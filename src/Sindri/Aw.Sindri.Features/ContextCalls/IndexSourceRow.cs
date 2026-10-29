@@ -8,4 +8,12 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="LastSync">When the last tick of this feed ended since the process started, or null when none has.</param>
 /// <param name="LastCode">The code that tick ended with (a down source's SND-CONTEXT-010), or null when it completed or none has run.</param>
 /// <param name="ReReading">How many records the source holds while it re-reads them (the Linear issue feed's one-time re-read for project links), or null.</param>
-public sealed record IndexSourceRow(string Source, string? Phase, bool Usable, bool Complete, DateTimeOffset? LastSync, string? LastCode, int? ReReading = null);
+/// <param name="Pull">'idle', 'running', 'backoff' or 'failed'.</param>
+/// <param name="Records">How many records the source holds.</param>
+/// <param name="LastCommit">The end of the last tick that did not fail, or null when none did.</param>
+/// <param name="LastError">The SND- code of the last failure; null after a success.</param>
+/// <param name="LastErrorText">One scrubbed line saying what failed.</param>
+/// <param name="Failures">Failed ticks in a row.</param>
+/// <param name="NextTry">When a source in backoff is pulled again.</param>
+public sealed record IndexSourceRow(string Source, string? Phase, bool Usable, bool Complete, DateTimeOffset? LastSync, string? LastCode, int? ReReading = null,
+    string? Pull = null, int? Records = null, DateTimeOffset? LastCommit = null, string? LastError = null, string? LastErrorText = null, int? Failures = null, DateTimeOffset? NextTry = null);

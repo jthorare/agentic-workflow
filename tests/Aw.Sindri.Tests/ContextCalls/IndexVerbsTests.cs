@@ -57,6 +57,34 @@ public sealed class IndexVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Status_adds_the_pull_state_the_next_try_and_the_last_commit_when_the_server_serves_them()
+    {
+        const string rows = """{"sources":[{"source":"linear","phase":"incremental","usable":true,"complete":true,"lastSync":"2026-10-27T12:00:00.0000000Z","lastCode":null,"pull":"idle","records":40,"lastCommit":"2026-10-27T12:00:00.0000000Z","lastError":null,"lastErrorText":null,"failures":0,"nextTry":null},{"source":"github","phase":"recent","usable":false,"complete":false,"lastSync":"2026-10-27T13:00:00.0000000Z","lastCode":"SND-CONTEXT-010","pull":"backoff","records":0,"lastCommit":"2026-10-27T12:00:00.0000000Z","lastError":"SND-CONTEXT-010","lastErrorText":"the source is down","failures":3,"nextTry":"2026-10-27T14:05:00.0000000Z"}]}""";
+
+        _ = await Run(new ScriptedApi((HttpStatusCode.OK, rows)), "status");
+
+        Assert.Equal(
+            "linear  complete · last sync 2026-10-27 12:00:00Z · last commit 12:00Z\n" +
+            "github  last sync failed: SND-CONTEXT-010 (A context source is unavailable) · last sync 2026-10-27 13:00:00Z · backoff, 3 failures, next try 14:05Z · last commit 12:00Z · the source is down\n",
+            Printed);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Status_prints_the_last_decision_run_on_the_concepts_line_with_its_code_when_it_failed()
+    {
+        const string ok = """{"sources":[],"concepts":{"enabled":true,"concepts":4,"multiSource":1,"queued":0,"covered":2,"embedded":10,"pending":0,"coverage":0.2,"watermark":7,"code":null,"lastRun":"2026-10-27T14:05:00.0000000Z","lastCode":null}}""";
+        const string failed = """{"sources":[],"concepts":{"enabled":true,"concepts":4,"multiSource":1,"queued":0,"covered":2,"embedded":10,"pending":0,"coverage":0.2,"watermark":7,"code":null,"lastRun":"2026-10-27T14:05:00.0000000Z","lastCode":"SND-CONTEXT-010"}}""";
+
+        _ = await Run(new ScriptedApi((HttpStatusCode.OK, ok)), "status");
+        var okLine = Printed;
+        _out.GetStringBuilder().Clear();
+        _ = await Run(new ScriptedApi((HttpStatusCode.OK, failed)), "status");
+
+        Assert.Contains("watermark 7, last run 14:05Z\n", okLine, StringComparison.Ordinal);
+        Assert.Contains("watermark 7, last run 14:05Z (SND-CONTEXT-010)\n", Printed, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Status_never_calls_a_source_usable_when_its_last_sync_failed()
     {
         const string rows = """{"sources":[{"source":"linear","phase":"backfill","usable":true,"complete":false,"lastSync":"2026-10-27T12:00:00.0000000Z","lastCode":"SND-CONTEXT-072"},{"source":"github","phase":"backfill","usable":true,"complete":false,"lastSync":"2026-10-27T12:00:00.0000000Z","lastCode":"SND-CONTEXT-059"},{"source":"slack","phase":null,"usable":false,"complete":false,"lastSync":null,"lastCode":null}]}""";

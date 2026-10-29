@@ -151,6 +151,10 @@ public sealed class VectorMatrixCacheTests : IDisposable
 
         public ValueTask<Kernel.Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken) => _inner.LastOutcome(source, cancellationToken);
 
+        public ValueTask<Kernel.Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken) => _inner.RecordAttempt(source, attempt, cancellationToken);
+
+        public ValueTask<Kernel.Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken) => _inner.Backoff(source, cancellationToken);
+
         public ValueTask<Kernel.Result<int>> PutVectors(IReadOnlyList<VectorWrite> vectors, CancellationToken cancellationToken) => _inner.PutVectors(vectors, cancellationToken);
 
         public ValueTask<Kernel.Result<IReadOnlyList<VectorRow>>> Vectors(VectorSpace space, long afterSeq, int limit, CancellationToken cancellationToken)

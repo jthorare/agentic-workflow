@@ -9,5 +9,7 @@ internal sealed class SyncLocks
 
     public bool TryEnter(string source) => _running.TryAdd(source, 0);
 
+    public bool IsHeld(string source) => _running.ContainsKey(source);
+
     public void Leave(string source) => _ = _running.TryRemove(source, out _);
 }

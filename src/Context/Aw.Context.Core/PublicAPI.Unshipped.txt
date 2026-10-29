@@ -9199,7 +9199,6 @@ Aw.Context.Core.Sync.SourceProgress
 Aw.Context.Core.Sync.SourceProgress.<Clone>$() -> Aw.Context.Core.Sync.SourceProgress!
 Aw.Context.Core.Sync.SourceProgress.Complete.get -> bool
 Aw.Context.Core.Sync.SourceProgress.Complete.init -> void
-Aw.Context.Core.Sync.SourceProgress.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Records.SyncPhase? Phase, out System.DateTimeOffset? LastSync, out string? LastCode, out bool Usable, out bool Complete, out int? ReReading) -> void
 Aw.Context.Core.Sync.SourceProgress.Equals(Aw.Context.Core.Sync.SourceProgress? other) -> bool
 Aw.Context.Core.Sync.SourceProgress.LastCode.get -> string?
 Aw.Context.Core.Sync.SourceProgress.LastCode.init -> void
@@ -9211,7 +9210,6 @@ Aw.Context.Core.Sync.SourceProgress.ReReading.get -> int?
 Aw.Context.Core.Sync.SourceProgress.ReReading.init -> void
 Aw.Context.Core.Sync.SourceProgress.Source.get -> Aw.Context.Core.Sources.SourceId
 Aw.Context.Core.Sync.SourceProgress.Source.init -> void
-Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null) -> void
 Aw.Context.Core.Sync.SourceProgress.Usable.get -> bool
 Aw.Context.Core.Sync.SourceProgress.Usable.init -> void
 override Aw.Context.Core.Sync.SourceProgress.Equals(object? obj) -> bool
@@ -9602,14 +9600,75 @@ static Aw.Context.Core.Results.ConceptSynthesisReport.operator !=(Aw.Context.Cor
 static Aw.Context.Core.Results.ConceptSynthesisReport.operator ==(Aw.Context.Core.Results.ConceptSynthesisReport? left, Aw.Context.Core.Results.ConceptSynthesisReport? right) -> bool
 static Aw.Context.Core.Results.CosineBucket.operator !=(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
 static Aw.Context.Core.Results.CosineBucket.operator ==(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
+Aw.Context.Core.Records.IRecordStore.Backoff(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SourceBackoffState!>!>
+Aw.Context.Core.Records.IRecordStore.RecordAttempt(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncAttempt! attempt, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Context.Core.Records.SourceBackoff
+Aw.Context.Core.Records.SourceBackoffState
+Aw.Context.Core.Records.SourceBackoffState.<Clone>$() -> Aw.Context.Core.Records.SourceBackoffState!
+Aw.Context.Core.Records.SourceBackoffState.Deconstruct(out int Failures, out System.DateTimeOffset? NextTry, out System.DateTimeOffset? LastCommit, out string? LastErrorText) -> void
+Aw.Context.Core.Records.SourceBackoffState.Equals(Aw.Context.Core.Records.SourceBackoffState? other) -> bool
+Aw.Context.Core.Records.SourceBackoffState.Failures.get -> int
+Aw.Context.Core.Records.SourceBackoffState.Failures.init -> void
+Aw.Context.Core.Records.SourceBackoffState.LastCommit.get -> System.DateTimeOffset?
+Aw.Context.Core.Records.SourceBackoffState.LastCommit.init -> void
+Aw.Context.Core.Records.SourceBackoffState.LastErrorText.get -> string?
+Aw.Context.Core.Records.SourceBackoffState.LastErrorText.init -> void
+Aw.Context.Core.Records.SourceBackoffState.NextTry.get -> System.DateTimeOffset?
+Aw.Context.Core.Records.SourceBackoffState.NextTry.init -> void
+Aw.Context.Core.Records.SourceBackoffState.SourceBackoffState(int Failures, System.DateTimeOffset? NextTry, System.DateTimeOffset? LastCommit, string? LastErrorText) -> void
+Aw.Context.Core.Records.SyncAttempt
+Aw.Context.Core.Records.SyncAttempt.<Clone>$() -> Aw.Context.Core.Records.SyncAttempt!
+Aw.Context.Core.Records.SyncAttempt.At.get -> System.DateTimeOffset
+Aw.Context.Core.Records.SyncAttempt.At.init -> void
+Aw.Context.Core.Records.SyncAttempt.Deconstruct(out System.DateTimeOffset At, out bool Failed, out string? ErrorText) -> void
+Aw.Context.Core.Records.SyncAttempt.Equals(Aw.Context.Core.Records.SyncAttempt? other) -> bool
+Aw.Context.Core.Records.SyncAttempt.ErrorText.get -> string?
+Aw.Context.Core.Records.SyncAttempt.ErrorText.init -> void
+Aw.Context.Core.Records.SyncAttempt.Failed.get -> bool
+Aw.Context.Core.Records.SyncAttempt.Failed.init -> void
+Aw.Context.Core.Records.SyncAttempt.SyncAttempt(System.DateTimeOffset At, bool Failed, string? ErrorText) -> void
+Aw.Context.Core.Sync.SourceProgress.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Records.SyncPhase? Phase, out System.DateTimeOffset? LastSync, out string? LastCode, out bool Usable, out bool Complete, out int? ReReading, out string? Pull, out int? Records, out System.DateTimeOffset? LastCommit, out string? LastError, out string? LastErrorText, out int? Failures, out System.DateTimeOffset? NextTry) -> void
+Aw.Context.Core.Sync.SourceProgress.Failures.get -> int?
+Aw.Context.Core.Sync.SourceProgress.Failures.init -> void
+Aw.Context.Core.Sync.SourceProgress.LastCommit.get -> System.DateTimeOffset?
+Aw.Context.Core.Sync.SourceProgress.LastCommit.init -> void
+Aw.Context.Core.Sync.SourceProgress.LastError.get -> string?
+Aw.Context.Core.Sync.SourceProgress.LastError.init -> void
+Aw.Context.Core.Sync.SourceProgress.LastErrorText.get -> string?
+Aw.Context.Core.Sync.SourceProgress.LastErrorText.init -> void
+Aw.Context.Core.Sync.SourceProgress.NextTry.get -> System.DateTimeOffset?
+Aw.Context.Core.Sync.SourceProgress.NextTry.init -> void
+Aw.Context.Core.Sync.SourceProgress.Pull.get -> string?
+Aw.Context.Core.Sync.SourceProgress.Pull.init -> void
+Aw.Context.Core.Sync.SourceProgress.Records.get -> int?
+Aw.Context.Core.Sync.SourceProgress.Records.init -> void
+Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null, string? Pull = null, int? Records = null, System.DateTimeOffset? LastCommit = null, string? LastError = null, string? LastErrorText = null, int? Failures = null, System.DateTimeOffset? NextTry = null) -> void
+const Aw.Context.Core.Records.SourceBackoff.FailedAfter = 5 -> int
+override Aw.Context.Core.Records.SourceBackoffState.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SourceBackoffState.GetHashCode() -> int
+override Aw.Context.Core.Records.SourceBackoffState.ToString() -> string!
+override Aw.Context.Core.Records.SyncAttempt.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SyncAttempt.GetHashCode() -> int
+override Aw.Context.Core.Records.SyncAttempt.ToString() -> string!
+static Aw.Context.Core.Records.SourceBackoff.Apply(Aw.Context.Core.Records.SourceBackoffState! previous, Aw.Context.Core.Records.SyncAttempt! attempt) -> Aw.Context.Core.Records.SourceBackoffState!
+static Aw.Context.Core.Records.SourceBackoff.Delay(int failures) -> System.TimeSpan
+static Aw.Context.Core.Records.SourceBackoff.Next(int previousFailures, Aw.Context.Core.Records.SyncAttempt! attempt) -> Aw.Context.Core.Records.SourceBackoffState!
+static Aw.Context.Core.Records.SourceBackoff.Pull(Aw.Context.Core.Records.SourceBackoffState! state, bool running, System.DateTimeOffset now) -> string!
+static Aw.Context.Core.Records.SourceBackoffState.None.get -> Aw.Context.Core.Records.SourceBackoffState!
+static Aw.Context.Core.Records.SourceBackoffState.operator !=(Aw.Context.Core.Records.SourceBackoffState? left, Aw.Context.Core.Records.SourceBackoffState? right) -> bool
+static Aw.Context.Core.Records.SourceBackoffState.operator ==(Aw.Context.Core.Records.SourceBackoffState? left, Aw.Context.Core.Records.SourceBackoffState? right) -> bool
+static Aw.Context.Core.Records.SyncAttempt.operator !=(Aw.Context.Core.Records.SyncAttempt? left, Aw.Context.Core.Records.SyncAttempt? right) -> bool
+static Aw.Context.Core.Records.SyncAttempt.operator ==(Aw.Context.Core.Records.SyncAttempt? left, Aw.Context.Core.Records.SyncAttempt? right) -> bool
+static readonly Aw.Context.Core.Records.SourceBackoff.BaseDelay -> System.TimeSpan
+static readonly Aw.Context.Core.Records.SourceBackoff.MaxDelay -> System.TimeSpan
+Aw.Context.Core.Concepts.SynthesizedConceptNodes
+static Aw.Context.Core.Concepts.SynthesizedConceptNodes.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts) -> Aw.Context.Core.Graph.GraphSnapshot!
 Aw.Context.Core.ConceptSynthesis.ConceptStatus
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.get -> int
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.init -> void
-Aw.Context.Core.ConceptSynthesis.ConceptStatus.ConceptStatus(bool Enabled, int Concepts, int MultiSource, int Queued, int Covered, long Watermark, int Embedded, int Pending) -> void
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.Covered.get -> int
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.Covered.init -> void
-Aw.Context.Core.ConceptSynthesis.ConceptStatus.Deconstruct(out bool Enabled, out int Concepts, out int MultiSource, out int Queued, out int Covered, out long Watermark, out int Embedded, out int Pending) -> void
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.Embedded.get -> int
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.Embedded.init -> void
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.Enabled.get -> bool
@@ -9645,3 +9704,9 @@ static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator !=(Aw.Context.Cor
 static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
 static Aw.Context.Core.Records.LiveRecordCounts.operator !=(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool
 static Aw.Context.Core.Records.LiveRecordCounts.operator ==(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.ConceptStatus(bool Enabled, int Concepts, int MultiSource, int Queued, int Covered, long Watermark, int Embedded, int Pending, System.DateTimeOffset? LastRun = null, string? LastCode = null) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Deconstruct(out bool Enabled, out int Concepts, out int MultiSource, out int Queued, out int Covered, out long Watermark, out int Embedded, out int Pending, out System.DateTimeOffset? LastRun, out string? LastCode) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastCode.get -> string?
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastCode.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastRun.get -> System.DateTimeOffset?
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastRun.init -> void
