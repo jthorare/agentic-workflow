@@ -46,7 +46,7 @@ internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, I
             }
         }
 
-        IReadOnlyList<string> notChecked = hooksSkipped ? [SandboxCheckReport.HooksNotChecked] : [];
+        IReadOnlyList<string> notChecked = hooksSkipped ? [SandboxCopy.HooksNotChecked] : [];
         if (blockers.Count > 0)
         {
             return new SandboxCheckReport(blockers, []) { NotChecked = notChecked };
