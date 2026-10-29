@@ -12,7 +12,7 @@ namespace Aw.Context.Features.SyncSources;
 
 /// <summary>
 /// <see cref="IIndexSync"/> over the record feeds (owned-index spec §5.5, §5.8): the same feeds and the same per-source tick as <see cref="SyncSourcesService"/>, without the
-/// intent walk or the docs refresh. The feeds tick concurrently, at most <see cref="MaxConcurrentFeeds"/> at once, each under its own time cap (<see cref="FeedCap"/>): a feed that hits it is a capped row, never a failure, and the next tick resumes it. A source that is down is its row's code; the last tick's end and code are kept in memory, so they read null until the first tick after a start.
+/// intent walk or the docs refresh. The feeds tick concurrently, at most <see cref="MaxConcurrentFeeds"/> at once, each under its own time cap (<see cref="FeedCap"/>): a feed that hits it is a capped row, never a failure, and the next tick resumes it. A source that is down is its row's code; the last tick's end and code are kept in the record store (`source_cursor`, repo 'records'), so every process reads the same and they are null only until a source's first tick.
 /// </summary>
 /// <param name="feeds">The feeds and their lock and last outcomes.</param>
 /// <param name="store">The record store the positions are read from.</param>
@@ -114,7 +114,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             // why: its own cap fired; the pages committed so far stay with the stored cursor, so the next tick resumes
-            feeds.Note(feed.Source, ContextErrors.SyncCapped.Code);
+            await feeds.Note(feed.Source, ContextErrors.SyncCapped.Code, cancellationToken).ConfigureAwait(false);
             return Failed(feed.Source, ContextErrors.SyncCapped.Code);
         }
         finally
@@ -155,7 +155,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
                 stored = counted.Value.Records;
             }
 
-            var last = feeds.LastOutcome(feed.Source);
+            var last = await feeds.LastOutcome(feed.Source, cancellationToken).ConfigureAwait(false);
             rows.Add(SourceProgress.From(feed.Source, position.Value.Phase, last?.At, last?.Code, stored));
         }
 

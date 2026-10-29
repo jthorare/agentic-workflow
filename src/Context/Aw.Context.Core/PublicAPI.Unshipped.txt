@@ -8583,6 +8583,8 @@ Aw.Context.Core.Records.IRecordStore.DeleteVectors(Aw.Context.Core.Records.Vecto
 Aw.Context.Core.Records.IRecordStore.Get(Aw.Context.Core.Sources.RecordKey key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.StoredRecord?>!>
 Aw.Context.Core.Records.IRecordStore.List(Aw.Context.Core.Records.RecordFilter! filter, Aw.Context.Core.Sources.RecordKey? after, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.StoredRecord!>!>!>
 Aw.Context.Core.Records.IRecordStore.Position(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SyncPosition!>!>
+Aw.Context.Core.Records.IRecordStore.RecordOutcome(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncOutcome! outcome, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Context.Core.Records.IRecordStore.LastOutcome(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SyncOutcome?>!>
 Aw.Context.Core.Records.IRecordStore.Purge(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Context.Core.Records.IRecordStore.PutVectors(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.VectorWrite!>! vectors, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Context.Core.Records.IRecordStore.Stamps(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.StoreStamps!>!>
@@ -8729,6 +8731,15 @@ Aw.Context.Core.Records.SyncPhase.Backfill = 1 -> Aw.Context.Core.Records.SyncPh
 Aw.Context.Core.Records.SyncPhase.Incremental = 2 -> Aw.Context.Core.Records.SyncPhase
 Aw.Context.Core.Records.SyncPhase.Recent = 0 -> Aw.Context.Core.Records.SyncPhase
 Aw.Context.Core.Records.SyncPhase.Reconcile = 3 -> Aw.Context.Core.Records.SyncPhase
+Aw.Context.Core.Records.SyncOutcome
+Aw.Context.Core.Records.SyncOutcome.<Clone>$() -> Aw.Context.Core.Records.SyncOutcome!
+Aw.Context.Core.Records.SyncOutcome.At.get -> System.DateTimeOffset
+Aw.Context.Core.Records.SyncOutcome.At.init -> void
+Aw.Context.Core.Records.SyncOutcome.Code.get -> string?
+Aw.Context.Core.Records.SyncOutcome.Code.init -> void
+Aw.Context.Core.Records.SyncOutcome.Deconstruct(out System.DateTimeOffset At, out string? Code) -> void
+Aw.Context.Core.Records.SyncOutcome.Equals(Aw.Context.Core.Records.SyncOutcome? other) -> bool
+Aw.Context.Core.Records.SyncOutcome.SyncOutcome(System.DateTimeOffset At, string? Code) -> void
 Aw.Context.Core.Records.SyncPosition
 Aw.Context.Core.Records.SyncPosition.<Clone>$() -> Aw.Context.Core.Records.SyncPosition!
 Aw.Context.Core.Records.SyncPosition.BackfillBefore.get -> System.DateTimeOffset?
@@ -8902,6 +8913,9 @@ override Aw.Context.Core.Records.StoreStamps.ToString() -> string!
 override Aw.Context.Core.Records.StoredRecord.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.StoredRecord.GetHashCode() -> int
 override Aw.Context.Core.Records.StoredRecord.ToString() -> string!
+override Aw.Context.Core.Records.SyncOutcome.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SyncOutcome.GetHashCode() -> int
+override Aw.Context.Core.Records.SyncOutcome.ToString() -> string!
 override Aw.Context.Core.Records.SyncPosition.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.SyncPosition.GetHashCode() -> int
 override Aw.Context.Core.Records.SyncPosition.ToString() -> string!
@@ -8958,6 +8972,8 @@ static Aw.Context.Core.Records.StoreStamps.operator ==(Aw.Context.Core.Records.S
 static Aw.Context.Core.Records.StoredRecord.operator !=(Aw.Context.Core.Records.StoredRecord? left, Aw.Context.Core.Records.StoredRecord? right) -> bool
 static Aw.Context.Core.Records.StoredRecord.operator ==(Aw.Context.Core.Records.StoredRecord? left, Aw.Context.Core.Records.StoredRecord? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.Start.get -> Aw.Context.Core.Records.SyncPosition!
+static Aw.Context.Core.Records.SyncOutcome.operator !=(Aw.Context.Core.Records.SyncOutcome? left, Aw.Context.Core.Records.SyncOutcome? right) -> bool
+static Aw.Context.Core.Records.SyncOutcome.operator ==(Aw.Context.Core.Records.SyncOutcome? left, Aw.Context.Core.Records.SyncOutcome? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.operator !=(Aw.Context.Core.Records.SyncPosition? left, Aw.Context.Core.Records.SyncPosition? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.operator ==(Aw.Context.Core.Records.SyncPosition? left, Aw.Context.Core.Records.SyncPosition? right) -> bool
 static Aw.Context.Core.Records.VectorRow.operator !=(Aw.Context.Core.Records.VectorRow? left, Aw.Context.Core.Records.VectorRow? right) -> bool
