@@ -1,6 +1,6 @@
 using System.Text.Json;
-using Aw.Sindri.Core;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Projects.Facts;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.DependencyInjection;
