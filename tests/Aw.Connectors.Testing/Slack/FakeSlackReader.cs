@@ -5,7 +5,7 @@ using Aw.Kernel;
 namespace Aw.Connectors.Testing.Slack;
 
 /// <summary>
-/// An in-memory <see cref="ISlackReader"/>: serves what was added per channel the way Slack does (history newest first from an inclusive oldest, a thread root first) and, like the real
+/// An in-memory <see cref="ISlackReader"/>: serves what was added per channel the way Slack does (history newest first from an inclusive oldest, one page at a time for <see cref="HistoryPage"/>, a thread root first) and, like the real
 /// client, refuses a channel that is not allowed before it reads anything (SND-INDEX-013). Contract-tested against the real client.
 /// </summary>
 public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackReader
@@ -79,6 +79,23 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<SlackMessagePage>> HistoryPage(string channel, string? oldest, string? latest, int limit, CancellationToken cancellationToken)
+    {
+        if (Refused(channel) is { } refused)
+        {
+            return ValueTask.FromResult<Result<SlackMessagePage>>(refused);
+        }
+
+        _reads.Add($"history {channel} {oldest}");
+        var size = Math.Max(1, limit);
+        return ValueTask.FromResult(_failure is not null
+            ? (Result<SlackMessagePage>)_failure
+            : LimitOf(_historyLimits, channel) is { } until
+                ? new SlackMessagePage([], until)
+                : PageOf(_store.Top(channel, oldest, latest), size));
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<SlackMessagePage>> Replies(string channel, string threadTs, CancellationToken cancellationToken)
     {
         if (Refused(channel) is { } refused)
@@ -129,6 +146,9 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
         => !SlackChannelIds.IsReadable(channel) || !_allowed.Contains(channel)
             ? ConnectorsErrors.ChannelNotAllowed.With("The channel is not in the profile.")
             : null;
+
+    private static Result<SlackMessagePage> PageOf(List<SlackMessage> all, int size)
+        => new SlackMessagePage([.. all.Take(size)], RateLimitedUntil: null, HasMore: all.Count > size);
 
     private Result<SlackMessagePage> Page(DateTimeOffset? limit, Func<List<SlackMessage>> read)
         => _failure is not null
