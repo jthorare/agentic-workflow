@@ -7,6 +7,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.CodeIndex;
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.Api.Index;
 using Aw.Sindri.Ui.Api.Jobs;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
@@ -73,6 +74,7 @@ public sealed class GoldenContractTests
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["setup"] = As<SetupView>,   // GET /setup (setup-once spec §7, api #458): the Setup card and page; the "extra-" scenarios are the app's own (SpecShaped)
+        ["index-status"] = As<IndexStatusView>,   // GET /index/status (#1597, spec-shaped until the context lane's PR lands): the Health Context index card
         ["context-map-refresh"] = As<JobStarted>,   // POST /context/map/refresh's 202 (the setup map row's Retry); the 409 is ProblemDetails
         ["setup-repos"] = As<JobStarted>,   // POST /setup/repos' 200 (api #528, AddRepo); the 400/409/403 bodies are ProblemDetails
         ["setup-mcp"] = As<JobStarted>,   // POST /setup/mcp's 202 (RegisterMcp, spec-shaped)
