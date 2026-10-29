@@ -16,6 +16,9 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
     private readonly Dictionary<string, DateTimeOffset> _historyLimits = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DateTimeOffset> _repliesLimits = new(StringComparer.Ordinal);
     private Error? _failure;
+    private int? _repliesBudget;
+    private DateTimeOffset? _repliesBudgetUntil;
+    private int _repliesCalls;
 
     /// <summary>The reads made, in order: 'history {channel} {oldest}', 'replies {channel} {ts}', 'probe {channel}'.</summary>
     public IReadOnlyList<string> Reads => _reads;
@@ -41,6 +44,18 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
     /// <param name="channel">The one channel it applies to, or null for every channel.</param>
     /// <returns>This fake.</returns>
     public FakeSlackReader RateLimitReplies(DateTimeOffset? until, string? channel = null) => Limit(_repliesLimits, until, channel);
+
+    /// <summary>Lets <paramref name="calls"/> thread reads succeed (counted from this call), then makes the next ones stop on a rate limit until <paramref name="until"/>, with nothing read; null lifts the limit.</summary>
+    /// <param name="calls">How many thread reads still succeed.</param>
+    /// <param name="until">When the quota comes back, or null to lift the limit.</param>
+    /// <returns>This fake.</returns>
+    public FakeSlackReader RateLimitRepliesAfter(int calls, DateTimeOffset? until)
+    {
+        _repliesBudget = until is null ? null : calls;
+        _repliesBudgetUntil = until;
+        _repliesCalls = 0;
+        return this;
+    }
 
     /// <summary>Makes every read fail with <paramref name="error"/>.</summary>
     /// <param name="error">The error.</param>
@@ -69,6 +84,11 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
         if (Refused(channel) is { } refused)
         {
             return ValueTask.FromResult<Result<SlackMessagePage>>(refused);
+        }
+
+        if (_repliesBudget is { } budget && _repliesBudgetUntil is { } budgetUntil && _repliesCalls++ >= budget)
+        {
+            return ValueTask.FromResult<Result<SlackMessagePage>>(new SlackMessagePage([], budgetUntil));
         }
 
         _reads.Add($"replies {channel} {threadTs}");
