@@ -14,7 +14,7 @@ internal static class IndexText
         ArgumentNullException.ThrowIfNull(view);
         if (view.Sources.Count == 0)
         {
-            return "no record source is set up (fix: add one to the profile's context section)\n";
+            return "no record source is set up (fix: add one to the profile's context section)\n" + Concepts(view.Concepts);
         }
 
         var width = view.Sources.Max(static s => s.Source.Length);
@@ -27,7 +27,59 @@ internal static class IndexText
             _ = text.Append('\n');
         }
 
-        return text.ToString();
+        return text.Append(Concepts(view.Concepts)).ToString();
+    }
+
+    /// <summary>The concepts line (#1597): empty from a server that sends none; a part whose value is unknown is left out.</summary>
+    private static string Concepts(IndexConceptsView? c)
+    {
+        if (c is null)
+        {
+            return string.Empty;
+        }
+
+        if (c.Code is { } code)
+        {
+            return $"concepts: unavailable ({code})\n";
+        }
+
+        if (!c.Enabled)
+        {
+            return "concepts: off (context.conceptSynthesis or labeling is off)\n";
+        }
+
+        if (c.Concepts is not { } count || count == 0)
+        {
+            return "concepts: none yet\n";
+        }
+
+        return "concepts: " + string.Join(", ", Parts(c, count)) + "\n";
+    }
+
+    private static List<string> Parts(IndexConceptsView c, int count)
+    {
+        var parts = new List<string> { string.Create(CultureInfo.InvariantCulture, $"{count:N0}") + (c.MultiSource is { } multi ? string.Create(CultureInfo.InvariantCulture, $" ({multi:N0} cite 2+ sources)") : string.Empty) };
+        if (c.Queued is { } queued)
+        {
+            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{queued:N0} queued"));
+        }
+
+        if (c.Covered is { } covered && c.Embedded is > 0 and var embedded)
+        {
+            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{covered:N0} of {embedded:N0} records covered ({Math.Round(c.Coverage * 100, MidpointRounding.AwayFromZero):0}%)"));
+        }
+
+        if (c.Pending is > 0 and var pending)
+        {
+            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{pending:N0} not embedded yet"));
+        }
+
+        if (c.Watermark is { } watermark)
+        {
+            parts.Add(string.Create(CultureInfo.InvariantCulture, $"watermark {watermark}"));
+        }
+
+        return parts;
     }
 
     private static readonly FrozenDictionary<string, string> _reasons =

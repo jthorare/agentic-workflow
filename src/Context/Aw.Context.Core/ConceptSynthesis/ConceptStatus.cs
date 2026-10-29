@@ -18,5 +18,13 @@ public sealed record ConceptStatus(bool Enabled, int Concepts, int MultiSource, 
     /// <param name="live">How many live records (not removed, not blocked) the record store holds.</param>
     /// <param name="embedded">How many of them have a chunk vector.</param>
     /// <returns>The status.</returns>
-    public static ConceptStatus From(bool enabled, IReadOnlyList<SynthesizedConcept> concepts, long watermark, int live, int embedded) => throw new NotSupportedException();
+    public static ConceptStatus From(bool enabled, IReadOnlyList<SynthesizedConcept> concepts, long watermark, int live, int embedded) => new(
+        enabled,
+        concepts.Count,
+        concepts.Count(c => c.Members.Select(m => m.Source).Distinct(StringComparer.Ordinal).Skip(1).Any()),
+        concepts.Count(c => c.State == SynthesisState.Queued),
+        concepts.Where(c => c.State == SynthesisState.Done).SelectMany(c => c.Members.Select(m => m.Record)).Distinct(StringComparer.Ordinal).Count(),
+        watermark,
+        embedded,
+        Math.Max(0, live - embedded));
 }

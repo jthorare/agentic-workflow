@@ -69,6 +69,7 @@ Each source is read in phases: the **recent** 30 days first, newest first, so th
 older records **back to the window's start** (`context.index.windowDays`, default 183 days) and no further; then changes
 since the last sync every 5 minutes; and a daily reconcile that catches deletes and edits. You see two milestones per
 source in `index status` and on Home: **usable** (the recent window is in) and **complete** (all of it is in and embedded).
+`index status` ends with one `concepts:` line: how many cross-source concepts exist, how many cite two or more sources, how many wait for a name, how many embedded records they cover, and how many records have no vector yet.
 
 ```
 github   usable, filling older history · last sync 14:05

@@ -54,6 +54,8 @@ internal static class RecordMappers
 
     internal static IRowMapper<SourceCounts> Counts { get; } = new Mapper<SourceCounts>(r => new SourceCounts(r.GetInt32(0), r.GetInt32(1), r.GetInt32(2)));
 
+    internal static IRowMapper<LiveRecordCounts> Live { get; } = new Mapper<LiveRecordCounts>(r => new LiveRecordCounts(r.GetInt32(0), r.GetInt32(1)));
+
     internal static IRowMapper<StoreStamps> Stamps { get; } = new Mapper<StoreStamps>(r => new StoreStamps(r.GetInt64(0), r.GetInt64(1)));
 
     internal static IRowMapper<ExistingRecord> Existing { get; } = new Mapper<ExistingRecord>(r =>

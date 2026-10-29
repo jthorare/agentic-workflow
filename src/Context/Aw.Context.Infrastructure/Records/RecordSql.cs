@@ -130,6 +130,11 @@ internal static class RecordSql
         "(SELECT COUNT(*) FROM chunk WHERE record IN (SELECT key FROM source_record WHERE source = @source)), " +
         "(SELECT COUNT(*) FROM embedding WHERE space = 'chunk' AND key IN (SELECT key FROM chunk WHERE record IN (SELECT key FROM source_record WHERE source = @source)))";
 
+    /// <summary>The live records (not removed, not blocked), and those with at least one chunk vector.</summary>
+    internal const string CountLive =
+        "SELECT (SELECT COUNT(*) FROM source_record WHERE removed_at IS NULL AND blocked = 0), " +
+        "(SELECT COUNT(*) FROM source_record r WHERE r.removed_at IS NULL AND r.blocked = 0 AND EXISTS (SELECT 1 FROM chunk c JOIN embedding e ON e.space = 'chunk' AND e.key = c.key WHERE c.record = r.key))";
+
     internal const string DeleteRecords = "DELETE FROM source_record WHERE source = @source";
 
     /// <summary>
