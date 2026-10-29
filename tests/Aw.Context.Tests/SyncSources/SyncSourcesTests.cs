@@ -96,7 +96,7 @@ public sealed class SyncSourcesTests
         Assert.Equal(["repo-docs", "linear"], report.Value.Sources.Select(s => s.Source.Value), StringComparer.Ordinal);
     }
 
-    // see #1637: no map now skips the decision pass silently (the 030 NoMap case is gone)
+    // no map: the index tick's decision row says SND-CONTEXT-030 (TickDecisionsTests.Without_a_map_the_feed_still_syncs_clean_and_the_decision_pass_says_SND_CONTEXT_030)
     [Fact]
     public async Task SyncSources_unknown_source_answers_058()
     {
