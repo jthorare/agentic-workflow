@@ -8,4 +8,10 @@ internal static class ProjectRoutes
     internal static string List(bool all) => all ? $"{Root}?all=true" : Root;
 
     internal static string One(string id) => $"{Root}/{Uri.EscapeDataString(id)}";
+
+    internal static string Change(string id) => One(id) + "/change";
+
+    internal static string Detach(string id) => One(id) + "/detach";
+
+    internal static string Hide => Root + "/hide";
 }
