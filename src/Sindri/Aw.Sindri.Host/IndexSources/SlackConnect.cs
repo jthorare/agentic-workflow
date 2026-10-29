@@ -3,7 +3,6 @@ using Aw.Connectors.Core.Slack;
 using Aw.Context.Core.Engine;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
 
@@ -21,7 +20,7 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="profile">Writes the pointer into the profile.</param>
 /// <param name="readers">Makes a Slack reader for a token and the channel ids it may read.</param>
 internal sealed class SlackConnect(
-    IOnyxPrompts prompts,
+    ISecretPrompts prompts,
     IProfileSource profiles,
     ISecretWriter writer,
     ISecretPointers pointers,

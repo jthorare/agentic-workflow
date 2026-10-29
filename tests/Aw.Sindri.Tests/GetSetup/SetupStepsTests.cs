@@ -132,6 +132,7 @@ public sealed class SetupStepsTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("github", "GitHub needs a token.")]
     [InlineData("slack", "Slack needs a token.")]
+    [InlineData("linear", "Linear needs a token.")]
     public void Sources_names_the_source_that_needs_a_token_and_lists_it(string source, string why)
     {
         var step = SetupSteps.Sources(InMemorySetupFacts.NamedSources((source, false)));
