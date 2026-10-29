@@ -196,4 +196,42 @@ public sealed class BlockedListViewModelTests
 
         Assert.Equal((0, string.Empty), (list.Rows.Count, list.Summary));
     }
+
+    [Fact]
+    public async Task A_draft_that_was_discarded_leaves_the_row_waiting_until_the_approved_profile_changes()
+    {
+        var list = await Read("some");
+        await list.Rows[0].Allow(Token);
+
+        _server.ProfileAnswer = Profile("hash-1");
+        await list.Read(_api, Item, Token);
+        await list.Read(_api, Item, Token);
+        Assert.Equal(AllowState.NeedsApproval, list.Rows[0].State);
+
+        _server.ProfileAnswer = Profile("hash-2");
+        await list.Read(_api, Item, Token);
+
+        Assert.Equal((AllowState.Allowed, "Allowed"), (list.Rows[0].State, list.Voice.Announcement));
+    }
+
+    [Fact]
+    public async Task The_same_host_denied_in_two_repos_is_two_rows_and_each_Allow_sends_its_own_launch()
+    {
+        _server.SandboxDenialsAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"launches":[{{LaunchIn("LCH-00000000000000000000000000000001", "api")}},{{LaunchIn("LCH-00000000000000000000000000000002", "web")}}]}""");
+        var list = new BlockedListViewModel(_server);
+        await list.Read(_api, Item, Token);
+
+        await list.Rows[0].Allow(Token);
+        await list.Rows[1].Allow(Token);
+
+        Assert.Equal(
+            [new AllowRequest("LCH-00000000000000000000000000000001", "network", "registry.example.org"), new AllowRequest("LCH-00000000000000000000000000000002", "network", "registry.example.org")],
+            _server.Allowed);
+        Assert.Equal(2, list.Rows.Count);
+    }
+
+    private static RouteAnswer Profile(string approved) => new(HttpStatusCode.OK, $$"""{"summary":null,"approved":"{{approved}}"}""");
+
+    private static string LaunchIn(string launch, string repo) =>
+        $$"""{"launchId":"{{launch}}","updatedAt":"2026-10-28T09:00:00.0000000Z","entries":[{"kind":"network","target":"registry.example.org","rule":"net.not-allowed","count":1,"first":"2026-10-28T08:00:00.0000000Z","last":"2026-10-28T08:20:00.0000000Z","fix":"allow"}],"overflow":[],"repo":"{{repo}}"}""";
 }

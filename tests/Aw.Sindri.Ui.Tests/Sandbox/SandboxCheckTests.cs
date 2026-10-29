@@ -1,6 +1,10 @@
+using System.Net;
+using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
+using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Sandbox;
 
 namespace Aw.Sindri.Ui.Tests.Sandbox;
@@ -187,4 +191,41 @@ public sealed class SandboxCheckTests
 
         Assert.Equal("fix 0", _bed.Clipboard.Text);
     }
+
+    [Fact]
+    public async Task A_resume_row_without_an_item_or_title_reads_as_a_parked_Step()
+    {
+        _bed.Server.SandboxCheckAnswer = ResumeBody("""{"instance":"ITM-0/step/1","item":null,"title":null,"since":"2026-10-28T08:00:00.0000000Z"}""");
+
+        await Check.Check(Token);
+
+        Assert.Equal((SandboxCheckPhase.AllClear, Labels.SandboxResumeNoTitle), (Check.Phase, Assert.Single(Check.ResumeRows).Title));
+    }
+
+    [Fact]
+    public async Task A_resume_row_without_a_title_shows_its_item()
+    {
+        _bed.Server.SandboxCheckAnswer = ResumeBody("""{"instance":"ITM-0/step/1","item":"ITM-0000000000000000000000000000000f","title":null,"since":"2026-10-28T08:00:00.0000000Z"}""");
+
+        await Check.Check(Token);
+
+        Assert.Equal("ITM-0000000000000000000000000000000f", Assert.Single(Check.ResumeRows).Title);
+    }
+
+    [Fact]
+    public async Task Resume_keeps_the_unsent_rows_when_a_send_is_refused_locally()
+    {
+        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody([], ["One", "Two", "Three"]);
+        var commander = new InstanceCommander(_bed.Server, () => SandboxTestBed.Api);
+        var sends = 0;
+        var check = new SandboxCheckViewModel(_bed.Server, _bed.Clock, () => SandboxTestBed.Api, body => ++sends == 2 ? Task.FromResult<Result<ApplyCommandAccepted>?>(null) : commander.Send(body), _bed.Clipboard);
+        await check.Check(Token);
+
+        await check.Resume(Token);
+
+        Assert.Equal(("Two | Three", true, Labels.SandboxResumeNotSent, SandboxCheckPhase.AllClear), (SandboxTestBed.J(check.ResumeRows.Select(r => r.Title)), check.ShowsResume, check.Live.Text, check.Phase));
+    }
+
+    private static RouteAnswer ResumeBody(string row) =>
+        new(HttpStatusCode.OK, $$"""{"blockers":[],"ready":true,"resume":[{{row}}],"checkedAt":"2026-10-28T09:00:00.0000000Z"}""");
 }

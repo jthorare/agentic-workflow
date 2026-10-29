@@ -16,8 +16,15 @@ public sealed class ExpandedStateSandboxTests
     private static StatusFields Waiting(int running = 3) =>
         FixtureInstances.Parse<StatusFields>(WithRunning(JsonNode.Parse(GoldenFiles.SpecShaped("workflow-status", "sandbox-waiting-for-slot"))!.AsObject(), running));
 
-    // The same run once its session started: no wait on the run.
+    // The same run once its session started: no wait on the run, and the session it started.
     private static StatusFields Started()
+    {
+        var status = Waiting();
+        return status with { Run = status.Run! with { WaitingForSlot = null, Session = new SessionHandle("claude", "abc") } };
+    }
+
+    // The wait ended with no session: the launch was cancelled or failed.
+    private static StatusFields EndedWithoutSession()
     {
         var status = Waiting();
         return status with { Run = status.Run! with { WaitingForSlot = null } };
@@ -84,5 +91,16 @@ public sealed class ExpandedStateSandboxTests
         expanded.AnnounceWaiting();
 
         Assert.Equal((string.Empty, false, false), (expanded.WaitingLine, expanded.HasWaiting, expanded.WaitingVoice.IsAnnouncing));
+    }
+
+    [Fact]
+    public void A_wait_that_ends_without_a_session_clears_the_line_and_never_says_Started()
+    {
+        var expanded = Expanded(Waiting());
+        expanded.AnnounceWaiting();
+
+        expanded.Update(new CurrentState("produce", Step: null, Gates: [], Desk: null, EndedWithoutSession()));
+
+        Assert.Equal((string.Empty, "Waiting for a free session slot, 3 of 3 running"), (expanded.WaitingLine, expanded.WaitingVoice.Announcement));
     }
 }
