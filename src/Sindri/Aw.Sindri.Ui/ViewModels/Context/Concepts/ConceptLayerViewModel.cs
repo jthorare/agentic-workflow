@@ -11,7 +11,6 @@ internal sealed class ConceptLayerViewModel : ObservableObject
 {
     private readonly Action<string> _open;
     private IReadOnlyList<ConceptTileViewModel> _all = [];
-    private IReadOnlyList<ConceptLink> _links = [];
     private HashSet<string>? _kept;
 
     internal ConceptLayerViewModel(Action<string> open)
@@ -84,7 +83,7 @@ internal sealed class ConceptLayerViewModel : ObservableObject
             return;
         }
 
-        (_all, _links, IsLoading, Note) = (tiles, view.Links ?? [], false, string.Empty);
+        (_all, IsLoading, Note) = (tiles, false, string.Empty);
         ResetSearch();
         Changed();
     }
@@ -136,26 +135,12 @@ internal sealed class ConceptLayerViewModel : ObservableObject
             : _all.Where(t => t.Name.Contains(text, StringComparison.OrdinalIgnoreCase) || t.Summary.Contains(text, StringComparison.OrdinalIgnoreCase) || t.Terms.Any(term => term.Contains(text, StringComparison.OrdinalIgnoreCase))).Select(t => t.Id).ToHashSet(StringComparer.Ordinal);
     }
 
-    /// <summary>A search resolved: the concepts that match stay, with the ones they link to; the rest is gone.</summary>
+    /// <summary>A search resolved: only the concepts that match stay (a linked concept is not a match, #1699); the rest is gone.</summary>
     /// <param name="matches">The ids of the concepts that match.</param>
     internal void ApplySearch(IReadOnlySet<string> matches)
     {
         ArgumentNullException.ThrowIfNull(matches);
-        var kept = new HashSet<string>(matches, StringComparer.Ordinal);
-        foreach (var link in _links)
-        {
-            if (matches.Contains(link.From))
-            {
-                _ = kept.Add(link.To);
-            }
-
-            if (matches.Contains(link.To))
-            {
-                _ = kept.Add(link.From);
-            }
-        }
-
-        (_kept, SearchActive, NoMatches) = (kept, true, matches.Count == 0);
+        (_kept, SearchActive, NoMatches) = (new HashSet<string>(matches, StringComparer.Ordinal), true, matches.Count == 0);
         Changed();
     }
 
@@ -177,7 +162,6 @@ internal sealed class ConceptLayerViewModel : ObservableObject
     {
         TermsNote = string.Empty;
         _all = [];
-        _links = [];
         (IsLoading, Note) = (false, note);
         ResetSearch();
         Changed();

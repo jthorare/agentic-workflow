@@ -72,6 +72,45 @@ public sealed class ProjectsFramesTests : FrameHost
     });
 
     [Fact]
+    public Task A_cards_notes_open_for_editing() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects("mixed", 1440, 900);
+        shell.Projects.Groups[0].Cards[0].BeginEdit();
+        await Until(window, () => Visible(window, "ProjectNotesBox"), "the notes box never showed");
+        Settle(window);
+
+        Shown(window, shell);
+        Frame(window, "projects-notes-edit-1440", prefix: string.Empty);
+    });
+
+    [Theory]
+    [InlineData(1440, 900)]
+    [InlineData(1000, 700)]
+    public Task A_cards_sheet_at(int width, int height) => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects("mixed", width, height);
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        await Until(window, () => shell.ProjectSheet.IsShown, "the sheet never showed");
+        Settle(window);
+
+        Assert.True(shell.IsProjectSheet);
+        Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"projects-sheet-{width}"), prefix: string.Empty);
+    });
+
+    [Fact]
+    public Task The_sheet_asking_to_remove() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects("mixed", 1440, 900);
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        await Until(window, () => shell.ProjectSheet.IsShown && shell.ProjectSheet.CanRemove, "the sheet never offered Remove");
+        shell.ProjectSheet.AskRemove();
+        Settle(window);
+
+        Assert.True(Visible(window, "ProjectRemoveAsk"));
+        Frame(window, "projects-sheet-remove-1440", prefix: string.Empty);
+    });
+
+    [Fact]
     public Task Before_the_first_answer_the_page_shows_card_shaped_placeholders() => OnUi(async () =>
     {
         var gate = new TaskCompletionSource();

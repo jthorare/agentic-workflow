@@ -44,4 +44,7 @@ internal enum DeepLinkKind
 
     /// <summary>'projects': the Projects page.</summary>
     Projects,
+
+    /// <summary>'project/&lt;escaped id&gt;': a project card's sheet (projects page spec §3.2); the id is url-escaped as one segment, since a led project's key holds a slash.</summary>
+    Project,
 }

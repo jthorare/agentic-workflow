@@ -78,7 +78,7 @@ public sealed class ShellSheetKindTests
         {
             shell.OpenSheet(new DeepLink(kind, kind == DeepLinkKind.HomeNeedsYou ? null : "X"));
 
-            Assert.Equal(kind is not (DeepLinkKind.Item or DeepLinkKind.NeedsYou or DeepLinkKind.Decision or DeepLinkKind.Workflow or DeepLinkKind.Recipe or DeepLinkKind.Session or DeepLinkKind.Job), shell.IsSheetPlaceholderShown);   // Job is the Jobs lane's, Session is U11a's, Recipe is U10's, Workflow is U8's, Item is U2's, NeedsYou and Decision are U3''s
+            Assert.Equal(kind is not (DeepLinkKind.Item or DeepLinkKind.NeedsYou or DeepLinkKind.Decision or DeepLinkKind.Workflow or DeepLinkKind.Recipe or DeepLinkKind.Session or DeepLinkKind.Job or DeepLinkKind.Project), shell.IsSheetPlaceholderShown);   // Project is the Projects page's, Job is the Jobs lane's, Session is U11a's, Recipe is U10's, Workflow is U8's, Item is U2's, NeedsYou and Decision are U3''s
             var noun = Labels.KindNoun(kind);
             var subject = kind == DeepLinkKind.HomeNeedsYou ? string.Empty : "X";
             Assert.Equal(noun.Length > 0 ? noun + " " + subject : subject, shell.SheetName);

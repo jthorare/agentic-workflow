@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.Platform;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
@@ -85,6 +86,38 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
     /// <summary>Whether the node is a file, so its path can be copied.</summary>
     public bool CanCopyPath { get; private set; }
 
+    /// <summary>Where the record opens at its source, or null when it is not a cited record or has no link.</summary>
+    public Uri? Link { get; private set; }
+
+    /// <summary>Whether there is a link to open.</summary>
+    public bool HasLink => Link is not null;
+
+    /// <summary>Whether the open row (the button or the caption) shows at all.</summary>
+    public bool HasOpenRow => HasLink || NoLink;
+
+    /// <summary>The button's words ("Open in Linear").</summary>
+    public string OpenText { get; private set; } = string.Empty;
+
+    /// <summary>The button's name for a screen reader ("Open SPL-103 in Linear").</summary>
+    public string OpenName { get; private set; } = string.Empty;
+
+    /// <summary>Whether the record is cited but has no link to give.</summary>
+    public bool NoLink { get; private set; }
+
+    /// <summary>The caption shown when there is no link.</summary>
+    public string NoLinkText { get; } = Labels.ContextNoLink;
+
+    /// <summary>Opens the record at its source through the launcher.</summary>
+    /// <param name="cancellationToken">Cancels the request.</param>
+    /// <returns>When the system answered.</returns>
+    internal async Task OpenRecord(CancellationToken cancellationToken = default)
+    {
+        if (Link is { } link)
+        {
+            _ = await (Ports.Launcher ?? NullLauncher.Instance).OpenUri(link, cancellationToken).ConfigureAwait(true);
+        }
+    }
+
     /// <summary>Chooses a node: its words at once, its links when the read returns.</summary>
     /// <param name="map">The map the node is on.</param>
     /// <param name="key">The node's key.</param>
@@ -133,6 +166,7 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
         Title = What = KindWord = Caption = KindIcon = Sure = Why = ConflictBody = Problem = string.Empty;
         Connected = [];
         (NoneConnected, CanCopyPath) = (false, false);
+        FillRecord(found: null);
         ResetReview();
         Refresh();
     }
@@ -149,11 +183,30 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
         Why = map.PathSentence(node.Key);
         ConflictBody = ConflictWords(map, node.Key);
         CanCopyPath = layout.Path.Length > 0;
+        FillRecord(map.RecordFor(node.Key));
         Connected = [];
         NoneConnected = false;
         Problem = string.Empty;
         ResetReview();
         Refresh();
+    }
+
+    // Only a web link is opened; a record with a citation but no (web) link says so, one without a citation shows nothing.
+    private void FillRecord((LensRecord Record, LensCitation? Citation)? found)
+    {
+        (Link, OpenText, OpenName, NoLink) = (null, string.Empty, string.Empty, false);
+        if (found is not ({ } record, { } citation))
+        {
+            return;
+        }
+
+        var web = citation.Permalink is { IsAbsoluteUri: true } uri && (string.Equals(uri.Scheme, Uri.UriSchemeHttps, StringComparison.Ordinal) || string.Equals(uri.Scheme, Uri.UriSchemeHttp, StringComparison.Ordinal));
+        NoLink = !web;
+        if (web)
+        {
+            var name = citation.Aliases is [var alias, ..] ? alias : record.Label;
+            (Link, OpenText, OpenName) = (citation.Permalink, Labels.ContextOpenIn(record.Source), Labels.ContextOpenInName(name, record.Source));
+        }
     }
 
     private static string ConflictWords(ContextMapViewModel map, string key)
@@ -185,7 +238,7 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
 
     private void Refresh()
     {
-        foreach (var name in new[] { nameof(IsOpen), nameof(Title), nameof(What), nameof(KindWord), nameof(Caption), nameof(KindIcon), nameof(Sure), nameof(Why), nameof(HasConflict), nameof(ConflictBody), nameof(Connected), nameof(NoneConnected), nameof(Problem), nameof(HasProblem), nameof(CanCopyPath) })
+        foreach (var name in new[] { nameof(IsOpen), nameof(Title), nameof(What), nameof(KindWord), nameof(Caption), nameof(KindIcon), nameof(Sure), nameof(Why), nameof(HasConflict), nameof(ConflictBody), nameof(Connected), nameof(NoneConnected), nameof(Problem), nameof(HasProblem), nameof(CanCopyPath), nameof(Link), nameof(HasLink), nameof(OpenText), nameof(OpenName), nameof(NoLink), nameof(HasOpenRow) })
         {
             OnChanged(name);
         }

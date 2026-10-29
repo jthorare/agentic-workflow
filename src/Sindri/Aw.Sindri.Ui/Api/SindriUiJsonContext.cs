@@ -47,6 +47,7 @@ namespace Aw.Sindri.Ui.Api;
 
 // LANE ANCHOR U9: one [JsonSerializable] per context record and request body; U9e adds SubgraphView. Insert immediately below this marker, never between the markers.
 [JsonSerializable(typeof(Context.LensesView))]
+[JsonSerializable(typeof(Context.LensCitation))]
 [JsonSerializable(typeof(Context.WholeMapView))]
 [JsonSerializable(typeof(Context.MapNotReadyView))]
 [JsonSerializable(typeof(Context.MapBuildingView))]
@@ -94,6 +95,10 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(JobStarted))]
 [JsonSerializable(typeof(Projects.ProjectList))]
 [JsonSerializable(typeof(Projects.ProjectOne))]
+[JsonSerializable(typeof(Projects.ProjectChange))]
+[JsonSerializable(typeof(Projects.ProjectDetach))]
+[JsonSerializable(typeof(Projects.ProjectHide))]
+[JsonSerializable(typeof(ProjectAcceptedView))]
 [JsonSerializable(typeof(ProfileRead))]
 [JsonSerializable(typeof(Setup.SetupView))]
 [JsonSerializable(typeof(Setup.AddRepoRequest))]

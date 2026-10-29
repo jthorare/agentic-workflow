@@ -1,17 +1,21 @@
 using System.Globalization;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.Navigation;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
 /// <summary>One project's card on the Projects page (mockup B). Kept by id across reads and updated in place; it maps served fields to words and decides nothing.</summary>
-internal sealed class ProjectCardViewModel : ObservableObject
+internal sealed partial class ProjectCardViewModel : ObservableObject
 {
     private readonly TimeProvider _clock;
+    private readonly ISindriApi? _api;
+    private readonly Func<Uri?>? _apiUrl;
 
-    internal ProjectCardViewModel(ProjectCardView card, TimeProvider clock)
+    internal ProjectCardViewModel(ProjectCardView card, TimeProvider clock, ISindriApi? api = null, Func<Uri?>? apiUrl = null)
     {
-        (Card, _clock) = (card, clock);
+        (Card, _clock, _api, _apiUrl) = (card, clock, api, apiUrl);
         Derive();
     }
 
@@ -20,6 +24,9 @@ internal sealed class ProjectCardViewModel : ObservableObject
 
     /// <summary>The project's id.</summary>
     public string Id => Card.Id;
+
+    /// <summary>The link that opens this card's sheet: the id escaped as one segment, since a led project's key holds a slash.</summary>
+    internal DeepLink Link => new(DeepLinkKind.Project, Uri.EscapeDataString(Card.Id));
 
     /// <summary>The version a write sends.</summary>
     public long Version => Card.Version;
@@ -106,6 +113,7 @@ internal sealed class ProjectCardViewModel : ObservableObject
         PrsValue = Card.OpenPrs?.ToString(CultureInfo.InvariantCulture);
         OnChanged(nameof(HasCounts));
         NotesFace = Face(Card.Notes);
+        DeriveNotes();
         IsGone = !Card.Synced;
         Footer = Parts();
         OnChanged(nameof(FooterText));
