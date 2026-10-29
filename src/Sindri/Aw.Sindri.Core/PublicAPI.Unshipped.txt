@@ -21649,3 +21649,9 @@ static Aw.Sindri.Core.Projects.LinearProjectRef.operator ==(Aw.Sindri.Core.Proje
 static Aw.Sindri.Core.Projects.LinearProjectRefs.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Projects.LinearProjectRef!>!
 static Aw.Sindri.Core.Projects.ProjectAccepted.operator !=(Aw.Sindri.Core.Projects.ProjectAccepted? left, Aw.Sindri.Core.Projects.ProjectAccepted? right) -> bool
 static Aw.Sindri.Core.Projects.ProjectAccepted.operator ==(Aw.Sindri.Core.Projects.ProjectAccepted? left, Aw.Sindri.Core.Projects.ProjectAccepted? right) -> bool
+Aw.Sindri.Core.Projects.ProjectText
+Aw.Sindri.Core.Projects.ProjectWrite
+static Aw.Sindri.Core.Projects.ProjectText.Links(System.Collections.Generic.IReadOnlyList<string!>? links, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> System.Collections.Generic.IReadOnlyList<string!>?
+static Aw.Sindri.Core.Projects.ProjectText.Note(string? note, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> string?
+static Aw.Sindri.Core.Projects.ProjectWrite.Append(Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Lease.LeaseGrant! grant, Aw.Sindri.Core.Ledger.LedgerEntry! entry, Aw.Sindri.Core.Ids.CommandId command, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Commands.CommandAccepted!>!>
+static Aw.Sindri.Core.Projects.ProjectWrite.Begin(Aw.Sindri.Core.Commands.ICallerContextAccessor! callers, Aw.Sindri.Core.Lease.HeldLease! held, string! action) -> Aw.Kernel.Result<(Aw.Sindri.Core.Commands.CallerContext! Caller, Aw.Sindri.Core.Lease.LeaseGrant! Grant)>!

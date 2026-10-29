@@ -1,7 +1,6 @@
-using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
-using Aw.Sindri.Core;
+using Aw.Kernel;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
@@ -10,6 +9,7 @@ using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
+using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Features.AttachProject;
 
