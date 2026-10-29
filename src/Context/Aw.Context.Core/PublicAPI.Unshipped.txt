@@ -9586,3 +9586,5 @@ static Aw.Context.Core.Results.ConceptSynthesisReport.operator !=(Aw.Context.Cor
 static Aw.Context.Core.Results.ConceptSynthesisReport.operator ==(Aw.Context.Core.Results.ConceptSynthesisReport? left, Aw.Context.Core.Results.ConceptSynthesisReport? right) -> bool
 static Aw.Context.Core.Results.CosineBucket.operator !=(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
 static Aw.Context.Core.Results.CosineBucket.operator ==(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
+Aw.Context.Core.Concepts.SynthesizedConceptNodes
+static Aw.Context.Core.Concepts.SynthesizedConceptNodes.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts) -> Aw.Context.Core.Graph.GraphSnapshot!
