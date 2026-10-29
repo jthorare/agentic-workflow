@@ -67,6 +67,88 @@ public sealed class JobFoldTests
         return JobsProjection.Fold(row, _h.Events.Payload<JobResumed>(recorded).Value, recorded);
     }
 
+    private JobRow Called(JobRow row, ContextModelCalled called) => CalledAt(row, called, ++_sequence);
+
+    private JobRow CalledAt(JobRow row, ContextModelCalled called, long sequence)
+    {
+        _h.Clock.Advance(TimeSpan.FromSeconds(1));
+        var recorded = Recorded.Of(_h.Events, EventTypes.ContextModelCalled, called, sequence);
+        return JobsProjection.Fold(row, _h.Events.Payload<ContextModelCalled>(recorded).Value, recorded);
+    }
+
+    [Fact]
+    public void A_job_that_made_no_call_has_no_model_totals_and_waits_on_nothing()
+    {
+        var row = Started();
+
+        Assert.Null(row.Models);
+        Assert.Null(row.WaitingOn);
+    }
+
+    [Fact]
+    public void A_call_event_adds_its_calls_tokens_and_answerer_to_the_jobs_totals()
+    {
+        var row = Called(Started(), ModelCallRows.Answered(A.FirstJobId, "call-1", "codex", "gpt-6-luna", input: 100, output: 50));
+        row = Called(row, ModelCallRows.Answered(A.FirstJobId, "call-2", "codex", "gpt-6-luna", input: 30, output: 10));
+
+        var models = row.Models!;
+        Expect.Equal((2, 0, 130L, 60L), (models.Calls, models.FailedCalls, models.InputTokens, models.OutputTokens));
+        Expect.Sequence([("codex", "gpt-6-luna", 2)], models.AnsweredBy.Select(static a => (a.Harness, a.Model, a.Count)));
+    }
+
+    [Fact]
+    public void A_call_no_harness_answered_counts_as_failed_and_names_no_answerer()
+    {
+        var row = Called(Started(), ModelCallRows.Failed(A.FirstJobId, "call-1"));
+        row = Called(row, ModelCallRows.FellBack(A.FirstJobId, "call-2", limited: "claude-code", answered: "codex", model: "gpt-6-luna", input: 40, output: 8));
+
+        var models = row.Models!;
+        Expect.Equal((2, 1, 40L, 8L), (models.Calls, models.FailedCalls, models.InputTokens, models.OutputTokens));
+        Expect.Sequence([("codex", "gpt-6-luna", 1)], models.AnsweredBy.Select(static a => (a.Harness, a.Model, a.Count)));
+    }
+
+    [Fact]
+    public void Answerers_are_kept_in_the_order_first_seen()
+    {
+        var row = Called(Started(), ModelCallRows.Answered(A.FirstJobId, "call-1", "claude-code", "haiku", 1, 1));
+        row = Called(row, ModelCallRows.Answered(A.FirstJobId, "call-2", "codex", "gpt-6-luna", 1, 1));
+        row = Called(row, ModelCallRows.Answered(A.FirstJobId, "call-3", "claude-code", "haiku", 1, 1));
+
+        Expect.Sequence([("claude-code", "haiku", 2), ("codex", "gpt-6-luna", 1)], row.Models!.AnsweredBy.Select(static a => (a.Harness, a.Model, a.Count)));
+    }
+
+    [Fact]
+    public void Folding_the_same_call_event_again_changes_nothing()
+    {
+        var once = CalledAt(Started(), ModelCallRows.Answered(A.FirstJobId, "call-1", "codex", "gpt-6-luna", 100, 50), sequence: 10);
+        var twice = CalledAt(once, ModelCallRows.Answered(A.FirstJobId, "call-1", "codex", "gpt-6-luna", 100, 50), sequence: 10);
+
+        Expect.Equal((1, 100L, 50L), (twice.Models!.Calls, twice.Models.InputTokens, twice.Models.OutputTokens));
+        Expect.Equal(10L, twice.Sequence);
+    }
+
+    [Fact]
+    public void A_waiting_job_names_the_signal_it_waits_on_and_a_resume_clears_it()
+    {
+        var waiting = Waiting(Started());
+
+        Expect.Equal("index-login", waiting.WaitingOn);
+        Assert.Null(Resumed(waiting).WaitingOn);
+    }
+
+    [Fact]
+    public void A_job_that_ends_while_waiting_waits_on_nothing()
+    {
+        var waiting = Waiting(Started());
+
+        Assert.Null(Finished(waiting, JobOutcome.Failed, "ran out", "SND-SETUP-006").WaitingOn);
+        Assert.Null(Cancelled(waiting, "human:cli").WaitingOn);
+    }
+
+    [Fact]
+    public void A_wait_on_an_ended_job_names_no_signal() =>
+        Assert.Null(Waiting(Finished(Started(), JobOutcome.Succeeded, "ok")).WaitingOn);
+
     [Fact]
     public void A_waiting_job_is_waiting_and_resumes_to_running()
     {
