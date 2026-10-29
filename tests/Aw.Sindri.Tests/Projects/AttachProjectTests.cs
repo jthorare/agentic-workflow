@@ -36,7 +36,7 @@ public sealed class AttachProjectTests
     }
 
     [Fact]
-    public async Task A_linear_key_is_recorded_without_a_name()
+    public async Task Attach_stores_the_linear_title_as_the_name()
     {
         await _h.Lease();
         using var human = _h.Human();
@@ -45,8 +45,21 @@ public sealed class AttachProjectTests
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         var payload = _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events));
-        Expect.Equal((ProjectRows.LinearKey, null), (payload.Linear, payload.Name));
-        Expect.Equal(ProjectRows.LinearKey, result.Value.Name);
+        Expect.Equal((ProjectRows.LinearKey, "Checkout rewrite"), (payload.Linear, payload.Name));
+        Expect.Equal("Checkout rewrite", result.Value.Name);
+    }
+
+    [Fact]
+    public async Task Attach_keeps_a_typed_name_over_the_linear_title()
+    {
+        await _h.Lease();
+        using var human = _h.Human();
+
+        var result = await _h.Attach().Handle(new AttachProjectRequest(Linear: ProjectRows.LinearKey, Name: " Checkout "), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        var payload = _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events));
+        Expect.Equal((ProjectRows.LinearKey, "Checkout"), (payload.Linear, payload.Name));
     }
 
     [Fact]
