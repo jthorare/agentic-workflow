@@ -254,6 +254,33 @@ public sealed class SindriApiClientContextTests
     }
 
     [Fact]
+    public async Task IndexStatus_reads_the_status_route_as_the_human_and_parses_the_per_source_golden()
+    {
+        var (client, _, handler) = Reach();
+
+        var status = await client.IndexStatus(_api, Token);
+
+        var seen = Assert.Single(handler.Requests);
+        Assert.Equal(("GET", "/sindri/index/status", string.Empty), (seen.Method, seen.Path, seen.Query));
+        Assert.Equal(("human", "ui", A.HumanToken), (seen.Caller, seen.Client, seen.Token));
+        Assert.Equal(["github", "linear", "slack"], status.Value.Sources.Select(s => s.Source), StringComparer.Ordinal);
+        var slack = status.Value.Sources[2];
+        Assert.Equal(("failed", "SND-CONTEXT-041", 3), (slack.Pull, slack.LastError, slack.Failures));
+        Assert.Null(status.Value.Sources[1].LastCommit);
+    }
+
+    [Fact]
+    public async Task IndexStatus_reads_todays_shape_with_every_new_field_absent()
+    {
+        var (client, server, _) = Reach();
+        server.IndexStatusAnswer = RouteAnswer.SpecShaped("index-status", "today");
+
+        var status = await client.IndexStatus(_api, Token);
+
+        Assert.All(status.Value.Sources, s => Assert.Equal((null, null, null), (s.Pull, s.Records, s.LastCommit)));
+    }
+
+    [Fact]
     public async Task The_publish_state_reads_its_golden_from_the_publish_route_and_never_waits_on_the_views()
     {
         var (client, _, handler) = Reach();

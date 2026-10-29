@@ -72,7 +72,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     public CodeIndexCardViewModel CodeIndex => field ??= WatchCodeIndex(new CodeIndexCardViewModel(api, clock));
 
     /// <summary>The Context index card (#1597): one line per context source.</summary>
-    public ContextIndexCardViewModel ContextIndex => field ??= new ContextIndexCardViewModel(api, clock);
+    public ContextIndexCardViewModel ContextIndex => field ??= WatchContextIndex(new ContextIndexCardViewModel(api, clock));
 
     /// <summary>The stalled and rebuilding banners (§4.1), from the services view's asOf.</summary>
     public ViewsBanner Banner { get; } = new();
