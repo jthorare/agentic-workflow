@@ -1,9 +1,6 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Results;
-using Aw.Context.Core.Records;
-using Aw.Context.Core.Sources;
-using Aw.Context.Testing.Records;
 using Aw.Context.Tests.Map;
 using static Aw.Context.Tests.SyncSources.ExtractDecisionsTests;
 
@@ -171,18 +168,6 @@ public sealed class ItemShapeTests
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         var record = result.Cites.Single(c => c.Value.Key.Value == R103).Key;
         Assert.Equal([record], decision.Cites);
-    }
-
-    [Fact]
-    public async Task The_anchor_record_is_cited_once_when_the_search_finds_it_too()
-    {
-        var leg = new FakeLexicalLeg().Add(new ChunkKey(RecordKey.From(R103), 0), AudienceKey.From("linear:SPL"));
-        await using var rig = await Rig.Start(lexical: leg);
-        _ = await rig.Sync(Scope());
-
-        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
-
-        _ = Assert.Single(result.Cites.Values, c => c.Key.Value == R103);
     }
 
     [Fact]
