@@ -2,6 +2,7 @@ using System.Net;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Context;
 
 namespace Aw.Sindri.Ui.Tests.Context.Concepts;
 
@@ -63,7 +64,7 @@ public sealed class ContextConceptNodeClickTests
         return new RouteAnswer(HttpStatusCode.OK, golden.ToJsonString());
     }
 
-    private static async Task<Aw.Sindri.Ui.ViewModels.Context.ContextPageViewModel> Queried(FakeSindriApi api)
+    private static async Task<ContextPageViewModel> Queried(FakeSindriApi api)
     {
         var page = await ConceptPage.Shown(api);
         page.AnchorText = Anchor;
