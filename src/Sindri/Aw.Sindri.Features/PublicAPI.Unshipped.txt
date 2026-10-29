@@ -2930,6 +2930,8 @@ Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.RoleCounts.get -> Syste
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.RoleCounts.init -> void
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Notice.get -> string?
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Notice.init -> void
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.Warnings.init -> void
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.StepArgv.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ApproveProfile.StepArgvLine!>!
 Aw.Sindri.Features.ApproveProfile.ApproveProfileResponse.StepArgv.init -> void
 Aw.Sindri.Features.ApproveProfile.StepArgvEntry
