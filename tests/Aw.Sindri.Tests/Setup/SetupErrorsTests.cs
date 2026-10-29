@@ -3,7 +3,7 @@ using Aw.Sindri.Core;
 
 namespace Aw.Sindri.Tests.Setup;
 
-/// <summary>The SND-SETUP family (setup-once spec §7.6): five live codes with the status each one answers, and each one's fix line (005 and 006 went with Onyx and stay reserved).</summary>
+/// <summary>The SND-SETUP family (setup-once spec §7.6): five live codes with the status each one answers, and each one's fix line (005 and 006 are retired and stay reserved).</summary>
 public sealed class SetupErrorsTests
 {
     [Theory, Trait("Lane", "unit")]

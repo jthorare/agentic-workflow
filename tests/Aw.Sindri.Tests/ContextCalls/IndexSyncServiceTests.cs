@@ -58,13 +58,13 @@ public sealed class IndexSyncServiceTests
     [Fact, Trait("Lane", "unit")]
     public async Task Tick_maps_a_down_source_to_a_row_with_its_code_not_a_failed_run()
     {
-        _index.Rows = [Row("linear", 0, ContextErrors.OnyxUnexpectedReply.Code), Row("github", 3)];
+        _index.Rows = [Row("linear", 0, ContextErrors.SourceUnavailable.Code), Row("github", 3)];
 
         var result = await Run(context: true);
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.Idle);
-        Assert.Equal($"ok: linear {ContextErrors.OnyxUnexpectedReply.Code}, github 3 fetched", result.Value.Summary);
+        Assert.Equal($"ok: linear {ContextErrors.SourceUnavailable.Code}, github 3 fetched", result.Value.Summary);
     }
 
     [Fact, Trait("Lane", "unit")]
