@@ -8,6 +8,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Media.TextFormatting;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
@@ -401,14 +402,14 @@ public sealed class ShellWindowTests : IDisposable
         }
     });
 
-    // R6 and R7 at the 900 px minimum and text scale 1.3: the strip's "." keycap is a visible cap (its glyph bold at Body
+    // R6 and R7 at the 1000 px minimum and text scale 1.3: the strip's "." keycap is a visible cap (its glyph bold at Body
     // size, the cap at least as wide as it is tall), and no strip value is trimmed (the pid shows whole).
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.3)]
-    public Task The_strip_shows_its_keycaps_and_whole_values_at_900_px(double scale) => OnUi(async () =>
+    public Task The_strip_shows_its_keycaps_and_whole_values_at_1000_px(double scale) => OnUi(async () =>
     {
-        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 900, 600) });
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         _records.Write(A.Record(pid: 1234567));
         _server.Current = A.Status(pid: 1234567) with { ApiVersion = 1 };
         _server.Pong = new(1234567, 7);
@@ -429,7 +430,7 @@ public sealed class ShellWindowTests : IDisposable
             }
 
             Assert.Contains(Named<ItemsControl>(window, "HealthCells").GetVisualDescendants().OfType<TextBlock>(), t => t.Text == "Running · pid 1234567");
-            Frame(window, string.Create(CultureInfo.InvariantCulture, $"strip-900-{scale * 100:0}"));
+            Frame(window, string.Create(CultureInfo.InvariantCulture, $"strip-1000-{scale * 100:0}"));
         }
         finally
         {
@@ -701,7 +702,7 @@ public sealed class ShellWindowTests : IDisposable
         Assert.Equal((StateGlyph.Ok, Labels.Running, "updated 0s ago"), (Glyph(window, "PillGlyph"), Text(window, "HealthPillText"), Text(window, "PillAgeText")));
         Assert.Equal("Running · updated 0s ago", AutomationProperties.GetName(Named<Button>(window, "HealthPill")));
         Assert.Equal(1280, window.Width);
-        Assert.Equal((900d, 600d), (window.MinWidth, window.MinHeight));
+        Assert.Equal((1000d, 600d), (window.MinWidth, window.MinHeight));
         EveryControlIsNamed(window);
         Frame(window, "normal");
     });
@@ -1224,7 +1225,7 @@ public sealed class ShellWindowTests : IDisposable
         Settle(window);
         Assert.True(Named<Button>(window, "HealthStrip").Focus(NavigationMethod.Tab));
 
-        window.Width = 900;
+        window.Width = 1000;
         Settle(window);
 
         var sheet = window.Get<Border>("Sheet");
@@ -1418,14 +1419,14 @@ public sealed class ShellWindowTests : IDisposable
         Frame(window, "sheet-covers");
     });
 
-    // Review run 3 (accessibility-tester-3; WCAG 2.4.3, 2.4.7): at 900 px the sheet covers the page, so the page and its
+    // Review run 3 (accessibility-tester-3; WCAG 2.4.3, 2.4.7): at 1000 px the sheet covers the page, so the page and its
     // controls leave the tab order while it does. Tab and Shift+Tab from Back, and F6, never land under the sheet, and
     // closing it gives the page back its focus and its stops.
     [Fact]
-    public Task At_900_px_the_covering_sheet_takes_the_page_out_of_the_tab_order() => OnUi(async () =>
+    public Task At_1000_px_the_covering_sheet_takes_the_page_out_of_the_tab_order() => OnUi(async () =>
     {
         _records.Write(A.Record());
-        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 900, 600) });
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         var (window, shell) = await Show(s => s.State == ShellState.Normal);
         Assert.True(DeepLink.TryParse("item/ITM-01JC8", out var link));
         shell.Navigate(link);
@@ -1455,7 +1456,7 @@ public sealed class ShellWindowTests : IDisposable
         Assert.True(UnderTheSheet() && Focused(window) != page, "Tab moves inside the page again once the sheet closes");
     });
 
-    // §3.2: window minimum 900 × 600, and the top bar still fits there in every pill state, at text scale 1.0 and 1.3: the
+    // §3.2: window minimum 1000 × 600, and the top bar still fits there in every pill state, at text scale 1.0 and 1.3: the
     // ⌘K field gives way first (down to its magnifier), then the pill's age (its accessible name keeps it); the pill's
     // word stays whole with room for its focus ring, nothing in the bar overlaps or runs past the window, and nothing
     // overflows the bar's 48 px. "Sindri not responding: run sindri doctor" stays readable in full in a banner under it.
@@ -1501,16 +1502,16 @@ public sealed class ShellWindowTests : IDisposable
 
     [Theory]
     [MemberData(nameof(MinimumWidthStates))]
-    public Task At_the_900_px_minimum_the_top_bar_fits_in_every_pill_state(BarState state, double scale) => OnUi(async () =>
+    public Task At_the_1000_px_minimum_the_top_bar_fits_in_every_pill_state(BarState state, double scale) => OnUi(async () =>
     {
-        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 900, 600) });
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         var window = await ShowIn(state);
         var resources = Application.Current!.Resources;
         TextScale.Apply(resources, scale);
         try
         {
             Settle(window);
-            Assert.Equal(900, window.ClientSize.Width);
+            Assert.Equal(1000, window.ClientSize.Width);
             if (state == BarState.VersionMismatch)
             {
                 Assert.False(Visible(window, "TopBar"));
@@ -1533,6 +1534,44 @@ public sealed class ShellWindowTests : IDisposable
         }
     });
 
+    // The Projects page spec §7: eight tabs at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
+    // and no count drawn, at text scale 1.0 and 1.3.
+    [Theory]
+    [InlineData(1.0)]
+    [InlineData(1.3)]
+    public Task At_the_1000_px_minimum_all_eight_tab_labels_are_whole_with_counts_hidden(double scale) => OnUi(async () =>
+    {
+        await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
+        var window = await ShowIn(BarState.Normal);
+        var resources = Application.Current!.Resources;
+        TextScale.Apply(resources, scale);
+        try
+        {
+            Settle(window);
+            var shell = (ShellViewModel)window.DataContext!;
+            var labels = Named<ListBox>(window, "Navigation").GetVisualDescendants().OfType<TextBlock>().Where(t => t.Classes.Contains("nav-label")).ToList();
+
+            Assert.Equal(shell.Navigation.Select(n => n.Label), labels.Select(t => t.Text), StringComparer.Ordinal);
+            Assert.Equal(8, labels.Count);
+            foreach (var label in labels)
+            {
+                using var layout = new TextLayout(label.Text, new Typeface(label.FontFamily, label.FontStyle, label.FontWeight), label.FontSize, foreground: null);
+                var box = new Rect(label.TranslatePoint(new Point(0, 0), window) ?? default, label.Bounds.Size);
+                var at = string.Create(CultureInfo.InvariantCulture, $"{label.Text} {box} at {scale:0.0}");
+                Assert.True(label.IsEffectivelyVisible, $"{at}: hidden");
+                Assert.True(label.Bounds.Width >= layout.Width - 0.5, string.Create(CultureInfo.InvariantCulture, $"{at}: trimmed to {label.Bounds.Width} of {layout.Width}"));
+                Assert.True(box.Left >= 0 && box.Right <= window.ClientSize.Width, $"{at}: outside the window");
+            }
+
+            Assert.DoesNotContain(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Classes.Contains("nav-count") && t.IsEffectivelyVisible);
+        }
+        finally
+        {
+            TextScale.Apply(resources, 1.0);
+            Settle(window);
+        }
+    });
+
     // Sending… beside Refresh, and the not-responding sentence in full in its banner.
     private static void StateWords(Window window, BarState state, double scale)
     {
@@ -1543,7 +1582,7 @@ public sealed class ShellWindowTests : IDisposable
             Assert.True(Visible(window, "RefreshSpinner"), "no spinner while sending");
             Assert.Equal(Labels.Sending, Named<TextBlock>(window, "RefreshSending").Text);
             Assert.Equal(0, Named<TextBlock>(window, "RefreshSending").Bounds.Width);
-            // Seven tabs (screens spec §3) leave no room for the word at 1.3x; the bar steps down to the mark alone, as stale does.
+            // Eight tabs (Projects page spec §7) leave no room for the word at 1.3x; the bar steps down to the mark alone, as stale does.
             Assert.True(scale > 1.0 || Visible(window, "BrandWord"), "the brand word dropped while sending");
         }
 

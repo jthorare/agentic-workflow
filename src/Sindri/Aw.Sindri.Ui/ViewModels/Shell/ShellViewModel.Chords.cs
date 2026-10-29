@@ -110,6 +110,7 @@ internal sealed partial class ShellViewModel
     {
         "H" or "N" => (PageId.Home, HomeFilter.All),
         "D" => (PageId.Home, HomeFilter.Decisions),
+        "P" => (PageId.Projects, HomeFilter.All),
         "W" => (PageId.Workflows, HomeFilter.All),
         "Q" => (PageId.Work, HomeFilter.All),
         "R" => (PageId.Recipes, HomeFilter.All),

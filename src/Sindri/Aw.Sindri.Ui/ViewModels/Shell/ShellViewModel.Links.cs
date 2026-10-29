@@ -18,9 +18,9 @@ internal sealed partial class ShellViewModel
 
     private void Navigate(DeepLink link, bool rowSheet)
     {
-        if (link.Kind == DeepLinkKind.Setup)
+        if (PageOnly(link.Kind) is { } only)
         {
-            GoTo(PageId.Settings);   // the checklist is Settings' first section; ShowPage scrolls to it
+            GoTo(only);
             return;
         }
 
@@ -59,6 +59,10 @@ internal sealed partial class ShellViewModel
         }
     }
 
+    // The links that name a page and nothing else: the checklist is Settings' first section (ShowPage scrolls to it).
+    private static PageId? PageOnly(DeepLinkKind kind) =>
+        kind == DeepLinkKind.Setup ? PageId.Settings : kind == DeepLinkKind.Projects ? PageId.Projects : null;
+
     // The links that open a whole page of their own, with no sheet: a line run's page, and the Context page for an item (its frozen scope is read as it opens).
     private bool OpenWholePage(DeepLink link)
     {
@@ -94,7 +98,7 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.Session => PageId.Agents,
         DeepLinkKind.System => PageId.System,
         DeepLinkKind.Job => PageId.Jobs,   // System's "View job" and the tray open the page with that job's sheet
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Setup => null,
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Setup or DeepLinkKind.Projects => null,
         _ => null,
     };
 }

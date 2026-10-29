@@ -34,6 +34,6 @@ internal sealed class NavEntry(PageId page, string label, string key, string cou
         }
     } = count;
 
-    /// <summary>True when there is a count to draw; an empty one takes no room (seven tabs must fit at 900 px).</summary>
+    /// <summary>True when there is a count to draw; an empty one takes no room (eight tabs must fit at 1,000 px).</summary>
     public bool HasCount => Count.Length > 0;
 }
