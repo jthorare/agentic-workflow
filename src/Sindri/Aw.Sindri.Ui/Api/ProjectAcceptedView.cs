@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Projects;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>A project write the API accepted (projects page spec §5.3).</summary>
 /// <param name="Accepted">The command id and the ledger sequence the app sends as X-Sindri-After next.</param>
