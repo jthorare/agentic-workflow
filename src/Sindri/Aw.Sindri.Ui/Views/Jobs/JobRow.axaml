@@ -9,7 +9,7 @@
        wrapper (a TextBlock's peer ignores AutomationProperties.Name). The row draws its own focus border (item-row), not the adorner. -->
   <Border x:Name="JobRowFrame" Classes="item-row job-row" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid x:Name="JobRowGrid" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" VerticalAlignment="Center" MinHeight="36">
+    <Grid x:Name="JobRowGrid" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" RowDefinitions="Auto,Auto" VerticalAlignment="Center" MinHeight="36">
       <DockPanel LastChildFill="True" Margin="0,0,8,0" VerticalAlignment="Center">
         <Button x:Name="JobRowOpen" DockPanel.Dock="Left" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
           <TextBlock Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
@@ -33,6 +33,16 @@
       <Panel Grid.Column="6" VerticalAlignment="Center" IsVisible="{Binding HasCancel}">
         <controls:CommandControl x:Name="JobRowCancel" DataContext="{Binding Cancel}" />
       </Panel>
+      <!-- The second row (context model routing, 8.2): what the job's model calls came to, or why it waits, across every column, wrapping at any width; Resume at its end while the job is parked on a model limit.
+           Hidden when the job made no call and isn't parked. -->
+      <Grid x:Name="JobRowModelRow" Grid.Row="1" Grid.ColumnSpan="7" ColumnDefinitions="*,Auto" IsVisible="{Binding HasModelRow}" Margin="0,2,0,6">
+        <Border x:Name="JobRowModels" IsVisible="{Binding HasModelText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding ModelText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="caption subtle" Text="{Binding ModelText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Panel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" IsVisible="{Binding HasResume}">
+          <controls:CommandControl x:Name="JobRowResume" DataContext="{Binding Resume}" />
+        </Panel>
+      </Grid>
     </Grid>
   </Border>
 </UserControl>

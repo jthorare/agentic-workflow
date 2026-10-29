@@ -35,6 +35,10 @@
       "rebuilding": false,
       "stalled": false
     },
+    "models": null,
+    "waitingOn": null,
+    "modelCalls": [],
+    "modelCallCount": 0,
     "page": {
       "offset": 0,
       "limit": 100,
@@ -46,6 +50,10 @@
         },
         "actions": {
           "total": 1,
+          "more": false
+        },
+        "modelCalls": {
+          "total": 0,
           "more": false
         }
       }

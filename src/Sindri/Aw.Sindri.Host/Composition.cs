@@ -54,9 +54,11 @@ internal static class Composition
             .AddContextLabeling()   // the labeling pass over IModelPort; a build asks it only when the approved profile turns 'context.labeling' on
             .AddSingleton<IApprovedModels, ApprovedModels>()   // 'context.models' of the approved profile, read once per approved hash (model routing spec §4)
             .AddSingleton<IModelCallLog, LedgerModelCallLog>()   // the router's 'context.model.called' event, as service:context, best effort
-            .AddSingleton<IModelPort>(sp => new RoutedModelPort(new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>()).Get,
+            .AddSingleton(sp => new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>()))   // Judge's provider catalog, built on first use; the router and the doctor's context:models row share it
+            .AddSingleton<IModelPort>(sp => new RoutedModelPort(sp.GetRequiredService<JudgeCatalog>().Get,
                 sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Aw.Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>()))
             .AddScoped<IDoctorChecks>(sp => new ModelPickDoctorChecks(sp.GetRequiredService<IModelPickSettings>(), environment))   // the 'model:pick' row (model-pick spec 8)
+            .AddScoped<IDoctorChecks>(sp => new ModelRoutingDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IModelCatalog>(), () => RoutedModelPort.InstalledHarnesses(sp.GetRequiredService<JudgeCatalog>().Get())))   // the 'context:models' row (model routing spec 8.4)
             .AddPullRequests(environment)   // IPullRequests over the forge the approved profile names (workflow.forge; compose edge to Aw.Forge.Infrastructure in Forge/ForgeAdapters)
             .AddProveBlocks(environment)   // input.prove.echo, only under AW_SINDRI_PROVE_BLOCKS=1 in a prover home
             .AddSindriHost();
