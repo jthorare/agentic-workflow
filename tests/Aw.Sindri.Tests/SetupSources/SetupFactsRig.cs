@@ -2,12 +2,15 @@ using System.Globalization;
 using System.Text.Json;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
+using Aw.Context.Testing.Engine;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Infrastructure.Processes;
+using Aw.Sindri.Infrastructure.Secrets;
 using Aw.Sindri.Features.SetupSources;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ApproveRecipe;
@@ -34,9 +37,13 @@ internal sealed class SetupFactsRig : IAsyncDisposable
             _scope.ServiceProvider.GetRequiredService<Core.Workflow.Registry.RecipeRegistryReader>(),
             new Testing.Workflow.ApproveAll.FakeShippedRecipes([]),
             new OnyxSetupReader(new OnyxStatusReader(Onyx.Pins, new OnyxFacts(Onyx.Runtime, Onyx.Probes, new FakeSindriHome(OnyxUpRig.Home)), Onyx.Health, Onyx.Workspace), Slice.Store, Slice.Events, Jobs, TimeProvider.System),
+            new SourcesSetupReader(Profiles, FakeContextEngine.Instance, new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
             new MapSetupReader(Profiles, Engine.Proxy, Jobs));
     }
+
+    /// <summary>The environment variables the token pointers (env:NAME) resolve against.</summary>
+    internal Dictionary<string, string> Env { get; } = new(StringComparer.Ordinal);
 
     internal SliceHarness Slice { get; } = new();
 
@@ -79,6 +86,15 @@ internal sealed class SetupFactsRig : IAsyncDisposable
     {
         RepoEntry[] entries = [.. Enumerable.Range(1, repos).Select(static i => new RepoEntry(i == 1 ? "demo" : "demo" + i.ToString(CultureInfo.InvariantCulture), i == 1 ? Checkout : "/work/demo" + i.ToString(CultureInfo.InvariantCulture)))];
         var profile = ProfileRules.Check(new SindriProfile(1, "thor", Repos: entries)).Value;
+        return new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
+    }
+
+    /// <summary>A checked profile naming one repo and the given context section (the JSON of 'context:').</summary>
+    /// <param name="context">The context section.</param>
+    /// <returns>The loaded profile.</returns>
+    internal static LoadedProfile ProfileWithContext(string context)
+    {
+        var profile = ProfileRules.Check(new SindriProfile(1, "thor", Repos: [new RepoEntry("demo", Checkout)], Context: JsonDocument.Parse(context).RootElement.Clone())).Value;
         return new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
     }
 

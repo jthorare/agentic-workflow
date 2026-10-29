@@ -21380,3 +21380,21 @@ override Aw.Sindri.Core.Health.HealthContext.GetHashCode() -> int
 override Aw.Sindri.Core.Health.HealthContext.ToString() -> string!
 static Aw.Sindri.Core.Health.HealthContext.operator !=(Aw.Sindri.Core.Health.HealthContext? left, Aw.Sindri.Core.Health.HealthContext? right) -> bool
 static Aw.Sindri.Core.Health.HealthContext.operator ==(Aw.Sindri.Core.Health.HealthContext? left, Aw.Sindri.Core.Health.HealthContext? right) -> bool
+Aw.Sindri.Core.Setup.ISetupFacts.Sources(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.SourcesFact!>!>
+Aw.Sindri.Core.Setup.SourcesFact
+Aw.Sindri.Core.Setup.SourcesFact.<Clone>$() -> Aw.Sindri.Core.Setup.SourcesFact!
+Aw.Sindri.Core.Setup.SourcesFact.Count.get -> int
+Aw.Sindri.Core.Setup.SourcesFact.Count.init -> void
+Aw.Sindri.Core.Setup.SourcesFact.Deconstruct(out int Count) -> void
+Aw.Sindri.Core.Setup.SourcesFact.Equals(Aw.Sindri.Core.Setup.SourcesFact? other) -> bool
+Aw.Sindri.Core.Setup.SourcesFact.Items.get -> Aw.Sindri.Core.Setup.SetupItems!
+Aw.Sindri.Core.Setup.SourcesFact.Items.init -> void
+Aw.Sindri.Core.Setup.SourcesFact.SourcesFact(int Count) -> void
+Aw.Sindri.Core.Setup.SetupStepId.Sources = 6 -> Aw.Sindri.Core.Setup.SetupStepId
+const Aw.Sindri.Core.Setup.SetupActions.ConnectIndexSource = "ConnectIndexSource" -> string!
+override Aw.Sindri.Core.Setup.SourcesFact.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.SourcesFact.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.SourcesFact.ToString() -> string!
+static Aw.Sindri.Core.Setup.SourcesFact.operator !=(Aw.Sindri.Core.Setup.SourcesFact? left, Aw.Sindri.Core.Setup.SourcesFact? right) -> bool
+static Aw.Sindri.Core.Setup.SourcesFact.operator ==(Aw.Sindri.Core.Setup.SourcesFact? left, Aw.Sindri.Core.Setup.SourcesFact? right) -> bool
+static Aw.Sindri.Core.Setup.SetupSteps.Sources(Aw.Sindri.Core.Setup.SourcesFact! fact) -> Aw.Sindri.Core.Setup.SetupStep!

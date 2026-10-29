@@ -282,6 +282,59 @@ public sealed class SetupFactsTests
         Assert.Equal([(0, 0), (1, 0), (1, 1)], [(empty.Total, empty.Approved), (registered.Total, registered.Approved), (approved.Total, approved.Approved)]);
     }
 
+    private const string BothSources = """{"sources":{"github":{"repos":["owner/name"],"token":"env:GH_KEY"},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}],"token":"env:SLACK_KEY"}}}""";
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Sources_name_none_without_an_approved_profile_and_none_for_a_profile_that_names_only_linear()
+    {
+        await using var rig = new SetupFactsRig();
+        var missing = (await rig.Facts.Sources(Token)).Value;
+        await rig.Approve(SetupFactsRig.ProfileWithContext("""{"sources":{"linear":{"token":"env:LINEAR_KEY"}}}"""));
+        rig.Env["LINEAR_KEY"] = "lin_live-secret";
+
+        var linearOnly = (await rig.Facts.Sources(Token)).Value;
+
+        Assert.Equal([(0, 0), (0, 0)], [(missing.Count, missing.Items.Lines.Count), (linearOnly.Count, linearOnly.Items.Lines.Count)]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_is_connected_when_its_token_pointer_resolves_and_needs_a_token_when_it_does_not()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithContext(BothSources));
+        rig.Env["GH_KEY"] = "ghp_live-secret-0123";
+
+        var fact = (await rig.Facts.Sources(Token)).Value;
+
+        Assert.Equal(2, fact.Count);
+        Assert.Equal([("github", SetupState.Done, "connected"), ("slack", SetupState.Todo, "needs token")], fact.Items.Lines.Select(static i => (i.Repo, i.State, i.Detail)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_whose_profile_entry_has_no_token_pointer_needs_a_token_and_a_secret_is_never_in_the_fact()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithContext("""{"sources":{"github":{"repos":["owner/name"]},"slack":{"channels":[{"id":"C0001GEN","name":"eng"}],"token":"env:SLACK_KEY"}}}"""));
+        rig.Env["SLACK_KEY"] = "xoxb-live-secret-0123";
+
+        var fact = (await rig.Facts.Sources(Token)).Value;
+
+        Assert.Equal([("github", SetupState.Todo, "needs token"), ("slack", SetupState.Done, "connected")], fact.Items.Lines.Select(static i => (i.Repo, i.State, i.Detail)));
+        Assert.DoesNotContain("xoxb-live-secret-0123", string.Join('|', fact.Items.Lines.Select(static i => i.Detail)), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Sources_read_from_the_approved_profile_not_the_live_one()
+    {
+        await using var rig = new SetupFactsRig();
+        await rig.Approve(SetupFactsRig.ProfileWithContext("""{"sources":{"github":{"repos":["owner/name"]}}}"""));
+        rig.Profiles.Live = SetupFactsRig.ProfileWithContext(BothSources);
+
+        var fact = (await rig.Facts.Sources(Token)).Value;
+
+        Assert.Equal(["github"], fact.Items.Lines.Select(static i => i.Repo), StringComparer.Ordinal);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Onyx_on_a_box_where_it_was_never_set_up_is_not_set_up_and_blocked_by_nothing()
     {

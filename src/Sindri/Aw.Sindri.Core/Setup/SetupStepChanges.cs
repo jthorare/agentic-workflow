@@ -60,6 +60,7 @@ public static class SetupStepChanges
         SetupStepId.Mcp => "mcp",
         SetupStepId.Map => "map",
         SetupStepId.Onyx => "onyx",
+        SetupStepId.Sources => "sources",
         _ => throw new ArgumentOutOfRangeException(nameof(id)),
     };
 

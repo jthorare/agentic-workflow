@@ -33,6 +33,11 @@ public interface ISetupFacts
     /// <returns>The fact, or the error that stopped the read.</returns>
     public ValueTask<Result<MapFact>> Map(CancellationToken cancellationToken);
 
+    /// <summary>Where the index sources the profile names stand (their tokens).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The fact, or the error that stopped the read.</returns>
+    public ValueTask<Result<SourcesFact>> Sources(CancellationToken cancellationToken);
+
     /// <summary>Where the managed Onyx stands.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The fact, or the error that stopped the read.</returns>

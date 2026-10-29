@@ -15,6 +15,7 @@ public static class SetupSteps
     private const string McpTitle = "Connect your agents";
     private const string MapTitle = "Build the map";
     private const string OnyxTitle = "Set up Onyx";
+    private const string SourcesTitle = "Connect your sources";
     private const string DockerLink = "https://docs.docker.com/get-docker/";
 
     /// <summary>The repo step: the owner's until the profile names a repo.</summary>
@@ -179,6 +180,15 @@ public static class SetupSteps
         _ => null,
     };
 
+    /// <summary>The sources step: done when every github or slack source the profile names has its token and at least one is named; otherwise the human's, with `sindri index connect`.</summary>
+    /// <param name="fact">Where the sources stand.</param>
+    /// <returns>The step.</returns>
+    public static SetupStep Sources(SourcesFact fact)
+    {
+        ArgumentNullException.ThrowIfNull(fact);
+        throw new NotSupportedException();
+    }
+
     /// <summary>The step for a source that couldn't be read: failed, with one plain sentence and the error's code.</summary>
     /// <param name="id">Which step.</param>
     /// <param name="code">The code of the error the read returned.</param>
@@ -194,6 +204,7 @@ public static class SetupSteps
             SetupStepId.Mcp => (McpTitle, "Sindri couldn't check whether your agent knows where it is."),
             SetupStepId.Map => (MapTitle, "Sindri couldn't read the state of the map."),
             SetupStepId.Onyx => (OnyxTitle, "Sindri couldn't check on Onyx."),
+            SetupStepId.Sources => (SourcesTitle, "Sindri couldn't read which sources your profile names."),
             _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not a setup step"),
         };
         return Failed(id, title, new SetupError(code, sentence));

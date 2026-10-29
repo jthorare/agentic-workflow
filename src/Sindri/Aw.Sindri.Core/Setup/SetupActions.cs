@@ -21,6 +21,9 @@ public static class SetupActions
     /// <summary>Hand the Onyx setup job the owner's login while it waits for it.</summary>
     public const string ConnectOnyx = "ConnectOnyx";
 
+    /// <summary>Connect an index source's token (`sindri index connect &lt;source&gt;`; the human's, at a terminal).</summary>
+    public const string ConnectIndexSource = "ConnectIndexSource";
+
     /// <summary>Build the context map again now (the context lane's job).</summary>
     public const string RefreshContextMap = "RefreshContextMap";
 }

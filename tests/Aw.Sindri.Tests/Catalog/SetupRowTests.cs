@@ -57,6 +57,17 @@ public sealed class SetupRowTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void ConnectIndexSource_is_a_cli_only_local_row_held_to_a_terminal_with_no_route()
+    {
+        var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == "ConnectIndexSource");
+
+        Assert.Equal((ActionClass.Local, "sindri index connect <source>", "cli-only:local", true), (row.Class, row.Cli.Text, row.Ui, row.NeedsTerminal));
+        Assert.Null(row.Route);
+        Assert.Null(row.Method);
+        Assert.Null(row.CommandType);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void RegisterMcp_is_a_ready_job_row_the_app_and_a_session_start()
     {
         var row = Assert.Single(new CommandCatalog().Rows, r => r.Action.Value == "RegisterMcp");

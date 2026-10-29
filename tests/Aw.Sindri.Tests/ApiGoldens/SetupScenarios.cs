@@ -17,6 +17,7 @@ internal static class SetupScenarios
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
         ("setup", "first-run"), ("setup", "profile-needs-approval"), ("setup", "running-progress"), ("setup", "failed"), ("setup", "all-done"), ("setup", "onyx-no-docker"), ("setup", "map-retrying"), ("setup", "onyx-skipped"), ("setup", "profile-preview"),
+        ("setup", "sources-none"), ("setup", "sources-github-needs-token"), ("setup", "sources-all-connected"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -57,6 +58,9 @@ internal static class SetupScenarios
         "map-retrying" => Done(map: new MapFact(MapPhase.Building, new SetupProgress(0, 1, "files")) { Items = Lines(SetupState.Running), Retry = new MapRetry(TimeSpan.FromMinutes(5), "the code index was busy") }),
         "onyx-skipped" => Done(onyx: new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null) { Deferred = true }),
         "onyx-no-docker" => Done(onyx: new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: "SND-ONYX-001")),
+        "sources-none" => Done(sources: new SourcesFact(0)),
+        "sources-github-needs-token" => Done(sources: InMemorySetupFacts.NamedSources(("github", false))),
+        "sources-all-connected" => Done(sources: InMemorySetupFacts.NamedSources(("github", true), ("slack", true))),
         "all-done" => InMemorySetupFacts.AllDone(),
         _ => new InMemorySetupFacts { RecipesAnswer = new RecipesFact(26, 0) },
     };
@@ -71,11 +75,12 @@ internal static class SetupScenarios
 
     private static SetupItems Lines(SetupState state) => new([new SetupItem("demo", state, Detail: null)]);
 
-    private static InMemorySetupFacts Done(MapFact? map = null, OnyxFact? onyx = null)
+    private static InMemorySetupFacts Done(MapFact? map = null, OnyxFact? onyx = null, SourcesFact? sources = null)
     {
         var facts = InMemorySetupFacts.AllDone();
         facts.MapAnswer = map ?? facts.MapAnswer;
         facts.OnyxAnswer = onyx ?? facts.OnyxAnswer;
+        facts.SourcesAnswer = sources ?? facts.SourcesAnswer;
         return facts;
     }
 }

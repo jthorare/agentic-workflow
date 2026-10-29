@@ -101,6 +101,8 @@ public sealed class GetSetupTests
 
         public ValueTask<Result<MapFact>> Map(CancellationToken cancellationToken) => inner.Map(cancellationToken);
 
+        public ValueTask<Result<SourcesFact>> Sources(CancellationToken cancellationToken) => inner.Sources(cancellationToken);
+
         public ValueTask<Result<OnyxFact>> Onyx(CancellationToken cancellationToken) => throw failure ?? new InvalidOperationException("docker would not start");
     }
 

@@ -22,6 +22,9 @@ public sealed class InMemorySetupFacts : ISetupFacts
     /// <summary>Gets or sets the map's answer.</summary>
     public Result<MapFact> MapAnswer { get; set; } = new MapFact(MapPhase.Waiting);
 
+    /// <summary>Gets or sets the index sources' answer.</summary>
+    public Result<SourcesFact> SourcesAnswer { get; set; } = new SourcesFact(0);
+
     /// <summary>Gets or sets Onyx's answer.</summary>
     public Result<OnyxFact> OnyxAnswer { get; set; } = new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null);
 
@@ -38,6 +41,15 @@ public sealed class InMemorySetupFacts : ISetupFacts
         McpAnswer = new McpFact(1, 1, "Claude Code") { Items = new SetupItems([new SetupItem("demo", SetupState.Done, "Claude Code") { Providers = [new McpProviderState("claude", McpConnection.Connected)] }]) },
         MapAnswer = new MapFact(MapPhase.Built) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) },
         OnyxAnswer = new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null),
+        SourcesAnswer = NamedSources(("github", true), ("slack", true)),
+    };
+
+    /// <summary>The sources fact for the named sources, each connected or not.</summary>
+    /// <param name="named">The source names with whether each token resolves.</param>
+    /// <returns>The fact.</returns>
+    public static SourcesFact NamedSources(params (string Source, bool Connected)[] named) => new(named.Length)
+    {
+        Items = new SetupItems([.. named.Select(static n => new SetupItem(n.Source, n.Connected ? SetupState.Done : SetupState.Todo, n.Connected ? "connected" : "needs token"))]),
     };
 
     /// <inheritdoc/>
@@ -54,6 +66,9 @@ public sealed class InMemorySetupFacts : ISetupFacts
 
     /// <inheritdoc/>
     public ValueTask<Result<MapFact>> Map(CancellationToken cancellationToken) => ValueTask.FromResult(MapAnswer);
+
+    /// <inheritdoc/>
+    public ValueTask<Result<SourcesFact>> Sources(CancellationToken cancellationToken) => ValueTask.FromResult(SourcesAnswer);
 
     /// <inheritdoc/>
     public ValueTask<Result<OnyxFact>> Onyx(CancellationToken cancellationToken) => ValueTask.FromResult(OnyxAnswer);

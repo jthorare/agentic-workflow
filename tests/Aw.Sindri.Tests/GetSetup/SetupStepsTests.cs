@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.GetSetup;
 
@@ -137,6 +138,58 @@ public sealed class SetupStepsTests
         Assert.Equal((SetupState.Failed, null, "Sindri couldn't ask Docker about Onyx."), (unknown.State, unknown.Action, unknown.Why));
         Assert.Equal((SetupState.Skipped, null, null), (memory.State, memory.Error, memory.Action));
         Assert.Equal((SetupState.Failed, "SND-ONYX-005"), (silent.State, silent.Error?.Code));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Sources_with_none_named_is_the_humans_and_says_no_source_is_connected_yet()
+    {
+        var step = SetupSteps.Sources(new SourcesFact(0));
+
+        Assert.Equal((SetupStepId.Sources, "Connect your sources", SetupState.Todo, "No source is connected yet.", SetupActions.ConnectIndexSource), (step.Id, step.Title, step.State, step.Why, step.Action));
+        Assert.Empty(step.Items);
+        Assert.Null(step.Error);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("github", "GitHub needs a token.")]
+    [InlineData("slack", "Slack needs a token.")]
+    public void Sources_names_the_source_that_needs_a_token_and_lists_it(string source, string why)
+    {
+        var step = SetupSteps.Sources(InMemorySetupFacts.NamedSources((source, false)));
+
+        Assert.Equal((SetupState.Todo, SetupActions.ConnectIndexSource, why), (step.State, step.Action, step.Why));
+        Assert.Equal([(source, SetupState.Todo, "needs token")], step.Items.Select(static i => (i.Repo, i.State, i.Detail)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Sources_names_only_the_sources_still_missing_a_token_and_keeps_a_line_for_each_named_one()
+    {
+        var both = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", false), ("slack", false)));
+        var one = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", true), ("slack", false)));
+
+        Assert.Equal(("GitHub and Slack need a token.", SetupState.Todo), (both.Why, both.State));
+        Assert.Equal(("Slack needs a token.", SetupState.Todo, SetupActions.ConnectIndexSource), (one.Why, one.State, one.Action));
+        Assert.Equal([("github", SetupState.Done, "connected"), ("slack", SetupState.Todo, "needs token")], one.Items.Select(static i => (i.Repo, i.State, i.Detail)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Sources_is_done_with_no_action_when_every_named_source_is_connected()
+    {
+        var one = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("slack", true)));
+        var both = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", true), ("slack", true)));
+
+        Assert.Equal((SetupState.Done, null, "Every source your profile names is connected.", "Slack."), (one.State, one.Action, one.Why, one.Detail));
+        Assert.Equal((SetupState.Done, null, "GitHub, Slack."), (both.State, both.Action, both.Detail));
+        Assert.Equal(2, both.Items.Count);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_unreadable_sources_step_is_failed_with_a_plain_sentence_and_the_code_only_in_the_error()
+    {
+        var step = SetupSteps.Unreadable(SetupStepId.Sources, "SND-PROFILE-004");
+
+        Assert.Equal((SetupState.Failed, "Connect your sources", "SND-PROFILE-004"), (step.State, step.Title, step.Error?.Code));
+        Assert.DoesNotContain("SND-", step.Why, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
