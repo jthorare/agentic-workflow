@@ -80,7 +80,7 @@ public sealed class ProjectFieldsStoreTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task A_source_identity_is_stored_once_per_source()
     {
-        var identities = new Aw.Context.Infrastructure.Records.SqliteSourceIdentityStore(_world.Database);
+        var identities = new Context.Infrastructure.Records.SqliteSourceIdentityStore(_world.Database);
         _ = await identities.Write(new SourceIdentity(RecordSamples.Linear, "linear:user/u1", "Joi", RecordSamples.Now), TestContext.Current.CancellationToken);
         _ = await identities.Write(new SourceIdentity(RecordSamples.Linear, "linear:user/u2", "Thor", RecordSamples.Now.AddHours(1)), TestContext.Current.CancellationToken);
 
