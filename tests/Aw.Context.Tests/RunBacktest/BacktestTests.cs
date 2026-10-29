@@ -148,7 +148,7 @@ public sealed class BacktestTests
         var text = await File.ReadAllTextAsync(run.Path, TestContext.Current.CancellationToken);
         Assert.DoesNotContain("named command in one registry", text, StringComparison.Ordinal);   // SPL-101's brief
         Assert.DoesNotContain("Command registry for pane commands", text, StringComparison.Ordinal);   // and its title
-        Assert.Contains("onyx/0e5a1b00-0000-4000-8000-000000000101", text, StringComparison.Ordinal);   // the ref is there
+        Assert.Contains("linear:issue/0e5a1b00-0000-4000-8000-000000000101", text, StringComparison.Ordinal);   // the ref is there
         Assert.DoesNotContain(world.Onyx.Token, text, StringComparison.Ordinal);
     }
 
