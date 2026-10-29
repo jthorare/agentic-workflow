@@ -45,7 +45,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(recorded);
         var at = recorded.Envelope.OccurredAt;
         return new ProjectAttachedRow(
-            attached.Id, attached.Linear, attached.Name, attached.State, attached.Links, attached.Note, attached.Target,
+            attached.Id, attached.Linear, attached.Name, attached.State, attached.Links, attached.Notes, attached.Target,
             Version: 1, at, IsFinished(attached.State) ? at : default(DateTimeOffset?), at, recorded.Sequence);
     }
 
@@ -66,7 +66,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
             Name = changed.Name ?? row.Name,
             State = state,
             Links = changed.Links ?? row.Links,
-            Note = changed.ClearNote ? null : changed.Note ?? row.Note,
+            Notes = changed.ClearNotes ? null : changed.Notes ?? row.Notes,
             Target = changed.ClearTarget ? null : changed.Target ?? row.Target,
             Version = changed.Version,
             FinishedAt = FinishedAt(row, state, at),

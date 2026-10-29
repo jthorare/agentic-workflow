@@ -162,7 +162,7 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
         Field(text, "lead", card.Lead?.Name);
         Field(text, "target", card.Target?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         Field(text, "finished", card.FinishedAt is { } done ? Instant(done) : null);
-        Field(text, "note", card.Note);
+        Field(text, "notes", card.Notes);
         Field(text, "synced", card.Synced ? null : "no longer synced from Linear");
         Field(text, "version", card.Version.ToString(CultureInfo.InvariantCulture));
         foreach (var link in card.Links)
@@ -207,7 +207,7 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
         const string Root = "/sindri/projects";
         if (command.Verb == ProjectVerbArguments.Verb.Add)
         {
-            return await client.Post<AttachProjectRequest, ProjectAccepted>(Root, new AttachProjectRequest(command.Linear, command.Name, command.State, command.Links.Count == 0 ? null : command.Links, command.Note, command.Target), ct).ConfigureAwait(false);
+            return await client.Post<AttachProjectRequest, ProjectAccepted>(Root, new AttachProjectRequest(command.Linear, command.Name, command.State, command.Links.Count == 0 ? null : command.Links, command.Notes, command.Target), ct).ConfigureAwait(false);
         }
 
         var version = await Version(command, ct).ConfigureAwait(false);
@@ -229,7 +229,7 @@ internal sealed class ProjectVerbs(ControlPlaneClient client, Output output, Fun
         var route = Root + "/" + Uri.EscapeDataString(id.Value);
         return command.Verb == ProjectVerbArguments.Verb.Remove
             ? await client.Post<DetachProjectBody, ProjectAccepted>(route + "/detach", new DetachProjectBody(version.Value), ct).ConfigureAwait(false)
-            : await client.Post<ChangeProjectBody, ProjectAccepted>(route + "/change", new ChangeProjectBody(version.Value, command.Name, command.State, command.ClearState, command.Links.Count == 0 ? null : command.Links, command.Note, command.ClearNote, command.Target, command.ClearTarget), ct).ConfigureAwait(false);
+            : await client.Post<ChangeProjectBody, ProjectAccepted>(route + "/change", new ChangeProjectBody(version.Value, command.Name, command.State, command.ClearState, command.Links.Count == 0 ? null : command.Links, command.Target, command.ClearTarget, command.Notes, command.ClearNotes), ct).ConfigureAwait(false);
     }
 
     /// <summary>The version a write sends: the one typed, or the card's own, read now (as 'item close' does).</summary>

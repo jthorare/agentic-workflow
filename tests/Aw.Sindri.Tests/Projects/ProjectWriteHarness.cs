@@ -40,11 +40,11 @@ internal sealed partial class ProjectWriteHarness
 
     /// <summary>Puts a hand-made project (version 1) in the view.</summary>
     internal Task SeedHandMade() =>
-        Views.Fold(EventTypes.ProjectAttached, new ProjectAttached(Slice.Ids.New<CommandId>(), ProjectRows.HandMadeId, Linear: null, "Kitchen", ProjectState.Planned, [], Note: null, Target: null));
+        Views.Fold(EventTypes.ProjectAttached, new ProjectAttached(Slice.Ids.New<CommandId>(), ProjectRows.HandMadeId, Linear: null, "Kitchen", ProjectState.Planned, [], Target: null));
 
     /// <summary>Puts an attached Linear project (version 1) in the view.</summary>
     internal Task SeedAttached() =>
-        Views.Fold(EventTypes.ProjectAttached, new ProjectAttached(Slice.Ids.New<CommandId>(), ProjectRows.LinearId, ProjectRows.LinearKey, Name: null, State: null, [], Note: null, Target: null));
+        Views.Fold(EventTypes.ProjectAttached, new ProjectAttached(Slice.Ids.New<CommandId>(), ProjectRows.LinearId, ProjectRows.LinearKey, Name: null, State: null, [], Target: null));
 
     internal Task SeedHidden(long version, bool hidden) =>
         Views.Fold(EventTypes.ProjectHidden, new ProjectHidden(Slice.Ids.New<CommandId>(), ProjectRows.LinearKey, hidden, version));

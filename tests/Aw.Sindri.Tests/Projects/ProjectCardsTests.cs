@@ -81,7 +81,7 @@ public sealed class ProjectCardsTests
         var card = Page([Fact(led: false)], [row]).Projects.Single();
 
         Expect.Equal(("prj_01J9Z3K5M7Q2R4T6V8WXYZ0124", ProjectOrigin.Attached, "Alpha", ProjectState.Paused, true, 3L, "my note"),
-            (card.Key, card.Origin, card.Name, card.State, card.StateSetByOwner, card.Version, card.Note));
+            (card.Key, card.Origin, card.Name, card.State, card.StateSetByOwner, card.Version, card.Notes));
         Expect.Sequence(["Linear", "https://example.com/plan"], card.Links.Select(static l => l.Label));
         Expect.Equal(("Sam", false), (card.Lead!.Name, card.Lead.You));
     }

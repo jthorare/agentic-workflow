@@ -27,29 +27,29 @@ public sealed class ChangeProjectTests
         await _h.SeedHandMade();
         using var human = _h.Human();
 
-        var result = await _h.Change().Handle(Change(new ProjectEdit(State: ProjectState.InProgress, Note: "started", ClearTarget: true)), Token);
+        var result = await _h.Change().Handle(Change(new ProjectEdit(State: ProjectState.InProgress, Notes: "started", ClearTarget: true)), Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         var recorded = Assert.Single(_h.Slice.Store.Events);
         var payload = _h.Payload<ProjectChanged>(recorded);
         Expect.Equal($"project.changed:{ProjectRows.HandMadeId.Value}:v2", recorded.IdempotencyKey);
-        Expect.Equal((2L, ProjectState.InProgress, "started", true), (payload.Version, payload.State, payload.Note, payload.ClearTarget));
+        Expect.Equal((2L, ProjectState.InProgress, "started", true), (payload.Version, payload.State, payload.Notes, payload.ClearTarget));
         Expect.Equal((recorded.Sequence, ProjectRows.HandMadeId.Value, 2L), (result.Value.Accepted.Sequence, result.Value.Project, result.Value.Version));
         Expect.Equal(payload.CommandId, result.Value.Accepted.CommandId);
     }
 
     [Fact]
-    public async Task The_note_and_each_link_are_scrubbed_before_the_event_is_written()
+    public async Task The_notes_and_each_link_are_scrubbed_before_the_event_is_written()
     {
         await _h.Lease();
         await _h.SeedHandMade();
         using var human = _h.Human();
 
-        var result = await _h.Change().Handle(Change(new ProjectEdit(Links: [$"https://example.com/{ProjectWriteHarness.Secret}"], Note: $"key {ProjectWriteHarness.Secret}")), Token);
+        var result = await _h.Change().Handle(Change(new ProjectEdit(Links: [$"https://example.com/{ProjectWriteHarness.Secret}"], Notes: $"key {ProjectWriteHarness.Secret}")), Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         var payload = _h.Payload<ProjectChanged>(Assert.Single(_h.Slice.Store.Events));
-        Expect.Equal("key [redacted]", payload.Note);
+        Expect.Equal("key [redacted]", payload.Notes);
         Expect.Sequence(["https://example.com/[redacted]"], payload.Links ?? []);
     }
 
@@ -98,7 +98,7 @@ public sealed class ChangeProjectTests
     {
         await _h.Lease();
         await _h.SeedHandMade();
-        var rival = new ProjectChanged(_h.Slice.Ids.New<CommandId>(), ProjectRows.HandMadeId, 2, Name: null, ProjectState.Done, ClearState: false, Links: null, Note: null, ClearNote: false, Target: null, ClearTarget: false);
+        var rival = new ProjectChanged(_h.Slice.Ids.New<CommandId>(), ProjectRows.HandMadeId, 2, Name: null, ProjectState.Done, ClearState: false, Links: null, Target: null, ClearTarget: false);
         _ = await _h.Slice.Store.Append(_h.Slice.Events.Entry(EventTypes.ProjectChanged, rival, $"project.changed:{ProjectRows.HandMadeId.Value}:v2"), _h.Slice.Held.Current!, Token);
         using var human = _h.Human();
 

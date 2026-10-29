@@ -123,7 +123,7 @@ public static class ProjectCards
         return new ProjectCard(
             fact.Key, ProjectOrigin.Led, fact.Title, fact.Description, state, StateSetByOwner: false, MapHealth(fact.Health), new ProjectLead(You: true, Name: null),
             Date(fact.DueAt), fact.OpenIssues, fact.Counting, OpenPrs: null, PrScope: null, fact.LastActivity, LinearFinished(state, fact), Repos: [],
-            LinearLinks(fact, []), Note: null, Synced: true, version);
+            LinearLinks(fact, []), Notes: null, Synced: true, version);
     }
 
     private static List<ProjectLink> OwnerLinks(ProjectAttachedRow row) => [.. row.Links.Select(static l => new ProjectLink(l, l))];
@@ -131,12 +131,12 @@ public static class ProjectCards
     private static ProjectCard HandMade(ProjectAttachedRow row) =>
         new(row.Id.Value, ProjectOrigin.HandMade, row.Name ?? string.Empty, Description: null, row.State, StateSetByOwner: row.State is not null, Health: null, Lead: null,
             row.Target, OpenIssues: null, Counting: false, OpenPrs: null, PrScope: null, row.EditedAt, row.FinishedAt, Repos: [],
-            OwnerLinks(row), row.Note, Synced: true, row.Version);
+            OwnerLinks(row), row.Notes, Synced: true, row.Version);
 
     private static ProjectCard Unmatched(ProjectAttachedRow row, string linearKey, bool synced) =>
         new(row.Id.Value, ProjectOrigin.Attached, row.Name ?? linearKey, Description: null, row.State, StateSetByOwner: row.State is not null, Health: null, Lead: null,
             row.Target, OpenIssues: null, Counting: false, OpenPrs: null, PrScope: null, LastActivity: null, row.FinishedAt, Repos: [],
-            OwnerLinks(row), row.Note, synced, row.Version);
+            OwnerLinks(row), row.Notes, synced, row.Version);
 
     private static ProjectCard Merged(ProjectAttachedRow row, LinearProjectFact fact)
     {
@@ -148,7 +148,7 @@ public static class ProjectCards
             fact.Lead is null ? null : new ProjectLead(fact.LeadIsOwner, fact.LeadIsOwner ? null : fact.Lead.Name),
             Date(fact.DueAt) ?? row.Target, fact.OpenIssues, fact.Counting, OpenPrs: null, PrScope: null, fact.LastActivity,
             byOwner ? row.FinishedAt ?? linearFinished : linearFinished ?? row.FinishedAt,
-            Repos: [], LinearLinks(fact, OwnerLinks(row)), row.Note, Synced: true, row.Version);
+            Repos: [], LinearLinks(fact, OwnerLinks(row)), row.Notes, Synced: true, row.Version);
     }
 
     private static List<ProjectLink> LinearLinks(LinearProjectFact fact, List<ProjectLink> owners) =>

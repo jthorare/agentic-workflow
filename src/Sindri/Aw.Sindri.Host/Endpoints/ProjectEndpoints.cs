@@ -12,14 +12,23 @@ internal static class ProjectEndpoints
 {
     internal static RouteGroupBuilder MapProjectWrites(this RouteGroupBuilder group)
     {
-        _ = group.MapPost("/projects", static async (AttachProjectRequest request, IService<AttachProjectRequest, ProjectAccepted> service, CancellationToken ct)
-            => (await service.Handle(request, ct).ConfigureAwait(false)).ToHttpResult());
+        _ = group.MapPost("/projects", static async (AttachProjectBody body, IService<AttachProjectRequest, ProjectAccepted> service, CancellationToken ct) =>
+        {
+            var request = body.ToRequest();
+            return request.IsError ? request.ToHttpResult() : (await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
+        });
         _ = group.MapPost("/projects/hide", static async (HideProjectRequest request, IService<HideProjectRequest, ProjectAccepted> service, CancellationToken ct)
             => (await service.Handle(request, ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/projects/{projectId}/change", static async (string projectId, ChangeProjectBody body, IService<ChangeProjectRequest, ProjectAccepted> service, CancellationToken ct) =>
         {
             var project = ProjectRoute.Project(projectId);
-            return project.IsError ? project.ToHttpResult() : (await service.Handle(body.ToRequest(project.Value), ct).ConfigureAwait(false)).ToHttpResult();
+            if (project.IsError)
+            {
+                return project.ToHttpResult();
+            }
+
+            var request = body.ToRequest(project.Value);
+            return request.IsError ? request.ToHttpResult() : (await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
         _ = group.MapPost("/projects/{projectId}/detach", static async (string projectId, DetachProjectBody body, IService<DetachProjectRequest, ProjectAccepted> service, CancellationToken ct) =>
         {

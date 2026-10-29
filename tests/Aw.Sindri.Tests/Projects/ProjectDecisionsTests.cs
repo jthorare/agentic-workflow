@@ -15,8 +15,8 @@ public sealed class ProjectDecisionsTests
 {
     private readonly CommandId _command = new SequentialIdGenerator().New<CommandId>();
 
-    private static ProjectDraft Hand(string? name = "Kitchen", IReadOnlyList<string>? links = null, string? note = null, ProjectState? state = null) =>
-        new(Linear: null, name, state, links, note);
+    private static ProjectDraft Hand(string? name = "Kitchen", IReadOnlyList<string>? links = null, string? notes = null, ProjectState? state = null) =>
+        new(Linear: null, name, state, links, notes);
 
     private Kernel.Result<Core.Events.ProjectAttached> Attach(ProjectDraft draft, IReadOnlyList<ProjectAttachedRow>? attached = null, bool led = false) =>
         ProjectDecisions.Attach(_command, ProjectRows.HandMadeId, draft, attached ?? [], led);
@@ -33,7 +33,7 @@ public sealed class ProjectDecisionsTests
         var attached = Attach(new ProjectDraft(Linear: null, "  Kitchen  ", ProjectState.InProgress, ["https://example.com/plan"], "one line", new DateOnly(2026, 11, 14))).Value;
 
         Expect.Equal((ProjectRows.HandMadeId, null, "Kitchen", ProjectState.InProgress, "one line", new DateOnly(2026, 11, 14), _command),
-            (attached.Id, attached.Linear, attached.Name, attached.State, attached.Note, attached.Target, attached.CommandId));
+            (attached.Id, attached.Linear, attached.Name, attached.State, attached.Notes, attached.Target, attached.CommandId));
         Expect.Sequence(["https://example.com/plan"], attached.Links);
     }
 
@@ -75,16 +75,36 @@ public sealed class ProjectDecisionsTests
     }
 
     [Fact]
-    public void A_note_of_200_characters_is_fine_and_201_is_SND_PROJECT_004_on_note()
+    public void Notes_of_16384_characters_are_fine_and_16385_is_SND_PROJECT_004_on_notes()
     {
-        Expect.Equal(200, Attach(Hand(note: new string('x', 200))).Value.Note!.Length);
-        RefusedOn("note", Attach(Hand(note: new string('x', 201))).Error);
+        Expect.Equal(16384, Attach(Hand(notes: new string('x', 16384))).Value.Notes!.Length);
+        var refused = Attach(Hand(notes: new string('x', 16385))).Error;
+        RefusedOn("notes", refused);
+        Expect.Equal("notes: is 16385 characters (at most 16384)", refused.Message);
     }
 
     [Theory]
     [InlineData("two\nlines")]
-    [InlineData("two\rlines")]
-    public void A_note_over_more_than_one_line_is_SND_PROJECT_004_on_note(string note) => RefusedOn("note", Attach(Hand(note: note)).Error);
+    [InlineData("two\r\nlines")]
+    [InlineData("\n\nleading and trailing\n")]
+    public void Notes_may_hold_line_breaks_and_are_kept_as_typed(string notes) => Expect.Equal(notes, Attach(Hand(notes: notes)).Value.Notes);
+
+    [Theory]
+    [InlineData(null, null, false)]
+    [InlineData("a", null, false)]
+    [InlineData(null, "a", false)]
+    [InlineData("a", "a", false)]
+    [InlineData("a", "b", true)]
+    public void Notes_and_its_alias_note_agree_or_are_SND_PROJECT_004(string? notes, string? note, bool conflict)
+    {
+        var error = ProjectDecisions.NotesAliasConflict(notes, note);
+
+        Assert.Equal(conflict, error is not null);
+        if (error is { } refused)
+        {
+            RefusedOn("notes", refused);
+        }
+    }
 
     [Fact]
     public void A_state_word_that_is_not_one_of_the_six_is_SND_PROJECT_004_on_state() => RefusedOn("state", Attach(Hand(state: (ProjectState)42)).Error);
@@ -115,18 +135,18 @@ public sealed class ProjectDecisionsTests
     [Fact]
     public void Change_moves_the_version_and_carries_only_the_asked_fields()
     {
-        var changed = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, ProjectRows.HandMade(version: 3), new ProjectEdit(Note: "later", Target: new DateOnly(2027, 1, 2)), seenVersion: 3).Value;
+        var changed = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, ProjectRows.HandMade(version: 3), new ProjectEdit(Notes: "later", Target: new DateOnly(2027, 1, 2)), seenVersion: 3).Value;
 
-        Expect.Equal((ProjectRows.HandMadeId, 4L, "later", new DateOnly(2027, 1, 2), null, null, null), (changed.Id, changed.Version, changed.Note, changed.Target, changed.Name, changed.State, changed.Links));
-        Expect.Equal((false, false, false), (changed.ClearState, changed.ClearNote, changed.ClearTarget));
+        Expect.Equal((ProjectRows.HandMadeId, 4L, "later", new DateOnly(2027, 1, 2), null, null, null), (changed.Id, changed.Version, changed.Notes, changed.Target, changed.Name, changed.State, changed.Links));
+        Expect.Equal((false, false, false), (changed.ClearState, changed.ClearNotes, changed.ClearTarget));
     }
 
     [Fact]
     public void Change_names_a_cleared_field_by_its_flag()
     {
-        var changed = ProjectDecisions.Change(_command, ProjectRows.LinearId, ProjectRows.Attached(), new ProjectEdit(ClearState: true, ClearNote: true, ClearTarget: true), seenVersion: 1).Value;
+        var changed = ProjectDecisions.Change(_command, ProjectRows.LinearId, ProjectRows.Attached(), new ProjectEdit(ClearState: true, ClearNotes: true, ClearTarget: true), seenVersion: 1).Value;
 
-        Expect.Equal((true, true, true, null, null, null), (changed.ClearState, changed.ClearNote, changed.ClearTarget, changed.State, changed.Note, changed.Target));
+        Expect.Equal((true, true, true, null, null, null), (changed.ClearState, changed.ClearNotes, changed.ClearTarget, changed.State, changed.Notes, changed.Target));
     }
 
     [Fact]
@@ -140,7 +160,7 @@ public sealed class ProjectDecisionsTests
     [Fact]
     public void Change_of_a_missing_project_is_SND_PROJECT_404_naming_it()
     {
-        var result = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, project: null, new ProjectEdit(Note: "x"), seenVersion: 1);
+        var result = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, project: null, new ProjectEdit(Notes: "x"), seenVersion: 1);
 
         Expect.Equal(SindriErrors.ProjectNotFound.Code, result.Error.Code);
         Expect.Equal($"No project {ProjectRows.HandMadeId.Value}. `sindri projects` lists them.", result.Error.Message);
@@ -149,7 +169,7 @@ public sealed class ProjectDecisionsTests
     [Fact]
     public void Change_at_a_stale_version_is_SND_PROJECT_409()
     {
-        var result = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, ProjectRows.HandMade(version: 3), new ProjectEdit(Note: "x"), seenVersion: 2);
+        var result = ProjectDecisions.Change(_command, ProjectRows.HandMadeId, ProjectRows.HandMade(version: 3), new ProjectEdit(Notes: "x"), seenVersion: 2);
 
         Expect.Equal(SindriErrors.ProjectConflict.Code, result.Error.Code);
         Expect.Equal("This project changed since you read it. Read it again and retry.", result.Error.Message);
@@ -161,7 +181,7 @@ public sealed class ProjectDecisionsTests
         var project = ProjectRows.HandMade();
 
         RefusedOn("links", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(Links: ["http://example.com"]), 1).Error);
-        RefusedOn("note", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(Note: new string('x', 201)), 1).Error);
+        RefusedOn("notes", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(Notes: new string('x', 16385)), 1).Error);
         RefusedOn("name", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(Name: "  "), 1).Error);
         RefusedOn("state", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(State: (ProjectState)42), 1).Error);
     }
@@ -180,7 +200,7 @@ public sealed class ProjectDecisionsTests
         var project = ProjectRows.HandMade();
 
         RefusedOn("state", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(State: ProjectState.Done, ClearState: true), 1).Error);
-        RefusedOn("note", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(Note: "x", ClearNote: true), 1).Error);
+        RefusedOn("notes", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(Notes: "x", ClearNotes: true), 1).Error);
         RefusedOn("target", ProjectDecisions.Change(_command, project.Id, project, new ProjectEdit(Target: new DateOnly(2027, 1, 1), ClearTarget: true), 1).Error);
     }
 

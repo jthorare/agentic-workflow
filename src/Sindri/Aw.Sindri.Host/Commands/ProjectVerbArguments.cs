@@ -8,7 +8,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>Reads the arguments of the project write verbs ('project add', 'edit', 'remove', 'hide', 'unhide'; projects page spec §5.3) into one <see cref="Parsed"/>, or the usage error.</summary>
 internal static class ProjectVerbArguments
 {
-    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--note T] [--target YYYY-MM-DD] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--state S | --clear-state] [--note T | --clear-note] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
+    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--notes T] [--target YYYY-MM-DD] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--state S | --clear-state] [--notes T | --clear-notes] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
 
     internal static Result<Parsed> Parse(string[] args)
     {
@@ -58,10 +58,10 @@ internal static class ProjectVerbArguments
             case "--all" when parsed.Verb == Verb.List:
                 parsed.All = true;
                 return 0;
-            case "--clear-state" or "--clear-note" or "--clear-target" when parsed.Verb == Verb.Edit:
+            case "--clear-state" or "--clear-notes" or "--clear-note" or "--clear-target" when parsed.Verb == Verb.Edit:
                 Clear(parsed, flag);
                 return 0;
-            case "--linear" or "--name" or "--link" or "--state" or "--note" or "--target" or "--version" when Takes(parsed.Verb, flag):
+            case "--linear" or "--name" or "--link" or "--state" or "--notes" or "--note" or "--target" or "--version" when Takes(parsed.Verb, flag):
                 return i + 1 < rest.Length ? Valued(parsed, flag, rest[i + 1]) : SindriErrors.InvalidInput.With($"{flag} needs a value: {Usage}");
             case var other when other.StartsWith("--", StringComparison.Ordinal):
                 return SindriErrors.InvalidInput.With($"'{other}' isn't a flag of this command: {Usage}");
@@ -85,8 +85,8 @@ internal static class ProjectVerbArguments
             case "--clear-state":
                 parsed.ClearState = true;
                 break;
-            case "--clear-note":
-                parsed.ClearNote = true;
+            case "--clear-notes" or "--clear-note":   // --clear-note is the old name, kept as an alias for one release (owner q158)
+                parsed.ClearNotes = true;
                 break;
             default:
                 parsed.ClearTarget = true;
@@ -115,7 +115,7 @@ internal static class ProjectVerbArguments
                 parsed.Links.Add(value);
                 break;
             default:
-                parsed.Note = value;
+                parsed.Notes = value;
                 break;
         }
 
@@ -221,9 +221,9 @@ internal static class ProjectVerbArguments
 
         public bool ClearState { get; set; }
 
-        public string? Note { get; set; }
+        public string? Notes { get; set; }
 
-        public bool ClearNote { get; set; }
+        public bool ClearNotes { get; set; }
 
         public DateOnly? Target { get; set; }
 

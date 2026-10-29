@@ -70,7 +70,7 @@ internal static class ProjectScenarios
         }
 
         var human = ItemScenarios.Human(host);
-        var made = await host.Http.Ask(Post("/sindri/projects", $$"""{"linear":"{{Mobile}}","state":"paused","note":"Waiting on the vendor","links":["https://example.com/mobile"]}""", human));
+        var made = await host.Http.Ask(Post("/sindri/projects", $$"""{"linear":"{{Mobile}}","state":"paused","notes":"Waiting on the vendor","links":["https://example.com/mobile"]}""", human));
         await ViewScenarios.CatchUp(host, ct);   // why: each write reads the project views, which wait for the writes before it
         _ = await host.Http.Ask(Post("/sindri/projects", """{"name":"Kitchen","state":"planned","target":"2026-03-01"}""", human));
         await ViewScenarios.CatchUp(host, ct);

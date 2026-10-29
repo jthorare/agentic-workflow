@@ -11,7 +11,7 @@ namespace Aw.Sindri.Core.Projects;
 public static partial class ProjectDecisions
 {
     private const int NameMax = 200;
-    private const int NoteMax = 200;
+    private const int NotesMax = 200;
     private const int LinksMax = 10;
     private const string StaleText = "This project changed since you read it. Read it again and retry.";
 
@@ -51,10 +51,10 @@ public static partial class ProjectDecisions
             name = named.Value;
         }
 
-        var fields = Fields(draft.State, draft.Links, draft.Note);
+        var fields = Fields(draft.State, draft.Links, draft.Notes);
         return fields.IsError
             ? fields.Error
-            : new ProjectAttached(command, id, draft.Linear, name, draft.State, fields.Value, draft.Note, draft.Target);
+            : new ProjectAttached(command, id, draft.Linear, name, draft.State, fields.Value, draft.Target, draft.Notes);
     }
 
     /// <summary>Changes an attached or hand-made project that is still at the version the owner saw.</summary>
@@ -76,7 +76,7 @@ public static partial class ProjectDecisions
         var refused = Refuse(found.Value, edit);
         return refused is not null
             ? refused
-            : new ProjectChanged(command, id, found.Value.Version + 1, edit.Name?.Trim(), edit.State, edit.ClearState, edit.Links?.Select(static l => l.Trim()).ToList(), edit.Note, edit.ClearNote, edit.Target, edit.ClearTarget);
+            : new ProjectChanged(command, id, found.Value.Version + 1, edit.Name?.Trim(), edit.State, edit.ClearState, edit.Links?.Select(static l => l.Trim()).ToList(), edit.Target, edit.ClearTarget, edit.Notes, edit.ClearNotes);
     }
 
     /// <summary>Removes an attached or hand-made project that is still at the version the owner saw.</summary>
@@ -118,6 +118,12 @@ public static partial class ProjectDecisions
         return SindriErrors.ProjectNotSynced.With($"Sindri doesn't sync that project. It syncs these Linear teams: {string.Join(", ", teams)}. Add the team to `context.sources.linear.teams`.");
     }
 
+    /// <summary>Whether a request sent both 'notes' and its alias 'note' with different values (SND-PROJECT-004).</summary>
+    /// <param name="notes">The 'notes' field, or null.</param>
+    /// <param name="note">The 'note' alias, or null. The alias is removed one release after the notes field ships (owner q158).</param>
+    /// <returns>The error, or null when at most one was sent or both agree.</returns>
+    public static Error? NotesAliasConflict(string? notes, string? note) => throw new NotSupportedException();
+
     private static Error Stale() => SindriErrors.ProjectConflict.With(StaleText);
 
     private static Result<ProjectAttachedRow> Found(ProjectId id, ProjectAttachedRow? project, long seenVersion) =>
@@ -130,8 +136,8 @@ public static partial class ProjectDecisions
     private static Error? Refuse(ProjectAttachedRow project, ProjectEdit edit) =>
         RenameError(project, edit.Name)
         ?? ClearAndSetError(edit)
-        ?? FieldError(edit.State, edit.Links, edit.Note)
-        ?? (IsEmpty(edit) ? Invalid("change", "nothing to change (give a name, state, links, note or target)") : null);
+        ?? FieldError(edit.State, edit.Links, edit.Notes)
+        ?? (IsEmpty(edit) ? Invalid("change", "nothing to change (give a name, state, links, notes or target)") : null);
 
     private static Error? RenameError(ProjectAttachedRow project, string? name) =>
         name is null ? null
@@ -140,12 +146,12 @@ public static partial class ProjectDecisions
 
     private static Error? ClearAndSetError(ProjectEdit edit) =>
         edit.State is not null && edit.ClearState ? Invalid("state", "can't be set and cleared in one change")
-        : edit.Note is not null && edit.ClearNote ? Invalid("note", "can't be set and cleared in one change")
+        : edit.Notes is not null && edit.ClearNotes ? Invalid("notes", "can't be set and cleared in one change")
         : edit.Target is not null && edit.ClearTarget ? Invalid("target", "can't be set and cleared in one change")
         : null;
 
     private static bool IsEmpty(ProjectEdit edit) =>
-        edit is { Name: null, State: null, ClearState: false, Links: null, Note: null, ClearNote: false, Target: null, ClearTarget: false };
+        edit is { Name: null, State: null, ClearState: false, Links: null, Notes: null, ClearNotes: false, Target: null, ClearTarget: false };
 
     private static Result<string> Name(string? name) => NameError(name) is { } error ? error : (name ?? string.Empty).Trim();
 
@@ -157,21 +163,21 @@ public static partial class ProjectDecisions
             : null;
     }
 
-    private static Result<IReadOnlyList<string>> Fields(ProjectState? state, IReadOnlyList<string>? links, string? note) =>
-        FieldError(state, links, note) is { } error ? error : (links ?? []).Select(static l => l.Trim()).ToList();
+    private static Result<IReadOnlyList<string>> Fields(ProjectState? state, IReadOnlyList<string>? links, string? notes) =>
+        FieldError(state, links, notes) is { } error ? error : (links ?? []).Select(static l => l.Trim()).ToList();
 
-    private static Error? FieldError(ProjectState? state, IReadOnlyList<string>? links, string? note) =>
-        StateError(state) ?? NoteError(note) ?? LinksError(links);
+    private static Error? FieldError(ProjectState? state, IReadOnlyList<string>? links, string? notes) =>
+        StateError(state) ?? NotesError(notes) ?? LinksError(links);
 
     private static Error? StateError(ProjectState? state) =>
         state is { } word && !Enum.IsDefined(word)
             ? Invalid("state", string.Create(CultureInfo.InvariantCulture, $"{(int)word} isn't one of backlog, planned, inProgress, paused, done, canceled"))
             : null;
 
-    private static Error? NoteError(string? note) =>
-        note is null ? null
-        : note.Length > NoteMax ? Invalid("note", string.Create(CultureInfo.InvariantCulture, $"is {note.Length} characters (at most {NoteMax})"))
-        : note.Contains('\n', StringComparison.Ordinal) || note.Contains('\r', StringComparison.Ordinal) ? Invalid("note", "must be one line")
+    private static Error? NotesError(string? notes) =>
+        notes is null ? null
+        : notes.Length > NotesMax ? Invalid("notes", string.Create(CultureInfo.InvariantCulture, $"is {notes.Length} characters (at most {NotesMax})"))
+        : notes.Contains('\n', StringComparison.Ordinal) || notes.Contains('\r', StringComparison.Ordinal) ? Invalid("notes", "must be one line")
         : null;
 
     private static Error? LinksError(IReadOnlyList<string>? links)

@@ -57,7 +57,7 @@
         "url": "https://example.com/mobile"
       }
     ],
-    "note": "Waiting on the vendor",
+    "notes": "Waiting on the vendor",
     "synced": true,
     "version": 1
   },

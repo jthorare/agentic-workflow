@@ -21,7 +21,7 @@ namespace Aw.Sindri.Core.Projects.Cards;
 /// <param name="FinishedAt">When it became Done or Canceled (Linear's closedAt, or the owner's event), else null.</param>
 /// <param name="Repos">Ship 2: repos of linked PRs; empty until then.</param>
 /// <param name="Links">The Linear link first, then the owner's links.</param>
-/// <param name="Note">The owner's one line, or null.</param>
+/// <param name="Notes">The owner's free-form notes, or null.</param>
 /// <param name="Synced">False for an attached project the store no longer holds ("no longer synced from Linear").</param>
 /// <param name="Version">The version a write sends: the attached row's, or the hide row's for a led project (0 when never hidden).</param>
 public sealed record ProjectCard(
@@ -42,6 +42,6 @@ public sealed record ProjectCard(
     DateTimeOffset? FinishedAt,
     IReadOnlyList<string> Repos,
     IReadOnlyList<ProjectLink> Links,
-    string? Note,
+    string? Notes,
     bool Synced,
     long Version);
