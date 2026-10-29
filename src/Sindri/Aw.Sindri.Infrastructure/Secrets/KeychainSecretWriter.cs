@@ -26,7 +26,7 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         var pointer = SecretPointer.Parse($"keychain:{service}/{account}");
         if (pointer.IsError)
         {
-            return SindriErrors.OnyxSecretNotStored.With("the key's store name is malformed");   // unreachable for the fixed names Sindri passes
+            return SindriErrors.SecretNotStored.With("the key's store name is malformed");   // unreachable for the fixed names Sindri passes
         }
 
         if (IsPlain(secret) && StoredInKeychain(service, account, secret) && ReadsBack(pointer.Value, secret))
@@ -85,7 +85,7 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return SindriErrors.OnyxSecretNotStored.With(
+            return SindriErrors.SecretNotStored.With(
                 $"neither the OS secret store nor {directory} could take the key ({e.GetType().Name}); make that directory writable by you, or install libsecret-tools (Linux), then run `sindri onyx up` again");
         }
 
