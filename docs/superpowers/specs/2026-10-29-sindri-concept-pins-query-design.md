@@ -186,6 +186,7 @@ index:
 
   | When | Line |
   |---|---|
+  | approved, the refresh not started yet (the service's next tick, up to a minute) | `Pinned · the map rebuild starts within a minute` |
   | the refresh is running | `Pinned · rebuilding the map: <the job's latest progress line>` (`extracting 4,200 of 9,111 files`, `resolving calls`, `cleaning up`) |
   | the relink is running | `Pinned · linking records to its words` |
   | the refresh failed | `Pinned · Couldn't rebuild the map with this pin. Try again.` with a **Try again** button (queues `RefreshContextMap`) |
@@ -237,6 +238,7 @@ index:
 | pin matches nothing | `concept billing matches no file in this map (check the paths of pin 'billing' in index.concepts)` |
 | stale map, refresh running | `pins changed; map v42 is being built with them, so some features are grouped the old way until it lands` |
 | stale map, no refresh | `pins changed after map v41 was built and the refresh for them didn't finish (fix: Try again on the Context page, or sindri context map refresh)` |
+| card, waiting for the rebuild | `Pinned · the map rebuild starts within a minute` |
 | card, rebuilding | `Pinned · rebuilding the map: resolving calls` (the job's latest progress line) |
 | card, relinking | `Pinned · linking records to its words` |
 | card, rebuild failed | `Pinned · Couldn't rebuild the map with this pin. Try again.` |
