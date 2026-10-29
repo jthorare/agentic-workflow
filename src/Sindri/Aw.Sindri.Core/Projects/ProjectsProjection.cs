@@ -7,8 +7,8 @@ using Aw.Sindri.Core.Views;
 namespace Aw.Sindri.Core.Projects;
 
 /// <summary>
-/// Folds the four project events into the 'project-attached' and 'project-hidden' views (projects page spec §5.2): a row per attached or hand-made project and a row per
-/// led Linear project the owner ever hid. A removal deletes the row (so the Linear key can be attached again, and a rebuild never has to carry tombstones); a change or
+/// Folds the five project events into the 'project-attached' and 'project-hidden' views (projects page spec §5.2): a row per attached or hand-made project and a row per
+/// led Linear project the owner ever hid or wrote notes on (one row, one version counter for both). A removal deletes the row (so the Linear key can be attached again, and a rebuild never has to carry tombstones); a change or
 /// removal for a row the view doesn't hold is skipped.
 /// </summary>
 /// <param name="events">Reads the payloads through the package's AwJson options.</param>
@@ -20,7 +20,8 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
         string.Equals(eventType, EventTypes.ProjectAttached, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ProjectChanged, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ProjectDetached, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.ProjectHidden, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.ProjectHidden, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.ProjectLedNoted, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -31,6 +32,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
             EventTypes.ProjectAttached => await Attached(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProjectChanged => await Changed(recorded, rows, cancellationToken).ConfigureAwait(false),
             EventTypes.ProjectDetached => await Detached(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.ProjectLedNoted => await LedNoted(recorded, rows, cancellationToken).ConfigureAwait(false),
             _ => await Hidden(recorded, rows, cancellationToken).ConfigureAwait(false),
         };
     }
@@ -45,7 +47,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(recorded);
         var at = recorded.Envelope.OccurredAt;
         return new ProjectAttachedRow(
-            attached.Id, attached.Linear, attached.Name, attached.State, attached.Links, attached.Note, attached.Target,
+            attached.Id, attached.Linear, attached.Name, attached.State, attached.Links, attached.Notes ?? attached.Note, attached.Target,
             Version: 1, at, IsFinished(attached.State) ? at : default(DateTimeOffset?), at, recorded.Sequence);
     }
 
@@ -66,7 +68,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
             Name = changed.Name ?? row.Name,
             State = state,
             Links = changed.Links ?? row.Links,
-            Note = changed.ClearNote ? null : changed.Note ?? row.Note,
+            Notes = NotesAfter(row, changed),
             Target = changed.ClearTarget ? null : changed.Target ?? row.Target,
             Version = changed.Version,
             FinishedAt = FinishedAt(row, state, at),
@@ -74,6 +76,10 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
             Sequence = recorded.Sequence,
         };
     }
+
+    // events written before notes was renamed carry 'note' and 'clearNote' (owner q158): read them as the same field
+    private static string? NotesAfter(ProjectAttachedRow row, ProjectChanged changed) =>
+        changed.ClearNotes || changed.ClearNote ? null : changed.Notes ?? changed.Note ?? row.Notes;
 
     // finished_at is when the event that set Done or Canceled was recorded: kept while the state stays, moved when it changes between the two, null once it leaves them
     private static DateTimeOffset? FinishedAt(ProjectAttachedRow row, ProjectState? state, DateTimeOffset at) =>
@@ -116,8 +122,30 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
     private async ValueTask<Result<Unit>> Hidden(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
         var hidden = events.Payload<ProjectHidden>(recorded);
-        return hidden.IsError
-            ? hidden.Error
-            : await rows.Put(ViewNames.ProjectHidden, hidden.Value.Linear, new ProjectHiddenRow(hidden.Value.Linear, hidden.Value.Hidden, hidden.Value.Version, recorded.Sequence), cancellationToken).ConfigureAwait(false);
+        if (hidden.IsError)
+        {
+            return hidden.Error;
+        }
+
+        // one row holds both the hide state and the notes of a led card, so a hide keeps the notes the row already has
+        var row = await rows.Get<ProjectHiddenRow>(ViewNames.ProjectHidden, hidden.Value.Linear, cancellationToken).ConfigureAwait(false);
+        return row.IsError
+            ? row.Error
+            : await rows.Put(ViewNames.ProjectHidden, hidden.Value.Linear, new ProjectHiddenRow(hidden.Value.Linear, hidden.Value.Hidden, hidden.Value.Version, recorded.Sequence, row.Value?.Notes), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<Unit>> LedNoted(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var noted = events.Payload<ProjectLedNoted>(recorded);
+        if (noted.IsError)
+        {
+            return noted.Error;
+        }
+
+        // ... and a notes save keeps the hide state (a card never hidden is a row with hidden = false)
+        var row = await rows.Get<ProjectHiddenRow>(ViewNames.ProjectHidden, noted.Value.Linear, cancellationToken).ConfigureAwait(false);
+        return row.IsError
+            ? row.Error
+            : await rows.Put(ViewNames.ProjectHidden, noted.Value.Linear, new ProjectHiddenRow(noted.Value.Linear, row.Value?.Hidden ?? false, noted.Value.Version, recorded.Sequence, noted.Value.Notes), cancellationToken).ConfigureAwait(false);
     }
 }

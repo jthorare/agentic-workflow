@@ -122,6 +122,9 @@ public static class EventTypes
     /// <summary>The owner hid or unhid a project they lead.</summary>
     public const string ProjectHidden = "project.hidden";
 
+    /// <summary>The owner wrote or cleared the notes on a Linear project they lead.</summary>
+    public const string ProjectLedNoted = "project.led.noted";
+
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
 
