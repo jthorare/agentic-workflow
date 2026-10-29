@@ -15,7 +15,7 @@ these differ from earlier text the UI spec wins (X52).
 Revision note (edited 2026-10-28, #1565; the owner decisions it records, q149 and q154, are dated 2026-10-29): how the map
 build finds actions and flows, and how Jev decides them. New §6.1 subsection "How product nodes are found", a pointer in
 Phase 4, stages S-ACT, S-ACT-b, S-FLOW-J, S-FLOW-C and S-PICK in the stage table, and new Phase 11. ActionPass is recorded as
-shipped (#1593). The model-routing spec (PR #1575) owns the Jev
+shipped (#1593). The model-routing spec (`2026-10-29-context-model-routing-design.md`, merged in #1575) owns the Jev
 call itself; this spec owns the candidates and what is stored. The review history is in PR #1590, not here.
 It refines the factory addendum §17.3 (the context graph), §17.29.2 and §17.29.3 (the engine, and access from
 sessions) and §17.17 Q2 (component options), for build step 3 of §17.29.4 (stage S3 in `docs/csharp/sindri.md`).
@@ -360,7 +360,7 @@ existing surface key, so stored review rows stay valid.
    files never reach the extractor today: `Recognizers.MayRead` drops `.spec.` and `.test.` paths, and both loaders
    (`BuildMapService.cs:186`, `AsOfMapBuilder.cs:111`) go through it. So journey files get **their own path filter** (e2e
    directories and `*.spec.*` files under them, `.ui-evidence/*.json`), applied in both loaders next to `MayRead`, and the
-   reader honors every repo's deny globs (`repo.Denies`). Journey files are bounded: at most 500 files and 1 MB each (a bigger
+   reader honors every repo's deny globs (`repo.Denies`). Journey files are bounded: at most 500 files and 512,000 bytes each (the same cap as the shared extractor, `Recognizers.cs:12` `MaxFileLength`) (a bigger
    file is skipped and counted). `.ui-evidence/*.json` goes only to the journey reader, never into the shared file list the
    other passes read.
    *Forms read from a Playwright spec:* `page.goto(url)`; `getByTestId`, `getByRole`, `getByLabel` and `getByText` followed by
@@ -420,7 +420,7 @@ skips shows the counts, not a reason.
 accepted, rejected or merged (review rows) is removed from the pick; only undecided candidates become questions or Jev input.
 
 **The Jev product pick** is a build step after cluster labeling and before the draft is written. The candidates go to Jev through
-the model-routing spec's port, restated here so this spec stands alone: `IChoicePort.Pick(IReadOnlyList<ChoiceQuestion> questions,
+the model-routing spec's port (`2026-10-29-context-model-routing-design.md` 6.7 and 6.9, #1575), restated here so this spec stands alone: `IChoicePort.Pick(IReadOnlyList<ChoiceQuestion> questions,
 int capChars)` returns `IReadOnlyList<ChoiceAnswer>`. A question is `{key, prompt, 2-5 options}`; an answer is `{key, option|none,
 confidence}`; the port also exposes `ChoiceModel Identity { get; }`. Call kind "product surfaces" (that spec's 6.9; its pack
 sizing 6.3, split 6.4 and can't-decide 6.5 rules apply unchanged). Tests use a fake `IChoicePort` that passes the port's contract
@@ -433,7 +433,7 @@ tests. All questions are multiple choice, in three shapes. Flows do not go throu
 | merge | Are these lookalikes (sharing a file or feature) one node? | each candidate's name, `separate`, `reject`; so at most 3 candidates per question |
 | attach | Which surface or feature does this action belong to? | up to 3: its file's home feature, its surface's feature, its cluster's feature (deduplicated) |
 
-Every question also offers `none` (answers allow it), so Jev is never forced to pick. Which candidate gets which shape, in this
+Every question may be answered `none` (the port's answer allows it; it is not a listed option, so the 2-5 option rule holds), so Jev is never forced to pick. That spec's 6.9 defines the merge group and its options; the keep and attach shapes are this spec's own, on the same port with fixed words. As in its 6.5, a missing answer, an answer that is not one of the options, or a confidence under 0.5 is treated as `none`, which here is `Jev undecided`. Which candidate gets which shape, in this
 order: **keep** goes to every undecided action candidate first; **merge** is built only among the candidates kept (lookalikes
 that share a file or feature), so a rejected candidate is in no merge group; **attach** is asked only for a kept action that
 is not merged away and has 2 or more distinct homes after deduplication. An attach question with fewer than 2 options is not
@@ -1631,7 +1631,7 @@ endpoints). S-PICK runs after S-ACT and after the model-routing spec's R-5 (the 
 
 **S-FLOW-J**
 - **Goal:** flows from the journeys the repo already has.
-- **Files:** `Extract/JourneyReader.cs` and `Extract/FlowPass.cs` (new), the journey path filter (500 files, 1 MB each) in `BuildMapService` and `AsOfMapBuilder`, `MapExtractor.Version` to the next number (6 or 7, coordinated with #1365) with the `ArmsTests` pin and golden keys read from the constant, the fixture's `.ui-evidence` plan and e2e spec, tests for each Playwright form read, a `ui-evidence` plan with a base URL, a storage-state path and a login step (all ignored, counted as unsupported form), each skip reason, the under-2 rule, match order, path-only route matching, scrubbed step text, deny globs, and e2e files reaching both loaders.
+- **Files:** `Extract/JourneyReader.cs` and `Extract/FlowPass.cs` (new), the journey path filter (500 files, 512,000 bytes each) in `BuildMapService` and `AsOfMapBuilder`, `MapExtractor.Version` to the next number (6 or 7, coordinated with #1365) with the `ArmsTests` pin and golden keys read from the constant, the fixture's `.ui-evidence` plan and e2e spec, tests for each Playwright form read, a `ui-evidence` plan with a base URL, a storage-state path and a login step (all ignored, counted as unsupported form), each skip reason, the under-2 rule, match order, path-only route matching, scrubbed step text, deny globs, and e2e files reaching both loaders.
 - **Size:** S–M.
 - **Signal:** the build prints a `flow:` node with ordered steps for a fixture journey and none for a one-step journey; the skip counts name their reasons.
 
@@ -1644,6 +1644,6 @@ endpoints). S-PICK runs after S-ACT and after the model-routing spec's R-5 (the 
 
 **S-PICK**
 - **Goal:** Jev decides keep, merge and attach for the candidates.
-- **Files:** the question builder for the three shapes in their order (keep, merge among the kept, attach with 2 or more options; `none` on every question; owner-decided candidates dropped first), the `product_pick` table and its migration (next free number after 0020; columns `repo`, `key_hash`, `answer`, `confidence`, `model_identity`, `created_at`, `candidate_keys`; the group key over all members' sorted node keys, with the scrubber pattern hash), `sindri context map picks [--repo R] [--clear]` (current repo by default), the scrub and fence, the build step after cluster labeling (as-of builds read hits made at or before the cut only, and never write), pruning only after a build where Jev answered, the unmerged and grouped-review fallback with the source labels, the "Rejected by Jev" list and restore with its states and keyboard path, the 50-group cap for every fallback cause with the next 50 on clear, the build-report row, the status-time kept and rejected share, the per-stage log lines, `docs/csharp/sindri.md` (`context map picks`, the `status --json` fields), `docs/csharp/sindri-ui.md` (the review sections), `PublicAPI.Unshipped.txt` for the new public types, `docs/csharp/sindri-profile.md` (the `context.models.productSurfaces` key, enforced by `check-profile-doc.test.sh`), tests with a contract-tested fake `IChoicePort` (a hit asks 0 questions; one new candidate asks only its own question; a new lookalike re-asks only its group; `unknown` identity misses; a 4th lookalike is regrouped in the same build; leftovers past 3 rounds become a cached `Jev undecided` and an unchanged rebuild with leftovers makes 0 calls; an attach question with 1 option is not asked; a human override beats a cached answer, including a restore; a scrub Blocked candidate is never sent; an as-of build writes no row and ignores an answer newer than its cut; a down Jev prunes nothing; `picks --clear` touches only the current repo).
+- **Files:** the question builder for the three shapes in their order (keep, merge among the kept, attach with 2 or more options; `none` allowed on every question; owner-decided candidates dropped first), the `product_pick` table and its migration (next free number after 0020; columns `repo`, `key_hash`, `answer`, `confidence`, `model_identity`, `created_at`, `candidate_keys`; the group key over all members' sorted node keys, with the scrubber pattern hash), `sindri context map picks [--repo R] [--clear]` (current repo by default), the scrub and fence, the build step after cluster labeling (as-of builds read hits made at or before the cut only, and never write), pruning only after a build where Jev answered, the unmerged and grouped-review fallback with the source labels, the "Rejected by Jev" list and restore with its states and keyboard path, the 50-group cap for every fallback cause with the next 50 on clear, the build-report row, the status-time kept and rejected share, the per-stage log lines, `docs/csharp/sindri.md` (`context map picks`, the `status --json` fields), `docs/csharp/sindri-ui.md` (the review sections), `PublicAPI.Unshipped.txt` for the new public types, `docs/csharp/sindri-profile.md` (the `context.models.productSurfaces` key, enforced by `check-profile-doc.test.sh`), tests with a contract-tested fake `IChoicePort` (a hit asks 0 questions; one new candidate asks only its own question; a new lookalike re-asks only its group; `unknown` identity misses; a 4th lookalike is regrouped in the same build; leftovers past 3 rounds become a cached `Jev undecided` and an unchanged rebuild with leftovers makes 0 calls; an attach question with 1 option is not asked; a human override beats a cached answer, including a restore; a scrub Blocked candidate is never sent; an as-of build writes no row and ignores an answer newer than its cut; a down Jev prunes nothing; `picks --clear` touches only the current repo).
 - **Size:** M.
 - **Signal:** a second build with nothing new makes 0 Jev calls; with Jev off the candidates appear unmerged in `context map review`, grouped per surface (at most 50 groups) with their source, and `context map status` prints the kept and rejected share.
