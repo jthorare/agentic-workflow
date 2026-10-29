@@ -153,10 +153,10 @@ internal sealed class NodePanelViewModel : ObservableObject
     }
 
     /// <summary>True when the system refused to open the source's link, until the next press succeeds or another node opens.</summary>
-    public bool LaunchFailed { get; private set; }   // red: #1712
+    public bool LaunchFailed { get; private set; }
 
     /// <summary>The short line shown when the launch failed: "Couldn't open the link" and the link to copy.</summary>
-    public string LaunchFailedText { get; private set; } = string.Empty;   // red: #1712
+    public string LaunchFailedText { get; private set; } = string.Empty;
 
     /// <summary>Opens the source's link in the system's browser.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
@@ -165,7 +165,10 @@ internal sealed class NodePanelViewModel : ObservableObject
     {
         if (_link is { } link)
         {
-            _ = await Launcher.OpenUri(link, cancellationToken).ConfigureAwait(true);
+            var opened = await Launcher.OpenUri(link, cancellationToken).ConfigureAwait(true);
+            (LaunchFailed, LaunchFailedText) = opened ? (false, string.Empty) : (true, Labels.LaunchFailed(link.AbsoluteUri));
+            OnChanged(nameof(LaunchFailed));
+            OnChanged(nameof(LaunchFailedText));
         }
     }
 
@@ -175,6 +178,7 @@ internal sealed class NodePanelViewModel : ObservableObject
     {
         (Kind, Title, SourceText, Description, _link) = (string.Empty, string.Empty, string.Empty, string.Empty, null);
         Groups = [];
+        (LaunchFailed, LaunchFailedText) = (false, string.Empty);
     }
 
     private void Fill(NodeView view)
@@ -214,7 +218,7 @@ internal sealed class NodePanelViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(OpenSourceName), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups)])
+        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups)])
         {
             OnChanged(name);
         }

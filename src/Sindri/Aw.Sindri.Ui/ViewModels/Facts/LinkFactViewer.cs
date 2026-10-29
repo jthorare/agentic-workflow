@@ -42,6 +42,12 @@ internal sealed class LinkFactViewer : ObservableObject, IFactViewer
     /// <summary>Open's accessible name.</summary>
     public string OpenName { get; }
 
+    /// <summary>True when the system refused the link; cleared by the next press that works.</summary>
+    public bool LaunchFailed { get; private set; }
+
+    /// <summary>"Couldn't open the link" and the link to copy; empty until a launch fails.</summary>
+    public string LaunchFailedText { get; private set; } = string.Empty;
+
     /// <summary>Hands the link to the system. Only an http or https link is opened.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that completes once the system answered.</returns>
@@ -49,7 +55,10 @@ internal sealed class LinkFactViewer : ObservableObject, IFactViewer
     {
         if (CanOpen && Uri.TryCreate(Url, UriKind.Absolute, out var uri))
         {
-            _ = await _launcher.OpenUri(uri, cancellationToken).ConfigureAwait(true);
+            var opened = await _launcher.OpenUri(uri, cancellationToken).ConfigureAwait(true);
+            (LaunchFailed, LaunchFailedText) = opened ? (false, string.Empty) : (true, Labels.LaunchFailed(uri.AbsoluteUri));
+            OnChanged(nameof(LaunchFailed));
+            OnChanged(nameof(LaunchFailedText));
         }
     }
 
