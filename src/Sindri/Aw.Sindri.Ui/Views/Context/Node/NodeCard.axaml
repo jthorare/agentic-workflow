@@ -64,6 +64,10 @@
       <Button x:Name="NodeReject" IsVisible="{Binding CanReview}" Click="OnReject" Content="{Binding RejectWord}" AutomationProperties.Name="{Binding RejectWord}" />
       <Button x:Name="NodeCopyPath" IsVisible="{Binding CanCopyPath}" Click="OnCopyPath" Content="{Binding CopyPathWord}" AutomationProperties.Name="{Binding CopyPathWord}" />
     </StackPanel>
+    <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding HasOpenRow}">
+      <Button x:Name="NodeOpenRecord" IsVisible="{Binding HasLink}" Click="OnOpenRecord" Content="{Binding OpenText}" AutomationProperties.Name="{Binding OpenName}" />
+      <TextBlock x:Name="NodeNoLink" IsVisible="{Binding NoLink}" Classes="caption subtle" Text="{Binding NoLinkText}" VerticalAlignment="Center" />
+    </StackPanel>
     <TextBlock IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes="caption subtle" Text="{Binding Status}" />
   </StackPanel>
 </UserControl>
