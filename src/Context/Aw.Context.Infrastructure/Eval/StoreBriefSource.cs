@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Aw.Context.Core;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Linear;
@@ -9,13 +8,12 @@ using Aw.Kernel;
 namespace Aw.Context.Infrastructure.Eval;
 
 /// <summary>
-/// Briefs from the Sindri-owned record store: the stored Linear issues whose tracker key ('TEAM-n', read from the title the Linear feed
-/// writes, '[TEAM-n] title') names one of the profile's teams, paged through the store so no team's listing is capped. A brief is the
+/// Briefs from the Sindri-owned record store: the stored Linear issues whose tracker key ('TEAM-n', read from the issue's stored linear.app permalink) names one of the profile's teams, paged through the store so no team's listing is capped. A brief is the
 /// stored title and the stored chunks, cleaned again at the ingest boundary. The store keeps no content history (a record holds its latest
 /// text under its latest 'updatedAt'), so an issue edited after its creation is leaky, as any one-record-per-issue store does; the corpus
 /// labels it from the issue's two dates. It is the eval harness's read, not an arm.
 /// </summary>
-internal sealed partial class StoreBriefSource(IRecordStore store) : IBriefSource
+internal sealed class StoreBriefSource(IRecordStore store) : IBriefSource
 {
     private const int PageSize = 1000;   // the store's own page limit
     private static readonly RecordFilter _issues = new(LinearSourceIds.Issues, Repo: null, RecordKind.Issue);
@@ -90,14 +88,13 @@ internal sealed partial class StoreBriefSource(IRecordStore store) : IBriefSourc
         }
 
         var updated = record.UpdatedAt ?? created;
-        var match = TrackerKey.Match(record.Title);
-        if (!match.Success || !teams.Contains(match.Groups["team"].Value) || (since is { } start && updated < start))
+        if (LinearIdentifiers.FromPermalink(record.Url, teams) is not { } key || (since is { } start && updated < start))
         {
             return null;
         }
 
         var title = scope.Scrubbers.Ingest.Clean(record.Title, singleLine: true);
-        return new BriefIssue(match.Groups["key"].Value, record.Key.Value, record.Version.Value, created, updated, title.Blocked ? string.Empty : title.Text);
+        return new BriefIssue(key, record.Key.Value, record.Version.Value, created, updated, title.Blocked ? string.Empty : $"[{key}] {title.Text}");
     }
 
     private static Error Unavailable(Error cause) =>
@@ -105,7 +102,4 @@ internal sealed partial class StoreBriefSource(IRecordStore store) : IBriefSourc
 
     private static Error NoSource() =>
         ContextErrors.NoBriefSource.With("no configured source can supply issue briefs: needs 'context.sources.linear.teams' in the approved profile (fix: sindri context sources status)");
-
-    [GeneratedRegex("^\\[(?<key>(?<team>[A-Za-z][A-Za-z0-9]*)-[0-9]{1,7})\\]", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex TrackerKey { get; }
 }
