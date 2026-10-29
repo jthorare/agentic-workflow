@@ -33,7 +33,7 @@ internal sealed class RunContextBacktestService(ContextScopes scopes, IContextEn
             return scope.Error;
         }
 
-        var run = await engine.EvalBacktest(new BacktestRequest(scope.Value, arms.Value, request.Since, request.Until, request.Limit, jobs.Current?.Progress), cancellationToken).ConfigureAwait(false);
+        var run = await engine.EvalBacktest(new BacktestRequest(scope.Value with { Job = jobs.Current?.Job.Value }, arms.Value, request.Since, request.Until, request.Limit, jobs.Current?.Progress), cancellationToken).ConfigureAwait(false);
         return run.IsError ? run.Error : Summarize(run.Value);
     }
 
