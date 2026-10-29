@@ -45,6 +45,28 @@ public sealed class IndexSliceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Status_carries_the_stored_count_of_a_source_that_is_re_reading_and_lists_the_projects_feed_as_its_own_row()
+    {
+        await ApproveProfile();
+        _index.Standing =
+        [
+            SourceProgress.From(SourceId.From("linear"), SyncPhase.Recent, lastSync: null, lastCode: null, stored: 1200),
+            SourceProgress.From(SourceId.From("linear-projects"), SyncPhase.Incremental, _now, lastCode: null),
+        ];
+        using var caller = _h.Callers.EnterService("test");
+
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+
+        Assert.True(view.IsSuccess);
+        Assert.Equal(
+            [
+                new IndexSourceRow("linear", "recent", Usable: false, Complete: false, LastSync: null, LastCode: null, ReReading: 1200),
+                new IndexSourceRow("linear-projects", "incremental", Usable: true, Complete: true, _now, LastCode: null),
+            ],
+            view.Value.Sources);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Status_without_an_approved_profile_is_the_profile_error()
     {
         using var caller = _h.Callers.EnterService("test");
