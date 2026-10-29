@@ -85,15 +85,26 @@
       ]
     },
     {
-      "id": "onyx",
-      "title": "Set up Onyx",
-      "state": "skipped",
-      "why": "Docker isn't installed.",
-      "detail": "Install Docker to set up Onyx: https://docs.docker.com/get-docker/",
+      "id": "sources",
+      "title": "Connect your sources",
+      "state": "done",
+      "why": "Every source your profile names is connected.",
+      "detail": "GitHub, Slack.",
       "error": null,
       "action": null,
       "progress": null,
-      "items": []
+      "items": [
+        {
+          "repo": "github",
+          "state": "done",
+          "detail": "connected"
+        },
+        {
+          "repo": "slack",
+          "state": "done",
+          "detail": "connected"
+        }
+      ]
     }
   ],
   "asOf": {

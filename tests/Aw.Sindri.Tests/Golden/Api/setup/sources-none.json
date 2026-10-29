@@ -85,13 +85,13 @@
       ]
     },
     {
-      "id": "onyx",
-      "title": "Set up Onyx",
-      "state": "skipped",
-      "why": "You chose to set up Onyx later.",
-      "detail": "Onyx isn't set up. Use Set up Onyx in the card's menu when you want search.",
+      "id": "sources",
+      "title": "Connect your sources",
+      "state": "todo",
+      "why": "No source is connected yet.",
+      "detail": "Connect GitHub or Slack so Sindri can read your issues and chat.",
       "error": null,
-      "action": "SetupOnyx",
+      "action": "ConnectIndexSource",
       "progress": null,
       "items": []
     }
