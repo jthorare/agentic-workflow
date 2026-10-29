@@ -1,1 +1,0 @@
-{"accepted":{"commandId":"00000000-0000-0000-0000-0000000000c1","sequence":41},"jobId":"JOB-000000000000000000000000000000c1","links":{"job":"/sindri/jobs/JOB-000000000000000000000000000000c1","cancel":"/sindri/jobs/JOB-000000000000000000000000000000c1/cancel","events":"/sindri/events?after=40&types=job.*"}}

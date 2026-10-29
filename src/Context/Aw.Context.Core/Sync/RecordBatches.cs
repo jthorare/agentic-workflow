@@ -37,7 +37,7 @@ public static class RecordBatches
             item.Key, source, item.Kind, item.Repo, item.Audience,
             clean.Blocked || title.Blocked ? item.Key.Value : UntrustedFence.Cap(title.Text),
             item.Url, item.Author, item.State, item.StateRaw, item.CreatedAt, item.UpdatedAt, item.ClosedAt, item.Version,
-            Hash(clean.Text), scrubbers.Ruleset.Value, clean.Blocked, RemovedAt: null, at, item.Links);
+            Hash(clean.Text), scrubbers.Ruleset.Value, clean.Blocked, RemovedAt: null, at, item.Links, item.Health, item.DueAt);
         IReadOnlyList<RecordChunk> chunks = clean.Blocked
             ? []
             : [.. Chunker.Split(clean.Text).Select(c => new RecordChunk(c.Seq, c.Text, c.Tokens, Hash(c.Text), c.LineStart, c.LineEnd))];

@@ -11,8 +11,9 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// <param name="forms">The form check.</param>
 /// <param name="logins">The login probe.</param>
 /// <param name="fixture">The fixture request.</param>
+/// <param name="fixtureLogin">The login the fixture requests carry.</param>
 /// <param name="resume">The parked instances and the free slots.</param>
-internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, ISandboxLoginCheck logins, ISandboxFixture fixture, SandboxResumeList resume) : ISandboxChecks
+internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, ISandboxLoginCheck logins, ISandboxFixture fixture, ISandboxFixtureLogin fixtureLogin, SandboxResumeList resume) : ISandboxChecks
 {
     public async ValueTask<SandboxCheckReport> Run(CancellationToken cancellationToken)
     {
@@ -51,13 +52,25 @@ internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, I
             return null;
         }
 
-        var plan = sandbox.Plan(request);
-        if (plan.IsError)
+        var fixtureLoginPrepared = await fixtureLogin.Prepare(request.Launch, cancellationToken).ConfigureAwait(false);
+        try
         {
-            return SandboxBlocker.Of(plan.Error);
-        }
+            var planned = fixtureLoginPrepared is { } l ? request with { Target = l.Target, Settings = l.Settings, Login = l.Login } : request;
+            var plan = sandbox.Plan(planned);
+            if (plan.IsError)
+            {
+                return SandboxBlocker.Of(plan.Error);
+            }
 
-        var proved = await sandbox.SelfCheck(plan.Value, cancellationToken).ConfigureAwait(false);
-        return proved.IsError ? SandboxBlocker.Of(proved.Error) : null;
+            var proved = await sandbox.SelfCheck(plan.Value, cancellationToken).ConfigureAwait(false);
+            return proved.IsError ? SandboxBlocker.Of(proved.Error) : null;
+        }
+        finally
+        {
+            if (fixtureLoginPrepared is not null)
+            {
+                fixtureLogin.Release(fixtureLoginPrepared.Login);
+            }
+        }
     }
 }

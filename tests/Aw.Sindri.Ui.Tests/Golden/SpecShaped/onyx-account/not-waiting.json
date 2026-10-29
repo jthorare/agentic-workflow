@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "SND-SETUP-006",
-  "status": 409,
-  "detail": "no Onyx setup is waiting for a login (fix: press Set up Onyx first)",
-  "traceId": "<trace>"
-}
