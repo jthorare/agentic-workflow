@@ -92,6 +92,37 @@ internal sealed partial class SqliteRecordStore(ContextDatabase database) : IRec
         }
     }
 
+    public async ValueTask<Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(outcome);
+        var begun = await BeginWrite(cancellationToken).ConfigureAwait(false);
+        if (begun.IsError)
+        {
+            return begun.Error;
+        }
+
+        await using (begun.Value.ConfigureAwait(false))
+        {
+            var saved = await Run(begun.Value, RecordSql.SaveOutcome, c => c.Bind("@source", source.Value).Bind("@at", outcome.At).Bind("@code", outcome.Code), cancellationToken).ConfigureAwait(false);
+            return saved.IsError ? saved.Error : await Finish(begun.Value, deleted: false, saved.Value, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    public async ValueTask<Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken)
+    {
+        var read = await BeginRead(cancellationToken).ConfigureAwait(false);
+        if (read.IsError || read.Value is not { } session)
+        {
+            return read.IsError ? read.Error : Results.Success<SyncOutcome?>(value: null);
+        }
+
+        await using (session.ConfigureAwait(false))
+        {
+            var rows = await SqliteQueries.List(session, new SqlStatement(RecordSql.ReadOutcome, c => c.Bind("@source", source.Value)), RecordMappers.Outcome, cancellationToken).ConfigureAwait(false);
+            return rows.IsError ? ContextDatabase.Translate(rows.Error) : Results.Success(rows.Value.Count == 0 ? null : rows.Value[0]);
+        }
+    }
+
     public async ValueTask<Result<StoreStamps>> Stamps(CancellationToken cancellationToken)
     {
         var read = await BeginRead(cancellationToken).ConfigureAwait(false);

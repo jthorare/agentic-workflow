@@ -17,6 +17,10 @@ internal sealed class VectorRefusingStore(IRecordStore inner) : IRecordStore
 
     public ValueTask<Result<SyncPosition>> Position(SourceId source, CancellationToken cancellationToken) => inner.Position(source, cancellationToken);
 
+    public ValueTask<Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken) => inner.RecordOutcome(source, outcome, cancellationToken);
+
+    public ValueTask<Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken) => inner.LastOutcome(source, cancellationToken);
+
     public ValueTask<Result<int>> PutVectors(IReadOnlyList<VectorWrite> vectors, CancellationToken cancellationToken) => ValueTask.FromResult<Result<int>>(0);
 
     public ValueTask<Result<IReadOnlyList<VectorRow>>> Vectors(VectorSpace space, long afterSeq, int limit, CancellationToken cancellationToken) => inner.Vectors(space, afterSeq, limit, cancellationToken);

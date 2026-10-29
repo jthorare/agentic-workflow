@@ -46,6 +46,19 @@ public interface IRecordStore
     /// <returns>Its position, <see cref="SyncPosition.Start"/> when it never committed.</returns>
     public ValueTask<Result<SyncPosition>> Position(SourceId source, CancellationToken cancellationToken);
 
+    /// <summary>Records how a source's last tick ended, keeping its cursor and phase as they are (a fresh process reads it back through <see cref="LastOutcome"/>).</summary>
+    /// <param name="source">The source.</param>
+    /// <param name="outcome">When the tick ended and the code it ended with, null for success.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Nothing on success.</returns>
+    public ValueTask<Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken);
+
+    /// <summary>Reads how a source's last tick ended.</summary>
+    /// <param name="source">The source.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The outcome, or null when no tick of it was recorded.</returns>
+    public ValueTask<Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken);
+
     /// <summary>Stores vectors. A chunk vector is stored only while its chunk exists with the same text hash, so a batch that finishes after a re-chunk stores nothing for it; a vector for a key and model that has one replaces it with a new 'Seq'.</summary>
     /// <param name="vectors">The vectors.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
