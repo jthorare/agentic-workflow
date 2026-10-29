@@ -12,7 +12,6 @@ namespace Aw.Sindri.Host.Models;
 internal sealed class LabelPickDoctorChecks(IApprovedModels models, Func<string, string?> environment) : IDoctorChecks
 {
     private const string Name = "context:labelpick";
-    private const string KeyVariable = "TYPESAFE_API_KEY";
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
@@ -21,9 +20,8 @@ internal sealed class LabelPickDoctorChecks(IApprovedModels models, Func<string,
             return [new DoctorCheck(Name, CheckState.Ok, "label choice is off", Fix: null)];
         }
 
-        // macOS keeps the key in the keychain, which the judge reads when it is asked; only a box with no variable and no keychain can say the key is missing.
-        return string.IsNullOrEmpty(environment(KeyVariable)) && !OperatingSystem.IsMacOS()
-            ? [new DoctorCheck(Name, CheckState.Warn, "label choice is on, Jev unavailable: labels take the model's first candidate", $"set {KeyVariable} where sindri runs")]
+        return !new JevKey(environment).Present()
+            ? [new DoctorCheck(Name, CheckState.Warn, "label choice is on, Jev unavailable: labels take the model's first candidate", $"set {JevKey.Variable} where sindri runs")]
             : [new DoctorCheck(Name, CheckState.Ok, "label choice is on", Fix: null)];
     }
 }
