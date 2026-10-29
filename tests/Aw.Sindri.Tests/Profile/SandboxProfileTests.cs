@@ -109,6 +109,8 @@ public sealed class SandboxProfileTests : IDisposable
     [InlineData("attended: { wall: never }", "sandbox.attended.wall")]
     [InlineData("network: { groups: { model: [ \"https://x.test\" ] } }", "sandbox.network.groups.model")]
     [InlineData("network: { groups: { \"\": [ a.test ] } }", "sandbox.network.groups")]
+    [InlineData("network: { groups: { model: [ 169.254.169.254 ] } }", "sandbox.network.groups.model")]
+    [InlineData("repos: { web: { hosts: [ 169.254.0.1 ] } }", "sandbox.repos.web.hosts")]
     [InlineData("fs: { homeAllow: [ { path: /etc } ] }", "sandbox.fs.homeAllow")]
     [InlineData("fs: { denyExtra: [ relative/path ] }", "sandbox.fs.denyExtra")]
     [InlineData("repos: { web: { groups: [ \"\" ] } }", "sandbox.repos.web.groups")]
