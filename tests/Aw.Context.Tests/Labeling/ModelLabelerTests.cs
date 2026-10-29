@@ -116,13 +116,13 @@ public sealed class ModelLabelerTests
     [Fact]
     public async Task A_model_call_that_fails_after_an_answered_batch_keeps_that_batchs_labels_and_says_incomplete()
     {
-        var many = Enumerable.Range(0, 60).Select(i => Cluster(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"c{i}"), string.Create(System.Globalization.CultureInfo.InvariantCulture, $"src/f{i}/a.ts"))).ToList();
-        var model = new AnswersOnceThenFails("""[{"id":"c0","label":"Zero"},{"id":"c7","label":"Seven"}]""");
+        var many = Enumerable.Range(0, 60).Select(i => Cluster(string.Create(System.Globalization.CultureInfo.InvariantCulture, $"c{i:D2}"), string.Create(System.Globalization.CultureInfo.InvariantCulture, $"src/f{i}/a.ts"))).ToList();   // zero-padded: packs are in id order, so c00 to c49 are the first pack
+        var model = new AnswersOnceThenFails("""[{"id":"c00","label":"Zero"},{"id":"c07","label":"Seven"}]""");
 
         var pass = await Labeler(model).Label(many, [], 10_000, options: null, Ct);
 
         Assert.True(pass.IsSuccess, pass.IsError ? pass.Error.Message : null);
-        Assert.Equal([("c0", "Zero"), ("c7", "Seven")], pass.Value.Labels.Select(l => (l.Id.Value, l.Label)));
+        Assert.Equal([("c00", "Zero"), ("c07", "Seven")], pass.Value.Labels.Select(l => (l.Id.Value, l.Label)));
         Assert.False(pass.Value.Complete);
     }
 
