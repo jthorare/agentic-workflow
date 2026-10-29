@@ -12,6 +12,9 @@ internal sealed record PullSlackRequest(IReadOnlyList<SlackChannelRef> Channels,
     /// <summary>Gets where a channel with no watermark starts (the index window, D12); null reads the whole channel.</summary>
     public DateTimeOffset? WindowStart { get; init; }
 
+    /// <summary>Gets the instant the pull started (the connector's clock); null skips moving the replies mark to a cutoff.</summary>
+    public DateTimeOffset? Now { get; init; }
+
     /// <summary>Gets the instant the read stops before (a Backfill's upper bound): roots at or after it are not read, and no replies are read for them; null is no bound.</summary>
     public DateTimeOffset? Before { get; init; }
 }

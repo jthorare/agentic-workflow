@@ -20,6 +20,9 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
     private DateTimeOffset? _repliesBudgetUntil;
     private int _repliesCalls;
 
+    /// <summary>Gets or sets a callback run with the thread ts just before a thread read is served, so a test can add a message between a history scan and the thread read (a race); null runs nothing.</summary>
+    public Action<string>? BeforeReplies { get; set; }
+
     /// <summary>The reads made, in order: 'history {channel} {oldest}', 'replies {channel} {ts}', 'probe {channel}'.</summary>
     public IReadOnlyList<string> Reads => _reads;
 
@@ -109,6 +112,7 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
         }
 
         _reads.Add($"replies {channel} {threadTs}");
+        BeforeReplies?.Invoke(threadTs);
         return ValueTask.FromResult(Page(LimitOf(_repliesLimits, channel), () => _store.Thread(channel, threadTs)));
     }
 

@@ -290,9 +290,9 @@ static Aw.Connectors.Core.Slack.SlackChannelRef.operator !=(Aw.Connectors.Core.S
 static Aw.Connectors.Core.Slack.SlackChannelRef.operator ==(Aw.Connectors.Core.Slack.SlackChannelRef? left, Aw.Connectors.Core.Slack.SlackChannelRef? right) -> bool
 Aw.Connectors.Core.Slack.SlackMessage
 Aw.Connectors.Core.Slack.SlackMessage.<Clone>$() -> Aw.Connectors.Core.Slack.SlackMessage!
-Aw.Connectors.Core.Slack.SlackMessage.Deconstruct(out string! Ts, out string? ThreadTs, out string? Author, out string! Text, out int ReplyCount, out string? Subtype) -> void
+Aw.Connectors.Core.Slack.SlackMessage.Deconstruct(out string! Ts, out string? ThreadTs, out string? Author, out string! Text, out int ReplyCount, out string? Subtype, out string? LatestReply) -> void
 Aw.Connectors.Core.Slack.SlackMessage.Equals(Aw.Connectors.Core.Slack.SlackMessage? other) -> bool
-Aw.Connectors.Core.Slack.SlackMessage.SlackMessage(string! Ts, string? ThreadTs, string? Author, string! Text, int ReplyCount, string? Subtype) -> void
+Aw.Connectors.Core.Slack.SlackMessage.SlackMessage(string! Ts, string? ThreadTs, string? Author, string! Text, int ReplyCount, string? Subtype, string? LatestReply = null) -> void
 Aw.Connectors.Core.Slack.SlackMessage.Ts.get -> string!
 Aw.Connectors.Core.Slack.SlackMessage.Ts.init -> void
 Aw.Connectors.Core.Slack.SlackMessage.ThreadTs.get -> string?
@@ -305,6 +305,8 @@ Aw.Connectors.Core.Slack.SlackMessage.ReplyCount.get -> int
 Aw.Connectors.Core.Slack.SlackMessage.ReplyCount.init -> void
 Aw.Connectors.Core.Slack.SlackMessage.Subtype.get -> string?
 Aw.Connectors.Core.Slack.SlackMessage.Subtype.init -> void
+Aw.Connectors.Core.Slack.SlackMessage.LatestReply.get -> string?
+Aw.Connectors.Core.Slack.SlackMessage.LatestReply.init -> void
 override Aw.Connectors.Core.Slack.SlackMessage.Equals(object? obj) -> bool
 override Aw.Connectors.Core.Slack.SlackMessage.GetHashCode() -> int
 override Aw.Connectors.Core.Slack.SlackMessage.ToString() -> string!
@@ -348,6 +350,8 @@ Aw.Connectors.Core.Slack.SlackCursor
 const Aw.Connectors.Core.Slack.SlackCursor.NothingReadText = "-" -> string!
 Aw.Connectors.Core.Slack.SlackCursor.Newest(string! channel) -> string?
 Aw.Connectors.Core.Slack.SlackCursor.Pass(string! channel) -> Aw.Connectors.Core.Slack.SlackPass?
+Aw.Connectors.Core.Slack.SlackCursor.RepliesMark(string! channel) -> string?
+Aw.Connectors.Core.Slack.SlackCursor.WithRepliesMark(string! channel, string! ts) -> Aw.Connectors.Core.Slack.SlackCursor!
 Aw.Connectors.Core.Slack.SlackCursor.ToText() -> string!
 Aw.Connectors.Core.Slack.SlackCursor.WithPass(string! channel, Aw.Connectors.Core.Slack.SlackPass! pass) -> Aw.Connectors.Core.Slack.SlackCursor!
 Aw.Connectors.Core.Slack.SlackCursor.With(string! channel, string! ts) -> Aw.Connectors.Core.Slack.SlackCursor!
