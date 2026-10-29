@@ -5498,3 +5498,6 @@ static Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.operator !=(Aw.Sin
 static Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.operator ==(Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest? left, Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.operator !=(Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? left, Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? right) -> bool
 static Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.operator ==(Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? left, Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? right) -> bool
+Aw.Sindri.Features.Leftovers.OnyxLeftovers
+static Aw.Sindri.Features.Leftovers.OnyxLeftovers.Find(string! home, Aw.Sindri.Core.Leftovers.IPurgeDocker! docker, Aw.Sindri.Core.Leftovers.ILeftoverFiles! files) -> Aw.Kernel.Result<Aw.Sindri.Core.Leftovers.PurgePlan!>!
+static Aw.Sindri.Features.Leftovers.OnyxLeftovers.ProjectNameFor(string! sindriHome) -> string!
