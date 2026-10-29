@@ -6,7 +6,7 @@ using Aw.Kernel.Data;
 
 namespace Aw.Context.Infrastructure.Records;
 
-/// <summary>Who the owner is in each source, in context.db (migration 0020_project_fields): one 'source_identity' row per source.</summary>
+/// <summary>Who the owner is in each source, in context.db (migration 0020_s4_project_fields): one 'source_identity' row per source.</summary>
 internal sealed class SqliteSourceIdentityStore(ContextDatabase database) : ISourceIdentityStore
 {
     public async ValueTask<Result<SourceIdentity?>> Read(SourceId source, CancellationToken cancellationToken)
