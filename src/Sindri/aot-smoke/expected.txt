@@ -23,7 +23,7 @@ ok    context:index-ollama not configured (no profile is approved)
 ok    context:index-sync not configured (no profile is approved)
 ok    launcher:adoption no opens in the last 30 days
 ok    pr-watch          the watcher has not run yet
-warn  setup             not finished: profile (needs-you), recipes (todo), mcp (todo), map (todo), onyx (todo) (fix: sindri profile approve <hash>)
+warn  setup             not finished: profile (needs-you), recipes (todo), mcp (todo), map (todo), sources (todo) (fix: sindri profile approve <hash>)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
 ok    model:pick        model choice is off
 ok    forge:credential  no forge configured
@@ -244,7 +244,7 @@ ok    context:index-ollama not configured (no record source, so nothing to embed
 ok    context:index-sync not configured (no record source, so nothing syncs)
 ok    launcher:adoption no opens in the last 30 days
 ok    pr-watch          the watcher's last run was ok
-warn  setup             not finished: recipes (needs-you), mcp (todo), map (todo), onyx (todo) (fix: sindri recipe approve-all)
+warn  setup             not finished: recipes (needs-you), mcp (todo), map (todo), sources (todo) (fix: sindri recipe approve-all)
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 ok    setup:token       WORK/home/auth/human.token can be read by you alone
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))

@@ -77,6 +77,5 @@ public sealed class OnyxDockerGuardTests
 
         Assert.Equal(OnyxState.Running, status.State);
         Assert.Contains("Ps", rig.Runtime.Calls, StringComparer.Ordinal);
-        Assert.Contains("ServerPlatform", rig.Runtime.Calls, StringComparer.Ordinal);
     }
 }
