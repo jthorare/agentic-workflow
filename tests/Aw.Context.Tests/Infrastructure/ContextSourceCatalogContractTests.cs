@@ -1,6 +1,5 @@
 using Aw.Context.Core.Docs;
 using Aw.Context.Infrastructure.Linear;
-using Aw.Context.Infrastructure.Onyx;
 using Aw.Context.Infrastructure.Sources;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Tests.Onyx;
@@ -20,6 +19,5 @@ public sealed class ContextSourceCatalogContractTests : SourceCatalogContract<IS
     }
 
     protected override ISourceCatalog Create() => new ContextSourceCatalog(_home.Database, _home.Git, _home.Clock,
-        new OnyxSources(new OnyxSourceParts(_http, static _ => null, _home.Clock, new CapturingLogger<OnyxClient>())),
         new LinearSources(new LinearSourceParts(_http, static _ => null, _home.Clock, new CapturingLogger<LinearClient>())));
 }

@@ -514,8 +514,8 @@ The goldens under `tests/Aw.Sindri.Tests/Golden/Api/context-*/` pin every body b
   `OnyxRoute` (the allowlist), `OnyxVersionProbe`, the wire records and their own `OnyxWireJsonContext`, and
   `OnyxSources.Create(OnyxSettings, IReadOnlySet<string> teams)`, the per-call factory registered by
   `AddContextInfrastructure`.
-- `Aw.Context.Infrastructure.Sources.ContextSourceCatalog` replaces S-1A's repo-docs catalog: repo-docs, then onyx when
-  the profile names it; no repo in scope gives no source (`SourceCatalogContract`).
+- `Aw.Context.Infrastructure.Sources.ContextSourceCatalog` replaces S-1A's repo-docs catalog: repo-docs, then linear when
+  the profile names a token; it builds no onyx source (the 'context.sources.onyx' key is ignored there); no repo in scope gives no source (`SourceCatalogContract`).
 - Sindri: `Composition` passes `ContextEnvironment(environment)` to `AddContextInfrastructure`, which resolves a name
   that is a secret pointer through `ISecretPointers` (`SecretPointerEnvironment`); every other name reads the real
   environment. Doctor's `context:onyx` is `OnyxDoctor` in the `RunDoctor` slice, the third row of `ContextEngineChecks` (after
