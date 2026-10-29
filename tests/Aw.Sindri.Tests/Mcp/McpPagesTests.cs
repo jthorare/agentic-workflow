@@ -140,7 +140,7 @@ public sealed class McpPagesTests
     [Fact, Trait("Lane", "unit")]
     public void Degraded_sources_are_a_warning_and_survive_every_window()
     {
-        var answer = Json("""{ "degraded": [{"source":"onyx"}, {"source":"linear"}], "suggestedAnchors": ["a", "b"] }""");
+        var answer = Json("""{ "degraded": [{"source":"slack"}, {"source":"linear"}], "suggestedAnchors": ["a", "b"] }""");
 
         var past = McpPages.Apply(answer, new McpWindow(Limit: 1, Offset: 1));
 
