@@ -253,7 +253,7 @@ S3 and S5 start together as two builders; S4 starts when S3 merges; S6 and S7 st
 11. **(#1372) A file under two pins.** Two pins' globs can both match one file. *Recommend the first pin in the profile list wins for homing, and `sindri doctor` warns on a pin pair whose globs overlap on real files.*
 12. **(#1372) Roll up to derived concepts too?** Derived concepts (the unpinned remainder, grouped by area) are rebuilt every build and renumber as the map grows. *Recommend roll-up edges for pinned concepts only; derived ones stay `belongs-to` groupings.*
 13. **(#1372) A hand-declared edge the code doesn't show, or the code shows and nobody declared.** *Recommend both are build-report notes, never a refusal and never an edge removed: "declared, not observed" and "observed, not declared".*
-14. **(#1372) The rest of the issue.** Pin ids on code-index rows, `concept=` on `context_query`, `aliases`, and counting pins against `MaxConcepts` are not designed here (§10 non-goals). *Recommend separate designs: they touch the code index and query surface, not the map build.*
+14. **(#1372) The rest of the issue.** Pin ids on code-index rows, `concept=` on `context_query`, `aliases`, and counting pins against `MaxConcepts` are not designed here (§10 non-goals). *Recommend separate designs: they touch the code index and query surface, not the map build.* Designed in `2026-10-29-sindri-concept-pins-query-design.md`; the `MaxConcepts` cap no longer exists in the code, so that part is dropped there (its N2).
 15. **(#1373) Which directory docs, and how far down.** A doc links to the home feature at its directory and the module's group features above it, not every feature below it (a root `README.md` would otherwise link to everything). *Recommend that, with the doc names configurable per repo (`AGENTS.md`, `README.md`, `CONTEXT.md` by default).*
 16. **(#1373) Docs enter the build or the read-time overlay?** *Recommend the build (§11): a doc-to-feature link that is structural belongs in the map version, so it is reviewed, versioned and cut by deny globs like any node.*
 17. **(#1372) Pins in feature lenses.** Adding `Concept` to the lens's product kinds shows a feature's pin next to its neighbors. *Recommend yes: it is the walkable layer #1350 took away, and the counts change is stated.*
@@ -316,7 +316,7 @@ A pin boundary inside a directory splits only the leaves that span it; a leaf wh
 
 ### 10.5 Non-goals here
 
-Pin ids on code-index rows, a `concept=` filter on `context_query`, pin `aliases` for query expansion and the glossary, and counting pins against `MaxConcepts` (`ConceptPlan.cs:10`) are the rest of #1372. They touch the code index and the query surface, not the map build, and are separate designs (Open question 14).
+Pin ids on code-index rows, a `concept=` filter on `context_query`, pin `aliases` for query expansion and the glossary, and counting pins against `MaxConcepts` (`ConceptPlan.cs:10`) are the rest of #1372. They touch the code index and the query surface, not the map build, and are separate designs (Open question 14). They are now `2026-10-29-sindri-concept-pins-query-design.md`, which drops the `MaxConcepts` part (the cap is gone from `ConceptPlan`).
 
 ## 11. Records linked to features (#1373)
 
