@@ -48,7 +48,7 @@ public sealed class SindriApiClientProjectsTests
         var led = list.Projects[0];
         Assert.Equal(("led", true, "atRisk", "2026-01-31", 12), (led.Origin, led.Lead!.You, led.Health, led.Target, led.OpenIssues));
         var attached = list.Projects.Single(p => p.Origin == "attached");
-        Assert.Equal(("Waiting on the vendor", "Sam Lee", 2), (attached.Note, attached.Lead!.Name, attached.Links.Count));
+        Assert.Equal(("Waiting on the vendor", "Sam Lee", 2), (attached.Notes, attached.Lead!.Name, attached.Links.Count));
         Assert.Null(list.Projects.Single(p => p.Origin == "handMade").Lead);
         _ = Assert.Single(list.Finished);
         Assert.True(list.Finished[0].FinishedAt is not null);
@@ -61,7 +61,7 @@ public sealed class SindriApiClientProjectsTests
     {
         var one = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("projects-id", "attached"))).Project(_api, "prj_0000000000000000000000000H", Token)).Value;
 
-        Assert.Equal(("Mobile app", "Waiting on the vendor", false), (one.Project.Name, one.Project.Note, one.Hidden));
+        Assert.Equal(("Mobile app", "Waiting on the vendor", false), (one.Project.Name, one.Project.Notes, one.Hidden));
     }
 
     private sealed class Canned(HttpStatusCode code, string body) : HttpMessageHandler

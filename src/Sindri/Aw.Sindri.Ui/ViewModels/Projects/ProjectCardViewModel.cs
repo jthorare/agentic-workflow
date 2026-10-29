@@ -105,7 +105,7 @@ internal sealed class ProjectCardViewModel : ObservableObject
             : Card.OpenIssues is { } issues ? (issues.ToString(CultureInfo.InvariantCulture), "open issues") : (null, null);
         PrsValue = Card.OpenPrs?.ToString(CultureInfo.InvariantCulture);
         OnChanged(nameof(HasCounts));
-        NotesFace = Face(Card.Note);
+        NotesFace = Face(Card.Notes);
         IsGone = !Card.Synced;
         Footer = Parts();
         OnChanged(nameof(FooterText));

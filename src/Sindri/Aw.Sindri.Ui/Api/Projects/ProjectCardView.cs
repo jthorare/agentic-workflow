@@ -18,7 +18,7 @@ namespace Aw.Sindri.Ui.Api.Projects;
 /// <param name="FinishedAt">When it became Done or Canceled; null while open.</param>
 /// <param name="Repos">The repos of linked PRs; empty until the PR count ships.</param>
 /// <param name="Links">The links.</param>
-/// <param name="Note">The owner's one line, or null. Becomes Notes when the API's notes field lands.</param>
+/// <param name="Notes">The owner's notes (free text, line breaks kept), or null.</param>
 /// <param name="Synced">False for an attached project the store no longer holds.</param>
 /// <param name="Version">The version a write sends.</param>
 internal sealed record ProjectCardView(
@@ -39,6 +39,6 @@ internal sealed record ProjectCardView(
     DateTimeOffset? FinishedAt,
     IReadOnlyList<string> Repos,
     IReadOnlyList<ProjectLinkView> Links,
-    string? Note, // becomes Notes when the API's notes field lands
+    string? Notes,
     bool Synced,
     long Version);
