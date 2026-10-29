@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Aw.Kernel;
+using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Features.AttachProject;
 
@@ -24,5 +25,8 @@ internal sealed record AttachProjectBody(
 {
     /// <summary>The request; SND-PROJECT-004 when 'notes' and 'note' disagree.</summary>
     /// <returns>The request, or the refusal.</returns>
-    internal Result<AttachProjectRequest> ToRequest() => new AttachProjectRequest(Linear, Name, State, Links, Notes, Target);
+    internal Result<AttachProjectRequest> ToRequest() =>
+        ProjectDecisions.NotesAliasConflict(Notes, Note) is { } conflict
+            ? conflict
+            : new AttachProjectRequest(Linear, Name, State, Links, Notes ?? Note, Target);
 }

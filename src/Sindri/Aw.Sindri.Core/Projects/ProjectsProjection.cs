@@ -45,7 +45,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(recorded);
         var at = recorded.Envelope.OccurredAt;
         return new ProjectAttachedRow(
-            attached.Id, attached.Linear, attached.Name, attached.State, attached.Links, attached.Notes, attached.Target,
+            attached.Id, attached.Linear, attached.Name, attached.State, attached.Links, attached.Notes ?? attached.Note, attached.Target,
             Version: 1, at, IsFinished(attached.State) ? at : default(DateTimeOffset?), at, recorded.Sequence);
     }
 
@@ -66,7 +66,7 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
             Name = changed.Name ?? row.Name,
             State = state,
             Links = changed.Links ?? row.Links,
-            Notes = changed.ClearNotes ? null : changed.Notes ?? row.Notes,
+            Notes = NotesAfter(row, changed),
             Target = changed.ClearTarget ? null : changed.Target ?? row.Target,
             Version = changed.Version,
             FinishedAt = FinishedAt(row, state, at),
@@ -74,6 +74,10 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
             Sequence = recorded.Sequence,
         };
     }
+
+    // events written before notes was renamed carry 'note' and 'clearNote' (owner q158): read them as the same field
+    private static string? NotesAfter(ProjectAttachedRow row, ProjectChanged changed) =>
+        changed.ClearNotes || changed.ClearNote ? null : changed.Notes ?? changed.Note ?? row.Notes;
 
     // finished_at is when the event that set Done or Canceled was recorded: kept while the state stays, moved when it changes between the two, null once it leaves them
     private static DateTimeOffset? FinishedAt(ProjectAttachedRow row, ProjectState? state, DateTimeOffset at) =>

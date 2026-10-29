@@ -36,5 +36,7 @@ internal sealed record ChangeProjectBody(
     /// <param name="project">The route's project.</param>
     /// <returns>The request, or SND-PROJECT-004 when 'notes' and 'note' disagree.</returns>
     internal Result<ChangeProjectRequest> ToRequest(ProjectId project) =>
-        new ChangeProjectRequest(project, Version, new ProjectEdit(Name, State, ClearState, Links, Notes, ClearNotes, Target, ClearTarget));
+        ProjectDecisions.NotesAliasConflict(Notes, Note) is { } conflict
+            ? conflict
+            : new ChangeProjectRequest(project, Version, new ProjectEdit(Name, State, ClearState, Links, Notes ?? Note, ClearNotes || ClearNote, Target, ClearTarget));
 }

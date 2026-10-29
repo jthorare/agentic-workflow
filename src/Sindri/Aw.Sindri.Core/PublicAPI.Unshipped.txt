@@ -21040,7 +21040,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 22 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 23 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -21353,6 +21353,5 @@ Aw.Sindri.Core.Projects.ProjectEdit.Deconstruct(out string? Name, out Aw.Sindri.
 Aw.Sindri.Core.Projects.ProjectEdit.Notes.get -> string?
 Aw.Sindri.Core.Projects.ProjectEdit.Notes.init -> void
 Aw.Sindri.Core.Projects.ProjectEdit.ProjectEdit(string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, bool ClearState = false, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Notes = null, bool ClearNotes = false, System.DateOnly? Target = null, bool ClearTarget = false) -> void
-const Aw.Sindri.Core.Views.ViewSchema.Version = 22 -> int
 static Aw.Sindri.Core.Projects.ProjectDecisions.NotesAliasConflict(string? notes, string? note) -> Aw.Kernel.Error?
 static Aw.Sindri.Core.Projects.ProjectText.Notes(string? notes, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> string?

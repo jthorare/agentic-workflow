@@ -11,7 +11,7 @@ namespace Aw.Sindri.Core.Projects;
 public static partial class ProjectDecisions
 {
     private const int NameMax = 200;
-    private const int NotesMax = 200;
+    private const int NotesMax = 16384;
     private const int LinksMax = 10;
     private const string StaleText = "This project changed since you read it. Read it again and retry.";
 
@@ -122,7 +122,10 @@ public static partial class ProjectDecisions
     /// <param name="notes">The 'notes' field, or null.</param>
     /// <param name="note">The 'note' alias, or null. The alias is removed one release after the notes field ships (owner q158).</param>
     /// <returns>The error, or null when at most one was sent or both agree.</returns>
-    public static Error? NotesAliasConflict(string? notes, string? note) => throw new NotSupportedException();
+    public static Error? NotesAliasConflict(string? notes, string? note) =>
+        notes is not null && note is not null && !string.Equals(notes, note, StringComparison.Ordinal)
+            ? Invalid("notes", "notes and its old name note were both sent with different values (send notes)")
+            : null;
 
     private static Error Stale() => SindriErrors.ProjectConflict.With(StaleText);
 
@@ -177,7 +180,6 @@ public static partial class ProjectDecisions
     private static Error? NotesError(string? notes) =>
         notes is null ? null
         : notes.Length > NotesMax ? Invalid("notes", string.Create(CultureInfo.InvariantCulture, $"is {notes.Length} characters (at most {NotesMax})"))
-        : notes.Contains('\n', StringComparison.Ordinal) || notes.Contains('\r', StringComparison.Ordinal) ? Invalid("notes", "must be one line")
         : null;
 
     private static Error? LinksError(IReadOnlyList<string>? links)
