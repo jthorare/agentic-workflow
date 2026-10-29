@@ -4804,7 +4804,7 @@ const Aw.Context.Core.Eval.MapQuality.MapQualityBars.UnmappedRate = 0.2 -> doubl
 const Aw.Context.Core.Eval.MapQuality.MapQualityReport.CurrentSchemaVersion = 1 -> int
 const Aw.Context.Core.Eval.ProbeReport.CurrentSchemaVersion = 1 -> int
 const Aw.Context.Core.Eval.ProbeScoring.K = 5 -> int
-const Aw.Context.Core.Extract.MapExtractor.Version = 5 -> int
+const Aw.Context.Core.Extract.MapExtractor.Version = 7 -> int
 const Aw.Context.Core.Graph.EntryKey.Version = 1 -> int
 const Aw.Context.Core.Graph.GraphWalk.MaxDepth = 8 -> int
 const Aw.Context.Core.History.HistoryRules.ChangesPerRepo = 2147483646 -> int
@@ -9284,3 +9284,61 @@ static Aw.Context.Core.Records.SourceViewer.operator ==(Aw.Context.Core.Records.
 static readonly Aw.Context.Core.Linear.LinearSourceIds.Identity -> Aw.Context.Core.Sources.SourceId
 static readonly Aw.Context.Core.Linear.LinearSourceIds.Issues -> Aw.Context.Core.Sources.SourceId
 static readonly Aw.Context.Core.Linear.LinearSourceIds.Projects -> Aw.Context.Core.Sources.SourceId
+Aw.Context.Core.Results.DecisionReport
+Aw.Context.Core.Results.DecisionReport.<Clone>$() -> Aw.Context.Core.Results.DecisionReport!
+Aw.Context.Core.Results.DecisionReport.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources) -> void
+Aw.Context.Core.Results.DecisionReport.Equals(Aw.Context.Core.Results.DecisionReport? other) -> bool
+Aw.Context.Core.Results.DecisionReport.Sources.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>!
+Aw.Context.Core.Results.DecisionReport.Sources.init -> void
+Aw.Context.Core.Results.DecisionReport.DecisionReport(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources) -> void
+Aw.Context.Core.Results.SourceDecisions
+Aw.Context.Core.Results.SourceDecisions.<Clone>$() -> Aw.Context.Core.Results.SourceDecisions!
+Aw.Context.Core.Results.SourceDecisions.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out int Looked, out int Decisions, out string? Code) -> void
+Aw.Context.Core.Results.SourceDecisions.Equals(Aw.Context.Core.Results.SourceDecisions? other) -> bool
+Aw.Context.Core.Results.SourceDecisions.Code.get -> string?
+Aw.Context.Core.Results.SourceDecisions.Code.init -> void
+Aw.Context.Core.Results.SourceDecisions.Decisions.get -> int
+Aw.Context.Core.Results.SourceDecisions.Decisions.init -> void
+Aw.Context.Core.Results.SourceDecisions.Looked.get -> int
+Aw.Context.Core.Results.SourceDecisions.Looked.init -> void
+Aw.Context.Core.Results.SourceDecisions.Source.get -> Aw.Context.Core.Sources.SourceId
+Aw.Context.Core.Results.SourceDecisions.Source.init -> void
+Aw.Context.Core.Results.SourceDecisions.SourceDecisions(Aw.Context.Core.Sources.SourceId Source, int Looked, int Decisions, string? Code) -> void
+Aw.Context.Core.Sync.IIndexSync.Decide(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Results.DecisionReport!>!>
+override Aw.Context.Core.Results.DecisionReport.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.DecisionReport.GetHashCode() -> int
+override Aw.Context.Core.Results.DecisionReport.ToString() -> string!
+override Aw.Context.Core.Results.SourceDecisions.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.SourceDecisions.GetHashCode() -> int
+override Aw.Context.Core.Results.SourceDecisions.ToString() -> string!
+static Aw.Context.Core.Results.DecisionReport.operator !=(Aw.Context.Core.Results.DecisionReport? left, Aw.Context.Core.Results.DecisionReport? right) -> bool
+static Aw.Context.Core.Results.DecisionReport.operator ==(Aw.Context.Core.Results.DecisionReport? left, Aw.Context.Core.Results.DecisionReport? right) -> bool
+static Aw.Context.Core.Results.SourceDecisions.operator !=(Aw.Context.Core.Results.SourceDecisions? left, Aw.Context.Core.Results.SourceDecisions? right) -> bool
+static Aw.Context.Core.Results.SourceDecisions.operator ==(Aw.Context.Core.Results.SourceDecisions? left, Aw.Context.Core.Results.SourceDecisions? right) -> bool
+Aw.Context.Core.Extract.Journeys
+Aw.Context.Core.Extract.JourneySkips
+Aw.Context.Core.Extract.JourneySkips.<Clone>$() -> Aw.Context.Core.Extract.JourneySkips!
+Aw.Context.Core.Extract.JourneySkips.Deconstruct(out int UnsupportedForm, out int NoMatch, out int Denied, out int OverSizeCap, out int OverFileCap) -> void
+Aw.Context.Core.Extract.JourneySkips.Denied.get -> int
+Aw.Context.Core.Extract.JourneySkips.Denied.init -> void
+Aw.Context.Core.Extract.JourneySkips.Equals(Aw.Context.Core.Extract.JourneySkips? other) -> bool
+Aw.Context.Core.Extract.JourneySkips.JourneySkips(int UnsupportedForm, int NoMatch, int Denied, int OverSizeCap, int OverFileCap) -> void
+Aw.Context.Core.Extract.JourneySkips.NoMatch.get -> int
+Aw.Context.Core.Extract.JourneySkips.NoMatch.init -> void
+Aw.Context.Core.Extract.JourneySkips.OverFileCap.get -> int
+Aw.Context.Core.Extract.JourneySkips.OverFileCap.init -> void
+Aw.Context.Core.Extract.JourneySkips.OverSizeCap.get -> int
+Aw.Context.Core.Extract.JourneySkips.OverSizeCap.init -> void
+Aw.Context.Core.Extract.JourneySkips.UnsupportedForm.get -> int
+Aw.Context.Core.Extract.JourneySkips.UnsupportedForm.init -> void
+Aw.Context.Core.Extract.MapExtraction.Skips.get -> Aw.Context.Core.Extract.JourneySkips!
+Aw.Context.Core.Extract.MapExtraction.Skips.init -> void
+const Aw.Context.Core.Extract.Journeys.MaxFiles = 500 -> int
+override Aw.Context.Core.Extract.JourneySkips.Equals(object? obj) -> bool
+override Aw.Context.Core.Extract.JourneySkips.GetHashCode() -> int
+override Aw.Context.Core.Extract.JourneySkips.ToString() -> string!
+static Aw.Context.Core.Extract.Journeys.Cap(System.Collections.Generic.IEnumerable<string!>! paths) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Context.Core.Extract.Journeys.IsJourney(string! path) -> bool
+static Aw.Context.Core.Extract.JourneySkips.None.get -> Aw.Context.Core.Extract.JourneySkips!
+static Aw.Context.Core.Extract.JourneySkips.operator !=(Aw.Context.Core.Extract.JourneySkips? left, Aw.Context.Core.Extract.JourneySkips? right) -> bool
+static Aw.Context.Core.Extract.JourneySkips.operator ==(Aw.Context.Core.Extract.JourneySkips? left, Aw.Context.Core.Extract.JourneySkips? right) -> bool

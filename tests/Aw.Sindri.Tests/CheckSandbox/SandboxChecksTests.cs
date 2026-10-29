@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.CheckSandbox;
@@ -23,7 +24,7 @@ public sealed class SandboxChecksTests
         SandboxBlocker.Of(SandboxRefusal.For(error, reason, source: source));
 
     private static SandboxChecks Checks(ISandbox sandbox, SandboxBlocker[]? forms = null, SandboxBlocker[]? logins = null, SandboxRequest? fixture = null, ParkedOnSandbox[]? parked = null, int free = 3, SandboxRequest? writeScope = null) =>
-        new(sandbox, new Blockers(forms ?? []), new Blockers(logins ?? []), new Fixture(fixture, writeScope), new SandboxResumeList(new Parks(parked ?? []), new Slots(free)));
+        new(sandbox, new Blockers(forms ?? []), new Blockers(logins ?? []), new Fixture(fixture, writeScope), new NoFixtureLogin(), new SandboxResumeList(new Parks(parked ?? []), new Slots(free)));
 
     [Fact]
     public async Task A_box_with_no_mechanism_and_a_bad_form_and_a_missing_login_reports_all_three_at_once()
@@ -122,6 +123,15 @@ public sealed class SandboxChecksTests
         var report = await Checks(new PassThroughSandbox(), [form], parked: [new ParkedOnSandbox(Instance(1), _noon)]).Run(Token);
 
         Assert.Empty(report.ReadyToResume);
+    }
+
+    private sealed class NoFixtureLogin : ISandboxFixtureLogin
+    {
+        public ValueTask<FixtureLogin?> Prepare(LaunchId launch, CancellationToken cancellationToken) => ValueTask.FromResult<FixtureLogin?>(null);
+
+        public void Release(PreparedLogin login)
+        {
+        }
     }
 
     private sealed class Blockers(SandboxBlocker[] found) : ISandboxFormCheck, ISandboxLoginCheck
