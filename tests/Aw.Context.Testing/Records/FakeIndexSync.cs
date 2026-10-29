@@ -18,6 +18,10 @@ public sealed class FakeIndexSync : IIndexSync
         ValueTask.FromResult<Result<SyncReport>>(new SyncReport([]));
 
     /// <inheritdoc />
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<DecisionReport>>(new DecisionReport([]));
+
+    /// <inheritdoc />
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<IReadOnlyList<SourceProgress>>>(Standing.ToList());
 

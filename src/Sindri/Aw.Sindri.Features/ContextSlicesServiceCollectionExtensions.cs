@@ -39,7 +39,9 @@ internal static class ContextSlicesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<PurgeIndexSourceRequest>, AcceptAllValidator<PurgeIndexSourceRequest>>().AddCommand<PurgeIndexSourceRequest, IndexPurgeView, PurgeIndexSourceService>();
         return services
             .AddScoped<IScheduledService, IndexSyncService>()
-            .AddSingleton(IndexSyncService.BuiltIn);
+            .AddSingleton(IndexSyncService.BuiltIn)
+            .AddScoped<IScheduledService, IndexDecisionsService>()
+            .AddSingleton(IndexDecisionsService.BuiltIn);
     }
 
     /// <summary>The context engine's slices (stages S-3 and S-4): the review, promote and proposals commands and the reads of the map, lenses, subgraph and filemap.</summary>

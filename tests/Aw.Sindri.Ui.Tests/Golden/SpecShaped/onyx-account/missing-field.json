@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
-  "title": "SND-SETUP-005",
-  "status": 400,
-  "detail": "the Onyx email and password are both needed (fix: enter both)",
-  "traceId": "<trace>"
-}
