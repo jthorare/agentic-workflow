@@ -12,7 +12,9 @@ namespace Aw.Context.Testing.Records;
 /// empty page as 'this phase is finished', so a feed that reads its whole source before it returns anything loses all of it to a rate limit or the time cap, and one that answers a rate limit with an empty page ends the phase. A binding
 /// gives a <see cref="ResumeUpstream"/> holding a source bigger than one pull, and says how many requests a pull may make. The facts: (1) every pull before an interruption returns records and a cursor, within the request bound;
 /// (2) the interrupted pull is an error, never an empty page, and asking again from the last cursor is an error too; (3) after the interruption lifts, pulling from the last returned cursor finishes the source with every record exactly once by key
-/// (a binding names the keys it may repeat) and without asking again for what the returned pages read; (4) the interruption early and late in the source both resume. Cancellation (the time cap) is not driven here yet.
+/// (a binding names the keys it may repeat) and without asking again for what the returned pages read; (4) the interruption early and late in the source both resume.
+/// The same facts hold when the interruption is a <b>cancellation</b> (the feed's time cap, SND-CONTEXT-059) after N requests, early and late: the upstream cancels the pull's token and throws, a pull cancelled mid-way is an error or a throw (never an empty page; any records it
+/// returns are not counted as kept, because the run commits with the same cancelled token), and a fresh token resumes from the last cursor of a pull that finished before the cancel. Progress rests on the bounded pulls, not on salvage.
 /// </summary>
 public abstract class RecordFeedResumeContract
 {
@@ -76,7 +78,7 @@ public abstract class RecordFeedResumeContract
         {
             var run = await Interrupt(point);
 
-            ContractCheck.That(Owner, !string.IsNullOrEmpty(run.Failure.Code), "the interrupted pull is an error with a code");
+            ContractCheck.That(Owner, !string.IsNullOrEmpty(run.Failure?.Code), "the interrupted pull is an error with a code");
             var again = await run.Upstream.Feed.Pull(new RecordPull(run.LastCursor, Limit, NotBefore: null), TestContext.Current.CancellationToken);
             ContractCheck.That(Owner, again.IsError, "asking again from the last cursor while the upstream is still limited is an error, never an empty page");
         }
@@ -131,6 +133,142 @@ public abstract class RecordFeedResumeContract
         ContractCheck.That(Owner, late.Pulls.Sum(static p => p.Items.Count) > early.Pulls.Sum(static p => p.Items.Count), "the late interruption lands after more records than the early one");
         _ = await Resume(early);
         _ = await Resume(late);
+    }
+
+    /// <summary>A pull cancelled mid-way throws or is an error, never an empty page, and every pull before the cancel returns records, a cursor and stays within the request bound. Records a cancelled pull returns are not kept.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public virtual async Task A_pull_cancelled_mid_way_keeps_the_pulls_before_it_and_is_never_an_empty_page()
+    {
+        foreach (var point in await CancelPoints())
+        {
+            var run = await Cancel(point);
+
+            ContractCheck.That(Owner, run.Pulls.Count > 0, $"a pull made progress before the cancel after {N(point)} requests");
+            foreach (var pull in run.Pulls)
+            {
+                ContractCheck.That(Owner, pull.Items.Count > 0, "a pull before the cancel returns records");
+                ContractCheck.That(Owner, !string.IsNullOrEmpty(pull.Cursor.Value), "a pull before the cancel returns a cursor");
+                ContractCheck.That(Owner, pull.Requests <= MaxRequestsPerPull, $"a pull makes at most {N(MaxRequestsPerPull)} upstream requests (made {N(pull.Requests)})");
+            }
+
+            ContractCheck.That(Owner, run.FailedRequests <= MaxRequestsPerPull, $"the cancelled pull makes at most {N(MaxRequestsPerPull)} upstream requests (made {N(run.FailedRequests)})");
+        }
+    }
+
+    /// <summary>After a cancel, a fresh token resumes from the last cursor a finished pull returned: every record once by key, nothing the returned pages read asked again.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public virtual async Task Resuming_with_a_fresh_token_after_a_cancel_finishes_the_source_without_repeating_work()
+    {
+        foreach (var point in await CancelPoints())
+        {
+            var run = await Cancel(point);
+            var resumed = await Resume(run);
+
+            var counts = run.Pulls.SelectMany(static p => p.Items).Concat(resumed.Items).GroupBy(static k => k, StringComparer.Ordinal).ToDictionary(static g => g.Key, static g => g.Count(), StringComparer.Ordinal);
+            foreach (var key in run.Upstream.Keys)
+            {
+                ContractCheck.That(Owner, counts.ContainsKey(key), $"the source's record {key} came (cancel after {N(point)} requests)");
+                ContractCheck.That(Owner, counts[key] == 1 || MayRepeatKey(key), $"the source's record {key} came {N(counts.GetValueOrDefault(key))} times, not once (cancel after {N(point)} requests)");
+            }
+
+            var stray = counts.Keys.Where(k => !run.Upstream.Keys.Contains(k, StringComparer.Ordinal)).ToList();
+            ContractCheck.That(Owner, stray.Count == 0, "no record the source does not hold came: " + string.Join(", ", stray));
+
+            var returned = run.Upstream.Served.Take(run.ServedAtLastReturnedPage).ToHashSet(StringComparer.Ordinal);
+            var again = resumed.Requests.Where(r => returned.Contains(r) && !MayRepeatRequest(r)).ToList();
+            ContractCheck.That(Owner, again.Count == 0, $"the resume asked again for {string.Join("; ", again.Take(3))} (cancel after {N(point)} requests)");
+        }
+    }
+
+    // The cancel points, found by pulling a fresh upstream through uncancelled: the first request of the second pull and of the third (between pulls, what the time cap does to a run that commits page by page), and the middle of the first
+    // later pull that makes two requests or more (after it has read something and before it returns, where a feed could move shared state). The rate-limit points may sit inside the first pull, where a cancel leaves no finished pull to resume from.
+    private async Task<int[]> CancelPoints()
+    {
+        var upstream = Create();
+        SourceCursor? cursor = null;
+        List<(int Before, int Used)> pulls = [];
+        for (var i = 0; i < MaxPulls; i++)
+        {
+            var before = upstream.Attempts;
+            var result = await upstream.Feed.Pull(new RecordPull(cursor, Limit, NotBefore: null), TestContext.Current.CancellationToken);
+            ContractCheck.That(Owner, result.IsSuccess, "an uncancelled pull of the source succeeds");
+            if (result.Value.Items.Count == 0 && result.Value.Removed.Count == 0)
+            {
+                break;
+            }
+
+            cursor = result.Value.Next;
+            pulls.Add((before, upstream.Attempts - before));
+        }
+
+        ContractCheck.That(Owner, pulls.Count >= 3, "the source holds at least three pulls' worth, so a cancel can land after the first and after the second");
+        if (MaxRequestsPerPull < 2)
+        {
+            return [pulls[1].Before, pulls[2].Before];   // a pull is one request by design (Linear: one GraphQL call), so it has no middle: the cancel in that request is the between-pulls point
+        }
+
+        var multi = pulls.Skip(1).Where(static p => p.Used >= 2).Cast<(int Before, int Used)?>().FirstOrDefault();
+        ContractCheck.That(Owner, multi is not null, "some pull after the first makes two upstream requests or more, so a cancel can land in the middle of a pull; make the fixture bigger");
+        return [pulls[1].Before, pulls[2].Before, multi!.Value.Before + (multi.Value.Used / 2)];
+    }
+
+    // One pull; null when the cancel reached it as a throw.
+    private async Task<Result<RecordPage>?> PullCancellable(ResumeUpstream upstream, SourceCursor? cursor, CancellationToken token)
+    {
+        try
+        {
+            return await upstream.Feed.Pull(new RecordPull(cursor, Limit, NotBefore: null), token);
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            return null;
+        }
+    }
+
+    // Pulls from the start under a token the upstream cancels after 'point' requests, until a pull throws or fails; only the pulls that finished before the cancel count as returned to the run.
+    private async Task<InterruptedRun> Cancel(int point)
+    {
+        var upstream = Create();
+        ContractCheck.That(Owner, upstream.Keys.Count > Limit, "the source holds more records than one pull asks for");
+        using var source = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        upstream.CancelAfter(point, source);
+        List<Pulled> pulls = [];
+        SourceCursor? cursor = null;
+        var served = 0;
+        for (var i = 0; i < MaxPulls; i++)
+        {
+            var before = upstream.Attempts;
+            var result = await PullCancellable(upstream, cursor, source.Token);
+            var used = upstream.Attempts - before;
+            if (result is not { } pulled)
+            {
+                return new InterruptedRun(upstream, pulls, Failure: null, cursor, served, used);
+            }
+
+            if (pulled.IsError)
+            {
+                return new InterruptedRun(upstream, pulls, pulled.Error, cursor, served, used);
+            }
+
+            var page = pulled.Value;
+            var empty = page.Items.Count == 0 && page.Removed.Count == 0;
+            ContractCheck.That(Owner, !empty, upstream.Interrupted
+                ? "a pull cancelled mid-way answered an empty page, which the run reads as 'the phase is finished'"
+                : $"the source ended before the cancel after {N(point)} requests; make the source bigger or the cancel earlier");
+            if (upstream.Interrupted)
+            {
+                // it returned records although the token was cancelled: the run commits with that token, so they are not kept
+                return new InterruptedRun(upstream, pulls, Failure: null, cursor, served, used);
+            }
+
+            pulls.Add(new Pulled([.. page.Items.Select(static item => item.Key.Value)], page.Next, used));
+            cursor = page.Next;
+            served = upstream.Served.Count;
+        }
+
+        throw new ContractViolationException($"{Owner}: no pull was cancelled in {N(MaxPulls)} pulls; the cancel after {N(point)} requests never fired");
     }
 
     // Pulls from the start with the upstream interrupted after 'point' requests, until a pull fails; every success before it counts as returned to the run.
@@ -195,7 +333,7 @@ public abstract class RecordFeedResumeContract
 
     private sealed record Pulled(IReadOnlyList<string> Items, SourceCursor Cursor, int Requests);
 
-    private sealed record InterruptedRun(ResumeUpstream Upstream, List<Pulled> Pulls, Error Failure, SourceCursor? LastCursor, int ServedAtLastReturnedPage, int FailedRequests);
+    private sealed record InterruptedRun(ResumeUpstream Upstream, List<Pulled> Pulls, Error? Failure, SourceCursor? LastCursor, int ServedAtLastReturnedPage, int FailedRequests);
 
     private sealed record Resumed(List<string> Items, List<string> Requests);
 }
