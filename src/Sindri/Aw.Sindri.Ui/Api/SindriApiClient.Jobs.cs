@@ -20,4 +20,8 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<CommandAcceptedView>> CancelJob(Uri api, string id, CancellationToken cancellationToken) =>
         Call<CommandAcceptedView>(api, HttpMethod.Post, JobRoutes.Cancel(id), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JobResumedView>> ResumeJob(Uri api, string id, CancellationToken cancellationToken) =>
+        Call<JobResumedView>(api, HttpMethod.Post, JobRoutes.Resume(id), cancellationToken);
 }
