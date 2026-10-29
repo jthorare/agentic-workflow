@@ -246,7 +246,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     private static IServiceCollection AddDoctor(this IServiceCollection services) => services
         .AddScoped<ProfileFacts>()
         .AddScoped<LedgerFacts>().AddScoped<RuntimeFacts>()
-        .AddScoped<OnyxDoctor>().AddScoped<LinearDoctor>()
+        .AddScoped<LinearDoctor>()
         .AddScoped<ContextEngineChecks>()
         .AddScoped<RunDoctorService>()
         .AddScoped<IService<RunDoctorRequest, RunDoctorResponse>>(static sp =>
@@ -255,7 +255,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<IDoctorChecks, LauncherDoctorChecks>().AddScoped<IDoctorChecks, AgentTargetDoctor>()   // #1428: `agent:target`
         .AddScoped<IDoctorChecks, PrWatchDoctorChecks>()                                   // PB spec API15: the PR watcher's last run
         .AddScoped<IDoctorChecks, SetupDoctor>()                                           // SO-A6: `setup`, ok when every step is done or skipped
-        .AddScoped<IDoctorChecks, OnyxStackDoctor>()                                       // Onyx P2: `onyx:stack`, after the context rows, only once `onyx up` has run
+        .AddScoped<IDoctorChecks, Leftovers.OnyxLeftoverDoctor>()                                // #1598: `index:onyx-leftover`, only while an old `onyx up` left something
         .AddSingleton<OnyxReadiness>()
         .AddScoped<OnyxDockerWait>()                                                       // `onyx up` waits for a Docker that is starting (scoped: it re-inspects through the scope's OnyxFacts)
         .AddSingleton<IOnyxUpStep, OnyxFetchStep>()                                         // Onyx P2: the steps of `onyx up`, in this order

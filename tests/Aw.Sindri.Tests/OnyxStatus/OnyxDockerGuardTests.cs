@@ -1,7 +1,5 @@
-using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Features.OnyxStatus;
-using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.OnyxStatus;
@@ -69,31 +67,15 @@ public sealed class OnyxDockerGuardTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Doctor_with_a_docker_on_another_machine_names_the_problem_and_sends_it_nothing()
-    {
-        var rig = await RigPointedAtAnotherMachine();
-        var doctor = new OnyxStackDoctor(rig.Workspace, Facts(rig), rig.Pins);
-
-        var check = await doctor.Check(Token);
-
-        Assert.Equal(CheckState.Warn, check!.State);
-        Assert.Contains("Docker points at another machine (" + Remote + ")", check.Detail, StringComparison.Ordinal);
-        Assert.Contains("onyx:stack not checked", check.Detail, StringComparison.Ordinal);
-        Assert.All(rig.Runtime.Calls, static c => Assert.Equal("Inspect", c));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task With_a_usable_docker_status_and_doctor_still_read_the_stack()
+    public async Task With_a_usable_docker_status_still_reads_the_stack()
     {
         var rig = new OnyxUpRig();
         _ = (await rig.Up(Token)).Value;
         rig.Runtime.Calls.Clear();
 
         var status = (await new OnyxStatusService(rig.Pins, Facts(rig), rig.Health, rig.Workspace).Handle(new OnyxStatusRequest(), Token)).Value;
-        var check = await new OnyxStackDoctor(rig.Workspace, Facts(rig), rig.Pins).Check(Token);
 
         Assert.Equal(OnyxState.Running, status.State);
-        Assert.DoesNotContain("not checked", check!.Detail, StringComparison.Ordinal);
         Assert.Contains("Ps", rig.Runtime.Calls, StringComparer.Ordinal);
         Assert.Contains("ServerPlatform", rig.Runtime.Calls, StringComparer.Ordinal);
     }
