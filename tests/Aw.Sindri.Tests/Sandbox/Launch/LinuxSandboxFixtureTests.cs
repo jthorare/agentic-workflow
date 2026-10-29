@@ -44,6 +44,22 @@ public sealed class LinuxSandboxFixtureTests : IDisposable
     }
 
     [Fact]
+    public void The_fixture_requests_leave_the_folders_and_session_home_the_plan_binds_in_place()
+    {
+        var fixture = Fixture(new FakeProcesses().When(static (_, _) => true, FakeProcesses.Ok()));
+
+        foreach (var request in new[] { fixture.Request(), fixture.WriteScopeRequest() })
+        {
+            Assert.NotNull(request);
+            var session = Aw.Sindri.Core.Sandbox.Plan.SessionHomePaths.For(_dir + "/sindri", request.Launch);
+            Assert.True(File.Exists(session + "/control.json"));
+            Assert.True(Directory.Exists(session + "/gh-config"));
+            Assert.True(Directory.Exists(_dir + "/sindri/launches"));
+            Assert.True(Directory.Exists(_dir + "/sindri/approved"));
+        }
+    }
+
+    [Fact]
     public void The_read_only_fixture_plan_has_no_git_ref_canary()
     {
         var request = Fixture(new FakeProcesses().When(static (_, _) => true, FakeProcesses.Ok())).Request();

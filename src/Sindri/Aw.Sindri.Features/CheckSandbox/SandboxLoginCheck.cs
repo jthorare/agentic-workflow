@@ -7,8 +7,8 @@ using Aw.Sindri.Core.Sandbox.Credentials;
 namespace Aw.Sindri.Features.CheckSandbox;
 
 /// <summary>
-/// The login probe (sandbox spec §3.4, §6): for every agent a Step may run and whose policy form is expressible, the credential source the profile picks (a repo's, else the
-/// agent's, else the profile's) must deliver the model login. Never tries another source. Distinct failures are listed once.
+/// The login probe (sandbox spec §3.4, §6): for the agent Steps run (the approved profile's 'workflow.agent.target', when installed, approved for Steps and its policy form is expressible), the credential source the profile picks (a repo's, else the
+/// agent's, else the profile's) must deliver the model login. Never tries another source. Distinct failures are listed once. With no target (or an unreadable profile) Steps go to the desk, so there is nothing to check; any other installed agent is no blocker.
 /// </summary>
 /// <param name="setup">The catalog and what is installed.</param>
 /// <param name="catalog">The entries' policy forms.</param>
@@ -21,25 +21,40 @@ internal sealed class SandboxLoginCheck(ILaunchSetup setup, IAgentCatalog catalo
 
     public async ValueTask<IReadOnlyList<SandboxBlocker>> Check(CancellationToken cancellationToken)
     {
+        var profile = await approved.Latest(cancellationToken).ConfigureAwait(false);
+        var loaded = profile.IsError ? null : profile.Value;
+        if (loaded?.Profile.Workflow?.Agent?.Target is not { } stepAgent)
+        {
+            return [];
+        }
+
         var shown = await setup.Show(only: null, cancellationToken).ConfigureAwait(false);
         if (shown.IsError)
         {
             return [];
         }
 
-        var profile = await approved.Latest(cancellationToken).ConfigureAwait(false);
-        var settings = profile.IsSuccess ? profile.Value?.Profile.Sandbox : null;
-        var repos = RepoNames(settings);
-        var found = new Dictionary<(string Target, string Source, string Reason), SandboxBlocker>();
-        foreach (var target in shown.Value.Entries.Where(e => e.ResolvedBin is not null && e.StepOk && Expressible(e.Id)))
+        if (!Runnable(shown.Value, stepAgent))
         {
-            foreach (var blocker in repos.Select(repo => Probe(settings, target.Id, repo)).OfType<SandboxBlocker>())
-            {
-                _ = found.TryAdd((target.Id.Value, blocker.Source ?? string.Empty, blocker.Reason), blocker);
-            }
+            return [];
         }
 
+        var settings = loaded.Profile.Sandbox;
+        var found = new Dictionary<(string Target, string Source, string Reason), SandboxBlocker>();
+        Collect(found, settings, stepAgent, RepoNames(settings));
         return [.. found.Values];
+    }
+
+    /// <summary>True when <paramref name="agent"/> is installed, approved for Steps and its policy form is expressible.</summary>
+    private bool Runnable(LaunchShowReport shown, AgentId agent) =>
+        shown.Entries.Any(e => e.Id == agent && e.ResolvedBin is not null && e.StepOk) && Expressible(agent);
+
+    private void Collect(Dictionary<(string Target, string Source, string Reason), SandboxBlocker> found, SandboxSettings? settings, AgentId target, List<RepoName> repos)
+    {
+        foreach (var blocker in repos.Select(repo => Probe(settings, target, repo)).OfType<SandboxBlocker>())
+        {
+            _ = found.TryAdd((target.Value, blocker.Source ?? string.Empty, blocker.Reason), blocker);
+        }
     }
 
     /// <summary>A name for 'no repo in particular', then every repo the profile's sandbox section names (a repo may pick its own source).</summary>
