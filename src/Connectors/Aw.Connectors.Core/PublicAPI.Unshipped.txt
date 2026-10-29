@@ -345,6 +345,7 @@ Aw.Connectors.Core.Slack.ISlackReader.Replies(string! channel, string! threadTs,
 Aw.Connectors.Core.Slack.ISlackReader.Probe(string! channel, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static readonly Aw.Connectors.Core.ConnectorsErrors.ChannelNotAllowed -> Aw.Kernel.ErrorDefinition!
 Aw.Connectors.Core.Slack.SlackCursor
+const Aw.Connectors.Core.Slack.SlackCursor.NothingReadText = "-" -> string!
 Aw.Connectors.Core.Slack.SlackCursor.Newest(string! channel) -> string?
 Aw.Connectors.Core.Slack.SlackCursor.Pass(string! channel) -> Aw.Connectors.Core.Slack.SlackPass?
 Aw.Connectors.Core.Slack.SlackCursor.ToText() -> string!

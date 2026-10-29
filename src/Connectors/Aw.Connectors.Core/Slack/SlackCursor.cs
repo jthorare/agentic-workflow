@@ -16,6 +16,9 @@ public sealed class SlackCursor
         _channels = channels;
     }
 
+    /// <summary>The text a feed stores for a cursor that has read nothing (feeds refuse an empty cursor); <see cref="Parse"/> reads it as <see cref="Empty"/>.</summary>
+    public const string NothingReadText = "-";
+
     /// <summary>A cursor that has read nothing.</summary>
     public static SlackCursor Empty { get; } = new([]);
 
@@ -70,7 +73,7 @@ public sealed class SlackCursor
     /// <returns>The cursor, or null when the text is not a cursor (the caller starts over and says the cursor was reset).</returns>
     public static SlackCursor? Parse(string? text)
     {
-        if (string.IsNullOrEmpty(text))
+        if (string.IsNullOrEmpty(text) || string.Equals(text, NothingReadText, StringComparison.Ordinal))
         {
             return Empty;
         }
