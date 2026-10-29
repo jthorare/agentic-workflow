@@ -89,7 +89,7 @@ public sealed class BacktestTests
     {
         await using var world = await BacktestWorld.Start(BacktestWorld.BeforeAllCuts);
 
-        var none = await world.Run("graph", world.Human(onyx: false));
+        var none = await world.Run("graph", world.Human(teams: false));
         var empty = await world.Run("graph", configure: r => r with { Until = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero) });
         var later = await world.Run("graph", configure: r => r with { Since = new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero) });   // the source itself lists nothing updated since
 

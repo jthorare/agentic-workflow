@@ -89,7 +89,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IProbeReportStore, FileProbeReportStore>()
             .AddSingleton<IMergeHistory, GitMergeHistory>()
             .AddSingleton<IFileHistory, GitFileHistory>()
-            .AddSingleton<IBriefSource, OnyxBriefSource>()
+            .AddSingleton<IBriefSource, StoreBriefSource>()
             .AddSingleton<IAsOfDocs, AsOfDocsFactory>()
             .AddSingleton<IEvalStore, FileEvalStore>()
             .AddSingleton(sp => new OnyxSources(new OnyxSourceParts(
