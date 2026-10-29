@@ -40,7 +40,7 @@ public sealed class DesignPlanBlockRuntimesTests
     [InlineData("workflow.plan", "freeze")]
     public void The_Step_opens_a_block_run_not_a_desk_task(string recipeName, string state)
     {
-        using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Station(provider, recipeName);
 
         var entered = StateEntry.Enter(EngineFixture.At(recipe, state), recipe, state, context);
@@ -102,7 +102,7 @@ public sealed class DesignPlanBlockRuntimesTests
     [Fact]
     public async Task The_design_and_plan_stations_run_intake_evidence_and_freeze_without_a_desk_task()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var line = new LineStation();
         var ct = TestContext.Current.CancellationToken;
         var (design, designContext) = Station(provider, "workflow.design");
@@ -129,7 +129,7 @@ public sealed class DesignPlanBlockRuntimesTests
     [Fact]
     public async Task A_revise_walk_loads_the_prior_design_and_apply_edits_it_in_place()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var line = new LineStation();
         var ct = TestContext.Current.CancellationToken;
         var (design, designContext) = Station(provider, "workflow.design");
