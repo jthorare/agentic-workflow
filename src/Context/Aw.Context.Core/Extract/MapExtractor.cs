@@ -10,7 +10,7 @@ namespace Aw.Context.Core.Extract;
 public static class MapExtractor
 {
     /// <summary>The recognizers' version. A backtest's as-of map cache is keyed by it, so a change to what the recognizers find bumps it.</summary>
-    public const int Version = 6;
+    public const int Version = 7;
 
     /// <summary>Extracts the map from the files.</summary>
     /// <param name="repo">The repo (its name joins the evidence keys).</param>
@@ -28,6 +28,14 @@ public static class MapExtractor
     {
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(recognizers);
+        // Journey files feed the flow pass only; no other pass reads them.
+        var (withActions, timedOut) = Source([.. files.Where(f => !Journeys.IsJourney(f.Path))], repo, recognizers, schemaGlobs);
+        var (flows, skips) = FlowPass.Run(repo, [.. files.Where(f => Journeys.IsJourney(f.Path))], withActions);
+        return new MapExtraction(withActions.Plus(flows), timedOut) { Skips = skips };
+    }
+
+    private static (ExtractedMap Map, bool TimedOut) Source(IReadOnlyList<RepoFile> files, ContextRepoName repo, RecognizerSet recognizers, IReadOnlyList<string>? schemaGlobs)
+    {
         var (profile, timedOut) = recognizers.Find(files);
         var hits = files.Where(Recognizers.Source).OrderBy(f => f.Path, StringComparer.Ordinal)
             .SelectMany(file => Recognizers.All.Where(r => r.Applies(file)).SelectMany(r => r.Find(file)).Select(found => (File: file, Found: found)))
@@ -44,7 +52,7 @@ public static class MapExtractor
         var depends = imports.Select(p => new GraphEdge(CodeKey(p.From)!.Value, CodeKey(p.To)!.Value, EdgeType.DependsOn, Provenance.Deterministic, 1.0, Evidence(repo, p.From) is { } e ? [e] : null));   // why: the filter above keeps valid keys
         var found = ExtractedMap.Empty.Plus(new ExtractedMap([.. nodes, .. codeNodes, .. importNodes], [.. implements, .. related, .. depends]));
         var withStores = found.Plus(DataStorePass.Run(repo, files, DataStoreAdapters.All, schemaGlobs ?? ContextSettings.DefaultSchemaGlobs));
-        return new MapExtraction(withStores.Plus(ActionPass.Run(repo, files, withStores)), timedOut);
+        return (withStores.Plus(ActionPass.Run(repo, files, withStores)), timedOut);
     }
 
     private static GraphNode Node(ContextRepoName repo, List<(RepoFile File, Found Found)> hits)

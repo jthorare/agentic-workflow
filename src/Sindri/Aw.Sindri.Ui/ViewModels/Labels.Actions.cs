@@ -39,9 +39,9 @@ internal static partial class Labels
         ["CloseItem:done"] = "Close item",
         ["CompleteStep"] = "Complete",
         ["CompleteStep:report"] = "Report agent run",
-        ["ConnectOnyx"] = "Connect Onyx",
+        ["ConnectOnyx"] = "Connect Onyx",   // #1598 step 5 deletes it with the server row
         ["CreateItem"] = "Create item",
-        ["DeferOnyx"] = "Not now",
+        ["DeferOnyx"] = "Not now",   // #1598 step 5 deletes it with the server row
         ["Decide"] = "Decide",
         ["DetachProject"] = "Remove project",
         ["FileRequest"] = "File a request",
@@ -52,7 +52,7 @@ internal static partial class Labels
         ["IssueChallenge"] = "Get approval challenge",
         ["IssueNonce"] = "Get command nonce",
         ["OpenItem:attach"] = "Attach",
-        ["SetupOnyx"] = "Set up Onyx",
+        ["SetupOnyx"] = "Set up Onyx",   // #1598 step 5 deletes it with the server row
         ["ShowLineHoldout"] = "Show hidden scenarios",
         ["SessionExit"] = "Report session exit",
         ["RecordLimitHit"] = "Record a sandbox limit hit",

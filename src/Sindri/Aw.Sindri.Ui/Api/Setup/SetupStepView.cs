@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.Api.Setup;
 /// One step of the setup list. Id and State are read as strings, so a step or state this build doesn't know renders as itself instead of failing the read. Every
 /// text but <see cref="Id"/>, <see cref="State"/> and <see cref="Action"/> is the API's plain words.
 /// </summary>
-/// <param name="Id">repo, profile, recipes, mcp, map or onyx.</param>
+/// <param name="Id">repo, profile, recipes, mcp, map or a step this build has no form for (drawn as a plain row).</param>
 /// <param name="Title">What the step is, in a few words ("Add your repo").</param>
 /// <param name="State">todo, running, done, failed, needs-you or skipped.</param>
 /// <param name="Why">One sentence on why the step is in this state.</param>
