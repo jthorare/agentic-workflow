@@ -109,7 +109,7 @@ public sealed class GraphifyRunnerContractTests : GraphRunnerContract, IDisposab
         var silent = await Runner(Tool(Pin, "exit 0")).Run(Request(), TestContext.Current.CancellationToken);
         var wrong = await Runner(Tool(Pin, Writes("[]"))).Run(Request(), TestContext.Current.CancellationToken);
 
-        Assert.Equal(("SND-CODEIDX-008", "failed"), (failed.Error.Code, failed.Error.Message));
+        Assert.Equal(("SND-CODEIDX-008", "failed: graphify exited with code 3"), (failed.Error.Code, failed.Error.Message));
         Assert.Equal(("SND-CODEIDX-008", "shape"), (silent.Error.Code, silent.Error.Message));
         Assert.Equal(("SND-CODEIDX-008", "shape"), (wrong.Error.Code, wrong.Error.Message));
     }

@@ -138,3 +138,8 @@ static readonly Aw.Kernel.Data.DataErrors.MigrationSequence -> Aw.Kernel.ErrorDe
 static readonly Aw.Kernel.Data.DataErrors.MigrationUnknown -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Kernel.Data.DataErrors.NotFound -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Kernel.Data.DataErrors.Unavailable -> Aw.Kernel.ErrorDefinition!
+Aw.Kernel.Data.Processes.PinnedProcess
+Aw.Kernel.Data.Processes.PinnedProcess.Dispose() -> void
+Aw.Kernel.Data.Processes.PinnedProcess.Process.get -> System.Diagnostics.Process!
+static Aw.Kernel.Data.Processes.PinnedProcess.Start(System.Diagnostics.ProcessStartInfo! start) -> Aw.Kernel.Data.Processes.PinnedProcess!
+static Aw.Kernel.Data.Processes.PinnedProcess.StartAsync(System.Diagnostics.ProcessStartInfo! start) -> System.Threading.Tasks.Task<Aw.Kernel.Data.Processes.PinnedProcess!>!
