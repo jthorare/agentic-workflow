@@ -47,7 +47,7 @@ public static class SubgraphBuilder
         var bands = LensRepos.Stamp(new LensBands(Intent(graph, nodes, order, reached, all), Product(graph, nodes, order, reached), Code(graph, nodes, order, reached, all)), graph, basis.MapRepo);
         var givenProduct = given.Where(k => IsProduct(k.Kind)).ToList();
         var ownSet = givenProduct.Select(k => k.Value).ToHashSet(StringComparer.Ordinal);
-        var coverage = LensCoverageBuilder.Of(graph, nodes, givenProduct) with { Map = MapCoverageBuilder.Of(graph, ownSet, basis, all.Where(k => nodes[k].Key.Kind == NodeKind.Code)) };
+        var coverage = LensCoverageBuilder.Of(graph, nodes, givenProduct) with { Map = MapCoverageBuilder.Of(graph, ownSet, basis, all.Where(k => nodes[k].Key.Kind == NodeKind.Code && !UnreadFileNodes.Is(nodes[k]))) };
         var searched = LensSearchedBuilder.For(basis, [.. given.Select(k => k.Value)], depth, bands) with { Hops = [] };
         return new SubgraphView(1, given, missing, basis.Map, depth, basis.AsOf, bands, LensEdges.Across(graph, all), LensConflicts.Of(graph, all, conflicts), coverage, searched, [],
             new Dictionary<string, Citation>(StringComparer.Ordinal))
