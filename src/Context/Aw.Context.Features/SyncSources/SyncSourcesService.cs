@@ -47,9 +47,33 @@ internal sealed class SyncSourcesService(
         }
 
         rows.AddRange(intent.Value);
-        foreach (var feed in wanted.Value.Feeds)
+        var fed = await FeedRows(wanted.Value.Feeds, wanted.Value.Intent, request.Scope, (settings.Value, scrubbers.Value), cancellationToken).ConfigureAwait(false);
+        if (fed.IsError)
         {
-            var row = await feeds.Run(feed, (scrubbers.Value, settings.Value), cancellationToken).ConfigureAwait(false);
+            return fed.Error;
+        }
+
+        rows.AddRange(fed.Value);
+        return new SyncReport(rows);
+    }
+
+    /// <summary>
+    /// One tick of each feed, each followed by its decision pass over the stored records, against the map read once (no map: no pass); a source the intent walk reads in this call (Linear) keeps its
+    /// decisions from that walk, so its feed gets no pass (two versions of one key would requeue each other, one model call each time).
+    /// </summary>
+    private async ValueTask<Result<List<SourceSync>>> FeedRows(IReadOnlyList<RecordFeed> wanted, IReadOnlyList<IContextSource> walked, ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, CancellationToken cancellationToken)
+    {
+        var rows = new List<SourceSync>();
+        if (wanted.Count == 0)
+        {
+            return rows;
+        }
+
+        var map = await graphs.ReadWithoutIntent(scope, draft: false, cancellationToken).ConfigureAwait(false);   // no map yet (the first build needs these records): the feeds still sync, the pass waits for one
+        foreach (var feed in wanted)
+        {
+            var decisions = map.IsError || walked.Any(w => w.Describe().Id == feed.Source) ? null : new RecordDecisionRun(feed.Source, map.Value, context, (feeds.OwnedRecords(), intents, model, clock));
+            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), decisions is null ? null : tick => decisions.Execute(tick, cancellationToken), cancellationToken).ConfigureAwait(false);
             if (row.IsError)
             {
                 return row.Error;
@@ -58,7 +82,7 @@ internal sealed class SyncSourcesService(
             rows.Add(row.Value);
         }
 
-        return new SyncReport(rows);
+        return rows;
     }
 
     private async ValueTask<Result<List<SourceSync>>> IntentRows(IReadOnlyList<IContextSource> wanted, ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, CancellationToken cancellationToken)

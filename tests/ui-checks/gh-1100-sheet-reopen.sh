@@ -79,7 +79,7 @@ drv wait-for --type ListBoxItem --name List --state visible --wait-ms 30000 >/de
 drv click --type ListBoxItem --name List >/dev/null 2>&1 || setup_fail "the List view could not be chosen"
 open=""
 for _ in $(seq 1 60); do
-  open="$(nodes --type Button | jq -r '[.matches[].name // empty | select(startswith("Open ") and test("incident"; "i"))][0] // empty')"
+  open="$(nodes --type Button | jq -r '[.matches[] | select(.visible) | .name // empty | select(startswith("Open ") and test("incident"; "i"))][0] // empty')"
   [ -n "$open" ] && break
   sleep 1
 done

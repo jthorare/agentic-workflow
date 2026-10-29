@@ -22,14 +22,24 @@ internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore stor
     private readonly SyncLocks _locks = new();
     private readonly ConcurrentDictionary<string, (DateTimeOffset At, string? Code)> _outcomes = new(StringComparer.Ordinal);
 
+    /// <summary>The record store the feeds commit into, for the decision pass that reads the stored records.</summary>
+    public IRecordStore OwnedRecords() => store;
+
     /// <summary>The feeds for the repos in scope, in source order.</summary>
     public IReadOnlyList<RecordFeed> For(ContextSettings settings, IReadOnlyList<ContextRepo> repos, Scrubbers scrubbers) =>
         [.. feeds.For(settings, repos, scrubbers).OrderBy(f => f.Source.Value, StringComparer.Ordinal)];
 
-    /// <summary>One tick of a feed; the row carries a feed failure as its code. The tick's end and code are kept for <see cref="LastOutcome"/>.</summary>
-    public async ValueTask<Result<SourceSync>> Run(RecordFeed feed, (Scrubbers Scrubbers, ContextSettings Settings) context, CancellationToken cancellationToken)
+    /// <summary>
+    /// One tick of a feed; the row carries a feed failure as its code. <paramref name="afterTick"/>, when given, runs under the same lock on the tick's row (the decision pass over the
+    /// stored records) and returns the row to report. The tick's end and code are kept for <see cref="LastOutcome"/>.
+    /// </summary>
+    public async ValueTask<Result<SourceSync>> Run(RecordFeed feed, (Scrubbers Scrubbers, ContextSettings Settings) context, Func<SourceSync, ValueTask<SourceSync>>? afterTick, CancellationToken cancellationToken)
     {
-        var row = await Locked(feed.Source, () => new RecordSyncRun(feed, store, (context.Scrubbers, context.Settings.Index), clock).Execute(cancellationToken)).ConfigureAwait(false);
+        var row = await Locked(feed.Source, async () =>
+        {
+            var ticked = await new RecordSyncRun(feed, store, (context.Scrubbers, context.Settings.Index), clock).Execute(cancellationToken).ConfigureAwait(false);
+            return afterTick is null ? ticked : await afterTick(ticked).ConfigureAwait(false);
+        }).ConfigureAwait(false);
         if (!row.IsError)
         {
             _outcomes[feed.Source.Value] = (clock.GetUtcNow(), row.Value.Code);

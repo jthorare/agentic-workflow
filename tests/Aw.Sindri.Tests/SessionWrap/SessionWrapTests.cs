@@ -4,7 +4,6 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Host.Commands.SessionWrap;
 using Aw.Sindri.Testing;
-using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.SessionWrap;
 
@@ -14,7 +13,7 @@ public sealed class SessionWrapTests : IDisposable
 {
     private const string Uuid = "0a1b2c3d-0000-4000-8000-000000000001";
     private static readonly TimeSpan _deadline = TimeSpan.FromSeconds(20);
-    private readonly FakeTimeProvider _clock = new(KnownInstants.Epoch);
+    private readonly TimerSteppingClock _clock = new(KnownInstants.Epoch);
     private readonly FakeChildren _children = new();
     private readonly FakeIds _ids = new();
     private readonly StringWriter _errors = new();
@@ -48,14 +47,8 @@ public sealed class SessionWrapTests : IDisposable
         }
     }
 
-    private async Task Run(TimeSpan span)
-    {
-        for (var elapsed = TimeSpan.Zero; elapsed < span; elapsed += TimeSpan.FromMilliseconds(500))
-        {
-            _clock.Advance(TimeSpan.FromMilliseconds(500));
-            await Task.Delay(2, TestContext.Current.CancellationToken);
-        }
-    }
+    // why: moves to each due timer in turn instead of a fixed tick with a real pause, so a 95 s heartbeat case costs a handful of steps.
+    private Task Run(TimeSpan span) => _clock.RunFor(span, TestContext.Current.CancellationToken);
 
     private async Task<int> Finish(Task<int> run, int code)
     {

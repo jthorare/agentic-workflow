@@ -79,7 +79,7 @@ public sealed class StuckInstanceCountTests
         var second = count.Current(Token).AsTask();
         while (!_engine.Calls.ContainsKey("Instances"))
         {
-            await Task.Delay(5, Token);
+            await Task.Delay(1, Token);
         }
 
         _engine.Hold.SetResult();
