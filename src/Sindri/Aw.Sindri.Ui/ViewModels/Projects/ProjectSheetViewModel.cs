@@ -111,10 +111,7 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
     public IReadOnlyList<ProjectLinkItem> Repos { get; private set => Set(ref field, value); } = [];
 
     /// <summary>The states the owner can pick.</summary>
-    public IReadOnlyList<ProjectStateChoice> StateChoices { get; } =
-    [
-        new("backlog", "Backlog"), new("planned", "Planned"), new("inProgress", "In progress"), new("paused", "Paused"), new("done", "Done"), new("canceled", "Canceled"),
-    ];
+    public IReadOnlyList<ProjectStateChoice> StateChoices { get; } = ProjectStateChoice.All;
 
     /// <summary>The state the picker holds.</summary>
     public ProjectStateChoice? SelectedState { get; set => Set(ref field, value); }

@@ -5,7 +5,7 @@
              x:Class="Aw.Sindri.Ui.Views.Projects.ProjectsPage"
              x:DataType="pvm:ProjectsPageViewModel">
   <!-- The Projects page (Projects page spec §3, mockup B): the title with the freshness line and Add project, the served sentence as an empty block or a
-       banner, a group per state with its cards in a grid of Columns, and the Finished and Hidden folds. Add is disabled until it ships. Every named line is a
+       banner, a group per state with its cards in a grid of Columns, and the Finished and Hidden folds. Add opens the Add project sheet. Every named line is a
        Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <UserControl.Styles>
     <Style Selector="ItemsControl.cards">
@@ -23,7 +23,7 @@
         <TextBlock x:Name="ProjectsTitle" Classes="page-title" Focusable="True" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
         <TextBlock x:Name="ProjectsFreshness" Classes="caption subtle" Classes.failing="{Binding FreshnessFailing}" Text="{Binding Freshness}" TextWrapping="Wrap" />
       </StackPanel>
-      <Button x:Name="ProjectsAdd" Grid.Column="1" Content="{Binding AddText}" IsEnabled="False" VerticalAlignment="Top" AutomationProperties.Name="{Binding AddText}" />
+      <Button x:Name="ProjectsAdd" Grid.Column="1" Content="{Binding AddText}" Click="OnAdd" VerticalAlignment="Top" AutomationProperties.Name="{Binding AddText}" />
     </Grid>
 
     <TextBlock x:Name="ProjectsError" Classes="caption subtle" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
@@ -49,7 +49,7 @@
         <Border x:Name="ProjectsEmptyName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body muted" Text="{Binding Sentence}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="ProjectsAddEmpty" Content="{Binding AddText}" IsEnabled="False" IsVisible="{Binding ShowsAddInEmpty}" HorizontalAlignment="Center" AutomationProperties.Name="{Binding AddText}" />
+        <Button x:Name="ProjectsAddEmpty" Content="{Binding AddText}" Click="OnAdd" IsVisible="{Binding ShowsAddInEmpty}" HorizontalAlignment="Center" AutomationProperties.Name="{Binding AddText}" />
       </StackPanel>
     </Panel>
 
