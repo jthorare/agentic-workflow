@@ -9984,5 +9984,8 @@ static Aw.Context.Core.Records.RecordSourceLink.operator !=(Aw.Context.Core.Reco
 static Aw.Context.Core.Records.RecordSourceLink.operator ==(Aw.Context.Core.Records.RecordSourceLink? left, Aw.Context.Core.Records.RecordSourceLink? right) -> bool
 Aw.Context.Core.Extract.MapBuildGate
 Aw.Context.Core.Extract.MapBuildGate.Dispose() -> void
-Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.IDisposable!>
+Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Extract.MapBuildTurn!>
 Aw.Context.Core.Extract.MapBuildGate.MapBuildGate() -> void
+Aw.Context.Core.Extract.MapBuildTurn
+Aw.Context.Core.Extract.MapBuildTurn.Dispose() -> void
+Aw.Context.Core.Extract.MapBuildTurn.Waited.get -> bool
