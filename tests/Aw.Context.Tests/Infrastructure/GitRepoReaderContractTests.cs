@@ -36,7 +36,7 @@ public sealed class GitRepoReaderContractTests : RepoReaderContract, IDisposable
     public async Task RemovedPaths_lists_a_file_deleted_in_history_and_omits_one_added_back_or_denied()
     {
         using var temp = new TempGitRepo(Committed);
-        foreach (var name in new[] { "gone.ts", "back.ts", ".env" })
+        foreach (var name in new[] { "gone.ts", "back.ts", ".env", "moved.ts" })
         {
             await File.WriteAllTextAsync(Path.Combine(temp.Path, name), name, TestContext.Current.CancellationToken);
         }
@@ -44,6 +44,7 @@ public sealed class GitRepoReaderContractTests : RepoReaderContract, IDisposable
         _ = temp.Run("add", "-A");
         _ = temp.Run("commit", "-q", "-m", "add");
         _ = temp.Run("rm", "-q", "gone.ts", "back.ts", ".env");
+        _ = temp.Run("mv", "moved.ts", "moved-to.ts");
         _ = temp.Run("commit", "-q", "-m", "remove");
         await File.WriteAllTextAsync(Path.Combine(temp.Path, "back.ts"), "again", TestContext.Current.CancellationToken);
         _ = temp.Run("add", "-A");
@@ -53,7 +54,7 @@ public sealed class GitRepoReaderContractTests : RepoReaderContract, IDisposable
         var removed = await new GitRepoReader(new GitCli()).RemovedPaths(temp.Repo, head, TestContext.Current.CancellationToken);
 
         Assert.True(removed.IsSuccess, removed.IsError ? removed.Error.Message : string.Empty);
-        Assert.Equal(["gone.ts"], removed.Value);
+        Assert.Equal(["gone.ts", "moved.ts"], removed.Value);
     }
 
     [Fact, Trait("Lane", "integration")]
