@@ -20,7 +20,7 @@ namespace Aw.Context.Infrastructure.Labeling;
 internal sealed class ModelLabeler(IModelPort model, IScrubberFactory scrubbers) : ILabeler
 {
     private const int BatchSize = 20;
-    private const int FilesPerCluster = 12;
+    internal const int FilesPerCluster = 12;
     private const int AnswerTokensPerCluster = 24;
     private const int LabelLength = 60;
     private static readonly TimeSpan _budget = TimeSpan.FromMinutes(2);
