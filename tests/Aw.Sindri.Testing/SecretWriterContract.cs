@@ -37,4 +37,16 @@ public abstract class SecretWriterContract
 
         Expect.Equal("on_second-0123", pointers.Resolve(pointer).Value);
     }
+
+    /// <summary>A secret stored in the file only gets a file: pointer that resolves to the same value.</summary>
+    [Fact]
+    public void A_secret_stored_in_the_file_gets_a_file_pointer_that_resolves()
+    {
+        var (writer, pointers) = Create();
+
+        var pointer = writer.StoreInFile("sindri-index", "linear", Key).Value;
+
+        Expect.True(pointer.ToString().StartsWith("file:", StringComparison.Ordinal));
+        Expect.Equal(Key, pointers.Resolve(pointer).Value);
+    }
 }
