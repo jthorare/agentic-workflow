@@ -75,7 +75,7 @@ internal sealed class MapWorld : IDisposable
         ["README.md"] = "# Split panes",
     };
 
-    public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null, WalkOptions? walk = null, IRecordStore? records = null, ILexicalLeg? lexical = null, IIndexSync? indexSync = null, IRecordFeedCatalog? feeds = null)
+    public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null, WalkOptions? walk = null, IRecordStore? records = null, ILexicalLeg? lexical = null, IIndexSync? indexSync = null, IRecordFeedCatalog? feeds = null, Action<IServiceCollection>? configure = null)
     {
         Sources = new FixedSourceCatalog(intent is null ? [Docs] : [Docs, intent]);
         Exports = new FakeExportStore(Clock);
@@ -112,16 +112,17 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IScopeRunStore>(new FakeScopeRunStore())
             .AddSingleton<IMapSearchIndexFactory>(new Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
             .AddContextFeatures();
-        AddOverrides(services, (walk, indexSync, feeds));
+        AddOverrides(services, (walk, indexSync, feeds), configure);
 
         _provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
         _scope = _provider.CreateScope();
     }
 
     /// <summary>What a test replaces after AddContextFeatures: the walk options and the owned index's sync port and its record feeds.</summary>
-    private static void AddOverrides(IServiceCollection services, (WalkOptions? Walk, IIndexSync? IndexSync, IRecordFeedCatalog? Feeds) overrides)
+    private static void AddOverrides(IServiceCollection services, (WalkOptions? Walk, IIndexSync? IndexSync, IRecordFeedCatalog? Feeds) overrides, Action<IServiceCollection>? configure)
     {
         var (walk, indexSync, feeds) = overrides;
+        configure?.Invoke(services);
         if (feeds is not null)
         {
             _ = services.AddSingleton(feeds);
