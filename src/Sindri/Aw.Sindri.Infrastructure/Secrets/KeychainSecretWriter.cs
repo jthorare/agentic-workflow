@@ -44,7 +44,7 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         return ToFile(service, account, secret);
     }
 
-    // The secret goes into a command line parsed by `security -i`, so only a plain token (what Onyx's keys are) is sent that way; anything else takes the file.
+    // The secret goes into a command line parsed by `security -i`, so only a plain token (what a source token is) is sent that way; anything else takes the file.
     private static bool IsPlain(string secret) => secret.Length > 0 && secret.All(static c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '~' or '+' or '/' or '=' or '-');
 
     private bool StoredInKeychain(string service, string account, string secret)
@@ -86,7 +86,7 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
             return SindriErrors.SecretNotStored.With(
-                $"neither the OS secret store nor {directory} could take the key ({e.GetType().Name}); make that directory writable by you, or install libsecret-tools (Linux), then run `sindri onyx up` again");
+                $"neither the OS secret store nor {directory} could take the key ({e.GetType().Name}); make that directory writable by you, or install libsecret-tools (Linux), then run `sindri index connect <source>` again");
         }
 
         return SecretPointer.Parse($"file:{path}");
