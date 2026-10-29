@@ -259,6 +259,34 @@
       ]
     },
     {
+      "type": "project.attached",
+      "keyShape": "project.attached:<projectId>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.changed",
+      "keyShape": "project.changed:<projectId>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.detached",
+      "keyShape": "project.detached:<projectId>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.hidden",
+      "keyShape": "project.hidden:<linear>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
       "type": "recipe.registration.completed",
       "keyShape": "recipe.registration.completed:<epoch>",
       "invalidates": [
