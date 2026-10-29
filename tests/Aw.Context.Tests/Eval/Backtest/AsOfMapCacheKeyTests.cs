@@ -13,7 +13,7 @@ public sealed class AsOfMapCacheKeyTests
     public void An_empty_recognizer_set_leaves_the_key_as_it_was()
     {
         Assert.Equal(AsOfMapCache.Key(_repo, Commit, MapExtractor.Version, clustered: true), AsOfMapCache.Key(_repo, Commit, MapExtractor.Version, clustered: true, RecognizerSet.None), StringComparer.Ordinal);
-        Assert.Equal("aw-split-panes-0123456789ab-x4-c1", AsOfMapCache.Key(_repo, Commit, MapExtractor.Version, clustered: true, RecognizerSet.From([])), StringComparer.Ordinal);
+        Assert.Equal("aw-split-panes-0123456789ab-x5-c1", AsOfMapCache.Key(_repo, Commit, MapExtractor.Version, clustered: true, RecognizerSet.From([])), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -24,7 +24,7 @@ public sealed class AsOfMapCacheKeyTests
 
         var key = AsOfMapCache.Key(_repo, Commit, MapExtractor.Version, clustered: false, flags);
 
-        Assert.Equal($"aw-split-panes-0123456789ab-x4-c0-{flags.Hash}", key, StringComparer.Ordinal);
+        Assert.Equal($"aw-split-panes-0123456789ab-x5-c0-{flags.Hash}", key, StringComparer.Ordinal);
         Assert.NotEqual(key, AsOfMapCache.Key(_repo, Commit, MapExtractor.Version, clustered: false, other), StringComparer.Ordinal);
     }
 }
