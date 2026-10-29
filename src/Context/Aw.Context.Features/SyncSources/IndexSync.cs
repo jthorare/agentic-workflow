@@ -41,6 +41,8 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         return new SyncReport(rows);
     }
 
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public async ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
     {
         var resolved = Resolve(scope);
