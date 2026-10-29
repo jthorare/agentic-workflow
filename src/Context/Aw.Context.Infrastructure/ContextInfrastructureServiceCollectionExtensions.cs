@@ -105,6 +105,9 @@ public static class ContextInfrastructureServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddContextLabeling(this IServiceCollection services)
         => services
-            .AddSingleton<ILabeler>(sp => new ModelLabeler(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()))
+            .AddSingleton<ILabelCache>(sp => new SqliteLabelCache(sp.GetRequiredService<ContextDatabase>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<ILabeler>(sp => new CachingLabeler(
+                new ModelLabeler(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()),
+                sp.GetRequiredService<ILabelCache>(), sp.GetRequiredService<IScrubberFactory>()))
             .AddSingleton<Core.Concepts.IConceptNamer>(sp => new ModelConceptNamer(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()));
 }
