@@ -3,6 +3,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -105,6 +106,9 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult<Result<IReadOnlyList<SourceProgress>>>(Down());
 
     /// <summary>The fake keeps no record store.</summary>
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<ConceptStatus>>(Down());
+
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SourceCounts>>(Down());
 

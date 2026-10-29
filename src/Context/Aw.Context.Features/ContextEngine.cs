@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
@@ -67,6 +68,8 @@ internal sealed class ContextEngine(
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) => sources.Tick(scope, source, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) => sources.Progress(scope, cancellationToken);
+
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) => sources.ConceptStatus(scope, cancellationToken);
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => sources.Counts(source, cancellationToken);
 

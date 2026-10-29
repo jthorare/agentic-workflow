@@ -29,6 +29,8 @@ internal sealed class UnreadableRecordStore(IRecordStore inner) : IRecordStore
     public ValueTask<Result<StoreStamps>> Stamps(CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<StoreStamps>>(ContextErrors.StoreUnavailable.With("the record store can't be opened"));
 
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken) => inner.LiveCounts(cancellationToken);
+
     public ValueTask<Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken) => inner.Count(source, cancellationToken);
 
     public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken) => inner.Purge(source, cancellationToken);

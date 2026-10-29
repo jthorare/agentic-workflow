@@ -181,6 +181,9 @@ public sealed class FakeRecordStore : IRecordStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc />
     public ValueTask<Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken)
     {
         lock (_gate)
