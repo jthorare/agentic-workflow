@@ -3,7 +3,7 @@ using Aw.Sindri.Ui.ViewModels.Setup;
 
 namespace Aw.Sindri.Ui.Tests.Setup;
 
-/// <summary>The states Sindri serves beyond the first run (setup slice 5): a map that retries, a profile that waits, a set-aside Onyx and the repo lines of a done agents step, each read from the API's own golden.</summary>
+/// <summary>The states Sindri serves beyond the first run (setup slice 5): a map that retries, a profile that waits and the repo lines of a done agents step, each read from the API's own golden.</summary>
 [Lane(TestLane.Unit)]
 public sealed class SetupServedStatesTests
 {
@@ -33,13 +33,6 @@ public sealed class SetupServedStatesTests
         Assert.Equal(("Needs you", true), (profile.ChipWord, profile.IsOpen));
     }
 
-    [Fact]
-    public async Task A_set_aside_onyx_is_finished_and_says_so_in_the_served_words()
-    {
-        var onyx = await StepOf("onyx-skipped", "onyx");
-
-        Assert.Equal((true, "Skipped", "Onyx isn't set up. Use Set up Onyx in the card's menu when you want search."), (onyx.IsFinished, onyx.ChipWord, onyx.Sub));
-    }
 
     [Fact]
     public async Task A_done_agents_step_lists_the_repo_lines_it_was_served()

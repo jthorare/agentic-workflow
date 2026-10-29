@@ -9284,6 +9284,37 @@ static Aw.Context.Core.Records.SourceViewer.operator ==(Aw.Context.Core.Records.
 static readonly Aw.Context.Core.Linear.LinearSourceIds.Identity -> Aw.Context.Core.Sources.SourceId
 static readonly Aw.Context.Core.Linear.LinearSourceIds.Issues -> Aw.Context.Core.Sources.SourceId
 static readonly Aw.Context.Core.Linear.LinearSourceIds.Projects -> Aw.Context.Core.Sources.SourceId
+Aw.Context.Core.Results.DecisionReport
+Aw.Context.Core.Results.DecisionReport.<Clone>$() -> Aw.Context.Core.Results.DecisionReport!
+Aw.Context.Core.Results.DecisionReport.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources) -> void
+Aw.Context.Core.Results.DecisionReport.Equals(Aw.Context.Core.Results.DecisionReport? other) -> bool
+Aw.Context.Core.Results.DecisionReport.Sources.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>!
+Aw.Context.Core.Results.DecisionReport.Sources.init -> void
+Aw.Context.Core.Results.DecisionReport.DecisionReport(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources) -> void
+Aw.Context.Core.Results.SourceDecisions
+Aw.Context.Core.Results.SourceDecisions.<Clone>$() -> Aw.Context.Core.Results.SourceDecisions!
+Aw.Context.Core.Results.SourceDecisions.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out int Looked, out int Decisions, out string? Code) -> void
+Aw.Context.Core.Results.SourceDecisions.Equals(Aw.Context.Core.Results.SourceDecisions? other) -> bool
+Aw.Context.Core.Results.SourceDecisions.Code.get -> string?
+Aw.Context.Core.Results.SourceDecisions.Code.init -> void
+Aw.Context.Core.Results.SourceDecisions.Decisions.get -> int
+Aw.Context.Core.Results.SourceDecisions.Decisions.init -> void
+Aw.Context.Core.Results.SourceDecisions.Looked.get -> int
+Aw.Context.Core.Results.SourceDecisions.Looked.init -> void
+Aw.Context.Core.Results.SourceDecisions.Source.get -> Aw.Context.Core.Sources.SourceId
+Aw.Context.Core.Results.SourceDecisions.Source.init -> void
+Aw.Context.Core.Results.SourceDecisions.SourceDecisions(Aw.Context.Core.Sources.SourceId Source, int Looked, int Decisions, string? Code) -> void
+Aw.Context.Core.Sync.IIndexSync.Decide(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Results.DecisionReport!>!>
+override Aw.Context.Core.Results.DecisionReport.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.DecisionReport.GetHashCode() -> int
+override Aw.Context.Core.Results.DecisionReport.ToString() -> string!
+override Aw.Context.Core.Results.SourceDecisions.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.SourceDecisions.GetHashCode() -> int
+override Aw.Context.Core.Results.SourceDecisions.ToString() -> string!
+static Aw.Context.Core.Results.DecisionReport.operator !=(Aw.Context.Core.Results.DecisionReport? left, Aw.Context.Core.Results.DecisionReport? right) -> bool
+static Aw.Context.Core.Results.DecisionReport.operator ==(Aw.Context.Core.Results.DecisionReport? left, Aw.Context.Core.Results.DecisionReport? right) -> bool
+static Aw.Context.Core.Results.SourceDecisions.operator !=(Aw.Context.Core.Results.SourceDecisions? left, Aw.Context.Core.Results.SourceDecisions? right) -> bool
+static Aw.Context.Core.Results.SourceDecisions.operator ==(Aw.Context.Core.Results.SourceDecisions? left, Aw.Context.Core.Results.SourceDecisions? right) -> bool
 Aw.Context.Core.Extract.Journeys
 Aw.Context.Core.Extract.JourneySkips
 Aw.Context.Core.Extract.JourneySkips.<Clone>$() -> Aw.Context.Core.Extract.JourneySkips!
