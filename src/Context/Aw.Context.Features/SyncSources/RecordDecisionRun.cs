@@ -14,7 +14,7 @@ namespace Aw.Context.Features.SyncSources;
 
 /// <summary>
 /// Decision extraction for the records one feed holds in the owned record store (owned-index spec §4.2, §5.7 D11): a tracker record that quotes a decision becomes a decision node
-/// citing it, like an Onyx record does (#1373). It runs right after the feed's <see cref="RecordSyncRun"/> tick, under the same lock, never inside ingest: each stored record
+/// citing it, like a Linear or Slack record does (#1373). It runs right after the feed's <see cref="RecordSyncRun"/> tick, under the same lock, never inside ingest: each stored record
 /// (not removed, not blocked) that is not done yet is written as an intent row with the same key (so the overlay can cite it), linked by <see cref="RulesLinker"/> against the
 /// map from its stored, already scrubbed chunks, and read by <see cref="DecisionPass"/>. Done means this version of the record is stored in the intent layer and not waiting for
 /// extraction, whatever the map version: one model call per record version, so a replay and a map rebuild ask the model about nothing for unchanged records. Their intent links stay as last
