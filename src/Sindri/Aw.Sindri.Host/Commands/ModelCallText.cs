@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Features.GetJob;
 
 namespace Aw.Sindri.Host.Commands;
@@ -78,7 +79,7 @@ internal static class ModelCallText
     private static string Pad(string value, int width) => value.Length >= width ? value + " " : value.PadRight(width);
 
     // Each try of a call is a row; the first starts when the call does, each next one when the one before ended.
-    private static IEnumerable<(DateTime At, string Kind, string Who, string Outcome, string Detail)> Tries(ContextModelCalled call, TimeZoneInfo zone)
+    private static IEnumerable<(DateTime At, string Kind, string Who, string Outcome, string Detail)> Tries(JobModelCall call, TimeZoneInfo zone)
     {
         var at = call.StartedAt;
         var tokens = call.InputTokens + (long)call.OutputTokens;
@@ -92,7 +93,7 @@ internal static class ModelCallText
 
     private static string Outcome(string outcome) => string.Equals(outcome, ModelCallOutcome.NotAsked, StringComparison.Ordinal) ? "not asked" : outcome;
 
-    private static string Detail(ContextModelCalled call, ModelCallTry attempt, long tokens) => attempt.Outcome switch
+    private static string Detail(JobModelCall call, JobModelTry attempt, long tokens) => attempt.Outcome switch
     {
         ModelCallOutcome.Answered when call.How is { } how => Pick(call, how),
         ModelCallOutcome.Answered => tokens > 0 ? Tokens(tokens) + " tokens" : string.Empty,
@@ -102,12 +103,12 @@ internal static class ModelCallText
         _ => string.Empty,
     };
 
-    private static string Pick(ContextModelCalled call, ModelCallHow how) => how.Merged is not null || how.Kept is not null ? Surfaces(call, how) : Labels(call, how);
+    private static string Pick(JobModelCall call, JobModelHow how) => how.Merged is not null || how.Kept is not null ? Surfaces(call, how) : Labels(call, how);
 
-    private static string Labels(ContextModelCalled call, ModelCallHow how) =>
+    private static string Labels(JobModelCall call, JobModelHow how) =>
         Join(string.Create(CultureInfo.InvariantCulture, $"picked {how.Jev ?? 0} of {call.Items ?? 0}"), how.FirstCandidate is > 0 ? Part(how.FirstCandidate, "first") : null, how.FileName is > 0 ? Part(how.FileName, "file name") : null);
 
-    private static string Surfaces(ContextModelCalled call, ModelCallHow how)
+    private static string Surfaces(JobModelCall call, JobModelHow how)
     {
         var kept = Part(how.Kept, "kept");
         if (kept is not null && how.Undecided is > 0)

@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Features.GetJob;
 using Aw.Sindri.Testing;
-using Aw.Sindri.Tests.Jobs;
 using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.GetJob;
@@ -88,10 +87,13 @@ public sealed class GetJobTests
         Assert.True((await Service().Handle(A.GetJobRequest().Build(), Token)).IsSuccess);
     }
 
+    private static JobModelCall Stored(string id) => new(ModelCallId.From(id), "labeling", "labeling", [new JobModelTry("codex", "gpt-6-luna", "answered", Reason: null, Ms: 100, "builtin")],
+        new JobModelAnswerer("codex", "gpt-6-luna"), 100, 50, "reported", Items: null, How: null, KnownInstants.Epoch, Ms: 100);
+
     [Fact]
     public async Task A_job_that_made_model_calls_carries_its_totals_its_calls_and_how_many_there_were()
     {
-        var calls = new[] { ModelCallRows.Answered(A.FirstJobId, "call-1", "codex", "gpt-6-luna", 100, 50), ModelCallRows.Failed(A.FirstJobId, "call-2") };
+        var calls = new[] { Stored("call-1"), Stored("call-2") };
         var totals = new ModelTotals(Calls: 205, FailedCalls: 1, InputTokens: 100, OutputTokens: 50, [new ModelAnsweredCount("codex", "gpt-6-luna", 1)]);
         _jobs.Put(A.Job().Build() with { Models = totals, ModelCalls = calls });
         using var entered = As(A.Caller().Human().Build());

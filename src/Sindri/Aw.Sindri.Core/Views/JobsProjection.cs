@@ -193,7 +193,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
             return row;
         }
 
-        return row with { Models = Added(row.Models, called), ModelCalls = Kept(row.ModelCalls, called), Sequence = recorded.Sequence };
+        return row with { Models = Added(row.Models, called), ModelCalls = Kept(row.ModelCalls, Stored(called)), Sequence = recorded.Sequence };
     }
 
     private static ModelTotals Added(ModelTotals? before, ContextModelCalled called)
@@ -213,8 +213,13 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         called.AnsweredBy is not null && called.Tries.Any(static t => string.Equals(t.Outcome, ModelCallOutcome.Limit, StringComparison.Ordinal) || string.Equals(t.Outcome, ModelCallOutcome.Failed, StringComparison.Ordinal)
             || string.Equals(t.Outcome, ModelCallOutcome.Skipped, StringComparison.Ordinal));
 
+    private static JobModelCall Stored(ContextModelCalled c) => new(c.CallId, c.Purpose, c.Kind,
+        [.. c.Tries.Select(static t => new JobModelTry(t.Harness, t.Model, t.Outcome, t.Reason, t.Ms, t.Source))],
+        c.AnsweredBy is { } by ? new JobModelAnswerer(by.Harness, by.Model) : null, c.InputTokens, c.OutputTokens, c.TokenBasis, c.Items,
+        c.How is { } h ? new JobModelHow(h.Jev, h.FirstCandidate, h.FileName, h.Merged, h.Kept, h.Rejected, h.Undecided) : null, c.StartedAt, c.Ms);
+
     // The last 200 calls, as the progress lines keep their last 200 (the totals still count every call).
-    private static List<ContextModelCalled> Kept(IReadOnlyList<ContextModelCalled>? before, ContextModelCalled called)
+    private static List<JobModelCall> Kept(IReadOnlyList<JobModelCall>? before, JobModelCall called)
     {
         var calls = before ?? [];
         return [.. calls.Skip(Math.Max(0, calls.Count + 1 - JobLimits.ViewLines)), called];

@@ -92,10 +92,10 @@ public sealed class CliJobVerbsTests : IDisposable
 
     private static readonly DateTimeOffset _noon = new(2026, 1, 1, 14, 2, 11, TimeSpan.Zero);
 
-    private static ContextModelCalled Call(string id, DateTimeOffset at, string kind, int input, int output, ModelCallAnswerer? answered, ModelCallHow? how = null, int? items = null, params ModelCallTry[] tries) =>
-        new(ModelCallId.From(id), JobId.From(Id), kind, kind, tries, answered, input, output, ModelTokenBasis.Reported, items, how, at, Ms: 1500);
+    private static JobModelCall Call(string id, DateTimeOffset at, string kind, int input, int output, JobModelAnswerer? answered, JobModelHow? how = null, int? items = null, params JobModelTry[] tries) =>
+        new(ModelCallId.From(id), kind, kind, tries, answered, input, output, ModelTokenBasis.Reported, items, how, at, Ms: 1500);
 
-    private static ModelCallTry Try(string harness, string model, string outcome, string? reason, int ms) => new(harness, model, outcome, reason, ms, "builtin");
+    private static JobModelTry Try(string harness, string model, string outcome, string? reason, int ms) => new(harness, model, outcome, reason, ms, "builtin");
 
     [Fact, Trait("Lane", "unit")]
     public async Task Jobs_show_prints_a_Model_calls_block_with_a_row_per_try()
@@ -103,11 +103,11 @@ public sealed class CliJobVerbsTests : IDisposable
         _rig.Clock.SetUtcNow(new DateTimeOffset(2026, 1, 1, 15, 0, 0, TimeSpan.Zero));
         var calls = new[]
         {
-            Call("c1", _noon, "labeling", 3000, 1100, new ModelCallAnswerer("codex", "gpt-6-luna"),
+            Call("c1", _noon, "labeling", 3000, 1100, new JobModelAnswerer("codex", "gpt-6-luna"),
                 tries: [Try("claude-code", "haiku", "limit", "limit", 1000), Try("codex", "gpt-6-luna", "answered", reason: null, 1200)]),
-            Call("c2", _noon.AddSeconds(29), "labeling", 3000, 800, new ModelCallAnswerer("codex", "gpt-6-luna"),
+            Call("c2", _noon.AddSeconds(29), "labeling", 3000, 800, new JobModelAnswerer("codex", "gpt-6-luna"),
                 tries: [Try("claude-code", "haiku", "skipped", "limited", 0), Try("codex", "gpt-6-luna", "answered", reason: null, 1200)]),
-            Call("c3", _noon.AddSeconds(39), "labeling", 0, 0, new ModelCallAnswerer("jev", "jev-1.13.0"), new ModelCallHow(Jev: 94, FirstCandidate: 5, FileName: 1), items: 100,
+            Call("c3", _noon.AddSeconds(39), "labeling", 0, 0, new JobModelAnswerer("jev", "jev-1.13.0"), new JobModelHow(Jev: 94, FirstCandidate: 5, FileName: 1), items: 100,
                 tries: [Try("jev", "jev-1.13.0", "answered", reason: null, 800)]),
         };
         var api = new JobApi().Ok("GET", "/sindri/jobs/" + Id, ModelView(JobState.Running, waitingOn: null, ["building"], calls, count: 3));
@@ -159,7 +159,7 @@ public sealed class CliJobVerbsTests : IDisposable
     public async Task More_calls_than_the_job_keeps_say_how_many_are_shown_and_a_row_not_from_today_carries_its_date()
     {
         _rig.Clock.SetUtcNow(new DateTimeOffset(2026, 1, 2, 9, 0, 0, TimeSpan.Zero));
-        var calls = new[] { Call("c1", _noon, "labeling", 100, 50, new ModelCallAnswerer("codex", "gpt-6-luna"), tries: [Try("codex", "gpt-6-luna", "answered", reason: null, 900)]) };
+        var calls = new[] { Call("c1", _noon, "labeling", 100, 50, new JobModelAnswerer("codex", "gpt-6-luna"), tries: [Try("codex", "gpt-6-luna", "answered", reason: null, 900)]) };
         var api = new JobApi().Ok("GET", "/sindri/jobs/" + Id, ModelView(JobState.Running, waitingOn: null, [], calls, count: 205));
 
         _ = await Finished(_rig.RunJobs(api, "show", Id));
@@ -171,7 +171,7 @@ public sealed class CliJobVerbsTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Jobs_show_json_carries_models_waitingOn_and_modelCalls()
     {
-        var body = ModelView(JobState.Waiting, "model-limit", ["Paused: x. Resume when one is back."], [Call("c1", _noon, "labeling", 1, 1, new ModelCallAnswerer("codex", "gpt-6-luna"), tries: [Try("codex", "gpt-6-luna", "answered", reason: null, 1)])], count: 1);
+        var body = ModelView(JobState.Waiting, "model-limit", ["Paused: x. Resume when one is back."], [Call("c1", _noon, "labeling", 1, 1, new JobModelAnswerer("codex", "gpt-6-luna"), tries: [Try("codex", "gpt-6-luna", "answered", reason: null, 1)])], count: 1);
         var api = new JobApi().Ok("GET", "/sindri/jobs/" + Id, body);
 
         _ = await Finished(_rig.RunJobs(api, "show", Id, "--json"));

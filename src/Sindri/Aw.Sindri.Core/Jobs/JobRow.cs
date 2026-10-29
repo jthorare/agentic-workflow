@@ -1,5 +1,4 @@
 using System.Text.Json;
-using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 
 namespace Aw.Sindri.Core.Jobs;
@@ -28,4 +27,4 @@ namespace Aw.Sindri.Core.Jobs;
 public sealed record JobRow(JobId Id, JobKind Kind, JobKey Key, ItemId? Item, RepoName? Repo, ServiceName? Service, JobState State,
     string StartedBy, DateTimeOffset StartedAt, DateTimeOffset? EndedAt, IReadOnlyList<JobLine> Progress, int Rounds,
     string? Summary, string? Code, JsonElement? Result, string? CancelledBy, long Sequence, ModelTotals? Models = null, string? WaitingOn = null,
-    IReadOnlyList<ContextModelCalled>? ModelCalls = null);
+    IReadOnlyList<JobModelCall>? ModelCalls = null);
