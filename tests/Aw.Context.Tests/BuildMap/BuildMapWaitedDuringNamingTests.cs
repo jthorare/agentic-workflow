@@ -31,6 +31,9 @@ public sealed class BuildMapWaitedDuringNamingTests : IDisposable
 
         Assert.Equal(firstReport.Draft.Number, secondReport.Draft.Number);
         _ = Assert.Single(_world.Clusters.Asked);
+        var number = firstReport.Draft.Number.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        Assert.Equal($"v{number} was built from these heads while this build waited, so it was not built again", Assert.Single(secondReport.Notes));
+        Assert.DoesNotContain(firstReport.Notes, n => n.Contains("while this build waited", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -50,6 +53,7 @@ public sealed class BuildMapWaitedDuringNamingTests : IDisposable
 
         Assert.NotEqual(earlier.Draft.Number, report.Draft.Number);
         Assert.Equal(2, _world.Clusters.Asked.Count);
+        Assert.DoesNotContain(report.Notes, n => n.Contains("while this build waited", StringComparison.Ordinal));
     }
 
     private static async Task WaitUntil(Func<bool> condition, CancellationToken ct)
