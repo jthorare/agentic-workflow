@@ -14,10 +14,13 @@ internal sealed class NodePanelViewModel : ObservableObject
     private readonly Action<string> _jump;
     private int _version;
     private Uri? _link;
+    private readonly LinkLaunch _launch;
 
     internal NodePanelViewModel(Func<string, (string Label, string Kind)?> lookup, Action<string> jump)
     {
         (_lookup, _jump) = (lookup, jump);
+        _launch = new LinkLaunch(() => Launcher);
+        _launch.Forward(OnChanged);
     }
 
     /// <summary>Reads a node; null while the page has no connection. Set by the page.</summary>
@@ -153,10 +156,10 @@ internal sealed class NodePanelViewModel : ObservableObject
     }
 
     /// <summary>True when the system refused to open the source's link, until the next press succeeds or another node opens.</summary>
-    public bool LaunchFailed { get; private set; }
+    public bool LaunchFailed => _launch.Failed;
 
     /// <summary>The short line shown when the launch failed: "Couldn't open the link" and the link to copy.</summary>
-    public string LaunchFailedText { get; private set; } = string.Empty;
+    public string LaunchFailedText => _launch.FailedText;
 
     /// <summary>Opens the source's link in the system's browser.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
@@ -165,10 +168,7 @@ internal sealed class NodePanelViewModel : ObservableObject
     {
         if (_link is { } link)
         {
-            var opened = await Launcher.OpenUri(link, cancellationToken).ConfigureAwait(true);
-            (LaunchFailed, LaunchFailedText) = opened ? (false, string.Empty) : (true, Labels.LaunchFailed(link.AbsoluteUri));
-            OnChanged(nameof(LaunchFailed));
-            OnChanged(nameof(LaunchFailedText));
+            _ = await _launch.Open(link, cancellationToken).ConfigureAwait(true);
         }
     }
 
@@ -178,7 +178,7 @@ internal sealed class NodePanelViewModel : ObservableObject
     {
         (Kind, Title, SourceText, Description, _link) = (string.Empty, string.Empty, string.Empty, string.Empty, null);
         Groups = [];
-        (LaunchFailed, LaunchFailedText) = (false, string.Empty);
+        _launch.Reset();
     }
 
     private void Fill(NodeView view)

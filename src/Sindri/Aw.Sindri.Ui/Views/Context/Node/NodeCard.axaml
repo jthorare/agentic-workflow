@@ -68,6 +68,7 @@
       <Button x:Name="NodeOpenRecord" IsVisible="{Binding HasLink}" Click="OnOpenRecord" Content="{Binding OpenText}" AutomationProperties.Name="{Binding OpenName}" />
       <TextBlock x:Name="NodeNoLink" IsVisible="{Binding NoLink}" Classes="caption subtle" Text="{Binding NoLinkText}" VerticalAlignment="Center" />
     </StackPanel>
+    <SelectableTextBlock x:Name="NodeLaunchFailed" Classes="caption" Text="{Binding LaunchFailedText}" IsVisible="{Binding LaunchFailed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LaunchFailedText}" />
     <TextBlock IsVisible="{Binding Status, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" Classes="caption subtle" Text="{Binding Status}" />
   </StackPanel>
 </UserControl>

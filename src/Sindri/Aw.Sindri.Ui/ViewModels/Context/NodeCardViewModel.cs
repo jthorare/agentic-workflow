@@ -17,6 +17,20 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
     /// <summary>What the stage reads through.</summary>
     internal ContextPorts Ports { get; } = ports;
 
+    private LinkLaunch Launch
+    {
+        get
+        {
+            if (field is null)
+            {
+                field = new LinkLaunch(() => Ports.Launcher ?? NullLauncher.Instance);
+                field.Forward(OnChanged);
+            }
+
+            return field;
+        }
+    }
+
     /// <summary>Whether a node is chosen.</summary>
     public bool IsOpen => Title.Length > 0;
 
@@ -107,6 +121,12 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
     /// <summary>The caption shown when there is no link.</summary>
     public string NoLinkText { get; } = Labels.ContextNoLink;
 
+    /// <summary>True when the system refused the record's link, until the next press works.</summary>
+    public bool LaunchFailed => Launch.Failed;
+
+    /// <summary>"Couldn't open the link" and the link to copy; empty until a launch fails.</summary>
+    public string LaunchFailedText => Launch.FailedText;
+
     /// <summary>Opens the record at its source through the launcher.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>
@@ -114,7 +134,7 @@ internal sealed partial class NodeCardViewModel(ContextPorts ports) : Observable
     {
         if (Link is { } link)
         {
-            _ = await (Ports.Launcher ?? NullLauncher.Instance).OpenUri(link, cancellationToken).ConfigureAwait(true);
+            _ = await Launch.Open(link, cancellationToken).ConfigureAwait(true);
         }
     }
 

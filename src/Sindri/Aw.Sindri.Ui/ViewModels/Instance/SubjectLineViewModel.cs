@@ -10,11 +10,12 @@ namespace Aw.Sindri.Ui.ViewModels.Instance;
 internal sealed class SubjectLineViewModel : ObservableObject
 {
     private readonly string _host = string.Empty;
-    private readonly ILauncher _launcher;
+    private readonly LinkLaunch _launch;
 
     internal SubjectLineViewModel(SubjectRef subject, string address, ILauncher launcher)
     {
-        _launcher = launcher;
+        _launch = new LinkLaunch(launcher);
+        _launch.Forward(OnChanged);
         Label = subject.Label.Length > 0 ? subject.Label : subject.Key;
         Kind = subject.Kind;
         if (subject.Href is { Length: > 0 } href && Controls.ControlViewModel.Safe(href)
@@ -45,10 +46,10 @@ internal sealed class SubjectLineViewModel : ObservableObject
     public string OpenInName { get; }
 
     /// <summary>True when the system refused the link; cleared by the next press that works.</summary>
-    public bool LaunchFailed { get; private set; }
+    public bool LaunchFailed => _launch.Failed;
 
     /// <summary>"Couldn't open the link" and the link to copy; empty until a launch fails.</summary>
-    public string LaunchFailedText { get; private set; } = string.Empty;
+    public string LaunchFailedText => _launch.FailedText;
 
     /// <summary>Hands the subject's link to the system.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
@@ -57,10 +58,7 @@ internal sealed class SubjectLineViewModel : ObservableObject
     {
         if (HasHref && Uri.TryCreate(Href, UriKind.Absolute, out var uri))
         {
-            var opened = await _launcher.OpenUri(uri, cancellationToken).ConfigureAwait(true);
-            (LaunchFailed, LaunchFailedText) = opened ? (false, string.Empty) : (true, Labels.LaunchFailed(uri.AbsoluteUri));
-            OnChanged(nameof(LaunchFailed));
-            OnChanged(nameof(LaunchFailedText));
+            _ = await _launch.Open(uri, cancellationToken).ConfigureAwait(true);
         }
     }
 
