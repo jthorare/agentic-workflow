@@ -17,8 +17,9 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="feeds">The feeds and their lock and last outcomes.</param>
 /// <param name="store">The record store the positions are read from.</param>
 /// <param name="scrubberFactory">Builds the call's scrubbers.</param>
-/// /// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run once the source's lock is released.</param>
-internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, TickSteps? steps = null) : IIndexSync
+/// /// <param name="decisions">The decision pass <see cref="Decide"/> runs; null: none.</param>
+/// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run once the source's lock is released.</param>
+internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null) : IIndexSync
 {
     /// <summary>The longest one feed's tick runs; the index tick comes every 5 minutes, and this sits above one normal Linear or Slack page with its rate-limit sleeps.</summary>
     internal static readonly TimeSpan FeedCap = TimeSpan.FromMinutes(4);
@@ -38,6 +39,37 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         using var slots = new SemaphoreSlim(MaxConcurrentFeeds);
         var rows = await Task.WhenAll(resolved.Value.Feeds.Select(feed => TickOne(feed, context, slots, cancellationToken))).ConfigureAwait(false);
         return new SyncReport(rows);
+    }
+
+    public async ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var resolved = Resolve(scope);
+        if (resolved.IsError)
+        {
+            return resolved.Error;
+        }
+
+        var rows = new List<SourceDecisions>();
+        if (decisions is null || resolved.Value.Feeds.Count == 0)
+        {
+            return new DecisionReport(rows);
+        }
+
+        var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
+        var after = await decisions.ForTick(scope, context, resolved.Value.Repos, cancellationToken).ConfigureAwait(false);
+        foreach (var feed in resolved.Value.Feeds)
+        {
+            if (after(feed) is not { } step)
+            {
+                continue;
+            }
+
+            // why: no source lock; the pass reads the stored records and writes the intent layer, so a pull of the same source goes on beside it
+            var row = await step(new SourceSync(feed.Source, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Code: null)).ConfigureAwait(false);
+            rows.Add(new SourceDecisions(feed.Source, row.Linked + row.Unlinked, row.Decisions, row.Code));
+        }
+
+        return new DecisionReport(rows);
     }
 
     private async Task<SourceSync> TickOne(RecordFeed feed, (ContextSettings Settings, Scrubbers Scrubbers) context, SemaphoreSlim slots, CancellationToken cancellationToken)
