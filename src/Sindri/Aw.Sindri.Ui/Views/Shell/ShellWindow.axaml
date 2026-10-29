@@ -304,11 +304,11 @@
               <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,12">
                 <Button x:Name="SheetBack" Classes="back" Classes.trail="{Binding HasTrail}" Content="{Binding Text.Back}" Click="OnBack"
                         AutomationProperties.Name="{Binding Text.Back}" Margin="0,0,12,0" />
-                <!-- The focus target is a Text-typed wrapper named for the kind and subject ("Workflow WFI-1"); the visible subject inside it is Raw, as ChordHint's key is (a TextBlock's peer reads its Text and ignores a Name). -->
+                <!-- The focus target is a Text-typed wrapper named for the kind and subject ("Workflow WFI-1"); the subject is mono (an id) except a project's, which is its name; the visible subject inside it is Raw, as ChordHint's key is (a TextBlock's peer reads its Text and ignores a Name). -->
                 <Border x:Name="SheetTitle" Classes="sheet-title" Grid.Column="1" Focusable="True" VerticalAlignment="Center"
                         AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text"
                         AutomationProperties.Name="{Binding SheetName}">
-                  <TextBlock x:Name="SheetSubjectText" Classes="detail-title mono" Text="{Binding SheetTitle}" TextTrimming="CharacterEllipsis"
+                  <TextBlock x:Name="SheetSubjectText" Classes="detail-title" Classes.mono="{Binding !IsProjectSheet}" Text="{Binding SheetTitle}" TextTrimming="CharacterEllipsis"
                              ToolTip.Tip="{Binding SheetSubject}" AutomationProperties.AccessibilityView="Raw" />
                 </Border>
                 <Button x:Name="SheetClose" Grid.Column="2" Click="OnCloseSheet" Margin="12,0,0,0"

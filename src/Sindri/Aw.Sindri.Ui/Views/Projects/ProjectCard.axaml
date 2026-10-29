@@ -22,6 +22,17 @@
     <Style Selector="Ellipse.dot.ok"><Setter Property="Fill" Value="{DynamicResource Brush.Success}" /></Style>
     <Style Selector="Ellipse.dot.attn"><Setter Property="Fill" Value="{DynamicResource Brush.Attention}" /></Style>
     <Style Selector="Ellipse.dot.fail"><Setter Property="Fill" Value="{DynamicResource Brush.Error}" /></Style>
+    <!-- Edit notes and Cancel are words, not boxed buttons (mockup B, notes): no fill or border at rest or under the pointer, the label brightens instead. -->
+    <Style Selector="Button.link">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="Padding" Value="0,2" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkMuted}" />
+    </Style>
+    <Style Selector="Button.link:pointerover /template/ ContentPresenter#PART_ContentPresenter, Button.link:pressed /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    </Style>
   </UserControl.Styles>
   <Border x:Name="ProjectCardFrame" Classes="card pcard" Classes.gone="{Binding IsGone}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
@@ -58,28 +69,30 @@
         </StackPanel>
         <TextBlock x:Name="ProjectCardGone" Classes="caption subtle" Text="{Binding GoneText}" IsVisible="{Binding IsGone}" />
         <!-- The notes area: the whole text (wrapping, line breaks kept) with Edit notes, or the box with its counter, Save and Cancel. Its code-behind stops Enter, Space and a
-             press at this Border, so the card around it (which opens the sheet on Enter or a click) never sees them. -->
-        <StackPanel x:Name="ProjectNotesArea" Spacing="6">
+             press at this panel, so the card around it (which opens the sheet on Enter or a click) never sees them. -->
+        <Panel x:Name="ProjectNotesArea">
           <TextBlock x:Name="ProjectNotesAnnouncement" Classes="caption live-region" Classes.live="{Binding Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False" Text="{Binding Voice.Announcement}" />
-          <Border x:Name="ProjectCardNote" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.HairlineTertiary}" BorderThickness="2,0,0,0"
-                  CornerRadius="{StaticResource Radius.XS}" Padding="8,6" IsVisible="{Binding ShowsNotes}">
-            <TextBlock Classes="caption muted" Text="{Binding NotesText}" TextWrapping="Wrap" />
-          </Border>
-          <Button x:Name="ProjectNotesEdit" Classes="link" Content="{Binding EditText}" Click="OnEdit" IsVisible="{Binding IsReading}" HorizontalAlignment="Left" />
-          <StackPanel x:Name="ProjectNotesEditor" Spacing="6" IsVisible="{Binding IsEditing}">
-            <TextBox x:Name="ProjectNotesBox" Text="{Binding Draft}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" MaxHeight="320" AutomationProperties.Name="{Binding BoxName}" />
-            <TextBlock x:Name="ProjectNotesCounter" Classes="caption subtle" Classes.error="{Binding OverLimit}" Text="{Binding Counter}" HorizontalAlignment="Right" />
-            <StackPanel x:Name="ProjectNotesConflict" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsConflict}">
-              <TextBlock Classes="caption error" Text="{Binding ConflictText}" VerticalAlignment="Center" />
-              <Button x:Name="ProjectNotesReload" Content="{Binding ReloadText}" Click="OnReload" />
-            </StackPanel>
-            <TextBlock x:Name="ProjectNotesError" Classes="caption error" Text="{Binding SaveError}" TextWrapping="Wrap" IsVisible="{Binding HasSaveError}" />
-            <StackPanel Orientation="Horizontal" Spacing="8">
-              <Button x:Name="ProjectNotesSave" Classes="accent" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnSave" />
-              <Button x:Name="ProjectNotesCancel" Content="{Binding CancelText}" Click="OnCancel" />
+          <StackPanel Spacing="6">
+            <Border x:Name="ProjectCardNote" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.HairlineTertiary}" BorderThickness="2,0,0,0"
+                    CornerRadius="{StaticResource Radius.XS}" Padding="8,6" IsVisible="{Binding ShowsNotes}">
+              <TextBlock Classes="caption muted" Text="{Binding NotesText}" TextWrapping="Wrap" />
+            </Border>
+            <Button x:Name="ProjectNotesEdit" Classes="link" Content="{Binding EditText}" Click="OnEdit" IsVisible="{Binding IsReading}" HorizontalAlignment="Left" />
+            <StackPanel x:Name="ProjectNotesEditor" Spacing="6" IsVisible="{Binding IsEditing}">
+              <TextBox x:Name="ProjectNotesBox" Text="{Binding Draft}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" MaxHeight="320" AutomationProperties.Name="{Binding BoxName}" />
+              <TextBlock x:Name="ProjectNotesCounter" Classes="caption subtle" Classes.error="{Binding OverLimit}" Text="{Binding Counter}" HorizontalAlignment="Right" />
+              <StackPanel x:Name="ProjectNotesConflict" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsConflict}">
+                <TextBlock Classes="caption error" Text="{Binding ConflictText}" VerticalAlignment="Center" />
+                <Button x:Name="ProjectNotesReload" Content="{Binding ReloadText}" Click="OnReload" />
+              </StackPanel>
+              <TextBlock x:Name="ProjectNotesError" Classes="caption error" Text="{Binding SaveError}" TextWrapping="Wrap" IsVisible="{Binding HasSaveError}" />
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button x:Name="ProjectNotesSave" Classes="accent" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnSave" />
+                <Button x:Name="ProjectNotesCancel" Classes="link" VerticalAlignment="Center" Content="{Binding CancelText}" Click="OnCancel" />
+              </StackPanel>
             </StackPanel>
           </StackPanel>
-        </StackPanel>
+        </Panel>
         <Border x:Name="ProjectCardFooter" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.Hairline}" Padding="0,8,0,0"
                 IsVisible="{Binding FooterText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
           <TextBlock Classes="caption subtle" Text="{Binding FooterText}" TextWrapping="Wrap" />
