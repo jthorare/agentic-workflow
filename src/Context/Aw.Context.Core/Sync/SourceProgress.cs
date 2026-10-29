@@ -14,14 +14,17 @@ namespace Aw.Context.Core.Sync;
 /// <param name="LastCode">The code the last tick ended with (a down source's SND-CONTEXT-010, the time cap's SND-CONTEXT-059), or null when it completed or none has run.</param>
 /// <param name="Usable">The recent window is synced.</param>
 /// <param name="Complete">The backfill is done (the embeddings are not counted yet).</param>
-public sealed record SourceProgress(SourceId Source, SyncPhase? Phase, DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete)
+/// <param name="ReReading">How many records the source already holds while it re-reads them (Recent, no completed read behind it, rows stored: the Linear issue feed after migration 0020's reset, projects page spec §4.3), or null when it is not re-reading.</param>
+public sealed record SourceProgress(SourceId Source, SyncPhase? Phase, DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null)
 {
     /// <summary>The progress of a source from its stored phase: usable once Recent is through, complete once Backfill is through.</summary>
     /// <param name="source">The source.</param>
     /// <param name="phase">Its stored phase (the one the next pull belongs to), or null before the first page.</param>
     /// <param name="lastSync">When its last tick ended, or null.</param>
     /// <param name="lastCode">The code that tick ended with, or null.</param>
-    /// <returns>The progress row.</returns>
-    public static SourceProgress From(SourceId source, SyncPhase? phase, DateTimeOffset? lastSync, string? lastCode) =>
-        new(source, phase, lastSync, lastCode, Usable: phase is SyncPhase.Backfill or SyncPhase.Incremental or SyncPhase.Reconcile, Complete: phase is SyncPhase.Incremental or SyncPhase.Reconcile);
+    /// <param name="stored">How many records the source holds, when the caller checks for a re-read; null: not checked.</param>
+    /// <returns>The progress row. A source in Recent that already holds records is re-reading (a first read starts with none).</returns>
+    public static SourceProgress From(SourceId source, SyncPhase? phase, DateTimeOffset? lastSync, string? lastCode, int? stored = null) =>
+        new(source, phase, lastSync, lastCode, Usable: phase is SyncPhase.Backfill or SyncPhase.Incremental or SyncPhase.Reconcile, Complete: phase is SyncPhase.Incremental or SyncPhase.Reconcile,
+            ReReading: phase is SyncPhase.Recent && stored is > 0 ? stored : null);
 }

@@ -9,6 +9,10 @@ namespace Aw.Context.Infrastructure.Linear;
 internal static class LinearIssueItem
 {
     private const string Prefix = "linear:issue/";
+    private const string ProjectPrefix = "linear:project/";
+
+    // why: a replay with the same version writes nothing, so issues stored before they carried a project link must change version to be re-saved once with it; bump this when the feed's output changes shape
+    private const string FeedFormat = ";f2";
 
     /// <summary>The item for an issue.</summary>
     /// <param name="issue">The issue.</param>
@@ -18,7 +22,7 @@ internal static class LinearIssueItem
         ArgumentNullException.ThrowIfNull(issue);
         return new RecordItem(
             RecordKey.From(Prefix + issue.Id), RecordKind.Issue, issue.Title, LinearText.Of(issue), issue.Creator?.Name, issue.Url, State(issue.State?.Type), issue.State?.Name,
-            issue.CreatedAt, issue.UpdatedAt, issue.CompletedAt ?? issue.CanceledAt, SourceVersion.From(issue.UpdatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)),
+            issue.CreatedAt, issue.UpdatedAt, issue.CompletedAt ?? issue.CanceledAt, SourceVersion.From(issue.UpdatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture) + FeedFormat),
             Links(issue), Repo: null, issue.Team is { } team && AudienceKey.TryFrom("linear:" + team.Key, out var audience) ? audience : null);
     }
 
@@ -33,6 +37,11 @@ internal static class LinearIssueItem
     private static List<RecordLink> Links(LinearIssue issue)
     {
         var links = new List<RecordLink>();
+        if (issue.Project is { } project)
+        {
+            links.Add(new RecordLink(ProjectPrefix + project.Id, RecordLinkKind.InProject, project.Name));
+        }
+
         if (issue.Parent is { } parent)
         {
             links.Add(Link(parent, RecordLinkKind.Parent));
