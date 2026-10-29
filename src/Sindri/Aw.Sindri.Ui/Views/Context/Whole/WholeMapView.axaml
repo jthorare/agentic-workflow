@@ -83,7 +83,8 @@
               <TextBlock x:Name="WholeNodeFailed" Classes="caption" Text="{Binding FailedText}" IsVisible="{Binding IsFailed}" />
               <StackPanel Spacing="2" IsVisible="{Binding HasSource}">
                 <TextBlock x:Name="WholeNodeSource" Classes="body" Text="{Binding SourceText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding SourceText}" />
-                <Button x:Name="WholeNodeOpenSource" Content="{Binding OpenSourceText}" IsVisible="{Binding HasLink}" Click="OnNodePanelOpenSource" HorizontalAlignment="Left" Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{Binding OpenSourceText}" />
+                <Button x:Name="WholeNodeOpenSource" Content="{Binding OpenSourceText}" IsVisible="{Binding HasLink}" Click="OnNodePanelOpenSource" HorizontalAlignment="Left" Padding="0" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{Binding OpenSourceName}" />
+                <TextBlock x:Name="WholeNodeNoLink" Classes="caption subtle" Text="{Binding NoLinkText}" IsVisible="{Binding HasNoLink}" AutomationProperties.Name="{Binding NoLinkText}" />
               </StackPanel>
               <TextBlock x:Name="WholeNodeDescription" Classes="body" Text="{Binding Description}" IsVisible="{Binding HasDescription}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Description}" />
               <ItemsControl x:Name="WholeNodeGroups" ItemsSource="{Binding Groups}" IsVisible="{Binding HasGroups}">

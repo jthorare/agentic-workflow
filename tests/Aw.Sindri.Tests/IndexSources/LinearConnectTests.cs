@@ -99,6 +99,7 @@ public sealed class LinearConnectTests
         Assert.DoesNotContain("ENG", result.Error.Message, StringComparison.Ordinal);
         Assert.Empty(_secrets.Stored);
         Assert.Empty(_written.Pointers);
+        Assert.Empty(_written.Teams);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -125,6 +126,34 @@ public sealed class LinearConnectTests
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(2, result.Value.Teams);
         Assert.Equal(["keychain:sindri-index/linear"], _written.Pointers, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task No_listed_teams_writes_the_teams_the_key_reads_sorted_with_the_pointer()
+    {
+        _profiles.Live = Profile("""{"sources":{}}""");
+        _reader.Readable = ["OPS", "ENG"];
+
+        var result = await Connect().Run(human: true, Ct);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
+        Assert.Equal(["ENG", "OPS"], result.Value.Added);
+        var (source, teams) = Assert.Single(_written.Teams);
+        Assert.Equal("linear", source);
+        Assert.Equal(["ENG", "OPS"], teams);
+        Assert.Equal(["keychain:sindri-index/linear"], _written.Pointers, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Listed_teams_are_left_alone()
+    {
+        _reader.Readable = ["ENG", "APP", "OPS"];
+
+        var result = await Connect().Run(human: true, Ct);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
+        Assert.Empty(result.Value.Added);
+        Assert.Empty(_written.Teams);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -170,6 +199,14 @@ public sealed class LinearConnectTests
         public List<string> Pointers { get; } = [];
 
         public List<string> Sources { get; } = [];
+
+        public List<(string Source, string[] Teams)> Teams { get; } = [];
+
+        public Result<bool> SetTeams(string source, IReadOnlyList<string> teams)
+        {
+            Teams.Add((source, [.. teams]));
+            return true;
+        }
 
         public Result<bool> SetToken(string source, string secretPointer)
         {

@@ -176,6 +176,7 @@ bash scripts/tests/owner-check.test.sh
 bash scripts/tests/context-first-run.test.sh   # dry-run golden, the refusal of a real-looking home, the approval stops, a whole run on a stub sindri
 bash scripts/tests/repo-templates.test.sh
 bash scripts/tests/probe.test.sh
+bash scripts/tests/probe-linear-projects.test.sh   # scripts/probe-linear-projects.sh (the projects page Ph0 probe) with stub curl and gh: output, legacy state fallback, no key exit 2, a failed call exit 1, the key never printed
 bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/system-design-tokens.test.sh   # skills/system-design/scripts/tokens_to_css.py: known tokens and aliases map, unmapped ones are printed and keep the neutral fallback, a missing tokens file exits 1 without output

@@ -20315,6 +20315,7 @@ static readonly Aw.Sindri.Core.SindriErrors.IndexNotInProfile -> Aw.Kernel.Error
 static readonly Aw.Sindri.Core.SindriErrors.IndexOnyxLeftover -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Secrets.ISourceTokenProfileWriter
 Aw.Sindri.Core.Secrets.ISourceTokenProfileWriter.SetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Secrets.ISourceTokenProfileWriter.SetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Workflow.Engine.Runtime.IReportOutputChecks
 Aw.Sindri.Core.Workflow.Engine.Runtime.IReportOutputChecks.Violations(System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, System.ReadOnlyMemory<byte>>! outputs, System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Workflow.Ids.FactKey>! payloads, bool scopingQuestions) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Workflow.Engine.Runtime.PayloadReportChecks
@@ -21480,3 +21481,4 @@ override Aw.Sindri.Core.Jobs.JobModelCall.GetHashCode() -> int
 override Aw.Sindri.Core.Jobs.JobModelCall.ToString() -> string!
 static Aw.Sindri.Core.Jobs.JobModelCall.operator !=(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
+static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?

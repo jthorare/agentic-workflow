@@ -5502,3 +5502,50 @@ Aw.Sindri.Features.AttachProject.AttachProjectRequest.Notes.init -> void
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.ChangeProjectRequest(string! Project, long Version, Aw.Sindri.Core.Projects.ProjectEdit! Edit) -> void
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Deconstruct(out string! Project, out long Version, out Aw.Sindri.Core.Projects.ProjectEdit! Edit) -> void
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Project.get -> string!
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest.<Clone>$() -> Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest!
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest.Equals(Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest? other) -> bool
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest.ListLinearProjectsRequest() -> void
+override Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest.ToString() -> string!
+static Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest.operator !=(Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest? left, Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest? right) -> bool
+static Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest.operator ==(Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest? left, Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsRequest? right) -> bool
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.<Clone>$() -> Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse!
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out string? Error, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice!>! Projects) -> void
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.Equals(Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse? other) -> bool
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.AsOf.init -> void
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.Error.get -> string?
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.Error.init -> void
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.Projects.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice!>!
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.Projects.init -> void
+Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.ListLinearProjectsResponse(Aw.Sindri.Core.Views.AsOf! AsOf, string? Error, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice!>! Projects) -> void
+override Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.ToString() -> string!
+static Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.operator !=(Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse? left, Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse? right) -> bool
+static Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse.operator ==(Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse? left, Aw.Sindri.Features.ListLinearProjects.ListLinearProjectsResponse? right) -> bool
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.<Clone>$() -> Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice!
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Deconstruct(out string! Key, out string! Name, out string? Lead, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out int OpenIssues, out string? Url) -> void
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Equals(Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? other) -> bool
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Key.get -> string!
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Key.init -> void
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Name.get -> string!
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Name.init -> void
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Lead.get -> string?
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Lead.init -> void
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.State.get -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.State.init -> void
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.OpenIssues.get -> int
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.OpenIssues.init -> void
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Url.get -> string?
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Url.init -> void
+Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.LinearProjectChoice(string! Key, string! Name, string? Lead, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, int OpenIssues, string? Url) -> void
+override Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.GetHashCode() -> int
+override Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.ToString() -> string!
+static Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.operator !=(Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? left, Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? right) -> bool
+static Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.operator ==(Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? left, Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? right) -> bool

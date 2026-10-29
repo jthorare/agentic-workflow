@@ -83,6 +83,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<ICurrentUser, OsCurrentUser>()
             .AddSingleton<IRepoReader, GitRepoReader>()
             .AddSingleton<IDefaultBranch, GitDefaultBranch>()
+            .AddSingleton<IRepoRemote, GitRepoRemote>()
             .AddSingleton<ICodeSearch, GitCodeSearch>()
             .AddSingleton(GraphifyOptions.Default)
             .AddSingleton<IClusterSource, GraphifyClusterSource>()

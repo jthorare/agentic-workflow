@@ -14,10 +14,11 @@ public sealed class MapBuildGate : IDisposable
     /// <param name="job">The job the caller runs for, named to a caller that has to wait behind it; null when it runs for no job.</param>
     /// <param name="progress">Told once, before the wait starts, that the call is waiting and for whom; null to say nothing.</param>
     /// <param name="cancellationToken">Cancels the wait.</param>
-    /// <returns>The lease.</returns>
-    public async ValueTask<IDisposable> Enter(string? job, IProgress<string>? progress, CancellationToken cancellationToken)
+    /// <returns>The lease, which says whether the call had to wait.</returns>
+    public async ValueTask<MapBuildTurn> Enter(string? job, IProgress<string>? progress, CancellationToken cancellationToken)
     {
-        if (!await _one.WaitAsync(0, cancellationToken).ConfigureAwait(false))
+        var waited = !await _one.WaitAsync(0, cancellationToken).ConfigureAwait(false);
+        if (waited)
         {
             // why: the holder is read after the failed take, so a holder that left in between reads as "no one" and the wait below ends at once.
             string? holder;
@@ -35,10 +36,9 @@ public sealed class MapBuildGate : IDisposable
             _holder = job;
         }
 
-        return new Lease(this);
+        return new MapBuildTurn(this, waited);
     }
 
-    /// <summary>Releases the gate's semaphore; no lease may be waiting.</summary>
     /// <summary>Releases the gate's semaphore; no lease may be waiting.</summary>
     public void Dispose() => _one.Dispose();
 
@@ -53,16 +53,5 @@ public sealed class MapBuildGate : IDisposable
         _ = _one.Release();
     }
 
-    private sealed class Lease(MapBuildGate gate) : IDisposable
-    {
-        private int _released;
-
-        public void Dispose()
-        {
-            if (Interlocked.Exchange(ref _released, 1) == 0)
-            {
-                gate.Release();
-            }
-        }
-    }
+    internal void Leave() => Release();
 }

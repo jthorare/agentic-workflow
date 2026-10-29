@@ -119,7 +119,7 @@ public static class ProjectCards
 
     private static ProjectCard Led(LinearProjectFact fact, long version, string? notes)
     {
-        var state = MapState(fact.StateRaw);
+        var state = StateOf(fact.StateRaw);
         return new ProjectCard(
             fact.Key, ProjectOrigin.Led, fact.Title, fact.Description, state, StateSetByOwner: false, MapHealth(fact.Health), new ProjectLead(You: true, Name: null),
             Date(fact.DueAt), fact.OpenIssues, fact.Counting, OpenPrs: null, PrScope: null, fact.LastActivity, LinearFinished(state, fact), Repos: [],
@@ -140,7 +140,7 @@ public static class ProjectCards
 
     private static ProjectCard Merged(ProjectAttachedRow row, LinearProjectFact fact)
     {
-        var linearState = MapState(fact.StateRaw);
+        var linearState = StateOf(fact.StateRaw);
         var byOwner = row.State is not null;
         var linearFinished = LinearFinished(linearState, fact);
         return new ProjectCard(
@@ -159,7 +159,10 @@ public static class ProjectCards
     private static DateTimeOffset? LinearFinished(ProjectState? state, LinearProjectFact fact) =>
         state is ProjectState.Done or ProjectState.Canceled ? fact.ClosedAt : null;
 
-    private static ProjectState? MapState(string? raw) => raw switch
+    /// <summary>Linear's status type in the page's six words.</summary>
+    /// <param name="raw">Linear's status type: backlog, planned, started, paused, completed or canceled.</param>
+    /// <returns>The state, or null when the status is unknown.</returns>
+    public static ProjectState? StateOf(string? raw) => raw switch
     {
         "backlog" => ProjectState.Backlog,
         "planned" or "unstarted" => ProjectState.Planned,
