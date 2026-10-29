@@ -3,6 +3,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
+using Aw.Sindri.Features;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Workflow.Blocks.Input;
@@ -70,4 +71,16 @@ public sealed class SyncIndexSourceServiceTests
         Assert.True(result.IsError);
         Assert.Equal(0, _index.Ticks);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("SND-CONTEXT-059", "partial: slack stopped at its time cap (SND-CONTEXT-059), 0 fetched")]
+    [InlineData("AW-CONNECTORS-009", "partial: slack stopped by a rate limit (AW-CONNECTORS-009), 0 fetched")]
+    public void A_job_that_ended_at_the_time_cap_or_a_rate_limit_leads_its_summary_with_partial(string code, string expected) =>
+        Assert.Equal(expected, ContextJobServiceCollectionExtensions.IndexSyncSummary(new SyncIndexSourceResult("slack", Fetched: 0, Records: 0, code)));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(null, "github 3 fetched")]
+    [InlineData("SND-CONTEXT-056", "github SND-CONTEXT-056")]
+    public void A_job_that_finished_or_found_the_source_down_keeps_its_plain_summary(string? code, string expected) =>
+        Assert.Equal(expected, ContextJobServiceCollectionExtensions.IndexSyncSummary(new SyncIndexSourceResult("github", Fetched: 3, Records: 3, code)));
 }

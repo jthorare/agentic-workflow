@@ -312,9 +312,11 @@ static Aw.Connectors.Core.Slack.SlackMessage.operator !=(Aw.Connectors.Core.Slac
 static Aw.Connectors.Core.Slack.SlackMessage.operator ==(Aw.Connectors.Core.Slack.SlackMessage? left, Aw.Connectors.Core.Slack.SlackMessage? right) -> bool
 Aw.Connectors.Core.Slack.SlackMessagePage
 Aw.Connectors.Core.Slack.SlackMessagePage.<Clone>$() -> Aw.Connectors.Core.Slack.SlackMessagePage!
-Aw.Connectors.Core.Slack.SlackMessagePage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.Slack.SlackMessage!>! Items, out System.DateTimeOffset? RateLimitedUntil) -> void
+Aw.Connectors.Core.Slack.SlackMessagePage.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.Slack.SlackMessage!>! Items, out System.DateTimeOffset? RateLimitedUntil, out bool HasMore) -> void
+Aw.Connectors.Core.Slack.SlackMessagePage.HasMore.get -> bool
+Aw.Connectors.Core.Slack.SlackMessagePage.HasMore.init -> void
 Aw.Connectors.Core.Slack.SlackMessagePage.Equals(Aw.Connectors.Core.Slack.SlackMessagePage? other) -> bool
-Aw.Connectors.Core.Slack.SlackMessagePage.SlackMessagePage(System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.Slack.SlackMessage!>! Items, System.DateTimeOffset? RateLimitedUntil) -> void
+Aw.Connectors.Core.Slack.SlackMessagePage.SlackMessagePage(System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.Slack.SlackMessage!>! Items, System.DateTimeOffset? RateLimitedUntil, bool HasMore = false) -> void
 Aw.Connectors.Core.Slack.SlackMessagePage.Items.get -> System.Collections.Generic.IReadOnlyList<Aw.Connectors.Core.Slack.SlackMessage!>!
 Aw.Connectors.Core.Slack.SlackMessagePage.Items.init -> void
 Aw.Connectors.Core.Slack.SlackMessagePage.RateLimitedUntil.get -> System.DateTimeOffset?
@@ -338,12 +340,16 @@ static Aw.Connectors.Core.Slack.SlackSettings.operator !=(Aw.Connectors.Core.Sla
 static Aw.Connectors.Core.Slack.SlackSettings.operator ==(Aw.Connectors.Core.Slack.SlackSettings? left, Aw.Connectors.Core.Slack.SlackSettings? right) -> bool
 Aw.Connectors.Core.Slack.ISlackReader
 Aw.Connectors.Core.Slack.ISlackReader.History(string! channel, string? oldest, string? latest, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Connectors.Core.Slack.SlackMessagePage!>!>
+Aw.Connectors.Core.Slack.ISlackReader.HistoryPage(string! channel, string? oldest, string? latest, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Connectors.Core.Slack.SlackMessagePage!>!>
 Aw.Connectors.Core.Slack.ISlackReader.Replies(string! channel, string! threadTs, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Connectors.Core.Slack.SlackMessagePage!>!>
 Aw.Connectors.Core.Slack.ISlackReader.Probe(string! channel, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.DateTimeOffset?>!>
 static readonly Aw.Connectors.Core.ConnectorsErrors.ChannelNotAllowed -> Aw.Kernel.ErrorDefinition!
 Aw.Connectors.Core.Slack.SlackCursor
+const Aw.Connectors.Core.Slack.SlackCursor.NothingReadText = "-" -> string!
 Aw.Connectors.Core.Slack.SlackCursor.Newest(string! channel) -> string?
+Aw.Connectors.Core.Slack.SlackCursor.Pass(string! channel) -> Aw.Connectors.Core.Slack.SlackPass?
 Aw.Connectors.Core.Slack.SlackCursor.ToText() -> string!
+Aw.Connectors.Core.Slack.SlackCursor.WithPass(string! channel, Aw.Connectors.Core.Slack.SlackPass! pass) -> Aw.Connectors.Core.Slack.SlackCursor!
 Aw.Connectors.Core.Slack.SlackCursor.With(string! channel, string! ts) -> Aw.Connectors.Core.Slack.SlackCursor!
 static Aw.Connectors.Core.Slack.SlackCursor.Empty.get -> Aw.Connectors.Core.Slack.SlackCursor!
 static Aw.Connectors.Core.Slack.SlackCursor.Parse(string? text) -> Aw.Connectors.Core.Slack.SlackCursor?
@@ -355,7 +361,25 @@ static Aw.Connectors.Core.Slack.SlackTs.Format(System.DateTimeOffset value) -> s
 static Aw.Connectors.Core.Slack.SlackTs.DayStart(string! ts) -> string!
 static Aw.Connectors.Core.Slack.SlackTs.Day(System.DateTimeOffset at) -> string!
 static Aw.Connectors.Core.Slack.SlackTs.Later(string! a, string! b) -> string!
+static Aw.Connectors.Core.Slack.SlackTs.Next(string! ts) -> string!
+static Aw.Connectors.Core.Slack.SlackTs.IsBefore(string! a, string! b) -> bool
 Aw.Connectors.Core.Slack.SlackChannelIds
 static Aw.Connectors.Core.Slack.SlackChannelIds.IsReadable(string? channel) -> bool
 Aw.Connectors.Core.Slack.ISlackConnectorFactory
 Aw.Connectors.Core.Slack.ISlackConnectorFactory.Create(Aw.Connectors.Core.Slack.SlackSettings! settings, Aw.Connectors.Core.Slack.ISlackReader! reader, System.TimeSpan window) -> Aw.Connectors.Core.IConnector!
+Aw.Connectors.Core.Slack.SlackPass
+Aw.Connectors.Core.Slack.SlackPass.<Clone>$() -> Aw.Connectors.Core.Slack.SlackPass!
+Aw.Connectors.Core.Slack.SlackPass.Below.get -> string?
+Aw.Connectors.Core.Slack.SlackPass.Below.init -> void
+Aw.Connectors.Core.Slack.SlackPass.Deconstruct(out string! Top, out string? Below, out string? ThreadsBelow) -> void
+Aw.Connectors.Core.Slack.SlackPass.Equals(Aw.Connectors.Core.Slack.SlackPass? other) -> bool
+Aw.Connectors.Core.Slack.SlackPass.SlackPass(string! Top, string? Below, string? ThreadsBelow) -> void
+Aw.Connectors.Core.Slack.SlackPass.ThreadsBelow.get -> string?
+Aw.Connectors.Core.Slack.SlackPass.ThreadsBelow.init -> void
+Aw.Connectors.Core.Slack.SlackPass.Top.get -> string!
+Aw.Connectors.Core.Slack.SlackPass.Top.init -> void
+override Aw.Connectors.Core.Slack.SlackPass.Equals(object? obj) -> bool
+override Aw.Connectors.Core.Slack.SlackPass.GetHashCode() -> int
+override Aw.Connectors.Core.Slack.SlackPass.ToString() -> string!
+static Aw.Connectors.Core.Slack.SlackPass.operator !=(Aw.Connectors.Core.Slack.SlackPass? left, Aw.Connectors.Core.Slack.SlackPass? right) -> bool
+static Aw.Connectors.Core.Slack.SlackPass.operator ==(Aw.Connectors.Core.Slack.SlackPass? left, Aw.Connectors.Core.Slack.SlackPass? right) -> bool
