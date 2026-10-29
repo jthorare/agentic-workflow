@@ -36,9 +36,9 @@ public sealed class BuildMapRecordEdgeEndpointsTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_record_whose_file_has_no_home_feature_is_built_without_a_rollup_edge_for_it()
     {
-        var files = new Dictionary<string, string>(StringComparer.Ordinal) { ["alpha/Alpha.csproj"] = "<Project/>", ["alpha/F00.cs"] = "class C {}", ["loose/Loose.cs"] = "class L {}" };
+        var files = new Dictionary<string, string>(StringComparer.Ordinal) { ["alpha/Alpha.csproj"] = "<Project/>", ["alpha/F00.cs"] = "class C {}", ["setup.sh"] = "#!/bin/sh\necho hi" };
         var world = World(files);
-        await Put(world, Pr("github:pr/acme/app/7", "alpha/F00.cs", "loose/Loose.cs"));
+        await Put(world, Pr("github:pr/acme/app/7", "alpha/F00.cs", "setup.sh"));
 
         var report = await world.Map.BuildMap(progress: null, Scope, MapWorld.None);
 
