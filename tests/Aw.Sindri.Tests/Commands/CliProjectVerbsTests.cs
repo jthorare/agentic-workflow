@@ -21,9 +21,9 @@ namespace Aw.Sindri.Tests.Commands;
 public sealed class CliProjectVerbsTests : IDisposable
 {
     private static readonly FakeControlPlaneProbe _probe = FakeControlPlaneProbe.For(new ControlEndpoint(new Uri("http://127.0.0.1:7410"), 42, 3), new Ping(42, 3));
-    private static readonly string[] _addParts = ["\"name\":\"Kitchen\"", "\"state\":\"inProgress\"", "\"links\":[\"https://example.com/a\",\"https://example.com/b\"]", "\"note\":\"tile\"", "\"target\":\"2026-12-01\""];
-    private static readonly string[] _showParts = ["  note: tile\n", "  version: 4\n", "  Plan: https://example.com/plan\n"];
-    private static readonly string[] _editParts = ["\"version\":3", "\"clearState\":true", "\"note\":\"n\""];
+    private static readonly string[] _addParts = ["\"name\":\"Kitchen\"", "\"state\":\"inProgress\"", "\"links\":[\"https://example.com/a\",\"https://example.com/b\"]", "\"notes\":\"tile\"", "\"target\":\"2026-12-01\""];
+    private static readonly string[] _showParts = ["  notes: tile\n", "  version: 4\n", "  Plan: https://example.com/plan\n"];
+    private static readonly string[] _editParts = ["\"version\":3", "\"clearState\":true", "\"notes\":\"n\""];
     private static readonly string[] _forms = ["sindri projects ", "sindri project show ", "sindri project add ", "sindri project edit ", "sindri project remove ", "sindri project hide ", "sindri project unhide "];
     private readonly StringWriter _out = new();
     private readonly StringWriter _error = new();
@@ -48,7 +48,7 @@ public sealed class CliProjectVerbsTests : IDisposable
     {
         var api = new RoutedApi().On("/sindri/projects", HttpStatusCode.OK, Accepted(Id, 1, "Kitchen", 9));
 
-        var code = await Verbs(api).Run(["project", "add", "--name", "Kitchen", "--link", "https://example.com/a", "--link", "https://example.com/b", "--state", "in-progress", "--note", "tile", "--target", "2026-12-01"], Token);
+        var code = await Verbs(api).Run(["project", "add", "--name", "Kitchen", "--link", "https://example.com/a", "--link", "https://example.com/b", "--state", "in-progress", "--notes", "tile", "--target", "2026-12-01"], Token);
 
         Assert.Equal((0, $"{Id} attached: Kitchen (sequence 9)\n"), (code, _out.ToString().ReplaceLineEndings("\n")));
         var body = api.Calls[^1].Body;
@@ -96,10 +96,54 @@ public sealed class CliProjectVerbsTests : IDisposable
     {
         var api = new RoutedApi().On($"/sindri/projects/{Id}/change", HttpStatusCode.OK, Accepted(Id, 4, "Kitchen", 12));
 
-        var code = await Verbs(api).Run(["project", "edit", Id, "--version", "3", "--clear-state", "--note", "n"], Token);
+        var code = await Verbs(api).Run(["project", "edit", Id, "--version", "3", "--clear-state", "--notes", "n"], Token);
 
         Assert.Equal((0, $"{Id} changed (sequence 12)\n"), (code, _out.ToString().ReplaceLineEndings("\n")));
         Assert.All(_editParts, part => Assert.Contains(part, api.Calls[^1].Body, StringComparison.Ordinal));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("--notes")]
+    [InlineData("--note")]   // the old name, an alias for one release (owner q158)
+    public async Task Cli_project_add_and_edit_take_notes_under_both_names_and_keep_the_line_breaks(string flag)
+    {
+        var api = new RoutedApi()
+            .On("/sindri/projects", HttpStatusCode.OK, Accepted(Id, 1, "Kitchen", 9))
+            .On($"/sindri/projects/{Id}/change", HttpStatusCode.OK, Accepted(Id, 4, "Kitchen", 12));
+
+        var added = await Verbs(api).Run(["project", "add", "--name", "Kitchen", flag, "tile\nsink"], Token);
+        var addBody = api.Calls[^1].Body;
+        var edited = await Verbs(api).Run(["project", "edit", Id, "--version", "3", flag, "tile\nsink"], Token);
+
+        Assert.Equal((0, 0), (added, edited));
+        Assert.Contains("\"notes\":\"tile\\nsink\"", addBody, StringComparison.Ordinal);
+        Assert.Contains("\"notes\":\"tile\\nsink\"", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Cli_project_edit_of_a_led_project_posts_notes_to_its_escaped_Linear_key()
+    {
+        const string Key = "linear:project/6f2a9c1e-7b34-4d58-9e0a-3c5d8b1f2a47";
+        var api = new RoutedApi().On($"/sindri/projects/{Uri.EscapeDataString(Key)}/change", HttpStatusCode.OK, Accepted(Key, 1, Key, 12));
+
+        var code = await Verbs(api).Run(["project", "edit", Key, "--version", "0", "--notes", "call them"], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"notes\":\"call them\"", api.Calls[^1].Body, StringComparison.Ordinal);
+        Assert.Contains("\"version\":0", api.Calls[^1].Body, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("--clear-notes")]
+    [InlineData("--clear-note")]
+    public async Task Cli_project_edit_clears_the_notes_under_both_flag_names(string flag)
+    {
+        var api = new RoutedApi().On($"/sindri/projects/{Id}/change", HttpStatusCode.OK, Accepted(Id, 4, "Kitchen", 12));
+
+        var code = await Verbs(api).Run(["project", "edit", Id, "--version", "3", flag], Token);
+
+        Assert.Equal(0, code);
+        Assert.Contains("\"clearNotes\":true", api.Calls[^1].Body, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -110,7 +154,7 @@ public sealed class CliProjectVerbsTests : IDisposable
             .On($"/sindri/projects/{Id}/change", HttpStatusCode.OK, Accepted(Id, 6, "Kitchen", 12))
             .On($"/sindri/projects/{Id}/detach", HttpStatusCode.OK, Accepted(Id, 6, "Kitchen", 13));
 
-        var edited = await Verbs(api).Run(["project", "edit", Id, "--note", "n"], Token);
+        var edited = await Verbs(api).Run(["project", "edit", Id, "--notes", "n"], Token);
         var editBody = api.Calls[^1].Body;
         var removed = await Verbs(api).Run(["project", "remove", Id], Token);
 
@@ -188,7 +232,7 @@ public sealed class CliProjectVerbsTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Cli_project_show_prints_the_card_in_full_with_its_links()
     {
-        var api = new RoutedApi().On($"/sindri/projects/{Id}", HttpStatusCode.OK, Shown(Card(Id, "Kitchen", version: 4, note: "tile", links: [new ProjectLink("Plan", "https://example.com/plan")]), hidden: false));
+        var api = new RoutedApi().On($"/sindri/projects/{Id}", HttpStatusCode.OK, Shown(Card(Id, "Kitchen", version: 4, notes: "tile", links: [new ProjectLink("Plan", "https://example.com/plan")]), hidden: false));
 
         var code = await Verbs(api).Run(["project", "show", Id], Token);
 
@@ -250,7 +294,7 @@ public sealed class CliProjectVerbsTests : IDisposable
     [Theory, Trait("Lane", "unit")]
     [InlineData("add --name K --state nope", "SND-PROJECT-004 state:")]
     [InlineData("add --name K --target 12/01/2026", "SND-PROJECT-004 target:")]
-    [InlineData("edit nope --version 1 --note x", "SND-CLI-003")]
+    [InlineData("edit nope --version 1 --notes x", "SND-CLI-003")]
     [InlineData("edit prj_x --version one", "SND-CLI-003")]
     [InlineData("remove --version 1", "SND-CLI-003")]
     [InlineData("add --name", "SND-CLI-003")]
@@ -271,8 +315,8 @@ public sealed class CliProjectVerbsTests : IDisposable
 
     private static readonly AsOf _fine = new(7, 7, ProjectedAt: null, Rebuilding: false, Stalled: false);
 
-    private static ProjectCard Card(string key, string name, ProjectState? state = ProjectState.Planned, int? issues = null, bool counting = false, DateTimeOffset? at = null, long version = 1, string? note = null, IReadOnlyList<ProjectLink>? links = null) =>
-        new(key, ProjectOrigin.HandMade, name, Description: null, state, StateSetByOwner: false, Health: null, Lead: null, Target: null, issues, counting, OpenPrs: null, PrScope: null, at, FinishedAt: null, [], links ?? [], note, Synced: true, version);
+    private static ProjectCard Card(string key, string name, ProjectState? state = ProjectState.Planned, int? issues = null, bool counting = false, DateTimeOffset? at = null, long version = 1, string? notes = null, IReadOnlyList<ProjectLink>? links = null) =>
+        new(key, ProjectOrigin.HandMade, name, Description: null, state, StateSetByOwner: false, Health: null, Lead: null, Target: null, issues, counting, OpenPrs: null, PrScope: null, at, FinishedAt: null, [], links ?? [], notes, Synced: true, version);
 
     private static GetProjectResponse Shown(ProjectCard card, bool hidden) => new(_fine, Viewer: null, [], card, hidden);
 

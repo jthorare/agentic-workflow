@@ -9216,18 +9216,18 @@ Aw.Context.Core.Records.SourceIdentity.Source.init -> void
 Aw.Context.Core.Records.SourceIdentity.SourceIdentity(Aw.Context.Core.Sources.SourceId Source, string! UserRef, string! Name, System.DateTimeOffset ReadAt) -> void
 Aw.Context.Core.Records.SourceIdentity.UserRef.get -> string!
 Aw.Context.Core.Records.SourceIdentity.UserRef.init -> void
-Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out string? Health, out System.DateOnly? DueAt) -> void
+Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out string? Health, out System.DateOnly? DueAt, out string? Description) -> void
 Aw.Context.Core.Records.StoredRecord.DueAt.get -> System.DateOnly?
 Aw.Context.Core.Records.StoredRecord.DueAt.init -> void
 Aw.Context.Core.Records.StoredRecord.Health.get -> string?
 Aw.Context.Core.Records.StoredRecord.Health.init -> void
-Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null) -> void
-Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt) -> void
+Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null, string? Description = null) -> void
+Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt, out string? Description) -> void
 Aw.Context.Core.Sync.RecordItem.DueAt.get -> System.DateOnly?
 Aw.Context.Core.Sync.RecordItem.DueAt.init -> void
 Aw.Context.Core.Sync.RecordItem.Health.get -> string?
 Aw.Context.Core.Sync.RecordItem.Health.init -> void
-Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null) -> void
+Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null, string? Description = null) -> void
 override Aw.Context.Core.Records.SourceIdentity.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.SourceIdentity.GetHashCode() -> int
 override Aw.Context.Core.Records.SourceIdentity.ToString() -> string!
@@ -9730,7 +9730,7 @@ Aw.Context.Core.Projects.ProjectFactsRequest.Equals(Aw.Context.Core.Projects.Pro
 Aw.Context.Core.Projects.ProjectFactsRequest.ProjectFactsRequest(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Attached) -> void
 Aw.Context.Core.Records.IRecordStore.ProjectFacts(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ProjectRow!>!>!>
 Aw.Context.Core.Records.ProjectRow.<Clone>$() -> Aw.Context.Core.Records.ProjectRow!
-Aw.Context.Core.Records.ProjectRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Health, out System.DateOnly? DueAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string? LeadRef, out string? LeadName, out int OpenIssues, out System.DateTimeOffset? NewestIssueAt) -> void
+Aw.Context.Core.Records.ProjectRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Health, out System.DateOnly? DueAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string? LeadRef, out string? LeadName, out int OpenIssues, out System.DateTimeOffset? NewestIssueAt, out string? Description) -> void
 override Aw.Context.Core.Projects.ProjectFact.Equals(object? obj) -> bool
 override Aw.Context.Core.Projects.ProjectFact.GetHashCode() -> int
 override Aw.Context.Core.Projects.ProjectFact.ToString() -> string!
@@ -9764,7 +9764,7 @@ Aw.Context.Core.Records.ProjectRow.NewestIssueAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Records.ProjectRow.NewestIssueAt.init -> void
 Aw.Context.Core.Records.ProjectRow.OpenIssues.get -> int
 Aw.Context.Core.Records.ProjectRow.OpenIssues.init -> void
-Aw.Context.Core.Records.ProjectRow.ProjectRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Health, System.DateOnly? DueAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, string? LeadRef, string? LeadName, int OpenIssues, System.DateTimeOffset? NewestIssueAt) -> void
+Aw.Context.Core.Records.ProjectRow.ProjectRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Health, System.DateOnly? DueAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, string? LeadRef, string? LeadName, int OpenIssues, System.DateTimeOffset? NewestIssueAt, string? Description = null) -> void
 Aw.Context.Core.Records.ProjectRow.StateRaw.get -> string?
 Aw.Context.Core.Records.ProjectRow.StateRaw.init -> void
 Aw.Context.Core.Records.ProjectRow.Title.get -> string!
@@ -9811,3 +9811,154 @@ Aw.Context.Core.Linear.LinearIdentifiers
 static Aw.Context.Core.Linear.LinearIdentifiers.AliasesOf(Aw.Context.Core.Sources.RecordKey key, string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string![]!
 static Aw.Context.Core.Linear.LinearIdentifiers.FromPermalink(string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string?
 Aw.Context.Core.Linking.IIntentStore.SetAliases(Aw.Context.Core.Sources.RecordKey record, string! version, System.Collections.Generic.IReadOnlyList<string!>! aliases, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Models.ModelPurpose.ConceptScan = 7 -> Aw.Context.Core.Models.ModelPurpose
+Aw.Context.Core.Models.TokenBasis
+Aw.Context.Core.Models.TokenBasis.Estimated = 0 -> Aw.Context.Core.Models.TokenBasis
+Aw.Context.Core.Models.TokenBasis.Reported = 1 -> Aw.Context.Core.Models.TokenBasis
+static readonly Aw.Context.Core.ContextErrors.ModelHarnessesUnavailable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.NoModelHarness -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Engine.LabelPick.Off = 0 -> Aw.Context.Core.Engine.LabelPick
+Aw.Context.Core.Engine.LabelPick.Jev = 1 -> Aw.Context.Core.Engine.LabelPick
+Aw.Context.Core.Engine.LabelPick
+Aw.Context.Core.Engine.ModelEntry.Tier.get -> Aw.Context.Core.Models.ModelTier?
+Aw.Context.Core.Engine.ModelEntry.Harnesses.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ModelHarness>?
+Aw.Context.Core.Engine.ModelEntry.Tier.init -> void
+Aw.Context.Core.Engine.ModelEntry.Models.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Context.Core.Engine.ModelHarness, string!>?
+Aw.Context.Core.Engine.ModelEntry.Harnesses.init -> void
+Aw.Context.Core.Engine.ModelEntry.Models.init -> void
+Aw.Context.Core.Engine.ModelEntry
+override Aw.Context.Core.Engine.ModelEntry.ToString() -> string!
+static Aw.Context.Core.Engine.ModelEntry.operator !=(Aw.Context.Core.Engine.ModelEntry? left, Aw.Context.Core.Engine.ModelEntry? right) -> bool
+static Aw.Context.Core.Engine.ModelEntry.operator ==(Aw.Context.Core.Engine.ModelEntry? left, Aw.Context.Core.Engine.ModelEntry? right) -> bool
+override Aw.Context.Core.Engine.ModelEntry.GetHashCode() -> int
+override Aw.Context.Core.Engine.ModelEntry.Equals(object? obj) -> bool
+Aw.Context.Core.Engine.ModelEntry.Equals(Aw.Context.Core.Engine.ModelEntry? other) -> bool
+Aw.Context.Core.Engine.ModelEntry.<Clone>$() -> Aw.Context.Core.Engine.ModelEntry!
+Aw.Context.Core.Engine.ModelEntry.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ModelHarness>? Harnesses, out Aw.Context.Core.Models.ModelTier? Tier, out System.Collections.Generic.IReadOnlyDictionary<Aw.Context.Core.Engine.ModelHarness, string!>? Models) -> void
+Aw.Context.Core.Engine.ModelEntry.ModelEntry(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ModelHarness>? Harnesses = null, Aw.Context.Core.Models.ModelTier? Tier = null, System.Collections.Generic.IReadOnlyDictionary<Aw.Context.Core.Engine.ModelHarness, string!>? Models = null) -> void
+Aw.Context.Core.Engine.ModelHarness.ClaudeCode = 0 -> Aw.Context.Core.Engine.ModelHarness
+Aw.Context.Core.Engine.ModelHarness.Codex = 1 -> Aw.Context.Core.Engine.ModelHarness
+Aw.Context.Core.Engine.ModelHarness.Cursor = 2 -> Aw.Context.Core.Engine.ModelHarness
+Aw.Context.Core.Engine.ModelHarness
+Aw.Context.Core.Engine.ModelKind.Labeling = 0 -> Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Engine.ModelKind.ConceptNaming = 1 -> Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Engine.ModelKind.MapCleanup = 4 -> Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Engine.ModelKind.DecisionExtraction = 2 -> Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Engine.ModelKind.Adjudication = 3 -> Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Engine.ModelKind.Rerank = 5 -> Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Engine.ModelHarnesses
+static Aw.Context.Core.Engine.ModelHarnesses.DefaultOrder.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ModelHarness>!
+static Aw.Context.Core.Engine.ModelHarnesses.Name(Aw.Context.Core.Engine.ModelHarness harness) -> string!
+static Aw.Context.Core.Engine.ModelHarnesses.TryParse(string? name, out Aw.Context.Core.Engine.ModelHarness harness) -> bool
+static Aw.Context.Core.Engine.ModelHarnesses.RequestKey(Aw.Context.Core.Engine.ModelHarness harness) -> string!
+Aw.Context.Core.Engine.ModelNames.ClaudeCode.get -> Aw.Context.Core.Engine.CliModels!
+Aw.Context.Core.Engine.ModelNames.ClaudeCode.init -> void
+Aw.Context.Core.Engine.ModelNames.Codex.get -> Aw.Context.Core.Engine.CliModels!
+Aw.Context.Core.Engine.ModelNames.Cursor.get -> Aw.Context.Core.Engine.CliModels!
+Aw.Context.Core.Engine.ModelNames.Codex.init -> void
+Aw.Context.Core.Engine.ModelNames
+Aw.Context.Core.Engine.ModelNames.Cursor.init -> void
+override Aw.Context.Core.Engine.ModelNames.ToString() -> string!
+static Aw.Context.Core.Engine.ModelNames.operator !=(Aw.Context.Core.Engine.ModelNames? left, Aw.Context.Core.Engine.ModelNames? right) -> bool
+static Aw.Context.Core.Engine.ModelNames.operator ==(Aw.Context.Core.Engine.ModelNames? left, Aw.Context.Core.Engine.ModelNames? right) -> bool
+override Aw.Context.Core.Engine.ModelNames.GetHashCode() -> int
+override Aw.Context.Core.Engine.ModelNames.Equals(object? obj) -> bool
+Aw.Context.Core.Engine.ModelNames.Equals(Aw.Context.Core.Engine.ModelNames? other) -> bool
+Aw.Context.Core.Engine.ModelNames.<Clone>$() -> Aw.Context.Core.Engine.ModelNames!
+Aw.Context.Core.Engine.ModelNames.Deconstruct(out Aw.Context.Core.Engine.CliModels! ClaudeCode, out Aw.Context.Core.Engine.CliModels! Codex, out Aw.Context.Core.Engine.CliModels! Cursor) -> void
+Aw.Context.Core.Engine.ModelNames.ModelNames(Aw.Context.Core.Engine.CliModels! ClaudeCode, Aw.Context.Core.Engine.CliModels! Codex, Aw.Context.Core.Engine.CliModels! Cursor) -> void
+static Aw.Context.Core.Engine.ModelNames.None.get -> Aw.Context.Core.Engine.ModelNames!
+static Aw.Context.Core.Engine.ModelNames.BuiltIn.get -> Aw.Context.Core.Engine.ModelNames!
+Aw.Context.Core.Engine.ModelNames.Written(Aw.Context.Core.Engine.ModelHarness harness, Aw.Context.Core.Models.ModelTier tier) -> string?
+static Aw.Context.Core.Engine.ModelNames.IsValid(string? name) -> bool
+Aw.Context.Core.Engine.ModelNames.Of(Aw.Context.Core.Engine.ModelHarness harness) -> Aw.Context.Core.Engine.CliModels!
+Aw.Context.Core.Engine.ModelKinds
+static Aw.Context.Core.Engine.ModelKinds.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ModelKind>!
+static Aw.Context.Core.Engine.ModelKinds.Of(Aw.Context.Core.Models.ModelPurpose purpose) -> Aw.Context.Core.Engine.ModelKind
+static Aw.Context.Core.Engine.ModelKinds.Key(Aw.Context.Core.Engine.ModelKind kind) -> string!
+Aw.Context.Core.Engine.ModelSource.Request = 0 -> Aw.Context.Core.Engine.ModelSource
+Aw.Context.Core.Engine.ModelSource.KindModels = 1 -> Aw.Context.Core.Engine.ModelSource
+Aw.Context.Core.Engine.ModelSource.DefaultModels = 2 -> Aw.Context.Core.Engine.ModelSource
+Aw.Context.Core.Engine.ModelSource
+Aw.Context.Core.Engine.ModelSource.Names = 3 -> Aw.Context.Core.Engine.ModelSource
+Aw.Context.Core.Engine.ModelSource.Builtin = 4 -> Aw.Context.Core.Engine.ModelSource
+Aw.Context.Core.Engine.ModelRouting
+static Aw.Context.Core.Engine.ModelRouting.Resolve(Aw.Context.Core.Engine.ModelsSettings! settings, Aw.Context.Core.Models.ModelRequest! request, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ModelHarness>! installed) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.RoutedModel!>!
+const Aw.Context.Core.Engine.ModelsSettings.DefaultCandidates = 3 -> int
+Aw.Context.Core.Engine.ModelsSettings
+override Aw.Context.Core.Engine.ModelsSettings.ToString() -> string!
+static Aw.Context.Core.Engine.ModelsSettings.operator !=(Aw.Context.Core.Engine.ModelsSettings? left, Aw.Context.Core.Engine.ModelsSettings? right) -> bool
+static Aw.Context.Core.Engine.ModelsSettings.operator ==(Aw.Context.Core.Engine.ModelsSettings? left, Aw.Context.Core.Engine.ModelsSettings? right) -> bool
+override Aw.Context.Core.Engine.ModelsSettings.GetHashCode() -> int
+override Aw.Context.Core.Engine.ModelsSettings.Equals(object? obj) -> bool
+Aw.Context.Core.Engine.ModelsSettings.Equals(Aw.Context.Core.Engine.ModelsSettings? other) -> bool
+Aw.Context.Core.Engine.ModelsSettings.<Clone>$() -> Aw.Context.Core.Engine.ModelsSettings!
+Aw.Context.Core.Engine.ModelsSettings.ModelsSettings() -> void
+Aw.Context.Core.Engine.ModelsSettings.Names.get -> Aw.Context.Core.Engine.ModelNames!
+Aw.Context.Core.Engine.ModelsSettings.Names.init -> void
+Aw.Context.Core.Engine.ModelsSettings.Default.get -> Aw.Context.Core.Engine.ModelEntry!
+Aw.Context.Core.Engine.ModelsSettings.Kinds.get -> System.Collections.Generic.IReadOnlyDictionary<Aw.Context.Core.Engine.ModelKind, Aw.Context.Core.Engine.ModelEntry!>!
+Aw.Context.Core.Engine.ModelsSettings.Default.init -> void
+Aw.Context.Core.Engine.ModelsSettings.Kinds.init -> void
+Aw.Context.Core.Engine.ModelsSettings.LabelCandidates.get -> int
+Aw.Context.Core.Engine.ModelsSettings.LabelPick.init -> void
+Aw.Context.Core.Engine.ModelsSettings.LabelPick.get -> Aw.Context.Core.Engine.LabelPick
+Aw.Context.Core.Engine.ModelsSettings.Warnings.init -> void
+Aw.Context.Core.Engine.ModelsSettings.LabelCandidates.init -> void
+Aw.Context.Core.Engine.ModelsSettings.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.ModelsSettings.Entry(Aw.Context.Core.Engine.ModelKind kind) -> Aw.Context.Core.Engine.ModelEntry!
+static Aw.Context.Core.Engine.ModelsSettings.Read(System.Text.Json.JsonElement? section) -> Aw.Kernel.Result<Aw.Context.Core.Engine.ModelsSettings!>!
+Aw.Context.Core.Engine.RoutedModel.Harness.get -> Aw.Context.Core.Engine.ModelHarness
+Aw.Context.Core.Engine.RoutedModel.Model.get -> string!
+Aw.Context.Core.Engine.RoutedModel.Harness.init -> void
+Aw.Context.Core.Engine.RoutedModel.Source.get -> Aw.Context.Core.Engine.ModelSource
+Aw.Context.Core.Engine.RoutedModel.Model.init -> void
+Aw.Context.Core.Engine.RoutedModel.Source.init -> void
+Aw.Context.Core.Engine.RoutedModel
+override Aw.Context.Core.Engine.RoutedModel.ToString() -> string!
+static Aw.Context.Core.Engine.RoutedModel.operator !=(Aw.Context.Core.Engine.RoutedModel? left, Aw.Context.Core.Engine.RoutedModel? right) -> bool
+static Aw.Context.Core.Engine.RoutedModel.operator ==(Aw.Context.Core.Engine.RoutedModel? left, Aw.Context.Core.Engine.RoutedModel? right) -> bool
+override Aw.Context.Core.Engine.RoutedModel.GetHashCode() -> int
+override Aw.Context.Core.Engine.RoutedModel.Equals(object? obj) -> bool
+Aw.Context.Core.Engine.RoutedModel.Equals(Aw.Context.Core.Engine.RoutedModel? other) -> bool
+Aw.Context.Core.Engine.RoutedModel.<Clone>$() -> Aw.Context.Core.Engine.RoutedModel!
+Aw.Context.Core.Engine.RoutedModel.Deconstruct(out Aw.Context.Core.Engine.ModelHarness Harness, out string! Model, out Aw.Context.Core.Engine.ModelSource Source) -> void
+Aw.Context.Core.Engine.RoutedModel.RoutedModel(Aw.Context.Core.Engine.ModelHarness Harness, string! Model, Aw.Context.Core.Engine.ModelSource Source) -> void
+Aw.Context.Core.Models.ModelAnswer.Harness.get -> string?
+Aw.Context.Core.Models.ModelAnswer.Harness.init -> void
+Aw.Context.Core.Models.ModelAnswer.TokenBasis.get -> Aw.Context.Core.Models.TokenBasis
+Aw.Context.Core.Models.ModelAnswer.TokenBasis.init -> void
+Aw.Context.Core.Engine.ContextSettings.Models.get -> Aw.Context.Core.Engine.ModelsSettings!
+Aw.Context.Core.Engine.ContextSettings.Models.init -> void
+static Aw.Context.Core.Engine.ModelKinds.TryParse(string! key, out Aw.Context.Core.Engine.ModelKind kind) -> bool
+static Aw.Context.Core.Engine.ModelNames.BuiltInName(Aw.Context.Core.Engine.ModelHarness harness, Aw.Context.Core.Models.ModelTier tier) -> string!
+Aw.Context.Core.Concepts.CoveredConcepts
+Aw.Context.Core.Concepts.CoverFold
+Aw.Context.Core.Concepts.CoverFold.<Clone>$() -> Aw.Context.Core.Concepts.CoverFold!
+Aw.Context.Core.Concepts.CoverFold.Covered.get -> int
+Aw.Context.Core.Concepts.CoverFold.Covered.init -> void
+Aw.Context.Core.Concepts.CoverFold.CoverFold(Aw.Context.Core.Graph.GraphSnapshot! Graph, int Covered) -> void
+Aw.Context.Core.Concepts.CoverFold.Deconstruct(out Aw.Context.Core.Graph.GraphSnapshot! Graph, out int Covered) -> void
+Aw.Context.Core.Concepts.CoverFold.Equals(Aw.Context.Core.Concepts.CoverFold? other) -> bool
+Aw.Context.Core.Concepts.CoverFold.Graph.get -> Aw.Context.Core.Graph.GraphSnapshot!
+Aw.Context.Core.Concepts.CoverFold.Graph.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.CoverShare.get -> double
+Aw.Context.Core.Engine.ConceptSynthesisSettings.CoverShare.init -> void
+override Aw.Context.Core.Concepts.CoverFold.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.CoverFold.GetHashCode() -> int
+override Aw.Context.Core.Concepts.CoverFold.ToString() -> string!
+static Aw.Context.Core.Concepts.CoveredConcepts.Fold(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts, double share) -> Aw.Context.Core.Concepts.CoverFold!
+static Aw.Context.Core.Concepts.CoverFold.operator !=(Aw.Context.Core.Concepts.CoverFold? left, Aw.Context.Core.Concepts.CoverFold? right) -> bool
+static Aw.Context.Core.Concepts.CoverFold.operator ==(Aw.Context.Core.Concepts.CoverFold? left, Aw.Context.Core.Concepts.CoverFold? right) -> bool
+Aw.Context.Core.Records.StoredRecord.Description.get -> string?
+Aw.Context.Core.Records.StoredRecord.Description.init -> void
+Aw.Context.Core.Sync.RecordItem.Description.get -> string?
+Aw.Context.Core.Sync.RecordItem.Description.init -> void
+Aw.Context.Core.Records.ProjectRow.Description.get -> string?
+Aw.Context.Core.Records.ProjectRow.Description.init -> void
+const Aw.Context.Core.Sync.RecordBatches.MaxDescription = 4000 -> int
+Aw.Context.Core.Graph.UnreadFileNodes
+const Aw.Context.Core.Graph.UnreadFileNodes.Attribute = "read" -> string!
+static Aw.Context.Core.Graph.UnreadFileNodes.Attributes() -> System.Text.Json.JsonElement
+static Aw.Context.Core.Graph.UnreadFileNodes.Is(Aw.Context.Core.Graph.GraphNode! node) -> bool

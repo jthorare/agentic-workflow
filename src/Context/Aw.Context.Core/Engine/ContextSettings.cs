@@ -97,6 +97,9 @@ public sealed record ContextSettings
     /// <summary>'context.conceptScan': the concept scan's tier thresholds and the model each agent CLI runs for each tier.</summary>
     public ConceptScanSettings ConceptScan { get; init; } = new();
 
+    /// <summary>'context.models': which harnesses and models each kind of model call uses (model routing spec §3).</summary>
+    public ModelsSettings Models { get; init; } = new();
+
     /// <summary>'context.conceptSynthesis': the pass that groups the whole record store by meaning and names each group (#1597).</summary>
     public ConceptSynthesisSettings ConceptSynthesis { get; init; } = new();
 

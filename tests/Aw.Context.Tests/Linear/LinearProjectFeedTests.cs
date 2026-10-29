@@ -98,6 +98,25 @@ public sealed class LinearProjectFeedTests
     }
 
     [Fact]
+    public async Task The_description_is_carried_on_its_own_and_stays_in_the_text()
+    {
+        var item = await One(static _ => { });
+
+        Assert.Equal("About p1", item.Description);
+        Assert.Contains("About p1", item.Text, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  \n ")]
+    public async Task A_blank_description_is_null(string blank)
+    {
+        var item = await One(n => n["description"] = blank);
+
+        Assert.Null(item.Description);
+    }
+
+    [Fact]
     public async Task A_project_with_no_lead_no_update_and_no_target_has_no_link_health_or_due_date()
     {
         var item = await One(static _ => { });

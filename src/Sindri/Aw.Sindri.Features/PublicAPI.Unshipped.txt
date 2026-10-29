@@ -5285,8 +5285,6 @@ static Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.operator !=(Aw.Sind
 static Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.operator ==(Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? left, Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? right) -> bool
 Aw.Sindri.Features.AttachProject.AttachProjectRequest
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.<Clone>$() -> Aw.Sindri.Features.AttachProject.AttachProjectRequest!
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.AttachProjectRequest(string? Linear = null, string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Note = null, System.DateOnly? Target = null) -> void
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.Deconstruct(out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Note, out System.DateOnly? Target) -> void
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Equals(Aw.Sindri.Features.AttachProject.AttachProjectRequest? other) -> bool
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Linear.get -> string?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Linear.init -> void
@@ -5294,20 +5292,15 @@ Aw.Sindri.Features.AttachProject.AttachProjectRequest.Links.get -> System.Collec
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Links.init -> void
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Name.get -> string?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Name.init -> void
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.Note.get -> string?
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.Note.init -> void
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.State.get -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.State.init -> void
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Target.get -> System.DateOnly?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Target.init -> void
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.<Clone>$() -> Aw.Sindri.Features.ChangeProject.ChangeProjectRequest!
-Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.ChangeProjectRequest(Aw.Sindri.Core.Ids.ProjectId Project, long Version, Aw.Sindri.Core.Projects.ProjectEdit! Edit) -> void
-Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Deconstruct(out Aw.Sindri.Core.Ids.ProjectId Project, out long Version, out Aw.Sindri.Core.Projects.ProjectEdit! Edit) -> void
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Edit.get -> Aw.Sindri.Core.Projects.ProjectEdit!
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Edit.init -> void
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Equals(Aw.Sindri.Features.ChangeProject.ChangeProjectRequest? other) -> bool
-Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Project.get -> Aw.Sindri.Core.Ids.ProjectId
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Project.init -> void
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Version.get -> long
 Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Version.init -> void
@@ -5474,3 +5467,10 @@ static Aw.Sindri.Features.ListProjects.ListProjectsRequest.operator !=(Aw.Sindri
 static Aw.Sindri.Features.ListProjects.ListProjectsRequest.operator ==(Aw.Sindri.Features.ListProjects.ListProjectsRequest? left, Aw.Sindri.Features.ListProjects.ListProjectsRequest? right) -> bool
 static Aw.Sindri.Features.ListProjects.ListProjectsResponse.operator !=(Aw.Sindri.Features.ListProjects.ListProjectsResponse? left, Aw.Sindri.Features.ListProjects.ListProjectsResponse? right) -> bool
 static Aw.Sindri.Features.ListProjects.ListProjectsResponse.operator ==(Aw.Sindri.Features.ListProjects.ListProjectsResponse? left, Aw.Sindri.Features.ListProjects.ListProjectsResponse? right) -> bool
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.AttachProjectRequest(string? Linear = null, string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Notes = null, System.DateOnly? Target = null) -> void
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Deconstruct(out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Notes, out System.DateOnly? Target) -> void
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Notes.get -> string?
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Notes.init -> void
+Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.ChangeProjectRequest(string! Project, long Version, Aw.Sindri.Core.Projects.ProjectEdit! Edit) -> void
+Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Deconstruct(out string! Project, out long Version, out Aw.Sindri.Core.Projects.ProjectEdit! Edit) -> void
+Aw.Sindri.Features.ChangeProject.ChangeProjectRequest.Project.get -> string!

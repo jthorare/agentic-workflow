@@ -39,9 +39,14 @@ internal sealed class AttachProjectLookup(IViewReader views, IProjectFacts facts
 
         var snapshot = read.Value;
         var found = snapshot.Catalog.FirstOrDefault(fact => Names(fact, typed));
-        return found is null
-            ? SindriErrors.ProjectNotSynced.With($"Sindri doesn't sync that project. It syncs these Linear teams: {string.Join(", ", snapshot.Teams)}. Add the team to `context.sources.linear.teams`.")
-            : new AttachContext(found.Key, found.Title, found.LeadIsOwner, attached.Value);
+        if (found is null)
+        {
+            return SindriErrors.ProjectNotSynced.With($"Sindri doesn't sync that project. It syncs these Linear teams: {string.Join(", ", snapshot.Teams)}. Add the team to `context.sources.linear.teams`.");
+        }
+
+        // notes the owner wrote while leading it are kept when it is attached after it stopped being led
+        var led = await views.Get<ProjectHiddenRow>(ViewNames.ProjectHidden, found.Key, cancellationToken).ConfigureAwait(false);
+        return led.IsError ? led.Error : new AttachContext(found.Key, found.Title, found.LeadIsOwner, attached.Value, led.Value?.Notes);
     }
 
     private static bool Names(LinearProjectFact fact, LinearProjectRef typed) =>

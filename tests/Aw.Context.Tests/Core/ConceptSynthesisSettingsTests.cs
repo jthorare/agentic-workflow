@@ -18,6 +18,15 @@ public sealed class ConceptSynthesisSettingsTests
         Assert.Equal(new ConceptSynthesisSettings(), synthesis);
         Assert.Equal((true, 8, 0.85f, 20, 2, 1, 1_500, 30_000), (synthesis.Enabled, synthesis.Neighbours, synthesis.MinCosine, synthesis.MaxGroup, synthesis.MinRecords, synthesis.MinSources, synthesis.MaxCharsPerRecord, synthesis.MaxCharsPerCall));
         Assert.Equal(new GroupingSettings(), synthesis.Grouping);
+        Assert.Equal(2.0 / 3.0, synthesis.CoverShare);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_cover_share_is_read_from_the_profile()
+    {
+        var synthesis = Read("""{"conceptSynthesis":{"coverShare":0.9}}""").Value.ConceptSynthesis;
+
+        Assert.Equal(0.9, synthesis.CoverShare);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -35,6 +44,8 @@ public sealed class ConceptSynthesisSettingsTests
     [InlineData("""{"conceptSynthesis":{"maxGroup":1}}""", "context.conceptSynthesis.maxGroup")]
     [InlineData("""{"conceptSynthesis":{"minRecords":1}}""", "context.conceptSynthesis.minRecords")]
     [InlineData("""{"conceptSynthesis":{"maxCharsPerCall":10}}""", "context.conceptSynthesis.maxCharsPerCall")]
+    [InlineData("""{"conceptSynthesis":{"coverShare":0.4}}""", "context.conceptSynthesis.coverShare")]
+    [InlineData("""{"conceptSynthesis":{"coverShare":1.5}}""", "context.conceptSynthesis.coverShare")]
     [InlineData("""{"conceptSynthesis":{"model":"x"}}""", "context")]
     public void A_wrong_value_or_key_is_SND_CONTEXT_001_with_the_key_path_first(string json, string keyPath)
     {

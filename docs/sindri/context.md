@@ -651,12 +651,10 @@ the scan itself never touches the graph, the overrides or the pins, and a featur
 
 The scan picks its model from the size of the map (owner, q121; issue 1172). Before the first call it counts the map's features and estimates the first prompt's tokens
 (characters / 4, rounded up). Above `context.conceptScan.strongAboveFeatures` (default 150) features or `context.conceptScan.strongAbovePromptTokens` (default 10,000;
-the input cap allows about 15,000) tokens it asks for the `strong` tier, otherwise the `cheap` one, and both calls of the scan ask for the same tier. The model port
-asks each agent CLI for the model the profile names for that CLI and tier (`context.conceptScan.models.<claude|codex|cursor>.<cheap|strong>`). Defaults: Claude Code
-`haiku` for cheap and `sonnet` for strong (aliases `claude --model` takes); Codex and Cursor have none, so for them both tiers run the CLI's own default until the profile names a
-model (a wrong name makes that CLI fail, so none is guessed). The port walks the CLIs in the same order as before and the first that answers wins, so a scan that
-falls through to the next CLI asks that CLI for its own model name for the tier. The scan's report, and so the job result, records the tier and the model the answering CLI was
-asked for (empty when that CLI ran its default); nothing else asks for a tier, so every other model call is unchanged.
+the input cap allows about 15,000) tokens it asks for the `strong` tier, otherwise the `cheap` one, and both calls of the scan ask for the same tier. The scan sends the tier only, never a model name. Which harness and which model a tier means comes from `context.models` (see "Model routing: `context.models`" below);
+the old `context.conceptScan.models.<claude|codex|cursor>.<cheap|strong>` is still read and supplies `context.models.names` when that key is absent. Without either, the tier means
+the built-in names: Claude Code `haiku` and `sonnet`, Codex `gpt-6-luna` and `gpt-5.5`, Cursor `gpt-5.6-luna-none-fast` and `gpt-5`. The scan's report, and so the job result, records the tier and the model the
+answering CLI was asked for; the scan is the only caller that picks its own tier, and `context.models.conceptNaming.tier` does not change it.
 
 **Rules changes start a refresh too (issue 1041).** Each map version records a hash of the rules it was built under (`MapRuleset`, table column
 `map_version.ruleset`): a built-in `RulesVersion` that is bumped in every change to the clustering or extraction rules, and per mapped repo the deny
@@ -1005,6 +1003,50 @@ What lies behind a node, in time: the stored records and decisions that reach it
 - **`searched`.** The rows are `map`, each intent source, `git-history` and `incidents` (no `code-index`). `incidents` is `not-configured` (no incident source exists). `git-history`: `ok` (reason `capped`, `shallow-clone` or `no-files` when worth saying), `ok` with reason `deadline` when the opt-in `context.history.deadline` ended the read (the row's `note` names the deadline and the elapsed ms; repos read before it are listed; with no such key there is no timer, #1221), `degraded` with `SND-CONTEXT-048` (a checkout git cannot read), or `unavailable` with `commit-not-held` and `SND-CONTEXT-110` (the map version's commit is not in the clone: fetch it into the repo's checkout). An intent source reads `not-configured`, `unavailable` with `history-unlinked` (records synced, none linked to a node), or `unavailable` with `not-synced` and `SND-CONTEXT-161` (the source never synced). Codes 160 and 161 are row codes, never a failed call.
 - **A gap fills itself.** When a configured intent source has never synced, the `not-synced` row carries `sync: {state, jobId}` while a sync job runs (the id `GET /sindri/jobs/{id}` serves; also on `context lenses`). The built-in `context-sync-gaps` service (listed by `sindri services`) starts that sync as `service:context-sync-gaps` through the `SyncSources` command; a sync that is already running is never doubled, and after a failed sync it waits 5, 10, 20, 40, then 60 minutes at most, counted from the newest failure in a row (a success resets it). It re-checks on the scheduler tick by reading the jobs view; the scheduler has no event trigger. A failure to start shows in needs-you as `failure:service:context-sync-gaps`. The app re-reads the lenses and history when a `job.*` event arrives.
 - **Exit codes.** 0 with an answer; 1 for attention (not running, an unknown anchor, a bad window, a version not held); 2 for a tool error.
+
+## Model routing: `context.models`
+
+Every model call the context engine makes belongs to one of six kinds, and the profile can say which harnesses (agent CLIs) and which models each kind uses. All keys are under
+`context.models` and every one is optional; a profile with none behaves as it did before (same harness order, same models). A wrong value is `SND-CONTEXT-001` with the key path, at `profile validate` and `profile approve`.
+
+```yaml
+context:
+  models:
+    names:                           # what "cheap" and "strong" mean on each harness
+      codex:  { cheap: gpt-6-luna, strong: gpt-5.5 }
+    default:
+      harnesses: [claude-code, codex, cursor]   # order to try; left out = the installed ones, claude-code first
+      tier: cheap
+    labeling: { tier: cheap, pick: off, candidates: 3 }
+    conceptNaming: { tier: strong }
+    adjudication: { harnesses: [claude-code], models: { claude-code: opus } }   # a named model wins over the tier
+```
+
+| Kind | Purposes it routes |
+|---|---|
+| `labeling` | labeling (map cluster names) |
+| `conceptNaming` | the concept scan (`concept-scan`), the concept names of a map build (`concepts`) and the concept synthesis (`concept-synthesis`; not in the spec's list, mapped here because it names concepts too) |
+| `decisionExtraction` | decision extraction from records |
+| `adjudication` | the eval adjudicator |
+| `mapCleanup` | the map cleanup agent |
+| `rerank` | the query's rerank arm |
+
+An entry takes `harnesses` (1 to 3 of `claude-code`, `codex`, `cursor`, none twice), `tier` (`cheap` or `strong`, default `cheap`) and `models` (a model per harness). `labeling` also takes `pick`
+(`jev` or `off`, default `off`) and `candidates` (2 to 5, default 3). A kind inherits `default` key by key. A model name is 1 to 100 letters, digits and `. _ : / @ + -`, not starting with `-` and with no `..`.
+
+A call finds its harnesses and model in this order: the harnesses are the kind's `harnesses`, else `default.harnesses`, else the installed CLIs (a named harness that is not installed is skipped). The model for a harness is the
+one the request itself names, else the kind's `models`, else `default.models`, else `names.<harness>.<tier>`, else the built-in table. The tier is the kind's, else `default.tier`, else `cheap`.
+
+| Harness | Cheap | Strong |
+|---|---|---|
+| `claude-code` | `haiku` | `sonnet` |
+| `codex` | `gpt-6-luna` | `gpt-5.5` |
+| `cursor` | `gpt-5.6-luna-none-fast` | `gpt-5` |
+
+The old `context.conceptScan.models` supplies `names` for the matching harness (`claude` is `claude-code`) when `names` doesn't say. If both are written, `names` wins name by name and `profile validate` prints
+"context.conceptScan.models is replaced by context.models.names; the new key is used". Nothing in the profile is rewritten.
+
+Two errors belong to routing: `SND-CONTEXT-240` (every harness for the call is at its usage limit or failing) and `SND-CONTEXT-241` (no harness for the call is installed). The router that raises them, the fallback and the pause are not part of this change; the settings, the resolver and the error codes are.
 
 ## The concept glossary: the words behind the concepts
 
