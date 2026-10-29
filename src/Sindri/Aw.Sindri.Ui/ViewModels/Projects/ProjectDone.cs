@@ -11,4 +11,7 @@ internal enum ProjectDone
 
     /// <summary>A hidden project was brought back.</summary>
     Unhidden,
+
+    /// <summary>A project was added (attached from Linear or made by hand).</summary>
+    Added,
 }

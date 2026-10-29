@@ -21382,3 +21382,4 @@ static Aw.Sindri.Core.Projects.ProjectDecisions.NamesLinearProject(string! proje
 Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention
 static Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention.Question.get -> string!
 static Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention.SharedLines.get -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?

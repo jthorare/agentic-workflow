@@ -67,7 +67,7 @@ internal static class ApiScenarios
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
         ProjectScenarios.Handles(slug, scenario)
-            ? await ProjectScenarios.Start(scenario, ct)
+            ? await ProjectScenarios.Start(slug, scenario, ct)
             : SandboxScenarios.Handles(slug, scenario)
             ? await SandboxScenarios.Start(slug, scenario, ct)
             : LaunchScenarios.Handles(slug, scenario)

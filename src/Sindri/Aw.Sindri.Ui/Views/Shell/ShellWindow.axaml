@@ -308,7 +308,7 @@
                 <Border x:Name="SheetTitle" Classes="sheet-title" Grid.Column="1" Focusable="True" VerticalAlignment="Center"
                         AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text"
                         AutomationProperties.Name="{Binding SheetName}">
-                  <TextBlock x:Name="SheetSubjectText" Classes="detail-title" Classes.mono="{Binding !IsProjectSheet}" Text="{Binding SheetTitle}" TextTrimming="CharacterEllipsis"
+                  <TextBlock x:Name="SheetSubjectText" Classes="detail-title" Classes.mono="{Binding SheetTitleIsMono}" Text="{Binding SheetTitle}" TextTrimming="CharacterEllipsis"
                              ToolTip.Tip="{Binding SheetSubject}" AutomationProperties.AccessibilityView="Raw" />
                 </Border>
                 <Button x:Name="SheetClose" Grid.Column="2" Click="OnCloseSheet" Margin="12,0,0,0"
@@ -377,6 +377,13 @@
                   <controls:Deferred DataContext="{Binding ProjectSheet}">
                     <controls:Deferred.Template>
                       <DataTemplate><pv:ProjectSheetView x:Name="ProjectSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="ProjectAddScroll" IsVisible="{Binding IsProjectAddSheet}">
+                  <controls:Deferred DataContext="{Binding ProjectAdd}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><pv:ProjectAddView x:Name="ProjectAddContent" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </ScrollViewer>

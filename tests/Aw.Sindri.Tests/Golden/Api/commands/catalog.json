@@ -303,7 +303,7 @@
       "method": "POST",
       "route": "/sindri/projects",
       "cli": "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]",
-      "ui": "pending:Projects",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null,
