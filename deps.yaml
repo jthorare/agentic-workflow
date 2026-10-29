@@ -122,7 +122,7 @@ packages:
     sublevel: 1
     projectPrefix: Aw.Kernel.Data
     src: src/Aw.Kernel.Data
-    note: "SQLite access and the migrations runner (Microsoft.Data.Sqlite)"
+    note: "SQLite access and the migrations runner (Microsoft.Data.Sqlite); PinnedProcess, a child-process start whose forking thread outlives pool retirement (bwrap --die-with-parent, #1680)"
   - id: KernelTelemetry
     kind: package
     tier: 0
