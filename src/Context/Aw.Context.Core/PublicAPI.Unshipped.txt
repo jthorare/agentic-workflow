@@ -4804,7 +4804,7 @@ const Aw.Context.Core.Eval.MapQuality.MapQualityBars.UnmappedRate = 0.2 -> doubl
 const Aw.Context.Core.Eval.MapQuality.MapQualityReport.CurrentSchemaVersion = 1 -> int
 const Aw.Context.Core.Eval.ProbeReport.CurrentSchemaVersion = 1 -> int
 const Aw.Context.Core.Eval.ProbeScoring.K = 5 -> int
-const Aw.Context.Core.Extract.MapExtractor.Version = 4 -> int
+const Aw.Context.Core.Extract.MapExtractor.Version = 5 -> int
 const Aw.Context.Core.Graph.EntryKey.Version = 1 -> int
 const Aw.Context.Core.Graph.GraphWalk.MaxDepth = 8 -> int
 const Aw.Context.Core.History.HistoryRules.ChangesPerRepo = 2147483646 -> int
@@ -8693,7 +8693,6 @@ Aw.Context.Core.Records.StoredRecord.ClosedAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Records.StoredRecord.ClosedAt.init -> void
 Aw.Context.Core.Records.StoredRecord.CreatedAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Records.StoredRecord.CreatedAt.init -> void
-Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links) -> void
 Aw.Context.Core.Records.StoredRecord.Equals(Aw.Context.Core.Records.StoredRecord? other) -> bool
 Aw.Context.Core.Records.StoredRecord.Key.get -> Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Records.StoredRecord.Key.init -> void
@@ -8713,7 +8712,6 @@ Aw.Context.Core.Records.StoredRecord.State.get -> Aw.Context.Core.Records.Record
 Aw.Context.Core.Records.StoredRecord.State.init -> void
 Aw.Context.Core.Records.StoredRecord.StateRaw.get -> string?
 Aw.Context.Core.Records.StoredRecord.StateRaw.init -> void
-Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links) -> void
 Aw.Context.Core.Records.StoredRecord.SyncedAt.get -> System.DateTimeOffset
 Aw.Context.Core.Records.StoredRecord.SyncedAt.init -> void
 Aw.Context.Core.Records.StoredRecord.TextHash.get -> string!
@@ -8787,7 +8785,6 @@ Aw.Context.Core.Sync.RecordItem.ClosedAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Sync.RecordItem.ClosedAt.init -> void
 Aw.Context.Core.Sync.RecordItem.CreatedAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Sync.RecordItem.CreatedAt.init -> void
-Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience) -> void
 Aw.Context.Core.Sync.RecordItem.Equals(Aw.Context.Core.Sync.RecordItem? other) -> bool
 Aw.Context.Core.Sync.RecordItem.Key.get -> Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Sync.RecordItem.Key.init -> void
@@ -8795,7 +8792,6 @@ Aw.Context.Core.Sync.RecordItem.Kind.get -> Aw.Context.Core.Sources.RecordKind
 Aw.Context.Core.Sync.RecordItem.Kind.init -> void
 Aw.Context.Core.Sync.RecordItem.Links.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>!
 Aw.Context.Core.Sync.RecordItem.Links.init -> void
-Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience) -> void
 Aw.Context.Core.Sync.RecordItem.Repo.get -> Aw.Context.Core.Engine.ContextRepoName?
 Aw.Context.Core.Sync.RecordItem.Repo.init -> void
 Aw.Context.Core.Sync.RecordItem.State.get -> Aw.Context.Core.Records.RecordState?
@@ -9186,7 +9182,7 @@ Aw.Context.Core.Sync.SourceProgress
 Aw.Context.Core.Sync.SourceProgress.<Clone>$() -> Aw.Context.Core.Sync.SourceProgress!
 Aw.Context.Core.Sync.SourceProgress.Complete.get -> bool
 Aw.Context.Core.Sync.SourceProgress.Complete.init -> void
-Aw.Context.Core.Sync.SourceProgress.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Records.SyncPhase? Phase, out System.DateTimeOffset? LastSync, out string? LastCode, out bool Usable, out bool Complete) -> void
+Aw.Context.Core.Sync.SourceProgress.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Records.SyncPhase? Phase, out System.DateTimeOffset? LastSync, out string? LastCode, out bool Usable, out bool Complete, out int? ReReading) -> void
 Aw.Context.Core.Sync.SourceProgress.Equals(Aw.Context.Core.Sync.SourceProgress? other) -> bool
 Aw.Context.Core.Sync.SourceProgress.LastCode.get -> string?
 Aw.Context.Core.Sync.SourceProgress.LastCode.init -> void
@@ -9194,15 +9190,17 @@ Aw.Context.Core.Sync.SourceProgress.LastSync.get -> System.DateTimeOffset?
 Aw.Context.Core.Sync.SourceProgress.LastSync.init -> void
 Aw.Context.Core.Sync.SourceProgress.Phase.get -> Aw.Context.Core.Records.SyncPhase?
 Aw.Context.Core.Sync.SourceProgress.Phase.init -> void
+Aw.Context.Core.Sync.SourceProgress.ReReading.get -> int?
+Aw.Context.Core.Sync.SourceProgress.ReReading.init -> void
 Aw.Context.Core.Sync.SourceProgress.Source.get -> Aw.Context.Core.Sources.SourceId
 Aw.Context.Core.Sync.SourceProgress.Source.init -> void
-Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete) -> void
+Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null) -> void
 Aw.Context.Core.Sync.SourceProgress.Usable.get -> bool
 Aw.Context.Core.Sync.SourceProgress.Usable.init -> void
 override Aw.Context.Core.Sync.SourceProgress.Equals(object? obj) -> bool
 override Aw.Context.Core.Sync.SourceProgress.GetHashCode() -> int
 override Aw.Context.Core.Sync.SourceProgress.ToString() -> string!
-static Aw.Context.Core.Sync.SourceProgress.From(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncPhase? phase, System.DateTimeOffset? lastSync, string? lastCode) -> Aw.Context.Core.Sync.SourceProgress!
+static Aw.Context.Core.Sync.SourceProgress.From(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncPhase? phase, System.DateTimeOffset? lastSync, string? lastCode, int? stored = null) -> Aw.Context.Core.Sync.SourceProgress!
 static Aw.Context.Core.Sync.SourceProgress.operator !=(Aw.Context.Core.Sync.SourceProgress? left, Aw.Context.Core.Sync.SourceProgress? right) -> bool
 static Aw.Context.Core.Sync.SourceProgress.operator ==(Aw.Context.Core.Sync.SourceProgress? left, Aw.Context.Core.Sync.SourceProgress? right) -> bool
 Aw.Context.Core.Sync.IIndexSync.Progress(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sync.SourceProgress!>!>!>
@@ -9229,3 +9227,60 @@ override Aw.Context.Core.Records.SourceCounts.GetHashCode() -> int
 override Aw.Context.Core.Records.SourceCounts.ToString() -> string!
 static Aw.Context.Core.Records.SourceCounts.operator !=(Aw.Context.Core.Records.SourceCounts? left, Aw.Context.Core.Records.SourceCounts? right) -> bool
 static Aw.Context.Core.Records.SourceCounts.operator ==(Aw.Context.Core.Records.SourceCounts? left, Aw.Context.Core.Records.SourceCounts? right) -> bool
+Aw.Context.Core.Records.ISourceIdentityStore
+Aw.Context.Core.Records.ISourceIdentityStore.Read(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SourceIdentity?>!>
+Aw.Context.Core.Records.ISourceIdentityStore.Write(Aw.Context.Core.Records.SourceIdentity! identity, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Records.RecordLinkKind.LedBy = 10 -> Aw.Context.Core.Records.RecordLinkKind
+Aw.Context.Core.Records.SourceIdentity
+Aw.Context.Core.Records.SourceIdentity.<Clone>$() -> Aw.Context.Core.Records.SourceIdentity!
+Aw.Context.Core.Records.SourceIdentity.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out string! UserRef, out string! Name, out System.DateTimeOffset ReadAt) -> void
+Aw.Context.Core.Records.SourceIdentity.Equals(Aw.Context.Core.Records.SourceIdentity? other) -> bool
+Aw.Context.Core.Records.SourceIdentity.Name.get -> string!
+Aw.Context.Core.Records.SourceIdentity.Name.init -> void
+Aw.Context.Core.Records.SourceIdentity.ReadAt.get -> System.DateTimeOffset
+Aw.Context.Core.Records.SourceIdentity.ReadAt.init -> void
+Aw.Context.Core.Records.SourceIdentity.Source.get -> Aw.Context.Core.Sources.SourceId
+Aw.Context.Core.Records.SourceIdentity.Source.init -> void
+Aw.Context.Core.Records.SourceIdentity.SourceIdentity(Aw.Context.Core.Sources.SourceId Source, string! UserRef, string! Name, System.DateTimeOffset ReadAt) -> void
+Aw.Context.Core.Records.SourceIdentity.UserRef.get -> string!
+Aw.Context.Core.Records.SourceIdentity.UserRef.init -> void
+Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out string? Health, out System.DateOnly? DueAt) -> void
+Aw.Context.Core.Records.StoredRecord.DueAt.get -> System.DateOnly?
+Aw.Context.Core.Records.StoredRecord.DueAt.init -> void
+Aw.Context.Core.Records.StoredRecord.Health.get -> string?
+Aw.Context.Core.Records.StoredRecord.Health.init -> void
+Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null) -> void
+Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt) -> void
+Aw.Context.Core.Sync.RecordItem.DueAt.get -> System.DateOnly?
+Aw.Context.Core.Sync.RecordItem.DueAt.init -> void
+Aw.Context.Core.Sync.RecordItem.Health.get -> string?
+Aw.Context.Core.Sync.RecordItem.Health.init -> void
+Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null) -> void
+override Aw.Context.Core.Records.SourceIdentity.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SourceIdentity.GetHashCode() -> int
+override Aw.Context.Core.Records.SourceIdentity.ToString() -> string!
+static Aw.Context.Core.Records.SourceIdentity.operator !=(Aw.Context.Core.Records.SourceIdentity? left, Aw.Context.Core.Records.SourceIdentity? right) -> bool
+static Aw.Context.Core.Records.SourceIdentity.operator ==(Aw.Context.Core.Records.SourceIdentity? left, Aw.Context.Core.Records.SourceIdentity? right) -> bool
+Aw.Context.Core.Linear.LinearSourceIds
+Aw.Context.Core.Records.ISourceViewer
+Aw.Context.Core.Records.ISourceViewer.Viewer(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SourceViewer!>!>
+Aw.Context.Core.Records.ISourceViewers
+Aw.Context.Core.Records.ISourceViewers.ForLinear(Aw.Context.Core.Engine.ContextSettings! settings) -> Aw.Context.Core.Records.ISourceViewer?
+Aw.Context.Core.Records.SourceViewer
+Aw.Context.Core.Records.SourceViewer.<Clone>$() -> Aw.Context.Core.Records.SourceViewer!
+Aw.Context.Core.Records.SourceViewer.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out string! Name) -> void
+Aw.Context.Core.Records.SourceViewer.Equals(Aw.Context.Core.Records.SourceViewer? other) -> bool
+Aw.Context.Core.Records.SourceViewer.Id.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Records.SourceViewer.Id.init -> void
+Aw.Context.Core.Records.SourceViewer.Name.get -> string!
+Aw.Context.Core.Records.SourceViewer.Name.init -> void
+Aw.Context.Core.Records.SourceViewer.SourceViewer(Aw.Context.Core.Sources.ExternalId Id, string! Name) -> void
+override Aw.Context.Core.Records.SourceViewer.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SourceViewer.GetHashCode() -> int
+override Aw.Context.Core.Records.SourceViewer.ToString() -> string!
+static Aw.Context.Core.Linear.LinearSourceIds.UserRef(Aw.Context.Core.Sources.ExternalId id) -> string!
+static Aw.Context.Core.Records.SourceViewer.operator !=(Aw.Context.Core.Records.SourceViewer? left, Aw.Context.Core.Records.SourceViewer? right) -> bool
+static Aw.Context.Core.Records.SourceViewer.operator ==(Aw.Context.Core.Records.SourceViewer? left, Aw.Context.Core.Records.SourceViewer? right) -> bool
+static readonly Aw.Context.Core.Linear.LinearSourceIds.Identity -> Aw.Context.Core.Sources.SourceId
+static readonly Aw.Context.Core.Linear.LinearSourceIds.Issues -> Aw.Context.Core.Sources.SourceId
+static readonly Aw.Context.Core.Linear.LinearSourceIds.Projects -> Aw.Context.Core.Sources.SourceId

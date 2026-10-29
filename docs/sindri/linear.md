@@ -97,3 +97,12 @@ An issue's stored text is its description, then `Comments:`, then `Attachments:`
 
 An `env:` pointer is read from the control plane's environment as it was when `serve` started, while doctor reads the
 calling shell's, so the two can disagree; `file:` and (on macOS) `keychain:` read the same in both.
+
+## 4. The record feeds and the one-time re-read
+
+With Linear configured the owned record index runs two feeds, each with its own cursor, lock and row in `sindri index status` and in the `record index: ...` detail of `context:index-sync`:
+
+- `linear`: the issues of the profile's teams. Its first read (no watermark) takes the recent window plus the old open issues of open projects; every later read has a watermark and never carries that clause. Issues are stored with a `;f2` version suffix.
+- `linear-projects`: the projects, as `linear:project/<id>` records. After each tick of this feed the order is: the decision pass for the feed, then the viewer step (who the Linear key belongs to).
+
+Upgrading to the build with migration 0020 resets the `linear` feed to Recent with no watermark, so every stored issue is re-saved once (it gains its project link) and the old open issues of open projects come in. While that runs, `sindri index status` shows the `linear` row as `re-reading for project links, <n> issues stored` and `context:index-sync` warns with the same words. A source in Recent that already holds records counts as re-reading; the count is what the store holds, not how many have been re-saved. The row goes back to `usable` once the read reaches the end and sets the watermark.

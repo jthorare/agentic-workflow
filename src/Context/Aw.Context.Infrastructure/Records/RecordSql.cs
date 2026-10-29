@@ -12,11 +12,11 @@ internal static class RecordSql
     internal const string Existing = "SELECT version, text_hash, ruleset, blocked, removed_at FROM source_record WHERE key = @key";
 
     internal const string UpsertRecord =
-        "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at) " +
-        "VALUES (@key, @source, @kind, @repo, @audience, @title, @url, @author, @state, @stateRaw, @created, @updated, @closed, @version, @hash, @ruleset, @blocked, NULL, @synced) " +
+        "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at) " +
+        "VALUES (@key, @source, @kind, @repo, @audience, @title, @url, @author, @state, @stateRaw, @created, @updated, @closed, @version, @hash, @ruleset, @blocked, NULL, @synced, @health, @dueAt) " +
         "ON CONFLICT (key) DO UPDATE SET source = excluded.source, kind = excluded.kind, repo = excluded.repo, audience_key = excluded.audience_key, title = excluded.title, url = excluded.url, " +
         "author = excluded.author, state = excluded.state, state_raw = excluded.state_raw, created_at = excluded.created_at, updated_at = excluded.updated_at, closed_at = excluded.closed_at, " +
-        "version = excluded.version, text_hash = excluded.text_hash, ruleset = excluded.ruleset, blocked = excluded.blocked, removed_at = NULL, synced_at = excluded.synced_at";
+        "version = excluded.version, text_hash = excluded.text_hash, ruleset = excluded.ruleset, blocked = excluded.blocked, removed_at = NULL, synced_at = excluded.synced_at, health = excluded.health, due_at = excluded.due_at";
 
     internal const string DeleteLinks = "DELETE FROM record_link WHERE from_key = @key";
 
@@ -54,13 +54,19 @@ internal static class RecordSql
         "INSERT INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, backfill_cursor, backfill_before) VALUES (@source, 'records', @cursor, @at, NULL, @phase, @backfill, @before) " +
         "ON CONFLICT (source, repo) DO UPDATE SET cursor = excluded.cursor, last_sync = excluded.last_sync, last_error = NULL, phase = excluded.phase, backfill_cursor = excluded.backfill_cursor, backfill_before = excluded.backfill_before";
 
+    internal const string ReadIdentity = "SELECT source, user_ref, name, read_at FROM source_identity WHERE source = @source";
+
+    internal const string WriteIdentity =
+        "INSERT INTO source_identity (source, user_ref, name, read_at) VALUES (@source, @userRef, @name, @readAt) " +
+        "ON CONFLICT (source) DO UPDATE SET user_ref = excluded.user_ref, name = excluded.name, read_at = excluded.read_at";
+
     internal const string BumpRecordStamp = "UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1";
 
     /// <summary>Compacts the full-text segments, so a deleted chunk's words don't outlive it in an old segment.</summary>
     internal const string OptimizeFts = "INSERT INTO chunk_fts (chunk_fts) VALUES ('optimize')";
 
     internal const string Columns =
-        "key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at";
+        "key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at";
 
     internal const string Get = "SELECT " + Columns + " FROM source_record WHERE key = @key";
 

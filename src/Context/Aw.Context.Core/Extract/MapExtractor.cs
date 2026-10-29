@@ -10,7 +10,7 @@ namespace Aw.Context.Core.Extract;
 public static class MapExtractor
 {
     /// <summary>The recognizers' version. A backtest's as-of map cache is keyed by it, so a change to what the recognizers find bumps it.</summary>
-    public const int Version = 4;
+    public const int Version = 5;
 
     /// <summary>Extracts the map from the files.</summary>
     /// <param name="repo">The repo (its name joins the evidence keys).</param>
@@ -43,7 +43,8 @@ public static class MapExtractor
         var importNodes = imports.SelectMany(p => new[] { p.From, p.To }).Except(codeNodes.Select(n => n.Key.Value[5..]), StringComparer.Ordinal).Distinct(StringComparer.Ordinal).Select(CodeNode);
         var depends = imports.Select(p => new GraphEdge(CodeKey(p.From)!.Value, CodeKey(p.To)!.Value, EdgeType.DependsOn, Provenance.Deterministic, 1.0, Evidence(repo, p.From) is { } e ? [e] : null));   // why: the filter above keeps valid keys
         var found = ExtractedMap.Empty.Plus(new ExtractedMap([.. nodes, .. codeNodes, .. importNodes], [.. implements, .. related, .. depends]));
-        return new MapExtraction(found.Plus(DataStorePass.Run(repo, files, DataStoreAdapters.All, schemaGlobs ?? ContextSettings.DefaultSchemaGlobs)), timedOut);
+        var withStores = found.Plus(DataStorePass.Run(repo, files, DataStoreAdapters.All, schemaGlobs ?? ContextSettings.DefaultSchemaGlobs));
+        return new MapExtraction(withStores.Plus(ActionPass.Run(repo, files, withStores)), timedOut);
     }
 
     private static GraphNode Node(ContextRepoName repo, List<(RepoFile File, Found Found)> hits)
@@ -53,7 +54,7 @@ public static class MapExtractor
         return new GraphNode(best.Key, best.Label, Provenance.Deterministic, best.Confidence, evidence);
     }
 
-    private static GraphNode CodeNode(string path)
+    internal static GraphNode CodeNode(string path)
     {
         var name = path[(path.LastIndexOf('/') + 1)..];
         return new GraphNode(CodeKey(path)!.Value, name, Provenance.Deterministic);   // why: only files with valid keys get here
