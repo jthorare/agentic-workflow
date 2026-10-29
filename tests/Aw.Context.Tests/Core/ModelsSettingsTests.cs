@@ -86,7 +86,21 @@ public sealed class ModelsSettingsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_json_null_models_key_is_the_defaults() => Assert.Equal(new ModelsSettings(), Read("""{"models":null}""").Value.Models);
+    public void A_json_null_models_key_is_the_defaults()
+    {
+        // The record holds a dictionary and a list, which compare by reference, so the defaults are checked field by field.
+        var models = Read("""{"models":null}""").Value.Models;
+        var defaults = new ModelsSettings();
+
+        Assert.Equal(defaults.Names, models.Names);
+        Assert.Equal(defaults.Default.Tier, models.Default.Tier);
+        Assert.Null(models.Default.Harnesses);
+        Assert.Null(models.Default.Models);
+        Assert.Empty(models.Kinds);
+        Assert.Equal(defaults.LabelPick, models.LabelPick);
+        Assert.Equal(defaults.LabelCandidates, models.LabelCandidates);
+        Assert.Empty(models.Warnings);
+    }
 
     // The old key and the new one
 
