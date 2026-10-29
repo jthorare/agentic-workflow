@@ -21379,3 +21379,6 @@ static Aw.Sindri.Core.Events.ProjectLedNoted.operator !=(Aw.Sindri.Core.Events.P
 static Aw.Sindri.Core.Events.ProjectLedNoted.operator ==(Aw.Sindri.Core.Events.ProjectLedNoted? left, Aw.Sindri.Core.Events.ProjectLedNoted? right) -> bool
 static Aw.Sindri.Core.Projects.ProjectDecisions.LedNotes(Aw.Sindri.Core.Ids.CommandId command, string! linear, Aw.Sindri.Core.Projects.ProjectHiddenRow? current, Aw.Sindri.Core.Projects.ProjectEdit! edit, long seenVersion) -> Aw.Kernel.Result<Aw.Sindri.Core.Events.ProjectLedNoted!>!
 static Aw.Sindri.Core.Projects.ProjectDecisions.NamesLinearProject(string! project) -> bool
+Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention
+static Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention.Question.get -> string!
+static Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention.SharedLines.get -> System.Collections.Generic.IReadOnlyList<string!>!

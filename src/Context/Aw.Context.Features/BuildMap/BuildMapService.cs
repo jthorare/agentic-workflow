@@ -41,7 +41,7 @@ internal sealed partial class BuildMapService(
         }
 
         var (settings, mappedRepos) = mapped.Value;
-        using var turn = await gate.Enter(cancellationToken).ConfigureAwait(false);
+        using var turn = await gate.Enter(scope.Job, request.Progress, cancellationToken).ConfigureAwait(false);
         return await Build(request.Progress, settings, mappedRepos, scope.Repos, cancellationToken).ConfigureAwait(false);
     }
 

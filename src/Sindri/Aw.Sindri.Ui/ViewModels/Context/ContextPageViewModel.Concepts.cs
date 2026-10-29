@@ -216,7 +216,8 @@ internal sealed partial class ContextPageViewModel
         return true;
     }
 
-    // A query at the concept layer: the concepts whose name or summary hold the words, and the ones that hold a node the words (or the anchors they resolve to) name.
+    // A query at the concept layer: the concepts whose name, summary or terms hold the words, and the ones that hold a node the words (or the anchors the question
+    // resolved to) name. The question's suggestions are choices, never matches (#1699).
     private async Task SearchConcepts(Uri api, List<string> words, int generation, CancellationToken cancellationToken)
     {
         var matches = new HashSet<string>(Concepts.Matching(AnchorText.Trim()), StringComparer.Ordinal);
@@ -226,6 +227,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        Choices = [];
         if (resolved is { } found)
         {
             var located = await Ports.Api.WholeMap(api, new WholeMapQuery("areas", Area: null, [.. found.Anchors.Take(MaxLocate)], MapVersion: null, Draft: false, Repo: _repo), cancellationToken).ConfigureAwait(true);
@@ -241,7 +243,13 @@ internal sealed partial class ContextPageViewModel
         }
 
         Concepts.ApplySearch(matches);
+        if (matches.Count == 0 && resolved is { Suggested.Count: > 0 } missed)
+        {
+            Choices = missed.Suggested;
+        }
+
         ChangedConcepts();
+        Refresh();
     }
 
     private void ChangedConcepts()

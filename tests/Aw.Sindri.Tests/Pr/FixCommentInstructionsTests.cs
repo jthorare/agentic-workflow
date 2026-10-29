@@ -32,6 +32,8 @@ public sealed class FixCommentInstructionsTests
     [InlineData("cannotFix")]
     [InlineData("fact:fix")]
     [InlineData("fact:handoffNote")]
+    [InlineData("find its class before you patch it")]
+    [InlineData("follow-up")]
     [InlineData("allowedFiles")]
     [InlineData("Never reply, push or resolve")]
     public void The_instructions_carry_the_appendix_A2_contract(string phrase) =>

@@ -458,6 +458,8 @@ Aw.Context.Core.Engine.ContextScope.Caller.init -> void
 Aw.Context.Core.Engine.ContextScope.ContextScope(System.Text.Json.JsonElement? Settings, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! Repos, Aw.Context.Core.Engine.ContextCaller! Caller, bool SyncConfigured = false) -> void
 Aw.Context.Core.Engine.ContextScope.Deconstruct(out System.Text.Json.JsonElement? Settings, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! Repos, out Aw.Context.Core.Engine.ContextCaller! Caller, out bool SyncConfigured) -> void
 Aw.Context.Core.Engine.ContextScope.Equals(Aw.Context.Core.Engine.ContextScope? other) -> bool
+Aw.Context.Core.Engine.ContextScope.Job.get -> string?
+Aw.Context.Core.Engine.ContextScope.Job.init -> void
 Aw.Context.Core.Engine.ContextScope.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!
 Aw.Context.Core.Engine.ContextScope.Repos.init -> void
 Aw.Context.Core.Engine.ContextScope.Settings.get -> System.Text.Json.JsonElement?
@@ -9965,3 +9967,7 @@ const Aw.Context.Core.Graph.UnreadFileNodes.Attribute = "read" -> string!
 static Aw.Context.Core.Graph.UnreadFileNodes.Attributes() -> System.Text.Json.JsonElement
 static Aw.Context.Core.Graph.UnreadFileNodes.Is(Aw.Context.Core.Graph.GraphNode! node) -> bool
 Aw.Context.Core.Extract.IRepoReader.RemovedPaths(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Context.Core.Extract.MapBuildGate
+Aw.Context.Core.Extract.MapBuildGate.Dispose() -> void
+Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.IDisposable!>
+Aw.Context.Core.Extract.MapBuildGate.MapBuildGate() -> void
