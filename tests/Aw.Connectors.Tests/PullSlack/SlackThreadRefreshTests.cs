@@ -4,6 +4,7 @@ using Aw.Connectors.Features;
 using Aw.Connectors.Testing;
 using Aw.Connectors.Testing.Slack;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Connectors.Tests.PullSlack;
 
@@ -18,10 +19,15 @@ public sealed class SlackThreadRefreshTests
 
     private static string At(DateTimeOffset at) => SlackTs.Format(at);
 
-    private static IConnector Connector(FakeSlackReader reader)
+    private static IConnector Connector(FakeSlackReader reader, FakeTimeProvider? clock = null)
     {
         var settings = SlackSettings.Create([General], "env:SLACK_READ_TOKEN", "example").Value;
         var services = new ServiceCollection();
+        if (clock is not null)
+        {
+            _ = services.AddSingleton<TimeProvider>(clock);
+        }
+
         _ = services.AddSingleton<ISlackReader>(reader).AddConnectorsFeatures().AddSlackConnector(settings);
         return services.BuildServiceProvider().CreateScope().ServiceProvider.GetRequiredService<IConnector>();
     }
@@ -94,5 +100,84 @@ public sealed class SlackThreadRefreshTests
 
         Assert.Empty(laterKeys);
         Assert.Equal(1, reader.Reads.Count(r => r == "replies " + General.Channel + " " + At(Monday)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_reply_landing_on_a_candidate_before_its_read_does_not_hide_the_next_candidate()
+    {
+        var reader = new FakeSlackReader(General.Channel);
+        var b = Monday.AddHours(1);
+        AddThread(reader, Monday);
+        AddThread(reader, b);
+        var connector = Connector(reader, new FakeTimeProvider(Monday.AddDays(2)));
+        var (_, afterSync) = await Drain(connector, start: null);
+
+        Reply(reader, Monday, Monday.AddDays(1), "late a");
+        Reply(reader, b, Monday.AddDays(1).AddMinutes(5), "late b");
+        var landed = false;
+        reader.BeforeReplies = ts =>
+        {
+            if (!landed && string.Equals(ts, At(Monday), StringComparison.Ordinal))
+            {
+                landed = true;
+                Reply(reader, Monday, Monday.AddDays(1).AddMinutes(9), "landed during the read"); // why: after the scan, before A's read
+            }
+        };
+        _ = reader.RateLimitRepliesAfter(1, Monday.AddDays(30));
+        var (firstKeys, afterFirst) = await Drain(connector, afterSync);
+        Assert.Equal(["slack:" + General.Channel + "/" + At(Monday)], firstKeys);
+
+        reader.BeforeReplies = null;
+        _ = reader.RateLimitRepliesAfter(0, until: null);
+        var (resumedKeys, _) = await Drain(connector, afterFirst);
+
+        Assert.Contains("slack:" + General.Channel + "/" + At(b), resumedKeys, StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_reply_on_an_old_thread_landing_while_a_pass_reads_a_new_thread_is_read_next_pull()
+    {
+        var reader = new FakeSlackReader(General.Channel);
+        var now = Monday.AddDays(2);
+        AddThread(reader, Monday);
+        var connector = Connector(reader, new FakeTimeProvider(now));
+        var (_, afterSync) = await Drain(connector, start: null);
+
+        var x = now.AddMinutes(-3);
+        _ = reader.Add(General.Channel, A.SlackMessage(At(x)).WithText("new root"));
+        Reply(reader, x, now.AddMinutes(-2), "x reply");
+        reader.BeforeReplies = ts =>
+        {
+            if (string.Equals(ts, At(x), StringComparison.Ordinal))
+            {
+                Reply(reader, Monday, now.AddMinutes(-2).AddSeconds(-30), "y reply landed"); // why: after the refresh scan, before the pass read X
+            }
+        };
+        var (passKeys, afterPass) = await Drain(connector, afterSync);
+        Assert.Contains("slack:" + General.Channel + "/" + At(x), passKeys, StringComparer.Ordinal);
+
+        reader.BeforeReplies = null;
+        var (nextKeys, _) = await Drain(connector, afterPass);
+
+        // why: Drain goes on until an empty page, so the pull that reads Y's late reply may already be inside the first drain.
+        var old = "slack:" + General.Channel + "/" + At(Monday);
+        Assert.Contains(old, passKeys.Concat(nextKeys), StringComparer.Ordinal);
+        Assert.True(reader.Reads.Where(r => r == "replies " + General.Channel + " " + At(Monday)).Skip(2).Any(), "the thread must be read again after the reply landed");
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task After_a_full_sync_with_nothing_new_further_pulls_are_empty_and_the_mark_stays()
+    {
+        var reader = new FakeSlackReader(General.Channel);
+        AddThread(reader, Monday);
+        var connector = Connector(reader, new FakeTimeProvider(Monday.AddDays(2)));
+        var (_, afterSync) = await Drain(connector, start: null);
+
+        var one = (await connector.Pull(afterSync, 100, before: null, Ct)).Value;
+        var two = (await connector.Pull(one.Next, 100, before: null, Ct)).Value;
+
+        Assert.Empty(one.Items);
+        Assert.Empty(two.Items);
+        Assert.EndsWith("~" + At(Monday.AddMinutes(1)), two.Next!.Value, StringComparison.Ordinal);
     }
 }

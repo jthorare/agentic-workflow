@@ -62,23 +62,44 @@ internal sealed class PullSlackService(ISlackReader reader) : IService<PullSlack
     private static string? Latest(PullSlackRequest request) => request.Before is { } end ? SlackTs.Format(end) : null;
 
     private async ValueTask<Result<bool>> ReadChannel(PullSlackRequest request, SlackChannelRef channel, PullRun run, CancellationToken cancellationToken)
-    {
-        if (run.Next.Newest(channel.Channel) is { } watermark && run.Next.Pass(channel.Channel) is null)
-        {
-            var start = run.Items.Count;
-            var refresh = await new ThreadRefresh(reader).Run(request, channel, watermark, run, cancellationToken).ConfigureAwait(false);
-            run.SortFrom(start);
-            if (refresh.IsError)
-            {
-                return refresh.Error;
-            }
+        => run.Next.Newest(channel.Channel) is { } watermark && run.Next.Pass(channel.Channel) is null
+            ? await RefreshAndRead(request, channel, watermark, run, cancellationToken).ConfigureAwait(false)
+            : await ReadChunks(request, channel, run, cancellationToken).ConfigureAwait(false);
 
-            if (run.Limited is not null)
-            {
-                return true;
-            }
+    private async ValueTask<Result<bool>> RefreshAndRead(PullSlackRequest request, SlackChannelRef channel, string watermark, PullRun run, CancellationToken cancellationToken)
+    {
+        // why: captured before the refresh's history scan: every reply older than it is on a window thread the scan saw or on a thread the pass reads live afterwards.
+        var cutoff = Cutoff(request);
+        var start = run.Items.Count;
+        var refresh = await new ThreadRefresh(reader).Run(request, channel, watermark, run, cancellationToken).ConfigureAwait(false);
+        run.SortFrom(start);
+        if (refresh.IsError || run.Limited is not null)
+        {
+            return refresh.IsError ? refresh.Error : true;
         }
 
+        var read = await ReadChunks(request, channel, run, cancellationToken).ConfigureAwait(false);
+
+        // why: the mark may jump to the cutoff only when the refresh read all its candidates and the channel is not mid-pass.
+        if (!read.IsError && refresh.Value && cutoff is not null && Idle(run, channel))
+        {
+            // why: the mark never passes what the scan saw, so a reply that is older than the cutoff but was not on the scan's page (a clock that runs ahead of Slack's) is still read.
+            run.Next = run.Next.WithRepliesMark(channel.Channel, run.ScanNewest is { } seen ? SlackTs.Format(MinOf(cutoff, seen)) : cutoff);
+        }
+
+        return read;
+    }
+
+    private static string? Cutoff(PullSlackRequest request)
+        => request.Now is { } now && request.Before is null ? SlackTs.Format(now - ThreadRefresh.ClockMargin) : null;
+
+    private static DateTimeOffset MinOf(string a, string b)
+        => SlackTs.TryParse(a, out var x) && SlackTs.TryParse(b, out var y) ? (x < y ? x : y) : DateTimeOffset.UnixEpoch;
+
+    private static bool Idle(PullRun run, SlackChannelRef channel) => run.Limited is null && run.Next.Pass(channel.Channel) is null;
+
+    private async ValueTask<Result<bool>> ReadChunks(PullSlackRequest request, SlackChannelRef channel, PullRun run, CancellationToken cancellationToken)
+    {
         while (!run.Enough(request.Limit))
         {
             var start = run.Items.Count;
@@ -235,7 +256,6 @@ internal sealed class PullSlackService(ISlackReader reader) : IService<PullSlack
             if (thread.Value.Items.Count > 0 && SlackRecords.Thread(chunk.Channel, chunk.Request.Workspace, thread.Value.Items) is { } item)
             {
                 run.Items.Add(item);
-                run.Next = run.Next.WithRepliesMark(chunk.Channel.Channel, thread.Value.Items.Select(static m => m.Ts).Aggregate(static (a, b) => SlackTs.Later(a, b)));
             }
 
             run.Next = run.Next.WithPass(chunk.Channel.Channel, new SlackPass(chunk.Top, chunk.Below, root.Ts));

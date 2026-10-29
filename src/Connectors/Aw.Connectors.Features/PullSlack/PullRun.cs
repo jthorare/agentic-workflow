@@ -14,6 +14,9 @@ internal sealed class PullRun(SlackCursor start)
 
     public DateTimeOffset? Limited { get; set; }
 
+    /// <summary>The newest ts (a root's or its latest reply's) the last thread refresh's history scan saw; the replies mark never jumps past it.</summary>
+    public string? ScanNewest { get; set; }
+
     // why: the consumer reads an empty page as 'finished', so a pull goes on until it has records, then stops at the limit or the replies budget.
     public void SortFrom(int start)
     {
