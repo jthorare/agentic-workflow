@@ -226,13 +226,6 @@
       ]
     },
     {
-      "type": "onyx.deferred",
-      "keyShape": "onyx.deferred:<commandId>",
-      "invalidates": [
-        "setup"
-      ]
-    },
-    {
       "type": "process.started",
       "keyShape": "process.started:<epoch>",
       "invalidates": [
@@ -263,6 +256,34 @@
         "status",
         "profile",
         "needs-you"
+      ]
+    },
+    {
+      "type": "project.attached",
+      "keyShape": "project.attached:<projectId>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.changed",
+      "keyShape": "project.changed:<projectId>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.detached",
+      "keyShape": "project.detached:<projectId>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.hidden",
+      "keyShape": "project.hidden:<linear>:v<version>",
+      "invalidates": [
+        "projects"
       ]
     },
     {

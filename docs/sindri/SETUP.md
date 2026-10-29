@@ -207,13 +207,11 @@ ok    api               127.0.0.1:7410 answers (pid 53290, epoch 6)
 ok    temporal          127.0.0.1:53876 answers (pid 53346), version 1.9.1 as pinned, namespace sindri present
 ok    context:map       map v2 current (my-app, 412 nodes, 655 edges)
 ok    context:retention no expired exports; retained map versions are within the newest 20 and the 90-day eval window
-ok    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3189 (pinned v4.9.0); key: admin, Sindri's dedicated user
 ok    context:sources   2 of 2 sources ok; session reads on
 ok    context:sync      sources sync: 1 intent source(s) synced
 ok    context:mcp-scope no user-wide 'sindri' MCP entry for Claude Code, Codex or Cursor
 ok    launcher          no launcher.json at …; this box's viewer is Warp (warp) (sindri launch init writes it); …
 ok    launcher:agents   claude-code (builtin): …/claude; codex (builtin): …/codex; cursor (builtin): …/agent
-ok    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3189, digests match the pins
 warn  claude-code       re-probed: claude 2.1.303 differs from the pinned probe (2.1.299) (fix: …)
 warn  codex:read-only   pending: owner probe (fix: …)
 ```
@@ -227,11 +225,10 @@ warn  codex:read-only   pending: owner probe (fix: …)
 | `api` | The control plane answers on its port | not running: `sindri` |
 | `temporal` | The dev server answers, at the pinned version, with the `sindri` namespace | `fail`: `sindri stop`, then start again; see `logs/temporal.log` |
 | `context:map` | A current product map exists | none yet: [OPERATIONS.md](OPERATIONS.md) |
-| `context:onyx` | Onyx answers and the key is Sindri's dedicated user | `warn` `SND-CONTEXT-053` "not a dedicated service account": rerun `onyx up` on a current build (step 5) |
 | `context:sources` | Every context source answered; whether sessions may read | `warn` some degraded (`SND-CONTEXT-010`), `fail` all down (`011`) |
 | `context:sync` | Each intent source synced at least once | `warn` `sources sync: …` never synced or last run failed: [OPERATIONS.md](OPERATIONS.md). This row is the older sources sync (queries no longer search Linear live); the record index has its own `context:index-*` rows, whose sync row reads `record index: …` |
 | `context:mcp-scope` | No user-wide `sindri` MCP entry | `warn` `SND-CONTEXT-026`: remove the user-wide entry it names |
-| `onyx:stack` | Every Onyx container runs healthy, on loopback, at the pinned digests | `warn` Docker not answering or stack stopped; `fail` a container down or a port not on 127.0.0.1 |
+| `index:onyx-leftover` | Nothing an old `onyx up` left on this box (no row when clean) | `fail` containers, volumes, a keychain entry or the `onyx/` directory are left: `sindri onyx down --purge`; `warn` once `context.index.acknowledgeOnyxLeftover` is true |
 | harness probes (`claude-code`, `codex:*`, `cursor-*`) | The installed agent CLI matches the probe pinned in the build | `warn` "differs" or "pending: owner probe" is normal on a dev box and doesn't block a run |
 
 **After a new build.** A control plane keeps running the build it started with. When `install-cs.sh` publishes a new
@@ -285,9 +282,7 @@ Indexing runs inside Onyx and can take a while on a large workspace.
 You should see, in `doctor`:
 
 ```text
-ok    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3189 (pinned v4.9.0); key: admin, Sindri's dedicated user
 ok    context:sources   2 of 2 sources ok; session reads on
-ok    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3189, digests match the pins
 ```
 
 With a managed Onyx, `sindri` starts its containers and `sindri stop` stops them. `onyx down` (**Human-only**)

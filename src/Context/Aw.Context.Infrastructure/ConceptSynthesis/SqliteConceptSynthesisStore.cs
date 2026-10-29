@@ -102,7 +102,7 @@ internal sealed class SqliteConceptSynthesisStore(ContextDatabase database) : IC
             }
 
             var rows = await SqliteQueries.List(read.Value, new SqlStatement(select), mapper, cancellationToken).ConfigureAwait(false);
-            return rows.IsError ? ContextDatabase.Translate(rows.Error) : Results.Success<IReadOnlyList<T>>(rows.Value);
+            return rows.IsError ? ContextDatabase.Translate(rows.Error) : Results.Success(rows.Value);
         }
     }
 
