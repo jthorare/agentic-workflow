@@ -179,7 +179,7 @@ public sealed class JobModelCallsTests
         var job = Golden("jobs-id", "running");
         job["state"] = state;
         job["waitingOn"] = waitingOn;
-        job["modelCalls"] = new JsonArray(calls);
+        job["modelCalls"] = new JsonArray([.. calls.Select(static c => c.DeepClone())]);
         job["modelCallCount"] = count;
         job["progress"] = new JsonArray([.. (progress ?? []).Select(static (l, n) => (JsonNode)new JsonObject { ["round"] = n + 1, ["line"] = l, ["at"] = "2026-01-01T00:00:00.0000000Z" })]);
         _f.Server.JobAnswers[Id] = new RouteAnswer(System.Net.HttpStatusCode.OK, job.ToJsonString());
