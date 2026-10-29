@@ -28,12 +28,22 @@ internal sealed class FeedDecisions(RecordFeedSync feeds, MapReader graphs, IInt
     /// <summary>The step a feed's tick is followed by, or null for none.</summary>
     internal delegate Func<SourceSync, ValueTask<SourceSync>>? AfterTick(RecordFeed feed);
 
-    /// <summary>The steps for each feed of one call.</summary>
-    internal async ValueTask<AfterTick> For(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, CancellationToken cancellationToken)
+    /// <summary>The steps for each feed of one call, a missing map being no step.</summary>
+    internal ValueTask<AfterTick> For(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, CancellationToken cancellationToken) =>
+        For(scope, context, reportNoMap: false, cancellationToken);
+
+    /// <summary>The steps for each feed of one call; with <paramref name="reportNoMap"/>, a missing map is the step's code instead of no step.</summary>
+    internal async ValueTask<AfterTick> For(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, bool reportNoMap, CancellationToken cancellationToken)
     {
         var map = await graphs.ReadWithoutIntent(scope, draft: false, cancellationToken).ConfigureAwait(false);   // no map yet (the first build needs these records): the feeds still sync, the pass waits for one
         return feed =>
         {
+            if (map.IsError && reportNoMap && feed.Source != _projects)
+            {
+                // why: the decision run says it skipped and why; the feed's own sync is not at fault, so its tick row stays as it is
+                return tick => ValueTask.FromResult(tick with { Code = map.Error.Code });
+            }
+
             if (map.IsError || feed.Source == _projects)
             {
                 return null;

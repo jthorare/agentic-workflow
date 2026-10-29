@@ -40,7 +40,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
 
         var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
         using var slots = new SemaphoreSlim(MaxConcurrentFeeds);
-        var rows = await Task.WhenAll(resolved.Value.Feeds.Select(feed => TickOne(feed, context, slots, cancellationToken))).ConfigureAwait(false);
+        var rows = await Task.WhenAll(resolved.Value.Feeds.Select(feed => TickOne(feed, context, slots, honorBackoff: true, cancellationToken))).ConfigureAwait(false);
         return new SyncReport(rows);
     }
 
@@ -61,10 +61,21 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
 
         var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
         using var slots = new SemaphoreSlim(1);
-        return new SyncReport([await TickOne(feed, context, slots, cancellationToken).ConfigureAwait(false)]);
+        return new SyncReport([await TickOne(feed, context, slots, honorBackoff: false, cancellationToken).ConfigureAwait(false)]);
     }
 
+    /// <summary>The record store's `source_cursor` row that keeps when the decision run last ended and its code (beside the feeds' rows, which the sync driver owns); it is no feed, so no tick or status row reads it as one.</summary>
+    internal static readonly SourceId DecisionsRun = SourceId.From("index-decisions");
+
     public async ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var report = await DecideAll(scope, cancellationToken).ConfigureAwait(false);
+        // why: a write that fails is dropped, as for a feed's outcome; the next run writes again
+        _ = await store.RecordOutcome(DecisionsRun, new SyncOutcome(feeds.Now(), report.IsError ? report.Error.Code : report.Value.Sources.Select(r => r.Code).FirstOrDefault(c => c is not null)), cancellationToken).ConfigureAwait(false);
+        return report;
+    }
+
+    private async ValueTask<Result<DecisionReport>> DecideAll(ContextScope scope, CancellationToken cancellationToken)
     {
         var resolved = Resolve(scope);
         if (resolved.IsError)
@@ -81,7 +92,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         if (decisions is not null)
         {
             var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
-            var after = await decisions.For(scope, context, cancellationToken).ConfigureAwait(false);
+            var after = await decisions.For(scope, context, reportNoMap: true, cancellationToken).ConfigureAwait(false);
             foreach (var feed in resolved.Value.Feeds)
             {
                 if (after(feed) is not { } step)
@@ -103,8 +114,15 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         return new DecisionReport(rows, synthesized);
     }
 
-    private async Task<SourceSync> TickOne(RecordFeed feed, (ContextSettings Settings, Scrubbers Scrubbers) context, SemaphoreSlim slots, CancellationToken cancellationToken)
+    private async Task<SourceSync> TickOne(RecordFeed feed, (ContextSettings Settings, Scrubbers Scrubbers) context, SemaphoreSlim slots, bool honorBackoff, CancellationToken cancellationToken)
     {
+        // why: the scheduled tick leaves a failing source alone until its next try; a named sync is the owner asking for it now, so it never waits
+        if (honorBackoff && await feeds.Backoff(feed.Source, cancellationToken).ConfigureAwait(false) is { Failures: > 0, NextTry: { } nextTry } && feeds.Now() < nextTry)
+        {
+            var last = await feeds.LastOutcome(feed.Source, cancellationToken).ConfigureAwait(false);
+            return Failed(feed.Source, last?.Code ?? ContextErrors.SourceUnavailable.Code);
+        }
+
         await slots.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -144,27 +162,55 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
                 return position.Error;
             }
 
-            // why: only the Linear issue feed is reset to Recent with rows already stored (migration 0020), so only it is checked for a re-read; any other source in Recent is on its first read
-            int? stored = null;
-            if (feed.Source == LinearSourceIds.Issues && position.Value.Phase is SyncPhase.Recent)
+            var row = await ProgressRow(feed.Source, position.Value.Phase, cancellationToken).ConfigureAwait(false);
+            if (row.IsError)
             {
-                var counted = await store.Count(feed.Source, cancellationToken).ConfigureAwait(false);
-                if (counted.IsError)
-                {
-                    return counted.Error;
-                }
-
-                stored = counted.Value.Records;
+                return row.Error;
             }
 
-            var last = await feeds.LastOutcome(feed.Source, cancellationToken).ConfigureAwait(false);
-            rows.Add(SourceProgress.From(feed.Source, position.Value.Phase, last?.At, last?.Code, stored));
+            rows.Add(row.Value);
         }
 
         return rows;
     }
 
+    private async ValueTask<Result<SourceProgress>> ProgressRow(SourceId source, SyncPhase? phase, CancellationToken cancellationToken)
+    {
+        var counted = await store.Count(source, cancellationToken).ConfigureAwait(false);
+        if (counted.IsError)
+        {
+            return counted.Error;
+        }
+
+        // why: only the Linear issue feed is reset to Recent with rows already stored (migration 0020), so only it is checked for a re-read; any other source in Recent is on its first read
+        int? stored = source == LinearSourceIds.Issues && phase is SyncPhase.Recent ? counted.Value.Records : null;
+        var last = await feeds.LastOutcome(source, cancellationToken).ConfigureAwait(false);
+        var backoff = await feeds.Backoff(source, cancellationToken).ConfigureAwait(false);
+        return SourceProgress.From(source, phase, last?.At, last?.Code, stored) with
+        {
+            Pull = SourceBackoff.Pull(backoff, feeds.IsRunning(source), feeds.Now()),
+            Records = counted.Value.Records,
+            LastCommit = backoff.LastCommit,
+            LastError = last?.Code is { } code && code != ContextErrors.SyncCapped.Code ? code : null,
+            LastErrorText = backoff.LastErrorText,
+            Failures = backoff.Failures,
+            NextTry = backoff.NextTry,
+        };
+    }
+
     public async ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var standing = await ConceptStanding(scope, cancellationToken).ConfigureAwait(false);
+        if (standing.IsError)
+        {
+            return standing;
+        }
+
+        var last = await store.LastOutcome(DecisionsRun, cancellationToken).ConfigureAwait(false);
+        return last.IsError || last.Value is not { } run ? standing : standing.Value with { LastRun = run.At, LastCode = run.Code };
+    }
+
+    private async ValueTask<Result<ConceptStatus>> ConceptStanding(ContextScope scope, CancellationToken cancellationToken)
     {
         var settings = SettingsReader.Read(scope.Settings);
         if (settings.IsError)

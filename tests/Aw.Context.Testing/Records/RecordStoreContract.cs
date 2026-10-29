@@ -219,6 +219,29 @@ public abstract class RecordStoreContract<TStore>
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.List(new RecordFilter(Kind: RecordKind.Doc), after: null, 10, CancellationToken.None)).Count == 0, "a kind filter narrows");
     }
 
+    /// <summary>A failed attempt counts, sets the retry time and keeps the last commit; a success resets them and stamps the commit; neither touches the last outcome.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task An_attempt_sets_and_clears_the_backoff_and_leaves_the_outcome_alone()
+    {
+        var store = Create();
+        var at = new DateTimeOffset(2026, 10, 29, 12, 0, 0, TimeSpan.Zero);
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Backoff(RecordSamples.Linear, CancellationToken.None)) == SourceBackoffState.None, "a source that never ticked has no backoff");
+
+        _ = ContractCheck.Ok(_owner, await store.RecordOutcome(RecordSamples.Linear, new SyncOutcome(at, "SND-CONTEXT-010"), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.RecordAttempt(RecordSamples.Linear, new SyncAttempt(at.AddHours(-1), Failed: false, ErrorText: null), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.RecordAttempt(RecordSamples.Linear, new SyncAttempt(at, Failed: true, "down"), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.RecordAttempt(RecordSamples.Linear, new SyncAttempt(at.AddMinutes(5), Failed: true, "still down"), CancellationToken.None));
+
+        var failing = ContractCheck.Ok(_owner, await store.Backoff(RecordSamples.Linear, CancellationToken.None));
+        ContractCheck.That(_owner, failing == new SourceBackoffState(2, at.AddMinutes(15), at.AddHours(-1), "still down"), "two failures wait 10 minutes from the second and keep the last commit");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.LastOutcome(RecordSamples.Linear, CancellationToken.None)) == new SyncOutcome(at, "SND-CONTEXT-010"), "the last outcome is the caller's own");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Backoff(RecordSamples.Github, CancellationToken.None)) == SourceBackoffState.None, "another source is untouched");
+
+        _ = ContractCheck.Ok(_owner, await store.RecordAttempt(RecordSamples.Linear, new SyncAttempt(at.AddMinutes(20), Failed: false, ErrorText: null), CancellationToken.None));
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Backoff(RecordSamples.Linear, CancellationToken.None)) == new SourceBackoffState(Failures: 0, NextTry: null, LastCommit: at.AddMinutes(20), LastErrorText: null), "a success resets the backoff and stamps the commit");
+    }
+
     /// <summary>A count is one source's records, chunks and chunk vectors, and nothing of another source.</summary>
     /// <returns>A task.</returns>
     [Fact]
