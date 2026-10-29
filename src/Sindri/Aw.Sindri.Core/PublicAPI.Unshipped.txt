@@ -21043,7 +21043,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 23 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 24 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
