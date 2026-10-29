@@ -33,7 +33,7 @@
       "id": "linear:project/00000000-0000-4000-8000-000000000001",
       "origin": "led",
       "name": "Checkout rewrite",
-      "description": null,
+      "description": "Rebuild checkout on the new payments API.",
       "state": "inProgress",
       "stateSetByOwner": false,
       "health": "atRisk",

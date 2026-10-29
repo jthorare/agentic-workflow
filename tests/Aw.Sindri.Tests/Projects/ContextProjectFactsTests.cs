@@ -28,7 +28,7 @@ public sealed class ContextProjectFactsTests
         _ = await _h.Profiles.Save(SliceHarness.Profile(), Ct);
         using var caller = _h.Callers.EnterService("projects-test");
         var lead = new UserRef(ExternalId.From("u-lead"), "Ana");
-        _context.Answer = new ProjectFactsAnswer(new UserRef(ExternalId.From("u-me"), "Joi"), [Fact("p1", lead, leadIsOwner: false)], [Fact("p1", lead, leadIsOwner: false), Fact("p2", lead: null, leadIsOwner: false)], ["ENG"], FirstReadDone: true);
+        _context.Answer = new ProjectFactsAnswer(new UserRef(ExternalId.From("u-me"), "Joi"), [Fact("p1", lead, leadIsOwner: false, description: "About p1")], [Fact("p1", lead, leadIsOwner: false, description: "About p1"), Fact("p2", lead: null, leadIsOwner: false)], ["ENG"], FirstReadDone: true);
 
         var read = await Facts().Read(["linear:project/p1", "not a key"], Ct);
 
@@ -36,7 +36,10 @@ public sealed class ContextProjectFactsTests
         Assert.Equal(("linear:user/u-me", "Joi"), (snapshot.Owner!.Ref, snapshot.Owner.Name));
         var p1 = Assert.Single(snapshot.Projects);
         Assert.Equal(("linear:project/p1", "Project p1", "started", "atRisk", 3, true), (p1.Key, p1.Title, p1.StateRaw, p1.Health, p1.OpenIssues, p1.Counting));
+        Assert.Equal("About p1", p1.Description);
         Assert.Equal("linear:user/u-lead", p1.Lead!.Ref);
+        Assert.Equal("About p1", snapshot.Catalog[0].Description);
+        Assert.Null(snapshot.Catalog[1].Description);
         Assert.Equal("linear:project/p1 linear:project/p2", string.Join(' ', snapshot.Catalog.Select(static f => f.Key)));
         Assert.Null(snapshot.Catalog[1].Lead);
         Assert.Equal("ENG", Assert.Single(snapshot.Teams));
@@ -90,8 +93,8 @@ public sealed class ContextProjectFactsTests
 
     private ContextProjectFacts Facts() => new(_h.Profiles, _h.Callers, EngineProxy.Of(_context));
 
-    private static ProjectFact Fact(string id, UserRef? lead, bool leadIsOwner) =>
-        new(RecordKey.From("linear:project/" + id), "Project " + id, Description: null, "https://linear.app/w/project/" + id, "started", "atRisk", DueAt: null, lead, leadIsOwner,
+    private static ProjectFact Fact(string id, UserRef? lead, bool leadIsOwner, string? description = null) =>
+        new(RecordKey.From("linear:project/" + id), "Project " + id, description, "https://linear.app/w/project/" + id, "started", "atRisk", DueAt: null, lead, leadIsOwner,
             _at, ClosedAt: null, OpenIssues: 3, OpenPrs: null, LastActivity: _at, Repos: null, Counting: true);
 
     private static SourceProgress Source(string id, bool usable, string? code) => new(SourceId.From(id), Phase: null, _at, code, usable, Complete: usable);
