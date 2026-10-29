@@ -62,8 +62,7 @@ waking from Resource Saver). `onyx status` never waits. Then it needs you twice:
    registering. A rerun after any failure resumes at this step (the user is reused, never doubled).
 
 Last it opens Onyx's connectors page and prints the checklist: connect Linear (the product's teams, with a start date that
-covers the backtests), Slack (the product's channels) and GitHub (the product's repositories, issues on, with a read-only personal access token) in Onyx's UI, using the company's OAuth for Linear and Slack. `$SINDRI doctor` then
-shows `context:onyx` and `onyx:stack`.
+covers the backtests), Slack (the product's channels) and GitHub (the product's repositories, issues on, with a read-only personal access token) in Onyx's UI, using the company's OAuth for Linear and Slack. `$SINDRI doctor` has no Onyx rows any more (`context:onyx` and `onyx:stack` were removed in #1598); `index:onyx-leftover` shows only while an old Onyx is still on the box.
 
 Day to day:
 
@@ -105,7 +104,7 @@ USER_AUTH_SECRET=<the output of: openssl rand -hex 32>
 chmod 600 .env
 ```
 
-The profile records the same tag (`context.sources.onyx.version`), and `$SINDRI doctor` (`context:onyx`) compares it with
+The profile records the same tag (`context.sources.onyx.version`), and `$SINDRI context sources status` compares it with
 what Onyx reports at `GET /api/version`. Changing the Onyx version means changing both, then re-running the manual
 checks in §6.
 
@@ -244,7 +243,7 @@ answer.
 ## 6. Check it
 
 ```bash
-$SINDRI doctor            # context:onyx — loopback url, version v4.9.0, the key can search
+$SINDRI context sources status   # onyx row — loopback url, version v4.9.0, the key can search
 $SINDRI context sources status
 ```
 
