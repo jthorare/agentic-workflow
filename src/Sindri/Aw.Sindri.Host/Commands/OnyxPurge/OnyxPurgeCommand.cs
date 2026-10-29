@@ -1,10 +1,7 @@
-using System.Security.Cryptography;
 using System.Text;
 using Aw.Kernel;
-using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Control;
-using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Infrastructure.Processes;
 
 namespace Aw.Sindri.Host.Commands.OnyxPurge;
@@ -22,11 +19,6 @@ namespace Aw.Sindri.Host.Commands.OnyxPurge;
 /// <param name="question">Where the question is asked (standard error).</param>
 internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeKeychain keychain, Output output, TextReader input, TextWriter question)
 {
-    private const string Prefix = "sindri-onyx-";
-    private const int HashHexDigits = 8;
-
-    private static readonly System.Text.Json.JsonSerializerOptions _json = AwJson.CreateOptions(PurgeJsonContext.Default);
-
     internal async Task<int> Run(bool human, CancellationToken ct)
     {
         if (!human)
@@ -34,9 +26,7 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
             return await output.Error(SindriErrors.AuthRefused.With("'onyx down --purge' deletes data and is the human's verb (fix: ask the human to run it at a terminal)")).ConfigureAwait(false);
         }
 
-        var directory = Path.Combine(home, "onyx");
-        var state = ReadState(Path.Combine(directory, "state.json"));
-        var plan = Plan(directory, state);
+        var plan = OnyxLeftovers.Find(home, docker);
         if (plan.IsError)
         {
             return await Failed(plan.Error).ConfigureAwait(false);
@@ -57,15 +47,6 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
 
         var done = Delete(plan.Value);
         return done.IsError ? await Failed(done.Error).ConfigureAwait(false) : await output.Text("Onyx's leftovers are gone.\n", 0).ConfigureAwait(false);
-    }
-
-    /// <summary>Names the compose project of a Sindri home the way an old `onyx up` did: `sindri-onyx-` and the first 8 hex digits of the sha256 of the home's full path.</summary>
-    /// <param name="sindriHome">The Sindri home as a full path; a trailing separator doesn't change the name.</param>
-    /// <returns>For example sindri-onyx-0a1b2c3d.</returns>
-    internal static string ProjectNameFor(string sindriHome)
-    {
-        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(sindriHome.TrimEnd('/', '\\'))));
-        return Prefix + hash[..HashHexDigits];
     }
 
     internal static OnyxPurgeCommand Create(IServiceProvider services, Output output, TextReader input, TextWriter question)
@@ -100,48 +81,10 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
         return text.ToString();
     }
 
-    private static PurgeState? ReadState(string path)
-    {
-        try
-        {
-            return File.Exists(path) && AwJson.Deserialize<PurgeState>(File.ReadAllBytes(path), _json) is { IsSuccess: true } read ? read.Value : null;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return null;
-        }
-    }
-
-    // A recorded name that isn't one the old `onyx up` could have made is ignored, so a hand-edited file can't point the purge at another project.
-    private static bool IsOurs(string? name)
-        => name is not null && name.Length == Prefix.Length + HashHexDigits && name.StartsWith(Prefix, StringComparison.Ordinal) && name[Prefix.Length..].All(static c => char.IsAsciiHexDigitLower(c));
-
-    // Only a keychain: pointer names an entry Sindri put there; a file: pointer's file lives under onyx/ or secrets/ and goes with the directory or stays.
-    private static string? KeychainEntry(string? pointer)
-        => pointer is not null && SecretPointer.Parse(pointer) is { IsSuccess: true } parsed && parsed.Value.Scheme == SecretScheme.Keychain ? parsed.Value.Target : null;
-
     private async Task<int> Failed(Error error)
     {
         _ = await output.Error(error).ConfigureAwait(false);
         return error.Code == SindriErrors.AuthRefused.Code ? 2 : 1;
-    }
-
-    private Result<PurgePlan> Plan(string directory, PurgeState? state)
-    {
-        var project = state?.Project is { } recorded && IsOurs(recorded) ? recorded : ProjectNameFor(home);
-        var containers = docker.ContainersOf(project);
-        if (containers.IsError)
-        {
-            return containers.Error;
-        }
-
-        var volumes = docker.VolumesOf(project);
-        if (volumes.IsError)
-        {
-            return volumes.Error;
-        }
-
-        return new PurgePlan(containers.Value, volumes.Value, Directory.Exists(directory) ? directory : null, KeychainEntry(state?.KeyPointer));
     }
 
     private Result<Unit> Delete(PurgePlan plan)
