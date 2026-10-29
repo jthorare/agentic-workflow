@@ -48,11 +48,11 @@ public sealed class SetupViewModelTests
     [Fact]
     public async Task A_web_address_in_a_steps_words_becomes_a_link_and_leaves_the_shown_text()
     {
-        _f.Serve(WithExtraStep(Golden("first-run"), "sources", "Connect your sources", "todo", "Install Docker to set up sources https://docs.docker.com/get-docker/"));
-        var sources = Step(await _f.Read(Token), "sources");
+        _f.Serve(WithExtraStep(Golden("first-run"), "later", "Connect later", "todo", "Install Docker to set up later https://docs.docker.com/get-docker/"));
+        var sources = Step(await _f.Read(Token), "later");
         var map = Step(await ReadWith("failed"), "map");
 
-        Assert.Equal(("Install Docker to set up sources", true, "https://docs.docker.com/get-docker/", "Open docs.docker.com"), (sources.Sub, sources.HasLink, sources.LinkUri?.AbsoluteUri, sources.LinkText));
+        Assert.Equal(("Install Docker to set up later", true, "https://docs.docker.com/get-docker/", "Open docs.docker.com"), (sources.Sub, sources.HasLink, sources.LinkUri?.AbsoluteUri, sources.LinkText));
         Assert.DoesNotContain("https://", sources.Name, StringComparison.Ordinal);
         Assert.Equal((false, null), (map.HasLink, map.LinkUri));
     }
@@ -70,15 +70,14 @@ public sealed class SetupViewModelTests
     [Fact]
     public async Task A_served_step_with_no_form_here_is_an_ordinary_row_with_its_command_to_copy()
     {
-        _f.ListCliAction("ConnectSources", "sindri index connect github");
-        _f.Serve(WithExtraStep(Golden("first-run"), "sources", "Connect your sources", "pending", action: "ConnectSources"));
+        _f.Serve(Golden("first-run"));
 
         var sources = Step(await _f.Read(Token), "sources");
         await sources.Action!.Cli!.Copy(Token);
 
-        Assert.Equal(("Connect your sources", "To do", "pending"), (sources.Title, sources.ChipWord, sources.Chip.Word));
-        Assert.Equal((false, null, null, null), (sources.Action.IsInApp, sources.Action.Protected, sources.Repo, sources.Profile));
-        Assert.Equal("sindri index connect github", _f.Clipboard.Text);
+        Assert.Equal(("Connect your sources", "To do", "todo"), (sources.Title, sources.ChipWord, sources.Chip.Word));
+        Assert.Equal(("ConnectIndexSource", false, null, null, null), (sources.Action.Action, sources.Action.IsInApp, sources.Action.Protected, sources.Repo, sources.Profile));
+        Assert.Equal("sindri index connect <source>", _f.Clipboard.Text);
     }
 
     [Fact]
@@ -111,12 +110,12 @@ public sealed class SetupViewModelTests
     [Fact]
     public async Task Each_state_reads_as_one_of_the_five_words_and_a_step_this_build_does_not_know_keeps_its_own_word()
     {
-        _f.Serve(WithExtraStep(Golden("failed"), "sources", "Connect your sources", "paused"));
+        _f.Serve(WithExtraStep(Golden("failed"), "later", "Connect later", "paused"));
 
         var setup = await _f.Read(Token);
 
-        Assert.Equal(["Done", "Done", "Done", "Done", "Failed", "To do"], [.. setup.Steps.Select(s => s.ChipWord).Take(5), Step(setup, "sources").ChipWord], StringComparer.Ordinal);
-        Assert.Equal("paused", Step(setup, "sources").Chip.Word);   // unknown: the To do chip, with the served word
+        Assert.Equal(["Done", "Done", "Done", "Done", "Failed", "To do"], [.. setup.Steps.Select(s => s.ChipWord).Take(5), Step(setup, "later").ChipWord], StringComparer.Ordinal);
+        Assert.Equal("paused", Step(setup, "later").Chip.Word);   // unknown: the To do chip, with the served word
         Assert.Equal("Working", Step(await ReadWith("running-progress"), "map").ChipWord);
         Assert.Equal("Skipped", Step(await ReadWith("first-run", "map", "skipped"), "map").ChipWord);
     }
