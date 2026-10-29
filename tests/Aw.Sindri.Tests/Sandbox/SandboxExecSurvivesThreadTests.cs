@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Infrastructure.Sandbox;
@@ -31,9 +32,13 @@ public sealed class SandboxExecSurvivesThreadTests
 
         // Everything before Process.Start completes synchronously (InlineCap, NoApprovedProfile), so Run forks on this thread and returns the pending wait.
         Task<Result<int>>? running = null;
-        var starter = new Thread(() => running = exec.Run(area.Plan, ["sh", "-c", "sleep 2; exit 0"], CancellationToken.None));
+        var starter = new Thread(() =>
+        {
+            running = exec.Run(area.Plan, ["sh", "-c", "sleep 4; exit 0"], CancellationToken.None);
+            RealTime.Sleep(TimeSpan.FromMilliseconds(1500));   // why: bwrap sets PR_SET_PDEATHSIG only after systemd-run has made the scope; a thread that dies earlier just gets the child reparented and nothing fires
+        });
         starter.Start();
-        starter.Join();   // the forking thread is gone before the command can finish
+        starter.Join();   // the forking thread is gone while the command still has about 2.5 s to run
 
         var result = await running!.WaitAsync(TimeSpan.FromSeconds(30), TestContext.Current.CancellationToken);
 
