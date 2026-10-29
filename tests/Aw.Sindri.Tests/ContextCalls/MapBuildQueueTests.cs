@@ -91,7 +91,11 @@ public sealed class MapBuildQueueTests : IDisposable
 
             var backtest = await Start(host, "/sindri/context/eval/backtest", """{"arms":"docs","limit":1}""");
             var line = $"waiting for the map build of job {build}";
-            await Until($"the backtest job {backtest} reports '{line}'", async () => await Reported(host, backtest, line));
+            await Until($"the backtest job {backtest} reports '{line}'", async () =>
+            {
+                Assert.True(clusters.Active <= 1, "the backtest ran graphify beside the build that holds it");
+                return await Reported(host, backtest, line);
+            });
             var (active, asked) = (clusters.Active, clusters.Asked.Count);
 
             hold.SetResult();
