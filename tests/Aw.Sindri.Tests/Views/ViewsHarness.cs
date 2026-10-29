@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Testing;
@@ -35,6 +36,7 @@ internal sealed class ViewsHarness
             new LaunchesProjection(Slice.Events),
             new CodeIndexProjection(Slice.Events),
             new ModelHistoryProjection(Slice.Events),
+            new ProjectsProjection(Slice.Events),
         ];
     }
 

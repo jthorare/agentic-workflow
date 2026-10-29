@@ -172,7 +172,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<SessionHeartbeatRequest>, AcceptAllValidator<SessionHeartbeatRequest>>().AddIssue<SessionHeartbeatRequest, SessionHeartbeatResponse, SessionHeartbeatService>().AddScoped<IValidator<SessionExitRequest>, AcceptAllValidator<SessionExitRequest>>().AddIssue<SessionExitRequest, SessionExitResponse, SessionExitService>();
         _ = services.AddScoped<IValidator<DecideRequest>, DecideValidator>().AddCommand<DecideRequest, CommandAccepted, DecideService>();
         _ = services.AddScoped<IValidator<FileRequestRequest>, FileRequestValidator>().AddCommand<FileRequestRequest, RequestFiledResponse, FileRequestService>();
-        _ = services.AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>();
+        _ = services.AddProjectCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>();
         _ = services.AddScoped<IValidator<RebuildViewsRequest>, AcceptAllValidator<RebuildViewsRequest>>().AddCommand<RebuildViewsRequest, CommandAccepted, RebuildViewsService>();
         _ = services.AddScoped<IValidator<ImportContextMapRequest>, AcceptAllValidator<ImportContextMapRequest>>().AddCommand<ImportContextMapRequest, ImportContextMapResponse, ImportContextMapService>();
         _ = services.AddScoped<IValidator<ApproveProfileRequest>, AcceptAllValidator<ApproveProfileRequest>>().AddCommand<ApproveProfileRequest, ApproveProfileResponse, ApproveProfileService>().AddScoped<ProfileChecks>().AddScoped<Core.Profile.ModelKeyChecks>();
