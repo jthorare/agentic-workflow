@@ -74,7 +74,7 @@ public sealed class HomeNeedsFileNoteTests : IDisposable
 
         Assert.Equal(ShellState.Normal, shell.State);
         // A longer repo name: at the window's minimum width the label line has no room left for the note beside it.
-        shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Desk() with { Repo = "platform-billing-reconciliation" }], ""));
+        shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Desk() with { Repo = "customer-platform-billing-reconciliation-service" }], ""));
         Settle(window);
         return (window, shell);
     }
