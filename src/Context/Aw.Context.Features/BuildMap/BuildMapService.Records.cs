@@ -29,9 +29,16 @@ internal sealed partial class BuildMapService
         }
 
         var reading = await inputs.Records.Read(new MapRecordInput(files, settings.DocGlobs, settings.DocDirectoryNames, at), cancellationToken).ConfigureAwait(false);
-        return reading.IsError
-            ? (ExtractedMap.Empty, [Unavailable(reading.Error)], [])
-            : (reading.Value.Map.Plus(RecordRollup.Edges([.. reading.Value.Overflow, .. reading.Value.UnderCap], directoryDocs, found)), reading.Value.Degraded, [.. reading.Value.Notes.Except(reading.Value.Degraded, StringComparer.Ordinal)]);
+        if (reading.IsError)
+        {
+            return (ExtractedMap.Empty, [Unavailable(reading.Error)], []);
+        }
+
+        var half = reading.Value.Map.Plus(RecordRollup.Edges([.. reading.Value.Overflow, .. reading.Value.UnderCap], directoryDocs, found));
+        // why: a record can mention a file that is no code: node (setup.sh has no recognizer); an edge to a node that isn't in the graph fails the save's foreign key.
+        var nodeKeys = found.Nodes.Concat(half.Nodes).Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
+        var kept = new ExtractedMap(half.Nodes, [.. half.Edges.Where(e => nodeKeys.Contains(e.From.Value) && nodeKeys.Contains(e.To.Value))]);
+        return (kept, reading.Value.Degraded, [.. reading.Value.Notes.Except(reading.Value.Degraded, StringComparer.Ordinal)]);
     }
 
     private static string Unavailable(Error error) => $"records: unavailable ({error.Code})";
