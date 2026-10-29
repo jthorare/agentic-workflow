@@ -473,18 +473,14 @@
       "confirm": null
     },
     {
-      "action": "ConnectOnyx",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/onyx/account",
-      "cli": "sindri onyx connect",
-      "ui": "ready",
+      "action": "ConnectIndexSource",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": true,
+      "method": null,
+      "route": null,
+      "cli": "sindri index connect <source>",
+      "ui": "cli-only:local",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -523,24 +519,6 @@
       "ui": "ready",
       "destructive": false,
       "readsViews": true,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "DeferOnyx",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/onyx/defer",
-      "cli": "sindri onyx defer",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
       "shortcut": null,
       "confirm": null
     },
@@ -1413,25 +1391,6 @@
       "method": "POST",
       "route": "/sindri/sessions/{launchId}/heartbeat",
       "cli": "sindri session wrap --launch <launchId>",
-      "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
-      "shortcut": null,
-      "confirm": null
-    },
-    {
-      "action": "SetupOnyx",
-      "class": "job",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session",
-        "service"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/onyx/setup",
-      "cli": "sindri onyx up",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
