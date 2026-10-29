@@ -43,10 +43,7 @@ public sealed partial class FreshnessTests : IDisposable
     private async Task Connected(Func<bool>? also = null)
     {
         _run = _vm.Run(_stop.Token);
-        for (var i = 0; i < 200 && !(_vm.State == ShellState.Normal && (also?.Invoke() ?? true)); i++)
-        {
-            await Task.Delay(10, TestContext.Current.CancellationToken);
-        }
+        await Poll(() => _vm.State == ShellState.Normal && (also?.Invoke() ?? true));
 
         Assert.Equal(ShellState.Normal, _vm.State);
         Assert.True(also?.Invoke() ?? true, "the awaited state was reached within 2 s");
@@ -173,13 +170,13 @@ public sealed partial class FreshnessTests : IDisposable
         _server.Push(A.Event(1, "service.ran"));
         await Until(() => _server.ServicesCalls == services + 1);
         _server.Push(A.Event(2, "service.ran"), A.Event(3, "service.ran"), A.Event(4, "service.ran"));
-        await Task.Delay(150, TestContext.Current.CancellationToken);
+        await Settle();
 
         Assert.Equal((status + 1, services + 1), (_server.StatusCalls, _server.ServicesCalls));
 
         _clock.Advance(HealthViewModel.RefreshEvery);
         await Until(() => _server.ServicesCalls == services + 2);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Settle();
 
         Assert.Equal((status + 2, services + 2), (_server.StatusCalls, _server.ServicesCalls));
     }
@@ -196,7 +193,7 @@ public sealed partial class FreshnessTests : IDisposable
 
         _server.Push(A.Event(1, "views.rebuild.started"));
         await Until(() => _server.StatusCalls > status);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Settle();
 
         Assert.Equal((ShellState.Normal, true), (_vm.State, _vm.Banner.IsShown));
         Assert.Equal("Views are stalled at 42: run `sindri views rebuild`", _vm.Banner.Text);
@@ -225,11 +222,12 @@ public sealed partial class FreshnessTests : IDisposable
         _server.Current = Status(new AsOfView(42, 42, A.Noon, Rebuilding: false, Stalled: false), new HealthView("degraded", [new HealthProblemView("SND-SCHED-001", "index failed")]));
         _server.ServiceView = RouteAnswer.SpecShaped("services", "rebuilding");
         await Until(() => _vm.Pill.Word == "Degraded", _clock);
+        await Settle();
         var settled = _server.StatusCalls;
         _clock.Advance(HealthViewModel.RefreshEvery);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Settle();
         _clock.Advance(HealthViewModel.RefreshEvery);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Settle();
 
         Assert.Equal("Degraded", _vm.Pill.Word);
         Assert.True(_server.StatusCalls <= settled + 1, "caught up: no more polling");
@@ -248,11 +246,12 @@ public sealed partial class FreshnessTests : IDisposable
 
         _server.Current = Status(new AsOfView(12, 42, A.Noon, Rebuilding: false, Stalled: true), new HealthView("degraded", []));
         await Until(() => _vm.Pill.Word == "Degraded", _clock);
+        await Settle();
         var settled = _server.StatusCalls;
         for (var i = 0; i < 3; i++)
         {
             _clock.Advance(HealthViewModel.RefreshEvery);
-            await Task.Delay(30, TestContext.Current.CancellationToken);
+            await Settle();
         }
 
         Assert.True(_server.StatusCalls <= settled + 1, "stalled: not polled");
@@ -260,11 +259,7 @@ public sealed partial class FreshnessTests : IDisposable
 
     private static async Task Until(Func<bool> condition, FakeTimeProvider clock)
     {
-        for (var i = 0; i < 300 && !condition(); i++)
-        {
-            clock.Advance(HealthViewModel.RefreshEvery);
-            await Task.Delay(10, TestContext.Current.CancellationToken);
-        }
+        await Poll(condition, () => clock.Advance(HealthViewModel.RefreshEvery));
 
         Assert.True(condition());
     }
@@ -281,7 +276,7 @@ public sealed partial class FreshnessTests : IDisposable
 
         _server.Push(A.Event(1, "service.ran"));
         await Until(() => _server.ServicesCalls > services);
-        await Task.Delay(50, TestContext.Current.CancellationToken);
+        await Settle();
 
         Assert.Equal((ShellState.Normal, true, true), (_vm.State, _vm.Banner.IsStalled, _vm.Banner.HasRebuild));
     }
@@ -349,11 +344,37 @@ public sealed partial class FreshnessTests : IDisposable
     // Waits up to 2 s for what the test is about to assert, and fails here, naming nothing else, when it never holds.
     private static async Task Until(Func<bool> condition)
     {
-        for (var i = 0; i < 200 && !condition(); i++)
-        {
-            await Task.Delay(10, TestContext.Current.CancellationToken);
-        }
+        await Poll(condition);
 
         Assert.True(condition(), "the awaited state was reached within 2 s");
+    }
+
+    // Polls with yields, not sleeps, so the wait ends the moment the condition holds; the 1 ms pause every 64th turn lets threadpool
+    // work run when the box is busy. A hang still fails: it gives up after 5 s.
+    private static async Task Poll(Func<bool> condition, Action? step = null)
+    {
+        var deadline = Environment.TickCount64 + 5000;
+        for (var i = 1; !condition() && Environment.TickCount64 < deadline; i++)
+        {
+            step?.Invoke();
+            if (i % 64 == 0)
+            {
+                await Task.Delay(1, TestContext.Current.CancellationToken);
+            }
+            else
+            {
+                await Task.Yield();
+            }
+        }
+    }
+
+    // "Nothing more happens": the fake clock has been moved as far as the test means to, so give the pending reads a bounded
+    // number of turns to run (they are in memory) and let the caller assert that nothing else came.
+    private static async Task Settle()
+    {
+        for (var i = 0; i < 200; i++)
+        {
+            await Task.Yield();
+        }
     }
 }
