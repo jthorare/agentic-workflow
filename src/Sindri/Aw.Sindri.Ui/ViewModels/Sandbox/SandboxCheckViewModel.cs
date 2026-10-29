@@ -61,6 +61,12 @@ internal sealed class SandboxCheckViewModel : ObservableObject
     /// <summary>True when the last check is still failing and lists blockers.</summary>
     public bool ShowsBlockers => Phase == SandboxCheckPhase.StillFailing && Blockers.Count > 0;
 
+    /// <summary>The checks the last answer says did not run, as captions under the blockers (informational).</summary>
+    public IReadOnlyList<string> NotChecked { get; private set => Set(ref field, value); } = [];
+
+    /// <summary>True when the last answer names a check that did not run.</summary>
+    public bool HasNotChecked => NotChecked.Count > 0;
+
     /// <summary>The Steps a resume would start, oldest first.</summary>
     public IReadOnlyList<SandboxResumeRow> ResumeRows { get; private set => Set(ref field, value); } = [];
 
@@ -111,6 +117,7 @@ internal sealed class SandboxCheckViewModel : ObservableObject
         {
             Blockers = [];
             ResumeRows = [];
+            ShowNotChecked([]);
             Move(SandboxCheckPhase.Idle);
             Say(Labels.SandboxCheckFailed);
             return;
@@ -140,6 +147,7 @@ internal sealed class SandboxCheckViewModel : ObservableObject
     {
         Seen(check.CheckedAt ?? _clock.GetUtcNow());
         Blockers = [.. check.Blockers.Select(SandboxBlockerRow.Of)];
+        ShowNotChecked(check.NotChecked ?? []);
         if (!check.Ready || check.Blockers.Count > 0)
         {
             ResumeRows = [];
@@ -151,6 +159,12 @@ internal sealed class SandboxCheckViewModel : ObservableObject
         ResumeRows = [.. (check.Resume ?? []).Select(r => new SandboxResumeRow(r.Instance, r.Title ?? r.Item ?? Labels.SandboxResumeNoTitle))];
         Move(SandboxCheckPhase.AllClear);
         Say(ResumeRows.Count > 0 ? Labels.SandboxReadyResume(ResumeRows.Count) : Labels.SandboxReadyNothingWaiting);
+    }
+
+    private void ShowNotChecked(IReadOnlyList<string> lines)
+    {
+        NotChecked = lines;
+        OnChanged(nameof(HasNotChecked));
     }
 
     /// <summary>Resume: sends the answer-resume of each listed Step as the human, oldest first; a Step that refuses has moved on and the rest stay parked.</summary>

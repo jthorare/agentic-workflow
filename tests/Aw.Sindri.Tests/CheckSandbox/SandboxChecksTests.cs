@@ -1,6 +1,7 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
@@ -23,8 +24,8 @@ public sealed class SandboxChecksTests
     private static SandboxBlocker Blocker(ErrorDefinition error, string reason, ModelLoginSource? source = null) =>
         SandboxBlocker.Of(SandboxRefusal.For(error, reason, source: source));
 
-    private static SandboxChecks Checks(ISandbox sandbox, SandboxBlocker[]? forms = null, SandboxBlocker[]? logins = null, SandboxRequest? fixture = null, ParkedOnSandbox[]? parked = null, int free = 3, SandboxRequest? writeScope = null) =>
-        new(sandbox, new Blockers(forms ?? []), new Blockers(logins ?? []), new Fixture(fixture, writeScope), new NoFixtureLogin(), new SandboxResumeList(new Parks(parked ?? []), new Slots(free)));
+    private static SandboxChecks Checks(ISandbox sandbox, SandboxBlocker[]? forms = null, SandboxBlocker[]? logins = null, SandboxRequest? fixture = null, ParkedOnSandbox[]? parked = null, int free = 3, SandboxRequest? writeScope = null, bool withLogin = false) =>
+        new(sandbox, new Blockers(forms ?? []), new Blockers(logins ?? []), new Fixture(fixture, writeScope), withLogin ? new WithFixtureLogin() : new NoFixtureLogin(), new SandboxResumeList(new Parks(parked ?? []), new Slots(free)));
 
     [Fact]
     public async Task A_box_with_no_mechanism_and_a_bad_form_and_a_missing_login_reports_all_three_at_once()
@@ -83,6 +84,61 @@ public sealed class SandboxChecksTests
     }
 
     [Fact]
+    public async Task A_fixture_plan_with_no_login_says_the_hooks_were_not_checked_and_stays_ready()
+    {
+        var report = await Checks(new PassThroughSandbox(), fixture: SandboxRequests.ReadOnly).Run(Token);
+
+        Assert.True(report.Ready);
+        Assert.Equal([SandboxCheckReport.HooksNotChecked], report.NotChecked);
+    }
+
+    [Fact]
+    public async Task The_hooks_note_is_said_once_when_both_fixtures_plan_with_no_login()
+    {
+        var report = await Checks(new PassThroughSandbox(), fixture: SandboxRequests.ReadOnly, writeScope: SandboxRequests.WriteScope).Run(Token);
+
+        Assert.Equal([SandboxCheckReport.HooksNotChecked], report.NotChecked);
+    }
+
+    [Fact]
+    public async Task The_hooks_note_stands_beside_a_blocker_and_does_not_change_the_blockers()
+    {
+        var form = Blocker(SindriErrors.LaunchUnconfinable, SandboxReasons.FormReserved);
+
+        var report = await Checks(new PassThroughSandbox(), [form], fixture: SandboxRequests.ReadOnly).Run(Token);
+
+        Assert.False(report.Ready);
+        _ = Assert.Single(report.Blockers);
+        Assert.Equal([SandboxCheckReport.HooksNotChecked], report.NotChecked);
+    }
+
+    [Fact]
+    public async Task A_fixture_plan_with_a_login_checks_the_hooks_and_notes_nothing()
+    {
+        var report = await Checks(new PassThroughSandbox(), fixture: SandboxRequests.ReadOnly, withLogin: true).Run(Token);
+
+        Assert.Empty(report.NotChecked);
+    }
+
+    [Fact]
+    public async Task No_fixture_plans_nothing_so_nothing_is_noted()
+    {
+        var report = await Checks(new PassThroughSandbox(), fixture: null).Run(Token);
+
+        Assert.Empty(report.NotChecked);
+    }
+
+    [Fact]
+    public async Task The_response_carries_what_the_report_did_not_check()
+    {
+        var checks = Checks(new PassThroughSandbox(), fixture: SandboxRequests.ReadOnly);
+
+        var response = (await new CheckSandboxService(checks, new LastSandboxCheck()).Handle(new CheckSandboxRequest(), Token)).Value;
+
+        Assert.Equal([SandboxCheckReport.HooksNotChecked], response.NotChecked);
+    }
+
+    [Fact]
     public async Task A_passing_fixture_leaves_the_box_ready()
     {
         var report = await Checks(new PassThroughSandbox(), fixture: SandboxRequests.ReadOnly).Run(Token);
@@ -128,6 +184,16 @@ public sealed class SandboxChecksTests
     private sealed class NoFixtureLogin : ISandboxFixtureLogin
     {
         public ValueTask<FixtureLogin?> Prepare(LaunchId launch, CancellationToken cancellationToken) => ValueTask.FromResult<FixtureLogin?>(null);
+
+        public void Release(PreparedLogin login)
+        {
+        }
+    }
+
+    private sealed class WithFixtureLogin : ISandboxFixtureLogin
+    {
+        public ValueTask<FixtureLogin?> Prepare(LaunchId launch, CancellationToken cancellationToken) => ValueTask.FromResult<FixtureLogin?>(
+            new FixtureLogin(AgentId.From("claude-code"), Settings: null, new PreparedLogin(ModelLoginSource.SeparateLogin, [], new Dictionary<string, string>(StringComparer.Ordinal), [], new LoginHandle("fixture"))));
 
         public void Release(PreparedLogin login)
         {
