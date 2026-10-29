@@ -359,9 +359,9 @@ the model-routing spec's `IChoicePort.Pick(questions, capChars)`, call kind "pro
 sha256(shape + scrubbed question text + sorted options + the port's `ChoiceModel Identity`). Only cache misses are asked, so a
 rebuild with nothing new makes 0 Jev calls (owner q149). An `unknown` identity misses every key, and so does a new Jev version.
 
-**When Jev can't be asked** (off, not consented, down, or an answer of `undecided`): the candidate is kept unmerged on its home
-feature at confidence 0.8 and goes to map review. It is never silently dropped. Consent is the model-routing spec's: one notice
-names the label pick and the product pick, and each sends only when its own profile key is `jev`.
+**When Jev can't be asked** (off, down, or an answer of `undecided`): the candidate is kept unmerged on its home
+feature at confidence 0.8 and goes to map review. It is never silently dropped. The only gate is the profile key
+`context.models.productSurfaces: jev | off` (default `off`); there is no consent notice for it (owner q154, 2026-10-29).
 
 ### 6.2 Storage
 
