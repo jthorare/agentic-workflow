@@ -25,6 +25,7 @@ internal sealed class ContextRecordFeedCatalog(IRecordStore store, GitCli git, L
         if (settings.Linear is { } linearSettings)
         {
             feeds.Add(linear.CreateFeed(linearSettings));
+            feeds.Add(linear.CreateProjectFeed(linearSettings));
         }
 
         feeds.AddRange((external ?? []).SelectMany(e => e.For(settings, repos, scrubbers)));

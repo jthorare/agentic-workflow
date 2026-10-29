@@ -8,7 +8,7 @@ internal static class RecordWire
 {
     private static readonly string[] _kinds = ["doc", "issue", "comment", "project", "message", "code", "pr"];
     private static readonly string[] _states = ["open", "closed", "merged", "draft", "canceled", "done"];
-    private static readonly string[] _links = ["parent", "blocks", "duplicates", "relates", "closes", "attachment", "review-of", "replies-to", "in-project", "touches"];
+    private static readonly string[] _links = ["parent", "blocks", "duplicates", "relates", "closes", "attachment", "review-of", "replies-to", "in-project", "touches", "led-by"];
     private static readonly string[] _phases = ["recent", "backfill", "incremental", "reconcile"];
     private static readonly string[] _spaces = ["chunk", "node"];
 

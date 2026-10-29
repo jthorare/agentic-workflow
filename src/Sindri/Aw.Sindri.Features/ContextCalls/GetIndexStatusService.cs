@@ -23,7 +23,7 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
         return progress.IsError ? progress.Error : new IndexStatusView([.. progress.Value.Select(Row)]);
     }
 
-    private static IndexSourceRow Row(SourceProgress p) => new(p.Source.Value, Phase(p.Phase), p.Usable, p.Complete, p.LastSync, p.LastCode);
+    private static IndexSourceRow Row(SourceProgress p) => new(p.Source.Value, Phase(p.Phase), p.Usable, p.Complete, p.LastSync, p.LastCode, p.ReReading);
 
     private static string? Phase(SyncPhase? phase) => phase switch
     {

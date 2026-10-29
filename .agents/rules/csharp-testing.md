@@ -52,7 +52,7 @@ Lanes are xUnit traits named `Lane`. Every test carries exactly one. A budget co
 |---|---|---|
 | `unit` | `Core` logic and services with in-memory fakes. No I/O | < 10 s |
 | `integration` | Repositories on a real temp SQLite file; endpoints on the real host on loopback (`LoopbackBinding` + `Pipeline.Configure`, as the scaffolded tests do) or through `WebApplicationFactory`; the architecture tests (`Aw.Architecture.Tests`: they load every assembly, and four take 22 to 27 s each, over the unit per-test cap; owner, 2026-10-16) | < 60 s; `SindriUi` < 90 s (headless Avalonia rendering; owner, 2026-10-16, `PACKAGE_BUDGETS` in `scripts/ci/lane-budgets.mjs`); `Sindri` < 120 s (real Temporal servers; owner, 2026-10-16: 63.7 s in CI after fail-fast + 8 threads); `Aw.Sindri.Engine.Tests` < 120 s as a row of its own, kept out of the `Sindri` sum (the Temporal-bound suites split out of `Aw.Sindri.Tests` so that package fits its budget on a loaded box; `PROJECT_BUDGETS` in `scripts/ci/lane-budgets.mjs`; owner, 2026-10-18) |
-| `heavy` | Real containers, browsers, index builds, multi-megabyte real-clock scale cases | none; nightly, or under a slot of the heavy-job lock (at most two heavy jobs at a time) |
+| `heavy` | Real containers, browsers, index builds, multi-megabyte real-clock scale cases | none; by hand only (a lane or the owner on their own box, never CI; owner 2026-10-29), under a slot of the heavy-job lock (at most two heavy jobs at a time) |
 
 ```csharp
 [Fact, Trait("Lane", "unit")]
