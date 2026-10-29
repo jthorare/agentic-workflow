@@ -28,6 +28,7 @@ using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Onyx;
+using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Core.Sandbox;
@@ -142,6 +143,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ApiProblem)), JsonSerializable(typeof(ApiProblemBuilding)), JsonSerializable(typeof(ApiProblemNoMap)), JsonSerializable(typeof(ProcessStarted)), JsonSerializable(typeof(ProcessStopped)), JsonSerializable(typeof(WorkflowEventPayload))]
 [JsonSerializable(typeof(ProfileApproved)), JsonSerializable(typeof(Heartbeat)), JsonSerializable(typeof(CommandHandled)), JsonSerializable(typeof(ServiceRan))]
 [JsonSerializable(typeof(ProfileChecked)), JsonSerializable(typeof(ViewsRebuilt)), JsonSerializable(typeof(ItemCreated)), JsonSerializable(typeof(ItemCreatedPublic))]
+[JsonSerializable(typeof(ProjectAttached)), JsonSerializable(typeof(ProjectChanged)), JsonSerializable(typeof(ProjectDetached)), JsonSerializable(typeof(ProjectHidden)), JsonSerializable(typeof(ProjectAttachedRow)), JsonSerializable(typeof(ProjectHiddenRow))]   // projects page Ph3: the owner-state events and their views
 [JsonSerializable(typeof(ItemStateChanged)), JsonSerializable(typeof(ItemLinked)), JsonSerializable(typeof(RequestFiled)), JsonSerializable(typeof(RequestFiledPublic))]
 [JsonSerializable(typeof(DecisionFact)), JsonSerializable(typeof(DecisionRecorded)), JsonSerializable(typeof(DecisionRecordedPublic)), JsonSerializable(typeof(JobStarted))]
 [JsonSerializable(typeof(JobProgress)), JsonSerializable(typeof(JobFinished)), JsonSerializable(typeof(JobFinishedPublic)), JsonSerializable(typeof(JobCancelled)), JsonSerializable(typeof(JobWaiting)), JsonSerializable(typeof(JobResumed))]

@@ -10,6 +10,7 @@ using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Onyx;
+using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
@@ -87,7 +88,8 @@ public static class SindriCoreServiceCollectionExtensions
             .AddSingleton<IProjection, LaunchesProjection>()
             .AddSingleton<IProjection, RecipeStatsProjection>()
             .AddSingleton<IProjection, ModelHistoryProjection>()
-            .AddSingleton<IProjection, CodeIndexProjection>();
+            .AddSingleton<IProjection, CodeIndexProjection>()
+            .AddSingleton<IProjection, ProjectsProjection>();
 
     /// <summary>
     /// The sandbox port and the credential registry (sandbox spec SB12, SB18). The product registers only <see cref="UnavailableSandbox"/> until SB-5a; test hosts replace it
