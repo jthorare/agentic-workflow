@@ -24,7 +24,10 @@ public sealed class IndexSyncIndependenceTests
 
     private static RecordItem Item(SourceId source, int n) => new(
         RecordKey.From($"{source.Value}:item/{n.ToString(CultureInfo.InvariantCulture)}"), RecordKind.Issue, $"Title {n.ToString(CultureInfo.InvariantCulture)}", $"Words of {source.Value} item {n.ToString(CultureInfo.InvariantCulture)}", Author: null, Url: null, RecordState.Open, StateRaw: null,
-        CreatedAt: null, RecordSamples.Now.AddDays(-1), ClosedAt: null, SourceVersion.From("v1"), Links: [], Repo: null, Audience: AudienceKey.From($"{source.Value}:team-a"));
+        CreatedAt: null, RecordSamples.Now.AddDays(-1), ClosedAt: null, SourceVersion.From("v1"), Links: [], Repo: null, Audience: Audience(source));
+
+    // why: a github record's audience is its repo, a linear one its team, a slack one its channel
+    private static AudienceKey Audience(SourceId source) => AudienceKey.From(source.Value.StartsWith("github", StringComparison.Ordinal) ? "repo:acme/app" : source.Value.StartsWith("slack", StringComparison.Ordinal) ? "slack:C1" : "linear:team-a");
 
     private static FakeRecordFeed Plain(SourceId source) => new(source, [Item(source, 1), Item(source, 2)]);
 
