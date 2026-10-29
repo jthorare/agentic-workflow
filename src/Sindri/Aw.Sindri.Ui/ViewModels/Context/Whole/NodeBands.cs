@@ -36,9 +36,10 @@ internal static class NodeBands
 
     /// <summary>A band's title.</summary>
     /// <param name="band">The band.</param>
-    /// <returns>"Why", "Product", "Code" or "Other".</returns>
+    /// <returns>"Concepts", "Why", "Product", "Code" or "Other".</returns>
     internal static string Title(WholeBand band) => band switch
     {
+        WholeBand.Concept => Labels.ContextWholeBandConcepts,
         WholeBand.Intent => Labels.ContextWholeBandWhy,
         WholeBand.Product => Labels.ContextMapAreaProduct,
         WholeBand.Code => Labels.ContextMapAreaCode,
