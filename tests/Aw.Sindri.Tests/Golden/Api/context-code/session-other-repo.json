@@ -118,8 +118,56 @@
     }
   ],
   "data": {
-    "things": [],
-    "files": []
+    "things": [
+      {
+        "key": "thing:note",
+        "label": "Note",
+        "kind": "thing",
+        "access": "reads",
+        "via": [
+          "action:sharing.resolve-link"
+        ],
+        "searchable": true,
+        "provenance": "human",
+        "confidence": 1,
+        "confirmed": true,
+        "trust": "trusted",
+        "anchors": [
+          "feature:sharing"
+        ]
+      },
+      {
+        "key": "thing:shared-link",
+        "label": "Shared link",
+        "kind": "thing",
+        "access": "both",
+        "via": [
+          "action:sharing.create-link",
+          "action:sharing.resolve-link"
+        ],
+        "searchable": true,
+        "provenance": "human",
+        "confidence": 1,
+        "confirmed": true,
+        "trust": "trusted",
+        "anchors": [
+          "feature:sharing"
+        ]
+      }
+    ],
+    "files": [
+      {
+        "path": "migrations/002_sharing.sql",
+        "label": "migrations/002_sharing.sql",
+        "kind": "code",
+        "thing": "thing:shared-link",
+        "matched": "shared_link",
+        "trust": "trusted",
+        "anchors": [
+          "feature:sharing"
+        ]
+      }
+    ]
   },
   "callers": {
     "state": "unavailable",
@@ -136,8 +184,8 @@
   "counts": {
     "files": 2,
     "tests": 3,
-    "things": 0,
-    "schemaFiles": 0,
+    "things": 2,
+    "schemaFiles": 1,
     "filesWithoutTest": 0,
     "unlocated": 0
   },
@@ -159,6 +207,33 @@
   ],
   "edges": [
     {
+      "from": "action:sharing.resolve-link",
+      "to": "thing:note",
+      "type": "reads",
+      "provenance": "human",
+      "link": "edge:b95dfbe93826f4f9",
+      "confirmed": true,
+      "confidence": 1
+    },
+    {
+      "from": "action:sharing.resolve-link",
+      "to": "thing:shared-link",
+      "type": "reads",
+      "provenance": "human",
+      "link": "edge:91260d06b99f9a1b",
+      "confirmed": true,
+      "confidence": 1
+    },
+    {
+      "from": "action:sharing.create-link",
+      "to": "thing:shared-link",
+      "type": "writes",
+      "provenance": "human",
+      "link": "edge:ef3ab8d8466df46e",
+      "confirmed": true,
+      "confidence": 1
+    },
+    {
       "from": "code:src/sharing/links.ts",
       "to": "feature:sharing",
       "type": "implements",
@@ -178,22 +253,38 @@
     }
   ],
   "coverage": {
-    "scope": 2,
+    "scope": 4,
     "intent": {
       "covered": 0,
-      "of": 2
+      "of": 4
     },
     "product": {
-      "confirmed": 2,
-      "of": 2
+      "confirmed": 4,
+      "of": 4
     },
     "code": {
       "implemented": 1,
-      "of": 2,
+      "of": 4,
       "level": "file",
       "suggested": 0
     },
     "gaps": [
+      {
+        "node": "action:sharing.create-link",
+        "missing": [
+          "intent",
+          "code"
+        ],
+        "note": null
+      },
+      {
+        "node": "action:sharing.resolve-link",
+        "missing": [
+          "intent",
+          "code"
+        ],
+        "note": null
+      },
       {
         "node": "feature:sharing",
         "missing": [
@@ -223,22 +314,38 @@
     },
     "byAnchor": {
       "feature:sharing": {
-        "scope": 2,
+        "scope": 4,
         "intent": {
           "covered": 0,
-          "of": 2
+          "of": 4
         },
         "product": {
-          "confirmed": 2,
-          "of": 2
+          "confirmed": 4,
+          "of": 4
         },
         "code": {
           "implemented": 1,
-          "of": 2,
+          "of": 4,
           "level": "file",
           "suggested": 0
         },
         "gaps": [
+          {
+            "node": "action:sharing.create-link",
+            "missing": [
+              "intent",
+              "code"
+            ],
+            "note": null
+          },
+          {
+            "node": "action:sharing.resolve-link",
+            "missing": [
+              "intent",
+              "code"
+            ],
+            "note": null
+          },
           {
             "node": "feature:sharing",
             "missing": [

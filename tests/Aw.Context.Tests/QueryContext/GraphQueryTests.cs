@@ -170,10 +170,14 @@ public sealed class GraphQueryTests : IDisposable
         var result = (await _world.Engine.Query(new ContextQuery(Text: null, Node: Orientation), MapWorld.Session(FixtureMap.Repo), MapWorld.None)).Value;
 
         var named = result.Sections.Where(s => s.Name != "records").SelectMany(s => s.Items).Select(i => i.Node ?? string.Empty)
-            .Concat(result.Sections.SelectMany(s => s.Items).SelectMany(i => i.Path ?? []).Skip(1));
+            .Concat(result.Sections.SelectMany(s => s.Items).SelectMany(i => i.Path ?? []).Skip(1).Select(HopTarget));
         Assert.All(named.Where(k => !k.StartsWith("code:", StringComparison.Ordinal)), k => Assert.Contains(k, FixtureMap.ScopedNodes, StringComparer.Ordinal));
-        Assert.DoesNotContain(result.Sections, s => s.Name == "affects");
+        var affects = Assert.Single(Section(result, "affects").Items);   // the scope keeps the cascade's mid-path nodes (spec §3 "and their cascade"), and what it reaches is in scope too
+        Assert.Equal("feature:tabs.tab-manager", affects.Node);
     }
+
+    // A path step after the anchor is "hop key" ("owns surface:x", "writes thing:t", "reads action:a"): the target is what a leak check names.
+    private static string HopTarget(string step) => step[(step.IndexOf(' ', StringComparison.Ordinal) + 1)..];
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_question_naming_a_node_anchors_on_it_and_still_cites_repo_docs()
