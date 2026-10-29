@@ -630,6 +630,16 @@ check "agent-run's wait is bounded in seconds: exits 1 when launch.started never
 contains "agent-run's wait is bounded in seconds: names the missing launch.started" "$out" "no launch.started"
 check "agent-run's wait is bounded in seconds: a 2 s ledger call with FIXTURE_AGENT_WAIT=3 ends in under 10 s (took ${took}s)" "$([ "$took" -lt 10 ] && echo yes || echo no)" "yes"
 
+# sandbox (SB-6): the usage and the refusals that need no control plane.
+contains "the usage lists sandbox" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh sandbox blocked|clear"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox >/dev/null 2>&1; check "sandbox needs a state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox nope >/dev/null 2>&1; check "sandbox refuses an unknown state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox blocked extra >/dev/null 2>&1; check "sandbox blocked takes no arguments (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox denials >/dev/null 2>&1; check "sandbox denials needs an item and an instance (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox denials not-an-item ITM-0f/step/1 >/dev/null 2>&1; check "sandbox refuses a bad item id (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" sandbox denials ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "sandbox refuses an unguarded home" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox clear >/dev/null 2>&1; check "sandbox clear before sessions up exits 2" "$?" "2"
+
 # model-picks-run (issue #1452): the Model picks table's four states through a real agent run with the pick on. The control
 # plane is the stub, so this checks what the verb sets up: the usage, the refusals, the profile, the launcher stub, the judge
 # stub and the environment the control plane restarts with; the states themselves are the lead's proof under a real serve.

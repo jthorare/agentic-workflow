@@ -8,7 +8,7 @@ internal static partial class WholeMapLayout
     private const double NodeCell = NodeHeight + NodeGap;
 
     // The bands stacked under the headers, each as tall as its fullest column needs (or the floor asks), so a band lines up across every column and
-    // across the open columns and the overview's beside them. Why, Product and Code always have a lane; Other only when something is in it.
+    // across the open columns and the overview's beside them. Why, Product and Code always have a lane; Concepts and Other only when something is in it.
     private static List<PlacedBand> Extents(Dictionary<WholeBand, double> need, Dictionary<WholeBand, string> meta, IReadOnlyList<PlacedBand>? floor = null)
     {
         var bands = new List<PlacedBand>();
@@ -19,7 +19,7 @@ internal static partial class WholeMapLayout
             var height = Math.Max(need.GetValueOrDefault(band), below?.Height ?? 0);
             var words = meta.GetValueOrDefault(band, string.Empty);   // the label counts what is drawn; a floor gives height only
 
-            if (band == WholeBand.Other && height <= 0 && words.Length == 0)
+            if (band is WholeBand.Concept or WholeBand.Other && height <= 0 && words.Length == 0)
             {
                 continue;
             }

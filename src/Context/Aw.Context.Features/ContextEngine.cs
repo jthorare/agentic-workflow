@@ -2,6 +2,7 @@ using System.Text.Json;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -11,6 +12,7 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -23,7 +25,6 @@ using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
 using Aw.Context.Core.Vectors;
 using Aw.Context.Core.WholeMap;
-using Aw.Context.Features.MapHeads;
 using Aw.Context.Features.QueryContext;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -41,10 +42,13 @@ internal sealed class ContextEngine(
     IContextMap map,
     ContextGraph graph,
     ContextEval eval,
-    IService<MapHeadsRequest, IReadOnlyList<RepoHead>> heads) : IContextEngine
+    ContextReads reads) : IContextEngine
 {
     public Result<ContextSettings> CheckSettings(JsonElement? section, IReadOnlyList<ProfileRepoEntry> repos) =>
         SettingsReader.Read(section).Bind(read => scrubbers.For(read.ExtraPatterns)).Bind(_ => SettingsReader.Check(section, repos));   // the keys, then the patterns, then the repos
+
+    public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.Projects(request, scope, cancellationToken);
 
     public ValueTask<Result<ContextResult>> Query(ContextQuery query1, ContextScope scope, CancellationToken cancellationToken) =>
         query.Handle(new QueryContextRequest(query1, scope), cancellationToken);
@@ -64,7 +68,11 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) => sources.Tick(scope, cancellationToken);
 
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) => sources.Tick(scope, source, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) => sources.Progress(scope, cancellationToken);
+
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) => sources.ConceptStatus(scope, cancellationToken);
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => sources.Counts(source, cancellationToken);
 
@@ -144,7 +152,7 @@ internal sealed class ContextEngine(
     public ValueTask<Result<MapPublishView>> PublishStatus(ContextScope scope, CancellationToken cancellationToken) => map.PublishStatus(scope, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) =>
-        heads.Handle(new MapHeadsRequest(scope), cancellationToken);
+        reads.Heads(scope, cancellationToken);
 
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         map.Propose(proposal, scope, cancellationToken);

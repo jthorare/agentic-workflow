@@ -5,7 +5,7 @@ namespace Aw.Sindri.Testing;
 
 /// <summary>
 /// The contract every <see cref="ISecretWriter"/> honours, with the resolver that reads back what it wrote. Run against the in-memory fake and KeychainSecretWriter (its owner-only file fallback, which a resolver reads on any machine).
-/// IBrowser and IOnyxPrompts have no contract: they are one-call wrappers over the OS (open a URL, read a console line) with nothing to pin down but the OS; their fakes only record calls (recorded exemption, owner review of #357).
+/// ISecretPrompts has no contract: it is a one-call wrapper over the OS (read a console line with echo off) with nothing to pin down but the OS; its fake only records calls (recorded exemption, owner review of #357).
 /// </summary>
 public abstract class SecretWriterContract
 {
@@ -21,7 +21,7 @@ public abstract class SecretWriterContract
     {
         var (writer, pointers) = Create();
 
-        var pointer = writer.Store("onyx", "sindri-onyx", Key).Value;
+        var pointer = writer.Store("sindri", "example-api-key", Key).Value;
 
         Expect.Equal(Key, pointers.Resolve(pointer).Value);
     }
@@ -31,10 +31,22 @@ public abstract class SecretWriterContract
     public void Storing_again_replaces_the_secret()
     {
         var (writer, pointers) = Create();
-        _ = writer.Store("onyx", "sindri-onyx", Key);
+        _ = writer.Store("sindri", "example-api-key", Key);
 
-        var pointer = writer.Store("onyx", "sindri-onyx", "on_second-0123").Value;
+        var pointer = writer.Store("sindri", "example-api-key", "on_second-0123").Value;
 
         Expect.Equal("on_second-0123", pointers.Resolve(pointer).Value);
+    }
+
+    /// <summary>A secret stored in the file only gets a file: pointer that resolves to the same value.</summary>
+    [Fact]
+    public void A_secret_stored_in_the_file_gets_a_file_pointer_that_resolves()
+    {
+        var (writer, pointers) = Create();
+
+        var pointer = writer.StoreInFile("sindri-index", "linear", Key).Value;
+
+        Expect.True(pointer.ToString().StartsWith("file:", StringComparison.Ordinal));
+        Expect.Equal(Key, pointers.Resolve(pointer).Value);
     }
 }

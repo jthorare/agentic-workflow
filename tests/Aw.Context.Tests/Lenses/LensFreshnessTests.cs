@@ -111,10 +111,10 @@ public sealed class LensFreshnessTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Without_onyx_in_the_profile_the_lens_has_no_onyx_row()
+    public async Task Without_linear_in_the_profile_the_lens_has_no_linear_row()
     {
         var view = await Lens();
 
-        Assert.DoesNotContain(view.Searched.Sources, s => s.Id.Value == "onyx");
+        Assert.DoesNotContain(view.Searched.Sources, s => s.Id.Value == "linear");
     }
 }

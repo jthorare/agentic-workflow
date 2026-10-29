@@ -19,6 +19,11 @@ public sealed class FileMapFilterWordsTests
         var clock = new FakeTimeProvider(A.Noon);
         var files = new FileMapViewModel(new ContextPorts(new FakeSindriApi(), () => new Uri("http://127.0.0.1:1/"), clipboard, clock, new CatalogViewModel(clipboard, clock), _ => { }));
         await files.Load("src/tabs/", Token);
+        if (string.Equals(files.FilterText, text, StringComparison.Ordinal))
+        {
+            return files;   // no change, so no filter run can start
+        }
+
         files.FilterText = text;
         clock.Advance(FileMapViewModel.FilterDelay);
         for (var i = 0; i < 300 && files.FilterRuns == 0; i++)

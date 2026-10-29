@@ -21,6 +21,7 @@ namespace Aw.Sindri.Ui.Api.Sessions;
 /// <param name="Title">Title, as served; null for a session caller.</param>
 /// <param name="Pid">Pid, as served; null for a session caller.</param>
 /// <param name="Launch">Launch: the Step an engine launch started it for; null when no launch row is known, all-null members for an attended launch.</param>
+/// <param name="Sandbox">Sandbox: the session's sandbox state and memory; null (omitted) for a row with no Sindri launch.</param>
 internal sealed record SessionRowView(
     string Ref,
     string Provider,
@@ -41,4 +42,5 @@ internal sealed record SessionRowView(
     SessionFocusView Focus,
     string? Title,
     int? Pid,
-    SessionLaunchView? Launch = null);
+    SessionLaunchView? Launch = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] Sandbox.SessionSandboxView? Sandbox = null);

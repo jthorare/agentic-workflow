@@ -1,6 +1,7 @@
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -13,6 +14,7 @@ using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
@@ -43,6 +45,7 @@ using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
+using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.GetProposals;
 using Aw.Context.Features.GetScopeGraph;
 using Aw.Context.Features.GetSubgraph;
@@ -89,6 +92,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddSingleton<IMapSearchIndexFactory, UnconfiguredMapSearchIndexFactory>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite FTS5 adapter
         services.TryAddSingleton<IConceptHintStore, UnconfiguredConceptHintStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
+        services.TryAddSingleton<IConceptSynthesisStore, UnconfiguredConceptSynthesisStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
         services.TryAddSingleton(WalkOptions.Of(Math.Max(1, Environment.ProcessorCount - 1)));   // every core but one, so the box keeps a core; a host or a test may register another degree
         services.TryAddSingleton(WholeMapRules.Default);   // a host or a test may register other limits
         services.TryAddSingleton<ICodeSymbolSource, NoCodeSymbolSource>();   // the host that wires the code index (Sindri's Host adapter) replaces it
@@ -105,12 +109,12 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddMapHeads().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
+        return services.AddMapHeads().AddProjectFacts().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
 
     private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();
 
-    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<IIndexSync, IndexSync>();
+    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>();
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
         .AddBacktest()
@@ -178,6 +182,10 @@ public static class ContextFeaturesServiceCollectionExtensions
     // The repo heads the map watcher reads (F1).
     private static IServiceCollection AddMapHeads(this IServiceCollection services) =>
         services.AddScoped<IService<MapHeadsRequest, IReadOnlyList<RepoHead>>, MapHeadsService>();
+
+    // The Projects page's reads (projects page spec §6.1).
+    private static IServiceCollection AddProjectFacts(this IServiceCollection services) =>
+        services.AddScoped<IService<GetProjectFactsRequest, ProjectFactsAnswer>, GetProjectFactsService>().AddScoped<ContextReads>();
 
     // The lenses and the code lens share the basis reader and the map reader's views.
     private static IServiceCollection AddLensSlices(this IServiceCollection services) => services

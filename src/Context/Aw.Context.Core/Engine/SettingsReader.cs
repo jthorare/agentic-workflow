@@ -43,7 +43,7 @@ public static partial class SettingsReader
 
         if (UnknownKey(element) is { } unknown)
         {
-            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan, checks, index)");
+            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan, conceptSynthesis, checks, index)");
         }
 
         if (CodeUnknownKey(element) is { } codeKey)
@@ -84,7 +84,6 @@ public static partial class SettingsReader
                     MinHits = section.MinHits ?? settings.MinHits,
                     CascadeDepth = section.CascadeDepth ?? settings.CascadeDepth,
                     SessionsEnabled = section.Sessions?.Enabled ?? true,
-                    Onyx = sources.Value.Onyx,
                     Linear = sources.Value.Linear,
                     LinearTeams = sources.Value.Teams,
                     ExtraPatterns = Patterns(section.Scrub),
@@ -237,13 +236,13 @@ public static partial class SettingsReader
     }
 
     private static ContextSettings WithFanOut(ContextSettings settings, ContextSection section) =>
-        settings with { DocDirectoryNames = DocNamesRules.Names(section.Docs), CascadeComponentFanOut = section.CascadeComponentFanOut ?? settings.CascadeComponentFanOut, Graphify = GraphifyRules.Limits(section.Extract?.Graphify) };
+        settings with { ConceptSynthesis = ConceptSynthesisRules.Read(section.ConceptSynthesis), DocDirectoryNames = DocNamesRules.Names(section.Docs), CascadeComponentFanOut = section.CascadeComponentFanOut ?? settings.CascadeComponentFanOut, Graphify = GraphifyRules.Limits(section.Extract?.Graphify) };
 
     private static Error? CascadeProblem(ContextSection section) => section switch
     {
         { CascadeDepth: < 0 or > QueryRules.MaxDepth } => Invalid("context.cascadeDepth", "is 0 to 8 steps"),
         { CascadeComponentFanOut: < 1 or > 500 } => Invalid("context.cascadeComponentFanOut", "is 1 to 500 features"),
-        _ => RankerRules.Problem(section.Ranker) ?? ConceptScanRules.Problem(section.ConceptScan) ?? CodeProblem(section.Code) ?? HistoryProblem(section.History),   // why: the last keys checked
+        _ => RankerRules.Problem(section.Ranker) ?? ConceptScanRules.Problem(section.ConceptScan) ?? ConceptSynthesisRules.Problem(section.ConceptSynthesis) ?? CodeProblem(section.Code) ?? HistoryProblem(section.History),   // why: the last keys checked
     };
 
     private static Error? RepoProblem(IReadOnlyList<string>? repos)
@@ -256,7 +255,7 @@ public static partial class SettingsReader
 
     private static string? UnknownKey(JsonElement element)
     {
-        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan", "checks", "index"];
+        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan", "conceptSynthesis", "checks", "index"];
         return element.EnumerateObject().Select(p => p.Name).FirstOrDefault(n => !known.Contains(n, StringComparer.Ordinal)) is { } name ? Printable(name) : null;
     }
 

@@ -7,6 +7,7 @@ using Aw.Context.Core.Map;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Symbols;
+using Aw.Context.Core.Sync;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features;
 using Aw.Context.Features.ApplyReviewFile;
@@ -69,7 +70,7 @@ internal static class Engines
 {
     internal static readonly ContextRepo[] Repos = [new(ContextRepoName.From("split-panes"), "/repos/split-panes"), new(ContextRepoName.From("other"), "/repos/other")];
 
-    internal static IContextEngine Over(FixedSourceCatalog catalog, FakeDocIndex? index = null, FakeTimeProvider? time = null, FakeIntentStore? intentStore = null, FakeLexicalLeg? lexical = null, FakeRecordStore? records = null, FakeQueryEmbedder? embedder = null)
+    internal static IContextEngine Over(FixedSourceCatalog catalog, FakeDocIndex? index = null, FakeTimeProvider? time = null, FakeIntentStore? intentStore = null, FakeLexicalLeg? lexical = null, FakeRecordStore? records = null, FakeQueryEmbedder? embedder = null, FakeIndexSync? indexSync = null)
     {
         var clock = time ?? new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         var scrubbers = new FakeScrubberFactory();
@@ -81,20 +82,21 @@ internal static class Engines
         var repos = new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal));
         return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos), intents, new FakeModelPort(),
                 new RecordSearch(lexical ?? new FakeLexicalLeg(), recordStore, embedder ?? new FakeQueryEmbedder(), new FakeVectorMatrixCache(recordStore), new FakeVectorScan())),
-            new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(catalog, new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()), intents,
-                new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers),
+            new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, recordStore, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()),
+                (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers),
             new ContextGraph(new ShowNodeService(graphs, scrubbers), new ListNeighborsService(graphs, scrubbers), new FindPathService(graphs, scrubbers),
-                new GetLensesService(graphs, new LensBasisReader(repos, intents, clock), scrubbers, new NoCodeSymbolSource(), repos), new GetLensesSetService(graphs, new LensBasisReader(repos, intents, clock), scrubbers), new GetFileMapService(graphs, repos, new NoCodeSymbolSource(), new RepoTreeCache()),
-                new ContextCodeHistory(new GetCodeService(graphs, new LensBasisReader(repos, intents, clock), Lexical(repos, clock), new CodeSymbolSearch(new NoCodeSymbolSource(), repos), scrubbers),
-                    new GetHistoryService(graphs, new HistoryPipeline(new LensBasisReader(repos, intents, clock), intents, new FakeFileHistory(Repos[0], new HistoryWorld("0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", [])), clock), scrubbers),
-                    new GetSubgraphService(graphs, new LensBasisReader(repos, intents, clock), scrubbers),
+                new GetLensesService(graphs, new LensBasisReader(repos, clock), scrubbers, new NoCodeSymbolSource(), repos), new GetLensesSetService(graphs, new LensBasisReader(repos, clock), scrubbers), new GetFileMapService(graphs, repos, new NoCodeSymbolSource(), new RepoTreeCache()),
+                new ContextCodeHistory(new GetCodeService(graphs, new LensBasisReader(repos, clock), Lexical(repos, clock), new CodeSymbolSearch(new NoCodeSymbolSource(), repos), scrubbers),
+                    new GetHistoryService(graphs, new HistoryPipeline(new LensBasisReader(repos, clock), intents, new FakeFileHistory(Repos[0], new HistoryWorld("0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", [])), clock), scrubbers),
+                    new GetSubgraphService(graphs, new LensBasisReader(repos, clock), scrubbers),
                     new GetWholeMapService(graphs, scrubbers, new WholeMapCache(), WholeMapRules.Default),
                     new Features.SearchMap.SearchMapService(graphs, scrubbers, new SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
                     new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
                         new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers))),
-                    new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, intents, clock), scrubbers), new FakeScopeRunStore(), clock))),
+                    new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),
-            new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()));
+            new ContextReads(new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()),
+                new Features.GetProjects.GetProjectFactsService(recordStore, new FakeSourceIdentityStore(), (IIndexSync?)indexSync ?? new FakeIndexSync())));
     }
 
     /// <summary>The probe runner over no probe file (the query tests never run probes).</summary>
@@ -134,7 +136,7 @@ internal static class Engines
 
     /// <summary>The build slice over empty fakes (the query tests never build).</summary>
     private static BuildMapService Build(TimeProvider clock, FakeGraphStore store) =>
-        new(new MapInputs(new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal)), new MapRecordSources(new FakeRecordStore(), new NoCodeSymbolSource())), new FakeClusterSource(), new MapNamers(new FakeLabeler(), new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), new FakeConceptHintStore(), store)), new MapBuildGate(), new FakeDefaultBranch(), store, clock);
+        new(new MapInputs(new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal)), new MapRecordSources(new FakeRecordStore(), new NoCodeSymbolSource())), new FakeClusterSource(), new MapNamers(new FakeLabeler(), new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), new FakeConceptHintStore(), store, new Testing.ConceptSynthesis.FakeConceptSynthesisStore())), new MapBuildGate(), new FakeDefaultBranch(), store, clock);
 
     internal static IContextEngine Over(params IContextSource[] sources) => Over(new FixedSourceCatalog(sources));
 

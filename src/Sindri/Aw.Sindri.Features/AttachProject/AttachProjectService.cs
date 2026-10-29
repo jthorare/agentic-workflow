@@ -1,7 +1,6 @@
 using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
@@ -9,22 +8,22 @@ using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Text;
-using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Features.AttachProject;
 
 /// <summary>
-/// Attaches a Linear project or adds a hand-made one (projects page spec §5.3; desk): reads the attached projects through the views, decides
+/// Attaches a Linear project or adds a hand-made one (projects page spec §5.3; desk): reads the attached projects through the views and the stored
+/// Linear projects through the project facts (a typed url or key must be one of them; one the owner leads is already on the page), decides
 /// through <see cref="ProjectDecisions"/>, scrubs the note and links, and appends 'project.attached' keyed by the new project id.
 /// </summary>
-/// <param name="views">The attached projects.</param>
+/// <param name="lookup">The attached projects and the stored Linear project a typed url or key names.</param>
 /// <param name="ledger">Appends the event.</param>
 /// <param name="held">The lease this process holds.</param>
 /// <param name="events">Builds the entry.</param>
 /// <param name="scrubber">Redacts the note and links.</param>
 /// <param name="callers">The caller: the command id.</param>
 /// <param name="ids">The id source for the project.</param>
-internal sealed class AttachProjectService(IViewReader views, ILedgerStore ledger, HeldLease held, EventFactory events, ITextScrubber scrubber, ICallerContextAccessor callers, IIdGenerator ids)
+internal sealed class AttachProjectService(AttachProjectLookup lookup, ILedgerStore ledger, HeldLease held, EventFactory events, ITextScrubber scrubber, ICallerContextAccessor callers, IIdGenerator ids)
     : IService<AttachProjectRequest, ProjectAccepted>
 {
     public async ValueTask<Result<ProjectAccepted>> Handle(AttachProjectRequest request, CancellationToken cancellationToken)
@@ -42,16 +41,17 @@ internal sealed class AttachProjectService(IViewReader views, ILedgerStore ledge
             return linear.Error;
         }
 
-        var attached = await views.List<ProjectAttachedRow>(ViewNames.ProjectAttached, cancellationToken).ConfigureAwait(false);
-        if (attached.IsError)
+        var found = await lookup.Read(linear.Value, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
         {
-            return attached.Error;
+            return found.Error;
         }
 
         var (caller, grant) = begun.Value;
         var id = ProjectId.New(ids);
-        var draft = new ProjectDraft(linear.Value, request.Name, request.State, request.Links, request.Note, request.Target);
-        var decided = ProjectDecisions.Attach(caller.CommandId, id, draft, attached.Value, led: false);   // Ph4: led comes from Context's project feed
+        var (key, led, attached) = found.Value;
+        var draft = new ProjectDraft(key, request.Name, request.State, request.Links, request.Note, request.Target);
+        var decided = ProjectDecisions.Attach(caller.CommandId, id, draft, attached, led);
         if (decided.IsError)
         {
             return decided.Error;
@@ -63,18 +63,15 @@ internal sealed class AttachProjectService(IViewReader views, ILedgerStore ledge
         return appended.IsError ? appended.Error : new ProjectAccepted(appended.Value, id.Value, Version: 1, payload.Name ?? payload.Linear ?? id.Value);
     }
 
-    /// <summary>The key a typed Linear project names; null when none was typed.</summary>
-    private static Result<string?> Linear(string? typed)
+    /// <summary>What a typed Linear project names; null when none was typed.</summary>
+    private static Result<LinearProjectRef?> Linear(string? typed)
     {
         if (typed is null)
         {
-            return (string?)null;
+            return Results.Success<LinearProjectRef?>(value: null);
         }
 
         var parsed = LinearProjectRefs.Parse(typed);
-        return parsed.IsError ? parsed.Error
-            : parsed.Value.Key is { } key ? key
-            // Ph4: look the url's slug id up among the stored Linear projects (SND-PROJECT-003 when none matches); Context has no facade member that answers that yet
-            : SindriErrors.ProjectInvalid.With("linear: a project url can't be looked up yet (pass the key: linear:project/<id>)");
+        return parsed.IsError ? parsed.Error : parsed.Value;
     }
 }

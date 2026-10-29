@@ -71,4 +71,3 @@ PPID # the shell sets it (the aw:fleet hook walks up from it)
 EPOCHREALTIME # the shell sets it (bash 5; the aw:fleet hook timestamps with it)
 AW_HOOK_PROVIDER # set by the Codex and Cursor adapters (config/hooks/adapters/common.sh) for the hook they run, never by the user; the aw:fleet hook maps it to the provider directory
 EDITOR # the user's own editor choice; sindri-pod.sh profile edit opens the profile in it (vi when unset)
-AW_SINDRI_ONYX_URL # set by the chart in the pod, read there by sindri-pod.sh (connect --onyx) to find Onyx's port

@@ -1,5 +1,4 @@
 using Aw.Context.Core;
-using Aw.Context.Core.Onyx;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Fakes;
@@ -9,7 +8,7 @@ namespace Aw.Context.Tests.Linear;
 
 /// <summary>
 /// The linear source against the fake Linear GraphQL API (spec §5.1, §5.2, §10, D18): the ContextSourceContract every source passes, and what is the
-/// linear source's own (keys, aliases, the team and updatedAt filters, the records' text, versions, the key checks of its probe, dedup with Onyx's records).
+/// linear source's own (keys, aliases, the team and updatedAt filters, the records' text, versions, the key checks of its probe).
 /// </summary>
 [Trait("Lane", "integration")]
 public sealed class LinearSourceContractTests : ContextSourceContract<IContextSource>, IAsyncDisposable
@@ -51,7 +50,7 @@ public sealed class LinearSourceContractTests : ContextSourceContract<IContextSo
     }
 
     [Fact]
-    public async Task An_issue_hit_has_the_key_onyx_gives_it_the_identifier_as_an_alias_and_its_updated_at_as_the_version()
+    public async Task An_issue_hit_has_the_canonical_key_the_identifier_as_an_alias_and_its_updated_at_as_the_version()
     {
         var (_, harness) = await Start();
 
@@ -215,21 +214,6 @@ public sealed class LinearSourceContractTests : ContextSourceContract<IContextSo
 
         Assert.Equal(ContextErrors.SourceNotConfigured.Code, search.Error.Code);
         Assert.Empty(linear.Requests);
-    }
-
-    [Fact]
-    public async Task An_issue_is_the_same_record_in_onyx_and_in_linear_so_their_hits_merge_on_one_key_and_one_alias()
-    {
-        await using var onyx = await FakeOnyxServer.Start();
-        var (_, harness) = await Start();
-        using var onyxHarness = new Onyx.OnyxSourceHarness(onyx.Url, onyx.Token);
-
-        var fromLinear = (await harness.Source.Search(LinearSourceHarness.Query("keyboard"), TestContext.Current.CancellationToken)).Value.Single();
-        var fromOnyx = (await onyxHarness.Source.Search(Onyx.OnyxSourceHarness.Query("minimum", "pane", "width"), TestContext.Current.CancellationToken)).Value.Single(h => h.Ref.Id.Value == Spl105);
-
-        Assert.Equal(fromOnyx.Ref.Canonical, fromLinear.Ref.Canonical);
-        Assert.Equal(fromOnyx.Aliases, fromLinear.Aliases, StringComparer.Ordinal);
-        Assert.Equal(RecordKind.Issue, OnyxRecordKeys.KindOf(fromOnyx.Ref.Canonical));
     }
 
     public async ValueTask DisposeAsync()

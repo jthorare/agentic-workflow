@@ -1,7 +1,7 @@
 using Aw.Context.Core;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
-using Aw.Context.Core.Linking;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
@@ -21,22 +21,25 @@ internal sealed class ContextSources(
     IService<RefreshDocsRequest, RefreshReport> refresh,
     IService<SyncSourcesRequest, SyncReport> sync,
     IService<EmbedRecordsRequest, EmbedRecordsReport> embed,
-    IIntentStore intents,
     IIndexSync index)
 {
-    private static readonly SourceId _onyx = SourceId.From("onyx");
-
-    // Only the stored sync state of the configured intent source: a source with no successful sync (never run, or only failed) is a gap.
+    // Only stored sync state: an owned index source that never got through its recent window (never ticked, or only failed) is a gap. The index rule is the one that reads a source as 'not-synced' in an answer's searched rows (SearchedSources.Index).
     public async ValueTask<Result<bool>> HasSyncGap(ContextScope scope, CancellationToken cancellationToken)
     {
         var settings = SettingsReader.Read(scope.Settings);
-        if (settings.IsError || settings.Value.Onyx is null)
+        if (settings.IsError)
         {
             return false;
         }
 
-        var state = await intents.State(_onyx, cancellationToken).ConfigureAwait(false);
-        return state.IsError ? state.Error : state.Value.LastSync is null;
+        var progress = await index.Progress(scope, cancellationToken).ConfigureAwait(false);
+        if (progress.IsError)
+        {
+            return progress.Error;
+        }
+
+        var indexGap = progress.Value.Any(static p => !p.Usable);
+        return indexGap;
     }
 
     public ValueTask<Result<SourcesView>> Status(ContextScope scope, CancellationToken cancellationToken) =>
@@ -47,9 +50,13 @@ internal sealed class ContextSources(
 
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) => index.Tick(scope, cancellationToken);
 
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) => index.Tick(scope, source, cancellationToken);
+
     public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken) => index.Decide(scope, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) => index.Progress(scope, cancellationToken);
+
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) => index.ConceptStatus(scope, cancellationToken);
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => index.Counts(source, cancellationToken);
 

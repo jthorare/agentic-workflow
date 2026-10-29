@@ -17,9 +17,9 @@ public sealed class RulesLinkerTests
 
     private static readonly IReadOnlyList<IntentRecord> _known =
     [
-        new(_r103, SourceId.From("onyx"), "2026-07-23T09:00:00+00:00", "Toggle split orientation", ["SPL-103"]),
-        new(_r104, SourceId.From("onyx"), "2026-07-22T10:20:00+00:00", "Restore pane layout when switching tabs", ["SPL-104"]),
-        new(_other, SourceId.From("onyx"), "2026-07-22T10:20:00+00:00", "Another team's issue", ["OTH-7"]),
+        new(_r103, SourceId.From("linear"), "2026-07-23T09:00:00+00:00", "Toggle split orientation", ["SPL-103"]),
+        new(_r104, SourceId.From("linear"), "2026-07-22T10:20:00+00:00", "Restore pane layout when switching tabs", ["SPL-104"]),
+        new(_other, SourceId.From("linear"), "2026-07-22T10:20:00+00:00", "Another team's issue", ["OTH-7"]),
     ];
 
     private static GraphSnapshot Map() => new GraphBuilder()

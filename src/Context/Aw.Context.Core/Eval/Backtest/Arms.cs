@@ -12,11 +12,11 @@ public static class Arms
     public static IReadOnlyList<Arm> Ranker { get; } = [Arm.RankerRrf, Arm.RankerFeatures, Arm.RankerRerank];
 
     /// <summary>The arms that print "not available", in report order.</summary>
-    public static IReadOnlyList<Arm> NotAvailable { get; } = [Arm.Linear, Arm.Onyx, Arm.Code];
+    public static IReadOnlyList<Arm> NotAvailable { get; } = [Arm.Linear, Arm.Code];
 
     /// <summary>The arm's name as '--arms' and the report write it.</summary>
     /// <param name="arm">The arm.</param>
-    /// <returns>'brief', 'docs', 'graph', 'graph+reviewed', 'linear', 'onyx', 'code' or 'all'.</returns>
+    /// <returns>'brief', 'docs', 'graph', 'graph+reviewed', 'linear', 'code' or 'all'.</returns>
     public static string Name(Arm arm) => arm switch
     {
         Arm.Brief => "brief",
@@ -24,7 +24,6 @@ public static class Arms
         Arm.Graph => "graph",
         Arm.GraphReviewed => "graph+reviewed",
         Arm.Linear => "linear",
-        Arm.Onyx => "onyx",
         Arm.Code => "code",
         Arm.All => "all",
         Arm.RankerRrf => "ranker-rrf",
@@ -35,11 +34,10 @@ public static class Arms
 
     /// <summary>The stage that brings a not-yet-available arm.</summary>
     /// <param name="arm">The arm.</param>
-    /// <returns>'S-6', 'S-7B' or 'S-9'; null for an arm that runs.</returns>
+    /// <returns>'S-6' or 'S-9'; null for an arm that runs.</returns>
     public static string? PendingStage(Arm arm) => arm switch
     {
         Arm.Linear => "S-6",
-        Arm.Onyx => "S-7B",
         Arm.Code => "S-9",
         Arm.Brief or Arm.Docs or Arm.Graph or Arm.GraphReviewed or Arm.All or Arm.RankerRrf or Arm.RankerFeatures or Arm.RankerRerank => null,
         _ => throw new ArgumentOutOfRangeException(nameof(arm)),

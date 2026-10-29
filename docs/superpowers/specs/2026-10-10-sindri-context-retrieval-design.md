@@ -1,5 +1,7 @@
 # Sindri context retrieval engine: the product graph and its retrieval (design)
 
+> **Superseded by 2026-10-27** for the Onyx source (`2026-10-27-sindri-owned-index-design.md`): Sindri's own record index replaces Onyx. Kept as history.
+
 Status: decisions settled in conversation with the owner, question by question, 2026-10-10; revised the same day
 after the `/autoplan` review (§14); revised 2026-10-11 in the Sindri app epic (`docs/sindri/README.md`, X1–X18): the
 shared MCP endpoint, `GET` queries and route classes, the error-doc location, the shared heavy-job lock, the `StepInput`

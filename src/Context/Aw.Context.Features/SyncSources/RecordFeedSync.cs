@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Records;
@@ -20,7 +19,6 @@ namespace Aw.Context.Features.SyncSources;
 internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore store, TimeProvider clock)
 {
     private readonly SyncLocks _locks = new();
-    private readonly ConcurrentDictionary<string, (DateTimeOffset At, string? Code)> _outcomes = new(StringComparer.Ordinal);
 
     /// <summary>The record store the feeds commit into, for the decision pass that reads the stored records.</summary>
     public IRecordStore OwnedRecords() => store;
@@ -30,26 +28,75 @@ internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore stor
         [.. feeds.For(settings, repos, scrubbers).OrderBy(f => f.Source.Value, StringComparer.Ordinal)];
 
     /// <summary>
-    /// One tick of a feed; the row carries a feed failure as its code. The source's lock covers only the pull (<see cref="RecordSyncRun"/>); its end and code are kept for <see cref="LastOutcome"/>
+    /// One tick of a feed; the row carries a feed failure as its code. The source's lock covers only the pull (<see cref="RecordSyncRun"/>); its end and code are written to the record store (<see cref="Note(SourceId, string?, string?, CancellationToken)"/>)
     /// right after it. <paramref name="afterTick"/>, when given, runs on the tick's row once the lock is released (the decision pass reads the store only) and returns the row to report.
     /// </summary>
     public async ValueTask<Result<SourceSync>> Run(RecordFeed feed, (Scrubbers Scrubbers, ContextSettings Settings) context, Func<SourceSync, ValueTask<SourceSync>>? afterTick, CancellationToken cancellationToken)
     {
-        var ticked = await Locked(feed.Source, () => new RecordSyncRun(feed, store, (context.Scrubbers, context.Settings.Index), clock).Execute(cancellationToken)).ConfigureAwait(false);
+        var run = new RecordSyncRun(feed, store, (context.Scrubbers, context.Settings.Index), clock);
+        var ticked = await Locked(feed.Source, () => run.Execute(cancellationToken)).ConfigureAwait(false);
         if (ticked.IsError)
         {
             return ticked;
         }
 
-        Note(feed.Source, ticked.Value.Code);
+        await Note(feed.Source, ticked.Value.Code, ErrorLine(run.ErrorMessage, context.Scrubbers), cancellationToken).ConfigureAwait(false);
         return afterTick is null ? ticked : await afterTick(ticked.Value).ConfigureAwait(false);
     }
 
-    /// <summary>Keeps the end and code of a tick of the source's feed for <see cref="LastOutcome"/>.</summary>
-    public void Note(SourceId source, string? code) => _outcomes[source.Value] = (clock.GetUtcNow(), code);
+    /// <summary>
+    /// Writes the end and code of a tick of the source's feed to the record store, so a process that did not run the tick (`sindri doctor`) reads the same. A write that fails is dropped: the tick's own row
+    /// already says how it went, and the next tick writes again.
+    /// </summary>
+    public ValueTask Note(SourceId source, string? code, CancellationToken cancellationToken) => Note(source, code, errorText: null, cancellationToken);
 
-    /// <summary>When this process last finished a tick of the source's feed and the code it ended with; null when it has not.</summary>
-    public (DateTimeOffset At, string? Code)? LastOutcome(SourceId source) => _outcomes.TryGetValue(source.Value, out var outcome) ? outcome : null;
+    /// <summary>
+    /// As <see cref="Note(SourceId, string?, CancellationToken)"/>, and the tick's backoff goes with it (<see cref="IRecordStore.RecordAttempt"/>): a code other than the time cap's is a failure, and
+    /// <paramref name="errorText"/> is the scrubbed line saying what failed. A capped tick committed its pages, so it counts as a success.
+    /// </summary>
+    public async ValueTask Note(SourceId source, string? code, string? errorText, CancellationToken cancellationToken)
+    {
+        var at = clock.GetUtcNow();
+        _ = await store.RecordOutcome(source, new SyncOutcome(at, code), cancellationToken).ConfigureAwait(false);
+        var failed = code is not null && code != ContextErrors.SyncCapped.Code;
+        _ = await store.RecordAttempt(source, new SyncAttempt(at, failed, failed ? errorText ?? code : null), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>The persisted backoff of the source's feed, in any process; none when the store can't be read.</summary>
+    public async ValueTask<SourceBackoffState> Backoff(SourceId source, CancellationToken cancellationToken)
+    {
+        var read = await store.Backoff(source, cancellationToken).ConfigureAwait(false);
+        return read.IsError ? SourceBackoffState.None : read.Value;
+    }
+
+    /// <summary>The time now, on the clock the ticks read.</summary>
+    public DateTimeOffset Now() => clock.GetUtcNow();
+
+    /// <summary>True while the source's lock is held, by a tick or a purge.</summary>
+    public bool IsRunning(SourceId source) => _locks.IsHeld(source.Value);
+
+    /// <summary>The first line of an error message through the egress scrubber, cut to <see cref="ErrorLineLimit"/> characters; null for no message.</summary>
+    internal static string? ErrorLine(string? message, Scrubbers scrubbers)
+    {
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return null;
+        }
+
+        var scrubbed = scrubbers.Egress.Scrub(message.Trim());
+        // why: a blocked field must not leave the process in any form, so the stored line only says it was withheld
+        var line = scrubbed.Blocked ? "(withheld: it matched a blocking rule)" : scrubbed.Text.Split('\n', 2)[0].Trim();
+        return line.Length <= ErrorLineLimit ? line : line[..ErrorLineLimit];
+    }
+
+    private const int ErrorLineLimit = 300;
+
+    /// <summary>When the source's feed last finished a tick, in any process, and the code it ended with; null when it has not (or the store can't be read).</summary>
+    public async ValueTask<SyncOutcome?> LastOutcome(SourceId source, CancellationToken cancellationToken)
+    {
+        var read = await store.LastOutcome(source, cancellationToken).ConfigureAwait(false);
+        return read.IsError ? null : read.Value;
+    }
 
     /// <summary>Runs a store change (a purge) while holding the source's lock, so it cannot race a tick; a tick running now is SND-CONTEXT-056 at once, never a wait.</summary>
     public async ValueTask<Result<T>> Exclusive<T>(SourceId id, Func<ValueTask<Result<T>>> run)

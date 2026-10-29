@@ -33,7 +33,7 @@ shared main checkout by derivation. That checkout must have a clean tree and a H
 | the pinned temporal binary | the workflow engine | `scripts/binaries-lock.sh fetch temporal` (`scripts/install-cs.sh` also fetches it) |
 
 If you don't want a layer yet, pass `--no-embeddings` or `--no-graph`: the profile turns that layer off and the check is
-skipped. Onyx is optional and not needed here; `sindri onyx status` tells you whether the box could run it.
+skipped.
 
 `./setup.sh` (or `scripts/install-cs.sh`) publishes the C# build into `$AW_STATE_DIR/bin/cs/` when its source changed, which can take several minutes. It also installs the pinned .NET SDK and links `sindri` into
 `~/.local/bin` when those are missing. Set `SINDRI` to use a binary you built yourself.

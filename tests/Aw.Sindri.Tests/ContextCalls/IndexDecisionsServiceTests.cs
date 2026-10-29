@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// <summary>The 'index-decisions' service (#1597) over a fake <see cref="Context.Core.Sync.IIndexSync"/> behind the engine facade.</summary>
 public sealed class IndexDecisionsServiceTests
 {
-    private const string OnyxSection = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"on_live-key-0123","version":"v4.9.0"}}}""";
+    private const string LinearTeams = """{"sources":{"linear":{"teams":["SPL"]}}}""";
     private static readonly DateTimeOffset _now = new(2026, 10, 27, 12, 0, 0, TimeSpan.Zero);
     private readonly SliceHarness _h = new();
     private readonly FakeIndexSync _index = new();
@@ -23,7 +23,7 @@ public sealed class IndexDecisionsServiceTests
     {
         _h.Clock.SetUtcNow(_now);
         var loaded = SliceHarness.Profile("5m");
-        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(OnyxSection).RootElement.Clone() : null } };
+        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(LinearTeams).RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
         var grant = await _h.HoldLease();
         using var caller = _h.Callers.EnterService("index-decisions");
@@ -60,6 +60,28 @@ public sealed class IndexDecisionsServiceTests
         var result = await Run(context: true);
 
         Assert.True(result.IsSuccess);
+        Assert.True(result.Value.Idle);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Run_adds_the_concept_synthesis_to_the_summary()
+    {
+        _index.Decided = [Row("github", 4, 2)];
+        _index.Synthesized = new ConceptSynthesisReport(Groups: 5, Unchanged: 3, Labeled: 2, Queued: 0, Pending: 7, Concepts: 5, MultiSource: 4, Covered: 40, Embedded: 50, [], Tokens: 900, Code: null);
+
+        var result = await Run(context: true);
+
+        Assert.False(result.Value.Idle);
+        Assert.Equal("ok: github 4 read, 2 decisions, concepts 5 (4 across 2+ sources), 2 named, 0 queued, 40/50 records covered, 7 not embedded yet", result.Value.Summary);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Run_is_quiet_when_synthesis_found_only_unchanged_concepts()
+    {
+        _index.Synthesized = new ConceptSynthesisReport(Groups: 5, Unchanged: 5, Labeled: 0, Queued: 0, Pending: 0, Concepts: 5, MultiSource: 4, Covered: 50, Embedded: 50, [], Tokens: 0, Code: null);
+
+        var result = await Run(context: true);
+
         Assert.True(result.Value.Idle);
     }
 

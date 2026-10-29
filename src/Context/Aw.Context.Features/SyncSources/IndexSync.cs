@@ -1,4 +1,5 @@
 using Aw.Context.Core;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
@@ -12,14 +13,16 @@ namespace Aw.Context.Features.SyncSources;
 
 /// <summary>
 /// <see cref="IIndexSync"/> over the record feeds (owned-index spec §5.5, §5.8): the same feeds and the same per-source tick as <see cref="SyncSourcesService"/>, without the
-/// intent walk or the docs refresh. The feeds tick concurrently, at most <see cref="MaxConcurrentFeeds"/> at once, each under its own time cap (<see cref="FeedCap"/>): a feed that hits it is a capped row, never a failure, and the next tick resumes it. A source that is down is its row's code; the last tick's end and code are kept in memory, so they read null until the first tick after a start.
+/// intent walk or the docs refresh. The feeds tick concurrently, at most <see cref="MaxConcurrentFeeds"/> at once, each under its own time cap (<see cref="FeedCap"/>): a feed that hits it is a capped row, never a failure, and the next tick resumes it. A source that is down is its row's code; the last tick's end and code are kept in the record store (`source_cursor`, repo 'records'), so every process reads the same and they are null only until a source's first tick.
 /// </summary>
 /// <param name="feeds">The feeds and their lock and last outcomes.</param>
 /// <param name="store">The record store the positions are read from.</param>
 /// <param name="scrubberFactory">Builds the call's scrubbers.</param>
-/// /// <param name="decisions">The decision pass <see cref="Decide"/> runs; null: none.</param>
+/// <param name="decisions">The decision pass <see cref="Decide"/> runs; null: none.</param>
 /// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run once the source's lock is released.</param>
-internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null) : IIndexSync
+/// <param name="synthesis">The concept synthesis <see cref="Decide"/> runs after the per-record pass; null: none.</param>
+/// <param name="concepts">The synthesized concepts <see cref="ConceptStatus"/> counts; null: none are kept.</param>
+internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null, ConceptSynthesisRun? synthesis = null, IConceptSynthesisStore? concepts = null) : IIndexSync
 {
     /// <summary>The longest one feed's tick runs; the index tick comes every 5 minutes, and this sits above one normal Linear or Slack page with its rate-limit sleeps.</summary>
     internal static readonly TimeSpan FeedCap = TimeSpan.FromMinutes(4);
@@ -37,11 +40,42 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
 
         var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
         using var slots = new SemaphoreSlim(MaxConcurrentFeeds);
-        var rows = await Task.WhenAll(resolved.Value.Feeds.Select(feed => TickOne(feed, context, slots, cancellationToken))).ConfigureAwait(false);
+        var rows = await Task.WhenAll(resolved.Value.Feeds.Select(feed => TickOne(feed, context, slots, honorBackoff: true, cancellationToken))).ConfigureAwait(false);
         return new SyncReport(rows);
     }
 
+    public async ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken)
+    {
+        var resolved = Resolve(scope);
+        if (resolved.IsError)
+        {
+            return resolved.Error;
+        }
+
+        var feed = resolved.Value.Feeds.FirstOrDefault(f => f.Source == source);
+        if (feed is null)
+        {
+            var known = resolved.Value.Feeds.Select(f => f.Source.Value).ToList();
+            return ContextErrors.SyncSourceUnknown.With($"'{source.Value}' isn't a record source this profile syncs ({(known.Count == 0 ? "none" : string.Join(", ", known))}); fix: sindri index status");
+        }
+
+        var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
+        using var slots = new SemaphoreSlim(1);
+        return new SyncReport([await TickOne(feed, context, slots, honorBackoff: false, cancellationToken).ConfigureAwait(false)]);
+    }
+
+    /// <summary>The record store's `source_cursor` row that keeps when the decision run last ended and its code (beside the feeds' rows, which the sync driver owns); it is no feed, so no tick or status row reads it as one.</summary>
+    internal static readonly SourceId DecisionsRun = SourceId.From("index-decisions");
+
     public async ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var report = await DecideAll(scope, cancellationToken).ConfigureAwait(false);
+        // why: a write that fails is dropped, as for a feed's outcome; the next run writes again
+        _ = await store.RecordOutcome(DecisionsRun, new SyncOutcome(feeds.Now(), report.IsError ? report.Error.Code : report.Value.Sources.Select(r => r.Code).FirstOrDefault(c => c is not null)), cancellationToken).ConfigureAwait(false);
+        return report;
+    }
+
+    private async ValueTask<Result<DecisionReport>> DecideAll(ContextScope scope, CancellationToken cancellationToken)
     {
         var resolved = Resolve(scope);
         if (resolved.IsError)
@@ -50,30 +84,45 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         }
 
         var rows = new List<SourceDecisions>();
-        if (decisions is null || resolved.Value.Feeds.Count == 0)
+        if (resolved.Value.Feeds.Count == 0)
         {
             return new DecisionReport(rows);
         }
 
-        var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
-        var after = await decisions.ForTick(scope, context, resolved.Value.Repos, cancellationToken).ConfigureAwait(false);
-        foreach (var feed in resolved.Value.Feeds)
+        if (decisions is not null)
         {
-            if (after(feed) is not { } step)
+            var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
+            var after = await decisions.For(scope, context, reportNoMap: true, cancellationToken).ConfigureAwait(false);
+            foreach (var feed in resolved.Value.Feeds)
             {
-                continue;
-            }
+                if (after(feed) is not { } step)
+                {
+                    continue;
+                }
 
-            // why: no source lock; the pass reads the stored records and writes the intent layer, so a pull of the same source goes on beside it
-            var row = await step(new SourceSync(feed.Source, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Code: null)).ConfigureAwait(false);
-            rows.Add(new SourceDecisions(feed.Source, row.Linked + row.Unlinked, row.Decisions, row.Code));
+                // why: no source lock; the pass reads the stored records and writes the intent layer, so a pull of the same source goes on beside it
+                var row = await step(new SourceSync(feed.Source, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, Code: null)).ConfigureAwait(false);
+                rows.Add(new SourceDecisions(feed.Source, row.Linked + row.Unlinked, row.Decisions, row.Code));
+            }
         }
 
-        return new DecisionReport(rows);
+        // why: after the per-record pass, which it leaves alone; it sends record text to a model, so it needs labeling on as well as its own switch
+        var settings = resolved.Value.Settings;
+        var synthesized = synthesis is null || !settings.ConceptSynthesis.Enabled || !settings.Labeling.Enabled
+            ? null
+            : await synthesis.Run(settings.ConceptSynthesis, settings.Labeling, settings.ExtraPatterns, cancellationToken).ConfigureAwait(false);
+        return new DecisionReport(rows, synthesized);
     }
 
-    private async Task<SourceSync> TickOne(RecordFeed feed, (ContextSettings Settings, Scrubbers Scrubbers) context, SemaphoreSlim slots, CancellationToken cancellationToken)
+    private async Task<SourceSync> TickOne(RecordFeed feed, (ContextSettings Settings, Scrubbers Scrubbers) context, SemaphoreSlim slots, bool honorBackoff, CancellationToken cancellationToken)
     {
+        // why: the scheduled tick leaves a failing source alone until its next try; a named sync is the owner asking for it now, so it never waits
+        if (honorBackoff && await feeds.Backoff(feed.Source, cancellationToken).ConfigureAwait(false) is { Failures: > 0, NextTry: { } nextTry } && feeds.Now() < nextTry)
+        {
+            var last = await feeds.LastOutcome(feed.Source, cancellationToken).ConfigureAwait(false);
+            return Failed(feed.Source, last?.Code ?? ContextErrors.SourceUnavailable.Code);
+        }
+
         await slots.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -85,7 +134,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             // why: its own cap fired; the pages committed so far stay with the stored cursor, so the next tick resumes
-            feeds.Note(feed.Source, ContextErrors.SyncCapped.Code);
+            await feeds.Note(feed.Source, ContextErrors.SyncCapped.Code, cancellationToken).ConfigureAwait(false);
             return Failed(feed.Source, ContextErrors.SyncCapped.Code);
         }
         finally
@@ -113,24 +162,85 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
                 return position.Error;
             }
 
-            // why: only the Linear issue feed is reset to Recent with rows already stored (migration 0020), so only it is checked for a re-read; any other source in Recent is on its first read
-            int? stored = null;
-            if (feed.Source == LinearSourceIds.Issues && position.Value.Phase is SyncPhase.Recent)
+            var row = await ProgressRow(feed.Source, position.Value.Phase, cancellationToken).ConfigureAwait(false);
+            if (row.IsError)
             {
-                var counted = await store.Count(feed.Source, cancellationToken).ConfigureAwait(false);
-                if (counted.IsError)
-                {
-                    return counted.Error;
-                }
-
-                stored = counted.Value.Records;
+                return row.Error;
             }
 
-            var last = feeds.LastOutcome(feed.Source);
-            rows.Add(SourceProgress.From(feed.Source, position.Value.Phase, last?.At, last?.Code, stored));
+            rows.Add(row.Value);
         }
 
         return rows;
+    }
+
+    private async ValueTask<Result<SourceProgress>> ProgressRow(SourceId source, SyncPhase? phase, CancellationToken cancellationToken)
+    {
+        var counted = await store.Count(source, cancellationToken).ConfigureAwait(false);
+        if (counted.IsError)
+        {
+            return counted.Error;
+        }
+
+        // why: only the Linear issue feed is reset to Recent with rows already stored (migration 0020), so only it is checked for a re-read; any other source in Recent is on its first read
+        int? stored = source == LinearSourceIds.Issues && phase is SyncPhase.Recent ? counted.Value.Records : null;
+        var last = await feeds.LastOutcome(source, cancellationToken).ConfigureAwait(false);
+        var backoff = await feeds.Backoff(source, cancellationToken).ConfigureAwait(false);
+        return SourceProgress.From(source, phase, last?.At, last?.Code, stored) with
+        {
+            Pull = SourceBackoff.Pull(backoff, feeds.IsRunning(source), feeds.Now()),
+            Records = counted.Value.Records,
+            LastCommit = backoff.LastCommit,
+            LastError = last?.Code is { } code && code != ContextErrors.SyncCapped.Code ? code : null,
+            LastErrorText = backoff.LastErrorText,
+            Failures = backoff.Failures,
+            NextTry = backoff.NextTry,
+        };
+    }
+
+    public async ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var standing = await ConceptStanding(scope, cancellationToken).ConfigureAwait(false);
+        if (standing.IsError)
+        {
+            return standing;
+        }
+
+        var last = await store.LastOutcome(DecisionsRun, cancellationToken).ConfigureAwait(false);
+        return last.IsError || last.Value is not { } run ? standing : standing.Value with { LastRun = run.At, LastCode = run.Code };
+    }
+
+    private async ValueTask<Result<ConceptStatus>> ConceptStanding(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var settings = SettingsReader.Read(scope.Settings);
+        if (settings.IsError)
+        {
+            return settings.Error;
+        }
+
+        var enabled = settings.Value.ConceptSynthesis.Enabled && settings.Value.Labeling.Enabled;
+        if (concepts is null)
+        {
+            return Core.ConceptSynthesis.ConceptStatus.From(enabled, [], watermark: 0, live: 0, embedded: 0);
+        }
+
+        // why: one count query each side, so a status read never pages the record store
+        var stored = await concepts.All(cancellationToken).ConfigureAwait(false);
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        var watermark = await concepts.Watermark(cancellationToken).ConfigureAwait(false);
+        if (watermark.IsError)
+        {
+            return watermark.Error;
+        }
+
+        var live = await store.LiveCounts(cancellationToken).ConfigureAwait(false);
+        return live.IsError
+            ? live.Error
+            : Core.ConceptSynthesis.ConceptStatus.From(enabled, stored.Value, watermark.Value, live.Value.Live, live.Value.Embedded);
     }
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => store.Count(source, cancellationToken);

@@ -29,16 +29,31 @@ internal static class WholeMapBandDrill
     private static HashSet<string> Inside(WholeMapGeometry geometry, WholeBand band) =>
         [.. geometry.Nodes.Where(n => NodeBands.Of(n.Kind) == band).Select(n => n.Key)];
 
-    // The world stays whole, so lanes and coordinates do not move; each band that stays counts what is drawn in it, and the drilled band stays even when it is empty.
+    // The bands stay where they are; the kept columns close up side by side, so a drilled band's few items are not spread across the whole map (#1645). Each band that stays counts what is drawn in it, and the drilled band stays even when it is empty.
     private static WholeMapGeometry Cut(WholeMapGeometry geometry, WholeBand band, List<PlacedEdge> edges, HashSet<string> keep)
     {
         var nodes = geometry.Nodes.Where(n => keep.Contains(n.Key)).ToList();
         var areas = nodes.Select(n => n.AreaIndex).ToHashSet();
+        var kept = geometry.Columns.Where(c => areas.Contains(c.AreaIndex)).OrderBy(c => c.Rect.X).ToList();
+        var shift = new Dictionary<int, double>();
+        var columns = new List<AreaColumn>(kept.Count);
+        foreach (var (column, k) in kept.Select((c, k) => (c, k)))
+        {
+            var dx = geometry.Columns[0].Rect.X + (k * WholeMapLayout.ColumnPitch) - column.Rect.X;
+            shift[column.AreaIndex] = dx;
+            columns.Add(column with { Rect = column.Rect with { X = column.Rect.X + dx } });
+        }
+
+        double Dx(int area) => shift.GetValueOrDefault(area);
+        var moved = nodes.Select(n => n with { Rect = n.Rect with { X = n.Rect.X + Dx(n.AreaIndex) } }).ToList();
+        var areaOf = nodes.ToDictionary(n => n.Key, n => n.AreaIndex, StringComparer.Ordinal);
+        var shifted = edges.Select(e => e with { X1 = e.X1 + Dx(areaOf[e.From]), X2 = e.X2 + Dx(areaOf[e.To]) }).ToList();
+        var width = (2 * WholeMapLayout.Margin) + (Math.Max(1, kept.Count) * WholeMapLayout.ColumnPitch) - WholeMapLayout.ColumnGutter;
         var bands = geometry.Bands
             .Select(b => b with { Meta = Meta(nodes, b.Band) })
             .Where(b => b.Band == band || nodes.Exists(n => NodeBands.Of(n.Kind) == b.Band))
             .ToList();
-        return geometry with { Nodes = nodes, Tiles = [], Edges = edges, AreaEdges = [], Columns = [.. geometry.Columns.Where(c => areas.Contains(c.AreaIndex))], Bands = bands };
+        return geometry with { Nodes = moved, Tiles = [], Edges = shifted, AreaEdges = [], Columns = columns, Bands = bands, World = geometry.World with { Width = width } };
     }
 
     private static string Meta(List<PlacedNode> nodes, WholeBand band) =>

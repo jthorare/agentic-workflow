@@ -1,0 +1,10 @@
+{
+  "blockers": [],
+  "readyToResume": [],
+  "ready": true,
+  "checkedAt": "2026-01-01T00:00:00.0000000Z",
+  "resume": [],
+  "notChecked": [
+    "The hooks weren't checked: no agent is picked for Steps."
+  ]
+}

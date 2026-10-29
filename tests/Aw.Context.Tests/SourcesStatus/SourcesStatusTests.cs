@@ -1,9 +1,11 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Fixtures;
+using Aw.Context.Testing.Records;
 using Aw.Context.Tests.QueryContext;
 using Microsoft.Extensions.Time.Testing;
 
@@ -63,11 +65,11 @@ public sealed class SourcesStatusTests
     [Fact, Trait("Lane", "unit")]
     public async Task Live_sources_report_their_probe_and_sessions_are_gated()
     {
-        var onyx = new FakeContextSource(new SourceDescriptor(SourceId.From("onyx"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false), [])
+        var linear = new FakeContextSource(new SourceDescriptor(SourceId.From("linear"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false), [])
         {
             Failure = ContextErrors.SourceUnavailable.With("down"),
         };
-        var engine = Engines.Over(new FixedSourceCatalog(onyx));
+        var engine = Engines.Over(new FixedSourceCatalog(linear));
 
         var view = await engine.Sources(Engines.Human(), CancellationToken.None);
         var session = await engine.Sources(Engines.Session("split-panes"), CancellationToken.None);
@@ -76,38 +78,59 @@ public sealed class SourcesStatusTests
         Assert.True(session.IsSuccess);
     }
 
-    // Health is not content: doctor already shows a session the onyx row and points it at `sources status` as the fix, so the status lists it too.
+    // Health is not content: doctor already shows a session the linear row and points it at `sources status` as the fix, so the status lists it too.
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_sees_the_onyx_row_with_its_probe()
+    public async Task A_session_sees_the_linear_row_with_its_probe()
     {
-        var (session, _) = await OnyxRows();
+        var (session, _) = await LinearRows();
 
         Assert.Equal((SourceState.Unavailable, "SND-CONTEXT-010"), (session.State, session.Code));
     }
 
     // A session searches the intent sources like a human (owner q93, 2026-10-23), so its row carries the sync counts too.
     [Fact, Trait("Lane", "unit")]
-    public async Task A_sessions_onyx_row_says_nothing_of_a_refusal_and_carries_the_sync_counts()
+    public async Task A_sessions_linear_row_says_nothing_of_a_refusal_and_carries_the_sync_counts()
     {
-        var (session, human) = await OnyxRows();
+        var (session, human) = await LinearRows();
 
         Assert.DoesNotContain("sessions don't search it", session.Detail, StringComparison.Ordinal);
         Assert.NotNull(session.Sync);
         Assert.NotNull(human.Sync);
     }
 
-    private static async Task<(SourceStatusRow Session, SourceStatusRow Human)> OnyxRows()
+    private static async Task<(SourceStatusRow Session, SourceStatusRow Human)> LinearRows()
     {
         const string on = """{"sessions":{"enabled":true}}""";
-        var onyx = new FakeContextSource(new SourceDescriptor(SourceId.From("onyx"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false), [])
+        var linear = new FakeContextSource(new SourceDescriptor(SourceId.From("linear"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false), [])
         {
             Failure = ContextErrors.SourceUnavailable.With("down"),
         };
-        var engine = Engines.Over(new FixedSourceCatalog(onyx));
+        var engine = Engines.Over(new FixedSourceCatalog(linear));
 
         var session = await engine.Sources(Engines.Session("split-panes", on), CancellationToken.None);
         var human = await engine.Sources(Engines.Human(on), CancellationToken.None);
 
-        return (Assert.Single(session.Value.Sources, static r => r.Source.Value == "onyx"), Assert.Single(human.Value.Sources, static r => r.Source.Value == "onyx"));
+        return (Assert.Single(session.Value.Sources, static r => r.Source.Value == "linear"), Assert.Single(human.Value.Sources, static r => r.Source.Value == "linear"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_feed_that_failed_once_and_then_synced_is_ok_again()
+    {
+        var records = new FakeRecordStore();
+        var linear = new FakeContextSource(new SourceDescriptor(RecordSamples.Linear, SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false), []);
+        var engine = Engines.Over(new FixedSourceCatalog(linear), records: records);
+        var at = DateTimeOffset.Parse("2026-10-12T09:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
+
+        async Task<SourceSyncStatus> Sync() => (await engine.Sources(Engines.Human(), CancellationToken.None)).Value.Sources.Single(r => r.Source == RecordSamples.Linear).Sync!;
+
+        var never = await Sync();
+        _ = await records.RecordOutcome(RecordSamples.Linear, new SyncOutcome(at, ContextErrors.SourceUnavailable.Code), CancellationToken.None);
+        var failed = await Sync();
+        _ = await records.RecordOutcome(RecordSamples.Linear, new SyncOutcome(at.AddMinutes(15), Code: null), CancellationToken.None);
+        var recovered = await Sync();
+
+        Assert.Equal((SourceState.Degraded, null), (never.State, never.Code));
+        Assert.Equal((SourceState.Unavailable, ContextErrors.SourceUnavailable.Code), (failed.State, failed.Code));
+        Assert.Equal((SourceState.Ok, null, at.AddMinutes(15)), (recovered.State, recovered.Code, recovered.LastSync));   // the failure is not stuck: the next good tick clears it
     }
 }

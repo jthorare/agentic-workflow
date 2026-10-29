@@ -1,3 +1,4 @@
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -18,6 +19,13 @@ public interface IIndexSync
     /// <returns>One row per feed, in source order (none without a feed), or the error the scope or settings give.</returns>
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken);
 
+    /// <summary>Runs one tick of the named source's feed only, under its lock and cap; one row. A source that is not a record feed of the profile is SND-CONTEXT-058 (<see cref="ContextErrors.SyncSourceUnknown"/>).</summary>
+    /// <param name="scope">The profile's settings and repos, and the caller.</param>
+    /// <param name="source">The source whose feed ticks.</param>
+    /// <param name="cancellationToken">Cancels the run.</param>
+    /// <returns>That one feed's row, or the error the scope or settings give, or SND-CONTEXT-058.</returns>
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken);
+
     /// <summary>
     /// Runs the decision pass over the records already stored for each feed's source, one source after the other and without the source's lock (it reads the store only, so a tick of the
     /// same source goes on). A source an intent walk owns, or no map yet, gives no row.
@@ -32,6 +40,12 @@ public interface IIndexSync
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>One row per feed, in source order, or the error the scope, settings or store give.</returns>
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>Where concept synthesis stands, read live from the concept and record stores at call time (nothing is kept between calls).</summary>
+    /// <param name="scope">The profile's settings and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The status (Enabled false when synthesis is off; its counts are still read), or the error the scope, settings or a store give.</returns>
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>Counts what one source holds in the record store, for the purge's preview. Any source id: a source the profile dropped still has rows to purge.</summary>
     /// <param name="source">The source.</param>

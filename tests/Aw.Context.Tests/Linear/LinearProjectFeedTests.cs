@@ -11,7 +11,6 @@ using Aw.Context.Infrastructure.Sources;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Records;
 using Aw.Context.Tests.Map;
-using Aw.Context.Tests.Onyx;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.Linear;
@@ -96,6 +95,25 @@ public sealed class LinearProjectFeedTests
         Assert.Contains("2026-11-15", item.Text, StringComparison.Ordinal);
         Assert.Contains("atRisk", item.Text, StringComparison.Ordinal);
         Assert.Equal("linear:SPL", item.Audience?.Value);
+    }
+
+    [Fact]
+    public async Task The_description_is_carried_on_its_own_and_stays_in_the_text()
+    {
+        var item = await One(static _ => { });
+
+        Assert.Equal("About p1", item.Description);
+        Assert.Contains("About p1", item.Text, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("  \n ")]
+    public async Task A_blank_description_is_null(string blank)
+    {
+        var item = await One(n => n["description"] = blank);
+
+        Assert.Null(item.Description);
     }
 
     [Fact]
@@ -200,7 +218,7 @@ public sealed class LinearProjectFeedTests
         var scrubbers = new FakeScrubberFactory().For([]).Value;
         var context = (new ContextSettings(), scrubbers);
 
-        var after = await decisions.For(MapWorld.Human, context, [], TestContext.Current.CancellationToken);
+        var after = await decisions.For(MapWorld.Human, context, TestContext.Current.CancellationToken);
 
         Assert.Null(after(new FakeRecordFeed(LinearSourceIds.Projects, [])));
         Assert.NotNull(after(new FakeRecordFeed(LinearSourceIds.Issues, [])));

@@ -25,7 +25,7 @@ public sealed class EvidenceBlockRuntimesTests
     [InlineData("workflow.evidence.yaml", "evidence-none", "step.evidence.none")]
     public void The_Step_opens_a_block_run_not_a_desk_task(string file, string state, string step)
     {
-        using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, file);
 
         var entered = StateEntry.Enter(EngineFixture.At(recipe, state), recipe, state, context);
@@ -37,7 +37,7 @@ public sealed class EvidenceBlockRuntimesTests
     [Fact]
     public async Task The_combined_summary_ends_evidence_all_resolved()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, "workflow.evidence-all.yaml");
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "combine"), recipe, "combine", context);
 
@@ -49,7 +49,7 @@ public sealed class EvidenceBlockRuntimesTests
     [Fact]
     public async Task A_phase_with_only_api_evidence_reaches_done_through_evidence_all()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, "workflow.evidence-all.yaml");
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "combine"), recipe, "combine", context);
 
@@ -66,7 +66,7 @@ public sealed class EvidenceBlockRuntimesTests
     [Fact]
     public async Task No_evidence_needed_ends_the_route_resolved()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, "workflow.evidence.yaml");
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "evidence-none"), recipe, "evidence-none", context);
 

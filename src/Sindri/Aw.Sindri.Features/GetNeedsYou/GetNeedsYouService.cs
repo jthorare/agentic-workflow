@@ -16,7 +16,7 @@ namespace Aw.Sindri.Features.GetNeedsYou;
 /// <param name="views">The 'needs_you' and 'items' views.</param>
 /// <param name="status">How fresh the views are.</param>
 /// <param name="callers">The caller; a read needs one.</param>
-/// <param name="live">The rows read at request time, not from the view (the managed Onyx's notice and the setup rows).</param>
+/// <param name="live">The rows read at request time, not from the view (the setup rows).</param>
 /// <param name="clock">The time the timeouts are measured at.</param>
 /// <param name="joins">Adds the stop and the timeout to the desk and park rows.</param>
 internal sealed class GetNeedsYouService(IViewReader views, IProjectorStatus status, ICallerContextAccessor callers, NeedsYouLiveRows live, TimeProvider clock, NeedsYouJoins joins) : IService<GetNeedsYouRequest, GetNeedsYouResponse>

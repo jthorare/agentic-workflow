@@ -3,7 +3,8 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Results;
-using Aw.Context.Core.Sources;
+using Aw.Context.Core.Sync;
+using Aw.Context.Testing.Records;
 using Aw.Context.Tests.Map;
 using Aw.Context.Tests.ReviewMap;
 
@@ -125,60 +126,42 @@ public sealed class LensesAtVersionTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Searched_says_the_map_is_ok_an_unconfigured_onyx_has_no_row_and_the_code_index_unavailable()
+    public async Task Searched_says_the_map_is_ok_an_unconfigured_linear_has_no_row_and_the_code_index_unavailable()
     {
         _ = await _world.ImportYaml(MapWorld.TabsMap);
 
         var view = (await Set([Manager, Groups])).Value;
 
         Assert.Equal(["map", "code-index"], [.. view.Searched.Sources.Select(s => s.Id.Value)], StringComparer.Ordinal);
-        Assert.DoesNotContain(view.Searched.Sources, s => s.Id.Value == "onyx");
+        Assert.DoesNotContain(view.Searched.Sources, s => s.Id.Value == "linear");
         var index = Assert.Single(view.Searched.Sources, s => s.Id.Value == "code-index");
         Assert.Equal((SearchedState.Unavailable, "index-not-built"), (index.State, index.Reason));
         Assert.Equal(SearchedState.Ok, Assert.Single(view.Searched.Sources, s => s.Id.Value == "map").State);
     }
 
-    private static ContextScope WithOnyx() => MapWorld.Human with
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_progress_read_that_fails_leaves_out_the_index_rows_and_the_lenses_still_answer()
     {
-        Settings = System.Text.Json.JsonDocument.Parse("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:ONYX_KEY","version":"v4.9.0"}}}""").RootElement.Clone(),
-    };
+        var index = new FakeIndexSync { ProgressFailure = new Kernel.Error("SND-CONTEXT-099", Kernel.ErrorKind.Unavailable, "state store down") };
+        using var world = new MapWorld(indexSync: index);
+        _ = await world.ImportYaml(MapWorld.TabsMap);
 
-    private async Task<SearchedSource> OnyxRow()
-    {
-        var view = (await Set([Manager], WithOnyx())).Value;
-        return Assert.Single(view.Searched.Sources, s => s.Id.Value == "onyx");
+        var view = (await world.Engine.LensesOf([Manager], MapRead.Current, depth: null, MapWorld.Human, MapWorld.None)).Value;
+
+        Assert.Equal(["map", "code-index"], [.. view.Searched.Sources.Select(s => s.Id.Value)], StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_configured_onyx_whose_last_sync_failed_reads_degraded_with_the_code()
+    public async Task An_index_source_that_never_synced_reads_unavailable_not_synced()
     {
-        _ = await _world.ImportYaml(MapWorld.TabsMap);
-        _ = await _world.Intents.RecordFailure(SourceId.From("onyx"), "SND-CONTEXT-010", CancellationToken.None);
+        var index = new FakeIndexSync { Standing = [SourceProgress.From(RecordSamples.Linear, phase: null, lastSync: null, lastCode: null)] };
+        using var world = new MapWorld(indexSync: index);
+        _ = await world.ImportYaml(MapWorld.TabsMap);
 
-        var onyx = await OnyxRow();
+        var view = (await world.Engine.LensesOf([Manager], MapRead.Current, depth: null, MapWorld.Human, MapWorld.None)).Value;
 
-        Assert.Equal((SearchedState.Degraded, "SND-CONTEXT-010"), (onyx.State, onyx.Code));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_configured_onyx_never_synced_reads_unavailable_not_synced()
-    {
-        _ = await _world.ImportYaml(MapWorld.TabsMap);
-
-        var onyx = await OnyxRow();
-
-        Assert.Equal((SearchedState.Unavailable, "not-synced"), (onyx.State, onyx.Reason));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_state_read_that_fails_falls_back_to_not_synced_and_the_lenses_still_answer()
-    {
-        _ = await _world.ImportYaml(MapWorld.TabsMap);
-        _world.Intents.StateFailure = new Kernel.Error("SND-CONTEXT-099", Kernel.ErrorKind.Unavailable, "state store down");
-
-        var onyx = await OnyxRow();
-
-        Assert.Equal((SearchedState.Unavailable, "not-synced"), (onyx.State, onyx.Reason));
+        var row = Assert.Single(view.Searched.Sources, s => s.Id == RecordSamples.Linear);
+        Assert.Equal((SearchedState.Unavailable, "not-synced"), (row.State, row.Reason));
     }
 
     [Fact, Trait("Lane", "unit")]

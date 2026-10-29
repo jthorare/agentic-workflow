@@ -14,7 +14,7 @@ namespace Aw.Context.Features.QueryContext;
 /// by rank beside the lexical leg; its hits name the 'records' source, so one record found by both legs is one item and is fetched from <see cref="RecordStoreSource"/>.
 /// A model that is down is an unavailable source with the spec's wording; no vectors yet is no hits and no line; partial coverage is a note.
 /// </summary>
-internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope, TimeProvider clock) : IContextSource, ISourceNotes
+internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope, TimeProvider clock, IReadOnlySet<string> teams) : IContextSource, ISourceNotes
 {
     public const int Chunks = 50;
     private const int PageSize = 1000;
@@ -59,7 +59,7 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
         var records = await Nearest(matrix.Value, embedded.Value.Vec, cancellationToken).ConfigureAwait(false);
         return records.IsError
             ? records.Error
-            : await RecordHits.Read(search.Store, scope, clock, records.Value, cancellationToken).ConfigureAwait(false);
+            : await RecordHits.Read(search.Store, (scope, teams), clock, records.Value, cancellationToken).ConfigureAwait(false);
     }
 
     public ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken) =>

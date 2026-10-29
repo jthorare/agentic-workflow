@@ -21,8 +21,7 @@ public sealed class GetHistoryTests : IDisposable
 {
     private const string Anchor = "feature:layout.split-pane";
     private const string Orientation = "feature:layout.split-pane.orientation";
-    private const string OnyxSettings = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:K","version":"v4.9.0"}}}""";
-    private static readonly SourceId _onyx = SourceId.From("onyx");
+    private static readonly SourceId _linear = SourceId.From("linear");
     private static readonly string[] _searched = ["src/layout/PaneResize.ts", "src/layout/SplitPane.ts"];
     private readonly List<IDisposable> _worlds = [];
 
@@ -68,17 +67,17 @@ public sealed class GetHistoryTests : IDisposable
 
     private static async Task Seed(MapWorld world, params (string Id, string Created, string Version)[] records)
     {
-        var rows = records.Select(r => new IntentRecord(RecordKey.From("linear:issue/" + r.Id), _onyx, r.Version, "Ticket " + r.Id, []) { CreatedAt = Utc(r.Created) }).ToList();
+        var rows = records.Select(r => new IntentRecord(RecordKey.From("linear:issue/" + r.Id), _linear, r.Version, "Ticket " + r.Id, []) { CreatedAt = Utc(r.Created) }).ToList();
         var links = rows.Select(r => new IntentLink(r.Key, NodeKey.From(Orientation), LinkRule.Identifier, 0.7, "aa")).ToList();
-        _ = await world.Intents.CommitPage(new IntentPage(_onyx, rows, links, Cursor: null, Utc("2026-07-30T00:00:00Z")), MapWorld.None);
+        _ = await world.Intents.CommitPage(new IntentPage(_linear, rows, links, Cursor: null, Utc("2026-07-30T00:00:00Z")), MapWorld.None);
     }
 
     // A person's decision on the orientation node, made on 2026-07-15, quoting a ticket that was created in June.
     private static async Task SeedDecision(MapWorld world)
     {
         var record = RecordKey.From("linear:issue/0301");
-        var row = new IntentRecord(record, _onyx, "2026-06-05T00:00:00Z", "Decision ticket", []) { CreatedAt = Utc("2026-06-01T00:00:00Z") };
-        _ = await world.Intents.CommitPage(new IntentPage(_onyx, [row], [new IntentLink(record, NodeKey.From(Orientation), LinkRule.Identifier, 0.7, "bb")], Cursor: null, Utc("2026-07-30T00:00:00Z")), MapWorld.None);
+        var row = new IntentRecord(record, _linear, "2026-06-05T00:00:00Z", "Decision ticket", []) { CreatedAt = Utc("2026-06-01T00:00:00Z") };
+        _ = await world.Intents.CommitPage(new IntentPage(_linear, [row], [new IntentLink(record, NodeKey.From(Orientation), LinkRule.Identifier, 0.7, "bb")], Cursor: null, Utc("2026-07-30T00:00:00Z")), MapWorld.None);
         var decision = new DecisionRow(record, "keep the focus", "Keeps focus on the first pane.", Provenance.Human, Utc("2026-07-15T10:00:00Z"));
         _ = await world.Intents.SaveDecisions(new DecisionBatch(record, row.Version, [decision], [new GraphEdge(decision.ToKey(), NodeKey.From(Orientation), EdgeType.Decides, Provenance.Human, 1.0, At: Utc("2026-07-15T10:00:00Z"))]), MapWorld.None);
     }
@@ -293,42 +292,18 @@ public sealed class GetHistoryTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_unconfigured_onyx_has_no_row_and_git_reads_ok()
+    public async Task An_unconfigured_linear_has_no_row_and_git_reads_ok()
     {
         var world = await Start(Fake(Landed()));
 
         var view = (await Ask(world)).Value;
 
         Assert.Equal(["map", "git-history", "incidents"], [.. view.Searched.Sources.Select(s => s.Id.Value)], StringComparer.Ordinal);
-        Assert.DoesNotContain(view.Searched.Sources, s => s.Id.Value == "onyx");
+        Assert.DoesNotContain(view.Searched.Sources, s => s.Id.Value == "linear");
         Assert.Equal((SearchedState.Ok, SearchedState.NotConfigured), (Row(view, "git-history").State, Row(view, "incidents").State));
         Assert.Equal((SearchedState.NotConfigured, "not-configured"), (view.Incidents.State, view.Incidents.Reason));
         Assert.Equal(0, view.Searched.Depth);
         Assert.Empty(view.Searched.Hops);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Never_synced_source_reads_unavailable_not_synced_with_161()
-    {
-        var world = await Start(Fake(Landed()));
-
-        var view = (await Ask(world, scope: MapWorld.HumanWith(OnyxSettings))).Value;
-
-        var row = Row(view, "onyx");
-        Assert.Equal((SearchedState.Unavailable, "not-synced", "SND-CONTEXT-161"), (row.State, row.Reason, row.Code));
-        Assert.Null(row.Sync);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Synced_records_with_no_links_read_history_unlinked()
-    {
-        var world = await Start(Fake(Landed()));
-        var record = new IntentRecord(RecordKey.From("linear:issue/9001"), _onyx, "2026-07-01T00:00:00Z", "Unlinked", []);
-        _ = await world.Intents.CommitPage(new IntentPage(_onyx, [record], [], Cursor: null, Utc("2026-07-30T00:00:00Z")), MapWorld.None);
-
-        var view = (await Ask(world, scope: MapWorld.HumanWith(OnyxSettings))).Value;
-
-        Assert.Equal((SearchedState.Unavailable, "history-unlinked"), (Row(view, "onyx").State, Row(view, "onyx").Reason));
     }
 
     [Fact, Trait("Lane", "unit")]

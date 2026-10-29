@@ -496,8 +496,6 @@ Aw.Context.Core.Engine.ContextSettings.LinearTeams.get -> System.Collections.Gen
 Aw.Context.Core.Engine.ContextSettings.LinearTeams.init -> void
 Aw.Context.Core.Engine.ContextSettings.MinHits.get -> int
 Aw.Context.Core.Engine.ContextSettings.MinHits.init -> void
-Aw.Context.Core.Engine.ContextSettings.Onyx.get -> Aw.Context.Core.Onyx.OnyxSettings?
-Aw.Context.Core.Engine.ContextSettings.Onyx.init -> void
 Aw.Context.Core.Engine.ContextSettings.Publish.get -> Aw.Context.Core.Engine.PublishSettings!
 Aw.Context.Core.Engine.ContextSettings.Publish.init -> void
 Aw.Context.Core.Engine.ContextSettings.Recognizers.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ProfileRecognizer!>!
@@ -623,14 +621,16 @@ Aw.Context.Core.Eval.Backtest.AdjudicationRequest.Surfaces.init -> void
 Aw.Context.Core.Eval.Backtest.AdjudicationRequest.TokensLeft.get -> int
 Aw.Context.Core.Eval.Backtest.AdjudicationRequest.TokensLeft.init -> void
 Aw.Context.Core.Eval.Backtest.Arm
-Aw.Context.Core.Eval.Backtest.Arm.All = 7 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Eval.Backtest.Arm.Brief = 0 -> Aw.Context.Core.Eval.Backtest.Arm
-Aw.Context.Core.Eval.Backtest.Arm.Code = 6 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Eval.Backtest.Arm.Docs = 1 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Eval.Backtest.Arm.Graph = 2 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Eval.Backtest.Arm.GraphReviewed = 3 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Eval.Backtest.Arm.Linear = 4 -> Aw.Context.Core.Eval.Backtest.Arm
-Aw.Context.Core.Eval.Backtest.Arm.Onyx = 5 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Eval.Backtest.Arm.Code = 5 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Eval.Backtest.Arm.All = 6 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Eval.Backtest.Arm.RankerRrf = 7 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Eval.Backtest.Arm.RankerFeatures = 8 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Eval.Backtest.Arm.RankerRerank = 9 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Eval.Backtest.ArmPassLine
 Aw.Context.Core.Eval.Backtest.ArmPassLine.<Clone>$() -> Aw.Context.Core.Eval.Backtest.ArmPassLine!
 Aw.Context.Core.Eval.Backtest.ArmPassLine.ArmPassLine(string! NodeRecall, string! NodePrecision, string! FileRecallAt20, string! Tokens, string! Overall) -> void
@@ -3099,8 +3099,8 @@ Aw.Context.Core.Map.IGraphStore.Versions(System.Threading.CancellationToken canc
 Aw.Context.Core.Map.IMapFileReader
 Aw.Context.Core.Map.IMapFileReader.Read(string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Map.MapFile!>!>
 Aw.Context.Core.Map.LensBasisReader
+Aw.Context.Core.Map.LensBasisReader.LensBasisReader(Aw.Context.Core.Extract.IRepoReader! repos, System.TimeProvider! clock, Aw.Context.Core.Sync.IIndexSync? sync = null) -> void
 Aw.Context.Core.Map.LensBasisReader.For(Aw.Context.Core.Map.VisibleMap! map, Aw.Context.Core.Engine.ContextSettings! settings, Aw.Context.Core.Engine.ContextScope! scope, bool draft, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Lenses.LensBasis!>
-Aw.Context.Core.Map.LensBasisReader.LensBasisReader(Aw.Context.Core.Extract.IRepoReader! repos, Aw.Context.Core.Linking.IIntentStore! intents, System.TimeProvider! clock, Aw.Context.Core.Sync.IIndexSync? sync = null) -> void
 Aw.Context.Core.Map.MapAccess
 Aw.Context.Core.Map.MapBuildReport
 Aw.Context.Core.Map.MapBuildReport.<Clone>$() -> Aw.Context.Core.Map.MapBuildReport!
@@ -3469,27 +3469,6 @@ Aw.Context.Core.Models.ModelRequest.Prompt.get -> string!
 Aw.Context.Core.Models.ModelRequest.Prompt.init -> void
 Aw.Context.Core.Models.ModelRequest.Purpose.get -> Aw.Context.Core.Models.ModelPurpose
 Aw.Context.Core.Models.ModelRequest.Purpose.init -> void
-Aw.Context.Core.Onyx.OnyxRecordIdentity
-Aw.Context.Core.Onyx.OnyxRecordIdentity.<Clone>$() -> Aw.Context.Core.Onyx.OnyxRecordIdentity!
-Aw.Context.Core.Onyx.OnyxRecordIdentity.Alias.get -> string?
-Aw.Context.Core.Onyx.OnyxRecordIdentity.Alias.init -> void
-Aw.Context.Core.Onyx.OnyxRecordIdentity.Canonical.get -> Aw.Context.Core.Sources.RecordKey
-Aw.Context.Core.Onyx.OnyxRecordIdentity.Canonical.init -> void
-Aw.Context.Core.Onyx.OnyxRecordIdentity.Deconstruct(out Aw.Context.Core.Sources.RecordKey Canonical, out Aw.Context.Core.Sources.RecordKind Kind, out string? Alias) -> void
-Aw.Context.Core.Onyx.OnyxRecordIdentity.Equals(Aw.Context.Core.Onyx.OnyxRecordIdentity? other) -> bool
-Aw.Context.Core.Onyx.OnyxRecordIdentity.Kind.get -> Aw.Context.Core.Sources.RecordKind
-Aw.Context.Core.Onyx.OnyxRecordIdentity.Kind.init -> void
-Aw.Context.Core.Onyx.OnyxRecordIdentity.OnyxRecordIdentity(Aw.Context.Core.Sources.RecordKey Canonical, Aw.Context.Core.Sources.RecordKind Kind, string? Alias) -> void
-Aw.Context.Core.Onyx.OnyxRecordKeys
-Aw.Context.Core.Onyx.OnyxSettings
-Aw.Context.Core.Onyx.OnyxSettings.<Clone>$() -> Aw.Context.Core.Onyx.OnyxSettings!
-Aw.Context.Core.Onyx.OnyxSettings.Address.get -> string!
-Aw.Context.Core.Onyx.OnyxSettings.CheckVersion(string! reported) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
-Aw.Context.Core.Onyx.OnyxSettings.Equals(Aw.Context.Core.Onyx.OnyxSettings? other) -> bool
-Aw.Context.Core.Onyx.OnyxSettings.Managed.get -> bool
-Aw.Context.Core.Onyx.OnyxSettings.Token.get -> string!
-Aw.Context.Core.Onyx.OnyxSettings.Url.get -> System.Uri!
-Aw.Context.Core.Onyx.OnyxSettings.Version.get -> string!
 Aw.Context.Core.Overrides.AppliedMap
 Aw.Context.Core.Overrides.AppliedMap.<Clone>$() -> Aw.Context.Core.Overrides.AppliedMap!
 Aw.Context.Core.Overrides.AppliedMap.AppliedMap(Aw.Context.Core.Graph.GraphSnapshot! Graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Orphaned, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Inapplicable) -> void
@@ -4812,7 +4791,6 @@ const Aw.Context.Core.History.HistoryRules.SubjectChars = 200 -> int
 const Aw.Context.Core.Linking.DecisionExtractor.MaxQuote = 600 -> int
 const Aw.Context.Core.Map.MapChecks.SizeCap = 150 -> int
 const Aw.Context.Core.Map.MapRetention.RetainedVersions = 100 -> int
-const Aw.Context.Core.Onyx.OnyxSettings.DedicatedAccountEmail = "sindri@example.com" -> string!
 const Aw.Context.Core.Overrides.MapOverride.CutMarker = "service:deny-cut" -> string!
 const Aw.Context.Core.Overrides.MapOverride.DemoteMarker = "service:demote-cut" -> string!
 const Aw.Context.Core.Overrides.MapOverride.EngineWho = "service:engine" -> string!
@@ -5440,12 +5418,6 @@ override Aw.Context.Core.Models.ModelAnswer.ToString() -> string!
 override Aw.Context.Core.Models.ModelRequest.Equals(object? obj) -> bool
 override Aw.Context.Core.Models.ModelRequest.GetHashCode() -> int
 override Aw.Context.Core.Models.ModelRequest.ToString() -> string!
-override Aw.Context.Core.Onyx.OnyxRecordIdentity.Equals(object? obj) -> bool
-override Aw.Context.Core.Onyx.OnyxRecordIdentity.GetHashCode() -> int
-override Aw.Context.Core.Onyx.OnyxRecordIdentity.ToString() -> string!
-override Aw.Context.Core.Onyx.OnyxSettings.Equals(object? obj) -> bool
-override Aw.Context.Core.Onyx.OnyxSettings.GetHashCode() -> int
-override Aw.Context.Core.Onyx.OnyxSettings.ToString() -> string!
 override Aw.Context.Core.Overrides.AppliedMap.Equals(object? obj) -> bool
 override Aw.Context.Core.Overrides.AppliedMap.GetHashCode() -> int
 override Aw.Context.Core.Overrides.AppliedMap.ToString() -> string!
@@ -6285,13 +6257,6 @@ static Aw.Context.Core.Models.ModelAnswer.operator !=(Aw.Context.Core.Models.Mod
 static Aw.Context.Core.Models.ModelAnswer.operator ==(Aw.Context.Core.Models.ModelAnswer? left, Aw.Context.Core.Models.ModelAnswer? right) -> bool
 static Aw.Context.Core.Models.ModelRequest.operator !=(Aw.Context.Core.Models.ModelRequest? left, Aw.Context.Core.Models.ModelRequest? right) -> bool
 static Aw.Context.Core.Models.ModelRequest.operator ==(Aw.Context.Core.Models.ModelRequest? left, Aw.Context.Core.Models.ModelRequest? right) -> bool
-static Aw.Context.Core.Onyx.OnyxRecordIdentity.operator !=(Aw.Context.Core.Onyx.OnyxRecordIdentity? left, Aw.Context.Core.Onyx.OnyxRecordIdentity? right) -> bool
-static Aw.Context.Core.Onyx.OnyxRecordIdentity.operator ==(Aw.Context.Core.Onyx.OnyxRecordIdentity? left, Aw.Context.Core.Onyx.OnyxRecordIdentity? right) -> bool
-static Aw.Context.Core.Onyx.OnyxRecordKeys.Identify(Aw.Context.Core.Sources.ExternalId document, string! sourceType, string! semanticIdentifier, string? link, System.Collections.Generic.IReadOnlySet<string!>! teams) -> Aw.Context.Core.Onyx.OnyxRecordIdentity?
-static Aw.Context.Core.Onyx.OnyxRecordKeys.KindOf(Aw.Context.Core.Sources.RecordKey canonical) -> Aw.Context.Core.Sources.RecordKind
-static Aw.Context.Core.Onyx.OnyxSettings.Create(string? url, string? token, string? version, bool managed = false) -> Aw.Kernel.Result<Aw.Context.Core.Onyx.OnyxSettings!>!
-static Aw.Context.Core.Onyx.OnyxSettings.operator !=(Aw.Context.Core.Onyx.OnyxSettings? left, Aw.Context.Core.Onyx.OnyxSettings? right) -> bool
-static Aw.Context.Core.Onyx.OnyxSettings.operator ==(Aw.Context.Core.Onyx.OnyxSettings? left, Aw.Context.Core.Onyx.OnyxSettings? right) -> bool
 static Aw.Context.Core.Overrides.AppliedMap.operator !=(Aw.Context.Core.Overrides.AppliedMap? left, Aw.Context.Core.Overrides.AppliedMap? right) -> bool
 static Aw.Context.Core.Overrides.AppliedMap.operator ==(Aw.Context.Core.Overrides.AppliedMap? left, Aw.Context.Core.Overrides.AppliedMap? right) -> bool
 static Aw.Context.Core.Overrides.Confirmation.Of(Aw.Context.Core.Results.Provenance provenance, bool accepted = false) -> bool
@@ -6577,11 +6542,6 @@ static readonly Aw.Context.Core.ContextErrors.NoEligibleSample -> Aw.Kernel.Erro
 static readonly Aw.Context.Core.ContextErrors.NoMap -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.NoMergeBase -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.NoProbeFile -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Context.Core.ContextErrors.OnyxDocumentNotFound -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Context.Core.ContextErrors.OnyxKeyNotServiceAccount -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Context.Core.ContextErrors.OnyxKeyRefused -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Context.Core.ContextErrors.OnyxNotPinnedOrLoopback -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Context.Core.ContextErrors.OnyxUnexpectedReply -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PathInWorktree -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PatternTimedOut -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.ProbeFileInvalid -> Aw.Kernel.ErrorDefinition!
@@ -6648,9 +6608,6 @@ Aw.Context.Core.Engine.RankerSettings.RerankTop.get -> int
 Aw.Context.Core.Engine.RankerSettings.RerankTop.init -> void
 Aw.Context.Core.Engine.RankerSettings.Weights.get -> Aw.Context.Core.Engine.FeatureWeights!
 Aw.Context.Core.Engine.RankerSettings.Weights.init -> void
-Aw.Context.Core.Eval.Backtest.Arm.RankerFeatures = 9 -> Aw.Context.Core.Eval.Backtest.Arm
-Aw.Context.Core.Eval.Backtest.Arm.RankerRerank = 10 -> Aw.Context.Core.Eval.Backtest.Arm
-Aw.Context.Core.Eval.Backtest.Arm.RankerRrf = 8 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Ranking.FeatureRanker
 Aw.Context.Core.Engine.FeatureWeights
 Aw.Context.Core.Engine.FeatureWeights.<Clone>$() -> Aw.Context.Core.Engine.FeatureWeights!
@@ -8583,6 +8540,8 @@ Aw.Context.Core.Records.IRecordStore.DeleteVectors(Aw.Context.Core.Records.Vecto
 Aw.Context.Core.Records.IRecordStore.Get(Aw.Context.Core.Sources.RecordKey key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.StoredRecord?>!>
 Aw.Context.Core.Records.IRecordStore.List(Aw.Context.Core.Records.RecordFilter! filter, Aw.Context.Core.Sources.RecordKey? after, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.StoredRecord!>!>!>
 Aw.Context.Core.Records.IRecordStore.Position(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SyncPosition!>!>
+Aw.Context.Core.Records.IRecordStore.RecordOutcome(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncOutcome! outcome, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Context.Core.Records.IRecordStore.LastOutcome(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SyncOutcome?>!>
 Aw.Context.Core.Records.IRecordStore.Purge(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Context.Core.Records.IRecordStore.PutVectors(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.VectorWrite!>! vectors, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Context.Core.Records.IRecordStore.Stamps(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.StoreStamps!>!>
@@ -8729,6 +8688,15 @@ Aw.Context.Core.Records.SyncPhase.Backfill = 1 -> Aw.Context.Core.Records.SyncPh
 Aw.Context.Core.Records.SyncPhase.Incremental = 2 -> Aw.Context.Core.Records.SyncPhase
 Aw.Context.Core.Records.SyncPhase.Recent = 0 -> Aw.Context.Core.Records.SyncPhase
 Aw.Context.Core.Records.SyncPhase.Reconcile = 3 -> Aw.Context.Core.Records.SyncPhase
+Aw.Context.Core.Records.SyncOutcome
+Aw.Context.Core.Records.SyncOutcome.<Clone>$() -> Aw.Context.Core.Records.SyncOutcome!
+Aw.Context.Core.Records.SyncOutcome.At.get -> System.DateTimeOffset
+Aw.Context.Core.Records.SyncOutcome.At.init -> void
+Aw.Context.Core.Records.SyncOutcome.Code.get -> string?
+Aw.Context.Core.Records.SyncOutcome.Code.init -> void
+Aw.Context.Core.Records.SyncOutcome.Deconstruct(out System.DateTimeOffset At, out string? Code) -> void
+Aw.Context.Core.Records.SyncOutcome.Equals(Aw.Context.Core.Records.SyncOutcome? other) -> bool
+Aw.Context.Core.Records.SyncOutcome.SyncOutcome(System.DateTimeOffset At, string? Code) -> void
 Aw.Context.Core.Records.SyncPosition
 Aw.Context.Core.Records.SyncPosition.<Clone>$() -> Aw.Context.Core.Records.SyncPosition!
 Aw.Context.Core.Records.SyncPosition.BackfillBefore.get -> System.DateTimeOffset?
@@ -8902,6 +8870,9 @@ override Aw.Context.Core.Records.StoreStamps.ToString() -> string!
 override Aw.Context.Core.Records.StoredRecord.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.StoredRecord.GetHashCode() -> int
 override Aw.Context.Core.Records.StoredRecord.ToString() -> string!
+override Aw.Context.Core.Records.SyncOutcome.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SyncOutcome.GetHashCode() -> int
+override Aw.Context.Core.Records.SyncOutcome.ToString() -> string!
 override Aw.Context.Core.Records.SyncPosition.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.SyncPosition.GetHashCode() -> int
 override Aw.Context.Core.Records.SyncPosition.ToString() -> string!
@@ -8958,6 +8929,8 @@ static Aw.Context.Core.Records.StoreStamps.operator ==(Aw.Context.Core.Records.S
 static Aw.Context.Core.Records.StoredRecord.operator !=(Aw.Context.Core.Records.StoredRecord? left, Aw.Context.Core.Records.StoredRecord? right) -> bool
 static Aw.Context.Core.Records.StoredRecord.operator ==(Aw.Context.Core.Records.StoredRecord? left, Aw.Context.Core.Records.StoredRecord? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.Start.get -> Aw.Context.Core.Records.SyncPosition!
+static Aw.Context.Core.Records.SyncOutcome.operator !=(Aw.Context.Core.Records.SyncOutcome? left, Aw.Context.Core.Records.SyncOutcome? right) -> bool
+static Aw.Context.Core.Records.SyncOutcome.operator ==(Aw.Context.Core.Records.SyncOutcome? left, Aw.Context.Core.Records.SyncOutcome? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.operator !=(Aw.Context.Core.Records.SyncPosition? left, Aw.Context.Core.Records.SyncPosition? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.operator ==(Aw.Context.Core.Records.SyncPosition? left, Aw.Context.Core.Records.SyncPosition? right) -> bool
 static Aw.Context.Core.Records.VectorRow.operator !=(Aw.Context.Core.Records.VectorRow? left, Aw.Context.Core.Records.VectorRow? right) -> bool
@@ -9178,11 +9151,11 @@ Aw.Context.Core.Engine.ContextSettings.IndexedDocGlobs.get -> System.Collections
 static Aw.Context.Core.Engine.ContextSettings.DefaultDocDirectoryNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Sync.IIndexSync
 Aw.Context.Core.Sync.IIndexSync.Tick(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Results.SyncReport!>!>
+Aw.Context.Core.Sync.IIndexSync.Tick(Aw.Context.Core.Engine.ContextScope! scope, Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Results.SyncReport!>!>
 Aw.Context.Core.Sync.SourceProgress
 Aw.Context.Core.Sync.SourceProgress.<Clone>$() -> Aw.Context.Core.Sync.SourceProgress!
 Aw.Context.Core.Sync.SourceProgress.Complete.get -> bool
 Aw.Context.Core.Sync.SourceProgress.Complete.init -> void
-Aw.Context.Core.Sync.SourceProgress.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Records.SyncPhase? Phase, out System.DateTimeOffset? LastSync, out string? LastCode, out bool Usable, out bool Complete, out int? ReReading) -> void
 Aw.Context.Core.Sync.SourceProgress.Equals(Aw.Context.Core.Sync.SourceProgress? other) -> bool
 Aw.Context.Core.Sync.SourceProgress.LastCode.get -> string?
 Aw.Context.Core.Sync.SourceProgress.LastCode.init -> void
@@ -9194,7 +9167,6 @@ Aw.Context.Core.Sync.SourceProgress.ReReading.get -> int?
 Aw.Context.Core.Sync.SourceProgress.ReReading.init -> void
 Aw.Context.Core.Sync.SourceProgress.Source.get -> Aw.Context.Core.Sources.SourceId
 Aw.Context.Core.Sync.SourceProgress.Source.init -> void
-Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null) -> void
 Aw.Context.Core.Sync.SourceProgress.Usable.get -> bool
 Aw.Context.Core.Sync.SourceProgress.Usable.init -> void
 override Aw.Context.Core.Sync.SourceProgress.Equals(object? obj) -> bool
@@ -9244,18 +9216,18 @@ Aw.Context.Core.Records.SourceIdentity.Source.init -> void
 Aw.Context.Core.Records.SourceIdentity.SourceIdentity(Aw.Context.Core.Sources.SourceId Source, string! UserRef, string! Name, System.DateTimeOffset ReadAt) -> void
 Aw.Context.Core.Records.SourceIdentity.UserRef.get -> string!
 Aw.Context.Core.Records.SourceIdentity.UserRef.init -> void
-Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out string? Health, out System.DateOnly? DueAt) -> void
+Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out string? Health, out System.DateOnly? DueAt, out string? Description) -> void
 Aw.Context.Core.Records.StoredRecord.DueAt.get -> System.DateOnly?
 Aw.Context.Core.Records.StoredRecord.DueAt.init -> void
 Aw.Context.Core.Records.StoredRecord.Health.get -> string?
 Aw.Context.Core.Records.StoredRecord.Health.init -> void
-Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null) -> void
-Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt) -> void
+Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null, string? Description = null) -> void
+Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt, out string? Description) -> void
 Aw.Context.Core.Sync.RecordItem.DueAt.get -> System.DateOnly?
 Aw.Context.Core.Sync.RecordItem.DueAt.init -> void
 Aw.Context.Core.Sync.RecordItem.Health.get -> string?
 Aw.Context.Core.Sync.RecordItem.Health.init -> void
-Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null) -> void
+Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null, string? Description = null) -> void
 override Aw.Context.Core.Records.SourceIdentity.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.SourceIdentity.GetHashCode() -> int
 override Aw.Context.Core.Records.SourceIdentity.ToString() -> string!
@@ -9286,11 +9258,9 @@ static readonly Aw.Context.Core.Linear.LinearSourceIds.Issues -> Aw.Context.Core
 static readonly Aw.Context.Core.Linear.LinearSourceIds.Projects -> Aw.Context.Core.Sources.SourceId
 Aw.Context.Core.Results.DecisionReport
 Aw.Context.Core.Results.DecisionReport.<Clone>$() -> Aw.Context.Core.Results.DecisionReport!
-Aw.Context.Core.Results.DecisionReport.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources) -> void
 Aw.Context.Core.Results.DecisionReport.Equals(Aw.Context.Core.Results.DecisionReport? other) -> bool
 Aw.Context.Core.Results.DecisionReport.Sources.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>!
 Aw.Context.Core.Results.DecisionReport.Sources.init -> void
-Aw.Context.Core.Results.DecisionReport.DecisionReport(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources) -> void
 Aw.Context.Core.Results.SourceDecisions
 Aw.Context.Core.Results.SourceDecisions.<Clone>$() -> Aw.Context.Core.Results.SourceDecisions!
 Aw.Context.Core.Results.SourceDecisions.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out int Looked, out int Decisions, out string? Code) -> void
@@ -9342,6 +9312,59 @@ static Aw.Context.Core.Extract.Journeys.IsJourney(string! path) -> bool
 static Aw.Context.Core.Extract.JourneySkips.None.get -> Aw.Context.Core.Extract.JourneySkips!
 static Aw.Context.Core.Extract.JourneySkips.operator !=(Aw.Context.Core.Extract.JourneySkips? left, Aw.Context.Core.Extract.JourneySkips? right) -> bool
 static Aw.Context.Core.Extract.JourneySkips.operator ==(Aw.Context.Core.Extract.JourneySkips? left, Aw.Context.Core.Extract.JourneySkips? right) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptMember
+Aw.Context.Core.ConceptSynthesis.ConceptMember.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptMember!
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Deconstruct(out string! Record, out string! Version, out string! Source) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Equals(Aw.Context.Core.ConceptSynthesis.ConceptMember? other) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptMember.ConceptMember(string! Record, string! Version, string! Source) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Record.get -> string!
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Record.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Version.get -> string!
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Version.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Source.get -> string!
+Aw.Context.Core.ConceptSynthesis.ConceptMember.Source.init -> void
+override Aw.Context.Core.ConceptSynthesis.ConceptMember.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.ConceptMember.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.ConceptMember.ToString() -> string!
+static Aw.Context.Core.ConceptSynthesis.ConceptMember.operator !=(Aw.Context.Core.ConceptSynthesis.ConceptMember? left, Aw.Context.Core.ConceptSynthesis.ConceptMember? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.ConceptMember.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptMember? left, Aw.Context.Core.ConceptSynthesis.ConceptMember? right) -> bool
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Deconstruct(out string! Key, out string! Name, out string! Summary, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.ConceptMember!>! Members, out string! MembershipHash, out Aw.Context.Core.ConceptSynthesis.SynthesisState State, out long Watermark, out System.DateTimeOffset CreatedAt, out System.DateTimeOffset UpdatedAt) -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Equals(Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? other) -> bool
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.SynthesizedConcept(string! Key, string! Name, string! Summary, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.ConceptMember!>! Members, string! MembershipHash, Aw.Context.Core.ConceptSynthesis.SynthesisState State, long Watermark, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt) -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Key.get -> string!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Key.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Name.get -> string!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Name.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Summary.get -> string!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Summary.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Members.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.ConceptMember!>!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Members.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.MembershipHash.get -> string!
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.MembershipHash.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.State.get -> Aw.Context.Core.ConceptSynthesis.SynthesisState
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.State.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Watermark.get -> long
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Watermark.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.CreatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.CreatedAt.init -> void
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.UpdatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.UpdatedAt.init -> void
+override Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.ToString() -> string!
+static Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.operator !=(Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? left, Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.SynthesizedConcept.operator ==(Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? left, Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? right) -> bool
+Aw.Context.Core.ConceptSynthesis.SynthesisState
+Aw.Context.Core.ConceptSynthesis.SynthesisState.Done = 1 -> Aw.Context.Core.ConceptSynthesis.SynthesisState
+Aw.Context.Core.ConceptSynthesis.SynthesisState.Queued = 0 -> Aw.Context.Core.ConceptSynthesis.SynthesisState
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.All(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>!>!>
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.Remove(string! key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.Save(Aw.Context.Core.ConceptSynthesis.SynthesizedConcept! concept, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.SaveWatermark(long watermark, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.ConceptSynthesis.IConceptSynthesisStore.Watermark(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<long>!>
 Aw.Context.Core.ConceptSynthesis.RecordVector
 Aw.Context.Core.ConceptSynthesis.RecordVector.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.RecordVector!
 Aw.Context.Core.ConceptSynthesis.RecordVector.Deconstruct(out string! Record, out string! Version, out string! Source, out System.ReadOnlyMemory<float> Vector) -> void
@@ -9393,7 +9416,7 @@ Aw.Context.Core.ConceptSynthesis.GroupingSettings
 Aw.Context.Core.ConceptSynthesis.GroupingSettings.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.GroupingSettings!
 Aw.Context.Core.ConceptSynthesis.GroupingSettings.Deconstruct(out int Neighbours, out float MinCosine, out int MaxGroup, out int MinRecords, out int MinSources, out float SplitStep) -> void
 Aw.Context.Core.ConceptSynthesis.GroupingSettings.Equals(Aw.Context.Core.ConceptSynthesis.GroupingSettings? other) -> bool
-Aw.Context.Core.ConceptSynthesis.GroupingSettings.GroupingSettings(int Neighbours = 8, float MinCosine = 0.75, int MaxGroup = 20, int MinRecords = 2, int MinSources = 1, float SplitStep = 0.05) -> void
+Aw.Context.Core.ConceptSynthesis.GroupingSettings.GroupingSettings(int Neighbours = 8, float MinCosine = 0.85, int MaxGroup = 20, int MinRecords = 2, int MinSources = 1, float SplitStep = 0.05) -> void
 override Aw.Context.Core.ConceptSynthesis.GroupingSettings.Equals(object? obj) -> bool
 override Aw.Context.Core.ConceptSynthesis.GroupingSettings.GetHashCode() -> int
 override Aw.Context.Core.ConceptSynthesis.GroupingSettings.ToString() -> string!
@@ -9417,3 +9440,381 @@ Aw.Context.Core.ConceptSynthesis.RecordVectors
 static Aw.Context.Core.ConceptSynthesis.ConceptGrouper.Group(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.RecordVector!>! records, Aw.Context.Core.ConceptSynthesis.GroupingSettings! settings, Aw.Context.Core.Vectors.IVectorScan! scan) -> Aw.Kernel.Result<Aw.Context.Core.ConceptSynthesis.GroupingResult!>!
 static Aw.Context.Core.ConceptSynthesis.CosineHistogram.Buckets(System.Collections.Generic.IReadOnlyList<float>! cosines, float width = 0.05) -> System.Collections.Generic.IReadOnlyList<(float Lower, int Count)>!
 static Aw.Context.Core.ConceptSynthesis.RecordVectors.Mean(string! record, string! version, string! source, System.Collections.Generic.IEnumerable<float[]!>! chunks) -> Aw.Context.Core.ConceptSynthesis.RecordVector?
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptAnswer!
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer.ConceptAnswer(string! Name, string! Summary) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer.Deconstruct(out string! Name, out string! Summary) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer.Equals(Aw.Context.Core.ConceptSynthesis.ConceptAnswer? other) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer.Name.get -> string!
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer.Name.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer.Summary.get -> string!
+Aw.Context.Core.ConceptSynthesis.ConceptAnswer.Summary.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptKeys
+Aw.Context.Core.ConceptSynthesis.ConceptMatcher
+Aw.Context.Core.ConceptSynthesis.ConceptPlan
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptPlan!
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.ConceptPlan(Aw.Context.Core.ConceptSynthesis.ConceptGroup! Group, Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? Existing) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.Deconstruct(out Aw.Context.Core.ConceptSynthesis.ConceptGroup! Group, out Aw.Context.Core.ConceptSynthesis.SynthesizedConcept? Existing) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.Equals(Aw.Context.Core.ConceptSynthesis.ConceptPlan? other) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.Existing.get -> Aw.Context.Core.ConceptSynthesis.SynthesizedConcept?
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.Existing.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.Group.get -> Aw.Context.Core.ConceptSynthesis.ConceptGroup!
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.Group.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptPlan.Unchanged.get -> bool
+Aw.Context.Core.Engine.ConceptSynthesisSettings
+Aw.Context.Core.Engine.ConceptSynthesisSettings.<Clone>$() -> Aw.Context.Core.Engine.ConceptSynthesisSettings!
+Aw.Context.Core.Engine.ConceptSynthesisSettings.ConceptSynthesisSettings() -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Enabled.get -> bool
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Enabled.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Equals(Aw.Context.Core.Engine.ConceptSynthesisSettings? other) -> bool
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Grouping.get -> Aw.Context.Core.ConceptSynthesis.GroupingSettings!
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxCharsPerCall.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxCharsPerCall.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxCharsPerRecord.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxCharsPerRecord.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxGroup.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxGroup.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinCosine.get -> float
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinCosine.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinRecords.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinRecords.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinSources.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinSources.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Neighbours.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Neighbours.init -> void
+Aw.Context.Core.Engine.ContextSettings.ConceptSynthesis.get -> Aw.Context.Core.Engine.ConceptSynthesisSettings!
+Aw.Context.Core.Engine.ContextSettings.ConceptSynthesis.init -> void
+Aw.Context.Core.Models.ModelPurpose.ConceptSynthesis = 6 -> Aw.Context.Core.Models.ModelPurpose
+Aw.Context.Core.Results.ConceptSynthesisReport
+Aw.Context.Core.Results.ConceptSynthesisReport.<Clone>$() -> Aw.Context.Core.Results.ConceptSynthesisReport!
+Aw.Context.Core.Results.ConceptSynthesisReport.Code.get -> string?
+Aw.Context.Core.Results.ConceptSynthesisReport.Code.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.ConceptSynthesisReport(int Groups, int Unchanged, int Labeled, int Queued, int Pending, int Concepts, int MultiSource, int Covered, int Embedded, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.CosineBucket!>! Cosines, int Tokens, string? Code) -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Concepts.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Concepts.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Cosines.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.CosineBucket!>!
+Aw.Context.Core.Results.ConceptSynthesisReport.Cosines.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Coverage.get -> double
+Aw.Context.Core.Results.ConceptSynthesisReport.Covered.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Covered.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Deconstruct(out int Groups, out int Unchanged, out int Labeled, out int Queued, out int Pending, out int Concepts, out int MultiSource, out int Covered, out int Embedded, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.CosineBucket!>! Cosines, out int Tokens, out string? Code) -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Embedded.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Embedded.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Equals(Aw.Context.Core.Results.ConceptSynthesisReport? other) -> bool
+Aw.Context.Core.Results.ConceptSynthesisReport.Groups.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Groups.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Labeled.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Labeled.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.MultiSource.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.MultiSource.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Pending.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Pending.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Queued.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Queued.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Tokens.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Tokens.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Unchanged.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Unchanged.init -> void
+Aw.Context.Core.Results.CosineBucket
+Aw.Context.Core.Results.CosineBucket.<Clone>$() -> Aw.Context.Core.Results.CosineBucket!
+Aw.Context.Core.Results.CosineBucket.CosineBucket(float Lower, int Count) -> void
+Aw.Context.Core.Results.CosineBucket.Count.get -> int
+Aw.Context.Core.Results.CosineBucket.Count.init -> void
+Aw.Context.Core.Results.CosineBucket.Deconstruct(out float Lower, out int Count) -> void
+Aw.Context.Core.Results.CosineBucket.Equals(Aw.Context.Core.Results.CosineBucket? other) -> bool
+Aw.Context.Core.Results.CosineBucket.Lower.get -> float
+Aw.Context.Core.Results.CosineBucket.Lower.init -> void
+Aw.Context.Core.Results.DecisionReport.DecisionReport(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources, Aw.Context.Core.Results.ConceptSynthesisReport? Synthesis = null) -> void
+Aw.Context.Core.Results.DecisionReport.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources, out Aw.Context.Core.Results.ConceptSynthesisReport? Synthesis) -> void
+Aw.Context.Core.Results.DecisionReport.Synthesis.get -> Aw.Context.Core.Results.ConceptSynthesisReport?
+Aw.Context.Core.Results.DecisionReport.Synthesis.init -> void
+override Aw.Context.Core.ConceptSynthesis.ConceptAnswer.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.ConceptAnswer.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.ConceptAnswer.ToString() -> string!
+override Aw.Context.Core.ConceptSynthesis.ConceptPlan.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.ConceptPlan.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.ConceptPlan.ToString() -> string!
+override Aw.Context.Core.Engine.ConceptSynthesisSettings.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.ConceptSynthesisSettings.GetHashCode() -> int
+override Aw.Context.Core.Engine.ConceptSynthesisSettings.ToString() -> string!
+override Aw.Context.Core.Results.ConceptSynthesisReport.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.ConceptSynthesisReport.GetHashCode() -> int
+override Aw.Context.Core.Results.ConceptSynthesisReport.ToString() -> string!
+override Aw.Context.Core.Results.CosineBucket.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.CosineBucket.GetHashCode() -> int
+override Aw.Context.Core.Results.CosineBucket.ToString() -> string!
+static Aw.Context.Core.ConceptSynthesis.ConceptAnswer.Read(string? text) -> Aw.Context.Core.ConceptSynthesis.ConceptAnswer?
+static Aw.Context.Core.ConceptSynthesis.ConceptAnswer.operator !=(Aw.Context.Core.ConceptSynthesis.ConceptAnswer? left, Aw.Context.Core.ConceptSynthesis.ConceptAnswer? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.ConceptAnswer.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptAnswer? left, Aw.Context.Core.ConceptSynthesis.ConceptAnswer? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.ConceptKeys.Slug(string! name, System.Collections.Generic.IReadOnlySet<string!>! taken) -> string!
+static Aw.Context.Core.ConceptSynthesis.ConceptMatcher.Plan(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.ConceptGroup!>! groups, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! stored) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.ConceptPlan!>!
+static Aw.Context.Core.ConceptSynthesis.ConceptPlan.operator !=(Aw.Context.Core.ConceptSynthesis.ConceptPlan? left, Aw.Context.Core.ConceptSynthesis.ConceptPlan? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.ConceptPlan.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptPlan? left, Aw.Context.Core.ConceptSynthesis.ConceptPlan? right) -> bool
+static Aw.Context.Core.Engine.ConceptSynthesisSettings.operator !=(Aw.Context.Core.Engine.ConceptSynthesisSettings? left, Aw.Context.Core.Engine.ConceptSynthesisSettings? right) -> bool
+static Aw.Context.Core.Engine.ConceptSynthesisSettings.operator ==(Aw.Context.Core.Engine.ConceptSynthesisSettings? left, Aw.Context.Core.Engine.ConceptSynthesisSettings? right) -> bool
+static Aw.Context.Core.Results.ConceptSynthesisReport.Failed(string! code) -> Aw.Context.Core.Results.ConceptSynthesisReport!
+static Aw.Context.Core.Results.ConceptSynthesisReport.operator !=(Aw.Context.Core.Results.ConceptSynthesisReport? left, Aw.Context.Core.Results.ConceptSynthesisReport? right) -> bool
+static Aw.Context.Core.Results.ConceptSynthesisReport.operator ==(Aw.Context.Core.Results.ConceptSynthesisReport? left, Aw.Context.Core.Results.ConceptSynthesisReport? right) -> bool
+static Aw.Context.Core.Results.CosineBucket.operator !=(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
+static Aw.Context.Core.Results.CosineBucket.operator ==(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
+Aw.Context.Core.Records.IRecordStore.Backoff(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SourceBackoffState!>!>
+Aw.Context.Core.Records.IRecordStore.RecordAttempt(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncAttempt! attempt, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Context.Core.Records.SourceBackoff
+Aw.Context.Core.Records.SourceBackoffState
+Aw.Context.Core.Records.SourceBackoffState.<Clone>$() -> Aw.Context.Core.Records.SourceBackoffState!
+Aw.Context.Core.Records.SourceBackoffState.Deconstruct(out int Failures, out System.DateTimeOffset? NextTry, out System.DateTimeOffset? LastCommit, out string? LastErrorText) -> void
+Aw.Context.Core.Records.SourceBackoffState.Equals(Aw.Context.Core.Records.SourceBackoffState? other) -> bool
+Aw.Context.Core.Records.SourceBackoffState.Failures.get -> int
+Aw.Context.Core.Records.SourceBackoffState.Failures.init -> void
+Aw.Context.Core.Records.SourceBackoffState.LastCommit.get -> System.DateTimeOffset?
+Aw.Context.Core.Records.SourceBackoffState.LastCommit.init -> void
+Aw.Context.Core.Records.SourceBackoffState.LastErrorText.get -> string?
+Aw.Context.Core.Records.SourceBackoffState.LastErrorText.init -> void
+Aw.Context.Core.Records.SourceBackoffState.NextTry.get -> System.DateTimeOffset?
+Aw.Context.Core.Records.SourceBackoffState.NextTry.init -> void
+Aw.Context.Core.Records.SourceBackoffState.SourceBackoffState(int Failures, System.DateTimeOffset? NextTry, System.DateTimeOffset? LastCommit, string? LastErrorText) -> void
+Aw.Context.Core.Records.SyncAttempt
+Aw.Context.Core.Records.SyncAttempt.<Clone>$() -> Aw.Context.Core.Records.SyncAttempt!
+Aw.Context.Core.Records.SyncAttempt.At.get -> System.DateTimeOffset
+Aw.Context.Core.Records.SyncAttempt.At.init -> void
+Aw.Context.Core.Records.SyncAttempt.Deconstruct(out System.DateTimeOffset At, out bool Failed, out string? ErrorText) -> void
+Aw.Context.Core.Records.SyncAttempt.Equals(Aw.Context.Core.Records.SyncAttempt? other) -> bool
+Aw.Context.Core.Records.SyncAttempt.ErrorText.get -> string?
+Aw.Context.Core.Records.SyncAttempt.ErrorText.init -> void
+Aw.Context.Core.Records.SyncAttempt.Failed.get -> bool
+Aw.Context.Core.Records.SyncAttempt.Failed.init -> void
+Aw.Context.Core.Records.SyncAttempt.SyncAttempt(System.DateTimeOffset At, bool Failed, string? ErrorText) -> void
+Aw.Context.Core.Sync.SourceProgress.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Records.SyncPhase? Phase, out System.DateTimeOffset? LastSync, out string? LastCode, out bool Usable, out bool Complete, out int? ReReading, out string? Pull, out int? Records, out System.DateTimeOffset? LastCommit, out string? LastError, out string? LastErrorText, out int? Failures, out System.DateTimeOffset? NextTry) -> void
+Aw.Context.Core.Sync.SourceProgress.Failures.get -> int?
+Aw.Context.Core.Sync.SourceProgress.Failures.init -> void
+Aw.Context.Core.Sync.SourceProgress.LastCommit.get -> System.DateTimeOffset?
+Aw.Context.Core.Sync.SourceProgress.LastCommit.init -> void
+Aw.Context.Core.Sync.SourceProgress.LastError.get -> string?
+Aw.Context.Core.Sync.SourceProgress.LastError.init -> void
+Aw.Context.Core.Sync.SourceProgress.LastErrorText.get -> string?
+Aw.Context.Core.Sync.SourceProgress.LastErrorText.init -> void
+Aw.Context.Core.Sync.SourceProgress.NextTry.get -> System.DateTimeOffset?
+Aw.Context.Core.Sync.SourceProgress.NextTry.init -> void
+Aw.Context.Core.Sync.SourceProgress.Pull.get -> string?
+Aw.Context.Core.Sync.SourceProgress.Pull.init -> void
+Aw.Context.Core.Sync.SourceProgress.Records.get -> int?
+Aw.Context.Core.Sync.SourceProgress.Records.init -> void
+Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null, string? Pull = null, int? Records = null, System.DateTimeOffset? LastCommit = null, string? LastError = null, string? LastErrorText = null, int? Failures = null, System.DateTimeOffset? NextTry = null) -> void
+const Aw.Context.Core.Records.SourceBackoff.FailedAfter = 5 -> int
+override Aw.Context.Core.Records.SourceBackoffState.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SourceBackoffState.GetHashCode() -> int
+override Aw.Context.Core.Records.SourceBackoffState.ToString() -> string!
+override Aw.Context.Core.Records.SyncAttempt.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SyncAttempt.GetHashCode() -> int
+override Aw.Context.Core.Records.SyncAttempt.ToString() -> string!
+static Aw.Context.Core.Records.SourceBackoff.Apply(Aw.Context.Core.Records.SourceBackoffState! previous, Aw.Context.Core.Records.SyncAttempt! attempt) -> Aw.Context.Core.Records.SourceBackoffState!
+static Aw.Context.Core.Records.SourceBackoff.Delay(int failures) -> System.TimeSpan
+static Aw.Context.Core.Records.SourceBackoff.Next(int previousFailures, Aw.Context.Core.Records.SyncAttempt! attempt) -> Aw.Context.Core.Records.SourceBackoffState!
+static Aw.Context.Core.Records.SourceBackoff.Pull(Aw.Context.Core.Records.SourceBackoffState! state, bool running, System.DateTimeOffset now) -> string!
+static Aw.Context.Core.Records.SourceBackoffState.None.get -> Aw.Context.Core.Records.SourceBackoffState!
+static Aw.Context.Core.Records.SourceBackoffState.operator !=(Aw.Context.Core.Records.SourceBackoffState? left, Aw.Context.Core.Records.SourceBackoffState? right) -> bool
+static Aw.Context.Core.Records.SourceBackoffState.operator ==(Aw.Context.Core.Records.SourceBackoffState? left, Aw.Context.Core.Records.SourceBackoffState? right) -> bool
+static Aw.Context.Core.Records.SyncAttempt.operator !=(Aw.Context.Core.Records.SyncAttempt? left, Aw.Context.Core.Records.SyncAttempt? right) -> bool
+static Aw.Context.Core.Records.SyncAttempt.operator ==(Aw.Context.Core.Records.SyncAttempt? left, Aw.Context.Core.Records.SyncAttempt? right) -> bool
+static readonly Aw.Context.Core.Records.SourceBackoff.BaseDelay -> System.TimeSpan
+static readonly Aw.Context.Core.Records.SourceBackoff.MaxDelay -> System.TimeSpan
+Aw.Context.Core.Concepts.SynthesizedConceptNodes
+static Aw.Context.Core.Concepts.SynthesizedConceptNodes.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts) -> Aw.Context.Core.Graph.GraphSnapshot!
+Aw.Context.Core.ConceptSynthesis.ConceptStatus
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Covered.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Covered.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Embedded.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Embedded.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Enabled.get -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Enabled.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Equals(Aw.Context.Core.ConceptSynthesis.ConceptStatus? other) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.MultiSource.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.MultiSource.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Pending.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Pending.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Queued.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Queued.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Watermark.get -> long
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Watermark.init -> void
+Aw.Context.Core.Records.IRecordStore.LiveCounts(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.LiveRecordCounts!>!>
+Aw.Context.Core.Records.LiveRecordCounts
+Aw.Context.Core.Records.LiveRecordCounts.<Clone>$() -> Aw.Context.Core.Records.LiveRecordCounts!
+Aw.Context.Core.Records.LiveRecordCounts.Deconstruct(out int Live, out int Embedded) -> void
+Aw.Context.Core.Records.LiveRecordCounts.Embedded.get -> int
+Aw.Context.Core.Records.LiveRecordCounts.Embedded.init -> void
+Aw.Context.Core.Records.LiveRecordCounts.Equals(Aw.Context.Core.Records.LiveRecordCounts? other) -> bool
+Aw.Context.Core.Records.LiveRecordCounts.Live.get -> int
+Aw.Context.Core.Records.LiveRecordCounts.Live.init -> void
+Aw.Context.Core.Records.LiveRecordCounts.LiveRecordCounts(int Live, int Embedded) -> void
+Aw.Context.Core.Sync.IIndexSync.ConceptStatus(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.ConceptSynthesis.ConceptStatus!>!>
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.ToString() -> string!
+override Aw.Context.Core.Records.LiveRecordCounts.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.LiveRecordCounts.GetHashCode() -> int
+override Aw.Context.Core.Records.LiveRecordCounts.ToString() -> string!
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.From(bool enabled, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts, long watermark, int live, int embedded) -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator !=(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
+static Aw.Context.Core.Records.LiveRecordCounts.operator !=(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool
+static Aw.Context.Core.Records.LiveRecordCounts.operator ==(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.ConceptStatus(bool Enabled, int Concepts, int MultiSource, int Queued, int Covered, long Watermark, int Embedded, int Pending, System.DateTimeOffset? LastRun = null, string? LastCode = null) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Deconstruct(out bool Enabled, out int Concepts, out int MultiSource, out int Queued, out int Covered, out long Watermark, out int Embedded, out int Pending, out System.DateTimeOffset? LastRun, out string? LastCode) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastCode.get -> string?
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastCode.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastRun.get -> System.DateTimeOffset?
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastRun.init -> void
+Aw.Context.Core.Facade.IContextProjects
+Aw.Context.Core.Facade.IContextProjects.Projects(Aw.Context.Core.Projects.ProjectFactsRequest! request, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Projects.ProjectFactsAnswer!>!>
+Aw.Context.Core.Projects.ProjectFact
+Aw.Context.Core.Projects.ProjectFact.<Clone>$() -> Aw.Context.Core.Projects.ProjectFact!
+Aw.Context.Core.Projects.ProjectFact.ClosedAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Projects.ProjectFact.ClosedAt.init -> void
+Aw.Context.Core.Projects.ProjectFact.Counting.get -> bool
+Aw.Context.Core.Projects.ProjectFact.Counting.init -> void
+Aw.Context.Core.Projects.ProjectFact.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Description, out string? Url, out string? StateRaw, out string? Health, out System.DateTimeOffset? DueAt, out Aw.Context.Core.Sources.UserRef? Lead, out bool LeadIsOwner, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out int OpenIssues, out int? OpenPrs, out System.DateTimeOffset? LastActivity, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>? Repos, out bool Counting) -> void
+Aw.Context.Core.Projects.ProjectFact.Description.get -> string?
+Aw.Context.Core.Projects.ProjectFact.Description.init -> void
+Aw.Context.Core.Projects.ProjectFact.DueAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Projects.ProjectFact.DueAt.init -> void
+Aw.Context.Core.Projects.ProjectFact.Equals(Aw.Context.Core.Projects.ProjectFact? other) -> bool
+Aw.Context.Core.Projects.ProjectFact.Health.get -> string?
+Aw.Context.Core.Projects.ProjectFact.Health.init -> void
+Aw.Context.Core.Projects.ProjectFact.Key.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Projects.ProjectFact.Key.init -> void
+Aw.Context.Core.Projects.ProjectFact.LastActivity.get -> System.DateTimeOffset?
+Aw.Context.Core.Projects.ProjectFact.LastActivity.init -> void
+Aw.Context.Core.Projects.ProjectFact.Lead.get -> Aw.Context.Core.Sources.UserRef?
+Aw.Context.Core.Projects.ProjectFact.Lead.init -> void
+Aw.Context.Core.Projects.ProjectFact.LeadIsOwner.get -> bool
+Aw.Context.Core.Projects.ProjectFact.LeadIsOwner.init -> void
+Aw.Context.Core.Projects.ProjectFact.OpenIssues.get -> int
+Aw.Context.Core.Projects.ProjectFact.OpenIssues.init -> void
+Aw.Context.Core.Projects.ProjectFact.OpenPrs.get -> int?
+Aw.Context.Core.Projects.ProjectFact.OpenPrs.init -> void
+Aw.Context.Core.Projects.ProjectFact.ProjectFact(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Description, string? Url, string? StateRaw, string? Health, System.DateTimeOffset? DueAt, Aw.Context.Core.Sources.UserRef? Lead, bool LeadIsOwner, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, int OpenIssues, int? OpenPrs, System.DateTimeOffset? LastActivity, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>? Repos, bool Counting) -> void
+Aw.Context.Core.Projects.ProjectFact.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>?
+Aw.Context.Core.Projects.ProjectFact.Repos.init -> void
+Aw.Context.Core.Projects.ProjectFact.StateRaw.get -> string?
+Aw.Context.Core.Projects.ProjectFact.StateRaw.init -> void
+Aw.Context.Core.Projects.ProjectFact.Title.get -> string!
+Aw.Context.Core.Projects.ProjectFact.Title.init -> void
+Aw.Context.Core.Projects.ProjectFact.UpdatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.Projects.ProjectFact.UpdatedAt.init -> void
+Aw.Context.Core.Projects.ProjectFact.Url.get -> string?
+Aw.Context.Core.Projects.ProjectFact.Url.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer
+Aw.Context.Core.Projects.ProjectFactsAnswer.<Clone>$() -> Aw.Context.Core.Projects.ProjectFactsAnswer!
+Aw.Context.Core.Projects.ProjectFactsAnswer.Catalog.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>!
+Aw.Context.Core.Projects.ProjectFactsAnswer.Catalog.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Deconstruct(out Aw.Context.Core.Sources.UserRef? Owner, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>! Projects, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>! Catalog, out System.Collections.Generic.IReadOnlyList<string!>! Teams, out bool FirstReadDone) -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Equals(Aw.Context.Core.Projects.ProjectFactsAnswer? other) -> bool
+Aw.Context.Core.Projects.ProjectFactsAnswer.FirstReadDone.get -> bool
+Aw.Context.Core.Projects.ProjectFactsAnswer.FirstReadDone.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Owner.get -> Aw.Context.Core.Sources.UserRef?
+Aw.Context.Core.Projects.ProjectFactsAnswer.Owner.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.ProjectFactsAnswer(Aw.Context.Core.Sources.UserRef? Owner, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>! Projects, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>! Catalog, System.Collections.Generic.IReadOnlyList<string!>! Teams, bool FirstReadDone) -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Projects.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>!
+Aw.Context.Core.Projects.ProjectFactsAnswer.Projects.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Teams.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Projects.ProjectFactsAnswer.Teams.init -> void
+Aw.Context.Core.Projects.ProjectFactsRequest
+Aw.Context.Core.Projects.ProjectFactsRequest.<Clone>$() -> Aw.Context.Core.Projects.ProjectFactsRequest!
+Aw.Context.Core.Projects.ProjectFactsRequest.Attached.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
+Aw.Context.Core.Projects.ProjectFactsRequest.Attached.init -> void
+Aw.Context.Core.Projects.ProjectFactsRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Attached) -> void
+Aw.Context.Core.Projects.ProjectFactsRequest.Equals(Aw.Context.Core.Projects.ProjectFactsRequest? other) -> bool
+Aw.Context.Core.Projects.ProjectFactsRequest.ProjectFactsRequest(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Attached) -> void
+Aw.Context.Core.Records.IRecordStore.ProjectFacts(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ProjectRow!>!>!>
+Aw.Context.Core.Records.ProjectRow.<Clone>$() -> Aw.Context.Core.Records.ProjectRow!
+Aw.Context.Core.Records.ProjectRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Health, out System.DateOnly? DueAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string? LeadRef, out string? LeadName, out int OpenIssues, out System.DateTimeOffset? NewestIssueAt, out string? Description) -> void
+override Aw.Context.Core.Projects.ProjectFact.Equals(object? obj) -> bool
+override Aw.Context.Core.Projects.ProjectFact.GetHashCode() -> int
+override Aw.Context.Core.Projects.ProjectFact.ToString() -> string!
+override Aw.Context.Core.Projects.ProjectFactsAnswer.Equals(object? obj) -> bool
+override Aw.Context.Core.Projects.ProjectFactsAnswer.GetHashCode() -> int
+override Aw.Context.Core.Projects.ProjectFactsAnswer.ToString() -> string!
+override Aw.Context.Core.Projects.ProjectFactsRequest.Equals(object? obj) -> bool
+override Aw.Context.Core.Projects.ProjectFactsRequest.GetHashCode() -> int
+override Aw.Context.Core.Projects.ProjectFactsRequest.ToString() -> string!
+static Aw.Context.Core.Projects.ProjectFact.operator !=(Aw.Context.Core.Projects.ProjectFact? left, Aw.Context.Core.Projects.ProjectFact? right) -> bool
+static Aw.Context.Core.Projects.ProjectFact.operator ==(Aw.Context.Core.Projects.ProjectFact? left, Aw.Context.Core.Projects.ProjectFact? right) -> bool
+static Aw.Context.Core.Projects.ProjectFactsAnswer.operator !=(Aw.Context.Core.Projects.ProjectFactsAnswer? left, Aw.Context.Core.Projects.ProjectFactsAnswer? right) -> bool
+static Aw.Context.Core.Projects.ProjectFactsAnswer.operator ==(Aw.Context.Core.Projects.ProjectFactsAnswer? left, Aw.Context.Core.Projects.ProjectFactsAnswer? right) -> bool
+static Aw.Context.Core.Projects.ProjectFactsRequest.operator !=(Aw.Context.Core.Projects.ProjectFactsRequest? left, Aw.Context.Core.Projects.ProjectFactsRequest? right) -> bool
+static Aw.Context.Core.Projects.ProjectFactsRequest.operator ==(Aw.Context.Core.Projects.ProjectFactsRequest? left, Aw.Context.Core.Projects.ProjectFactsRequest? right) -> bool
+Aw.Context.Core.Records.ProjectRow
+Aw.Context.Core.Records.ProjectRow.ClosedAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Records.ProjectRow.ClosedAt.init -> void
+Aw.Context.Core.Records.ProjectRow.DueAt.get -> System.DateOnly?
+Aw.Context.Core.Records.ProjectRow.DueAt.init -> void
+Aw.Context.Core.Records.ProjectRow.Equals(Aw.Context.Core.Records.ProjectRow? other) -> bool
+Aw.Context.Core.Records.ProjectRow.Health.get -> string?
+Aw.Context.Core.Records.ProjectRow.Health.init -> void
+Aw.Context.Core.Records.ProjectRow.Key.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Records.ProjectRow.Key.init -> void
+Aw.Context.Core.Records.ProjectRow.LeadName.get -> string?
+Aw.Context.Core.Records.ProjectRow.LeadName.init -> void
+Aw.Context.Core.Records.ProjectRow.LeadRef.get -> string?
+Aw.Context.Core.Records.ProjectRow.LeadRef.init -> void
+Aw.Context.Core.Records.ProjectRow.NewestIssueAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Records.ProjectRow.NewestIssueAt.init -> void
+Aw.Context.Core.Records.ProjectRow.OpenIssues.get -> int
+Aw.Context.Core.Records.ProjectRow.OpenIssues.init -> void
+Aw.Context.Core.Records.ProjectRow.ProjectRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Health, System.DateOnly? DueAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, string? LeadRef, string? LeadName, int OpenIssues, System.DateTimeOffset? NewestIssueAt, string? Description = null) -> void
+Aw.Context.Core.Records.ProjectRow.StateRaw.get -> string?
+Aw.Context.Core.Records.ProjectRow.StateRaw.init -> void
+Aw.Context.Core.Records.ProjectRow.Title.get -> string!
+Aw.Context.Core.Records.ProjectRow.Title.init -> void
+Aw.Context.Core.Records.ProjectRow.UpdatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.Records.ProjectRow.UpdatedAt.init -> void
+Aw.Context.Core.Records.ProjectRow.Url.get -> string?
+Aw.Context.Core.Records.ProjectRow.Url.init -> void
+Aw.Context.Core.Sources.UserRef
+Aw.Context.Core.Sources.UserRef.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out string? Name) -> void
+Aw.Context.Core.Sources.UserRef.Equals(Aw.Context.Core.Sources.UserRef other) -> bool
+Aw.Context.Core.Sources.UserRef.Id.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Sources.UserRef.Id.init -> void
+Aw.Context.Core.Sources.UserRef.Name.get -> string?
+Aw.Context.Core.Sources.UserRef.Name.init -> void
+Aw.Context.Core.Sources.UserRef.UserRef() -> void
+Aw.Context.Core.Sources.UserRef.UserRef(Aw.Context.Core.Sources.ExternalId Id, string? Name) -> void
+override Aw.Context.Core.Records.ProjectRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.ProjectRow.GetHashCode() -> int
+override Aw.Context.Core.Records.ProjectRow.ToString() -> string!
+override Aw.Context.Core.Sources.UserRef.GetHashCode() -> int
+static Aw.Context.Core.Records.ProjectRow.operator !=(Aw.Context.Core.Records.ProjectRow? left, Aw.Context.Core.Records.ProjectRow? right) -> bool
+static Aw.Context.Core.Records.ProjectRow.operator ==(Aw.Context.Core.Records.ProjectRow? left, Aw.Context.Core.Records.ProjectRow? right) -> bool
+static Aw.Context.Core.Sources.UserRef.operator !=(Aw.Context.Core.Sources.UserRef left, Aw.Context.Core.Sources.UserRef right) -> bool
+static Aw.Context.Core.Sources.UserRef.operator ==(Aw.Context.Core.Sources.UserRef left, Aw.Context.Core.Sources.UserRef right) -> bool
+~override Aw.Context.Core.Sources.UserRef.Equals(object obj) -> bool
+~override Aw.Context.Core.Sources.UserRef.ToString() -> string
+Aw.Context.Core.Records.RecordAudience
+Aw.Context.Core.Records.RecordAudience.<Clone>$() -> Aw.Context.Core.Records.RecordAudience!
+Aw.Context.Core.Records.RecordAudience.Allowed.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>!
+Aw.Context.Core.Records.RecordAudience.Allows(Aw.Context.Core.Records.AudienceKey? audience, Aw.Context.Core.Sources.RecordKey record) -> bool
+Aw.Context.Core.Records.RecordAudience.Deconstruct(out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>! Allowed, out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>! Records) -> void
+Aw.Context.Core.Records.RecordAudience.Equals(Aw.Context.Core.Records.RecordAudience? other) -> bool
+Aw.Context.Core.Records.RecordAudience.RecordAudience(System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>! Allowed, System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>! Records) -> void
+Aw.Context.Core.Records.RecordAudience.Records.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
+override Aw.Context.Core.Records.RecordAudience.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.RecordAudience.GetHashCode() -> int
+override Aw.Context.Core.Records.RecordAudience.ToString() -> string!
+static Aw.Context.Core.Records.RecordAudience.operator !=(Aw.Context.Core.Records.RecordAudience? left, Aw.Context.Core.Records.RecordAudience? right) -> bool
+static Aw.Context.Core.Records.RecordAudience.operator ==(Aw.Context.Core.Records.RecordAudience? left, Aw.Context.Core.Records.RecordAudience? right) -> bool
+Aw.Context.Core.Records.RecordAudience.Allowed.init -> void
+Aw.Context.Core.Records.RecordAudience.Records.init -> void
+Aw.Context.Core.Linear.LinearIdentifiers
+static Aw.Context.Core.Linear.LinearIdentifiers.AliasesOf(Aw.Context.Core.Sources.RecordKey key, string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string![]!
+static Aw.Context.Core.Linear.LinearIdentifiers.FromPermalink(string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string?
+Aw.Context.Core.Linking.IIntentStore.SetAliases(Aw.Context.Core.Sources.RecordKey record, string! version, System.Collections.Generic.IReadOnlyList<string!>! aliases, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Records.StoredRecord.Description.get -> string?
+Aw.Context.Core.Records.StoredRecord.Description.init -> void
+Aw.Context.Core.Sync.RecordItem.Description.get -> string?
+Aw.Context.Core.Sync.RecordItem.Description.init -> void
+Aw.Context.Core.Records.ProjectRow.Description.get -> string?
+Aw.Context.Core.Records.ProjectRow.Description.init -> void
+const Aw.Context.Core.Sync.RecordBatches.MaxDescription = 4000 -> int

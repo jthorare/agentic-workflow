@@ -214,7 +214,7 @@ and the person's choice survives a read. The progress strip is one 4 px segment 
 can't open itself (`ApproveProfile`, `ApproveAllRecipes`) is the existing `ProtectedActionButton` with the catalog's command to copy; `ApproveAllRecipes` and the profile's approval row open in the app
 when the shell can; the map shows **Retry** only when it failed, which sends `RefreshContextMap` (`POST /sindri/context/map/refresh`; the client is `ISindriApi.RefreshContextMap`). Retry sends once, the
 row shows Working until the next read, and a 409 `SND-JOB-409` (the running job) shows as already building, not as an error. Fallbacks: a 404 says "Setup isn't available in this build yet."; no answer
-says "Sindri isn't running" with the launcher command and no Start button. Not built here (slices 1, 3, 4): the typed and held confirmations in their rows, the per-agent list, the Onyx form and the
+says "Sindri isn't running" with the launcher command and no Start button. Not built here (slices 1, 3, 4): the typed and held confirmations in their rows, the per-agent list and the
 repo form.
 
 ### LiveSetting on macOS (§11.4, §18.2; U0 spike)
@@ -623,6 +623,7 @@ message, which names the full path; the path shows shortened (`~/…`) on its ow
 | Services | `services[]` | `heartbeat · every 5s · last run 12:00:05Z` (`not run yet`) |
 | Last event | the newest stream event | `service.heartbeat · 12:00:05Z · #42` |
 | Code index (CI-10b) | `GET /sindri/code-index/status` (`repos[]`: `state`, `commit`, `builtAt`, `layers[]`) | One wrapped line per repo, read on connect and after each event: `repo @ abcdef0, 3 min old, structure ok · graph ok · embeddings pending 31%` (its accessible name starts "Code index: "), and a word at the heading, `ok` or `needs a look`. By state: `missing` "first build queued", `damaged` "damaged, rebuilding on the next check", `stale` "(behind main)", `building`, `waiting` "waiting for a free build slot"; a state the app doesn't know shows as served. A layer reads `ok`, `off`, `pending N%` (from "N of M embedded") or `unavailable (SND-CODEIDX-…)`; clones and deps show only when they need a look. A failed read says "The code index can't be read just now." |
+| Sandbox (SB-6) | `GET /sindri/sandbox/status` (`checkedAt`, `ready`, `blockers[]`, `mechanism`, `groups`, `limits`, `learn[]`) | One row, `Sandbox: ready`, `Sandbox: <the first blocker's sentence>`, `Sandbox: learning, network open for <repo>, ends in <days> days` (a warning), `Sandbox: not checked yet` (`checkedAt` null) or, with Sindri down, a dimmed `Sandbox: unknown`. Read on connect and after each event; the route never probes, Check again does. States in `Golden/Sandbox/states.json` `healthRow` |
 
 **The Context map card (F1P-c, code index spec 6.4).** Up front under the actions, above Details: the eyebrow `CONTEXT MAP`, the state as a glyph and a word at its right, and Sindri's sentences under it. It reads `GET /sindri/context/map/publish` (`ISindriApi.MapPublish`) with the other followed views, on connect and after every event, and shows nothing while the read is refused (no map yet, `SND-CONTEXT-030`).
 
@@ -838,12 +839,33 @@ A read-only sheet for `recipe/<id>[@<hash>]` (`RecipeSheetViewModel`, `Views/Rec
 
 ## Sandbox surfaces (sandbox spec §8; SB-0 goldens, SB-6 views)
 
-The park card with Check again and its resume list, the Sandbox line, the Blocked list with Allow, the waiting state, the limit ending, the
-takeover banner, and the Health and Settings rows are built in SB-6 over goldens that SB-0 pins in `tests/Aw.Sindri.Tests/Golden/Sandbox/`
-(`copy.json`, `states.json`, `accessibility.json`, `doctor.json`, the status lines, the banner). `Aw.Sindri.Ui.Tests` links that directory as
-`Golden/Sandbox`. The vocabulary is "sandbox", "limit" and "blocked"; "scope", "plan", "canary" and "confined" never appear in an owner string.
-The accessibility rows of `accessibility.json` use this page's terms (polite zero-width live `TextBlock`, `KeepFocus`, the region resting on
-its label before a repeat outcome) and each gets a test in SB-6.
+The surfaces are built in SB-6 over goldens that SB-0 pins in `tests/Aw.Sindri.Tests/Golden/Sandbox/` (`copy.json`, `states.json`,
+`accessibility.json`, `doctor.json`, the status lines, the banner). `Aw.Sindri.Ui.Tests` links that directory as `Golden/Sandbox`. The
+vocabulary is "sandbox", "limit" and "blocked"; "scope", "plan", "canary" and "confined" never appear in an owner string. The accessibility
+rows use this page's terms (polite zero-width live `TextBlock`, `KeepFocus`, the region resting on its label before a repeat outcome) and
+each gets a test.
+
+| Surface | Where it sits | States (`states.json`) | Accessibility (`accessibility.json`) |
+|---|---|---|---|
+| Park card | Needs you, a card for a Step parked on a sandbox code | `parkCard`: never checked (`Needs you: Step <x> can't start, <first clause>`), `Checked <age> ago`, `Checked just now` | A focus-region group (`ControlTypeOverride=Group`) with its fix text before its buttons; named by the sentence, never the code; focus goes to its heading when a user action shows it, and to its neighbour after "Ready. Resuming <n> Steps"; severity as a word and an icon |
+| Check again | The park card and the Health row | `checkAgain`: idle, in flight (`Sending…` after 300 ms, a second click does nothing), still failing (`Still blocked: <n> things to fix`, every blocker listed), all clear, resumed, resumed partial | Enter and Space with the 2 px ring; a zero-width polite live `TextBlock` present before its state, its text never set to `""`; focus stays on the button; the region rests on the label before a repeat outcome |
+| Resume list | Under Check again once nothing blocks | `Ready. Resume these <n> Steps?`, Resume and Not now, oldest first, no more than the free session slots; then `Resumed <n> Steps` or `Resumed <n> of <m>: <item> has moved on` | The list is read before the buttons; Resume first; Not now returns focus to Check again |
+| Sandbox line | The Agents sheet | `sandboxLine`: on, attended, details unavailable, status unavailable (dimmed); headroom `memory <used> of <max> GiB` | In the sheet's tab order; wraps; state as a word |
+| Blocked list | The item sheet | `blockedList`: none, some, many (`top 5 of <n>`, See all blocked), host, path, permanent path (no button), tool (no button) | Reads by kind; each fix button reachable |
+| Allow | A Blocked row | `allow`: idle, sending, needs approval, allowed, refused | The button keeps focus through every state; a polite live `TextBlock` says "Sending", then "Needs your approval: open the approval to allow <target>", then "Allowed" or "Refused" |
+| Waiting for a slot | The run's row | `waiting`: `Waiting for a free session slot (<n> of <cap> running)`, then `Started` | A polite zero-width live `TextBlock` present before its state, once; takes no focus; a word, never red |
+| Limit ending | The failure row of a Step | `limitEnding`: memory or time, with or without a kept branch | The whole sentence; in the failure row |
+| Takeover banner | A taken-over sandboxed run | `takeover-banner.txt` | A polite zero-width live `TextBlock`, read once on appearance; takes no focus; dismissible once, back after reattach |
+| Health row | Health page | `healthRow`: ready, blocked, learning (a warning), unknown (dimmed), not checked yet | Row name `Sandbox: <state>`; wraps; state as a word |
+| Settings section | Settings | `settingsSection`: loaded (mechanism, groups, limits, learn mode), learning, details unavailable, status unavailable (dimmed) | Learn mode reads "learning, ends in <days> days" |
+
+**Fixture and mockups.** `scripts/sindri-ui-fixture.sh sandbox <state>` seeds the states. `blocked` and `clear` restart the control plane (after
+`sessions up`) with `AW_SANDBOX_BWRAP=/nonexistent` or with it unset, because `/sindri/sandbox/status` and `/check` need a live answer that ledger rows
+can't fake (`clear` needs a working bubblewrap); `blocked` also starts the agent-run recipe so a Step parks on `SND-LAUNCH-014` (run it twice for two
+parked Steps). `denials`, `denials-many`, `waiting`, `limit-memory`, `limit-wall`, `learning`, `takeover` and `attended` write ledger rows on an
+existing item and instance, as `model-picks` does. The mockups are `sandbox-park.html`, `sandbox-sheet.html` and `sandbox-health.html` in the
+screens mockups folder, with matching entries in `docs/sindri/ui-evidence/screens.json`.
+
 ## U5': the Start form (screens spec §4.2)
 
 `N` on Workflows, the Workflows head's and Home's "Start workflow" buttons (Home's carries no key hint: `N` is Workflows'), Ctrl+N (⌘N) from any page and the palette's "Start workflow" entry open a modal form (`StartDialog`, `StartFormViewModel`). With an item sheet open it starts for that item.
@@ -883,7 +905,7 @@ The contract (T0): `GET /sindri/sessions` and `GET /sindri/sessions/{provider}/{
 
 **Views.** `Views/Agents/AgentsPage` (the head "N live · M asking · K outside a workflow", the provider, state and repo filters, the problem lines, the groups and the "Recently ended" fold), `SessionGroup`, `SessionRow` (chip, provider and title as a button that opens the sheet, where it runs, how long, and the pending Focus with its copy line), `EndedSessionRow` (with the resume command and Copy) and `SessionSheetView` (the 520 px sheet: cwd, host, socket, state history, the pending Focus, and `LivePreviewHost`, the collapsed seam CO-7c fills). Rows are kept by ref across reads, so a refresh moves neither focus nor scroll. Every named line is a Border wrapper, and a row's name is provider, title, state, what it asks and host.
 
-**Routes and codes.** The page reads `GET /sindri/sessions` every 2 s while it is shown and the window is not minimised; the sheet reads `GET /sindri/sessions/{provider}/{id}` and again on every event while open. `SND-SESSION-002` (the collector cannot see sessions on this system) is the page's one line, with no rows and the filters disabled; `SND-SESSION-404` is the sheet's "This session has ended." (the sheet stays open, Focus disabled); `SND-SESSION-001` and `-003` are problem lines above a list that still draws. None of them is a Not responding banner.
+**Routes and codes.** The page reads `GET /sindri/sessions` every 5 s (`AgentsPageViewModel.PollEvery`) while it is shown and the window is not minimised; the sheet reads `GET /sindri/sessions/{provider}/{id}` and again on every event while open. `SND-SESSION-002` (the collector cannot see sessions on this system) is the page's one line, with no rows and the filters disabled; `SND-SESSION-404` is the sheet's "This session has ended." (the sheet stays open, Focus disabled); `SND-SESSION-001` and `-003` are problem lines above a list that still draws. None of them is a Not responding banner.
 
 **Keys.** `G A` opens the page; `J` / `K` walk the rows; Enter or the title opens the sheet and Esc returns focus to the row that opened it; `O` moves focus to the row's copy line; `Y` copies it (an ended row's resume command); `E` opens or closes the fold.
 

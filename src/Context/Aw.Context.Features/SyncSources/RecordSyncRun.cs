@@ -37,7 +37,7 @@ internal sealed class RecordSyncRun(RecordFeed feed, IRecordStore store, (Scrubb
         var stored = await store.Position(feed.Source, cancellationToken).ConfigureAwait(false);
         if (stored.IsError)
         {
-            return Row(stored.Error.Code);
+            return Failed(stored.Error);
         }
 
         var position = stored.Value;
@@ -52,7 +52,7 @@ internal sealed class RecordSyncRun(RecordFeed feed, IRecordStore store, (Scrubb
             var step = await Step(position, cancellationToken).ConfigureAwait(false);
             if (step.IsError)
             {
-                return Row(step.Error.Code);
+                return Failed(step.Error);
             }
 
             if (step.Value is not { } after)
@@ -134,6 +134,15 @@ internal sealed class RecordSyncRun(RecordFeed feed, IRecordStore store, (Scrubb
         phase == SyncPhase.Recent ? position with { Phase = SyncPhase.Backfill, BackfillBefore = recentStart } : position with { Phase = SyncPhase.Incremental };
 
     private static DateTimeOffset Max(DateTimeOffset a, DateTimeOffset b) => a > b ? a : b;
+
+    /// <summary>The message of the error the last <see cref="Execute"/> ended with, unscrubbed; null when it did not end with one. The caller scrubs it before it is stored.</summary>
+    public string? ErrorMessage { get; private set; }
+
+    private SourceSync Failed(Error error)
+    {
+        ErrorMessage = error.Message;
+        return Row(error.Code);
+    }
 
     private SourceSync Row(string? code) => new(feed.Source, _written, _fetched, _unchanged, Linked: 0, Unlinked: 0, Orphaned: 0, Decisions: 0, Queued: 0, Refused: 0, Tokens: 0, code);
 }

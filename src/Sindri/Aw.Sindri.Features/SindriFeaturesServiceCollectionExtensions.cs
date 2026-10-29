@@ -8,7 +8,6 @@ using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow.ApproveAll;
@@ -66,11 +65,6 @@ using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
-using Aw.Sindri.Features.OnyxAccount;
-using Aw.Sindri.Features.OnyxDown;
-using Aw.Sindri.Features.OnyxEnsure;
-using Aw.Sindri.Features.OnyxStatus;
-using Aw.Sindri.Features.OnyxUp;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.PingProcess;
@@ -132,7 +126,6 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IService<InitProfileRequest, InitProfileResponse>, InitProfileService>()
             .AddScoped<IService<ScrubRequest, ScrubResponse>, ScrubService>()
             .AddDoctor()
-            .AddOnyxStatus()
             .AddScoped<ServeRecords>()
             .AddScoped<IService<RegisterMcpRequest, RegisterMcpResponse>, RegisterMcpService>()
             .AddScoped<IService<GetRepoStatusRequest, GetRepoStatusResponse>, GetRepoStatusService>()
@@ -243,7 +236,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     private static IServiceCollection AddDoctor(this IServiceCollection services) => services
         .AddScoped<ProfileFacts>()
         .AddScoped<LedgerFacts>().AddScoped<RuntimeFacts>()
-        .AddScoped<OnyxDoctor>().AddScoped<LinearDoctor>()
+        .AddScoped<LinearDoctor>()
         .AddScoped<ContextEngineChecks>()
         .AddScoped<RunDoctorService>()
         .AddScoped<IService<RunDoctorRequest, RunDoctorResponse>>(static sp =>
@@ -252,22 +245,8 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<IDoctorChecks, LauncherDoctorChecks>().AddScoped<IDoctorChecks, AgentTargetDoctor>()   // #1428: `agent:target`
         .AddScoped<IDoctorChecks, PrWatchDoctorChecks>()                                   // PB spec API15: the PR watcher's last run
         .AddScoped<IDoctorChecks, SetupDoctor>()                                           // SO-A6: `setup`, ok when every step is done or skipped
-        .AddScoped<IDoctorChecks, OnyxStackDoctor>()                                       // Onyx P2: `onyx:stack`, after the context rows, only once `onyx up` has run
-        .AddSingleton<OnyxReadiness>()
-        .AddScoped<OnyxDockerWait>()                                                       // `onyx up` waits for a Docker that is starting (scoped: it re-inspects through the scope's OnyxFacts)
-        .AddSingleton<IOnyxUpStep, OnyxFetchStep>()                                         // Onyx P2: the steps of `onyx up`, in this order
-        .AddSingleton<IOnyxUpStep, OnyxConfigStep>()
-        .AddSingleton<IOnyxUpStep, OnyxPullStep>()
-        .AddSingleton<IOnyxUpStep, OnyxStartStep>()
-        .AddScoped<IService<OnyxUpRequest, OnyxUpResponse>, OnyxUpService>()
-        .AddScoped<IManagedOnyx, ManagedOnyx>()                                            // Onyx P4: serve starts a managed Onyx and the needs-you list says when it needs you
-        .AddScoped<OnyxKeyMinter>()
-        .AddScoped<OnyxAccountService>().AddScoped<IService<OnyxAccountRequest, OnyxAccountResponse>>(static sp => sp.GetRequiredService<OnyxAccountService>())   // Onyx P3: sign-up hand-off, Sindri's key, the profile section
-        .AddScoped<IService<OnyxDownRequest, OnyxDownResponse>, OnyxDownService>();
+        .AddScoped<IDoctorChecks, Leftovers.OnyxLeftoverDoctor>();                                // #1598: `index:onyx-leftover`, only while an old `onyx up` left something
 
-    /// <summary>Onyx's status (P1): read-only and in process, like the doctor, but its own slice.</summary>
-    private static IServiceCollection AddOnyxStatus(this IServiceCollection services) => services
-        .AddScoped<IService<OnyxStatusRequest, OnyxStatusResponse>, OnyxStatusService>();
 
     /// <summary>The registry's slices (engine P2): register, approve and revoke (commands), the challenge (an issue), list and show (queries).</summary>
     private static IServiceCollection AddRegistrySlices(this IServiceCollection services)

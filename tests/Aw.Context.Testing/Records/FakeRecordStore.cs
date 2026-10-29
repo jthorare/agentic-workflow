@@ -12,6 +12,8 @@ public sealed class FakeRecordStore : IRecordStore
     private readonly Dictionary<RecordKey, StoredRecord> _records = [];
     private readonly Dictionary<RecordKey, List<RecordChunk>> _chunks = [];
     private readonly Dictionary<SourceId, SyncPosition> _positions = [];
+    private readonly Dictionary<SourceId, SyncOutcome> _outcomes = [];
+    private readonly Dictionary<SourceId, SourceBackoffState> _backoffs = [];
     private readonly List<VectorRow> _vectors = [];
     private long _seq;
     private long _recordStamp;
@@ -86,6 +88,44 @@ public sealed class FakeRecordStore : IRecordStore
         lock (_gate)
         {
             return Ok(_positions.GetValueOrDefault(source) ?? SyncPosition.Start);
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _outcomes[source] = outcome;
+            return Ok(1);
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok(_outcomes.GetValueOrDefault(source));
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _backoffs[source] = SourceBackoff.Apply(_backoffs.GetValueOrDefault(source, SourceBackoffState.None), attempt);
+            return Ok(1);
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok(_backoffs.GetValueOrDefault(source, SourceBackoffState.None));
         }
     }
 
@@ -181,6 +221,25 @@ public sealed class FakeRecordStore : IRecordStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var live = _records.Values.Where(r => !r.Blocked && r.RemovedAt is null).ToList();
+            var embedded = new HashSet<RecordKey>();
+            foreach (var vector in _vectors.Where(v => v.Vector.Space == VectorSpace.Chunk))
+            {
+                if (ChunkKey.TryParse(vector.Vector.Key, out var chunk))
+                {
+                    _ = embedded.Add(chunk.Record);
+                }
+            }
+
+            return Ok(new LiveRecordCounts(live.Count, live.Count(r => embedded.Contains(r.Key))));
+        }
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -189,6 +248,30 @@ public sealed class FakeRecordStore : IRecordStore
             var chunks = keys.SelectMany(k => (_chunks.GetValueOrDefault(k) ?? []).Select(c => new ChunkKey(k, c.Seq).ToString())).ToHashSet(StringComparer.Ordinal);
             return Ok(new SourceCounts(keys.Count, chunks.Count, _vectors.Count(v => v.Vector.Space == VectorSpace.Chunk && chunks.Contains(v.Vector.Key))));
         }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(audience);
+        lock (_gate)
+        {
+            var rows = _records.Values
+                .Where(r => r.Source == source && r.Kind == RecordKind.Project && r.RemovedAt is null && !r.Blocked && audience.Allows(r.Audience, r.Key))
+                .Select(project => ProjectRowOf(project, audience))
+                .OrderBy(r => r.Title, StringComparer.Ordinal).ThenBy(r => r.Key.Value, StringComparer.Ordinal);
+            return Ok<IReadOnlyList<ProjectRow>>([.. rows]);
+        }
+    }
+
+    private ProjectRow ProjectRowOf(StoredRecord project, RecordAudience audience)
+    {
+        var lead = project.Links.Where(l => l.Kind == RecordLinkKind.LedBy).OrderBy(l => l.ToRef, StringComparer.Ordinal).FirstOrDefault();
+        var issues = _records.Values
+            .Where(i => i.Kind == RecordKind.Issue && i.RemovedAt is null && audience.Allows(i.Audience, i.Key) && i.Links.Any(l => l.Kind == RecordLinkKind.InProject && l.ToRef == project.Key.Value))
+            .ToList();
+        return new ProjectRow(project.Key, project.Title, project.Url, project.StateRaw, project.Health, project.DueAt, project.UpdatedAt ?? project.SyncedAt, project.ClosedAt,
+            lead?.ToRef, lead?.Title, issues.Count(i => i.State == RecordState.Open), issues.Max(i => i.UpdatedAt), project.Description);
     }
 
     /// <inheritdoc />
@@ -205,6 +288,7 @@ public sealed class FakeRecordStore : IRecordStore
             }
 
             _ = _positions.Remove(source);
+            _ = _outcomes.Remove(source);
             return Ok(keys.Count);
         }
     }
@@ -241,7 +325,7 @@ public sealed class FakeRecordStore : IRecordStore
             {
                 tombstoned++;
                 DropChunkVectors((_chunks.GetValueOrDefault(key) ?? []).Select(c => new ChunkKey(key, c.Seq).ToString()));
-                _records[key] = row with { RemovedAt = at };
+                _records[key] = row with { RemovedAt = at, Description = null };
                 _ = _chunks.Remove(key);
             }
         }

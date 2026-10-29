@@ -3,6 +3,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -12,6 +13,7 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -84,12 +86,20 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SyncReport>>(Down());
 
+    /// <summary>The fake keeps no records: a project read answers like every query (all sources unavailable).</summary>
+    public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<ProjectFactsAnswer>>(Down());
+
     /// <summary>An embed run answers like every query (all sources unavailable) unless the engine came from <see cref="WithEmbed"/>.</summary>
     public ValueTask<Result<EmbedRecordsReport>> Embed(EmbedRecordsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult(_embed is null ? (Result<EmbedRecordsReport>)Down() : _embed(request));
 
     /// <summary>The fake runs no feeds.</summary>
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<SyncReport>>(Down());
+
+    /// <summary>The fake runs no feeds.</summary>
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SyncReport>>(Down());
 
     /// <summary>The fake reads no records.</summary>
@@ -101,6 +111,9 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult<Result<IReadOnlyList<SourceProgress>>>(Down());
 
     /// <summary>The fake keeps no record store.</summary>
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<ConceptStatus>>(Down());
+
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SourceCounts>>(Down());
 

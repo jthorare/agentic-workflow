@@ -10,6 +10,7 @@ using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Proposals;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Trust;
@@ -26,11 +27,11 @@ using Aw.Context.Testing.Fixtures;
 using Aw.Context.Testing.Linking;
 using Aw.Context.Testing.Locks;
 using Aw.Context.Testing.Map;
+using Aw.Context.Testing.Records;
 using Aw.Context.Testing.Review;
 using Aw.Context.Testing.ScopeGraph;
 using Aw.Context.Tests.EvalProbes;
 using Aw.Context.Tests.Map;
-using Aw.Context.Tests.Onyx;
 using Aw.Context.Tests.Sync;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
@@ -40,7 +41,7 @@ using Microsoft.Extensions.Time.Testing;
 namespace Aw.Context.Tests.RunBacktest;
 
 /// <summary>
-/// The backtest over the split-panes fixture repo (real git, real merge history), the fake Onyx server (the briefs) and fakes for the rest, composed the way
+/// The backtest over the split-panes fixture repo (real git, real merge history), the stored Linear records (the briefs) and fakes for the rest, composed the way
 /// Sindri composes it (AddContextFeatures). The clock decides when the authored map is imported, which decides which cuts it reaches.
 /// </summary>
 internal sealed class BacktestWorld : IAsyncDisposable
@@ -51,16 +52,15 @@ internal sealed class BacktestWorld : IAsyncDisposable
     private GrownCorpus? _grown;
     private readonly string _home;
 
-    private BacktestWorld(FixtureRepo repo, (FakeOnyxServer Onyx, OnyxSourceHarness Harness) onyx, FakeTimeProvider clock, (Func<IRepoReader, IRepoReader>? Wrap, string? HomeUnder) options)
+    private BacktestWorld(FixtureRepo repo, FakeTimeProvider clock, (Func<IRepoReader, IRepoReader>? Wrap, string? HomeUnder, IReadOnlyList<SyntheticIssue>? Issues) options)
     {
         _home = Directory.CreateDirectory(Path.Combine(options.HomeUnder ?? Path.GetTempPath(), "aw-backtest-home-" + Path.GetRandomFileName())).FullName;
         Repo = repo;
-        (Onyx, Harness) = onyx;
         Clock = clock;
         Settings = new ContextStoreSettings(Path.Combine(_home, "context"));
-        var git = new GitCli();
-        var catalog = new FixedSourceCatalog(Harness.Source);
-        Briefs = new FlakyBriefSource(new OnyxBriefSource(catalog));
+        var (git, catalog) = (new GitCli(), new FixedSourceCatalog());
+        var records = Seeded(options.Issues);   // the issues the world seeds, stored as the Linear feed writes them
+        Briefs = new FlakyBriefSource(new StoreBriefSource(records));
         Reader.Put(MapPath, Maps.Fixture(), FixtureMap.Yaml);
         Profile = [new ContextRepo(ContextRepoName.From(FixtureMap.Repo), repo.Path)];
         _provider = new ServiceCollection()
@@ -77,7 +77,7 @@ internal sealed class BacktestWorld : IAsyncDisposable
             .AddSingleton<IProbeReportStore>(new NoProbes())
             .AddSingleton(options.Wrap?.Invoke(new GitRepoReader(git)) ?? new GitRepoReader(git))
             .AddSingleton<Context.Core.Code.ICodeSearch>(new Testing.Code.FakeCodeSearch(new ContextRepo(ContextRepoName.From("none"), "/none"), "0000000", new Dictionary<string, string>(StringComparer.Ordinal)))   // the backtest never asks the code lens
-            .AddSingleton<IIntentStore>(Intents).AddRecordFakes()
+            .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton<IRecordStore>(records)
             .AddSingleton<IModelPort>(Model)
             .AddSingleton<IClusterSource>(Clusters)
             .AddSingleton<ILabeler>(new FakeLabeler())
@@ -98,9 +98,13 @@ internal sealed class BacktestWorld : IAsyncDisposable
 
     public FlakyBriefSource Briefs { get; }
 
-    public FakeOnyxServer Onyx { get; }
-
-    public OnyxSourceHarness Harness { get; }
+    private static FakeRecordStore Seeded(IReadOnlyList<SyntheticIssue>? issues)
+    {
+        var records = new FakeRecordStore();
+        var seeded = records.Commit(RecordSamples.Batch(RecordSamples.Linear, 1, [.. LinearIssueSeed.From(issues)]), CancellationToken.None).AsTask().GetAwaiter().GetResult();
+        Assert.True(seeded.IsSuccess, seeded.IsError ? seeded.Error.Message : null);
+        return records;
+    }
 
     public FakeTimeProvider Clock { get; }
 
@@ -132,44 +136,29 @@ internal sealed class BacktestWorld : IAsyncDisposable
 
     /// <summary>Starts the world with its clock at <paramref name="now"/>.</summary>
     /// <param name="now">The time the authored map is imported at when <see cref="ImportMap"/> runs.</param>
-    /// <param name="onyx">Options for the fake Onyx server.</param>
     /// <param name="wrap">Wraps the git repo reader (to make a read fail).</param>
     /// <param name="homeUnder">A directory to make the state home in (inside a git worktree, to refuse writes with 005), or null for the temp directory.</param>
     /// <returns>The world.</returns>
-    public static async Task<BacktestWorld> Start(DateTimeOffset now, FakeServerOptions? onyx = null, Func<IRepoReader, IRepoReader>? wrap = null, string? homeUnder = null)
-    {
-        var repo = FixtureRepo.Build();
-        return await Start(repo, now, onyx, (wrap, homeUnder)).ConfigureAwait(false);
-    }
+    public static Task<BacktestWorld> Start(DateTimeOffset now, Func<IRepoReader, IRepoReader>? wrap = null, string? homeUnder = null) =>
+        Task.FromResult(new BacktestWorld(FixtureRepo.Build(), new FakeTimeProvider(now), (wrap, homeUnder, null)));
 
-    /// <summary>Starts the world over the grown synthetic corpus (32 pull requests, SPL-201 and up) and the fake Onyx serving its issues.</summary>
+    /// <summary>Starts the world over the grown synthetic corpus (32 pull requests, SPL-201 and up).</summary>
     /// <param name="now">The clock.</param>
     /// <param name="grown">The corpus; the world owns it and disposes it.</param>
     /// <returns>The world.</returns>
-    public static async Task<BacktestWorld> Start(DateTimeOffset now, GrownCorpus grown)
+    public static Task<BacktestWorld> Start(DateTimeOffset now, GrownCorpus grown)
     {
         ArgumentNullException.ThrowIfNull(grown);
-        var world = await Start(grown.Repo, now, new FakeServerOptions { OnyxDocuments = grown.Issues }, (null, null)).ConfigureAwait(false);
-        world._grown = grown;
-        return world;
+        return Task.FromResult(new BacktestWorld(grown.Repo, new FakeTimeProvider(now), (null, null, grown.Issues)) { _grown = grown });
     }
 
-    private static async Task<BacktestWorld> Start(FixtureRepo repo, DateTimeOffset now, FakeServerOptions? onyx, (Func<IRepoReader, IRepoReader>? Wrap, string? HomeUnder) options)
-    {
-        var server = await FakeOnyxServer.Start(onyx).ConfigureAwait(false);
-        var harness = new OnyxSourceHarness(server.Url, server.Token);
-        return new BacktestWorld(repo, (server, harness), new FakeTimeProvider(now), options);
-    }
-
-    /// <summary>The human's scope: the fixture repo, the fake Onyx and team SPL, plus any extra 'context:' keys.</summary>
+    /// <summary>The human's scope: the fixture repo and team SPL, plus any extra 'context:' keys.</summary>
     /// <param name="extra">Extra JSON members for the section (a leading comma is added), or null.</param>
-    /// <param name="onyx">False to leave the onyx source out of the profile.</param>
+    /// <param name="teams">False to leave the Linear teams out of the profile (no brief source can list issues).</param>
     /// <returns>The scope.</returns>
-    public ContextScope Human(string? extra = null, bool onyx = true)
+    public ContextScope Human(string? extra = null, bool teams = true)
     {
-        var sources = onyx
-            ? "{\"onyx\":{\"url\":\"" + Onyx.Url + "\",\"token\":\"" + OnyxSourceHarness.Pointer + "\",\"version\":\"v4.9.0\"},\"linear\":{\"teams\":[\"SPL\"]}}"
-            : """{"linear":{"teams":["SPL"]}}""";
+        var sources = teams ? """{"linear":{"teams":["SPL"]}}""" : "{}";
         return Scope(ContextCallerKind.Human, extra, sources);
     }
 
@@ -213,8 +202,6 @@ internal sealed class BacktestWorld : IAsyncDisposable
     {
         _scope.Dispose();
         await _provider.DisposeAsync();
-        Harness.Dispose();
-        await Onyx.DisposeAsync();
         if (_grown is null)
         {
             Repo.Dispose();

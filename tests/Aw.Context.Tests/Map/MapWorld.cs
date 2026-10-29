@@ -1,5 +1,6 @@
 using Aw.Context.Core.Code;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
@@ -23,6 +24,7 @@ using Aw.Context.Core.Walks;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features;
 using Aw.Context.Testing.Code;
+using Aw.Context.Testing.ConceptSynthesis;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Extract;
 using Aw.Context.Testing.Fixtures;
@@ -83,6 +85,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
             .AddSingleton<IConceptHintStore>(Hints)
+            .AddSingleton<IConceptSynthesisStore>(ConceptSynthesis)
             .AddSingleton<IExportStore>(Exports)
             .AddSingleton<IMapFileReader>(Reader)
             .AddSingleton<IScrubberFactory>(new FakeScrubberFactory())
@@ -139,6 +142,9 @@ internal sealed class MapWorld : IDisposable
     public FakeGraphStore Store { get; } = new();
 
     public FakeConceptHintStore Hints { get; } = new();
+
+    /// <summary>The synthesized concepts the index-decisions run writes.</summary>
+    public FakeConceptSynthesisStore ConceptSynthesis { get; } = new();
 
     public FakeDefaultBranch DefaultBranch { get; } = new();
 

@@ -72,7 +72,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         ApproveAll = new ApproveAllViewModel(Health.Catalog, () => Health.ApiUrl(), api, clock);
         Decision = new DecisionSheetViewModel(api, () => Health.ApiUrl(), clock, decisions, clipboard);
         InitNeedsYou(clipboard);
-        Inbox = InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher, (window ?? WindowPorts.None).Files);
+        Inbox = InitSandbox(InitInbox(api, clipboard, (window ?? WindowPorts.None).Launcher, (window ?? WindowPorts.None).Files));
         Strip = new WorkflowsStripViewModel(clipboard, clock);
         InitStrip();
         window ??= WindowPorts.None;
@@ -99,7 +99,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     {
         Health.Follow(Queue.Refresh);
         Health.Follow(Item.Refresh);
-        Health.Follow(Health.CodeIndex.Refresh);
+        Health.FollowCards();
     }
 
     /// <summary>The app's copy, for the view.</summary>

@@ -46,6 +46,32 @@ public interface IRecordStore
     /// <returns>Its position, <see cref="SyncPosition.Start"/> when it never committed.</returns>
     public ValueTask<Result<SyncPosition>> Position(SourceId source, CancellationToken cancellationToken);
 
+    /// <summary>Records how a source's last tick ended, keeping its cursor and phase as they are (a fresh process reads it back through <see cref="LastOutcome"/>).</summary>
+    /// <param name="source">The source.</param>
+    /// <param name="outcome">When the tick ended and the code it ended with, null for success.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Nothing on success.</returns>
+    public ValueTask<Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken);
+
+    /// <summary>Reads how a source's last tick ended.</summary>
+    /// <param name="source">The source.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The outcome, or null when no tick of it was recorded.</returns>
+    public ValueTask<Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken);
+
+    /// <summary>Records how a source's last tick went for its persisted backoff: a failure adds one to the failure count and sets the next try (5 minutes, doubling, at most 6 hours); a success resets both and sets the last commit. The cursor, phase and last outcome are kept as they are.</summary>
+    /// <param name="source">The source.</param>
+    /// <param name="attempt">How the tick ended.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Nothing on success.</returns>
+    public ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken);
+
+    /// <summary>Reads a source's persisted backoff and last commit.</summary>
+    /// <param name="source">The source.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The state, <see cref="SourceBackoffState.None"/> for a source that never ticked.</returns>
+    public ValueTask<Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken);
+
     /// <summary>Stores vectors. A chunk vector is stored only while its chunk exists with the same text hash, so a batch that finishes after a re-chunk stores nothing for it; a vector for a key and model that has one replaces it with a new 'Seq'.</summary>
     /// <param name="vectors">The vectors.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
@@ -79,6 +105,11 @@ public interface IRecordStore
     /// <returns>The counters.</returns>
     public ValueTask<Result<StoreStamps>> Stamps(CancellationToken cancellationToken);
 
+    /// <summary>Counts the live records (not removed, not blocked) and those with a chunk vector, in two queries, without paging the store.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The counts (zero for an empty store).</returns>
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken);
+
     /// <summary>Counts what one source holds, so a purge can say what it is about to delete.</summary>
     /// <param name="source">The source.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -90,4 +121,14 @@ public interface IRecordStore
     /// <param name="cancellationToken">Cancels the purge.</param>
     /// <returns>How many records were deleted.</returns>
     public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reads every stored project of a source the audience may see (not removed, not blocked), by title, each with its lead and its linked issues counted in SQL: open issues and the newest change among them.
+    /// An issue counts only when its own audience is allowed too, so a count never reveals an issue the caller can't read.
+    /// </summary>
+    /// <param name="source">The source whose projects are read.</param>
+    /// <param name="audience">The caller's audiences.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>One row per project, ordered by title then key; none for a source with no projects.</returns>
+    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken);
 }

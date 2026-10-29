@@ -10,6 +10,8 @@ internal sealed class UnreadableRecordStore(IRecordStore inner) : IRecordStore
 {
     public ValueTask<Result<CommitReport>> Commit(RecordBatch batch, CancellationToken cancellationToken) => inner.Commit(batch, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken) => inner.ProjectFacts(source, audience, cancellationToken);
+
     public ValueTask<Result<StoredRecord?>> Get(RecordKey key, CancellationToken cancellationToken) => inner.Get(key, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<RecordChunk>>> Chunks(RecordKey key, CancellationToken cancellationToken) => inner.Chunks(key, cancellationToken);
@@ -17,6 +19,14 @@ internal sealed class UnreadableRecordStore(IRecordStore inner) : IRecordStore
     public ValueTask<Result<IReadOnlyList<StoredRecord>>> List(RecordFilter filter, RecordKey? after, int limit, CancellationToken cancellationToken) => inner.List(filter, after, limit, cancellationToken);
 
     public ValueTask<Result<SyncPosition>> Position(SourceId source, CancellationToken cancellationToken) => inner.Position(source, cancellationToken);
+
+    public ValueTask<Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken) => inner.RecordOutcome(source, outcome, cancellationToken);
+
+    public ValueTask<Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken) => inner.LastOutcome(source, cancellationToken);
+
+    public ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken) => inner.RecordAttempt(source, attempt, cancellationToken);
+
+    public ValueTask<Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken) => inner.Backoff(source, cancellationToken);
 
     public ValueTask<Result<int>> PutVectors(IReadOnlyList<VectorWrite> vectors, CancellationToken cancellationToken) => inner.PutVectors(vectors, cancellationToken);
 
@@ -28,6 +38,8 @@ internal sealed class UnreadableRecordStore(IRecordStore inner) : IRecordStore
 
     public ValueTask<Result<StoreStamps>> Stamps(CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<StoreStamps>>(ContextErrors.StoreUnavailable.With("the record store can't be opened"));
+
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken) => inner.LiveCounts(cancellationToken);
 
     public ValueTask<Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken) => inner.Count(source, cancellationToken);
 
