@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
 
-/// <summary>Registers the context engine's jobs on the P6 job runtime: 'SyncSources', 'BuildContextMap', 'ScanContextConcepts' and 'RunContextBacktest'.</summary>
+/// <summary>Registers the context engine's jobs on the P6 job runtime: 'SyncSources', 'SyncIndexSource', 'BuildContextMap', 'ScanContextConcepts' and 'RunContextBacktest'.</summary>
 internal static class ContextJobServiceCollectionExtensions
 {
     /// <summary>Adds the jobs, each keyed by a constant: one sync at a time, whatever it names, one build at a time (the profile's one map) and one backtest at a time.</summary>
@@ -24,6 +24,8 @@ internal static class ContextJobServiceCollectionExtensions
             .AddScoped<MapJobStarts>()
             .AddJob<SyncContextSourcesRequest, SyncContextSourcesResult, SyncContextSourcesService>(
                 static _ => JobKey.From("sync"), static r => SyncSummary(r), PrecheckSync)
+            .AddJob<SyncIndexSourceRequest, SyncIndexSourceResult, SyncIndexSourceService>(
+                static r => JobKey.From($"index-sync-{r.Source}"), static r => IndexSyncSummary(r), PrecheckIndexSync)
             .AddJob<BuildContextMapRequest, BuildContextMapResult, BuildContextMapService>(
                 static _ => JobKey.From("build"), static r => string.Create(CultureInfo.InvariantCulture, $"draft v{r.Draft}: {r.Proposed} proposed"))
             .AddJob<RefreshContextMapRequest, RefreshContextMapResult, RefreshContextMapService>(
@@ -42,6 +44,10 @@ internal static class ContextJobServiceCollectionExtensions
         var linked = result.Sources.Sum(static s => s.Links.Linked);
         return string.Create(CultureInfo.InvariantCulture, $"{result.Sources.Count} source(s) synced, {linked} linked{(failed > 0 ? $", {failed} with a code" : string.Empty)}");
     }
+
+    private static string IndexSyncSummary(SyncIndexSourceResult result) => result.Code is null
+        ? string.Create(CultureInfo.InvariantCulture, $"{result.Source} {result.Fetched} fetched")
+        : $"{result.Source} {result.Code}";
 
     private static string RefreshSummary(RefreshContextMapResult result) => result.Held
         ? MapJobSummaries.Held(result.Version)
@@ -71,6 +77,15 @@ internal static class ContextJobServiceCollectionExtensions
             : request.Since > request.Until ? SindriErrors.InvalidInput.With("since is after until: the window is empty (fix: swap them)")
             : Unit.Value;
         return ValueTask.FromResult(verdict);
+    }
+
+    /// <summary>A source that can't be a source id is unknown (SND-CONTEXT-058) before any job exists, and the job key never carries a name that isn't one.</summary>
+    private static ValueTask<Result<Unit>> PrecheckIndexSync(SyncIndexSourceRequest request, CancellationToken cancellationToken)
+    {
+        Result<Unit> checkedRequest = SourceId.TryFrom(request.Source, out _)
+            ? Unit.Value
+            : ContextErrors.SyncSourceUnknown.With($"'{request.Source}' isn't a source id (kebab-case); fix: sindri index status");
+        return ValueTask.FromResult(checkedRequest);
     }
 
     /// <summary>A named source that can't be a source id is unknown (SND-CONTEXT-058) before any job exists.</summary>

@@ -42,6 +42,26 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         return new SyncReport(rows);
     }
 
+    public async ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken)
+    {
+        var resolved = Resolve(scope);
+        if (resolved.IsError)
+        {
+            return resolved.Error;
+        }
+
+        var feed = resolved.Value.Feeds.FirstOrDefault(f => f.Source == source);
+        if (feed is null)
+        {
+            var known = resolved.Value.Feeds.Select(f => f.Source.Value).ToList();
+            return ContextErrors.SyncSourceUnknown.With($"'{source.Value}' isn't a record source this profile syncs ({(known.Count == 0 ? "none" : string.Join(", ", known))}); fix: sindri index status");
+        }
+
+        var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
+        using var slots = new SemaphoreSlim(1);
+        return new SyncReport([await TickOne(feed, context, slots, cancellationToken).ConfigureAwait(false)]);
+    }
+
     public async ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
     {
         var resolved = Resolve(scope);

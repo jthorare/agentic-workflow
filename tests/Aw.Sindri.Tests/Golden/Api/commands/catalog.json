@@ -1451,6 +1451,25 @@
       "confirm": null
     },
     {
+      "action": "SyncIndexSource",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/index/sync",
+      "cli": "sindri index sync <source>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "SyncSources",
       "class": "job",
       "allowedCallers": [

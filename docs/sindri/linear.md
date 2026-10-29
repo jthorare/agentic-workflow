@@ -1,14 +1,15 @@
 # Linear for Sindri's context engine
 
 Sindri's native `linear` source reads Linear directly, read-only, with hand-written GraphQL (context spec D4, D18). It
-sits beside the `onyx` source (see [onyx.md](onyx.md)) and adds what Onyx's Linear connector does not read. Nothing is
-written to Linear, and Sindri never connects a source on its own: you create the key and put its pointer in the profile.
+is one of the index's sources beside GitHub and Slack (see [sources.md](sources.md)). Sindri used to read Linear through Onyx;
+it now reads it itself. Nothing is written to Linear, and Sindri never connects a source on its own: you create the key and put its
+pointer in the profile.
 
 `$SINDRI` is the installed `sindri`; see [context.md](context.md).
 
-## What Linear adds over Onyx's connector (D17)
+## What it reads (D17)
 
-Onyx's Linear connector reads issues and comments only. The native source also reads:
+The source reads:
 
 | Record | Key | Why it matters |
 |---|---|---|
@@ -16,13 +17,12 @@ Onyx's Linear connector reads issues and comments only. The native source also r
 | Linear Documents | `linear:doc/<uuid>` | where PRDs and TDDs live; cited with their `updatedAt` |
 | Project updates | `linear:update/<uuid>` | status history of a project; its latest five are listed in the project's record (an update has no title, so search never lists one by itself) |
 | Issue attachments | on the issue | the PRs that shipped an issue, and the Slack threads, Figma files and links behind it |
-| Issues with their comments | `linear:issue/<uuid>` | the same issues Onyx returns, cited once (below) |
+| Issues with their comments | `linear:issue/<uuid>` | the issues of the profile's teams, comments included, cited once (below) |
 
 Every record keys on Linear's immutable UUID; the human identifier (`ENG-482`) is an alias, because it changes when an
-issue moves team. An issue that arrives through both Onyx and the native source is deduplicated before ranking and cited
-once, carrying both sources. Onyx still does the text search over issues; the native source does title and key lookup and
-the project, document and attachment reads. A source that fails degrades the query instead of failing it (a Linear
-outage never blocks an answer).
+issue moves team. Text search over issues runs on the owned index; the Linear calls do title and key lookup and the project,
+document and attachment reads. A source that fails degrades the query instead of failing it (a Linear outage never blocks an
+answer).
 
 ## 1. Create a read-only key
 
@@ -36,8 +36,7 @@ security add-generic-password -s linear -a work-read -w      # macOS: prompts fo
 secret-tool store --label 'linear/work-read' service 'linear' account 'work-read'   # Linux (libsecret): prompts for the key
 ```
 
-The profile pointer is the same on both machines: `keychain:linear/work-read`. The other pointers are the ones Onyx
-takes: `env:<VAR>`, `op:<vault>/<item>/<field>` and `file:<absolute path>` (a regular file, mode 0600 or stricter). A
+The profile pointer is the same on both machines: `keychain:linear/work-read`. The other pointers are `env:<VAR>`, `op:<vault>/<item>/<field>` and `file:<absolute path>` (a regular file, mode 0600 or stricter). A
 value that is not a pointer is refused (`SND-CONTEXT-002`) without repeating it; rotate a key that was ever written into a
 profile.
 
@@ -51,7 +50,7 @@ context:
 
 | Key | Meaning | Default |
 |---|---|---|
-| `context.sources.linear.token` | the secret pointer to the key; required for the native source to run | none (without it only `teams` is read, as Onyx's identifier aliases) |
+| `context.sources.linear.token` | the secret pointer to the key; required for the native source to run | none (without it only `teams` is read, as identifier aliases) |
 | `context.sources.linear.teams` | team keys (a capital, then capitals or digits: `ENG`) that scope every read; empty reads every team the key can see | `[]` |
 | `context.sources.linear.url` | Linear's GraphQL endpoint | `https://api.linear.app/graphql` |
 
@@ -93,7 +92,7 @@ Whether Linear accepts the key is `context sources status`, not doctor:
 
 The profile's `teams` are applied by Linear in the filter of each read, so the source finds its records however many other projects the workspace has. Lists are read a page at a time (250 nodes, at most 20 pages; the log says when that cut one). An issue's first 50 comments and attachments are read, and its record ends with `(more comments not shown)` when there are more.
 
-An issue's stored text is its description, then `Comments:`, then `Attachments:` (every attachment, one line each: `- <title> (<sourceType>) <url>`; a missing title shows the url's host and a missing source type shows `link`), then `Images:`. The ingest sanitizer removes markdown and HTML images from stored text, so every image found in the description, the comments and the image attachments (png, jpg, jpeg, gif, webp, or an `uploads.linear.app` url) is listed again as `- <alt or image> <url>`, once per url. The images themselves are not fetched or read: only their alt text and link are kept. The text is kept whole, with no cut: the `Project: <name>` line, the `Relations:` section (`- <type> <ID> <title>` for the issue's relations, `- (from) <type> <ID> <title>` for those pointing at it), the `Attachments:` section and the `Images:` section follow the description and the comments. Of the issue's own fields only the project and the relations are added; labels, cycle, assignee and state are covered by Onyx. (Changed for owner q105, 2026-10-24.)
+An issue's stored text is its description, then `Comments:`, then `Attachments:` (every attachment, one line each: `- <title> (<sourceType>) <url>`; a missing title shows the url's host and a missing source type shows `link`), then `Images:`. The ingest sanitizer removes markdown and HTML images from stored text, so every image found in the description, the comments and the image attachments (png, jpg, jpeg, gif, webp, or an `uploads.linear.app` url) is listed again as `- <alt or image> <url>`, once per url. The images themselves are not fetched or read: only their alt text and link are kept. The text is kept whole, with no cut: the `Project: <name>` line, the `Relations:` section (`- <type> <ID> <title>` for the issue's relations, `- (from) <type> <ID> <title>` for those pointing at it), the `Attachments:` section and the `Images:` section follow the description and the comments. Of the issue's own fields only the project and the relations are added; labels, cycle, assignee and state are not in the stored text. (Changed for owner q105, 2026-10-24.)
 
 An `env:` pointer is read from the control plane's environment as it was when `serve` started, while doctor reads the
 calling shell's, so the two can disagree; `file:` and (on macOS) `keychain:` read the same in both.

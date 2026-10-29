@@ -153,13 +153,13 @@ sindri context query "<project description>"          # expect anchors and cited
 sindri context lenses <anchor-key> --json            # the anchor key comes from the query's anchors; it takes positional anchors, not --anchor
 ```
 
-### Optional for the demo: Onyx
+### Optional for the demo: record sources
 
-Onyx is the intent-source engine (trackers, notes). The demo does not need it: repo docs and the map are enough. `./setup.sh` builds the sindri CLI and, by default, stands the pinned Onyx up. Opt out with `./setup.sh --no-onyx`; start it later with `sindri onyx up`. Do not add it the morning of the demo.
+The record index (GitHub issues and PRs, Slack threads, Linear) is optional. The demo does not need it: repo docs and the map are enough. `./setup.sh` builds the sindri CLI and does not connect any source; connect them later with `sindri index connect github|slack` (see [sources.md](sources.md)). Do not add them the morning of the demo.
 
 ## 6. Recipes
 
-**Merged (on main bb26d9a):** #367 (register fix), #371 P7 (child workflows start), #356, #364, #354 (the optional `aw:fleet` hook, `scripts/install-fleet.sh --provider claude`), #372, #377, #381, #369 (Agents page), #379 (children view), #351 (Start form), #376 (ship and docs-sync stations), #387, #384, #380, #388, #362 (`sindri scoping check` and `show`), #348, #357, #360, #361 (the Onyx P2 to P5 stack), #295 (the launcher: open and attach), #370 (PR-B), #394 (S-LB2: the shipped `workflow.scoping` approves), #396 (SC-K2: `sindri scoping desk <block>` with read-brief, anchor, gather, reanchor and propose, plus the ScopingView and packet-file routes), #378 (history lens), #365 (code lens), #391 (`workflow.line`), #386 (sindri connects MCP for Claude Code, Codex and Cursor, including the Codex trust row), #392 (row titles) and #390.
+**Merged (on main bb26d9a):** #367 (register fix), #371 P7 (child workflows start), #356, #364, #354 (the optional `aw:fleet` hook, `scripts/install-fleet.sh --provider claude`), #372, #377, #381, #369 (Agents page), #379 (children view), #351 (Start form), #376 (ship and docs-sync stations), #387, #384, #380, #388, #362 (`sindri scoping check` and `show`), #348, #357, #360, #361 (the old intent-source stack, since replaced by the owned index), #295 (the launcher: open and attach), #370 (PR-B), #394 (S-LB2: the shipped `workflow.scoping` approves), #396 (SC-K2: `sindri scoping desk <block>` with read-brief, anchor, gather, reanchor and propose, plus the ScopingView and packet-file routes), #378 (history lens), #365 (code lens), #391 (`workflow.line`), #386 (sindri connects MCP for Claude Code, Codex and Cursor, including the Codex trust row), #392 (row titles) and #390.
 
 **Merged since:** #405 (P8: agents run the line's agent Steps) and #403 (the map extractor reads C# API routes). Main was `ea2bc59`.
 
@@ -382,7 +382,7 @@ To finish, in order: bring #352 up to main and restack #355, #363, #366 (merge 3
 
 ### 9c. Setup and the context map: less human-driven
 
-Today three setup steps are `protected` (a typed confirmation at a terminal, refused to sessions and to the app with `SND-AUTH-002`): profile approval (API surface spec §4.1–4.2), map import and promote (API §3.7; context spec §3 "decisions stay human"), and recipe approve/revoke and token grants (engine spec W9). Onyx `up`/`down` and connecting its sources are the owner's by the Onyx spec (O3).
+Today three setup steps are `protected` (a typed confirmation at a terminal, refused to sessions and to the app with `SND-AUTH-002`): profile approval (API surface spec §4.1–4.2), map import and promote (API §3.7; context spec §3 "decisions stay human"), and recipe approve/revoke and token grants (engine spec W9). Connecting the record sources (`sindri index connect`) is the owner's too.
 
 **Owner decision, 2026-10-19: map import and promote, and recipe approval, must run from CI/CD with no manual step.** This changes the specs above for those verbs and needs a spec amendment (API surface §3.7 and §4, engine W9, context §3) before any code. The amendment has to say what stands in for the typed confirmation, for example: the map or recipe change is reviewed and merged as a PR in the repo, and a CI job holding a scoped Sindri credential applies exactly what was merged (content hash bound to the merge commit), recorded in the ledger as approved by that CI identity, with revoke kept available to the owner. Profile approval and token grants stay human unless the owner says otherwise.
 
@@ -398,7 +398,7 @@ Everything else below is manual only because the automation is not built:
 | MCP registration | context spec §3 | a bare `sindri` or `serve` registers every provider once the port is known | a worktree guesses the repo name from the folder (`AW_SINDRI_MCP_REPO` overrides); tracked `.cursor/mcp.json` / `.codex/config.toml` are reported `failed`, not edited; a port change needs a new agent session |
 | Install | — | `scripts/install-deps.sh`, `scripts/install-cs.sh` (SDK, temporal, publish, link) | Claude's folder-trust prompt in launched sessions (accepted by hand; launcher follow-up); the opt-in session hook (`./setup.sh --with-fleet`) |
 | Launcher setup | — | `sindri launch init`, `workflow.agent.target` | part of profile init above |
-| Onyx | Onyx spec O1/O6, P5 | `sindri onyx up/status/open/down`, the first-run offer, the "Set up Onyx" row, `install-onyx.sh` | built. Docker install and the owner's steps remain by design |
+| Record sources | owned index spec §5.4 | `sindri index connect github\|slack`, `sindri index sync`, the "connect your sources" setup step | built. The read-only tokens are the owner's to make, by design |
 
 ### 9d. The app: CLI-only functionality
 
@@ -422,7 +422,7 @@ The app is a client of Sindri's HTTP API with no logic of its own. Today it read
 | `agents focus`, Attach, Take over, Budgets | disabled ("arrives in CO-4a") / missing | screens §4.5, U11 | — |
 | `doctor` | copy | System's dependency graph (screens §4.6) | **no endpoint** |
 | `stop` | palette confirm only | confirmed button on Health (UI §4.8) | exists |
-| `mcp register`, `onyx` verbs, `profile validate`, `launch init` | none | not in the UI spec (Onyx only as a health node) | **no endpoint** (`cli-only:local`) |
+| `mcp register`, `profile validate`, `launch init` | none | not in the UI spec | **no endpoint** (`cli-only:local`) |
 
 Spec'd screens or parts not built: the Recipes page (U10b); System beyond Health (dependency graph, impact panel, engine execution, services/jobs panel; U12); Context beyond the lens stack (node card, sources, map review, file map, U9b–d; "pinned to a scope" mode, U9e); the instance frame's Timeline, Decisions and Requests tabs (U8b); item-sheet re-base and the scope-map and packet viewers (U13); Agents recipe groups, Attach, Take over, Budgets (U11) and live preview (CO-7c).
 
