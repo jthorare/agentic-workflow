@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
@@ -16,7 +17,9 @@ namespace Aw.Context.Features.BuildMap;
 /// <param name="vectors">The stored symbol embeddings.</param>
 /// <param name="hintStore">The concept hints of the last scan.</param>
 /// <param name="store">The map versions.</param>
-internal sealed class ConceptPass(IConceptNamer namer, ISymbolVectors vectors, IConceptHintStore hintStore, IGraphStore store)
+/// <param name="synthesis">The synthesized concepts, whose labeled ones join the map as concept nodes.</param>
+/// <remarks>As-of builds (AsOfMapBuilder) never run this pass, so a backtest map has no synthesized concepts.</remarks>
+internal sealed class ConceptPass(IConceptNamer namer, ISymbolVectors vectors, IConceptHintStore hintStore, IGraphStore store, IConceptSynthesisStore synthesis)
 {
     // The code index answers at most this many files in one read.
     private const int MaxPaths = 2000;
@@ -48,6 +51,7 @@ internal sealed class ConceptPass(IConceptNamer namer, ISymbolVectors vectors, I
             Nodes = [.. joined.Nodes.Concat(concepts.Nodes).DistinctBy(n => n.Key.Value, StringComparer.Ordinal)],
             Edges = [.. joined.Edges.Concat(concepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))],
         };
+        withConcepts = await Synthesized(withConcepts, notes, cancellationToken).ConfigureAwait(false);
         // The pins' concept edges (spec 2026-10-27 §10.2 and §10.3): the roll-up and what the owner declared, one edge per key, made fresh on every build. What the declared edges and the code disagree on, and the entries
         // with no endpoint in the map, are report lines and never degraded states (Open question 13).
         var declared = PinEdges.Declared(withConcepts, pins);
@@ -59,6 +63,19 @@ internal sealed class ConceptPass(IConceptNamer namer, ISymbolVectors vectors, I
         }
 
         return new ConceptOutcome(withConcepts with { Edges = [.. rolled.Edges.Concat(withConcepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))] }, notes, reportNotes);
+    }
+
+    // why: the synthesized concepts join before the pins' edges, so a pin and the roll-up see their nodes; a store that can't answer leaves the graph as it was.
+    private async ValueTask<GraphSnapshot> Synthesized(GraphSnapshot graph, List<string> notes, CancellationToken cancellationToken)
+    {
+        var synthesized = await synthesis.All(cancellationToken).ConfigureAwait(false);
+        if (synthesized.IsError)
+        {
+            notes.Add("synthesized concepts");
+            return graph;
+        }
+
+        return SynthesizedConceptNodes.Apply(graph, synthesized.Value);
     }
 
     // The concept hints of the newest map version the scan has looked at; a store that can't answer, or a version with none, shapes nothing.

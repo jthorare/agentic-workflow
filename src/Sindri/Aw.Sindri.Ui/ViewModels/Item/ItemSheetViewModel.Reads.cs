@@ -63,6 +63,7 @@ internal sealed partial class ItemSheetViewModel
             if (_url is { } url && HasItem)
             {
                 await Needs.Read(url, ItemId, cancellationToken).ConfigureAwait(true);
+                await Blocked.Read(url, ItemId, cancellationToken).ConfigureAwait(true);
             }
         }
     }
