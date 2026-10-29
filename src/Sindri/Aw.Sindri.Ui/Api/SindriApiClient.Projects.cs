@@ -8,9 +8,9 @@ internal sealed partial class SindriApiClient
 {
     /// <inheritdoc />
     public Task<Result<ProjectList>> Projects(Uri api, bool all, CancellationToken cancellationToken) =>
-        throw new NotSupportedException(ProjectRoutes.List(all));
+        Get<ProjectList>(api, ProjectRoutes.List(all), cancellationToken, view: true);
 
     /// <inheritdoc />
     public Task<Result<ProjectOne>> Project(Uri api, string id, CancellationToken cancellationToken) =>
-        throw new NotSupportedException(ProjectRoutes.One(id));
+        Get<ProjectOne>(api, ProjectRoutes.One(id), cancellationToken, view: true);
 }
