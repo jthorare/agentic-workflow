@@ -81,7 +81,15 @@ case "$AW_RC" in
       if [ "$REWRITE_OK" != "1" ]; then
         OUT_JSON="$(printf '%s' "$OUT_JSON" | jq -c 'del(.hookSpecificOutput.updatedInput)')"
       fi
-      printf '%s\n' "$OUT_JSON"
+      # Codex accepts permissionDecision "allow" only with updatedInput; a bare one fails the hook with "unsupported
+      # permissionDecision:allow" (#1585). Without a rewrite, allow means "no objection", which is what no decision means
+      # to Codex, so drop it, and print nothing when nothing else is left.
+      OUT_JSON="$(printf '%s' "$OUT_JSON" | jq -c '
+        if (.hookSpecificOutput.permissionDecision // "") == "allow" and ((.hookSpecificOutput | has("updatedInput")) | not) then
+          del(.hookSpecificOutput.permissionDecision, .hookSpecificOutput.permissionDecisionReason)
+          | if (.hookSpecificOutput | keys) == ["hookEventName"] then del(.hookSpecificOutput) else . end
+        else . end')"
+      [ "$OUT_JSON" = "{}" ] || printf '%s\n' "$OUT_JSON"
     elif [ -n "$AW_OUT" ]; then
       case "$EVENT" in
         # Plain-text stdout becomes developer context on these events.
