@@ -1,18 +1,18 @@
-# Context model calls are routed per kind across Claude Code, Codex and Cursor, with a fallback to the next harness at a usage limit, a pause when every harness is limited, and a bulk Jev label pick
+# Context model calls are routed per kind across Claude Code, Codex and Cursor, with a fallback to the next harness at a usage limit, a pause when every harness is limited, and bulk Jev picks for cluster labels and for the map's product surfaces
 
-Status: draft for the owner's read (not marked ready). Issue: #1567. Owner answers: q150 (in the issue), the 2026-10-28 addendum on labeling, and q152 (2026-10-29: Jev picks labels yes, model names confirmed, pause when every harness is limited, no timed skip, no cost line). Written against main `401c55d34`.
+Status: draft for the owner's read (not marked ready). Issue: #1567. Owner answers: q150 (in the issue), the 2026-10-28 addendum on labeling, and q152 (2026-10-29: Jev picks labels yes, model names confirmed, pause when every harness is limited, no timed skip, no cost line), and the owner direction of 2026-10-29 that Jev decides the context map's product surfaces (#1565; section 6.9). Written against main `401c55d34`.
 
-Related: #1564 (a second caller of `DecisionPass`, merged), #1461 (Jev's input cap, merged), #1457 and `docs/superpowers/specs/2026-10-26-sindri-model-pick-design.md` (the launch-side model pick), #1428 (Cursor agent Steps).
+Related: #1565 (the map build never derives actions or flows; the product-surface candidates come from there), #1564 (a second caller of `DecisionPass`, merged), #1461 (Jev's input cap, merged), #1457 and `docs/superpowers/specs/2026-10-26-sindri-model-pick-design.md` (the launch-side model pick), #1428 (Cursor agent Steps).
 
 ## 0. Why
 
 Every model call the context index makes goes through one port, `IModelPort`, and Sindri's adapter for it (`JudgeModelPort`) tries the agent CLIs in a fixed order and takes the first answer. Three things hurt:
 
 1. **One tool's usage limit stops the work.** When Claude Code is at its limit, each call still starts `claude`, waits for it to fail, then moves on to Codex. It does that again on the next call, and the next. Nothing remembers, inside a job, that Claude is out. And when every tool is out, the work ends with file-derived names or queued records, and nobody is told to come back.
-2. **The owner can't choose.** Six kinds of call exist (labeling, concept naming, decision extraction, adjudication, map cleanup, rerank). Only the concept scan can name a model, and only Claude has names for it. The other five always run on whatever the adapter's first CLI defaults to.
+2. **The owner can't choose.** Six kinds of call exist (labeling, concept naming, decision extraction, adjudication, map cleanup, rerank), and a seventh is coming with #1565 (product surfaces, 6.9). Only the concept scan can name a model, and only Claude has names for it. The other five always run on whatever the adapter's first CLI defaults to.
 3. **Nobody can see what a call used.** `ModelAnswer` has text, two token counts and a model name. It has no harness, and nothing is written to the ledger.
 
-And one new ask (owner, 2026-10-28): labeling should use Jev to choose between candidate labels, many clusters per call, never one call per cluster. The call count falls mostly because of the bigger packs; the Jev pick itself buys better labels (6.3).
+And two new asks. (1, owner 2026-10-28) Labeling should use Jev to choose between candidate labels, many clusters per call, never one call per cluster. The call count falls mostly because of the bigger packs; the Jev pick itself buys better labels (6.3). (2, owner 2026-10-29) Jev decides the product surfaces of the context map: the map build's passes generate candidates, Jev picks among them and merges them, through the same port and the same bulk calls (6.9).
 
 ### Goals
 
@@ -21,6 +21,7 @@ And one new ask (owner, 2026-10-28): labeling should use Jev to choose between c
 3. At a usage limit the call moves to the next harness in its route. When every harness is limited, the job pauses and says why, and the owner clicks Resume once a harness is back (q150-3, q152-3, q152-4).
 4. Each call's harness, model and tokens are in the ledger and in the app's Jobs view (q150-4 without a cost line, q152-5).
 5. Labeling: generate candidate labels in bulk, have Jev pick in bulk, with as few model calls as possible (addendum).
+6. Product surfaces: Jev picks and merges the map's candidate surfaces, things, actions and flows in bulk, on the same machinery as 5 (owner 2026-10-29).
 
 ### Non-goals
 
@@ -53,7 +54,7 @@ And one new ask (owner, 2026-10-28): labeling should use Jev to choose between c
 
 `AgentCliProvider.Decide` (`src/Judge/Aw.Judge.Infrastructure/Providers/AgentCliProvider.cs:53` to `:59`) turns a process end into a result: not found is `ProviderUnavailable("not-installed")`, a non-zero exit is `ProviderErrored("exit-N")`, and a zero exit goes to the CLI's own `Read`. `ClaudeCliProvider.Read` and `CursorCliProvider.Read` return `ProviderErrored("cli-reported-error")` when the envelope says `is_error` (`CliEnvelope.cs:14`); `CodexCliProvider.Read` does the same when it saw a `turn.failed` or `error` event (`CodexCliProvider.cs:43`). **In every case the CLI's stdout and stderr text is dropped.** `ProcessResult` has both (`ProcessResult.cs`); the providers don't pass them on. So today nothing above the provider can tell a usage limit from any other failure.
 
-### 1.4 The eight call sites (seven callers)
+### 1.4 The eight call sites (seven callers), and the one that doesn't exist yet
 
 | Call | `ModelPurpose` | Site | Routing it sends today |
 |---|---|---|---|
@@ -65,8 +66,11 @@ And one new ask (owner, 2026-10-28): labeling should use Jev to choose between c
 | Eval adjudicator | `Adjudication` | `Adjudicator.cs:62` | none |
 | Map cleanup | `Cleanup` | `CleanMapService.cs:173` | none |
 | Rerank (query time, off by default) | `Rerank` | `RankerStage.cs:41` | none |
+| Product surfaces (new, 6.9) | `ProductSurfaces` | not built; the pass that would call it is #1565's | n/a |
 
-Two things to see in that table. The concept names and the concept scan share `ModelPurpose.Concepts`, so the port can't tell them apart. And `DecisionPass` is now called from two places: the Onyx intent walk (`IntentSyncRun`) and, since #1564, `RecordDecisionRun` (`SyncSources/RecordDecisionRun.cs`) after each owned-index feed tick.
+Where product nodes are built today (the input to 6.9): the recognizer table makes only `surface:*` nodes (`Extract/Recognizers.cs:83`, `:84`, `:96`, `:106`; `RecognizerSet.cs:84`); `DataStorePass` makes `thing:*` from declared data stores (`Extract/DataStorePass.cs:98`); `BuildMapService` runs the extractor and the labeler at `BuildMapService.cs:150` and `:153`. **Nothing in the build constructs an `Action` or `Flow` node**: `rg "ActionPass|FlowPass" src/Context` finds nothing, and the only way those kinds enter a map is `ProposalNodes` (`Proposals/ProposalNodes.cs:10`, `:43`) or a hand-added review row. That is defect A of #1565, still open: PR #1584 (merged) and PR #1573 fixed only defect B, serving the things and actions a repo's code reads or writes (`GraphSnapshot.ScopedTo` with `RepoScope.WithProduct`). So the candidates of 6.9 do not exist yet; this spec fixes the question and answer shape, and the context lane builds the passes and the apply step.
+
+Two things to see in the table. The concept names and the concept scan share `ModelPurpose.Concepts`, so the port can't tell them apart. And `DecisionPass` is now called from two places: the Onyx intent walk (`IntentSyncRun`) and, since #1564, `RecordDecisionRun` (`SyncSources/RecordDecisionRun.cs`) after each owned-index feed tick.
 
 ### 1.5 Settings
 
@@ -99,6 +103,7 @@ Two things to see in that table. The concept names and the concept scan share `M
 | D10 | No timed skip, no `model-cooldowns` view, no `context.harness.limited` or `cleared` events, no `sindri context models reset`, no 5-minute failure safety net. | q152-4 |
 | D11 | No cost anywhere: not in the event, the Jobs view, `sindri jobs show` or doctor, and no price is read (`Budgets.PriceOf` and `total_cost_usd` are out). | q152-5 |
 | D12 | Model names are as pinned in 3.3: Codex `gpt-6-luna` and `gpt-5.5`; Cursor `gpt-5.6-luna-none-fast` and `gpt-5`. | q152-2 |
+| D13 | owner 2026-10-29: Jev decides product surfaces (#1565). The map build's passes generate candidate surfaces, things, actions and flows; Jev picks which are real, merges the ones that are one thing, and names the merged node by choosing one of the candidates' names. A seventh kind, `productSurfaces`, with the purpose `ProductSurfaces`, reuses 6's packing, split rule, can't-decide rule, consent and `IChoicePort`: no second path. It has no CLI harness step (a route of Jev, then the deterministic result). | owner 2026-10-29 |
 
 D9 to D12 and the edits to D2 to D5 are the owner's q152 answers (2026-10-29).
 
@@ -129,6 +134,8 @@ context:
     mapCleanup: {}
     rerank:
       harnesses: [claude-code]
+    productSurfaces:
+      pick: jev                      # jev or off (default off); the only keys this kind has
 ```
 
 ### 3.1 Keys
@@ -137,11 +144,12 @@ context:
 |---|---|---|---|
 | `context.models.names.<harness>.<cheap\|strong>` | model name | the table in 3.3 | What the tier means on that harness. Replaces `context.conceptScan.models` (section 9) |
 | `context.models.default` | kind entry | `{ tier: cheap }`, installed harnesses in default order | What every kind inherits |
-| `context.models.<kind>` | kind entry | inherits `default` | `<kind>` is one of `labeling`, `conceptNaming`, `decisionExtraction`, `adjudication`, `mapCleanup`, `rerank` |
+| `context.models.<kind>` | kind entry | inherits `default` | `<kind>` is one of `labeling`, `conceptNaming`, `decisionExtraction`, `adjudication`, `mapCleanup`, `rerank`, `productSurfaces` (the last takes `pick` only) |
 | entry `harnesses` | list of 1 to 3 of `claude-code`, `codex`, `cursor`, none twice | see above | Try them in this order. A harness named but not installed is skipped at run time and `sindri doctor` says so (section 8.4) |
 | entry `tier` | `cheap` or `strong` | `cheap` | Which name of `names.<harness>` to use |
 | entry `models` | map from harness to model name | none | A model for a harness, which wins over `tier` for that harness |
 | `labeling.pick` | `jev` or `off` | `off` | Whether Jev chooses between candidate labels (section 6) |
+| `productSurfaces.pick` | `jev` or `off` | `off` | Whether Jev decides the map's candidate product surfaces (6.9). With `off`, every candidate the passes produce goes into the map as it is. The entry takes no `harnesses`, `tier` or `models`: this kind makes no CLI call (6.9), so those keys are `SND-CONTEXT-001` here |
 | `labeling.candidates` | whole number 2 to 5 | 3 | How many candidate labels the model writes per cluster |
 
 A model name uses the pattern `context.conceptScan.models` already uses: 1 to 100 letters, digits and `. _ : / @ + -`, not starting with `-`, and in addition no `..` (a name is always its own argv element, never joined into a string, in all three providers). The profile never checks a name against a catalog (the same rule as `workflow.agent`; a wrong name makes the CLI fail, which is not a limit, so the call moves on to the next harness, section 5).
@@ -152,8 +160,9 @@ For a call of kind K:
 
 1. **Harnesses:** `K.harnesses`, else `default.harnesses`, else the installed CLIs in the default order. Remove the ones that already hit a limit in this job (5.2). If none are left, the job pauses (5.3).
 2. **Model on harness H:** `K.models[H]`, else `default.models[H]`, else `names[H][tier]` where `tier` is `K.tier`, else `default.tier`, else `cheap`, else the built-in table (3.3).
-3. **The concept scan** (`ConceptScan`) keeps choosing its own tier from the map's size (`strongAboveFeatures`, `strongAbovePromptTokens`, unchanged) and ignores `conceptNaming.tier`. It does use `conceptNaming.harnesses` and `conceptNaming.models`.
-4. **A request that already names a model** (`ModelRequest.Models` or `.Model`) keeps naming it: the request wins over the profile for that call. Only code fills these fields, never text from a repo or a model, and the router runs each name through the same name check as the profile (3.1) before it reaches a CLI. **The concept scan sends `Tier` only and never `Models`.** `ModelsSettings.Read` folds the old `context.conceptScan.models` key into `names.<harness>.<tier>` when the new key is absent, and the new key wins when both are present (section 9). That is one mechanism, so the new keys can't be shadowed by a request-side name. `ConceptScanModels.Default` stays as it is (its test is unchanged); the scan just stops forwarding it, and the built-in table (3.3) supplies `haiku`/`sonnet`, so a profile that sets nothing gets the same models.
+3. **`productSurfaces`** has no harness list and no tier. Its route is fixed: Jev through `IChoicePort` when the pick is on and consented (6.9), else no model at all. `default.harnesses` and `default.tier` do not apply to it.
+4. **The concept scan** (`ConceptScan`) keeps choosing its own tier from the map's size (`strongAboveFeatures`, `strongAbovePromptTokens`, unchanged) and ignores `conceptNaming.tier`. It does use `conceptNaming.harnesses` and `conceptNaming.models`.
+5. **A request that already names a model** (`ModelRequest.Models` or `.Model`) keeps naming it: the request wins over the profile for that call. Only code fills these fields, never text from a repo or a model, and the router runs each name through the same name check as the profile (3.1) before it reaches a CLI. **The concept scan sends `Tier` only and never `Models`.** `ModelsSettings.Read` folds the old `context.conceptScan.models` key into `names.<harness>.<tier>` when the new key is absent, and the new key wins when both are present (section 9). That is one mechanism, so the new keys can't be shadowed by a request-side name. `ConceptScanModels.Default` stays as it is (its test is unchanged); the scan just stops forwarding it, and the built-in table (3.3) supplies `haiku`/`sonnet`, so a profile that sets nothing gets the same models.
 
 ### 3.3 Built-in names (what "cheap" and "strong" mean when the profile says nothing)
 
@@ -175,7 +184,7 @@ Because the cheap names equal what the judge already runs, **a box with an empty
 
 A new `RoutedModelPort` in `src/Sindri/Aw.Sindri.Host/Models/` replaces `JudgeModelPort` as the `IModelPort` registered at `Composition.cs:54`. It keeps `JudgeModelPort`'s way of calling a CLI (the judge's `Lineup` and `IModelProvider.Decide`) and adds, in order, for each `Ask`:
 
-1. Find the kind from `request.Purpose` (`Labeling` to `labeling`, `Concepts` and `ConceptScan` to `conceptNaming`, `DecisionExtraction` to `decisionExtraction`, `Adjudication` to `adjudication`, `Cleanup` to `mapCleanup`, `Rerank` to `rerank`).
+1. Find the kind from `request.Purpose` (`Labeling` to `labeling`, `Concepts` and `ConceptScan` to `conceptNaming`, `DecisionExtraction` to `decisionExtraction`, `Adjudication` to `adjudication`, `Cleanup` to `mapCleanup`, `Rerank` to `rerank`). `ProductSurfaces` never reaches `RoutedModelPort`: it makes no `Ask`; its calls go through `IChoicePort` (6.7, 6.9).
 2. Read the approved profile's `context.models` (the same approved-profile reader the model-pick settings use: `ProfileModelPickSettings`), resolve the harness list and each harness's model (3.2).
 3. For each harness not already limited in this job (5.2): call it with that model, read the result.
 4. On an answer: append `context.model.called` (except a no-job rerank answer, 7.1), return it.
@@ -264,7 +273,7 @@ A scheduled service whose run is paused keeps that run in flight, so its next sl
 
 ## 6. Bulk labeling: generate candidates, Jev picks
 
-Applies to `labeling` only, and only when `context.models.labeling.pick` is `jev` and the owner has approved that (6.6). With `pick: off` the labeler asks for one label per cluster exactly as it does now.
+6.1 to 6.8 apply to `labeling`, and only when `context.models.labeling.pick` is `jev` and the owner has approved that (6.6). With `pick: off` the labeler asks for one label per cluster exactly as it does now. 6.9 reuses the same machinery for the product surfaces and says where it differs.
 
 ### 6.1 The flow
 
@@ -340,10 +349,11 @@ Jev is a third party (TypeSafe). `JudgeModelPort`'s own comment, `deps.yaml:535`
 
 ### 6.7 Where it sits in the code
 
-- A new port in `Aw.Context.Core/Models`: `IChoicePort.Pick(IReadOnlyList<ChoiceQuestion>, capChars) -> IReadOnlyList<ChoiceAnswer>` (a question is a key, a prompt and 2 to 5 options; an answer is the picked option or none, with the confidence). Context stays free of Judge.
+- A new port in `Aw.Context.Core/Models`, used by 6.9 as well: `IChoicePort.Pick(IReadOnlyList<ChoiceQuestion>, capChars) -> IReadOnlyList<ChoiceAnswer>` (a question is a key, a prompt and 2 to 5 options; an answer is the picked option or none, with the confidence). Context stays free of Judge.
 - Its implementation in the Host over `IBatchClassifier` (Host already references `Aw.Judge.Core` and `Aw.Judge.Infrastructure`, `deps.yaml:529` to `:540`). `JudgeCatalog` (`Host/Models/JudgeCatalog.cs`) gets a second accessor next to `Get` for the classifier, which `AddJudgeInfrastructure` already registers (`JudgeInfrastructureServiceCollectionExtensions.cs:61`).
 - `ModelLabeler` takes the port and does 6.1 to 6.5. With the port absent or `pick: off` it takes today's path.
-- No new package reference. The `deps.yaml` edge note at `:535` ("never the remote jev API") is amended to say "except the label pick, when the owner has approved it".
+- No new package reference. The `deps.yaml` edge note at `:535` ("never the remote jev API") is amended to say "except the label pick and the product-surface pick, when the owner has approved them".
+- `IChoicePort` is shared: the product-surface step (6.9) is a second caller of it with its own questions, and adds no port.
 
 ### 6.8 Where #1564's `DecisionPass` caller fits
 
@@ -355,6 +365,38 @@ It needs nothing special. `RecordDecisionRun` calls `DecisionPass`, which asks w
 
 Decision extraction is not bulk-picked: its answers are text, not a choice between known options, and a record is one call by design (#1564).
 
+### 6.9 Product surfaces: candidates, then Jev picks and merges (owner 2026-10-29, #1565)
+
+The context map's product layer is surfaces, things, actions and flows (`NodeBands`, the product graph in the context spec). The map build is to produce **candidates** for them and Jev is the decider that pieces them together. This is a seventh kind of call, `productSurfaces`, with its own `ModelPurpose.ProductSurfaces` (JSON name `product-surfaces`), not a labeling variant: labeling generates text with a CLI and then picks among texts; here the candidates come from the build's own passes (no CLI generate step) and the answer is a verdict on each group, not just a label. Everything else is shared on purpose.
+
+**Who builds what.** This spec owns the kind, the question and answer shape, the packing, the fallback, the consent, the event and the doctor row. The context lane owns the map-build side, which is #1565's work and is not specified here: the passes that make the candidates (the action and flow passes #1565 asks for, the existing recognizer surfaces and data-store things), the grouping, and applying a verdict to the map (writing, merging or hiding nodes and edges, and remembering a decision so unchanged input is not asked again, q149). Where that sits today is in 1.4; the passes do not exist yet.
+
+**Which candidates are asked about.** Not all. A surface the code declares outright (a route, a command id, a setting key: `Recognizers.cs:83` to `:106`) is a fact and is not put to Jev. A question is asked for a *group*: up to 3 candidates that look like the same thing (the pass groups by name and by shared evidence, in key order, so a rerun builds the same groups) or one derived candidate (an action or flow the passes inferred rather than found declared). A group of lookalikes bigger than 3 is cut into groups of 3, in key order; a merge across two groups is not offered in this pass.
+
+**One item** is one group. As a `ChoiceQuestion`: the key is a hash of the group's candidate keys and their evidence, so an unchanged group has the same key and the context lane can skip it; the prompt lists, for each candidate, its node key (for example `action:inclusions.grant`), its kind, its proposed name, which pass made it, up to 6 evidence file paths and up to 6 edges as text (`on surface:…`, `writes thing:account`). Paths and names go through `IEgressScrubber` first, then lose control characters and newlines and are cut at 200 characters, in a block the prompt calls data. About 1,200 characters an item; the packing rule is 6.3's (80% of `providers.inputCapChars`, at most 100 questions per call, first-fit in key order, the same 45 s budget).
+
+**The options** (2 to 5, fixed words plus the candidates' own names, so Jev never writes free text):
+
+| Option | Meaning |
+|---|---|
+| `keep separate` | The candidates are different nodes; all stay |
+| `merge as <name>` (one per candidate, so up to 3 in a group of 3) | The candidates are one node, named with that candidate's proposed name |
+| `reject all` | None of them is a real product surface, thing, action or flow |
+
+A group of one has two options, `keep separate` (keep it) and `reject all` (reject it). A group of 3 has 5. The merged node's name is always one of the candidates' names (checked for exact equality, then cleaned like a label: control characters, runs of spaces, 60 characters), so what reaches the map is text the build itself produced. A partial merge (two of three) is not an option; that case answers `keep separate` and the next pass can group the two.
+
+**Pack calls and splits** are 6.3 and 6.4 unchanged: one `IChoicePort.Pick` per pack, the split-by-halves rule on a rejected pack, the stop-asking rule on `no-api-key`, `network-error` and the rest of that table. Jev's tokens count toward `context.labeling.maxTokens`, the one budget for model use by the build; a separate cap is not added.
+
+**When Jev can't decide** (6.5's rule, with the safe side changed): a missing answer, an off-option answer, or confidence under 0.5 for a group is treated as `keep separate`. Nothing is merged and nothing is rejected on an uncertain answer, because both are lossy and `keep separate` is exactly what the build would have done without Jev. A decision to reject needs the same 0.5 confidence as a merge; the first-candidate fallback of labeling does not exist here.
+
+**When Jev isn't consented** (or has no key, or `pick` is `off`): no Jev call is made and no CLI is asked in its place. Every candidate enters the map as the passes produced it, as if each group had answered `keep separate`. The build says `product surfaces: not decided (<reason>)` (`no-consent`, `no-key`, `off`) so the owner sees why the What band is the raw candidate set, and the doctor row says it too. The CLI is not the fallback: the owner's direction is that Jev decides, and the CLI harnesses were never given the edges and evidence this call sends.
+
+**Consent.** What reaches Jev is more than labeling sends: candidate names, their evidence paths and their edges (as text). That is its own notice, so it is its own consent: "Product surface choice is on: file paths and edges of candidate surfaces, things, actions and flows (secrets and denied paths removed) are sent to Jev to decide which are real and which are the same." It is recorded the way 6.6's is (`setup.consent.given`, keyed to the notice hash and the Jev endpoint host), checked at run time against the approved profile snapshot, and shown in both approval surfaces and the Settings page ("Product surface choice", the same four states as "Label choice"). The `deps.yaml` note at `:535` ("except the label pick, with consent") names both picks. A test with a denied path and a secret-shaped name in a candidate asserts neither is in the request body.
+
+**How the result enters the map.** At the level this spec owns: the `IChoicePort` answers come back as one verdict per group (`SurfaceVerdict`: keep separate; merge, with the chosen name; reject) and the call's event records the counts (7.1). Turning a verdict into node and edge changes, the review rows a rejection leaves, and the stored decision are the map build's. The context lane's apply step must be idempotent per group key and must not write a path or CLI/Jev text anywhere but the node's own evidence it already holds.
+
+**Not here:** a CLI generate step for candidates (the passes are deterministic), a second pick when Jev can't decide, and any change to q149 (a group already decided and unchanged is not asked again; the context lane stores that).
+
 ## 7. The ledger event
 
 ### 7.1 `context.model.called`
@@ -365,14 +407,14 @@ New event type, one per `Ask` that reaches the adapter (and one per Jev pick cal
 |---|---|
 | `callId` | A new id for the call; idempotency |
 | `job` | The ambient job id (`IJobContextAccessor.Current`), or null when the call isn't under a job. Map builds, source syncs and backtests are jobs (they take `IJobContextAccessor`); the query-time rerank and an in-process command are not |
-| `purpose` | The `ModelPurpose` as written in the profile docs (`labeling`, `concept-scan`, …) |
+| `purpose` | The `ModelPurpose` as written in the profile docs (`labeling`, `concept-scan`, `product-surfaces`, …) |
 | `kind` | The profile entry used (`labeling`, `conceptNaming`, …) |
 | `tries` | Every harness tried, in order: `{ harness, model, outcome, reason?, ms }` where `outcome` is `answered`, `limit`, `failed`, `skipped` (limited earlier in this job, or prompt too long) or `not-asked` (a Jev pick step that was skipped, reason `no-consent` or `no-key`; written once per labeling pass). `harness` is one of the three CLI harnesses, or `jev` in this event only, `reason` is a code (`exit-1`, `cli-reported-error`, `timeout`, `limit`), never CLI text, and `source` says where the model name came from (`request`, `kind.models`, `default.models`, `names`, `builtin`) so "why did adjudication run on haiku" has an answer. A harness not on `PATH` is never a try: the judge's lineup leaves it out |
 | `answeredBy` | `{ harness, model }` of the try that answered, or null |
 | `inputTokens`, `outputTokens` | From the answer |
 | `tokenBasis` | `reported` (the CLI said), `estimated` (characters / 4) |
-| `items` | For a Jev pick: how many questions were in the pack; for a generate call: how many clusters |
-| `how` | For labeling with a pick: counts of clusters labeled `jev`, `first-candidate`, `file-name` |
+| `items` | For a Jev pick: how many questions were in the pack (for `product-surfaces`, how many candidate groups); for a generate call: how many clusters |
+| `how` | For labeling with a pick: counts of clusters labeled `jev`, `first-candidate`, `file-name`. For `product-surfaces`: counts of groups `merged`, `kept` (chosen or undecided) and `rejected`, plus `undecided` (the part of `kept` that Jev did not settle). A `not-asked` try carries the reason `no-consent`, `no-key` or `off` |
 | `startedAt`, `ms` | |
 
 **Never prompt text, never answer text, never a path, never CLI error text.** Counts, names of harnesses and models, and codes only.
@@ -419,7 +461,7 @@ at most two harness-model pairs, then "+K more". Variants:
 
 Example: `Models: codex gpt-6-luna 3 calls · 4.1k tokens (input plus output) (1 fell back)`. There is no cost anywhere in the line. The model line shows at every width and wraps rather than trims. The row's accessible name is one `Name` string with the same text after the existing parts (children stay raw, so it isn't read twice). The Resume button has its own accessible name ("Resume <job kind>") and is one tab stop; it is only present while `WaitingOn` is `model-limit`, and a click that finds the job no longer waiting (someone else resumed it) just refreshes the row.
 
-**The sheet.** Under the existing Progress list the sheet gets a "Model calls" heading and a list, one named `Border` row per attempt (not a data grid), in call order, newest last, scrolling inside the sheet and a single tab stop with Up, Down, Home and End moving between rows; it doesn't autoscroll unless already at the bottom and isn't a live region. It holds the last 200 calls, with "showing the last 200 of N" only when there are more, on both surfaces, and a date on a time when it isn't today. A row reads "time, kind, harness and model, tokens, outcome" and its accessible name reads in that order. An attempt that failed at a limit is its own row with the outcome word, then the next attempt's row: `limit`, `failed`, `skipped` or `answered`, so "claude-code limit" is followed by "codex answered"; three attempts are three rows. A Jev pick row reads "Jev: picked 94 of 100, 5 took the model's first, 1 took the file name", or "Jev: not asked (no consent)" / "Jev: not asked (no key)". A paused job's sheet also shows the pause reason and the Resume button above the Progress list. Tab reaches the list; there is no key trap, Esc closes the sheet as for any sheet.
+**The sheet.** Under the existing Progress list the sheet gets a "Model calls" heading and a list, one named `Border` row per attempt (not a data grid), in call order, newest last, scrolling inside the sheet and a single tab stop with Up, Down, Home and End moving between rows; it doesn't autoscroll unless already at the bottom and isn't a live region. It holds the last 200 calls, with "showing the last 200 of N" only when there are more, on both surfaces, and a date on a time when it isn't today. A row reads "time, kind, harness and model, tokens, outcome" and its accessible name reads in that order. An attempt that failed at a limit is its own row with the outcome word, then the next attempt's row: `limit`, `failed`, `skipped` or `answered`, so "claude-code limit" is followed by "codex answered"; three attempts are three rows. A Jev pick row reads "Jev: picked 94 of 100, 5 took the model's first, 1 took the file name", or "Jev: not asked (no consent)" / "Jev: not asked (no key)". A product-surface pick row reads "Jev product surfaces: 80 groups, 12 merged, 6 rejected, 58 kept (4 undecided)", or "Jev product surfaces: not asked (no consent)" (also `no key`, `off`). A paused job's sheet also shows the pause reason and the Resume button above the Progress list. Tab reaches the list; there is no key trap, Esc closes the sheet as for any sheet.
 
 `sindri jobs show <id>` prints the same rows as text, for example:
 
@@ -442,11 +484,11 @@ If the wait ends by cancel or the 24 hours, the call returns 240 and the existin
 
 ### 8.4 Doctor
 
-`sindri doctor` (`docs/csharp/sindri.md`) gets a `context:models` row. `ok` prints one line per distinct route, for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna` and `conceptNaming: claude-code sonnet, then codex gpt-5.5`, which is also the answer to "what will run". `warn` for these, each with its fix: a harness in a `harnesses` list that isn't installed ("cursor is not installed: remove it from context.models.default.harnesses"); a list of one harness ("no fallback"); a built-in or named model the CLI's own list doesn't contain (Codex: `codex debug models`; Cursor: `cursor-agent --list-models`; Claude has no list command so it isn't checked). A job paused on a limit is not a doctor problem: it shows on the Jobs page and the health badge doesn't change. A new row changes `aot-smoke/expected.txt` (`src/Sindri/aot-smoke`), so R-4's gate runs it. The label pick adds `context:labelpick` the way `model:pick` works: `ok` off, `ok` on with a key, `warn` on without one or without consent.
+`sindri doctor` (`docs/csharp/sindri.md`) gets a `context:models` row. `ok` prints one line per distinct route, for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna` and `conceptNaming: claude-code sonnet, then codex gpt-5.5`, which is also the answer to "what will run". `warn` for these, each with its fix: a harness in a `harnesses` list that isn't installed ("cursor is not installed: remove it from context.models.default.harnesses"); a list of one harness ("no fallback"); a built-in or named model the CLI's own list doesn't contain (Codex: `codex debug models`; Cursor: `cursor-agent --list-models`; Claude has no list command so it isn't checked). A job paused on a limit is not a doctor problem: it shows on the Jobs page and the health badge doesn't change. A new row changes `aot-smoke/expected.txt` (`src/Sindri/aot-smoke`), so R-4's gate runs it. The label pick adds `context:labelpick` the way `model:pick` works: `ok` off, `ok` on with a key, `warn` on without one or without consent. `context:surfacepick` is the same row for `productSurfaces.pick`, with its own consent. The `context:models` row prints `productSurfaces: jev, then none` for the route when the pick is on and `productSurfaces: no model` when it is off.
 
 ### 8.5 The approval notice
 
-The notice of 6.6 is shown in the approval summary of both surfaces that approve a profile (`sindri profile approve` and the app's approval sheet), as one added line like the model-pick one, and again in the Settings page's read-only "Label choice" line, which has four states: "off", "on, but needs an API key", "on, but not approved yet" (the doctor wording), and "on". The notice text is hashed; changing the text voids earlier consent (6.6).
+The notices of 6.6 and 6.9 (two lines, one per pick) is shown in the approval summary of both surfaces that approve a profile (`sindri profile approve` and the app's approval sheet), as one added line like the model-pick one, and again in the Settings page's read-only "Label choice" line, which has four states: "off", "on, but needs an API key", "on, but not approved yet" (the doctor wording), and "on". The notice text is hashed; changing the text voids earlier consent (6.6).
 
 ## 9. Migration
 
@@ -459,7 +501,7 @@ The notice of 6.6 is shown in the approval summary of both surfaces that approve
 
 ## 10. Validation and errors
 
-- `SettingsReader` learns `models` (add it to the known-key list at `SettingsReader.cs:46` and `:259`) and validates section 3.1. A wrong type, an unknown harness, a duplicate in `harnesses`, an unknown kind or key, or a value out of range is `SND-CONTEXT-001` with the key path, at `profile validate` and `profile approve`, like every other `context` key. Example messages: `context.models.adjudication.harnesses[0]: "claude" is not one of claude-code, codex, cursor (did you mean claude-code?)`; `context.models.labeling.tier: "medium" is cheap or strong`; `context.models.labeling.models.codex: a model name is letters, digits and . _ : / @ + - , not starting with -`. `docs/csharp/sindri-profile.md` (the `context` row, `:24`) gets the keys and defaults.
+- `SettingsReader` learns `models` (the `productSurfaces` entry accepts `pick` only; `harnesses`, `tier` or `models` under it is `SND-CONTEXT-001` with the key path) (add it to the known-key list at `SettingsReader.cs:46` and `:259`) and validates section 3.1. A wrong type, an unknown harness, a duplicate in `harnesses`, an unknown kind or key, or a value out of range is `SND-CONTEXT-001` with the key path, at `profile validate` and `profile approve`, like every other `context` key. Example messages: `context.models.adjudication.harnesses[0]: "claude" is not one of claude-code, codex, cursor (did you mean claude-code?)`; `context.models.labeling.tier: "medium" is cheap or strong`; `context.models.labeling.models.codex: a model name is letters, digits and . _ : / @ + - , not starting with -`. `docs/csharp/sindri-profile.md` (the `context` row, `:24`) gets the keys and defaults.
 - `SND-CONTEXT-240`, "Every model harness for this call is at its usage limit or failing". `ErrorKind.Unavailable`. Message: the harnesses and their `until` times.
 - `SND-CONTEXT-241`, "No model harness is installed for this call". `ErrorKind.Unavailable`. Fix: install one or name another.
 - Both are in `ContextErrors.cs` next to `RerankUnavailable` (`:228`); `SND-CONTEXT-240` to `-249` are free (the highest in use is 232).
@@ -479,7 +521,8 @@ Each phase is one PR, red first, layered commits. Builders run on Sonnet or Haik
 | **R-4** | Showing it. `JobView.ModelCalls`, the API view and its golden, the Jobs page row, the sheet list and the Resume button, `sindri jobs show` (with the waiting line), `sindri-ui-fixture.sh` states for a limited harness and a paused job, the `context:models` doctor row and `src/Sindri/aot-smoke/expected.txt` | R-3a (the event shape and row fields); R-3 for real events and the resume route | In the running app (scratch home with the fixture): the Jobs line and sheet in every state, and Resume taking a paused job back to running |
 | **R-5** | The Jev label pick. `IChoicePort`, its Host implementation over `IBatchClassifier`, `JudgeCatalog`'s classifier accessor, `ModelLabeler`'s generate then pick flow, pack sizing, the split rule, the fallback, the consent notice in the approval summary, the `context:labelpick` doctor row and the Settings page's four-state "Label choice" line (with a view-model test). The numbers (80%, 100 questions, 45 s, 0.5) are constants in one `LabelPickLimits` type that the tests read, so R-0 changes one place; the larger generate packs ship with `pick: off` and don't wait for R-0. R-5 adds its `IChoicePort` registration as one call to a separate extension method, after R-3 merges | R-1 (settings), R-0 for the numbers (starts on the defaults) | Unit: pack sizes at caps of 1,000, 40,000 and 160,000; every row of the split table; undecided clusters take the first candidate |
 | **R-6** | Cursor models. A `cursor-agent --list-models` reader beside the Codex one in `ProbedModelCatalog`, used by the doctor row and (separately, later) by the launch pick | R-0 (the output shape) | `sindri launch show` lists Cursor's models on a logged-in box |
-| **R-7** | The owner's proof and docs: the run on a real map (section 12) and the doc pass | R-3, R-4, R-5 | The owner check below |
+| **R-8** | The product-surface pick, spec side. `ModelPurpose.ProductSurfaces`, the `productSurfaces` entry and its validation (if R-1 has merged; else it lands in R-1), `SurfaceVerdict`, the group-to-`ChoiceQuestion` mapper and the verdict reader (option words, exact-name check, 0.5 rule, `keep separate` on doubt), pack sizing through R-5's `LabelPickLimits`, the consent notice and its record, the `context:surfacepick` doctor row, the Settings page line, the `context.model.called` fields of 7.1. **Not in this phase:** the passes that make the candidates, the grouping and applying a verdict to the map; those are the context lane's work for #1565 and R-8 is tested against a fake candidate source and a fake `IChoicePort`. The `deps.yaml` note names both picks | R-5 (the port, consent and packing), R-1 (settings); #1565's passes for anything owner-visible | Unit: every row of the option table maps to the right verdict; the exact-name check; doubt keeps separate; a rejected pack splits as in 6.4; no consent makes no Jev call and the build says `product surfaces: not decided (no-consent)` |
+| **R-7** | The owner's proof and docs: the run on a real map (section 12) and the doc pass | R-3, R-4, R-5; R-8 and #1565's passes for the product-surface check | The owner check below |
 
 ### 11.1 Lanes
 
@@ -490,10 +533,11 @@ Four lanes, builders always busy.
 | 0 | **R-1** | **R-2a** (Claude and Codex) | **R-3a** (event payload, job row fields), then **R-4**'s Ui view-models on R-3a's shapes | **R-0** (needs the owner) |
 | 1 | **R-5** (against `IChoicePort` and a fake) | **R-2b** (Cursor) when R-0 lands | **R-3** (judge types behind a seam until R-2a merges); **R-4** wires to real events | **R-6** (after R-0) |
 | 2 | **R-5** finishes (Host side of the port) | free | **R-4** finishes | **R-7** |
+| 3 | **R-8** (spec side of the product-surface pick, on R-5's port); the context lane's #1565 passes and apply step run beside it in its own PRs | free | free | **R-7**'s product-surface check, once #1565's passes have landed |
 
-Parallel: R-1, R-2a and R-3a touch different projects (Context.Core, Judge, Sindri.Core). R-4 starts from R-3a's shapes and a fake. R-5 and R-3 touch different files in the Host (the choice port and the router). R-0 and R-6 need the owner's box and block nothing until R-2's Cursor part and R-5's numbers.
+Parallel: R-8 and the #1565 passes touch different files (the picker and its settings; the extract passes and the apply step) and meet at the `SurfaceVerdict` and group shapes, which R-8 publishes first as a stub the passes code against. R-1, R-2a and R-3a touch different projects (Context.Core, Judge, Sindri.Core). R-4 starts from R-3a's shapes and a fake. R-5 and R-3 touch different files in the Host (the choice port and the router). R-0 and R-6 need the owner's box and block nothing until R-2's Cursor part and R-5's numbers.
 
-Sequential: R-3's base is the later of R-1 and R-3a; the other merges first. R-2a merges first or is seamed. R-4's real-event proof needs R-3. R-7 needs all. No stack is deeper than three open PRs.
+Sequential: R-8 needs R-5's port merged; R-3's base is the later of R-1 and R-3a; the other merges first. R-2a merges first or is seamed. R-4's real-event proof needs R-3. R-7 needs all. No stack is deeper than three open PRs.
 
 If R-0 is late, everything ships on the defaults written here (Cursor's limit text guessed, the pick's numbers as in section 6).
 
@@ -505,6 +549,7 @@ Every phase also runs `node scripts/check-deps.mjs`, `scripts/check-env-example.
 - R-2: `Aw.Judge.Tests` unit and integration, `Aw.Sindri.Host` tests (the judge is consumed there), `src/Judge/aot-smoke/run.sh`, `config/lib/tests/judge-cs-hook-surface.test.sh`, the public-API check.
 - R-3a: `Aw.Sindri.Core` tests, the Sindri integration lane, `Aw.Sindri.Engine.Tests`, `Aw.Sindri.Ui.Tests` (a view-schema bump and catalog entries), `Aw.Architecture.Tests`. R-0 and R-7: docs only, no gate. R-6: the unit test on the `--list-models` fixture once R-0 has captured it.
 - R-3, R-4 and R-5: `Aw.Context.Tests` (R-3's `DecisionPass` commit), `bash scripts/tests/sindri-ui-fixture.test.sh` (R-4), `Aw.Sindri.Host` tests, the Sindri integration lane and `Aw.Sindri.Engine.Tests` (a view and a catalog entry change), `Aw.Sindri.Ui.Tests` (a new API golden or action id), `src/Sindri/aot-smoke/run.sh` (a doctor row changes `expected.txt`), `Aw.Architecture.Tests`.
+- R-8: `Aw.Context.Tests` unit and integration, `Aw.Sindri.Host` tests, `Aw.Sindri.Ui.Tests` (the Settings line), `src/Sindri/aot-smoke/run.sh` (the `context:surfacepick` row changes `expected.txt`), `check-deps.mjs`, `Aw.Architecture.Tests`.
 - R-5: also `src/Sindri/aot-smoke/run.sh` (the `context:labelpick` row changes `expected.txt`), `check-deps.mjs` for the amended note, and the architecture tests for any new `using Aw.` or sub-namespace.
 
 ## 12. Test plan
@@ -523,6 +568,7 @@ Every phase also runs `node scripts/check-deps.mjs`, `scripts/check-env-example.
 - **Pieces the router adds:** a lost lease or no control plane makes the event append log and leave the `Ask` result alone; tokens per CLI (Claude `usage`/`modelUsage`, Codex `turn.completed`; none given means the characters / 4 estimate with `tokenBasis: estimated`); each `warn` of the doctor rows; changing the notice text voids consent; the old-key-only profile equals its new-key equivalent; `GH_TOKEN` and `AW_FORGE_TOKEN` are absent in the child environment of all three harnesses.
 - **Pack sizing:** pack count at caps 1,000, 40,000, 160,000 and 256,000; first-fit order is stable; a cluster with no path still fits; the 100-question limit binds at the default.
 - **Split rule:** one test per row of 6.4, including that `no-api-key` makes no second call.
+- **Product surfaces (R-8):** group of 1, 2 and 3 candidates give 2, 4 and 5 options; each option maps to its verdict; the merged name must equal a candidate's name; a missing answer, an off-option answer and confidence 0.49 keep separate (0.5 acts); a reject at 0.49 keeps; packs follow 6.3's sizes and splits; `no-consent`, `no-key` and `off` make no Jev call, ask no CLI and leave every candidate in; `productSurfaces.harnesses` is refused with its key path; a denied path and a secret-shaped name are absent from the request body; the `how` counts add up to the group count.
 - **Can't decide:** missing key, off-option choice, confidence 0.49 and 0.5, each takes the first candidate; with no candidates it takes the file-derived name.
 
 ### Integration
@@ -530,7 +576,8 @@ Every phase also runs `node scripts/check-deps.mjs`, `scripts/check-env-example.
 - **Router end to end** (fake providers, real ledger in a temp home): Claude limited, Codex answers; the ledger has one `context.model.called` with two `tries`; the next call of the same job has `skipped` for Claude. All out: the job is `waiting`, `ResumeJob` wakes it and the call answers; a `RecordDecisionRun` over a fake feed pauses the same way, and after a cancel its records end queued with `Failure` empty and a second tick reads them.
 - **Jobs view:** a job that made calls has `models` totals and `modelCalls`; `sindri views rebuild` reproduces them and `waitingOn`; a `context.model.called` with a null or unknown job changes no row; the wording of every state in section 8.2 is pinned in a golden.
 - **Labeling with a pick** (fake model port, fake choice port): 250 clusters give 5 generate calls and 3 pick calls; with the port failing at `network-error` after the first pack, the first pack's labels are Jev's and the rest are first candidates, with no further Jev call.
-- **Profile approval:** `pick: jev` without the notice in the summary stays off.
+- **Profile approval:** `pick: jev` without the notice in the summary stays off, for labeling and for product surfaces separately.
+- **Product-surface pick** (fake candidate source, fake choice port): 250 groups give 3 pick calls and one `context.model.called` per call with `purpose: product-surfaces`; the port failing at `network-error` after the first pack leaves the rest `keep separate` with no further call; the Jobs sheet shows the pick row.
 
 ### Heavy and owner checks
 
@@ -541,7 +588,7 @@ Every phase also runs `node scripts/check-deps.mjs`, `scripts/check-env-example.
 
 ## 13. Open questions for the owner
 
-None. q152 (2026-10-29) answered the five this section asked: Jev picks labels (yes), the model names (confirmed as pinned), every harness limited (pause), the skip (none) and the cost line (none). The 24-hour wait cap in 5.3 is a number the spec chose; say if you want it longer or shorter.
+None new from the product-surface kind: the owner's direction fixed that Jev decides, and the choices made here (no CLI fallback; groups of at most 3; doubt keeps separate; its own consent notice; its tokens inside `context.labeling.maxTokens`) follow from it and are open to a change on read. The earlier answers: q152 (2026-10-29) answered the five this section asked: Jev picks labels (yes), the model names (confirmed as pinned), every harness limited (pause), the skip (none) and the cost line (none). The 24-hour wait cap in 5.3 is a number the spec chose; say if you want it longer or shorter.
 
 ## 14. Corrections to the scoping note
 
