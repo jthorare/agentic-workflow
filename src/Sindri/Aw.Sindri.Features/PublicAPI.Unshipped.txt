@@ -5247,15 +5247,17 @@ Aw.Sindri.Features.ContextCalls.IndexSourceRow
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.<Clone>$() -> Aw.Sindri.Features.ContextCalls.IndexSourceRow!
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Complete.get -> bool
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Complete.init -> void
-Aw.Sindri.Features.ContextCalls.IndexSourceRow.Deconstruct(out string! Source, out string? Phase, out bool Usable, out bool Complete, out System.DateTimeOffset? LastSync, out string? LastCode) -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.Deconstruct(out string! Source, out string? Phase, out bool Usable, out bool Complete, out System.DateTimeOffset? LastSync, out string? LastCode, out int? ReReading) -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Equals(Aw.Sindri.Features.ContextCalls.IndexSourceRow? other) -> bool
-Aw.Sindri.Features.ContextCalls.IndexSourceRow.IndexSourceRow(string! Source, string? Phase, bool Usable, bool Complete, System.DateTimeOffset? LastSync, string? LastCode) -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.IndexSourceRow(string! Source, string? Phase, bool Usable, bool Complete, System.DateTimeOffset? LastSync, string? LastCode, int? ReReading = null) -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastCode.get -> string?
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastCode.init -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastSync.get -> System.DateTimeOffset?
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastSync.init -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Phase.get -> string?
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Phase.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.ReReading.get -> int?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.ReReading.init -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Source.get -> string!
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Source.init -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Usable.get -> bool

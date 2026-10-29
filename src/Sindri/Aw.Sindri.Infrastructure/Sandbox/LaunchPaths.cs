@@ -12,6 +12,9 @@ internal static class LaunchPaths
     /// <summary>The run area's file name for the stored plan.</summary>
     internal const string PlanName = "sandbox-plan.json";
 
+    /// <summary>The run directory's file name for the limits 'sindri session wrap --limits' reads (#1553).</summary>
+    internal const string WrapLimitsName = "wrap-limits.json";
+
     /// <summary>The run area of a launch.</summary>
     /// <param name="launchDirectory">The launcher's directory.</param>
     /// <param name="launch">The launch.</param>

@@ -38,18 +38,35 @@ internal sealed class FakeLinearIssues(IReadOnlyList<JsonObject> nodes) : HttpMe
         var body = JsonNode.Parse(await request.Content!.ReadAsStringAsync(cancellationToken).ConfigureAwait(false))!.AsObject();
         var variables = body["variables"]?.AsObject() ?? [];
         Variables.Add((JsonObject)variables.DeepClone());
-        var rows = Matching(variables["filter"]?["updatedAt"]?.AsObject());
+        var rows = Matching(variables["filter"]?.AsObject());
         var skip = variables["after"] is { } after ? int.Parse(after.GetValue<string>(), CultureInfo.InvariantCulture) : 0;
         var reply = Reply(rows, skip, variables["first"]?.GetValue<int>() ?? 50);
         return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(reply.ToJsonString(_json), Encoding.UTF8, "application/json") };
     }
 
-    private List<JsonObject> Matching(JsonObject? filter)
+    private List<JsonObject> Matching(JsonObject? query) => query?["or"] is JsonArray any ? OrMatching(any) : InRange(query?["updatedAt"]?.AsObject());
+
+    private List<JsonObject> InRange(JsonObject? filter)
     {
         var gt = Bound(filter, "gt") ?? DateTimeOffset.MinValue;
         var gte = Bound(filter, "gte") ?? DateTimeOffset.MinValue;
         return [.. nodes.Where(n => Updated(n) > gt && Updated(n) >= gte).OrderByDescending(Updated).ThenBy(n => n["id"]!.GetValue<string>(), StringComparer.Ordinal)];
     }
+
+    // why: the first-read filter is "updated in the window, or open in an open project"; the fake reads the first branch like a plain updatedAt filter and the second from the node's state type and project status type
+    private List<JsonObject> OrMatching(JsonArray branches)
+    {
+        var window = branches.OfType<JsonObject>().FirstOrDefault(static b => b["updatedAt"] is not null)?["updatedAt"]?.AsObject();
+        var open = branches.OfType<JsonObject>().FirstOrDefault(static b => b["state"] is not null);
+        var inWindow = InRange(window);
+        var rest = open is null ? [] : nodes.Where(n => OpenInOpenProject(n) && !inWindow.Contains(n));
+        return [.. inWindow.Concat(rest).OrderByDescending(Updated).ThenBy(n => n["id"]!.GetValue<string>(), StringComparer.Ordinal)];
+    }
+
+    private static bool OpenInOpenProject(JsonObject node) =>
+        node["project"] is JsonObject project && !Closed(node["state"]?["type"]) && !Closed(project["status"]?["type"]);
+
+    private static bool Closed(JsonNode? type) => type?.GetValue<string>() is { } t && (string.Equals(t, "completed", StringComparison.Ordinal) || string.Equals(t, "canceled", StringComparison.Ordinal));
 
     private static JsonObject Reply(List<JsonObject> rows, int skip, int first)
     {
