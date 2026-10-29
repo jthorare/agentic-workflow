@@ -16,7 +16,7 @@ public sealed class ConceptSynthesisSettingsTests
         var synthesis = SettingsReader.Read(section: null).Value.ConceptSynthesis;
 
         Assert.Equal(new ConceptSynthesisSettings(), synthesis);
-        Assert.Equal((true, 8, 0.75f, 20, 2, 1, 1_500, 30_000), (synthesis.Enabled, synthesis.Neighbours, synthesis.MinCosine, synthesis.MaxGroup, synthesis.MinRecords, synthesis.MinSources, synthesis.MaxCharsPerRecord, synthesis.MaxCharsPerCall));
+        Assert.Equal((true, 8, 0.85f, 20, 2, 1, 1_500, 30_000), (synthesis.Enabled, synthesis.Neighbours, synthesis.MinCosine, synthesis.MaxGroup, synthesis.MinRecords, synthesis.MinSources, synthesis.MaxCharsPerRecord, synthesis.MaxCharsPerCall));
         Assert.Equal(new GroupingSettings(), synthesis.Grouping);
     }
 
