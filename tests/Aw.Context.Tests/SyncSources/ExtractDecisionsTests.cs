@@ -68,23 +68,41 @@ public sealed class ExtractDecisionsTests
 
     internal sealed class Rig : IAsyncDisposable
     {
-        private Rig(MapWorld world)
+        private readonly FakeLexicalLeg _leg;
+        private readonly HashSet<string> _indexed = new(StringComparer.Ordinal);
+
+        private Rig(MapWorld world, FakeLexicalLeg leg)
         {
-            World = world;
+            (World, _leg) = (world, leg);
         }
 
         public MapWorld World { get; }
 
-        public static async Task<Rig> Start(string verdict = "contradicts", Func<RecordItem, RecordItem>? shape = null)
+        public static async Task<Rig> Start(string verdict = "contradicts", Func<RecordItem, RecordItem>? shape = null, IContextSource? intent = null)
         {
             var feed = new FakeRecordFeed(RecordSamples.Linear, items: [.. LinearIssueSeed.From(issues: null).Select(Item).Select(i => shape?.Invoke(i) ?? i)]);
-            var world = new MapWorld(feeds: new FakeRecordFeedCatalog(feed));
+            var leg = new FakeLexicalLeg();
+            var world = new MapWorld(intent: intent, lexical: leg, feeds: new FakeRecordFeedCatalog(feed));
             world.Model.Responder = r => Route(r, verdict);
             _ = await world.ImportFixture();
-            return new Rig(world);
+            return new Rig(world, leg);
         }
 
-        public async Task<SourceSync> Sync(ContextScope scope) => (await World.Engine.Sync("linear", scope, Ct)).Value.Sources[0];
+        public async Task<SourceSync> Sync(ContextScope scope)
+        {
+            var row = (await World.Engine.Sync("linear", scope, Ct)).Value.Sources[0];
+            await IndexStored();
+            return row;
+        }
+
+        // The fake lexical leg holds no index of its own: whatever the sync stored is what a search can find, the way the real leg reads the store.
+        private async Task IndexStored()
+        {
+            foreach (var record in (await World.Records.List(new RecordFilter(), after: null, 1000, Ct)).Value.Where(r => _indexed.Add(r.Key.Value)))
+            {
+                _ = _leg.Add(new ChunkKey(record.Key, 0), record.Audience);
+            }
+        }
 
         public async Task<IntentLayer> Layer() => (await World.Intents.Layer(Ct)).Value;
 

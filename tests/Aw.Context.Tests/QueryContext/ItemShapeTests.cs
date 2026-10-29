@@ -1,6 +1,8 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Sources;
+using Aw.Context.Testing.Engine;
 using Aw.Context.Tests.Map;
 using static Aw.Context.Tests.SyncSources.ExtractDecisionsTests;
 
@@ -184,7 +186,9 @@ public sealed class ItemShapeTests
     [Fact]
     public async Task While_decisions_are_queued_for_a_linked_record_the_query_degrades_042_for_decisions()
     {
-        await using var rig = await Rig.Start();
+        // the query reads the queue of its Intent-kind sources: the Linear source the catalog adds when the profile holds a Linear token
+        var linear = new FakeContextSource(new SourceDescriptor(SourceId.From("linear"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false), []);
+        await using var rig = await Rig.Start(intent: linear);
         _ = await rig.Sync(Scope(labeling: false));
         _ = await rig.Sync(Scope(labeling: false));   // the run after the one that fetched
 
