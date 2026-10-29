@@ -32,7 +32,7 @@ internal sealed partial class ShellViewModel : ObservableObject
 
     private static readonly string[] _pageProperties =
     [
-        nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsWorkflows), nameof(IsWork), nameof(IsRecipes), nameof(IsContext),
+        nameof(CurrentPage), nameof(PageName), nameof(SelectedNav), nameof(IsHome), nameof(IsProjects), nameof(IsWorkflows), nameof(IsWork), nameof(IsRecipes), nameof(IsContext),
         nameof(IsAgents), nameof(IsSystem), nameof(IsJobs), nameof(IsSettings), nameof(IsNotRunningPanel), nameof(IsPageVisible), nameof(IsHomeShown), nameof(IsInboxShown), nameof(IsPagesShown),
     ];
 
@@ -108,10 +108,11 @@ internal sealed partial class ShellViewModel : ObservableObject
     /// <summary>The connection and the Health page's status card.</summary>
     public HealthViewModel Health { get; }
 
-    /// <summary>The top bar's segments, in order: Home, Workflows, Work, Recipes, Context, Agents, System (screens spec §3).</summary>
+    /// <summary>The top bar's segments, in order: Home, Projects, Workflows, Work, Recipes, Context, Agents, System (screens spec §3, Projects page spec §7).</summary>
     public IReadOnlyList<NavEntry> Navigation { get; } =
     [
         new(PageId.Home, Labels.Home, "H", string.Empty),
+        new(PageId.Projects, Labels.Projects, "P", string.Empty),
         new(PageId.Workflows, Labels.Workflows, "W", string.Empty),
         new(PageId.Work, Labels.Work, "Q", string.Empty),
         new(PageId.Recipes, Labels.Recipes, "R", string.Empty),
@@ -120,7 +121,7 @@ internal sealed partial class ShellViewModel : ObservableObject
         new(PageId.System, Labels.System, ".", string.Empty),
     ];
 
-    /// <summary>Every page the window can show, in order: the seven tabs, then Settings.</summary>
+    /// <summary>Every page the window can show, in order: the eight tabs, then Jobs and Settings.</summary>
     public IReadOnlyList<PageId> Pages { get; } = Enum.GetValues<PageId>();
 
     /// <summary>The page shown.</summary>
@@ -272,22 +273,6 @@ internal sealed partial class ShellViewModel : ObservableObject
         Queue.PageShown(RowScopeOf(page));
         Changed(_pageProperties);
         Remember(p => p with { LastPage = page.ToString() });
-    }
-
-    /// <summary>
-    /// Esc on Settings over the Not running card: back to the page it was opened from, so the card shows again. While
-    /// connected Settings is a page like any other, and Esc leaves it where it is.
-    /// </summary>
-    /// <returns>True when it left Settings.</returns>
-    internal bool LeaveSettings()
-    {
-        if (!IsSettings || !IsNotRunning)
-        {
-            return false;
-        }
-
-        GoTo(_beforeSettings);
-        return true;
     }
 
     // LANE ANCHOR U3': new Needs you state belongs in its own partial (ShellViewModel.<Slice>.cs), not in this file (cap 300 lines); only a hook-up line goes here. Insert immediately above this marker, never between the markers.

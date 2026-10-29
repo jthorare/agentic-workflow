@@ -41,4 +41,7 @@ internal enum DeepLinkKind
 
     /// <summary>'setup': Settings, scrolled to the setup checklist (setup spec §5).</summary>
     Setup,
+
+    /// <summary>'projects': the Projects page.</summary>
+    Projects,
 }
