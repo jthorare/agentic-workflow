@@ -1,14 +1,14 @@
-namespace Aw.Sindri.Features;
+namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 
-// why: the root namespace, not BugFix: the Pr and Review slices tell their repair Steps the same rule and slices never name each other (AW1003)
+// why: in Core, not a Features slice: the BugFix, Pr and Review slices all tell their Steps this rule, and slices never name each other (AW1003)
 /// <summary>The prevent-the-class rule every bug-fix and repair Step is told (skills/_shared/prevent-the-class.md, #1682): the question word for word and the lines that follow it. Plain text, no fact content.</summary>
-internal static class BugClassPrevention
+public static class BugClassPrevention
 {
     /// <summary>The owner's question, the shared file's quoted line word for word (a test holds the two equal).</summary>
-    internal const string Question = "How can we prevent this class of bugs from happening again—not just fix this instance? Consider enforceable constraints such as lint rules, analyzers, type/API design, shared primitives, state-machine or architecture changes, and checks that catch other instances of the same failure.";
+    public static string Question { get; } = "How can we prevent this class of bugs from happening again—not just fix this instance? Consider enforceable constraints such as lint rules, analyzers, type/API design, shared primitives, state-machine or architecture changes, and checks that catch other instances of the same failure.";
 
     /// <summary>The lines every bug-fix Step gets, in order: ask once the cause is confirmed and before choosing a fix.</summary>
-    internal static IReadOnlyList<string> SharedLines { get; } =
+    public static IReadOnlyList<string> SharedLines { get; } =
     [
         "Prevent the class, not just the instance: once the cause is confirmed and before you choose a fix, ask yourself: " + Question,
         "Name the failure class and the invariant that should hold, one sentence each, from the code and evidence you have. Don't invent defects you haven't seen.",
