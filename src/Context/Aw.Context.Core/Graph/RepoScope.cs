@@ -2,13 +2,13 @@ namespace Aw.Context.Core.Graph;
 
 /// <summary>
 /// The nodes a repo implements (spec §3): the targets of 'implements' edges (and 'tags' edges, so a tag feature has its repo) with file evidence in that repo
-/// ('repo:&lt;repo&gt;/&lt;path&gt;'), and the code files those edges start from ("that repo's files and code"). S-3b adds their cascade: <see cref="WithProduct"/> keeps the
+/// ('repo:&lt;repo&gt;/&lt;path&gt;'), and the repo's code files (any edge evidenced in the repo, so a data-access file that implements nothing and only reads or writes a thing is in; "that repo's files and code"). S-3b adds their cascade: <see cref="WithProduct"/> keeps the
 /// actions on the scoped surfaces and the things the scoped nodes read or write.
 /// Since owner decision 2026-10-15 (B) a session also sees the intent linked to those nodes (<see cref="WithLinkedIntent"/>).
 /// </summary>
 public static class RepoScope
 {
-    /// <summary>The keys of the nodes <paramref name="repo"/> implements.</summary>
+    /// <summary>The keys of the nodes <paramref name="repo"/> implements and of its code files (any edge evidenced in the repo).</summary>
     /// <param name="graph">The graph.</param>
     /// <param name="repo">The repo's short name.</param>
     /// <returns>The node keys (ordinal), empty when it implements nothing.</returns>
@@ -16,10 +16,12 @@ public static class RepoScope
     {
         ArgumentNullException.ThrowIfNull(graph);
         var prefix = $"repo:{repo.Value}/";
-        return graph.Edges
-            .Where(e => e.Type is EdgeType.Implements or EdgeType.Tags && e.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith(prefix, StringComparison.Ordinal)))
-            .SelectMany(e => new[] { e.To.Value, e.From.Value })
-            .ToHashSet(StringComparer.Ordinal);
+        bool InRepo(GraphEdge e) => e.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith(prefix, StringComparison.Ordinal));
+        var implemented = graph.Edges
+            .Where(e => e.Type is EdgeType.Implements or EdgeType.Tags && InRepo(e))
+            .SelectMany(e => new[] { e.To.Value, e.From.Value });
+        var ownFiles = graph.Edges.Where(e => e.From.Kind == NodeKind.Code && InRepo(e)).Select(e => e.From.Value);
+        return implemented.Concat(ownFiles).ToHashSet(StringComparer.Ordinal);
     }
 
     /// <summary>

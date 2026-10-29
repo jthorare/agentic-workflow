@@ -16,38 +16,20 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// <param name="sources">The credential sources.</param>
 internal sealed class SandboxLoginCheck(ILaunchSetup setup, IAgentCatalog catalog, IApprovedProfile approved, ModelCredentialSources sources) : ISandboxLoginCheck
 {
-    /// <summary>A floor for how long the login must stay valid: a Step's own wall time is only known at launch.</summary>
-    private static readonly TimeSpan _needed = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan _needed = SandboxLoginTarget.Needed;
 
     public async ValueTask<IReadOnlyList<SandboxBlocker>> Check(CancellationToken cancellationToken)
     {
-        var profile = await approved.Latest(cancellationToken).ConfigureAwait(false);
-        var loaded = profile.IsError ? null : profile.Value;
-        if (loaded?.Profile.Workflow?.Agent?.Target is not { } stepAgent)
+        if (await SandboxLoginTarget.Find(setup, catalog, approved, cancellationToken).ConfigureAwait(false) is not { } target)
         {
             return [];
         }
 
-        var shown = await setup.Show(only: null, cancellationToken).ConfigureAwait(false);
-        if (shown.IsError)
-        {
-            return [];
-        }
-
-        if (!Runnable(shown.Value, stepAgent))
-        {
-            return [];
-        }
-
-        var settings = loaded.Profile.Sandbox;
+        var (stepAgent, settings) = target;
         var found = new Dictionary<(string Target, string Source, string Reason), SandboxBlocker>();
         Collect(found, settings, stepAgent, RepoNames(settings));
         return [.. found.Values];
     }
-
-    /// <summary>True when <paramref name="agent"/> is installed, approved for Steps and its policy form is expressible.</summary>
-    private bool Runnable(LaunchShowReport shown, AgentId agent) =>
-        shown.Entries.Any(e => e.Id == agent && e.ResolvedBin is not null && e.StepOk) && Expressible(agent);
 
     private void Collect(Dictionary<(string Target, string Source, string Reason), SandboxBlocker> found, SandboxSettings? settings, AgentId target, List<RepoName> repos)
     {
@@ -78,5 +60,4 @@ internal sealed class SandboxLoginCheck(ILaunchSetup setup, IAgentCatalog catalo
         return blocker with { Values = values };
     }
 
-    private bool Expressible(AgentId id) => catalog.Resolve(id)?.PolicyForm is PolicyForm.ClaudeSettingsFile or PolicyForm.CodexOverrides;
 }

@@ -1,7 +1,0 @@
-{
-  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
-  "title": "SND-ONYX-001",
-  "status": 409,
-  "detail": "Docker is not installed (fix: install Docker, then set up Onyx)",
-  "traceId": "<trace>"
-}

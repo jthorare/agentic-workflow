@@ -79,17 +79,6 @@
           "detail": null
         }
       ]
-    },
-    {
-      "id": "onyx",
-      "title": "Set up Onyx",
-      "state": "todo",
-      "why": "Docker is ready. Set up Onyx when you want search.",
-      "detail": "Onyx isn't set up yet.",
-      "error": null,
-      "action": "SetupOnyx",
-      "progress": null,
-      "items": []
     }
   ],
   "asOf": {
