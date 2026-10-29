@@ -134,7 +134,8 @@ scripts/onyx-lock.sh check              # Shape of context/onyx.lock: one versio
 scripts/onyx-lock.sh verify             # Maintainer-run, network, never in CI: recompute each file sha256 from raw.githubusercontent.com and each image digest from `docker buildx imagetools inspect`, and check the compose names only pinned images; exit 0 all match, 1 a mismatch, 2 usage or network
 scripts/images-lock.sh check             # Shape of deploy/images.lock (every deployment image by index and per-platform digest; unresolved ones are `todo` rows) and that the Dockerfile names only pinned images; exit 0 ok, 1 a check failed
 
-# Sindri-managed Onyx (docs/sindri/onyx.md, docs/csharp/sindri.md; the C# Sindri app, `dotnet run --project src/Sindri/Aw.Sindri.Host --` or the published sindri)
+# Old Onyx leftovers (#1598: Sindri no longer runs Onyx)
+sindri onyx down --purge                # Once, on a box that ran the old `onyx up`: lists its labelled containers and volumes, the recorded keychain entry and onyx/, asks, then removes them; the human's verb (a session is refused, SND-AUTH-002); exit 0 done or nothing left, 1 a step failed, 2 refused
 
 # External tools, once per box (setup.sh runs it): uv, graphify at sindri's pin, the code index's graphify environment and Ollama model from context/code-index.lock, both Temporal binaries, system packages (installed when missing)
 scripts/install-deps.sh                 # AW_DRY_RUN=1 prints only; missing system packages are installed (brew on macOS; sudo + apt-get, dnf, yum, pacman or zypper on Linux); AW_NO_SYSTEM_INSTALL=1 prints the commands and exits 1 instead
