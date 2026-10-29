@@ -134,6 +134,41 @@ public sealed class WholeNodePanelTests
     }
 
     [Fact]
+    public async Task A_source_with_a_link_has_no_no_link_line_and_names_what_it_opens()
+    {
+        var (page, launcher, _) = await Open(Served(""", "source": { "kind": "ticket", "ref": "LIN-12", "url": "https://linear.app/x/issue/LIN-12" }"""));
+
+        await Click(page, Node);
+        await page.Whole.Panel.OpenSource(Token);
+
+        var panel = page.Whole.Panel;
+        Assert.Equal((true, false, "Open the ticket in the browser"), (panel.HasLink, panel.HasNoLink, panel.OpenSourceName));
+        Assert.Equal(["https://linear.app/x/issue/LIN-12"], launcher.Opened, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_source_without_a_url_says_it_has_no_link_and_opens_nothing()
+    {
+        var (page, launcher, _) = await Open(Served(""", "source": { "kind": "commit", "ref": "abc1234" }"""));
+
+        await Click(page, Node);
+        await page.Whole.Panel.OpenSource(Token);
+
+        Assert.Equal((false, true, "No link to the source"), (page.Whole.Panel.HasLink, page.Whole.Panel.HasNoLink, page.Whole.Panel.NoLinkText));
+        Assert.Empty(launcher.Opened);
+    }
+
+    [Fact]
+    public async Task A_node_without_a_source_shows_neither_a_link_nor_the_no_link_line()
+    {
+        var (page, _, _) = await Open(Served());
+
+        await Click(page, Node);
+
+        Assert.Equal((false, false), (page.Whole.Panel.HasLink, page.Whole.Panel.HasNoLink));
+    }
+
+    [Fact]
     public async Task A_missing_source_and_description_show_nothing()
     {
         var (page, _, _) = await Open(Served());

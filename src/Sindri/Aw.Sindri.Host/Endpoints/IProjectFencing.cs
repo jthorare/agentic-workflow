@@ -1,4 +1,5 @@
 using Aw.Sindri.Features.GetProject;
+using Aw.Sindri.Features.ListLinearProjects;
 using Aw.Sindri.Features.ListProjects;
 
 namespace Aw.Sindri.Host.Endpoints;
@@ -18,4 +19,9 @@ internal interface IProjectFencing
     /// <param name="project">The project.</param>
     /// <returns>The JSON answer with the Linear text fenced.</returns>
     public IResult One(GetProjectResponse project);
+
+    /// <summary>The From Linear tab's rows as a session reads them.</summary>
+    /// <param name="rows">The rows.</param>
+    /// <returns>The JSON answer with the Linear text fenced.</returns>
+    public IResult Choices(ListLinearProjectsResponse rows);
 }

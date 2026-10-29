@@ -111,6 +111,32 @@ public sealed class ProjectsFramesTests : FrameHost
     });
 
     [Fact]
+    public Task The_add_sheet_from_Linear() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects("mixed", 1440, 900);
+        shell.Navigate(DeepLink.ProjectAdd);
+        await Until(window, () => shell.ProjectAdd.LinearRows.Count > 0, "the From Linear tab never listed a project");
+        Settle(window);
+
+        Assert.True(shell.IsProjectAddSheet);
+        Assert.True(Visible(window, "ProjectAddLinearRows"));
+        Frame(window, "projects-add-linear-1440", prefix: string.Empty);
+    });
+
+    [Fact]
+    public Task The_add_sheet_by_hand() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects("mixed", 1440, 900);
+        shell.Navigate(DeepLink.ProjectAdd);
+        await Until(window, () => shell.ProjectAdd.IsFromLinear, "the add sheet never showed");
+        shell.ProjectAdd.SelectByHand();
+        Settle(window);
+
+        Assert.True(Visible(window, "ProjectAddForm"));
+        Frame(window, "projects-add-hand-1440", prefix: string.Empty);
+    });
+
+    [Fact]
     public Task Before_the_first_answer_the_page_shows_card_shaped_placeholders() => OnUi(async () =>
     {
         var gate = new TaskCompletionSource();

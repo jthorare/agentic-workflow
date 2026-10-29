@@ -10,6 +10,9 @@ internal sealed partial class JobSheetViewModel
     /// <summary>The progress heading.</summary>
     public string ProgressHeading => Labels.JobProgress;
 
+    /// <summary>The heading over the list of the job's model calls.</summary>
+    public string ModelCallsHeading => Labels.JobModelCalls;
+
     /// <summary>The line when a job has said nothing yet.</summary>
     public string NoProgressText => Labels.JobNoProgress;
 

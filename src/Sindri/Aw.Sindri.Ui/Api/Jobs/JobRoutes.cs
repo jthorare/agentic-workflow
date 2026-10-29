@@ -23,6 +23,8 @@ internal static class JobRoutes
 
     internal static string Cancel(string id) => $"{One(id)}/cancel";
 
+    internal static string Resume(string id) => $"{One(id)}/resume";
+
     private static void Add(List<string> parts, string name, string? value)
     {
         if (!string.IsNullOrEmpty(value))

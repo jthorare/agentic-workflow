@@ -83,6 +83,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<ICurrentUser, OsCurrentUser>()
             .AddSingleton<IRepoReader, GitRepoReader>()
             .AddSingleton<IDefaultBranch, GitDefaultBranch>()
+            .AddSingleton<IRepoRemote, GitRepoRemote>()
             .AddSingleton<ICodeSearch, GitCodeSearch>()
             .AddSingleton(GraphifyOptions.Default)
             .AddSingleton<IClusterSource, GraphifyClusterSource>()
@@ -105,6 +106,9 @@ public static class ContextInfrastructureServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddContextLabeling(this IServiceCollection services)
         => services
-            .AddSingleton<ILabeler>(sp => new ModelLabeler(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>(), sp.GetService<Core.Models.IChoicePort>(), sp.GetService<Core.Models.IModelPromptBudget>()))
+            .AddSingleton<ILabelCache>(sp => new SqliteLabelCache(sp.GetRequiredService<ContextDatabase>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<ILabeler>(sp => new CachingLabeler(
+                new ModelLabeler(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>(), sp.GetService<Core.Models.IChoicePort>(), sp.GetService<Core.Models.IModelPromptBudget>()),
+                sp.GetRequiredService<ILabelCache>(), sp.GetRequiredService<IScrubberFactory>()))
             .AddSingleton<Core.Concepts.IConceptNamer>(sp => new ModelConceptNamer(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()));
 }

@@ -12,10 +12,11 @@ internal sealed class JobRowViewModel : ObservableObject
 {
     private readonly TimeProvider _clock;
     private readonly Func<string, string, ControlViewModel?> _cancel;
+    private readonly Func<string, string, ControlViewModel?>? _resume;
 
-    internal JobRowViewModel(JobRowView row, Func<string, string, ControlViewModel?> cancel, TimeProvider clock)
+    internal JobRowViewModel(JobRowView row, Func<string, string, ControlViewModel?> cancel, TimeProvider clock, Func<string, string, ControlViewModel?>? resume = null)
     {
-        (Row, _cancel, _clock) = (row, cancel, clock);
+        (Row, _cancel, _clock, _resume) = (row, cancel, clock, resume);
         Link = new DeepLink(DeepLinkKind.Job, row.Id);
         Derive();
     }
@@ -53,6 +54,21 @@ internal sealed class JobRowViewModel : ObservableObject
     /// <summary>The error code of a failed job, muted after the summary; empty otherwise.</summary>
     public string CodeText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The second line of the row: what the job's model calls came to, or why it waits; empty when there is none.</summary>
+    public string ModelText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when the row has a model line.</summary>
+    public bool HasModelText => ModelText.Length > 0;
+
+    /// <summary>True when the second row is drawn: a model line, or Resume.</summary>
+    public bool HasModelRow => HasModelText || HasResume;
+
+    /// <summary>True while the job is parked on 'model-limit' and the catalog has the ResumeJob row: the row shows Resume.</summary>
+    public bool HasResume => Resume is not null;
+
+    /// <summary>The Resume control (the catalog's ResumeJob row acting on this job) while the job is parked on 'model-limit'; else null.</summary>
+    public ControlViewModel? Resume { get; private set => Set(ref field, value); }
+
     /// <summary>The row's accessible name.</summary>
     public string Name { get; private set => Set(ref field, value); } = string.Empty;
 
@@ -61,6 +77,9 @@ internal sealed class JobRowViewModel : ObservableObject
 
     /// <summary>True while the job runs.</summary>
     public bool IsRunning => string.Equals(Row.State, "running", StringComparison.Ordinal);
+
+    /// <summary>True while the job is not over: it runs, or it waits (on a model limit, a login).</summary>
+    public bool IsLive => IsRunning || string.Equals(Row.State, "waiting", StringComparison.Ordinal);
 
     /// <summary>True when the row has a summary.</summary>
     public bool HasSummary => SummaryText.Length > 0;
@@ -112,15 +131,24 @@ internal sealed class JobRowViewModel : ObservableObject
         WhenText = When();
         ByText = "by " + Labels.JobStartedBy(Row.StartedBy);
         (SummaryText, CodeText) = (Row.Summary ?? string.Empty, Row.Code ?? string.Empty);
-        Cancel = IsRunning ? Cancel ?? _cancel(Row.Id, TitleText) : null;
+        Cancel = IsLive ? Cancel ?? _cancel(Row.Id, TitleText) : null;
+        DeriveModels();
         Name = Labels.JobRowName(TitleText, word.ToLowerInvariant(), WhenText, Labels.JobStartedBy(Row.StartedBy), SummaryText);
-        foreach (var name in (string[])[nameof(IsRunning), nameof(HasSummary), nameof(HasWideSummary), nameof(HasCode), nameof(HasCancel)])
+        Name = ModelText.Length > 0 ? Name + ", " + ModelText : Name;   // the model line reads once, after the row's other parts (its children stay raw)
+        foreach (var name in (string[])[nameof(IsRunning), nameof(IsLive), nameof(HasSummary), nameof(HasWideSummary), nameof(HasCode), nameof(HasCancel), nameof(HasModelText), nameof(HasResume), nameof(HasModelRow)])
         {
             OnChanged(name);
         }
     }
 
-    private string When() => IsRunning
+    // The second line (what the model calls came to, or why the job waits) and Resume while it is parked on a model limit.
+    private void DeriveModels()
+    {
+        ModelText = Row.Models is null && Row.WaitingOn is null ? string.Empty : ModelLines.Row(Row) ?? string.Empty;
+        Resume = string.Equals(Row.WaitingOn, ModelLines.ModelLimit, StringComparison.Ordinal) ? Resume ?? _resume?.Invoke(Row.Id, TitleText) : null;
+    }
+
+    private string When() => IsLive
         ? Labels.JobWhen(running: true, _clock.GetUtcNow() - Row.StartedAt)
         : Labels.JobWhen(running: false, _clock.GetUtcNow() - (Row.EndedAt ?? Row.StartedAt));
 }

@@ -34,7 +34,7 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <summary>"Reading projects…" until the first answer.</summary>
     public string ReadingText => Labels.ReadingProjects;
 
-    /// <summary>The button that adds a project (disabled until Add arrives).</summary>
+    /// <summary>The button that adds a project.</summary>
     public string AddText => Labels.ProjectsAddButton;
 #pragma warning restore CA1822, MA0041
 
@@ -83,6 +83,12 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <summary>A write closed a sheet: the view moves focus.</summary>
     internal event EventHandler<ProjectFocusEventArgs>? FocusRequested;
 
+    /// <summary>Add project was pressed: the shell opens the Add project sheet.</summary>
+    internal event EventHandler? AddRequested;
+
+    /// <summary>Asks the shell to open the Add project sheet.</summary>
+    internal void RequestAdd() => AddRequested?.Invoke(this, EventArgs.Empty);
+
     /// <summary>Asks the shell to open a card's sheet.</summary>
     /// <param name="link">The card's link.</param>
     internal void RequestOpen(DeepLink link) => OpenRequested?.Invoke(this, new ProjectOpenRequestedEventArgs(link));
@@ -101,7 +107,13 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
             await Read(url, cancellationToken).ConfigureAwait(true);
         }
 
-        FocusRequested?.Invoke(this, done.Kind == ProjectDone.Unhidden ? Fold(done.WentToFinished) : Card(candidates, done.Id));
+        FocusRequested?.Invoke(this, done.Kind switch
+        {
+            ProjectDone.Unhidden => Fold(done.WentToFinished),
+            ProjectDone.Added => Card([done.Id], gone: string.Empty),   // the new card, else Add project when a fold hides it
+            ProjectDone.Removed or ProjectDone.Hidden => Card(candidates, done.Id),
+            _ => throw new ArgumentOutOfRangeException(nameof(done), done.Kind, message: null),
+        });
     }
 
     // The cards as the page lays them out: the state groups, then the folds that are open.

@@ -29,5 +29,11 @@ internal sealed class ApprovedModels(IApprovedProfile approved) : IApprovedModel
         return settings;
     }
 
+    public async ValueTask<bool> IsApproved(CancellationToken cancellationToken)
+    {
+        var latest = await approved.Latest(cancellationToken).ConfigureAwait(false);
+        return latest.IsSuccess && latest.Value is not null;
+    }
+
     private sealed record Cached(ProfileHash Hash, ModelsSettings Settings);
 }

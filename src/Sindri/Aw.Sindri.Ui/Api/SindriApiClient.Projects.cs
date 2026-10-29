@@ -16,6 +16,10 @@ internal sealed partial class SindriApiClient
         Get<ProjectOne>(api, ProjectRoutes.One(id), cancellationToken, view: true);
 
     /// <inheritdoc />
+    public Task<Result<ProjectLinearList>> LinearProjects(Uri api, CancellationToken cancellationToken) =>
+        Get<ProjectLinearList>(api, ProjectRoutes.Linear, cancellationToken, view: true);
+
+    /// <inheritdoc />
     public Task<Result<ProjectAcceptedView>> ChangeProject(Uri api, string id, ProjectChange change, CancellationToken cancellationToken) =>
         Call<ProjectAcceptedView>(api, HttpMethod.Post, ProjectRoutes.Change(id), cancellationToken, new CallOptions(Content: AwJson.Serialize(change, Json)));
 
@@ -26,4 +30,8 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<ProjectAcceptedView>> HideProject(Uri api, ProjectHide hide, CancellationToken cancellationToken) =>
         Call<ProjectAcceptedView>(api, HttpMethod.Post, ProjectRoutes.Hide, cancellationToken, new CallOptions(Content: AwJson.Serialize(hide, Json)));
+
+    /// <inheritdoc />
+    public Task<Result<ProjectAcceptedView>> AttachProject(Uri api, ProjectAttach attach, CancellationToken cancellationToken) =>
+        Call<ProjectAcceptedView>(api, HttpMethod.Post, ProjectRoutes.Attach, cancellationToken, new CallOptions(Content: AwJson.Serialize(attach, Json)));
 }

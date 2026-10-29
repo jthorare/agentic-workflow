@@ -9,4 +9,9 @@ internal interface IApprovedModels
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The settings.</returns>
     public ValueTask<ModelsSettings> Current(CancellationToken cancellationToken);
+
+    /// <summary>True when a profile is approved; without one <see cref="Current"/> is only the built-in defaults.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>Whether a profile is approved.</returns>
+    public ValueTask<bool> IsApproved(CancellationToken cancellationToken);
 }

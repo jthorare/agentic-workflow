@@ -95,6 +95,15 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
             : new PromptBudget(route.Min(static r => ModelHarnesses.PromptBudget(r.Harness).Chars), route.Min(static r => ModelHarnesses.PromptBudget(r.Harness).MaxItems));
     }
 
+    /// <summary>The harnesses on PATH, in the default order (the AW_PROVIDER one first): what the doctor says a route can use.</summary>
+    /// <param name="catalog">Judge's provider catalog.</param>
+    /// <returns>The installed harnesses.</returns>
+    internal static IReadOnlyList<ModelHarness> InstalledHarnesses(IProviderCatalog catalog)
+    {
+        ArgumentNullException.ThrowIfNull(catalog);
+        return [.. Installed(catalog.Lineup(config: null, _agentClis, new NoRulesProvider())).Select(static i => i.Harness)];
+    }
+
     private async ValueTask<ModelCall> Begin(ModelRequest request, CancellationToken cancellationToken)
     {
         var settings = await _models.Current(cancellationToken).ConfigureAwait(false);

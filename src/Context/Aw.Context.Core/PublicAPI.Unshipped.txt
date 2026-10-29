@@ -1246,6 +1246,8 @@ Aw.Context.Core.Extract.IClusterSource
 Aw.Context.Core.Extract.IClusterSource.Clusters(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, Aw.Context.Core.Engine.ClusterLimits! limits, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.ClusterSet!>!>
 Aw.Context.Core.Extract.IDefaultBranch
 Aw.Context.Core.Extract.IDefaultBranch.Reaches(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Context.Core.Extract.IRepoRemote
+Aw.Context.Core.Extract.IRepoRemote.Origin(Aw.Context.Core.Engine.ContextRepo! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Context.Core.Extract.ILabeler
 Aw.Context.Core.Extract.ILabeler.Label(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Extract.FileCluster!>! clusters, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Trust.ScrubPattern!>! extraPatterns, int maxTokens, Aw.Context.Core.Extract.LabelOptions? options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.LabelPass!>!>
 Aw.Context.Core.Extract.IRepoReader
@@ -3433,7 +3435,7 @@ Aw.Context.Core.Map.MapViewCache
 Aw.Context.Core.Map.MapViewCache.MapViewCache() -> void
 Aw.Context.Core.Map.NodeDetails
 Aw.Context.Core.Map.NodeDetails.Edge(Aw.Context.Core.Graph.EdgeFact! edge, Aw.Context.Core.Graph.NodeKey other) -> Aw.Context.Core.Graph.EdgeDetail!
-Aw.Context.Core.Map.NodeDetails.Node(Aw.Context.Core.Graph.GraphNode! node) -> Aw.Context.Core.Graph.NodeDetail!
+Aw.Context.Core.Map.NodeDetails.Node(Aw.Context.Core.Graph.GraphNode! node, System.Uri? sourceUrl = null) -> Aw.Context.Core.Graph.NodeDetail!
 Aw.Context.Core.Map.NodeDetails.NodeDetails(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, string? mapRepo = null) -> void
 Aw.Context.Core.Map.ProposedNode
 Aw.Context.Core.Map.ProposedNode.<Clone>$() -> Aw.Context.Core.Map.ProposedNode!
@@ -10110,5 +10112,23 @@ static Aw.Context.Core.Records.RecordSourceLink.operator !=(Aw.Context.Core.Reco
 static Aw.Context.Core.Records.RecordSourceLink.operator ==(Aw.Context.Core.Records.RecordSourceLink? left, Aw.Context.Core.Records.RecordSourceLink? right) -> bool
 Aw.Context.Core.Extract.MapBuildGate
 Aw.Context.Core.Extract.MapBuildGate.Dispose() -> void
-Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.IDisposable!>
+Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Extract.MapBuildTurn!>
 Aw.Context.Core.Extract.MapBuildGate.MapBuildGate() -> void
+Aw.Context.Core.Extract.MapBuildTurn
+Aw.Context.Core.Extract.MapBuildTurn.Dispose() -> void
+Aw.Context.Core.Extract.MapBuildTurn.Waited.get -> bool
+Aw.Context.Core.Extract.GithubRemote
+Aw.Context.Core.Extract.GithubRemote.Blob(string? commit, string! path, Aw.Context.Core.Trust.IEgressScrubber! egress) -> System.Uri?
+Aw.Context.Core.Extract.GithubRemote.Name.get -> string!
+Aw.Context.Core.Extract.GithubRemote.Owner.get -> string!
+static Aw.Context.Core.Extract.GithubRemote.Parse(string? origin) -> Aw.Context.Core.Extract.GithubRemote?
+Aw.Context.Core.Map.NodeDetails.TargetOf(Aw.Context.Core.Graph.GraphNode! node) -> Aw.Context.Core.Map.SourceTarget?
+Aw.Context.Core.Map.SourceTarget
+Aw.Context.Core.Map.SourceTarget.Path.get -> string?
+Aw.Context.Core.Map.SourceTarget.Record.get -> Aw.Context.Core.Sources.RecordKey?
+Aw.Context.Core.Map.SourceTarget.Repo.get -> string?
+static Aw.Context.Core.Map.SourceTarget.OfFile(string? repo, string! path) -> Aw.Context.Core.Map.SourceTarget!
+static Aw.Context.Core.Map.SourceTarget.OfRecord(Aw.Context.Core.Sources.RecordKey record) -> Aw.Context.Core.Map.SourceTarget!
+Aw.Context.Core.Extract.ILabelCache
+Aw.Context.Core.Extract.ILabelCache.Find(System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, string!>!>!>
+Aw.Context.Core.Extract.ILabelCache.Save(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, string!>>! labels, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

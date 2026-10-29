@@ -17,5 +17,9 @@ namespace Aw.Sindri.Features.ListJobs;
 /// <param name="Rounds">Progress lines recorded.</param>
 /// <param name="Summary">How it ended, or null.</param>
 /// <param name="Code">The error code when it failed, otherwise null.</param>
+/// <param name="Models">The job's model calls added up, or null when it made none.</param>
+/// <param name="WaitingOn">The signal a waiting job is parked on, or null.</param>
+/// <param name="WaitingLine">The job's last progress line while it waits (why, and how to resume), or null.</param>
 public sealed record JobSummary(JobId Id, JobKind Kind, JobKey Key, ItemId? Item, RepoName? Repo, ServiceName? Service, JobState State, string StartedBy,
-    DateTimeOffset StartedAt, DateTimeOffset? EndedAt, int Rounds, string? Summary, string? Code);
+    DateTimeOffset StartedAt, DateTimeOffset? EndedAt, int Rounds, string? Summary, string? Code,
+    ModelTotals? Models = null, string? WaitingOn = null, string? WaitingLine = null);

@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
+             x:Class="Aw.Sindri.Ui.Views.Projects.ProjectAddView"
+             x:DataType="pvm:ProjectAddViewModel">
+  <!-- The Add project sheet (projects page spec §3.2) inside the shell's sheet, whose title says "Add project": two underline tabs, From Linear (the default) and By hand. From Linear is a search box, then one row per project (name, "Lead · state · open issues" and an Attach button) and a footnote; By hand is
+       the name (Save waits for one), the state, the links one per line, the notes and the target date; Save shows "Saving…" and disables itself, and its error shows under
+       the button with every field kept. The tabs are toggle buttons so a screen reader hears which one is on. -->
+  <UserControl.Styles>
+    <Style Selector="Border.add-tab">
+      <Setter Property="BorderThickness" Value="0,0,0,2" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+    </Style>
+    <Style Selector="Border.add-tab.on">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
+    </Style>
+    <Style Selector="ToggleButton.add-tab-button">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+    </Style>
+    <Style Selector="ToggleButton.add-tab-button /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+    </Style>
+    <!-- Fluent fills a checked or hovered toggle; an underline tab keeps its ground and says which one is on by its ink and the underline. -->
+    <Style Selector="ToggleButton.add-tab-button:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.add-tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.add-tab-button:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    </Style>
+    <Style Selector="Border.add-row">
+      <Setter Property="BorderThickness" Value="0,1,0,0" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="Padding" Value="0,8" />
+    </Style>
+  </UserControl.Styles>
+  <StackPanel x:Name="ProjectAdd" Spacing="{StaticResource Space.MD}">
+    <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}">
+      <StackPanel Orientation="Horizontal" Spacing="16">
+        <Border Classes="add-tab" Classes.on="{Binding IsFromLinear}">
+          <ToggleButton x:Name="ProjectAddTabLinear" Classes="add-tab-button" Content="{Binding FromLinearText}" IsChecked="{Binding IsFromLinear, Mode=OneWay}" Click="OnFromLinear"
+                        AutomationProperties.Name="{Binding FromLinearText}" />
+        </Border>
+        <Border Classes="add-tab" Classes.on="{Binding IsByHand}">
+          <ToggleButton x:Name="ProjectAddTabHand" Classes="add-tab-button" Content="{Binding ByHandText}" IsChecked="{Binding IsByHand, Mode=OneWay}" Click="OnByHand"
+                        AutomationProperties.Name="{Binding ByHandText}" />
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <StackPanel x:Name="ProjectAddLinear" Spacing="6" IsVisible="{Binding IsFromLinear}">
+      <TextBox x:Name="ProjectAddSearch" Text="{Binding LinearSearch, Mode=TwoWay}" PlaceholderText="{Binding SearchLabel}" AutomationProperties.Name="{Binding SearchLabel}" />
+      <Border x:Name="ProjectAddLinearStatus" IsVisible="{Binding LinearStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              AutomationProperties.Name="{Binding LinearStatus}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body muted" Text="{Binding LinearStatus}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <ItemsControl x:Name="ProjectAddLinearRows" ItemsSource="{Binding LinearRows}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="pvm:ProjectLinearRowViewModel">
+            <Border Classes="add-row">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                  <TextBlock Classes="body" Text="{Binding Name}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption subtle" Text="{Binding Detail}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+                <Button Grid.Column="1" Content="{Binding AttachText}" IsEnabled="{Binding CanAttach}" Click="OnAttach" AutomationProperties.Name="{Binding AttachName}" />
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <Border x:Name="ProjectAddLinearError" IsVisible="{Binding LinearError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              AutomationProperties.Name="{Binding LinearError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding LinearError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <TextBlock x:Name="ProjectAddLinearFootnote" Classes="caption subtle" Text="{Binding LinearFootnote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LinearFootnote}" />
+    </StackPanel>
+
+    <StackPanel x:Name="ProjectAddForm" Spacing="6" IsVisible="{Binding IsByHand}">
+      <StackPanel Spacing="2">
+        <TextBlock Classes="caption subtle" Text="{Binding NameLabel}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBox x:Name="ProjectAddName" Text="{Binding Name, Mode=TwoWay}" AutomationProperties.Name="{Binding NameLabel}" />
+      </StackPanel>
+      <StackPanel Spacing="2">
+        <TextBlock Classes="caption subtle" Text="{Binding StateLabel}" AutomationProperties.AccessibilityView="Raw" />
+        <ComboBox x:Name="ProjectAddState" ItemsSource="{Binding StateChoices}" SelectedItem="{Binding SelectedState, Mode=TwoWay}" HorizontalAlignment="Stretch" AutomationProperties.Name="{Binding StateLabel}">
+          <ComboBox.ItemTemplate>
+            <DataTemplate x:DataType="pvm:ProjectStateChoice"><TextBlock Text="{Binding Word}" /></DataTemplate>
+          </ComboBox.ItemTemplate>
+        </ComboBox>
+      </StackPanel>
+      <StackPanel Spacing="2">
+        <TextBlock Classes="caption subtle" Text="{Binding LinksLabel}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBox x:Name="ProjectAddLinks" Text="{Binding Links, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding LinksLabel}" />
+      </StackPanel>
+      <StackPanel Spacing="2">
+        <TextBlock Classes="caption subtle" Text="{Binding NotesLabel}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBox x:Name="ProjectAddNotes" Text="{Binding Notes, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72" AutomationProperties.Name="{Binding NotesLabel}" />
+      </StackPanel>
+      <StackPanel Spacing="2">
+        <TextBlock Classes="caption subtle" Text="{Binding TargetLabel}" AutomationProperties.AccessibilityView="Raw" />
+        <TextBox x:Name="ProjectAddTarget" Text="{Binding Target, Mode=TwoWay}" AutomationProperties.Name="{Binding TargetLabel}" />
+      </StackPanel>
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button x:Name="ProjectAddSave" Classes="accent" Content="{Binding SaveText}" IsEnabled="{Binding CanSave}" Click="OnSave" AutomationProperties.Name="{Binding SaveText}" />
+        <Button x:Name="ProjectAddCancel" Content="{Binding CancelText}" IsEnabled="{Binding !IsSaving}" Click="OnCancel" AutomationProperties.Name="{Binding CancelText}" />
+      </StackPanel>
+      <Border x:Name="ProjectAddError" IsVisible="{Binding SaveError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              AutomationProperties.Name="{Binding SaveError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding SaveError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

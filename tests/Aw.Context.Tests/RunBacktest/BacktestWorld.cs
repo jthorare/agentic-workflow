@@ -86,7 +86,7 @@ internal sealed class BacktestWorld : IAsyncDisposable
             .AddSingleton<ICurrentUser>(new FakeCurrentUser())
             .AddSingleton<IMergeHistory>(new GitMergeHistory(git))
             .AddSingleton<IFileHistory>(new GitFileHistory(git))
-            .AddSingleton<IBriefSource>(Briefs).AddSingleton<IDefaultBranch>(new FakeDefaultBranch())
+            .AddSingleton<IBriefSource>(Briefs).AddSingleton<IDefaultBranch>(new FakeDefaultBranch()).AddSingleton<IRepoRemote>(new FakeRepoRemote())
             .AddSingleton<IAsOfDocs>(new AsOfDocsFactory(git, Clock))
             .AddSingleton<IEvalStore>(new FileEvalStore(Settings)).AddSingleton<IScopeRunStore>(new FakeScopeRunStore())
             .AddContextFeatures()

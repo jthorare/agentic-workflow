@@ -35,4 +35,7 @@ internal sealed record FencePlan(string Source, IReadOnlyList<FenceField> Fields
 
     /// <summary>sindri_projects for one project: the card's Linear-sourced text, the owner's notes and the viewer's name.</summary>
     internal static FencePlan OneProject { get; } = new("sindri:project", [new("viewer"), new("project.name"), new("project.description"), new("project.lead.name"), new("project.notes")]);
+
+    /// <summary>GET /sindri/projects/linear for a session: each row's Linear name and lead's name.</summary>
+    internal static FencePlan LinearProjects { get; } = new("sindri:project", [new("projects[].name"), new("projects[].lead")]);
 }

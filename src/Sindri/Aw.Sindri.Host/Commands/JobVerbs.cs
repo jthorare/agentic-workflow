@@ -16,7 +16,8 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="client">The API client.</param>
 /// <param name="output">Where the verbs write.</param>
 /// <param name="ensureRunning">Starts the control plane (true: this verb may launch it) or names why not; null: never start it.</param>
-internal sealed class JobVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null)
+/// <param name="clock">The clock 'jobs show' dates a model call by (a row from another day carries its date); the system clock when null.</param>
+internal sealed class JobVerbs(ControlPlaneClient client, Output output, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null, TimeProvider? clock = null)
 {
     internal async Task<int> Run(string[] args, CancellationToken ct)
     {
@@ -67,7 +68,7 @@ internal sealed class JobVerbs(ControlPlaneClient client, Output output, Func<bo
         var code = answer.Value.Value.AsOf.Rebuilding || answer.Value.Value.AsOf.Stalled ? 1 : 0;
         return command.Json
             ? await output.Raw(answer.Value.Body, code).ConfigureAwait(false)
-            : await output.Text(JobText.Render(answer.Value.Value) + await PublishLink(answer.Value.Value, ct).ConfigureAwait(false), code).ConfigureAwait(false);
+            : await output.Text(JobText.Render(answer.Value.Value, clock ?? TimeProvider.System) + await PublishLink(answer.Value.Value, ct).ConfigureAwait(false), code).ConfigureAwait(false);
     }
 
     // A map refresh that ended held for the code index points at the publish job that finished it; a failed publish read leaves the job's own text alone.
