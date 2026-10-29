@@ -27,7 +27,6 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Requests;
@@ -173,8 +172,6 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(LineDeskReport)), JsonSerializable(typeof(DesignStopView)), JsonSerializable(typeof(LineView))]   // LN-K: the line verbs; LN-API1
 [JsonSerializable(typeof(DocsCheckResponse)), JsonSerializable(typeof(DocsCheckFinding))]   // API17: 'docs check'
 [JsonSerializable(typeof(LineDoctorResponse))]   // LN-L: 'line doctor'
-[JsonSerializable(typeof(OnyxSetupState))]
-[JsonSerializable(typeof(OnyxStepResult))]
 [JsonSerializable(typeof(RequestKind))]   // API P8: the sindri_request kind argument binds through it
 [JsonSerializable(typeof(FleetChanged))]
 [JsonSerializable(typeof(Features.CodeIndexReads.CodeIndexStatusView)), JsonSerializable(typeof(Features.CodeIndexReads.RepoHealth)), JsonSerializable(typeof(CodeIndex.Core.Facade.FindSymbolsAnswer)), JsonSerializable(typeof(CodeIndex.Core.Values.RepoName), TypeInfoPropertyName = "CodeIndexRepoName"), JsonSerializable(typeof(Features.CodeIndexReads.CodeCallsView)), JsonSerializable(typeof(CodeIndex.Core.Facade.RepoStatus), TypeInfoPropertyName = "CodeIndexRepoStatus")]   // code-index reads (CI-10a)

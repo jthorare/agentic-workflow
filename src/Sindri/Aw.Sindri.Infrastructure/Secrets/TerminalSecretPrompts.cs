@@ -1,27 +1,13 @@
 using System.Text;
-using Aw.Sindri.Core.Onyx;
+using Aw.Sindri.Core.Secrets;
 
-namespace Aw.Sindri.Infrastructure.Onyx;
+namespace Aw.Sindri.Infrastructure.Secrets;
 
-/// <summary>IOnyxPrompts over the console: questions go to standard error (standard output carries only the summary), a secret is read key by key with echo off and never written anywhere.</summary>
-internal sealed class TerminalPrompts : IOnyxPrompts
+/// <summary>ISecretPrompts over the console: the question goes to standard error (standard output carries only the summary), a secret is read key by key with echo off and never written anywhere.</summary>
+internal sealed class TerminalSecretPrompts : ISecretPrompts
 {
     /// <inheritdoc />
     public bool Interactive => !Console.IsInputRedirected && !Console.IsOutputRedirected && !Console.IsErrorRedirected;
-
-    /// <inheritdoc />
-    public async ValueTask Pause(string message, CancellationToken cancellationToken)
-    {
-        await Console.Error.WriteAsync($"{message}: ").ConfigureAwait(false);
-        _ = await Raced(static () => Console.In.ReadLine(), cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <inheritdoc />
-    public async ValueTask<string?> Ask(string question, CancellationToken cancellationToken)
-    {
-        await Console.Error.WriteAsync(question).ConfigureAwait(false);
-        return (await Raced(static () => Console.In.ReadLine(), cancellationToken).ConfigureAwait(false))?.Trim();
-    }
 
     /// <inheritdoc />
     public async ValueTask<string?> AskSecret(string question, CancellationToken cancellationToken)
