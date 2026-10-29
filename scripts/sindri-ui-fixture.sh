@@ -91,7 +91,7 @@
 #                                  (phase incremental), so the page is past its first read and not counting. It adds
 #                                  context.sources.linear.teams [SPL] to the live profile (a human reads only the profile's teams) and
 #                                  approves that. Then, as the owner: attaches Billing migration, adds a hand-made project (Hiring loop) and
-#                                  hides Mobile offline sync, once (the marker <home>/ui-fixture-projects-owner; the store rows are rewritten
+#                                  hides Search relevance v2 (a project the viewer leads: Hide acts only on a project on the page), each once (the markers <home>/ui-fixture-projects-owner-attach|add|hide; the store rows are rewritten
 #                                  every run, so a repeat adds no row and no project). The store is read when the page asks, so no rebuild is
 #                                  needed; the owner's writes are ledger events and refresh the view. Exit 2 without a context store (run
 #                                  'context up' first) or when the profile already has a context: section without the SPL team.
@@ -897,14 +897,22 @@ UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
 "
   sql_on "$db" "$projects_sql" >/dev/null || die "projects: can't write the Linear rows to $db"
 
-  # The owner's writes, once: attach a Linear project, add a hand-made one, hide another's.
+  # The owner's writes, each once (one marker each, so a run that stopped half way resumes): attach a Linear project, add a hand-made one,
+  # hide one the viewer leads (Hide acts only on a project that is on the page: led, or attached).
   marker="$(projects_marker)"
-  [ ! -f "$marker" ] || return 0
-  "$PROVE" human project add --linear "linear:project/fx-billing" >&2 || return
-  target="$(projects_day 14)"
-  "$PROVE" human project add --name "Hiring loop" --state in-progress --notes "Two onsite slots left this month" --target "$target" >&2 || return
-  "$PROVE" human project hide "linear:project/fx-mobile" >&2 || return
-  : > "$marker"
+  if [ ! -f "$marker-attach" ]; then
+    "$PROVE" human project add --linear "linear:project/fx-billing" >&2 || return
+    : > "$marker-attach"
+  fi
+  if [ ! -f "$marker-add" ]; then
+    target="$(projects_day 14)"
+    "$PROVE" human project add --name "Hiring loop" --state in-progress --notes "Two onsite slots left this month" --target "$target" >&2 || return
+    : > "$marker-add"
+  fi
+  if [ ! -f "$marker-hide" ]; then
+    "$PROVE" human project hide "linear:project/fx-search" >&2 || return
+    : > "$marker-hide"
+  fi
 }
 
 SESSIONS_DIRNAME="ui-fixture-sessions"

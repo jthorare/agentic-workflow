@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # tests/ui-checks/projects-page.sh — the Projects page's screenshot run on the UI fixture (projects page spec §12 Ph5 proof, §13.1; #1566).
 # The fixture (sindri-ui-fixture.sh up, context up, projects) seeds six Linear projects, their issues, the viewer (Sam Rivera) and the owner's own
-# state (Billing migration attached, Hiring loop made by hand, Mobile offline sync hidden). The check opens the REAL sindri-ui on the Projects tab and:
+# state (Billing migration attached, Hiring loop made by hand, Search relevance v2 hidden). The check opens the REAL sindri-ui on the Projects tab and:
 #   1. waits for the Checkout rewrite card; asserts "Linear says you're Sam Rivera", Checkout rewrite shows 5 open issues, Billing migration and
-#      Hiring loop are on the page, Mobile offline sync is not (it is hidden); screenshot projects-page.png
+#      Hiring loop are on the page, Search relevance v2 is not (it is hidden); screenshot projects-page.png
 #   2. opens the Checkout rewrite card's sheet; screenshot projects-sheet.png; closes it
-#   3. "+ Add project": the From Linear list names Platform API v3; screenshot projects-add-linear.png; By hand; screenshot projects-add-hand.png; closes it
+#   3. "+ Add project": the From Linear list names Platform API v3 and Mobile offline sync; screenshot projects-add-linear.png; By hand; screenshot projects-add-hand.png; closes it
 #   4. opens Finished (Onboarding revamp); screenshot projects-finished.png
-#   5. opens Hidden (Mobile offline sync); screenshot projects-hidden.png
+#   5. opens Hidden (Search relevance v2); screenshot projects-hidden.png
 # It drives the REAL sindri-ui (UI driver, docs/csharp/ui-driver.md) against a guarded fixture home (context-lib.sh). Every driver call has `timeout 120`.
 #   bash tests/ui-checks/projects-page.sh        exit 0 pass; 1 FAIL (one line on stderr); 2 the setup broke
 # Run it guarded: scripts/run-test-guard.sh -- bash tests/ui-checks/projects-page.sh
@@ -72,7 +72,7 @@ has "Linear says you're Sam Rivera" || fail "step 1: the freshness line does not
 find_nodes "Checkout rewrite" | jq -r '.name // empty' | grep -q "5 open issues" || fail "step 1: the Checkout rewrite card does not show 5 open issues"
 has "Billing migration" || fail "step 1: the attached project, Billing migration, is not on the page"
 has "Hiring loop" || fail "step 1: the hand-made project, Hiring loop, is not on the page"
-! has "Mobile offline sync" || fail "step 1: Mobile offline sync is on the page before Hidden is opened"
+! has "Search relevance v2" || fail "step 1: Search relevance v2 is on the page before Hidden is opened"
 snap projects-page
 
 # Step 2: the card's sheet.
@@ -84,6 +84,7 @@ close_sheet
 # Step 3: Add project, From Linear then By hand.
 click_on "+ Add project" || fail "step 3: no + Add project button"
 wait_text "Platform API v3" "step 3 (the From Linear list)"
+wait_text "Mobile offline sync" "step 3 (the From Linear list)"
 snap projects-add-linear
 click_on "By hand" || fail "step 3: no By hand tab"
 sleep 1
@@ -97,7 +98,7 @@ snap projects-finished
 
 # Step 5: Hidden.
 click_on "Hidden (" || fail "step 5: no Hidden fold"
-wait_text "Mobile offline sync" "step 5"
+wait_text "Search relevance v2" "step 5"
 snap projects-hidden
 
 echo "PASS: the Projects page showed the viewer, the cards and counts, the sheet, both Add tabs, and the Finished and Hidden folds (screenshots in $OUT)"
