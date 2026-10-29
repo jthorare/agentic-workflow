@@ -121,4 +121,14 @@ public interface IRecordStore
     /// <param name="cancellationToken">Cancels the purge.</param>
     /// <returns>How many records were deleted.</returns>
     public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reads every stored project of a source the audience may see (not removed, not blocked), by title, each with its lead and its linked issues counted in SQL: open issues and the newest change among them.
+    /// An issue counts only when its own audience is allowed too, so a count never reveals an issue the caller can't read.
+    /// </summary>
+    /// <param name="source">The source whose projects are read.</param>
+    /// <param name="audience">The caller's audiences.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>One row per project, ordered by title then key; none for a source with no projects.</returns>
+    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken);
 }

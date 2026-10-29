@@ -95,7 +95,8 @@ internal static class Engines
                         new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers))),
                     new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),
-            new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()));
+            new ContextReads(new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()),
+                new Features.GetProjects.GetProjectFactsService(recordStore, new FakeSourceIdentityStore(), (IIndexSync?)indexSync ?? new FakeIndexSync())));
     }
 
     /// <summary>The probe runner over no probe file (the query tests never run probes).</summary>

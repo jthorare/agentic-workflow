@@ -9672,6 +9672,146 @@ Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastCode.get -> string?
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastCode.init -> void
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastRun.get -> System.DateTimeOffset?
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.LastRun.init -> void
+Aw.Context.Core.Facade.IContextProjects
+Aw.Context.Core.Facade.IContextProjects.Projects(Aw.Context.Core.Projects.ProjectFactsRequest! request, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Projects.ProjectFactsAnswer!>!>
+Aw.Context.Core.Projects.ProjectFact
+Aw.Context.Core.Projects.ProjectFact.<Clone>$() -> Aw.Context.Core.Projects.ProjectFact!
+Aw.Context.Core.Projects.ProjectFact.ClosedAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Projects.ProjectFact.ClosedAt.init -> void
+Aw.Context.Core.Projects.ProjectFact.Counting.get -> bool
+Aw.Context.Core.Projects.ProjectFact.Counting.init -> void
+Aw.Context.Core.Projects.ProjectFact.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Description, out string? Url, out string? StateRaw, out string? Health, out System.DateTimeOffset? DueAt, out Aw.Context.Core.Sources.UserRef? Lead, out bool LeadIsOwner, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out int OpenIssues, out int? OpenPrs, out System.DateTimeOffset? LastActivity, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>? Repos, out bool Counting) -> void
+Aw.Context.Core.Projects.ProjectFact.Description.get -> string?
+Aw.Context.Core.Projects.ProjectFact.Description.init -> void
+Aw.Context.Core.Projects.ProjectFact.DueAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Projects.ProjectFact.DueAt.init -> void
+Aw.Context.Core.Projects.ProjectFact.Equals(Aw.Context.Core.Projects.ProjectFact? other) -> bool
+Aw.Context.Core.Projects.ProjectFact.Health.get -> string?
+Aw.Context.Core.Projects.ProjectFact.Health.init -> void
+Aw.Context.Core.Projects.ProjectFact.Key.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Projects.ProjectFact.Key.init -> void
+Aw.Context.Core.Projects.ProjectFact.LastActivity.get -> System.DateTimeOffset?
+Aw.Context.Core.Projects.ProjectFact.LastActivity.init -> void
+Aw.Context.Core.Projects.ProjectFact.Lead.get -> Aw.Context.Core.Sources.UserRef?
+Aw.Context.Core.Projects.ProjectFact.Lead.init -> void
+Aw.Context.Core.Projects.ProjectFact.LeadIsOwner.get -> bool
+Aw.Context.Core.Projects.ProjectFact.LeadIsOwner.init -> void
+Aw.Context.Core.Projects.ProjectFact.OpenIssues.get -> int
+Aw.Context.Core.Projects.ProjectFact.OpenIssues.init -> void
+Aw.Context.Core.Projects.ProjectFact.OpenPrs.get -> int?
+Aw.Context.Core.Projects.ProjectFact.OpenPrs.init -> void
+Aw.Context.Core.Projects.ProjectFact.ProjectFact(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Description, string? Url, string? StateRaw, string? Health, System.DateTimeOffset? DueAt, Aw.Context.Core.Sources.UserRef? Lead, bool LeadIsOwner, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, int OpenIssues, int? OpenPrs, System.DateTimeOffset? LastActivity, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>? Repos, bool Counting) -> void
+Aw.Context.Core.Projects.ProjectFact.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepoName>?
+Aw.Context.Core.Projects.ProjectFact.Repos.init -> void
+Aw.Context.Core.Projects.ProjectFact.StateRaw.get -> string?
+Aw.Context.Core.Projects.ProjectFact.StateRaw.init -> void
+Aw.Context.Core.Projects.ProjectFact.Title.get -> string!
+Aw.Context.Core.Projects.ProjectFact.Title.init -> void
+Aw.Context.Core.Projects.ProjectFact.UpdatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.Projects.ProjectFact.UpdatedAt.init -> void
+Aw.Context.Core.Projects.ProjectFact.Url.get -> string?
+Aw.Context.Core.Projects.ProjectFact.Url.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer
+Aw.Context.Core.Projects.ProjectFactsAnswer.<Clone>$() -> Aw.Context.Core.Projects.ProjectFactsAnswer!
+Aw.Context.Core.Projects.ProjectFactsAnswer.Catalog.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>!
+Aw.Context.Core.Projects.ProjectFactsAnswer.Catalog.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Deconstruct(out Aw.Context.Core.Sources.UserRef? Owner, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>! Projects, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>! Catalog, out System.Collections.Generic.IReadOnlyList<string!>! Teams, out bool FirstReadDone) -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Equals(Aw.Context.Core.Projects.ProjectFactsAnswer? other) -> bool
+Aw.Context.Core.Projects.ProjectFactsAnswer.FirstReadDone.get -> bool
+Aw.Context.Core.Projects.ProjectFactsAnswer.FirstReadDone.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Owner.get -> Aw.Context.Core.Sources.UserRef?
+Aw.Context.Core.Projects.ProjectFactsAnswer.Owner.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.ProjectFactsAnswer(Aw.Context.Core.Sources.UserRef? Owner, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>! Projects, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>! Catalog, System.Collections.Generic.IReadOnlyList<string!>! Teams, bool FirstReadDone) -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Projects.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Projects.ProjectFact!>!
+Aw.Context.Core.Projects.ProjectFactsAnswer.Projects.init -> void
+Aw.Context.Core.Projects.ProjectFactsAnswer.Teams.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Projects.ProjectFactsAnswer.Teams.init -> void
+Aw.Context.Core.Projects.ProjectFactsRequest
+Aw.Context.Core.Projects.ProjectFactsRequest.<Clone>$() -> Aw.Context.Core.Projects.ProjectFactsRequest!
+Aw.Context.Core.Projects.ProjectFactsRequest.Attached.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
+Aw.Context.Core.Projects.ProjectFactsRequest.Attached.init -> void
+Aw.Context.Core.Projects.ProjectFactsRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Attached) -> void
+Aw.Context.Core.Projects.ProjectFactsRequest.Equals(Aw.Context.Core.Projects.ProjectFactsRequest? other) -> bool
+Aw.Context.Core.Projects.ProjectFactsRequest.ProjectFactsRequest(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Attached) -> void
+Aw.Context.Core.Records.IRecordStore.ProjectFacts(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ProjectRow!>!>!>
+Aw.Context.Core.Records.ProjectRow.<Clone>$() -> Aw.Context.Core.Records.ProjectRow!
+Aw.Context.Core.Records.ProjectRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Health, out System.DateOnly? DueAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string? LeadRef, out string? LeadName, out int OpenIssues, out System.DateTimeOffset? NewestIssueAt) -> void
+override Aw.Context.Core.Projects.ProjectFact.Equals(object? obj) -> bool
+override Aw.Context.Core.Projects.ProjectFact.GetHashCode() -> int
+override Aw.Context.Core.Projects.ProjectFact.ToString() -> string!
+override Aw.Context.Core.Projects.ProjectFactsAnswer.Equals(object? obj) -> bool
+override Aw.Context.Core.Projects.ProjectFactsAnswer.GetHashCode() -> int
+override Aw.Context.Core.Projects.ProjectFactsAnswer.ToString() -> string!
+override Aw.Context.Core.Projects.ProjectFactsRequest.Equals(object? obj) -> bool
+override Aw.Context.Core.Projects.ProjectFactsRequest.GetHashCode() -> int
+override Aw.Context.Core.Projects.ProjectFactsRequest.ToString() -> string!
+static Aw.Context.Core.Projects.ProjectFact.operator !=(Aw.Context.Core.Projects.ProjectFact? left, Aw.Context.Core.Projects.ProjectFact? right) -> bool
+static Aw.Context.Core.Projects.ProjectFact.operator ==(Aw.Context.Core.Projects.ProjectFact? left, Aw.Context.Core.Projects.ProjectFact? right) -> bool
+static Aw.Context.Core.Projects.ProjectFactsAnswer.operator !=(Aw.Context.Core.Projects.ProjectFactsAnswer? left, Aw.Context.Core.Projects.ProjectFactsAnswer? right) -> bool
+static Aw.Context.Core.Projects.ProjectFactsAnswer.operator ==(Aw.Context.Core.Projects.ProjectFactsAnswer? left, Aw.Context.Core.Projects.ProjectFactsAnswer? right) -> bool
+static Aw.Context.Core.Projects.ProjectFactsRequest.operator !=(Aw.Context.Core.Projects.ProjectFactsRequest? left, Aw.Context.Core.Projects.ProjectFactsRequest? right) -> bool
+static Aw.Context.Core.Projects.ProjectFactsRequest.operator ==(Aw.Context.Core.Projects.ProjectFactsRequest? left, Aw.Context.Core.Projects.ProjectFactsRequest? right) -> bool
+Aw.Context.Core.Records.ProjectRow
+Aw.Context.Core.Records.ProjectRow.ClosedAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Records.ProjectRow.ClosedAt.init -> void
+Aw.Context.Core.Records.ProjectRow.DueAt.get -> System.DateOnly?
+Aw.Context.Core.Records.ProjectRow.DueAt.init -> void
+Aw.Context.Core.Records.ProjectRow.Equals(Aw.Context.Core.Records.ProjectRow? other) -> bool
+Aw.Context.Core.Records.ProjectRow.Health.get -> string?
+Aw.Context.Core.Records.ProjectRow.Health.init -> void
+Aw.Context.Core.Records.ProjectRow.Key.get -> Aw.Context.Core.Sources.RecordKey
+Aw.Context.Core.Records.ProjectRow.Key.init -> void
+Aw.Context.Core.Records.ProjectRow.LeadName.get -> string?
+Aw.Context.Core.Records.ProjectRow.LeadName.init -> void
+Aw.Context.Core.Records.ProjectRow.LeadRef.get -> string?
+Aw.Context.Core.Records.ProjectRow.LeadRef.init -> void
+Aw.Context.Core.Records.ProjectRow.NewestIssueAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Records.ProjectRow.NewestIssueAt.init -> void
+Aw.Context.Core.Records.ProjectRow.OpenIssues.get -> int
+Aw.Context.Core.Records.ProjectRow.OpenIssues.init -> void
+Aw.Context.Core.Records.ProjectRow.ProjectRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Health, System.DateOnly? DueAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, string? LeadRef, string? LeadName, int OpenIssues, System.DateTimeOffset? NewestIssueAt) -> void
+Aw.Context.Core.Records.ProjectRow.StateRaw.get -> string?
+Aw.Context.Core.Records.ProjectRow.StateRaw.init -> void
+Aw.Context.Core.Records.ProjectRow.Title.get -> string!
+Aw.Context.Core.Records.ProjectRow.Title.init -> void
+Aw.Context.Core.Records.ProjectRow.UpdatedAt.get -> System.DateTimeOffset
+Aw.Context.Core.Records.ProjectRow.UpdatedAt.init -> void
+Aw.Context.Core.Records.ProjectRow.Url.get -> string?
+Aw.Context.Core.Records.ProjectRow.Url.init -> void
+Aw.Context.Core.Sources.UserRef
+Aw.Context.Core.Sources.UserRef.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out string? Name) -> void
+Aw.Context.Core.Sources.UserRef.Equals(Aw.Context.Core.Sources.UserRef other) -> bool
+Aw.Context.Core.Sources.UserRef.Id.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Sources.UserRef.Id.init -> void
+Aw.Context.Core.Sources.UserRef.Name.get -> string?
+Aw.Context.Core.Sources.UserRef.Name.init -> void
+Aw.Context.Core.Sources.UserRef.UserRef() -> void
+Aw.Context.Core.Sources.UserRef.UserRef(Aw.Context.Core.Sources.ExternalId Id, string? Name) -> void
+override Aw.Context.Core.Records.ProjectRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.ProjectRow.GetHashCode() -> int
+override Aw.Context.Core.Records.ProjectRow.ToString() -> string!
+override Aw.Context.Core.Sources.UserRef.GetHashCode() -> int
+static Aw.Context.Core.Records.ProjectRow.operator !=(Aw.Context.Core.Records.ProjectRow? left, Aw.Context.Core.Records.ProjectRow? right) -> bool
+static Aw.Context.Core.Records.ProjectRow.operator ==(Aw.Context.Core.Records.ProjectRow? left, Aw.Context.Core.Records.ProjectRow? right) -> bool
+static Aw.Context.Core.Sources.UserRef.operator !=(Aw.Context.Core.Sources.UserRef left, Aw.Context.Core.Sources.UserRef right) -> bool
+static Aw.Context.Core.Sources.UserRef.operator ==(Aw.Context.Core.Sources.UserRef left, Aw.Context.Core.Sources.UserRef right) -> bool
+~override Aw.Context.Core.Sources.UserRef.Equals(object obj) -> bool
+~override Aw.Context.Core.Sources.UserRef.ToString() -> string
+Aw.Context.Core.Records.RecordAudience
+Aw.Context.Core.Records.RecordAudience.<Clone>$() -> Aw.Context.Core.Records.RecordAudience!
+Aw.Context.Core.Records.RecordAudience.Allowed.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>!
+Aw.Context.Core.Records.RecordAudience.Allows(Aw.Context.Core.Records.AudienceKey? audience, Aw.Context.Core.Sources.RecordKey record) -> bool
+Aw.Context.Core.Records.RecordAudience.Deconstruct(out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>! Allowed, out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>! Records) -> void
+Aw.Context.Core.Records.RecordAudience.Equals(Aw.Context.Core.Records.RecordAudience? other) -> bool
+Aw.Context.Core.Records.RecordAudience.RecordAudience(System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>! Allowed, System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>! Records) -> void
+Aw.Context.Core.Records.RecordAudience.Records.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
+override Aw.Context.Core.Records.RecordAudience.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.RecordAudience.GetHashCode() -> int
+override Aw.Context.Core.Records.RecordAudience.ToString() -> string!
+static Aw.Context.Core.Records.RecordAudience.operator !=(Aw.Context.Core.Records.RecordAudience? left, Aw.Context.Core.Records.RecordAudience? right) -> bool
+static Aw.Context.Core.Records.RecordAudience.operator ==(Aw.Context.Core.Records.RecordAudience? left, Aw.Context.Core.Records.RecordAudience? right) -> bool
+Aw.Context.Core.Records.RecordAudience.Allowed.init -> void
+Aw.Context.Core.Records.RecordAudience.Records.init -> void
 Aw.Context.Core.Linear.LinearIdentifiers
 static Aw.Context.Core.Linear.LinearIdentifiers.AliasesOf(Aw.Context.Core.Sources.RecordKey key, string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string![]!
 static Aw.Context.Core.Linear.LinearIdentifiers.FromPermalink(string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string?

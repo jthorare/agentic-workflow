@@ -13,6 +13,7 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -84,6 +85,10 @@ public sealed class FakeContextEngine : IContextEngine
     /// <summary>No map: every map call answers SND-CONTEXT-030.</summary>
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SyncReport>>(Down());
+
+    /// <summary>The fake keeps no records: a project read answers like every query (all sources unavailable).</summary>
+    public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<ProjectFactsAnswer>>(Down());
 
     /// <summary>An embed run answers like every query (all sources unavailable) unless the engine came from <see cref="WithEmbed"/>.</summary>
     public ValueTask<Result<EmbedRecordsReport>> Embed(EmbedRecordsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
