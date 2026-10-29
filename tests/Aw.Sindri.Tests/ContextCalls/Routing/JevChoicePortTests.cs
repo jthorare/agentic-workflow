@@ -67,7 +67,9 @@ public sealed class JevChoicePortTests
 
         _ = await rig.Pick(ChoiceRig.Question("h1", "Tabs", "Tab groups"));
 
-        var body = JsonSerializer.Serialize(Assert.Single(rig.Batches.Asked), _json);
+        // everything the batch carries, as text: the state, and each question's key, text and criteria (the base type's JSON would leave the criteria out)
+        var batch = Assert.Single(rig.Batches.Asked);
+        var body = JsonSerializer.Serialize(batch.State, _json) + string.Concat(batch.Questions.Select(q => q.Key + q.Prompt + (q is ChoiceBatchQuestion c ? string.Concat(c.Criteria.Select(p => p.Key + p.Value)) : string.Empty)));
         Assert.DoesNotContain("BuildContextMap", body, StringComparison.Ordinal);
         Assert.DoesNotContain("JOB-", body, StringComparison.Ordinal);
         Assert.Contains("Tab groups", body, StringComparison.Ordinal);
