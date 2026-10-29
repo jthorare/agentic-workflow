@@ -54,6 +54,8 @@ internal static class RecordMappers
 
     internal static IRowMapper<SyncOutcome> Outcome { get; } = new Mapper<SyncOutcome>(r => new SyncOutcome(SqliteRead.GetTimestamp(r, 0), Text(r, 1)));
 
+    internal static IRowMapper<SourceBackoffState> Backoff { get; } = new Mapper<SourceBackoffState>(r => new SourceBackoffState(r.GetInt32(0), At(r, 1), At(r, 2), Text(r, 3)));
+
     internal static IRowMapper<SourceCounts> Counts { get; } = new Mapper<SourceCounts>(r => new SourceCounts(r.GetInt32(0), r.GetInt32(1), r.GetInt32(2)));
 
     internal static IRowMapper<StoreStamps> Stamps { get; } = new Mapper<StoreStamps>(r => new StoreStamps(r.GetInt64(0), r.GetInt64(1)));

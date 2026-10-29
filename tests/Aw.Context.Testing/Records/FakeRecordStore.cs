@@ -13,6 +13,7 @@ public sealed class FakeRecordStore : IRecordStore
     private readonly Dictionary<RecordKey, List<RecordChunk>> _chunks = [];
     private readonly Dictionary<SourceId, SyncPosition> _positions = [];
     private readonly Dictionary<SourceId, SyncOutcome> _outcomes = [];
+    private readonly Dictionary<SourceId, SourceBackoffState> _backoffs = [];
     private readonly List<VectorRow> _vectors = [];
     private long _seq;
     private long _recordStamp;
@@ -110,10 +111,23 @@ public sealed class FakeRecordStore : IRecordStore
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _backoffs[source] = SourceBackoff.Apply(_backoffs.GetValueOrDefault(source, SourceBackoffState.None), attempt);
+            return Ok(1);
+        }
+    }
 
     /// <inheritdoc />
-    public ValueTask<Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok(_backoffs.GetValueOrDefault(source, SourceBackoffState.None));
+        }
+    }
 
     /// <inheritdoc />
     public ValueTask<Result<int>> PutVectors(IReadOnlyList<VectorWrite> vectors, CancellationToken cancellationToken)

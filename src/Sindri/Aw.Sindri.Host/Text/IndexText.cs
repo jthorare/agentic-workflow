@@ -24,11 +24,38 @@ internal static class IndexText
             var sync = row.LastSync is { } at ? "last sync " + at.ToString("u", CultureInfo.InvariantCulture) : "not synced yet";
             _ = text.Append(row.Source.PadRight(width)).Append("  ").Append(State(row)).Append(" · ").Append(sync);
             _ = row.LastCode is { } code && code == ContextErrors.SyncCapped.Code ? text.Append(" · ").Append(code) : text;   // a failed code is already in the state word
+            AppendPull(text, row);
             _ = text.Append('\n');
         }
 
         return text.ToString();
     }
+
+    // why: a server that predates the fields serves none of them, and the line stays as it was
+    private static void AppendPull(StringBuilder text, IndexSourceRow row)
+    {
+        switch (row.Pull)
+        {
+            case "running":
+                _ = text.Append(" · pulling now");
+                break;
+            case "backoff":
+                _ = text.Append(CultureInfo.InvariantCulture, $" · backoff, {Failures(row.Failures)}").Append(row.NextTry is { } next ? ", next try " + Clock(next) : string.Empty);
+                break;
+            case "failed":
+                _ = text.Append(CultureInfo.InvariantCulture, $" · failed, {Failures(row.Failures)}");
+                break;
+            default:
+                break;
+        }
+
+        _ = row.LastCommit is { } commit ? text.Append(" · last commit ").Append(Clock(commit)) : text;
+        _ = (string.Equals(row.Pull, "backoff", StringComparison.Ordinal) || string.Equals(row.Pull, "failed", StringComparison.Ordinal)) && row.LastErrorText is { Length: > 0 } why ? text.Append(" · ").Append(why) : text;
+    }
+
+    private static string Failures(int? count) => count == 1 ? "1 failure" : string.Create(CultureInfo.InvariantCulture, $"{count ?? 0} failures");
+
+    private static string Clock(DateTimeOffset at) => at.UtcDateTime.ToString("HH:mm'Z'", CultureInfo.InvariantCulture);
 
     private static readonly FrozenDictionary<string, string> _reasons =
         ContextErrors.All.ToFrozenDictionary(static e => e.Code, static e => e.Title, StringComparer.Ordinal);

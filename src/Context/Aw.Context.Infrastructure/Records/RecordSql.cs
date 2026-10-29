@@ -61,6 +61,12 @@ internal static class RecordSql
 
     internal const string ReadOutcome = "SELECT last_sync, last_error FROM source_cursor WHERE source = @source AND repo = 'records' AND last_sync IS NOT NULL";
 
+    internal const string ReadBackoff = "SELECT failures, next_try, last_commit, last_error_text FROM source_cursor WHERE source = @source AND repo = 'records'";
+
+    internal const string SaveBackoff =
+        "INSERT INTO source_cursor (source, repo, cursor, failures, next_try, last_commit, last_error_text) VALUES (@source, 'records', NULL, @failures, @nextTry, @lastCommit, @errorText) " +
+        "ON CONFLICT (source, repo) DO UPDATE SET failures = excluded.failures, next_try = excluded.next_try, last_commit = excluded.last_commit, last_error_text = excluded.last_error_text";
+
     internal const string ReadIdentity = "SELECT source, user_ref, name, read_at FROM source_identity WHERE source = @source";
 
     internal const string WriteIdentity =
