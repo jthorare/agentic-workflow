@@ -5,7 +5,11 @@ using Aw.Sindri.Core.Views;
 
 namespace Aw.Sindri.Core.Projects;
 
-/// <summary>Folds the four project events into the 'project-attached' and 'project-hidden' views (projects page spec §5.2).</summary>
+/// <summary>
+/// Folds the four project events into the 'project-attached' and 'project-hidden' views (projects page spec §5.2): a row per attached or hand-made project and a row per
+/// led Linear project the owner ever hid. A removal deletes the row (so the Linear key can be attached again, and a rebuild never has to carry tombstones); a change or
+/// removal for a row the view doesn't hold is skipped.
+/// </summary>
 /// <param name="events">Reads the payloads through the package's AwJson options.</param>
 internal sealed class ProjectsProjection(EventFactory events) : IProjection
 {
@@ -17,5 +21,102 @@ internal sealed class ProjectsProjection(EventFactory events) : IProjection
         || string.Equals(eventType, EventTypes.ProjectDetached, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.ProjectHidden, StringComparison.Ordinal);
 
-    public ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken) => throw new NotSupportedException(events.GetType().Name);
+    public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(recorded);
+        ArgumentNullException.ThrowIfNull(rows);
+        return recorded.Envelope.Type switch
+        {
+            EventTypes.ProjectAttached => await Attached(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.ProjectChanged => await Changed(recorded, rows, cancellationToken).ConfigureAwait(false),
+            EventTypes.ProjectDetached => await Detached(recorded, rows, cancellationToken).ConfigureAwait(false),
+            _ => await Hidden(recorded, rows, cancellationToken).ConfigureAwait(false),
+        };
+    }
+
+    /// <summary>The row a 'project.attached' makes: version 1, finished when it starts out Done or Canceled.</summary>
+    /// <param name="attached">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The new row.</returns>
+    public static ProjectAttachedRow Fold(ProjectAttached attached, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(attached);
+        ArgumentNullException.ThrowIfNull(recorded);
+        var at = recorded.Envelope.OccurredAt;
+        return new ProjectAttachedRow(
+            attached.Id, attached.Linear, attached.Name, attached.State, attached.Links, attached.Note, attached.Target,
+            Version: 1, at, IsFinished(attached.State) ? at : default(DateTimeOffset?), at, recorded.Sequence);
+    }
+
+    /// <summary>The row after a 'project.changed': the asked fields set, the cleared ones dropped, the version moved, and the finish time set when the state newly became Done or Canceled and dropped when it left them.</summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="changed">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The new row.</returns>
+    public static ProjectAttachedRow Fold(ProjectAttachedRow row, ProjectChanged changed, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(changed);
+        ArgumentNullException.ThrowIfNull(recorded);
+        var at = recorded.Envelope.OccurredAt;
+        var state = changed.ClearState ? null : changed.State ?? row.State;
+        return row with
+        {
+            Name = changed.Name ?? row.Name,
+            State = state,
+            Links = changed.Links ?? row.Links,
+            Note = changed.ClearNote ? null : changed.Note ?? row.Note,
+            Target = changed.ClearTarget ? null : changed.Target ?? row.Target,
+            Version = changed.Version,
+            FinishedAt = FinishedAt(row, state, at),
+            EditedAt = at,
+            Sequence = recorded.Sequence,
+        };
+    }
+
+    // finished_at is when the event that set Done or Canceled was recorded: kept while the state stays, moved when it changes between the two, null once it leaves them
+    private static DateTimeOffset? FinishedAt(ProjectAttachedRow row, ProjectState? state, DateTimeOffset at) =>
+        !IsFinished(state) ? null : state == row.State ? row.FinishedAt ?? at : at;
+
+    private static bool IsFinished(ProjectState? state) => state is ProjectState.Done or ProjectState.Canceled;
+
+    private async ValueTask<Result<Unit>> Attached(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var attached = events.Payload<ProjectAttached>(recorded);
+        return attached.IsError
+            ? attached.Error
+            : await rows.Put(ViewNames.ProjectAttached, attached.Value.Id.Value, Fold(attached.Value, recorded), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<Unit>> Changed(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var changed = events.Payload<ProjectChanged>(recorded);
+        if (changed.IsError)
+        {
+            return changed.Error;
+        }
+
+        var row = await rows.Get<ProjectAttachedRow>(ViewNames.ProjectAttached, changed.Value.Id.Value, cancellationToken).ConfigureAwait(false);
+        return row.IsError
+            ? row.Error
+            : row.Value is null
+                ? Unit.Value
+                : await rows.Put(ViewNames.ProjectAttached, changed.Value.Id.Value, Fold(row.Value, changed.Value, recorded), cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<Unit>> Detached(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var detached = events.Payload<ProjectDetached>(recorded);
+        return detached.IsError
+            ? detached.Error
+            : await rows.Delete(ViewNames.ProjectAttached, detached.Value.Id.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<Unit>> Hidden(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var hidden = events.Payload<ProjectHidden>(recorded);
+        return hidden.IsError
+            ? hidden.Error
+            : await rows.Put(ViewNames.ProjectHidden, hidden.Value.Linear, new ProjectHiddenRow(hidden.Value.Linear, hidden.Value.Hidden, hidden.Value.Version, recorded.Sequence), cancellationToken).ConfigureAwait(false);
+    }
 }
