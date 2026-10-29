@@ -261,7 +261,7 @@ A profile turns off skills that don't apply to a repo (for example, the iOS desi
 
 ### Sindri
 
-`./setup.sh` installs the C# Sindri (control plane, workflow engine, context engine and a desktop UI) with the other binaries; there is no opt-in flag (`--with-sindri` is accepted and does nothing). It also stands the pinned Onyx up unless you pass `--no-onyx`; that step needs Docker and you at a terminal.
+`./setup.sh` installs the C# Sindri (control plane, workflow engine, context engine and a desktop UI) with the other binaries; there is no opt-in flag (`--with-sindri` is accepted and does nothing). Then connect your sources with `sindri index connect github|slack` (see `docs/sindri/sources.md`).
 
 ```bash
 sindri doctor                     # expect every line ok

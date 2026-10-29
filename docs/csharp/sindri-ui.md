@@ -214,7 +214,7 @@ and the person's choice survives a read. The progress strip is one 4 px segment 
 can't open itself (`ApproveProfile`, `ApproveAllRecipes`) is the existing `ProtectedActionButton` with the catalog's command to copy; `ApproveAllRecipes` and the profile's approval row open in the app
 when the shell can; the map shows **Retry** only when it failed, which sends `RefreshContextMap` (`POST /sindri/context/map/refresh`; the client is `ISindriApi.RefreshContextMap`). Retry sends once, the
 row shows Working until the next read, and a 409 `SND-JOB-409` (the running job) shows as already building, not as an error. Fallbacks: a 404 says "Setup isn't available in this build yet."; no answer
-says "Sindri isn't running" with the launcher command and no Start button. Not built here (slices 1, 3, 4): the typed and held confirmations in their rows, the per-agent list, the Onyx form and the
+says "Sindri isn't running" with the launcher command and no Start button. Not built here (slices 1, 3, 4): the typed and held confirmations in their rows, the per-agent list and the
 repo form.
 
 ### LiveSetting on macOS (§11.4, §18.2; U0 spike)

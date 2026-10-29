@@ -1,7 +1,4 @@
-using Aw.Sindri.Core;
-using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Onyx;
-using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Infrastructure.Onyx;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Testing;
@@ -66,30 +63,5 @@ public sealed class ComposeFailureHintTests
         Assert.Equal("running", nginx.State);
         Assert.Contains(new ComposePublisher("127.0.0.1", 3189, 80), nginx.Publishers);
         Assert.Equal("exited", Assert.Single(containers, static c => c.Service == "api_server").State);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_failed_up_step_says_to_run_up_again_to_resume()
-    {
-        var rig = new OnyxUpRig();
-        rig.Runtime.FailNext("Pull", SindriErrors.OnyxComposeFailed.With("`docker compose pull` failed (exit 1): no space left on device"));
-
-        var error = (await rig.Up(Token)).Error;
-
-        Assert.Equal("SND-ONYX-011", error.Code);
-        Assert.EndsWith("run `sindri onyx up` again to resume", error.Message, StringComparison.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Doctor_names_the_repair_of_onyx_files_when_the_stack_cannot_be_read()
-    {
-        var rig = new OnyxUpRig();
-        _ = (await rig.Up(Token)).Value;
-        rig.Runtime.FailNext("Ps", SindriErrors.OnyxComposeFailed.With("`docker compose ps` failed (exit 1): no configuration file provided"));
-
-        var check = await new OnyxStackDoctor(rig.Workspace, new OnyxFacts(rig.Runtime, rig.Probes, new FakeSindriHome(OnyxUpRig.Home)), rig.Pins).Check(Token);
-
-        Assert.Equal(CheckState.Warn, check!.State);
-        Assert.Contains("run `sindri onyx up` to repair Onyx's files", check.Fix, StringComparison.Ordinal);
     }
 }

@@ -1,0 +1,106 @@
+{
+  "steps": [
+    {
+      "id": "repo",
+      "title": "Add your repo",
+      "state": "done",
+      "why": "A repo is in your profile.",
+      "detail": "demo",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "demo",
+          "state": "done",
+          "detail": null
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "title": "Approve the profile",
+      "state": "done",
+      "why": "Your profile is approved.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": []
+    },
+    {
+      "id": "recipes",
+      "title": "Approve the workflows",
+      "state": "done",
+      "why": "Every workflow that ships with Sindri is approved.",
+      "detail": "26 workflows.",
+      "error": null,
+      "action": null,
+      "progress": {
+        "done": 26,
+        "total": 26,
+        "unit": "workflows"
+      },
+      "items": []
+    },
+    {
+      "id": "mcp",
+      "title": "Connect your agents",
+      "state": "done",
+      "why": "Sindri is registered in your repos.",
+      "detail": "Claude Code in demo.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "demo",
+          "state": "done",
+          "detail": "Claude Code",
+          "providers": [
+            {
+              "provider": "claude",
+              "state": "connected",
+              "detail": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "map",
+      "title": "Build the map",
+      "state": "done",
+      "why": "Every repo has a current map.",
+      "detail": "The map is built.",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "demo",
+          "state": "done",
+          "detail": null
+        }
+      ]
+    },
+    {
+      "id": "sources",
+      "title": "Connect your sources",
+      "state": "todo",
+      "why": "No source is connected yet.",
+      "detail": "Connect GitHub or Slack so Sindri can read your issues and chat.",
+      "error": null,
+      "action": "ConnectIndexSource",
+      "progress": null,
+      "items": []
+    }
+  ],
+  "asOf": {
+    "cursor": 0,
+    "ledgerHead": 0,
+    "projectedAt": null,
+    "rebuilding": false,
+    "stalled": false
+  }
+}

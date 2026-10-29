@@ -1,6 +1,4 @@
-using Aw.Kernel.Services;
 using Aw.Sindri.Core.Onyx;
-using Aw.Sindri.Features.OnyxUp;
 using Aw.Sindri.Infrastructure.Onyx;
 
 namespace Aw.Sindri.Testing;
@@ -67,29 +65,6 @@ public sealed class OnyxUpRig
 
     /// <summary>Gets what the service reported.</summary>
     public CapturingOnyxProgress Progress { get; } = new();
-
-    /// <summary>Builds the service over the fakes, steps in order.</summary>
-    /// <returns>The service.</returns>
-    public IService<OnyxUpRequest, OnyxUpResponse> Service()
-    {
-        var compose = new YamlComposeServices();
-        var readiness = new OnyxReadiness(Health, Runtime, Clock);
-        IOnyxUpStep[] steps =
-        [
-            new OnyxFetchStep(Files, Progress),
-            new OnyxConfigStep(Workspace, compose, Random, Progress),
-            new OnyxPullStep(Runtime, Workspace, compose, Progress),
-            new OnyxStartStep(Runtime, Health, readiness, Progress, Clock),
-        ];
-        var facts = new OnyxFacts(Runtime, Probes, new FakeSindriHome(Home));
-        return new OnyxUpService(Workspace, facts, Pins, Progress, new OnyxDockerWait(facts, Progress, Clock), steps);
-    }
-
-    /// <summary>Runs the service once.</summary>
-    /// <param name="cancellationToken">Cancels the run.</param>
-    /// <returns>The result.</returns>
-    public async Task<Kernel.Result<OnyxUpResponse>> Up(CancellationToken cancellationToken)
-        => await Service().Handle(new OnyxUpRequest(), cancellationToken);
 
     // Compose reads HOST_PORT from the rendered .env, so the fake config answers with it (3189 before the env exists).
     private int RenderedPort()

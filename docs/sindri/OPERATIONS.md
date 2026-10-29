@@ -20,7 +20,7 @@ sindri context sources sync      # Human-only: a job; prints 'job JOB-… starte
 sindri context sources status    # Agent OK: each source's last sync, links, decisions and queued records
 ```
 
-The sync links Onyx's records (issues, threads) to the map and extracts decisions from them. With `context-sync`
+The sync links the indexed records (issues, threads) to the map and extracts decisions from them. With `context-sync`
 named under `services:` it runs on that cadence instead.
 
 ### Build the map

@@ -6,7 +6,6 @@
   check: the code-index graphify under <T>/state/cache/code-index/graphify-*, and bwrap (Linux) for its sandbox
   check: the pinned temporal binary under <T>/state/cache/bin/temporal-*
   check: nothing but this script's own plane listens on port 7481
-+ AW_SINDRI_HOME=<T>/state/sindri-app-firstrun AW_SINDRI_PORT=7481 AW_SINDRI_APP_NO_MCP=1 sindri onyx status   # optional: Onyx isn't required
 
 == 1. scratch home <T>/state/sindri-app-firstrun (port 7481)
 + mkdir -p <T>/state/sindri-app-firstrun/profile && chmod 700 <T>/state/sindri-app-firstrun && touch <T>/state/sindri-app-firstrun/.first-run-scratch

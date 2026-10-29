@@ -1,5 +1,6 @@
 using Aw.Context.Core.Code;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
@@ -17,6 +18,7 @@ using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
 using Aw.Context.Core.Vectors;
 using Aw.Context.Infrastructure.ConceptScan;
+using Aw.Context.Infrastructure.ConceptSynthesis;
 using Aw.Context.Infrastructure.Docs;
 using Aw.Context.Infrastructure.Eval;
 using Aw.Context.Infrastructure.Extract;
@@ -67,6 +69,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IGraphStore>(sp => sp.GetRequiredService<SqliteGraphStore>())
             .AddSingleton<IProposalRuns>(sp => sp.GetRequiredService<SqliteGraphStore>())
             .AddSingleton<IConceptHintStore, SqliteConceptHintStore>()
+            .AddSingleton<IConceptSynthesisStore, SqliteConceptSynthesisStore>()
             .AddSingleton<IIntentStore, SqliteIntentStore>()
             .AddSingleton<IRecordStore, SqliteRecordStore>()
             .AddSingleton<ISourceIdentityStore, SqliteSourceIdentityStore>()
@@ -89,7 +92,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IProbeReportStore, FileProbeReportStore>()
             .AddSingleton<IMergeHistory, GitMergeHistory>()
             .AddSingleton<IFileHistory, GitFileHistory>()
-            .AddSingleton<IBriefSource, OnyxBriefSource>()
+            .AddSingleton<IBriefSource, StoreBriefSource>()
             .AddSingleton<IAsOfDocs, AsOfDocsFactory>()
             .AddSingleton<IEvalStore, FileEvalStore>()
             .AddSingleton(sp => new OnyxSources(new OnyxSourceParts(

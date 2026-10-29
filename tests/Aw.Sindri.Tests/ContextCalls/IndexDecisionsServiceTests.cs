@@ -64,6 +64,28 @@ public sealed class IndexDecisionsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Run_adds_the_concept_synthesis_to_the_summary()
+    {
+        _index.Decided = [Row("github", 4, 2)];
+        _index.Synthesized = new ConceptSynthesisReport(Groups: 5, Unchanged: 3, Labeled: 2, Queued: 0, Pending: 7, Concepts: 5, MultiSource: 4, Covered: 40, Embedded: 50, [], Tokens: 900, Code: null);
+
+        var result = await Run(context: true);
+
+        Assert.False(result.Value.Idle);
+        Assert.Equal("ok: github 4 read, 2 decisions, concepts 5 (4 across 2+ sources), 2 named, 0 queued, 40/50 records covered, 7 not embedded yet", result.Value.Summary);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Run_is_quiet_when_synthesis_found_only_unchanged_concepts()
+    {
+        _index.Synthesized = new ConceptSynthesisReport(Groups: 5, Unchanged: 5, Labeled: 0, Queued: 0, Pending: 0, Concepts: 5, MultiSource: 4, Covered: 50, Embedded: 50, [], Tokens: 0, Code: null);
+
+        var result = await Run(context: true);
+
+        Assert.True(result.Value.Idle);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Run_without_a_context_section_does_not_call_the_pass()
     {
         var result = await Run(context: false);

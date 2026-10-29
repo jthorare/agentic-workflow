@@ -60,17 +60,19 @@ internal static class RequestScenarios
     private static Task<(string Request, string Decision)> Filed(GoldenHost host, CancellationToken ct, string text = Split, string kind = "rescope", string? item = null, string repo = "demo") =>
         RequestCalls.Filed(host, text, ItemScenarios.Session(repo), ct, kind, item);
 
-    /// <summary>Appends <paramref name="count"/> open 'request.filed' events in the repo 'demo' straight to the ledger, then catches the views up.</summary>
-    private static async Task SeedOpen(GoldenHost host, int count, CancellationToken ct)
+    /// <summary>Appends <paramref name="count"/> open 'request.filed' events in <paramref name="repo"/> in one ledger transaction (#1546), then catches the views up.</summary>
+    internal static async Task SeedOpen(GoldenHost host, int count, string repo, CancellationToken ct)
     {
         var ids = host.App.Services.GetRequiredService<IIdGenerator>();
+        var items = new List<(RequestFiled Payload, string Key)>(count);
         for (var n = 0; n < count; n++)
         {
-            var filed = new RequestFiled(ids.New<CommandId>(), RequestId.New(ids), DecisionId.New(ids), RequestKind.Note, Item: null, RepoName.From("demo"),
+            var filed = new RequestFiled(ids.New<CommandId>(), RequestId.New(ids), DecisionId.New(ids), RequestKind.Note, Item: null, RepoName.From(repo),
                 string.Create(CultureInfo.InvariantCulture, $"Request {n + 1}."));
-            await ViewScenarios.Append(host, EventTypes.RequestFiled, filed, "request.filed:" + filed.Request.Value, ct);
+            items.Add((filed, "request.filed:" + filed.Request.Value));
         }
 
+        await ViewScenarios.AppendMany(host, EventTypes.RequestFiled, items, ct);
         await ViewScenarios.CatchUp(host, ct);
     }
 
@@ -280,7 +282,7 @@ internal static class RequestScenarios
 
         if (scenario == "too-many")
         {
-            await SeedOpen(host, RequestRules.MaxOpenPerRepo, ct);   // why: filing 200 through the API outran the 30 s test budget; the cap reads the requests view
+            await SeedOpen(host, RequestRules.MaxOpenPerRepo, "demo", ct);   // why: filing 200 through the API outran the 30 s test budget; the cap reads the requests view
         }
 
         var (kind, text) = scenario switch

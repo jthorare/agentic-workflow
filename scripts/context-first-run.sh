@@ -10,7 +10,7 @@
 # up   0. Preflight: git, jq, ollama (server and the pinned embedding model), the code-index graphify, a sandbox for it (bwrap
 #         on Linux), the pinned temporal binary, and that the repo's checkout is clean and its HEAD is contained in origin/main
 #         or main (a detached worktree of origin/main is the intended place; any dirty tree is refused). Missing tools are printed with the
-#         install command; nothing is installed. `sindri onyx status` is optional (Onyx isn't needed) and only reported.
+#         install command; nothing is installed.
 #      1. Scratch home: AW_SINDRI_HOME=$AW_STATE_DIR/sindri-app-firstrun (0700, marker .first-run-scratch), port 7481.
 #      2. Profile: `sindri profile init`, then this repo as the one repo, the context-docs-refresh service, and the
 #         `index:` and `context:` sections. Written only when the home has no profile yet.
@@ -168,7 +168,6 @@ preflight() {
     echo "  check: the code-index graphify under $state/cache/code-index/graphify-*, and bwrap (Linux) for its sandbox"
     echo "  check: the pinned temporal binary under $state/cache/bin/temporal-*"
     echo "  check: nothing but this script's own plane listens on port $port"
-    echo "+ $(shown) onyx status   # optional: Onyx isn't required"
     return 0
   fi
   command -v git >/dev/null 2>&1 || miss "git" "your package manager"
@@ -224,8 +223,6 @@ preflight() {
     broke "step 0 (preflight): install the above, then run $self up again (nothing was installed)"
   fi
   echo "  tools ok; $repo at $repo_path is clean and contained in main"
-  # Optional: Onyx. Reported, never required, and it only reads (no control plane).
-  note "onyx (optional): run '$(shown) onyx status' to see whether this box could run it"
 }
 
 # ---- 1. home ----
