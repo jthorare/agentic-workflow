@@ -9958,3 +9958,7 @@ Aw.Context.Core.Sync.RecordItem.Description.init -> void
 Aw.Context.Core.Records.ProjectRow.Description.get -> string?
 Aw.Context.Core.Records.ProjectRow.Description.init -> void
 const Aw.Context.Core.Sync.RecordBatches.MaxDescription = 4000 -> int
+Aw.Context.Core.Graph.UnreadFileNodes
+const Aw.Context.Core.Graph.UnreadFileNodes.Attribute = "read" -> string!
+static Aw.Context.Core.Graph.UnreadFileNodes.Attributes() -> System.Text.Json.JsonElement
+static Aw.Context.Core.Graph.UnreadFileNodes.Is(Aw.Context.Core.Graph.GraphNode! node) -> bool
