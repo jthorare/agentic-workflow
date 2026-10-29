@@ -51,10 +51,15 @@ internal sealed partial class ExpandedStateViewModel
             _waiting = now;
             AnnounceWaiting();
         }
-        else if (_waiting is not null)
+        else if (_waiting is not null && current.Status.Run?.Session is not null)
         {
             (_waiting, _waitSaid, WaitingLine) = (null, false, Labels.SlotStarted);
             WaitingVoice.Say(Labels.SlotStarted);
+        }
+        else if (_waiting is not null)
+        {
+            // The wait ended without a session (the launch was cancelled or failed, or the run moved on): no "Started" for a Step that never ran.
+            (_waiting, _waitSaid, WaitingLine) = (null, false, string.Empty);
         }
 
         OnChanged(nameof(HasWaiting));

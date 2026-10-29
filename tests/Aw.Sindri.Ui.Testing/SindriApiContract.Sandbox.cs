@@ -40,7 +40,7 @@ public abstract partial class SindriApiContract
         Expect.Equal(1, status.Learn.Count);
         var learn = status.Learn[0];
         Expect.Equal(("api", DateTimeOffset.Parse("2026-10-31T09:00:00Z", System.Globalization.CultureInfo.InvariantCulture)), (learn.Repo, learn.EndsAt));
-        Expect.Equal(("12GiB", "40m", "owner-login"), (status.Limits.MemoryMax, status.Limits.Wall, status.Login));
+        Expect.Equal(("12GiB", "40m", "owner-copy"), (status.Limits.MemoryMax, status.Limits.Wall, status.Login));
     }
 
     [Fact]

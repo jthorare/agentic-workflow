@@ -62,7 +62,7 @@ internal sealed class SandboxSettingsViewModel : ObservableObject
                 new(Labels.SandboxFieldGroups, status.Groups.Count == 0 ? Labels.SandboxNoGroups : string.Join(", ", status.Groups)),
                 new(Labels.SandboxFieldLimits, Labels.SandboxLimits(status.Limits.MemoryMax, status.Limits.CpuQuota, status.Limits.TasksMax, status.Limits.Wall)),
                 new(Labels.SandboxFieldLearn, learning.Count == 0 ? Labels.SandboxLearnOff : string.Join("; ", learning.Select(l => Labels.SandboxLearnOn(l.Repo, l.Days)))),
-                new(Labels.SandboxFieldLogin, status.Login),
+                new(Labels.SandboxFieldLogin, Labels.SandboxLogin(status.Login)),
             ]
             : [];
         OnChanged(nameof(Title));

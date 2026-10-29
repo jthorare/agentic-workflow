@@ -5,7 +5,7 @@ using Aw.Sindri.Ui.ViewModels.Components;
 namespace Aw.Sindri.Ui.ViewModels.Item;
 
 /// <summary>
-/// The item sheet's Blocked list: what the sandbox denied the item's launches, counted per target over every launch, with a fix per row
+/// The item sheet's Blocked list: what the sandbox denied the item's launches, counted per target and repo over every launch, with a fix per row
 /// (states.json 'blockedList'). A failed read keeps what was shown; a re-read keeps the row objects so the focused Allow button survives.
 /// </summary>
 internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
@@ -13,6 +13,7 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
     private const int Top = 5;
 
     private readonly Dictionary<string, BlockedRowViewModel> _known = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string?> _approvedWhenAsked = new(StringComparer.Ordinal);
     private List<BlockedTarget> _targets = [];
     private bool _showAll;
     private bool _read;
@@ -56,6 +57,7 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
         (_item, _showAll, _read) = (string.Empty, false, false);
         _targets = [];
         _known.Clear();
+        _approvedWhenAsked.Clear();
         Draw();
     }
 
@@ -84,7 +86,9 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
         Draw();
     }
 
-    // why: an Allow is a draft profile edit until the owner approves the profile; the profile having nothing left to approve is the app's only sign that they did.
+    // why: an Allow is a draft profile edit until the owner approves the profile. A row settles only when nothing is left to approve AND the
+    // approved hash moved past the one first seen while the row waited: a discarded or reverted draft also leaves nothing to approve, but
+    // keeps the old approved hash, so the host stays "needs approval" instead of reading "Allowed" while it is still blocked.
     private async Task SettleApproved(Uri url, CancellationToken cancellationToken)
     {
         var waiting = _known.Values.Where(r => r.IsWaitingForApproval).ToList();
@@ -94,9 +98,22 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
         }
 
         var profile = await api.ProfileSummary(url, cancellationToken).ConfigureAwait(true);
-        if (profile.IsSuccess && profile.Value.Summary is null)
+        if (profile.IsError)
         {
-            waiting.ForEach(r => r.Settle());
+            return;
+        }
+
+        foreach (var row in waiting)
+        {
+            if (!_approvedWhenAsked.TryGetValue(row.Key, out var asked))
+            {
+                _approvedWhenAsked[row.Key] = profile.Value.Approved;
+            }
+            else if (profile.Value.Summary is null && !string.Equals(asked, profile.Value.Approved, StringComparison.Ordinal))
+            {
+                row.Settle();
+                _ = _approvedWhenAsked.Remove(row.Key);
+            }
         }
     }
 
@@ -108,7 +125,7 @@ internal sealed class BlockedListViewModel(ISindriApi api) : ObservableObject
         {
             foreach (var entry in launch.Entries)
             {
-                var target = new BlockedTarget(entry.Kind, entry.Target, entry.Count, FixOf(entry), entry.Reason ?? string.Empty, launch.LaunchId);
+                var target = new BlockedTarget(entry.Kind, entry.Target, entry.Count, FixOf(entry), entry.Reason ?? string.Empty, launch.LaunchId, launch.Repo);
                 if (!byKey.TryGetValue(target.Key, out var seen))
                 {
                     (byKey[target.Key], best[target.Key]) = (target, entry.Count);

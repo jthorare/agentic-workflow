@@ -6,9 +6,10 @@ namespace Aw.Sindri.Ui.ViewModels.Item;
 /// <param name="Count">How many times, over every launch.</param>
 /// <param name="Fix">'allow', 'never' or 'own-terminal'.</param>
 /// <param name="Reason">Why, for 'never'.</param>
-/// <param name="Launch">The launch with the most denials of it: what Allow edits the repo of.</param>
-internal sealed record BlockedTarget(string Kind, string Target, int Count, string Fix, string Reason, string Launch)
+/// <param name="Launch">The launch with the most denials of it in <paramref name="Repo"/>: what Allow edits the repo of.</param>
+/// <param name="Repo">The repo its launches ran in, or null from a server before the field; a target denied in two repos is two rows, so one Allow never claims to fix both.</param>
+internal sealed record BlockedTarget(string Kind, string Target, int Count, string Fix, string Reason, string Launch, string? Repo = null)
 {
     /// <summary>The target's identity across reads.</summary>
-    internal string Key => Kind + "|" + Target;
+    internal string Key => Kind + "|" + Target + "|" + Repo;
 }

@@ -41,7 +41,7 @@ public sealed class SandboxCardTests
     [Fact]
     public async Task A_gray_blocker_reads_as_waiting_never_blocked()
     {
-        _bed.Server.SandboxStatusAnswer = new RouteAnswer(HttpStatusCode.OK, """{"checkedAt":"2026-10-28T09:00:00Z","ready":false,"blockers":[{"code":"SND-LAUNCH-014","reason":"unsupported-platform","text":"Steps can't run by themselves on macOS yet.","state":"gray"}],"mechanism":"none","groups":[],"limits":{"memoryMax":"12GiB","cpuQuota":"400%","tasksMax":512},"login":"owner-login","learn":[]}""");
+        _bed.Server.SandboxStatusAnswer = new RouteAnswer(HttpStatusCode.OK, """{"checkedAt":"2026-10-28T09:00:00Z","ready":false,"blockers":[{"code":"SND-LAUNCH-014","reason":"unsupported-platform","text":"Steps can't run by themselves on macOS yet.","state":"gray"}],"mechanism":"none","groups":[],"limits":{"memoryMax":"12GiB","cpuQuota":"400%","tasksMax":512},"login":"owner-copy","learn":[]}""");
         await _bed.Card.Refresh(SandboxTestBed.Api, SandboxTestBed.Token);
 
         Assert.Equal(("waiting", StateGlyph.Stale), (_bed.Card.StateWord, _bed.Card.Glyph));

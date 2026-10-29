@@ -21,6 +21,6 @@
     "tasksMax": 512,
     "wall": "40m"
   },
-  "login": "owner-login",
+  "login": "owner-copy",
   "learn": []
 }

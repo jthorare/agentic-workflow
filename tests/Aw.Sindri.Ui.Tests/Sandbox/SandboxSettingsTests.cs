@@ -28,7 +28,7 @@ public sealed class SandboxSettingsTests
         var names = ((System.Text.Json.Nodes.JsonArray)SandboxTestBed.Row("settingsSection", "loaded")["fields"]!).Select(f => (string)f!).ToList();
         Assert.Equal("mechanism | groups | limits | learn mode", SandboxTestBed.J(names));
         Assert.Equal("Mechanism | Allowed networks | Limits | Learn mode | Sign-in", SandboxTestBed.J(section.Fields.Select(f => f.Label)));
-        Assert.Equal("bubblewrap | github, npm, nuget | 12GiB memory, 400% CPU, 512 processes, 40m time | off | owner-login", SandboxTestBed.J(section.Fields.Select(f => f.Value)));
+        Assert.Equal("bubblewrap | github, npm, nuget | 12GiB memory, 400% CPU, 512 processes, 40m time | off | A copy of your sign-in", SandboxTestBed.J(section.Fields.Select(f => f.Value)));
         Assert.False(section.IsDimmed);
     }
 

@@ -73,6 +73,17 @@ internal static partial class Labels
     /// <summary>The Settings field name.</summary>
     internal const string SandboxFieldLogin = "Sign-in";
 
+    /// <summary>The model sign-in a Step uses, in words; a value this build doesn't know is shown as served.</summary>
+    /// <param name="login">'owner-copy' or 'separate-login' as served.</param>
+    /// <returns>The words.</returns>
+    internal static string SandboxLogin(string? login) => login switch
+    {
+        "owner-copy" => "A copy of your sign-in",
+        "separate-login" => "Its own sign-in",
+        null or "" => "Unknown",
+        _ => login,
+    };
+
     /// <summary>The mechanism in words.</summary>
     /// <param name="mechanism">The served mechanism.</param>
     /// <returns>A short phrase.</returns>
@@ -123,6 +134,12 @@ internal static partial class Labels
 
     /// <summary>The result when the check could not run.</summary>
     internal const string SandboxCheckFailed = "The check could not run just now.";
+
+    /// <summary>A resume row whose item title the server couldn't read (the items view is down or rebuilding).</summary>
+    internal const string SandboxResumeNoTitle = "A parked Step (its title can't be read right now)";
+
+    /// <summary>Resume couldn't send (another command is on its way, or serve isn't reachable); the rows left stay listed.</summary>
+    internal const string SandboxResumeNotSent = "Some Steps weren't sent. Press Resume again to send the rest.";
 
     /// <summary>How long ago the last check ran.</summary>
     /// <param name="age">The age.</param>

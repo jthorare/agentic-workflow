@@ -148,7 +148,7 @@ internal sealed class SandboxCheckViewModel : ObservableObject
             return;
         }
 
-        ResumeRows = [.. (check.Resume ?? []).Select(r => new SandboxResumeRow(r.Instance, r.Title))];
+        ResumeRows = [.. (check.Resume ?? []).Select(r => new SandboxResumeRow(r.Instance, r.Title ?? r.Item ?? Labels.SandboxResumeNoTitle))];
         Move(SandboxCheckPhase.AllClear);
         Say(ResumeRows.Count > 0 ? Labels.SandboxReadyResume(ResumeRows.Count) : Labels.SandboxReadyNothingWaiting);
     }
@@ -169,13 +169,21 @@ internal sealed class SandboxCheckViewModel : ObservableObject
             var rows = ResumeRows;
             Live.Say(Labels.SandboxResuming(rows.Count));
             List<string> movedOn = [];
-            foreach (var row in rows)
+            for (var i = 0; i < rows.Count; i++)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var sent = await _commands(ApplyCommandBody.Resume(row.Instance)).ConfigureAwait(true);
-                if (sent is not { IsSuccess: true })
+                var sent = await _commands(ApplyCommandBody.Resume(rows[i].Instance)).ConfigureAwait(true);
+                if (sent is null)
                 {
-                    movedOn.Add(row.Title);
+                    // Not sent (a command is already on its way, or no endpoint): this Step and the rest stay listed for the next press.
+                    ResumeRows = [.. rows.Skip(i)];
+                    Say(Labels.SandboxResumeNotSent);
+                    return;
+                }
+
+                if (!sent.IsSuccess)
+                {
+                    movedOn.Add(rows[i].Title);
                 }
             }
 
