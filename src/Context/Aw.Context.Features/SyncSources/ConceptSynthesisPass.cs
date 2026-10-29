@@ -1,6 +1,7 @@
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Trust;
 
 namespace Aw.Context.Features.SyncSources;
 
@@ -17,6 +18,8 @@ internal sealed class ConceptSynthesisPass(Dictionary<string, StoredRecord> live
     public Dictionary<string, SynthesizedConcept> Current { get; } = stored.ToDictionary(c => c.Key, StringComparer.Ordinal);
 
     public long Watermark { get; } = watermark;
+
+    public required IEgressScrubber Egress { get; init; }
 
     public int Unchanged { get; set; }
 

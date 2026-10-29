@@ -77,7 +77,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         var settings = resolved.Value.Settings;
         var synthesized = synthesis is null || !settings.ConceptSynthesis.Enabled || !settings.Labeling.Enabled
             ? null
-            : await synthesis.Run(settings.ConceptSynthesis, settings.Labeling, cancellationToken).ConfigureAwait(false);
+            : await synthesis.Run(settings.ConceptSynthesis, settings.Labeling, settings.ExtraPatterns, cancellationToken).ConfigureAwait(false);
         return new DecisionReport(rows, synthesized);
     }
 

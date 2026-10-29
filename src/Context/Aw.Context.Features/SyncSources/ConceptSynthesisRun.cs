@@ -5,6 +5,7 @@ using Aw.Context.Core.Models;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
+using Aw.Context.Core.Trust;
 using Aw.Context.Core.Vectors;
 using Aw.Kernel;
 
@@ -20,8 +21,9 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="scan">The vector scan.</param>
 /// <param name="concepts">The synthesized concepts.</param>
 /// <param name="model">The model.</param>
+/// <param name="scrubbers">Builds the scrubber every record's text passes through before the model sees it.</param>
 /// <param name="clock">The clock.</param>
-internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan, IConceptSynthesisStore concepts, IModelPort model, TimeProvider clock)
+internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan, IConceptSynthesisStore concepts, IModelPort model, IScrubberFactory scrubbers, TimeProvider clock)
 {
     /// <summary>The most tokens one answer (a name and a sentence) may take; part of every call's estimated cost.</summary>
     internal const int AnswerTokens = 200;
@@ -33,12 +35,19 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
     /// <summary>Runs once over the whole store.</summary>
     /// <param name="settings">The grouper's knobs and the prompt caps.</param>
     /// <param name="labeling">Its 'maxTokensPerSync' is the run's cap.</param>
+    /// <param name="extraPatterns">The profile's extra scrub patterns.</param>
     /// <param name="cancellationToken">Cancels the run.</param>
     /// <returns>What the run did; a failure is the report's code.</returns>
-    public async ValueTask<ConceptSynthesisReport> Run(ConceptSynthesisSettings settings, LabelingSettings labeling, CancellationToken cancellationToken)
+    public async ValueTask<ConceptSynthesisReport> Run(ConceptSynthesisSettings settings, LabelingSettings labeling, IReadOnlyList<ScrubPattern> extraPatterns, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
         ArgumentNullException.ThrowIfNull(labeling);
+        var built = scrubbers.For(extraPatterns);
+        if (built.IsError)
+        {
+            return ConceptSynthesisReport.Failed(built.Error.Code);
+        }
+
         var live = await Live(cancellationToken).ConfigureAwait(false);
         var read = live.IsError ? live.Error : await Embeddings(live.Value, cancellationToken).ConfigureAwait(false);
         var grouped = read.IsError ? read.Error : ConceptGrouper.Group(read.Value.Vectors, settings.Grouping, scan);
@@ -48,7 +57,7 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
             return ConceptSynthesisReport.Failed(stored.Error.Code);
         }
 
-        var pass = new ConceptSynthesisPass(live.Value, stored.Value, read.Value.Watermark);
+        var pass = new ConceptSynthesisPass(live.Value, stored.Value, read.Value.Watermark) { Egress = built.Value.Egress };
         var plans = ConceptMatcher.Plan(grouped.Value.Groups, stored.Value);
         await Remove(plans, pass, cancellationToken).ConfigureAwait(false);
         foreach (var plan in plans)
@@ -235,8 +244,8 @@ internal sealed class ConceptSynthesisRun(IRecordStore records, IVectorScan scan
                 return null;
             }
 
-            var title = pass.Live.TryGetValue(member.Record, out var record) ? record.Title : member.Record;
-            var block = Block(member, title, chunks.Value.Count > 0 ? chunks.Value[0].Text : "", settings.MaxCharsPerRecord);
+            var title = pass.Egress.Scrub(pass.Live.TryGetValue(member.Record, out var record) ? record.Title : member.Record).Text;
+            var block = Block(member, title, pass.Egress.Scrub(chunks.Value.Count > 0 ? chunks.Value[0].Text : "").Text, settings.MaxCharsPerRecord);
             if (text.Length + block.Length > settings.MaxCharsPerCall)
             {
                 break;

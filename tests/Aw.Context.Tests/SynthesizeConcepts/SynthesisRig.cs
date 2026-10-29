@@ -70,5 +70,5 @@ internal sealed class SynthesisRig
         _ = await Records.Commit(new RecordBatch(SourceId.From(source), [], [RecordKey.From(key)], SyncPosition.Start, Clock.GetUtcNow()), Ct);
 
     public ValueTask<ConceptSynthesisReport> Run(int maxTokens = 50_000, ConceptSynthesisSettings? settings = null) =>
-        new ConceptSynthesisRun(Records, new FakeVectorScan(), Concepts, Model, Clock).Run(settings ?? new ConceptSynthesisSettings(), new LabelingSettings { MaxTokensPerSync = maxTokens }, Ct);
+        new ConceptSynthesisRun(Records, new FakeVectorScan(), Concepts, Model, new FakeScrubberFactory(), Clock).Run(settings ?? new ConceptSynthesisSettings(), new LabelingSettings { MaxTokensPerSync = maxTokens }, [], Ct);
 }

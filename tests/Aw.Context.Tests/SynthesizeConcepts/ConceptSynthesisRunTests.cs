@@ -1,5 +1,6 @@
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Features.SyncSources;
+using Aw.Context.Testing.Engine;
 
 namespace Aw.Context.Tests.SynthesizeConcepts;
 
@@ -160,6 +161,20 @@ public sealed class ConceptSynthesisRunTests
 
         Assert.Empty((await rig.Concepts.All(Ct)).Value);
         Assert.Equal(0, report.Concepts);
+    }
+
+    [Fact]
+    public async Task Secret_shaped_text_in_a_record_is_scrubbed_before_the_model_sees_it()
+    {
+        var rig = new SynthesisRig();
+        await rig.Add("linear", "linear:issue/ENG-1", 0, text: $"retry uses key {FakeScrubber.Secret} here");
+        await rig.Add("github", "github:pr/acme/shop/2", 5);
+
+        _ = await rig.Run();
+
+        var prompt = Assert.Single(rig.Model.Requests).Prompt;
+        Assert.DoesNotContain(FakeScrubber.Secret, prompt, StringComparison.Ordinal);
+        Assert.Contains("[REDACTED:fake]", prompt, StringComparison.Ordinal);
     }
 
     [Fact]
