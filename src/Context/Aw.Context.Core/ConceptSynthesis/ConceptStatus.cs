@@ -9,7 +9,9 @@ namespace Aw.Context.Core.ConceptSynthesis;
 /// <param name="Watermark">The embedding.seq high-water the last pass reached (0: none ran).</param>
 /// <param name="Embedded">How many live records (not removed, not blocked) have a chunk vector.</param>
 /// <param name="Pending">How many live records have none yet.</param>
-public sealed record ConceptStatus(bool Enabled, int Concepts, int MultiSource, int Queued, int Covered, long Watermark, int Embedded, int Pending)
+/// <param name="LastRun">When the index-decisions run last ended, in any process; null when none was recorded.</param>
+/// <param name="LastCode">The code that run ended with; null when it succeeded or none was recorded.</param>
+public sealed record ConceptStatus(bool Enabled, int Concepts, int MultiSource, int Queued, int Covered, long Watermark, int Embedded, int Pending, DateTimeOffset? LastRun = null, string? LastCode = null)
 {
     /// <summary>Counts the stored concepts the way a synthesis pass reports them.</summary>
     /// <param name="enabled">Whether synthesis is on.</param>

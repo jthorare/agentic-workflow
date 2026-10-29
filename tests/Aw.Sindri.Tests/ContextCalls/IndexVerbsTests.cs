@@ -70,6 +70,21 @@ public sealed class IndexVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Status_prints_the_last_decision_run_on_the_concepts_line_with_its_code_when_it_failed()
+    {
+        const string ok = """{"sources":[],"concepts":{"enabled":true,"concepts":4,"multiSource":1,"queued":0,"covered":2,"embedded":10,"pending":0,"coverage":0.2,"watermark":7,"code":null,"lastRun":"2026-10-27T14:05:00.0000000Z","lastCode":null}}""";
+        const string failed = """{"sources":[],"concepts":{"enabled":true,"concepts":4,"multiSource":1,"queued":0,"covered":2,"embedded":10,"pending":0,"coverage":0.2,"watermark":7,"code":null,"lastRun":"2026-10-27T14:05:00.0000000Z","lastCode":"SND-CONTEXT-010"}}""";
+
+        _ = await Run(new ScriptedApi((HttpStatusCode.OK, ok)), "status");
+        var okLine = Printed;
+        _out.GetStringBuilder().Clear();
+        _ = await Run(new ScriptedApi((HttpStatusCode.OK, failed)), "status");
+
+        Assert.Contains("watermark 7, last run 14:05Z\n", okLine, StringComparison.Ordinal);
+        Assert.Contains("watermark 7, last run 14:05Z (SND-CONTEXT-010)\n", Printed, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Status_never_calls_a_source_usable_when_its_last_sync_failed()
     {
         const string rows = """{"sources":[{"source":"linear","phase":"backfill","usable":true,"complete":false,"lastSync":"2026-10-27T12:00:00.0000000Z","lastCode":"SND-CONTEXT-072"},{"source":"github","phase":"backfill","usable":true,"complete":false,"lastSync":"2026-10-27T12:00:00.0000000Z","lastCode":"SND-CONTEXT-059"},{"source":"slack","phase":null,"usable":false,"complete":false,"lastSync":null,"lastCode":null}]}""";

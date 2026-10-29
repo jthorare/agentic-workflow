@@ -103,6 +103,18 @@ public sealed class IndexSliceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Status_carries_when_the_decision_run_last_ended_and_its_code()
+    {
+        await ApproveProfile();
+        _index.Concepts = new ConceptStatus(Enabled: true, Concepts: 0, MultiSource: 0, Queued: 0, Covered: 0, Watermark: 0, Embedded: 0, Pending: 0, LastRun: _now, LastCode: "SND-CONTEXT-042");
+        using var caller = _h.Callers.EnterService("test");
+
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+
+        Assert.Equal((_now, "SND-CONTEXT-042"), (view.Value.Concepts?.LastRun, view.Value.Concepts?.LastCode));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Status_coverage_is_0_while_nothing_is_embedded()
     {
         await ApproveProfile();
