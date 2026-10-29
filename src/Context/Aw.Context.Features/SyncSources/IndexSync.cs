@@ -64,7 +64,18 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         return new SyncReport([await TickOne(feed, context, slots, honorBackoff: false, cancellationToken).ConfigureAwait(false)]);
     }
 
+    /// <summary>The record store's `source_cursor` row that keeps when the decision run last ended and its code (beside the feeds' rows, which the sync driver owns); it is no feed, so no tick or status row reads it as one.</summary>
+    internal static readonly SourceId DecisionsRun = SourceId.From("index-decisions");
+
     public async ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var report = await DecideAll(scope, cancellationToken).ConfigureAwait(false);
+        // why: a write that fails is dropped, as for a feed's outcome; the next run writes again
+        _ = await store.RecordOutcome(DecisionsRun, new SyncOutcome(feeds.Now(), report.IsError ? report.Error.Code : report.Value.Sources.Select(r => r.Code).FirstOrDefault(c => c is not null)), cancellationToken).ConfigureAwait(false);
+        return report;
+    }
+
+    private async ValueTask<Result<DecisionReport>> DecideAll(ContextScope scope, CancellationToken cancellationToken)
     {
         var resolved = Resolve(scope);
         if (resolved.IsError)
@@ -188,6 +199,18 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
     }
 
     public async ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var standing = await ConceptStanding(scope, cancellationToken).ConfigureAwait(false);
+        if (standing.IsError)
+        {
+            return standing;
+        }
+
+        var last = await store.LastOutcome(DecisionsRun, cancellationToken).ConfigureAwait(false);
+        return last.IsError || last.Value is not { } run ? standing : standing.Value with { LastRun = run.At, LastCode = run.Code };
+    }
+
+    private async ValueTask<Result<ConceptStatus>> ConceptStanding(ContextScope scope, CancellationToken cancellationToken)
     {
         var settings = SettingsReader.Read(scope.Settings);
         if (settings.IsError)

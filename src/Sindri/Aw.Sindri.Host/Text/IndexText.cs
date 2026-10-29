@@ -71,6 +71,11 @@ internal static class IndexText
         }
 
         parts.Add(string.Create(CultureInfo.InvariantCulture, $"watermark {c.Watermark}"));
+        if (c.LastRun is { } ran)
+        {
+            parts.Add("last run " + Clock(ran) + (c.LastCode is { } code ? $" ({code})" : string.Empty));
+        }
+
         return parts;
     }
 
