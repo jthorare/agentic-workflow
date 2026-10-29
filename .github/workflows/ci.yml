@@ -220,11 +220,14 @@ jobs:
         # tests (exit 5). A lane step that may select no tests adds --ignore-exit-code 8.
         # --report-xunit-ctrf writes one CTRF report per test project for the lane cap below; no
         # --report-xunit-ctrf-filename, or every project would write the same file.
-        run: dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf
+        # Lane=heavy (real Docker, Onyx, browsers, index builds) is left out: the merge gate runs it nightly, not on every
+        # push (#1581). A test with no Lane trait still runs, so the lane cap below still finds it. Exit 8 is a project
+        # whose every test is heavy.
+        run: dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf --filter-not-trait "Lane=heavy" --ignore-exit-code 8
       - name: Per-test lane cap (LANE-TEST-001/002)
         if: steps.sln.outputs.run == 'true'
         # Each test's own time against its lane's budget (unit 10 s, integration 60 s), and exactly one
-        # known Lane trait per test: the run above is unfiltered, so a test with none shows up (spec §4b.5).
+        # known Lane trait per test: the run above leaves out only Lane=heavy, so a test with none shows up (spec §4b.5).
         run: dotnet run --project tests/Aw.LaneCap.Testing --configuration Release --no-build -- TestResults
       - name: Recipe versions (a content change bumps the version)
         if: steps.sln.outputs.run == 'true'
