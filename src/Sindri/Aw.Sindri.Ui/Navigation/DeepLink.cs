@@ -19,6 +19,9 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     /// <summary>The Projects page.</summary>
     internal static DeepLink Projects { get; } = new(DeepLinkKind.Projects, Subject: null);
 
+    /// <summary>The Add project sheet.</summary>
+    internal static DeepLink ProjectAdd { get; } = new(DeepLinkKind.ProjectAdd, Subject: null);
+
     /// <summary>Parses a deep link's text.</summary>
     /// <param name="text">The text (from a second launch, the tray or the palette).</param>
     /// <param name="link">The link, when the text is one.</param>
@@ -99,7 +102,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         DeepLinkKind.Recipe => IsRecipe(subject),
         DeepLinkKind.Session => IsSessionRef(subject),
         DeepLinkKind.Project => IsEscapedId(subject),
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects => IsSubject(subject),
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.ProjectAdd => IsSubject(subject),
         _ => false,
     };
 

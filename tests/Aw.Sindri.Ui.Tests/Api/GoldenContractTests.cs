@@ -76,6 +76,7 @@ public sealed class GoldenContractTests
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
         ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
         ["projects-id"] = As<ProjectOne>,   // GET /projects/{id}: one card with its hidden flag
+        ["projects-attach"] = As<ProjectAcceptedView>,   // POST /projects' accepted answer: the new prj_ id at version 1 (hand-written until the route's scenario records it)
         ["projects-id-change"] = As<ProjectAcceptedView>,   // POST /projects/{id}/change's accepted answers (a prj_ id, or a led project's key for its notes); the stale 409 is ProblemDetails
         ["projects-id-detach"] = As<ProjectAcceptedView>,   // POST /projects/{id}/detach's accepted answer
         ["projects-hide"] = As<ProjectAcceptedView>,   // POST /projects/hide's accepted answer

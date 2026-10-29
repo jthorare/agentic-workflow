@@ -14,6 +14,12 @@ internal sealed partial class ShellViewModel
     /// <summary>The project card's sheet.</summary>
     public ProjectSheetViewModel ProjectSheet { get; private set; }
 
+    /// <summary>The Add project sheet.</summary>
+    public ProjectAddViewModel ProjectAdd { get; private set; }
+
+    /// <summary>True when the sheet is the Add project sheet.</summary>
+    public bool IsProjectAddSheet => SheetLink?.Kind == DeepLinkKind.ProjectAdd;
+
     /// <summary>True when the sheet's subject is a project.</summary>
     public bool IsProjectSheet => SheetLink?.Kind == DeepLinkKind.Project;
 
@@ -23,11 +29,12 @@ internal sealed partial class ShellViewModel
     /// <summary>True on Projects.</summary>
     public bool IsProjects => CurrentPage == PageId.Projects;
 
-    [MemberNotNull(nameof(Projects), nameof(ProjectSheet))]
+    [MemberNotNull(nameof(Projects), nameof(ProjectSheet), nameof(ProjectAdd))]
     private void InitProjects(ILauncher launcher)
     {
         Projects = new ProjectsPageViewModel(_api, _clock);
         ProjectSheet = new ProjectSheetViewModel(_api, launcher, _clock);
+        ProjectAdd = new ProjectAddViewModel(_api, Health.ApiUrl);
         Health.Follow(Projects.Refresh);
         PropertyChanged += (_, e) =>
         {

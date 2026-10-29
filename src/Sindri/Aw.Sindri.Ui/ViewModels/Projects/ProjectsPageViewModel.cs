@@ -83,6 +83,12 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
     /// <summary>A write closed a sheet: the view moves focus.</summary>
     internal event EventHandler<ProjectFocusEventArgs>? FocusRequested;
 
+    /// <summary>Add project was pressed: the shell opens the Add project sheet.</summary>
+    internal event EventHandler? AddRequested;
+
+    /// <summary>Asks the shell to open the Add project sheet.</summary>
+    internal void RequestAdd() => AddRequested?.Invoke(this, EventArgs.Empty);
+
     /// <summary>Asks the shell to open a card's sheet.</summary>
     /// <param name="link">The card's link.</param>
     internal void RequestOpen(DeepLink link) => OpenRequested?.Invoke(this, new ProjectOpenRequestedEventArgs(link));

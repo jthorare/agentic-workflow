@@ -42,4 +42,11 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The accepted write; SND-PROJECT-409 or -404; or SND-UI-002/003.</returns>
     public Task<Result<ProjectAcceptedView>> HideProject(Uri api, ProjectHide hide, CancellationToken cancellationToken);
+
+    /// <summary>POST /sindri/projects (projects page spec §5.3, desk): attach a Linear project, or add a hand-made one.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="attach">The Linear key, or the hand-made project's fields.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The accepted write, carrying the new project's id; the API's refusal (SND-PROJECT-004 for a bad field); or SND-UI-002/003.</returns>
+    public Task<Result<ProjectAcceptedView>> AttachProject(Uri api, ProjectAttach attach, CancellationToken cancellationToken);
 }
