@@ -21,7 +21,7 @@ internal sealed class ProfileFacts(IProfileSource live, IApprovals approvals, IL
     }
 
     /// <summary>The context engine's doctor rows: 'context:map', and 'context:retention' (S-3a).</summary>
-    /// <param name="approved">The approved profile, or null (onyx is then 'not configured').</param>
+    /// <param name="approved">The approved profile, or null (the index checks then say 'not configured').</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
     /// <returns>The three checks.</returns>
     public ValueTask<DoctorCheck[]> Context(LoadedProfile? approved, CancellationToken cancellationToken) => context.Check(approved, cancellationToken);

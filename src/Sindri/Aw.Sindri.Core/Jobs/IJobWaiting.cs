@@ -4,7 +4,7 @@ namespace Aw.Sindri.Core.Jobs;
 public interface IJobWaiting
 {
     /// <summary>Parks the job on <paramref name="signal"/>: records 'job.waiting', then waits.</summary>
-    /// <param name="signal">The signal's name, for example 'onyx-account'.</param>
+    /// <param name="signal">The signal's name, for example 'index-login'.</param>
     /// <param name="timeout">How long to wait at most.</param>
     /// <param name="cancellationToken">Trips on CancelJob or the host stopping; the wait then throws OperationCanceledException.</param>
     /// <returns>True when the signal came ('job.resumed' is recorded); false when the time ran out.</returns>

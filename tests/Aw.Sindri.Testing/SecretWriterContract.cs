@@ -21,7 +21,7 @@ public abstract class SecretWriterContract
     {
         var (writer, pointers) = Create();
 
-        var pointer = writer.Store("onyx", "sindri-onyx", Key).Value;
+        var pointer = writer.Store("sindri", "example-api-key", Key).Value;
 
         Expect.Equal(Key, pointers.Resolve(pointer).Value);
     }
@@ -31,9 +31,9 @@ public abstract class SecretWriterContract
     public void Storing_again_replaces_the_secret()
     {
         var (writer, pointers) = Create();
-        _ = writer.Store("onyx", "sindri-onyx", Key);
+        _ = writer.Store("sindri", "example-api-key", Key);
 
-        var pointer = writer.Store("onyx", "sindri-onyx", "on_second-0123").Value;
+        var pointer = writer.Store("sindri", "example-api-key", "on_second-0123").Value;
 
         Expect.Equal("on_second-0123", pointers.Resolve(pointer).Value);
     }
