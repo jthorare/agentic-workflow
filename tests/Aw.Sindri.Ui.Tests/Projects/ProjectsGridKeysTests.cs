@@ -72,6 +72,7 @@ public sealed class ProjectsGridKeysTests : FrameHost
     private static void Press(Window window, PhysicalKey key)
     {
         window.KeyPressQwerty(key, RawInputModifiers.None);
+        window.KeyReleaseQwerty(key, RawInputModifiers.None);   // why: a button clicks on Space's key up
         Settle(window);
     }
 
@@ -128,9 +129,9 @@ public sealed class ProjectsGridKeysTests : FrameHost
     {
         var (window, _) = await OnProjects();
         var frame = Frames(window).First(f => ((ProjectCardViewModel)f.DataContext!).Name == "B");
-        var box = new TextBox { Text = "note" };
-        ((Panel)frame.Parent!).Children.Add(box); // why: stands in for the notes box another change adds to a card
+        ((ProjectCardViewModel)frame.DataContext!).BeginEdit();
         Settle(window);
+        var box = frame.GetVisualDescendants().OfType<TextBox>().Single(b => b.Name == "ProjectNotesBox");
         Assert.True(box.Focus(NavigationMethod.Tab));
 
         Press(window, PhysicalKey.ArrowRight);
