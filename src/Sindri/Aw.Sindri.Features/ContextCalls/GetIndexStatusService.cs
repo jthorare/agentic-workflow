@@ -32,7 +32,7 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
     }
 
     private static IndexConceptsView Concepts(ConceptStatus c) =>
-        new(c.Enabled, c.Concepts, c.MultiSource, c.Queued, c.Covered, c.Embedded, c.Pending, c.Watermark, c.Embedded == 0 ? 0 : (double)c.Covered / c.Embedded);
+        new(c.Enabled, c.Concepts, c.MultiSource, c.Queued, c.Covered, c.Embedded, c.Pending, c.Embedded == 0 ? 0 : (double)c.Covered / c.Embedded, c.Watermark);
 
     private static IndexSourceRow Row(SourceProgress p) => new(p.Source.Value, Phase(p.Phase), p.Usable, p.Complete, p.LastSync, p.LastCode, p.ReReading);
 

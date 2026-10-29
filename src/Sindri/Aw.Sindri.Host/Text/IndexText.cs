@@ -48,25 +48,20 @@ internal static class IndexText
             return "concepts: off (context.conceptSynthesis or labeling is off)\n";
         }
 
-        if (c.Concepts is not { } count || count == 0)
+        if (c.Concepts == 0)
         {
             return "concepts: none yet\n";
         }
 
-        return "concepts: " + string.Join(", ", Parts(c, count)) + "\n";
+        return "concepts: " + string.Join(", ", Parts(c)) + "\n";
     }
 
-    private static List<string> Parts(IndexConceptsView c, int count)
+    private static List<string> Parts(IndexConceptsView c)
     {
-        var parts = new List<string> { string.Create(CultureInfo.InvariantCulture, $"{count:N0}") + (c.MultiSource is { } multi ? string.Create(CultureInfo.InvariantCulture, $" ({multi:N0} cite 2+ sources)") : string.Empty) };
-        if (c.Queued is { } queued)
+        var parts = new List<string> { string.Create(CultureInfo.InvariantCulture, $"{c.Concepts:N0} ({c.MultiSource:N0} cite 2+ sources)"), string.Create(CultureInfo.InvariantCulture, $"{c.Queued:N0} queued") };
+        if (c.Embedded is > 0 and var embedded)
         {
-            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{queued:N0} queued"));
-        }
-
-        if (c.Covered is { } covered && c.Embedded is > 0 and var embedded)
-        {
-            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{covered:N0} of {embedded:N0} records covered ({Math.Round(c.Coverage * 100, MidpointRounding.AwayFromZero):0}%)"));
+            parts.Add(string.Create(CultureInfo.InvariantCulture, $"{c.Covered:N0} of {embedded:N0} records covered ({Math.Round(c.Coverage * 100, MidpointRounding.AwayFromZero):0}%)"));
         }
 
         if (c.Pending is > 0 and var pending)
@@ -74,11 +69,7 @@ internal static class IndexText
             parts.Add(string.Create(CultureInfo.InvariantCulture, $"{pending:N0} not embedded yet"));
         }
 
-        if (c.Watermark is { } watermark)
-        {
-            parts.Add(string.Create(CultureInfo.InvariantCulture, $"watermark {watermark}"));
-        }
-
+        parts.Add(string.Create(CultureInfo.InvariantCulture, $"watermark {c.Watermark}"));
         return parts;
     }
 

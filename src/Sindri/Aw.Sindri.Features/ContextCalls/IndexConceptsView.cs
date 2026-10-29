@@ -11,4 +11,4 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="Watermark">The embedding.seq high-water the last pass reached.</param>
 /// <param name="Coverage">Covered over Embedded, 0 to 1 (0 when Embedded is 0 or unknown).</param>
 /// <param name="Code">The error code of a failed read, or null.</param>
-public sealed record IndexConceptsView(bool Enabled, int? Concepts = null, int? MultiSource = null, int? Queued = null, int? Covered = null, int? Embedded = null, int? Pending = null, long? Watermark = null, double Coverage = 0, string? Code = null);
+public sealed record IndexConceptsView(bool Enabled, int Concepts = 0, int MultiSource = 0, int Queued = 0, int Covered = 0, int? Embedded = null, int? Pending = null, double Coverage = 0, long Watermark = 0, string? Code = null);
