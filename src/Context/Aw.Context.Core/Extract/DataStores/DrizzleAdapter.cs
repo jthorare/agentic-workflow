@@ -42,7 +42,7 @@ internal sealed partial class DrizzleAdapter : IBindingDataStoreAdapter
         ArgumentNullException.ThrowIfNull(scope);
         return Safe<StoreAccess>(() =>
         {
-            var clean = Comments.Strip(text);
+            var clean = Literal.Replace(Comments.Strip(text), "\"\"");   // a call spelled inside a string is no use
             return [.. Uses(clean, Reads, DataAccess.Read, scope).Concat(Uses(clean, Writes, DataAccess.Write, scope)).Concat(Keyed(clean, scope))
                 .DistinctBy(a => (a.Store.ToLowerInvariant(), a.Access))];
         });
@@ -106,6 +106,9 @@ internal sealed partial class DrizzleAdapter : IBindingDataStoreAdapter
 
     [GeneratedRegex("\\.(?:insert|update|delete)\\(\\s*(?<t>[A-Za-z_$][\\w$]*(?:\\.[A-Za-z_$][\\w$]*)?)\\s*\\)", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Writes { get; }
+
+    [GeneratedRegex("'(?:[^'\\\\\\r\\n]|\\\\.)*'|\"(?:[^\"\\\\\\r\\n]|\\\\.)*\"|`(?:[^`\\\\]|\\\\.)*`", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex Literal { get; }
 
     [GeneratedRegex("\\.query\\.(?<k>[A-Za-z_$][\\w$]*)\\.find(?:Many|First)\\b", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Query { get; }
