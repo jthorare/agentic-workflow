@@ -134,7 +134,6 @@ using Aw.Sindri.Host.Commands.Recipe;
 using Aw.Sindri.Host.Commands.Scoping;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
-using Aw.Sindri.Host.Onyx;
 
 namespace Aw.Sindri.Host;
 

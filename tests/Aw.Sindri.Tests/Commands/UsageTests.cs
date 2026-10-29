@@ -115,7 +115,7 @@ public sealed class UsageTests
 
     [Fact, Trait("Lane", "unit")]
     public void Usage_lists_only_the_onyx_purge_verb() =>
-        Assert.Equal(["sindri onyx down --purge"], Lines().Where(static l => l.Contains("sindri onyx", StringComparison.Ordinal)).Select(static l => l[..l.IndexOf("   ", StringComparison.Ordinal)]));
+        Assert.Equal(["sindri onyx down --purge"], Lines().Where(static l => l.Contains("sindri onyx", StringComparison.Ordinal)).Select(static l => l[..l.IndexOf("   ", StringComparison.Ordinal)]), StringComparer.Ordinal);
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("pr babysit")]
