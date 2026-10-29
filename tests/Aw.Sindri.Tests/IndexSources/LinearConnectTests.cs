@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Context.Core;
+using Aw.Context.Core.Linear;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
@@ -30,7 +31,7 @@ public sealed class LinearConnectTests
         _prompts.Answer(Planted);
     }
 
-    private LinearConnect Connect() => new(_prompts, _profiles, _secrets, _secrets, _written, (url, key) =>
+    private LinearConnect Connect(FakeOnyxPrompts? prompts = null) => new(prompts ?? _prompts, _profiles, _secrets, _secrets, _written, (url, key) =>
     {
         _built.Add((url, key));
         return _reader;
@@ -73,7 +74,7 @@ public sealed class LinearConnectTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task The_profiles_url_is_the_one_the_reader_is_built_for()
+    public async Task A_loopback_url_is_the_one_the_reader_is_built_for_and_its_key_goes_to_the_file()
     {
         _profiles.Live = Profile("""{"sources":{"linear":{"teams":["ENG"],"url":"http://127.0.0.1:7777/graphql","token":"env:LINEAR_FAKE"}}}""");
         _reader.Readable = ["ENG"];
@@ -82,6 +83,8 @@ public sealed class LinearConnectTests
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(new Uri("http://127.0.0.1:7777/graphql"), Assert.Single(_built).Url);
+        Assert.Equal(["file:/fake-secrets/sindri-index-linear"], _written.Pointers, StringComparer.Ordinal);
+        Assert.True(LinearSettings.Create("http://127.0.0.1:7777/graphql", _written.Pointers[0], ["ENG"]).IsSuccess);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -152,9 +155,10 @@ public sealed class LinearConnectTests
     [Fact, Trait("Lane", "unit")]
     public async Task An_empty_answer_saves_nothing()
     {
-        _prompts.Answer("   ");
+        var prompts = new FakeOnyxPrompts();
+        prompts.Answer("   ");
 
-        var result = await Connect().Run(human: true, Ct);
+        var result = await Connect(prompts).Run(human: true, Ct);
 
         Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
         Assert.Empty(_built);

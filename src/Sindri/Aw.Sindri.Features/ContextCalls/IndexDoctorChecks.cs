@@ -53,7 +53,7 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
         [
             Store(configured, progress),
             Token(GitHubName, "github", "context.sources.github.token", configured.GitHub?.Token, configured.GitHub is not null),
-            Token(LinearName, "linear", "context.sources.linear.token", configured.Linear?.Token, configured.Linear is not null),
+            Token(LinearName, "linear", "context.sources.linear.token", configured.Linear?.Token, configured.Linear is not null || configured.LinearTeams.Count > 0),
             Token(SlackName, "slack", "context.sources.slack.token", configured.Slack?.Token, configured.Slack is not null),
             await Ollama(configured, cancellationToken).ConfigureAwait(false),
             Sync(configured, progress),

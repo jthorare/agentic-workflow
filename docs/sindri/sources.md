@@ -22,6 +22,8 @@ sign-off first.
          workspace: acme                      # the name in https://acme.slack.com
          channels:
            - { id: C0123456789, name: eng }   # C… or G… ids; direct messages are refused
+       linear:
+         teams: [ENG, APP]                    # team keys; empty reads every team the key can see
    ```
 
    A record outside these lists is dropped at the connector, before it reaches the store.
@@ -31,10 +33,11 @@ sign-off first.
    ```bash
    $SINDRI index connect github
    $SINDRI index connect slack
+   $SINDRI index connect linear
    ```
 
-   Each asks for the token once (not shown), checks it **and** every listed repo or channel before saving anything, then
-   stores it in the OS keychain (service `sindri-index`, account `github` or `slack`; an owner-only file under
+   Each asks for the token once (not shown), checks it **and** every listed repo, channel or team before saving anything, then
+   stores it in the OS keychain (service `sindri-index`, account `github`, `slack` or `linear`; an owner-only file under
    `$AW_SINDRI_HOME/secrets/` when there is no keychain) and writes the pointer into the profile's `token` key. A wrong
    scope fails here, not hours into a sync. It is the human's verb: an agent session is refused with `SND-AUTH-002`.
 
@@ -111,8 +114,8 @@ $SINDRI onyx down --purge
 
 It lists what it will delete (the containers and volumes carrying the compose label Sindri recorded, `$AW_SINDRI_HOME/onyx/`
 and the keychain entries Sindri created, nothing else), asks for your yes, then removes them. If a step fails
-(`SND-INDEX-014`, usually Docker not running), fix it and run it again; it resumes from what is left. Then reconnect GitHub
-and Slack with `index connect` and approve the profile once more.
+(`SND-INDEX-014`, usually Docker not running), fix it and run it again; it resumes from what is left. Then reconnect GitHub,
+Slack and Linear with `index connect` and approve the profile once more.
 
 Until then `index:onyx-leftover` fails; set `context.index.acknowledgeOnyxLeftover: true` to make it a warning instead. A
 box that never ran `onyx up` sees none of this.

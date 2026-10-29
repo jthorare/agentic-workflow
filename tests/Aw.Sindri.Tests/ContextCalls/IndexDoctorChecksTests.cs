@@ -38,13 +38,23 @@ public sealed class IndexDoctorChecksTests
     public async Task A_profile_naming_no_record_source_makes_every_row_ok_not_configured_and_never_asks_ollama()
     {
         var probe = new FakeProbe(Answer: Unit.Value);
-        await Approve("""{"sources":{"linear":{"teams":["ENG"]}}}""");
+        await Approve("""{"sources":{}}""");
 
         var rows = await Checks(_noSecrets, probe).Run(Token);
 
         Assert.All(rows, r => Assert.Equal(CheckState.Ok, r.State));
         Assert.All(rows, r => Assert.StartsWith("not configured", r.Detail, StringComparison.Ordinal));
         Assert.Equal(0, probe.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Linear_teams_without_a_token_warn_and_point_to_index_connect_linear()
+    {
+        await Approve("""{"sources":{"linear":{"teams":["ENG"]}}}""");
+
+        var linear = (await Checks(_noSecrets, new FakeProbe(Answer: Unit.Value)).Run(Token)).Single(r => r.Name == "context:index-linear");
+
+        Assert.Equal((CheckState.Warn, "context.sources.linear.token is not set, so linear can't sync", "set context.sources.linear.token to a secret pointer (sindri index connect linear)"), (linear.State, linear.Detail, linear.Fix));
     }
 
     [Fact, Trait("Lane", "unit")]
