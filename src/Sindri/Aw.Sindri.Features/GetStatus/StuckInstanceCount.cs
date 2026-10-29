@@ -59,7 +59,7 @@ internal sealed class StuckInstanceCount(IEngineReader engine, TimeProvider cloc
 
     private async Task<int> Count(DateTimeOffset now)
     {
-        using var limit = new CancellationTokenSource(_bound);
+        using var limit = new CancellationTokenSource(_bound, clock);
         try
         {
             var running = await engine.Instances(limit.Token).AsTask().WaitAsync(limit.Token).ConfigureAwait(false);

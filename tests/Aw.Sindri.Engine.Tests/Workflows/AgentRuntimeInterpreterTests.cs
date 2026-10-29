@@ -22,7 +22,6 @@ namespace Aw.Sindri.Tests.Workflows;
 /// real adapters; the polls are 100 ms.
 /// </summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class AgentRuntimeInterpreterTests : AgentRuntimeTestBase
 {
     [Fact(Timeout = 120_000)]

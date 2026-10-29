@@ -9,7 +9,6 @@ namespace Aw.Sindri.Tests.Workflows;
 /// always did. 'step.report.write' reports 'done' with 'fact:resolution'.
 /// </summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class AgentRecoveryRuntimeTests : AgentRuntimeTestBase
 {
     [Theory(Timeout = 120_000)]
