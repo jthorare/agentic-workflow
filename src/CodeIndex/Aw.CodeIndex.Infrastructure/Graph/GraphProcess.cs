@@ -8,12 +8,14 @@ namespace Aw.CodeIndex.Infrastructure.Graph;
 internal static class GraphProcess
 {
     private const int MaxKept = 64 * 1024;
+    private const int TailKept = 4096;
 
     /// <summary>How a process ended.</summary>
     /// <param name="Exit">The exit code; -1 when it timed out.</param>
     /// <param name="Stdout">What it printed (at most 64 KB).</param>
     /// <param name="TimedOut">True when it was killed at the limit.</param>
-    internal sealed record Ran(int Exit, string Stdout, bool TimedOut = false);
+    /// <param name="Stderr">The last 4096 characters it printed to stderr (the end, where a crash prints), for a failure message.</param>
+    internal sealed record Ran(int Exit, string Stdout, bool TimedOut = false, string Stderr = "");
 
     /// <summary>Runs argv; null when it cannot start.</summary>
     /// <param name="argv">The command.</param>
@@ -35,10 +37,10 @@ internal static class GraphProcess
             pinned = await PinnedProcess.StartAsync(start).ConfigureAwait(false);
             process = pinned.Process;
             var stdout = Capture(process.StandardOutput, timeout.Token);
-            var stderr = Capture(process.StandardError, timeout.Token);
+            var stderr = CaptureTail(process.StandardError, timeout.Token);
             await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
-            _ = await stderr.ConfigureAwait(false);
-            return new Ran(process.ExitCode, await stdout.ConfigureAwait(false));
+            var tail = await stderr.ConfigureAwait(false);
+            return new Ran(process.ExitCode, await stdout.ConfigureAwait(false), Stderr: tail);
         }
         catch (OperationCanceledException)
         {
@@ -53,6 +55,24 @@ internal static class GraphProcess
         {
             pinned?.Dispose();
         }
+    }
+
+    // Reads the stream to its end, keeping only the last TailKept characters: a crash prints last, and a chatty tool can't grow this process.
+    private static async Task<string> CaptureTail(StreamReader reader, CancellationToken cancellationToken)
+    {
+        var kept = new StringBuilder();
+        var buffer = new char[4096];
+        int read;
+        while ((read = await reader.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false)) > 0)
+        {
+            _ = kept.Append(buffer, 0, read);
+            if (kept.Length > TailKept * 2)
+            {
+                _ = kept.Remove(0, kept.Length - TailKept);
+            }
+        }
+
+        return kept.Length > TailKept ? kept.ToString(kept.Length - TailKept, TailKept) : kept.ToString();
     }
 
     private static ProcessStartInfo StartInfo(IReadOnlyList<string> argv, Dictionary<string, string> environment, string directory)
