@@ -89,7 +89,7 @@ internal static class SandboxCanaries
     {
         ArgumentNullException.ThrowIfNull(plan);
         List<SandboxCanary> canaries = [FsDeny(plan), FsWrite(plan), Env(), Login(plan)];
-        // why: the hooks live in the agent home a login binds; a plan without one (a form-only plan) has none to run, and every launch's plan has one
+        // why: the hooks live in the agent home a login binds; a plan without one (Check again's fixture when no agent is picked for Steps) has none to run, and every launch's plan has one
         if (plan.Environment.Any(static e => e.Value is not null && (string.Equals(e.Name, "CLAUDE_CONFIG_DIR", StringComparison.Ordinal) || string.Equals(e.Name, "CODEX_HOME", StringComparison.Ordinal))))
         {
             canaries.Add(new SandboxCanary(SandboxReasons.HooksRun, HookScript(plan), Shell: "/bin/bash"));
