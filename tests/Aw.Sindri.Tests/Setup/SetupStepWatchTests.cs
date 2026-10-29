@@ -33,7 +33,7 @@ public sealed class SetupStepWatchTests : IDisposable
         await watch.Run(AddRepoRig.Token);
 
         Assert.Equal(
-            ["setup.step.changed:repo:needs-you:0", "setup.step.changed:profile:todo:0", "setup.step.changed:recipes:todo:0", "setup.step.changed:mcp:todo:0", "setup.step.changed:map:todo:0", "setup.step.changed:onyx:todo:0"],
+            ["setup.step.changed:repo:needs-you:0", "setup.step.changed:profile:todo:0", "setup.step.changed:recipes:todo:0", "setup.step.changed:mcp:todo:0", "setup.step.changed:map:todo:0", "setup.step.changed:sources:todo:0"],
             Changes().Select(static c => c.Key),
             StringComparer.Ordinal);
     }

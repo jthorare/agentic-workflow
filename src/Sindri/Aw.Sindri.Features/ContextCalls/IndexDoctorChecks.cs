@@ -94,12 +94,11 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
             return new DoctorCheck(name, CheckState.Ok, $"not configured (the approved profile names no context.sources.{source})", Fix: null);
         }
 
-        if (pointer is null)
+        if (SourceTokens.Look(pointer, secrets) is not { } resolved)
         {
             return new DoctorCheck(name, CheckState.Warn, $"{key} is not set, so {source} can't sync", $"set {key} to a secret pointer (sindri index connect {source})");
         }
 
-        var resolved = SecretPointer.Parse(pointer).Bind(secrets.Resolve);
         return resolved.IsError
             ? new DoctorCheck(name, CheckState.Fail, $"{resolved.Error.Code}: {resolved.Error.Message}", $"fix {key}'s target as the message says")
             : new DoctorCheck(name, CheckState.Ok, $"{pointer} resolves (not probed: the source is read by sindri index sync)", Fix: null);
