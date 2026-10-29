@@ -68,6 +68,8 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => sources.Counts(source, cancellationToken);
 
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken) => sources.Decide(scope, cancellationToken);
+
     public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken) => sources.Purge(source, cancellationToken);
 
     public ValueTask<Result<ProbeRun>> EvalProbes(string? file, Func<ProbeCase, CancellationToken, ValueTask<Result<ContextResult>>> ask, CancellationToken cancellationToken) =>
