@@ -17,7 +17,7 @@ internal sealed class AttachProjectLookup(IViewReader views, IProjectFacts facts
     /// <summary>Reads the attached projects and resolves the typed Linear project.</summary>
     /// <param name="typed">What the owner typed, or null for a hand-made project (no facts are read).</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>The project's key (null for a hand-made one), whether the owner leads it, and the attached rows; or the error.</returns>
+    /// <returns>The project's key and title (null for a hand-made one), whether the owner leads it, and the attached rows; or the error.</returns>
     public async ValueTask<Result<AttachContext>> Read(LinearProjectRef? typed, CancellationToken cancellationToken)
     {
         var attached = await views.List<ProjectAttachedRow>(ViewNames.ProjectAttached, cancellationToken).ConfigureAwait(false);
@@ -28,7 +28,7 @@ internal sealed class AttachProjectLookup(IViewReader views, IProjectFacts facts
 
         if (typed is null)
         {
-            return new AttachContext(Key: null, Led: false, attached.Value);
+            return new AttachContext(Key: null, Title: null, Led: false, attached.Value);
         }
 
         var read = await facts.Read([], cancellationToken).ConfigureAwait(false);
@@ -41,7 +41,7 @@ internal sealed class AttachProjectLookup(IViewReader views, IProjectFacts facts
         var found = snapshot.Catalog.FirstOrDefault(fact => Names(fact, typed));
         return found is null
             ? SindriErrors.ProjectNotSynced.With($"Sindri doesn't sync that project. It syncs these Linear teams: {string.Join(", ", snapshot.Teams)}. Add the team to `context.sources.linear.teams`.")
-            : new AttachContext(found.Key, found.LeadIsOwner, attached.Value);
+            : new AttachContext(found.Key, found.Title, found.LeadIsOwner, attached.Value);
     }
 
     private static bool Names(LinearProjectFact fact, LinearProjectRef typed) =>

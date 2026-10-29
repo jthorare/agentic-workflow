@@ -50,6 +50,11 @@ public static partial class ProjectDecisions
 
             name = named.Value;
         }
+        else if (NameError(draft.Name) is null)
+        {
+            // A Linear project keeps the title Linear had when it was attached, so the card has one while Context is down.
+            name = (draft.Name ?? string.Empty).Trim();
+        }
 
         var fields = Fields(draft.State, draft.Links, draft.Note);
         return fields.IsError
