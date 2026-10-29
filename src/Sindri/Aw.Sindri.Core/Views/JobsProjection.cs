@@ -145,6 +145,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
                 Summary = SafeText.Escape(finished.Summary),
                 Code = finished.Code,
                 Result = finished.Result,
+                WaitingOn = null,
                 Sequence = recorded.Sequence,
             };
     }
@@ -159,7 +160,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(waiting);
         ArgumentNullException.ThrowIfNull(recorded);
-        return row.State != JobState.Running ? row : row with { State = JobState.Waiting, Sequence = recorded.Sequence };
+        return row.State != JobState.Running ? row : row with { State = JobState.Waiting, WaitingOn = waiting.Signal, Sequence = recorded.Sequence };
     }
 
     /// <summary>The row after a 'job.resumed': running again, when it was waiting.</summary>
@@ -172,7 +173,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(resumed);
         ArgumentNullException.ThrowIfNull(recorded);
-        return row.State != JobState.Waiting ? row : row with { State = JobState.Running, Sequence = recorded.Sequence };
+        return row.State != JobState.Waiting ? row : row with { State = JobState.Running, WaitingOn = null, Sequence = recorded.Sequence };
     }
 
     /// <summary>
@@ -182,7 +183,45 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
     /// <param name="called">The payload.</param>
     /// <param name="recorded">The recorded event.</param>
     /// <returns>The row.</returns>
-    public static JobRow Fold(JobRow row, ContextModelCalled called, LedgerEvent recorded) => throw new NotSupportedException();
+    public static JobRow Fold(JobRow row, ContextModelCalled called, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(called);
+        ArgumentNullException.ThrowIfNull(recorded);
+        if (recorded.Sequence <= row.Sequence)
+        {
+            return row;
+        }
+
+        return row with { Models = Added(row.Models, called), Sequence = recorded.Sequence };
+    }
+
+    private static ModelTotals Added(ModelTotals? before, ContextModelCalled called)
+    {
+        var so = before ?? new ModelTotals(Calls: 0, FailedCalls: 0, InputTokens: 0, OutputTokens: 0, AnsweredBy: []);
+        return new ModelTotals(
+            so.Calls + 1,
+            so.FailedCalls + (called.AnsweredBy is null ? 1 : 0),
+            so.InputTokens + called.InputTokens,
+            so.OutputTokens + called.OutputTokens,
+            called.AnsweredBy is { } by ? Counted(so.AnsweredBy, by) : so.AnsweredBy);
+    }
+
+    private static List<ModelAnsweredCount> Counted(IReadOnlyList<ModelAnsweredCount> answered, ModelCallAnswerer by)
+    {
+        var counts = new List<ModelAnsweredCount>(answered);
+        var at = counts.FindIndex(c => string.Equals(c.Harness, by.Harness, StringComparison.Ordinal) && string.Equals(c.Model, by.Model, StringComparison.Ordinal));
+        if (at < 0)
+        {
+            counts.Add(new ModelAnsweredCount(by.Harness, by.Model, 1));
+        }
+        else
+        {
+            counts[at] = counts[at] with { Count = counts[at].Count + 1 };
+        }
+
+        return counts;
+    }
 
     /// <summary>The row after a 'job.cancelled': cancelled, by whom. A job that ended ignores it (D5).</summary>
     /// <param name="row">The row so far.</param>
@@ -196,6 +235,6 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(recorded);
         return !JobStates.IsActive(row.State)
             ? row
-            : row with { State = JobState.Cancelled, EndedAt = recorded.Envelope.OccurredAt, Summary = "cancelled", CancelledBy = cancelled.By, Sequence = recorded.Sequence };
+            : row with { State = JobState.Cancelled, EndedAt = recorded.Envelope.OccurredAt, Summary = "cancelled", CancelledBy = cancelled.By, WaitingOn = null, Sequence = recorded.Sequence };
     }
 }
