@@ -139,7 +139,7 @@ internal static class SandboxScenarios
         public ValueTask<SandboxCheckReport> Run(CancellationToken cancellationToken) => ValueTask.FromResult(new SandboxCheckReport(
             blocked ? [SandboxBlocker.Of(SandboxRefusal.For(SindriErrors.LaunchSandboxUnavailable, SandboxReasons.NoBwrap))] : [], [])
         {
-            NotChecked = hooksNotChecked ? [SandboxCheckReport.HooksNotChecked] : [],
+            NotChecked = hooksNotChecked ? [SandboxCopy.HooksNotChecked] : [],
         });
     }
 }

@@ -53,7 +53,9 @@ internal sealed partial class WholeMapCanvas
             var (colour, _) = WholePalette.For(column.AreaIndex);
             context.DrawLine(rule, new Point(column.Rect.X, column.Rect.Y + WholeMapLayout.HeaderHeight), new Point(column.Rect.Right, column.Rect.Y + WholeMapLayout.HeaderHeight));
             var text = Text(column.Label, dots ? AreaLabelSize / Math.Max(Scale, 0.25) : AreaLabelSize, Brush(PaletteKey(colour)), column.Rect.Width, bold: true);
-            context.DrawText(text, new Point(column.Rect.X, column.Rect.Y));
+            // The label sits on the header rule and grows up, so a dots-mode label never runs over the first band's title (#1646).
+            var labelY = Math.Min(column.Rect.Y, column.Rect.Y + WholeMapLayout.HeaderHeight - text.Height);
+            context.DrawText(text, new Point(column.Rect.X, labelY));
         }
     }
 

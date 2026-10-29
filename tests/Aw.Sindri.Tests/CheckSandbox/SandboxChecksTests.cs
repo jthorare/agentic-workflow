@@ -89,7 +89,7 @@ public sealed class SandboxChecksTests
         var report = await Checks(new PassThroughSandbox(), fixture: SandboxRequests.ReadOnly).Run(Token);
 
         Assert.True(report.Ready);
-        Assert.Equal([SandboxCheckReport.HooksNotChecked], report.NotChecked);
+        Assert.Equal([SandboxCopy.HooksNotChecked], report.NotChecked);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public sealed class SandboxChecksTests
     {
         var report = await Checks(new PassThroughSandbox(), fixture: SandboxRequests.ReadOnly, writeScope: SandboxRequests.WriteScope).Run(Token);
 
-        Assert.Equal([SandboxCheckReport.HooksNotChecked], report.NotChecked);
+        Assert.Equal([SandboxCopy.HooksNotChecked], report.NotChecked);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class SandboxChecksTests
 
         Assert.False(report.Ready);
         _ = Assert.Single(report.Blockers);
-        Assert.Equal([SandboxCheckReport.HooksNotChecked], report.NotChecked);
+        Assert.Equal([SandboxCopy.HooksNotChecked], report.NotChecked);
     }
 
     [Fact]
@@ -135,7 +135,7 @@ public sealed class SandboxChecksTests
 
         var response = (await new CheckSandboxService(checks, new LastSandboxCheck()).Handle(new CheckSandboxRequest(), Token)).Value;
 
-        Assert.Equal([SandboxCheckReport.HooksNotChecked], response.NotChecked);
+        Assert.Equal([SandboxCopy.HooksNotChecked], response.NotChecked);
     }
 
     [Fact]

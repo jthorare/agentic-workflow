@@ -79,7 +79,7 @@ internal sealed class JobEventWriter(ILedgerStore ledger, HeldLease held, EventF
         ArgumentNullException.ThrowIfNull(start);
         ArgumentNullException.ThrowIfNull(work);
         var payload = work.Error is { } error
-            ? new JobFinished(start.Caller.CommandId, start.Job, JobOutcome.Failed, JobLines.Clean(scrubber, error.Message), error.Code, Result: null, Item: null, start.Repo)
+            ? new JobFinished(start.Caller.CommandId, start.Job, JobOutcome.Failed, JobLines.CleanFailure(scrubber, error.Message), error.Code, Result: null, Item: null, start.Repo)
             : Succeeded(start, work);
         return Append(start, EventTypes.JobFinished, payload, $"{EventTypes.JobFinished}:{start.Job.Value}", cancellationToken);
     }
