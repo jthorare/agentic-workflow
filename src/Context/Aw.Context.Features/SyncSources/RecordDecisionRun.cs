@@ -30,7 +30,7 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
 
     private DecisionPass Decisions => field ??= new(ports.Intents, ports.Model, context.Settings.Labeling, (context.Scrubbers.Ingest, ports.Clock));
 
-    /// <summary>Reads the feed's new records for decisions and folds the numbers into the feed's row; a decision-pass failure code wins over the cap, like <see cref="IntentSyncRun"/>'s.</summary>
+    /// <summary>Reads the feed's new records for decisions and folds the numbers into the feed's row; a decision-pass failure code wins over the cap.</summary>
     public async ValueTask<SourceSync> Execute(SourceSync row, CancellationToken cancellationToken)
     {
         var layer = await ports.Intents.Layer(cancellationToken).ConfigureAwait(false);

@@ -1,9 +1,11 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Fixtures;
+using Aw.Context.Testing.Records;
 using Aw.Context.Tests.QueryContext;
 using Microsoft.Extensions.Time.Testing;
 
@@ -109,5 +111,26 @@ public sealed class SourcesStatusTests
         var human = await engine.Sources(Engines.Human(on), CancellationToken.None);
 
         return (Assert.Single(session.Value.Sources, static r => r.Source.Value == "onyx"), Assert.Single(human.Value.Sources, static r => r.Source.Value == "onyx"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_feed_that_failed_once_and_then_synced_is_ok_again()
+    {
+        var records = new FakeRecordStore();
+        var linear = new FakeContextSource(new SourceDescriptor(RecordSamples.Linear, SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false), []);
+        var engine = Engines.Over(new FixedSourceCatalog(linear), records: records);
+        var at = DateTimeOffset.Parse("2026-10-12T09:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
+
+        async Task<SourceSyncStatus> Sync() => (await engine.Sources(Engines.Human(), CancellationToken.None)).Value.Sources.Single(r => r.Source == RecordSamples.Linear).Sync!;
+
+        var never = await Sync();
+        _ = await records.RecordOutcome(RecordSamples.Linear, new SyncOutcome(at, ContextErrors.SourceUnavailable.Code), CancellationToken.None);
+        var failed = await Sync();
+        _ = await records.RecordOutcome(RecordSamples.Linear, new SyncOutcome(at.AddMinutes(15), Code: null), CancellationToken.None);
+        var recovered = await Sync();
+
+        Assert.Equal((SourceState.Degraded, null), (never.State, never.Code));
+        Assert.Equal((SourceState.Unavailable, ContextErrors.SourceUnavailable.Code), (failed.State, failed.Code));
+        Assert.Equal((SourceState.Ok, null, at.AddMinutes(15)), (recovered.State, recovered.Code, recovered.LastSync));   // the failure is not stuck: the next good tick clears it
     }
 }

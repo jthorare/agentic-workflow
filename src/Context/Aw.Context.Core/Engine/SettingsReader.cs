@@ -84,7 +84,6 @@ public static partial class SettingsReader
                     MinHits = section.MinHits ?? settings.MinHits,
                     CascadeDepth = section.CascadeDepth ?? settings.CascadeDepth,
                     SessionsEnabled = section.Sessions?.Enabled ?? true,
-                    Onyx = sources.Value.Onyx,
                     Linear = sources.Value.Linear,
                     LinearTeams = sources.Value.Teams,
                     ExtraPatterns = Patterns(section.Scrub),

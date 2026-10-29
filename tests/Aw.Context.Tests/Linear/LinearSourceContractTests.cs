@@ -1,5 +1,4 @@
 using Aw.Context.Core;
-using Aw.Context.Core.Onyx;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Fakes;
@@ -215,21 +214,6 @@ public sealed class LinearSourceContractTests : ContextSourceContract<IContextSo
 
         Assert.Equal(ContextErrors.SourceNotConfigured.Code, search.Error.Code);
         Assert.Empty(linear.Requests);
-    }
-
-    [Fact]
-    public async Task An_issue_is_the_same_record_in_onyx_and_in_linear_so_their_hits_merge_on_one_key_and_one_alias()
-    {
-        await using var onyx = await FakeOnyxServer.Start();
-        var (_, harness) = await Start();
-        using var onyxHarness = new Onyx.OnyxSourceHarness(onyx.Url, onyx.Token);
-
-        var fromLinear = (await harness.Source.Search(LinearSourceHarness.Query("keyboard"), TestContext.Current.CancellationToken)).Value.Single();
-        var fromOnyx = (await onyxHarness.Source.Search(Onyx.OnyxSourceHarness.Query("minimum", "pane", "width"), TestContext.Current.CancellationToken)).Value.Single(h => h.Ref.Id.Value == Spl105);
-
-        Assert.Equal(fromOnyx.Ref.Canonical, fromLinear.Ref.Canonical);
-        Assert.Equal(fromOnyx.Aliases, fromLinear.Aliases, StringComparer.Ordinal);
-        Assert.Equal(RecordKind.Issue, OnyxRecordKeys.KindOf(fromOnyx.Ref.Canonical));
     }
 
     public async ValueTask DisposeAsync()

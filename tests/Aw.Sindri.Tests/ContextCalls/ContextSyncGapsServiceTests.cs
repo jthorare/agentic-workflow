@@ -34,7 +34,7 @@ public sealed class ContextSyncGapsServiceTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private const string OnyxSection = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"on_live-key-0123","version":"v4.9.0"}}}""";
+    private const string LinearTeams = """{"sources":{"linear":{"teams":["SPL"]}}}""";
     private readonly GapEngineProxy _engine = GapEngineProxy.Create();
     private readonly CountingJobViews _counted;
     private readonly CapturingLogger _log = new();
@@ -43,7 +43,7 @@ public sealed class ContextSyncGapsServiceTests
     {
         _h.Clock.SetUtcNow(_now);
         var loaded = SliceHarness.Profile("5s");
-        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(OnyxSection).RootElement.Clone() : null } };
+        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(LinearTeams).RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
         return new ContextSyncGapsService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _counted, _start, _h.Clock, _log);
     }
