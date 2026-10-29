@@ -1,6 +1,7 @@
 using System.Text;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract.DataStores;
+using Aw.Context.Core.Extract.Imports;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Results;
 
@@ -39,11 +40,10 @@ public static class DataStorePass
         var byName = stores.Values.SelectMany(s => s.Names.Select(n => (Name: n, s.Key))).DistinctBy(p => p.Name, StringComparer.Ordinal).ToDictionary(p => p.Name, p => p.Key, StringComparer.Ordinal);
         List<GraphNode> nodes = [.. stores.Values.Select(s => new GraphNode(s.Key, s.Label, Provenance.Deterministic, 1.0, s.Evidence))];
         List<GraphEdge> edges = [];
+        var access = new Access(adapters, names, byName, Bindings(schema, adapters), ordered);
         foreach (var file in ordered.Where(f => !schemaPaths.Contains(f.Path) && Recognizers.Source(f)))
         {
-            var uses = adapters.SelectMany(a => a.Accesses(file.Text, names))
-                .Where(a => byName.ContainsKey(a.Store.ToLowerInvariant()))
-                .Select(a => (Key: byName[a.Store.ToLowerInvariant()], a.Access)).Distinct().ToList();
+            var uses = access.Of(file);
             if (uses.Count > 0 && MapExtractor.CodeKey(file.Path) is { } code && MapExtractor.Evidence(repo, file.Path) is { } evidence)
             {
                 nodes.Add(new GraphNode(code, file.Path[(file.Path.LastIndexOf('/') + 1)..], Provenance.Deterministic));
@@ -52,6 +52,35 @@ public static class DataStorePass
         }
 
         return ExtractedMap.Empty.Plus(new ExtractedMap(nodes, edges));
+    }
+
+    // The identifier each schema file declares for a store, by file: what the code's imports are followed to.
+    private static Dictionary<(string File, string Identifier), string> Bindings(List<RepoFile> schema, IReadOnlyList<IDataStoreAdapter> adapters)
+    {
+        var bindings = new Dictionary<(string, string), string>();
+        foreach (var file in schema)
+        {
+            foreach (var binding in adapters.OfType<IBindingDataStoreAdapter>().SelectMany(a => a.DeclaredBindings(file.Text)))
+            {
+                _ = bindings.TryAdd((file.Path, binding.Identifier), binding.Store.ToLowerInvariant());
+            }
+        }
+
+        return bindings;
+    }
+
+    // The uses of declared stores in one file, by the adapters: an adapter that follows imports gets the file's scope, the others the declared names.
+    private sealed class Access(IReadOnlyList<IDataStoreAdapter> adapters, HashSet<string> names, Dictionary<string, NodeKey> byName, Dictionary<(string File, string Identifier), string> bindings, List<RepoFile> files)
+    {
+        private readonly TsSymbolResolver? _resolver = bindings.Count == 0 ? null : new TsSymbolResolver([.. files.Where(f => !RepoPath.InDependencyFolder(f.Path)).Select(static f => new SourceFile(f.Path, f.Text))]);
+
+        internal List<(NodeKey Key, DataAccess Access)> Of(RepoFile file)
+        {
+            var scope = _resolver is null ? null : new FileScope(file.Path, _resolver, bindings);
+            return [.. adapters.SelectMany(a => scope is not null && a is IBindingDataStoreAdapter binding ? binding.Accesses(file.Text, scope) : a.Accesses(file.Text, names))
+                .Where(a => byName.ContainsKey(a.Store.ToLowerInvariant()))
+                .Select(a => (Key: byName[a.Store.ToLowerInvariant()], a.Access)).Distinct()];
+        }
     }
 
     private sealed record Store(NodeKey Key, string Label, HashSet<string> Names, List<EvidenceRef> Evidence);

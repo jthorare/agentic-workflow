@@ -37,7 +37,7 @@ public sealed class ArmsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_extractor_version_is_pinned_so_a_recognizer_change_bumps_it() => Assert.Equal(5, Context.Core.Extract.MapExtractor.Version);
+    public void The_extractor_version_is_pinned_so_a_recognizer_change_bumps_it() => Assert.Equal(6, Context.Core.Extract.MapExtractor.Version);
 
     [Fact, Trait("Lane", "unit")]
     public void S7A_allocates_080_to_083()

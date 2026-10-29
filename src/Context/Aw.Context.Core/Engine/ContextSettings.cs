@@ -18,7 +18,7 @@ public sealed record ContextSettings
 
     /// <summary>The default 'context.code.schemaGlobs': the migration and schema files the code lens's data files may name.</summary>
     public static IReadOnlyList<string> DefaultSchemaGlobs { get; } =
-        ["**/migrations/**", "**/migrate/**", "**/schema/**", "**/schemas/**", "**/*.sql", "**/*.prisma", "**/*.graphql", "**/*.gql", "**/*.proto", "**/*.avsc", "**/*.xsd", "**/*.schema.json"];
+        ["**/migrations/**", "**/migrate/**", "**/schema/**", "**/schemas/**", "**/schema.ts", "**/*.sql", "**/*.prisma", "**/*.graphql", "**/*.gql", "**/*.proto", "**/*.avsc", "**/*.xsd", "**/*.schema.json"];
 
     /// <summary>The profile repos the engine maps, or null for all of them.</summary>
     public IReadOnlyList<ContextRepoName>? Repos { get; init; }
