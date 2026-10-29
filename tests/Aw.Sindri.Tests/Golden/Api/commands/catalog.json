@@ -292,6 +292,24 @@
       "confirm": null
     },
     {
+      "action": "AttachProject",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/projects",
+      "cli": "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--note <text>] [--target <date>]",
+      "ui": "pending:Projects",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "BuildCodeIndex",
       "class": "job",
       "allowedCallers": [
@@ -343,6 +361,24 @@
       "route": "/sindri/jobs/{jobId}/cancel",
       "cli": "sindri jobs cancel <jobId>",
       "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ChangeProject",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/projects/{projectId}/change",
+      "cli": "sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--note <text>] [--target <date>]",
+      "ui": "pending:Projects",
       "destructive": false,
       "readsViews": true,
       "shortcut": null,
@@ -509,6 +545,24 @@
       "confirm": null
     },
     {
+      "action": "DetachProject",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/projects/{projectId}/detach",
+      "cli": "sindri project remove <project> --version <n>",
+      "ui": "pending:Projects",
+      "destructive": true,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "EmbedCodeIndex",
       "class": "job",
       "allowedCallers": [
@@ -579,6 +633,24 @@
       "ui": "pending:CO-4a",
       "destructive": false,
       "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "HideProject",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/projects/hide",
+      "cli": "sindri project hide <project> --version <n>",
+      "ui": "pending:Projects",
+      "destructive": false,
+      "readsViews": true,
       "shortcut": null,
       "confirm": null
     },
