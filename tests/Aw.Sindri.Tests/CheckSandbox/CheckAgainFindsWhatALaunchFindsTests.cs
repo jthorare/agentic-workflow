@@ -66,8 +66,8 @@ public sealed class CheckAgainFindsWhatALaunchFindsTests : IDisposable
 
         var report = await scope.ServiceProvider.GetRequiredService<ISandboxChecks>().Run(Token);
 
-        var said = System.Text.Encoding.UTF8.GetString(AwJson.Serialize(report.Blockers.Select(SandboxBlockerLine.From).ToList(), SliceHarness.Json));
         Assert.DoesNotContain(report.Blockers, b => string.Equals(b.Reason, SandboxReasons.FsDeny, StringComparison.Ordinal));
+        var said = System.Text.Encoding.UTF8.GetString(AwJson.Serialize(new CheckSandboxResponse([.. report.Blockers.Select(SandboxBlockerLine.From)], report.ReadyToResume, report.Ready), SliceHarness.Json));
         Assert.DoesNotContain("Can't find source path", said, StringComparison.Ordinal);
     }
 
