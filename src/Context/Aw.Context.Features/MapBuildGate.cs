@@ -2,7 +2,7 @@ namespace Aw.Context.Features;
 
 /// <summary>
 /// One graphify run at a time per host (a host has one map store and one cluster source): a map build, a refresh and a backtest's as-of cut all take it, and a second caller
-/// waits for the first instead of failing, so two refreshes of one map never write over each other. One instance per host. The box-wide heavy-job lock is not used: a map build is mostly git reads and a model call.
+/// waits for the first instead of failing, so two refreshes of one map never write over each other. One instance per host. The box-wide heavy-job lock is not used: a build is mostly git reads and a model call, and a graphify run (about 2 GB) is the one heavy step, kept to one at a time by this gate.
 /// </summary>
 internal sealed class MapBuildGate : IDisposable
 {
