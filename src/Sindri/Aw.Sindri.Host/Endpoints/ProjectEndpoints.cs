@@ -21,7 +21,7 @@ internal static class ProjectEndpoints
             => (await service.Handle(request, ct).ConfigureAwait(false)).ToHttpResult());
         _ = group.MapPost("/projects/{projectId}/change", static async (string projectId, ChangeProjectBody body, IService<ChangeProjectRequest, ProjectAccepted> service, CancellationToken ct) =>
         {
-            var request = body.ToRequest(projectId);
+            var request = body.ToRequest(ProjectRoute.Segment(projectId));
             return request.IsError ? request.ToHttpResult() : (await service.Handle(request.Value, ct).ConfigureAwait(false)).ToHttpResult();
         });
         _ = group.MapPost("/projects/{projectId}/detach", static async (string projectId, DetachProjectBody body, IService<DetachProjectRequest, ProjectAccepted> service, CancellationToken ct) =>
