@@ -66,6 +66,11 @@ internal sealed class SyncSourcesService(
                 return row.Error;
             }
 
+            if (row.Value.Code is { } code)
+            {
+                _ = await intents.RecordFailure(feed.Source, code, cancellationToken).ConfigureAwait(false);   // why: 'context sources status' and the doctor's context:sync row read the code from the intent state; a write that fails is dropped, the row already carries it
+            }
+
             rows.Add(row.Value);
         }
 

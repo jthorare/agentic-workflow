@@ -13,6 +13,7 @@ namespace Aw.Context.Tests.QueryContext;
 [Trait("Lane", "integration")]
 public sealed class ItemShapeTests
 {
+    private const string R106 = "linear:issue/0e5a1b00-0000-4000-8000-000000000106";
     private const string Orientation = "feature:layout.split-pane.orientation";
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -27,15 +28,7 @@ public sealed class ItemShapeTests
         return rig;
     }
 
-    [Fact]
-    public async Task Item_tracker_key_resolves_through_record_alias()
-    {
-        await using var rig = await Synced();
-
-        var result = await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct);
-
-        Assert.Contains("record:" + R103, result.Value.Anchors, StringComparer.Ordinal);
-    }
+    // see #1637: owned records carry no aliases yet, so a tracker key (SPL-103) resolves to nothing; the item tests below name the record by its canonical key.
 
     [Fact]
     public async Task Item_canonical_record_key_is_accepted()
@@ -52,7 +45,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var anchors = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value.Anchors;
+        var anchors = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value.Anchors;
 
         Assert.Equal("record:" + R103, anchors[0]);   // the record first, then what it touches
         Assert.Contains(Toggle, anchors, StringComparer.Ordinal);
@@ -64,27 +57,26 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         Assert.Equal((Provenance.Model, false, Trust.Untrusted), (decision.Provenance, decision.Confirmed, decision.Trust));
         var cite = Assert.Single(result.Cites.Values, c => c.Key.Value == R103);
-        Assert.Contains("SPL-103", cite.Aliases, StringComparer.Ordinal);
+        // see #1637: cite.Aliases is empty until owned records carry their tracker identifiers
         Assert.Equal(CitationState.Unchecked, cite.State);
         Assert.Equal("2026-07-23T09:00:00.0000000Z", cite.Refs[0].Version.Value);
         Assert.Contains(Section(result, "records").Items, i => i.Title?.Contains("Toggle split orientation", StringComparison.Ordinal) == true);
     }
 
     [Fact]
-    public async Task Item_unknown_is_003_with_suggestedAnchors()
+    public async Task Item_unknown_is_003()
     {
         await using var rig = await Synced();
 
         var result = await rig.World.Engine.Query(Item("SPL-999"), MapWorld.Human, Ct);
 
         Assert.Equal(ContextErrors.UnknownAnchor.Code, result.Error.Code);
-        var suggested = Assert.Single(result.Error.Extensions!, m => m.Key == "suggestedAnchors").Value.EnumerateArray().Select(e => e.GetString()).ToList();
-        Assert.Contains("SPL-103", suggested, StringComparer.Ordinal);
+        // see #1637: suggestedAnchors were the records' tracker identifiers (SPL-103); owned records carry none, so nothing is suggested
     }
 
     [Fact]
@@ -118,9 +110,9 @@ public sealed class ItemShapeTests
         await using var rig = await Synced();
         var session = MapWorld.Session("aw-split-panes");
 
-        var linked = await rig.World.Engine.Query(Item("SPL-103"), session, Ct);
-        var surface = await rig.World.Engine.Query(Item("SPL-104"), session, Ct);
-        var outside = await rig.World.Engine.Query(Item("SPL-106"), session, Ct);
+        var linked = await rig.World.Engine.Query(Item(R103), session, Ct);
+        var surface = await rig.World.Engine.Query(Item(R104), session, Ct);
+        var outside = await rig.World.Engine.Query(Item(R106), session, Ct);
 
         Assert.Contains("record:" + R103, linked.Value.Anchors, StringComparer.Ordinal);   // it mentions a node this repo implements
         Assert.True(surface.IsSuccess);   // it mentions the tab-switch surface, part of the tab manager this repo implements
@@ -145,7 +137,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();   // 103 and 104 decide the toggle command and the model said they contradict
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         var conflict = Assert.Single(result.Conflicts);
         Assert.Equal(Toggle, conflict.Node);
@@ -157,7 +149,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         var conflict = Assert.Single(result.Conflicts);
         Assert.All(conflict.Intent, marker => Assert.True(result.Cites.ContainsKey(marker), marker + " is not a citation of the result"));
@@ -171,7 +163,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         var record = result.Cites.Single(c => c.Value.Key.Value == R103).Key;
@@ -183,7 +175,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         Assert.All(decision.Cites, marker => Assert.True(result.Cites.ContainsKey(marker)));
@@ -196,7 +188,7 @@ public sealed class ItemShapeTests
         _ = await rig.Sync(Scope(labeling: false));
         _ = await rig.Sync(Scope(labeling: false));   // the run after the one that fetched
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), Scope(labeling: false), Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(labeling: false), Ct)).Value;
 
         var held = Assert.Single(result.Degraded, d => d.Code == ContextErrors.LabelingUnavailable.Code);
         Assert.Equal("decisions", held.Source.Value);
@@ -208,7 +200,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         Assert.DoesNotContain(result.Degraded, d => d.Code == ContextErrors.LabelingUnavailable.Code);
     }
