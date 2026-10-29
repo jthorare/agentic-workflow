@@ -42,7 +42,7 @@ public sealed class ShellSetupTests
 
         Assert.True(before >= 1);
         Assert.True(_server.SetupCalls > before);
-        Assert.Equal(["repo", "profile", "recipes", "mcp", "map", "onyx"], shell.Setup.Steps.Select(s => s.Id), StringComparer.Ordinal);
+        Assert.Equal(["repo", "profile", "recipes", "mcp", "map"], shell.Setup.Steps.Select(s => s.Id), StringComparer.Ordinal);
     }, Token);
 
     [Fact]

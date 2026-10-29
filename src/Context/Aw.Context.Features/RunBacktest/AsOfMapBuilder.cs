@@ -108,7 +108,7 @@ internal sealed class AsOfMapBuilder(IRepoReader repos, IClusterSource clusters,
         var (repo, sample) = (request.Repo, request.Sample);
         var set = cut.Set;
         var files = new List<RepoFile>();
-        foreach (var path in cut.Tree.Where(p => !repo.Denies(p) && (Recognizers.MayRead(p) || recognizers.Wants(p))))
+        foreach (var path in Journeys.Cap(cut.Tree.Where(p => !repo.Denies(p) && (Recognizers.MayRead(p) || Journeys.IsJourney(p) || recognizers.Wants(p)))))
         {
             var text = await repos.Read(repo, sample.Cut, path, cancellationToken).ConfigureAwait(false);
             if (text.IsError)
