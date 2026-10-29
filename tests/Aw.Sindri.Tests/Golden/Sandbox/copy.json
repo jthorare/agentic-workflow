@@ -11,6 +11,9 @@
     "canary",
     "confined"
   ],
+  "notChecked": {
+    "hooks-run": "The hooks weren't checked: no agent is picked for Steps."
+  },
   "entries": [
     {
       "code": "SND-LAUNCH-014",
