@@ -62,7 +62,7 @@ public sealed class ConceptStatusTests
     }
 
     [Theory]
-    [InlineData("{}")]
+    [InlineData("{\"labeling\":{\"enabled\":false}}")]
     [InlineData("{\"labeling\":{\"enabled\":true},\"conceptSynthesis\":{\"enabled\":false}}")]
     public async Task The_engine_reports_synthesis_off_when_labeling_or_conceptSynthesis_is_off(string section)
     {
