@@ -6,7 +6,7 @@ The top bar is drawn with the eight tabs, Projects second (§7); its right side 
 
 `projects.html` draws every screen from URL parameters (`v=a|b|c`, `state=`, `sheet=`, `fold=`, `marks=1`). `bash shots.sh` renders
 `screens/*.png` with headless Chrome. The sample data is the spec's fields only: seven projects across the three origins (led, attached,
-by hand), two finished, one hidden, with the ship-2 PR line included.
+by hand), two finished, one hidden, with the ship-2 PR line included. Three carry notes, one of them several lines.
 
 ## The three variants
 
@@ -25,8 +25,27 @@ by hand), two finished, one hidden, with the ship-2 PR line included.
   side by side and the densest. It isn't a card grid, so §7's "wrapping grid" and §3.3's arrow keys change to up and down only. At
   1000 px Repos and Target drop.
 
-My pick: **A**. It's the spec, it fits one screen, and every card reads alone. B is the pick if the open counts matter most; C if the
-list grows past about ten projects.
+**The owner picked B** (q158, 2026-10-29), with a **Notes** area on every card. The page is built as B.
+
+## B with notes (the build target)
+
+| Screen | File |
+|---|---|
+| The page, notes on the card face | `screens/b-1440.png` |
+| The sheet, writing notes | `screens/b-notes-1440.png` |
+| Save after someone else changed them (SND-PROJECT-409) | `screens/b-stale-1440.png` |
+| The sheet at the 1,000 px minimum (covers the page) | `screens/b-notes-1000.png` |
+
+- **The card face shows the first line of the notes**, cut at 80 characters with an ellipsis, in a quiet inset under the counts. No
+  notes, no inset.
+- **The sheet shows all of it** in a Notes area under the facts: free-form text, line breaks kept, at most 16,384 characters (the
+  counter shows how much is used). Saving is **explicit** (Save and Cancel, no autosave), and the whole text is replaced.
+- **After Save the sheet shows what the server returns**, never the textbox: notes pass through `Aw.Redaction`, so a pasted token
+  comes back scrubbed.
+- **A stale version** (someone saved since the sheet read it, `SND-PROJECT-409`) says "Changed elsewhere since you opened it" with
+  Reload; the typed text stays in the box until Reload.
+- An agent session reads notes fenced as untrusted text; its write is refused (`SND-AUTH-002`).
+- The Edit sheet loses its one-line Note field: notes live in the Notes area now.
 
 ## Page states and sheets (same in every variant, drawn in A)
 
@@ -43,11 +62,11 @@ list grows past about ten projects.
 | Edit an attached project, with the stale-version error under Save (SND-PROJECT-409) | `screens/sheet-edit-1440.png` |
 | Remove asks inline, focus on Keep | `screens/sheet-remove-1440.png` |
 
-## Found while drawing
+## Found while drawing (both fixed in the mockup)
 
-- **Three columns at the minimum width cut names.** §7 says three columns from a 900 px page; at the new 1,000 px window the page is
+- **Three columns at the minimum width cut names.** Fixed: three columns from 1,040 px of page (was 900), two below it. §7 says three columns from a 900 px page; at the new 1,000 px window the page is
   about 950 px, so A gets three 300 px cards and "Hiring loop for the platform team" and "Design system v2" are cut, and the
   attached / by-hand chip is pushed off. Two ways out: three columns from about 1,040 px of page instead of 900, or let the name wrap
   to two lines. B cuts the long name the same way and its footer wraps to two lines; C doesn't cut.
-- **The finish date isn't on a card.** Finished cards (open the fold) show only last activity; the 14-day rule counts from the finish
-  date, which only the sheet could show.
+- **The finish date isn't on a card.** Finished cards (open the fold) showed only last activity; the 14-day rule counts from the
+  finish date. Fixed: a finished card leads its footer with "Done Oct 23" or "Canceled Oct 18" (`b-finished-1440.png`).

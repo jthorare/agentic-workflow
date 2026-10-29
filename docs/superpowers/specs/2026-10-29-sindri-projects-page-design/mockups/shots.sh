@@ -15,3 +15,6 @@ for s in loading ctxerr empty syncing noled; do shot "v=a&state=$s" "state-$s-14
 shot "v=a&marks=1" "state-marks-1440" 1440
 shot "v=a&sheet=card" "sheet-covers-1000" 1000
 for s in add edit remove; do shot "v=a&sheet=$s" "sheet-$s-1440" 1440; done
+# The picked variant (B) with notes: editing them, and the stale-version answer to Save.
+for s in notes stale; do shot "v=b&sheet=$s" "b-$s-1440" 1440; done
+shot "v=b&sheet=notes" "b-notes-1000" 1000
