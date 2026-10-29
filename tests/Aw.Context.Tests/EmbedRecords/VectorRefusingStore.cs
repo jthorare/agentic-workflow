@@ -33,5 +33,7 @@ internal sealed class VectorRefusingStore(IRecordStore inner) : IRecordStore
 
     public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken) => inner.Purge(source, cancellationToken);
 
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken) => inner.LiveCounts(cancellationToken);
+
     public ValueTask<Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken) => inner.Count(source, cancellationToken);
 }

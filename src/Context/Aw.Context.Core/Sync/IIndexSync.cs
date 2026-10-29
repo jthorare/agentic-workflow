@@ -1,3 +1,4 @@
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -39,6 +40,12 @@ public interface IIndexSync
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>One row per feed, in source order, or the error the scope, settings or store give.</returns>
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>Where concept synthesis stands, read live from the concept and record stores at call time (nothing is kept between calls).</summary>
+    /// <param name="scope">The profile's settings and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The status (Enabled false when synthesis is off; its counts are still read), or the error the scope, settings or a store give.</returns>
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>Counts what one source holds in the record store, for the purge's preview. Any source id: a source the profile dropped still has rows to purge.</summary>
     /// <param name="source">The source.</param>
