@@ -19,7 +19,7 @@ internal sealed class ToolPurgeKeychain(IToolRunner runner) : IPurgeKeychain
             ? runner.Run("security", ["delete-generic-password", "-s", service, "-a", account], _timeout)
             : OperatingSystem.IsLinux() ? runner.Run("secret-tool", ["clear", "service", service, "account", account], _timeout) : ToolRun.Missing;
         return run is { Outcome: ToolOutcome.Missing } or { Outcome: ToolOutcome.Exited, ExitCode: 0 or MacNotFound }
-            ? Aw.Kernel.Results.Ok()
+            ? Results.Ok()
             : SindriErrors.IndexOnyxLeftover.With($"the keychain entry {service}/{account} could not be deleted (fix: unlock the keychain, or delete that entry in your keychain app, then run `sindri onyx down --purge` again)");
     }
 }
