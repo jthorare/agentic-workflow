@@ -167,7 +167,7 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
         (IsLoading, Error) = (false, string.Empty);
         var failing = list.Freshness.Any(f => string.Equals(f.State, "failing", StringComparison.Ordinal));
         FreshnessFailing = failing;
-        Freshness = string.Join(" · ", list.Freshness.Select(f => Labels.ProjectSource(f.Source) + " " + f.Text).Concat(list.Viewer is { } viewer ? [Labels.ProjectViewer(viewer)] : []));
+        Freshness = string.Join(" · ", list.Freshness.Select(f => Labels.ProjectFreshnessPart(f.Source, f.Text)).Concat(list.Viewer is { } viewer ? [Labels.ProjectViewer(viewer)] : []));
         NamesOnly = list.Freshness.Any(f => string.Equals(f.Source, "context", StringComparison.Ordinal) && string.Equals(f.State, "failing", StringComparison.Ordinal));
         Sentence = list.Empty;
         IsEmptyBlock = list.Projects.Count == 0 && list.Empty is not null;

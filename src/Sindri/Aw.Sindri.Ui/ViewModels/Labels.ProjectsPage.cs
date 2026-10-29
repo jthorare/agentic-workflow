@@ -36,14 +36,14 @@ internal static partial class Labels
     /// <summary>The page when a read failed: the reason follows.</summary>
     internal static string ProjectsFailed(Error error) => "Couldn't read the projects just now. " + InstanceRefused(error);
 
-    /// <summary>One source's name in the freshness line.</summary>
-    internal static string ProjectSource(string source) => source switch
+    /// <summary>One source's part of the freshness line: its name, then its served text. Context's text already names it ("Context is not answering").</summary>
+    internal static string ProjectFreshnessPart(string source, string text) => source switch
     {
-        "linear-projects" => "Linear projects",
-        "linear" => "Linear issues",
-        "github" => "GitHub",
-        "context" => "Context",
-        _ => source,
+        "linear-projects" => "Linear projects " + text,
+        "linear" => "Linear issues " + text,
+        "github" => "GitHub " + text,
+        "context" => text,
+        _ => source + " " + text,
     };
 
     /// <summary>The freshness line's last part.</summary>

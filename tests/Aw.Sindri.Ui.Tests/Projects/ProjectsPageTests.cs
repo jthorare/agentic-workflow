@@ -144,7 +144,7 @@ public sealed class ProjectsPageTests
         var page = await _f.Shown(Token);
 
         Assert.Equal(("Linear and GitHub data unavailable: Context is not answering", true, true, false), (page.Sentence, page.NamesOnly, page.IsBanner, page.IsEmptyBlock));
-        Assert.Equal("Context Context is not answering", page.Freshness);
+        Assert.Equal("Context is not answering", page.Freshness);
         Assert.All(page.Groups.SelectMany(g => g.Cards), c => Assert.True(c.NamesOnly));
     }
 
