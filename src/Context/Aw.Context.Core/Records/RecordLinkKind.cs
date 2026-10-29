@@ -45,4 +45,7 @@ public enum RecordLinkKind
     /// <summary>A pull request touched a file ('path:&lt;repo&gt;/&lt;path&gt;').</summary>
     [JsonStringEnumMemberName("touches")]
     Touches,
+    /// <summary>The other record (a person) leads this one (a project).</summary>
+    [JsonStringEnumMemberName("led-by")]
+    LedBy,
 }

@@ -24,7 +24,7 @@ public sealed record GraphSnapshot(
     }
 
     /// <summary>
-    /// What a session scoped to <paramref name="repo"/> may see (spec §3): <see cref="RepoScope"/>'s nodes with their part-of hierarchy (<see cref="RepoScope.WithHierarchy"/>), the actions on its surfaces and the things its nodes
+    /// What a session scoped to <paramref name="repo"/> may see (spec §3): <see cref="RepoScope"/>'s nodes (what the repo implements and its code files, any edge evidenced in the repo) with their part-of hierarchy (<see cref="RepoScope.WithHierarchy"/>), the actions on its surfaces and the things its nodes
     /// read or write ("and their cascade", §6.1; <see cref="RepoScope.WithProduct"/>), the records and decisions linked to them (owner decision 2026-10-15, B),
     /// the concepts those belong to (<see cref="RepoScope.WithConcepts"/>), and the edges, aliases and decisions among those. A link to a node outside the scope is dropped with that node.
     /// </summary>
