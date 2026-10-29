@@ -241,7 +241,7 @@ public sealed class RoutedModelPortTests
         Assert.Null(called.Tries[1].Reason);
         Assert.Equal(("codex", "gpt-6-luna-2"), (called.AnsweredBy!.Harness, called.AnsweredBy.Model));
         Assert.Equal((120, 30, TokenBasis.Reported, "gpt-6-luna-2"), (answer.InputTokens, answer.OutputTokens, answer.TokenBasis, answer.Model));
-        Assert.DoesNotContain("must not be recorded", System.Text.Json.JsonSerializer.Serialize(called), StringComparison.Ordinal);
+        Assert.DoesNotContain("must not be recorded", called.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

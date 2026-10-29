@@ -4,6 +4,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Models;
 using Aw.Judge.Core.Providers;
 using Aw.Kernel;
+using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Host.Models;
@@ -21,7 +22,7 @@ internal sealed class RouterRig
     {
         Catalog = new ScriptedCatalog(clis);
         Clis = clis;
-        Port = new RoutedModelPort(() => Catalog, new FixedModels(settings ?? new ModelsSettings()), _jobs, Calls, Clock);
+        Port = new RoutedModelPort(() => Catalog, new FixedModels(settings ?? new ModelsSettings()), _jobs, Calls, new SequentialIdGenerator(), Clock);
     }
 
     public ScriptedCatalog Catalog { get; }
