@@ -12,7 +12,7 @@ public sealed class ImplementFixStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => BugfixSteps.ImplementFix;
 
-    protected override string ExpectedHash => "sha256:0000000000000000000000000000000000000000000000000000000000000000";
+    protected override string ExpectedHash => "sha256:f40ab62d39740b590e239526f4014423466171c3e94f52b7c088cc015d480fa6";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 
