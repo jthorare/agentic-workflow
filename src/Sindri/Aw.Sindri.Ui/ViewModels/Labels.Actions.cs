@@ -89,6 +89,7 @@ internal static partial class Labels
         ["RunService"] = "Run now",
         ["StartInstance"] = "Start workflow",
         ["StopProcess"] = "Stop Sindri",
+        ["SyncIndexSource"] = "Sync index source",
         ["SyncSources"] = "Sync context sources",
         ["ValidateProfile"] = "Validate profile",
     }.ToFrozenDictionary(StringComparer.Ordinal);
