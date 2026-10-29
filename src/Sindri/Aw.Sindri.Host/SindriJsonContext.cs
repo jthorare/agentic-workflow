@@ -28,8 +28,8 @@ using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Onyx;
-using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
@@ -53,6 +53,7 @@ using Aw.Sindri.Features.ApplyCommand;
 using Aw.Sindri.Features.ApproveAllRecipes;
 using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.ApproveRecipe;
+using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.CancelJob;
 using Aw.Sindri.Features.CheckPack;
 using Aw.Sindri.Features.CheckSandbox;
@@ -86,6 +87,7 @@ using Aw.Sindri.Features.GetRunSuspension;
 using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Features.GetSetup;
 using Aw.Sindri.Features.GetStatus;
+using Aw.Sindri.Features.HideProject;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.IssueChallenge;
 using Aw.Sindri.Features.IssueNonce;
@@ -164,6 +166,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
 [JsonSerializable(typeof(DeferOnyxRequest)), JsonSerializable(typeof(DeferOnyxResponse)), JsonSerializable(typeof(DeferOnyxBody)), JsonSerializable(typeof(SetupOnyxRequest)), JsonSerializable(typeof(SetupOnyxResult)), JsonSerializable(typeof(ConnectOnyxRequest))]
+[JsonSerializable(typeof(AttachProjectRequest)), JsonSerializable(typeof(ProjectAccepted)), JsonSerializable(typeof(ChangeProjectBody)), JsonSerializable(typeof(DetachProjectBody)), JsonSerializable(typeof(HideProjectRequest))]
 [JsonSerializable(typeof(CloseItemRequest)), JsonSerializable(typeof(CloseItemBody)), JsonSerializable(typeof(GetQueueRequest)), JsonSerializable(typeof(QueueResponse))]
 [JsonSerializable(typeof(QueueGroupView)), JsonSerializable(typeof(ItemSummary)), JsonSerializable(typeof(ListItemsRequest)), JsonSerializable(typeof(ListItemsResponse))]
 [JsonSerializable(typeof(GetItemRequest)), JsonSerializable(typeof(ItemView)), JsonSerializable(typeof(FileRequestRequest)), JsonSerializable(typeof(RequestFiledResponse))]

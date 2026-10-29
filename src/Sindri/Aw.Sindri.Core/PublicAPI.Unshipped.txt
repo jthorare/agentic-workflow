@@ -21615,3 +21615,37 @@ override Aw.Sindri.Core.Projects.ProjectDraft.ToString() -> string!
 static Aw.Sindri.Core.Projects.ProjectDecisions.Attach(Aw.Sindri.Core.Ids.CommandId command, Aw.Sindri.Core.Ids.ProjectId id, Aw.Sindri.Core.Projects.ProjectDraft! draft, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectAttachedRow!>! attached, bool led) -> Aw.Kernel.Result<Aw.Sindri.Core.Events.ProjectAttached!>!
 static Aw.Sindri.Core.Projects.ProjectDraft.operator !=(Aw.Sindri.Core.Projects.ProjectDraft? left, Aw.Sindri.Core.Projects.ProjectDraft? right) -> bool
 static Aw.Sindri.Core.Projects.ProjectDraft.operator ==(Aw.Sindri.Core.Projects.ProjectDraft? left, Aw.Sindri.Core.Projects.ProjectDraft? right) -> bool
+Aw.Sindri.Core.Projects.LinearProjectRef
+Aw.Sindri.Core.Projects.LinearProjectRef.<Clone>$() -> Aw.Sindri.Core.Projects.LinearProjectRef!
+Aw.Sindri.Core.Projects.LinearProjectRef.Deconstruct(out string? Key, out string? Slug) -> void
+Aw.Sindri.Core.Projects.LinearProjectRef.Equals(Aw.Sindri.Core.Projects.LinearProjectRef? other) -> bool
+Aw.Sindri.Core.Projects.LinearProjectRef.Key.get -> string?
+Aw.Sindri.Core.Projects.LinearProjectRef.Key.init -> void
+Aw.Sindri.Core.Projects.LinearProjectRef.LinearProjectRef(string? Key, string? Slug) -> void
+Aw.Sindri.Core.Projects.LinearProjectRef.Slug.get -> string?
+Aw.Sindri.Core.Projects.LinearProjectRef.Slug.init -> void
+Aw.Sindri.Core.Projects.LinearProjectRefs
+Aw.Sindri.Core.Projects.ProjectAccepted
+Aw.Sindri.Core.Projects.ProjectAccepted.<Clone>$() -> Aw.Sindri.Core.Projects.ProjectAccepted!
+Aw.Sindri.Core.Projects.ProjectAccepted.Accepted.get -> Aw.Sindri.Core.Commands.CommandAccepted!
+Aw.Sindri.Core.Projects.ProjectAccepted.Accepted.init -> void
+Aw.Sindri.Core.Projects.ProjectAccepted.Deconstruct(out Aw.Sindri.Core.Commands.CommandAccepted! Accepted, out string! Project, out long Version, out string! Name) -> void
+Aw.Sindri.Core.Projects.ProjectAccepted.Equals(Aw.Sindri.Core.Projects.ProjectAccepted? other) -> bool
+Aw.Sindri.Core.Projects.ProjectAccepted.Name.get -> string!
+Aw.Sindri.Core.Projects.ProjectAccepted.Name.init -> void
+Aw.Sindri.Core.Projects.ProjectAccepted.Project.get -> string!
+Aw.Sindri.Core.Projects.ProjectAccepted.Project.init -> void
+Aw.Sindri.Core.Projects.ProjectAccepted.ProjectAccepted(Aw.Sindri.Core.Commands.CommandAccepted! Accepted, string! Project, long Version, string! Name) -> void
+Aw.Sindri.Core.Projects.ProjectAccepted.Version.get -> long
+Aw.Sindri.Core.Projects.ProjectAccepted.Version.init -> void
+override Aw.Sindri.Core.Projects.LinearProjectRef.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Projects.LinearProjectRef.GetHashCode() -> int
+override Aw.Sindri.Core.Projects.LinearProjectRef.ToString() -> string!
+override Aw.Sindri.Core.Projects.ProjectAccepted.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Projects.ProjectAccepted.GetHashCode() -> int
+override Aw.Sindri.Core.Projects.ProjectAccepted.ToString() -> string!
+static Aw.Sindri.Core.Projects.LinearProjectRef.operator !=(Aw.Sindri.Core.Projects.LinearProjectRef? left, Aw.Sindri.Core.Projects.LinearProjectRef? right) -> bool
+static Aw.Sindri.Core.Projects.LinearProjectRef.operator ==(Aw.Sindri.Core.Projects.LinearProjectRef? left, Aw.Sindri.Core.Projects.LinearProjectRef? right) -> bool
+static Aw.Sindri.Core.Projects.LinearProjectRefs.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Projects.LinearProjectRef!>!
+static Aw.Sindri.Core.Projects.ProjectAccepted.operator !=(Aw.Sindri.Core.Projects.ProjectAccepted? left, Aw.Sindri.Core.Projects.ProjectAccepted? right) -> bool
+static Aw.Sindri.Core.Projects.ProjectAccepted.operator ==(Aw.Sindri.Core.Projects.ProjectAccepted? left, Aw.Sindri.Core.Projects.ProjectAccepted? right) -> bool
