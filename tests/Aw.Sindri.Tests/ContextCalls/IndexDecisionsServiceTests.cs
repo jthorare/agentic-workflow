@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// <summary>The 'index-decisions' service (#1597) over a fake <see cref="Context.Core.Sync.IIndexSync"/> behind the engine facade.</summary>
 public sealed class IndexDecisionsServiceTests
 {
-    private const string OnyxSection = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"on_live-key-0123","version":"v4.9.0"}}}""";
+    private const string LinearTeams = """{"sources":{"linear":{"teams":["SPL"]}}}""";
     private static readonly DateTimeOffset _now = new(2026, 10, 27, 12, 0, 0, TimeSpan.Zero);
     private readonly SliceHarness _h = new();
     private readonly FakeIndexSync _index = new();
@@ -23,7 +23,7 @@ public sealed class IndexDecisionsServiceTests
     {
         _h.Clock.SetUtcNow(_now);
         var loaded = SliceHarness.Profile("5m");
-        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(OnyxSection).RootElement.Clone() : null } };
+        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(LinearTeams).RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
         var grant = await _h.HoldLease();
         using var caller = _h.Callers.EnterService("index-decisions");

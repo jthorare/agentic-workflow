@@ -52,7 +52,11 @@ internal static class RecordMappers
     internal static IRowMapper<SyncPosition> Position { get; } = new Mapper<SyncPosition>(r =>
         new SyncPosition(Text(r, 0) is { } cursor ? SourceCursor.From(cursor) : null, Text(r, 1) is { } phase ? RecordWire.Phase(phase) : null, Text(r, 2) is { } backfill ? SourceCursor.From(backfill) : null, At(r, 3)));
 
+    internal static IRowMapper<SyncOutcome> Outcome { get; } = new Mapper<SyncOutcome>(r => new SyncOutcome(SqliteRead.GetTimestamp(r, 0), Text(r, 1)));
+
     internal static IRowMapper<SourceCounts> Counts { get; } = new Mapper<SourceCounts>(r => new SourceCounts(r.GetInt32(0), r.GetInt32(1), r.GetInt32(2)));
+
+    internal static IRowMapper<LiveRecordCounts> Live { get; } = new Mapper<LiveRecordCounts>(r => new LiveRecordCounts(r.GetInt32(0), r.GetInt32(1)));
 
     internal static IRowMapper<StoreStamps> Stamps { get; } = new Mapper<StoreStamps>(r => new StoreStamps(r.GetInt64(0), r.GetInt64(1)));
 

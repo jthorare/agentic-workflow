@@ -31,7 +31,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-INDEX-003` | The index input is larger than index.maxTotalMB. | add generated or vendored paths to index.denyPaths, or raise index.maxTotalMB |
 | `SND-INDEX-005` | The embedding URL is not loopback. | set index.embeddings.url to http://127.0.0.1:11434 (or disable embeddings) |
 | `SND-INDEX-006` | The local embedding server failed. | sindri index setup (starts Ollama checks and pulls the model) |
-| `SND-INDEX-007` | No network sandbox is available for graphify. | macOS: sandbox-exec ships with the OS; Linux: install bubblewrap (bwrap); if `bwrap --ro-bind / / true` fails with "setting up uid map: Permission denied" (Ubuntu 24.04), run `scripts/install-deps.sh` for the AppArmor profile fix; or set index.graph: none |
+| `SND-INDEX-007` | The profile still has a `context.sources.onyx` section; Sindri no longer runs or reads Onyx. | remove the `onyx` entry under context.sources in profile.yaml, then sindri profile approve |
 | `SND-INDEX-008` | graphify is missing, failed or wrote no usable graph. | if graphify or its sandbox is missing: sindri index setup; if graph.json is over the cap: raise index.graphMaxMB (max 512); then sindri index build |
 | `SND-INDEX-009` | A source token pointer does not resolve, the source refused the token, or its file is wider than 0600. | run sindri index connect &lt;source&gt; at your terminal; for a file: pointer, chmod 600 the file |
 | `SND-INDEX-010` | A repo the profile lists is unreadable with this token; the message names each one. | give the fine-grained token read access to those repos (Contents, Issues, Pull requests, Metadata), then sindri index connect github |
@@ -79,8 +79,30 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-SCRUB-006` | git's init.templateDir is set to a directory sindri does not own, or could not be read or set. | copy the named hook into that template dir's hooks/ yourself, or `git config --global --unset init.templateDir` and rerun `sindri repo onboard --template` |
 | `SND-SECRET-001` | A secret pointer could not be resolved. | check the pointer in the profile and that the secret exists (env var, file, keychain item or 1Password item) |
 | `SND-SECRET-002` | A secret file is readable by other users. | chmod 600 &lt;file&gt; |
+| `SND-SECRET-004` | A secret couldn't be stored: neither the OS secret store nor the owner-only file took it. | on Linux install libsecret (secret-tool) or check the Sindri home is writable by you; on macOS unlock the login keychain; then run the command again |
 | `SND-TRACKER-001` | The tracker's source is missing or unreadable (for plan-file: the repo path or plan dir). | Restore that directory, or fix `path` in repos/&lt;name&gt;.yaml and run `sindri profile approve`. |
 | `SND-TRACKER-002` | The tracker's source holds no items to read (for plan-file: no plan file matches tracker.include). | Fix tracker.include in profile.yaml (or restore the plan files), then run `sindri profile approve`. |
 | `SND-TRACKER-003` | A plan file is too big to read (over 2 MiB). | Split the plan file into smaller plans. |
 | `SND-TRACKER-404` | The tracker has no such item. | Check the id with `sindri observe`. |
 | `SND-TRACKER-405` | This tracker can't write. | The plan-file tracker is read-only; edit the plan file. |
+
+## Retired (reserved, never reused)
+
+These codes went with Onyx (#1598). They are never given to a new error, so an old log line can't be read as something else.
+
+| Code | Was |
+|---|---|
+| `SND-ONYX-001` | Docker is missing or not running |
+| `SND-ONYX-002` | Docker Compose v2 is missing |
+| `SND-ONYX-003` | Not enough disk or Docker memory for Onyx |
+| `SND-ONYX-004` | The Onyx pins are malformed or a download failed its pin |
+| `SND-ONYX-005` | Onyx isn't ready or runs another version |
+| `SND-ONYX-006` | Onyx's port is taken and no fallback port is free |
+| `SND-ONYX-007` | The Onyx login given isn't an admin |
+| `SND-ONYX-008` | Minting or verifying Sindri's Onyx key failed |
+| `SND-ONYX-009` | Writing the Onyx key to a secret store failed (now `SND-SECRET-004`, for any secret) |
+| `SND-ONYX-010` | Docker points at another machine |
+| `SND-ONYX-011` | A docker compose command failed |
+| `SND-ONYX-012` | Sindri can't use its Onyx directory |
+| `SND-SETUP-005` | The Onyx admin email and password were both needed |
+| `SND-SETUP-006` | No Onyx setup was waiting for the login |

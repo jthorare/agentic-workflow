@@ -4,7 +4,7 @@ using Aw.Kernel;
 
 namespace Aw.Context.Tests.Core;
 
-/// <summary>'context.sources' (spec §8.8): the retired onyx entry and the Linear teams its identifier aliases may name.</summary>
+/// <summary>'context.sources' (spec §8.8): the Linear teams its identifier aliases may name.</summary>
 public sealed class SourcesSettingsTests
 {
     private static Result<ContextSettings> Read(string json) => SettingsReader.Read(JsonDocument.Parse(json).RootElement.Clone());
@@ -17,17 +17,14 @@ public sealed class SourcesSettingsTests
         Assert.Empty(settings.LinearTeams);
     }
 
-    [Theory, Trait("Lane", "unit")]
-    [InlineData("""{"url":"http://127.0.0.1:3189","token":"env:ONYX_KEY","version":"v4.9.0"}""")]
-    [InlineData("""{"url":"http://127.0.0.1:3189","token":"keychain:onyx/sindri-onyx","version":"v4.9.0","managed":true}""")]
-    [InlineData("""{"url":"http://10.0.0.5:3189","token":"a-key-written-in-the-profile","version":"latest","apiKey":"x"}""")]
-    [InlineData("\"http://127.0.0.1:3189\"")]
-    public void A_profile_that_still_carries_the_retired_onyx_entry_loads_and_ignores_it(string onyx)
+    [Fact, Trait("Lane", "unit")]
+    public void A_leftover_onyx_entry_is_not_a_source_this_build_knows()
     {
-        var read = Read("""{"sources":{"onyx":""" + onyx + ""","linear":{"teams":["SPL","APP"]}}}""");
+        // The profile loader refuses it first with SND-INDEX-007 (OnyxLeftoverKeyTests); the reader on its own names the key path.
+        var read = Read("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189"}}}""");
 
-        Assert.False(read.IsError);
-        Assert.Equal(["SPL", "APP"], read.Value.LinearTeams, StringComparer.Ordinal);
+        Assert.Equal("SND-CONTEXT-001", read.Error.Code);
+        Assert.StartsWith("context.sources.onyx:", read.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

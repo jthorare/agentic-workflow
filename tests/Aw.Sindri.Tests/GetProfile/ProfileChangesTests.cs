@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow.Blocks;
@@ -69,7 +68,7 @@ public sealed class ProfileChangesTests
     public void A_repo_has_three_sentences_in_reading_order()
     {
         Assert.Equal(
-            ["Sindri will read /work/web and send what it reads to your Onyx and to the map cleanup agent",
+            ["Sindri will read /work/web and send what it reads to the map cleanup agent",
              "Sindri will write its MCP settings into web for Claude Code, Codex and Cursor",
              "Sindri will keep web's map up to date on its own"],
             ProfileChanges.RepoSentences("web", "/work/web"));
@@ -110,7 +109,6 @@ public sealed class ProfileChangesTests
     [Fact, Trait("Lane", "unit")]
     public void Connections_say_the_forge_judge_providers_and_agents_the_live_profile_adds()
     {
-        var context = JsonDocument.Parse("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"keychain:onyx/x","managed":true}}}""").RootElement;
         var live = new SindriProfile(
             1,
             "t",
@@ -118,7 +116,6 @@ public sealed class ProfileChangesTests
                 Judge: new JudgeSettings(["claude-cli", "jev"]),
                 Agent: new WorkflowAgentSettings(AgentId.From("claude")),
                 Forge: new ForgeSettings("github", ["github.com"], "env:GH_TOKEN")),
-            Context: context,
             Setup: new SetupSettings(SetupSettings.Auto));
 
         var changes = ProfileChanges.Between(approved: null, live, _sentences);
@@ -126,7 +123,6 @@ public sealed class ProfileChangesTests
         Assert.Equal(
             ["Sindri will use the github forge at github.com, with the token in GH_TOKEN", "Judge steps may ask claude-cli", "Judge steps may ask jev", "Workflow steps will launch the claude agent", "Sindri will register its MCP server in each repo on its own"],
             changes.Connections);
-        Assert.DoesNotContain(changes.Connections, static c => c.Contains("keychain", StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "unit")]

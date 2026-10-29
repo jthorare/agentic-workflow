@@ -10,7 +10,6 @@ namespace Aw.Context.Tests.QueryContext;
 /// <summary>The facade's stored-state gap check: an owned index source past no recent window read without probing any source.</summary>
 public sealed class SyncGapTests
 {
-    private const string OnyxSettings = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:K","version":"v4.9.0"}}}""";
     private static readonly SourceId _linear = SourceId.From("linear");
     private readonly FakeIntentStore _intents = new();
     private readonly FakeIndexSync _index = new();
@@ -19,10 +18,6 @@ public sealed class SyncGapTests
 
     private async Task<bool> Gap(string? settings) =>
         (await Engines.Over(new FixedSourceCatalog(), intentStore: _intents, indexSync: _index).HasSyncGap(Engines.Human(settings), Ct)).Value;
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task The_retired_onyx_key_is_no_gap_whatever_its_stored_state() =>
-        Assert.False(await Gap(OnyxSettings));
 
     [Fact, Trait("Lane", "unit")]
     public async Task No_configured_intent_source_is_no_gap()

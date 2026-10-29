@@ -6,13 +6,12 @@ using Aw.Kernel;
 namespace Aw.Context.Core.Engine;
 
 /// <summary>
-/// Reads 'context.sources' for <see cref="SettingsReader"/> (spec §8.8): 'onyx' is a retired key, accepted and ignored so a profile written
-/// before Onyx was dropped still loads, and 'linear' (its teams, and with a token the native adapter's settings through <see cref="LinearSettings.Create"/>). The shape (a map, known keys only) is SND-CONTEXT-001
+/// Reads 'context.sources' for <see cref="SettingsReader"/> (spec §8.8): 'linear' (its teams, and with a token the native adapter's settings through <see cref="LinearSettings.Create"/>). The shape (a map, known keys only) is SND-CONTEXT-001
 /// naming the full key path.
 /// </summary>
 internal static partial class SourcesReader
 {
-    private static readonly string[] _sources = ["onyx", "linear", "github", "slack"];
+    private static readonly string[] _sources = ["linear", "github", "slack"];
     private static readonly string[] _linear = ["teams", "url", "token"];
     private static readonly string[] _github = ["repos", "host", "allowPrivateHost", "token"];
     private static readonly string[] _slack = ["channels", "retainDays", "token", "workspace"];
@@ -29,11 +28,11 @@ internal static partial class SourcesReader
 
         if (sources.ValueKind != JsonValueKind.Object)
         {
-            return SettingsReader.Invalid("context.sources", "must be a map of sources (onyx, linear, github, slack)");
+            return SettingsReader.Invalid("context.sources", "must be a map of sources (linear, github, slack)");
         }
 
         return Unknown(sources, _sources) is { } name
-            ? SettingsReader.Invalid("context.sources." + name, "is not a source this build knows (onyx, linear, github, slack)")
+            ? SettingsReader.Invalid("context.sources." + name, "is not a source this build knows (linear, github, slack)")
             : Entry(sources, "linear", _linear) ?? Entry(sources, "github", _github) ?? Entry(sources, "slack", _slack) ?? SlackChannelShape(sources);
     }
 

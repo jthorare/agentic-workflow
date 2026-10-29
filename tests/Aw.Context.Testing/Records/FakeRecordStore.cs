@@ -12,6 +12,7 @@ public sealed class FakeRecordStore : IRecordStore
     private readonly Dictionary<RecordKey, StoredRecord> _records = [];
     private readonly Dictionary<RecordKey, List<RecordChunk>> _chunks = [];
     private readonly Dictionary<SourceId, SyncPosition> _positions = [];
+    private readonly Dictionary<SourceId, SyncOutcome> _outcomes = [];
     private readonly List<VectorRow> _vectors = [];
     private long _seq;
     private long _recordStamp;
@@ -86,6 +87,25 @@ public sealed class FakeRecordStore : IRecordStore
         lock (_gate)
         {
             return Ok(_positions.GetValueOrDefault(source) ?? SyncPosition.Start);
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _outcomes[source] = outcome;
+            return Ok(1);
+        }
+    }
+
+    /// <inheritdoc />
+    public ValueTask<Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return Ok(_outcomes.GetValueOrDefault(source));
         }
     }
 
@@ -181,6 +201,25 @@ public sealed class FakeRecordStore : IRecordStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var live = _records.Values.Where(r => !r.Blocked && r.RemovedAt is null).ToList();
+            var embedded = new HashSet<RecordKey>();
+            foreach (var vector in _vectors.Where(v => v.Vector.Space == VectorSpace.Chunk))
+            {
+                if (ChunkKey.TryParse(vector.Vector.Key, out var chunk))
+                {
+                    _ = embedded.Add(chunk.Record);
+                }
+            }
+
+            return Ok(new LiveRecordCounts(live.Count, live.Count(r => embedded.Contains(r.Key))));
+        }
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -205,6 +244,7 @@ public sealed class FakeRecordStore : IRecordStore
             }
 
             _ = _positions.Remove(source);
+            _ = _outcomes.Remove(source);
             return Ok(keys.Count);
         }
     }

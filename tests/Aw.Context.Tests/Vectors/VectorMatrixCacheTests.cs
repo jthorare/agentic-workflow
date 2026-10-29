@@ -147,6 +147,10 @@ public sealed class VectorMatrixCacheTests : IDisposable
 
         public ValueTask<Kernel.Result<SyncPosition>> Position(SourceId source, CancellationToken cancellationToken) => _inner.Position(source, cancellationToken);
 
+        public ValueTask<Kernel.Result<int>> RecordOutcome(SourceId source, SyncOutcome outcome, CancellationToken cancellationToken) => _inner.RecordOutcome(source, outcome, cancellationToken);
+
+        public ValueTask<Kernel.Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken) => _inner.LastOutcome(source, cancellationToken);
+
         public ValueTask<Kernel.Result<int>> PutVectors(IReadOnlyList<VectorWrite> vectors, CancellationToken cancellationToken) => _inner.PutVectors(vectors, cancellationToken);
 
         public ValueTask<Kernel.Result<IReadOnlyList<VectorRow>>> Vectors(VectorSpace space, long afterSeq, int limit, CancellationToken cancellationToken)
@@ -162,6 +166,8 @@ public sealed class VectorMatrixCacheTests : IDisposable
         public ValueTask<Kernel.Result<StoreStamps>> Stamps(CancellationToken cancellationToken) => _inner.Stamps(cancellationToken);
 
         public ValueTask<Kernel.Result<int>> Purge(SourceId source, CancellationToken cancellationToken) => _inner.Purge(source, cancellationToken);
+
+        public ValueTask<Kernel.Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken) => _inner.LiveCounts(cancellationToken);
 
         public ValueTask<Kernel.Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken) => _inner.Count(source, cancellationToken);
     }

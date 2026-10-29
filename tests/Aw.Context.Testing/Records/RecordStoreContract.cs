@@ -237,6 +237,29 @@ public abstract class RecordStoreContract<TStore>
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Count(SourceId.From("slack"), CancellationToken.None)) == new SourceCounts(0, 0, 0), "a source the store never saw holds nothing");
     }
 
+    /// <summary>The live count leaves out tombstones and blocked records; the embedded count is the live records with a chunk vector.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_live_count_leaves_out_removed_and_blocked_records_and_counts_the_ones_with_a_vector()
+    {
+        var store = Create();
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.LiveCounts(CancellationToken.None)) == new LiveRecordCounts(0, 0), "an empty store holds nothing");
+        var embedded = RecordSamples.Record("linear:issue/1");
+        var twoChunks = RecordSamples.Record("linear:issue/2");
+        var pending = RecordSamples.Record("linear:issue/3");
+        var removed = RecordSamples.Record("linear:issue/4");
+        var blocked = RecordSamples.Record("linear:issue/5", blocked: true);
+        var github = RecordSamples.Record("github:pr/o/r/1", source: RecordSamples.Github);
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1, RecordSamples.Write(embedded, "one"), RecordSamples.Write(twoChunks, "a", "b"), RecordSamples.Write(pending, "three"), RecordSamples.Write(removed, "four"), RecordSamples.Write(blocked)), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Github, 1, RecordSamples.Write(github, "gh")), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.PutVectors(
+            [RecordSamples.Vector(new ChunkKey(embedded.Key, 0), "one", 1, 0), RecordSamples.Vector(new ChunkKey(twoChunks.Key, 0), "a", 1, 0), RecordSamples.Vector(new ChunkKey(twoChunks.Key, 1), "b", 0, 1), RecordSamples.Vector(new ChunkKey(github.Key, 0), "gh", 1, 1)],
+            CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 2) with { Removed = [removed.Key] }, CancellationToken.None));
+
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.LiveCounts(CancellationToken.None)) == new LiveRecordCounts(4, 3), "4 live records (one removed, one blocked), 3 with a vector: a record with two vectors counts once");
+    }
+
     /// <summary>A purge removes one source's records, chunks, vectors and position and no other's.</summary>
     /// <returns>A task.</returns>
     [Fact]

@@ -10,7 +10,7 @@ public sealed class FakeSecretWriter : ISecretWriter, ISecretPointers
     /// <summary>Gets the secrets by pointer text.</summary>
     public IDictionary<string, string> Stored { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 
-    /// <summary>Gets or sets a value indicating whether storing fails (SND-ONYX-009).</summary>
+    /// <summary>Gets or sets a value indicating whether storing fails (SND-SECRET-004).</summary>
     public bool Fails { get; set; }
 
     /// <inheritdoc />
@@ -18,7 +18,7 @@ public sealed class FakeSecretWriter : ISecretWriter, ISecretPointers
     {
         if (Fails)
         {
-            return SindriErrors.OnyxSecretNotStored.With("no store took the key");
+            return SindriErrors.SecretNotStored.With("no store took the key");
         }
 
         var pointer = SecretPointer.Parse($"keychain:{service}/{account}").Value;
@@ -31,7 +31,7 @@ public sealed class FakeSecretWriter : ISecretWriter, ISecretPointers
     {
         if (Fails)
         {
-            return SindriErrors.OnyxSecretNotStored.With("no store took the key");
+            return SindriErrors.SecretNotStored.With("no store took the key");
         }
 
         var pointer = SecretPointer.Parse($"file:/fake-secrets/{service}-{account}").Value;

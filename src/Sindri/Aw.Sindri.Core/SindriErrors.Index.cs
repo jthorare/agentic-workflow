@@ -4,6 +4,9 @@ namespace Aw.Sindri.Core;
 
 public static partial class SindriErrors
 {
+    /// <summary>SND-INDEX-007: the profile still has a 'context.sources.onyx' section; Sindri no longer runs or reads Onyx (refused for one release so the leftover is seen, owned-index spec Q15).</summary>
+    public static readonly ErrorDefinition IndexOnyxInProfile = new("SND-INDEX-007", ErrorKind.Invalid, "The profile still names Onyx (fix: remove context.sources.onyx, then sindri profile approve)");
+
     /// <summary>SND-INDEX-009: a source's token pointer does not resolve, the source refused the token, or a file: pointer is wider than 0600.</summary>
     public static readonly ErrorDefinition IndexTokenUnresolved = new("SND-INDEX-009", ErrorKind.Invalid, "A source token pointer does not resolve, the token was refused, or its file is wider than 0600");
 

@@ -8545,6 +8545,8 @@ Aw.Context.Core.Records.IRecordStore.DeleteVectors(Aw.Context.Core.Records.Vecto
 Aw.Context.Core.Records.IRecordStore.Get(Aw.Context.Core.Sources.RecordKey key, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.StoredRecord?>!>
 Aw.Context.Core.Records.IRecordStore.List(Aw.Context.Core.Records.RecordFilter! filter, Aw.Context.Core.Sources.RecordKey? after, int limit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.StoredRecord!>!>!>
 Aw.Context.Core.Records.IRecordStore.Position(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SyncPosition!>!>
+Aw.Context.Core.Records.IRecordStore.RecordOutcome(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncOutcome! outcome, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
+Aw.Context.Core.Records.IRecordStore.LastOutcome(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SyncOutcome?>!>
 Aw.Context.Core.Records.IRecordStore.Purge(Aw.Context.Core.Sources.SourceId source, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Context.Core.Records.IRecordStore.PutVectors(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.VectorWrite!>! vectors, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Context.Core.Records.IRecordStore.Stamps(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.StoreStamps!>!>
@@ -8691,6 +8693,15 @@ Aw.Context.Core.Records.SyncPhase.Backfill = 1 -> Aw.Context.Core.Records.SyncPh
 Aw.Context.Core.Records.SyncPhase.Incremental = 2 -> Aw.Context.Core.Records.SyncPhase
 Aw.Context.Core.Records.SyncPhase.Recent = 0 -> Aw.Context.Core.Records.SyncPhase
 Aw.Context.Core.Records.SyncPhase.Reconcile = 3 -> Aw.Context.Core.Records.SyncPhase
+Aw.Context.Core.Records.SyncOutcome
+Aw.Context.Core.Records.SyncOutcome.<Clone>$() -> Aw.Context.Core.Records.SyncOutcome!
+Aw.Context.Core.Records.SyncOutcome.At.get -> System.DateTimeOffset
+Aw.Context.Core.Records.SyncOutcome.At.init -> void
+Aw.Context.Core.Records.SyncOutcome.Code.get -> string?
+Aw.Context.Core.Records.SyncOutcome.Code.init -> void
+Aw.Context.Core.Records.SyncOutcome.Deconstruct(out System.DateTimeOffset At, out string? Code) -> void
+Aw.Context.Core.Records.SyncOutcome.Equals(Aw.Context.Core.Records.SyncOutcome? other) -> bool
+Aw.Context.Core.Records.SyncOutcome.SyncOutcome(System.DateTimeOffset At, string? Code) -> void
 Aw.Context.Core.Records.SyncPosition
 Aw.Context.Core.Records.SyncPosition.<Clone>$() -> Aw.Context.Core.Records.SyncPosition!
 Aw.Context.Core.Records.SyncPosition.BackfillBefore.get -> System.DateTimeOffset?
@@ -8864,6 +8875,9 @@ override Aw.Context.Core.Records.StoreStamps.ToString() -> string!
 override Aw.Context.Core.Records.StoredRecord.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.StoredRecord.GetHashCode() -> int
 override Aw.Context.Core.Records.StoredRecord.ToString() -> string!
+override Aw.Context.Core.Records.SyncOutcome.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SyncOutcome.GetHashCode() -> int
+override Aw.Context.Core.Records.SyncOutcome.ToString() -> string!
 override Aw.Context.Core.Records.SyncPosition.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.SyncPosition.GetHashCode() -> int
 override Aw.Context.Core.Records.SyncPosition.ToString() -> string!
@@ -8920,6 +8934,8 @@ static Aw.Context.Core.Records.StoreStamps.operator ==(Aw.Context.Core.Records.S
 static Aw.Context.Core.Records.StoredRecord.operator !=(Aw.Context.Core.Records.StoredRecord? left, Aw.Context.Core.Records.StoredRecord? right) -> bool
 static Aw.Context.Core.Records.StoredRecord.operator ==(Aw.Context.Core.Records.StoredRecord? left, Aw.Context.Core.Records.StoredRecord? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.Start.get -> Aw.Context.Core.Records.SyncPosition!
+static Aw.Context.Core.Records.SyncOutcome.operator !=(Aw.Context.Core.Records.SyncOutcome? left, Aw.Context.Core.Records.SyncOutcome? right) -> bool
+static Aw.Context.Core.Records.SyncOutcome.operator ==(Aw.Context.Core.Records.SyncOutcome? left, Aw.Context.Core.Records.SyncOutcome? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.operator !=(Aw.Context.Core.Records.SyncPosition? left, Aw.Context.Core.Records.SyncPosition? right) -> bool
 static Aw.Context.Core.Records.SyncPosition.operator ==(Aw.Context.Core.Records.SyncPosition? left, Aw.Context.Core.Records.SyncPosition? right) -> bool
 static Aw.Context.Core.Records.VectorRow.operator !=(Aw.Context.Core.Records.VectorRow? left, Aw.Context.Core.Records.VectorRow? right) -> bool
@@ -9548,3 +9564,46 @@ static Aw.Context.Core.Results.ConceptSynthesisReport.operator !=(Aw.Context.Cor
 static Aw.Context.Core.Results.ConceptSynthesisReport.operator ==(Aw.Context.Core.Results.ConceptSynthesisReport? left, Aw.Context.Core.Results.ConceptSynthesisReport? right) -> bool
 static Aw.Context.Core.Results.CosineBucket.operator !=(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
 static Aw.Context.Core.Results.CosineBucket.operator ==(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.ConceptStatus(bool Enabled, int Concepts, int MultiSource, int Queued, int Covered, long Watermark, int Embedded, int Pending) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Covered.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Covered.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Deconstruct(out bool Enabled, out int Concepts, out int MultiSource, out int Queued, out int Covered, out long Watermark, out int Embedded, out int Pending) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Embedded.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Embedded.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Enabled.get -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Enabled.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Equals(Aw.Context.Core.ConceptSynthesis.ConceptStatus? other) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.MultiSource.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.MultiSource.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Pending.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Pending.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Queued.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Queued.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Watermark.get -> long
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Watermark.init -> void
+Aw.Context.Core.Records.IRecordStore.LiveCounts(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.LiveRecordCounts!>!>
+Aw.Context.Core.Records.LiveRecordCounts
+Aw.Context.Core.Records.LiveRecordCounts.<Clone>$() -> Aw.Context.Core.Records.LiveRecordCounts!
+Aw.Context.Core.Records.LiveRecordCounts.Deconstruct(out int Live, out int Embedded) -> void
+Aw.Context.Core.Records.LiveRecordCounts.Embedded.get -> int
+Aw.Context.Core.Records.LiveRecordCounts.Embedded.init -> void
+Aw.Context.Core.Records.LiveRecordCounts.Equals(Aw.Context.Core.Records.LiveRecordCounts? other) -> bool
+Aw.Context.Core.Records.LiveRecordCounts.Live.get -> int
+Aw.Context.Core.Records.LiveRecordCounts.Live.init -> void
+Aw.Context.Core.Records.LiveRecordCounts.LiveRecordCounts(int Live, int Embedded) -> void
+Aw.Context.Core.Sync.IIndexSync.ConceptStatus(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.ConceptSynthesis.ConceptStatus!>!>
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.ToString() -> string!
+override Aw.Context.Core.Records.LiveRecordCounts.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.LiveRecordCounts.GetHashCode() -> int
+override Aw.Context.Core.Records.LiveRecordCounts.ToString() -> string!
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.From(bool enabled, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts, long watermark, int live, int embedded) -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator !=(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
+static Aw.Context.Core.Records.LiveRecordCounts.operator !=(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool
+static Aw.Context.Core.Records.LiveRecordCounts.operator ==(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool

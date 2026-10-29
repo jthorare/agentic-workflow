@@ -12,7 +12,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// <summary>The named index sync job (#1597): it asks the engine for that one source's tick and nothing else, and a source's code is its result, not a failed job.</summary>
 public sealed class SyncIndexSourceServiceTests
 {
-    private const string OnyxSection = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"on_live-key-0123","version":"v4.9.0"}}}""";
+    private const string LinearTeams = """{"sources":{"linear":{"teams":["SPL"]}}}""";
     private readonly SliceHarness _h = new();
     private readonly FakeIndexSync _index = new();
 
@@ -24,7 +24,7 @@ public sealed class SyncIndexSourceServiceTests
     private async Task<Result<SyncIndexSourceResult>> Run(string source, bool context = true)
     {
         var loaded = SliceHarness.Profile("5m");
-        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(OnyxSection).RootElement.Clone() : null } };
+        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(LinearTeams).RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
         using var caller = _h.Callers.EnterService("index-sync");
         return await new SyncIndexSourceService(new ContextScopes(_h.Profiles, _h.Callers), EngineProxy.Of(_index), new FakeJobContextAccessor()).Handle(new SyncIndexSourceRequest(source), Ct);

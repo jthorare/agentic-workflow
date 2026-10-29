@@ -1,4 +1,5 @@
 using Aw.Context.Core;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
@@ -12,7 +13,7 @@ namespace Aw.Context.Features.SyncSources;
 
 /// <summary>
 /// <see cref="IIndexSync"/> over the record feeds (owned-index spec §5.5, §5.8): the same feeds and the same per-source tick as <see cref="SyncSourcesService"/>, without the
-/// intent walk or the docs refresh. The feeds tick concurrently, at most <see cref="MaxConcurrentFeeds"/> at once, each under its own time cap (<see cref="FeedCap"/>): a feed that hits it is a capped row, never a failure, and the next tick resumes it. A source that is down is its row's code; the last tick's end and code are kept in memory, so they read null until the first tick after a start.
+/// intent walk or the docs refresh. The feeds tick concurrently, at most <see cref="MaxConcurrentFeeds"/> at once, each under its own time cap (<see cref="FeedCap"/>): a feed that hits it is a capped row, never a failure, and the next tick resumes it. A source that is down is its row's code; the last tick's end and code are kept in the record store (`source_cursor`, repo 'records'), so every process reads the same and they are null only until a source's first tick.
 /// </summary>
 /// <param name="feeds">The feeds and their lock and last outcomes.</param>
 /// <param name="store">The record store the positions are read from.</param>
@@ -20,7 +21,8 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="decisions">The decision pass <see cref="Decide"/> runs; null: none.</param>
 /// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run once the source's lock is released.</param>
 /// <param name="synthesis">The concept synthesis <see cref="Decide"/> runs after the per-record pass; null: none.</param>
-internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null, ConceptSynthesisRun? synthesis = null) : IIndexSync
+/// <param name="concepts">The synthesized concepts <see cref="ConceptStatus"/> counts; null: none are kept.</param>
+internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null, ConceptSynthesisRun? synthesis = null, IConceptSynthesisStore? concepts = null) : IIndexSync
 {
     /// <summary>The longest one feed's tick runs; the index tick comes every 5 minutes, and this sits above one normal Linear or Slack page with its rate-limit sleeps.</summary>
     internal static readonly TimeSpan FeedCap = TimeSpan.FromMinutes(4);
@@ -114,7 +116,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             // why: its own cap fired; the pages committed so far stay with the stored cursor, so the next tick resumes
-            feeds.Note(feed.Source, ContextErrors.SyncCapped.Code);
+            await feeds.Note(feed.Source, ContextErrors.SyncCapped.Code, cancellationToken).ConfigureAwait(false);
             return Failed(feed.Source, ContextErrors.SyncCapped.Code);
         }
         finally
@@ -155,11 +157,44 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
                 stored = counted.Value.Records;
             }
 
-            var last = feeds.LastOutcome(feed.Source);
+            var last = await feeds.LastOutcome(feed.Source, cancellationToken).ConfigureAwait(false);
             rows.Add(SourceProgress.From(feed.Source, position.Value.Phase, last?.At, last?.Code, stored));
         }
 
         return rows;
+    }
+
+    public async ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var settings = SettingsReader.Read(scope.Settings);
+        if (settings.IsError)
+        {
+            return settings.Error;
+        }
+
+        var enabled = settings.Value.ConceptSynthesis.Enabled && settings.Value.Labeling.Enabled;
+        if (concepts is null)
+        {
+            return Core.ConceptSynthesis.ConceptStatus.From(enabled, [], watermark: 0, live: 0, embedded: 0);
+        }
+
+        // why: one count query each side, so a status read never pages the record store
+        var stored = await concepts.All(cancellationToken).ConfigureAwait(false);
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        var watermark = await concepts.Watermark(cancellationToken).ConfigureAwait(false);
+        if (watermark.IsError)
+        {
+            return watermark.Error;
+        }
+
+        var live = await store.LiveCounts(cancellationToken).ConfigureAwait(false);
+        return live.IsError
+            ? live.Error
+            : Core.ConceptSynthesis.ConceptStatus.From(enabled, stored.Value, watermark.Value, live.Value.Live, live.Value.Embedded);
     }
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => store.Count(source, cancellationToken);

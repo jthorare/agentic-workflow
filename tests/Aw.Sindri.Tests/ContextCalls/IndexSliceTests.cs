@@ -1,3 +1,5 @@
+using Aw.Context.Core;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
@@ -64,6 +66,47 @@ public sealed class IndexSliceTests
                 new IndexSourceRow("linear-projects", "incremental", Usable: true, Complete: true, _now, LastCode: null),
             ],
             view.Value.Sources);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Status_carries_where_concept_synthesis_stands_with_its_coverage()
+    {
+        await ApproveProfile();
+        _index.Standing = [SourceProgress.From(SourceId.From("linear"), SyncPhase.Incremental, _now, lastCode: null)];
+        _index.Concepts = new ConceptStatus(Enabled: true, Concepts: 101, MultiSource: 34, Queued: 3, Covered: 300, Watermark: 8812, Embedded: 550, Pending: 12);
+        using var caller = _h.Callers.EnterService("test");
+
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+
+        Assert.True(view.IsSuccess);
+        Assert.Equal(new IndexConceptsView(Enabled: true, Concepts: 101, MultiSource: 34, Queued: 3, Covered: 300, Embedded: 550, Pending: 12, Watermark: 8812, Coverage: 300d / 550), view.Value.Concepts);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Status_coverage_is_0_while_nothing_is_embedded()
+    {
+        await ApproveProfile();
+        _index.Concepts = new ConceptStatus(Enabled: true, Concepts: 0, MultiSource: 0, Queued: 0, Covered: 0, Watermark: 0, Embedded: 0, Pending: 5);
+        using var caller = _h.Callers.EnterService("test");
+
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+
+        Assert.Equal(0d, view.Value.Concepts?.Coverage);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Status_whose_concepts_read_failed_still_lists_the_feeds_and_carries_the_code()
+    {
+        await ApproveProfile();
+        _index.Standing = [SourceProgress.From(SourceId.From("linear"), SyncPhase.Incremental, _now, lastCode: null)];
+        _index.ConceptsFailure = ContextErrors.StoreUnavailable.With("the concept store can't be opened");
+        using var caller = _h.Callers.EnterService("test");
+
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+
+        Assert.True(view.IsSuccess);
+        Assert.Equal("linear", Assert.Single(view.Value.Sources).Source);
+        Assert.Equal(new IndexConceptsView(Enabled: true, Code: ContextErrors.StoreUnavailable.Code), view.Value.Concepts);
     }
 
     [Fact, Trait("Lane", "unit")]

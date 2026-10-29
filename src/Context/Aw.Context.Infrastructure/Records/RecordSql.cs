@@ -54,6 +54,13 @@ internal static class RecordSql
         "INSERT INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, backfill_cursor, backfill_before) VALUES (@source, 'records', @cursor, @at, NULL, @phase, @backfill, @before) " +
         "ON CONFLICT (source, repo) DO UPDATE SET cursor = excluded.cursor, last_sync = excluded.last_sync, last_error = NULL, phase = excluded.phase, backfill_cursor = excluded.backfill_cursor, backfill_before = excluded.backfill_before";
 
+    // Only last_sync and last_error: the cursor, phase and backfill columns stay as the page commits left them.
+    internal const string SaveOutcome =
+        "INSERT INTO source_cursor (source, repo, cursor, last_sync, last_error) VALUES (@source, 'records', NULL, @at, @code) " +
+        "ON CONFLICT (source, repo) DO UPDATE SET last_sync = excluded.last_sync, last_error = excluded.last_error";
+
+    internal const string ReadOutcome = "SELECT last_sync, last_error FROM source_cursor WHERE source = @source AND repo = 'records' AND last_sync IS NOT NULL";
+
     internal const string ReadIdentity = "SELECT source, user_ref, name, read_at FROM source_identity WHERE source = @source";
 
     internal const string WriteIdentity =
@@ -129,6 +136,11 @@ internal static class RecordSql
         "SELECT (SELECT COUNT(*) FROM source_record WHERE source = @source), " +
         "(SELECT COUNT(*) FROM chunk WHERE record IN (SELECT key FROM source_record WHERE source = @source)), " +
         "(SELECT COUNT(*) FROM embedding WHERE space = 'chunk' AND key IN (SELECT key FROM chunk WHERE record IN (SELECT key FROM source_record WHERE source = @source)))";
+
+    /// <summary>The live records (not removed, not blocked), and those with at least one chunk vector.</summary>
+    internal const string CountLive =
+        "SELECT (SELECT COUNT(*) FROM source_record WHERE removed_at IS NULL AND blocked = 0), " +
+        "(SELECT COUNT(*) FROM source_record r WHERE r.removed_at IS NULL AND r.blocked = 0 AND EXISTS (SELECT 1 FROM chunk c JOIN embedding e ON e.space = 'chunk' AND e.key = c.key WHERE c.record = r.key))";
 
     internal const string DeleteRecords = "DELETE FROM source_record WHERE source = @source";
 
