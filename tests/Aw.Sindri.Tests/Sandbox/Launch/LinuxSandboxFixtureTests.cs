@@ -14,10 +14,18 @@ public sealed class LinuxSandboxFixtureTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("aw-fixture-").FullName;
 
+    // why: the fixture lists the directories beside HOME as "other homes"; with HOME straight under /tmp that is every leftover directory on the box, so HOME sits alone in a folder of its own.
+    private readonly string _home;
+
+    public LinuxSandboxFixtureTests()
+    {
+        _home = Directory.CreateDirectory(Path.Combine(_dir, "homes", "owner")).FullName;
+    }
+
     public void Dispose() => Directory.Delete(_dir, recursive: true);
 
     private LinuxSandboxFixture Fixture(FakeProcesses processes) =>
-        new(_dir + "/sindri", name => name switch { "HOME" => _dir, "AW_STATE_DIR" => _dir + "/state", "XDG_RUNTIME_DIR" => _dir + "/run", _ => null }, processes, new Machine());
+        new(_dir + "/sindri", name => name switch { "HOME" => _home, "AW_STATE_DIR" => _dir + "/state", "XDG_RUNTIME_DIR" => _dir + "/run", _ => null }, processes, new Machine());
 
     private static string[] Canaries(SandboxRequest request)
     {
