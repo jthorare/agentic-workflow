@@ -8,7 +8,7 @@ using Aw.Context.Tests.Map;
 
 namespace Aw.Context.Tests.SynthesizeConcepts;
 
-/// <summary>The index-decisions run (<see cref="Aw.Context.Core.Sync.IIndexSync.Decide"/>) reads each record for decisions first, then groups the whole store into concepts (#1597).</summary>
+/// <summary>The index-decisions run (<see cref="IIndexSync.Decide"/>) reads each record for decisions first, then groups the whole store into concepts (#1597).</summary>
 [Trait("Lane", "unit")]
 public sealed class DecideSynthesisTests
 {
@@ -36,7 +36,7 @@ public sealed class DecideSynthesisTests
     [Fact]
     public async Task Decide_runs_the_per_record_pass_and_then_synthesis()
     {
-        var now = DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture);   // MapWorld's clock
+        var now = DateTimeOffset.Parse("2026-08-01T12:00:00Z", CultureInfo.InvariantCulture);   // MapWorld's clock
         using var world = new MapWorld(feeds: new FakeRecordFeedCatalog(new FakeRecordFeed(RecordSamples.Github, [Issue(1, now), Issue(2, now)])));
         _ = await world.ImportFixture();
         world.Model.Responder = Respond;

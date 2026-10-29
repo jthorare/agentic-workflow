@@ -12,7 +12,7 @@ public sealed record ConceptSynthesisSettings
     public int Neighbours { get; init; } = 8;
 
     /// <summary>The cosine two records need to be joined.</summary>
-    public float MinCosine { get; init; } = 0.75f;
+    public float MinCosine { get; init; } = 0.85f;
 
     /// <summary>The most records a group may hold; a bigger one is split at a tighter cosine.</summary>
     public int MaxGroup { get; init; } = 20;

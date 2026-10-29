@@ -9444,7 +9444,7 @@ Aw.Context.Core.ConceptSynthesis.GroupingSettings
 Aw.Context.Core.ConceptSynthesis.GroupingSettings.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.GroupingSettings!
 Aw.Context.Core.ConceptSynthesis.GroupingSettings.Deconstruct(out int Neighbours, out float MinCosine, out int MaxGroup, out int MinRecords, out int MinSources, out float SplitStep) -> void
 Aw.Context.Core.ConceptSynthesis.GroupingSettings.Equals(Aw.Context.Core.ConceptSynthesis.GroupingSettings? other) -> bool
-Aw.Context.Core.ConceptSynthesis.GroupingSettings.GroupingSettings(int Neighbours = 8, float MinCosine = 0.75, int MaxGroup = 20, int MinRecords = 2, int MinSources = 1, float SplitStep = 0.05) -> void
+Aw.Context.Core.ConceptSynthesis.GroupingSettings.GroupingSettings(int Neighbours = 8, float MinCosine = 0.85, int MaxGroup = 20, int MinRecords = 2, int MinSources = 1, float SplitStep = 0.05) -> void
 override Aw.Context.Core.ConceptSynthesis.GroupingSettings.Equals(object? obj) -> bool
 override Aw.Context.Core.ConceptSynthesis.GroupingSettings.GetHashCode() -> int
 override Aw.Context.Core.ConceptSynthesis.GroupingSettings.ToString() -> string!
