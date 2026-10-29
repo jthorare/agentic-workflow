@@ -49,8 +49,8 @@ internal sealed class AttachProjectService(AttachProjectLookup lookup, ILedgerSt
 
         var (caller, grant) = begun.Value;
         var id = ProjectId.New(ids);
-        var (key, led, attached) = found.Value;
-        var draft = new ProjectDraft(key, request.Name, request.State, request.Links, request.Notes, request.Target);
+        var (key, led, attached, ledNotes) = found.Value;
+        var draft = new ProjectDraft(key, request.Name, request.State, request.Links, request.Notes ?? ledNotes, request.Target);
         var decided = ProjectDecisions.Attach(caller.CommandId, id, draft, attached, led);
         if (decided.IsError)
         {

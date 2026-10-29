@@ -125,7 +125,30 @@ public static partial class ProjectDecisions
     /// <param name="edit">What to change: only notes or clearNotes.</param>
     /// <param name="seenVersion">The version the owner saw.</param>
     /// <returns>The event to append, SND-PROJECT-004 naming a bad field or any other field, or SND-PROJECT-409.</returns>
-    public static Result<ProjectLedNoted> LedNotes(CommandId command, string linear, ProjectHiddenRow? current, ProjectEdit edit, long seenVersion) => throw new NotSupportedException();
+    public static Result<ProjectLedNoted> LedNotes(CommandId command, string linear, ProjectHiddenRow? current, ProjectEdit edit, long seenVersion)
+    {
+        ArgumentNullException.ThrowIfNull(edit);
+        if (!IsLinearKey(linear))
+        {
+            return Invalid("linear", $"'{linear}' isn't a Linear project key (expected linear:project/<id>)");
+        }
+
+        var refused = LedEditError(edit);
+        if (refused is not null)
+        {
+            return refused;
+        }
+
+        var version = current?.Version ?? 0;
+        return version == seenVersion ? new ProjectLedNoted(command, linear, edit.ClearNotes ? null : edit.Notes, version + 1) : Stale();
+    }
+
+    // a project the owner leads keeps Linear's name, state, links and target: only the notes are the owner's
+    private static Error? LedEditError(ProjectEdit edit) =>
+        edit is { Name: not null } or { State: not null } or { ClearState: true } or { Links: not null } or { Target: not null } or { ClearTarget: true }
+            ? SindriErrors.ProjectInvalid.With("a project you lead only takes notes here; edit it in Linear")
+            : edit.Notes is not null && edit.ClearNotes ? Invalid("notes", "can't be set and cleared in one change")
+            : NotesError(edit.Notes) ?? (edit is { Notes: null, ClearNotes: false } ? Invalid("change", "nothing to change (give notes or clear them)") : null);
 
     /// <summary>Whether a change names a Linear project the owner leads ('linear:project/&lt;id&gt;') rather than a prj_ id.</summary>
     /// <param name="project">What the request named.</param>

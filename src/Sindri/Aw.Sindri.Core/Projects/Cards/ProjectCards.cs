@@ -54,7 +54,7 @@ public static class ProjectCards
         {
             ledCount++;
             _ = hideRows.TryGetValue(fact.Key, out var hide);
-            var card = Led(fact, hide?.Version ?? 0);
+            var card = Led(fact, hide?.Version ?? 0, hide?.Notes);
             if (hide is { Hidden: true })
             {
                 lists.Hidden.Add(card);
@@ -117,13 +117,13 @@ public static class ProjectCards
         _ => 4,
     };
 
-    private static ProjectCard Led(LinearProjectFact fact, long version)
+    private static ProjectCard Led(LinearProjectFact fact, long version, string? notes)
     {
         var state = MapState(fact.StateRaw);
         return new ProjectCard(
             fact.Key, ProjectOrigin.Led, fact.Title, fact.Description, state, StateSetByOwner: false, MapHealth(fact.Health), new ProjectLead(You: true, Name: null),
             Date(fact.DueAt), fact.OpenIssues, fact.Counting, OpenPrs: null, PrScope: null, fact.LastActivity, LinearFinished(state, fact), Repos: [],
-            LinearLinks(fact, []), Notes: null, Synced: true, version);
+            LinearLinks(fact, []), notes, Synced: true, version);
     }
 
     private static List<ProjectLink> OwnerLinks(ProjectAttachedRow row) => [.. row.Links.Select(static l => new ProjectLink(l, l))];
