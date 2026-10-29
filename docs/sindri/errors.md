@@ -37,6 +37,7 @@ Generated from `sindri/src/errors.ts` by `cd sindri && npm run gen`. Do not edit
 | `SND-INDEX-010` | A repo the profile lists is unreadable with this token; the message names each one. | give the fine-grained token read access to those repos (Contents, Issues, Pull requests, Metadata), then sindri index connect github |
 | `SND-INDEX-011` | The source, repo or host is not in the profile; no request was sent. | add it under context.sources in the profile, then sindri profile approve |
 | `SND-INDEX-013` | A Slack channel is not in the profile, or is a direct message; no request was sent. | add the channel id to context.sources.slack.channels, then sindri profile approve |
+| `SND-INDEX-014` | `sindri onyx down --purge` could not remove a container, volume, keychain entry or the onyx/ directory an old `onyx up` left. | start Docker (or fix the named step) and run `sindri onyx down --purge` again; it resumes from what is left |
 | `SND-INDEX-404` | No index has been built for this repo. | sindri index build --repo &lt;name&gt; |
 | `SND-ITEM-404` | No such item in the ledger. | Run `sindri observe` to list items. |
 | `SND-LEDGER-001` | The ledger was written by a newer sindri. | Upgrade sindri (`git pull` then `scripts/install-cs.sh`), then rerun. |

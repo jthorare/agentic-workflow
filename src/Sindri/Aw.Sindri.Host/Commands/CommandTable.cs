@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
-
 using Aw.Sindri.Host.Commands.Probe;
 
 namespace Aw.Sindri.Host.Commands;
@@ -113,7 +112,7 @@ internal static partial class CommandTable
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["launch" or "session", ..] => await LaunchOrSession(args, client, (output, environment), services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["doctor", ..] => await Doctor(args, verbs, new ProbeCommands(services.GetRequiredService<IProcessAncestry>(), services.GetRequiredService<IHarnessVersions>(), environment, Interactive()), output, ct).ConfigureAwait(false),
-            ["onyx", .. var rest] => await Onyx(rest, verbs, new OnyxVerbs(services, output, (hash, to, c) => new Verbs(client, probe, to, services, e => start.EnsureRunning(launch: true, e)).Approve(hash, c)), output, ct).ConfigureAwait(false),
+            ["onyx", .. var rest] => await Onyx(rest, verbs, new OnyxVerbs(services, output, (hash, to, c) => new Verbs(client, probe, to, services, e => start.EnsureRunning(launch: true, e)).Approve(hash, c), c => OnyxPurgeCommand.Create(services, output, Console.In, Console.Error).Run(session.Human && session.Launch is null, c)), output, ct).ConfigureAwait(false),
             ["sandbox", ..] => await Sandbox(args, client, output, services, (ct, Headers(session, services))).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await Context(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
@@ -169,12 +168,13 @@ internal static partial class CommandTable
             c => Onyx(["up"], new Verbs(wire.Client, wire.Probe, wire.Output, services), new OnyxVerbs(services, wire.Output, (hash, to, a) => Approve(services, (wire.Client, wire.Probe, to), hash, a)), wire.Output, c),
             Console.Error).Run(ct);
 
-    /// <summary>'sindri onyx status|up|down [--json]'.</summary>
+    /// <summary>'sindri onyx status|up|down [--json]', 'onyx down --purge' and 'onyx open'.</summary>
     private static async Task<int> Onyx(string[] rest, Verbs verbs, OnyxVerbs onyx, Output output, CancellationToken ct) =>
         rest switch
         {
             ["status", .. var flags] when Json(flags) is { } json => await verbs.OnyxStatus(json, ct).ConfigureAwait(false),
             ["up", .. var flags] when Json(flags) is { } json => await onyx.Up(json, ct).ConfigureAwait(false),
+            ["down", "--purge"] => await onyx.Purge(ct).ConfigureAwait(false),   // the one onyx verb that outlives Onyx: when OnyxVerbs goes, this row is the whole `onyx` entry in Dispatch and the other onyx verbs become unknown
             ["down", .. var flags] when Json(flags) is { } json => await onyx.Down(json, ct).ConfigureAwait(false),
             ["open"] => await onyx.Open(ct).ConfigureAwait(false),
             _ => await UnknownVerb(["onyx", .. rest], output).ConfigureAwait(false),

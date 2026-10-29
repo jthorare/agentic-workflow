@@ -5536,3 +5536,6 @@ static Aw.Sindri.Features.DetachProject.DetachProjectRequest.operator !=(Aw.Sind
 static Aw.Sindri.Features.DetachProject.DetachProjectRequest.operator ==(Aw.Sindri.Features.DetachProject.DetachProjectRequest? left, Aw.Sindri.Features.DetachProject.DetachProjectRequest? right) -> bool
 static Aw.Sindri.Features.HideProject.HideProjectRequest.operator !=(Aw.Sindri.Features.HideProject.HideProjectRequest? left, Aw.Sindri.Features.HideProject.HideProjectRequest? right) -> bool
 static Aw.Sindri.Features.HideProject.HideProjectRequest.operator ==(Aw.Sindri.Features.HideProject.HideProjectRequest? left, Aw.Sindri.Features.HideProject.HideProjectRequest? right) -> bool
+Aw.Sindri.Features.Leftovers.OnyxLeftovers
+static Aw.Sindri.Features.Leftovers.OnyxLeftovers.Find(string! home, Aw.Sindri.Core.Leftovers.IPurgeDocker! docker, Aw.Sindri.Core.Leftovers.ILeftoverFiles! files) -> Aw.Kernel.Result<Aw.Sindri.Core.Leftovers.PurgePlan!>!
+static Aw.Sindri.Features.Leftovers.OnyxLeftovers.ProjectNameFor(string! sindriHome) -> string!
