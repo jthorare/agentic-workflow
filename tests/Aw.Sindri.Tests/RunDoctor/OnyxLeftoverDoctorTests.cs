@@ -54,9 +54,7 @@ public sealed class OnyxLeftoverDoctorTests
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_clean_box_has_no_row()
-    {
-        Assert.Empty(await Doctor().Run(Token));
-    }
+        => Assert.Empty(await Doctor().Run(Token));
 
     [Fact, Trait("Lane", "unit")]
     public async Task A_docker_that_does_not_answer_warns_that_it_was_not_checked()

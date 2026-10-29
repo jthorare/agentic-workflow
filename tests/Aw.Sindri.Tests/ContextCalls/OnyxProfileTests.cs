@@ -3,7 +3,6 @@ using Aw.Context.Testing.Engine;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.ValidateProfile;
-using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
