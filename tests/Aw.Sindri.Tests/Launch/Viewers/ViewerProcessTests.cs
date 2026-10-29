@@ -21,7 +21,7 @@ public sealed class ViewerProcessTests : IDisposable
         Assert.SkipUnless(OperatingSystem.IsLinux(), "reads /proc");
         var pidFile = Path.Combine(_dir, "pid");
 
-        var output = await ViewerProcess.Output("sh", ["-c", $"echo $$ > '{pidFile}'; sleep 30"], TimeSpan.FromMilliseconds(400), Token);
+        var output = await ViewerProcess.Output("sh", ["-c", $"echo $$ > '{pidFile}'; sleep 30"], TimeSpan.FromMilliseconds(250), Token);
 
         Assert.Null(output);
         var proc = "/proc/" + (await File.ReadAllTextAsync(pidFile, Token)).Trim();
@@ -38,7 +38,7 @@ public sealed class ViewerProcessTests : IDisposable
     {
         var clock = System.Diagnostics.Stopwatch.StartNew();
 
-        var output = await ViewerProcess.Output("sh", ["-c", "sleep 4 & echo hi"], TimeSpan.FromMilliseconds(500), Token);
+        var output = await ViewerProcess.Output("sh", ["-c", "sleep 4 & echo hi"], TimeSpan.FromMilliseconds(250), Token);
 
         Assert.Null(output);   // the pipe never closed in time
         Assert.True(clock.Elapsed < TimeSpan.FromSeconds(3));

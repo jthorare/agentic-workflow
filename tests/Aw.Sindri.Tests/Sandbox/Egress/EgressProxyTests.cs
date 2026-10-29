@@ -160,7 +160,7 @@ public sealed class EgressProxyTests
     [Fact, Trait("Lane", "unit")]
     public async Task Connection_lifetime_ends_a_connection()
     {
-        var (proxy, dialer, _) = Make(new EgressCaps(4, 1024, TimeSpan.FromMilliseconds(200), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)));
+        var (proxy, dialer, _) = Make(new EgressCaps(4, 1024, TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30)));
         var (client, server) = JoinedStream.Pair();
         var handled = proxy.Handle(server, TestContext.Current.CancellationToken);
         await client.WriteAsync("CONNECT api.anthropic.com:443 HTTP/1.1\r\n\r\n"u8.ToArray(), TestContext.Current.CancellationToken);
@@ -222,7 +222,7 @@ public sealed class EgressProxyTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_client_that_never_sends_its_head_is_closed_after_the_head_timeout()
     {
-        var (proxy, _, _) = Make(new EgressCaps(4, 1024, TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(200), TimeSpan.FromSeconds(30)));
+        var (proxy, _, _) = Make(new EgressCaps(4, 1024, TimeSpan.FromMinutes(1), TimeSpan.FromMilliseconds(50), TimeSpan.FromSeconds(30)));
         var (client, server) = JoinedStream.Pair();
 
         await proxy.Handle(server, TestContext.Current.CancellationToken).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
@@ -251,7 +251,7 @@ public sealed class EgressProxyTests
     [Fact, Trait("Lane", "unit")]
     public async Task Upstream_closing_first_half_closes_the_client_and_the_connection_ends_within_the_grace()
     {
-        var (proxy, dialer, _) = Make(new EgressCaps(4, 1024, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(30), TimeSpan.FromMilliseconds(300)));
+        var (proxy, dialer, _) = Make(new EgressCaps(4, 1024, TimeSpan.FromMinutes(1), TimeSpan.FromSeconds(30), TimeSpan.FromMilliseconds(100)));
         var (client, server) = JoinedStream.Pair();
         var handled = proxy.Handle(server, TestContext.Current.CancellationToken);
         await client.WriteAsync("CONNECT api.anthropic.com:443 HTTP/1.1\r\n\r\n"u8.ToArray(), TestContext.Current.CancellationToken);
