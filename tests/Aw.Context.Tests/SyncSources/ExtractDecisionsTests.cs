@@ -63,7 +63,7 @@ public sealed class ExtractDecisionsTests
     {
         var r = write.Record;
         return new RecordItem(r.Key, r.Kind, r.Title, Plant(string.Join('\n', write.Chunks.OrderBy(c => c.Seq).Select(c => c.Text))), Author: null, Url: null, r.State, r.StateRaw,
-            r.CreatedAt, r.UpdatedAt, r.ClosedAt, r.Version, Links: [], Repo: null, r.Audience);
+            r.CreatedAt, r.UpdatedAt, r.ClosedAt, r.Version, Links: [], Repo: null, AudienceKey.From("linear:SPL"));   // the audience the profile's team gives its issues
     }
 
     internal sealed class Rig : IAsyncDisposable
@@ -75,10 +75,10 @@ public sealed class ExtractDecisionsTests
 
         public MapWorld World { get; }
 
-        public static async Task<Rig> Start(string verdict = "contradicts", Func<RecordItem, RecordItem>? shape = null)
+        public static async Task<Rig> Start(string verdict = "contradicts", Func<RecordItem, RecordItem>? shape = null, FakeLexicalLeg? lexical = null)
         {
             var feed = new FakeRecordFeed(RecordSamples.Linear, items: [.. LinearIssueSeed.From(issues: null).Select(Item).Select(i => shape?.Invoke(i) ?? i)]);
-            var world = new MapWorld(feeds: new FakeRecordFeedCatalog(feed));
+            var world = new MapWorld(lexical: lexical, feeds: new FakeRecordFeedCatalog(feed));
             world.Model.Responder = r => Route(r, verdict);
             _ = await world.ImportFixture();
             return new Rig(world);
