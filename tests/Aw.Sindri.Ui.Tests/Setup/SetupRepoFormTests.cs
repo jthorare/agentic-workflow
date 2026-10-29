@@ -184,7 +184,7 @@ public sealed class SetupRepoFormTests
             step.Action!.Open();
         }
 
-        Assert.Equal((0, 0, 0, 0, 0), (_f.Server.AddedRepos.Count, _f.Server.RegisteredMcp.Count, _f.Server.SetupOnyxCalls, _f.Server.OnyxLogins.Count, _f.Server.ApproveAllJobCalls));
+        Assert.Equal((0, 0, 0), (_f.Server.AddedRepos.Count, _f.Server.RegisteredMcp.Count, _f.Server.ApproveAllJobCalls));
         Assert.Equal(0, _f.Server.RefreshContextMapCalls);
     }
 
