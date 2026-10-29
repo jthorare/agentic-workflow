@@ -28,11 +28,8 @@ internal sealed class SqliteConceptSynthesisStore(ContextDatabase database) : IC
 
     private static readonly JsonSerializerOptions _json = AwJson.CreateOptions(ConceptSynthesisJsonContext.Default);
 
-    public async ValueTask<Result<IReadOnlyList<SynthesizedConcept>>> All(CancellationToken cancellationToken)
-    {
-        var read = await Read(HasConcepts, SelectAll, new ConceptMapper(), cancellationToken).ConfigureAwait(false);
-        return read.IsError ? read.Error : read.Value;
-    }
+    public ValueTask<Result<IReadOnlyList<SynthesizedConcept>>> All(CancellationToken cancellationToken) =>
+        Read(HasConcepts, SelectAll, new ConceptMapper(), cancellationToken);
 
     public ValueTask<Result<Unit>> Save(SynthesizedConcept concept, CancellationToken cancellationToken)
     {
@@ -105,7 +102,7 @@ internal sealed class SqliteConceptSynthesisStore(ContextDatabase database) : IC
             }
 
             var rows = await SqliteQueries.List(read.Value, new SqlStatement(select), mapper, cancellationToken).ConfigureAwait(false);
-            return rows.IsError ? ContextDatabase.Translate(rows.Error) : rows.Value;
+            return rows.IsError ? ContextDatabase.Translate(rows.Error) : Results.Success<IReadOnlyList<T>>(rows.Value);
         }
     }
 

@@ -84,7 +84,7 @@ public sealed class SqliteConceptSynthesisStoreTests : IDisposable
         Assert.False((await _store.Remove("a", Ct)).IsError);
         var all = await _store.All(Ct);
 
-        Assert.Equal(["b"], all.Value.Select(c => c.Key));
+        Assert.Equal("b", Assert.Single(all.Value).Key);
     }
 
     [Fact]
