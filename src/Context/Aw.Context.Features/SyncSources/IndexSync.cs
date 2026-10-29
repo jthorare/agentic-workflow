@@ -28,7 +28,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         var rows = new List<SourceSync>();
         foreach (var feed in resolved.Value.Feeds)
         {
-            var row = await feeds.Run(feed, (resolved.Value.Scrubbers, resolved.Value.Settings), cancellationToken).ConfigureAwait(false);
+            var row = await feeds.Run(feed, (resolved.Value.Scrubbers, resolved.Value.Settings), afterTick: null, cancellationToken).ConfigureAwait(false);
             if (row.IsError)
             {
                 return row.Error;
