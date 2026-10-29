@@ -5,7 +5,7 @@ using Aw.Sindri.Ui.Api.Workflow;
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
 /// <summary>One project's card on the Projects page (mockup B). Kept by id across reads and updated in place; it maps served fields to words and decides nothing.</summary>
-internal sealed class ProjectCardViewModel : ObservableObject
+internal sealed partial class ProjectCardViewModel : ObservableObject
 {
     private readonly TimeProvider _clock;
 
