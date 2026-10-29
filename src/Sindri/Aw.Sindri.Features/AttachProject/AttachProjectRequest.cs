@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Projects;
+using Aw.Sindri.Core.Projects.Vocabulary;
 
 namespace Aw.Sindri.Features.AttachProject;
 

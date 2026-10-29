@@ -1,7 +1,7 @@
 using System.Globalization;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Projects;
+using Aw.Sindri.Core.Projects.Vocabulary;
 
 namespace Aw.Sindri.Host.Commands;
 

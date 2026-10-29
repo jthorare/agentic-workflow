@@ -5468,8 +5468,8 @@ static Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.operator !=(Aw.S
 static Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.operator ==(Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? left, Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? right) -> bool
 Aw.Sindri.Features.AttachProject.AttachProjectRequest
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.<Clone>$() -> Aw.Sindri.Features.AttachProject.AttachProjectRequest!
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.AttachProjectRequest(string? Linear = null, string? Name = null, Aw.Sindri.Core.Projects.ProjectState? State = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Note = null, System.DateOnly? Target = null) -> void
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.Deconstruct(out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Note, out System.DateOnly? Target) -> void
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.AttachProjectRequest(string? Linear = null, string? Name = null, Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State = null, System.Collections.Generic.IReadOnlyList<string!>? Links = null, string? Note = null, System.DateOnly? Target = null) -> void
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.Deconstruct(out string? Linear, out string? Name, out Aw.Sindri.Core.Projects.Vocabulary.ProjectState? State, out System.Collections.Generic.IReadOnlyList<string!>? Links, out string? Note, out System.DateOnly? Target) -> void
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Equals(Aw.Sindri.Features.AttachProject.AttachProjectRequest? other) -> bool
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Linear.get -> string?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Linear.init -> void
@@ -5479,7 +5479,7 @@ Aw.Sindri.Features.AttachProject.AttachProjectRequest.Name.get -> string?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Name.init -> void
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Note.get -> string?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Note.init -> void
-Aw.Sindri.Features.AttachProject.AttachProjectRequest.State.get -> Aw.Sindri.Core.Projects.ProjectState?
+Aw.Sindri.Features.AttachProject.AttachProjectRequest.State.get -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.State.init -> void
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Target.get -> System.DateOnly?
 Aw.Sindri.Features.AttachProject.AttachProjectRequest.Target.init -> void

@@ -3,7 +3,7 @@ using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
-using Aw.Sindri.Core.Projects;
+using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.ChangeProject;

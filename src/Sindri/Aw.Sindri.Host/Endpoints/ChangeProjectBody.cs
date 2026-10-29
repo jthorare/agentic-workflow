@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Projects;
+using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Features.ChangeProject;
 
 namespace Aw.Sindri.Host.Endpoints;
