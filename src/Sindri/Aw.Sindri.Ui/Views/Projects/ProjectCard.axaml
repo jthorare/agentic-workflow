@@ -6,7 +6,7 @@
              x:DataType="pvm:ProjectCardViewModel">
   <!-- One project (mockup B): the name with its origin chip and the health dot and word, the open counts large, the first line of the owner's note inset,
        and the footer under a hairline. A card the store no longer holds is greyed and says so; with Context down it keeps its name and chip only. The dot
-       alone is coloured; the word is ink. The card takes focus and draws the app's 2 px ring; pressing it does nothing until the sheet lands. -->
+       alone is coloured; the word is ink. The card takes focus and draws the app's 2 px ring; a click or Enter opens its sheet (ProjectCard.axaml.cs). -->
   <UserControl.Styles>
     <Style Selector="Border.pcard:focus-visible">
       <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />

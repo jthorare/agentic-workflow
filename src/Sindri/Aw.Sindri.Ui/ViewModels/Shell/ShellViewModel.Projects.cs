@@ -1,5 +1,6 @@
 using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Projects;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -10,13 +11,23 @@ internal sealed partial class ShellViewModel
     /// <summary>The Projects page's list.</summary>
     public ProjectsPageViewModel Projects { get; private set; }
 
+    /// <summary>The project card's sheet.</summary>
+    public ProjectSheetViewModel ProjectSheet { get; private set; }
+
+    /// <summary>True when the sheet's subject is a project.</summary>
+    public bool IsProjectSheet => SheetLink?.Kind == DeepLinkKind.Project;
+
+    /// <summary>The project whose card opened the sheet (its id), where Esc returns focus; null when it was opened some other way.</summary>
+    internal string? OpenerProject { get; private set; }
+
     /// <summary>True on Projects.</summary>
     public bool IsProjects => CurrentPage == PageId.Projects;
 
-    [MemberNotNull(nameof(Projects))]
-    private void InitProjects()
+    [MemberNotNull(nameof(Projects), nameof(ProjectSheet))]
+    private void InitProjects(ILauncher launcher)
     {
         Projects = new ProjectsPageViewModel(_api, _clock);
+        ProjectSheet = new ProjectSheetViewModel(_api, launcher, _clock);
         Health.Follow(Projects.Refresh);
         PropertyChanged += (_, e) =>
         {
@@ -25,5 +36,58 @@ internal sealed partial class ShellViewModel
                 Projects.SetShown(IsProjects);
             }
         };
+        Health.Follow((url, token) => IsProjectSheet && IsSheetOpen ? ProjectSheet.Refresh(url, token) : Task.CompletedTask);
+        Projects.OpenRequested += (_, e) =>
+        {
+            OpenSheet(e.Link);
+            OpenerProject = Uri.UnescapeDataString(e.Link.Subject ?? string.Empty);   // Esc comes back to this card, after the sheet's own opening cleared it
+        };
+        ProjectSheet.Done += OnProjectDone;
+        ProjectSheet.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Heading), StringComparison.Ordinal))
+            {
+                Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
+            }
+            else if (string.Equals(e.PropertyName, nameof(ProjectSheetViewModel.Announcement), StringComparison.Ordinal) && ProjectSheet.Announcement.Length > 0)
+            {
+                _line.Say(ProjectSheet.Announcement);
+            }
+        };
+    }
+
+    // The project part of opening the sheet (OnSheetOpened): the sheet names its project at once and reads it.
+    private void OnProjectSheetOpened(DeepLink link)
+    {
+        OpenerProject = null;
+        Changed(nameof(IsProjectSheet));
+        if (link.Kind != DeepLinkKind.Project || link.Subject is not { } subject)
+        {
+            return;
+        }
+
+        ProjectSheet.Show(subject);
+        if (Health.ApiUrl() is { } url)
+        {
+            _ = ProjectSheet.Open(url, subject, CancellationToken.None);
+        }
+    }
+
+    // The project part of reopening the sheet (ReopenSheet): the card may have changed while the sheet was closed.
+    private void OnProjectSheetReopened()
+    {
+        if (IsProjectSheet && Health.ApiUrl() is { } url)
+        {
+            _ = ProjectSheet.Refresh(url, CancellationToken.None);
+        }
+    }
+
+    // A write took the card off the page (or back): the sheet closes without an edge tab, since its card is gone, and the page reads again and moves focus.
+    private void OnProjectDone(object? sender, ProjectDoneEventArgs e)
+    {
+        CloseSheet();
+        SheetLink = null;
+        Changed(nameof(SheetLink), nameof(SheetSubject), nameof(HasEdgeTab), nameof(IsEdgeTabShown), nameof(IsProjectSheet), nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
+        _ = Projects.Settled(e, CancellationToken.None);
     }
 }

@@ -373,6 +373,13 @@
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </ScrollViewer>
+                <ScrollViewer x:Name="ProjectSheetScroll" IsVisible="{Binding IsProjectSheet}">
+                  <controls:Deferred DataContext="{Binding ProjectSheet}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><pv:ProjectSheetView x:Name="ProjectSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
                 <ScrollViewer x:Name="SessionSheetScroll" IsVisible="{Binding IsSessionSheet}">
                   <controls:Deferred DataContext="{Binding AgentSheet}">
                     <controls:Deferred.Template>
