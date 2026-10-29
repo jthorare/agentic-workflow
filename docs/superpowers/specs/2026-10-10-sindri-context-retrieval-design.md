@@ -353,7 +353,7 @@ the model-routing spec's `IChoicePort.Pick(questions, capChars)`, call kind "pro
 |---|---|---|
 | keep | Is this candidate real? | `keep`, `reject` |
 | merge | Are these lookalikes (sharing a file or feature) one node? | each candidate's name, `separate`, `reject`; so at most 3 candidates per question. A merge never spans questions in one pass; the next build regroups the rest |
-| attach | Which surface or feature does this action belong to? | the top 3 by evidence overlap |
+| attach | Which surface or feature does this action belong to? | up to 3: its file's home feature, its surface's feature, its cluster's feature (deduplicated) |
 
 **Answers are cached** in `context.db` (table `product_pick`, per repo, kept across map versions), keyed by
 sha256(shape + scrubbed question text + sorted options + the port's `ChoiceModel Identity`). Only cache misses are asked, so a
