@@ -14,8 +14,15 @@ internal sealed class FakeGitHubApi : IDisposable
     private (int Status, string Body) _reply = (201, "{}");
 
     internal FakeGitHubApi()
+        : this(FreePort)
     {
-        var port = FreePort();
+    }
+
+    /// <summary>Starts the fake on the port <paramref name="pickPort"/> names.</summary>
+    /// <param name="pickPort">Picks the port to listen on.</param>
+    internal FakeGitHubApi(Func<int> pickPort)
+    {
+        var port = pickPort();
         Url = "http://127.0.0.1:" + port.ToString(CultureInfo.InvariantCulture);
         _listener.Prefixes.Add(Url + "/");
         _listener.Start();
