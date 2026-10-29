@@ -1,4 +1,3 @@
-using System.Text.Json;
 using Aw.Context.Core.Models;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Features.GetStatus;
@@ -10,12 +9,12 @@ internal static class ChoicePortRegistration
 {
     /// <summary>Registers <see cref="IChoicePort"/>, <see cref="IModelPromptBudget"/> and the 'context:labelpick' doctor row and the key probe the status uses for the Settings line.</summary>
     /// <param name="services">The service collection.</param>
-    /// <param name="environment">Reads an environment variable (the judge's state directory).</param>
+    /// <param name="environment">Reads an environment variable (the key probe).</param>
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddChoicePort(this IServiceCollection services, Func<string, string?> environment) => services
         .AddSingleton<IChoicePort>(sp =>
         {
-            var judge = new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<JsonSerializerOptions>());
+            var judge = sp.GetRequiredService<JudgeCatalog>();
             return new JevChoicePort(judge.Classifier, judge.Providers, sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<Aw.Sindri.Core.Jobs.IJobContextAccessor>(),
                 sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Aw.Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>());
         })
