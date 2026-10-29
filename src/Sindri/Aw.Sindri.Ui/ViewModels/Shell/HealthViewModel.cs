@@ -71,6 +71,9 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     /// <summary>The Code index card (code-index spec §7.3, CI-10b); the shell has it followed with the other views.</summary>
     public CodeIndexCardViewModel CodeIndex => field ??= WatchCodeIndex(new CodeIndexCardViewModel(api, clock));
 
+    /// <summary>The Sandbox row and Check again (sandbox spec §8); the shell has it followed with the other views, and Settings and the park card share it.</summary>
+    public Sandbox.SandboxCardViewModel Sandbox => field ??= new Sandbox.SandboxCardViewModel(api, clock, ApiUrl, new NeedsYou.InstanceCommander(api, ApiUrl).Send, clipboard);
+
     /// <summary>The Context index card (#1597): one line per context source.</summary>
     public ContextIndexCardViewModel ContextIndex => field ??= WatchContextIndex(new ContextIndexCardViewModel(api, clock));
 

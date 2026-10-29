@@ -29,6 +29,11 @@ internal sealed partial class ExpandedStateView : UserControl
         _state?.PropertyChanged -= OnStateChanged;
         _state = DataContext as ExpandedStateViewModel;
         _state?.PropertyChanged += OnStateChanged;
+        if (_state is { } state)
+        {
+            // why: the wait is said once the live region is in the tree, so it is a change a screen reader hears.
+            Dispatcher.UIThread.Post(state.AnnounceWaiting, DispatcherPriority.Loaded);
+        }
     }
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)

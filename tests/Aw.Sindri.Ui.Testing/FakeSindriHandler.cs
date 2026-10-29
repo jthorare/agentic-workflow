@@ -108,7 +108,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
             { } path when path.StartsWith("/sindri/context/", StringComparison.Ordinal) => await ContextRoute(request, cancellationToken),
             // LANE ANCHOR U11a: the session reads, as arms above the workflow-read arm. Insert immediately below this marker, never between the markers.
             { } path when request.Method == HttpMethod.Get && (path == "/sindri/sessions" || path.StartsWith("/sindri/sessions/", StringComparison.Ordinal)) => await Sessions(uri, cancellationToken),
-            { } path when path == "/sindri/jobs" || path.StartsWith("/sindri/jobs/", StringComparison.Ordinal) => await Jobs(request, cancellationToken),
+            { } path when IsJobsOrSandbox(path) => await JobsOrSandbox(request, path, cancellationToken),
             "/sindri/code-index/status" when request.Method == HttpMethod.Get => Answer(Counted(await server.CodeIndexStatus(uri, cancellationToken), server.CodeIndexStatusAnswer)),
             "/sindri/index/status" when request.Method == HttpMethod.Get => Answer(Counted(await server.IndexStatus(uri, cancellationToken), server.IndexStatusAnswer)),
             "/sindri/setup" when request.Method == HttpMethod.Get => Answer(Counted(await server.Setup(uri, cancellationToken), server.SetupAnswer)),

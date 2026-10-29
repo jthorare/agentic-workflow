@@ -67,6 +67,7 @@ internal sealed partial class ShellWindow
         ListenStrip(shell, on);
         ListenWorkflows(shell, on);
         ListenAgents(shell, on);
+        ListenSandbox(shell, on);
         if (on)
         {
             shell.Queue.FocusRequested += OnFocusRow;
