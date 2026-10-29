@@ -13,7 +13,6 @@ internal sealed partial class Launcher
     /// <summary>What a launch runs with after the sandbox step: the argv, the environment and the summary (null when it ran unconfined).</summary>
     private sealed record Confined(IReadOnlyList<string> Argv, Dictionary<string, string> Env, SandboxSummary? Summary, string? RunArea = null);
 
-    /// <summary>A launch with a sandbox (a Step's or a session the owner opens, with no unconfined fallback when it refuses) runs its wrapped argv and sees the session home as AW_SINDRI_HOME, never the real one; anything else runs as built.</summary>
     /// <summary>'sindri session wrap --launch id [--limits file] --': a confined launch hands the watchdog its scope's limits, or an OOM kill ends the run as 'exit' (#1553).</summary>
     private List<string> WrapCommand(LaunchId launch, string? runArea)
     {
@@ -27,6 +26,7 @@ internal sealed partial class Launcher
         return wrapped;
     }
 
+    /// <summary>A launch with a sandbox (a Step's or a session the owner opens, with no unconfined fallback when it refuses) runs its wrapped argv and sees the session home as AW_SINDRI_HOME, never the real one; anything else runs as built.</summary>
     private async ValueTask<Result<Confined>> Confine(LaunchRequest request, IReadOnlyList<string> argv, Dictionary<string, string> env, SessionId? session, CancellationToken cancellationToken)
     {
         if (parts.Sandbox is not { } sandbox)
