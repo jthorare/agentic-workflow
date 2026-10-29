@@ -159,7 +159,7 @@ public sealed class ProjectNotesTests
 
         await card.Save(Token);
 
-        Assert.Equal((true, true, "mine", true), (card.IsConflict, card.IsEditing, card.Draft, card.CanSave));
+        Assert.Equal((true, true, "mine", false), (card.IsConflict, card.IsEditing, card.Draft, card.CanSave));   // Save waits for Reload: it would send the old version again
         Assert.Empty(_f.Server.ProjectsRead);
 
         ReadsBack(card, "theirs", 3);
@@ -203,12 +203,6 @@ public sealed class ProjectNotesTests
         var card = await _f.FirstCard(c => c["notes"] = "kept", Token);
         card.BeginEdit();
         card.Draft = "half typed";
-        var served = ProjectsFixture.Golden("mixed");
-        served["projects"]![0]!["notes"] = "other";
-        served["projects"]![0]!["version"] = 5;
-        _f.Serve(served);
-
-        _ = await _f.Shown(Token);   // a second page; the card under test is updated by the page that owns it
         card.Update(card.Card with { Notes = "other", Version = 5 });
 
         Assert.Equal(("half typed", "other"), (card.Draft, card.NotesText));

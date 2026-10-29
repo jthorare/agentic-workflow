@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Api.Workflow;
 
@@ -8,10 +9,12 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 internal sealed partial class ProjectCardViewModel : ObservableObject
 {
     private readonly TimeProvider _clock;
+    private readonly ISindriApi? _api;
+    private readonly Func<Uri?>? _apiUrl;
 
-    internal ProjectCardViewModel(ProjectCardView card, TimeProvider clock)
+    internal ProjectCardViewModel(ProjectCardView card, TimeProvider clock, ISindriApi? api = null, Func<Uri?>? apiUrl = null)
     {
-        (Card, _clock) = (card, clock);
+        (Card, _clock, _api, _apiUrl) = (card, clock, api, apiUrl);
         Derive();
     }
 
@@ -106,6 +109,7 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
         PrsValue = Card.OpenPrs?.ToString(CultureInfo.InvariantCulture);
         OnChanged(nameof(HasCounts));
         NotesFace = Face(Card.Notes);
+        DeriveNotes();
         IsGone = !Card.Synced;
         Footer = Parts();
         OnChanged(nameof(FooterText));

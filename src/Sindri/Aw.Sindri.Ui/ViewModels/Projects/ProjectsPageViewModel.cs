@@ -225,7 +225,7 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
         }
         else
         {
-            kept = _cards[served.Id] = new ProjectCardViewModel(served, _clock);
+            kept = _cards[served.Id] = new ProjectCardViewModel(served, _clock, _api, () => _url);
         }
 
         kept.NamesOnly = NamesOnly;
