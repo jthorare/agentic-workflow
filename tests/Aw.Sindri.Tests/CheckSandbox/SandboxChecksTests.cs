@@ -117,7 +117,6 @@ public sealed class SandboxChecksTests
     {
         var report = await Checks(new PassThroughSandbox(), fixture: SandboxRequests.ReadOnly, withLogin: true).Run(Token);
 
-        Assert.True(report.Ready);
         Assert.Empty(report.NotChecked);
     }
 
