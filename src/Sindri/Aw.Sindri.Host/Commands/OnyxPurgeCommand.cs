@@ -15,10 +15,11 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="home">The Sindri home (AW_SINDRI_HOME).</param>
 /// <param name="docker">Lists and removes by compose label.</param>
 /// <param name="keychain">Deletes one keychain entry.</param>
+/// <param name="files">Reads state.json, finds and deletes onyx/.</param>
 /// <param name="output">Where the list and answers go.</param>
 /// <param name="input">Where the human's answer is read.</param>
 /// <param name="question">Where the question is asked (standard error).</param>
-internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeKeychain keychain, Output output, TextReader input, TextWriter question)
+internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeKeychain keychain, ILeftoverFiles files, Output output, TextReader input, TextWriter question)
 {
     internal async Task<int> Run(bool human, CancellationToken ct)
     {
@@ -27,7 +28,7 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
             return await output.Error(SindriErrors.AuthRefused.With("'onyx down --purge' deletes data and is the human's verb (fix: ask the human to run it at a terminal)")).ConfigureAwait(false);
         }
 
-        var plan = OnyxLeftovers.Find(home, docker);
+        var plan = OnyxLeftovers.Find(home, docker, files);
         if (plan.IsError)
         {
             return await Failed(plan.Error).ConfigureAwait(false);
@@ -51,7 +52,7 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
     }
 
     internal static OnyxPurgeCommand Create(IServiceProvider services, Output output, TextReader input, TextWriter question)
-        => new(services.GetRequiredService<ISindriHome>().Path, services.GetRequiredService<IPurgeDocker>(), services.GetRequiredService<IPurgeKeychain>(), output, input, question);
+        => new(services.GetRequiredService<ISindriHome>().Path, services.GetRequiredService<IPurgeDocker>(), services.GetRequiredService<IPurgeKeychain>(), services.GetRequiredService<ILeftoverFiles>(), output, input, question);
 
     private static string Describe(PurgePlan plan)
     {
@@ -106,18 +107,6 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
             }
         }
 
-        try
-        {
-            if (plan.Directory is not null)
-            {
-                Directory.Delete(plan.Directory, recursive: true);
-            }
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return SindriErrors.IndexOnyxLeftover.With($"{plan.Directory} could not be deleted ({e.GetType().Name}) (fix: remove it by hand, then run `sindri onyx down --purge` again)");
-        }
-
-        return Aw.Kernel.Results.Ok();
+        return plan.Directory is null ? Aw.Kernel.Results.Ok() : files.DeleteDirectory(plan.Directory);
     }
 }

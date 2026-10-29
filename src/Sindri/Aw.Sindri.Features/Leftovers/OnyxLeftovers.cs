@@ -21,11 +21,12 @@ public static class OnyxLeftovers
     /// <summary>Lists the leftovers.</summary>
     /// <param name="home">The Sindri home (AW_SINDRI_HOME).</param>
     /// <param name="docker">Lists by compose label.</param>
+    /// <param name="files">Reads state.json and finds onyx/.</param>
     /// <returns>The plan (empty when nothing is left), or SND-INDEX-014 when docker is there but did not answer.</returns>
-    public static Result<PurgePlan> Find(string home, IPurgeDocker docker)
+    public static Result<PurgePlan> Find(string home, IPurgeDocker docker, ILeftoverFiles files)
     {
-        var directory = Path.Combine(home, "onyx");
-        var state = ReadState(Path.Combine(directory, "state.json"));
+        var directory = home.TrimEnd('/', '\\') + "/onyx";
+        var state = ReadState(files.ReadText(directory + "/state.json"));
         var project = state?.Project is { } recorded && IsOurs(recorded) ? recorded : ProjectNameFor(home);
         var containers = docker.ContainersOf(project);
         if (containers.IsError)
@@ -39,7 +40,7 @@ public static class OnyxLeftovers
             return volumes.Error;
         }
 
-        return new PurgePlan(containers.Value, volumes.Value, Directory.Exists(directory) ? directory : null, KeychainEntry(state?.KeyPointer));
+        return new PurgePlan(containers.Value, volumes.Value, files.DirectoryExists(directory) ? directory : null, KeychainEntry(state?.KeyPointer));
     }
 
     /// <summary>Names the compose project of a Sindri home the way an old `onyx up` did: `sindri-onyx-` and the first 8 hex digits of the sha256 of the home's full path.</summary>
@@ -51,17 +52,8 @@ public static class OnyxLeftovers
         return Prefix + hash[..HashHexDigits];
     }
 
-    private static PurgeState? ReadState(string path)
-    {
-        try
-        {
-            return File.Exists(path) && AwJson.Deserialize<PurgeState>(File.ReadAllBytes(path), _json) is { IsSuccess: true } read ? read.Value : null;
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            return null;
-        }
-    }
+    private static PurgeState? ReadState(string? text)
+        => text is not null && AwJson.Deserialize<PurgeState>(Encoding.UTF8.GetBytes(text), _json) is { IsSuccess: true } read ? read.Value : null;
 
     // A recorded name that isn't one the old `onyx up` could have made is ignored, so a hand-edited file can't point the purge at another project.
     private static bool IsOurs(string? name)

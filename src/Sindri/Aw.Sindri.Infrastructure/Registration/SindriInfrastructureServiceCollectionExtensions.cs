@@ -206,7 +206,8 @@ public static class SindriInfrastructureServiceCollectionExtensions
     // What an old `onyx up` left on the box (docker by compose label, one keychain entry): `onyx down --purge` and the doctor's leftover row. Independent of the Onyx adapters above.
     private static IServiceCollection AddLeftoverInfrastructure(this IServiceCollection services) => services
         .AddSingleton<IPurgeDocker>(static _ => new ToolPurgeDocker(new ProcessToolRunner()))
-        .AddSingleton<IPurgeKeychain>(static _ => new ToolPurgeKeychain(new ProcessToolRunner()));
+        .AddSingleton<IPurgeKeychain>(static _ => new ToolPurgeKeychain(new ProcessToolRunner()))
+        .AddSingleton<ILeftoverFiles, DiskLeftoverFiles>();
 
     private static IServiceCollection AddOnyxInfrastructure(this IServiceCollection services, Func<string, string?> environment)
         => services

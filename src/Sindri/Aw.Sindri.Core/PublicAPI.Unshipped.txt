@@ -21407,3 +21407,7 @@ override Aw.Sindri.Core.Leftovers.PurgePlan.GetHashCode() -> int
 override Aw.Sindri.Core.Leftovers.PurgePlan.ToString() -> string!
 static Aw.Sindri.Core.Leftovers.PurgePlan.operator !=(Aw.Sindri.Core.Leftovers.PurgePlan? left, Aw.Sindri.Core.Leftovers.PurgePlan? right) -> bool
 static Aw.Sindri.Core.Leftovers.PurgePlan.operator ==(Aw.Sindri.Core.Leftovers.PurgePlan? left, Aw.Sindri.Core.Leftovers.PurgePlan? right) -> bool
+Aw.Sindri.Core.Leftovers.ILeftoverFiles
+Aw.Sindri.Core.Leftovers.ILeftoverFiles.DeleteDirectory(string! path) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Leftovers.ILeftoverFiles.DirectoryExists(string! path) -> bool
+Aw.Sindri.Core.Leftovers.ILeftoverFiles.ReadText(string! path) -> string?

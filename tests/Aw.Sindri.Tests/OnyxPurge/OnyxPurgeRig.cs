@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Host.Commands;
+using Aw.Sindri.Infrastructure.Leftovers;
 using Aw.Sindri.Core.Leftovers;
 
 namespace Aw.Sindri.Tests.OnyxPurge;
@@ -43,7 +44,7 @@ internal sealed class OnyxPurgeRig : IDisposable
     {
         Docker.Calls = Calls;
         Keychain.Calls = Calls;
-        var command = new OnyxPurgeCommand(Home, Docker, Keychain, new Output(_out, _error, SliceHarness.Json), new StringReader(answer is null ? "" : answer + "\n"), _error);
+        var command = new OnyxPurgeCommand(Home, Docker, Keychain, new DiskLeftoverFiles(), new Output(_out, _error, SliceHarness.Json), new StringReader(answer is null ? "" : answer + "\n"), _error);
         return command.Run(human, TestContext.Current.CancellationToken);
     }
 
