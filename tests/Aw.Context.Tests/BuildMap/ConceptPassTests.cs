@@ -81,6 +81,24 @@ public sealed class ConceptPassTests
     }
 
     [Fact]
+    public async Task A_derived_concept_a_synthesized_one_covers_is_folded_and_reported()
+    {
+        const string pr = "github:pr/acme/web/412";
+        var graph = new ConceptGraph().Node($"record:{pr}")
+            .Edge($"record:{pr}", EdgeType.Mentions, "feature:sched").Edge($"record:{pr}", EdgeType.Mentions, "feature:sched.one").Edge($"record:{pr}", EdgeType.Mentions, "feature:sched.two").Build();
+        graph = Product() with { Nodes = [.. Product().Nodes, .. graph.Nodes], Edges = [.. Product().Edges, .. graph.Edges] };
+        var bucket = Assert.Single((await Run(new DisabledSymbolVectors(), graph: graph)).Graph.Edges, e => e.Type == EdgeType.BelongsTo && e.From.Value == "feature:sched.one").To.Value;
+        var at = new DateTimeOffset(2026, 10, 29, 0, 0, 0, TimeSpan.Zero);
+        _ = await _synthesis.Save(new Synth.SynthesizedConcept("checkout-retry", "Checkout retry", "Retries.", [new Synth.ConceptMember(pr, "1", "github")], "h", Synth.SynthesisState.Done, 1, at, at), Ct);
+
+        var outcome = await Run(new DisabledSymbolVectors(), graph: graph);
+
+        Assert.DoesNotContain(outcome.Graph.Nodes, n => n.Key.Value == bucket);
+        Assert.True(Belongs(outcome, "feature:sched.one", "concept:checkout-retry"));
+        Assert.Contains("concepts covered: 1", outcome.ReportNotes, StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task A_synthesis_store_that_fails_leaves_the_graph_alone_and_adds_a_note()
     {
         var baseline = await Run(new DisabledSymbolVectors());

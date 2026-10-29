@@ -43,7 +43,7 @@ public static partial class SettingsReader
 
         if (UnknownKey(element) is { } unknown)
         {
-            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan, conceptSynthesis, checks, index)");
+            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan, conceptSynthesis, checks, index, models)");
         }
 
         if (CodeUnknownKey(element) is { } codeKey)
@@ -68,13 +68,14 @@ public static partial class SettingsReader
         var codeDeadline = CodeDeadline(section.Code, settings);
         var sources = SourcesReader.Check(section.Sources);
         var index = IndexRules.Index(section.Index);
+        var models = ModelsSettings.Read(section.Models, section.ConceptScan?.Models);
         return (Refused(section, globs), deadline, codeDeadline, sources) switch
         {
             ({ } problem, _, _, _) => problem,
             (_, null, _, _) => Invalid("context.deadline", "is a duration from 100ms to 300s, such as 10s or 500ms"),
             (_, _, null, _) => Invalid("context.code.deadline", "is a duration from 100ms to 86400s, such as 180s or 90s"),
             (_, _, _, { IsError: true }) => sources.Error,
-            _ when index.IsError => index.Error,
+            _ when FirstFailure(index, models) is { } failure => failure,
             _ => WithOwnedIndex(WithCode(
                 WithFanOut(settings, section) with
                 {
@@ -98,12 +99,15 @@ public static partial class SettingsReader
                     CheckLimits = ChecksRules.Limits(section.Checks),
                 },
                 section.Code,
-                codeDeadline.Value), sources.Value.GitHub, sources.Value.Slack, index.Value),
+                codeDeadline.Value), sources.Value.GitHub, sources.Value.Slack, index.Value, models.Value),
         };
     }
 
-    private static ContextSettings WithOwnedIndex(ContextSettings settings, GitHubSource? github, SlackSource? slack, ContextIndexSettings index) =>
-        settings with { GitHub = github, Slack = slack, Index = index };
+    private static Error? FirstFailure(Result<ContextIndexSettings> index, Result<ModelsSettings> models) =>
+        index.IsError ? index.Error : models.IsError ? models.Error : null;
+
+    private static ContextSettings WithOwnedIndex(ContextSettings settings, GitHubSource? github, SlackSource? slack, ContextIndexSettings index, ModelsSettings models) =>
+        settings with { GitHub = github, Slack = slack, Index = index, Models = models };
 
     private const int MaxCodeGlobs = 500;
     private const int MaxCodeGlobLength = 2_000;
@@ -255,7 +259,7 @@ public static partial class SettingsReader
 
     private static string? UnknownKey(JsonElement element)
     {
-        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan", "conceptSynthesis", "checks", "index"];
+        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan", "conceptSynthesis", "checks", "index", "models"];
         return element.EnumerateObject().Select(p => p.Name).FirstOrDefault(n => !known.Contains(n, StringComparer.Ordinal)) is { } name ? Printable(name) : null;
     }
 

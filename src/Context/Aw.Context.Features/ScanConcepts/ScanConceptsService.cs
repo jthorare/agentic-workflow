@@ -80,10 +80,10 @@ internal sealed class ScanConceptsService(IGraphStore store, IScrubberFactory sc
     // True when either reply broke off mid-JSON: the scan kept what was whole.
     private static bool CutOff(ModelAnswer? first, ModelAnswer second) => (first is not null && ConceptScanReplies.IsCutOff(first.Text)) || ConceptScanReplies.IsCutOff(second.Text);
 
-    // The model's answer, or null when no agent answered.
+    // The model's answer, or null when no agent answered. Models are still forwarded here; R-3's router replaces this with context.models.names (spec 3.2 point 5).
     private async ValueTask<ModelAnswer?> Ask(string prompt, (ModelTier Tier, IReadOnlyDictionary<string, string> Models) pick, CancellationToken cancellationToken)
     {
-        var answer = await model.Ask(new ModelRequest(ModelPurpose.Concepts, prompt, ConceptScanLimits.MaxOutputTokens, ConceptScanLimits.CallTimeout, pick.Tier, pick.Models), cancellationToken).ConfigureAwait(false);
+        var answer = await model.Ask(new ModelRequest(ModelPurpose.ConceptScan, prompt, ConceptScanLimits.MaxOutputTokens, ConceptScanLimits.CallTimeout, pick.Tier, pick.Models), cancellationToken).ConfigureAwait(false);
         return answer.IsError ? null : answer.Value;
     }
 
