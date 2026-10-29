@@ -92,6 +92,14 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SyncReport>>(Down());
 
+    /// <summary>The fake runs no feeds.</summary>
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<SyncReport>>(Down());
+
+    /// <summary>The fake reads no records.</summary>
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<DecisionReport>>(Down());
+
     /// <summary>The fake keeps no record store.</summary>
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<IReadOnlyList<SourceProgress>>>(Down());

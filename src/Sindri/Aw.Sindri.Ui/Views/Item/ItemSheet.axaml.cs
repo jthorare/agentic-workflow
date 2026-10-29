@@ -11,6 +11,7 @@ using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Views.Item;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The item detail inside the shell's sheet; Load more asks for the timeline's next page.</summary>
 internal sealed partial class ItemSheet : UserControl
 {
@@ -156,3 +157,4 @@ internal sealed partial class ItemSheet : UserControl
         }
     }
 }
+#pragma warning restore MA0182

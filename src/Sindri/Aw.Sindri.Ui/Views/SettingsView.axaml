@@ -7,7 +7,7 @@
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
        the page region's own margin and scroll viewer, so it adds neither (its title lines up with every other page's). -->
   <StackPanel Spacing="{StaticResource Space.LG}" MinWidth="480">
-    <TextBlock x:Name="TitleText" Classes="page-title" Text="{Binding Title}"
+    <TextBlock x:Name="TitleText" Classes="page-title" Focusable="True" Text="{Binding Title}"
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
     <!-- The setup checklist goes here, second child, put in code when the page has a setup list (a host without one draws nothing, so none of its controls exist). -->

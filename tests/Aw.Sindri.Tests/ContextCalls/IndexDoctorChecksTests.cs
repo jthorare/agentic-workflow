@@ -38,13 +38,23 @@ public sealed class IndexDoctorChecksTests
     public async Task A_profile_naming_no_record_source_makes_every_row_ok_not_configured_and_never_asks_ollama()
     {
         var probe = new FakeProbe(Answer: Unit.Value);
-        await Approve("""{"sources":{"linear":{"teams":["ENG"]}}}""");
+        await Approve("""{"sources":{}}""");
 
         var rows = await Checks(_noSecrets, probe).Run(Token);
 
         Assert.All(rows, r => Assert.Equal(CheckState.Ok, r.State));
         Assert.All(rows, r => Assert.StartsWith("not configured", r.Detail, StringComparison.Ordinal));
         Assert.Equal(0, probe.Calls);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Linear_teams_without_a_token_warn_and_point_to_index_connect_linear()
+    {
+        await Approve("""{"sources":{"linear":{"teams":["ENG"]}}}""");
+
+        var linear = (await Checks(_noSecrets, new FakeProbe(Answer: Unit.Value)).Run(Token)).Single(r => r.Name == "context:index-linear");
+
+        Assert.Equal((CheckState.Warn, "context.sources.linear.token is not set, so linear can't sync", "set context.sources.linear.token to a secret pointer (sindri index connect linear)"), (linear.State, linear.Detail, linear.Fix));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -164,6 +174,20 @@ public sealed class IndexDoctorChecksTests
         var row = IndexSyncRules.Judge([SourceProgress.From(SourceId.From("github"), SyncPhase.Incremental, at, "SND-CONTEXT-059")]);
 
         Assert.Equal((CheckState.Ok, "record index: github synced 2026-10-28 09:05Z"), (row.State, row.Detail));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Sync_names_the_projects_feed_as_its_own_source_and_says_when_the_issue_feed_is_re_reading()
+    {
+        var at = new DateTimeOffset(2026, 10, 28, 9, 5, 0, TimeSpan.Zero);
+
+        var row = IndexSyncRules.Judge(
+        [
+            SourceProgress.From(SourceId.From("linear"), SyncPhase.Recent, lastSync: null, lastCode: null, stored: 1200),
+            SourceProgress.From(SourceId.From("linear-projects"), SyncPhase.Incremental, at, lastCode: null),
+        ]);
+
+        Assert.Equal((CheckState.Warn, "record index: linear re-reading for project links, 1,200 issues stored; linear-projects synced 2026-10-28 09:05Z"), (row.State, row.Detail));
     }
 
     private IndexDoctorChecks Checks(PointerSecrets secrets, FakeProbe probe, TimeSpan? limit = null) =>

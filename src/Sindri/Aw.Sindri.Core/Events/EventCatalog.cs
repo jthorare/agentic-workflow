@@ -34,6 +34,10 @@ public static class EventCatalog
         new(EventTypes.ItemCreated, Public: true, typeof(ItemCreatedPublic), "item.created:<itemId>") { Invalidates = [ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.ItemStateChanged, Public: true, typeof(ItemStateChanged), "item.state-changed:<itemId>:v<version>") { Invalidates = [ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline, ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions] },
         new(EventTypes.ItemLinked, Public: true, typeof(ItemLinked), "item.linked:<itemId>:<record>") { Invalidates = [ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
+        new(EventTypes.ProjectAttached, Public: true, typeof(ProjectAttached), "project.attached:<projectId>") { Invalidates = [ApiViews.Projects] },
+        new(EventTypes.ProjectChanged, Public: true, typeof(ProjectChanged), "project.changed:<projectId>:v<version>") { Invalidates = [ApiViews.Projects] },
+        new(EventTypes.ProjectDetached, Public: true, typeof(ProjectDetached), "project.detached:<projectId>:v<version>") { Invalidates = [ApiViews.Projects] },
+        new(EventTypes.ProjectHidden, Public: true, typeof(ProjectHidden), "project.hidden:<linear>:v<version>") { Invalidates = [ApiViews.Projects] },
         new(EventTypes.RequestFiled, Public: true, typeof(RequestFiledPublic), "request.filed:<requestId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.DecisionRecorded, Public: true, typeof(DecisionRecordedPublic), "decision.recorded:<decisionId>") { Invalidates = [ApiViews.NeedsYou, ApiViews.Requests, ApiViews.Decisions, ApiViews.Queue, ApiViews.Items, ApiViews.Item, ApiViews.Timeline] },
         new(EventTypes.WorkflowStarted, Public: true, typeof(WorkflowEventPayload), "workflow:<workflow id>:<run id>:<activity id>[:<content hash>]"),
@@ -57,6 +61,7 @@ public static class EventCatalog
         new(EventTypes.FleetChanged, Public: true, typeof(FleetChanged), "fleet.changed:<provider>:<id>:<change>:<observedAtMs>") { Invalidates = [ApiViews.Status] },
         new(EventTypes.ItemOpenRequested, Public: true, typeof(ItemOpenRequested), "item.open-requested:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item, ApiViews.Items, ApiViews.Timeline] },
         new(EventTypes.LaunchStarted, Public: true, typeof(LaunchStartedPublic), "launch.outcome:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.LaunchPicks, ApiViews.Item, ApiViews.Items, ApiViews.Timeline, ApiViews.NeedsYou] },
+        new(EventTypes.LaunchWaiting, Public: true, typeof(LaunchWaiting), "launch.waiting:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.Item] },
         new(EventTypes.ModelPicked, Public: true, typeof(ModelPicked), "model.pick:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.LaunchPicks, ApiViews.Timeline] },
         new(EventTypes.ModelPicking, Public: true, typeof(ModelPicking), "model.picking:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.LaunchPicks, ApiViews.Timeline] },
         new(EventTypes.LaunchFailed, Public: true, typeof(LaunchFailed), "launch.outcome:<launchId>") { Invalidates = [ApiViews.Launch, ApiViews.LaunchPicks, ApiViews.Item, ApiViews.Items, ApiViews.Timeline, ApiViews.NeedsYou, ApiViews.LaunchTargets] },
@@ -75,7 +80,6 @@ public static class EventCatalog
         new(EventTypes.RecipeRegistrationCompleted, Public: true, typeof(RecipeRegistrationCompleted), "recipe.registration.completed:<epoch>") { Invalidates = [ApiViews.Setup, ApiViews.Recipes] },
         new(EventTypes.McpRegistered, Public: true, typeof(McpRegistered), "mcp.registered:<commandId>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },
-        new(EventTypes.OnyxDeferred, Public: true, typeof(OnyxDeferred), "onyx.deferred:<commandId>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

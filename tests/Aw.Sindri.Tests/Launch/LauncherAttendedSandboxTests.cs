@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Launch;
@@ -58,6 +59,16 @@ public sealed class LauncherAttendedSandboxTests : IDisposable
         Assert.True(Directory.Exists(Path.Combine(_sindriHome, "open", request.Launch.Value)));   // the run directory for the plan, denials.json and egress.log
         Assert.Equal("/sessions/home", _host.Started[0].Env["AW_SINDRI_HOME"]);
         Assert.True(started.Sandbox is { Attended: true });   // launch.started carries attended: true
+    }
+
+    [Fact]
+    public async Task Attended_open_asks_its_host_for_the_attended_status_line()
+    {
+        var (request, _) = await Open();
+
+        _ = await Make(_sandbox).Launch(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(SandboxStatusLine.Template(attended: true), _host.Started[0].StatusRight);
     }
 
     [Fact]

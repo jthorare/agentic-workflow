@@ -6,6 +6,7 @@ using Aw.Sindri.Ui.Views.Layout;
 
 namespace Aw.Sindri.Ui.Views.Recipes;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Recipes page: a title click on a row opens the workflow's sheet; the filters, the retry and Approve new workflows go to the view model.</summary>
 internal sealed partial class RecipesPage : UserControl
 {
@@ -61,3 +62,4 @@ internal sealed partial class RecipesPage : UserControl
         }
     }
 }
+#pragma warning restore MA0182

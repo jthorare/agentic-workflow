@@ -89,7 +89,7 @@ public sealed class BacktestTests
     {
         await using var world = await BacktestWorld.Start(BacktestWorld.BeforeAllCuts);
 
-        var none = await world.Run("graph", world.Human(onyx: false));
+        var none = await world.Run("graph", world.Human(teams: false));
         var empty = await world.Run("graph", configure: r => r with { Until = new DateTimeOffset(2020, 1, 1, 0, 0, 0, TimeSpan.Zero) });
         var later = await world.Run("graph", configure: r => r with { Since = new DateTimeOffset(2027, 1, 1, 0, 0, 0, TimeSpan.Zero) });   // the source itself lists nothing updated since
 
@@ -148,7 +148,7 @@ public sealed class BacktestTests
         var text = await File.ReadAllTextAsync(run.Path, TestContext.Current.CancellationToken);
         Assert.DoesNotContain("named command in one registry", text, StringComparison.Ordinal);   // SPL-101's brief
         Assert.DoesNotContain("Command registry for pane commands", text, StringComparison.Ordinal);   // and its title
-        Assert.Contains("onyx/0e5a1b00-0000-4000-8000-000000000101", text, StringComparison.Ordinal);   // the ref is there
+        Assert.Contains("linear:issue/0e5a1b00-0000-4000-8000-000000000101", text, StringComparison.Ordinal);   // the ref is there
         Assert.DoesNotContain(world.Onyx.Token, text, StringComparison.Ordinal);
     }
 

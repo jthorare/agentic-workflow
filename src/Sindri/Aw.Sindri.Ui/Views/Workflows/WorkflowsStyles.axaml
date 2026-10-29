@@ -194,4 +194,10 @@
   <Style Selector="TextBlock.current">
     <Setter Property="FontWeight" Value="SemiBold" />
   </Style>
+  <!-- The type filter is a plain choice list: the combo box's hidden edit field takes no focus, no pointer and no place in the control view. -->
+  <Style Selector="ComboBox#RecipeFilter /template/ TextBox#PART_EditableTextBox">
+    <Setter Property="Focusable" Value="False" />
+    <Setter Property="IsHitTestVisible" Value="False" />
+    <Setter Property="AutomationProperties.AccessibilityView" Value="Raw" />
+  </Style>
 </Styles>

@@ -78,6 +78,7 @@ internal static class LauncherServiceCollectionExtensions
             Config = () => catalog.Current,
             Models = sp.GetRequiredService<IModelCatalog>(),
             Trust = sp.GetRequiredService<IAgentTrust>(),
+            Prepare = sp.GetService<IWorkspacePrepare>(),   // null when nothing registers the host-side prepare: a Step starts with whatever its worktree holds
             Sandbox = sp.GetService<ISandboxLaunch>(),   // null until the product registers a sandbox: Steps then run unconfined
             EndLive = async (launch, cancellationToken) =>
             {

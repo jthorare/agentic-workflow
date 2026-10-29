@@ -38,6 +38,7 @@ internal static class IndexText
 
     private static string State(IndexSourceRow row) =>
         row.LastCode is { } code && code != ContextErrors.SyncCapped.Code ? Failed(code)
+        : row.ReReading is { } stored ? string.Create(CultureInfo.InvariantCulture, $"re-reading for project links, {stored:N0} issues stored")
         : row.Complete ? "complete"
         : row.Usable ? "usable, filling older history"
         : row.Phase is null ? "not started"

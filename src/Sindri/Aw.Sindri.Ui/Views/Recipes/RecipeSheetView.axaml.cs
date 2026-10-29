@@ -5,6 +5,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Views.Recipes;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The recipe sheet inside the shell's sheet: Back returns to the frame or sheet this one was opened from, else closes the sheet like Esc.</summary>
 internal sealed partial class RecipeSheetView : UserControl
 {
@@ -29,3 +30,4 @@ internal sealed partial class RecipeSheetView : UserControl
 
     private void OnCopyApprove(object? sender, RoutedEventArgs e) => _ = (DataContext as RecipeSheetViewModel)?.CopyApprove(CancellationToken.None);
 }
+#pragma warning restore MA0182

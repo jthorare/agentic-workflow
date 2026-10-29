@@ -4,9 +4,11 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Media.TextFormatting;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Theme;
@@ -108,6 +110,32 @@ public sealed class TopBarTests : IDisposable
     // Review run 4 (accessibility-tester-2) hid the ⌘K field from assistive tech while it did nothing. U1 opens the
     // palette from it, so the field is a Tab stop and exposed with its name; only its decorative parts (the placeholder
     // text, the keycap) stay Raw so the name is not read twice.
+    // #1544: when the pill names a problem at 1280 px, the problem text is what gives way; the ⌘K field keeps its whole
+    // placeholder, and the trimmed text stays readable in the pill's tooltip and accessible name.
+    [Fact]
+    public Task A_long_problem_text_gives_way_before_the_search_placeholder() => OnUi(async () =>
+    {
+        _records.Write(A.Record());
+        _server.Current = A.Status() with
+        {
+            Health = new HealthView("degraded", [new HealthProblemView("SND-PROFILE-001", "the profile changed since approval", "the profile changed since approval and a much longer clause")]),
+        };
+        var (window, shell) = await Show(s => s.State == ShellState.Normal && s.Pill.HasProblems);
+        window.Width = 1280;
+        Settle(window);
+
+        var placeholder = Named<TextBlock>(window, "SearchText");
+        var problems = Named<TextBlock>(window, "PillProblems");
+        using var layout = new TextLayout(placeholder.Text, new Typeface(placeholder.FontFamily, placeholder.FontStyle, placeholder.FontWeight), placeholder.FontSize, foreground: null);
+        var natural = layout.Width;
+        Assert.True(
+            placeholder.Bounds.Width >= natural + TopBar.PlaceholderSlack - 0.5,
+            string.Create(System.Globalization.CultureInfo.InvariantCulture, $"the placeholder got {placeholder.Bounds.Width} of its {natural}"));
+        Assert.True(problems.IsEffectivelyVisible);
+        Assert.Equal(shell.Pill.Text, ToolTip.GetTip(Named<Button>(window, "HealthPill")));
+        Assert.Equal(shell.Pill.Text, AutomationProperties.GetName(Named<Button>(window, "HealthPill")));
+    });
+
     [Fact]
     public Task The_search_field_is_exposed_to_assistive_tech_and_reachable_by_keyboard() => OnUi(async () =>
     {

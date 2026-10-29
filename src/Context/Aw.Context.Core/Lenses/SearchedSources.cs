@@ -1,5 +1,6 @@
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Sources;
+using Aw.Context.Core.Sync;
 
 namespace Aw.Context.Core.Lenses;
 
@@ -26,6 +27,25 @@ public static class SearchedSources
         // A capped run (059) or held-back extraction (042) is partial, not a failure: the source still answers.
         var failed = state.LastError is { } code && code != ContextErrors.SyncCapped.Code && code != ContextErrors.LabelingUnavailable.Code;
         return new SearchedSource(id, failed ? SearchedState.Degraded : SearchedState.Ok, Reason: null, state.LastError, state.LastSync);
+    }
+
+    /// <summary>The row of an owned index source: degraded with the last tick's code when it failed, unavailable ('not-synced') before it has data, else ok at its last sync.</summary>
+    /// <param name="progress">The source's sync progress.</param>
+    /// <returns>The row.</returns>
+    public static SearchedSource Index(SourceProgress progress)
+    {
+        // A capped run (059) is partial, not a failure: the source still answers.
+        if (progress.LastCode is { } code && code != ContextErrors.SyncCapped.Code)
+        {
+            return new SearchedSource(progress.Source, SearchedState.Degraded, Reason: null, code, progress.LastSync);
+        }
+
+        if (progress.Phase is null || !progress.Usable)
+        {
+            return new SearchedSource(progress.Source, SearchedState.Unavailable, NotSynced, ContextErrors.IntentNotSynced.Code, AsOf: null);
+        }
+
+        return new SearchedSource(progress.Source, SearchedState.Ok, Reason: null, Code: null, progress.LastSync);
     }
 
     /// <summary>The map's row: ok, as of the version's creation.</summary>

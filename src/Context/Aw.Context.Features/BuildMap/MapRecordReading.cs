@@ -13,4 +13,7 @@ internal sealed record MapRecordReading(ExtractedMap Map, long Stamp, IReadOnlyL
 
     /// <summary>The records over <see cref="MapRecordSources.TouchCap"/> files: no file edges in <see cref="Map"/>, they roll up to features once the build has assigned the homes.</summary>
     public IReadOnlyList<RolledRecord> Overflow { get; init; } = [];
+
+    /// <summary>The records at or under the cap that name files: they keep their file edges in <see cref="Map"/> and roll up to features beside them (#1373).</summary>
+    public IReadOnlyList<RolledRecord> UnderCap { get; init; } = [];
 }

@@ -87,7 +87,7 @@ public static partial class NeedsYouRows
             "failure · " + name,
             new NeedsYouSubject(SubjectKind.Service, SubjectId.From(name)),
             Item: null,
-            "Service " + name + " failed",
+            unknown ? "Service " + name + " isn't in this build" : "Service " + name + " failed",
             unknown ? UnknownReason(name, scrubber) : Reason(last, scrubber),
             Repo: null,
             Urgency.Colour,

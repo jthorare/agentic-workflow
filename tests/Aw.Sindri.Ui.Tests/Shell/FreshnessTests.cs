@@ -71,7 +71,7 @@ public sealed partial class FreshnessTests : IDisposable
     public async Task A_degraded_pill_warns_and_names_the_problem_by_its_clause()
     {
         _server.Current = Status(new AsOfView(41, 41, A.Noon.AddSeconds(-12), Rebuilding: false, Stalled: false),
-            new HealthView("degraded", [new HealthProblemView("SND-SCHED-001", "Service broken failed at 2026-10-25T07:06:29Z", "service broken failed")]));
+            new HealthView("degraded", [new HealthProblemView("SND-SCHED-001", "Service broken failed 1 min ago", "service broken failed")]));
 
         await Connected(() => _vm.Pill.Word == "Degraded");
 
@@ -326,7 +326,7 @@ public sealed partial class FreshnessTests : IDisposable
         _server.Push(A.Event(1, "service.ran"));
         await Until(() => _vm.Banner.HasRebuild);
 
-        Assert.Equal((80, true, ShellState.Normal), (_vm.Catalog.Controls.Count, _vm.Banner.HasRebuild, _vm.State));
+        Assert.Equal((84, true, ShellState.Normal), (_vm.Catalog.Controls.Count, _vm.Banner.HasRebuild, _vm.State));
     }
 
     // F13: the pill words come from the goldens, not from records built by hand.

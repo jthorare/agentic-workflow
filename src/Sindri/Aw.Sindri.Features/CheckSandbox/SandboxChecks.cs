@@ -11,8 +11,9 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// <param name="forms">The form check.</param>
 /// <param name="logins">The login probe.</param>
 /// <param name="fixture">The fixture request.</param>
+/// <param name="fixtureLogin">The login the fixture requests carry.</param>
 /// <param name="resume">The parked instances and the free slots.</param>
-internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, ISandboxLoginCheck logins, ISandboxFixture fixture, SandboxResumeList resume) : ISandboxChecks
+internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, ISandboxLoginCheck logins, ISandboxFixture fixture, ISandboxFixtureLogin fixtureLogin, SandboxResumeList resume) : ISandboxChecks
 {
     public async ValueTask<SandboxCheckReport> Run(CancellationToken cancellationToken)
     {
@@ -34,9 +35,13 @@ internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, I
             blockers.Add(writeFailed);   // the git canary only runs for a writable work tree, so the ReadOnly fixture never reaches it
         }
 
-        return blockers.Count > 0
-            ? new SandboxCheckReport(blockers, [])
-            : new SandboxCheckReport(blockers, await resume.Next(cancellationToken).ConfigureAwait(false));
+        if (blockers.Count > 0)
+        {
+            return new SandboxCheckReport(blockers, []);
+        }
+
+        var next = await resume.NextParked(cancellationToken).ConfigureAwait(false);
+        return new SandboxCheckReport(blockers, [.. next.Select(static p => p.Instance)]) { Resume = next };
     }
 
     /// <summary>Plans a fixture and proves the plan inside the sandbox; the first failure is the blocker. No fixture on this box skips it.</summary>
@@ -47,13 +52,25 @@ internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, I
             return null;
         }
 
-        var plan = sandbox.Plan(request);
-        if (plan.IsError)
+        var fixtureLoginPrepared = await fixtureLogin.Prepare(request.Launch, cancellationToken).ConfigureAwait(false);
+        try
         {
-            return SandboxBlocker.Of(plan.Error);
-        }
+            var planned = fixtureLoginPrepared is { } l ? request with { Target = l.Target, Settings = l.Settings, Login = l.Login } : request;
+            var plan = sandbox.Plan(planned);
+            if (plan.IsError)
+            {
+                return SandboxBlocker.Of(plan.Error);
+            }
 
-        var proved = await sandbox.SelfCheck(plan.Value, cancellationToken).ConfigureAwait(false);
-        return proved.IsError ? SandboxBlocker.Of(proved.Error) : null;
+            var proved = await sandbox.SelfCheck(plan.Value, cancellationToken).ConfigureAwait(false);
+            return proved.IsError ? SandboxBlocker.Of(proved.Error) : null;
+        }
+        finally
+        {
+            if (fixtureLoginPrepared is not null)
+            {
+                fixtureLogin.Release(fixtureLoginPrepared.Login);
+            }
+        }
     }
 }

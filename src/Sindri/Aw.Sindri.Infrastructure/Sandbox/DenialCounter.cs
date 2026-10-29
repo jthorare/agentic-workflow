@@ -10,7 +10,7 @@ using Aw.Sindri.Core.Workflow.Engine;
 namespace Aw.Sindri.Infrastructure.Sandbox;
 
 /// <summary>
-/// One launch's denial counter, 'denials.json' in the run area (sandbox spec §3.6): a count per (kind, target, rule), at most 200 distinct
+/// One launch's denial counter, 'denials/{launch id}.json' in the launch directory (sandbox spec §3.6): a count per (kind, target, rule), at most 200 distinct
 /// (kind, target); the rest are counted per kind in the overflow rows. Targets are scrubbed and cut to 200 characters before they are
 /// stored or sent, and are never a whole command line. The 1st, 10th and 100th count of each entry, and the first overflow of each kind,
 /// queue a 'sandbox.denied' event that <see cref="Publish"/> sends to <see cref="Sink"/>.
@@ -109,9 +109,8 @@ internal sealed class DenialCounter(LaunchId launch, string path, JsonSerializer
                 return;
             }
 
-            var temp = path + ".tmp";
-            File.WriteAllBytes(temp, AwJson.Serialize(Build(), json));
-            File.Move(temp, path, overwrite: true);
+            OwnerOnly.EnsureDirectory(Path.GetDirectoryName(path)!);   // why: the 'denials' folder is created by the first flush, not by the launcher
+            OwnerOnly.WriteAtomically(path, AwJson.Serialize(Build(), json));
             _written = _version;
         }
     }

@@ -157,23 +157,23 @@ internal sealed partial class ShellWindow
     {
         if (sender == shell.Palette)
         {
-            this.Get<CommandPalette>("CommandPalette").FocusQuery();
+            Built<CommandPalette>("CommandPalette")?.FocusQuery();
         }
         else if (sender == shell.Create)
         {
-            this.Get<CreateItemDialog>("CreateItemDialog").FocusTitle();
+            Built<CreateItemDialog>("CreateItemDialog")?.FocusTitle();
         }
         else if (sender == shell.Start)
         {
-            this.Get<StartDialog>("StartDialog").FocusFirst();
+            Built<StartDialog>("StartDialog")?.FocusFirst();
         }
         else if (sender == shell.ApproveAll)
         {
-            this.Get<ApproveAllDialog>("ApproveAllDialog").FocusFirst();
+            Built<ApproveAllDialog>("ApproveAllDialog")?.FocusFirst();
         }
         else
         {
-            this.Get<ShortcutsSheet>("ShortcutsSheet").FocusSheet();
+            Built<ShortcutsSheet>("ShortcutsSheet")?.FocusSheet();
         }
     }
 }

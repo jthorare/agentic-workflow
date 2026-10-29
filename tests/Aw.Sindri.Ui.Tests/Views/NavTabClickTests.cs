@@ -91,8 +91,9 @@ public sealed class NavTabClickTests : IDisposable
         window.UpdateLayout();
 
         Assert.Equal(target, shell.CurrentPage);
+        // A page is built the first time it is shown (#1546), so one never opened is not in the tree: not shown.
         var shown = _pages
-            .Where(n => window.GetVisualDescendants().OfType<Control>().First(c => c.Name == n).IsEffectivelyVisible).ToList();
+            .Where(n => window.GetVisualDescendants().OfType<Control>().FirstOrDefault(c => c.Name == n)?.IsEffectivelyVisible == true).ToList();
         Assert.Equal([Own(target)], shown);
         if (target == PageId.Context)   // a pointer opening (not an arrow) puts focus in the anchor box
         {

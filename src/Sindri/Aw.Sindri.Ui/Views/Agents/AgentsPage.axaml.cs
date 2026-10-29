@@ -8,6 +8,7 @@ using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Views.Agents;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Agents page: a title click opens the sheet, focus arriving selects the row, the filters narrow the list, and a key or a re-read can ask for focus.</summary>
 internal sealed partial class AgentsPage : UserControl
 {
@@ -160,3 +161,4 @@ internal sealed partial class AgentsPage : UserControl
 
     private void OnRepoChosen(object? sender, SelectionChangedEventArgs e) => Page?.FilterRepo((sender as ComboBox)?.SelectedItem as string);
 }
+#pragma warning restore MA0182

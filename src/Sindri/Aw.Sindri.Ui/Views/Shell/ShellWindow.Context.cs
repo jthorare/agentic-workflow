@@ -13,7 +13,7 @@ internal sealed partial class ShellWindow
     {
         if (Shell is { CurrentPage: PageId.Context })
         {
-            Dispatcher.UIThread.Post(() => _ = this.Get<Control>("ContextPage").FindControl<TextBox>("AnchorBox")?.Focus(NavigationMethod.Unspecified), DispatcherPriority.Loaded);   // the box is in the page's own name scope
+            Dispatcher.UIThread.Post(() => _ = Built<Control>("ContextPage")?.FindControl<TextBox>("AnchorBox")?.Focus(NavigationMethod.Unspecified), DispatcherPriority.Loaded);   // the box is in the page's own name scope
         }
     }
 }

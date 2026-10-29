@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Features.ListSessions;
@@ -9,6 +10,9 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>'sindri agents' and 'sindri agents show' as text (collector spec CI-8): a state is a word, never a colour.</summary>
 internal static class AgentsText
 {
+    private const double Gib = 1024d * 1024 * 1024;
+    private const double Mib = 1024d * 1024;
+
     /// <summary>The list: a head, one line per session, the recently ended ones, then one line per problem.</summary>
     /// <param name="list">The answer.</param>
     /// <returns>The text.</returns>
@@ -75,10 +79,40 @@ internal static class AgentsText
         Field(text, "pid", row.Pid?.ToString(CultureInfo.InvariantCulture));
         Field(text, "cwd", view.Cwd);
         Field(text, "socket", row.Host.Socket);
+        Field(text, "sandbox", Sandbox(row.Sandbox));
+        Field(text, "writes to", row.Sandbox?.Folder);
     }
 
     private static string Line(SessionRow row) =>
-        $"{row.Ref}  {State(row)}  {row.Repo?.Value ?? "-"}  {row.Host.Label}{(row.Estimated ? "  (estimated)" : string.Empty)}{(row.Title is { } title ? "  " + title : string.Empty)}";
+        $"{row.Ref}  {State(row)}  {row.Repo?.Value ?? "-"}  {row.Host.Label}{(row.Estimated ? "  (estimated)" : string.Empty)}{(row.Title is { } title ? "  " + title : string.Empty)}{(Sandbox(row.Sandbox) is { } sandbox ? "  " + sandbox : string.Empty)}";
+
+    // Spec §8 Surfaces: "sandboxed · mem 2.1/12 GiB", "sandboxed · attended · mem 2.1/12 GiB"; a plan that doesn't read says so, a scope that is gone has no memory to show; below 0.1 GiB used memory reads in MiB ("mem 2.4 MiB/6.3 GiB").
+    private static string? Sandbox(SessionSandbox? sandbox)
+    {
+        if (sandbox is null)
+        {
+            return null;
+        }
+
+        var parts = new List<string> { "sandboxed" };
+        if (sandbox.Attended)
+        {
+            parts.Add("attended");
+        }
+
+        if (sandbox.State == SessionSandboxState.Unavailable)
+        {
+            parts.Add("details unavailable");
+        }
+        else if (sandbox.Memory is { UsedBytes: { } used, MaxBytes: { } max })
+        {
+            parts.Add(used < Gib / 10
+                ? string.Create(CultureInfo.InvariantCulture, $"mem {used / Mib:0.0} MiB/{max / Gib:0.#} GiB")
+                : string.Create(CultureInfo.InvariantCulture, $"mem {used / Gib:0.0}/{max / Gib:0.#} GiB"));
+        }
+
+        return string.Join(" · ", parts);
+    }
 
     private static string State(SessionRow row) =>
         row.State == SessionState.Asking && row.Asking is { } asking

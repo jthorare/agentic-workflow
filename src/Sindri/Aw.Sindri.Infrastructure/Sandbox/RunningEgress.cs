@@ -77,7 +77,7 @@ internal sealed class RunningEgress : IAsyncDisposable
                 denials.Flush();
                 await denials.Publish(CancellationToken.None).ConfigureAwait(false);
             }
-        }, "writing denials.json").ConfigureAwait(false);
+        }, "writing the denial counter").ConfigureAwait(false);
         _stopFlushing.Dispose();
         await Safely(() =>
         {

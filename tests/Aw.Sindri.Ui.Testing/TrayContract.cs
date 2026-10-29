@@ -44,16 +44,22 @@ public abstract class TrayContract
         Expect.Equal(notRunning, tray.Shown);
     }
 
-    [Fact]
-    public void Every_state_shows()
+    /// <summary>Every tray state, one theory case each: the data is the enum itself, so a new state is covered without an edit.</summary>
+    public static TheoryData<TrayState> States => [.. Enum.GetValues<TrayState>()];
+
+    // One case per state: through the Avalonia adapter each Show and Shown is dispatched to the assembly's one headless UI thread, so a single test looping every state
+    // queued behind the other tests' dispatches for over a minute in the parallel integration lane. The data is discovered row by row
+    // (an enum serializes), so each state is its own test case and the per-test cap times each one.
+    [Theory]
+    [MemberData(nameof(States))]
+    public void Each_state_shows(TrayState state)
     {
         var tray = Create();
-        foreach (var state in Enum.GetValues<TrayState>())
-        {
-            var view = _neutral with { State = state };
-            tray.Show(view);
-            Expect.Equal(view, tray.Shown);
-        }
+        var view = _neutral with { State = state };
+
+        tray.Show(view);
+
+        Expect.Equal(view, tray.Shown);
     }
 
     // Menu labels are the app's words; one with an underscore (an access-key marker on some platforms) shows as written.

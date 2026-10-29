@@ -55,6 +55,7 @@ internal sealed partial class TopBar : UserControl
     /// <inheritdoc />
     protected override Size MeasureOverride(Size availableSize)
     {
+        CapProblems(availableSize.Width);
         var size = base.MeasureOverride(availableSize);
         Remember();
         var fit = Choose(availableSize.Width);
@@ -73,12 +74,20 @@ internal sealed partial class TopBar : UserControl
     {
         // A part can grow after the bar was measured (a text-size change reaches it late); measure again to step down.
         Remember();
-        if (Choose(finalSize.Width) != _fit)
+        var cap = PillProblems.MaxWidth;
+        CapProblems(finalSize.Width);
+        if (Choose(finalSize.Width) != _fit || Math.Abs(PillProblems.MaxWidth - cap) > 0.5)
         {
             InvalidateMeasure();
         }
 
-        return base.ArrangeOverride(finalSize);
+        var arranged = base.ArrangeOverride(finalSize);
+        if (LowerCapByShortfall(finalSize.Width))
+        {
+            InvalidateMeasure();
+        }
+
+        return arranged;
     }
 
     // The widest step that fits: the bar's padding, the brand and the navigation are fixed; then the ⌘K field (full or

@@ -6,13 +6,13 @@
   "repo": "aw-split-panes",
   "detail": "nodes",
   "counts": {
-    "nodes": 12,
-    "edges": 13,
+    "nodes": 14,
+    "edges": 15,
     "byKind": {
       "feature": 2,
       "surface": 2,
-      "action": 1,
-      "thing": 0,
+      "action": 2,
+      "thing": 1,
       "flow": 0,
       "decision": 2,
       "record": 3,
@@ -25,11 +25,12 @@
       "key": "area:unassigned",
       "label": "Not linked to a feature yet",
       "trust": "trusted",
-      "members": 7,
+      "members": 8,
       "byKind": {
         "feature": 1,
         "surface": 1,
         "action": 1,
+        "thing": 1,
         "record": 3,
         "code": 1
       },
@@ -39,10 +40,11 @@
       "key": "feature:tabs.tab-groups",
       "label": "Tab groups",
       "trust": "trusted",
-      "members": 5,
+      "members": 6,
       "byKind": {
         "feature": 1,
         "surface": 1,
+        "action": 1,
         "decision": 2,
         "code": 1
       },
@@ -94,6 +96,18 @@
       "key": "action:tab-manager.restore-layout",
       "label": "Restore a tab's pane layout",
       "kind": "action",
+      "area": "area:unassigned",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
+    },
+    {
+      "key": "thing:pane-layout",
+      "label": "Pane layout",
+      "kind": "thing",
       "area": "area:unassigned",
       "alsoIn": [],
       "trust": "trusted",
@@ -172,6 +186,18 @@
       "repo": "aw-split-panes"
     },
     {
+      "key": "action:tab-groups.group-selected",
+      "label": "Group the selected tabs",
+      "kind": "action",
+      "area": "feature:tabs.tab-groups",
+      "alsoIn": [],
+      "trust": "trusted",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true,
+      "repo": "aw-split-panes"
+    },
+    {
       "key": "decision:d036352234b17baf9a7b2e7cffef599bdc9c8209e92c389d2bcbb919c74c162b",
       "label": "A tab group collapses to one tab in the strip.",
       "kind": "decision",
@@ -208,10 +234,28 @@
   ],
   "edges": [
     {
+      "from": "action:tab-groups.group-selected",
+      "to": "surface:command/group-tabs",
+      "type": "on",
+      "link": "edge:f507f71370a5f7c3",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
       "from": "action:tab-manager.restore-layout",
       "to": "surface:command/switch-tab",
       "type": "on",
       "link": "edge:9b9cd5139939b8bd",
+      "provenance": "human",
+      "confidence": 1,
+      "confirmed": true
+    },
+    {
+      "from": "action:tab-manager.restore-layout",
+      "to": "thing:pane-layout",
+      "type": "reads",
+      "link": "edge:5080017e168da7d6",
       "provenance": "human",
       "confidence": 1,
       "confirmed": true
@@ -329,7 +373,7 @@
   "repos": [
     {
       "name": "aw-split-panes",
-      "nodeCount": 7
+      "nodeCount": 9
     }
   ]
 }

@@ -37,7 +37,7 @@ public static partial class NeedsYouRows
         var (label, words) = Words(suspension, park.Refusal);
         var shape = new EngineRow(NeedsYouRowIds.Park(park.Address), label, $"{words} ({at.Value})", Urgency.Pulse, answer?.Kind,
             answer?.ActionId ?? _approveRecipe, answer is null ? [_approveRecipe, _cancel] : [answer.ActionId], answer?.Cli ?? Status(at), OpenOf(answer, at), answer?.Via, answer?.Child);
-        return Row(item, park.Address, shape, since, scrubber);
+        return Row(item, park.Address, shape, since, scrubber) with { Sandbox = StatusSandboxes.OrNull(suspension.Sandbox) };
     }
 
     /// <summary>Where a park row opens: a parked descendant, or a mirrored child that decides, opens that instance; any other park its own.</summary>

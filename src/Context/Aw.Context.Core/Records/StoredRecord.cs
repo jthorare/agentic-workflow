@@ -24,6 +24,8 @@ namespace Aw.Context.Core.Records;
 /// <param name="RemovedAt">When the source deleted it (a tombstone), or null.</param>
 /// <param name="SyncedAt">When the store last wrote it.</param>
 /// <param name="Links">What the source says connects it to other records.</param>
+/// <param name="Health">A project's latest health word as the source gave it ('onTrack', 'atRisk', 'offTrack'), or null.</param>
+/// <param name="DueAt">The day a project is due, or null.</param>
 public sealed record StoredRecord(
     RecordKey Key,
     SourceId Source,
@@ -44,4 +46,6 @@ public sealed record StoredRecord(
     bool Blocked,
     DateTimeOffset? RemovedAt,
     DateTimeOffset SyncedAt,
-    IReadOnlyList<RecordLink> Links);
+    IReadOnlyList<RecordLink> Links,
+    string? Health = null,
+    DateOnly? DueAt = null);

@@ -76,9 +76,6 @@ public sealed class GoldenContractTests
         ["context-map-refresh"] = As<JobStarted>,   // POST /context/map/refresh's 202 (the setup map row's Retry); the 409 is ProblemDetails
         ["setup-repos"] = As<JobStarted>,   // POST /setup/repos' 200 (api #528, AddRepo); the 400/409/403 bodies are ProblemDetails
         ["setup-mcp"] = As<JobStarted>,   // POST /setup/mcp's 202 (RegisterMcp, spec-shaped)
-        ["onyx-setup"] = As<JobStarted>,   // POST /onyx/setup's 202 (SetupOnyx, spec-shaped)
-        ["onyx-account"] = As<JobStarted>,   // POST /onyx/account's 202 (ConnectOnyx, spec-shaped); the refusals are ProblemDetails
-        ["onyx-defer"] = As<OnyxDeferView>,   // POST /onyx/defer's 200 (DeferOnyx, spec-shaped)
         ["launch-picks"] = As<LaunchPicksView>,   // GET /launch/picks: the model picks of the runs (model-pick spec §6.1)
         ["launches-id"] = As<LaunchView>,   // GET /launches/{id}: the launch an Open started (Attach, the run line)
         // The approve-all plan and result are the engine's real goldens (workflow-recipes-approve-all); the start, job and refusal bodies below stay SPEC-SHAPED (the engine has none).
@@ -112,6 +109,7 @@ public sealed class GoldenContractTests
         "workflow-instance-line",   // LN-API1 (LN-L): the line board of a workflow.line instance; the app reads it in LN-U (LN-UI1)
         "workflow-instance-design-stop",   // LN-API2 (LN-K): stop 2's view of a workflow.plan instance; the app reads it in LN-U (LN-UI2)
         "items-id-scope",   // an item's scope: the Context page reads it once it lands (UI lane, with the lenses routes)
+        "sandbox-status", "sandbox-check", "sandbox-denials", "sandbox-allow",   // SB-6a serves them; the app reads them in SB-6b (Health, Settings, the park card and the item sheet)
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
     };

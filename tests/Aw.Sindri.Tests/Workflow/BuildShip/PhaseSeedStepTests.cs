@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Worktrees;
 using Aw.Sindri.Features.Build;
+using Aw.Sindri.Testing.Prepare;
 using Aw.Sindri.Testing.Scoping;
 using Aw.Sindri.Testing.Worktrees;
 using Aw.Sindri.Tests.Workflow.Blocks.Contracts;
@@ -32,7 +33,7 @@ public sealed class PhaseSeedStepTests
         var facts = new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["phasePacket"] = """{"hash":"sha256:aa","dir":"/packets/p2"}""",
-            ["lineContext"] = $$$"""{"line":"L-1","phase":"p2","attempt":1,"base":"{{{Base}}}","runArea":{}}""",
+            ["lineContext"] = LineContexts.Of(Base),
         };
         change?.Invoke(facts);
         return BuildShipContexts.Of("step.phase.seed", facts) with { Repo = RepoName.From("name") };

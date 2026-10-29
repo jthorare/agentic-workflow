@@ -9,6 +9,7 @@ using Aw.Sindri.Ui.Views.Layout;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Workflows page: a row's title opens its instance, and the filters narrow the list.</summary>
 internal sealed partial class WorkflowsPage : UserControl
 {
@@ -197,3 +198,4 @@ internal sealed partial class WorkflowsPage : UserControl
         List?.RequestStart();
     }
 }
+#pragma warning restore MA0182

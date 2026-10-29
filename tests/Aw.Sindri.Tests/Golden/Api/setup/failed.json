@@ -88,15 +88,26 @@
       ]
     },
     {
-      "id": "onyx",
-      "title": "Set up Onyx",
+      "id": "sources",
+      "title": "Connect your sources",
       "state": "done",
-      "why": "Onyx is running and Sindri can search it.",
-      "detail": "Onyx is up and answering.",
+      "why": "Every source your profile names is connected.",
+      "detail": "GitHub, Slack.",
       "error": null,
       "action": null,
       "progress": null,
-      "items": []
+      "items": [
+        {
+          "repo": "github",
+          "state": "done",
+          "detail": "connected"
+        },
+        {
+          "repo": "slack",
+          "state": "done",
+          "detail": "connected"
+        }
+      ]
     }
   ],
   "asOf": {

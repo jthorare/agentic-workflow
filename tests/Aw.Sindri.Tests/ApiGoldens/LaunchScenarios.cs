@@ -2,6 +2,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.Launching;
 using Aw.Sindri.Infrastructure.Launch;
@@ -31,7 +32,7 @@ internal static class LaunchScenarios
         ("items-id-open", "refused-origin"),
         ("launches-id", "requested"), ("launches-id", "started-opened"), ("launches-id", "started-unconfirmed"), ("launches-id", "started-late-attach"),
         ("launches-id", "started-viewer-failed"), ("launches-id", "started-print"), ("launches-id", "failed-host-stage"), ("launches-id", "failed-expired-007"),
-        ("launches-id", "started-engine"), ("launches-id", "failed-engine"), ("items-id", "live-session"), ("launches-id", "not-found"), ("launches-id", "bad-id"), ("launches-id", "session-other-repo"),
+        ("launches-id", "started-engine"), ("launches-id", "sandboxed-engine"), ("launches-id", "failed-engine"), ("items-id", "live-session"), ("launches-id", "not-found"), ("launches-id", "bad-id"), ("launches-id", "session-other-repo"),
         ("launch-picks", "empty"), ("launch-picks", "picked-with-usage"),
         .. LaunchTargetScenarios.All,
     ];
@@ -216,7 +217,9 @@ internal static class LaunchScenarios
     }
 
     private static Task SeedEngine(GoldenHost host, LaunchId launch, string item, string scenario, CancellationToken ct) =>
-        scenario == "started-engine"
+        scenario == "sandboxed-engine"
+            ? Started(host, launch, item, ViewerOutcomeKind.Skipped, ct, ViewerOf("none", "none", ViewerOutcomeKind.Skipped), EngineStep(item), sandbox: SessionScenarios.SandboxSummary)
+            : scenario == "started-engine"
             ? Started(host, launch, item, ViewerOutcomeKind.Skipped, ct, ViewerOf("none", "none", ViewerOutcomeKind.Skipped), EngineStep(item))
             : Failed(host, launch, item, "SND-LAUNCH-009", "The launch timed out (fix: run `sindri doctor`)", LaunchStage.Host, ct, EngineStep(item));
 
@@ -227,10 +230,10 @@ internal static class LaunchScenarios
     private static LaunchStep EngineStep(string item) => new(InstanceAddress.From(item + "/step/1"), "build", 2);
 
     internal static Task Started(GoldenHost host, LaunchId launch, string item, ViewerOutcomeKind outcome, CancellationToken ct, LaunchViewer? viewer = null, LaunchStep? step = null,
-        string agent = "claude-code", string session = "0a1b2c3d-0000-4000-8000-000000000001") =>
+        string agent = "claude-code", string session = "0a1b2c3d-0000-4000-8000-000000000001", SandboxSummary? sandbox = null) =>
         ViewScenarios.Append(host, EventTypes.LaunchStarted,
             new LaunchStarted(launch, ItemId.From(item), LaunchMode.Open, AgentId.From(agent), SessionId.From(session), "sindri " + item,
-                viewer ?? ViewerOf("warp", "Warp", outcome), AttachOf(launch), CatalogSource.Builtin, "sha256:" + new string('a', 64), step?.Instance, step?.State, step?.Attempt),
+                viewer ?? ViewerOf("warp", "Warp", outcome), AttachOf(launch), CatalogSource.Builtin, "sha256:" + new string('a', 64), step?.Instance, step?.State, step?.Attempt, sandbox),
             $"launch.outcome:{launch.Value}", ct);
 
     /// <summary>The viewer part as the launcher service records it: through <see cref="LaunchOutcomes.ViewerFrom"/>, from the viewer's own facts, not hand-written.</summary>

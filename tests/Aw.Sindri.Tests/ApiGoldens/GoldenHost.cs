@@ -3,6 +3,7 @@ using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Onyx;
@@ -41,6 +42,7 @@ public sealed class GoldenHost : IAsyncDisposable
     private readonly List<IAsyncDisposable> _running = [];
     private readonly TempHome? _elsewhere;
     private WebApplication? _app;
+    private bool _stopped;
 
     private readonly string _profileYaml;
     private readonly IReadOnlyDictionary<string, string>? _environment;
@@ -119,8 +121,12 @@ public sealed class GoldenHost : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         Http.Dispose();
-        if (_app is not null)
+        if (_app is not null && !_stopped)
         {
+            _stopped = true;   // a second dispose (a test's finally) must not reach the disposed container
+
+            // why: an open event stream ends only on the shutdown signal (serve's stop path trips it); without it StopAsync waits out the 30 s host shutdown timeout (#1546)
+            _app.Services.GetService<IShutdown>()?.Request();
             await _app.StopAsync(CancellationToken.None);
             await _app.DisposeAsync();
         }
@@ -145,7 +151,7 @@ public sealed class GoldenHost : IAsyncDisposable
         {
             // why: an ordinary build embeds the checkout's recipes/sindri (#878), and unapproved shipped recipes would add a setup row to every golden; a test that needs a shipped set replaces this in 'extra'
             _ = services.Replace(ServiceDescriptor.Singleton<IEmbeddedRecipes>(FakeEmbeddedRecipes.Empty));
-            // why: the setup route's Onyx step asks Docker and the loopback ports of the box the test runs on, and a box with a hung Docker would fail every route test (#1121); a test that needs another replaces these in 'extra'
+            // why: the Onyx checks ask Docker and the loopback ports of the box the test runs on, and a box with a hung Docker would fail every route test (#1121); a test that needs another replaces these in 'extra'
             _ = services.Replace(ServiceDescriptor.Singleton<IContainerRuntime>(new FakeContainerRuntime(FakeContainerRuntime.Healthy)));
             _ = services.Replace(ServiceDescriptor.Singleton<IHostProbes>(new FakeHostProbes()));
             // why: the dense leg of a context query embeds the query through Ollama on 127.0.0.1:11434; a box without it reports 'records-dense' degraded (CI), a box with it does not, so every golden would depend on the machine; a test that needs the model down sets Failure on a fake of its own in 'extra'

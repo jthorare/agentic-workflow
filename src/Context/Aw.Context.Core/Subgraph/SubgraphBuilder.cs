@@ -177,7 +177,7 @@ public static class SubgraphBuilder
             .DistinctBy(k => k.Value, StringComparer.Ordinal).OrderBy(k => k.Value, StringComparer.Ordinal)];
 
     private static LensRecord Record(GraphSnapshot graph, GraphNode n, int depth, HashSet<string> all) =>
-        new(n.Key, n.Label, LensIntent.Source(n.Key), Targets(graph, n.Key, EdgeType.Mentions, all), Results.Trust.Untrusted, CitationState.Unchecked, [], NodeKind.Record) { Depth = depth };
+        new(n.Key, n.Label, LensIntent.Source(n.Key), Targets(graph, n.Key, EdgeType.Mentions, all), Results.Trust.Untrusted, CitationState.Unchecked, [], NodeKind.Record) { Depth = depth, At = n.At };
 
     private static LensDecision Decision(GraphSnapshot graph, GraphNode n, int depth, HashSet<string> all) =>
         LensIntent.Decision(graph, n, Targets(graph, n.Key, EdgeType.Decides, all)) with { Depth = depth };

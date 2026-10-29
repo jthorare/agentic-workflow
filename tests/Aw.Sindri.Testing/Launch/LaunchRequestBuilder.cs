@@ -17,6 +17,8 @@ public sealed class LaunchRequestBuilder
     private RunToken? _run;
     private EvaluatorLaunch? _evaluator;
     private string _directory = "/work/repo";
+    private string? _worktree;
+    private string? _baseCommit;
 
     /// <summary>Sets the launch id.</summary>
     /// <param name="value">The id.</param>
@@ -85,8 +87,26 @@ public sealed class LaunchRequestBuilder
         return this;
     }
 
+    /// <summary>Sets the worktree the launch works in.</summary>
+    /// <param name="value">The worktree path.</param>
+    /// <returns>This builder.</returns>
+    public LaunchRequestBuilder InWorktree(string value)
+    {
+        _worktree = value;
+        return this;
+    }
+
+    /// <summary>Sets the base commit the engine passes (a phase workspace's seed).</summary>
+    /// <param name="value">The commit.</param>
+    /// <returns>This builder.</returns>
+    public LaunchRequestBuilder WithBaseCommit(string value)
+    {
+        _baseCommit = value;
+        return this;
+    }
+
     /// <summary>Builds the request.</summary>
     /// <returns>The request.</returns>
     public LaunchRequest Build() =>
-        new(_launch, A.FirstItemId, _agent, _mode, _attended, _directory, _instance, Worktree: null, _step, _run, _resume, _evaluator);
+        new(_launch, A.FirstItemId, _agent, _mode, _attended, _directory, _instance, _worktree, _step, _run, _resume, _evaluator) { BaseCommit = _baseCommit };
 }

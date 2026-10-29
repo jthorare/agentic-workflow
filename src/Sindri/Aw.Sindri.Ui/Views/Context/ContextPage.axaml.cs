@@ -9,6 +9,7 @@ using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Views.Context;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Context page (U9a owns this class): the head, the control row and the stage.</summary>
 internal sealed partial class ContextPage : UserControl
 {
@@ -241,3 +242,4 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 }
+#pragma warning restore MA0182

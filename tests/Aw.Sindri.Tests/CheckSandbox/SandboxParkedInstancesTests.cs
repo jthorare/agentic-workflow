@@ -1,6 +1,8 @@
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Items.Vocabulary;
 using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Decisions;
@@ -10,6 +12,7 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Tests.GetInstance;
+using Aw.Sindri.Tests.Items;
 using Aw.Sindri.Tests.Workflow.Engine;
 using static Aw.Sindri.Tests.Workflow.Engine.EngineFixture;
 
@@ -43,11 +46,11 @@ public sealed class SandboxParkedInstancesTests
     private static WorkflowInstance Park(Trigger trigger) =>
         Assert.IsType<Applied>(Decide(Running(), Step, trigger, context: AgentOnly())).Changes[0].After;
 
-    private static Task<IReadOnlyList<ParkedOnSandbox>> Listed(WorkflowInstance parked)
+    private static Task<IReadOnlyList<ParkedOnSandbox>> Listed(WorkflowInstance parked, IViewReader? views = null)
     {
         var view = InstanceViews.Of(parked, StatusCases.Recipe with { Recipe = Step, Catalog = EngineFixture.Catalog }, DateTimeOffset.UnixEpoch, timeoutAt: null, new InstanceViewContext());
         var row = new InstanceRow(parked.Address.Value, EngineStates.Parked, NeedsYou: true);
-        return new SandboxParkedInstances(new Rows(row), new Reader(view)).Parked(Token).AsTask();
+        return new SandboxParkedInstances(new Rows(row), new Reader(view), views).Parked(Token).AsTask();
     }
 
     [Fact]
@@ -66,6 +69,49 @@ public sealed class SandboxParkedInstancesTests
         var parked = Park(new LaunchRefused("service:agent:" + ProduceStep, _run, "SND-LAUNCH-016", "fs-deny", Source: null, "the canary failed"));
 
         _ = Assert.Single(await Listed(parked));
+    }
+
+    [Fact]
+    public async Task A_listed_park_names_its_item_and_the_items_title()
+    {
+        var parked = Park(new RuntimeUnavailable("service:agent:" + ProduceStep, _run, "SND-LAUNCH-014", "no-bwrap", Source: null, "no sandbox tool"));
+
+        var found = Assert.Single(await Listed(parked, new Titles("Add the tax field")));
+
+        Assert.Equal(("T-3", "Add the tax field"), (found.Item, found.Title));
+    }
+
+    [Fact]
+    public async Task A_park_whose_item_cant_be_read_is_still_listed_without_a_title()
+    {
+        var parked = Park(new RuntimeUnavailable("service:agent:" + ProduceStep, _run, "SND-LAUNCH-014", "no-bwrap", Source: null, "no sandbox tool"));
+
+        var found = Assert.Single(await Listed(parked, new Titles(title: null)));
+
+        Assert.Equal(("T-3", null), (found.Item, found.Title));
+    }
+
+    private sealed class Titles(string? title) : IViewReader
+    {
+        public ValueTask<Result<TRow?>> Get<TRow>(string view, string key, CancellationToken cancellationToken)
+            where TRow : class
+        {
+            var row = title is null ? null : new ItemRow(
+                ItemQueryHarness.Id('1'), title, Repo: null, ItemState.Parked, Step: null, Version: 1, "human:thor", DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch,
+                Link: null, Alias: null, Body: null, WaitingOn: null, Instance: null, Owner: null, Sequence: 1) as TRow;
+            return ValueTask.FromResult<Result<TRow?>>(row);
+        }
+
+        public ValueTask<Result<IReadOnlyList<TRow>>> List<TRow>(string view, CancellationToken cancellationToken)
+            where TRow : class => throw new NotSupportedException();
+
+        public ValueTask<Result<IReadOnlyList<TRow>>> Range<TRow>(string view, string afterKey, string? beforeKey, int max, CancellationToken cancellationToken)
+            where TRow : class => throw new NotSupportedException();
+
+        public ValueTask<Result<IReadOnlyList<TRow>>> Where<TRow>(string view, ViewColumn column, string value, CancellationToken cancellationToken)
+            where TRow : class => throw new NotSupportedException();
+
+        public ValueTask<Result<ProjectorState?>> State(CancellationToken cancellationToken) => throw new NotSupportedException();
     }
 
     private sealed class Rows(InstanceRow row) : IWorkflowInstances

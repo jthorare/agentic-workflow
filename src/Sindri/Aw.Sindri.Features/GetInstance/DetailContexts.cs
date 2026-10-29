@@ -13,6 +13,7 @@ internal sealed class DetailContexts(TimeProvider clock, IRecipeDisplayNames? na
     {
         var session = joins is null ? null : await joins.Session(view, cancellationToken).ConfigureAwait(false);
         var targets = joins is null ? null : await joins.ReviewTargets(view, cancellationToken).ConfigureAwait(false);
-        return new InstanceDetailContext(inputs.Title, inputs.Parent, inputs.Counts, clock.GetUtcNow(), inputs.StepRuns, names?.Of(view.Recipe.Id), session, targets);
+        var waiting = joins is null ? null : await joins.Waiting(view, cancellationToken).ConfigureAwait(false);
+        return new InstanceDetailContext(inputs.Title, inputs.Parent, inputs.Counts, clock.GetUtcNow(), inputs.StepRuns, names?.Of(view.Recipe.Id), session, targets) { Waiting = waiting };
     }
 }

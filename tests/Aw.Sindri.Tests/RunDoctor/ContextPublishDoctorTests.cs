@@ -39,7 +39,7 @@ public sealed class ContextPublishDoctorTests
         var clock = new FakeTimeProvider(now);
         var engine = PublishStatusEngineProxy.Create(view);
         var reader = new MapPublishStatusReader(engine, outlooks, new ListLedger([Published()]), clock);
-        var checks = new ContextEngineChecks(FakeContextEngine.Instance, new OnyxDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new MapPublishDoctorCheck(reader, clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins(), clock, new InMemoryProfiles()));
+        var checks = new ContextEngineChecks(FakeContextEngine.Instance, new MapPublishDoctorCheck(reader, clock), new LinearDoctor(FakeContextEngine.Instance, new PointerSecrets(_ => null, new FakeToolRunner(ToolRun.Missing))), new Features.CodeIndexJobs.CodeIndexDoctor(new CodeIndex.Testing.FakeCodeIndex(), new CodeIndex.Testing.FakeRepoHeads(), new InMemoryJobViews(), new CodeIndex.Testing.FakeEmbedder(), new CodeIndex.Testing.FakePins(), clock, new InMemoryProfiles()));
         var rows = await checks.Check(SliceHarness.Profile(), Ct);
         return rows.Single(static c => c.Name == MapPublishDoctorCheck.PublishName);
     }

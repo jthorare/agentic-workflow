@@ -1,0 +1,17 @@
+{
+  "blockers": [],
+  "mechanism": "bubblewrap",
+  "groups": [
+    "model",
+    "packages",
+    "github"
+  ],
+  "limits": {
+    "memoryMax": "12GiB",
+    "cpuQuota": "400%",
+    "tasksMax": 2048,
+    "wall": "250m"
+  },
+  "login": "owner-copy",
+  "learn": []
+}

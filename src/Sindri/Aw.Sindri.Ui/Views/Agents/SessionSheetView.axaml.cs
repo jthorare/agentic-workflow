@@ -4,6 +4,7 @@ using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Views.Agents;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The session sheet inside the shell's sheet: Copy puts the pending Focus's CLI on the clipboard.</summary>
 internal sealed partial class SessionSheetView : UserControl
 {
@@ -30,3 +31,4 @@ internal sealed partial class SessionSheetView : UserControl
         }
     }
 }
+#pragma warning restore MA0182

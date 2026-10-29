@@ -19,6 +19,11 @@ namespace Aw.Sindri.Features.GetStatus;
 internal sealed class HealthServiceRows(IViewReader views, IEnumerable<BuiltInService> builtIns, ICodeIndexHealth? codeIndex = null, StuckInstanceCount? stuck = null, IStalledAgentRuns? stalled = null,
     IBuildStamps? builds = null, TimeProvider? clock = null)
 {
+    /// <summary>What the health reads besides the views and the services: the code index's problems and now (for how long ago a service failed).</summary>
+    /// <param name="codeIndexProblems">The code index's problems.</param>
+    /// <returns>The context.</returns>
+    public HealthContext Context(IReadOnlyList<HealthProblem>? codeIndexProblems) => new(codeIndexProblems, clock?.GetUtcNow());
+
     /// <summary>The report with the stale build problem (#1032) when the running build is not the one 'bin/cs/current' names.</summary>
     /// <param name="report">The report so far.</param>
     /// <returns>The report; the same one outside an install.</returns>

@@ -17,6 +17,10 @@ public sealed class UsageTests
     public void Help_lists_every_workflow_verb(string verb) =>
         Assert.Single(Lines(), l => l.StartsWith($"sindri workflow {verb} ", StringComparison.Ordinal));
 
+    [Fact, Trait("Lane", "unit")]
+    public void Help_lists_index_connect_linear_as_the_humans_verb() =>
+        Assert.Contains("SND-AUTH-002", Assert.Single(Lines(), l => l.TrimStart().StartsWith("sindri index connect linear", StringComparison.Ordinal)), StringComparison.Ordinal);
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("takeover")]
     [InlineData("handback")]
@@ -113,12 +117,9 @@ public sealed class UsageTests
         Assert.Contains(flags, part, StringComparison.Ordinal);
     }
 
-    [Theory, Trait("Lane", "unit")]
-    [InlineData("onyx status")]
-    [InlineData("onyx up")]
-    [InlineData("onyx down")]
-    public void Usage_lists_the_onyx_verbs(string verb) =>
-        Assert.Single(Lines(), l => l.StartsWith($"sindri {verb} ", StringComparison.Ordinal) || l.StartsWith($"sindri {verb}\t", StringComparison.Ordinal));
+    [Fact, Trait("Lane", "unit")]
+    public void Usage_lists_only_the_onyx_purge_verb() =>
+        Assert.Equal(["sindri onyx down --purge"], Lines().Where(static l => l.Contains("sindri onyx", StringComparison.Ordinal)).Select(static l => l[..l.IndexOf("   ", StringComparison.Ordinal)]), StringComparer.Ordinal);
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("pr babysit")]

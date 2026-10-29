@@ -2,12 +2,13 @@ namespace Aw.Context.Core.Graph;
 
 /// <summary>
 /// The nodes a repo implements (spec §3): the targets of 'implements' edges (and 'tags' edges, so a tag feature has its repo) with file evidence in that repo
-/// ('repo:&lt;repo&gt;/&lt;path&gt;'), and the code files those edges start from ("that repo's files and code"). S-3b adds their cascade.
+/// ('repo:&lt;repo&gt;/&lt;path&gt;'), and the repo's code files (any edge evidenced in the repo, so a data-access file that implements nothing and only reads or writes a thing is in; "that repo's files and code"). S-3b adds their cascade: <see cref="WithProduct"/> keeps the
+/// actions on the scoped surfaces and the things the scoped nodes read or write.
 /// Since owner decision 2026-10-15 (B) a session also sees the intent linked to those nodes (<see cref="WithLinkedIntent"/>).
 /// </summary>
 public static class RepoScope
 {
-    /// <summary>The keys of the nodes <paramref name="repo"/> implements.</summary>
+    /// <summary>The keys of the nodes <paramref name="repo"/> implements and of its code files (any edge evidenced in the repo).</summary>
     /// <param name="graph">The graph.</param>
     /// <param name="repo">The repo's short name.</param>
     /// <returns>The node keys (ordinal), empty when it implements nothing.</returns>
@@ -15,10 +16,12 @@ public static class RepoScope
     {
         ArgumentNullException.ThrowIfNull(graph);
         var prefix = $"repo:{repo.Value}/";
-        return graph.Edges
-            .Where(e => e.Type is EdgeType.Implements or EdgeType.Tags && e.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith(prefix, StringComparison.Ordinal)))
-            .SelectMany(e => new[] { e.To.Value, e.From.Value })
-            .ToHashSet(StringComparer.Ordinal);
+        bool InRepo(GraphEdge e) => e.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith(prefix, StringComparison.Ordinal));
+        var implemented = graph.Edges
+            .Where(e => e.Type is EdgeType.Implements or EdgeType.Tags && InRepo(e))
+            .SelectMany(e => new[] { e.To.Value, e.From.Value });
+        var ownFiles = graph.Edges.Where(e => e.From.Kind == NodeKind.Code && InRepo(e)).Select(e => e.From.Value);
+        return implemented.Concat(ownFiles).ToHashSet(StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -56,6 +59,30 @@ public static class RepoScope
         }
 
         return reached;
+    }
+
+    /// <summary>
+    /// <paramref name="scope"/> and its product cascade (spec §3 "graph nodes the repo implements and their cascade"; the cascade's reverse 'on' and state hops, §6.1):
+    /// an action with an 'on' edge whose surface is in scope joins, and a thing with a 'reads' or 'writes' edge whose reader or writer (a code file or an action) is in scope
+    /// joins — to a fixpoint, so an action that joins through its surface brings the things it reads or writes. A hop never runs backwards: a thing brings none of its readers
+    /// or writers, and an action or thing attached only to nodes outside <paramref name="scope"/> stays out. A feature's rolled-up 'reads' or 'writes' (FeatureRollup)
+    /// is no hop: it counts the files of every repo homed in the feature, so a shared feature would bring another repo's things.
+    /// </summary>
+    /// <param name="graph">The graph.</param>
+    /// <param name="scope">The nodes the repo implements with their part-of hierarchy (<see cref="WithHierarchy"/>).</param>
+    /// <returns>The keys of the scope and of those actions and things (ordinal).</returns>
+    internal static IReadOnlySet<string> WithProduct(GraphSnapshot graph, IReadOnlySet<string> scope)
+    {
+        ArgumentNullException.ThrowIfNull(graph);
+        ArgumentNullException.ThrowIfNull(scope);
+        var product = graph.Edges.Where(e => e.Type == EdgeType.On && e.From.Kind == NodeKind.Action)
+            .Select(e => (InScope: e.To.Value, Joins: e.From.Value))
+            .Concat(graph.Edges.Where(e => e.Type is EdgeType.Reads or EdgeType.Writes && e.From.Kind is NodeKind.Code or NodeKind.Action && e.To.Kind == NodeKind.Thing)
+                .Select(e => (InScope: e.From.Value, Joins: e.To.Value)))
+            .ToLookup(p => p.InScope, p => p.Joins, StringComparer.Ordinal);
+        var all = new HashSet<string>(scope, StringComparer.Ordinal);
+        all.UnionWith(Closure(scope, product));
+        return all;
     }
 
     /// <summary>

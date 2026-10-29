@@ -19,6 +19,11 @@ public sealed record LensRecord(NodeKey Key, string Label, string Source, IReadO
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? Anchors { get; init; }
 
+    /// <summary>When the record was last written at its source (a ticket's update time, a doc's head commit time); left out when the node has none.</summary>
+    [JsonPropertyName("at")]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public DateTimeOffset? At { get; init; }
+
     /// <summary>The repo it belongs to (see <see cref="NodeRepos"/>), or null when it belongs to no single repo; left out when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Repo { get; init; }

@@ -63,6 +63,7 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         var created = await Run(Create(session), deadline).ConfigureAwait(false);
         if (created.ExitCode == 0)
         {
+            await ShowStatusLine(session, name, deadline).ConfigureAwait(false);
             return name;
         }
 

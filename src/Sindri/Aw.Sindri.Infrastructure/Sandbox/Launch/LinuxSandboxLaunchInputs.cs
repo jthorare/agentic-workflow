@@ -33,7 +33,7 @@ internal sealed class LinuxSandboxLaunchInputs(LauncherOptions Launcher, IAgentC
     }
 
     /// <inheritdoc/>
-    public string RunAreaFor(LaunchId launch) => Path.Combine(Launcher.LaunchDirectory, "areas", launch.Value);
+    public string RunAreaFor(LaunchId launch) => LaunchPaths.RunArea(Launcher.LaunchDirectory, launch);
 
     /// <inheritdoc/>
     public string? RunDirectoryFor(LaunchRequest request) => request.Attended ? AttendedOpen.RunDirectory(Launcher.SindriHome, request.Launch) : StepEnvironment.RunDirectoryOf(request, Launcher.SindriHome);
@@ -77,7 +77,7 @@ internal sealed class LinuxSandboxLaunchInputs(LauncherOptions Launcher, IAgentC
     /// <inheritdoc/>
     public DenialCounter? DenialCounterFor(LaunchId launch) =>
         Counters is { } parts
-            ? new DenialCounter(launch, Path.Combine(Launcher.LaunchDirectory, "denials", launch.Value + ".json"), parts.Json, parts.Scrubber, parts.Clock) { Sink = parts.Sink }
+            ? new DenialCounter(launch, LaunchPaths.DenialsFile(Launcher.LaunchDirectory, launch), parts.Json, parts.Scrubber, parts.Clock) { Sink = parts.Sink }
             : null;
 
     /// <summary>The socket directory of a launch: short, because a unix socket path holds about 100 characters (<c lang="text">&lt;base&gt;/aw-net/&lt;12 hex&gt;</c>).</summary>

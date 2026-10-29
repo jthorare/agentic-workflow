@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sessions;
 
 namespace Aw.Sindri.Features.GetSession;
@@ -12,7 +13,7 @@ namespace Aw.Sindri.Features.GetSession;
 /// <summary>
 /// One live session (collector spec CA-2). A ref that is unknown or ended answers SND-SESSION-404. Every caller gets the directory, the socket and the state history.
 /// </summary>
-internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, ILaunchViews launches)
+internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, ILaunchViews launches, ISessionSandboxes sandboxes)
     : IService<GetSessionRequest, SessionView>
 {
     public async ValueTask<Result<SessionView>> Handle(GetSessionRequest request, CancellationToken cancellationToken)
@@ -43,7 +44,9 @@ internal sealed class GetSessionService(ISessionSnapshot snapshot, IAgentCatalog
     private async ValueTask<SessionRow> Row(ObservedSession session, string? path, CancellationToken cancellationToken)
     {
         var steps = await LaunchSteps.Of(launches, session.LaunchId is { } id ? [id] : [], cancellationToken).ConfigureAwait(false);
-        return SessionRows.Of(session, catalog.Resolve(session.Ref.Provider), path, session.LaunchId is { } launch ? steps.GetValueOrDefault(launch) : null);
+        var sandboxed = await LaunchSandboxes.Of(launches, sandboxes, session.LaunchId is { } sandboxId ? [sandboxId] : [], cancellationToken).ConfigureAwait(false);
+        return SessionRows.Of(session, catalog.Resolve(session.Ref.Provider), path, session.LaunchId is { } launch ? steps.GetValueOrDefault(launch) : null,
+            session.LaunchId is { } sandboxLaunch ? sandboxed.GetValueOrDefault(sandboxLaunch) : null);
     }
 
     private async ValueTask<string?> RepoPath(ObservedSession session, CancellationToken cancellationToken)

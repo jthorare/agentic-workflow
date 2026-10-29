@@ -56,8 +56,19 @@ public sealed class StuckInstanceCountTests
     public async Task A_read_that_never_answers_counts_none_after_two_seconds()
     {
         _engine.Hold = new TaskCompletionSource();
+        var count = new StuckInstanceCount(_engine, _clock).Current(TestContext.Current.CancellationToken).AsTask();
+        while (!_engine.Calls.ContainsKey("Instances"))
+        {
+            await Task.Delay(1, TestContext.Current.CancellationToken);
+        }
 
-        Assert.Equal(0, await new StuckInstanceCount(_engine, _clock).Current(TestContext.Current.CancellationToken));
+        _clock.Advance(TimeSpan.FromMilliseconds(1999));
+        await Task.Delay(20, TestContext.Current.CancellationToken);
+        Assert.False(count.IsCompleted);   // why: the bound is two seconds of the clock, not less
+
+        _clock.Advance(TimeSpan.FromMilliseconds(1));
+
+        Assert.Equal(0, await count);
     }
 
     [Fact]
@@ -79,7 +90,7 @@ public sealed class StuckInstanceCountTests
         var second = count.Current(Token).AsTask();
         while (!_engine.Calls.ContainsKey("Instances"))
         {
-            await Task.Delay(5, Token);
+            await Task.Delay(1, Token);
         }
 
         _engine.Hold.SetResult();

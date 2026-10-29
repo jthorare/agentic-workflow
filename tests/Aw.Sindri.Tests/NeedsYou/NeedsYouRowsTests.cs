@@ -96,6 +96,7 @@ public sealed class NeedsYouRowsTests
         Expect.Sequence([ActionId.From("PauseService")], row.Actions);
         Assert.Contains("remove or rename", row.Reason, StringComparison.Ordinal);
         Assert.StartsWith("SND-SVC-404", row.Reason, StringComparison.Ordinal);
+        Expect.Equal("Service heartbeat isn't in this build", row.Title);
     }
 
     [Fact]

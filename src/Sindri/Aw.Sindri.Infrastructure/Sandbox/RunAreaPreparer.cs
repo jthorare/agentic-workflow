@@ -13,7 +13,7 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// </summary>
 internal static class RunAreaPreparer
 {
-    private const string RefusingPrePush = "#!/bin/sh\necho 'git push is not available in a sandboxed session: Sindri sends pushes and pull requests for you.' >&2\nexit 1\n";
+    private static readonly string _refusingPrePush = "#!/bin/sh\necho 'git push is not available in a sandboxed session: Sindri sends pushes and pull requests for you. " + SandboxStatusLine.Refusal + "' >&2\nexit 1\n";
 
     /// <summary>Gets where the run area is: the directory of the plan file that AW_SANDBOX_PLAN names.</summary>
     /// <param name="plan">The plan.</param>
@@ -65,9 +65,9 @@ internal static class RunAreaPreparer
 
         _ = Directory.CreateDirectory(area + "/githooks");
         // why: the hook depends on the plan (agent-app allows the run branch), so a re-prepare may flip modes and must not keep the other mode's hook.
-        WriteIfDifferent(area + "/githooks/pre-push", agentApp ? SandboxShims.BranchOnlyPrePush(plan.RunNamespace) : RefusingPrePush);
+        WriteIfDifferent(area + "/githooks/pre-push", agentApp ? SandboxShims.BranchOnlyPrePush(plan.RunNamespace) : _refusingPrePush);
         WriteIfAbsent(area + "/gitconfig.empty", string.Empty, executable: false);
-        OwnerOnly.WriteAtomically(area + "/sandbox-plan.json", AwJson.Serialize(plan, SandboxFilesJson.Options));   // value-free: launcher-supplied variables carry no value; 'sandbox explain' reads this file
+        OwnerOnly.WriteAtomically(Path.Combine(area, LaunchPaths.PlanName), AwJson.Serialize(plan, SandboxFilesJson.Options));   // value-free: launcher-supplied variables carry no value; 'sandbox explain' reads this file
         return null;
     }
 

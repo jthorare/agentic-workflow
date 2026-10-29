@@ -164,7 +164,7 @@ public sealed class SheetEnterFocusTests : IDisposable
 
         Assert.Contains(content.GetVisualDescendants(), v => v is Ui.Views.Item.ItemSheet);
         Assert.False(body.IsEffectivelyVisible);
-        Assert.True(window.Get<Control>("ItemSheet").IsEffectivelyVisible);
+        Assert.True(window.GetVisualDescendants().OfType<Control>().First(c => c.Name == "ItemSheet").IsEffectivelyVisible);
         var peer = Avalonia.Automation.Peers.ControlAutomationPeer.CreatePeerForElement(window.Get<Control>("SheetTitle"));
         Assert.Equal(shell.Item.ItemId, peer.GetName());
     });

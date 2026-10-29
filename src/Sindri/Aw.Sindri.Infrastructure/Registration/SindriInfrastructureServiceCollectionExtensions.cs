@@ -26,6 +26,7 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
+using Aw.Sindri.Core.Leftovers;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
@@ -49,6 +50,7 @@ using Aw.Sindri.Infrastructure.Forge;
 using Aw.Sindri.Infrastructure.Judge;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Lease;
+using Aw.Sindri.Infrastructure.Leftovers;
 using Aw.Sindri.Infrastructure.Ledger;
 using Aw.Sindri.Infrastructure.LensPacks;
 using Aw.Sindri.Infrastructure.Line;
@@ -84,17 +86,21 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddOnyxInfrastructure(environment).AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch();
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddOnyxInfrastructure(environment).AddLeftoverInfrastructure().AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch();
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>
     private static IServiceCollection AddScopeWatch(this IServiceCollection services) =>
         services.AddSingleton<IScopeControl>(static _ => new SystemctlScopeControl(new SandboxProcesses())).AddSingleton<ICgroupStats, CgroupFiles>().AddSingleton<IHeavyLockSweep>(static sp => new HeavyLockSweep(sp.GetRequiredService<TimeProvider>()))
-            .AddSingleton<IDenialFiles>(static sp => new DiskDenialFiles(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<JsonSerializerOptions>()));   // SB-4b: the run areas' denials.json
+            .AddSingleton<IDenialFiles>(static sp => new DiskDenialFiles(sp.GetRequiredService<LauncherOptions>().LaunchDirectory, sp.GetRequiredService<JsonSerializerOptions>()))   // SB-4b: the launcher's denials folder
+            .AddSingleton<ISessionSandboxes>(static sp => new DiskSessionSandboxes(
+                sp.GetRequiredService<LauncherOptions>().LaunchDirectory, sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<ICgroupStats>(), Sandbox.Launch.PlatformSandboxServiceCollectionExtensions.SliceRelativePath(OwnUid.Read())));   // SB-6a: a session row's sandbox
 
     /// <summary>Engine P8: the diff signal of an agent run (git) and an agent session's end and spend (the ledger).</summary>
     private static IServiceCollection AddAgentRuntimeAdapters(this IServiceCollection services, Func<string, string?> environment) =>
-        services.AddSingleton<IRunDiff, GitRunDiff>().AddSingleton<IWorkspaceRebase, GitWorkspaceRebase>().AddSingleton<IDiffContent, GitDiffContent>().AddSingleton<IBranchChanges, GitBranchChanges>().AddSingleton<IAgentSessions, LedgerAgentSessions>().AddSingleton<IRunSuspensions, LedgerRunSuspensions>().AddSingleton<ILearnHistory, LedgerLearnHistory>().AddSingleton<IScopeRunRecords, ScopeRunRecords>()
+        services.AddSingleton<IRunDiff, GitRunDiff>().AddSingleton<IRunBranches, GitRunBranches>().AddSingleton<IWorkspaceRebase, GitWorkspaceRebase>().AddSingleton<IDiffContent, GitDiffContent>().AddSingleton<IBranchChanges, GitBranchChanges>().AddSingleton<IAgentSessions, LedgerAgentSessions>().AddSingleton<IRunSuspensions, LedgerRunSuspensions>().AddSingleton<ILearnHistory, LedgerLearnHistory>().AddSingleton<ILaunchOwners, LedgerLaunchOwners>().AddSingleton<IScopeRunRecords, ScopeRunRecords>()
+            .AddSingleton<IPrepareSource, GitPrepareSource>()
+            .AddSingleton<IPrepareCache>(sp => new FilePrepareCache(Path.Combine(sp.GetRequiredService<ISindriHome>().Path, "cache", "prepare"), new ProcessToolRunner()))   // <real home>/cache/prepare/<key>/ (sandbox spec 3.8)
             .AddSingleton<ICheckCommands>(sp => new ToolCheckCommands(new ProcessToolRunner(), sp.GetRequiredService<ITextScrubber>(), sp.GetRequiredService<TimeProvider>()))
             .AddLensPackAdapters(environment);
 
@@ -168,7 +174,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IRecipeBuild, BuildInfoRecipeBuild>()   // setup-once §5.3: doctor compares the embedded recipe set's tree hash with HEAD's
             .AddSingleton<IBuildStamps>(static _ => new InstalledBuildStamps(AppContext.BaseDirectory))   // #1032: status and doctor compare the running build with bin/cs/current
             .AddSingleton<IProcessAncestry, PosixProcessAncestry>()
-            .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
+            .AddSingleton<IRepoLocator, GitRepoLocator>().AddSingleton<IRepoInspector, GitRepoInspector>().AddSingleton<IProfileRepoWriter, YamlProfileRepoWriter>().AddSingleton<IProfileSandboxWriter, YamlProfileSandboxWriter>().AddSingleton<IProfileInitializer, FileProfileInitializer>()   // setup-once §5.1: AddRepo's folder checks and the profile's repos[] appender
             .AddSingleton<ICommandOrigins, LedgerCommandOrigins>()   // engine P4 unit (d): the bridge's causation route
             .AddRecipeAdapters(environment)
             .AddSingleton<IChallenges, ProcessChallenges>()
@@ -196,6 +202,12 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IMcpAutoSwitch>(new EnvironmentMcpSwitch(environment))
             .AddSingleton<IProviderHost, ProviderHost>()
             .AddSingleton<IProviderFiles, ProviderConfigFiles>();
+
+    // What an old `onyx up` left on the box (docker by compose label, one keychain entry): `onyx down --purge` and the doctor's leftover row. Independent of the Onyx adapters above.
+    private static IServiceCollection AddLeftoverInfrastructure(this IServiceCollection services) => services
+        .AddSingleton<IPurgeDocker>(static _ => new ToolPurgeDocker(new ProcessToolRunner()))
+        .AddSingleton<IPurgeKeychain>(static _ => new ToolPurgeKeychain(new ProcessToolRunner()))
+        .AddSingleton<ILeftoverFiles, DiskLeftoverFiles>();
 
     private static IServiceCollection AddOnyxInfrastructure(this IServiceCollection services, Func<string, string?> environment)
         => services

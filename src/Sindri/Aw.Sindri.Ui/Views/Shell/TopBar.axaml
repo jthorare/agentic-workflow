@@ -126,7 +126,7 @@
           </StackPanel>
         </Button>
         <Button x:Name="HealthPill" Classes="health-pill" Click="OnHealthPill" IsEnabled="{Binding IsNavigationEnabled}"
-                AutomationProperties.Name="{Binding Pill.Text}">
+                AutomationProperties.Name="{Binding Pill.Text}" ToolTip.Tip="{Binding Pill.Text}">
           <!-- S1: the 6 px gaps are the glyph's and the age's own margins, so a state with neither (Connecting) centres its word. -->
           <StackPanel Orientation="Horizontal">
             <icons:StateIcon x:Name="PillGlyph" Glyph="{Binding Pill.Glyph}" IsVisible="{Binding Pill.HasGlyph}" Margin="0,0,6,0"

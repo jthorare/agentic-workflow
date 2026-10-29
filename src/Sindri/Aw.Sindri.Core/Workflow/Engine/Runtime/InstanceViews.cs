@@ -65,7 +65,7 @@ public static partial class InstanceViews
             since,
             words.Next(task),
             Allowed(instance, recipe, task, words.GrantTokens()),
-            instance.Suspension is { } s ? new OpenQuestion(s.Kind, s.Reason, s.Question, ParkCodes.Of(s)) : null,
+            instance.Suspension is { } s ? new OpenQuestion(s.Kind, s.Reason, s.Question, ParkCodes.Of(s)) { Sandbox = s.Sandbox } : null,
             task,
             instance.Frame.Run?.Token,
             children,
@@ -107,7 +107,7 @@ public static partial class InstanceViews
     {
         ArgumentNullException.ThrowIfNull(view);
         ArgumentNullException.ThrowIfNull(context);
-        var status = DetailParts.WithSession(Status(view, context.AsOf), context.Session);
+        var status = DetailParts.WithWaiting(DetailParts.WithSession(Status(view, context.AsOf), context.Session), context.Waiting);
         return new InstanceDetail(
             view.Address,
             view.Id,

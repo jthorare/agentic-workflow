@@ -14,16 +14,16 @@ internal sealed partial class Launcher
 {
     private async ValueTask<Result<Prepared>> Prepare(LaunchRequest request, AgentEntry entry, CancellationToken cancellationToken)
     {
+        var created = request.Worktree is { } expected && !Directory.Exists(expected);
         var located = await WorkDirectory(request, cancellationToken).ConfigureAwait(false);
         if (located.IsError)
         {
             return located.Error;
         }
-
         var workDir = located.Value;
-        if (await Guard(request, entry, workDir, cancellationToken).ConfigureAwait(false) is { } refusedStart)
+        if (await GuardAndPrepare(request, entry, (workDir, created), cancellationToken).ConfigureAwait(false) is { } refusedStart)
         {
-            return refusedStart;
+            return refusedStart;   // the guard's refusal, or SND-LAUNCH-021 (a step failure; nothing started)
         }
 
         try
@@ -47,7 +47,7 @@ internal sealed partial class Launcher
                 return confined.Error;   // a refusal carries its SND-LAUNCH-014..017 or -020 code; Start cleans up (and releases) after it
             }
 
-            return new Prepared(workDir, confined.Value.Argv, confined.Value.Env, composed.Value.Session?.Value) { PriorHash = prior, Seed = composed.Value.Seed, Sandbox = confined.Value.Summary };
+            return new Prepared(workDir, confined.Value.Argv, confined.Value.Env, composed.Value.Session?.Value) { PriorHash = prior, Seed = composed.Value.Seed, Sandbox = confined.Value.Summary, SandboxRunArea = confined.Value.RunArea };
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -63,17 +63,6 @@ internal sealed partial class Launcher
         var prior = File.Exists(hashFile) ? await File.ReadAllBytesAsync(hashFile, cancellationToken).ConfigureAwait(false) : null;
         LaunchSecrets.Write(parts.Options.SecretsDirectory, launch, secret);
         return prior;
-    }
-
-    /// <summary>A Step's worktree gets the pre-push guard and, for claude-code, its trust mark before anything else is written; an error when either is refused.</summary>
-    private async ValueTask<Error?> Guard(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
-    {
-        if (!request.Attended && request.Step is not null && await PrePushGuard.Install(workDir, cancellationToken).ConfigureAwait(false) is { } foreign)
-        {
-            return foreign;
-        }
-
-        return await Trust(request, entry, workDir, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>LN-WF5: the Step's pack, in its directory before the session starts (an attended launch has none); an error when the pack is refused.</summary>
@@ -127,18 +116,6 @@ internal sealed partial class Launcher
         }
 
         return await parts.Scratch.Create(request.RepoPath, ScratchPath(request.Launch), evaluator.HeadSha, cancellationToken).ConfigureAwait(false);
-    }
-
-    /// <summary>A claude-code Step's worktree is marked trusted before the CLI starts: it would stop at "do you trust this project?" with no one to answer. Other entries and human opens need nothing.</summary>
-    private async ValueTask<Error?> Trust(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
-    {
-        if (request.Attended || !string.Equals(entry.Id.Value, "claude-code", StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        var trusted = await parts.Trust.Trust(workDir, cancellationToken).ConfigureAwait(false);
-        return trusted.IsError ? trusted.Error : null;
     }
 
     private async ValueTask<Result<(IReadOnlyList<string> Argv, SessionId? Session, string Seed)>> Compose(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
@@ -279,6 +256,9 @@ internal sealed partial class Launcher
 
         /// <summary>The sandbox summary of a confined Step launch (<c lang="text">launch.started</c>'s sandbox field), or null when it ran unconfined.</summary>
         public SandboxSummary? Sandbox { get; init; }
+
+        /// <summary>The confined launch's run directory, where <c lang="text">wrap-limits.json</c> sits, or null when it ran unconfined.</summary>
+        public string? SandboxRunArea { get; init; }
     }
 
     /// <summary>The start clashed with a session of this launch's name: it is the launch's own and stays untouched. The hash the live wrap checks is put back (and the session answered as started), or, with no hash to put back, the minted pair is removed and the launch fails.</summary>

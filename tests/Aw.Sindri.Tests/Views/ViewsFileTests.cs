@@ -56,7 +56,7 @@ public sealed class ViewsFileTests : IDisposable
         var migrated = await runner.Migrate(ViewsDatabase.Migrations, Token);
 
         Assert.True(migrated.IsSuccess, migrated.IsError ? migrated.Error.Message : null);
-        Assert.Equal(["projector_state", "view_code_index", "view_decisions", "view_item_aliases", "view_item_timeline", "view_items", "view_jobs", "view_launches", "view_model_history", "view_model_runs", "view_needs_you", "view_profile", "view_recipe_stats", "view_requests", "view_services"], Tables(path));
+        Assert.Equal(["projector_state", "view_code_index", "view_decisions", "view_item_aliases", "view_item_timeline", "view_items", "view_jobs", "view_launches", "view_model_history", "view_model_runs", "view_needs_you", "view_profile", "view_project_attached", "view_project_hidden", "view_recipe_stats", "view_requests", "view_services"], Tables(path));
         Assert.Equal(["key", "row_json", "seq", "owner"], Columns(path, "view_items"));
         Assert.Equal(["key", "row_json", "seq", "item", "state", "repo"], Columns(path, "view_requests"));
         Assert.Equal(["key", "row_json", "seq", "item", "state", "repo"], Columns(path, "view_decisions"));
@@ -66,10 +66,10 @@ public sealed class ViewsFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Every_view_name_has_a_table_and_the_schema_is_at_version_18()
+    public void Every_view_name_has_a_table_and_the_schema_is_at_version_21()
     {
-        Assert.Equal(["code-index", "decisions", "item-aliases", "item-timeline", "items", "jobs", "launches", "model-history", "model-runs", "needs_you", "profile", "recipe-stats", "requests", "services"], ViewNames.All.Order(StringComparer.Ordinal).ToList());
-        Assert.Equal(18, ViewSchema.Version);   // the model-history fold keys a mirrored row by the workflow id (#1481); the launch row carries the model (#1008); a parked suspension carries its sandbox marker and the launch and self-check park kinds (U9, #1113); the model-history and model-runs views (model-pick M-4); the launch row carries the sandbox failure reason, source and limit ending (SB-0); the services row carries pausedBy/pausedAt and lastRun.detail (B-15); the launch row folds launch.takeover-opened (#1004); the engine item part carries the unavailable park (#1001); NeedsYouRow.Open became required (#959); the code-index view joined after recipe-stats (and launch rows gained a required member at 7): an older views.db must rebuild, not fail to read
+        Assert.Equal(["code-index", "decisions", "item-aliases", "item-timeline", "items", "jobs", "launches", "model-history", "model-runs", "needs_you", "profile", "project-attached", "project-hidden", "recipe-stats", "requests", "services"], ViewNames.All.Order(StringComparer.Ordinal).ToList());
+        Assert.Equal(21, ViewSchema.Version);   // the project-attached and project-hidden views (projects page Ph3); a park row carries its sandbox refusal (SB-6); the launch row carries the sandbox summary from launch.started (SB-6); the model-history fold keys a mirrored row by the workflow id (#1481); the launch row carries the model (#1008); a parked suspension carries its sandbox marker and the launch and self-check park kinds (U9, #1113); the model-history and model-runs views (model-pick M-4); the launch row carries the sandbox failure reason, source and limit ending (SB-0); the services row carries pausedBy/pausedAt and lastRun.detail (B-15); the launch row folds launch.takeover-opened (#1004); the engine item part carries the unavailable park (#1001); NeedsYouRow.Open became required (#959); the code-index view joined after recipe-stats (and launch rows gained a required member at 7): an older views.db must rebuild, not fail to read
     }
 
     [Fact, Trait("Lane", "integration")]

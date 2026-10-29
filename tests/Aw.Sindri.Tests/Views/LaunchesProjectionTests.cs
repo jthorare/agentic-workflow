@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.ListSessions;
 
 namespace Aw.Sindri.Tests.Views;
 
@@ -32,6 +33,26 @@ public sealed class LaunchesProjectionTests
         var row = (await Row())!;
 
         Expect.Equal(("SND-LAUNCH-017", "expired", "separate-login"), (row.Code, row.Reason, row.Source));
+    }
+
+    [Fact]
+    public async Task A_start_keeps_its_sandbox_summary()
+    {
+        await _v.Request();
+        await _v.Start(sandbox: SandboxData.Summary());
+
+        var row = (await Row())!;
+
+        SandboxData.AssertIsSummary(row.Sandbox);
+    }
+
+    [Fact]
+    public async Task A_start_without_a_sandbox_leaves_the_row_without_one()
+    {
+        await _v.Request();
+        await _v.Start();
+
+        Assert.Null((await Row())!.Sandbox);
     }
 
     [Fact]

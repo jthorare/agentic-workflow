@@ -54,7 +54,7 @@ public sealed class ContextHistoryApiTests : IDisposable
         Assert.All(changes, c => Assert.Equal("untrusted", c.GetProperty("trust").GetString()));
         Assert.Equal("not-configured", view.GetProperty("incidents").GetProperty("state").GetString());
         var sources = view.GetProperty("searched").GetProperty("sources").EnumerateArray().Select(s => s.GetProperty("id").GetString()).ToList();
-        Assert.Equal(["map", "onyx", "git-history", "incidents"], sources, StringComparer.Ordinal);
+        Assert.Equal(["map", "repo-docs", "git-history", "incidents"], sources, StringComparer.Ordinal);
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]

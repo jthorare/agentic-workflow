@@ -35,7 +35,7 @@
     "problems": [
       {
         "code": "SND-SCHED-001",
-        "text": "Service heartbeat failed at 2026-01-01T00:00:00Z",
+        "text": "Service heartbeat failed just now",
         "clause": "service heartbeat failed"
       }
     ],

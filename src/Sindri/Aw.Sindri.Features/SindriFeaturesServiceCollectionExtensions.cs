@@ -28,7 +28,6 @@ using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.Decide;
-using Aw.Sindri.Features.DeferOnyx;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetApproveAllPlan;
 using Aw.Sindri.Features.GetEventCatalog;
@@ -67,11 +66,7 @@ using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
-using Aw.Sindri.Features.OnyxAccount;
-using Aw.Sindri.Features.OnyxDown;
 using Aw.Sindri.Features.OnyxEnsure;
-using Aw.Sindri.Features.OnyxStatus;
-using Aw.Sindri.Features.OnyxUp;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.PingProcess;
@@ -129,11 +124,10 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddRecordServiceRun()
             .AddScoped<IService<CheckProfileRequest, CheckProfileResponse>, CheckProfileService>()
             .AddScoped<IService<ValidateProfileRequest, ValidateProfileResponse>, ValidateProfileService>()
-            .AddPlanSandbox().AddRecordLimitHit().AddEndLearnMode().AddListDenials().AddCheckSandbox()
+            .AddPlanSandbox().AddRecordLimitHit().AddEndLearnMode().AddListDenials().AddAllowDenial().AddCheckSandbox().AddWorkspacePrepare()
             .AddScoped<IService<InitProfileRequest, InitProfileResponse>, InitProfileService>()
             .AddScoped<IService<ScrubRequest, ScrubResponse>, ScrubService>()
             .AddDoctor()
-            .AddOnyxStatus()
             .AddScoped<ServeRecords>()
             .AddScoped<IService<RegisterMcpRequest, RegisterMcpResponse>, RegisterMcpService>()
             .AddScoped<IService<GetRepoStatusRequest, GetRepoStatusResponse>, GetRepoStatusService>()
@@ -164,8 +158,6 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<PauseServiceRequest>, AcceptAllValidator<PauseServiceRequest>>().AddCommand<PauseServiceRequest, CommandAccepted, PauseServiceService>();
         _ = services.AddScoped<IValidator<ResumeServiceRequest>, AcceptAllValidator<ResumeServiceRequest>>().AddCommand<ResumeServiceRequest, CommandAccepted, ResumeServiceService>();
         _ = services.AddRunService();
-        _ = services.AddScoped<IValidator<DeferOnyxRequest>, AcceptAllValidator<DeferOnyxRequest>>().AddCommand<DeferOnyxRequest, DeferOnyxResponse, DeferOnyxService>();
-        _ = services.AddOnyxSetup();
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
         _ = services.AddScoped<IValidator<OpenItemRequest>, OpenItemValidator>().AddCommand<OpenItemRequest, LaunchRequested, OpenItemService>().AddScoped<OpenChecks>().AddSingleton<OpenRequests>().AddScoped<OpenTarget>();
         _ = services.AddScoped<ISessionUsageSampler, SessionUsageSampler>();   // API P10a U11: the 60 s sample of what a live session has used
@@ -174,7 +166,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IValidator<SessionHeartbeatRequest>, AcceptAllValidator<SessionHeartbeatRequest>>().AddIssue<SessionHeartbeatRequest, SessionHeartbeatResponse, SessionHeartbeatService>().AddScoped<IValidator<SessionExitRequest>, AcceptAllValidator<SessionExitRequest>>().AddIssue<SessionExitRequest, SessionExitResponse, SessionExitService>();
         _ = services.AddScoped<IValidator<DecideRequest>, DecideValidator>().AddCommand<DecideRequest, CommandAccepted, DecideService>();
         _ = services.AddScoped<IValidator<FileRequestRequest>, FileRequestValidator>().AddCommand<FileRequestRequest, RequestFiledResponse, FileRequestService>();
-        _ = services.AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>();
+        _ = services.AddProjectCommands().AddScoped<IValidator<CreateItemRequest>, CreateItemValidator>().AddCommand<CreateItemRequest, ItemCreatedResponse, CreateItemService>();
         _ = services.AddScoped<IValidator<RebuildViewsRequest>, AcceptAllValidator<RebuildViewsRequest>>().AddCommand<RebuildViewsRequest, CommandAccepted, RebuildViewsService>();
         _ = services.AddScoped<IValidator<ImportContextMapRequest>, AcceptAllValidator<ImportContextMapRequest>>().AddCommand<ImportContextMapRequest, ImportContextMapResponse, ImportContextMapService>();
         _ = services.AddScoped<IValidator<ApproveProfileRequest>, AcceptAllValidator<ApproveProfileRequest>>().AddCommand<ApproveProfileRequest, ApproveProfileResponse, ApproveProfileService>().AddScoped<ProfileChecks>().AddScoped<Core.Profile.ModelKeyChecks>();
@@ -238,7 +230,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<GetInstanceRequest>, AcceptAllValidator<GetInstanceRequest>>().AddQuery<GetInstanceRequest, InstanceDetail, GetInstanceService>();
         _ = services.AddScoped<InstanceRows>().AddScoped<DetailContexts>().AddScoped<InstanceJoins>();
         _ = services.AddScoped<IValidator<ListInstancesRequest>, AcceptAllValidator<ListInstancesRequest>>().AddQuery<ListInstancesRequest, InstanceList, ListInstancesService>();
-        _ = services.AddScoped<IValidator<GetInstanceEventsRequest>, AcceptAllValidator<GetInstanceEventsRequest>>().AddQuery<GetInstanceEventsRequest, GetInstanceEventsResponse, GetInstanceEventsService>();
+        _ = services.AddScoped<IValidator<GetInstanceEventsRequest>, AcceptAllValidator<GetInstanceEventsRequest>>().AddQuery<GetInstanceEventsRequest, GetInstanceEventsResponse, GetInstanceEventsService>().AddScoped<LimitEndingReader>();
         return services;
     }
 
@@ -246,7 +238,7 @@ public static class SindriFeaturesServiceCollectionExtensions
     private static IServiceCollection AddDoctor(this IServiceCollection services) => services
         .AddScoped<ProfileFacts>()
         .AddScoped<LedgerFacts>().AddScoped<RuntimeFacts>()
-        .AddScoped<OnyxDoctor>().AddScoped<LinearDoctor>()
+        .AddScoped<LinearDoctor>()
         .AddScoped<ContextEngineChecks>()
         .AddScoped<RunDoctorService>()
         .AddScoped<IService<RunDoctorRequest, RunDoctorResponse>>(static sp =>
@@ -255,24 +247,9 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<IDoctorChecks, LauncherDoctorChecks>().AddScoped<IDoctorChecks, AgentTargetDoctor>()   // #1428: `agent:target`
         .AddScoped<IDoctorChecks, PrWatchDoctorChecks>()                                   // PB spec API15: the PR watcher's last run
         .AddScoped<IDoctorChecks, SetupDoctor>()                                           // SO-A6: `setup`, ok when every step is done or skipped
-        .AddScoped<IDoctorChecks, OnyxStackDoctor>()                                       // Onyx P2: `onyx:stack`, after the context rows, only once `onyx up` has run
-        .AddSingleton<OnyxReadiness>()
-        .AddScoped<OnyxDockerWait>()                                                       // `onyx up` waits for a Docker that is starting (scoped: it re-inspects through the scope's OnyxFacts)
-        .AddSingleton<IOnyxUpStep, OnyxFetchStep>()                                         // Onyx P2: the steps of `onyx up`, in this order
-        .AddSingleton<IOnyxUpStep, OnyxConfigStep>()
-        .AddSingleton<IOnyxUpStep, OnyxPullStep>()
-        .AddSingleton<IOnyxUpStep, OnyxStartStep>()
-        .AddScoped<IService<OnyxUpRequest, OnyxUpResponse>, OnyxUpService>()
-        .AddScoped<IManagedOnyx, ManagedOnyx>()                                            // Onyx P4: serve starts a managed Onyx and the needs-you list says when it needs you
-        .AddScoped<IOnyxNotices, OnyxNotices>()
-        .AddScoped<IService<OnyxEnsureRequest, OnyxEnsureResponse>, OnyxEnsureService>()
-        .AddScoped<OnyxKeyMinter>()
-        .AddScoped<OnyxAccountService>().AddScoped<IService<OnyxAccountRequest, OnyxAccountResponse>>(static sp => sp.GetRequiredService<OnyxAccountService>())   // Onyx P3: sign-up hand-off, Sindri's key, the profile section
-        .AddScoped<IService<OnyxDownRequest, OnyxDownResponse>, OnyxDownService>();
+        .AddScoped<IDoctorChecks, Leftovers.OnyxLeftoverDoctor>()                                // #1598: `index:onyx-leftover`, only while an old `onyx up` left something
+        .AddScoped<IManagedOnyx, ManagedOnyx>();                                            // Onyx P4: serve starts a managed Onyx and the needs-you list says when it needs you
 
-    /// <summary>Onyx's status (P1): read-only and in process, like the doctor, but its own slice.</summary>
-    private static IServiceCollection AddOnyxStatus(this IServiceCollection services) => services
-        .AddScoped<IService<OnyxStatusRequest, OnyxStatusResponse>, OnyxStatusService>();
 
     /// <summary>The registry's slices (engine P2): register, approve and revoke (commands), the challenge (an issue), list and show (queries).</summary>
     private static IServiceCollection AddRegistrySlices(this IServiceCollection services)

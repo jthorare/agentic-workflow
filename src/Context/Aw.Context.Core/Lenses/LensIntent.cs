@@ -35,7 +35,7 @@ internal static class LensIntent
             .GroupBy(e => e.From.Value, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal)
             .Select(g => new LensRecord(scope.Nodes[g.Key].Key, scope.Nodes[g.Key].Label, Source(scope.Nodes[g.Key].Key),
                 [.. g.Select(e => e.To).DistinctBy(k => k.Value, StringComparer.Ordinal).OrderBy(k => k.Value, StringComparer.Ordinal)],
-                Results.Trust.Untrusted, CitationState.Unchecked, [], NodeKind.Record))];
+                Results.Trust.Untrusted, CitationState.Unchecked, [], NodeKind.Record) { At = scope.Nodes[g.Key].At })];
 
     internal static List<LensDecision> Decisions(LensScope scope) =>
         [.. scope.IntoScope(EdgeType.Decides).Where(e => scope.Nodes.ContainsKey(e.From.Value))

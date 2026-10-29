@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-01-01T00:00:00.0000000Z",
+  "ready": true,
+  "blockers": [],
+  "mechanism": "bubblewrap",
+  "groups": [
+    "model",
+    "packages",
+    "github"
+  ],
+  "limits": {
+    "memoryMax": "12GiB",
+    "cpuQuota": "400%",
+    "tasksMax": 2048,
+    "wall": "250m"
+  },
+  "login": "owner-copy",
+  "learn": []
+}

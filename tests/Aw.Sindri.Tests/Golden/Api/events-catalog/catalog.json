@@ -193,6 +193,14 @@
       ]
     },
     {
+      "type": "launch.waiting",
+      "keyShape": "launch.waiting:<launchId>",
+      "invalidates": [
+        "launch",
+        "item"
+      ]
+    },
+    {
       "type": "mcp.registered",
       "keyShape": "mcp.registered:<commandId>",
       "invalidates": [
@@ -215,13 +223,6 @@
         "launch",
         "launch-picks",
         "timeline"
-      ]
-    },
-    {
-      "type": "onyx.deferred",
-      "keyShape": "onyx.deferred:<commandId>",
-      "invalidates": [
-        "setup"
       ]
     },
     {
@@ -255,6 +256,34 @@
         "status",
         "profile",
         "needs-you"
+      ]
+    },
+    {
+      "type": "project.attached",
+      "keyShape": "project.attached:<projectId>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.changed",
+      "keyShape": "project.changed:<projectId>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.detached",
+      "keyShape": "project.detached:<projectId>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.hidden",
+      "keyShape": "project.hidden:<linear>:v<version>",
+      "invalidates": [
+        "projects"
       ]
     },
     {

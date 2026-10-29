@@ -16,6 +16,9 @@ public sealed record HostSession(string Name, string WorkDir, IReadOnlyList<stri
     /// <summary>The session's title ('sindri ITM-…'), for a host that shows one; null when not given.</summary>
     public string? Title { get; init; }
 
+    /// <summary>The status line a host that has one shows for this session, with the tmux prefix left as '&lt;prefix&gt;' for the host to fill in (a sandboxed session, sandbox spec §7); null for a session with none.</summary>
+    public string? StatusRight { get; init; }
+
     /// <summary>The catalog agent the launch asked for, for a host that picks its own runtime for it (T3); null when not given.</summary>
     public AgentId? Agent { get; init; }
 }

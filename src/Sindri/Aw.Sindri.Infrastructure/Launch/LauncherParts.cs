@@ -46,6 +46,9 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
     /// <summary>The sandbox step for an unattended launch (sandbox spec §12 SB-5a), or null when there is none: the agent then runs its argv unconfined, as before SB-5a.</summary>
     public ISandboxLaunch? Sandbox { get; init; }
 
+    /// <summary>The host-side prepare of a Step's worktree (sandbox spec §3.8, SB-11), or null when there is none: the Step then starts with whatever its worktree holds.</summary>
+    public IWorkspacePrepare? Prepare { get; init; }
+
     /// <summary>Finds an agent CLI the way the login shell does; null when it doesn't resolve.</summary>
     public Func<string, CancellationToken, ValueTask<string?>> ResolveBin { get; init; } = BinResolver.Resolve;
 }

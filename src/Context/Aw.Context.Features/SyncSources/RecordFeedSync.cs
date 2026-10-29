@@ -22,21 +22,31 @@ internal sealed class RecordFeedSync(IRecordFeedCatalog feeds, IRecordStore stor
     private readonly SyncLocks _locks = new();
     private readonly ConcurrentDictionary<string, (DateTimeOffset At, string? Code)> _outcomes = new(StringComparer.Ordinal);
 
+    /// <summary>The record store the feeds commit into, for the decision pass that reads the stored records.</summary>
+    public IRecordStore OwnedRecords() => store;
+
     /// <summary>The feeds for the repos in scope, in source order.</summary>
     public IReadOnlyList<RecordFeed> For(ContextSettings settings, IReadOnlyList<ContextRepo> repos, Scrubbers scrubbers) =>
         [.. feeds.For(settings, repos, scrubbers).OrderBy(f => f.Source.Value, StringComparer.Ordinal)];
 
-    /// <summary>One tick of a feed; the row carries a feed failure as its code. The tick's end and code are kept for <see cref="LastOutcome"/>.</summary>
-    public async ValueTask<Result<SourceSync>> Run(RecordFeed feed, (Scrubbers Scrubbers, ContextSettings Settings) context, CancellationToken cancellationToken)
+    /// <summary>
+    /// One tick of a feed; the row carries a feed failure as its code. The source's lock covers only the pull (<see cref="RecordSyncRun"/>); its end and code are kept for <see cref="LastOutcome"/>
+    /// right after it. <paramref name="afterTick"/>, when given, runs on the tick's row once the lock is released (the decision pass reads the store only) and returns the row to report.
+    /// </summary>
+    public async ValueTask<Result<SourceSync>> Run(RecordFeed feed, (Scrubbers Scrubbers, ContextSettings Settings) context, Func<SourceSync, ValueTask<SourceSync>>? afterTick, CancellationToken cancellationToken)
     {
-        var row = await Locked(feed.Source, () => new RecordSyncRun(feed, store, (context.Scrubbers, context.Settings.Index), clock).Execute(cancellationToken)).ConfigureAwait(false);
-        if (!row.IsError)
+        var ticked = await Locked(feed.Source, () => new RecordSyncRun(feed, store, (context.Scrubbers, context.Settings.Index), clock).Execute(cancellationToken)).ConfigureAwait(false);
+        if (ticked.IsError)
         {
-            _outcomes[feed.Source.Value] = (clock.GetUtcNow(), row.Value.Code);
+            return ticked;
         }
 
-        return row;
+        Note(feed.Source, ticked.Value.Code);
+        return afterTick is null ? ticked : await afterTick(ticked.Value).ConfigureAwait(false);
     }
+
+    /// <summary>Keeps the end and code of a tick of the source's feed for <see cref="LastOutcome"/>.</summary>
+    public void Note(SourceId source, string? code) => _outcomes[source.Value] = (clock.GetUtcNow(), code);
 
     /// <summary>When this process last finished a tick of the source's feed and the code it ended with; null when it has not.</summary>
     public (DateTimeOffset At, string? Code)? LastOutcome(SourceId source) => _outcomes.TryGetValue(source.Value, out var outcome) ? outcome : null;

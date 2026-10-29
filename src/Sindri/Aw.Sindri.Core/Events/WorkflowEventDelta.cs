@@ -62,5 +62,5 @@ public sealed record WorkflowEventDelta(
     /// <param name="s">The suspension, or none.</param>
     /// <returns>The summary, or none.</returns>
     internal static SuspensionSummary? Summary(Suspension? s) =>
-        s is null ? null : new SuspensionSummary(s.Kind, s.Reason, s.ParkKind, s.Escalation, s.Mirrors?.Value, MirroredParkKind: s.MirroredParkKind, MirroredEscalation: s.MirroredEscalation);
+        s is null ? null : new SuspensionSummary(s.Kind, s.Reason, s.ParkKind, s.Escalation, s.Mirrors?.Value, MirroredParkKind: s.MirroredParkKind, MirroredEscalation: s.MirroredEscalation) { Sandbox = s.Sandbox };
 }

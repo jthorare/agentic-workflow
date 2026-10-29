@@ -223,7 +223,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
     private async ValueTask<LaunchResult> Run(LaunchRequest request, AgentEntry entry, ISessionHost host, Prepared prepared, CancellationToken cancellationToken)
     {
         var name = SessionName(request.Launch);
-        var wrapped = new List<string> { parts.Options.SindriExecutable, "session", "wrap", "--launch", request.Launch.Value, "--" };
+        var wrapped = WrapCommand(request.Launch, prepared.SandboxRunArea);
         wrapped.AddRange(prepared.Argv);
         var source = (entry.Source, entry.ArgvHash ?? string.Empty);
         if (host.Kind == HostKind.None)
@@ -231,7 +231,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             return await RunOnViewer(request, host, (name, prepared.WorkDir, wrapped), (source, prepared.Session, prepared.Sandbox), cancellationToken).ConfigureAwait(false);
         }
 
-        var session = new HostSession(name, prepared.WorkDir, wrapped, prepared.Env) { RepoPath = request.RepoPath, Seed = prepared.Seed, Title = $"sindri {request.Item.Value}", Agent = request.Agent };
+        var session = new HostSession(name, prepared.WorkDir, wrapped, prepared.Env) { RepoPath = request.RepoPath, Seed = prepared.Seed, Title = $"sindri {request.Item.Value}", Agent = request.Agent, StatusRight = prepared.Sandbox is { } sandbox ? SandboxStatusLine.Template(sandbox.Attended) : null };
         var started = await host.Start(session, parts.Options.HostDeadline, cancellationToken).ConfigureAwait(false);
         if (started.IsError)
         {

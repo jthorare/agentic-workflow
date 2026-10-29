@@ -40,6 +40,7 @@ internal static class ApiScenarios
         ["Setup"] = [.. SetupScenarios.All, .. SetupRepoScenarios.All],
         ["Recipes"] = [.. ApproveAllScenarios.All, .. RecipeApprovedVersionScenarios.All],
         ["CodeIndex"] = CodeIndexScenarios.All,
+        ["Sandbox"] = SandboxScenarios.All,
     };
 
     /// <summary>Every (route slug, scenario) pair, group by group.</summary>
@@ -64,7 +65,9 @@ internal static class ApiScenarios
 
     /// <summary>The last hosts of <see cref="Start"/>: the launch, approve-all, item-scope and wrapped-session ones, else the plain golden host.</summary>
     private static async Task<GoldenHost> StartLaunchOrLater(string slug, string scenario, CancellationToken ct) =>
-        LaunchScenarios.Handles(slug, scenario)
+        SandboxScenarios.Handles(slug, scenario)
+            ? await SandboxScenarios.Start(slug, scenario, ct)
+            : LaunchScenarios.Handles(slug, scenario)
             ? await LaunchScenarios.Start(scenario, ct)
             : ApproveAllScenarios.Handles(slug, scenario)
             ? await ApproveAllScenarios.Start(scenario, ct)
@@ -72,6 +75,8 @@ internal static class ApiScenarios
             ? await ItemScopeScenarios.Start(ct)
             : WrapSessionScenarios.Handles(slug, scenario)
             ? await GoldenHost.Start(temporary: true, ct, ItemScenarios.ProfileYaml)
+            : SessionScenarios.NeedsCgroup(slug, scenario)
+            ? await SessionScenarios.Start(ct)
             : await GoldenHost.Start(temporary: !NeedsNonTemporaryHome(slug, scenario), ct, ProfileYaml(slug, scenario));
 
     /// <summary>Whether the scenario is a setup one (the steps, or adding a repo).</summary>
@@ -143,6 +148,7 @@ internal static class ApiScenarios
         : SetupRepoScenarios.Handles(slug, scenario) ? () => SetupRepoScenarios.Body(host, slug, scenario)
         : SessionScenarios.Handles(slug, scenario) ? () => SessionScenarios.Body(host, slug, scenario, ct)
         : WrapSessionScenarios.Handles(slug, scenario) ? () => WrapSessionScenarios.Body(host, slug, scenario, ct)
+        : SandboxScenarios.Handles(slug, scenario) ? () => SandboxScenarios.Body(host, slug, scenario, ct)
         : null;
 
 

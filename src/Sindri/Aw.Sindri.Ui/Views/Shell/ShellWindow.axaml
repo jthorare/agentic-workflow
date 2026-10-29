@@ -199,22 +199,60 @@
             <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}">
               <Panel x:Name="PageContent" Classes="page-content" Classes.edge="{Binding IsEdgeTabShown}">
                 <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHomeShown}" />
-                <Panel IsVisible="{Binding IsWorkflows}"><wfv:WorkflowsPage x:Name="WorkflowsPage" DataContext="{Binding Workflows}" /></Panel>
-                <queue:QueuePage x:Name="QueuePage" IsVisible="{Binding IsWork}" />
-                <Panel IsVisible="{Binding IsRecipes}"><rv:RecipesPage x:Name="RecipesPage" DataContext="{Binding RecipesPage}" /></Panel>
-                <Panel IsVisible="{Binding IsContext}"><ctxv:ContextPage x:Name="ContextPage" DataContext="{Binding Context}" /></Panel>
-                <Panel IsVisible="{Binding IsAgents}"><agv:AgentsPage x:Name="AgentsPage" DataContext="{Binding Agents}" /></Panel>
+                <Panel IsVisible="{Binding IsWorkflows}">
+                  <controls:Deferred DataContext="{Binding Workflows}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><wfv:WorkflowsPage x:Name="WorkflowsPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <controls:Deferred IsVisible="{Binding IsWork}">
+                  <controls:Deferred.Template>
+                    <DataTemplate><queue:QueuePage x:Name="QueuePage" /></DataTemplate>
+                  </controls:Deferred.Template>
+                </controls:Deferred>
+                <Panel IsVisible="{Binding IsRecipes}">
+                  <controls:Deferred DataContext="{Binding RecipesPage}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><rv:RecipesPage x:Name="RecipesPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <Panel IsVisible="{Binding IsContext}">
+                  <controls:Deferred DataContext="{Binding Context}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><ctxv:ContextPage x:Name="ContextPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
+                <Panel IsVisible="{Binding IsAgents}">
+                  <controls:Deferred DataContext="{Binding Agents}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><agv:AgentsPage x:Name="AgentsPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
                 <!-- System hosts the control plane's health until U12 builds the rest (screens spec §4.6). -->
                 <Panel IsVisible="{Binding IsSystem}">
                   <StackPanel Spacing="{StaticResource Size.PanelGap}">
-                    <views:HealthPage x:Name="HealthPage" DataContext="{Binding Health}" />
+                    <controls:Deferred DataContext="{Binding Health}">
+                      <controls:Deferred.Template>
+                        <DataTemplate><views:HealthPage x:Name="HealthPage" /></DataTemplate>
+                      </controls:Deferred.Template>
+                    </controls:Deferred>
                     <!-- Jobs is not a tab: System leads to it (G J and the palette too). -->
                     <Button x:Name="JobsLink" Classes="row-title" Click="OnJobsLink" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Text.JobsLinkName}">
                       <TextBlock Classes="body" Text="{Binding Text.JobsLink}" AutomationProperties.AccessibilityView="Raw" />
                     </Button>
                   </StackPanel>
                 </Panel>
-                <Panel IsVisible="{Binding IsJobs}"><jv:JobsPage x:Name="JobsPage" DataContext="{Binding Jobs}" /></Panel>
+                <Panel IsVisible="{Binding IsJobs}">
+                  <controls:Deferred DataContext="{Binding Jobs}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><jv:JobsPage x:Name="JobsPage" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </Panel>
                 <!-- Settings (⌘,): SindriApp puts Settings' view here at start-up; the placeholder shows where nothing does (view tests). -->
                 <ContentControl x:Name="SettingsSlot" IsVisible="{Binding IsSettings}">
                   <views:PlaceholderPage x:Name="SettingsPlaceholder" Title="{Binding Text.Settings}" />
@@ -223,11 +261,19 @@
             </ScrollViewer>
             <!-- The Needs-you inbox (F3 needs-you spec §2): over Home's panels while Home stays the page; it scrolls its own list and card, so it sits beside the pages' scroller. -->
             <Panel x:Name="NeedsYouInboxLayer" IsVisible="{Binding IsInboxShown}">
-              <ny:NeedsYouPage x:Name="NeedsYouInboxPage" DataContext="{Binding Inbox}" />
+              <controls:Deferred DataContext="{Binding Inbox}">
+                <controls:Deferred.Template>
+                  <DataTemplate><ny:NeedsYouPage x:Name="NeedsYouInboxPage" /></DataTemplate>
+                </controls:Deferred.Template>
+              </controls:Deferred>
             </Panel>
             <!-- A line run (F3 run canvas): its canvas over the Workflows page, in place of the detail sheet. -->
             <Panel x:Name="RunPageLayer" IsVisible="{Binding IsRunPageShown}">
-              <runv:RunPage x:Name="RunPageView" DataContext="{Binding RunPage}" />
+              <controls:Deferred DataContext="{Binding RunPage}">
+                <controls:Deferred.Template>
+                  <DataTemplate><runv:RunPage x:Name="RunPageView" /></DataTemplate>
+                </controls:Deferred.Template>
+              </controls:Deferred>
             </Panel>
           </Panel>
         </Border>
@@ -277,31 +323,59 @@
                            AutomationProperties.Name="{Binding Text.NotServedYet}" />
                 <!-- U2's item sheet (kind: Item). -->
                 <ScrollViewer x:Name="ItemSheetScroll" IsVisible="{Binding IsItemSheet}">
-                  <item:ItemSheet x:Name="ItemSheet" DataContext="{Binding Item}" />
+                  <controls:Deferred DataContext="{Binding Item}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><item:ItemSheet x:Name="ItemSheet" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </ScrollViewer>
                 <!-- U3' T9: a Needs-you row's sheet (kind: NeedsYou); the decision sheet is kind Decision (T6). -->
                 <ScrollViewer x:Name="NeedsYouSheetScroll" IsVisible="{Binding IsNeedsYouSheet}">
-                  <ny:NeedsYouSheet x:Name="NeedsYouSheet" DataContext="{Binding NeedsYou.SheetRow}" />
+                  <controls:Deferred DataContext="{Binding NeedsYou.SheetRow}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><ny:NeedsYouSheet x:Name="NeedsYouSheet" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </ScrollViewer>
                 <ScrollViewer x:Name="DecisionSheetScroll" IsVisible="{Binding IsDecisionSheet}">
-                  <ny:DecisionSheet x:Name="DecisionSheet" DataContext="{Binding Decision}" />
+                  <controls:Deferred DataContext="{Binding Decision}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><ny:DecisionSheet x:Name="DecisionSheet" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </ScrollViewer>
                 <!-- LANE ANCHOR U3': the sheet content for the kinds U3' claims (kinds: NeedsYou, Decision). Insert immediately above this marker, never between the markers. -->
                 <!-- LANE ANCHOR U8: the sheet content for the kinds U8 claims (kinds: Workflow); the item sheet's re-base (U8b) is content only. Insert immediately below this marker, never between the markers. -->
                 <ScrollViewer x:Name="InstanceSheetScroll" IsVisible="{Binding IsInstanceSheet}">
-                  <iv:InstanceFrameView x:Name="InstanceSheetFrame" DataContext="{Binding Instance}" />
+                  <controls:Deferred DataContext="{Binding Instance}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><iv:InstanceFrameView x:Name="InstanceSheetFrame" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </ScrollViewer>
                 <!-- LANE ANCHOR U10: the sheet content for the kinds U10 claims (kinds: Recipe). System, Service and Job are claimed later, at this switch, by the phase that renders them (screens spec §8). Insert immediately below this marker, never between the markers. -->
                 <ScrollViewer x:Name="RecipeSheetScroll" IsVisible="{Binding IsRecipeSheet}">
-                  <rv:RecipeSheetView x:Name="RecipeSheetContent" DataContext="{Binding Recipe}" />
+                  <controls:Deferred DataContext="{Binding Recipe}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><rv:RecipeSheetView x:Name="RecipeSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </ScrollViewer>
                 <!-- LANE ANCHOR U9: the sheet content for the kinds U9 claims (kinds: Node), the node card of the Context page. Insert immediately below this marker, never between the markers. -->
                 <!-- LANE ANCHOR U11a: the sheet content for the kinds U11a claims (kinds: Session), the session sheet. Insert immediately below this marker, never between the markers. -->
                 <ScrollViewer x:Name="JobSheetScroll" IsVisible="{Binding IsJobSheet}">
-                  <jv:JobSheetView x:Name="JobSheetContent" DataContext="{Binding JobSheet}" />
+                  <controls:Deferred DataContext="{Binding JobSheet}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><jv:JobSheetView x:Name="JobSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </ScrollViewer>
                 <ScrollViewer x:Name="SessionSheetScroll" IsVisible="{Binding IsSessionSheet}">
-                  <agv:SessionSheetView x:Name="SessionSheetContent" DataContext="{Binding AgentSheet}" />
+                  <controls:Deferred DataContext="{Binding AgentSheet}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><agv:SessionSheetView x:Name="SessionSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
                 </ScrollViewer>
               </Panel>
             </DockPanel>
@@ -349,19 +423,39 @@
                Width="0" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left" VerticalAlignment="Top" />
     <!-- The palette and the ? sheet (§8): layers over everything, shown by their view models; Esc closes the topmost. -->
     <Panel x:Name="PaletteLayer" IsVisible="{Binding Palette.IsOpen}">
-      <root:CommandPalette x:Name="CommandPalette" DataContext="{Binding Palette}" />
+      <controls:Deferred DataContext="{Binding Palette}">
+        <controls:Deferred.Template>
+          <DataTemplate><root:CommandPalette x:Name="CommandPalette" /></DataTemplate>
+        </controls:Deferred.Template>
+      </controls:Deferred>
     </Panel>
     <Panel x:Name="CreateLayer" IsVisible="{Binding Create.IsOpen}">
-      <item:CreateItemDialog x:Name="CreateItemDialog" DataContext="{Binding Create}" />
+      <controls:Deferred DataContext="{Binding Create}">
+        <controls:Deferred.Template>
+          <DataTemplate><item:CreateItemDialog x:Name="CreateItemDialog" /></DataTemplate>
+        </controls:Deferred.Template>
+      </controls:Deferred>
     </Panel>
     <Panel x:Name="StartLayer" IsVisible="{Binding Start.IsOpen}">
-      <startv:StartDialog x:Name="StartDialog" DataContext="{Binding Start}" />
+      <controls:Deferred DataContext="{Binding Start}">
+        <controls:Deferred.Template>
+          <DataTemplate><startv:StartDialog x:Name="StartDialog" /></DataTemplate>
+        </controls:Deferred.Template>
+      </controls:Deferred>
     </Panel>
     <Panel x:Name="ApproveAllLayer" IsVisible="{Binding ApproveAll.IsOpen}">
-      <apv:ApproveAllDialog x:Name="ApproveAllDialog" DataContext="{Binding ApproveAll}" />
+      <controls:Deferred DataContext="{Binding ApproveAll}">
+        <controls:Deferred.Template>
+          <DataTemplate><apv:ApproveAllDialog x:Name="ApproveAllDialog" /></DataTemplate>
+        </controls:Deferred.Template>
+      </controls:Deferred>
     </Panel>
     <Panel x:Name="ShortcutsLayer" IsVisible="{Binding Shortcuts.IsOpen}">
-      <root:ShortcutsSheet x:Name="ShortcutsSheet" DataContext="{Binding Shortcuts}" />
+      <controls:Deferred DataContext="{Binding Shortcuts}">
+        <controls:Deferred.Template>
+          <DataTemplate><root:ShortcutsSheet x:Name="ShortcutsSheet" /></DataTemplate>
+        </controls:Deferred.Template>
+      </controls:Deferred>
     </Panel>
   </Panel>
 </Window>

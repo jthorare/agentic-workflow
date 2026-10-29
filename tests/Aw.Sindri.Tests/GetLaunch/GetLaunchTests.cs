@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Features.GetLaunch;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.ListSessions;
 using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.GetLaunch;
@@ -65,6 +66,32 @@ public sealed class GetLaunchTests
 
         Expect.Equal((LaunchState.Failed, "SND-LAUNCH-009", LaunchStage.Host), (view.State, view.Code, view.Stage));
         Assert.NotNull(view.Detail);
+    }
+
+    [Fact]
+    public async Task A_sandboxed_launch_carries_its_sandbox_summary()
+    {
+        await _v.Item(repo: null);
+        await _v.Request();
+        await _v.Start(sandbox: SandboxData.Summary());
+        using var entered = Human();
+
+        var view = (await Service().Handle(A.GetLaunchRequest().Build(), Token)).Value;
+
+        SandboxData.AssertIsSummary(view.Sandbox);
+    }
+
+    [Fact]
+    public async Task An_unsandboxed_launch_has_no_sandbox_summary()
+    {
+        await _v.Item(repo: null);
+        await _v.Request();
+        await _v.Start();
+        using var entered = Human();
+
+        var view = (await Service().Handle(A.GetLaunchRequest().Build(), Token)).Value;
+
+        Assert.Null(view.Sandbox);
     }
 
     [Fact]

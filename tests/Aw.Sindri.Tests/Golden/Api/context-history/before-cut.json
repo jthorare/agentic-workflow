@@ -288,10 +288,10 @@
         "asOf": "2026-01-01T00:00:00.0000000Z"
       },
       {
-        "id": "onyx",
-        "state": "not-configured",
-        "reason": "not-configured",
-        "code": null,
+        "id": "repo-docs",
+        "state": "unavailable",
+        "reason": "not-synced",
+        "code": "SND-CONTEXT-161",
         "asOf": null
       },
       {

@@ -125,14 +125,14 @@ public sealed class LensesAtVersionTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Searched_says_the_map_is_ok_the_unconfigured_intent_source_so_and_the_code_index_unavailable()
+    public async Task Searched_says_the_map_is_ok_an_unconfigured_onyx_has_no_row_and_the_code_index_unavailable()
     {
         _ = await _world.ImportYaml(MapWorld.TabsMap);
 
         var view = (await Set([Manager, Groups])).Value;
 
-        var onyx = Assert.Single(view.Searched.Sources, s => s.Id.Value == "onyx");
-        Assert.Equal((SearchedState.NotConfigured, "not-configured"), (onyx.State, onyx.Reason));
+        Assert.Equal(["map", "code-index"], [.. view.Searched.Sources.Select(s => s.Id.Value)], StringComparer.Ordinal);
+        Assert.DoesNotContain(view.Searched.Sources, s => s.Id.Value == "onyx");
         var index = Assert.Single(view.Searched.Sources, s => s.Id.Value == "code-index");
         Assert.Equal((SearchedState.Unavailable, "index-not-built"), (index.State, index.Reason));
         Assert.Equal(SearchedState.Ok, Assert.Single(view.Searched.Sources, s => s.Id.Value == "map").State);

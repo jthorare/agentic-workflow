@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Sindri.Core.Onyx;
 
 namespace Aw.Sindri.Core.Setup;
 
@@ -14,8 +13,7 @@ public static class SetupSteps
     private const string RecipesTitle = "Approve the workflows";
     private const string McpTitle = "Connect your agents";
     private const string MapTitle = "Build the map";
-    private const string OnyxTitle = "Set up Onyx";
-    private const string DockerLink = "https://docs.docker.com/get-docker/";
+    private const string SourcesTitle = "Connect your sources";
 
     /// <summary>The repo step: the owner's until the profile names a repo.</summary>
     /// <param name="fact">The repos.</param>
@@ -127,57 +125,22 @@ public static class SetupSteps
         return step with { Items = fact.Items.Lines };
     }
 
-    /// <summary>The Onyx step: done when the pinned Onyx answers; skipped when this machine can't run it (no Docker, or a failed check); failed when it runs and doesn't answer or Docker can't be asked.</summary>
-    /// <param name="fact">Where Onyx stands.</param>
+    /// <summary>The sources step: done when every github, slack or linear source the profile names has its token and at least one is named; otherwise the human's, with `sindri index connect`.</summary>
+    /// <param name="fact">Where the sources stand.</param>
     /// <returns>The step.</returns>
-    public static SetupStep Onyx(OnyxFact fact)
+    public static SetupStep Sources(SourcesFact fact)
     {
         ArgumentNullException.ThrowIfNull(fact);
-        if (OnyxJobStep(fact) is { } job)
+        var missing = fact.Items.Lines.Where(static i => i.State != SetupState.Done).Select(static i => SourceName(i.Repo)).ToList();
+        if (fact.Items.Lines.Count == 0)
         {
-            return job;
+            return new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, "No source is connected yet.", "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.", Error: null, SetupActions.ConnectIndexSource, Progress: null);
         }
 
-        if (fact.State == OnyxState.Running)
-        {
-            return fact.Unreachable
-                ? new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Failed, OnyxSentence("SND-ONYX-005"), Detail: null, new SetupError("SND-ONYX-005", OnyxSentence("SND-ONYX-005")), Action: null, Progress: null)
-                : new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Done, "Onyx is running and Sindri can search it.", "Onyx is up and answering.", Error: null, Action: null, Progress: null);
-        }
-
-        if (fact.State == OnyxState.Unknown && fact.BlockedByCode is null)
-        {
-            // Every preflight check passed, yet Docker could not say whether Onyx runs: that is a failed read, not a missing Docker.
-            return new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Failed, "Sindri couldn't ask Docker about Onyx.", Detail: null, new SetupError("SND-ONYX-011", "Sindri couldn't ask Docker about Onyx."), Action: null, Progress: null);
-        }
-
-        if (fact.BlockedByCode is not null)
-        {
-            var code = fact.BlockedByCode;
-            return code == "SND-ONYX-001"
-                ? new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Skipped, "Docker isn't installed.", "Install Docker to set up Onyx: " + DockerLink, Error: null, Action: null, Progress: null)
-                : new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Skipped, OnyxSentence(code), "Fix that and Sindri will offer Onyx again.", Error: null, Action: null, Progress: null);
-        }
-
-        if (fact.Deferred)
-        {
-            return new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Skipped, "You chose to set up Onyx later.", "Onyx isn't set up. Use Set up Onyx in the card's menu when you want search.", Error: null, SetupActions.SetupOnyx, Progress: null);
-        }
-
-        return new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Todo, "Docker is ready. Set up Onyx when you want search.",
-            fact.State == OnyxState.Stopped ? "Onyx is set up but stopped." : "Onyx isn't set up yet.", Error: null, SetupActions.SetupOnyx, Progress: null);
+        return missing.Count == 0
+            ? new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Done, "Every source your profile names is connected.", string.Join(", ", fact.Items.Lines.Select(static i => SourceName(i.Repo))) + ".", Error: null, Action: null, Progress: null) { Items = fact.Items.Lines }
+            : new SetupStep(SetupStepId.Sources, SourcesTitle, SetupState.Todo, string.Join(" and ", missing) + (missing.Count == 1 ? " needs" : " need") + " a token.", Detail: null, Error: null, SetupActions.ConnectIndexSource, Progress: null) { Items = fact.Items.Lines };
     }
-
-    // The Onyx setup job's own states win over what Docker shows: the stack is up while the job still waits for the owner's login, and that is not "done".
-    private static SetupStep? OnyxJobStep(OnyxFact fact) => fact.Job switch
-    {
-        OnyxJobPhase.Working => new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Running, "Sindri is setting up Onyx.", fact.JobLine ?? "Starting Onyx.", Error: null, Action: null, Progress: null),
-        OnyxJobPhase.WaitingForLogin => new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.NeedsYou, "Create your Onyx account in the browser, then enter your login here.",
-            "Sign up at " + OnyxSetupJob.SignupUrl(fact.Port), Error: null, SetupActions.ConnectOnyx, Progress: null),
-        OnyxJobPhase.Failed when fact.JobFailure is { } failure => new SetupStep(SetupStepId.Onyx, OnyxTitle, SetupState.Failed, failure.Sentence, Detail: null, new SetupError(failure.Code, failure.Sentence), SetupActions.SetupOnyx, Progress: null),
-        OnyxJobPhase.None or OnyxJobPhase.Failed => null,
-        _ => null,
-    };
 
     /// <summary>The step for a source that couldn't be read: failed, with one plain sentence and the error's code.</summary>
     /// <param name="id">Which step.</param>
@@ -193,7 +156,7 @@ public static class SetupSteps
             SetupStepId.Recipes => (RecipesTitle, "Sindri couldn't read the list of workflows."),
             SetupStepId.Mcp => (McpTitle, "Sindri couldn't check whether your agent knows where it is."),
             SetupStepId.Map => (MapTitle, "Sindri couldn't read the state of the map."),
-            SetupStepId.Onyx => (OnyxTitle, "Sindri couldn't check on Onyx."),
+            SetupStepId.Sources => (SourcesTitle, "Sindri couldn't read which sources your profile names."),
             _ => throw new ArgumentOutOfRangeException(nameof(id), id, "Not a setup step"),
         };
         return Failed(id, title, new SetupError(code, sentence));
@@ -210,15 +173,12 @@ public static class SetupSteps
 
     private static string Names(SetupItems items, string fallback) => items.Lines.Count == 0 ? fallback : string.Join(", ", items.Lines.Select(static i => i.Repo));
 
-    private static string OnyxSentence(string code) => code switch
+    private static string SourceName(string source) => source switch
     {
-        "SND-ONYX-001" => "Docker isn't installed or isn't running, and Onyx runs in Docker.",
-        "SND-ONYX-002" => "Docker Compose isn't available, and Onyx needs it.",
-        "SND-ONYX-003" => "There isn't enough free memory or disk space to run Onyx.",
-        "SND-ONYX-005" => "Onyx is running but isn't answering.",
-        "SND-ONYX-006" => "The port Onyx needs is taken by something else.",
-        "SND-ONYX-010" => "Docker points at another machine, and Sindri only runs Onyx on this one.",
-        _ => "Onyx can't be set up on this machine right now.",
+        "github" => "GitHub",
+        "slack" => "Slack",
+        "linear" => "Linear",
+        _ => source,
     };
 
     private static string Counted(int count, string one, string many) => string.Create(CultureInfo.InvariantCulture, $"{count} {(count == 1 ? one : many)}");

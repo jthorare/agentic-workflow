@@ -2,6 +2,7 @@ using System.Net;
 using System.Text;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.GetSession;
 using Aw.Sindri.Features.ListSessions;
@@ -39,6 +40,41 @@ public sealed class CliAgentsTests : IDisposable
         new(new ControlPlaneClient(probe, SliceHarness.Json,
             CallerHeaders.For(new AgentSession(Terminal: true, Prover: false), InMemoryHumanTokenStore.WithToken(), _ => ValueTask.FromResult((Core.Ids.RepoName?)null)), handler: api),
             new Output(_out, _error, SliceHarness.Json));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Agents_prints_sandboxed_and_the_memory_in_use_against_the_limit_on_a_sandboxed_row()
+    {
+        var step = Row(SessionsRig.Claude(), "Claude Code") with { Sandbox = SandboxData.Reading() };
+        var attended = Row(SessionsRig.Codex(), "Codex") with { Sandbox = SandboxData.Reading(attended: true) };
+        var api = new Api(HttpStatusCode.OK, Body(ListOf([step, attended])));
+
+        _ = await Verbs(_up, api).Run([], Token);
+
+        var lines = _out.ToString().ReplaceLineEndings("\n").Split('\n');
+        Assert.EndsWith("  sandboxed · mem 2.1/12 GiB", lines[1], StringComparison.Ordinal);
+        Assert.EndsWith("  sandboxed · attended · mem 2.1/12 GiB", lines[2], StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Agents_prints_details_unavailable_for_a_sandbox_whose_plan_does_not_read()
+    {
+        var row = Row(SessionsRig.Claude(), "Claude Code") with { Sandbox = new SessionSandbox(SessionSandboxState.Unavailable, Attended: false, Folder: null, Memory: null) };
+        var api = new Api(HttpStatusCode.OK, Body(ListOf([row])));
+
+        _ = await Verbs(_up, api).Run([], Token);
+
+        Assert.Contains("  sandboxed · details unavailable", _out.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Agents_prints_nothing_about_the_sandbox_on_a_row_without_one()
+    {
+        var api = new Api(HttpStatusCode.OK, Body(ListOf([Row(SessionsRig.Claude(), "Claude Code")])));
+
+        _ = await Verbs(_up, api).Run([], Token);
+
+        Assert.DoesNotContain("sandboxed", _out.ToString(), StringComparison.Ordinal);
+    }
 
     [Fact, Trait("Lane", "unit")]
     public async Task Agents_cli_exits_1_when_serve_is_down()

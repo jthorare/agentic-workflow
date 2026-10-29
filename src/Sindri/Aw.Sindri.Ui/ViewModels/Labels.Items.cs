@@ -160,6 +160,12 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string Cleared(string id) => id + " cleared";
 
+    /// <summary>The decision sheet's title when the request has neither a title nor a question.</summary>
+    internal const string DecisionHeadingFallback = "Decision";
+
+    /// <summary>The decision sheet's line when its row left the list and the decided list serves no words for it.</summary>
+    internal const string DecisionClearedFallback = "This decision was cleared";
+
     /// <summary>The two together, when "N new" and "cleared" come in one refresh: one sentence, spoken once.</summary>
     /// <param name="newRows">The pill's words.</param>
     /// <param name="id">The cleared row's id.</param>

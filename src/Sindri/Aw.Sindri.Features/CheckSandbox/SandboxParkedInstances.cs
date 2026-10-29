@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Desk;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
@@ -12,7 +13,8 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// </summary>
 /// <param name="instances">The open instances.</param>
 /// <param name="reader">Reads one instance.</param>
-internal sealed class SandboxParkedInstances(IWorkflowInstances instances, IInstanceReader reader) : ISandboxParks
+/// <param name="views">The items view, for the title of the item a park runs for; null leaves the title off.</param>
+internal sealed class SandboxParkedInstances(IWorkflowInstances instances, IInstanceReader reader, IViewReader? views = null) : ISandboxParks
 {
     private const string LaunchCode = "SND-LAUNCH-";
 
@@ -35,11 +37,24 @@ internal sealed class SandboxParkedInstances(IWorkflowInstances instances, IInst
             var view = await reader.Get(address, cancellationToken).ConfigureAwait(false);
             if (view.IsSuccess && view.Value.Question is { Kind: SuspensionKind.Park } question && OnSandbox(question))
             {
-                found.Add(new ParkedOnSandbox(view.Value.Id, view.Value.Since));
+                var item = address.Value.Split('/', 2)[0];
+                found.Add(new ParkedOnSandbox(view.Value.Id, view.Value.Since, item, await TitleOf(item, cancellationToken).ConfigureAwait(false)));
             }
         }
 
         return found;
+    }
+
+    /// <summary>The item's title, or null when the items view is unavailable or has no such item: a park is listed either way.</summary>
+    private async ValueTask<string?> TitleOf(string item, CancellationToken cancellationToken)
+    {
+        if (views is null)
+        {
+            return null;
+        }
+
+        var row = await views.Get<ItemRow>(ViewNames.Items, item, cancellationToken).ConfigureAwait(false);
+        return row.IsSuccess ? row.Value?.Title : null;
     }
 
     /// <summary>

@@ -126,7 +126,7 @@ internal sealed partial class ShellWindow
     {
         if (Shell?.IsNeedsYouInbox == true)
         {
-            if (!this.Get<NeedsYouPage>("NeedsYouInboxPage").FocusRow(rowId))
+            if (Built<NeedsYouPage>("NeedsYouInboxPage")?.FocusRow(rowId) != true)
             {
                 KeepFocus();   // the row is not drawn: focus still goes somewhere
             }

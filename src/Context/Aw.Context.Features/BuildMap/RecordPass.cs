@@ -26,10 +26,9 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
     private readonly Dictionary<(string Repo, string Name), IReadOnlyList<(string Repo, string Path)>> _symbolFiles = [];
     private int _notSynced;
     private int _older;
-    private int _removedTouches;
-    private int _overCap;
-    private int _overCapPaths;
+    private int _removedTouches, _overCap, _overCapPaths;
     private readonly List<RolledRecord> _overflow = [];
+    private readonly List<RolledRecord> _underCap = [];
 
     /// <summary>Reads the docs, then the tracker records.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
@@ -64,7 +63,7 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
             [.. _nodes.Values.OrderBy(n => n.Key.Value, StringComparer.Ordinal)],
             [.. _edges.Values.OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.To.Value, StringComparer.Ordinal)]);
         var (notes, degraded) = Notes(stamp);
-        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
+        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)], UnderCap = [.. _underCap.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
     }
 
     private async ValueTask<Error?> Docs(MapRepoFiles repo, CancellationToken cancellationToken)
@@ -229,17 +228,19 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
         }
     }
 
-    // A record's file edges, from everything it touched, cited or defined: past TouchCap (counted by (repo, path), so one relative path in two repos is two) it gets none, is counted, and is handed on to roll up to features once the homes are known.
+    // A record's file edges, from everything it touched, cited or defined: past TouchCap (counted by (repo, path), so one relative path in two repos is two) it gets none, is counted, and is handed on to roll up to features once the homes are known. A record under the cap keeps its file edges and is handed on too, to roll up beside them.
     private int Emit(RecordKey evidence, GraphNode node, HashSet<(string Repo, string Path)> targets)
     {
+        var rolled = new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]);
         if (targets.Count > MapRecordSources.TouchCap)
         {
             _overCap++;
             _overCapPaths += targets.Count;
-            _overflow.Add(new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]));
+            _overflow.Add(rolled);
             return 0;
         }
 
+        _underCap.AddRange(targets.Count > 0 ? [rolled] : []);
         return targets.OrderBy(t => t.Path, StringComparer.Ordinal).ThenBy(t => t.Repo, StringComparer.Ordinal).Count(t => AddCode(node.Key, t.Path, evidence));
     }
 

@@ -1,0 +1,50 @@
+{
+  "session": {
+    "ref": "cursor/pid-333-100",
+    "provider": "cursor",
+    "providerLabel": "Cursor",
+    "id": "pid-333-100",
+    "idKnown": false,
+    "state": "idle",
+    "asking": null,
+    "stateSource": "record",
+    "estimated": false,
+    "repo": null,
+    "worktree": null,
+    "host": {
+      "kind": "unknown",
+      "label": "unknown",
+      "socketKind": null,
+      "attachedClients": null,
+      "terminal": null,
+      "session": null,
+      "pane": null,
+      "socket": null
+    },
+    "lane": null,
+    "launchId": "LCH-00000000000000000000000000000001",
+    "startedAt": null,
+    "since": "2026-10-16T12:02:00.0000000Z",
+    "focus": {
+      "method": "none",
+      "possible": false,
+      "why": "not-built"
+    },
+    "title": null,
+    "launch": {
+      "instance": "ITM-00000000000000000000000000000001/step/1",
+      "state": "build",
+      "attempt": 2
+    },
+    "pid": 333,
+    "sandbox": {
+      "state": "unavailable",
+      "attended": false,
+      "folder": null,
+      "memory": null
+    }
+  },
+  "cwd": null,
+  "stateHistory": [],
+  "asOf": "2026-10-16T12:05:00.0000000Z"
+}

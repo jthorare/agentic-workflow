@@ -72,6 +72,7 @@ public sealed class SandboxGithubShimsTests : IDisposable
         Assert.Equal(1, code);
         Assert.Equal(string.Empty, output);
         Assert.Contains("the GitHub token is not available", error, StringComparison.Ordinal);
+        Assert.Contains(SandboxStatusLine.Refusal, error, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -120,7 +121,7 @@ public sealed class SandboxGithubShimsTests : IDisposable
         Assert.Equal(allowed ? 0 : 1, code);
         if (!allowed)
         {
-            Assert.Equal($"git push to {remoteRef} is not allowed in this Step: only the run branch refs/heads/{Namespace} can be pushed.\n", error);
+            Assert.Equal($"git push to {remoteRef} is not allowed in this Step: only the run branch refs/heads/{Namespace} can be pushed. {SandboxStatusLine.Refusal}\n", error);
         }
     }
 
@@ -149,6 +150,7 @@ public sealed class SandboxGithubShimsTests : IDisposable
         Assert.Null(RunAreaPreparer.Prepare(plan));
 
         Assert.Contains("git push is not available in a sandboxed session", File.ReadAllText(other.Root + "/area/githooks/pre-push"), StringComparison.Ordinal);
+        Assert.Contains(SandboxStatusLine.Refusal, File.ReadAllText(other.Root + "/area/githooks/pre-push"), StringComparison.Ordinal);
         Assert.False(File.Exists(other.Root + "/area/shims/gh"));
         Assert.False(File.Exists(other.Root + "/area/shims/" + SandboxShims.CredentialHelperName));
     }

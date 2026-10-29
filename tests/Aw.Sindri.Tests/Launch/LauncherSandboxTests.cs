@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Launch;
@@ -55,6 +56,22 @@ public sealed class LauncherSandboxTests : IDisposable
         Expect.Equal("/sessions/home/launch.secret", session.Env["AW_SINDRI_LAUNCH_SECRET_FILE"]);
         Expect.Equal(1, _sandbox.Prepared.Count);
         Expect.True(_sandbox.Prepared[0].Argv.SequenceEqual(session.Argv.Skip(at + 2), StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_sandboxed_step_asks_its_host_for_the_step_status_line()
+    {
+        _ = await Make(_sandbox).Launch(Step(), CancellationToken.None);
+
+        Expect.Equal(SandboxStatusLine.Template(attended: false), _host.Started[0].StatusRight);
+    }
+
+    [Fact]
+    public async Task An_unsandboxed_session_asks_for_no_status_line()
+    {
+        _ = await Make(sandbox: null).Launch(Step(), CancellationToken.None);
+
+        Expect.True(_host.Started[0].StatusRight is null);
     }
 
     [Fact]

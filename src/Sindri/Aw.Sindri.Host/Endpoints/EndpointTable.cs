@@ -62,6 +62,7 @@ internal static class EndpointTable
     private static RouteGroupBuilder MapSandboxQueries(RouteGroupBuilder queries)
     {
         _ = queries.MapCheckSandbox();
+        _ = queries.MapGetSandboxStatus();
         _ = queries.MapListDenials();
         return queries;
     }
@@ -128,10 +129,8 @@ internal static class EndpointTable
         // ---- commands: one line per slice, sorted ----
         _ = commands.MapApproveProfile();
         _ = commands.MapCancelJob();
-        _ = commands.MapCloseItem();
-        _ = commands.MapDeferOnyx().MapEndLearnMode();
-        _ = commands.MapSetupOnyx();
-        _ = commands.MapConnectOnyx();
+        _ = commands.MapCloseItem().MapProjectWrites();
+        _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();
         _ = commands.MapPauseService();
         _ = commands.MapResumeService();

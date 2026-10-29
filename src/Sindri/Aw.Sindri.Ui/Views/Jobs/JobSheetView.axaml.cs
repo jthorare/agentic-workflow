@@ -4,6 +4,7 @@ using Aw.Sindri.Ui.ViewModels.Jobs;
 
 namespace Aw.Sindri.Ui.Views.Jobs;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The job sheet inside the shell's sheet: Copy puts the cancel's terminal form on the clipboard.</summary>
 internal sealed partial class JobSheetView : UserControl
 {
@@ -28,3 +29,4 @@ internal sealed partial class JobSheetView : UserControl
         }
     }
 }
+#pragma warning restore MA0182

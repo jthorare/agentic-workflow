@@ -21,7 +21,7 @@ internal static class AttendedOpen
     /// <returns>The branch name.</returns>
     public static string Branch(LaunchId launch) => RunNamespace(launch) + "/work";
 
-    /// <summary>The directory for the plan, denials.json and egress.log.</summary>
+    /// <summary>The directory for the plan and egress.log.</summary>
     /// <param name="sindriHome">Sindri's own home, or null.</param>
     /// <param name="launch">The launch.</param>
     /// <returns>The path, or null without a home.</returns>

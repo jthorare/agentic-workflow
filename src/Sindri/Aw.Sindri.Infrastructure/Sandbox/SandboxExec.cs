@@ -25,7 +25,7 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
     private static readonly TimeSpan _unusedLongMax = TimeSpan.FromHours(2);   // the exec is attended: it has no wall, so no longMax applies
 
     /// <inheritdoc/>
-    public string PlanFileOf(LaunchId launch) => Path.Combine(launchDirectory(), "areas", launch.Value, "sandbox-plan.json");
+    public string PlanFileOf(LaunchId launch) => LaunchPaths.PlanFile(launchDirectory(), launch);
 
     /// <inheritdoc/>
     public async Task<Result<int>> Run(SandboxPlan stored, IReadOnlyList<string> command, CancellationToken cancellationToken)

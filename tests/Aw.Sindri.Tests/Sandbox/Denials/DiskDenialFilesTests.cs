@@ -1,18 +1,14 @@
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Sandbox.Denials;
-using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Host;
-using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Tests.Ledger;
-using Aw.Sindri.Tests.Sandbox.Plan;
-using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Denials;
 
-/// <summary>The denial counters on disk: a launch's stored plan names its run area, and 'denials.json' sits in it.</summary>
+/// <summary>The denial counters on disk: one file per launch under the launcher's 'denials' folder, where the counter writes it.</summary>
 public sealed class DiskDenialFilesTests : IDisposable
 {
     private static readonly System.Text.Json.JsonSerializerOptions _json = AwJson.CreateOptions(SindriJsonContext.Default);
@@ -24,20 +20,17 @@ public sealed class DiskDenialFilesTests : IDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private DiskDenialFiles Files() => new(new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile.yaml")), _json);
+    private string LaunchDirectory => Path.Combine(_home.Path, "launch");   // the launcher's directory, where the counters are written
 
-    private void Launch(string launch, string area, DenialFile? counter)
+    private DiskDenialFiles Files() => new(LaunchDirectory, _json);
+
+    private void Launch(string launch, DenialFile? counter)
     {
-        _ = Directory.CreateDirectory(Path.Combine(_home.Path, "launches"));
-        _ = Directory.CreateDirectory(area);
-        var plan = SandboxPlannerTests.Build(Req.WriteScope) with
-        {
-            Environment = [new PlanEnvVar("AW_SANDBOX_PLAN", Path.Combine(area, "sandbox-plan.json"), "test")],
-        };
-        File.WriteAllBytes(Path.Combine(_home.Path, "launches", launch + ".sandbox.json"), AwJson.Serialize(plan, _json));
         if (counter is not null)
         {
-            File.WriteAllBytes(Path.Combine(area, "denials.json"), AwJson.Serialize(counter, _json));
+            var file = LaunchPaths.DenialsFile(LaunchDirectory, LaunchId.From(launch));
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+            File.WriteAllBytes(file, AwJson.Serialize(counter, _json));
         }
     }
 
@@ -47,8 +40,8 @@ public sealed class DiskDenialFilesTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task Every_launch_with_a_counter_is_listed_newest_first()
     {
-        Launch(DenialsRendererTests.LaunchOne, Path.Combine(_home.Path, "areas", "one"), Counter(DenialsRendererTests.LaunchOne, _at, "one.example"));
-        Launch(DenialsRendererTests.LaunchTwo, Path.Combine(_home.Path, "areas", "two"), Counter(DenialsRendererTests.LaunchTwo, _at.AddHours(1), "two.example"));
+        Launch(DenialsRendererTests.LaunchOne, Counter(DenialsRendererTests.LaunchOne, _at, "one.example"));
+        Launch(DenialsRendererTests.LaunchTwo, Counter(DenialsRendererTests.LaunchTwo, _at.AddHours(1), "two.example"));
 
         var files = await Files().List(launch: null, Token);
 
@@ -58,8 +51,8 @@ public sealed class DiskDenialFilesTests : IDisposable
     [Fact, Trait("Lane", "integration")]
     public async Task One_launch_can_be_asked_for()
     {
-        Launch(DenialsRendererTests.LaunchOne, Path.Combine(_home.Path, "areas", "one"), Counter(DenialsRendererTests.LaunchOne, _at, "one.example"));
-        Launch(DenialsRendererTests.LaunchTwo, Path.Combine(_home.Path, "areas", "two"), Counter(DenialsRendererTests.LaunchTwo, _at, "two.example"));
+        Launch(DenialsRendererTests.LaunchOne, Counter(DenialsRendererTests.LaunchOne, _at, "one.example"));
+        Launch(DenialsRendererTests.LaunchTwo, Counter(DenialsRendererTests.LaunchTwo, _at, "two.example"));
 
         var files = await Files().List(LaunchId.From(DenialsRendererTests.LaunchTwo), Token);
 
@@ -67,11 +60,11 @@ public sealed class DiskDenialFilesTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
-    public async Task A_launch_without_a_counter_or_with_a_broken_one_is_skipped()
+    public async Task A_broken_counter_is_skipped()
     {
-        Launch(DenialsRendererTests.LaunchOne, Path.Combine(_home.Path, "areas", "one"), counter: null);
-        Launch(DenialsRendererTests.LaunchTwo, Path.Combine(_home.Path, "areas", "two"), counter: null);
-        await File.WriteAllTextAsync(Path.Combine(_home.Path, "areas", "two", "denials.json"), "{ not json", Token);
+        var broken = LaunchPaths.DenialsFile(LaunchDirectory, LaunchId.From(DenialsRendererTests.LaunchTwo));
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(broken)!);
+        await File.WriteAllTextAsync(broken, "{ not json", Token);
 
         var files = await Files().List(launch: null, Token);
 

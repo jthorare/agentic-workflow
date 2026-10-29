@@ -14,8 +14,6 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// <param name="events">Reads a payload.</param>
 internal sealed class LedgerLearnHistory(ILedgerReader ledger, EventFactory events) : ILearnHistory
 {
-    private const int Page = 500;
-
     /// <summary>What an unreadable ledger reads as: a window that cannot be proven open is closed (the run cap is spent), never an empty history that would open it.</summary>
     private static readonly LearnHistory _unreadable = new(FirstLearnRun: null, LearnRuns: int.MaxValue, EndedAt: null);
 
@@ -58,26 +56,5 @@ internal sealed class LedgerLearnHistory(ILedgerReader ledger, EventFactory even
             .Select(static p => p.Value.At)];
 
     /// <summary>Every row of one type, oldest first.</summary>
-    private async ValueTask<Result<List<LedgerEvent>>> Rows(string type, CancellationToken cancellationToken)
-    {
-        var filter = new LedgerFilter(TypeFilter.Parse(type).Value, Item: null);
-        var rows = new List<LedgerEvent>();
-        var cursor = 0L;
-        while (true)
-        {
-            var scan = await ledger.Scan(cursor, Page, filter, cancellationToken).ConfigureAwait(false);
-            if (scan.IsError)
-            {
-                return scan.Error;
-            }
-
-            rows.AddRange(scan.Value.Events);
-            if (scan.Value.ScannedTo <= cursor)
-            {
-                return rows;
-            }
-
-            cursor = scan.Value.ScannedTo;
-        }
-    }
+    private ValueTask<Result<List<LedgerEvent>>> Rows(string type, CancellationToken cancellationToken) => LedgerRows.Of(ledger, type, cancellationToken);
 }

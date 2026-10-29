@@ -123,10 +123,15 @@ public static class PlatformSandboxServiceCollectionExtensions
     /// <summary>Gets the cgroup directory whose '*.scope' children are the live Step sessions.</summary>
     /// <param name="uid">The real uid.</param>
     /// <returns>The directory.</returns>
-    internal static string SliceDirectory(int uid)
+    internal static string SliceDirectory(int uid) => "/sys/fs/cgroup/" + SliceRelativePath(uid);
+
+    /// <summary>Gets the slice's cgroup path under the cgroup root (what ICgroupStats takes, with the scope's name added).</summary>
+    /// <param name="uid">The real uid.</param>
+    /// <returns>The path, with no leading slash.</returns>
+    internal static string SliceRelativePath(int uid)
     {
         var id = uid.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        return $"/sys/fs/cgroup/user.slice/user-{id}.slice/user@{id}.service/{SliceCgroupPath}";
+        return $"user.slice/user-{id}.slice/user@{id}.service/{SliceCgroupPath}";
     }
 
     /// <summary>Gets where the egress proxies write egress.log (one directory for the service; the log is a count per host, port and verdict).</summary>

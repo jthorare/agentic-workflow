@@ -15,7 +15,20 @@ public sealed class FakeWorktrees : IWorktrees
     private readonly Dictionary<string, HashSet<string>> _repos = [];
     private readonly Dictionary<(string Repo, string Branch), string> _branches = [];   // a branch's tip; it stays after its worktree goes, as in git
     private readonly Dictionary<string, (string Repo, WorktreeCheckout Checkout, bool Dirty, bool Detached, bool Gone)> _worktrees = [];
+    private readonly List<WorktreeRequest> _requests = [];
     private readonly Lock _gate = new();
+
+    /// <summary>Every request Create was given, in order.</summary>
+    public IReadOnlyList<WorktreeRequest> Requests
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _requests];
+            }
+        }
+    }
 
     /// <summary>Tells the fake which commits a repo holds; a repo or sha it was not told about fails like git does.</summary>
     /// <param name="repoRoot">The repo's path.</param>
@@ -95,6 +108,7 @@ public sealed class FakeWorktrees : IWorktrees
         ArgumentNullException.ThrowIfNull(request);
         lock (_gate)
         {
+            _requests.Add(request);
             return ValueTask.FromResult(Make(request));
         }
     }

@@ -28,4 +28,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-LAUNCH-021: the host-side prepare of the repo's packages failed (kind step-failure); 'reason' is install-failed, lockfile-missing or timeout.</summary>
     public static readonly ErrorDefinition LaunchPrepareFailed = new("SND-LAUNCH-021", ErrorKind.Unavailable, "The repo's packages couldn't be prepared for the Step");
+
+    /// <summary>SND-SANDBOX-001: the Allow button can't allow that (sandbox spec §3.6): a tool the policy refused, a path that is never allowed, a target that wasn't blocked in that run, or a run with no repo. The detail is the owner's sentence.</summary>
+    public static readonly ErrorDefinition SandboxAllowRefused = new("SND-SANDBOX-001", ErrorKind.Conflict, "That can't be allowed from here");
 }

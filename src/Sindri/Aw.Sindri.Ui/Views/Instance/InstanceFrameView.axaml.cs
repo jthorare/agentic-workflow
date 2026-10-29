@@ -9,6 +9,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Views.Instance;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The instance frame inside the sheet: Back closes the sheet like Esc, and Open in hands the subject's link to the platform.</summary>
 internal sealed partial class InstanceFrameView : UserControl
 {
@@ -146,3 +147,4 @@ internal sealed partial class InstanceFrameView : UserControl
 
     private void OnOpenIn(object? sender, RoutedEventArgs e) => _ = (DataContext as InstanceFrameViewModel)?.Subject?.OpenIn(CancellationToken.None);
 }
+#pragma warning restore MA0182

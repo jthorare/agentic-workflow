@@ -159,7 +159,7 @@ internal sealed partial class BuildMapService(
         // The model names the home features (by path, never picking members); one that couldn't answer leaves them their path names. The clusters are tags, named from their files.
         var named = home.WithLabels(labels.IsError ? [] : labels.Value.Labels);
         var tags = ClusterFeatures.Propose(repo, clusters, [], extracted);
-        return new RepoExtraction(extracted.Plus(named.Map).Plus(tags), commit, Degraded(clusters, labels, timedOut), await Dropped(repo, commit, cancellationToken).ConfigureAwait(false), paths);
+        return new RepoExtraction(extracted.Plus(named.Map).Plus(tags), commit, Degraded(clusters, labels, timedOut), await Dropped(repo, commit, cancellationToken).ConfigureAwait(false), paths, home.Directories);
     }
 
     // What the repo's ignored roles dropped from the tracked files (issue 1161); an unreadable listing counts nothing, never a failed build.
@@ -183,7 +183,7 @@ internal sealed partial class BuildMapService(
 
     // A denied path is never read, whatever a recognizer wants; a schema file (the globs that name where stores are declared) is read for the data-store pass.
     private static bool Readable(ContextRepo repo, (RecognizerSet Recognizers, IReadOnlyList<string> SchemaGlobs) wants, string path) =>
-        !repo.Denies(path) && (Recognizers.MayRead(path) || wants.Recognizers.Wants(path) || PathDenylist.Matches(path, wants.SchemaGlobs));
+        !repo.Denies(path) && (Recognizers.MayRead(path) || Journeys.IsJourney(path) || wants.Recognizers.Wants(path) || PathDenylist.Matches(path, wants.SchemaGlobs));
 
     // HEAD's tree minus the denied paths, and the text of each file the extractor may read.
     private async ValueTask<Result<(string Commit, List<RepoFile> Files, IReadOnlyList<string> Paths)>> ReadFiles(IProgress<string>? progress, ContextRepo repo, (RecognizerSet Recognizers, IReadOnlyList<string> SchemaGlobs) wants, CancellationToken cancellationToken)
@@ -195,7 +195,7 @@ internal sealed partial class BuildMapService(
             return head.IsError ? head.Error : listed.Error;
         }
 
-        var wanted = listed.Value.Where(p => Readable(repo, wants, p)).ToList();
+        var wanted = Journeys.Cap(listed.Value.Where(p => Readable(repo, wants, p)));
         var files = new List<RepoFile>(wanted.Count);
         foreach (var path in wanted)
         {
@@ -283,5 +283,5 @@ internal sealed partial class BuildMapService(
         return prefix is not null && NodeKey.TryFrom("code:" + record[prefix.Length..], out var key) ? key : null;
     }
 
-    private sealed record RepoExtraction(ExtractedMap Map, string Commit, IReadOnlyList<string> Degraded, IReadOnlyList<RoleDropped> Dropped, IReadOnlyList<string> Paths);
+    private sealed record RepoExtraction(ExtractedMap Map, string Commit, IReadOnlyList<string> Degraded, IReadOnlyList<RoleDropped> Dropped, IReadOnlyList<string> Paths, IReadOnlyDictionary<string, NodeKey> Directories);
 }

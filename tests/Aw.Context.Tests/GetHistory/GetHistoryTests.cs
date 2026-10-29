@@ -293,14 +293,15 @@ public sealed class GetHistoryTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Unconfigured_source_reads_not_configured_and_git_reads_ok()
+    public async Task An_unconfigured_onyx_has_no_row_and_git_reads_ok()
     {
         var world = await Start(Fake(Landed()));
 
         var view = (await Ask(world)).Value;
 
-        Assert.Equal(["map", "onyx", "git-history", "incidents"], [.. view.Searched.Sources.Select(s => s.Id.Value)], StringComparer.Ordinal);
-        Assert.Equal((SearchedState.NotConfigured, SearchedState.Ok, SearchedState.NotConfigured), (Row(view, "onyx").State, Row(view, "git-history").State, Row(view, "incidents").State));
+        Assert.Equal(["map", "git-history", "incidents"], [.. view.Searched.Sources.Select(s => s.Id.Value)], StringComparer.Ordinal);
+        Assert.DoesNotContain(view.Searched.Sources, s => s.Id.Value == "onyx");
+        Assert.Equal((SearchedState.Ok, SearchedState.NotConfigured), (Row(view, "git-history").State, Row(view, "incidents").State));
         Assert.Equal((SearchedState.NotConfigured, "not-configured"), (view.Incidents.State, view.Incidents.Reason));
         Assert.Equal(0, view.Searched.Depth);
         Assert.Empty(view.Searched.Hops);

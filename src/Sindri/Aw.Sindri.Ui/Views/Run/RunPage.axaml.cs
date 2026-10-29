@@ -10,6 +10,7 @@ using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Views.Run;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The run page (F3 spec 3, slice 3): the view over <see cref="RunPageViewModel"/>. The cards, the runs and the badge name their brushes by key, so this class paints them.</summary>
 internal sealed partial class RunPage : UserControl
 {
@@ -201,3 +202,4 @@ internal sealed partial class RunPage : UserControl
         }
     }
 }
+#pragma warning restore MA0182

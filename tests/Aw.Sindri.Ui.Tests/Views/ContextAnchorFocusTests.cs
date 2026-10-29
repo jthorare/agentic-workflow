@@ -1,6 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -50,7 +51,7 @@ public sealed class ContextAnchorFocusTests : IDisposable
                     Dispatcher.UIThread.RunJobs();
                 }
 
-                var anchor = window.Get<Control>("ContextPage").FindControl<TextBox>("AnchorBox")!;
+                var anchor = window.GetVisualDescendants().OfType<Control>().First(c => c.Name == "ContextPage").FindControl<TextBox>("AnchorBox")!;
                 Assert.Same(anchor, window.FocusManager?.GetFocusedElement());
                 Assert.DoesNotContain(":focus-visible", anchor.Classes, StringComparer.Ordinal);
             }

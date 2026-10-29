@@ -51,4 +51,9 @@ public sealed record NeedsYouRow(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Via = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Child = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] NeedsYouStop? Stop = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] StatusTimeout? Timeout = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] StatusTimeout? Timeout = null)
+{
+    /// <summary>On a 'park:' row for a sandbox refusal, the refusal in the owner's words (sandbox spec §8); null (omitted) otherwise.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public StatusSandbox? Sandbox { get; init; }
+}

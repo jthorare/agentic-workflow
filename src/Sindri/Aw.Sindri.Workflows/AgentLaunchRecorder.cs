@@ -1,9 +1,12 @@
+using System.Globalization;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Workflows;
@@ -51,6 +54,26 @@ internal sealed class AgentLaunchRecorder(ILedgerStore ledger, HeldLease lease, 
         var payload = new LaunchFailed(request.Launch, request.Item, failed.Error.Code, failed.Error.Message, LaunchFailureDetail.Of(failed.Error, failed.Stage),
             request.Instance, request.Step?.Ref.State, request.Run?.Number);
         _ = await Append(events.Entry(EventTypes.LaunchFailed, payload, Key(request.Launch), request.Item.Value), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Records that the launch waits for a free session slot, once per launch (the first wait): 'launch.waiting:&lt;launch&gt;'. Other errors than a full cap record nothing.</summary>
+    /// <param name="request">The launch.</param>
+    /// <param name="failed">The launcher's SND-LAUNCH-020 answer, which names how many sessions run and the cap.</param>
+    /// <param name="cancellationToken">Cancels the append.</param>
+    /// <returns>Done; throws when the ledger refuses, so the activity retries.</returns>
+    public async Task Waiting(LaunchRequest request, FailedLaunch failed, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(failed);
+        var values = SandboxBlocker.Of(failed.Error).Values;
+        if (!string.Equals(failed.Error.Code, SindriErrors.LaunchSessionWait.Code, StringComparison.Ordinal) || values is null
+            || !int.TryParse(values.GetValueOrDefault("running"), NumberStyles.None, CultureInfo.InvariantCulture, out var running) || !int.TryParse(values.GetValueOrDefault("cap"), NumberStyles.None, CultureInfo.InvariantCulture, out var cap))
+        {
+            return;
+        }
+
+        var payload = new LaunchWaiting(request.Launch, request.Item, running, cap, request.Instance, request.Step?.Ref.State, request.Run?.Number);
+        _ = await Append(events.Entry(EventTypes.LaunchWaiting, payload, "launch.waiting:" + request.Launch.Value, request.Item.Value), cancellationToken).ConfigureAwait(false);
     }
 
     private async Task<LedgerAppend> Append(LedgerEntry entry, CancellationToken cancellationToken)

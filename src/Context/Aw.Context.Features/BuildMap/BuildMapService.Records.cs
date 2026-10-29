@@ -12,10 +12,13 @@ internal sealed partial class BuildMapService
     {
         var at = clock.GetUtcNow();
         var files = new List<MapRepoFiles>(extractions.Count);
+        var directoryDocs = new List<DirectoryDoc>();
         foreach (var (repo, read) in extractions)
         {
             var paths = read.Paths.Where(p => !repo.Denies(p)).ToList();
-            var docs = DocRecords.Find(repo.Name, paths, settings.DocGlobs, settings.DocDirectoryNames, at).Select(n => n.Label).ToList();
+            var nodes = DocRecords.Find(repo.Name, paths, settings.DocGlobs, settings.DocDirectoryNames, at);
+            var docs = nodes.Select(n => n.Label).ToList();
+            directoryDocs.AddRange(RecordRollup.DirectoryDocs(repo.Name, nodes, settings.DocDirectoryNames, read.Directories));
             var blobs = await inputs.Repos.BlobIds(repo, read.Commit, docs, cancellationToken).ConfigureAwait(false);
             if (blobs.IsError)
             {
@@ -28,7 +31,7 @@ internal sealed partial class BuildMapService
         var reading = await inputs.Records.Read(new MapRecordInput(files, settings.DocGlobs, settings.DocDirectoryNames, at), cancellationToken).ConfigureAwait(false);
         return reading.IsError
             ? (ExtractedMap.Empty, [Unavailable(reading.Error)], [])
-            : (reading.Value.Map.Plus(RecordRollup.Edges(reading.Value.Overflow, found)), reading.Value.Degraded, [.. reading.Value.Notes.Except(reading.Value.Degraded, StringComparer.Ordinal)]);
+            : (reading.Value.Map.Plus(RecordRollup.Edges([.. reading.Value.Overflow, .. reading.Value.UnderCap], directoryDocs, found)), reading.Value.Degraded, [.. reading.Value.Notes.Except(reading.Value.Degraded, StringComparer.Ordinal)]);
     }
 
     private static string Unavailable(Error error) => $"records: unavailable ({error.Code})";

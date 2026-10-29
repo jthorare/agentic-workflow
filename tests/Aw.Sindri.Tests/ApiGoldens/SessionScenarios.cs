@@ -1,11 +1,18 @@
+using Aw.Kernel.Json;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Host;
 using Aw.Sindri.Tests.ListSessions;
+using Aw.Sindri.Tests.Sandbox.Plan;
 using Aw.Sindri.Tests.Sessions;
+using Aw.Sindri.Tests.SessionWrap;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using static Aw.Sindri.Tests.Callers.CallerRequests;
+using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.ApiGoldens;
 
@@ -22,12 +29,25 @@ internal static class SessionScenarios
         ("sessions", "recently-ended"), ("sessions", "unsupported-platform"), ("sessions", "proc-unreadable"), ("sessions", "disabled"),
         ("sessions-id", "claude-tmux"), ("sessions-id", "codex-hook"), ("sessions-id", "not-found"), ("sessions-id", "session-caller-hidden-fields"), ("sessions-id", "cursor-engine-launch"),
         ("status", "sessions"),
+        ("sessions", "sandboxed"), ("sessions-id", "cursor-sandboxed"), ("sessions-id", "cursor-sandbox-unavailable"),
     ];
 
     /// <summary>The golden host's profile: the repos the fixture sessions work in, so a session's worktree is served relative to its checkout.</summary>
     public const string ProfileYaml = "schemaVersion: 1\nuser: golden\nrepos:\n  - { name: api, path: /work/api }\n  - { name: web, path: /work/web }\nservices:\n  heartbeat: { every: 5s }\n";
 
-    private static readonly string[] _engineLaunch = ["fixture-three-providers", "cursor-engine-launch"];
+    private static readonly string[] _engineLaunch = ["fixture-three-providers", "cursor-engine-launch", "sandboxed", "cursor-sandboxed", "cursor-sandbox-unavailable"];
+    private static readonly string[] _sandboxed = ["sandboxed", "cursor-sandboxed", "cursor-sandbox-unavailable"];
+
+    /// <summary>What the fake cgroup answers for the sandboxed launch's scope: 2.1 GiB in use.</summary>
+    internal const long MemoryInUse = 2_254_857_830;
+
+    /// <summary>What 'launch.started' records for the sandboxed scenarios' Step: writes to the fixture worktree, 12 GiB of memory.</summary>
+    internal static SandboxSummary SandboxSummary { get; } = new(
+        SandboxMechanism.Bubblewrap, "9f2c0a41d8e6", [Req.Worktree], ["model", "packages"], NetworkMode.Enforce, InnerState.On, new SandboxLimitsSummary("12GiB", "400%", 2048, "70m"),
+        new SandboxCredentialsSummary(GithubCredentials.None), ModelLoginSource.OwnerCopy);
+
+    /// <summary>The plan file the launcher stored for it: the fixture Step's plan with 12 GiB of memory.</summary>
+    internal static SandboxPlan SandboxPlan { get; } = SandboxPlannerTests.Build(Req.WriteScope) with { Limits = SandboxPlannerTests.Build(Req.WriteScope).Limits with { MemoryMaxBytes = 12L * 1024 * 1024 * 1024 } };
 
     private static readonly Dictionary<string, UnavailableReason> _reasons = new(StringComparer.Ordinal)
     {
@@ -37,6 +57,16 @@ internal static class SessionScenarios
     };
 
     public static bool Handles(string slug, string scenario) => All.Contains((slug, scenario));
+
+    /// <summary>Whether the scenario needs the host's cgroup reader faked (it reads the sandboxed launch's scope).</summary>
+    public static bool NeedsCgroup(string slug, string scenario) => Handles(slug, scenario) && _sandboxed.Contains(scenario, StringComparer.Ordinal);
+
+    /// <summary>The host of a sandboxed scenario: the cgroup reader answers a live scope using <see cref="MemoryInUse"/>.</summary>
+    public static Task<GoldenHost> Start(CancellationToken ct)
+    {
+        var stats = new FakeCgroupStats { Sample = new CgroupSample(OomKills: 0, MemoryCurrent: MemoryInUse, MemoryPeak: MemoryInUse, Pids: 12, CpuMicroseconds: 0) };
+        return GoldenHost.Start(temporary: true, ct, ProfileYaml, extra: services => services.Replace(ServiceDescriptor.Singleton<ICgroupStats>(stats)));
+    }
 
     public static async Task<string> Body(GoldenHost host, string slug, string scenario, CancellationToken ct)
     {
@@ -51,8 +81,16 @@ internal static class SessionScenarios
         {
             // The Cursor row's launch is the engine's: its instance, Step and attempt come from the 'launches' view, folded from the ledger.
             var item = "ITM-00000000000000000000000000000001";
+            var sandboxed = _sandboxed.Contains(scenario, StringComparer.Ordinal);
             await LaunchScenarios.Started(host, LaunchId.From(SessionsRig.Launch), item, ViewerOutcomeKind.Skipped, ct, LaunchScenarios.ViewerOf("none", "none", ViewerOutcomeKind.Skipped),
-                new LaunchStep(InstanceAddress.From(item + "/step/1"), "build", 2), agent: "cursor");
+                new LaunchStep(InstanceAddress.From(item + "/step/1"), "build", 2), agent: "cursor", sandbox: sandboxed ? SandboxSummary : null);
+            if (sandboxed && scenario != "cursor-sandbox-unavailable")
+            {
+                var planFile = Infrastructure.Sandbox.LaunchPaths.PlanFile(Path.Combine(host.Home, "launch"), LaunchId.From(SessionsRig.Launch));   // the plan file the launcher stored; the unavailable scenario leaves it out
+                _ = Directory.CreateDirectory(Path.GetDirectoryName(planFile)!);
+                await File.WriteAllBytesAsync(planFile, AwJson.Serialize(SandboxPlan, host.App.Services.GetRequiredService<System.Text.Json.JsonSerializerOptions>()), ct);
+            }
+
             await ViewScenarios.CatchUp(host, ct);
         }
 
@@ -61,7 +99,7 @@ internal static class SessionScenarios
         {
             ("sessions-id", "claude-tmux") => ($"/sindri/sessions/claude-code/{SessionsRig.ClaudeId}", human),
             ("sessions-id", "codex-hook") => ($"/sindri/sessions/codex/{SessionsRig.CodexId}", human),
-            ("sessions-id", "cursor-engine-launch") => ("/sindri/sessions/cursor/pid-333-100", human),
+            ("sessions-id", "cursor-engine-launch" or "cursor-sandboxed" or "cursor-sandbox-unavailable") => ("/sindri/sessions/cursor/pid-333-100", human),
             ("sessions-id", "not-found") => ("/sindri/sessions/codex/not-here", human),
             ("sessions-id", _) => ($"/sindri/sessions/claude-code/{SessionsRig.ClaudeId}", session),
             ("status", _) => ("/sindri/status", human),

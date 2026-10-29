@@ -16,7 +16,13 @@ internal sealed class FakeIndexSync : IIndexSync
 
     public SourceCounts Held { get; set; } = new(0, 0, 0);
 
+    public IReadOnlyList<SourceDecisions> Decided { get; set; } = [];
+
+    public ConceptSynthesisReport? Synthesized { get; set; }
+
     public int Ticks { get; private set; }
+
+    public int Decides { get; private set; }
 
     public List<SourceId> Purged { get; } = [];
 
@@ -24,6 +30,18 @@ internal sealed class FakeIndexSync : IIndexSync
     {
         Ticks++;
         return ValueTask.FromResult<Result<SyncReport>>(new SyncReport(Rows));
+    }
+
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken)
+    {
+        Ticks++;
+        return ValueTask.FromResult<Result<SyncReport>>(new SyncReport([.. Rows.Where(r => r.Source == source)]));
+    }
+
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
+    {
+        Decides++;
+        return ValueTask.FromResult<Result<DecisionReport>>(new DecisionReport(Decided, Synthesized));
     }
 
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) =>

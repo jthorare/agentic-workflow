@@ -5,6 +5,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Health page: binds to the health view model, holds no logic beyond handing it the page's width, the tab keys and a row's View job press.</summary>
 internal sealed partial class HealthPage : UserControl
 {
@@ -39,3 +40,4 @@ internal sealed partial class HealthPage : UserControl
         }
     }
 }
+#pragma warning restore MA0182

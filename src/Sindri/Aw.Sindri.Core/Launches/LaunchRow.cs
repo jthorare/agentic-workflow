@@ -80,4 +80,8 @@ public sealed record LaunchRow(
     /// <summary>The model the launch asked for, read from 'launch.started' (#1008: the challenger's pick reads the drafter's); null when none was named and for launches recorded before the field.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Model { get; init; }
+
+    /// <summary>The sandbox summary from 'launch.started' (sandbox spec §8); null when the launch was not sandboxed and for launches recorded before the field.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Sandbox.SandboxSummary? Sandbox { get; init; }
 }

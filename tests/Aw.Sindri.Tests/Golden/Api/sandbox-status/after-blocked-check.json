@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-01-01T00:00:00.0000000Z",
+  "ready": false,
+  "blockers": [
+    {
+      "code": "SND-LAUNCH-014",
+      "reason": "no-bwrap",
+      "source": null,
+      "text": "This machine has no sandbox tool, so this Step can't run by itself. Install bubblewrap (`sudo apt install bubblewrap`), then press Check again.",
+      "command": "sudo apt install bubblewrap",
+      "state": null,
+      "quiet": false
+    }
+  ],
+  "mechanism": "none",
+  "groups": [
+    "model",
+    "packages",
+    "github"
+  ],
+  "limits": {
+    "memoryMax": "12GiB",
+    "cpuQuota": "400%",
+    "tasksMax": 2048,
+    "wall": "250m"
+  },
+  "login": "owner-copy",
+  "learn": []
+}

@@ -1,6 +1,7 @@
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -89,6 +90,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddSingleton<IMapSearchIndexFactory, UnconfiguredMapSearchIndexFactory>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite FTS5 adapter
         services.TryAddSingleton<IConceptHintStore, UnconfiguredConceptHintStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
+        services.TryAddSingleton<IConceptSynthesisStore, UnconfiguredConceptSynthesisStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
         services.TryAddSingleton(WalkOptions.Of(Math.Max(1, Environment.ProcessorCount - 1)));   // every core but one, so the box keeps a core; a host or a test may register another degree
         services.TryAddSingleton(WholeMapRules.Default);   // a host or a test may register other limits
         services.TryAddSingleton<ICodeSymbolSource, NoCodeSymbolSource>();   // the host that wires the code index (Sindri's Host adapter) replaces it
@@ -110,7 +112,7 @@ public static class ContextFeaturesServiceCollectionExtensions
 
     private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();
 
-    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<IIndexSync, IndexSync>();
+    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>();
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
         .AddBacktest()

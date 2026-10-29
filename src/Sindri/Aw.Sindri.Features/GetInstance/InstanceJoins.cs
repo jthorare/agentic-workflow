@@ -1,5 +1,7 @@
 using System.Text;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Views;
@@ -12,8 +14,33 @@ namespace Aw.Sindri.Features.GetInstance;
 /// </summary>
 /// <param name="launches">The launches view.</param>
 /// <param name="contents">The stored fact content.</param>
-internal sealed class InstanceJoins(ILaunchViews launches, IFactContents contents)
+/// <param name="ledger">The ledger, for a launch's wait for a free session slot; null serves none.</param>
+/// <param name="events">Reads a payload; null serves none.</param>
+internal sealed class InstanceJoins(ILaunchViews launches, IFactContents contents, ILedgerReader? ledger = null, EventFactory? events = null)
 {
+    /// <summary>Whether the open agent run's launch waits for a free session slot: 'launch.waiting' is on the ledger and 'launch.outcome' is not yet.</summary>
+    /// <param name="view">The instance's view.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>How many sessions run and the cap; null when the run does not wait, has no agent run, or the ledger can't be read.</returns>
+    public async ValueTask<StatusWaiting?> Waiting(InstanceView view, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(view);
+        if (ledger is null || events is null || view.AgentRun?.Launch is not { } launch)
+        {
+            return null;
+        }
+
+        var outcome = await ledger.ByKey("launch.outcome:" + launch, cancellationToken).ConfigureAwait(false);
+        if (outcome is not { IsSuccess: true, Value: null })
+        {
+            return null;   // the launch has an outcome, or the ledger can't say
+        }
+
+        var waited = await ledger.ByKey("launch.waiting:" + launch, cancellationToken).ConfigureAwait(false);
+        var payload = waited is { IsSuccess: true, Value: { } row } ? events.Payload<LaunchWaiting>(row) : default;
+        return payload is { IsSuccess: true } ? new StatusWaiting(payload.Value.Running, payload.Value.Cap) : null;
+    }
+
     /// <summary>The session of <paramref name="view"/>'s open agent run.</summary>
     /// <param name="view">The instance's view.</param>
     /// <param name="cancellationToken">Cancels the read.</param>

@@ -87,7 +87,7 @@ for attempt in $(seq 1 8); do
   [ -n "$DEC" ] || setup_fail "the request answered without a decisionId: $resp"
   open=""
   for _ in $(seq 1 60); do
-    open="$(nodes --type Button | jq -r --arg d "$DEC" '[.matches[].name // empty | select(startswith("Open ") and contains($d))][0] // empty')"
+    open="$(nodes --type Button | jq -r --arg d "$DEC" '[.matches[] | select(.visible) | .name // empty | select(startswith("Open ") and contains($d))][0] // empty')"
     [ -n "$open" ] && break
     sleep 1
   done

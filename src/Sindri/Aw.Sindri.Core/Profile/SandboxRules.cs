@@ -95,6 +95,13 @@ internal static partial class SandboxRules
         (paths ?? []).Select((path, i) => problemOf(path) is { } problem ? Problem(string.Create(CultureInfo.InvariantCulture, $"{at}[{i}]"), problem) : null)
             .FirstOrDefault(e => e is not null);
 
+    /// <summary>What is wrong with <paramref name="host"/> as a 'hosts' entry, or null.</summary>
+    internal static string? HostProblem(string host) =>
+        Host.IsMatch(host) ? null : "must be a host name such as registry.npmjs.org or *.nuget.org (no scheme, port or path)";
+
+    /// <summary>What is wrong with <paramref name="path"/> as a 'homeAllow' path, or null.</summary>
+    internal static string? HomePathProblem(string? path) => RelativePathProblem(path);
+
     private static string? RelativePathProblem(string? path) => path switch
     {
         null or "" => "must be a non-empty path",

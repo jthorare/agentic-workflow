@@ -15,11 +15,7 @@ internal static class SandboxCanaries
 
     // The hooks-run canary exercises the hooks the plan keeps (plan.Hooks.Kept), never a dropped one, and never rtk-rewrite: inside a Step
     // that hook grants nothing (owner, 2026-10-18, strict; SB-5a enforces it), so no canary part may rely on it.
-    private static readonly string[] _preamble =
-    [
-        "H=\"$HOME/.claude/hooks\"",
-        "S=\"${AW_STATE_DIR:-$HOME/.agentic-workflow}\"",
-    ];
+    private const string StateDirLine = "S=\"${AW_STATE_DIR:-$HOME/.agentic-workflow}\"";
 
     private static readonly string[] _blockDestructive =
     [
@@ -57,10 +53,22 @@ internal static class SandboxCanaries
         "exit 0",
     ];
 
+    // why: the owner-copy login binds the owner's ~/.claude, so its hooks are in $HOME/.claude/hooks; a separate-login Step binds only its agent home (CLAUDE_CONFIG_DIR or CODEX_HOME, set inside the sandbox), where 'sindri sandbox login' installed them (#1602).
+    private static string HooksDirLine(SandboxPlan plan)
+    {
+        if (plan.Login == ModelLoginSource.SeparateLogin)
+        {
+            var variable = plan.Environment.Any(static e => e.Value is not null && string.Equals(e.Name, "CLAUDE_CONFIG_DIR", StringComparison.Ordinal)) ? "CLAUDE_CONFIG_DIR" : "CODEX_HOME";
+            return "H=\"$" + variable + "/hooks\"";
+        }
+
+        return "H=\"$HOME/.claude/hooks\"";
+    }
+
     private static string HookScript(SandboxPlan plan)
     {
         var kept = plan.Hooks.Kept;
-        var lines = new List<string>(_preamble);
+        var lines = new List<string> { HooksDirLine(plan), StateDirLine };
         if (kept.Contains("block-destructive", StringComparer.Ordinal))
         {
             lines.AddRange(_blockDestructive);
@@ -88,7 +96,14 @@ internal static class SandboxCanaries
     internal static IReadOnlyList<SandboxCanary> For(SandboxPlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        List<SandboxCanary> canaries = [FsDeny(plan), FsWrite(plan), Env(), Login(plan), new SandboxCanary(SandboxReasons.HooksRun, HookScript(plan), Shell: "/bin/bash"), NetDeny()];
+        List<SandboxCanary> canaries = [FsDeny(plan), FsWrite(plan), Env(), Login(plan)];
+        // why: the hooks live in the agent home a login binds; a plan without one (Check again's fixture when no agent is picked for Steps) has none to run, and every launch's plan has one
+        if (plan.Environment.Any(static e => e.Value is not null && (string.Equals(e.Name, "CLAUDE_CONFIG_DIR", StringComparison.Ordinal) || string.Equals(e.Name, "CODEX_HOME", StringComparison.Ordinal))))
+        {
+            canaries.Add(new SandboxCanary(SandboxReasons.HooksRun, HookScript(plan), Shell: "/bin/bash"));
+        }
+
+        canaries.Add(NetDeny());
         if (plan.Worktree is { } worktree && plan.Writable.Contains(worktree, StringComparer.Ordinal))
         {
             canaries.Insert(2, GitRef(plan, worktree));
