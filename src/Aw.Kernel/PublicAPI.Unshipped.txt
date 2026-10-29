@@ -253,3 +253,8 @@ static Aw.Kernel.ErrorExtensions.ReservedNames.get -> System.Collections.Generic
 Aw.Kernel.ErrorExtensions.Equals(Aw.Kernel.ErrorExtensions? other) -> bool
 override Aw.Kernel.ErrorExtensions.Equals(object? obj) -> bool
 override Aw.Kernel.ErrorExtensions.GetHashCode() -> int
+Aw.Kernel.Processes.PinnedProcess
+Aw.Kernel.Processes.PinnedProcess.Dispose() -> void
+Aw.Kernel.Processes.PinnedProcess.Process.get -> System.Diagnostics.Process!
+static Aw.Kernel.Processes.PinnedProcess.Start(System.Diagnostics.ProcessStartInfo! start) -> Aw.Kernel.Processes.PinnedProcess!
+static Aw.Kernel.Processes.PinnedProcess.StartAsync(System.Diagnostics.ProcessStartInfo! start) -> System.Threading.Tasks.Task<Aw.Kernel.Processes.PinnedProcess!>!
