@@ -25,7 +25,7 @@ internal sealed partial class DecisionSheetViewModel(ISindriApi api, Func<Uri?> 
     internal string Question => _row is null ? "" : _row.Entry.Question.Length > 0 ? _row.Entry.Question : _row.Title;
 
     /// <summary>The sheet's title: the request's own words.</summary>
-    internal string Heading => _row is null ? "" : _row.Title.Length > 0 ? _row.Title : DecisionId;
+    internal string Heading => _row is null ? "" : _row.Title.Length > 0 ? _row.Title : _row.Entry.Question.Length > 0 ? _row.Entry.Question : Labels.DecisionHeadingFallback;
 
     /// <summary>Who filed the request, how long ago and for which item.</summary>
     internal string FiledLine => _row is null ? "" : Labels.DecisionFiled(_row.Entry.FiledBy, _row.Entry.Since == default ? null : clock.GetUtcNow() - _row.Entry.Since, _row.Entry.ItemId);
