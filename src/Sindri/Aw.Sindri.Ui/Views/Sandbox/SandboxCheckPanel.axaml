@@ -46,6 +46,13 @@
         </DataTemplate>
       </ItemsControl.ItemTemplate>
     </ItemsControl>
+    <ItemsControl x:Name="SandboxCheckNotChecked" ItemsSource="{Binding NotChecked}" IsVisible="{Binding HasNotChecked}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="x:String">
+          <TextBlock Classes="caption subtle" Text="{Binding}" TextWrapping="Wrap" AutomationProperties.Name="{Binding}" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
     <!-- The list is read before the buttons: its names come first in the tree. -->
     <ItemsControl x:Name="SandboxResumeList" ItemsSource="{Binding ResumeRows}" IsVisible="{Binding ShowsResume}">
       <ItemsControl.ItemTemplate>

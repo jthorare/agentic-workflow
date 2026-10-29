@@ -49,6 +49,18 @@ public sealed class SandboxCheckTests
     }
 
     [Fact]
+    public async Task A_check_that_did_not_run_is_shown_as_a_caption_and_an_empty_list_shows_none()
+    {
+        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody(["No sandbox tool."], [], notChecked: [SandboxTestBed.HooksNotChecked]);
+        await Check.Check(Token);
+        Assert.Equal((true, SandboxTestBed.HooksNotChecked), (Check.HasNotChecked, SandboxTestBed.J(Check.NotChecked)));
+
+        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody(["No sandbox tool."], []);
+        await Check.Check(Token);
+        Assert.Equal((false, 0), (Check.HasNotChecked, Check.NotChecked.Count));
+    }
+
+    [Fact]
     public async Task Still_failing_lists_every_blocker_not_the_first_and_says_how_many()
     {
         _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody(["No sandbox tool.", "Not signed in."], []);
