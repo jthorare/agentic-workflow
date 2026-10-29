@@ -8,7 +8,7 @@ using Aw.Context.Tests.Map;
 namespace Aw.Context.Tests.SyncSources;
 
 /// <summary>
-/// The 5-minute index tick (<see cref="IIndexSync.Tick"/>) reads tracker records for decisions like the manual sync does (#1574).
+/// The index tick (<see cref="IIndexSync.Tick"/>) pulls records and writes no decisions; the decision pass (<see cref="IIndexSync.Decide"/>) reads the stored tracker records for decisions like the manual sync does (#1574, #1597).
 /// </summary>
 [Trait("Lane", "unit")]
 public sealed class TickDecisionsTests
@@ -37,13 +37,21 @@ public sealed class TickDecisionsTests
     private static ModelPurpose Extraction => ModelPurpose.DecisionExtraction;
 
     [Fact]
-    public async Task Tick_turns_a_tracker_record_quoting_a_decision_into_a_decision_citing_it()
+    public async Task Tick_writes_no_decisions_and_Decide_turns_the_stored_record_into_a_decision_citing_it()
     {
         using var world = await Rig();
+        var scope = MapWorld.HumanWith(Section(labeling: true));
 
-        var report = await world.Engine.Tick(MapWorld.HumanWith(Section(labeling: true)), Ct);
+        var report = await world.Engine.Tick(scope, Ct);
 
         Assert.True(report.IsSuccess, report.IsError ? report.Error.Message : null);
+        Assert.Empty((await world.Intents.Layer(Ct)).Value.Decisions);   // the tick only pulls
+        Assert.DoesNotContain(world.Model.Requests, r => r.Purpose == Extraction);
+
+        var decided = await world.Engine.Decide(scope, Ct);
+
+        Assert.True(decided.IsSuccess, decided.IsError ? decided.Error.Message : null);
+        Assert.Equal(1, Assert.Single(decided.Value.Sources).Looked);
         Assert.Equal(_issue.Value, Assert.Single((await world.Records.List(new RecordFilter(), after: null, 10, Ct)).Value).Key.Value);   // the record itself did sync
         var decision = Assert.Single((await world.Intents.Layer(Ct)).Value.Decisions);
         Assert.Equal(_issue, decision.Record);
@@ -51,13 +59,14 @@ public sealed class TickDecisionsTests
     }
 
     [Fact]
-    public async Task Tick_does_not_resend_an_unchanged_record_to_the_model()
+    public async Task Decide_does_not_resend_an_unchanged_record_to_the_model()
     {
         using var world = await Rig();
         var scope = MapWorld.HumanWith(Section(labeling: true));
 
         _ = await world.Engine.Tick(scope, Ct);
-        _ = await world.Engine.Tick(scope, Ct);
+        _ = await world.Engine.Decide(scope, Ct);
+        _ = await world.Engine.Decide(scope, Ct);
 
         _ = Assert.Single(world.Model.Requests, r => r.Purpose == Extraction);
     }
