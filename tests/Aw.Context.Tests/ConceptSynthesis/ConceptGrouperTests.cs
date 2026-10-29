@@ -2,8 +2,8 @@ using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Vectors;
-using Aw.Kernel;
 using Aw.Context.Testing.Vectors;
+using Aw.Kernel;
 
 namespace Aw.Context.Tests.ConceptSynthesis;
 
@@ -27,7 +27,7 @@ public sealed class ConceptGrouperTests
 
         var group = Assert.Single(result.Groups);
         Assert.Equal(3, group.SourceCount);
-        Assert.Equal<string>(["github:pr/2", "linear:A-1", "slack:t/3"], group.Members.Select(m => m.Record), StringComparer.Ordinal);
+        Assert.Equal(["github:pr/2", "linear:A-1", "slack:t/3"], group.Members.Select(m => m.Record), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -76,8 +76,8 @@ public sealed class ConceptGrouperTests
         var result = outcome.Value;
 
         Assert.Equal(2, result.Groups.Count);
-        Assert.Equal<string>(["a", "b", "c"], result.Groups[0].Members.Select(m => m.Record), StringComparer.Ordinal);
-        Assert.Equal<string>(["d", "e", "f"], result.Groups[1].Members.Select(m => m.Record), StringComparer.Ordinal);
+        Assert.Equal(["a", "b", "c"], result.Groups[0].Members.Select(m => m.Record), StringComparer.Ordinal);
+        Assert.Equal(["d", "e", "f"], result.Groups[1].Members.Select(m => m.Record), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
