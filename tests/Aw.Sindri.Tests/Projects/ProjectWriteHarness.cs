@@ -23,7 +23,10 @@ internal sealed partial class ProjectWriteHarness
 
     internal SliceHarness Slice => Views.Slice;
 
-    internal AttachProjectService Attach() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers, Slice.Ids);
+    /// <summary>The stored Linear projects the attach reads: by default the one catalog project, <see cref="ProjectRows.LinearKey"/>.</summary>
+    internal FakeProjectFacts Facts { get; } = new FakeProjectFacts().With(ProjectRows.Snapshot(ProjectRows.Fact()));
+
+    internal AttachProjectService Attach() => new(new AttachProjectLookup(Views.Views, Facts), Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers, Slice.Ids);
 
     internal ChangeProjectService Change() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers);
 
