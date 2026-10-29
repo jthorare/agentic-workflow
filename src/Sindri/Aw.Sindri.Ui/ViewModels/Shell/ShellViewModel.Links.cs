@@ -18,9 +18,8 @@ internal sealed partial class ShellViewModel
 
     private void Navigate(DeepLink link, bool rowSheet)
     {
-        if (PageOnly(link.Kind) is { } only)
+        if (OpenPageOnly(link))
         {
-            GoTo(only);
             return;
         }
 
@@ -57,6 +56,25 @@ internal sealed partial class ShellViewModel
         {
             SelectRowOf(link);
         }
+    }
+
+    // The links that need no subject: a page (see PageOnly), or the Add project sheet over the Projects page.
+    private bool OpenPageOnly(DeepLink link)
+    {
+        if (link.Kind == DeepLinkKind.ProjectAdd)
+        {
+            GoTo(PageId.Projects);
+            OpenSheet(link);
+            return true;
+        }
+
+        if (PageOnly(link.Kind) is not { } only)
+        {
+            return false;
+        }
+
+        GoTo(only);
+        return true;
     }
 
     // The links that name a page and nothing else: the checklist is Settings' first section (ShowPage scrolls to it).
@@ -97,9 +115,9 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.Node => PageId.Context,
         DeepLinkKind.Session => PageId.Agents,
         DeepLinkKind.System => PageId.System,
-        DeepLinkKind.Project => PageId.Projects,
+        DeepLinkKind.Project or DeepLinkKind.ProjectAdd => PageId.Projects,
         DeepLinkKind.Job => PageId.Jobs,   // System's "View job" and the tray open the page with that job's sheet
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.ProjectAdd => null,
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Setup or DeepLinkKind.Projects => null,
         _ => null,
     };
 }

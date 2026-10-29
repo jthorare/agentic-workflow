@@ -52,10 +52,10 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         return true;
     }
 
-    // The links that name a page and have no subject: 'home/needs-you', 'setup' and 'projects'.
+    // The links that have no subject: 'home/needs-you', 'setup', 'projects' and 'projects/add'.
     private static bool TryParsePage(string? text, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out DeepLink? link)
     {
-        link = string.Equals(text, HomeNeedsYouText, StringComparison.Ordinal) ? HomeNeedsYou : string.Equals(text, SetupText, StringComparison.Ordinal) ? Setup : string.Equals(text, ProjectsText, StringComparison.Ordinal) ? Projects : ContextItemOf(text);
+        link = string.Equals(text, HomeNeedsYouText, StringComparison.Ordinal) ? HomeNeedsYou : string.Equals(text, SetupText, StringComparison.Ordinal) ? Setup : string.Equals(text, ProjectsText, StringComparison.Ordinal) ? Projects : string.Equals(text, ProjectAddText, StringComparison.Ordinal) ? ProjectAdd : ContextItemOf(text);
         return link is not null;
     }
 
@@ -68,13 +68,15 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     /// <summary>The link's text, the form <see cref="TryParse"/> reads.</summary>
     /// <returns>The text.</returns>
     public override string ToString() =>
-        Kind == DeepLinkKind.HomeNeedsYou ? HomeNeedsYouText : Kind == DeepLinkKind.Setup ? SetupText : Kind == DeepLinkKind.Projects ? ProjectsText : Kind == DeepLinkKind.ContextItem ? ContextItemPrefix + Subject : _kinds.First(k => k.Kind == Kind).Prefix + "/" + Subject;
+        Kind == DeepLinkKind.HomeNeedsYou ? HomeNeedsYouText : Kind == DeepLinkKind.Setup ? SetupText : Kind == DeepLinkKind.Projects ? ProjectsText : Kind == DeepLinkKind.ProjectAdd ? ProjectAddText : Kind == DeepLinkKind.ContextItem ? ContextItemPrefix + Subject : _kinds.First(k => k.Kind == Kind).Prefix + "/" + Subject;
 
     private const string HomeNeedsYouText = "home/needs-you";
 
     private const string SetupText = "setup";
 
     private const string ProjectsText = "projects";
+
+    private const string ProjectAddText = "projects/add";
 
     private const string ContextItemPrefix = "context?item=";
 

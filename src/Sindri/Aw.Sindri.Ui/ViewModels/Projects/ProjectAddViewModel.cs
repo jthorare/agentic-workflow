@@ -1,4 +1,7 @@
+using System.Globalization;
+using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Projects;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
 
@@ -11,13 +14,43 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// <param name="apiUrl">Where the API is now, or null while it is unreachable.</param>
 internal sealed class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl) : ObservableObject
 {
-#pragma warning disable CA1823, IDE0052, CS0067 // the red commit: Save and Added arrive with the implementation
     private readonly ISindriApi _api = api;
     private readonly Func<Uri?> _apiUrl = apiUrl;
 
     /// <summary>A project was added: the shell closes the sheet, says it, and the page reads again and focuses the new card.</summary>
     internal event EventHandler<ProjectDoneEventArgs>? Added;
-#pragma warning restore CA1823, IDE0052, CS0067
+
+    /// <summary>Cancel was pressed: the shell closes the sheet.</summary>
+    internal event EventHandler? Cancelled;
+
+#pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
+    /// <summary>The From Linear tab's word.</summary>
+    public string FromLinearText => Labels.ProjectAddFromLinear;
+
+    /// <summary>The By hand tab's word.</summary>
+    public string ByHandText => Labels.ProjectAddByHand;
+
+    /// <summary>The From Linear tab's body until its list ships.</summary>
+    public string FromLinearSoonText => Labels.ProjectAddFromLinearSoon;
+
+    /// <summary>The name field's label.</summary>
+    public string NameLabel => Labels.ProjectNameField;
+
+    /// <summary>The state picker's label.</summary>
+    public string StateLabel => Labels.ProjectStateField;
+
+    /// <summary>The links field's label.</summary>
+    public string LinksLabel => Labels.ProjectLinksField;
+
+    /// <summary>The notes field's label.</summary>
+    public string NotesLabel => Labels.ProjectAddNotesField;
+
+    /// <summary>The target date field's label.</summary>
+    public string TargetLabel => Labels.ProjectTargetField;
+
+    /// <summary>The Cancel button's word.</summary>
+    public string CancelText => Labels.ProjectCancelEdit;
+#pragma warning restore CA1822, MA0041
 
     /// <summary>True while the By hand tab shows.</summary>
     public bool IsByHand
@@ -86,6 +119,9 @@ internal sealed class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl) : O
     /// <summary>Shows the By hand tab.</summary>
     internal void SelectByHand() => IsByHand = true;
 
+    /// <summary>Leaves the sheet without saving.</summary>
+    internal void Cancel() => Cancelled?.Invoke(this, EventArgs.Empty);
+
     /// <summary>Starts the sheet over: By hand, every field empty, no error.</summary>
     internal void Reset() =>
         (IsByHand, SelectedState, Name, Links, Notes, Target, SaveError) = (true, Planned, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
@@ -93,7 +129,53 @@ internal sealed class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl) : O
     /// <summary>Adds the hand-made project the fields describe.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that ends when the answer is drawn.</returns>
-    internal Task Save(CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal async Task Save(CancellationToken cancellationToken)
+    {
+        if (!CanSave || _apiUrl() is not { } url)
+        {
+            return;
+        }
+
+        var target = Target.Trim();
+        if (target.Length > 0 && !DateOnly.TryParseExact(target, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+        {
+            SaveError = Labels.ProjectAddBadTarget;
+            return;
+        }
+
+        var attach = Body(target);
+        (SaveError, IsSaving) = (string.Empty, true);
+        Result<ProjectAcceptedView> answer;
+        try
+        {
+            answer = await _api.AttachProject(url, attach, cancellationToken).ConfigureAwait(true);
+        }
+        finally
+        {
+            IsSaving = false;
+        }
+
+        if (answer.IsError)
+        {
+            SaveError = Labels.ProjectAddFailed(answer.Error);
+            return;
+        }
+
+        Added?.Invoke(this, new ProjectDoneEventArgs(ProjectDone.Added, answer.Value.Project, Labels.ProjectAdded(attach.Name!), wentToFinished: false));   // why: Body always sets the name
+    }
+
+    // The fields as the API takes them: an empty links, notes or target is left out.
+    private ProjectAttach Body(string target)
+    {
+        var links = Links.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var notes = Notes.Trim();
+        return new ProjectAttach(
+            Name: Name.Trim(),
+            State: SelectedState?.Value,
+            Links: links.Length > 0 ? links : null,
+            Notes: notes.Length > 0 ? notes : null,
+            Target: target.Length > 0 ? target : null);
+    }
 
     private static ProjectStateChoice Planned => ProjectStateChoice.All.First(s => string.Equals(s.Value, "planned", StringComparison.Ordinal));
 }
