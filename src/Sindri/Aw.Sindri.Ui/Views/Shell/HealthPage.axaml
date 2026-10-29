@@ -259,6 +259,27 @@
           </Border>
         </Border>
 
+        <!-- #1597: the Context index card: one wrapped line per context source, its state a word and never colour alone. -->
+        <Border x:Name="ContextIndexPanel" Classes="panel" Width="440" Margin="0,0,12,12" DataContext="{Binding ContextIndex}" x:DataType="shell:ContextIndexCardViewModel">
+          <Border Classes="section last">
+            <StackPanel Spacing="{StaticResource Space.XS}">
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBlock x:Name="ContextIndexEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
+                <TextBlock x:Name="ContextIndexWord" Grid.Column="1" Classes="body-strong" Text="{Binding Word}" AutomationProperties.Name="{Binding Word}" />
+              </Grid>
+              <ItemsControl x:Name="ContextIndexLines" ItemsSource="{Binding Lines}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="shell:ContextIndexLine">
+                    <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Name}" />
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <TextBlock x:Name="ContextIndexMessage" Classes="body subtle" Text="{Binding Message}" TextWrapping="Wrap" IsVisible="{Binding HasMessage}"
+                         AutomationProperties.Name="{Binding Message}" />
+            </StackPanel>
+          </Border>
+        </Border>
+
         <Border x:Name="AgentsCard" Classes="panel" Width="440" Margin="0,0,12,12">
           <Border Classes="section last">
             <StackPanel Spacing="{StaticResource Space.XS}">

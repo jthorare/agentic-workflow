@@ -1,0 +1,80 @@
+using System.Globalization;
+
+namespace Aw.Sindri.Ui.ViewModels;
+
+/// <summary>The app's own copy (<see cref="Labels"/>, continued): Health's Context index card (#1597). The words are keyed by each source's pull state; none is a served sentence.</summary>
+internal static partial class Labels
+{
+    /// <summary>The card's heading.</summary>
+    internal const string ContextIndexCard = "Context index";
+
+    /// <summary>A line's accessible name starts with this, then the line.</summary>
+    internal const string ContextIndexNamePrefix = "Context index: ";
+
+    /// <summary>The card before its first answer.</summary>
+    internal const string ReadingContextIndex = "Reading the context index…";
+
+    /// <summary>The card when no source is set up.</summary>
+    internal const string ContextIndexNone = "No sources are set up yet.";
+
+    /// <summary>The card when the read failed.</summary>
+    internal const string ContextIndexUnreadable = "The context index can't be read just now.";
+
+    /// <summary>The Context index, named in the headline when its card needs a look.</summary>
+    internal const string ContextIndexLookName = "context index";
+
+    /// <summary>A source that hasn't started and has no phase to show.</summary>
+    internal const string ContextSourceNotStarted = "not started";
+
+    /// <summary>A source that is pulling.</summary>
+    internal const string ContextSourcePulling = "pulling";
+
+    /// <summary>A source between pulls.</summary>
+    internal const string ContextSourceIdle = "idle";
+
+    /// <summary>A source that stopped early because it hit its cap this round (SND-CONTEXT-059).</summary>
+    internal const string ContextSourceAtCap = "idle, at its cap this round";
+
+    /// <summary>The code a source reports when it was capped this tick.</summary>
+    internal const string ContextCapCode = "SND-CONTEXT-059";
+
+    /// <summary>What a source in backoff reads as.</summary>
+    /// <param name="minutes">Whole minutes until the next try, at least 1.</param>
+    /// <param name="code">The last error's code, or null.</param>
+    /// <returns>"retrying in 4 min (SND-CONTEXT-041)".</returns>
+    internal static string ContextSourceRetrying(int minutes, string? code)
+    {
+        var words = string.Create(CultureInfo.InvariantCulture, $"retrying in {minutes} min");
+        return string.IsNullOrEmpty(code) ? words : words + " (" + code + ")";
+    }
+
+    /// <summary>What a failed source reads as.</summary>
+    /// <param name="code">The last error's code, or null.</param>
+    /// <param name="text">The one scrubbed line saying what failed, or null.</param>
+    /// <returns>"failed (SND-CONTEXT-041): the token was refused".</returns>
+    internal static string ContextSourceFailed(string? code, string? text)
+    {
+        var words = string.IsNullOrEmpty(code) ? "failed" : "failed (" + code + ")";
+        return string.IsNullOrEmpty(text) ? words : words + ": " + text;
+    }
+
+    /// <summary>How many records a source holds.</summary>
+    /// <param name="records">The count.</param>
+    /// <returns>"200 records".</returns>
+    internal static string ContextRecords(int records) =>
+        string.Create(CultureInfo.InvariantCulture, $"{records} {(records == 1 ? "record" : "records")}");
+
+    /// <summary>The words when a source has records but its last commit is unknown.</summary>
+    internal const string ContextNothingCommitted = "nothing committed yet";
+
+    /// <summary>When a source last committed.</summary>
+    /// <param name="age">Since the last successful tick.</param>
+    /// <returns>"last commit 3 min ago".</returns>
+    internal static string ContextLastCommit(TimeSpan age) => "last commit " + age.TotalMinutes switch
+    {
+        < 1 => "under a minute ago",
+        < 60 => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalMinutes} min ago"),
+        < 1440 => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalHours} h ago"),
+        _ => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalDays} d ago"),
+    };
+}

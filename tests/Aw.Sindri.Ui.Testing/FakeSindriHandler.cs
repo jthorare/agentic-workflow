@@ -110,6 +110,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
             { } path when request.Method == HttpMethod.Get && (path == "/sindri/sessions" || path.StartsWith("/sindri/sessions/", StringComparison.Ordinal)) => await Sessions(uri, cancellationToken),
             { } path when path == "/sindri/jobs" || path.StartsWith("/sindri/jobs/", StringComparison.Ordinal) => await Jobs(request, cancellationToken),
             "/sindri/code-index/status" when request.Method == HttpMethod.Get => Answer(Counted(await server.CodeIndexStatus(uri, cancellationToken), server.CodeIndexStatusAnswer)),
+            "/sindri/index/status" when request.Method == HttpMethod.Get => Answer(Counted(await server.IndexStatus(uri, cancellationToken), server.IndexStatusAnswer)),
             "/sindri/setup" when request.Method == HttpMethod.Get => Answer(Counted(await server.Setup(uri, cancellationToken), server.SetupAnswer)),
             { } path when request.Method == HttpMethod.Post && IsSetupWrite(path) => await SetupWrite(request, path, cancellationToken),
             { } path when request.Method == HttpMethod.Get && path.StartsWith("/sindri/workflow/", StringComparison.Ordinal) => await Workflow(uri, cancellationToken),
