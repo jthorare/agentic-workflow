@@ -40,7 +40,7 @@ internal static class NodeBands
     /// <returns>"Concepts", "Why", "Product", "Code" or "Other".</returns>
     internal static string Title(WholeBand band) => band switch
     {
-        WholeBand.Concept => Labels.ContextWholeBandConcepts,
+        WholeBand.Concept => Labels.ContextConceptsCrumb,
         WholeBand.Intent => Labels.ContextWholeBandWhy,
         WholeBand.Product => Labels.ContextMapAreaProduct,
         WholeBand.Code => Labels.ContextMapAreaCode,
