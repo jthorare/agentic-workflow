@@ -15,7 +15,7 @@ namespace Aw.Sindri.Host.Models;
 /// (<see cref="ModelWalker"/>). When nothing answered and a harness is at its limit, a call that runs under a job parks the job on 'model-limit' (<see cref="ModelPauser"/>) and walks again from the first harness when it is resumed; every
 /// other end is SND-CONTEXT-240, 241 or 042 (<see cref="ModelCallErrors"/>). The tries become 'context.model.called' events (<see cref="ModelCallRecorder"/>). A request's own model names win over the profile and go through the same name check.
 /// </summary>
-internal sealed class RoutedModelPort : IModelPort
+internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
 {
     private static readonly ProviderName[] _agentClis = [.. AgentCliNames.DefaultOrder.Select(AgentCliNames.Provider)];
 
@@ -84,6 +84,8 @@ internal sealed class RoutedModelPort : IModelPort
             }
         }
     }
+
+    public ValueTask<PromptBudget?> For(ModelPurpose purpose, CancellationToken cancellationToken) => throw new NotSupportedException();
 
     private async ValueTask<ModelCall> Begin(ModelRequest request, CancellationToken cancellationToken)
     {
