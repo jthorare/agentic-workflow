@@ -102,10 +102,6 @@ using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
 using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Features.OnboardRepo;
-using Aw.Sindri.Features.OnyxAccount;
-using Aw.Sindri.Features.OnyxDown;
-using Aw.Sindri.Features.OnyxStatus;
-using Aw.Sindri.Features.OnyxUp;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
 using Aw.Sindri.Features.ProbeLaunchTargets;
@@ -132,7 +128,6 @@ using Aw.Sindri.Host.Commands.Recipe;
 using Aw.Sindri.Host.Commands.Scoping;
 using Aw.Sindri.Host.Endpoints;
 using Aw.Sindri.Host.Mcp;
-using Aw.Sindri.Host.Onyx;
 
 namespace Aw.Sindri.Host;
 
@@ -178,13 +173,8 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(LineDeskReport)), JsonSerializable(typeof(DesignStopView)), JsonSerializable(typeof(LineView))]   // LN-K: the line verbs; LN-API1
 [JsonSerializable(typeof(DocsCheckResponse)), JsonSerializable(typeof(DocsCheckFinding))]   // API17: 'docs check'
 [JsonSerializable(typeof(LineDoctorResponse))]   // LN-L: 'line doctor'
-[JsonSerializable(typeof(OnyxStatusResponse))]
 [JsonSerializable(typeof(OnyxSetupState))]
-[JsonSerializable(typeof(OnyxUpResponse))]
-[JsonSerializable(typeof(OnyxUpSummary))]
-[JsonSerializable(typeof(OnyxAccountResponse))]
 [JsonSerializable(typeof(OnyxStepResult))]
-[JsonSerializable(typeof(OnyxDownResponse))]
 [JsonSerializable(typeof(RequestKind))]   // API P8: the sindri_request kind argument binds through it
 [JsonSerializable(typeof(FleetChanged))]
 [JsonSerializable(typeof(Features.CodeIndexReads.CodeIndexStatusView)), JsonSerializable(typeof(Features.CodeIndexReads.RepoHealth)), JsonSerializable(typeof(CodeIndex.Core.Facade.FindSymbolsAnswer)), JsonSerializable(typeof(CodeIndex.Core.Values.RepoName), TypeInfoPropertyName = "CodeIndexRepoName"), JsonSerializable(typeof(Features.CodeIndexReads.CodeCallsView)), JsonSerializable(typeof(CodeIndex.Core.Facade.RepoStatus), TypeInfoPropertyName = "CodeIndexRepoStatus")]   // code-index reads (CI-10a)

@@ -1,4 +1,3 @@
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Infrastructure.Onyx;
 using Aw.Sindri.Infrastructure.Processes;
@@ -64,17 +63,5 @@ public sealed class ComposeFailureHintTests
         Assert.Equal("running", nginx.State);
         Assert.Contains(new ComposePublisher("127.0.0.1", 3189, 80), nginx.Publishers);
         Assert.Equal("exited", Assert.Single(containers, static c => c.Service == "api_server").State);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_failed_up_step_says_to_run_up_again_to_resume()
-    {
-        var rig = new OnyxUpRig();
-        rig.Runtime.FailNext("Pull", SindriErrors.OnyxComposeFailed.With("`docker compose pull` failed (exit 1): no space left on device"));
-
-        var error = (await rig.Up(Token)).Error;
-
-        Assert.Equal("SND-ONYX-011", error.Code);
-        Assert.EndsWith("run `sindri onyx up` again to resume", error.Message, StringComparison.Ordinal);
     }
 }
