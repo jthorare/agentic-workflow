@@ -6,24 +6,30 @@ namespace Aw.Context.Features.BuildMap;
 
 internal sealed partial class BuildMapService
 {
-    // The newest draft when it finished after this build asked for the gate, under the same rules, at exactly the commits the mapped repos stand at now; null on any mismatch or read error (the build then runs as usual).
-    private async ValueTask<MapBuildReport?> SavedWhileWaiting(ContextSettings settings, IReadOnlyList<ContextRepo> mappedRepos, IReadOnlyList<ContextRepo> profileRepos, DateTimeOffset asked, CancellationToken cancellationToken)
+    // The newest draft's version row, or null when there is none or the store can't say (a draft's date is stamped before its concepts are named, so only its number tells whether it was saved while a build waited).
+    private async ValueTask<MapVersion?> NewestDraft(CancellationToken cancellationToken)
     {
-        var open = await store.Snapshot(draft: true, cancellationToken).ConfigureAwait(false);
-        if (open.IsError || open.Value is not { } draft || draft.Version.Created < asked
-            || !string.Equals(draft.Version.Ruleset, MapRuleset.Of(ScopeRules.Mapped(settings, profileRepos)), StringComparison.Ordinal))
+        var versions = await store.Versions(cancellationToken).ConfigureAwait(false);
+        return versions.IsError ? null : versions.Value.FirstOrDefault(v => v.Status == MapVersionStatus.Draft);
+    }
+
+    // The newest draft when it is not the one seen before the wait (so it was saved during it), under the same rules, at exactly the commits the mapped repos stand at now; null on any mismatch or read error (the build then runs as usual).
+    private async ValueTask<MapBuildReport?> SavedWhileWaiting(ContextSettings settings, IReadOnlyList<ContextRepo> mappedRepos, IReadOnlyList<ContextRepo> profileRepos, MapVersion? before, CancellationToken cancellationToken)
+    {
+        if (await NewestDraft(cancellationToken).ConfigureAwait(false) is not { } draft || draft.Number == before?.Number
+            || !string.Equals(draft.Ruleset, MapRuleset.Of(ScopeRules.Mapped(settings, profileRepos)), StringComparison.Ordinal))
         {
             return null;
         }
 
-        var saved = await store.Heads(draft.Version.Number, cancellationToken).ConfigureAwait(false);
+        var saved = await store.Heads(draft.Number, cancellationToken).ConfigureAwait(false);
         if (saved.IsError || !await StandAt(mappedRepos, saved.Value, cancellationToken).ConfigureAwait(false))
         {
             return null;
         }
 
-        var number = draft.Version.Number.ToString(CultureInfo.InvariantCulture);
-        return new MapBuildReport(draft.Version, [], [], saved.Value) { Notes = [$"v{number} was built from these heads while this build waited, so it was not built again"] };
+        var number = draft.Number.ToString(CultureInfo.InvariantCulture);
+        return new MapBuildReport(draft, [], [], saved.Value) { Notes = [$"v{number} was built from these heads while this build waited, so it was not built again"] };
     }
 
     // Whether the mapped repos are exactly the repos of the saved heads, each at its saved commit.
