@@ -10,6 +10,9 @@ namespace Aw.Context.Core.Map;
 /// <param name="OnDefault">Whether that commit was on the repo's default branch.</param>
 public sealed partial record MapHead(ContextRepoName Repo, string Commit, bool OnDefault)
 {
+    /// <summary>The commit of the code index the build resolved this repo's symbol citations against; null when none held the build's commit (#1704: a stub, never set yet).</summary>
+    public string? IndexCommit { get; init; }
+
     /// <summary>Whether <paramref name="text"/> is a commit as heads are stored: 7 to 40 lowercase hex characters.</summary>
     /// <param name="text">The text.</param>
     /// <returns>True when it is.</returns>
