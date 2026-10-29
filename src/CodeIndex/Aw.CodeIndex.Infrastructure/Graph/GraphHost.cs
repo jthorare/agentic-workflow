@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Aw.Kernel.Processes;
 
 namespace Aw.CodeIndex.Infrastructure.Graph;
 
@@ -63,10 +64,11 @@ internal sealed record GraphHost(bool IsLinux, bool IsMac, string Home, string? 
                 start.ArgumentList.Add(arg);
             }
 
-            using var stat = Process.Start(start);
-            var owner = stat?.StandardOutput.ReadToEnd().Trim();
-            stat?.WaitForExit();
-            return owner == "0" && stat?.ExitCode == 0;
+            using var pinned = PinnedProcess.Start(start);
+            var stat = pinned.Process;
+            var owner = stat.StandardOutput.ReadToEnd().Trim();
+            stat.WaitForExit();
+            return owner == "0" && stat.ExitCode == 0;
         }
         catch (Exception e) when (e is InvalidOperationException or System.ComponentModel.Win32Exception)
         {

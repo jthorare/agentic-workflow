@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Aw.Kernel.Processes;
 
 namespace Aw.Context.Infrastructure.Extract;
 
@@ -23,10 +24,13 @@ internal static class GraphifyProcess
         var start = StartInfo(argv, environment, directory);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(limit ?? Timeout.InfiniteTimeSpan);
+        PinnedProcess? pinned = null;
         Process? process = null;
         try
         {
-            process = Process.Start(start) ?? throw new InvalidOperationException("the process didn't start");
+            // A thread that outlives this call forks the child: bwrap --die-with-parent dies with the thread that forked it, and pool threads retire (#1680).
+            pinned = await PinnedProcess.StartAsync(start).ConfigureAwait(false);
+            process = pinned.Process;
             var stdout = Capture(process.StandardOutput, timeout.Token);
             var stderr = Capture(process.StandardError, timeout.Token);
             await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
@@ -49,7 +53,7 @@ internal static class GraphifyProcess
         }
         finally
         {
-            process?.Dispose();
+            pinned?.Dispose();
         }
     }
 

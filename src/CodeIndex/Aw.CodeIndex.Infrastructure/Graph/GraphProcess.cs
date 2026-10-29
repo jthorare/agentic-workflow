@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text;
+using Aw.Kernel.Processes;
 
 namespace Aw.CodeIndex.Infrastructure.Graph;
 
@@ -23,24 +24,16 @@ internal static class GraphProcess
     /// <returns>How it ended, or null.</returns>
     internal static async Task<Ran?> Spawn(IReadOnlyList<string> argv, Dictionary<string, string> environment, string directory, TimeSpan limit, CancellationToken cancellationToken)
     {
-        var start = new ProcessStartInfo(argv[0]) { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, WorkingDirectory = directory };
-        start.Environment.Clear();
-        foreach (var (name, value) in environment)
-        {
-            start.Environment[name] = value;
-        }
-
-        foreach (var arg in argv.Skip(1))
-        {
-            start.ArgumentList.Add(arg);
-        }
-
+        var start = StartInfo(argv, environment, directory);
         using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeout.CancelAfter(limit);
+        PinnedProcess? pinned = null;
         Process? process = null;
         try
         {
-            process = Process.Start(start) ?? throw new InvalidOperationException("the process did not start");
+            // A thread that outlives this call forks the child: bwrap --die-with-parent dies with the thread that forked it, and pool threads retire (#1680).
+            pinned = await PinnedProcess.StartAsync(start).ConfigureAwait(false);
+            process = pinned.Process;
             var stdout = Capture(process.StandardOutput, timeout.Token);
             var stderr = Capture(process.StandardError, timeout.Token);
             await process.WaitForExitAsync(timeout.Token).ConfigureAwait(false);
@@ -58,8 +51,25 @@ internal static class GraphProcess
         }
         finally
         {
-            process?.Dispose();
+            pinned?.Dispose();
         }
+    }
+
+    private static ProcessStartInfo StartInfo(IReadOnlyList<string> argv, Dictionary<string, string> environment, string directory)
+    {
+        var start = new ProcessStartInfo(argv[0]) { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, WorkingDirectory = directory };
+        start.Environment.Clear();
+        foreach (var (name, value) in environment)
+        {
+            start.Environment[name] = value;
+        }
+
+        foreach (var arg in argv.Skip(1))
+        {
+            start.ArgumentList.Add(arg);
+        }
+
+        return start;
     }
 
     private static async Task<string> Capture(StreamReader reader, CancellationToken cancellationToken)
