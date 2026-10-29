@@ -99,7 +99,7 @@ internal sealed partial class ShellViewModel : ObservableObject
     {
         Health.Follow(Queue.Refresh);
         Health.Follow(Item.Refresh);
-        Health.Follow(Health.CodeIndex.Refresh);
+        Health.FollowCards();
     }
 
     /// <summary>The app's copy, for the view.</summary>
