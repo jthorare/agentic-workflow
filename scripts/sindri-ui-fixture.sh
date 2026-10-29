@@ -139,6 +139,28 @@
 #                                  (model.picking for picking; model.picked and session.usage, twice for the retry, for the others).
 #                                  Exit 1 when they do not come in time; needs jq and git.
 #
+#   sindri-ui-fixture.sh sandbox blocked|clear
+#   sindri-ui-fixture.sh sandbox denials|denials-many|waiting|limit-memory|limit-wall|learning|takeover|attended <ITM-id> <instance-address>
+#                                  the sandbox surfaces' states (sandbox spec section 8, States; goldens tests/Aw.Sindri.Tests/Golden/Sandbox/).
+#                                  blocked and clear need a live answer from the control plane (/sindri/sandbox/status and /check), which
+#                                  ledger rows can't fake, so they restart serve (as 'sessions up' does) with AW_SANDBOX_BWRAP=/nonexistent
+#                                  (blocked: no bubblewrap, the Health row, the Settings section and the park card show the first blocker) or
+#                                  with it unset (clear: needs a working bwrap, nothing blocks). The setting is remembered in
+#                                  <home>/ui-fixture-sandbox/bwrap, so every later restart keeps it. blocked then starts the agent-run
+#                                  recipe and waits (FIXTURE_AGENT_WAIT s) for its launch.failed: that Step is parked on SND-LAUNCH-014 no-bwrap;
+#                                  run blocked twice for two parked Steps, then clear for the resume list (one Step may be closed first, so the
+#                                  list shows "has moved on"). Run after 'sessions up'; needs jq and git.
+#                                  The other states are ledger rows on a launch of an existing item (see 'workflows'), the same way
+#                                  model-picks writes them (fixed ids, INSERT OR IGNORE, a rerun adds nothing): every one starts with the
+#                                  launch.started row of events/launch-started-sandbox.json (all but waiting). denials: sandbox.denied x10 for github.com
+#                                  (some) and one blocked path; denials-many: the overflow row too (top 5 of n, with a fix of every kind);
+#                                  waiting: launch.waiting for a full session cap (3 of 3, SND-LAUNCH-020) and no launch.started, which
+#                                  would end the wait; limit-memory and limit-wall: sandbox.limit-hit and
+#                                  session.ended with reason limit (12GiB, 40m); learning: launch.started with networkMode learn;
+#                                  takeover: launch.takeover-opened on the sandboxed run; attended: a launch.started in open mode with
+#                                  no instance. The Agents sheet line needs the session row to carry the sandbox summary, which the
+#                                  control plane serves from the launch's plan file, not from these rows.
+#
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
 # FIXTURE_DESK_TIMEOUT (up only): writes workflow.deskTimeout into the fixture profile, the floor of every desk Step timeout (park-timeout).
 # FIXTURE_AGENT_WAIT is how many seconds agent-run waits for launch.started (default 120; a saturated box needs more).
@@ -779,6 +801,8 @@ sessions_export() {
   export AW_SESSIONS_PROC_ROOT="$d/proc" AW_SESSIONS_CLAUDE_DIR="$d/claude-sessions" AW_FLEET_DIR="$d/fleet" AW_LAUNCHER_CONFIG="$d/launcher.json"
   # agent-run's launches mark their worktree trusted in Claude Code's config: keep that file inside the home.
   if [ -d "$(agent_dir)/claude-config" ]; then export CLAUDE_CONFIG_DIR="$(agent_dir)/claude-config"; fi
+  # 'sandbox blocked|clear' keeps AW_SANDBOX_BWRAP across restarts.
+  if [ -s "$(sandbox_dir)/bwrap" ]; then export AW_SANDBOX_BWRAP="$(cat "$(sandbox_dir)/bwrap")"; else unset AW_SANDBOX_BWRAP; fi
   # model-picks-run's judge stub stays the judge of every later restart (the real judge would call a model provider).
   if [ -x "$(agent_dir)/stub-judge/judge" ]; then export AW_SINDRI_JUDGE="$(agent_dir)/stub-judge/judge"; fi
 }
@@ -947,13 +971,13 @@ agent_run() {
   [[ "$wait" =~ ^[0-9]+$ ]] || die "agent-run: FIXTURE_AGENT_WAIT '$wait' is not a number of seconds"
   local deadline=$((SECONDS + wait))
   while [ "$SECONDS" -lt "$deadline" ]; do
-    if "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | grep -q 'launch.started'; then
+    if "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | grep -q "${FIXTURE_AGENT_WANT:-launch.started}"; then
       printf '%s\n' "$item"
       return 0
     fi
     sleep 1
   done
-  echo "sindri-ui-fixture: agent-run: no launch.started for $item in $wait s; the ledger says:" >&2
+  echo "sindri-ui-fixture: agent-run: no ${FIXTURE_AGENT_WANT:-launch.started} for $item in $wait s; the ledger says:" >&2
   "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | tail -15 >&2
   return 1
 }
@@ -1123,6 +1147,83 @@ model_picks_run() { # $1 state
   return 1
 }
 
+# --- sandbox: the sandbox surfaces' states (sandbox spec section 8; issue #1113 SB-6) ---
+
+sandbox_dir() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-sandbox"; }
+
+# $1 key, $2 type, $3 payload JSON. A fixed id and idempotency key, so a rerun adds nothing (see pick_event).
+sandbox_event() {
+  local key="sindri-ui-fixture:sandbox:$1" id corr
+  id="$(printf '%s' "$key" | cksum | awk '{printf "5b0f1e01-%04x-4d1e-9a55-3c2f6d8e1b05", $1 % 65536}')"
+  corr="${id%?}6"
+  ledger "INSERT OR IGNORE INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, correlation_id, epoch, idempotency_key, payload_json)
+          VALUES ('$id', '$2', 1, strftime('%Y-%m-%dT%H:%M:%S', 'now') || '.0000000Z', 'sindri-ui-fixture', 'local', 0, '$corr',
+                  COALESCE((SELECT MAX(epoch) FROM events), 0), '$key', '$3');" >/dev/null
+}
+
+# $1 state, $2 item, $3 instance: launch.started with the golden's sandbox summary, on a fixed launch id per state.
+sandbox_started() {
+  local golden="$ROOT/tests/Aw.Sindri.Tests/Golden/Sandbox/events/launch-started-sandbox.json" mode=enforce attended=false
+  case "$1" in learning) mode=learn ;; attended) attended=true ;; esac
+  sandbox_event "started:$1" launch.started "$(jq -c --arg l "$(sandbox_launch "$1")" --arg i "$2" --arg a "$3" --arg m "$mode" --argjson at "$attended" '
+    .launchId = $l | .item = $i | .sandbox.networkMode = $m
+    | if $at then .mode = "open" | .instance = null | .state = null | .attempt = null
+      else .mode = "step" | .instance = $a | .state = "build" | .attempt = 1 end' "$golden")"
+}
+
+# $1 state; prints the launch id (LCH- and 32 hex digits), one per state so reruns and states never collide.
+sandbox_launch() { printf 'LCH-%032x\n' "$((0x5b0f1e00 + $(printf '%s' "$1" | cksum | awk '{print $1 % 4096}')))"; }
+
+# $1 state, $2 file of events/, $3 key: a golden event payload with the launch id of the state.
+sandbox_golden() { jq -c --arg l "$(sandbox_launch "$1")" '.launchId = $l' "$ROOT/tests/Aw.Sindri.Tests/Golden/Sandbox/events/$2"; }
+
+sandbox_bwrap() { # $1 the AW_SANDBOX_BWRAP value, or empty for unset
+  mkdir -p "$(sandbox_dir)" && printf '%s' "$1" > "$(sandbox_dir)/bwrap" || die "sandbox: can't write $(sandbox_dir)/bwrap"
+  sessions_need_copy
+  unset TMUX
+  sessions_restart >&2
+}
+
+sandbox() { # $1 state, $2 item, $3 instance
+  need jq
+  local state="$1" item="${2:-}" instance="${3:-}" l
+  case "$state" in
+    blocked)
+      sandbox_bwrap /nonexistent || return
+      FIXTURE_AGENT_WANT=launch.failed agent_run; return ;;
+    clear)
+      sandbox_bwrap ""; return ;;
+    *)
+      need_sql
+      l="$(sandbox_launch "$state")"
+      [ "$state" = waiting ] || sandbox_started "$state" "$item" "$instance"
+      case "$state" in
+        denials)
+          sandbox_event "denied:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json)"
+          sandbox_event "denied-path:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.config/gh" | .rule = "not-bound" | .count = 3')" ;;
+        denials-many)
+          sandbox_event "denied:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json)"
+          sandbox_event "denied-path:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.config/gh" | .rule = "not-bound" | .count = 3')"
+          sandbox_event "denied-never:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.ssh" | .rule = "deny-list" | .count = 2')"
+          sandbox_event "denied-tool:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "policy" | .target = "git push" | .rule = "inner-policy" | .count = 4')"
+          sandbox_event "denied-overflow:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied-overflow.json)" ;;
+        waiting)
+          # the engine launch found the session cap full (SND-LAUNCH-020): no launch.started, since it ends the wait.
+          sandbox_event "waiting:$state" launch.waiting "$(jq -cn --arg l "$l" --arg i "$item" --arg a "$instance" '{launchId: $l, item: $i, running: 3, cap: 3, instance: $a, state: "build", attempt: 1}')" ;;
+        limit-memory)
+          sandbox_event "limit-hit:$state" sandbox.limit-hit "$(sandbox_golden "$state" sandbox-limit-hit.json | jq -c '.kind = "memory"')"
+          sandbox_event "ended:$state" session.ended "$(sandbox_golden "$state" session-ended-limit.json)" ;;
+        limit-wall)
+          sandbox_event "limit-hit:$state" sandbox.limit-hit "$(sandbox_golden "$state" sandbox-limit-hit.json | jq -c '.kind = "wall"')"
+          sandbox_event "ended:$state" session.ended "$(sandbox_golden "$state" session-ended-limit.json | jq -c '.kind = "wall" | .limit = 2400 | .peaks.wallSeconds = 2400')" ;;
+        takeover)
+          sandbox_event "takeover:$state" launch.takeover-opened "$(jq -cn --arg l "$l" --arg i "$item" --arg a "$instance" '{launchId: $l, item: $i, instance: $a, viewer: {kind: "warp", label: "Warp", outcome: "opened", code: null, detail: null}}')" ;;
+        learning | attended) : ;;
+      esac ;;
+  esac
+  printf '%s\n' "$instance"
+}
+
 verb="${1:-}"
 case "$verb" in
   -h | --help) usage; exit 0 ;;
@@ -1161,6 +1262,15 @@ case "$verb" in
     case "$2" in picked | escalated | unpriced | picking) ;; *) die "model-picks: '$2' is not a state (picked, escalated, unpriced, picking)" ;; esac
     case "$3" in ITM-*[!0-9a-f]* | ITM-) die "model-picks: '$3' is not an item id" ;; ITM-*) ;; *) die "model-picks: '$3' is not an item id" ;; esac
     [ -n "$4" ] || die "model-picks: the instance address is empty" ;;
+  sandbox)
+    case "${2:-}" in
+      blocked | clear) [ "$#" -eq 2 ] || die "usage: sandbox blocked|clear" ;;
+      denials | denials-many | waiting | limit-memory | limit-wall | learning | takeover | attended)
+        [ "$#" -eq 4 ] || die "usage: sandbox $2 <ITM-id> <instance-address>"
+        case "$3" in ITM-*[!0-9a-f]* | ITM-) die "sandbox: '$3' is not an item id" ;; ITM-*) ;; *) die "sandbox: '$3' is not an item id" ;; esac
+        [ -n "$4" ] || die "sandbox: the instance address is empty" ;;
+      *) die "usage: sandbox blocked|clear | sandbox denials|denials-many|waiting|limit-memory|limit-wall|learning|takeover|attended <ITM-id> <instance-address>" ;;
+    esac ;;
   decide) [ "$#" -eq 3 ] || die "usage: decide <DEC-id> <choice>" ;;
   *) usage >&2; die "unknown verb: $verb" ;;
 esac
