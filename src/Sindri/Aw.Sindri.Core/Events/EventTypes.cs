@@ -167,6 +167,9 @@ public static class EventTypes
     /// <summary>The model an engine launch was given, and how it was chosen (model-pick spec §6).</summary>
     public const string ModelPicked = "model.picked";
 
+    /// <summary>A model call of the context engine ended (context model routing spec §7.1); one per call, under a job or not.</summary>
+    public const string ContextModelCalled = "context.model.called";
+
     /// <summary>Just before the pick asks Jev: "choosing model…" until model.picked for the same launch ends it (model-pick spec §6).</summary>
     public const string ModelPicking = "model.picking";
 

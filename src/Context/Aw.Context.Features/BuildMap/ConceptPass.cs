@@ -51,31 +51,43 @@ internal sealed class ConceptPass(IConceptNamer namer, ISymbolVectors vectors, I
             Nodes = [.. joined.Nodes.Concat(concepts.Nodes).DistinctBy(n => n.Key.Value, StringComparer.Ordinal)],
             Edges = [.. joined.Edges.Concat(concepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))],
         };
-        withConcepts = await Synthesized(withConcepts, notes, cancellationToken).ConfigureAwait(false);
+        (withConcepts, var covered) = await Synthesized(withConcepts, settings.ConceptSynthesis.CoverShare, notes, cancellationToken).ConfigureAwait(false);
         // The pins' concept edges (spec 2026-10-27 §10.2 and §10.3): the roll-up and what the owner declared, one edge per key, made fresh on every build. What the declared edges and the code disagree on, and the entries
         // with no endpoint in the map, are report lines and never degraded states (Open question 13).
         var declared = PinEdges.Declared(withConcepts, pins);
         var rolled = PinRollup.Apply(withConcepts, pins, declared);
-        var reportNotes = new List<string>(rolled.Notes);
-        if (declared.Skipped > 0)
-        {
-            reportNotes.Add(string.Create(CultureInfo.InvariantCulture, $"pin edges skipped: {declared.Skipped}"));
-        }
-
-        return new ConceptOutcome(withConcepts with { Edges = [.. rolled.Edges.Concat(withConcepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))] }, notes, reportNotes);
+        return new ConceptOutcome(withConcepts with { Edges = [.. rolled.Edges.Concat(withConcepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))] }, notes, ReportNotes(rolled.Notes, covered, declared.Skipped));
     }
 
-    // why: the synthesized concepts join before the pins' edges, so a pin and the roll-up see their nodes; a store that can't answer leaves the graph as it was.
-    private async ValueTask<GraphSnapshot> Synthesized(GraphSnapshot graph, List<string> notes, CancellationToken cancellationToken)
+    // The build report's lines: the roll-up's, then how many derived concepts folded away and how many declared pin edges were skipped, each only when there were any.
+    private static List<string> ReportNotes(IReadOnlyList<string> rolled, int covered, int skipped)
+    {
+        var lines = new List<string>(rolled);
+        if (covered > 0)
+        {
+            lines.Add(string.Create(CultureInfo.InvariantCulture, $"concepts covered: {covered}"));
+        }
+
+        if (skipped > 0)
+        {
+            lines.Add(string.Create(CultureInfo.InvariantCulture, $"pin edges skipped: {skipped}"));
+        }
+
+        return lines;
+    }
+
+    // why: the synthesized concepts join before the pins' edges, so a pin and the roll-up see their nodes, and the derived concepts they cover fold away (#1281); a store that can't answer leaves the graph as it was.
+    private async ValueTask<(GraphSnapshot Graph, int Covered)> Synthesized(GraphSnapshot graph, double coverShare, List<string> notes, CancellationToken cancellationToken)
     {
         var synthesized = await synthesis.All(cancellationToken).ConfigureAwait(false);
         if (synthesized.IsError)
         {
             notes.Add("synthesized concepts");
-            return graph;
+            return (graph, 0);
         }
 
-        return SynthesizedConceptNodes.Apply(graph, synthesized.Value);
+        var fold = CoveredConcepts.Fold(SynthesizedConceptNodes.Apply(graph, synthesized.Value), synthesized.Value, coverShare);
+        return (fold.Graph, fold.Covered);
     }
 
     // The concept hints of the newest map version the scan has looked at; a store that can't answer, or a version with none, shapes nothing.

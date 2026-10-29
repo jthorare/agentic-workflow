@@ -15,6 +15,13 @@
       ]
     },
     {
+      "type": "context.model.called",
+      "keyShape": "context.model.called:<callId>",
+      "invalidates": [
+        "jobs"
+      ]
+    },
+    {
       "type": "decision.recorded",
       "keyShape": "decision.recorded:<decisionId>",
       "invalidates": [

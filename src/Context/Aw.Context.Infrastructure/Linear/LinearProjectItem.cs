@@ -23,7 +23,8 @@ internal static class LinearProjectItem
             RecordKey.From(Prefix + project.Id), RecordKind.Project, project.Name, Text(project), project.Lead?.Name, project.Url, State(raw), raw,
             project.CreatedAt, project.UpdatedAt, project.CompletedAt ?? project.CanceledAt, Version(project),
             project.Lead is { } lead ? [new RecordLink("linear:user/" + lead.Id, RecordLinkKind.LedBy, lead.Name)] : [],
-            Repo: null, Audience(project, profileTeams), project.LastUpdate?.Health, Due(project.TargetDate));
+            Repo: null, Audience(project, profileTeams), project.LastUpdate?.Health, Due(project.TargetDate),
+            string.IsNullOrWhiteSpace(project.Description) ? null : project.Description);
     }
 
     private static RecordState? State(string? type) => type switch
