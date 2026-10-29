@@ -40,5 +40,5 @@ internal sealed class ToolPurgeDocker(IToolRunner runner) : IPurgeDocker
     }
 
     private Result<Unit> Remove(string[] arguments, string what)
-        => runner.Run("docker", arguments, _timeout) is { Outcome: ToolOutcome.Exited, ExitCode: 0 } ? Aw.Kernel.Results.Ok() : Failed($"docker could not remove {what}");
+        => runner.Run("docker", arguments, _timeout) is { Outcome: ToolOutcome.Exited, ExitCode: 0 } ? Results.Ok() : Failed($"docker could not remove {what}");
 }

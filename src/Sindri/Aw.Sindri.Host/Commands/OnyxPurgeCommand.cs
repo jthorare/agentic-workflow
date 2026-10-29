@@ -107,6 +107,6 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
             }
         }
 
-        return plan.Directory is null ? Aw.Kernel.Results.Ok() : files.DeleteDirectory(plan.Directory);
+        return plan.Directory is null ? Kernel.Results.Ok() : files.DeleteDirectory(plan.Directory);
     }
 }
