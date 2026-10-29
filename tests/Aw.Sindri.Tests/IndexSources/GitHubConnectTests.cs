@@ -132,6 +132,8 @@ public sealed class GitHubConnectTests
     {
         public List<string> Pointers { get; } = [];
 
+        public Result<bool> SetTeams(string source, IReadOnlyList<string> teams) => throw new NotSupportedException();
+
         public Result<bool> SetToken(string source, string pointer)
         {
             Pointers.Add(pointer);
