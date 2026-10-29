@@ -1,4 +1,5 @@
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
@@ -16,7 +17,8 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="store">The record store the positions are read from.</param>
 /// <param name="scrubberFactory">Builds the call's scrubbers.</param>
 /// <param name="decisions">The decision pass after each feed's tick; null: none.</param>
-internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null) : IIndexSync
+/// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run after the decision pass, in that order.</param>
+internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null) : IIndexSync
 {
     public async ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken)
     {
@@ -31,7 +33,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         var rows = new List<SourceSync>();
         foreach (var feed in resolved.Value.Feeds)
         {
-            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), after?.Invoke(feed), cancellationToken).ConfigureAwait(false);
+            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), AfterSteps.Compose(after?.Invoke(feed), steps?.For(feed, context.Settings, cancellationToken)), cancellationToken).ConfigureAwait(false);
             if (row.IsError)
             {
                 return row.Error;
@@ -60,8 +62,21 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
                 return position.Error;
             }
 
+            // why: only the Linear issue feed is reset to Recent with rows already stored (migration 0020), so only it is checked for a re-read; any other source in Recent is on its first read
+            int? stored = null;
+            if (feed.Source == LinearSourceIds.Issues && position.Value.Phase is SyncPhase.Recent)
+            {
+                var counted = await store.Count(feed.Source, cancellationToken).ConfigureAwait(false);
+                if (counted.IsError)
+                {
+                    return counted.Error;
+                }
+
+                stored = counted.Value.Records;
+            }
+
             var last = feeds.LastOutcome(feed.Source);
-            rows.Add(SourceProgress.From(feed.Source, position.Value.Phase, last?.At, last?.Code));
+            rows.Add(SourceProgress.From(feed.Source, position.Value.Phase, last?.At, last?.Code, stored));
         }
 
         return rows;
