@@ -67,4 +67,27 @@ public sealed class RepoScopeProductTests
         Assert.DoesNotContain("surface:screen/roster", keys, StringComparer.Ordinal);
         Assert.DoesNotContain("code:src/b/Roster.tsx", keys, StringComparer.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_shared_features_rolled_up_reads_and_writes_bring_no_other_repos_things()
+    {
+        var graph = new GraphBuilder()
+            .Node("feature:sharing", "Sharing")
+            .Node("code:src/a/Share.tsx", "Share.tsx")
+            .Node("code:src/b/Upload.cs", "Upload.cs")
+            .Node("thing:share-link", "Share link", Provenance.Model, 0.8)
+            .Node("thing:upload-bucket", "Upload bucket", Provenance.Model, 0.8)
+            .Edge("code:src/a/Share.tsx", EdgeType.Implements, "feature:sharing", evidence: "repo:web/src/a/Share.tsx")
+            .Edge("code:src/b/Upload.cs", EdgeType.Implements, "feature:sharing", evidence: "repo:other/src/b/Upload.cs")
+            .Edge("code:src/a/Share.tsx", EdgeType.Writes, "thing:share-link", evidence: "repo:web/src/a/Share.tsx")
+            .Edge("code:src/b/Upload.cs", EdgeType.Writes, "thing:upload-bucket", evidence: "repo:other/src/b/Upload.cs")
+            .Edge("feature:sharing", EdgeType.Writes, "thing:share-link")
+            .Edge("feature:sharing", EdgeType.Writes, "thing:upload-bucket")   // the roll-up of the other repo's file (FeatureRollup)
+            .Build();
+
+        var keys = graph.ScopedTo(Context.Core.Engine.ContextRepoName.From("web")).Nodes.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
+
+        Assert.Contains("thing:share-link", keys, StringComparer.Ordinal);
+        Assert.DoesNotContain("thing:upload-bucket", keys, StringComparer.Ordinal);
+    }
 }

@@ -63,7 +63,8 @@ public static class RepoScope
     /// <paramref name="scope"/> and its product cascade (spec §3 "graph nodes the repo implements and their cascade"; the cascade's reverse 'on' and state hops, §6.1):
     /// an action with an 'on' edge whose surface is in scope joins, and a thing with a 'reads' or 'writes' edge whose reader or writer (a code file or an action) is in scope
     /// joins — to a fixpoint, so an action that joins through its surface brings the things it reads or writes. A hop never runs backwards: a thing brings none of its readers
-    /// or writers, and an action or thing attached only to nodes outside <paramref name="scope"/> stays out.
+    /// or writers, and an action or thing attached only to nodes outside <paramref name="scope"/> stays out. A feature's rolled-up 'reads' or 'writes' (FeatureRollup)
+    /// is no hop: it counts the files of every repo homed in the feature, so a shared feature would bring another repo's things.
     /// </summary>
     /// <param name="graph">The graph.</param>
     /// <param name="scope">The nodes the repo implements with their part-of hierarchy (<see cref="WithHierarchy"/>).</param>
@@ -74,7 +75,7 @@ public static class RepoScope
         ArgumentNullException.ThrowIfNull(scope);
         var product = graph.Edges.Where(e => e.Type == EdgeType.On && e.From.Kind == NodeKind.Action)
             .Select(e => (InScope: e.To.Value, Joins: e.From.Value))
-            .Concat(graph.Edges.Where(e => e.Type is EdgeType.Reads or EdgeType.Writes && e.To.Kind == NodeKind.Thing)
+            .Concat(graph.Edges.Where(e => e.Type is EdgeType.Reads or EdgeType.Writes && e.From.Kind is NodeKind.Code or NodeKind.Action && e.To.Kind == NodeKind.Thing)
                 .Select(e => (InScope: e.From.Value, Joins: e.To.Value)))
             .ToLookup(p => p.InScope, p => p.Joins, StringComparer.Ordinal);
         var all = new HashSet<string>(scope, StringComparer.Ordinal);
