@@ -233,7 +233,19 @@ internal sealed partial class JobsPageViewModel : ObservableObject, IDisposable
             return kept;
         }
 
-        return _rows[served.Id] = new JobRowViewModel(served, Cancel, _clock);
+        return _rows[served.Id] = new JobRowViewModel(served, Cancel, _clock, Resume);
+    }
+
+    // Resume wakes a job parked on a model limit. A job someone else already resumed is refused (SND-JOB-003); either way the list is read again, so the row shows the job as it is now.
+    private async Task Resume(string id, CancellationToken cancellationToken)
+    {
+        if (_url is not { } url)
+        {
+            return;
+        }
+
+        _ = await Api.ResumeJob(url, id, cancellationToken).ConfigureAwait(true);
+        await Read(url, cancellationToken).ConfigureAwait(true);
     }
 
     // Cancel is the catalog's CancelJob row acting on this job; the app sends it once and never retries. The catalog may not be read yet: the row then has none until the next read.

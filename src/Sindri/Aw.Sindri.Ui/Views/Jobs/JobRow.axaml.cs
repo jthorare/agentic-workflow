@@ -51,4 +51,6 @@ internal sealed partial class JobRow : UserControl
         JobRowGrid.ColumnDefinitions = ColumnDefinitions.Parse(Job is { IsCompact: true } ? JobsColumns.Compact : JobsColumns.Wide);
 
     private void OnOpen(object? sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(OpenEvent, this));
+
+    private void OnResume(object? sender, RoutedEventArgs e) => _ = Job?.Resume(CancellationToken.None);
 }

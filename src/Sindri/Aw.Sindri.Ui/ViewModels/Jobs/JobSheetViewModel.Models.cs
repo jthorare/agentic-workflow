@@ -34,10 +34,15 @@ internal sealed partial class JobSheetViewModel
     /// <summary>Sends the resume of the open job and reads it again; a job no longer waiting is refused by Sindri and the read shows it as it is now.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>A task that ends when the job was read again.</returns>
-    internal Task Resume(CancellationToken cancellationToken)
+    internal async Task Resume(CancellationToken cancellationToken)
     {
-        _ = (Api, cancellationToken);
-        throw new NotSupportedException();
+        if (_url is not { } url || Id.Length == 0)
+        {
+            return;
+        }
+
+        _ = await Api.ResumeJob(url, Id, cancellationToken).ConfigureAwait(true);   // a job that is no longer waiting is refused; either way the job is read again
+        await Read(cancellationToken).ConfigureAwait(true);
     }
 
     private void DrawModels(JobView job)

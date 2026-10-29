@@ -60,6 +60,9 @@ internal sealed class JobRowViewModel : ObservableObject
     /// <summary>True when the row has a model line.</summary>
     public bool HasModelText => ModelText.Length > 0;
 
+    /// <summary>True when the second row is drawn: a model line, or Resume.</summary>
+    public bool HasModelRow => HasModelText || HasResume;
+
     /// <summary>True while the job is parked on 'model-limit': the row shows Resume.</summary>
     public bool HasResume { get; private set => Set(ref field, value); }
 
@@ -74,11 +77,7 @@ internal sealed class JobRowViewModel : ObservableObject
     /// <summary>Sends the resume of this job and reads the list again; a job that is no longer waiting is refused by Sindri and the read shows it as it is now.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>A task that ends when the list was read again.</returns>
-    internal Task Resume(CancellationToken cancellationToken)
-    {
-        _ = (_resume, cancellationToken);
-        throw new NotSupportedException();
-    }
+    internal Task Resume(CancellationToken cancellationToken) => _resume is null ? Task.CompletedTask : _resume(Id, cancellationToken);
 
     /// <summary>The row's accessible name.</summary>
     public string Name { get; private set => Set(ref field, value); } = string.Empty;
@@ -88,6 +87,9 @@ internal sealed class JobRowViewModel : ObservableObject
 
     /// <summary>True while the job runs.</summary>
     public bool IsRunning => string.Equals(Row.State, "running", StringComparison.Ordinal);
+
+    /// <summary>True while the job is not over: it runs, or it waits (on a model limit, a login).</summary>
+    public bool IsLive => IsRunning || string.Equals(Row.State, "waiting", StringComparison.Ordinal);
 
     /// <summary>True when the row has a summary.</summary>
     public bool HasSummary => SummaryText.Length > 0;
@@ -139,17 +141,18 @@ internal sealed class JobRowViewModel : ObservableObject
         WhenText = When();
         ByText = "by " + Labels.JobStartedBy(Row.StartedBy);
         (SummaryText, CodeText) = (Row.Summary ?? string.Empty, Row.Code ?? string.Empty);
-        Cancel = IsRunning ? Cancel ?? _cancel(Row.Id, TitleText) : null;
+        Cancel = IsLive ? Cancel ?? _cancel(Row.Id, TitleText) : null;
         ModelText = Row.Models is null && Row.WaitingOn is null ? string.Empty : ModelLines.Row(Row) ?? string.Empty;
         HasResume = string.Equals(Row.WaitingOn, ModelLines.ModelLimit, StringComparison.Ordinal);
         Name = Labels.JobRowName(TitleText, word.ToLowerInvariant(), WhenText, Labels.JobStartedBy(Row.StartedBy), SummaryText);
-        foreach (var name in (string[])[nameof(IsRunning), nameof(HasSummary), nameof(HasWideSummary), nameof(HasCode), nameof(HasCancel), nameof(HasModelText), nameof(ResumeName)])
+        Name = ModelText.Length > 0 ? Name + ", " + ModelText : Name;   // the model line reads once, after the row's other parts (its children stay raw)
+        foreach (var name in (string[])[nameof(IsRunning), nameof(IsLive), nameof(HasSummary), nameof(HasWideSummary), nameof(HasCode), nameof(HasCancel), nameof(HasModelText), nameof(HasModelRow), nameof(ResumeName)])
         {
             OnChanged(name);
         }
     }
 
-    private string When() => IsRunning
+    private string When() => IsLive
         ? Labels.JobWhen(running: true, _clock.GetUtcNow() - Row.StartedAt)
         : Labels.JobWhen(running: false, _clock.GetUtcNow() - (Row.EndedAt ?? Row.StartedAt));
 }
