@@ -116,17 +116,17 @@ public sealed class ProjectCardTests
     [InlineData("Waiting on the vendor", "Waiting on the vendor")]
     [InlineData("First line\nSecond line", "First line")]
     [InlineData("First line\r\nSecond", "First line")]
-    public async Task The_note_shows_its_first_line_only(string note, string face)
-        => Assert.Equal(face, (await _f.FirstCard(c => c["note"] = note, Token)).NotesFace);
+    public async Task The_notes_show_their_first_line_only(string note, string face)
+        => Assert.Equal(face, (await _f.FirstCard(c => c["notes"] = note, Token)).NotesFace);
 
     [Fact]
-    public async Task A_note_of_eighty_characters_is_kept_and_a_longer_one_is_cut_with_an_ellipsis()
+    public async Task Notes_of_eighty_characters_are_kept_and_longer_ones_are_cut_with_an_ellipsis()
     {
         var eighty = new string('a', 80);
         var longer = new string('b', 79) + "  tail";
 
-        Assert.Equal(eighty, (await _f.FirstCard(c => c["note"] = eighty, Token)).NotesFace);
-        Assert.Equal(new string('b', 79) + "…", (await _f.FirstCard(c => c["note"] = longer, Token)).NotesFace);
+        Assert.Equal(eighty, (await _f.FirstCard(c => c["notes"] = eighty, Token)).NotesFace);
+        Assert.Equal(new string('b', 79) + "…", (await _f.FirstCard(c => c["notes"] = longer, Token)).NotesFace);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public sealed class ProjectCardTests
     {
         var note = new string('c', 77) + "  " + "dddd";
 
-        var face = (await _f.FirstCard(c => c["note"] = note, Token)).NotesFace;
+        var face = (await _f.FirstCard(c => c["notes"] = note, Token)).NotesFace;
 
         Assert.Equal(new string('c', 77) + "…", face);
     }
@@ -142,8 +142,8 @@ public sealed class ProjectCardTests
     [Fact]
     public async Task A_missing_or_blank_note_has_no_face()
     {
-        Assert.Null((await _f.FirstCard(c => c["note"] = null, Token)).NotesFace);
-        Assert.Null((await _f.FirstCard(c => c["note"] = "  ", Token)).NotesFace);
+        Assert.Null((await _f.FirstCard(c => c["notes"] = null, Token)).NotesFace);
+        Assert.Null((await _f.FirstCard(c => c["notes"] = "  ", Token)).NotesFace);
     }
 
     [Fact]
