@@ -169,6 +169,8 @@ public sealed class SlackConnectTests
 
         public List<string> Sources { get; } = [];
 
+        public Result<bool> SetTeams(string source, IReadOnlyList<string> teams) => throw new NotSupportedException();
+
         public Result<bool> SetToken(string source, string secretPointer)
         {
             Sources.Add(source);

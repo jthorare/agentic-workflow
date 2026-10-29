@@ -76,4 +76,35 @@ public sealed class YamlSourceTokenProfileWriterTests : IDisposable
         Assert.Equal(SindriErrors.ProfileInvalid.Code, result.Error.Code);
         Assert.Equal(Yaml, File.ReadAllText(ProfilePath));
     }
+
+    [Fact]
+    public void An_empty_teams_line_is_replaced_by_the_list_and_everything_else_stays()
+    {
+        Write("# mine\nschemaVersion: 1\ncontext:\n  sources:\n    linear:\n      token: \"env:X\"\n      teams: []   # none yet\n    github:\n      repos: [a/b]\n");
+
+        Assert.True(Writer().SetTeams("linear", ["ENG", "OPS"]).Value);
+        Assert.False(Writer().SetTeams("linear", ["ENG", "OPS"]).Value);
+
+        Assert.Equal("# mine\nschemaVersion: 1\ncontext:\n  sources:\n    linear:\n      token: \"env:X\"\n      teams: [ENG, OPS]\n    github:\n      repos: [a/b]\n", File.ReadAllText(ProfilePath));
+    }
+
+    [Fact]
+    public void A_block_without_a_teams_line_gets_one_as_its_first_line()
+    {
+        Write("schemaVersion: 1\ncontext:\n  sources:\n    linear:\n      token: \"env:X\"\n");
+
+        Assert.True(Writer().SetTeams("linear", ["ENG"]).Value);
+
+        Assert.Equal("schemaVersion: 1\ncontext:\n  sources:\n    linear:\n      teams: [ENG]\n      token: \"env:X\"\n", File.ReadAllText(ProfilePath));
+    }
+
+    [Fact]
+    public void Teams_without_a_linear_entry_are_refused_and_the_file_is_left_alone()
+    {
+        const string Yaml = "schemaVersion: 1\ncontext:\n  sources:\n    github:\n      repos: [a/b]\n";
+        Write(Yaml);
+
+        Assert.Equal(SindriErrors.IndexNotInProfile.Code, Writer().SetTeams("linear", ["ENG"]).Error.Code);
+        Assert.Equal(Yaml, File.ReadAllText(ProfilePath));
+    }
 }

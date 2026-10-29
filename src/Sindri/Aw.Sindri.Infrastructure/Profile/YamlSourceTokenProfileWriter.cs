@@ -48,6 +48,9 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         return Save(path, edited.Value);
     }
 
+    /// <inheritdoc />
+    public Result<bool> SetTeams(string source, IReadOnlyList<string> teams) => throw new NotSupportedException();
+
     private static Result<bool> Save(string path, string text)
     {
         try

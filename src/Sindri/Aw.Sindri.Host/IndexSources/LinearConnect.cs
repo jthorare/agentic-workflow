@@ -103,7 +103,7 @@ internal sealed class LinearConnect(
         }
 
         var written = profile.SetToken("linear", stored.Value.ToString());
-        return written.IsError ? written.Error : new LinearConnected(stored.Value.ToString(), teams);
+        return written.IsError ? written.Error : new LinearConnected(stored.Value.ToString(), teams, []);
     }
 
     // One read of the teams the key can see, before anything is saved: a refused key ends it at once, a listed team missing from the answer is named.
