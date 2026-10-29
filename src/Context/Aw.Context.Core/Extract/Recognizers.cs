@@ -51,9 +51,9 @@ public static partial class Recognizers
     }
 
     // The TypeScript and JavaScript forms: C# named arguments (id: "a", title: "b") would read as a command registry entry.
-    private static bool Script(RepoFile file) => Source(file) && !IsCSharp(file.Path);
+    internal static bool Script(RepoFile file) => Source(file) && !IsCSharp(file.Path);
 
-    private static bool IsCSharp(string path) => path.EndsWith(".cs", StringComparison.Ordinal);
+    internal static bool IsCSharp(string path) => path.EndsWith(".cs", StringComparison.Ordinal);
 
     // The app's own settings registry is a tracked file of its source; a dot-folder (.vscode, .devcontainer, .idea) holds a tool's settings, not the product's.
     private static bool InToolFolder(string path) => path.Split('/').SkipLast(1).Any(segment => segment.StartsWith('.'));
@@ -68,7 +68,7 @@ public static partial class Recognizers
             || segments.SkipLast(1).Any(_localeFolders.Contains);
     }
 
-    private static bool IsComponentFile(string path) => path.EndsWith(".tsx", StringComparison.Ordinal) || path.EndsWith(".jsx", StringComparison.Ordinal);
+    internal static bool IsComponentFile(string path) => path.EndsWith(".tsx", StringComparison.Ordinal) || path.EndsWith(".jsx", StringComparison.Ordinal);
 
     private static IEnumerable<Found> CommandIds(RepoFile file) =>
         CommandUnion.Matches(file.Text).SelectMany(m => Literal.Matches(m.Groups["body"].Value))
@@ -110,12 +110,16 @@ public static partial class Recognizers
             .Select(r => Named($"surface:route/{r.Method}:{r.Path}", $"{r.Method} {r.Path}", 1.0)).OfType<Found>();
 
     private static IEnumerable<Found> Components(RepoFile file) =>
-        Component.Matches(file.Text).Select(m => m.Groups["n"].Value).Where(n => !_notComponents.Any(suffix => n.EndsWith(suffix, StringComparison.Ordinal))).Select(n => Named($"surface:{ComponentKind(n)}/{n}", n, 0.9)).OfType<Found>();
+        ComponentNames(file.Text).Select(c => Named($"surface:{ComponentKind(c.Name)}/{c.Name}", c.Name, 0.9)).OfType<Found>();
+
+    // The exported component names with the offset each starts at, in file order.
+    internal static IEnumerable<(string Name, int Index)> ComponentNames(string text) =>
+        Component.Matches(text).Select(m => (Name: m.Groups["n"].Value, m.Index)).Where(c => !_notComponents.Any(suffix => c.Name.EndsWith(suffix, StringComparison.Ordinal)));
 
     private static IEnumerable<Found> TestIds(RepoFile file) =>
         TestId.Matches(file.Text).Select(m => m.Groups["id"].Value).Select(id => Named("surface:pane/" + id, id, 0.8)).OfType<Found>();
 
-    private static string ComponentKind(string name) =>
+    internal static string ComponentKind(string name) =>
         name.EndsWith("Dialog", StringComparison.Ordinal) || name.EndsWith("Modal", StringComparison.Ordinal) ? "dialog"
         : name.EndsWith("Screen", StringComparison.Ordinal) || name.EndsWith("Page", StringComparison.Ordinal) ? "screen"
         : "pane";
@@ -124,7 +128,7 @@ public static partial class Recognizers
 
     private static Found? Named(string key, string label, double confidence) => Make(key) is { } k ? new Found(k, label, confidence, Named: true, []) : null;
 
-    private static NodeKey? Make(string value) => NodeKey.TryFrom(value, out var key) && NodeKinds.HasValidSurfaceKind(key) ? key : null;
+    internal static NodeKey? Make(string value) => NodeKey.TryFrom(value, out var key) && NodeKinds.HasValidSurfaceKind(key) ? key : null;
 
     private static string Humanize(string id)
     {
@@ -142,7 +146,7 @@ public static partial class Recognizers
     private static partial Regex Literal { get; }
 
     [GeneratedRegex("\\bid:\\s*\"(?<id>[A-Za-z0-9][\\w.-]*)\"\\s*,\\s*title:\\s*\"(?<title>[^\"\\r\\n]*)\"", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex RegistryEntry { get; }
+    internal static partial Regex RegistryEntry { get; }
 
     [GeneratedRegex("Record<\\s*string\\s*,\\s*\\w*Command(?:Id|Name)\\s*>\\s*=\\s*\\{(?<body>[^}]*)\\}", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex KeyTable { get; }
@@ -151,11 +155,11 @@ public static partial class Recognizers
     private static partial Regex Binding { get; }
 
     [GeneratedRegex("\\b(?:app|router)\\.(?<m>get|post|put|patch|delete)\\(\\s*[\"'`](?<p>/[^\"'`\\s]*)[\"'`]", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex Route { get; }
+    internal static partial Regex Route { get; }
 
     // ASP.NET Core minimal APIs: a Map{Get,Post,Put,Patch,Delete} call on an app or a group whose first argument is a literal path from '/'. The path is the one written there, without any MapGroup prefix (that is often set in another file).
     [GeneratedRegex("\\.Map(?<m>Get|Post|Put|Patch|Delete)\\(\\s*\"(?<p>/[^\"\\s]*)\"", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex MinimalApiRoute { get; }
+    internal static partial Regex MinimalApiRoute { get; }
 
     [GeneratedRegex("\\bexport\\s+(?:default\\s+)?(?:async\\s+)?(?:function|const|class)\\s+(?<n>[A-Z][A-Za-z0-9]*[a-z][A-Za-z0-9]*)(?![A-Za-z0-9_])", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex Component { get; }
