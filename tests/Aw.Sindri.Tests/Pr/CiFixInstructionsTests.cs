@@ -43,6 +43,8 @@ public sealed class CiFixInstructionsTests
     [InlineData("Never push")]
     [InlineData("credential")]
     [InlineData("fact:handoffNote")]
+    [InlineData("find its class before you patch it")]
+    [InlineData("follow-up")]
     public void The_instructions_carry_the_appendix_A1_contract(string phrase) =>
         Assert.Contains(phrase, All, StringComparison.OrdinalIgnoreCase);
 

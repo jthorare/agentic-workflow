@@ -563,7 +563,8 @@ what a report must carry, on which outcomes; "every outcome" outputs are on all 
 | `step.bugfix.record-candidate` | block | `diff` | `recorded` | `candidate` on recorded |
 | `step.bugfix.recheck` | block | `check`, `candidate` | `passed`, `failed` | `recheck` (every outcome) |
 | `step.bugfix.judge` | block | `check`, `candidate`, `evidenceSummary` | `resolved`, `partial`, `unresolved`, `needsHuman` | `verdict` (every outcome) |
-| `step.report.write` | agent | `issue` | `done` | `resolution` on done |
+| `step.implement.fix` | agent | `issue`, `rootCause` | `done` | `output` on done |
+| `step.report.write` | agent | `issue`, `rootCause` | `done` | `resolution` on done |
 | `step.handtest.run` | agent | `phasePacket`, `workspace` | `works`, `broken` | `manualTest` (every outcome) |
 | `step.verify.journey` | agent | `phasePacket`, `workspace` | `pass`, `fail` | `evidencePack` (every outcome) |
 | `step.verify.design` | agent | `phasePacket`, `workspace` | `pass`, `fail`, `skipped` | `designCheck` on pass,fail |

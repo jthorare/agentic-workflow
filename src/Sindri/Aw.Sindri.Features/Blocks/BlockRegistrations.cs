@@ -28,6 +28,7 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(BugfixSteps.RootcauseInvestigate)
         .AddBlockDescriptor(BugfixSteps.ReproduceUiCheck)
         .AddBlockDescriptor(BugfixSteps.ReproduceTestCheck)
+        .AddBlockDescriptor(BugfixSteps.ImplementFix)
         .AddBlockDescriptor(BugfixSteps.StartAttempt)
         .AddBlockDescriptor(BugfixSteps.RecordCandidate)
         .AddBlockDescriptor(BugfixSteps.Recheck)
