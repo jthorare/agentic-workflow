@@ -63,9 +63,11 @@ public sealed class SeparateLoginHooksRunCanaryTests
         {
             var target = AgentId.From("claude-code");
             var agentHome = AgentHomes.For(box.SindriHome, target);
-            _ = Directory.CreateDirectory(agentHome);
+            // why: 'sindri sandbox login' leaves the agent home 0700 and the login 0600, and the login canary refuses anything looser.
+            _ = Directory.CreateDirectory(agentHome, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
             var expires = RealTime.NowOffset.AddHours(8).ToUnixTimeMilliseconds().ToString(System.Globalization.CultureInfo.InvariantCulture);
             await File.WriteAllTextAsync(agentHome + "/.credentials.json", $"{{\"claudeAiOauth\":{{\"accessToken\":\"fixture\",\"refreshToken\":\"fixture\",\"expiresAt\":{expires}}}}}", ct);
+            File.SetUnixFileMode(agentHome + "/.credentials.json", UnixFileMode.UserRead | UnixFileMode.UserWrite);
             InstallHooks(agentHome);
             var prepared = await new SeparateLoginCredentialSource(box.SindriHome, RealTime.Clock).Prepare(target, box.WriteScope().Launch, ct);
             Assert.True(prepared.IsSuccess, prepared.IsError ? prepared.Error.ToString() : null);
