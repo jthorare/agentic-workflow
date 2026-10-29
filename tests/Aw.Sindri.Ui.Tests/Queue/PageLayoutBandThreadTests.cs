@@ -14,7 +14,7 @@ namespace Aw.Sindri.Ui.Tests.Queue;
 [Collection(HeadlessWindows.Name)]
 public sealed class PageLayoutBandThreadTests
 {
-    private static readonly TimeSpan _window = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan _window = TimeSpan.FromSeconds(1);
 
     private static Task<T> OnUi<T>(Func<T> body) =>
         HeadlessUnitTestSession.GetOrStartForAssembly(typeof(PageLayoutBandThreadTests).Assembly).Dispatch(body, TestContext.Current.CancellationToken);
