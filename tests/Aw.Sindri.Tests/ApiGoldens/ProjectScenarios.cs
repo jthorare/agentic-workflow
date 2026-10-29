@@ -34,7 +34,7 @@ internal static class ProjectScenarios
     [
         ("projects", "empty-no-linear"), ("projects", "empty-leads-nothing"), ("projects", "syncing"), ("projects", "counting"), ("projects", "mixed"),
         ("projects", "linear-failing"), ("projects", "context-down"), ("projects", "untrusted-name"),
-        ("projects-id", "attached"),
+        ("projects-id", "attached"), ("projects-id", "led"),
         ("projects-id-change", "accepted"), ("projects-id-change", "stale"), ("projects-id-change", "led-notes"), ("projects-id-detach", "accepted"), ("projects-hide", "accepted"),
     ];
 
@@ -65,7 +65,12 @@ internal static class ProjectScenarios
         }
 
         var caller = scenario == "untrusted-name" ? ItemScenarios.Session("demo") : ItemScenarios.Human(host);
-        var path = slug == "projects-id" ? "/sindri/projects/" + attached : "/sindri/projects";
+        var path = (slug, scenario) switch
+        {
+            ("projects-id", "led") => "/sindri/projects/" + Uri.EscapeDataString(Led),   // why: the app and the CLI send a led key escaped as one segment
+            ("projects-id", _) => "/sindri/projects/" + attached,
+            _ => "/sindri/projects",
+        };
         return (await host.Http.Ask(Get(path, caller))).Body;
     }
 
@@ -87,7 +92,7 @@ internal static class ProjectScenarios
     /// <summary>Writes the owner's state of the scenario through the routes; returns the attached project's id (every scenario that starts from 'mixed').</summary>
     private static async Task<string?> Seed(GoldenHost host, string scenario, CancellationToken ct)
     {
-        if (scenario is not ("mixed" or "attached" or "context-down" or "accepted" or "stale" or "led-notes"))
+        if (scenario is not ("mixed" or "attached" or "led" or "context-down" or "accepted" or "stale" or "led-notes"))
         {
             return null;
         }
