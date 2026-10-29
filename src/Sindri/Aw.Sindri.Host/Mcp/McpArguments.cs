@@ -121,6 +121,23 @@ internal static class McpArguments
             : ContextErrors.McpArgumentsInvalid.With($"'{name}' must be a whole number of {min.ToString(CultureInfo.InvariantCulture)} or more, got {Kind(raw)} {raw.GetRawText()} (fix: see {tool}'s input schema)");
     }
 
+    /// <summary>An optional true or false; null counts as absent.</summary>
+    /// <param name="tool">The tool's name.</param>
+    /// <param name="arguments">The call's arguments.</param>
+    /// <param name="name">The argument's name.</param>
+    /// <returns>The flag, null when absent, or the refusal.</returns>
+    internal static Result<bool?> OptionalBool(string tool, IDictionary<string, JsonElement>? arguments, string name)
+    {
+        if (arguments is null || !arguments.TryGetValue(name, out var raw) || raw.ValueKind == JsonValueKind.Null)
+        {
+            return (bool?)null;
+        }
+
+        return raw.ValueKind is JsonValueKind.True or JsonValueKind.False
+            ? raw.GetBoolean()
+            : ContextErrors.McpArgumentsInvalid.With($"'{name}' must be true or false, got {Kind(raw)} (fix: see {tool}'s input schema)");
+    }
+
     /// <summary>A required enum argument, read by the names the JSON context gives its values.</summary>
     /// <typeparam name="T">The enum.</typeparam>
     /// <param name="tool">The tool's name.</param>
