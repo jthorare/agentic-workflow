@@ -20497,6 +20497,9 @@ Aw.Sindri.Core.Sandbox.ParkedOnSandbox.Title.get -> string?
 Aw.Sindri.Core.Sandbox.ParkedOnSandbox.Title.init -> void
 Aw.Sindri.Core.Sandbox.SandboxCheckReport.Resume.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Sandbox.ParkedOnSandbox!>!
 Aw.Sindri.Core.Sandbox.SandboxCheckReport.Resume.init -> void
+const Aw.Sindri.Core.Sandbox.SandboxCheckReport.HooksNotChecked = "The hooks weren't checked: no agent is picked for Steps." -> string!
+Aw.Sindri.Core.Sandbox.SandboxCheckReport.NotChecked.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Sandbox.SandboxCheckReport.NotChecked.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.OpenQuestion.Sandbox.get -> Aw.Sindri.Core.Workflow.Engine.SandboxPark?
 Aw.Sindri.Core.Workflow.Engine.Runtime.OpenQuestion.Sandbox.init -> void
 Aw.Sindri.Core.Workflow.Engine.Runtime.StatusSandboxes
