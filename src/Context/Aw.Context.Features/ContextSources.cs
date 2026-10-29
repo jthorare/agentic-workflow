@@ -26,13 +26,26 @@ internal sealed class ContextSources(
 {
     private static readonly SourceId _onyx = SourceId.From("onyx");
 
-    // Only the stored sync state of the configured intent source: a source with no successful sync (never run, or only failed) is a gap.
+    // Only stored sync state: an owned index source that never got through its recent window (never ticked, or only failed), or the configured Onyx intent source with no
+    // successful sync, is a gap. The index rule is the one that reads a source as 'not-synced' in an answer's searched rows (SearchedSources.Index).
     public async ValueTask<Result<bool>> HasSyncGap(ContextScope scope, CancellationToken cancellationToken)
     {
         var settings = SettingsReader.Read(scope.Settings);
-        if (settings.IsError || settings.Value.Onyx is null)
+        if (settings.IsError)
         {
             return false;
+        }
+
+        var progress = await index.Progress(scope, cancellationToken).ConfigureAwait(false);
+        if (progress.IsError)
+        {
+            return progress.Error;
+        }
+
+        var indexGap = progress.Value.Any(static p => !p.Usable);
+        if (indexGap || settings.Value.Onyx is null)
+        {
+            return indexGap;
         }
 
         var state = await intents.State(_onyx, cancellationToken).ConfigureAwait(false);
