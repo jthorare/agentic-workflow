@@ -437,6 +437,116 @@
           "action": "screenshot"
         }
       ]
+    },
+    {
+      "name": "sandbox-park",
+      "design": "sandbox-park.html",
+      "fixture": [
+        [
+          "sessions",
+          "up"
+        ],
+        [
+          "sandbox",
+          "blocked"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "Check again"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "sandbox-sheet",
+      "design": "sandbox-sheet.html",
+      "fixture": [
+        [
+          "sessions",
+          "up"
+        ],
+        [
+          "sandbox",
+          "blocked"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "Agents"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "Sandbox"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
+    },
+    {
+      "name": "sandbox-health",
+      "design": "sandbox-health.html",
+      "fixture": [
+        [
+          "sessions",
+          "up"
+        ],
+        [
+          "sandbox",
+          "blocked"
+        ]
+      ],
+      "steps": [
+        {
+          "action": "launch"
+        },
+        {
+          "action": "click",
+          "target": {
+            "type": "ListBoxItem",
+            "name": "System"
+          }
+        },
+        {
+          "action": "wait-for",
+          "target": {
+            "contains": "Sandbox"
+          },
+          "expectedState": {
+            "state": "visible"
+          },
+          "timeoutMs": 30000
+        },
+        {
+          "action": "screenshot"
+        }
+      ]
     }
   ]
 }

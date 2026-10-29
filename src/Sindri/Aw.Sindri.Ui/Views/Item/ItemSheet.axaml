@@ -7,6 +7,12 @@
              xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
              x:Class="Aw.Sindri.Ui.Views.Item.ItemSheet"
              x:DataType="item:ItemSheetViewModel">
+  <UserControl.Styles>
+    <!-- The live regions of this view are live only while they speak, so their resting text is never read. -->
+    <Style Selector="TextBlock.live-region.live">
+      <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+    </Style>
+  </UserControl.Styles>
   <!-- The item detail (UI spec §4.6, item-detail.html), inside the shell's sheet: the header (title, repo, the state as a
        word, version, since), who created it and what it waits on, the item's actions from the catalog (Close item with
        the version shown; Close as cancelled confirms first), and the timeline paged by 'next'. SND-ITEM-404 shows its
@@ -128,6 +134,37 @@
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+      </StackPanel>
+
+      <!-- The sandbox's Blocked list (SB-6b): what it denied the item's launches, one row per target by kind with its fix. One polite zero-width live region speaks every Allow step; Allow keeps the focus. -->
+      <StackPanel x:Name="ItemBlocked" Spacing="6" IsVisible="{Binding Blocked.IsShown}">
+        <TextBlock Classes="eyebrow" Text="{Binding Blocked.Heading}" />
+        <TextBlock x:Name="ItemBlockedAnnouncement" Classes="caption live-region" Classes.live="{Binding Blocked.Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False"
+                   Text="{Binding Blocked.Voice.Announcement}" />
+        <Border x:Name="ItemBlockedSummary" IsVisible="{Binding Blocked.Summary, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Blocked.Summary}"
+                AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body muted" Text="{Binding Blocked.Summary}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <ItemsControl x:Name="ItemBlockedList" ItemsSource="{Binding Blocked.Rows}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="item:BlockedRowViewModel">
+              <StackPanel Spacing="2" Margin="0,0,0,6">
+                <Border x:Name="ItemBlockedText" AutomationProperties.Name="{Binding Text}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+                  <StackPanel AutomationProperties.AccessibilityView="Raw">
+                    <TextBlock Classes="body-strong" Text="{Binding Line}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                    <TextBlock Classes="caption muted" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  </StackPanel>
+                </Border>
+                <Button x:Name="ItemBlockedAllow" Click="OnAllow" HorizontalAlignment="Left" IsVisible="{Binding HasAllow}" AutomationProperties.Name="{Binding AllowName}">
+                  <TextBlock Text="{Binding AllowText}" AutomationProperties.AccessibilityView="Raw" />
+                </Button>
+                <TextBlock x:Name="ItemBlockedRefusal" Classes="caption" Text="{Binding Refusal}" TextWrapping="Wrap" IsVisible="{Binding Refusal, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+              </StackPanel>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <Button x:Name="ItemBlockedSeeAll" Click="OnSeeAllBlocked" Classes="row-title" HorizontalAlignment="Left" Content="{Binding Blocked.SeeAllText}" IsVisible="{Binding Blocked.HasSeeAll}"
+                AutomationProperties.Name="{Binding Blocked.SeeAllText}" />
       </StackPanel>
 
       <Expander x:Name="ItemDetailsExpander" Header="{Binding Text.Details}" IsExpanded="{Binding DetailsOpen, Mode=TwoWay}" AutomationProperties.Name="{Binding Text.Details}">

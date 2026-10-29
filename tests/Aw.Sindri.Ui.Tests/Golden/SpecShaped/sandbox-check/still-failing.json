@@ -1,0 +1,13 @@
+{
+  "blockers": [
+    {
+      "code": "SND-LAUNCH-014",
+      "reason": "no-bwrap",
+      "text": "Sandboxed sessions can't start: bubblewrap isn't installed.",
+      "command": "sudo apt install bubblewrap"
+    }
+  ],
+  "ready": false,
+  "resume": [],
+  "checkedAt": "2026-10-28T09:00:00.0000000Z"
+}

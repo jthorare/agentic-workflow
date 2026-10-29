@@ -1,0 +1,7 @@
+{
+  "type": "about:blank",
+  "title": "SND-SANDBOX-001",
+  "status": 409,
+  "detail": "that path is never shared with a session (fix: run it in your own terminal)",
+  "traceId": "<trace>"
+}

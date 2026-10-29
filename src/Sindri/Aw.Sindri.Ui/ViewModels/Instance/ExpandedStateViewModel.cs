@@ -56,6 +56,7 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
         AttachCommandCopy = new CopyAction(clipboard, clock, Labels.CopyAttachName(address));
         CopyAttachName = Labels.CopyAttachName(address);
         InitRun(current, address);
+        InitSandbox(current);
         Name = Labels.ExpandedName(State, address);
         CopyStatusName = Labels.CopyStatusName(address);
         StatusCopy = new CopyAction(clipboard, clock, Labels.CopyStatus, Labels.CopyStatus);
@@ -256,6 +257,7 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
     {
         _current = current;
         (BudgetLine, TimeoutLine, PausedLine, DriftLine, Next) = Moving(current);
+        UpdateSandbox(current);
         if (current.Status.Child is { } child)
         {
             Child?.Update(child);

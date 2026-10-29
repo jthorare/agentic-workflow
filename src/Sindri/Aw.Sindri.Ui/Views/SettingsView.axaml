@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Settings"
+             xmlns:sandbox="using:Aw.Sindri.Ui.Views.Sandbox"
              x:Class="Aw.Sindri.Ui.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
@@ -29,6 +30,11 @@
           </Button>
         </StackPanel>
       </Border>
+    </StackPanel>
+
+    <!-- The Sandbox section: read-only (the profile changes it), its heading carries the state (sandbox spec 8). -->
+    <StackPanel x:Name="SandboxSettingsSlot" IsVisible="{Binding HasSandbox}">
+      <sandbox:SandboxSettingsSection x:Name="SandboxSettings" DataContext="{Binding Sandbox}" />
     </StackPanel>
 
     <Border x:Name="ThisAppName" AutomationProperties.Name="{Binding ThisAppLabel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">

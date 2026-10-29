@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sb="using:Aw.Sindri.Ui.ViewModels.Sandbox"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             x:Class="Aw.Sindri.Ui.Views.Sandbox.SandboxCheckPanel"
+             x:DataType="sb:SandboxCheckViewModel">
+  <!-- Check again and what follows it (sandbox spec 8): the button, its outcome, every blocker, and the Steps a resume would start, listed before [Resume] [Not now].
+       The polite live region is a zero-width TextBlock in the tree from the start, so assistive tech has read it before its text changes; its Text is never "".
+       In flight the label stays and a spinner takes the icon's place, the button stays enabled for the keyboard and a second press does nothing. -->
+  <UserControl.Styles>
+    <!-- Live only while it speaks (Live.IsLive), so its resting text, set once the gate is off, is never read (docs/csharp/sindri-ui.md "LiveSetting on macOS"). -->
+    <Style Selector="TextBlock.live-region.live">
+      <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+    </Style>
+  </UserControl.Styles>
+  <StackPanel x:Name="SandboxCheck" Spacing="{StaticResource Space.XS}">
+    <TextBlock x:Name="SandboxCheckLive" Classes="caption live-region" Classes.live="{Binding Live.IsLive}" Width="0" Opacity="0" IsHitTestVisible="False"
+               HorizontalAlignment="Left" Text="{Binding Live.Text}" />
+    <StackPanel Orientation="Horizontal" Spacing="12">
+      <Button x:Name="SandboxCheckButton" Classes="bar-button" Click="OnCheck" AutomationProperties.Name="{Binding Label}">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <Panel VerticalAlignment="Center">
+            <icons:StateIcon Icon="Refresh" IsVisible="{Binding !IsChecking}" />
+            <icons:StateIcon x:Name="SandboxCheckSpinner" Icon="Spinner" IsVisible="{Binding IsChecking}" Spins="{Binding IsChecking}" />
+          </Panel>
+          <TextBlock Classes="caption" Text="{Binding Label}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        </StackPanel>
+      </Button>
+      <TextBlock x:Name="SandboxCheckedText" Classes="caption subtle" Text="{Binding CheckedText}" IsVisible="{Binding HasChecked}" VerticalAlignment="Center"
+                 AutomationProperties.Name="{Binding CheckedText}" />
+    </StackPanel>
+    <TextBlock x:Name="SandboxCheckResult" Classes="body-strong" Text="{Binding Result}" IsVisible="{Binding HasResult}" TextWrapping="Wrap"
+               AutomationProperties.Name="{Binding Result}" />
+    <ItemsControl x:Name="SandboxBlockers" ItemsSource="{Binding Blockers}" IsVisible="{Binding ShowsBlockers}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="sb:SandboxBlockerRow">
+          <StackPanel Spacing="2" Margin="0,4,0,0">
+            <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Text}" />
+            <StackPanel Orientation="Horizontal" Spacing="6" IsVisible="{Binding HasCommand}">
+              <TextBlock Classes="mono subtle" Text="{Binding Command}" TextWrapping="Wrap" MaxWidth="360" VerticalAlignment="Center" AutomationProperties.Name="{Binding Command}" />
+              <Button Classes="copy" Click="OnCopy" AutomationProperties.Name="{Binding CopyName}">
+                <TextBlock Classes="caption" Text="Copy" AutomationProperties.AccessibilityView="Raw" />
+              </Button>
+            </StackPanel>
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <!-- The list is read before the buttons: its names come first in the tree. -->
+    <ItemsControl x:Name="SandboxResumeList" ItemsSource="{Binding ResumeRows}" IsVisible="{Binding ShowsResume}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="sb:SandboxResumeRow">
+          <TextBlock Classes="body" Text="{Binding Title}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Title}" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <StackPanel x:Name="SandboxResumeButtons" Orientation="Horizontal" Spacing="8" IsVisible="{Binding ShowsResume}">
+      <Button x:Name="SandboxResumeButton" Classes="bar-button primary" Click="OnResume" AutomationProperties.Name="Resume">
+        <TextBlock Classes="caption" Text="Resume" AutomationProperties.AccessibilityView="Raw" />
+      </Button>
+      <Button x:Name="SandboxNotNowButton" Classes="bar-button" Click="OnNotNow" AutomationProperties.Name="Not now">
+        <TextBlock Classes="caption" Text="Not now" AutomationProperties.AccessibilityView="Raw" />
+      </Button>
+    </StackPanel>
+  </StackPanel>
+</UserControl>

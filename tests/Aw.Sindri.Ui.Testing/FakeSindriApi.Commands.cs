@@ -57,6 +57,7 @@ internal sealed partial class FakeSindriApi
         }
 
         await WaitFor(WorkflowCommandGate, cancellationToken).ConfigureAwait(false);
-        return Answer<ApplyCommandAccepted>(api, WorkflowRoutes.Commands(instanceId), CommandAnswer);
+        var answer = MovedOnInstances.Contains(instanceId) ? RouteAnswer.Problem(System.Net.HttpStatusCode.Conflict, "SND-WORKFLOW-409", "The instance is not waiting for an answer.") : CommandAnswer;
+        return Answer<ApplyCommandAccepted>(api, WorkflowRoutes.Commands(instanceId), answer);
     }
 }

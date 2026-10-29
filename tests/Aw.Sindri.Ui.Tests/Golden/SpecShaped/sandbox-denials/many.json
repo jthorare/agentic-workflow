@@ -1,0 +1,89 @@
+{
+  "launches": [
+    {
+      "launchId": "LCH-00000000000000000000000000000001",
+      "updatedAt": "2026-10-28T09:00:00.0000000Z",
+      "entries": [
+        {
+          "kind": "network",
+          "target": "host0.example.org",
+          "rule": "net.not-allowed",
+          "count": 10,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "network",
+          "target": "host1.example.org",
+          "rule": "net.not-allowed",
+          "count": 9,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "network",
+          "target": "host2.example.org",
+          "rule": "net.not-allowed",
+          "count": 8,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "network",
+          "target": "host3.example.org",
+          "rule": "net.not-allowed",
+          "count": 7,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "network",
+          "target": "host4.example.org",
+          "rule": "net.not-allowed",
+          "count": 6,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "network",
+          "target": "host5.example.org",
+          "rule": "net.not-allowed",
+          "count": 5,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "network",
+          "target": "host6.example.org",
+          "rule": "net.not-allowed",
+          "count": 4,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "network",
+          "target": "host7.example.org",
+          "rule": "net.not-allowed",
+          "count": 3,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        }
+      ],
+      "overflow": [
+        {
+          "kind": "network",
+          "count": 42
+        }
+      ],
+      "repo": "api"
+    }
+  ]
+}
