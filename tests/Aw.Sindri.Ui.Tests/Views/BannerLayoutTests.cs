@@ -17,7 +17,7 @@ namespace Aw.Sindri.Ui.Tests.Views;
 
 /// <summary>
 /// The Unreadable banner's layout under the headless platform (UI spec §4.1; prover run 7): at the 1280 px default and
-/// the 900 px minimum a long reason wraps, and the icon, the heading, the reason, "Check it:" and the sindri doctor box
+/// the 1000 px minimum a long reason wraps, and the icon, the heading, the reason, "Check it:" and the sindri doctor box
 /// all stay inside the window.
 /// </summary>
 [Lane(TestLane.Integration)]
@@ -104,7 +104,7 @@ public sealed class BannerLayoutTests : IDisposable
 
     [Theory]
     [InlineData(1280)]
-    [InlineData(900)]
+    [InlineData(1000)]
     public Task Unreadable_wraps_a_long_reason_and_keeps_sindri_doctor_in_the_window(double width) => OnUi(async () =>
     {
         _records.Write(A.Record());

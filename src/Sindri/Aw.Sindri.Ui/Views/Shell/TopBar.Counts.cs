@@ -3,7 +3,7 @@ using Avalonia.VisualTree;
 
 namespace Aw.Sindri.Ui.Views.Shell;
 
-/// <summary>The top bar (continued): the navigation's counts, the last thing to give way at 900 px (UI spec §3.2).</summary>
+/// <summary>The top bar (continued): the navigation's counts, the last thing to give way at 1,000 px (UI spec §3.2).</summary>
 internal sealed partial class TopBar
 {
     // What the shown counts take, remembered while they show so the bar knows what hiding them would give back.

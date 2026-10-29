@@ -19,7 +19,7 @@ internal sealed partial class ShellViewModel
     public SessionSheetViewModel AgentSheet { get; private set; }
 
     // ShellViewModel's constructor calls this one line: both view models exist, then each builder's hook wires its own part.
-    [MemberNotNull(nameof(Agents), nameof(AgentSheet), nameof(Jobs), nameof(JobSheet))]
+    [MemberNotNull(nameof(Agents), nameof(AgentSheet), nameof(Jobs), nameof(JobSheet), nameof(Projects))]
     private void InitAgents(IClipboard clipboard)
     {
         Agents = new AgentsPageViewModel(_api, clipboard, _clock, Health.Catalog);
@@ -27,6 +27,7 @@ internal sealed partial class ShellViewModel
         InitAgentsPage();
         InitAgentSheet();
         InitAgentCounts();
+        InitProjects();   // likewise: the Projects page reads while shown
         InitJobs();   // the Jobs page is not an Agents page, but it rides the same constructor line: ShellViewModel.cs is at its size cap
     }
 

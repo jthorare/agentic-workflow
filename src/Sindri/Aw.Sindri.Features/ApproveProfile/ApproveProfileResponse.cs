@@ -27,4 +27,8 @@ public sealed record ApproveProfileResponse(ProfileHash Hash, IReadOnlyList<stri
     /// <summary>The notice the owner approves along with the profile when model choice is on (model-pick spec 8); null, and left out of the JSON, otherwise.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Notice { get; init; }
+
+    /// <summary>What the check of the context section warns about, one line each (the old 'context.conceptScan.models' key beside 'context.models.names'); null, and left out of the JSON, when nothing.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Warnings { get; init; }
 }

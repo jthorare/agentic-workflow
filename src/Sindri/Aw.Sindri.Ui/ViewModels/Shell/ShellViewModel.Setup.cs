@@ -74,4 +74,20 @@ internal sealed partial class ShellViewModel
         IsNeedsYouInbox
         || ((HomeFilter != HomeFilter.Decisions || row.DecisionId is not null)
             && !(Setup.IsHomeLineShown && string.Equals(row.Kind, SetupRowKind, StringComparison.Ordinal) && string.Equals(row.Id, SetupRowKind + ":" + Setup.HomeStepId, StringComparison.Ordinal)));
+
+    /// <summary>
+    /// Esc on Settings over the Not running card: back to the page it was opened from, so the card shows again. While
+    /// connected Settings is a page like any other, and Esc leaves it where it is.
+    /// </summary>
+    /// <returns>True when it left Settings.</returns>
+    internal bool LeaveSettings()
+    {
+        if (!IsSettings || !IsNotRunning)
+        {
+            return false;
+        }
+
+        GoTo(_beforeSettings);
+        return true;
+    }
 }

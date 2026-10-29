@@ -1039,6 +1039,24 @@
       "confirm": null
     },
     {
+      "action": "ResumeJob",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/jobs/{jobId}/resume",
+      "cli": "sindri jobs resume <jobId>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ResumeService",
       "class": "desk",
       "allowedCallers": [

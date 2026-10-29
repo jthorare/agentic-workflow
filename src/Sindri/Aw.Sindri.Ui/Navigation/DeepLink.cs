@@ -16,6 +16,9 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     /// <summary>Settings at the setup checklist.</summary>
     internal static DeepLink Setup { get; } = new(DeepLinkKind.Setup, Subject: null);
 
+    /// <summary>The Projects page.</summary>
+    internal static DeepLink Projects { get; } = new(DeepLinkKind.Projects, Subject: null);
+
     /// <summary>Parses a deep link's text.</summary>
     /// <param name="text">The text (from a second launch, the tray or the palette).</param>
     /// <param name="link">The link, when the text is one.</param>
@@ -46,10 +49,10 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         return true;
     }
 
-    // The links that name a page and have no subject: 'home/needs-you' and 'setup'.
+    // The links that name a page and have no subject: 'home/needs-you', 'setup' and 'projects'.
     private static bool TryParsePage(string? text, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out DeepLink? link)
     {
-        link = string.Equals(text, HomeNeedsYouText, StringComparison.Ordinal) ? HomeNeedsYou : string.Equals(text, SetupText, StringComparison.Ordinal) ? Setup : ContextItemOf(text);
+        link = string.Equals(text, HomeNeedsYouText, StringComparison.Ordinal) ? HomeNeedsYou : string.Equals(text, SetupText, StringComparison.Ordinal) ? Setup : string.Equals(text, ProjectsText, StringComparison.Ordinal) ? Projects : ContextItemOf(text);
         return link is not null;
     }
 
@@ -62,11 +65,13 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     /// <summary>The link's text, the form <see cref="TryParse"/> reads.</summary>
     /// <returns>The text.</returns>
     public override string ToString() =>
-        Kind == DeepLinkKind.HomeNeedsYou ? HomeNeedsYouText : Kind == DeepLinkKind.Setup ? SetupText : Kind == DeepLinkKind.ContextItem ? ContextItemPrefix + Subject : _kinds.First(k => k.Kind == Kind).Prefix + "/" + Subject;
+        Kind == DeepLinkKind.HomeNeedsYou ? HomeNeedsYouText : Kind == DeepLinkKind.Setup ? SetupText : Kind == DeepLinkKind.Projects ? ProjectsText : Kind == DeepLinkKind.ContextItem ? ContextItemPrefix + Subject : _kinds.First(k => k.Kind == Kind).Prefix + "/" + Subject;
 
     private const string HomeNeedsYouText = "home/needs-you";
 
     private const string SetupText = "setup";
+
+    private const string ProjectsText = "projects";
 
     private const string ContextItemPrefix = "context?item=";
 
