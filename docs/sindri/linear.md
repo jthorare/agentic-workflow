@@ -62,7 +62,7 @@ $SINDRI profile approve
 It asks for the key once (not shown) and checks it can read every team in `teams` (with no team listed, at least one)
 before saving anything. Only then does it store the key in the OS keychain (service `sindri-index`, account `linear`; an
 owner-only file under `$AW_SINDRI_HOME/secrets/` when there is no keychain, and always the file for a loopback `url`) and
-write the pointer into `context.sources.linear.token`. It is the human's verb: an agent session is refused
+write the pointer into `context.sources.linear.token`. When the profile lists no teams it also writes the teams the key reads (sorted) into `context.sources.linear.teams`, so the Projects page has rows to show. It is the human's verb: an agent session is refused
 (`SND-AUTH-002`). A key Linear refuses is `SND-INDEX-009`; a listed team it can't read, or no team at all, is
 `SND-INDEX-010`, naming the teams; an unreachable Linear passes `SND-CONTEXT-010` through. Nothing is saved on any failure.
 
