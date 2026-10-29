@@ -1,10 +1,10 @@
-namespace Aw.Context.Features;
+namespace Aw.Context.Core.Extract;
 
 /// <summary>
 /// One graphify run at a time per host (a host has one map store and one cluster source): a map build, a refresh and a backtest's as-of cut all take it, and a second caller
 /// waits for the first instead of failing, so two refreshes of one map never write over each other. One instance per host, in this process only: a build started by another process is not covered. The box-wide heavy-job lock is separate (a backtest takes its own heavy slot) and does not replace this gate.
 /// </summary>
-internal sealed class MapBuildGate : IDisposable
+public sealed class MapBuildGate : IDisposable
 {
     private readonly SemaphoreSlim _one = new(1, 1);
     private readonly Lock _holderLock = new();
@@ -38,6 +38,7 @@ internal sealed class MapBuildGate : IDisposable
         return new Lease(this);
     }
 
+    /// <summary>Releases the gate's semaphore; no lease may be waiting.</summary>
     /// <summary>Releases the gate's semaphore; no lease may be waiting.</summary>
     public void Dispose() => _one.Dispose();
 

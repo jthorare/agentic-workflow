@@ -1,6 +1,6 @@
 using System.Reflection;
 using Aw.Context.Core.Extract;
-using Aw.Context.Features;
+using Aw.Context.Features.BuildMap;
 
 namespace Aw.Context.Tests.BuildMap;
 
@@ -10,7 +10,7 @@ public sealed class ClusterSourceGateTests
     [Fact, Trait("Lane", "unit")]
     public void Every_feature_that_runs_the_cluster_source_takes_the_map_build_gate()
     {
-        var offenders = typeof(MapBuildGate).Assembly.GetTypes()
+        var offenders = typeof(BuildMapService).Assembly.GetTypes()
             .Where(t => t is { IsClass: true, IsAbstract: false }
                 && t.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
                 .Any(c => c.GetParameters().Any(p => p.ParameterType == typeof(IClusterSource)) && !c.GetParameters().Any(p => p.ParameterType == typeof(MapBuildGate))))
