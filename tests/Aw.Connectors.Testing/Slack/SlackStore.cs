@@ -27,8 +27,8 @@ internal sealed class SlackStore
             .OrderByDescending(static m => Pad(m.Ts), StringComparer.Ordinal)
             .Select(m =>
             {
-                var replies = all.Count(r => r.ThreadTs == m.Ts && r.Ts != m.Ts);
-                return replies == 0 ? m : m with { ThreadTs = m.Ts, ReplyCount = replies };
+                var replies = all.Where(r => r.ThreadTs == m.Ts && r.Ts != m.Ts).ToList();
+                return replies.Count == 0 ? m : m with { ThreadTs = m.Ts, ReplyCount = replies.Count, LatestReply = replies.Select(static r => r.Ts).MaxBy(static t => Pad(t), StringComparer.Ordinal) };
             })];
     }
 

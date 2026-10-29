@@ -12,7 +12,6 @@ public sealed class PinnedProcessTests
 
     private static readonly Dictionary<string, string> _exemptions = new(StringComparer.Ordinal)
     {
-        [$"{Sandbox}.SandboxExec"] = "#1684: moves to PinnedProcess in the api fix",
         [$"{Sandbox}.SandboxLoginRunner"] = "no bwrap: the host sign-in runs unsandboxed",
         [$"{Sandbox}.SandboxProcesses"] = "short-lived: every run is bounded at seconds, well under the 20 s thread retire",
     };

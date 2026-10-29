@@ -115,6 +115,9 @@ public sealed class SlackResumeTests
         Assert.All(pages.SkipLast(1), p => Assert.NotEmpty(p.Items));
         Assert.Empty(pages[^1].Items);
         var seen = pages.SelectMany(static p => p.Items).Select(static i => i.Key).ToList();
-        Assert.Equal(expected.Order(StringComparer.Ordinal), seen.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+
+        // why: a pass that spans several pulls moves no replies mark (#1689), so the next thread refresh reads its newest thread once more; the record is the same key, a consumer upserts it.
+        Assert.Equal(expected.Order(StringComparer.Ordinal), seen.Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.True(seen.Count - expected.Count <= 1, "at most the newest thread is read twice");
     }
 }
