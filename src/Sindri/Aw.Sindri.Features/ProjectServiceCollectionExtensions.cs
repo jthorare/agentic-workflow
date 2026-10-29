@@ -23,7 +23,7 @@ internal static class ProjectServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
-            .AddScoped<IValidator<AttachProjectRequest>, AcceptAllValidator<AttachProjectRequest>>().AddCommand<AttachProjectRequest, ProjectAccepted, AttachProjectService>()
+            .AddScoped<IValidator<AttachProjectRequest>, AcceptAllValidator<AttachProjectRequest>>().AddCommand<AttachProjectRequest, ProjectAccepted, AttachProjectService>().AddScoped<AttachProjectLookup>()
             .AddScoped<IValidator<ChangeProjectRequest>, AcceptAllValidator<ChangeProjectRequest>>().AddCommand<ChangeProjectRequest, ProjectAccepted, ChangeProjectService>()
             .AddScoped<IValidator<DetachProjectRequest>, AcceptAllValidator<DetachProjectRequest>>().AddCommand<DetachProjectRequest, ProjectAccepted, DetachProjectService>()
             .AddScoped<IValidator<HideProjectRequest>, AcceptAllValidator<HideProjectRequest>>().AddCommand<HideProjectRequest, ProjectAccepted, HideProjectService>()
