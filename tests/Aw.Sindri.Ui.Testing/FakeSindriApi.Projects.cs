@@ -24,11 +24,19 @@ internal sealed partial class FakeSindriApi
     /// <summary>Every project id one card was read for, in order.</summary>
     public IReadOnlyList<string> ProjectsRead { get { lock (_gate) { return [.. _projectsRead]; } } }
 
-    public Task<Result<ProjectList>> Projects(Uri api, bool all, CancellationToken cancellationToken)
+    /// <summary>When set, the project list read waits for it: the page stays loading until the test completes it.</summary>
+    public TaskCompletionSource? ProjectsGate { get; set; }
+
+    public async Task<Result<ProjectList>> Projects(Uri api, bool all, CancellationToken cancellationToken)
     {
         _ = Interlocked.Increment(ref _projectsCalls);
         LastProjectsAll = all;
-        return Task.FromResult(Answer<ProjectList>(api, ProjectRoutes.List(all), ProjectsAnswer));
+        if (ProjectsGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<ProjectList>(api, ProjectRoutes.List(all), ProjectsAnswer);
     }
 
     public Task<Result<ProjectOne>> Project(Uri api, string id, CancellationToken cancellationToken)
