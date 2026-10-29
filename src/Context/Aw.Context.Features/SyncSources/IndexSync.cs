@@ -1,4 +1,5 @@
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
@@ -61,8 +62,21 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
                 return position.Error;
             }
 
+            // why: only the Linear issue feed is reset to Recent with rows already stored (migration 0020), so only it is checked for a re-read; any other source in Recent is on its first read
+            int? stored = null;
+            if (feed.Source == LinearSourceIds.Issues && position.Value.Phase is SyncPhase.Recent)
+            {
+                var counted = await store.Count(feed.Source, cancellationToken).ConfigureAwait(false);
+                if (counted.IsError)
+                {
+                    return counted.Error;
+                }
+
+                stored = counted.Value.Records;
+            }
+
             var last = feeds.LastOutcome(feed.Source);
-            rows.Add(SourceProgress.From(feed.Source, position.Value.Phase, last?.At, last?.Code));
+            rows.Add(SourceProgress.From(feed.Source, position.Value.Phase, last?.At, last?.Code, stored));
         }
 
         return rows;

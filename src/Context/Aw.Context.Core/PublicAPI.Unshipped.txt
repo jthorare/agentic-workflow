@@ -9182,7 +9182,7 @@ Aw.Context.Core.Sync.SourceProgress
 Aw.Context.Core.Sync.SourceProgress.<Clone>$() -> Aw.Context.Core.Sync.SourceProgress!
 Aw.Context.Core.Sync.SourceProgress.Complete.get -> bool
 Aw.Context.Core.Sync.SourceProgress.Complete.init -> void
-Aw.Context.Core.Sync.SourceProgress.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Records.SyncPhase? Phase, out System.DateTimeOffset? LastSync, out string? LastCode, out bool Usable, out bool Complete) -> void
+Aw.Context.Core.Sync.SourceProgress.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Records.SyncPhase? Phase, out System.DateTimeOffset? LastSync, out string? LastCode, out bool Usable, out bool Complete, out int? ReReading) -> void
 Aw.Context.Core.Sync.SourceProgress.Equals(Aw.Context.Core.Sync.SourceProgress? other) -> bool
 Aw.Context.Core.Sync.SourceProgress.LastCode.get -> string?
 Aw.Context.Core.Sync.SourceProgress.LastCode.init -> void
@@ -9190,15 +9190,17 @@ Aw.Context.Core.Sync.SourceProgress.LastSync.get -> System.DateTimeOffset?
 Aw.Context.Core.Sync.SourceProgress.LastSync.init -> void
 Aw.Context.Core.Sync.SourceProgress.Phase.get -> Aw.Context.Core.Records.SyncPhase?
 Aw.Context.Core.Sync.SourceProgress.Phase.init -> void
+Aw.Context.Core.Sync.SourceProgress.ReReading.get -> int?
+Aw.Context.Core.Sync.SourceProgress.ReReading.init -> void
 Aw.Context.Core.Sync.SourceProgress.Source.get -> Aw.Context.Core.Sources.SourceId
 Aw.Context.Core.Sync.SourceProgress.Source.init -> void
-Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete) -> void
+Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null) -> void
 Aw.Context.Core.Sync.SourceProgress.Usable.get -> bool
 Aw.Context.Core.Sync.SourceProgress.Usable.init -> void
 override Aw.Context.Core.Sync.SourceProgress.Equals(object? obj) -> bool
 override Aw.Context.Core.Sync.SourceProgress.GetHashCode() -> int
 override Aw.Context.Core.Sync.SourceProgress.ToString() -> string!
-static Aw.Context.Core.Sync.SourceProgress.From(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncPhase? phase, System.DateTimeOffset? lastSync, string? lastCode) -> Aw.Context.Core.Sync.SourceProgress!
+static Aw.Context.Core.Sync.SourceProgress.From(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.SyncPhase? phase, System.DateTimeOffset? lastSync, string? lastCode, int? stored = null) -> Aw.Context.Core.Sync.SourceProgress!
 static Aw.Context.Core.Sync.SourceProgress.operator !=(Aw.Context.Core.Sync.SourceProgress? left, Aw.Context.Core.Sync.SourceProgress? right) -> bool
 static Aw.Context.Core.Sync.SourceProgress.operator ==(Aw.Context.Core.Sync.SourceProgress? left, Aw.Context.Core.Sync.SourceProgress? right) -> bool
 Aw.Context.Core.Sync.IIndexSync.Progress(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sync.SourceProgress!>!>!>

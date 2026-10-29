@@ -166,6 +166,20 @@ public sealed class IndexDoctorChecksTests
         Assert.Equal((CheckState.Ok, "record index: github synced 2026-10-28 09:05Z"), (row.State, row.Detail));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void Sync_names_the_projects_feed_as_its_own_source_and_says_when_the_issue_feed_is_re_reading()
+    {
+        var at = new DateTimeOffset(2026, 10, 28, 9, 5, 0, TimeSpan.Zero);
+
+        var row = IndexSyncRules.Judge(
+        [
+            SourceProgress.From(SourceId.From("linear"), SyncPhase.Recent, lastSync: null, lastCode: null, stored: 1200),
+            SourceProgress.From(SourceId.From("linear-projects"), SyncPhase.Incremental, at, lastCode: null),
+        ]);
+
+        Assert.Equal((CheckState.Warn, "record index: linear re-reading for project links, 1,200 issues stored; linear-projects synced 2026-10-28 09:05Z"), (row.State, row.Detail));
+    }
+
     private IndexDoctorChecks Checks(PointerSecrets secrets, FakeProbe probe, TimeSpan? limit = null) =>
         new(_h.Profiles, new ContextScopes(_h.Profiles, _h.Callers), FakeContextEngine.Instance, secrets, probe, limit ?? TimeSpan.FromSeconds(3));
 
