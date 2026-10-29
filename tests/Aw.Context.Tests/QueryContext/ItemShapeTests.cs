@@ -57,13 +57,13 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(), Ct)).Value;
 
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         Assert.Equal((Provenance.Model, false, Trust.Untrusted), (decision.Provenance, decision.Confirmed, decision.Trust));
         var cite = Assert.Single(result.Cites.Values, c => c.Key.Value == R103);
         // see #1637: cite.Aliases is empty until owned records carry their tracker identifiers
-        Assert.Equal(CitationState.Unchecked, cite.State);
+        Assert.Equal(CitationState.Current, cite.State);   // the profile names the Linear team, so the freshness check ran and the version still matches
         Assert.Equal("2026-07-23T09:00:00.0000000Z", cite.Refs[0].Version.Value);
         Assert.Contains(Section(result, "records").Items, i => i.Title?.Contains("Toggle split orientation", StringComparison.Ordinal) == true);
     }
@@ -149,7 +149,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(), Ct)).Value;
 
         var conflict = Assert.Single(result.Conflicts);
         Assert.All(conflict.Intent, marker => Assert.True(result.Cites.ContainsKey(marker), marker + " is not a citation of the result"));
@@ -163,7 +163,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(), Ct)).Value;
 
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         var record = result.Cites.Single(c => c.Value.Key.Value == R103).Key;

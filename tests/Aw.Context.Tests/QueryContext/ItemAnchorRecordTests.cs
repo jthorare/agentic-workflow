@@ -4,7 +4,6 @@ using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Records;
-using Aw.Context.Tests.Map;
 using static Aw.Context.Tests.SyncSources.ExtractDecisionsTests;
 
 namespace Aw.Context.Tests.QueryContext;
@@ -24,7 +23,7 @@ public sealed class ItemAnchorRecordTests
         await using var rig = await Rig.Start(lexical: leg);
         _ = await rig.Sync(Scope());
 
-        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(), Ct)).Value;
 
         _ = Assert.Single(result.Cites.Values, c => c.Key.Value == R103);
     }
