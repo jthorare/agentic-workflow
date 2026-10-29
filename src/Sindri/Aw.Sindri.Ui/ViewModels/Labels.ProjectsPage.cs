@@ -24,6 +24,9 @@ internal static partial class Labels
     /// <summary>The "+ Add project" button's words.</summary>
     internal const string ProjectsAddButton = "+ Add project";
 
+    /// <summary>The label under a card's PR count.</summary>
+    internal const string ProjectPrsLabel = "open PRs";
+
     /// <summary>A fold's words: "Finished (3)".</summary>
     internal static string ProjectFoldHeading(string title, int count) => string.Create(CultureInfo.InvariantCulture, $"{title} ({count})");
 

@@ -200,8 +200,8 @@
             <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}">
               <Panel x:Name="PageContent" Classes="page-content" Classes.edge="{Binding IsEdgeTabShown}">
                 <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHomeShown}" />
-                <!-- Projects (Projects page spec §7): the heading only, until the page's content lands. -->
-                <pv:ProjectsPage x:Name="ProjectsPage" IsVisible="{Binding IsProjects}" />
+                <!-- Projects (Projects page spec §7): the owner's projects in state groups. -->
+                <Panel IsVisible="{Binding IsProjects}"><pv:ProjectsPage x:Name="ProjectsPage" DataContext="{Binding Projects}" /></Panel>
                 <Panel IsVisible="{Binding IsWorkflows}">
                   <controls:Deferred DataContext="{Binding Workflows}">
                     <controls:Deferred.Template>

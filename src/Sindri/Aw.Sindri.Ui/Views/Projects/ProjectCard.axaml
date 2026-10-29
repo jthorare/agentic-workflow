@@ -1,0 +1,73 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
+             xmlns:wf="using:Aw.Sindri.Ui.Api.Workflow"
+             x:Class="Aw.Sindri.Ui.Views.Projects.ProjectCard"
+             x:DataType="pvm:ProjectCardViewModel">
+  <!-- One project (mockup B): the name with its origin chip and the health dot and word, the open counts large, the first line of the owner's note inset,
+       and the footer under a hairline. A card the store no longer holds is greyed and says so; with Context down it keeps its name and chip only. The dot
+       alone is coloured; the word is ink. The card takes focus and draws the app's 2 px ring; pressing it does nothing until the sheet lands. -->
+  <UserControl.Styles>
+    <Style Selector="Border.pcard:focus-visible">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.PrimaryHover}" />
+      <Setter Property="BorderThickness" Value="2" />
+      <Setter Property="Padding" Value="15" />
+    </Style>
+    <Style Selector="Border.pcard.gone"><Setter Property="Opacity" Value="0.5" /></Style>
+    <Style Selector="Ellipse.dot">
+      <Setter Property="Width" Value="8" />
+      <Setter Property="Height" Value="8" />
+      <Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Ellipse.dot.ok"><Setter Property="Fill" Value="{DynamicResource Brush.Success}" /></Style>
+    <Style Selector="Ellipse.dot.attn"><Setter Property="Fill" Value="{DynamicResource Brush.Attention}" /></Style>
+    <Style Selector="Ellipse.dot.fail"><Setter Property="Fill" Value="{DynamicResource Brush.Error}" /></Style>
+  </UserControl.Styles>
+  <Border x:Name="ProjectCardFrame" Classes="card pcard" Classes.gone="{Binding IsGone}" Focusable="True"
+          AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+    <StackPanel Spacing="{StaticResource Space.SM}">
+      <Grid ColumnDefinitions="*,Auto">
+        <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
+          <TextBlock x:Name="ProjectCardName" Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+          <Border BorderThickness="1" BorderBrush="{DynamicResource Brush.HairlineStrong}" CornerRadius="{StaticResource Radius.XS}" Padding="6,1" VerticalAlignment="Center"
+                  IsVisible="{Binding OriginChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Classes="caption subtle" Text="{Binding OriginChip}" />
+          </Border>
+        </StackPanel>
+        <StackPanel Grid.Column="1" IsVisible="{Binding !NamesOnly}" Margin="8,0,0,0" AutomationProperties.AccessibilityView="Raw">
+          <StackPanel x:Name="ProjectCardHealth" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
+                      IsVisible="{Binding HealthWord, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <Ellipse Classes="dot"
+                     Classes.ok="{Binding HealthTone, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static wf:ChipTone.Ok}}"
+                     Classes.attn="{Binding HealthTone, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static wf:ChipTone.Attn}}"
+                     Classes.fail="{Binding HealthTone, Converter={x:Static ObjectConverters.Equal}, ConverterParameter={x:Static wf:ChipTone.Fail}}" />
+            <TextBlock Classes="caption" Foreground="{DynamicResource Brush.Ink}" Text="{Binding HealthWord}" />
+          </StackPanel>
+        </StackPanel>
+      </Grid>
+      <StackPanel IsVisible="{Binding !NamesOnly}" Spacing="{StaticResource Space.SM}" AutomationProperties.AccessibilityView="Raw">
+        <StackPanel x:Name="ProjectCardStats" Orientation="Horizontal" Spacing="{StaticResource Space.LG}">
+          <StackPanel IsVisible="{Binding IssuesValue, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock FontSize="22" FontWeight="SemiBold" LetterSpacing="-0.4" Text="{Binding IssuesValue}" />
+            <TextBlock Classes="caption subtle" Text="{Binding IssuesLabel}" />
+          </StackPanel>
+          <StackPanel IsVisible="{Binding PrsValue, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock FontSize="22" FontWeight="SemiBold" LetterSpacing="-0.4" Text="{Binding PrsValue}" />
+            <TextBlock Classes="caption subtle" Text="{Binding PrsLabel}" />
+          </StackPanel>
+        </StackPanel>
+        <TextBlock x:Name="ProjectCardGone" Classes="caption subtle" Text="{Binding GoneText}" IsVisible="{Binding IsGone}" />
+        <StackPanel IsVisible="{Binding !IsGone}">
+          <Border x:Name="ProjectCardNote" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.HairlineTertiary}" BorderThickness="2,0,0,0"
+                  CornerRadius="{StaticResource Radius.XS}" Padding="8,6" IsVisible="{Binding NotesFace, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Classes="caption muted" Text="{Binding NotesFace}" TextTrimming="CharacterEllipsis" />
+          </Border>
+        </StackPanel>
+        <Border x:Name="ProjectCardFooter" BorderThickness="0,1,0,0" BorderBrush="{DynamicResource Brush.Hairline}" Padding="0,8,0,0"
+                IsVisible="{Binding FooterText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock Classes="caption subtle" Text="{Binding FooterText}" TextWrapping="Wrap" />
+        </Border>
+      </StackPanel>
+    </StackPanel>
+  </Border>
+</UserControl>

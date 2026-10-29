@@ -48,6 +48,11 @@ internal sealed class ProjectCardViewModel : ObservableObject
     /// <summary>The open PR count, or null.</summary>
     public string? PrsValue { get; private set => Set(ref field, value); }
 
+    /// <summary>"open PRs", the label under the PR count.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string PrsLabel => Labels.ProjectPrsLabel;
+#pragma warning restore CA1822, MA0041
+
     /// <summary>The first line of the note, cut to 80 characters; null without a note.</summary>
     public string? NotesFace { get; private set => Set(ref field, value); }
 
