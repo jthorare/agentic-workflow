@@ -88,7 +88,7 @@ internal sealed class LinearConnect(
     }
 
     // A loopback Linear (the fixture's fake) takes only a file: pointer (LinearSettings, SND-CONTEXT-070), so its key never goes to the keychain.
-    private Result<LinearConnected> Save(string key, Uri url, int teams)
+    private Result<LinearConnected> Save(string key, Uri url, CheckedTeams teams)
     {
         var stored = url == DefaultUrl ? writer.Store(Service, Account, key) : writer.StoreInFile(Service, Account, key);
         if (stored.IsError)
@@ -103,11 +103,26 @@ internal sealed class LinearConnect(
         }
 
         var written = profile.SetToken("linear", stored.Value.ToString());
-        return written.IsError ? written.Error : new LinearConnected(stored.Value.ToString(), teams, []);
+        if (written.IsError)
+        {
+            return written.Error;
+        }
+
+        // No teams listed: list the ones the key reads, or the Projects page (which shows only listed teams) would stay empty. The owner still approves the profile.
+        if (teams.Added.Count > 0)
+        {
+            var listed = profile.SetTeams("linear", teams.Added);
+            if (listed.IsError)
+            {
+                return listed.Error;
+            }
+        }
+
+        return new LinearConnected(stored.Value.ToString(), teams.Count, teams.Added);
     }
 
     // One read of the teams the key can see, before anything is saved: a refused key ends it at once, a listed team missing from the answer is named.
-    private async ValueTask<Result<int>> CheckTeams(IReadOnlyList<string> listed, Uri url, string key, CancellationToken cancellationToken)
+    private async ValueTask<Result<CheckedTeams>> CheckTeams(IReadOnlyList<string> listed, Uri url, string key, CancellationToken cancellationToken)
     {
         var read = await readers(url, key).Teams(cancellationToken).ConfigureAwait(false);
         if (read.IsError)
@@ -120,13 +135,15 @@ internal sealed class LinearConnect(
         if (listed.Count == 0)
         {
             return read.Value.Count > 0
-                ? read.Value.Count
+                ? new CheckedTeams(read.Value.Count, [.. read.Value.Order(StringComparer.Ordinal)])
                 : SindriErrors.IndexRepoUnreadable.With("the key reads no Linear team; nothing was saved (fix: use a key from an account that belongs to a team, then run `sindri index connect linear` again)");
         }
 
         var unreadable = listed.Where(t => !read.Value.Contains(t, StringComparer.Ordinal)).ToList();
         return unreadable.Count == 0
-            ? listed.Count
+            ? new CheckedTeams(listed.Count, [])
             : SindriErrors.IndexRepoUnreadable.With($"the key cannot read {string.Join(", ", unreadable)}; nothing was saved (fix: use a key whose account belongs to them, or remove them from context.sources.linear.teams)");
     }
+
+    private sealed record CheckedTeams(int Count, IReadOnlyList<string> Added);
 }
