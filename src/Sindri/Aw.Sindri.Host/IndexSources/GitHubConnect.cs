@@ -3,7 +3,6 @@ using Aw.Connectors.Core.GitHub;
 using Aw.Context.Core.Engine;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
 
@@ -21,7 +20,7 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="readers">Makes a GitHub reader for a host, the private-host switch and a token.</param>
 /// <param name="clock">The clock the checks read.</param>
 internal sealed class GitHubConnect(
-    IOnyxPrompts prompts,
+    ISecretPrompts prompts,
     IProfileSource profiles,
     ISecretWriter writer,
     ISecretPointers pointers,

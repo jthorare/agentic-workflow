@@ -5,7 +5,7 @@ namespace Aw.Sindri.Testing;
 
 /// <summary>
 /// The contract every <see cref="ISecretWriter"/> honours, with the resolver that reads back what it wrote. Run against the in-memory fake and KeychainSecretWriter (its owner-only file fallback, which a resolver reads on any machine).
-/// IBrowser and IOnyxPrompts have no contract: they are one-call wrappers over the OS (open a URL, read a console line) with nothing to pin down but the OS; their fakes only record calls (recorded exemption, owner review of #357).
+/// ISecretPrompts has no contract: it is a one-call wrapper over the OS (read a console line with echo off) with nothing to pin down but the OS; its fake only records calls (recorded exemption, owner review of #357).
 /// </summary>
 public abstract class SecretWriterContract
 {
