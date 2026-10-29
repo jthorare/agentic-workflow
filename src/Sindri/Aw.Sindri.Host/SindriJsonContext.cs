@@ -29,6 +29,7 @@ using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects;
+using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Requests;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
@@ -78,6 +79,7 @@ using Aw.Sindri.Features.GetLaunchPicks;
 using Aw.Sindri.Features.GetLaunchTargets;
 using Aw.Sindri.Features.GetNeedsYou;
 using Aw.Sindri.Features.GetProfile;
+using Aw.Sindri.Features.GetProject;
 using Aw.Sindri.Features.GetQueue;
 using Aw.Sindri.Features.GetRepoStatus;
 using Aw.Sindri.Features.GetRunSuspension;
@@ -96,6 +98,7 @@ using Aw.Sindri.Features.ListDenials;
 using Aw.Sindri.Features.ListItems;
 using Aw.Sindri.Features.ListJobs;
 using Aw.Sindri.Features.ListOutbox;
+using Aw.Sindri.Features.ListProjects;
 using Aw.Sindri.Features.ListRecipes;
 using Aw.Sindri.Features.ListRequests;
 using Aw.Sindri.Features.ListServices;
@@ -157,6 +160,8 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(GetSetupRequest)), JsonSerializable(typeof(GetSetupResponse)), JsonSerializable(typeof(GetRepoStatusResponse)), JsonSerializable(typeof(RepoStatus))]
 [JsonSerializable(typeof(GetProfileResponse)), JsonSerializable(typeof(ProfilePack)), JsonSerializable(typeof(ProfileSummary)), JsonSerializable(typeof(RepoPreview)), JsonSerializable(typeof(RebuildViewsRequest)), JsonSerializable(typeof(CreateItemRequest)), JsonSerializable(typeof(ItemCreatedResponse))]
 [JsonSerializable(typeof(AttachProjectRequest)), JsonSerializable(typeof(ProjectAccepted)), JsonSerializable(typeof(ChangeProjectBody)), JsonSerializable(typeof(DetachProjectBody)), JsonSerializable(typeof(HideProjectRequest))]
+[JsonSerializable(typeof(ListProjectsRequest)), JsonSerializable(typeof(ListProjectsResponse)), JsonSerializable(typeof(GetProjectRequest)), JsonSerializable(typeof(GetProjectResponse)), JsonSerializable(typeof(ProjectCard))]
+[JsonSerializable(typeof(ProjectLead)), JsonSerializable(typeof(ProjectLink)), JsonSerializable(typeof(ProjectFreshnessRow))]
 [JsonSerializable(typeof(CloseItemRequest)), JsonSerializable(typeof(CloseItemBody)), JsonSerializable(typeof(GetQueueRequest)), JsonSerializable(typeof(QueueResponse))]
 [JsonSerializable(typeof(QueueGroupView)), JsonSerializable(typeof(ItemSummary)), JsonSerializable(typeof(ListItemsRequest)), JsonSerializable(typeof(ListItemsResponse))]
 [JsonSerializable(typeof(GetItemRequest)), JsonSerializable(typeof(ItemView)), JsonSerializable(typeof(FileRequestRequest)), JsonSerializable(typeof(RequestFiledResponse))]

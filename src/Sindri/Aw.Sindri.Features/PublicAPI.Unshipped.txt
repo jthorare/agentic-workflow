@@ -5406,3 +5406,71 @@ Aw.Sindri.Features.ContextCalls.IndexConceptsView.LastCode.get -> string?
 Aw.Sindri.Features.ContextCalls.IndexConceptsView.LastCode.init -> void
 Aw.Sindri.Features.ContextCalls.IndexConceptsView.LastRun.get -> System.DateTimeOffset?
 Aw.Sindri.Features.ContextCalls.IndexConceptsView.LastRun.init -> void
+Aw.Sindri.Features.GetProject.GetProjectRequest
+Aw.Sindri.Features.GetProject.GetProjectRequest.<Clone>$() -> Aw.Sindri.Features.GetProject.GetProjectRequest!
+Aw.Sindri.Features.GetProject.GetProjectRequest.Deconstruct(out string! Project) -> void
+Aw.Sindri.Features.GetProject.GetProjectRequest.Equals(Aw.Sindri.Features.GetProject.GetProjectRequest? other) -> bool
+Aw.Sindri.Features.GetProject.GetProjectRequest.GetProjectRequest(string! Project) -> void
+Aw.Sindri.Features.GetProject.GetProjectRequest.Project.get -> string!
+Aw.Sindri.Features.GetProject.GetProjectRequest.Project.init -> void
+Aw.Sindri.Features.GetProject.GetProjectResponse
+Aw.Sindri.Features.GetProject.GetProjectResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.GetProject.GetProjectResponse.AsOf.init -> void
+Aw.Sindri.Features.GetProject.GetProjectResponse.<Clone>$() -> Aw.Sindri.Features.GetProject.GetProjectResponse!
+Aw.Sindri.Features.GetProject.GetProjectResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out string? Viewer, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, out Aw.Sindri.Core.Projects.Cards.ProjectCard! Project, out bool Hidden) -> void
+Aw.Sindri.Features.GetProject.GetProjectResponse.Equals(Aw.Sindri.Features.GetProject.GetProjectResponse? other) -> bool
+Aw.Sindri.Features.GetProject.GetProjectResponse.Freshness.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>!
+Aw.Sindri.Features.GetProject.GetProjectResponse.Freshness.init -> void
+Aw.Sindri.Features.GetProject.GetProjectResponse.GetProjectResponse(Aw.Sindri.Core.Views.AsOf! AsOf, string? Viewer, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, Aw.Sindri.Core.Projects.Cards.ProjectCard! Project, bool Hidden) -> void
+Aw.Sindri.Features.GetProject.GetProjectResponse.Hidden.get -> bool
+Aw.Sindri.Features.GetProject.GetProjectResponse.Hidden.init -> void
+Aw.Sindri.Features.GetProject.GetProjectResponse.Project.get -> Aw.Sindri.Core.Projects.Cards.ProjectCard!
+Aw.Sindri.Features.GetProject.GetProjectResponse.Project.init -> void
+Aw.Sindri.Features.GetProject.GetProjectResponse.Viewer.get -> string?
+Aw.Sindri.Features.GetProject.GetProjectResponse.Viewer.init -> void
+Aw.Sindri.Features.ListProjects.ListProjectsRequest
+Aw.Sindri.Features.ListProjects.ListProjectsRequest.All.get -> bool
+Aw.Sindri.Features.ListProjects.ListProjectsRequest.All.init -> void
+Aw.Sindri.Features.ListProjects.ListProjectsRequest.<Clone>$() -> Aw.Sindri.Features.ListProjects.ListProjectsRequest!
+Aw.Sindri.Features.ListProjects.ListProjectsRequest.Deconstruct(out bool All) -> void
+Aw.Sindri.Features.ListProjects.ListProjectsRequest.Equals(Aw.Sindri.Features.ListProjects.ListProjectsRequest? other) -> bool
+Aw.Sindri.Features.ListProjects.ListProjectsRequest.ListProjectsRequest(bool All) -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.AsOf.init -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.<Clone>$() -> Aw.Sindri.Features.ListProjects.ListProjectsResponse!
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Deconstruct(out Aw.Sindri.Core.Views.AsOf! AsOf, out string? Empty, out string? Viewer, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Projects, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Finished, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Hidden) -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Empty.get -> string?
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Empty.init -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Equals(Aw.Sindri.Features.ListProjects.ListProjectsResponse? other) -> bool
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Finished.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>!
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Finished.init -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Freshness.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>!
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Freshness.init -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Hidden.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>!
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Hidden.init -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.ListProjectsResponse(Aw.Sindri.Core.Views.AsOf! AsOf, string? Empty, string? Viewer, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectFreshnessRow!>! Freshness, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Projects, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Finished, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>! Hidden) -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Projects.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Cards.ProjectCard!>!
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Projects.init -> void
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Viewer.get -> string?
+Aw.Sindri.Features.ListProjects.ListProjectsResponse.Viewer.init -> void
+override Aw.Sindri.Features.GetProject.GetProjectRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetProject.GetProjectRequest.GetHashCode() -> int
+override Aw.Sindri.Features.GetProject.GetProjectRequest.ToString() -> string!
+override Aw.Sindri.Features.GetProject.GetProjectResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.GetProject.GetProjectResponse.GetHashCode() -> int
+override Aw.Sindri.Features.GetProject.GetProjectResponse.ToString() -> string!
+override Aw.Sindri.Features.ListProjects.ListProjectsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListProjects.ListProjectsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ListProjects.ListProjectsRequest.ToString() -> string!
+override Aw.Sindri.Features.ListProjects.ListProjectsResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ListProjects.ListProjectsResponse.GetHashCode() -> int
+override Aw.Sindri.Features.ListProjects.ListProjectsResponse.ToString() -> string!
+static Aw.Sindri.Features.GetProject.GetProjectRequest.operator !=(Aw.Sindri.Features.GetProject.GetProjectRequest? left, Aw.Sindri.Features.GetProject.GetProjectRequest? right) -> bool
+static Aw.Sindri.Features.GetProject.GetProjectRequest.operator ==(Aw.Sindri.Features.GetProject.GetProjectRequest? left, Aw.Sindri.Features.GetProject.GetProjectRequest? right) -> bool
+static Aw.Sindri.Features.GetProject.GetProjectResponse.operator !=(Aw.Sindri.Features.GetProject.GetProjectResponse? left, Aw.Sindri.Features.GetProject.GetProjectResponse? right) -> bool
+static Aw.Sindri.Features.GetProject.GetProjectResponse.operator ==(Aw.Sindri.Features.GetProject.GetProjectResponse? left, Aw.Sindri.Features.GetProject.GetProjectResponse? right) -> bool
+static Aw.Sindri.Features.ListProjects.ListProjectsRequest.operator !=(Aw.Sindri.Features.ListProjects.ListProjectsRequest? left, Aw.Sindri.Features.ListProjects.ListProjectsRequest? right) -> bool
+static Aw.Sindri.Features.ListProjects.ListProjectsRequest.operator ==(Aw.Sindri.Features.ListProjects.ListProjectsRequest? left, Aw.Sindri.Features.ListProjects.ListProjectsRequest? right) -> bool
+static Aw.Sindri.Features.ListProjects.ListProjectsResponse.operator !=(Aw.Sindri.Features.ListProjects.ListProjectsResponse? left, Aw.Sindri.Features.ListProjects.ListProjectsResponse? right) -> bool
+static Aw.Sindri.Features.ListProjects.ListProjectsResponse.operator ==(Aw.Sindri.Features.ListProjects.ListProjectsResponse? left, Aw.Sindri.Features.ListProjects.ListProjectsResponse? right) -> bool

@@ -8,14 +8,14 @@ namespace Aw.Sindri.Host.Commands;
 /// <summary>Reads the arguments of the project write verbs ('project add', 'edit', 'remove', 'hide', 'unhide'; projects page spec §5.3) into one <see cref="Parsed"/>, or the usage error.</summary>
 internal static class ProjectVerbArguments
 {
-    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--note T] [--target YYYY-MM-DD] [--json] [--no-start] | project edit <project> --version N [--name T] [--link URL]... [--state S | --clear-state] [--note T | --clear-note] [--target D | --clear-target] [--json] [--no-start] | project remove <project> --version N [--json] [--no-start] | project hide|unhide <project> --version N [--json] [--no-start]";
-
-    internal const string NeedsVersion = "pass --version N (the version `sindri projects` will show; reading it for you comes with `sindri projects`)";
+    internal const string Usage = "project add [--linear KEY] [--name T] [--link URL]... [--state S] [--note T] [--target YYYY-MM-DD] [--json] [--no-start] | project show <project> [--json] | projects [--all] [--json] | project edit <project> [--version N] [--name T] [--link URL]... [--state S | --clear-state] [--note T | --clear-note] [--target D | --clear-target] [--json] [--no-start] | project remove <project> [--version N] [--json] [--no-start] | project hide|unhide <project> [--version N] [--json] [--no-start]";
 
     internal static Result<Parsed> Parse(string[] args)
     {
         var (verb, rest) = args switch
         {
+            ["projects", .. var r] => (Verb.List, r),
+            ["project", "show", .. var r] => (Verb.Show, r),
             ["project", "add", .. var r] => (Verb.Add, r),
             ["project", "edit", .. var r] => (Verb.Edit, r),
             ["project", "remove", .. var r] => (Verb.Remove, r),
@@ -55,6 +55,9 @@ internal static class ProjectVerbArguments
             case "--no-start":
                 parsed.NoStart = true;
                 return 0;
+            case "--all" when parsed.Verb == Verb.List:
+                parsed.All = true;
+                return 0;
             case "--clear-state" or "--clear-note" or "--clear-target" when parsed.Verb == Verb.Edit:
                 Clear(parsed, flag);
                 return 0;
@@ -71,7 +74,7 @@ internal static class ProjectVerbArguments
     private static bool Takes(Verb verb, string flag) => flag switch
     {
         "--linear" => verb == Verb.Add,
-        "--version" => verb != Verb.Add,
+        "--version" => verb is Verb.Edit or Verb.Remove or Verb.Hide or Verb.Unhide,
         _ => verb is Verb.Add or Verb.Edit,
     };
 
@@ -172,18 +175,25 @@ internal static class ProjectVerbArguments
                 : null;
         }
 
+        if (parsed.Verb == Verb.List)
+        {
+            return words.Count > 0 ? SindriErrors.InvalidInput.With($"'{words[0]}' isn't an argument of projects: {Usage}") : null;
+        }
+
         if (words.Count != 1)
         {
             return SindriErrors.InvalidInput.With($"project {parsed.Verb.ToString().ToLowerInvariant()} needs one project: {Usage}");
         }
 
         parsed.Project = words[0];
-        return parsed.Version is null ? SindriErrors.InvalidInput.With(NeedsVersion) : null;
+        return null;
     }
 
     internal enum Verb
     {
         None,
+        List,
+        Show,
         Add,
         Edit,
         Remove,
@@ -198,6 +208,8 @@ internal static class ProjectVerbArguments
         public bool Json { get; set; }
 
         public bool NoStart { get; set; }
+
+        public bool All { get; set; }
 
         public string? Linear { get; set; }
 
