@@ -32,7 +32,7 @@ public sealed class OnyxRegistrationTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_source_catalog_adds_the_onyx_source_after_repo_docs_when_the_profile_names_onyx_and_a_repo_is_in_scope()
+    public void The_source_catalog_builds_no_onyx_source_even_when_the_profile_names_onyx()
     {
         var services = new ServiceCollection()
             .AddSingleton<TimeProvider>(new FakeTimeProvider(OnyxSourceHarness.Now))
@@ -51,7 +51,7 @@ public sealed class OnyxRegistrationTests
         };
 
         Assert.Equal(["repo-docs"], catalog.For(plain, repos, scrubbers).Select(s => s.Describe().Id.Value), StringComparer.Ordinal);
-        Assert.Equal(["repo-docs", "onyx"], catalog.For(named, repos, scrubbers).Select(s => s.Describe().Id.Value), StringComparer.Ordinal);
+        Assert.Equal(["repo-docs"], catalog.For(named, repos, scrubbers).Select(s => s.Describe().Id.Value), StringComparer.Ordinal);
         Assert.Empty(catalog.For(named, [], scrubbers));   // no repo in scope, no source (SourceCatalogContract)
     }
 }
