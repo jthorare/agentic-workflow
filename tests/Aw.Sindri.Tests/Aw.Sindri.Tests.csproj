@@ -5,6 +5,8 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Aw.Sindri.Tests</RootNamespace>
     <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
+    <!-- why: 12,500 short tests never reach the tier PGO's instrumentation pays for; off, the unit lane spends ~9% less CPU (#1546). -->
+    <TieredPGO>false</TieredPGO>
   </PropertyGroup>
 
   <ItemGroup>

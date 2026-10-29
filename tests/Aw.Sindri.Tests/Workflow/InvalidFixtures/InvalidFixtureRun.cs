@@ -29,11 +29,14 @@ internal static class InvalidFixtureRun
 
     private static readonly string _stateRoot = Path.Combine(Path.GetTempPath(), "aw-sindri-invalid-fixtures-test");
 
+    // why: the reader and catalog are stateless singletons and every fixture composed the whole host for them (~20 ms each); one composition serves the run (#1546).
+    private static readonly Lazy<ServiceProvider> _provider = new(static () =>
+        Composition.Compose(new ServiceCollection(), name => name == "AW_STATE_DIR" ? _stateRoot : null, new FakeTimeProvider()).BuildServiceProvider());
+
     /// <summary>Every finding's line, in the order the service returns them; a finding that isn't an error ends with its severity.</summary>
     public static async Task<IReadOnlyList<string>> Lines(string rule, FixtureSetup setup, CancellationToken cancellationToken)
     {
-        await using var provider = Composition.Compose(new ServiceCollection(), name => name == "AW_STATE_DIR" ? _stateRoot : null, new FakeTimeProvider())
-            .BuildServiceProvider();
+        var provider = _provider.Value;
         var reader = provider.GetRequiredService<IRecipeReader>();
         var file = rule + ".yaml";
         var path = Path.Combine(Directory, file);
