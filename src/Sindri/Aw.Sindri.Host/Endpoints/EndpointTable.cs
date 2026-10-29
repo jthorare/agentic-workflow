@@ -62,6 +62,7 @@ internal static class EndpointTable
 
     private static RouteGroupBuilder MapProjectQueries(RouteGroupBuilder queries)
     {
+        _ = queries.MapListLinearProjects();
         _ = queries.MapGetProject();
         _ = queries.MapGetProjects();
         return queries;

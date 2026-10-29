@@ -19,7 +19,7 @@ public sealed class ListLinearProjectsTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static ListLinearProjectsService Service() => new();
+    private ListLinearProjectsService Service() => new(_h.Views.Views, _h.Facts, _h.Views.Progress, _h.Slice.Callers);
 
     private static LinearProjectFact Fact(string key, string title, string state = "started", string? url = "https://linear.app/acme/project/x", bool leadIsOwner = false, DateTimeOffset? closed = null) =>
         ProjectRows.Fact(key, url, leadIsOwner) with { Title = title, StateRaw = state, ClosedAt = closed, Lead = new ProjectPerson("linear:user/ana", "Ana Ruiz"), OpenIssues = 6 };
