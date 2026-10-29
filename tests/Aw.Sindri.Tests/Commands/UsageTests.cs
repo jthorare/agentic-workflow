@@ -17,6 +17,10 @@ public sealed class UsageTests
     public void Help_lists_every_workflow_verb(string verb) =>
         Assert.Single(Lines(), l => l.StartsWith($"sindri workflow {verb} ", StringComparison.Ordinal));
 
+    [Fact, Trait("Lane", "unit")]
+    public void Help_lists_index_connect_linear_as_the_humans_verb() =>
+        Assert.Contains("SND-AUTH-002", Assert.Single(Lines(), l => l.TrimStart().StartsWith("sindri index connect linear", StringComparison.Ordinal)), StringComparison.Ordinal);
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("takeover")]
     [InlineData("handback")]
