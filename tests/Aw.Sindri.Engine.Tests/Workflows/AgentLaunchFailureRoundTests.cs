@@ -9,7 +9,6 @@ namespace Aw.Sindri.Tests.Workflows;
 /// the one the pre-patch replay tests hold, and the decision's legacy flag is in LaunchFailureRoundsTests.
 /// </summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class AgentLaunchFailureRoundTests : AgentRuntimeTestBase
 {
     private const string Retrying = "workflow.dev-agent-retry";

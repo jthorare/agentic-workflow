@@ -19,7 +19,6 @@ namespace Aw.Sindri.Tests.Workflows;
 /// in the same run, with no round counted and no special token cap. Run through the workflow with FakeLauncher, FakeAgentSessions and the fake judge.
 /// </summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class ModelEscalationTests : AgentRuntimeTestBase
 {
     private static readonly ModelFacts[] _three =

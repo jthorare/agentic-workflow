@@ -9,7 +9,6 @@ namespace Aw.Sindri.Tests.Workflows;
 /// temp folder (the instance holds it as 'fact:workspace', so the launch runs there); only the launcher and the session watch are fakes. Behaviour only, so the same file holds before and after the fix.
 /// </summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class StrandedAgentResultCheckTests : AgentRuntimeTestBase
 {
     private const int RunsBeforeThePark = 3;   // the first run and the engine's two retries

@@ -15,7 +15,6 @@ namespace Aw.Sindri.Tests.Workflows;
 /// kept; a target that ends the instance is refused by the validator, recording nothing. Modelled on <see cref="PhaseFiveSignalTests"/>.
 /// </summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class RewindUpdateTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>, IDisposable
 {
     private readonly WorkflowsHarness _harness = new();

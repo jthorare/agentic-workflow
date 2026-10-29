@@ -18,7 +18,6 @@ namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>An agent Step in a CHILD instance (engine P8 proof F1): the child starts with its declared inputs only, so it has no 'fact:item'; the launch finds the item's repo from the instance's item instead.</summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class AgentChildLaunchTests : IDisposable
 {
     private const string Repo = "/work/app";
