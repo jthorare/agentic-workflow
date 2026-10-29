@@ -77,4 +77,42 @@ internal static partial class Labels
         < 1440 => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalHours} h ago"),
         _ => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalDays} d ago"),
     };
+
+    /// <summary>The concepts line when concept synthesis or labeling is off.</summary>
+    internal const string ConceptsOff = "Concepts: labeling is off";
+
+    /// <summary>The concepts line when their read failed.</summary>
+    /// <param name="code">The failure's code.</param>
+    /// <returns>"Concepts: can't be read (SND-CONTEXT-090)".</returns>
+    internal static string ConceptsUnreadable(string code) => "Concepts: can't be read (" + code + ")";
+
+    /// <summary>How many concepts there are and how many cite two or more sources.</summary>
+    /// <param name="concepts">Stored concepts.</param>
+    /// <param name="multiSource">Those citing two or more sources.</param>
+    /// <returns>"Concepts: 101 · 34 cite 2+ sources (33%)", or "Concepts: none yet".</returns>
+    internal static string ConceptsCount(int concepts, int multiSource) => concepts <= 0
+        ? "Concepts: none yet"
+        : string.Create(CultureInfo.InvariantCulture, $"Concepts: {concepts} · {multiSource} cite 2+ sources ({multiSource * 100 / concepts}%)");
+
+    /// <summary>Records with no vector yet.</summary>
+    /// <param name="pending">The count.</param>
+    /// <returns>"Not embedded yet: 12 records".</returns>
+    internal static string ConceptsNotEmbedded(int pending) => "Not embedded yet: " + ContextRecords(pending);
+
+    /// <summary>Groups waiting for the model to name them.</summary>
+    /// <param name="queued">The count.</param>
+    /// <returns>"Waiting for a name: 3 groups".</returns>
+    internal static string ConceptsQueued(int queued) =>
+        string.Create(CultureInfo.InvariantCulture, $"Waiting for a name: {queued} {(queued == 1 ? "group" : "groups")}");
+
+    /// <summary>Embedded records in no concept: most are singletons the grouper never names, so this is normal, not a backlog.</summary>
+    /// <param name="records">Embedded minus covered.</param>
+    /// <param name="coverage">Covered over embedded, 0 to 1.</param>
+    /// <returns>"Not in any concept: 250 records (55% covered)"; no share while nothing is covered.</returns>
+    internal static string ConceptsUncovered(int records, double coverage)
+    {
+        var words = "Not in any concept: " + ContextRecords(records);
+        var percent = (int)Math.Round(Math.Clamp(coverage, 0, 1) * 100, MidpointRounding.AwayFromZero);   // rounded like `sindri index status`
+        return percent <= 0 ? words : words + string.Create(CultureInfo.InvariantCulture, $" ({percent}% covered)");
+    }
 }
