@@ -4,13 +4,15 @@ namespace Aw.Context.Testing.Records;
 
 /// <summary>
 /// A fake upstream (Slack, GitHub, Linear, ...) behind a <see cref="RecordFeed"/>, for <see cref="RecordFeedResumeContract"/>: it holds a source bigger than one pull, counts every request the feed makes, logs the ones it served and, once told
-/// to <see cref="InterruptAfter"/>, refuses every request past the allowance the way a rate limit does (the binding's own fake does the refusing: an empty page that names a reset time, an HTTP 429, ...). A binding calls
+/// to <see cref="InterruptAfter"/>, refuses every request past the allowance the way a rate limit does (the binding's own fake does the refusing: an empty page that names a reset time, an HTTP 429, ...). Told to
+/// <see cref="CancelAfter"/> instead, it cancels a token source at the first request past the allowance and throws <see cref="OperationCanceledException"/>, the way an HTTP call under a cancelled token does (the feed's time cap). A binding calls
 /// <see cref="Admit"/> at the top of every upstream request and refuses the request when it answers false.
 /// </summary>
 public abstract class ResumeUpstream
 {
     private readonly List<string> _served = [];
     private int _allowed = int.MaxValue;
+    private CancellationTokenSource? _cancels;
 
     /// <summary>Gets the feed under test, reading this upstream.</summary>
     public abstract RecordFeed Feed { get; }
@@ -31,18 +33,37 @@ public abstract class ResumeUpstream
     /// <param name="requests">How many more requests are served.</param>
     public void InterruptAfter(int requests) => _allowed = Attempts + requests;
 
-    /// <summary>Serves requests again.</summary>
-    public void Lift() => _allowed = int.MaxValue;
+    /// <summary>Cancels <paramref name="source"/> at the first request after the next <paramref name="requests"/> ones, and throws <see cref="OperationCanceledException"/> from it, as an HTTP call under a cancelled token does.</summary>
+    /// <param name="requests">How many more requests are served.</param>
+    /// <param name="source">The source whose token the pulls run under.</param>
+    public void CancelAfter(int requests, CancellationTokenSource source)
+    {
+        _allowed = Attempts + requests;
+        _cancels = source;
+    }
+
+    /// <summary>Serves requests again; a cancellation set up by <see cref="CancelAfter"/> is dropped.</summary>
+    public void Lift()
+    {
+        _allowed = int.MaxValue;
+        _cancels = null;
+    }
 
     /// <summary>Counts a request and says whether it is served.</summary>
     /// <param name="request">Text that names what the request asks for; logged when it is served.</param>
-    /// <returns>True to serve it, false to refuse it as rate limited.</returns>
+    /// <returns>True to serve it, false to refuse it as rate limited. When a cancellation is set up it cancels the source and throws instead.</returns>
     protected bool Admit(string request)
     {
         Attempts++;
         if (Attempts > _allowed)
         {
             Interrupted = true;
+            if (_cancels is { } source)
+            {
+                source.Cancel();
+                throw new OperationCanceledException(source.Token);
+            }
+
             return false;
         }
 

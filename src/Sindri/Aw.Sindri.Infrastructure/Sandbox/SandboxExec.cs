@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Aw.Kernel;
+using Aw.Kernel.Data.Processes;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
@@ -64,9 +65,10 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
             }
 
             running = started.Value.Egress;
-            using var process = started.Value.Process;
-            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
-            return process.ExitCode;
+            // why: disposing the pinned process releases its forking thread, and bwrap --die-with-parent dies with that thread, so it is disposed only after the wait
+            using var pinned = started.Value.Pinned;
+            await pinned.Process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            return pinned.Process.ExitCode;
         }
         catch (OperationCanceledException)
         {
@@ -98,20 +100,20 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
     }
 
     /// <summary>Under the cap's lock: the egress, the wrap and the process, so the scope exists when the lock is released.</summary>
-    private Task<Result<Started>> Start(SandboxPlan plan, IReadOnlyList<string> command, ScopeLimits limits, CancellationToken cancellationToken)
+    private async Task<Result<Started>> Start(SandboxPlan plan, IReadOnlyList<string> command, ScopeLimits limits, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var listeners = egress.Start(plan.Network, EgressCaps.Default);
         if (listeners.IsError)
         {
-            return Task.FromResult<Result<Started>>(listeners.Error);
+            return listeners.Error;
         }
 
         var wrapped = sandbox.Wrap(plan, command);
         if (wrapped.IsError)
         {
             _ = listeners.Value.DisposeAsync().AsTask();
-            return Task.FromResult<Result<Started>>(wrapped.Error);
+            return wrapped.Error;
         }
 
         var argv = SystemdScopeArgv.Start(systemdRun, plan.Launch, limits, wrapped.Value);
@@ -119,20 +121,14 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
 
         try
         {
-            var process = Process.Start(info);
-            if (process is not null)
-            {
-                return Task.FromResult<Result<Started>>(new Started(process, listeners.Value));
-            }
+            var pinned = await PinnedProcess.StartAsync(info).ConfigureAwait(false);
+            return new Started(pinned, listeners.Value);
         }
         catch (Exception e) when (e is System.ComponentModel.Win32Exception or InvalidOperationException)
         {
             _ = listeners.Value.DisposeAsync().AsTask();
-            return Task.FromResult<Result<Started>>(SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.NoUserManager, $"{argv[0]} could not start: {e.Message}"));
+            return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.NoUserManager, $"{argv[0]} could not start: {e.Message}");
         }
-
-        _ = listeners.Value.DisposeAsync().AsTask();
-        return Task.FromResult<Result<Started>>(SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.NoUserManager, $"{argv[0]} did not start"));
     }
 
     // The exec's own run area (scratch, spool, plan) and secrets directory go with it; the stored launch's files are never touched.
@@ -152,5 +148,5 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
         }
     }
 
-    private sealed record Started(Process Process, RunningEgress Egress);
+    private sealed record Started(PinnedProcess Pinned, RunningEgress Egress);
 }
