@@ -1,6 +1,6 @@
 # Sindri's Projects page: one card per work stream the owner runs, with links into Linear and the repo
 
-**Status:** draft for the owner, revision 4 (autoplan round 3 fixes) · **Date:** 2026-10-29 · **Issue:** #1566 · **Builds on:** the owned index spec `2026-10-27-sindri-owned-index-design.md` (the record store, the Linear feed, the GitHub feed, "no live calls at query time" §6.1), the API surface spec `2026-10-10-sindri-api-surface-design.md` (views, `asOf`, `empty`, who may run what), the UI spec `2026-10-11-sindri-ui-design.md` and `docs/csharp/sindri-ui.md` (pages, the detail sheet, focus, the action catalog, labels), #1564 (`RecordDecisionRun`, the step that runs after a feed's tick), owner rulings q145, q146 (no live Linear search when a query runs) and q149 (model calls are fine on new data) · **Next:** /specToProvenPR takes §12's phases (Ph0 to Ph7) to PRs.
+**Status:** draft for the owner, revision 5 (owner answers q151, 2026-10-29) · **Date:** 2026-10-29 · **Issue:** #1566 · **Builds on:** the owned index spec `2026-10-27-sindri-owned-index-design.md` (the record store, the Linear feed, the GitHub feed, "no live calls at query time" §6.1), the API surface spec `2026-10-10-sindri-api-surface-design.md` (views, `asOf`, `empty`, who may run what), the UI spec `2026-10-11-sindri-ui-design.md` and `docs/csharp/sindri-ui.md` (pages, the detail sheet, focus, the action catalog, labels), #1564 (`RecordDecisionRun`, the step that runs after a feed's tick), owner rulings q145, q146 (no live Linear search when a query runs) and q149 (model calls are fine on new data) · **Next:** /specToProvenPR takes §12's phases (Ph0 to Ph7) to PRs.
 
 Every file path is one the author opened on main (e280467e8). Every command, route, event and type is marked **existing** or **new**.
 
@@ -30,25 +30,25 @@ What Sindri has today (checked in code, 2026-10-29):
 |---|---|---|
 | P1 | **The page reads only stored data.** Opening it makes no Linear or GitHub call. Freshness is the last sync, shown on the page | q145/q146; owned index §6.1 |
 | P2 | **Linear projects are records in the owned index**, written by a new feed with **its own source id, `linear-projects`**, keyed `linear:project/<id>` (existing key), kind `Project` (existing `RecordKind.Project`) | The driver keys cursor, lock and outcome by source (`RecordFeedSync.cs:22-23,38`), so a second feed can't share `linear`. Its own source gets its own progress row and doctor row |
-| P3 | **"The owner" on Linear is the user the Linear key belongs to** (Linear's `viewer`), read after the project feed's tick and saved; the page says who that is. `context.sources.linear.me` overrides it | Nothing to set up for a personal key; a wrong key is visible, not silent (§10 Q2) |
-| P4 | **Two ships.** Ship 1: Linear projects, exact open-issue counts, the Linear link, the page, attach and add by hand (with repo PR-list links for hand-made projects, which need no new data). Ship 2: PR counts and repo links for Linear projects | Ship 1 is useful on its own and depends on nothing unmeasured. PR links rest on data Ph0 must look at first |
+| P3 | **"The owner" on Linear is the user the Linear key belongs to** (Linear's `viewer`), read on the sync tick and saved; the page says who that is | The owner's key is a personal API key (owner, q151) |
+| P4 | **Two ships.** Ship 1: Linear projects, exact open-issue counts, the Linear link, the page, attach and add by hand. Ship 2: PR counts and repo links for Linear projects | Ship 1 is useful on its own and depends on nothing unmeasured. PR links rest on data Ph0 must look at first |
 | P5 | **Attached, hand-made and hidden projects are Sindri ledger events**, folded into `views.db`. Commands are desk class: the app and the CLI may run them, an agent session is refused (`SND-AUTH-002`) | Owner state that survives a resync and a map rebuild. Not the profile: every edit would need `profile approve` (`docs/csharp/sindri-profile.md:9-10`) |
 | P6 | **A card is a summary, never a task list** | #1566 |
 | P7 | **Items don't belong to projects in v1** | #1566 default; §11 |
 | P8 | **The issue feed also reads every open issue of an open project, however old.** Its first Recent read (no watermark yet) adds "**or** open and in a project that isn't done or canceled" to its filter; every later read is unchanged. Everything else is still bounded by the window | An open issue nobody touched for seven months is still open. One filter clause in the existing feed's first read: same cursor, lock and commit path, so no second writer (§4.4) |
 | P9 | **No removal by absence in v1.** A canceled or completed project arrives by `updatedAt` like any change. A project deleted in Linear stays until Reconcile is driven (owned index §5.5; `RecordSyncRun.cs:16-17`) | Removing whatever a read didn't return blanks the page after a 429 or a timeout |
-| P10 | **No new top-bar tab in v1.** Projects is a panel on Home (the first four cards and "All projects") and a page reached from it and by the chord `G P`. §10 Q1 asks whether the owner wants a tab instead | The bar holds seven tabs at 900 px; making room means moving an existing page into a sub-nav pattern the app doesn't have |
+| P10 | **Projects is an eighth top-bar tab, second after Home, and the window's minimum width grows to fit eight tabs** | Owner, q151 |
 
 ## 2. Goals and non-goals
 
 **Goals**
-- Home has a **Projects** panel; "All projects" opens the full page. One card per project the owner leads in Linear, plus each attached or hand-made project.
+- The app has a **Projects** tab. One card per project the owner leads in Linear, plus each attached or hand-made project.
 - A card shows name, state, health (when Linear has one), lead, target date, last activity, open issues (exact), and from ship 2 open PRs and repos, with links to the Linear project and each repo's PR list.
 - The owner can attach a Linear project they don't lead, add one that isn't in Linear, edit or remove those, and hide a project they lead (and un-hide it).
 - `sindri projects [--json]` prints the same cards, so an agent session can read them.
 - Opening the page costs no network call. A failing sync shows on the page.
 
-**Success measure.** For one week after ship 1, the owner glances at the panel daily; the open-issue count on each led project matches Linear's project view once a tick (5 minutes) has passed since the last change, except the re-opened-project gap in §4.4 (Ph7 logs the comparison), and the owner opens Linear's project view less often than before (their word, at the end of the week).
+**Success measure.** For one week after ship 1, the owner glances at the Projects tab daily; the open-issue count on each led project matches Linear's project view once a tick (5 minutes) has passed since the last change, except the re-opened-project gap in §4.4 (Ph7 logs the comparison), and the owner opens Linear's project view less often than before (their word, at the end of the week).
 
 **Non-goals**
 - Issue lists, burndown, cycles, estimates. Linear does that.
@@ -79,16 +79,16 @@ Ship 2 adds a line: `3 open PRs · repos: web-app, api`. The links (Open in Line
 | Lead | "you" | the lead's name | none |
 | Target | Linear's `targetDate` | same | the owner's, optional |
 | Open issues | stored issues `in-project` with state `open` (exact, P8) | same | none |
-| Open PRs (ship 2) | stored PRs, `open` or `draft`, linked to the project's issues (§4.5) | same | ship 1: open PRs in its repos, labelled "whole repo" |
-| Last activity | newest `updated_at` of the project, its issues, (ship 2) their PRs | same | newest of its repos' PRs, else when the owner last edited it |
-| Repos | (ship 2) repos of linked PRs, plus repos the owner added | same | the owner's |
+| Open PRs (ship 2) | stored PRs, `open` or `draft`, linked to the project's issues (§4.5) | same | none (a hand-made project has no repo, owner q151) |
+| Last activity | newest `updated_at` of the project, its issues, (ship 2) their PRs | same | when the owner last edited it |
+| Repos | (ship 2) repos of linked PRs | same | none |
 | Note | none | the owner's one line | the owner's one line |
 
 A repo's PR list link is `https://github.com/<owner>/<repo>/pulls`, built from the repo's GitHub name in `context.sources.github.repos`. A repo not listed there gets no link and no count; the sheet says "PRs not synced for this repo".
 
 PR counts only see PRs inside the GitHub feed's window. A PR open longer than the window without an update isn't in the store, so the PR line ends "(updated in the last N days)", N from `context.index.windowDays`.
 
-**Order.** In progress, Planned, Paused, Backlog; inside each, newest last activity first. On the page, two folded rows close the list: **Finished (n)** (Done or Canceled in the last 14 days; older ones leave the page and `sindri projects --all` lists them) and **Hidden (n)** (projects the owner hid). A hidden project that finishes stays only under Hidden; Unhide puts it back where its state puts it (Finished, or gone after 14 days). A Linear project's finish date is `completedAt` or `canceledAt`; a hand-made project's is the time of the event that set its state to Done or Canceled. The Home panel shows the first four open cards and "All projects (n)". Clicking a card on Home opens the Projects page with that card's sheet open (Home has no sheet host, `HomePage.axaml`). The panel's own states: three placeholders while loading; the page's sentence for states 3 to 6 (§3.1) in one line, with **Add project**; nothing else.
+**Order.** In progress, Planned, Paused, Backlog; inside each, newest last activity first. On the page, two folded rows close the list: **Finished (n)** (Done or Canceled in the last 14 days; older ones leave the page and `sindri projects --all` lists them) and **Hidden (n)** (projects the owner hid). A hidden project that finishes stays only under Hidden; Unhide puts it back where its state puts it (Finished, or gone after 14 days). A Linear project's finish date is `completedAt` or `canceledAt`; a hand-made project's is the time of the event that set its state to Done or Canceled.
 
 ### 3.1 Page states
 
@@ -115,13 +115,13 @@ A card is one control. Click or Enter opens **its sheet**, the app's detail shee
 | Origin | Edit | Remove | Hide | Set state |
 |---|---|---|---|---|
 | Led | — | — | yes | — |
-| Attached Linear | yes (repos, links, note, target) | yes | — | yes (override; clear goes back to Linear's) |
+| Attached Linear | yes (links, note, target) | yes | — | yes (override; clear goes back to Linear's) |
 | Hand-made | yes (all fields) | yes | — | yes |
 | Hidden (from the Hidden row) | — | — | **Unhide** | — |
 
 **Remove** asks inline in the sheet ("Remove Checkout rewrite from your page? Remove / Keep"), focus on Keep. No toast: the app has no toast component, and removing an attachment loses only what the owner typed.
 
-**Add project** (top right of the page and the panel) opens the same sheet with two tabs: **From Linear** (a search box over stored projects in scope that the owner doesn't lead and hasn't attached; no live call; its states: "Loading…" while the view reads, "No other Linear projects in your teams." when empty, the Context error line when it fails) and **By hand** (name, state, repos from the profile's list, links, note, target). Save shows "Saving…" and disables itself; an error shows under the button and keeps every field. On success the sheet closes and focus goes to the new card.
+**Add project** (top right of the page) opens the same sheet with two tabs: **From Linear** (a search box over stored projects in scope that the owner doesn't lead and hasn't attached; no live call; its states: "Loading…" while the view reads, "No other Linear projects in your teams." when empty, the Context error line when it fails) and **By hand** (name, state, links, note, target). Save shows "Saving…" and disables itself; an error shows under the button and keeps every field. On success the sheet closes and focus goes to the new card.
 
 After Remove or Hide the sheet closes and focus moves to the next card, the previous one when it was the last, or **Add project** when none is left.
 
@@ -193,7 +193,7 @@ CREATE TABLE source_identity (
 
 A test pins that a tick on an empty store fills `source_identity`, so the page never sits on "leads nothing" for want of a viewer row.
 
-`context.sources.linear.me` (**new** profile key, optional, a Linear user id) wins when set; `profile approve` shows it; `docs/csharp/sindri-profile.md` and `check-profile-doc.mjs` list it. An older Sindri refuses the unknown key at `profile check` (unknown keys are errors, `sindri-profile.md:5`).
+The owner's key is a personal API key (owner, q151), so there is no override key; a wrong key shows as someone else's name in the freshness line.
 
 "Led by the owner" = a `Project` record with a `led-by` link whose `to_ref` is the owner's `user_ref`. The page shows the viewer's name in the freshness line and the "leads nothing" sentence, so a shared or bot key is visible at a glance.
 
@@ -242,7 +242,7 @@ Nothing new is fetched. The page reads the PR records the GitHub feed already st
 
 | Event | Payload | When |
 |---|---|---|
-| `project.attached` | `id` (`prj_<ulid>`), `linear` (`linear:project/<id>` or null), `name` (required when `linear` is null), `state` (null or one of the six words), `repos` (profile repo names), `links` (https urls, at most 10), `note` (one line, ≤ 200 characters), `target` (date or null) | Attach a Linear project, or add one by hand |
+| `project.attached` | `id` (`prj_<ulid>`), `linear` (`linear:project/<id>` or null), `name` (required when `linear` is null), `state` (null or one of the six words), `links` (https urls, at most 10), `note` (one line, ≤ 200 characters), `target` (date or null) | Attach a Linear project, or add one by hand |
 | `project.changed` | `id`, `version`, the changed fields | Edit, set state |
 | `project.detached` | `id`, `version` | Remove |
 | `project.hidden` | `linear`, `hidden` (true or false), `version` | Hide or unhide a led project |
@@ -257,7 +257,7 @@ Every event is public (`EventCatalog`, `Public: true`) and invalidates the new v
 
 | CLI | Route, class | Prints | Exit |
 |---|---|---|---|
-| `sindri project add (--linear <url-or-key> \| --name <text>) [--repo R]... [--link URL]... [--state S] [--note T] [--target YYYY-MM-DD] [--json] [--no-start]` | `POST /sindri/projects`, desk | `prj_01J… attached: Checkout rewrite (sequence N)` | 0; 1 not running; 2 refused (`SND-PROJECT-001`, `-003`, `-004`) |
+| `sindri project add (--linear <url-or-key> \| --name <text>) [--link URL]... [--state S] [--note T] [--target YYYY-MM-DD] [--json] [--no-start]` | `POST /sindri/projects`, desk | `prj_01J… attached: Checkout rewrite (sequence N)` | 0; 1 not running; 2 refused (`SND-PROJECT-001`, `-003`, `-004`) |
 | `sindri project edit <project> [same flags] [--clear-state] [--version N] [--json] [--no-start]` | `POST /sindri/projects/{id}/change`, desk | `prj_… changed (sequence N)` | 0; 1; 2 (`-404`, `-409`, `-004`) |
 | `sindri project remove <project> [--version N] [--json] [--no-start]` | `POST /sindri/projects/{id}/detach`, desk | `prj_… removed (sequence N)` | 0; 1; 2 (`-404`, `-409`) |
 | `sindri project hide <project>` / `unhide <project>` `[--version N] [--json] [--no-start]` | `POST /sindri/projects/hide`, desk | `<name> hidden (sequence N)` | 0; 1; 2 (`-404`, `-409`) |
@@ -275,13 +275,12 @@ Each write is a row in `Host/Catalog/ProjectRows.cs` (new), with its own label i
 A new facade interface `IContextProjects` added to `IContextEngine`'s list (`Facade/IContextEngine.cs:18`), implemented in Features over a new `IRecordStore.ProjectFacts` SQL read, registered in `ContextFeaturesServiceCollectionExtensions`, each new public type in `PublicAPI.Unshipped.txt`:
 
 ```
-IContextProjects.Projects(ProjectFactsRequest(IReadOnlyList<RecordKey> Attached, IReadOnlyList<ContextRepoName> WholeRepos), ContextScope scope, ct)
+IContextProjects.Projects(ProjectFactsRequest(IReadOnlyList<RecordKey> Attached), ContextScope scope, ct)
   -> Result<ProjectFactsAnswer>
 
-ProjectFactsAnswer  Owner (UserRef? with name; null when unknown), Projects, Repos, Catalog (stored projects in scope, for the From Linear tab)
+ProjectFactsAnswer  Owner (UserRef? with name; null when unknown), Projects, Catalog (stored projects in scope, for the From Linear tab)
 ProjectFact         Key, Title, Description, Url, StateRaw, Health, DueAt, Lead, LeadIsOwner, UpdatedAt, ClosedAt,
                     OpenIssues, OpenPrs (ship 2), LastActivity, Repos (ship 2)
-RepoFact            Repo, OpenPrs, LastActivity
 ```
 
 `UserRef` is a **new** value type in `Aw.Context.Core/Sources/`. Counts are SQL over `record_link` (index `record_link_by_to_key`) joined to `source_record` by key; Linear rows have a null `repo`, so `source_record_by_state` serves only the PR counts. `scope` is the caller's, so the audience rule applies as for any record read.
@@ -293,7 +292,7 @@ Tests: unit counts on a seeded store; an integration test pins that the plan use
 `GET /sindri/projects[?all=true]` and `GET /sindri/projects/{id}`, Features slices, Host endpoints in `EndpointTable.MapQueries`:
 
 1. Read `project_attached` and `project_hidden` from `views.db`.
-2. Call `IContextProjects.Projects` with the attached Linear keys and the hand-made projects' repos.
+2. Call `IContextProjects.Projects` with the attached Linear keys.
 3. Merge: led minus hidden, plus attached; apply overrides; order (§3). On a Context error, serve the attached and hand-made cards with names only and the error in `freshness` (§3.1).
 4. Freshness from `IIndexSync.Progress`, plus the viewer's name.
 
@@ -325,17 +324,16 @@ Tests: unit counts on a seeded store; an integration test pins that the plan use
 
 `version` is the projection's version for attached and hand-made projects and the hide row's for led ones, so every write has one to send.
 
-Goldens under `tests/Aw.Sindri.Tests/Golden/Api/projects/`: `empty-no-linear.json`, `empty-leads-nothing.json`, `syncing.json`, `counting.json`, `mixed.json` (one led, one attached with a state override, one hand-made with a repo, one hidden, one finished 3 days ago, one finished 20 days ago that's absent without `all`), `linear-failing.json`, `context-down.json`, `untrusted-name.json`. The app's records in `Aw.Sindri.Ui/Api/Projects/` read them through `SindriUiJsonContext` (`GoldenContractTests`).
+Goldens under `tests/Aw.Sindri.Tests/Golden/Api/projects/`: `empty-no-linear.json`, `empty-leads-nothing.json`, `syncing.json`, `counting.json`, `mixed.json` (one led, one attached with a state override, one hand-made, one hidden, one finished 3 days ago, one finished 20 days ago that's absent without `all`), `linear-failing.json`, `context-down.json`, `untrusted-name.json`. The app's records in `Aw.Sindri.Ui/Api/Projects/` read them through `SindriUiJsonContext` (`GoldenContractTests`).
 
-## 7. The page and the Home panel (app)
+## 7. The page (app)
 
-- **Home panel**: a new `Border.panel` section on Home (`Views/Shell/HomePage.axaml`, beside the existing panels), the first four open cards and "All projects (n)". Same view model as the page.
-- **The page**: `PageId.Projects`, not in the top bar's `Navigation` list (P10), reached from the panel, the chord `G P` (free, `ShellViewModel.Chords.cs:109-121`) and a deep link `sindri://projects`. Its header has a Back to Home link, like `Jobs` (a page that isn't a tab, `PageId.cs`).
+- **The tab**: `PageId.Projects`, a `NavEntry` second in `Navigation` (`ShellViewModel.cs:113-121`), label "Projects", chord `G P` (free, `ShellViewModel.Chords.cs:109-121`), deep link `sindri://projects`. Eight tabs must fit: Ph5 measures the narrowest window at which the eight labels fit (counts hidden, `NavEntry.cs:37`), sets the window's `MinWidth` to it (expected about 1,000 px), and updates `NavEntry.cs:37`'s comment, `TopBarTests`, `ShellNavTests`, `ShellChordTests` and `NavTabClickTests`.
 - `ShellViewModel.Projects.cs` with `InitProjects` (as `ShellViewModel.Jobs.cs:25-46`) and `Health.Follow(Page.Refresh)`; `context.sources.synced` (`EventCatalog.cs:17`) and the new `project.*` events refresh it.
 - Cards use the existing `Border.card` style (`SindriApp.axaml:42-48`) in a wrapping grid keyed to **the page's width** (not the window's): one column under 560 px, two from 560, three from 900. With the sheet open beside the page at ≥ 1,100 px window width, the page narrows and the grid reflows. Health uses `Brush.Success`, `Brush.Attention`, `Brush.Error` (existing, `Theme/Tokens.axaml`). No new tokens.
 - Links open through `ILauncher.OpenUri` (`Platform/ILauncher.cs`). The app checks the url is `https`; a link that came from Linear or GitHub must also be on `linear.app` or `github.com` exactly. Anything else isn't drawn as a link. The owner's own links are https-only, with no query string or fragment (refused at save, `SND-PROJECT-004`), since `Aw.Redaction` is pattern-based and a plain `?token=abc` could pass it.
 - Copy goes in a new `Labels.Projects.cs`.
-- **Mockup first.** Ph5 starts with `/design-mockup` for the panel and the page at 900 and 1,440 px window width, covering §3.1's states and the sheet, and the owner picks before the view is built (the F3 pages' pattern, `docs/superpowers/specs/2026-10-20-sindri-ui-f3-redesign/`).
+- **Mockup first.** Ph5 starts with `/design-mockup` for the page at the new minimum width and at 1,440 px, covering §3.1's states and the sheet, and the owner picks before the view is built (the F3 pages' pattern, `docs/superpowers/specs/2026-10-20-sindri-ui-f3-redesign/`).
 
 ## 8. Errors
 
@@ -343,7 +341,7 @@ Goldens under `tests/Aw.Sindri.Tests/Golden/Api/projects/`: `empty-no-linear.jso
 |---|---|---|
 | `SND-PROJECT-001` | Attaching a project already on the page | "That project is already on your page." |
 | `SND-PROJECT-003` | `--linear` names a project not in the store | "Sindri doesn't sync that project. It syncs these Linear teams: ENG, OPS. Add the team to `context.sources.linear.teams`." |
-| `SND-PROJECT-004` | A bad field: no name on a hand-made project, a repo not in the profile, a non-https link, a note over 200 characters, more than 10 links, a link with a query or fragment, a bad date, a `--linear` that isn't a Linear project url or key | names the field |
+| `SND-PROJECT-004` | A bad field: no name on a hand-made project, a non-https link, a note over 200 characters, more than 10 links, a link with a query or fragment, a bad date, a `--linear` that isn't a Linear project url or key | names the field |
 | `SND-PROJECT-404` | No such project | "No project <id>. `sindri projects` lists them." |
 | `SND-PROJECT-409` | A stale version | "This project changed since you read it. Read it again and retry." |
 
@@ -351,14 +349,14 @@ Registered in `docs/csharp/sindri.md`'s error table.
 
 ## 9. Docs to update
 
-`docs/csharp/sindri.md` (the CLI table, the error table), `docs/csharp/sindri-profile.md` (`context.sources.linear.me`), `docs/csharp/sindri-ui.md` (the panel and page; and its stale top-bar line 132), the owned-index docs' feed list (`linear-projects`, the after-tick list, the issue filter), `planning/ERD.md` (migration 0020), the API surface spec's route list, `src/Sindri/aot-smoke/expected.txt` (the new doctor row), AGENTS.md's Commands list (`sindri project …`, `sindri projects`). The migration number 0020 is the next free one today; it takes whatever is next when Ph1 merges.
+`docs/csharp/sindri.md` (the CLI table, the error table), `docs/csharp/sindri-ui.md` (the eighth tab, the new minimum width; and its stale top-bar line 132), the owned-index docs' feed list (`linear-projects`, the after-tick list, the issue filter), `planning/ERD.md` (migration 0020), the API surface spec's route list, `src/Sindri/aot-smoke/expected.txt` (the new doctor row), AGENTS.md's Commands list (`sindri project …`, `sindri projects`). The migration number 0020 is the next free one today; it takes whatever is next when Ph1 merges.
 
-## 10. Questions for the owner (defaults in brackets)
+## 10. The owner's answers (q151, 2026-10-29)
 
-1. **Where Projects lives.** The top bar holds seven tabs at 900 px. [A panel on Home with the first four cards, and a full page one click away (and `G P`).] Or: an eighth tab, which means moving one of today's tabs (Recipes is the least used) into System.
-2. **Whose Linear key is it?** "Projects I lead" asks Linear who the key belongs to, and the page shows the name it got. A personal API key needs nothing; a workspace or bot key needs your Linear user id once in the profile. [Personal key.]
-3. **Finished projects** stay 14 days under a folded row, then leave the page (`sindri projects --all` still lists them). [Yes.]
-4. **A hand-made project with a repo counts every open PR in that repo.** No branch or label to narrow it. [OK for v1, labelled "whole repo".]
+1. **Where Projects lives:** an eighth top-bar tab, and the window's minimum width grows to fit it (not a Home panel).
+2. **Whose Linear key:** a personal API key. No override key.
+3. **Finished projects:** stay 14 days under a folded row, then leave the page.
+4. **Hand-made projects:** not linked to a repo, so no PR count.
 
 ## 11. Later (not in this spec)
 
@@ -376,7 +374,7 @@ Registered in `docs/csharp/sindri.md`'s error table.
 | **Ph2** | 1 | `IContextProjects` + `ProjectFacts` | `Aw.Context.Core`, `.Features`, `.Infrastructure` | Ph1's migration | unit counts; integration plan check |
 | **Ph3** | 1 | Sindri owner state: events, redaction, projection, commands, catalog rows, CLI `project …` | `Aw.Sindri.Core`, `.Features`, `.Host` | — (parallel with Ph1) | unit per command; catalog golden; `SND-AUTH-002` for a session |
 | **Ph4** | 1 | `ListProjects`, `GetProject`, `sindri projects`, `sindri_projects`, fencing, goldens | `Aw.Sindri.Features`, `.Host` | Ph2, Ph3 | API goldens (§6.2) |
-| **Ph5** | 1 | Mockup, owner pick, then the panel and the page | `Aw.Sindri.Ui` | Ph4's goldens (hand-written first) | UI tests (chord, deep link, Projects absent from `Navigation`, Home panel, focus after remove, grid keys), `GoldenContractTests`, a screenshot run on the fixture |
+| **Ph5** | 1 | Mockup, owner pick, then the tab and the page | `Aw.Sindri.Ui` | Ph4's goldens (hand-written first) | UI tests (eight tabs at the new minimum width, chord, deep link, focus after remove, grid keys), `GoldenContractTests`, a screenshot run on the fixture |
 | **Ph6** | 2 | PR links (both sources), the PR and repo fields | Context, Sindri Host (`ConnectorFeed.cs`), Ui | ship 1, Ph0's counts | unit per source and the url rules; goldens gain PRs |
 | **Ph7** | — | Owner proof (§13) and the week's daily check | — | each ship | §13 |
 
