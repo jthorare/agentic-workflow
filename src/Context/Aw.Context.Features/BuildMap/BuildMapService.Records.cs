@@ -30,8 +30,14 @@ internal sealed partial class BuildMapService
                 return (ExtractedMap.Empty, [Unavailable(blobs.Error)], []);
             }
 
+            var removed = await inputs.Repos.RemovedPaths(repo, read.Commit, cancellationToken).ConfigureAwait(false);
+            if (removed.IsError)
+            {
+                return (ExtractedMap.Empty, [Unavailable(removed.Error)], []);
+            }
+
             tracked.UnionWith(paths);
-            files.Add(new MapRepoFiles(repo.Name, paths, blobs.Value));
+            files.Add(new MapRepoFiles(repo.Name, paths, blobs.Value) { Removed = removed.Value });
         }
 
         var reading = await inputs.Records.Read(new MapRecordInput(files, settings.DocGlobs, settings.DocDirectoryNames, at), cancellationToken).ConfigureAwait(false);
