@@ -13,4 +13,7 @@ public sealed record ProviderDecided(string Decision, double Confidence, string 
 
     /// <summary>The provider's per-output probabilities, when it gives them.</summary>
     public IReadOnlyDictionary<string, double>? Probabilities { get; init; }
+
+    /// <summary>The tokens the CLI reported for this answer, when it gives them; the judge's own output never shows it.</summary>
+    public ProviderUsage? Usage { get; init; }
 }

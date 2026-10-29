@@ -8,7 +8,10 @@ internal static class ConceptSynthesisRules
     /// <summary>The settings of a section; a missing section or key is its default.</summary>
     /// <param name="section">The section as written, or null.</param>
     /// <returns>The settings.</returns>
-    internal static ConceptSynthesisSettings Read(ConceptSynthesisSection? section) => Prompt(section, Grouping(section, new ConceptSynthesisSettings()));
+    internal static ConceptSynthesisSettings Read(ConceptSynthesisSection? section) => Prompt(section, Grouping(section, new ConceptSynthesisSettings())) with
+    {
+        CoverShare = section?.CoverShare ?? new ConceptSynthesisSettings().CoverShare,
+    };
 
     private static ConceptSynthesisSettings Grouping(ConceptSynthesisSection? section, ConceptSynthesisSettings defaults) => defaults with
     {
@@ -44,6 +47,7 @@ internal static class ConceptSynthesisRules
         { MinSources: < 1 or > 10 } => Refuse("minSources", "is 1 to 10 sources"),
         { MaxCharsPerRecord: < 100 or > 20_000 } => Refuse("maxCharsPerRecord", "is 100 to 20000 characters"),
         { MaxCharsPerCall: < 1_000 or > 200_000 } => Refuse("maxCharsPerCall", "is 1000 to 200000 characters"),
+        { CoverShare: < 0.5 or > 1 } => Refuse("coverShare", "is a share from 0.5 to 1"),
         _ => null,
     };
 
