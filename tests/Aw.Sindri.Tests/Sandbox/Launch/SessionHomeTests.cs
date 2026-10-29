@@ -62,7 +62,7 @@ public sealed class SessionHomeTests : IDisposable
 
         Assert.Null(new FileInfo(home + "/control.json").LinkTarget);
         var read = AwJson.Deserialize<ControlEndpoint>(File.ReadAllBytes(home + "/control.json"), AwJson.CreateOptions(SindriJsonContext.Default));
-        Assert.Equal(_endpoint, read.Value with { Temporal = null, Onyx = null });
+        Assert.Equal(_endpoint, read.Value with { Temporal = null });
     }
 
     [Fact]

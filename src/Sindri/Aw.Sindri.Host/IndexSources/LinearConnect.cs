@@ -2,7 +2,6 @@ using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
 
@@ -20,7 +19,7 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="profile">Writes the pointer into the profile.</param>
 /// <param name="readers">Makes a team reader for the endpoint and the key.</param>
 internal sealed class LinearConnect(
-    IOnyxPrompts prompts,
+    ISecretPrompts prompts,
     IProfileSource profiles,
     ISecretWriter writer,
     ISecretPointers pointers,
