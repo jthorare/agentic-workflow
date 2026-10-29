@@ -2,6 +2,8 @@ using Avalonia.Automation;
 using Avalonia.Automation.Peers;
 using Avalonia.Automation.Provider;
 using Avalonia.Controls;
+using Avalonia.Headless;
+using Avalonia.Input;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -116,6 +118,32 @@ public sealed class ProjectsPageViewTests : FrameHost
         Assert.Equal(shell.Projects.Freshness, Named<TextBlock>(window, "ProjectsFreshness").Text);
         var add = Named<Button>(window, "ProjectsAdd");
         Assert.Equal(("+ Add project", false), (add.Content, add.IsEnabled));
+    });
+
+    [Fact]
+    public Task With_no_card_left_and_Add_project_disabled_focus_goes_to_the_page_title() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects("empty-no-linear");
+
+        await shell.Projects.Settled(new ViewModels.Projects.ProjectDoneEventArgs(ViewModels.Projects.ProjectDone.Removed, "prj_0000000000000000000000000H", "Mobile app removed", wentToFinished: false), Token);
+
+        await Until(window, () => Named<TextBlock>(window, "ProjectsTitle").IsFocused, "focus never reached the page title");
+    });
+
+    [Fact]
+    public Task Esc_on_the_Remove_question_keeps_the_sheet_open_and_focus_on_Remove() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects();
+        shell.Navigate(new DeepLink(DeepLinkKind.Project, "prj_0000000000000000000000000H"));
+        await Until(window, () => shell.ProjectSheet.IsShown && shell.ProjectSheet.CanRemove, "the sheet never offered Remove");
+        shell.ProjectSheet.AskRemove();
+        await Until(window, () => Named<Button>(window, "ProjectKeep").IsFocused, "focus never reached Keep");
+
+        window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        Settle(window);
+
+        Assert.Equal((true, false), (shell.IsSheetOpen, shell.ProjectSheet.IsConfirmingRemove));
+        await Until(window, () => Named<Button>(window, "ProjectRemove").IsFocused, "focus never went back to Remove");
     });
 
     private static ExpandCollapseState State(Expander fold) =>

@@ -355,6 +355,28 @@ public sealed class ProjectSheetTests
     }
 
     [Fact]
+    public async Task Esc_on_the_question_keeps_the_project_and_focus_goes_back_to_Remove()
+    {
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+        var focus = 0;
+        sheet.RemoveFocusRequested += (_, _) => focus++;
+        sheet.AskRemove();
+
+        Assert.True(sheet.Escape());
+
+        Assert.Equal((false, 1, 0), (sheet.IsConfirmingRemove, focus, _f.Server.ProjectWrites.Count));
+        Assert.True(sheet.IsShown);
+    }
+
+    [Fact]
+    public async Task Esc_without_the_question_is_left_to_the_shell()
+    {
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+
+        Assert.False(sheet.Escape());
+    }
+
+    [Fact]
     public async Task Remove_detaches_with_the_version_and_says_it_is_done()
     {
         var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);

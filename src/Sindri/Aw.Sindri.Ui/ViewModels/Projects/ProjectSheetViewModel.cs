@@ -23,6 +23,9 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
     /// <summary>Asking to remove puts focus on Keep: the view moves it.</summary>
     internal event EventHandler? KeepFocusRequested;
 
+    /// <summary>Keeping closes the question and puts focus back on Remove: the view moves it.</summary>
+    internal event EventHandler? RemoveFocusRequested;
+
     /// <summary>A write took the card off the page (or back).</summary>
     internal event EventHandler<ProjectDoneEventArgs>? Done;
 
@@ -252,8 +255,25 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
         KeepFocusRequested?.Invoke(this, EventArgs.Empty);
     }
 
-    /// <summary>Keeps the project: the question closes.</summary>
-    internal void Keep() => (IsConfirmingRemove, SaveError, IsConflict) = (false, string.Empty, false);
+    /// <summary>Keeps the project: the question closes and focus goes back to Remove.</summary>
+    internal void Keep()
+    {
+        (IsConfirmingRemove, SaveError, IsConflict) = (false, string.Empty, false);
+        RemoveFocusRequested?.Invoke(this, EventArgs.Empty);
+    }
+
+    /// <summary>Esc while the Remove question shows means Keep, not closing the sheet.</summary>
+    /// <returns>True when Esc was spent on the question.</returns>
+    internal bool Escape()
+    {
+        if (!IsConfirmingRemove)
+        {
+            return false;
+        }
+
+        Keep();
+        return true;
+    }
 
     private ISindriApi Api { get; } = api;
 

@@ -55,7 +55,8 @@ internal sealed partial class ProjectsPage : UserControl
         }
     }
 
-    // After the list is read again and the sheet has closed: the next card's frame, the Add button, or a fold's button.
+    // After the list is read again and the sheet has closed: the next card's frame, the Add button, or a fold's button. Add project is
+    // disabled until its form ships, so focus then goes to the page title rather than nowhere.
     private void OnFocusRequested(object? sender, ProjectFocusEventArgs e) =>
         Dispatcher.UIThread.Post(() => _ = Target(e)?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
 
@@ -65,7 +66,7 @@ internal sealed partial class ProjectsPage : UserControl
             .FirstOrDefault(c => c is { DataContext: ProjectCardViewModel card } && string.Equals(card.Id, e.CardId, StringComparison.Ordinal))?.FindControl<Border>("ProjectCardFrame"),
         ProjectFocus.HiddenFold => FoldButton("ProjectsHidden"),
         ProjectFocus.FinishedFold => FoldButton("ProjectsFinished"),
-        ProjectFocus.Add => this.FindControl<Button>("ProjectsAdd") is { IsEnabled: true } add ? add : this.FindControl<Button>("ProjectsAddEmpty") is { IsEnabled: true, IsEffectivelyVisible: true } empty ? empty : null,
+        ProjectFocus.Add => this.FindControl<Button>("ProjectsAdd") is { IsEnabled: true } add ? add : this.FindControl<Button>("ProjectsAddEmpty") is { IsEnabled: true, IsEffectivelyVisible: true } empty ? empty : this.FindControl<TextBlock>("ProjectsTitle"),
         _ => null,
     };
 

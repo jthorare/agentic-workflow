@@ -20,7 +20,7 @@
   <StackPanel x:Name="ProjectsRoot" Spacing="{StaticResource Size.PanelGap}">
     <Grid ColumnDefinitions="*,Auto">
       <StackPanel>
-        <TextBlock Classes="page-title" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
+        <TextBlock x:Name="ProjectsTitle" Classes="page-title" Focusable="True" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
         <TextBlock x:Name="ProjectsFreshness" Classes="caption subtle" Classes.failing="{Binding FreshnessFailing}" Text="{Binding Freshness}" TextWrapping="Wrap" />
       </StackPanel>
       <Button x:Name="ProjectsAdd" Grid.Column="1" Content="{Binding AddText}" IsEnabled="False" VerticalAlignment="Top" AutomationProperties.Name="{Binding AddText}" />

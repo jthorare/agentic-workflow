@@ -92,6 +92,11 @@ internal sealed partial class ShellWindow
     {
         if (shell.IsSheetShown)
         {
+            if (shell.IsProjectSheet && shell.ProjectSheet.Escape())
+            {
+                return true;   // the Remove question closes first, as Keep
+            }
+
             shell.CloseSheet();
             return true;
         }
