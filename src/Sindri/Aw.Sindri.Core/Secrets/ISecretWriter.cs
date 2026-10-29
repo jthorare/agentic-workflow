@@ -11,4 +11,11 @@ public interface ISecretWriter
     /// <param name="secret">The secret.</param>
     /// <returns>The pointer to put in the profile (`keychain:sindri-index/github`, or a `file:` pointer when no store is available), or the error when neither store can be written.</returns>
     public Result<SecretPointer> Store(string service, string account, string secret);
+
+    /// <summary>Stores a secret in the owner-only file only, never the OS keychain: for a source whose rules allow only a `file:` pointer, such as a loopback fixture.</summary>
+    /// <param name="service">The store name's first part (`sindri-index`).</param>
+    /// <param name="account">The store name's second part (`linear`).</param>
+    /// <param name="secret">The secret.</param>
+    /// <returns>The `file:` pointer to put in the profile, or SND-ONYX-009.</returns>
+    public Result<SecretPointer> StoreInFile(string service, string account, string secret);
 }
