@@ -16,6 +16,8 @@ Revision note (2026-10-29, #1565, owner 2026-10-29): how the map build finds act
 New §6.1 subsection "How product nodes are found", a pointer in Phase 4, stages S-ACT, S-FLOW-J, S-FLOW-C and S-PICK in the
 stage table, and new Phase 11. The model-routing spec (`2026-10-29-context-model-routing-design.md`, #1567) owns the Jev
 call itself; this spec owns the candidates and what is stored.
+Round-2 review fixes (2026-10-28): source labels, Rejected by Jev, the cache key per candidate, as-of rules, journey and code-path
+rules and bounds, the status contract and the docs lines; ActionPass is recorded as shipped (#1593).
 It refines the factory addendum §17.3 (the context graph), §17.29.2 and §17.29.3 (the engine, and access from
 sessions) and §17.17 Q2 (component options), for build step 3 of §17.29.4 (stage S3 in `docs/csharp/sindri.md`).
 Where they disagree, this document wins for the context retrieval engine.
@@ -321,15 +323,18 @@ commit sha).
 
 #### How product nodes are found (#1565, owner 2026-10-29)
 
-**History.** No build has ever derived an `Action` or a `Flow`. Phase 4 listed only surface anchors. Actions exist today only
+**History.** Until #1593 no build derived an `Action` or a `Flow`. Phase 4 listed only surface anchors. Actions existed only
 in hand-written fixtures (`scripts/sindri-ui-fixture.sh` `action:pick`, the graphs under `tests/fixtures/line/gold`) and in the
 F3 mockup (`docs/superpowers/specs/2026-10-20-sindri-ui-f3-redesign/screens/context.html`, "Create a share link"), so the What
-band's action and flow rows had nothing real behind them.
+band's action and flow rows had nothing real behind them. `ActionPass` shipped in #1593 (below); flows and the Jev pick are
+what this amendment adds.
 
 **Three deterministic candidate passes**, each its own stage. All write `Deterministic` nodes at confidence 0.8 (a candidate,
-shown to map review, not a fact) and none changes an existing surface key, so stored review rows stay valid.
+shown to map review, not a fact; one named constant, `ProductCandidate.Confidence`, in `Aw.Context.Core`) and none changes an
+existing surface key, so stored review rows stay valid.
 
-1. **`ActionPass`** (in `Extract`, after `DataStorePass`, `MapExtractor.cs:46`). Three sources: a named `onClick` or `onSubmit`
+1. **`ActionPass`** (shipped in #1593: `Extract/ActionPass.cs`, called in `MapExtractor.cs` after `DataStorePass`;
+   `MapExtractor.Version` is 5). Three sources: a named `onClick` or `onSubmit`
    handler in a `.tsx` or `.jsx` file gives `action:<Component>.<kebab>` `on` the component's surface; a `POST`, `PUT`, `PATCH` or
    `DELETE` route (`Recognizers.cs:104`, `:108`) gives `action:route/<METHOD>:<path>` `on` the route surface; a titled command
    registry entry (`Recognizers.cs:77`) gives `action:command/<id>` `on` the command surface. A `POST` route is both a surface and
@@ -341,31 +346,60 @@ shown to map review, not a fact) and none changes an existing surface key, so st
    *Readable names:* a handler name is humanized (`handleCreateShare` -> "Create share": drop `handle` and `on`, split the
    camel case, capitalize the first word); a command uses its registered title; a route uses its verb and resource (`POST
    /api/shares` -> "Create share", `DELETE /api/shares/:id` -> "Delete share").
-   *`MapExtractor.Version` goes from 4 to 5* (`MapExtractor.cs:13`), with the same effects #1593 shipped for 4: the version pin
-   in `ArmsTests` (`ArmsTests.cs:40`) moves to 5, every cached as-of map rebuilds once, and the golden cache keys change from
-   `-x4-c` to `-x5-c` (the `AsOfMapCacheKey` and `EvalStore` tests). The next pass to land bumps again: `FlowPass` and the
-   engine's Drizzle adapter (#1365) coordinate the 6 and 7 between them.
-2. **`FlowPass` from journeys** (S-FLOW-J). Reads `ui-evidence` plans (`.ui-evidence/*.json`) and Playwright e2e specs
-   (`page.goto`, `getByTestId` and `getByRole` clicks). Those files never reach the extractor today: `Recognizers.MayRead` drops
-   `.spec.` and `.test.` paths, and both loaders (`BuildMapService.cs:186`, `AsOfMapBuilder.cs:111`) go through it. So journey
-   files get **their own path filter** (e2e directories and `*.spec.*` files under them, `.ui-evidence/*.json`), applied in both
-   loaders next to `MayRead`, and the reader honors every repo's deny globs (`repo.Denies`). Each journey makes one
-   `flow:<journey>`. A step matches a surface or action in this order: test id, then route, then role or label name; the first
-   match wins. A matched step becomes an ordered `step-of` edge (`GraphEdge.Order`, `GraphEdge.cs:24`); steps that match
-   nothing are skipped (and counted, below); fewer than 2 matched steps means no flow. `fill` and `type` steps' literal values
-   (typed text, passwords, emails) never become step text or an option. Unit tests stay ignored: only e2e and journey files
-   are read (owner OK).
+   *Colliding names:* two actions can humanize to the same words (`handleCreateShare` in two components). Review and the What
+   band show each row's surface as a second line (and the route for a route action); when two rows on one surface still read
+   the same, the source key is appended as a suffix (`Create share (action:ShareForm.create-share)`).
+   *The version bumps one pass at a time.* The 4 -> 5 bump (#1593) moved the pin in `ArmsTests` and the golden cache keys to
+   `-x5-c`. Each later pass that changes extractor output bumps again: S-FLOW-J takes the next number (6 or 7) and the engine's
+   Drizzle adapter (#1365) takes the other; they coordinate the order, and whichever lands second rebases its pin and keys.
+   *Test rule:* golden tests read `MapExtractor.Version` and build their expected cache keys from it (no hard-coded `x5`), so a
+   bump changes one constant, not every golden.
+2. **`FlowPass` from journeys** (S-FLOW-J). Reads `ui-evidence` plans (`.ui-evidence/*.json`) and Playwright e2e specs. Those
+   files never reach the extractor today: `Recognizers.MayRead` drops `.spec.` and `.test.` paths, and both loaders
+   (`BuildMapService.cs:186`, `AsOfMapBuilder.cs:111`) go through it. So journey files get **their own path filter** (e2e
+   directories and `*.spec.*` files under them, `.ui-evidence/*.json`), applied in both loaders next to `MayRead`, and the
+   reader honors every repo's deny globs (`repo.Denies`). Journey files are bounded: at most 500 files and 1 MB each (a bigger
+   file is skipped and counted). `.ui-evidence/*.json` goes only to the journey reader, never into the shared file list the
+   other passes read.
+   *Forms read from a Playwright spec:* `page.goto(url)`; `getByTestId`, `getByRole`, `getByLabel` and `getByText` followed by
+   `.click()`, `.fill()`, `.check()` or `.selectOption()`; and `expect(page).toHaveURL(...)` (read as a route step). Anything
+   else (loops, helper functions, `page.locator(css)`, dynamic ids) is skipped.
+   *Skip reasons are counted separately:* unsupported form, no surface or action match, denied path, file over the size cap.
+   A step matches a surface or action in this order: test id, then route, then role or label name; the first match wins. Route
+   matching uses the URL path only (query string and fragment are dropped). A matched step becomes an ordered `step-of` edge
+   (`GraphEdge.Order`, `GraphEdge.cs:24`); fewer than 2 matched steps means no flow.
+   *Journey text is scrubbed before it is stored:* role, label and `getByText` names and journey titles go through the map's
+   scrubber first. `fill` and `type` steps' literal values (typed text, passwords, emails) never become step text or an option.
+   Unit tests stay ignored: only e2e and journey files are read (owner OK).
+   *Flow names:* a journey flow is named by its (scrubbed) journey or test title. Its steps read as their action or surface
+   names, numbered in the text ("1. Open Shares, 2. Create share, 3. ..."), so a screen reader hears the order.
+   *`MapExtractor.Version` bumps* (to 6 or 7, above), with the `ArmsTests` pin and the golden-key literals, in the same PR.
 3. **Code-path flows** (S-FLOW-C). A **build step after `Extract`**, not part of the pure, Version-cached extractor (which must
    not read an index that changes without a repo commit). It takes each route or command handler action and follows its call
    chain through the code index's callers and callees. A flow is a chain that reaches at least 2 other actions or surfaces, in
    call order. It needs a new port in `Aw.Context.Core` (the chain from a handler, as code keys in call order); the Sindri
    host composes the code index (`src/CodeIndex`) behind it, so `deps.yaml` gets a new edge **Sindri Host -> CodeIndex**: a
    reviewed change (the project-ref checks apply), called out in the PR. Index symbols map to `code:<path>` by the file they
-   sit in, so a chain is a list of files in call order, matched to the actions and surfaces those files implement. As-of maps
-   (backtests) skip this step, because an index is of today's tree, not the cut's; the as-of build says so. With no code
-   index for the repo, the step adds no flows and the build log says `code-path flows: no code index`. The first index is built
-   by `sindri repo onboard` (which already builds one); a repo onboarded before this change gets flows after its next index
-   build and map build.
+   sit in, so a chain is a list of files in call order.
+   *Step rule:* a file in the chain with several actions contributes the one whose handler is on the call path, else none. The
+   walk is bounded: depth 8, 20 steps, a visited set, and a file called by more than 20 entry points is skipped as a helper.
+   Chain keys that match a repo's deny globs are dropped before matching. The index's commit must equal the build's commit,
+   else the step is skipped with the reason `index commit differs`.
+   *Names and keys:* the flow key is `flow:code/<entry-action-key>`; its name is `Code path: <entry action name>`. A code-path
+   flow is shown in the **How** band as architecture, not in the journey list of the What band.
+   As-of maps (backtests) skip this step, because an index is of today's tree, not the cut's; the as-of build says so. With no
+   code index for the repo, the step adds no flows and says `code-path flows: no code index`. The first index is built by
+   `sindri repo onboard` (which already builds one); a repo onboarded before this change gets flows after its next index build
+   and map build.
+   *Tests:* the port has a fake (chains given as data), so the chain-to-flow rule (order, the 2-step minimum, the bounds, deny
+   globs, the commit check) runs in the unit lane. Only the check against a real built index is heavy lane.
+
+**"No flows" says why.** When a build adds no flows, the reason is in `context map status` and on the How band's empty state
+(not only the build log): `too few matched steps` (journeys found, fewer than 2 steps matched), `no journey files`, `no code
+index`, `index commit differs`.
+
+**Candidates the owner already decided are dropped first.** Before any question is built, a candidate whose node key the owner
+accepted, rejected or merged (review rows) is removed from the pick; only undecided candidates become questions or Jev input.
 
 **The Jev product pick** is a build step after cluster labeling and before the draft is written. The candidates go to Jev through
 the model-routing spec's port, restated here so this spec stands alone: `IChoicePort.Pick(IReadOnlyList<ChoiceQuestion> questions,
@@ -380,40 +414,64 @@ tests. All questions are multiple choice, in three shapes:
 | merge | Are these lookalikes (sharing a file or feature) one node? | each candidate's name, `separate`, `reject`; so at most 3 candidates per question |
 | attach | Which surface or feature does this action belong to? | up to 3: its file's home feature, its surface's feature, its cluster's feature (deduplicated) |
 
-Lookalikes left over after a merge question's 3 (a 4th, 5th, ...) are regrouped in the same build, up to 3 rounds; what is
-still left after that waits for the next build. Options are sorted stably (by canonical node key), so the same candidates always
-make the same question. Calls are per question group, bulked within `capChars`.
+A merged row lists the candidates it absorbed (their names and source keys) in review and in the What band, so the owner can
+undo a merge by rejecting it and keeping the candidates apart.
+
+Lookalikes left over after a merge question's 3 (a 4th, 5th, ...) are regrouped in the same build, up to 3 rounds. What is
+still left after that is labeled `Jev undecided`, kept unmerged, and goes to the next build with a rotated order (so the same
+leftovers aren't always the ones cut). Options are sorted stably (by canonical node key), so the same candidates always make the
+same question. Calls are per question group, bulked within `capChars`.
 
 **What goes to Jev is scrubbed.** The question and every option go through the map's scrubber (`IScrubberFactory`, with the
-profile's extra patterns from D14) and are fenced as untrusted text. A candidate the scrubber Blocks is not sent: it takes the
-Jev-off path below.
+profile's extra patterns from D14) and are fenced as untrusted text. A candidate the scrubber Blocks is not sent: it is kept
+unmerged and labeled `not sent: scrubbed`.
 
-**Answers are cached** in `context.db` (table `product_pick`, kept across map versions), keyed by `(repo, sha256(shape +
-scrubbed question text + sorted options + canonical node key + the port's ChoiceModel Identity))`. The canonical node key is in
-the hash so two candidates that read the same after scrubbing don't share an answer. The table stores that hash and the answer
-(option, confidence) only, never the question text. Only cache misses are asked, so a rebuild with nothing new makes 0 Jev calls
-(owner q149). An `unknown` identity misses every key, and so does a new Jev version: an identity bump re-asks once per question
-group (the cost, bounded by the group count and `capChars` bulking). On every build, rows of other model identities for that
-repo are pruned.
+**Answers are cached** in `context.db` (table `product_pick`, kept across map versions), **per candidate**, not per group: the
+key is `(repo, sha256(shape + scrubbed question text + sorted option keys + canonical node key + the port's ChoiceModel
+Identity + the scrubber's pattern hash))`. One new lookalike therefore asks only the questions it changes; the
+others hit the cache. The canonical node key is in the hash so two candidates that read the same after scrubbing don't share an
+answer; the scrubber's pattern hash is in it so a D14 pattern change re-asks instead of reusing an answer for old text. The
+table stores that hash and the answer (option, confidence) only, never the question text. Only cache misses are asked, so a
+rebuild with nothing new makes 0 Jev calls (owner q149). An `unknown` identity misses every key, and so does a new Jev version:
+an identity bump re-asks once per question (bounded by `capChars` bulking). Rows of other model identities for that repo are
+pruned only after a build in which Jev answered, never when Jev is off or down (a down Jev must not wipe the cache). A rename
+of a handler or a moved route is a new node key and may re-enter review: accepted, not a bug.
+`product_pick` is a new `context.db` migration (the next free number after `0020_s4_project_fields.sql`, numbered on the branch
+and renumbered on rebase, §14 R2-1). `sindri context map picks [--clear]` lists the stored picks (hash, option, confidence,
+identity, age) or clears them; it is a human verb (a session is refused, `SND-AUTH-002`).
 
-**A human decision wins.** A map-review override (accept, reject or merge by the owner) always beats a cached Jev answer, and a
-cached answer never re-applies over it: the owner's decision is checked first, and only a candidate with none goes to the cache
-or to Jev.
+**As-of (backtest) builds never call Jev.** They read `product_pick` cache hits only and never write to it: a backtest of a
+past cut must not spend model calls or leak a cut's content into the cache.
 
-**When Jev can't be asked** (off, down, scrub Blocked, or an answer of `undecided`): the candidate is kept unmerged on its home
-feature at confidence 0.8 and goes to map review. It is never silently dropped. In review those candidates are **grouped per
-surface** (one group per surface, its actions inside), writes-first (actions with `writes` before those without, then by name),
-not one row per handler. A candidate key the owner already reviewed never re-enters review on a later build. The only gate is
-the profile key `context.models.productSurfaces: jev | off` (default `off`); there is no consent notice for it (owner q154,
-2026-10-29).
+**A human decision wins, forever.** A map-review override (accept, reject or merge by the owner) always beats a cached Jev answer,
+and a cached answer never re-applies over it: the owner's decision is checked first, and only a candidate with none goes to the
+cache or to Jev. That includes a candidate the owner restores after Jev rejected it (R6): the restore is a human override.
 
-**Every row says where it came from.** Each group and each member in review and in the What band shows its source: `build
-candidate` (found by a pass, not asked), `Jev pick` (with Jev's confidence), or `Jev off` (kept unmerged because Jev was off or
-couldn't be asked).
+**Jev rejects stay visible.** A candidate Jev rejects is not drawn on the map, but it is listed in map review under **Rejected
+by Jev**, with its source and confidence; the owner can restore one (a human override, which then wins on every later build).
 
-**What the build reports.** One build-log line per stage: candidates per pass, journey steps skipped, pick cache hits and
-misses, Jev calls. `context map status` shows the same counts, so "0 Jev calls on an unchanged rebuild" is something a test
-can assert.
+**When Jev can't be asked** (off, down or errored, scrub Blocked, or an answer of `undecided`): the candidate is kept unmerged on
+its home feature at confidence 0.8 and goes to map review. It is never silently dropped. In review those candidates are **grouped
+per surface** (one group per surface, its actions inside), writes-first (actions with `writes` before those without, then by
+name), not one row per handler. A candidate key the owner already reviewed never re-enters review on a later build. The only
+gate is the profile key `context.models.productSurfaces: jev | off` (default `off`); there is no consent notice for it (owner
+q149/q154, 2026-10-29).
+*First-run volume with Jev off:* a repo's first build can yield hundreds of candidates. Review shows at most 50 action groups
+per build, writes-first, then by surface; the rest wait for the next build, and review says so ("50 of 212 shown, the rest wait
+for the next build"). Unreviewed 0.8 candidates are still served to sessions, labeled `candidate`.
+
+**Every row says where it came from.** Each group and each member in review and in the What band shows one source label:
+`build candidate` (found by a pass, not asked), `Jev pick (0.9)` (Jev's confidence), `Jev off` (the profile gate is off),
+`Jev unavailable` (Jev was down or errored), `not sent: scrubbed` (the scrubber Blocked it), or `Jev undecided` (Jev answered
+`none`, or the question was left over past 3 rounds).
+
+**What the build reports, and how success is measured.** One build-log line per stage: candidates per pass, journey steps skipped
+(by reason), no-flows reasons, pick cache hits and misses, Jev calls. The last build's counts are stored with the map version (a
+build-report row in `context.db`, one per map version) so `sindri context map status` and `status --json` can print them
+without rebuilding. Fields (JSON): `candidates` (per pass), `journeySkips` (per reason), `noFlowsReason`, `pickHits`,
+`pickMisses`, `jevCalls`, and, per pass of the review loop, `reviewedKept` and `reviewedRejected` with their share of reviewed
+candidates (the success measure: how often the owner keeps what the builds propose). "0 Jev calls on an unchanged rebuild" is
+something a test can assert.
 
 ### 6.2 Storage
 
@@ -1144,9 +1202,9 @@ the stacking limits: the stage starts without it and never branches from it (see
 | **S-6** | Phase 6: native `linear` adapter (hand-written GraphQL, D18): projects, Linear Documents, project updates, issue↔PR attachments; dedup with Onyx's records. Starts on S-1A and S-5A; what goes through S-5B (links and decisions from documents through its linker, and `item.linked` through its `context-sync` service) is added when S-5B merges (owner, 2026-10-12) | S-1A · S-5A · S-5B (linker only) | 3 |
 | **S-7A** | Phase 7, harness: corpus builder, per-sample as-of maps (from the extractor), arms runner, reports, on the fixture corpus | S-3b · S-4 · S-FX | 4 |
 | **S-CF** | Intent-vs-file conflicts: a decision citing a file the map says implements something else (S) | S-4 · S-5B | 4 |
-| **S-ACT** | Phase 11: `ActionPass` in `Extract` (`MapExtractor.Version` 5) | S-4 | 4 |
-| **S-FLOW-J** | Phase 11: `FlowPass` from `ui-evidence` plans and e2e specs | S-ACT | 5 |
-| **S-FLOW-C** | Phase 11: code-path flows, the new Core port and the Host's code-index adapter (a `deps.yaml` edge) | S-ACT · the code index block | 5 |
+| **S-ACT** | Phase 11: `ActionPass` in `Extract` (`MapExtractor.Version` 5). Shipped in #1593 | S-4 | 4 |
+| **S-FLOW-J** | Phase 11: `FlowPass` from `ui-evidence` plans and e2e specs (bumps `MapExtractor.Version`) | S-ACT | 5 |
+| **S-FLOW-C** | Phase 11: code-path flows, the new Core port and the Host's code-index adapter (a `deps.yaml` edge); unit lane over a fake, heavy for the real index | S-ACT · the code index block | 5 |
 | **S-PICK** | Phase 11: the Jev product pick, its question shapes and the `product_pick` cache | S-ACT · the model-routing spec's R-5 | 5 |
 | **S-7B** | Phase 7 on the owner's corpus: eligible-sample count, the real backtest and probes. **Owner-run** (below) | S-4 · S-6 · S-7A | 5 |
 | **S-8** | Phase 8: ranker features and the rerank arm (code on fixtures; the arm decision from an owner-run backtest) | S-7B | 6 |
@@ -1505,30 +1563,31 @@ on the fixture app.
 
 ### Phase 11: product candidates and the Jev product pick (#1565)
 
-Stages in order: S-ACT first. After it, S-FLOW-J and S-FLOW-C may run in parallel (different files, no shared type beyond
+Stages in order: S-ACT shipped first (#1593). S-FLOW-J and S-FLOW-C may run in parallel (different files, no shared type beyond
 the flow node shape; S-FLOW-J's journey reader needs S-ACT's actions to match steps to, S-FLOW-C's chain needs them as
 endpoints). S-PICK runs after S-ACT and after the model-routing spec's R-5 (the `IChoicePort`).
 
-**S-ACT**
+**S-ACT** (shipped, #1593)
 - **Goal:** the build derives actions from handlers, mutating routes and command entries.
-- **Files:** `src/Context/Aw.Context.Core/Extract/ActionPass.cs` (new), `MapExtractor.cs` (call it after `DataStorePass`, bump `Version` to 5), the `ArmsTests` version pin and the `-x5-c` golden keys (`AsOfMapCacheKey`, `EvalStore` tests), the readable-name rule, tests on a fixture with a `.tsx` handler, a `POST` route and a registry command, and a stored review row that still resolves.
+- **Files:** `src/Context/Aw.Context.Core/Extract/ActionPass.cs`, `MapExtractor.cs` (calls it after `DataStorePass`, `Version` 5), the `ArmsTests` version pin and the `-x5-c` golden keys, the readable-name rule, tests on a fixture with a `.tsx` handler, a `POST` route and a registry command, and a stored review row that still resolves. **Still to do in this amendment's follow-up:** the colliding-name second line and suffix in review and the What band, and the `ProductCandidate.Confidence` constant.
 - **Size:** S.
 - **Signal:** `$SINDRI context map build` on the fixture app prints `action:` nodes at confidence 0.8 with `on`, `implements` and `writes`; a second build changes no existing surface key.
 
 **S-FLOW-J**
 - **Goal:** flows from the journeys the repo already has.
-- **Files:** `Extract/JourneyReader.cs` and `Extract/FlowPass.cs` (new), the journey path filter in `BuildMapService` and `AsOfMapBuilder`, the fixture's `.ui-evidence` plan and e2e spec, tests for unmatched steps, the under-2 rule, match order, deny globs and e2e files reaching both loaders.
+- **Files:** `Extract/JourneyReader.cs` and `Extract/FlowPass.cs` (new), the journey path filter (500 files, 1 MB each) in `BuildMapService` and `AsOfMapBuilder`, `MapExtractor.Version` to the next number (6 or 7, coordinated with #1365) with the `ArmsTests` pin and golden keys read from the constant, the fixture's `.ui-evidence` plan and e2e spec, tests for each Playwright form read, each skip reason, the under-2 rule, match order, path-only route matching, scrubbed step text, deny globs, and e2e files reaching both loaders.
 - **Size:** S–M.
-- **Signal:** the build prints a `flow:` node with ordered steps for a fixture journey and none for a one-step journey.
+- **Signal:** the build prints a `flow:` node with ordered steps for a fixture journey and none for a one-step journey; the skip counts name their reasons.
 
 **S-FLOW-C**
 - **Goal:** flows from a handler's call chain.
-- **Files:** the port in `Aw.Context.Core` (new), the Host adapter over the code index, `deps.yaml` (the new edge) and its `check-deps.mjs` run, the chain-to-flow build step after `Extract` (symbols mapped to `code:<path>`, skipped for as-of maps), the first index from `sindri repo onboard`.
+- **Files:** the port in `Aw.Context.Core` (new) with its fake and `PublicAPI.Unshipped.txt` entries, the Host adapter over the code index, `deps.yaml` (the new edge) and its `check-deps.mjs` run, the chain-to-flow build step after `Extract` (symbols mapped to `code:<path>`, bounds, deny globs, commit check, skipped for as-of maps), the first index from `sindri repo onboard`, the How-band placement.
 - **Size:** M.
-- **Signal:** on a fixture whose index is built, a route handler that calls two other actions yields one flow in call order; without an index the step adds nothing and the build log says `code-path flows: no code index`.
+- **Lanes:** the chain-to-flow rule is unit lane over the fake port; only the check against a real built index is heavy lane.
+- **Signal:** on a fixture whose index is built (heavy), a route handler that calls two other actions yields one flow `flow:code/<entry-action-key>` in call order; without an index the step adds nothing and the build log and `context map status` say `code-path flows: no code index`.
 
 **S-PICK**
 - **Goal:** Jev decides keep, merge and attach for the candidates.
-- **Files:** the question builder for the three shapes, the `product_pick` table and migration (repo-keyed hash, answer only, other identities pruned), the scrub and fence, the build step after cluster labeling, the unmerged and grouped-review fallback with sources shown, the per-stage log lines and `map status` counts, tests with a contract-tested fake `IChoicePort` (a hit asks 0 questions; `unknown` identity misses; a 4th lookalike is regrouped in the same build; a human override beats a cached answer; a scrub Blocked candidate is never sent).
+- **Files:** the question builder for the three shapes (owner-decided candidates dropped first), the `product_pick` table and its migration (next free number after 0020; per-candidate hash with scrubber pattern hash, answer only), `sindri context map picks [--clear]`, the scrub and fence, the build step after cluster labeling (as-of builds read hits only), pruning only after a build where Jev answered, the unmerged and grouped-review fallback with the six source labels, the "Rejected by Jev" list and restore, the 50-group first-run cap, the build-report row and the per-stage log lines, `map status` and `--json` fields, `PublicAPI.Unshipped.txt` for the new public types, `docs/csharp/sindri-profile.md` (the `context.models.productSurfaces` key, enforced by `check-profile-doc.test.sh`), tests with a contract-tested fake `IChoicePort` (a hit asks 0 questions; one new lookalike asks only its own questions; `unknown` identity misses; a 4th lookalike is regrouped in the same build; leftovers past 3 rounds become `Jev undecided` and rotate; a human override beats a cached answer, including a restore; a scrub Blocked candidate is never sent; an as-of build writes no row; a down Jev prunes nothing).
 - **Size:** M.
-- **Signal:** a second build with nothing new makes 0 Jev calls; with Jev off the candidates appear unmerged in `context map review`, grouped per surface with their source.
+- **Signal:** a second build with nothing new makes 0 Jev calls; with Jev off the candidates appear unmerged in `context map review`, grouped per surface (at most 50 groups) with their source, and `context map status` prints the kept and rejected share.
