@@ -1,4 +1,3 @@
-using Aw.Context.Core.Audience;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Infrastructure.Store;
@@ -10,7 +9,7 @@ namespace Aw.Context.Infrastructure.Records;
 /// <summary>The project read (projects page spec §6.1).</summary>
 internal sealed partial class SqliteRecordStore
 {
-    public async ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, AudienceScope audience, CancellationToken cancellationToken)
+    public async ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(audience);
         var read = await BeginRead(cancellationToken).ConfigureAwait(false);

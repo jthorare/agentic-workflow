@@ -1,4 +1,3 @@
-using Aw.Context.Core.Audience;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
 
@@ -131,5 +130,5 @@ public interface IRecordStore
     /// <param name="audience">The caller's audiences.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>One row per project, ordered by title then key; none for a source with no projects.</returns>
-    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, AudienceScope audience, CancellationToken cancellationToken);
+    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken);
 }

@@ -1,5 +1,4 @@
 using Aw.Context.Core;
-using Aw.Context.Core.Audience;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
@@ -11,7 +10,7 @@ internal sealed class UnreadableRecordStore(IRecordStore inner) : IRecordStore
 {
     public ValueTask<Result<CommitReport>> Commit(RecordBatch batch, CancellationToken cancellationToken) => inner.Commit(batch, cancellationToken);
 
-    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, AudienceScope audience, CancellationToken cancellationToken) => inner.ProjectFacts(source, audience, cancellationToken);
+    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken) => inner.ProjectFacts(source, audience, cancellationToken);
 
     public ValueTask<Result<StoredRecord?>> Get(RecordKey key, CancellationToken cancellationToken) => inner.Get(key, cancellationToken);
 

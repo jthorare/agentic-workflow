@@ -1,5 +1,4 @@
 using Aw.Context.Core;
-using Aw.Context.Core.Audience;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
@@ -252,7 +251,7 @@ public sealed class FakeRecordStore : IRecordStore
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, AudienceScope audience, CancellationToken cancellationToken)
+    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(audience);
         lock (_gate)
@@ -265,7 +264,7 @@ public sealed class FakeRecordStore : IRecordStore
         }
     }
 
-    private ProjectRow ProjectRowOf(StoredRecord project, AudienceScope audience)
+    private ProjectRow ProjectRowOf(StoredRecord project, RecordAudience audience)
     {
         var lead = project.Links.Where(l => l.Kind == RecordLinkKind.LedBy).OrderBy(l => l.ToRef, StringComparer.Ordinal).FirstOrDefault();
         var issues = _records.Values

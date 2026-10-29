@@ -29,7 +29,7 @@ internal sealed class GetProjectFactsService(IRecordStore store, ISourceIdentity
         }
 
         var audience = await AudienceOf(settings.Value, scope, cancellationToken).ConfigureAwait(false);
-        var rows = audience.IsError ? audience.Error : await store.ProjectFacts(LinearSourceIds.Projects, audience.Value, cancellationToken).ConfigureAwait(false);
+        var rows = audience.IsError ? audience.Error : await store.ProjectFacts(LinearSourceIds.Projects, new RecordAudience(audience.Value.Allowed, audience.Value.Records), cancellationToken).ConfigureAwait(false);
         var identity = rows.IsError ? rows.Error : await identities.Read(LinearSourceIds.Identity, cancellationToken).ConfigureAwait(false);
         var progress = identity.IsError ? identity.Error : await sync.Progress(scope, cancellationToken).ConfigureAwait(false);
         if (progress.IsError)

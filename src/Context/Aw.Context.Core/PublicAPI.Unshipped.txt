@@ -9733,7 +9733,7 @@ Aw.Context.Core.Projects.ProjectFactsRequest.Attached.init -> void
 Aw.Context.Core.Projects.ProjectFactsRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Attached) -> void
 Aw.Context.Core.Projects.ProjectFactsRequest.Equals(Aw.Context.Core.Projects.ProjectFactsRequest? other) -> bool
 Aw.Context.Core.Projects.ProjectFactsRequest.ProjectFactsRequest(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Attached) -> void
-Aw.Context.Core.Records.IRecordStore.ProjectFacts(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Audience.AudienceScope! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ProjectRow!>!>!>
+Aw.Context.Core.Records.IRecordStore.ProjectFacts(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ProjectRow!>!>!>
 Aw.Context.Core.Records.ProjectRow.<Clone>$() -> Aw.Context.Core.Records.ProjectRow!
 Aw.Context.Core.Records.ProjectRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Health, out System.DateOnly? DueAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string? LeadRef, out string? LeadName, out int OpenIssues, out System.DateTimeOffset? NewestIssueAt) -> void
 override Aw.Context.Core.Projects.ProjectFact.Equals(object? obj) -> bool
@@ -9797,3 +9797,18 @@ static Aw.Context.Core.Sources.UserRef.operator !=(Aw.Context.Core.Sources.UserR
 static Aw.Context.Core.Sources.UserRef.operator ==(Aw.Context.Core.Sources.UserRef left, Aw.Context.Core.Sources.UserRef right) -> bool
 ~override Aw.Context.Core.Sources.UserRef.Equals(object obj) -> bool
 ~override Aw.Context.Core.Sources.UserRef.ToString() -> string
+Aw.Context.Core.Records.RecordAudience
+Aw.Context.Core.Records.RecordAudience.<Clone>$() -> Aw.Context.Core.Records.RecordAudience!
+Aw.Context.Core.Records.RecordAudience.Allowed.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>!
+Aw.Context.Core.Records.RecordAudience.Allows(Aw.Context.Core.Records.AudienceKey? audience, Aw.Context.Core.Sources.RecordKey record) -> bool
+Aw.Context.Core.Records.RecordAudience.Deconstruct(out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>! Allowed, out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>! Records) -> void
+Aw.Context.Core.Records.RecordAudience.Equals(Aw.Context.Core.Records.RecordAudience? other) -> bool
+Aw.Context.Core.Records.RecordAudience.RecordAudience(System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Records.AudienceKey>! Allowed, System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>! Records) -> void
+Aw.Context.Core.Records.RecordAudience.Records.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
+override Aw.Context.Core.Records.RecordAudience.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.RecordAudience.GetHashCode() -> int
+override Aw.Context.Core.Records.RecordAudience.ToString() -> string!
+static Aw.Context.Core.Records.RecordAudience.operator !=(Aw.Context.Core.Records.RecordAudience? left, Aw.Context.Core.Records.RecordAudience? right) -> bool
+static Aw.Context.Core.Records.RecordAudience.operator ==(Aw.Context.Core.Records.RecordAudience? left, Aw.Context.Core.Records.RecordAudience? right) -> bool
+Aw.Context.Core.Records.RecordAudience.Allowed.init -> void
+Aw.Context.Core.Records.RecordAudience.Records.init -> void

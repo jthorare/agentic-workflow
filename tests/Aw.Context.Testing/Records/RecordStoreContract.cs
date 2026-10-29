@@ -1,5 +1,4 @@
 using Aw.Context.Core;
-using Aw.Context.Core.Audience;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
@@ -305,7 +304,7 @@ public abstract class RecordStoreContract<TStore>
             RecordSamples.Write(RecordSamples.Record("linear:issue/4") with { Links = inBeta, Audience = AudienceKey.From("linear:other") }, "four")), CancellationToken.None));
         _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(projects, 2) with { Removed = [removed.Key] }, CancellationToken.None));
 
-        var rows = ContractCheck.Ok(_owner, await store.ProjectFacts(projects, new AudienceScope(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }), CancellationToken.None));
+        var rows = ContractCheck.Ok(_owner, await store.ProjectFacts(projects, new RecordAudience(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }, new HashSet<RecordKey>()), CancellationToken.None));
 
         ContractCheck.That(_owner, rows.Select(r => r.Title).SequenceEqual(["Alpha", "Beta"], StringComparer.Ordinal), "the visible, live projects come by title (not the other audience's, not the removed one)");
         var row = rows[1];
@@ -314,7 +313,7 @@ public abstract class RecordStoreContract<TStore>
         ContractCheck.That(_owner, row.LeadRef == "linear:user/u1" && row.LeadName == "Ada", "the lead is the led-by link's target and title");
         ContractCheck.That(_owner, row.Health == "atRisk" && row.DueAt == new DateOnly(2026, 11, 14), "health and due day come with it");
         ContractCheck.That(_owner, rows[0].OpenIssues == 0 && rows[0].NewestIssueAt is null && rows[0].LeadRef is null, "a project with no issues and no lead has zero, null and null");
-        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.ProjectFacts(RecordSamples.Github, new AudienceScope(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }), CancellationToken.None)).Count == 0, "another source has no projects here");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.ProjectFacts(RecordSamples.Github, new RecordAudience(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }, new HashSet<RecordKey>()), CancellationToken.None)).Count == 0, "another source has no projects here");
     }
 
     /// <summary>A purge removes one source's records, chunks, vectors and position and no other's.</summary>
