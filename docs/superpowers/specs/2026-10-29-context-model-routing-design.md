@@ -9,10 +9,10 @@ Related: #1564 (a second caller of `DecisionPass`, merged), #1461 (Jev's input c
 Every model call the context index makes goes through one port, `IModelPort`, and Sindri's adapter for it (`JudgeModelPort`) tries the agent CLIs in a fixed order and takes the first answer. Three things hurt:
 
 1. **One tool's usage limit stops the work.** When Claude Code is at its limit, each call still starts `claude`, waits for it to fail, then moves on to Codex. It does that again on the next call, and the next. Nothing remembers that Claude is out.
-2. **The owner can't choose.** Six kinds of call exist (labeling, concept naming, decision extraction, adjudication, map cleanup, rerank). Only the concept scan can name a model, and only Claude has names for it. The other six always run on whatever the adapter's first CLI defaults to.
+2. **The owner can't choose.** Six kinds of call exist (labeling, concept naming, decision extraction, adjudication, map cleanup, rerank). Only the concept scan can name a model, and only Claude has names for it. The other five always run on whatever the adapter's first CLI defaults to.
 3. **Nobody can see what a call used or cost.** `ModelAnswer` has text, two token counts and a model name. It has no harness and no cost, and nothing is written to the ledger.
 
-And one new ask (owner, 2026-10-28): labeling should get cheaper by having Jev choose between candidate labels, many clusters per call, never one call per cluster.
+And one new ask (owner, 2026-10-28): labeling should use Jev to choose between candidate labels, many clusters per call, never one call per cluster. The call count falls mostly because of the bigger packs; the Jev pick itself buys better labels (6.3).
 
 ### Goals
 
@@ -20,7 +20,7 @@ And one new ask (owner, 2026-10-28): labeling should get cheaper by having Jev c
 2. With nothing set, the cheapest model on the first installed harness (q150-2).
 3. At a usage limit, skip that harness for about 30 minutes and use the next (q150-3).
 4. Each call's harness, model, tokens and cost are in the ledger and in the app's Jobs view (q150-4).
-5. Labeling: generate candidate labels in bulk, have Jev pick in bulk (addendum).
+5. Labeling: generate candidate labels in bulk, have Jev pick in bulk, with as few model calls as possible (addendum).
 
 ### Non-goals
 
@@ -51,7 +51,7 @@ And one new ask (owner, 2026-10-28): labeling should get cheaper by having Jev c
 
 `AgentCliProvider.Decide` (`src/Judge/Aw.Judge.Infrastructure/Providers/AgentCliProvider.cs:53` to `:59`) turns a process end into a result: not found is `ProviderUnavailable("not-installed")`, a non-zero exit is `ProviderErrored("exit-N")`, and a zero exit goes to the CLI's own `Read`. `ClaudeCliProvider.Read` and `CursorCliProvider.Read` return `ProviderErrored("cli-reported-error")` when the envelope says `is_error` (`CliEnvelope.cs:14`); `CodexCliProvider.Read` does the same when it saw a `turn.failed` or `error` event (`CodexCliProvider.cs:43`). **In every case the CLI's stdout and stderr text is dropped.** `ProcessResult` has both (`ProcessResult.cs`); the providers don't pass them on. So today nothing above the provider can tell a usage limit from any other failure.
 
-### 1.4 The seven call sites
+### 1.4 The eight call sites (seven callers)
 
 | Call | `ModelPurpose` | Site | Routing it sends today |
 |---|---|---|---|
@@ -173,7 +173,7 @@ A new `RoutedModelPort` in `src/Sindri/Aw.Sindri.Host/Models/` replaces `JudgeMo
 1. Find the kind from `request.Purpose` (`Labeling` to `labeling`, `Concepts` and `ConceptScan` to `conceptNaming`, `DecisionExtraction` to `decisionExtraction`, `Adjudication` to `adjudication`, `Cleanup` to `mapCleanup`, `Rerank` to `rerank`).
 2. Read the approved profile's `context.models` (the same approved-profile reader the model-pick settings use: `ProfileModelPickSettings`), resolve the harness list and each harness's model (3.2).
 3. For each harness not in cooldown: call it with that model, read the result.
-4. On an answer: append `context.model.called`, return it.
+4. On an answer: append `context.model.called` (except a no-job rerank answer, 7.1), return it.
 5. On a usage limit: put the harness in cooldown (5.2), append `context.harness.limited`, go to the next harness.
 6. On any other miss (crash, timeout, unreadable answer): go to the next harness; no cooldown.
 7. After the last harness: append `context.model.called` with outcome `failed`, return `SND-CONTEXT-240` or the old `SND-CONTEXT-042` (5.4).
@@ -182,13 +182,13 @@ A new `RoutedModelPort` in `src/Sindri/Aw.Sindri.Host/Models/` replaces `JudgeMo
 
 **Seams.** `RoutedModelPort` takes `TimeProvider` (tests use `FakeTimeProvider`), the cooldown view reader, the event writer and the judge catalog accessor; the tests' fake judge providers and fake CLI scripts live in the Host test project's fakes.
 
-**Environment.** The three providers inherit the full Sindri environment today (only the Claude adjudicator sets `MinimalEnvironment`, `ClaudeCliOptions.cs:12`), which can hold `GH_TOKEN`, `AW_FORGE_TOKEN`, cloud keys and Jev's key. Context calls carry repo-controlled prompt text, so R-2 gives all three providers the minimal-environment option, which `RoutedModelPort` selects on the question: the shared `InheritedVariables` list plus the variables each CLI's own login needs (`CODEX_HOME`, `CURSOR_*`; R-0 checks the exact list on a logged-in box so no login breaks). A test asserts `GH_TOKEN` and `AW_FORGE_TOKEN` are absent in the child.
+**Environment.** The three providers inherit the full Sindri environment today (only the Claude adjudicator sets `MinimalEnvironment`, `ClaudeCliOptions.cs:12`), which can hold `GH_TOKEN`, `AW_FORGE_TOKEN`, cloud keys and Jev's key. Context calls carry repo-controlled prompt text, so R-2 gives all three providers the minimal-environment option, which `RoutedModelPort` selects on the question: the shared `InheritedVariables` list plus an exact list of the variables each CLI's own login needs (for example `CODEX_HOME`, `CURSOR_API_KEY`; the runner's `InheritOnly` matches exact names, no wildcard). R-0 captures the list on a logged-in box, including a login that depends on an env var (an API-key box), so no login breaks; `sindri doctor` warns when the minimal environment leaves a configured provider without credentials. `RoutedModelPort` selects the option with a new `QuestionRef.MinimalEnvironment` field that all three providers honor. A test asserts `GH_TOKEN` and `AW_FORGE_TOKEN` are absent in the child.
 
-**Writing events.** A small Host service appends the two events through `ILedgerStore.Append` with `HeldLease`, `EventFactory` and the actor `service:context`, the way `SyncContextSourcesService` does (`Features/ContextCalls/SyncContextSourcesService.cs:30`). Appends are best-effort: a failed append (lost lease, a command run without the control plane) is logged and never changes the `Ask` result.
+**Writing events.** A small Host service appends the router's two events (`called`, `limited`; `models reset` appends the third, `cleared`) through `ILedgerStore.Append` with `HeldLease`, `EventFactory` and the actor `service:context`, the way `SyncContextSourcesService` does (`Features/ContextCalls/SyncContextSourcesService.cs:30`). Appends are best-effort: a failed append (lost lease, a command run without the control plane) is logged and never changes the `Ask` result.
 
 No Context project references Judge (`deps.yaml:535` and the "separable, no Sindri imports" rule at `deps.yaml:181`); that stays true. The scoping note said Context "calls `Judge.Core` types in process". It does not; Sindri's Host does.
 
-**Why not route inside each caller.** There are seven call sites in three projects, each with its own settings access (some get a `ContextScope`, the labeler gets only a token cap). The adapter sees every call and the approved profile, so one place changes. The cost is that the engine's own `SettingsReader` also validates the keys (section 3.1, section 10) so a bad value fails at `profile validate` and `profile approve`, not at the first call.
+**Why not route inside each caller.** There are eight call sites in three projects, each with its own settings access (some get a `ContextScope`, the labeler gets only a token cap). The adapter sees every call and the approved profile, so one place changes. The cost is that the engine's own `SettingsReader` also validates the keys (section 3.1, section 10) so a bad value fails at `profile validate` and `profile approve`, not at the first call.
 
 ## 5. Usage limits and fallback
 
@@ -209,14 +209,14 @@ What each harness prints when it is at its limit, and how sure I am:
 
 The Meta parser is `internal` to Meta and reads lane panes, so the judge gets its own small matcher with a shared fixture file of the real strings above (Meta's tests keep its own). Two copies of three patterns is cheaper than a new shared package.
 
-Anything that doesn't match is not a limit. A harness failing for another reason is skipped for that call only. **Safety net that doesn't depend on any text:** a harness that fails 3 times in a row (any non-limit failure, no answer between) is skipped for 5 minutes and shown in the Jobs line and `sindri doctor` as "failing", not as a limit. It is memory-only (no event, no view) and resets on the first answer. This covers a stale model name, a login that expired, and Cursor until R-0 captures its limit text.
+Anything that doesn't match is not a limit. A harness failing for another reason is skipped for that call only. **Safety net that doesn't depend on any text:** a (harness, model) pair that fails 3 times in a row (any non-limit failure, no answer between) is skipped for 5 minutes and shown in the Jobs line and `sindri doctor` as "failing", not as a limit. Counting per pair means one bad model name for one kind doesn't bench the harness for the other kinds. It is memory-only (no event, no view) and resets on the first answer. This covers a stale model name, a login that expired, and Cursor until R-0 captures its limit text.
 
 ### 5.2 The 30-minute skip and where it lives
 
 - A harness that returned a `Limit` is in cooldown until `now + cooldownMinutes` (default 30). The message's own reset time, when it has one, is recorded for display (`resetsAt`) but does not change the 30 minutes (open question Q4).
-- The state is in memory in the `RoutedModelPort` singleton (a `ConcurrentDictionary`, harness to `until`) and survives a restart through a small view, `model-cooldowns` (harness, `until`), that the view projector folds from `context.harness.limited` events (only those written by the actor `service:context`; others are ignored) and clears on `context.harness.cleared`. `ILedgerStore` can only read the newest event of a type or a range by sequence (`ILedgerStore.cs`), so it can't answer "the latest per harness" directly; a view can, and `sindri views rebuild` reproduces it. The router loads the view lazily on its first `Ask` and trusts memory after that. On load it ignores an event dated in the future and clamps `until` to `now + cooldownMinutes` of the approved snapshot (at most 1440), so a bad event can't park a harness for long. The fallback never adds a harness the profile didn't list. The projector is asynchronous, so a call right after a restart can still try a harness whose event isn't folded yet; one wasted call is accepted.
+- The state is in memory in the `RoutedModelPort` singleton (a `ConcurrentDictionary`, harness to `until`) and survives a restart through a small view, `model-cooldowns` (harness, `until`), that the view projector folds from `context.harness.limited` events (only those whose actor is `service:context`; the projector sees the actor, `LedgerEvent.Envelope.Actor`) and deletes on `context.harness.cleared` (accepted from any non-session caller; the authorization table already guarantees who can append it). `ILedgerStore` can only read the newest event of a type or a range by sequence (`ILedgerStore.cs`), so it can't answer "the latest per harness" directly; a view can, and `sindri views rebuild` reproduces it. The router loads the view lazily on its first `Ask` and trusts memory after that. On load it ignores an event dated in the future and clamps `until` to `now + cooldownMinutes` of the approved snapshot (at most 1440), so a bad event can't park a harness for long. The fallback never adds a harness the profile didn't list. The projector is asynchronous, so a call right after a restart can still try a harness whose event isn't folded yet; one wasted call is accepted.
 - **Concurrency.** Entering cooldown is an atomic "extend, never shorten"; only the call that moves a harness from open to limited appends the event, so ten calls failing together write one event. Time comes from the injected `TimeProvider`. The 3-failures counter is a plain per-harness counter under the same lock.
-- **Override.** `sindri doctor` shows each cooling harness and its `until`. A new verb `sindri context models reset [<harness>]` (no argument clears all) clears it, for the owner who just topped up. It is a route on the control plane's API with the per-start human token, the same as `sandbox learn` (`SandboxLoginVerb.cs:9`): a session actor gets `SND-AUTH-002`, an unknown harness exits 2. It appends a third event, `context.harness.cleared` (key `context.harness.cleared:<harness>:<commandId>`, `Public: true`, invalidates `ApiViews.Status`), which the view folds as a delete and the running router drops from memory, so a restart or `views rebuild` can't bring a cleared cooldown back. A process that is not `serve` (an in-process command) keeps a memory-only cooldown and writes no events.
+- **Override.** `sindri doctor` shows each cooling harness and its `until`. A new verb `sindri context models reset [<harness>]` (no argument clears all) clears it, for the owner who just topped up. It follows `sandbox learn off`: a `POST` route on the control plane (`EndLearnModeEndpoint`, `SandboxLearnVerbs`, the catalog row in `SandboxRows.cs`), a desk-class command with an entry in the authorization table, so a session actor gets `SND-AUTH-002`; an unknown harness exits 2. It appends a third event, `context.harness.cleared` (key `context.harness.cleared:<harness>:<commandId>`, `Public: true`, invalidates `ApiViews.Status`), which the view folds as a delete and the running router drops from memory, so a restart or `views rebuild` can't bring a cleared cooldown back. A process that is not `serve` (an in-process command) keeps a memory-only cooldown and writes no events.
 - A call that finds every harness in cooldown (5.4) does not wait; it fails at once with the earliest `until` in the message.
 - A harness that comes out of cooldown is tried like any other. If it is still limited, it goes back in for another 30 minutes, which costs one fast failing call per harness per 30 minutes.
 
@@ -256,7 +256,7 @@ For a build's clusters (`FileCluster`: an id and up to 12 file paths, `ModelLabe
 
 ### 6.2 Generate packs
 
-A pack is as many clusters as fit the harness's prompt budget, at most 50.
+A pack is as many clusters as fit the smallest prompt budget among the harnesses of the labeling route (the resolved, installed ones, 3.2), at most 50. The labeler sizes the pack before the router picks a harness, and the router can fall back mid-call, so it must not size for Claude and then fall back to Cursor. As a backstop `ModelRequest` gets an optional `MaxPromptChars` and the router skips (outcome `skipped`, reason `prompt-too-long`) any harness whose cap is smaller than the prompt, rather than let Cursor cut clusters silently.
 
 | Harness | Prompt budget | Clusters per call |
 |---|---|---|
@@ -344,7 +344,7 @@ New event type, one per `Ask` that reaches the adapter (and one per Jev pick cal
 | `job` | The ambient job id (`IJobContextAccessor.Current`), or null when the call isn't under a job. Map builds, source syncs and backtests are jobs (they take `IJobContextAccessor`); the query-time rerank and an in-process command are not |
 | `purpose` | The `ModelPurpose` as written in the profile docs (`labeling`, `concept-scan`, …) |
 | `kind` | The profile entry used (`labeling`, `conceptNaming`, …) |
-| `tries` | Every harness tried, in order: `{ harness, model, outcome, reason?, ms }` where `outcome` is `answered`, `limit`, `failed` or `skipped` (in cooldown), `reason` is a code (`exit-1`, `cli-reported-error`, `timeout`, `limit`), never CLI text, and `source` says where the model name came from (`request`, `kind.models`, `default.models`, `names`, `builtin`) so "why did adjudication run on haiku" has an answer. A harness not on `PATH` is never a try: the judge's lineup leaves it out |
+| `tries` | Every harness tried, in order: `{ harness, model, outcome, reason?, ms }` where `outcome` is `answered`, `limit`, `failed`, `skipped` (in cooldown, or prompt too long) or `not-asked` (a Jev pick step that was skipped, reason `no-consent` or `no-key`; written once per labeling pass). `harness` is one of the three CLI harnesses, or `jev` in this event only, `reason` is a code (`exit-1`, `cli-reported-error`, `timeout`, `limit`), never CLI text, and `source` says where the model name came from (`request`, `kind.models`, `default.models`, `names`, `builtin`) so "why did adjudication run on haiku" has an answer. A harness not on `PATH` is never a try: the judge's lineup leaves it out |
 | `answeredBy` | `{ harness, model }` of the try that answered, or null |
 | `inputTokens`, `outputTokens` | From the answer |
 | `tokenBasis` | `reported` (the CLI said), `estimated` (characters / 4) |
@@ -358,7 +358,7 @@ New event type, one per `Ask` that reaches the adapter (and one per Jev pick cal
 
 ### 7.2 `context.harness.limited`
 
-One event when a harness enters cooldown. Key `context.harness.limited:<harness>:<untilMs>`. Fields: `harness`, `at`, `until`, `pattern` (the id of the matcher that fired) and `resetsAt` (the time the CLI's message named, when it named one and it parsed, else null). There is no line of CLI text: those lines can carry an account name, a plan or an upgrade link. The `model-cooldowns` view folds the event (5.2). No event is written when a harness comes out of cooldown; the clock does that. Only the control plane writes this type.
+One event when a harness enters cooldown. Key `context.harness.limited:<harness>:<untilMs>`. Fields: `harness`, `at`, `until`, `pattern` (the id of the matcher that fired) and `resetsAt` (the time the CLI's message named, when it named one and it parsed, else null). There is no line of CLI text: those lines can carry an account name, a plan or an upgrade link. The `model-cooldowns` view folds the event (5.2). No event is written when a harness comes out of cooldown; the clock does that. Only the control plane writes `limited`; `cleared` is appended by the authenticated reset command.
 
 The three events are `Public: true`. Their fields are codes, names, numbers and times, so there is nothing to scrub; a test asserts no field holds free text. `context.model.called` invalidates `ApiViews.Jobs` only (context events have no item, so the timeline isn't touched); `limited` and `cleared` invalidate `ApiViews.Status`, so doctor and health pick them up. `resetsAt` is parsed with a strict pattern and clamped to now plus 24 hours; raw CLI text is never shown.
 
@@ -395,6 +395,7 @@ at most two harness-model pairs, then "+K more". The cost part is one of:
 | some estimated | "about $0.04 list price" |
 | some calls unpriced | "cost partial: 2 calls have no price" (full wording, with the count) |
 | none priced | "cost unknown" |
+| a harness fell back | "(1 fell back)" appended to the line, with any of the rows above |
 | every call failed and none reported a cost | "Models: no call answered (3 failed)" and no cost |
 | no call made | no line |
 
@@ -412,11 +413,11 @@ Model calls
 14:02:20  labeling       jev jev-1.13.0           answered   picked 94 of 100, 5 first, 1 file name   cost unknown
 ```
 
-`sindri jobs --json` carries `models` and `modelCalls`. Fixtures for R-4 cover every state in the two tables above plus a narrow window, and the proof is a screenshot at a wide and a narrow width.
+`sindri jobs --json` carries `models` and `modelCalls`. Fixtures for R-4 cover every state in the table above, the sheet outcomes and a narrow window, and the proof is a screenshot at a wide and a narrow width.
 
 ### 8.3 When everything is out
 
-The job's progress line says it, in local time (with the date when it isn't today), one cause per clause: "Labels skipped: claude-code at its usage limit, retrying at 14:10 (resets Fri 02:50 per its message); codex at its usage limit, retrying at 14:40; cursor not installed." The retry time is ours; the reset time appears only when the CLI named one. The job finishes with the existing `degraded` wording and the code (`SND-CONTEXT-240`), so the chip is the one a degraded build already has. For a source sync the feed row reads "Queued (14 items): claude-code and codex at their usage limit, retrying at 14:10" (the Sindri app's source feed list and `sindri context sources` print the same text). Labels left as file names stay that way until the next build; nothing relabels on its own (open question Q3 asks whether the owner wants a wait instead).
+The job's progress line says it, in local time (with the date when it isn't today), one cause per clause: "Labels skipped: claude-code at its usage limit, retrying at 14:10 (resets Fri 02:50 per its message); codex at its usage limit, retrying at 14:40; cursor not installed." The retry time is ours; the reset time appears only when the CLI named one. The job finishes with the existing `degraded` wording and the code (`SND-CONTEXT-042` for labeling, which wraps 240 and 241 per section 10; 240 or 241 for the other kinds), so the chip is the one a degraded build already has. For a source sync the feed row reads "Queued (14 items): claude-code and codex at their usage limit, retrying at 14:10" (the Sindri app's source feed list and `sindri context sources` print the same text). Labels left as file names stay that way until the next build; nothing relabels on its own (open question Q3 asks whether the owner wants a wait instead).
 
 ### 8.4 Doctor
 
@@ -424,7 +425,7 @@ The job's progress line says it, in local time (with the date when it isn't toda
 
 ### 8.5 The approval notice
 
-The notice of 6.6 is shown in the approval summary of both surfaces that approve a profile (`sindri profile approve` and the app's approval sheet), as one added line like the model-pick one, and again in the Settings page's read-only "Label choice" line, which has three words: "off", "on, but needs an API key", "on, but not approved yet" (the doctor wording), and "on". The notice text is hashed; changing the text voids earlier consent (6.6).
+The notice of 6.6 is shown in the approval summary of both surfaces that approve a profile (`sindri profile approve` and the app's approval sheet), as one added line like the model-pick one, and again in the Settings page's read-only "Label choice" line, which has four states: "off", "on, but needs an API key", "on, but not approved yet" (the doctor wording), and "on". The notice text is hashed; changing the text voids earlier consent (6.6).
 
 ## 9. Migration
 
@@ -438,7 +439,7 @@ The notice of 6.6 is shown in the approval summary of both surfaces that approve
 ## 10. Validation and errors
 
 - `SettingsReader` learns `models` (add it to the known-key list at `SettingsReader.cs:46` and `:259`) and validates section 3.1. A wrong type, an unknown harness, a duplicate in `harnesses`, an unknown kind or key, or a value out of range is `SND-CONTEXT-001` with the key path, at `profile validate` and `profile approve`, like every other `context` key. Example messages: `context.models.adjudication.harnesses[0]: "claude" is not one of claude-code, codex, cursor (did you mean claude-code?)`; `context.models.labeling.tier: "medium" is cheap or strong`; `context.models.cooldownMinutes: is 1 to 1440`; `context.models.labeling.models.codex: a model name is letters, digits and . _ : / @ + - , not starting with -`. `docs/csharp/sindri-profile.md` (the `context` row, `:24`) gets the keys and defaults.
-- `SND-CONTEXT-240`, "Every model harness for this call is at its usage limit". `ErrorKind.Unavailable`. Message: the harnesses and their `until` times.
+- `SND-CONTEXT-240`, "Every model harness for this call is at its usage limit or failing". `ErrorKind.Unavailable`. Message: the harnesses and their `until` times.
 - `SND-CONTEXT-241`, "No model harness is installed for this call". `ErrorKind.Unavailable`. Fix: install one or name another.
 - Both are in `ContextErrors.cs` next to `RerankUnavailable` (`:228`); `SND-CONTEXT-240` to `-249` are free (the highest in use is 232).
 - A caller that cannot tell the two from `SND-CONTEXT-042` keeps working: the adapter wraps 240 and 241 so `answer.Error.Code == LabelingUnavailable.Code` checks (as in `ModelLabeler.cs:59`) still match, by returning 042 with the 240 text when the caller's purpose is `Labeling` and 240 or 241 as is for the others. (Callers that branch on the code today: `ModelLabeler.cs`; the rest use `IsError` only.)
@@ -451,11 +452,11 @@ Each phase is one PR, red first, layered commits. Builders run on Sonnet or Haik
 |---|---|---|---|
 | **R-0** | Captures, not code. (1) A real limit message from `claude -p --output-format json` and from `cursor-agent -p` (the owner's logged-in box; no limit can be forced, so collect them from logs or when one happens; a hand-made fake CLI script is the test stand-in meanwhile). (2) `cursor-agent --list-models` output once logged in. (3) A Jev label-pick trial on one real map, through a throwaway script against `IBatchClassifier` (no `IChoicePort` yet): 100 clusters in one call, to measure time, the confidence spread and how often it agrees with the model's first candidate; that fixes the 45 s budget, the 0.5 threshold and the 100 cap | the owner's key and Cursor login | The PR amends sections 3.3, 5.1, 6.3 and 6.5 with the real text and numbers |
 | **R-1** | Context Core and docs. `ModelsSettings` records, `SettingsReader` validation for `context.models`, the built-in names table, the `ConceptScan` purpose value, the migration read of `context.conceptScan.models` and the scan sending `Tier` only (`ConceptScanModels.Default` and its test stay), `ModelAnswer`'s new init properties, `SND-CONTEXT-240/241`, `docs/csharp/sindri-profile.md`, `docs/sindri/context.md`, the `PublicAPI.Unshipped.txt` edits | none | Unit: `profile validate` accepts the example in section 3 and refuses each bad value with the key path |
-| **R-2** (R-2a Claude and Codex, R-2b Cursor) | The judge (accepted on the Claude and Codex strings already seen, kept in `tests/fixtures/judge/usage-limit/`): `UsageLimit` on `ProviderErrored`, `Usage` on `ProviderDecided`, the per-CLI matchers and readers (`claude` envelope usage, `codex` `turn.completed`, cursor best effort), the fixture file of real strings, `docs/csharp/judge.md` | R-0 for the Cursor text and the login variables (R-2a starts now) | Unit: each real string yields a `Limit`; every other failure doesn't; the judge's CLI output is byte-identical (the hook-surface test `config/lib/tests/judge-cs-hook-surface.test.sh`) |
-| **R-3a** | Sindri Core: the three event payloads and catalog entries, the `model-cooldowns` view (`ViewNames`, `ViewSql`, the projector, the one view-schema version bump) | none (plain strings and numbers only) | Unit: fold tests (max `until` per harness, a future event ignored, a non-`service:context` actor ignored, replay idempotent, limited then cleared stays cleared across `views rebuild`) |
-| **R-3** | The router (R-3b). `RoutedModelPort` replacing `JudgeModelPort`: kind lookup, harness and model resolution, cooldown set read from R-3a's view, the Host event writer, `sindri context models reset` (with `sindri help`, `docs/csharp/sindri.md` and the `CLAUDE.md` Commands block), the 3-failures safety net, the minimal environment, 240 and 241, `DecisionPass` holding records back on them (its own commit, gated with `Aw.Context.Tests`), the `deps.yaml` notes; **this lane owns `Composition.cs`**, and R-4 builds on R-3a | R-1 (settings), R-2a (the judge types; R-3 starts on R-1's branch with the judge types behind a local seam), R-3a | Integration: with a fake provider that returns a `Limit` for Claude, the second call never starts `claude`, the third (after the fake clock moves 31 minutes) does |
+| **R-2** (R-2a Claude and Codex, R-2b Cursor) | The judge, including the minimal-environment option on all three providers and its child-environment test (the Cursor login list in R-2b) (accepted on the Claude and Codex strings already seen, kept in `tests/fixtures/judge/usage-limit/`): `UsageLimit` on `ProviderErrored`, `Usage` on `ProviderDecided`, the per-CLI matchers and readers (`claude` envelope usage, `codex` `turn.completed`, cursor best effort), the fixture file of real strings, `docs/csharp/judge.md` | R-0 for the Cursor text and the login variables (R-2a starts now) | Unit: each real string yields a `Limit`; every other failure doesn't; the judge's CLI output is byte-identical (the hook-surface test `config/lib/tests/judge-cs-hook-surface.test.sh`) |
+| **R-3a** | Sindri Core: the three event payloads and catalog entries, the `model-cooldowns` view (`ViewNames`, `ViewSql`, the projector, and the one view-schema version bump for the whole spec, which also adds the defaulted-null `Models` field to the stored `JobRow` so R-4 needs no second bump) | none (plain strings and numbers only) | Unit: fold tests (max `until` per harness, a future event ignored, a non-`service:context` actor ignored, replay idempotent, limited then cleared stays cleared across `views rebuild`) |
+| **R-3** | The router. `RoutedModelPort` replacing `JudgeModelPort`: kind lookup, harness and model resolution, cooldown set read from R-3a's view, the Host event writer, `sindri context models reset` (with `sindri help`, `docs/csharp/sindri.md` and the `CLAUDE.md` Commands block), the 3-failures safety net, selecting the minimal environment, the job progress line and the `degraded: labels` reason text of 8.3 (with a golden), 240 and 241, `DecisionPass` holding records back on them (its own commit, gated with `Aw.Context.Tests`), the `deps.yaml` notes; **this lane owns `Composition.cs`**; R-5 adds one registration call to it after R-3 merges | R-1 (settings), R-2a (the judge types; R-3 starts on R-1's branch with the judge types behind a local seam), R-3a | Integration: with a fake provider that returns a `Limit` for Claude, the second call never starts `claude`, the third (after the fake clock moves 31 minutes) does |
 | **R-4** | Showing it. `JobRow.Models` and `JobView.ModelCalls`, the API view and its golden, the Jobs page row and sheet list, `sindri jobs show`, `sindri-ui-fixture.sh` states for a limited harness and an unpriced model, the `context:models` doctor row and `src/Sindri/aot-smoke/expected.txt`, the Codex price names (names the table can't price stay `unknown`) | R-3a (the event shapes); R-3 for real events | In the running app (scratch home with the fixture): the Jobs line and sheet in every state |
-| **R-5** | The Jev label pick. `IChoicePort`, its Host implementation over `IBatchClassifier`, `JudgeCatalog`'s classifier accessor, `ModelLabeler`'s generate then pick flow, pack sizing, the split rule, the fallback, the consent notice in the approval summary, the `context:labelpick` doctor row. The numbers (80%, 100 questions, 45 s, 0.5) are constants in one `LabelPickLimits` type that the tests read, so R-0 changes one place; the larger generate packs ship with `pick: off` and don't wait for R-0. R-5 adds its `IChoicePort` registration through a separate extension method called from `Composition.cs`, so it doesn't edit the line R-3 replaces | R-1 (settings), R-0 for the numbers (starts on the defaults) | Unit: pack sizes at caps of 1,000, 40,000 and 160,000; every row of the split table; undecided clusters take the first candidate |
+| **R-5** | The Jev label pick. `IChoicePort`, its Host implementation over `IBatchClassifier`, `JudgeCatalog`'s classifier accessor, `ModelLabeler`'s generate then pick flow, pack sizing, the split rule, the fallback, the consent notice in the approval summary, the `context:labelpick` doctor row and the Settings page's four-state "Label choice" line (with a view-model test). The numbers (80%, 100 questions, 45 s, 0.5) are constants in one `LabelPickLimits` type that the tests read, so R-0 changes one place; the larger generate packs ship with `pick: off` and don't wait for R-0. R-5 adds its `IChoicePort` registration as one call to a separate extension method, after R-3 merges | R-1 (settings), R-0 for the numbers (starts on the defaults) | Unit: pack sizes at caps of 1,000, 40,000 and 160,000; every row of the split table; undecided clusters take the first candidate |
 | **R-6** | Cursor models. A `cursor-agent --list-models` reader beside the Codex one in `ProbedModelCatalog`, used by the doctor row and (separately, later) by the launch pick | R-0 (the output shape) | `sindri launch show` lists Cursor's models on a logged-in box |
 | **R-7** | The owner's proof and docs: the run on a real map (section 12) and the doc pass | R-3, R-4, R-5 | The owner check below |
 
@@ -465,13 +466,13 @@ Four lanes, builders always busy.
 
 | Wave | Lane A (Context) | Lane B (Judge) | Lane C (Sindri Host and app) | Lane D (free) |
 |---|---|---|---|---|
-| 0 | **R-1** | **R-2a** (Claude and Codex) | **R-3a** (events, view), then **R-4**'s Ui view-models on R-3a's shapes | **R-0** (needs the owner), **R-6** |
-| 1 | **R-5** (against `IChoicePort` and a fake) | **R-2b** (Cursor) when R-0 lands | **R-3** (stacked on R-1 and R-3a, judge types behind a seam until R-2a merges); **R-4** wires to real events | free |
+| 0 | **R-1** | **R-2a** (Claude and Codex) | **R-3a** (events, view), then **R-4**'s Ui view-models on R-3a's shapes | **R-0** (needs the owner) |
+| 1 | **R-5** (against `IChoicePort` and a fake) | **R-2b** (Cursor) when R-0 lands | **R-3** (judge types behind a seam until R-2a merges); **R-4** wires to real events | **R-6** (after R-0) |
 | 2 | **R-5** finishes (Host side of the port) | free | **R-4** finishes | **R-7** |
 
 Parallel: R-1, R-2a and R-3a touch different projects (Context.Core, Judge, Sindri.Core). R-4 starts from R-3a's shapes and a fake. R-5 and R-3 touch different files in the Host (the choice port and the router). R-0 and R-6 need the owner's box and block nothing until R-2's Cursor part and R-5's numbers.
 
-Sequential: R-3 needs R-1 and R-3a merged or open as a stack (its base is R-1's branch; R-2a merges first or is seamed). R-4's real-event proof needs R-3. R-7 needs all. No stack is deeper than three open PRs.
+Sequential: R-3's base is the later of R-1 and R-3a; the other merges first. R-2a merges first or is seamed. R-4's real-event proof needs R-3. R-7 needs all. No stack is deeper than three open PRs.
 
 If R-0 is late, everything ships on the defaults written here (Cursor's limit text guessed, the pick's numbers as in section 6).
 
@@ -481,9 +482,9 @@ Every phase also runs `node scripts/check-deps.mjs`, `scripts/check-env-example.
 
 - R-1: `Aw.Context.Tests` unit and integration, `Aw.Architecture.Tests` (new namespace folders), `bash scripts/tests/check-profile-doc.test.sh`, `node scripts/check-rules.mjs`, and the public-API check for `PublicAPI.Unshipped.txt`.
 - R-2: `Aw.Judge.Tests` unit and integration, `Aw.Sindri.Host` tests (the judge is consumed there), `src/Judge/aot-smoke/run.sh`, `config/lib/tests/judge-cs-hook-surface.test.sh`, the public-API check.
-- R-3a: `Aw.Sindri.Core` tests, the Sindri integration lane, `Aw.Architecture.Tests`. R-0 and R-7: docs only, no gate. R-6: the unit test on the `--list-models` fixture once R-0 has captured it.
+- R-3a: `Aw.Sindri.Core` tests, the Sindri integration lane, `Aw.Sindri.Engine.Tests`, `Aw.Sindri.Ui.Tests` (a view-schema bump and catalog entries), `Aw.Architecture.Tests`. R-0 and R-7: docs only, no gate. R-6: the unit test on the `--list-models` fixture once R-0 has captured it.
 - R-3, R-4 and R-5: `Aw.Context.Tests` (R-3's `DecisionPass` commit), `bash scripts/tests/sindri-ui-fixture.test.sh` (R-4), `Aw.Sindri.Host` tests, the Sindri integration lane and `Aw.Sindri.Engine.Tests` (a view and a catalog entry change), `Aw.Sindri.Ui.Tests` (a new API golden or action id), `src/Sindri/aot-smoke/run.sh` (a doctor row changes `expected.txt`), `Aw.Architecture.Tests`.
-- R-5: Context and Host tests; `check-deps.mjs` for the amended note; a new `using Aw.` or sub-namespace runs the architecture tests.
+- R-5: also `src/Sindri/aot-smoke/run.sh` (the `context:labelpick` row changes `expected.txt`), `check-deps.mjs` for the amended note, and the architecture tests for any new `using Aw.` or sub-namespace.
 
 ## 12. Test plan
 
@@ -496,6 +497,7 @@ Every phase also runs `node scripts/check-deps.mjs`, `scripts/check-env-example.
 - **Not a limit:** a successful answer whose text is the exact limit string, and a failed run whose stderr says something else, start no cooldown. Two parallel `Ask`s that both hit a limit write one `context.harness.limited` event. A cooldown event dated in the future or with `until` past `at + cooldownMinutes` is clamped on load.
 - **Routing details:** `labeling.enabled: false` routes nothing; `ConceptScan` and `Concepts` both use the `conceptNaming` entry; `DecisionPass` on 240 and 241 holds records back with `Failure` null and on any other error still fails; the 042 wrapping rule (section 10); a request-supplied model name that fails the name check is refused.
 - **Cooldown view and reset:** the fold cases of R-3a; the reset verb with no argument clearing all, an unknown harness exiting 2, a session actor refused with `SND-AUTH-002`, a restart and a `views rebuild` after a reset staying cleared; a non-serve process keeping a memory-only cooldown and writing nothing; the 3-failures safety net skipping a harness for 5 minutes and clearing on an answer.
+- **Old and new key together:** `profile validate` prints the warning text of section 9 and the new key wins.
 - **Pieces the router adds:** a lost lease or no control plane makes the event append log and leave the `Ask` result alone; tokens and cost per CLI (Claude `usage`/`modelUsage`, Codex `turn.completed`, unpriced gives `unknown`); each `warn` of the doctor rows; changing the notice text voids consent; the old-key-only profile equals its new-key equivalent; `GH_TOKEN` and `AW_FORGE_TOKEN` are absent in the child environment of all three harnesses.
 - **Pack sizing:** pack count at caps 1,000, 40,000, 160,000 and 256,000; first-fit order is stable; a cluster with no path still fits; the 100-question limit binds at the default.
 - **Split rule:** one test per row of 6.4, including that `no-api-key` makes no second call.
@@ -517,11 +519,11 @@ Every phase also runs `node scripts/check-deps.mjs`, `scripts/check-env-example.
 
 ## 13. Open questions for the owner
 
-Question 1 is the one real egress decision; 2 to 4 each have a recommendation.
+Question 1 is the one real egress decision; 2 to 4 each carry a recommendation.
 
-1. **Jev sees file paths.** May the label pick send each cluster's scrubbed file paths (up to 12) and its candidate labels to Jev? It stays off until you approve a profile that turns it on. Yes or no?
-2. **The names** in section 3.3. Codex cheap `gpt-6-luna` and strong `gpt-5.5`; Cursor cheap `gpt-5.6-luna-none-fast` and strong `gpt-5`. Confirm each, or give the name. Also pick: keep these pinned names, or read the cheapest from each CLI's live list as the launch pick does (a name can then change when the CLI's list does). (Cursor's strong one is a guess; Codex's bundled catalog also offers `gpt-5.4-mini` as a cheaper one that your box's catalog doesn't list).
-3. **Every harness out during a map build.** Pick one: (a) the build finishes now with file-derived names and says when to run it again (what this spec does), or (b) the build waits up to 30 minutes for a harness to come back, then finishes without labels if none does.
+1. **Jev sees file paths.** The pick improves labels; it does not cut cost (the bigger packs cut calls either way, and Jev has no price). May the label pick send each cluster's scrubbed file paths (up to 12) and its candidate labels to Jev? It stays off until you approve a profile that turns it on. Yes or no?
+2. **The names** in section 3.3. Codex cheap `gpt-6-luna` and strong `gpt-5.5`; Cursor cheap `gpt-5.6-luna-none-fast` and strong `gpt-5`. Confirm each, or give the name. Also pick: keep these pinned names (recommended: a default can't change under you; doctor warns when the CLI stops listing one), or read the cheapest from each CLI's live list as the launch pick does. (Cursor's strong one is a guess; Codex's bundled catalog also offers `gpt-5.4-mini` as a cheaper one that your box's catalog doesn't list).
+3. **Every harness out during a map build.** Pick one: (a) the build finishes now with file-derived names and says when to run it again (what this spec does), or (b) the build waits up to 30 minutes for a harness to come back, then finishes without labels if none does. Recommended: (a); a build that sits for half an hour for optional names is worse than names that can be redone.
 4. **The skip length when the CLI says when the limit ends.** Claude says "resets 2:50am" and Codex says "try again at 9:52 PM". Pick one: (a) always 30 minutes, as you said (one fast failing call per harness every 30 minutes until it clears; recommended), or (b) 30 minutes, or the time the CLI named if that is later, up to 24 hours.
 
 ## 14. Corrections to the scoping note
