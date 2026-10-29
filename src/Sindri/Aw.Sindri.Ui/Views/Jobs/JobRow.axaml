@@ -10,12 +10,12 @@
   <Border x:Name="JobRowFrame" Classes="item-row job-row" Focusable="True"
           AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
     <Grid x:Name="JobRowGrid" ColumnDefinitions="1.6*,110,150,1.2*,130,56,120" VerticalAlignment="Center" MinHeight="36">
-      <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,8,0" VerticalAlignment="Center">
-        <Button x:Name="JobRowOpen" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
+      <DockPanel LastChildFill="True" Margin="0,0,8,0" VerticalAlignment="Center">
+        <Button x:Name="JobRowOpen" DockPanel.Dock="Left" Classes="row-title" Click="OnOpen" HorizontalAlignment="Left" AutomationProperties.Name="{Binding Name}">
           <TextBlock Classes="body-strong" Text="{Binding TitleText}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
         </Button>
-        <TextBlock Classes="caption mono subtle" Text="{Binding KeyText}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-      </StackPanel>
+        <TextBlock Classes="caption mono subtle" Text="{Binding KeyText}" Margin="8,0,0,0" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+      </DockPanel>
       <Border x:Name="JobRowChip" Grid.Column="1" Margin="0,0,8,0" VerticalAlignment="Center" AutomationProperties.Name="{Binding ChipText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body-strong mono" Text="{Binding ChipText}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
