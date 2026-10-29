@@ -6,15 +6,16 @@ namespace Aw.Sindri.Tests.IndexSources;
 [Trait("Lane", "unit")]
 public sealed class SlackFeedResumeTests : RecordFeedResumeContract
 {
-    protected override int Limit => 100;
+    // why: the source holds 33 records (3 day records, 30 threads), so a limit of 10 makes it several pulls; the day records count toward the limit.
+    protected override int Limit => 10;
 
-    // why: one history page, then at most 20 thread reads (PullSlackService.RepliesPerPull), with room for a second history page.
-    protected override int MaxRequestsPerPull => 25;
+    // why: one history page, then a thread read per record until the limit of 10 is met, with room for a second history page.
+    protected override int MaxRequestsPerPull => 12;
 
-    // why: the early point lands inside the first pull's thread reads (history, then two threads); the late one lands inside the second pull.
+    // why: the early point lands inside the first pull's thread reads (history, then two threads); the late one lands inside the second pull (the first makes 8 requests, the second starts at 9).
     protected override int EarlyInterruption => 3;
 
-    protected override int LateInterruption => 25;
+    protected override int LateInterruption => 14;
 
     protected override ResumeUpstream Create() => new SlackResumeUpstream();
 
