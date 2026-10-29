@@ -33,4 +33,8 @@ public enum ModelPurpose
     /// <summary>Naming and summarizing one group of related records across sources (context.conceptSynthesis, context.labeling.maxTokensPerSync).</summary>
     [JsonStringEnumMemberName("concept-synthesis")]
     ConceptSynthesis,
+
+    /// <summary>The concept scan's two calls over a built map (context.conceptScan); routed like <see cref="Concepts"/>.</summary>
+    [JsonStringEnumMemberName("concept-scan")]
+    ConceptScan,
 }
