@@ -64,6 +64,6 @@ public sealed class ApprovedModelsTests
 
         var settings = await new ApprovedModels(profiles).Current(Token);
 
-        Assert.Equal("old-cheap", settings.Names.Written(ModelHarness.ClaudeCode, Aw.Context.Core.Models.ModelTier.Cheap));
+        Assert.Equal("old-cheap", settings.Names.Written(ModelHarness.ClaudeCode, Context.Core.Models.ModelTier.Cheap));
     }
 }

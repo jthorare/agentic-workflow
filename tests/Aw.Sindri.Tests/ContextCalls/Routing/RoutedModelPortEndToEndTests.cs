@@ -28,7 +28,7 @@ public sealed class RoutedModelPortEndToEndTests
     {
         var waits = new JobWaits(_h.Clock);
         var log = new LedgerModelCallLog(_h.Held, _h.Store, _h.Events, new ListLogger<LedgerModelCallLog>());
-        return (new RoutedModelPort(() => new ScriptedCatalog(clis), new FixedModels(new Aw.Context.Core.Engine.ModelsSettings()), _jobs, log, _h.Ids, _h.Clock), waits);
+        return (new RoutedModelPort(() => new ScriptedCatalog(clis), new FixedModels(new Context.Core.Engine.ModelsSettings()), _jobs, log, _h.Ids, _h.Clock), waits);
     }
 
     private IDisposable InJob(JobWaits waits) => _jobs.Enter(new JobContext(_job, JobKind.From("BuildContextMap"), _progress, new ParkedOnJobWaits(waits, _job)));
@@ -71,7 +71,7 @@ public sealed class RoutedModelPortEndToEndTests
             await Task.Delay(5, Token);
         }
 
-        using var human = _h.Callers.Enter(Aw.Sindri.Testing.A.Caller().Human().Build());
+        using var human = _h.Callers.Enter(A.Caller().Human().Build());
         var resumed = await new ResumeJobService(waits, _h.Store, _h.Callers).Handle(new ResumeJobRequest(_job), Token);
         var answer = await asking;
 

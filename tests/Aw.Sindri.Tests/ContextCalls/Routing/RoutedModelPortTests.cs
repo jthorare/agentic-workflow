@@ -1,10 +1,10 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
-using Aw.Sindri.Core.Jobs;
-using Aw.Sindri.Host.Models;
 using Aw.Context.Core.Models;
 using Aw.Judge.Core.Providers;
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Host.Models;
 
 namespace Aw.Sindri.Tests.ContextCalls.Routing;
 
@@ -209,8 +209,8 @@ public sealed class RoutedModelPortTests
     public void An_entry_of_a_job_that_ended_is_dropped_and_the_others_stay()
     {
         var limits = new JobModelLimits();
-        var ended = new JobContext(Aw.Sindri.Core.Ids.JobId.From("JOB-" + new string('c', 32)), Aw.Sindri.Core.Ids.JobKind.From("BuildContextMap"), new LineProgress());
-        var running = new JobContext(Aw.Sindri.Core.Ids.JobId.From("JOB-" + new string('d', 32)), Aw.Sindri.Core.Ids.JobKind.From("BuildContextMap"), new LineProgress());
+        var ended = new JobContext(Core.Ids.JobId.From("JOB-" + new string('c', 32)), Core.Ids.JobKind.From("BuildContextMap"), new LineProgress());
+        var running = new JobContext(Core.Ids.JobId.From("JOB-" + new string('d', 32)), Core.Ids.JobKind.From("BuildContextMap"), new LineProgress());
         limits.Remember(ended, ModelHarness.ClaudeCode);
         limits.Remember(running, ModelHarness.ClaudeCode);
 
@@ -446,7 +446,7 @@ public sealed class RoutedModelPortTests
         var rig = new RouterRig(settings: null, Claude(RouterRig.Limit()));
         using var job = rig.EnterJob();
 
-        var asking = rig.Ask(RouterRig.Request()).AsTask();
+        var asking = rig.Ask(RouterRig.Request(ModelPurpose.Adjudication)).AsTask();   // not labeling: its 240 is wrapped as 042 (spec §10)
         await rig.Waiting.Until(1, Token);
         _ = rig.Waiting.Resume();
         while (rig.Waiting.Waits.Count < 2)
