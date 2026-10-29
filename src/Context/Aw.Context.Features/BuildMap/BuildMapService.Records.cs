@@ -52,7 +52,7 @@ internal sealed partial class BuildMapService
     private static (List<GraphNode> Nodes, List<GraphEdge> Edges) WithFileNodes(ExtractedMap half, ExtractedMap found, HashSet<string> tracked)
     {
         var known = found.Nodes.Concat(half.Nodes).Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
-        var docs = half.Nodes.Where(n => n.Key.Value.StartsWith(DocPrefix, StringComparison.Ordinal)).Select(n => n.Key.Value).Order(StringComparer.Ordinal).ToList();
+        var docs = DocsByPath(half);
         var nodes = half.Nodes.ToList();
         var edges = new Dictionary<(string From, string To, EdgeType Type), GraphEdge>();
         foreach (var edge in half.Edges)
@@ -60,9 +60,14 @@ internal sealed partial class BuildMapService
             var target = edge;
             if (edge.To.Kind == NodeKind.Code && !known.Contains(edge.To.Value) && tracked.Contains(edge.To.Name))
             {
-                var doc = docs.Find(d => d.AsSpan(DocPrefix.Length).IndexOf('/') is var slash and >= 0 && string.Equals(d[(DocPrefix.Length + slash + 1)..], edge.To.Name, StringComparison.Ordinal));
-                if (doc is not null)
+                if (docs.TryGetValue(edge.To.Name, out var holders))
                 {
+                    // why: a path two repos both hold is the doc of the mentioning doc's own repo; with no such pick the edge is dropped, never linked to another repo's doc.
+                    if (DocFor(holders, edge.From.Value) is not { } doc)
+                    {
+                        continue;
+                    }
+
                     target = edge with { To = NodeKey.From(doc) };
                 }
                 else
@@ -77,6 +82,45 @@ internal sealed partial class BuildMapService
         }
 
         return (nodes, [.. edges.Values]);
+    }
+
+    // Each doc record's key by its path in its repo, in key order.
+    private static Dictionary<string, List<string>> DocsByPath(ExtractedMap half)
+    {
+        var docs = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        foreach (var key in half.Nodes.Select(n => n.Key.Value).Where(k => k.StartsWith(DocPrefix, StringComparison.Ordinal)).Order(StringComparer.Ordinal))
+        {
+            if (key.IndexOf('/', DocPrefix.Length) is var slash and >= 0)
+            {
+                var path = key[(slash + 1)..];
+                if (!docs.TryGetValue(path, out var same))
+                {
+                    docs[path] = same = [];
+                }
+
+                same.Add(key);
+            }
+        }
+
+        return docs;
+    }
+
+    // The one doc a mention lands on: the only holder of the path, else the holder in the mentioning doc's own repo; null when neither picks exactly one.
+    private static string? DocFor(List<string> holders, string from)
+    {
+        if (holders.Count == 1)
+        {
+            return holders[0];
+        }
+
+        var slash = from.StartsWith(DocPrefix, StringComparison.Ordinal) ? from.IndexOf('/', DocPrefix.Length) : -1;
+        if (slash < 0)
+        {
+            return null;
+        }
+
+        var own = holders.Where(h => h.StartsWith(from[..(slash + 1)], StringComparison.Ordinal)).ToList();
+        return own.Count == 1 ? own[0] : null;
     }
 
     private static string Unavailable(Error error) => $"records: unavailable ({error.Code})";

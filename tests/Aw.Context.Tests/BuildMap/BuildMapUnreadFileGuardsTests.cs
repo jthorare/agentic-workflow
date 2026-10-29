@@ -16,6 +16,7 @@ public sealed class BuildMapUnreadFileGuardsTests : IDisposable
     private const string PrKey = "github:pr/acme/app/71";
     private const string Secret = "secrets/key.sh";
     private static readonly ContextRepoName _repo = ContextRepoName.From("aw-split-panes");
+    private static readonly string[] _twoRepos = ["alpha", "zeta"];
     private readonly List<MapWorld> _worlds = [];
 
     public void Dispose() => _worlds.ForEach(w => w.Dispose());
@@ -84,4 +85,42 @@ public sealed class BuildMapUnreadFileGuardsTests : IDisposable
     public void The_extractor_version_is_unchanged_by_file_nodes() =>
         // why: #1670's file nodes are made in the record half, so the backtest's as-of cache key doesn't change.
         Assert.Equal(7, MapExtractor.Version);
+
+    // Two profile repos, each holding a README.md: alpha's doc cites it, and a PR of zeta mentions it.
+    private async Task<GraphSnapshot> BuildTwoRepos(params RecordWrite[] writes)
+    {
+        var alpha = ContextRepoName.From("alpha");
+        var zeta = ContextRepoName.From("zeta");
+        var files = new Dictionary<string, string>(StringComparer.Ordinal) { ["README.md"] = "Read me.", ["src/F.cs"] = "class C {}", ["Alpha.csproj"] = "<Project/>" };
+        ContextRepo[] repos = [new(alpha, "/work/alpha"), new(zeta, "/work/zeta")];
+        var world = new MapWorld(new RoutingRepoReader(new Dictionary<string, IRepoReader>(StringComparer.Ordinal) { [alpha.Value] = new FakeRepoReader(repos[0], MapWorld.Head, files), [zeta.Value] = new FakeRepoReader(repos[1], MapWorld.Head, files) }));
+        _worlds.Add(world);
+        foreach (var source in writes.GroupBy(w => w.Record.Source))
+        {
+            _ = await world.Records.Commit(RecordSamples.Batch(source.Key, 1, [.. source]), MapWorld.None);
+        }
+
+        var report = await world.Map.BuildMap(progress: null, MapWorld.HumanWith("""{"repos":["alpha","zeta"]}""", repos), MapWorld.None);
+        Assert.False(report.IsError, report.IsError ? report.Error.ToString() : "");
+        return (await world.Store.Snapshot(draft: true, MapWorld.None)).Value!.Graph;
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_cited_doc_path_two_repos_hold_links_to_the_citing_docs_own_repo_and_never_to_the_other()
+    {
+        var alpha = ContextRepoName.From("alpha");
+        const string text = "See `README.md`.";
+        var doc = RecordSamples.Write(
+            RecordSamples.Record(RepoDocs.Key(alpha, "AGENTS.md").Value, FakeRepoReader.BlobId(text), RepoDocs.Id) with { Kind = RecordKind.Doc, Repo = alpha, Title = "AGENTS.md" }, text);
+        var readmes = _twoRepos.Select(r => RecordSamples.Write(
+            RecordSamples.Record(RepoDocs.Key(ContextRepoName.From(r), "README.md").Value, FakeRepoReader.BlobId("Read me."), RepoDocs.Id) with { Kind = RecordKind.Doc, Repo = ContextRepoName.From(r), Title = "README.md" }, "Read me."));
+        var pr = RecordSamples.Write(
+            RecordSamples.Record(PrKey, "v1", RecordSamples.Github) with { Kind = RecordKind.Pr, Repo = ContextRepoName.From("zeta"), Links = [new RecordLink("path:zeta/README.md", RecordLinkKind.Touches, Title: null)] }, "Touch the readme");
+
+        var graph = await BuildTwoRepos([doc, .. readmes, pr]);
+
+        Assert.Contains(graph.Edges, e => e.Type == EdgeType.Mentions && e.From.Value == "record:" + RepoDocs.Key(alpha, "AGENTS.md").Value && e.To.Value == "record:" + RepoDocs.Key(alpha, "README.md").Value);
+        Assert.DoesNotContain(graph.Edges, e => e.From.Value == "record:" + PrKey && e.To.Value == "record:" + RepoDocs.Key(alpha, "README.md").Value);
+        Assert.DoesNotContain(graph.Edges, e => e.To.Value == "record:" + RepoDocs.Key(alpha, "README.md").Value && e.From.Value != "record:" + RepoDocs.Key(alpha, "AGENTS.md").Value);
+    }
 }
