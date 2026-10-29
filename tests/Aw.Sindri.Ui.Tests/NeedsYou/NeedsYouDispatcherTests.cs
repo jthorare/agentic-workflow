@@ -107,14 +107,14 @@ public sealed class NeedsYouDispatcherTests
     }
 
     [Fact]
-    public async Task Complete_on_a_task_with_a_required_output_says_to_open_it_with_Answer_and_sends_nothing()
+    public async Task Complete_on_a_task_with_a_required_output_opens_the_sheet_and_sends_nothing()
     {
         ServeRecommending("approve", withOutputs: true);
 
         var result = await Dispatcher().Run(NeedsYouRows.Desk(), NeedsYouRows.Desk().Actions[0]);
 
         Assert.Empty(_server.CompleteCalls);
-        Assert.Equal((DispatchOutcome.Refused, Labels.CompleteNeedsOutput), (result.Outcome, result.Message));
+        Assert.Equal((DispatchOutcome.OpenSheet, Labels.CompleteNeedsOutputInSheet), (result.Outcome, result.Message));
     }
 
     [Theory]
