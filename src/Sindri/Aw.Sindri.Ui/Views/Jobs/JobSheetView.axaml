@@ -58,7 +58,7 @@
         <Border x:Name="JobPausedText" AutomationProperties.Name="{Binding PausedText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="body" Text="{Binding PausedText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="JobResume" Classes="command-control primary" HorizontalAlignment="Left" Content="{Binding ResumeText}" Click="OnResume" AutomationProperties.Name="{Binding ResumeName}" />
+        <controls:CommandControl x:Name="JobResume" HorizontalAlignment="Left" DataContext="{Binding Resume}" />
       </StackPanel>
 
       <StackPanel x:Name="JobProgress" Spacing="6">

@@ -88,7 +88,7 @@ public sealed class JobModelCallsTests
         var row = await RowWith(Totals(2, 0, 100, 50, 0, ("codex", "gpt-6-luna", 2)), "model-limit", line, state: "waiting");
 
         Assert.Equal(("○ Waiting", line, true), (row.ChipText, row.ModelText, row.HasResume));
-        Assert.Equal(("Resume", "Resume Build the context map"), (row.ResumeText, row.ResumeName));
+        Assert.Equal(("Resume job", "Resume job Build the context map"), (row.Resume?.Label, row.Resume?.Name));
     }
 
     [Fact]
@@ -124,22 +124,47 @@ public sealed class JobModelCallsTests
         var row = await RowWith(models: null, "model-limit", "Paused: x. Resume when one is back.", state: "waiting");
         var reads = _f.Server.JobsCalls;
 
-        await row.Resume(Token);
+        await row.Resume!.Press(Token);
 
         Assert.Equal([row.Id], _f.Server.ResumedJobs);
         Assert.True(_f.Server.JobsCalls > reads);
+        Assert.True(row.Resume.IsAccepted);
     }
 
     [Fact]
-    public async Task A_Resume_that_finds_the_job_no_longer_waiting_only_reads_again()
+    public async Task A_refused_Resume_shows_the_refusal_on_the_control_and_reads_the_list_again()
     {
         var row = await RowWith(models: null, "model-limit", "Paused: x. Resume when one is back.", state: "waiting");
         _f.Server.ResumeJobAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.Conflict, "SND-JOB-003", "The job is not waiting for a model harness.");
         var reads = _f.Server.JobsCalls;
 
-        await row.Resume(Token);
+        await row.Resume!.Press(Token);
 
+        Assert.Equal((true, "SND-JOB-003"), (row.Resume.IsFailed, row.Resume.ErrorCode));
         Assert.True(_f.Server.JobsCalls > reads);
+    }
+
+    [Fact]
+    public async Task The_row_Resume_is_busy_while_the_call_runs_so_a_second_press_sends_nothing()
+    {
+        var row = await RowWith(models: null, "model-limit", "Paused: x. Resume when one is back.", state: "waiting");
+        _f.Server.CommandGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var first = row.Resume!.Press(Token);
+        await row.Resume.Press(Token);
+
+        Assert.Equal((true, false), (row.Resume.IsSending, row.Resume.CanRun));
+        _ = Assert.Single(_f.Server.ResumedJobs);
+        _f.Server.CommandGate.SetResult();
+        await first;
+    }
+
+    [Fact]
+    public async Task All_calls_skipped_or_not_asked_count_the_skipped_not_zero_failed()
+    {
+        var row = await RowWith(Totals(2, 0, 0, 0, 0));
+
+        Assert.Equal("Models: no call answered (2 skipped)", row.ModelText);
     }
 
     [Theory]
@@ -269,11 +294,37 @@ public sealed class JobModelCallsTests
         var sheet = await SheetWith(0, "waiting", "model-limit", ["building", line]);
         var reads = _f.Server.JobCalls;
 
-        Assert.Equal((true, line, "Resume"), (sheet.IsPaused, sheet.PausedText, sheet.ResumeText));
-        await sheet.Resume(Token);
+        Assert.Equal((true, line, "Resume job"), (sheet.IsPaused, sheet.PausedText, sheet.Resume?.Label));
+        await sheet.Resume!.Press(Token);
 
         Assert.Equal([Id], _f.Server.ResumedJobs);
         Assert.True(_f.Server.JobCalls > reads);
+    }
+
+    [Fact]
+    public async Task A_refused_Resume_shows_the_refusal_on_the_sheets_control()
+    {
+        var sheet = await SheetWith(0, "waiting", "model-limit", ["building", "Paused: x. Resume when one is back."]);
+        _f.Server.ResumeJobAnswer = RouteAnswer.Problem(System.Net.HttpStatusCode.Conflict, "SND-JOB-003", "The job is not waiting for a model harness.");
+
+        await sheet.Resume!.Press(Token);
+
+        Assert.Equal((true, "SND-JOB-003"), (sheet.Resume.IsFailed, sheet.Resume.ErrorCode));
+    }
+
+    [Fact]
+    public async Task The_sheets_Resume_is_busy_while_the_call_runs_so_a_second_press_sends_nothing()
+    {
+        var sheet = await SheetWith(0, "waiting", "model-limit", ["building", "Paused: x. Resume when one is back."]);
+        _f.Server.CommandGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        var first = sheet.Resume!.Press(Token);
+        await sheet.Resume.Press(Token);
+
+        Assert.Equal((true, false), (sheet.Resume.IsSending, sheet.Resume.CanRun));
+        _ = Assert.Single(_f.Server.ResumedJobs);
+        _f.Server.CommandGate.SetResult();
+        await first;
     }
 
     [Fact]
@@ -282,5 +333,6 @@ public sealed class JobModelCallsTests
         var sheet = await SheetWith(0);
 
         Assert.False(sheet.IsPaused);
+        Assert.Null(sheet.Resume);
     }
 }

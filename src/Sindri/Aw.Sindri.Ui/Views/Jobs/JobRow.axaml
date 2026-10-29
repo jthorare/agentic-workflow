@@ -39,7 +39,9 @@
         <Border x:Name="JobRowModels" IsVisible="{Binding HasModelText}" VerticalAlignment="Center" AutomationProperties.Name="{Binding ModelText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock Classes="caption subtle" Text="{Binding ModelText}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Button x:Name="JobRowResume" Grid.Column="1" Classes="command-control primary" Margin="8,0,0,0" Content="{Binding ResumeText}" IsVisible="{Binding HasResume}" Click="OnResume" AutomationProperties.Name="{Binding ResumeName}" />
+        <Panel Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" IsVisible="{Binding HasResume}">
+          <controls:CommandControl x:Name="JobRowResume" DataContext="{Binding Resume}" />
+        </Panel>
       </Grid>
     </Grid>
   </Border>

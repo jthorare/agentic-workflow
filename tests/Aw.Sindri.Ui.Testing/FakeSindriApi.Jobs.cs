@@ -83,13 +83,19 @@ internal sealed partial class FakeSindriApi
         return answer;
     }
 
-    public Task<Result<JobResumedView>> ResumeJob(Uri api, string id, CancellationToken cancellationToken)
+    public async Task<Result<JobResumedView>> ResumeJob(Uri api, string id, CancellationToken cancellationToken)
     {
+        if (NotReceived<JobResumedView>(api) is { } unanswered)
+        {
+            return unanswered;
+        }
+
         lock (_gate)
         {
             _resumedJobs.Add(id);
         }
 
-        return Task.FromResult(Answer<JobResumedView>(api, JobRoutes.Resume(id), ResumeJobAnswer));
+        await WaitFor(CommandGate, cancellationToken).ConfigureAwait(false);
+        return Answer<JobResumedView>(api, JobRoutes.Resume(id), ResumeJobAnswer);
     }
 }

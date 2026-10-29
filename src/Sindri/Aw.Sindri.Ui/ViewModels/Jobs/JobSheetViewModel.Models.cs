@@ -1,4 +1,6 @@
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Jobs;
+using Aw.Sindri.Ui.ViewModels.Controls;
 
 namespace Aw.Sindri.Ui.ViewModels.Jobs;
 
@@ -23,27 +25,8 @@ internal sealed partial class JobSheetViewModel
     /// <summary>Why the job is paused (its last progress line); empty while it isn't.</summary>
     public string PausedText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The Resume button's words.</summary>
-#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
-    public string ResumeText => Labels.JobResume;
-
-    /// <summary>The Resume button's accessible name: "Resume Build the context map".</summary>
-    public string ResumeName => Labels.JobResumeName(Heading);
-#pragma warning restore CA1822, MA0041
-
-    /// <summary>Sends the resume of the open job and reads it again; a job no longer waiting is refused by Sindri and the read shows it as it is now.</summary>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>A task that ends when the job was read again.</returns>
-    internal async Task Resume(CancellationToken cancellationToken)
-    {
-        if (_url is not { } url || Id.Length == 0)
-        {
-            return;
-        }
-
-        _ = await Api.ResumeJob(url, Id, cancellationToken).ConfigureAwait(true);   // a job that is no longer waiting is refused; either way the job is read again
-        await Read(cancellationToken).ConfigureAwait(true);
-    }
+    /// <summary>The Resume control (the catalog's ResumeJob row acting on this job) while it is parked on 'model-limit'; else null.</summary>
+    public ControlViewModel? Resume { get; private set => Set(ref field, value); }
 
     private void DrawModels(JobView job)
     {
@@ -53,6 +36,20 @@ internal sealed partial class JobSheetViewModel
         ModelMoreText = job.ModelCallCount > (job.ModelCalls?.Count ?? 0) ? ModelLines.More(job) ?? string.Empty : string.Empty;
         OnChanged(nameof(HasModelCalls));
         OnChanged(nameof(HasModelMore));
-        OnChanged(nameof(ResumeName));
+        Resume = IsPaused ? Resume ?? ResumeFor() : null;
     }
+
+    // Like CancelFor: a refusal is the control's own error, and the job is read again after the call either way.
+    private ControlViewModel? ResumeFor() =>
+        _catalog?.On("ResumeJob", Heading, async ct =>
+        {
+            if (_url is not { } url || Id.Length == 0)
+            {
+                return SindriUiErrors.Unreachable.With("Sindri isn't reachable yet");
+            }
+
+            var resumed = await Api.ResumeJob(url, Id, ct).ConfigureAwait(true);
+            await Read(ct).ConfigureAwait(true);
+            return resumed.Map(static r => new CommandAcceptedView(r.Accepted.CommandId, r.Accepted.Sequence));
+        });
 }

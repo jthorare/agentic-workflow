@@ -58,7 +58,10 @@ internal static class ModelLines
         return job.ModelCallCount > shown ? string.Create(CultureInfo.InvariantCulture, $"showing the last {shown} of {job.ModelCallCount}") : null;
     }
 
-    private static string Failed(JobModelTotalsView totals) => string.Create(CultureInfo.InvariantCulture, $"Models: no call answered ({totals.FailedCalls} failed)");
+    // "(3 failed)" when calls failed; a job whose calls were all skipped or not asked has none failed, so it counts the skipped ones.
+    private static string Failed(JobModelTotalsView totals) => totals.FailedCalls > 0
+        ? string.Create(CultureInfo.InvariantCulture, $"Models: no call answered ({totals.FailedCalls} failed)")
+        : string.Create(CultureInfo.InvariantCulture, $"Models: no call answered ({totals.Calls - totals.FailedCalls} skipped)");
 
     private static string Line(JobModelTotalsView totals)
     {

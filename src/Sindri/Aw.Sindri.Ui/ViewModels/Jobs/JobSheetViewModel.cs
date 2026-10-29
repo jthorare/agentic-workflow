@@ -166,6 +166,7 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
             if (string.Equals(e.PropertyName, nameof(CatalogViewModel.Controls), StringComparison.Ordinal) && _last is { } job)
             {
                 Cancel = CancelFor(job);   // a catalog read after the sheet drew gives a running job its Cancel
+                Resume = IsPaused ? ResumeFor() : null;
             }
         };
     }
@@ -278,7 +279,7 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
     private void Clear()
     {
         (Heading, StateLine, SummaryText, CodeText, ProblemText, Note, ResultText, Cli) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
-        (Progress, Fields, Cancel, _last) = ([], [], null, null);
+        (Progress, Fields, Cancel, Resume, _last) = ([], [], null, null, null);
         (ModelCalls, ModelMoreText, PausedText, IsPaused) = ([], string.Empty, string.Empty, false);
         (ProblemCode, CopyLabel, CopyIdLabel) = (string.Empty, Labels.Copy, Labels.Copy);
         _idCopies++;

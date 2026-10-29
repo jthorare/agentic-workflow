@@ -21,14 +21,6 @@ internal sealed partial class JobSheetView : UserControl
         }
     }
 
-    private void OnResume(object? sender, RoutedEventArgs e)
-    {
-        if (DataContext is JobSheetViewModel sheet)
-        {
-            _ = sheet.Resume(CancellationToken.None);
-        }
-    }
-
     private void OnCopyCli(object? sender, RoutedEventArgs e)
     {
         if (DataContext is JobSheetViewModel sheet)
