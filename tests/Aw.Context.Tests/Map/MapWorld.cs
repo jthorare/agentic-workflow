@@ -166,6 +166,9 @@ internal sealed class MapWorld : IDisposable
     /// <summary>How many search indexes were built rather than served from the cache.</summary>
     internal int SearchBuilds => _scope.ServiceProvider.GetRequiredService<Features.SearchMap.MapSearchCache>().Builds;
 
+    /// <summary>A scoped service of the world, for internals a test drives directly.</summary>
+    internal T Service<T>() where T : notnull => _scope.ServiceProvider.GetRequiredService<T>();
+
     public IContextMap Map => _scope.ServiceProvider.GetRequiredService<IContextMap>();
 
     /// <summary>The whole facade (S-3b: graph reads and queries over the imported map).</summary>

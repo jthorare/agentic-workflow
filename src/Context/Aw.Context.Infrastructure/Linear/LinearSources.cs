@@ -19,4 +19,9 @@ internal sealed class LinearSources(LinearSourceParts parts)
     /// <param name="settings">The checked 'context.sources.linear' settings.</param>
     /// <returns>The feed.</returns>
     public RecordFeed CreateFeed(LinearSettings settings) => new LinearFeed(new LinearClient(settings, parts), parts.CallDeadline);
+
+    /// <summary>A linear project record feed (projects page spec §4.1).</summary>
+    /// <param name="settings">The checked 'context.sources.linear' settings.</param>
+    /// <returns>The feed.</returns>
+    public RecordFeed CreateProjectFeed(LinearSettings settings) => new LinearProjectFeed(new LinearClient(settings, parts), parts.CallDeadline);
 }
