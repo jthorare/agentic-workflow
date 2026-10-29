@@ -29,6 +29,9 @@ public sealed record ConceptSynthesisSettings
     /// <summary>The most characters one prompt carries.</summary>
     public int MaxCharsPerCall { get; init; } = 30_000;
 
+    /// <summary>The share of a derived concept's features one synthesized concept must hold for the derived one to fold into it (#1281).</summary>
+    public double CoverShare { get; init; }
+
     /// <summary>The grouper's knobs.</summary>
     public GroupingSettings Grouping => new(Neighbours, MinCosine, MaxGroup, MinRecords, MinSources);
 }
