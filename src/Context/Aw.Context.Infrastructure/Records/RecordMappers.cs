@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Globalization;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
@@ -10,6 +11,9 @@ namespace Aw.Context.Infrastructure.Records;
 /// <summary>The record store's row mappers and the binds its statements share.</summary>
 internal static class RecordMappers
 {
+    /// <summary>How a due day is stored: the date alone, no time zone.</summary>
+    internal const string DueFormat = "yyyy-MM-dd";
+
     internal static IRowMapper<StoredRecord> Record { get; } = new Mapper<StoredRecord>(r => new StoredRecord(
         RecordKey.From(r.GetString(0)),
         SourceId.From(r.GetString(1)),
@@ -30,7 +34,12 @@ internal static class RecordMappers
         r.GetInt64(16) == 1,
         At(r, 17),
         SqliteRead.GetTimestamp(r, 18),
-        []));
+        [],
+        Text(r, 19),
+        Text(r, 20) is { } due ? DateOnly.ParseExact(due, DueFormat, CultureInfo.InvariantCulture) : null));
+
+    internal static IRowMapper<SourceIdentity> Identity { get; } = new Mapper<SourceIdentity>(r =>
+        new SourceIdentity(SourceId.From(r.GetString(0)), r.GetString(1), r.GetString(2), SqliteRead.GetTimestamp(r, 3)));
 
     internal static IRowMapper<RecordLink> Link { get; } = new Mapper<RecordLink>(r =>
         new RecordLink(r.GetString(0), RecordWire.Link(r.GetString(1)), Text(r, 2), Text(r, 3) is { } to ? RecordKey.From(to) : null));
