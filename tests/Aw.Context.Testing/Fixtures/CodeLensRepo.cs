@@ -81,28 +81,34 @@ public sealed class CodeLensRepo : IDisposable
         var root = Directory.CreateTempSubdirectory("aw-code-lens-").FullName;
         try
         {
-            var path = Directory.CreateDirectory(System.IO.Path.Combine(root, "sharing")).FullName;
-            var emptyConfig = System.IO.Path.Combine(root, "gitconfig");
-            File.WriteAllText(emptyConfig, string.Empty);
-            foreach (var (relative, text) in _files.Concat(Enumerable.Range(0, extraTests).Select(i => ($"tests/gen/g{i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture)}.test.ts", "import { createLink } from '../../src/sharing/links';\n"))))
-            {
-                var target = System.IO.Path.Combine(path, relative);
-                _ = Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);   // why: a file under the repo has a directory
-                File.WriteAllText(target, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            }
-
-            var git = new GitRunner(path, emptyConfig, _author);
-            _ = git.Run(_at, "init", "-q", "-b", "main");
-            _ = git.Run(_at, "config", "core.hooksPath", System.IO.Path.Combine(root, "no-hooks"));
-            _ = git.Run(_at, "add", "-A");
-            _ = git.Run(_at, "commit", "-q", "--no-gpg-sign", "-m", "Code lens fixture");
-            return new CodeLensRepo(root, path, git.Run(_at, "rev-parse", "main"));
+            var template = RepoTemplate.Copy("code-lens-" + extraTests.ToString(System.Globalization.CultureInfo.InvariantCulture), "code-lens-", root, templateRoot => BuildTemplate(templateRoot, extraTests));   // one git build per process and size; a copy has the same sha
+            return new CodeLensRepo(root, System.IO.Path.Combine(root, "sharing"), template.Head);
         }
         catch
         {
             Directory.Delete(root, recursive: true);
             throw;
         }
+    }
+
+    private static CodeLensRepo BuildTemplate(string root, int extraTests)
+    {
+        var path = Directory.CreateDirectory(System.IO.Path.Combine(root, "sharing")).FullName;
+        var emptyConfig = System.IO.Path.Combine(root, "gitconfig");
+        File.WriteAllText(emptyConfig, string.Empty);
+        foreach (var (relative, text) in _files.Concat(Enumerable.Range(0, extraTests).Select(i => ($"tests/gen/g{i.ToString("D3", System.Globalization.CultureInfo.InvariantCulture)}.test.ts", "import { createLink } from '../../src/sharing/links';\n"))))
+        {
+            var target = System.IO.Path.Combine(path, relative);
+            _ = Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);   // why: a file under the repo has a directory
+            File.WriteAllText(target, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        var git = new GitRunner(path, emptyConfig, _author);
+        _ = git.Run(_at, "init", "-q", "-b", "main");
+        _ = git.Run(_at, "config", "core.hooksPath", System.IO.Path.Combine(root, "no-hooks"));
+        _ = git.Run(_at, "add", "-A");
+        _ = git.Run(_at, "commit", "-q", "--no-gpg-sign", "-m", "Code lens fixture");
+        return new CodeLensRepo(root, path, git.Run(_at, "rev-parse", "main"));
     }
 
     /// <summary>Writes <paramref name="yaml"/> to <paramref name="directory"/>/code-map.yaml.</summary>
