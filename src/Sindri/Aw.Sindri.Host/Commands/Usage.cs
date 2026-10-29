@@ -51,6 +51,7 @@ internal static class Usage
         "       sindri jobs [--state <s>] [--kind <k>] [--json] [--no-start]   the jobs, newest first (states: running, succeeded, failed, cancelled); exit 1 while the views rebuild or stall",
         "       sindri jobs show <jobId> [--json] [--no-start]   one job: who started it, its last 200 lines, how it ended and the command that cancels it",
         "       sindri jobs cancel <jobId> [--no-start]   cancel a running job (SND-JOB-409 when it already ended)",
+        "       sindri jobs resume <jobId> [--no-start]   wake a job paused because every model harness hit its usage limit and walk its harnesses again from the first (SND-JOB-003 when it isn't paused for that); exit 2 when it isn't",
         "       sindri launch init [--viewer <name>] [--force] [--stdout]   detect this box's terminal and write launcher.json (0600); a file that exists is refused without --force (exit 1); --stdout writes nothing",
         "       sindri launch probe [--detach] [--json]   check the launch targets again (the Check again control): a job on the running control plane that records launch.probed when what it found changed; follows the job as 'services run' does",
         "       sindri launch show [<id>] [--json]   the merged agent catalog: source, resolved bin, argvHash, whether Steps may run it (SL8) and the profile line that approves an entry that will park",
