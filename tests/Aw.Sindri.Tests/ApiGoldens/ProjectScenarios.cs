@@ -89,10 +89,10 @@ internal static class ProjectScenarios
             "syncing" => facts.With(Snapshot(_owner, firstRead: false)).WithFreshness(new ProjectSourceFreshness("linear-projects", Usable: false, LastSync: null, LastCode: null)),
             "counting" => facts.With(Snapshot(_owner, [Fact(Led, "Checkout rewrite", "started", _owner, leadIsOwner: true, Epoch(-1), issues: 4, counting: true)])).WithFreshness(Ok("linear-projects")),
             "linear-failing" => facts.With(Snapshot(_owner, [all])).WithFreshness(Ok("linear-projects"), new ProjectSourceFreshness("linear", Usable: true, Epoch(-1), "SND-INDEX-401")),
-            "untrusted-name" => facts.With(Snapshot(_owner, [Fact(Led, Injected, "started", _owner, leadIsOwner: true, Epoch(-1), issues: 1)])).WithFreshness(Ok("linear-projects")),
+            "untrusted-name" => facts.With(Snapshot(_owner, [Fact(Led, Injected, "started", _owner, leadIsOwner: true, Epoch(-1), issues: 1) with { Description = Injected }])).WithFreshness(Ok("linear-projects")),
             _ => facts.With(Snapshot(_owner,
             [
-                all,
+                all with { Description = "Rebuild checkout on the new payments API." },
                 Fact(Hidden, "Billing cleanup", "started", _owner, leadIsOwner: true, Epoch(-2), issues: 3),
                 Fact(RecentlyDone, "Search relaunch", "completed", _owner, leadIsOwner: true, Epoch(-3), issues: 0, closed: Epoch(-3)),
                 Fact(LongDone, "Old migration", "completed", _owner, leadIsOwner: true, Epoch(-20), issues: 0, closed: Epoch(-20)),
