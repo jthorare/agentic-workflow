@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.AttachProject;
 /// <param name="Name">The name; required when <paramref name="Linear"/> is null.</param>
 /// <param name="State">The owner's state, or null.</param>
 /// <param name="Links">The links (https, no query or fragment, at most 10), or null.</param>
-/// <param name="Note">The one-line note (at most 200 characters), or null.</param>
+/// <param name="Notes">The free-form notes (at most 16,384 characters, line breaks allowed), or null.</param>
 /// <param name="Target">The target date, or null.</param>
-public sealed record AttachProjectRequest(string? Linear = null, string? Name = null, ProjectState? State = null, IReadOnlyList<string>? Links = null, string? Note = null, DateOnly? Target = null)
+public sealed record AttachProjectRequest(string? Linear = null, string? Name = null, ProjectState? State = null, IReadOnlyList<string>? Links = null, string? Notes = null, DateOnly? Target = null)
     : ICommand<ProjectAccepted>;

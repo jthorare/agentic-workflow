@@ -47,6 +47,18 @@ public sealed class ProjectCardsTests
             all);
 
     [Fact]
+    public void A_led_card_serves_the_notes_and_the_version_of_its_row_and_none_without_one()
+    {
+        var bare = Page([Fact()]).Projects.Single();
+        var noted = Page([Fact()], hidden: [new ProjectHiddenRow(KeyA, Hidden: false, Version: 2, Sequence: 9, "led notes\nsecond line")]).Projects.Single();
+        var hidden = Page([Fact()], hidden: [new ProjectHiddenRow(KeyA, Hidden: true, Version: 3, Sequence: 9, "still here")]).Hidden.Single();
+
+        Expect.Equal((null, 0L), (bare.Notes, bare.Version));
+        Expect.Equal(("led notes\nsecond line", 2L), (noted.Notes, noted.Version));
+        Expect.Equal(("still here", 3L), (hidden.Notes, hidden.Version));
+    }
+
+    [Fact]
     public void Build_makes_a_led_card_with_the_Linear_key_and_hide_version_zero()
     {
         var card = Page([Fact()]).Projects.Single();
@@ -81,7 +93,7 @@ public sealed class ProjectCardsTests
         var card = Page([Fact(led: false)], [row]).Projects.Single();
 
         Expect.Equal(("prj_01J9Z3K5M7Q2R4T6V8WXYZ0124", ProjectOrigin.Attached, "Alpha", ProjectState.Paused, true, 3L, "my note"),
-            (card.Key, card.Origin, card.Name, card.State, card.StateSetByOwner, card.Version, card.Note));
+            (card.Key, card.Origin, card.Name, card.State, card.StateSetByOwner, card.Version, card.Notes));
         Expect.Sequence(["Linear", "https://example.com/plan"], card.Links.Select(static l => l.Label));
         Expect.Equal(("Sam", false), (card.Lead!.Name, card.Lead.You));
     }

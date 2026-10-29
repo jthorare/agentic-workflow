@@ -1,6 +1,7 @@
 using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Views;
@@ -20,22 +21,22 @@ public sealed class ProjectsProjectionTests
 
     private CommandId Command() => H.Ids.New<CommandId>();
 
-    private Task Attach(ProjectState? state = null, string? linear = null, string? name = "Kitchen", IReadOnlyList<string>? links = null, string? note = null, DateOnly? target = null) =>
-        _v.Fold(EventTypes.ProjectAttached, new ProjectAttached(Command(), _id, linear, name, state, links ?? [], note, target));
+    private Task Attach(ProjectState? state = null, string? linear = null, string? name = "Kitchen", IReadOnlyList<string>? links = null, string? notes = null, DateOnly? target = null) =>
+        _v.Fold(EventTypes.ProjectAttached, new ProjectAttached(Command(), _id, linear, name, state, links ?? [], target, notes));
 
-    private Task Change(long version, ProjectState? state = null, bool clearState = false, IReadOnlyList<string>? links = null, string? note = null, bool clearNote = false, DateOnly? target = null, bool clearTarget = false, string? name = null) =>
-        _v.Fold(EventTypes.ProjectChanged, new ProjectChanged(Command(), _id, version, name, state, clearState, links, note, clearNote, target, clearTarget));
+    private Task Change(long version, ProjectState? state = null, bool clearState = false, IReadOnlyList<string>? links = null, string? notes = null, bool clearNotes = false, DateOnly? target = null, bool clearTarget = false, string? name = null) =>
+        _v.Fold(EventTypes.ProjectChanged, new ProjectChanged(Command(), _id, version, name, state, clearState, links, target, clearTarget, notes, clearNotes));
 
     private async Task<ProjectAttachedRow?> Row() => (await _v.Views.Get<ProjectAttachedRow>(ViewNames.ProjectAttached, _id.Value, Token)).Value;
 
     [Fact, Trait("Lane", "unit")]
     public async Task Attached_makes_a_row_at_version_1_keyed_by_the_project_id()
     {
-        await Attach(ProjectState.Planned, links: ["https://example.com/plan"], note: "one line", target: new DateOnly(2026, 11, 14));
+        await Attach(ProjectState.Planned, links: ["https://example.com/plan"], notes: "one line", target: new DateOnly(2026, 11, 14));
 
         var row = (await Row())!;
 
-        Assert.Equal((_id, null, "Kitchen", ProjectState.Planned, "one line", new DateOnly(2026, 11, 14), 1L), (row.Id, row.Linear, row.Name, row.State, row.Note, row.Target, row.Version));
+        Assert.Equal((_id, null, "Kitchen", ProjectState.Planned, "one line", new DateOnly(2026, 11, 14), 1L), (row.Id, row.Linear, row.Name, row.State, row.Notes, row.Target, row.Version));
         Assert.Equal(["https://example.com/plan"], row.Links);
         Assert.Equal((H.Clock.GetUtcNow(), H.Clock.GetUtcNow(), null, 1L), (row.AttachedAt, row.EditedAt, row.FinishedAt, row.Sequence));
     }
@@ -61,14 +62,14 @@ public sealed class ProjectsProjectionTests
     [Fact, Trait("Lane", "unit")]
     public async Task Changed_sets_only_the_asked_fields_and_the_version()
     {
-        await Attach(ProjectState.Planned, links: ["https://example.com/a"], note: "first", target: new DateOnly(2026, 11, 14));
+        await Attach(ProjectState.Planned, links: ["https://example.com/a"], notes: "first", target: new DateOnly(2026, 11, 14));
         var attachedAt = H.Clock.GetUtcNow();
         H.Clock.Advance(TimeSpan.FromMinutes(5));
 
-        await Change(version: 2, note: "second");
+        await Change(version: 2, notes: "second");
 
         var row = (await Row())!;
-        Assert.Equal((2L, "second", ProjectState.Planned, new DateOnly(2026, 11, 14), "Kitchen"), (row.Version, row.Note, row.State, row.Target, row.Name));
+        Assert.Equal((2L, "second", ProjectState.Planned, new DateOnly(2026, 11, 14), "Kitchen"), (row.Version, row.Notes, row.State, row.Target, row.Name));
         Assert.Equal(["https://example.com/a"], row.Links);
         Assert.Equal((attachedAt, H.Clock.GetUtcNow(), 2L), (row.AttachedAt, row.EditedAt, row.Sequence));
     }
@@ -86,14 +87,14 @@ public sealed class ProjectsProjectionTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task The_clear_flags_drop_state_note_and_target()
+    public async Task The_clear_flags_drop_state_notes_and_target()
     {
-        await Attach(ProjectState.Paused, note: "n", target: new DateOnly(2026, 11, 14));
+        await Attach(ProjectState.Paused, notes: "n", target: new DateOnly(2026, 11, 14));
 
-        await Change(version: 2, clearState: true, clearNote: true, clearTarget: true);
+        await Change(version: 2, clearState: true, clearNotes: true, clearTarget: true);
 
         var row = (await Row())!;
-        Assert.Equal((null, null, null), (row.State, row.Note, row.Target));
+        Assert.Equal((null, null, null), (row.State, row.Notes, row.Target));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -106,7 +107,7 @@ public sealed class ProjectsProjectionTests
         Assert.Equal(doneAt, (await Row())!.FinishedAt);
 
         H.Clock.Advance(TimeSpan.FromHours(1));
-        await Change(version: 3, note: "still done");
+        await Change(version: 3, notes: "still done");
         Assert.Equal(doneAt, (await Row())!.FinishedAt);
 
         H.Clock.Advance(TimeSpan.FromHours(1));
@@ -133,10 +134,54 @@ public sealed class ProjectsProjectionTests
     public async Task Versions_follow_the_events_so_the_next_command_sees_the_latest()
     {
         await Attach();
-        await Change(version: 2, note: "a");
-        await Change(version: 3, note: "b");
+        await Change(version: 2, notes: "a");
+        await Change(version: 3, notes: "b");
 
         Assert.Equal(3L, (await Row())!.Version);
+    }
+
+    private ProjectChanged Bare(long version) => new(Command(), _id, version, Name: null, State: null, ClearState: false, Links: null, Target: null, ClearTarget: false);
+
+    // Events written before the field was renamed carry "note" and "clearNote": the payload is rewritten to that shape after it is serialized (owner q158)
+    private Task FoldOld<TPayload>(string type, TPayload payload, params (string Now, string Then)[] edits) =>
+        _v.Fold(type, payload, ItemId.From("ITM-" + new string('1', 32)), json =>
+        {
+            foreach (var (now, then) in edits)
+            {
+                Assert.Contains(now, json, StringComparison.Ordinal);
+                json = json.Replace(now, then, StringComparison.Ordinal);
+            }
+
+            return json;
+        });
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_old_attached_event_with_note_shows_up_as_the_rows_notes()
+    {
+        await FoldOld(EventTypes.ProjectAttached, new ProjectAttached(Command(), _id, Linear: null, "Kitchen", ProjectState.Planned, [], Target: null), ("\"notes\":null", "\"note\":\"order the tile\""));
+
+        Assert.Equal("order the tile", (await Row())!.Notes);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_old_changed_event_with_note_sets_the_notes_and_one_with_clearNote_drops_them()
+    {
+        await Attach(notes: "first");
+
+        await FoldOld(EventTypes.ProjectChanged, Bare(2), ("\"notes\":null", "\"note\":\"second\""));
+        Assert.Equal("second", (await Row())!.Notes);
+
+        await FoldOld(EventTypes.ProjectChanged, Bare(3), ("\"clearNotes\":false", "\"clearNote\":true"));
+        Assert.Null((await Row())!.Notes);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void New_events_write_notes_and_never_the_old_note_field()
+    {
+        var recorded = Recorded.Of(H.Events, EventTypes.ProjectAttached, new ProjectAttached(Command(), _id, Linear: null, "Kitchen", State: null, [], Target: null, "line one\nline two"), 1);
+
+        Assert.Contains("\"notes\":\"line one\\nline two\"", recorded.Envelope.Payload, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"note\"", recorded.Envelope.Payload, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -154,7 +199,7 @@ public sealed class ProjectsProjectionTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_change_or_detach_for_a_project_the_view_does_not_hold_is_skipped()
     {
-        await Change(version: 2, note: "orphan");
+        await Change(version: 2, notes: "orphan");
         await _v.Fold(EventTypes.ProjectDetached, new ProjectDetached(Command(), _id, Version: 3));
 
         Assert.Null(await Row());
@@ -172,12 +217,76 @@ public sealed class ProjectsProjectionTests
         Assert.Equal((false, 2L, 2L), (unhidden.Hidden, unhidden.Version, unhidden.Sequence));
     }
 
+    private LedgerEvent Hide(long sequence, bool hidden, long version) =>
+        Recorded.Of(H.Events, EventTypes.ProjectHidden, new ProjectHidden(Command(), ProjectRows.LinearKey, hidden, version), sequence);
+
+    private LedgerEvent Noted(long sequence, string? notes, long version) =>
+        Recorded.Of(H.Events, EventTypes.ProjectLedNoted, new ProjectLedNoted(Command(), ProjectRows.LinearKey, notes, version), sequence);
+
+    private static async Task<ProjectHiddenRow?> LedRow(ViewsHarness views) =>
+        (await views.Views.Get<ProjectHiddenRow>(ViewNames.ProjectHidden, ProjectRows.LinearKey, Token)).Value;
+
+    // folds the events one page each here, then all in one page into a fresh set of views (a rebuild from the ledger): the row must come out the same
+    private async Task<ProjectHiddenRow> FoldAndRebuild(params LedgerEvent[] ledger)
+    {
+        foreach (var recorded in ledger)
+        {
+            await _v.Apply([recorded]);
+        }
+
+        var rebuilt = new ViewsHarness();
+        await rebuilt.Apply(ledger);
+        var row = (await LedRow(_v))!;
+        Assert.Equal(row, await LedRow(rebuilt));
+        return row;
+    }
+
     [Fact, Trait("Lane", "unit")]
-    public void The_projection_folds_exactly_the_four_project_events_into_its_two_views()
+    public async Task Led_noted_makes_a_row_that_is_not_hidden_with_the_notes_and_the_version()
+    {
+        var row = await FoldAndRebuild(Noted(1, "first line\nsecond", version: 1));
+
+        Assert.Equal((ProjectRows.LinearKey, false, 1L, 1L, "first line\nsecond"), (row.Linear, row.Hidden, row.Version, row.Sequence, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Hide_keeps_a_led_cards_notes()
+    {
+        var row = await FoldAndRebuild(Noted(1, "keep me", version: 1), Hide(2, hidden: true, version: 2));
+
+        Assert.Equal((true, 2L, "keep me"), (row.Hidden, row.Version, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Unhide_keeps_a_led_cards_notes()
+    {
+        var row = await FoldAndRebuild(Noted(1, "keep me", version: 1), Hide(2, hidden: true, version: 2), Hide(3, hidden: false, version: 3));
+
+        Assert.Equal((false, 3L, "keep me"), (row.Hidden, row.Version, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_notes_save_keeps_a_hidden_card_hidden()
+    {
+        var row = await FoldAndRebuild(Hide(1, hidden: true, version: 1), Noted(2, "while hidden", version: 2));
+
+        Assert.Equal((true, 2L, "while hidden"), (row.Hidden, row.Version, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Null_notes_clear_them()
+    {
+        var row = await FoldAndRebuild(Noted(1, "gone soon", version: 1), Noted(2, notes: null, version: 2));
+
+        Assert.Equal((false, 2L, null), (row.Hidden, row.Version, row.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_projection_folds_exactly_the_five_project_events_into_its_two_views()
     {
         var projection = new ProjectsProjection(H.Events);
 
-        Assert.All([EventTypes.ProjectAttached, EventTypes.ProjectChanged, EventTypes.ProjectDetached, EventTypes.ProjectHidden], type => Assert.True(projection.Handles(type)));
+        Assert.All([EventTypes.ProjectAttached, EventTypes.ProjectChanged, EventTypes.ProjectDetached, EventTypes.ProjectHidden, EventTypes.ProjectLedNoted], type => Assert.True(projection.Handles(type)));
         Assert.False(projection.Handles(EventTypes.ItemCreated));
         Assert.Equal([ViewNames.ProjectAttached, ViewNames.ProjectHidden], projection.Views);
     }

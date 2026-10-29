@@ -35,7 +35,7 @@
       "finishedAt": null,
       "repos": [],
       "links": [],
-      "note": null,
+      "notes": null,
       "synced": true,
       "version": 1
     },
@@ -62,7 +62,7 @@
           "url": "https://example.com/mobile"
         }
       ],
-      "note": "Waiting on the vendor",
+      "notes": "Waiting on the vendor",
       "synced": true,
       "version": 1
     }

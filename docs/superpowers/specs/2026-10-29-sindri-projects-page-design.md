@@ -82,7 +82,7 @@ Ship 2 adds a line: `3 open PRs · repos: web-app, api`. The links (Open in Line
 | Open PRs (ship 2) | stored PRs, `open` or `draft`, linked to the project's issues (§4.5) | same | none (a hand-made project has no repo, owner q151) |
 | Last activity | newest `updated_at` of the project, its issues, (ship 2) their PRs | same | when the owner last edited it |
 | Repos | (ship 2) repos of linked PRs | same | none |
-| Note | none | the owner's one line | the owner's one line |
+| Notes | the owner's free text (on the card's `project-hidden` row) | the owner's free text | the owner's free text |
 
 A repo's PR list link is `https://github.com/<owner>/<repo>/pulls`, built from the repo's GitHub name in `context.sources.github.repos`. A repo not listed there gets no link and no count; the sheet says "PRs not synced for this repo".
 
@@ -114,8 +114,8 @@ A card is one control. Click or Enter opens **its sheet**, the app's detail shee
 
 | Origin | Edit | Remove | Hide | Set state |
 |---|---|---|---|---|
-| Led | — | — | yes | — |
-| Attached Linear | yes (links, note, target) | yes | — | yes (override; clear goes back to Linear's) |
+| Led | notes only | — | yes | — |
+| Attached Linear | yes (links, notes, target) | yes | — | yes (override; clear goes back to Linear's) |
 | Hand-made | yes (all fields) | yes | — | yes |
 | Hidden (from the Hidden row) | — | — | **Unhide** | — |
 
@@ -242,23 +242,24 @@ Nothing new is fetched. The page reads the PR records the GitHub feed already st
 
 | Event | Payload | When |
 |---|---|---|
-| `project.attached` | `id` (`prj_<ulid>`), `linear` (`linear:project/<id>` or null), `name` (required when `linear` is null), `state` (null or one of the six words), `links` (https urls, at most 10), `note` (one line, ≤ 200 characters), `target` (date or null) | Attach a Linear project, or add one by hand |
+| `project.attached` | `id` (`prj_<ulid>`), `linear` (`linear:project/<id>` or null), `name` (required when `linear` is null), `state` (null or one of the six words), `links` (https urls, at most 10), `notes` (free text, ≤ 16,384 characters, line breaks allowed; `note` is accepted as an alias for one release and old events carry it; owner q158, 2026-10-29), `target` (date or null) | Attach a Linear project, or add one by hand |
 | `project.changed` | `id`, `version`, the changed fields | Edit, set state |
 | `project.detached` | `id`, `version` | Remove |
 | `project.hidden` | `linear`, `hidden` (true or false), `version` | Hide or unhide a led project |
+| `project.led.noted` | `linear`, `notes` (free text ≤ 16,384 characters, or null = cleared), `version` (the same counter `project.hidden` moves) | Write or clear the notes on a led project (owner q158, 2026-10-29) |
 
-Every event is public (`EventCatalog`, `Public: true`) and invalidates the new view `ApiViews.Projects`. `note` and each link pass through `Aw.Redaction` before the event is written, as other owner-typed text does, so a pasted token or a `?token=` link is scrubbed before any session can read the ledger. A stale `version` is refused with `SND-PROJECT-409`, as `CloseItem` refuses with `SND-ITEM-409`. Attaching a project already on the page (led, or already attached) is `SND-PROJECT-001`.
+Every event is public (`EventCatalog`, `Public: true`) and invalidates the new view `ApiViews.Projects`. `notes` and each link pass through `Aw.Redaction` before the event is written, as other owner-typed text does, so a pasted token or a `?token=` link is scrubbed before any session can read the ledger. A stale `version` is refused with `SND-PROJECT-409`, as `CloseItem` refuses with `SND-ITEM-409`. Attaching a project already on the page (led, or already attached) is `SND-PROJECT-001`.
 
 ### 5.2 Projection
 
-`ProjectsProjection : IProjection` (`Aw.Sindri.Core/Projects/`) folds the four events into two `views.db` tables, `project_attached` (with `finished_at`, the time of the event that set Done or Canceled) and `project_hidden`. Pure fold, rebuilt by `sindri views rebuild` (API spec §3).
+`ProjectsProjection : IProjection` (`Aw.Sindri.Core/Projects/`) folds the five events into two `views.db` tables, `project_attached` (with `finished_at`, the time of the event that set Done or Canceled) and `project_hidden` (the led card's owner state: `hidden` and `notes`, one row and one version counter; a hide keeps the notes and a notes save keeps the hide state; owner q158, 2026-10-29). Pure fold, rebuilt by `sindri views rebuild` (API spec §3).
 
 ### 5.3 Commands and the CLI (new)
 
 | CLI | Route, class | Prints | Exit |
 |---|---|---|---|
-| `sindri project add (--linear <url-or-key> \| --name <text>) [--link URL]... [--state S] [--note T] [--target YYYY-MM-DD] [--json] [--no-start]` | `POST /sindri/projects`, desk | `prj_01J… attached: Checkout rewrite (sequence N)` | 0; 1 not running; 2 refused (`SND-PROJECT-001`, `-003`, `-004`) |
-| `sindri project edit <project> [same flags] [--clear-state] [--version N] [--json] [--no-start]` | `POST /sindri/projects/{id}/change`, desk | `prj_… changed (sequence N)` | 0; 1; 2 (`-404`, `-409`, `-004`) |
+| `sindri project add (--linear <url-or-key> \| --name <text>) [--link URL]... [--state S] [--notes T] [--target YYYY-MM-DD] [--json] [--no-start]` | `POST /sindri/projects`, desk | `prj_01J… attached: Checkout rewrite (sequence N)` | 0; 1 not running; 2 refused (`SND-PROJECT-001`, `-003`, `-004`) |
+| `sindri project edit <project> [same flags] [--clear-state] [--clear-notes] [--version N] [--json] [--no-start]` | `POST /sindri/projects/{id}/change`, desk | `prj_… changed (sequence N)` | 0; 1; 2 (`-404`, `-409`, `-004`) |
 | `sindri project remove <project> [--version N] [--json] [--no-start]` | `POST /sindri/projects/{id}/detach`, desk | `prj_… removed (sequence N)` | 0; 1; 2 (`-404`, `-409`) |
 | `sindri project hide <project>` / `unhide <project>` `[--version N] [--json] [--no-start]` | `POST /sindri/projects/hide`, desk | `<name> hidden (sequence N)` | 0; 1; 2 (`-404`, `-409`) |
 | `sindri project show <project> [--json]` | `GET /sindri/projects/{id}`, query | the card in full, with links | 0; 1; 2 (`-404`) |
@@ -312,7 +313,7 @@ Tests: unit counts on a seeded store; an integration test pins that the plan use
       "lastActivity": "2026-10-29T11:40:00Z",
       "repos": [],
       "links": [ { "label": "Linear", "url": "https://linear.app/…" } ],
-      "note": null, "synced": true, "version": 7
+      "notes": null, "synced": true, "version": 7
     }
   ],
   "finished": [],
@@ -341,7 +342,7 @@ Goldens under `tests/Aw.Sindri.Tests/Golden/Api/projects/`: `empty-no-linear.jso
 |---|---|---|
 | `SND-PROJECT-001` | Attaching a project already on the page | "That project is already on your page." |
 | `SND-PROJECT-003` | `--linear` names a project not in the store | "Sindri doesn't sync that project. It syncs these Linear teams: ENG, OPS. Add the team to `context.sources.linear.teams`." |
-| `SND-PROJECT-004` | A bad field: no name on a hand-made project, a non-https link, a note over 200 characters, more than 10 links, a link with a query or fragment, a bad date, a `--linear` that isn't a Linear project url or key | names the field |
+| `SND-PROJECT-004` | A bad field: no name on a hand-made project, a non-https link, notes over 16,384 characters, more than 10 links, a link with a query or fragment, a bad date, a `--linear` that isn't a Linear project url or key | names the field |
 | `SND-PROJECT-404` | No such project | "No project <id>. `sindri projects` lists them." |
 | `SND-PROJECT-409` | A stale version | "This project changed since you read it. Read it again and retry." |
 
