@@ -5380,3 +5380,6 @@ override Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.GetHashCode() 
 override Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.ToString() -> string!
 static Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.operator !=(Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? left, Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? right) -> bool
 static Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.operator ==(Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? left, Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? right) -> bool
+Aw.Sindri.Features.Leftovers.OnyxLeftovers
+static Aw.Sindri.Features.Leftovers.OnyxLeftovers.Find(string! home, Aw.Sindri.Core.Leftovers.IPurgeDocker! docker, Aw.Sindri.Core.Leftovers.ILeftoverFiles! files) -> Aw.Kernel.Result<Aw.Sindri.Core.Leftovers.PurgePlan!>!
+static Aw.Sindri.Features.Leftovers.OnyxLeftovers.ProjectNameFor(string! sindriHome) -> string!

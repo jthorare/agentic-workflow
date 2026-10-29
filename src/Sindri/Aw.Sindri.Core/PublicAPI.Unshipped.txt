@@ -21041,6 +21041,7 @@ Aw.Sindri.Core.Profile.WorkflowAgentSettings.PickIsOn.get -> bool
 static readonly Aw.Sindri.Core.SindriErrors.IndexTokenUnresolved -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.IndexRepoUnreadable -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.IndexNotInProfile -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.IndexOnyxLeftover -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Secrets.ISourceTokenProfileWriter
 Aw.Sindri.Core.Secrets.ISourceTokenProfileWriter.SetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Workflow.Engine.Runtime.IReportOutputChecks
@@ -21353,3 +21354,33 @@ static Aw.Sindri.Core.Setup.SetupSteps.Sources(Aw.Sindri.Core.Setup.SourcesFact!
 Aw.Sindri.Core.Secrets.SourceTokens
 static Aw.Sindri.Core.Secrets.SourceTokens.Connected(string? tokenPointer, Aw.Sindri.Core.Secrets.ISecretPointers! secrets) -> bool
 static Aw.Sindri.Core.Secrets.SourceTokens.Look(string? tokenPointer, Aw.Sindri.Core.Secrets.ISecretPointers! secrets) -> Aw.Kernel.Result<string!>?
+Aw.Sindri.Core.Leftovers.IPurgeDocker
+Aw.Sindri.Core.Leftovers.IPurgeDocker.ContainersOf(string! project) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Leftovers.IPurgeDocker.RemoveContainers(System.Collections.Generic.IReadOnlyList<string!>! names) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Leftovers.IPurgeDocker.RemoveVolumes(System.Collections.Generic.IReadOnlyList<string!>! names) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Leftovers.IPurgeDocker.VolumesOf(string! project) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Leftovers.IPurgeKeychain
+Aw.Sindri.Core.Leftovers.IPurgeKeychain.Remove(string! service, string! account) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Leftovers.PurgePlan
+Aw.Sindri.Core.Leftovers.PurgePlan.<Clone>$() -> Aw.Sindri.Core.Leftovers.PurgePlan!
+Aw.Sindri.Core.Leftovers.PurgePlan.Containers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Leftovers.PurgePlan.Containers.init -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Containers, out System.Collections.Generic.IReadOnlyList<string!>! Volumes, out string? Directory, out string? Keychain) -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.Directory.get -> string?
+Aw.Sindri.Core.Leftovers.PurgePlan.Directory.init -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.Equals(Aw.Sindri.Core.Leftovers.PurgePlan? other) -> bool
+Aw.Sindri.Core.Leftovers.PurgePlan.IsEmpty.get -> bool
+Aw.Sindri.Core.Leftovers.PurgePlan.Keychain.get -> string?
+Aw.Sindri.Core.Leftovers.PurgePlan.Keychain.init -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.PurgePlan(System.Collections.Generic.IReadOnlyList<string!>! Containers, System.Collections.Generic.IReadOnlyList<string!>! Volumes, string? Directory, string? Keychain) -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.Volumes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Leftovers.PurgePlan.Volumes.init -> void
+override Aw.Sindri.Core.Leftovers.PurgePlan.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Leftovers.PurgePlan.GetHashCode() -> int
+override Aw.Sindri.Core.Leftovers.PurgePlan.ToString() -> string!
+static Aw.Sindri.Core.Leftovers.PurgePlan.operator !=(Aw.Sindri.Core.Leftovers.PurgePlan? left, Aw.Sindri.Core.Leftovers.PurgePlan? right) -> bool
+static Aw.Sindri.Core.Leftovers.PurgePlan.operator ==(Aw.Sindri.Core.Leftovers.PurgePlan? left, Aw.Sindri.Core.Leftovers.PurgePlan? right) -> bool
+Aw.Sindri.Core.Leftovers.ILeftoverFiles
+Aw.Sindri.Core.Leftovers.ILeftoverFiles.DeleteDirectory(string! path) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Leftovers.ILeftoverFiles.DirectoryExists(string! path) -> bool
+Aw.Sindri.Core.Leftovers.ILeftoverFiles.ReadText(string! path) -> string?
