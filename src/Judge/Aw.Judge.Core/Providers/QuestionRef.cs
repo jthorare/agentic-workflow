@@ -37,4 +37,10 @@ public sealed record QuestionRef
 
     /// <summary>The cap on the state and the instructions Jev is sent, in characters; null keeps config.json's providers.inputCapChars, else 160,000 (ProvidersConfig.DefaultInputCapChars).</summary>
     public int? InputCapChars { get; init; }
+
+    /// <summary>
+    /// Whether an agent CLI's child inherits only the shared list of variables plus the ones its own login needs, so no token of the
+    /// caller's (GH_TOKEN, AW_FORGE_TOKEN, cloud keys) reaches a model that reads repo-controlled text; false inherits everything.
+    /// </summary>
+    public bool MinimalEnvironment { get; init; }
 }

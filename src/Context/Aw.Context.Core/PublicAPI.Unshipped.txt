@@ -9933,6 +9933,24 @@ Aw.Context.Core.Engine.ContextSettings.Models.get -> Aw.Context.Core.Engine.Mode
 Aw.Context.Core.Engine.ContextSettings.Models.init -> void
 static Aw.Context.Core.Engine.ModelKinds.TryParse(string! key, out Aw.Context.Core.Engine.ModelKind kind) -> bool
 static Aw.Context.Core.Engine.ModelNames.BuiltInName(Aw.Context.Core.Engine.ModelHarness harness, Aw.Context.Core.Models.ModelTier tier) -> string!
+Aw.Context.Core.Concepts.CoveredConcepts
+Aw.Context.Core.Concepts.CoverFold
+Aw.Context.Core.Concepts.CoverFold.<Clone>$() -> Aw.Context.Core.Concepts.CoverFold!
+Aw.Context.Core.Concepts.CoverFold.Covered.get -> int
+Aw.Context.Core.Concepts.CoverFold.Covered.init -> void
+Aw.Context.Core.Concepts.CoverFold.CoverFold(Aw.Context.Core.Graph.GraphSnapshot! Graph, int Covered) -> void
+Aw.Context.Core.Concepts.CoverFold.Deconstruct(out Aw.Context.Core.Graph.GraphSnapshot! Graph, out int Covered) -> void
+Aw.Context.Core.Concepts.CoverFold.Equals(Aw.Context.Core.Concepts.CoverFold? other) -> bool
+Aw.Context.Core.Concepts.CoverFold.Graph.get -> Aw.Context.Core.Graph.GraphSnapshot!
+Aw.Context.Core.Concepts.CoverFold.Graph.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.CoverShare.get -> double
+Aw.Context.Core.Engine.ConceptSynthesisSettings.CoverShare.init -> void
+override Aw.Context.Core.Concepts.CoverFold.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.CoverFold.GetHashCode() -> int
+override Aw.Context.Core.Concepts.CoverFold.ToString() -> string!
+static Aw.Context.Core.Concepts.CoveredConcepts.Fold(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts, double share) -> Aw.Context.Core.Concepts.CoverFold!
+static Aw.Context.Core.Concepts.CoverFold.operator !=(Aw.Context.Core.Concepts.CoverFold? left, Aw.Context.Core.Concepts.CoverFold? right) -> bool
+static Aw.Context.Core.Concepts.CoverFold.operator ==(Aw.Context.Core.Concepts.CoverFold? left, Aw.Context.Core.Concepts.CoverFold? right) -> bool
 Aw.Context.Core.Records.StoredRecord.Description.get -> string?
 Aw.Context.Core.Records.StoredRecord.Description.init -> void
 Aw.Context.Core.Sync.RecordItem.Description.get -> string?
