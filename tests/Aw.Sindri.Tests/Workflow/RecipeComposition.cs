@@ -12,16 +12,18 @@ internal static class RecipeComposition
 {
     private static readonly string _stateRoot = Path.Combine(Path.GetTempPath(), "aw-sindri-recipes-test");
 
+    // why: composing the whole host costs ~20 ms and hundreds of tests read a recipe; the reader is a stateless singleton, so one
+    // composition serves the run (#1546). The provider lives for the test process.
+    private static readonly Lazy<IRecipeReader> _reader = new(static () =>
+        Composition.Compose(new ServiceCollection(), name => name == "AW_STATE_DIR" ? _stateRoot : null, new FakeTimeProvider())
+            .BuildServiceProvider()
+            .GetRequiredService<IRecipeReader>());
+
     /// <summary>Reads <paramref name="text"/> with the build's IRecipeReader.</summary>
     /// <param name="text">The recipe's text.</param>
     /// <param name="file">Its file name.</param>
     /// <returns>What the reader made of it.</returns>
-    public static RecipeReading Read(string text, string file)
-    {
-        using var provider = Composition.Compose(new ServiceCollection(), name => name == "AW_STATE_DIR" ? _stateRoot : null, new FakeTimeProvider())
-            .BuildServiceProvider();
-        return provider.GetRequiredService<IRecipeReader>().Read(text, file);
-    }
+    public static RecipeReading Read(string text, string file) => _reader.Value.Read(text, file);
 
     /// <summary>Reads <paramref name="text"/> and asserts it bound with no findings.</summary>
     /// <param name="text">The recipe's text.</param>
