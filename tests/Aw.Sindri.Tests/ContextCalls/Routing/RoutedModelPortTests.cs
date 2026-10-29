@@ -97,6 +97,7 @@ public sealed class RoutedModelPortTests
         var codex = Codex(Said("ok"));
         var settings = RouterRig.Settings("""{"labeling":{"harnesses":["codex","claude-code"],"models":{"codex":"gpt-x"}}}""");
         var rig = new RouterRig(settings, claude, codex);
+        using var job = rig.EnterJob();   // a call outside a job that answered writes no event
 
         var answer = (await rig.Ask(RouterRig.Request())).Value;
 
@@ -145,6 +146,7 @@ public sealed class RoutedModelPortTests
     {
         var claude = Claude(Said("ok"));
         var rig = new RouterRig(RouterRig.Settings("""{"conceptNaming":{"models":{"claude-code":"sonnet-x"}}}"""), claude);
+        using var job = rig.EnterJob();   // a call outside a job that answered writes no event
 
         _ = await rig.Ask(RouterRig.Request(purpose));
 
@@ -212,7 +214,9 @@ public sealed class RoutedModelPortTests
         limits.Remember(ended, ModelHarness.ClaudeCode);
         limits.Remember(running, ModelHarness.ClaudeCode);
 
-        limits.Prune(entry => entry == limits.EntryFor(ended));
+        var endedEntry = limits.EntryFor(ended);   // read before pruning: asking again afterwards would make a fresh one
+
+        limits.Prune(entry => entry == endedEntry);
 
         Assert.Equal(1, limits.Count);
         Assert.True(limits.IsLimited(running, ModelHarness.ClaudeCode));
@@ -445,7 +449,10 @@ public sealed class RoutedModelPortTests
         var asking = rig.Ask(RouterRig.Request()).AsTask();
         await rig.Waiting.Until(1, Token);
         _ = rig.Waiting.Resume();
-        await rig.Waiting.Until(1, Token);
+        while (rig.Waiting.Waits.Count < 2)
+        {
+            await Task.Delay(5, Token);   // the first wait leaves the parked list a moment after it is resumed, so count the waits started
+        }
 
         Assert.Equal(2, rig.Waiting.Waits.Count);
         Assert.False(asking.IsCompleted);
