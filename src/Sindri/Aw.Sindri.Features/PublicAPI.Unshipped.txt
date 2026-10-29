@@ -5032,9 +5032,7 @@ Aw.Sindri.Features.ContextCalls.IndexSourceRow
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.<Clone>$() -> Aw.Sindri.Features.ContextCalls.IndexSourceRow!
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Complete.get -> bool
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Complete.init -> void
-Aw.Sindri.Features.ContextCalls.IndexSourceRow.Deconstruct(out string! Source, out string? Phase, out bool Usable, out bool Complete, out System.DateTimeOffset? LastSync, out string? LastCode, out int? ReReading) -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.Equals(Aw.Sindri.Features.ContextCalls.IndexSourceRow? other) -> bool
-Aw.Sindri.Features.ContextCalls.IndexSourceRow.IndexSourceRow(string! Source, string? Phase, bool Usable, bool Complete, System.DateTimeOffset? LastSync, string? LastCode, int? ReReading = null) -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastCode.get -> string?
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastCode.init -> void
 Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastSync.get -> System.DateTimeOffset?
@@ -5354,3 +5352,19 @@ static Aw.Sindri.Features.HideProject.HideProjectRequest.operator ==(Aw.Sindri.F
 Aw.Sindri.Features.Leftovers.OnyxLeftovers
 static Aw.Sindri.Features.Leftovers.OnyxLeftovers.Find(string! home, Aw.Sindri.Core.Leftovers.IPurgeDocker! docker, Aw.Sindri.Core.Leftovers.ILeftoverFiles! files) -> Aw.Kernel.Result<Aw.Sindri.Core.Leftovers.PurgePlan!>!
 static Aw.Sindri.Features.Leftovers.OnyxLeftovers.ProjectNameFor(string! sindriHome) -> string!
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.Deconstruct(out string! Source, out string? Phase, out bool Usable, out bool Complete, out System.DateTimeOffset? LastSync, out string? LastCode, out int? ReReading, out string? Pull, out int? Records, out System.DateTimeOffset? LastCommit, out string? LastError, out string? LastErrorText, out int? Failures, out System.DateTimeOffset? NextTry) -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.Failures.get -> int?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.Failures.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.IndexSourceRow(string! Source, string? Phase, bool Usable, bool Complete, System.DateTimeOffset? LastSync, string? LastCode, int? ReReading = null, string? Pull = null, int? Records = null, System.DateTimeOffset? LastCommit = null, string? LastError = null, string? LastErrorText = null, int? Failures = null, System.DateTimeOffset? NextTry = null) -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastCommit.get -> System.DateTimeOffset?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastCommit.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastError.get -> string?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastError.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastErrorText.get -> string?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.LastErrorText.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.NextTry.get -> System.DateTimeOffset?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.NextTry.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.Pull.get -> string?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.Pull.init -> void
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.Records.get -> int?
+Aw.Sindri.Features.ContextCalls.IndexSourceRow.Records.init -> void

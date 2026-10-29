@@ -123,6 +123,10 @@ internal sealed partial class SqliteRecordStore(ContextDatabase database) : IRec
         }
     }
 
+    public ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    public ValueTask<Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public async ValueTask<Result<StoreStamps>> Stamps(CancellationToken cancellationToken)
     {
         var read = await BeginRead(cancellationToken).ConfigureAwait(false);

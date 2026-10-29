@@ -15,7 +15,15 @@ namespace Aw.Context.Core.Sync;
 /// <param name="Usable">The recent window is synced.</param>
 /// <param name="Complete">The backfill is done (the embeddings are not counted yet).</param>
 /// <param name="ReReading">How many records the source already holds while it re-reads them (Recent, no completed read behind it, rows stored: the Linear issue feed after migration 0020's reset, projects page spec §4.3), or null when it is not re-reading.</param>
-public sealed record SourceProgress(SourceId Source, SyncPhase? Phase, DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null)
+/// <param name="Pull">'running' while the source's sync lock is held, 'backoff' while failing before its next try, 'failed' after five failures in a row once past it, else 'idle'; null where the caller did not read it.</param>
+/// <param name="Records">How many records the store holds for the source; null where the caller did not count.</param>
+/// <param name="LastCommit">The end of the last tick that did not fail, or null when none did.</param>
+/// <param name="LastError">The code of the last failure (the stored last error), or null after a success.</param>
+/// <param name="LastErrorText">One scrubbed line saying what the last failure was.</param>
+/// <param name="Failures">Failed ticks in a row.</param>
+/// <param name="NextTry">When a source in backoff is pulled again by a scheduled tick.</param>
+public sealed record SourceProgress(SourceId Source, SyncPhase? Phase, DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null,
+    string? Pull = null, int? Records = null, DateTimeOffset? LastCommit = null, string? LastError = null, string? LastErrorText = null, int? Failures = null, DateTimeOffset? NextTry = null)
 {
     /// <summary>The progress of a source from its stored phase: usable once Recent is through, complete once Backfill is through.</summary>
     /// <param name="source">The source.</param>

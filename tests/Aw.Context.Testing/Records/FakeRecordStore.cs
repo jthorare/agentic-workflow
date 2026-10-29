@@ -110,6 +110,12 @@ public sealed class FakeRecordStore : IRecordStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc />
+    public ValueTask<Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc />
     public ValueTask<Result<int>> PutVectors(IReadOnlyList<VectorWrite> vectors, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(vectors);

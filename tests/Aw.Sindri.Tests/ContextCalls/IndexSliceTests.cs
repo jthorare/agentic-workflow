@@ -67,6 +67,26 @@ public sealed class IndexSliceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Status_carries_the_pull_state_counts_and_last_error_of_a_source()
+    {
+        await ApproveProfile();
+        _index.Standing =
+        [
+            SourceProgress.From(SourceId.From("github"), SyncPhase.Recent, _now, "SND-CONTEXT-010") with
+            {
+                Pull = "backoff", Records = 12, LastCommit = _now.AddHours(-1), LastError = "SND-CONTEXT-010", LastErrorText = "the source is down", Failures = 3, NextTry = _now.AddMinutes(20),
+            },
+        ];
+        using var caller = _h.Callers.EnterService("test");
+
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+
+        Assert.Equal(
+            [new IndexSourceRow("github", "recent", Usable: false, Complete: false, _now, "SND-CONTEXT-010", Pull: "backoff", Records: 12, LastCommit: _now.AddHours(-1), LastError: "SND-CONTEXT-010", LastErrorText: "the source is down", Failures: 3, NextTry: _now.AddMinutes(20))],
+            view.Value.Sources);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Status_without_an_approved_profile_is_the_profile_error()
     {
         using var caller = _h.Callers.EnterService("test");

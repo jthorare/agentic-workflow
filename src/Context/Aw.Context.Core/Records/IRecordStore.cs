@@ -59,6 +59,19 @@ public interface IRecordStore
     /// <returns>The outcome, or null when no tick of it was recorded.</returns>
     public ValueTask<Result<SyncOutcome?>> LastOutcome(SourceId source, CancellationToken cancellationToken);
 
+    /// <summary>Records how a source's last tick went for its persisted backoff: a failure adds one to the failure count and sets the next try (5 minutes, doubling, at most 6 hours); a success resets both and sets the last commit. The cursor, phase and last outcome are kept as they are.</summary>
+    /// <param name="source">The source.</param>
+    /// <param name="attempt">How the tick ended.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Nothing on success.</returns>
+    public ValueTask<Result<int>> RecordAttempt(SourceId source, SyncAttempt attempt, CancellationToken cancellationToken);
+
+    /// <summary>Reads a source's persisted backoff and last commit.</summary>
+    /// <param name="source">The source.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The state, <see cref="SourceBackoffState.None"/> for a source that never ticked.</returns>
+    public ValueTask<Result<SourceBackoffState>> Backoff(SourceId source, CancellationToken cancellationToken);
+
     /// <summary>Stores vectors. A chunk vector is stored only while its chunk exists with the same text hash, so a batch that finishes after a re-chunk stores nothing for it; a vector for a key and model that has one replaces it with a new 'Seq'.</summary>
     /// <param name="vectors">The vectors.</param>
     /// <param name="cancellationToken">Cancels the write.</param>
