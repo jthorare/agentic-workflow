@@ -12,7 +12,7 @@ namespace Aw.Context.Infrastructure.Eval;
 /// Briefs from the Sindri-owned record store: the stored Linear issues whose tracker key ('TEAM-n', read from the title the Linear feed
 /// writes, '[TEAM-n] title') names one of the profile's teams, paged through the store so no team's listing is capped. A brief is the
 /// stored title and the stored chunks, cleaned again at the ingest boundary. The store keeps no content history (a record holds its latest
-/// text under its latest 'updatedAt'), so an issue edited after its creation is leaky, exactly as it was when Onyx held it; the corpus
+/// text under its latest 'updatedAt'), so an issue edited after its creation is leaky, as any one-record-per-issue store does; the corpus
 /// labels it from the issue's two dates. It is the eval harness's read, not an arm.
 /// </summary>
 internal sealed partial class StoreBriefSource(IRecordStore store) : IBriefSource
