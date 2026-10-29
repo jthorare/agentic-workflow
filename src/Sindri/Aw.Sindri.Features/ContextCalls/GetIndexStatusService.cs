@@ -32,9 +32,9 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
     }
 
     private static IndexConceptsView Concepts(ConceptStatus c) =>
-        new(c.Enabled, c.Concepts, c.MultiSource, c.Queued, c.Covered, c.Embedded, c.Pending, c.Embedded == 0 ? 0 : (double)c.Covered / c.Embedded, c.Watermark);
+        new(c.Enabled, c.Concepts, c.MultiSource, c.Queued, c.Covered, c.Embedded, c.Pending, c.Embedded == 0 ? 0 : (double)c.Covered / c.Embedded, c.Watermark, Code: null, c.LastRun, c.LastCode);
 
-    private static IndexSourceRow Row(SourceProgress p) => new(p.Source.Value, Phase(p.Phase), p.Usable, p.Complete, p.LastSync, p.LastCode, p.ReReading);
+    private static IndexSourceRow Row(SourceProgress p) => new(p.Source.Value, Phase(p.Phase), p.Usable, p.Complete, p.LastSync, p.LastCode, p.ReReading, p.Pull, p.Records, p.LastCommit, p.LastError, p.LastErrorText, p.Failures, p.NextTry);
 
     private static string? Phase(SyncPhase? phase) => phase switch
     {

@@ -69,6 +69,26 @@ public sealed class IndexSliceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Status_carries_the_pull_state_counts_and_last_error_of_a_source()
+    {
+        await ApproveProfile();
+        _index.Standing =
+        [
+            SourceProgress.From(SourceId.From("github"), SyncPhase.Recent, _now, "SND-CONTEXT-010") with
+            {
+                Pull = "backoff", Records = 12, LastCommit = _now.AddHours(-1), LastError = "SND-CONTEXT-010", LastErrorText = "the source is down", Failures = 3, NextTry = _now.AddMinutes(20),
+            },
+        ];
+        using var caller = _h.Callers.EnterService("test");
+
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+
+        Assert.Equal(
+            [new IndexSourceRow("github", "recent", Usable: false, Complete: false, _now, "SND-CONTEXT-010", Pull: "backoff", Records: 12, LastCommit: _now.AddHours(-1), LastError: "SND-CONTEXT-010", LastErrorText: "the source is down", Failures: 3, NextTry: _now.AddMinutes(20))],
+            view.Value.Sources);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Status_carries_where_concept_synthesis_stands_with_its_coverage()
     {
         await ApproveProfile();
@@ -80,6 +100,18 @@ public sealed class IndexSliceTests
 
         Assert.True(view.IsSuccess);
         Assert.Equal(new IndexConceptsView(Enabled: true, Concepts: 101, MultiSource: 34, Queued: 3, Covered: 300, Embedded: 550, Pending: 12, Watermark: 8812, Coverage: 300d / 550), view.Value.Concepts);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Status_carries_when_the_decision_run_last_ended_and_its_code()
+    {
+        await ApproveProfile();
+        _index.Concepts = new ConceptStatus(Enabled: true, Concepts: 0, MultiSource: 0, Queued: 0, Covered: 0, Watermark: 0, Embedded: 0, Pending: 0, LastRun: _now, LastCode: "SND-CONTEXT-042");
+        using var caller = _h.Callers.EnterService("test");
+
+        var view = await new GetIndexStatusService(Scopes(), EngineProxy.Of(_index)).Handle(new GetIndexStatusRequest(), Ct);
+
+        Assert.Equal((_now, "SND-CONTEXT-042"), (view.Value.Concepts?.LastRun, view.Value.Concepts?.LastCode));
     }
 
     [Fact, Trait("Lane", "unit")]
