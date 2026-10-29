@@ -48,9 +48,10 @@ public sealed class NodeBandsTests
     }
 
     [Fact]
-    public void A_concept_node_sits_in_the_product_row_with_its_own_mark()
+    public void A_concept_node_sits_in_the_concept_row_with_its_own_mark()
     {
-        Assert.Equal(WholeBand.Product, NodeBands.Of("concept"));
+        Assert.Equal(WholeBand.Concept, NodeBands.Of("concept"));
+        Assert.Equal("Concepts", NodeBands.Title(WholeBand.Concept));
 
         var concept = NodeBands.StyleOf("concept");
         Assert.NotEqual(KindMark.None, concept.Mark);
