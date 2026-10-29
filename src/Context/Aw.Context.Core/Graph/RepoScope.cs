@@ -2,7 +2,8 @@ namespace Aw.Context.Core.Graph;
 
 /// <summary>
 /// The nodes a repo implements (spec §3): the targets of 'implements' edges (and 'tags' edges, so a tag feature has its repo) with file evidence in that repo
-/// ('repo:&lt;repo&gt;/&lt;path&gt;'), and the code files those edges start from ("that repo's files and code"). S-3b adds their cascade.
+/// ('repo:&lt;repo&gt;/&lt;path&gt;'), and the code files those edges start from ("that repo's files and code"). S-3b adds their cascade: <see cref="WithProduct"/> keeps the
+/// actions on the scoped surfaces and the things the scoped nodes read or write.
 /// Since owner decision 2026-10-15 (B) a session also sees the intent linked to those nodes (<see cref="WithLinkedIntent"/>).
 /// </summary>
 public static class RepoScope
@@ -56,6 +57,30 @@ public static class RepoScope
         }
 
         return reached;
+    }
+
+    /// <summary>
+    /// <paramref name="scope"/> and its product cascade (spec §3 "graph nodes the repo implements and their cascade"; the cascade's reverse 'on' and state hops, §6.1):
+    /// an action with an 'on' edge whose surface is in scope joins, and a thing with a 'reads' or 'writes' edge whose reader or writer (a code file or an action) is in scope
+    /// joins — to a fixpoint, so an action that joins through its surface brings the things it reads or writes. A hop never runs backwards: a thing brings none of its readers
+    /// or writers, and an action or thing attached only to nodes outside <paramref name="scope"/> stays out. A feature's rolled-up 'reads' or 'writes' (FeatureRollup)
+    /// is no hop: it counts the files of every repo homed in the feature, so a shared feature would bring another repo's things.
+    /// </summary>
+    /// <param name="graph">The graph.</param>
+    /// <param name="scope">The nodes the repo implements with their part-of hierarchy (<see cref="WithHierarchy"/>).</param>
+    /// <returns>The keys of the scope and of those actions and things (ordinal).</returns>
+    internal static IReadOnlySet<string> WithProduct(GraphSnapshot graph, IReadOnlySet<string> scope)
+    {
+        ArgumentNullException.ThrowIfNull(graph);
+        ArgumentNullException.ThrowIfNull(scope);
+        var product = graph.Edges.Where(e => e.Type == EdgeType.On && e.From.Kind == NodeKind.Action)
+            .Select(e => (InScope: e.To.Value, Joins: e.From.Value))
+            .Concat(graph.Edges.Where(e => e.Type is EdgeType.Reads or EdgeType.Writes && e.From.Kind is NodeKind.Code or NodeKind.Action && e.To.Kind == NodeKind.Thing)
+                .Select(e => (InScope: e.From.Value, Joins: e.To.Value)))
+            .ToLookup(p => p.InScope, p => p.Joins, StringComparer.Ordinal);
+        var all = new HashSet<string>(scope, StringComparer.Ordinal);
+        all.UnionWith(Closure(scope, product));
+        return all;
     }
 
     /// <summary>

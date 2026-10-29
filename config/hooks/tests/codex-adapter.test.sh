@@ -41,6 +41,9 @@ run() { # run <fixture-file> <hook-script> [args...] — sets RC, OUT, ERR
   ERR="$(cat "$WORK/err")"
 }
 
+# The permission decision Codex would read from stdout, or "none" when there is none.
+decision() { if [ -n "$OUT" ]; then printf '%s' "$OUT" | jq -r '.hookSpecificOutput.permissionDecision // "none"'; else echo none; fi; }
+
 # --- safety hooks: exit 2 moves the reason to stderr (Codex reads stderr) ---
 run "$FIX/pretooluse-bash-rm.json" "$HOOKS/block-destructive.sh"
 check "rm -rf: exit 2" "$RC" "2"
@@ -63,8 +66,17 @@ run "$FIX/pretooluse-bash-git-status.json" "$HOOKS/rtk-rewrite.sh"
 check "rtk: exit 0" "$RC" "0"
 check "rtk: updatedInput rewritten" "$(printf '%s' "$OUT" | jq -r '.hookSpecificOutput.updatedInput.command')" "rtk git status --short"
 run "$FIX/pretooluse-exec-git-status.json" "$HOOKS/rtk-rewrite.sh"
-check "rtk: updatedInput dropped for exec_command {cmd} shape" "$(printf '%s' "$OUT" | jq -c '.hookSpecificOutput | has("updatedInput")')" "false"
-check "rtk: exec_command still allowed" "$(printf '%s' "$OUT" | jq -r '.hookSpecificOutput.permissionDecision')" "allow"
+check "rtk: updatedInput dropped for exec_command {cmd} shape" "$(if [ -n "$OUT" ]; then printf '%s' "$OUT" | jq -c '.hookSpecificOutput // {} | has("updatedInput")'; else echo false; fi)" "false"
+# Codex rejects permissionDecision "allow" without updatedInput ("PreToolUse hook returned unsupported
+# permissionDecision:allow", codex-rs hooks output_parser.rs), so once the rewrite is dropped no bare allow is left (#1585).
+check "rtk: exec_command without its rewrite carries no bare allow" "$(decision)" "none"
+
+# --- bare allows from the canonical hooks never reach Codex (#1585) ---
+run "$FIX/pretooluse-exec-git-status.json" "$HOOKS/external-write-guard.sh"
+check "external-write-guard: exit 0" "$RC" "0"
+check "external-write-guard: an ordinary call carries no bare allow" "$(decision)" "none"
+run "$FIX/pretooluse-bash-git-status.json" "$HOOKS/rtk-rewrite.sh"
+check "rtk: allow with its rewrite still reaches Codex" "$(decision)" "allow"
 
 # --- normalization seen by the canonical script ---
 export CAPTURE_FILE="$WORK/capture.json"

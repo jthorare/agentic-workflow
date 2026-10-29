@@ -93,8 +93,10 @@ the binary's `HookStateToml` strings). Docs: <https://learn.chatgpt.com/docs/hoo
 - Tool names: shell is `Bash` (unified exec also `exec_command`), `apply_patch` (also matches
   `Edit`/`Write`), MCP is `mcp__<server>__<tool>`, and `spawn_agent` matches `Agent`.
 - Output: exit 2 blocks and **reads the reason from stderr**. PreToolUse JSON supports
-  `permissionDecision: allow|deny`, `permissionDecisionReason`, `additionalContext`, and
-  `updatedInput` (command rewrite). Stop and SubagentStop accept JSON only (`decision: "block"` +
+  `permissionDecision: deny` with `permissionDecisionReason`, `additionalContext`, and
+  `permissionDecision: allow` only together with `updatedInput` (a command rewrite): a bare `allow` fails the
+  hook with "unsupported permissionDecision:allow" (codex-cli 0.164), so the adapter drops it and prints
+  nothing when nothing else is left (#1585). Stop and SubagentStop accept JSON only (`decision: "block"` +
   `reason`, or exit 2). Plain-text stdout on SessionStart, UserPromptSubmit, and SubagentStart
   becomes developer context.
 - Non-managed hooks need an explicit trust step (`/hooks`). The trust is recorded against the
