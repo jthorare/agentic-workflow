@@ -65,6 +65,7 @@ internal static class ContextRows
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/import", ShellRows.Form("sindri context map import <file>"), "ready"),
         JobRows.Job("SyncSources", typeof(SyncContextSourcesRequest), "/sindri/context/sources/sync", "sindri context sources sync"),
+        JobRows.Job("SyncIndexSource", typeof(SyncIndexSourceRequest), "/sindri/index/sync", "sindri index sync <source>"),
         JobRows.Job(BacktestAction, typeof(RunContextBacktestRequest), "/sindri/context/eval/backtest", "sindri context eval backtest") with { SessionOk = true },
     ];
 

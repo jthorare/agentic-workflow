@@ -8,7 +8,7 @@ using Aw.Context.Tests.Map;
 namespace Aw.Context.Tests.SyncSources;
 
 /// <summary>
-/// The index tick (<see cref="IIndexSync.Tick"/>) pulls records and writes no decisions; the decision pass (<see cref="IIndexSync.Decide"/>) reads the stored tracker records for decisions like the manual sync does (#1574, #1597).
+/// The index tick (IIndexSync.Tick) pulls records and writes no decisions; the decision pass (<see cref="IIndexSync.Decide"/>) reads the stored tracker records for decisions like the manual sync does (#1574, #1597).
 /// </summary>
 [Trait("Lane", "unit")]
 public sealed class TickDecisionsTests

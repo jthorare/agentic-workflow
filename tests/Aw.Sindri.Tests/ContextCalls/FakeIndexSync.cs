@@ -30,6 +30,12 @@ internal sealed class FakeIndexSync : IIndexSync
         return ValueTask.FromResult<Result<SyncReport>>(new SyncReport(Rows));
     }
 
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken)
+    {
+        Ticks++;
+        return ValueTask.FromResult<Result<SyncReport>>(new SyncReport([.. Rows.Where(r => r.Source == source)]));
+    }
+
     public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
     {
         Decides++;

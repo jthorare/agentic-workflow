@@ -220,7 +220,7 @@ jobs:
         # tests (exit 5). A lane step that may select no tests adds --ignore-exit-code 8.
         # --report-xunit-ctrf writes one CTRF report per test project for the lane cap below; no
         # --report-xunit-ctrf-filename, or every project would write the same file.
-        # Lane=heavy (real Docker, Onyx, browsers, index builds) is left out: it runs only by hand, by a lane or the owner, never on
+        # Lane=heavy (real Docker, browsers, index builds) is left out: it runs only by hand, by a lane or the owner, never on
         # CI (owner, 2026-10-29; #1581). A test with no Lane trait still runs, so the lane cap below still finds it. Exit 8 is a project
         # whose every test is heavy.
         run: dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf --filter-not-trait "Lane=heavy" --ignore-exit-code 8

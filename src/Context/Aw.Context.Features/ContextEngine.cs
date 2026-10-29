@@ -64,6 +64,8 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) => sources.Tick(scope, cancellationToken);
 
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) => sources.Tick(scope, source, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) => sources.Progress(scope, cancellationToken);
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => sources.Counts(source, cancellationToken);

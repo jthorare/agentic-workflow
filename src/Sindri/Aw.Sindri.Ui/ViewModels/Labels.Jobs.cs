@@ -138,6 +138,7 @@ internal static partial class Labels
     /// <returns>The words.</returns>
     internal static string JobKind(string kind) => kind switch
     {
+        "SyncIndexSource" => "Sync an index source",
         "SyncSources" => "Sync sources",
         "RefreshContextMap" => "Refresh the context map",
         "BuildContextMap" => "Build the context map",
