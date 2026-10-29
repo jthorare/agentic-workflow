@@ -9,7 +9,7 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 /// Followed like the other views: read on connect and after every event, never folded.
 /// </summary>
 /// <param name="api">The API.</param>
-/// <param name="clock">For the age of the last commit and the minutes to a retry.</param>
+/// <param name="clock">For the age of the last commit and last concepts run, and the minutes to a retry.</param>
 internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clock) : ObservableObject
 {
     /// <summary>The card's heading.</summary>
@@ -66,8 +66,9 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         _ => false,
     };
 
-    // A failed read carries zero counts, so its code is checked first; queued groups and records in no concept are normal work, not a look.
-    private static IEnumerable<string> ConceptLines(IndexConceptsView? concepts)
+    // A failed read carries zero counts, so its code is checked first; queued groups and records in no concept are normal work, not a look,
+    // and so is the last pass's code (SND-CONTEXT-030 while there is no map yet): it is shown, not flagged.
+    private IEnumerable<string> ConceptLines(IndexConceptsView? concepts)
     {
         if (concepts is null)
         {
@@ -86,7 +87,10 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
             yield break;
         }
 
-        yield return Labels.ConceptsCount(concepts.Concepts, concepts.MultiSource);
+        var count = Labels.ConceptsCount(concepts.Concepts, concepts.MultiSource);
+        yield return concepts.LastRun is null && string.IsNullOrEmpty(concepts.LastCode)
+            ? count
+            : count + " · " + Labels.ConceptsLastRun(clock.GetUtcNow() - concepts.LastRun, concepts.LastCode);
         if (concepts.Pending is { } pending)
         {
             yield return Labels.ConceptsNotEmbedded(pending);

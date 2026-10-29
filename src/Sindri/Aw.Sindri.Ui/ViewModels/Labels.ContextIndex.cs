@@ -70,7 +70,19 @@ internal static partial class Labels
     /// <summary>When a source last committed.</summary>
     /// <param name="age">Since the last successful tick.</param>
     /// <returns>"last commit 3 min ago".</returns>
-    internal static string ContextLastCommit(TimeSpan age) => "last commit " + age.TotalMinutes switch
+    internal static string ContextLastCommit(TimeSpan age) => "last commit " + Ago(age);
+
+    /// <summary>When concept synthesis last ran, and its code.</summary>
+    /// <param name="age">Since the last pass, or null when unknown.</param>
+    /// <param name="code">The last pass's code, or null.</param>
+    /// <returns>"last run 3 min ago (SND-CONTEXT-030)", "last run 2 h ago" or "last run (SND-CONTEXT-030)".</returns>
+    internal static string ConceptsLastRun(TimeSpan? age, string? code)
+    {
+        var words = age is { } a ? "last run " + Ago(a) : "last run";
+        return string.IsNullOrEmpty(code) ? words : words + " (" + code + ")";
+    }
+
+    private static string Ago(TimeSpan age) => age.TotalMinutes switch
     {
         < 1 => "under a minute ago",
         < 60 => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalMinutes} min ago"),
