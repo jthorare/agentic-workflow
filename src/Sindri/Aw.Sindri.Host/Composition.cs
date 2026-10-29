@@ -9,6 +9,7 @@ using Aw.Context.Infrastructure;
 using Aw.Kernel.Json;
 using Aw.Kernel.Telemetry;
 using Aw.Sindri.Core.Doctor;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Registration;
 using Aw.Sindri.Features;
@@ -51,7 +52,10 @@ internal static class Composition
             .AddGitHubConnectorFactory()   // the source readers are built per token (owned-index spec §9.2), so only the factory; the Host adapter over IConnector is IndexSources/ConnectorFeed
             .AddConnectorsInfrastructure(environment)
             .AddContextLabeling()   // the labeling pass over IModelPort; a build asks it only when the approved profile turns 'context.labeling' on
-            .AddSingleton<IModelPort>(sp => new JudgeModelPort(new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>()).Get))
+            .AddSingleton<IApprovedModels, ApprovedModels>()   // 'context.models' of the approved profile, read once per approved hash (model routing spec §4)
+            .AddSingleton<IModelCallLog, LedgerModelCallLog>()   // the router's 'context.model.called' event, as service:context, best effort
+            .AddSingleton<IModelPort>(sp => new RoutedModelPort(new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>()).Get,
+                sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Aw.Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>()))
             .AddScoped<IDoctorChecks>(sp => new ModelPickDoctorChecks(sp.GetRequiredService<IModelPickSettings>(), environment))   // the 'model:pick' row (model-pick spec 8)
             .AddPullRequests(environment)   // IPullRequests over the forge the approved profile names (workflow.forge; compose edge to Aw.Forge.Infrastructure in Forge/ForgeAdapters)
             .AddProveBlocks(environment)   // input.prove.echo, only under AW_SINDRI_PROVE_BLOCKS=1 in a prover home

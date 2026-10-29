@@ -88,6 +88,38 @@ public sealed class DecisionPassTests
         _ = Assert.Single(layer.Decisions, d => d.Record == _big);
     }
 
+    [Theory]
+    [InlineData("SND-CONTEXT-240")]
+    [InlineData("SND-CONTEXT-241")]
+    public async Task No_model_harness_to_ask_holds_the_record_back_and_is_no_failure(string code)
+    {
+        var store = new FakeIntentStore();
+        var record = Pending(_small, "A decision");
+        await Commit(store, record);
+        var model = new FakeModelPort { Fail = _ => string.Equals(code, ContextErrors.NoModelHarness.Code, StringComparison.Ordinal) ? ContextErrors.NoModelHarness.With("none") : ContextErrors.ModelHarnessesUnavailable.With("limited") };
+        var pass = new DecisionPass(store, model, new LabelingSettings { Enabled = true, MaxTokensPerSync = 2_000 }, (new FakeScrubber(), new FakeTimeProvider(_at)));
+
+        await pass.Run([record], Ct);
+
+        Assert.True(pass.HeldBack);
+        Assert.Null(pass.Failure);
+        Assert.Contains(_small.Value, (await store.Queued(_linear, Ct)).Value.Select(static k => k.Value), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Any_other_model_error_still_fails_the_pass_with_its_code()
+    {
+        var store = new FakeIntentStore();
+        var record = Pending(_small, "A decision");
+        await Commit(store, record);
+        var model = new FakeModelPort { Fail = _ => ContextErrors.LabelingUnavailable.With("nobody answered") };
+        var pass = new DecisionPass(store, model, new LabelingSettings { Enabled = true, MaxTokensPerSync = 2_000 }, (new FakeScrubber(), new FakeTimeProvider(_at)));
+
+        await pass.Run([record], Ct);
+
+        Assert.Equal(ContextErrors.LabelingUnavailable.Code, pass.Failure);
+    }
+
     [Fact]
     public async Task A_store_error_while_queuing_a_held_back_record_stops_the_pass_with_its_code()
     {

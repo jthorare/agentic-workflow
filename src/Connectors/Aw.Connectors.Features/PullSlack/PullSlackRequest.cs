@@ -2,11 +2,11 @@ using Aw.Connectors.Core.Slack;
 
 namespace Aw.Connectors.Features.PullSlack;
 
-/// <summary>Reads the listed channels' threads and messages newer than a cursor.</summary>
+/// <summary>Reads the listed channels' threads and messages newer than a cursor, a bounded chunk of a channel at a time.</summary>
 /// <param name="Channels">The channels to read (id and display name), in the order they are read.</param>
 /// <param name="Workspace">The workspace name the permalinks are built from.</param>
-/// <param name="After">Where each channel starts; <see cref="SlackCursor.Empty"/> for a first run.</param>
-/// <param name="Limit">Stop starting new channels once this many records are read (a channel is read whole).</param>
+/// <param name="After">Where each channel starts, including a channel's pass in progress; <see cref="SlackCursor.Empty"/> for a first run.</param>
+/// <param name="Limit">Stop reading once this many records are read (a channel is NOT read whole: the cursor keeps its place inside it, and the next pull goes on). A pull also stops after a fixed number of thread reads.</param>
 internal sealed record PullSlackRequest(IReadOnlyList<SlackChannelRef> Channels, string Workspace, SlackCursor After, int Limit)
 {
     /// <summary>Gets where a channel with no watermark starts (the index window, D12); null reads the whole channel.</summary>

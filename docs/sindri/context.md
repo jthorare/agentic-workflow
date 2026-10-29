@@ -822,13 +822,26 @@ the store, a usage error · `75` the heavy-job lock stayed busy (`040`).
 | `SND-CONTEXT-057` | A model answer the engine refused (quote not verbatim, target outside the record's links, malformed), or a record skipped because its extraction prompt alone is over `maxTokensPerSync` (no decisions, not queued; the same when its conflict checks can't fit even one pair under the cap as the run's first call: the pairs are refused, and not retried on a version change unless the decision's quote changes); counted in `refused`, never fails the sync. A conflict verdict that can't be read keeps the pair pending (the record stays queued) and is asked at most 3 times, then the pair is marked refused | None for answers (persistent counts mean prompt drift); for a skipped record raise `maxTokensPerSync`: a record skipped for its prompt is retried when its version changes, but refused conflict pairs are not (unless the quote changes), so raise the cap before the give-up happens |
 | `SND-CONTEXT-058` | `sources sync <source>` names a source that isn't configured or has nothing to sync (404) | `context sources status` for the names |
 | `SND-CONTEXT-133` | A `context.extract.graphify` limit (`timeoutMinutes`, `maxSnapshotMB`, `maxFileMB`, `maxGraphMB`) is negative, fractional, over 10,000,000 or, for `timeoutMinutes`, over 70,000 (`profile validate`, exit 2; the message names the key path) | Write a whole number, or `0` for no limit |
-| `SND-CONTEXT-059` | A sync stopped at its time cap: partial, it resumes from its cursor (`sources status` shows `059`, the source stays `ok` or `degraded`, exit 0). Every run completes at least one record, so a slow source still finishes across runs. A model or store failure in the same run shows instead of `059` | None; the next run continues. Raise the cadence if persistent |
+| `SND-CONTEXT-059` | A sync stopped at its time cap: partial, it resumes from its cursor (`sources status` shows `059`, the source stays `ok` or `degraded`, exit 0; the sync job's summary leads with `partial:`). Every run completes at least one record, so a slow source still finishes across runs. A model or store failure in the same run shows instead of `059` | None; the next run continues. Raise the cadence if persistent |
 
 ## S-5A: the index sources, secret pointers
 
 Sindri keeps its own record index (one SQLite store under `$AW_SINDRI_HOME`) and fills it from its own connectors: GitHub (issues and
 pull requests), Slack (threads) and Linear (issues and projects). Sindri used to read these through Onyx; it now reads them itself.
 Setting the sources up (tokens, `sindri index connect`, the first sync) is `docs/sindri/sources.md`.
+
+**Every source syncs in bounded pulls (#1679).** A pull reads one chunk of a source (a page or two, at most 20 Slack threads or a pull request page of
+GitHub reads), and its cursor moves only with the records that pull returns. The sync commits each page with its cursor, so a rate limit
+(`AW-CONNECTORS-009`) or the sync's time cap (`SND-CONTEXT-059`) in the middle of a source keeps everything read so far and the next sync resumes after it. A pull
+that read nothing says why (an error), never an empty page, because an empty page means "this phase is finished". Slack walks a channel newest to oldest
+in chunks of a day or more, and a day record can come again when a pull resumes inside that day (same key, so the store keeps one). The contract is
+`RecordFeedResumeContract` (`tests/Aw.Context.Testing/Records`), run by Slack and GitHub (through the Host's `ConnectorFeed`) and by the Linear issue and project feeds.
+
+**A sync job that stopped early says so.** A source that hit the time cap or a rate limit is a row with its code and a job that ended well (a source being down must
+not fail the run), so the job summary tells it apart: `sindri jobs show`, the Jobs page and `sindri index sync` lead with `partial:` and name the source, why it
+stopped and how many records it fetched: `partial: slack stopped at its time cap (SND-CONTEXT-059), 0 fetched` or `partial: slack stopped by a rate limit (AW-CONNECTORS-009), 4 fetched`.
+The scheduled `index-sync` run does the same (`partial: slack stopped at its time cap (SND-CONTEXT-059), 0 fetched, github 3 fetched`; `ok:` when no source stopped early). A named
+sync's result keeps the code, so `sindri index sync <source>` exits 1 for either. Other codes (a source down, a sync already running) keep `<source> <code>`.
 
 ### Profile
 

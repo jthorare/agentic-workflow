@@ -6,39 +6,49 @@ using Aw.Kernel.Services;
 namespace Aw.Connectors.Features.PullSlack;
 
 /// <summary>
-/// Reads each listed channel whole, newest first, from its watermark's day (so a day record is always rebuilt from its first message) or the window start, folds the threads (one
-/// replies read per root with replies) and the day buckets into records, and moves that channel's watermark to the newest message seen. A channel is committed only when it was read whole:
-/// a rate limit in the middle of one drops that channel's records and leaves its cursor where it was, so it comes again complete; the channels before it keep theirs.
+/// Reads the listed channels in bounded chunks and keeps its place inside a channel. A channel is walked newest to oldest in a pass: one chunk reads history pages (one request each, paged by the
+/// exclusive 'latest' bound) until a message from an older day appears or history runs out. Every day of the chunk but its oldest (unless history ran out) is complete: its day record is emitted from
+/// history alone, then its thread roots are read, newest first, at most <see cref="RepliesPerPull"/> replies reads per pull. The cursor moves after every chunk and every thread, so a rate limit, the
+/// feed's time cap or a cancellation keeps what was read and the next pull resumes at the next unread thread or chunk. When history runs out the channel's watermark becomes the newest root the pass saw.
+/// A pull loops chunks across the channels until it has records and (the limit is reached or the replies budget is spent), a rate limit stops it, or every channel is done; it returns an empty page only
+/// when nothing is left. A channel with nothing newer than its watermark is skipped (the watermark's day is still read once to find that out).
 /// </summary>
 internal sealed class PullSlackService(ISlackReader reader) : IService<PullSlackRequest, PullSlackResponse>
 {
+    /// <summary>The most thread reads (conversations.replies) one pull makes once it has records.</summary>
+    internal const int RepliesPerPull = 20;
+
+    private const int PageSize = 200;
+    private const int MaxPagesPerChunk = 500;
+
     public async ValueTask<Result<PullSlackResponse>> Handle(PullSlackRequest request, CancellationToken cancellationToken)
     {
-        List<ConnectorItem> items = [];
-        var next = request.After;
-        foreach (var channel in request.Channels)
+        var run = new Run(request.After);
+        try
         {
-            if (items.Count >= request.Limit)
+            foreach (var channel in request.Channels)
             {
-                break;
-            }
+                var step = await ReadChannel(request, channel, run, cancellationToken).ConfigureAwait(false);
+                if (step.IsError)
+                {
+                    return step.Error;
+                }
 
-            var read = await ReadChannel(request, channel, cancellationToken).ConfigureAwait(false);
-            if (read.IsError)
-            {
-                return read.Error;
+                if (run.Limited is not null || run.Enough(request.Limit))
+                {
+                    break;
+                }
             }
-
-            if (read.Value.RateLimitedUntil is { } until)
-            {
-                return new PullSlackResponse(items, next, until);
-            }
-
-            items.AddRange(read.Value.Items);
-            next = read.Value.Newest is { } newest ? next.With(channel.Channel, newest) : next;
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested && run.Items.Count > 0)
+        {
+            // why: the feed's time cap cancels the read; what was read is committed with the cursor it moved, and the next pull resumes there.
         }
 
-        return new PullSlackResponse(items, next, RateLimitedUntil: null);
+        // why: a pull that read nothing must not hand back a moved cursor with an empty page (the consumer reads an empty page as 'finished').
+        return run.Limited is { } until
+            ? new PullSlackResponse(run.Items, run.Items.Count == 0 ? request.After : run.Next, until)
+            : new PullSlackResponse(run.Items, run.Next, RateLimitedUntil: null);
     }
 
     private static string? Oldest(PullSlackRequest request, SlackChannelRef channel)
@@ -46,41 +56,151 @@ internal sealed class PullSlackService(ISlackReader reader) : IService<PullSlack
             ? SlackTs.DayStart(watermark)
             : request.WindowStart is { } window ? SlackTs.Format(window) : null;
 
-    // why: a bounded read starts at the watermark's day, so it gets that day again; with no root newer than the watermark the channel was already read whole up to the bound, and Backfill must see an empty page.
-    private static bool ReadWholeUpToBound(PullSlackRequest request, SlackChannelRef channel, string? newest)
-        => request.Before is not null && request.After.Newest(channel.Channel) is { } mark && (newest is null || SlackTs.Later(mark, newest) == mark);
-
-    private async ValueTask<Result<ChannelRead>> ReadChannel(PullSlackRequest request, SlackChannelRef channel, CancellationToken cancellationToken)
-    {
-        var history = await reader.History(channel.Channel, Oldest(request, channel), Latest(request), cancellationToken).ConfigureAwait(false);
-        if (history.IsError)
-        {
-            return history.Error;
-        }
-
-        if (history.Value.RateLimitedUntil is { } until)
-        {
-            return new ChannelRead([], Newest: null, until);
-        }
-
-        var roots = history.Value.Items;
-        var newest = roots.Select(static m => m.Ts).Aggregate((string?)null, static (a, b) => a is null ? b : SlackTs.Later(a, b));
-        if (ReadWholeUpToBound(request, channel, newest))
-        {
-            return new ChannelRead([], Newest: null, RateLimitedUntil: null);
-        }
-
-        return await ReadThreads(request, channel, roots, newest, cancellationToken).ConfigureAwait(false);
-    }
-
     private static string? Latest(PullSlackRequest request) => request.Before is { } end ? SlackTs.Format(end) : null;
 
-    private async ValueTask<Result<ChannelRead>> ReadThreads(PullSlackRequest request, SlackChannelRef channel, IReadOnlyList<SlackMessage> roots, string? newest, CancellationToken cancellationToken)
+    private async ValueTask<Result<bool>> ReadChannel(PullSlackRequest request, SlackChannelRef channel, Run run, CancellationToken cancellationToken)
     {
-        List<ConnectorItem> items = [];
-        foreach (var root in roots.Where(static m => !SlackRecords.IsNoise(m) && SlackRecords.IsThreadRoot(m)))
+        while (!run.Enough(request.Limit))
         {
-            var thread = await reader.Replies(channel.Channel, root.Ts, cancellationToken).ConfigureAwait(false);
+            var start = run.Items.Count;
+            var chunk = await ReadChunk(request, channel, run, cancellationToken).ConfigureAwait(false);
+            run.SortFrom(start);
+            if (chunk.IsError)
+            {
+                return chunk.Error;
+            }
+
+            if (chunk.Value != ChunkEnd.More)
+            {
+                return true;
+            }
+        }
+
+        return true;
+    }
+
+    private async ValueTask<Result<ChunkEnd>> ReadChunk(PullSlackRequest request, SlackChannelRef channel, Run run, CancellationToken cancellationToken)
+    {
+        var pass = run.Next.Pass(channel.Channel);
+        var read = await ReadHistory(channel, Oldest(request, channel), pass is null ? Latest(request) : pass.Below ?? SlackTs.Next(pass.Top), run, cancellationToken).ConfigureAwait(false);
+        if (read.IsError)
+        {
+            return read.Error;
+        }
+
+        if (run.Limited is not null)
+        {
+            return ChunkEnd.Stopped;
+        }
+
+        return await Settle(new Place(request, channel, pass), read.Value, run, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<Result<ChunkEnd>> Settle(Place place, (List<SlackMessage> Roots, bool Exhausted) read, Run run, CancellationToken cancellationToken)
+    {
+        var (request, channel, pass) = place;
+        var (roots, exhausted) = read;
+        if (roots.Count == 0)
+        {
+            run.Next = pass is null ? run.Next : run.Next.With(channel.Channel, pass.Top);
+            return ChunkEnd.Done;
+        }
+
+        var top = pass?.Top ?? roots[0].Ts;
+        if (pass is null && NothingNewer(request, channel, top))
+        {
+            return ChunkEnd.Done;
+        }
+
+        var oldestDay = SlackRecords.DayOf(roots[^1]);
+        var complete = exhausted ? roots : [.. roots.Where(m => !string.Equals(SlackRecords.DayOf(m), oldestDay, StringComparison.Ordinal))];
+        var chunk = new Chunk(request, channel, top, pass?.Below, complete, roots[0].Ts);
+        return await Emit(chunk, pass?.ThreadsBelow, exhausted, run, cancellationToken).ConfigureAwait(false);
+    }
+
+    // why: with no pass in progress, a first message that is not newer than the watermark means the channel has nothing new to read.
+    private static bool NothingNewer(PullSlackRequest request, SlackChannelRef channel, string top)
+        => request.After.Newest(channel.Channel) is { } mark && !SlackTs.IsBefore(mark, top);
+
+    /// <summary>Emits the chunk's day records (unless an earlier pull did), reads its threads, and moves the cursor to the end of the chunk.</summary>
+    private async ValueTask<Result<ChunkEnd>> Emit(Chunk chunk, string? threadsBelow, bool exhausted, Run run, CancellationToken cancellationToken)
+    {
+        if (threadsBelow is null)
+        {
+            run.Items.AddRange(Days(chunk.Channel, chunk.Request.Workspace, chunk.Complete));
+            threadsBelow = SlackTs.Next(chunk.Newest);
+            run.Next = run.Next.WithPass(chunk.Channel.Channel, new SlackPass(chunk.Top, chunk.Below, threadsBelow));
+        }
+
+        var threads = await ReadThreads(chunk, threadsBelow, run, cancellationToken).ConfigureAwait(false);
+        if (threads.IsError || threads.Value != ChunkEnd.More)
+        {
+            return threads;
+        }
+
+        if (exhausted)
+        {
+            run.Next = run.Next.With(chunk.Channel.Channel, chunk.Top);
+            return ChunkEnd.Done;
+        }
+
+        run.Next = run.Next.WithPass(chunk.Channel.Channel, new SlackPass(chunk.Top, SlackTs.DayStart(chunk.Complete[^1].Ts), ThreadsBelow: null));
+        return ChunkEnd.More;
+    }
+
+    /// <summary>Reads history pages from <paramref name="latest"/> (exclusive) down until a message of an older day than the first appears or history runs out; a rate limit sets <see cref="Run.Limited"/>.</summary>
+    private async ValueTask<Result<(List<SlackMessage> Roots, bool Exhausted)>> ReadHistory(SlackChannelRef channel, string? oldest, string? latest, Run run, CancellationToken cancellationToken)
+    {
+        List<SlackMessage> roots = [];
+        HashSet<string> seen = new(StringComparer.Ordinal);
+        for (var page = 0; page < MaxPagesPerChunk; page++)
+        {
+            var read = await reader.HistoryPage(channel.Channel, oldest, latest, PageSize, cancellationToken).ConfigureAwait(false);
+            if (read.IsError)
+            {
+                return read.Error;
+            }
+
+            if (read.Value.RateLimitedUntil is { } until)
+            {
+                run.Limited = until;
+                return (roots, false);
+            }
+
+            // why: Slack's inclusive flag can return the message AT latest; the bound is exclusive, so drop it, and drop a message a page boundary repeated.
+            roots.AddRange(read.Value.Items.Where(m => (latest is null || SlackTs.IsBefore(m.Ts, latest)) && seen.Add(m.Ts)));
+            var next = OldestTs(read.Value.Items);
+            if (!read.Value.HasMore || next is null || !Descends(next, latest))
+            {
+                return (roots, true);
+            }
+
+            latest = next;
+            if (!string.Equals(SlackRecords.DayOf(roots[0]), SlackRecords.DayOf(roots[^1]), StringComparison.Ordinal))
+            {
+                return (roots, false);
+            }
+        }
+
+        return ConnectorsErrors.BadReply.With($"The channel has more than {MaxPagesPerChunk} pages of messages in one day; narrow context.index.windowDays.");
+    }
+
+    // why: a page that does not reach below its own bound would repeat forever, so it counts as the end of history.
+    private static bool Descends(string next, string? latest) => latest is null || SlackTs.IsBefore(next, latest);
+
+    private static string? OldestTs(IReadOnlyList<SlackMessage> items)
+        => items.Count == 0 ? null : items.Select(static m => m.Ts).Aggregate(static (a, b) => SlackTs.IsBefore(b, a) ? b : a);
+
+    private async ValueTask<Result<ChunkEnd>> ReadThreads(Chunk chunk, string threadsBelow, Run run, CancellationToken cancellationToken)
+    {
+        foreach (var root in chunk.Complete.Where(m => !SlackRecords.IsNoise(m) && SlackRecords.IsThreadRoot(m) && SlackTs.IsBefore(m.Ts, threadsBelow)))
+        {
+            if (run.Enough(chunk.Request.Limit))
+            {
+                return ChunkEnd.Stopped;
+            }
+
+            var thread = await reader.Replies(chunk.Channel.Channel, root.Ts, cancellationToken).ConfigureAwait(false);
             if (thread.IsError)
             {
                 return thread.Error;
@@ -88,17 +208,20 @@ internal sealed class PullSlackService(ISlackReader reader) : IService<PullSlack
 
             if (thread.Value.RateLimitedUntil is { } limited)
             {
-                return new ChannelRead([], Newest: null, limited);
+                run.Limited = limited;
+                return ChunkEnd.Stopped;
             }
 
-            if (thread.Value.Items.Count > 0 && SlackRecords.Thread(channel, request.Workspace, thread.Value.Items) is { } item)
+            run.Replies++;
+            if (thread.Value.Items.Count > 0 && SlackRecords.Thread(chunk.Channel, chunk.Request.Workspace, thread.Value.Items) is { } item)
             {
-                items.Add(item);
+                run.Items.Add(item);
             }
+
+            run.Next = run.Next.WithPass(chunk.Channel.Channel, new SlackPass(chunk.Top, chunk.Below, root.Ts));
         }
 
-        items.AddRange(Days(channel, request.Workspace, roots));
-        return new ChannelRead([.. items.OrderBy(static i => i.CreatedAt).ThenBy(static i => i.Key, StringComparer.Ordinal)], newest, RateLimitedUntil: null);
+        return ChunkEnd.More;
     }
 
     private static IEnumerable<ConnectorItem> Days(SlackChannelRef channel, string workspace, IReadOnlyList<SlackMessage> roots)
@@ -108,5 +231,41 @@ internal sealed class PullSlackService(ISlackReader reader) : IService<PullSlack
             .Select(day => SlackRecords.Day(channel, workspace, day.Key, [.. day.OrderBy(static m => m.Ts, StringComparer.Ordinal)]))
             .OfType<ConnectorItem>();
 
-    private sealed record ChannelRead(IReadOnlyList<ConnectorItem> Items, string? Newest, DateTimeOffset? RateLimitedUntil);
+    /// <summary>One chunk of a pass: its complete days' roots (newest first), the pass's top, the chunk's exclusive history bound and its newest root.</summary>
+    private sealed record Chunk(PullSlackRequest Request, SlackChannelRef Channel, string Top, string? Below, List<SlackMessage> Complete, string Newest);
+
+    private sealed record Place(PullSlackRequest Request, SlackChannelRef Channel, SlackPass? Pass);
+
+    private enum ChunkEnd
+    {
+        /// <summary>The channel is finished (or has nothing new).</summary>
+        Done,
+
+        /// <summary>The chunk is finished and the pass goes on below it.</summary>
+        More,
+
+        /// <summary>The pull stopped inside the chunk (a rate limit or the replies budget); the cursor holds the place.</summary>
+        Stopped,
+    }
+
+    private sealed class Run(SlackCursor start)
+    {
+        public List<ConnectorItem> Items { get; } = [];
+
+        public SlackCursor Next { get; set; } = start;
+
+        public int Replies { get; set; }
+
+        public DateTimeOffset? Limited { get; set; }
+
+        // why: the consumer reads an empty page as 'finished', so a pull goes on until it has records, then stops at the limit or the replies budget.
+        public void SortFrom(int start)
+        {
+            var tail = Items.Skip(start).OrderBy(static i => i.CreatedAt).ThenBy(static i => i.Key, StringComparer.Ordinal).ToList();
+            Items.RemoveRange(start, Items.Count - start);
+            Items.AddRange(tail);
+        }
+
+        public bool Enough(int limit) => Items.Count > 0 && (Items.Count >= limit || Replies >= RepliesPerPull);
+    }
 }

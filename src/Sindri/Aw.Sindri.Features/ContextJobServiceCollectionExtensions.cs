@@ -45,9 +45,8 @@ internal static class ContextJobServiceCollectionExtensions
         return string.Create(CultureInfo.InvariantCulture, $"{result.Sources.Count} source(s) synced, {linked} linked{(failed > 0 ? $", {failed} with a code" : string.Empty)}");
     }
 
-    private static string IndexSyncSummary(SyncIndexSourceResult result) => result.Code is null
-        ? string.Create(CultureInfo.InvariantCulture, $"{result.Source} {result.Fetched} fetched")
-        : $"{result.Source} {result.Code}";
+    internal static string IndexSyncSummary(SyncIndexSourceResult result) =>
+        (SourceStops.Is(result.Code) ? "partial: " : string.Empty) + SourceStops.Part(result.Source, result.Fetched, result.Code);
 
     private static string RefreshSummary(RefreshContextMapResult result) => result.Held
         ? MapJobSummaries.Held(result.Version)

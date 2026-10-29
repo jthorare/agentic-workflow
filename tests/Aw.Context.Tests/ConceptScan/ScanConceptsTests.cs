@@ -136,7 +136,7 @@ public sealed class ScanConceptsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task The_default_models_are_haiku_for_cheap_and_sonnet_for_strong_on_claude_and_none_for_the_others()
+    public async Task The_scan_sends_its_tier_only_and_leaves_the_model_to_the_router()
     {
         _ = await Seed(Shifts().Build());
         _world.Model.Responder = TwoPasses;
@@ -147,13 +147,14 @@ public sealed class ScanConceptsTests : IDisposable
         {
             Assert.Equal(ModelPurpose.ConceptScan, r.Purpose);
             Assert.Equal(ModelTier.Cheap, r.Tier);
-            Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "haiku" }, r.Models);
+            Assert.Null(r.Models);
+            Assert.Null(r.Model);
         });
         Assert.Equal(ModelTier.Cheap, report.Tier);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task The_profile_moves_the_thresholds_and_names_the_models()
+    public async Task The_profile_moves_the_thresholds_and_the_old_models_key_is_not_forwarded_in_the_request()
     {
         _ = await Seed(Shifts().Build());   // three features
         _world.Model.Responder = TwoPasses;
@@ -166,7 +167,8 @@ public sealed class ScanConceptsTests : IDisposable
         {
             Assert.Equal(ModelPurpose.ConceptScan, r.Purpose);
             Assert.Equal(ModelTier.Strong, r.Tier);
-            Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "opus", ["codex"] = "codex-big" }, r.Models);
+            Assert.Null(r.Models);   // the router reads context.conceptScan.models as names; the request never carries it
+            Assert.Null(r.Model);
         });
     }
 
