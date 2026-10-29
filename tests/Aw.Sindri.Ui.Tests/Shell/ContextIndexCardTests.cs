@@ -34,6 +34,89 @@ public sealed class ContextIndexCardTests
         Assert.Equal("needs a look", card.Word, StringComparer.Ordinal);
     }
 
+    [Fact]
+    public async Task The_concepts_follow_the_sources_with_the_share_citing_two_sources_and_what_is_not_labeled_yet()
+    {
+        var card = await ReadWithConcepts(
+            """{"enabled":true,"concepts":101,"multiSource":34,"queued":3,"covered":300,"embedded":550,"pending":12,"coverage":0.5454545454545454,"watermark":8812,"code":null}""",
+            Source("github", "running", 200));
+
+        Assert.Equal(
+            [
+                "github: pulling · 200 records · nothing committed yet",
+                "Concepts: 101 · 34 cite 2+ sources (33%)",
+                "Not embedded yet: 12 records",
+                "Waiting for a name: 3 groups",
+                "Not in any concept: 250 records (55% covered)",
+            ],
+            card.Lines.Select(l => l.Text),
+            StringComparer.Ordinal);
+        Assert.Equal(Labels.CodeIndexOk, card.Word);
+    }
+
+    [Fact]
+    public async Task Concepts_that_cannot_be_read_say_so_with_their_code_show_no_counts_and_need_a_look()
+    {
+        var card = await ReadWithConcepts("""{"enabled":true,"concepts":0,"multiSource":0,"queued":0,"covered":0,"embedded":null,"pending":null,"coverage":0,"watermark":0,"code":"SND-CONTEXT-090"}""", Source("github", "running", 200));
+
+        Assert.Equal("Concepts: can't be read (SND-CONTEXT-090)", card.Lines[^1].Text);
+        Assert.Equal(2, card.Lines.Count);
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
+    }
+
+    [Fact]
+    public async Task Labeling_off_reads_as_one_line_and_none_yet_reads_as_none()
+    {
+        var off = await ReadWithConcepts("""{"enabled":false}""", Source("github", "running", 200));
+        Assert.Equal("Concepts: labeling is off", Assert.Single(off.Lines, l => l.Text.StartsWith("Concepts", StringComparison.Ordinal)).Text);
+        Assert.Equal(2, off.Lines.Count);
+
+        var none = await ReadWithConcepts("""{"enabled":true,"concepts":0,"multiSource":0,"queued":0,"covered":0,"embedded":0,"pending":0,"coverage":0,"watermark":0}""", Source("github", "running", 200));
+        Assert.Equal(["Concepts: none yet", "Not embedded yet: 0 records", "Waiting for a name: 0 groups", "Not in any concept: 0 records"], none.Lines.Skip(1).Select(l => l.Text), StringComparer.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(-3d, "SND-CONTEXT-030", " · last run 3 min ago (SND-CONTEXT-030)")]
+    [InlineData(-120d, null, " · last run 2 h ago")]
+    [InlineData(null, "SND-CONTEXT-030", " · last run (SND-CONTEXT-030)")]
+    public async Task The_concepts_line_names_the_last_run_and_its_code_without_needing_a_look(double? minutesAgo, string? code, string expected)
+    {
+        var lastRun = minutesAgo is { } m ? Json(_clock.GetUtcNow().AddMinutes(m).ToString("O", CultureInfo.InvariantCulture)) : "null";
+        var card = await ReadWithConcepts(
+            $$"""{"enabled":true,"concepts":0,"multiSource":0,"queued":0,"covered":0,"embedded":0,"pending":0,"coverage":0,"watermark":0,"code":null,"lastRun":{{lastRun}},"lastCode":{{Json(code)}}}""",
+            Source("github", "running", 200));
+
+        Assert.Equal("Concepts: none yet" + expected, card.Lines[1].Text);
+        Assert.Equal(Labels.CodeIndexOk, card.Word);
+    }
+
+    [Fact]
+    public async Task A_server_that_sends_the_last_run_shows_it_from_the_spec_shaped_golden()
+    {
+        _server.IndexStatusAnswer = RouteAnswer.SpecShaped("index-status", "concepts-last-run");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Contains(card.Lines, l => l.Text.StartsWith("Concepts: 101 · 34 cite 2+ sources (33%) · last run ", StringComparison.Ordinal) && l.Text.EndsWith(" (SND-CONTEXT-030)", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task A_server_without_concepts_shows_only_the_sources()
+    {
+        var card = await Read(Source("github", "running", 200));
+
+        _ = Assert.Single(card.Lines);
+    }
+
+    private async Task<ContextIndexCardViewModel> ReadWithConcepts(string concepts, params string[] sources)
+    {
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"sources":[{{string.Join(',', sources)}}],"concepts":{{concepts}}}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+        await card.Refresh(_api, Token);
+        return card;
+    }
+
     private static string Source(string name, string pull, int? records = null, string? lastCommit = null, string? lastCode = null, string? lastError = null, string? lastErrorText = null, string? nextTry = null) =>
         $$"""{"source":"{{name}}","phase":"live","usable":true,"complete":false,"lastSync":null,"lastCode":{{Json(lastCode)}},"pull":"{{pull}}","records":{{(records is { } r ? r.ToString(CultureInfo.InvariantCulture) : "null")}},"lastCommit":{{Json(lastCommit)}},"lastError":{{Json(lastError)}},"lastErrorText":{{Json(lastErrorText)}},"nextTry":{{Json(nextTry)}}}""";
 
