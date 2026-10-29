@@ -82,14 +82,14 @@
       ]
     },
     {
-      "id": "onyx",
-      "title": "Set up Onyx",
+      "id": "sources",
+      "title": "Connect your sources",
       "state": "failed",
-      "why": "Sindri couldn't ask Docker about Onyx.",
+      "why": "Sindri couldn't reach your sources.",
       "detail": null,
       "error": {
-        "code": "SND-ONYX-002",
-        "sentence": "Sindri couldn't ask Docker about Onyx."
+        "code": "SND-CONTEXT-042",
+        "sentence": "Sindri couldn't reach your sources."
       },
       "action": null,
       "progress": null,

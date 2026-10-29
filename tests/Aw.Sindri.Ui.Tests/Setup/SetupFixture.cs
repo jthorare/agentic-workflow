@@ -55,6 +55,18 @@ internal sealed class SetupFixture
         return node.ToJsonString();
     }
 
+    /// <summary>Has the catalog list one more action that is the terminal's alone, as a future Sindri may serve one: a copy of the first row with its own id and command.</summary>
+    /// <param name="action">The new action id.</param>
+    /// <param name="cli">Its command.</param>
+    internal void ListCliAction(string action, string cli)
+    {
+        var node = JsonNode.Parse(Server.Catalog.Body)!;   // why: the catalog was served as JSON
+        var row = JsonNode.Parse(node["rows"]!.AsArray()[0]!.ToJsonString())!;   // why: a copy of a row of the catalog
+        (row["action"], row["cli"], row["ui"], row["route"], row["method"]) = (action, cli, "cli-only:local", null, null);
+        node["rows"]!.AsArray().Add(row);
+        Catalog.Show(Url, Server, AwJson.Deserialize<CommandList>(System.Text.Encoding.UTF8.GetBytes(node.ToJsonString()), SindriApiClient.Json).Value);
+    }
+
     /// <summary>The route answer for <see cref="CatalogJson"/>.</summary>
     /// <param name="catalog">The catalog scenario.</param>
     /// <param name="cliOnly">The actions to list as cli-only.</param>
@@ -65,7 +77,7 @@ internal sealed class SetupFixture
 
     internal void Serve(JsonNode list) => Server.SetupAnswer = new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
 
-    /// <summary>The route answer for a setup scenario: Sindri'"'"'s own golden, or for an "extra-" one the app'"'"'s own (a shape the API has no golden for, such as three running steps and a failed Onyx).</summary>
+    /// <summary>The route answer for a setup scenario: Sindri'"'"'s own golden, or for an "extra-" one the app'"'"'s own (a shape the API has no golden for, such as three running steps and a failed one).</summary>
     internal static RouteAnswer Answer(string scenario) => IsExtra(scenario) ? RouteAnswer.SpecShaped("setup", scenario) : RouteAnswer.Api("setup", scenario);
 
     internal static JsonNode Golden(string scenario) => JsonNode.Parse(IsExtra(scenario) ? GoldenFiles.SpecShaped("setup", scenario) : GoldenFiles.Api("setup", scenario))!; // why: the golden is a JSON document
@@ -81,6 +93,24 @@ internal sealed class SetupFixture
         var served = list["steps"]!.AsArray().Single(s => (string)s!["id"]! == step)!;
         served["state"] = state;
         served["action"] = action;
+        return list;
+    }
+
+    /// <summary>The list with one more step at the end, as the API would serve a step this build has no form for: its words, its state and, when given, an action.</summary>
+    internal static JsonNode WithExtraStep(JsonNode list, string id, string title, string state, string? why = null, string? action = null)
+    {
+        list["steps"]!.AsArray().Add(new JsonObject
+        {
+            ["id"] = id,
+            ["title"] = title,
+            ["state"] = state,
+            ["why"] = why ?? title,
+            ["detail"] = null,
+            ["error"] = null,
+            ["action"] = action,
+            ["progress"] = null,
+            ["items"] = new JsonArray(),
+        });
         return list;
     }
 
