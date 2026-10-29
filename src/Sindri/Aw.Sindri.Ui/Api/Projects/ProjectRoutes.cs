@@ -16,4 +16,6 @@ internal static class ProjectRoutes
     internal static string Detach(string id) => One(id) + "/detach";
 
     internal static string Hide => Root + "/hide";
+
+    internal static string Linear => Root + "/linear";
 }

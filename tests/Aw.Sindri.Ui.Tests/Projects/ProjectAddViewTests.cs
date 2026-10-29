@@ -1,7 +1,9 @@
 using System.Net;
+using Avalonia.Automation;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Navigation;
@@ -32,15 +34,27 @@ public sealed class ProjectAddViewTests : FrameHost
         return (window, shell);
     }
 
+    // The sheet opens on From Linear; the By hand tests switch to the form.
+    private static async Task OpenByHand(ShellWindow window)
+    {
+        Click(window, "ProjectsAdd");
+        await Until(window, () => Visible(window, "ProjectAddLinear"), "the Add project sheet never showed");
+        Click(window, "ProjectAddTabHand");
+        await Until(window, () => Visible(window, "ProjectAddForm"), "the Add project form never showed");
+    }
+
     private static void Click(Window window, string name) =>
         Named<Button>(window, name).RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
 
     [Fact]
-    public Task The_head_button_opens_the_sheet_with_the_By_hand_form() => OnUi(async () =>
+    public Task The_head_button_opens_the_sheet_on_From_Linear_and_By_hand_shows_the_form() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects();
 
         Click(window, "ProjectsAdd");
+        await Until(window, () => Visible(window, "ProjectAddLinear"), "the From Linear tab never showed");
+        Assert.False(Visible(window, "ProjectAddForm"));
+        Click(window, "ProjectAddTabHand");
         await Until(window, () => Visible(window, "ProjectAddForm"), "the Add project form never showed");
 
         Assert.Equal((true, "Add project"), (shell.IsProjectAddSheet, Named<TextBlock>(window, "SheetSubjectText").Text));
@@ -62,8 +76,7 @@ public sealed class ProjectAddViewTests : FrameHost
     public Task Typing_a_name_enables_Save_and_Save_sends_it() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects();
-        Click(window, "ProjectsAdd");
-        await Until(window, () => Visible(window, "ProjectAddForm"), "the Add project form never showed");
+        await OpenByHand(window);
 
         Named<TextBox>(window, "ProjectAddName").Text = "Kitchen";
         Assert.True(Named<Button>(window, "ProjectAddSave").IsEnabled);
@@ -74,11 +87,10 @@ public sealed class ProjectAddViewTests : FrameHost
     });
 
     [Fact]
-    public Task The_tabs_switch_between_the_Linear_placeholder_and_the_form() => OnUi(async () =>
+    public Task The_tabs_switch_between_the_Linear_list_and_the_form() => OnUi(async () =>
     {
         var (window, _) = await OnProjects();
-        Click(window, "ProjectsAdd");
-        await Until(window, () => Visible(window, "ProjectAddForm"), "the Add project form never showed");
+        await OpenByHand(window);
 
         Click(window, "ProjectAddTabLinear");
         Assert.Equal((false, true), (Visible(window, "ProjectAddForm"), Visible(window, "ProjectAddLinear")));
@@ -90,8 +102,7 @@ public sealed class ProjectAddViewTests : FrameHost
     public Task Esc_closes_the_sheet_and_focus_returns_to_Add_project() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects();
-        Click(window, "ProjectsAdd");
-        await Until(window, () => Visible(window, "ProjectAddForm"), "the Add project form never showed");
+        await OpenByHand(window);
 
         window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
         Settle(window);
@@ -101,12 +112,27 @@ public sealed class ProjectAddViewTests : FrameHost
     });
 
     [Fact]
+    public Task The_Linear_tab_lists_the_rows_and_Attach_adds_the_project() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects();
+        Click(window, "ProjectsAdd");
+
+        await Until(window, () => shell.ProjectAdd.LinearRows.Count == 3, "the Linear rows never showed");
+        Assert.True(Visible(window, "ProjectAddSearch"));
+        Assert.True(Visible(window, "ProjectAddLinearFootnote"));
+        var attach = window.GetVisualDescendants().OfType<Button>().First(b => string.Equals(b.GetValue(AutomationProperties.NameProperty), "Attach api cleanup", StringComparison.Ordinal));
+        attach.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+
+        await Until(window, () => !shell.IsSheetOpen, "the sheet never closed after Attach");
+        Assert.Equal("linear:project/00000000-0000-4000-8000-0000000000a3", Assert.IsType<ProjectAttach>(Assert.Single(Server.ProjectWrites).Body).Linear);
+    });
+
+    [Fact]
     public Task A_refusal_shows_under_the_button() => OnUi(async () =>
     {
         var (window, _) = await OnProjects();
         Server.ProjectWriteAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-PROJECT-004", "name: too long");
-        Click(window, "ProjectsAdd");
-        await Until(window, () => Visible(window, "ProjectAddForm"), "the Add project form never showed");
+        await OpenByHand(window);
         Named<TextBox>(window, "ProjectAddName").Text = "Kitchen";
 
         Click(window, "ProjectAddSave");

@@ -37,6 +37,8 @@ internal sealed partial class ProjectAddView : UserControl
         }
     }
 
+    private void OnAttach(object? sender, RoutedEventArgs e) => ((sender as Button)?.DataContext as ProjectLinearRowViewModel)?.RequestAttach();
+
     private void OnSave(object? sender, RoutedEventArgs e) => _ = Sheet?.Save(CancellationToken.None);
 
     private void OnCancel(object? sender, RoutedEventArgs e) => Sheet?.Cancel();

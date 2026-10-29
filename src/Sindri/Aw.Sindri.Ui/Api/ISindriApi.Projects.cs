@@ -20,6 +20,12 @@ internal partial interface ISindriApi
     /// <returns>The card, the API's refusal for an unknown project, or SND-UI-002/003.</returns>
     public Task<Result<ProjectOne>> Project(Uri api, string id, CancellationToken cancellationToken);
 
+    /// <summary>GET /sindri/projects/linear (projects page spec §3.2, §6.2): the From Linear tab's rows, read from the stored projects. A view read.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The rows (or the one line Context failed with), the API's refusal, or SND-UI-002/003.</returns>
+    public Task<Result<ProjectLinearList>> LinearProjects(Uri api, CancellationToken cancellationToken);
+
     /// <summary>POST /sindri/projects/{id}/change (projects page spec §5.3, desk): edit, set or clear the state, or save the notes. A led card takes notes only.</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="id">A "prj_…" id, or a led project's "linear:project/&lt;uuid&gt;" key (its notes).</param>

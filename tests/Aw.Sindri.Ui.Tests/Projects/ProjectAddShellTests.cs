@@ -93,7 +93,7 @@ public sealed class ProjectAddShellTests
 
         shell.Projects.RequestAdd();
 
-        Assert.Equal((string.Empty, true), (shell.ProjectAdd.Name, shell.ProjectAdd.IsByHand));
+        Assert.Equal((string.Empty, true), (shell.ProjectAdd.Name, shell.ProjectAdd.IsFromLinear));
     }, Token);
 
     [Fact]

@@ -41,6 +41,22 @@ public sealed class SindriApiClientProjectsTests
     }
 
     [Fact]
+    public async Task LinearProjects_calls_the_linear_route_and_reads_the_four_goldens()
+    {
+        Assert.Equal("/sindri/projects/linear", ProjectRoutes.Linear);
+        var some = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("projects-linear", "some"))).LinearProjects(_api, Token)).Value;
+        var empty = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("projects-linear", "empty"))).LinearProjects(_api, Token)).Value;
+        var down = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("projects-linear", "context-down"))).LinearProjects(_api, Token)).Value;
+        var untrusted = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("projects-linear", "untrusted-name"))).LinearProjects(_api, Token)).Value;
+
+        Assert.Equal((null, 3, "Ana Ruiz", "backlog", 2, "https://linear.app/acme/project/3"), (some.Error, some.Projects.Count, some.Projects[0].Lead, some.Projects[0].State, some.Projects[0].OpenIssues, some.Projects[0].Url));
+        Assert.Null(some.Projects[1].Lead);
+        Assert.Equal((null, 0), (empty.Error, empty.Projects.Count));
+        Assert.Equal(("Context is not answering", 0), (down.Error, down.Projects.Count));
+        Assert.StartsWith("<untrusted", Assert.Single(untrusted.Projects).Name, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task The_mixed_golden_reads_the_leads_the_note_the_finished_card_and_the_hidden_list()
     {
         var list = (await Client(new Canned(HttpStatusCode.OK, GoldenFiles.Api("projects", "mixed"))).Projects(_api, all: true, Token)).Value;

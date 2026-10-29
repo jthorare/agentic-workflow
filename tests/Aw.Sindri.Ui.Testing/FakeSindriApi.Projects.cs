@@ -10,10 +10,20 @@ internal sealed partial class FakeSindriApi
     private readonly List<string> _projectsRead = [];
     private readonly List<(string Route, object Body)> _projectWrites = [];
     private int _projectsCalls;
+    private int _linearCalls;
     private int _attached;
 
     /// <summary>GET /sindri/projects's answer: the mixed golden by default.</summary>
     public RouteAnswer ProjectsAnswer { get; set; } = RouteAnswer.Api("projects", "mixed");
+
+    /// <summary>GET /sindri/projects/linear's answer: the "some" golden by default.</summary>
+    public RouteAnswer LinearAnswer { get; set; } = RouteAnswer.Api("projects-linear", "some");
+
+    /// <summary>How many times the Linear project list was read.</summary>
+    public int LinearCalls => Volatile.Read(ref _linearCalls);
+
+    /// <summary>When set, the Linear project list read waits for it: the tab stays loading until the test completes it.</summary>
+    public TaskCompletionSource? LinearGate { get; set; }
 
     /// <summary>GET /sindri/projects/{id}'s answer per project id; an id not here answers the attached golden.</summary>
     public Dictionary<string, RouteAnswer> ProjectAnswers { get; } = new(StringComparer.Ordinal);
@@ -49,6 +59,17 @@ internal sealed partial class FakeSindriApi
         }
 
         return Answer<ProjectList>(api, ProjectRoutes.List(all), ProjectsAnswer);
+    }
+
+    public async Task<Result<ProjectLinearList>> LinearProjects(Uri api, CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _linearCalls);
+        if (LinearGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<ProjectLinearList>(api, ProjectRoutes.Linear, LinearAnswer);
     }
 
     public Task<Result<ProjectOne>> Project(Uri api, string id, CancellationToken cancellationToken)

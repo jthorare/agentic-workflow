@@ -20,15 +20,15 @@ public sealed class ProjectAddTests
     private ProjectAttach Sent() => Assert.IsType<ProjectAttach>(Assert.Single(_f.Server.ProjectWrites).Body);
 
     [Fact]
-    public void The_sheet_opens_on_By_hand_and_the_tabs_switch()
+    public void The_sheet_opens_on_From_Linear_and_the_tabs_switch()
     {
         var add = Add();
 
-        Assert.Equal((true, false), (add.IsByHand, add.IsFromLinear));
-        add.SelectFromLinear();
         Assert.Equal((false, true), (add.IsByHand, add.IsFromLinear));
         add.SelectByHand();
         Assert.Equal((true, false), (add.IsByHand, add.IsFromLinear));
+        add.SelectFromLinear();
+        Assert.Equal((false, true), (add.IsByHand, add.IsFromLinear));
     }
 
     [Fact]
@@ -159,18 +159,18 @@ public sealed class ProjectAddTests
     }
 
     [Fact]
-    public async Task Reset_starts_the_sheet_over_on_By_hand_with_empty_fields()
+    public async Task Reset_starts_the_sheet_over_on_From_Linear_with_empty_fields()
     {
         var add = Add();
         _f.Server.ProjectWriteAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-PROJECT-004", "no");
         (add.Name, add.Links, add.Notes, add.Target) = ("Kitchen", "https://example.com/a", "n", "2026-02-03");
         add.SelectedState = add.StateChoices[0];
         await add.Save(Token);
-        add.SelectFromLinear();
+        add.SelectByHand();
 
         add.Reset();
 
-        Assert.Equal((true, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, "planned"), (add.IsByHand, add.Name, add.Links, add.Notes, add.Target, add.SaveError, add.SelectedState?.Value));
+        Assert.Equal((false, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, "planned"), (add.IsByHand, add.Name, add.Links, add.Notes, add.Target, add.SaveError, add.SelectedState?.Value));
     }
 
     [Fact]

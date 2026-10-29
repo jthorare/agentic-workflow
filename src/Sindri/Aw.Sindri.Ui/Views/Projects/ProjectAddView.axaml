@@ -3,7 +3,7 @@
              xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
              x:Class="Aw.Sindri.Ui.Views.Projects.ProjectAddView"
              x:DataType="pvm:ProjectAddViewModel">
-  <!-- The Add project sheet (projects page spec §3.2) inside the shell's sheet, whose title says "Add project": two underline tabs, From Linear and By hand. By hand is
+  <!-- The Add project sheet (projects page spec §3.2) inside the shell's sheet, whose title says "Add project": two underline tabs, From Linear (the default) and By hand. From Linear is a search box, then one row per project (name, "Lead · state · open issues" and an Attach button) and a footnote; By hand is
        the name (Save waits for one), the state, the links one per line, the notes and the target date; Save shows "Saving…" and disables itself, and its error shows under
        the button with every field kept. The tabs are toggle buttons so a screen reader hears which one is on. -->
   <UserControl.Styles>
@@ -31,9 +31,31 @@
       </Border>
     </StackPanel>
 
-    <Border x:Name="ProjectAddLinear" IsVisible="{Binding IsFromLinear}" AutomationProperties.Name="{Binding FromLinearSoonText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-      <TextBlock Classes="body muted" Text="{Binding FromLinearSoonText}" AutomationProperties.AccessibilityView="Raw" />
-    </Border>
+    <StackPanel x:Name="ProjectAddLinear" Spacing="6" IsVisible="{Binding IsFromLinear}">
+      <TextBox x:Name="ProjectAddSearch" Text="{Binding LinearSearch, Mode=TwoWay}" PlaceholderText="{Binding SearchLabel}" AutomationProperties.Name="{Binding SearchLabel}" />
+      <Border x:Name="ProjectAddLinearStatus" IsVisible="{Binding LinearStatus, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              AutomationProperties.Name="{Binding LinearStatus}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body muted" Text="{Binding LinearStatus}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <ItemsControl x:Name="ProjectAddLinearRows" ItemsSource="{Binding LinearRows}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="pvm:ProjectLinearRowViewModel">
+            <Grid ColumnDefinitions="*,Auto" Margin="0,4">
+              <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                <TextBlock Classes="body" Text="{Binding Name}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock Classes="caption subtle" Text="{Binding Detail}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </StackPanel>
+              <Button Grid.Column="1" Content="{Binding AttachText}" IsEnabled="{Binding CanAttach}" Click="OnAttach" AutomationProperties.Name="{Binding AttachName}" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <Border x:Name="ProjectAddLinearError" IsVisible="{Binding LinearError, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+              AutomationProperties.Name="{Binding LinearError}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding LinearError}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <TextBlock x:Name="ProjectAddLinearFootnote" Classes="caption subtle" Text="{Binding LinearFootnote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LinearFootnote}" />
+    </StackPanel>
 
     <StackPanel x:Name="ProjectAddForm" Spacing="6" IsVisible="{Binding IsByHand}">
       <StackPanel Spacing="2">
