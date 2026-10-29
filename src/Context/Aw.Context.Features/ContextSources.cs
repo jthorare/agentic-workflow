@@ -1,7 +1,6 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
-using Aw.Context.Core.Linking;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
@@ -21,13 +20,9 @@ internal sealed class ContextSources(
     IService<RefreshDocsRequest, RefreshReport> refresh,
     IService<SyncSourcesRequest, SyncReport> sync,
     IService<EmbedRecordsRequest, EmbedRecordsReport> embed,
-    IIntentStore intents,
     IIndexSync index)
 {
-    private static readonly SourceId _onyx = SourceId.From("onyx");
-
-    // Only stored sync state: an owned index source that never got through its recent window (never ticked, or only failed), or the configured Onyx intent source with no
-    // successful sync, is a gap. The index rule is the one that reads a source as 'not-synced' in an answer's searched rows (SearchedSources.Index).
+    // Only stored sync state: an owned index source that never got through its recent window (never ticked, or only failed) is a gap. The index rule is the one that reads a source as 'not-synced' in an answer's searched rows (SearchedSources.Index).
     public async ValueTask<Result<bool>> HasSyncGap(ContextScope scope, CancellationToken cancellationToken)
     {
         var settings = SettingsReader.Read(scope.Settings);
@@ -43,13 +38,7 @@ internal sealed class ContextSources(
         }
 
         var indexGap = progress.Value.Any(static p => !p.Usable);
-        if (indexGap || settings.Value.Onyx is null)
-        {
-            return indexGap;
-        }
-
-        var state = await intents.State(_onyx, cancellationToken).ConfigureAwait(false);
-        return state.IsError ? state.Error : state.Value.LastSync is null;
+        return indexGap;
     }
 
     public ValueTask<Result<SourcesView>> Status(ContextScope scope, CancellationToken cancellationToken) =>

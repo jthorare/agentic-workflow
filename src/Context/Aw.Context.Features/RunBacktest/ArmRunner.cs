@@ -31,7 +31,7 @@ internal sealed class ArmRunner(IArmQuery planner, TimeProvider clock)
             Arm.Graph => (inputs.AsOfMap, [], null),
             Arm.GraphReviewed => (null, [], null),   // the ceiling: today's map with every review decision
             Arm.All or Arm.RankerRrf or Arm.RankerFeatures or Arm.RankerRerank => (inputs.AsOfMap, docs, null),   // the ranker arms read what 'all' reads and differ only in the ranker stages
-            Arm.Linear or Arm.Onyx or Arm.Code => throw new ArgumentOutOfRangeException(nameof(arm), "that arm is not available yet"),
+            Arm.Linear or Arm.Code => throw new ArgumentOutOfRangeException(nameof(arm), "that arm is not available yet"),
             _ => throw new ArgumentOutOfRangeException(nameof(arm)),
         };
         var (map, sources, depth) = setup;

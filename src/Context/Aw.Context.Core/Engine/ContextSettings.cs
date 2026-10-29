@@ -1,5 +1,4 @@
 using Aw.Context.Core.Linear;
-using Aw.Context.Core.Onyx;
 using Aw.Context.Core.Trust;
 
 namespace Aw.Context.Core.Engine;
@@ -52,9 +51,6 @@ public sealed record ContextSettings
 
     /// <summary>Whether session callers may read context at all, on any transport (spec §3). Off until approved.</summary>
     public bool SessionsEnabled { get; init; } = true;
-
-    /// <summary>The checked 'context.sources.onyx' entry, or null when the profile names no onyx source.</summary>
-    public OnyxSettings? Onyx { get; init; }
 
     /// <summary>The checked 'context.sources.linear' entry for the native Linear adapter (S-6), or null when the profile names no Linear token.</summary>
     public LinearSettings? Linear { get; init; }

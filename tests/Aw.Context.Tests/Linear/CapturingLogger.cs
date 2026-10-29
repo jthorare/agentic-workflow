@@ -2,7 +2,7 @@ using System.Collections.Concurrent;
 using System.Globalization;
 using Microsoft.Extensions.Logging;
 
-namespace Aw.Context.Tests.Onyx;
+namespace Aw.Context.Tests.Linear;
 
 /// <summary>Keeps every line an adapter logs, with its exception's message, so a test can search them.</summary>
 /// <typeparam name="T">The logger's category.</typeparam>

@@ -3,7 +3,6 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Results;
-using Aw.Context.Core.Sources;
 using Aw.Context.Tests.Map;
 using Aw.Context.Tests.ReviewMap;
 
@@ -136,49 +135,6 @@ public sealed class LensesAtVersionTests : IDisposable
         var index = Assert.Single(view.Searched.Sources, s => s.Id.Value == "code-index");
         Assert.Equal((SearchedState.Unavailable, "index-not-built"), (index.State, index.Reason));
         Assert.Equal(SearchedState.Ok, Assert.Single(view.Searched.Sources, s => s.Id.Value == "map").State);
-    }
-
-    private static ContextScope WithOnyx() => MapWorld.Human with
-    {
-        Settings = System.Text.Json.JsonDocument.Parse("""{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:ONYX_KEY","version":"v4.9.0"}}}""").RootElement.Clone(),
-    };
-
-    private async Task<SearchedSource> OnyxRow()
-    {
-        var view = (await Set([Manager], WithOnyx())).Value;
-        return Assert.Single(view.Searched.Sources, s => s.Id.Value == "onyx");
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_configured_onyx_whose_last_sync_failed_reads_degraded_with_the_code()
-    {
-        _ = await _world.ImportYaml(MapWorld.TabsMap);
-        _ = await _world.Intents.RecordFailure(SourceId.From("onyx"), "SND-CONTEXT-010", CancellationToken.None);
-
-        var onyx = await OnyxRow();
-
-        Assert.Equal((SearchedState.Degraded, "SND-CONTEXT-010"), (onyx.State, onyx.Code));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_configured_onyx_never_synced_reads_unavailable_not_synced()
-    {
-        _ = await _world.ImportYaml(MapWorld.TabsMap);
-
-        var onyx = await OnyxRow();
-
-        Assert.Equal((SearchedState.Unavailable, "not-synced"), (onyx.State, onyx.Reason));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task A_state_read_that_fails_falls_back_to_not_synced_and_the_lenses_still_answer()
-    {
-        _ = await _world.ImportYaml(MapWorld.TabsMap);
-        _world.Intents.StateFailure = new Kernel.Error("SND-CONTEXT-099", Kernel.ErrorKind.Unavailable, "state store down");
-
-        var onyx = await OnyxRow();
-
-        Assert.Equal((SearchedState.Unavailable, "not-synced"), (onyx.State, onyx.Reason));
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -18,8 +18,6 @@ public enum Arm
     /// <summary>The native Linear source (S-6).</summary>
     Linear,
 
-    /// <summary>The Onyx source (S-7B).</summary>
-    Onyx,
 
     /// <summary>The code source (S-9).</summary>
     Code,
