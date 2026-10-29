@@ -48,6 +48,14 @@ Find the bug in the source code.
 2. **Spawn a subagent** (explore) to search the codebase if the initial search is insufficient.
 3. Read all relevant source files. Trace the logic to identify the defect.
 
+## Step 3.6: Prevent the Class
+
+Once the defect is located and before choosing a fix, read `$SHARED_DIR/prevent-the-class.md` and ask its question:
+
+> How can we prevent this class of bugs from happening again—not just fix this instance? Consider enforceable constraints such as lint rules, analyzers, type/API design, shared primitives, state-machine or architecture changes, and checks that catch other instances of the same failure.
+
+Follow steps 1-4 of that file (name the class and invariant, search for the other instances, pick the smallest mechanism, keep mitigation apart from prevention) and write the handoff block (Failure class, Invariant, Affected scope, Prevention decision, Mitigation, Proof). With `--from-investigation`, adopt the handoff's block instead of redoing it; if it has none, write it now. A dark-factory objective (Step 3.5) carries this block too.
+
 ## Step 3.5: Dark Factory (optional)
 
 Follow `skills/_shared/dark-factory.md` — the gate (CD12), the route/infer/verify flow, and the **bugHunt fix objective template** are all preserved there. Fill the template with the root cause from Step 3 and the failing command from Step 2:
@@ -65,7 +73,7 @@ cat "$SHARED_DIR/dark-factory.md"
 
 Implement the fix and commit atomically.
 
-1. **Edit the source file(s)** to fix the bug. Keep changes minimal — fix only the identified defect.
+1. **Edit the source file(s)** to fix the bug, shaped by the Step 3.6 decision: the chosen mechanism beside the instance fix, or the instance fix plus the recorded follow-up. Keep changes minimal — fix the identified defect and build only the mechanism that decision names; label a stopgap as mitigation.
 2. **Commit the fix:**
    ```bash
    git add <changed-files>
@@ -81,6 +89,8 @@ Write a test that guards against this bug recurring.
    - Would **fail** on the original buggy code
    - **Passes** on the fixed code
    - Tests the specific edge case or condition that triggered the bug
+
+   A test with one fixture is the instance's proof, not the class's. The mechanism's own proof (Step 3.6: a second representative bad instance rejected, or more than one case run) is separate and goes in the report, unless the decision is "existing guard" or "deferred: <link>".
 3. **Commit the test:**
    ```bash
    git add <test-files>
@@ -174,6 +184,25 @@ Report format:
 **File:** `{test-file-path}`
 **Test name:** `{test name or describe block}`
 
+## Failure class
+{one sentence: the mistake that can recur}
+
+## Invariant
+{one sentence: what should always hold}
+
+## Affected scope
+{other instances, file:line each, or "searched <how>, none found"}
+
+## Prevention decision
+{existing guard <which> | new mechanism <which> | deferred: <follow-up link>}, and why it covers the class
+
+## Mitigation
+{the instance fix and any stopgap, or "none"}
+
+## Proof
+- Original failure: {the failing check, red before, green after}
+- Prevention: {the mechanism's own proof, or "deferred"}
+
 ## Verification Results
 
 **Tier:** {tier}
@@ -200,6 +229,9 @@ Attempts: {n}/3
 Root cause: {one-line summary}
 Fix: {commit sha} — fix: {description}
 Test: {commit sha} — test: regression test for {description}
+Original bug: {the check's before and after}
+Class prevention: {what was built and its proof | existing guard <which> | none built}
+Deferred: {follow-ups with links | none}
 Report: ~/.agentic-workflow/<repo-slug>/qa/{filename}
 Evidence: {pack path or "n/a"}
 ```
