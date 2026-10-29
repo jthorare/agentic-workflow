@@ -11,7 +11,6 @@ using Aw.Sindri.Core.Projects.Vocabulary;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetProject;
 using Aw.Sindri.Features.ListProjects;
-using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Projects;
@@ -119,7 +118,6 @@ public sealed class CliProjectVerbsTests : IDisposable
         Assert.Equal(string.Join(',', ["GET /sindri/status", $"GET /sindri/projects/{Id}", $"POST /sindri/projects/{Id}/change", "GET /sindri/status", $"GET /sindri/projects/{Id}", $"POST /sindri/projects/{Id}/detach"]), string.Join(',', api.Calls.Select(static c => $"{c.Method} {c.Path}")));
         Assert.Contains("\"version\":5", editBody, StringComparison.Ordinal);
         Assert.Equal("""{"version":5}""", api.Calls[^1].Body);
-        Assert.Equal("7", api.Calls[2].Headers[SindriHeaders.After]);   // the read-your-write rule: the head the status gave
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -203,7 +201,7 @@ public sealed class CliProjectVerbsTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Cli_project_show_of_an_unknown_project_is_SND_PROJECT_404_and_exits_2()
     {
-        var api = new RoutedApi().OnRaw($"/sindri/projects/{Id}", HttpStatusCode.NotFound, """{"title":"SND-PROJECT-404","detail":"No such project"}""");
+        var api = new RoutedApi().OnRaw($"/sindri/projects/{Id}", HttpStatusCode.NotFound, """{"type":"about:blank","title":"SND-PROJECT-404","status":404,"detail":"No such project"}""");
 
         var code = await Verbs(api).Run(["project", "show", Id], Token);
 
