@@ -4,9 +4,9 @@ using Aw.Context.Core.Projects;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Projects.Facts;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Projects.Facts;
 
 namespace Aw.Sindri.Features.ProjectFacts;
 
