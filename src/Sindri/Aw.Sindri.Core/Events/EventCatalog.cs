@@ -76,7 +76,6 @@ public static class EventCatalog
         new(EventTypes.RecipeRegistrationCompleted, Public: true, typeof(RecipeRegistrationCompleted), "recipe.registration.completed:<epoch>") { Invalidates = [ApiViews.Setup, ApiViews.Recipes] },
         new(EventTypes.McpRegistered, Public: true, typeof(McpRegistered), "mcp.registered:<commandId>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },
-        new(EventTypes.OnyxDeferred, Public: true, typeof(OnyxDeferred), "onyx.deferred:<commandId>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.ViewsRebuilt, Public: false, PublicPayload: null, "views.rebuilt:<commandId>"),
     ];
 }

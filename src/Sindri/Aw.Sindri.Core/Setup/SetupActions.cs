@@ -15,12 +15,6 @@ public static class SetupActions
     /// <summary>Register Sindri's MCP server for a repo, local scope only.</summary>
     public const string RegisterMcp = "RegisterMcp";
 
-    /// <summary>Set the managed Onyx up.</summary>
-    public const string SetupOnyx = "SetupOnyx";
-
-    /// <summary>Hand the Onyx setup job the owner's login while it waits for it.</summary>
-    public const string ConnectOnyx = "ConnectOnyx";
-
     /// <summary>Connect an index source's token (`sindri index connect &lt;source&gt;`; the human's, at a terminal).</summary>
     public const string ConnectIndexSource = "ConnectIndexSource";
 

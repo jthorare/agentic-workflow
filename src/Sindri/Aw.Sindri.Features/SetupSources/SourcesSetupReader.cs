@@ -1,3 +1,4 @@
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Kernel;
 using Aw.Sindri.Core.Profile;
@@ -6,15 +7,50 @@ using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Features.SetupSources;
 
-/// <summary>What the sources step reads: the github and slack sources the approved profile names, and whether each token pointer resolves. A read; no source is called.</summary>
+/// <summary>
+/// What the sources step reads: the github and slack sources the approved profile names (linear is not connected through `sindri index connect` yet), and whether each token pointer resolves, decided by
+/// <see cref="SourceTokens"/> as doctor does. A read; no source is called and no token value is kept.
+/// </summary>
 /// <param name="approvals">The approved profile.</param>
 /// <param name="engine">The context engine, which checks the profile's context section.</param>
 /// <param name="secrets">Resolves a token pointer.</param>
 internal sealed class SourcesSetupReader(IApprovedProfile approvals, IContextEngine engine, ISecretPointers secrets)
 {
-    internal ValueTask<Result<SourcesFact>> Read(CancellationToken cancellationToken)
+    internal async ValueTask<Result<SourcesFact>> Read(CancellationToken cancellationToken)
     {
-        _ = (approvals, engine, secrets, cancellationToken);
-        throw new NotSupportedException();
+        var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
+        if (latest.IsError)
+        {
+            return latest.Error;
+        }
+
+        if (latest.Value is not { } loaded)
+        {
+            return new SourcesFact(0);
+        }
+
+        ProfileRepoEntry[] entries = [.. (loaded.Profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path))];
+        var settings = engine.CheckSettings(loaded.Profile.Context, entries);
+        if (settings.IsError)
+        {
+            return settings.Error;
+        }
+
+        List<SetupItem> lines = [];
+        if (settings.Value.GitHub is { } github)
+        {
+            lines.Add(Line("github", github.Token));
+        }
+
+        if (settings.Value.Slack is { } slack)
+        {
+            lines.Add(Line("slack", slack.Token));
+        }
+
+        return new SourcesFact(lines.Count) { Items = new SetupItems(lines) };
     }
+
+    private SetupItem Line(string source, string? pointer) => SourceTokens.Connected(pointer, secrets)
+        ? new SetupItem(source, SetupState.Done, "connected")
+        : new SetupItem(source, SetupState.Todo, "needs token");
 }

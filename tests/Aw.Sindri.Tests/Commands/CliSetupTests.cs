@@ -2,7 +2,6 @@ using System.Net;
 using System.Text;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Control;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.GetSetup;
@@ -67,14 +66,14 @@ public sealed class CliSetupTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Setup_exits_0_when_every_step_is_done_or_skipped_and_says_how_to_unskip()
+    public async Task Setup_exits_0_when_every_step_is_done_or_skipped_and_says_why_and_what_to_do()
     {
-        var api = new Api(HttpStatusCode.OK, Body(SetupSteps.Repo(new RepoFact(1)), SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: "SND-ONYX-001"))));
+        var api = new Api(HttpStatusCode.OK, Body(SetupSteps.Repo(new RepoFact(1)), new SetupStep(SetupStepId.Sources, "Connect your sources", SetupState.Skipped, "Nothing to connect here.", "Connect a source any time.", Error: null, Action: null, Progress: null)));
 
         var code = await Verbs(_up, api).Run([], Token);
 
         Assert.Equal(0, code);
-        Assert.Contains("skipped   Set up Onyx: Docker isn't installed. Install Docker to set up Onyx: https://docs.docker.com/get-docker/\n", _out.ToString().ReplaceLineEndings("\n"), StringComparison.Ordinal);
+        Assert.Contains("skipped   Connect your sources: Nothing to connect here. Connect a source any time.\n", _out.ToString().ReplaceLineEndings("\n"), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

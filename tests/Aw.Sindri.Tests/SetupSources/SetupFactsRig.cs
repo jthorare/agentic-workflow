@@ -3,22 +3,20 @@ using System.Text.Json;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Testing.Engine;
-using Aw.Kernel.Ids;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Features.SetupSources;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Infrastructure.Secrets;
-using Aw.Sindri.Features.SetupSources;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.ApproveRecipe;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.SetupSources;
 
-/// <summary>The setup list's sources over in-memory ports: the profile, Claude Code's config, the engine's map status, the jobs view, the recipe registry and the Onyx rig.</summary>
+/// <summary>The setup list's sources over in-memory ports: the profile, Claude Code's config, the engine's map status, the jobs view, the recipe registry and the token pointers.</summary>
 internal sealed class SetupFactsRig : IAsyncDisposable
 {
     internal const string Checkout = "/work/demo";
@@ -36,7 +34,6 @@ internal sealed class SetupFactsRig : IAsyncDisposable
             new ProfileSetupReader(Profiles, Profiles, new Core.Setup.RepoGitCache(Inspector, Clock)),
             _scope.ServiceProvider.GetRequiredService<Core.Workflow.Registry.RecipeRegistryReader>(),
             new Testing.Workflow.ApproveAll.FakeShippedRecipes([]),
-            new OnyxSetupReader(new OnyxStatusReader(Onyx.Pins, new OnyxFacts(Onyx.Runtime, Onyx.Probes, new FakeSindriHome(OnyxUpRig.Home)), Onyx.Health, Onyx.Workspace), Slice.Store, Slice.Events, Jobs, TimeProvider.System),
             new SourcesSetupReader(Profiles, FakeContextEngine.Instance, new PointerSecrets(name => Env.GetValueOrDefault(name), new FakeToolRunner(ToolRun.Missing))),
             new McpSetupReader(Profiles, Host, Jobs, Queue),
             new MapSetupReader(Profiles, Engine.Proxy, Jobs));
@@ -63,19 +60,7 @@ internal sealed class SetupFactsRig : IAsyncDisposable
 
     internal RegistryHarness Registry { get; }
 
-    internal OnyxUpRig Onyx { get; } = new();
-
     internal SetupFacts Facts { get; }
-
-    /// <summary>Records the owner's choice about Onyx ('onyx.deferred') as the ledger holds it.</summary>
-    /// <param name="deferred">The choice.</param>
-    /// <returns>A task.</returns>
-    internal async Task Choose(bool deferred)
-    {
-        var grant = Slice.Held.Current!;
-        var id = Slice.Ids.New<CommandId>();
-        _ = await Slice.Store.Append(Slice.Events.Entry(Core.Events.EventTypes.OnyxDeferred, new Core.Events.OnyxDeferred(id, deferred), "onyx.deferred:" + id.Value), grant, Token);
-    }
 
     internal static CancellationToken Token => TestContext.Current.CancellationToken;
 

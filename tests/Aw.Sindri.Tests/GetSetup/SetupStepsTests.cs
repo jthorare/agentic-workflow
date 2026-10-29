@@ -1,4 +1,3 @@
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Testing;
 
@@ -121,26 +120,6 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Onyx_is_done_when_up_todo_when_not_started_skipped_when_this_machine_cannot_run_it_and_failed_when_it_does_not_answer()
-    {
-        var done = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null));
-        var notSetUp = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null));
-        var stopped = SetupSteps.Onyx(new OnyxFact(OnyxState.Stopped, Unreachable: false, BlockedByCode: null));
-        var noDocker = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: "SND-ONYX-001"));
-        var unknown = SetupSteps.Onyx(new OnyxFact(OnyxState.Unknown, Unreachable: false, BlockedByCode: null));
-        var memory = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: "SND-ONYX-003"));
-        var silent = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: true, BlockedByCode: null));
-
-        Assert.Equal(SetupState.Done, done.State);
-        Assert.Equal((SetupState.Todo, SetupActions.SetupOnyx), (notSetUp.State, notSetUp.Action));
-        Assert.Equal((SetupState.Todo, "Onyx is set up but stopped."), (stopped.State, stopped.Detail));
-        Assert.Equal((SetupState.Skipped, null, null, "Docker isn't installed.", "Install Docker to set up Onyx: https://docs.docker.com/get-docker/"), (noDocker.State, noDocker.Error, noDocker.Action, noDocker.Why, noDocker.Detail));
-        Assert.Equal((SetupState.Failed, null, "Sindri couldn't ask Docker about Onyx."), (unknown.State, unknown.Action, unknown.Why));
-        Assert.Equal((SetupState.Skipped, null, null), (memory.State, memory.Error, memory.Action));
-        Assert.Equal((SetupState.Failed, "SND-ONYX-005"), (silent.State, silent.Error?.Code));
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public void Sources_with_none_named_is_the_humans_and_says_no_source_is_connected_yet()
     {
         var step = SetupSteps.Sources(new SourcesFact(0));
@@ -197,7 +176,7 @@ public sealed class SetupStepsTests
     {
         List<SetupStep> steps =
         [
-            SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: true, BlockedByCode: null)),
+            SetupSteps.Unreadable(SetupStepId.Sources, "SND-LEDGER-002"),
             SetupSteps.Map(new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-040")),
             .. Enum.GetValues<SetupStepId>().Select(static id => SetupSteps.Unreadable(id, "SND-LEDGER-002")),
         ];
@@ -215,7 +194,7 @@ public sealed class SetupStepsTests
         var all = new[]
         {
             SetupSteps.Repo(new RepoFact(0)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), new RepoFact(0)), SetupSteps.Recipes(new RecipesFact(0, 0), profileApproved: false),
-            SetupSteps.Mcp(new McpFact(0, 0, "Claude Code")), SetupSteps.Map(new MapFact(MapPhase.Waiting)), SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null)),
+            SetupSteps.Mcp(new McpFact(0, 0, "Claude Code")), SetupSteps.Map(new MapFact(MapPhase.Waiting)), SetupSteps.Sources(new SourcesFact(0)),
         };
 
         Assert.Equal(Enum.GetValues<SetupStepId>(), all.Select(static s => s.Id));

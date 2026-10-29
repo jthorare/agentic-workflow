@@ -28,7 +28,6 @@ using Aw.Sindri.Features.CompleteStep;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Features.CreateItem;
 using Aw.Sindri.Features.Decide;
-using Aw.Sindri.Features.DeferOnyx;
 using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetApproveAllPlan;
 using Aw.Sindri.Features.GetEventCatalog;
@@ -164,8 +163,6 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<PauseServiceRequest>, AcceptAllValidator<PauseServiceRequest>>().AddCommand<PauseServiceRequest, CommandAccepted, PauseServiceService>();
         _ = services.AddScoped<IValidator<ResumeServiceRequest>, AcceptAllValidator<ResumeServiceRequest>>().AddCommand<ResumeServiceRequest, CommandAccepted, ResumeServiceService>();
         _ = services.AddRunService();
-        _ = services.AddScoped<IValidator<DeferOnyxRequest>, AcceptAllValidator<DeferOnyxRequest>>().AddCommand<DeferOnyxRequest, DeferOnyxResponse, DeferOnyxService>();
-        _ = services.AddOnyxSetup();
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
         _ = services.AddScoped<IValidator<OpenItemRequest>, OpenItemValidator>().AddCommand<OpenItemRequest, LaunchRequested, OpenItemService>().AddScoped<OpenChecks>().AddSingleton<OpenRequests>().AddScoped<OpenTarget>();
         _ = services.AddScoped<ISessionUsageSampler, SessionUsageSampler>();   // API P10a U11: the 60 s sample of what a live session has used
@@ -265,7 +262,6 @@ public static class SindriFeaturesServiceCollectionExtensions
         .AddScoped<IService<OnyxUpRequest, OnyxUpResponse>, OnyxUpService>()
         .AddScoped<IManagedOnyx, ManagedOnyx>()                                            // Onyx P4: serve starts a managed Onyx and the needs-you list says when it needs you
         .AddScoped<IOnyxNotices, OnyxNotices>()
-        .AddScoped<IService<OnyxEnsureRequest, OnyxEnsureResponse>, OnyxEnsureService>()
         .AddScoped<OnyxKeyMinter>()
         .AddScoped<OnyxAccountService>().AddScoped<IService<OnyxAccountRequest, OnyxAccountResponse>>(static sp => sp.GetRequiredService<OnyxAccountService>())   // Onyx P3: sign-up hand-off, Sindri's key, the profile section
         .AddScoped<IService<OnyxDownRequest, OnyxDownResponse>, OnyxDownService>();

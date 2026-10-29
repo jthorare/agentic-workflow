@@ -203,9 +203,6 @@ public static class EventTypes
     /// <summary>The owner agreed that Sindri may register itself and build the map on its own (setup-once spec §7.5).</summary>
     public const string SetupConsentGiven = "setup.consent.given";
 
-    /// <summary>The owner left Onyx for later, or took that back (setup-once spec §7.5).</summary>
-    public const string OnyxDeferred = "onyx.deferred";
-
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>
     /// <returns>The event type, for example 'service.heartbeat'.</returns>

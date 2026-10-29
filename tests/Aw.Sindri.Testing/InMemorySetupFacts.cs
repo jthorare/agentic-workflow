@@ -1,5 +1,4 @@
 using Aw.Kernel;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Testing;
@@ -25,13 +24,10 @@ public sealed class InMemorySetupFacts : ISetupFacts
     /// <summary>Gets or sets the index sources' answer.</summary>
     public Result<SourcesFact> SourcesAnswer { get; set; } = new SourcesFact(0);
 
-    /// <summary>Gets or sets Onyx's answer.</summary>
-    public Result<OnyxFact> OnyxAnswer { get; set; } = new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null);
-
     /// <summary>The profile names one repo, demo.</summary>
     public static RepoFact OneRepo { get; } = new(1) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) };
 
-    /// <summary>Everything done: a repo, an approved profile, every recipe approved, the registration made, the map built and Onyx up.</summary>
+    /// <summary>Everything done: a repo, an approved profile, every recipe approved, the registration made, the map built and every named source connected.</summary>
     /// <returns>The fake.</returns>
     public static InMemorySetupFacts AllDone() => new()
     {
@@ -40,7 +36,6 @@ public sealed class InMemorySetupFacts : ISetupFacts
         RecipesAnswer = new RecipesFact(26, 26),
         McpAnswer = new McpFact(1, 1, "Claude Code") { Items = new SetupItems([new SetupItem("demo", SetupState.Done, "Claude Code") { Providers = [new McpProviderState("claude", McpConnection.Connected)] }]) },
         MapAnswer = new MapFact(MapPhase.Built) { Items = new SetupItems([new SetupItem("demo", SetupState.Done, Detail: null)]) },
-        OnyxAnswer = new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null),
         SourcesAnswer = NamedSources(("github", true), ("slack", true)),
     };
 
@@ -69,7 +64,4 @@ public sealed class InMemorySetupFacts : ISetupFacts
 
     /// <inheritdoc/>
     public ValueTask<Result<SourcesFact>> Sources(CancellationToken cancellationToken) => ValueTask.FromResult(SourcesAnswer);
-
-    /// <inheritdoc/>
-    public ValueTask<Result<OnyxFact>> Onyx(CancellationToken cancellationToken) => ValueTask.FromResult(OnyxAnswer);
 }

@@ -75,7 +75,6 @@ internal sealed class SetupDoctor(ISetupFacts facts, IRecipeBuild? build = null,
         SetupStepId.Recipes => "sindri recipe approve-all",
         SetupStepId.Mcp => "sindri mcp register --apply",
         SetupStepId.Map => "sindri context map refresh",
-        SetupStepId.Onyx => "sindri onyx up",
         SetupStepId.Sources => "sindri index connect <source>",
         _ => throw new ArgumentOutOfRangeException(nameof(id)),
     };

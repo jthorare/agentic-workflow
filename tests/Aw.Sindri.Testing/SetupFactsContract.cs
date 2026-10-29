@@ -24,7 +24,6 @@ public abstract class SetupFactsContract
         Same(await facts.Recipes(Token), await facts.Recipes(Token));
         Same(await facts.Mcp(Token), await facts.Mcp(Token));
         Same(await facts.Map(Token), await facts.Map(Token));
-        Same(await facts.Onyx(Token), await facts.Onyx(Token));
         Same(await facts.Sources(Token), await facts.Sources(Token));
     }
 

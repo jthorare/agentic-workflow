@@ -1,10 +1,8 @@
 using Aw.Context.Core;
 using Aw.Kernel;
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Testing;
 
@@ -333,52 +331,5 @@ public sealed class SetupFactsTests
         var fact = (await rig.Facts.Sources(Token)).Value;
 
         Assert.Equal(["github"], fact.Items.Lines.Select(static i => i.Repo), StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Onyx_on_a_box_where_it_was_never_set_up_is_not_set_up_and_blocked_by_nothing()
-    {
-        await using var rig = new SetupFactsRig();
-
-        var fact = (await rig.Facts.Onyx(Token)).Value;
-
-        Assert.Equal((OnyxState.NotSetUp, false, null), (fact.State, fact.Unreachable, fact.BlockedByCode));
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Onyx_fact_names_the_first_failed_check_and_an_unanswering_onyx()
-    {
-        var problem = SindriErrors.OnyxDockerUnavailable.With("docker isn't running");
-        PreflightCheck[] checks = [new("docker", CheckState.Fail, "no daemon", problem), new("disk", CheckState.Ok, "plenty", Problem: null)];
-
-        var blocked = OnyxFact.From(new OnyxStatusReport(OnyxState.NotSetUp, "v4.9.0", "abc", checks, 3189, 1, Url: null, RunningVersion: null));
-        var silent = OnyxFact.From(new OnyxStatusReport(OnyxState.Running, "v4.9.0", "abc", [], 3189, 0, "http://127.0.0.1:3189", "unreachable"));
-
-        Assert.Equal(("SND-ONYX-001", false), (blocked.BlockedByCode, blocked.Unreachable));
-        Assert.True(silent.Unreachable);
-    }
-
-    [Theory, Trait("Lane", "unit")]
-    [InlineData(true, true)]
-    [InlineData(false, false)]
-    public async Task Onyx_is_deferred_when_the_latest_choice_in_the_ledger_says_so(bool latest, bool expected)
-    {
-        await using var rig = new SetupFactsRig();
-        _ = await rig.Slice.HoldLease();
-        using var entered = rig.Slice.Callers.Enter(A.Caller().Human().Build());
-        await rig.Choose(deferred: true);
-        await rig.Choose(latest);
-
-        var fact = (await rig.Facts.Onyx(Token)).Value;
-
-        Assert.Equal(expected, fact.Deferred);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Onyx_is_not_deferred_before_any_choice()
-    {
-        await using var rig = new SetupFactsRig();
-
-        Assert.False((await rig.Facts.Onyx(Token)).Value.Deferred);
     }
 }

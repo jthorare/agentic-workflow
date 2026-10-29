@@ -226,13 +226,6 @@
       ]
     },
     {
-      "type": "onyx.deferred",
-      "keyShape": "onyx.deferred:<commandId>",
-      "invalidates": [
-        "setup"
-      ]
-    },
-    {
       "type": "process.started",
       "keyShape": "process.started:<epoch>",
       "invalidates": [

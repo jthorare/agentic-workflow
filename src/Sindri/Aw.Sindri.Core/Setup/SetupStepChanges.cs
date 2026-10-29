@@ -51,7 +51,7 @@ public static class SetupStepChanges
 
     /// <summary>A step in the event's fixed words.</summary>
     /// <param name="id">The step.</param>
-    /// <returns>'repo', 'profile', 'recipes', 'mcp', 'map' or 'onyx'.</returns>
+    /// <returns>'repo', 'profile', 'recipes', 'mcp', 'map' or 'sources'.</returns>
     public static string Word(SetupStepId id) => id switch
     {
         SetupStepId.Repo => "repo",
@@ -59,7 +59,6 @@ public static class SetupStepChanges
         SetupStepId.Recipes => "recipes",
         SetupStepId.Mcp => "mcp",
         SetupStepId.Map => "map",
-        SetupStepId.Onyx => "onyx",
         SetupStepId.Sources => "sources",
         _ => throw new ArgumentOutOfRangeException(nameof(id)),
     };
