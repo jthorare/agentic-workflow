@@ -43,9 +43,9 @@
         <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
           <TextBlock Classes="caption subtle" Text="{Binding Label}" TextTrimming="CharacterEllipsis" AutomationProperties.Name="{Binding Label}" />
           <TextBlock Classes="caption subtle mono" Text="{Binding Repo}" IsVisible="{Binding Repo, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" AutomationProperties.Name="{Binding Repo}" />
-          <TextBlock x:Name="NeedsYouNotice" Classes="caption" Text="{Binding Notice}" IsVisible="{Binding HasNotice}" TextTrimming="CharacterEllipsis" ToolTip.Tip="{Binding Notice}" AutomationProperties.Name="{Binding Notice}" />
         </StackPanel>
       </DockPanel>
+      <TextBlock x:Name="NeedsYouNotice" Classes="caption" Text="{Binding Notice}" IsVisible="{Binding HasNotice}" TextWrapping="Wrap" ToolTip.Tip="{Binding Notice}" AutomationProperties.Name="{Binding Notice}" />
     </StackPanel>
   </Border>
 </UserControl>
