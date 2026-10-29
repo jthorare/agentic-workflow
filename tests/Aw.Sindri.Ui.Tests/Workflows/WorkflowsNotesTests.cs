@@ -12,6 +12,7 @@ using Aw.Sindri.Ui.Tests.Setup;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
+using Aw.Sindri.Ui.ViewModels.Settings;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.Views;
 using Aw.Sindri.Ui.Views.Setup;
@@ -101,6 +102,7 @@ public sealed class WorkflowsNotesTests : FrameHost
     {
         Server.SetupAnswer = SetupFixture.Answer("extra-priority-mix");
         var (window, shell) = await Connected(s => s.Setup.Steps.Count > 0);
+        window.SettingsSlot.Content = new SettingsView { DataContext = new SettingsViewModel(new Preferences(new InMemoryPreferencesStore()), new FakeMotionPreference(), _ => { }) };
 
         Press(window, Key.G);
         Press(window, Key.U);
