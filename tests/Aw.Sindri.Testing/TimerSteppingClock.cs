@@ -9,8 +9,9 @@ namespace Aw.Sindri.Testing;
 /// <param name="start">The first instant.</param>
 public sealed class TimerSteppingClock(DateTimeOffset start) : FakeTimeProvider(start)
 {
-    // why: a step never passes a timer it knows of, but one the subject has not armed yet is unknown, so no step is longer than this.
-    private static readonly TimeSpan _longestStep = TimeSpan.FromSeconds(10);
+    // why: a step never passes a timer it knows of, but one the subject has not armed yet is unknown, so no step is longer than this. A timer armed later than the
+    // quiet period (a busy box, issue 1705: the wrap's 1 s exit retry) is caught by the next step; at 10 s one step jumped past the whole span and the retry never fired.
+    private static readonly TimeSpan _longestStep = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan _quiet = TimeSpan.FromMilliseconds(2);
 
     private readonly Lock _gate = new();
