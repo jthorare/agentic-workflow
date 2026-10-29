@@ -5468,3 +5468,33 @@ override Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.GetHashCode() 
 override Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.ToString() -> string!
 static Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.operator !=(Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? left, Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? right) -> bool
 static Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding.operator ==(Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? left, Aw.Sindri.Features.GetInstanceEvents.InstanceLimitEnding? right) -> bool
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest!
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.Deconstruct(out string! Source) -> void
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.Equals(Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.Source.get -> string!
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.Source.init -> void
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.SyncIndexSourceRequest(string! Source) -> void
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult!
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Code.get -> string?
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Code.init -> void
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Deconstruct(out string! Source, out int Fetched, out int Records, out string? Code) -> void
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Equals(Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? other) -> bool
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Fetched.get -> int
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Fetched.init -> void
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Records.get -> int
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Records.init -> void
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Source.get -> string!
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Source.init -> void
+Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.SyncIndexSourceResult(string! Source, int Fetched, int Records, string? Code) -> void
+override Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.ToString() -> string!
+override Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.operator !=(Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest? left, Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest.operator ==(Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest? left, Aw.Sindri.Features.ContextCalls.SyncIndexSourceRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.operator !=(Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? left, Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult.operator ==(Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? left, Aw.Sindri.Features.ContextCalls.SyncIndexSourceResult? right) -> bool

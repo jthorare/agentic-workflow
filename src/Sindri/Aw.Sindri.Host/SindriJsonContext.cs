@@ -252,7 +252,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(SessionHeartbeatBody)), JsonSerializable(typeof(SessionHeartbeatResponse)), JsonSerializable(typeof(SessionExitBody)), JsonSerializable(typeof(SessionExitResponse)), JsonSerializable(typeof(CaptureRule))]   // API P10a (U10)
 // Two LaunchId types meet here: the collector's looser one (Core.Launch) and the engine's 'LCH-…' one the launch events carry (SYSLIB1031).
 [JsonSerializable(typeof(Core.Workflow.Engine.LaunchId), TypeInfoPropertyName = "EngineLaunchId")]
-[JsonSerializable(typeof(SyncContextSourcesRequest)), JsonSerializable(typeof(SyncContextSourcesResult))]
+[JsonSerializable(typeof(SyncContextSourcesRequest)), JsonSerializable(typeof(SyncContextSourcesResult)), JsonSerializable(typeof(SyncIndexSourceRequest)), JsonSerializable(typeof(SyncIndexSourceResult))]
 [JsonSerializable(typeof(BuildContextMapRequest)), JsonSerializable(typeof(BuildContextMapResult))]
 [JsonSerializable(typeof(RefreshContextMapRequest)), JsonSerializable(typeof(RefreshContextMapResult)), JsonSerializable(typeof(ContextMapRefreshed))]
 [JsonSerializable(typeof(BuildCodeIndexRequest)), JsonSerializable(typeof(BuildCodeIndexResult)), JsonSerializable(typeof(EmbedCodeIndexRequest)), JsonSerializable(typeof(EmbedCodeIndexResult)), JsonSerializable(typeof(CodeIndexBuilt)), JsonSerializable(typeof(CodeIndexBuiltLayer))]

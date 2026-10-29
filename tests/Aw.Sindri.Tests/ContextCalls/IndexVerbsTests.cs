@@ -120,7 +120,20 @@ public sealed class IndexVerbsTests : IDisposable
         var exit = await Run(api, "sync", "github", "--detach");
 
         Assert.Equal(0, exit);
-        Assert.Equal(["/sindri/index/status", "/sindri/services/index-sync/run"], api.Calls.Select(c => c.Route), StringComparer.Ordinal);
+        Assert.Equal(["/sindri/index/status", "/sindri/index/sync"], api.Calls.Select(c => c.Route), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Sync_of_a_named_source_starts_that_sources_own_job_not_the_index_sync_service()
+    {
+        var api = new ScriptedApi((HttpStatusCode.OK, Rows), (HttpStatusCode.OK, Started));
+
+        var exit = await Run(api, "sync", "github", "--detach");
+
+        Assert.Equal(0, exit);
+        Assert.Equal([("GET", "/sindri/index/status"), ("POST", "/sindri/index/sync")], api.Calls.Select(c => (c.Method, c.Route)));
+        Assert.DoesNotContain("index-sync", string.Join(' ', api.Calls.Select(c => c.Route)), StringComparison.Ordinal);
+        Assert.Equal("job JOB-0000000000000000000000000000000e started\n", Printed);
     }
 
     [Fact, Trait("Lane", "unit")]
