@@ -31,7 +31,7 @@ internal static class JobText
         return text.ToString();
     }
 
-    /// <summary>A job: its header, who started it and when, its lines, how it ended and the command that cancels it.</summary>
+    /// <summary>A job: its header, who started it and when, its lines, its model calls, how it ended and the command that cancels it; a job paused on 'model-limit' starts with why and how to resume.</summary>
     /// <param name="job">The job.</param>
     /// <returns>The text.</returns>
     internal static string Render(JobView job) => Render(job, TimeProvider.System);
@@ -44,7 +44,7 @@ internal static class JobText
     {
         ArgumentNullException.ThrowIfNull(job);
         ArgumentNullException.ThrowIfNull(clock);
-        var text = new StringBuilder();
+        var text = new StringBuilder(ModelCallText.Waiting(job));
         _ = text.AppendLine($"{job.Id.Value}  {JobStateNames.Of(job.State)}  {job.Kind.Value}  {job.Service?.Value ?? job.Key.Value}");
         _ = text.AppendLine($"started by {job.StartedBy} at {Time(job.StartedAt)}");
         foreach (var line in job.Progress)
@@ -52,6 +52,7 @@ internal static class JobText
             _ = text.AppendLine(line.Line);
         }
 
+        _ = text.Append(ModelCallText.Block(job, clock));
         if (JobFrames.Ended(job) is { } ended)
         {
             _ = text.AppendLine(ended.Text);
