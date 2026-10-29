@@ -2,7 +2,7 @@ using System.Globalization;
 
 namespace Aw.Sindri.Ui.ViewModels;
 
-/// <summary>The app's own copy (<see cref="Labels"/>, continued): the setup checklist's repo form, the coding agents, the map and the Onyx form (setup spec §6). Plain words; a code never shows in a sentence.</summary>
+/// <summary>The app's own copy (<see cref="Labels"/>, continued): the setup checklist's repo form, the coding agents, and the map (setup spec §6). Plain words; a code never shows in a sentence.</summary>
 internal static partial class Labels
 {
     /// <summary>The coding agents the step connects, in the order the list shows them.</summary>
@@ -82,66 +82,6 @@ internal static partial class Labels
     /// <summary>"Stopped at 40 of 100".</summary>
     internal static string SetupMapStopped(int done, int total) => string.Create(CultureInfo.InvariantCulture, $"Stopped at {done} of {total}.");
 
-    /// <summary>The line over the Onyx form.</summary>
-    internal const string SetupOnyxIntro = "Create your Onyx account in the browser first if you haven't, then sign in here.";
-
-    /// <summary>The email field's label.</summary>
-    internal const string SetupOnyxEmail = "Onyx email";
-
-    /// <summary>The password field's label.</summary>
-    internal const string SetupOnyxPassword = "Onyx password";
-
-    /// <summary>The control that shows the password.</summary>
-    internal const string SetupOnyxShow = "Show password";
-
-    /// <summary>The control that hides the password.</summary>
-    internal const string SetupOnyxHide = "Hide password";
-
-    /// <summary>The note under the Onyx form.</summary>
-    internal const string SetupOnyxNote = "Used once to connect Linear and Slack. Never stored, never shown in any log.";
-
-    /// <summary>The footnote under the checklist.</summary>
-    internal const string SetupOnyxFoot = "Prefer a terminal? Run";
-
-    /// <summary>The command the footnote names.</summary>
-    internal const string SetupOnyxFootCommand = "sindri onyx up";
-
-    /// <summary>The Onyx button that sends the login (and opens the form again).</summary>
-    internal const string SetupActConnect = "Connect";
-
-    /// <summary>The Onyx button that sets it aside.</summary>
-    internal const string SetupOnyxNotNow = "Not now";
-
-    /// <summary>The Onyx row after Set up started the stack.</summary>
-    internal const string SetupOnyxStarting = "Starting Onyx.";
-
-    /// <summary>The Onyx row after the login was sent.</summary>
-    internal const string SetupOnyxConnecting = "Connecting to Onyx.";
-
-    /// <summary>The Onyx row after Not now.</summary>
-    internal const string SetupOnyxLater = "Onyx is set aside for later.";
-
-    /// <summary>The Onyx row when a button could not start its job.</summary>
-    internal const string SetupOnyxFailed = "Couldn't reach Onyx just now. Try again in a moment.";
-
-    /// <summary>Under both fields when neither was entered, and SND-SETUP-005 in words.</summary>
-    internal const string SetupErr005 = "Enter your Onyx email and password.";
-
-    /// <summary>Under the email field when it is empty.</summary>
-    internal const string SetupOnyxEmailNeeded = "Enter your Onyx email.";
-
-    /// <summary>Under the password field when it is empty.</summary>
-    internal const string SetupOnyxPasswordNeeded = "Enter your Onyx password.";
-
-    /// <summary>Under the password field when Onyx refused the login (SND-ONYX-007).</summary>
-    internal const string SetupOnyxWrong = "Onyx didn't accept that email and password. Check them and try again.";
-
-    /// <summary>Under the form when no Onyx setup is waiting for a login (SND-SETUP-006).</summary>
-    internal const string SetupErr006 = "Sindri isn't waiting for a login. Set up Onyx first.";
-
-    /// <summary>Under the form when Docker is missing (SND-ONYX-001).</summary>
-    internal const string SetupDockerMissing = "Docker isn't installed.";
-
     /// <summary>A refusal of one of Sindri's own steps (SND-AUTH-002) in words.</summary>
     internal const string SetupAuthRefused = "Sindri's own steps can't answer this.";
 
@@ -156,11 +96,7 @@ internal static partial class Labels
         "SND-SETUP-001" => SetupErr001,
         "SND-SETUP-002" => SetupErr002,
         "SND-SETUP-004" => SetupErr004,
-        "SND-SETUP-005" => SetupErr005,
-        "SND-SETUP-006" => SetupErr006,
         "SND-PROFILE-002" => SetupProfileChanged,
-        "SND-ONYX-001" => SetupDockerMissing,
-        "SND-ONYX-007" => SetupOnyxWrong,
         "SND-AUTH-002" => SetupAuthRefused,
         _ => null,
     };
