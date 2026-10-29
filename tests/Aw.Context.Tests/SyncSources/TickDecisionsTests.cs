@@ -1,3 +1,4 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
@@ -56,6 +57,22 @@ public sealed class TickDecisionsTests
         var decision = Assert.Single((await world.Intents.Layer(Ct)).Value.Decisions);
         Assert.Equal(_issue, decision.Record);
         Assert.Equal(Quote, decision.Quote);
+    }
+
+    [Fact]
+    public async Task Without_a_map_the_feed_still_syncs_clean_and_the_decision_pass_says_SND_CONTEXT_030()
+    {
+        var now = DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture);
+        using var world = new MapWorld(feeds: new FakeRecordFeedCatalog(new FakeRecordFeed(RecordSamples.Github, [Issue(now)])));
+        var scope = MapWorld.HumanWith(Section(labeling: true));
+
+        var ticked = await world.Engine.Tick(scope, Ct);
+        var decided = await world.Engine.Decide(scope, Ct);
+
+        Assert.Null(Assert.Single(ticked.Value.Sources).Code);
+        Assert.Equal(ContextErrors.NoMap.Code, Assert.Single(decided.Value.Sources).Code);
+        Assert.Equal(ContextErrors.NoMap.Code, (await world.Engine.ConceptStatus(scope, Ct)).Value.LastCode);
+        Assert.Equal(0, (await world.Records.Backoff(RecordSamples.Github, Ct)).Value.Failures);
     }
 
     [Fact]
