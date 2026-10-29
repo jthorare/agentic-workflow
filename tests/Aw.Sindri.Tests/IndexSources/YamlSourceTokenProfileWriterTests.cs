@@ -85,7 +85,7 @@ public sealed class YamlSourceTokenProfileWriterTests : IDisposable
         Assert.True(Writer().SetTeams("linear", ["ENG", "OPS"]).Value);
         Assert.False(Writer().SetTeams("linear", ["ENG", "OPS"]).Value);
 
-        Assert.Equal("# mine\nschemaVersion: 1\ncontext:\n  sources:\n    linear:\n      token: \"env:X\"\n      teams: [ENG, OPS]\n    github:\n      repos: [a/b]\n", File.ReadAllText(ProfilePath));
+        Assert.Equal("# mine\nschemaVersion: 1\ncontext:\n  sources:\n    linear:\n      token: \"env:X\"\n      teams: [\"ENG\", \"OPS\"]\n    github:\n      repos: [a/b]\n", File.ReadAllText(ProfilePath));
     }
 
     [Fact]
@@ -95,7 +95,7 @@ public sealed class YamlSourceTokenProfileWriterTests : IDisposable
 
         Assert.True(Writer().SetTeams("linear", ["ENG"]).Value);
 
-        Assert.Equal("schemaVersion: 1\ncontext:\n  sources:\n    linear:\n      teams: [ENG]\n      token: \"env:X\"\n", File.ReadAllText(ProfilePath));
+        Assert.Equal("schemaVersion: 1\ncontext:\n  sources:\n    linear:\n      teams: [\"ENG\"]\n      token: \"env:X\"\n", File.ReadAllText(ProfilePath));
     }
 
     [Fact]
