@@ -10,12 +10,13 @@ namespace Aw.Context.Features.SyncSources;
 
 /// <summary>
 /// <see cref="IIndexSync"/> over the record feeds (owned-index spec §5.5, §5.8): the same feeds and the same per-source tick as <see cref="SyncSourcesService"/>, without the
-/// intent walk or the docs refresh. A source that is down is its row's code; the last tick's end and code are kept in memory, so they read null until the first tick after a start.
+/// intent walk or the docs refresh; each feed's tick is followed by its decision pass (<see cref="FeedDecisions"/>, #1574) unless a live intent source owns it. A source that is down is its row's code; the last tick's end and code are kept in memory, so they read null until the first tick after a start.
 /// </summary>
 /// <param name="feeds">The feeds and their lock and last outcomes.</param>
 /// <param name="store">The record store the positions are read from.</param>
 /// <param name="scrubberFactory">Builds the call's scrubbers.</param>
-internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory) : IIndexSync
+/// <param name="decisions">The decision pass after each feed's tick; null: none.</param>
+internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null) : IIndexSync
 {
     public async ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken)
     {
@@ -25,10 +26,12 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
             return resolved.Error;
         }
 
+        var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
+        var after = decisions is null || resolved.Value.Feeds.Count == 0 ? null : await decisions.ForTick(scope, context, resolved.Value.Repos, cancellationToken).ConfigureAwait(false);
         var rows = new List<SourceSync>();
         foreach (var feed in resolved.Value.Feeds)
         {
-            var row = await feeds.Run(feed, (resolved.Value.Scrubbers, resolved.Value.Settings), afterTick: null, cancellationToken).ConfigureAwait(false);
+            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), after?.Invoke(feed), cancellationToken).ConfigureAwait(false);
             if (row.IsError)
             {
                 return row.Error;
@@ -68,11 +71,11 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
 
     public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken) => feeds.Exclusive(source, () => store.Purge(source, cancellationToken));
 
-    private Result<(ContextSettings Settings, Scrubbers Scrubbers, IReadOnlyList<RecordFeed> Feeds)> Resolve(ContextScope scope)
+    private Result<(ContextSettings Settings, Scrubbers Scrubbers, IReadOnlyList<ContextRepo> Repos, IReadOnlyList<RecordFeed> Feeds)> Resolve(ContextScope scope)
     {
         var settings = SettingsReader.Read(scope.Settings);
         var scrubbers = settings.Bind(s => scrubberFactory.For(s.ExtraPatterns));
         var repos = scrubbers.Bind(_ => ScopeRules.Resolve(settings.Value, scope.Repos, scope.Caller));
-        return repos.Bind(r => Results.Success((settings.Value, scrubbers.Value, feeds.For(settings.Value, r, scrubbers.Value))));
+        return repos.Bind(r => Results.Success((settings.Value, scrubbers.Value, r, feeds.For(settings.Value, r, scrubbers.Value))));
     }
 }

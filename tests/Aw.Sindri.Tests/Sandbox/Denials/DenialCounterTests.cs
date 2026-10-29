@@ -151,4 +151,22 @@ public sealed class DenialCounterTests
 
         Assert.True(File.Exists(path));
     }
+
+    [Fact, Lane(TestLane.Unit)]
+    public void Flush_writes_the_counter_file_owner_only()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var home = new TempHome();
+        var path = LaunchPaths.DenialsFile(Path.Combine(home.Path, "launch"), _launch);
+        var (counter, _) = Make(path);
+        counter.Record(Net("evil.example"));
+
+        counter.Flush();
+
+        Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(path));
+    }
 }

@@ -1,8 +1,11 @@
+using System.Security.Cryptography;
+using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Infrastructure.Launch;
 
 namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 
@@ -16,7 +19,10 @@ namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 /// <param name="machine">The machine's memory and cores.</param>
 internal sealed class LinuxSandboxFixture(string sindriHome, Func<string, string?> environment, ISandboxProcesses processes, ISandboxMachine machine) : ISandboxFixture
 {
+    private const int FixturePort = 7480;
+
     private static readonly TimeSpan _gitTimeout = TimeSpan.FromSeconds(30);
+    private static readonly LaunchId _launch = LaunchId.From("LCH-" + new string('f', 32));
 
     /// <inheritdoc/>
     public SandboxRequest? Request()
@@ -33,6 +39,8 @@ internal sealed class LinuxSandboxFixture(string sindriHome, Func<string, string
             {
                 _ = Directory.CreateDirectory(directory);
             }
+
+            MakeSessionHome();
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -62,6 +70,8 @@ internal sealed class LinuxSandboxFixture(string sindriHome, Func<string, string
             {
                 _ = Directory.CreateDirectory(directory);
             }
+
+            MakeSessionHome();
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -77,6 +87,16 @@ internal sealed class LinuxSandboxFixture(string sindriHome, Func<string, string
         return Build(repo, worktree, runDirectory, runArea, netDir) with { Policy = new StepPolicy([], StepPermissionMode.Default, worktree) };
     }
 
+    /// <summary>Makes what the plan binds from Sindri's home, the way a launch's Stage does: the launches and approved folders, and the fixture launch's session home with a real control.json.</summary>
+    private void MakeSessionHome()
+    {
+        OwnerOnly.EnsureDirectory(Path.Combine(sindriHome, "launches"));
+        OwnerOnly.EnsureDirectory(Path.Combine(sindriHome, "approved"));
+        // why: a record of its own, not a link to the real control.json: that file may not exist yet, and a missing bind source fails bwrap before any canary runs.
+        var control = new ControlEndpoint(new Uri($"http://127.0.0.1:{FixturePort}"), Environment.ProcessId, Epoch: 0);
+        _ = SessionHome.Create(sindriHome, _launch, Convert.ToHexString(RandomNumberGenerator.GetBytes(32)), control);   // a fresh throw-away secret; the same home each run, replaced by Create
+    }
+
     private bool MakeWorktree(string repo, string worktree)
     {
         string[][] steps =
@@ -90,7 +110,7 @@ internal sealed class LinuxSandboxFixture(string sindriHome, Func<string, string
 
     private SandboxRequest Build(string repo, string worktree, string runDirectory, string runArea, string netDir) =>
         new(
-            LaunchId.From("LCH-" + new string('f', 32)),
+            _launch,
             ItemId.From("ITM-" + new string('f', 32)),
             AgentId.From("claude-code"),
             RepoName.From("fixture"),
@@ -102,7 +122,7 @@ internal sealed class LinuxSandboxFixture(string sindriHome, Func<string, string
             StepTimeout: TimeSpan.FromMinutes(5),
             LongMax: null,
             SlotHeld: false,
-            new SandboxNetFacts(netDir, SindriPort: 7480, ProxyPort: 41234),
+            new SandboxNetFacts(netDir, SindriPort: FixturePort, ProxyPort: 41234),
             BoxHostFacts.Read(environment, sindriHome, machine),
             Settings: null,
             Login: null);

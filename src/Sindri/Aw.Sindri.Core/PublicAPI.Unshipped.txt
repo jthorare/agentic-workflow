@@ -20976,11 +20976,13 @@ Aw.Sindri.Core.Sandbox.SandboxBlocker
 Aw.Sindri.Core.Sandbox.SandboxBlocker.<Clone>$() -> Aw.Sindri.Core.Sandbox.SandboxBlocker!
 Aw.Sindri.Core.Sandbox.SandboxBlocker.Code.get -> Aw.Sindri.Core.Sandbox.SandboxCode!
 Aw.Sindri.Core.Sandbox.SandboxBlocker.Code.init -> void
-Aw.Sindri.Core.Sandbox.SandboxBlocker.Deconstruct(out Aw.Sindri.Core.Sandbox.SandboxCode! Code, out string! Reason, out string? Source, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Values) -> void
+Aw.Sindri.Core.Sandbox.SandboxBlocker.Deconstruct(out Aw.Sindri.Core.Sandbox.SandboxCode! Code, out string! Reason, out string? Source, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Values, out string? Detail) -> void
+Aw.Sindri.Core.Sandbox.SandboxBlocker.Detail.get -> string?
+Aw.Sindri.Core.Sandbox.SandboxBlocker.Detail.init -> void
 Aw.Sindri.Core.Sandbox.SandboxBlocker.Equals(Aw.Sindri.Core.Sandbox.SandboxBlocker? other) -> bool
 Aw.Sindri.Core.Sandbox.SandboxBlocker.Reason.get -> string!
 Aw.Sindri.Core.Sandbox.SandboxBlocker.Reason.init -> void
-Aw.Sindri.Core.Sandbox.SandboxBlocker.SandboxBlocker(Aw.Sindri.Core.Sandbox.SandboxCode! Code, string! Reason, string? Source = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Values = null) -> void
+Aw.Sindri.Core.Sandbox.SandboxBlocker.SandboxBlocker(Aw.Sindri.Core.Sandbox.SandboxCode! Code, string! Reason, string? Source = null, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Values = null, string? Detail = null) -> void
 Aw.Sindri.Core.Sandbox.SandboxBlocker.Source.get -> string?
 Aw.Sindri.Core.Sandbox.SandboxBlocker.Source.init -> void
 Aw.Sindri.Core.Sandbox.SandboxCheckReport
@@ -21045,9 +21047,11 @@ Aw.Sindri.Core.Sandbox.SandboxBlockerLine.Command.init -> void
 Aw.Sindri.Core.Sandbox.SandboxBlockerLine.State.get -> string?
 Aw.Sindri.Core.Sandbox.SandboxBlockerLine.State.init -> void
 Aw.Sindri.Core.Sandbox.SandboxBlockerLine.<Clone>$() -> Aw.Sindri.Core.Sandbox.SandboxBlockerLine!
-Aw.Sindri.Core.Sandbox.SandboxBlockerLine.Deconstruct(out string! Code, out string! Reason, out string? Source, out string! Text, out string? Command, out string? State) -> void
+Aw.Sindri.Core.Sandbox.SandboxBlockerLine.Deconstruct(out string! Code, out string! Reason, out string? Source, out string! Text, out string? Command, out string? State, out string? Detail) -> void
+Aw.Sindri.Core.Sandbox.SandboxBlockerLine.Detail.get -> string?
+Aw.Sindri.Core.Sandbox.SandboxBlockerLine.Detail.init -> void
 Aw.Sindri.Core.Sandbox.SandboxBlockerLine.Equals(Aw.Sindri.Core.Sandbox.SandboxBlockerLine? other) -> bool
-Aw.Sindri.Core.Sandbox.SandboxBlockerLine.SandboxBlockerLine(string! Code, string! Reason, string? Source, string! Text, string? Command, string? State) -> void
+Aw.Sindri.Core.Sandbox.SandboxBlockerLine.SandboxBlockerLine(string! Code, string! Reason, string? Source, string! Text, string? Command, string? State, string? Detail = null) -> void
 override Aw.Sindri.Core.Sandbox.SandboxBlockerLine.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Sandbox.SandboxBlockerLine.GetHashCode() -> int
 override Aw.Sindri.Core.Sandbox.SandboxBlockerLine.ToString() -> string!
