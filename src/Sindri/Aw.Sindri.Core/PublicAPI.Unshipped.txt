@@ -21381,3 +21381,29 @@ override Aw.Sindri.Core.Health.HealthContext.GetHashCode() -> int
 override Aw.Sindri.Core.Health.HealthContext.ToString() -> string!
 static Aw.Sindri.Core.Health.HealthContext.operator !=(Aw.Sindri.Core.Health.HealthContext? left, Aw.Sindri.Core.Health.HealthContext? right) -> bool
 static Aw.Sindri.Core.Health.HealthContext.operator ==(Aw.Sindri.Core.Health.HealthContext? left, Aw.Sindri.Core.Health.HealthContext? right) -> bool
+Aw.Sindri.Core.Leftovers.IPurgeDocker
+Aw.Sindri.Core.Leftovers.IPurgeDocker.ContainersOf(string! project) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Leftovers.IPurgeDocker.RemoveContainers(System.Collections.Generic.IReadOnlyList<string!>! names) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Leftovers.IPurgeDocker.RemoveVolumes(System.Collections.Generic.IReadOnlyList<string!>! names) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Leftovers.IPurgeDocker.VolumesOf(string! project) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Leftovers.IPurgeKeychain
+Aw.Sindri.Core.Leftovers.IPurgeKeychain.Remove(string! service, string! account) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
+Aw.Sindri.Core.Leftovers.PurgePlan
+Aw.Sindri.Core.Leftovers.PurgePlan.<Clone>$() -> Aw.Sindri.Core.Leftovers.PurgePlan!
+Aw.Sindri.Core.Leftovers.PurgePlan.Containers.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Leftovers.PurgePlan.Containers.init -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Containers, out System.Collections.Generic.IReadOnlyList<string!>! Volumes, out string? Directory, out string? Keychain) -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.Directory.get -> string?
+Aw.Sindri.Core.Leftovers.PurgePlan.Directory.init -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.Equals(Aw.Sindri.Core.Leftovers.PurgePlan? other) -> bool
+Aw.Sindri.Core.Leftovers.PurgePlan.IsEmpty.get -> bool
+Aw.Sindri.Core.Leftovers.PurgePlan.Keychain.get -> string?
+Aw.Sindri.Core.Leftovers.PurgePlan.Keychain.init -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.PurgePlan(System.Collections.Generic.IReadOnlyList<string!>! Containers, System.Collections.Generic.IReadOnlyList<string!>! Volumes, string? Directory, string? Keychain) -> void
+Aw.Sindri.Core.Leftovers.PurgePlan.Volumes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Leftovers.PurgePlan.Volumes.init -> void
+override Aw.Sindri.Core.Leftovers.PurgePlan.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Leftovers.PurgePlan.GetHashCode() -> int
+override Aw.Sindri.Core.Leftovers.PurgePlan.ToString() -> string!
+static Aw.Sindri.Core.Leftovers.PurgePlan.operator !=(Aw.Sindri.Core.Leftovers.PurgePlan? left, Aw.Sindri.Core.Leftovers.PurgePlan? right) -> bool
+static Aw.Sindri.Core.Leftovers.PurgePlan.operator ==(Aw.Sindri.Core.Leftovers.PurgePlan? left, Aw.Sindri.Core.Leftovers.PurgePlan? right) -> bool

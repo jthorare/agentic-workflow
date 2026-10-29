@@ -2,15 +2,16 @@ using System.Security.Cryptography;
 using System.Text;
 using Aw.Kernel;
 using Aw.Kernel.Json;
+using Aw.Sindri.Core.Leftovers;
 using Aw.Sindri.Core.Secrets;
 
-namespace Aw.Sindri.Host.Commands.OnyxPurge;
+namespace Aw.Sindri.Features.Leftovers;
 
 /// <summary>
 /// What an old `sindri onyx up` left on this box: the containers and volumes carrying its compose project label, the `keychain:` entry its state.json recorded and the onyx/ directory. Read-only (it lists, never deletes), so `onyx down --purge` and a later doctor row (`index:onyx-leftover`) share it.
 /// Reads state.json with its own record and uses nothing from the Onyx setup code.
 /// </summary>
-internal static class OnyxLeftovers
+public static class OnyxLeftovers
 {
     private const string Prefix = "sindri-onyx-";
     private const int HashHexDigits = 8;
@@ -21,7 +22,7 @@ internal static class OnyxLeftovers
     /// <param name="home">The Sindri home (AW_SINDRI_HOME).</param>
     /// <param name="docker">Lists by compose label.</param>
     /// <returns>The plan (empty when nothing is left), or SND-INDEX-014 when docker is there but did not answer.</returns>
-    internal static Result<PurgePlan> Find(string home, IPurgeDocker docker)
+    public static Result<PurgePlan> Find(string home, IPurgeDocker docker)
     {
         var directory = Path.Combine(home, "onyx");
         var state = ReadState(Path.Combine(directory, "state.json"));
@@ -44,7 +45,7 @@ internal static class OnyxLeftovers
     /// <summary>Names the compose project of a Sindri home the way an old `onyx up` did: `sindri-onyx-` and the first 8 hex digits of the sha256 of the home's full path.</summary>
     /// <param name="sindriHome">The Sindri home as a full path; a trailing separator doesn't change the name.</param>
     /// <returns>For example sindri-onyx-0a1b2c3d.</returns>
-    internal static string ProjectNameFor(string sindriHome)
+    public static string ProjectNameFor(string sindriHome)
     {
         var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(sindriHome.TrimEnd('/', '\\'))));
         return Prefix + hash[..HashHexDigits];

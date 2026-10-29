@@ -2,9 +2,10 @@ using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Control;
-using Aw.Sindri.Infrastructure.Processes;
+using Aw.Sindri.Core.Leftovers;
+using Aw.Sindri.Features.Leftovers;
 
-namespace Aw.Sindri.Host.Commands.OnyxPurge;
+namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
 /// 'sindri onyx down --purge': removes what an old `sindri onyx up` left on the box (owned-index spec §8.2 step 5): the containers and volumes labelled with its compose project, the keychain entry Sindri recorded and the onyx/ directory. Lists them, asks the human, then deletes in that order.
@@ -50,10 +51,7 @@ internal sealed class OnyxPurgeCommand(string home, IPurgeDocker docker, IPurgeK
     }
 
     internal static OnyxPurgeCommand Create(IServiceProvider services, Output output, TextReader input, TextWriter question)
-    {
-        var runner = new ProcessToolRunner();
-        return new OnyxPurgeCommand(services.GetRequiredService<ISindriHome>().Path, new ToolPurgeDocker(runner), new ToolPurgeKeychain(runner), output, input, question);
-    }
+        => new(services.GetRequiredService<ISindriHome>().Path, services.GetRequiredService<IPurgeDocker>(), services.GetRequiredService<IPurgeKeychain>(), output, input, question);
 
     private static string Describe(PurgePlan plan)
     {

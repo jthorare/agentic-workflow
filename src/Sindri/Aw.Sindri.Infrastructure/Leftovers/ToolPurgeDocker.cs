@@ -1,8 +1,9 @@
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Leftovers;
 using Aw.Sindri.Infrastructure.Processes;
 
-namespace Aw.Sindri.Host.Commands.OnyxPurge;
+namespace Aw.Sindri.Infrastructure.Leftovers;
 
 /// <summary>IPurgeDocker over the `docker` CLI: every list is a label filter, never a name match.</summary>
 /// <param name="runner">Runs `docker`.</param>

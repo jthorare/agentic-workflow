@@ -115,7 +115,7 @@ public sealed class OnyxPurgeCommandTests : IDisposable
     public async Task A_state_without_a_project_falls_back_to_the_name_of_this_home()
     {
         _rig.WriteState("""{"port":3000}""");
-        var name = Aw.Sindri.Host.Commands.OnyxPurge.OnyxLeftovers.ProjectNameFor(_rig.Home);
+        var name = Aw.Sindri.Features.Leftovers.OnyxLeftovers.ProjectNameFor(_rig.Home);
         _rig.Docker.Containers["mine"] = name;
         _rig.Docker.Containers["other"] = Label;
 

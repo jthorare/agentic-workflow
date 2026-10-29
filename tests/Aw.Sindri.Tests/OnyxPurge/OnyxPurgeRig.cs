@@ -1,6 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Host.Commands;
-using Aw.Sindri.Host.Commands.OnyxPurge;
+using Aw.Sindri.Core.Leftovers;
 
 namespace Aw.Sindri.Tests.OnyxPurge;
 

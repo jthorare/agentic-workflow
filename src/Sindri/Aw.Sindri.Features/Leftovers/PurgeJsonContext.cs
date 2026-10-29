@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace Aw.Sindri.Host.Commands.OnyxPurge;
+namespace Aw.Sindri.Features.Leftovers;
 
 /// <summary>The purge's own JSON context.</summary>
 [JsonSerializable(typeof(PurgeState))]

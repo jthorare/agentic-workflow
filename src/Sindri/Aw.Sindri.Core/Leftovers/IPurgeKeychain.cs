@@ -1,9 +1,9 @@
 using Aw.Kernel;
 
-namespace Aw.Sindri.Host.Commands.OnyxPurge;
+namespace Aw.Sindri.Core.Leftovers;
 
 /// <summary>Deletes one OS keychain entry.</summary>
-internal interface IPurgeKeychain
+public interface IPurgeKeychain
 {
     /// <summary>Deletes the entry; an entry that is already gone is not an error.</summary>
     /// <param name="service">The keychain service (`onyx`).</param>

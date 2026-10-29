@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
-using Aw.Sindri.Host.Commands.OnyxPurge;
 using Aw.Sindri.Host.Commands.Probe;
 
 namespace Aw.Sindri.Host.Commands;

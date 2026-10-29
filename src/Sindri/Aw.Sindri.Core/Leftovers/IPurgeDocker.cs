@@ -1,9 +1,9 @@
 using Aw.Kernel;
 
-namespace Aw.Sindri.Host.Commands.OnyxPurge;
+namespace Aw.Sindri.Core.Leftovers;
 
 /// <summary>What the purge needs from Docker: list by compose label, remove by name. Self-contained: it shares nothing with the Onyx setup code, which is being deleted.</summary>
-internal interface IPurgeDocker
+public interface IPurgeDocker
 {
     /// <summary>Lists the containers (running or not) that carry the label com.docker.compose.project=<paramref name="project"/>. Never matches by name.</summary>
     /// <param name="project">The compose project name.</param>

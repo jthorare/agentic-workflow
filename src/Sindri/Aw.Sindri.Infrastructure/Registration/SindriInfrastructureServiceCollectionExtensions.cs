@@ -26,6 +26,7 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Denials;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Scoping;
+using Aw.Sindri.Core.Leftovers;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Core.Text;
@@ -49,6 +50,7 @@ using Aw.Sindri.Infrastructure.Forge;
 using Aw.Sindri.Infrastructure.Judge;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Lease;
+using Aw.Sindri.Infrastructure.Leftovers;
 using Aw.Sindri.Infrastructure.Ledger;
 using Aw.Sindri.Infrastructure.LensPacks;
 using Aw.Sindri.Infrastructure.Line;
@@ -84,7 +86,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddOnyxInfrastructure(environment).AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch();
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddOnyxInfrastructure(environment).AddLeftoverInfrastructure().AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch();
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>
@@ -200,6 +202,11 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddSingleton<IMcpAutoSwitch>(new EnvironmentMcpSwitch(environment))
             .AddSingleton<IProviderHost, ProviderHost>()
             .AddSingleton<IProviderFiles, ProviderConfigFiles>();
+
+    // What an old `onyx up` left on the box (docker by compose label, one keychain entry): `onyx down --purge` and the doctor's leftover row. Independent of the Onyx adapters above.
+    private static IServiceCollection AddLeftoverInfrastructure(this IServiceCollection services) => services
+        .AddSingleton<IPurgeDocker>(static _ => new ToolPurgeDocker(new ProcessToolRunner()))
+        .AddSingleton<IPurgeKeychain>(static _ => new ToolPurgeKeychain(new ProcessToolRunner()));
 
     private static IServiceCollection AddOnyxInfrastructure(this IServiceCollection services, Func<string, string?> environment)
         => services
