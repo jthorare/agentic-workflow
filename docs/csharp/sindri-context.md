@@ -518,9 +518,7 @@ The goldens under `tests/Aw.Sindri.Tests/Golden/Api/context-*/` pin every body b
   the profile names it; no repo in scope gives no source (`SourceCatalogContract`).
 - Sindri: `Composition` passes `ContextEnvironment(environment)` to `AddContextInfrastructure`, which resolves a name
   that is a secret pointer through `ISecretPointers` (`SecretPointerEnvironment`); every other name reads the real
-  environment. Doctor's `context:onyx` is `OnyxDoctor` in the `RunDoctor` slice, the third row of `ContextEngineChecks` (after
-  S-3a's `context:map` and `context:retention`): it resolves the key's pointer first, then asks the facade's `Sources`
-  for the approved profile as a service caller and judges the `onyx` row.
+  environment. Doctor's `context:onyx` row is gone (#1598); `sindri context sources status` still shows the `onyx` source's row until the Context lane removes the source.
 
 ### Routes and allowlist
 
