@@ -69,7 +69,7 @@ internal static class LensCitations
 
         var link = RecordPermalinks.Of(stored, reading.Teams, reading.Egress);
         var reference = new CitationRef(_recordStore, ExternalId.From(Scrubbed(reading.Egress, id.Value)), SourceVersion.From(Scrubbed(reading.Egress, stored.Version.Value))) { FetchedAt = reading.AsOf };
-        return new Citation(RecordKey.From(Scrubbed(reading.Egress, stored.Key.Value)), [reference], link.Permalink, Core.Results.Trust.Untrusted, CitationState.Current) { Aliases = link.Aliases };
+        return new Citation(RecordKey.From(Scrubbed(reading.Egress, stored.Key.Value)), [reference], link.Permalink, Trust.Untrusted, CitationState.Current) { Aliases = link.Aliases };
     }
 
     private static string Scrubbed(IEgressScrubber egress, string value) => egress.Scrub(value) is { Blocked: false } scrubbed ? scrubbed.Text : "scrub:blocked";

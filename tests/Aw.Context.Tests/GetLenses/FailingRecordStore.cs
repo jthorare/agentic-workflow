@@ -7,7 +7,7 @@ namespace Aw.Context.Tests.GetLenses;
 /// <summary>A record store whose reads all fail, for the answers that must not fail with it.</summary>
 internal sealed class FailingRecordStore : IRecordStore
 {
-    private static readonly Error _error = Aw.Context.Core.ContextErrors.QueryInvalid.With("the store can't be read");
+    private static readonly Error _error = Context.Core.ContextErrors.QueryInvalid.With("the store can't be read");
 
     public ValueTask<Result<StoredRecord?>> Get(RecordKey key, CancellationToken cancellationToken) => ValueTask.FromResult<Result<StoredRecord?>>(_error);
 
