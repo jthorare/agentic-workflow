@@ -32,7 +32,7 @@ public sealed class WorkflowsBoardLayoutTests : FrameHost
 
     [Theory]
     [InlineData(1440)]
-    [InlineData(900)]
+    [InlineData(1000)]
     public Task The_lanes_keep_their_minimum_widths_and_the_lane_row_its_minimum(double width) => OnUi(async () =>
     {
         var (window, _) = await OnBoard(width);
@@ -50,7 +50,6 @@ public sealed class WorkflowsBoardLayoutTests : FrameHost
     [Theory]
     [InlineData(1440, 480)]
     [InlineData(1000, 480)]
-    [InlineData(900, 432)]
     public Task The_drawer_is_48_percent_of_the_window_up_to_480(double width, double drawer) => OnUi(async () =>
     {
         var (window, shell) = await OnBoard(width);

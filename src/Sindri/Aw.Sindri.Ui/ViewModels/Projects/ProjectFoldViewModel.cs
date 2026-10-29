@@ -28,6 +28,9 @@ internal sealed class ProjectFoldViewModel : ObservableObject
     /// <summary>True while the fold is open.</summary>
     public bool IsOpen { get; private set => Set(ref field, value); }
 
+    /// <summary>How many cards sit across, as the page last set it.</summary>
+    public int Columns { get; internal set => Set(ref field, value); } = 1;
+
     /// <summary>The cards, as the server orders them.</summary>
     public ObservableCollection<ProjectCardViewModel> Cards { get; } = [];
 

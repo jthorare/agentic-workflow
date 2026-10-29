@@ -19,6 +19,9 @@ internal sealed class ProjectGroupViewModel : ObservableObject
     /// <summary>How many cards.</summary>
     public int Count => Cards.Count;
 
+    /// <summary>How many cards sit across, as the page last set it.</summary>
+    public int Columns { get; internal set => Set(ref field, value); } = 1;
+
     /// <summary>The cards, as the server orders them.</summary>
     public ObservableCollection<ProjectCardViewModel> Cards { get; } = [];
 

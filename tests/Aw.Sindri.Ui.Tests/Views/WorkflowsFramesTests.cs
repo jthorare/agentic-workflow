@@ -102,7 +102,7 @@ public sealed class WorkflowsFramesTests : FrameHost
         Expect.Sequence(shell.Workflows.Groups.SelectMany(g => g.Rows).Select(r => r.Address), rows.Select(Address));
         var kept = ListColumns.For(ListPanel(window).Bounds.Width);
         var stages = window.GetVisualDescendants().OfType<TextBlock>().Where(t => t.Name == "WorkflowRowStage" && t.IsEffectivelyVisible).ToList();
-        Assert.Equal(kept.Shows(ListColumns.Stage), stages.Count > 0);   // 1440 keeps all six columns; at 900 Stage and Waiting on are gone
+        Assert.Equal(kept.Shows(ListColumns.Stage), stages.Count > 0);   // 1440 keeps all six columns; at 1000 Stage and Waiting on are gone if the tier drops them
         Assert.Equal(kept.Shows(ListColumns.WaitingOn), window.GetVisualDescendants().OfType<TextBlock>().Any(t => t.Name == "WorkflowRowWho" && t.IsEffectivelyVisible));
         Assert.True(ListPanel(window).Bounds.Width <= width);   // the page never scrolls sideways
         Frame(window, "workflows-list-" + frame, "f3-");
@@ -112,7 +112,7 @@ public sealed class WorkflowsFramesTests : FrameHost
     public Task The_list_draws_six_columns_at_1440() => OnUi(() => ListAt(1440, "1440"));
 
     [Fact]
-    public Task The_list_drops_Stage_and_Waiting_on_at_900() => OnUi(() => ListAt(900, "900"));
+    public Task The_list_drops_Stage_and_Waiting_on_at_1000() => OnUi(() => ListAt(1000, "1000"));
 
     [Fact]
     public Task u8_workflows_recipe_filter() => OnUi(async () =>

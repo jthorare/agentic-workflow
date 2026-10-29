@@ -3,18 +3,12 @@
              xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
              xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
              x:Class="Aw.Sindri.Ui.Views.Projects.ProjectsPage"
-             x:DataType="pvm:ProjectsPageViewModel"
-             Columns="{Binding Columns}">
+             x:DataType="pvm:ProjectsPageViewModel">
   <!-- The Projects page (Projects page spec §3, mockup B): the title with the freshness line and Add project, the served sentence as an empty block or a
        banner, a group per state with its cards in a grid of Columns, and the Finished and Hidden folds. Add is disabled until it ships. Every named line is a
        Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
   <UserControl.Styles>
     <Style Selector="ItemsControl.cards">
-      <Setter Property="ItemsPanel">
-        <ItemsPanelTemplate>
-          <UniformGrid Columns="{Binding $parent[pv:ProjectsPage].Columns}" />
-        </ItemsPanelTemplate>
-      </Setter>
       <Setter Property="ItemTemplate">
         <DataTemplate x:DataType="pvm:ProjectCardViewModel">
           <pv:ProjectCard Margin="0,0,12,12" />
@@ -62,9 +56,11 @@
           <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
               <TextBlock x:Name="ProjectsGroupHeading" Classes="eyebrow subtle" Text="{Binding HeadingCaps}" />
-              <TextBlock Classes="eyebrow" Foreground="{DynamicResource Brush.InkTertiary}" Text="{Binding Count}" />
+              <TextBlock Classes="eyebrow" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding Count}" />
             </StackPanel>
-            <ItemsControl Classes="cards" ItemsSource="{Binding Cards}" />
+            <ItemsControl Classes="cards" ItemsSource="{Binding Cards}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
           </StackPanel>
         </DataTemplate>
       </ItemsControl.ItemTemplate>
@@ -75,10 +71,12 @@
       <Expander.Header>
         <Grid ColumnDefinitions="Auto,*" x:DataType="pvm:ProjectFoldViewModel">
           <TextBlock Classes="body muted" Text="{Binding Heading}" />
-          <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkTertiary}" HorizontalAlignment="Right" Text="{Binding Why}" />
+          <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right" Text="{Binding Why}" />
         </Grid>
       </Expander.Header>
-      <ItemsControl Classes="cards" ItemsSource="{Binding Cards}" Margin="0,8,0,0" />
+      <ItemsControl Classes="cards" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      </ItemsControl>
     </Expander>
 
     <Expander x:Name="ProjectsHidden" DataContext="{Binding Hidden}" x:DataType="pvm:ProjectFoldViewModel" IsVisible="{Binding IsVisible}"
@@ -86,10 +84,12 @@
       <Expander.Header>
         <Grid ColumnDefinitions="Auto,*" x:DataType="pvm:ProjectFoldViewModel">
           <TextBlock Classes="body muted" Text="{Binding Heading}" />
-          <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkTertiary}" HorizontalAlignment="Right" Text="{Binding Why}" />
+          <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right" Text="{Binding Why}" />
         </Grid>
       </Expander.Header>
-      <ItemsControl Classes="cards" ItemsSource="{Binding Cards}" Margin="0,8,0,0" />
+      <ItemsControl Classes="cards" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      </ItemsControl>
     </Expander>
   </StackPanel>
 </UserControl>

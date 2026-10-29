@@ -84,8 +84,15 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
 
     /// <summary>The page's width changed: 2 columns from 560 px, 3 from 1,040.</summary>
     /// <param name="width">The width in px.</param>
-    internal void SetPageWidth(double width) =>
+    internal void SetPageWidth(double width)
+    {
         Columns = width >= Labels.ProjectsThreeColumnsFrom ? 3 : width >= Labels.ProjectsTwoColumnsFrom ? 2 : 1;
+        Finished.Columns = Hidden.Columns = Columns;   // the grids below read their own owner's count
+        foreach (var group in _groups.Values)
+        {
+            group.Columns = Columns;
+        }
+    }
 
     /// <summary>Re-reads the list (on connect and on every event); while the page isn't shown it only remembers where the API is.</summary>
     /// <param name="url">The API's base URL.</param>
@@ -200,7 +207,7 @@ internal sealed class ProjectsPageViewModel : ObservableObject, IDisposable
             var heading = Labels.ProjectStateWord(served.Key);
             if (!_groups.TryGetValue(heading, out var group))
             {
-                group = _groups[heading] = new ProjectGroupViewModel(heading);
+                group = _groups[heading] = new ProjectGroupViewModel(heading) { Columns = Columns };
             }
 
             group.Show([.. served.Select(Card)]);
