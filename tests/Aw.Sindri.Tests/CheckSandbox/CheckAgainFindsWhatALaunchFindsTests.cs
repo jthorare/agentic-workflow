@@ -62,7 +62,8 @@ public sealed class CheckAgainFindsWhatALaunchFindsTests : IDisposable
         var services = Composition(Approved(target: null), [_claude])
             .AddSingleton(new SindriSettings(Path.Combine(_dir, "sindri"), Path.Combine(_dir, "sindri", "profile.yaml")))
             .AddSingleton(RealTime.Clock)
-            .AddSindriPlatformSandbox(Env);
+            .AddSindriPlatformSandbox(Env)
+            .AddSingleton<ModelCredentialSources>();   // serve registers it in the core; the fixture login needs it
         await using var scope = Build(services).CreateAsyncScope();
         Assert.SkipUnless(scope.ServiceProvider.GetRequiredService<ISandbox>().Probe().IsSuccess, "bubblewrap's probe refuses on this box");
 
