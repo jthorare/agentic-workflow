@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Aw.Context.Core.Vectors;
+using Aw.Kernel;
 
 namespace Aw.Context.Core.ConceptSynthesis;
 
@@ -11,8 +12,8 @@ public static class ConceptGrouper
     /// <param name="records">The record vectors, all of one dimension.</param>
     /// <param name="settings">The knobs.</param>
     /// <param name="scan">The vector scan.</param>
-    /// <returns>The groups and every neighbour cosine seen.</returns>
-    public static GroupingResult Group(IReadOnlyList<RecordVector> records, GroupingSettings settings, IVectorScan scan)
+    /// <returns>The groups and every neighbour cosine seen; the scan's error when it fails, or SND-CONTEXT-232 when the vectors differ in dimension.</returns>
+    public static Result<GroupingResult> Group(IReadOnlyList<RecordVector> records, GroupingSettings settings, IVectorScan scan)
     {
         ArgumentNullException.ThrowIfNull(records);
         ArgumentNullException.ThrowIfNull(settings);
@@ -22,7 +23,13 @@ public static class ConceptGrouper
             return new GroupingResult([], []);
         }
 
-        var edges = NearestEdges(records, settings, scan);
+        var found = NearestEdges(records, settings, scan);
+        if (found.IsError)
+        {
+            return found.Error;
+        }
+
+        var edges = found.Value;
         var parts = new List<List<int>>();
         Split([.. Enumerable.Range(0, records.Count)], edges, settings.MinCosine, settings, parts);
 
@@ -35,7 +42,7 @@ public static class ConceptGrouper
     }
 
     // Each record's nearest neighbours, every pair once (the scan's score is the cosine: the vectors are unit length).
-    private static List<Edge> NearestEdges(IReadOnlyList<RecordVector> records, GroupingSettings settings, IVectorScan scan)
+    private static Result<List<Edge>> NearestEdges(IReadOnlyList<RecordVector> records, GroupingSettings settings, IVectorScan scan)
     {
         var dim = records[0].Vector.Length;
         var data = new float[records.Count * dim];
@@ -43,7 +50,7 @@ public static class ConceptGrouper
         {
             if (records[i].Vector.Length != dim)
             {
-                throw new ArgumentException("every record vector must have the same dimension", nameof(records));
+                return ContextErrors.VectorScanInvalid.With("every record vector must have the same dimension");
             }
 
             records[i].Vector.CopyTo(data.AsMemory(i * dim, dim));
@@ -58,7 +65,7 @@ public static class ConceptGrouper
             var top = scan.Top(matrix, records[i].Vector, ReadOnlyMemory<bool>.Empty, count);
             if (top.IsError)
             {
-                throw new InvalidOperationException($"the vector scan failed: {top.Error.Code}");
+                return top.Error;
             }
 
             foreach (var hit in top.Value.Where(h => h.Row != i))

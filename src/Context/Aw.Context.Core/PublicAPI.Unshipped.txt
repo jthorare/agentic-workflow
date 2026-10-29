@@ -9383,6 +9383,6 @@ Aw.Context.Core.ConceptSynthesis.GroupingSettings.SplitStep.init -> void
 Aw.Context.Core.ConceptSynthesis.ConceptGrouper
 Aw.Context.Core.ConceptSynthesis.CosineHistogram
 Aw.Context.Core.ConceptSynthesis.RecordVectors
-static Aw.Context.Core.ConceptSynthesis.ConceptGrouper.Group(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.RecordVector!>! records, Aw.Context.Core.ConceptSynthesis.GroupingSettings! settings, Aw.Context.Core.Vectors.IVectorScan! scan) -> Aw.Context.Core.ConceptSynthesis.GroupingResult!
+static Aw.Context.Core.ConceptSynthesis.ConceptGrouper.Group(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.RecordVector!>! records, Aw.Context.Core.ConceptSynthesis.GroupingSettings! settings, Aw.Context.Core.Vectors.IVectorScan! scan) -> Aw.Kernel.Result<Aw.Context.Core.ConceptSynthesis.GroupingResult!>!
 static Aw.Context.Core.ConceptSynthesis.CosineHistogram.Buckets(System.Collections.Generic.IReadOnlyList<float>! cosines, float width = 0.05) -> System.Collections.Generic.IReadOnlyList<(float Lower, int Count)>!
 static Aw.Context.Core.ConceptSynthesis.RecordVectors.Mean(string! record, string! version, string! source, System.Collections.Generic.IEnumerable<float[]!>! chunks) -> Aw.Context.Core.ConceptSynthesis.RecordVector?
