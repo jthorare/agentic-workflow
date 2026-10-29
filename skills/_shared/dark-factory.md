@@ -25,7 +25,7 @@ Config absent or not enabled ⇒ **skip silently — don't mention dark factory 
 ## Consumer objective templates
 
 **bugHunt (fix):**
-> "Fix the bug: \<one-sentence description\>. Root cause: \<root cause from Step 3\>. Reproduce with: \<test command from Step 2\>. The fix must: (1) make the failing test pass, (2) introduce no new test failures, (3) be minimal — only the identified defect is changed, (4) include a regression test for the specific edge case."
+> "Fix the bug: \<one-sentence description\>. Root cause: \<root cause from Step 3\>. Reproduce with: \<test command from Step 2\>. The fix must: (1) make the failing test pass, (2) introduce no new test failures, (3) be minimal — only the identified defect and the mechanism named below are changed, (4) include a regression test for the specific edge case. Prevention decision (bugHunt Step 3.6, `prevent-the-class.md`): \<failure class, invariant, other instances, chosen mechanism or \"existing guard\" or \"deferred: link\"\>; build that mechanism with its own proof, and label any stopgap as mitigation."
 
 **officeHours (doc-quality):**
 > "Adversarially evaluate these four spec docs for the '{feature}' feature. Check: (1) product.md contains no technical implementation details, (2) engineering.md contains no user personas or business metrics, (3) design-brief.md contains no technical constraints, (4) TASKS.md references domain docs rather than duplicating implementation details, (5) all selected EARS requirement types are present with at least 2 requirements each, (6) every product.md requirement traces to at least one acceptance criterion, (7) TASKS.md dependency graph is topologically sorted with no circular dependencies. For each failing criterion, provide file:line evidence."
