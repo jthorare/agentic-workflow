@@ -7522,6 +7522,8 @@ static Aw.Sindri.Core.Jobs.JobContext.operator !=(Aw.Sindri.Core.Jobs.JobContext
 static Aw.Sindri.Core.Jobs.JobContext.operator ==(Aw.Sindri.Core.Jobs.JobContext? left, Aw.Sindri.Core.Jobs.JobContext? right) -> bool
 static Aw.Sindri.Core.Jobs.JobLine.operator !=(Aw.Sindri.Core.Jobs.JobLine? left, Aw.Sindri.Core.Jobs.JobLine? right) -> bool
 static Aw.Sindri.Core.Jobs.JobLine.operator ==(Aw.Sindri.Core.Jobs.JobLine? left, Aw.Sindri.Core.Jobs.JobLine? right) -> bool
+const Aw.Sindri.Core.Jobs.JobLines.FailureHeadChars = 60 -> int
+static Aw.Sindri.Core.Jobs.JobLines.CleanFailure(Aw.Sindri.Core.Text.ITextScrubber! scrubber, string! message) -> string!
 static Aw.Sindri.Core.Jobs.JobLines.Clean(Aw.Sindri.Core.Text.ITextScrubber! scrubber, string! line) -> string!
 static Aw.Sindri.Core.Jobs.JobLines.Keep(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! lines, Aw.Sindri.Core.Jobs.JobLine! next) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>!
 static Aw.Sindri.Core.Jobs.JobLinks.operator !=(Aw.Sindri.Core.Jobs.JobLinks? left, Aw.Sindri.Core.Jobs.JobLinks? right) -> bool
