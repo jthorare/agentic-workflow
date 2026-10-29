@@ -79,7 +79,15 @@
             </Border>
             <Button x:Name="ProjectNotesEdit" Classes="link" Content="{Binding EditText}" Click="OnEdit" IsVisible="{Binding IsReading}" HorizontalAlignment="Left" />
             <StackPanel x:Name="ProjectNotesEditor" Spacing="6" IsVisible="{Binding IsEditing}">
-              <TextBox x:Name="ProjectNotesBox" Text="{Binding Draft}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" MaxHeight="320" AutomationProperties.Name="{Binding BoxName}" />
+              <Border x:Name="ProjectNotesNewer" IsVisible="{Binding HasNewerNotes}" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.HairlineTertiary}"
+                    BorderThickness="2,0,0,0" CornerRadius="{StaticResource Radius.XS}" Padding="8,6"
+                    AutomationProperties.Name="{Binding NewerNotesCaption}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+              <StackPanel Spacing="4">
+                <TextBlock Classes="caption subtle" Text="{Binding NewerNotesCaption}" TextWrapping="Wrap" />
+                <TextBlock x:Name="ProjectNotesNewerText" Classes="caption muted" Text="{Binding NewerNotes}" TextWrapping="Wrap" />
+              </StackPanel>
+            </Border>
+            <TextBox x:Name="ProjectNotesBox" Text="{Binding Draft}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="96" MaxHeight="320" AutomationProperties.Name="{Binding BoxName}" />
               <TextBlock x:Name="ProjectNotesCounter" Classes="caption subtle" Classes.error="{Binding OverLimit}" Text="{Binding Counter}" HorizontalAlignment="Right" />
               <StackPanel x:Name="ProjectNotesConflict" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsConflict}">
                 <TextBlock Classes="caption error" Text="{Binding ConflictText}" VerticalAlignment="Center" />

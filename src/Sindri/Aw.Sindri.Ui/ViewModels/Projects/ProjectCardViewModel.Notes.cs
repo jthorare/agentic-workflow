@@ -52,6 +52,12 @@ internal sealed partial class ProjectCardViewModel
     /// <summary>True after a 409 until Reload.</summary>
     public bool IsConflict { get; private set { Set(ref field, value); Changed(); } }
 
+    /// <summary>After Reload, the notes the API holds now, shown above the box while it keeps what the owner typed; null otherwise.</summary>
+    public string? NewerNotes { get; private set { Set(ref field, value); OnChanged(nameof(HasNewerNotes)); } }
+
+    /// <summary>True when the newer notes show above the box.</summary>
+    public bool HasNewerNotes => NewerNotes is not null;
+
     /// <summary>The polite live region for the notes ("Notes saved for …").</summary>
     public LiveAnnouncer Voice { get; } = new(Labels.ProjectNotesResting);
 
@@ -65,6 +71,9 @@ internal sealed partial class ProjectCardViewModel
     /// <summary>The button that re-reads after a conflict.</summary>
     public string ReloadText => Labels.ProjectNotesReload;
 
+    /// <summary>The caption over the newer notes after Reload.</summary>
+    public string NewerNotesCaption => Labels.ProjectNotesNewer;
+
     /// <summary>The conflict line.</summary>
     public string ConflictText => Labels.ProjectNotesConflict;
 
@@ -76,7 +85,7 @@ internal sealed partial class ProjectCardViewModel
     internal void BeginEdit()
     {
         _openedAt = Card.Version;
-        (SaveError, IsConflict) = (null, false);
+        (SaveError, IsConflict, NewerNotes) = (null, false, null);
         Draft = NotesText;
         IsEditing = true;
     }
@@ -84,7 +93,7 @@ internal sealed partial class ProjectCardViewModel
     /// <summary>Closes the box and drops what was typed.</summary>
     internal void CancelEdit()
     {
-        (SaveError, IsConflict) = (null, false);
+        (SaveError, IsConflict, NewerNotes) = (null, false, null);
         Draft = NotesText;
         IsEditing = false;
     }
@@ -125,7 +134,7 @@ internal sealed partial class ProjectCardViewModel
                 Update(one.Value.Project);   // a failed read-back leaves the old text until the event stream redraws the card
             }
 
-            IsEditing = false;
+            (IsEditing, NewerNotes) = (false, null);
             Voice.Say(Labels.ProjectNotesSaved(Name));
         }
         finally
@@ -134,7 +143,7 @@ internal sealed partial class ProjectCardViewModel
         }
     }
 
-    /// <summary>Re-reads the card after a conflict and replaces the box's text with what the API holds now.</summary>
+    /// <summary>Re-reads the card after a conflict: the box keeps what the owner typed, the notes the API holds now show above it, and the next Save goes at the newer version (#1710).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that completes when the box shows the card as it is now or the refusal.</returns>
     internal async Task Reload(CancellationToken cancellationToken)
@@ -153,7 +162,7 @@ internal sealed partial class ProjectCardViewModel
 
         Update(one.Value.Project);
         _openedAt = Card.Version;
-        Draft = NotesText;
+        NewerNotes = NotesText;
         (SaveError, IsConflict) = (null, false);
     }
 

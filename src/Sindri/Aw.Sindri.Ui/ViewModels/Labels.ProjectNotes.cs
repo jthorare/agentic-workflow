@@ -26,6 +26,9 @@ internal static partial class Labels
     /// <summary>The line under the box when the project changed since it was opened (SND-PROJECT-409).</summary>
     internal const string ProjectNotesConflict = "Changed elsewhere since you opened it.";
 
+    /// <summary>The caption over the notes Reload read, above the box that keeps what the owner typed.</summary>
+    internal const string ProjectNotesNewer = "Now on Sindri (Save puts your text below in its place):";
+
     /// <summary>The live region's resting text for a card's notes.</summary>
     internal const string ProjectNotesResting = "Project notes";
 
