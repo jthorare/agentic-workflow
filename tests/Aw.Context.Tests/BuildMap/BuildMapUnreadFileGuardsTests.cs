@@ -16,6 +16,7 @@ public sealed class BuildMapUnreadFileGuardsTests : IDisposable
     private const string PrKey = "github:pr/acme/app/71";
     private const string Secret = "secrets/key.sh";
     private static readonly ContextRepoName _repo = ContextRepoName.From("aw-split-panes");
+    private const string CitingDoc = "See `README.md`.";
     private static readonly string[] _twoRepos = ["alpha", "zeta"];
     private readonly List<MapWorld> _worlds = [];
 
@@ -93,7 +94,7 @@ public sealed class BuildMapUnreadFileGuardsTests : IDisposable
         var zeta = ContextRepoName.From("zeta");
         var files = new Dictionary<string, string>(StringComparer.Ordinal) { ["README.md"] = "Read me.", ["src/F.cs"] = "class C {}", ["Alpha.csproj"] = "<Project/>" };
         ContextRepo[] repos = [new(alpha, "/work/alpha"), new(zeta, "/work/zeta")];
-        var world = new MapWorld(new RoutingRepoReader(new Dictionary<string, IRepoReader>(StringComparer.Ordinal) { [alpha.Value] = new FakeRepoReader(repos[0], MapWorld.Head, files), [zeta.Value] = new FakeRepoReader(repos[1], MapWorld.Head, files) }));
+        var world = new MapWorld(new RoutingRepoReader(new Dictionary<string, IRepoReader>(StringComparer.Ordinal) { [alpha.Value] = new FakeRepoReader(repos[0], MapWorld.Head, new Dictionary<string, string>(files, StringComparer.Ordinal) { ["AGENTS.md"] = CitingDoc }), [zeta.Value] = new FakeRepoReader(repos[1], MapWorld.Head, files) }));
         _worlds.Add(world);
         foreach (var source in writes.GroupBy(w => w.Record.Source))
         {
@@ -109,7 +110,7 @@ public sealed class BuildMapUnreadFileGuardsTests : IDisposable
     public async Task A_cited_doc_path_two_repos_hold_links_to_the_citing_docs_own_repo_and_never_to_the_other()
     {
         var alpha = ContextRepoName.From("alpha");
-        const string text = "See `README.md`.";
+        const string text = CitingDoc;
         var doc = RecordSamples.Write(
             RecordSamples.Record(RepoDocs.Key(alpha, "AGENTS.md").Value, FakeRepoReader.BlobId(text), RepoDocs.Id) with { Kind = RecordKind.Doc, Repo = alpha, Title = "AGENTS.md" }, text);
         var readmes = _twoRepos.Select(r => RecordSamples.Write(
