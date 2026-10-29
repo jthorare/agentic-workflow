@@ -1,4 +1,5 @@
 using Aw.Context.Core;
+using Aw.Context.Core.Audience;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
@@ -281,6 +282,39 @@ public abstract class RecordStoreContract<TStore>
         _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 2) with { Removed = [removed.Key] }, CancellationToken.None));
 
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.LiveCounts(CancellationToken.None)) == new LiveRecordCounts(4, 3), "4 live records (one removed, one blocked), 3 with a vector: a record with two vectors counts once");
+    }
+
+    /// <summary>The project read lists a source's visible projects by title, each with its lead and the open, visible issues linked to it, and nothing the audience can't read.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_project_read_counts_open_visible_issues_and_hides_what_the_audience_cannot_read()
+    {
+        var store = Create();
+        var projects = SourceId.From("linear-projects");
+        var beta = RecordSamples.Record("linear:project/beta", source: projects) with { Kind = RecordKind.Project, Title = "Beta", Health = "atRisk", DueAt = new DateOnly(2026, 11, 14), Links = [new RecordLink("linear:user/u1", RecordLinkKind.LedBy, "Ada")] };
+        var alpha = RecordSamples.Record("linear:project/alpha", source: projects) with { Kind = RecordKind.Project, Title = "Alpha" };
+        var hidden = RecordSamples.Record("linear:project/hidden", source: projects) with { Kind = RecordKind.Project, Title = "Hidden", Audience = AudienceKey.From("linear:other") };
+        var removed = RecordSamples.Record("linear:project/gone", source: projects) with { Kind = RecordKind.Project, Title = "Gone" };
+        var inBeta = new[] { new RecordLink("linear:project/beta", RecordLinkKind.InProject, Title: null) };
+        var older = RecordSamples.Now.AddDays(-1);
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(projects, 1, RecordSamples.Write(beta, "b"), RecordSamples.Write(alpha, "a"), RecordSamples.Write(hidden, "h"), RecordSamples.Write(removed, "g")), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1,
+            RecordSamples.Write(RecordSamples.Record("linear:issue/1") with { Links = inBeta }, "one"),
+            RecordSamples.Write(RecordSamples.Record("linear:issue/2") with { Links = inBeta, UpdatedAt = older }, "two"),
+            RecordSamples.Write(RecordSamples.Record("linear:issue/3") with { Links = inBeta, State = RecordState.Done }, "three"),
+            RecordSamples.Write(RecordSamples.Record("linear:issue/4") with { Links = inBeta, Audience = AudienceKey.From("linear:other") }, "four")), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(projects, 2) with { Removed = [removed.Key] }, CancellationToken.None));
+
+        var rows = ContractCheck.Ok(_owner, await store.ProjectFacts(projects, new AudienceScope(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }), CancellationToken.None));
+
+        ContractCheck.That(_owner, rows.Select(r => r.Title).SequenceEqual(["Alpha", "Beta"], StringComparer.Ordinal), "the visible, live projects come by title (not the other audience's, not the removed one)");
+        var row = rows[1];
+        ContractCheck.That(_owner, row.OpenIssues == 2, "two open visible issues: not the done one, not the other audience's");
+        ContractCheck.That(_owner, row.NewestIssueAt == RecordSamples.Now, "the newest change among the issues the caller can read");
+        ContractCheck.That(_owner, row.LeadRef == "linear:user/u1" && row.LeadName == "Ada", "the lead is the led-by link's target and title");
+        ContractCheck.That(_owner, row.Health == "atRisk" && row.DueAt == new DateOnly(2026, 11, 14), "health and due day come with it");
+        ContractCheck.That(_owner, rows[0].OpenIssues == 0 && rows[0].NewestIssueAt is null && rows[0].LeadRef is null, "a project with no issues and no lead has zero, null and null");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.ProjectFacts(RecordSamples.Github, new AudienceScope(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }), CancellationToken.None)).Count == 0, "another source has no projects here");
     }
 
     /// <summary>A purge removes one source's records, chunks, vectors and position and no other's.</summary>
