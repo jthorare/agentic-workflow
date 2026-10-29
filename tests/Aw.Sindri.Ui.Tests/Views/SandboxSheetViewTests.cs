@@ -119,7 +119,8 @@ public sealed class SandboxSheetViewTests : FrameHost
         Assert.Equal("Needs your approval: open the approval to allow registry.example.org", live.Text);
         Assert.True(Polite(live));
 
-        Server.ProfileAnswer = RouteAnswer.Api("profile", "approved");
+        // The owner approved the edit: nothing is left to approve and the approved hash moved on.
+        Server.ProfileAnswer = new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("profile", "approved").Replace("70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261", "cc73e26e84c70b5c151d3b0ea90bb7f048a85174433c1b8620f8ba68d8479ee2", StringComparison.Ordinal));
         await ((ItemSheetViewModel)((ItemSheet)window.Content!).DataContext!).Blocked.Read(_api, A.NewItem, Token);
         Settle(window);
 
@@ -141,7 +142,7 @@ public sealed class SandboxSheetViewTests : FrameHost
         Assert.Equal(("Waiting for a free session slot, 3 of 3 running", 0d, true), (live.Text, live.Width, Polite(live)));
         Assert.Null(window.FocusManager!.GetFocusedElement());
 
-        expanded.Update(new CurrentState(status.Header.State, Step: null, Gates: [], Desk: null, status with { Run = status.Run! with { WaitingForSlot = null } }));
+        expanded.Update(new CurrentState(status.Header.State, Step: null, Gates: [], Desk: null, status with { Run = status.Run! with { WaitingForSlot = null, Session = new SessionHandle("claude", "abc") } }));
         Settle(window);
 
         Assert.Equal(("Started", "Started"), (live.Text, Named<TextBlock>(window, "ExpandedWaitingLine").Text));

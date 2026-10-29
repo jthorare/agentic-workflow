@@ -260,8 +260,6 @@
           </Border>
         </Border>
 
-        <!-- Sandbox (sandbox spec 8): the row "Sandbox: <state>" and, while it is blocked or never checked, Check again. -->
-        <sandbox:SandboxHealthCard x:Name="SandboxCard" DataContext="{Binding Sandbox}" />
         <!-- #1597: the Context index card: one wrapped line per context source, its state a word and never colour alone. -->
         <Border x:Name="ContextIndexPanel" Classes="panel" Width="440" Margin="0,0,12,12" DataContext="{Binding ContextIndex}" x:DataType="shell:ContextIndexCardViewModel">
           <Border Classes="section last">
@@ -282,6 +280,8 @@
             </StackPanel>
           </Border>
         </Border>
+        <!-- Sandbox (sandbox spec 8): the row "Sandbox: <state>" and, while it is blocked or never checked, Check again. -->
+        <sandbox:SandboxHealthCard x:Name="SandboxCard" DataContext="{Binding Sandbox}" />
 
         <Border x:Name="AgentsCard" Classes="panel" Width="440" Margin="0,0,12,12">
           <Border Classes="section last">

@@ -15,11 +15,13 @@ internal sealed class BlockedRowViewModel : ObservableObject
     private readonly Func<AllowRequest, CancellationToken, Task<Result<AllowView>>> _send;
     private readonly LiveAnnouncer _voice;
     private readonly Action<ApprovalRequestedEventArgs> _approval;
+    private readonly Func<CancellationToken, Task<string?>> _approvedNow;
     private BlockedTarget _target;
 
-    internal BlockedRowViewModel(BlockedTarget target, Func<AllowRequest, CancellationToken, Task<Result<AllowView>>> send, LiveAnnouncer voice, Action<ApprovalRequestedEventArgs> approval)
+    internal BlockedRowViewModel(BlockedTarget target, Func<AllowRequest, CancellationToken, Task<Result<AllowView>>> send, LiveAnnouncer voice, Action<ApprovalRequestedEventArgs> approval, Func<CancellationToken, Task<string?>>? approvedNow = null)
     {
         (_target, _send, _voice, _approval) = (target, send, voice, approval);
+        _approvedNow = approvedNow ?? (static _ => Task.FromResult<string?>(null));
         Draw();
     }
 
@@ -80,6 +82,9 @@ internal sealed class BlockedRowViewModel : ObservableObject
         }
     }
 
+    /// <summary>The approved profile's hash read when the Allow became a draft edit; null when none was approved or it couldn't be read.</summary>
+    internal string? ApprovedWhenAsked { get; private set; }
+
     /// <summary>True while the approval is open and not yet answered.</summary>
     internal bool IsWaitingForApproval => State == AllowState.NeedsApproval;
 
@@ -117,6 +122,8 @@ internal sealed class BlockedRowViewModel : ObservableObject
             return;
         }
 
+        // The approved profile's hash as the edit lands: the row is allowed only once the approved hash moves past it.
+        ApprovedWhenAsked = await _approvedNow(cancellationToken).ConfigureAwait(true);
         State = AllowState.NeedsApproval;
         _voice.Say(Labels.AllowNeedsApproval(_target.Target));
         _approval(new ApprovalRequestedEventArgs(_target.Target));

@@ -201,9 +201,10 @@ public sealed class BlockedListViewModelTests
     public async Task A_draft_that_was_discarded_leaves_the_row_waiting_until_the_approved_profile_changes()
     {
         var list = await Read("some");
+        _server.ProfileAnswer = Profile("hash-1");
         await list.Rows[0].Allow(Token);
 
-        _server.ProfileAnswer = Profile("hash-1");
+        // The draft was discarded: nothing is left to approve, but the approved hash is the one read as the edit landed.
         await list.Read(_api, Item, Token);
         await list.Read(_api, Item, Token);
         Assert.Equal(AllowState.NeedsApproval, list.Rows[0].State);
