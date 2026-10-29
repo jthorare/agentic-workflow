@@ -1,3 +1,4 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
@@ -11,15 +12,20 @@ namespace Aw.Context.Features.SyncSources;
 
 /// <summary>
 /// <see cref="IIndexSync"/> over the record feeds (owned-index spec §5.5, §5.8): the same feeds and the same per-source tick as <see cref="SyncSourcesService"/>, without the
-/// intent walk or the docs refresh; each feed's tick is followed by its decision pass (<see cref="FeedDecisions"/>, #1574) unless a live intent source owns it. A source that is down is its row's code; the last tick's end and code are kept in memory, so they read null until the first tick after a start.
+/// intent walk or the docs refresh. The feeds tick concurrently, at most <see cref="MaxConcurrentFeeds"/> at once, each under its own time cap (<see cref="FeedCap"/>): a feed that hits it is a capped row, never a failure, and the next tick resumes it. A source that is down is its row's code; the last tick's end and code are kept in memory, so they read null until the first tick after a start.
 /// </summary>
 /// <param name="feeds">The feeds and their lock and last outcomes.</param>
 /// <param name="store">The record store the positions are read from.</param>
 /// <param name="scrubberFactory">Builds the call's scrubbers.</param>
-/// <param name="decisions">The decision pass after each feed's tick; null: none.</param>
-/// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run after the decision pass, in that order.</param>
-internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null) : IIndexSync
+/// /// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run once the source's lock is released.</param>
+internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, TickSteps? steps = null) : IIndexSync
 {
+    /// <summary>The longest one feed's tick runs; the index tick comes every 5 minutes, and this sits above one normal Linear or Slack page with its rate-limit sleeps.</summary>
+    internal static readonly TimeSpan FeedCap = TimeSpan.FromMinutes(4);
+
+    /// <summary>The most feeds that tick at the same time.</summary>
+    internal const int MaxConcurrentFeeds = 4;
+
     public async ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken)
     {
         var resolved = Resolve(scope);
@@ -29,21 +35,34 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         }
 
         var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
-        var after = decisions is null || resolved.Value.Feeds.Count == 0 ? null : await decisions.ForTick(scope, context, resolved.Value.Repos, cancellationToken).ConfigureAwait(false);
-        var rows = new List<SourceSync>();
-        foreach (var feed in resolved.Value.Feeds)
-        {
-            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), AfterSteps.Compose(after?.Invoke(feed), steps?.For(feed, context.Settings, cancellationToken)), cancellationToken).ConfigureAwait(false);
-            if (row.IsError)
-            {
-                return row.Error;
-            }
-
-            rows.Add(row.Value);
-        }
-
+        using var slots = new SemaphoreSlim(MaxConcurrentFeeds);
+        var rows = await Task.WhenAll(resolved.Value.Feeds.Select(feed => TickOne(feed, context, slots, cancellationToken))).ConfigureAwait(false);
         return new SyncReport(rows);
     }
+
+    private async Task<SourceSync> TickOne(RecordFeed feed, (ContextSettings Settings, Scrubbers Scrubbers) context, SemaphoreSlim slots, CancellationToken cancellationToken)
+    {
+        await slots.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            using var capped = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            capped.CancelAfter(FeedCap);
+            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), steps?.For(feed, context.Settings, capped.Token), capped.Token).ConfigureAwait(false);
+            return row.IsError ? Failed(feed.Source, row.Error.Code) : row.Value;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // why: its own cap fired; the pages committed so far stay with the stored cursor, so the next tick resumes
+            feeds.Note(feed.Source, ContextErrors.SyncCapped.Code);
+            return Failed(feed.Source, ContextErrors.SyncCapped.Code);
+        }
+        finally
+        {
+            _ = slots.Release();
+        }
+    }
+
+    private static SourceSync Failed(SourceId source, string code) => new(source, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, code);
 
     public async ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken)
     {
