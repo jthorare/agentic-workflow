@@ -94,7 +94,7 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.Session => PageId.Agents,
         DeepLinkKind.System => PageId.System,
         DeepLinkKind.Job => PageId.Jobs,   // System's "View job" and the tray open the page with that job's sheet
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Setup => null,
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.ContextItem or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Setup or DeepLinkKind.Projects => null,
         _ => null,
     };
 }

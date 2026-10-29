@@ -118,6 +118,7 @@ public sealed class SingleLaunchTests : IDisposable
     [InlineData(new string[0], InstanceMessages.Focus)]
     [InlineData(new[] { "item/ITM-01JC8" }, "item/ITM-01JC8")]
     [InlineData(new[] { "sindri://item/ITM-01JC8" }, "item/ITM-01JC8")]
+    [InlineData(new[] { "sindri://projects" }, "projects")]
     [InlineData(new[] { "--verbose" }, InstanceMessages.Focus)]
     [InlineData(new[] { "item/a", "item/b" }, InstanceMessages.Focus)]
     public void A_later_launch_sends_its_deep_link_or_focus(string[] args, string message) =>
