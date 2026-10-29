@@ -2,6 +2,7 @@ using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Overrides;
+using Aw.Context.Features;
 using Aw.Context.Features.RunBacktest;
 using Aw.Kernel;
 using Microsoft.Extensions.DependencyInjection;

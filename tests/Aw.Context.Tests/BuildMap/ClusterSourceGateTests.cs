@@ -1,5 +1,6 @@
 using System.Reflection;
 using Aw.Context.Core.Extract;
+using Aw.Context.Features;
 using Aw.Context.Features.BuildMap;
 
 namespace Aw.Context.Tests.BuildMap;
