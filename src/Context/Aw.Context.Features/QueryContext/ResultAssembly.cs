@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Packing;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Trust;
@@ -97,14 +98,7 @@ internal sealed class ResultAssembly(IEgressScrubber egress, QueryId queryId, Da
 
     private SourceVersion Scrubbed(SourceVersion version) => SourceVersion.From(Scrubbed(version.Value));
 
-    /// <summary>
-    /// The link, scrubbed as written and as it reads unescaped, then allowed by host; one the scrub changes at all
-    /// (redacted or blocked) is dropped, never rewritten: a link with a placeholder in it leads nowhere and could mislead.
-    /// </summary>
-    private Uri? Permalink(Uri? link) =>
-        link is not null && Unchanged(link.OriginalString) && Unchanged(Uri.UnescapeDataString(link.OriginalString)) ? Permalinks.Allowed(link) : null;
-
-    private bool Unchanged(string value) => egress.Scrub(value) is { Blocked: false } scrubbed && string.Equals(scrubbed.Text, value, StringComparison.Ordinal);
+    private Uri? Permalink(Uri? link) => RecordPermalinks.Permalink(link, egress);
 
     /// <summary>The citation's state is its worst reference's: blocked, then stale, then unchecked, then current.</summary>
     private static CitationState Worst(List<CitationState> states) =>

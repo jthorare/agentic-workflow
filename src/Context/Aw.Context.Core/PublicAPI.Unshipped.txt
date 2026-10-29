@@ -9963,3 +9963,20 @@ const Aw.Context.Core.Graph.UnreadFileNodes.Attribute = "read" -> string!
 static Aw.Context.Core.Graph.UnreadFileNodes.Attributes() -> System.Text.Json.JsonElement
 static Aw.Context.Core.Graph.UnreadFileNodes.Is(Aw.Context.Core.Graph.GraphNode! node) -> bool
 Aw.Context.Core.Extract.IRepoReader.RemovedPaths(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+Aw.Context.Core.Records.RecordPermalinks
+Aw.Context.Core.Records.RecordSourceLink
+Aw.Context.Core.Records.RecordSourceLink.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Records.RecordSourceLink.Aliases.init -> void
+Aw.Context.Core.Records.RecordSourceLink.Permalink.get -> System.Uri?
+Aw.Context.Core.Records.RecordSourceLink.Permalink.init -> void
+Aw.Context.Core.Records.RecordSourceLink.RecordSourceLink(System.Uri? Permalink, System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+static Aw.Context.Core.Records.RecordPermalinks.Of(Aw.Context.Core.Records.StoredRecord! record, System.Collections.Generic.IReadOnlySet<string!>! linearTeams, Aw.Context.Core.Trust.IEgressScrubber! egress) -> Aw.Context.Core.Records.RecordSourceLink!
+static Aw.Context.Core.Records.RecordPermalinks.Permalink(System.Uri? link, Aw.Context.Core.Trust.IEgressScrubber! egress) -> System.Uri?
+Aw.Context.Core.Records.RecordSourceLink.<Clone>$() -> Aw.Context.Core.Records.RecordSourceLink!
+Aw.Context.Core.Records.RecordSourceLink.Deconstruct(out System.Uri? Permalink, out System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+Aw.Context.Core.Records.RecordSourceLink.Equals(Aw.Context.Core.Records.RecordSourceLink? other) -> bool
+override Aw.Context.Core.Records.RecordSourceLink.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.RecordSourceLink.GetHashCode() -> int
+override Aw.Context.Core.Records.RecordSourceLink.ToString() -> string!
+static Aw.Context.Core.Records.RecordSourceLink.operator !=(Aw.Context.Core.Records.RecordSourceLink? left, Aw.Context.Core.Records.RecordSourceLink? right) -> bool
+static Aw.Context.Core.Records.RecordSourceLink.operator ==(Aw.Context.Core.Records.RecordSourceLink? left, Aw.Context.Core.Records.RecordSourceLink? right) -> bool
