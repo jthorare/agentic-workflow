@@ -21,7 +21,7 @@ public static class LinearIssueSeed
     {
         var recordKey = LinearRecordKeys.Issue(ExternalId.From(id)) ?? throw new ArgumentException("The issue id isn't a UUID.", nameof(id));
         var record = new StoredRecord(
-            recordKey, RecordSamples.Linear, RecordKind.Issue, Repo: null, Audience: AudienceKey.From("linear:team-a"), $"[{key}] {title}", Url: null, Author: null,
+            recordKey, RecordSamples.Linear, RecordKind.Issue, Repo: null, Audience: AudienceKey.From("linear:team-a"), $"[{key}] {title}", Url: $"https://linear.app/split-panes/issue/{key}/{Slug(title)}", Author: null,
             RecordState.Closed, StateRaw: "Done", createdAt, updatedAt, ClosedAt: null, SourceVersion.From(updatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)),
             RecordSamples.Hash(string.Concat(chunks)), Ruleset: "r1", Blocked: false, RemovedAt: null, RecordSamples.Now, Links: []);
         return RecordSamples.Write(record, chunks);
@@ -39,6 +39,8 @@ public static class LinearIssueSeed
 
         return [.. OnyxIndex.Documents.Where(d => d.SourceType == "linear").Select(Recorded)];
     }
+
+    private static string Slug(string title) => string.Join('-', new string([.. title.ToLowerInvariant().Select(c => char.IsAsciiLetterOrDigit(c) ? c : ' ')]).Split(' ', StringSplitOptions.RemoveEmptyEntries));
 
     private static RecordWrite Recorded(OnyxDocument document)
     {

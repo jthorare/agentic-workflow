@@ -28,7 +28,15 @@ public sealed class ItemShapeTests
         return rig;
     }
 
-    // see #1637: owned records carry no aliases yet, so a tracker key (SPL-103) resolves to nothing; the item tests below name the record by its canonical key.
+    [Fact]
+    public async Task Item_tracker_key_resolves_through_record_alias()
+    {
+        await using var rig = await Synced();
+
+        var result = await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct);
+
+        Assert.Contains("record:" + R103, result.Value.Anchors, StringComparer.Ordinal);
+    }
 
     [Fact]
     public async Task Item_canonical_record_key_is_accepted()
@@ -62,21 +70,22 @@ public sealed class ItemShapeTests
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         Assert.Equal((Provenance.Model, false, Trust.Untrusted), (decision.Provenance, decision.Confirmed, decision.Trust));
         var cite = Assert.Single(result.Cites.Values, c => c.Key.Value == R103);
-        // see #1637: cite.Aliases is empty until owned records carry their tracker identifiers
+        Assert.Contains("SPL-103", cite.Aliases, StringComparer.Ordinal);
         Assert.Equal(CitationState.Current, cite.State);   // the profile names the Linear team, so the freshness check ran and the version still matches
         Assert.Equal("2026-07-23T09:00:00.0000000Z", cite.Refs[0].Version.Value);
         Assert.Contains(Section(result, "records").Items, i => i.Title?.Contains("Toggle split orientation", StringComparison.Ordinal) == true);
     }
 
     [Fact]
-    public async Task Item_unknown_is_003()
+    public async Task Item_unknown_is_003_with_suggestedAnchors()
     {
         await using var rig = await Synced();
 
         var result = await rig.World.Engine.Query(Item("SPL-999"), MapWorld.Human, Ct);
 
         Assert.Equal(ContextErrors.UnknownAnchor.Code, result.Error.Code);
-        // see #1637: suggestedAnchors were the records' tracker identifiers (SPL-103); owned records carry none, so nothing is suggested
+        var suggested = Assert.Single(result.Error.Extensions!, m => m.Key == "suggestedAnchors").Value.EnumerateArray().Select(e => e.GetString()).ToList();
+        Assert.Contains("SPL-103", suggested, StringComparer.Ordinal);
     }
 
     [Fact]
