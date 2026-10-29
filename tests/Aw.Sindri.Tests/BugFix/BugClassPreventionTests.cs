@@ -3,7 +3,7 @@ using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
-using Aw.Sindri.Features.BugFix;
+using Aw.Sindri.Features;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Workflow.Blocks.Contracts;
 using Microsoft.Extensions.DependencyInjection;

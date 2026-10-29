@@ -54,6 +54,7 @@ internal static class ShippedDescriptorHashes
         ["step.evidence.desktop-run"] = "sha256:3c02f1eb936bacd5d72104af6064d05c4f875d875a370c5a571352690ff1f2a0",
         ["step.evidence.ui-run"] = "sha256:cc61bf599ffbc47677b7e719566da7511d3e9674489741c98e862529912e7ad9",
         ["step.handtest.run"] = "sha256:3ec327e0820b5cb0b02b62c6ee95b93f74f626a800f095d751811aff55bd4a49",
+        ["step.implement.fix"] = "sha256:0000000000000000000000000000000000000000000000000000000000000000",
         ["step.intake.ticket"] = "sha256:ea24ee0f0a02b06b48469073d11591f0ed25a9c803c86c8e439cf096e0e2b04f",
         ["step.interview.answer"] = "sha256:6fdbc0aa65ff51935b3daba0e56081fc082e175b65a65d915fe7bd71bf8f0fbe",
         ["step.interview.apply"] = "sha256:6b0c46e0dc8b016d3413f24b8fef52ab8a67173c5e9f6d7cb3e801d7a099ed9d",
