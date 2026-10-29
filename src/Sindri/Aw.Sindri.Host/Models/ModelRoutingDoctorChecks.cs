@@ -29,6 +29,11 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
     {
+        if (!await models.IsApproved(cancellationToken).ConfigureAwait(false))
+        {
+            return [new DoctorCheck(Name, CheckState.Ok, "not configured (no profile is approved)", Fix: null)];   // the defaults fill in only once a profile is approved; PATH is not read
+        }
+
         var settings = await models.Current(cancellationToken).ConfigureAwait(false);
         var have = installed();
         if (have.Count == 0)

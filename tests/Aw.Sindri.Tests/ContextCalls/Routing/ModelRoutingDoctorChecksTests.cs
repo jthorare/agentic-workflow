@@ -86,6 +86,17 @@ public sealed class ModelRoutingDoctorChecksTests
     }
 
     [Fact]
+    public async Task With_no_approved_profile_the_row_is_ok_and_says_not_configured_without_reading_PATH()
+    {
+        var checks = new ModelRoutingDoctorChecks(new FixedModels(new ModelsSettings(), approved: false), new FixedCatalog([]), () => throw new InvalidOperationException("PATH was read"));
+
+        var row = await Row(checks);
+
+        Expect.Equal((CheckState.Ok, "not configured (no profile is approved)"), (row.State, row.Detail));
+        Assert.Null(row.Fix);
+    }
+
+    [Fact]
     public async Task No_installed_harness_warns_that_no_model_call_can_run()
     {
         var row = await Row(Checks(Settings(), []));
