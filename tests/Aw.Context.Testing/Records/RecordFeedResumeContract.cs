@@ -182,23 +182,36 @@ public abstract class RecordFeedResumeContract
         }
     }
 
-    // The cancel points: the first request of the second pull and of the third, found by pulling a fresh upstream through uncancelled. The rate-limit points may sit inside the first pull (a feed keeps what it has when limited),
-    // where a cancel leaves no finished pull to resume from; a cancel lands between pulls, which is what the time cap does to a run that commits page by page.
+    // The cancel points, found by pulling a fresh upstream through uncancelled: the first request of the second pull and of the third (between pulls, what the time cap does to a run that commits page by page), and the middle of the first
+    // later pull that makes two requests or more (after it has read something and before it returns, where a feed could move shared state). The rate-limit points may sit inside the first pull, where a cancel leaves no finished pull to resume from.
     private async Task<int[]> CancelPoints()
     {
         var upstream = Create();
         SourceCursor? cursor = null;
-        List<int> boundaries = [];
-        for (var i = 0; i < MaxPulls && boundaries.Count < 2; i++)
+        List<(int Before, int Used)> pulls = [];
+        for (var i = 0; i < MaxPulls; i++)
         {
+            var before = upstream.Attempts;
             var result = await upstream.Feed.Pull(new RecordPull(cursor, Limit, NotBefore: null), TestContext.Current.CancellationToken);
-            ContractCheck.That(Owner, result.IsSuccess && result.Value.Items.Count > 0, "the source holds at least three pulls' worth, so a cancel can land after the first and after the second");
+            ContractCheck.That(Owner, result.IsSuccess, "an uncancelled pull of the source succeeds");
+            if (result.Value.Items.Count == 0 && result.Value.Removed.Count == 0)
+            {
+                break;
+            }
+
             cursor = result.Value.Next;
-            boundaries.Add(upstream.Attempts);
+            pulls.Add((before, upstream.Attempts - before));
         }
 
-        ContractCheck.That(Owner, boundaries.Count == 2, "the source holds at least three pulls' worth, so a cancel can land after the first and after the second");
-        return [.. boundaries];
+        ContractCheck.That(Owner, pulls.Count >= 3, "the source holds at least three pulls' worth, so a cancel can land after the first and after the second");
+        if (MaxRequestsPerPull < 2)
+        {
+            return [pulls[1].Before, pulls[2].Before];   // a pull is one request by design (Linear: one GraphQL call), so it has no middle: the cancel in that request is the between-pulls point
+        }
+
+        var multi = pulls.Skip(1).Where(static p => p.Used >= 2).Cast<(int Before, int Used)?>().FirstOrDefault();
+        ContractCheck.That(Owner, multi is not null, "some pull after the first makes two upstream requests or more, so a cancel can land in the middle of a pull; make the fixture bigger");
+        return [pulls[1].Before, pulls[2].Before, multi!.Value.Before + (multi.Value.Used / 2)];
     }
 
     // One pull; null when the cancel reached it as a throw.
