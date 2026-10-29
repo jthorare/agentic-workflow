@@ -73,7 +73,8 @@ public sealed class HomeNeedsFileNoteTests : IDisposable
         }
 
         Assert.Equal(ShellState.Normal, shell.State);
-        shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Desk()], ""));
+        // A longer repo name: at the window's minimum width the label line has no room left for the note beside it.
+        shell.ShowNeedsYou(new NeedsYouFeed([NeedsYouRows.Desk() with { Repo = "platform-billing-reconciliation" }], ""));
         Settle(window);
         return (window, shell);
     }
@@ -104,6 +105,7 @@ public sealed class HomeNeedsFileNoteTests : IDisposable
         Assert.NotEmpty(buttons);
         Assert.All(buttons, b => Assert.False(noticeBox.Intersects(b), $"note {Show(noticeBox)} runs under a button at {Show(b)}"));
         Assert.True(noticeBox.Right <= row.Bounds.Width, $"note {Show(noticeBox)} is wider than the row {Show(row.Bounds)}");
+        Assert.False(notice.TextLayout.TextLines.Any(l => l.HasCollapsed), $"note {Show(noticeBox)} is cut off with an ellipsis");
     });
 
     private static string Show(Rect r) => string.Create(CultureInfo.InvariantCulture, $"[x {r.X}, y {r.Y}, w {r.Width}, h {r.Height}]");
