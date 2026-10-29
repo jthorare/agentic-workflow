@@ -201,6 +201,25 @@ public sealed class FakeRecordStore : IRecordStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            var live = _records.Values.Where(r => !r.Blocked && r.RemovedAt is null).ToList();
+            var embedded = new HashSet<RecordKey>();
+            foreach (var vector in _vectors.Where(v => v.Vector.Space == VectorSpace.Chunk))
+            {
+                if (ChunkKey.TryParse(vector.Vector.Key, out var chunk))
+                {
+                    _ = embedded.Add(chunk.Record);
+                }
+            }
+
+            return Ok(new LiveRecordCounts(live.Count, live.Count(r => embedded.Contains(r.Key))));
+        }
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken)
     {
         lock (_gate)

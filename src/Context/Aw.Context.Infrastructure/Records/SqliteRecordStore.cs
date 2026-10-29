@@ -138,6 +138,21 @@ internal sealed partial class SqliteRecordStore(ContextDatabase database) : IRec
         }
     }
 
+    public async ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken)
+    {
+        var read = await BeginRead(cancellationToken).ConfigureAwait(false);
+        if (read.IsError || read.Value is not { } session)
+        {
+            return read.IsError ? read.Error : new LiveRecordCounts(0, 0);
+        }
+
+        await using (session.ConfigureAwait(false))
+        {
+            var rows = await SqliteQueries.List(session, new SqlStatement(RecordSql.CountLive), RecordMappers.Live, cancellationToken).ConfigureAwait(false);
+            return rows.IsError ? ContextDatabase.Translate(rows.Error) : rows.Value[0];
+        }
+    }
+
     public async ValueTask<Result<SourceCounts>> Count(SourceId source, CancellationToken cancellationToken)
     {
         var read = await BeginRead(cancellationToken).ConfigureAwait(false);

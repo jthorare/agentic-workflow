@@ -5354,3 +5354,35 @@ static Aw.Sindri.Features.HideProject.HideProjectRequest.operator ==(Aw.Sindri.F
 Aw.Sindri.Features.Leftovers.OnyxLeftovers
 static Aw.Sindri.Features.Leftovers.OnyxLeftovers.Find(string! home, Aw.Sindri.Core.Leftovers.IPurgeDocker! docker, Aw.Sindri.Core.Leftovers.ILeftoverFiles! files) -> Aw.Kernel.Result<Aw.Sindri.Core.Leftovers.PurgePlan!>!
 static Aw.Sindri.Features.Leftovers.OnyxLeftovers.ProjectNameFor(string! sindriHome) -> string!
+Aw.Sindri.Features.ContextCalls.IndexStatusView.Concepts.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.<Clone>$() -> Aw.Sindri.Features.ContextCalls.IndexConceptsView!
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Code.get -> string?
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Code.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Concepts.get -> int
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Concepts.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Coverage.get -> double
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Coverage.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Covered.get -> int
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Covered.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Deconstruct(out bool Enabled, out int Concepts, out int MultiSource, out int Queued, out int Covered, out int? Embedded, out int? Pending, out double Coverage, out long Watermark, out string? Code) -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Embedded.get -> int?
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Embedded.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Enabled.get -> bool
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Enabled.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Equals(Aw.Sindri.Features.ContextCalls.IndexConceptsView? other) -> bool
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.IndexConceptsView(bool Enabled, int Concepts = 0, int MultiSource = 0, int Queued = 0, int Covered = 0, int? Embedded = null, int? Pending = null, double Coverage = 0, long Watermark = 0, string? Code = null) -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.MultiSource.get -> int
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.MultiSource.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Pending.get -> int?
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Pending.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Queued.get -> int
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Queued.init -> void
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Watermark.get -> long
+Aw.Sindri.Features.ContextCalls.IndexConceptsView.Watermark.init -> void
+Aw.Sindri.Features.ContextCalls.IndexStatusView.Concepts.get -> Aw.Sindri.Features.ContextCalls.IndexConceptsView?
+override Aw.Sindri.Features.ContextCalls.IndexConceptsView.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.IndexConceptsView.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.IndexConceptsView.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.IndexConceptsView.operator !=(Aw.Sindri.Features.ContextCalls.IndexConceptsView? left, Aw.Sindri.Features.ContextCalls.IndexConceptsView? right) -> bool
+static Aw.Sindri.Features.ContextCalls.IndexConceptsView.operator ==(Aw.Sindri.Features.ContextCalls.IndexConceptsView? left, Aw.Sindri.Features.ContextCalls.IndexConceptsView? right) -> bool
