@@ -41,7 +41,14 @@ internal sealed partial class BuildMapService(
         }
 
         var (settings, mappedRepos) = mapped.Value;
+        var before = await NewestDraft(cancellationToken).ConfigureAwait(false);
         using var turn = await gate.Enter(scope.Job, request.Progress, cancellationToken).ConfigureAwait(false);
+        // A build that waited may have been queued behind one that mapped these very commits: it returns the draft saved meanwhile instead of mapping them again.
+        if (turn.Waited && await SavedWhileWaiting(settings, mappedRepos, scope.Repos, before, cancellationToken).ConfigureAwait(false) is { } saved)
+        {
+            return saved;
+        }
+
         return await Build(request.Progress, settings, mappedRepos, scope.Repos, cancellationToken).ConfigureAwait(false);
     }
 
