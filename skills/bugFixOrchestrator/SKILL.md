@@ -97,6 +97,10 @@ contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
    hypothesis but two or more open ones is accepted: the first attempt is then mode B, never a single
    implementer on an unconfirmed cause. From here on the helper uses its own
    snapshot of the hypotheses and root cause; editing the handoff changes nothing.
+4. **The handoff must carry the handoff block** from `$SHARED_DIR/prevent-the-class.md` (Failure class, Invariant,
+   Affected scope, Prevention decision, Mitigation, Proof). If the diagnosed handoff lacks it, send `/rootCause` back
+   once for it (its Phase 3.6); do not go on to Phase 3 without it. This changes nothing about the helper's
+   checks: it is your own gate.
 
 ## Phase 3 — Reproduce (the check must FAIL first)
 
@@ -177,6 +181,12 @@ Every implementer is a **Spawn a subagent** of type `lean-coder`. Its brief cont
   only to iterate; the recorded run is yours);
 - whether the worktree needs a one-time dependency install (say so explicitly; the agent otherwise
   won't install);
+- the handoff block (Failure class, Invariant, Affected scope, Prevention decision, Mitigation, Proof) verbatim, and
+  the instruction to ask the prevention question in `$SHARED_DIR/prevent-the-class.md` and build the chosen mechanism
+  beside the instance fix, with its own proof (a second representative bad instance rejected, or more than one case
+  run), reported in the commit message or its final reply. The frozen check is never edited for it; a mechanism that
+  needs test, fixture or config changes goes through `--allow-test-changes --reason` as below, and one that cannot
+  fit the task's scope is named as a follow-up, not skipped silently;
 - the ticket brief (verbatim) and expected behaviour, and the handoff path;
 - on a retry: the previous candidate's diff and the exact failure reasons (failed steps/assertions,
   and the judge's `reasons`);
@@ -219,11 +229,15 @@ already are. The candidate's branch stays checked out in its worktree, so detach
      3 tries; `judge health` for the cause), then `advance report --unresolved`. Same for `run-ui`.
    - A `judge` call that died (no answer recorded) → `resume` says to ask once more; if asked twice
      with no answer and `judge why` shows no process still running, `start-attempt --abandon-judge`.
-5. `git -C "$REPO" checkout bugfix/<ticket-slug>` before the next candidate or phase.
+5. **Prevention check** (yours, separate from the judge, which still judges only the reported problem): the candidate
+   either ran the mechanism's own proof from the handoff block, or its Prevention decision is "existing guard
+   <which>" or "deferred: <link>". A candidate with none of these goes back to Phase 4 with that reason. This never
+   changes the frozen check and never replaces the judge's decision.
+6. `git -C "$REPO" checkout bugfix/<ticket-slug>` before the next candidate or phase.
 
 Outcome:
 
-- A candidate with a passing run **and** a `resolved` decision → Phase 6. With two eligible B
+- A candidate with a passing run, a `resolved` decision **and** a satisfied prevention check → Phase 6. With two eligible B
   candidates, pick the smaller diff and say why.
 - `partial` / `unresolved` / a failing run → back to Phase 4 with the failure reasons.
 - Attempt cap reached (the helper refuses a 6th) → Phase 6 as unresolved.
@@ -234,7 +248,7 @@ Outcome:
 
 1. `bugfix-state advance report --state "$STATE" --candidate <id>` (resolved) or `--unresolved`.
 2. Write `$STATE/resolution.md`: ticket (id, title, link), root cause, the fix branch and commits,
-   before/after evidence paths, the judge decision id and reasons, attempts and modes used. For an
+   before/after evidence paths, the judge decision id and reasons, attempts and modes used, and the three resolution lines from `$SHARED_DIR/prevent-the-class.md` (Original bug, Class prevention, Deferred). For an
    unresolved outcome, list every candidate with why it failed.
 3. **Ask the user** before posting anything: offer to post `resolution.md` to the Linear issue with
    `mcp: linear/save_comment`. Screenshots and traces follow `ui-evidence`'s publish rules (approved
@@ -254,6 +268,9 @@ Root cause: {one line}
 Fix: {branch} @ {commit}   (attempts: {n}/5, modes: {A|B|C…})
 Check: {ui-evidence script | test} — failed before, {passed | failed} after
 Judge: {decision} ({decision id})
+Original bug: {the frozen check's before and after, and the judge's verdict}
+Class prevention: {what was built and its proof | existing guard <which> | none built}
+Deferred: {follow-ups with links | none}
 Report: {STATE}/resolution.md
 ```
 
