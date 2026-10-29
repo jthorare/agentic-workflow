@@ -1,5 +1,6 @@
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
@@ -23,6 +24,9 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="clock">The clock.</param>
 internal sealed class FeedDecisions(RecordFeedSync feeds, ISourceCatalog catalog, MapReader graphs, IIntentStore intents, IModelPort model, TimeProvider clock)
 {
+    // why: the Linear intent walk already resolves linear:project/<id>, so a pass over the project feed would write the same keys twice
+    private static readonly SourceId _projects = SourceId.From(LinearSourceIds.Projects);
+
     /// <summary>The step a feed's tick is followed by, or null for none.</summary>
     internal delegate Func<SourceSync, ValueTask<SourceSync>>? AfterTick(RecordFeed feed);
 
@@ -32,7 +36,7 @@ internal sealed class FeedDecisions(RecordFeedSync feeds, ISourceCatalog catalog
         var map = await graphs.ReadWithoutIntent(scope, draft: false, cancellationToken).ConfigureAwait(false);   // no map yet (the first build needs these records): the feeds still sync, the pass waits for one
         return feed =>
         {
-            if (map.IsError || walked.Any(w => w.Describe().Id == feed.Source))
+            if (map.IsError || feed.Source == _projects || walked.Any(w => w.Describe().Id == feed.Source))
             {
                 return null;
             }

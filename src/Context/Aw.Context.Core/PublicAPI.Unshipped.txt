@@ -9259,3 +9259,6 @@ override Aw.Context.Core.Records.SourceIdentity.GetHashCode() -> int
 override Aw.Context.Core.Records.SourceIdentity.ToString() -> string!
 static Aw.Context.Core.Records.SourceIdentity.operator !=(Aw.Context.Core.Records.SourceIdentity? left, Aw.Context.Core.Records.SourceIdentity? right) -> bool
 static Aw.Context.Core.Records.SourceIdentity.operator ==(Aw.Context.Core.Records.SourceIdentity? left, Aw.Context.Core.Records.SourceIdentity? right) -> bool
+Aw.Context.Core.Linear.LinearSourceIds
+const Aw.Context.Core.Linear.LinearSourceIds.Issues = "linear" -> string!
+const Aw.Context.Core.Linear.LinearSourceIds.Projects = "linear-projects" -> string!
