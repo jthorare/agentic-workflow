@@ -25,7 +25,7 @@ internal static class RecordHits
 
             if (record.Value is { RemovedAt: null } stored && reader.Scope.Allows(stored.Audience, stored.Key) && Ref(stored) is { } reference)
             {
-                hits.Add(new SourceHit(reference, stored.Title, hits.Count + 1, clock.GetUtcNow(), Leaky: false) { Aliases = LinearIdentifiers.AliasesOf(stored, reader.Teams) });
+                hits.Add(new SourceHit(reference, stored.Title, hits.Count + 1, clock.GetUtcNow(), Leaky: false) { Aliases = LinearIdentifiers.AliasesOf(stored.Key, stored.Url, reader.Teams) });
             }
         }
 

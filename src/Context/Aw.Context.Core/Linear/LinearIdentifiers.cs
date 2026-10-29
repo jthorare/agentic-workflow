@@ -1,4 +1,3 @@
-using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Core.Linear;
@@ -21,16 +20,14 @@ public static class LinearIdentifiers
     }
 
     /// <summary>A stored record's aliases: a Linear issue's tracker identifier, read from its permalink; nothing for any other record.</summary>
-    /// <param name="stored">The stored record.</param>
+    /// <param name="key">The stored record's key.</param>
+    /// <param name="url">Its stored permalink, or null.</param>
     /// <param name="teams">The profile's Linear team keys.</param>
     /// <returns>One identifier, or none.</returns>
-    public static string[] AliasesOf(StoredRecord stored, IReadOnlySet<string> teams)
-    {
-        ArgumentNullException.ThrowIfNull(stored);
-        return LinearRecordKeys.IsLinear(stored.Key) && LinearRecordKeys.KindOf(stored.Key) == RecordKind.Issue && FromPermalink(stored.Url, teams) is { } identifier
+    public static string[] AliasesOf(RecordKey key, string? url, IReadOnlySet<string> teams) =>
+        LinearRecordKeys.IsLinear(key) && LinearRecordKeys.KindOf(key) == RecordKind.Issue && FromPermalink(url, teams) is { } identifier
             ? [identifier]
             : [];
-    }
 
     /// <summary>The path segment after '/issue/' of an https linear.app link, or null.</summary>
     private static string? IssueSegment(string? url)
