@@ -152,6 +152,12 @@ internal sealed class NodePanelViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>True when the system refused to open the source's link, until the next press succeeds or another node opens.</summary>
+    public bool LaunchFailed { get; private set; }   // red: #1712
+
+    /// <summary>The short line shown when the launch failed: "Couldn't open the link" and the link to copy.</summary>
+    public string LaunchFailedText { get; private set; } = string.Empty;   // red: #1712
+
     /// <summary>Opens the source's link in the system's browser.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>When the system answered.</returns>
