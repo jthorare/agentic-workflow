@@ -104,22 +104,46 @@
     }
   ],
   "coverage": {
-    "scope": 7,
+    "scope": 10,
     "intent": {
       "covered": 0,
-      "of": 7
+      "of": 10
     },
     "product": {
-      "confirmed": 7,
-      "of": 7
+      "confirmed": 10,
+      "of": 10
     },
     "code": {
       "implemented": 3,
-      "of": 7,
+      "of": 10,
       "level": "file",
       "suggested": 0
     },
     "gaps": [
+      {
+        "node": "action:pane-resize.resize-focused",
+        "missing": [
+          "intent",
+          "code"
+        ],
+        "note": null
+      },
+      {
+        "node": "action:split-pane.split-vertical",
+        "missing": [
+          "intent",
+          "code"
+        ],
+        "note": null
+      },
+      {
+        "node": "action:split-pane.toggle-orientation",
+        "missing": [
+          "intent",
+          "code"
+        ],
+        "note": null
+      },
       {
         "node": "feature:layout.pane-resize",
         "missing": [
@@ -187,22 +211,46 @@
     },
     "byAnchor": {
       "feature:layout.split-pane": {
-        "scope": 7,
+        "scope": 10,
         "intent": {
           "covered": 0,
-          "of": 7
+          "of": 10
         },
         "product": {
-          "confirmed": 7,
-          "of": 7
+          "confirmed": 10,
+          "of": 10
         },
         "code": {
           "implemented": 3,
-          "of": 7,
+          "of": 10,
           "level": "file",
           "suggested": 0
         },
         "gaps": [
+          {
+            "node": "action:pane-resize.resize-focused",
+            "missing": [
+              "intent",
+              "code"
+            ],
+            "note": null
+          },
+          {
+            "node": "action:split-pane.split-vertical",
+            "missing": [
+              "intent",
+              "code"
+            ],
+            "note": null
+          },
+          {
+            "node": "action:split-pane.toggle-orientation",
+            "missing": [
+              "intent",
+              "code"
+            ],
+            "note": null
+          },
           {
             "node": "feature:layout.pane-resize",
             "missing": [

@@ -122,7 +122,7 @@ public sealed class ContextMapApiTests
         Assert.Equal(HttpStatusCode.OK, export.Status);
         Assert.Contains(Path.Combine(host.Home, "context", "exports"), JsonDocument.Parse(export.Body).RootElement.GetProperty("path").GetString(), StringComparison.Ordinal);
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-033"), (outside.Status, outside.Code));
-        Assert.Contains("\"nodes\":13", scoped.Body, StringComparison.Ordinal);   // its 8 nodes and the 5 surfaces inside its features (part-of descendants)
+        Assert.Contains("\"nodes\":17", scoped.Body, StringComparison.Ordinal);   // its 13 implemented/hierarchy nodes, the 3 actions on its surfaces and the thing they read or write (spec §3 "and their cascade")
         Assert.Equal((HttpStatusCode.NotFound, "SND-CONTEXT-003"), (other.Status, other.Code));
     }
 

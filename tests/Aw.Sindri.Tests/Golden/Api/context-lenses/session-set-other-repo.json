@@ -96,6 +96,20 @@
     "product": {
       "own": [
         {
+          "node": "action:tab-groups.group-selected",
+          "label": "Group the selected tabs",
+          "kind": "action",
+          "provenance": "human",
+          "confidence": 1,
+          "confirmed": true,
+          "trust": "trusted",
+          "anchors": [
+            "feature:tabs.tab-manager"
+          ],
+          "repo": "aw-split-panes",
+          "depth": 0
+        },
+        {
           "node": "action:tab-manager.restore-layout",
           "label": "Restore a tab's pane layout",
           "kind": "action",
@@ -169,10 +183,10 @@
       "neighbors": [],
       "affects": [],
       "counts": {
-        "own": 5,
+        "own": 6,
         "affects": 0,
         "neighbors": 0,
-        "edges": 4
+        "edges": 5
       },
       "edges": [
         {
@@ -199,6 +213,15 @@
           "type": "part-of",
           "provenance": "human",
           "link": "edge:e77c6359aafbc814",
+          "confirmed": true,
+          "confidence": 1
+        },
+        {
+          "from": "action:tab-groups.group-selected",
+          "to": "surface:command/group-tabs",
+          "type": "on",
+          "provenance": "human",
+          "link": "edge:f507f71370a5f7c3",
           "confirmed": true,
           "confidence": 1
         },
@@ -346,22 +369,30 @@
     }
   ],
   "coverage": {
-    "scope": 5,
+    "scope": 6,
     "intent": {
       "covered": 2,
-      "of": 5
+      "of": 6
     },
     "product": {
-      "confirmed": 5,
-      "of": 5
+      "confirmed": 6,
+      "of": 6
     },
     "code": {
       "implemented": 2,
-      "of": 5,
+      "of": 6,
       "level": "file",
       "suggested": 1
     },
     "gaps": [
+      {
+        "node": "action:tab-groups.group-selected",
+        "missing": [
+          "intent",
+          "code"
+        ],
+        "note": null
+      },
       {
         "node": "action:tab-manager.restore-layout",
         "missing": [
@@ -406,22 +437,30 @@
     },
     "byAnchor": {
       "feature:tabs.tab-manager": {
-        "scope": 5,
+        "scope": 6,
         "intent": {
           "covered": 2,
-          "of": 5
+          "of": 6
         },
         "product": {
-          "confirmed": 5,
-          "of": 5
+          "confirmed": 6,
+          "of": 6
         },
         "code": {
           "implemented": 2,
-          "of": 5,
+          "of": 6,
           "level": "file",
           "suggested": 1
         },
         "gaps": [
+          {
+            "node": "action:tab-groups.group-selected",
+            "missing": [
+              "intent",
+              "code"
+            ],
+            "note": null
+          },
           {
             "node": "action:tab-manager.restore-layout",
             "missing": [
