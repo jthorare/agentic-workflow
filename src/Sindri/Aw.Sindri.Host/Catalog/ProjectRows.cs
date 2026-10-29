@@ -7,12 +7,12 @@ using Aw.Sindri.Features.HideProject;
 
 namespace Aw.Sindri.Host.Catalog;
 
-/// <summary>The Projects page's writes (projects page spec §5.3): attach, change, remove, and hide or unhide one. Desk class like the item writes, so a session is refused. The page edits, removes and hides a project; attach stays 'pending' until its Add project form ships.</summary>
+/// <summary>The Projects page's writes (projects page spec §5.3): attach, change, remove, and hide or unhide one. Desk class like the item writes, so a session is refused. The page adds, edits, removes and hides a project.</summary>
 internal static class ProjectRows
 {
     internal static IReadOnlyList<CommandRow> All { get; } =
     [
-        Row("AttachProject", typeof(AttachProjectRequest), "/sindri/projects", "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]", destructive: false) with { Ui = "pending:Projects" },
+        Row("AttachProject", typeof(AttachProjectRequest), "/sindri/projects", "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]", destructive: false),
         Row("ChangeProject", typeof(ChangeProjectRequest), "/sindri/projects/{projectId}/change", "sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]", destructive: false),
         Row("DetachProject", typeof(DetachProjectRequest), "/sindri/projects/{projectId}/detach", "sindri project remove <project> --version <n>", destructive: true),
         Row("HideProject", typeof(HideProjectRequest), "/sindri/projects/hide", "sindri project hide <project> --version <n>", destructive: false),
