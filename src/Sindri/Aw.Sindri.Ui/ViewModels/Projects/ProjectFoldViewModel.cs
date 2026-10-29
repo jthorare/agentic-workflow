@@ -1,4 +1,3 @@
-#pragma warning disable CA1822, MA0041, MA0182, S3237, IDE0060, CA1801, S1172 // red stubs: replaced by the implementation commit
 using System.Collections.ObjectModel;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
@@ -8,31 +7,36 @@ internal sealed class ProjectFoldViewModel : ObservableObject
 {
     internal ProjectFoldViewModel(string title, string why)
     {
-        throw new NotSupportedException();
+        (Title, Why) = (title, why);
     }
 
     /// <summary>The fold's title.</summary>
-    public string Title => throw new NotSupportedException();
+    public string Title { get; }
 
     /// <summary>Why these cards are here; empty for none.</summary>
-    public string Why => throw new NotSupportedException();
+    public string Why { get; }
 
     /// <summary>How many cards.</summary>
-    public int Count => throw new NotSupportedException();
+    public int Count => Cards.Count;
 
     /// <summary>True when there are cards: a fold with none is not drawn.</summary>
-    public bool IsVisible => throw new NotSupportedException();
+    public bool IsVisible => Count > 0;
 
     /// <summary>True while the fold is open.</summary>
-    public bool IsOpen => throw new NotSupportedException();
+    public bool IsOpen { get; private set => Set(ref field, value); }
 
     /// <summary>The cards, as the server orders them.</summary>
-    public ObservableCollection<ProjectCardViewModel> Cards => throw new NotSupportedException();
+    public ObservableCollection<ProjectCardViewModel> Cards { get; } = [];
 
     /// <summary>Opens or closes the fold.</summary>
-    internal void Toggle() => throw new NotSupportedException();
+    internal void Toggle() => IsOpen = !IsOpen;
 
     /// <summary>Shows these cards.</summary>
     /// <param name="cards">The cards, in order.</param>
-    internal void Show(IReadOnlyList<ProjectCardViewModel> cards) => throw new NotSupportedException();
+    internal void Show(IReadOnlyList<ProjectCardViewModel> cards)
+    {
+        Patch.To(Cards, cards);
+        OnChanged(nameof(Count));
+        OnChanged(nameof(IsVisible));
+    }
 }

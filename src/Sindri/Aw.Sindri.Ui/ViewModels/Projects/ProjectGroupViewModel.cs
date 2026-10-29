@@ -1,4 +1,3 @@
-#pragma warning disable CA1822, MA0041, MA0182, S3237, IDE0060, CA1801, S1172 // red stubs: replaced by the implementation commit
 using System.Collections.ObjectModel;
 
 namespace Aw.Sindri.Ui.ViewModels.Projects;
@@ -8,19 +7,23 @@ internal sealed class ProjectGroupViewModel : ObservableObject
 {
     internal ProjectGroupViewModel(string heading)
     {
-        throw new NotSupportedException();
+        Heading = heading;
     }
 
     /// <summary>The state's word.</summary>
-    public string Heading => throw new NotSupportedException();
+    public string Heading { get; }
 
     /// <summary>How many cards.</summary>
-    public int Count => throw new NotSupportedException();
+    public int Count => Cards.Count;
 
     /// <summary>The cards, as the server orders them.</summary>
-    public ObservableCollection<ProjectCardViewModel> Cards => throw new NotSupportedException();
+    public ObservableCollection<ProjectCardViewModel> Cards { get; } = [];
 
     /// <summary>Shows these cards.</summary>
     /// <param name="cards">The cards, in order.</param>
-    internal void Show(IReadOnlyList<ProjectCardViewModel> cards) => throw new NotSupportedException();
+    internal void Show(IReadOnlyList<ProjectCardViewModel> cards)
+    {
+        Patch.To(Cards, cards);
+        OnChanged(nameof(Count));
+    }
 }
