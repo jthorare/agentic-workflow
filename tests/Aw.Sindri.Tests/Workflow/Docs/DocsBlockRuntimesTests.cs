@@ -25,7 +25,7 @@ public sealed class DocsBlockRuntimesTests
     [Fact]
     public void The_check_Step_opens_a_block_run_not_a_desk_task()
     {
-        using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, "workflow.docs-sync.yaml");
 
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "check"), recipe, "check", context);
@@ -39,7 +39,7 @@ public sealed class DocsBlockRuntimesTests
     [InlineData("src/App.cs", "update")]
     public async Task The_result_carries_the_instance_to_opening_or_back_to_update(string changed, string expected)
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, "workflow.docs-sync.yaml");
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "check"), recipe, "check", context);
         var diff = new FakeRunDiff();

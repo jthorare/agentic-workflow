@@ -92,6 +92,22 @@ internal static class RecordSql
         "SELECT " + Columns + " FROM source_record WHERE (@source IS NULL OR source = @source) AND (@repo IS NULL OR repo = @repo) AND (@kind IS NULL OR kind = @kind) " +
         "AND (@removed = 1 OR removed_at IS NULL) AND (@after IS NULL OR key > @after) ORDER BY key LIMIT @limit";
 
+    /// <summary>
+    /// A source's projects with their lead and issue counts (projects page spec §6.1): the projects by 'source_record_by_source', each issue count a probe of 'record_link_by_to_key' joined to the issue by its key.
+    /// The audience mask is the lexical leg's: the record's audience is allowed, or the record itself is listed.
+    /// </summary>
+    internal const string ProjectFacts =
+        "SELECT p.key, p.title, p.url, p.state_raw, p.health, p.due_at, COALESCE(p.updated_at, p.synced_at), p.closed_at, " +
+        "(SELECT l.to_ref FROM record_link l WHERE l.from_key = p.key AND l.kind = 'led-by' ORDER BY l.to_ref LIMIT 1), " +
+        "(SELECT l.title FROM record_link l WHERE l.from_key = p.key AND l.kind = 'led-by' ORDER BY l.to_ref LIMIT 1), " +
+        "(SELECT COUNT(*) FROM record_link l JOIN source_record i ON i.key = l.from_key WHERE l.to_key = p.key AND l.kind = 'in-project' AND i.kind = 'issue' AND i.state = 'open' AND i.removed_at IS NULL AND " + VisibleIssue + "), " +
+        "(SELECT MAX(i.updated_at) FROM record_link l JOIN source_record i ON i.key = l.from_key WHERE l.to_key = p.key AND l.kind = 'in-project' AND i.kind = 'issue' AND i.removed_at IS NULL AND " + VisibleIssue + ") " +
+        "FROM source_record p WHERE p.source = @source AND p.kind = 'project' AND p.removed_at IS NULL AND p.blocked = 0 AND " + VisibleProject + " ORDER BY p.title, p.key";
+
+    private const string VisibleProject = "(p.audience_key IN (SELECT value FROM json_each(@audiences)) OR p.key IN (SELECT value FROM json_each(@records)))";
+
+    private const string VisibleIssue = "(i.audience_key IN (SELECT value FROM json_each(@audiences)) OR i.key IN (SELECT value FROM json_each(@records)))";
+
     internal const string ReadPosition = "SELECT cursor, phase, backfill_cursor, backfill_before FROM source_cursor WHERE source = @source AND repo = 'records'";
 
     internal const string ReadStamps = "SELECT record_stamp, delete_epoch FROM store_epoch WHERE id = 1";
