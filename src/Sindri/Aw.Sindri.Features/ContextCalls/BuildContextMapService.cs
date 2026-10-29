@@ -40,7 +40,7 @@ internal sealed class BuildContextMapService(ContextScopes scopes, IContextEngin
         }
 
         var slot = clock.GetUtcNow();
-        var built = await engine.BuildMap(jobs.Current?.Progress, scope.Value, cancellationToken).ConfigureAwait(false);
+        var built = await engine.BuildMap(jobs.Current?.Progress, scope.Value with { Job = jobs.Current?.Job.Value }, cancellationToken).ConfigureAwait(false);
         if (built.IsError)
         {
             return built.Error;
