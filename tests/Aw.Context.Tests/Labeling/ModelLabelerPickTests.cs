@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Models;
+using Aw.Context.Core.Trust;
 using Aw.Context.Infrastructure.Labeling;
 using Aw.Context.Infrastructure.Scrubbing;
 using Aw.Context.Testing.Engine;
@@ -135,6 +136,20 @@ public sealed class ModelLabelerPickTests
 
         var question = Assert.Single(Assert.Single(port.Asked).Questions);
         Assert.DoesNotContain(Planted.Secret, question.Prompt + string.Concat(question.Options), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_identifier_the_owner_scrubs_never_reaches_the_port_even_in_the_file_derived_name()
+    {
+        var port = Picking("Tabs");
+        var model = Model(Labels(0, "Tabs", "Tab groups"));
+        var cluster = Cluster(0, fileName: "Acme 123456", "clients/ACME-123456/billing.ts", "src/b.ts");
+
+        _ = await new ModelLabeler(model, new RedactionScrubberFactory(new FakeTimeProvider()), port).Label([cluster], [new ScrubPattern("acme-customer-id", "(?i)ACME[- ]?[0-9]{6}")], 1_000_000, _on, Ct);
+
+        var question = Assert.Single(Assert.Single(port.Asked).Questions);
+        Assert.DoesNotContain("123456", question.Prompt + string.Concat(question.Options), StringComparison.Ordinal);
+        Assert.DoesNotContain("123456", Assert.Single(model.Requests).Prompt, StringComparison.Ordinal);
     }
 
     [Fact]

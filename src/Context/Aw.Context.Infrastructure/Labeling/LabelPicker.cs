@@ -31,10 +31,10 @@ internal sealed class LabelPicker(IChoicePort port, IEgressScrubber egress)
         return Resolve(cases);
     }
 
-    private static Case Candidates(FileCluster cluster, List<string> model)
+    private Case Candidates(FileCluster cluster, List<string> model)
     {
         var options = new List<string>(model);
-        var safe = cluster.FileName is { } name ? LabelPrompt.Clean(name) : string.Empty;
+        var safe = cluster.FileName is { } name ? LabelPrompt.Clean(egress.Scrub(name).Text) : string.Empty;   // the humanized slot name can carry an identifier the owner scrubs
         if (model.Count > 0 && safe.Length > 0 && !options.Exists(o => string.Equals(o, safe, StringComparison.OrdinalIgnoreCase)))
         {
             options = [.. options.Take(LabelPickLimits.MaxOptions - 1), safe];
