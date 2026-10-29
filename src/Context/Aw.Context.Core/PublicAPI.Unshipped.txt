@@ -1242,6 +1242,8 @@ Aw.Context.Core.Extract.IClusterSource
 Aw.Context.Core.Extract.IClusterSource.Clusters(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, Aw.Context.Core.Engine.ClusterLimits! limits, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.ClusterSet!>!>
 Aw.Context.Core.Extract.IDefaultBranch
 Aw.Context.Core.Extract.IDefaultBranch.Reaches(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<bool>!>
+Aw.Context.Core.Extract.IRepoRemote
+Aw.Context.Core.Extract.IRepoRemote.Origin(Aw.Context.Core.Engine.ContextRepo! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Context.Core.Extract.ILabeler
 Aw.Context.Core.Extract.ILabeler.Label(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Extract.FileCluster!>! clusters, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Trust.ScrubPattern!>! extraPatterns, int maxTokens, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.LabelPass!>!>
 Aw.Context.Core.Extract.IRepoReader
