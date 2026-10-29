@@ -6,12 +6,5 @@ namespace Aw.Context.Core.ConceptSynthesis;
 public sealed record ConceptGroup(IReadOnlyList<RecordVector> Members, string MembershipHash)
 {
     /// <summary>How many distinct sources the members come from.</summary>
-    public int SourceCount
-    {
-        get
-        {
-            _ = Members;
-            throw new NotSupportedException();
-        }
-    }
+    public int SourceCount => Members.Select(m => m.Source).Distinct(StringComparer.Ordinal).Count();
 }
