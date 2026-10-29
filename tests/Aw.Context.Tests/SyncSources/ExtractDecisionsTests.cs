@@ -75,9 +75,9 @@ public sealed class ExtractDecisionsTests
 
         public MapWorld World { get; }
 
-        public static async Task<Rig> Start(string verdict = "contradicts")
+        public static async Task<Rig> Start(string verdict = "contradicts", Func<RecordItem, RecordItem>? shape = null)
         {
-            var feed = new FakeRecordFeed(RecordSamples.Linear, items: [.. LinearIssueSeed.From(issues: null).Select(Item)]);
+            var feed = new FakeRecordFeed(RecordSamples.Linear, items: [.. LinearIssueSeed.From(issues: null).Select(Item).Select(i => shape?.Invoke(i) ?? i)]);
             var world = new MapWorld(feeds: new FakeRecordFeedCatalog(feed));
             world.Model.Responder = r => Route(r, verdict);
             _ = await world.ImportFixture();
