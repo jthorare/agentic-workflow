@@ -178,6 +178,6 @@ public sealed class SlackThreadRefreshTests
 
         Assert.Empty(one.Items);
         Assert.Empty(two.Items);
-        Assert.EndsWith("~" + At(Monday.AddMinutes(1)), two.Next!.Value, StringComparison.Ordinal);
+        Assert.EndsWith("~" + At(Monday.AddMinutes(1)), two.Next.Value, StringComparison.Ordinal);
     }
 }
