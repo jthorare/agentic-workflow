@@ -42,7 +42,7 @@ public sealed class BuildShipBlockRuntimesTests
     [InlineData("workflow.prove.yaml", "evidence-pack", "step.prove.evidence")]
     public void The_Step_opens_a_block_run_not_a_desk_task(string file, string state, string step)
     {
-        using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, file);
 
         var entered = StateEntry.Enter(EngineFixture.At(recipe, state), recipe, state, context);
@@ -54,7 +54,7 @@ public sealed class BuildShipBlockRuntimesTests
     [Fact]
     public async Task A_ship_that_goes_red_returns_to_build_without_a_desk_task()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, "workflow.ship.yaml");
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "return"), recipe, "return", context);
 
@@ -66,7 +66,7 @@ public sealed class BuildShipBlockRuntimesTests
     [Fact]
     public async Task A_head_review_moved_is_accepted_and_the_phase_leaves_drift()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, "workflow.phase.yaml");
         var entered = StateEntry.Enter(Pinned(EngineFixture.At(recipe, "drift")), recipe, "drift", context);
         var diff = new FakeRunDiff();
@@ -87,7 +87,7 @@ public sealed class BuildShipBlockRuntimesTests
     [Fact]
     public async Task A_proof_that_failed_is_logged_and_the_prove_recipe_ends_failed()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Read(provider, "workflow.prove.yaml");
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "fail-log"), recipe, "fail-log", context);
 

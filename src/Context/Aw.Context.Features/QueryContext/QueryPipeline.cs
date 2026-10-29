@@ -61,7 +61,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var deadline = clock.GetUtcNow() + settings.Value.Deadline;
         var catalogSources = terms.Count == 0 ? [] : catalog.For(settings.Value, repos.Value, scrubbers.Value).ToList();
         var (sources, degraded) = await WithRecordStore(catalogSources, (settings.Value, repos.Value), (inputs.AsOf, terms), (request, inputs.Map, valid.Value.Read), cancellationToken).ConfigureAwait(false);
-        var searched = await Search(sources, terms, (deadline, inputs.AsOf), cancellationToken).ConfigureAwait(false);
+        var searched = await WithAnchorRecord(await Search(sources, terms, (deadline, inputs.AsOf), cancellationToken).ConfigureAwait(false), (graph, sources), cancellationToken).ConfigureAwait(false);
         if (catalogSources.Count > 0 && NothingAnswered(searched) && graph.Anchors.Count == 0)
         {
             return NoSourceAnswered(degraded.Concat(searched.Degraded));
@@ -75,7 +75,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
             return Unknown(miss, request.Scope);   // not linked by any sync, and no live record carries that tracker key
         }
 
-        await NoteQueuedDecisions(graph, sources, degraded, cancellationToken).ConfigureAwait(false);
+        await NoteQueuedDecisions(graph, degraded, cancellationToken).ConfigureAwait(false);
         var versions = await Versions(fetched, sources, deadline, degraded, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
         var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
@@ -185,7 +185,8 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var text = new MapText(context.Scrubbers);
         var touched = ItemAnchors.Touched(found.Map.Graph, found.Record);
         var terms = QueryRules.Terms(found.Record.Key.Name).Concat(QueryRules.Terms(item)).Concat(touched.Skip(1).SelectMany(n => text.SearchTerms(n.Label))).Distinct(StringComparer.Ordinal).Take(QueryRules.MaxTerms).ToList();
-        return (GraphAnswer.Build(found.Map, touched, [], CascadeReach.Of(request.Query, context.Settings), text), terms, null);
+        var anchor = RecordKey.TryFrom(found.Record.Key.Name, out var recordKey) ? recordKey : (RecordKey?)null;
+        return (GraphAnswer.Build(found.Map, touched, [], CascadeReach.Of(request.Query, context.Settings), text) with { AnchorRecord = anchor }, terms, null);
     }
 
     private static Error Unknown(ItemMiss miss, ContextScope scope) => QueryRules.UnknownItem(miss.Item, miss.Suggested, scope.SyncConfigured);
@@ -216,31 +217,6 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         }
 
         return new Searched(answers, degraded);
-    }
-
-    /// <summary>
-    /// A record linked to the answer's nodes whose decisions are still queued (labeling off or over its cap) is told as degraded 042 for 'decisions',
-    /// so a missing decision is not read as no decision (verification plan J2.3). Nothing is asked of the model.
-    /// </summary>
-    private async Task NoteQueuedDecisions(GraphPart graph, IReadOnlyList<IContextSource> sources, List<DegradedSource> degraded, CancellationToken ct)
-    {
-        if (graph.LinkedRecords.Count == 0)
-        {
-            return;
-        }
-
-        var waiting = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var source in sources.Select(s => s.Describe()).Where(d => d.Kind == SourceKind.Intent))
-        {
-            var queued = await intents.Queued(source.Id, ct).ConfigureAwait(false);
-            waiting.UnionWith(queued.IsError ? [] : queued.Value.Select(k => k.Value));
-        }
-
-        if (graph.LinkedRecords.Any(waiting.Contains))
-        {
-            degraded.Add(new DegradedSource(SourceId.From("decisions"), ContextErrors.LabelingUnavailable.Code,
-                "decisions of a linked record are not extracted yet: labeling is off or over its token cap (fix: turn on 'context.labeling.enabled' or raise 'maxTokensPerSync', then run sindri context sources sync, or wait for the next context-sync slot)", clock.GetUtcNow()));
-        }
     }
 
     /// <summary>One batched version check per source, under what is left of the deadline (spec §8.2 step 8).</summary>

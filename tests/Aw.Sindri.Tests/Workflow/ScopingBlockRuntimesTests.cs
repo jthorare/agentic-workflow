@@ -31,7 +31,7 @@ public sealed class ScopingBlockRuntimesTests
     [Fact]
     public void Every_registered_scoping_Step_opens_a_block_run_and_the_rest_stay_off_it()
     {
-        using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Scoping(provider);
 
         var runtimes = recipe.States.Where(static s => s.Value.Step is not null).ToDictionary(static s => s.Key, s =>
@@ -45,7 +45,7 @@ public sealed class ScopingBlockRuntimesTests
     [Fact]
     public void The_registered_Steps_are_the_ones_this_build_runs_and_the_recipe_uses_each()
     {
-        using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Scoping(provider);
 
         var scoping = context.Runtimes.Keys.Select(static k => k.Value).Where(static k => !k.StartsWith("step.design.", StringComparison.Ordinal) && !k.StartsWith("step.plan.", StringComparison.Ordinal) && !k.StartsWith("step.review.", StringComparison.Ordinal) && !k.StartsWith("step.lens.", StringComparison.Ordinal));   // the design and plan stations' runtimes are BS2's, the lens loop's block Step is the design recipe's
@@ -86,9 +86,9 @@ public sealed class ScopingBlockRuntimesTests
     }
 
     [Fact]
-    public async Task A_frozen_report_leaves_fact_scopePacket_as_hash_and_dir_on_the_instance()
+    public void A_frozen_report_leaves_fact_scopePacket_as_hash_and_dir_on_the_instance()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Scoping(provider);
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "freeze"), recipe, "freeze", context);
         var packet = EngineFixture.Fact("""{"hash":"sha256:aaaa","dir":"/runs/T-1/scoping/1/scope-packet"}""");

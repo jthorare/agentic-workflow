@@ -11,7 +11,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// <summary>The 'index-embed' service (owned-index spec §5.6) over a fake context engine whose embed runs answer from the test.</summary>
 public sealed class IndexEmbedServiceTests
 {
-    private const string Section = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"on_live-key-0123","version":"v4.9.0"}}}""";
+    private const string Section = """{"sources":{"linear":{"teams":["SPL"]}}}""";
     private static readonly DateTimeOffset _now = new(2026, 10, 27, 12, 0, 0, TimeSpan.Zero);
     private readonly SliceHarness _h = new();
     private readonly List<EmbedRecordsRequest> _asked = [];

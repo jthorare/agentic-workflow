@@ -14,6 +14,7 @@ using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
@@ -44,6 +45,7 @@ using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
+using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.GetProposals;
 using Aw.Context.Features.GetScopeGraph;
 using Aw.Context.Features.GetSubgraph;
@@ -107,7 +109,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddMapHeads().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
+        return services.AddMapHeads().AddProjectFacts().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
 
     private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();
@@ -180,6 +182,10 @@ public static class ContextFeaturesServiceCollectionExtensions
     // The repo heads the map watcher reads (F1).
     private static IServiceCollection AddMapHeads(this IServiceCollection services) =>
         services.AddScoped<IService<MapHeadsRequest, IReadOnlyList<RepoHead>>, MapHeadsService>();
+
+    // The Projects page's reads (projects page spec §6.1).
+    private static IServiceCollection AddProjectFacts(this IServiceCollection services) =>
+        services.AddScoped<IService<GetProjectFactsRequest, ProjectFactsAnswer>, GetProjectFactsService>().AddScoped<ContextReads>();
 
     // The lenses and the code lens share the basis reader and the map reader's views.
     private static IServiceCollection AddLensSlices(this IServiceCollection services) => services

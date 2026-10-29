@@ -139,7 +139,7 @@ public sealed class ContextSyncTests : IDisposable
     }
 
     [Fact(Timeout = 90_000), Trait("Lane", "integration")]
-    public async Task A_sindri_item_id_has_no_tracker_record_until_S6_links_items_and_a_tracker_key_is_answered()
+    public async Task A_sindri_item_id_has_no_tracker_record_until_S6_links_items_and_a_record_key_is_answered()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var linear = await FakeLinearServer.Start();
@@ -147,12 +147,15 @@ public sealed class ContextSyncTests : IDisposable
         _ = await RunSync(host, DateTimeOffset.UnixEpoch, ct);
 
         var byId = await host.Http.Ask(Get("/sindri/context/query?item=ITM-00000000000000000000000000000001", Human(host.Token.Value)));
-        var byKey = await host.Http.Ask(Get("/sindri/context/query?item=SPL-103", Human(host.Token.Value)));
+        var byTracker = await host.Http.Ask(Get("/sindri/context/query?item=SPL-103", Human(host.Token.Value)));
+        var byKey = await host.Http.Ask(Get("/sindri/context/query?item=" + Uri.EscapeDataString("linear:issue/0e5a1b00-0000-4000-8000-000000000103"), Human(host.Token.Value)));
 
         Assert.Equal((HttpStatusCode.NotFound, "SND-CONTEXT-003"), (byId.Status, byId.Code));
         Assert.Contains("no synced record is linked", byId.Body, StringComparison.Ordinal);
         Assert.Equal(HttpStatusCode.OK, byKey.Status);
         Assert.Contains("\"anchors\":[\"record:linear:issue/", byKey.Body, StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.OK, byTracker.Status);
+        Assert.Contains("\"anchors\":[\"record:linear:issue/", byTracker.Body, StringComparison.Ordinal);
     }
 
     private static async Task<Kernel.Result<ScheduledResult>> RunSync(GoldenHost host, DateTimeOffset slot, CancellationToken ct)

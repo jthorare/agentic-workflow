@@ -14,7 +14,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// <summary>The 'index-sync' service (owned-index spec §5.5) over a fake <see cref="IIndexSync"/> behind the engine facade, and the milestones the progress rows carry (§5.8).</summary>
 public sealed class IndexSyncServiceTests
 {
-    private const string OnyxSection = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"on_live-key-0123","version":"v4.9.0"}}}""";
+    private const string LinearTeams = """{"sources":{"linear":{"teams":["SPL"]}}}""";
     private static readonly DateTimeOffset _now = new(2026, 10, 27, 12, 0, 0, TimeSpan.Zero);
     private readonly SliceHarness _h = new();
     private readonly FakeIndexSync _index = new();
@@ -25,7 +25,7 @@ public sealed class IndexSyncServiceTests
     {
         _h.Clock.SetUtcNow(_now);
         var loaded = SliceHarness.Profile("5m");
-        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(OnyxSection).RootElement.Clone() : null } };
+        loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse(LinearTeams).RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
         var grant = await _h.HoldLease();
         using var caller = _h.Callers.EnterService("index-sync");
@@ -58,13 +58,13 @@ public sealed class IndexSyncServiceTests
     [Fact, Trait("Lane", "unit")]
     public async Task Tick_maps_a_down_source_to_a_row_with_its_code_not_a_failed_run()
     {
-        _index.Rows = [Row("linear", 0, ContextErrors.OnyxUnexpectedReply.Code), Row("github", 3)];
+        _index.Rows = [Row("linear", 0, ContextErrors.SourceUnavailable.Code), Row("github", 3)];
 
         var result = await Run(context: true);
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.Idle);
-        Assert.Equal($"ok: linear {ContextErrors.OnyxUnexpectedReply.Code}, github 3 fetched", result.Value.Summary);
+        Assert.Equal($"ok: linear {ContextErrors.SourceUnavailable.Code}, github 3 fetched", result.Value.Summary);
     }
 
     [Fact, Trait("Lane", "unit")]

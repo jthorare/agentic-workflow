@@ -81,6 +81,7 @@ internal sealed partial class QueryPipeline
         }
 
         var audience = new AudienceScope(allowed) { Records = await LinkedRecords(caller.Request, caller.Read, caller.Graphs, ct).ConfigureAwait(false) };
-        return ([.. catalogSources, new RecordStoreSource(lexical.Leg, lexical.Store, audience, clock), new DenseRecordSource(lexical, audience, clock)], degraded);
+        var teams = profile.Settings.LinearTeams.ToHashSet(StringComparer.Ordinal);
+        return ([.. catalogSources, new RecordStoreSource(lexical.Leg, lexical.Store, audience, clock, teams), new DenseRecordSource(lexical, audience, clock, teams)], degraded);
     }
 }

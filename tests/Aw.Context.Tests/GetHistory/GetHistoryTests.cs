@@ -21,7 +21,6 @@ public sealed class GetHistoryTests : IDisposable
 {
     private const string Anchor = "feature:layout.split-pane";
     private const string Orientation = "feature:layout.split-pane.orientation";
-    private const string OnyxSettings = """{"sources":{"onyx":{"url":"http://127.0.0.1:3189","token":"env:K","version":"v4.9.0"}}}""";
     private static readonly SourceId _onyx = SourceId.From("onyx");
     private static readonly string[] _searched = ["src/layout/PaneResize.ts", "src/layout/SplitPane.ts"];
     private readonly List<IDisposable> _worlds = [];
@@ -305,30 +304,6 @@ public sealed class GetHistoryTests : IDisposable
         Assert.Equal((SearchedState.NotConfigured, "not-configured"), (view.Incidents.State, view.Incidents.Reason));
         Assert.Equal(0, view.Searched.Depth);
         Assert.Empty(view.Searched.Hops);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Never_synced_source_reads_unavailable_not_synced_with_161()
-    {
-        var world = await Start(Fake(Landed()));
-
-        var view = (await Ask(world, scope: MapWorld.HumanWith(OnyxSettings))).Value;
-
-        var row = Row(view, "onyx");
-        Assert.Equal((SearchedState.Unavailable, "not-synced", "SND-CONTEXT-161"), (row.State, row.Reason, row.Code));
-        Assert.Null(row.Sync);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task Synced_records_with_no_links_read_history_unlinked()
-    {
-        var world = await Start(Fake(Landed()));
-        var record = new IntentRecord(RecordKey.From("linear:issue/9001"), _onyx, "2026-07-01T00:00:00Z", "Unlinked", []);
-        _ = await world.Intents.CommitPage(new IntentPage(_onyx, [record], [], Cursor: null, Utc("2026-07-30T00:00:00Z")), MapWorld.None);
-
-        var view = (await Ask(world, scope: MapWorld.HumanWith(OnyxSettings))).Value;
-
-        Assert.Equal((SearchedState.Unavailable, "history-unlinked"), (Row(view, "onyx").State, Row(view, "onyx").Reason));
     }
 
     [Fact, Trait("Lane", "unit")]
