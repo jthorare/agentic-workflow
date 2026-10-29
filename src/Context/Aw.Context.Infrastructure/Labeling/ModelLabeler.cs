@@ -17,7 +17,9 @@ namespace Aw.Context.Infrastructure.Labeling;
 /// </summary>
 /// <param name="model">The model port.</param>
 /// <param name="scrubbers">Builds the scrubbers the prompt passes through.</param>
-internal sealed class ModelLabeler(IModelPort model, IScrubberFactory scrubbers) : ILabeler
+/// <param name="choice">The Jev pick (spec §6), or null when the host has none: the pass then asks for one label per cluster.</param>
+/// <param name="budget">The smallest prompt budget of the labeling route (spec §6.2), or null for the wide one.</param>
+internal sealed class ModelLabeler(IModelPort model, IScrubberFactory scrubbers, IChoicePort? choice = null, IModelPromptBudget? budget = null) : ILabeler
 {
     private const int BatchSize = 20;
     private const int FilesPerCluster = 12;
@@ -25,17 +27,17 @@ internal sealed class ModelLabeler(IModelPort model, IScrubberFactory scrubbers)
     private const int LabelLength = 60;
     private static readonly TimeSpan _budget = TimeSpan.FromMinutes(2);
 
-    public async ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, CancellationToken cancellationToken)
+    public async ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(clusters);
+        _ = (choice, budget, options);   // the next commits use them: the generate packs' budget and the Jev pick
         var built = scrubbers.For(extraPatterns);
         if (built.IsError)
         {
             return built.Error;
         }
 
-        var labels = new List<ClusterLabel>();
-        var spent = 0;
+        var (labels, spent) = (new List<ClusterLabel>(), 0);
         foreach (var batch in clusters.Chunk(BatchSize))
         {
             var prompt = Prompt(batch, built.Value.Egress);
