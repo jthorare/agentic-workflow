@@ -10,9 +10,20 @@ internal sealed partial class FakeSindriApi
     private readonly List<string> _projectsRead = [];
     private readonly List<(string Route, object Body)> _projectWrites = [];
     private int _projectsCalls;
+    private int _linearCalls;
+    private int _attached;
 
     /// <summary>GET /sindri/projects's answer: the mixed golden by default.</summary>
     public RouteAnswer ProjectsAnswer { get; set; } = RouteAnswer.Api("projects", "mixed");
+
+    /// <summary>GET /sindri/projects/linear's answer: the "some" golden by default.</summary>
+    public RouteAnswer LinearAnswer { get; set; } = RouteAnswer.Api("projects-linear", "some");
+
+    /// <summary>How many times the Linear project list was read.</summary>
+    public int LinearCalls => Volatile.Read(ref _linearCalls);
+
+    /// <summary>When set, the Linear project list read waits for it: the tab stays loading until the test completes it.</summary>
+    public TaskCompletionSource? LinearGate { get; set; }
 
     /// <summary>GET /sindri/projects/{id}'s answer per project id; an id not here answers the attached golden.</summary>
     public Dictionary<string, RouteAnswer> ProjectAnswers { get; } = new(StringComparer.Ordinal);
@@ -50,6 +61,17 @@ internal sealed partial class FakeSindriApi
         return Answer<ProjectList>(api, ProjectRoutes.List(all), ProjectsAnswer);
     }
 
+    public async Task<Result<ProjectLinearList>> LinearProjects(Uri api, CancellationToken cancellationToken)
+    {
+        _ = Interlocked.Increment(ref _linearCalls);
+        if (LinearGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return Answer<ProjectLinearList>(api, ProjectRoutes.Linear, LinearAnswer);
+    }
+
     public Task<Result<ProjectOne>> Project(Uri api, string id, CancellationToken cancellationToken)
     {
         lock (_gate)
@@ -70,7 +92,10 @@ internal sealed partial class FakeSindriApi
     public Task<Result<ProjectAcceptedView>> HideProject(Uri api, ProjectHide hide, CancellationToken cancellationToken) =>
         ProjectWrite(api, ProjectRoutes.Hide, hide, hide.Linear, hide.Version, cancellationToken);
 
-    private async Task<Result<ProjectAcceptedView>> ProjectWrite(Uri api, string route, object body, string project, long version, CancellationToken cancellationToken)
+    public Task<Result<ProjectAcceptedView>> AttachProject(Uri api, ProjectAttach attach, CancellationToken cancellationToken) =>
+        ProjectWrite(api, ProjectRoutes.Attach, attach, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"prj_{Interlocked.Increment(ref _attached):D26}"), version: 0, cancellationToken, attach.Name ?? attach.Linear);
+
+    private async Task<Result<ProjectAcceptedView>> ProjectWrite(Uri api, string route, object body, string project, long version, CancellationToken cancellationToken, string? name = null)
     {
         if (NotReceived<ProjectAcceptedView>(api) is { } unanswered)
         {
@@ -84,7 +109,7 @@ internal sealed partial class FakeSindriApi
 
         await WaitFor(CommandGate, cancellationToken).ConfigureAwait(false);
         var accepted = string.Create(System.Globalization.CultureInfo.InvariantCulture,
-            $$"""{"accepted":{"commandId":"cmd_fake","sequence":41},"project":"{{project}}","version":{{version + 1}},"name":"{{project}}"}""");
+            $$"""{"accepted":{"commandId":"cmd_fake","sequence":41},"project":"{{project}}","version":{{version + 1}},"name":"{{name ?? project}}"}""");
         var answer = Answer<ProjectAcceptedView>(api, route, ProjectWriteAnswer ?? new RouteAnswer(System.Net.HttpStatusCode.OK, accepted));
         if (answer.IsSuccess)
         {

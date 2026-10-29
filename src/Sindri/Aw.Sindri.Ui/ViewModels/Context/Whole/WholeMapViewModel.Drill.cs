@@ -54,10 +54,14 @@ internal sealed partial class WholeMapViewModel
 
     /// <summary>Gets the line that says the drilled view has no links; empty when it has some.</summary>
     public string DrillEmptyText => !ShowDrillEmpty || _drilled is not { } band ? string.Empty
-        : _drillOwn ? Labels.ContextDrillNoOwn(NodeBands.Title(band)) : Labels.ContextDrillNoCross(NodeBands.Title(band));
+        : _drillOwn ? Labels.ContextDrillNoOwn(NodeBands.Title(band))
+        : WhyWithoutProduct ? Labels.ContextDrillWhyNoProductLine : Labels.ContextDrillNoCross(NodeBands.Title(band));
+
+    // A Why cross drill that reaches no Product node: the Product band stays, empty, and says so.
+    private bool WhyWithoutProduct => _drilled == WholeBand.Intent && !_drillOwn && Shown is { } shown && !shown.Nodes.Any(n => NodeBands.Of(n.Kind) == WholeBand.Product);
 
     /// <summary>Gets a value indicating whether <see cref="DrillEmptyText"/> shows.</summary>
-    public bool ShowDrillEmpty => IsDrilled && Shown is { Edges.Count: 0 };
+    public bool ShowDrillEmpty => IsDrilled && (Shown is { Edges.Count: 0 } || WhyWithoutProduct);
 
     /// <summary>Drills into a band: links to the other bands first.</summary>
     /// <param name="band">The band.</param>
