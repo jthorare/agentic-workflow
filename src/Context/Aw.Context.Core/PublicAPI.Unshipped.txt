@@ -9286,11 +9286,9 @@ static readonly Aw.Context.Core.Linear.LinearSourceIds.Issues -> Aw.Context.Core
 static readonly Aw.Context.Core.Linear.LinearSourceIds.Projects -> Aw.Context.Core.Sources.SourceId
 Aw.Context.Core.Results.DecisionReport
 Aw.Context.Core.Results.DecisionReport.<Clone>$() -> Aw.Context.Core.Results.DecisionReport!
-Aw.Context.Core.Results.DecisionReport.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources) -> void
 Aw.Context.Core.Results.DecisionReport.Equals(Aw.Context.Core.Results.DecisionReport? other) -> bool
 Aw.Context.Core.Results.DecisionReport.Sources.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>!
 Aw.Context.Core.Results.DecisionReport.Sources.init -> void
-Aw.Context.Core.Results.DecisionReport.DecisionReport(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources) -> void
 Aw.Context.Core.Results.SourceDecisions
 Aw.Context.Core.Results.SourceDecisions.<Clone>$() -> Aw.Context.Core.Results.SourceDecisions!
 Aw.Context.Core.Results.SourceDecisions.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out int Looked, out int Decisions, out string? Code) -> void
@@ -9470,3 +9468,86 @@ Aw.Context.Core.ConceptSynthesis.RecordVectors
 static Aw.Context.Core.ConceptSynthesis.ConceptGrouper.Group(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.RecordVector!>! records, Aw.Context.Core.ConceptSynthesis.GroupingSettings! settings, Aw.Context.Core.Vectors.IVectorScan! scan) -> Aw.Kernel.Result<Aw.Context.Core.ConceptSynthesis.GroupingResult!>!
 static Aw.Context.Core.ConceptSynthesis.CosineHistogram.Buckets(System.Collections.Generic.IReadOnlyList<float>! cosines, float width = 0.05) -> System.Collections.Generic.IReadOnlyList<(float Lower, int Count)>!
 static Aw.Context.Core.ConceptSynthesis.RecordVectors.Mean(string! record, string! version, string! source, System.Collections.Generic.IEnumerable<float[]!>! chunks) -> Aw.Context.Core.ConceptSynthesis.RecordVector?
+Aw.Context.Core.Engine.ConceptSynthesisSettings
+Aw.Context.Core.Engine.ConceptSynthesisSettings.<Clone>$() -> Aw.Context.Core.Engine.ConceptSynthesisSettings!
+Aw.Context.Core.Engine.ConceptSynthesisSettings.ConceptSynthesisSettings() -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Enabled.get -> bool
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Enabled.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Equals(Aw.Context.Core.Engine.ConceptSynthesisSettings? other) -> bool
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Grouping.get -> Aw.Context.Core.ConceptSynthesis.GroupingSettings!
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxCharsPerCall.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxCharsPerCall.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxCharsPerRecord.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxCharsPerRecord.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxGroup.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MaxGroup.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinCosine.get -> float
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinCosine.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinRecords.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinRecords.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinSources.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.MinSources.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Neighbours.get -> int
+Aw.Context.Core.Engine.ConceptSynthesisSettings.Neighbours.init -> void
+Aw.Context.Core.Engine.ContextSettings.ConceptSynthesis.get -> Aw.Context.Core.Engine.ConceptSynthesisSettings!
+Aw.Context.Core.Engine.ContextSettings.ConceptSynthesis.init -> void
+Aw.Context.Core.Models.ModelPurpose.ConceptSynthesis = 6 -> Aw.Context.Core.Models.ModelPurpose
+Aw.Context.Core.Results.ConceptSynthesisReport
+Aw.Context.Core.Results.ConceptSynthesisReport.<Clone>$() -> Aw.Context.Core.Results.ConceptSynthesisReport!
+Aw.Context.Core.Results.ConceptSynthesisReport.Code.get -> string?
+Aw.Context.Core.Results.ConceptSynthesisReport.Code.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.ConceptSynthesisReport(int Groups, int Unchanged, int Labeled, int Queued, int Pending, int Concepts, int MultiSource, int Covered, int Embedded, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.CosineBucket!>! Cosines, int Tokens, string? Code) -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Concepts.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Concepts.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Cosines.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.CosineBucket!>!
+Aw.Context.Core.Results.ConceptSynthesisReport.Cosines.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Coverage.get -> double
+Aw.Context.Core.Results.ConceptSynthesisReport.Covered.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Covered.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Deconstruct(out int Groups, out int Unchanged, out int Labeled, out int Queued, out int Pending, out int Concepts, out int MultiSource, out int Covered, out int Embedded, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.CosineBucket!>! Cosines, out int Tokens, out string? Code) -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Embedded.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Embedded.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Equals(Aw.Context.Core.Results.ConceptSynthesisReport? other) -> bool
+Aw.Context.Core.Results.ConceptSynthesisReport.Groups.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Groups.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Labeled.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Labeled.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.MultiSource.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.MultiSource.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Pending.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Pending.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Queued.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Queued.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Tokens.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Tokens.init -> void
+Aw.Context.Core.Results.ConceptSynthesisReport.Unchanged.get -> int
+Aw.Context.Core.Results.ConceptSynthesisReport.Unchanged.init -> void
+Aw.Context.Core.Results.CosineBucket
+Aw.Context.Core.Results.CosineBucket.<Clone>$() -> Aw.Context.Core.Results.CosineBucket!
+Aw.Context.Core.Results.CosineBucket.CosineBucket(float Lower, int Count) -> void
+Aw.Context.Core.Results.CosineBucket.Count.get -> int
+Aw.Context.Core.Results.CosineBucket.Count.init -> void
+Aw.Context.Core.Results.CosineBucket.Deconstruct(out float Lower, out int Count) -> void
+Aw.Context.Core.Results.CosineBucket.Equals(Aw.Context.Core.Results.CosineBucket? other) -> bool
+Aw.Context.Core.Results.CosineBucket.Lower.get -> float
+Aw.Context.Core.Results.CosineBucket.Lower.init -> void
+Aw.Context.Core.Results.DecisionReport.DecisionReport(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources, Aw.Context.Core.Results.ConceptSynthesisReport? Synthesis = null) -> void
+Aw.Context.Core.Results.DecisionReport.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Results.SourceDecisions!>! Sources, out Aw.Context.Core.Results.ConceptSynthesisReport? Synthesis) -> void
+Aw.Context.Core.Results.DecisionReport.Synthesis.get -> Aw.Context.Core.Results.ConceptSynthesisReport?
+Aw.Context.Core.Results.DecisionReport.Synthesis.init -> void
+override Aw.Context.Core.Engine.ConceptSynthesisSettings.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.ConceptSynthesisSettings.GetHashCode() -> int
+override Aw.Context.Core.Engine.ConceptSynthesisSettings.ToString() -> string!
+override Aw.Context.Core.Results.ConceptSynthesisReport.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.ConceptSynthesisReport.GetHashCode() -> int
+override Aw.Context.Core.Results.ConceptSynthesisReport.ToString() -> string!
+override Aw.Context.Core.Results.CosineBucket.Equals(object? obj) -> bool
+override Aw.Context.Core.Results.CosineBucket.GetHashCode() -> int
+override Aw.Context.Core.Results.CosineBucket.ToString() -> string!
+static Aw.Context.Core.Engine.ConceptSynthesisSettings.operator !=(Aw.Context.Core.Engine.ConceptSynthesisSettings? left, Aw.Context.Core.Engine.ConceptSynthesisSettings? right) -> bool
+static Aw.Context.Core.Engine.ConceptSynthesisSettings.operator ==(Aw.Context.Core.Engine.ConceptSynthesisSettings? left, Aw.Context.Core.Engine.ConceptSynthesisSettings? right) -> bool
+static Aw.Context.Core.Results.ConceptSynthesisReport.Failed(string! code) -> Aw.Context.Core.Results.ConceptSynthesisReport!
+static Aw.Context.Core.Results.ConceptSynthesisReport.operator !=(Aw.Context.Core.Results.ConceptSynthesisReport? left, Aw.Context.Core.Results.ConceptSynthesisReport? right) -> bool
+static Aw.Context.Core.Results.ConceptSynthesisReport.operator ==(Aw.Context.Core.Results.ConceptSynthesisReport? left, Aw.Context.Core.Results.ConceptSynthesisReport? right) -> bool
+static Aw.Context.Core.Results.CosineBucket.operator !=(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
+static Aw.Context.Core.Results.CosineBucket.operator ==(Aw.Context.Core.Results.CosineBucket? left, Aw.Context.Core.Results.CosineBucket? right) -> bool
