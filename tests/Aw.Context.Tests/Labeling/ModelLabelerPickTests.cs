@@ -39,7 +39,8 @@ public sealed class ModelLabelerPickTests
         var pass = await Labeler(Model(Labels(0, "Tab groups", "Tabs", "Tab manager")), port).Label([Cluster(0)], [], 1_000_000, _on, Ct);
 
         var asked = Assert.Single(Assert.Single(port.Asked).Questions);
-        Assert.Equal((Id(0), ["Tab groups", "Tabs", "Tab manager", "src/tabs"]), (asked.Key, asked.Options));
+        Assert.Equal(Id(0), asked.Key);
+        Assert.Equal(["Tab groups", "Tabs", "Tab manager", "src/tabs"], asked.Options, StringComparer.Ordinal);
         Assert.Equal([(Id(0), "Tabs")], pass.Value.Labels.Select(l => (l.Id.Value, l.Label)));
         Assert.Equal(new LabelHow(Jev: 1, FirstCandidate: 0, FileName: 0), pass.Value.Chosen);
         Assert.Equal(ChoiceKind.Labeling, port.Asked[0].Kind);
@@ -157,8 +158,9 @@ public sealed class ModelLabelerPickTests
     public async Task A_cap_too_small_for_one_question_skips_the_pick_and_every_cluster_takes_its_first_candidate()
     {
         var port = new FakeChoicePort { Cap = 1_000 };
+        var files = Enumerable.Range(0, 12).Select(f => string.Create(CultureInfo.InvariantCulture, $"src/module/feature/component{f}/{new string('x', 40)}.ts")).ToArray();   // a question of about 900 characters, over 80% of 1,000
 
-        var pass = await Labeler(Model(Labels(0, "Tab groups", "Tabs")), port).Label([Cluster(0)], [], 1_000_000, _on, Ct);
+        var pass = await Labeler(Model(Labels(0, "Tab groups", "Tabs")), port).Label([Cluster(0, files: files)], [], 1_000_000, _on, Ct);
 
         Assert.Empty(port.Asked);
         Assert.Equal("Tab groups", Assert.Single(pass.Value.Labels).Label);
