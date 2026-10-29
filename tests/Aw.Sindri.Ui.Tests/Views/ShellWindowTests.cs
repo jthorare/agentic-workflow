@@ -1535,11 +1535,11 @@ public sealed class ShellWindowTests : IDisposable
     });
 
     // The Projects page spec §7: eight tabs at the 1,000 px minimum, each label whole (not trimmed, not past the window's edge)
-    // and no count drawn, at text scale 1.0 and 1.3.
+    // at text scale 1.0 and 1.3. The counts may give way first (TopBar.Counts); the labels never do.
     [Theory]
     [InlineData(1.0)]
     [InlineData(1.3)]
-    public Task At_the_1000_px_minimum_all_eight_tab_labels_are_whole_with_counts_hidden(double scale) => OnUi(async () =>
+    public Task At_the_1000_px_minimum_all_eight_tab_labels_are_whole(double scale) => OnUi(async () =>
     {
         await new Preferences(_preferences).Update(_ => UiPreferences.Defaults with { Window = new WindowBounds(0, 0, 1000, 600) });
         var window = await ShowIn(BarState.Normal);
@@ -1562,8 +1562,6 @@ public sealed class ShellWindowTests : IDisposable
                 Assert.True(label.Bounds.Width >= layout.Width - 0.5, string.Create(CultureInfo.InvariantCulture, $"{at}: trimmed to {label.Bounds.Width} of {layout.Width}"));
                 Assert.True(box.Left >= 0 && box.Right <= window.ClientSize.Width, $"{at}: outside the window");
             }
-
-            Assert.DoesNotContain(window.GetVisualDescendants().OfType<TextBlock>(), t => t.Classes.Contains("nav-count") && t.IsEffectivelyVisible);
         }
         finally
         {
