@@ -130,9 +130,7 @@ internal static class EndpointTable
         _ = commands.MapApproveProfile();
         _ = commands.MapCancelJob();
         _ = commands.MapCloseItem().MapProjectWrites();
-        _ = commands.MapDeferOnyx().MapEndLearnMode().MapAllowDenial();
-        _ = commands.MapSetupOnyx();
-        _ = commands.MapConnectOnyx();
+        _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();
         _ = commands.MapPauseService();
         _ = commands.MapResumeService();

@@ -5,7 +5,7 @@ using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.Setup;
 
-/// <summary>Doctor's 'setup' check: ok when every step is done or skipped; otherwise a warning that names the steps still open, with the owner's next move.</summary>
+/// <summary>Doctor's 'setup' check: ok when every step is done; otherwise a warning that names the steps still open, with the owner's next move.</summary>
 public sealed class SetupDoctorTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -24,12 +24,16 @@ public sealed class SetupDoctorTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_skipped_onyx_still_counts_as_finished()
+    public async Task A_profile_that_names_no_source_leaves_the_sources_step_open_with_the_connect_command()
     {
         var facts = InMemorySetupFacts.AllDone();
-        facts.OnyxAnswer = new OnyxFact(Core.Onyx.OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null) { Deferred = true };
+        facts.SourcesAnswer = new SourcesFact(0);
 
-        Assert.Equal(CheckState.Ok, (await Run(facts)).State);
+        var check = await Run(facts);
+
+        Assert.Equal(CheckState.Warn, check.State);
+        Assert.Contains("sources (todo)", check.Detail, StringComparison.Ordinal);
+        Assert.Equal("sindri index connect <source>", check.Fix);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -46,12 +50,12 @@ public sealed class SetupDoctorTests
     public async Task A_step_that_cannot_be_read_is_a_warning_not_a_throw()
     {
         var facts = InMemorySetupFacts.AllDone();
-        facts.OnyxAnswer = Core.SindriErrors.ApiInternal.With("boom");
+        facts.SourcesAnswer = Core.SindriErrors.ApiInternal.With("boom");
 
         var check = await Run(facts);
 
         Assert.Equal(CheckState.Warn, check.State);
-        Assert.Contains("onyx", check.Detail, StringComparison.Ordinal);
+        Assert.Contains("sources", check.Detail, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
