@@ -28,7 +28,7 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
             return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message}");
         }
 
-        var line = $"token: {YamlOnyxProfileWriter.Quote(secretPointer)}";
+        var line = $"token: {YamlProfileLines.Quote(secretPointer)}";
         var edited = Edit(before, source, line);
         if (edited.IsError)
         {
@@ -52,7 +52,7 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
     {
         try
         {
-            YamlOnyxProfileWriter.Write(path, text);
+            YamlProfileLines.Write(path, text);
             return true;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -70,8 +70,8 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         }
 
         var context = lines.FindIndex(static l => l.TrimEnd() == "context:");
-        var sources = context < 0 ? -1 : YamlOnyxProfileWriter.Child(lines, context, "sources:");
-        var block = sources < 0 ? -1 : YamlOnyxProfileWriter.Child(lines, sources, source + ":");
+        var sources = context < 0 ? -1 : YamlProfileLines.Child(lines, context, "sources:");
+        var block = sources < 0 ? -1 : YamlProfileLines.Child(lines, sources, source + ":");
         if (block < 0)
         {
             return SindriErrors.IndexNotInProfile.With($"the profile has no context.sources.{source} entry (fix: list its repos under context.sources.{source}, then connect)");
@@ -82,11 +82,11 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
             return SindriErrors.ProfileInvalid.With($"context.sources.{source} is written in flow style, which Sindri won't edit (fix: write it as a block, or add `{line}` to it by hand)");
         }
 
-        var indent = YamlOnyxProfileWriter.Indent(lines[block]) + 2;
-        var existing = YamlOnyxProfileWriter.Child(lines, block, "token:");
+        var indent = YamlProfileLines.Indent(lines[block]) + 2;
+        var existing = YamlProfileLines.Child(lines, block, "token:");
         if (existing >= 0)
         {
-            lines[existing] = new string(' ', YamlOnyxProfileWriter.Indent(lines[existing])) + line;
+            lines[existing] = new string(' ', YamlProfileLines.Indent(lines[existing])) + line;
         }
         else
         {
@@ -104,7 +104,7 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         }
 
         using var document = JsonDocument.Parse(json);
-        return YamlOnyxProfileWriter.Descend(document.RootElement, "context", "sources", source, "token") is { ValueKind: JsonValueKind.String } entry
+        return YamlProfileLines.Descend(document.RootElement, "context", "sources", source, "token") is { ValueKind: JsonValueKind.String } entry
             && string.Equals(entry.GetString(), pointer, StringComparison.Ordinal);
     }
 }
