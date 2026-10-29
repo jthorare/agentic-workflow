@@ -34,9 +34,16 @@ internal static class JobText
     /// <summary>A job: its header, who started it and when, its lines, how it ended and the command that cancels it.</summary>
     /// <param name="job">The job.</param>
     /// <returns>The text.</returns>
-    internal static string Render(JobView job)
+    internal static string Render(JobView job) => Render(job, TimeProvider.System);
+
+    /// <summary>A job as <see cref="Render(JobView)"/> prints it, with the model-call block (context model routing spec §8.2) dated against <paramref name="clock"/>.</summary>
+    /// <param name="job">The job.</param>
+    /// <param name="clock">Tells now and the local time zone; a call from another local day carries its date.</param>
+    /// <returns>The text.</returns>
+    internal static string Render(JobView job, TimeProvider clock)
     {
         ArgumentNullException.ThrowIfNull(job);
+        ArgumentNullException.ThrowIfNull(clock);
         var text = new StringBuilder();
         _ = text.AppendLine($"{job.Id.Value}  {JobStateNames.Of(job.State)}  {job.Kind.Value}  {job.Service?.Value ?? job.Key.Value}");
         _ = text.AppendLine($"started by {job.StartedBy} at {Time(job.StartedAt)}");

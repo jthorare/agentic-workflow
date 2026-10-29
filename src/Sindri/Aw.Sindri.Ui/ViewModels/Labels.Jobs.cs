@@ -45,6 +45,20 @@ internal static partial class Labels
     /// <summary>The result disclosure's note when the result was cut.</summary>
     internal const string JobResultCut = "Cut short";
 
+    /// <summary>The sheet's heading over the list of a job's model calls.</summary>
+    internal const string JobModelCalls = "Model calls";
+
+    /// <summary>The Resume button's words.</summary>
+    internal const string JobResume = "Resume";
+
+    /// <summary>The model line of a job paused for a model harness when it has no progress line yet.</summary>
+    internal const string JobModelPausedFallback = "Waiting for a model harness. Resume when one is back.";
+
+    /// <summary>The Resume button's accessible name: its words, then the job's kind.</summary>
+    /// <param name="title">The job's kind in words.</param>
+    /// <returns>The words.</returns>
+    internal static string JobResumeName(string title) => JobResume + " " + title;
+
     /// <summary>The line when a job has said nothing yet.</summary>
     internal const string JobNoProgress = "No progress yet.";
 

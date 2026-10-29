@@ -20999,9 +20999,11 @@ Aw.Sindri.Core.Ids.ModelCallId.IsInitialized() -> bool
 Aw.Sindri.Core.Ids.ModelCallId.ModelCallId() -> void
 Aw.Sindri.Core.Ids.ModelCallId.ToString(System.IFormatProvider? provider) -> string!
 Aw.Sindri.Core.Ids.ModelCallId.Value.get -> string!
-Aw.Sindri.Core.Jobs.JobRow.Deconstruct(out Aw.Sindri.Core.Ids.JobId Id, out Aw.Sindri.Core.Ids.JobKind Kind, out Aw.Sindri.Core.Ids.JobKey Key, out Aw.Sindri.Core.Ids.ItemId? Item, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Ids.ServiceName? Service, out Aw.Sindri.Core.Jobs.JobState State, out string! StartedBy, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! Progress, out int Rounds, out string? Summary, out string? Code, out System.Text.Json.JsonElement? Result, out string? CancelledBy, out long Sequence, out Aw.Sindri.Core.Jobs.ModelTotals? Models, out string? WaitingOn) -> void
-Aw.Sindri.Core.Jobs.JobRow.JobRow(Aw.Sindri.Core.Ids.JobId Id, Aw.Sindri.Core.Ids.JobKind Kind, Aw.Sindri.Core.Ids.JobKey Key, Aw.Sindri.Core.Ids.ItemId? Item, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Ids.ServiceName? Service, Aw.Sindri.Core.Jobs.JobState State, string! StartedBy, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! Progress, int Rounds, string? Summary, string? Code, System.Text.Json.JsonElement? Result, string? CancelledBy, long Sequence, Aw.Sindri.Core.Jobs.ModelTotals? Models = null, string? WaitingOn = null) -> void
+Aw.Sindri.Core.Jobs.JobRow.Deconstruct(out Aw.Sindri.Core.Ids.JobId Id, out Aw.Sindri.Core.Ids.JobKind Kind, out Aw.Sindri.Core.Ids.JobKey Key, out Aw.Sindri.Core.Ids.ItemId? Item, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Ids.ServiceName? Service, out Aw.Sindri.Core.Jobs.JobState State, out string! StartedBy, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! Progress, out int Rounds, out string? Summary, out string? Code, out System.Text.Json.JsonElement? Result, out string? CancelledBy, out long Sequence, out Aw.Sindri.Core.Jobs.ModelTotals? Models, out string? WaitingOn, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.ContextModelCalled!>? ModelCalls) -> void
+Aw.Sindri.Core.Jobs.JobRow.JobRow(Aw.Sindri.Core.Ids.JobId Id, Aw.Sindri.Core.Ids.JobKind Kind, Aw.Sindri.Core.Ids.JobKey Key, Aw.Sindri.Core.Ids.ItemId? Item, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Ids.ServiceName? Service, Aw.Sindri.Core.Jobs.JobState State, string! StartedBy, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! Progress, int Rounds, string? Summary, string? Code, System.Text.Json.JsonElement? Result, string? CancelledBy, long Sequence, Aw.Sindri.Core.Jobs.ModelTotals? Models = null, string? WaitingOn = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.ContextModelCalled!>? ModelCalls = null) -> void
 Aw.Sindri.Core.Jobs.JobRow.Models.get -> Aw.Sindri.Core.Jobs.ModelTotals?
+Aw.Sindri.Core.Jobs.JobRow.ModelCalls.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Events.ContextModelCalled!>?
+Aw.Sindri.Core.Jobs.JobRow.ModelCalls.init -> void
 Aw.Sindri.Core.Jobs.JobRow.Models.init -> void
 Aw.Sindri.Core.Jobs.JobRow.WaitingOn.get -> string?
 Aw.Sindri.Core.Jobs.JobRow.WaitingOn.init -> void
@@ -21022,13 +21024,15 @@ Aw.Sindri.Core.Jobs.ModelTotals.AnsweredBy.get -> System.Collections.Generic.IRe
 Aw.Sindri.Core.Jobs.ModelTotals.AnsweredBy.init -> void
 Aw.Sindri.Core.Jobs.ModelTotals.Calls.get -> int
 Aw.Sindri.Core.Jobs.ModelTotals.Calls.init -> void
-Aw.Sindri.Core.Jobs.ModelTotals.Deconstruct(out int Calls, out int FailedCalls, out long InputTokens, out long OutputTokens, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.ModelAnsweredCount!>! AnsweredBy) -> void
+Aw.Sindri.Core.Jobs.ModelTotals.Deconstruct(out int Calls, out int FailedCalls, out long InputTokens, out long OutputTokens, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.ModelAnsweredCount!>! AnsweredBy, out int FellBack) -> void
 Aw.Sindri.Core.Jobs.ModelTotals.Equals(Aw.Sindri.Core.Jobs.ModelTotals? other) -> bool
 Aw.Sindri.Core.Jobs.ModelTotals.FailedCalls.get -> int
+Aw.Sindri.Core.Jobs.ModelTotals.FellBack.get -> int
+Aw.Sindri.Core.Jobs.ModelTotals.FellBack.init -> void
 Aw.Sindri.Core.Jobs.ModelTotals.FailedCalls.init -> void
 Aw.Sindri.Core.Jobs.ModelTotals.InputTokens.get -> long
 Aw.Sindri.Core.Jobs.ModelTotals.InputTokens.init -> void
-Aw.Sindri.Core.Jobs.ModelTotals.ModelTotals(int Calls, int FailedCalls, long InputTokens, long OutputTokens, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.ModelAnsweredCount!>! AnsweredBy) -> void
+Aw.Sindri.Core.Jobs.ModelTotals.ModelTotals(int Calls, int FailedCalls, long InputTokens, long OutputTokens, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.ModelAnsweredCount!>! AnsweredBy, int FellBack = 0) -> void
 Aw.Sindri.Core.Jobs.ModelTotals.OutputTokens.get -> long
 Aw.Sindri.Core.Jobs.ModelTotals.OutputTokens.init -> void
 const Aw.Sindri.Core.Events.EventTypes.ContextModelCalled = "context.model.called" -> string!

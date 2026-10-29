@@ -12,10 +12,11 @@ internal sealed class JobRowViewModel : ObservableObject
 {
     private readonly TimeProvider _clock;
     private readonly Func<string, string, ControlViewModel?> _cancel;
+    private readonly Func<string, CancellationToken, Task>? _resume;
 
-    internal JobRowViewModel(JobRowView row, Func<string, string, ControlViewModel?> cancel, TimeProvider clock)
+    internal JobRowViewModel(JobRowView row, Func<string, string, ControlViewModel?> cancel, TimeProvider clock, Func<string, CancellationToken, Task>? resume = null)
     {
-        (Row, _cancel, _clock) = (row, cancel, clock);
+        (Row, _cancel, _clock, _resume) = (row, cancel, clock, resume);
         Link = new DeepLink(DeepLinkKind.Job, row.Id);
         Derive();
     }
@@ -52,6 +53,32 @@ internal sealed class JobRowViewModel : ObservableObject
 
     /// <summary>The error code of a failed job, muted after the summary; empty otherwise.</summary>
     public string CodeText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The second line of the row: what the job's model calls came to, or why it waits; empty when there is none.</summary>
+    public string ModelText { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when the row has a model line.</summary>
+    public bool HasModelText => ModelText.Length > 0;
+
+    /// <summary>True while the job is parked on 'model-limit': the row shows Resume.</summary>
+    public bool HasResume { get; private set => Set(ref field, value); }
+
+    /// <summary>The Resume button's words.</summary>
+#pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
+    public string ResumeText => Labels.JobResume;
+#pragma warning restore CA1822, MA0041
+
+    /// <summary>The Resume button's accessible name: "Resume Build the context map".</summary>
+    public string ResumeName => Labels.JobResumeName(TitleText);
+
+    /// <summary>Sends the resume of this job and reads the list again; a job that is no longer waiting is refused by Sindri and the read shows it as it is now.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>A task that ends when the list was read again.</returns>
+    internal Task Resume(CancellationToken cancellationToken)
+    {
+        _ = (_resume, cancellationToken);
+        throw new NotSupportedException();
+    }
 
     /// <summary>The row's accessible name.</summary>
     public string Name { get; private set => Set(ref field, value); } = string.Empty;
@@ -113,8 +140,10 @@ internal sealed class JobRowViewModel : ObservableObject
         ByText = "by " + Labels.JobStartedBy(Row.StartedBy);
         (SummaryText, CodeText) = (Row.Summary ?? string.Empty, Row.Code ?? string.Empty);
         Cancel = IsRunning ? Cancel ?? _cancel(Row.Id, TitleText) : null;
+        ModelText = Row.Models is null && Row.WaitingOn is null ? string.Empty : ModelLines.Row(Row) ?? string.Empty;
+        HasResume = string.Equals(Row.WaitingOn, ModelLines.ModelLimit, StringComparison.Ordinal);
         Name = Labels.JobRowName(TitleText, word.ToLowerInvariant(), WhenText, Labels.JobStartedBy(Row.StartedBy), SummaryText);
-        foreach (var name in (string[])[nameof(IsRunning), nameof(HasSummary), nameof(HasWideSummary), nameof(HasCode), nameof(HasCancel)])
+        foreach (var name in (string[])[nameof(IsRunning), nameof(HasSummary), nameof(HasWideSummary), nameof(HasCode), nameof(HasCancel), nameof(HasModelText), nameof(ResumeName)])
         {
             OnChanged(name);
         }

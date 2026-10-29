@@ -5,6 +5,7 @@ using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Views;
@@ -51,6 +52,13 @@ internal sealed class JobRig : IDisposable
         [.. Enumerable.Range(1, rounds).Select(static n => new JobLine(n, string.Create(CultureInfo.InvariantCulture, $"line {n}"), KnownInstants.Epoch))], rounds, summary, code, result, CancelledBy: null,
         state == JobState.Running ? [ActionId.From("CancelJob")] : [], state == JobState.Running ? "sindri jobs cancel " + Id : null, new AsOf(10, 10, KnownInstants.Epoch, Rebuilding: false, Stalled: false)));
 
+    /// <summary>A job that made model calls (context model routing spec §8.2): its totals, its calls and, when <paramref name="waitingOn"/> is set, the progress line it waits with.</summary>
+    public static string ModelView(JobState state, string? waitingOn, IReadOnlyList<string> lines, IReadOnlyList<ContextModelCalled> calls, int count) => Body(new JobView(JobId.From(Id), JobKind.From("BuildContextMap"), JobKey.From("map"),
+        Item: null, Repo: null, Service: null, state, "human:local", KnownInstants.Epoch, EndedAt: null,
+        [.. lines.Select(static (line, n) => new JobLine(n + 1, line, KnownInstants.Epoch))], lines.Count, Summary: null, Code: null, Result: null, CancelledBy: null,
+        [ActionId.From("CancelJob")], "sindri jobs cancel " + Id, new AsOf(10, 10, KnownInstants.Epoch, Rebuilding: false, Stalled: false),
+        Models: new ModelTotals(count, FailedCalls: 0, InputTokens: 6000, OutputTokens: 1900, [new ModelAnsweredCount("codex", "gpt-6-luna", 2)], FellBack: 1), WaitingOn: waitingOn, ModelCalls: calls, ModelCallCount: count));
+
     public static string Progress(int round, string line) => string.Create(CultureInfo.InvariantCulture, $$"""{"commandId":"00000000-0000-0000-0000-000000000007","job":"{{Id}}","round":{{round}},"line":"{{line}}"}""");
 
     public static string Finished(string outcome, string summary, string? code = null) =>
@@ -67,7 +75,7 @@ internal sealed class JobRig : IDisposable
 
     public ServiceVerbs Services(JobApi api) => new(Client(api), Output(), Follower(api), (_, _) => Task.FromResult<Kernel.Error?>(null));
 
-    public JobVerbs Jobs(JobApi api) => new(Client(api), Output(), (_, _) => Task.FromResult<Kernel.Error?>(null));
+    public JobVerbs Jobs(JobApi api) => new(Client(api), Output(), (_, _) => Task.FromResult<Kernel.Error?>(null), Clock);
 
     public Task Interrupt() => _interrupt.CancelAsync();
 
