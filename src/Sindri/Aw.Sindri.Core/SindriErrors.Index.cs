@@ -12,4 +12,7 @@ public static partial class SindriErrors
 
     /// <summary>SND-INDEX-011: a repo or host is not in the profile; no request was sent.</summary>
     public static readonly ErrorDefinition IndexNotInProfile = new("SND-INDEX-011", ErrorKind.Invalid, "The source, repo or host is not in the profile; no request was sent");
+
+    /// <summary>SND-INDEX-014: `sindri onyx down --purge` could not remove one of the things an old `onyx up` left (a container, volume, keychain entry or the onyx/ directory); the message names it and the fix.</summary>
+    public static readonly ErrorDefinition IndexOnyxLeftover = new("SND-INDEX-014", ErrorKind.Unavailable, "Removing what an old `sindri onyx up` left on this box failed");
 }

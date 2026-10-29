@@ -110,6 +110,18 @@ public static class EventTypes
     /// <summary>An existing item was linked to a tracker record.</summary>
     public const string ItemLinked = "item.linked";
 
+    /// <summary>The owner attached a Linear project to the Projects page, or added one by hand.</summary>
+    public const string ProjectAttached = "project.attached";
+
+    /// <summary>The owner edited an attached or hand-made project.</summary>
+    public const string ProjectChanged = "project.changed";
+
+    /// <summary>The owner removed an attached or hand-made project.</summary>
+    public const string ProjectDetached = "project.detached";
+
+    /// <summary>The owner hid or unhid a project they lead.</summary>
+    public const string ProjectHidden = "project.hidden";
+
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
 
@@ -202,9 +214,6 @@ public static class EventTypes
 
     /// <summary>The owner agreed that Sindri may register itself and build the map on its own (setup-once spec §7.5).</summary>
     public const string SetupConsentGiven = "setup.consent.given";
-
-    /// <summary>The owner left Onyx for later, or took that back (setup-once spec §7.5).</summary>
-    public const string OnyxDeferred = "onyx.deferred";
 
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>

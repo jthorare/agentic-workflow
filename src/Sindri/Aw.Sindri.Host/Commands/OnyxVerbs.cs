@@ -13,8 +13,14 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="services">The CLI's scoped services.</param>
 /// <param name="output">Where answers go.</param>
 /// <param name="approve">Runs `profile approve [hash]` the way the CLI does (preview without a hash, the typed challenge with one), for the approval `onyx up` shows inline; null skips the offer.</param>
-internal sealed class OnyxVerbs(IServiceProvider services, Output output, Func<string?, Output, CancellationToken, Task<int>>? approve = null)
+/// <param name="purge">Runs `onyx down --purge` (the OnyxPurge stub, which does not depend on this class); null where the verb is not offered.</param>
+internal sealed class OnyxVerbs(IServiceProvider services, Output output, Func<string?, Output, CancellationToken, Task<int>>? approve = null, Func<CancellationToken, Task<int>>? purge = null)
 {
+    /// <summary>'sindri onyx down --purge': the self-contained stub in OnyxPurge/, which shares nothing with the rest of this class.</summary>
+    /// <param name="ct">Cancels the verb.</param>
+    /// <returns>The stub's exit code; 2 when this host wasn't given one.</returns>
+    internal async Task<int> Purge(CancellationToken ct) => purge is null ? await output.Error(SindriErrors.UnknownVerb.With("'onyx down --purge' isn't available here")).ConfigureAwait(false) : await purge(ct).ConfigureAwait(false);
+
     internal async Task<int> Up(bool json, CancellationToken ct)
     {
         Result<OnyxUpResponse> answer;
