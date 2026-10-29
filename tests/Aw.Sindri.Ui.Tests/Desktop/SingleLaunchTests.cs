@@ -119,10 +119,17 @@ public sealed class SingleLaunchTests : IDisposable
     [InlineData(new[] { "item/ITM-01JC8" }, "item/ITM-01JC8")]
     [InlineData(new[] { "sindri://item/ITM-01JC8" }, "item/ITM-01JC8")]
     [InlineData(new[] { "sindri://projects" }, "projects")]
+    [InlineData(new[] { "sindri://setup" }, "setup")]
     [InlineData(new[] { "--verbose" }, InstanceMessages.Focus)]
     [InlineData(new[] { "item/a", "item/b" }, InstanceMessages.Focus)]
     public void A_later_launch_sends_its_deep_link_or_focus(string[] args, string message) =>
         Assert.Equal(message, SingleLaunch.MessageFor(args));
+
+    [Theory]
+    [InlineData("projects", true)]
+    [InlineData("item/x", true)]
+    [InlineData("nonsense", false)]
+    public void Only_a_link_is_forwarded(string text, bool link) => Assert.Equal(link, InstanceMessages.IsLink(text));
 
     // The app ends with 2 when it failed (SindriApp logs the cause); the launch says so on standard error. Review run 4
     // (code-reviewer-1): the words are neutral ("failed"), since the app may have run normally before it failed.

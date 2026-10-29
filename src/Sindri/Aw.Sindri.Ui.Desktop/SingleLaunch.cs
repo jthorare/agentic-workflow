@@ -22,9 +22,6 @@ internal sealed class SingleLaunch(TimeSpan holderWait)
     private static readonly TimeSpan _claimEvery = TimeSpan.FromMilliseconds(50);
     private const string Scheme = "sindri://";
 
-    // The one page link with no subject (and so no slash) a launch forwards.
-    private const string ProjectsLink = "projects";
-
     // A failure inside the app (at start-up or while it ran): the app's log names the cause, which AW_LOG_LEVEL=none hides.
     private const string FailedInApp = "sindri-ui: failed (SND-UI-004); the log names the cause unless AW_LOG_LEVEL is none";
 
@@ -160,7 +157,7 @@ internal sealed class SingleLaunch(TimeSpan holderWait)
         }
 
         var link = only.StartsWith(Scheme, StringComparison.OrdinalIgnoreCase) ? only[Scheme.Length..] : only;
-        return (link.Contains('/', StringComparison.Ordinal) || string.Equals(link, ProjectsLink, StringComparison.Ordinal)) && link.Length <= InstanceMessages.MaxLength ? link : InstanceMessages.Focus;
+        return InstanceMessages.IsLink(link) && link.Length <= InstanceMessages.MaxLength ? link : InstanceMessages.Focus;
     }
 
 #pragma warning disable RS0030 // the launcher is synchronous on the main thread before the UI starts
