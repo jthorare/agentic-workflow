@@ -11,6 +11,7 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -73,6 +74,8 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     public ValueTask<Result<RefreshReport>> Refresh(ContextScope scope, CancellationToken cancellationToken) => inner.Refresh(scope, cancellationToken);
 
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) => inner.Sync(source, scope, cancellationToken);
+
+    public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) => inner.Projects(request, scope, cancellationToken);
 
     public ValueTask<Result<EmbedRecordsReport>> Embed(EmbedRecordsRequest request, ContextScope scope, CancellationToken cancellationToken) => inner.Embed(request, scope, cancellationToken);
 

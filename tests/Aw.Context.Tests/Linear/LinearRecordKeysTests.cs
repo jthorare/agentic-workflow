@@ -1,5 +1,4 @@
 using Aw.Context.Core.Linear;
-using Aw.Context.Core.Onyx;
 using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Tests.Linear;
@@ -18,14 +17,6 @@ public sealed class LinearRecordKeysTests
         Assert.Equal(
             ["linear:issue/" + Lower, "linear:doc/" + Lower, "linear:project/" + Lower, "linear:update/" + Lower],
             new[] { LinearRecordKeys.Issue(Ext(Id)), LinearRecordKeys.Document(Ext(Id)), LinearRecordKeys.Project(Ext(Id)), LinearRecordKeys.Update(Ext(Id)) }.Select(k => k!.Value.Value), StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void An_issue_has_the_key_onyxs_linear_connector_gives_it_so_the_two_adapters_merge()
-    {
-        var onyx = OnyxRecordKeys.Identify(ExternalId.From(Lower), "linear", "[SPL-105] Resize panes", "https://linear.app/x/issue/SPL-105", new HashSet<string>(StringComparer.Ordinal) { "SPL" })!;
-
-        Assert.Equal(onyx.Canonical, LinearRecordKeys.Issue(Ext(Id)));
     }
 
     [Theory, Trait("Lane", "unit")]

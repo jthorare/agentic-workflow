@@ -160,7 +160,7 @@ internal sealed class RealJobRuntime : IJobRuntimeSubject
         return await scope.ServiceProvider.GetRequiredService<IService<TRequest, TResponse>>().Handle(request, TestContext.Current.CancellationToken);
     }
 
-    /// <summary>Runs a registered command through its chain as <paramref name="caller"/> in a scope the test gets to prepare first (the Onyx login's per-request hand-over lives in one).</summary>
+    /// <summary>Runs a registered command through its chain as <paramref name="caller"/> in a scope the test gets to prepare first (a per-request hand-over lives in one).</summary>
     /// <typeparam name="TRequest">The request.</typeparam>
     /// <typeparam name="TResponse">The response.</typeparam>
     /// <param name="request">The request.</param>

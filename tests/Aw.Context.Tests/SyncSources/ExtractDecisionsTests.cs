@@ -4,19 +4,19 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Models;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
+using Aw.Context.Core.Sync;
 using Aw.Context.Features.SyncSources;
-using Aw.Context.Testing.Fakes;
-using Aw.Context.Testing.Map;
+using Aw.Context.Testing.Records;
 using Aw.Context.Tests.Map;
-using Aw.Context.Tests.Onyx;
 
 namespace Aw.Context.Tests.SyncSources;
 
 /// <summary>
 /// Decision extraction, supersedes and intent-vs-intent conflicts inside a sync (S-5B, spec §6.1, §8.8, §8.9): the model behind
-/// 'context.labeling', under 'maxTokensPerSync', over the fake Onyx and a scripted model.
+/// 'context.labeling', under 'maxTokensPerSync', over a Linear record feed and a scripted model.
 /// </summary>
 [Trait("Lane", "integration")]
 public sealed class ExtractDecisionsTests
@@ -40,7 +40,7 @@ public sealed class ExtractDecisionsTests
         return MapWorld.HumanWith("{\"sources\":{\"linear\":{\"teams\":[\"SPL\"]}}" + section + "}");
     }
 
-    internal static string Plant(string json) => json
+    internal static string Plant(string text) => text
         .Replace("Implemented as setOrientation in SplitPane.ts", "Implemented as setOrientation in SplitPane.ts (layout.split-pane.orientation)", StringComparison.Ordinal)
         .Replace("Resize step defaults to 2 columns", "Resize step (layout.pane-resize) defaults to 2 columns", StringComparison.Ordinal)
         .Replace("Restoring a tab brings back orientation and focus", "Restoring a tab brings back orientation and focus; " + Q104, StringComparison.Ordinal);
@@ -59,40 +59,39 @@ public sealed class ExtractDecisionsTests
         _ => "{\"decisions\":[]}",
     };
 
+    private static RecordItem Item(RecordWrite write)
+    {
+        var r = write.Record;
+        return new RecordItem(r.Key, r.Kind, r.Title, Plant(string.Join('\n', write.Chunks.OrderBy(c => c.Seq).Select(c => c.Text))), Author: null, Url: r.Url, r.State, r.StateRaw,
+            r.CreatedAt, r.UpdatedAt, r.ClosedAt, r.Version, Links: [], Repo: null, AudienceKey.From("linear:SPL"));   // the audience the profile's team gives its issues
+    }
+
     internal sealed class Rig : IAsyncDisposable
     {
-        private Rig(FakeOnyxServer onyx, OnyxSourceHarness harness, MapWorld world)
+        private Rig(MapWorld world)
         {
-            Onyx = onyx;
-            Harness = harness;
             World = world;
         }
 
-        public FakeOnyxServer Onyx { get; }
-
-        public OnyxSourceHarness Harness { get; }
-
         public MapWorld World { get; }
 
-        public static async Task<Rig> Start(string verdict = "contradicts", Func<IContextSource, IContextSource>? wrap = null)
+        public static async Task<Rig> Start(string verdict = "contradicts", Func<RecordItem, RecordItem>? shape = null, FakeLexicalLeg? lexical = null, IContextSource? intent = null)
         {
-            var onyx = await FakeOnyxServer.Start(new FakeServerOptions { OnyxPlant = Plant });
-            var harness = new OnyxSourceHarness(onyx.Url, onyx.Token);
-            var world = new MapWorld(intent: wrap?.Invoke(harness.Source) ?? harness.Source);
+            var feed = new FakeRecordFeed(RecordSamples.Linear, items: [.. LinearIssueSeed.From(issues: null).Select(Item).Select(i => shape?.Invoke(i) ?? i)]);
+            var world = new MapWorld(intent: intent, lexical: lexical, feeds: new FakeRecordFeedCatalog(feed));
             world.Model.Responder = r => Route(r, verdict);
             _ = await world.ImportFixture();
-            return new Rig(onyx, harness, world);
+            return new Rig(world);
         }
 
-        public async Task<SourceSync> Sync(ContextScope scope) => (await World.Engine.Sync("onyx", scope, Ct)).Value.Sources[0];
+        public async Task<SourceSync> Sync(ContextScope scope) => (await World.Engine.Sync("linear", scope, Ct)).Value.Sources[0];
 
         public async Task<IntentLayer> Layer() => (await World.Intents.Layer(Ct)).Value;
 
-        public async ValueTask DisposeAsync()
+        public ValueTask DisposeAsync()
         {
             World.Dispose();
-            Harness.Dispose();
-            await Onyx.DisposeAsync();
+            return ValueTask.CompletedTask;
         }
     }
 
@@ -127,56 +126,6 @@ public sealed class ExtractDecisionsTests
         Assert.True(row.Tokens <= 1_100);
         Assert.Equal(linked - asked, row.Queued);
         Assert.Equal(ContextErrors.LabelingUnavailable.Code, row.Code);
-    }
-
-    [Fact]
-    public async Task A_done_record_held_back_when_a_map_change_re_extracts_it_is_queued_again_with_its_old_decisions_kept()
-    {
-        await using var rig = await Rig.Start();
-        _ = await rig.Sync(Scope());
-        var before = await rig.Layer();
-        var linked = rig.World.Model.Requests.Count(r => r.Purpose == ModelPurpose.DecisionExtraction);
-        _ = await rig.World.ImportYaml(FixtureMap.Yaml.Replace("edges:", "  - key: thing:zzz-added\n    label: \"Added by the new map\"\nedges:", StringComparison.Ordinal));   // a new map version re-extracts every record
-        rig.World.Model.Requests.Clear();
-
-        var row = await rig.Sync(Scope(perSync: 1_100));   // room for one extraction only
-
-        var asked = rig.World.Model.Requests.Count(r => r.Purpose == ModelPurpose.DecisionExtraction);
-        Assert.InRange(asked, 1, linked - 1);
-        Assert.Equal(linked - asked, row.Queued);   // the held-back done records wait again: they were not re-extracted against the new map
-        Assert.Equal(ContextErrors.LabelingUnavailable.Code, row.Code);
-        Assert.Equal(before.Decisions.Count, (await rig.Layer()).Decisions.Count);   // and keep their old decisions meanwhile
-    }
-
-    [Fact]
-    public async Task A_run_cancelled_during_the_model_call_after_a_map_change_leaves_the_record_queued_and_the_next_run_re_extracts_it()
-    {
-        await using var rig = await Rig.Start();
-        _ = await rig.Sync(Scope());
-        var linked = rig.World.Model.Requests.Count(r => r.Purpose == ModelPurpose.DecisionExtraction);
-        _ = await rig.World.ImportYaml(FixtureMap.Yaml.Replace("edges:", "  - key: thing:zzz-added\n    label: \"Added by the new map\"\nedges:", StringComparison.Ordinal));
-        rig.World.Model.Requests.Clear();
-        using var stop = new CancellationTokenSource();
-        var route = rig.World.Model.Responder!;
-        rig.World.Model.Responder = request =>
-        {
-            if (request.Purpose == ModelPurpose.DecisionExtraction)
-            {
-                stop.Cancel();   // an owner's stop, while the first record's extraction is in flight
-                throw new OperationCanceledException(stop.Token);
-            }
-
-            return route(request);
-        };
-
-        _ = await Record.ExceptionAsync(async () => await rig.World.Engine.Sync("onyx", Scope(), stop.Token));
-        rig.World.Model.Responder = route;
-        rig.World.Model.Requests.Clear();
-        var resumed = await rig.Sync(Scope());
-
-        var asked = rig.World.Model.Requests.Count(r => r.Purpose == ModelPurpose.DecisionExtraction);
-        Assert.Equal(linked, asked);   // every record, the one the stop interrupted included, is extracted against the new map
-        Assert.Equal((0, null), (resumed.Queued, resumed.Code));
     }
 
     [Fact]
@@ -275,7 +224,7 @@ public sealed class ExtractDecisionsTests
     }
 
     [Fact]
-    public async Task A_time_cap_passing_during_a_model_call_lets_the_record_in_hand_finish_and_stops_before_the_next_fetch()
+    public async Task A_time_cap_passing_during_a_model_call_lets_the_record_in_hand_finish_and_stops_before_the_next_record()
     {
         await using var whole = await Rig.Start();
         var all = (await whole.Sync(Scope())).Decisions;
@@ -290,55 +239,12 @@ public sealed class ExtractDecisionsTests
 
         Assert.Equal(ContextErrors.SyncCapped.Code, capped.Code);
         _ = Assert.Single(rig.World.Model.Requests, r => r.Purpose == ModelPurpose.DecisionExtraction);
-        Assert.Equal(0, capped.Queued);   // the record in hand was extracted; the others were not fetched yet, so none waits queued
-        Assert.Equal(1, capped.Fetched);
+        Assert.Equal(0, capped.Queued);   // the record in hand was extracted; the others were not read yet, so none waits queued
         rig.World.Model.Fail = null;
 
         var resumed = await rig.Sync(Scope());
 
         Assert.Equal((0, null, all), (resumed.Queued, resumed.Code, resumed.Decisions));
-    }
-
-    [Fact]
-    public async Task A_source_that_takes_longer_than_the_cap_for_every_fetch_still_finishes_across_runs()
-    {
-        await using var whole = await Rig.Start();
-        var all = (await whole.Sync(Scope())).Decisions;
-        ScriptedSource? slow = null;
-        await using var rig = await Rig.Start(wrap: inner => slow = new ScriptedSource(inner));
-        slow!.AfterFetch = () => rig.World.Clock.Advance(SyncSourcesService.RunCap + TimeSpan.FromSeconds(1));   // every fetch alone takes longer than the whole run may
-        var runs = 0;
-        SourceSync last;
-
-        do
-        {
-            last = await rig.Sync(Scope());
-            runs++;
-            Assert.True(last.Code is null || (last.Fetched == 1 && last.Queued == 0), "a capped run completes exactly one record (fetched, linked and extracted), no more and no less");
-        }
-        while (last.Code is not null && runs < 60);
-
-        Assert.Null(last.Code);
-        Assert.Equal((0, all), (last.Queued, last.Decisions));
-    }
-
-    [Fact]
-    public async Task A_capped_run_keeps_what_it_fetched_extracted_and_the_next_run_does_not_fetch_it_again()
-    {
-        ScriptedSource? slow = null;
-        await using var rig = await Rig.Start(wrap: inner => slow = new ScriptedSource(inner));
-        slow!.AfterFetch = () => rig.World.Clock.Advance(SyncSourcesService.RunCap + TimeSpan.FromSeconds(1));
-
-        var first = await rig.Sync(Scope());
-        var stored = (await rig.Layer()).Records.Select(r => r.Key.Value).ToList();
-        var second = await rig.Sync(Scope());
-
-        Assert.Equal(ContextErrors.SyncCapped.Code, first.Code);
-        Assert.Equal(1, first.Fetched);
-        Assert.Equal(0, first.Queued);   // the record in hand was extracted before the cap stopped the run
-        Assert.True(first.Tokens > 0);
-        Assert.Equal(1, second.Fetched);
-        Assert.Equal(stored.Count + 1, (await rig.Layer()).Records.Count);   // the second run moved on to another record
     }
 
     [Fact]

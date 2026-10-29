@@ -11,7 +11,6 @@ using Aw.Context.Infrastructure.Sources;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Records;
 using Aw.Context.Tests.Map;
-using Aw.Context.Tests.Onyx;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.Linear;
@@ -200,7 +199,7 @@ public sealed class LinearProjectFeedTests
         var scrubbers = new FakeScrubberFactory().For([]).Value;
         var context = (new ContextSettings(), scrubbers);
 
-        var after = await decisions.For(MapWorld.Human, context, [], TestContext.Current.CancellationToken);
+        var after = await decisions.For(MapWorld.Human, context, TestContext.Current.CancellationToken);
 
         Assert.Null(after(new FakeRecordFeed(LinearSourceIds.Projects, [])));
         Assert.NotNull(after(new FakeRecordFeed(LinearSourceIds.Issues, [])));

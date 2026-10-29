@@ -3,6 +3,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linking;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Trust;
@@ -17,7 +18,7 @@ namespace Aw.Context.Features.SourcesStatus;
 /// refresh), then every live source's probe. A session's view is gated and its repo rows scoped like its queries, but
 /// says whether sessions are enabled; it lists the live sources it doesn't search too, health only, each saying so.
 /// </summary>
-internal sealed class SourcesStatusService(IDocIndex index, ISourceCatalog catalog, IScrubberFactory scrubberFactory, IIntentStore intents, TimeProvider clock)
+internal sealed class SourcesStatusService(IDocIndex index, ISourceCatalog catalog, IScrubberFactory scrubberFactory, IIntentStore intents, IRecordStore records, TimeProvider clock)
     : IService<SourcesStatusRequest, SourcesView>
 {
     public async ValueTask<Result<SourcesView>> Handle(SourcesStatusRequest request, CancellationToken cancellationToken)
@@ -70,7 +71,9 @@ internal sealed class SourcesStatusService(IDocIndex index, ISourceCatalog catal
                     return state.Error;
                 }
 
-                row = row with { Sync = SyncStatus(state.Value) };
+                // why: the feed's tick writes its end and code to the record store, one row per source that each tick sets and a good tick clears (RecordFeedSync.Note)
+                var outcome = await records.LastOutcome(described.Id, cancellationToken).ConfigureAwait(false);
+                row = row with { Sync = SyncStatus(state.Value, outcome.IsError ? null : outcome.Value) };
             }
 
             rows.Add(row);
@@ -80,16 +83,19 @@ internal sealed class SourcesStatusService(IDocIndex index, ISourceCatalog catal
     }
 
     /// <summary>
-    /// Unavailable after a failed run; labeling being off or over its token cap (042) only queues the extraction, so the links synced and it stays ok. A run the time
-    /// cap stopped (059) is partial, not failed: it stays ok (or degraded before the first sync) and shows 059 until a run goes on; the next run continues. While
-    /// records are queued and no other code is recorded the code stays 042, run after run (a run that fetches nothing records no failure of its own).
+    /// Unavailable after a failed tick; labeling being off or over its token cap (042) only queues the extraction, so the links synced and it stays ok. A tick the time cap stopped (059) is partial,
+    /// not failed. The tick's end and code come from the record store, so a good tick after a failed one is ok again; the counts come from the intent state. While records are queued and
+    /// the tick has no code the code stays 042, run after run (a run that fetches nothing records no failure of its own).
     /// </summary>
-    private static SourceSyncStatus SyncStatus(IntentSourceState state)
+    private static SourceSyncStatus SyncStatus(IntentSourceState state, SyncOutcome? outcome)
     {
-        var failed = state.LastError is { } code && code != ContextErrors.LabelingUnavailable.Code && code != ContextErrors.SyncCapped.Code;
-        var health = failed ? SourceState.Unavailable : state.LastSync is null ? SourceState.Degraded : SourceState.Ok;
-        return new SourceSyncStatus(state.LastSync, health, state.Records, state.Links, state.Decisions, state.Queued, state.LastError ?? (state.Queued > 0 ? ContextErrors.LabelingUnavailable.Code : null));
+        var failed = Failed(outcome?.Code);
+        var lastSync = outcome?.At ?? state.LastSync;
+        var health = failed ? SourceState.Unavailable : lastSync is null ? SourceState.Degraded : SourceState.Ok;
+        return new SourceSyncStatus(lastSync, health, state.Records, state.Links, state.Decisions, state.Queued, outcome?.Code ?? (state.Queued > 0 ? ContextErrors.LabelingUnavailable.Code : null));
     }
+
+    private static bool Failed(string? code) => code is not null && code != ContextErrors.LabelingUnavailable.Code && code != ContextErrors.SyncCapped.Code;
 
     private static SourceStatusRow Row(ContextRepoName repo, DocIndexStatus status)
     {

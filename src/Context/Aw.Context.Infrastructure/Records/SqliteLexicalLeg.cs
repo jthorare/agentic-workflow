@@ -65,8 +65,8 @@ internal sealed class SqliteLexicalLeg(ContextDatabase database) : ILexicalLeg
 
         var rows = await SqliteQueries.List(session, new SqlStatement(RecordSql.LexicalSearch, c => c
                 .Bind("@match", match)
-                .Bind("@audiences", Array(scope.Allowed.Select(k => k.Value)))
-                .Bind("@records", Array(scope.Records.Select(k => k.Value)))
+                .Bind("@audiences", JsonArray(scope.Allowed.Select(k => k.Value)))
+                .Bind("@records", JsonArray(scope.Records.Select(k => k.Value)))
                 .Bind("@limit", limit)), LexicalRow.Mapper, cancellationToken).ConfigureAwait(false);
         return rows.IsError ? ContextDatabase.Translate(rows.Error) : new LexicalAnswer(BestPerRecord(rows.Value), Degraded: null);
     }
@@ -89,7 +89,7 @@ internal sealed class SqliteLexicalLeg(ContextDatabase database) : ILexicalLeg
         return hits;
     }
 
-    private static string Array(IEnumerable<string> values)
+    internal static string JsonArray(IEnumerable<string> values)
     {
         using var buffer = new MemoryStream();
         using (var json = new Utf8JsonWriter(buffer))

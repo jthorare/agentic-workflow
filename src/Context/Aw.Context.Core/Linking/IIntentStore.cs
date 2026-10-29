@@ -56,6 +56,14 @@ public interface IIntentStore
     /// <returns>Unit, or SND-CONTEXT-004.</returns>
     public ValueTask<Result<Unit>> Requeue(RecordKey record, string version, CancellationToken cancellationToken);
 
+    /// <summary>Replaces a record's aliases without touching its extraction state (only if the record still has that version): a same-version row never gets new aliases from <see cref="CommitPage"/>.</summary>
+    /// <param name="record">The record.</param>
+    /// <param name="version">The record version the aliases belong to.</param>
+    /// <param name="aliases">The aliases.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Unit, or SND-CONTEXT-004.</returns>
+    public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken);
+
     /// <summary>Stores a checked pair (a pair is stored once).</summary>
     /// <param name="conflict">The pair and its verdict.</param>
     /// <param name="cancellationToken">Cancels the write.</param>

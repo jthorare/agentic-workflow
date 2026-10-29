@@ -83,14 +83,11 @@ public sealed class SingleLaunchTests : IDisposable
         Assert.True(await first.TryClaim(TestContext.Current.CancellationToken));
         await using var reader = new InstanceReader(first, TestContext.Current.CancellationToken);
         first.Retire();
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(300, TestContext.Current.CancellationToken);
-            await first.DisposeAsync();
-        }, TestContext.Current.CancellationToken);
+        // The holder goes only after this launch's claim failed once inside the wait (its first claim and the refused message come before).
+        var second = new EndsHolderOnClaim(new FakeSingleInstance(_channel), first, claimsBefore: 2);
         var ran = false;
 
-        var exit = new SingleLaunch(TimeSpan.FromSeconds(5)).Execute(new FakeSingleInstance(_channel), [], () =>
+        var exit = new SingleLaunch(TimeSpan.FromSeconds(5)).Execute(second, [], () =>
         {
             ran = true;
             return 7;
@@ -100,6 +97,7 @@ public sealed class SingleLaunchTests : IDisposable
         Assert.True(ran);
         Assert.Equal(string.Empty, _errors.ToString());
         Assert.Equal(0, _channel.Taken);
+        Assert.Equal(3, second.Claims);
     }
 
     // A holder that retires but never goes (wedged while ending) is still named after the bounded wait.
@@ -320,6 +318,32 @@ public sealed class SingleLaunchTests : IDisposable
         public int? HolderProcessId() => null;
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    // A later launch whose holder ends just before its claim number claimsBefore + 1, and that counts its claims.
+    private sealed class EndsHolderOnClaim(ISingleInstance inner, ISingleInstance holder, int claimsBefore) : ISingleInstance
+    {
+        public int Claims { get; private set; }
+
+        public async ValueTask<bool> TryClaim(CancellationToken cancellationToken)
+        {
+            if (++Claims == claimsBefore + 1)
+            {
+                await holder.DisposeAsync();
+            }
+
+            return await inner.TryClaim(cancellationToken);
+        }
+
+        public ValueTask<bool> Send(string message, CancellationToken cancellationToken) => inner.Send(message, cancellationToken);
+
+        public IAsyncEnumerable<InstanceMessage> Messages(CancellationToken cancellationToken) => inner.Messages(cancellationToken);
+
+        public void Retire() => inner.Retire();
+
+        public int? HolderProcessId() => inner.HolderProcessId();
+
+        public ValueTask DisposeAsync() => inner.DisposeAsync();
     }
 
     // A later launch whose message arrives just as the holder ends.

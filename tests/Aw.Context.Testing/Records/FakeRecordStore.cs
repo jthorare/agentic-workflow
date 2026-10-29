@@ -251,6 +251,30 @@ public sealed class FakeRecordStore : IRecordStore
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<IReadOnlyList<ProjectRow>>> ProjectFacts(SourceId source, RecordAudience audience, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(audience);
+        lock (_gate)
+        {
+            var rows = _records.Values
+                .Where(r => r.Source == source && r.Kind == RecordKind.Project && r.RemovedAt is null && !r.Blocked && audience.Allows(r.Audience, r.Key))
+                .Select(project => ProjectRowOf(project, audience))
+                .OrderBy(r => r.Title, StringComparer.Ordinal).ThenBy(r => r.Key.Value, StringComparer.Ordinal);
+            return Ok<IReadOnlyList<ProjectRow>>([.. rows]);
+        }
+    }
+
+    private ProjectRow ProjectRowOf(StoredRecord project, RecordAudience audience)
+    {
+        var lead = project.Links.Where(l => l.Kind == RecordLinkKind.LedBy).OrderBy(l => l.ToRef, StringComparer.Ordinal).FirstOrDefault();
+        var issues = _records.Values
+            .Where(i => i.Kind == RecordKind.Issue && i.RemovedAt is null && audience.Allows(i.Audience, i.Key) && i.Links.Any(l => l.Kind == RecordLinkKind.InProject && l.ToRef == project.Key.Value))
+            .ToList();
+        return new ProjectRow(project.Key, project.Title, project.Url, project.StateRaw, project.Health, project.DueAt, project.UpdatedAt ?? project.SyncedAt, project.ClosedAt,
+            lead?.ToRef, lead?.Title, issues.Count(i => i.State == RecordState.Open), issues.Max(i => i.UpdatedAt));
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken)
     {
         lock (_gate)

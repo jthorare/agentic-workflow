@@ -12,7 +12,7 @@ namespace Aw.Context.Features.QueryContext;
 /// A hit's reference carries the stored record's version and link and its key as the canonical key, so it fuses with the other sources' hits of the same record.
 /// A store that can't be read, or a leg that says it is degraded, is an unavailable source. The text it fetches is the stored, already scrubbed chunks.
 /// </summary>
-internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, AudienceScope scope, TimeProvider clock) : IContextSource
+internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, AudienceScope scope, TimeProvider clock, IReadOnlySet<string> teams) : IContextSource
 {
     public static SourceId Id { get; } = SourceId.From("records");
 
@@ -34,8 +34,11 @@ internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, Aud
             return ContextErrors.SourceUnavailable.With(degraded.Message);
         }
 
-        return await RecordHits.Read(store, scope, clock, found.Value.Hits.Select(h => h.Chunk.Record), cancellationToken).ConfigureAwait(false);
+        return await RecordHits.Read(store, (scope, teams), clock, found.Value.Hits.Select(h => h.Chunk.Record), cancellationToken).ConfigureAwait(false);
     }
+
+    /// <summary>One record of the store as a hit, the way the lexical leg's hits are read (live and allowed only); none when it is gone or not the caller's.</summary>
+    public ValueTask<Result<IReadOnlyList<SourceHit>>> Anchor(RecordKey key, CancellationToken cancellationToken) => RecordHits.Read(store, (scope, teams), clock, [key], cancellationToken);
 
     public async ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken)
     {

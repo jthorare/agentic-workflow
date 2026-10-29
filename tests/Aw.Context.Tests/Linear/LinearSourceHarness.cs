@@ -1,7 +1,6 @@
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sources;
 using Aw.Context.Infrastructure.Linear;
-using Aw.Context.Tests.Onyx;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.Linear;

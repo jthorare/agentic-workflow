@@ -92,7 +92,7 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
         if (decisions is not null)
         {
             var context = (resolved.Value.Settings, resolved.Value.Scrubbers);
-            var after = await decisions.ForTick(scope, context, resolved.Value.Repos, reportNoMap: true, cancellationToken).ConfigureAwait(false);
+            var after = await decisions.For(scope, context, reportNoMap: true, cancellationToken).ConfigureAwait(false);
             foreach (var feed in resolved.Value.Feeds)
             {
                 if (after(feed) is not { } step)

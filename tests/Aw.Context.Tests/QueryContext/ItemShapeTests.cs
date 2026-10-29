@@ -13,6 +13,7 @@ namespace Aw.Context.Tests.QueryContext;
 [Trait("Lane", "integration")]
 public sealed class ItemShapeTests
 {
+    private const string R106 = "linear:issue/0e5a1b00-0000-4000-8000-000000000106";
     private const string Orientation = "feature:layout.split-pane.orientation";
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -52,7 +53,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var anchors = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value.Anchors;
+        var anchors = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value.Anchors;
 
         Assert.Equal("record:" + R103, anchors[0]);   // the record first, then what it touches
         Assert.Contains(Toggle, anchors, StringComparer.Ordinal);
@@ -64,13 +65,13 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(), Ct)).Value;
 
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         Assert.Equal((Provenance.Model, false, Trust.Untrusted), (decision.Provenance, decision.Confirmed, decision.Trust));
         var cite = Assert.Single(result.Cites.Values, c => c.Key.Value == R103);
         Assert.Contains("SPL-103", cite.Aliases, StringComparer.Ordinal);
-        Assert.Equal(CitationState.Unchecked, cite.State);   // Onyx can't check versions (S-5A)
+        Assert.Equal(CitationState.Current, cite.State);   // the profile names the Linear team, so the freshness check ran and the version still matches
         Assert.Equal("2026-07-23T09:00:00.0000000Z", cite.Refs[0].Version.Value);
         Assert.Contains(Section(result, "records").Items, i => i.Title?.Contains("Toggle split orientation", StringComparison.Ordinal) == true);
     }
@@ -113,43 +114,18 @@ public sealed class ItemShapeTests
     }
 
     [Fact]
-    public async Task Item_not_synced_falls_back_to_onyx_search_by_key_for_human_callers()
-    {
-        await using var rig = await Rig.Start();
-
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
-
-        Assert.Empty(result.Anchors);
-        Assert.Contains(result.Cites.Values, c => c.Key.Value == R103 && c.Aliases.Contains("SPL-103", StringComparer.Ordinal));
-    }
-
-    [Fact]
     public async Task Item_for_session_sees_only_records_linked_to_in_scope_nodes()
     {
         await using var rig = await Synced();
         var session = MapWorld.Session("aw-split-panes");
 
-        var linked = await rig.World.Engine.Query(Item("SPL-103"), session, Ct);
-        var surface = await rig.World.Engine.Query(Item("SPL-104"), session, Ct);
-        var outside = await rig.World.Engine.Query(Item("SPL-106"), session, Ct);
+        var linked = await rig.World.Engine.Query(Item(R103), session, Ct);
+        var surface = await rig.World.Engine.Query(Item(R104), session, Ct);
+        var outside = await rig.World.Engine.Query(Item(R106), session, Ct);
 
         Assert.Contains("record:" + R103, linked.Value.Anchors, StringComparer.Ordinal);   // it mentions a node this repo implements
         Assert.True(surface.IsSuccess);   // it mentions the tab-switch surface, part of the tab manager this repo implements
-        Assert.Equal(ContextErrors.UnknownAnchor.Code, outside.Error.Code);   // it touches nothing in scope: not shown, and no fallback to Onyx
-    }
-
-    [Fact]
-    public async Task Item_with_onyx_down_degrades_010_and_keeps_stored_links()
-    {
-        var rig = await Synced();
-        await using var disposing = rig;
-        await rig.Onyx.DisposeAsync();
-
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
-
-        Assert.Contains(result.Degraded, d => d.Source.Value == "onyx" && d.Code == ContextErrors.SourceUnavailable.Code);
-        Assert.Contains("record:" + R103, result.Anchors, StringComparer.Ordinal);
-        Assert.Contains(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
+        Assert.Equal(ContextErrors.UnknownAnchor.Code, outside.Error.Code);   // it touches nothing in scope: not shown
     }
 
     [Theory]
@@ -170,7 +146,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();   // 103 and 104 decide the toggle command and the model said they contradict
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         var conflict = Assert.Single(result.Conflicts);
         Assert.Equal(Toggle, conflict.Node);
@@ -182,7 +158,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(), Ct)).Value;
 
         var conflict = Assert.Single(result.Conflicts);
         Assert.All(conflict.Intent, marker => Assert.True(result.Cites.ContainsKey(marker), marker + " is not a citation of the result"));
@@ -196,7 +172,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(), Ct)).Value;
 
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         var record = result.Cites.Single(c => c.Value.Key.Value == R103).Key;
@@ -207,9 +183,8 @@ public sealed class ItemShapeTests
     public async Task A_decision_whose_record_was_not_fetched_keeps_the_map_citation()
     {
         await using var rig = await Synced();
-        await rig.Onyx.DisposeAsync();   // nothing is fetched live, so no record citation exists
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         var decision = Assert.Single(Section(result, "decisions").Items, i => i.Text!.Contains(Q103, StringComparison.Ordinal));
         Assert.All(decision.Cites, marker => Assert.True(result.Cites.ContainsKey(marker)));
@@ -222,7 +197,7 @@ public sealed class ItemShapeTests
         _ = await rig.Sync(Scope(labeling: false));
         _ = await rig.Sync(Scope(labeling: false));   // the run after the one that fetched
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), Scope(labeling: false), Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), Scope(labeling: false), Ct)).Value;
 
         var held = Assert.Single(result.Degraded, d => d.Code == ContextErrors.LabelingUnavailable.Code);
         Assert.Equal("decisions", held.Source.Value);
@@ -234,7 +209,7 @@ public sealed class ItemShapeTests
     {
         await using var rig = await Synced();
 
-        var result = (await rig.World.Engine.Query(Item("SPL-103"), MapWorld.Human, Ct)).Value;
+        var result = (await rig.World.Engine.Query(Item(R103), MapWorld.Human, Ct)).Value;
 
         Assert.DoesNotContain(result.Degraded, d => d.Code == ContextErrors.LabelingUnavailable.Code);
     }

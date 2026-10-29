@@ -82,20 +82,21 @@ internal static class Engines
         var repos = new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal));
         return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos), intents, new FakeModelPort(),
                 new RecordSearch(lexical ?? new FakeLexicalLeg(), recordStore, embedder ?? new FakeQueryEmbedder(), new FakeVectorMatrixCache(recordStore), new FakeVectorScan())),
-            new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(catalog, new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()), intents,
+            new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, recordStore, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()),
                 (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers),
             new ContextGraph(new ShowNodeService(graphs, scrubbers), new ListNeighborsService(graphs, scrubbers), new FindPathService(graphs, scrubbers),
-                new GetLensesService(graphs, new LensBasisReader(repos, intents, clock), scrubbers, new NoCodeSymbolSource(), repos), new GetLensesSetService(graphs, new LensBasisReader(repos, intents, clock), scrubbers), new GetFileMapService(graphs, repos, new NoCodeSymbolSource(), new RepoTreeCache()),
-                new ContextCodeHistory(new GetCodeService(graphs, new LensBasisReader(repos, intents, clock), Lexical(repos, clock), new CodeSymbolSearch(new NoCodeSymbolSource(), repos), scrubbers),
-                    new GetHistoryService(graphs, new HistoryPipeline(new LensBasisReader(repos, intents, clock), intents, new FakeFileHistory(Repos[0], new HistoryWorld("0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", [])), clock), scrubbers),
-                    new GetSubgraphService(graphs, new LensBasisReader(repos, intents, clock), scrubbers),
+                new GetLensesService(graphs, new LensBasisReader(repos, clock), scrubbers, new NoCodeSymbolSource(), repos), new GetLensesSetService(graphs, new LensBasisReader(repos, clock), scrubbers), new GetFileMapService(graphs, repos, new NoCodeSymbolSource(), new RepoTreeCache()),
+                new ContextCodeHistory(new GetCodeService(graphs, new LensBasisReader(repos, clock), Lexical(repos, clock), new CodeSymbolSearch(new NoCodeSymbolSource(), repos), scrubbers),
+                    new GetHistoryService(graphs, new HistoryPipeline(new LensBasisReader(repos, clock), intents, new FakeFileHistory(Repos[0], new HistoryWorld("0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", [])), clock), scrubbers),
+                    new GetSubgraphService(graphs, new LensBasisReader(repos, clock), scrubbers),
                     new GetWholeMapService(graphs, scrubbers, new WholeMapCache(), WholeMapRules.Default),
                     new Features.SearchMap.SearchMapService(graphs, scrubbers, new SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
                     new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
                         new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers))),
-                    new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, intents, clock), scrubbers), new FakeScopeRunStore(), clock))),
+                    new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),
-            new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()));
+            new ContextReads(new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()),
+                new Features.GetProjects.GetProjectFactsService(recordStore, new FakeSourceIdentityStore(), (IIndexSync?)indexSync ?? new FakeIndexSync())));
     }
 
     /// <summary>The probe runner over no probe file (the query tests never run probes).</summary>

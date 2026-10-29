@@ -197,6 +197,20 @@ public sealed class FakeIntentStore : IIntentStore
         });
     }
 
+    public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken)
+    {
+        _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
+        return Done(() =>
+        {
+            if (_records.TryGetValue(record.Value, out var stored) && stored.Version == version)
+            {
+                _records[record.Value] = stored with { Aliases = [.. aliases] };
+            }
+
+            return Unit.Value;
+        });
+    }
+
     public ValueTask<Result<Unit>> SaveConflict(DecisionConflict conflict, CancellationToken cancellationToken)
     {
         _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
