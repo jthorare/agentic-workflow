@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.Api.Index;
+namespace Aw.Sindri.Ui.Api.Sources;
 
 /// <summary>One context source. The first six fields are what the server has always served; every later one is null from a server that predates it.</summary>
 /// <param name="Source">The source's name ("github", "linear", "slack").</param>

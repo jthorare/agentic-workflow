@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Net;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -171,12 +172,13 @@ public sealed class ContextIndexCardTests
     public async Task Health_adds_the_context_index_to_its_headline_when_the_card_needs_a_look()
     {
         var harness = new SystemTestHarness();
-        await harness.Show();
+        await harness.Show(A.Status() with { Health = new HealthView("healthy", []) });
         harness.Server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"sources":[{{Source("linear", "idle", 0)}}]}""");
 
         await harness.Vm.ContextIndex.Refresh(A.Record().Url, Token);
 
         Assert.Equal(Labels.CodeIndexNeedsLook, harness.Vm.ContextIndex.Word);
-        Assert.Contains(Labels.ContextIndexLookName, harness.Vm.Sentence, StringComparison.Ordinal);
+        Assert.Equal("Something needs a look: context index.", harness.Vm.Sentence);
+        Assert.True(harness.Vm.ToneWarn);
     }
 }

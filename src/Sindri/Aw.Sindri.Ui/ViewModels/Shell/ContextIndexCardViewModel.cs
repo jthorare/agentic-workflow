@@ -1,5 +1,5 @@
 using Aw.Sindri.Ui.Api;
-using Aw.Sindri.Ui.Api.Index;
+using Aw.Sindri.Ui.Api.Sources;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
