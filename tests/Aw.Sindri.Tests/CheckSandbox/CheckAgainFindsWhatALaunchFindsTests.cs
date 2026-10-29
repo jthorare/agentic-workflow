@@ -59,7 +59,7 @@ public sealed class CheckAgainFindsWhatALaunchFindsTests : IDisposable
 
         var services = Composition(Approved(target: null), [_claude])
             .AddSingleton(new SindriSettings(Path.Combine(_dir, "sindri"), Path.Combine(_dir, "sindri", "profile.yaml")))
-            .AddSingleton<TimeProvider>(RealTime.Clock)
+            .AddSingleton(RealTime.Clock)
             .AddSindriPlatformSandbox(Env);
         await using var scope = Build(services).CreateAsyncScope();
         Assert.SkipUnless(scope.ServiceProvider.GetRequiredService<ISandbox>().Probe().IsSuccess, "bubblewrap's probe refuses on this box");
@@ -102,7 +102,7 @@ public sealed class CheckAgainFindsWhatALaunchFindsTests : IDisposable
 
     private ISandboxFormCheck FormCheck(IApprovedProfile approved, params AgentEntry[] installed)
     {
-        var services = Composition(approved, installed).AddSingleton<TimeProvider>(RealTime.Clock).AddSingleton<ISandbox, PassThroughSandbox>();
+        var services = Composition(approved, installed).AddSingleton(RealTime.Clock).AddSingleton<ISandbox, PassThroughSandbox>();
         return Build(services).CreateScope().ServiceProvider.GetRequiredService<ISandboxFormCheck>();
     }
 
