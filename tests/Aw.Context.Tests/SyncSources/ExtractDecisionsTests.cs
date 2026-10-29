@@ -62,7 +62,7 @@ public sealed class ExtractDecisionsTests
     private static RecordItem Item(RecordWrite write)
     {
         var r = write.Record;
-        return new RecordItem(r.Key, r.Kind, r.Title, Plant(string.Join('\n', write.Chunks.OrderBy(c => c.Seq).Select(c => c.Text))), Author: null, Url: null, r.State, r.StateRaw,
+        return new RecordItem(r.Key, r.Kind, r.Title, Plant(string.Join('\n', write.Chunks.OrderBy(c => c.Seq).Select(c => c.Text))), Author: null, Url: r.Url, r.State, r.StateRaw,
             r.CreatedAt, r.UpdatedAt, r.ClosedAt, r.Version, Links: [], Repo: null, AudienceKey.From("linear:SPL"));   // the audience the profile's team gives its issues
     }
 
