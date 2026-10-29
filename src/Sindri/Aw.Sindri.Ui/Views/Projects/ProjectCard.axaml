@@ -26,13 +26,15 @@
   <Border x:Name="ProjectCardFrame" Classes="card pcard" Classes.gone="{Binding IsGone}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <StackPanel Spacing="{StaticResource Space.SM}">
-      <Grid ColumnDefinitions="*,Auto,Auto" AutomationProperties.AccessibilityView="Raw">
-        <TextBlock x:Name="ProjectCardName" Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-        <Border Grid.Column="1" Margin="6,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource Brush.HairlineStrong}" CornerRadius="{StaticResource Radius.XS}" Padding="6,1" VerticalAlignment="Center"
-                IsVisible="{Binding OriginChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-          <TextBlock Classes="caption subtle" Text="{Binding OriginChip}" />
-        </Border>
-        <StackPanel Grid.Column="2" IsVisible="{Binding !NamesOnly}" Margin="8,0,0,0">
+      <Grid ColumnDefinitions="*,Auto" AutomationProperties.AccessibilityView="Raw">
+        <Grid ColumnDefinitions="*,Auto" HorizontalAlignment="Left">
+          <TextBlock x:Name="ProjectCardName" Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+          <Border Grid.Column="1" Margin="6,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource Brush.HairlineStrong}" CornerRadius="{StaticResource Radius.XS}" Padding="6,1" VerticalAlignment="Center"
+                  IsVisible="{Binding OriginChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+            <TextBlock Classes="caption subtle" Text="{Binding OriginChip}" />
+          </Border>
+        </Grid>
+        <StackPanel Grid.Column="1" IsVisible="{Binding !NamesOnly}" Margin="8,0,0,0">
           <StackPanel x:Name="ProjectCardHealth" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
                       IsVisible="{Binding HealthWord, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
             <Ellipse Classes="dot"
