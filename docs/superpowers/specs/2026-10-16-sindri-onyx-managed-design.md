@@ -1,5 +1,7 @@
 # Sindri-managed Onyx: Sindri stands up Onyx, the owner only logs in and connects
 
+> **Superseded by 2026-10-27** (`2026-10-27-sindri-owned-index-design.md`): Onyx is removed; Sindri reads GitHub, Slack and Linear itself. Kept as history.
+
 **Status:** design, revision 1, for the owner's review · **Date:** 2026-10-16 · **Owner decisions:** 2026-10-16 (§1:
 O1, O2) · **Builds on:** the context retrieval spec `2026-10-10-sindri-context-retrieval-design.md` (CTX: D2, D3, §8.8),
 `docs/sindri/onyx.md` (the manual setup this replaces), `docs/csharp/sindri-context.md`, `docs/csharp/sindri.md`

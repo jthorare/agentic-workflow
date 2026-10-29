@@ -1,11 +1,9 @@
 using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Features.OnyxDown;
 using Aw.Sindri.Features.OnyxStatus;
 using Aw.Sindri.Features.OnyxUp;
-using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Host;
 using Aw.Sindri.Infrastructure.Processes;
 using Aw.Sindri.Testing;
@@ -68,7 +66,6 @@ public sealed class OnyxRealStackTests
 
         Assert.Contains("v4.9.0", await http.GetStringAsync(new Uri(up.Url + OnyxRoutes.Version), Token), StringComparison.Ordinal);
         Assert.All(runtime.Ps(paths.Project, Token).Value.SelectMany(static c => c.Publishers), static p => Assert.Equal("127.0.0.1", p.Address));
-        Assert.Equal(CheckState.Ok, (await services.GetServices<IDoctorChecks>().OfType<OnyxStackDoctor>().Single().Check(Token))!.State);
         var again = (await services.GetRequiredService<IService<OnyxUpRequest, OnyxUpResponse>>().Handle(new OnyxUpRequest(), Token)).Value;
         Assert.Equal(["fetch", "config", "pull", "start"], again.Skipped, StringComparer.Ordinal);
 
