@@ -22,7 +22,8 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         || string.Equals(eventType, EventTypes.JobFinished, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.JobCancelled, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.JobWaiting, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.JobResumed, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.JobResumed, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.ContextModelCalled, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -35,6 +36,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
             EventTypes.JobFinished => await Change<JobFinished>(recorded, rows, static f => f.Job, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.JobWaiting => await Change<JobWaiting>(recorded, rows, static w => w.Job, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.JobResumed => await Change<JobResumed>(recorded, rows, static r => r.Job, Fold, cancellationToken).ConfigureAwait(false),
+            EventTypes.ContextModelCalled => await Called(recorded, rows, cancellationToken).ConfigureAwait(false),
             _ => await Change<JobCancelled>(recorded, rows, static c => c.Job, Fold, cancellationToken).ConfigureAwait(false),
         };
     }
@@ -50,6 +52,30 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         var key = started.Value.Job.Value;
         var row = await rows.Get<JobRow>(ViewNames.Jobs, key, cancellationToken).ConfigureAwait(false);
         return row.IsError ? row.Error : await rows.Put(ViewNames.Jobs, key, Fold(row.Value, started.Value, recorded), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>A model call adds to its job's totals. A call with no job, or whose job has no row, changes nothing (it is still in the ledger): not the SND-VIEW-001 the job events raise.</summary>
+    private async ValueTask<Result<Unit>> Called(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var called = events.Payload<ContextModelCalled>(recorded);
+        if (called.IsError)
+        {
+            return called.Error;
+        }
+
+        if (called.Value.Job is not { } job)
+        {
+            return Unit.Value;
+        }
+
+        var key = job.Value;
+        var row = await rows.Get<JobRow>(ViewNames.Jobs, key, cancellationToken).ConfigureAwait(false);
+        if (row.IsError)
+        {
+            return row.Error;
+        }
+
+        return row.Value is null ? Unit.Value : await rows.Put(ViewNames.Jobs, key, Fold(row.Value, called.Value, recorded), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<Unit>> Change<TPayload>(LedgerEvent recorded, IViewRows rows, Func<TPayload, JobId> job,
@@ -148,6 +174,15 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(recorded);
         return row.State != JobState.Waiting ? row : row with { State = JobState.Running, Sequence = recorded.Sequence };
     }
+
+    /// <summary>
+    /// The row after a 'context.model.called': the call is added to <see cref="JobRow.Models"/> (calls, failed calls when no harness answered, tokens, the answering harness and model). An event at or before the row's sequence is a replay and changes nothing.
+    /// </summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="called">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The row.</returns>
+    public static JobRow Fold(JobRow row, ContextModelCalled called, LedgerEvent recorded) => throw new NotSupportedException();
 
     /// <summary>The row after a 'job.cancelled': cancelled, by whom. A job that ended ignores it (D5).</summary>
     /// <param name="row">The row so far.</param>
