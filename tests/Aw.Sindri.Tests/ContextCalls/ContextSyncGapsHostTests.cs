@@ -17,24 +17,24 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// <summary>A configured intent source that has never synced: the history route shows the gap, the 'context-sync-gaps' service fills it through the command chain, the next read is clean (owner decision 2026-10-18).</summary>
 public sealed class ContextSyncGapsHostTests : IDisposable
 {
-    private const string KeyVariable = "SINDRI_TEST_ONYX_KEY";
+    private const string KeyVariable = "SINDRI_TEST_LINEAR_KEY";
     private const string History = "/sindri/context/history?anchor=feature%3Alayout.split-pane";
     private readonly FixtureRepo _repo = FixtureRepo.Build();
 
     public void Dispose() => _repo.Dispose();
 
-    private static JsonElement Onyx(string body)
+    private static JsonElement LinearRow(string body)
     {
         using var view = JsonDocument.Parse(body);
-        return view.RootElement.GetProperty("searched").GetProperty("sources").EnumerateArray().Single(s => s.GetProperty("id").GetString() == "onyx").Clone();
+        return view.RootElement.GetProperty("searched").GetProperty("sources").EnumerateArray().Single(s => s.GetProperty("id").GetString() == "linear").Clone();
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
     public async Task Never_synced_source_reads_not_synced_161_then_the_service_syncs_it_as_itself_and_the_next_read_is_clean()
     {
         var ct = TestContext.Current.CancellationToken;
-        await using var onyx = await FakeOnyxServer.Start();
-        await using var host = await Approved(onyx, ct);
+        await using var linear = await FakeLinearServer.Start();
+        await using var host = await Approved(linear, ct);
 
         var before = await host.Http.Ask(Get(History, Human(host.Token.Value)));
         var first = await RunGaps(host, ct);
@@ -43,11 +43,11 @@ public sealed class ContextSyncGapsHostTests : IDisposable
         var second = await RunGaps(host, ct);
         var started = await host.App.Services.GetRequiredService<ILedgerStore>().Latest(EventTypes.JobStarted, ct);
 
-        var gap = Onyx(before.Body);
+        var gap = LinearRow(before.Body);
         Assert.Equal(("unavailable", "not-synced", "SND-CONTEXT-161"), (gap.GetProperty("state").GetString(), gap.GetProperty("reason").GetString(), gap.GetProperty("code").GetString()));
         Assert.False(gap.TryGetProperty("sync", out _));
         Assert.False(first.Value.Idle);
-        var healed = Onyx(after.Body);
+        var healed = LinearRow(after.Body);
         Assert.True(healed.GetProperty("state").GetString() == "ok", healed.GetRawText());
         Assert.True(second.Value.Idle);
         Assert.Equal("service:context-sync-gaps", started.Value!.Envelope.Actor);
@@ -57,8 +57,8 @@ public sealed class ContextSyncGapsHostTests : IDisposable
     public async Task The_service_is_a_built_in_with_no_profile_entry_and_a_tick_with_no_approved_profile_is_quiet()
     {
         var ct = TestContext.Current.CancellationToken;
-        await using var onyx = await FakeOnyxServer.Start();
-        await using var host = await Approved(onyx, ct);
+        await using var linear = await FakeLinearServer.Start();
+        await using var host = await Approved(linear, ct);
 
         var builtIns = host.App.Services.GetServices<BuiltInService>();
 
@@ -91,13 +91,12 @@ public sealed class ContextSyncGapsHostTests : IDisposable
         Assert.Fail("the sync job didn't end");
     }
 
-    private async Task<GoldenHost> Approved(FakeOnyxServer onyx, CancellationToken ct)
+    private async Task<GoldenHost> Approved(FakeLinearServer linear, CancellationToken ct)
     {
         var yaml = $"schemaVersion: 1\nuser: golden\nrepos:\n  - {{ name: {FixtureMap.Repo}, path: \"{_repo.Path}\" }}\n"
             + "context:\n  docs: { globs: [\"docs/**/*.md\"] }\n  sources:\n"
-            + $"    onyx: {{ url: \"{onyx.Url}\", token: \"env:{KeyVariable}\", version: \"{FakeOnyxServer.PinnedVersion}\" }}\n"
-            + "    linear: { teams: [SPL] }\n";
-        var host = await GoldenHost.Start(temporary: true, ct, yaml, new Dictionary<string, string>(StringComparer.Ordinal) { [KeyVariable] = onyx.Token });
+            + $"    linear: {{ url: \"{linear.Url}\", token: \"env:{KeyVariable}\", teams: [SPL] }}\n";
+        var host = await GoldenHost.Start(temporary: true, ct, yaml, new Dictionary<string, string>(StringComparer.Ordinal) { [KeyVariable] = linear.Token });
         var hash = (await host.LiveHash(ct)).Value;
         var approved = await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)));
         Assert.Equal(HttpStatusCode.OK, approved.Status);
