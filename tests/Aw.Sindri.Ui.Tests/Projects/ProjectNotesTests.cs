@@ -71,6 +71,14 @@ public sealed class ProjectNotesTests
     }
 
     [Fact]
+    public async Task Notes_whose_first_line_is_blank_still_show_whole()
+    {
+        var card = await _f.FirstCard(c => c["notes"] = "\n\nreal text", Token);
+
+        Assert.Equal(("\n\nreal text", true, true), (card.NotesText, card.HasNotes, card.ShowsNotes));
+    }
+
+    [Fact]
     public async Task Save_sends_the_version_the_card_was_opened_at_and_the_typed_notes()
     {
         var card = await LedCard();
