@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Sindri Setup</title>
-<meta name="description" content="Set up the C# Sindri app one step at a time, with a picture of what each step adds: prerequisites, install, profile, first start, Onyx, agent runtime, MCP and the app.">
+<meta name="description" content="Set up the C# Sindri app one step at a time, with a picture of what each step adds: prerequisites, install, profile, first start, sources, agent runtime, MCP and the app.">
 <script>
 document.documentElement.classList.add("js");
 try { var t0 = localStorage.getItem("sindri-setup-theme"); if (t0 === "light" || t0 === "dark") document.documentElement.setAttribute("data-theme", t0); } catch (e) {}
@@ -159,7 +159,7 @@ details.more .body p { margin: 4px 0 8px; }
 details.more .body ul { padding-left: 1.1em; margin: 6px 0; }
 details.more .body li { margin: 4px 0; }
 
-/* the onyx up strip */
+/* the step strip */
 .strip { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 0 0 14px; font-size: 13px; }
 .strip span { background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 4px 10px; white-space: nowrap; }
 .strip span.you { border-color: var(--human); color: var(--human); font-weight: 650; }
@@ -227,14 +227,14 @@ details.more .body li { margin: 4px 0; }
 <section class="step" data-slug="start" data-n="★" data-title="What you'll have" data-k="99">
   <p class="kicker">Sindri · C# build</p>
   <h1 tabindex="-1">Set up Sindri</h1>
-  <p class="lede">Eight steps take a new Mac to this picture: Sindri running, Onyx connected, agents able to reach it, and the app open.</p>
+  <p class="lede">Eight steps take a new Mac to this picture: Sindri running, your sources connected, agents able to reach it, and the app open.</p>
   <figure class="sys"></figure>
   <p><span class="chip human">HUMAN-ONLY</span> type it in your own terminal, not in an agent session. <span class="chip agent">AGENT OK</span> an agent may run it for you.</p>
   <details class="more"><summary>Sindri's hints</summary><div class="body">
     <p>Sindri's hints say <code>sindri …</code>: type them as written.</p>
   </div></details>
   <details class="more"><summary>Why some commands are human-only (<code>SND-AUTH-002</code>)</summary><div class="body">
-    <p>Approving the profile, starting Sindri, <code>onyx up</code>, MCP registration and every later approval are a person's decisions: an agent that could run them could widen its own config and approve its own work.</p>
+    <p>Approving the profile, starting Sindri, <code>index connect</code>, MCP registration and every later approval are a person's decisions: an agent that could run them could widen its own config and approve its own work.</p>
     <p>The CLI acts for a person only at a real terminal with no agent among its parent processes. Otherwise Sindri refuses with <code>SND-AUTH-002</code> and names what it saw. Run those commands yourself; don't try to get around the check.</p>
   </div></details>
 </section>
@@ -242,7 +242,7 @@ details.more .body li { margin: 4px 0; }
 <section class="step" data-slug="prereqs" data-n="1" data-title="Prerequisites" data-k="1">
   <p class="kicker">Step 1</p>
   <h1 tabindex="-1">Prepare the Mac</h1>
-  <p class="lede">Install Docker yourself (Onyx needs about 5.5 GiB of Docker memory and 10.5 GiB of disk). The script fetches the rest.</p>
+  <p class="lede">Install Docker yourself (Serena, the code-navigation server, runs in it). The script fetches the rest.</p>
   <figure class="sys"></figure>
   <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">uv, graphify, the pinned Temporal binaries and any missing system packages (<code>AW_DRY_RUN=1</code> prints only, agent OK)</span></div>
   <pre><code>scripts/install-deps.sh</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
@@ -253,12 +253,11 @@ details.more .body li { margin: 4px 0; }
   <details class="more"><summary>What each piece is for</summary><div class="body"><ul>
     <li><strong>.NET SDK 10.0.401</strong> (<code>global.json</code>) builds Sindri; step 2 installs it into <code>~/.dotnet</code> when missing.</li>
     <li><strong>Temporal CLI</strong> runs workflow instances; pinned in <code>binaries.lock</code>.</li>
-    <li><strong>Docker</strong> with Compose 2.24 or later runs Onyx.</li>
+    <li><strong>Docker</strong> runs Serena, the code-navigation server.</li>
     <li><strong>graphify</strong> in a sandbox (<code>sandbox-exec</code> on macOS, <code>bwrap</code> on Linux) groups the product map.</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
     <li>A system package is missing: the script installs it with Homebrew (or apt, dnf…); <code>AW_NO_SYSTEM_INSTALL=1</code> prints the commands instead.</li>
-    <li>Docker memory too small: Docker Desktop → Settings → Resources.</li>
   </ul></div></details>
 </section>
 
@@ -312,7 +311,7 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
     <li><code>denyPaths</code>: files Sindri never reads for the map, on top of the built-in secret globs.</li>
     <li><code>context-docs-refresh</code>: indexes the repo's docs every 5 minutes; nothing is indexed without it.</li>
     <li><code>sessions.enabled</code>: lets agent sessions read context over MCP.</li>
-    <li>Step 5 adds the Onyx section for you. Every change needs another approval; until then Sindri keeps the last approved one.</li>
+    <li>Step 5 adds the <code>context.sources</code> section for you. Every change needs another approval; until then Sindri keeps the last approved one.</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
     <li><code>SND-PROFILE-002</code>: a typo or unknown key; the message names the key path.</li>
@@ -335,10 +334,9 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
 <span class="ok">ok</span>    api               127.0.0.1:7410 answers (pid 53290, epoch 6)
 <span class="ok">ok</span>    temporal          127.0.0.1:53876 answers (pid 53346), version 1.9.1 as pinned, namespace sindri present</pre></div>
   <details class="more"><summary>Reading <code>doctor</code></summary><div class="body"><ul>
-    <li>Each line is <code>ok</code>, <code>warn</code> or <code>fail</code>, with its fix. The <code>context:*</code> and <code>onyx:stack</code> lines turn ok in step 5.</li>
+    <li>Each line is <code>ok</code>, <code>warn</code> or <code>fail</code>, with its fix. The <code>context:index-*</code> lines turn ok in step 5.</li>
     <li>Agent-probe lines (<code>claude-code</code>, <code>codex:*</code>, <code>cursor-*</code>) that say "differs" or "pending" are normal on a dev box.</li>
     <li>After a new build the running Sindri keeps its old one: <code>sindri stop</code>, then start again.</li>
-    <li>The first start without Onyx offers to set it up: say no here and do step 5.</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
     <li><code>SND-API-001 … ask the human to run 'sindri'</code>: an agent can't start Sindri. Run it yourself.</li>
@@ -348,35 +346,39 @@ hash 73ce9910…470b, <span class="ok">approved</span></pre></div>
   </ul></div></details>
 </section>
 
-<section class="step" data-slug="onyx" data-n="5" data-title="Onyx" data-k="5">
+<section class="step" data-slug="sources" data-n="5" data-title="Sources" data-k="5">
   <p class="kicker">Step 5</p>
-  <h1 tabindex="-1">Add Onyx, then connect Linear and Slack</h1>
-  <p class="lede">One command runs a pinned Onyx in Docker on <code>127.0.0.1</code> and gives Sindri its own Onyx user. Then connect your sources in Onyx's web page.</p>
+  <h1 tabindex="-1">Connect your sources</h1>
+  <p class="lede">Sindri keeps its own record index and reads GitHub and Slack itself (Linear has its own setup, <code>docs/sindri/linear.md</code>). You list the repos and channels in the profile, connect a read-only token, approve, and it syncs.</p>
   <figure class="sys"></figure>
-  <div class="strip" role="group" aria-label="What onyx up does, in order">
-    <span>check the Mac</span><b aria-hidden="true">→</b><span>pinned files</span><b aria-hidden="true">→</b><span>pull images</span><b aria-hidden="true">→</b><span>start</span><b aria-hidden="true">→</b><span class="you">you: sign up</span><b aria-hidden="true">→</b><span class="you">you: your admin login</span><b aria-hidden="true">→</b><span>Sindri's user + key</span><b aria-hidden="true">→</b><span class="you">you: approve profile</span>
+  <div class="strip" role="group" aria-label="What connecting a source does, in order">
+    <span class="you">you: list sources in the profile</span><b aria-hidden="true">→</b><span class="you">you: paste a token</span><b aria-hidden="true">→</b><span>token and every repo or channel checked</span><b aria-hidden="true">→</b><span>token saved in the keychain</span><b aria-hidden="true">→</b><span class="you">you: approve profile</span><b aria-hidden="true">→</b><span>sync</span>
   </div>
-  <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Safe to rerun: it resumes where it stopped</span></div>
-  <pre><code>sindri onyx up</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
-  <div class="see"><p class="lbl">You should see (<code>sindri doctor</code>)</p>
-<pre class="term"><span class="ok">ok</span>    context:onyx      Onyx v4.9.0 answers on 127.0.0.1:3189 (pinned v4.9.0); key: admin, Sindri's dedicated user
-<span class="ok">ok</span>    context:sources   2 of 2 sources ok; session reads on
-<span class="ok">ok</span>    onyx:stack        9 containers running, healthy, bound to 127.0.0.1:3189, digests match the pins</pre></div>
-  <details class="more"><summary>Connect Linear and Slack</summary><div class="body"><ul>
-    <li><code>onyx up</code> ends on Onyx's connectors page. Add <strong>Linear</strong> (the product's teams, with a start date far enough back) and <strong>Slack</strong> (the product's channels).</li>
-    <li>These use your company's OAuth: get sign-off first. Sindri never connects a source itself.</li>
-    <li>Onyx indexes in the background; a large workspace takes a while.</li>
+  <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">Asks for the token once; checks it and every listed repo or channel before saving anything</span></div>
+  <pre><code>sindri index connect github
+sindri index connect slack</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <div class="cmd human"><div class="head"><span class="chip human">HUMAN-ONLY</span><span class="what">The token pointer changed the profile, so approve it again</span></div>
+  <pre><code>sindri profile approve</code></pre><p class="note">Your own terminal, not an agent session.</p></div>
+  <div class="cmd agent"><div class="head"><span class="chip agent">AGENT OK</span><span class="what">One line per source: usable, complete, waiting, needs token, needs access or error</span></div>
+  <pre><code>sindri index sync
+sindri index status</code></pre></div>
+  <details class="more"><summary>The profile keys</summary><div class="body"><ul>
+    <li><code>context.sources.github</code>: <code>repos</code>, and <code>host</code> if you aren't on github.com.</li>
+    <li><code>context.sources.slack</code>: <code>channels</code> as <code>{ id, name }</code>, and <code>workspace</code>.</li>
+    <li><code>context.sources.linear</code>: <code>teams</code>.</li>
+    <li>Full details: <code>docs/sindri/sources.md</code>.</li>
   </ul></div></details>
-  <details class="more"><summary>Your login and Sindri's user</summary><div class="body"><ul>
-    <li>It asks once for <em>your own</em> Onyx admin login (the account you just signed up with). The password isn't shown or stored.</li>
-    <li>With it, Sindri makes its own user, <code>sindri@example.com</code>, and a token kept in the macOS keychain. You never type that address.</li>
-    <li>Onyx's data survives <code>sindri stop</code> and <code>onyx down</code>.</li>
+  <details class="more"><summary>Which tokens</summary><div class="body"><ul>
+    <li>GitHub: a fine-grained personal access token with Contents, Issues, Pull requests and Metadata read on the listed repos only.</li>
+    <li>Slack: a bot token with <code>channels:history</code> and <code>channels:read</code> (<code>groups:*</code> only for listed private channels), in an app you install.</li>
+    <li>The token goes in the OS keychain (an owner-only file under <code>secrets/</code> when there is none); the profile only holds a pointer.</li>
+    <li>The built-in <code>index-sync</code> service re-syncs every 5 minutes while Sindri runs.</li>
   </ul></div></details>
   <details class="more"><summary>If it didn't work</summary><div class="body"><ul>
-    <li><code>SND-ONYX-001</code>: Docker isn't running. <code>SND-ONYX-003</code>: not enough memory or disk (the message says how much).</li>
-    <li><code>SND-ONYX-007</code>: that login isn't an Onyx admin; use your first account.</li>
-    <li><code>SND-ONYX-008</code>: invite-only Onyx; invite <code>sindri@example.com</code> once in Admin → Users, then rerun.</li>
-    <li><code>warn context:onyx SND-CONTEXT-053</code>: the key came from an older build; update, rebuild, restart, rerun <code>onyx up</code>.</li>
+    <li><code>SND-INDEX-009</code>: the token pointer doesn't resolve, or the token was refused.</li>
+    <li><code>SND-INDEX-010</code>: a listed repo can't be read; fix the token's access or the name.</li>
+    <li><code>SND-INDEX-011</code> / <code>SND-INDEX-013</code>: that source isn't in the approved profile; add it and approve.</li>
+    <li>Sindri used to read these through Onyx. If this box once ran that, run <code>sindri onyx down --purge</code> once to remove what it left.</li>
   </ul></div></details>
 </section>
 
@@ -486,8 +488,8 @@ sindri mcp register --apply --providers all</code></pre><p class="note">Your own
     { at: 6, label: "Launcher", sub: "agent: claude-code", w: [366, 116, 160, 56], n: [22, 200, 154, 52] },
     { at: 7, label: "MCP", sub: "/sindri/mcp", w: [366, 180, 160, 56], n: [184, 200, 154, 52] },
     { at: 6, label: "Agent sessions", sub: "Claude · Codex · Cursor", tick: true, w: [600, 104, 140, 62], n: [10, 330, 165, 56] },
-    { at: 5, box: true, title: "Onyx · Docker", tick: true, w: [600, 222, 140, 86], n: [185, 310, 165, 90] },
-    { at: 5, label: "Linear", w: [608, 260, 60, 30], n: [195, 352, 70, 30] },
+    { at: 5, box: true, title: "Source index", tick: true, w: [600, 222, 140, 86], n: [185, 310, 165, 90] },
+    { at: 5, label: "GitHub", w: [608, 260, 60, 30], n: [195, 352, 70, 30] },
     { at: 5, label: "Slack", w: [672, 260, 60, 30], n: [271, 352, 70, 30] },
     { at: 1, box: true, title: "This Mac", tick: true, w: [20, 316, 720, 56], n: [10, 420, 340, 160] },
     { at: 1, label: ".NET 10", w: [110, 328, 96, 32], n: [22, 446, 154, 30] },
@@ -551,7 +553,7 @@ sindri mcp register --apply --providers all</code></pre><p class="note">Your own
       svg.appendChild(el("text", { "class": "elbl ed-" + state(e.at, k), x: lp[0], y: lp[1] }, e.l));
     });
     svg.setAttribute("aria-label", k === 99
-      ? "The finished setup: your terminal and the Sindri app talk to Sindri on 127.0.0.1:7410, which holds the ledger, Temporal, the context engine, the launcher and MCP; agent sessions connect over MCP; Onyx in Docker brings Linear and Slack; all on this Mac."
+      ? "The finished setup: your terminal and the Sindri app talk to Sindri on 127.0.0.1:7410, which holds the ledger, Temporal, the context engine, the launcher and MCP; agent sessions connect over MCP; the source index reads GitHub and Slack; all on this Mac."
       : "What this step adds: " + added.join(", ") + ". Parts with a check mark are done." + (later.length ? " Later steps add: " + later.join(", ") + "." : ""));
     fig.innerHTML = "";
     fig.appendChild(svg);
