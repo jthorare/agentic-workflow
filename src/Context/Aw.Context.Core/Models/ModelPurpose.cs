@@ -29,4 +29,8 @@ public enum ModelPurpose
     /// <summary>Naming the derived concepts of a map, one call per build (context.labeling).</summary>
     [JsonStringEnumMemberName("concepts")]
     Concepts,
+
+    /// <summary>Naming and summarizing one group of related records across sources (context.conceptSynthesis, context.labeling.maxTokensPerSync).</summary>
+    [JsonStringEnumMemberName("concept-synthesis")]
+    ConceptSynthesis,
 }

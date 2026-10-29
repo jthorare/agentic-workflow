@@ -37,7 +37,23 @@ internal sealed class IndexDecisionsService(ContextScopes scopes, IContextEngine
         }
 
         var report = await engine.Decide(scope.Value, cancellationToken).ConfigureAwait(false);
-        return report.IsError ? report.Error : Summarize(report.Value.Sources);
+        return report.IsError ? report.Error : Summarize(report.Value);
+    }
+
+    /// <summary>The run's outcome from the per-source rows and the concept synthesis that followed: idle when neither had anything to do, else one summary of both.</summary>
+    internal static ScheduledResult Summarize(DecisionReport report)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        var sources = Summarize(report.Sources);
+        if (report.Synthesis is not { } synthesis || (synthesis.Code is null && synthesis.Labeled == 0 && synthesis.Queued == 0))
+        {
+            return sources;
+        }
+
+        var concepts = synthesis.Code is null
+            ? string.Create(CultureInfo.InvariantCulture, $"concepts {synthesis.Concepts} ({synthesis.MultiSource} across 2+ sources), {synthesis.Labeled} named, {synthesis.Queued} queued, {synthesis.Covered}/{synthesis.Embedded} records covered, {synthesis.Pending} not embedded yet")
+            : $"concepts {synthesis.Code}";
+        return new ScheduledResult(Idle: false, sources.Idle ? $"ok: {concepts}" : $"{sources.Summary}, {concepts}");
     }
 
     /// <summary>The run's outcome from the sources' rows: idle when no source had a record to read or failed, else a summary with each source's count or code.</summary>
