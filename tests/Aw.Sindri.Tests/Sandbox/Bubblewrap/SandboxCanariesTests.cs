@@ -73,6 +73,25 @@ public sealed class SandboxCanariesTests
     }
 
     [Fact]
+    public void A_separate_login_plans_hooks_run_canary_uses_the_agent_homes_hooks()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope);
+        var claude = plan with { Login = ModelLoginSource.SeparateLogin };
+        var codex = claude with { Environment = [.. plan.Environment.Where(static e => e.Name != "CLAUDE_CONFIG_DIR"), new PlanEnvVar("CODEX_HOME", "/agent-home", "login")] };
+
+        Assert.StartsWith("fail() { echo \"$1\"; exit 1; }\nH=\"$CLAUDE_CONFIG_DIR/hooks\"\n", SandboxCanaries.For(claude).Single(c => c.Reason == "hooks-run").Script, StringComparison.Ordinal);
+        Assert.StartsWith("fail() { echo \"$1\"; exit 1; }\nH=\"$CODEX_HOME/hooks\"\n", SandboxCanaries.For(codex).Single(c => c.Reason == "hooks-run").Script, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_owner_copy_plans_hooks_run_canary_keeps_the_home_claude_hooks()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope) with { Login = ModelLoginSource.OwnerCopy };
+
+        Assert.Contains("H=\"$HOME/.claude/hooks\"", SandboxCanaries.For(plan).Single(c => c.Reason == "hooks-run").Script, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void A_plan_with_an_agent_home_bound_has_the_hooks_run_canary() =>
         Assert.Contains(SandboxReasons.HooksRun, Reasons(SandboxPlannerTests.Build(Req.WriteScope)), StringComparer.Ordinal);
 
