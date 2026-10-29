@@ -4,15 +4,16 @@ using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
+using GraphConceptKeys = Aw.Context.Core.Graph.ConceptKeys;
 
 namespace Aw.Context.Core.Concepts;
 
-/// <summary>Puts the synthesized concepts (the cross-source groups the model named) into a map graph as 'concept:&lt;key&gt;' nodes with their evidence and 'belongs-to' edges.</summary>
+/// <summary>Puts the synthesized concepts (the cross-source groups the model named) into a map graph as 'concept:&lt;key&gt;' nodes with their evidence and 'belongs-to' edges. A pin (a human node of the same key) and the catch-all 'other' are left untouched.</summary>
 public static class SynthesizedConceptNodes
 {
     private const double Confidence = 0.7;
 
-    /// <summary>Adds a node for each concept the model has labeled, or merges its evidence into the node already there, and joins the member records and the features they touch to it.</summary>
+    /// <summary>Adds a node for each concept the model has labeled, or merges its evidence into the derived node already there (a pinned one is skipped whole), and joins the member records and the features they touch to it.</summary>
     /// <param name="graph">The graph so far, with the derived concepts.</param>
     /// <param name="concepts">Every stored synthesized concept; only the 'done' ones count.</param>
     /// <returns>The graph with the concepts, in the same order for the same input.</returns>
@@ -31,31 +32,47 @@ public static class SynthesizedConceptNodes
         var seen = edges.Select(e => (e.From.Value, e.To.Value, e.Type)).ToHashSet();
         foreach (var concept in done)
         {
-            var key = NodeKey.From("concept:" + concept.Key);
-            var members = Members(concept);
-            var evidence = members.Select(m => new EvidenceRef(m)).ToList();
-            var at = nodes.FindIndex(n => n.Key.Value == key.Value);
-            if (at >= 0)
-            {
-                // why: a derived or human concept of the same key keeps its label and provenance; the model's members only add evidence.
-                var existing = nodes[at];
-                nodes[at] = existing with { Evidence = [.. existing.EvidenceOrEmpty.Concat(evidence).DistinctBy(e => (e.Key.Value, e.Span))] };
-            }
-            else
-            {
-                nodes.Add(new GraphNode(key, concept.Name, Provenance.Model, Confidence, evidence, Attributes(concept.Summary)));
-            }
-
-            foreach (var from in Joined(graph, members))
-            {
-                if (EdgeRules.Allows(EdgeType.BelongsTo, from.Kind, NodeKind.Concept) && seen.Add((from.Value, key.Value, EdgeType.BelongsTo)))
-                {
-                    edges.Add(new GraphEdge(from, key, EdgeType.BelongsTo, Provenance.Model, Confidence));
-                }
-            }
+            Add(graph, concept, nodes, edges, seen);
         }
 
         return graph with { Nodes = nodes, Edges = edges };
+    }
+
+    private static void Add(GraphSnapshot graph, SynthesizedConcept concept, List<GraphNode> nodes, List<GraphEdge> edges, HashSet<(string, string, EdgeType)> seen)
+    {
+        var key = NodeKey.From("concept:" + concept.Key);
+        if (key.Value == GraphConceptKeys.Other)
+        {
+            return;
+        }
+
+        var members = Members(concept);
+        var evidence = members.Select(m => new EvidenceRef(m)).ToList();
+        var at = nodes.FindIndex(n => n.Key.Value == key.Value);
+        if (at >= 0 && nodes[at].Provenance == Provenance.Human)
+        {
+            // why: a pin survives every rebuild with the edges and evidence it had, so anything merged into it would outlive the member that earned it.
+            return;
+        }
+
+        if (at >= 0)
+        {
+            // why: a derived concept of the same key keeps its label and provenance (it is purged and rebuilt each build); the model's members only add evidence.
+            var existing = nodes[at];
+            nodes[at] = existing with { Evidence = [.. existing.EvidenceOrEmpty.Concat(evidence).DistinctBy(e => (e.Key.Value, e.Span)).Take(ConceptNodes.EvidenceCap)] };
+        }
+        else
+        {
+            nodes.Add(new GraphNode(key, concept.Name, Provenance.Model, Confidence, [.. evidence.Take(ConceptNodes.EvidenceCap)], Attributes(concept.Summary)));
+        }
+
+        foreach (var from in Joined(graph, members))
+        {
+            if (EdgeRules.Allows(EdgeType.BelongsTo, from.Kind, NodeKind.Concept) && seen.Add((from.Value, key.Value, EdgeType.BelongsTo)))
+            {
+                edges.Add(new GraphEdge(from, key, EdgeType.BelongsTo, Provenance.Model, Confidence));
+            }
+        }
     }
 
     // The members' record keys, valid ones only, distinct and in order.
