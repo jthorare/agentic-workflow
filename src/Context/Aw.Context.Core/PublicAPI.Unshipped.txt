@@ -9216,18 +9216,18 @@ Aw.Context.Core.Records.SourceIdentity.Source.init -> void
 Aw.Context.Core.Records.SourceIdentity.SourceIdentity(Aw.Context.Core.Sources.SourceId Source, string! UserRef, string! Name, System.DateTimeOffset ReadAt) -> void
 Aw.Context.Core.Records.SourceIdentity.UserRef.get -> string!
 Aw.Context.Core.Records.SourceIdentity.UserRef.init -> void
-Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out string? Health, out System.DateOnly? DueAt) -> void
+Aw.Context.Core.Records.StoredRecord.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.SourceId Source, out Aw.Context.Core.Sources.RecordKind Kind, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string! Title, out string? Url, out string? Author, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out string! TextHash, out string! Ruleset, out bool Blocked, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset SyncedAt, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out string? Health, out System.DateOnly? DueAt, out string? Description) -> void
 Aw.Context.Core.Records.StoredRecord.DueAt.get -> System.DateOnly?
 Aw.Context.Core.Records.StoredRecord.DueAt.init -> void
 Aw.Context.Core.Records.StoredRecord.Health.get -> string?
 Aw.Context.Core.Records.StoredRecord.Health.init -> void
-Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null) -> void
-Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt) -> void
+Aw.Context.Core.Records.StoredRecord.StoredRecord(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Sources.RecordKind Kind, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string! Title, string? Url, string? Author, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, string! TextHash, string! Ruleset, bool Blocked, System.DateTimeOffset? RemovedAt, System.DateTimeOffset SyncedAt, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, string? Health = null, System.DateOnly? DueAt = null, string? Description = null) -> void
+Aw.Context.Core.Sync.RecordItem.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out Aw.Context.Core.Sources.RecordKind Kind, out string! Title, out string! Text, out string? Author, out string? Url, out Aw.Context.Core.Records.RecordState? State, out string? StateRaw, out System.DateTimeOffset? CreatedAt, out System.DateTimeOffset? UpdatedAt, out System.DateTimeOffset? ClosedAt, out Aw.Context.Core.Sources.SourceVersion Version, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Records.AudienceKey? Audience, out string? Health, out System.DateOnly? DueAt, out string? Description) -> void
 Aw.Context.Core.Sync.RecordItem.DueAt.get -> System.DateOnly?
 Aw.Context.Core.Sync.RecordItem.DueAt.init -> void
 Aw.Context.Core.Sync.RecordItem.Health.get -> string?
 Aw.Context.Core.Sync.RecordItem.Health.init -> void
-Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null) -> void
+Aw.Context.Core.Sync.RecordItem.RecordItem(Aw.Context.Core.Sources.RecordKey Key, Aw.Context.Core.Sources.RecordKind Kind, string! Title, string! Text, string? Author, string? Url, Aw.Context.Core.Records.RecordState? State, string? StateRaw, System.DateTimeOffset? CreatedAt, System.DateTimeOffset? UpdatedAt, System.DateTimeOffset? ClosedAt, Aw.Context.Core.Sources.SourceVersion Version, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.RecordLink!>! Links, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Records.AudienceKey? Audience, string? Health = null, System.DateOnly? DueAt = null, string? Description = null) -> void
 override Aw.Context.Core.Records.SourceIdentity.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.SourceIdentity.GetHashCode() -> int
 override Aw.Context.Core.Records.SourceIdentity.ToString() -> string!
@@ -9730,7 +9730,7 @@ Aw.Context.Core.Projects.ProjectFactsRequest.Equals(Aw.Context.Core.Projects.Pro
 Aw.Context.Core.Projects.ProjectFactsRequest.ProjectFactsRequest(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Attached) -> void
 Aw.Context.Core.Records.IRecordStore.ProjectFacts(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ProjectRow!>!>!>
 Aw.Context.Core.Records.ProjectRow.<Clone>$() -> Aw.Context.Core.Records.ProjectRow!
-Aw.Context.Core.Records.ProjectRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Health, out System.DateOnly? DueAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string? LeadRef, out string? LeadName, out int OpenIssues, out System.DateTimeOffset? NewestIssueAt) -> void
+Aw.Context.Core.Records.ProjectRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Health, out System.DateOnly? DueAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string? LeadRef, out string? LeadName, out int OpenIssues, out System.DateTimeOffset? NewestIssueAt, out string? Description) -> void
 override Aw.Context.Core.Projects.ProjectFact.Equals(object? obj) -> bool
 override Aw.Context.Core.Projects.ProjectFact.GetHashCode() -> int
 override Aw.Context.Core.Projects.ProjectFact.ToString() -> string!
@@ -9764,7 +9764,7 @@ Aw.Context.Core.Records.ProjectRow.NewestIssueAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Records.ProjectRow.NewestIssueAt.init -> void
 Aw.Context.Core.Records.ProjectRow.OpenIssues.get -> int
 Aw.Context.Core.Records.ProjectRow.OpenIssues.init -> void
-Aw.Context.Core.Records.ProjectRow.ProjectRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Health, System.DateOnly? DueAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, string? LeadRef, string? LeadName, int OpenIssues, System.DateTimeOffset? NewestIssueAt) -> void
+Aw.Context.Core.Records.ProjectRow.ProjectRow(Aw.Context.Core.Sources.RecordKey Key, string! Title, string? Url, string? StateRaw, string? Health, System.DateOnly? DueAt, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, string? LeadRef, string? LeadName, int OpenIssues, System.DateTimeOffset? NewestIssueAt, string? Description = null) -> void
 Aw.Context.Core.Records.ProjectRow.StateRaw.get -> string?
 Aw.Context.Core.Records.ProjectRow.StateRaw.init -> void
 Aw.Context.Core.Records.ProjectRow.Title.get -> string!
@@ -9811,3 +9811,28 @@ Aw.Context.Core.Linear.LinearIdentifiers
 static Aw.Context.Core.Linear.LinearIdentifiers.AliasesOf(Aw.Context.Core.Sources.RecordKey key, string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string![]!
 static Aw.Context.Core.Linear.LinearIdentifiers.FromPermalink(string? url, System.Collections.Generic.IReadOnlySet<string!>! teams) -> string?
 Aw.Context.Core.Linking.IIntentStore.SetAliases(Aw.Context.Core.Sources.RecordKey record, string! version, System.Collections.Generic.IReadOnlyList<string!>! aliases, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Concepts.CoveredConcepts
+Aw.Context.Core.Concepts.CoverFold
+Aw.Context.Core.Concepts.CoverFold.<Clone>$() -> Aw.Context.Core.Concepts.CoverFold!
+Aw.Context.Core.Concepts.CoverFold.Covered.get -> int
+Aw.Context.Core.Concepts.CoverFold.Covered.init -> void
+Aw.Context.Core.Concepts.CoverFold.CoverFold(Aw.Context.Core.Graph.GraphSnapshot! Graph, int Covered) -> void
+Aw.Context.Core.Concepts.CoverFold.Deconstruct(out Aw.Context.Core.Graph.GraphSnapshot! Graph, out int Covered) -> void
+Aw.Context.Core.Concepts.CoverFold.Equals(Aw.Context.Core.Concepts.CoverFold? other) -> bool
+Aw.Context.Core.Concepts.CoverFold.Graph.get -> Aw.Context.Core.Graph.GraphSnapshot!
+Aw.Context.Core.Concepts.CoverFold.Graph.init -> void
+Aw.Context.Core.Engine.ConceptSynthesisSettings.CoverShare.get -> double
+Aw.Context.Core.Engine.ConceptSynthesisSettings.CoverShare.init -> void
+override Aw.Context.Core.Concepts.CoverFold.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.CoverFold.GetHashCode() -> int
+override Aw.Context.Core.Concepts.CoverFold.ToString() -> string!
+static Aw.Context.Core.Concepts.CoveredConcepts.Fold(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts, double share) -> Aw.Context.Core.Concepts.CoverFold!
+static Aw.Context.Core.Concepts.CoverFold.operator !=(Aw.Context.Core.Concepts.CoverFold? left, Aw.Context.Core.Concepts.CoverFold? right) -> bool
+static Aw.Context.Core.Concepts.CoverFold.operator ==(Aw.Context.Core.Concepts.CoverFold? left, Aw.Context.Core.Concepts.CoverFold? right) -> bool
+Aw.Context.Core.Records.StoredRecord.Description.get -> string?
+Aw.Context.Core.Records.StoredRecord.Description.init -> void
+Aw.Context.Core.Sync.RecordItem.Description.get -> string?
+Aw.Context.Core.Sync.RecordItem.Description.init -> void
+Aw.Context.Core.Records.ProjectRow.Description.get -> string?
+Aw.Context.Core.Records.ProjectRow.Description.init -> void
+const Aw.Context.Core.Sync.RecordBatches.MaxDescription = 4000 -> int

@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace Aw.Context.Core.Engine;
 
-/// <summary>'context.conceptSynthesis' as written: the grouper's knobs and the prompt's character caps.</summary>
+/// <summary>'context.conceptSynthesis' as written: the grouper's knobs, the prompt's character caps and the cover share.</summary>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 internal sealed record ConceptSynthesisSection(
     bool? Enabled = null,
@@ -12,4 +12,5 @@ internal sealed record ConceptSynthesisSection(
     int? MinRecords = null,
     int? MinSources = null,
     int? MaxCharsPerRecord = null,
-    int? MaxCharsPerCall = null);
+    int? MaxCharsPerCall = null,
+    double? CoverShare = null);

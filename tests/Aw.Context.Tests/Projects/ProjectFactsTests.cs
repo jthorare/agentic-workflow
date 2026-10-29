@@ -51,6 +51,17 @@ public sealed class ProjectFactsTests
     }
 
     [Fact]
+    public async Task The_description_of_the_stored_project_is_carried_on_the_fact()
+    {
+        await Seed(Project(_alpha, "Alpha") with { Description = "Ship it." }, Project(_beta, "Beta"));
+
+        var answer = await Read([_alpha, _beta]);
+
+        Assert.Equal("Ship it.", answer.Projects[0].Description);
+        Assert.Null(answer.Projects[1].Description);
+    }
+
+    [Fact]
     public async Task Projects_keep_the_order_of_the_attached_keys()
     {
         await Seed(Project(_alpha, "Alpha"), Project(_beta, "Beta"));
