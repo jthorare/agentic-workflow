@@ -6,6 +6,9 @@ namespace Aw.Sindri.Core.Sandbox;
 /// </summary>
 public static class SandboxCopy
 {
+    /// <summary>The 'notChecked' sentence when the hooks canary was skipped because the fixture plan has no login (copy.json's 'notChecked.hooks-run').</summary>
+    public const string HooksNotChecked = "The hooks weren't checked: no agent is picked for Steps.";
+
     private static readonly CopyRow[] _rows =
     [
         Row("SND-LAUNCH-014", "no-bwrap", "This machine has no sandbox tool, so this Step can't run by itself. Install bubblewrap (`sudo apt install bubblewrap`), then press Check again.") with { Command = "sudo apt install bubblewrap", AttendedText = "This machine has no sandbox tool, so this session can't be opened. Install bubblewrap (`sudo apt install bubblewrap`), then press Check again." },
