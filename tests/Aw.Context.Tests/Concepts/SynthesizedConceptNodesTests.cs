@@ -1,9 +1,11 @@
+using System.Globalization;
 using System.Text.Json;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
+using GraphConceptKeys = Aw.Context.Core.Graph.ConceptKeys;
 
 namespace Aw.Context.Tests.Concepts;
 
@@ -106,5 +108,64 @@ public sealed class SynthesizedConceptNodesTests
         Assert.Equal(first.Nodes.Select(n => n.Key.Value), second.Nodes.Select(n => n.Key.Value), StringComparer.Ordinal);
         Assert.Equal(first.Edges.Select(e => (e.From.Value, e.To.Value)), second.Edges.Select(e => (e.From.Value, e.To.Value)));
         Assert.Equal(first.Nodes.SelectMany(n => n.EvidenceOrEmpty).Select(e => e.Key.Value), second.Nodes.SelectMany(n => n.EvidenceOrEmpty).Select(e => e.Key.Value), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void A_human_node_with_the_same_key_is_left_alone_and_gets_no_edges()
+    {
+        var graph = new ConceptGraph().Concept("concept:checkout-retry", "Pinned", "Mine.", "override", Pr).Node($"record:{Issue}").Build();
+        graph = graph with { Nodes = [.. graph.Nodes.Select(n => n.Key.Value == "concept:checkout-retry" ? n with { Provenance = Provenance.Human } : n)] };
+
+        var result = SynthesizedConceptNodes.Apply(graph, [Concept("checkout-retry", "Checkout retry", SynthesisState.Done, Pr, Issue)]);
+
+        var node = Node(result, "concept:checkout-retry");
+        Assert.Equal("Pinned", node.Label);
+        Assert.Equal([Pr], node.EvidenceOrEmpty.Select(e => e.Key.Value), StringComparer.Ordinal);
+        Assert.False(Belongs(result, $"record:{Issue}", "concept:checkout-retry"));
+        Assert.Empty(result.Edges);
+    }
+
+    [Fact]
+    public void A_derived_node_with_the_same_key_still_gets_the_members_edges()
+    {
+        var graph = new ConceptGraph().Concept("concept:checkout-retry", "Checkout", "Derived.", "derived", Pr).Node($"record:{Issue}").Build();
+
+        var result = SynthesizedConceptNodes.Apply(graph, [Concept("checkout-retry", "Checkout retry", SynthesisState.Done, Pr, Issue)]);
+
+        Assert.True(Belongs(result, $"record:{Issue}", "concept:checkout-retry"));
+        Assert.Equal([Pr, Issue], Node(result, "concept:checkout-retry").EvidenceOrEmpty.Select(e => e.Key.Value), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void A_concept_keyed_other_adds_and_merges_nothing()
+    {
+        var graph = new ConceptGraph().Concept(GraphConceptKeys.Other, "Other", "Rest.", "derived", Pr).Node($"record:{Issue}").Build();
+
+        var result = SynthesizedConceptNodes.Apply(graph, [Concept(GraphConceptKeys.Other["concept:".Length..], "Other", SynthesisState.Done, Pr, Issue)]);
+
+        Assert.Equal([Pr], Node(result, GraphConceptKeys.Other).EvidenceOrEmpty.Select(e => e.Key.Value), StringComparer.Ordinal);
+        Assert.Empty(result.Edges);
+        _ = Assert.Single(result.Nodes, n => n.Key.Kind == NodeKind.Concept);
+    }
+
+    [Fact]
+    public void A_thirty_member_concept_keeps_the_first_twenty_five_evidence_refs_by_record_key()
+    {
+        var records = Enumerable.Range(0, 30).Select(i => "github:pr/acme/web/" + (100 + i).ToString(CultureInfo.InvariantCulture)).ToArray();
+
+        var result = SynthesizedConceptNodes.Apply(GraphSnapshot.Empty, [Concept("big", "Big", SynthesisState.Done, [.. Enumerable.Reverse(records)])]);
+
+        Assert.Equal(records.Order(StringComparer.Ordinal).Take(25), Node(result, "concept:big").EvidenceOrEmpty.Select(e => e.Key.Value), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void Merging_into_a_derived_node_also_stops_at_twenty_five_evidence_refs()
+    {
+        var records = Enumerable.Range(0, 30).Select(i => "github:pr/acme/web/" + (100 + i).ToString(CultureInfo.InvariantCulture)).ToArray();
+        var graph = new ConceptGraph().Concept("concept:big", "Big", "Derived.", "derived", records[0]).Build();
+
+        var result = SynthesizedConceptNodes.Apply(graph, [Concept("big", "Big", SynthesisState.Done, records)]);
+
+        Assert.Equal(25, Node(result, "concept:big").EvidenceOrEmpty.Count);
     }
 }
