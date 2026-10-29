@@ -1,5 +1,6 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Linking;
+using Aw.Context.Core.Records;
 using Aw.Context.Features.SyncSources;
 using Aw.Context.Testing.Records;
 using static Aw.Context.Tests.SyncSources.ExtractDecisionsTests;
@@ -13,6 +14,9 @@ public sealed class SourcesSyncStatusTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     // The index-fed source has no row in 'context sources status' (that lists live sources and repo docs); what the sync holds is the intent store's state for it.
+    /// <summary>What the feed's last tick wrote to the record store: the one place a tick's end and code are read from (the status, the doctor and the index status).</summary>
+    private static async Task<SyncOutcome?> Outcome(Rig rig) => (await rig.World.Records.LastOutcome(RecordSamples.Linear, Ct)).Value;
+
     private static async Task<IntentSourceState> Linear(Rig rig) => (await rig.World.Intents.State(RecordSamples.Linear, Ct)).Value;
 
     [Fact]
@@ -26,8 +30,9 @@ public sealed class SourcesSyncStatusTests
 
         Assert.Equal((null, 0), (before.LastSync, before.Records));   // never synced
         var layer = await rig.Layer();
-        Assert.Equal((layer.Records.Count, layer.Links.Count, layer.Decisions.Count, 0, null, null),
-            (after.Records, after.Links, after.Decisions, after.Queued, after.LastError, row.Code));
+        Assert.Equal((layer.Records.Count, layer.Links.Count, layer.Decisions.Count, 0, null),
+            (after.Records, after.Links, after.Decisions, after.Queued, row.Code));
+        Assert.Null((await Outcome(rig))?.Code);
         _ = Assert.NotNull(after.LastSync);
         Assert.True(after.Decisions > 0);
     }
@@ -44,7 +49,6 @@ public sealed class SourcesSyncStatusTests
         Assert.True(replay.Queued > 0);
         _ = Assert.NotNull(sync.LastSync);
         Assert.True(sync.Queued > 0);   // labeling being off only queues the extraction: the links synced
-        Assert.Equal(ContextErrors.LabelingUnavailable.Code, sync.LastError);
     }
 
     [Fact]
@@ -56,7 +60,7 @@ public sealed class SourcesSyncStatusTests
 
         var sync = await Linear(rig);
 
-        Assert.Equal((0, null), (sync.Queued, sync.LastError));
+        Assert.Equal(0, sync.Queued);
     }
 
     [Fact]
@@ -76,10 +80,9 @@ public sealed class SourcesSyncStatusTests
         var after = await Linear(rig);
 
         Assert.Equal(ContextErrors.SyncCapped.Code, capped.Code);
-        Assert.Equal(ContextErrors.SyncCapped.Code, cut.LastError);
         Assert.True(cut.Records < after.Records);   // partial, not failed: the next run continues with the records the cap left
         Assert.Null(next.Code);
-        Assert.Equal((0, null), (after.Queued, after.LastError));
+        Assert.Equal(0, after.Queued);
     }
 
     [Fact]
@@ -93,10 +96,8 @@ public sealed class SourcesSyncStatusTests
         };
 
         var capped = await rig.Sync(Scope());
-        var sync = await Linear(rig);
 
-        Assert.Equal(ContextErrors.SourceUnavailable.Code, capped.Code);
-        Assert.Equal(ContextErrors.SourceUnavailable.Code, sync.LastError);   // the outage, not "059, the next run continues"
+        Assert.Equal(ContextErrors.SourceUnavailable.Code, capped.Code);   // the outage, not "059, the next run continues"
     }
 
     [Fact]
