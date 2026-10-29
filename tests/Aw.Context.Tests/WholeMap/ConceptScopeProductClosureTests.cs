@@ -64,11 +64,12 @@ public sealed class ConceptScopeProductClosureTests
             .Node("surface:offers").Edge("action:offer", EdgeType.On, "surface:offers")
             .Node("feature:payroll", "Payroll").Edge("surface:offers", EdgeType.PartOf, "feature:payroll").Edge("feature:payroll", EdgeType.DependsOn, "feature:swaps")
             .Node("surface:payslips").Edge("surface:payslips", EdgeType.PartOf, "feature:payroll")
-            .Node("code:src/Offer.cs").Edge("code:src/Offer.cs", EdgeType.Writes, "thing:staffing-goal")
+            .Node("code:src/Offer.cs").Edge("code:src/Offer.cs", EdgeType.Implements, "action:offer")
             .Edge("action:set-goal", EdgeType.StepOf, "flow:onboarding").Node("flow:onboarding").Node("surface:welcome").Edge("surface:welcome", EdgeType.StepOf, "flow:onboarding");
 
         var keys = Keys(Ask(world));
 
+        // Levels from the members (decision:goal-rule, feature:swaps): thing:staffing-goal and surface:board are 1, action:set-goal and action:offer 2. code:src/Offer.cs is 3 (past the walk) and never added by the closure.
         // The member feature's own chain is level 2 and so already in; the closure takes action:offer's other surface from there.
         Assert.Contains("action:offer", keys);
         Assert.Contains("surface:offers", keys);
@@ -82,17 +83,22 @@ public sealed class ConceptScopeProductClosureTests
     [Fact, Trait("Lane", "unit")]
     public void The_closure_adds_at_most_its_cap_in_key_order()
     {
-        var world = Staffing();
+        // feature:f is the member; surface:s is level 1 and thing:t level 2, so the 250 writers of thing:t are level 3 and only the closure's back-hop can add them.
+        var world = new ConceptGraph()
+            .Concept("concept:staffing", "Staffing")
+            .Node("feature:f").Member("feature:f", "concept:staffing")
+            .Node("surface:s").Edge("surface:s", EdgeType.PartOf, "feature:f")
+            .Node("thing:t").Edge("surface:s", EdgeType.Writes, "thing:t");
         for (var i = 0; i < 250; i++)
         {
             var writer = $"action:w-{i.ToString("000", CultureInfo.InvariantCulture)}";
-            _ = world.Node(writer).Edge(writer, EdgeType.Writes, "thing:staffing-goal");
+            _ = world.Node(writer).Edge(writer, EdgeType.Writes, "thing:t");
         }
 
         var keys = Keys(Ask(world));
         var writers = keys.Where(k => k.StartsWith("action:w-", StringComparison.Ordinal)).ToHashSet(StringComparer.Ordinal);
 
-        Assert.True(writers.Count <= 200);
+        Assert.Equal(200, writers.Count);
         Assert.Contains("action:w-000", writers);
         Assert.DoesNotContain("action:w-249", writers);
     }
