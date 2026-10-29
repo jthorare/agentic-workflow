@@ -75,6 +75,32 @@ public sealed class ContextIndexCardTests
         Assert.Equal(["Concepts: none yet", "Not embedded yet: 0 records", "Waiting for a name: 0 groups", "Not in any concept: 0 records"], none.Lines.Skip(1).Select(l => l.Text), StringComparer.Ordinal);
     }
 
+    [Theory]
+    [InlineData(-3d, "SND-CONTEXT-030", " · last run 3 min ago (SND-CONTEXT-030)")]
+    [InlineData(-120d, null, " · last run 2 h ago")]
+    [InlineData(null, "SND-CONTEXT-030", " · last run (SND-CONTEXT-030)")]
+    public async Task The_concepts_line_names_the_last_run_and_its_code_without_needing_a_look(double? minutesAgo, string? code, string expected)
+    {
+        var lastRun = minutesAgo is { } m ? Json(_clock.GetUtcNow().AddMinutes(m).ToString("O", CultureInfo.InvariantCulture)) : "null";
+        var card = await ReadWithConcepts(
+            $$"""{"enabled":true,"concepts":0,"multiSource":0,"queued":0,"covered":0,"embedded":0,"pending":0,"coverage":0,"watermark":0,"code":null,"lastRun":{{lastRun}},"lastCode":{{Json(code)}}}""",
+            Source("github", "running", 200));
+
+        Assert.Equal("Concepts: none yet" + expected, card.Lines[1].Text);
+        Assert.Equal(Labels.CodeIndexOk, card.Word);
+    }
+
+    [Fact]
+    public async Task A_server_that_sends_the_last_run_shows_it_from_the_spec_shaped_golden()
+    {
+        _server.IndexStatusAnswer = RouteAnswer.SpecShaped("index-status", "concepts-last-run");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Contains(card.Lines, l => l.Text.StartsWith("Concepts: 101 · 34 cite 2+ sources (33%) · last run ", StringComparison.Ordinal) && l.Text.EndsWith(" (SND-CONTEXT-030)", StringComparison.Ordinal));
+    }
+
     [Fact]
     public async Task A_server_without_concepts_shows_only_the_sources()
     {

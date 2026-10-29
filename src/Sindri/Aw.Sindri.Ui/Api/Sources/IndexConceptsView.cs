@@ -11,6 +11,8 @@ namespace Aw.Sindri.Ui.Api.Sources;
 /// <param name="Coverage">Covered over embedded, 0 to 1; 0 while nothing is embedded.</param>
 /// <param name="Watermark">The embedding sequence the last pass reached.</param>
 /// <param name="Code">Set when the concepts read failed; every count is then 0.</param>
+/// <param name="LastRun">When the last synthesis pass ran, or null when none has or the server doesn't send it yet.</param>
+/// <param name="LastCode">The last pass's code (SND-CONTEXT-030 while there is no map), or null.</param>
 internal sealed record IndexConceptsView(
     bool Enabled,
     int Concepts = 0,
@@ -21,4 +23,6 @@ internal sealed record IndexConceptsView(
     int? Pending = null,
     double Coverage = 0,
     long Watermark = 0,
-    string? Code = null);
+    string? Code = null,
+    DateTimeOffset? LastRun = null,
+    string? LastCode = null);
