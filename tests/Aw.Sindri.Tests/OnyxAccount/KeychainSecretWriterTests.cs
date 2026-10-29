@@ -122,7 +122,7 @@ public sealed class KeychainSecretWriterTests : IDisposable
 
         var result = writer.Store("onyx", "sindri-onyx", Key);
 
-        Assert.Equal(SindriErrors.OnyxSecretNotStored.Code, result.Error.Code);
+        Assert.Equal(SindriErrors.SecretNotStored.Code, result.Error.Code);
         Assert.DoesNotContain(Key, result.Error.Message, StringComparison.Ordinal);
     }
 }

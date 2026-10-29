@@ -1,3 +1,4 @@
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
@@ -46,6 +47,15 @@ internal sealed class FakeIndexSync : IIndexSync
 
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(Standing));
+
+    /// <summary>What <see cref="ConceptStatus"/> answers, unless <see cref="ConceptsFailure"/> is set.</summary>
+    public ConceptStatus Concepts { get; set; } = new(Enabled: false, Concepts: 0, MultiSource: 0, Queued: 0, Covered: 0, Watermark: 0, Embedded: 0, Pending: 0);
+
+    /// <summary>When set, <see cref="ConceptStatus"/> fails with it.</summary>
+    public Error? ConceptsFailure { get; set; }
+
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(ConceptsFailure is { } failure ? (Result<ConceptStatus>)failure : Concepts);
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => ValueTask.FromResult<Result<SourceCounts>>(Held);
 

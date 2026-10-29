@@ -92,6 +92,11 @@ public interface IRecordStore
     /// <returns>The counters.</returns>
     public ValueTask<Result<StoreStamps>> Stamps(CancellationToken cancellationToken);
 
+    /// <summary>Counts the live records (not removed, not blocked) and those with a chunk vector, in two queries, without paging the store.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The counts (zero for an empty store).</returns>
+    public ValueTask<Result<LiveRecordCounts>> LiveCounts(CancellationToken cancellationToken);
+
     /// <summary>Counts what one source holds, so a purge can say what it is about to delete.</summary>
     /// <param name="source">The source.</param>
     /// <param name="cancellationToken">Cancels the read.</param>

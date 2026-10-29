@@ -9899,17 +9899,8 @@ static readonly Aw.Sindri.Core.SindriErrors.SessionsTestOverride -> Aw.Kernel.Er
 static readonly Aw.Sindri.Core.SindriErrors.SessionsUnavailable -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Launch.ViewerRequest.Cwd.get -> string?
 Aw.Sindri.Core.Launch.ViewerRequest.Cwd.init -> void
-static readonly Aw.Sindri.Core.SindriErrors.OnyxPinsMalformed -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxComposeMissing -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxDockerUnavailable -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxNotEnoughResources -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxPortTaken -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Control.ISindriHome
 Aw.Sindri.Core.Control.ISindriHome.Path.get -> string!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxComposeFailed -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxNotReady -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxRemoteDocker -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxWorkspaceUnusable -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.HumanOnly.get -> bool?
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.HumanOnly.init -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor.Runtime.get -> Aw.Sindri.Core.Workflow.Blocks.BlockRuntime?
@@ -11776,9 +11767,7 @@ Aw.Sindri.Core.Secrets.ISecretPrompts.Interactive.get -> bool
 Aw.Sindri.Core.Secrets.ISecretWriter
 Aw.Sindri.Core.Secrets.ISecretWriter.Store(string! service, string! account, string! secret) -> Aw.Kernel.Result<Aw.Sindri.Core.Secrets.SecretPointer!>!
 Aw.Sindri.Core.Secrets.ISecretWriter.StoreInFile(string! service, string! account, string! secret) -> Aw.Kernel.Result<Aw.Sindri.Core.Secrets.SecretPointer!>!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxKeyFailed -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxNotAdmin -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.OnyxSecretNotStored -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Sindri.Core.SindriErrors.SecretNotStored -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Workflow.Engine.Rules.MatchedTransition
 Aw.Sindri.Core.Workflow.Engine.Runtime.RoutedItem
 Aw.Sindri.Core.Workflow.Engine.Runtime.RoutedItem.<Clone>$() -> Aw.Sindri.Core.Workflow.Engine.Runtime.RoutedItem!
@@ -15133,8 +15122,6 @@ static Aw.Sindri.Core.Events.SetupStepChanged.operator !=(Aw.Sindri.Core.Events.
 static Aw.Sindri.Core.Events.SetupStepChanged.operator ==(Aw.Sindri.Core.Events.SetupStepChanged? left, Aw.Sindri.Core.Events.SetupStepChanged? right) -> bool
 static readonly Aw.Sindri.Core.SindriErrors.SetupConfirmationRefused -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.SetupFolderInvalid -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.SetupOnyxCredentialsMissing -> Aw.Kernel.ErrorDefinition!
-static readonly Aw.Sindri.Core.SindriErrors.SetupOnyxNotWaiting -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.SetupRepoExists -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Sindri.Core.SindriErrors.SetupRepoNotInProfile -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Events.SetupStepChanged.State.get -> string!
@@ -20943,3 +20930,4 @@ Aw.Sindri.Core.Leftovers.ILeftoverFiles
 Aw.Sindri.Core.Leftovers.ILeftoverFiles.DeleteDirectory(string! path) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
 Aw.Sindri.Core.Leftovers.ILeftoverFiles.DirectoryExists(string! path) -> bool
 Aw.Sindri.Core.Leftovers.ILeftoverFiles.ReadText(string! path) -> string?
+static readonly Aw.Sindri.Core.SindriErrors.IndexOnyxInProfile -> Aw.Kernel.ErrorDefinition!

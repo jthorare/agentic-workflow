@@ -1,9 +1,9 @@
 namespace Aw.Sindri.Tests.ApiGoldens;
 
-/// <summary>The Context group of API goldens (<see cref="ApiScenarios.Groups"/>), a class of its own so it runs in parallel with the other groups.</summary>
+/// <summary>The Context group of API goldens (<see cref="ApiScenarios.Groups"/>), shard 0 of 6 (the others are the Shard classes beside it), a class of its own so it runs in parallel with the other groups.</summary>
 public sealed class ContextApiGoldenTests
 {
-    public static TheoryData<string, string> Rows() => ApiGoldenRows.Of("Context");
+    public static TheoryData<string, string> Rows() => ApiGoldenRows.Of("Context", 0, 6);
 
     [Theory(Timeout = 30_000), Trait("Lane", "integration")]
     [MemberData(nameof(Rows))]

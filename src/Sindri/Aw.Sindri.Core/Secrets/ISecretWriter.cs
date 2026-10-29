@@ -16,6 +16,6 @@ public interface ISecretWriter
     /// <param name="service">The store name's first part (`sindri-index`).</param>
     /// <param name="account">The store name's second part (`linear`).</param>
     /// <param name="secret">The secret.</param>
-    /// <returns>The `file:` pointer to put in the profile, or SND-ONYX-009.</returns>
+    /// <returns>The `file:` pointer to put in the profile, or SND-SECRET-004.</returns>
     public Result<SecretPointer> StoreInFile(string service, string account, string secret);
 }
