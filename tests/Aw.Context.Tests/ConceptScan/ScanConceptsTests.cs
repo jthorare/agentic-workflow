@@ -97,7 +97,7 @@ public sealed class ScanConceptsTests : IDisposable
         Assert.Equal(2, _world.Model.Requests.Count);
         Assert.All(_world.Model.Requests, static r =>
         {
-            Assert.Equal(ModelPurpose.Concepts, r.Purpose);
+            Assert.Equal(ModelPurpose.ConceptScan, r.Purpose);
             Assert.Equal(ConceptScanLimits.MaxOutputTokens, r.MaxTokens);
             Assert.Equal(ConceptScanLimits.CallTimeout, r.Budget);
             Assert.True(r.Prompt.Length <= ConceptScanLimits.MaxInputChars);
@@ -143,7 +143,12 @@ public sealed class ScanConceptsTests : IDisposable
 
         var report = (await Scan()).Value;
 
-        Assert.All(_world.Model.Requests, static r => Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "haiku" }, r.Models));
+        Assert.All(_world.Model.Requests, static r =>
+        {
+            Assert.Equal(ModelPurpose.ConceptScan, r.Purpose);
+            Assert.Equal(ModelTier.Cheap, r.Tier);
+            Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "haiku" }, r.Models);
+        });
         Assert.Equal(ModelTier.Cheap, report.Tier);
     }
 
@@ -157,7 +162,12 @@ public sealed class ScanConceptsTests : IDisposable
         var report = (await Scan(scope: scope)).Value;
 
         Assert.Equal(ModelTier.Strong, report.Tier);
-        Assert.All(_world.Model.Requests, static r => Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "opus", ["codex"] = "codex-big" }, r.Models));
+        Assert.All(_world.Model.Requests, static r =>
+        {
+            Assert.Equal(ModelPurpose.ConceptScan, r.Purpose);
+            Assert.Equal(ModelTier.Strong, r.Tier);
+            Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["claude"] = "opus", ["codex"] = "codex-big" }, r.Models);
+        });
     }
 
     [Fact, Trait("Lane", "unit")]
