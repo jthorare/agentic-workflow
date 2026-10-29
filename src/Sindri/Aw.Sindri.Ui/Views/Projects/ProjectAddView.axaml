@@ -12,24 +12,39 @@
       <Setter Property="BorderBrush" Value="Transparent" />
     </Style>
     <Style Selector="Border.add-tab.on">
-      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Ink}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Primary}" />
     </Style>
     <Style Selector="ToggleButton.add-tab-button">
       <Setter Property="Background" Value="Transparent" />
       <Setter Property="BorderThickness" Value="0" />
     </Style>
+    <Style Selector="ToggleButton.add-tab-button /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Foreground" Value="{DynamicResource Brush.InkSubtle}" />
+    </Style>
+    <!-- Fluent fills a checked or hovered toggle; an underline tab keeps its ground and says which one is on by its ink and the underline. -->
+    <Style Selector="ToggleButton.add-tab-button:checked /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.add-tab-button:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.add-tab-button:checked:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="Foreground" Value="{DynamicResource Brush.Ink}" />
+    </Style>
+    <Style Selector="Border.add-row">
+      <Setter Property="BorderThickness" Value="0,1,0,0" />
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Hairline}" />
+      <Setter Property="Padding" Value="0,8" />
+    </Style>
   </UserControl.Styles>
   <StackPanel x:Name="ProjectAdd" Spacing="{StaticResource Space.MD}">
-    <StackPanel Orientation="Horizontal" Spacing="16">
-      <Border Classes="add-tab" Classes.on="{Binding IsFromLinear}">
-        <ToggleButton x:Name="ProjectAddTabLinear" Classes="add-tab-button" Content="{Binding FromLinearText}" IsChecked="{Binding IsFromLinear, Mode=OneWay}" Click="OnFromLinear"
-                      AutomationProperties.Name="{Binding FromLinearText}" />
-      </Border>
-      <Border Classes="add-tab" Classes.on="{Binding IsByHand}">
-        <ToggleButton x:Name="ProjectAddTabHand" Classes="add-tab-button" Content="{Binding ByHandText}" IsChecked="{Binding IsByHand, Mode=OneWay}" Click="OnByHand"
-                      AutomationProperties.Name="{Binding ByHandText}" />
-      </Border>
-    </StackPanel>
+    <Border BorderThickness="0,0,0,1" BorderBrush="{DynamicResource Brush.Hairline}">
+      <StackPanel Orientation="Horizontal" Spacing="16">
+        <Border Classes="add-tab" Classes.on="{Binding IsFromLinear}">
+          <ToggleButton x:Name="ProjectAddTabLinear" Classes="add-tab-button" Content="{Binding FromLinearText}" IsChecked="{Binding IsFromLinear, Mode=OneWay}" Click="OnFromLinear"
+                        AutomationProperties.Name="{Binding FromLinearText}" />
+        </Border>
+        <Border Classes="add-tab" Classes.on="{Binding IsByHand}">
+          <ToggleButton x:Name="ProjectAddTabHand" Classes="add-tab-button" Content="{Binding ByHandText}" IsChecked="{Binding IsByHand, Mode=OneWay}" Click="OnByHand"
+                        AutomationProperties.Name="{Binding ByHandText}" />
+        </Border>
+      </StackPanel>
+    </Border>
 
     <StackPanel x:Name="ProjectAddLinear" Spacing="6" IsVisible="{Binding IsFromLinear}">
       <TextBox x:Name="ProjectAddSearch" Text="{Binding LinearSearch, Mode=TwoWay}" PlaceholderText="{Binding SearchLabel}" AutomationProperties.Name="{Binding SearchLabel}" />
@@ -40,13 +55,15 @@
       <ItemsControl x:Name="ProjectAddLinearRows" ItemsSource="{Binding LinearRows}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="pvm:ProjectLinearRowViewModel">
-            <Grid ColumnDefinitions="*,Auto" Margin="0,4">
-              <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
-                <TextBlock Classes="body" Text="{Binding Name}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-                <TextBlock Classes="caption subtle" Text="{Binding Detail}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-              </StackPanel>
-              <Button Grid.Column="1" Content="{Binding AttachText}" IsEnabled="{Binding CanAttach}" Click="OnAttach" AutomationProperties.Name="{Binding AttachName}" />
-            </Grid>
+            <Border Classes="add-row">
+              <Grid ColumnDefinitions="*,Auto">
+                <StackPanel Grid.Column="0" Spacing="2" VerticalAlignment="Center">
+                  <TextBlock Classes="body" Text="{Binding Name}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBlock Classes="caption subtle" Text="{Binding Detail}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                </StackPanel>
+                <Button Grid.Column="1" Content="{Binding AttachText}" IsEnabled="{Binding CanAttach}" Click="OnAttach" AutomationProperties.Name="{Binding AttachName}" />
+              </Grid>
+            </Border>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
