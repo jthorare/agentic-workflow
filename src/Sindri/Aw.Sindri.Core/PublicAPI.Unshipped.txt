@@ -20943,3 +20943,4 @@ Aw.Sindri.Core.Leftovers.ILeftoverFiles
 Aw.Sindri.Core.Leftovers.ILeftoverFiles.DeleteDirectory(string! path) -> Aw.Kernel.Result<Aw.Kernel.Unit>!
 Aw.Sindri.Core.Leftovers.ILeftoverFiles.DirectoryExists(string! path) -> bool
 Aw.Sindri.Core.Leftovers.ILeftoverFiles.ReadText(string! path) -> string?
+static readonly Aw.Sindri.Core.SindriErrors.IndexOnyxInProfile -> Aw.Kernel.ErrorDefinition!
