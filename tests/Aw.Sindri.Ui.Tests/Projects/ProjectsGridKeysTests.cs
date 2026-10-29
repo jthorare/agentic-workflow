@@ -141,16 +141,14 @@ public sealed class ProjectsGridKeysTests : FrameHost
     });
 
     [Fact]
-    public Task Enter_on_a_card_is_not_taken_by_the_grid() => OnUi(async () =>
+    public Task Enter_on_a_card_is_left_to_the_card_which_opens_its_sheet() => OnUi(async () =>
     {
-        var (window, _) = await OnProjects();
+        var (window, shell) = await OnProjects();
         FocusCard(window, "B");
 
-        var seen = false;
-        window.AddHandler(InputElement.KeyDownEvent, (_, e) => seen |= e.Key == Key.Enter && !e.Handled, Avalonia.Interactivity.RoutingStrategies.Bubble);
         Press(window, PhysicalKey.Enter);
 
-        Assert.True(seen);
+        Assert.True(shell.ProjectSheet.IsShown);
     });
 
     [Fact]

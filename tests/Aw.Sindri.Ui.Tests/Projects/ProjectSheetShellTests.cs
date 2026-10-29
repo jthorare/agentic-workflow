@@ -100,7 +100,7 @@ public sealed class ProjectSheetShellTests
         await Until(() => shell.ProjectSheet.IsShown);
         var reads = _server.ProjectsRead.Count;
 
-        await shell.Health.Refresh(Token);
+        await shell.Health.RefreshViews(shell.Health.ApiUrl()!, Token);   // why: what an event runs; Refresh alone reads only health
 
         await Until(() => _server.ProjectsRead.Count > reads);
     }, Token);
