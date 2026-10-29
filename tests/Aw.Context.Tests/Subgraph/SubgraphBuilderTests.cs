@@ -207,4 +207,15 @@ public sealed class SubgraphBuilderTests
     [InlineData(99)]
     public void A_depth_past_the_old_cap_widens_and_one_past_8_is_read_as_8(int depth) =>
         Assert.True(SubgraphBuilder.Build(_basis, Graph(), [A], depth, []).IsSuccess);
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_code_band_skips_file_nodes_the_extractor_did_not_read()
+    {
+        var unread = new GraphNode(NodeKey.From("code:setup.sh"), "setup.sh", Attributes: UnreadFileNodes.Attributes());
+        var graph = new GraphSnapshot([.. Graph().Nodes, unread], [.. Graph().Edges, new GraphEdge(NodeKey.From(Rec), NodeKey.From("code:setup.sh"), EdgeType.Mentions)], [], []);
+
+        var view = Of([Rec, "code:setup.sh"], graph: graph);
+
+        Assert.Empty(view.Bands.Code.Files);
+    }
 }
