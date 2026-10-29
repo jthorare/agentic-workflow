@@ -37,6 +37,13 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         return ToFile(service, account, secret);
     }
 
+    /// <inheritdoc />
+    public Result<SecretPointer> StoreInFile(string service, string account, string secret)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+        return ToFile(service, account, secret);
+    }
+
     // The secret goes into a command line parsed by `security -i`, so only a plain token (what Onyx's keys are) is sent that way; anything else takes the file.
     private static bool IsPlain(string secret) => secret.Length > 0 && secret.All(static c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '~' or '+' or '/' or '=' or '-');
 

@@ -27,6 +27,19 @@ public sealed class FakeSecretWriter : ISecretWriter, ISecretPointers
     }
 
     /// <inheritdoc />
+    public Result<SecretPointer> StoreInFile(string service, string account, string secret)
+    {
+        if (Fails)
+        {
+            return SindriErrors.OnyxSecretNotStored.With("no store took the key");
+        }
+
+        var pointer = SecretPointer.Parse($"file:/fake-secrets/{service}-{account}").Value;
+        Stored[pointer.ToString()] = secret;
+        return pointer;
+    }
+
+    /// <inheritdoc />
     public Result<string> Resolve(SecretPointer secretPointer)
         => Stored.TryGetValue(secretPointer.ToString(), out var value) ? value : SindriErrors.SecretUnresolved.With("not stored");
 }

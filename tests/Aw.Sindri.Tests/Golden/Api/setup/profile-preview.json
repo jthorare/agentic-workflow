@@ -84,7 +84,7 @@
       "title": "Connect your sources",
       "state": "todo",
       "why": "No source is connected yet.",
-      "detail": "Connect GitHub or Slack so Sindri can read your issues and chat.",
+      "detail": "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.",
       "error": null,
       "action": "ConnectIndexSource",
       "progress": null,
