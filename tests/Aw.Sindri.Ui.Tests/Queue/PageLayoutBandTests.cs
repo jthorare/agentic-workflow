@@ -1,8 +1,8 @@
 using System.Globalization;
+using Avalonia.Headless;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.Layout;
-using Avalonia.Headless;
 
 namespace Aw.Sindri.Ui.Tests.Queue;
 
