@@ -899,6 +899,8 @@ U9 builds the Context page in stages that run in parallel after U9a0: the lens s
 
 **Tests.** `ContextGoldenTests`, `SindriApiClientContextTests`, the context cases of the API contract (`SindriApiContract.Context.cs`, fake and client), `ContextPageViewModelTests`, `LaneAnchorTests` (unit); `ContextPageWindowTests` (integration, one window).
 
+**Search on the Concepts layer (#1699).** Enter in the anchor box at the concept layer keeps a concept card only when it matches: its name, summary or one of its glossary terms holds the typed text (case-insensitive), or it holds a node the question resolved to (`/sindri/context/query` returned real anchors, located through the whole map's `areas` read). A concept linked to a match is not a match. When the question finds no anchors, its suggested anchors are never matches, on this layer or on the whole map: the typed text is read as one anchor (a label), and the suggestions are offered as choices under "did you mean". No match shows no cards and the no-matches line; Clear search brings every card back. A newer search wins over an older one still in flight, and a background refresh does not redraw the cards while the search is on. Tests: `ConceptSearchTests`, `ContextConceptsTests`, `ContextQuestionTests`; the UI check `tests/ui-checks/concept-search.sh`.
+
 ## U11a: the Agents page, the session sheet and the tray line
 
 The contract (T0): `GET /sindri/sessions` and `GET /sindri/sessions/{provider}/{id}` (`ISindriApi.Sessions`, `.Session`), the `Api/Sessions` records, the fake and the handler arms, and the `session/<provider>/<id>` deep link.

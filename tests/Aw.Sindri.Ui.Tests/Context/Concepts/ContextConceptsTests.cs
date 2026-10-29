@@ -148,15 +148,30 @@ public sealed class ContextConceptsTests
     }
 
     [Fact]
-    public async Task A_search_at_the_concept_layer_keeps_the_concepts_that_match_and_their_links()
+    public async Task A_search_at_the_concept_layer_keeps_only_the_concepts_that_match()
     {
         var page = await ConceptPage.Shown(ConceptPage.Serving(AConcepts.Three()));
 
         page.AnchorText = "scheduling";
         await page.Submit(Token);
 
-        Expect.Sequence(["Self scheduling", "Billing"], page.Concepts.Tiles.Select(t => t.Name));   // why: Billing is linked to the match
+        Expect.Sequence(["Self scheduling"], page.Concepts.Tiles.Select(t => t.Name));   // why: Billing is linked to the match, and a link is not a match (#1699)
         Expect.Equal((true, false), (page.Concepts.SearchActive, page.Concepts.NoMatches));
+    }
+
+    [Fact]
+    public async Task A_search_that_matches_nothing_offers_the_questions_suggestions_and_keeps_no_concept()
+    {
+        var api = ConceptPage.Serving(AConcepts.Three());
+        api.QueryAnswer = _ => FakeSindriApi.QueryAnchorsBody([], ["surface:command/switch-tab"]);
+        var page = await ConceptPage.Shown(api);
+
+        page.AnchorText = "zebra stripes";
+        await page.Submit(Token);
+
+        Expect.Equal((true, 0), (page.Concepts.NoMatches, page.Concepts.Tiles.Count));
+        Assert.Equal(["surface:command/switch-tab"], page.Choices);
+        Expect.True(api.WholeMapAsked.All(q => !q.Locate.Contains("surface:command/switch-tab", StringComparer.Ordinal)));   // why: a suggestion is never located as a hit
     }
 
     [Fact]
