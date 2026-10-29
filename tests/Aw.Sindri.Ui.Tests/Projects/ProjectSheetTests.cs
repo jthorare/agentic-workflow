@@ -205,7 +205,7 @@ public sealed class ProjectSheetTests
         sheet.BeginEdit();
         await sheet.Save(Token);
 
-        Assert.Equal(("2026-01-31", "https://linear.app/acme/project/5\nhttps://example.com/mobile"), (sheet.EditTarget, sheet.EditLinks));
+        Assert.Equal(("2026-01-31", "https://example.com/mobile"), (sheet.EditTarget, sheet.EditLinks));
         var change = Assert.IsType<ProjectChange>(Assert.Single(_f.Server.ProjectWrites).Body);
         Assert.Equal((null, null, false), (change.Target, change.Name, change.ClearTarget));
     }

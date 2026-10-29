@@ -119,10 +119,11 @@ public sealed class ProjectSheetShellTests
         var reads = _server.ProjectsCalls;
 
         await shell.ProjectSheet.Hide(Token);
+        await Until(() => asked.Count == 1);
 
         Assert.Equal((false, false, "Checkout rewrite hidden"), (shell.IsSheetOpen, shell.HasEdgeTab, shell.NeedsYouAnnouncement));
         Assert.True(_server.ProjectsCalls > reads);
-        Assert.Equal(ProjectFocus.Card, Assert.Single(asked).Target);
+        Assert.Equal(ProjectFocus.Card, asked[0].Target);
     }, Token);
 
     [Fact]

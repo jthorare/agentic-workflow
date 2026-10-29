@@ -3,9 +3,9 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// <summary>One link on a project's sheet: clickable when it may be, else plain text.</summary>
 internal sealed class ProjectLinkItem
 {
-    private readonly Func<Uri, CancellationToken, Task> _open;
+    private readonly Func<Uri, CancellationToken, Task<bool>> _open;
 
-    internal ProjectLinkItem(string text, string url, bool canOpen, Func<Uri, CancellationToken, Task> open)
+    internal ProjectLinkItem(string text, string url, bool canOpen, Func<Uri, CancellationToken, Task<bool>> open)
     {
         (Text, Url, CanOpen, _open) = (text, url, canOpen, open);
     }
@@ -22,6 +22,11 @@ internal sealed class ProjectLinkItem
     /// <summary>Opens the link in the system's browser; nothing when it is not clickable.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that completes when the system has taken it.</returns>
-    internal Task Open(CancellationToken cancellationToken) =>
-        CanOpen && Uri.TryCreate(Url, UriKind.Absolute, out var uri) ? _open(uri, cancellationToken) : Task.CompletedTask;
+    internal async Task Open(CancellationToken cancellationToken)
+    {
+        if (CanOpen && Uri.TryCreate(Url, UriKind.Absolute, out var uri))
+        {
+            _ = await _open(uri, cancellationToken).ConfigureAwait(true);
+        }
+    }
 }

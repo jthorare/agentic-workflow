@@ -15,6 +15,15 @@ internal static partial class Labels
     /// <summary>The note under a sheet whose refresh failed: the reason follows.</summary>
     internal static string ProjectSheetStale(Aw.Kernel.Error error) => "Couldn't refresh this project just now. " + InstanceRefused(error);
 
+    /// <summary>The sheet when the answer can't be read.</summary>
+    internal const string ProjectsUnreadable = "This project can't be read from this Sindri.";
+
+    /// <summary>The issue count before it is final.</summary>
+    internal const string ProjectIssuesCounting = "Counting open issues…";
+
+    /// <summary>"Active 2h ago".</summary>
+    internal static string ProjectActiveOn(TimeSpan age) => "Active " + ProjectActive(age);
+
     /// <summary>The Edit button.</summary>
     internal const string ProjectEdit = "Edit";
 

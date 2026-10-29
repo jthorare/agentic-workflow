@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Instance;
@@ -12,25 +13,34 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// <param name="api">The API.</param>
 /// <param name="launcher">Opens a link in the system's browser.</param>
 /// <param name="clock">The clock.</param>
-internal sealed class ProjectSheetViewModel(ISindriApi api, ILauncher launcher, TimeProvider clock) : ObservableObject
+internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher launcher, TimeProvider clock) : ObservableObject
 {
-#pragma warning disable CA1823, CS0414, IDE0052 // the stub holds them for the next commit
-    private readonly (ISindriApi, ILauncher, TimeProvider) _ports = (api, launcher, clock);
-#pragma warning restore CA1823, CS0414, IDE0052
+    private readonly TimeProvider _clock = clock;
+    private Uri? _url;
+    private int _generation;
+    private ProjectOne? _one;
 
-#pragma warning disable CS0067 // the stub raises neither yet
     /// <summary>Asking to remove puts focus on Keep: the view moves it.</summary>
     internal event EventHandler? KeepFocusRequested;
 
     /// <summary>A write took the card off the page (or back).</summary>
     internal event EventHandler<ProjectDoneEventArgs>? Done;
-#pragma warning restore CS0067
 
     /// <summary>The project's id, unescaped; empty before the first.</summary>
     public string Id { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>Where the read stands.</summary>
-    public FramePhase Phase { get; private set => Set(ref field, value); }
+    public FramePhase Phase
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(IsShown));
+            OnChanged(nameof(IsLoading));
+            OnChanged(nameof(IsProblem));
+        }
+    }
 
     /// <summary>True while a project is shown.</summary>
     public bool IsShown => Phase == FramePhase.Shown;
@@ -140,7 +150,15 @@ internal sealed class ProjectSheetViewModel(ISindriApi api, ILauncher launcher, 
     public string EditLinks { get; set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True while a write is in flight.</summary>
-    public bool IsSaving { get; private set => Set(ref field, value); }
+    public bool IsSaving
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(SaveText));
+        }
+    }
 
     /// <summary>"Save", or "Saving…" while the write is in flight.</summary>
     public string SaveText => IsSaving ? Labels.ProjectSaving : Labels.ProjectSave;
@@ -162,65 +180,82 @@ internal sealed class ProjectSheetViewModel(ISindriApi api, ILauncher launcher, 
 
     /// <summary>Names the project now, before any read.</summary>
     /// <param name="subject">The deep link's subject: the id, url-escaped as one segment.</param>
-    internal void Show(string subject) => throw new NotSupportedException();
+    internal void Show(string subject)
+    {
+        var id = Uri.UnescapeDataString(subject);
+        if (string.Equals(id, Id, StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _generation++;
+        Clear();
+        Id = id;
+        Phase = FramePhase.Loading;
+    }
 
     /// <summary>Reads the project behind a subject and shows it.</summary>
     /// <param name="url">The base URL.</param>
     /// <param name="subject">The deep link's subject.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that ends when the read has been drawn.</returns>
-    internal Task Open(Uri url, string subject, CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal Task Open(Uri url, string subject, CancellationToken cancellationToken)
+    {
+        Show(subject);
+        _url = url;
+        return Read(cancellationToken);
+    }
 
-    /// <summary>Reads the open project again (every event while the sheet is open); an edit in progress keeps its fields.</summary>
+    /// <summary>Reads the open project again (every event while the sheet is open); an edit or a write in progress keeps what it has.</summary>
     /// <param name="url">The base URL.</param>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that ends when the read has been drawn.</returns>
-    internal Task Refresh(Uri url, CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal Task Refresh(Uri url, CancellationToken cancellationToken)
+    {
+        _url = url;
+        return Id.Length == 0 || IsEditing || IsSaving ? Task.CompletedTask : Read(cancellationToken);
+    }
 
     /// <summary>Reads the card again after a conflict, dropping the form.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>A task that ends when the read has been drawn.</returns>
-    internal Task Reload(CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal Task Reload(CancellationToken cancellationToken)
+    {
+        (IsEditing, IsConfirmingRemove, IsConflict, SaveError) = (false, false, false, string.Empty);
+        return Read(cancellationToken);
+    }
 
     /// <summary>Opens the edit form with the card's values.</summary>
-    internal void BeginEdit() => throw new NotSupportedException();
+    internal void BeginEdit()
+    {
+        if (_one is not { } one || !CanEdit)
+        {
+            return;
+        }
+
+        (EditName, EditTarget, EditLinks) = (one.Project.Name, one.Project.Target ?? string.Empty, string.Join('\n', OwnerLinks(one.Project)));
+        (SaveError, IsConflict, IsEditing) = (string.Empty, false, true);
+    }
 
     /// <summary>Closes the form without saving.</summary>
-    internal void CancelEdit() => throw new NotSupportedException();
-
-    /// <summary>Saves the form's fields.</summary>
-    /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>A task that ends when the answer is drawn.</returns>
-    internal Task Save(CancellationToken cancellationToken) => throw new NotSupportedException();
-
-    /// <summary>Sets the owner's state to the picked one.</summary>
-    /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>A task that ends when the answer is drawn.</returns>
-    internal Task SetState(CancellationToken cancellationToken) => throw new NotSupportedException();
-
-    /// <summary>Gives the state back to Linear's.</summary>
-    /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>A task that ends when the answer is drawn.</returns>
-    internal Task ClearState(CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal void CancelEdit() => (IsEditing, SaveError, IsConflict) = (false, string.Empty, false);
 
     /// <summary>Asks "Remove … from your page?"; focus goes to Keep.</summary>
-    internal void AskRemove() => throw new NotSupportedException();
+    internal void AskRemove()
+    {
+        if (!CanRemove)
+        {
+            return;
+        }
+
+        (RemoveQuestion, SaveError, IsConflict, IsConfirmingRemove) = (Labels.ProjectRemoveQuestion(Heading), string.Empty, false, true);
+        KeepFocusRequested?.Invoke(this, EventArgs.Empty);
+    }
 
     /// <summary>Keeps the project: the question closes.</summary>
-    internal void Keep() => throw new NotSupportedException();
+    internal void Keep() => (IsConfirmingRemove, SaveError, IsConflict) = (false, string.Empty, false);
 
-    /// <summary>Removes the attachment.</summary>
-    /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>A task that ends when the answer is drawn.</returns>
-    internal Task Remove(CancellationToken cancellationToken) => throw new NotSupportedException();
+    private ISindriApi Api { get; } = api;
 
-    /// <summary>Hides the led project.</summary>
-    /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>A task that ends when the answer is drawn.</returns>
-    internal Task Hide(CancellationToken cancellationToken) => throw new NotSupportedException();
-
-    /// <summary>Brings a hidden project back.</summary>
-    /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>A task that ends when the answer is drawn.</returns>
-    internal Task Unhide(CancellationToken cancellationToken) => throw new NotSupportedException();
+    private ILauncher Launcher { get; } = launcher;
 }
