@@ -4,7 +4,7 @@ using Aw.Kernel.Data.Processes;
 
 namespace Aw.Kernel.Data.Tests;
 
-[Trait("Lane", "unit")]
+[Trait("Lane", "integration")]
 public sealed class PinnedProcessTests
 {
     [Fact]
