@@ -18,10 +18,10 @@ public sealed class ProjectDecisionsTests
     private static ProjectDraft Hand(string? name = "Kitchen", IReadOnlyList<string>? links = null, string? note = null, ProjectState? state = null) =>
         new(Linear: null, name, state, links, note);
 
-    private Aw.Kernel.Result<Aw.Sindri.Core.Events.ProjectAttached> Attach(ProjectDraft draft, IReadOnlyList<ProjectAttachedRow>? attached = null, bool led = false) =>
+    private Kernel.Result<Core.Events.ProjectAttached> Attach(ProjectDraft draft, IReadOnlyList<ProjectAttachedRow>? attached = null, bool led = false) =>
         ProjectDecisions.Attach(_command, ProjectRows.HandMadeId, draft, attached ?? [], led);
 
-    private static void RefusedOn(string field, Aw.Kernel.Error error)
+    private static void RefusedOn(string field, Kernel.Error error)
     {
         Expect.Equal(SindriErrors.ProjectInvalid.Code, error.Code);
         Expect.True(error.Message.StartsWith(field + ":", StringComparison.Ordinal));
