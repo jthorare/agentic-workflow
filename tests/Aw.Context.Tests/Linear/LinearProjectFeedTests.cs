@@ -199,7 +199,7 @@ public sealed class LinearProjectFeedTests
         var scrubbers = new FakeScrubberFactory().For([]).Value;
         var context = (new ContextSettings(), scrubbers);
 
-        var after = await decisions.For(MapWorld.Human, context, [], TestContext.Current.CancellationToken);
+        var after = await decisions.For(MapWorld.Human, context, TestContext.Current.CancellationToken);
 
         Assert.Null(after(new FakeRecordFeed(LinearSourceIds.Projects, [])));
         Assert.NotNull(after(new FakeRecordFeed(LinearSourceIds.Issues, [])));
