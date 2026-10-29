@@ -158,7 +158,7 @@ public sealed class ProjectNotesTests
     }
 
     [Fact]
-    public async Task A_409_keeps_the_typed_text_until_Reload_replaces_it()
+    public async Task A_409_keeps_the_typed_text_and_Reload_shows_the_newer_notes_beside_it()
     {
         var card = await LedCard();
         _f.Server.ProjectWriteAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-PROJECT-409", "The project changed.");
@@ -173,9 +173,45 @@ public sealed class ProjectNotesTests
         ReadsBack(card, "theirs", 3);
         await card.Reload(Token);
 
-        Assert.Equal((false, "theirs", 3L, "theirs"), (card.IsConflict, card.Draft, card.Version, card.NotesText));
+        Assert.Equal((false, "mine", 3L, "theirs"), (card.IsConflict, card.Draft, card.Version, card.NotesText));   // #1710: what the owner typed is never thrown away
+        Assert.Equal((true, "theirs", true), (card.HasNewerNotes, card.NewerNotes, card.CanSave));
         Assert.True(card.IsEditing);
         Assert.Equal([Led], _f.Server.ProjectsRead);
+    }
+
+    [Fact]
+    public async Task After_Reload_Save_sends_the_draft_at_the_newer_version_and_the_newer_notes_go()
+    {
+        var card = await LedCard();
+        _f.Server.ProjectWriteAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-PROJECT-409", "The project changed.");
+        card.BeginEdit();
+        card.Draft = "mine";
+        await card.Save(Token);
+        ReadsBack(card, "theirs", 3);
+        await card.Reload(Token);
+        _f.Server.ProjectWriteAnswer = null;
+
+        await card.Save(Token);
+
+        var sent = Assert.IsType<ProjectChange>(_f.Server.ProjectWrites[^1].Body);
+        Assert.Equal(("mine", 3L), (sent.Notes, sent.Version));
+        Assert.Equal((false, null), (card.HasNewerNotes, card.NewerNotes));
+    }
+
+    [Fact]
+    public async Task Cancel_after_Reload_drops_the_newer_notes_line()
+    {
+        var card = await LedCard();
+        _f.Server.ProjectWriteAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-PROJECT-409", "The project changed.");
+        card.BeginEdit();
+        card.Draft = "mine";
+        await card.Save(Token);
+        ReadsBack(card, "theirs", 3);
+        await card.Reload(Token);
+
+        card.CancelEdit();
+
+        Assert.Equal((false, null, "theirs"), (card.HasNewerNotes, card.NewerNotes, card.Draft));
     }
 
     [Fact]
