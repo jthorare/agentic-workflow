@@ -3,7 +3,7 @@ using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Tests.Linear;
 
-/// <summary>The canonical keys of the native Linear adapter's records (spec §5.1, D16): one key per record, shared with Onyx's issues.</summary>
+/// <summary>The canonical keys of the native Linear adapter's records (spec §5.1, D16): one key per record.</summary>
 public sealed class LinearRecordKeysTests
 {
     private const string Id = "0E5A1B00-0000-4000-8000-000000000105";
