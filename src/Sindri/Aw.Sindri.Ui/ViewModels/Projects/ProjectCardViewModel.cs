@@ -48,6 +48,9 @@ internal sealed class ProjectCardViewModel : ObservableObject
     /// <summary>The open PR count, or null.</summary>
     public string? PrsValue { get; private set => Set(ref field, value); }
 
+    /// <summary>True when there is an issue count or a PR count to show: a card with neither draws no counts row.</summary>
+    public bool HasCounts => IssuesValue is not null || PrsValue is not null;
+
     /// <summary>"open PRs", the label under the PR count.</summary>
 #pragma warning disable CA1822, MA0041 // a fixed word is a property because the view binds it
     public string PrsLabel => Labels.ProjectPrsLabel;
@@ -101,6 +104,7 @@ internal sealed class ProjectCardViewModel : ObservableObject
             ? ("…", "counting")
             : Card.OpenIssues is { } issues ? (issues.ToString(CultureInfo.InvariantCulture), "open issues") : (null, null);
         PrsValue = Card.OpenPrs?.ToString(CultureInfo.InvariantCulture);
+        OnChanged(nameof(HasCounts));
         NotesFace = Face(Card.Note);
         IsGone = !Card.Synced;
         Footer = Parts();

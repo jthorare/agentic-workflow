@@ -42,7 +42,7 @@ public sealed class ProjectsFramesTests : FrameHost
     [Fact]
     public Task The_Finished_fold_open() => OnUi(async () =>
     {
-        var (window, shell) = await OnProjects("mixed", 1440, 900);
+        var (window, shell) = await OnProjects("mixed", 1440, 1200);   // tall enough to show the open fold whole
         shell.Projects.Finished.Toggle();
         Settle(window);
 

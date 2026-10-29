@@ -34,10 +34,13 @@
       <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
     </UniformGrid>
 
-    <Border x:Name="ProjectsBanner" Classes="card" IsVisible="{Binding IsBanner}">
-      <Border x:Name="ProjectsBannerName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
-        <TextBlock Classes="body muted" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
-      </Border>
+    <Border x:Name="ProjectsBanner" Classes="card" Background="{DynamicResource Brush.ErrorSoft}" BorderBrush="{DynamicResource Brush.Error}" IsVisible="{Binding IsBanner}">
+      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+        <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Error}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        <Border x:Name="ProjectsBannerName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body" Foreground="{DynamicResource Brush.Ink}" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
     </Border>
 
     <Panel x:Name="ProjectsEmptyBlock" IsVisible="{Binding IsEmptyBlock}">

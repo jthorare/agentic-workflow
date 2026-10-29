@@ -160,4 +160,14 @@ public sealed class ProjectCardTests
         Assert.Same(card, page.Groups[0].Cards[0]);
         Assert.Equal("9", card.IssuesValue);
     }
+
+    [Fact]
+    public async Task A_card_has_counts_when_it_has_an_issue_count_or_a_PR_count_and_none_otherwise()
+    {
+        var page = await _f.Shown(Token);
+
+        Assert.Equal([true, false, true], page.Groups.Select(g => g.Cards[0].HasCounts));
+        Assert.False((await _f.FirstCard(c => c["openIssues"] = null, Token)).HasCounts);
+        Assert.True((await _f.FirstCard(c => { c["openIssues"] = null; c["openPrs"] = 2; }, Token)).HasCounts);
+    }
 }

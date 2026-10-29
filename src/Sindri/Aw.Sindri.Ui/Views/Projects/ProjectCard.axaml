@@ -26,15 +26,13 @@
   <Border x:Name="ProjectCardFrame" Classes="card pcard" Classes.gone="{Binding IsGone}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <StackPanel Spacing="{StaticResource Space.SM}">
-      <Grid ColumnDefinitions="*,Auto">
-        <StackPanel Orientation="Horizontal" Spacing="6" AutomationProperties.AccessibilityView="Raw">
-          <TextBlock x:Name="ProjectCardName" Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
-          <Border BorderThickness="1" BorderBrush="{DynamicResource Brush.HairlineStrong}" CornerRadius="{StaticResource Radius.XS}" Padding="6,1" VerticalAlignment="Center"
-                  IsVisible="{Binding OriginChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
-            <TextBlock Classes="caption subtle" Text="{Binding OriginChip}" />
-          </Border>
-        </StackPanel>
-        <StackPanel Grid.Column="1" IsVisible="{Binding !NamesOnly}" Margin="8,0,0,0" AutomationProperties.AccessibilityView="Raw">
+      <Grid ColumnDefinitions="*,Auto,Auto" AutomationProperties.AccessibilityView="Raw">
+        <TextBlock x:Name="ProjectCardName" Classes="body-strong" Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center" />
+        <Border Grid.Column="1" Margin="6,0,0,0" BorderThickness="1" BorderBrush="{DynamicResource Brush.HairlineStrong}" CornerRadius="{StaticResource Radius.XS}" Padding="6,1" VerticalAlignment="Center"
+                IsVisible="{Binding OriginChip, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
+          <TextBlock Classes="caption subtle" Text="{Binding OriginChip}" />
+        </Border>
+        <StackPanel Grid.Column="2" IsVisible="{Binding !NamesOnly}" Margin="8,0,0,0">
           <StackPanel x:Name="ProjectCardHealth" Orientation="Horizontal" Spacing="6" VerticalAlignment="Center"
                       IsVisible="{Binding HealthWord, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
             <Ellipse Classes="dot"
@@ -46,7 +44,7 @@
         </StackPanel>
       </Grid>
       <StackPanel IsVisible="{Binding !NamesOnly}" Spacing="{StaticResource Space.SM}" AutomationProperties.AccessibilityView="Raw">
-        <StackPanel x:Name="ProjectCardStats" Orientation="Horizontal" Spacing="{StaticResource Space.LG}">
+        <StackPanel x:Name="ProjectCardStats" Orientation="Horizontal" Spacing="{StaticResource Space.LG}" IsVisible="{Binding HasCounts}">
           <StackPanel IsVisible="{Binding IssuesValue, Converter={x:Static StringConverters.IsNotNullOrEmpty}}">
             <TextBlock FontSize="22" FontWeight="SemiBold" LetterSpacing="-0.4" Text="{Binding IssuesValue}" />
             <TextBlock Classes="caption subtle" Text="{Binding IssuesLabel}" />
