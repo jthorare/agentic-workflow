@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Projects;
+using Aw.Sindri.Core.Projects.Vocabulary;
 
 namespace Aw.Sindri.Tests.Projects;
 
