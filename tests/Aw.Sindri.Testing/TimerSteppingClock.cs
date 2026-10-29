@@ -57,7 +57,7 @@ public sealed class TimerSteppingClock(DateTimeOffset start) : FakeTimeProvider(
         do
         {
             seen = Volatile.Read(ref _created);
-            await Task.Delay(_quiet, TimeProvider.System, cancellationToken).ConfigureAwait(false);
+            await Task.Delay(_quiet, System, cancellationToken).ConfigureAwait(false);   // why: System is the inherited real clock; the pause is real time
         }
         while (Volatile.Read(ref _created) != seen);
     }
