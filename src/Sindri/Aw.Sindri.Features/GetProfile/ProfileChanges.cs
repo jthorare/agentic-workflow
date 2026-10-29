@@ -39,7 +39,7 @@ internal sealed record ProfileChanges(IReadOnlyList<RepoEntry> NewRepos, IReadOn
     /// <returns>The sentences.</returns>
     public static IReadOnlyList<string> RepoSentences(string name, string path) =>
     [
-        $"Sindri will read {path} and send what it reads to your Onyx and to the map cleanup agent",
+        $"Sindri will read {path} and send what it reads to the map cleanup agent",
         $"Sindri will write its MCP settings into {name} for Claude Code, Codex and Cursor",
         $"Sindri will keep {name}'s map up to date on its own",
     ];

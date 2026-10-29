@@ -37,7 +37,8 @@ public sealed class ConceptNamerNoteTests
             new ModelConceptNamer(model, new RedactionScrubberFactory(new FakeTimeProvider())),
             new DisabledSymbolVectors(),
             new FakeConceptHintStore(),
-            new FakeGraphStore()).Run(
+            new FakeGraphStore(),
+            new Testing.ConceptSynthesis.FakeConceptSynthesisStore()).Run(
             new ContextSettings { Labeling = new LabelingSettings { Enabled = true, MaxTokens = maxTokens } }, Product(), [], _repos, Ct);
 
     [Fact]

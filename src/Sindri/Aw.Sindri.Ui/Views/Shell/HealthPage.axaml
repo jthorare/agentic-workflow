@@ -6,6 +6,7 @@
              xmlns:controls="using:Aw.Sindri.Ui.ViewModels.Controls"
              xmlns:api="using:Aw.Sindri.Ui.Api"
              xmlns:ccontrols="using:Aw.Sindri.Ui.Views.Controls"
+             xmlns:sandbox="using:Aw.Sindri.Ui.Views.Sandbox"
              x:Class="Aw.Sindri.Ui.Views.Shell.HealthPage"
              x:DataType="shell:HealthViewModel">
   <UserControl.Styles>
@@ -279,6 +280,8 @@
             </StackPanel>
           </Border>
         </Border>
+        <!-- Sandbox (sandbox spec 8): the row "Sandbox: <state>" and, while it is blocked or never checked, Check again. -->
+        <sandbox:SandboxHealthCard x:Name="SandboxCard" DataContext="{Binding Sandbox}" />
 
         <Border x:Name="AgentsCard" Classes="panel" Width="440" Margin="0,0,12,12">
           <Border Classes="section last">

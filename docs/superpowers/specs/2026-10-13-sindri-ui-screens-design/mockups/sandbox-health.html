@@ -1,0 +1,417 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sindri Sandbox health</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --canvas:#010102;
+  --s1:#0f1011; --s2:#141516; --s3:#18191a; --s4:#191a1b;
+  --line1:#23252a; --line2:#34343a; --line3:#3e3e44;
+  --ink:#f7f8f8; --ink-muted:#d0d6e0; --ink-subtle:#8a8f98; --ink-tertiary:#62666d;
+  --on-primary:#fbfbfd; /* tinted near-white, never pure white: 4.6:1 on --brand (--ink lands at 4.4:1) */
+  --brand:#5e6ad2; --brand-hover:#828fff; --focus:#828fff;
+  --brand-hover-fill:#535fc6; --brand-pressed:#4c57be; --brand-deep:#535db9; --error:#eb5757;
+  --success:#27a644;
+  --attn:#f2994a; --attn-soft:rgba(242,153,74,.14);
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+/* type scale (fixes.md wave 4, rule 5): page title 20/600 · section heading 15/500 · row title 14/500 · body 13 · meta 12 · chip 11/500 uppercase. Nothing else at 11. */
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--canvas);color:var(--ink);font-family:var(--sans);font-size:13px;line-height:1.4;
+  -webkit-font-smoothing:antialiased;font-feature-settings:"cv01","ss03"}
+body{overflow-x:hidden;position:relative;min-height:100vh}
+button,input,textarea{font:inherit;color:inherit;background:none;border:0}
+button{cursor:pointer}
+a{color:var(--brand-hover);text-decoration:none}
+:focus-visible,.is-focused{outline:2px solid var(--focus);outline-offset:2px}
+.mono{font-family:var(--mono);font-size:12px;letter-spacing:-.1px}
+kbd{font-family:var(--sans);font-size:12px;font-weight:500;color:var(--ink-subtle);line-height:1.2;
+  border:1px solid var(--line2);border-radius:4px;padding:2px 6px;min-width:18px;
+  display:inline-flex;align-items:center;justify-content:center;background:var(--s2)}
+small{font-size:12px}
+svg{flex:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* glyph vocabulary (fixture.md): one class set, the same glyph and colour everywhere, always beside a word.
+   Work state: ● done (g-done) or live (g-live) · ◐ in progress · ○ not started or queued · ◎ with you ·
+   ▌ parked · ▲ escalated · ◌ model call, no session · ⇄ loop · ▣ current state · ◆ changed since approval.
+   Health: ✓ ok · ◐ degraded · ✕ failed · ○ absent. */
+.g-done{color:var(--ink-muted)}
+.g-live{color:var(--success)}
+.g-prog{color:var(--ink)}
+.g-todo{color:var(--ink-subtle)}
+.g-you{color:var(--ink-muted)}
+.g-park,.g-esc,.g-chg{color:var(--attn)}
+.g-model{color:var(--ink-subtle)}
+.g-loop{color:var(--ink-subtle)}
+.g-cur{color:var(--ink)}
+.h-ok{color:var(--success)}
+.h-deg{color:var(--ink)}
+.h-fail{color:var(--error)}
+.h-abs{color:var(--ink-subtle)}
+
+/* top bar (fits 1280: the search flexes, the health pill never shrinks) */
+.topbar{height:48px;display:flex;align-items:center;gap:8px;padding:0 16px;
+  border-bottom:1px solid var(--line1);background:var(--canvas);position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:8px;font-weight:600;font-size:14px;letter-spacing:-.2px;flex:none}
+.brand-mark{width:20px;height:20px;border-radius:5px;background:var(--brand);color:var(--on-primary);display:grid;place-items:center}
+.seg{display:flex;align-items:center;gap:2px;padding:2px;background:var(--s1);border:1px solid var(--line1);border-radius:8px;flex:none}
+.seg a{display:flex;align-items:center;gap:6px;height:26px;padding:2px 8px;border-radius:6px;
+  color:var(--ink-subtle);font-weight:500;font-size:13px;white-space:nowrap}
+.seg a:hover{color:var(--ink-muted);background:var(--s2)}
+.seg a[aria-current="page"]{color:var(--ink);background:var(--s3);box-shadow:inset 0 0 0 1px var(--line2)}
+.seg a[aria-current="page"]::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--brand)}
+.count-attn{font-size:12px;font-weight:600;line-height:1.2;color:var(--attn);background:var(--attn-soft);
+  border-radius:4px;padding:2px 6px;display:inline-flex;align-items:center}
+.count{font-size:12px;font-weight:500;color:var(--ink-subtle)}
+.search{margin-left:auto;display:flex;align-items:center;gap:6px;flex:1 1 160px;min-width:120px;max-width:260px;white-space:nowrap;height:30px;padding:4px 8px 4px 10px;
+  border:1px solid var(--line1);border-radius:8px;background:var(--s1);color:var(--ink-subtle)}
+.search span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.search kbd{flex:none}
+.health{display:flex;align-items:center;gap:6px;height:30px;padding:4px 10px;border:1px solid var(--line1);flex:none;
+  border-radius:8px;background:var(--s1);white-space:nowrap;font-size:12px;color:var(--ink-muted)}
+.health .word{display:inline-flex;align-items:center;gap:5px;color:var(--attn);font-weight:500;font-size:13px}  /* Degraded in --attn, the chip table's colour */
+.health .word .g{color:inherit}
+.health .sep{color:var(--ink-subtle)}
+.health .age{color:var(--ink-subtle)}
+/* static here; in the real app it pulses once when the needs-you count changes */
+
+/* page */
+.page{max-width:1264px;margin:0 auto;padding:0 40px 48px 16px}
+.pagehead{display:flex;align-items:flex-end;justify-content:space-between;padding:10px 0 10px;gap:16px}
+.pagehead h1{font-size:20px;font-weight:600;letter-spacing:-.4px;display:flex;align-items:center;gap:8px}
+.pagehead h1 .crumb{color:var(--ink-subtle);font-weight:500}
+.pagehead .sub{color:var(--ink-subtle);margin-top:2px;display:flex;gap:8px;align-items:center}
+.pagehead .sub b{color:var(--ink-muted);font-weight:500}
+.attn-word{color:var(--ink);font-weight:500;display:inline-flex;align-items:center;gap:6px}
+.attn-word i{width:6px;height:6px;border-radius:50%;background:var(--attn)}
+.hints{display:flex;gap:12px;color:var(--ink-subtle);font-size:12px;white-space:nowrap}
+.hints span{display:flex;align-items:center;gap:4px}
+
+/* panels */
+.panel{background:transparent;border:0;border-radius:0;box-shadow:none}
+.phead{display:flex;align-items:center;gap:8px;min-height:32px;padding:4px 16px;border:0}
+.eyebrow{font-size:15px;font-weight:500;letter-spacing:-.1px;color:var(--ink)}
+.phead .meta{margin-left:auto;color:var(--ink-subtle);font-size:12px;display:flex;gap:10px;align-items:center}
+.phead .meta a{color:var(--brand-hover)}
+.row2{display:grid;grid-template-columns:1.5fr 1fr;gap:8px;margin-top:8px}
+
+/* needs-you rows: a full-row tint plus the chip and the word, no stripe (fixes.md 3) */
+.ny{display:grid;grid-template-columns:104px minmax(0,1fr) 60px 492px;gap:12px;align-items:center;
+  padding:6px 16px;border-top:1px solid var(--line1)}
+.ny:first-of-type{border-top:0}
+.ny:hover{background:var(--s2)}
+.ny.sel{background:var(--s3)}
+.ny.pulse,.ny.colour{background:var(--attn-soft)}
+.ny.pulse .chip{color:var(--attn)}
+.kind{display:flex;flex-direction:column;gap:3px}
+.what{min-width:0}
+.what .line1{display:flex;align-items:baseline;gap:8px;min-width:0;white-space:nowrap}
+.what .line1>*{flex:none}
+.what .line1 .title{flex:0 1 auto;min-width:0}
+.what .line1 .rest{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:var(--ink-subtle)}
+.id{color:var(--ink-subtle);white-space:nowrap}
+.what .title{color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.what .line2{color:var(--ink-subtle);margin-top:2px;display:flex;gap:6px;align-items:center;white-space:nowrap;overflow:hidden}
+.what .line2 .reason{color:var(--ink-muted);overflow:hidden;text-overflow:ellipsis}
+.tag{font-size:12px;line-height:1.2;border:0;border-radius:0;padding:0;color:var(--ink-subtle);display:inline-flex;align-items:center;white-space:nowrap;flex:none}
+.since{color:var(--ink-subtle);font-size:12px;text-align:right;line-height:1.4;white-space:nowrap}
+.since b{display:block;color:var(--ink-muted);font-weight:500;font-size:12px}
+.acts{display:flex;align-items:center;gap:6px;justify-content:flex-end}
+
+/* buttons */
+.btn{height:28px;padding:0 10px;border-radius:8px;font-size:13px;font-weight:500;display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--line2);background:var(--s3);color:var(--ink-muted);white-space:nowrap}
+.btn:hover{background:var(--s4);border-color:var(--line3);color:var(--ink)}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:var(--on-primary)}
+.btn.primary:hover{background:var(--brand-hover-fill);border-color:var(--brand-hover-fill)}
+.btn.primary:active{background:var(--brand-pressed);border-color:var(--brand-pressed)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-subtle)}
+.btn.ghost:hover{color:var(--ink-muted);background:var(--s2)}
+.btn[disabled]{color:var(--ink-tertiary);background:var(--s2);border-color:var(--line1);cursor:not-allowed}
+.btn kbd{margin-left:1px}
+.btn.primary kbd{color:var(--on-primary);opacity:.85;border-color:transparent;background:var(--brand-deep)}
+.btn.term{background:var(--s2);color:var(--ink)}
+.btn.term svg{color:var(--ink-subtle)}
+.btn.sm{height:24px;padding:0 8px;font-size:12px}
+.split{position:relative;display:inline-flex}
+.split .main{border-radius:8px 0 0 8px}
+.split .chev{border-radius:0 8px 8px 0;border-left-color:var(--line1);padding:0 6px;margin-left:-1px}
+.warp{width:12px;height:12px;border-radius:3px;background:var(--s4);border:1px solid var(--line3);display:inline-grid;place-items:center}
+.cmd{display:inline-flex;align-items:stretch;margin-top:4px;min-height:24px;border:1px solid var(--line1);border-radius:6px;background:var(--canvas);max-width:100%}
+.cmd .prompt{font-family:var(--mono);font-size:12px;color:var(--ink-subtle);padding:4px 0 4px 8px;display:flex;align-items:center}
+.cmd code{font-family:var(--mono);font-size:12px;color:var(--ink-muted);padding:4px 8px 4px 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center}
+.cmd button{padding:4px 8px;border-left:1px solid var(--line1);color:var(--ink-subtle);display:flex;align-items:center;gap:4px;font-size:12px}
+.cmd button:hover{color:var(--ink);background:var(--s3)}
+.pending{font-size:12px;line-height:1.2;color:var(--ink-subtle);border:1px dashed var(--line2);border-radius:4px;padding:2px 6px;white-space:nowrap}
+
+/* running */
+.run{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 14px;padding:5px 16px;border-top:1px solid var(--line1);align-items:center}
+.run:first-of-type{border-top:0}
+.run:hover{background:var(--s2)}
+.run .step{display:flex;gap:6px;align-items:center;color:var(--ink-subtle);margin-top:2px;white-space:nowrap;overflow:hidden;font-size:12px}
+.run .step .mono{color:var(--ink-muted)}
+.state{display:inline-flex;align-items:center;gap:5px;font-weight:500;color:var(--ink);font-size:12px;white-space:nowrap}
+.run .hint{grid-column:1/-1;color:var(--ink-subtle);font-size:12px}
+.budget{grid-column:1/-1;display:flex;align-items:center;gap:10px;color:var(--ink-subtle);font-size:12px}
+.budget .track{flex:1;height:3px;border-radius:2px;background:var(--line1);overflow:hidden}
+.budget .fill{height:100%;background:var(--ink-subtle)}
+.subgroup{display:flex;align-items:center;gap:8px;padding:6px 16px 4px;font-size:12px;color:var(--ink-subtle);border-top:1px solid var(--line1)}
+.subgroup:first-of-type{border-top:0}
+
+/* queued */
+.q{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;padding:5px 16px;border-top:1px solid var(--line1);align-items:center}
+.q:first-of-type{border-top:0}
+.q:hover{background:var(--s2)}
+.q .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.q .t b{font-weight:500}
+.q .sub{color:var(--ink-subtle);font-size:12px}
+.q .r{color:var(--ink-subtle);font-size:12px;text-align:right;white-space:nowrap}
+.qfoot{padding:8px 16px;border-top:1px solid var(--line1);color:var(--ink-subtle);font-size:12px;display:flex;justify-content:space-between}
+
+/* label/value cell (no health strip any more; Context's coverage row still uses it) */
+.cell{flex:1 1 auto;padding:6px 12px;min-width:0}
+.cell .k{font-size:12px;color:var(--ink-subtle);display:block}
+.cell .v{display:flex;align-items:center;gap:6px;color:var(--ink);font-weight:500;white-space:nowrap;overflow:hidden;font-size:12px}
+.cell .v .mono{font-weight:400;color:var(--ink-muted)}
+.cell .v.warn{color:var(--ink-muted)}
+
+/* sheet */
+.sheet-tab{position:fixed;right:0;top:50%;transform:translateY(-50%);writing-mode:vertical-rl;
+  background:var(--s2);border:1px solid var(--line2);border-right:0;border-radius:8px 0 0 8px;
+  padding:10px 4px;color:var(--ink-subtle);font-size:12px;display:flex;gap:6px;align-items:center;z-index:15}
+.sheet{position:fixed;top:48px;right:0;bottom:0;width:520px;background:var(--s1);border-left:1px solid var(--line2);z-index:25;
+  display:flex;flex-direction:column}
+
+/* absolute to the page, not fixed, so captures never cover content (fixes.md 10) */
+.caption{position:absolute;right:16px;bottom:12px;font-size:12px;color:var(--ink-subtle);background:var(--canvas);
+  border:1px solid var(--line1);border-radius:6px;padding:2px 8px;z-index:40}
+
+/* menu (closed by default) */
+.menu{position:absolute;right:0;top:32px;z-index:30;width:320px;background:var(--s3);border:1px solid var(--line2);
+  border-radius:8px;padding:4px;box-shadow:inset 0 1px 0 rgba(247,248,248,.04)}
+.menu[hidden]{display:none}
+.menu .mi{display:flex;flex-direction:column;align-items:flex-start;gap:1px;padding:6px 8px;border-radius:6px;color:var(--ink);width:100%;text-align:left}
+.menu .mi small{color:var(--ink-subtle);font-size:12px}
+.menu .mi:hover{background:var(--s4)}
+.menu .mi[aria-disabled="true"]{color:var(--ink-tertiary)}
+.menu .cap{padding:6px 8px 4px;font-size:12px;color:var(--ink-subtle)}
+
+/* ===== the calm pass, shared shell (fixes.md wave 4a) ===== */
+/* (a) type scale */
+h1.page-title{font-size:20px;font-weight:600;letter-spacing:-.4px;line-height:1.2}
+.section>h2,.section>.sh>h2{font-size:15px;font-weight:500;letter-spacing:-.1px;line-height:1.3;color:var(--ink)}
+.row-title,.what .title,.wf .subj{font-size:14px;font-weight:500;line-height:1.3;color:var(--ink)}
+.meta{font-size:12px;line-height:1.4;color:var(--ink-subtle)}
+/* (b) chips state: one uppercase word in tinted ink, no border, no glyph */
+.chip{display:inline-flex;align-items:center;gap:4px;align-self:flex-start;padding:2px 6px;border:0;border-radius:4px;
+  background:var(--s2);color:var(--ink-muted);font-size:11px;font-weight:500;line-height:1.2;letter-spacing:.04em;
+  text-transform:uppercase;white-space:nowrap}
+.chip.attn{color:var(--attn)}
+.chip.fail{color:var(--error)}
+.chip.ok{color:var(--success)}
+/* (c) sections by surface: heading, 24 px, rows; bands alternate canvas / surface-1 at the page column's full width */
+.section{margin-top:32px}
+.section>h2,.section>.sh{margin-bottom:24px;padding:0 16px}
+.section>.sh{display:flex;align-items:baseline;gap:12px}
+.section>.sh>h2{margin:0}
+.band{background:var(--canvas);border:0;border-radius:0;box-shadow:none;margin-top:0;padding:32px 0}
+.band:nth-of-type(even){background:var(--s1)}
+.band.attn,.band.attn:nth-of-type(even){background:var(--attn-soft)}
+.band>.section{margin-top:0}
+/* (d) ids recede: shown on row hover and focus, always in a sheet header, a copyable command, or when marked .keep */
+.id{display:none}
+:is(.row,.ny,.run,.q,.wf,.mr,.tr,tr,li):is(:hover,:focus-within) .id,
+.sheet-head .id,.cmd .id,.id.keep{display:inline}
+/* ids at rest (fixes.md wave 5, item 2): one mechanism. .id.at-rest is never display:none: mono, tertiary ink at rest,
+   subtle ink on row hover and focus, a fixed slot where the row gives it a column, so nothing shifts */
+.id.at-rest{display:inline-block;font-family:var(--mono);font-size:12px;font-weight:400;letter-spacing:-.1px;color:var(--ink-subtle);white-space:nowrap}
+:is(.row,.ny,.run,.q,.wf,.mr,.tr,tr,li,.en,.child,.ag,.op):is(:hover,:focus-within) .id.at-rest{display:inline-block;color:var(--ink-muted)}
+/* (e) 40 px rows, 16 px gutters, hairlines only between rows */
+.row{display:grid;align-items:center;column-gap:16px;padding:4px 16px;border-top:1px solid var(--line1)}
+.row:first-child{border-top:0}
+.row,.ny,.run,.q,.wf{min-height:40px;column-gap:16px}
+.ny{padding-top:4px;padding-bottom:4px}
+.run,.q{padding-top:4px;padding-bottom:4px}
+/* (g) the health strip is one sentence */
+.hsent{margin-top:32px;padding:0 16px;font-size:12px;line-height:1.4;color:var(--ink-subtle)}
+
+
+/* ===== screens rev 8 · shared additions ===== */
+body{min-width:1280px}
+.pagehead .acts{align-self:center}
+.sub .x{color:var(--error);font-weight:600}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:4px 12px;font-size:12px}
+.kv dt{color:var(--ink-subtle)}
+.kv dd{color:var(--ink-muted)}
+.kv dd .mono{font-size:12px;color:var(--ink)}
+.subgroup b{color:var(--ink-muted);font-weight:500}
+.subgroup .r{margin-left:auto}
+.lock{width:12px;height:12px}
+
+/* motion: hover and press only, 120 ms ease-out, colour properties only (nothing that lays out) */
+.btn,.disc,.en,.hr,.gn rect{transition:background-color .12s ease-out,border-color .12s ease-out,color .12s ease-out,stroke .12s ease-out}
+.btn:active{background:var(--s2);border-color:var(--line3)}
+
+/* ===== System · the dependency drawing (nodes, hubs, edges, labels) ===== */
+.node{fill:var(--s3);stroke:var(--line2);stroke-width:1}
+.node.orph{stroke:var(--line3);stroke-dasharray:3 3}
+.hub{fill:var(--s3);stroke:var(--line3)}
+.nt{font-family:var(--mono);font-size:12px;letter-spacing:-.1px;fill:var(--ink)}
+.nt .dim{fill:var(--ink-subtle)}
+.nt .b{font-family:var(--sans);font-weight:600;letter-spacing:.3px;font-size:12px}
+.edge{stroke:var(--line3);fill:none;stroke-width:1}
+/* edge and node labels at 12 (the meta size) */
+.el{font-family:var(--sans);font-size:12px;fill:var(--ink-subtle)}
+.el.m{font-family:var(--mono);font-size:12px}
+.el .fail{fill:var(--error)}
+.arrow{fill:var(--line3)}
+
+/* ===== System ===== */
+/* four bands: graph | impact (s1), engine (canvas), history (s1), services (canvas). The shell's .band alternates by nth-of-type,
+   so inside .bands the first band is s1 explicitly. */
+.bands{margin-top:8px}
+.bands>.band{background:var(--s1);padding-left:16px;padding-right:16px}
+.bands>.band:nth-of-type(even){background:var(--canvas)}
+.bands>.band.last{padding-top:20px;padding-bottom:20px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
+.cols>.section{margin-top:0}
+.section.impact{border-left:1px solid var(--line2)}
+.sh .meta b{color:var(--ink-muted);font-weight:500}
+.sh .meta .mono,.sh .mono{color:var(--ink-muted)}
+.sh .act{margin-left:auto}
+.graphbody{padding:0 16px}
+.graphbody svg{display:block}
+.gn{outline:none}
+.gn:hover rect{stroke:var(--line3)}
+.gn:focus-visible rect{stroke:var(--focus);stroke-width:2}
+/* health glyphs inside the drawing follow the one vocabulary: ✓ ok in success, ◐ degraded in ink, ✕ failed in error, ○ absent in subtle ink */
+.nt .ok{fill:var(--success)}
+.nt .deg{fill:var(--ink)}
+.nt .fail{fill:var(--error)}
+.nt .abs{fill:var(--ink-subtle)}
+.gnote{padding:12px 0 0;color:var(--ink-subtle);font-size:12px}
+/* impact: blocks separated by hairlines; the state is a chip, the subject the row title */
+.imp{padding:12px 16px 16px;border-top:1px solid var(--line1)}
+.imp:first-of-type{border-top:0;padding-top:0}
+.imp h3{font-size:14px;font-weight:500;color:var(--ink);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.imp h3 .dim{color:var(--ink-subtle);font-weight:400;font-size:12px}
+.imp ul{list-style:none;margin-top:8px}
+/* each consequence is one block-level line: the arrow is a fixed slot, the sentence wraps inside its own span */
+.imp li{display:flex;gap:4px;align-items:flex-start;color:var(--ink-muted);font-size:13px;padding:2px 0;line-height:1.4}
+.imp li::before{content:"→";color:var(--ink-subtle);flex:none;width:14px}
+.imp li>span{min-width:0}
+.imp code{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--s2);border-radius:4px;padding:0 4px}
+.imp .mono{color:var(--ink)}
+.imp .note{color:var(--ink-subtle);font-size:12px;margin-top:6px;padding-left:18px}
+.imp .acts{margin-top:12px;justify-content:flex-start;display:flex;align-items:center;gap:8px}
+.imp .cmd{margin-top:8px}
+.worker{display:flex;gap:8px;align-items:center;padding:0 16px 12px;color:var(--ink-subtle);font-size:12px;white-space:nowrap}
+.worker .mono{color:var(--ink-muted)}
+.worker .r{margin-left:auto}
+/* engine table: its columns stay; ids stay visible (.id.at-rest: tertiary at rest, subtle on hover); the state column is a chip plus the step */
+.en-h,.en{display:grid;grid-template-columns:96px 168px 214px minmax(0,1fr) 164px 70px 60px;column-gap:16px;align-items:center;padding:4px 16px}
+.en-h{height:32px;color:var(--ink-subtle);font-size:12px;font-weight:500;border-bottom:1px solid var(--line1)}
+.en{min-height:40px;border-top:1px solid var(--line1);font-size:12px}
+.en-h + .en{border-top:0}
+.en:hover{background:var(--s2)}
+.en.sel{background:var(--s3)}
+.en .id{font-family:var(--mono);font-size:12px;font-weight:400}
+.en .mono{color:var(--ink-muted);font-size:12px}
+.en .st{display:flex;align-items:center;gap:8px;color:var(--ink);font-size:13px;font-weight:500;white-space:nowrap;min-width:0}
+.en .st .chip{align-self:center;flex:none}
+.en .wait,.en .tim,.en .rt{color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.en .rt .null{color:var(--ink-subtle)}
+.en .hist{color:var(--ink-subtle);text-align:right;white-space:nowrap}
+.en.more{min-height:32px}
+.pend-line{display:flex;gap:10px;align-items:center;padding:8px 16px;border-top:1px solid var(--line1);color:var(--ink-subtle);font-size:12px}
+.pend-line .mono{color:var(--ink-muted)}
+.pend-line .r{margin-left:auto;display:flex;gap:10px;align-items:center}
+/* history */
+.hr{display:grid;grid-template-columns:62px 236px 118px minmax(0,1fr) auto;column-gap:16px;align-items:center;min-height:40px;padding:5px 16px;border-top:1px solid var(--line1);font-family:var(--mono);font-size:12px;letter-spacing:-.1px;color:var(--ink-muted)}
+.hr:first-of-type{border-top:0}
+.sh + .hr{border-top:0}
+.hr:hover{background:var(--s2)}
+.hr .ts{color:var(--ink-subtle)}
+.hr .ev{color:var(--ink)}
+.hr .dt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hr .led{color:var(--ink-subtle);white-space:nowrap}
+.hr.more{grid-template-columns:1fr auto;color:var(--ink-subtle);font-family:var(--sans)}
+.disc{width:18px;height:18px;flex:none;border-radius:4px;color:var(--ink-subtle);display:inline-grid;place-items:center;font-size:12px}
+.disc:hover{background:var(--s3);color:var(--ink)}
+.disc:active{background:var(--s4)}
+/* the services line, collapsed to its heading: the page's last section */
+.svc .sh{align-items:center;margin-bottom:0}
+.svc .sh .meta{margin-left:auto}
+.svc .sum{display:inline-flex;gap:8px;align-items:center}
+.pagesum{margin-top:2px;color:var(--ink-subtle);font-size:12px}
+/* adapt: the mockup renders at 1280. At the 900 × 600 minimum the page scrolls both ways (the dependency drawing keeps its width);
+   under 1100 px the Impact column drops under the graph and the engine table hides Timers and Retries behind the row's sheet. */
+
+.sbx-card{border:1px solid var(--line2);border-radius:8px;background:var(--s2);padding:16px;display:grid;gap:8px;max-width:760px}
+.sbx-card h3{font-size:14px;font-weight:500}
+.sbx-card ul{list-style:none;display:grid;gap:6px;margin:4px 0}
+.sbx-card li{display:flex;gap:8px;align-items:baseline}
+.sbx-cmd{font-family:var(--mono);font-size:12px;color:var(--ink-muted);background:var(--s1);border:1px solid var(--line1);border-radius:4px;padding:4px 8px;display:block;overflow-wrap:anywhere}
+.sbx-live{color:var(--ink-subtle);font-size:12px}
+.sbx-row{display:flex;align-items:center;gap:12px;padding:6px 16px;border-top:1px solid var(--line1);min-height:40px}
+.sbx-row:first-child{border-top:0}
+.sbx-row .grow{flex:1}
+.sbx-dim{opacity:.55}
+.sbx-fields{display:grid;grid-template-columns:140px 1fr;gap:6px 16px;max-width:760px}
+.sbx-fields dt{color:var(--ink-subtle)}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><span class="brand-mark" aria-hidden="true"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 9.5 6 2l4 7.5H7.4L6 6.8 4.6 9.5z" fill="currentColor"/></svg></span>Sindri</div>
+  <nav class="seg" aria-label="Primary">
+    <a href="#">Home</a>
+    <a href="#">Workflows <span class="count">12</span></a>
+    <a href="#">Work <span class="count">12</span></a>
+    <a href="#">Recipes <span class="count">8</span></a>
+    <a href="#">Context</a>
+    <a href="#">Agents <span class="count">4</span></a>
+    <a href="#" aria-current="page">System</a>
+  </nav>
+  <div class="search" role="search"><svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><circle cx="6" cy="6" r="4.2" stroke="currentColor" fill="none" stroke-width="1.4"/><path d="m9.2 9.2 3 3" stroke="currentColor" stroke-width="1.4"/></svg><span>Search or run a command</span><kbd>⌘K</kbd></div>
+  <button class="health" aria-label="Health: Degraded, updated 2s ago, index failed, profile changed">
+    <span class="word"><span class="g h-deg" aria-hidden="true">◐</span>Degraded</span>
+    <span class="sep" aria-hidden="true">·</span><span class="age">updated 2s ago</span>
+    <span class="sep" aria-hidden="true">·</span><span>index failed</span>
+    <span class="sep" aria-hidden="true">·</span><span>profile changed</span>
+  </button>
+</header>
+
+<main class="page">
+  <div class="pagehead"><div><h1 class="page-title">System</h1>
+    <p class="pagesum">Sandbox: This machine has no sandbox tool, so this Step can't run by itself. Updated 2s ago.</p></div></div>
+  <section class="band" aria-labelledby="hs-h"><div class="section">
+    <div class="sh"><h2 id="hs-h">Health</h2></div>
+    <div class="sbx-row"><span class="chip attn">Blocked</span><span class="grow">Sandbox: This machine has no sandbox tool, so this Step can't run by itself. Install bubblewrap (<span class="mono">sudo apt install bubblewrap</span>), then press Check again.</span><button class="btn sm">Check again</button></div>
+    <div class="sbx-row"><span class="chip ok">OK</span><span class="grow">Sandbox: ready</span></div>
+    <div class="sbx-row"><span class="chip attn">Learning</span><span class="grow">Sandbox: learning, network open for web, ends in 6 days</span></div>
+    <div class="sbx-row sbx-dim"><span class="grow">Sandbox: unknown</span></div>
+    <div class="sbx-row"><span class="grow">Sandbox: not checked yet</span></div>
+  </div></section>
+  <section class="band" aria-labelledby="se-h"><div class="section">
+    <div class="sh"><h2 id="se-h">Sandbox</h2></div>
+    <dl class="sbx-fields">
+      <dt>mechanism</dt><dd>bubblewrap</dd>
+      <dt>groups</dt><dd>model, packages</dd>
+      <dt>limits</dt><dd>memory 12GiB · cpu 400% · tasks 2048 · wall 70m</dd>
+      <dt>learn mode</dt><dd>Sandbox: learning, ends in 6 days <button class="btn sm">End learn mode</button></dd>
+    </dl>
+    <p class="meta" style="margin-top:12px">Sandbox: details unavailable · Sandbox: status unavailable</p>
+  </div></section>
+</main>
+
+<div class="caption">Sandbox health · design reference, not implementation</div>
+</body>
+</html>

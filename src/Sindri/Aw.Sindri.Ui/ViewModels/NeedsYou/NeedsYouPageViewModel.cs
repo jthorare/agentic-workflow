@@ -211,7 +211,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
 
     private static readonly string[] _cardProperties =
     [
-        nameof(ShowsRequest), nameof(IsDone), nameof(Selected), nameof(Card), nameof(IsCleared), nameof(ClearedText), nameof(FooterName), nameof(HasSelected), nameof(KindWord), nameof(CardName), nameof(Reference), nameof(Why), nameof(Question), nameof(FooterRight), nameof(ShowsAnswer), nameof(ShowsTakeover), nameof(ShowsBarButtons),
+        nameof(ShowsRequest), nameof(IsDone), nameof(Selected), nameof(Card), nameof(IsCleared), nameof(ClearedText), nameof(FooterName), nameof(HasSelected), nameof(KindWord), nameof(CardName), nameof(Reference), nameof(Why), nameof(Question), nameof(FooterRight), nameof(ShowsAnswer), nameof(ShowsTakeover), nameof(ShowsBarButtons), nameof(Park),
     ];
 
     private static readonly string[] _listProperties =
@@ -245,6 +245,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
         _list.Select(id);
         _lastRow = Selected ?? _lastRow;
         Report(_cardProperties);
+        PickedPark();
     }
 
     // The list moved the selection on its own because the row under the card left: the card keeps that row, cleared, until the user moves.

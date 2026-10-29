@@ -88,6 +88,10 @@ public sealed class GoldenContractTests
         ["profile-approve"] = As<ProfileApproved>,   // POST /profile/approve's approved and preview answers (needs-you slice 3: the typed approve on a drifted-profile row); the refusals are ProblemDetails
         ["recipe-approve"] = As<RecipeApproved>,   // POST /workflow/recipes/{id}@{hash}/approve's accepted answer (needs-you slice 3b: the typed approve on a changed-workflow row; spec-shaped)
         ["workflow-complete"] = As<CompleteStepAccepted>,   // POST /workflow/instances/{id}/runs/{run}/complete's accepted answer (spec-shaped; the engine has no golden for it)
+        ["sandbox-status"] = As<Ui.Api.Sandbox.SandboxStatusView>,   // GET /sandbox/status: Health and Settings (SB-6; spec-shaped until the server's golden is recorded)
+        ["sandbox-check"] = As<Ui.Api.Sandbox.SandboxCheckView>,   // GET /sandbox/check: Check again and the resume list (SB-6, spec-shaped)
+        ["sandbox-denials"] = As<Ui.Api.Sandbox.DenialsView>,   // GET /sandbox/denials?item=: the item sheet's Blocked list (SB-6, spec-shaped)
+        ["sandbox-allow"] = As<Ui.Api.Sandbox.AllowView>,   // POST /sandbox/allow's needs-approval answer; the refusals are ProblemDetails (SB-6, spec-shaped)
     };
 
     // Routes the app never calls yet: stop is Health's (U4), and the

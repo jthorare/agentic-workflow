@@ -40,7 +40,7 @@
         "files": 1234,
         "megabytes": 12.6,
         "sentences": [
-          "Sindri will read /work/demo and send what it reads to your Onyx and to the map cleanup agent",
+          "Sindri will read /work/demo and send what it reads to the map cleanup agent",
           "Sindri will write its MCP settings into demo for Claude Code, Codex and Cursor",
           "Sindri will keep demo's map up to date on its own"
         ]

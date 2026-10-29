@@ -9661,6 +9661,8 @@ static Aw.Context.Core.Records.SyncAttempt.operator !=(Aw.Context.Core.Records.S
 static Aw.Context.Core.Records.SyncAttempt.operator ==(Aw.Context.Core.Records.SyncAttempt? left, Aw.Context.Core.Records.SyncAttempt? right) -> bool
 static readonly Aw.Context.Core.Records.SourceBackoff.BaseDelay -> System.TimeSpan
 static readonly Aw.Context.Core.Records.SourceBackoff.MaxDelay -> System.TimeSpan
+Aw.Context.Core.Concepts.SynthesizedConceptNodes
+static Aw.Context.Core.Concepts.SynthesizedConceptNodes.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts) -> Aw.Context.Core.Graph.GraphSnapshot!
 Aw.Context.Core.ConceptSynthesis.ConceptStatus
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.get -> int
