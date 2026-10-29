@@ -5164,6 +5164,8 @@ Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.CheckedAt.get -> System.Dat
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.CheckedAt.init -> void
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Resume.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.CheckSandbox.SandboxResumeLine!>!
 Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.Resume.init -> void
+Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.NotChecked.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Features.CheckSandbox.CheckSandboxResponse.NotChecked.init -> void
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.<Clone>$() -> Aw.Sindri.Features.CheckSandbox.SandboxResumeLine!
 Aw.Sindri.Features.CheckSandbox.SandboxResumeLine.Deconstruct(out Aw.Sindri.Core.Workflow.Engine.WorkflowInstanceId Instance, out string? Item, out string? Title, out System.DateTimeOffset Since) -> void

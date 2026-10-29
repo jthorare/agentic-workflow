@@ -42,16 +42,18 @@ internal sealed class SandboxTestBed
     internal static string Announce(string section, string id) => (string)Row(section, id)["announce"]!;
 
     /// <summary>A check answer with these blockers and Steps.</summary>
-    internal static RouteAnswer CheckBody(string[] blockers, string[] titles, DateTimeOffset? checkedAt = null) =>
-        Body(checkedAt ?? Now, blockers, titles);
+    internal static RouteAnswer CheckBody(string[] blockers, string[] titles, DateTimeOffset? checkedAt = null, string[]? notChecked = null) =>
+        Body(checkedAt ?? Now, blockers, titles, notChecked ?? []);
 
-    private static RouteAnswer Body(DateTimeOffset at, string[] blockers, string[] titles) =>
+    private static RouteAnswer Body(DateTimeOffset at, string[] blockers, string[] titles, string[]? notChecked = null) =>
         new(HttpStatusCode.OK,
-            $$"""{"blockers":[{{string.Join(',', blockers.Select((b, i) => $$"""{"code":"SND-LAUNCH-014","reason":"r{{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}}","text":"{{b}}","command":"fix {{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}}"}"""))}}],"ready":{{(blockers.Length == 0 ? "true" : "false")}},"resume":[{{string.Join(',', titles.Select((t, i) => $$"""{"instance":"{{Instance(i)}}","item":"ITM-{{Hex(i)}}","title":"{{t}}","since":"2026-10-28T08:00:00.0000000Z"}"""))}}],"checkedAt":"{{at:O}}"}""");
+            $$"""{"blockers":[{{string.Join(',', blockers.Select((b, i) => $$"""{"code":"SND-LAUNCH-014","reason":"r{{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}}","text":"{{b}}","command":"fix {{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}}"}"""))}}],"ready":{{(blockers.Length == 0 ? "true" : "false")}},"resume":[{{string.Join(',', titles.Select((t, i) => $$"""{"instance":"{{Instance(i)}}","item":"ITM-{{Hex(i)}}","title":"{{t}}","since":"2026-10-28T08:00:00.0000000Z"}"""))}}],"notChecked":[{{string.Join(',', (notChecked ?? []).Select(n => "\"" + n + "\""))}}],"checkedAt":"{{at:O}}"}""");
 
     private static string Hex(int i) => i.ToString("x32", System.Globalization.CultureInfo.InvariantCulture);
 
     /// <summary>A sequence on one line, so a list compares as a string.</summary>
+    internal const string HooksNotChecked = "The hooks weren't checked: no agent is picked for Steps.";
+
     internal static string J(IEnumerable<string?> values) => string.Join(" | ", values);
 
     internal static string Instance(int i) => "ITM-" + i.ToString("x32", System.Globalization.CultureInfo.InvariantCulture) + "/step/1";

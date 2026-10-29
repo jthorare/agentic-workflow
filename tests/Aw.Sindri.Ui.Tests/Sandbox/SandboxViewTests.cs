@@ -116,6 +116,25 @@ public sealed class SandboxViewTests
     });
 
     [Fact]
+    public Task Check_again_shows_a_check_that_did_not_run_as_one_caption_under_the_blockers_and_none_when_empty() => OnUi(async () =>
+    {
+        var window = await ShowCheck(["No sandbox tool."], []);
+        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody(["No sandbox tool."], [], notChecked: [SandboxTestBed.HooksNotChecked]);
+        await _bed.Check.Check(Token);
+        Settle(window);
+
+        var list = Find<ItemsControl>(window, "SandboxCheckNotChecked");
+        var caption = list.GetLogicalDescendants().OfType<TextBlock>().Single();
+        Assert.Equal((true, SandboxTestBed.HooksNotChecked, SandboxTestBed.HooksNotChecked), (list.IsEffectivelyVisible, caption.Text, AutomationProperties.GetName(caption)));
+        Assert.True(Top(window, Find<ItemsControl>(window, "SandboxBlockers")) < Top(window, list));
+
+        _bed.Server.SandboxCheckAnswer = SandboxTestBed.CheckBody(["No sandbox tool."], []);
+        await _bed.Check.Check(Token);
+        Settle(window);
+        Assert.False(list.IsEffectivelyVisible);
+    });
+
+    [Fact]
     public Task The_resume_list_is_read_before_its_buttons_resume_first_and_not_now_returns_focus_to_check_again() => OnUi(async () =>
     {
         var window = await ShowCheck([], ["Try the engine", "Fix the login timeout"]);
