@@ -1,7 +1,11 @@
-#pragma warning disable CS9113, MA0182 // the stub until the commit that implements it
+#pragma warning disable CS9113 // the event is written by the next commit
+using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Models;
+using Aw.Judge.Core.Batching;
 using Aw.Judge.Core.Config;
 using Aw.Judge.Core.Ports;
+using Aw.Judge.Core.Providers;
 using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Jobs;
@@ -28,9 +32,57 @@ internal sealed class JevChoicePort(
     IIdGenerator ids,
     TimeProvider clock) : IChoicePort
 {
-    public ChoiceModel Identity => throw new NotSupportedException();
+    // The input the judge refused as such: the labeler may split the pack. Everything else that is an error or an unavailable provider would fail the same way for the rest of the pass.
+    private static readonly string[] _refused = ["http-400", "http-413", "http-422", "unparseable-answer"];
 
-    public ValueTask<int> InputCapChars(CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ChoiceModel Identity { get; } = new(JevModel.Id);
 
-    public ValueTask<Result<IReadOnlyList<ChoiceAnswer>>> Pick(ChoiceKind kind, IReadOnlyList<ChoiceQuestion> questions, int capChars, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<int> InputCapChars(CancellationToken cancellationToken) =>
+        (await providers(cancellationToken).ConfigureAwait(false))?.InputCapChars ?? ProvidersConfig.DefaultInputCapChars;
+
+    public async ValueTask<Result<IReadOnlyList<ChoiceAnswer>>> Pick(ChoiceKind kind, IReadOnlyList<ChoiceQuestion> questions, int capChars, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(questions);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!await IsOn(kind, cancellationToken).ConfigureAwait(false))
+        {
+            return ContextErrors.ChoiceUnavailable.With(ChoiceReasons.Off);
+        }
+
+        if (questions.Sum(LabelChars) > LabelPickLimits.CallChars(capChars))
+        {
+            return ContextErrors.ChoiceRejected.With(ChoiceReasons.OverCap);
+        }
+
+        var batch = new BatchRequest(State: null, [.. questions.Select(Wire)], LabelPickLimits.Budget);
+        var result = await classifier().Classify(batch, await providers(cancellationToken).ConfigureAwait(false), allowed: null, cancellationToken).ConfigureAwait(false);
+        return Map(result, questions);
+    }
+
+    // The approved profile, read at every call: an edited live file that says 'jev' makes no Jev call until it is approved. The product-surface pick has no setting until R-8 adds it.
+    private async ValueTask<bool> IsOn(ChoiceKind kind, CancellationToken cancellationToken) =>
+        kind == ChoiceKind.Labeling && (await models.Current(cancellationToken).ConfigureAwait(false)).LabelPick == LabelPick.Jev;
+
+    private static int LabelChars(ChoiceQuestion question) => question.Prompt.Length + question.Options.Sum(static o => o.Length);
+
+    // The option text is the criterion's key; its value is a short fixed word, so the options are sent once and the pack stays inside the share of the cap the labeler sized it for.
+    private static ChoiceBatchQuestion Wire(ChoiceQuestion question) => new(
+        question.Key,
+        question.Prompt,
+        question.Options.Distinct(StringComparer.Ordinal).Select(static (option, i) => (Option: option, Index: i)).ToDictionary(static o => o.Option, static o => "option " + (o.Index + 1).ToString(System.Globalization.CultureInfo.InvariantCulture), StringComparer.Ordinal));
+
+    private static Result<IReadOnlyList<ChoiceAnswer>> Map(ProviderResult result, IReadOnlyList<ChoiceQuestion> questions) => result switch
+    {
+        BatchDecided decided => Aw.Kernel.Results.Success<IReadOnlyList<ChoiceAnswer>>([.. questions.Select(q => Answer(q, decided)).OfType<ChoiceAnswer>()]),
+        ProviderUnavailable { ReasonCode: "no-api-key" } => ContextErrors.ChoiceUnavailable.With(ChoiceReasons.NoKey),
+        ProviderUnavailable { ReasonCode: ProviderUnavailable.Timeout } => ContextErrors.ChoiceRejected.With(ProviderUnavailable.Timeout),
+        ProviderErrored errored when _refused.Contains(errored.ReasonCode, StringComparer.Ordinal) => ContextErrors.ChoiceRejected.With(errored.ReasonCode),
+        _ => ContextErrors.ChoiceUnavailable.With(result.ReasonCode),
+    };
+
+    // A question the answer leaves out (or answers in a shape the judge couldn't use) has no answer; a choice that is none of the options is an answer with nothing picked.
+    private static ChoiceAnswer? Answer(ChoiceQuestion question, BatchDecided decided) =>
+        decided.Answers.GetValueOrDefault(question.Key) is ChoiceBatchAnswer choice
+            ? new ChoiceAnswer(question.Key, question.Options.Contains(choice.Choice, StringComparer.Ordinal) ? choice.Choice : null, choice.Confidence)
+            : null;
 }

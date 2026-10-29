@@ -13,7 +13,7 @@ namespace Aw.Sindri.Host.Models;
 /// The context engine's model port with routing (model routing spec §4) over Judge's provider catalog. It asks only the owner's own agent CLIs (Claude Code, Codex, Cursor), never the remote 'jev' API, because the prompt carries the
 /// owner's repo text. For each call it finds the kind from the purpose, reads 'context.models' of the approved profile, lets <see cref="ModelRouting"/> pick the harnesses and the model each runs, and walks them in order
 /// (<see cref="ModelWalker"/>). When nothing answered and a harness is at its limit, a call that runs under a job parks the job on 'model-limit' (<see cref="ModelPauser"/>) and walks again from the first harness when it is resumed; every
-/// other end is SND-CONTEXT-240, 241 or 042 (<see cref="ModelCallErrors"/>). The tries become 'context.model.called' events (<see cref="ModelCallRecorder"/>). A request's own model names win over the profile and go through the same name check.
+/// other end is SND-CONTEXT-240, 241 or 042 (<see cref="ModelCallErrors"/>). It also tells a caller how big a prompt it may send, the smallest budget among the harnesses of the route (<see cref="IModelPromptBudget"/>). The tries become 'context.model.called' events (<see cref="ModelCallRecorder"/>). A request's own model names win over the profile and go through the same name check.
 /// </summary>
 internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
 {
@@ -85,7 +85,15 @@ internal sealed class RoutedModelPort : IModelPort, IModelPromptBudget
         }
     }
 
-    public ValueTask<PromptBudget?> For(ModelPurpose purpose, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async ValueTask<PromptBudget?> For(ModelPurpose purpose, CancellationToken cancellationToken)
+    {
+        var settings = await _models.Current(cancellationToken).ConfigureAwait(false);
+        var installed = Installed(_catalog().Lineup(config: null, _agentClis, new NoRulesProvider()));
+        var route = ModelRouting.Resolve(settings, new ModelRequest(purpose, string.Empty, MaxTokens: 0, TimeSpan.Zero), [.. installed.Select(static i => i.Harness)]);
+        return route.Count == 0
+            ? null
+            : new PromptBudget(route.Min(static r => ModelHarnesses.PromptBudget(r.Harness).Chars), route.Min(static r => ModelHarnesses.PromptBudget(r.Harness).MaxItems));
+    }
 
     private async ValueTask<ModelCall> Begin(ModelRequest request, CancellationToken cancellationToken)
     {
