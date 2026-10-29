@@ -37,15 +37,40 @@ public sealed class WholeMapBandDrillTests
     private static string Meta(WholeMapGeometry geometry, WholeBand band) => geometry.Bands.Single(b => b.Band == band).Meta;
 
     [Fact]
-    public void Why_across_keeps_the_decision_and_what_it_decides_and_only_that_link()
+    public void Why_across_keeps_the_decision_and_what_it_decides_and_follows_product_structure_only_from_there()
     {
         var shown = WholeMapBandDrill.Cross(Concept(), WholeBand.Intent);
+
+        // feature:swaps has no pages in this fixture; the page and action under feature:shifts are not reached from a decision.
+        Expect.True(!Keys(shown).Contains("surface:screen"), "an unrelated page stays out");
 
         Expect.Sequence(["decision:d", "feature:swaps"], Keys(shown));
         Expect.Sequence(["decides"], shown.Edges.Select(e => e.Type));
         Expect.Sequence([WholeBand.Intent, WholeBand.Product], shown.Bands.Select(b => b.Band));
         Expect.Equal(Labels.ContextWholeKindCount("decision", 1), Meta(shown, WholeBand.Intent));
         Expect.Equal(Labels.ContextWholeKindCount("feature", 1), Meta(shown, WholeBand.Product));
+    }
+
+    [Fact]
+    public void Why_across_adds_at_most_the_cap_of_chained_product_nodes()
+    {
+        var map = WholeMapLayoutTests.Draft("nodes-small");
+        var area = map.Areas[0].Key;
+        var chain = Enumerable.Range(0, WholeMapBandDrill.ProductReachCap + 50).Select(i => "action:n" + i.ToString("D4", System.Globalization.CultureInfo.InvariantCulture)).ToList();
+        var keys = chain.Prepend("feature:f").Prepend("decision:d").ToList();
+        var links = new List<(string From, string To, string Type)> { ("decision:d", "feature:f", "decides"), (chain[0], "feature:f", "step-of") };
+        links.AddRange(chain.Zip(chain.Skip(1), (a, b) => (a, b, "step-of")));
+        var whole = WholeMapLayout.Place(map with
+        {
+            Areas = [map.Areas[0]],
+            AreaEdges = [],
+            Nodes = [.. keys.Select(k => new WholeNode(k, k, k[..k.IndexOf(':', StringComparison.Ordinal)], area, [], "trusted", "human", 1, Confirmed: true))],
+            Edges = [.. links.Select(l => new WholeEdge(l.From, l.To, l.Type, $"edge:{l.From}>{l.To}", "human", 1, Confirmed: true))],
+        });
+
+        var shown = WholeMapBandDrill.Cross(whole, WholeBand.Intent);
+
+        Expect.Equal(WholeMapBandDrill.ProductReachCap, shown.Nodes.Count(n => n.Kind == "action"));
     }
 
     [Fact]
