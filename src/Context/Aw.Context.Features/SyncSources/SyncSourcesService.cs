@@ -69,11 +69,10 @@ internal sealed class SyncSourcesService(
             return rows;
         }
 
-        var map = await graphs.ReadWithoutIntent(scope, draft: false, cancellationToken).ConfigureAwait(false);   // no map yet (the first build needs these records): the feeds still sync, the pass waits for one
+        var after = await new FeedDecisions(feeds, catalog, graphs, intents, model, clock).For(scope, context, walked, cancellationToken).ConfigureAwait(false);
         foreach (var feed in wanted)
         {
-            var decisions = map.IsError || walked.Any(w => w.Describe().Id == feed.Source) ? null : new RecordDecisionRun(feed.Source, map.Value, context, (feeds.OwnedRecords(), intents, model, clock));
-            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), decisions is null ? null : tick => decisions.Execute(tick, cancellationToken), cancellationToken).ConfigureAwait(false);
+            var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), after(feed), cancellationToken).ConfigureAwait(false);
             if (row.IsError)
             {
                 return row.Error;
