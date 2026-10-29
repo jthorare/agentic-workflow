@@ -54,6 +54,13 @@ internal static class RecordSql
         "INSERT INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, backfill_cursor, backfill_before) VALUES (@source, 'records', @cursor, @at, NULL, @phase, @backfill, @before) " +
         "ON CONFLICT (source, repo) DO UPDATE SET cursor = excluded.cursor, last_sync = excluded.last_sync, last_error = NULL, phase = excluded.phase, backfill_cursor = excluded.backfill_cursor, backfill_before = excluded.backfill_before";
 
+    // Only last_sync and last_error: the cursor, phase and backfill columns stay as the page commits left them.
+    internal const string SaveOutcome =
+        "INSERT INTO source_cursor (source, repo, cursor, last_sync, last_error) VALUES (@source, 'records', NULL, @at, @code) " +
+        "ON CONFLICT (source, repo) DO UPDATE SET last_sync = excluded.last_sync, last_error = excluded.last_error";
+
+    internal const string ReadOutcome = "SELECT last_sync, last_error FROM source_cursor WHERE source = @source AND repo = 'records' AND last_sync IS NOT NULL";
+
     internal const string ReadIdentity = "SELECT source, user_ref, name, read_at FROM source_identity WHERE source = @source";
 
     internal const string WriteIdentity =
