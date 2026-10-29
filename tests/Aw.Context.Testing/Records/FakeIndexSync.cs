@@ -13,6 +13,9 @@ public sealed class FakeIndexSync : IIndexSync
     /// <summary>What <see cref="Progress"/> answers.</summary>
     public IReadOnlyList<SourceProgress> Standing { get; set; } = [];
 
+    /// <summary>When set, <see cref="Progress"/> answers this error instead of <see cref="Standing"/>.</summary>
+    public Error? ProgressFailure { get; set; }
+
     /// <inheritdoc />
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SyncReport>>(new SyncReport([]));
@@ -27,7 +30,7 @@ public sealed class FakeIndexSync : IIndexSync
 
     /// <inheritdoc />
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) =>
-        ValueTask.FromResult<Result<IReadOnlyList<SourceProgress>>>(Standing.ToList());
+        ValueTask.FromResult<Result<IReadOnlyList<SourceProgress>>>(ProgressFailure is { } failure ? failure : Standing.ToList());
 
     /// <inheritdoc />
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) =>

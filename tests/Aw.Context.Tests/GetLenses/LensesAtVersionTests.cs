@@ -3,6 +3,8 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Sync;
+using Aw.Context.Testing.Records;
 using Aw.Context.Tests.Map;
 using Aw.Context.Tests.ReviewMap;
 
@@ -135,6 +137,31 @@ public sealed class LensesAtVersionTests : IDisposable
         var index = Assert.Single(view.Searched.Sources, s => s.Id.Value == "code-index");
         Assert.Equal((SearchedState.Unavailable, "index-not-built"), (index.State, index.Reason));
         Assert.Equal(SearchedState.Ok, Assert.Single(view.Searched.Sources, s => s.Id.Value == "map").State);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_progress_read_that_fails_leaves_out_the_index_rows_and_the_lenses_still_answer()
+    {
+        var index = new FakeIndexSync { ProgressFailure = new Kernel.Error("SND-CONTEXT-099", Kernel.ErrorKind.Unavailable, "state store down") };
+        using var world = new MapWorld(indexSync: index);
+        _ = await world.ImportYaml(MapWorld.TabsMap);
+
+        var view = (await world.Engine.LensesOf([Manager], MapRead.Current, depth: null, MapWorld.Human, MapWorld.None)).Value;
+
+        Assert.Equal(["map", "code-index"], [.. view.Searched.Sources.Select(s => s.Id.Value)], StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_index_source_that_never_synced_reads_unavailable_not_synced()
+    {
+        var index = new FakeIndexSync { Standing = [SourceProgress.From(RecordSamples.Linear, phase: null, lastSync: null, lastCode: null)] };
+        using var world = new MapWorld(indexSync: index);
+        _ = await world.ImportYaml(MapWorld.TabsMap);
+
+        var view = (await world.Engine.LensesOf([Manager], MapRead.Current, depth: null, MapWorld.Human, MapWorld.None)).Value;
+
+        var row = Assert.Single(view.Searched.Sources, s => s.Id == RecordSamples.Linear);
+        Assert.Equal((SearchedState.Unavailable, "not-synced"), (row.State, row.Reason));
     }
 
     [Fact, Trait("Lane", "unit")]
