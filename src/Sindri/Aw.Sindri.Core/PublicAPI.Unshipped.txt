@@ -21181,3 +21181,5 @@ override Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.ToString() -> string!
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.Build(Aw.Sindri.Core.Projects.Cards.ProjectPageInputs! inputs, System.DateTimeOffset now, bool all) -> Aw.Sindri.Core.Projects.Cards.ProjectsPage!
 static Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.operator !=(Aw.Sindri.Core.Projects.Cards.ProjectPageInputs? left, Aw.Sindri.Core.Projects.Cards.ProjectPageInputs? right) -> bool
 static Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.operator ==(Aw.Sindri.Core.Projects.Cards.ProjectPageInputs? left, Aw.Sindri.Core.Projects.Cards.ProjectPageInputs? right) -> bool
+Aw.Sindri.Core.Projects.Cards.IProjectPages
+Aw.Sindri.Core.Projects.Cards.IProjectPages.Read(bool all, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Projects.Cards.ProjectsPage!>!>

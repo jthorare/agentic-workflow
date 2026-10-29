@@ -1,5 +1,6 @@
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Projects;
+using Aw.Sindri.Core.Projects.Cards;
 using Aw.Sindri.Core.Projects.Facts;
 using Aw.Sindri.Features.AttachProject;
 using Aw.Sindri.Features.ChangeProject;
@@ -29,6 +30,7 @@ internal static class ProjectServiceCollectionExtensions
             .AddScoped<IValidator<HideProjectRequest>, AcceptAllValidator<HideProjectRequest>>().AddCommand<HideProjectRequest, ProjectAccepted, HideProjectService>()
             .AddScoped<IValidator<ListProjectsRequest>, AcceptAllValidator<ListProjectsRequest>>().AddQuery<ListProjectsRequest, ListProjectsResponse, ListProjectsService>()
             .AddScoped<IValidator<GetProjectRequest>, AcceptAllValidator<GetProjectRequest>>().AddQuery<GetProjectRequest, GetProjectResponse, GetProjectService>()
+            .AddScoped<IProjectPages, ProjectPageReader>()
             .AddSingleton<IProjectFacts, NoProjectFacts>();   // Ph2: the adapter over IContextEngine.Projects replaces it
     }
 }
