@@ -11,7 +11,7 @@ internal static class GetProjectEndpoint
     {
         _ = group.MapGet("/projects/{project}", static async Task<IResult> (string project, IService<GetProjectRequest, GetProjectResponse> service, ICallerContextAccessor callers, IProjectFencing fencing, CancellationToken ct) =>
         {
-            var answer = await service.Handle(new GetProjectRequest(project), ct).ConfigureAwait(false);
+            var answer = await service.Handle(new GetProjectRequest(ProjectRoute.Segment(project)), ct).ConfigureAwait(false);
             return answer.IsError || callers.Current?.Class != CallerClass.Session ? answer.ToHttpResult() : fencing.One(answer.Value);
         });
         return group;

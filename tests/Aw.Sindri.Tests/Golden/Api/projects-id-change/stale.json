@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-PROJECT-409",
+  "status": 409,
+  "detail": "This project changed since you read it. Read it again and retry.",
+  "traceId": "<trace>"
+}
