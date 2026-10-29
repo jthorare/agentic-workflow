@@ -69,6 +69,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IConceptHintStore, SqliteConceptHintStore>()
             .AddSingleton<IIntentStore, SqliteIntentStore>()
             .AddSingleton<IRecordStore, SqliteRecordStore>()
+            .AddSingleton<ISourceIdentityStore, SqliteSourceIdentityStore>()
             .AddSingleton<ILexicalLeg, SqliteLexicalLeg>()
             .AddSingleton<IRecordFeedCatalog, ContextRecordFeedCatalog>()
             .AddSingleton<IVectorMatrixCache, VectorMatrixCache>()
