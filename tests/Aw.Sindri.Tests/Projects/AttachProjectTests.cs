@@ -22,17 +22,43 @@ public sealed class AttachProjectTests
         await _h.Lease();
         using var human = _h.Human();
 
-        var result = await _h.Attach().Handle(new AttachProjectRequest(Name: " Kitchen ", State: ProjectState.Planned, Links: ["https://example.com/plan"], Note: "ordering tile", Target: new DateOnly(2026, 12, 1)), Token);
+        var result = await _h.Attach().Handle(new AttachProjectRequest(Name: " Kitchen ", State: ProjectState.Planned, Links: ["https://example.com/plan"], Notes: "ordering tile", Target: new DateOnly(2026, 12, 1)), Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         var recorded = Assert.Single(_h.Slice.Store.Events);
         var payload = _h.Payload<ProjectAttached>(recorded);
         Expect.Equal(EventTypes.ProjectAttached, recorded.Envelope.Type);
         Expect.Equal($"project.attached:{payload.Id.Value}", recorded.IdempotencyKey);
-        Expect.Equal(("Kitchen", ProjectState.Planned, "ordering tile", new DateOnly(2026, 12, 1)), (payload.Name, payload.State, payload.Note, payload.Target));
+        Expect.Equal(("Kitchen", ProjectState.Planned, "ordering tile", new DateOnly(2026, 12, 1)), (payload.Name, payload.State, payload.Notes, payload.Target));
         Expect.Sequence(["https://example.com/plan"], payload.Links);
         Expect.Equal((recorded.Sequence, payload.Id.Value, 1L, "Kitchen"), (result.Value.Accepted.Sequence, result.Value.Project, result.Value.Version, result.Value.Name));
         Expect.Equal(payload.CommandId, result.Value.Accepted.CommandId);
+    }
+
+    [Fact]
+    public async Task Attaching_a_project_that_stopped_being_led_takes_its_led_notes_when_none_are_typed()
+    {
+        await _h.Lease();
+        await _h.SeedLedNotes(version: 1, notes: "from when I led it");
+        using var human = _h.Human();   // the stored project is led by someone else now
+
+        var kept = await _h.Attach().Handle(new AttachProjectRequest(Linear: ProjectRows.LinearKey), Token);
+
+        Assert.True(kept.IsSuccess, kept.IsError ? kept.Error.ToString() : null);
+        Expect.Equal("from when I led it", _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events)).Notes);
+    }
+
+    [Fact]
+    public async Task Notes_typed_on_attach_win_over_the_led_notes()
+    {
+        await _h.Lease();
+        await _h.SeedLedNotes(version: 1, notes: "from when I led it");
+        using var human = _h.Human();
+
+        var typed = await _h.Attach().Handle(new AttachProjectRequest(Linear: ProjectRows.LinearKey, Notes: "fresh start"), Token);
+
+        Assert.True(typed.IsSuccess, typed.IsError ? typed.Error.ToString() : null);
+        Expect.Equal("fresh start", _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events)).Notes);
     }
 
     [Fact]
@@ -50,16 +76,16 @@ public sealed class AttachProjectTests
     }
 
     [Fact]
-    public async Task The_note_and_each_link_are_scrubbed_before_the_event_is_written()
+    public async Task The_notes_and_each_link_are_scrubbed_before_the_event_is_written()
     {
         await _h.Lease();
         using var human = _h.Human();
 
-        var result = await _h.Attach().Handle(new AttachProjectRequest(Name: "Kitchen", Links: [$"https://example.com/{ProjectWriteHarness.Secret}"], Note: $"key {ProjectWriteHarness.Secret}"), Token);
+        var result = await _h.Attach().Handle(new AttachProjectRequest(Name: "Kitchen", Links: [$"https://example.com/{ProjectWriteHarness.Secret}"], Notes: $"key {ProjectWriteHarness.Secret}"), Token);
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
         var payload = _h.Payload<ProjectAttached>(Assert.Single(_h.Slice.Store.Events));
-        Expect.Equal("key [redacted]", payload.Note);
+        Expect.Equal("key [redacted]", payload.Notes);
         Expect.Sequence(["https://example.com/[redacted]"], payload.Links);
     }
 
@@ -81,16 +107,16 @@ public sealed class AttachProjectTests
     }
 
     [Fact]
-    public async Task A_long_note_a_plain_http_link_and_too_many_links_are_refused()
+    public async Task Long_notes_a_plain_http_link_and_too_many_links_are_refused()
     {
         await _h.Lease();
         using var human = _h.Human();
 
-        var note = await _h.Attach().Handle(new AttachProjectRequest(Name: "Kitchen", Note: new string('x', 201)), Token);
+        var note = await _h.Attach().Handle(new AttachProjectRequest(Name: "Kitchen", Notes: new string('x', 16385)), Token);
         var link = await _h.Attach().Handle(new AttachProjectRequest(Name: "Kitchen", Links: ["http://example.com"]), Token);
         var many = await _h.Attach().Handle(new AttachProjectRequest(Name: "Kitchen", Links: [.. Enumerable.Range(0, 11).Select(static i => "https://example.com/" + i.ToString(CultureInfo.InvariantCulture))]), Token);
 
-        Assert.StartsWith("note:", note.Error.Message, StringComparison.Ordinal);
+        Assert.StartsWith("notes:", note.Error.Message, StringComparison.Ordinal);
         Assert.StartsWith("links:", link.Error.Message, StringComparison.Ordinal);
         Assert.StartsWith("links:", many.Error.Message, StringComparison.Ordinal);
         Assert.Empty(_h.Slice.Store.Events);

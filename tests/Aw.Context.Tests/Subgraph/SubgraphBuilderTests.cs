@@ -57,6 +57,21 @@ public sealed class SubgraphBuilderTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_reached_unread_file_node_adds_nothing_to_the_map_coverage()
+    {
+        const string Script = "code:scripts/foo.sh";
+        var plain = new GraphBuilder().Edge(FileA, EdgeType.Implements, A).Edge(Rec, EdgeType.Mentions, A).Build();
+        var built = new GraphBuilder().Edge(FileA, EdgeType.Implements, A).Edge(Rec, EdgeType.Mentions, A).Edge(Rec, EdgeType.Mentions, Script).Build();
+        var withUnread = new GraphSnapshot([.. built.Nodes.Select(n => n.Key.Value == Script ? n with { Attributes = UnreadFileNodes.Attributes() } : n)], built.Edges, built.Aliases, built.Decisions);
+
+        var without = SubgraphBuilder.Build(_basis, plain, [A, Rec], 1, []).Value;
+        var with = SubgraphBuilder.Build(_basis, withUnread, [A, Rec], 1, []).Value;
+
+        Assert.Equal(without.Coverage.Map!.Paths, with.Coverage.Map!.Paths);
+        Assert.Equal(without.Coverage.Map.Files, with.Coverage.Map.Files);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Widened_code_files_add_their_directories_to_the_map_coverage()
     {
         var graph = new GraphBuilder().Edge(B, EdgeType.PartOf, A).Edge("code:lib/b.ts", EdgeType.Implements, B).Edge(FileA, EdgeType.Implements, A).Build();
@@ -207,4 +222,15 @@ public sealed class SubgraphBuilderTests
     [InlineData(99)]
     public void A_depth_past_the_old_cap_widens_and_one_past_8_is_read_as_8(int depth) =>
         Assert.True(SubgraphBuilder.Build(_basis, Graph(), [A], depth, []).IsSuccess);
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_code_band_skips_file_nodes_the_extractor_did_not_read()
+    {
+        var unread = new GraphNode(NodeKey.From("code:setup.sh"), "setup.sh", Attributes: UnreadFileNodes.Attributes());
+        var graph = new GraphSnapshot([.. Graph().Nodes, unread], [.. Graph().Edges, new GraphEdge(NodeKey.From(Rec), NodeKey.From("code:setup.sh"), EdgeType.Mentions)], [], []);
+
+        var view = Of([Rec, "code:setup.sh"], graph: graph);
+
+        Assert.Empty(view.Bands.Code.Files);
+    }
 }
