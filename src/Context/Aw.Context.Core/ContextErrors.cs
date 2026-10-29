@@ -127,7 +127,7 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-080: no eligible backtest sample (no merge carries an issue key of a profile team in the window, or every candidate was left out; the message gives the counts).</summary>
     public static readonly ErrorDefinition NoEligibleSample = new("SND-CONTEXT-080", ErrorKind.NotFound, "No eligible backtest sample");
 
-    /// <summary>SND-CONTEXT-081: no configured intent source can fetch issue records for a brief ('onyx' today; 'linear' after S-6).</summary>
+    /// <summary>SND-CONTEXT-081: no configured intent source can fetch issue records for a brief (today 'linear').</summary>
     public static readonly ErrorDefinition NoBriefSource = new("SND-CONTEXT-081", ErrorKind.Unavailable, "No source can supply backtest briefs");
 
     /// <summary>SND-CONTEXT-082: '--arms' names an unknown arm; the message lists the arms and which are not available yet.</summary>

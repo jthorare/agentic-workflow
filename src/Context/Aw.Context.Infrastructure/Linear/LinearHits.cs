@@ -4,7 +4,7 @@ using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Infrastructure.Linear;
 
-/// <summary>Maps Linear's records to search hits: the canonical key, the updatedAt version, the title as Onyx's connector builds it for an issue, and the identifier alias.</summary>
+/// <summary>Maps Linear's records to search hits: the canonical key, the updatedAt version, the title as '[ENG-482] Title', and the identifier alias.</summary>
 /// <param name="scope">The profile's teams (an alias names only one of them).</param>
 /// <param name="now">When Linear answered.</param>
 /// <param name="asOf">The query's as-of time, or null.</param>
@@ -12,12 +12,12 @@ internal sealed class LinearHits(LinearScope scope, DateTimeOffset now, DateTime
 {
     private static readonly SourceId _id = SourceId.From("linear");
 
-    /// <summary>The version of a record: its updatedAt, as Onyx writes the same instant.</summary>
+    /// <summary>The version of a record: its updatedAt as an ISO instant.</summary>
     /// <param name="updatedAt">When Linear says the record last changed.</param>
     /// <returns>The version text.</returns>
     public static string Version(DateTimeOffset updatedAt) => updatedAt.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
 
-    /// <summary>An issue's title as Onyx's Linear connector builds it ('[ENG-482] Title').</summary>
+    /// <summary>An issue's title ('[ENG-482] Title').</summary>
     /// <param name="issue">The issue.</param>
     /// <returns>The title.</returns>
     public static string Title(LinearIssue issue) => $"[{issue.Identifier}] {issue.Title}";
@@ -51,7 +51,7 @@ internal sealed class LinearHits(LinearScope scope, DateTimeOffset now, DateTime
         };
     }
 
-    // The identifier is an alias when it is Linear's own for this issue and its team is one of the profile's (the same rule as Onyx's: OnyxRecordKeys).
+    // The identifier is an alias when it is Linear's own for this issue and its team is one of the profile's.
     private string? Alias(LinearIssue issue) =>
         scope.IsScoped && issue.Team is { } team && scope.Reads(team.Key)
         && issue.Identifier.StartsWith(team.Key + "-", StringComparison.Ordinal) && issue.Identifier.Length > team.Key.Length + 1

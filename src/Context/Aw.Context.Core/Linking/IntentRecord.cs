@@ -5,7 +5,7 @@ namespace Aw.Context.Core.Linking;
 /// <summary>An intent record the sync knows (spec §6.2): never its text, only what identifies it. The title is untrusted and scrubbed.</summary>
 /// <param name="Key">The record's canonical key.</param>
 /// <param name="Source">The source it came from.</param>
-/// <param name="Version">The source's version of the record (an Onyx hit's updated_at).</param>
+/// <param name="Version">The source's version of the record (a Linear record's updatedAt).</param>
 /// <param name="Title">The scrubbed one-line title (untrusted).</param>
 /// <param name="Aliases">Other names for it, such as the tracker key 'SPL-103'.</param>
 public sealed record IntentRecord(RecordKey Key, SourceId Source, string Version, string Title, IReadOnlyList<string> Aliases)

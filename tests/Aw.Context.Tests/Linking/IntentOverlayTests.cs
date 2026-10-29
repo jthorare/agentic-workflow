@@ -9,7 +9,7 @@ namespace Aw.Context.Tests.Linking;
 public sealed class IntentOverlayTests
 {
     private static readonly RecordKey _r103 = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000103");
-    private static readonly IntentRecord _record = new(_r103, SourceId.From("onyx"), "2026-07-23T09:00:00+00:00", "Toggle split orientation", ["SPL-103"]);
+    private static readonly IntentRecord _record = new(_r103, SourceId.From("linear"), "2026-07-23T09:00:00+00:00", "Toggle split orientation", ["SPL-103"]);
 
     private static GraphSnapshot Map() => new GraphBuilder()
         .Node("feature:layout.split-pane.orientation", "Split orientation")
@@ -71,7 +71,7 @@ public sealed class IntentOverlayTests
     }
 
     private static readonly RecordKey _r104 = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000104");
-    private static readonly IntentRecord _target = new(_r104, SourceId.From("onyx"), "2026-07-22T10:20:00+00:00", "Restore pane layout", ["SPL-104"]);
+    private static readonly IntentRecord _target = new(_r104, SourceId.From("linear"), "2026-07-22T10:20:00+00:00", "Restore pane layout", ["SPL-104"]);
 
     [Fact, Trait("Lane", "unit")]
     public void A_record_that_is_only_the_target_of_a_link_becomes_a_node_and_the_link_is_not_orphaned()
