@@ -88,29 +88,49 @@ public sealed class CompleteWaitsOutRestartCheckTests : IDisposable
     }
 
     /// <summary>
-    /// Moves the fake clock only while the command waits: not at all until its first "retrying in" line, then a second at a time with a short real pause between steps, so each of the command's
-    /// own timers is set before the clock passes it. Stops when the command ends, after <see cref="_anyWindow"/> of fake time, or after <see cref="_realBound"/> of real time.
+    /// Moves the fake clock only while the command waits: not at all until its first "retrying in N s" line, then by exactly the N that line names, once per new line, so the clock lands on
+    /// the command's own timer instead of crawling a second at a time. A short real pause before each step lets the command set that timer first; when no new line follows a step, the same
+    /// step is taken again. Stops when the command ends, after <see cref="_anyWindow"/> of fake time, or after <see cref="_realBound"/> of real time.
     /// </summary>
     private async Task Drive(Task<int> run, DateTimeOffset started)
     {
         var real = TimeProvider.System.GetTimestamp();
+        var seen = 0;
+        var idle = 0;
+        var step = TimeSpan.FromSeconds(1);
         while (!run.IsCompleted && _clock.GetUtcNow() - started < _anyWindow && TimeProvider.System.GetElapsedTime(real) < _realBound)
         {
-            if (Waiting())
-            {
-                _clock.Advance(TimeSpan.FromSeconds(1));
-            }
-
             await Task.Delay(TimeSpan.FromMilliseconds(2), TimeProvider.System, Token);
+            var lines = Notices();
+            if (lines.Count > seen)
+            {
+                seen = lines.Count;
+                idle = 0;
+                step = Wait(lines[^1]);
+                await Task.Delay(TimeSpan.FromMilliseconds(2), TimeProvider.System, Token);   // why: the line is written just before the command sets its timer
+                _clock.Advance(step);
+            }
+            else if (seen > 0 && ++idle >= 25)   // why: the pause was not set yet when the step came (or the command is between tries); step again rather than hang
+            {
+                idle = 0;
+                _clock.Advance(step);
+            }
         }
     }
 
-    private bool Waiting()
+    private List<string> Notices()
     {
         lock (_errorShared)   // why: the synchronized writer locks on itself
         {
-            return _error.ToString().Contains("retrying in", StringComparison.Ordinal);
+            return [.. _error.ToString().Split('\n', StringSplitOptions.RemoveEmptyEntries).Where(static l => l.Contains("retrying in", StringComparison.Ordinal))];
         }
+    }
+
+    // "... retrying in 4 s (up to 296 s more)"
+    private static TimeSpan Wait(string line)
+    {
+        var from = line.IndexOf("retrying in ", StringComparison.Ordinal) + "retrying in ".Length;
+        return TimeSpan.FromSeconds(int.Parse(line[from..line.IndexOf(' ', from)], System.Globalization.CultureInfo.InvariantCulture));
     }
 
     [Fact]
