@@ -56,13 +56,13 @@
     {
       "code": "SND-LAUNCH-015",
       "reason": "form-none",
-      "text": "This agent hasn't been taught how to follow a Step's rules, so it can't run by itself. Use Claude Code or Codex, or add its policy setting.",
+      "text": "`<target>` hasn't been taught how to follow a Step's rules, so it can't run by itself. Use Claude Code or Codex, or add its policy setting.",
       "attendedText": "This agent hasn't been taught how to follow the sandbox's rules, so this session can't be opened. Use Claude Code or Codex, or add its policy setting."
     },
     {
       "code": "SND-LAUNCH-015",
       "reason": "form-reserved",
-      "text": "This agent hasn't been taught how to follow a Step's rules, so it can't run by itself. Use Claude Code or Codex, or add its policy setting.",
+      "text": "`<target>` hasn't been taught how to follow a Step's rules, so it can't run by itself. Use Claude Code or Codex, or add its policy setting.",
       "attendedText": "This agent hasn't been taught how to follow the sandbox's rules, so this session can't be opened. Use Claude Code or Codex, or add its policy setting."
     },
     {
