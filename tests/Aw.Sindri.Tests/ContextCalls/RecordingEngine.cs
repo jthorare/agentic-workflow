@@ -3,6 +3,7 @@ using System.Text.Json;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Facade;
@@ -82,6 +83,8 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken) => inner.Decide(scope, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) => inner.Progress(scope, cancellationToken);
+
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) => inner.ConceptStatus(scope, cancellationToken);
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => inner.Counts(source, cancellationToken);
 

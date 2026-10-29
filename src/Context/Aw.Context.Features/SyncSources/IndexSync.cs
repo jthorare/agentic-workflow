@@ -1,4 +1,5 @@
 using Aw.Context.Core;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
@@ -20,7 +21,8 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="decisions">The decision pass <see cref="Decide"/> runs; null: none.</param>
 /// <param name="steps">The other steps after a feed's tick (the Linear viewer after the projects feed); null: none. They run once the source's lock is released.</param>
 /// <param name="synthesis">The concept synthesis <see cref="Decide"/> runs after the per-record pass; null: none.</param>
-internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null, ConceptSynthesisRun? synthesis = null) : IIndexSync
+/// <param name="concepts">The synthesized concepts <see cref="ConceptStatus"/> counts; null: none are kept.</param>
+internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrubberFactory scrubberFactory, FeedDecisions? decisions = null, TickSteps? steps = null, ConceptSynthesisRun? synthesis = null, IConceptSynthesisStore? concepts = null) : IIndexSync
 {
     /// <summary>The longest one feed's tick runs; the index tick comes every 5 minutes, and this sits above one normal Linear or Slack page with its rate-limit sleeps.</summary>
     internal static readonly TimeSpan FeedCap = TimeSpan.FromMinutes(4);
@@ -183,6 +185,39 @@ internal sealed class IndexSync(RecordFeedSync feeds, IRecordStore store, IScrub
             Failures = backoff.Failures,
             NextTry = backoff.NextTry,
         };
+    }
+
+    public async ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var settings = SettingsReader.Read(scope.Settings);
+        if (settings.IsError)
+        {
+            return settings.Error;
+        }
+
+        var enabled = settings.Value.ConceptSynthesis.Enabled && settings.Value.Labeling.Enabled;
+        if (concepts is null)
+        {
+            return Core.ConceptSynthesis.ConceptStatus.From(enabled, [], watermark: 0, live: 0, embedded: 0);
+        }
+
+        // why: one count query each side, so a status read never pages the record store
+        var stored = await concepts.All(cancellationToken).ConfigureAwait(false);
+        if (stored.IsError)
+        {
+            return stored.Error;
+        }
+
+        var watermark = await concepts.Watermark(cancellationToken).ConfigureAwait(false);
+        if (watermark.IsError)
+        {
+            return watermark.Error;
+        }
+
+        var live = await store.LiveCounts(cancellationToken).ConfigureAwait(false);
+        return live.IsError
+            ? live.Error
+            : Core.ConceptSynthesis.ConceptStatus.From(enabled, stored.Value, watermark.Value, live.Value.Live, live.Value.Embedded);
     }
 
     public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => store.Count(source, cancellationToken);

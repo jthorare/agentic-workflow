@@ -9661,3 +9661,46 @@ static Aw.Context.Core.Records.SyncAttempt.operator !=(Aw.Context.Core.Records.S
 static Aw.Context.Core.Records.SyncAttempt.operator ==(Aw.Context.Core.Records.SyncAttempt? left, Aw.Context.Core.Records.SyncAttempt? right) -> bool
 static readonly Aw.Context.Core.Records.SourceBackoff.BaseDelay -> System.TimeSpan
 static readonly Aw.Context.Core.Records.SourceBackoff.MaxDelay -> System.TimeSpan
+Aw.Context.Core.ConceptSynthesis.ConceptStatus
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.<Clone>$() -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Concepts.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.ConceptStatus(bool Enabled, int Concepts, int MultiSource, int Queued, int Covered, long Watermark, int Embedded, int Pending) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Covered.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Covered.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Deconstruct(out bool Enabled, out int Concepts, out int MultiSource, out int Queued, out int Covered, out long Watermark, out int Embedded, out int Pending) -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Embedded.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Embedded.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Enabled.get -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Enabled.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Equals(Aw.Context.Core.ConceptSynthesis.ConceptStatus? other) -> bool
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.MultiSource.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.MultiSource.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Pending.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Pending.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Queued.get -> int
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Queued.init -> void
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Watermark.get -> long
+Aw.Context.Core.ConceptSynthesis.ConceptStatus.Watermark.init -> void
+Aw.Context.Core.Records.IRecordStore.LiveCounts(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.LiveRecordCounts!>!>
+Aw.Context.Core.Records.LiveRecordCounts
+Aw.Context.Core.Records.LiveRecordCounts.<Clone>$() -> Aw.Context.Core.Records.LiveRecordCounts!
+Aw.Context.Core.Records.LiveRecordCounts.Deconstruct(out int Live, out int Embedded) -> void
+Aw.Context.Core.Records.LiveRecordCounts.Embedded.get -> int
+Aw.Context.Core.Records.LiveRecordCounts.Embedded.init -> void
+Aw.Context.Core.Records.LiveRecordCounts.Equals(Aw.Context.Core.Records.LiveRecordCounts? other) -> bool
+Aw.Context.Core.Records.LiveRecordCounts.Live.get -> int
+Aw.Context.Core.Records.LiveRecordCounts.Live.init -> void
+Aw.Context.Core.Records.LiveRecordCounts.LiveRecordCounts(int Live, int Embedded) -> void
+Aw.Context.Core.Sync.IIndexSync.ConceptStatus(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.ConceptSynthesis.ConceptStatus!>!>
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.Equals(object? obj) -> bool
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.GetHashCode() -> int
+override Aw.Context.Core.ConceptSynthesis.ConceptStatus.ToString() -> string!
+override Aw.Context.Core.Records.LiveRecordCounts.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.LiveRecordCounts.GetHashCode() -> int
+override Aw.Context.Core.Records.LiveRecordCounts.ToString() -> string!
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.From(bool enabled, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts, long watermark, int live, int embedded) -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator !=(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
+static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
+static Aw.Context.Core.Records.LiveRecordCounts.operator !=(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool
+static Aw.Context.Core.Records.LiveRecordCounts.operator ==(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool

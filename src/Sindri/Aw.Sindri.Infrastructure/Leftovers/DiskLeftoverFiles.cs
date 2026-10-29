@@ -26,7 +26,7 @@ internal sealed class DiskLeftoverFiles : ILeftoverFiles
         try
         {
             Directory.Delete(path, recursive: true);
-            return Aw.Kernel.Results.Ok();
+            return Results.Ok();
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
