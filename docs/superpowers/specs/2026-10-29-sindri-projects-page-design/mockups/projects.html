@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Projects mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!--
+  Sindri Projects page mockups (spec 2026-10-29-sindri-projects-page-design.md §3, §3.1, §3.2, §7; Ph5 "mockup first").
+  Static: no production code. Colors, sizes and radii are the app's tokens (src/Sindri/Aw.Sindri.Ui/Theme/Tokens.axaml), no new ones.
+  Query: v=a|b|c (variant) · state=main|loading|ctxerr|empty|syncing|noled · sheet=card|add|remove · fold=finished|hidden · marks=1
+-->
+<style>
+:root {
+  --canvas:#010102; --s1:#0f1011; --s2:#141516; --s3:#18191a; --s4:#191a1b;
+  --hair:#23252a; --hair2:#34343a; --hair3:#3e3e44;
+  --ink:#f7f8f8; --muted:#d0d6e0; --subtle:#8a8f98; --tert:#62666d;
+  --primary:#5e6ad2; --primarySoft:#1d2036; --onPrimary:#fff;
+  --success:#27a644; --attention:#f2994a; --error:#eb5757;
+  --attentionSoft:#23160c; --errorSoft:#220d0e;
+  --xxs:4px; --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px;
+  --rxs:4px; --rsm:6px; --rmd:8px; --rlg:12px;
+  --topbar:48px; --sheet:520px; --control:30px;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; }
+body { background:var(--canvas); color:var(--ink); font:13px/1.45 Inter, system-ui, sans-serif; overflow:hidden; }
+.mono { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; }
+
+/* Top bar: the app's eight tabs (spec §7), Projects second. */
+.top { height:var(--topbar); display:flex; align-items:center; gap:var(--xxs); padding:0 var(--md); border-bottom:1px solid var(--hair); background:var(--canvas); }
+.logo { width:24px; height:24px; border-radius:var(--rsm); background:var(--ink); color:#000; font-weight:600; display:grid; place-items:center; margin-right:var(--sm); font-size:12px; }
+.tab { height:var(--control); padding:0 10px; display:flex; align-items:center; border-radius:var(--rsm); color:var(--subtle); white-space:nowrap; }
+.tab.on { color:var(--ink); background:var(--s3); }
+.top .grow { flex:1; }
+.status { display:flex; align-items:center; gap:6px; color:var(--subtle); font-size:12px; white-space:nowrap; }
+.dot { width:8px; height:8px; border-radius:50%; display:inline-block; flex:none; }
+.dot.ok { background:var(--success); } .dot.warn { background:var(--attention); } .dot.err { background:var(--error); } .dot.none { background:transparent; border:1px solid var(--hair3); }
+
+.body { position:absolute; top:var(--topbar); left:0; right:0; bottom:0; display:flex; }
+.page { flex:1; min-width:0; overflow:hidden; padding:var(--lg) var(--lg) var(--xl); }
+.head { display:flex; align-items:flex-start; gap:var(--md); margin-bottom:var(--lg); }
+.head h1 { font-size:20px; font-weight:600; margin:0 0 var(--xxs); letter-spacing:-0.01em; }
+.fresh { color:var(--subtle); font-size:12px; }
+.fresh b { color:var(--attention); font-weight:500; }
+.head .grow { flex:1; min-width:0; }
+.btn { height:var(--control); padding:0 var(--sm); border-radius:var(--rmd); border:1px solid var(--hair2); background:var(--s2); color:var(--ink); display:inline-flex; align-items:center; gap:6px; font:500 13px Inter, sans-serif; white-space:nowrap; }
+.btn.primary { background:var(--ink); color:#000; border-color:var(--ink); }
+.btn.danger { color:var(--error); }
+.btn.ghost { background:transparent; border-color:transparent; color:var(--subtle); }
+
+.banner { border:1px solid var(--hair); background:var(--s1); border-radius:var(--rlg); padding:var(--sm) var(--md); margin-bottom:var(--md); display:flex; align-items:center; gap:var(--sm); color:var(--muted); }
+.banner.err { border-color:#4a1f21; background:var(--errorSoft); }
+.banner.quiet { color:var(--subtle); }
+.empty { border:1px dashed var(--hair2); border-radius:var(--rlg); padding:var(--xl); text-align:center; color:var(--muted); }
+.empty p { margin:0 0 var(--md); }
+
+/* Variant A: the spec's card, as written (§3). */
+.grid { display:grid; gap:var(--sm); }
+.card { background:var(--s1); border:1px solid var(--hair); border-radius:var(--rlg); padding:var(--md); min-width:0; }
+.card.focus { outline:2px solid var(--primary); outline-offset:2px; }
+.card.gone { opacity:.5; }
+.card .r1 { display:flex; gap:var(--xs); align-items:baseline; }
+.card .name { font-weight:600; font-size:14px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.card .sh { color:var(--muted); white-space:nowrap; font-size:12px; display:flex; align-items:center; gap:6px; }
+.card .line { color:var(--subtle); font-size:12px; margin-top:6px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card .line.ink { color:var(--muted); }
+.chip { display:inline-flex; align-items:center; height:18px; padding:0 6px; border-radius:var(--rxs); border:1px solid var(--hair2); color:var(--subtle); font-size:11px; margin-left:6px; vertical-align:2px; white-space:nowrap; }
+.chip.violet { color:#a78bfa; border-color:#3a2d5c; }
+.mark { color:var(--attention); }
+.note { color:var(--subtle); font-style:italic; }
+
+/* Variant B: grouped by state, the counts large. */
+.group { margin-bottom:var(--lg); }
+.ghead { display:flex; align-items:center; gap:var(--xs); color:var(--subtle); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:500; margin-bottom:var(--xs); }
+.ghead .n { color:var(--tert); }
+.bcard { background:var(--s1); border:1px solid var(--hair); border-radius:var(--rlg); padding:var(--md); display:flex; flex-direction:column; gap:var(--sm); min-width:0; }
+.bcard .top2 { display:flex; align-items:baseline; gap:var(--xs); }
+.bcard .name { font-weight:600; font-size:14px; flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.health { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--ink); white-space:nowrap; }
+.stats { display:flex; gap:var(--lg); }
+.stat .v { font-size:22px; font-weight:600; letter-spacing:-0.02em; line-height:1.1; }
+.stat .k { color:var(--subtle); font-size:11px; }
+.bcard .foot { display:flex; flex-wrap:wrap; column-gap:var(--sm); row-gap:2px; color:var(--subtle); font-size:12px; border-top:1px solid var(--hair); padding-top:var(--sm); }
+.bcard .foot span { white-space:nowrap; }
+
+/* Variant C: one row per project, columns to compare. */
+.table { border:1px solid var(--hair); border-radius:var(--rlg); background:var(--s1); overflow:hidden; }
+.tr { display:grid; align-items:center; gap:var(--sm); padding:0 var(--md); min-height:52px; border-top:1px solid var(--hair); }
+.tr:first-child { border-top:none; }
+.tr.th { min-height:34px; color:var(--tert); font-size:11px; letter-spacing:.06em; text-transform:uppercase; background:var(--s2); }
+.tr.sect { min-height:30px; color:var(--subtle); font-size:11px; letter-spacing:.08em; text-transform:uppercase; background:var(--canvas); font-weight:500; }
+.tr.focus { box-shadow:inset 2px 0 0 var(--primary); background:var(--s3); }
+.tr .nm { min-width:0; }
+.tr .nm .t { font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tr .nm .s { color:var(--subtle); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.tr .num { font-variant-numeric:tabular-nums; text-align:right; }
+.tr .dim { color:var(--subtle); font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* The folds (§3 Order). */
+.fold { margin-top:var(--md); border-top:1px solid var(--hair); }
+.fold .fb { display:flex; align-items:center; gap:var(--xs); height:40px; color:var(--muted); }
+.fold .fb .chev { color:var(--subtle); width:12px; }
+.fold .fb .n { color:var(--subtle); }
+.fold .fb .why { color:var(--tert); font-size:12px; margin-left:auto; }
+
+/* Loading: three card-shaped placeholders, no text, no spinner (§3.1 row 2). */
+.ph { background:var(--s1); border:1px solid var(--hair); border-radius:var(--rlg); height:118px; }
+
+/* The sheet (§3.2): right side, 520 px; below 1,100 px it covers the page. */
+.sheet { width:var(--sheet); flex:none; background:var(--s2); border-left:1px solid var(--hair2); padding:var(--lg); overflow:hidden; display:flex; flex-direction:column; gap:var(--md); }
+.sheet.cover { position:absolute; right:0; top:0; bottom:0; box-shadow:-24px 0 48px rgba(0,0,0,.6); }
+.scrim { position:absolute; inset:0; background:rgba(0,0,0,.5); }
+.sheet h2 { font-size:18px; font-weight:600; margin:0; outline:2px solid var(--primary); outline-offset:4px; border-radius:2px; display:inline; }
+.sheet .sub { color:var(--muted); display:flex; gap:var(--xs); align-items:center; flex-wrap:wrap; }
+.kv { display:grid; grid-template-columns:120px 1fr; row-gap:var(--xs); column-gap:var(--md); font-size:13px; }
+.kv .k { color:var(--subtle); }
+.desc { color:var(--muted); }
+.sec { color:var(--subtle); font-size:11px; letter-spacing:.08em; text-transform:uppercase; font-weight:500; margin-bottom:var(--xs); }
+.links a { display:flex; justify-content:space-between; color:var(--ink); text-decoration:none; padding:var(--xs) 0; border-top:1px solid var(--hair); }
+.links a span:last-child { color:var(--subtle); }
+.actions { display:flex; gap:var(--xs); margin-top:auto; padding-top:var(--md); border-top:1px solid var(--hair); }
+.x { margin-left:auto; color:var(--subtle); font-size:12px; }
+.confirm { border:1px solid #4a1f21; background:var(--errorSoft); border-radius:var(--rmd); padding:var(--sm); display:flex; flex-direction:column; gap:var(--sm); }
+.tabs2 { display:flex; gap:var(--xxs); border-bottom:1px solid var(--hair); }
+.tabs2 div { padding:var(--xs) var(--sm); color:var(--subtle); }
+.tabs2 .on { color:var(--ink); box-shadow:inset 0 -2px 0 var(--primary); }
+.input { height:var(--control); border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rmd); display:flex; align-items:center; padding:0 var(--sm); color:var(--subtle); }
+.input.focus { border-color:var(--primary); color:var(--ink); }
+.pick { display:flex; align-items:center; gap:var(--sm); padding:var(--xs) 0; border-top:1px solid var(--hair); }
+.pick .grow { flex:1; min-width:0; }
+.pick .s { color:var(--subtle); font-size:12px; }
+.label { position:fixed; left:8px; bottom:8px; color:var(--tert); font-size:11px; }
+</style>
+</head>
+<body>
+<div class="top" id="top"></div>
+<div class="body" id="body"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const V = q.get('v') || 'a', STATE = q.get('state') || 'main', SHEET = q.get('sheet'), FOLD = q.get('fold'), MARKS = q.get('marks') === '1';
+const W = window.innerWidth;
+
+// Sample projects: §3's fields; three origins; ship 2's PR line included. Generic names (no work app).
+const P = [
+  { name:'Checkout rewrite', origin:'led', state:'In progress', health:'at risk', lead:'you', target:'Nov 14', issues:12, prs:3, repos:['web-app','api'], last:'2 h ago' },
+  { name:'Search relevance', origin:'led', state:'In progress', health:'on track', lead:'you', target:'Dec 2', issues:27, prs:5, repos:['search','api'], last:'25 min ago' },
+  { name:'Design system v2', origin:'attached', state:'In progress', health:'off track', lead:'Sam Lee', target:'Nov 30', issues:8, prs:1, repos:['web-app'], last:'1 d ago', note:'I review every token PR' },
+  { name:'Offline mode', origin:'led', state:'Planned', health:'', lead:'you', target:'Jan 20', issues:14, prs:0, repos:[], last:'3 d ago' },
+  { name:'Billing migration', origin:'led', state:'Paused', health:'at risk', lead:'you', target:'—', issues:5, prs:0, repos:['billing'], last:'9 d ago' },
+  { name:'Hiring loop for the platform team', origin:'hand', state:'In progress', health:'', lead:'', target:'Dec 15', last:'4 d ago', note:'Two onsite slots left this month' },
+  { name:'Docs site refresh', origin:'led', state:'Backlog', health:'', lead:'you', target:'—', issues:3, prs:0, repos:[], last:'12 d ago' },
+];
+const FIN = [
+  { name:'Audit log export', origin:'led', state:'Done', health:'on track', lead:'you', target:'Oct 20', issues:0, prs:0, repos:['api'], last:'6 d ago' },
+  { name:'Legacy auth removal', origin:'attached', state:'Canceled', health:'', lead:'Ana Ruiz', target:'—', issues:2, prs:0, repos:[], last:'11 d ago' },
+];
+const HID = [ { name:'Team offsite planning', origin:'led', state:'Planned', health:'', lead:'you', target:'Feb 3', issues:4, prs:0, repos:[], last:'2 d ago' } ];
+[...P, ...FIN, ...HID].forEach(p => { p.repos = p.repos || []; });
+if (MARKS) { P[2].gone = true; P[1].counting = true; }
+
+const ORDER = ['In progress','Planned','Paused','Backlog'];
+const hdot = h => h === 'on track' ? 'ok' : h === 'at risk' ? 'warn' : h === 'off track' ? 'err' : 'none';
+const health = p => p.health ? `<span class="health"><span class="dot ${hdot(p.health)}"></span>${p.health}</span>` : '';
+const originChip = p => p.origin === 'attached' ? '<span class="chip">attached</span>' : p.origin === 'hand' ? '<span class="chip violet">by hand</span>' : '';
+const issues = p => p.origin === 'hand' ? '' : p.counting ? 'counting…' : `${p.issues} open issue${p.issues === 1 ? '' : 's'}`;
+const prLine = p => p.origin === 'hand' || !p.repos.length ? '' : `${p.prs} open PR${p.prs === 1 ? '' : 's'} · repos: ${p.repos.join(', ')}`;
+const sheetCovers = SHEET && W < 1100;
+const pageW = W - (SHEET && !sheetCovers ? 520 : 0) - 48;
+const cols = pageW < 560 ? 1 : pageW < 900 ? 2 : 3;
+
+// The top bar.
+const tabs = ['Home','Projects','Workflows','Work','Recipes','Context','Agents','System'];
+document.getElementById('top').innerHTML = `<div class="logo">S</div>` + tabs.map(t => `<div class="tab${t === 'Projects' ? ' on' : ''}">${t}</div>`).join('') +
+  `<div class="grow"></div><div class="status"><span class="dot ok"></span>Running</div>`;
+
+function cardA(p, focus) {
+  const lead = [p.lead ? `Lead: ${p.lead}` : '', p.target && p.target !== '—' ? `target ${p.target}` : ''].filter(Boolean).join(' · ');
+  const l3 = [issues(p), `last activity ${p.last}`].filter(Boolean).join(' · ');
+  return `<div class="card${focus ? ' focus' : ''}${p.gone ? ' gone' : ''}">
+    <div class="r1"><span class="name">${p.name}${originChip(p)}</span><span class="sh">${p.state}${p.health ? ` · <span class="dot ${hdot(p.health)}"></span>${p.health}` : ''}</span></div>
+    ${lead ? `<div class="line">${lead}</div>` : ''}
+    <div class="line ink">${l3}</div>
+    ${prLine(p) ? `<div class="line">${prLine(p)}</div>` : ''}
+    ${p.gone ? '<div class="line mark">no longer synced from Linear</div>' : p.note ? `<div class="line note">${p.note}</div>` : ''}
+  </div>`;
+}
+
+function cardB(p, focus) {
+  const st = p.origin === 'hand' ? '' : `<div class="stats">
+      <div class="stat"><div class="v">${p.counting ? '…' : p.issues}</div><div class="k">${p.counting ? 'counting' : 'open issues'}</div></div>
+      ${p.repos.length ? `<div class="stat"><div class="v">${p.prs}</div><div class="k">open PRs</div></div>` : ''}</div>`;
+  const foot = [p.lead ? `Lead: ${p.lead}` : '', p.target && p.target !== '—' ? `Target ${p.target}` : '', p.repos.length ? p.repos.join(', ') : '', `${p.last}`].filter(Boolean);
+  return `<div class="bcard${focus ? ' card focus' : ''}${p.gone ? ' gone' : ''}" ${p.gone ? 'style="opacity:.5"' : ''}>
+    <div class="top2"><span class="name">${p.name}${originChip(p)}</span>${health(p)}</div>
+    ${st}
+    ${p.gone ? '<div class="mark" style="font-size:12px">no longer synced from Linear</div>' : p.note ? `<div class="note" style="font-size:12px">${p.note}</div>` : ''}
+    <div class="foot">${foot.map(f => `<span>${f}</span>`).join('<span>·</span>')}</div>
+  </div>`;
+}
+
+function rowsC(list, narrow) {
+  const cols = narrow ? 'minmax(0,1fr) 96px 92px 64px 56px 88px' : 'minmax(0,1fr) 104px 100px 72px 64px 140px 96px 80px';
+  const th = narrow ? ['Project','State','Health','Issues','PRs','Activity'] : ['Project','State','Health','Issues','PRs','Repos','Activity','Target'];
+  let h = `<div class="tr th" style="grid-template-columns:${cols}">${th.map((t, i) => `<div${i >= 3 && i <= 4 ? ' class="num"' : ''}>${t}</div>`).join('')}</div>`;
+  list.forEach((p, i) => {
+    const sub = p.gone ? '<span class="mark">no longer synced from Linear</span>' : [p.lead ? `Lead: ${p.lead}` : '', p.note || ''].filter(Boolean).join(' · ');
+    h += `<div class="tr${i === 0 ? ' focus' : ''}" style="grid-template-columns:${cols}${p.gone ? ';opacity:.5' : ''}">
+      <div class="nm"><div class="t">${p.name}${originChip(p)}</div><div class="s">${sub}</div></div>
+      <div>${p.state}</div><div>${health(p) || '<span class="dim">—</span>'}</div>
+      <div class="num">${p.origin === 'hand' ? '<span class="dim">—</span>' : p.counting ? '<span class="dim">…</span>' : p.issues}</div>
+      <div class="num">${p.origin === 'hand' || !p.repos.length ? '<span class="dim">—</span>' : p.prs}</div>
+      ${narrow ? '' : `<div class="dim">${p.repos.join(', ') || '—'}</div>`}
+      <div class="dim">${p.last}</div>${narrow ? '' : `<div class="dim">${p.target}</div>`}
+    </div>`;
+  });
+  return `<div class="table">${h}</div>`;
+}
+
+const ordered = [...P].sort((a, b) => ORDER.indexOf(a.state) - ORDER.indexOf(b.state));
+let focusUsed = false;   // one card on the page has focus
+const takeFocus = () => !SHEET && !focusUsed && (focusUsed = true);
+const grid = (items, fn) => `<div class="grid" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${items.map(p => fn(p, takeFocus())).join('')}</div>`;
+
+function folds() {
+  const f = (name, list, why, open) => `<div class="fold"><div class="fb"><span class="chev">${open ? '▾' : '▸'}</span>${name} <span class="n">(${list.length})</span><span class="why">${why}</span></div>
+    ${open ? (V === 'c' ? rowsC(list, pageW < 900) : grid(list, V === 'b' ? cardB : cardA)) : ''}</div>`;
+  return f('Finished', FIN, 'Done or canceled in the last 14 days', FOLD === 'finished') + f('Hidden', HID, '', FOLD === 'hidden');
+}
+
+function content() {
+  if (V === 'b') {
+    return ORDER.map(s => { const g = ordered.filter(p => p.state === s); return g.length ? `<div class="group"><div class="ghead">${s} <span class="n">${g.length}</span></div>${grid(g, cardB)}</div>` : ''; }).join('');
+  }
+  if (V === 'c') return rowsC(ordered, pageW < 900);
+  return grid(ordered, cardA);
+}
+
+const freshness = MARKS ? 'Linear projects synced 4 min ago · <b>Linear issues: re-reading for project links, 1,200 / ~4,000</b> · GitHub 3 min ago · Linear says you\'re Jo Smith'
+  : 'Linear projects synced 4 min ago · Linear issues 2 min ago · GitHub 3 min ago · Linear says you\'re Jo Smith';
+let page = '';
+const head = (fresh) => `<div class="head"><div class="grow"><h1>Projects</h1><div class="fresh">${fresh}</div></div><button class="btn primary">+ Add project</button></div>`;
+switch (STATE) {
+  case 'loading':
+    page = `<div class="head"><div class="grow"><h1>Projects</h1><div class="fresh">&nbsp;</div></div><button class="btn primary">+ Add project</button></div>` +
+      `<div class="grid" style="grid-template-columns:repeat(${cols},minmax(0,1fr))"><div class="ph"></div><div class="ph"></div><div class="ph"></div></div>`;
+    break;
+  case 'ctxerr': {
+    const own = P.filter(p => p.origin !== 'led');
+    page = head('Linear: error · GitHub 3 min ago') + `<div class="banner err"><span class="dot err"></span>Linear and GitHub data unavailable: the context store did not answer (SND-CONTEXT-001).</div>` +
+      `<div class="grid" style="grid-template-columns:repeat(${cols},minmax(0,1fr))">${own.map(p => `<div class="card"><div class="r1"><span class="name">${p.name}${originChip(p)}</span></div></div>`).join('')}</div>`;
+    break;
+  }
+  case 'empty':
+    page = head('Linear: not connected') + `<div class="empty"><p>No projects yet. Connect Linear or add one by hand.</p><button class="btn primary">+ Add project</button></div>`;
+    break;
+  case 'syncing':
+    page = head('Linear projects: first read, 40 / ~120 · GitHub 3 min ago') + `<div class="banner quiet"><span class="dot none"></span>Linear is still syncing. Projects you lead show up when it's done.</div>` + grid(P.filter(p => p.origin === 'hand'), cardA);
+    break;
+  case 'noled':
+    page = head('Linear projects synced 4 min ago · Linear says you\'re Jo Smith') + `<div class="empty"><p>You don't lead any Linear projects as Jo Smith. Attach one you drive, or add one by hand.</p><button class="btn primary">+ Add project</button></div>`;
+    break;
+  default:
+    page = head(freshness) + content() + folds();
+}
+
+function sheet() {
+  if (SHEET === 'edit') {
+    const e = P[2];
+    const field = (k, v, f) => `<div class="kv" style="grid-template-columns:120px 1fr"><div class="k" style="align-self:center">${k}</div><div class="input${f ? ' focus' : ''}">${v}</div></div>`;
+    return `<div class="sheet${sheetCovers ? ' cover' : ''}"><div style="display:flex"><h2>Edit ${e.name}</h2><span class="x">Esc</span></div>
+      <div class="sub">Attached from Linear: name, state and lead stay Linear's ${originChip(e)}</div>
+      ${field('Target', 'Nov 30')}${field('Note', e.note, true)}${field('Link', 'https://example.com/design-system/roadmap')}
+      <div class="fresh">+ Add a link</div>
+      <div class="actions" style="flex-direction:column;align-items:flex-start"><div style="display:flex;gap:8px"><button class="btn primary">Save</button><button class="btn ghost">Cancel</button></div>
+      <div style="color:var(--error);font-size:12px">This project changed since you read it. Read it again and retry. <span class="mono" style="color:var(--subtle)">SND-PROJECT-409</span></div></div></div>`;
+  }
+  if (SHEET === 'add') {
+    return `<div class="sheet${sheetCovers ? ' cover' : ''}"><div style="display:flex"><h2>Add project</h2><span class="x">Esc</span></div>
+      <div class="tabs2"><div class="on">From Linear</div><div>By hand</div></div>
+      <div class="input focus">Search Linear projects in your teams…</div>
+      <div>${[['Mobile push settings','Lead: Ana Ruiz · In progress · 6 open issues'],['Data retention policy','Lead: Kim Park · Planned · 11 open issues'],['API rate limits','Lead: Sam Lee · In progress · 4 open issues']]
+        .map(([n, s]) => `<div class="pick"><div class="grow"><div>${n}</div><div class="s">${s}</div></div><button class="btn">Attach</button></div>`).join('')}</div>
+      <div class="fresh">Only projects already synced; nothing is fetched from Linear while you search.</div></div>`;
+  }
+  const p = P[0];
+  const confirm = SHEET === 'remove';
+  const q2 = confirm ? P[2] : p;
+  return `<div class="sheet${sheetCovers ? ' cover' : ''}"><div style="display:flex"><h2>${q2.name}</h2><span class="x">Esc</span></div>
+    <div class="sub">${q2.state} · ${health(q2) || 'no update yet'} ${originChip(q2)}</div>
+    <div class="kv">
+      <div class="k">Lead</div><div>${q2.lead}</div>
+      <div class="k">Target</div><div>${q2.target}</div>
+      <div class="k">Open issues</div><div>${q2.issues}</div>
+      <div class="k">Open PRs</div><div>${q2.prs} <span class="fresh">(updated in the last 30 days)</span></div>
+      <div class="k">Last activity</div><div>${q2.last}</div>
+      ${q2.note ? `<div class="k">Note</div><div>${q2.note}</div>` : ''}
+    </div>
+    <div class="desc">Move checkout to the new payments API and cut the old flow's three page loads to one.</div>
+    <div class="links"><div class="sec">Links</div>
+      <a><span>Open in Linear</span><span>↗</span></a>
+      ${q2.repos.map(r => `<a><span>${r}: pull requests</span><span>↗</span></a>`).join('')}
+    </div>
+    ${confirm ? `<div class="confirm"><div>Remove ${q2.name} from your page?</div><div style="display:flex;gap:8px"><button class="btn danger">Remove</button><button class="btn" style="outline:2px solid var(--primary);outline-offset:2px">Keep</button></div></div>` : ''}
+    <div class="actions">${q2.origin === 'led' ? '<button class="btn">Hide</button>' : '<button class="btn">Edit</button><button class="btn">Set state</button><button class="btn danger">Remove</button>'}</div>
+  </div>`;
+}
+
+document.getElementById('body').innerHTML = `<div class="page">${page}</div>` + (SHEET ? (sheetCovers ? '<div class="scrim"></div>' : '') + sheet() : '');
+document.body.insertAdjacentHTML('beforeend', `<div class="label">mockup · variant ${V.toUpperCase()} · ${STATE}${SHEET ? ' · sheet ' + SHEET : ''} · ${W}px</div>`);
+</script>
+</body>
+</html>
