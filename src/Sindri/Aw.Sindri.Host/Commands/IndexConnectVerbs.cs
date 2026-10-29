@@ -1,5 +1,4 @@
 using Aw.Sindri.Core;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Secrets;
 using Aw.Sindri.Host.IndexSources;
@@ -30,7 +29,7 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
     private async Task<int> Slack(CancellationToken ct)
     {
         var connect = new SlackConnect(
-            services.GetRequiredService<IOnyxPrompts>(),
+            services.GetRequiredService<ISecretPrompts>(),
             services.GetRequiredService<IProfileSource>(),
             services.GetRequiredService<ISecretWriter>(),
             services.GetRequiredService<ISecretPointers>(),
@@ -50,7 +49,7 @@ internal sealed class IndexConnectVerbs(IServiceProvider services, Output output
     private async Task<int> Github(CancellationToken ct)
     {
         var connect = new GitHubConnect(
-            services.GetRequiredService<IOnyxPrompts>(),
+            services.GetRequiredService<ISecretPrompts>(),
             services.GetRequiredService<IProfileSource>(),
             services.GetRequiredService<ISecretWriter>(),
             services.GetRequiredService<ISecretPointers>(),
