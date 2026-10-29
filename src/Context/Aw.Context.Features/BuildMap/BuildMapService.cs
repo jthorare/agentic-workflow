@@ -183,7 +183,7 @@ internal sealed partial class BuildMapService(
 
     // A denied path is never read, whatever a recognizer wants; a schema file (the globs that name where stores are declared) is read for the data-store pass.
     private static bool Readable(ContextRepo repo, (RecognizerSet Recognizers, IReadOnlyList<string> SchemaGlobs) wants, string path) =>
-        !repo.Denies(path) && (Recognizers.MayRead(path) || wants.Recognizers.Wants(path) || PathDenylist.Matches(path, wants.SchemaGlobs));
+        !repo.Denies(path) && (Recognizers.MayRead(path) || Journeys.IsJourney(path) || wants.Recognizers.Wants(path) || PathDenylist.Matches(path, wants.SchemaGlobs));
 
     // HEAD's tree minus the denied paths, and the text of each file the extractor may read.
     private async ValueTask<Result<(string Commit, List<RepoFile> Files, IReadOnlyList<string> Paths)>> ReadFiles(IProgress<string>? progress, ContextRepo repo, (RecognizerSet Recognizers, IReadOnlyList<string> SchemaGlobs) wants, CancellationToken cancellationToken)
@@ -195,7 +195,7 @@ internal sealed partial class BuildMapService(
             return head.IsError ? head.Error : listed.Error;
         }
 
-        var wanted = listed.Value.Where(p => Readable(repo, wants, p)).ToList();
+        var wanted = Journeys.Cap(listed.Value.Where(p => Readable(repo, wants, p)));
         var files = new List<RepoFile>(wanted.Count);
         foreach (var path in wanted)
         {

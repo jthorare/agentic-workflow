@@ -154,4 +154,50 @@ public sealed class FlowPassTests
         Assert.Empty(Flows(map));
         Assert.Empty(Steps(map));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_skip_counts_name_their_reasons()
+    {
+        var spec = "test(\"counted\", async ({ page }) => {\n"
+            + "  await page.goto(\"/links\");\n"
+            + "  await page.locator(\".css\").click();\n"
+            + "  await page.getByTestId(\"nothing-here\").click();\n"
+            + "  await page.getByTestId(\"create-link\").click();\n"
+            + "});\n";
+        var huge = ShareSpec + "// " + new string('x', 512_001) + "\n";
+
+        var skips = MapExtractor.Extract(_repo, App(new RepoFile("e2e/counted.spec.ts", spec), new RepoFile("e2e/huge.spec.ts", huge)), RecognizerSet.None).Skips;
+
+        Assert.Equal(new JourneySkips(UnsupportedForm: 1, NoMatch: 1, Denied: 0, OverSizeCap: 1, OverFileCap: 0), skips);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_title_with_an_email_or_a_token_is_replaced_by_the_file_name()
+    {
+        var spec = ShareSpec.Replace("share a link", "invite owner@internal.example", StringComparison.Ordinal);
+
+        var map = MapExtractor.Extract(_repo, App(new RepoFile("e2e/invite-flow.spec.ts", spec)));
+
+        var flow = Assert.Single(Flows(map));
+        Assert.Equal("flow:invite-flow", flow.Key.Value);
+        Assert.Equal("invite-flow", flow.Label);
+        Assert.DoesNotContain(AllText(map), t => t.Contains("internal.example", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Two_journeys_with_one_title_get_numbered_keys_in_path_order()
+    {
+        var map = MapExtractor.Extract(_repo, App(new RepoFile("e2e/b.spec.ts", ShareSpec), new RepoFile("e2e/a.spec.ts", ShareSpec)));
+
+        Assert.Equal(["flow:share-a-link", "flow:share-a-link-2"], Flows(map).Select(f => f.Key.Value), StringComparer.Ordinal);
+        Assert.Equal(["e2e/a.spec.ts"], Flows(map)[0].EvidenceOrEmpty.Select(e => e.Key.Value[(e.Key.Value.IndexOf('/', StringComparison.Ordinal) + 1)..]), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_journey_file_adds_no_code_node()
+    {
+        var map = MapExtractor.Extract(_repo, App(new RepoFile("e2e/share.spec.ts", ShareSpec)));
+
+        Assert.DoesNotContain(map.Nodes, n => n.Key.Value.Contains("e2e/", StringComparison.Ordinal));
+    }
 }
