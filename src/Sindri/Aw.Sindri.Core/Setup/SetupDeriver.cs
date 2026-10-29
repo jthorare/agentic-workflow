@@ -3,7 +3,7 @@ using Aw.Kernel;
 namespace Aw.Sindri.Core.Setup;
 
 /// <summary>
-/// Derives the six steps in their fixed order (repo, profile, recipes, mcp, map, onyx), each decided by <see cref="SetupSteps"/> from the fact its own source gave (setup-once spec §6: the inputs are read live).
+/// Derives the six steps in their fixed order (repo, profile, recipes, mcp, map, sources), each decided by <see cref="SetupSteps"/> from the fact its own source gave (setup-once spec §6: the inputs are read live).
 /// A source that can't be read, or that throws, makes only its own step "failed" with a plain sentence, so the answer is never an error. Shared by GET /setup, the 'setup' service and doctor's 'setup' check.
 /// </summary>
 /// <param name="facts">The sources.</param>
@@ -20,7 +20,7 @@ public sealed class SetupDeriver(ISetupFacts facts, Action<string, Exception>? s
         var recipes = await Read("recipes", facts.Recipes, cancellationToken).ConfigureAwait(false);
         var mcp = await Read("mcp", facts.Mcp, cancellationToken).ConfigureAwait(false);
         var map = await Read("map", facts.Map, cancellationToken).ConfigureAwait(false);
-        var onyx = await Read("onyx", facts.Onyx, cancellationToken).ConfigureAwait(false);
+        var sources = await Read("sources", facts.Sources, cancellationToken).ConfigureAwait(false);
         var profileApproved = profile.IsSuccess && profile.Value.Presence is ProfilePresence.Approved or ProfilePresence.Drifted;
         return
         [
@@ -29,7 +29,7 @@ public sealed class SetupDeriver(ISetupFacts facts, Action<string, Exception>? s
             Step(SetupStepId.Recipes, recipes, r => SetupSteps.Recipes(r, profileApproved)),
             Step(SetupStepId.Mcp, mcp, SetupSteps.Mcp),
             Step(SetupStepId.Map, map, SetupSteps.Map),
-            Step(SetupStepId.Onyx, onyx, SetupSteps.Onyx),
+            Step(SetupStepId.Sources, sources, SetupSteps.Sources),
         ];
     }
 
