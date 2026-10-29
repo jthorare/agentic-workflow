@@ -87,7 +87,7 @@ internal static partial class CommandTable
         var output = new Output(Console.Out, Console.Error, options);
         var cap = CliTimeout.Read(environment);   // a malformed value refuses the calls, not the verbs that make none
         using var client = new ControlPlaneClient(probe, options, Headers(session, services), cap.IsError ? null : cap.Value, refusal: cap.IsError ? cap.Error : null);
-        StartCommand Start(bool headless) => NewStart(services, session, (client, probe, output), UiOpener(headless, environment), headless);
+        StartCommand Start(bool headless) => new(probe, services.GetRequiredService<IControlPlaneLauncher>(), client, output, services.GetRequiredService<TimeProvider>(), UiOpener(headless, environment));
         var start = Start(headless: true);   // 'sindri --headless', and the start a human 'profile approve' may need
         var verbs = new Verbs(client, probe, output, services);
         var ct = interrupt.Token;
@@ -112,7 +112,7 @@ internal static partial class CommandTable
             ["ledger", .. var rest] => await new LedgerVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(rest, ct).ConfigureAwait(false),
             ["launch" or "session", ..] => await LaunchOrSession(args, client, (output, environment), services, (ct, interrupt.Again)).ConfigureAwait(false),
             ["doctor", ..] => await Doctor(args, verbs, new ProbeCommands(services.GetRequiredService<IProcessAncestry>(), services.GetRequiredService<IHarnessVersions>(), environment, Interactive()), output, ct).ConfigureAwait(false),
-            ["onyx", .. var rest] => await Onyx(rest, verbs, new OnyxVerbs(services, output, (hash, to, c) => new Verbs(client, probe, to, services, e => start.EnsureRunning(launch: true, e)).Approve(hash, c), c => OnyxPurgeCommand.Create(services, output, Console.In, Console.Error).Run(session.Human && session.Launch is null, c)), output, ct).ConfigureAwait(false),
+            ["onyx", "down", "--purge"] => await OnyxPurgeCommand.Create(services, output, Console.In, Console.Error).Run(session.Human && session.Launch is null, ct).ConfigureAwait(false),
             ["sandbox", ..] => await Sandbox(args, client, output, services, (ct, Headers(session, services))).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
             ["context", ..] => await Context(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
@@ -141,44 +141,6 @@ internal static partial class CommandTable
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
     }
-
-    // Bare 'sindri' (not headless) offers to set Onyx up before it starts the control plane.
-    private static StartCommand NewStart(IServiceProvider services, AgentSession session, (ControlPlaneClient Client, IControlPlaneProbe Probe, Output Output) wire, Func<string>? openUi, bool headless)
-        => new(wire.Probe, services.GetRequiredService<IControlPlaneLauncher>(), wire.Client, wire.Output, services.GetRequiredService<TimeProvider>(), openUi)
-        {
-            BeforeStart = headless ? null : OnyxFirstRun(services, session, wire),
-        };
-
-    // The control plane may not be running yet while the offer's inline approval needs it, so this approval may start it.
-    private static Task<int> Approve(IServiceProvider services, (ControlPlaneClient Client, IControlPlaneProbe Probe, Output Output) wire, string? hash, CancellationToken ct)
-    {
-        var starter = new StartCommand(wire.Probe, services.GetRequiredService<IControlPlaneLauncher>(), wire.Client, wire.Output, services.GetRequiredService<TimeProvider>());
-        return new Verbs(wire.Client, wire.Probe, wire.Output, services, e => starter.EnsureRunning(launch: true, e)).Approve(hash, ct);
-    }
-
-    // Bare 'sindri' offers to set Onyx up first (O6); the offer asks on standard error and reads a line from standard input, and only at a terminal.
-    private static Func<CancellationToken, Task> OnyxFirstRun(IServiceProvider services, AgentSession session, (ControlPlaneClient Client, IControlPlaneProbe Probe, Output Output) wire)
-        => ct => !Interactive() ? Task.CompletedTask : new OnyxOffer(
-            services, session,
-            async question =>
-            {
-                await Console.Error.WriteAsync(question).ConfigureAwait(false);
-                return await Console.In.ReadLineAsync(ct).ConfigureAwait(false);
-            },
-            c => Onyx(["up"], new Verbs(wire.Client, wire.Probe, wire.Output, services), new OnyxVerbs(services, wire.Output, (hash, to, a) => Approve(services, (wire.Client, wire.Probe, to), hash, a)), wire.Output, c),
-            Console.Error).Run(ct);
-
-    /// <summary>'sindri onyx status|up|down [--json]', 'onyx down --purge' and 'onyx open'.</summary>
-    private static async Task<int> Onyx(string[] rest, Verbs verbs, OnyxVerbs onyx, Output output, CancellationToken ct) =>
-        rest switch
-        {
-            ["status", .. var flags] when Json(flags) is { } json => await verbs.OnyxStatus(json, ct).ConfigureAwait(false),
-            ["up", .. var flags] when Json(flags) is { } json => await onyx.Up(json, ct).ConfigureAwait(false),
-            ["down", "--purge"] => await onyx.Purge(ct).ConfigureAwait(false),   // the one onyx verb that outlives Onyx: when OnyxVerbs goes, this row is the whole `onyx` entry in Dispatch and the other onyx verbs become unknown
-            ["down", .. var flags] when Json(flags) is { } json => await onyx.Down(json, ct).ConfigureAwait(false),
-            ["open"] => await onyx.Open(ct).ConfigureAwait(false),
-            _ => await UnknownVerb(["onyx", .. rest], output).ConfigureAwait(false),
-        };
 
     /// <summary>'launch init|show' (box-local) and 'session wrap' (runs the agent under a launch).</summary>
     private static async Task<int> LaunchOrSession(string[] args, ControlPlaneClient client, (Output Output, Func<string, string?> Environment) io, IServiceProvider services, (CancellationToken Interrupt, CancellationToken Again) signals) =>

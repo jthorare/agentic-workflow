@@ -103,7 +103,6 @@ using Aw.Sindri.Features.ListSessions;
 using Aw.Sindri.Features.OnboardRepo;
 using Aw.Sindri.Features.OnyxAccount;
 using Aw.Sindri.Features.OnyxDown;
-using Aw.Sindri.Features.OnyxStatus;
 using Aw.Sindri.Features.OnyxUp;
 using Aw.Sindri.Features.OpenItem;
 using Aw.Sindri.Features.PauseService;
@@ -177,10 +176,8 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(LineCheckResponse)), JsonSerializable(typeof(LineDeskReport)), JsonSerializable(typeof(DesignStopView)), JsonSerializable(typeof(LineView))]   // LN-K: the line verbs; LN-API1
 [JsonSerializable(typeof(DocsCheckResponse)), JsonSerializable(typeof(DocsCheckFinding))]   // API17: 'docs check'
 [JsonSerializable(typeof(LineDoctorResponse))]   // LN-L: 'line doctor'
-[JsonSerializable(typeof(OnyxStatusResponse))]
 [JsonSerializable(typeof(OnyxSetupState))]
 [JsonSerializable(typeof(OnyxUpResponse))]
-[JsonSerializable(typeof(OnyxUpSummary))]
 [JsonSerializable(typeof(OnyxAccountResponse))]
 [JsonSerializable(typeof(OnyxStepResult))]
 [JsonSerializable(typeof(OnyxDownResponse))]

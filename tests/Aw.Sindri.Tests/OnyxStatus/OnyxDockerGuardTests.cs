@@ -1,6 +1,5 @@
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Onyx;
-using Aw.Sindri.Features.OnyxStatus;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Testing;
 
@@ -54,21 +53,6 @@ public sealed class OnyxDockerGuardTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task Status_with_a_docker_on_another_machine_shows_its_docker_row_and_sends_it_nothing()
-    {
-        var rig = await RigPointedAtAnotherMachine();
-        var service = new OnyxStatusService(rig.Pins, Facts(rig), rig.Health, rig.Workspace);
-
-        var status = (await service.Handle(new OnyxStatusRequest(), Token)).Value;
-
-        Assert.Equal("SND-ONYX-010", Assert.Single(status.Checks, static c => c.Name == "docker").Problem?.Code);
-        Assert.Equal(OnyxState.Unknown, status.State);
-        Assert.Null(status.Url);
-        Assert.Null(status.RunningVersion);
-        Assert.All(rig.Runtime.Calls, static c => Assert.Equal("Inspect", c));
-    }
-
-    [Fact, Trait("Lane", "unit")]
     public async Task Doctor_with_a_docker_on_another_machine_names_the_problem_and_sends_it_nothing()
     {
         var rig = await RigPointedAtAnotherMachine();
@@ -83,16 +67,14 @@ public sealed class OnyxDockerGuardTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task With_a_usable_docker_status_and_doctor_still_read_the_stack()
+    public async Task With_a_usable_docker_the_doctor_still_reads_the_stack()
     {
         var rig = new OnyxUpRig();
         _ = (await rig.Up(Token)).Value;
         rig.Runtime.Calls.Clear();
 
-        var status = (await new OnyxStatusService(rig.Pins, Facts(rig), rig.Health, rig.Workspace).Handle(new OnyxStatusRequest(), Token)).Value;
         var check = await new OnyxStackDoctor(rig.Workspace, Facts(rig), rig.Pins).Check(Token);
 
-        Assert.Equal(OnyxState.Running, status.State);
         Assert.DoesNotContain("not checked", check!.Detail, StringComparison.Ordinal);
         Assert.Contains("Ps", rig.Runtime.Calls, StringComparer.Ordinal);
         Assert.Contains("ServerPlatform", rig.Runtime.Calls, StringComparer.Ordinal);

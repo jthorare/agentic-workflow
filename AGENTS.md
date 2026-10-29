@@ -128,17 +128,12 @@ node scripts/check-deps.mjs --mermaid [--base-file F]   # Also print the Mermaid
 scripts/binaries-lock.sh check          # Shape of binaries.lock: six fields, one version per name, all four platforms
 scripts/binaries-lock.sh fetch <name>   # Download this platform's row, verify its sha256, install under $AW_STATE_DIR/cache/bin/<name>-<version>/
 
-sindri onyx status [--json]            # Can this box run the pinned Onyx? Docker, Compose, memory, disk and port checks; read-only, no control plane, an agent session may run it; exit 0 all ok, 1 attention, 2 usage
-sindri onyx up|down|open                  # The C# Sindri's Onyx: `up` stands the pinned stack up and continues with your account, Sindri's key and the profile section; `down` stops its containers; `open` opens the sign-up or connectors page (the human's verbs, a session is refused)
 # Onyx pins (context/onyx.lock: the Onyx version and commit, deployment-file sha256s, image digests per platform, preflight needs; spec docs/superpowers/specs/2026-10-16-sindri-onyx-managed-design.md §6)
 scripts/onyx-lock.sh check              # Shape of context/onyx.lock: one version row, every image on both platforms, both need rows; exit 0 ok, 1 a check failed
 scripts/onyx-lock.sh verify             # Maintainer-run, network, never in CI: recompute each file sha256 from raw.githubusercontent.com and each image digest from `docker buildx imagetools inspect`, and check the compose names only pinned images; exit 0 all match, 1 a mismatch, 2 usage or network
 scripts/images-lock.sh check             # Shape of deploy/images.lock (every deployment image by index and per-platform digest; unresolved ones are `todo` rows) and that the Dockerfile names only pinned images; exit 0 ok, 1 a check failed
 
 # Sindri-managed Onyx (docs/sindri/onyx.md, docs/csharp/sindri.md; the C# Sindri app, `dotnet run --project src/Sindri/Aw.Sindri.Host --` or the published sindri)
-sindri onyx status [--json]             # Where Onyx stands (not set up / running with url and version / stopped) and whether this box can run the pinned one; read-only, no control plane needed; exit 0 ok, 1 a check needs attention
-sindri onyx up [--json]                 # Preflight, verified file fetch, .env and compose override, digest-pinned pull, start and readiness for Onyx v4.9.0 on 127.0.0.1; idempotent, resumable, the human's verb (a session is refused, SND-AUTH-002); exit 0 running, 1 a step failed (the error names the fix)
-sindri onyx down [--json]               # Stop it (containers only; data, images and files are kept); the human's verb
 
 # External tools, once per box (setup.sh runs it): uv, graphify at sindri's pin, the code index's graphify environment and Ollama model from context/code-index.lock, both Temporal binaries, system packages (installed when missing)
 scripts/install-deps.sh                 # AW_DRY_RUN=1 prints only; missing system packages are installed (brew on macOS; sudo + apt-get, dnf, yum, pacman or zypper on Linux); AW_NO_SYSTEM_INSTALL=1 prints the commands and exits 1 instead

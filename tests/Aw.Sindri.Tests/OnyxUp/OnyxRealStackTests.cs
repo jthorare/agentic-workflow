@@ -3,7 +3,6 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Features.OnyxDown;
-using Aw.Sindri.Features.OnyxStatus;
 using Aw.Sindri.Features.OnyxUp;
 using Aw.Sindri.Features.RunDoctor;
 using Aw.Sindri.Host;
@@ -74,8 +73,6 @@ public sealed class OnyxRealStackTests
 
         _ = (await services.GetRequiredService<IService<OnyxDownRequest, OnyxDownResponse>>().Handle(new OnyxDownRequest(), Token)).Value;
         Assert.DoesNotContain(runtime.Ps(paths.Project, Token).Value, static c => c.State == "running");
-        var status = (await services.GetRequiredService<IService<OnyxStatusRequest, OnyxStatusResponse>>().Handle(new OnyxStatusRequest(), Token)).Value;
-        Assert.Equal(OnyxState.Stopped, status.State);
     }
 
     // `compose down -v` with the home's files when they all landed; after a start that failed before they did, the project's containers and volumes are found by its label.
