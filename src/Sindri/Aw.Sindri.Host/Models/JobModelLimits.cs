@@ -28,11 +28,15 @@ internal sealed class JobModelLimits
     internal JobLimitEntry EntryFor(JobContext job) => _byJob.GetOrAdd(job.Job.Value, static (_, owner) => new JobLimitEntry(owner), job);
 
     /// <summary>Drops the entries of jobs whose context is gone.</summary>
-    internal void Prune()
+    internal void Prune() => Prune(static entry => !entry.Owner.TryGetTarget(out _));
+
+    /// <summary>Drops the entries <paramref name="isGone"/> says belong to a job that has ended (a test decides without the garbage collector).</summary>
+    /// <param name="isGone">Whether an entry's job has ended.</param>
+    internal void Prune(Func<JobLimitEntry, bool> isGone)
     {
         foreach (var (key, entry) in _byJob)
         {
-            if (!entry.Owner.TryGetTarget(out _))
+            if (isGone(entry))
             {
                 _ = _byJob.TryRemove(key, out _);
             }

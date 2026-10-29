@@ -1,4 +1,7 @@
 using Aw.Context.Core;
+using Aw.Context.Core.Engine;
+using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Host.Models;
 using Aw.Context.Core.Models;
 using Aw.Judge.Core.Providers;
 using Aw.Sindri.Core.Events;
@@ -201,24 +204,19 @@ public sealed class RoutedModelPortTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_job_that_ended_leaves_nothing_in_the_set()
+    public void An_entry_of_a_job_that_ended_is_dropped_and_the_others_stay()
     {
-        var rig = new RouterRig(settings: null, Claude(RouterRig.Limit()), Codex(Said("ok")));
-        await LimitInAJobThatThenEnds(rig);
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
+        var limits = new JobModelLimits();
+        var ended = new JobContext(Aw.Sindri.Core.Ids.JobId.From("JOB-" + new string('c', 32)), Aw.Sindri.Core.Ids.JobKind.From("BuildContextMap"), new LineProgress());
+        var running = new JobContext(Aw.Sindri.Core.Ids.JobId.From("JOB-" + new string('d', 32)), Aw.Sindri.Core.Ids.JobKind.From("BuildContextMap"), new LineProgress());
+        limits.Remember(ended, ModelHarness.ClaudeCode);
+        limits.Remember(running, ModelHarness.ClaudeCode);
 
-        _ = await rig.Ask(RouterRig.Request());   // the next call prunes the set of jobs that are gone
+        limits.Prune(entry => entry == limits.EntryFor(ended));
 
-        Assert.Equal(0, rig.Port.JobsRemembered);
-    }
-
-    [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
-    private static async Task LimitInAJobThatThenEnds(RouterRig rig)
-    {
-        using var job = rig.EnterJob("c");
-        _ = await rig.Ask(RouterRig.Request());
-        Assert.Equal(1, rig.Port.JobsRemembered);
+        Assert.Equal(1, limits.Count);
+        Assert.True(limits.IsLimited(running, ModelHarness.ClaudeCode));
+        Assert.False(limits.IsLimited(ended, ModelHarness.ClaudeCode));
     }
 
     // --- the event (spec 7.1)

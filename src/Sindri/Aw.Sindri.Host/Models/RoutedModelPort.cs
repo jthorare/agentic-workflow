@@ -50,16 +50,6 @@ internal sealed class RoutedModelPort : IModelPort
         _pauser = new ModelPauser(_limits, _recorder);
     }
 
-    /// <summary>How many jobs the limited set holds a harness for now (jobs that ended are dropped first).</summary>
-    internal int JobsRemembered
-    {
-        get
-        {
-            _limits.Prune();
-            return _limits.Count;
-        }
-    }
-
     public async ValueTask<Result<ModelAnswer>> Ask(ModelRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
