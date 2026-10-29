@@ -9,6 +9,8 @@ internal static class ProjectRoutes
 
     internal static string One(string id) => $"{Root}/{Uri.EscapeDataString(id)}";
 
+    internal static string Attach => Root;
+
     internal static string Change(string id) => One(id) + "/change";
 
     internal static string Detach(string id) => One(id) + "/detach";

@@ -10,6 +10,7 @@ internal sealed partial class FakeSindriApi
     private readonly List<string> _projectsRead = [];
     private readonly List<(string Route, object Body)> _projectWrites = [];
     private int _projectsCalls;
+    private int _attached;
 
     /// <summary>GET /sindri/projects's answer: the mixed golden by default.</summary>
     public RouteAnswer ProjectsAnswer { get; set; } = RouteAnswer.Api("projects", "mixed");
@@ -70,7 +71,10 @@ internal sealed partial class FakeSindriApi
     public Task<Result<ProjectAcceptedView>> HideProject(Uri api, ProjectHide hide, CancellationToken cancellationToken) =>
         ProjectWrite(api, ProjectRoutes.Hide, hide, hide.Linear, hide.Version, cancellationToken);
 
-    private async Task<Result<ProjectAcceptedView>> ProjectWrite(Uri api, string route, object body, string project, long version, CancellationToken cancellationToken)
+    public Task<Result<ProjectAcceptedView>> AttachProject(Uri api, ProjectAttach attach, CancellationToken cancellationToken) =>
+        ProjectWrite(api, ProjectRoutes.Attach, attach, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"prj_{Interlocked.Increment(ref _attached):D26}"), version: 0, cancellationToken, attach.Name ?? attach.Linear);
+
+    private async Task<Result<ProjectAcceptedView>> ProjectWrite(Uri api, string route, object body, string project, long version, CancellationToken cancellationToken, string? name = null)
     {
         if (NotReceived<ProjectAcceptedView>(api) is { } unanswered)
         {
@@ -84,7 +88,7 @@ internal sealed partial class FakeSindriApi
 
         await WaitFor(CommandGate, cancellationToken).ConfigureAwait(false);
         var accepted = string.Create(System.Globalization.CultureInfo.InvariantCulture,
-            $$"""{"accepted":{"commandId":"cmd_fake","sequence":41},"project":"{{project}}","version":{{version + 1}},"name":"{{project}}"}""");
+            $$"""{"accepted":{"commandId":"cmd_fake","sequence":41},"project":"{{project}}","version":{{version + 1}},"name":"{{name ?? project}}"}""");
         var answer = Answer<ProjectAcceptedView>(api, route, ProjectWriteAnswer ?? new RouteAnswer(System.Net.HttpStatusCode.OK, accepted));
         if (answer.IsSuccess)
         {

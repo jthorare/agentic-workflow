@@ -55,8 +55,10 @@ internal sealed partial class ProjectsPage : UserControl
         }
     }
 
-    // After the list is read again and the sheet has closed: the next card's frame, the Add button, or a fold's button. Add project is
-    // disabled until its form ships, so focus then goes to the page title rather than nowhere.
+    private void OnAdd(object? sender, RoutedEventArgs e) => (DataContext as ProjectsPageViewModel)?.RequestAdd();
+
+    // After the list is read again and the sheet has closed: the next card's frame, the Add button, or a fold's button. The empty block's
+    // Add button stands in when the header's is not usable, and the page title when neither is.
     private void OnFocusRequested(object? sender, ProjectFocusEventArgs e) =>
         Dispatcher.UIThread.Post(() => _ = Target(e)?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
 

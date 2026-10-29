@@ -86,7 +86,7 @@ public sealed class ProjectsPageViewTests : FrameHost
 
         Assert.Equal(shell.Projects.Sentence, Heard.Wrapper(Named<Border>(window, "ProjectsEmptyName")));
         Assert.Equal((true, false, true), (Visible(window, "ProjectsEmptyBlock"), Visible(window, "ProjectsBanner"), Visible(window, "ProjectsAddEmpty")));
-        Assert.False(Named<Button>(window, "ProjectsAddEmpty").IsEnabled);
+        Assert.True(Named<Button>(window, "ProjectsAddEmpty").IsEnabled);
         Assert.Empty(Frames(window));
     });
 
@@ -111,23 +111,23 @@ public sealed class ProjectsPageViewTests : FrameHost
     });
 
     [Fact]
-    public Task The_head_has_the_freshness_line_and_a_disabled_Add_project() => OnUi(async () =>
+    public Task The_head_has_the_freshness_line_and_an_enabled_Add_project() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects();
 
         Assert.Equal(shell.Projects.Freshness, Named<TextBlock>(window, "ProjectsFreshness").Text);
         var add = Named<Button>(window, "ProjectsAdd");
-        Assert.Equal(("+ Add project", false), (add.Content, add.IsEnabled));
+        Assert.Equal(("+ Add project", true), (add.Content, add.IsEnabled));
     });
 
     [Fact]
-    public Task With_no_card_left_and_Add_project_disabled_focus_goes_to_the_page_title() => OnUi(async () =>
+    public Task With_no_card_left_focus_goes_to_Add_project() => OnUi(async () =>
     {
         var (window, shell) = await OnProjects("empty-no-linear");
 
         await shell.Projects.Settled(new ViewModels.Projects.ProjectDoneEventArgs(ViewModels.Projects.ProjectDone.Removed, "prj_0000000000000000000000000H", "Mobile app removed", wentToFinished: false), Token);
 
-        await Until(window, () => Named<TextBlock>(window, "ProjectsTitle").IsFocused, "focus never reached the page title");
+        await Until(window, () => Named<Button>(window, "ProjectsAdd").IsFocused, "focus never reached Add project");
     });
 
     [Fact]
