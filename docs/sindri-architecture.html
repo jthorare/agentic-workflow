@@ -364,7 +364,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; color: var(--ink-
       { l: "tool", t: "one call", c: "context_query", s: "specced", r: "CTX §8.5 · S-1M", d: "One MCP call instead of many: the station asks once and gets a budgeted bundle.", scr: term("claude", ["> context_query q=\"export date\" budget=4k"]) },
       { l: "api", t: "route", c: "GET /sindri/context/query", s: "building", r: "CTX S-1A #194", d: "Session reads are gated by context.sessions.enabled and scoped to the repo.", scr: term("api", ["GET /sindri/context/query?q=export+date", "caller: session · repo-scoped"]) },
       { l: "ctx", t: "plan", c: "product graph → cascade", s: "building", r: "CTX S-3a #196", d: "The planner seeds from product-graph nodes and expands what a change cascades into.", scr: big("🧭", "Export › Date range › Timezone") },
-      { l: "src", t: "recall", c: "repo docs · Onyx · code index", s: "building", r: "CTX S-1A, S-5A #195", d: "Sources give recall. Onyx searches business intent; Sindri does its own ranking.", scr: app("Sources", [["repo docs", "3"], ["Onyx: tickets, PRDs", "5"], ["code index", "4"]]) },
+      { l: "src", t: "recall", c: "repo docs · GitHub · Slack · Linear · code index", s: "building", r: "CTX S-1A, S-5A #195", d: "Sources give recall. Sindri reads them into its own index and does its own ranking.", scr: app("Sources", [["repo docs", "3"], ["GitHub, Slack, Linear", "5"], ["code index", "4"]]) },
       { l: "ctx", t: "rank + cite", c: "budgeted · scrubbed", s: "specced", r: "CTX §1, §4", d: "Ranked, cut to the budget, scrubbed of secrets, and every section cited.", scr: term("claude", ["4 sections · 3.1k tokens", "[1] PRD: export ranges (Linear)", "[2] src/export/range.ts:42", "[3] decision: dates are UTC"]) }
     ] },
     { id: "U7", ic: "📜", name: "Change a recipe", lanes: ["you", "cli", "engine"], hops: [
@@ -682,7 +682,7 @@ footer { border-top: 1px solid var(--line); padding-top: 18px; color: var(--ink-
       { id: "ledger", x: 270, y: 330, w: 125, ic: "📒", t: "Ledger", s: "built", f: ["U3", "B1", "B2"], b: "The one public log. Every engine transition is mirrored here." },
       { id: "temporal", x: 740, y: 70, w: 190, ic: "⏱️", t: "Temporal", s: "building", f: ["U1", "B2"], b: "Durable execution on loopback: state, timers, retries." },
       { id: "agent", x: 740, y: 180, w: 190, ic: "🤖", t: "Agents in tmux", s: "designed", f: ["U2", "U4"], b: "Each agent Step runs in a tmux session Sindri owns. Warp attaches." },
-      { id: "src", x: 740, y: 290, w: 190, ic: "📚", t: "Sources", s: "building", f: ["U6"], b: "Repo docs, Onyx, the tracker and the code index." },
+      { id: "src", x: 740, y: 290, w: 190, ic: "📚", t: "Sources", s: "building", f: ["U6"], b: "Repo docs, GitHub, Slack, Linear and the code index." },
       { id: "gh", x: 740, y: 400, w: 190, ic: "🌐", t: "GitHub · tracker", s: "designed", f: ["U2"], b: "Where PRs open and items come from." }
     ];
     var E = [["cli", "api"], ["app", "api"], ["tool", "api"], ["api", "cp"], ["api", "engine"], ["api", "ctx"], ["cp", "ledger"], ["engine", "recipes"], ["engine", "blocks"],

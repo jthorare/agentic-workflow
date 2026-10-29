@@ -53,7 +53,7 @@ public sealed record SecretPointer
         };
     }
 
-    /// <summary>The pointer as the profile writes it, e.g. 'keychain:onyx/sindri-onyx'. Holds no secret.</summary>
+    /// <summary>The pointer as the profile writes it, e.g. 'keychain:sindri-index/github'. Holds no secret.</summary>
     /// <returns>The pointer text.</returns>
     public override string ToString() => $"{Name(Scheme)}:{Target}";
 
