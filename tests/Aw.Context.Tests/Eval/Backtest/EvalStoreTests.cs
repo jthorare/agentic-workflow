@@ -43,8 +43,8 @@ public sealed class EvalStoreTests : IDisposable
         _ = await store.WriteMap(plain, Map(), TestContext.Current.CancellationToken);
         var read = (await store.ReadMap(plain, TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal("aw-split-panes-0123456789ab-x5-c0", plain);
-        Assert.Equal("aw-split-panes-0123456789ab-x5-c1", clustered);
+        Assert.Equal("aw-split-panes-0123456789ab-x6-c0", plain);
+        Assert.Equal("aw-split-panes-0123456789ab-x6-c1", clustered);
         Assert.Null((await store.ReadMap(clustered, TestContext.Current.CancellationToken)).Value);   // a machine without graphify never reuses a clustered map, and the reverse
         Assert.Equal(Map().Nodes.Select(n => n.Key.Value), read!.Nodes.Select(n => n.Key.Value), StringComparer.Ordinal);
         Assert.Equal(Map().Edges.Select(e => e.To.Value), read.Edges.Select(e => e.To.Value), StringComparer.Ordinal);
