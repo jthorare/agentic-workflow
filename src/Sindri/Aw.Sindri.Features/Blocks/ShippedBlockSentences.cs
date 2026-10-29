@@ -81,6 +81,7 @@ internal sealed class ShippedBlockSentences : IBlockSentences
         ["step.evidence.ui-plan"] = "Starts an AI agent session that plans the proof for the screens",
         ["step.evidence.ui-run"] = "Runs the planned checks in a browser against the running app",
         ["step.handtest.run"] = "Starts an AI agent session that tries the change by hand in the running app",
+        ["step.implement.fix"] = "Starts an AI agent session that fixes the bug and prevents its class, tests first",
         ["step.intake.ticket"] = "Reads the ticket and picks out what needs fixing",
         ["step.interview.answer"] = "Asks you the questions and records your answers",
         ["step.interview.apply"] = "Applies your answers to what will change and what done means",
