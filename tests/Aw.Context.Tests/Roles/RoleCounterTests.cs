@@ -1,5 +1,6 @@
 using System.Globalization;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Graph;
 using Aw.Context.Core.Roles;
 
 namespace Aw.Context.Tests.Roles;
@@ -114,4 +115,15 @@ public sealed class RoleCounterTests
     [InlineData("src/latest.ts", false)]
     [InlineData("src/contest/main.ts", false)]
     public void Role_like_paths_are_the_fixed_set(string path, bool like) => Assert.Equal(like, RoleLikePaths.Matches(path));
+
+    [Fact, Trait("Lane", "unit")]
+    public void Code_paths_skip_file_nodes_the_extractor_did_not_read()
+    {
+        var read = new GraphNode(NodeKey.From("code:src/a.ts"), "a.ts");
+        var unread = new GraphNode(NodeKey.From("code:setup.sh"), "setup.sh", Attributes: UnreadFileNodes.Attributes());
+
+        var paths = RoleCounter.CodePaths(new GraphSnapshot([read, unread], [], [], []), "web-app");
+
+        Assert.Equal(["src/a.ts"], paths["web-app"]);
+    }
 }
