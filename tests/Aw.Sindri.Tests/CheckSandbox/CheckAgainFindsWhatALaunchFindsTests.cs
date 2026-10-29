@@ -6,7 +6,9 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features;
 using Aw.Sindri.Features.CheckSandbox;
 using Aw.Sindri.Infrastructure;
@@ -93,7 +95,7 @@ public sealed class CheckAgainFindsWhatALaunchFindsTests : IDisposable
     {
         const string Observed = "visible: /home/owner/.ssh/id_ed25519";
         var sandbox = new FailingSelfCheck(SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsDeny, Observed));
-        var checks = new SandboxChecks(sandbox, new NoBlockers(), new NoBlockers(), new FixedFixture(SandboxRequests.ReadOnly), new SandboxResumeList(new NoParks(), new FreeSlots()));
+        var checks = new SandboxChecks(sandbox, new NoBlockers(), new NoBlockers(), new FixedFixture(SandboxRequests.ReadOnly), new NoFixtureLogin(), new SandboxResumeList(new NoParks(), new FreeSlots()));
 
         var response = (await new CheckSandboxService(checks, new LastSandboxCheck()).Handle(new CheckSandboxRequest(), Token)).Value;
 
@@ -153,6 +155,15 @@ public sealed class CheckAgainFindsWhatALaunchFindsTests : IDisposable
     private sealed class ApprovedProfileFake(LoadedProfile? profile) : IApprovedProfile
     {
         public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) => ValueTask.FromResult<Result<LoadedProfile?>>(profile);
+    }
+
+    private sealed class NoFixtureLogin : ISandboxFixtureLogin
+    {
+        public ValueTask<FixtureLogin?> Prepare(LaunchId launch, CancellationToken cancellationToken) => ValueTask.FromResult<FixtureLogin?>(null);
+
+        public void Release(PreparedLogin login)
+        {
+        }
     }
 
     private sealed class NoBlockers : ISandboxFormCheck, ISandboxLoginCheck
