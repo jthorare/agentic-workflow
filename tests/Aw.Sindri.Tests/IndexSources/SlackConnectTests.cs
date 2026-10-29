@@ -18,7 +18,7 @@ public sealed class SlackConnectTests
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
-    private readonly FakeOnyxPrompts _prompts = new();
+    private readonly FakeSecretPrompts _prompts = new();
     private readonly FakeSecretWriter _secrets = new();
     private readonly InMemoryProfiles _profiles = new();
     private readonly RecordingProfileWriter _written = new();
@@ -31,7 +31,7 @@ public sealed class SlackConnectTests
         _prompts.Answer(Planted);
     }
 
-    private SlackConnect Connect(FakeOnyxPrompts? prompts = null) => new(prompts ?? _prompts, _profiles, _secrets, _secrets, _written, (token, channels) =>
+    private SlackConnect Connect(FakeSecretPrompts? prompts = null) => new(prompts ?? _prompts, _profiles, _secrets, _secrets, _written, (token, channels) =>
     {
         _built.Add((token, [.. channels]));
         return _reader;
@@ -153,7 +153,7 @@ public sealed class SlackConnectTests
     [Fact, Trait("Lane", "unit")]
     public async Task An_empty_answer_saves_nothing()
     {
-        var prompts = new FakeOnyxPrompts();
+        var prompts = new FakeSecretPrompts();
         prompts.Answer("   ");
 
         var result = await Connect(prompts).Run(human: true, Ct);
