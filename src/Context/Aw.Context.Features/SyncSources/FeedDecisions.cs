@@ -25,7 +25,7 @@ namespace Aw.Context.Features.SyncSources;
 internal sealed class FeedDecisions(RecordFeedSync feeds, ISourceCatalog catalog, MapReader graphs, IIntentStore intents, IModelPort model, TimeProvider clock)
 {
     // why: the Linear intent walk already resolves linear:project/<id>, so a pass over the project feed would write the same keys twice
-    private static readonly SourceId _projects = SourceId.From(LinearSourceIds.Projects);
+    private static readonly SourceId _projects = LinearSourceIds.Projects;
 
     /// <summary>The step a feed's tick is followed by, or null for none.</summary>
     internal delegate Func<SourceSync, ValueTask<SourceSync>>? AfterTick(RecordFeed feed);

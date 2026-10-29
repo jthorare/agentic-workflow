@@ -9260,5 +9260,25 @@ override Aw.Context.Core.Records.SourceIdentity.ToString() -> string!
 static Aw.Context.Core.Records.SourceIdentity.operator !=(Aw.Context.Core.Records.SourceIdentity? left, Aw.Context.Core.Records.SourceIdentity? right) -> bool
 static Aw.Context.Core.Records.SourceIdentity.operator ==(Aw.Context.Core.Records.SourceIdentity? left, Aw.Context.Core.Records.SourceIdentity? right) -> bool
 Aw.Context.Core.Linear.LinearSourceIds
-const Aw.Context.Core.Linear.LinearSourceIds.Issues = "linear" -> string!
-const Aw.Context.Core.Linear.LinearSourceIds.Projects = "linear-projects" -> string!
+Aw.Context.Core.Records.ISourceViewer
+Aw.Context.Core.Records.ISourceViewer.Viewer(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Records.SourceViewer!>!>
+Aw.Context.Core.Records.ISourceViewers
+Aw.Context.Core.Records.ISourceViewers.ForLinear(Aw.Context.Core.Engine.ContextSettings! settings) -> Aw.Context.Core.Records.ISourceViewer?
+Aw.Context.Core.Records.SourceViewer
+Aw.Context.Core.Records.SourceViewer.<Clone>$() -> Aw.Context.Core.Records.SourceViewer!
+Aw.Context.Core.Records.SourceViewer.Deconstruct(out Aw.Context.Core.Sources.ExternalId Id, out string! Name) -> void
+Aw.Context.Core.Records.SourceViewer.Equals(Aw.Context.Core.Records.SourceViewer? other) -> bool
+Aw.Context.Core.Records.SourceViewer.Id.get -> Aw.Context.Core.Sources.ExternalId
+Aw.Context.Core.Records.SourceViewer.Id.init -> void
+Aw.Context.Core.Records.SourceViewer.Name.get -> string!
+Aw.Context.Core.Records.SourceViewer.Name.init -> void
+Aw.Context.Core.Records.SourceViewer.SourceViewer(Aw.Context.Core.Sources.ExternalId Id, string! Name) -> void
+override Aw.Context.Core.Records.SourceViewer.Equals(object? obj) -> bool
+override Aw.Context.Core.Records.SourceViewer.GetHashCode() -> int
+override Aw.Context.Core.Records.SourceViewer.ToString() -> string!
+static Aw.Context.Core.Linear.LinearSourceIds.UserRef(Aw.Context.Core.Sources.ExternalId id) -> string!
+static Aw.Context.Core.Records.SourceViewer.operator !=(Aw.Context.Core.Records.SourceViewer? left, Aw.Context.Core.Records.SourceViewer? right) -> bool
+static Aw.Context.Core.Records.SourceViewer.operator ==(Aw.Context.Core.Records.SourceViewer? left, Aw.Context.Core.Records.SourceViewer? right) -> bool
+static readonly Aw.Context.Core.Linear.LinearSourceIds.Identity -> Aw.Context.Core.Sources.SourceId
+static readonly Aw.Context.Core.Linear.LinearSourceIds.Issues -> Aw.Context.Core.Sources.SourceId
+static readonly Aw.Context.Core.Linear.LinearSourceIds.Projects -> Aw.Context.Core.Sources.SourceId

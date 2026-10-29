@@ -1,4 +1,5 @@
 using Aw.Context.Core.Linear;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 
@@ -24,4 +25,9 @@ internal sealed class LinearSources(LinearSourceParts parts)
     /// <param name="settings">The checked 'context.sources.linear' settings.</param>
     /// <returns>The feed.</returns>
     public RecordFeed CreateProjectFeed(LinearSettings settings) => new LinearProjectFeed(new LinearClient(settings, parts), parts.CallDeadline);
+
+    /// <summary>The viewer asking Linear who the key belongs to (projects page spec §4.2).</summary>
+    /// <param name="settings">The checked 'context.sources.linear' settings.</param>
+    /// <returns>The viewer.</returns>
+    public ISourceViewer CreateViewer(LinearSettings settings) => new LinearViewer(new LinearClient(settings, parts), parts.CallDeadline);
 }

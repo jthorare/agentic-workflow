@@ -187,8 +187,8 @@ public sealed class LinearProjectFeedTests
         var with = catalog.For(new ContextSettings { Linear = linear }, repos, scrubbers).Select(static f => f.Source.Value).ToList();
         var without = catalog.For(new ContextSettings(), repos, scrubbers).Select(static f => f.Source.Value).ToList();
 
-        Assert.Contains(LinearSourceIds.Projects, with, StringComparer.Ordinal);
-        Assert.DoesNotContain(LinearSourceIds.Projects, without, StringComparer.Ordinal);
+        Assert.Contains(LinearSourceIds.Projects.Value, with, StringComparer.Ordinal);
+        Assert.DoesNotContain(LinearSourceIds.Projects.Value, without, StringComparer.Ordinal);
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public sealed class LinearProjectFeedTests
 
         var after = await decisions.For(MapWorld.Human, context, [], TestContext.Current.CancellationToken);
 
-        Assert.Null(after(new FakeRecordFeed(SourceId.From(LinearSourceIds.Projects), [])));
-        Assert.NotNull(after(new FakeRecordFeed(SourceId.From(LinearSourceIds.Issues), [])));
+        Assert.Null(after(new FakeRecordFeed(LinearSourceIds.Projects, [])));
+        Assert.NotNull(after(new FakeRecordFeed(LinearSourceIds.Issues, [])));
     }
 }

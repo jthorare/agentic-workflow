@@ -13,7 +13,7 @@ namespace Aw.Context.Infrastructure.Linear;
 /// </summary>
 /// <param name="client">The Linear client.</param>
 /// <param name="deadline">How long each call gets.</param>
-internal sealed class LinearProjectFeed(LinearClient client, TimeSpan deadline) : RecordFeed(SourceId.From(LinearSourceIds.Projects))
+internal sealed class LinearProjectFeed(LinearClient client, TimeSpan deadline) : RecordFeed(LinearSourceIds.Projects)
 {
     private const int MaxPage = 50;
 

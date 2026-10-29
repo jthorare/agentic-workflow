@@ -96,6 +96,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton(codeSearch ?? new FakeCodeSearch(Repos[0], Head, BuildFiles))
             .AddSingleton(symbols ?? new NoCodeSymbolSource())
             .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton(records ?? Records).AddSingleton(lexical ?? new FakeLexicalLeg())
+            .AddSingleton<ISourceIdentityStore>(Identities).AddSingleton<ISourceViewers>(Viewers)
             .AddSingleton(history ?? new FakeFileHistory(Repos[0], new HistoryWorld(Head, [])))
             .AddSingleton<IModelPort>(Model)
             .AddSingleton<IClusterSource>(Clusters)
@@ -143,6 +144,12 @@ internal sealed class MapWorld : IDisposable
 
     /// <summary>The record store the build reads, unless the world was given another.</summary>
     public FakeRecordStore Records { get; } = new();
+
+    /// <summary>Who the owner is in each source: what the viewer step of a Linear projects tick writes.</summary>
+    public FakeSourceIdentityStore Identities { get; } = new();
+
+    /// <summary>The Linear viewer the tick asks (answers only for settings that configure Linear).</summary>
+    public FakeSourceViewers Viewers { get; } = new();
 
     public FakeIntentStore Intents { get; } = new();
 
