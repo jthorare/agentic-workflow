@@ -52,6 +52,12 @@ internal sealed partial class ProjectCardViewModel
     /// <summary>True after a 409 until Reload.</summary>
     public bool IsConflict { get; private set { Set(ref field, value); Changed(); } }
 
+    /// <summary>After Reload, the notes the API holds now, shown above the box while it keeps what the owner typed; null otherwise.</summary>
+    public string? NewerNotes { get; private set { Set(ref field, value); OnChanged(nameof(HasNewerNotes)); } }
+
+    /// <summary>True when the newer notes show above the box.</summary>
+    public bool HasNewerNotes => NewerNotes is not null;
+
     /// <summary>The polite live region for the notes ("Notes saved for …").</summary>
     public LiveAnnouncer Voice { get; } = new(Labels.ProjectNotesResting);
 
