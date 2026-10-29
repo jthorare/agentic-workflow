@@ -12,7 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Projects;
 /// </summary>
 /// <param name="api">The API.</param>
 /// <param name="apiUrl">Where the API is now, or null while it is unreachable.</param>
-internal sealed class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl) : ObservableObject
+internal sealed partial class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl) : ObservableObject
 {
     private readonly ISindriApi _api = api;
     private readonly Func<Uri?> _apiUrl = apiUrl;
@@ -116,32 +116,12 @@ internal sealed class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl) : O
     /// <summary>Under the button: why the last Save failed; empty otherwise.</summary>
     public string SaveError { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>What the From Linear search box holds; the rows are filtered by name as it changes.</summary>
-    public string LinearSearch { get; set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>The rows the search leaves.</summary>
-    public IReadOnlyList<ProjectLinearRowViewModel> LinearRows { get; private set => Set(ref field, value); } = [];
-
-    /// <summary>"Loading…", the empty or no-match sentence, or empty while rows show or the list failed.</summary>
-    public string LinearStatus { get; private set => Set(ref field, value); } = string.Empty;
-
-    /// <summary>Why the list could not be read, or why the last Attach was refused; empty otherwise.</summary>
-    public string LinearError { get; private set => Set(ref field, value); } = string.Empty;
-
     /// <summary>Shows the From Linear tab and reads its list if this opening has not.</summary>
-    internal void SelectFromLinear() => IsByHand = false;
-
-    /// <summary>The latest read of the From Linear list, so a test can wait for it.</summary>
-    internal Task LinearLoad { get; private set; } = Task.CompletedTask;
-
-    /// <summary>The latest Attach a row's button started, so a test can wait for it.</summary>
-    internal Task LinearAttach { get; private set; } = Task.CompletedTask;
-
-    /// <summary>Attaches the Linear project a row names.</summary>
-    /// <param name="row">The row.</param>
-    /// <param name="cancellationToken">Cancels the request.</param>
-    /// <returns>A task that ends when the answer is drawn.</returns>
-    internal Task Attach(ProjectLinearRowViewModel row, CancellationToken cancellationToken) => throw new NotSupportedException();
+    internal void SelectFromLinear()
+    {
+        IsByHand = false;
+        StartLinearLoad();
+    }
 
     /// <summary>Shows the By hand tab.</summary>
     internal void SelectByHand() => IsByHand = true;
@@ -149,9 +129,15 @@ internal sealed class ProjectAddViewModel(ISindriApi api, Func<Uri?> apiUrl) : O
     /// <summary>Leaves the sheet without saving.</summary>
     internal void Cancel() => Cancelled?.Invoke(this, EventArgs.Empty);
 
-    /// <summary>Starts the sheet over: From Linear, every field empty, no error.</summary>
-    internal void Reset() =>
+    /// <summary>Starts the sheet over: From Linear, every field empty, no error, and the Linear list read again.</summary>
+    internal void Reset()
+    {
         (IsByHand, SelectedState, Name, Links, Notes, Target, SaveError) = (false, Planned, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
+        (_linearLoaded, _linearAll, _linearReading, _attaching) = (false, [], false, false);
+        _linearGeneration++;   // why: a read still in flight belongs to the last opening
+        (LinearError, LinearSearch) = (string.Empty, string.Empty);
+        StartLinearLoad();
+    }
 
     /// <summary>Adds the hand-made project the fields describe.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
