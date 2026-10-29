@@ -4,14 +4,13 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
 /// <summary>
 /// The concept band: the first layer of the context map. It holds the product's concepts (name, summary, size) and a synthetic Other for the unassigned nodes.
-/// A search filters it the way the map's own search does: the matches and the concepts they link to stay, the rest is gone. It is loading while the read is in flight,
+/// A search filters it the way the map's own search does: the concepts that match stay, the rest is gone. It is loading while the read is in flight,
 /// and when the map has no concepts it says why in one line and the page opens the bands unscoped.
 /// </summary>
 internal sealed class ConceptLayerViewModel : ObservableObject
 {
     private readonly Action<string> _open;
     private IReadOnlyList<ConceptTileViewModel> _all = [];
-    private IReadOnlyList<ConceptLink> _links = [];
     private HashSet<string>? _kept;
 
     internal ConceptLayerViewModel(Action<string> open)
@@ -84,7 +83,7 @@ internal sealed class ConceptLayerViewModel : ObservableObject
             return;
         }
 
-        (_all, _links, IsLoading, Note) = (tiles, view.Links ?? [], false, string.Empty);
+        (_all, IsLoading, Note) = (tiles, false, string.Empty);
         ResetSearch();
         Changed();
     }
@@ -136,25 +135,12 @@ internal sealed class ConceptLayerViewModel : ObservableObject
             : _all.Where(t => t.Name.Contains(text, StringComparison.OrdinalIgnoreCase) || t.Summary.Contains(text, StringComparison.OrdinalIgnoreCase) || t.Terms.Any(term => term.Contains(text, StringComparison.OrdinalIgnoreCase))).Select(t => t.Id).ToHashSet(StringComparer.Ordinal);
     }
 
-    /// <summary>A search resolved: the concepts that match stay, with the ones they link to; the rest is gone.</summary>
+    /// <summary>A search resolved: the concepts that match stay, the rest is gone.</summary>
     /// <param name="matches">The ids of the concepts that match.</param>
     internal void ApplySearch(IReadOnlySet<string> matches)
     {
         ArgumentNullException.ThrowIfNull(matches);
         var kept = new HashSet<string>(matches, StringComparer.Ordinal);
-        foreach (var link in _links)
-        {
-            if (matches.Contains(link.From))
-            {
-                _ = kept.Add(link.To);
-            }
-
-            if (matches.Contains(link.To))
-            {
-                _ = kept.Add(link.From);
-            }
-        }
-
         (_kept, SearchActive, NoMatches) = (kept, true, matches.Count == 0);
         Changed();
     }
@@ -177,7 +163,6 @@ internal sealed class ConceptLayerViewModel : ObservableObject
     {
         TermsNote = string.Empty;
         _all = [];
-        _links = [];
         (IsLoading, Note) = (false, note);
         ResetSearch();
         Changed();

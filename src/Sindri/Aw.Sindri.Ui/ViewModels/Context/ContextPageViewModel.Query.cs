@@ -38,7 +38,7 @@ internal sealed partial class ContextPageViewModel
     // Anchors are keys like surface:pane/Drop; every word of one has a colon. Anything else is a person's question.
     private static bool AnchorShaped(List<string> words) => words.TrueForAll(w => w.Contains(':', StringComparison.Ordinal));
 
-    // The anchors the question resolved to, or when it found none, the ones it suggests.
+    // The anchors the question resolved to; its suggestions are guesses, never matches.
     private static List<string> FromQuestion(Api.Context.QueryAnchorsView view) =>
-        [.. (view.Anchors.Count > 0 ? view.Anchors : view.SuggestedAnchors).Distinct(StringComparer.Ordinal)];
+        [.. view.Anchors.Distinct(StringComparer.Ordinal)];
 }

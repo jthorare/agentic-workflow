@@ -52,7 +52,7 @@ public sealed class ContextQuestionTests
     }
 
     [Fact]
-    public async Task No_anchors_from_the_query_fall_back_to_its_suggestions()
+    public async Task No_anchors_from_the_query_read_the_whole_text_as_one_anchor_not_its_suggestions()
     {
         var server = new FakeSindriApi { QueryAnswer = _ => FakeSindriApi.QueryAnchorsBody([], [Tabs]) };
         var page = Page(server);
@@ -60,7 +60,7 @@ public sealed class ContextQuestionTests
 
         await page.Submit(Token);
 
-        Assert.Equal([$"query:{Phrase}", $"lenses:{Tabs}"], server.ContextLog);
+        Assert.Equal([$"query:{Phrase}", $"lenses:{Phrase}"], server.ContextLog);
     }
 
     [Fact]

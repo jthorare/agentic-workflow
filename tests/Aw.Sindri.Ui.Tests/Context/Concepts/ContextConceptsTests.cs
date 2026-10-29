@@ -148,14 +148,14 @@ public sealed class ContextConceptsTests
     }
 
     [Fact]
-    public async Task A_search_at_the_concept_layer_keeps_the_concepts_that_match_and_their_links()
+    public async Task A_search_at_the_concept_layer_keeps_only_the_concepts_that_match()
     {
         var page = await ConceptPage.Shown(ConceptPage.Serving(AConcepts.Three()));
 
         page.AnchorText = "scheduling";
         await page.Submit(Token);
 
-        Expect.Sequence(["Self scheduling", "Billing"], page.Concepts.Tiles.Select(t => t.Name));   // why: Billing is linked to the match
+        Expect.Sequence(["Self scheduling"], page.Concepts.Tiles.Select(t => t.Name));
         Expect.Equal((true, false), (page.Concepts.SearchActive, page.Concepts.NoMatches));
     }
 
