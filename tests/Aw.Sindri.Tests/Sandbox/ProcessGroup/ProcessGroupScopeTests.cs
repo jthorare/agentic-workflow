@@ -135,7 +135,7 @@ public sealed class ProcessGroupScopeTests : IDisposable
         for (var i = 0; !ProcessGroupFiles.Alive(process.Id); i++)
         {
             Assert.True(i < 500, "setsid did not make its process group within 5 s");   // why: Start returns before the child has called setsid(), and a signal to a group that isn't there yet is refused
-            Thread.Sleep(10);
+            RealTime.Sleep(TimeSpan.FromMilliseconds(10));
         }
 
         return process;
