@@ -35,6 +35,12 @@ click_on() { # $1 a word of the node's name or text
   [ -n "$id" ] || return 1
   d click --node-id "$id" >/dev/null 2>&1
 }
+open_card() { # $1 a word of the card's name: a card opens on Enter or a pointer release, and the driver's click has no peer action for a Group
+  local id
+  id="$(node_id "$1")"
+  [ -n "$id" ] || return 1
+  d key --chord Enter --node-id "$id" >/dev/null 2>&1
+}
 wait_text() { # $1 text, $2 what it is for
   local i
   for i in $(seq 1 60); do has "$1" && return 0; sleep 1; done
@@ -76,7 +82,7 @@ has "Hiring loop" || fail "step 1: the hand-made project, Hiring loop, is not on
 snap projects-page
 
 # Step 2: the card's sheet.
-click_on "Checkout rewrite, " || fail "step 2: could not click the Checkout rewrite card"
+open_card "Checkout rewrite, " || fail "step 2: could not open the Checkout rewrite card"
 wait_text "Close sheet" "step 2 (the card's sheet)"
 snap projects-sheet
 close_sheet
@@ -96,9 +102,11 @@ click_on "Finished (" || fail "step 4: no Finished fold"
 wait_text "Onboarding revamp" "step 4"
 snap projects-finished
 
-# Step 5: Hidden.
+# Step 5: Hidden. The page scrolls to its end first, so the open Hidden fold is in the window's shot (Finished stays open above it).
 click_on "Hidden (" || fail "step 5: no Hidden fold"
 wait_text "Search relevance v2" "step 5"
+id="$(node_id "Hidden (")"; [ -n "$id" ] && d scroll --dy 2000 --node-id "$id" >/dev/null 2>&1
+sleep 1
 snap projects-hidden
 
 echo "PASS: the Projects page showed the viewer, the cards and counts, the sheet, both Add tabs, and the Finished and Hidden folds (screenshots in $OUT)"
