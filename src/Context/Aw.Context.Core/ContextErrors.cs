@@ -6,7 +6,7 @@ namespace Aw.Context.Core;
 /// The context engine's error catalogue (spec §8.6), codes SND-CONTEXT-NNN. Stage S-1A owns 001–019 and defines 020
 /// (the session gate, spec §3); S-3a adds 030–034 (the map file and its store); S-3b adds 035–038 (the probe runner and anchors; 039 is reserved); S-4 adds 040 and 042–048 (041 stays retired, 049 is reserved); S-7A adds 080–083 (backtest; 084–086 reserved for review findings); S-5A/B own 050–069 (050–055 are
 /// retired with the old intent source); later stages
-/// add theirs in their ranges. HTTP status follows the kind; the CLI exit code is 1 for attention (<see cref="Attention"/>) and 2 for a tool error.
+/// add theirs in their ranges; the pages spec books 250–259 (250–258 used: unknown concept, unknown key, repo, caps, duplicate ids, names, action spec, no such page, no such concept or repo for context_pages). HTTP status follows the kind; the CLI exit code is 1 for attention (<see cref="Attention"/>) and 2 for a tool error.
 /// </summary>
 public static class ContextErrors
 {
@@ -240,6 +240,33 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-243: Jev can't be asked for the rest of this pass (no key, offline, excluded, a refused key, rate limited, a server error, or the pick is off in the approved profile). Every undecided choice takes its fallback. The message is a reason code.</summary>
     public static readonly ErrorDefinition ChoiceUnavailable = new("SND-CONTEXT-243", ErrorKind.Unavailable, "Jev can't be asked for choices");
 
+    /// <summary>SND-CONTEXT-250: index.pages names a concept that isn't pinned or derived in the current map.</summary>
+    public static readonly ErrorDefinition PageConceptUnknown = new("SND-CONTEXT-250", ErrorKind.Invalid, "A page action names a concept the map doesn't have");
+
+    /// <summary>SND-CONTEXT-251: a surface or action key not in the current map.</summary>
+    public static readonly ErrorDefinition PageKeyUnknown = new("SND-CONTEXT-251", ErrorKind.Invalid, "A page names a map key the map doesn't have");
+
+    /// <summary>SND-CONTEXT-252: several repos and none named, or a surface in more than one repo.</summary>
+    public static readonly ErrorDefinition PageRepoAmbiguous = new("SND-CONTEXT-252", ErrorKind.Invalid, "A page's repo is ambiguous or unknown");
+
+    /// <summary>SND-CONTEXT-253: more than 200 pages, 40 actions on a page or 20 concepts on an action.</summary>
+    public static readonly ErrorDefinition PageOverCap = new("SND-CONTEXT-253", ErrorKind.Invalid, "A page list is over a cap");
+
+    /// <summary>SND-CONTEXT-254: page ids unique, action ids unique within a page.</summary>
+    public static readonly ErrorDefinition PageIdDuplicate = new("SND-CONTEXT-254", ErrorKind.Invalid, "A page or action id repeats");
+
+    /// <summary>SND-CONTEXT-255: a name empty, over 80 characters, or with a leading or trailing space after control characters are stripped.</summary>
+    public static readonly ErrorDefinition PageNameInvalid = new("SND-CONTEXT-255", ErrorKind.Invalid, "A page or action name is invalid");
+
+    /// <summary>SND-CONTEXT-256: a '--action' with no concept after '->'.</summary>
+    public static readonly ErrorDefinition PageActionSpecInvalid = new("SND-CONTEXT-256", ErrorKind.Invalid, "A page action spec is invalid");
+
+    /// <summary>SND-CONTEXT-257: an unknown page id (remove, context_pages).</summary>
+    public static readonly ErrorDefinition PageNotFound = new("SND-CONTEXT-257", ErrorKind.NotFound, "No such page");
+
+    /// <summary>SND-CONTEXT-258: an unknown concept or repo in context_pages.</summary>
+    public static readonly ErrorDefinition PageQueryUnknown = new("SND-CONTEXT-258", ErrorKind.NotFound, "context_pages names no such concept or repo");
+
     /// <summary>Every Context error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
         [SettingsInvalid, RecordBatchInvalid, EmbedderUnavailable, VectorScanInvalid, SourceNotConfigured, UnknownAnchor, StoreUnavailable, PathInWorktree, QueryInvalid, SourceUnavailable, AllSourcesUnavailable, SessionsDisabled,
@@ -247,7 +274,8 @@ public static class ContextErrors
          NoMap, MapFileInvalid, MapNodeUndefined, ExportOutsideHome, MapFileChanged, ProbeFileInvalid, NoProbeFile, AmbiguousAnchor, ProbesRegressed,
          HeavyLockBusy, LabelingUnavailable, ReviewFileNoMatch, NoDraftMap, RepoOutsideScope, PromoteRefused, ReviewTargetStale, ExtractionUnreadable,
          LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
-         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph, PinUnknown, NoPins, PinNewerThanMap, PinNeedsMap];
+         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph, PinUnknown, NoPins, PinNewerThanMap, PinNeedsMap,
+         PageConceptUnknown, PageKeyUnknown, PageRepoAmbiguous, PageOverCap, PageIdDuplicate, PageNameInvalid, PageActionSpecInvalid, PageNotFound, PageQueryUnknown];
 
     /// <summary>
     /// The codes the CLI answers with exit 1 (attention, spec §8.6): an unknown or ambiguous anchor, a refused input or

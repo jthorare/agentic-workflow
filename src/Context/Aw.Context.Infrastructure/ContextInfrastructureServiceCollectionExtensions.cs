@@ -110,7 +110,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<Core.Surfaces.ISurfacePickStore>(sp => new Surfaces.SqliteSurfacePickStore(sp.GetRequiredService<ContextDatabase>()))
             .AddSingleton<ILabeler>(sp => new CachingLabeler(
                 new ModelLabeler(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>(), sp.GetService<Core.Models.IChoicePort>(), sp.GetService<Core.Models.IModelPromptBudget>()),
-                sp.GetRequiredService<ILabelCache>(), sp.GetRequiredService<IScrubberFactory>()))
+                sp.GetRequiredService<ILabelCache>(), sp.GetRequiredService<IScrubberFactory>(), sp.GetService<Core.Models.IChoicePort>()))
             .AddSingleton<Core.Surfaces.ISurfacePicker>(sp => new Surfaces.SurfacePicker(sp.GetService<Core.Models.IChoicePort>(), sp.GetRequiredService<IScrubberFactory>()))
             .AddSingleton<Core.Concepts.IConceptNamer>(sp => new ModelConceptNamer(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()));
 }

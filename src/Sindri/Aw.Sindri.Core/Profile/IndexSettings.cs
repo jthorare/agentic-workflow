@@ -18,6 +18,7 @@ namespace Aw.Sindri.Core.Profile;
 /// <param name="Concepts">Concepts the owner pins (context concepts note §3); a repo's own are added to the profile's.</param>
 /// <param name="Ignore">Role names (keys of <c xml:lang="en">roles</c>) whose files are not indexed and never cited; a role in neither <c xml:lang="en">ignore</c> nor <c xml:lang="en">demote</c> is ignored. Per repo only (a profile-level one is refused).</param>
 /// <param name="Demote">Role names (keys of <c xml:lang="en">roles</c>) whose files stay indexed and searchable but are never a feature implementer, anchor or scope surface, and rank last in answers and lenses. Per repo only; a role cannot be in both lists.</param>
+/// <param name="Pages">Pages the owner names (pages spec §3.1), each with its actions and the concepts they relate to; a repo's own are added to the profile's.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record IndexSettings(
     IReadOnlyList<string>? DenyPaths = null,
@@ -29,7 +30,8 @@ public sealed record IndexSettings(
     IReadOnlyDictionary<string, IReadOnlyList<string>>? Roles = null,
     IReadOnlyList<ConceptSettings>? Concepts = null,
     IReadOnlyList<string>? Ignore = null,
-    IReadOnlyList<string>? Demote = null)
+    IReadOnlyList<string>? Demote = null,
+    IReadOnlyList<PageSettings>? Pages = null)
 {
     /// <summary>The default for 'maxFileKB'.</summary>
     public const int DefaultMaxFileKB = 4_096;

@@ -4,6 +4,7 @@ using Aw.Judge.Core.Config;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Host.Models;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.Time.Testing;
@@ -15,16 +16,19 @@ internal sealed class ChoiceRig
 {
     private readonly FakeJobContextAccessor _jobs = new();
 
-    public ChoiceRig(ScriptedBatches batches, LabelPick pick = LabelPick.Jev, ProvidersConfig? providers = null, LabelPick surfacePick = LabelPick.Off)
+    public ChoiceRig(ScriptedBatches batches, LabelPick pick = LabelPick.Jev, ProvidersConfig? providers = null, LabelPick surfacePick = LabelPick.Off, bool key = true)
     {
+        Key = new SwitchableKey(key);
         Batches = batches;
         Models = new SwitchableModels(pick) { SurfacePick = surfacePick };
-        Port = new JevChoicePort(() => batches, _ => ValueTask.FromResult(providers), Models, _jobs, Calls, new SequentialIdGenerator(), Clock);
+        Port = new JevChoicePort(() => batches, _ => ValueTask.FromResult(providers), new JevAvailability(Models, Key), _jobs, Calls, new SequentialIdGenerator(), Clock);
     }
 
     public ScriptedBatches Batches { get; }
 
     public SwitchableModels Models { get; }
+
+    public SwitchableKey Key { get; }
 
     public RecordedCalls Calls { get; } = new();
 
@@ -43,6 +47,14 @@ internal sealed class ChoiceRig
 
     public ValueTask<Kernel.Result<IReadOnlyList<ChoiceAnswer>>> PickSurfaces(params ChoiceQuestion[] questions) =>
         Port.Pick(ChoiceKind.ProductSurfaces, questions, capChars: 160_000, TestContext.Current.CancellationToken);
+
+    /// <summary>Whether a Jev key is present, which a test can change between calls.</summary>
+    internal sealed class SwitchableKey(bool present) : IJevKeyProbe
+    {
+        public bool Present { get; set; } = present;
+
+        ValueTask<bool> IJevKeyProbe.Present(CancellationToken cancellationToken) => ValueTask.FromResult(Present);
+    }
 
     /// <summary>The approved 'context.models', which a test can change between calls the way an approval does.</summary>
     internal sealed class SwitchableModels(LabelPick pick) : IApprovedModels

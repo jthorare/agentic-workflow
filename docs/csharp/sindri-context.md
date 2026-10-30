@@ -616,6 +616,15 @@ sources status, doctor row, item query), `ContextCliTests` and `ContextReviewRow
 | `SND-CONTEXT-241` | Unavailable (503) | 2 | No model harness a call may try is installed |
 | `SND-CONTEXT-242` | Unavailable (503) | 2 | Jev refused a pack of choice questions (the label pick; input too big, an unreadable answer, a timeout). The labeler splits the pack in halves, twice at most, and never shows it: what still fails takes the model's first candidate. The message is a reason code |
 | `SND-CONTEXT-243` | Unavailable (503) | 2 | Jev can't be asked for the rest of this pass (no key, offline, excluded, a refused key, rate limited, a server error, or the pick is off in the approved profile). The labeler stops asking and every undecided cluster takes its first candidate; only the reasons other than `off` and `no-key` reach the build as `labels: jev unavailable (<reason>)`. The message is a reason code |
+| `SND-CONTEXT-250` | Invalid (400) | 2 | A page action in `index.pages` names a concept that is neither a pin nor a derived concept of the current map (the message offers the nearest id) |
+| `SND-CONTEXT-251` | Invalid (400) | 2 | A page's `surface` or an action's `action` key is not in the current map |
+| `SND-CONTEXT-252` | Invalid (400) | 2 | A page's repo can't be told: its surface is evidenced in several repos and `repo` is absent |
+| `SND-CONTEXT-253` | Invalid (400) | 2 | Over a cap: 200 pages, 40 actions on a page, 20 concepts on an action |
+| `SND-CONTEXT-254` | Invalid (400) | 2 | A page id repeats, or an action id repeats within its page |
+| `SND-CONTEXT-255` | Invalid (400) | 2 | A page or action name is empty, over 80 characters, or starts or ends with a space (control and format characters are stripped first) |
+| `SND-CONTEXT-256` | Invalid (400) | 2 | A `--action` spec has no concept after `->` (reserved for the CLI, P1d) |
+| `SND-CONTEXT-257` | Not found (404) | 2 | No page has that id (remove, `context_pages`; reserved for P1d) |
+| `SND-CONTEXT-258` | Not found (404) | 2 | `context_pages` names no such concept or repo (reserved for P1d) |
 
 084-086 are reserved for review findings, 087-089 for S-7B. Reused: 020, 030, 040, 048 (a cut git can't read: that sample is dropped and counted), 005, 004 (a cache or context.db read failing stops the run with its own code), 001, 011.
 
