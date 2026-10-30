@@ -143,7 +143,7 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
         var record = new IntentRecord(stored.Key, source, stored.Version.Value, stored.Title, Aliases(stored)) { CreatedAt = stored.CreatedAt };
         var before = known.GetValueOrDefault(record.Key.Value);
         known[record.Key.Value] = record;
-        var found = RulesLinker.Link(record.Key, text, map.Graph, [.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal));
+        var found = RulesLinker.Link(record.Key, text, map.Graph, ([.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal)), []);
         _fetched++;
         _linked += found.Count;
         _unlinked += found.Count == 0 ? 1 : 0;
