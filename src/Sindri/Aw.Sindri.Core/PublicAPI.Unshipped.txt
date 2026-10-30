@@ -20315,6 +20315,7 @@ static readonly Aw.Sindri.Core.SindriErrors.IndexNotInProfile -> Aw.Kernel.Error
 static readonly Aw.Sindri.Core.SindriErrors.IndexOnyxLeftover -> Aw.Kernel.ErrorDefinition!
 Aw.Sindri.Core.Secrets.ISourceTokenProfileWriter
 Aw.Sindri.Core.Secrets.ISourceTokenProfileWriter.SetToken(string! source, string! secretPointer) -> Aw.Kernel.Result<bool>!
+Aw.Sindri.Core.Secrets.ISourceTokenProfileWriter.SetTeams(string! source, System.Collections.Generic.IReadOnlyList<string!>! teams) -> Aw.Kernel.Result<bool>!
 Aw.Sindri.Core.Workflow.Engine.Runtime.IReportOutputChecks
 Aw.Sindri.Core.Workflow.Engine.Runtime.IReportOutputChecks.Violations(System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, System.ReadOnlyMemory<byte>>! outputs, System.Collections.Generic.IReadOnlySet<Aw.Sindri.Core.Workflow.Ids.FactKey>! payloads, bool scopingQuestions) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Workflow.Engine.Runtime.PayloadReportChecks
@@ -20999,9 +21000,11 @@ Aw.Sindri.Core.Ids.ModelCallId.IsInitialized() -> bool
 Aw.Sindri.Core.Ids.ModelCallId.ModelCallId() -> void
 Aw.Sindri.Core.Ids.ModelCallId.ToString(System.IFormatProvider? provider) -> string!
 Aw.Sindri.Core.Ids.ModelCallId.Value.get -> string!
-Aw.Sindri.Core.Jobs.JobRow.Deconstruct(out Aw.Sindri.Core.Ids.JobId Id, out Aw.Sindri.Core.Ids.JobKind Kind, out Aw.Sindri.Core.Ids.JobKey Key, out Aw.Sindri.Core.Ids.ItemId? Item, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Ids.ServiceName? Service, out Aw.Sindri.Core.Jobs.JobState State, out string! StartedBy, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! Progress, out int Rounds, out string? Summary, out string? Code, out System.Text.Json.JsonElement? Result, out string? CancelledBy, out long Sequence, out Aw.Sindri.Core.Jobs.ModelTotals? Models, out string? WaitingOn) -> void
-Aw.Sindri.Core.Jobs.JobRow.JobRow(Aw.Sindri.Core.Ids.JobId Id, Aw.Sindri.Core.Ids.JobKind Kind, Aw.Sindri.Core.Ids.JobKey Key, Aw.Sindri.Core.Ids.ItemId? Item, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Ids.ServiceName? Service, Aw.Sindri.Core.Jobs.JobState State, string! StartedBy, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! Progress, int Rounds, string? Summary, string? Code, System.Text.Json.JsonElement? Result, string? CancelledBy, long Sequence, Aw.Sindri.Core.Jobs.ModelTotals? Models = null, string? WaitingOn = null) -> void
+Aw.Sindri.Core.Jobs.JobRow.Deconstruct(out Aw.Sindri.Core.Ids.JobId Id, out Aw.Sindri.Core.Ids.JobKind Kind, out Aw.Sindri.Core.Ids.JobKey Key, out Aw.Sindri.Core.Ids.ItemId? Item, out Aw.Sindri.Core.Ids.RepoName? Repo, out Aw.Sindri.Core.Ids.ServiceName? Service, out Aw.Sindri.Core.Jobs.JobState State, out string! StartedBy, out System.DateTimeOffset StartedAt, out System.DateTimeOffset? EndedAt, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! Progress, out int Rounds, out string? Summary, out string? Code, out System.Text.Json.JsonElement? Result, out string? CancelledBy, out long Sequence, out Aw.Sindri.Core.Jobs.ModelTotals? Models, out string? WaitingOn, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobModelCall!>? ModelCalls) -> void
+Aw.Sindri.Core.Jobs.JobRow.JobRow(Aw.Sindri.Core.Ids.JobId Id, Aw.Sindri.Core.Ids.JobKind Kind, Aw.Sindri.Core.Ids.JobKey Key, Aw.Sindri.Core.Ids.ItemId? Item, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Ids.ServiceName? Service, Aw.Sindri.Core.Jobs.JobState State, string! StartedBy, System.DateTimeOffset StartedAt, System.DateTimeOffset? EndedAt, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobLine!>! Progress, int Rounds, string? Summary, string? Code, System.Text.Json.JsonElement? Result, string? CancelledBy, long Sequence, Aw.Sindri.Core.Jobs.ModelTotals? Models = null, string? WaitingOn = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobModelCall!>? ModelCalls = null) -> void
 Aw.Sindri.Core.Jobs.JobRow.Models.get -> Aw.Sindri.Core.Jobs.ModelTotals?
+Aw.Sindri.Core.Jobs.JobRow.ModelCalls.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobModelCall!>?
+Aw.Sindri.Core.Jobs.JobRow.ModelCalls.init -> void
 Aw.Sindri.Core.Jobs.JobRow.Models.init -> void
 Aw.Sindri.Core.Jobs.JobRow.WaitingOn.get -> string?
 Aw.Sindri.Core.Jobs.JobRow.WaitingOn.init -> void
@@ -21022,13 +21025,15 @@ Aw.Sindri.Core.Jobs.ModelTotals.AnsweredBy.get -> System.Collections.Generic.IRe
 Aw.Sindri.Core.Jobs.ModelTotals.AnsweredBy.init -> void
 Aw.Sindri.Core.Jobs.ModelTotals.Calls.get -> int
 Aw.Sindri.Core.Jobs.ModelTotals.Calls.init -> void
-Aw.Sindri.Core.Jobs.ModelTotals.Deconstruct(out int Calls, out int FailedCalls, out long InputTokens, out long OutputTokens, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.ModelAnsweredCount!>! AnsweredBy) -> void
+Aw.Sindri.Core.Jobs.ModelTotals.Deconstruct(out int Calls, out int FailedCalls, out long InputTokens, out long OutputTokens, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.ModelAnsweredCount!>! AnsweredBy, out int FellBack) -> void
 Aw.Sindri.Core.Jobs.ModelTotals.Equals(Aw.Sindri.Core.Jobs.ModelTotals? other) -> bool
 Aw.Sindri.Core.Jobs.ModelTotals.FailedCalls.get -> int
+Aw.Sindri.Core.Jobs.ModelTotals.FellBack.get -> int
+Aw.Sindri.Core.Jobs.ModelTotals.FellBack.init -> void
 Aw.Sindri.Core.Jobs.ModelTotals.FailedCalls.init -> void
 Aw.Sindri.Core.Jobs.ModelTotals.InputTokens.get -> long
 Aw.Sindri.Core.Jobs.ModelTotals.InputTokens.init -> void
-Aw.Sindri.Core.Jobs.ModelTotals.ModelTotals(int Calls, int FailedCalls, long InputTokens, long OutputTokens, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.ModelAnsweredCount!>! AnsweredBy) -> void
+Aw.Sindri.Core.Jobs.ModelTotals.ModelTotals(int Calls, int FailedCalls, long InputTokens, long OutputTokens, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.ModelAnsweredCount!>! AnsweredBy, int FellBack = 0) -> void
 Aw.Sindri.Core.Jobs.ModelTotals.OutputTokens.get -> long
 Aw.Sindri.Core.Jobs.ModelTotals.OutputTokens.init -> void
 const Aw.Sindri.Core.Events.EventTypes.ContextModelCalled = "context.model.called" -> string!
@@ -21039,7 +21044,7 @@ const Aw.Sindri.Core.Events.ModelCallOutcome.NotAsked = "not-asked" -> string!
 const Aw.Sindri.Core.Events.ModelCallOutcome.Skipped = "skipped" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Estimated = "estimated" -> string!
 const Aw.Sindri.Core.Events.ModelTokenBasis.Reported = "reported" -> string!
-const Aw.Sindri.Core.Views.ViewSchema.Version = 23 -> int
+const Aw.Sindri.Core.Views.ViewSchema.Version = 24 -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Events.ContextModelCalled.GetHashCode() -> int
 override Aw.Sindri.Core.Events.ContextModelCalled.ToString() -> string!
@@ -21382,4 +21387,98 @@ static Aw.Sindri.Core.Projects.ProjectDecisions.NamesLinearProject(string! proje
 Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention
 static Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention.Question.get -> string!
 static Aw.Sindri.Core.Workflow.Engine.Runtime.BugClassPrevention.SharedLines.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Jobs.JobModelTry
+Aw.Sindri.Core.Jobs.JobModelTry.<Clone>$() -> Aw.Sindri.Core.Jobs.JobModelTry!
+Aw.Sindri.Core.Jobs.JobModelTry.Deconstruct(out string! Harness, out string! Model, out string! Outcome, out string? Reason, out int Ms, out string! Source) -> void
+Aw.Sindri.Core.Jobs.JobModelTry.Equals(Aw.Sindri.Core.Jobs.JobModelTry? other) -> bool
+Aw.Sindri.Core.Jobs.JobModelTry.Harness.get -> string!
+Aw.Sindri.Core.Jobs.JobModelTry.Harness.init -> void
+Aw.Sindri.Core.Jobs.JobModelTry.Model.get -> string!
+Aw.Sindri.Core.Jobs.JobModelTry.Model.init -> void
+Aw.Sindri.Core.Jobs.JobModelTry.Outcome.get -> string!
+Aw.Sindri.Core.Jobs.JobModelTry.Outcome.init -> void
+Aw.Sindri.Core.Jobs.JobModelTry.Reason.get -> string?
+Aw.Sindri.Core.Jobs.JobModelTry.Reason.init -> void
+Aw.Sindri.Core.Jobs.JobModelTry.Ms.get -> int
+Aw.Sindri.Core.Jobs.JobModelTry.Ms.init -> void
+Aw.Sindri.Core.Jobs.JobModelTry.Source.get -> string!
+Aw.Sindri.Core.Jobs.JobModelTry.Source.init -> void
+Aw.Sindri.Core.Jobs.JobModelTry.JobModelTry(string! Harness, string! Model, string! Outcome, string? Reason, int Ms, string! Source) -> void
+override Aw.Sindri.Core.Jobs.JobModelTry.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Jobs.JobModelTry.GetHashCode() -> int
+override Aw.Sindri.Core.Jobs.JobModelTry.ToString() -> string!
+static Aw.Sindri.Core.Jobs.JobModelTry.operator !=(Aw.Sindri.Core.Jobs.JobModelTry? left, Aw.Sindri.Core.Jobs.JobModelTry? right) -> bool
+static Aw.Sindri.Core.Jobs.JobModelTry.operator ==(Aw.Sindri.Core.Jobs.JobModelTry? left, Aw.Sindri.Core.Jobs.JobModelTry? right) -> bool
+Aw.Sindri.Core.Jobs.JobModelAnswerer
+Aw.Sindri.Core.Jobs.JobModelAnswerer.<Clone>$() -> Aw.Sindri.Core.Jobs.JobModelAnswerer!
+Aw.Sindri.Core.Jobs.JobModelAnswerer.Deconstruct(out string! Harness, out string! Model) -> void
+Aw.Sindri.Core.Jobs.JobModelAnswerer.Equals(Aw.Sindri.Core.Jobs.JobModelAnswerer? other) -> bool
+Aw.Sindri.Core.Jobs.JobModelAnswerer.Harness.get -> string!
+Aw.Sindri.Core.Jobs.JobModelAnswerer.Harness.init -> void
+Aw.Sindri.Core.Jobs.JobModelAnswerer.Model.get -> string!
+Aw.Sindri.Core.Jobs.JobModelAnswerer.Model.init -> void
+Aw.Sindri.Core.Jobs.JobModelAnswerer.JobModelAnswerer(string! Harness, string! Model) -> void
+override Aw.Sindri.Core.Jobs.JobModelAnswerer.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Jobs.JobModelAnswerer.GetHashCode() -> int
+override Aw.Sindri.Core.Jobs.JobModelAnswerer.ToString() -> string!
+static Aw.Sindri.Core.Jobs.JobModelAnswerer.operator !=(Aw.Sindri.Core.Jobs.JobModelAnswerer? left, Aw.Sindri.Core.Jobs.JobModelAnswerer? right) -> bool
+static Aw.Sindri.Core.Jobs.JobModelAnswerer.operator ==(Aw.Sindri.Core.Jobs.JobModelAnswerer? left, Aw.Sindri.Core.Jobs.JobModelAnswerer? right) -> bool
+Aw.Sindri.Core.Jobs.JobModelHow
+Aw.Sindri.Core.Jobs.JobModelHow.<Clone>$() -> Aw.Sindri.Core.Jobs.JobModelHow!
+Aw.Sindri.Core.Jobs.JobModelHow.Deconstruct(out int? Jev, out int? FirstCandidate, out int? FileName, out int? Merged, out int? Kept, out int? Rejected, out int? Undecided) -> void
+Aw.Sindri.Core.Jobs.JobModelHow.Equals(Aw.Sindri.Core.Jobs.JobModelHow? other) -> bool
+Aw.Sindri.Core.Jobs.JobModelHow.Jev.get -> int?
+Aw.Sindri.Core.Jobs.JobModelHow.Jev.init -> void
+Aw.Sindri.Core.Jobs.JobModelHow.FirstCandidate.get -> int?
+Aw.Sindri.Core.Jobs.JobModelHow.FirstCandidate.init -> void
+Aw.Sindri.Core.Jobs.JobModelHow.FileName.get -> int?
+Aw.Sindri.Core.Jobs.JobModelHow.FileName.init -> void
+Aw.Sindri.Core.Jobs.JobModelHow.Merged.get -> int?
+Aw.Sindri.Core.Jobs.JobModelHow.Merged.init -> void
+Aw.Sindri.Core.Jobs.JobModelHow.Kept.get -> int?
+Aw.Sindri.Core.Jobs.JobModelHow.Kept.init -> void
+Aw.Sindri.Core.Jobs.JobModelHow.Rejected.get -> int?
+Aw.Sindri.Core.Jobs.JobModelHow.Rejected.init -> void
+Aw.Sindri.Core.Jobs.JobModelHow.Undecided.get -> int?
+Aw.Sindri.Core.Jobs.JobModelHow.Undecided.init -> void
+Aw.Sindri.Core.Jobs.JobModelHow.JobModelHow(int? Jev = null, int? FirstCandidate = null, int? FileName = null, int? Merged = null, int? Kept = null, int? Rejected = null, int? Undecided = null) -> void
+override Aw.Sindri.Core.Jobs.JobModelHow.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Jobs.JobModelHow.GetHashCode() -> int
+override Aw.Sindri.Core.Jobs.JobModelHow.ToString() -> string!
+static Aw.Sindri.Core.Jobs.JobModelHow.operator !=(Aw.Sindri.Core.Jobs.JobModelHow? left, Aw.Sindri.Core.Jobs.JobModelHow? right) -> bool
+static Aw.Sindri.Core.Jobs.JobModelHow.operator ==(Aw.Sindri.Core.Jobs.JobModelHow? left, Aw.Sindri.Core.Jobs.JobModelHow? right) -> bool
+Aw.Sindri.Core.Jobs.JobModelCall
+Aw.Sindri.Core.Jobs.JobModelCall.<Clone>$() -> Aw.Sindri.Core.Jobs.JobModelCall!
+Aw.Sindri.Core.Jobs.JobModelCall.Deconstruct(out Aw.Sindri.Core.Ids.ModelCallId CallId, out string! Purpose, out string! Kind, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobModelTry!>! Tries, out Aw.Sindri.Core.Jobs.JobModelAnswerer? AnsweredBy, out int InputTokens, out int OutputTokens, out string! TokenBasis, out int? Items, out Aw.Sindri.Core.Jobs.JobModelHow? How, out System.DateTimeOffset StartedAt, out int Ms) -> void
+Aw.Sindri.Core.Jobs.JobModelCall.Equals(Aw.Sindri.Core.Jobs.JobModelCall? other) -> bool
+Aw.Sindri.Core.Jobs.JobModelCall.CallId.get -> Aw.Sindri.Core.Ids.ModelCallId
+Aw.Sindri.Core.Jobs.JobModelCall.CallId.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.Purpose.get -> string!
+Aw.Sindri.Core.Jobs.JobModelCall.Purpose.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.Kind.get -> string!
+Aw.Sindri.Core.Jobs.JobModelCall.Kind.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.Tries.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobModelTry!>!
+Aw.Sindri.Core.Jobs.JobModelCall.Tries.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.AnsweredBy.get -> Aw.Sindri.Core.Jobs.JobModelAnswerer?
+Aw.Sindri.Core.Jobs.JobModelCall.AnsweredBy.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.InputTokens.get -> int
+Aw.Sindri.Core.Jobs.JobModelCall.InputTokens.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.OutputTokens.get -> int
+Aw.Sindri.Core.Jobs.JobModelCall.OutputTokens.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.TokenBasis.get -> string!
+Aw.Sindri.Core.Jobs.JobModelCall.TokenBasis.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.Items.get -> int?
+Aw.Sindri.Core.Jobs.JobModelCall.Items.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.How.get -> Aw.Sindri.Core.Jobs.JobModelHow?
+Aw.Sindri.Core.Jobs.JobModelCall.How.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.StartedAt.get -> System.DateTimeOffset
+Aw.Sindri.Core.Jobs.JobModelCall.StartedAt.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.Ms.get -> int
+Aw.Sindri.Core.Jobs.JobModelCall.Ms.init -> void
+Aw.Sindri.Core.Jobs.JobModelCall.JobModelCall(Aw.Sindri.Core.Ids.ModelCallId CallId, string! Purpose, string! Kind, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Jobs.JobModelTry!>! Tries, Aw.Sindri.Core.Jobs.JobModelAnswerer? AnsweredBy, int InputTokens, int OutputTokens, string! TokenBasis, int? Items, Aw.Sindri.Core.Jobs.JobModelHow? How, System.DateTimeOffset StartedAt, int Ms) -> void
+override Aw.Sindri.Core.Jobs.JobModelCall.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Jobs.JobModelCall.GetHashCode() -> int
+override Aw.Sindri.Core.Jobs.JobModelCall.ToString() -> string!
+static Aw.Sindri.Core.Jobs.JobModelCall.operator !=(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
+static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?

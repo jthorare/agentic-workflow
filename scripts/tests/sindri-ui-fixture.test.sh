@@ -615,6 +615,30 @@ AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks nope ITM-0f ITM-0f/step/1 >/dev/
 AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks picked not-an-item ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses a bad item id (exit 2)" "$?" "2"
 AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-picks picked ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses an unguarded home" "$?" "2"
 
+# model-calls (#1567 R-4): the usage, the refusals, and the ledger rows each state writes (fixed ids, so a rerun adds nothing).
+contains "the usage lists model-calls" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-calls >/dev/null 2>&1; check "model-calls needs a state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-calls nope >/dev/null 2>&1; check "model-calls refuses an unknown state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-calls paused extra >/dev/null 2>&1; check "model-calls takes one argument (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-calls paused >/dev/null 2>&1; check "model-calls refuses an unguarded home" "$?" "2"
+calls_rows() { sqlq "$H/ledger.db" "SELECT COUNT(*) FROM events WHERE type = '$1' AND json_extract(payload_json, '$.job') = '$2'"; }
+job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls fell-back 2>/dev/null)"; check "model-calls fell-back exits 0 and prints the job id" "$?" "0"
+[[ "$job" =~ ^JOB-[0-9a-f]{32}$ ]]; check "the printed job id is a JOB- id" "$?" "0"
+check "fell-back starts the job once" "$(calls_rows job.started "$job")" "1"
+check "fell-back writes six calls" "$(calls_rows context.model.called "$job")" "6"
+check "fell-back's calls hold a limit, a skipped and a failed try" "$(sqlq "$H/ledger.db" "SELECT COUNT(DISTINCT json_extract(t.value, '$.outcome')) FROM events e, json_each(e.payload_json, '$.tries') t WHERE e.type = 'context.model.called' AND json_extract(e.payload_json, '$.job') = '$job' AND json_extract(t.value, '$.outcome') IN ('limit', 'skipped', 'failed')")" "3"
+check "fell-back's calls hold a Jev label pick, a surface pick and a pick not asked" "$(sqlq "$H/ledger.db" "SELECT COUNT(*) FROM events WHERE type = 'context.model.called' AND json_extract(payload_json, '$.job') = '$job' AND json_extract(payload_json, '$.tries[0].harness') = 'jev'")" "3"
+check "fell-back never waits" "$(calls_rows job.waiting "$job")" "0"
+AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls fell-back >/dev/null 2>&1
+check "a second fell-back adds nothing" "$(calls_rows context.model.called "$job")" "6"
+job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls no-answer 2>/dev/null)"
+check "no-answer writes three calls and none has an answerer" "$(sqlq "$H/ledger.db" "SELECT COUNT(*) FROM events WHERE type = 'context.model.called' AND json_extract(payload_json, '$.job') = '$job' AND json_extract(payload_json, '$.answeredBy') IS NULL")" "3"
+job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls paused 2>/dev/null)"
+check "paused waits on model-limit" "$(sqlq "$H/ledger.db" "SELECT json_extract(payload_json, '$.signal') FROM events WHERE type = 'job.waiting' AND json_extract(payload_json, '$.job') = '$job'")" "model-limit"
+check "paused says why in its last progress line" "$(sqlq "$H/ledger.db" "SELECT json_extract(payload_json, '$.line') FROM events WHERE type = 'job.progress' AND json_extract(payload_json, '$.job') = '$job' ORDER BY seq DESC LIMIT 1")" "Paused: claude-code at its usage limit; codex at its usage limit. Resume when one is back."
+job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls none 2>/dev/null)"
+check "none writes a job and no call" "$(calls_rows job.started "$job")$(calls_rows context.model.called "$job")" "10"
+
 # agent-run's wait is wall-clock seconds, not loop passes (issue #1123): a ledger call that takes 2 s and never shows
 # launch.started must still end the wait after FIXTURE_AGENT_WAIT=3 s. The sessions copy is faked (no uid needed): agent-run
 # only checks that its proc folder exists and edits its launcher.json.

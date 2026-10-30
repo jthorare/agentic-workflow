@@ -9967,10 +9967,6 @@ const Aw.Context.Core.Graph.UnreadFileNodes.Attribute = "read" -> string!
 static Aw.Context.Core.Graph.UnreadFileNodes.Attributes() -> System.Text.Json.JsonElement
 static Aw.Context.Core.Graph.UnreadFileNodes.Is(Aw.Context.Core.Graph.GraphNode! node) -> bool
 Aw.Context.Core.Extract.IRepoReader.RemovedPaths(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
-Aw.Context.Core.Extract.MapBuildGate
-Aw.Context.Core.Extract.MapBuildGate.Dispose() -> void
-Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.IDisposable!>
-Aw.Context.Core.Extract.MapBuildGate.MapBuildGate() -> void
 Aw.Context.Core.Records.RecordPermalinks
 Aw.Context.Core.Records.RecordSourceLink
 Aw.Context.Core.Records.RecordSourceLink.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -9988,6 +9984,13 @@ override Aw.Context.Core.Records.RecordSourceLink.GetHashCode() -> int
 override Aw.Context.Core.Records.RecordSourceLink.ToString() -> string!
 static Aw.Context.Core.Records.RecordSourceLink.operator !=(Aw.Context.Core.Records.RecordSourceLink? left, Aw.Context.Core.Records.RecordSourceLink? right) -> bool
 static Aw.Context.Core.Records.RecordSourceLink.operator ==(Aw.Context.Core.Records.RecordSourceLink? left, Aw.Context.Core.Records.RecordSourceLink? right) -> bool
+Aw.Context.Core.Extract.MapBuildGate
+Aw.Context.Core.Extract.MapBuildGate.Dispose() -> void
+Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Extract.MapBuildTurn!>
+Aw.Context.Core.Extract.MapBuildGate.MapBuildGate() -> void
+Aw.Context.Core.Extract.MapBuildTurn
+Aw.Context.Core.Extract.MapBuildTurn.Dispose() -> void
+Aw.Context.Core.Extract.MapBuildTurn.Waited.get -> bool
 Aw.Context.Core.Extract.GithubRemote
 Aw.Context.Core.Extract.GithubRemote.Blob(string? commit, string! path, Aw.Context.Core.Trust.IEgressScrubber! egress) -> System.Uri?
 Aw.Context.Core.Extract.GithubRemote.Name.get -> string!
@@ -10000,3 +10003,6 @@ Aw.Context.Core.Map.SourceTarget.Record.get -> Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Map.SourceTarget.Repo.get -> string?
 static Aw.Context.Core.Map.SourceTarget.OfFile(string? repo, string! path) -> Aw.Context.Core.Map.SourceTarget!
 static Aw.Context.Core.Map.SourceTarget.OfRecord(Aw.Context.Core.Sources.RecordKey record) -> Aw.Context.Core.Map.SourceTarget!
+Aw.Context.Core.Extract.ILabelCache
+Aw.Context.Core.Extract.ILabelCache.Find(System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, string!>!>!>
+Aw.Context.Core.Extract.ILabelCache.Save(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, string!>>! labels, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
