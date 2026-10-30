@@ -1,12 +1,14 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Symbols;
 using Aw.Context.Testing.Fixtures;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Tests.Jobs;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -35,11 +37,19 @@ public sealed class MapPublishGateHostTests : IDisposable
     // The engine every test runs on lets a test act between the cleanup pass and the promote of a publish (what a writer racing the job does).
     private Func<ContextScope, ValueTask>? _beforePromote;
     private MapPublishRig? _rig;
+    private ScriptedSymbolSource? _symbols;
     private int _runs;
 
     private async Task<MapPublishRig> Rig(int wait = 10)
     {
-        _rig = await MapPublishRig.Start([(Repo, _repo.Path)], wait, _locks, extra: services => RecordingEngine.Install(services, [], beforePromote: scope => _beforePromote?.Invoke(scope) ?? ValueTask.CompletedTask));
+        // why: a draft keeps the code index commit its build read (#1704); the fixture's code index is at the checkout's head, so a build records it, until a test turns it off to build before the index exists
+        _symbols = new ScriptedSymbolSource(new Dictionary<string, string>(StringComparer.Ordinal) { [Repo] = _repo.Path });
+        _rig = await MapPublishRig.Start([(Repo, _repo.Path)], wait, _locks, extra: services =>
+        {
+            RecordingEngine.Install(services, [], beforePromote: scope => _beforePromote?.Invoke(scope) ?? ValueTask.CompletedTask);
+            _ = services.RemoveAll<ICodeSymbolSource>();
+            _ = services.AddSingleton<ICodeSymbolSource>(_symbols);
+        });
         return _rig;
     }
 
@@ -66,30 +76,38 @@ public sealed class MapPublishGateHostTests : IDisposable
     }
 
     [Fact(Timeout = 240_000), Trait("Lane", "integration")]
-    public async Task A_held_version_promotes_when_the_index_lands_between_two_ticks_and_the_new_current_keeps_the_held_heads()
+    public async Task A_draft_built_before_its_index_landed_is_built_again_when_the_index_lands_and_the_rebuilt_draft_is_promoted_with_the_held_heads()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
         await using var rig = await Rig();
+        _symbols!.Indexed = false;   // the index is still coming when the draft is built, so the draft's head records no index commit
         var moved = await Held(rig, _repo.Path);
         await rig.AcceptDeterministic();
+        var heldVersion = (await rig.State()).Hold!.Version;
 
         var waiting = await rig.Tick();
+        _symbols.Indexed = true;
         rig.Outlooks.All = IndexOutlook.Built;
+        var refreshes = await Started(rig, "RefreshContextMap");
+        var rebuilding = await rig.Tick();
+        await rig.AcceptDeterministic();   // the rebuilt draft's proposals are undecided, as the first draft's were
         var ready = await rig.Tick();
 
         Assert.Contains("held", waiting.Value.Summary, StringComparison.Ordinal);
-        Assert.False(ready.Value.Idle);
+        Assert.False(rebuilding.Value.Idle);
+        Assert.Equal(refreshes + 1, await Started(rig, "RefreshContextMap"));   // the held draft was not published: the refresh built it again
+        Assert.True(ready.IsSuccess, ready.IsError ? ready.Error.Message : null);
         var published = (await rig.Of(EventTypes.ContextMapPublished))[^1];
         var promoted = (await rig.Of(EventTypes.ContextMapPromoted))[^1];
         Assert.True(promoted.Sequence < published.Sequence);
-        Assert.Equal(("IndexReady", "check", 0), (Text(published, "reason"), Text(published, "via"), Number(published, "staleRepos")));
+        Assert.Equal(("IndexReady", 0), (Text(published, "reason"), Number(published, "staleRepos")));
+        Assert.True(Number(published, "version") > heldVersion);   // the rebuilt draft, not the held one
         Assert.Equal(moved, MapPublishRig.Payload(published).GetProperty("heads").GetProperty(Repo).GetString());
         var state = await rig.State();
         Assert.Null(state.Hold);
         Assert.Equal(Number(published, "version"), state.Current);
         Assert.Equal(moved, state.CurrentHeads.Single().Commit);
-        var refreshed = MapPublishRig.Payload((await rig.Of(EventTypes.ContextMapRefreshed))[^1]);
-        Assert.True(refreshed.GetProperty("held").GetBoolean());
+        Assert.Contains((await rig.Of(EventTypes.ContextMapRefreshed)).Select(MapPublishRig.Payload), r => r.GetProperty("held").GetBoolean());
     }
 
     [Fact(Timeout = 240_000), Trait("Lane", "integration")]
