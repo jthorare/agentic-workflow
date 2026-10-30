@@ -47,13 +47,13 @@ public sealed class SandboxPlanSeatbeltTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_bubblewrap_plan_names_the_hook_folders_at_their_mounted_paths()
+    public void A_bubblewrap_plan_leaves_the_hook_folders_to_their_defaults()
     {
         var plan = Build(Req.WriteScope, SandboxMechanism.Bubblewrap);
 
-        Assert.Equal(Req.StateDir + "/logs", Env(plan, "AW_LOG_DIR"));
-        Assert.Equal(Req.StateDir + "/probe", Env(plan, "AW_PROBE_DIR"));
-        Assert.Equal(Req.StateDir + "/digests", Env(plan, "AW_DIGEST_DIR"));
+        Assert.Null(Env(plan, "AW_LOG_DIR"));
+        Assert.Null(Env(plan, "AW_PROBE_DIR"));
+        Assert.Null(Env(plan, "AW_DIGEST_DIR"));
     }
 
     [Fact, Trait("Lane", "unit")]

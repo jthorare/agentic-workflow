@@ -70,8 +70,14 @@ internal static class SeatbeltPlan
                 result.Insert(at, new PlanEnvVar("AW_STATE_DIR", c.StateDir, EnvironmentAllowlist.Names["AW_STATE_DIR"]));   // why: the hooks default to $HOME/.agentic-workflow, and HOME is no longer the real one
             }
 
+            // why: the real logs, probe and digests folders are denied here, so the hooks write to the run area's spool. Seatbelt only: on Bubblewrap the hooks' defaults already land on the mounts, and the extra --setenv pairs would push a launch's argv toward tmux's command size cap.
+            var hooks = result.FindIndex(e => string.Equals(e.Name, "AW_STATE_DIR", StringComparison.Ordinal)) + 1;
+            result.InsertRange(hooks, [HookDir("AW_LOG_DIR", "logs"), HookDir("AW_PROBE_DIR", "probe"), HookDir("AW_DIGEST_DIR", "digests")]);
+
             return result;
         }
+
+        private PlanEnvVar HookDir(string name, string folder) => new(name, Rebase($"{c.StateDir}/{folder}"), EnvironmentAllowlist.Names[name]);
 
         private void Add(PlanMount m, int index)
         {

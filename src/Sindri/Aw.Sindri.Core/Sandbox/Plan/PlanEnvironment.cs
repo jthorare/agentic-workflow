@@ -39,7 +39,6 @@ internal static class PlanEnvironment
             Var("DOTNET_CLI_USE_MSBUILD_SERVER", "0"),
         ];
         env.AddRange(StateDir(c));
-        env.AddRange(HookDirs(c));
         env.AddRange(GitSettings.ToEnvironment(Git(c), c.RunArea + "/gitconfig.empty"));
         env.AddRange(Proxy(r.Net.ProxyPort));
         env.AddRange(Sindri(c));
@@ -50,14 +49,6 @@ internal static class PlanEnvironment
     // The hooks default to $HOME/.agentic-workflow; anywhere else they need to be told.
     private static IEnumerable<PlanEnvVar> StateDir(PlanContext c) =>
         string.Equals(c.StateDir, c.Home + "/.agentic-workflow", StringComparison.Ordinal) ? [] : [Var("AW_STATE_DIR", c.StateDir)];
-
-    // The three hook write folders, named at the path each is mounted at: the hooks' own default on Bubblewrap, and (rebased by the Seatbelt rewrite) the run area's spool folder on a Mac, where the real ones are denied.
-    private static IEnumerable<PlanEnvVar> HookDirs(PlanContext c)
-    {
-        yield return Var("AW_LOG_DIR", c.StateDir + "/logs");
-        yield return Var("AW_PROBE_DIR", c.StateDir + "/probe");
-        yield return Var("AW_DIGEST_DIR", c.StateDir + "/digests");
-    }
 
     internal static IReadOnlyList<GitSetting> Git(PlanContext c) => GitSettings.For(
         c.Worktree,
