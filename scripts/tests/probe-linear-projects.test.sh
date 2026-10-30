@@ -31,7 +31,8 @@ run() { # env assignments first, then optional script args after a literal --; s
   while [ $# -gt 0 ] && [ "$1" != -- ]; do envs+=("$1"); shift; done
   [ "${1:-}" = -- ] && shift
   args=("$@")
-  out="$(env "${envs[@]}" bash "$SCRIPT" "${args[@]}" 2>&1)"; rc=$?
+  # ${a[@]+"${a[@]}"}: bash 3.2 (macOS, the CI runner) calls an empty array unbound under set -u
+  out="$(env ${envs[@]+"${envs[@]}"} bash "$SCRIPT" ${args[@]+"${args[@]}"} 2>&1)"; rc=$?
 }
 
 # --- happy path: key from the profile's env: pointer, teams and repo from the profile ---
