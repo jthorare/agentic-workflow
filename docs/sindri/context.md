@@ -1059,7 +1059,34 @@ one the request itself names, else the kind's `models`, else `default.models`, e
 The old `context.conceptScan.models` supplies `names` for the matching harness (`claude` is `claude-code`) when `names` doesn't say. If both are written, `names` wins name by name and `profile validate` prints
 "context.conceptScan.models is replaced by context.models.names; the new key is used". Nothing in the profile is rewritten.
 
-Two errors belong to routing: `SND-CONTEXT-240` (every harness for the call is at its usage limit or failing) and `SND-CONTEXT-241` (no harness for the call is installed). The router that raises them, the fallback and the pause are not part of this change; the settings, the resolver and the error codes are.
+Two errors belong to routing: `SND-CONTEXT-240` (every harness for the call is at its usage limit or failing) and `SND-CONTEXT-241` (no harness for the call is installed).
+
+### Fallback, the pause and Resume
+
+A call walks its route in order and stops at the first harness that answers. A harness that fails moves the call on to the next one. A harness that fails at its **usage limit** also moves the call on, and the rest of that job skips it (`skipped`, reason `limited`), so a 600-cluster labeling pass doesn't start `claude` 30 times to see the same limit. Nothing else is remembered: a new job, a restart, or a call outside a job (the query's rerank, an in-process command) walks the route from its first harness again. A harness whose prompt budget the call's prompt doesn't fit is skipped too (`prompt-too-long`).
+
+A limit is read only where the CLI itself reports an error (Claude Code's `is_error: true` envelope, Codex's `error` or `turn.failed` event, standard error of a non-zero exit), and only when the message starts with the limit wording (`You've hit your … limit`, `Claude usage limit reached`), never from an answer a model wrote. Cursor has no limit pattern yet: its limits read as plain failures, so the call still moves on, but a route where Cursor is the only one limited does not pause.
+
+**When no harness answers and at least one was at its limit**, a call that runs under a job pauses the job instead of failing:
+
+1. The job's progress line says why, one clause per harness: `Paused: claude-code at its usage limit; codex at its usage limit; cursor not installed. Resume when one is back.` The map build's status and a source sync's feed row print the same line.
+2. The job goes to `waiting` on `model-limit` for up to 24 hours and gives its job slot back. It keeps its place in memory (the clusters left, the record in hand); what it already saved stays saved. It never retries by itself.
+3. **Resume** wakes it: the button on the job's row and in its sheet on the Jobs page, or `sindri jobs resume <jobId>` (`<jobId> resumed (sequence N)`, exit 0; a job not waiting on `model-limit` exits 2). It is the owner's action: a session is refused (`SND-AUTH-002`). The job's limited set is cleared and the stalled call starts again from the route's first harness. If every harness is still at its limit, the job pauses again.
+
+A cancel or the 24 hours ending makes the stalled call fail with `SND-CONTEXT-240`, and so does a limit on a call with no job, since there is nothing to pause. A restart of Sindri ends a waiting job as failed. If no harness is installed the call fails at once with `SND-CONTEXT-241`; if no harness answered and none was at its limit it is the old `SND-CONTEXT-042`. Labeling reports 240 and 241 as 042 with their text, so its `degraded: labels` handling is unchanged. What each caller then does:
+
+| Call | When no harness can answer |
+|---|---|
+| Labeling | The build goes on with file-derived names and says `degraded: labels` with the reason |
+| Concept names, the concept scan | The deterministic names stand |
+| Decision extraction, conflict check | The record is held back and stays queued (the feed row reads queued, not failed); the next sync tick asks again |
+| Eval adjudicator | The round returns no ids and carries the code |
+| Map cleanup | The loop stops; proposals with no verdict keep their state |
+| Rerank | The fused order stands and `rerank` is listed as degraded |
+
+**Where calls show.** Every call writes one `context.model.called` event (the kind, each harness tried with its outcome `answered`, `limit`, `failed` or `skipped`, the tokens). A call under a job adds to that job's row on the Jobs page (`Models: codex gpt-6-luna 3 calls · 4.1k tokens (1 fell back)`) and lists in its sheet under "Model calls", one row per attempt, the last 200. `sindri jobs show <jobId>` prints the same rows and, for a paused job, a first line `waiting on model-limit: … Resume with: sindri jobs resume <jobId>`. A call with no job is in the ledger only (`sindri ledger --type context.model.called`).
+
+**Doctor.** `context:models` prints one line per distinct route, which is also the answer to "what will run", for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model`. It warns, each with its fix, for a listed harness that isn't installed, a list of one harness (no fallback), a Codex model missing from `codex debug models`, and no agent CLI on PATH at all; it is `ok` "not configured" until a profile is approved. A paused job is not a doctor problem.
 
 ### The Jev label pick (`labeling.pick: jev`)
 

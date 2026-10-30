@@ -10137,6 +10137,133 @@ static Aw.Context.Core.Map.SourceTarget.OfRecord(Aw.Context.Core.Sources.RecordK
 Aw.Context.Core.Extract.ILabelCache
 Aw.Context.Core.Extract.ILabelCache.Find(System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, string!>!>!>
 Aw.Context.Core.Extract.ILabelCache.Save(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, string!>>! labels, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Engine.PageActionId
+Aw.Context.Core.Engine.PageActionId.Equals(Aw.Context.Core.Engine.PageActionId other) -> bool
+Aw.Context.Core.Engine.PageActionId.Equals(Aw.Context.Core.Engine.PageActionId other, System.Collections.Generic.IEqualityComparer<Aw.Context.Core.Engine.PageActionId>! comparer) -> bool
+Aw.Context.Core.Engine.PageActionId.GetTypeCode() -> System.TypeCode
+Aw.Context.Core.Engine.PageActionId.IsInitialized() -> bool
+Aw.Context.Core.Engine.PageActionId.PageActionId() -> void
+Aw.Context.Core.Engine.PageActionId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Context.Core.Engine.PageActionId.Value.get -> string!
+Aw.Context.Core.Engine.PageActionPin
+Aw.Context.Core.Engine.PageActionPin.ActionKey.get -> string?
+Aw.Context.Core.Engine.PageActionPin.ActionKey.init -> void
+Aw.Context.Core.Engine.PageActionPin.<Clone>$() -> Aw.Context.Core.Engine.PageActionPin!
+Aw.Context.Core.Engine.PageActionPin.Concepts.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.PageActionPin.Concepts.init -> void
+Aw.Context.Core.Engine.PageActionPin.Deconstruct(out Aw.Context.Core.Engine.PageActionId Id, out string! Name, out string? ActionKey, out System.Collections.Generic.IReadOnlyList<string!>! Concepts) -> void
+Aw.Context.Core.Engine.PageActionPin.Equals(Aw.Context.Core.Engine.PageActionPin? other) -> bool
+Aw.Context.Core.Engine.PageActionPin.Id.get -> Aw.Context.Core.Engine.PageActionId
+Aw.Context.Core.Engine.PageActionPin.Id.init -> void
+Aw.Context.Core.Engine.PageActionPin.Name.get -> string!
+Aw.Context.Core.Engine.PageActionPin.Name.init -> void
+Aw.Context.Core.Engine.PageActionPin.PageActionPin(Aw.Context.Core.Engine.PageActionId Id, string! Name, string? ActionKey, System.Collections.Generic.IReadOnlyList<string!>! Concepts) -> void
+Aw.Context.Core.Engine.PageFacts
+Aw.Context.Core.Engine.PageFacts.ActionRepos.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Context.Core.Engine.PageFacts.ActionRepos.init -> void
+Aw.Context.Core.Engine.PageFacts.<Clone>$() -> Aw.Context.Core.Engine.PageFacts!
+Aw.Context.Core.Engine.PageFacts.ConceptIds.init -> void
+Aw.Context.Core.Engine.PageFacts.Equals(Aw.Context.Core.Engine.PageFacts? other) -> bool
+Aw.Context.Core.Engine.PageFacts.SurfaceRepos.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Context.Core.Engine.PageFacts.SurfaceRepos.init -> void
+Aw.Context.Core.Engine.PageId
+Aw.Context.Core.Engine.PageId.Equals(Aw.Context.Core.Engine.PageId other) -> bool
+Aw.Context.Core.Engine.PageId.Equals(Aw.Context.Core.Engine.PageId other, System.Collections.Generic.IEqualityComparer<Aw.Context.Core.Engine.PageId>! comparer) -> bool
+Aw.Context.Core.Engine.PageId.GetTypeCode() -> System.TypeCode
+Aw.Context.Core.Engine.PageId.IsInitialized() -> bool
+Aw.Context.Core.Engine.PageId.PageId() -> void
+Aw.Context.Core.Engine.PageId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Context.Core.Engine.PageId.Value.get -> string!
+Aw.Context.Core.Engine.PagePin
+Aw.Context.Core.Engine.PagePin.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.PageActionPin!>!
+Aw.Context.Core.Engine.PagePin.Actions.init -> void
+Aw.Context.Core.Engine.PagePin.<Clone>$() -> Aw.Context.Core.Engine.PagePin!
+Aw.Context.Core.Engine.PagePin.Deconstruct(out Aw.Context.Core.Engine.PageId Id, out string! Name, out Aw.Context.Core.Engine.ContextRepoName? Repo, out string? SurfaceKey, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.PageActionPin!>! Actions) -> void
+Aw.Context.Core.Engine.PagePin.Equals(Aw.Context.Core.Engine.PagePin? other) -> bool
+Aw.Context.Core.Engine.PagePin.Id.get -> Aw.Context.Core.Engine.PageId
+Aw.Context.Core.Engine.PagePin.Id.init -> void
+Aw.Context.Core.Engine.PagePin.Name.get -> string!
+Aw.Context.Core.Engine.PagePin.Name.init -> void
+Aw.Context.Core.Engine.PagePin.PagePin(Aw.Context.Core.Engine.PageId Id, string! Name, Aw.Context.Core.Engine.ContextRepoName? Repo, string? SurfaceKey, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.PageActionPin!>! Actions) -> void
+Aw.Context.Core.Engine.PagePin.Repo.get -> Aw.Context.Core.Engine.ContextRepoName?
+Aw.Context.Core.Engine.PagePin.Repo.init -> void
+Aw.Context.Core.Engine.PagePin.SurfaceKey.get -> string?
+Aw.Context.Core.Engine.PagePin.SurfaceKey.init -> void
+Aw.Context.Core.Engine.PageRules
+override Aw.Context.Core.Engine.PageActionId.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.PageActionId.GetHashCode() -> int
+override Aw.Context.Core.Engine.PageActionId.ToString() -> string!
+override Aw.Context.Core.Engine.PageActionPin.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.PageActionPin.GetHashCode() -> int
+override Aw.Context.Core.Engine.PageActionPin.ToString() -> string!
+override Aw.Context.Core.Engine.PageFacts.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.PageFacts.GetHashCode() -> int
+override Aw.Context.Core.Engine.PageFacts.ToString() -> string!
+override Aw.Context.Core.Engine.PageId.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.PageId.GetHashCode() -> int
+override Aw.Context.Core.Engine.PageId.ToString() -> string!
+override Aw.Context.Core.Engine.PagePin.Equals(object? obj) -> bool
+override Aw.Context.Core.Engine.PagePin.GetHashCode() -> int
+override Aw.Context.Core.Engine.PagePin.ToString() -> string!
+static Aw.Context.Core.Engine.PageActionId.From(string! value) -> Aw.Context.Core.Engine.PageActionId
+static Aw.Context.Core.Engine.PageActionId.operator !=(Aw.Context.Core.Engine.PageActionId left, Aw.Context.Core.Engine.PageActionId right) -> bool
+static Aw.Context.Core.Engine.PageActionId.operator ==(Aw.Context.Core.Engine.PageActionId left, Aw.Context.Core.Engine.PageActionId right) -> bool
+static Aw.Context.Core.Engine.PageActionId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Context.Core.Engine.PageActionId
+static Aw.Context.Core.Engine.PageActionId.TryFrom(string? value, out Aw.Context.Core.Engine.PageActionId vo) -> bool
+static Aw.Context.Core.Engine.PageActionId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Context.Core.Engine.PageActionId result) -> bool
+static Aw.Context.Core.Engine.PageActionPin.operator !=(Aw.Context.Core.Engine.PageActionPin? left, Aw.Context.Core.Engine.PageActionPin? right) -> bool
+static Aw.Context.Core.Engine.PageActionPin.operator ==(Aw.Context.Core.Engine.PageActionPin? left, Aw.Context.Core.Engine.PageActionPin? right) -> bool
+static Aw.Context.Core.Engine.PageFacts.operator !=(Aw.Context.Core.Engine.PageFacts? left, Aw.Context.Core.Engine.PageFacts? right) -> bool
+static Aw.Context.Core.Engine.PageFacts.operator ==(Aw.Context.Core.Engine.PageFacts? left, Aw.Context.Core.Engine.PageFacts? right) -> bool
+static Aw.Context.Core.Engine.PageId.From(string! value) -> Aw.Context.Core.Engine.PageId
+static Aw.Context.Core.Engine.PageId.operator !=(Aw.Context.Core.Engine.PageId left, Aw.Context.Core.Engine.PageId right) -> bool
+static Aw.Context.Core.Engine.PageId.operator ==(Aw.Context.Core.Engine.PageId left, Aw.Context.Core.Engine.PageId right) -> bool
+static Aw.Context.Core.Engine.PageId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Context.Core.Engine.PageId
+static Aw.Context.Core.Engine.PageId.TryFrom(string? value, out Aw.Context.Core.Engine.PageId vo) -> bool
+static Aw.Context.Core.Engine.PageId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Context.Core.Engine.PageId result) -> bool
+static Aw.Context.Core.Engine.PagePin.operator !=(Aw.Context.Core.Engine.PagePin? left, Aw.Context.Core.Engine.PagePin? right) -> bool
+static Aw.Context.Core.Engine.PagePin.operator ==(Aw.Context.Core.Engine.PagePin? left, Aw.Context.Core.Engine.PagePin? right) -> bool
+static Aw.Context.Core.Engine.PageRules.Check(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.PagePin!>! pages, Aw.Context.Core.Engine.PageFacts! facts) -> System.Collections.Generic.IReadOnlyList<Aw.Kernel.Error!>!
+static readonly Aw.Context.Core.ContextErrors.PageActionSpecInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PageConceptUnknown -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PageIdDuplicate -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PageKeyUnknown -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PageNameInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PageNotFound -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PageOverCap -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PageQueryUnknown -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PageRepoAmbiguous -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Engine.PageFacts.ConceptIds.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Engine.ConceptId>!
+Aw.Context.Core.Engine.PageFacts.Deconstruct(out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Engine.ConceptId>! ConceptIds, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! SurfaceRepos, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! ActionRepos) -> void
+Aw.Context.Core.Engine.PageFacts.PageFacts(System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Engine.ConceptId>! ConceptIds, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! SurfaceRepos, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! ActionRepos) -> void
+const Aw.Context.Core.Engine.PageRules.MaxActions = 40 -> int
+const Aw.Context.Core.Engine.PageRules.MaxConcepts = 20 -> int
+const Aw.Context.Core.Engine.PageRules.MaxNameLength = 80 -> int
+const Aw.Context.Core.Engine.PageRules.MaxPages = 200 -> int
+Aw.Context.Core.Engine.ContextRepo.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.PagePin!>!
+Aw.Context.Core.Engine.ContextRepo.Pages.init -> void
+Aw.Context.Core.Engine.PageSlugs
+Aw.Context.Core.Engine.ProfileRepoEntry.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.PagePin!>?
+Aw.Context.Core.Engine.ProfileRepoEntry.Pages.init -> void
+static Aw.Context.Core.Engine.PageSlugs.Of(string? name) -> string!
+static Aw.Context.Core.Engine.PageSlugs.Unique(string! slug, System.Collections.Generic.ISet<string!>! taken) -> string!
+Aw.Context.Core.Concepts.PinScope
+Aw.Context.Core.Concepts.PinScope.HoldsNode(Aw.Context.Core.Graph.NodeKey key) -> bool
+Aw.Context.Core.Concepts.PinScope.HoldsPath(Aw.Context.Core.Engine.ContextRepoName repo, string! repoRelativePath) -> bool
+Aw.Context.Core.Concepts.PinScope.Pin.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Concepts.PinSet
+Aw.Context.Core.Concepts.PinSet.IsEmpty.get -> bool
+Aw.Context.Core.Concepts.PinSet.PinOf(Aw.Context.Core.Graph.NodeKey key) -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Concepts.PinSet.Visible.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>!
+static Aw.Context.Core.Concepts.PinScope.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! visible, string! pin, Aw.Context.Core.Graph.GraphSnapshot! graph, string! mapTag) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.PinScope!>!
+static Aw.Context.Core.Concepts.PinScope.PinOf(Aw.Context.Core.Graph.NodeKey anchor, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Engine.ConceptId?
+static Aw.Context.Core.Concepts.PinSet.Empty.get -> Aw.Context.Core.Concepts.PinSet!
+static Aw.Context.Core.Concepts.PinSet.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! visible, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Concepts.PinSet!
+static readonly Aw.Context.Core.ContextErrors.NoPins -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinNeedsMap -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinNewerThanMap -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinUnknown -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Concepts.PinSet.Scope(string! pin, string! mapTag) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.PinScope!>!
 Aw.Context.Core.Graph.EdgeType.Expresses = 15 -> Aw.Context.Core.Graph.EdgeType
 Aw.Context.Core.Concepts.PageExpresses
 static Aw.Context.Core.Concepts.PageExpresses.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
