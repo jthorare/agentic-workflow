@@ -40,4 +40,8 @@ public sealed record ContextResult(
     /// <summary>How many demoted files the answer carries, per role ('index.demote'); left out when none.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public FilteredCounts? Filtered { get; init; }
+
+    /// <summary>One-line facts about how the answer was read (scoped to a pin, an anchor outside it, a hint); left out when none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Notes { get; init; }
 }

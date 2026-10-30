@@ -10434,3 +10434,7 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Engine.ContextQuery.Concept.get -> string?
+Aw.Context.Core.Engine.ContextQuery.Concept.init -> void
+Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Results.ContextResult.Notes.init -> void
