@@ -243,6 +243,15 @@ MSBUILDDISABLENODEREUSE
 DOTNET_CLI_USE_MSBUILD_SERVER
 0
 --setenv
+AW_LOG_DIR
+/home/owner/.agentic-workflow/logs
+--setenv
+AW_PROBE_DIR
+/home/owner/.agentic-workflow/probe
+--setenv
+AW_DIGEST_DIR
+/home/owner/.agentic-workflow/digests
+--setenv
 GIT_CONFIG_COUNT
 9
 --setenv
