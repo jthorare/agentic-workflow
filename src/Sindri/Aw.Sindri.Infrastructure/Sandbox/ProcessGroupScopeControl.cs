@@ -32,6 +32,11 @@ internal sealed class ProcessGroupScopeControl(string directory) : IScopeControl
     /// <inheritdoc />
     public Task<bool> Record(string unit, CancellationToken cancellationToken)
     {
+        if (ProcessGroupFiles.ReadPgid(directory, unit) is null)
+        {
+            return Task.FromResult(false);   // why: the watchdog records only for its own session, while the group file is still there (Release removes it after the verdict)
+        }
+
         try
         {
             return Task.FromResult(ProcessGroupFiles.RecordMemoryKill(directory, unit));

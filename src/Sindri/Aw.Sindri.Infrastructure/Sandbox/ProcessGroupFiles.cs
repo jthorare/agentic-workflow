@@ -100,7 +100,7 @@ internal static class ProcessGroupFiles
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            // best effort: the next session of the unit overwrites it
+            // best effort: a stale file is ignored once its group is gone
         }
     }
 

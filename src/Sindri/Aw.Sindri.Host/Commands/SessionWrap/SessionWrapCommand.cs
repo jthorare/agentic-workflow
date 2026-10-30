@@ -83,7 +83,7 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            // best effort: the next session of the unit overwrites the file
+            // best effort: a stale file is ignored once its group is gone
         }
     }
 
