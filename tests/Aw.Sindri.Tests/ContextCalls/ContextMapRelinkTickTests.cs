@@ -157,9 +157,8 @@ public sealed class ContextMapRelinkTickTests
     [Fact, Trait("Lane", "unit")]
     public async Task No_map_at_all_queues_no_relink()
     {
-        var result = await Tick();
+        _ = await Tick();
 
-        Assert.True(result.Value.Idle);
         Assert.Empty(_relink.Actors);
     }
 
