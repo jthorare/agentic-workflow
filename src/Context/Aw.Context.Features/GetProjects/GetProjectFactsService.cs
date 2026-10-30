@@ -13,7 +13,7 @@ namespace Aw.Context.Features.GetProjects;
 /// <summary>
 /// The stored projects with their open-issue counts, the owner and where the feeds stand (projects page spec §6.1). It reads the record store only: the audience rule is the one the query's lexical leg applies
 /// (the profile's repos and Linear teams; a session sees only its own repo's), counts are SQL in the store, and nothing calls Linear.
-/// 'FirstReadDone' is the projects feed having moved past its Recent phase; 'Counting' is the Linear issue feed not having (its one-time re-read for project links, spec §4.3), the same for every project.
+/// 'FirstReadDone' is the stored projects cursor having moved past its Recent phase, whether or not a feed is configured; 'Counting' is the Linear issue feed not having (its one-time re-read for project links, spec §4.3), the same for every project.
 /// </summary>
 internal sealed class GetProjectFactsService(IRecordStore store, ISourceIdentityStore identities, IIndexSync sync) : IService<GetProjectFactsRequest, ProjectFactsAnswer>
 {
@@ -32,12 +32,14 @@ internal sealed class GetProjectFactsService(IRecordStore store, ISourceIdentity
         var rows = audience.IsError ? audience.Error : await store.ProjectFacts(LinearSourceIds.Projects, new RecordAudience(audience.Value.Allowed, audience.Value.Records), cancellationToken).ConfigureAwait(false);
         var identity = rows.IsError ? rows.Error : await identities.Read(LinearSourceIds.Identity, cancellationToken).ConfigureAwait(false);
         var progress = identity.IsError ? identity.Error : await sync.Progress(scope, cancellationToken).ConfigureAwait(false);
-        if (progress.IsError)
+        var position = progress.IsError ? progress.Error : await store.Position(LinearSourceIds.Projects, cancellationToken).ConfigureAwait(false);
+        if (position.IsError)
         {
-            return progress.Error;
+            return position.Error;
         }
 
-        var firstReadDone = progress.Value.Any(p => p.Source == LinearSourceIds.Projects && p.Usable);
+        // why: the stored cursor outlives the feed list, which has no projects feed while the profile has Linear teams but no token (#1734)
+        var firstReadDone = SourceProgress.From(LinearSourceIds.Projects, position.Value.Phase, lastSync: null, lastCode: null).Usable;
         var counting = progress.Value.Any(p => p.Source == LinearSourceIds.Issues && !p.Usable);
         var owner = identity.Value is { } known ? new UserRef(Id(known.UserRef), known.Name) : (UserRef?)null;
         var catalog = rows.Value.Select(row => Fact(row, owner, counting)).ToList();
