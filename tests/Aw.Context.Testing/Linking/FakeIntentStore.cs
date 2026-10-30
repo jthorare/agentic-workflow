@@ -197,6 +197,9 @@ public sealed class FakeIntentStore : IIntentStore
         });
     }
 
+    public ValueTask<Result<Unit>> ReplaceRuleLinks(RecordKey record, LinkRule rule, IReadOnlyList<IntentLink> links, CancellationToken cancellationToken) =>
+        throw new NotSupportedException("Q9: not built yet");
+
     public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken)
     {
         _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves

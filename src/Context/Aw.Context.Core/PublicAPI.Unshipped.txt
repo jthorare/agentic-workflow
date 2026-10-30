@@ -10307,3 +10307,20 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Linking.IIntentStore.ReplaceRuleLinks(Aw.Context.Core.Sources.RecordKey record, Aw.Context.Core.Linking.LinkRule rule, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentLink!>! links, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Linking.LinkRule.Alias = 6 -> Aw.Context.Core.Linking.LinkRule
+Aw.Context.Core.Linking.PinAliases
+Aw.Context.Core.Linking.PinAliases.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Linking.PinAliases.Aliases.init -> void
+Aw.Context.Core.Linking.PinAliases.<Clone>$() -> Aw.Context.Core.Linking.PinAliases!
+Aw.Context.Core.Linking.PinAliases.Deconstruct(out Aw.Context.Core.Engine.ConceptId Id, out System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+Aw.Context.Core.Linking.PinAliases.Equals(Aw.Context.Core.Linking.PinAliases? other) -> bool
+Aw.Context.Core.Linking.PinAliases.Id.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Linking.PinAliases.Id.init -> void
+Aw.Context.Core.Linking.PinAliases.PinAliases(Aw.Context.Core.Engine.ConceptId Id, System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+override Aw.Context.Core.Linking.PinAliases.Equals(object? obj) -> bool
+override Aw.Context.Core.Linking.PinAliases.GetHashCode() -> int
+override Aw.Context.Core.Linking.PinAliases.ToString() -> string!
+static Aw.Context.Core.Linking.PinAliases.operator !=(Aw.Context.Core.Linking.PinAliases? left, Aw.Context.Core.Linking.PinAliases? right) -> bool
+static Aw.Context.Core.Linking.PinAliases.operator ==(Aw.Context.Core.Linking.PinAliases? left, Aw.Context.Core.Linking.PinAliases? right) -> bool
+static Aw.Context.Core.Linking.RulesLinker.Aliases(Aw.Context.Core.Sources.RecordKey record, string! text, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinAliases!>! pins) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentLink!>!
