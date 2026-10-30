@@ -38,6 +38,13 @@ internal static partial class Libc
     internal static int Signal(int pid, int signal) =>
         Kill(pid, signal) == 0 ? 0 : Marshal.GetLastPInvokeError();
 
+    /// <summary>The process group id of this process.</summary>
+    /// <returns>The group id.</returns>
+    internal static int OwnGroup() => GetPgrp();
+
+    [LibraryImport(Library, EntryPoint = "getpgrp")]
+    private static partial int GetPgrp();
+
     [LibraryImport(Library, EntryPoint = "kill", SetLastError = true)]
     private static partial int Kill(int pid, int signal);
 

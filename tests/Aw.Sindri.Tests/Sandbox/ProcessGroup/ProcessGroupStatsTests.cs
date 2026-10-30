@@ -6,12 +6,8 @@ namespace Aw.Sindri.Tests.Sandbox.ProcessGroup;
 
 /// <summary>A process group's accounting from one 'ps' listing (SB-9b), with the output of both macOS and procps.</summary>
 [Lane(TestLane.Unit)]
-public sealed class ProcessGroupStatsTests : IDisposable
+public sealed class ProcessGroupStatsTests
 {
-    private readonly string _dir = Directory.CreateTempSubdirectory("aw-pgstats-").FullName;
-
-    public void Dispose() => Directory.Delete(_dir, recursive: true);
-
     [Theory]
     [InlineData("00:00:01", 1_000_000L)]
     [InlineData("0:00.12", 120_000L)]
@@ -58,7 +54,7 @@ public sealed class ProcessGroupStatsTests : IDisposable
     [Fact]
     public void A_handle_that_is_not_a_group_or_a_ps_that_fails_reads_nothing()
     {
-        var failing = new ProcessGroupStats(new FakeProcesses().When((_, _) => true, FakeProcesses.Failed("boom")), _dir);
+        var failing = new ProcessGroupStats(new FakeProcesses().When((_, _) => true, FakeProcesses.Failed("boom")));
 
         Assert.Null(Stats("  100   500   2048  0:01.00\n", out _).Read("/user.slice/x.scope"));
         Assert.Null(failing.Read("pgid:500"));
@@ -68,7 +64,7 @@ public sealed class ProcessGroupStatsTests : IDisposable
     public void The_peak_is_the_highest_figure_seen_for_the_group()
     {
         var ps = new ScriptedPs(["  100   500   4096  0:01.00\n", "  100   500   1024  0:02.00\n"]);
-        var stats = new ProcessGroupStats(ps, _dir);
+        var stats = new ProcessGroupStats(ps);
 
         var first = stats.Read("pgid:500");
         var second = stats.Read("pgid:500");
@@ -78,20 +74,10 @@ public sealed class ProcessGroupStatsTests : IDisposable
         Assert.Equal(4096 * 1024L, second?.MemoryPeak);
     }
 
-    [Fact]
-    public void A_memory_kill_record_shows_as_an_oom_kill()
-    {
-        ProcessGroupFiles.RecordMemoryKill(_dir, 500);
-
-        var sample = Stats("  100   500   2048  0:01.00\n", out _).Read("pgid:500");
-
-        Assert.Equal(1, sample?.OomKills);
-    }
-
-    private ProcessGroupStats Stats(string psOutput, out FakeProcesses processes)
+    private static ProcessGroupStats Stats(string psOutput, out FakeProcesses processes)
     {
         processes = new FakeProcesses().When((_, _) => true, FakeProcesses.Ok(psOutput));
-        return new ProcessGroupStats(processes, _dir);
+        return new ProcessGroupStats(processes);
     }
 
     private sealed class ScriptedPs(IEnumerable<string> outputs) : ISandboxProcesses
