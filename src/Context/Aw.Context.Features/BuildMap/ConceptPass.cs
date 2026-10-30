@@ -56,7 +56,9 @@ internal sealed class ConceptPass(IConceptNamer namer, ISymbolVectors vectors, I
         // with no endpoint in the map, are report lines and never degraded states (Open question 13).
         var declared = PinEdges.Declared(withConcepts, pins);
         var rolled = PinRollup.Apply(withConcepts, pins, declared);
-        return new ConceptOutcome(withConcepts with { Edges = [.. rolled.Edges.Concat(withConcepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))] }, notes, ReportNotes(rolled.Notes, covered, declared.Skipped));
+        var final = withConcepts with { Edges = [.. rolled.Edges.Concat(withConcepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))] };
+        // The suggested 'expresses' edges come last, over the final concept membership (pages spec §3.2).
+        return new ConceptOutcome(PageExpresses.Apply(final), notes, ReportNotes(rolled.Notes, covered, declared.Skipped));
     }
 
     // The build report's lines: the roll-up's, then how many derived concepts folded away and how many declared pin edges were skipped, each only when there were any.
