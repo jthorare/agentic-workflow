@@ -210,6 +210,18 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-191: a map head names a commit that is not 7 to 40 lowercase hex characters, or a repo twice (a build report, a hold or an import).</summary>
     public static readonly ErrorDefinition MapHeadInvalid = new("SND-CONTEXT-191", ErrorKind.Invalid, "A map head is invalid");
 
+    /// <summary>SND-CONTEXT-102: <c xml:lang="en">concept=</c> names no pin the caller can see. The message lists at most 5 visible pins to try.</summary>
+    public static readonly ErrorDefinition PinUnknown = new("SND-CONTEXT-102", ErrorKind.NotFound, "No such pin");
+
+    /// <summary>SND-CONTEXT-103: <c xml:lang="en">concept=</c> was given and the caller sees no pin at all.</summary>
+    public static readonly ErrorDefinition NoPins = new("SND-CONTEXT-103", ErrorKind.NotFound, "No pins are set up");
+
+    /// <summary>SND-CONTEXT-104: the approved profile has the pin but the map version has no concept node for it yet.</summary>
+    public static readonly ErrorDefinition PinNewerThanMap = new("SND-CONTEXT-104", ErrorKind.NotFound, "The pin is newer than the map");
+
+    /// <summary>SND-CONTEXT-105: <c xml:lang="en">concept=</c> needs a built map and there is none the caller may read.</summary>
+    public static readonly ErrorDefinition PinNeedsMap = new("SND-CONTEXT-105", ErrorKind.NotFound, "concept= needs a built map");
+
     /// <summary>SND-CONTEXT-200: the whole-map read was asked to open an area the map doesn't have (Part D; 201 to 209 are reserved for this stage).</summary>
     public static readonly ErrorDefinition AreaUnknown = new("SND-CONTEXT-200", ErrorKind.NotFound, "No such area in this map");
 
@@ -235,7 +247,7 @@ public static class ContextErrors
          NoMap, MapFileInvalid, MapNodeUndefined, ExportOutsideHome, MapFileChanged, ProbeFileInvalid, NoProbeFile, AmbiguousAnchor, ProbesRegressed,
          HeavyLockBusy, LabelingUnavailable, ReviewFileNoMatch, NoDraftMap, RepoOutsideScope, PromoteRefused, ReviewTargetStale, ExtractionUnreadable,
          LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
-         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph];
+         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph, PinUnknown, NoPins, PinNewerThanMap, PinNeedsMap];
 
     /// <summary>
     /// The codes the CLI answers with exit 1 (attention, spec §8.6): an unknown or ambiguous anchor, a refused input or
@@ -249,5 +261,6 @@ public static class ContextErrors
         LabelingUnavailable.Code, ReviewFileNoMatch.Code, NoDraftMap.Code, RepoOutsideScope.Code, PromoteRefused.Code, ReviewTargetStale.Code, SyncRunning.Code, SyncSourceUnknown.Code,
         NoEligibleSample.Code, NoBriefSource.Code, UnknownArm.Code,
         CommitUnknown.Code, NoMergeBase.Code, MapVersionNotRetained.Code, CodeGlobInvalid.Code, CodeGlobsTooMany.Code, DraftChanged.Code, MapHeadInvalid.Code, AreaUnknown.Code,
+        PinUnknown.Code, NoPins.Code, PinNewerThanMap.Code, PinNeedsMap.Code,
     };
 }
