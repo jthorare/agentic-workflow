@@ -48,6 +48,7 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("index.utilityGlobs", _approved with { Index = new IndexSettings(UtilityGlobs: ["**/util/**"]) }),
             ("index.maxTotalMB", _approved with { Index = new IndexSettings(MaxTotalMB: 9) }),
             ("index.concepts dependsOn", _approved with { Index = new IndexSettings(Concepts: [new ConceptSettings(Name: "Billing", DependsOn: ["orders"])]) }),
+            ("index.concepts aliases", _approved with { Index = new IndexSettings(Concepts: [new ConceptSettings(Name: "Billing", Aliases: ["payments"])]) }),
             ("index.concepts owns", _approved with { Index = new IndexSettings(Concepts: [new ConceptSettings(Name: "Billing", Owns: ["invoices"])]) }),
             ("setup.mcp", _approved with { Setup = new SetupSettings(SetupSettings.Off) }),
             ("workflow.scoping.historyWindow", _approved with { Workflow = new WorkflowSettings(Scoping: new ScopingSettings(new HistoryWindowSettings(Since: "2026-01-01"))) }),

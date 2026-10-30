@@ -7497,6 +7497,9 @@ Aw.Context.Core.Engine.ConceptPin
 Aw.Context.Core.Engine.ConceptPin.<Clone>$() -> Aw.Context.Core.Engine.ConceptPin!
 Aw.Context.Core.Engine.ConceptPin.ConceptPin(Aw.Context.Core.Engine.ConceptId? Id, string! Name, string? Summary, System.Collections.Generic.IReadOnlyList<string!>! Features, System.Collections.Generic.IReadOnlyList<string!>! Paths, System.Collections.Generic.IReadOnlyList<string!>! DependsOn, System.Collections.Generic.IReadOnlyList<string!>! Owns) -> void
 Aw.Context.Core.Engine.ConceptPin.Deconstruct(out Aw.Context.Core.Engine.ConceptId? Id, out string! Name, out string? Summary, out System.Collections.Generic.IReadOnlyList<string!>! Features, out System.Collections.Generic.IReadOnlyList<string!>! Paths, out System.Collections.Generic.IReadOnlyList<string!>! DependsOn, out System.Collections.Generic.IReadOnlyList<string!>! Owns) -> void
+Aw.Context.Core.Engine.ConceptPin.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.ConceptPin.Aliases.init -> void
+Aw.Context.Core.Engine.ConceptPin.WithAliases(System.Collections.Generic.IEnumerable<string!>? aliases) -> Aw.Context.Core.Engine.ConceptPin!
 Aw.Context.Core.Engine.ConceptPin.Declaring(System.Collections.Generic.IEnumerable<string!>? dependsOn, System.Collections.Generic.IEnumerable<string!>? owns) -> Aw.Context.Core.Engine.ConceptPin!
 Aw.Context.Core.Engine.ConceptPin.Equals(Aw.Context.Core.Engine.ConceptPin? other) -> bool
 Aw.Context.Core.Engine.ConceptPin.DependsOn.get -> System.Collections.Generic.IReadOnlyList<string!>!

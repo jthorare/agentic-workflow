@@ -11,6 +11,7 @@ namespace Aw.Sindri.Core.Profile;
 /// <param name="Paths">Repo-relative file globs; the features implemented there belong to the concept.</param>
 /// <param name="DependsOn">Ids of the pins this one depends on; each becomes a hand-declared 'depends-on' edge.</param>
 /// <param name="Owns">Names of the data stores this pin owns, as the map names them; each becomes a hand-declared 'writes' edge.</param>
+/// <param name="Aliases">Other words the owner uses for the concept ('payments' for billing); a question using one anchors on the concept. Not part of the map hash.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record ConceptSettings(
     ConceptPinId? Id = null,
@@ -19,4 +20,5 @@ public sealed record ConceptSettings(
     IReadOnlyList<string>? Features = null,
     IReadOnlyList<string>? Paths = null,
     IReadOnlyList<string>? DependsOn = null,
-    IReadOnlyList<string>? Owns = null);
+    IReadOnlyList<string>? Owns = null,
+    IReadOnlyList<string>? Aliases = null);

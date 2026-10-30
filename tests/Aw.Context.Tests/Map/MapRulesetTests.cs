@@ -49,6 +49,15 @@ public sealed class MapRulesetTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_summary_or_alias_edit_leaves_the_hash_unchanged()
+    {
+        var plain = Repo("a") with { Concepts = [ConceptPin.Of(ConceptId.From("billing"), "Billing", summary: null, features: null, paths: ["src/**"])] };
+        var described = Repo("a") with { Concepts = [ConceptPin.Of(ConceptId.From("billing"), "Billing", summary: "How we take money", features: null, paths: ["src/**"]).WithAliases(["payments"])] };
+
+        Assert.Equal(MapRuleset.Of([plain]), MapRuleset.Of([described]), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Demote_globs_change_the_hash_and_the_same_ones_hash_the_same()
     {
         var plain = Repo("a", "x/**");
