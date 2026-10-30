@@ -49,6 +49,7 @@ public sealed class DiffCoversHashedKeysCheckTests
             ("index.maxTotalMB", _approved with { Index = new IndexSettings(MaxTotalMB: 9) }),
             ("index.concepts dependsOn", _approved with { Index = new IndexSettings(Concepts: [new ConceptSettings(Name: "Billing", DependsOn: ["orders"])]) }),
             ("index.concepts owns", _approved with { Index = new IndexSettings(Concepts: [new ConceptSettings(Name: "Billing", Owns: ["invoices"])]) }),
+            ("index.pages action concepts", _approved with { Index = new IndexSettings(Pages: [new PageSettings(Name: "Schedule week", Actions: [new PageActionSettings(Name: "Submit", Concepts: ["scheduling"])])]) }),
             ("setup.mcp", _approved with { Setup = new SetupSettings(SetupSettings.Off) }),
             ("workflow.scoping.historyWindow", _approved with { Workflow = new WorkflowSettings(Scoping: new ScopingSettings(new HistoryWindowSettings(Since: "2026-01-01"))) }),
             ("context", _approved with { Context = context.RootElement.Clone() }),

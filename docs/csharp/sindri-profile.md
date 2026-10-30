@@ -188,6 +188,7 @@ What the router stub does with an item it routes (workflow engine spec §12). Re
 | `maxFileKB` | whole number | no | `4096` | The code index skips larger files as `too-large`. 1 to 102400 |
 | `maxTotalMB` | whole number | no | `4096` | Larger tracked code input (code files only; docs, assets and lockfiles do not count) stops a code index build (`SND-CODEIDX-003`). 1 to 102400 |
 | `concepts` | list of mappings | no | none | Concepts you pin for the context map, below. A repo's own are added to the profile's |
+| `pages` | list of mappings | no | none | Pages you name for the context map, with their actions and the concepts each relates to, below. A repo's own are added to the profile's |
 | `embeddings` | mapping | no | none | The code index's embeddings layer, below |
 | `graph` | mapping | no | none | The code index's graph layer, below |
 
@@ -243,6 +244,35 @@ index:
 Entries also shape the home features: a directory whose files fall in two entries (or one entry and none) is split into one feature per entry, keyed `feature:<repo>.<dir>~<id>`, and each is `belongs-to` its concept.
 
 A bad entry is refused with its key path (`index.concepts[0].features[1]: must be a feature: key or glob, like 'feature:shifts' or 'feature:shifts.*'`).
+
+#### `index.pages`
+
+Each entry names one page, with the actions on it and the concepts each action relates to. A change is part of the profile hash, so it needs approval (as any profile change: no separate rule), and `sindri profile approve` lists a page by id with every field in its row, so an edit to one concept on one action shows. A repo's own `index.pages` belong to that repo (their `repo` must be absent or that repo; anything else is refused with its key path); a page at the top says `repo:` to name one repo, else it applies to every repo.
+
+| Key | Type | Required | Default | Meaning |
+|---|---|---|---|---|
+| `id` | text | no | the `name`, lower-cased, words joined by `-` (`Schedule week` -> `schedule-week`) | Unique among the pages; a clash takes `-2`, `-3` |
+| `name` | text | yes | none | What the map shows: 1 to 80 characters after control and format characters are stripped, no leading or trailing space |
+| `repo` | text | no | the repo of the surface, else the profile's only repo | The repo the page is in |
+| `surface` | text | no | none | The map surface it names (`surface:route/GET:/schedule/week`); left out, it is an owner page |
+| `actions` | list of mappings | no | none | The page's actions, at most 40 |
+
+An action takes `id` (unique within the page, derived from `name`), `name` (required, same rules), `action` (the map action it names, `action:SchedulePage.submit-schedule`) and `concepts` (ids of the pins in `index.concepts`, or `concept:<id>` keys of derived concepts; at most 20).
+
+```yaml
+index:
+  pages:
+    - id: schedule-week
+      name: Schedule week
+      surface: "surface:route/GET:/schedule/week"
+      actions:
+        - id: submit-schedule
+          name: Submit a schedule
+          action: "action:SchedulePage.submit-schedule"
+          concepts: [scheduling, approval-workflow]
+```
+
+Two times the rules apply. At **write** (the CLI and the app, `PageRules.Check`) a concept or key the current map doesn't have is refused (`SND-CONTEXT-250`, `-251`), a surface in several repos needs `repo` (`-252`), the caps are enforced (`-253`: 200 pages, 40 actions, 20 concepts), ids repeat nowhere (`-254`) and names follow the rule above (`-255`). At **read** of an approved profile nothing is refused: the engine reads the first 200 pages, 40 actions and 20 concepts and ignores the rest, a key the map no longer has falls back to an owner node and a concept it no longer has drops that edge, so a rebuild after a route rename never makes the approved profile fail. Page and action names are your input, shown as untrusted text.
 
 #### `index.embeddings`
 

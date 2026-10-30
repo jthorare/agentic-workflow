@@ -10233,3 +10233,14 @@ static readonly Aw.Context.Core.ContextErrors.PageRepoAmbiguous -> Aw.Kernel.Err
 Aw.Context.Core.Engine.PageFacts.ConceptIds.get -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Engine.ConceptId>!
 Aw.Context.Core.Engine.PageFacts.Deconstruct(out System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Engine.ConceptId>! ConceptIds, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! SurfaceRepos, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! ActionRepos) -> void
 Aw.Context.Core.Engine.PageFacts.PageFacts(System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Engine.ConceptId>! ConceptIds, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! SurfaceRepos, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! ActionRepos) -> void
+const Aw.Context.Core.Engine.PageRules.MaxActions = 40 -> int
+const Aw.Context.Core.Engine.PageRules.MaxConcepts = 20 -> int
+const Aw.Context.Core.Engine.PageRules.MaxNameLength = 80 -> int
+const Aw.Context.Core.Engine.PageRules.MaxPages = 200 -> int
+Aw.Context.Core.Engine.ContextRepo.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.PagePin!>!
+Aw.Context.Core.Engine.ContextRepo.Pages.init -> void
+Aw.Context.Core.Engine.PageSlugs
+Aw.Context.Core.Engine.ProfileRepoEntry.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.PagePin!>?
+Aw.Context.Core.Engine.ProfileRepoEntry.Pages.init -> void
+static Aw.Context.Core.Engine.PageSlugs.Of(string? name) -> string!
+static Aw.Context.Core.Engine.PageSlugs.Unique(string! slug, System.Collections.Generic.ISet<string!>! taken) -> string!
