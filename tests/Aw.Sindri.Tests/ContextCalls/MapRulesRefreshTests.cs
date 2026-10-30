@@ -7,6 +7,7 @@ using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
@@ -44,6 +45,61 @@ public sealed class MapRulesRefreshTests
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Run(new ScheduledRun(_grant, _now), Ct);
+    }
+
+    private static readonly ContextCaller _humanImport = new(ContextCallerKind.Human, Repo: null, ContextClient.Cli);
+
+    /// <summary>A tick through the service's own rules path (no override), over a map that records what a human import of a profile mapping <paramref name="importedRepos"/> records, while the profile now maps <paramref name="profileRepos"/>.</summary>
+    private async Task<Result<ScheduledResult>> TickAfterImport(string[] importedRepos, string[] profileRepos, string importedAt = "1")
+    {
+        _h.Clock.SetUtcNow(_now);
+        var imported = WithRepos(importedRepos);
+        var recorded = MapRuleset.Running(ContextScopes.For(imported.Profile, _humanImport));
+        Assert.NotNull(recorded);
+
+        var loaded = WithRepos(profileRepos);
+        _ = await _h.Profiles.Save(loaded, Ct);
+        _engine.Heads = [new RepoHead(ContextRepoName.From("a"), "1", OnDefault: true)];
+        _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 1, [new MapHead(ContextRepoName.From("a"), importedAt, OnDefault: true)]) { CurrentRuleset = recorded };
+        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, new InMemoryJobViews(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h)), _h.Clock, new QuietLogger()) { RulesFromScope = true };
+        _grant ??= await _h.HoldLease();
+        using var caller = _h.Callers.EnterService("context-map-refresh");
+        return await service.Run(new ScheduledRun(_grant, _now), Ct);
+    }
+
+    private static LoadedProfile WithRepos(string[] names)
+    {
+        var loaded = SliceHarness.Profile("5s");
+        var context = JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone();
+        return loaded with { Profile = loaded.Profile with { Context = context, Repos = [.. names.Select(n => new RepoEntry(n, "/work/" + n))] } };
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_tick_right_after_an_import_starts_nothing()
+    {
+        var result = await TickAfterImport(["a"], ["a"]);
+
+        Assert.True(result.Value.Idle);
+        Assert.Empty(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_rules_change_after_an_import_still_refreshes()
+    {
+        var result = await TickAfterImport(["a"], ["a", "b"]);
+
+        Assert.False(result.Value.Idle);
+        _ = Assert.Single(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_import_behind_the_default_branch_head_still_refreshes()
+    {
+        // the import is of commit 0 and the checkout's default branch is at 1: a new commit is a real change, so the map is built again
+        var result = await TickAfterImport(["a"], ["a"], importedAt: "0");
+
+        Assert.False(result.Value.Idle);
+        _ = Assert.Single(_start.Requests);
     }
 
     [Fact, Trait("Lane", "unit")]
