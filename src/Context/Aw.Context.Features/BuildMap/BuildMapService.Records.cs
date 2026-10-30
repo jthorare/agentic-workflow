@@ -2,6 +2,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Symbols;
 using Aw.Kernel;
 
 namespace Aw.Context.Features.BuildMap;
@@ -11,8 +12,10 @@ internal sealed partial class BuildMapService
 {
     private const string DocPrefix = "record:repo:";
 
+    private static readonly Dictionary<string, CodeIndexHead> _noIndexHeads = [];
+
     // The record store read once for the whole build (spec 2026-10-27 §7.1). A store or a checkout that can't be read is the one degraded line 'records: unavailable (<code>)' and no record nodes: the build is about the code, and the next build reads them again.
-    private async ValueTask<(ExtractedMap Map, IReadOnlyList<string> Degraded, IReadOnlyList<string> Notes)> Records(ContextSettings settings, List<(ContextRepo Repo, RepoExtraction Read)> extractions, ExtractedMap found, CancellationToken cancellationToken)
+    private async ValueTask<(ExtractedMap Map, IReadOnlyList<string> Degraded, IReadOnlyList<string> Notes, IReadOnlyDictionary<string, CodeIndexHead> IndexHeads)> Records(ContextSettings settings, List<(ContextRepo Repo, RepoExtraction Read)> extractions, ExtractedMap found, CancellationToken cancellationToken)
     {
         var at = clock.GetUtcNow();
         var files = new List<MapRepoFiles>(extractions.Count);
@@ -27,13 +30,13 @@ internal sealed partial class BuildMapService
             var blobs = await inputs.Repos.BlobIds(repo, read.Commit, docs, cancellationToken).ConfigureAwait(false);
             if (blobs.IsError)
             {
-                return (ExtractedMap.Empty, [Unavailable(blobs.Error)], []);
+                return (ExtractedMap.Empty, [Unavailable(blobs.Error)], [], _noIndexHeads);
             }
 
             var removed = await inputs.Repos.RemovedPaths(repo, read.Commit, cancellationToken).ConfigureAwait(false);
             if (removed.IsError)
             {
-                return (ExtractedMap.Empty, [Unavailable(removed.Error)], []);
+                return (ExtractedMap.Empty, [Unavailable(removed.Error)], [], _noIndexHeads);
             }
 
             tracked.UnionWith(paths);
@@ -43,7 +46,7 @@ internal sealed partial class BuildMapService
         var reading = await inputs.Records.Read(new MapRecordInput(files, settings.DocGlobs, settings.DocDirectoryNames, at), cancellationToken).ConfigureAwait(false);
         if (reading.IsError)
         {
-            return (ExtractedMap.Empty, [Unavailable(reading.Error)], []);
+            return (ExtractedMap.Empty, [Unavailable(reading.Error)], [], _noIndexHeads);
         }
 
         var half = reading.Value.Map.Plus(RecordRollup.Edges([.. reading.Value.Overflow, .. reading.Value.UnderCap], directoryDocs, found));
@@ -51,7 +54,7 @@ internal sealed partial class BuildMapService
         // why: a record can mention a path that is neither a node nor in the tree; an edge to a node that isn't in the graph fails the save's foreign key.
         var nodeKeys = found.Nodes.Concat(withFiles).Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
         var kept = new ExtractedMap(withFiles, [.. edges.Where(e => nodeKeys.Contains(e.From.Value) && nodeKeys.Contains(e.To.Value))]);
-        return (kept, reading.Value.Degraded, [.. reading.Value.Notes.Except(reading.Value.Degraded, StringComparer.Ordinal)]);
+        return (kept, reading.Value.Degraded, [.. reading.Value.Notes.Except(reading.Value.Degraded, StringComparer.Ordinal)], reading.Value.IndexHeads);
     }
 
     // A record's mention of a tracked file the extractor didn't read (setup.sh, a script) gets a code: node marked read: false that implements nothing; a mention of a path that is itself a doc record points at that record instead.
