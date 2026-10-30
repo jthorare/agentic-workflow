@@ -9,9 +9,11 @@ namespace Aw.Sindri.Core.Projects.Cards;
 /// <param name="Facts">Context's answer, or its error.</param>
 /// <param name="Freshness">The sources' sync state, or its error.</param>
 /// <param name="LinearConfigured">Whether the profile configures a Linear source (state 4 tells "connect Linear" from "still syncing").</param>
+/// <param name="LinearTokenMissing">Whether the profile lists Linear teams but names no token, so nothing syncs.</param>
 public sealed record ProjectPageInputs(
     IReadOnlyList<ProjectAttachedRow> Attached,
     IReadOnlyList<ProjectHiddenRow> Hidden,
     Result<ProjectFactsSnapshot> Facts,
     Result<IReadOnlyList<ProjectSourceFreshness>> Freshness,
-    bool LinearConfigured);
+    bool LinearConfigured,
+    bool LinearTokenMissing = false);

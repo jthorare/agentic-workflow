@@ -33,7 +33,10 @@ internal static class SurfacePrompt
         foreach (var (candidate, i) in group.Candidates.Select(static (c, i) => (c, i)))
         {
             Describe(prompt, candidate, i + 1, egress);
-            options.Add(Option(i + 2, "merge as: " + LabelPrompt.Clean(egress.Scrub(candidate.Name).Text)));
+            if (group.Candidates.Count > 1)
+            {
+                options.Add(Option(i + 2, "merge as: " + LabelPrompt.Clean(egress.Scrub(candidate.Name).Text)));   // a group of one has nothing to merge with: separate and reject only
+            }
         }
 
         options.Add(Option(options.Count + 1, "reject"));
@@ -67,7 +70,7 @@ internal static class SurfacePrompt
             return SurfaceVerdict.Rejected(group.Key);
         }
 
-        return at > 0 && at - 1 < group.Candidates.Count && LabelPrompt.Clean(group.Candidates[at - 1].Name) is { Length: > 0 } name
+        return group.Candidates.Count > 1 && at > 0 && at - 1 < group.Candidates.Count && LabelPrompt.Clean(group.Candidates[at - 1].Name) is { Length: > 0 } name
             ? SurfaceVerdict.Merged(group.Key, at - 1, group.Candidates[at - 1].NodeKey, name)
             : undecided;
     }

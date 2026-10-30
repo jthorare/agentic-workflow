@@ -12,7 +12,7 @@ using Microsoft.Data.Sqlite;
 namespace Aw.Context.Infrastructure.Surfaces;
 
 /// <summary>
-/// Jev's product-surface decisions in context.db (migration 0025_s5j_surface_pick). A read opens the file read-only and never migrates it: no file, or a file from before the table, is all misses.
+/// Jev's product-surface decisions in context.db (migration 0026_s5j_surface_pick). A read opens the file read-only and never migrates it: no file, or a file from before the table, is all misses.
 /// A write migrates first and upserts every decision in one transaction.
 /// </summary>
 internal sealed class SqliteSurfacePickStore(ContextDatabase database) : ISurfacePickStore

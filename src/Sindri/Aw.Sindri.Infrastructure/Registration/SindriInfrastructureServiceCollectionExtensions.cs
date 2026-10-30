@@ -84,7 +84,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     public static IServiceCollection AddSindriInfrastructure(this IServiceCollection services, Func<string, string?> environment)
     {
         var settings = SettingsFromEnvironment.Read(environment);
-        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddSecretInfrastructure().AddLeftoverInfrastructure().AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch();
+        return services.AddSingleton(settings).AddSindriSessions(environment, settings).AddSindriLauncher(environment, settings).AddSindriAdapters(environment).AddAgentRuntimeAdapters(environment).AddSindriMcp(environment).AddSecretInfrastructure().AddProfileEditing(environment).AddLeftoverInfrastructure().AddScopingInfrastructure(environment).AddBugFixInfrastructure(environment).AddJudgeInfrastructure(environment).AddScopeWatch();
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>
@@ -206,6 +206,12 @@ public static class SindriInfrastructureServiceCollectionExtensions
         .AddSingleton<IPurgeDocker>(static _ => new ToolPurgeDocker(new ProcessToolRunner()))
         .AddSingleton<IPurgeKeychain>(static _ => new ToolPurgeKeychain(new ProcessToolRunner()))
         .AddSingleton<ILeftoverFiles, DiskLeftoverFiles>();
+
+    // 'profile set' (#1740): the in-place key writer and the reader that checks its result before it is written.
+    private static IServiceCollection AddProfileEditing(this IServiceCollection services, Func<string, string?> environment)
+        => services
+            .AddSingleton<IProfileKeyWriter, YamlProfileKeyWriter>()
+            .AddSingleton<IProfileTextParser>(sp => new YamlProfileTextParser(sp.GetRequiredService<JsonSerializerOptions>(), () => HeavyCap.Read(environment, sp.GetRequiredService<SindriSettings>().StateDirectory)));
 
     private static IServiceCollection AddSecretInfrastructure(this IServiceCollection services)
         => services

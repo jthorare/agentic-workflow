@@ -56,6 +56,7 @@ internal static class ContextJobServiceCollectionExtensions
     {
         { Code: not null } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} was replaced before it could be published ({result.Code})"),
         { Reason: "NotHeld" } => "no map is held",
+        { Reason: "Rebuild" } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} was built before its code index and is built again, not published"),
         { Reason: "Waiting" } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} still waits for the code index"),
         { Reason: "Gone" or "AlreadyCurrent" } => string.Create(CultureInfo.InvariantCulture, $"hold on map v{result.Version} dropped ({result.Reason})"),
         _ => MapJobSummaries.Promoted(result.Version, result.Reason ?? string.Empty),

@@ -23,6 +23,7 @@ internal static partial class Labels
         ["AddRepo"] = "Add repo",
         ["OnboardRepo"] = "Onboard repo",
         ["InitProfile"] = "Create profile",
+        ["SetProfileKey"] = "Set a profile key",
         ["ApproveProfile"] = "Approve profile",
         ["ApproveAllRecipes"] = ApproveAllTitle,
         ["ApproveRecipe"] = "Approve recipe",

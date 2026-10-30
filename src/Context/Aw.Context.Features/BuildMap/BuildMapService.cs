@@ -88,9 +88,11 @@ internal sealed partial class BuildMapService(
 
         found = WithStructure(found);
         // The records come after the homes are assigned: a record over the file cap rolls up to the features its files are homed in.
-        var (records, recordDegraded, recordNotes) = await Records(settings, extractions, found, cancellationToken).ConfigureAwait(false);
+        var (records, recordDegraded, recordNotes, indexHeads) = await Records(settings, extractions, found, cancellationToken).ConfigureAwait(false);
         found = found.Plus(records);
         degraded.AddRange(recordDegraded);
+        // #1704: each head says which code index its symbol citations were resolved against, when that index held the commit the build read.
+        heads = [.. heads.Select(h => h with { IndexCommit = indexHeads.TryGetValue(h.Repo.Value, out var index) ? IndexCommitOf(index, h.Commit) : null })];
         // why: mappedRepos is not empty, so the loop set the primary
         return MapHead.Check(heads) is { } invalid ? invalid : new Reading(found, degraded, primary!.Value.Name, primary.Value.Commit, heads, settings) { Dropped = dropped, RecordNotes = recordNotes, Spent = spent };
     }

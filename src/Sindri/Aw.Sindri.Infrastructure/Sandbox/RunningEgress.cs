@@ -6,14 +6,14 @@ internal sealed class RunningEgress : IAsyncDisposable
     private static readonly TimeSpan _flushEvery = TimeSpan.FromSeconds(1);
     private static readonly TimeSpan _warnEvery = TimeSpan.FromMinutes(1);
     private readonly EgressListener _proxy;
-    private readonly EgressListener _sindri;
+    private readonly EgressListener? _sindri;
     private readonly CancellationTokenSource _stopFlushing = new();
     private readonly Task _flushing;
     private readonly Action<string> _warn;
     private int _disposed;
     private long _lastWarn = long.MinValue;
 
-    internal RunningEgress(string socat, string directory, EgressLog log, EgressListener proxy, EgressListener sindri, Action<string> warn)
+    internal RunningEgress(string socat, string directory, EgressLog log, EgressListener proxy, EgressListener? sindri, Action<string> warn)
     {
         _warn = warn;
         Socat = socat;
@@ -24,7 +24,10 @@ internal sealed class RunningEgress : IAsyncDisposable
         _flushing = Task.Run(FlushLoop, _stopFlushing.Token);
     }
 
-    /// <summary>The socat to put in the init script.</summary>
+    /// <summary>Gets the loopback TCP port of the proxy when it listens on TCP (macOS); 0 when it listens on the unix socket in <see cref="Directory"/>.</summary>
+    public int ProxyPort => _proxy.Port;
+
+    /// <summary>The socat to put in the init script; empty for the loopback form, which has no forwarder.</summary>
     public string Socat { get; }
 
     /// <summary>The launch's denial counter, flushed with the log and once more at the end; null when the launch has none.</summary>
@@ -33,7 +36,7 @@ internal sealed class RunningEgress : IAsyncDisposable
     /// <summary>The egress log.</summary>
     public EgressLog Log { get; }
 
-    /// <summary>The short socket directory.</summary>
+    /// <summary>The short socket directory; empty for the loopback form, which has none.</summary>
     public string Directory { get; }
 
     /// <inheritdoc />
@@ -64,7 +67,11 @@ internal sealed class RunningEgress : IAsyncDisposable
     {
         // Every step runs and none throws: a cleanup problem must not replace the agent's real outcome.
         await Safely(() => _proxy.DisposeAsync().AsTask(), "stopping the proxy listener").ConfigureAwait(false);
-        await Safely(() => _sindri.DisposeAsync().AsTask(), "stopping the Sindri listener").ConfigureAwait(false);
+        if (_sindri is { } sindri)
+        {
+            await Safely(() => sindri.DisposeAsync().AsTask(), "stopping the Sindri listener").ConfigureAwait(false);
+        }
+
         await Safely(() =>
         {
             Log.Flush();
@@ -81,7 +88,7 @@ internal sealed class RunningEgress : IAsyncDisposable
         _stopFlushing.Dispose();
         await Safely(() =>
         {
-            if (System.IO.Directory.Exists(Directory))
+            if (Directory.Length > 0 && System.IO.Directory.Exists(Directory))
             {
                 System.IO.Directory.Delete(Directory, recursive: true);
             }

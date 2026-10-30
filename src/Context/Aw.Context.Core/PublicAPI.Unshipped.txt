@@ -3234,6 +3234,8 @@ Aw.Context.Core.Map.MapHead
 Aw.Context.Core.Map.MapHead.<Clone>$() -> Aw.Context.Core.Map.MapHead!
 Aw.Context.Core.Map.MapHead.Commit.get -> string!
 Aw.Context.Core.Map.MapHead.Commit.init -> void
+Aw.Context.Core.Map.MapHead.IndexCommit.get -> string?
+Aw.Context.Core.Map.MapHead.IndexCommit.init -> void
 Aw.Context.Core.Map.MapHead.Deconstruct(out Aw.Context.Core.Engine.ContextRepoName Repo, out string! Commit, out bool OnDefault) -> void
 Aw.Context.Core.Map.MapHead.Equals(Aw.Context.Core.Map.MapHead? other) -> bool
 Aw.Context.Core.Map.MapHead.MapHead(Aw.Context.Core.Engine.ContextRepoName Repo, string! Commit, bool OnDefault) -> void

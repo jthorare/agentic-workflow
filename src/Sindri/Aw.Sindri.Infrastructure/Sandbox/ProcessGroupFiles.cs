@@ -1,0 +1,149 @@
+using System.Globalization;
+using Aw.Sindri.Infrastructure.Locks;
+
+namespace Aw.Sindri.Infrastructure.Sandbox;
+
+/// <summary>
+/// The files and signals of a session that runs as its own process group (macOS has no cgroups, so the group is the session's "unit"; SB-9b).
+/// They live in one flat folder, '&lt;launch dir&gt;/pgroups' (<see cref="Directory"/>), beside 'areas' and 'denials', not inside the launch's run area: the run area
+/// is removed with the launch, while the slice count and the memory-kill record must still be readable after the session ends. The launcher (SB-9c) writes
+/// '&lt;unit&gt;.pgid', the group id as one decimal line, as it starts the session; the watchdog writes '&lt;unit&gt;.oom' when it kills for memory, and session wrap removes the '.pgid' file once the session has ended (a group id is reused by the system, so a stale file would name an unrelated group). The '.oom' record stays: it is keyed by unit, which is not reused. The unit is the launch id,
+/// so a file name; a unit with a path separator in it is no unit.
+/// </summary>
+internal static class ProcessGroupFiles
+{
+    private const int Kill = 9;
+    private const int Hangup = 1;
+    private const int Interrupt = 2;
+    private const int Terminate = 15;
+
+    /// <summary>The folder of the group files.</summary>
+    /// <param name="launchDirectory">The launcher's directory.</param>
+    /// <returns>The folder.</returns>
+    internal static string Directory(string launchDirectory) => Path.Combine(launchDirectory, "pgroups");
+
+    /// <summary>Writes the group id of a unit, replacing an older one.</summary>
+    /// <param name="directory">The folder of the group files.</param>
+    /// <param name="unit">The unit.</param>
+    /// <param name="pgid">The process group id; more than 1 and not this process's own group (signalling it would kill serve and its sessions).</param>
+    internal static void WritePgid(string directory, string unit, int pgid)
+    {
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pgid, 1);
+        ArgumentOutOfRangeException.ThrowIfEqual(pgid, Libc.OwnGroup());
+        _ = System.IO.Directory.CreateDirectory(directory);
+        var file = PgidFile(directory, unit) ?? throw new ArgumentException("the unit is not a file name", nameof(unit));
+        var temporary = file + ".tmp";
+        File.WriteAllText(temporary, pgid.ToString(CultureInfo.InvariantCulture) + "\n");
+        File.Move(temporary, file, overwrite: true);
+    }
+
+    /// <summary>Reads the group id of a unit.</summary>
+    /// <param name="directory">The folder of the group files.</param>
+    /// <param name="unit">The unit.</param>
+    /// <returns>The group id, or null when the file is missing, malformed, or names 1 or less (0 and 1 would signal the caller's own group or every process).</returns>
+    internal static int? ReadPgid(string directory, string unit)
+    {
+        if (PgidFile(directory, unit) is not { } file)
+        {
+            return null;
+        }
+
+        try
+        {
+            return int.TryParse(File.ReadAllText(file).Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var pgid) && pgid > 1 ? pgid : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Tells whether any process of the group is still there (a zombie counts until it is reaped).</summary>
+    /// <param name="pgid">The process group id.</param>
+    /// <returns>True when the group has a process.</returns>
+    internal static bool Alive(int pgid)
+    {
+        var error = Libc.Signal(-pgid, 0);
+        return error is 0 or Libc.NotPermitted;
+    }
+
+    /// <summary>Signals every process of the group.</summary>
+    /// <param name="pgid">The process group id.</param>
+    /// <param name="signal">The signal name: SIGKILL, SIGTERM, SIGINT or SIGHUP.</param>
+    /// <returns>True when the signal was sent; false for another signal name, a group that is gone, or this process's own group (never signalled).</returns>
+    internal static bool Signal(int pgid, string signal)
+    {
+        int? number = signal switch
+        {
+            "SIGKILL" => Kill,
+            "SIGTERM" => Terminate,
+            "SIGINT" => Interrupt,
+            "SIGHUP" => Hangup,
+            _ => null,
+        };
+        return number is { } n && pgid > 1 && pgid != Libc.OwnGroup() && Libc.Signal(-pgid, n) == 0;
+    }
+
+    /// <summary>Deletes the group id file of a unit once its session has ended; the memory-kill record stays. A missing file or folder is fine.</summary>
+    /// <param name="directory">The folder of the group files.</param>
+    /// <param name="unit">The unit.</param>
+    internal static void Remove(string directory, string unit)
+    {
+        if (PgidFile(directory, unit) is not { } file)
+        {
+            return;
+        }
+
+        try
+        {
+            File.Delete(file);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // best effort: a stale file is ignored once its group is gone
+        }
+    }
+
+    /// <summary>Writes down that the watchdog killed the unit's group for memory. Keyed by unit, so it outlives the group id file.</summary>
+    /// <param name="directory">The folder of the group files.</param>
+    /// <param name="unit">The unit.</param>
+    /// <returns>False when the unit is not a file name.</returns>
+    internal static bool RecordMemoryKill(string directory, string unit)
+    {
+        if (MarkerFile(directory, unit) is not { } file)
+        {
+            return false;
+        }
+
+        _ = System.IO.Directory.CreateDirectory(directory);
+        File.WriteAllText(file, "oom-kill\n");
+        return true;
+    }
+
+    /// <summary>Tells whether the watchdog killed the unit's group for memory.</summary>
+    /// <param name="directory">The folder of the group files.</param>
+    /// <param name="unit">The unit.</param>
+    /// <returns>True when the record is there.</returns>
+    internal static bool MemoryKilled(string directory, string unit) => MarkerFile(directory, unit) is { } file && File.Exists(file);
+
+    /// <summary>Lists the units that have a group id file, in order.</summary>
+    /// <param name="directory">The folder of the group files.</param>
+    /// <returns>The units; empty when the folder is not there.</returns>
+    internal static IReadOnlyList<string> Units(string directory)
+    {
+        try
+        {
+            return [.. System.IO.Directory.EnumerateFiles(directory, "*.pgid").Select(f => Path.GetFileNameWithoutExtension(f)).Order(StringComparer.Ordinal)];
+        }
+        catch (DirectoryNotFoundException)
+        {
+            return [];
+        }
+    }
+
+    private static string? PgidFile(string directory, string unit) =>
+        unit.Length == 0 || unit.AsSpan().ContainsAny('/', '\\') || unit.Contains("..", StringComparison.Ordinal) ? null : Path.Combine(directory, unit + ".pgid");
+
+    private static string? MarkerFile(string directory, string unit) =>
+        PgidFile(directory, unit) is null ? null : Path.Combine(directory, unit + ".oom");
+}
