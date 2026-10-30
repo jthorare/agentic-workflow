@@ -28,6 +28,11 @@ internal sealed class ModelWalker(JobModelLimits limits, TimeProvider clock)
             {
                 Add(call, new ModelCallTry(ModelHarnesses.Name(step.Harness), step.Model, ModelCallOutcome.Skipped, "limited", Ms: 0, Source(step)));
             }
+            else if (call.Request.MaxPromptChars is not null && ModelHarnesses.PromptBudget(step.Harness).Chars < call.Request.Prompt.Length)
+            {
+                // a caller that sized its prompt for the smallest harness asked that no harness cut it (spec 6.2): this one would
+                Add(call, new ModelCallTry(ModelHarnesses.Name(step.Harness), step.Model, ModelCallOutcome.Skipped, "prompt-too-long", Ms: 0, Source(step)));
+            }
             else if (await Try(call, step, question, cancellationToken).ConfigureAwait(false) is { } answer)
             {
                 return answer;
