@@ -15,6 +15,7 @@ public sealed class ProfileSetCommandTests : IDisposable
     private readonly TextWriter _consoleOut = Console.Out;
     private readonly TextWriter _consoleError = Console.Error;
     private string? _launch;
+    private bool _token = true;
 
     public ProfileSetCommandTests()
     {
@@ -33,9 +34,23 @@ public sealed class ProfileSetCommandTests : IDisposable
 
     private string ProfilePath => Path.Combine(_home.Path, "profile", "profile.yaml");
 
+    private void HumanToken()
+    {
+        _ = Directory.CreateDirectory(Path.Combine(_home.Path, "auth"));
+        File.WriteAllText(Path.Combine(_home.Path, "auth", "human.token"), "a-human-token\n");
+    }
+
     private string? Environment(string name) => name switch { "AW_SINDRI_HOME" => _home.Path, "AW_SINDRI_LAUNCH" => _launch, _ => null };
 
-    private Task<int> Run(params string[] args) => CommandTable.Run(args, Environment, TimeProvider.System);
+    private Task<int> Run(params string[] args)
+    {
+        if (_token)
+        {
+            HumanToken();
+        }
+
+        return CommandTable.Run(args, Environment, TimeProvider.System);
+    }
 
     [Fact, Trait("Lane", "integration")]
     public async Task A_valid_value_is_written_on_its_line_and_the_next_step_is_approving()
@@ -82,6 +97,18 @@ public sealed class ProfileSetCommandTests : IDisposable
     public async Task A_launched_session_is_refused_SND_AUTH_002_and_the_file_is_untouched()
     {
         _launch = "lau_test";
+
+        var code = await Run("profile", "set", "context.models.labeling.pick", "jev");
+
+        Assert.Equal(2, code);
+        Assert.Contains("SND-AUTH-002", _error.ToString(), StringComparison.Ordinal);
+        Assert.Equal(Profile, await File.ReadAllTextAsync(ProfilePath, TestContext.Current.CancellationToken));
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Without_the_per_start_human_token_it_is_refused_SND_AUTH_002_and_the_file_is_untouched()
+    {
+        _token = false;
 
         var code = await Run("profile", "set", "context.models.labeling.pick", "jev");
 

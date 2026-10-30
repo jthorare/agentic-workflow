@@ -6,11 +6,11 @@ namespace Aw.Sindri.Host.Commands;
 internal static partial class CommandTable
 {
     /// <summary>'sindri profile validate|init|set|approve …'.</summary>
-    private static async Task<int> Profile(string[] args, Verbs verbs, Func<(string? Hash, bool NoStart), Verbs> approving, (Output Output, bool Launched) caller, CancellationToken ct) => args switch
+    private static async Task<int> Profile(string[] args, Verbs verbs, Func<(string? Hash, bool NoStart), Verbs> approving, (Output Output, CallerHeaders Caller) caller, CancellationToken ct) => args switch
     {
         ["profile", "validate", .. var rest] when Json(rest) is { } json => await verbs.Validate(json, ct).ConfigureAwait(false),
         ["profile", "init", .. var rest] when Json(rest) is { } json => await verbs.InitProfile(json, ct).ConfigureAwait(false),
-        ["profile", "set", .. var rest] when SetArguments(rest) is { } set => await verbs.SetProfileKey(set.Key, set.Value, set.Json, caller.Launched, ct).ConfigureAwait(false),
+        ["profile", "set", .. var rest] when SetArguments(rest) is { } set => await verbs.SetProfileKey(set.Key, set.Value, set.Json, caller.Caller, ct).ConfigureAwait(false),
         ["profile", "approve", .. var rest] when Approval(rest) is { } a => await approving(a).Approve(a.Hash, ct).ConfigureAwait(false),
         _ => await UnknownVerb(args, caller.Output).ConfigureAwait(false),
     };

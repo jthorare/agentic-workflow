@@ -13,7 +13,7 @@ internal static class Usage
         "       sindri stop                   stop it and release the host lease",
         "       sindri profile validate [--json]",
         "       sindri profile init [--json]   write the default profile when none exists (no repos yet: add one with 'repo add', then approve); refuses when one exists (exit 2); runs without the control plane",
-        "       sindri profile set <key> <value> [--json]   set one scalar key of the live profile in place (dotted key, such as context.models.labeling.pick): comments and order stay, the edited file is checked before it is written, and it never approves (run 'profile approve' after); refused for an agent session (SND-AUTH-002); runs without the control plane",
+        "       sindri profile set <key> <value> [--json]   set one scalar key of the live profile in place (dotted key, such as context.models.labeling.pick): comments and order stay, the edited file is checked before it is written, and it never approves (run 'profile approve' after); refused without the per-start human token or for an agent session (SND-AUTH-002); runs without the control plane",
         "       sindri scrub [--staged | --install-pre-commit [--repo PATH] [--bin PATH]]   redact standard input; --staged scans the staged diff's added lines (exit 1, SND-SCRUB-002, on a finding); --install-pre-commit writes the pre-commit hook that runs it; runs without the control plane",
         "       sindri profile approve [--no-start] [<hash>]   without a hash: show the hash and what changed; with it: approve; starts the control plane unless --no-start",
         "       sindri views rebuild [--no-start]   replay the ledger into the views (the fix when they stall); starts the control plane unless --no-start",

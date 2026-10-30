@@ -100,14 +100,14 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
     }
 
     /// <summary>
-    /// 'profile set &lt;key&gt; &lt;value&gt; [--json]': sets one scalar key of the live profile in place and says to approve it; local, like init. A session Sindri launched is refused (SND-AUTH-002, like approve). It never approves.
+    /// 'profile set &lt;key&gt; &lt;value&gt; [--json]': sets one scalar key of the live profile in place and says to approve it; local, like init. A CLI with no readable per-start human token, or a session Sindri launched, is refused (SND-AUTH-002, like 'sandbox login'). It never approves.
     /// Exit 0 set or unchanged, 1 an invalid key or value or a layout it won't edit (nothing written), 2 refused or the file can't be read or written.
     /// </summary>
-    internal async Task<int> SetProfileKey(string key, string value, bool json, bool launched, CancellationToken ct)
+    internal async Task<int> SetProfileKey(string key, string value, bool json, CallerHeaders caller, CancellationToken ct)
     {
-        if (launched)
+        if (await caller.Resolve(ct).ConfigureAwait(false) is { } reason)
         {
-            return await output.Error(SindriErrors.AuthRefused.With("`sindri profile set` is the human's: run it in your own terminal, not from an agent session")).ConfigureAwait(false);
+            return await output.Error(SindriErrors.AuthRefused.With($"profile set is for the person at the keyboard, and this is {reason} (fix: run it from your own terminal)")).ConfigureAwait(false);
         }
 
         var set = await scope.GetRequiredService<IService<SetProfileKeyRequest, SetProfileKeyResponse>>().Handle(new SetProfileKeyRequest(key, value), ct).ConfigureAwait(false);
