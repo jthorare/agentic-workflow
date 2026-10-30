@@ -16,7 +16,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Keys.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The Create dialog's layout and the sheet's dismiss name (proof B5, N1, N2, N7).</summary>
 [Lane(TestLane.Integration)]

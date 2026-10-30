@@ -8,7 +8,7 @@ using Aw.Sindri.Ui.Views.Controls;
 using ChipTone = Aw.Sindri.Ui.Api.Workflow.ChipTone;
 using Served = Aw.Sindri.Ui.Api.Workflow.StateChip;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The chip control under the headless platform: the word as served, the class its tone picks, hidden with nothing to say.</summary>
 [Lane(TestLane.Integration)]

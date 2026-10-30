@@ -5,6 +5,7 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 using Aw.Sindri.Ui.Views.Context.Whole;
 using Aw.Sindri.Ui.Views.Controls;

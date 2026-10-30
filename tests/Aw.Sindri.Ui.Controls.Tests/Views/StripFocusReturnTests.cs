@@ -4,10 +4,11 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>Closing a sheet opened from a strip row returns focus to that strip row (review run 1, a11y-13; UI spec §11.2 "Esc or back returns it to the row").</summary>
 [Lane(TestLane.Integration)]

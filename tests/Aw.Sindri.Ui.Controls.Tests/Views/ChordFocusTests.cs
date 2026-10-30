@@ -6,12 +6,13 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Keys.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>Review run 5 (a11y-0): a page change made by a G-chord or the palette's Go to lands focus on the new page's region, wherever focus was.</summary>
 [Lane(TestLane.Integration)]

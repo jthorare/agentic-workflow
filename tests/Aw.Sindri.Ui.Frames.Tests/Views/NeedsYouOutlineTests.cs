@@ -4,6 +4,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.NeedsYou;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;

@@ -7,6 +7,7 @@ using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Queue;
 using Aw.Sindri.Ui.ViewModels.Shell;
@@ -14,7 +15,7 @@ using Aw.Sindri.Ui.Views.Queue;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>
 /// Focus and selection on the queue, Home's panels and the item sheet (UI spec §3.3, §8, §11.2) under the headless

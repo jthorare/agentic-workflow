@@ -16,7 +16,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Keys.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>
 /// The Create item form as a modal dialog (UI spec §4.5, §8, §11.2; L10): counted as an overlay, Tab cycles in its card,

@@ -12,7 +12,7 @@ using Aw.Sindri.Ui.ViewModels.Components;
 using Aw.Sindri.Ui.Views.Components;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The lock button under the headless platform: its label and title, the popover it opens, Esc, and Copy.</summary>
 [Lane(TestLane.Integration)]

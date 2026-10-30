@@ -6,11 +6,12 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 
-namespace Aw.Sindri.Ui.Keys.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The Start dialog's layout does not move when an error shows, and each control of the Item row has a caption of its own (UX-pass C-9).</summary>
 [Lane(TestLane.Integration)]

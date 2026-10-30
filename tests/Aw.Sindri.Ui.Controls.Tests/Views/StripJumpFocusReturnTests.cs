@@ -1,12 +1,13 @@
 using Avalonia.Controls;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.Views.Shell;
 using Aw.Sindri.Ui.Views.Workflows;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>Enter on a strip row with no park row jumps to Workflows with the instance's sheet (#1360); Esc there puts focus on the instance's own frame (its board card, or its list row's Open), never the Board/List toggle or the page.</summary>
 [Lane(TestLane.Integration)]

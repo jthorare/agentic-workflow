@@ -7,8 +7,9 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Tests.Theme;
+using Aw.Sindri.Ui.Tests.Views;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>A focused primary button in a row keeps a ring that contrasts (review run 4, a11y): the in-row ring is at least 3:1 against the primary fill and against the row, and differs from the unfocused look (WCAG 1.4.11).</summary>
 [Lane(TestLane.Integration)]

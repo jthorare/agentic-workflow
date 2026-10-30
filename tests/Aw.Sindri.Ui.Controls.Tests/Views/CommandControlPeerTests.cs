@@ -11,7 +11,7 @@ using Aw.Sindri.Ui.ViewModels.Controls;
 using Aw.Sindri.Ui.Views.Controls;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>
 /// A catalog control is invokable through its own automation peer (ux-A-3): the UI driver and screen readers act on the

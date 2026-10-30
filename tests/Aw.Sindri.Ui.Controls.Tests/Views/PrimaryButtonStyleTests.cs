@@ -6,7 +6,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The recommended option is drawn primary (real-app re-proof, NB2): a command button with the primary class is filled with the primary token.</summary>
 [Lane(TestLane.Integration)]

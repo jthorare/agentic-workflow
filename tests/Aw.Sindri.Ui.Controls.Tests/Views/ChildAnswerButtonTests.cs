@@ -5,13 +5,14 @@ using Avalonia.Threading;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.NeedsYou;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.Views.NeedsYou;
 using Aw.Sindri.Ui.Views.Workflows;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>"Answer in the child" in the rows, read at the automation peers (where AT-SPI reads): a stop in the control view whose name leads with the drawn words.</summary>
 [Lane(TestLane.Integration)]

@@ -103,8 +103,8 @@
     <Project Path="tests/Aw.Sindri.Testing/Aw.Sindri.Testing.csproj" />
     <Project Path="tests/Aw.Sindri.Ui.Tests/Aw.Sindri.Ui.Tests.csproj" />
     <Project Path="tests/Aw.Sindri.Ui.Rendering.Tests/Aw.Sindri.Ui.Rendering.Tests.csproj" />
+    <Project Path="tests/Aw.Sindri.Ui.Controls.Tests/Aw.Sindri.Ui.Controls.Tests.csproj" />
     <Project Path="tests/Aw.Sindri.Ui.Frames.Tests/Aw.Sindri.Ui.Frames.Tests.csproj" />
-    <Project Path="tests/Aw.Sindri.Ui.Keys.Tests/Aw.Sindri.Ui.Keys.Tests.csproj" />
     <Project Path="tests/Aw.Sindri.Ui.Testing/Aw.Sindri.Ui.Testing.csproj" />
     <Project Path="tests/Aw.Context.Testing/Aw.Context.Testing.csproj" />
     <Project Path="tests/Aw.Context.Testing.Tests/Aw.Context.Testing.Tests.csproj" />

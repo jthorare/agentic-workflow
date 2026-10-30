@@ -10,13 +10,14 @@ using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Start;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Instance;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 using Aw.Sindri.Ui.Views.Start;
 
-namespace Aw.Sindri.Ui.Keys.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>
 /// The Start form as a modal dialog (U5'): `N` and the buttons open it with focus on the recipe picker, Esc closes it, Ctrl+Enter sends
@@ -453,6 +454,6 @@ public sealed class StartDialogTests : FrameHost
         await Until(window, () => !shell.Start.IsOpen);
     });
 
-    private static string Wire(Ui.Api.Workflow.StartInstanceRequest request) =>
-        System.Text.Encoding.UTF8.GetString(Kernel.Json.AwJson.Serialize(request, Ui.Api.SindriApiClient.Json));
+    private static string Wire(Api.Workflow.StartInstanceRequest request) =>
+        System.Text.Encoding.UTF8.GetString(Kernel.Json.AwJson.Serialize(request, Api.SindriApiClient.Json));
 }

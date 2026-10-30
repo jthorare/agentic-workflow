@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Media;
 using Avalonia.Threading;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Frames.Tests.Views;

@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Aw.Sindri.Ui.Frames.Tests: the page and panel views (Needs you, Queue, Instance, Context, Workflows, ...) under Avalonia's headless platform. Split out of Aw.Sindri.Ui.Tests (#1546): every Avalonia test in a process runs on that process's one
-       headless UI thread, so a second project is a second UI thread and the two halves of the integration lane run side by side.
-       Its own lane-budget row (scripts/ci/lane-budgets.mjs PROJECT_BUDGETS). -->
+  <!-- Aw.Sindri.Ui.Frames.Tests: the page and panel views (Needs you, Queue, Instance, Context, Workflows, Agents, ...), under Avalonia's headless platform.
+       Split out of Aw.Sindri.Ui.Tests (#1546): every Avalonia test in a process runs on that process's one headless UI thread, so
+       each project is a UI thread of its own and the three run side by side. Its own lane-budget row (lane-budgets.mjs PROJECT_BUDGETS). -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <OutputType>Exe</OutputType>
@@ -28,7 +28,6 @@
   <ItemGroup>
     <Using Include="Xunit" />
     <Using Include="Aw.Sindri.Ui.Tests" />
-    <Using Include="Aw.Sindri.Ui.Tests.Views" />
   </ItemGroup>
 
   <!-- Shared with Aw.Sindri.Ui.Tests by link, not copy: the headless app builder (drawing off), the key-frame host and its helpers. -->
@@ -39,17 +38,16 @@
     <Compile Include="../Aw.Sindri.Ui.Tests/Views/HeadlessWindows.cs" Link="Shared/HeadlessWindows.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Views/Heard.cs" Link="Shared/Heard.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/OffThreadTimers.cs" Link="Shared/OffThreadTimers.cs" />
-    <Compile Include="../Aw.Sindri.Ui.Tests/Theme/TokenFile.cs" Link="Shared/TokenFile.cs" />
-    <Compile Include="../Aw.Sindri.Ui.Tests/Theme/UiSource.cs" Link="Shared/UiSource.cs" />
-    <Compile Include="../Aw.Sindri.Ui.Tests/Theme/Wcag.cs" Link="Shared/Wcag.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Workflows/LineGolden.cs" Link="Shared/LineGolden.cs" />
     <Compile Include="../Aw.Sindri.Ui.Tests/Jobs/JobsFixture.cs" Link="Shared/JobsFixture.cs" />
-    <Compile Include="../Aw.Sindri.Ui.Tests/NeedsYou/ChildAnswerRows.cs" Link="Shared/ChildAnswerRows.cs" />
   </ItemGroup>
 
   <!-- The API goldens the fake serves (Aw.Sindri.Ui.Testing reads them from the output folder): the same files as Aw.Sindri.Ui.Tests. -->
   <ItemGroup>
     <None Include="../Aw.Sindri.Tests/Golden/Api/**/*.json" Link="Golden/Api/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <None Include="../Aw.Sindri.Ui.Tests/Golden/SpecShaped/**/*.json" Link="Golden/SpecShaped/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Aw.Sindri.Tests/Layout/Golden/instance-summary-*.json" Link="Golden/Layout/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Aw.Sindri.Tests/Golden/ledger/workflow.transition-*.json" Link="Golden/Ledger/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Aw.Sindri.Tests/Golden/Sandbox/**/*" Link="Golden/Sandbox/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

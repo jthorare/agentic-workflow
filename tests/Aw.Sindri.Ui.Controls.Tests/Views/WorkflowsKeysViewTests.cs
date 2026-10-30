@@ -9,13 +9,14 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Facts;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 using Aw.Sindri.Ui.Views.Components;
 
-namespace Aw.Sindri.Ui.Keys.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The Workflows keys in the window (U8 T7, UI spec §8, §11.2): J / K carry focus with the selection, a refresh never moves it, a row that goes leaves focus somewhere, and each key lands focus where it acts. Frames saved as u8-keys-*.png.</summary>
 [Lane(TestLane.Integration)]

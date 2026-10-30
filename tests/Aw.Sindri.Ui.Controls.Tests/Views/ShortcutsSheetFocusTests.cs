@@ -11,7 +11,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Keys.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The `?` sheet is modal (UI spec §11.2): Tab and Shift+Tab never leave it for the page behind the scrim (#1081, C-15).</summary>
 [Lane(TestLane.Integration)]

@@ -13,7 +13,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
-namespace Aw.Sindri.Ui.Keys.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The G-chords as the window routes them (screens spec §3, rev 7 §8): gated like the other navigation, never typed into a text field.</summary>
 [Lane(TestLane.Integration)]

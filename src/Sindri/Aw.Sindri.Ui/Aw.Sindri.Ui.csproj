@@ -34,7 +34,7 @@
     <InternalsVisibleTo Include="Aw.Sindri.Ui.Tests" />
     <InternalsVisibleTo Include="Aw.Sindri.Ui.Rendering.Tests" />
     <InternalsVisibleTo Include="Aw.Sindri.Ui.Frames.Tests" />
-    <InternalsVisibleTo Include="Aw.Sindri.Ui.Keys.Tests" />
+    <InternalsVisibleTo Include="Aw.Sindri.Ui.Controls.Tests" />
     <InternalsVisibleTo Include="Aw.Sindri.Ui.Testing" />
   </ItemGroup>
 </Project>

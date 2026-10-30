@@ -12,7 +12,7 @@ using Aw.Sindri.Ui.Tests.Theme;
 using Aw.Sindri.Ui.ViewModels.Components;
 using Aw.Sindri.Ui.Views.Components;
 
-namespace Aw.Sindri.Ui.Frames.Tests.Views;
+namespace Aw.Sindri.Ui.Controls.Tests.Views;
 
 /// <summary>The Attach component under the headless platform (screens spec §4.5): one template in two sizes, names, the chip, the menu's keys.</summary>
 [Lane(TestLane.Integration)]
