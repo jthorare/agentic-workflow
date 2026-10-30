@@ -21535,3 +21535,19 @@ Aw.Sindri.Core.Profile.IProfileTextParser.Parse(string! yaml, string! source) ->
 Aw.Sindri.Core.Profile.LinearToken
 const Aw.Sindri.Core.Profile.LinearToken.Connect = "sindri index connect linear" -> string!
 const Aw.Sindri.Core.Profile.LinearToken.Missing = "Linear needs a token" -> string!
+Aw.Sindri.Core.Setup.ConceptEdit
+Aw.Sindri.Core.Setup.ConceptEdit.ConceptEdit(Aw.Sindri.Core.Ids.ConceptPinId Id, Aw.Sindri.Core.Profile.ConceptSettings? Entry) -> void
+Aw.Sindri.Core.Setup.ConceptEdit.Entry.get -> Aw.Sindri.Core.Profile.ConceptSettings?
+Aw.Sindri.Core.Setup.ConceptEdit.Entry.init -> void
+Aw.Sindri.Core.Setup.ConceptEdit.Id.get -> Aw.Sindri.Core.Ids.ConceptPinId
+Aw.Sindri.Core.Setup.ConceptEdit.Id.init -> void
+Aw.Sindri.Core.Setup.IProfileConceptWriter
+Aw.Sindri.Core.Setup.IProfileConceptWriter.Write(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptEdit!>! edits, Aw.Sindri.Core.Ids.ProfileHash? ifHash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ProfileHash>!>
+Aw.Sindri.Core.Setup.ConceptEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptEdit!
+Aw.Sindri.Core.Setup.ConceptEdit.Deconstruct(out Aw.Sindri.Core.Ids.ConceptPinId Id, out Aw.Sindri.Core.Profile.ConceptSettings? Entry) -> void
+Aw.Sindri.Core.Setup.ConceptEdit.Equals(Aw.Sindri.Core.Setup.ConceptEdit? other) -> bool
+override Aw.Sindri.Core.Setup.ConceptEdit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ConceptEdit.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ConceptEdit.ToString() -> string!
+static Aw.Sindri.Core.Setup.ConceptEdit.operator !=(Aw.Sindri.Core.Setup.ConceptEdit? left, Aw.Sindri.Core.Setup.ConceptEdit? right) -> bool
+static Aw.Sindri.Core.Setup.ConceptEdit.operator ==(Aw.Sindri.Core.Setup.ConceptEdit? left, Aw.Sindri.Core.Setup.ConceptEdit? right) -> bool
