@@ -222,7 +222,7 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     [GeneratedRegex(@"(?<major>\d+)\.(?<minor>\d+)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex VersionPattern { get; }
 
-    [GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex ShellName { get; }
 
     private static string Target(HostRef host) => "=" + host.Name;   // '=' : this exact name, never a prefix
