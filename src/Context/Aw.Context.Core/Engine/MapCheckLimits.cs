@@ -12,8 +12,11 @@ public sealed record MapCheckLimits
     /// <summary>The fewest such features a map needs for the isolation measure to apply (default 20).</summary>
     public int MinFeaturesIsolated { get; init; } = 20;
 
-    /// <summary>Isolated features above this percent make the map degraded (default 30).</summary>
-    public int IsolatedDegradedPercent { get; init; } = 30;
+    /// <summary>
+    /// Isolated features above this percent make the map degraded (default 5). Measured (issue 1365): healthy maps sit at 1 to 1.5%, a TypeScript monorepo that
+    /// loses its cross-package imports (a path alias the resolver can't follow) at about 9%, and one that loses every import at 87 to 97%.
+    /// </summary>
+    public int IsolatedDegradedPercent { get; init; } = 5;
 
     /// <summary>Isolated features above this percent refuse the map (default 60).</summary>
     public int IsolatedRefusePercent { get; init; } = 60;
