@@ -84,9 +84,45 @@ APP_WRAPPER_PID=$!
 d ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 d window --width 1280 --height 900 >/dev/null 2>&1 || setup_fail "could not size the window"
 d click --type ListBoxItem --name Context >/dev/null 2>&1 || setup_fail "no Context tab"
-# A map with concepts opens on its concept cards (#1281): the Map toggle shows the whole map.
-d wait-for --name Map --state visible --wait-ms 60000 >/dev/null 2>&1 && d click --name Map >/dev/null 2>&1
-d wait-for --type TextBlock --contains "links" --state visible --wait-ms 60000 >/dev/null 2>&1 || setup_fail "the whole map never showed its size line"
+# A map with concepts opens on its concept cards (#1281), and Map is already the chosen view. Which concept the import's nodes land in is the
+# namer's pick, so open_with opens the cards in turn until a 'Map items' row holds one of its needles, and leaves that needle in $FOUND.
+tiles() { d search --type Button --limit 400 2>/dev/null | jq -r '.matches[] | select(.visible and ((.name // "") | endswith("Press Enter to open."))) | .name'; }
+button_id() { d search --type Button --limit 400 2>/dev/null | jq -r --arg n "$1" 'first(.matches[] | select(.visible and .name == $n) | .id) // empty'; }
+on_tiles() { # waits up to 60 s for the concept cards
+  local i
+  for i in $(seq 1 60); do [ -n "$(tiles | head -n 1)" ] && return 0; sleep 1; done
+  setup_fail "the Context page never showed its concept cards"
+}
+back_to_tiles() { # Back, up to three times (a drill or an open panel may take a press of its own)
+  local id i
+  for i in 1 2 3; do
+    [ -n "$(tiles | head -n 1)" ] && return 0
+    id="$(button_id Back)"
+    [ -n "$id" ] || setup_fail "no Back button on the concept's map"
+    d click --node-id "$id" >/dev/null 2>&1 || setup_fail "could not click Back"
+    sleep 1
+  done
+  on_tiles
+}
+FOUND=""
+open_with() { # $@ needles
+  local names n id i w
+  back_to_tiles
+  mapfile -t names < <(tiles)
+  for n in "${names[@]}"; do
+    id="$(button_id "$n")"
+    [ -n "$id" ] || continue
+    d click --node-id "$id" >/dev/null 2>&1 || setup_fail "could not open the card '$n'"
+    d wait-for --type TextBlock --contains "links" --state visible --wait-ms 60000 >/dev/null 2>&1 || setup_fail "the card '$n' never showed its map's size line"
+    for i in 1 2 3 4 5; do
+      for w in "$@"; do has "$w" ListBoxItem && { FOUND="$w"; echo "'$w' is in '$n'"; return 0; }; done
+      sleep 1
+    done
+    back_to_tiles
+  done
+  return 1
+}
+on_tiles
 sleep 1
 
 REPO_DIR="$AW_SINDRI_HOME/ui-fixture-context/aw-split-panes"
@@ -95,7 +131,7 @@ HEAD_SHA="$(env -u GIT_DIR -u GIT_WORK_TREE git -C "$REPO_DIR" rev-parse HEAD 2>
 DOC_URL="https://github.com/acme/tabs/blob/$HEAD_SHA/$DOC_PATH"
 
 # Step 1: the repo file. The doc node's panel shows its source and the GitHub button.
-wait_has "$DOC_LABEL" ListBoxItem "step 1 (the doc node in the 'Map items' list)"
+open_with "$DOC_LABEL" || fail "step 1: no concept's 'Map items' list holds '$DOC_LABEL'"
 pick "$DOC_LABEL"
 wait_has "doc:" TextBlock "step 1 (the doc node's source line)"
 sleep 1
@@ -108,8 +144,9 @@ got="$(served_url "$DOC_KEY")"
 [ "$got" = "$DOC_URL" ] || fail "step 1: the app is served '$got' for $DOC_KEY, not $DOC_URL"
 
 # Step 2: the Linear ticket. The record node's panel shows the ticket source and the ticket button.
-wait_has "$TICKET_LABEL" ListBoxItem "step 2 (the ticket node in the 'Map items' list)"
-pick "$TICKET_LABEL"
+# The row reads the ticket's title, or its key when the map was built before the record was stored.
+open_with "$TICKET_LABEL" "${TICKET_KEY#record:}" || fail "step 2: no concept's 'Map items' list holds '$TICKET_LABEL' or ${TICKET_KEY#record:}"
+pick "$FOUND"
 for i in $(seq 1 30); do has "ticket:" TextBlock && break; sleep 1; done
 has "ticket:" TextBlock || fail "step 2: the panel of '$TICKET_LABEL' shows no 'ticket:' source line"
 sleep 1
