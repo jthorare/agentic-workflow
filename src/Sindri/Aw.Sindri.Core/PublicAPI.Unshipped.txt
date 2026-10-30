@@ -21502,6 +21502,27 @@ override Aw.Sindri.Core.Jobs.JobModelCall.ToString() -> string!
 static Aw.Sindri.Core.Jobs.JobModelCall.operator !=(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
+Aw.Sindri.Core.Setup.ProfileKeyEdit
+Aw.Sindri.Core.Setup.ProfileKeyEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ProfileKeyEdit!
+Aw.Sindri.Core.Setup.ProfileKeyEdit.ProfileKeyEdit(string! Path, string! Text, bool Changed) -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Deconstruct(out string! Path, out string! Text, out bool Changed) -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Path.get -> string!
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Path.init -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Text.get -> string!
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Text.init -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Changed.get -> bool
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Changed.init -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Equals(Aw.Sindri.Core.Setup.ProfileKeyEdit? other) -> bool
+override Aw.Sindri.Core.Setup.ProfileKeyEdit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ProfileKeyEdit.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ProfileKeyEdit.ToString() -> string!
+static Aw.Sindri.Core.Setup.ProfileKeyEdit.operator !=(Aw.Sindri.Core.Setup.ProfileKeyEdit? left, Aw.Sindri.Core.Setup.ProfileKeyEdit? right) -> bool
+static Aw.Sindri.Core.Setup.ProfileKeyEdit.operator ==(Aw.Sindri.Core.Setup.ProfileKeyEdit? left, Aw.Sindri.Core.Setup.ProfileKeyEdit? right) -> bool
+Aw.Sindri.Core.Setup.IProfileKeyWriter
+Aw.Sindri.Core.Setup.IProfileKeyWriter.Plan(string! keyPath, string! value) -> Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileKeyEdit!>!
+Aw.Sindri.Core.Setup.IProfileKeyWriter.Save(Aw.Sindri.Core.Setup.ProfileKeyEdit! edit) -> Aw.Kernel.Result<string!>!
+Aw.Sindri.Core.Profile.IProfileTextParser
+Aw.Sindri.Core.Profile.IProfileTextParser.Parse(string! yaml, string! source) -> Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile!>!
 Aw.Sindri.Core.Profile.LinearToken
 const Aw.Sindri.Core.Profile.LinearToken.Connect = "sindri index connect linear" -> string!
 const Aw.Sindri.Core.Profile.LinearToken.Missing = "Linear needs a token" -> string!

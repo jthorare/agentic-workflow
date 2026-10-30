@@ -5553,3 +5553,35 @@ override Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.GetHashCode()
 override Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.ToString() -> string!
 static Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.operator !=(Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? left, Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? right) -> bool
 static Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.operator ==(Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? left, Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? right) -> bool
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.<Clone>$() -> Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.SetProfileKeyRequest(string! Key, string! Value) -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Deconstruct(out string! Key, out string! Value) -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Key.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Key.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Value.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Value.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Equals(Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? other) -> bool
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.ToString() -> string!
+static Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.operator !=(Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? right) -> bool
+static Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.operator ==(Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? right) -> bool
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.<Clone>$() -> Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.SetProfileKeyResponse(string! Path, string! Key, string! Value, bool Changed) -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Deconstruct(out string! Path, out string! Key, out string! Value, out bool Changed) -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Path.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Path.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Key.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Key.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Value.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Value.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Changed.get -> bool
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Changed.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Equals(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? other) -> bool
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.GetHashCode() -> int
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.ToString() -> string!
+static Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.operator !=(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? right) -> bool
+static Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.operator ==(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? right) -> bool

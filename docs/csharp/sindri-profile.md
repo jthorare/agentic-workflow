@@ -86,6 +86,8 @@ Which model an agent step runs on (model-pick spec `2026-10-26-sindri-model-pick
 | `agent.cap` | object: agent id to a model id | no | none | No pick goes above this model |
 | `agent.pick` | `on` or `off` | no | absent = `off` | `off` is the privacy switch and the old behaviour: nothing is picked and nothing is sent to Jev. `on` takes effect only once the owner has approved a profile whose summary showed the Jev notice (spec §8 "Consent") |
 
+Edit one scalar key without opening the file: `sindri profile set <dotted.key> <value>` (for example `sindri profile set context.models.labeling.pick jev`) changes that line only, checks the result with the same rules as `profile validate`, and leaves approving to you (`sindri profile approve`). See `docs/csharp/sindri.md`.
+
 `sindri profile validate` prints, for each `pin` and `cap`, what it matches, for example `pin claude-code/questions = haiku: matches workflow.scoping state questions, workflow.design state questions`.
 
 ### The line's keys (`workflow.packs`, `.line`, `.plan`, `.prove`, `.build`, `.ship`, `.design`, `.review`, `.steps`, `.docs`)
