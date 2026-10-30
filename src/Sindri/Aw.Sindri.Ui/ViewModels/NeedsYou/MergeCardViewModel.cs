@@ -10,12 +10,11 @@ namespace Aw.Sindri.Ui.ViewModels.NeedsYou;
 internal sealed class MergeCardViewModel
 {
     private readonly PrStatusView _status;
-    private readonly ILauncher _launcher;
 
     internal MergeCardViewModel(PrStatusView status, ILauncher? launcher = null)
     {
         ArgumentNullException.ThrowIfNull(status);
-        (_status, _launcher) = (status, launcher ?? NullLauncher.Instance);
+        (_status, Launch) = (status, new LinkLaunch(launcher ?? NullLauncher.Instance));
         Lines =
         [
             new(Labels.MergeChecks, status.Checks is { } checks ? Labels.MergeChecksLine(checks.Passed, checks.Failed, checks.Pending) : Labels.MergeChecksUnread),
@@ -24,6 +23,9 @@ internal sealed class MergeCardViewModel
             new(Labels.MergeDocs, DocsWords(status.Docs)),
         ];
     }
+
+    /// <summary>The pull request link's launch, with its failed line.</summary>
+    public LinkLaunch Launch { get; }
 
     /// <summary>The heading.</summary>
     public string Heading { get; } = Labels.MergeCardHeading;
@@ -47,7 +49,7 @@ internal sealed class MergeCardViewModel
     {
         if (CanOpen && Uri.TryCreate(_status.Url, UriKind.Absolute, out var uri))
         {
-            _ = await _launcher.OpenUri(uri, cancellationToken).ConfigureAwait(true);
+            _ = await Launch.Open(uri, cancellationToken).ConfigureAwait(true);
         }
     }
 

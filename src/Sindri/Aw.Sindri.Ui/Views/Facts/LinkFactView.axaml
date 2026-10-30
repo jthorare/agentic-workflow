@@ -4,9 +4,12 @@
              x:Class="Aw.Sindri.Ui.Views.Facts.LinkFactView"
              x:DataType="facts:LinkFactViewer">
   <!-- A link fact: its title and host as served, and Open, which hands an http or https link to the platform. -->
+  <StackPanel Spacing="4">
   <WrapPanel Orientation="Horizontal">
     <TextBlock x:Name="FactLinkTitle" Classes="body-strong" Text="{Binding Title}" VerticalAlignment="Center" Margin="0,0,12,0" AutomationProperties.Name="{Binding Title}" />
     <TextBlock x:Name="FactLinkHost" Classes="caption mono subtle" Text="{Binding Host}" VerticalAlignment="Center" Margin="0,0,12,0" />
     <Button x:Name="FactLinkOpen" Content="{Binding OpenText}" IsVisible="{Binding CanOpen}" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}" />
   </WrapPanel>
+    <SelectableTextBlock x:Name="FactLinkLaunchFailed" Classes="caption" Text="{Binding LaunchFailedText}" IsVisible="{Binding LaunchFailed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LaunchFailedText}" />
+  </StackPanel>
 </UserControl>
