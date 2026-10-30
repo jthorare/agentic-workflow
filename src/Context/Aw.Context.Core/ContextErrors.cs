@@ -222,6 +222,12 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-232: a vector scan was asked with a query or mask that doesn't fit the matrix, or a count out of range.</summary>
     public static readonly ErrorDefinition VectorScanInvalid = new("SND-CONTEXT-232", ErrorKind.Invalid, "The vector scan request is invalid");
 
+    /// <summary>SND-CONTEXT-242: Jev refused a pack of choice questions (input too big, an answer that wasn't one, a timeout). The labeler splits the pack and asks again, down to two levels; what still fails takes its fallback. The message is a reason code.</summary>
+    public static readonly ErrorDefinition ChoiceRejected = new("SND-CONTEXT-242", ErrorKind.Unavailable, "Jev refused a pack of choice questions");
+
+    /// <summary>SND-CONTEXT-243: Jev can't be asked for the rest of this pass (no key, offline, excluded, a refused key, rate limited, a server error, or the pick is off in the approved profile). Every undecided choice takes its fallback. The message is a reason code.</summary>
+    public static readonly ErrorDefinition ChoiceUnavailable = new("SND-CONTEXT-243", ErrorKind.Unavailable, "Jev can't be asked for choices");
+
     /// <summary>Every Context error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
         [SettingsInvalid, RecordBatchInvalid, EmbedderUnavailable, VectorScanInvalid, SourceNotConfigured, UnknownAnchor, StoreUnavailable, PathInWorktree, QueryInvalid, SourceUnavailable, AllSourcesUnavailable, SessionsDisabled,
@@ -229,7 +235,7 @@ public static class ContextErrors
          NoMap, MapFileInvalid, MapNodeUndefined, ExportOutsideHome, MapFileChanged, ProbeFileInvalid, NoProbeFile, AmbiguousAnchor, ProbesRegressed,
          HeavyLockBusy, LabelingUnavailable, ReviewFileNoMatch, NoDraftMap, RepoOutsideScope, PromoteRefused, ReviewTargetStale, ExtractionUnreadable,
          LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
-         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, AreaUnknown, NodeNotInScopeGraph];
+         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph];
 
     /// <summary>
     /// The codes the CLI answers with exit 1 (attention, spec §8.6): an unknown or ambiguous anchor, a refused input or

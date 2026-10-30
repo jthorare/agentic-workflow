@@ -614,6 +614,8 @@ sources status, doctor row, item query), `ContextCliTests` and `ContextReviewRow
 | `SND-CONTEXT-090` | degraded | 0 | The rerank (`context.ranker.rerank`, or the `ranker-rerank` backtest arm) could not order the items: the answer lists `rerank` as degraded and keeps the feature or fusion order |
 | `SND-CONTEXT-240` | Unavailable (503) | 2 | Every model harness a call may try is at its usage limit or failing (model routing, `context.models`; raised by the router, not by the settings) |
 | `SND-CONTEXT-241` | Unavailable (503) | 2 | No model harness a call may try is installed |
+| `SND-CONTEXT-242` | Unavailable (503) | 2 | Jev refused a pack of choice questions (the label pick; input too big, an unreadable answer, a timeout). The labeler splits the pack in halves, twice at most, and never shows it: what still fails takes the model's first candidate. The message is a reason code |
+| `SND-CONTEXT-243` | Unavailable (503) | 2 | Jev can't be asked for the rest of this pass (no key, offline, excluded, a refused key, rate limited, a server error, or the pick is off in the approved profile). The labeler stops asking and every undecided cluster takes its first candidate; only the reasons other than `off` and `no-key` reach the build as `labels: jev unavailable (<reason>)`. The message is a reason code |
 
 084-086 are reserved for review findings, 087-089 for S-7B. Reused: 020, 030, 040, 048 (a cut git can't read: that sample is dropped and counted), 005, 004 (a cache or context.db read failing stops the run with its own code), 001, 011.
 

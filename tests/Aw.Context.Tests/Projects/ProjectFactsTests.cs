@@ -171,9 +171,10 @@ public sealed class ProjectFactsTests
     }
 
     [Fact]
-    public async Task FirstReadDone_follows_the_projects_feed_and_Counting_follows_the_issue_re_read()
+    public async Task FirstReadDone_follows_the_stored_projects_cursor_and_Counting_follows_the_issue_re_read()
     {
         await Seed(Project(_alpha, "Alpha"), Project(_beta, "Beta"));
+        _ = await _store.Commit(RecordSamples.Batch(LinearSourceIds.Projects, 1) with { Position = new SyncPosition(Cursor: null, SyncPhase.Recent, BackfillCursor: null) }, TestContext.Current.CancellationToken);
         _sync.Standing = [Progress(LinearSourceIds.Projects, SyncPhase.Recent), Progress(LinearSourceIds.Issues, SyncPhase.Recent, reReading: 1200)];
 
         var reading = await Read([_alpha, _beta]);
@@ -182,6 +183,7 @@ public sealed class ProjectFactsTests
         Assert.All(reading.Projects, p => Assert.True(p.Counting));
         Assert.All(reading.Catalog, p => Assert.True(p.Counting));
 
+        _ = await _store.Commit(RecordSamples.Batch(LinearSourceIds.Projects, 1) with { Position = new SyncPosition(Cursor: null, SyncPhase.Incremental, BackfillCursor: null) }, TestContext.Current.CancellationToken);
         _sync.Standing = [Progress(LinearSourceIds.Projects, SyncPhase.Incremental), Progress(LinearSourceIds.Issues, SyncPhase.Incremental)];
 
         var done = await Read([_alpha, _beta]);
@@ -191,14 +193,14 @@ public sealed class ProjectFactsTests
     }
 
     [Fact]
-    public async Task Without_a_linear_feed_nothing_is_counting_and_the_first_read_is_not_done()
+    public async Task Without_a_linear_feed_nothing_is_counting_and_the_first_read_is_done_from_the_stored_cursor()
     {
         await Seed(Project(_alpha, "Alpha"));
         _sync.Standing = [];
 
         var answer = await Read([_alpha]);
 
-        Assert.False(answer.FirstReadDone);
+        Assert.True(answer.FirstReadDone);
         Assert.False(answer.Projects[0].Counting);
     }
 

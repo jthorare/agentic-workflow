@@ -1221,6 +1221,8 @@ Aw.Context.Core.Extract.FileCluster.Confidence.init -> void
 Aw.Context.Core.Extract.FileCluster.Deconstruct(out Aw.Context.Core.Extract.ClusterId Id, out System.Collections.Generic.IReadOnlyList<string!>! Files, out double Confidence) -> void
 Aw.Context.Core.Extract.FileCluster.Equals(Aw.Context.Core.Extract.FileCluster? other) -> bool
 Aw.Context.Core.Extract.FileCluster.FileCluster(Aw.Context.Core.Extract.ClusterId Id, System.Collections.Generic.IReadOnlyList<string!>! Files, double Confidence) -> void
+Aw.Context.Core.Extract.FileCluster.FileName.get -> string?
+Aw.Context.Core.Extract.FileCluster.FileName.init -> void
 Aw.Context.Core.Extract.FileCluster.Files.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Extract.FileCluster.Files.init -> void
 Aw.Context.Core.Extract.FileCluster.Id.get -> Aw.Context.Core.Extract.ClusterId
@@ -1247,19 +1249,43 @@ Aw.Context.Core.Extract.IDefaultBranch.Reaches(Aw.Context.Core.Engine.ContextRep
 Aw.Context.Core.Extract.IRepoRemote
 Aw.Context.Core.Extract.IRepoRemote.Origin(Aw.Context.Core.Engine.ContextRepo! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string?>!>
 Aw.Context.Core.Extract.ILabeler
-Aw.Context.Core.Extract.ILabeler.Label(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Extract.FileCluster!>! clusters, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Trust.ScrubPattern!>! extraPatterns, int maxTokens, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.LabelPass!>!>
+Aw.Context.Core.Extract.ILabeler.Label(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Extract.FileCluster!>! clusters, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Trust.ScrubPattern!>! extraPatterns, int maxTokens, Aw.Context.Core.Extract.LabelOptions? options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.LabelPass!>!>
 Aw.Context.Core.Extract.IRepoReader
 Aw.Context.Core.Extract.IRepoReader.Changes(Aw.Context.Core.Engine.ContextRepo! repo, Aw.Context.Core.Engine.DiffRange! range, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.RepoChanges!>!>
 Aw.Context.Core.Extract.IRepoReader.Head(Aw.Context.Core.Engine.ContextRepo! repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Context.Core.Extract.IRepoReader.ListFiles(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
 Aw.Context.Core.Extract.IRepoReader.Read(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
+Aw.Context.Core.Extract.LabelHow
+Aw.Context.Core.Extract.LabelHow.<Clone>$() -> Aw.Context.Core.Extract.LabelHow!
+Aw.Context.Core.Extract.LabelHow.Deconstruct(out int Jev, out int FirstCandidate, out int FileName) -> void
+Aw.Context.Core.Extract.LabelHow.Equals(Aw.Context.Core.Extract.LabelHow? other) -> bool
+Aw.Context.Core.Extract.LabelHow.FileName.get -> int
+Aw.Context.Core.Extract.LabelHow.FileName.init -> void
+Aw.Context.Core.Extract.LabelHow.FirstCandidate.get -> int
+Aw.Context.Core.Extract.LabelHow.FirstCandidate.init -> void
+Aw.Context.Core.Extract.LabelHow.Jev.get -> int
+Aw.Context.Core.Extract.LabelHow.Jev.init -> void
+Aw.Context.Core.Extract.LabelHow.LabelHow(int Jev, int FirstCandidate, int FileName) -> void
+Aw.Context.Core.Extract.LabelOptions
+Aw.Context.Core.Extract.LabelOptions.<Clone>$() -> Aw.Context.Core.Extract.LabelOptions!
+Aw.Context.Core.Extract.LabelOptions.Candidates.get -> int
+Aw.Context.Core.Extract.LabelOptions.Candidates.init -> void
+Aw.Context.Core.Extract.LabelOptions.Deconstruct(out bool Pick, out int Candidates) -> void
+Aw.Context.Core.Extract.LabelOptions.Equals(Aw.Context.Core.Extract.LabelOptions? other) -> bool
+Aw.Context.Core.Extract.LabelOptions.LabelOptions(bool Pick, int Candidates) -> void
+Aw.Context.Core.Extract.LabelOptions.Pick.get -> bool
+Aw.Context.Core.Extract.LabelOptions.Pick.init -> void
 Aw.Context.Core.Extract.LabelPass
 Aw.Context.Core.Extract.LabelPass.<Clone>$() -> Aw.Context.Core.Extract.LabelPass!
+Aw.Context.Core.Extract.LabelPass.Chosen.get -> Aw.Context.Core.Extract.LabelHow?
+Aw.Context.Core.Extract.LabelPass.Chosen.init -> void
 Aw.Context.Core.Extract.LabelPass.Complete.get -> bool
 Aw.Context.Core.Extract.LabelPass.Complete.init -> void
 Aw.Context.Core.Extract.LabelPass.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Extract.ClusterLabel!>! Labels, out bool Complete, out string? Unavailable) -> void
 Aw.Context.Core.Extract.LabelPass.Equals(Aw.Context.Core.Extract.LabelPass? other) -> bool
 Aw.Context.Core.Extract.LabelPass.LabelPass(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Extract.ClusterLabel!>! Labels, bool Complete = true, string? Unavailable = null) -> void
+Aw.Context.Core.Extract.LabelPass.PickUnavailable.get -> string?
+Aw.Context.Core.Extract.LabelPass.PickUnavailable.init -> void
 Aw.Context.Core.Extract.LabelPass.Unavailable.get -> string?
 Aw.Context.Core.Extract.LabelPass.Unavailable.init -> void
 Aw.Context.Core.Map.CheckMeasure
@@ -3447,8 +3473,48 @@ Aw.Context.Core.Map.VisibleMap.Graph.init -> void
 Aw.Context.Core.Map.VisibleMap.Snapshot.get -> Aw.Context.Core.Map.MapSnapshot!
 Aw.Context.Core.Map.VisibleMap.Snapshot.init -> void
 Aw.Context.Core.Map.VisibleMap.VisibleMap(Aw.Context.Core.Map.MapSnapshot! Snapshot, Aw.Context.Core.Graph.GraphSnapshot! Graph) -> void
+Aw.Context.Core.Models.ChoiceAnswer
+Aw.Context.Core.Models.ChoiceAnswer.<Clone>$() -> Aw.Context.Core.Models.ChoiceAnswer!
+Aw.Context.Core.Models.ChoiceAnswer.ChoiceAnswer(string! Key, string? Picked, double Confidence) -> void
+Aw.Context.Core.Models.ChoiceAnswer.Confidence.get -> double
+Aw.Context.Core.Models.ChoiceAnswer.Confidence.init -> void
+Aw.Context.Core.Models.ChoiceAnswer.Deconstruct(out string! Key, out string? Picked, out double Confidence) -> void
+Aw.Context.Core.Models.ChoiceAnswer.Equals(Aw.Context.Core.Models.ChoiceAnswer? other) -> bool
+Aw.Context.Core.Models.ChoiceAnswer.Key.get -> string!
+Aw.Context.Core.Models.ChoiceAnswer.Key.init -> void
+Aw.Context.Core.Models.ChoiceAnswer.Picked.get -> string?
+Aw.Context.Core.Models.ChoiceAnswer.Picked.init -> void
+Aw.Context.Core.Models.ChoiceKind
+Aw.Context.Core.Models.ChoiceKind.Labeling = 0 -> Aw.Context.Core.Models.ChoiceKind
+Aw.Context.Core.Models.ChoiceKind.ProductSurfaces = 1 -> Aw.Context.Core.Models.ChoiceKind
+Aw.Context.Core.Models.ChoiceModel
+Aw.Context.Core.Models.ChoiceModel.<Clone>$() -> Aw.Context.Core.Models.ChoiceModel!
+Aw.Context.Core.Models.ChoiceModel.ChoiceModel(string! Value) -> void
+Aw.Context.Core.Models.ChoiceModel.Deconstruct(out string! Value) -> void
+Aw.Context.Core.Models.ChoiceModel.Equals(Aw.Context.Core.Models.ChoiceModel? other) -> bool
+Aw.Context.Core.Models.ChoiceModel.Value.get -> string!
+Aw.Context.Core.Models.ChoiceModel.Value.init -> void
+Aw.Context.Core.Models.ChoiceQuestion
+Aw.Context.Core.Models.ChoiceQuestion.<Clone>$() -> Aw.Context.Core.Models.ChoiceQuestion!
+Aw.Context.Core.Models.ChoiceQuestion.ChoiceQuestion(string! Key, string! Prompt, System.Collections.Generic.IReadOnlyList<string!>! Options) -> void
+Aw.Context.Core.Models.ChoiceQuestion.Deconstruct(out string! Key, out string! Prompt, out System.Collections.Generic.IReadOnlyList<string!>! Options) -> void
+Aw.Context.Core.Models.ChoiceQuestion.Equals(Aw.Context.Core.Models.ChoiceQuestion? other) -> bool
+Aw.Context.Core.Models.ChoiceQuestion.Key.get -> string!
+Aw.Context.Core.Models.ChoiceQuestion.Key.init -> void
+Aw.Context.Core.Models.ChoiceQuestion.Options.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Models.ChoiceQuestion.Options.init -> void
+Aw.Context.Core.Models.ChoiceQuestion.Prompt.get -> string!
+Aw.Context.Core.Models.ChoiceQuestion.Prompt.init -> void
+Aw.Context.Core.Models.ChoiceReasons
+Aw.Context.Core.Models.IChoicePort
+Aw.Context.Core.Models.IChoicePort.Identity.get -> Aw.Context.Core.Models.ChoiceModel!
+Aw.Context.Core.Models.IChoicePort.InputCapChars(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
+Aw.Context.Core.Models.IChoicePort.Pick(Aw.Context.Core.Models.ChoiceKind kind, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Models.ChoiceQuestion!>! questions, int capChars, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Models.ChoiceAnswer!>!>!>
 Aw.Context.Core.Models.IModelPort
 Aw.Context.Core.Models.IModelPort.Ask(Aw.Context.Core.Models.ModelRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Models.ModelAnswer!>!>
+Aw.Context.Core.Models.IModelPromptBudget
+Aw.Context.Core.Models.IModelPromptBudget.For(Aw.Context.Core.Models.ModelPurpose purpose, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Models.PromptBudget?>
+Aw.Context.Core.Models.LabelPickLimits
 Aw.Context.Core.Models.ModelAnswer
 Aw.Context.Core.Models.ModelAnswer.<Clone>$() -> Aw.Context.Core.Models.ModelAnswer!
 Aw.Context.Core.Models.ModelAnswer.Equals(Aw.Context.Core.Models.ModelAnswer? other) -> bool
@@ -3469,12 +3535,23 @@ Aw.Context.Core.Models.ModelRequest.<Clone>$() -> Aw.Context.Core.Models.ModelRe
 Aw.Context.Core.Models.ModelRequest.Budget.get -> System.TimeSpan
 Aw.Context.Core.Models.ModelRequest.Budget.init -> void
 Aw.Context.Core.Models.ModelRequest.Equals(Aw.Context.Core.Models.ModelRequest? other) -> bool
+Aw.Context.Core.Models.ModelRequest.MaxPromptChars.get -> int?
+Aw.Context.Core.Models.ModelRequest.MaxPromptChars.init -> void
 Aw.Context.Core.Models.ModelRequest.MaxTokens.get -> int
 Aw.Context.Core.Models.ModelRequest.MaxTokens.init -> void
 Aw.Context.Core.Models.ModelRequest.Prompt.get -> string!
 Aw.Context.Core.Models.ModelRequest.Prompt.init -> void
 Aw.Context.Core.Models.ModelRequest.Purpose.get -> Aw.Context.Core.Models.ModelPurpose
 Aw.Context.Core.Models.ModelRequest.Purpose.init -> void
+Aw.Context.Core.Models.PromptBudget
+Aw.Context.Core.Models.PromptBudget.<Clone>$() -> Aw.Context.Core.Models.PromptBudget!
+Aw.Context.Core.Models.PromptBudget.Chars.get -> int
+Aw.Context.Core.Models.PromptBudget.Chars.init -> void
+Aw.Context.Core.Models.PromptBudget.Deconstruct(out int Chars, out int MaxItems) -> void
+Aw.Context.Core.Models.PromptBudget.Equals(Aw.Context.Core.Models.PromptBudget? other) -> bool
+Aw.Context.Core.Models.PromptBudget.MaxItems.get -> int
+Aw.Context.Core.Models.PromptBudget.MaxItems.init -> void
+Aw.Context.Core.Models.PromptBudget.PromptBudget(int Chars, int MaxItems) -> void
 Aw.Context.Core.Overrides.AppliedMap
 Aw.Context.Core.Overrides.AppliedMap.<Clone>$() -> Aw.Context.Core.Overrides.AppliedMap!
 Aw.Context.Core.Overrides.AppliedMap.AppliedMap(Aw.Context.Core.Graph.GraphSnapshot! Graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Orphaned, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! Inapplicable) -> void
@@ -4797,6 +4874,12 @@ const Aw.Context.Core.History.HistoryRules.SubjectChars = 200 -> int
 const Aw.Context.Core.Linking.DecisionExtractor.MaxQuote = 600 -> int
 const Aw.Context.Core.Map.MapChecks.SizeCap = 150 -> int
 const Aw.Context.Core.Map.MapRetention.RetainedVersions = 100 -> int
+const Aw.Context.Core.Models.ChoiceReasons.NoKey = "no-key" -> string!
+const Aw.Context.Core.Models.ChoiceReasons.Off = "off" -> string!
+const Aw.Context.Core.Models.ChoiceReasons.OverCap = "over-cap" -> string!
+const Aw.Context.Core.Models.LabelPickLimits.AnswerTokens = 16 -> int
+const Aw.Context.Core.Models.LabelPickLimits.CapShare = 0.8 -> double
+const Aw.Context.Core.Models.LabelPickLimits.MaxOptions = 5 -> int
 const Aw.Context.Core.Overrides.MapOverride.CutMarker = "service:deny-cut" -> string!
 const Aw.Context.Core.Overrides.MapOverride.DemoteMarker = "service:demote-cut" -> string!
 const Aw.Context.Core.Overrides.MapOverride.EngineWho = "service:engine" -> string!
@@ -4810,6 +4893,10 @@ const Aw.Context.Core.Review.CleanupPolicy.MaxTokens = 100000 -> int
 const Aw.Context.Core.Review.ReviewHistory.DefaultLimit = 2147483647 -> int
 const Aw.Context.Core.Review.ReviewLimits.QueueDefault = 2147483647 -> int
 const Aw.Context.Core.Map.NodeDetails.MaxDescription = 280 -> int
+const Aw.Context.Core.Models.LabelPickLimits.MaxQuestions = 100 -> int
+const Aw.Context.Core.Models.LabelPickLimits.MaxSplitDepth = 2 -> int
+const Aw.Context.Core.Models.LabelPickLimits.MinConfidence = 0.5 -> double
+const Aw.Context.Core.Models.LabelPickLimits.MinOptions = 2 -> int
 const Aw.Context.Core.Trust.UntrustedFence.MaxTitle = 200 -> int
 override Aw.Context.Core.Code.CodeData.Equals(object? obj) -> bool
 override Aw.Context.Core.Code.CodeData.GetHashCode() -> int
@@ -5038,6 +5125,7 @@ override Aw.Context.Core.Extract.FileCluster.ToString() -> string!
 override Aw.Context.Core.Extract.Found.Equals(object? obj) -> bool
 override Aw.Context.Core.Extract.Found.GetHashCode() -> int
 override Aw.Context.Core.Extract.Found.ToString() -> string!
+override Aw.Context.Core.Extract.LabelOptions.GetHashCode() -> int
 override Aw.Context.Core.Extract.LabelPass.Equals(object? obj) -> bool
 override Aw.Context.Core.Extract.LabelPass.GetHashCode() -> int
 override Aw.Context.Core.Extract.LabelPass.ToString() -> string!
@@ -5418,12 +5506,21 @@ override Aw.Context.Core.Map.PurgeReport.ToString() -> string!
 override Aw.Context.Core.Map.VisibleMap.Equals(object? obj) -> bool
 override Aw.Context.Core.Map.VisibleMap.GetHashCode() -> int
 override Aw.Context.Core.Map.VisibleMap.ToString() -> string!
+override Aw.Context.Core.Models.ChoiceAnswer.Equals(object? obj) -> bool
+override Aw.Context.Core.Models.ChoiceAnswer.GetHashCode() -> int
+override Aw.Context.Core.Models.ChoiceAnswer.ToString() -> string!
+override Aw.Context.Core.Models.ChoiceModel.GetHashCode() -> int
+override Aw.Context.Core.Models.ChoiceModel.ToString() -> string!
+override Aw.Context.Core.Models.ChoiceQuestion.Equals(object? obj) -> bool
+override Aw.Context.Core.Models.ChoiceQuestion.ToString() -> string!
 override Aw.Context.Core.Models.ModelAnswer.Equals(object? obj) -> bool
 override Aw.Context.Core.Models.ModelAnswer.GetHashCode() -> int
 override Aw.Context.Core.Models.ModelAnswer.ToString() -> string!
 override Aw.Context.Core.Models.ModelRequest.Equals(object? obj) -> bool
 override Aw.Context.Core.Models.ModelRequest.GetHashCode() -> int
 override Aw.Context.Core.Models.ModelRequest.ToString() -> string!
+override Aw.Context.Core.Models.PromptBudget.Equals(object? obj) -> bool
+override Aw.Context.Core.Models.PromptBudget.GetHashCode() -> int
 override Aw.Context.Core.Overrides.AppliedMap.Equals(object? obj) -> bool
 override Aw.Context.Core.Overrides.AppliedMap.GetHashCode() -> int
 override Aw.Context.Core.Overrides.AppliedMap.ToString() -> string!
@@ -9607,6 +9704,10 @@ Aw.Context.Core.Sync.SourceProgress.Records.get -> int?
 Aw.Context.Core.Sync.SourceProgress.Records.init -> void
 Aw.Context.Core.Sync.SourceProgress.SourceProgress(Aw.Context.Core.Sources.SourceId Source, Aw.Context.Core.Records.SyncPhase? Phase, System.DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null, string? Pull = null, int? Records = null, System.DateTimeOffset? LastCommit = null, string? LastError = null, string? LastErrorText = null, int? Failures = null, System.DateTimeOffset? NextTry = null) -> void
 const Aw.Context.Core.Records.SourceBackoff.FailedAfter = 5 -> int
+override Aw.Context.Core.Extract.LabelOptions.ToString() -> string!
+override Aw.Context.Core.Models.ChoiceModel.Equals(object? obj) -> bool
+override Aw.Context.Core.Models.ChoiceQuestion.GetHashCode() -> int
+override Aw.Context.Core.Models.PromptBudget.ToString() -> string!
 override Aw.Context.Core.Records.SourceBackoffState.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.SourceBackoffState.GetHashCode() -> int
 override Aw.Context.Core.Records.SourceBackoffState.ToString() -> string!
@@ -9665,6 +9766,17 @@ override Aw.Context.Core.Records.LiveRecordCounts.ToString() -> string!
 static Aw.Context.Core.ConceptSynthesis.ConceptStatus.From(bool enabled, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.ConceptSynthesis.SynthesizedConcept!>! concepts, long watermark, int live, int embedded) -> Aw.Context.Core.ConceptSynthesis.ConceptStatus!
 static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator !=(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
 static Aw.Context.Core.ConceptSynthesis.ConceptStatus.operator ==(Aw.Context.Core.ConceptSynthesis.ConceptStatus? left, Aw.Context.Core.ConceptSynthesis.ConceptStatus? right) -> bool
+static Aw.Context.Core.Models.ChoiceModel.Unknown.get -> Aw.Context.Core.Models.ChoiceModel!
+static Aw.Context.Core.Models.ChoiceModel.operator !=(Aw.Context.Core.Models.ChoiceModel? left, Aw.Context.Core.Models.ChoiceModel? right) -> bool
+static Aw.Context.Core.Models.ChoiceModel.operator ==(Aw.Context.Core.Models.ChoiceModel? left, Aw.Context.Core.Models.ChoiceModel? right) -> bool
+static Aw.Context.Core.Models.ChoiceQuestion.operator !=(Aw.Context.Core.Models.ChoiceQuestion? left, Aw.Context.Core.Models.ChoiceQuestion? right) -> bool
+static Aw.Context.Core.Models.ChoiceQuestion.operator ==(Aw.Context.Core.Models.ChoiceQuestion? left, Aw.Context.Core.Models.ChoiceQuestion? right) -> bool
+static Aw.Context.Core.Models.LabelPickLimits.Budget.get -> System.TimeSpan
+static Aw.Context.Core.Models.LabelPickLimits.CallChars(int capChars) -> int
+static Aw.Context.Core.Models.PromptBudget.Narrow.get -> Aw.Context.Core.Models.PromptBudget!
+static Aw.Context.Core.Models.PromptBudget.Wide.get -> Aw.Context.Core.Models.PromptBudget!
+static Aw.Context.Core.Models.PromptBudget.operator !=(Aw.Context.Core.Models.PromptBudget? left, Aw.Context.Core.Models.PromptBudget? right) -> bool
+static Aw.Context.Core.Models.PromptBudget.operator ==(Aw.Context.Core.Models.PromptBudget? left, Aw.Context.Core.Models.PromptBudget? right) -> bool
 static Aw.Context.Core.Records.LiveRecordCounts.operator !=(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool
 static Aw.Context.Core.Records.LiveRecordCounts.operator ==(Aw.Context.Core.Records.LiveRecordCounts? left, Aw.Context.Core.Records.LiveRecordCounts? right) -> bool
 Aw.Context.Core.ConceptSynthesis.ConceptStatus.ConceptStatus(bool Enabled, int Concepts, int MultiSource, int Queued, int Covered, long Watermark, int Embedded, int Pending, System.DateTimeOffset? LastRun = null, string? LastCode = null) -> void
@@ -9737,6 +9849,7 @@ Aw.Context.Core.Projects.ProjectFactsRequest.ProjectFactsRequest(System.Collecti
 Aw.Context.Core.Records.IRecordStore.ProjectFacts(Aw.Context.Core.Sources.SourceId source, Aw.Context.Core.Records.RecordAudience! audience, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Records.ProjectRow!>!>!>
 Aw.Context.Core.Records.ProjectRow.<Clone>$() -> Aw.Context.Core.Records.ProjectRow!
 Aw.Context.Core.Records.ProjectRow.Deconstruct(out Aw.Context.Core.Sources.RecordKey Key, out string! Title, out string? Url, out string? StateRaw, out string? Health, out System.DateOnly? DueAt, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out string? LeadRef, out string? LeadName, out int OpenIssues, out System.DateTimeOffset? NewestIssueAt, out string? Description) -> void
+override Aw.Context.Core.Extract.LabelOptions.Equals(object? obj) -> bool
 override Aw.Context.Core.Projects.ProjectFact.Equals(object? obj) -> bool
 override Aw.Context.Core.Projects.ProjectFact.GetHashCode() -> int
 override Aw.Context.Core.Projects.ProjectFact.ToString() -> string!
@@ -9788,10 +9901,15 @@ Aw.Context.Core.Sources.UserRef.Name.get -> string?
 Aw.Context.Core.Sources.UserRef.Name.init -> void
 Aw.Context.Core.Sources.UserRef.UserRef() -> void
 Aw.Context.Core.Sources.UserRef.UserRef(Aw.Context.Core.Sources.ExternalId Id, string? Name) -> void
+override Aw.Context.Core.Extract.LabelHow.ToString() -> string!
 override Aw.Context.Core.Records.ProjectRow.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.ProjectRow.GetHashCode() -> int
 override Aw.Context.Core.Records.ProjectRow.ToString() -> string!
 override Aw.Context.Core.Sources.UserRef.GetHashCode() -> int
+static Aw.Context.Core.Extract.LabelHow.operator !=(Aw.Context.Core.Extract.LabelHow? left, Aw.Context.Core.Extract.LabelHow? right) -> bool
+static Aw.Context.Core.Extract.LabelHow.operator ==(Aw.Context.Core.Extract.LabelHow? left, Aw.Context.Core.Extract.LabelHow? right) -> bool
+static Aw.Context.Core.Extract.LabelOptions.operator !=(Aw.Context.Core.Extract.LabelOptions? left, Aw.Context.Core.Extract.LabelOptions? right) -> bool
+static Aw.Context.Core.Extract.LabelOptions.operator ==(Aw.Context.Core.Extract.LabelOptions? left, Aw.Context.Core.Extract.LabelOptions? right) -> bool
 static Aw.Context.Core.Records.ProjectRow.operator !=(Aw.Context.Core.Records.ProjectRow? left, Aw.Context.Core.Records.ProjectRow? right) -> bool
 static Aw.Context.Core.Records.ProjectRow.operator ==(Aw.Context.Core.Records.ProjectRow? left, Aw.Context.Core.Records.ProjectRow? right) -> bool
 static Aw.Context.Core.Sources.UserRef.operator !=(Aw.Context.Core.Sources.UserRef left, Aw.Context.Core.Sources.UserRef right) -> bool
@@ -9937,6 +10055,7 @@ Aw.Context.Core.Models.ModelAnswer.TokenBasis.get -> Aw.Context.Core.Models.Toke
 Aw.Context.Core.Models.ModelAnswer.TokenBasis.init -> void
 Aw.Context.Core.Engine.ContextSettings.Models.get -> Aw.Context.Core.Engine.ModelsSettings!
 Aw.Context.Core.Engine.ContextSettings.Models.init -> void
+static Aw.Context.Core.Engine.ModelHarnesses.PromptBudget(Aw.Context.Core.Engine.ModelHarness harness) -> Aw.Context.Core.Models.PromptBudget!
 static Aw.Context.Core.Engine.ModelKinds.TryParse(string! key, out Aw.Context.Core.Engine.ModelKind kind) -> bool
 static Aw.Context.Core.Engine.ModelNames.BuiltInName(Aw.Context.Core.Engine.ModelHarness harness, Aw.Context.Core.Models.ModelTier tier) -> string!
 Aw.Context.Core.Concepts.CoveredConcepts
@@ -9966,9 +10085,16 @@ Aw.Context.Core.Records.ProjectRow.Description.init -> void
 const Aw.Context.Core.Sync.RecordBatches.MaxDescription = 4000 -> int
 Aw.Context.Core.Graph.UnreadFileNodes
 const Aw.Context.Core.Graph.UnreadFileNodes.Attribute = "read" -> string!
+override Aw.Context.Core.Extract.LabelHow.Equals(object? obj) -> bool
+override Aw.Context.Core.Extract.LabelHow.GetHashCode() -> int
 static Aw.Context.Core.Graph.UnreadFileNodes.Attributes() -> System.Text.Json.JsonElement
 static Aw.Context.Core.Graph.UnreadFileNodes.Is(Aw.Context.Core.Graph.GraphNode! node) -> bool
 Aw.Context.Core.Extract.IRepoReader.RemovedPaths(Aw.Context.Core.Engine.ContextRepo! repo, string! commit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!>
+static Aw.Context.Core.Models.ChoiceAnswer.operator !=(Aw.Context.Core.Models.ChoiceAnswer? left, Aw.Context.Core.Models.ChoiceAnswer? right) -> bool
+static Aw.Context.Core.Models.ChoiceAnswer.operator ==(Aw.Context.Core.Models.ChoiceAnswer? left, Aw.Context.Core.Models.ChoiceAnswer? right) -> bool
+static Aw.Context.Core.Models.ChoiceReasons.IsQuiet(string! reason) -> bool
+static readonly Aw.Context.Core.ContextErrors.ChoiceRejected -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.ChoiceUnavailable -> Aw.Kernel.ErrorDefinition!
 Aw.Context.Core.Records.RecordPermalinks
 Aw.Context.Core.Records.RecordSourceLink
 Aw.Context.Core.Records.RecordSourceLink.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
