@@ -21483,3 +21483,6 @@ override Aw.Sindri.Core.Jobs.JobModelCall.ToString() -> string!
 static Aw.Sindri.Core.Jobs.JobModelCall.operator !=(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
+Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.MacOsCanonical(string! path) -> string!
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.Render(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Func<string!, string!>? canonical = null) -> string!
