@@ -4,7 +4,10 @@
 (deny network*)
 (allow network-outbound (remote ip "localhost:7480"))
 (allow network-outbound (remote ip "localhost:41234"))
-; no unix-socket rule on purpose: the Linux plan's net directory does not exist here, and a CLI that turns out to need one is a canary finding, not a default
+; unix sockets under the run area only
+(allow network-bind (local unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-inbound (local unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-outbound (remote unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
 ; nothing is writable until a rule below says so
 (deny file-write* (subpath "/"))
 ; the terminal and the null device

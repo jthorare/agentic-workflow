@@ -1,6 +1,8 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
+using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
@@ -39,8 +41,7 @@ public sealed class SeatbeltProfileTests
     {
         var lines = Lines(SeatbeltProfile.Render(Plan(Req.WriteScope)));
 
-        Assert.Equal(["(allow network-outbound (remote ip \"localhost:7480\"))", "(allow network-outbound (remote ip \"localhost:41234\"))"], lines.Where(l => l.StartsWith("(allow network", StringComparison.Ordinal)), StringComparer.Ordinal);
-        Assert.DoesNotContain(lines, l => l.Contains("unix-socket", StringComparison.Ordinal) && !l.StartsWith(';'));
+        Assert.Equal(["(allow network-outbound (remote ip \"localhost:7480\"))", "(allow network-outbound (remote ip \"localhost:41234\"))"], lines.Where(l => l.Contains("remote ip", StringComparison.Ordinal)), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -131,4 +132,60 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void An_attended_session_with_home_entries_matches_its_golden() =>
         Match(SeatbeltProfile.Render(Plan(Req.Attended with { Settings = new SandboxSettings(Fs: new SandboxFs(HomeAllow: [new HomeAllowEntry(".venv", MountMode.ReadWrite), new HomeAllowEntry(".config/gh", MountMode.ReadOnly)]), Repos: new Dictionary<string, SandboxRepoSettings>(StringComparer.Ordinal) { ["web"] = new(CachePaths: [".cache/pip"]) }) })), "seatbelt-attended.sb");
+
+    [Fact, Trait("Lane", "unit")]
+    public void Unix_sockets_are_allowed_under_the_run_area_only_and_the_path_is_canonical()
+    {
+        var plan = Plan(Req.WriteScope);
+
+        var lines = Lines(SeatbeltProfile.Render(plan, p => p.Replace("/home/owner", "/c", StringComparison.Ordinal)));
+
+        const string Area = "(subpath \"/c/.agentic-workflow/sindri-app/workflow/areas/run-1\")";
+        Assert.Contains($"(allow network-bind (local unix-socket {Area}))", lines, StringComparer.Ordinal);
+        Assert.Contains($"(allow network-inbound (local unix-socket {Area}))", lines, StringComparer.Ordinal);
+        Assert.Contains($"(allow network-outbound (remote unix-socket {Area}))", lines, StringComparer.Ordinal);
+        Assert.Equal(3, lines.Count(l => l.Contains("unix-socket", StringComparison.Ordinal) && !l.StartsWith(';')));
+    }
+
+    private static SandboxRequest MacShaped()
+    {
+        const string Home = "/Users/owner";
+        const string Repo = Home + "/repos/web";
+        const string Worktree = Repo + "/.claude/worktrees/sindri-x-1";
+        const string Area = Home + "/.agentic-workflow/sindri-app/workflow/areas/run-1";
+        static string Mac(string v) => v.Replace("/home/owner", Home, StringComparison.Ordinal);
+        var host = Req.Host with
+        {
+            Home = Home,
+            StateDir = Home + "/.agentic-workflow",
+            SindriHome = Home + "/.agentic-workflow/sindri-app",
+            CsBinDir = Mac(Req.CsBinDir),
+            IsMacOs = true,
+            Environment = Req.Host.Environment.ToDictionary(e => e.Key, e => Mac(e.Value), StringComparer.Ordinal),
+            OtherHomes = ["/Users/other"],
+        };
+        var login = new PreparedLogin(
+            ModelLoginSource.OwnerCopy,
+            [new LoginMount(Home + "/.claude", Home + "/.claude", MountMode.ReadOnly), new LoginMount(Area + "/login", Home + "/.claude-run", MountMode.ReadWrite)],
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["CLAUDE_CONFIG_DIR"] = Home + "/.claude-run" },
+            [Home + "/.claude-run"],
+            new LoginHandle(Area + "/login"));
+        return Req.WriteScope with
+        {
+            Paths = new SandboxPaths(Repo, Repo + "/.git", Worktree, host.SindriHome + "/workflow/runs/x/s/1", Area),
+            Policy = new StepPolicy([], StepPermissionMode.Default, Worktree),
+            Host = host,
+            Login = login,
+        };
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_mac_shaped_write_scope_step_matches_its_golden()
+    {
+        var text = SeatbeltProfile.Render(Plan(MacShaped()));
+
+        Match(text, "seatbelt-mac.sb");
+        Assert.Contains("(allow file-read* file-write* (subpath \"/Users/owner/repos/web/.claude/worktrees/sindri-x-1\"))", text, StringComparison.Ordinal);
+        Assert.True(text.IndexOf("(deny file-read* file-write* (subpath \"/Users/owner\"))", StringComparison.Ordinal) < text.IndexOf("(subpath \"/Users/owner/repos/web/.claude/worktrees/sindri-x-1\")", StringComparison.Ordinal));
+    }
 }

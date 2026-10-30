@@ -20,7 +20,7 @@ public static class SeatbeltProfile
         ArgumentNullException.ThrowIfNull(plan);
         var path = canonical ?? MacOsCanonical;
         var sb = new StringBuilder();
-        Header(sb, plan);
+        Header(sb, plan, path);
         List<(PlanMount Mount, string Path)> done = [];
         foreach (var mount in plan.Mounts)
         {
@@ -46,7 +46,7 @@ public static class SeatbeltProfile
         return _systemLinks.Any(p => string.Equals(path, p, StringComparison.Ordinal) || path.StartsWith(p + "/", StringComparison.Ordinal)) ? "/private" + path : path;
     }
 
-    private static void Header(StringBuilder sb, SandboxPlan plan)
+    private static void Header(StringBuilder sb, SandboxPlan plan, Func<string, string> canonical)
     {
         var net = plan.Network;
         _ = sb.AppendLine("(version 1)")
@@ -55,13 +55,28 @@ public static class SeatbeltProfile
             .AppendLine("(deny network*)")
             .AppendLine(Port(net.SindriPort))
             .AppendLine(Port(net.ProxyPort))
-            .AppendLine("; no unix-socket rule on purpose: the Linux plan's net directory does not exist here, and a CLI that turns out to need one is a canary finding, not a default")
+            .AppendLine(UnixSockets(plan, canonical))
+            // Known gap, on purpose: loopback stays strict. A test that starts its own localhost server (Kestrel on :0, a dev server) can't run in a Mac Step,
+            // because a Mac's loopback is shared with the owner's own services, serve included.
             .AppendLine("; nothing is writable until a rule below says so")
             .AppendLine("(deny file-write* (subpath \"/\"))")
             .AppendLine("; the terminal and the null device")
             .AppendLine("(allow file-write* (literal \"/dev/null\"))")
             .AppendLine("(allow file-write* (literal \"/dev/tty\"))")
             .AppendLine("(allow file-write* (regex #\"^/dev/ttys[0-9]+$\"))");
+    }
+
+    // why: (deny network*) also kills unix sockets, which MSBuild's worker nodes and the build server use (named pipes in TMPDIR); they may bind and connect under the run area only.
+    private static string UnixSockets(SandboxPlan plan, Func<string, string> canonical)
+    {
+        var file = plan.Environment.FirstOrDefault(static e => string.Equals(e.Name, "AW_SANDBOX_PLAN", StringComparison.Ordinal))?.Value;
+        if (file is null || file.LastIndexOf('/') is not (> 0 and var slash))
+        {
+            return "; no run area is named, so no unix socket is allowed";
+        }
+
+        var area = $"(subpath \"{Escape(canonical(file[..slash]))}\")";
+        return $"; unix sockets under the run area only\n(allow network-bind (local unix-socket {area}))\n(allow network-inbound (local unix-socket {area}))\n(allow network-outbound (remote unix-socket {area}))";
     }
 
     private static string Port(int port) => string.Create(CultureInfo.InvariantCulture, $"(allow network-outbound (remote ip \"localhost:{port}\"))");
