@@ -1,8 +1,9 @@
 using Avalonia;
 using Avalonia.Headless;
+using Aw.Sindri.Ui.Tests.Views;
 using Aw.Sindri.Ui.Views;
 
-[assembly: AvaloniaTestApplication(typeof(Aw.Sindri.Ui.Tests.Views.TestAppBuilder))]
+[assembly: AvaloniaTestApplication(typeof(TestAppBuilder))]
 
 namespace Aw.Sindri.Ui.Tests.Views;
 
