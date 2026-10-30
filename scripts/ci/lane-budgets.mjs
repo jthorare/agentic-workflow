@@ -42,8 +42,15 @@ const PACKAGE_BUDGETS = {
 // of its package's sum, with its own limits. For a package whose slow suites cannot fit one project's budget: Aw.Sindri.Engine.Tests
 // holds the Temporal-bound suites split out of Aw.Sindri.Tests so that package's integration lane fits 120 s (owner, 2026-10-18).
 // An explicit --budget for a lane overrides this table too. Raised by the owner on 2026-10-28 (q148, superseding q147) to about
-// twice the slowest run seen (125.3 s in run 40734081015); #1546 brings it back down.
-const PROJECT_BUDGETS = { "Aw.Sindri.Engine.Tests": { integration: 250 } };
+// twice the slowest run seen (125.3 s in run 40734081015); #1546 brings it back down. Aw.Sindri.Ui.Controls.Tests and
+// Aw.Sindri.Ui.Frames.Tests hold the view tests split out of Aw.Sindri.Ui.Tests (#1546, owner 2026-10-29: each its own row), so
+// each runs on a headless UI thread of its own: 55 s and 69 s alone on a 4-core box, budgeted at about 3x that (CI runs these
+// lanes 1.2-1.7x slower than a local run, and q148 allows twice the slowest CI run).
+const PROJECT_BUDGETS = {
+  "Aw.Sindri.Engine.Tests": { integration: 250 },
+  "Aw.Sindri.Ui.Controls.Tests": { integration: 180 },
+  "Aw.Sindri.Ui.Frames.Tests": { integration: 220 },
+};
 const SOLUTION = "AgenticWorkflow.slnx";
 
 class ToolError extends Error {}

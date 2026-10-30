@@ -53,7 +53,7 @@
       "code": "SND-LAUNCH-014",
       "reason": "unsupported-platform",
       "text": "Steps can't run by themselves on macOS yet.",
-      "attendedText": "Sessions can't be opened in a sandbox on macOS yet.",
+      "attendedText": "Sessions can't be opened on macOS until its sandbox is proven (SB-9): Sindri doesn't run agents without one.",
       "state": "gray"
     },
     {

@@ -37,4 +37,8 @@ public enum ModelPurpose
     /// <summary>The concept scan's two calls over a built map (context.conceptScan); routed like <see cref="Concepts"/>.</summary>
     [JsonStringEnumMemberName("concept-scan")]
     ConceptScan,
+
+    /// <summary>Jev's decision on product-surface candidate groups (context.models.productSurfaces); no CLI harness serves it.</summary>
+    [JsonStringEnumMemberName("product-surfaces")]
+    ProductSurfaces,
 }
