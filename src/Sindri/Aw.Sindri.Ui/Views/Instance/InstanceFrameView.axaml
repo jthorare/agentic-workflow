@@ -44,6 +44,8 @@
         <Button x:Name="InstanceOpenIn" Content="{Binding Subject.OpenInText}" IsVisible="{Binding Subject.HasHref}" Click="OnOpenIn"
                 AutomationProperties.Name="{Binding Subject.OpenInName}" />
       </WrapPanel>
+      <SelectableTextBlock x:Name="InstanceOpenInFailed" Classes="caption" Text="{Binding Subject.LaunchFailedText}" IsVisible="{Binding Subject.LaunchFailed, FallbackValue=False}" TextWrapping="Wrap"
+                           AutomationProperties.Name="{Binding Subject.LaunchFailedText}" />
       <Panel IsVisible="{Binding Band, Converter={x:Static ObjectConverters.IsNotNull}}">
         <iv:StatesBand x:Name="Band" DataContext="{Binding Band}" />
       </Panel>

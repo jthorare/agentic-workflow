@@ -99,6 +99,8 @@
         </ItemsControl>
       </StackPanel>
 
+      <SelectableTextBlock x:Name="ProjectLinkLaunchFailed" Classes="caption" Text="{Binding LinkLaunch.FailedText}" IsVisible="{Binding LinkLaunch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding LinkLaunch.FailedText}" />
+
       <WrapPanel x:Name="ProjectActions" Orientation="Horizontal">
         <Button x:Name="ProjectEdit" Content="{Binding EditText}" IsVisible="{Binding CanEdit}" IsEnabled="{Binding !IsEditing}" Click="OnEdit" Margin="0,0,8,8" AutomationProperties.Name="{Binding EditText}" />
         <Button x:Name="ProjectRemove" Content="{Binding RemoveText}" IsVisible="{Binding CanRemove}" Click="OnAskRemove" Margin="0,0,8,8" AutomationProperties.Name="{Binding RemoveText}" />
