@@ -32,7 +32,11 @@ public sealed class FakeChoicePort : IChoicePort
     public ValueTask<int> InputCapChars(CancellationToken cancellationToken) => ValueTask.FromResult(Cap);
 
     /// <inheritdoc />
-    public ValueTask<string?> Unavailable(ChoiceKind kind, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public ValueTask<string?> Unavailable(ChoiceKind kind, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(UnavailableReason);
+    }
 
     /// <inheritdoc />
     public ValueTask<Result<IReadOnlyList<ChoiceAnswer>>> Pick(ChoiceKind kind, IReadOnlyList<ChoiceQuestion> questions, int capChars, CancellationToken cancellationToken)

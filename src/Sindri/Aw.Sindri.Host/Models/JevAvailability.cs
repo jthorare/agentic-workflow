@@ -19,9 +19,15 @@ internal sealed class JevAvailability(IApprovedModels models, IJevKeyProbe key)
         return (kind == ChoiceKind.Labeling ? settings.LabelPick : settings.SurfacePick) == LabelPick.Jev;
     }
 
-    internal ValueTask<string?> Unavailable(ChoiceKind kind, CancellationToken cancellationToken)
+    // A cheap read: the approved setting first (an 'off' pick says off whether or not a key exists), then the key.
+    internal async ValueTask<string?> Unavailable(ChoiceKind kind, CancellationToken cancellationToken)
     {
-        _ = (key, kind, cancellationToken);   // red stub
-        throw new NotSupportedException();
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!await IsOn(kind, cancellationToken).ConfigureAwait(false))
+        {
+            return ChoiceReasons.Off;
+        }
+
+        return await key.Present(cancellationToken).ConfigureAwait(false) ? null : ChoiceReasons.NoKey;
     }
 }

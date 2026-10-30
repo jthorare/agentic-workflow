@@ -27,8 +27,9 @@ internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubbe
             return built.Error;
         }
 
-        _ = choice;   // red stub: the real pass asks the port
-        var keys = clusters.Select(c => Key(c, built.Value.Egress, options)).ToList();
+        // One question per pass; a pick that is on but cannot go out (no key) is keyed apart, so the key arriving later misses once and Jev runs.
+        var unavailable = choice is not null && options is { Pick: true } ? await choice.Unavailable(ChoiceKind.Labeling, cancellationToken).ConfigureAwait(false) : null;
+        var keys = clusters.Select(c => Key(c, built.Value.Egress, options, unavailable)).ToList();
         var known = await cache.Find(keys, cancellationToken).ConfigureAwait(false);
         var saved = known.IsError ? new Dictionary<string, string>(StringComparer.Ordinal) : known.Value;
 
@@ -77,11 +78,19 @@ internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubbe
         return (hits, misses, missKeys);
     }
 
+    // A pick the port says is off is the off key; one with no key is its own, so the key arriving later is one deliberate miss. Both keep one candidate: nothing was offered to Jev.
+    private static (string Mode, int Candidates) Mode(LabelOptions? options, string? unavailable) => options switch
+    {
+        not { Pick: true } => ("off", 1),
+        _ when string.Equals(unavailable, ChoiceReasons.Off, StringComparison.Ordinal) => ("off", 1),
+        _ when string.Equals(unavailable, ChoiceReasons.NoKey, StringComparison.Ordinal) => ("jev-nokey", 1),
+        _ => ("jev", options.Candidates),
+    };
+
     // The pick mode and the candidate count are in the key: flipping either is a deliberate full miss (a label chosen by Jev is not the model's single label). The file-derived name is the safe candidate, so it is in too, scrubbed like the files.
     internal static string Key(FileCluster cluster, IEgressScrubber egress, LabelOptions? options = null, string? unavailable = null)
     {
-        _ = unavailable;   // red stub
-        var (mode, candidates) = options is { Pick: true } ? ("jev", options.Candidates) : ("off", 1);
+        var (mode, candidates) = Mode(options, unavailable);
         var name = cluster.FileName is { } fileName ? egress.Scrub(fileName).Text : string.Empty;
         var files = cluster.Files.Take(LabelPrompt.FilesPerCluster).Select(f => egress.Scrub(f).Text);
         var text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"label-v1\n{mode}\n{candidates}\n{name}\n") + string.Join('\n', files);
