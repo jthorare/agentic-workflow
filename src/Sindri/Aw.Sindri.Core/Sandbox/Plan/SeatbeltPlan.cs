@@ -70,8 +70,14 @@ internal static class SeatbeltPlan
                 result.Insert(at, new PlanEnvVar("AW_STATE_DIR", c.StateDir, EnvironmentAllowlist.Names["AW_STATE_DIR"]));   // why: the hooks default to $HOME/.agentic-workflow, and HOME is no longer the real one
             }
 
+            // why: the real logs, probe and digests folders are denied here, so the hooks write to the run area's spool. Seatbelt only: on Bubblewrap the hooks' defaults already land on the mounts, and the extra --setenv pairs would push a launch's argv toward tmux's command size cap.
+            var hooks = result.FindIndex(e => string.Equals(e.Name, "AW_STATE_DIR", StringComparison.Ordinal)) + 1;
+            result.InsertRange(hooks, [HookDir("AW_LOG_DIR", "logs"), HookDir("AW_PROBE_DIR", "probe"), HookDir("AW_DIGEST_DIR", "digests")]);
+
             return result;
         }
+
+        private PlanEnvVar HookDir(string name, string folder) => new(name, Rebase($"{c.StateDir}/{folder}"), EnvironmentAllowlist.Names[name]);
 
         private void Add(PlanMount m, int index)
         {
@@ -128,6 +134,16 @@ internal static class SeatbeltPlan
 
         private void AddRemapped(PlanMount m, string real)
         {
+            if (string.Equals(m.Path, "/tmp", StringComparison.Ordinal))
+            {
+                var temp = SandboxPaths.SeatbeltTemp(c.Request.Launch);   // why: a short path, so a unix socket under TMPDIR fits in 104 bytes
+                _rebase.Add((m.Path, temp));
+                var scratch = new PlanMount(temp, PlanMountKind.PerLaunchDir, Reason: m.Reason);
+                _ = _moved.Add(scratch);
+                _out.Add(scratch);
+                return;
+            }
+
             if (string.Equals(m.Path, _current, StringComparison.Ordinal))
             {
                 _out.Add(m with { Source = null, Reason = "the wrappers exec into 'current': the real link exists, and its stamp is allowed above" });

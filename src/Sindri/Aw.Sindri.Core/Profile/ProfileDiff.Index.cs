@@ -41,7 +41,7 @@ public static partial class ProfileDiff
     private static IEnumerable<(string Key, string Value)> IndexConcepts(string prefix, IndexSettings index) =>
         (index.Concepts ?? []).Select((concept, position) =>
             ($"{prefix}.concepts.{concept.Id?.Value ?? position.ToString(CultureInfo.InvariantCulture)}",
-                string.Join(" | ", concept.Name, concept.Summary, Joined(concept.Features), Joined(concept.Paths), Joined(concept.DependsOn), Joined(concept.Owns))));
+                string.Join(" | ", concept.Name, concept.Summary, Joined(concept.Features), Joined(concept.Paths), Joined(concept.DependsOn), Joined(concept.Owns), Joined(concept.Aliases))));
 
     /// <summary>The keys that have a value; an absent key has no path, so adding one shows as a change.</summary>
     private static IEnumerable<(string Key, string Value)> Present(params (string Key, string? Value)[] keys) =>

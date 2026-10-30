@@ -11,7 +11,7 @@ namespace Aw.Context.Tests.Surfaces;
 [Trait("Lane", "unit")]
 public sealed class SurfacePromptTests
 {
-    private static readonly Aw.Context.Core.Trust.IEgressScrubber _egress = new RedactionScrubberFactory(new FakeTimeProvider()).For([]).Value.Egress;
+    private static readonly Context.Core.Trust.IEgressScrubber _egress = new RedactionScrubberFactory(new FakeTimeProvider()).For([]).Value.Egress;
 
     private static ChoiceQuestion Question(SurfaceGroup group) => SurfacePrompt.Question(group, _egress);
 

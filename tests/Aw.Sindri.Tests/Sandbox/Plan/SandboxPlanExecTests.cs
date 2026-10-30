@@ -98,4 +98,38 @@ public sealed class SandboxPlanExecTests
         Assert.True(result.IsError);
         Assert.Equal(SindriErrors.InvalidInput.Code, result.Error.Code);
     }
+
+    private static SandboxPlan Planned(SandboxMechanism mechanism)
+    {
+        var result = SandboxPlanner.Build(mechanism, Req.WriteScope);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        return result.Value;
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_seatbelt_exec_gets_its_own_short_temp_directory_and_never_the_live_launchs()
+    {
+        var stored = Planned(SandboxMechanism.Seatbelt);
+        var live = SandboxPaths.SeatbeltTemp(stored.Launch);
+        var own = SandboxPaths.SeatbeltTemp(_exec);
+        Assert.NotEqual(live, own, StringComparer.Ordinal);
+
+        var plan = Exec(stored);
+
+        Assert.Contains(plan.Mounts, m => m.Kind == PlanMountKind.PerLaunchDir && m.Path == own);
+        Assert.DoesNotContain(plan.Mounts, m => (m.Path + m.Source).Contains(live, StringComparison.Ordinal));
+        Assert.Equal(own, plan.Environment.Single(e => e.Name == "TMPDIR").Value);
+        Assert.Equal(own + "/dotnet-home", plan.Environment.Single(e => e.Name == "DOTNET_CLI_HOME").Value);
+        Assert.DoesNotContain(plan.Environment, e => e.Value is { } v && v.Contains(live, StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_bubblewrap_exec_keeps_slash_tmp()
+    {
+        var plan = Exec(Planned(SandboxMechanism.Bubblewrap));
+
+        Assert.Equal("/tmp", plan.Environment.Single(e => e.Name == "TMPDIR").Value);
+        Assert.Equal(ExecArea + "/tmp", plan.Mounts.Last(m => m.Path == "/tmp").Source);
+        Assert.DoesNotContain(plan.Mounts, m => m.Path.StartsWith("/private/tmp/aw-", StringComparison.Ordinal));
+    }
 }

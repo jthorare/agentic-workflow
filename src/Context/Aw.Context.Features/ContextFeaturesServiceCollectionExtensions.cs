@@ -14,6 +14,7 @@ using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Models;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
@@ -21,6 +22,7 @@ using Aw.Context.Core.Review;
 using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.Surfaces;
 using Aw.Context.Core.Symbols;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Walks;
@@ -99,6 +101,9 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<ILabeler, DisabledLabeler>();   // a host that sets up labeling (AddContextLabeling) replaces it
         services.TryAddSingleton<IConceptNamer, DisabledConceptNamer>();   // a host that sets up labeling (AddContextLabeling) replaces it
         services.TryAddSingleton<ISymbolVectors, DisabledSymbolVectors>();   // the host that wires the code index (Sindri's Host adapter) replaces it
+        services.TryAddSingleton<ISurfacePicker, DisabledSurfacePicker>();   // a host that sets up labeling (AddContextLabeling) replaces it
+        services.TryAddSingleton<ISurfacePickStore, NoSurfacePickStore>();   // a host that sets up labeling (AddContextLabeling) replaces it
+        services.TryAddScoped(sp => new SurfacePickPass(sp.GetRequiredService<ISurfacePicker>(), sp.GetRequiredService<ISurfacePickStore>(), sp.GetService<IChoicePort>(), sp.GetRequiredService<TimeProvider>()));
         services.TryAddScoped<ConceptPass>();
         services.TryAddScoped<MapRecordSources>();   // scoped: it reads the code index, which is read in the call's scope
         services.TryAddScoped<MapInputs>();

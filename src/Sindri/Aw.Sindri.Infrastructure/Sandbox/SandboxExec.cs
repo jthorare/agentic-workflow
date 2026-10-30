@@ -135,6 +135,19 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
     private void Cleanup(SandboxPlan plan)
     {
         sandbox.Discard(plan);
+        var shortTemp = SandboxPaths.SeatbeltTemp(plan.Launch);   // Seatbelt's per-launch temp directory sits outside the run area
+        if (plan.Mounts.Any(m => string.Equals(m.Path, shortTemp, StringComparison.Ordinal)) && Directory.Exists(shortTemp))
+        {
+            try
+            {
+                Directory.Delete(shortTemp, recursive: true);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                Trace.TraceWarning($"could not remove the exec temp directory {shortTemp}: {e.Message}");
+            }
+        }
+
         if (RunAreaPreparer.RunAreaOf(plan) is { } area && Directory.Exists(area))
         {
             try
