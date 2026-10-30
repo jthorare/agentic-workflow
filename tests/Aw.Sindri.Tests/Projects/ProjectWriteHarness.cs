@@ -23,9 +23,15 @@ internal sealed partial class ProjectWriteHarness
 
     internal SliceHarness Slice => Views.Slice;
 
-    internal AttachProjectService Attach() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers, Slice.Ids);
+    /// <summary>The stored Linear projects the attach reads: by default the one catalog project, <see cref="ProjectRows.LinearKey"/>.</summary>
+    internal FakeProjectFacts Facts { get; } = new FakeProjectFacts().With(ProjectRows.Snapshot(ProjectRows.Fact()));
 
-    internal ChangeProjectService Change() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers);
+    internal AttachProjectService Attach() => new(new AttachProjectLookup(Views.Views, Facts), Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers, Slice.Ids);
+
+    internal ChangeProjectService Change() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, new MaskingScrubber(), Slice.Callers, new LedProjectNotes(Views.Views, Facts, Slice.Store, Slice.Events, new MaskingScrubber()));
+
+    /// <summary>Makes <see cref="ProjectRows.LinearKey"/> a project the owner leads, as far as the stored facts go.</summary>
+    internal void OwnerLeads() => _ = Facts.With(ProjectRows.Snapshot(ProjectRows.Fact(leadIsOwner: true)));
 
     internal DetachProjectService Detach() => new(Views.Views, Slice.Store, Slice.Held, Slice.Events, Slice.Callers);
 
@@ -37,14 +43,17 @@ internal sealed partial class ProjectWriteHarness
 
     /// <summary>Puts a hand-made project (version 1) in the view.</summary>
     internal Task SeedHandMade() =>
-        Views.Fold(EventTypes.ProjectAttached, new ProjectAttached(Slice.Ids.New<CommandId>(), ProjectRows.HandMadeId, Linear: null, "Kitchen", ProjectState.Planned, [], Note: null, Target: null));
+        Views.Fold(EventTypes.ProjectAttached, new ProjectAttached(Slice.Ids.New<CommandId>(), ProjectRows.HandMadeId, Linear: null, "Kitchen", ProjectState.Planned, [], Target: null));
 
     /// <summary>Puts an attached Linear project (version 1) in the view.</summary>
     internal Task SeedAttached() =>
-        Views.Fold(EventTypes.ProjectAttached, new ProjectAttached(Slice.Ids.New<CommandId>(), ProjectRows.LinearId, ProjectRows.LinearKey, Name: null, State: null, [], Note: null, Target: null));
+        Views.Fold(EventTypes.ProjectAttached, new ProjectAttached(Slice.Ids.New<CommandId>(), ProjectRows.LinearId, ProjectRows.LinearKey, Name: null, State: null, [], Target: null));
 
     internal Task SeedHidden(long version, bool hidden) =>
         Views.Fold(EventTypes.ProjectHidden, new ProjectHidden(Slice.Ids.New<CommandId>(), ProjectRows.LinearKey, hidden, version));
+
+    internal Task SeedLedNotes(long version, string? notes) =>
+        Views.Fold(EventTypes.ProjectLedNoted, new ProjectLedNoted(Slice.Ids.New<CommandId>(), ProjectRows.LinearKey, notes, version));
 
     internal T Payload<T>(LedgerEvent recorded) => Slice.Events.Payload<T>(recorded).Value;
 

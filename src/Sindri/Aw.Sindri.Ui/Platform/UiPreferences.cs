@@ -27,7 +27,7 @@ internal sealed record UiPreferences(
     internal const int CurrentVersion = 1;
 
     /// <summary>The window's minimum width (§3.2).</summary>
-    internal const double MinWidth = 900;
+    internal const double MinWidth = 1000;
 
     /// <summary>The window's minimum height (§3.2).</summary>
     internal const double MinHeight = 600;

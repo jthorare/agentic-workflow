@@ -22,7 +22,8 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         || string.Equals(eventType, EventTypes.JobFinished, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.JobCancelled, StringComparison.Ordinal)
         || string.Equals(eventType, EventTypes.JobWaiting, StringComparison.Ordinal)
-        || string.Equals(eventType, EventTypes.JobResumed, StringComparison.Ordinal);
+        || string.Equals(eventType, EventTypes.JobResumed, StringComparison.Ordinal)
+        || string.Equals(eventType, EventTypes.ContextModelCalled, StringComparison.Ordinal);
 
     public async ValueTask<Result<Unit>> Apply(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
@@ -35,6 +36,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
             EventTypes.JobFinished => await Change<JobFinished>(recorded, rows, static f => f.Job, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.JobWaiting => await Change<JobWaiting>(recorded, rows, static w => w.Job, Fold, cancellationToken).ConfigureAwait(false),
             EventTypes.JobResumed => await Change<JobResumed>(recorded, rows, static r => r.Job, Fold, cancellationToken).ConfigureAwait(false),
+            EventTypes.ContextModelCalled => await Called(recorded, rows, cancellationToken).ConfigureAwait(false),
             _ => await Change<JobCancelled>(recorded, rows, static c => c.Job, Fold, cancellationToken).ConfigureAwait(false),
         };
     }
@@ -50,6 +52,30 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         var key = started.Value.Job.Value;
         var row = await rows.Get<JobRow>(ViewNames.Jobs, key, cancellationToken).ConfigureAwait(false);
         return row.IsError ? row.Error : await rows.Put(ViewNames.Jobs, key, Fold(row.Value, started.Value, recorded), cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>A model call adds to its job's totals. A call with no job, or whose job has no row, changes nothing (it is still in the ledger): not the SND-VIEW-001 the job events raise.</summary>
+    private async ValueTask<Result<Unit>> Called(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
+    {
+        var called = events.Payload<ContextModelCalled>(recorded);
+        if (called.IsError)
+        {
+            return called.Error;
+        }
+
+        if (called.Value.Job is not { } job)
+        {
+            return Unit.Value;
+        }
+
+        var key = job.Value;
+        var row = await rows.Get<JobRow>(ViewNames.Jobs, key, cancellationToken).ConfigureAwait(false);
+        if (row.IsError)
+        {
+            return row.Error;
+        }
+
+        return row.Value is null ? Unit.Value : await rows.Put(ViewNames.Jobs, key, Fold(row.Value, called.Value, recorded), cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<Result<Unit>> Change<TPayload>(LedgerEvent recorded, IViewRows rows, Func<TPayload, JobId> job,
@@ -119,6 +145,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
                 Summary = SafeText.Escape(finished.Summary),
                 Code = finished.Code,
                 Result = finished.Result,
+                WaitingOn = null,
                 Sequence = recorded.Sequence,
             };
     }
@@ -133,7 +160,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(waiting);
         ArgumentNullException.ThrowIfNull(recorded);
-        return row.State != JobState.Running ? row : row with { State = JobState.Waiting, Sequence = recorded.Sequence };
+        return row.State != JobState.Running ? row : row with { State = JobState.Waiting, WaitingOn = waiting.Signal, Sequence = recorded.Sequence };
     }
 
     /// <summary>The row after a 'job.resumed': running again, when it was waiting.</summary>
@@ -146,7 +173,72 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(row);
         ArgumentNullException.ThrowIfNull(resumed);
         ArgumentNullException.ThrowIfNull(recorded);
-        return row.State != JobState.Waiting ? row : row with { State = JobState.Running, Sequence = recorded.Sequence };
+        return row.State != JobState.Waiting ? row : row with { State = JobState.Running, WaitingOn = null, Sequence = recorded.Sequence };
+    }
+
+    /// <summary>
+    /// The row after a 'context.model.called': the call is added to <see cref="JobRow.Models"/> (calls, failed calls when no harness answered, fallbacks, tokens, the answering harness and model) and kept in <see cref="JobRow.ModelCalls"/> (the last 200). An event at or before the row's sequence is a replay and changes nothing.
+    /// </summary>
+    /// <param name="row">The row so far.</param>
+    /// <param name="called">The payload.</param>
+    /// <param name="recorded">The recorded event.</param>
+    /// <returns>The row.</returns>
+    public static JobRow Fold(JobRow row, ContextModelCalled called, LedgerEvent recorded)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        ArgumentNullException.ThrowIfNull(called);
+        ArgumentNullException.ThrowIfNull(recorded);
+        if (recorded.Sequence <= row.Sequence)
+        {
+            return row;
+        }
+
+        return row with { Models = Added(row.Models, called), ModelCalls = Kept(row.ModelCalls, Stored(called)), Sequence = recorded.Sequence };
+    }
+
+    private static ModelTotals Added(ModelTotals? before, ContextModelCalled called)
+    {
+        var so = before ?? new ModelTotals(Calls: 0, FailedCalls: 0, InputTokens: 0, OutputTokens: 0, AnsweredBy: []);
+        return new ModelTotals(
+            so.Calls + 1,
+            so.FailedCalls + (called.AnsweredBy is null ? 1 : 0),
+            so.InputTokens + called.InputTokens,
+            so.OutputTokens + called.OutputTokens,
+            called.AnsweredBy is { } by ? Counted(so.AnsweredBy, by) : so.AnsweredBy,
+            so.FellBack + (FellBack(called) ? 1 : 0));
+    }
+
+    // Answered, but only after an earlier harness limited, failed or was skipped.
+    private static bool FellBack(ContextModelCalled called) =>
+        called.AnsweredBy is not null && called.Tries.Any(static t => string.Equals(t.Outcome, ModelCallOutcome.Limit, StringComparison.Ordinal) || string.Equals(t.Outcome, ModelCallOutcome.Failed, StringComparison.Ordinal)
+            || string.Equals(t.Outcome, ModelCallOutcome.Skipped, StringComparison.Ordinal));
+
+    private static JobModelCall Stored(ContextModelCalled c) => new(c.CallId, c.Purpose, c.Kind,
+        [.. c.Tries.Select(static t => new JobModelTry(t.Harness, t.Model, t.Outcome, t.Reason, t.Ms, t.Source))],
+        c.AnsweredBy is { } by ? new JobModelAnswerer(by.Harness, by.Model) : null, c.InputTokens, c.OutputTokens, c.TokenBasis, c.Items,
+        c.How is { } h ? new JobModelHow(h.Jev, h.FirstCandidate, h.FileName, h.Merged, h.Kept, h.Rejected, h.Undecided) : null, c.StartedAt, c.Ms);
+
+    // The last 200 calls, as the progress lines keep their last 200 (the totals still count every call).
+    private static List<JobModelCall> Kept(IReadOnlyList<JobModelCall>? before, JobModelCall called)
+    {
+        var calls = before ?? [];
+        return [.. calls.Skip(Math.Max(0, calls.Count + 1 - JobLimits.ViewLines)), called];
+    }
+
+    private static List<ModelAnsweredCount> Counted(IReadOnlyList<ModelAnsweredCount> answered, ModelCallAnswerer by)
+    {
+        var counts = new List<ModelAnsweredCount>(answered);
+        var at = counts.FindIndex(c => string.Equals(c.Harness, by.Harness, StringComparison.Ordinal) && string.Equals(c.Model, by.Model, StringComparison.Ordinal));
+        if (at < 0)
+        {
+            counts.Add(new ModelAnsweredCount(by.Harness, by.Model, 1));
+        }
+        else
+        {
+            counts[at] = counts[at] with { Count = counts[at].Count + 1 };
+        }
+
+        return counts;
     }
 
     /// <summary>The row after a 'job.cancelled': cancelled, by whom. A job that ended ignores it (D5).</summary>
@@ -161,6 +253,6 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
         ArgumentNullException.ThrowIfNull(recorded);
         return !JobStates.IsActive(row.State)
             ? row
-            : row with { State = JobState.Cancelled, EndedAt = recorded.Envelope.OccurredAt, Summary = "cancelled", CancelledBy = cancelled.By, Sequence = recorded.Sequence };
+            : row with { State = JobState.Cancelled, EndedAt = recorded.Envelope.OccurredAt, Summary = "cancelled", CancelledBy = cancelled.By, WaitingOn = null, Sequence = recorded.Sequence };
     }
 }

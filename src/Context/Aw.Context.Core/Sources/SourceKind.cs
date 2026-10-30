@@ -6,7 +6,7 @@ namespace Aw.Context.Core.Sources;
 [JsonConverter(typeof(JsonStringEnumConverter<SourceKind>))]
 public enum SourceKind
 {
-    /// <summary>Business intent: issues, comments, decisions, threads (Linear, Onyx).</summary>
+    /// <summary>Business intent: issues, comments, decisions, threads (Linear, Slack).</summary>
     [JsonStringEnumMemberName("intent")]
     Intent,
 

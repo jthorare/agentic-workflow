@@ -26,9 +26,14 @@ internal static class GraphPublishReads
     public static async ValueTask<Result<IReadOnlyList<MapHead>>> Heads(SqliteReadSession session, int version, CancellationToken cancellationToken)
     {
         var upgraded = await SqliteQueries.One(session, new SqlStatement(GraphSql.HasPublishTables), GraphRows.Id, cancellationToken).ConfigureAwait(false);
-        return upgraded.IsError ? upgraded.Error
-            : upgraded.Value < 3 ? Results.Success<IReadOnlyList<MapHead>>([])
-            : await SqliteQueries.List(session, new SqlStatement(GraphSql.SelectHeads, c => c.Bind("$v", (long)version)), GraphRows.Head, cancellationToken).ConfigureAwait(false);
+        if (upgraded.IsError || upgraded.Value < 3)
+        {
+            return upgraded.IsError ? upgraded.Error : Results.Success<IReadOnlyList<MapHead>>([]);
+        }
+
+        var indexed = await SqliteQueries.One(session, new SqlStatement(GraphSql.HasIndexCommitColumn), GraphRows.Id, cancellationToken).ConfigureAwait(false);
+        return indexed.IsError ? indexed.Error
+            : await SqliteQueries.List(session, new SqlStatement(indexed.Value == 0 ? GraphSql.SelectHeadsBeforeIndexCommit : GraphSql.SelectHeads, c => c.Bind("$v", (long)version)), GraphRows.Head, cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask<Result<MapPublishState>> WithHold(SqliteReadSession session, int? draft, int? current, CancellationToken cancellationToken)

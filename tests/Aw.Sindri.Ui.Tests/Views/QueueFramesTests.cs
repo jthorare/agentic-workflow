@@ -139,7 +139,7 @@ public sealed class QueueFramesTests : IDisposable
         var rows = page.GetVisualDescendants().OfType<Ui.Views.Queue.ItemRow>().Where(r => r.IsEffectivelyVisible).Select(r => r.ItemId).ToList();
         Assert.Equal(4, rows.Count);
         Assert.Equal(A.NewItem, rows[^1]);
-        Assert.Equal("4", shell.Navigation[2].Count);
+        Assert.Equal("4", shell.Navigation[3].Count);
         Frame(window, "queue-populated");
     });
 

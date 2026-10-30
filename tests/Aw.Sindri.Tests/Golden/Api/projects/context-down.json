@@ -1,0 +1,72 @@
+{
+  "asOf": {
+    "cursor": 11,
+    "ledgerHead": 11,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "empty": "Linear and GitHub data unavailable: Context is not answering",
+  "viewer": null,
+  "freshness": [
+    {
+      "source": "context",
+      "state": "failing",
+      "text": "Context is not answering",
+      "at": null
+    }
+  ],
+  "projects": [
+    {
+      "id": "prj_0000000000000000000000000R",
+      "origin": "handMade",
+      "name": "Kitchen",
+      "description": null,
+      "state": "planned",
+      "stateSetByOwner": true,
+      "health": null,
+      "lead": null,
+      "target": "2026-03-01",
+      "openIssues": null,
+      "counting": false,
+      "openPrs": null,
+      "prScope": null,
+      "lastActivity": "2026-01-01T00:00:00.0000000Z",
+      "finishedAt": null,
+      "repos": [],
+      "links": [],
+      "notes": null,
+      "synced": true,
+      "version": 1
+    },
+    {
+      "id": "prj_0000000000000000000000000H",
+      "origin": "attached",
+      "name": "linear:project/00000000-0000-4000-8000-000000000005",
+      "description": null,
+      "state": "paused",
+      "stateSetByOwner": true,
+      "health": null,
+      "lead": null,
+      "target": null,
+      "openIssues": null,
+      "counting": false,
+      "openPrs": null,
+      "prScope": null,
+      "lastActivity": null,
+      "finishedAt": null,
+      "repos": [],
+      "links": [
+        {
+          "label": "https://example.com/mobile",
+          "url": "https://example.com/mobile"
+        }
+      ],
+      "notes": "Waiting on the vendor",
+      "synced": true,
+      "version": 1
+    }
+  ],
+  "finished": [],
+  "hidden": []
+}

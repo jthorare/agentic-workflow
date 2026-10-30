@@ -40,8 +40,8 @@ public sealed class ShellPreferencesTests
     {
         (await Shell()).RememberWindow(new WindowBounds(10, 20, 640, 480));
 
-        Assert.Equal(new WindowBounds(10, 20, 900, 600), (await Stored()).Window);
-        Assert.Equal(new WindowBounds(10, 20, 900, 600), (await Shell()).Window);
+        Assert.Equal(new WindowBounds(10, 20, 1000, 600), (await Stored()).Window);
+        Assert.Equal(new WindowBounds(10, 20, 1000, 600), (await Shell()).Window);
     }
 
     [Fact]

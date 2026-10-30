@@ -20,6 +20,9 @@ internal static class BugfixSteps
     /// <summary>'step.reproduce.test-check': as 'step.reproduce.ui-check', with a test as the check.</summary>
     public static BlockDescriptor ReproduceTestCheck { get; } = AgentStep("step.reproduce.test-check", Capability.Tools).Reads("fact:issue", "fact:rootCause").Reports("reproduced", "notReproduced").Writes(On("fact:check", "reproduced"), On("fact:baseline", "reproduced"), On("fact:findings", "notReproduced"));
 
+    /// <summary>'step.implement.fix': fixes the bug and prevents its class, tests first, in atomic commits; 'done' with 'fact:output' (the diff's description, ending with the filled handoff block).</summary>
+    public static BlockDescriptor ImplementFix { get; } = AgentStep("step.implement.fix", Capability.Tools | Capability.WriteScope).Reads("fact:issue", "fact:rootCause").Reports("done").Writes(On("fact:output", "done"));
+
     /// <summary>'step.bugfix.start-attempt': 'single' or 'split' with 'fact:attempt', or 'capReached'.</summary>
     public static BlockDescriptor StartAttempt { get; } = BlockStep("step.bugfix.start-attempt", Capability.Tools).Reads("fact:decision").Reports("single", "split", "capReached").Writes(On("fact:attempt", "single", "split"));
 
@@ -33,5 +36,5 @@ internal static class BugfixSteps
     public static BlockDescriptor Judge { get; } = BlockStep("step.bugfix.judge", Capability.Tools).Reads("fact:check", "fact:candidate", "fact:evidenceSummary").Reports("resolved", "partial", "unresolved", "needsHuman").Writes(Every("fact:verdict"));
 
     /// <summary>'step.report.write': the write-up; 'done' with 'fact:resolution'.</summary>
-    public static BlockDescriptor ReportWrite { get; } = AgentStep("step.report.write", Capability.Tools).Reads("fact:issue").Reports("done").Writes(On("fact:resolution", "done"));
+    public static BlockDescriptor ReportWrite { get; } = AgentStep("step.report.write", Capability.Tools).Reads("fact:issue", "fact:rootCause").Reports("done").Writes(On("fact:resolution", "done"));
 }

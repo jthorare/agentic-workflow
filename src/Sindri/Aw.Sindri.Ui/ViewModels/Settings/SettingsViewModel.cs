@@ -26,10 +26,12 @@ internal sealed class SettingsViewModel : ObservableObject, IDisposable
     /// <param name="setup">The setup checklist, Settings' first section; null where the page has none (a host that shows only the local preferences).</param>
     /// <param name="modelChoice">The read-only model-choice line (model-pick spec 8); null where the page has none.</param>
     /// <param name="sandbox">The read-only Sandbox section (sandbox spec 8); null where the page has none.</param>
-    internal SettingsViewModel(Preferences preferences, IMotionPreference motion, Action<AppearanceSettings> apply, SetupViewModel? setup = null, ModelChoiceViewModel? modelChoice = null, SandboxSettingsViewModel? sandbox = null)
+    /// <param name="labelChoice">The read-only label-choice line (model routing spec 8.5); null where the page has none.</param>
+    internal SettingsViewModel(Preferences preferences, IMotionPreference motion, Action<AppearanceSettings> apply, SetupViewModel? setup = null, ModelChoiceViewModel? modelChoice = null, SandboxSettingsViewModel? sandbox = null, LabelChoiceViewModel? labelChoice = null)
     {
         Setup = setup;
         ModelChoice = modelChoice;
+        LabelChoice = labelChoice;
         Sandbox = sandbox;
         _preferences = preferences;
         _motion = motion;
@@ -47,7 +49,10 @@ internal sealed class SettingsViewModel : ObservableObject, IDisposable
     /// <summary>The model-choice line, below the checklist; null when this host has none.</summary>
     public ModelChoiceViewModel? ModelChoice { get; }
 
-    /// <summary>The Sandbox section, below the model-choice line; null when this host has none.</summary>
+    /// <summary>The label-choice line, below the model-choice line; null when this host has none.</summary>
+    public LabelChoiceViewModel? LabelChoice { get; }
+
+    /// <summary>The Sandbox section, below the label-choice line; null when this host has none.</summary>
     public SandboxSettingsViewModel? Sandbox { get; }
 
     /// <summary>True when the page has the Sandbox section.</summary>
@@ -55,6 +60,9 @@ internal sealed class SettingsViewModel : ObservableObject, IDisposable
 
     /// <summary>True when the page has the model-choice line.</summary>
     public bool HasModelChoice => ModelChoice is not null;
+
+    /// <summary>True when the page has the label-choice line.</summary>
+    public bool HasLabelChoice => LabelChoice is not null;
 
     /// <summary>True when the page has the setup checklist.</summary>
     public bool HasSetup => Setup is not null;

@@ -24,10 +24,10 @@ public sealed class RankFusionTests
     public void Aliases_of_every_hit_of_a_record_merge_best_hit_first_without_repeats()
     {
         var fused = RankFusion.Fuse([
-            new SourceAnswer(SourceId.From("onyx"), [Hit("onyx", "a", 1) with { Aliases = ["SPL-103"] }, Hit("onyx", "a", 4, "#2") with { Aliases = ["SPL-9"] }]),
+            new SourceAnswer(SourceId.From("slack"), [Hit("slack", "a", 1) with { Aliases = ["SPL-103"] }, Hit("slack", "a", 4, "#2") with { Aliases = ["SPL-9"] }]),
             new SourceAnswer(SourceId.From("linear"), [Hit("linear", "a", 2) with { Aliases = ["SPL-103", "SPL-7"] }])]);
 
-        Assert.Equal(["SPL-103", "SPL-7", "SPL-9"], fused.Single().Aliases, StringComparer.Ordinal);   // both rank 1: linear before onyx by source id
+        Assert.Equal(["SPL-103", "SPL-7", "SPL-9"], fused.Single().Aliases, StringComparer.Ordinal);   // both rank 1: linear before slack by source id
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -36,11 +36,11 @@ public sealed class RankFusionTests
         // 'docs' saw b only at rank 9 of its sub-queries; it is still its second-best record, so rank 2.
         var fused = RankFusion.Fuse([
             new SourceAnswer(SourceId.From("docs"), [Hit("docs", "a", 1), Hit("docs", "b", 9)]),
-            new SourceAnswer(SourceId.From("onyx"), [Hit("onyx", "b", 1)])]);
+            new SourceAnswer(SourceId.From("slack"), [Hit("slack", "b", 1)])]);
 
         Assert.Equal("repo:b", fused[0].Key.Value);
         Assert.Equal((1d / 62) + (1d / 61), fused[0].Score, 12);
-        Assert.Equal(["rrf:docs#2", "rrf:onyx#1"], fused[0].Why);
+        Assert.Equal(["rrf:docs#2", "rrf:slack#1"], fused[0].Why);
         Assert.Equal(2, fused[0].Hits.Count);
     }
 

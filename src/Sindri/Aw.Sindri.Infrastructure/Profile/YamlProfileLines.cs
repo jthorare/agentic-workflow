@@ -63,4 +63,17 @@ internal static class YamlProfileLines
         OwnerOnly.RestrictFiles(temporary);
         File.Move(temporary, path, overwrite: true);
     }
+
+    // 'profile set': the same write, except the file keeps the mode it has (the owner may have loosened or tightened it) instead of getting the owner-only default.
+    internal static void WriteKeepingMode(string path, string text)
+    {
+        var temporary = path + ".tmp";
+        File.WriteAllText(temporary, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(temporary, File.GetUnixFileMode(path));
+        }
+
+        File.Move(temporary, path, overwrite: true);
+    }
 }

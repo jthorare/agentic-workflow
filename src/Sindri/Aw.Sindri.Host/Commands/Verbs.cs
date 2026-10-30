@@ -10,6 +10,7 @@ using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.InitProfile;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RunDoctor;
+using Aw.Sindri.Features.SetProfileKey;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.ValidateProfile;
 
@@ -98,6 +99,32 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
             : await output.Text($"Profile written: {written.Value.Path}\nnext: sindri repo add <path>, then sindri profile approve\n", 0).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// 'profile set &lt;key&gt; &lt;value&gt; [--json]': sets one scalar key of the live profile in place and says to approve it; local, like init. A CLI with no readable per-start human token, or a session Sindri launched, is refused (SND-AUTH-002, like 'sandbox login'). It never approves.
+    /// Exit 0 set or unchanged, 1 an invalid key or value or a layout it won't edit (nothing written), 2 refused or the file can't be read or written.
+    /// </summary>
+    internal async Task<int> SetProfileKey(string key, string value, bool json, CallerHeaders caller, CancellationToken ct)
+    {
+        if (await caller.Resolve(ct).ConfigureAwait(false) is { } reason)
+        {
+            return await output.Error(SindriErrors.AuthRefused.With($"profile set is for the person at the keyboard, and this is {reason} (fix: run it from your own terminal)")).ConfigureAwait(false);
+        }
+
+        var set = await scope.GetRequiredService<IService<SetProfileKeyRequest, SetProfileKeyResponse>>().Handle(new SetProfileKeyRequest(key, value), ct).ConfigureAwait(false);
+        if (set.IsError)
+        {
+            var code = await output.Error(set.Error).ConfigureAwait(false);
+            return string.Equals(set.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) ? code : 1;
+        }
+
+        var done = set.Value;
+        return json
+            ? await output.Json(done, 0).ConfigureAwait(false)
+            : await output.Text(done.Changed
+                ? $"set {done.Key} = {done.Value} in {done.Path}. Approve it with: sindri profile approve\n"
+                : $"{done.Key} is already {done.Value} in {done.Path}: unchanged\n", 0).ConfigureAwait(false);
+    }
+
     internal async Task<int> Doctor(bool json, CancellationToken ct, Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>>? harnesses = null)
     {
         var report = (await scope.GetRequiredService<IService<RunDoctorRequest, RunDoctorResponse>>().Handle(new RunDoctorRequest(), ct).ConfigureAwait(false)).Value;
@@ -147,11 +174,13 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
     private static string ApprovalText(ApproveProfileResponse a, bool preview) => (preview, a.Approved) switch
     {
         (_, true) when preview => $"Approved already: {a.Hash.Value}\n",
-        (true, _) => $"hash {a.Hash.Value}\n{(a.Unreadable is null ? string.Empty : $"the stored approval can't be read by this build ({a.Unreadable}); approving the hash below replaces it\n")}changed since the last approval: {(a.Changes.Count == 0 ? (a.UnlistedChange ? "no listed key, yet the hash differs (this build may write the profile differently from the one that approved it; if not, a key is missing from this list: report it)" : "nothing") : string.Join(", ", a.Changes))}\n{RoleCountsText(a)}{StepArgvText(a)}{(a.Notice is null ? string.Empty : a.Notice + "\n")}to approve: sindri profile approve {a.Hash.Value}\n",
+        (true, _) => $"hash {a.Hash.Value}\n{(a.Unreadable is null ? string.Empty : $"the stored approval can't be read by this build ({a.Unreadable}); approving the hash below replaces it\n")}changed since the last approval: {(a.Changes.Count == 0 ? (a.UnlistedChange ? "no listed key, yet the hash differs (this build may write the profile differently from the one that approved it; if not, a key is missing from this list: report it)" : "nothing") : string.Join(", ", a.Changes))}\n{RoleCountsText(a)}{StepArgvText(a)}{(a.Notice is null ? string.Empty : a.Notice + "\n")}{WarningsText(a)}to approve: sindri profile approve {a.Hash.Value}\n",
         _ => $"Approved {a.Hash.Value}\n",
     };
 
     /// <summary>One line per changed role key: the files it matches on the repo's HEAD, or that the count is unavailable (#1148).</summary>
+    private static string WarningsText(ApproveProfileResponse a) => string.Concat((a.Warnings ?? []).Select(static line => "warning: " + line + "\n"));
+
     private static string RoleCountsText(ApproveProfileResponse a) => string.Concat((a.RoleCounts ?? []).Select(static line => line + "\n"));
 
     /// <summary>One line per step hash: the entry on this box that has it, or that none does (launcher L-16).</summary>

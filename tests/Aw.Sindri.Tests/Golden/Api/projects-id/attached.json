@@ -1,0 +1,65 @@
+{
+  "asOf": {
+    "cursor": 11,
+    "ledgerHead": 11,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "viewer": "Jo Smith",
+  "freshness": [
+    {
+      "source": "linear-projects",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "linear",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "project": {
+    "id": "prj_0000000000000000000000000H",
+    "origin": "attached",
+    "name": "Mobile app",
+    "description": null,
+    "state": "paused",
+    "stateSetByOwner": true,
+    "health": null,
+    "lead": {
+      "you": false,
+      "name": "Sam Lee"
+    },
+    "target": null,
+    "openIssues": 7,
+    "counting": false,
+    "openPrs": null,
+    "prScope": null,
+    "lastActivity": "2025-12-27T00:00:00.0000000Z",
+    "finishedAt": null,
+    "repos": [],
+    "links": [
+      {
+        "label": "Linear",
+        "url": "https://linear.app/acme/project/5"
+      },
+      {
+        "label": "https://example.com/mobile",
+        "url": "https://example.com/mobile"
+      }
+    ],
+    "notes": "Waiting on the vendor",
+    "synced": true,
+    "version": 1
+  },
+  "hidden": false
+}

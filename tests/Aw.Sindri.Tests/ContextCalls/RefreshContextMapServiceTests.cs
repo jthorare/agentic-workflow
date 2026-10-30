@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
@@ -188,6 +189,20 @@ public sealed class RefreshContextMapServiceTests
         Assert.False(result.Value.Held);
         Assert.Equal("IndexReady", Payload(EventTypes.ContextMapPublished).GetProperty("reason").GetString());
         Assert.Empty(_engine.Holds);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_draft_built_before_its_code_index_is_held_for_the_rebuild_not_promoted_though_the_index_is_built_now()
+    {
+        _outlooks.All = IndexOutlook.Built;
+        _engine.Built = new MapBuildReport(_engine.Built.Value.Draft, [], [], [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true)]);
+
+        var result = await Run();
+
+        Assert.True(result.Value.Held);
+        Assert.DoesNotContain(_engine.Log, call => string.Equals(call, "Promote", StringComparison.Ordinal));
+        Assert.Equal([EventTypes.ContextMapBuilt, EventTypes.ContextMapHeld, EventTypes.ContextMapRefreshed], Types());
+        _ = Assert.Single(_engine.Holds);
     }
 
     [Fact, Trait("Lane", "unit")]

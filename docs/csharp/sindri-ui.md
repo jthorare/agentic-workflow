@@ -90,7 +90,7 @@ start-up), and disposes it on exit.
 `seenIds`, `paletteHistory`, `textScale`, `reduceMotion`, camelCase JSON. A head's store only moves bytes; the app's
 `ViewModels/Preferences` (`Load`, `Update`, `Flush`; one instance, built in `SindriApp.Create` and shared by the shell
 and Settings, queues every read-change-write behind the one before) parses and writes them through `Api/PreferencesJson`, so clamping is the same
-on every head: the window grows to 900 × 600 (bounds that
+on every head: the window grows to 1,000 × 600 (bounds that
 aren't finite are dropped), the sheet is 420–760, the scale 0.9–1.3, an unknown page reads as Home, and the id lists
 drop blanks and repeats and keep their newest 500 and 20. A malformed file, or one of another version, reads as the
 defaults.
@@ -129,7 +129,7 @@ only, never the message, which can name the home), with a line that names the ex
 
 | Part | What it shows |
 |---|---|
-| Top bar (48 px) | Brand; Home · Queue · Decisions · Services (counts empty until their routes); Later ▾ (Agents, Repos, Today, Automatic work, each "not served yet"); the ⌘K field, which opens the palette (U1); the health pill, which opens Health (while Sindri isn't running it is only the state: disabled like the navigation, its word undimmed, since the Not running card is the health state and Health has nothing to show). When they don't all fit (the 900 px minimum, text scale up to 1.3) the bar steps down in `TopBar.axaml.cs`: the ⌘K field folds to its magnifier, then the pill's age drops (the pill's accessible name keeps it), then the brand keeps its mark alone. The pill's word always shows |
+| Top bar (48 px) | Brand; the eight tabs Home · Projects · Workflows · Work · Recipes · Context · Agents · System (counts empty until their routes); the ⌘K field, which opens the palette (U1); the health pill, which opens Health (while Sindri isn't running it is only the state: disabled like the navigation, its word undimmed, since the Not running card is the health state and Health has nothing to show). When they don't all fit (the 1,000 px minimum, text scale up to 1.3) the bar steps down in `TopBar.axaml.cs`: the ⌘K field folds to its magnifier, then the pill's age drops (the pill's accessible name keeps it), then the brand keeps its mark alone. The pill's word always shows |
 | Home panels' bodies | "not served yet", centred in the panel |
 | Home | The page title, three frames (Needs you, Running · With you, Queued), each "not served yet", and the Sindri health strip: the health line (§4.8) over the fields the status carries today (`Running · pid · epoch · API v1 · N services · profile <state>`; "Not running" when it isn't), which opens Health on a click or Enter |
 | Queue, Decisions, Services, Settings | The title and "not served yet"; Settings is the slot `Views/Settings*` fills (⌘, opens it) |
@@ -149,10 +149,10 @@ nothing. Its answer counts only when the follow decided no state while it was in
 stale, and it came from the pid and epoch the follow checked with ping; otherwise it is dropped, so a late answer never
 shows Running over Not running or Unreadable. After three failed refreshes the pill keeps "stale" and a banner under
 the top bar reads "Sindri not responding: run `sindri doctor`" in full, since the sentence doesn't fit the pill at
-900 px. The view models carry no Avalonia types; views bind the app's copy through `ShellText` (compiled bindings
+1,000 px. The view models carry no Avalonia types; views bind the app's copy through `ShellText` (compiled bindings
 resolve public members only, and `Labels` is internal). F6 / Shift+F6 cycle top bar, page and sheet; on macOS ⌘⌥→ / ⌘⌥← do the same (owner decision, 2026-10-12;
 UI spec §8), since with the default "Use F1, F2, etc. keys as standard function keys" off F6 is the Focus key there and
-reaches the app only with fn held (fn+F6 and fn+Shift+F6). Ctrl+F6 isn't bound. The window's minimum is 900 × 600.
+reaches the app only with fn held (fn+F6 and fn+Shift+F6). Ctrl+F6 isn't bound. The window's minimum is 1,000 × 600 (eight tabs fit; `Size.WindowMinWidth` in `Theme/Tokens.axaml` and `UiPreferences.MinWidth`).
 
 **Focus never goes nowhere (§11.2).** When the focused control disappears, focus moves to a neighbour: Refresh keeps
 focus through its in-flight phase and gets it back when the refresh fails; when Sindri answers and Refresh hides, the
@@ -529,11 +529,11 @@ facts in `Controls/ControlViewModelTests`, and the P3 facts in `SindriApiContrac
 The rev-8 contract unit gives the shell its screens' skeleton and the app its first workflow reads; the pages fill in with
 U3' and U8.
 
-- **Navigation.** The top bar has seven tabs, in order: Home, Workflows, Work, Recipes, Context, Agents, System. Settings is
-  not a tab (⌘, opens it). `PageId` names the eight pages; a page with no screen yet shows a placeholder that says what it
+- **Navigation.** The top bar has eight tabs, in order: Home, Projects, Workflows, Work, Recipes, Context, Agents, System. Settings is
+  not a tab (⌘, opens it). `PageId` names the ten pages (Jobs is reached by G J, the palette and System's link; Projects shows only its heading until its content lands); a page with no screen yet shows a placeholder that says what it
   waits for. The last page is remembered in the preferences.
 - **Chords.** `G`, then a page's key within `ShellViewModel.ChordWait` (1 s): `H` or `N` Home, `D` Home filtered to
-  decisions (`HomeFilter.Decisions`), `W` Workflows, `Q` Work, `R` Recipes, `C` Context, `A` Agents, `.` or `S` System.
+  decisions (`HomeFilter.Decisions`), `P` Projects (link `sindri://projects`), `W` Workflows, `Q` Work, `R` Recipes, `C` Context, `A` Agents, `.` or `S` System.
   They carry no modifier, so they are the same on every platform. The wait is a delay on the shell's clock (no timer
   thread), and a generation says which chord a finished wait belongs to. A chord is gated like the other navigation
   (`IsNavigationEnabled` and `IsChromeVisible`, in `PressKey`), never fires while a text field has focus or an overlay
@@ -898,6 +898,8 @@ U9 builds the Context page in stages that run in parallel after U9a0: the lens s
 **Seams.** `ContextPageViewModel` (U9a) holds four stage view models, `MapReviewViewModel` (U9c), `FileMapViewModel` (U9d), `NodeCardViewModel` and `SourcesPanelViewModel` (U9b), each created by an `Init*` partial named for its stage (`.Review.cs`, `.FileMap.cs`, `.Side.cs`) and each taking the page's one `ContextPorts` (`ViewModels/Context/ContextPorts.cs`: the API, its URL, the clipboard, the clock, the catalog and `Follow`, the shell's re-read-on-connect hook; U9a0 owns the record, append-only; it is a positional record, so a new port is a new member there plus a new argument in `InitContext` (`ShellViewModel.Context.cs`), and no stage edits the page's constructor; a stage registers its own refresh with `ports.Follow` from its own view model). `Views/Context/ContextPage.axaml` hosts each stage's seam view, bound to that stage's view model: `Views/Context/Review/MapReviewPanel` (`ReviewHost`), `FileMap/FileMapTree` (`FileMapHost`), `Node/NodeCard` (`NodeHost`) and `Sources/SourcesPanel` (`SourcesHost`); only `LensStackHost` is a bare panel, U9a's own. A stage fills its seam view and its view model and never edits the page. `ShellViewModel.Context.cs` (`InitContext`) builds the ports. The page is mounted in `ShellWindow.axaml` in place of the placeholder; it opens empty (an empty, hidden head: "no map" is for the served no-map case U9a wires) with focus in the anchor box, and reads nothing before an anchor.
 
 **Tests.** `ContextGoldenTests`, `SindriApiClientContextTests`, the context cases of the API contract (`SindriApiContract.Context.cs`, fake and client), `ContextPageViewModelTests`, `LaneAnchorTests` (unit); `ContextPageWindowTests` (integration, one window).
+
+**Search on the Concepts layer (#1699).** Enter in the anchor box at the concept layer keeps a concept card only when it matches: its name, summary or one of its glossary terms holds the typed text (case-insensitive), or it holds a node the question resolved to (`/sindri/context/query` returned real anchors, located through the whole map's `areas` read). A concept linked to a match is not a match. When the question finds no anchors, its suggested anchors are never matches, on this layer or on the whole map: the typed text is read as one anchor (a label), and the suggestions are offered as choices under "did you mean". No match shows no cards and the no-matches line; Clear search brings every card back. A newer search wins over an older one still in flight, and a background refresh does not redraw the cards while the search is on. Tests: `ConceptSearchTests`, `ContextConceptsTests`, `ContextQuestionTests`; the UI check `tests/ui-checks/concept-search.sh`.
 
 ## U11a: the Agents page, the session sheet and the tray line
 

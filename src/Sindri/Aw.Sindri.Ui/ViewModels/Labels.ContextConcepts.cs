@@ -87,6 +87,14 @@ internal static partial class Labels
     /// <returns>"No links from Why to the other bands."</returns>
     internal static string ContextDrillNoCross(string band) => $"No links from {band} to the other bands.";
 
+    /// <summary>The band header note under the Product band of the Why drill when nothing in Product is linked to what the Why band explains.</summary>
+    /// <returns>"None linked yet".</returns>
+    internal static string ContextDrillWhyNoProduct => "None linked yet";
+
+    /// <summary>The line under the Why drill when no page, feature or action is linked to what the Why band explains.</summary>
+    /// <returns>"No pages, features or actions are linked to these records and decisions yet."</returns>
+    internal static string ContextDrillWhyNoProductLine => "No pages, features or actions are linked to these records and decisions yet.";
+
     /// <summary>The line when a drilled band has no links of its own.</summary>
     /// <param name="band">The band's title.</param>
     /// <returns>"No links inside Why."</returns>

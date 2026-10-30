@@ -99,11 +99,11 @@ internal static partial class CommandTable
             ["status", .. var rest] when Json(rest) is { } json => await verbs.Status(json, ct).ConfigureAwait(false),
             ["scrub", .. var rest] => await new ScrubCommand(services, output, Console.In).Run(rest, ct).ConfigureAwait(false),
             ["stop"] => await verbs.Stop(ct).ConfigureAwait(false),
-            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), output, ct).ConfigureAwait(false),
+            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), (output, Headers(session, services)), ct).ConfigureAwait(false),
             ["views", "rebuild", .. var rest] when NoStart(rest) is { } noStart => await new Verbs(client, probe, output, services, c => start.EnsureRunning(!noStart, c))
                 .RebuildViews(ct).ConfigureAwait(false),
             ["open", .. var rest] => await new OpenCommand(client, output, start.EnsureRunning, services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),
-            ["queue" or "items" or "item" or "project", ..] => await ItemOrProject(args, client, output, start, ct).ConfigureAwait(false),
+            ["queue" or "items" or "item" or "project" or "projects", ..] => await ItemOrProject(args, client, output, start, ct).ConfigureAwait(false),
             ["request" or "requests" or "decisions" or "decide" or "needs-you", ..] => await new RequestVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct).ConfigureAwait(false),
             ["index", "connect", .. var rest] => await new IndexConnectVerbs(services, output, session).Run(["connect", .. rest], ct).ConfigureAwait(false),
             ["services" or "jobs", ..] or ["index", "embed", ..] => await JobCommands.Run(args, (client, output), start.EnsureRunning, services.GetRequiredService<TimeProvider>(), (ct, interrupt.Again)).ConfigureAwait(false),
@@ -243,7 +243,7 @@ internal static partial class CommandTable
     private static bool Interactive() => !Console.IsInputRedirected && !Console.IsOutputRedirected;
 
     private static Task<int> ItemOrProject(string[] args, ControlPlaneClient client, Output output, StartCommand start, CancellationToken ct) =>
-        args is ["project", ..]
+        args is ["project" or "projects", ..]
             ? new ProjectVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct)
             : new ItemVerbs(client, output, (launch, c) => start.EnsureRunning(launch, c)).Run(args, ct);
 

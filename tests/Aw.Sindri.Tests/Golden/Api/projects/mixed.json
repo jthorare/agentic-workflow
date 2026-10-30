@@ -1,0 +1,183 @@
+{
+  "asOf": {
+    "cursor": 11,
+    "ledgerHead": 11,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "empty": null,
+  "viewer": "Jo Smith",
+  "freshness": [
+    {
+      "source": "linear-projects",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "linear",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "linear:project/00000000-0000-4000-8000-000000000001",
+      "origin": "led",
+      "name": "Checkout rewrite",
+      "description": "Rebuild checkout on the new payments API.",
+      "state": "inProgress",
+      "stateSetByOwner": false,
+      "health": "atRisk",
+      "lead": {
+        "you": true,
+        "name": null
+      },
+      "target": "2026-01-31",
+      "openIssues": 12,
+      "counting": false,
+      "openPrs": null,
+      "prScope": null,
+      "lastActivity": "2025-12-31T00:00:00.0000000Z",
+      "finishedAt": null,
+      "repos": [],
+      "links": [
+        {
+          "label": "Linear",
+          "url": "https://linear.app/acme/project/1"
+        }
+      ],
+      "notes": null,
+      "synced": true,
+      "version": 0
+    },
+    {
+      "id": "prj_0000000000000000000000000R",
+      "origin": "handMade",
+      "name": "Kitchen",
+      "description": null,
+      "state": "planned",
+      "stateSetByOwner": true,
+      "health": null,
+      "lead": null,
+      "target": "2026-03-01",
+      "openIssues": null,
+      "counting": false,
+      "openPrs": null,
+      "prScope": null,
+      "lastActivity": "2026-01-01T00:00:00.0000000Z",
+      "finishedAt": null,
+      "repos": [],
+      "links": [],
+      "notes": null,
+      "synced": true,
+      "version": 1
+    },
+    {
+      "id": "prj_0000000000000000000000000H",
+      "origin": "attached",
+      "name": "Mobile app",
+      "description": null,
+      "state": "paused",
+      "stateSetByOwner": true,
+      "health": null,
+      "lead": {
+        "you": false,
+        "name": "Sam Lee"
+      },
+      "target": null,
+      "openIssues": 7,
+      "counting": false,
+      "openPrs": null,
+      "prScope": null,
+      "lastActivity": "2025-12-27T00:00:00.0000000Z",
+      "finishedAt": null,
+      "repos": [],
+      "links": [
+        {
+          "label": "Linear",
+          "url": "https://linear.app/acme/project/5"
+        },
+        {
+          "label": "https://example.com/mobile",
+          "url": "https://example.com/mobile"
+        }
+      ],
+      "notes": "Waiting on the vendor",
+      "synced": true,
+      "version": 1
+    }
+  ],
+  "finished": [
+    {
+      "id": "linear:project/00000000-0000-4000-8000-000000000003",
+      "origin": "led",
+      "name": "Search relaunch",
+      "description": null,
+      "state": "done",
+      "stateSetByOwner": false,
+      "health": null,
+      "lead": {
+        "you": true,
+        "name": null
+      },
+      "target": null,
+      "openIssues": 0,
+      "counting": false,
+      "openPrs": null,
+      "prScope": null,
+      "lastActivity": "2025-12-29T00:00:00.0000000Z",
+      "finishedAt": "2025-12-29T00:00:00.0000000Z",
+      "repos": [],
+      "links": [
+        {
+          "label": "Linear",
+          "url": "https://linear.app/acme/project/3"
+        }
+      ],
+      "notes": null,
+      "synced": true,
+      "version": 0
+    }
+  ],
+  "hidden": [
+    {
+      "id": "linear:project/00000000-0000-4000-8000-000000000002",
+      "origin": "led",
+      "name": "Billing cleanup",
+      "description": null,
+      "state": "inProgress",
+      "stateSetByOwner": false,
+      "health": null,
+      "lead": {
+        "you": true,
+        "name": null
+      },
+      "target": null,
+      "openIssues": 3,
+      "counting": false,
+      "openPrs": null,
+      "prScope": null,
+      "lastActivity": "2025-12-30T00:00:00.0000000Z",
+      "finishedAt": null,
+      "repos": [],
+      "links": [
+        {
+          "label": "Linear",
+          "url": "https://linear.app/acme/project/2"
+        }
+      ],
+      "notes": null,
+      "synced": true,
+      "version": 1
+    }
+  ]
+}

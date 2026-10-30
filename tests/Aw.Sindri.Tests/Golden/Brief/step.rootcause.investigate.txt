@@ -1,0 +1,18 @@
+Sindri Step brief. Instance ITM-00000000000000000000000000000001/bugfix/1, run 1.1, state s.
+Goal: the confirmed root cause of the reported bug, and the decision on how to stop its class from coming back.
+Read fact:issue, fact:expected and fact:actual from your inputs. Reproduce or otherwise confirm the cause from evidence before you conclude anything: a cause you haven't seen is a guess.
+Prevent the class, not just the instance: once the cause is confirmed and before you choose a fix, ask yourself: How can we prevent this class of bugs from happening again—not just fix this instance? Consider enforceable constraints such as lint rules, analyzers, type/API design, shared primitives, state-machine or architecture changes, and checks that catch other instances of the same failure.
+Name the failure class and the invariant that should hold, one sentence each, from the code and evidence you have. Don't invent defects you haven't seen.
+Search for other instances of the same pattern and list them with file:line, or say how you searched and found none.
+Pick the smallest mechanism that holds the invariant: an existing guard that already covers it (say which), a lint or analyzer rule, a type or API constraint, one shared primitive, a data constraint, a state-machine change, or a behavioural check run over every instance. Say why it covers the class. A regression test for one fixture is not class-wide prevention.
+Keep mitigation and prevention apart: a timeout, a retry or a guard at one call site is mitigation. When the prevention can't be built inside the allowed scope, say what remains and name a concrete follow-up (the class, the instances, the proposed mechanism).
+Never claim the class is gone without the mechanism's own proof; say what it covers and what it doesn't. The full rule and three worked examples: $HOME/.agentic-workflow/toolkit/skills/_shared/prevent-the-class.md.
+Report diagnosed with fact:rootCause. It MUST be the handoff block, with these six headings in this order: '## Failure class' (one sentence), '## Invariant' (one sentence), '## Affected scope' (other instances with file:line, or how you searched and found none), '## Prevention decision' (existing guard <which>, new mechanism <which>, or deferred: <follow-up>, and why it covers the class), '## Mitigation' (the instance fix and any stopgap, or none), '## Proof' (Original failure: the check, to be run red then green; Prevention: pending). Every later Step carries the block on unchanged.
+Report unfixed when you can't confirm a cause, with fact:findings saying what you ruled out and how.
+You read: fact:issue, fact:expected, fact:actual.
+The facts you read that are set are already in the run folder $AW_SINDRI_RUN_DIR, one JSON file each: fact-issue.json.
+Outcome diagnosed: write fact:rootCause.
+Outcome unfixed: write fact:findings.
+Put each output in its own file under the output folder $AW_SINDRI_RUN_DIR/.sindri-out, named after the fact.
+Report with: sindri workflow complete ITM-00000000000000000000000000000001/bugfix/1 --run 1.1 --outcome <diagnosed|unfixed> --output fact:<key>=$AW_SINDRI_RUN_DIR/.sindri-out/<key> (one --output per fact the outcome needs)
+Your Step ends only when this command succeeds; if it's refused, read the error and fix it.

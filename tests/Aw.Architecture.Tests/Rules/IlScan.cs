@@ -59,6 +59,28 @@ public static class IlScan
         return found;
     }
 
+    /// <summary>The methods the type's bodies (and nested types: closures, state machines) call with call, callvirt or newobj.</summary>
+    /// <param name="type">The type.</param>
+    /// <returns>The called methods.</returns>
+    public static IReadOnlySet<MethodBase> CalledMethods(Type type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+        var found = new HashSet<MethodBase>();
+        foreach (var (method, il) in Bodies(type))
+        {
+            for (var i = 0; i + 4 < il.Length; i++)
+            {
+                if (Array.IndexOf(_calls, il[i]) >= 0 && il[i + 4] is MemberRefTable or MethodDefTable
+                    && Resolve(() => method.Module.ResolveMethod(BitConverter.ToInt32(il, i + 1), genericTypeArguments: method.DeclaringType?.GenericTypeArguments, genericMethodArguments: null)) is { } called)
+                {
+                    _ = found.Add(called);
+                }
+            }
+        }
+
+        return found;
+    }
+
     /// <summary>The declaring types of the constructors the type's bodies call with newobj (only construction, not other calls on the type).</summary>
     /// <param name="type">The type.</param>
     /// <returns>The constructed types.</returns>

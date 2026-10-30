@@ -36,10 +36,10 @@ The small recipes that bugfix and spec-to-PR runs are built from. Each is a chil
 
 | Recipe | Inputs | Outputs | Terminals (resolved / unresolved) |
 |---|---|---|---|
-| `workflow.report` | issue | resolution | written / - |
+| `workflow.report` (version 4) | issue, rootCause | resolution | written / - |
 | `workflow.investigate` | issue, expected, actual | rootCause | diagnosed / unfixed (after 2 rounds) |
 | `workflow.reproduce` | issue, rootCause | check, baseline | reproduced / not-reproduced |
-| `workflow.implement` | issue, rootCause | output (the diff) | built / stuck (after 3 rounds) |
+| `workflow.implement` (version 5) | issue, rootCause | output (the diff) | built / stuck (after 3 rounds) |
 | `workflow.hand-test` | phasePacket, workspace | manualTest | works / broken |
 | `workflow.verify` | phasePacket, workspace | evidencePack | passed / failed |
 | `workflow.evidence-ui` | phasePacket, built | evidenceSummary | passed / failed (one repair of a broken selector) |
@@ -55,6 +55,8 @@ The small recipes that bugfix and spec-to-PR runs are built from. Each is a chil
 | `workflow.prove-recheck` | handoff, phasePacket, workspace, prState | recheck | held / broken (unresolved), nothing (alreadySatisfied). Re-runs the verify journey and recorded evidence scripts on a PR's current head (PB spec C.3) |
 | `workflow.phase` | phasePacket, lineContext | pr, handoff, proofPack, mergedSha | merged / dropped. The per-phase child of the line (spec App. C.6): build, prove, review, drift check, ship, babysit; `stage` 3 and `reprove` 3 |
 
+
+Prevent the class (#1682): `workflow.implement` v5 runs `step.implement.fix` (was `step.produce`) so the fixing session builds the instance fix and the prevention the root cause's handoff block decided, and `workflow.report` v4 takes `fact:rootCause` so the report copies the block and writes its three separate lines (original bug, class prevention, deferred). Both hashes changed, and `step.report.write`'s descriptor moved (it reads `fact:rootCause`); the owner re-approves `workflow.implement` v5 and `workflow.report` v4 (`sindri recipe list --stale`), plus the parents that wait on them.
 
 `workflow.review-loop` v2 (DTC4) reviews one lens per run (`round`, `lens`, `lens-log`), a round per iteration (cap 5), keeps the narrow re-check, and ends `clean` or `wrong` only through `step.review.record` (`recorded` or `recordedWrong`), which writes and freezes the review packet, so a failed review carries its packet too; `step.review.round` reports `noLens` when no lens applies and the loop ends `stuck` for the owner (never a clean review of unreviewed code); a lens queue is capped by the `lens-runs` loop (50), which parks; `fact:review` is now `type: packet` (it was `payload`). Its hash changed: version 1 and version 2 are different recipes, and no approval of version 1 carries over (no live approvals exist, so there is no migration). The v1 eval names are kept (`happy`, `cap-then-recheck`, `behaviour-wrong`, `recheck-clean`, `recheck-wrong`) and `one-lens-per-run`, `empty-queue` and `lens-runs-cap` are new. `step.lens.run` and `step.review.record` are descriptor-only (an instance parks with SND-WF-010 at the desk when it reaches one); `step.review.round` and `step.review.log` run on the block runtime. v4 (LN-PK lite) adds the `fact:lensRounds` input (the round log, `[]` at the start, which `workflow.phase` v2 passes), so round 1 holds the fact `step.review.round` reads; the round queues the review lens pack's lenses whose `when` fits the changed paths and records the others as not applicable. v5 (LN-WF2) adds the `fact:workspace` input (the phase worktree, which `workflow.phase` v3 passes), so the loop's agent Steps launch in the phase worktree like build's and prove's do.
 

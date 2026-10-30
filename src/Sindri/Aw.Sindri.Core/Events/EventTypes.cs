@@ -122,6 +122,9 @@ public static class EventTypes
     /// <summary>The owner hid or unhid a project they lead.</summary>
     public const string ProjectHidden = "project.hidden";
 
+    /// <summary>The owner wrote or cleared the notes on a Linear project they lead.</summary>
+    public const string ProjectLedNoted = "project.led.noted";
+
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
 
@@ -166,6 +169,9 @@ public static class EventTypes
 
     /// <summary>The model an engine launch was given, and how it was chosen (model-pick spec §6).</summary>
     public const string ModelPicked = "model.picked";
+
+    /// <summary>A model call of the context engine ended (context model routing spec §7.1); one per call, under a job or not.</summary>
+    public const string ContextModelCalled = "context.model.called";
 
     /// <summary>Just before the pick asks Jev: "choosing model…" until model.picked for the same launch ends it (model-pick spec §6).</summary>
     public const string ModelPicking = "model.picking";

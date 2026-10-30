@@ -122,7 +122,7 @@ packages:
     sublevel: 1
     projectPrefix: Aw.Kernel.Data
     src: src/Aw.Kernel.Data
-    note: "SQLite access and the migrations runner (Microsoft.Data.Sqlite)"
+    note: "SQLite access and the migrations runner (Microsoft.Data.Sqlite); PinnedProcess, a child-process start whose forking thread outlives pool retirement (bwrap --die-with-parent, #1680)"
   - id: KernelTelemetry
     kind: package
     tier: 0
@@ -532,7 +532,7 @@ edges:
     to: Judge
     kind: project
     status: current
-    note: "Sindri's Host adapts Judge's provider catalog (IProviderCatalog, IModelProvider in Aw.Judge.Core) as the context engine's IModelPort, so the labeling pass runs through the owner's own agent CLIs (Claude Code, Codex, Cursor) and never the remote jev API"
+    note: "Sindri's Host adapts Judge's provider catalog (IProviderCatalog, IModelProvider in Aw.Judge.Core) as the context engine's IModelPort, so the labeling pass runs through the owner's own agent CLIs (Claude Code, Codex, Cursor) and never the remote jev API, except the label pick and the product-surface pick: Jev receives their data when their setting is `jev` (Host/Models/JevChoicePort over IBatchClassifier)"
   - from: Sindri
     to: Judge
     kind: compose

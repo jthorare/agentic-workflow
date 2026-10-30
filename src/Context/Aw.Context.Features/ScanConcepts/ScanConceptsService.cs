@@ -55,7 +55,7 @@ internal sealed class ScanConceptsService(IGraphStore store, IScrubberFactory sc
         var (map, summary, keys, config) = read;
         var propose = ConceptScanPrompts.Propose(summary);
         var tier = config.Tiers.Pick(keys.Count, ConceptScanTiers.EstimateTokens(propose));   // the size is known before the first call; both calls ask for this tier
-        var first = await Ask(propose, (tier, config.Models.For(tier)), cancellationToken).ConfigureAwait(false);
+        var first = await Ask(propose, tier, cancellationToken).ConfigureAwait(false);
         var candidates = first is null ? [] : ConceptScanReplies.Candidates(first.Text);
         if (candidates.Count == 0)
         {
@@ -63,7 +63,7 @@ internal sealed class ScanConceptsService(IGraphStore store, IScrubberFactory sc
         }
 
         var found = await Searches(candidates, (scope, new MapRead(map.OnDraft, Version: null)), egress, cancellationToken).ConfigureAwait(false);
-        var second = await Ask(ConceptScanPrompts.Conclude(summary, candidates, found), (tier, config.Models.For(tier)), cancellationToken).ConfigureAwait(false);
+        var second = await Ask(ConceptScanPrompts.Conclude(summary, candidates, found), tier, cancellationToken).ConfigureAwait(false);
         if (second is null)
         {
             return new ConceptScanReport(map.Number, map.OnDraft, ConceptScanOutcome.ModelUnavailable, Hints: 0, found.Count, tier, first?.Model);
@@ -80,10 +80,10 @@ internal sealed class ScanConceptsService(IGraphStore store, IScrubberFactory sc
     // True when either reply broke off mid-JSON: the scan kept what was whole.
     private static bool CutOff(ModelAnswer? first, ModelAnswer second) => (first is not null && ConceptScanReplies.IsCutOff(first.Text)) || ConceptScanReplies.IsCutOff(second.Text);
 
-    // The model's answer, or null when no agent answered.
-    private async ValueTask<ModelAnswer?> Ask(string prompt, (ModelTier Tier, IReadOnlyDictionary<string, string> Models) pick, CancellationToken cancellationToken)
+    // The model's answer, or null when no agent answered. The scan sends its tier only: the router finds the model from context.models (the old context.conceptScan.models key reaches it as names; spec 3.2 point 5).
+    private async ValueTask<ModelAnswer?> Ask(string prompt, ModelTier tier, CancellationToken cancellationToken)
     {
-        var answer = await model.Ask(new ModelRequest(ModelPurpose.Concepts, prompt, ConceptScanLimits.MaxOutputTokens, ConceptScanLimits.CallTimeout, pick.Tier, pick.Models), cancellationToken).ConfigureAwait(false);
+        var answer = await model.Ask(new ModelRequest(ModelPurpose.ConceptScan, prompt, ConceptScanLimits.MaxOutputTokens, ConceptScanLimits.CallTimeout, tier), cancellationToken).ConfigureAwait(false);
         return answer.IsError ? null : answer.Value;
     }
 

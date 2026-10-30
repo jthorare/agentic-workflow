@@ -12,5 +12,10 @@ internal static class ProjectRoute
     /// <param name="projectId">The segment.</param>
     /// <returns>The id, or SND-CLI-003.</returns>
     internal static Result<ProjectId> Project(string projectId) =>
-        ProjectId.TryFrom(projectId, out var id) ? id : SindriErrors.InvalidInput.With("'" + SafeText.Line(SafeText.Escape(projectId), 80) + "' isn't a project id (prj_…)");
+        ProjectId.TryFrom(Segment(projectId), out var id) ? id : SindriErrors.InvalidInput.With("'" + SafeText.Line(SafeText.Escape(projectId), 80) + "' isn't a project id (prj_…)");
+
+    /// <summary>The project a '{project}' or '{projectId}' segment names. A led project's key is "linear:project/&lt;uuid&gt;", sent escaped as one segment, and ASP.NET keeps an escaped '/' as "%2F" in a route value, so the segment is unescaped here.</summary>
+    /// <param name="segment">The segment as routed.</param>
+    /// <returns>The unescaped id or key.</returns>
+    internal static string Segment(string segment) => Uri.UnescapeDataString(segment);
 }

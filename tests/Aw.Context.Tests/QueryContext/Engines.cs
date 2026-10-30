@@ -2,6 +2,7 @@ using System.Text.Json;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Search;
@@ -84,8 +85,8 @@ internal static class Engines
                 new RecordSearch(lexical ?? new FakeLexicalLeg(), recordStore, embedder ?? new FakeQueryEmbedder(), new FakeVectorMatrixCache(recordStore), new FakeVectorScan())),
             new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, recordStore, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()),
                 (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers),
-            new ContextGraph(new ShowNodeService(graphs, scrubbers), new ListNeighborsService(graphs, scrubbers), new FindPathService(graphs, scrubbers),
-                new GetLensesService(graphs, new LensBasisReader(repos, clock), scrubbers, new NoCodeSymbolSource(), repos), new GetLensesSetService(graphs, new LensBasisReader(repos, clock), scrubbers), new GetFileMapService(graphs, repos, new NoCodeSymbolSource(), new RepoTreeCache()),
+            new ContextGraph(new ShowNodeService(graphs, scrubbers, recordStore, new FakeRepoRemote()), new ListNeighborsService(graphs, scrubbers), new FindPathService(graphs, scrubbers),
+                new GetLensesService(graphs, new LensBasisReader(repos, clock), scrubbers, new NoCodeSymbolSource(), repos, recordStore, clock), new GetLensesSetService(graphs, new LensBasisReader(repos, clock), scrubbers, recordStore, clock), new GetFileMapService(graphs, repos, new NoCodeSymbolSource(), new RepoTreeCache()),
                 new ContextCodeHistory(new GetCodeService(graphs, new LensBasisReader(repos, clock), Lexical(repos, clock), new CodeSymbolSearch(new NoCodeSymbolSource(), repos), scrubbers),
                     new GetHistoryService(graphs, new HistoryPipeline(new LensBasisReader(repos, clock), intents, new FakeFileHistory(Repos[0], new HistoryWorld("0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", [])), clock), scrubbers),
                     new GetSubgraphService(graphs, new LensBasisReader(repos, clock), scrubbers),

@@ -45,9 +45,8 @@ internal static class ContextJobServiceCollectionExtensions
         return string.Create(CultureInfo.InvariantCulture, $"{result.Sources.Count} source(s) synced, {linked} linked{(failed > 0 ? $", {failed} with a code" : string.Empty)}");
     }
 
-    private static string IndexSyncSummary(SyncIndexSourceResult result) => result.Code is null
-        ? string.Create(CultureInfo.InvariantCulture, $"{result.Source} {result.Fetched} fetched")
-        : $"{result.Source} {result.Code}";
+    internal static string IndexSyncSummary(SyncIndexSourceResult result) =>
+        (SourceStops.Is(result.Code) ? "partial: " : string.Empty) + SourceStops.Part(result.Source, result.Fetched, result.Code);
 
     private static string RefreshSummary(RefreshContextMapResult result) => result.Held
         ? MapJobSummaries.Held(result.Version)
@@ -57,6 +56,7 @@ internal static class ContextJobServiceCollectionExtensions
     {
         { Code: not null } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} was replaced before it could be published ({result.Code})"),
         { Reason: "NotHeld" } => "no map is held",
+        { Reason: "Rebuild" } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} was built before its code index and is built again, not published"),
         { Reason: "Waiting" } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} still waits for the code index"),
         { Reason: "Gone" or "AlreadyCurrent" } => string.Create(CultureInfo.InvariantCulture, $"hold on map v{result.Version} dropped ({result.Reason})"),
         _ => MapJobSummaries.Promoted(result.Version, result.Reason ?? string.Empty),

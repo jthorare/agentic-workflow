@@ -56,6 +56,29 @@ public sealed class IndexSyncServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_source_stopped_at_its_time_cap_makes_the_summary_partial_and_names_it_without_failing_the_run()
+    {
+        _index.Rows = [Row("slack", 0, ContextErrors.SyncCapped.Code), Row("github", 3)];
+
+        var result = await Run(context: true);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.Value.Idle);
+        Assert.Equal("partial: slack stopped at its time cap (SND-CONTEXT-059), 0 fetched, github 3 fetched", result.Value.Summary);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_source_stopped_by_a_rate_limit_makes_the_summary_partial_and_names_it_without_failing_the_run()
+    {
+        _index.Rows = [Row("slack", 4, SourceStops.RateLimitedCode)];
+
+        var result = await Run(context: true);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("partial: slack stopped by a rate limit (AW-CONNECTORS-009), 4 fetched", result.Value.Summary);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Tick_maps_a_down_source_to_a_row_with_its_code_not_a_failed_run()
     {
         _index.Rows = [Row("linear", 0, ContextErrors.SourceUnavailable.Code), Row("github", 3)];

@@ -76,6 +76,7 @@ using Aw.Sindri.Features.RecordHeartbeat;
 using Aw.Sindri.Features.RegisterMcp;
 using Aw.Sindri.Features.RegisterRecipe;
 using Aw.Sindri.Features.Repos;
+using Aw.Sindri.Features.ResumeJob;
 using Aw.Sindri.Features.ResumeService;
 using Aw.Sindri.Features.RevokeRecipe;
 using Aw.Sindri.Features.RunDoctor;
@@ -85,6 +86,7 @@ using Aw.Sindri.Features.Scrub;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.Sessions;
+using Aw.Sindri.Features.SetProfileKey;
 using Aw.Sindri.Features.SetupWatch;
 using Aw.Sindri.Features.ShowRecipe;
 using Aw.Sindri.Features.StartInstance;
@@ -124,6 +126,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IService<ValidateProfileRequest, ValidateProfileResponse>, ValidateProfileService>()
             .AddPlanSandbox().AddRecordLimitHit().AddEndLearnMode().AddListDenials().AddAllowDenial().AddCheckSandbox().AddWorkspacePrepare()
             .AddScoped<IService<InitProfileRequest, InitProfileResponse>, InitProfileService>()
+            .AddScoped<IService<SetProfileKeyRequest, SetProfileKeyResponse>, SetProfileKeyService>()
             .AddScoped<IService<ScrubRequest, ScrubResponse>, ScrubService>()
             .AddDoctor()
             .AddScoped<ServeRecords>()
@@ -155,6 +158,7 @@ public static class SindriFeaturesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<CancelJobRequest>, AcceptAllValidator<CancelJobRequest>>().AddCommand<CancelJobRequest, CommandAccepted, CancelJobService>();
         _ = services.AddScoped<IValidator<PauseServiceRequest>, AcceptAllValidator<PauseServiceRequest>>().AddCommand<PauseServiceRequest, CommandAccepted, PauseServiceService>();
         _ = services.AddScoped<IValidator<ResumeServiceRequest>, AcceptAllValidator<ResumeServiceRequest>>().AddCommand<ResumeServiceRequest, CommandAccepted, ResumeServiceService>();
+        _ = services.AddScoped<IValidator<ResumeJobRequest>, AcceptAllValidator<ResumeJobRequest>>().AddCommand<ResumeJobRequest, JobStartedResponse, ResumeJobService>();
         _ = services.AddRunService();
         _ = services.AddScoped<IValidator<CloseItemRequest>, CloseItemValidator>().AddCommand<CloseItemRequest, CommandAccepted, CloseItemService>();
         _ = services.AddScoped<IValidator<OpenItemRequest>, OpenItemValidator>().AddCommand<OpenItemRequest, LaunchRequested, OpenItemService>().AddScoped<OpenChecks>().AddSingleton<OpenRequests>().AddScoped<OpenTarget>();

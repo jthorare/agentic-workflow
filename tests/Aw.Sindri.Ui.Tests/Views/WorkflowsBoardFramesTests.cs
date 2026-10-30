@@ -12,7 +12,7 @@ namespace Aw.Sindri.Ui.Tests.Views;
 
 /// <summary>
 /// F3 workflows slice 2 key frames (UI spec §18.2: one per state, integration lane) for the board: the line's six lanes and Not on a line with their cards and
-/// counts at 1440 and 900 (the board scrolls inside its host, the page does not), the filter with no match, and no runs at all.
+/// counts at 1440 and 1000 (the board scrolls inside its host, the page does not), the filter with no match, and no runs at all.
 /// Saved under frames/ as f3-workflows-board-*.png.
 /// </summary>
 [Lane(TestLane.Integration)]
@@ -37,7 +37,7 @@ public sealed class WorkflowsBoardFramesTests : FrameHost
 
     [Theory]
     [InlineData(1440)]
-    [InlineData(900)]
+    [InlineData(1000)]
     public Task The_board_draws_the_line_lanes_and_Not_on_a_line_with_the_runs_in_their_lanes(int width) => OnUi(async () =>
     {
         Lines();
@@ -53,7 +53,7 @@ public sealed class WorkflowsBoardFramesTests : FrameHost
         Assert.Equal(shell.Workflows.FilterAllText, Named<ListBoxItem>(window, "WorkflowsFilterAllItem").GetVisualDescendants().OfType<TextBlock>().Single().Text);
         var scroll = Named<ScrollViewer>(window, "WorkflowsBoardScroll");
         Assert.True(scroll.Bounds.Width <= width);   // the page never scrolls sideways
-        Assert.True(width > 900 || scroll.Extent.Width > scroll.Viewport.Width + 1);   // at the 900 minimum the board scrolls inside its host
+        Assert.True(width > 1000 || scroll.Extent.Width > scroll.Viewport.Width + 1);   // at the 1000 minimum the board scrolls inside its host
         Frame(window, "workflows-board-" + width.ToString(System.Globalization.CultureInfo.InvariantCulture), Prefix);
     });
 

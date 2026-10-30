@@ -651,12 +651,10 @@ the scan itself never touches the graph, the overrides or the pins, and a featur
 
 The scan picks its model from the size of the map (owner, q121; issue 1172). Before the first call it counts the map's features and estimates the first prompt's tokens
 (characters / 4, rounded up). Above `context.conceptScan.strongAboveFeatures` (default 150) features or `context.conceptScan.strongAbovePromptTokens` (default 10,000;
-the input cap allows about 15,000) tokens it asks for the `strong` tier, otherwise the `cheap` one, and both calls of the scan ask for the same tier. The model port
-asks each agent CLI for the model the profile names for that CLI and tier (`context.conceptScan.models.<claude|codex|cursor>.<cheap|strong>`). Defaults: Claude Code
-`haiku` for cheap and `sonnet` for strong (aliases `claude --model` takes); Codex and Cursor have none, so for them both tiers run the CLI's own default until the profile names a
-model (a wrong name makes that CLI fail, so none is guessed). The port walks the CLIs in the same order as before and the first that answers wins, so a scan that
-falls through to the next CLI asks that CLI for its own model name for the tier. The scan's report, and so the job result, records the tier and the model the answering CLI was
-asked for (empty when that CLI ran its default); nothing else asks for a tier, so every other model call is unchanged.
+the input cap allows about 15,000) tokens it asks for the `strong` tier, otherwise the `cheap` one, and both calls of the scan ask for the same tier. The scan sends the tier only, never a model name. Which harness and which model a tier means comes from `context.models` (see "Model routing: `context.models`" below);
+the old `context.conceptScan.models.<claude|codex|cursor>.<cheap|strong>` is still read and supplies `context.models.names` when that key is absent. Without either, the tier means
+the built-in names: Claude Code `haiku` and `sonnet`, Codex `gpt-6-luna` and `gpt-5.5`, Cursor `gpt-5.6-luna-none-fast` and `gpt-5`. The scan's report, and so the job result, records the tier and the model the
+answering CLI was asked for; the scan is the only caller that picks its own tier, and `context.models.conceptNaming.tier` does not change it.
 
 **Rules changes start a refresh too (issue 1041).** Each map version records a hash of the rules it was built under (`MapRuleset`, table column
 `map_version.ruleset`): a built-in `RulesVersion` that is bumped in every change to the clustering or extraction rules, and per mapped repo the deny
@@ -824,13 +822,26 @@ the store, a usage error · `75` the heavy-job lock stayed busy (`040`).
 | `SND-CONTEXT-057` | A model answer the engine refused (quote not verbatim, target outside the record's links, malformed), or a record skipped because its extraction prompt alone is over `maxTokensPerSync` (no decisions, not queued; the same when its conflict checks can't fit even one pair under the cap as the run's first call: the pairs are refused, and not retried on a version change unless the decision's quote changes); counted in `refused`, never fails the sync. A conflict verdict that can't be read keeps the pair pending (the record stays queued) and is asked at most 3 times, then the pair is marked refused | None for answers (persistent counts mean prompt drift); for a skipped record raise `maxTokensPerSync`: a record skipped for its prompt is retried when its version changes, but refused conflict pairs are not (unless the quote changes), so raise the cap before the give-up happens |
 | `SND-CONTEXT-058` | `sources sync <source>` names a source that isn't configured or has nothing to sync (404) | `context sources status` for the names |
 | `SND-CONTEXT-133` | A `context.extract.graphify` limit (`timeoutMinutes`, `maxSnapshotMB`, `maxFileMB`, `maxGraphMB`) is negative, fractional, over 10,000,000 or, for `timeoutMinutes`, over 70,000 (`profile validate`, exit 2; the message names the key path) | Write a whole number, or `0` for no limit |
-| `SND-CONTEXT-059` | A sync stopped at its time cap: partial, it resumes from its cursor (`sources status` shows `059`, the source stays `ok` or `degraded`, exit 0). Every run completes at least one record, so a slow source still finishes across runs. A model or store failure in the same run shows instead of `059` | None; the next run continues. Raise the cadence if persistent |
+| `SND-CONTEXT-059` | A sync stopped at its time cap: partial, it resumes from its cursor (`sources status` shows `059`, the source stays `ok` or `degraded`, exit 0; the sync job's summary leads with `partial:`). Every run completes at least one record, so a slow source still finishes across runs. A model or store failure in the same run shows instead of `059` | None; the next run continues. Raise the cadence if persistent |
 
 ## S-5A: the index sources, secret pointers
 
 Sindri keeps its own record index (one SQLite store under `$AW_SINDRI_HOME`) and fills it from its own connectors: GitHub (issues and
 pull requests), Slack (threads) and Linear (issues and projects). Sindri used to read these through Onyx; it now reads them itself.
 Setting the sources up (tokens, `sindri index connect`, the first sync) is `docs/sindri/sources.md`.
+
+**Every source syncs in bounded pulls (#1679).** A pull reads one chunk of a source (a page or two, at most 20 Slack threads or a pull request page of
+GitHub reads), and its cursor moves only with the records that pull returns. The sync commits each page with its cursor, so a rate limit
+(`AW-CONNECTORS-009`) or the sync's time cap (`SND-CONTEXT-059`) in the middle of a source keeps everything read so far and the next sync resumes after it. A pull
+that read nothing says why (an error), never an empty page, because an empty page means "this phase is finished". Slack walks a channel newest to oldest
+in chunks of a day or more, and a day record can come again when a pull resumes inside that day (same key, so the store keeps one). The contract is
+`RecordFeedResumeContract` (`tests/Aw.Context.Testing/Records`), run by Slack and GitHub (through the Host's `ConnectorFeed`) and by the Linear issue and project feeds.
+
+**A sync job that stopped early says so.** A source that hit the time cap or a rate limit is a row with its code and a job that ended well (a source being down must
+not fail the run), so the job summary tells it apart: `sindri jobs show`, the Jobs page and `sindri index sync` lead with `partial:` and name the source, why it
+stopped and how many records it fetched: `partial: slack stopped at its time cap (SND-CONTEXT-059), 0 fetched` or `partial: slack stopped by a rate limit (AW-CONNECTORS-009), 4 fetched`.
+The scheduled `index-sync` run does the same (`partial: slack stopped at its time cap (SND-CONTEXT-059), 0 fetched, github 3 fetched`; `ok:` when no source stopped early). A named
+sync's result keeps the code, so `sindri index sync <source>` exits 1 for either. Other codes (a source down, a sync already running) keep `<source> <code>`.
 
 ### Profile
 
@@ -1005,6 +1016,60 @@ What lies behind a node, in time: the stored records and decisions that reach it
 - **`searched`.** The rows are `map`, each intent source, `git-history` and `incidents` (no `code-index`). `incidents` is `not-configured` (no incident source exists). `git-history`: `ok` (reason `capped`, `shallow-clone` or `no-files` when worth saying), `ok` with reason `deadline` when the opt-in `context.history.deadline` ended the read (the row's `note` names the deadline and the elapsed ms; repos read before it are listed; with no such key there is no timer, #1221), `degraded` with `SND-CONTEXT-048` (a checkout git cannot read), or `unavailable` with `commit-not-held` and `SND-CONTEXT-110` (the map version's commit is not in the clone: fetch it into the repo's checkout). An intent source reads `not-configured`, `unavailable` with `history-unlinked` (records synced, none linked to a node), or `unavailable` with `not-synced` and `SND-CONTEXT-161` (the source never synced). Codes 160 and 161 are row codes, never a failed call.
 - **A gap fills itself.** When a configured intent source has never synced, the `not-synced` row carries `sync: {state, jobId}` while a sync job runs (the id `GET /sindri/jobs/{id}` serves; also on `context lenses`). The built-in `context-sync-gaps` service (listed by `sindri services`) starts that sync as `service:context-sync-gaps` through the `SyncSources` command; a sync that is already running is never doubled, and after a failed sync it waits 5, 10, 20, 40, then 60 minutes at most, counted from the newest failure in a row (a success resets it). It re-checks on the scheduler tick by reading the jobs view; the scheduler has no event trigger. A failure to start shows in needs-you as `failure:service:context-sync-gaps`. The app re-reads the lenses and history when a `job.*` event arrives.
 - **Exit codes.** 0 with an answer; 1 for attention (not running, an unknown anchor, a bad window, a version not held); 2 for a tool error.
+
+## Model routing: `context.models`
+
+Every model call the context engine makes belongs to one of six kinds, and the profile can say which harnesses (agent CLIs) and which models each kind uses. All keys are under
+`context.models` and every one is optional; a profile with none behaves as it did before (same harness order, same models). A wrong value is `SND-CONTEXT-001` with the key path, at `profile validate` and `profile approve`.
+
+```yaml
+context:
+  models:
+    names:                           # what "cheap" and "strong" mean on each harness
+      codex:  { cheap: gpt-6-luna, strong: gpt-5.5 }
+    default:
+      harnesses: [claude-code, codex, cursor]   # order to try; left out = the installed ones, claude-code first
+      tier: cheap
+    labeling: { tier: cheap, pick: off, candidates: 3 }
+    conceptNaming: { tier: strong }
+    adjudication: { harnesses: [claude-code], models: { claude-code: opus } }   # a named model wins over the tier
+```
+
+| Kind | Purposes it routes |
+|---|---|
+| `labeling` | labeling (map cluster names) |
+| `conceptNaming` | the concept scan (`concept-scan`), the concept names of a map build (`concepts`) and the concept synthesis (`concept-synthesis`; not in the spec's list, mapped here because it names concepts too) |
+| `decisionExtraction` | decision extraction from records |
+| `adjudication` | the eval adjudicator |
+| `mapCleanup` | the map cleanup agent |
+| `rerank` | the query's rerank arm |
+
+An entry takes `harnesses` (1 to 3 of `claude-code`, `codex`, `cursor`, none twice), `tier` (`cheap` or `strong`, default `cheap`) and `models` (a model per harness). `labeling` also takes `pick`
+(`jev` or `off`, default `off`) and `candidates` (2 to 5, default 3). A kind inherits `default` key by key. A model name is 1 to 100 letters, digits and `. _ : / @ + -`, not starting with `-` and with no `..`.
+
+A call finds its harnesses and model in this order: the harnesses are the kind's `harnesses`, else `default.harnesses`, else the installed CLIs (a named harness that is not installed is skipped). The model for a harness is the
+one the request itself names, else the kind's `models`, else `default.models`, else `names.<harness>.<tier>`, else the built-in table. The tier is the kind's, else `default.tier`, else `cheap`.
+
+| Harness | Cheap | Strong |
+|---|---|---|
+| `claude-code` | `haiku` | `sonnet` |
+| `codex` | `gpt-6-luna` | `gpt-5.5` |
+| `cursor` | `gpt-5.6-luna-none-fast` | `gpt-5` |
+
+The old `context.conceptScan.models` supplies `names` for the matching harness (`claude` is `claude-code`) when `names` doesn't say. If both are written, `names` wins name by name and `profile validate` prints
+"context.conceptScan.models is replaced by context.models.names; the new key is used". Nothing in the profile is rewritten.
+
+Two errors belong to routing: `SND-CONTEXT-240` (every harness for the call is at its usage limit or failing) and `SND-CONTEXT-241` (no harness for the call is installed). The router that raises them, the fallback and the pause are not part of this change; the settings, the resolver and the error codes are.
+
+### The Jev label pick (`labeling.pick: jev`)
+
+With `pick: off` (the default) a map build asks the labeling route for one name per cluster, in packs of up to 50 clusters (30 when Cursor is on the route; each pack also fits the smallest prompt budget among the route's harnesses: 60,000 characters for Claude Code and Codex, 30,000 for Cursor). A 600-cluster map is 12 calls. With `pick: jev` and `candidates: N` the model writes N candidate names per cluster, best first; the build adds the file-derived name as a last candidate, drops duplicates (ignoring case), and asks Jev to pick one for every cluster left with two or more. Jev answers a pack of up to 100 questions in one call, at most 80% of `providers.inputCapChars` of the judge's config (160,000 by default) in characters, 45 seconds a call. The chosen name must be exactly one of the candidates and goes through the usual label cleaner.
+
+- **Undecided.** A cluster Jev left out, answered with something that was not a candidate, or answered under 0.5 confidence takes the model's first candidate, else its file-derived name. The map is never worse than without the pick.
+- **A pack Jev refuses** (HTTP 400, 413 or 422, an answer that could not be read, a timeout) is split in halves, twice at most (7 calls for a pack of 100), then the clusters take their first candidate. **Jev that cannot be asked** (no key, offline, 401, 403, 429, 5xx, or left out of the judge's providers) stops the pick for the rest of the build; the build says `labels: jev unavailable (<reason>)`. With the pick off in the approved profile, or no key, nothing is asked and nothing is said, as if the pick were off.
+- **What Jev receives.** The same scrubbed file paths (up to 12 per cluster, cut at 200 characters) the agent CLI already gets, and the candidate names, after the judge's own redaction and cap. The pick turns on only from the *approved* profile, checked at every call: an edited live file that says `jev` makes no Jev call until it is approved.
+- **Tokens.** Jev's tokens (characters / 4 when it reports none) count toward `context.labeling.maxTokens`; a pick that would pass it is skipped and the clusters take their first candidate (`labels: jev unavailable (token-cap)`).
+- **Visible as.** One `context.model.called` event per Jev call (harness `jev`, the questions in the pack, how many Jev settled and how many took the first candidate; a `not-asked` try with reason `off` or `no-key` when it was never in force), `sindri doctor`'s `context:labelpick` row, and Settings' "Label choice" line.
 
 ## The concept glossary: the words behind the concepts
 

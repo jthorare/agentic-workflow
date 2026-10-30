@@ -9,11 +9,11 @@ namespace Aw.Context.Tests.Map;
 public sealed class MapChecksTests
 {
     [Theory, Trait("Lane", "unit")]
-    [InlineData(300, CheckVerdict.Pass)]       // 30% of 1000 features
-    [InlineData(301, CheckVerdict.Degraded)]   // 30.1%
+    [InlineData(50, CheckVerdict.Pass)]        // 5% of 1000 features
+    [InlineData(51, CheckVerdict.Degraded)]    // 5.1%
     [InlineData(600, CheckVerdict.Degraded)]   // 60%
     [InlineData(601, CheckVerdict.Refuse)]     // 60.1%
-    public void Isolated_features_pass_at_30_percent_degrade_above_and_refuse_above_60(int isolated, CheckVerdict expected)
+    public void Isolated_features_pass_at_5_percent_degrade_above_and_refuse_above_60(int isolated, CheckVerdict expected)
     {
         var report = MapChecks.Measure(StructureGraphs.Isolated(total: 1000, isolated));
 
@@ -120,8 +120,8 @@ public sealed class MapChecksTests
         var outcome = MapChecks.Measure(StructureGraphs.Isolated(total: 100, isolated: 41)).Decide(ChecksMode.Refuse);
 
         Assert.Equal(CheckVerdict.Degraded, outcome.Verdict);
-        Assert.Equal(["structure: 41% of features (a feature is a group of files) have no link to another feature or a table; limit 30%"], outcome.Notes);
-        Assert.Equal("structure 41% isolated, limit 30%", outcome.Stored);
+        Assert.Equal(["structure: 41% of features (a feature is a group of files) have no link to another feature or a table; limit 5%"], outcome.Notes);
+        Assert.Equal("structure 41% isolated, limit 5%", outcome.Stored);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -132,7 +132,7 @@ public sealed class MapChecksTests
 
         var outcome = MapChecks.Measure(graph).Decide(ChecksMode.Refuse);
 
-        Assert.Equal("structure 41% isolated, limit 30%; size 5% over 150 files, limit 2%", outcome.Stored);
+        Assert.Equal("structure 41% isolated, limit 5%; size 5% over 150 files, limit 2%", outcome.Stored);
         Assert.Equal(2, outcome.Notes.Count);
     }
 

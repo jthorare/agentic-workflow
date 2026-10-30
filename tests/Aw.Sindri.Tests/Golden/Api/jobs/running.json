@@ -13,7 +13,10 @@
       "endedAt": null,
       "rounds": 0,
       "summary": null,
-      "code": null
+      "code": null,
+      "models": null,
+      "waitingOn": null,
+      "waitingLine": null
     }
   ],
   "empty": null,

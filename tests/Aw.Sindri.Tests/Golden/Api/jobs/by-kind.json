@@ -13,7 +13,10 @@
       "endedAt": "2026-01-01T00:00:00.0000000Z",
       "rounds": 0,
       "summary": "ok: worked",
-      "code": null
+      "code": null,
+      "models": null,
+      "waitingOn": null,
+      "waitingLine": null
     }
   ],
   "empty": null,

@@ -23,6 +23,7 @@ public sealed class FakeRecordStore : IRecordStore
     public ValueTask<Result<CommitReport>> Commit(RecordBatch batch, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(batch);
+        cancellationToken.ThrowIfCancellationRequested();   // a real store's transaction does not start under a cancelled token
         lock (_gate)
         {
             if (Validate(batch) is { } invalid)
@@ -271,7 +272,7 @@ public sealed class FakeRecordStore : IRecordStore
             .Where(i => i.Kind == RecordKind.Issue && i.RemovedAt is null && audience.Allows(i.Audience, i.Key) && i.Links.Any(l => l.Kind == RecordLinkKind.InProject && l.ToRef == project.Key.Value))
             .ToList();
         return new ProjectRow(project.Key, project.Title, project.Url, project.StateRaw, project.Health, project.DueAt, project.UpdatedAt ?? project.SyncedAt, project.ClosedAt,
-            lead?.ToRef, lead?.Title, issues.Count(i => i.State == RecordState.Open), issues.Max(i => i.UpdatedAt));
+            lead?.ToRef, lead?.Title, issues.Count(i => i.State == RecordState.Open), issues.Max(i => i.UpdatedAt), project.Description);
     }
 
     /// <inheritdoc />
@@ -325,7 +326,7 @@ public sealed class FakeRecordStore : IRecordStore
             {
                 tombstoned++;
                 DropChunkVectors((_chunks.GetValueOrDefault(key) ?? []).Select(c => new ChunkKey(key, c.Seq).ToString()));
-                _records[key] = row with { RemovedAt = at };
+                _records[key] = row with { RemovedAt = at, Description = null };
                 _ = _chunks.Remove(key);
             }
         }

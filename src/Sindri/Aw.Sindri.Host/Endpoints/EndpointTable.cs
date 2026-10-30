@@ -30,6 +30,7 @@ internal static class EndpointTable
         _ = queries.MapListJobs();
         _ = queries.MapGetItemTimeline();
         _ = queries.MapGetItemScope();
+        _ = MapProjectQueries(queries);
         _ = queries.MapGetQueue();
         _ = queries.MapGetSession();
         _ = queries.MapGetRunSuspension();
@@ -57,6 +58,14 @@ internal static class EndpointTable
         _ = MapInstanceQueries(queries);
         _ = MapCodeIndexQueries(queries);
         return MapContextQueries(queries);
+    }
+
+    private static RouteGroupBuilder MapProjectQueries(RouteGroupBuilder queries)
+    {
+        _ = queries.MapListLinearProjects();
+        _ = queries.MapGetProject();
+        _ = queries.MapGetProjects();
+        return queries;
     }
 
     private static RouteGroupBuilder MapSandboxQueries(RouteGroupBuilder queries)
@@ -129,6 +138,7 @@ internal static class EndpointTable
         // ---- commands: one line per slice, sorted ----
         _ = commands.MapApproveProfile();
         _ = commands.MapCancelJob();
+        _ = commands.MapResumeJob();
         _ = commands.MapCloseItem().MapProjectWrites();
         _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();

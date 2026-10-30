@@ -4,8 +4,8 @@ namespace Aw.Context.Core;
 
 /// <summary>
 /// The context engine's error catalogue (spec §8.6), codes SND-CONTEXT-NNN. Stage S-1A owns 001–019 and defines 020
-/// (the session gate, spec §3); S-3a adds 030–034 (the map file and its store); S-3b adds 035–038 (the probe runner and anchors; 039 is reserved); S-4 adds 040 and 042–048 (041 stays retired, 049 is reserved); S-7A adds 080–083 (backtest; 084–086 reserved for review findings); S-5A adds 050–055 (Onyx, in the
-/// S-5A/B range 050–069); later stages
+/// (the session gate, spec §3); S-3a adds 030–034 (the map file and its store); S-3b adds 035–038 (the probe runner and anchors; 039 is reserved); S-4 adds 040 and 042–048 (041 stays retired, 049 is reserved); S-7A adds 080–083 (backtest; 084–086 reserved for review findings); S-5A/B own 050–069 (050–055 are
+/// retired with the old intent source); later stages
 /// add theirs in their ranges. HTTP status follows the kind; the CLI exit code is 1 for attention (<see cref="Attention"/>) and 2 for a tool error.
 /// </summary>
 public static class ContextErrors
@@ -106,35 +106,6 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-048: extraction couldn't read the repo from git at the commit (a missing repo or sha).</summary>
     public static readonly ErrorDefinition ExtractionUnreadable = new("SND-CONTEXT-048", ErrorKind.Unavailable, "Extraction can't read the repo from git");
 
-    /// <summary>
-    /// SND-CONTEXT-050: Onyx refused the key (HTTP 403): it is missing, wrong, or lacks the admin role that
-    /// 'POST /api/admin/search' needs (spec §8.8). Fix: use a personal access token of a dedicated admin user (or a service-account key),
-    /// store it behind 'context.sources.onyx.token', and approve the profile again.
-    /// </summary>
-    public static readonly ErrorDefinition OnyxKeyRefused = new("SND-CONTEXT-050", ErrorKind.Forbidden, "Onyx refused the key: it is missing, wrong, or lacks the admin role the search route needs");
-
-    /// <summary>
-    /// SND-CONTEXT-051: Onyx answered with an unexpected status or shape (a route or field the pinned v4.9.0 doesn't have).
-    /// The query goes on without Onyx (Unavailable). Fix: check the running release against 'context.sources.onyx.version'.
-    /// </summary>
-    public static readonly ErrorDefinition OnyxUnexpectedReply = new("SND-CONTEXT-051", ErrorKind.Unavailable, "Onyx answered with an unexpected shape; check the pinned version");
-
-    /// <summary>SND-CONTEXT-052: Onyx has no document with that id (it was deleted or its connector no longer indexes it).</summary>
-    public static readonly ErrorDefinition OnyxDocumentNotFound = new("SND-CONTEXT-052", ErrorKind.NotFound, "Onyx has no such document");
-
-    /// <summary>
-    /// SND-CONTEXT-053: the Onyx token is an admin token of a person's account, not of Sindri's dedicated user
-    /// (OnyxSettings.DedicatedAccountEmail, the user `sindri onyx up` makes, a STANDARD account) or a service account (spec
-    /// §8.8). Doctor shows it as degraded. Fix: use a token of a dedicated admin user for Sindri alone.
-    /// </summary>
-    public static readonly ErrorDefinition OnyxKeyNotServiceAccount = new("SND-CONTEXT-053", ErrorKind.Forbidden, "The Onyx key doesn't belong to Sindri's dedicated account");
-
-    /// <summary>
-    /// SND-CONTEXT-055: Onyx isn't on a loopback address, or its version differs from the pinned one (spec §8.8). The
-    /// message names the key path ('context.sources.onyx.url' or '.version') and the fix, never the token.
-    /// </summary>
-    public static readonly ErrorDefinition OnyxNotPinnedOrLoopback = new("SND-CONTEXT-055", ErrorKind.Invalid, "Onyx isn't on a loopback address, or its version differs from the pinned one");
-
     /// <summary>SND-CONTEXT-056: a sync of that source is already running (one at a time per source; CLI exit 1, HTTP 409).</summary>
     public static readonly ErrorDefinition SyncRunning = new("SND-CONTEXT-056", ErrorKind.Conflict, "A sync of that source is already running");
 
@@ -156,7 +127,7 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-080: no eligible backtest sample (no merge carries an issue key of a profile team in the window, or every candidate was left out; the message gives the counts).</summary>
     public static readonly ErrorDefinition NoEligibleSample = new("SND-CONTEXT-080", ErrorKind.NotFound, "No eligible backtest sample");
 
-    /// <summary>SND-CONTEXT-081: no configured intent source can fetch issue records for a brief ('onyx' today; 'linear' after S-6).</summary>
+    /// <summary>SND-CONTEXT-081: no configured intent source can fetch issue records for a brief (today 'linear').</summary>
     public static readonly ErrorDefinition NoBriefSource = new("SND-CONTEXT-081", ErrorKind.Unavailable, "No source can supply backtest briefs");
 
     /// <summary>SND-CONTEXT-082: '--arms' names an unknown arm; the message lists the arms and which are not available yet.</summary>
@@ -227,6 +198,12 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-090: the query's rerank (Phase 8, 'context.ranker.rerank') could not order the items: the model was unavailable, over budget, or answered no order. The query went on in its feature or fusion order; the answer lists 'rerank' as degraded (never a route failure).</summary>
     public static readonly ErrorDefinition RerankUnavailable = new("SND-CONTEXT-090", ErrorKind.Unavailable, "The rerank could not order the items");
 
+    /// <summary>SND-CONTEXT-240: every harness a call may try is at its usage limit or failed (the message names them and their 'until' times). The job pauses when it can; the work waits for a harness to come back.</summary>
+    public static readonly ErrorDefinition ModelHarnessesUnavailable = new("SND-CONTEXT-240", ErrorKind.Unavailable, "Every model harness for this call is at its usage limit or failing");
+
+    /// <summary>SND-CONTEXT-241: none of the harnesses a call may try is installed. Fix: install one or name another in 'context.models'.</summary>
+    public static readonly ErrorDefinition NoModelHarness = new("SND-CONTEXT-241", ErrorKind.Unavailable, "No model harness is installed for this call");
+
     /// <summary>SND-CONTEXT-190: a promote, a cleanup, an override append or a hold named a draft ('expectedVersion') and the latest draft is another number or there is none: a rebuild replaced it, or it was promoted. The map's publish rules own 190-194 (retrieval spec §8.7a).</summary>
     public static readonly ErrorDefinition DraftChanged = new("SND-CONTEXT-190", ErrorKind.Conflict, "The draft is not the one that was expected");
 
@@ -245,14 +222,20 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-232: a vector scan was asked with a query or mask that doesn't fit the matrix, or a count out of range.</summary>
     public static readonly ErrorDefinition VectorScanInvalid = new("SND-CONTEXT-232", ErrorKind.Invalid, "The vector scan request is invalid");
 
+    /// <summary>SND-CONTEXT-242: Jev refused a pack of choice questions (input too big, an answer that wasn't one, a timeout). The labeler splits the pack and asks again, down to two levels; what still fails takes its fallback. The message is a reason code.</summary>
+    public static readonly ErrorDefinition ChoiceRejected = new("SND-CONTEXT-242", ErrorKind.Unavailable, "Jev refused a pack of choice questions");
+
+    /// <summary>SND-CONTEXT-243: Jev can't be asked for the rest of this pass (no key, offline, excluded, a refused key, rate limited, a server error, or the pick is off in the approved profile). Every undecided choice takes its fallback. The message is a reason code.</summary>
+    public static readonly ErrorDefinition ChoiceUnavailable = new("SND-CONTEXT-243", ErrorKind.Unavailable, "Jev can't be asked for choices");
+
     /// <summary>Every Context error, for ErrorCatalogue.Validate.</summary>
     public static IReadOnlyList<ErrorDefinition> All { get; } =
         [SettingsInvalid, RecordBatchInvalid, EmbedderUnavailable, VectorScanInvalid, SourceNotConfigured, UnknownAnchor, StoreUnavailable, PathInWorktree, QueryInvalid, SourceUnavailable, AllSourcesUnavailable, SessionsDisabled,
          McpRepoMissing, McpArgumentsInvalid, McpToolUnknown, McpRegisterRepoUnknown, McpRegisterFailed, McpUserWide,
          NoMap, MapFileInvalid, MapNodeUndefined, ExportOutsideHome, MapFileChanged, ProbeFileInvalid, NoProbeFile, AmbiguousAnchor, ProbesRegressed,
          HeavyLockBusy, LabelingUnavailable, ReviewFileNoMatch, NoDraftMap, RepoOutsideScope, PromoteRefused, ReviewTargetStale, ExtractionUnreadable,
-         OnyxKeyRefused, OnyxUnexpectedReply, OnyxDocumentNotFound, OnyxKeyNotServiceAccount, OnyxNotPinnedOrLoopback, LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
-         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, AreaUnknown, NodeNotInScopeGraph];
+         LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
+         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph];
 
     /// <summary>
     /// The codes the CLI answers with exit 1 (attention, spec §8.6): an unknown or ambiguous anchor, a refused input or
