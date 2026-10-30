@@ -11,7 +11,7 @@ public sealed class MapPublishDecisionTests
     private static IndexOutlookDetail Of(IndexOutlook o, RepoWait w = RepoWait.None) => new(o, w, RetryAt: null);
 
     private static MapHoldState Hold(DateTimeOffset since, params string[] repos) =>
-        new(14, since, repos.ToDictionary(static r => r, static r => new MapRepoHead("abc1234", OnDefaultBranch: true), StringComparer.Ordinal));
+        new(14, since, repos.ToDictionary(static r => r, static r => new MapRepoHead("abc1234", OnDefaultBranch: true) { IndexCommit = "abc1234" }, StringComparer.Ordinal));
 
     private static MapPublishAction Decide(MapHoldState hold, Dictionary<string, IndexOutlookDetail> outlooks, int? draft = 14, int? current = 13, TimeSpan? wait = null, DateTimeOffset? now = null) =>
         MapPublishDecision.Decide(new MapPublishInput(hold, draft, current, outlooks, wait ?? _wait), now ?? _now);
@@ -28,6 +28,33 @@ public sealed class MapPublishDecisionTests
     [Fact, Trait("Lane", "unit")]
     public void Every_repo_built_publishes_IndexReady() =>
         IsPublish(Decide(Hold(_now, "a", "b"), Outlooks(("a", IndexOutlook.Built), ("b", IndexOutlook.Built))), MapPublishReason.IndexReady);
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_held_draft_built_before_its_code_index_is_rebuilt_not_published()
+    {
+        var hold = new MapHoldState(14, _now, new Dictionary<string, MapRepoHead>(StringComparer.Ordinal)
+        {
+            ["a"] = new MapRepoHead("abc1234", OnDefaultBranch: true),   // built with no code index
+            ["b"] = new MapRepoHead("abc1234", OnDefaultBranch: true) { IndexCommit = "def5678" },   // built against another commit's index
+            ["c"] = new MapRepoHead("abc1234", OnDefaultBranch: true) { IndexCommit = "abc1234" },
+        });
+
+        var action = Decide(hold, Outlooks(("a", IndexOutlook.Built), ("b", IndexOutlook.Built), ("c", IndexOutlook.Built)));
+
+        Assert.Equal(["a", "b"], Assert.IsType<MapRebuild>(action).Repos);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_draft_built_before_a_code_index_that_is_still_coming_keeps_waiting()
+    {
+        var hold = new MapHoldState(14, _now, new Dictionary<string, MapRepoHead>(StringComparer.Ordinal) { ["a"] = new MapRepoHead("abc1234", OnDefaultBranch: true) });
+
+        _ = Assert.IsType<MapWait>(Decide(hold, Outlooks(("a", IndexOutlook.Coming))));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_draft_built_with_its_code_index_still_publishes_IndexReady() =>
+        IsPublish(Decide(Hold(_now, "a"), Outlooks(("a", IndexOutlook.Built))), MapPublishReason.IndexReady);
 
     [Fact, Trait("Lane", "unit")]
     public void One_coming_repo_inside_the_wait_waits_until_since_plus_wait_on_one()
