@@ -119,6 +119,15 @@
 #                                  writes the same rows (INSERT OR IGNORE). The item and the instance must exist (see 'workflows'): the
 #                                  frame opens the instance and reads its picks by address. Needs jq and sqlite3 or python3.
 #
+#   sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none
+#                                  a job with model calls for the Jobs page and the job sheet (context model routing spec 8.2, #1567),
+#                                  written as ledger rows the jobs view folds (job.started, job.progress, context.model.called and,
+#                                  for paused, job.waiting with signal model-limit): fell-back is a running job with six calls (a
+#                                  limited harness, a skipped one, a failed one, a Jev label pick, a product-surface pick and a pick
+#                                  that was not asked: one call fell back to Codex); no-answer is three calls no harness answered;
+#                                  paused is a job parked on model-limit with its progress line, so its row shows Resume; none is a
+#                                  running job that made no call. Each state is its own job (fixed ids, INSERT OR IGNORE, a rerun adds
+#                                  nothing); prints the job id. Needs jq and sqlite3 or python3.
 #   sindri-ui-fixture.sh model-picks-run picked|escalated|unpriced|picking
 #                                  one workflow instance whose Model picks table (the instance frame; model-pick spec section 6.1,
 #                                  issue #1452) shows that state, made by a real agent run with the pick on (run after 'sessions up'; each
@@ -1037,6 +1046,61 @@ model_picks() { # $1 state, $2 item, $3 instance
   printf '%s\n' "$instance"
 }
 
+# --- model-calls: a job's model calls on the Jobs page and the job sheet (context model routing spec 8.2, #1567 R-4) ---
+
+# $1 key, $2 type, $3 payload JSON. A fixed id and idempotency key, so a rerun adds nothing (see pick_event).
+calls_event() {
+  local key="sindri-ui-fixture:model-calls:$1" id corr
+  id="$(printf '%s' "$key" | cksum | awk '{printf "5c0f1e02-%04x-4d1e-9a55-3c2f6d8e1b05", $1 % 65536}')"
+  corr="${id%?}6"
+  ledger "INSERT OR IGNORE INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, correlation_id, epoch, idempotency_key, payload_json)
+          VALUES ('$id', '$2', 1, strftime('%Y-%m-%dT%H:%M:%S', 'now') || '.0000000Z', 'sindri-ui-fixture', 'local', 0, '$corr',
+                  COALESCE((SELECT MAX(epoch) FROM events), 0), '$key', '$3');" >/dev/null
+}
+
+# $1 job, $2 call number, $3 seconds ago, $4 purpose, $5 kind, $6 tries JSON, $7 answeredBy JSON (or null), $8 input tokens, $9 output tokens, $10 items (or null), $11 how JSON (or null)
+calls_call() {
+  local at
+  at="$(ledger "SELECT strftime('%Y-%m-%dT%H:%M:%S', 'now', '-$3 seconds') || '.0000000Z';")"
+  calls_event "call:$1:$2" context.model.called "$(jq -cn --arg j "$1" --arg c "fixture-call-$2" --arg at "$at" --arg p "$4" --arg k "$5" --argjson tries "$6" --argjson by "$7" \
+    --argjson i "$8" --argjson o "$9" --argjson items "${10}" --argjson how "${11}" \
+    '{callId: $c, job: $j, purpose: $p, kind: $k, tries: $tries, answeredBy: $by, inputTokens: $i, outputTokens: $o, tokenBasis: "reported", items: $items, how: $how, startedAt: $at, ms: 2000}')"
+}
+
+# $1 harness, $2 model, $3 outcome, $4 reason (or null), $5 ms
+calls_try() { jq -cn --arg h "$1" --arg m "$2" --arg o "$3" --arg r "$4" --argjson ms "$5" '{harness: $h, model: $m, outcome: $o, reason: (if $r == "null" then null else $r end), ms: $ms, source: "builtin"}'; }
+
+model_calls() { # $1 state
+  need jq
+  need_sql
+  local state="$1" n job cmd haiku luna sonnet gpt jev
+  case "$state" in fell-back) n=1 ;; no-answer) n=2 ;; paused) n=3 ;; none) n=4 ;; esac
+  job="$(printf 'JOB-%032x' "$((0x5c0f1e20 + n))")"
+  cmd="5c0f1e02-0000-4d1e-9a55-3c2f6d8e1b0$n"
+  calls_event "started:$job" job.started "$(jq -cn --arg c "$cmd" --arg j "$job" --arg k "map-$state" '{commandId: $c, job: $j, kind: "BuildContextMap", key: $k, item: null, repo: null, service: null}')"
+  calls_event "progress:$job" job.progress "$(jq -cn --arg c "$cmd" --arg j "$job" '{commandId: $c, job: $j, round: 1, line: "labeling the map"}')"
+  haiku="$(calls_try claude-code haiku failed exit-1 400)"
+  luna="$(calls_try codex gpt-6-luna answered null 1200)"
+  case "$state" in
+    fell-back)
+      calls_call "$job" 1 300 labeling labeling "[$(calls_try claude-code haiku limit limit 300), $luna]" '{"harness":"codex","model":"gpt-6-luna"}' 3000 1100 null null
+      calls_call "$job" 2 240 labeling labeling "[$(calls_try claude-code haiku skipped limited 0), $luna]" '{"harness":"codex","model":"gpt-6-luna"}' 2800 1000 null null
+      calls_call "$job" 3 180 concept-scan conceptNaming "[$haiku, $luna]" '{"harness":"codex","model":"gpt-6-luna"}' 2100 700 null null
+      jev="$(calls_try jev jev-1.13.0 answered null 800)"
+      calls_call "$job" 4 120 labeling labeling "[$jev]" '{"harness":"jev","model":"jev-1.13.0"}' 0 0 100 '{"jev":94,"firstCandidate":5,"fileName":1}'
+      calls_call "$job" 5 60 product-surfaces productSurfaces "[$jev]" '{"harness":"jev","model":"jev-1.13.0"}' 0 0 80 '{"merged":12,"kept":58,"rejected":6,"undecided":4}'
+      calls_call "$job" 6 30 labeling labeling "[$(calls_try jev jev-1.13.0 not-asked no-key 0)]" null 0 0 null null ;;
+    no-answer)
+      for i in 1 2 3; do calls_call "$job" "$i" "$((200 - i * 50))" labeling labeling "[$haiku]" null 0 0 null null; done ;;
+    paused)
+      calls_call "$job" 1 120 labeling labeling "[$luna]" '{"harness":"codex","model":"gpt-6-luna"}' 1900 600 null null
+      calls_event "progress-paused:$job" job.progress "$(jq -cn --arg c "$cmd" --arg j "$job" '{commandId: $c, job: $j, round: 2, line: "Paused: claude-code at its usage limit; codex at its usage limit. Resume when one is back."}')"
+      calls_event "waiting:$job" job.waiting "$(jq -cn --arg c "$cmd" --arg j "$job" '{commandId: $c, job: $j, signal: "model-limit"}')" ;;
+    none) : ;;
+  esac
+  printf '%s\n' "$job"
+}
+
 # --- model-picks-run: the Model picks table's states from a real agent run with the pick on (issue #1452) ---
 PICK_RECIPE="workflow.dev-agent-pick"
 PICK_CHEAP="claude-haiku-4-5"
@@ -1254,6 +1318,9 @@ case "$verb" in
     esac ;;
   hide-item) { [ "$#" -eq 2 ] && case "$2" in ITM-*[!0-9a-f]* | ITM-) false ;; ITM-*) true ;; *) false ;; esac; } || die "usage: hide-item <ITM-id>" ;;
   agent-run) [ "$#" -eq 1 ] || die "'agent-run' takes no arguments" ;;
+  model-calls)
+    [ "$#" -eq 2 ] || die "usage: model-calls fell-back|no-answer|paused|none"
+    case "$2" in fell-back | no-answer | paused | none) ;; *) die "model-calls: '$2' is not a state (fell-back, no-answer, paused, none)" ;; esac ;;
   model-picks-run)
     [ "$#" -eq 2 ] || die "usage: model-picks-run picked|escalated|unpriced|picking"
     case "$2" in picked | escalated | unpriced | picking) ;; *) die "model-picks-run: '$2' is not a state (picked, escalated, unpriced, picking)" ;; esac ;;
