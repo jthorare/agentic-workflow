@@ -30,6 +30,7 @@ public sealed class UsageTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("sindri repo onboard ", "never approves the profile")]
     [InlineData("sindri profile init ", "refuses when one exists")]
+    [InlineData("sindri profile set ", "never approves")]
     public void Help_lists_repo_onboard_and_profile_init(string start, string says) =>
         Assert.Contains(says, Assert.Single(Lines(), l => l.StartsWith(start, StringComparison.Ordinal)), StringComparison.Ordinal);
 
