@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Kernel;
@@ -15,6 +16,7 @@ public sealed class PinScope
     }
 
     /// <summary>The pin.</summary>
+    [JsonRequired]   // why: never serialized; ARCH-ID-002 wants every typed id required on read, and the constructor stays internal so only PinScope.Of makes one
     public ConceptId Pin { get; }
 
     /// <summary>The pin <paramref name="pin"/> names, as the caller may see it.</summary>
