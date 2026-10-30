@@ -26,6 +26,10 @@
           "type": "string",
           "description": "Two commit shas joined by '..' (base..head), not branch names"
         },
+        "concept": {
+          "type": "string",
+          "description": "a pin id from context_concepts (rows with pinned: true); only results inside that pin"
+        },
         "depth": {
           "type": "integer",
           "description": "Cascade depth (deeper than 8 is read as 8)",

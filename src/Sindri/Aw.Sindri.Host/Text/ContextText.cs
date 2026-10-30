@@ -23,6 +23,11 @@ internal static class ContextText
             Diff(text, diff);
         }
 
+        foreach (var note in result.Notes ?? [])
+        {
+            _ = text.AppendLine(Invariant($"NOTE {note}"));
+        }
+
         foreach (var degraded in result.Degraded)
         {
             _ = text.AppendLine(Invariant($"DEGRADED {degraded.Source.Value}: {degraded.Code} {degraded.Message}"));

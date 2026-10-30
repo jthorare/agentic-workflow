@@ -35,6 +35,9 @@ internal sealed record GraphPart(IReadOnlyList<PackCandidate> Candidates, IReadO
     /// <summary>The diff shape's facts, or null for every other shape.</summary>
     internal DiffPart? Diff { get; init; }
 
+    /// <summary>What the answer says about the pin it was read under; empty when none.</summary>
+    internal IReadOnlyList<string> Notes { get; init; } = [];
+
     /// <summary>The pins of this query, resolved once; none when no repo has a pin.</summary>
     internal PinContext Pins { get; init; } = PinContext.None;
 

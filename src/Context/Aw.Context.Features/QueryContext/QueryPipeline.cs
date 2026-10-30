@@ -94,7 +94,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         var (request, visible, settings) = asked;
         var mapped = ScopeRules.Mapped(settings, request.Scope.Repos);
-        var concept = source.Inputs.Concept;
+        var concept = source.Inputs.Concept ?? request.Query.Concept;
         if (concept is null && !mapped.Any(r => r.Concepts.Count > 0))
         {
             return anchored;
@@ -102,7 +102,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         var map = await source.Inputs.Map.Read(request.Scope, source.Read, cancellationToken).ConfigureAwait(false);
         var pins = PinContext.Of(mapped, visible, map.IsError ? null : map.Value, concept, anchored.Value.Graph.Anchors);
-        return pins.IsError ? pins.Error : (anchored.Value.Graph with { Pins = pins.Value }, anchored.Value.Terms, anchored.Value.Miss);
+        return pins.IsError ? pins.Error : (PinNotes.Apply(anchored.Value.Graph with { Pins = pins.Value }, request.Query.Text is not null), anchored.Value.Terms, anchored.Value.Miss);
     }
 
     private static IEnumerable<NodeKey> CodeKeys(GraphPart graph) =>

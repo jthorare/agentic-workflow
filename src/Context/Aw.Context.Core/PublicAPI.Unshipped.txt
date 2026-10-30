@@ -10438,3 +10438,4 @@ Aw.Context.Core.Engine.ContextQuery.Concept.get -> string?
 Aw.Context.Core.Engine.ContextQuery.Concept.init -> void
 Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Context.Core.Results.ContextResult.Notes.init -> void
+const Aw.Context.Core.Engine.QueryRules.ConceptMessage = "concept names a pin: its id or 'concept:<id>' (see context_concepts, rows with pinned: true)" -> string!
