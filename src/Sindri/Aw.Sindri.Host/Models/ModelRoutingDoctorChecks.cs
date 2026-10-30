@@ -25,6 +25,7 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
         [ModelKind.Adjudication] = ModelPurpose.Adjudication,
         [ModelKind.MapCleanup] = ModelPurpose.Cleanup,
         [ModelKind.Rerank] = ModelPurpose.Rerank,
+        [ModelKind.ProductSurfaces] = ModelPurpose.ProductSurfaces,
     };
 
     public async ValueTask<IReadOnlyList<DoctorCheck>> Run(CancellationToken cancellationToken)
@@ -47,7 +48,7 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
         await CodexProblems(routes, problems, cancellationToken).ConfigureAwait(false);
         if (problems.Count == 0)
         {
-            return [new DoctorCheck(Name, CheckState.Ok, Lines(routes), Fix: null)];
+            return [new DoctorCheck(Name, CheckState.Ok, Lines(routes, settings), Fix: null)];
         }
 
         var distinct = problems.Distinct().ToList();
@@ -84,11 +85,12 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
     }
 
     private static List<(ModelKind Kind, IReadOnlyList<RoutedModel> Route)> Routes(ModelsSettings settings, IReadOnlyList<ModelHarness> have) =>
-        [.. ModelKinds.All.Select(kind => (kind, ModelRouting.Resolve(settings, new ModelRequest(_purposes[kind], Prompt: string.Empty, MaxTokens: 0, TimeSpan.Zero), have)))];
+        [.. ModelKinds.All.Where(static kind => kind != ModelKind.ProductSurfaces).Select(kind => (kind, ModelRouting.Resolve(settings, new ModelRequest(_purposes[kind], Prompt: string.Empty, MaxTokens: 0, TimeSpan.Zero), have)))];
 
-    // One line per distinct route, kinds in the profile docs' order: "labeling, mapCleanup: claude-code haiku, then codex gpt-6-luna".
-    private static string Lines(List<(ModelKind Kind, IReadOnlyList<RoutedModel> Route)> routes) =>
-        string.Join("; ", routes.GroupBy(static r => Words(r.Route), StringComparer.Ordinal).Select(g => $"{string.Join(", ", g.Select(static r => ModelKinds.Key(r.Kind)))}: {g.Key}"));
+    // One line per distinct route, kinds in the profile docs' order: "labeling, mapCleanup: claude-code haiku, then codex gpt-6-luna". The product-surface kind has no harness: its line is Jev when its pick is on, no model when off (spec §8.4).
+    private static string Lines(List<(ModelKind Kind, IReadOnlyList<RoutedModel> Route)> routes, ModelsSettings settings) =>
+        string.Join("; ", routes.GroupBy(static r => Words(r.Route), StringComparer.Ordinal).Select(g => $"{string.Join(", ", g.Select(static r => ModelKinds.Key(r.Kind)))}: {g.Key}")
+            .Append($"{ModelKinds.Key(ModelKind.ProductSurfaces)}: {(settings.SurfacePick == LabelPick.Jev ? "jev, then none" : "no model")}"));
 
     private static string Words(IReadOnlyList<RoutedModel> route) =>
         route.Count == 0 ? "no harness installed" : string.Join(", then ", route.Select(static s => ModelHarnesses.Name(s.Harness) + " " + s.Model));

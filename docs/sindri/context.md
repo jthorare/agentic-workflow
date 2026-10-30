@@ -1071,6 +1071,17 @@ With `pick: off` (the default) a map build asks the labeling route for one name 
 - **Tokens.** Jev's tokens (characters / 4 when it reports none) count toward `context.labeling.maxTokens`; a pick that would pass it is skipped and the clusters take their first candidate (`labels: jev unavailable (token-cap)`).
 - **Visible as.** One `context.model.called` event per Jev call (harness `jev`, the questions in the pack, how many Jev settled and how many took the first candidate; a `not-asked` try with reason `off` or `no-key` when it was never in force), `sindri doctor`'s `context:labelpick` row, and Settings' "Label choice" line.
 
+### The Jev product-surface pick (`productSurfaces.pick: jev`)
+
+`context.models.productSurfaces` is the seventh model kind and takes `pick` only (`jev` or `off`, default `off`). It has no harness list, tier or model: no agent CLI is ever asked in Jev's place, and a CLI call for this purpose is `SND-CONTEXT-241`. The map build makes candidates for the product layer (surfaces, things, actions, flows); this pick decides whether lookalikes are one node.
+
+- **One question per group.** A group is one derived candidate or up to 3 lookalikes (a bigger set is cut in node-key order, 7 into 3, 3 and 1). The question lists each candidate's node key, kind, name, pass, up to 6 evidence paths and up to 6 edges, scrubbed and cut at 200 characters, inside a block it calls data. Its key is a hash of the group's node keys and evidence, so an unchanged group has the same key.
+- **Options are numbered:** `1. separate`, one `N. merge as: <candidate name>` per candidate, then `N. reject` (2 to 5 options). The answer is read by position, so a candidate named `separate` or `reject`, or two candidates with one name, cannot be mistaken for the words. A merge takes one candidate's own name, cleaned like a label (60 characters).
+- **Undecided is `separate`.** A missing answer, an answer that is none of the options, or confidence under 0.5 keeps the group's candidates as they are, and a reject needs the same 0.5 as a merge. There is no first-candidate fallback.
+- **Packing, splits and stops** are the label pick's: 80% of the judge's `providers.inputCapChars`, at most 100 questions per call, first-fit in key order, a refused pack split in halves twice, a provider that cannot be asked ends the pass. Jev's tokens count toward `context.labeling.maxTokens`.
+- **Off or no key** asks nothing and leaves every group separate; the build says `product surfaces: not decided (off)` or `(no-key)`. The pick turns on only from the *approved* profile, and `labeling.pick: jev` alone sends no surface data.
+- **Visible as.** One `context.model.called` event per Jev call (purpose `product-surfaces`, kind `productSurfaces`, items = groups in the pack, `how` = merged, kept, rejected and undecided), `sindri doctor`'s `context:surfacepick` row and the `productSurfaces:` line of `context:models` (`jev, then none` when on, `no model` when off), and Settings' read-only "Product surface choice" line (off, on but needs an API key, on).
+
 ## The concept glossary: the words behind the concepts
 
 A map build can name its concepts from the words the code uses, not only from the feature titles. It works from the code index's stored symbol embeddings, so it needs the embeddings layer on for the repo (`sindri code-index status` shows it); the build never embeds anything itself.

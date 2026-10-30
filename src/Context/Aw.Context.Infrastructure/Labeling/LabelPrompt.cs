@@ -105,7 +105,7 @@ internal static class LabelPrompt
     private static string? Text(JsonElement item, string name) =>
         item.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
 
-    private static string Flatten(string text) =>
+    internal static string Flatten(string text) =>
         string.Join(' ', new string([.. text.Select(static c => char.IsControl(c) ? ' ' : c)]).Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
     private static string Cut(string path) => path.Length > PathLength ? path[..PathLength] : path;

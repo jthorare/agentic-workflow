@@ -68,9 +68,12 @@ internal sealed class JevChoicePort(
         return mapped;
     }
 
-    // The approved profile, read at every call: an edited live file that says 'jev' makes no Jev call until it is approved. The product-surface pick has no setting until R-8 adds it.
-    private async ValueTask<bool> IsOn(ChoiceKind kind, CancellationToken cancellationToken) =>
-        kind == ChoiceKind.Labeling && (await models.Current(cancellationToken).ConfigureAwait(false)).LabelPick == LabelPick.Jev;
+    // The approved profile, read at every call: an edited live file that says 'jev' makes no Jev call until it is approved. Each kind has its own key: 'labeling.pick: jev' alone sends no surface data (spec §6.9, q154).
+    private async ValueTask<bool> IsOn(ChoiceKind kind, CancellationToken cancellationToken)
+    {
+        var settings = await models.Current(cancellationToken).ConfigureAwait(false);
+        return (kind == ChoiceKind.Labeling ? settings.LabelPick : settings.SurfacePick) == LabelPick.Jev;
+    }
 
     private static int LabelChars(ChoiceQuestion question) => question.Prompt.Length + question.Options.Sum(static o => o.Length);
 
