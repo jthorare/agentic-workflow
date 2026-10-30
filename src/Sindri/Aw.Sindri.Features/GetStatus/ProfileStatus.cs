@@ -14,4 +14,5 @@ namespace Aw.Sindri.Features.GetStatus;
 /// (missing from the ledger, or followed by a later one). A live file that doesn't load is judged by the saved approval.
 /// </param>
 /// <param name="ModelPick">'on' when the approved profile has model choice on (workflow.agent.pick), else 'off': computed here so the app never derives it (model-pick spec 8).</param>
-public sealed record ProfileStatus(ProfileHash? Approved, ProfileHash? Live, bool ChangedSinceApproval, string? Problem, string? Source, bool NeedsApproval, string ModelPick = "off");
+/// <param name="LabelPick">'off', 'on' or 'needs-key' for the Jev label pick (context.models.labeling.pick) of the approved profile; 'needs-key' when it is on and Jev has no key. Computed here so the app never derives it (model routing spec §8.5).</param>
+public sealed record ProfileStatus(ProfileHash? Approved, ProfileHash? Live, bool ChangedSinceApproval, string? Problem, string? Source, bool NeedsApproval, string ModelPick = "off", string LabelPick = "off");
