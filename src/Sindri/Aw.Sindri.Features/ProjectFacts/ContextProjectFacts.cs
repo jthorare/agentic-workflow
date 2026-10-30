@@ -40,7 +40,9 @@ internal sealed class ContextProjectFacts(IApprovedProfile approvals, ICallerCon
         }
 
         var a = answer.Value;
-        return new ProjectFactsSnapshot(Person(a.Owner), [.. a.Projects.Select(Fact)], [.. a.Catalog.Select(Fact)], a.Teams, a.FirstReadDone);
+        // why: Context returns only the requested keys in Projects; the ones the owner leads are only in Catalog, and the snapshot's Projects is "led, then attached"
+        LinearProjectFact[] projects = [.. a.Catalog.Where(static f => f.LeadIsOwner).Concat(a.Projects).Select(Fact).DistinctBy(static f => f.Key, StringComparer.Ordinal)];
+        return new ProjectFactsSnapshot(Person(a.Owner), projects, [.. a.Catalog.Select(Fact)], a.Teams, a.FirstReadDone);
     }
 
     public async ValueTask<Result<IReadOnlyList<ProjectSourceFreshness>>> Freshness(CancellationToken cancellationToken)

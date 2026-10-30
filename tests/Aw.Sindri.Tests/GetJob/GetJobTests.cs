@@ -86,4 +86,46 @@ public sealed class GetJobTests
 
         Assert.True((await Service().Handle(A.GetJobRequest().Build(), Token)).IsSuccess);
     }
+
+    private static JobModelCall Stored(string id) => new(ModelCallId.From(id), "labeling", "labeling", [new JobModelTry("codex", "gpt-6-luna", "answered", Reason: null, Ms: 100, "builtin")],
+        new JobModelAnswerer("codex", "gpt-6-luna"), 100, 50, "reported", Items: null, How: null, KnownInstants.Epoch, Ms: 100);
+
+    [Fact]
+    public async Task A_job_that_made_model_calls_carries_its_totals_its_calls_and_how_many_there_were()
+    {
+        var calls = new[] { Stored("call-1"), Stored("call-2") };
+        var totals = new ModelTotals(Calls: 205, FailedCalls: 1, InputTokens: 100, OutputTokens: 50, [new ModelAnsweredCount("codex", "gpt-6-luna", 1)]);
+        _jobs.Put(A.Job().Build() with { Models = totals, ModelCalls = calls });
+        using var entered = As(A.Caller().Human().Build());
+
+        var job = (await Service().Handle(A.GetJobRequest().Build(), Token)).Value;
+
+        Expect.Equal(totals, job.Models);
+        Expect.Sequence(["call-1", "call-2"], job.ModelCalls!.Select(static c => c.CallId.Value));
+        Expect.Equal(205, job.ModelCallCount);
+    }
+
+    [Fact]
+    public async Task A_job_parked_on_model_limit_says_so()
+    {
+        _jobs.Put(A.Job().Build() with { State = JobState.Waiting, WaitingOn = "model-limit" });
+        using var entered = As(A.Caller().Human().Build());
+
+        var job = (await Service().Handle(A.GetJobRequest().Build(), Token)).Value;
+
+        Expect.Equal("model-limit", job.WaitingOn);
+    }
+
+    [Fact]
+    public async Task A_job_that_made_no_call_carries_no_totals_and_an_empty_call_list()
+    {
+        _jobs.Put(A.Job().Build());
+        using var entered = As(A.Caller().Human().Build());
+
+        var job = (await Service().Handle(A.GetJobRequest().Build(), Token)).Value;
+
+        Assert.Null(job.Models);
+        Assert.Empty(job.ModelCalls!);
+        Expect.Equal(0, job.ModelCallCount);
+    }
 }
