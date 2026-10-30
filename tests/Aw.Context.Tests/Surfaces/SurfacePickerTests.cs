@@ -179,4 +179,28 @@ public sealed class SurfacePickerTests
         Assert.DoesNotContain(Planted.Secret, sent, StringComparison.Ordinal);
         Assert.DoesNotContain("123456", sent, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task With_no_key_nothing_is_asked_every_group_stays_separate_and_the_reason_is_no_key()
+    {
+        var port = new FakeChoicePort { UnavailableReason = ChoiceReasons.NoKey, Script = Answering(-1).Script };
+
+        var result = await Picker(port).Decide(SurfaceTestData.Groups(3), _on, Ct);
+
+        Assert.Empty(port.Asked);
+        Assert.All(result.Verdicts, v => Assert.Equal((SurfaceChoice.Separate, false), (v.Choice, v.Decided)));
+        Assert.Equal(ChoiceReasons.NoKey, result.NotDecided);
+    }
+
+    [Fact]
+    public async Task A_port_that_says_off_while_the_options_say_pick_reports_off()
+    {
+        var port = new FakeChoicePort { UnavailableReason = ChoiceReasons.Off };
+
+        var result = await Picker(port).Decide(SurfaceTestData.Groups(2), _on, Ct);
+
+        Assert.Empty(port.Asked);
+        Assert.Equal((ChoiceReasons.Off, 2), (result.NotDecided, result.Verdicts.Count));
+        Assert.All(result.Verdicts, v => Assert.False(v.Decided));
+    }
 }

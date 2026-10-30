@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using Aw.Context.Core.Extract;
+using Aw.Context.Core.Models;
 using Aw.Context.Core.Trust;
 using Aw.Kernel;
 
@@ -14,7 +15,8 @@ namespace Aw.Context.Infrastructure.Labeling;
 /// <param name="inner">The labeler asked about the misses.</param>
 /// <param name="cache">The saved labels.</param>
 /// <param name="scrubbers">Builds the scrubbers the keys are made through.</param>
-internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubberFactory scrubbers) : ILabeler
+/// <param name="choice">The Jev pick, asked once per pass whether it can go out (a pass with no key is keyed apart from one that asked Jev), or null when the host has none.</param>
+internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubberFactory scrubbers, IChoicePort? choice = null) : ILabeler
 {
     public async ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken)
     {
@@ -25,6 +27,7 @@ internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubbe
             return built.Error;
         }
 
+        _ = choice;   // red stub: the real pass asks the port
         var keys = clusters.Select(c => Key(c, built.Value.Egress, options)).ToList();
         var known = await cache.Find(keys, cancellationToken).ConfigureAwait(false);
         var saved = known.IsError ? new Dictionary<string, string>(StringComparer.Ordinal) : known.Value;
@@ -75,8 +78,9 @@ internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubbe
     }
 
     // The pick mode and the candidate count are in the key: flipping either is a deliberate full miss (a label chosen by Jev is not the model's single label). The file-derived name is the safe candidate, so it is in too, scrubbed like the files.
-    internal static string Key(FileCluster cluster, IEgressScrubber egress, LabelOptions? options = null)
+    internal static string Key(FileCluster cluster, IEgressScrubber egress, LabelOptions? options = null, string? unavailable = null)
     {
+        _ = unavailable;   // red stub
         var (mode, candidates) = options is { Pick: true } ? ("jev", options.Candidates) : ("off", 1);
         var name = cluster.FileName is { } fileName ? egress.Scrub(fileName).Text : string.Empty;
         var files = cluster.Files.Take(LabelPrompt.FilesPerCluster).Select(f => egress.Scrub(f).Text);
