@@ -10258,3 +10258,8 @@ Aw.Context.Core.Surfaces.SurfaceVerdict.Survivor.init -> void
 Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.get -> string?
 Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.init -> void
 static Aw.Context.Core.Surfaces.SurfaceVerdict.Merged(string! groupKey, int survivor, string! survivorKey, string! name) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+const Aw.Context.Core.Overrides.MapOverride.JevWho = "service:jev" -> string!
+Aw.Context.Core.Surfaces.SurfaceApply
+static Aw.Context.Core.Surfaces.SurfaceApply.Rows(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceGroup!>! groups, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceVerdict!>! verdicts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, System.DateTimeOffset at) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>!
+Aw.Context.Core.Surfaces.SurfaceCandidates
+static Aw.Context.Core.Surfaces.SurfaceCandidates.Groups(Aw.Context.Core.Extract.ExtractedMap! found, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceGroup!>!
