@@ -26,6 +26,8 @@ Some commands (approvals, starting and answering workflows, map builds, `index c
 
 The full setup, from prerequisites through connecting your sources, agent runtime and MCP to the app, is in **[SETUP.md](SETUP.md)**, and as a guided page with a picture per step: **[`docs/sindri-setup.html`](../sindri-setup.html)** (open it from disk). Operating it from the CLI (the product map, recipes, running the line) is in [OPERATIONS.md](OPERATIONS.md) until those move into the app.
 
+Live check of the Sindri-owned index (the ConnectAI replacement: GitHub, Linear, Slack, repo docs) on a new box: [connectai-live-check.md](connectai-live-check.md), written for agents who set it up and decide whether it works.
+
 Demo handoff and remaining work: [demo-handoff.md](demo-handoff.md) is a prompt for an agent on a fresh machine to set up and rehearse the Sindri demo, and its section 9 lists what is not built yet against the spec.
 
 ## What it is
