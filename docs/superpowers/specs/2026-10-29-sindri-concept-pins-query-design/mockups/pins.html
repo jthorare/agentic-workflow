@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concept pins mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<!--
+  Sindri concept pins mockups (spec 2026-10-29-sindri-concept-pins-query-design.md §0, §3.6, §3.7, §3.8, §5; phase Q7m "mockup first").
+  Static: no production code. Tokens and sheet styles are the Projects page mockup's (same app).
+  Query: s=sheet|cards|several · v=a|b|c · mode=pin|edit (sheet) · other=1 (sheet: other changes wait) · step=1|2 (several, v=c)
+  Every visible product string is a literal text of the spec. The small grey captions (mockup · ...) and the state captions above cards are annotations, not UI.
+-->
+<style>
+:root {
+  --canvas:#010102; --s1:#0f1011; --s2:#141516; --s3:#18191a; --s4:#191a1b;
+  --hair:#23252a; --hair2:#34343a; --hair3:#3e3e44;
+  --ink:#f7f8f8; --muted:#d0d6e0; --subtle:#8a8f98; --tert:#62666d;
+  --primary:#5e6ad2; --primarySoft:#1d2036; --onPrimary:#fff;
+  --success:#27a644; --attention:#f2994a; --error:#eb5757;
+  --attentionSoft:#23160c; --errorSoft:#220d0e;
+  --xxs:4px; --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px;
+  --rxs:4px; --rsm:6px; --rmd:8px; --rlg:12px;
+  --topbar:48px; --strip:26px; --sheet:520px; --control:30px;
+}
+* { box-sizing:border-box; }
+html, body { margin:0; height:100%; }
+body { background:var(--canvas); color:var(--ink); font:13px/1.45 Inter, system-ui, sans-serif; overflow:hidden; }
+.mono { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; }
+.top { height:var(--topbar); display:flex; align-items:center; gap:var(--sm); padding:0 var(--md); border-bottom:1px solid var(--hair); }
+.brand { display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; margin-right:2px; }
+.brand i { color:#5e6ad2; font-style:normal; font-size:15px; }
+.tabs { display:flex; gap:2px; padding:2px; border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s1); }
+.tab { height:26px; padding:0 8px; display:flex; align-items:center; gap:5px; border-radius:var(--rsm); color:var(--subtle); white-space:nowrap; }
+.tab .c { color:var(--tert); font-size:12px; }
+.tab.on { color:var(--ink); background:var(--s3); }
+.top .grow { flex:1; }
+.search { height:30px; width:300px; min-width:0; flex:0 1 300px; display:flex; align-items:center; gap:8px; padding:0 var(--sm); border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s1); color:var(--subtle); white-space:nowrap; overflow:hidden; }
+.search .k { margin-left:auto; font-size:11px; }
+.health { height:30px; display:flex; align-items:center; gap:8px; padding:0 var(--sm); border:1px solid var(--hair2); border-radius:999px; background:var(--s1); white-space:nowrap; }
+.health b { font-weight:600; } .health span { color:var(--subtle); font-size:12px; } .health .ok { color:var(--success); }
+.body { position:absolute; top:var(--topbar); left:0; right:0; bottom:var(--strip); display:flex; }
+.page { flex:1; min-width:0; overflow:hidden; padding:var(--lg) var(--lg) var(--xl); }
+.head { display:flex; align-items:flex-start; gap:var(--md); margin-bottom:var(--md); }
+.head h1 { font-size:20px; font-weight:600; margin:0 0 var(--xxs); letter-spacing:-0.01em; }
+.head .grow { flex:1; min-width:0; }
+.cov { color:var(--subtle); font-size:12px; }
+.btn { height:var(--control); padding:0 var(--sm); border-radius:var(--rmd); border:1px solid var(--hair2); background:var(--s2); color:var(--ink); display:inline-flex; align-items:center; gap:6px; font:500 13px Inter, sans-serif; white-space:nowrap; }
+.btn.primary { background:var(--ink); color:#000; border-color:var(--ink); }
+.btn.sm { height:26px; font-size:12px; padding:0 10px; }
+.btn.danger { color:var(--error); }
+.btn.ghost { background:transparent; border-color:transparent; color:var(--subtle); }
+.chip { display:inline-flex; align-items:center; height:18px; padding:0 6px; border-radius:var(--rxs); border:1px solid var(--hair2); color:var(--subtle); font-size:11px; white-space:nowrap; }
+.chip.mine { color:#a78bfa; border-color:#3a2d5c; }
+.chip.attn { color:var(--attention); border-color:#5a3a1a; background:var(--attentionSoft); }
+.chip.prog { color:#aab1f0; border-color:#323a78; background:var(--primarySoft); }
+.chip.err { color:var(--error); border-color:#4a1f21; background:var(--errorSoft); }
+.cap { color:var(--tert); font:11px "JetBrains Mono", monospace; margin:0 0 6px; }
+
+/* Concept cards */
+.cgrid { display:grid; gap:var(--sm); }
+.card { background:var(--s1); border:1px solid var(--hair); border-radius:var(--rlg); min-width:0; display:flex; flex-direction:column; overflow:hidden; }
+.card .in { padding:var(--md); flex:1; }
+.card .r1 { display:flex; gap:var(--xs); align-items:center; }
+.card .name { font-weight:600; font-size:14px; flex:1; min-width:0; }
+.card .size { color:var(--muted); font-size:12px; margin-top:6px; }
+.card .terms { color:var(--subtle); font-size:12px; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.card .st { margin-top:var(--sm); color:var(--muted); font-size:12px; }
+.card .st .sub { color:var(--subtle); margin-top:2px; }
+.card .acts { margin-top:var(--sm); display:flex; gap:var(--xs); }
+.card.derived { border-style:dashed; }
+.bar { height:4px; border-radius:2px; background:var(--hair2); margin-top:6px; overflow:hidden; }
+.bar i { display:block; height:100%; background:var(--primary); }
+.strip { padding:var(--xs) var(--md); font-size:12px; border-top:1px solid var(--hair2); background:var(--s2); color:var(--muted); }
+.strip.attn { background:var(--attentionSoft); border-color:#5a3a1a; }
+.strip.prog { background:var(--primarySoft); border-color:#323a78; }
+.strip .sub { color:var(--subtle); margin-top:2px; }
+.dotp { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--primary); margin-right:6px; }
+.dotp.a { background:var(--attention); } .dotp.g { background:var(--success); }
+
+/* Sheet (same family as the Projects sheet; §3.6) */
+.sheet { flex:none; background:var(--s2); border-left:1px solid var(--hair2); padding:var(--lg); overflow:hidden; display:flex; flex-direction:column; gap:var(--sm); width:var(--sheet); }
+.sheet.cover { position:absolute; right:0; top:0; bottom:0; box-shadow:-24px 0 48px rgba(0,0,0,.6); }
+.scrim { position:absolute; inset:0; background:rgba(0,0,0,.5); }
+.sheet h2 { font-size:18px; font-weight:600; margin:0; }
+.x { margin-left:auto; color:var(--tert); font-size:12px; }
+.sheet .x { margin-left:auto; color:var(--tert); font-size:12px; }
+.fl { color:var(--muted); font-weight:500; font-size:12px; margin-bottom:4px; }
+.hint { color:var(--subtle); font-size:12px; margin-top:4px; }
+.hint.warn { color:var(--attention); }
+.input { min-height:var(--control); border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rmd); display:flex; align-items:center; padding:0 var(--sm); color:var(--ink); }
+.input.focus { border-color:var(--primary); }
+.input.ro { color:var(--subtle); background:transparent; border-style:dashed; }
+.area { border:1px solid var(--hair2); background:var(--s1); border-radius:var(--rmd); padding:var(--sm); color:var(--ink); white-space:pre-wrap; font-size:12px; line-height:1.5; }
+.area.focus { border-color:var(--primary); }
+.row { display:flex; align-items:center; gap:var(--xs); padding:6px 0; border-top:1px solid var(--hair); min-width:0; }
+.row:first-child { border-top:0; }
+.row .t { flex:1; min-width:0; }
+.row .why { color:var(--attention); font-size:12px; }
+.row .n { color:var(--subtle); font-size:12px; white-space:nowrap; }
+.cb { width:16px; height:16px; border-radius:4px; border:1px solid var(--hair3); flex:none; display:grid; place-items:center; font-size:11px; line-height:1; }
+.cb.on { background:var(--primary); border-color:var(--primary); color:#fff; }
+.sec { border:1px solid var(--hair); border-radius:var(--rmd); background:var(--s1); }
+.sec > .sh { padding:var(--xs) var(--sm); display:flex; align-items:center; gap:var(--xs); color:var(--muted); font-weight:500; border-bottom:1px solid var(--hair); }
+.sec > .sh .n { margin-left:auto; color:var(--subtle); font-weight:400; font-size:12px; }
+.sec > .sb { padding:var(--xs) var(--sm); }
+.foot { margin-top:auto; display:flex; gap:var(--xs); align-items:center; flex-wrap:wrap; }
+.confirm { border:1px solid #4a1f21; background:var(--errorSoft); border-radius:var(--rmd); padding:var(--xs) var(--sm); font-size:12px; color:var(--muted); }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:var(--md); min-height:0; }
+
+/* Add several */
+.dlg { background:var(--s2); border:1px solid var(--hair2); border-radius:var(--rlg); padding:var(--lg); display:flex; flex-direction:column; gap:var(--sm); }
+table.t { width:100%; border-collapse:collapse; font-size:12px; }
+table.t th { text-align:left; color:var(--subtle); font-weight:500; padding:6px var(--xs); border-bottom:1px solid var(--hair2); }
+table.t td { padding:var(--xs); border-bottom:1px solid var(--hair); vertical-align:top; }
+.pick { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 var(--xs); border:1px solid var(--hair2); border-radius:var(--rsm); background:var(--s1); color:var(--ink); white-space:nowrap; }
+.rc { border:1px solid var(--hair); border-radius:var(--rmd); background:var(--s1); padding:var(--sm); display:flex; gap:var(--sm); }
+.rc.dim { opacity:.78; }
+.rc .main { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.split { color:var(--muted); font-size:12px; }
+.words { color:var(--subtle); font-size:12px; }
+.strip { position:fixed; left:0; right:0; bottom:0; height:var(--strip); display:flex; align-items:center; gap:12px; padding:0 12px; background:var(--s4); border-top:1px solid var(--hair2); font:10px "JetBrains Mono", monospace; color:var(--tert); z-index:9; }
+.strip .grow { flex:1; }
+.switch { display:flex; gap:4px; font:11px "JetBrains Mono", monospace; }
+.switch a { color:var(--subtle); text-decoration:none; padding:1px 6px; border:1px solid var(--hair2); border-radius:4px; background:var(--s1); }
+.switch a.on { color:var(--ink); border-color:var(--primary); }
+.switch .sep { width:8px; }
+</style>
+</head>
+<body>
+<div class="top" id="top"></div>
+<div class="body" id="body"></div>
+<script>
+const q = new URLSearchParams(location.search);
+const S = q.get('s') || 'sheet', V = q.get('v') || 'a', MODE = q.get('mode') || 'pin', OTHER = q.get('other') === '1', STEP = q.get('step') || '2';
+const W = innerWidth;
+const tabs = [['Home'],['Projects'],['Workflows','0'],['Work','0'],['Workflow types'],['Context'],['Agents','6'],['System']];
+document.getElementById('top').innerHTML = '<div class="brand"><i>◆</i>Sindri</div><div class="tabs">' + tabs.map(t => `<div class="tab${t[0] === 'Context' ? ' on' : ''}">${t[0]}${t[1] ? `<span class="c">${t[1]}</span>` : ''}</div>`).join('') + '</div><div class="grow"></div><div class="search">⌕ Search or run a command<span class="k">⌘K</span></div><div class="health"><span class="ok">✓</span><b>Healthy</b><span>updated 3s ago</span></div>';
+
+const tick = on => `<span class="cb${on ? ' on' : ''}">${on ? '✓' : ''}</span>`;
+const sizeLine = '4 features · 3 records · 2 decisions · 40 code files';
+
+/* ---------------- shared data ---------------- */
+const words = [
+  { w:'payments', n:'about 41 more records', on:true },
+  { w:'invoicing', n:'about 12 more records', on:true },
+  { w:'ledger', n:'about 6 more records', on:true },
+  { w:'login', n:'', on:false, why:'Already a word of the pin Auth ("login")' },
+  { w:'account', n:'', on:false, why:'About 1,240 more records, likely too broad' },
+];
+const feats = [
+  ['feature:billing.charges', true], ['feature:billing.refunds', true], ['feature:billing.invoices', true], ['feature:billing.plans', true], ['feature:billing.webhooks', false],
+];
+const wordRow = x => `<div class="row">${tick(x.on)}<div class="t"><span class="mono">${x.w}</span>${x.why ? `<div class="why">${x.why}</div>` : ''}</div>${x.n ? `<span class="n">${x.w} · ${x.n}</span>`.replace(`${x.w} · `, '') : ''}</div>`;
+const wordRowFull = x => `<div class="row">${tick(x.on)}<div class="t">${x.n ? `<span class="mono">${x.w} · ${x.n}</span>` : `<span class="mono">${x.w}</span>`}${x.why ? `<div class="why">${x.why}</div>` : ''}</div></div>`;
+const featRow = f => `<div class="row">${tick(f[1])}<div class="t"><span class="mono">${f[0]}</span></div></div>`;
+const edit = MODE === 'edit';
+const title = edit ? 'Edit pin' : 'Pin this';
+const btnLabel = edit ? (OTHER ? 'Save' : 'Save and approve') : (OTHER ? 'Pin' : 'Pin and approve');
+const nameVal = edit ? 'Billing Payments' : 'Billing';
+const defVal = 'How we take money from customers, send invoices and handle refunds.';
+const roKeys = `<div><div class="fl">paths</div><div class="input ro mono">packages/api/src/services/billing/**</div><div class="hint">Set outside the app; kept as is.</div></div>
+  <div><div class="fl">dependsOn</div><div class="input ro mono">auth</div><div class="hint">Set outside the app; kept as is.</div></div>
+  <div><div class="fl">owns</div><div class="input ro mono">invoices</div><div class="hint">Set outside the app; kept as is.</div></div>`;
+const nameField = `<div><div class="fl">Name</div><div class="input focus">${nameVal}</div>${edit ? '<div class="hint warn">Renaming rebuilds the map (about 4 minutes) before the card shows the new name.</div>' : ''}</div>`;
+const defField = `<div><div class="fl">Definition</div><div class="input">${defVal}</div><div class="hint">Shown to people and agents; it moves no records and needs no rebuild.</div></div>`;
+const unpinConfirm = `<div class="confirm">Unpin Billing? It comes back as a suggestion once the map rebuilds.<br>It also has 2 folder rules set outside the app; Unpin removes them too.</div>`;
+const foot = `<div class="foot"><span class="btn primary">${btnLabel}</span><span class="btn">Esc</span>${edit ? '<span class="btn danger" style="margin-left:auto">Unpin</span>' : ''}</div>`;
+
+/* ---------------- layer behind the sheet ---------------- */
+function layerHead() {
+  return `<div class="head"><div class="grow"><h1>Context</h1><div class="cov">You've pinned 120 of 300 features and 410 of 2,300 records. The rest are in suggestions or in no concept.</div></div>
+    <span class="btn">Add several</span><span class="btn primary">New pin</span></div>`;
+}
+function behind() {
+  const c = (n, mine) => `<div class="card${mine ? '' : ' derived'}"><div class="in"><div class="r1"><span class="name">${n}</span><span class="chip${mine ? ' mine' : ''}">${mine ? 'Set by a person' : 'Suggested'}</span></div><div class="size">${sizeLine}</div></div></div>`;
+  return `<div class="page" style="opacity:.6">${layerHead()}<div class="cgrid" style="grid-template-columns:repeat(2,1fr)">${c('Auth', true)}${c('Notify', false)}${c('Billing', false)}${c('Search', false)}</div></div>`;
+}
+
+/* ---------------- 1. the Pin sheet ---------------- */
+function sheetBody() {
+  if (V === 'a') {
+    return `<div style="display:flex;align-items:center"><h2>${title}</h2><span class="x">Esc</span></div>
+      ${nameField}${defField}
+      <div><div class="fl">The words people use</div><div class="sec"><div class="sb" style="padding:2px var(--sm)">${words.map(wordRowFull).join('')}</div></div></div>
+      <div><div class="fl">Features</div><div class="sec"><div class="sb" style="padding:2px var(--sm)">${feats.slice(0, edit ? 3 : 4).map(featRow).join('')}</div></div></div>
+      ${edit ? roKeys.split('</div></div>').slice(0, 1).join('') + '</div></div>' : ''}
+      ${edit ? unpinConfirm : ''}${foot}`;
+  }
+  if (V === 'b') {
+    return `<div style="display:flex;align-items:center"><h2>${title}</h2><span class="x">Esc</span></div>
+      <div class="sec"><div class="sh">Name and definition</div><div class="sb" style="display:flex;flex-direction:column;gap:var(--sm);padding:var(--sm)">${nameField}${defField}</div></div>
+      <div class="sec"><div class="sh">The words people use</div><div class="sb">${words.map(wordRowFull).join('')}</div></div>
+      <div class="sec"><div class="sh">Features</div><div class="sb">${feats.slice(0, 3).map(featRow).join('')}</div></div>
+      ${edit ? `<div class="sec"><div class="sh">paths · dependsOn · owns</div><div class="sb" style="display:flex;flex-direction:column;gap:var(--xs)"><div class="input ro mono">packages/api/src/services/billing/**</div><div class="hint" style="margin:0">Set outside the app; kept as is.</div></div></div>` : ''}
+      ${edit ? unpinConfirm : ''}${foot}`;
+  }
+  // C: two panes, words left, features right
+  return `<div style="display:flex;align-items:center"><h2>${title}</h2><span class="x">Esc</span></div>
+    <div class="cols">${nameField}${defField}</div>
+    <div class="cols" style="flex:1">
+      <div><div class="fl">The words people use</div><div class="sec"><div class="sb" style="padding:2px var(--sm)">${words.map(wordRowFull).join('')}</div></div></div>
+      <div><div class="fl">Features</div><div class="sec"><div class="sb" style="padding:2px var(--sm)">${feats.map(featRow).join('')}</div></div>
+      ${edit ? `<div style="margin-top:var(--sm)"><div class="fl">paths</div><div class="input ro mono">packages/api/src/services/billing/**</div><div class="hint">Set outside the app; kept as is.</div></div>` : ''}</div>
+    </div>
+    ${edit ? unpinConfirm : ''}${foot}`;
+}
+function sheetPage() {
+  const w = V === 'c' ? 880 : 520;
+  const covers = W < w + 480 || V === 'c' && W < 1300;
+  const sh = `<div class="sheet${covers ? ' cover' : ''}" style="width:${covers ? Math.min(w, W - 40) : w}px">${sheetBody()}</div>`;
+  return `<div class="page" style="opacity:.6">${layerHead()}</div>`.replace(/.*/s, behind()) + (covers ? '<div class="scrim"></div>' : '') + sh;
+}
+
+/* ---------------- 2. the pinned card states ---------------- */
+const states = {
+  waiting:   { n:'Billing', chip:'Pinned', msg:'the map rebuild starts within a minute', acts:'<span class="btn sm">Edit pin</span>', tone:'' },
+  rebuild:   { n:'Auth', chip:'Pinned', msg:'rebuilding the map: extracting 4,200 of 9,111 files', acts:'<span class="btn sm">Edit pin</span>', tone:'prog', bar:46 },
+  moved:     { n:'Notify', chip:'Pinned', msg:'', moved:'+4 features, 3 more records linked here', acts:'<span class="btn sm">Edit pin</span>', tone:'ok' },
+  unapproved:{ n:'Refunds', chip:'Pinned, not approved yet', msg:'', sub:'Other changes are waiting, so this needs your review.', acts:'<span class="btn sm primary">Review and approve</span>', tone:'attn', whole:true },
+  held:      { n:'Search', chip:'Pinned', msg:'the new map is waiting for your look', acts:'<span class="btn sm primary">Open review</span>', tone:'attn' },
+};
+function pinnedCard(k) {
+  const s = states[k];
+  const head = `<div class="r1"><span class="name">${s.n}</span><span class="chip mine">Set by a person</span></div><div class="size">${sizeLine}</div><div class="terms">payments · invoicing · ledger</div>`;
+  const text = s.whole ? s.chip : `Pinned · ${s.msg}`;
+  const moved = s.moved ? s.moved : '';
+  if (V === 'a') { // inline line under the terms
+    return `<div class="card"><div class="in">${head}
+      <div class="st"><span class="dotp${s.tone === 'attn' ? ' a' : s.tone === 'ok' ? ' g' : ''}"></span>${s.moved ? moved : text}${s.sub ? `<div class="sub">${s.sub}</div>` : ''}${s.bar ? `<div class="bar"><i style="width:${s.bar}%"></i></div>` : ''}</div>
+      <div class="acts">${s.acts}</div></div></div>`;
+  }
+  if (V === 'b') { // footer strip
+    const tn = s.tone === 'attn' ? 'attn' : s.tone === 'prog' ? 'prog' : '';
+    return `<div class="card"><div class="in">${head}<div class="acts">${s.acts}</div></div>
+      <div class="strip ${tn}">${s.moved ? `<span class="dotp g"></span>${moved}` : text}${s.sub ? `<div class="sub">${s.sub}</div>` : ''}${s.bar ? `<div class="bar"><i style="width:${s.bar}%"></i></div>` : ''}</div></div>`;
+  }
+  // C: chip plus line
+  const cc = s.tone === 'attn' ? 'attn' : s.tone === 'prog' ? 'prog' : '';
+  return `<div class="card"><div class="in"><div class="r1"><span class="name">${s.n}</span><span class="chip mine">Set by a person</span></div>
+    <div style="margin-top:6px"><span class="chip ${s.moved ? '' : cc}">${s.moved ? 'Pinned' : s.chip}</span></div>
+    <div class="size">${sizeLine}</div><div class="terms">payments · invoicing · ledger</div>
+    ${s.moved ? `<div class="st">${moved}</div>` : s.msg ? `<div class="st">${s.msg}${s.bar ? `<div class="bar"><i style="width:${s.bar}%"></i></div>` : ''}</div>` : `<div class="st"><div class="sub" style="color:var(--subtle)">${s.sub}</div></div>`}
+    <div class="acts">${s.acts}</div></div></div>`;
+}
+function derivedCard() {
+  return `<div class="card derived"><div class="in"><div class="r1"><span class="name">Reports</span><span class="chip">Suggested</span></div><div class="size">${sizeLine}</div><div class="terms">export · scheduled · dashboard</div><div class="acts"><span class="btn sm primary">Pin this</span></div></div></div>`;
+}
+function cardsPage() {
+  const cols = W < 1100 ? 2 : 3;
+  const cells = (k, cap) => `<div><div class="cap">${cap}</div>${pinnedCard(k)}</div>`;
+  return `<div class="page">${layerHead()}<div class="cgrid" style="grid-template-columns:repeat(${cols},1fr)">
+    ${cells('waiting', 'approved, waiting')}${cells('rebuild', 'refresh running')}${cells('moved', 'refresh landed')}
+    ${cells('unapproved', 'written, not approved')}${cells('held', 'held by the publish decision')}<div><div class="cap">derived</div>${derivedCard()}</div>
+  </div></div>`;
+}
+
+/* ---------------- 3. Add several ---------------- */
+const pasted = `Billing: Plans, invoices and renewals
+
+- Notifications: Emails and push messages
+Payments: How we take money from customers (also: invoicing, ledger, login)
+
+Refunds
+Putting money back, in full or in part
+Payments: Card and bank charges
+: nothing here`;
+const rows = [
+  { ln:1, split:'Name: Billing · Definition: Plans, invoices and renewals', pick:'Billing', words:'payments · invoicing', note:'Updates your pin Billing', on:false, kind:'warn' },
+  { ln:2, split:'Name: Notifications · Definition: Emails and push messages', pick:'Notify', words:'notifications · email', on:true },
+  { ln:3, split:'Name: Payments · Definition: How we take money…', pick:'Billing', words:'invoicing · ledger · login', wordsNote:'login: Already a word of the pin Auth ("login")', on:true },
+  { ln:4, split:'Name: Refunds · Definition: Putting money back, in full or in part', pick:'Refunds', words:'refund · chargeback', on:true },
+  { ln:5, split:'Name: Payments · Definition: Card and bank charges', pick:'New, no match yet', words:'', note:'Same name as line 3; only one is kept', on:false, kind:'warn' },
+  { ln:6, split:': nothing here', pick:'', words:'', note:"Couldn't read this line", on:false, kind:'err', unread:true },
+];
+const noteHtml = r => r.note ? `<div class="${r.kind === 'err' ? 'why" style="color:var(--error)' : 'why'}">${r.note}</div>` : '';
+const pickHtml = r => r.unread ? '' : `<span class="pick">${r.pick}${r.pick === 'New, no match yet' ? '' : ' ▾'}</span>`;
+const wordsHtml = r => r.words ? `<div class="words">${r.words}${r.wordsNote ? `<div class="why" style="color:var(--attention)">${r.wordsNote}</div>` : ''}</div>` : '';
+const several = { head: `<div style="display:flex;align-items:center"><h2>Add several</h2><span class="x">Esc</span></div>`, btn: OTHER ? 'Pin all' : 'Pin all and approve' };
+const box = focus => `<div><div class="area${focus ? ' focus' : ''}">${pasted}</div><div class="foot" style="margin-top:var(--xs)"><span class="btn${focus ? ' primary' : ''}">Read the list</span></div></div>`;
+function severalPage() {
+  const finish = `<div class="foot" style="margin-top:var(--xs)"><span class="btn primary">${several.btn}</span><span class="hint" style="margin:0">Pinning 3…</span></div>`.replace('<span class="hint" style="margin:0">Pinning 3…</span>', '');
+  let inner;
+  if (V === 'a') { // table
+    inner = `${several.head}${box(false)}
+      <table class="t"><tbody>
+      ${rows.map(r => `<tr><td>${tick(r.on)}</td><td class="mono">${r.ln}</td><td><div class="split">${r.split}</div>${noteHtml(r)}</td><td>${pickHtml(r)}</td><td>${wordsHtml(r)}</td></tr>`).join('')}
+      </tbody></table>${finish}`;
+  } else if (V === 'b') { // stacked rows, box collapsed to a few lines
+    inner = `${several.head}${box(false)}
+      <div style="display:flex;flex-direction:column;gap:var(--xs)">${rows.map(r => `<div class="rc${r.on ? '' : ' dim'}">${tick(r.on)}<div class="main"><div class="split">line ${r.ln} · ${r.split}</div>${noteHtml(r)}<div style="display:flex;gap:var(--sm);align-items:flex-start;flex-wrap:wrap">${pickHtml(r)}${wordsHtml(r)}</div></div></div>`).join('')}</div>${finish}`;
+  } else if (STEP === '1') { // wizard step one
+    inner = `${several.head}<div class="hint" style="margin-top:0">1 · 2</div>${box(true).replace('class="area focus"', 'class="area focus" style="min-height:300px"')}`;
+  } else { // wizard step two
+    inner = `${several.head}<div class="hint" style="margin-top:0">1 · 2</div>
+      <div style="display:flex;flex-direction:column;gap:0" class="sec"><div class="sb" style="padding:2px var(--sm)">${rows.map(r => `<div class="row" style="align-items:flex-start;padding:var(--xs) 0">${tick(r.on)}<div class="t"><div class="split">${r.split}</div>${noteHtml(r)}${wordsHtml(r)}</div>${pickHtml(r)}</div>`).join('')}</div></div>${finish}`;
+  }
+  return `${behind()}<div class="scrim"></div><div class="dlg" style="position:absolute;top:var(--md);left:50%;transform:translateX(-50%);width:${Math.min(W - 40, 980)}px">${inner}</div>`;
+}
+
+document.getElementById('body').innerHTML = S === 'cards' ? cardsPage() : S === 'several' ? severalPage() : sheetPage();
+const sw = (label, href, on) => `<a class="${on ? 'on' : ''}" href="${href}">${label}</a>`;
+document.body.insertAdjacentHTML('beforeend', `<div class="strip"><span>mockup · ${S} · variant ${V.toUpperCase()}${S === 'sheet' ? ' · ' + MODE : ''} · ${W}px</span><span class="grow"></span><div class="switch">${['sheet','cards','several'].map(s => sw(s, `?s=${s}&v=${V}`, s === S)).join('')}<span class="sep"></span>${['a','b','c'].map(v => sw(v.toUpperCase(), `?s=${S}&v=${v}`, v === V)).join('')}</div></div>`);
+</script>
+</body>
+</html>
