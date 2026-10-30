@@ -1502,3 +1502,5 @@ static Aw.CodeIndex.Core.Facade.RepoFile.operator !=(Aw.CodeIndex.Core.Facade.Re
 static Aw.CodeIndex.Core.Facade.RepoFile.operator ==(Aw.CodeIndex.Core.Facade.RepoFile left, Aw.CodeIndex.Core.Facade.RepoFile right) -> bool
 override Aw.CodeIndex.Core.Facade.RepoFile.GetHashCode() -> int
 ~override Aw.CodeIndex.Core.Facade.RepoFile.Equals(object obj) -> bool
+Aw.CodeIndex.Core.Facade.FindSymbolsAnswer.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.CodeIndex.Core.Facade.FindSymbolsAnswer.Notes.init -> void
