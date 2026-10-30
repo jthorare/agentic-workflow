@@ -17,7 +17,7 @@ namespace Aw.Context.Core.Map;
 public static class MapDocumentValidator
 {
     /// <summary>The file format versions this build reads: 2 (a map holding a 'tags' edge or a roll-up count) and 1 (every other map). A build that reads only 1 refuses a 2 file with SND-CONTEXT-031.</summary>
-    public static IReadOnlyList<int> SchemaVersions { get; } = [1, 2];
+    public static IReadOnlyList<int> SchemaVersions { get; } = [1, 2, 3];
 
     /// <summary>Checks <paramref name="document"/>.</summary>
     /// <param name="document">The parsed file.</param>

@@ -40,5 +40,5 @@ internal sealed class ModelLabeler(IModelPort model, IScrubberFactory scrubbers,
     }
 
     private static LabelPass Named(Generated generated) =>
-        new([.. generated.Named.Select(static n => new ClusterLabel(n.Cluster.Id, n.Labels[0]))], generated.Complete, generated.Unavailable);
+        new([.. generated.Named.Select(static n => new ClusterLabel(n.Cluster.Id, n.Labels[0]))], generated.Complete, generated.Unavailable) { Spent = generated.Spent };
 }

@@ -13,14 +13,16 @@ public static class SeatbeltProfile
 
     /// <summary>Renders the profile.</summary>
     /// <param name="plan">A plan built for <see cref="SandboxMechanism.Seatbelt"/>.</param>
+    /// <param name="runArea">The launch's run area: unix sockets may be bound under it (and under the launch's short temp directory).</param>
     /// <param name="canonical">Maps a path to the one Seatbelt matches; null uses <see cref="MacOsCanonical"/>. The adapter passes one that also resolves the symlinks it finds on the box.</param>
     /// <returns>The profile text.</returns>
-    public static string Render(SandboxPlan plan, Func<string, string>? canonical = null)
+    public static string Render(SandboxPlan plan, string runArea, Func<string, string>? canonical = null)
     {
         ArgumentNullException.ThrowIfNull(plan);
+        ArgumentException.ThrowIfNullOrEmpty(runArea);
         var path = canonical ?? MacOsCanonical;
         var sb = new StringBuilder();
-        Header(sb, plan, path);
+        Header(sb, plan, runArea, path);
         List<(PlanMount Mount, string Path)> done = [];
         foreach (var mount in plan.Mounts)
         {
@@ -46,7 +48,7 @@ public static class SeatbeltProfile
         return _systemLinks.Any(p => string.Equals(path, p, StringComparison.Ordinal) || path.StartsWith(p + "/", StringComparison.Ordinal)) ? "/private" + path : path;
     }
 
-    private static void Header(StringBuilder sb, SandboxPlan plan, Func<string, string> canonical)
+    private static void Header(StringBuilder sb, SandboxPlan plan, string runArea, Func<string, string> canonical)
     {
         var net = plan.Network;
         _ = sb.AppendLine("(version 1)")
@@ -55,7 +57,7 @@ public static class SeatbeltProfile
             .AppendLine("(deny network*)")
             .AppendLine(Port(net.SindriPort))
             .AppendLine(Port(net.ProxyPort))
-            .AppendLine(UnixSockets(plan, canonical))
+            .AppendLine(UnixSockets(plan, runArea, canonical))
             // why: denying ~/Library/Keychains is not enough, the keychain is read through securityd, so `security find-generic-password` would hand a Step the owner's login.
             .AppendLine("; the Keychain service: a Step never reads the owner's Keychain, its login comes from its credential source")
             .AppendLine("(deny mach-lookup (global-name \"com.apple.SecurityServer\") (global-name \"com.apple.securityd\"))")
@@ -69,17 +71,17 @@ public static class SeatbeltProfile
             .AppendLine("(allow file-write* (regex #\"^/dev/ttys[0-9]+$\"))");
     }
 
-    // why: (deny network*) also kills unix sockets, which MSBuild's worker nodes and the build server use (named pipes in TMPDIR); they may bind and connect under the run area only.
-    private static string UnixSockets(SandboxPlan plan, Func<string, string> canonical)
+    // why: (deny network*) also kills unix sockets, which MSBuild's worker nodes and the build server use (named pipes in TMPDIR); they may bind and connect under the run area and the launch's short temp directory only.
+    private static string UnixSockets(SandboxPlan plan, string runArea, Func<string, string> canonical)
     {
-        var file = plan.Environment.FirstOrDefault(static e => string.Equals(e.Name, "AW_SANDBOX_PLAN", StringComparison.Ordinal))?.Value;
-        if (file is null || file.LastIndexOf('/') is not (> 0 and var slash))
+        var areas = new[] { runArea, SandboxPaths.SeatbeltTemp(plan.Launch) }.Select(a => $"(subpath \"{Escape(canonical(a))}\")").ToList();
+        var rules = areas.SelectMany(a => new[]
         {
-            return "; no run area is named, so no unix socket is allowed";
-        }
-
-        var area = $"(subpath \"{Escape(canonical(file[..slash]))}\")";
-        return $"; unix sockets under the run area only\n(allow network-bind (local unix-socket {area}))\n(allow network-inbound (local unix-socket {area}))\n(allow network-outbound (remote unix-socket {area}))";
+            $"(allow network-bind (local unix-socket {a}))",
+            $"(allow network-inbound (local unix-socket {a}))",
+            $"(allow network-outbound (remote unix-socket {a}))",
+        });
+        return "; unix sockets under the run area and the launch's short temp directory only\n" + string.Join('\n', rules);
     }
 
     private static string Port(int port) => string.Create(CultureInfo.InvariantCulture, $"(allow network-outbound (remote ip \"localhost:{port}\"))");

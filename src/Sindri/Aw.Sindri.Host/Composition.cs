@@ -56,7 +56,7 @@ internal static class Composition
             .AddSingleton<IModelCallLog, LedgerModelCallLog>()   // the router's 'context.model.called' event, as service:context, best effort
             .AddSingleton(sp => new JudgeCatalog(environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>()))   // Judge's provider catalog, built on first use; the router and the doctor's context:models row share it
             .AddSingleton<IModelPort>(sp => new RoutedModelPort(sp.GetRequiredService<JudgeCatalog>().Get,
-                sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Aw.Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>()))
+                sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>()))
             .AddChoicePort(environment)   // the Jev label pick: IChoicePort over the judge's batch classifier, and the route's prompt budget (model routing spec §6.7)
             .AddScoped<IDoctorChecks>(sp => new ModelPickDoctorChecks(sp.GetRequiredService<IModelPickSettings>(), environment))   // the 'model:pick' row (model-pick spec 8)
             .AddScoped<IDoctorChecks>(sp => new ModelRoutingDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IModelCatalog>(), () => RoutedModelPort.InstalledHarnesses(sp.GetRequiredService<JudgeCatalog>().Get())))   // the 'context:models' row (model routing spec 8.4)

@@ -36,5 +36,5 @@ internal static class PinIds
     }
 
     private static string Identity(ConceptPin pin) =>
-        string.Join(Unit, pin.Id?.Value, pin.Name, pin.Summary, string.Join(',', pin.Features), string.Join(',', pin.Paths), string.Join(',', pin.DependsOn), string.Join(',', pin.Owns));
+        string.Join(Unit, pin.Id?.Value, pin.Name, pin.Summary, string.Join(',', pin.Features), string.Join(',', pin.Paths), string.Join(',', pin.DependsOn), string.Join(',', pin.Owns), string.Join(',', pin.Aliases));
 }

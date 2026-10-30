@@ -14,4 +14,7 @@ public sealed record LabelPass(IReadOnlyList<ClusterLabel> Labels, bool Complete
 
     /// <summary>The reason code Jev could not be asked for the rest of the pass ('network-error', 'http-429', ...), or null. The build says 'labels: jev unavailable (reason)'. Never set for a pick that was off or had no key: that is today's behavior, not a degradation.</summary>
     public string? PickUnavailable { get; init; }
+
+    /// <summary>The tokens the pass used (the generate calls and the Jev pick); 0 for a pass that asked no model, such as a full cache hit.</summary>
+    public int Spent { get; init; }
 }

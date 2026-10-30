@@ -153,8 +153,8 @@ public sealed class CachingLabelerTests
     {
         public int Calls { get; private set; }
 
-        public ValueTask<Aw.Kernel.Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken) =>
-            ValueTask.FromResult<Aw.Kernel.Result<LabelPass>>(Count(pass));
+        public ValueTask<Kernel.Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Kernel.Result<LabelPass>>(Count(pass));
 
         private LabelPass Count(LabelPass answer)
         {

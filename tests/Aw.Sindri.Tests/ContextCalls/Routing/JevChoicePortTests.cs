@@ -24,7 +24,7 @@ public sealed class JevChoicePortTests
     {
         var port = new ChoiceRig(ScriptedBatches.Picking()).Port;
 
-        Assert.Equal(Aw.Judge.Core.Batching.JevModel.Id, port.Identity.Value);
+        Assert.Equal(JevModel.Id, port.Identity.Value);
         Assert.Contains("jev-", port.Identity.Value, StringComparison.Ordinal);
         Assert.Same(port.Identity, port.Identity);
     }
@@ -54,7 +54,7 @@ public sealed class JevChoicePortTests
         Assert.Equal(["h1", "h2"], batch.Questions.Select(q => q.Key), StringComparer.Ordinal);
         Assert.Equal(["Panes", "Layout", "Split"], Assert.IsType<ChoiceBatchQuestion>(batch.Questions[1]).Criteria.Keys, StringComparer.Ordinal);
         Assert.Null(batch.State);
-        Assert.Equal(Aw.Context.Core.Models.LabelPickLimits.Budget, batch.Budget);
+        Assert.Equal(LabelPickLimits.Budget, batch.Budget);
         Assert.Same(providers, Assert.Single(rig.Batches.Configs));
         Assert.Equal([("h1", "Tab groups", 0.9), ("h2", "Split", 0.9)], answers.Select(a => (a.Key, a.Picked, a.Confidence)));
     }
@@ -273,7 +273,7 @@ public sealed class JevChoicePortTests
         Assert.Equal(("labeling", "labeling", 3, 1200, 40, ModelTokenBasis.Reported), (called.Purpose, called.Kind, called.Items, called.InputTokens, called.OutputTokens, called.TokenBasis));
         Assert.Equal(new ModelCallHow(Jev: 1, FirstCandidate: 2), called.How);
         Assert.Equal(("jev", ModelCallOutcome.Answered), (called.Tries[0].Harness, called.Tries[0].Outcome));
-        Assert.Equal(new ModelCallAnswerer("jev", Aw.Judge.Core.Batching.JevModel.Id), called.AnsweredBy);
+        Assert.Equal(new ModelCallAnswerer("jev", JevModel.Id), called.AnsweredBy);
         _ = Assert.NotNull(called.Job);
         var written = AwJson.Serialize(called, SliceHarness.Json);
         Assert.DoesNotContain("src/h1", System.Text.Encoding.UTF8.GetString(written), StringComparison.Ordinal);

@@ -41,7 +41,7 @@ public static partial class ProfileDiff
     private static IEnumerable<(string Key, string Value)> IndexConcepts(string prefix, IndexSettings index) =>
         (index.Concepts ?? []).Select((concept, position) =>
             ($"{prefix}.concepts.{concept.Id?.Value ?? position.ToString(CultureInfo.InvariantCulture)}",
-                string.Join(" | ", concept.Name, concept.Summary, Joined(concept.Features), Joined(concept.Paths), Joined(concept.DependsOn), Joined(concept.Owns))));
+                string.Join(" | ", concept.Name, concept.Summary, Joined(concept.Features), Joined(concept.Paths), Joined(concept.DependsOn), Joined(concept.Owns), Joined(concept.Aliases))));
 
     /// <summary>A page shows by its id, and its row holds every field (name, repo, surface, each action's id, name, key and concepts), so any edit is a row.</summary>
     private static IEnumerable<(string Key, string Value)> IndexPages(string prefix, IndexSettings index) =>

@@ -7497,6 +7497,9 @@ Aw.Context.Core.Engine.ConceptPin
 Aw.Context.Core.Engine.ConceptPin.<Clone>$() -> Aw.Context.Core.Engine.ConceptPin!
 Aw.Context.Core.Engine.ConceptPin.ConceptPin(Aw.Context.Core.Engine.ConceptId? Id, string! Name, string? Summary, System.Collections.Generic.IReadOnlyList<string!>! Features, System.Collections.Generic.IReadOnlyList<string!>! Paths, System.Collections.Generic.IReadOnlyList<string!>! DependsOn, System.Collections.Generic.IReadOnlyList<string!>! Owns) -> void
 Aw.Context.Core.Engine.ConceptPin.Deconstruct(out Aw.Context.Core.Engine.ConceptId? Id, out string! Name, out string? Summary, out System.Collections.Generic.IReadOnlyList<string!>! Features, out System.Collections.Generic.IReadOnlyList<string!>! Paths, out System.Collections.Generic.IReadOnlyList<string!>! DependsOn, out System.Collections.Generic.IReadOnlyList<string!>! Owns) -> void
+Aw.Context.Core.Engine.ConceptPin.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Engine.ConceptPin.Aliases.init -> void
+Aw.Context.Core.Engine.ConceptPin.WithAliases(System.Collections.Generic.IEnumerable<string!>? aliases) -> Aw.Context.Core.Engine.ConceptPin!
 Aw.Context.Core.Engine.ConceptPin.Declaring(System.Collections.Generic.IEnumerable<string!>? dependsOn, System.Collections.Generic.IEnumerable<string!>? owns) -> Aw.Context.Core.Engine.ConceptPin!
 Aw.Context.Core.Engine.ConceptPin.Equals(Aw.Context.Core.Engine.ConceptPin? other) -> bool
 Aw.Context.Core.Engine.ConceptPin.DependsOn.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -8094,7 +8097,7 @@ Aw.Context.Core.Map.MapPublishState.CurrentRuleset.get -> string?
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.init -> void
 Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?
 Aw.Context.Core.Map.MapVersion.Ruleset.init -> void
-const Aw.Context.Core.Map.MapRuleset.RulesVersion = "1" -> string!
+const Aw.Context.Core.Map.MapRuleset.RulesVersion = "2" -> string!
 Aw.Context.Core.Map.MapRuleset
 static Aw.Context.Core.Map.MapRuleset.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> string!
 Aw.Context.Core.Map.MapImport.Ruleset.get -> string?
@@ -10244,6 +10247,14 @@ Aw.Context.Core.Engine.ProfileRepoEntry.Pages.get -> System.Collections.Generic.
 Aw.Context.Core.Engine.ProfileRepoEntry.Pages.init -> void
 static Aw.Context.Core.Engine.PageSlugs.Of(string? name) -> string!
 static Aw.Context.Core.Engine.PageSlugs.Unique(string! slug, System.Collections.Generic.ISet<string!>! taken) -> string!
+Aw.Context.Core.Graph.EdgeType.Expresses = 15 -> Aw.Context.Core.Graph.EdgeType
+Aw.Context.Core.Concepts.PageExpresses
+static Aw.Context.Core.Concepts.PageExpresses.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
+const Aw.Context.Core.Concepts.PageExpresses.MostPerSource = 3 -> int
+Aw.Context.Core.Graph.PageKinds
+static Aw.Context.Core.Graph.PageKinds.IsPage(Aw.Context.Core.Graph.GraphNode! node, System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphEdge!>! edges) -> bool
+Aw.Context.Core.Graph.PageNames
+static Aw.Context.Core.Graph.PageNames.Offer(Aw.Context.Core.Graph.GraphNode! node) -> string!
 Aw.Context.Core.Engine.ModelKind.ProductSurfaces = 6 -> Aw.Context.Core.Engine.ModelKind
 Aw.Context.Core.Engine.ModelsSettings.SurfacePick.get -> Aw.Context.Core.Engine.LabelPick
 Aw.Context.Core.Engine.ModelsSettings.SurfacePick.init -> void
@@ -10370,3 +10381,39 @@ Aw.Context.Core.Surfaces.SurfaceVerdict.Survivor.init -> void
 Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.get -> string?
 Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.init -> void
 static Aw.Context.Core.Surfaces.SurfaceVerdict.Merged(string! groupKey, int survivor, string! survivorKey, string! name) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+const Aw.Context.Core.Overrides.MapOverride.JevWho = "service:jev" -> string!
+Aw.Context.Core.Surfaces.SurfaceApply
+static Aw.Context.Core.Surfaces.SurfaceApply.Rows(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceGroup!>! groups, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceVerdict!>! verdicts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, System.DateTimeOffset at) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>!
+Aw.Context.Core.Surfaces.SurfaceCandidates
+static Aw.Context.Core.Surfaces.SurfaceCandidates.Groups(Aw.Context.Core.Extract.ExtractedMap! found, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceGroup!>!
+Aw.Context.Core.Surfaces.ISurfacePickStore
+Aw.Context.Core.Surfaces.ISurfacePickStore.Get(System.Collections.Generic.IReadOnlyCollection<string!>! groupKeys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Surfaces.SurfaceDecision!>!>!>
+Aw.Context.Core.Surfaces.ISurfacePickStore.Save(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceDecision!>! decisions, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Surfaces.SurfaceDecision
+Aw.Context.Core.Surfaces.SurfaceDecision.CandidateKeys.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Surfaces.SurfaceDecision.CandidateKeys.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.Choice.get -> Aw.Context.Core.Surfaces.SurfaceChoice
+Aw.Context.Core.Surfaces.SurfaceDecision.Choice.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.<Clone>$() -> Aw.Context.Core.Surfaces.SurfaceDecision!
+Aw.Context.Core.Surfaces.SurfaceDecision.DecidedAt.get -> System.DateTimeOffset
+Aw.Context.Core.Surfaces.SurfaceDecision.DecidedAt.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.Deconstruct(out string! GroupKey, out Aw.Context.Core.Surfaces.SurfaceChoice Choice, out string? SurvivorKey, out string? MergedName, out System.Collections.Generic.IReadOnlyList<string!>! CandidateKeys, out string? Model, out System.DateTimeOffset DecidedAt) -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.Equals(Aw.Context.Core.Surfaces.SurfaceDecision? other) -> bool
+Aw.Context.Core.Surfaces.SurfaceDecision.GroupKey.get -> string!
+Aw.Context.Core.Surfaces.SurfaceDecision.GroupKey.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.MergedName.get -> string?
+Aw.Context.Core.Surfaces.SurfaceDecision.MergedName.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.Model.get -> string?
+Aw.Context.Core.Surfaces.SurfaceDecision.Model.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.SurfaceDecision(string! GroupKey, Aw.Context.Core.Surfaces.SurfaceChoice Choice, string? SurvivorKey, string? MergedName, System.Collections.Generic.IReadOnlyList<string!>! CandidateKeys, string? Model, System.DateTimeOffset DecidedAt) -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.SurvivorKey.get -> string?
+Aw.Context.Core.Surfaces.SurfaceDecision.SurvivorKey.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.ToVerdict(Aw.Context.Core.Surfaces.SurfaceGroup! group) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+override Aw.Context.Core.Surfaces.SurfaceDecision.Equals(object? obj) -> bool
+override Aw.Context.Core.Surfaces.SurfaceDecision.GetHashCode() -> int
+override Aw.Context.Core.Surfaces.SurfaceDecision.ToString() -> string!
+static Aw.Context.Core.Surfaces.SurfaceDecision.From(Aw.Context.Core.Surfaces.SurfaceVerdict! verdict, Aw.Context.Core.Surfaces.SurfaceGroup! group, string? model, System.DateTimeOffset at) -> Aw.Context.Core.Surfaces.SurfaceDecision!
+static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
+Aw.Context.Core.Extract.LabelPass.Spent.get -> int
+Aw.Context.Core.Extract.LabelPass.Spent.init -> void
