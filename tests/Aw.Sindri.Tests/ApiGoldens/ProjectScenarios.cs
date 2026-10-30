@@ -16,7 +16,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 internal static class ProjectScenarios
 {
-    private const string LinearProfile = ItemScenarios.ProfileYaml + "context:\n  sources:\n    linear: { teams: [ENG] }\n";
+    private const string LinearProfile = ItemScenarios.ProfileYaml + "context:\n  sources:\n    linear: { token: \"env:LINEAR_KEY\", teams: [ENG] }\n";
     private const string Led = "linear:project/00000000-0000-4000-8000-000000000001";
     private const string Hidden = "linear:project/00000000-0000-4000-8000-000000000002";
     private const string RecentlyDone = "linear:project/00000000-0000-4000-8000-000000000003";
