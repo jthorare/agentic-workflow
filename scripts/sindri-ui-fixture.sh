@@ -969,6 +969,9 @@ context_sources() {
   sql_on "$db" "INSERT OR REPLACE INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
       VALUES ('linear:issue/$SOURCES_TICKET_UUID', 'linear', 'issue', NULL, 'linear:$PROJECTS_TEAM', 'Roll out staffing', '$SOURCES_TICKET_URL', '$PROJECTS_VIEWER_NAME', 'open', 'In Progress', $(projects_ts '-10 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-sources-1', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
     UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "context sources: can't write the ticket record to $db"
+  # A map built over the import (a refresh under the approved profile) has no $SOURCES_DOC_NODE: fail here, not later as a panel error.
+  local shown
+  shown="$("$PROVE" human context show "$SOURCES_DOC_NODE" 2>&1)" || die "context sources: the imported map was replaced, $SOURCES_DOC_NODE is gone: $shown"
   printf '%s\n%s\n%s\n' "$CONTEXT_REPO" "$SOURCES_DOC_NODE" "$SOURCES_TICKET_NODE"
 }
 

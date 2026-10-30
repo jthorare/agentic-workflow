@@ -84,6 +84,8 @@ APP_WRAPPER_PID=$!
 d ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 d window --width 1280 --height 900 >/dev/null 2>&1 || setup_fail "could not size the window"
 d click --type ListBoxItem --name Context >/dev/null 2>&1 || setup_fail "no Context tab"
+# A map with concepts opens on its concept cards (#1281): the Map toggle shows the whole map.
+d wait-for --name Map --state visible --wait-ms 60000 >/dev/null 2>&1 && d click --name Map >/dev/null 2>&1
 d wait-for --type TextBlock --contains "links" --state visible --wait-ms 60000 >/dev/null 2>&1 || setup_fail "the whole map never showed its size line"
 sleep 1
 
