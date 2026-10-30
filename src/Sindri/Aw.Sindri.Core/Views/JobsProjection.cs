@@ -177,7 +177,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
     }
 
     /// <summary>
-    /// The row after a 'context.model.called': the call is added to <see cref="JobRow.Models"/> (calls, failed calls when no harness answered, tokens, the answering harness and model). An event at or before the row's sequence is a replay and changes nothing.
+    /// The row after a 'context.model.called': the call is added to <see cref="JobRow.Models"/> (calls, failed calls when no harness answered, fallbacks, tokens, the answering harness and model) and kept in <see cref="JobRow.ModelCalls"/> (the last 200). An event at or before the row's sequence is a replay and changes nothing.
     /// </summary>
     /// <param name="row">The row so far.</param>
     /// <param name="called">The payload.</param>
@@ -193,7 +193,7 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
             return row;
         }
 
-        return row with { Models = Added(row.Models, called), Sequence = recorded.Sequence };
+        return row with { Models = Added(row.Models, called), ModelCalls = Kept(row.ModelCalls, Stored(called)), Sequence = recorded.Sequence };
     }
 
     private static ModelTotals Added(ModelTotals? before, ContextModelCalled called)
@@ -204,7 +204,25 @@ internal sealed class JobsProjection(EventFactory events) : IProjection
             so.FailedCalls + (called.AnsweredBy is null ? 1 : 0),
             so.InputTokens + called.InputTokens,
             so.OutputTokens + called.OutputTokens,
-            called.AnsweredBy is { } by ? Counted(so.AnsweredBy, by) : so.AnsweredBy);
+            called.AnsweredBy is { } by ? Counted(so.AnsweredBy, by) : so.AnsweredBy,
+            so.FellBack + (FellBack(called) ? 1 : 0));
+    }
+
+    // Answered, but only after an earlier harness limited, failed or was skipped.
+    private static bool FellBack(ContextModelCalled called) =>
+        called.AnsweredBy is not null && called.Tries.Any(static t => string.Equals(t.Outcome, ModelCallOutcome.Limit, StringComparison.Ordinal) || string.Equals(t.Outcome, ModelCallOutcome.Failed, StringComparison.Ordinal)
+            || string.Equals(t.Outcome, ModelCallOutcome.Skipped, StringComparison.Ordinal));
+
+    private static JobModelCall Stored(ContextModelCalled c) => new(c.CallId, c.Purpose, c.Kind,
+        [.. c.Tries.Select(static t => new JobModelTry(t.Harness, t.Model, t.Outcome, t.Reason, t.Ms, t.Source))],
+        c.AnsweredBy is { } by ? new JobModelAnswerer(by.Harness, by.Model) : null, c.InputTokens, c.OutputTokens, c.TokenBasis, c.Items,
+        c.How is { } h ? new JobModelHow(h.Jev, h.FirstCandidate, h.FileName, h.Merged, h.Kept, h.Rejected, h.Undecided) : null, c.StartedAt, c.Ms);
+
+    // The last 200 calls, as the progress lines keep their last 200 (the totals still count every call).
+    private static List<JobModelCall> Kept(IReadOnlyList<JobModelCall>? before, JobModelCall called)
+    {
+        var calls = before ?? [];
+        return [.. calls.Skip(Math.Max(0, calls.Count + 1 - JobLimits.ViewLines)), called];
     }
 
     private static List<ModelAnsweredCount> Counted(IReadOnlyList<ModelAnsweredCount> answered, ModelCallAnswerer by)

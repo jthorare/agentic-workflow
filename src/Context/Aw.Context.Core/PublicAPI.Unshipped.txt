@@ -10005,3 +10005,6 @@ Aw.Context.Core.Map.SourceTarget.Record.get -> Aw.Context.Core.Sources.RecordKey
 Aw.Context.Core.Map.SourceTarget.Repo.get -> string?
 static Aw.Context.Core.Map.SourceTarget.OfFile(string? repo, string! path) -> Aw.Context.Core.Map.SourceTarget!
 static Aw.Context.Core.Map.SourceTarget.OfRecord(Aw.Context.Core.Sources.RecordKey record) -> Aw.Context.Core.Map.SourceTarget!
+Aw.Context.Core.Extract.ILabelCache
+Aw.Context.Core.Extract.ILabelCache.Find(System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, string!>!>!>
+Aw.Context.Core.Extract.ILabelCache.Save(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, string!>>! labels, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>

@@ -52,7 +52,10 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="comps:DeskReviewViewModel">
-            <Button Classes="row-title" Margin="0,0,8,4" Content="{Binding Label}" Click="OnReview" AutomationProperties.Name="{Binding Name}" />
+            <StackPanel Margin="0,0,8,4">
+              <Button Classes="row-title" Content="{Binding Label}" Click="OnReview" AutomationProperties.Name="{Binding Name}" />
+              <SelectableTextBlock Classes="caption" Text="{Binding Launch.FailedText}" IsVisible="{Binding Launch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Launch.FailedText}" />
+            </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>

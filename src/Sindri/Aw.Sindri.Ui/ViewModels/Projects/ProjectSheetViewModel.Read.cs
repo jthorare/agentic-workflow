@@ -96,7 +96,7 @@ internal sealed partial class ProjectSheetViewModel
             ? new ProjectLinkItem(Labels.ProjectRepoPrs(repo), "https://github.com/" + repo + "/pulls", canOpen: true, Open)
             : new ProjectLinkItem(Labels.ProjectRepoNotSynced(repo), string.Empty, canOpen: false, Open);
 
-    private Task<bool> Open(Uri uri, CancellationToken cancellationToken) => Launcher.OpenUri(uri, cancellationToken);
+    private Task<bool> Open(Uri uri, CancellationToken cancellationToken) => LinkLaunch.Open(uri, cancellationToken);
 
     // "owner/name", each part letters, digits, '.', '_' or '-'.
     private static bool IsGitHubName(string repo) =>

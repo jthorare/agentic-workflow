@@ -87,6 +87,7 @@
                           AutomationProperties.Name="{Binding Card.OpenPrText}">
                     <TextBlock Classes="caption muted" Text="{Binding Card.OpenPrText}" AutomationProperties.AccessibilityView="Raw" />
                   </Button>
+                  <SelectableTextBlock x:Name="NeedsYouCardPrFailed" Classes="caption" Text="{Binding PrLaunch.FailedText}" IsVisible="{Binding PrLaunch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding PrLaunch.FailedText}" />
                   <Button x:Name="NeedsYouCardItem" Classes="row-title" Click="OnItem" IsVisible="{Binding Card.CanOpenItem}" HorizontalAlignment="Left"
                           AutomationProperties.Name="{Binding OpenItemWord}">
                     <TextBlock Classes="caption muted" Text="{Binding OpenItemWord}" AutomationProperties.AccessibilityView="Raw" />
@@ -142,6 +143,7 @@
                   <TextBlock Classes="eyebrow" Text="{Binding Bar.MergeCard.Heading}" />
                   <Button x:Name="NeedsYouMergePr" Classes="row-title" HorizontalAlignment="Left" Click="OnOpenPr" IsEnabled="{Binding Bar.MergeCard.CanOpen}"
                           Content="{Binding Bar.MergeCard.PrText}" AutomationProperties.Name="{Binding Bar.MergeCard.PrName}" />
+                  <SelectableTextBlock x:Name="NeedsYouMergePrFailed" Classes="caption" Text="{Binding Bar.MergeCard.Launch.FailedText}" IsVisible="{Binding Bar.MergeCard.Launch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Bar.MergeCard.Launch.FailedText}" />
                   <ItemsControl x:Name="NeedsYouMergeLines" ItemsSource="{Binding Bar.MergeCard.Lines}">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="ny:MergeCardLine">
@@ -337,7 +339,10 @@
               </ItemsControl.ItemsPanel>
               <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="comps:DeskReviewViewModel">
-                  <Button Classes="bar-button" Margin="0,0,6,4" Content="{Binding Label}" Click="OnReview" AutomationProperties.Name="{Binding Name}" />
+                  <StackPanel Margin="0,0,6,4">
+                    <Button Classes="bar-button" Content="{Binding Label}" Click="OnReview" AutomationProperties.Name="{Binding Name}" />
+                    <SelectableTextBlock Classes="caption" Text="{Binding Launch.FailedText}" IsVisible="{Binding Launch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Launch.FailedText}" />
+                  </StackPanel>
                 </DataTemplate>
               </ItemsControl.ItemTemplate>
             </ItemsControl>

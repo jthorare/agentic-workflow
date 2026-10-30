@@ -53,6 +53,7 @@ internal sealed class GetJobService(IJobViews jobs, IProjectorStatus status, ICa
         }
 
         return new JobView(row.Id, row.Kind, row.Key, row.Item, row.Repo, row.Service, row.State, row.StartedBy, row.StartedAt, row.EndedAt, row.Progress, row.Rounds,
-            row.Summary, row.Code, row.Result, row.CancelledBy, running ? [_cancel] : [], cli, asOf);
+            row.Summary, row.Code, row.Result, row.CancelledBy, running ? [_cancel] : [], cli, asOf,
+            row.Models, row.WaitingOn, row.ModelCalls ?? [], row.Models?.Calls ?? 0);
     }
 }
