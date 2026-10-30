@@ -1,3 +1,4 @@
+using Aw.Context.Core.Extract;
 using Aw.Context.Tests.Map;
 
 namespace Aw.Context.Tests.BuildMap;
@@ -32,6 +33,27 @@ public sealed class BuildMapWaitedAfterPromoteTests : IDisposable
         _ = Assert.Single(_world.Clusters.Asked);
         var number = firstReport.Draft.Number.ToString(System.Globalization.CultureInfo.InvariantCulture);
         Assert.Equal($"v{number} was built from these heads while this build waited, so it was not built again", Assert.Single(secondReport.Notes));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_build_that_waited_behind_a_holder_does_not_reuse_a_current_version_that_existed_before_it_waited()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        var scope = MapWorld.HumanWith(MapWorld.OnlyFixtureRepo);
+        var earlier = (await _world.Map.BuildMap(progress: null, scope, MapWorld.None)).Value;
+        _ = (await _world.Store.Promote(earlier.Draft.Number, ct)).Value;   // current at these very heads before the wait began
+        var gate = _world.Service<MapBuildGate>();
+        var holder = await gate.Enter(job: null, progress: null, ct);
+
+        var waiting = _world.Map.BuildMap(progress: null, scope, MapWorld.None).AsTask();
+        await Task.Delay(TimeSpan.FromMilliseconds(100), TimeProvider.System, ct);
+        Assert.False(waiting.IsCompleted);
+        holder.Dispose();
+        var report = (await waiting.WaitAsync(TimeSpan.FromSeconds(10), TimeProvider.System, ct)).Value;
+
+        Assert.NotEqual(earlier.Draft.Number, report.Draft.Number);
+        Assert.Equal(2, _world.Clusters.Asked.Count);
+        Assert.DoesNotContain(report.Notes, n => n.Contains("while this build waited", StringComparison.Ordinal));
     }
 
     private static async Task WaitUntil(Func<bool> condition, CancellationToken ct)
