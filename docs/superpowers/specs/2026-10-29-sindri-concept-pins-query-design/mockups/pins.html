@@ -22,17 +22,25 @@
   --attentionSoft:#23160c; --errorSoft:#220d0e;
   --xxs:4px; --xs:8px; --sm:12px; --md:16px; --lg:24px; --xl:32px;
   --rxs:4px; --rsm:6px; --rmd:8px; --rlg:12px;
-  --topbar:48px; --sheet:520px; --control:30px;
+  --topbar:48px; --strip:26px; --sheet:520px; --control:30px;
 }
 * { box-sizing:border-box; }
 html, body { margin:0; height:100%; }
 body { background:var(--canvas); color:var(--ink); font:13px/1.45 Inter, system-ui, sans-serif; overflow:hidden; }
 .mono { font-family:"JetBrains Mono", Menlo, monospace; font-size:12px; }
-.top { height:var(--topbar); display:flex; align-items:center; gap:var(--xxs); padding:0 var(--md); border-bottom:1px solid var(--hair); }
-.logo { width:24px; height:24px; border-radius:var(--rsm); background:var(--ink); color:#000; font-weight:600; display:grid; place-items:center; margin-right:var(--sm); font-size:12px; }
-.tab { height:var(--control); padding:0 10px; display:flex; align-items:center; border-radius:var(--rsm); color:var(--subtle); white-space:nowrap; }
+.top { height:var(--topbar); display:flex; align-items:center; gap:var(--sm); padding:0 var(--md); border-bottom:1px solid var(--hair); }
+.brand { display:flex; align-items:center; gap:8px; font-weight:600; font-size:13px; margin-right:2px; }
+.brand i { color:#5e6ad2; font-style:normal; font-size:15px; }
+.tabs { display:flex; gap:2px; padding:2px; border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s1); }
+.tab { height:26px; padding:0 8px; display:flex; align-items:center; gap:5px; border-radius:var(--rsm); color:var(--subtle); white-space:nowrap; }
+.tab .c { color:var(--tert); font-size:12px; }
 .tab.on { color:var(--ink); background:var(--s3); }
-.body { position:absolute; top:var(--topbar); left:0; right:0; bottom:0; display:flex; }
+.top .grow { flex:1; }
+.search { height:30px; width:300px; min-width:0; flex:0 1 300px; display:flex; align-items:center; gap:8px; padding:0 var(--sm); border:1px solid var(--hair2); border-radius:var(--rmd); background:var(--s1); color:var(--subtle); white-space:nowrap; overflow:hidden; }
+.search .k { margin-left:auto; font-size:11px; }
+.health { height:30px; display:flex; align-items:center; gap:8px; padding:0 var(--sm); border:1px solid var(--hair2); border-radius:999px; background:var(--s1); white-space:nowrap; }
+.health b { font-weight:600; } .health span { color:var(--subtle); font-size:12px; } .health .ok { color:var(--success); }
+.body { position:absolute; top:var(--topbar); left:0; right:0; bottom:var(--strip); display:flex; }
 .page { flex:1; min-width:0; overflow:hidden; padding:var(--lg) var(--lg) var(--xl); }
 .head { display:flex; align-items:flex-start; gap:var(--md); margin-bottom:var(--md); }
 .head h1 { font-size:20px; font-weight:600; margin:0 0 var(--xxs); letter-spacing:-0.01em; }
@@ -112,9 +120,10 @@ table.t td { padding:var(--xs); border-bottom:1px solid var(--hair); vertical-al
 .rc .main { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
 .split { color:var(--muted); font-size:12px; }
 .words { color:var(--subtle); font-size:12px; }
-.label { position:fixed; left:8px; bottom:6px; font:10px "JetBrains Mono", monospace; color:var(--tert); pointer-events:none; }
-.switch { position:fixed; right:12px; top:12px; display:flex; gap:4px; font:11px "JetBrains Mono", monospace; z-index:9; }
-.switch a { color:var(--subtle); text-decoration:none; padding:2px 6px; border:1px solid var(--hair2); border-radius:4px; background:var(--s1); }
+.strip { position:fixed; left:0; right:0; bottom:0; height:var(--strip); display:flex; align-items:center; gap:12px; padding:0 12px; background:var(--s4); border-top:1px solid var(--hair2); font:10px "JetBrains Mono", monospace; color:var(--tert); z-index:9; }
+.strip .grow { flex:1; }
+.switch { display:flex; gap:4px; font:11px "JetBrains Mono", monospace; }
+.switch a { color:var(--subtle); text-decoration:none; padding:1px 6px; border:1px solid var(--hair2); border-radius:4px; background:var(--s1); }
 .switch a.on { color:var(--ink); border-color:var(--primary); }
 .switch .sep { width:8px; }
 </style>
@@ -126,8 +135,8 @@ table.t td { padding:var(--xs); border-bottom:1px solid var(--hair); vertical-al
 const q = new URLSearchParams(location.search);
 const S = q.get('s') || 'sheet', V = q.get('v') || 'a', MODE = q.get('mode') || 'pin', OTHER = q.get('other') === '1', STEP = q.get('step') || '2';
 const W = innerWidth;
-const tabs = ['Home','Projects','Items','Context','Jobs','Agents','Health','Settings'];
-document.getElementById('top').innerHTML = '<div class="logo">S</div>' + tabs.map(t => `<div class="tab${t === 'Context' ? ' on' : ''}">${t}</div>`).join('');
+const tabs = [['Home'],['Projects'],['Workflows','0'],['Work','0'],['Workflow types'],['Context'],['Agents','6'],['System']];
+document.getElementById('top').innerHTML = '<div class="brand"><i>◆</i>Sindri</div><div class="tabs">' + tabs.map(t => `<div class="tab${t[0] === 'Context' ? ' on' : ''}">${t[0]}${t[1] ? `<span class="c">${t[1]}</span>` : ''}</div>`).join('') + '</div><div class="grow"></div><div class="search">⌕ Search or run a command<span class="k">⌘K</span></div><div class="health"><span class="ok">✓</span><b>Healthy</b><span>updated 3s ago</span></div>';
 
 const tick = on => `<span class="cb${on ? ' on' : ''}">${on ? '✓' : ''}</span>`;
 const sizeLine = '4 features · 3 records · 2 decisions · 40 code files';
@@ -291,10 +300,8 @@ function severalPage() {
 }
 
 document.getElementById('body').innerHTML = S === 'cards' ? cardsPage() : S === 'several' ? severalPage() : sheetPage();
-const base = `?s=${S}`;
 const sw = (label, href, on) => `<a class="${on ? 'on' : ''}" href="${href}">${label}</a>`;
-document.body.insertAdjacentHTML('beforeend', `<div class="switch">${['sheet','cards','several'].map(s => sw(s, `?s=${s}&v=${V}`, s === S)).join('')}<span class="sep"></span>${['a','b','c'].map(v => sw(v.toUpperCase(), `?s=${S}&v=${v}`, v === V)).join('')}</div>`);
-document.body.insertAdjacentHTML('beforeend', `<div class="label">mockup · ${S} · variant ${V.toUpperCase()}${S === 'sheet' ? ' · ' + MODE : ''} · ${W}px</div>`);
+document.body.insertAdjacentHTML('beforeend', `<div class="strip"><span>mockup · ${S} · variant ${V.toUpperCase()}${S === 'sheet' ? ' · ' + MODE : ''} · ${W}px</span><span class="grow"></span><div class="switch">${['sheet','cards','several'].map(s => sw(s, `?s=${s}&v=${V}`, s === S)).join('')}<span class="sep"></span>${['a','b','c'].map(v => sw(v.toUpperCase(), `?s=${S}&v=${v}`, v === V)).join('')}</div></div>`);
 </script>
 </body>
 </html>
