@@ -59,6 +59,7 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         await stop.CancelAsync().ConfigureAwait(false);
         await Task.WhenAll(watchers).ConfigureAwait(false);
         var limit = await watch.ConfigureAwait(false);
+        Release(limits, extras?.Watchdog);
         if (proof is { } last)
         {
             await Exit(launch, last, new WrapExit(code, _found, limit), cancellationToken).ConfigureAwait(false);
@@ -66,6 +67,24 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
 
         SweepHeavySlots();
         return code;
+    }
+
+    /// <summary>Process-group mode, the child reaped and the verdict taken: the unit's group id file would name an unrelated group once the system reuses the id. Never blocks or fails the exit.</summary>
+    private static void Release(WrapLimits? limits, WatchdogPorts? ports)
+    {
+        if (limits is not { } held || ports is not { MemoryKills: not null, Release: { } release })
+        {
+            return;
+        }
+
+        try
+        {
+            release(held.Unit);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // best effort: a stale file is ignored once its group is gone
+        }
     }
 
     /// <summary>The scope has ended: slots a killed scope left in the heavy wrapper's folder are litter now. Never blocks or fails the exit.</summary>
