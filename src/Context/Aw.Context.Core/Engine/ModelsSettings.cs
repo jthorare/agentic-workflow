@@ -24,6 +24,9 @@ public sealed record ModelsSettings
     /// <summary>'labeling.candidates': how many candidate labels the model writes per cluster (2 to 5).</summary>
     public int LabelCandidates { get; init; } = DefaultCandidates;
 
+    /// <summary>'productSurfaces.pick': whether Jev decides the product-surface candidates (the same two values as the label pick).</summary>
+    public LabelPick SurfacePick { get; init; } = LabelPick.Off;
+
     /// <summary>What the profile check should print as warnings; today only the old 'context.conceptScan.models' written beside 'context.models.names'.</summary>
     public IReadOnlyList<string> Warnings { get; init; } = [];
 

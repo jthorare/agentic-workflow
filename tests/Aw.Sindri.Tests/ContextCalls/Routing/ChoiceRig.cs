@@ -15,10 +15,10 @@ internal sealed class ChoiceRig
 {
     private readonly FakeJobContextAccessor _jobs = new();
 
-    public ChoiceRig(ScriptedBatches batches, LabelPick pick = LabelPick.Jev, ProvidersConfig? providers = null)
+    public ChoiceRig(ScriptedBatches batches, LabelPick pick = LabelPick.Jev, ProvidersConfig? providers = null, LabelPick surfacePick = LabelPick.Off)
     {
         Batches = batches;
-        Models = new SwitchableModels(pick);
+        Models = new SwitchableModels(pick) { SurfacePick = surfacePick };
         Port = new JevChoicePort(() => batches, _ => ValueTask.FromResult(providers), Models, _jobs, Calls, new SequentialIdGenerator(), Clock);
     }
 
@@ -41,12 +41,17 @@ internal sealed class ChoiceRig
     public ValueTask<Aw.Kernel.Result<IReadOnlyList<ChoiceAnswer>>> Pick(params ChoiceQuestion[] questions) =>
         Port.Pick(ChoiceKind.Labeling, questions, capChars: 160_000, TestContext.Current.CancellationToken);
 
+    public ValueTask<Aw.Kernel.Result<IReadOnlyList<ChoiceAnswer>>> PickSurfaces(params ChoiceQuestion[] questions) =>
+        Port.Pick(ChoiceKind.ProductSurfaces, questions, capChars: 160_000, TestContext.Current.CancellationToken);
+
     /// <summary>The approved 'context.models', which a test can change between calls the way an approval does.</summary>
     internal sealed class SwitchableModels(LabelPick pick) : IApprovedModels
     {
         public LabelPick Pick { get; set; } = pick;
 
-        public ValueTask<ModelsSettings> Current(CancellationToken cancellationToken) => ValueTask.FromResult(new ModelsSettings { LabelPick = Pick });
+        public LabelPick SurfacePick { get; set; }
+
+        public ValueTask<ModelsSettings> Current(CancellationToken cancellationToken) => ValueTask.FromResult(new ModelsSettings { LabelPick = Pick, SurfacePick = SurfacePick });
 
         public ValueTask<bool> IsApproved(CancellationToken cancellationToken) => ValueTask.FromResult(true);
     }

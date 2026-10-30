@@ -13,7 +13,8 @@
       "source": "<home>/profile/profile.yaml",
       "needsApproval": false,
       "modelPick": "off",
-      "labelPick": "off"
+      "labelPick": "off",
+      "surfacePick": "off"
     },
     "services": [
       {

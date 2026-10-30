@@ -66,7 +66,13 @@ public sealed class ModelsSettingsTests
     [InlineData("""{"models":{"names":{"codex":{"medium":"x"}}}}""", "context.models.names.codex.medium")]
     [InlineData("""{"models":{"labeling":{"speed":"fast"}}}""", "context.models.labeling.speed")]
     [InlineData("""{"models":{"summaries":{}}}""", "context.models.summaries")]
-    [InlineData("""{"models":{"productSurfaces":{"pick":"jev"}}}""", "context.models.productSurfaces")]
+    [InlineData("""{"models":{"productSurfaces":{"pick":"yes"}}}""", "context.models.productSurfaces.pick")]
+    [InlineData("""{"models":{"productSurfaces":{"pick":"maybe"}}}""", "context.models.productSurfaces.pick")]
+    [InlineData("""{"models":{"productSurfaces":{"harnesses":["codex"]}}}""", "context.models.productSurfaces.harnesses")]
+    [InlineData("""{"models":{"productSurfaces":{"tier":"cheap"}}}""", "context.models.productSurfaces.tier")]
+    [InlineData("""{"models":{"productSurfaces":{"models":{"codex":"x"}}}}""", "context.models.productSurfaces.models")]
+    [InlineData("""{"models":{"productSurfaces":{"candidates":3}}}""", "context.models.productSurfaces.candidates")]
+    [InlineData("""{"models":{"productSurfaces":"jev"}}""", "context.models.productSurfaces")]
     [InlineData("""{"models":[]}""", "context.models")]
     [InlineData("""{"models":{"labeling":"cheap"}}""", "context.models.labeling")]
     public void A_wrong_value_or_key_is_SND_CONTEXT_001_with_the_key_path_first(string json, string keyPath)
@@ -76,6 +82,37 @@ public sealed class ModelsSettingsTests
         Assert.Equal(ContextErrors.SettingsInvalid.Code, error.Code);
         Assert.StartsWith(keyPath + ":", error.Message, StringComparison.Ordinal);
     }
+
+    // Row moved on purpose (model routing spec 3.1, 6.9): 'productSurfaces' used to be refused as an unknown kind; it is the seventh kind and takes 'pick' only.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("""{"models":{"productSurfaces":{"pick":"jev"}}}""", LabelPick.Jev)]
+    [InlineData("""{"models":{"productSurfaces":{"pick":"off"}}}""", LabelPick.Off)]
+    [InlineData("""{"models":{"productSurfaces":{}}}""", LabelPick.Off)]
+    [InlineData("""{"models":{"labeling":{"pick":"jev"}}}""", LabelPick.Off)]
+    public void The_product_surface_pick_is_read_on_its_own_and_defaults_to_off(string json, LabelPick expected) =>
+        Assert.Equal(expected, Read(json).Value.Models.SurfacePick);
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_two_picks_are_independent()
+    {
+        var models = Read("""{"models":{"labeling":{"pick":"jev"},"productSurfaces":{"pick":"off"}}}""").Value.Models;
+
+        Assert.Equal((LabelPick.Jev, LabelPick.Off), (models.LabelPick, models.SurfacePick));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Product_surfaces_is_a_kind_but_the_defaults_harnesses_and_tier_never_apply_to_it()
+    {
+        Assert.True(ModelKinds.TryParse("productSurfaces", out var kind));
+        Assert.Equal(ModelKind.ProductSurfaces, kind);
+        Assert.Equal("productSurfaces", ModelKinds.Key(ModelKind.ProductSurfaces));
+        Assert.Equal(ModelKind.ProductSurfaces, ModelKinds.Of(ModelPurpose.ProductSurfaces));
+        Assert.Empty(ModelRouting.Resolve(Read("""{"models":{"default":{"harnesses":["codex"],"tier":"strong"},"productSurfaces":{"pick":"jev"}}}""").Value.Models, Request(ModelPurpose.ProductSurfaces), [ModelHarness.Codex]));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_unknown_kind_message_lists_product_surfaces_among_the_kinds() =>
+        Assert.Contains("productSurfaces", Read("""{"models":{"summaries":{}}}""").Error.Message, StringComparison.Ordinal);
 
     [Fact, Trait("Lane", "unit")]
     public void The_messages_say_what_is_allowed_and_suggest_the_harness_that_was_meant()
