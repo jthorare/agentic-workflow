@@ -68,6 +68,17 @@
 #                                  (Self scheduling, Billing) over four features and a decision on Swaps, so the Context page opens on
 #                                  its concept band and a concept draws its Why, product and code
 #
+#   sindri-ui-fixture.sh context sources
+#                                  the node panel's source links (#1702; run after 'context up'): gives the tabs repo a GitHub remote
+#                                  (origin https://github.com/acme/tabs.git, set again on a repeat), imports a small authored map
+#                                  (map-sources.json, with "commit" set to the tabs repo's HEAD) whose doc node, feature:staffing.schema,
+#                                  rests on repo:aw-split-panes/migrations/0001_staffing/migration.sql, and whose Linear ticket node,
+#                                  record:linear:issue/0e5a1b00-0000-4000-8000-000000000702 (team SPL), has a stored record (source_record,
+#                                  url https://linear.app/acme/issue/SPL-142/roll-out-staffing). It adds context.sources.linear.teams [SPL]
+#                                  to the live profile like 'projects' does. Prints three lines: the repo name, the doc node key and the
+#                                  ticket node key. The migration file is not added to the repo: the link is built from the path and the
+#                                  map's commit, never read from the tree
+#
 #   sindri-ui-fixture.sh context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume
 #                                  the Health page's Context map card (F1P-c, code index spec 6.4; run after 'context up'): puts the
 #                                  map into one of the six publish states by writing the stored state the card reads, then prints the
@@ -813,7 +824,7 @@ context_publish() {
 }
 
 context() {
-  case "$1" in up) context_up ;; draft) context_draft ;; down) context_down ;; publish) context_publish "$2" ;; whole) context_whole "$2" ;; esac
+  case "$1" in up) context_up ;; draft) context_draft ;; down) context_down ;; publish) context_publish "$2" ;; whole) context_whole "$2" ;; sources) context_sources ;; esac
 }
 
 # --- projects: the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1) ---
@@ -926,6 +937,39 @@ UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
     fi
     : > "$marker-hide"
   fi
+}
+
+# --- context sources: the node panel's source links (#1702) ---
+SOURCES_ORIGIN="https://github.com/acme/tabs.git"
+SOURCES_DOC_NODE="feature:staffing.schema"
+SOURCES_TICKET_UUID="0e5a1b00-0000-4000-8000-000000000702"
+SOURCES_TICKET_NODE="record:linear:issue/$SOURCES_TICKET_UUID"
+SOURCES_TICKET_URL="https://linear.app/acme/issue/SPL-142/roll-out-staffing"
+
+context_sources() {
+  need jq
+  need_sql
+  local dir repo db commit map
+  dir="$(context_dir)"
+  repo="$dir/$CONTEXT_REPO"
+  [ -d "$repo/.git" ] || die "context sources: run 'context up' first"
+  db="$(context_db)"
+  [ -f "$db" ] || die "no context store at $db: run 'context up' first"
+  projects_profile || return
+  local g=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 git -C "$repo")
+  if "${g[@]}" remote get-url origin >/dev/null 2>&1; then
+    "${g[@]}" remote set-url origin "$SOURCES_ORIGIN" || die "context sources: can't set the origin of $repo"
+  else
+    "${g[@]}" remote add origin "$SOURCES_ORIGIN" || die "context sources: can't add the origin to $repo"
+  fi
+  commit="$("${g[@]}" rev-parse HEAD)" || die "context sources: can't read the HEAD of $repo"
+  map="$dir/sources-map.json"
+  jq --arg commit "$commit" '. + {commit: $commit}' "$ROOT/tests/Aw.Context.Testing/Fixtures/map-sources.json" > "$map" || die "context sources: can't write the sources map"
+  context_import "$map" || return
+  sql_on "$db" "INSERT OR REPLACE INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+      VALUES ('linear:issue/$SOURCES_TICKET_UUID', 'linear', 'issue', NULL, 'linear:$PROJECTS_TEAM', 'Roll out staffing', '$SOURCES_TICKET_URL', '$PROJECTS_VIEWER_NAME', 'open', 'In Progress', $(projects_ts '-10 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-sources-1', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+    UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "context sources: can't write the ticket record to $db"
+  printf '%s\n%s\n%s\n' "$CONTEXT_REPO" "$SOURCES_DOC_NODE" "$SOURCES_TICKET_NODE"
 }
 
 SESSIONS_DIRNAME="ui-fixture-sessions"
@@ -1432,12 +1476,12 @@ case "$verb" in
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)
     case "${2:-}" in
-      up | draft | down) [ "$#" -eq 2 ] || die "usage: context up|draft|down|publish <state>" ;;
+      up | draft | down | sources) [ "$#" -eq 2 ] || die "usage: context up|draft|down|sources|publish <state>" ;;
       publish)
         [ "$#" -eq 3 ] || die "usage: context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume"
         case "$3" in held | overdue | published | without-waiting | stale | by-hand | pause | resume) ;; *) die "context publish: '$3' is not a state (held, overdue, published, without-waiting, stale, by-hand, pause, resume)" ;; esac ;;
       whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ] || [ "$3" = concepts ]; }; } || die "usage: context whole over|under|concepts" ;;
-      *) die "usage: context up|draft|down|publish <state>|whole over|under|concepts" ;;
+      *) die "usage: context up|draft|down|sources|publish <state>|whole over|under|concepts" ;;
     esac ;;
   sessions)
     case "${2:-}" in
