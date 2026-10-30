@@ -33,9 +33,11 @@ const BUDGETS = { unit: 10, integration: 60 };
 // Raised by the owner on 2026-10-28 (q148, superseding q147's measured + 25%) to about twice the slowest main CI run seen, since
 // the same lanes swing 35-80% between runs on GitHub's shared runners (run 40734081015 then 40747387454: Sindri unit 27.3 s then
 // 48.4 s, SindriUi integration 224.7 s then 303.3 s, Context unit 9.66 s then 14.9 s). Still blocking; #1546 brings them back down.
+// Sindri unit brought back down by the owner on 2026-10-30 (#1546) to the slowest of the last six main CI runs + 25%: 29.4 s
+// (job 123538665909; the others 12.8-23.8 s) -> 37 s.
 const PACKAGE_BUDGETS = {
   SindriUi: { unit: 28, integration: 600 },
-  Sindri: { unit: 100, integration: 340 },
+  Sindri: { unit: 37, integration: 340 },
   Context: { unit: 30 },
 };
 // Per-test-project rows: a test project named here is measured as a row of its own (the row is the project's name) and kept out
