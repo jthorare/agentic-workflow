@@ -53,7 +53,7 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         }
 
         var watch = limits is { } held && extras?.Watchdog is { } ports
-            ? new LimitWatchdog(ports.Scope, ports.Stats, calls, clock, held).Run(launch, proof, child.Exited, cancellationToken)
+            ? new LimitWatchdog(ports.Scope, ports.Stats, calls, clock, held, ports.MemoryKills).Run(launch, proof, child.Exited, cancellationToken)
             : Task.FromResult<LimitEnd?>(null);
         var code = await ExitCode(child, cancellationToken).ConfigureAwait(false);
         await stop.CancelAsync().ConfigureAwait(false);
