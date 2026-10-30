@@ -197,8 +197,20 @@ public sealed class FakeIntentStore : IIntentStore
         });
     }
 
-    public ValueTask<Result<Unit>> ReplaceRuleLinks(RecordKey record, LinkRule rule, IReadOnlyList<IntentLink> links, CancellationToken cancellationToken) =>
-        throw new NotSupportedException("Q9: not built yet");
+    public ValueTask<Result<Unit>> ReplaceRuleLinks(RecordKey record, LinkRule rule, IReadOnlyList<IntentLink> links, CancellationToken cancellationToken)
+    {
+        _layer = null;   // the store keeps its layer until a write, as SQLite keeps it until the change stamp moves
+        return Done(() =>
+        {
+            if (_records.ContainsKey(record.Value))   // SQLite: a record that isn't stored takes no link
+            {
+                var kept = _links.GetValueOrDefault(record.Value)?.Where(l => l.Rule != rule) ?? [];
+                _links[record.Value] = [.. kept, .. links.Where(l => l.Record.Value == record.Value).Select(l => l with { Rule = rule }).DistinctBy(l => (l.Target.Value, l.Rule))];
+            }
+
+            return Unit.Value;
+        });
+    }
 
     public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken)
     {

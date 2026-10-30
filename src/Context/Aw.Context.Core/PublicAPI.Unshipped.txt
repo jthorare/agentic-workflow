@@ -10310,6 +10310,7 @@ Aw.Context.Core.Extract.LabelPass.Spent.init -> void
 Aw.Context.Core.Linking.IIntentStore.ReplaceRuleLinks(Aw.Context.Core.Sources.RecordKey record, Aw.Context.Core.Linking.LinkRule rule, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentLink!>! links, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Context.Core.Linking.LinkRule.Alias = 6 -> Aw.Context.Core.Linking.LinkRule
 Aw.Context.Core.Linking.PinAliases
+static Aw.Context.Core.Linking.PinAliases.Of(System.Collections.Generic.IEnumerable<Aw.Context.Core.Engine.ConceptPin!>! pins) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinAliases!>!
 Aw.Context.Core.Linking.PinAliases.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Linking.PinAliases.Aliases.init -> void
 Aw.Context.Core.Linking.PinAliases.<Clone>$() -> Aw.Context.Core.Linking.PinAliases!
