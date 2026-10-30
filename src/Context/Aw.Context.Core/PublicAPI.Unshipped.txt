@@ -10453,3 +10453,7 @@ override Aw.Context.Core.Ranking.RankedLeg.GetHashCode() -> int
 override Aw.Context.Core.Ranking.RankedLeg.ToString() -> string!
 static Aw.Context.Core.Ranking.RankedLeg.operator !=(Aw.Context.Core.Ranking.RankedLeg? left, Aw.Context.Core.Ranking.RankedLeg? right) -> bool
 static Aw.Context.Core.Ranking.RankedLeg.operator ==(Aw.Context.Core.Ranking.RankedLeg? left, Aw.Context.Core.Ranking.RankedLeg? right) -> bool
+Aw.Context.Core.Engine.RankerSettings.PinLeg.get -> bool
+Aw.Context.Core.Engine.RankerSettings.PinLeg.init -> void
+Aw.Context.Core.Ranking.RankerMode.Pin = 3 -> Aw.Context.Core.Ranking.RankerMode
+Aw.Context.Core.Eval.Backtest.Arm.RankerPin = 10 -> Aw.Context.Core.Eval.Backtest.Arm

@@ -92,6 +92,22 @@ public sealed class PinSet
     internal string? PathPin(ContextRepoName repo, string path) =>
         _byRepo.TryGetValue(repo.Value, out var pins) ? pins.FirstOrDefault(p => PathDenylist.MatchesExactCase(path, p.Pin.Paths))?.Id : null;
 
+    /// <summary>The pin a repo document's canonical key ('repo:&lt;repo&gt;/&lt;path&gt;') is in, by its path.</summary>
+    /// <param name="recordKey">The record's canonical key.</param>
+    /// <returns>The pin's id, or null for any other key or a path no pin matches.</returns>
+    internal string? RecordPathPin(string recordKey)
+    {
+        const string prefix = "repo:";
+        if (!recordKey.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var rest = recordKey[prefix.Length..];
+        return _byRepo.Keys.Where(r => rest.StartsWith(r + "/", StringComparison.Ordinal)).OrderByDescending(r => r.Length)
+            .Select(r => PathPin(ContextRepoName.From(r), rest[(r.Length + 1)..])).FirstOrDefault(p => p is not null);
+    }
+
     private const int MaxSuggestions = 5;
 
     // The map's own grouping: a concept holds itself, a feature belongs-to its concept, a code file implements its home feature, a record mentions the concept or a member feature.

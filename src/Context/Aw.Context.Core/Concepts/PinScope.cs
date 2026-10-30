@@ -43,7 +43,8 @@ public sealed class PinScope
     /// <summary>Whether a record is in this pin: the record node a pin holds, or a repo document whose path the pin's paths match.</summary>
     /// <param name="record">The record's canonical key.</param>
     /// <returns>True when this pin holds it.</returns>
-    public bool HoldsRecord(Sources.RecordKey record) => throw new NotSupportedException();
+    public bool HoldsRecord(Sources.RecordKey record) =>
+        HoldsNode(NodeKey.From("record:" + record.Value)) || (_set.RecordPathPin(record.Value) is { } pin && string.Equals(pin, Pin.Value, StringComparison.Ordinal));
 
     /// <summary>The pin an anchor sits in.</summary>
     /// <param name="anchor">The anchor.</param>

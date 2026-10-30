@@ -13,5 +13,10 @@ public static class PinLeg
     /// <param name="fused">The plain fusion's output, best first.</param>
     /// <param name="scope">The pin.</param>
     /// <returns>The leg.</returns>
-    public static RankedLeg Of(IReadOnlyList<FusedItem> fused, PinScope scope) => throw new NotSupportedException();
+    public static RankedLeg Of(IReadOnlyList<FusedItem> fused, PinScope scope)
+    {
+        ArgumentNullException.ThrowIfNull(fused);
+        ArgumentNullException.ThrowIfNull(scope);
+        return new RankedLeg(Source, [.. fused.Where(f => scope.HoldsRecord(f.Key)).Select(f => f.Key)]);
+    }
 }

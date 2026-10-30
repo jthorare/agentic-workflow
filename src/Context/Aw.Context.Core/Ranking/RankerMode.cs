@@ -17,4 +17,8 @@ public enum RankerMode
     /// <summary>Fusion plus features plus the model rerank.</summary>
     [JsonStringEnumMemberName("rerank")]
     Rerank,
+
+    /// <summary>Fusion plus the anchor's pin leg plus the feature scores (concept pins spec §3.3).</summary>
+    [JsonStringEnumMemberName("pin")]
+    Pin,
 }
