@@ -10260,3 +10260,39 @@ Aw.Context.Core.Surfaces.SurfaceVerdict.Survivor.init -> void
 Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.get -> string?
 Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.init -> void
 static Aw.Context.Core.Surfaces.SurfaceVerdict.Merged(string! groupKey, int survivor, string! survivorKey, string! name) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+const Aw.Context.Core.Overrides.MapOverride.JevWho = "service:jev" -> string!
+Aw.Context.Core.Surfaces.SurfaceApply
+static Aw.Context.Core.Surfaces.SurfaceApply.Rows(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceGroup!>! groups, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceVerdict!>! verdicts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides, System.DateTimeOffset at) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>!
+Aw.Context.Core.Surfaces.SurfaceCandidates
+static Aw.Context.Core.Surfaces.SurfaceCandidates.Groups(Aw.Context.Core.Extract.ExtractedMap! found, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Overrides.MapOverride!>! overrides) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceGroup!>!
+Aw.Context.Core.Surfaces.ISurfacePickStore
+Aw.Context.Core.Surfaces.ISurfacePickStore.Get(System.Collections.Generic.IReadOnlyCollection<string!>! groupKeys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Surfaces.SurfaceDecision!>!>!>
+Aw.Context.Core.Surfaces.ISurfacePickStore.Save(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceDecision!>! decisions, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Surfaces.SurfaceDecision
+Aw.Context.Core.Surfaces.SurfaceDecision.CandidateKeys.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Surfaces.SurfaceDecision.CandidateKeys.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.Choice.get -> Aw.Context.Core.Surfaces.SurfaceChoice
+Aw.Context.Core.Surfaces.SurfaceDecision.Choice.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.<Clone>$() -> Aw.Context.Core.Surfaces.SurfaceDecision!
+Aw.Context.Core.Surfaces.SurfaceDecision.DecidedAt.get -> System.DateTimeOffset
+Aw.Context.Core.Surfaces.SurfaceDecision.DecidedAt.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.Deconstruct(out string! GroupKey, out Aw.Context.Core.Surfaces.SurfaceChoice Choice, out string? SurvivorKey, out string? MergedName, out System.Collections.Generic.IReadOnlyList<string!>! CandidateKeys, out string? Model, out System.DateTimeOffset DecidedAt) -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.Equals(Aw.Context.Core.Surfaces.SurfaceDecision? other) -> bool
+Aw.Context.Core.Surfaces.SurfaceDecision.GroupKey.get -> string!
+Aw.Context.Core.Surfaces.SurfaceDecision.GroupKey.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.MergedName.get -> string?
+Aw.Context.Core.Surfaces.SurfaceDecision.MergedName.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.Model.get -> string?
+Aw.Context.Core.Surfaces.SurfaceDecision.Model.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.SurfaceDecision(string! GroupKey, Aw.Context.Core.Surfaces.SurfaceChoice Choice, string? SurvivorKey, string? MergedName, System.Collections.Generic.IReadOnlyList<string!>! CandidateKeys, string? Model, System.DateTimeOffset DecidedAt) -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.SurvivorKey.get -> string?
+Aw.Context.Core.Surfaces.SurfaceDecision.SurvivorKey.init -> void
+Aw.Context.Core.Surfaces.SurfaceDecision.ToVerdict(Aw.Context.Core.Surfaces.SurfaceGroup! group) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+override Aw.Context.Core.Surfaces.SurfaceDecision.Equals(object? obj) -> bool
+override Aw.Context.Core.Surfaces.SurfaceDecision.GetHashCode() -> int
+override Aw.Context.Core.Surfaces.SurfaceDecision.ToString() -> string!
+static Aw.Context.Core.Surfaces.SurfaceDecision.From(Aw.Context.Core.Surfaces.SurfaceVerdict! verdict, Aw.Context.Core.Surfaces.SurfaceGroup! group, string? model, System.DateTimeOffset at) -> Aw.Context.Core.Surfaces.SurfaceDecision!
+static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
+Aw.Context.Core.Extract.LabelPass.Spent.get -> int
+Aw.Context.Core.Extract.LabelPass.Spent.init -> void
