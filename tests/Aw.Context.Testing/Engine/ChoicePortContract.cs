@@ -44,6 +44,31 @@ public abstract class ChoicePortContract<TPort>
         Check(answers.Value.All(a => _questions.Any(q => string.Equals(q.Key, a.Key, StringComparison.Ordinal) && (a.Picked is null || q.Options.Contains(a.Picked, StringComparer.Ordinal)))), "every answer is for a question asked and picks one of its options");
     }
 
+    /// <summary>Asking whether a pick can go out is a read: it answers null or one of the port's reason codes, and null for a port that can answer a label pack.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Unavailable_is_null_for_a_port_that_can_answer()
+    {
+        var port = Create();
+
+        Check(await port.Unavailable(ChoiceKind.Labeling, CancellationToken.None) is null, "a port that answers label packs says nothing is unavailable for them");
+    }
+
+    /// <summary>Whatever the kind, the reason is one of the two codes the labeler and the cache understand.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Unavailable_names_off_or_no_key_and_nothing_else()
+    {
+        var port = Create();
+
+        foreach (var kind in new[] { ChoiceKind.Labeling, ChoiceKind.ProductSurfaces })
+        {
+            var reason = await port.Unavailable(kind, CancellationToken.None);
+
+            Check(reason is null || ChoiceReasons.IsQuiet(reason), $"the reason for {kind} is null, 'off' or 'no-key'");
+        }
+    }
+
     /// <summary>A cancelled call throws OperationCanceledException, never an error result.</summary>
     /// <returns>A task.</returns>
     [Fact]

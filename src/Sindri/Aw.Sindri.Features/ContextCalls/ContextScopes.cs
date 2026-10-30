@@ -51,8 +51,37 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
     internal static IReadOnlyList<ProfileRepoEntry> Entries(SindriProfile profile)
     {
         ArgumentNullException.ThrowIfNull(profile);
-        return [.. (profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path, RepoDenyGlobs.For(profile, r), [.. RepoConcepts.For(profile, r).Select(c => ConceptPin.Of(c.Id is { } id ? ConceptId.From(id.Value) : null, c.Name, c.Summary, c.Features, c.Paths).Declaring(c.DependsOn, c.Owns).WithAliases(c.Aliases))], DemotePaths: RepoDemoteGlobs.For(profile, r)) { Roles = RepoRoleSets.For(profile, r) is { } sets ? [.. sets.Select(x => new RepoRole(x.Name, x.Demoted, x.Globs))] : null })];
+        return [.. (profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path, RepoDenyGlobs.For(profile, r), [.. RepoConcepts.For(profile, r).Select(c => ConceptPin.Of(c.Id is { } id ? ConceptId.From(id.Value) : null, c.Name, c.Summary, c.Features, c.Paths).Declaring(c.DependsOn, c.Owns).WithAliases(c.Aliases))], DemotePaths: RepoDemoteGlobs.For(profile, r)) { Roles = RepoRoleSets.For(profile, r) is { } sets ? [.. sets.Select(x => new RepoRole(x.Name, x.Demoted, x.Globs))] : null, Pages = Pages(profile, r) })];
     }
+
+    /// <summary>
+    /// The pages of 'index.pages' as page pins: an id the profile leaves out is the name's slug (a clash takes '-2', '-3'), and the
+    /// first 200 pages, 40 actions and 20 concepts are read and the rest ignored (the write refused them; a hand-edited profile gets
+    /// a doctor row, never a refusal here).
+    /// </summary>
+    private static List<PagePin> Pages(SindriProfile profile, RepoEntry repo)
+    {
+        var taken = new HashSet<string>(StringComparer.Ordinal);
+        return [.. RepoPages.For(profile, repo).Take(PageRules.MaxPages).Select(page => Page(page, taken))];
+    }
+
+    private static PagePin Page(PageSettings page, HashSet<string> taken)
+    {
+        var name = page.Name ?? string.Empty;
+        var actionIds = new HashSet<string>(StringComparer.Ordinal);
+        return new PagePin(
+            PageId.From(PageSlugs.Unique(page.Id is { } id && PageId.TryFrom(id.Value, out _) ? id.Value : PageSlugs.Of(name), taken)),
+            name,
+            page.Repo is { } written && ContextRepoName.TryFrom(written, out var repoName) ? repoName : null,
+            page.Surface,
+            [.. (page.Actions ?? []).Take(PageRules.MaxActions).Select(a => Action(a, actionIds))]);
+    }
+
+    private static PageActionPin Action(PageActionSettings action, HashSet<string> taken) => new(
+        PageActionId.From(PageSlugs.Unique(action.Id is { } id && PageActionId.TryFrom(id.Value, out _) ? id.Value : PageSlugs.Of(action.Name), taken)),
+        action.Name ?? string.Empty,
+        action.Action,
+        [.. (action.Concepts ?? []).Take(PageRules.MaxConcepts)]);
 
     /// <summary>The engine's caller for a Sindri caller; no caller at all is an in-process service.</summary>
     /// <param name="caller">The Sindri caller, or null.</param>

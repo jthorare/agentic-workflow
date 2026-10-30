@@ -13850,8 +13850,6 @@ override Aw.Sindri.Core.Profile.GraphSettings.ToString() -> string!
 static Aw.Sindri.Core.Profile.GraphSettings.operator !=(Aw.Sindri.Core.Profile.GraphSettings? left, Aw.Sindri.Core.Profile.GraphSettings? right) -> bool
 static Aw.Sindri.Core.Profile.GraphSettings.operator ==(Aw.Sindri.Core.Profile.GraphSettings? left, Aw.Sindri.Core.Profile.GraphSettings? right) -> bool
 const Aw.Sindri.Core.Profile.GraphSettings.DefaultMaxMB = 1024 -> int
-Aw.Sindri.Core.Profile.IndexSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs, out int? MaxFileKB, out int? MaxTotalMB, out Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings, out Aw.Sindri.Core.Profile.GraphSettings? Graph, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? Roles, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts, out System.Collections.Generic.IReadOnlyList<string!>? Ignore, out System.Collections.Generic.IReadOnlyList<string!>? Demote) -> void
-Aw.Sindri.Core.Profile.IndexSettings.IndexSettings(System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs = null, int? MaxFileKB = null, int? MaxTotalMB = null, Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings = null, Aw.Sindri.Core.Profile.GraphSettings? Graph = null, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? Roles = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts = null, System.Collections.Generic.IReadOnlyList<string!>? Ignore = null, System.Collections.Generic.IReadOnlyList<string!>? Demote = null) -> void
 const Aw.Sindri.Core.Profile.IndexSettings.DefaultMaxFileKB = 4096 -> int
 const Aw.Sindri.Core.Profile.IndexSettings.DefaultMaxTotalMB = 4096 -> int
 Aw.Sindri.Core.Profile.IndexSettings.DenyPaths.get -> System.Collections.Generic.IReadOnlyList<string!>?
@@ -21551,3 +21549,81 @@ override Aw.Sindri.Core.Setup.ConceptEdit.GetHashCode() -> int
 override Aw.Sindri.Core.Setup.ConceptEdit.ToString() -> string!
 static Aw.Sindri.Core.Setup.ConceptEdit.operator !=(Aw.Sindri.Core.Setup.ConceptEdit? left, Aw.Sindri.Core.Setup.ConceptEdit? right) -> bool
 static Aw.Sindri.Core.Setup.ConceptEdit.operator ==(Aw.Sindri.Core.Setup.ConceptEdit? left, Aw.Sindri.Core.Setup.ConceptEdit? right) -> bool
+Aw.Sindri.Core.Ids.PageActionPinId
+Aw.Sindri.Core.Ids.PageActionPinId.Equals(Aw.Sindri.Core.Ids.PageActionPinId other) -> bool
+Aw.Sindri.Core.Ids.PageActionPinId.Equals(Aw.Sindri.Core.Ids.PageActionPinId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.PageActionPinId>! comparer) -> bool
+Aw.Sindri.Core.Ids.PageActionPinId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.PageActionPinId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.PageActionPinId.PageActionPinId() -> void
+Aw.Sindri.Core.Ids.PageActionPinId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.PageActionPinId.Value.get -> string!
+Aw.Sindri.Core.Ids.PagePinId
+Aw.Sindri.Core.Ids.PagePinId.Equals(Aw.Sindri.Core.Ids.PagePinId other) -> bool
+Aw.Sindri.Core.Ids.PagePinId.Equals(Aw.Sindri.Core.Ids.PagePinId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.PagePinId>! comparer) -> bool
+Aw.Sindri.Core.Ids.PagePinId.GetTypeCode() -> System.TypeCode
+Aw.Sindri.Core.Ids.PagePinId.IsInitialized() -> bool
+Aw.Sindri.Core.Ids.PagePinId.PagePinId() -> void
+Aw.Sindri.Core.Ids.PagePinId.ToString(System.IFormatProvider? provider) -> string!
+Aw.Sindri.Core.Ids.PagePinId.Value.get -> string!
+Aw.Sindri.Core.Profile.IndexSettings.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>? DenyPaths, out System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs, out int? MaxFileKB, out int? MaxTotalMB, out Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings, out Aw.Sindri.Core.Profile.GraphSettings? Graph, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? Roles, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts, out System.Collections.Generic.IReadOnlyList<string!>? Ignore, out System.Collections.Generic.IReadOnlyList<string!>? Demote, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>? Pages) -> void
+Aw.Sindri.Core.Profile.IndexSettings.IndexSettings(System.Collections.Generic.IReadOnlyList<string!>? DenyPaths = null, System.Collections.Generic.IReadOnlyList<string!>? UtilityGlobs = null, int? MaxFileKB = null, int? MaxTotalMB = null, Aw.Sindri.Core.Profile.EmbeddingSettings? Embeddings = null, Aw.Sindri.Core.Profile.GraphSettings? Graph = null, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>? Roles = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ConceptSettings!>? Concepts = null, System.Collections.Generic.IReadOnlyList<string!>? Ignore = null, System.Collections.Generic.IReadOnlyList<string!>? Demote = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>? Pages = null) -> void
+Aw.Sindri.Core.Profile.IndexSettings.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>?
+Aw.Sindri.Core.Profile.IndexSettings.Pages.init -> void
+Aw.Sindri.Core.Profile.PageActionSettings
+Aw.Sindri.Core.Profile.PageActionSettings.Action.get -> string?
+Aw.Sindri.Core.Profile.PageActionSettings.Action.init -> void
+Aw.Sindri.Core.Profile.PageActionSettings.<Clone>$() -> Aw.Sindri.Core.Profile.PageActionSettings!
+Aw.Sindri.Core.Profile.PageActionSettings.Concepts.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Profile.PageActionSettings.Concepts.init -> void
+Aw.Sindri.Core.Profile.PageActionSettings.Deconstruct(out Aw.Sindri.Core.Ids.PageActionPinId? Id, out string? Name, out string? Action, out System.Collections.Generic.IReadOnlyList<string!>? Concepts) -> void
+Aw.Sindri.Core.Profile.PageActionSettings.Equals(Aw.Sindri.Core.Profile.PageActionSettings? other) -> bool
+Aw.Sindri.Core.Profile.PageActionSettings.Id.get -> Aw.Sindri.Core.Ids.PageActionPinId?
+Aw.Sindri.Core.Profile.PageActionSettings.Id.init -> void
+Aw.Sindri.Core.Profile.PageActionSettings.Name.get -> string?
+Aw.Sindri.Core.Profile.PageActionSettings.Name.init -> void
+Aw.Sindri.Core.Profile.PageActionSettings.PageActionSettings(Aw.Sindri.Core.Ids.PageActionPinId? Id = null, string? Name = null, string? Action = null, System.Collections.Generic.IReadOnlyList<string!>? Concepts = null) -> void
+Aw.Sindri.Core.Profile.PageSettings
+Aw.Sindri.Core.Profile.PageSettings.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageActionSettings!>?
+Aw.Sindri.Core.Profile.PageSettings.Actions.init -> void
+Aw.Sindri.Core.Profile.PageSettings.<Clone>$() -> Aw.Sindri.Core.Profile.PageSettings!
+Aw.Sindri.Core.Profile.PageSettings.Deconstruct(out Aw.Sindri.Core.Ids.PagePinId? Id, out string? Name, out string? Repo, out string? Surface, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageActionSettings!>? Actions) -> void
+Aw.Sindri.Core.Profile.PageSettings.Equals(Aw.Sindri.Core.Profile.PageSettings? other) -> bool
+Aw.Sindri.Core.Profile.PageSettings.Id.get -> Aw.Sindri.Core.Ids.PagePinId?
+Aw.Sindri.Core.Profile.PageSettings.Id.init -> void
+Aw.Sindri.Core.Profile.PageSettings.Name.get -> string?
+Aw.Sindri.Core.Profile.PageSettings.Name.init -> void
+Aw.Sindri.Core.Profile.PageSettings.PageSettings(Aw.Sindri.Core.Ids.PagePinId? Id = null, string? Name = null, string? Repo = null, string? Surface = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageActionSettings!>? Actions = null) -> void
+Aw.Sindri.Core.Profile.PageSettings.Repo.get -> string?
+Aw.Sindri.Core.Profile.PageSettings.Repo.init -> void
+Aw.Sindri.Core.Profile.PageSettings.Surface.get -> string?
+Aw.Sindri.Core.Profile.PageSettings.Surface.init -> void
+Aw.Sindri.Core.Profile.RepoPages
+override Aw.Sindri.Core.Ids.PageActionPinId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.PageActionPinId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.PageActionPinId.ToString() -> string!
+override Aw.Sindri.Core.Ids.PagePinId.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Ids.PagePinId.GetHashCode() -> int
+override Aw.Sindri.Core.Ids.PagePinId.ToString() -> string!
+override Aw.Sindri.Core.Profile.PageActionSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PageActionSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PageActionSettings.ToString() -> string!
+override Aw.Sindri.Core.Profile.PageSettings.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.PageSettings.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.PageSettings.ToString() -> string!
+static Aw.Sindri.Core.Ids.PageActionPinId.From(string! value) -> Aw.Sindri.Core.Ids.PageActionPinId
+static Aw.Sindri.Core.Ids.PageActionPinId.operator !=(Aw.Sindri.Core.Ids.PageActionPinId left, Aw.Sindri.Core.Ids.PageActionPinId right) -> bool
+static Aw.Sindri.Core.Ids.PageActionPinId.operator ==(Aw.Sindri.Core.Ids.PageActionPinId left, Aw.Sindri.Core.Ids.PageActionPinId right) -> bool
+static Aw.Sindri.Core.Ids.PageActionPinId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.PageActionPinId
+static Aw.Sindri.Core.Ids.PageActionPinId.TryFrom(string? value, out Aw.Sindri.Core.Ids.PageActionPinId vo) -> bool
+static Aw.Sindri.Core.Ids.PageActionPinId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.PageActionPinId result) -> bool
+static Aw.Sindri.Core.Ids.PagePinId.From(string! value) -> Aw.Sindri.Core.Ids.PagePinId
+static Aw.Sindri.Core.Ids.PagePinId.operator !=(Aw.Sindri.Core.Ids.PagePinId left, Aw.Sindri.Core.Ids.PagePinId right) -> bool
+static Aw.Sindri.Core.Ids.PagePinId.operator ==(Aw.Sindri.Core.Ids.PagePinId left, Aw.Sindri.Core.Ids.PagePinId right) -> bool
+static Aw.Sindri.Core.Ids.PagePinId.Parse(string! s, System.IFormatProvider? provider) -> Aw.Sindri.Core.Ids.PagePinId
+static Aw.Sindri.Core.Ids.PagePinId.TryFrom(string? value, out Aw.Sindri.Core.Ids.PagePinId vo) -> bool
+static Aw.Sindri.Core.Ids.PagePinId.TryParse(string? s, System.IFormatProvider? provider, out Aw.Sindri.Core.Ids.PagePinId result) -> bool
+static Aw.Sindri.Core.Profile.PageActionSettings.operator !=(Aw.Sindri.Core.Profile.PageActionSettings? left, Aw.Sindri.Core.Profile.PageActionSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PageActionSettings.operator ==(Aw.Sindri.Core.Profile.PageActionSettings? left, Aw.Sindri.Core.Profile.PageActionSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PageSettings.operator !=(Aw.Sindri.Core.Profile.PageSettings? left, Aw.Sindri.Core.Profile.PageSettings? right) -> bool
+static Aw.Sindri.Core.Profile.PageSettings.operator ==(Aw.Sindri.Core.Profile.PageSettings? left, Aw.Sindri.Core.Profile.PageSettings? right) -> bool
+static Aw.Sindri.Core.Profile.RepoPages.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>!
