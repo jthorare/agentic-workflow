@@ -10292,3 +10292,5 @@ override Aw.Context.Core.Surfaces.SurfaceDecision.ToString() -> string!
 static Aw.Context.Core.Surfaces.SurfaceDecision.From(Aw.Context.Core.Surfaces.SurfaceVerdict! verdict, Aw.Context.Core.Surfaces.SurfaceGroup! group, string? model, System.DateTimeOffset at) -> Aw.Context.Core.Surfaces.SurfaceDecision!
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
+Aw.Context.Core.Extract.LabelPass.Spent.get -> int
+Aw.Context.Core.Extract.LabelPass.Spent.init -> void

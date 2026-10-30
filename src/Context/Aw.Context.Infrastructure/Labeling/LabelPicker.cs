@@ -25,7 +25,7 @@ internal sealed class LabelPicker(IChoicePort port, IEgressScrubber egress)
             await _asker.Ask(questions, tokens.MaxTokens, cancellationToken).ConfigureAwait(false);
         }
 
-        return Resolve(cases);
+        return Resolve(cases) with { Spent = _asker.Spent };   // the asker started at the generate step's spend, so this is the whole pass
     }
 
     private Case Candidates(FileCluster cluster, List<string> model)
