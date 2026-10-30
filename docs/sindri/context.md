@@ -1061,6 +1061,16 @@ The old `context.conceptScan.models` supplies `names` for the matching harness (
 
 Two errors belong to routing: `SND-CONTEXT-240` (every harness for the call is at its usage limit or failing) and `SND-CONTEXT-241` (no harness for the call is installed). The router that raises them, the fallback and the pause are not part of this change; the settings, the resolver and the error codes are.
 
+### The Jev label pick (`labeling.pick: jev`)
+
+With `pick: off` (the default) a map build asks the labeling route for one name per cluster, in packs of up to 50 clusters (30 when Cursor is on the route; each pack also fits the smallest prompt budget among the route's harnesses: 60,000 characters for Claude Code and Codex, 30,000 for Cursor). A 600-cluster map is 12 calls. With `pick: jev` and `candidates: N` the model writes N candidate names per cluster, best first; the build adds the file-derived name as a last candidate, drops duplicates (ignoring case), and asks Jev to pick one for every cluster left with two or more. Jev answers a pack of up to 100 questions in one call, at most 80% of `providers.inputCapChars` of the judge's config (160,000 by default) in characters, 45 seconds a call. The chosen name must be exactly one of the candidates and goes through the usual label cleaner.
+
+- **Undecided.** A cluster Jev left out, answered with something that was not a candidate, or answered under 0.5 confidence takes the model's first candidate, else its file-derived name. The map is never worse than without the pick.
+- **A pack Jev refuses** (HTTP 400, 413 or 422, an answer that could not be read, a timeout) is split in halves, twice at most (7 calls for a pack of 100), then the clusters take their first candidate. **Jev that cannot be asked** (no key, offline, 401, 403, 429, 5xx, or left out of the judge's providers) stops the pick for the rest of the build; the build says `labels: jev unavailable (<reason>)`. With the pick off in the approved profile, or no key, nothing is asked and nothing is said, as if the pick were off.
+- **What Jev receives.** The same scrubbed file paths (up to 12 per cluster, cut at 200 characters) the agent CLI already gets, and the candidate names, after the judge's own redaction and cap. The pick turns on only from the *approved* profile, checked at every call: an edited live file that says `jev` makes no Jev call until it is approved.
+- **Tokens.** Jev's tokens (characters / 4 when it reports none) count toward `context.labeling.maxTokens`; a pick that would pass it is skipped and the clusters take their first candidate (`labels: jev unavailable (token-cap)`).
+- **Visible as.** One `context.model.called` event per Jev call (harness `jev`, the questions in the pack, how many Jev settled and how many took the first candidate; a `not-asked` try with reason `off` or `no-key` when it was never in force), `sindri doctor`'s `context:labelpick` row, and Settings' "Label choice" line.
+
 ## The concept glossary: the words behind the concepts
 
 A map build can name its concepts from the words the code uses, not only from the feature titles. It works from the code index's stored symbol embeddings, so it needs the embeddings layer on for the repo (`sindri code-index status` shows it); the build never embeds anything itself.
