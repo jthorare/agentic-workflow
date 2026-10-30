@@ -13,7 +13,36 @@ public sealed record SurfaceDecision(string GroupKey, SurfaceChoice Choice, stri
     /// <summary>Turns the stored decision back into a verdict for the group as it is now.</summary>
     /// <param name="group">The group as built this time.</param>
     /// <returns>A merge naming the survivor's index in the group, a reject, or separate (also when a merge's survivor is no longer in the group). Always decided.</returns>
-    public SurfaceVerdict ToVerdict(SurfaceGroup group) => throw new NotSupportedException();
+    public SurfaceVerdict ToVerdict(SurfaceGroup group)
+    {
+        ArgumentNullException.ThrowIfNull(group);
+        switch (Choice)
+        {
+            case SurfaceChoice.Reject:
+                return SurfaceVerdict.Rejected(GroupKey);
+            case SurfaceChoice.Merge:
+                var index = SurvivorKey is null ? -1 : IndexOf(group, SurvivorKey);
+                return SurvivorKey is { } survivorKey && index >= 0
+                    ? SurfaceVerdict.Merged(GroupKey, index, survivorKey, MergedName ?? group.Candidates[index].Name)
+                    : SurfaceVerdict.Separate(GroupKey, decided: true);
+            case SurfaceChoice.Separate:
+            default:
+                return SurfaceVerdict.Separate(GroupKey, decided: true);
+        }
+    }
+
+    private static int IndexOf(SurfaceGroup group, string nodeKey)
+    {
+        for (var i = 0; i < group.Candidates.Count; i++)
+        {
+            if (string.Equals(group.Candidates[i].NodeKey, nodeKey, StringComparison.Ordinal))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 
     /// <summary>Makes the decision to store from a decided verdict.</summary>
     /// <param name="verdict">The verdict.</param>
@@ -21,5 +50,10 @@ public sealed record SurfaceDecision(string GroupKey, SurfaceChoice Choice, stri
     /// <param name="model">The deciding model's identity, or null.</param>
     /// <param name="at">When it was decided.</param>
     /// <returns>The decision.</returns>
-    public static SurfaceDecision From(SurfaceVerdict verdict, SurfaceGroup group, string? model, DateTimeOffset at) => throw new NotSupportedException();
+    public static SurfaceDecision From(SurfaceVerdict verdict, SurfaceGroup group, string? model, DateTimeOffset at)
+    {
+        ArgumentNullException.ThrowIfNull(verdict);
+        ArgumentNullException.ThrowIfNull(group);
+        return new SurfaceDecision(verdict.GroupKey, verdict.Choice, verdict.SurvivorKey, verdict.MergedName, [.. group.Candidates.Select(static c => c.NodeKey)], model, at);
+    }
 }
