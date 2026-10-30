@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
+using Aw.Context.Core.Sources;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Concepts;
@@ -39,6 +40,27 @@ public sealed class PinScope
     /// <param name="key">The node.</param>
     /// <returns>True when this pin holds it.</returns>
     public bool HoldsNode(NodeKey key) => _set.PinOf(key) is { } held && string.Equals(held.Value, Pin.Value, StringComparison.Ordinal);
+
+    /// <summary>Whether a record is in this pin: the record node <c xml:lang="en">record:&lt;key&gt;</c> is held through a link to the pin or a member feature. One that is not is counted in <paramref name="skipped"/> under the pin it sits in.</summary>
+    /// <param name="record">The record.</param>
+    /// <param name="skipped">Where a left-out record is counted, or null.</param>
+    /// <returns>True when this pin holds it.</returns>
+    public bool HoldsRecord(RecordKey record, PinTally? skipped) => throw new NotSupportedException();
+
+    /// <summary>Whether a repo doc is in this pin: its record is linked in, or failing a link its path is inside the pin's code paths. One that is not is counted in <paramref name="skipped"/>.</summary>
+    /// <param name="repo">The repo.</param>
+    /// <param name="repoRelativePath">The path in the repo.</param>
+    /// <param name="skipped">Where a left-out doc is counted, or null.</param>
+    /// <returns>True when this pin holds it.</returns>
+    public bool HoldsDoc(ContextRepoName repo, string repoRelativePath, PinTally? skipped) => throw new NotSupportedException();
+
+    /// <summary>The records of the map this pin holds (the ones the dense leg's scan is cut to).</summary>
+    /// <returns>Their keys.</returns>
+    public IReadOnlySet<RecordKey> Records() => throw new NotSupportedException();
+
+    /// <summary>Whether the map holds a file in this pin at all.</summary>
+    /// <returns>False for a pin whose globs and features match nothing.</returns>
+    public bool HoldsAnyFile() => throw new NotSupportedException();
 
     /// <summary>The pin an anchor sits in.</summary>
     /// <param name="anchor">The anchor.</param>

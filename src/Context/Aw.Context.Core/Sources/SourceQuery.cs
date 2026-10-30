@@ -12,4 +12,10 @@ public sealed record SourceQuery(IReadOnlyList<string> Terms, DateTimeOffset? As
 
     /// <summary>Keep only records updated at or after this time, applied by the source before its cap; a source that can't filter by update time ignores it.</summary>
     public DateTimeOffset? UpdatedSince { get; init; }
+
+    /// <summary>Keep only what is inside this pin, applied before the source's cap so its limit fills with in-pin hits; null for the unscoped search. A source that doesn't say <see cref="SourceDescriptor.HonorsPin"/> is not asked with one.</summary>
+    public Concepts.PinScope? Pin { get; init; }
+
+    /// <summary>Where a pin-scoped source counts the results it read and left out, by the pin they sit in (concept pins spec §3.2); null when nobody asked.</summary>
+    public Concepts.PinTally? Skipped { get; init; }
 }

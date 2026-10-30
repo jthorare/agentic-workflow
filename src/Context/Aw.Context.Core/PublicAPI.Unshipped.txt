@@ -10434,3 +10434,17 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Concepts.PinTally
+Aw.Context.Core.Concepts.PinTally.Count(Aw.Context.Core.Engine.ConceptId? pin) -> void
+Aw.Context.Core.Concepts.PinTally.EmptyNote(Aw.Context.Core.Engine.ConceptId scope, bool matchesNothing) -> string!
+Aw.Context.Core.Concepts.PinTally.PinTally() -> void
+Aw.Context.Core.Concepts.PinScope.HoldsAnyFile() -> bool
+Aw.Context.Core.Concepts.PinScope.HoldsDoc(Aw.Context.Core.Engine.ContextRepoName repo, string! repoRelativePath, Aw.Context.Core.Concepts.PinTally? skipped) -> bool
+Aw.Context.Core.Concepts.PinScope.HoldsRecord(Aw.Context.Core.Sources.RecordKey record, Aw.Context.Core.Concepts.PinTally? skipped) -> bool
+Aw.Context.Core.Concepts.PinScope.Records() -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
+Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.get -> bool
+Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.init -> void
+Aw.Context.Core.Sources.SourceQuery.Pin.get -> Aw.Context.Core.Concepts.PinScope?
+Aw.Context.Core.Sources.SourceQuery.Pin.init -> void
+Aw.Context.Core.Sources.SourceQuery.Skipped.get -> Aw.Context.Core.Concepts.PinTally?
+Aw.Context.Core.Sources.SourceQuery.Skipped.init -> void
