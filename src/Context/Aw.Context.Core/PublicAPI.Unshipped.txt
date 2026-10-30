@@ -10150,3 +10150,4 @@ static readonly Aw.Context.Core.ContextErrors.NoPins -> Aw.Kernel.ErrorDefinitio
 static readonly Aw.Context.Core.ContextErrors.PinNeedsMap -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PinNewerThanMap -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PinUnknown -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Concepts.PinSet.Scope(string! pin, string! mapTag) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.PinScope!>!

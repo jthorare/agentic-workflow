@@ -4,6 +4,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Results;
 using Aw.Context.Testing.Graph;
+using Aw.Kernel;
 
 namespace Aw.Context.Tests.Concepts;
 
@@ -16,7 +17,7 @@ public sealed class PinScopeTests
     private static ContextRepo Repo(string name, params ConceptPin[] pins) => new(ContextRepoName.From(name), "/" + name) { Concepts = pins };
 
     // api: billing holds services/billing, auth holds services/auth; every file implements its directory's home feature.
-    private static GraphSnapshot Graph() => new GraphBuilder()
+    private static GraphSnapshot Graph(params string[] concepts) => Plus(concepts, new GraphBuilder()
         .Edge("code:services/billing/charge.cs", EdgeType.Implements, "feature:api.services.billing", provenance: Provenance.Deterministic)
         .Edge("code:services/auth/login.cs", EdgeType.Implements, "feature:api.services.auth", provenance: Provenance.Deterministic)
         .Edge("code:services/auth/login.cs", EdgeType.Implements, "feature:tag.login", provenance: Provenance.Deterministic)
@@ -24,8 +25,18 @@ public sealed class PinScopeTests
         .Edge("feature:api.services.auth", EdgeType.BelongsTo, "concept:auth")
         .Edge("feature:tag.login", EdgeType.BelongsTo, "concept:billing")
         .Edge("record:linear/ENG-1", EdgeType.Mentions, "concept:billing")
-        .Edge("record:linear/ENG-2", EdgeType.Mentions, "feature:api.services.auth")
-        .Build();
+        .Edge("record:linear/ENG-2", EdgeType.Mentions, "feature:api.services.auth"));
+
+    // The map has a concept node for every pin it was built with.
+    private static GraphSnapshot Plus(string[] concepts, GraphBuilder builder)
+    {
+        foreach (var concept in concepts)
+        {
+            _ = builder.Node("concept:" + concept);
+        }
+
+        return builder.Build();
+    }
 
     private static readonly ConceptPin _billing = Pin("billing", "Billing", paths: ["services/billing/**"]);
     private static readonly string[] _eight = ["p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8"];
@@ -71,7 +82,7 @@ public sealed class PinScopeTests
         var api = Repo("api", wide, _billing);
 
         var billing = PinScope.Of([api], [api], "billing", Graph(), "v41").Value;
-        var holdsWide = PinScope.Of([api], [api], "wide", Graph(), "v41").Value;
+        var holdsWide = PinScope.Of([api], [api], "wide", Graph("wide"), "v41").Value;
 
         Assert.False(billing.HoldsPath(api.Name, "services/billing/charge.cs"));
         Assert.True(holdsWide.HoldsPath(api.Name, "services/billing/charge.cs"));
@@ -109,12 +120,13 @@ public sealed class PinScopeTests
     public void Ids_are_made_over_the_mapped_repos_so_a_smaller_view_never_renames_a_pin()
     {
         var web = Repo("web", Pin("billing", "Billing", paths: ["web/**"]));
-        var api = Repo("api", Pin("billing", "Billing", paths: ["services/**"]));
+        var api = Repo("api", Pin("billing", "Billing", paths: ["services/**"]));   // a different pin: over both repos it is billing-2
 
-        var scope = PinScope.Of([web, api], [api], "billing", Graph(), "v41");
+        var theirs = PinScope.Of([web, api], [api], "billing-2", Graph("billing-2"), "v41");
+        var unseen = PinScope.Of([web, api], [api], "billing", Graph("billing"), "v41");
 
-        Assert.Equal("billing", scope.Value.Pin.Value);
-        Assert.True(PinScope.Of([web, api], [api], "billing-2", Graph(), "v41").IsError);
+        Assert.Equal("billing-2", theirs.Value.Pin.Value);
+        Assert.Equal(ContextErrors.PinUnknown.Code, unseen.Error.Code);   // 'billing' is web's pin, which this caller can't see
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -128,7 +140,7 @@ public sealed class PinScopeTests
 
         Assert.Equal(ContextErrors.PinUnknown.Code, typo.Error.Code);
         Assert.Equal("no pin is named 'bilin' (fix: try billing, auth)", typo.Error.Message);
-        Assert.Equal("no pin is named 'secret' (fix: try billing, auth)", unseen.Error.Message);
+        Assert.Equal("no pin is named 'secret' (fix: try auth, billing)", unseen.Error.Message);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -167,7 +179,7 @@ public sealed class PinScopeTests
     [Fact, Trait("Lane", "unit")]
     public void The_four_query_side_errors_exit_as_attention()
     {
-        Aw.Kernel.ErrorDefinition[] errors = [ContextErrors.PinUnknown, ContextErrors.NoPins, ContextErrors.PinNewerThanMap, ContextErrors.PinNeedsMap];
+        ErrorDefinition[] errors = [ContextErrors.PinUnknown, ContextErrors.NoPins, ContextErrors.PinNewerThanMap, ContextErrors.PinNeedsMap];
 
         Assert.All(errors, e => Assert.Contains(e.Code, ContextErrors.Attention));
     }
