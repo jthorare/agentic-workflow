@@ -34,6 +34,11 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
             return KernelErrors.Invalid.With("A session needs a command to run");
         }
 
+        if (session.Env.Keys.FirstOrDefault(key => !ShellName.IsMatch(key)) is { } badName)
+        {
+            return KernelErrors.Invalid.With($"A session environment name is not a shell name: {badName}");
+        }
+
         var name = new HostRef(HostKind.Tmux, session.Name);
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(timeout);   // one deadline over the whole start: the version check and new-session share it
@@ -216,6 +221,9 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
     [GeneratedRegex(@"(?<major>\d+)\.(?<minor>\d+)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex VersionPattern { get; }
+
+    [GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*$", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex ShellName { get; }
 
     private static string Target(HostRef host) => "=" + host.Name;   // '=' : this exact name, never a prefix
 

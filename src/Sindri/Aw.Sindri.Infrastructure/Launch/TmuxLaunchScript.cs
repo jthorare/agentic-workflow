@@ -20,13 +20,20 @@ internal static class TmuxLaunchScript
     {
         _ = Directory.CreateDirectory(root);
         var dir = Path.Combine(root, "snd-" + Guid.NewGuid().ToString("N")[..12]);
-        _ = Directory.CreateDirectory(dir);
+        if (OperatingSystem.IsWindows())
+        {
+            _ = Directory.CreateDirectory(dir);
+        }
+        else
+        {
+            _ = Directory.CreateDirectory(dir, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);   // 0700 from the start, never 0755 for a moment
+        }
+
         try
         {
             var options = new FileStreamOptions { Mode = FileMode.CreateNew, Access = FileAccess.Write };
             if (!OperatingSystem.IsWindows())
             {
-                File.SetUnixFileMode(dir, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
                 options.UnixCreateMode = UnixFileMode.UserRead | UnixFileMode.UserWrite;
             }
 

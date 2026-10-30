@@ -40,6 +40,18 @@ public sealed class TmuxSessionHostLaunchScriptTests : IDisposable
         Expect.Equal(0, await LaunchDirsWhenGone());   // the first script ran and removed its own directory; the second was removed by the host
     }
 
+    [Fact]
+    public async Task An_env_name_that_is_not_a_shell_name_is_refused_and_nothing_is_written()
+    {
+        var host = new TmuxSessionHost(_tmux.Options);
+
+        var started = await host.Start(Session("snd-bad", new Dictionary<string, string>(StringComparer.Ordinal) { ["BAD-NAME"] = "x" }), _deadline, CancellationToken.None);
+
+        Expect.True(started.IsError && started.Error.Code == KernelErrors.Invalid.Code);
+        Expect.Equal(0, await LaunchDirsWhenGone());
+        Expect.True(!_tmux.HasSession("snd-bad"));
+    }
+
     private HostSession Session(string name, Dictionary<string, string> env) => new(name, _tmux.Scratch, ["sleep", "60"], env);
 
     private async Task<int> LaunchDirsWhenGone()
