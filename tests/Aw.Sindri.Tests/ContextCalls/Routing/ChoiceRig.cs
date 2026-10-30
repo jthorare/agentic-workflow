@@ -47,5 +47,7 @@ internal sealed class ChoiceRig
         public LabelPick Pick { get; set; } = pick;
 
         public ValueTask<ModelsSettings> Current(CancellationToken cancellationToken) => ValueTask.FromResult(new ModelsSettings { LabelPick = Pick });
+
+        public ValueTask<bool> IsApproved(CancellationToken cancellationToken) => ValueTask.FromResult(true);
     }
 }
