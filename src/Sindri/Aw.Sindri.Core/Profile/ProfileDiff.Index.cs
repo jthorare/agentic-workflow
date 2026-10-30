@@ -13,7 +13,7 @@ public static partial class ProfileDiff
     private static IEnumerable<(string Key, string Value)> IndexKeys(string prefix, IndexSettings? index) =>
         index is null
             ? []
-            : IndexLimits(prefix, index).Concat(IndexLayers(prefix, index)).Concat(IndexLists(prefix, index)).Concat(IndexRoles(prefix, index)).Concat(IndexConcepts(prefix, index));
+            : IndexLimits(prefix, index).Concat(IndexLayers(prefix, index)).Concat(IndexLists(prefix, index)).Concat(IndexRoles(prefix, index)).Concat(IndexConcepts(prefix, index)).Concat(IndexPages(prefix, index));
 
     private static IEnumerable<(string Key, string Value)> IndexLimits(string prefix, IndexSettings index) =>
         Present(
@@ -42,6 +42,12 @@ public static partial class ProfileDiff
         (index.Concepts ?? []).Select((concept, position) =>
             ($"{prefix}.concepts.{concept.Id?.Value ?? position.ToString(CultureInfo.InvariantCulture)}",
                 string.Join(" | ", concept.Name, concept.Summary, Joined(concept.Features), Joined(concept.Paths), Joined(concept.DependsOn), Joined(concept.Owns), Joined(concept.Aliases))));
+
+    /// <summary>A page shows by its id, and its row holds every field (name, repo, surface, each action's id, name, key and concepts), so any edit is a row.</summary>
+    private static IEnumerable<(string Key, string Value)> IndexPages(string prefix, IndexSettings index) =>
+        (index.Pages ?? []).Select((page, position) =>
+            ($"{prefix}.pages.{page.Id?.Value ?? position.ToString(CultureInfo.InvariantCulture)}",
+                string.Join(" | ", page.Name, page.Repo, page.Surface, string.Join("; ", (page.Actions ?? []).Select(static a => string.Join(" | ", a.Id?.Value, a.Name, a.Action, Joined(a.Concepts)))))));
 
     /// <summary>The keys that have a value; an absent key has no path, so adding one shows as a change.</summary>
     private static IEnumerable<(string Key, string Value)> Present(params (string Key, string? Value)[] keys) =>
