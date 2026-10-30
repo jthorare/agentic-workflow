@@ -2,6 +2,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Host.Commands.SessionWrap;
+using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Testing;
 using Microsoft.Extensions.Time.Testing;
 
@@ -43,10 +44,10 @@ public sealed class SessionWrapLimitsTests : IDisposable
         return path;
     }
 
-    private SessionWrapCommand Command()
+    private SessionWrapCommand Command(WatchdogPorts? ports = null)
     {
         var env = new Dictionary<string, string?>(StringComparer.Ordinal) { ["PATH"] = "/usr/bin:/bin", ["AW_SINDRI_LAUNCH_SECRET"] = "wrap-proof" };
-        return new SessionWrapCommand(_calls, _children, name => env.GetValueOrDefault(name), _clock, _errors, new FakeIds(), new WrapExtras(Watchdog: new WatchdogPorts(_scope, _stats)));
+        return new SessionWrapCommand(_calls, _children, name => env.GetValueOrDefault(name), _clock, _errors, new FakeIds(), new WrapExtras(Watchdog: ports ?? new WatchdogPorts(_scope, _stats)));
     }
 
     [Fact]
@@ -99,6 +100,38 @@ public sealed class SessionWrapLimitsTests : IDisposable
     }
 
     [Fact]
+    public async Task In_process_group_mode_the_group_file_is_removed_once_the_child_has_exited()
+    {
+        var pgroups = Path.Combine(_dir, "pgroups");
+        ProcessGroupFiles.WritePgid(pgroups, "sindri-LCH-1.scope", 2_000_000_000);   // why: far above any pid_max, and not this process's group
+        _stats.Sample = new CgroupSample(OomKills: 0, MemoryCurrent: 1, MemoryPeak: 1, Pids: 1, CpuMicroseconds: 0);
+        var ports = new WatchdogPorts(_scope, _stats, new NoKills(), unit => ProcessGroupFiles.Remove(pgroups, unit));
+        var run = Command(ports).Run(Args(LimitsFile("sindri-LCH-1.scope")), Token);
+        await Until(() => _children.Child is not null && _stats.Reads > 0);
+        Expect.Equal(2_000_000_000, ProcessGroupFiles.ReadPgid(pgroups, "sindri-LCH-1.scope"));
+
+        _children.Child!.Exit(0);
+        _ = await run.WaitAsync(_deadline, TimeProvider.System, Token);
+
+        Expect.True(ProcessGroupFiles.ReadPgid(pgroups, "sindri-LCH-1.scope") is null);
+    }
+
+    [Fact]
+    public async Task Without_process_group_mode_the_group_file_is_left_alone()
+    {
+        var pgroups = Path.Combine(_dir, "pgroups");
+        ProcessGroupFiles.WritePgid(pgroups, "sindri-LCH-1.scope", 2_000_000_000);
+        _stats.Sample = new CgroupSample(OomKills: 0, MemoryCurrent: 1, MemoryPeak: 1, Pids: 1, CpuMicroseconds: 0);
+        var run = Command().Run(Args(LimitsFile("sindri-LCH-1.scope")), Token);
+        await Until(() => _children.Child is not null && _stats.Reads > 0);
+
+        _children.Child!.Exit(0);
+        _ = await run.WaitAsync(_deadline, TimeProvider.System, Token);
+
+        Expect.Equal(2_000_000_000, ProcessGroupFiles.ReadPgid(pgroups, "sindri-LCH-1.scope"));
+    }
+
+    [Fact]
     public async Task Limits_without_a_watchdog_refuse_the_start()
     {
         var env = new Dictionary<string, string?>(StringComparer.Ordinal) { ["PATH"] = "/usr/bin:/bin", ["AW_SINDRI_LAUNCH_SECRET"] = "wrap-proof" };
@@ -118,5 +151,10 @@ public sealed class SessionWrapLimitsTests : IDisposable
             Assert.True(TimeProvider.System.GetElapsedTime(limit) < _deadline, "timed out waiting for the wrap");
             await Task.Delay(2, Token);
         }
+    }
+
+    private sealed class NoKills : IMemoryKills
+    {
+        public Task<bool> Record(string unit, CancellationToken cancellationToken) => Task.FromResult(true);
     }
 }

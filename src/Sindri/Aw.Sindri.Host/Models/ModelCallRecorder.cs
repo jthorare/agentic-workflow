@@ -72,6 +72,7 @@ internal sealed class ModelCallRecorder(IModelCallLog log, IIdGenerator ids, Tim
         ModelPurpose.Concepts => "concepts",
         ModelPurpose.ConceptSynthesis => "concept-synthesis",
         ModelPurpose.ConceptScan => "concept-scan",
+        ModelPurpose.ProductSurfaces => "product-surfaces",
         _ => throw new ArgumentOutOfRangeException(nameof(purpose)),
     };
 }

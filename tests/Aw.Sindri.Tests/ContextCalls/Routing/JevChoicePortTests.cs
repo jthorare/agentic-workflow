@@ -118,14 +118,76 @@ public sealed class JevChoicePortTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task The_product_surface_pick_has_no_setting_yet_so_it_is_off()
+    public async Task The_product_surface_pick_is_off_when_its_own_setting_is_off_even_if_the_label_pick_is_on()
     {
-        var rig = new ChoiceRig(ScriptedBatches.Picking());
+        var rig = new ChoiceRig(ScriptedBatches.Picking(), LabelPick.Jev, surfacePick: LabelPick.Off);
 
-        var reply = await rig.Port.Pick(ChoiceKind.ProductSurfaces, [ChoiceRig.Question("g1")], 160_000, Token);
+        var reply = await rig.PickSurfaces(ChoiceRig.Question("g1"));
 
         Assert.Equal(ChoiceReasons.Off, reply.Error.Message);
         Assert.Empty(rig.Batches.Asked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_product_surface_pick_asks_the_classifier_when_the_approved_profile_says_jev_and_the_label_pick_is_off()
+    {
+        var rig = new ChoiceRig(ScriptedBatches.Picking(), LabelPick.Off, surfacePick: LabelPick.Jev);
+
+        var answers = (await rig.PickSurfaces(ChoiceRig.Question("g1", "1. separate", "2. reject"))).Value;
+
+        _ = Assert.Single(rig.Batches.Asked);
+        Assert.Equal(("g1", "2. reject"), (answers[0].Key, answers[0].Picked));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_product_surface_setting_is_read_from_the_approved_profile_at_every_call_so_an_unapproved_edit_asks_nothing()
+    {
+        var rig = new ChoiceRig(ScriptedBatches.Picking(), surfacePick: LabelPick.Jev);
+
+        Assert.True((await rig.PickSurfaces(ChoiceRig.Question("g1"))).IsSuccess);
+        rig.Models.SurfacePick = LabelPick.Off;
+        Assert.True((await rig.PickSurfaces(ChoiceRig.Question("g2"))).IsError);
+
+        _ = Assert.Single(rig.Batches.Asked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_product_surface_call_writes_the_purpose_the_kind_and_the_four_counts_by_option_position()
+    {
+        var batches = new ScriptedBatches(request => new BatchDecided(new Dictionary<string, BatchAnswer>(StringComparer.Ordinal)
+        {
+            ["g1"] = new ChoiceBatchAnswer("2. merge as: A", 0.9, new Dictionary<string, double>(StringComparer.Ordinal)),    // merged
+            ["g2"] = new ChoiceBatchAnswer("1. separate", 0.9, new Dictionary<string, double>(StringComparer.Ordinal)),       // kept, chosen
+            ["g3"] = new ChoiceBatchAnswer("3. reject", 0.9, new Dictionary<string, double>(StringComparer.Ordinal)),         // rejected
+            ["g4"] = new ChoiceBatchAnswer("3. reject", 0.49, new Dictionary<string, double>(StringComparer.Ordinal)),        // kept, undecided
+        }, new BatchUsage(900, 30)));
+        var rig = new ChoiceRig(batches, surfacePick: LabelPick.Jev);
+        using var job = rig.EnterJob();
+
+        _ = await rig.PickSurfaces(
+            ChoiceRig.Question("g1", "1. separate", "2. merge as: A", "3. reject"),
+            ChoiceRig.Question("g2", "1. separate", "2. reject"),
+            ChoiceRig.Question("g3", "1. separate", "2. merge as: A", "3. reject"),
+            ChoiceRig.Question("g4", "1. separate", "2. merge as: A", "3. reject"),
+            ChoiceRig.Question("g5", "1. separate", "2. reject"));   // left out of the answer: kept, undecided
+
+        var called = Assert.Single(rig.Calls.Calls);
+        Assert.Equal(("product-surfaces", "productSurfaces", 5), (called.Purpose, called.Kind, called.Items));
+        Assert.Equal(new ModelCallHow(Merged: 1, Kept: 3, Rejected: 1, Undecided: 2), called.How);
+        Assert.Null(called.How!.Jev);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_product_surface_pick_that_is_off_is_a_not_asked_try_with_its_reason()
+    {
+        var rig = new ChoiceRig(ScriptedBatches.Picking());
+        using var job = rig.EnterJob();
+
+        _ = await rig.PickSurfaces(ChoiceRig.Question("g1"));
+
+        var called = Assert.Single(rig.Calls.Calls);
+        var attempt = Assert.Single(called.Tries);
+        Assert.Equal(("product-surfaces", "jev", ModelCallOutcome.NotAsked, "off"), (called.Purpose, attempt.Harness, attempt.Outcome, attempt.Reason));
     }
 
     // --- what comes back

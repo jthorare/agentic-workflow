@@ -18795,6 +18795,7 @@ Aw.Sindri.Core.Sandbox.Plan.PlanMount.Source.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.Deny = 2 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.Dev = 5 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
+Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.Link = 7 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.PerLaunchDir = 4 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.Proc = 6 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.ReadOnly = 0 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
@@ -21506,6 +21507,9 @@ override Aw.Sindri.Core.Jobs.JobModelCall.ToString() -> string!
 static Aw.Sindri.Core.Jobs.JobModelCall.operator !=(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
+Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.MacOsCanonical(string! path) -> string!
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.Render(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Func<string!, string!>? canonical = null) -> string!
 Aw.Sindri.Core.Setup.ProfileKeyEdit
 Aw.Sindri.Core.Setup.ProfileKeyEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ProfileKeyEdit!
 Aw.Sindri.Core.Setup.ProfileKeyEdit.ProfileKeyEdit(string! Path, string! Text, bool Changed) -> void
