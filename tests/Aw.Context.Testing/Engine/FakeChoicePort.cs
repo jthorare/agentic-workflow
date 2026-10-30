@@ -19,6 +19,9 @@ public sealed class FakeChoicePort : IChoicePort
     /// <summary>The model <see cref="Identity"/> reports.</summary>
     public ChoiceModel Model { get; set; } = new("jev-test-1");
 
+    /// <summary>The reason <see cref="Unavailable"/> reports (<see cref="ChoiceReasons.Off"/> or <see cref="ChoiceReasons.NoKey"/>); null, the default, means a pick can go out.</summary>
+    public string? UnavailableReason { get; set; }
+
     /// <summary>The packs asked so far, failed ones included, with the kind and the cap each was sized for.</summary>
     public IList<(ChoiceKind Kind, IReadOnlyList<ChoiceQuestion> Questions, int CapChars)> Asked { get; } = [];
 
@@ -27,6 +30,13 @@ public sealed class FakeChoicePort : IChoicePort
 
     /// <inheritdoc />
     public ValueTask<int> InputCapChars(CancellationToken cancellationToken) => ValueTask.FromResult(Cap);
+
+    /// <inheritdoc />
+    public ValueTask<string?> Unavailable(ChoiceKind kind, CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(UnavailableReason);
+    }
 
     /// <inheritdoc />
     public ValueTask<Result<IReadOnlyList<ChoiceAnswer>>> Pick(ChoiceKind kind, IReadOnlyList<ChoiceQuestion> questions, int capChars, CancellationToken cancellationToken)

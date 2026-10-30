@@ -22,6 +22,12 @@ internal sealed class SurfacePicker(IChoicePort? port, IScrubberFactory scrubber
             return Result(groups, new Dictionary<string, (ChoiceQuestion, ChoiceAnswer?)>(StringComparer.Ordinal), ChoiceReasons.Off);
         }
 
+        // Nothing to build or ask when no call can go out: every group stays separate and the reason is told.
+        if (await port.Unavailable(ChoiceKind.ProductSurfaces, cancellationToken).ConfigureAwait(false) is { } unavailable)
+        {
+            return Result(groups, new Dictionary<string, (ChoiceQuestion, ChoiceAnswer?)>(StringComparer.Ordinal), unavailable);
+        }
+
         var built = scrubbers.For(options.ExtraPatterns);
         if (built.IsError)
         {
