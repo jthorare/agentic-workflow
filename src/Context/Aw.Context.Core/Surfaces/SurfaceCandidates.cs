@@ -8,11 +8,11 @@ namespace Aw.Context.Core.Surfaces;
 /// <summary>Finds the action candidates of a build and groups the lookalikes (spec §6.9, apply step).</summary>
 public static class SurfaceCandidates
 {
-    private const string ActionPass = "action";
+    private const string ActionPass = "actions";
 
     /// <summary>
     /// Groups the build's deterministic actions that look alike. Lookalikes share an evidence key or have equal names (trimmed, case-folded), joined transitively; each set is cut into groups of at most
-    /// <see cref="SurfaceGroup.MaxCandidates"/>, and a loner is a group of one. An action a person already decided (an override on its key whose 'who' does not start with 'service:') is left out.
+    /// <see cref="SurfaceGroup.MaxCandidates"/>, and a loner is a group of one. An action a person already decided (an active, not undone, override on its key whose 'who' does not start with 'service:') is left out.
     /// </summary>
     /// <param name="found">The map this build found.</param>
     /// <param name="overrides">Every override of the map.</param>
@@ -21,7 +21,7 @@ public static class SurfaceCandidates
     {
         ArgumentNullException.ThrowIfNull(found);
         ArgumentNullException.ThrowIfNull(overrides);
-        var decided = overrides.Where(static o => !o.Who.StartsWith("service:", StringComparison.Ordinal)).Select(static o => o.Target.Value).ToHashSet(StringComparer.Ordinal);
+        var decided = OverrideLog.Active(overrides).Where(static o => !o.Who.StartsWith("service:", StringComparison.Ordinal)).Select(static o => o.Target.Value).ToHashSet(StringComparer.Ordinal);
         var nodes = found.Nodes
             .Where(n => n.Key.Kind == NodeKind.Action && n.Provenance == Provenance.Deterministic && !decided.Contains(n.Key.Value))
             .DistinctBy(static n => n.Key.Value, StringComparer.Ordinal)

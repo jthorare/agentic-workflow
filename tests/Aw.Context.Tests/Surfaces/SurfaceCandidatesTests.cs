@@ -92,6 +92,17 @@ public sealed class SurfaceCandidatesTests
     }
 
     [Fact]
+    public void A_key_whose_person_decision_was_undone_is_asked_again()
+    {
+        var found = Map(Action("action:a", "Grant", "repo:r/a.ts"));
+        var reject = new MapOverride(OverrideAction.Reject, NodeKey.From("action:a"), "joi", _now);
+        var undo = new MapOverride(OverrideAction.Undo, NodeKey.From("action:a"), "joi", _now.AddHours(1), Undoes: reject.ToId());
+
+        _ = Assert.Single(SurfaceCandidates.Groups(found, [reject, undo]));
+        Assert.Empty(SurfaceCandidates.Groups(found, [reject]));
+    }
+
+    [Fact]
     public void A_candidate_has_the_raw_shape_with_sorted_evidence_and_edge_texts()
     {
         var node = Action("action:post", "Create account", "repo:r/z.ts", "repo:r/a.ts");
@@ -105,7 +116,7 @@ public sealed class SurfaceCandidatesTests
         var candidate = Assert.Single(Assert.Single(SurfaceCandidates.Groups(new ExtractedMap([node], edges), [])).Candidates);
 
         Assert.Equal("action", candidate.Kind);
-        Assert.Equal("action", candidate.Pass);
+        Assert.Equal("actions", candidate.Pass);
         Assert.Equal("Create account", candidate.Name);
         Assert.Equal(["repo:r/a.ts", "repo:r/z.ts"], candidate.Evidence, StringComparer.Ordinal);
         Assert.Equal(["on surface:route/POST:/x", "writes thing:account"], candidate.Edges, StringComparer.Ordinal);
