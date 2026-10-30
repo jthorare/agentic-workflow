@@ -21,5 +21,14 @@ internal sealed class SurfaceChoiceViewModel : ObservableObject
 
     /// <summary>A status arrived: the line follows its profile part.</summary>
     /// <param name="profile">The status's profile part.</param>
-    internal void Show(ProfileView profile) => throw new NotSupportedException();
+    internal void Show(ProfileView profile)
+    {
+        ArgumentNullException.ThrowIfNull(profile);
+        Line = profile.SurfacePick switch
+        {
+            "on" => Labels.SurfaceChoiceOn,
+            "needs-key" => Labels.SurfaceChoiceNeedsKey,
+            _ => Labels.SurfaceChoiceOff,
+        };
+    }
 }

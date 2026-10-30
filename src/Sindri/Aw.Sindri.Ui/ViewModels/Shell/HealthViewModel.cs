@@ -182,6 +182,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
         LiveProfile = status.Profile.Live;
         ModelChoice.Show(status.Profile);
         LabelChoice.Show(status.Profile);
+        SurfaceChoice.Show(status.Profile);
         Services = [.. status.Services.Select(StatusText.Service)];
         if (status.Running)
         {
