@@ -98,6 +98,7 @@ public static partial class SandboxPlanRenderer
         PlanMountKind.PerLaunchDir => "this run",
         PlanMountKind.Dev => "device",
         PlanMountKind.Proc => "process",
+        PlanMountKind.Link => "link",
         _ => kind.ToString(),
     };
 

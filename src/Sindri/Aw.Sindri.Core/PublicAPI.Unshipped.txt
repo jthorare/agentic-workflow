@@ -18775,6 +18775,7 @@ Aw.Sindri.Core.Sandbox.Plan.PlanMount.Source.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.Deny = 2 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.Dev = 5 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
+Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.Link = 7 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.PerLaunchDir = 4 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.Proc = 6 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMountKind.ReadOnly = 0 -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind

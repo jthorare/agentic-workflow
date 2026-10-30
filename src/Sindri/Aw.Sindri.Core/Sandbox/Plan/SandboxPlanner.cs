@@ -25,7 +25,7 @@ public static class SandboxPlanner
         }
 
         var hooks = HookPermissionPolicy.ForSession(request.Host.InstalledHooks);
-        var plan = new SandboxPlan(
+        var linux = new SandboxPlan(
             PlanVersion,
             mechanism,
             string.Empty,
@@ -44,6 +44,7 @@ public static class SandboxPlanner
             PlanEnvironment.Git(c),
             PlanPolicy.Build(c, hooks),
             hooks);
+        var plan = mechanism == SandboxMechanism.Seatbelt ? SeatbeltPlan.Rewrite(linux, c) : linux;
         return plan with { PlanHash = PlanHasher.Hash(plan, PerLaunchPaths(request)) };
     }
 

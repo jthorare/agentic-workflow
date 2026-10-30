@@ -63,6 +63,7 @@ internal static class BubblewrapArgv
             PlanMountKind.Proc => ["--proc", m.Path],
             PlanMountKind.Tmpfs => Tmpfs(m),
             PlanMountKind.Deny => Deny(mounts, index, host),
+            PlanMountKind.Link => throw new InvalidOperationException($"A link ({m.Path}) is a Seatbelt entry: bubblewrap binds, it never links; the plan was built for another mechanism."),
             _ => throw new ArgumentOutOfRangeException(nameof(mounts), m.Kind, "unknown mount kind"),
         };
     }
