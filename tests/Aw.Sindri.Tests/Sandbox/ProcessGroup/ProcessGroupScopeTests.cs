@@ -132,6 +132,12 @@ public sealed class ProcessGroupScopeTests : IDisposable
         var process = Process.Start(new ProcessStartInfo(setsid, ["sleep", "60"]) { UseShellExecute = false }) ?? throw new InvalidOperationException("setsid did not start");
         _started.Add(process);
         ProcessGroupFiles.WritePgid(_dir, unit, process.Id);   // why: setsid run from a non-leader execs in place, so the child's group id is its own pid
+        for (var i = 0; !ProcessGroupFiles.Alive(process.Id); i++)
+        {
+            Assert.True(i < 500, "setsid did not make its process group within 5 s");   // why: Start returns before the child has called setsid(), and a signal to a group that isn't there yet is refused
+            Thread.Sleep(10);
+        }
+
         return process;
     }
 }
