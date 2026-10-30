@@ -1,0 +1,43 @@
+.empty-st{flex:1;display:flex;align-items:center;justify-content:center;padding:24px}
+.empty-st .box{text-align:center;max-width:420px}
+.empty-st .tile{width:40px;height:40px;border-radius:10px;border:1px solid var(--border);background:var(--card);display:inline-flex;align-items:center;justify-content:center;color:var(--muted-fg);margin-bottom:16px}
+.empty-st .tile svg{width:20px;height:20px}
+.empty-st h2{font:600 18px/26px var(--font);letter-spacing:-.02em;margin:0}
+.empty-st p{margin:6px 0 20px;color:var(--muted-fg);font-size:13px;line-height:20px}
+.empty-st .acts{display:flex;gap:8px;justify-content:center}
+</style>
+</head>
+<body>
+@@RAIL@@
+  <div class="main">
+    <header class="top">
+      <h1 id="h">Not part of this review</h1>
+      <span class="sp"></span>
+      <span class="cmdk" title="Command palette"><kbd>⌘K</kbd> Jump to anything</span>
+      <button class="switch" id="annot" role="switch" aria-checked="false"><i></i>Annotations</button>
+    </header>
+    <div class="empty-st"><div class="box">
+      <div class="tile" id="tile"></div>
+      <h2 id="t"></h2>
+      <p id="d"></p>
+      <div class="acts"><a class="btn primary" href="workflows.html">Go to Workflows</a><a class="btn" href="needs-you.html">Go to Home</a></div>
+    </div></div>
+  </div>
+</div>
+<script>
+const P = {
+  Work:{d:'Every item Sindri is working on, from a ticket or an idea to a merged pull request, with its stage and what it is waiting for.',i:'<path d="M9 6h12M9 12h12M9 18h12"/><path d="M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/>'},
+  Agents:{d:'Every coding agent working right now, in which repository, what it is doing, and how much of its allowance it has used.',i:'<rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M2 13v2M22 13v2"/>'},
+  System:{d:'Whether Sindri itself is healthy: its services, background jobs, and anything that needs a fix.',i:'<path d="M3 12h4l3-8 4 16 3-8h4"/>'}
+};
+const page = new URLSearchParams(location.search).get('page') || 'This page';
+const p = P[page] || {d:'It is not drawn in this prototype.',i:'<circle cx="12" cy="12" r="9"/>'};
+document.title = page; document.getElementById('h').textContent = page;
+document.getElementById('t').textContent = page + " isn't part of this review";
+document.getElementById('d').textContent = 'When it is built, it will show: ' + p.d.charAt(0).toLowerCase() + p.d.slice(1);
+document.getElementById('tile').innerHTML = '<svg class="ico" viewBox="0 0 24 24">'+p.i+'</svg>';
+document.getElementById('annot').onclick = e => { const on = e.currentTarget.getAttribute('aria-checked')!=='true'; e.currentTarget.setAttribute('aria-checked',on); document.body.classList.toggle('annot',on); };
+document.querySelectorAll('.rail a').forEach(a=>{ if (a.getAttribute('aria-label')===page) a.setAttribute('aria-current','page'); });
+</script>
+</body>
+</html>

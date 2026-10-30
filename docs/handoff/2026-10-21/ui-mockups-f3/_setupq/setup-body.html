@@ -1,0 +1,198 @@
+  <div class="main">
+    <header class="top">
+      <h1>Settings</h1>
+      <span class="sp"></span>
+      <span class="cmdk" title="Command palette"><kbd>⌘K</kbd> Jump to anything</span>
+      <button class="switch" id="annot" role="switch" aria-checked="false"><i></i>Annotations</button>
+    </header>
+    <div class="scroll">
+      <div class="col">
+        <h2 class="lead" id="lead">Set up Sindri</h2>
+        <p class="sub" id="sub">Six steps. Two of them need you: approve your settings, then approve the workflows. Sindri does the rest.</p>
+        <div class="prog" data-gap="setup progress (GET /setup)"><div class="segs" id="segs"></div><span class="cnt" id="cnt"></span></div>
+        <div class="ran"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg><span>You've run</span><code>./setup.sh --with-sindri</code><span class="sp"></span><span class="note">The only command you type for Sindri.</span></div>
+        <div class="fin" id="fin"><b><svg class="ico" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>Sindri is set up</b><span class="t">Nothing else to do. New workflows and repos show up here when they need you.</span><a class="btn primary" href="workflows.html">Go to Workflows</a></div>
+        <div class="steps" id="steps" data-gap="setup steps (GET /setup)"></div>
+        <p class="two">Prefer the terminal for Onyx? Run <span class="copy" style="display:inline-flex" title="Copy"><svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg><span>sindri-app onyx up</span></span> once. Same result as the form.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const I = {
+  check:'<svg class="ico" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>',
+  x:'<svg class="ico" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  spin:'<svg class="ico spin" viewBox="0 0 24 24"><path d="M21 12a9 9 0 11-6.2-8.6"/></svg>',
+  todo:'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/></svg>',
+  you:'<svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6 7-6s7 2 7 6"/></svg>',
+  chev:'<svg class="ico chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>',
+  folder:'<svg class="ico" viewBox="0 0 24 24"><path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>',
+  hold:'<svg class="ico" viewBox="0 0 24 24"><path d="M12 3v9M8 7l4-4 4 4M5 21h14"/></svg>',
+  copy:'<svg class="ico" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 012-2h9"/></svg>'
+};
+const WORD = { todo:['To do','s-idle',I.todo], run:['Working','s-running',I.spin], done:['Done','s-done',I.check], fail:['Failed','s-fail',I.x], you:['Needs you','s-wait',I.you] };
+const badge = s => `<span class="badge ${WORD[s][1]}">${WORD[s][2]}${WORD[s][0]}</span>`;
+
+const PLAN = [
+ ['Build','Writes failing tests first, then code, only in the files the plan allows.','9 of 9'],
+ ['Prove it works','Runs the app and checks each done-criterion. Changes no code.','8 of 8'],
+ ['Review loop','Reads the change in rounds and reports problems. Changes no code.','12 of 12'],
+ ['Open the pull request','Opens the pull request once proof, review and code match. Never merges.','7 of 7'],
+ ['Watch the pull request','Waits for checks and docs. Never merges; you approve the merge.','5 of 5'],
+ ['Build and prove','Runs build, proof, review and the pull request for one phase.','10 of 10'],
+ ['Idea to brief','Asks you a few questions, then writes a brief with sources.','6 of 6'],
+ ['Scoping','Reads the product and code, drafts what changes, then stops for you.','11 of 11'],
+ ['Design','Writes a spec from the approved scope and has it reviewed.','9 of 9'],
+ ['Plan','Splits the design into pull-request-sized phases, then stops for you.','8 of 8'],
+ ['Idea to merged pull request','Runs scoping, design, plan and every phase in order. Stops for you three times.','14 of 14']
+];
+const planHtml = `<div class="plan" data-gap="workflow display name, capability summary, checks result (GET /workflow/recipes/approve-all)">` +
+  PLAN.map((p,i)=>`<div class="pr"><span class="pi">${i+1}</span><span class="pn">${p[0]}</span><span class="pm">${p[1]}</span><span class="pc">${I.check}passed ${p[2]}</span></div>`).join('') + `</div>`;
+
+const STATE = {
+ fresh:   { lead:'Set up Sindri', open:'repo', s:{repo:'todo',profile:'todo',recipes:'todo',mcp:'todo',map:'todo',onyx:'todo'} },
+ profile: { lead:'Set up Sindri', open:'profile', s:{repo:'done',profile:'you',recipes:'todo',mcp:'todo',map:'todo',onyx:'todo'} },
+ approveall:{ lead:'Set up Sindri', open:'recipes', s:{repo:'done',profile:'done',recipes:'you',mcp:'run',map:'run',onyx:'todo'}, hold:.62 },
+ done:    { lead:'Sindri is set up', open:null, s:{repo:'done',profile:'done',recipes:'done',mcp:'done',map:'done',onyx:'done'} },
+ failed:  { lead:'Set up Sindri', open:'map', s:{repo:'done',profile:'done',recipes:'done',mcp:'done',map:'fail',onyx:'you'} }
+};
+let cur = (location.hash || '#fresh').slice(1); if (!STATE[cur]) cur = 'fresh';
+
+function meta(id, s){
+  const m = {
+   repo:{ title:'Add your repository', why:{todo:'Sindri works inside a repository you choose. Pick its top folder.',done:'Sindri can work in this repository.'},
+     det:{done:'agentic-workflow added, at /home/thor/repos/agentic-workflow'}, act:{todo:['Choose folder','primary']} },
+   profile:{ title:'Approve your settings', why:{todo:'Waits for a repository.',you:'Your settings changed. Sindri works only inside what you approve here.',done:'Sindri works only inside what you approved.'},
+     det:{done:'approved just now'}, act:{you:['Review and approve','primary']} },
+   recipes:{ title:'Approve the workflows', why:{todo:'Waits for your settings.',you:'11 workflows are loaded and waiting. Read what each may do, then approve them all at once.',done:'All 11 workflows can run.'},
+     det:{done:'11 approved just now'}, act:{you:['Review and approve all','primary']} },
+   mcp:{ title:'Connect your coding agents', why:{todo:'Waits for your settings.',run:'Sindri is adding itself to this repository for Claude Code, Codex and Cursor.',done:'Claude Code, Codex and Cursor can reach Sindri in this repository.'},
+     det:{run:'Connecting 2 of 3: Claude Code and Codex done, Cursor next', done:'3 of 3 connected. Codex and Cursor will each ask you to trust the folder once.'}, act:{} },
+   map:{ title:'Build the product map', why:{todo:'Waits for your settings.',run:'Sindri reads your code and builds a map of it. It builds itself and keeps up to date.',done:'The map is up to date with your code.',fail:'The map could not be built.'},
+     det:{done:'3,100 files, up to date as of a few minutes ago'}, act:{fail:['Retry','primary']} },
+   onyx:{ title:'Connect Linear and Slack (Onyx)', why:{todo:'Onyx lets Sindri read your tickets and chats. Sign in once.',you:'Sign in to Onyx once. Your password is used for this step only.',done:'Sindri can read your Linear and Slack context.'},
+     det:{done:'Linear and Slack connected'}, act:{todo:['Connect','primary'],you:['Connect','primary']} }
+  }[id];
+  return m;
+}
+
+function bodyFor(id, s, st){
+  const m = meta(id,s), det = m.det[s];
+  const detLine = det ? `<div class="detail">${s==='done'?I.check:''}<span>${det}</span></div>` : '';
+  if (id==='repo') {
+    if (s==='done') return detLine + `<div class="grey"><span>setup:repo</span><span>repo.added</span></div>`;
+    return `<p>Choose the top folder of a git checkout. Adding it changes your settings, so you approve them next.</p>
+      <div class="field"><input class="in mono" value="/home/thor/repos/agentic-workflow" aria-label="Folder"><button class="btn">${I.folder}Browse</button></div>
+      <p class="note">Linked worktrees resolve to their main checkout. If the folder is already added, or is inside Sindri's own folder, Sindri says so here and changes nothing.</p>`;
+  }
+  if (id==='profile') {
+    if (s==='done') return detLine + `<div class="grey"><span>setup:profile</span><span>profile.approved</span></div>`;
+    const typed = st.typed ?? (cur==='profile' ? 'approve 3f9a' : '');
+    const ok = typed.trim()==='approve 3f9a1c';
+    return `<p>This is what your settings let Sindri do. Nothing runs outside it.</p>
+      <div class="sumlist" data-gap="profile change summary in plain words">
+        <div class="r"><span>Repositories</span><span>agentic-workflow<small>Sindri may read it and work in it, in separate working copies.</small></span></div>
+        <div class="r"><span>Runs on its own</span><span>Map refresh, every minute, when your code changes<small>Setup check, every 30 seconds</small></span></div>
+        <div class="r"><span>Work allowance</span><span>Up to 4M per workflow run<small>A run that goes over pauses and asks you.</small></span></div>
+        <div class="r"><span>Connections</span><span>Sindri adds itself to agentic-workflow for Claude Code, Codex and Cursor<small>Only this repository, only on this computer.</small></span></div>
+        <div class="r"><span>Needs you for</span><span>Approving the scope, the design and plan, and the merge<small>Sindri never approves these itself.</small></span></div>
+      </div>
+      <div class="chal" data-gap="typed challenge (POST /sindri/workflow/challenges, confirm: typed)"><span class="ask">To approve, type <code>approve 3f9a1c</code></span>
+        <input class="in mono ${ok?'ok':''}" id="typed" value="${typed}" placeholder="approve 3f9a1c" aria-label="Type the phrase to approve" autocomplete="off" spellcheck="false" style="max-width:200px">
+        <button class="btn primary" id="apprBtn" ${ok?'':'disabled'}>Approve settings</button></div>
+      <p class="note" style="margin-top:8px">The phrase is tied to exactly this list. If your settings change before you press the button, Sindri asks again.</p>`;
+  }
+  if (id==='recipes') {
+    if (s==='done') return detLine + `<div class="grey"><span>setup:recipes</span><span>recipe.approved ×11</span></div>`;
+    const pct = Math.round((st.hold||0)*100);
+    return `<p>Each workflow is listed with what it may do. The ones at the top run inside the ones below. Every one passed all of its own checks.</p>${planHtml}
+      <div class="holdrow" data-gap="held challenge (confirm: held, minHoldMs 1500)"><button class="hold" id="hold" aria-label="Press and hold to approve all 11 workflows"><span class="fill" id="fill" style="width:${pct}%"></span><span class="lbl">${I.hold}<span id="holdTxt">${pct?'Keep holding':'Hold to approve all 11'}</span></span></button>
+      <span class="note">Hold for 1.5 seconds. Let go to cancel. Sindri refuses a shorter hold.</span></div>`;
+  }
+  if (id==='mcp') {
+    const ps = s==='run' ? [['Claude Code','done','Connected'],['Codex','done','Connected. It will ask you to trust the folder once.'],['Cursor','run','Connecting']] :
+      s==='done' ? [['Claude Code','done','Connected'],['Codex','done','Connected. It will ask you to trust the folder once.'],['Cursor','done','Connected. It will ask you to trust the folder once.']] : [['Claude Code','todo','Not started'],['Codex','todo','Not started'],['Cursor','todo','Not started']];
+    return detLine + `<div class="prov" data-gap="per-coding-agent result (mcp.registered providers)">` + ps.map(p=>`<div class="r">${badge(p[1])}<b style="font-weight:500">${p[0]}</b><span class="sp"></span><small>${p[2]}</small></div>`).join('') + `</div><p class="note">Only this repository, never your whole account. Skipped automatically if a coding agent isn't installed.</p>`;
+  }
+  if (id==='map') {
+    if (s==='fail') return `<div class="err"><h3>${I.x}Couldn't read the repository's files</h3><p>The folder /home/thor/repos/agentic-workflow isn't readable right now. It may have moved or lost permission. Fix that, then retry. Sindri also retries on its own with longer waits (5, 10, 20 minutes).</p></div>
+      <div class="meter"><i style="width:40%;background:var(--fail-dot)"></i></div><div class="meta2">Stopped at 1,240 of 3,100 files. Failed 3 times in a row.</div>
+      <div class="grey"><span>failure:service:context-map-refresh</span><span>3 failures in a row</span></div>`;
+    if (s==='done') return detLine + `<div class="grey"><span>setup:map</span><span>context.map.refreshed</span></div>`;
+    if (s==='run') return `<div class="meter" data-gap="step progress {done,total}"><i style="width:40%"></i></div><div class="meta2">Building, 1,240 of 3,100 files</div>
+      <p style="margin-top:10px" class="note">No button on purpose: the map builds itself and updates whenever your code changes.</p>`;
+    return `<p class="note">Starts by itself once your settings are approved. No button.</p>`;
+  }
+  if (id==='onyx') {
+    if (s==='done') return detLine + `<div class="grey"><span>setup:onyx</span><span>job onyx-up</span></div>`;
+    return `<p>Create your Onyx account in the browser first if you haven't, then sign in here.</p>
+      <div data-gap="Onyx login form (POST /setup/onyx)"><div class="field"><label for="em">Email</label><input class="in" id="em" type="email" placeholder="you@company.com" autocomplete="off"></div>
+      <div class="field"><label for="pw">Password</label><input class="in" id="pw" type="password" placeholder="Your Onyx password" autocomplete="off"></div></div>
+      <p class="note">Used once to connect Linear and Slack. Never stored, never shown in any log.</p>`;
+  }
+  return '';
+}
+
+const st = { typed:null, hold:0 };
+function render(){
+  const S = STATE[cur];
+  st.hold = S.hold || 0;
+  document.getElementById('lead').textContent = S.lead;
+  const done = Object.values(S.s).filter(x=>x==='done').length;
+  const working = Object.values(S.s).filter(x=>x==='run').length;
+  document.getElementById('cnt').textContent = done===6 ? 'All 6 done' : done + ' of 6 done';
+  document.getElementById('segs').innerHTML = Object.values(S.s).map(x=>`<i class="${x==='done'?'on':x==='run'?'mid':''}"></i>`).join('');
+  document.getElementById('fin').classList.toggle('show', done===6);
+  document.getElementById('sub').style.display = done===6 ? 'none' : '';
+  const ids = ['repo','profile','recipes','mcp','map','onyx'];
+  document.getElementById('steps').innerHTML = ids.map((id,i)=>{
+    const s = S.s[id], m = meta(id,s), open = (S.open===id);
+    const a = m.act[s];
+    const num = s==='done' ? I.check : (i+1);
+    const why = (m.why[s]||'');
+    return `<section class="st ${open?'open':''}" data-id="${id}" data-s="${s}">
+      <div class="sh" role="button" tabindex="0" aria-expanded="${open}">
+        <span class="num">${num}</span>
+        <span class="stt"><b>${m.title}</b><span>${why}${s==='done'&&m.det.done?' · '+m.det.done.replace(/^(.*)$/,'$1'):''}</span></span>
+        <span class="sact">${badge(s)}${a?`<button class="btn ${a[1]}" data-act="${id}">${a[0]}</button>`:''}</span>
+        ${I.chev}
+      </div>
+      <div class="body">${bodyFor(id,s,st)}</div></section>`;
+  }).join('');
+  wire();
+  if (annotOn) document.body.classList.add('annot');
+}
+
+function wire(){
+  document.querySelectorAll('.sh').forEach(h=>{
+    const toggle = e => { if (e.target.closest('[data-act]')) return; h.parentElement.classList.toggle('open'); h.setAttribute('aria-expanded', h.parentElement.classList.contains('open')); };
+    h.onclick = toggle; h.onkeydown = e => { if (e.key==='Enter'||e.key===' ') { e.preventDefault(); toggle(e); } };
+  });
+  document.querySelectorAll('[data-act]').forEach(b=>b.onclick = () => {
+    const el = b.closest('.st'); el.classList.add('open');
+    const inp = el.querySelector('.in'); if (inp) inp.focus();
+    if (b.textContent==='Retry') { STATE.failed.s.map='run'; render(); }
+  });
+  const t = document.getElementById('typed');
+  if (t) { t.oninput = () => { st.typed = t.value; const ok = t.value.trim()==='approve 3f9a1c'; t.classList.toggle('ok', ok); document.getElementById('apprBtn').disabled = !ok; };
+    document.getElementById('apprBtn').onclick = () => { STATE[cur].s.profile='done'; STATE[cur].open=null; render(); }; }
+  const h = document.getElementById('hold');
+  if (h) {
+    let raf=0, t0=0;
+    const fill = document.getElementById('fill'), txt = document.getElementById('holdTxt');
+    const tick = now => { const p = Math.min(1,(now-t0)/1500); fill.style.width = (p*100)+'%'; txt.textContent = p<1 ? 'Keep holding' : 'Approving';
+      if (p>=1) { STATE[cur].s.recipes='done'; STATE[cur].open=null; render(); return; } raf=requestAnimationFrame(tick); };
+    const start = e => { e.preventDefault(); t0=performance.now(); h.classList.add('pressing'); raf=requestAnimationFrame(tick); };
+    const stop = () => { cancelAnimationFrame(raf); h.classList.remove('pressing'); if (document.getElementById('fill') && fill.style.width!=='100%' && !STATE[cur].hold) { fill.style.width='0'; txt.textContent='Hold to approve all 11'; } };
+    h.addEventListener('pointerdown', start); ['pointerup','pointerleave','pointercancel'].forEach(ev=>h.addEventListener(ev, stop));
+    h.addEventListener('keydown', e => { if (e.key===' '||e.key==='Enter') { if(!e.repeat) start(e); } }); h.addEventListener('keyup', stop);
+  }
+}
+let annotOn = false;
+document.getElementById('annot').onclick = e => { annotOn = e.currentTarget.getAttribute('aria-checked') !== 'true'; e.currentTarget.setAttribute('aria-checked', annotOn); document.body.classList.toggle('annot', annotOn); };
+window.addEventListener('hashchange', () => { cur = (location.hash||'#fresh').slice(1); if (!STATE[cur]) cur='fresh'; render(); });
+if (new URLSearchParams(location.search).get('annot')) { annotOn = true; document.getElementById('annot').setAttribute('aria-checked','true'); }
+render();
+</script>
+</body>
+</html>

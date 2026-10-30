@@ -1,0 +1,2690 @@
+[
+ {
+  "id": "step.babysit.watch",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "BabysitSteps.cs",
+  "doc": "'step.babysit.watch': the human says 'merged' (with the merged sha), 'rework' (with why it goes back to build) or 'stuck'.",
+  "reads": [
+   "fact:pr",
+   "fact:handoff",
+   "fact:phasePacket",
+   "fact:lineContext",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "merged",
+   "rework",
+   "stuck"
+  ],
+  "writes": [
+   {
+    "fact": "fact:mergedSha",
+    "requiredOn": [
+     "merged"
+    ]
+   },
+   {
+    "fact": "fact:reworkNotes",
+    "requiredOn": [
+     "rework"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.intake.ticket",
+  "runtime": "desk",
+  "capabilities": [
+   "None"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.intake.ticket': the ticket read into facts; outcome 'done'.",
+  "reads": [],
+  "outcomes": [
+   "done"
+  ],
+  "writes": [
+   {
+    "fact": "fact:issue",
+    "requiredOn": [
+     "done"
+    ]
+   },
+   {
+    "fact": "fact:expected",
+    "requiredOn": [
+     "done"
+    ]
+   },
+   {
+    "fact": "fact:actual",
+    "requiredOn": [
+     "done"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.rootcause.investigate",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.rootcause.investigate': 'diagnosed' with 'fact:rootCause', or 'unfixed' with 'fact:findings'.",
+  "reads": [
+   "fact:issue",
+   "fact:expected",
+   "fact:actual"
+  ],
+  "outcomes": [
+   "diagnosed",
+   "unfixed"
+  ],
+  "writes": [
+   {
+    "fact": "fact:rootCause",
+    "requiredOn": [
+     "diagnosed"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "unfixed"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.reproduce.ui-check",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.reproduce.ui-check': 'reproduced' with 'fact:check' and 'fact:baseline', or 'notReproduced' with 'fact:findings'.",
+  "reads": [
+   "fact:issue",
+   "fact:rootCause"
+  ],
+  "outcomes": [
+   "reproduced",
+   "notReproduced"
+  ],
+  "writes": [
+   {
+    "fact": "fact:check",
+    "requiredOn": [
+     "reproduced"
+    ]
+   },
+   {
+    "fact": "fact:baseline",
+    "requiredOn": [
+     "reproduced"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "notReproduced"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.reproduce.test-check",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.reproduce.test-check': as 'step.reproduce.ui-check', with a test as the check.",
+  "reads": [
+   "fact:issue",
+   "fact:rootCause"
+  ],
+  "outcomes": [
+   "reproduced",
+   "notReproduced"
+  ],
+  "writes": [
+   {
+    "fact": "fact:check",
+    "requiredOn": [
+     "reproduced"
+    ]
+   },
+   {
+    "fact": "fact:baseline",
+    "requiredOn": [
+     "reproduced"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "notReproduced"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.bugfix.start-attempt",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.bugfix.start-attempt': 'single' or 'split' with 'fact:attempt', or 'capReached'.",
+  "reads": [
+   "fact:decision"
+  ],
+  "outcomes": [
+   "single",
+   "split",
+   "capReached"
+  ],
+  "writes": [
+   {
+    "fact": "fact:attempt",
+    "requiredOn": [
+     "single",
+     "split"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.bugfix.record-candidate",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.bugfix.record-candidate': 'recorded' with 'fact:candidate'.",
+  "reads": [
+   "fact:diff"
+  ],
+  "outcomes": [
+   "recorded"
+  ],
+  "writes": [
+   {
+    "fact": "fact:candidate",
+    "requiredOn": [
+     "recorded"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.bugfix.recheck",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.bugfix.recheck': runs the reproduction check against the candidate; 'passed' or 'failed', 'fact:recheck' on both.",
+  "reads": [
+   "fact:check",
+   "fact:candidate"
+  ],
+  "outcomes": [
+   "passed",
+   "failed"
+  ],
+  "writes": [
+   {
+    "fact": "fact:recheck",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.bugfix.judge",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.bugfix.judge': the resolution check; 'resolved', 'partial', 'unresolved' or 'needsHuman', 'fact:verdict' on every one.",
+  "reads": [
+   "fact:check",
+   "fact:candidate",
+   "fact:evidenceSummary"
+  ],
+  "outcomes": [
+   "resolved",
+   "partial",
+   "unresolved",
+   "needsHuman"
+  ],
+  "writes": [
+   {
+    "fact": "fact:verdict",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.report.write",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BugfixSteps.cs",
+  "doc": "'step.report.write': the write-up; 'done' with 'fact:resolution'.",
+  "reads": [
+   "fact:issue"
+  ],
+  "outcomes": [
+   "done"
+  ],
+  "writes": [
+   {
+    "fact": "fact:resolution",
+    "requiredOn": [
+     "done"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.build.prepare",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BuildSteps.cs",
+  "doc": "'step.build.prepare': checks the phase worktree is clean at its recorded head and seeds the facts every later wait reads; 'ready'.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:workspace",
+   "fact:buildNotes",
+   "fact:lineContext"
+  ],
+  "outcomes": [
+   "ready"
+  ],
+  "writes": [
+   {
+    "fact": "fact:activePacket",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:redTests",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:built",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:change",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:answers",
+    "requiredOn": [
+     "ready"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.build.red",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools",
+   "WriteScope"
+  ],
+  "file": "BuildSteps.cs",
+  "doc": "'step.build.red': one failing test per visible acceptance item, committed as 'test: \u2026'; 'written' with the red tests.",
+  "reads": [
+   "fact:activePacket",
+   "fact:buildNotes",
+   "fact:redTests",
+   "fact:findings"
+  ],
+  "outcomes": [
+   "written"
+  ],
+  "writes": [
+   {
+    "fact": "fact:redTests",
+    "requiredOn": [
+     "written"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.build.red-check",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BuildSteps.cs",
+  "doc": "'step.build.red-check': runs the red tests on the red commit; 'red' when every one fails, 'vacuous' (with findings) when one passes.",
+  "reads": [
+   "fact:redTests",
+   "fact:activePacket"
+  ],
+  "outcomes": [
+   "red",
+   "vacuous"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "vacuous"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.build.green",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools",
+   "WriteScope"
+  ],
+  "file": "BuildSteps.cs",
+  "doc": "'step.build.green': implements in atomic commits inside the allowed files; 'built', or 'blocked' with a request.",
+  "reads": [
+   "fact:activePacket",
+   "fact:redTests",
+   "fact:buildNotes",
+   "fact:findings",
+   "fact:answers"
+  ],
+  "outcomes": [
+   "built",
+   "blocked"
+  ],
+  "writes": [
+   {
+    "fact": "fact:built",
+    "requiredOn": [
+     "built"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "blocked"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.build.checks",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BuildSteps.cs",
+  "doc": "'step.build.checks': the scope gate, the build rules and the repo's commands; 'pass' with the built head and the change, 'failed' or 'outOfScope' with findings.",
+  "reads": [
+   "fact:activePacket",
+   "fact:built",
+   "fact:redTests",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "pass",
+   "failed",
+   "outOfScope"
+  ],
+  "writes": [
+   {
+    "fact": "fact:built",
+    "requiredOn": [
+     "pass"
+    ]
+   },
+   {
+    "fact": "fact:change",
+    "requiredOn": [
+     "pass"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "failed",
+     "outOfScope"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.build.scope-desk",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "BuildSteps.cs",
+  "doc": "'step.build.scope-desk': the owner's call on a file outside the allowed ones, human-only: allow, revert or stop.",
+  "reads": [
+   "fact:findings",
+   "fact:activePacket"
+  ],
+  "outcomes": [
+   "allow",
+   "revert",
+   "stop"
+  ],
+  "writes": [
+   {
+    "fact": "fact:answers",
+    "requiredOn": [
+     "allow",
+     "revert"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.build.amend",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "BuildSteps.cs",
+  "doc": "'step.build.amend': writes the owner-frozen child phase packet with the granted paths; 'amended' with it as the packet in force.",
+  "reads": [
+   "fact:activePacket",
+   "fact:answers"
+  ],
+  "outcomes": [
+   "amended"
+  ],
+  "writes": [
+   {
+    "fact": "fact:activePacket",
+    "requiredOn": [
+     "amended"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.design.intake",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "DesignSteps.cs",
+  "doc": "'step.design.intake': loads the frozen scope packet and the style and lens packs; 'fresh' or 'revise' (a revision from stop 2); every outcome carries the eight round-1 seeds.",
+  "reads": [
+   "fact:scopePacket",
+   "fact:designRevision"
+  ],
+  "outcomes": [],
+  "writes": []
+ },
+ {
+  "id": "step.design.draft",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "DesignSteps.cs",
+  "doc": "'step.design.draft': one spec draft in the house style; 'drafted'.",
+  "reads": [
+   "fact:scope",
+   "fact:packs",
+   "fact:design",
+   "fact:findings",
+   "fact:changedSections"
+  ],
+  "outcomes": [
+   "drafted"
+  ],
+  "writes": [
+   {
+    "fact": "fact:design",
+    "requiredOn": [
+     "drafted"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.design.apply",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "DesignSteps.cs",
+  "doc": "'step.design.apply': folds the stop-2 revision into the sections it affects; 'applied' with the changed sections.",
+  "reads": [
+   "fact:scope",
+   "fact:packs",
+   "fact:design",
+   "fact:designRevision",
+   "fact:answers"
+  ],
+  "outcomes": [
+   "applied"
+  ],
+  "writes": [
+   {
+    "fact": "fact:design",
+    "requiredOn": [
+     "applied"
+    ]
+   },
+   {
+    "fact": "fact:changedSections",
+    "requiredOn": [
+     "applied"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.design.check",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "DesignSteps.cs",
+  "doc": "'step.design.check': the draft-stage design checks (coverage, signals, decisions, contract edits, style); 'pass' or 'gaps' with findings.",
+  "reads": [
+   "fact:scope",
+   "fact:packs",
+   "fact:design"
+  ],
+  "outcomes": [
+   "pass",
+   "gaps"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "gaps"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.design.revise",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "DesignSteps.cs",
+  "doc": "'step.design.revise': fixes the lens findings and answers the rest in writing; 'revised' with the changed sections.",
+  "reads": [
+   "fact:scope",
+   "fact:packs",
+   "fact:design",
+   "fact:findings",
+   "fact:answers"
+  ],
+  "outcomes": [
+   "revised"
+  ],
+  "writes": [
+   {
+    "fact": "fact:design",
+    "requiredOn": [
+     "revised"
+    ]
+   },
+   {
+    "fact": "fact:changedSections",
+    "requiredOn": [
+     "revised"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.design.lens-desk",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "DesignSteps.cs",
+  "doc": "'step.design.lens-desk': the lens rounds hit their cap with findings left; human-only: accept them as known risks, revise with notes, or drop.",
+  "reads": [
+   "fact:findings",
+   "fact:lensRounds"
+  ],
+  "outcomes": [
+   "accept",
+   "revise",
+   "drop"
+  ],
+  "writes": [
+   {
+    "fact": "fact:accepted",
+    "requiredOn": [
+     "accept"
+    ]
+   },
+   {
+    "fact": "fact:answers",
+    "requiredOn": [
+     "revise"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.design.evidence",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "DesignSteps.cs",
+  "doc": "'step.design.evidence': checks the design evidence and assembles the candidate design packet; 'complete' or 'incomplete' with findings.",
+  "reads": [
+   "fact:scope",
+   "fact:packs",
+   "fact:design",
+   "fact:findings",
+   "fact:lensRounds",
+   "fact:accepted"
+  ],
+  "outcomes": [
+   "complete",
+   "incomplete"
+  ],
+  "writes": [
+   {
+    "fact": "fact:designPacket",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:design",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:lensRounds",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "incomplete"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.docs.scope",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "DocsSteps.cs",
+  "doc": "'step.docs.scope': lists the docs the pull request might leave stale; 'candidates', 'none', 'disabled' or 'notOpen'.",
+  "reads": [
+   "fact:pr",
+   "fact:phasePacket"
+  ],
+  "outcomes": [
+   "candidates",
+   "none",
+   "disabled",
+   "notOpen"
+  ],
+  "writes": [
+   {
+    "fact": "fact:docsResult",
+    "requiredOn": "every"
+   },
+   {
+    "fact": "fact:docsScope",
+    "requiredOn": [
+     "candidates"
+    ]
+   },
+   {
+    "fact": "fact:prState",
+    "requiredOn": [
+     "candidates"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "candidates"
+    ]
+   },
+   {
+    "fact": "fact:handoffNote",
+    "requiredOn": [
+     "candidates"
+    ]
+   },
+   {
+    "fact": "fact:workspace",
+    "requiredOn": [
+     "candidates"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.docs.update",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools",
+   "WriteScope"
+  ],
+  "file": "DocsSteps.cs",
+  "doc": "'step.docs.update': edits the listed docs in the docs worktree; 'changed', 'noChange' or 'blocked'.",
+  "reads": [
+   "fact:docsScope",
+   "fact:prState",
+   "fact:findings",
+   "fact:handoffNote",
+   "fact:phasePacket"
+  ],
+  "outcomes": [
+   "changed",
+   "noChange",
+   "blocked"
+  ],
+  "writes": [
+   {
+    "fact": "fact:handoffNote",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.docs.check",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "DocsSteps.cs",
+  "doc": "'step.docs.check': doc paths only, links resolve, the markdown parses; 'pass' or 'fail' (with 'fact:findings').",
+  "reads": [
+   "fact:docsScope",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "pass",
+   "fail"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "fail"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.docs.open-pr",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "DocsSteps.cs",
+  "doc": "'step.docs.open-pr': the desk opens (or updates) the stacked docs PR, or rejects; 'fact:docsPr' on opened and updated.",
+  "reads": [
+   "fact:pr",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "opened",
+   "updated",
+   "rejected"
+  ],
+  "writes": [
+   {
+    "fact": "fact:docsPr",
+    "requiredOn": [
+     "opened",
+     "updated"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.evidence.ui-run",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "EvidenceSteps.cs",
+  "doc": "'step.evidence.ui-run': the long browser run (DT spec \u00a78.2); 'passed', 'failed' or 'broken', 'fact:evidenceSummary' on every one.",
+  "reads": [
+   "fact:evidencePlan",
+   "fact:built"
+  ],
+  "outcomes": [
+   "passed",
+   "failed",
+   "broken"
+  ],
+  "writes": [
+   {
+    "fact": "fact:evidenceSummary",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.evidence.none",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "EvidenceSteps.cs",
+  "doc": "'step.evidence.none': records that nothing needs evidence; 'done' with 'fact:evidenceSummary'.",
+  "reads": [
+   "fact:built"
+  ],
+  "outcomes": [
+   "done"
+  ],
+  "writes": [
+   {
+    "fact": "fact:evidenceSummary",
+    "requiredOn": [
+     "done"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.evidence.combine",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "EvidenceSteps.cs",
+  "doc": "'step.evidence.combine': the three summaries into one; 'done' with 'fact:evidenceSummary'.",
+  "reads": [
+   "fact:evidenceUi",
+   "fact:evidenceApi",
+   "fact:evidenceDb"
+  ],
+  "outcomes": [
+   "done"
+  ],
+  "writes": [
+   {
+    "fact": "fact:evidenceSummary",
+    "requiredOn": [
+     "done"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.evidence.desk",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "EvidenceSteps.cs",
+  "doc": "'step.evidence.desk': a human records evidence for a change no provider covers; human-only; 'recorded' or 'noneFound', summary and reason on both.",
+  "reads": [
+   "fact:built"
+  ],
+  "outcomes": [
+   "recorded",
+   "noneFound"
+  ],
+  "writes": [
+   {
+    "fact": "fact:evidenceSummary",
+    "requiredOn": "every"
+   },
+   {
+    "fact": "fact:evidenceReason",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.lens.round",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "LensRoundSteps.cs",
+  "doc": "'step.lens.round': queues the pack's lenses for a round; 'ready'. 'pack' names the lens pack (a profile key).",
+  "reads": [
+   "fact:packs",
+   "fact:lensRounds",
+   "fact:changedSections"
+  ],
+  "outcomes": [
+   "ready"
+  ],
+  "writes": [
+   {
+    "fact": "fact:lensQueue",
+    "requiredOn": [
+     "ready"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.lens.log",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "LensRoundSteps.cs",
+  "doc": "'step.lens.log': appends the report to the lens rounds; 'next' (a lens is still queued), 'clean' or 'findings'.",
+  "reads": [
+   "fact:lensReport",
+   "fact:lensRounds",
+   "fact:lensQueue"
+  ],
+  "outcomes": [
+   "next",
+   "clean",
+   "findings"
+  ],
+  "writes": [
+   {
+    "fact": "fact:lensRounds",
+    "requiredOn": "every"
+   },
+   {
+    "fact": "fact:lensQueue",
+    "requiredOn": [
+     "next"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "findings"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.lens.run",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "LensSteps.cs",
+  "doc": "'step.lens.run': runs the queue's next lens through the fixed frame; 'reviewed' with 'fact:lensReport'. 'subject' ('design' or 'change') says what the frame reads, so the subject's own facts are not descriptor inputs; 'bundle' ('lenses') copies the pack's files into the Step directory.",
+  "reads": [
+   "fact:lensQueue",
+   "fact:lensRounds"
+  ],
+  "outcomes": [
+   "reviewed"
+  ],
+  "writes": [
+   {
+    "fact": "fact:lensReport",
+    "requiredOn": [
+     "reviewed"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.owner.decide",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "OwnerSteps.cs",
+  "doc": "'step.owner.decide': the owner picks 'retry' (with 'fact:notes') or 'stop'.",
+  "reads": [],
+  "outcomes": [
+   "retry",
+   "stop"
+  ],
+  "writes": [
+   {
+    "fact": "fact:notes",
+    "requiredOn": [
+     "retry"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.phase.seed",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "PhaseSteps.cs",
+  "doc": "'step.phase.seed': checks the phase packet and its dependencies, prepares the worktree, and writes the round-1 value of every fact a later wait reads.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:lineContext"
+  ],
+  "outcomes": [
+   "seeded"
+  ],
+  "writes": [
+   {
+    "fact": "fact:buildNotes",
+    "requiredOn": [
+     "seeded"
+    ]
+   },
+   {
+    "fact": "fact:workspace",
+    "requiredOn": [
+     "seeded"
+    ]
+   },
+   {
+    "fact": "fact:built",
+    "requiredOn": [
+     "seeded"
+    ]
+   },
+   {
+    "fact": "fact:change",
+    "requiredOn": [
+     "seeded"
+    ]
+   },
+   {
+    "fact": "fact:redTests",
+    "requiredOn": [
+     "seeded"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.phase.drift",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "PhaseSteps.cs",
+  "doc": "'step.phase.drift': 'same' when review left the proven head unchanged, 'moved' with the new built head and change when it did not.",
+  "reads": [
+   "fact:built",
+   "fact:change",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "same",
+   "moved"
+  ],
+  "writes": [
+   {
+    "fact": "fact:built",
+    "requiredOn": [
+     "moved"
+    ]
+   },
+   {
+    "fact": "fact:change",
+    "requiredOn": [
+     "moved"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.phase.decide",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "PhaseSteps.cs",
+  "doc": "'step.phase.decide': the owner rebuilds the phase with notes or stops it.",
+  "reads": [
+   "fact:phasePacket"
+  ],
+  "outcomes": [
+   "rebuild",
+   "stop"
+  ],
+  "writes": [
+   {
+    "fact": "fact:buildNotes",
+    "requiredOn": [
+     "rebuild"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.intake",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.intake': loads the candidate design and frozen scope packets; 'loaded' with the seven round-1 seeds.",
+  "reads": [
+   "fact:scopePacket",
+   "fact:designPacket"
+  ],
+  "outcomes": [
+   "loaded"
+  ],
+  "writes": []
+ },
+ {
+  "id": "step.plan.graph",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.graph': the phase graph; 'drafted'.",
+  "reads": [
+   "fact:scopePacket",
+   "fact:design",
+   "fact:plan",
+   "fact:findings",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "drafted"
+  ],
+  "writes": [
+   {
+    "fact": "fact:plan",
+    "requiredOn": [
+     "drafted"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.check",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.check': the plan checks and aw-packets validate; 'pass' or 'gaps' with findings.",
+  "reads": [
+   "fact:scopePacket",
+   "fact:design",
+   "fact:plan"
+  ],
+  "outcomes": [
+   "pass",
+   "gaps"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "gaps"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.exec-review",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.exec-review': each phase as its builder (four answers); 'executable' or 'objections' with findings.",
+  "reads": [
+   "fact:design",
+   "fact:plan"
+  ],
+  "outcomes": [
+   "executable",
+   "objections"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "objections"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.holdout",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.holdout': hidden scenarios into the holdout store; 'written' with the sets (ids and hashes, never text).",
+  "reads": [
+   "fact:design",
+   "fact:plan"
+  ],
+  "outcomes": [
+   "written"
+  ],
+  "writes": [
+   {
+    "fact": "fact:holdoutSets",
+    "requiredOn": [
+     "written"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.evidence",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.evidence': checks the design and plan evidence and assembles the candidate plan packet; 'complete' or 'incomplete' with findings.",
+  "reads": [
+   "fact:scopePacket",
+   "fact:design",
+   "fact:plan",
+   "fact:holdoutSets",
+   "fact:findings",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "complete",
+   "incomplete"
+  ],
+  "writes": [
+   {
+    "fact": "fact:planPacket",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "incomplete"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.questions",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.questions': turns the open decisions into the stop's questions; 'asked' or 'none'.",
+  "reads": [
+   "fact:design",
+   "fact:answers",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "asked",
+   "none"
+  ],
+  "writes": [
+   {
+    "fact": "fact:questions",
+    "requiredOn": [
+     "asked"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.settle",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.settle': compares the answers with the design's assumptions; 'assumed', 'changed' (a design revision) or 'replan'.",
+  "reads": [
+   "fact:design",
+   "fact:answers",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "assumed",
+   "changed",
+   "replan"
+  ],
+  "writes": [
+   {
+    "fact": "fact:designRevision",
+    "requiredOn": [
+     "changed"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.review",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.review': the after-design stop, human-only: approve, revise the design, revise the plan, or drop.",
+  "reads": [
+   "fact:planPacket",
+   "fact:design"
+  ],
+  "outcomes": [
+   "approve",
+   "reviseDesign",
+   "revisePlan",
+   "drop"
+  ],
+  "writes": [
+   {
+    "fact": "fact:answers",
+    "requiredOn": [
+     "reviseDesign",
+     "revisePlan"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.plan.freeze",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "PlanSteps.cs",
+  "doc": "'step.plan.freeze': re-checks and freezes the design, plan and phase packets together; 'frozen' or 'mismatch'.",
+  "reads": [
+   "fact:planPacket",
+   "fact:design",
+   "fact:plan",
+   "fact:holdoutSets"
+  ],
+  "outcomes": [
+   "frozen",
+   "mismatch"
+  ],
+  "writes": [
+   {
+    "fact": "fact:planPacket",
+    "requiredOn": [
+     "frozen"
+    ]
+   },
+   {
+    "fact": "fact:phasePackets",
+    "requiredOn": [
+     "frozen"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "mismatch"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.handtest.run",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ProofSteps.cs",
+  "doc": "'step.handtest.run': the hand test in the running app; 'works' or 'broken', 'fact:manualTest' on both.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "works",
+   "broken"
+  ],
+  "writes": [
+   {
+    "fact": "fact:manualTest",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.verify.journey",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ProofSteps.cs",
+  "doc": "'step.verify.journey': the journeys in the running app; 'pass' or 'fail', 'fact:evidencePack' on both.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "pass",
+   "fail"
+  ],
+  "writes": [
+   {
+    "fact": "fact:evidencePack",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.verify.design",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ProofSteps.cs",
+  "doc": "'step.verify.design': the design comparison; 'pass', 'fail' or 'skipped'; 'fact:designCheck' on 'pass' and 'fail'.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "pass",
+   "fail",
+   "skipped"
+  ],
+  "writes": [
+   {
+    "fact": "fact:designCheck",
+    "requiredOn": [
+     "pass",
+     "fail"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.prove.intake",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ProveSteps.cs",
+  "doc": "'step.prove.intake': loads the phase's proof signals and seeds the facts the later waits read; 'ready'.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:built",
+   "fact:workspace",
+   "fact:redTests"
+  ],
+  "outcomes": [
+   "ready"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:proof",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:holdoutResult",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:beforeAfter",
+    "requiredOn": [
+     "ready"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.prove.before-after",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ProveSteps.cs",
+  "doc": "'step.prove.before-after': each fix item's recorded script must fail at the base and pass at the head; 'pass' or 'fail', the result on both.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:built",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "pass",
+   "fail"
+  ],
+  "writes": [
+   {
+    "fact": "fact:beforeAfter",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.prove.holdout",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools",
+   "WriteScope"
+  ],
+  "file": "ProveSteps.cs",
+  "doc": "'step.prove.holdout': runs the hidden scenarios against the head in the running app; 'ran' with the verdicts.",
+  "reads": [
+   "fact:built",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "ran"
+  ],
+  "writes": [
+   {
+    "fact": "fact:holdoutResult",
+    "requiredOn": [
+     "ran"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.prove.holdout-log",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ProveSteps.cs",
+  "doc": "'step.prove.holdout-log': records the verdicts, marks failures spent and checks the canary; 'passed', 'failed' or 'leaked'.",
+  "reads": [
+   "fact:holdoutResult",
+   "fact:built"
+  ],
+  "outcomes": [
+   "passed",
+   "failed",
+   "leaked"
+  ],
+  "writes": [
+   {
+    "fact": "fact:holdoutResult",
+    "requiredOn": [
+     "passed",
+     "failed"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "failed",
+     "leaked"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.prove.evidence",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ProveSteps.cs",
+  "doc": "'step.prove.evidence': the proof checks, then assembles and machine-freezes the proof pack; 'complete' or 'incomplete' with findings.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:built",
+   "fact:redTests",
+   "fact:beforeAfter",
+   "fact:holdoutResult"
+  ],
+  "outcomes": [
+   "complete",
+   "incomplete"
+  ],
+  "writes": [
+   {
+    "fact": "fact:proofPack",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "incomplete"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.prove.fail-log",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ProveSteps.cs",
+  "doc": "'step.prove.fail-log': every failure path ends here; writes what failed as findings for the builder; 'logged'.",
+  "reads": [
+   "fact:findings",
+   "fact:beforeAfter",
+   "fact:holdoutResult"
+  ],
+  "outcomes": [
+   "logged"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "logged"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.review.round",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ReviewSteps.cs",
+  "doc": "'step.review.round': starts a review round; queues the review pack's lenses that apply to the changed paths, in pack order, and seeds the round's log. 'ready'.",
+  "reads": [
+   "fact:change",
+   "fact:phasePacket"
+  ],
+  "outcomes": [
+   "ready"
+  ],
+  "writes": [
+   {
+    "fact": "fact:lensQueue",
+    "requiredOn": [
+     "ready"
+    ]
+   },
+   {
+    "fact": "fact:lensRounds",
+    "requiredOn": [
+     "ready"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.review.log",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ReviewSteps.cs",
+  "doc": "'step.review.log': appends the lens report to the round's log. 'next' while the queue is not empty; at the round's end 'clean' (zero blocking and zero issue), 'findings', or 'behaviourWrong' (a blocking finding that the behaviour is wrong), the running 'fact:review' on each of those three.",
+  "reads": [
+   "fact:lensReport",
+   "fact:lensRounds"
+  ],
+  "outcomes": [
+   "next",
+   "clean",
+   "findings",
+   "behaviourWrong"
+  ],
+  "writes": [
+   {
+    "fact": "fact:lensRounds",
+    "requiredOn": "every"
+   },
+   {
+    "fact": "fact:lensQueue",
+    "requiredOn": [
+     "next"
+    ]
+   },
+   {
+    "fact": "fact:review",
+    "requiredOn": [
+     "clean",
+     "findings",
+     "behaviourWrong"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.review.record",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ReviewSteps.cs",
+  "doc": "'step.review.record': writes the review result packet (rounds, each finding with its class and resolution, the last verdict, the head sha) and machine-freezes it; 'recorded' (line spec DTC4).",
+  "reads": [
+   "fact:change",
+   "fact:review",
+   "fact:lensRounds"
+  ],
+  "outcomes": [
+   "recorded"
+  ],
+  "writes": [
+   {
+    "fact": "fact:review",
+    "requiredOn": [
+     "recorded"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.review.fix",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools",
+   "WriteScope"
+  ],
+  "file": "ReviewSteps.cs",
+  "doc": "'step.review.fix': fixes the findings; 'fixed' with the new 'fact:change'.",
+  "reads": [
+   "fact:change",
+   "fact:review"
+  ],
+  "outcomes": [
+   "fixed"
+  ],
+  "writes": [
+   {
+    "fact": "fact:change",
+    "requiredOn": [
+     "fixed"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.review.recheck",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ReviewSteps.cs",
+  "doc": "'step.review.recheck': reviews the fixed head; as 'step.review.run'.",
+  "reads": [
+   "fact:change",
+   "fact:review"
+  ],
+  "outcomes": [
+   "clean",
+   "findings",
+   "behaviourWrong"
+  ],
+  "writes": [
+   {
+    "fact": "fact:review",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.scope.intake",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.intake': what to scope, sorted into one of four readers; every outcome carries the eight round-1 seeds.",
+  "reads": [
+   "fact:scopeInput"
+  ],
+  "outcomes": [],
+  "writes": []
+ },
+ {
+  "id": "step.scope.read-brief",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.read-brief': reads the brief file (or its named section); 'read' with the brief and its anchors, or 'empty'.",
+  "reads": [
+   "fact:scopeInput"
+  ],
+  "outcomes": [
+   "read",
+   "empty"
+  ],
+  "writes": [
+   {
+    "fact": "fact:brief",
+    "requiredOn": [
+     "read"
+    ]
+   },
+   {
+    "fact": "fact:anchors",
+    "requiredOn": [
+     "read"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.read-tracker",
+  "runtime": "block",
+  "capabilities": [
+   "Tools",
+   "Network"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.read-tracker': reads the tracker project or issue through the tracker port; 'read' or 'empty'.",
+  "reads": [
+   "fact:scopeInput"
+  ],
+  "outcomes": [
+   "read",
+   "empty"
+  ],
+  "writes": [
+   {
+    "fact": "fact:brief",
+    "requiredOn": [
+     "read"
+    ]
+   },
+   {
+    "fact": "fact:anchors",
+    "requiredOn": [
+     "read"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.read-change",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.read-change': reads the change's diff, commits and PR body; 'read' or 'empty'.",
+  "reads": [
+   "fact:scopeInput"
+  ],
+  "outcomes": [
+   "read",
+   "empty"
+  ],
+  "writes": [
+   {
+    "fact": "fact:brief",
+    "requiredOn": [
+     "read"
+    ]
+   },
+   {
+    "fact": "fact:anchors",
+    "requiredOn": [
+     "read"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.brief.seed",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.brief.seed' (idea-to-brief): the empty round-1 answers and log, so the log is an output and never also an input.",
+  "reads": [],
+  "outcomes": [
+   "seeded"
+  ],
+  "writes": [
+   {
+    "fact": "fact:answers",
+    "requiredOn": [
+     "seeded"
+    ]
+   },
+   {
+    "fact": "fact:answerLog",
+    "requiredOn": [
+     "seeded"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.brief.questions",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.brief.questions': what the idea leaves open; 'asked' with up to five questions, or 'ready'.",
+  "reads": [
+   "fact:idea",
+   "fact:answers",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "asked",
+   "ready"
+  ],
+  "writes": [
+   {
+    "fact": "fact:questions",
+    "requiredOn": [
+     "asked"
+    ]
+   },
+   {
+    "fact": "fact:interviewClosed",
+    "requiredOn": [
+     "ready"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.brief.write",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.brief.write': the cited brief from the idea and the answers; 'written' or 'empty'.",
+  "reads": [
+   "fact:idea",
+   "fact:answers",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "written",
+   "empty"
+  ],
+  "writes": [
+   {
+    "fact": "fact:brief",
+    "requiredOn": [
+     "written"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.anchor",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.anchor': the brief's anchors from the context engine's text shape; 'anchored'.",
+  "reads": [
+   "fact:brief"
+  ],
+  "outcomes": [
+   "anchored"
+  ],
+  "writes": [
+   {
+    "fact": "fact:anchors",
+    "requiredOn": [
+     "anchored"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.gather",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.gather': the four lenses over the anchors, assembled from its Step inputs; 'gathered'.",
+  "reads": [
+   "fact:anchors"
+  ],
+  "outcomes": [
+   "gathered"
+  ],
+  "writes": [
+   {
+    "fact": "fact:lenses",
+    "requiredOn": [
+     "gathered"
+    ]
+   },
+   {
+    "fact": "fact:coverage",
+    "requiredOn": [
+     "gathered"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.draft",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.draft': the scope map and the acceptance list from the lenses; 'drafted'.",
+  "reads": [
+   "fact:brief",
+   "fact:lenses",
+   "fact:coverage",
+   "fact:scopeMap",
+   "fact:acceptance",
+   "fact:findings",
+   "fact:answerLog",
+   "fact:challenge"
+  ],
+  "outcomes": [
+   "drafted"
+  ],
+  "writes": [
+   {
+    "fact": "fact:scopeMap",
+    "requiredOn": [
+     "drafted"
+    ]
+   },
+   {
+    "fact": "fact:acceptance",
+    "requiredOn": [
+     "drafted"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.check",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.check': the draft-stage checks; 'pass', or findings on 'gaps' (the drafter can fix) and 'regather' (a lens must run again).",
+  "reads": [
+   "fact:brief",
+   "fact:lenses",
+   "fact:coverage",
+   "fact:scopeMap",
+   "fact:acceptance",
+   "fact:answers",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "pass",
+   "gaps",
+   "regather"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "gaps",
+     "regather"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.interview.questions",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.interview.questions': the behaviour gaps as up to five questions; 'asked' or 'none'.",
+  "reads": [
+   "fact:scopeMap",
+   "fact:acceptance",
+   "fact:lenses",
+   "fact:answerLog",
+   "fact:challenge",
+   "fact:openQuestions"
+  ],
+  "outcomes": [
+   "asked",
+   "none"
+  ],
+  "writes": [
+   {
+    "fact": "fact:questions",
+    "requiredOn": [
+     "asked"
+    ]
+   },
+   {
+    "fact": "fact:openQuestions",
+    "requiredOn": [
+     "asked",
+     "none"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.interview.answer",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.interview.answer': the owner's answers to the questions (the form is built from 'fact:questions'); human-only. 'doneAsking' also closes the interview.",
+  "reads": [
+   "fact:questions",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "answered",
+   "doneAsking"
+  ],
+  "writes": [
+   {
+    "fact": "fact:answers",
+    "requiredOn": [
+     "answered",
+     "doneAsking"
+    ]
+   },
+   {
+    "fact": "fact:interviewClosed",
+    "requiredOn": [
+     "doneAsking"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.interview.record",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.interview.record': appends the latest batch to the answer log once, by its digest; 'recorded'.",
+  "reads": [
+   "fact:answers",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "recorded"
+  ],
+  "writes": [
+   {
+    "fact": "fact:answerLog",
+    "requiredOn": [
+     "recorded"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.interview.apply",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.interview.apply': folds the answers into the map, list and open questions; 'updated', or 'rescope' when an answer changes the surfaces.",
+  "reads": [
+   "fact:brief",
+   "fact:lenses",
+   "fact:coverage",
+   "fact:questions",
+   "fact:answers",
+   "fact:answerLog",
+   "fact:scopeMap",
+   "fact:acceptance",
+   "fact:openQuestions",
+   "fact:anchors"
+  ],
+  "outcomes": [
+   "updated",
+   "rescope"
+  ],
+  "writes": [
+   {
+    "fact": "fact:scopeMap",
+    "requiredOn": [
+     "updated",
+     "rescope"
+    ]
+   },
+   {
+    "fact": "fact:acceptance",
+    "requiredOn": [
+     "updated",
+     "rescope"
+    ]
+   },
+   {
+    "fact": "fact:openQuestions",
+    "requiredOn": [
+     "updated",
+     "rescope"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.reanchor",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.reanchor': anchors the changed map from the context engine's text shape; 'anchored'.",
+  "reads": [
+   "fact:scopeMap",
+   "fact:anchors",
+   "fact:lenses"
+  ],
+  "outcomes": [
+   "anchored"
+  ],
+  "writes": [
+   {
+    "fact": "fact:anchors",
+    "requiredOn": [
+     "anchored"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.challenge",
+  "runtime": "agent",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.challenge': a second model's look for missed surfaces and behaviours; reports only its own round.",
+  "reads": [
+   "fact:brief",
+   "fact:lenses",
+   "fact:coverage",
+   "fact:scopeMap",
+   "fact:acceptance",
+   "fact:answerLog",
+   "fact:challenge"
+  ],
+  "outcomes": [
+   "nothingNew",
+   "found"
+  ],
+  "writes": [
+   {
+    "fact": "fact:challengeRound",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.scope.challenge-log",
+  "runtime": "block",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.challenge-log': appends the round to the challenge record and re-reports its verdict; a verdict that disagrees with its items is a failed Step.",
+  "reads": [
+   "fact:challenge",
+   "fact:challengeRound"
+  ],
+  "outcomes": [
+   "nothingNew",
+   "found"
+  ],
+  "writes": [
+   {
+    "fact": "fact:challenge",
+    "requiredOn": "every"
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "found"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.propose",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.propose': submits the map's new surfaces as draft proposals and records each surface's graph status; 'proposed' or 'skipped'.",
+  "reads": [
+   "fact:scopeMap"
+  ],
+  "outcomes": [
+   "proposed",
+   "skipped"
+  ],
+  "writes": [
+   {
+    "fact": "fact:scopeMap",
+    "requiredOn": "every"
+   }
+  ]
+ },
+ {
+  "id": "step.scope.evidence",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.evidence': every check, the packet assembled in the run area; 'complete' re-reports five facts, 'incomplete' and 'regather' carry findings.",
+  "reads": [
+   "fact:brief",
+   "fact:lenses",
+   "fact:coverage",
+   "fact:scopeMap",
+   "fact:acceptance",
+   "fact:answers",
+   "fact:answerLog",
+   "fact:challenge",
+   "fact:openQuestions",
+   "fact:decision",
+   "fact:anchors",
+   "fact:questions"
+  ],
+  "outcomes": [
+   "complete",
+   "incomplete",
+   "regather"
+  ],
+  "writes": [
+   {
+    "fact": "fact:scopeMap",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:acceptance",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:coverage",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:openQuestions",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:scopePacket",
+    "requiredOn": [
+     "complete"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "incomplete",
+     "regather"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.review",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.review': the owner's stop, human-only: approve, revise (notes become answers) or drop.",
+  "reads": [
+   "fact:scopePacket"
+  ],
+  "outcomes": [
+   "approve",
+   "revise",
+   "drop"
+  ],
+  "writes": [
+   {
+    "fact": "fact:answers",
+    "requiredOn": [
+     "revise"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.freeze",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.freeze': re-checks the packet, confirms its hash and freezes it through aw-packets; 'frozen' or 'mismatch'.",
+  "reads": [
+   "fact:scopePacket",
+   "fact:answerLog"
+  ],
+  "outcomes": [
+   "frozen",
+   "mismatch"
+  ],
+  "writes": [
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "mismatch"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.scope.withdraw",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ScopingSteps.cs",
+  "doc": "'step.scope.withdraw': withdraws the run's undecided map proposals; 'withdrawn'.",
+  "reads": [],
+  "outcomes": [
+   "withdrawn"
+  ],
+  "writes": []
+ },
+ {
+  "id": "step.ship.green",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ShipSteps.cs",
+  "doc": "'step.ship.green': the local GREEN gate on the head; 'green' or 'red' (with 'fact:findings').",
+  "reads": [
+   "fact:phasePacket",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "green",
+   "red"
+  ],
+  "writes": [
+   {
+    "fact": "fact:green",
+    "requiredOn": [
+     "green"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "red"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.ship.pack",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ShipSteps.cs",
+  "doc": "'step.ship.pack': assembles the hand-off draft, the evidence pack as the PR body.",
+  "reads": [
+   "fact:phasePacket",
+   "fact:proofPack",
+   "fact:review",
+   "fact:lineContext"
+  ],
+  "outcomes": [
+   "packed"
+  ],
+  "writes": [
+   {
+    "fact": "fact:handoffDraft",
+    "requiredOn": [
+     "packed"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.ship.freeze",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ShipSteps.cs",
+  "doc": "'step.ship.freeze': proof, review and hand-off agree on one head; 'frozen' or 'stale' (with 'fact:findings').",
+  "reads": [
+   "fact:handoffDraft",
+   "fact:proofPack",
+   "fact:review"
+  ],
+  "outcomes": [
+   "frozen",
+   "stale"
+  ],
+  "writes": [
+   {
+    "fact": "fact:handoff",
+    "requiredOn": [
+     "frozen"
+    ]
+   },
+   {
+    "fact": "fact:findings",
+    "requiredOn": [
+     "stale"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.ship.open",
+  "runtime": "desk(human-only)",
+  "capabilities": [
+   "None"
+  ],
+  "file": "ShipSteps.cs",
+  "doc": "'step.ship.open': the desk opens (or updates) the pull request from the frozen hand-off, or refuses; 'fact:pr' on opened and updated.",
+  "reads": [
+   "fact:handoff",
+   "fact:workspace"
+  ],
+  "outcomes": [
+   "opened",
+   "updated",
+   "refused"
+  ],
+  "writes": [
+   {
+    "fact": "fact:pr",
+    "requiredOn": [
+     "opened",
+     "updated"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "step.ship.return",
+  "runtime": "block",
+  "capabilities": [
+   "Tools"
+  ],
+  "file": "ShipSteps.cs",
+  "doc": "'step.ship.return': writes why the phase goes back to build.",
+  "reads": [
+   "fact:findings"
+  ],
+  "outcomes": [
+   "noted"
+  ],
+  "writes": [
+   {
+    "fact": "fact:returnNotes",
+    "requiredOn": [
+     "noted"
+    ]
+   }
+  ]
+ }
+]

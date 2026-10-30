@@ -1,0 +1,41 @@
+  <div class="main">
+    <header class="top">
+      <h1>Questions for the owner</h1>
+      <span class="sp"></span>
+      <span class="cmdk" title="Command palette"><kbd>⌘K</kbd> Jump to anything</span>
+      <button class="switch" id="annot" role="switch" aria-checked="false"><i></i>Annotations</button>
+    </header>
+    <div class="qhead"><span class="cnt" id="cnt"></span><span class="sp"></span><span class="intro">Each row is a choice the mockups made for you. Open one to see the options and the recommended answer.</span><kbd>J</kbd><kbd>K</kbd><kbd>Enter</kbd></div>
+    <div class="scroll" id="list"></div>
+  </div>
+</div>
+<script>
+const Q = /*DATA*/;
+const chev = '<svg class="ico chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
+const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/`([^`]+)`/g,'<span class="mono">$1</span>');
+const A=Q.filter(q=>q.sec==='A'), Bq=Q.filter(q=>q.sec==='B'), C=Q.filter(q=>q.sec==='C');
+document.getElementById('cnt').innerHTML = A.length+' to answer first <span>&middot; '+Bq.length+' smaller &middot; '+C.length+' settled</span>';
+const ext = '<svg class="ico" style="width:12px;height:12px" viewBox="0 0 24 24"><path d="M7 17L17 7M8 7h9v9"/></svg>';
+const row = (q,num) => `<button class="qr" aria-expanded="false" data-id="${q.id}"><svg class="ico chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg><span class="id">${num}</span><span class="t">${esc(q.q)}</span>${q.sec==='C'?`<span class="chip dec">Settled${q.date?' '+q.date:''}</span>`:'<span class="chip rec"><svg class="ico" viewBox="0 0 24 24"><path d="M5 12l5 5 9-10"/></svg>Recommended</span>'}</button>
+  <div class="qd" id="d-${q.id}"><dl>
+    ${q.opts?`<dt>Options</dt><dd>${esc(q.opts)}</dd>`:''}
+    <dt>${q.sec==='C'?'Settled as':'Recommended'}</dt><dd class="recbox"><div class="rc">${esc(q.rec)}</div></dd>
+    ${q.follows?`<dt>Follows</dt><dd>${esc(q.follows)}</dd>`:''}
+    <dt>Affects</dt><dd style="display:flex;gap:6px;flex-wrap:wrap">${q.links.map(l=>`<a class="copy" href="${l.href}" style="text-decoration:none">${l.label}${ext}</a>`).join('')}</dd>
+  </dl></div>`;
+const sec = (t,sub,items,numf) => `<div class="qs"><h2>${t}</h2><span>${sub}</span></div>`+items;
+const byScreen = list => { const g=[]; list.forEach(q=>{ let x=g.find(y=>y.s===q.screen); if(!x){x={s:q.screen,name:q.screenName,items:[]};g.push(x);} x.items.push(q); }); return g.map(x=>`<div class="qg"><b>${x.name}</b><span class="n">${x.items.length}</span></div>`+x.items.map(q=>row(q,q.n)).join('')).join(''); };
+document.getElementById('list').innerHTML =
+  sec('Answer these first','Ten choices that shape the product. Everything else follows from them.',A.map((q,i)=>row(q,i+1)).join('')) +
+  sec('Smaller choices','Each has a recommended answer. Skip them and the recommendation stands.',byScreen(Bq)) +
+  sec('Settled','Already decided, or notes about the mockup. No answer needed.',byScreen(C));
+const rows = [...document.querySelectorAll('.qr')];
+const toggle = r => { const o = r.getAttribute('aria-expanded')!=='true'; r.setAttribute('aria-expanded',o); document.getElementById('d-'+r.dataset.id).classList.toggle('open',o); };
+rows.forEach(r=>r.onclick=()=>toggle(r));
+let f=-1; document.addEventListener('keydown',e=>{ if(e.target.closest('input'))return; if(e.key==='j'||e.key==='k'){ f=Math.max(0,Math.min(rows.length-1,f+(e.key==='j'?1:-1))); rows[f].focus(); rows[f].scrollIntoView({block:'nearest'}); } });
+document.getElementById('annot').onclick = e => { const on = e.currentTarget.getAttribute('aria-checked')!=='true'; e.currentTarget.setAttribute('aria-checked',on); document.body.classList.toggle('annot',on); };
+const hp = (location.hash||'').slice(1); if (hp) { const r = rows.find(r=>r.dataset.id===hp); if (r) toggle(r); }
+
+</script>
+</body>
+</html>

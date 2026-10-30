@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Run canvas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#14120b; --fg:#edecec; --card:#17191c; --card-warm:#1b1913; --muted:#26251e; --muted-fg:#a3a3a3;
+  --border:#33312b; --field:#221f18; --ring:#8a8578; --wire:#4a4740; --dots:#33312b; --canvas:#14120b;
+  --handle-border:#4a4740; --handle-hover:#6b6560;
+  --node-outline:rgba(255,255,255,.06); --node-icon-border:rgba(255,255,255,.08); --node-shadow:0 1px 3px rgba(0,0,0,.28);
+  --running-dot:#60a5fa; --running-bg:rgba(29,78,216,.16); --sel-ring:#60a5fa; --wire-running:#818cf8; --wire-failed:#f87171;
+  --hover:rgba(255,255,255,.04);--seg:#2a2c2f;--seg-on:#101113;--panel:#101113; --panel-line:rgba(255,255,255,.1); --panel-fg:#f3f4f6; --panel-muted:#9096a2; --panel-dim:#747c8b; --tl-border:#2e3138;
+  --attn:#fcd34d; --attn-bg:rgba(180,83,9,.18); --attn-border:rgba(245,158,11,.4);
+  --ok:#6ee7b7; --fail:#fca5a5; --gap:#f59e0b;
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"JetBrains Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 13px/19.5px var(--font);font-feature-settings:"cv02","cv03","cv04","cv11";-webkit-font-smoothing:antialiased;overflow:hidden}
+button{font-family:inherit;cursor:pointer}
+svg{flex:none}
+.ic{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.app{display:flex;height:100vh;width:100vw}
+/* rail */
+.rail{width:56px;flex:none;background:var(--card-warm);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:12px 0;gap:4px}
+.rail .ws{width:32px;height:32px;border-radius:8px;background:var(--fg);color:var(--bg);font:700 13px/32px var(--font);text-align:center;margin-bottom:12px}
+.rail a{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted-fg);position:relative}
+.rail a svg{width:20px;height:20px}
+.rail a:hover{background:var(--hover);color:var(--fg)}
+.rail a[aria-current]{background:var(--muted);color:var(--fg);box-shadow:inset 0 0 0 1px var(--border)}
+.rail a .tip{position:absolute;left:48px;top:50%;transform:translateY(-50%);background:var(--card);border:1px solid var(--border);border-radius:6px;padding:2px 8px;font:500 12px/18px var(--font);color:var(--fg);white-space:nowrap;display:none;z-index:30}
+.rail a:hover .tip{display:block}
+.rail .sp{flex:1}
+.rail .me{width:28px;height:28px;border-radius:50%;background:var(--seg);font:600 11px/28px var(--font);text-align:center;color:var(--muted-fg)}
+.ico{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.rail a svg{width:20px;height:20px}
+/* main column */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.hdr{height:52px;flex:none;display:flex;align-items:center;gap:10px;padding:0 12px 0 16px;border-bottom:1px solid var(--border);background:var(--bg);min-width:0}
+.hdr h1{margin:0;font:600 16px/24px var(--font);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.hdr .crumb{color:var(--muted-fg);font:500 12px/16px var(--font);white-space:nowrap}
+.badge{display:inline-flex;align-items:center;gap:4px;border-radius:4px;padding:2px 6px 2px 4px;font:500 12px/16px var(--font);flex:none;white-space:nowrap}
+.badge svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.b-running{background:rgba(23,37,84,.7);color:#93c5fd}.b-passed{background:rgba(2,44,34,.7);color:#6ee7b7}
+.b-failed{background:rgba(69,10,10,.7);color:#fca5a5}.b-pending{background:#0f172a;color:#d1d5db}
+.b-unres{background:#26251e;color:#d6d3d1}.b-canc{background:#0f172a;color:#d1d5db}.b-done{background:rgba(2,44,34,.7);color:#6ee7b7}
+.b-took{background:rgba(76,29,149,.45);color:#c4b5fd}
+.b-needs{background:var(--attn-bg);color:var(--attn)}.b-you{background:#26251e;color:#d1d5db}
+.meta{color:var(--muted-fg);font:400 12px/16px var(--font);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ref{display:inline-flex;align-items:center;gap:6px;font:400 11px/16px var(--mono);color:#747c8b;border:1px solid var(--border);border-radius:6px;padding:2px 6px;background:var(--field);white-space:nowrap}
+.ref:hover{color:var(--fg)}
+.ref svg{width:12px;height:12px}
+.hdr .grow{flex:1}
+.btn{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;border:1px solid var(--border);background:var(--muted);color:var(--fg);font:500 12px/1 var(--font);white-space:nowrap}
+a.btn,a.btn:hover{text-decoration:none}
+.btn:hover{background:#383c44}
+.btn.pri{background:#f7f7f4;color:#26251e;border-color:transparent}.btn.pri:hover{background:#fff}
+.btn.dis{opacity:.45;pointer-events:none}
+.btn .ic{width:14px;height:14px}
+.btn.term{font-family:var(--font);background:var(--field)}
+.seg{display:inline-flex;background:#26251e;border-radius:8px;padding:2px;gap:2px}
+.seg button{white-space:nowrap;height:24px;padding:0 10px;border:0;border-radius:6px;background:none;color:var(--muted-fg);font:500 12px/1 var(--font)}
+.seg button.on{background:#383c44;color:var(--fg)}
+.smenu{position:relative}.smenu summary{list-style:none}.smenu summary::-webkit-details-marker{display:none}.smenu .sm{position:absolute;right:0;top:34px;min-width:210px;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:4px;z-index:70}
+.smenu .sm a{display:flex;justify-content:space-between;gap:12px;padding:6px 10px;border-radius:6px;color:var(--fg);text-decoration:none;font:500 12px/16px var(--font)}.smenu .sm a small{color:var(--muted-fg);font-weight:400;font-size:11px}.smenu .sm a:hover{background:rgba(255,255,255,.06)}
+.tgl{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted-fg);font:500 12px/1 var(--font)}
+.tgl .sw{width:22px;height:12px;border-radius:6px;background:var(--muted);position:relative}
+.tgl .sw:after{content:"";position:absolute;left:2px;top:2px;width:8px;height:8px;border-radius:50%;background:var(--muted-fg);transition:.15s}
+body.ann .tgl{color:var(--fg)}body.ann .tgl .sw{background:#5b4410}body.ann .tgl .sw:after{left:12px;background:var(--gap)}
+.runsbtn{display:none}
+.wd{font-weight:500}
+
+/* body row */
+.row{flex:1;display:flex;min-height:0;position:relative}
+/* runs sidebar */
+.runs{width:280px;flex:none;background:var(--card-warm);border-right:1px solid var(--border);display:flex;flex-direction:column;min-height:0}
+.runs-h{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--border);font:500 12px/16px var(--font);text-transform:uppercase;letter-spacing:.04em;color:var(--muted-fg)}
+.search{flex:1;height:32px;display:flex;align-items:center;gap:8px;padding:0 10px;border:1px solid var(--border);border-radius:6px;background:var(--field);font:400 13px/1 var(--font);color:var(--muted-fg);text-transform:none;letter-spacing:-.01em;min-width:0}
+.search svg{width:16px;height:16px}
+.fbtn{width:32px;height:32px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted-fg);display:flex;align-items:center;justify-content:center}
+.runs-list{overflow:auto;padding:2px 0 8px}
+.rw{padding:6px 8px 0}
+.rc{color:inherit;text-decoration:none;display:block;border:1px solid var(--border);background:var(--card-warm);border-radius:6px;padding:10px 12px;cursor:pointer}
+.rc:hover{background:rgba(30,41,59,.55)}
+.rc.sel{background:#1e293b;border-color:rgba(237,236,236,.2)}
+.rc .t{font:500 13px/19.5px var(--font);letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rc .m{margin-top:4px;display:flex;align-items:center;gap:6px;font:400 12px/16px var(--font);color:var(--muted-fg)}
+.rc .m svg{width:14px;height:14px}
+.rc .m .w{font-weight:500}
+.rc .m .ts{margin-left:auto;font-variant-numeric:tabular-nums}
+.c-neu{color:#d6d3d1}.c-run{color:#93c5fd}.c-needs{color:var(--attn)}.c-you{color:#c4b5fd}.c-fail{color:var(--fail)}.c-ok{color:var(--ok)}
+.runs-note{padding:10px 12px;color:var(--panel-dim);font:400 12px/16px var(--font)}
+/* canvas */
+.cv{flex:1;min-width:0;position:relative;overflow:hidden;background-color:var(--canvas);background-image:radial-gradient(circle,var(--dots) 1px,transparent 1.3px);background-size:22px 22px;cursor:grab;touch-action:none}
+.cv.pan{cursor:grabbing}
+.world{position:absolute;left:0;top:0;transform-origin:0 0}
+.world svg.edges{position:absolute;left:-2000px;top:-300px;width:5000px;height:5000px;overflow:visible;pointer-events:none}
+.edges path{fill:none;stroke-width:2;stroke:var(--wire);transition:stroke .2s}
+.edges path.run{stroke:var(--wire-running)}.edges path.fail{stroke:var(--wire-failed)}.edges path.dim{stroke-dasharray:6 5;opacity:.7}
+.edges path.hl{stroke:#8a847c}.edges path.run.hl{stroke:#a5b4fc}
+.chan{position:absolute;transform:translate(-50%,-50%);border:1px solid var(--border);background:var(--card);border-radius:6px;padding:2px 6px;font:500 11px/1.4 var(--font);color:var(--muted-fg);box-shadow:0 1px 2px rgba(0,0,0,.05);white-space:nowrap;pointer-events:none}
+.chan.fail{color:var(--fail);border-color:rgba(239,68,68,.35)}
+/* nodes */
+.node{position:absolute;width:280px;background:var(--card);border-radius:16px;box-shadow:var(--node-shadow),0 0 0 1px var(--node-outline);color:var(--fg);text-align:left;cursor:pointer;transition:box-shadow .2s}
+.node.wide{width:320px}
+.node .clip{border-radius:16px;overflow:hidden}
+.node.selected{box-shadow:0 0 0 2px var(--running-bg),0 0 0 6px var(--sel-ring)}
+.node.dim{opacity:.7}
+.node:hover:not(.selected){box-shadow:var(--node-shadow),0 0 0 1px rgba(255,255,255,.2)}
+.node .head{padding:14px 14px 12px;display:flex;gap:10px;align-items:flex-start}
+.node .icon{margin-top:2px;width:28px;height:28px;flex:none;border-radius:6px;background:var(--muted);border:1px solid var(--node-icon-border);display:flex;align-items:center;justify-content:center;color:var(--fg);opacity:.9}
+.node .icon svg{width:16px;height:16px}
+.node .title{font:600 14px/1.375 var(--font);letter-spacing:-.015em}
+.node .sub{font:400 12px/1.375 var(--font);color:var(--muted-fg);margin-top:2px}
+.steps{list-style:none;margin:0;padding:10px 14px;border-top:1px solid color-mix(in oklab,var(--border) 70%,transparent);background:color-mix(in oklab,var(--muted) 30%,transparent)}
+.steps li{display:flex;align-items:center;gap:8px;min-height:28px;padding:6px 6px;margin:0 -6px;border-bottom:1px solid color-mix(in oklab,var(--border) 50%,transparent);border-radius:6px;position:relative}
+.steps li:last-child{border-bottom:0}
+.steps li:hover{background:rgba(255,255,255,.05)}
+.steps li.cur{background:rgba(59,130,246,.12);border-bottom-color:transparent}
+.steps li.sel{box-shadow:inset 0 0 0 1px rgba(96,165,250,.7)}
+.steps .n{width:16px;height:16px;border-radius:50%;background:var(--muted);color:var(--muted-fg);font:600 11px/16px var(--font);text-align:center;font-variant-numeric:tabular-nums;flex:none}
+.steps li.done .n{background:rgba(16,185,129,.2);color:#6ee7b7}
+.steps li.cur .n{background:#2563eb;color:#fff}
+.steps li.unres .n,.steps li.canc .n{background:#3a3833;color:#d6d3d1}
+.steps li.wait .n{background:rgba(245,158,11,.25);color:#fcd34d}.steps li.took .n{background:rgba(139,92,246,.25);color:#c4b5fd}
+.steps li.failed .n{background:rgba(239,68,68,.25);color:#fca5a5}
+.steps .t{font:500 12px/16px var(--font);flex:1;min-width:0}
+.steps .t small{display:block;font:400 11px/14px var(--font);color:var(--muted-fg);margin-top:1px}
+.steps li.cur .t{color:#dbeafe}
+.steps .sg{width:14px;height:14px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.steps .kd{width:13px;height:13px;stroke:var(--muted-fg);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.8}
+.steps .try{font:500 11px/14px var(--font);color:#93c5fd;white-space:nowrap}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 14px;border-top:1px solid;font:500 11px/16.5px var(--font)}
+.foot .l{display:inline-flex;align-items:center;gap:6px}
+.foot .r{max-width:60%;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-variant-numeric:tabular-nums;opacity:.8}
+.g{width:16px;height:16px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:#fff;flex:none}
+.g svg{width:10px;height:10px;stroke:#fff;fill:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.gi{width:14px;height:14px;flex:none;fill:none;stroke-width:1.75}
+.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+.s-passed{border-color:rgba(16,185,129,.2);background:rgba(16,185,129,.1);color:#6ee7b7}
+.s-failed{border-color:rgba(239,68,68,.2);background:rgba(239,68,68,.1);color:#fca5a5}
+.s-running{border-color:rgba(59,130,246,.2);background:rgba(59,130,246,.1);color:#93c5fd}
+.s-wait{border-color:var(--attn-border);background:var(--attn-bg);color:var(--attn)}.s-took{border-color:rgba(139,92,246,.25);background:rgba(139,92,246,.1);color:#c4b5fd}
+.s-unres,.s-canc{border-color:var(--border);background:var(--muted);color:#d1d5db}
+.s-pending{border-color:var(--border);background:var(--muted);color:var(--muted-fg)}
+.port{position:absolute;width:10px;height:10px;border-radius:3px;border:1px solid var(--handle-border);background:var(--card);z-index:11}
+.port.t{top:-5px;left:50%;margin-left:-5px}.port.b{bottom:-5px;left:50%;margin-left:-5px}.port.r{right:-5px;top:50%;margin-top:-5px}.port.l{left:-5px;top:50%;margin-top:-5px}
+.node:hover .port{border-color:var(--handle-hover)}
+/* zoom pill + minimap */
+.zoom{position:absolute;left:16px;bottom:16px;display:inline-flex;align-items:center;gap:2px;height:28px;padding:2px;border-radius:6px;background:#2e3138;box-shadow:0 0 0 1px rgba(75,85,99,.7);color:#f3f4f6;font:500 12px/1 var(--font);z-index:20;cursor:default}
+.zoom button{width:24px;height:24px;border:0;background:none;color:inherit;border-radius:4px;display:flex;align-items:center;justify-content:center}
+.zoom button:hover{background:rgba(255,255,255,.1)}
+.zoom button svg{width:14px;height:14px}
+.zoom span{padding:0 6px;font-variant-numeric:tabular-nums;min-width:44px;text-align:center}
+.mini{position:absolute;right:16px;bottom:16px;width:168px;z-index:20;cursor:default}
+.mini .box{height:132px;border-radius:8px;background:var(--card-warm);border:1px solid var(--border);position:relative;overflow:hidden}
+.mini .box i{position:absolute;display:block;border-radius:2px;background:#464a53}
+.mini .box i.d{background:#2f7a5c}.mini .box i.a{background:#3b82f6}.mini .box i.w{background:#b45309}.mini .box i.t{background:#7c3aed}.mini .box i.u,.mini .box i.c{background:#8a8578}.mini .box i.f{background:#dc2626}.mini .box i.s{outline:1px solid #fff}
+.mini .vp{position:absolute;border:1.5px solid #f3f4f6;border-radius:2px;background:rgba(255,255,255,.06);pointer-events:none}
+.mini .cap{font:500 11px/16px var(--font);color:var(--muted-fg);margin-top:4px;text-align:right}
+/* inspector */
+.insp{width:480px;flex:none;background:var(--card-warm);border-left:1px solid var(--border);display:flex;flex-direction:column;min-height:0;font-size:13px;line-height:19.5px;letter-spacing:-.01em}
+.insp.hide{display:none}
+.sb-chrome{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border-bottom:1px solid var(--panel-line);flex:none}
+.icbtn{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;color:var(--muted-fg);background:none;border:0}
+.icbtn:hover{background:rgba(255,255,255,.06);color:var(--fg)}
+.insp-scroll{overflow:auto;flex:1;min-height:0}
+.run-head{padding:16px;border-bottom:1px solid var(--panel-line);background:var(--panel)}
+.run-head .l1{display:flex;align-items:center;gap:8px}
+.run-head h2{margin:0;font:600 16px/1.25 var(--font);letter-spacing:0;color:var(--panel-fg);flex:1;min-width:0}
+.run-head .sub{margin-top:6px;font:400 12px/16px var(--font);color:var(--panel-muted);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.run-head .sub i{color:#464a53;font-style:normal}
+.kind{display:inline-flex;align-items:center;gap:4px;border-radius:999px;border:1px solid var(--tl-border);padding:1px 8px;font:500 11px/16px var(--font);color:#d1d5db}
+.kind svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.run-head .acts{margin-top:12px;display:flex;gap:8px;flex-wrap:wrap}
+.why{margin:12px;padding:12px 14px;border-radius:8px;background:#17191c;border:1px solid var(--tl-border)}
+.why .lb,.sec .lb{font:600 11px/16px var(--font);text-transform:uppercase;letter-spacing:.025em;color:var(--panel-dim)}
+.why p{margin:4px 0 0;font:400 14px/21px var(--font);color:var(--panel-fg);letter-spacing:-.005em}
+.sec{padding:4px 12px 12px}
+.sec .lb{padding:0 4px 6px;display:block}
+.tl{border:1px solid var(--tl-border);border-radius:8px;background:#17191c;overflow:hidden}
+.li{display:flex;gap:10px;align-items:flex-start;padding:8px 12px;border-bottom:1px solid var(--tl-border);font:400 13px/19.5px var(--font);color:#e3e5e8}
+.li:last-child{border-bottom:0}
+.li .gl{margin-top:3px;width:14px;height:14px;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.li .tx{flex:1;min-width:0}
+.li .tx small{display:block;color:var(--panel-muted);font:400 12px/16px var(--font)}
+.li .st{font:500 12px/16px var(--font);color:var(--panel-muted);white-space:nowrap;margin-top:2px}
+.runrow{display:flex;gap:12px;padding:10px 12px;border-bottom:1px solid var(--tl-border)}
+.runrow:last-child{border-bottom:0}
+.dotcol{display:flex;flex-direction:column;align-items:center;width:14px;flex:none;padding-top:4px}
+.dotcol b{width:10px;height:10px;border-radius:50%;background:#464a53;display:block}
+.dotcol b.d{background:#10b981}.dotcol b.a{background:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.25);animation:pulse 1.6s ease-in-out infinite}.dotcol b.n{background:#8a8578}.dotcol b.f{background:#ef4444}
+@keyframes pulse{50%{opacity:.55}}
+.runrow .tx{flex:1;min-width:0}
+.runrow .tt{font:500 13px/19.5px var(--font);color:var(--panel-fg)}
+.runrow .tt em{font-style:normal;color:var(--panel-muted);font-weight:400}
+.runrow small{display:block;font:400 12px/17px var(--font);color:var(--panel-muted)}
+.bar{height:6px;border-radius:3px;background:#2e3138;overflow:hidden;margin-top:6px}.bar i{display:block;height:100%;background:#60a5fa;border-radius:3px}
+.err{border:1px solid rgba(127,29,29,.7);background:rgba(69,10,10,.3);border-radius:8px;margin:0 12px 12px;color:#fca5a5}
+.err.neutral{border-color:var(--tl-border);background:#17191c;color:#e3e5e8}.err.neutral .h{color:#d6d3d1;border-color:var(--tl-border)}.err.neutral .b small{color:var(--panel-muted)}
+.err .h{display:flex;align-items:center;gap:6px;padding:6px 12px;font:600 11px/16px var(--font);text-transform:uppercase;letter-spacing:.025em;color:#f87171;border-bottom:1px solid rgba(127,29,29,.7)}
+.err .h svg{width:14px;height:14px}
+.err .b{padding:10px 12px;font:500 13px/19.5px var(--font)}
+.err .b small{display:block;margin-top:4px;color:#fca5a5;opacity:.8;font:400 12px/17px var(--font)}
+.next{padding:4px 12px 12px}
+.next .opt{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--tl-border);border-radius:8px;background:#17191c;margin-bottom:8px}
+.next .opt .tx{flex:1;min-width:0}.next .opt .tx b{font-weight:500;color:var(--panel-fg);display:block}.next .opt .tx small{color:var(--panel-muted);font:400 12px/16px var(--font)}
+details.dt{margin:0 12px 12px;border:1px solid var(--tl-border);border-radius:8px;background:#17191c;overflow:hidden}
+details.dt summary{list-style:none;display:flex;align-items:center;gap:6px;padding:6px 12px;font:600 11px/16px var(--font);text-transform:uppercase;letter-spacing:.025em;color:var(--panel-dim);cursor:pointer}
+details.dt summary::-webkit-details-marker{display:none}
+details.dt summary svg{width:14px;height:14px;transition:transform .15s}
+details.dt[open] summary svg{transform:rotate(90deg)}
+details.dt[open] summary{border-bottom:1px solid var(--tl-border)}
+details.dt pre{margin:0;padding:10px 12px;font:400 12px/18px var(--mono);color:#e3e5e8;white-space:pre-wrap;word-break:break-word}
+.jk{color:#93c5fd}.js{color:#86efac}.jn{color:#fcd34d}
+kbd{font:500 11px/16px var(--font);border:1px solid var(--tl-border);border-radius:4px;padding:0 4px;color:var(--panel-muted)}
+.hint{padding:8px 16px 14px;color:var(--panel-dim);font:400 12px/16px var(--font)}
+/* annotations */
+body.ann [data-gap]{outline:1px dashed var(--gap);outline-offset:2px;position:relative}
+body.ann [data-gap]::after{content:attr(data-gap);position:absolute;left:0;top:-9px;background:var(--gap);color:#1b1913;font:600 11px/13px var(--font);padding:0 4px;border-radius:3px;white-space:nowrap;z-index:40;pointer-events:none}
+body.ann .mini[data-gap]{position:absolute}
+body.ann .edges g[data-gap] path{stroke-dasharray:3 3;filter:drop-shadow(0 0 2px var(--gap))}
+body.ann .edges g[data-gap] path{stroke:var(--gap)}
+body.ann .steps li[data-gap]{outline-offset:-1px}
+/* narrow */
+@media (max-width:1199px){
+  .insp{position:absolute;right:0;top:0;bottom:0;width:min(440px,100%);z-index:30;box-shadow:-8px 0 24px rgba(0,0,0,.35)}
+  .mini{right:16px}
+  body.insp-open .mini{display:none}
+}
+@media (max-width:1099px){
+  .runs{position:absolute;left:0;top:0;bottom:0;z-index:35;display:none;width:300px}
+  .runs.open{display:flex}
+  .runsbtn{display:inline-flex}
+  .hdr .crumb{display:none}
+  .hdr .opt-r{display:none}
+}
+/* aw-frame: the shared top bar and Annotations toggle, copied from workflows.html */
+.top,.hdr{height:56px;padding:0 16px;gap:16px}
+.top .crumb b,.hdr h1{font:600 22px/33px var(--font);letter-spacing:-.02em;color:var(--fg)}
+#annTog,#annBtn{display:inline-flex;align-items:center;gap:8px;height:28px;padding:0;border:0;border-radius:0;background:none;color:var(--muted-fg);font:500 12px/1 var(--font);cursor:pointer;user-select:none}
+#annTog i,#annBtn i,#annBtn .sw{display:block;width:28px;height:16px;border-radius:8px;border:0;background:var(--seg);position:relative;transition:background .2s}
+#annTog i::after,#annBtn i::after,#annBtn .sw::after{content:"";position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:50%;background:var(--muted-fg);transition:transform .2s}
+#annTog[aria-pressed=true] i,#annBtn[aria-pressed=true] i,#annBtn[aria-pressed=true] .sw{background:#f59e0b}
+#annTog[aria-pressed=true] i::after,#annBtn[aria-pressed=true] i::after,#annBtn[aria-pressed=true] .sw::after{left:2px;transform:translateX(12px);background:#1a1200}
+@media (max-width:1100px){.hdr .crumb,.hdr .meta{display:none}.hdr h1{min-width:120px}}
+</style>
+</head>
+<body>
+<div class="app">
+    <nav class="rail" aria-label="Sindri pages">
+    <div class="ws" aria-hidden="true">S</div>
+    <a href="needs-you.html" aria-label="Home"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg><span class="tip">Home</span></a>
+    <a href="not-mocked.html?page=Work" aria-label="Work"><svg class="ico" viewBox="0 0 24 24"><path d="M9 6h12M9 12h12M9 18h12"/><path d="M3 6l1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg><span class="tip">Work</span></a>
+    <a href="workflows.html" aria-label="Workflows" aria-current="page"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="6" rx="1.5"/><rect x="14" y="15" width="7" height="6" rx="1.5"/><path d="M6.5 9v3a3 3 0 003 3H14"/></svg><span class="tip">Workflows</span></a>
+    <a href="context.html" aria-label="Context"><svg class="ico" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8 7l8 1M7 8l4 8M17 10.5l-4 5.5"/></svg><span class="tip">Context</span></a>
+    <a href="not-mocked.html?page=Agents" aria-label="Agents"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="3"/><path d="M12 4v4M9 14h.01M15 14h.01M2 13v2M22 13v2"/></svg><span class="tip">Agents</span></a>
+    <a href="not-mocked.html?page=System" aria-label="System"><svg class="ico" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg><span class="tip">System</span></a>
+    <a href="setup.html" aria-label="Settings"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 01-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 010-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 014 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 010 4h-.1a1.7 1.7 0 00-1.5 1z"/></svg><span class="tip">Settings</span></a>
+    <div class="sp"></div>
+    <a href="questions.html" aria-label="Questions for the owner"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 114 2c-.9.6-1.5 1-1.5 2M12 17h.01"/></svg><span class="tip">Questions for the owner</span></a>
+    <div class="me" aria-hidden="true">You</div>
+  </nav>
+  <div class="main">
+    <header class="hdr">
+      <button class="btn runsbtn" id="runsbtn" aria-label="Show runs"><svg class="ic" viewBox="0 0 24 24"><path d="M3 12h4l3 8 4-16 3 8h4"/></svg>Runs</button>
+      <span class="crumb">Idea to merged pull request /</span>
+      <h1 id="h-title"></h1>
+      <span id="h-badge"></span>
+      <span class="meta" id="h-elapsed"></span>
+      <span class="ref" id="h-ref" title="Copy reference" data-gap="display-names"></span>
+      <span class="grow"></span>
+      <details class="smenu" id="smenuD"><summary class="btn" title="Mockup control: not part of the product">States<svg class="ic" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></summary><div class="sm" id="statesMenu"></div></details>
+      <button class="tgl" id="annBtn" aria-pressed="false"><span class="sw"></span>Annotations</button>
+      <button class="btn" id="cancelBtn"><svg class="ic" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>Cancel run</button>
+    </header>
+    <div class="row" id="row">
+      <aside class="runs" id="runs">
+        <div class="runs-h">Runs<div class="search"><svg class="ic" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>Search runs</div><button class="fbtn" aria-label="Filter"><svg class="ic" viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2v-8.54z"/></svg></button></div>
+        <div class="runs-list" id="runsList" data-gap="run-list-by-workflow"></div>
+        <div class="runs-note">Runs of Idea to merged pull request, newest first.</div>
+      </aside>
+      <section class="cv" id="cv" aria-label="Run canvas, fixed layout">
+        <div class="world" id="world"><svg class="edges" id="edges"></svg></div>
+        <div class="zoom" id="zoom">
+          <button id="zo" aria-label="Zoom out"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+          <button id="zi" aria-label="Zoom in"><svg class="ic" viewBox="0 0 24 24"><path d="M5 12h14M12 5v14"/></svg></button>
+          <span id="zp">70%</span>
+          <button id="zf" aria-label="Fit to screen" title="Fit (F)"><svg class="ic" viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg></button>
+          <button id="zc" aria-label="Centre on the active step" title="Active step"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="1.5"/></svg></button>
+        </div>
+        <div class="mini" id="mini" data-gap="minimap (our addition, SuperPlane has none)"><div class="box" id="miniBox"></div><div class="cap">Overview</div></div>
+      </section>
+      <aside class="insp" id="insp" aria-label="Step details"></aside>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ---------- icons ---------- */
+const P={
+ home:'<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/>',
+ work:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+ flow:'<rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/>',
+ ctx:'<circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4"/>',
+ agents:'<rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4M8 16h.01M16 16h.01"/>',
+ sys:'<path d="M22 12h-4l-3 9L9 3l-3 9H2"/>',
+ set:'<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+ pause:'<circle cx="12" cy="12" r="9"/><path d="M10 9v6M14 9v6"/>', minus:'<circle cx="12" cy="12" r="9"/><path d="M8 12h8"/>', check:'<path d="M20 6 9 17l-5-5"/>', x:'<path d="M18 6 6 18M6 6l12 12"/>',
+ loader:'<path d="M21 12a9 9 0 1 1-6.2-8.55"/>',
+ agent:'<path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/>',
+ auto:'<path d="M20 7h-9M14 17H5"/><circle cx="17" cy="17" r="3"/><circle cx="7" cy="7" r="3"/>',
+ you:'<path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+ only:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+ sub:'<rect x="3" y="3" width="8" height="8" rx="2"/><path d="M7 11v4a2 2 0 0 0 2 2h4"/><rect x="13" y="13" width="8" height="8" rx="2"/>',
+ wait:'<circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>',
+ copy:'<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
+ up:'<path d="m18 15-6-6-6 6"/>', down:'<path d="m6 9 6 6 6-6"/>', right:'<path d="m9 18 6-6-6-6"/>',
+ link:'<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>',
+ panel:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M15 3v18"/><path d="m8 9 3 3-3 3"/>',
+ target:'<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>',
+ pen:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+ list:'<path d="m3 17 2 2 4-4M3 7l2 2 4-4M13 6h8M13 12h8M13 18h8"/>',
+ pr:'<circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7M6 9v12"/>',
+ flag:'<path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zM4 22v-7"/>',
+ alert:'<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4M12 17h.01"/>',
+ ban:'<circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/>',
+ redo:'<path d="M3 12a9 9 0 0 1 15-6.7L21 8M21 3v5h-5M21 12a9 9 0 0 1-15 6.7L3 16M3 21v-5h5"/>',
+ term:'<path d="m4 17 6-6-6-6M12 19h8"/>',
+ hand:'<path d="M18 11V6a2 2 0 0 0-4 0M14 10V4a2 2 0 0 0-4 0v2M10 10.5V6a2 2 0 0 0-4 0v8M18 8a2 2 0 1 1 4 0v6a8 8 0 0 1-8 8h-2c-2.8 0-4.5-.9-5.9-2.4L3.4 16a2 2 0 0 1 3.2-2.4L8 15"/>'
+};
+const ic=(k,c='ic')=>`<svg class="${c}" viewBox="0 0 24 24">${P[k]}</svg>`;
+const KIND={agent:['AI agent','agent'],auto:['Automatic','auto'],you:['You','you'],only:['Only you','only'],sub:['Sub-workflow','sub'],wait:['Waiting','wait']};
+const kindChip=k=>`<span class="kind">${ic(KIND[k][1])}${KIND[k][0]}</span>`;
+
+/* ---------- rail ---------- */
+/* ---------- data (sample.json: workflow.line ITM-01JM8/line/1; ITM-01JQ7 review run) ---------- */
+const WHY={
+ scope:'Decides exactly what will change before any design or code, so nobody builds the wrong thing.',
+ design:'Turns the locked scope into a written spec that reviewers check from several angles. The plan is built from it.',
+ plan:'Splits the design into pull-request-sized phases a builder can finish. Without it the build has no safe order.',
+ phase:'Builds one phase, proves it works in the running app, has it reviewed, and opens the pull request.',
+ merged:'The pull request is merged and the work is done.',
+ stuck:'A stage could not finish. The run stops here until you decide what to do.',
+ dropped:'The run was stopped or cancelled, so no later stage ran.',
+ redesign:'When the plan finds the design cannot be built, the design stage runs again with the plan\'s notes (up to 2 times).'
+};
+const R=(t,len,who,res,state)=>({t,len,who,res,state});
+const SCOPE_STEPS=[
+ {id:'intake',name:'Take in the request',kind:'auto',st:'done',why:'Sorts a brief, ticket, idea or change into the right reader. Without it the stage would guess the input.',needs:['What to build: tracker item SPL-212'],makes:['The request, read and ready'],runs:[R('07:05 to 07:12','7m','Automatic','Read the tracker item')]},
+ {id:'gather',name:'Look at what exists',kind:'auto',st:'done',why:'Pulls in what already exists in the product, code, related work and history. Skipped, the scope would miss screens.',needs:['The request'],makes:['What already exists, from 4 views'],runs:[R('07:12 to 07:34','22m','Automatic','Gathered from 4 views')]},
+ {id:'draft',name:'Draft what changes',kind:'agent',st:'done',why:'Gives you something concrete to approve: what will change and what "done" means.',needs:['What already exists'],makes:['What will change: 19 screens and actions','What "done" means: 9 points'],runs:[R('07:34 to 08:05','31m','AI agent','Drafted',0)],tok:'118k'},
+ {id:'check',name:'Check the draft',kind:'auto',st:'done',why:'Catches missing sources and points that cannot be tested before you read it.',needs:['The draft'],makes:['A pass, or a list of gaps'],runs:[R('08:05 to 08:07','2m','Automatic','Passed')]},
+ {id:'ask',name:'Ask you questions',kind:'agent',st:'done',why:'Closes behaviour gaps only you can answer. Unanswered, the AI assumes.',needs:['The checked draft'],makes:['Questions for you'],runs:[R('08:07 to 08:13','6m','AI agent','Asked 4 questions')],tok:'22k'},
+ {id:'answer',name:'Your answers',kind:'you',st:'done',why:'You answer because only you know what you want. Skipped, the workflow guesses.',needs:['Questions for you'],makes:['Record of your answers'],runs:[R('08:13 to 09:07','54m','You','Answered')]},
+ {id:'second',name:'Second opinion',kind:'agent',st:'done',why:'A different AI hunts for what the first one missed.',needs:['The updated draft'],makes:['Nothing new found'],runs:[R('09:09 to 09:23','14m','AI agent','Found nothing new')],tok:'71k'},
+ {id:'size',name:'Estimate size',kind:'auto',st:'done',why:'Sets whether this is one pull request or must be split.',needs:['The draft','Second opinion'],makes:['Size: medium'],runs:[R('09:24 to 09:25','1m','Automatic','AI picked medium')]},
+ {id:'stop',name:'Approve the scope',kind:'only',st:'done',why:'Last chance to change the scope before it is locked in.',needs:['The proof package'],makes:['Your approval'],runs:[R('09:28 to 10:06','38m','You','Approved')]},
+ {id:'freeze',name:'Lock in the scope',kind:'auto',st:'done',why:'Makes the approved scope tamper-proof for later stages.',needs:['Your approval'],makes:['Scope document, locked in'],runs:[R('10:06 to 10:07','1m','Automatic','Locked in')]}
+];
+const DESIGN_STEPS=[
+ {id:'intake',name:'Load the scope',kind:'auto',st:'done',why:'Pulls in the locked-in scope and the house style so the spec starts from what you approved.',needs:['Scope document, locked in when you approved','Style and review guides'],makes:['Starting notes for the draft'],runs:[R('09:20 to 09:22','2m','Automatic','Fresh start')],tech:'step.design.intake'},
+ {id:'draft',name:'Write the spec draft',kind:'agent',st:'done',why:'Gives the reviewers something concrete to check. Without a draft there is nothing to review.',needs:['Scope document','House style','Problems found so far'],makes:['Spec draft: 11 sections'],runs:[R('09:22 to 10:03','41m','AI agent','Drafted')],tok:'164k',tech:'step.design.draft',tries:'Try 1 of 5'},
+ {id:'check',name:'Check the draft',kind:'auto',st:'done',note:'gaps found: draft again',why:'Catches missing coverage and style slips before reviewers spend time on them.',needs:['Spec draft','House style'],makes:['A pass, or a list of gaps'],runs:[R('10:03 to 10:05','2m','Automatic','Passed'),R('10:50 to 10:52','2m','Automatic','Passed after the fixes')],tech:'step.design.check'},
+ {id:'round',name:'Start a review pass',kind:'auto',st:'done',why:'Queues the reviewers for this pass, so each angle gets looked at once.',needs:['Review guide','Sections changed since the last pass'],makes:['A queue of reviewers'],runs:[R('10:05 to 10:06','1m','Automatic','Queued, pass 1'),R('10:52 to 10:53','1m','Automatic','Queued, pass 2')],tech:'step.lens.round'},
+ {id:'lens',name:'Review the draft',kind:'agent',st:'cur',tries:'Try 2 of 4',why:'Independent reviewers look for serious problems in the spec before a plan is built on it. Skipped, the plan could rest on a flawed design.',needs:['Spec draft: 11 sections, draft 2','Review queue: the next reviewer','What the earlier pass found: 3 problems, all fixed'],makes:['A review report with its findings (not written yet)'],runs:[R('10:06 to 10:23','17m','AI agent','Reviewed, found 3 problems, all fixed later'),R('Started 10:53','5h 47m','AI agent','Running now','cur')],tok:'61k of 150k',tech:'step.lens.run',live:true},
+ {id:'lenslog',name:'Log the review',kind:'auto',st:'pending',note:'findings: fix, then check again',why:'Records what the reviewer found and decides the next move: another reviewer, clean, or fix first.',needs:['The review report'],makes:['The review record','Problems to fix, if any'],runs:[],ranBefore:'Ran once in pass 1: 3 problems found.',tech:'step.lens.log'},
+ {id:'evidence',name:'Assemble the proof',kind:'auto',st:'pending',why:'Packs every check into the document you approve.',needs:['Spec draft','Review record'],makes:['Design document, ready for your approval'],runs:[],tech:'step.design.evidence'}
+];
+const PLAN_STEPS=[
+ {id:'intake',name:'Take in the design',kind:'auto',st:'pending',why:'Loads the design so the plan starts from what was reviewed.',needs:['Design document'],makes:['Starting notes for the plan'],runs:[]},
+ {id:'graph',name:'Draft the phase plan',kind:'agent',st:'pending',why:'Splits the design into pull-request-sized phases in a safe order.',needs:['Design document','Scope document'],makes:['The plan: phases and their order'],runs:[]},
+ {id:'check',name:'Check the plan',kind:'auto',st:'pending',why:'Catches gaps in the plan before a builder tries to follow it.',needs:['The plan'],makes:['A pass, or a list of gaps'],runs:[]},
+ {id:'dry',name:'Dry-run each phase',kind:'agent',st:'pending',why:'Asks: would a builder, given only this, succeed? Finds vague phases early.',needs:['The plan'],makes:['Notes on vague phases'],runs:[]},
+ {id:'hidden',name:'Write hidden tests',kind:'agent',st:'pending',why:'Tests the builder never sees, so passing them cannot be gamed.',needs:['The plan'],makes:['Hidden tests'],runs:[]},
+ {id:'proof',name:'Assemble the proof',kind:'auto',st:'pending',why:'Packs every check into the document you approve.',needs:['The plan','Hidden tests'],makes:['Plan, ready for your approval'],runs:[]},
+ {id:'stop',name:'Approve design and plan',kind:'only',st:'pending',why:'Nothing moves on until you approve. This locks in the design, the plan and every phase together.',needs:['Plan, ready for your approval'],makes:['Your approval'],runs:[]},
+ {id:'freeze',name:'Lock in the plan',kind:'auto',st:'pending',why:'Makes the approved plan tamper-proof for the build.',needs:['Your approval'],makes:['Plan, locked in'],runs:[]}
+];
+const PHASE_STEPS=[
+ {id:'seed',name:'Get ready',kind:'auto',st:'pending',why:'Sets up the branch and the allowed files for this phase.',needs:['Phase from the plan'],makes:['A branch to work on'],runs:[]},
+ {id:'build',name:'Build',kind:'sub',st:'pending',why:'Red tests first, then code inside the allowed files.',needs:['Phase from the plan','Hidden tests'],makes:['The change on the branch'],runs:[]},
+ {id:'prove',name:'Prove it works',kind:'sub',st:'pending',why:'Shows it works in the running app, not only in tests.',needs:['The change'],makes:['Proof package'],runs:[]},
+ {id:'review',name:'Code review',kind:'sub',st:'pending',why:'Review loops until no blocking issues are left.',needs:['The change','Proof package'],makes:['Review result'],runs:[]},
+ {id:'drift',name:'Check nothing changed',kind:'auto',st:'pending',why:'Did the code change after proof? It must be the same commit.',needs:['Proof package','Review result'],makes:['Same commit, confirmed'],runs:[]},
+ {id:'ship',name:'Open the pull request',kind:'sub',st:'pending',why:'Final check that proof, review and code are the same commit.',needs:['Same commit, confirmed'],makes:['A pull request'],runs:[]},
+ {id:'babysit',name:'Watch the pull request',kind:'wait',st:'pending',why:'Waiting for CI to finish and docs to sync. Nothing is stuck.',needs:['The pull request'],makes:['Green checks'],runs:[]},
+ {id:'owner',name:'Approve the merge',kind:'only',st:'pending',protected:true,why:'Nothing merges until you approve. One click merges the pull request, then the docs pull request.',needs:['Green checks','Proof package'],makes:['The merge'],runs:[]}
+];
+const fm=m=>String(Math.floor(m/60)).padStart(2,'0')+':'+String(m%60).padStart(2,'0');
+/* Invented timings for the failed run's earlier stages (sample.json has none): steps run one after another from `start` minutes. */
+function seqRuns(steps,start,durs){let t=start;return steps.map((x,i)=>{const d=durs[i],a=fm(t),b=fm(t+d);t+=d;return {...x,st:'done',tries:undefined,live:false,runs:[R(a+' to '+b,d+'m',{agent:'AI agent',auto:'Automatic',you:'You',only:'You',sub:'Automatic',wait:'Automatic'}[x.kind],'Done','d')]}})}
+const done=a=>a.map(s=>({...s,st:'done'}));
+
+const RUNS_LIST=[
+ ['ITM-01JM8','Saved search sharing','running','Running','9h 35m'],
+ ['ITM-01JN2','Link expiry','wait','Waiting for you','5h 51m'],
+ ['ITM-01JP4','Bulk tag rename','took','You took over','2h 35m'],
+ ['ITM-01JQ7','CSV import limits','failed','Failed','3h 8m ago'],
+ ['ITM-01K1A','Email digest settings','running','Running','48m'],
+ ['ITM-01K2C','Team invite links','wait','Paused, needs you','4h 30m'],
+ ['ITM-01K3D','Audit log filters','running','Running','1d 7h'],
+ ['ITM-01K4E','Rate limit headers','running','Running','3d 6h'],
+ ['ITM-01K5F','Bulk archive','wait','Waiting for you','1h 45m'],
+ ['ITM-01K6G','Webhook retry backoff','done','Done','5h 20m ago'],
+ ['ITM-01K7H','Export to PDF','unres',"Didn't work out",'1d ago'],
+ ['ITM-01K8J','Dark mode toggle','canc','Cancelled','2d ago']
+].map(([key,t,k,w,ts])=>({key,t,k,w,ts,ref:key+'/line/1'}));
+const RGL={running:['loader','c-run'],wait:['wait','c-needs'],took:['you','c-you'],failed:['x','c-fail'],done:['check','c-ok'],unres:['minus','c-neu'],canc:['x','c-neu']};
+
+const STATES={
+ run:{
+  title:'Saved search sharing',ref:'ITM-01JM8/line/1',status:'running',word:'Running',elapsed:'9h 35m',sel:'design/lens',
+  stages:[
+   {id:'scoping',name:'Scoping',sub:'Decide what will change',icon:'target',st:'done',foot:'Done',dur:'2h 14m',steps:SCOPE_STEPS,why:WHY.scope,needs:['What to build: tracker item SPL-212'],makes:['Scope document, locked in'],runs:[R('07:05 to 09:19','2h 14m','Automatic','Done: scope approved')]},
+   {id:'design',name:'Design',sub:'Write the spec, have it reviewed',icon:'pen',st:'running',foot:'Running',dur:'7h 21m',steps:DESIGN_STEPS,why:WHY.design,needs:['Scope document, locked in'],makes:['Design document (review pass 2 of 4)'],runs:[R('Started 09:19','7h 21m','Automatic','Running: review pass 2 of 4','cur')],tok:'374k of 1.5M'},
+   {id:'plan',name:'Plan',sub:'Split into buildable phases',icon:'list',st:'pending',foot:'Not started',dur:'',steps:PLAN_STEPS,why:WHY.plan,needs:['Design document','Scope document'],makes:['Plan graph'],runs:[]},
+   {id:'phase',name:'Build and prove',sub:'Build, prove, review, pull request',icon:'pr',st:'pending',foot:'Not started',dur:'',steps:PHASE_STEPS,why:WHY.phase,needs:['The plan\'s phases'],makes:['Pull request, merged'],runs:[]}
+  ],
+  ends:{done:['pending','Not reached'],stuck:['pending','Not reached'],dropped:['pending','Not reached']}
+ },
+ fail:{
+  title:'CSV import limits',ref:'ITM-01JQ7/line/1',status:'failed',word:'Failed',elapsed:'ended 13:32',sel:'phase/review',
+  stages:[
+   {id:'scoping',name:'Scoping',sub:'Decide what will change',icon:'target',st:'done',foot:'Done',dur:'2h 56m',steps:seqRuns(SCOPE_STEPS,370,[7,22,31,2,6,54,14,1,38,1]),why:WHY.scope,needs:['What to build: CSV import limits'],makes:['Scope document, locked in'],runs:[R('06:10 to 09:06','2h 56m','Automatic','Done: scope approved','d')]},
+   {id:'design',name:'Design',sub:'Write the spec, have it reviewed',icon:'pen',st:'done',foot:'Done',dur:'1h 8m',steps:seqRuns(DESIGN_STEPS,546,[2,41,2,1,19,1,2]),why:WHY.design,needs:['Scope document, locked in'],makes:['Design document'],runs:[]},
+   {id:'plan',name:'Plan',sub:'Split into buildable phases',icon:'list',st:'done',foot:'Done',dur:'1h 34m',steps:seqRuns(PLAN_STEPS,614,[3,31,2,18,14,3,22,1]),why:WHY.plan,needs:['Design document','Scope document'],makes:['Plan: 3 phases'],runs:[R('10:14 to 11:48','1h 34m','Automatic','Done: design and plan approved','d')]},
+   {id:'phase',name:'Build and prove',sub:'Phase 2 of 3',icon:'pr',st:'failed',foot:'Failed',dur:'1h 44m',why:WHY.phase,needs:['Phase 2 of 3, locked in'],makes:['Pull request (not reached)'],runs:[R('11:48 to 13:32','1h 44m','Automatic','Stopped at code review','f')],
+    steps:[
+     ...seqRuns(PHASE_STEPS.slice(0,3),708,[1,16,10]),
+     {id:'review',name:'Code review',kind:'sub',st:'failed',tries:'Try 2 of 5',why:'Review loops until no blocking issues are left, so a wrong behaviour never reaches the pull request.',
+      needs:['The change: branch csv-import-limits at 6e1f0c2','Phase plan: phase 2 of 3, locked in'],makes:['Review result (none: the review ended as failed)'],
+      err:{head:'The reviewer found the behaviour wrong',body:'1 blocking problem: the import accepts rows over the 10,000 row limit.',more:'Review pass 2 of 5 ended the review. Pass 1 found problems and an AI fixed them (33m), then pass 2 found the behaviour itself was wrong, not just the code.'},
+      runs:[R('12:15 to 12:36','21m','AI agent','Pass 1: found problems','d'),R('12:36 to 13:09','33m','AI agent','Fixed the problems','d'),R('13:10 to 13:32','22m','AI agent','Pass 2: behaviour wrong, review ended','f')],tok:'301k',tech:'workflow.review-loop',ref:'ITM-01JQ7/line/1/phase.1/review.1'},
+     {...PHASE_STEPS[4]},{...PHASE_STEPS[5]},{...PHASE_STEPS[6]},{...PHASE_STEPS[7]}
+    ]}
+  ],
+  ends:{done:['pending','Not reached'],stuck:['pending','Not reached'],dropped:['pending','Not reached']}
+ }
+};
+
+
+
+const NOW=Date.parse('2026-10-19T16:40:00Z');
+const hmOf=iso=>iso.slice(11,16);
+const durOf=(from,to)=>{let m=Math.round(((to||NOW)-Date.parse(from))/60000);if(m>=2880)return Math.floor(m/1440)+'d '+Math.floor(m%1440/60)+'h';const h=Math.floor(m/60);return h?h+'h '+(m%60)+'m':m+'m'};
+const STAGE_BASE=[
+ {id:'scoping',name:'Scoping',sub:'Decide what will change',icon:'target',steps:SCOPE_STEPS,why:WHY.scope,needs:['What to build'],makes:['Scope document, locked in']},
+ {id:'design',name:'Design',sub:'Write the spec, have it reviewed',icon:'pen',steps:DESIGN_STEPS,why:WHY.design,needs:['Scope document, locked in'],makes:['Design document']},
+ {id:'plan',name:'Plan',sub:'Split into buildable phases',icon:'list',steps:PLAN_STEPS,why:WHY.plan,needs:['Design document','Scope document'],makes:['Plan graph']},
+ {id:'phase',name:'Build and prove',sub:'Build, prove, review, pull request',icon:'pr',steps:PHASE_STEPS,why:WHY.phase,needs:['The plan\'s phases'],makes:['Pull request, merged']}
+];
+const FOOT={running:'Running',wait:'Waiting for you',took:'You took over',unres:"Didn't work out",canc:'Cancelled'};
+/* One run from a short spec: stages before it are finished, stages after are not started. */
+function gen(sp){
+  const stages=STAGE_BASE.map((b,i)=>{
+    const steps=b.steps.map(x=>({...x,runs:[],tries:undefined,live:false,err:undefined,protected:i===3&&x.protected,st:i<sp.stage||sp.status==='done'?'done':'pending'}));
+    let st=i<sp.stage||sp.status==='done'?'done':'pending',foot=st==='done'?'Done':'Not started',runs=[];
+    if(i===sp.stage&&sp.status!=='done'){
+      st=sp.status;foot=sp.word||FOOT[sp.status];
+      const k=steps.findIndex(x=>x.id===sp.step);
+      steps.forEach((x,j)=>{x.st=j<k?'done':j===k?(sp.status==='running'?'cur':sp.status):'pending'});
+      const cs=steps[k];cs.tries=sp.tries;cs.err=sp.info;cs.waitWord=sp.word;
+      cs.runs=[R((sp.status==='running'?'Started ':'Since ')+hmOf(sp.since),sp.status==='running'||sp.status==='wait'||sp.status==='took'?durOf(sp.since):'',sp.who||'AI agent',sp.res,sp.status==='running'?'cur':sp.status==='canc'?'c':sp.status==='unres'?'u':'w')];
+      runs=[R('Since '+hmOf(sp.since),durOf(sp.since),'Automatic',foot,sp.status==='running'?'cur':'w')];
+    }
+    return {...b,steps,st,foot,dur:'',runs};
+  });
+  const ended=['done','unres','canc'].includes(sp.status);
+  return {title:sp.title,ref:sp.ref,status:sp.status,word:sp.word||(sp.status==='done'?'Done':sp.status==='running'?'Running':FOOT[sp.status]),
+    elapsed:ended?'ended '+hmOf(sp.since)+', ran '+durOf(sp.started,Date.parse(sp.since)):durOf(sp.started),
+    sel:sp.stage+''&&STAGE_BASE[sp.stage].id+'/'+(sp.status==='done'?'owner':sp.step),stages,
+    ends:{done:[sp.status==='done'?'done':'pending',sp.status==='done'?'Done':'Not reached'],stuck:['pending','Not reached'],dropped:sp.status==='unres'?['unres',"Didn't work out"]:sp.status==='canc'?['canc','Cancelled']:['pending','Not reached']}};
+}
+const info=(label,head,body,more)=>({neutral:true,label,head,body,more});
+const SPECS=[
+ {ref:'ITM-01JN2/line/1',title:'Link expiry',status:'wait',stage:0,step:'stop',since:'2026-10-19T10:49:00Z',started:'2026-10-19T08:10:00Z',who:'You',res:'Waiting for your decision',info:info('Why it needs you','The scope is drafted and checked. It waits for your decision.','Read the scope, then approve it, ask for changes with notes, or drop the idea.','Nothing moves on until you approve. This is your last chance to change what will be built before it is locked in.')},
+ {ref:'ITM-01JP4/line/1',title:'Bulk tag rename',status:'took',stage:2,step:'graph',since:'2026-10-19T14:05:00Z',started:'2026-10-19T11:02:00Z',who:'You',res:'You took over; the clock is paused',info:info('You took over','You took over at 14:05. The clock is paused.','Hand it back when you are done and the workflow carries on from here.','2h 50m of waiting time is left on this stage.')},
+ {ref:'ITM-01K1A/line/1',title:'Email digest settings',status:'running',stage:0,step:'gather',since:'2026-10-19T15:52:00Z',started:'2026-10-19T15:52:00Z',res:'Gathering what already exists around email settings'},
+ {ref:'ITM-01K2C/line/1',title:'Team invite links',status:'wait',word:'Paused, needs you',stage:1,step:'lens',tries:'Used all 3 tries',since:'2026-10-19T12:10:00Z',started:'2026-10-18T16:30:00Z',who:'You',res:'Paused, waiting for your answer',info:info('Why it needs you','Used all 3 tries and problems are left.','Allow more tries, or stop the run.','The workflow cannot judge this alone. Without your answer it stays paused.')},
+ {ref:'ITM-01K3D/line/1',title:'Audit log filters',status:'running',stage:2,step:'dry',since:'2026-10-19T15:05:00Z',started:'2026-10-18T09:40:00Z',res:'Checking whether a builder, given only the plan, would succeed'},
+ {ref:'ITM-01K4E/line/1',title:'Rate limit headers',status:'running',stage:3,step:'build',since:'2026-10-19T13:48:00Z',started:'2026-10-17T10:00:00Z',res:'Building phase 2 of 3: red tests first, then code'},
+ {ref:'ITM-01K5F/line/1',title:'Bulk archive',status:'wait',stage:3,step:'owner',since:'2026-10-19T14:55:00Z',started:'2026-10-16T09:00:00Z',who:'You',res:'Waiting for your approval',info:info('Why it needs you','CI is green and the docs are synced.','Proof, review and code are the same commit. One approval merges the pull request, then the docs pull request.','Nothing is merged until you approve. This is the last check before the change reaches main.')},
+ {ref:'ITM-01K6G/line/1',title:'Webhook retry backoff',status:'done',stage:3,since:'2026-10-19T11:20:00Z',started:'2026-10-15T09:00:00Z'},
+ {ref:'ITM-01K7H/line/1',title:'Export to PDF',status:'unres',stage:1,step:'lens',tries:'Used all 4 tries',since:'2026-10-18T17:30:00Z',started:'2026-10-16T14:00:00Z',res:'The design could not pass review',info:info('Why it ended','The design could not be made to pass review.','The review used all its tries and problems were left, so nothing was built.','The run did not fail on its own: it ended without a result you can use.')},
+ {ref:'ITM-01K8J/line/1',title:'Dark mode toggle',status:'canc',stage:1,step:'draft',since:'2026-10-17T10:05:00Z',started:'2026-10-17T08:00:00Z',who:'You',res:'Stopped when you cancelled the run',info:info('How it ended','Cancelled by you while this step was running.','Nothing after this step ran.','The earlier steps finished and are kept in the history.')}
+];
+SPECS.forEach(sp=>{STATES[sp.ref.split('/')[0]]=gen(sp)});
+STATES['ITM-01JM8']=STATES.run;STATES['ITM-01JQ7']=STATES.fail;
+/* ---------- state ---------- */
+let S='ITM-01JM8',D=STATES.run,sel=D.sel,view={x:0,y:0,k:.7},pos={},edgeDefs=[];
+const cv=document.getElementById('cv'),world=document.getElementById('world'),edges=document.getElementById('edges');
+const $=id=>document.getElementById(id);
+const _unused={
+ done:['passed','Done'],running:['running','Running'],pending:['pending','Not started'],failed:['failed','Failed']
+};
+function foot(st,word,right){
+  const g={done:'<span class="g" style="background:#16a34a"><svg viewBox="0 0 24 24">'+P.check+'</svg></span>',
+   running:'<svg class="gi spin" viewBox="0 0 24 24" style="stroke:#2563eb;stroke-width:2">'+P.loader+'</svg>',
+   pending:'<svg class="gi" viewBox="0 0 14 14" style="stroke:#a3a3a3"><circle cx="7" cy="7" r="5.5"/></svg>',
+   failed:'<span class="g" style="background:#dc2626"><svg viewBox="0 0 24 24">'+P.x+'</svg></span>',
+   wait:'<svg class="gi" viewBox="0 0 24 24" style="stroke:#fcd34d;stroke-width:2">'+P.wait+'</svg>',
+   took:'<svg class="gi" viewBox="0 0 24 24" style="stroke:#c4b5fd;stroke-width:2">'+P.you+'</svg>',
+   unres:'<svg class="gi" viewBox="0 0 24 24" style="stroke:#d6d3d1;stroke-width:2"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>',
+   canc:'<span class="g" style="background:#737373"><svg viewBox="0 0 24 24">'+P.x+'</svg></span>'}[st];
+  const cls={done:'s-passed',running:'s-running',pending:'s-pending',failed:'s-failed',unres:'s-unres',canc:'s-canc',wait:'s-wait',took:'s-took'}[st];
+  return `<div class="foot ${cls}" ${st==='failed'?'data-gap="failed-chip"':''}><span class="l">${g}${word}</span><span class="r">${right||''}</span></div>`;
+}
+function stepGlyph(st){
+  if(st==='done')return `<svg class="sg" viewBox="0 0 24 24" style="stroke:#34d399">${P.check}</svg>`;
+  if(st==='cur')return `<svg class="sg spin" viewBox="0 0 24 24" style="stroke:#60a5fa">${P.loader}</svg>`;
+  if(st==='failed')return `<svg class="sg" viewBox="0 0 24 24" style="stroke:#f87171">${P.x}</svg>`;
+  if(st==='wait')return `<svg class="sg" viewBox="0 0 24 24" style="stroke:#fcd34d">${P.wait}</svg>`;
+  if(st==='took')return `<svg class="sg" viewBox="0 0 24 24" style="stroke:#c4b5fd">${P.you}</svg>`;
+  if(st==='unres')return `<svg class="sg" viewBox="0 0 24 24" style="stroke:#d6d3d1"><circle cx="12" cy="12" r="9"/><path d="M8 12h8"/></svg>`;
+  if(st==='canc')return `<svg class="sg" viewBox="0 0 24 24" style="stroke:#a3a3a3">${P.x}</svg>`;
+  return '';
+}
+function stageNode(s){
+  const id='st:'+s.id;
+  const li=s.steps.map((p,i)=>{
+    const cls=[p.st==='cur'?'cur':'',p.st==='done'?'done':'',p.st==='failed'?'failed':'',p.st==='unres'?'unres':'',p.st==='canc'?'canc':'',p.st==='wait'?'wait':'',p.st==='took'?'took':'',sel===s.id+'/'+p.id?'sel':''].join(' ');
+    const right=p.st==='cur'?`<span class="try">${p.tries}</span>`:p.st==='failed'?`<span class="try" style="color:#fca5a5">${p.tries}</span>`:(p.st==='unres'||p.st==='canc'||p.st==='wait'||p.st==='took')&&p.tries?`<span class="try" style="color:#d6d3d1">${p.tries}</span>`:'';
+    const note=p.note?`<small data-gap="recipe-edges">${p.note}</small>`:'';
+    return `<li class="${cls}" data-sel="${s.id}/${p.id}" title="${KIND[p.kind][0]}"><span class="n">${i+1}</span><span class="t">${p.name}${note}</span>${right}<svg class="kd" viewBox="0 0 24 24">${P[KIND[p.kind][1]]}</svg>${stepGlyph(p.st)}</li>`;
+  }).join('');
+  const dim=s.st==='pending'?'':'';
+  return `<div class="node wide ${sel===s.id?'selected':''} ${dim}" data-sel="${s.id}" id="n-${s.id}"><div class="clip">
+   <div class="head"><span class="icon">${ic(s.icon)}</span><div><div class="title" data-gap="display-names">${s.name}</div><div class="sub">${s.sub}</div></div></div>
+   <ol class="steps">${li}</ol>${foot(s.st,s.foot,s.dur)}</div><span class="port t"></span><span class="port b"></span><span class="port l"></span><span class="port r"></span></div>`;
+}
+function endNode(id,title,sub,icon,st,word,w){
+  return `<div class="node ${st==='pending'?'dim':''} ${sel===id?'selected':''}" data-sel="${id}" id="n-${id}"><div class="clip">
+   <div class="head"><span class="icon">${ic(icon)}</span><div><div class="title" data-gap="display-names">${title}</div><div class="sub">${sub}</div></div></div>${foot(st,word,'')}</div><span class="port t"></span><span class="port l"></span><span class="port r"></span></div>`;
+}
+function renderCanvas(){
+  const st=D.stages;
+  world.querySelectorAll('.node,.chan').forEach(n=>n.remove());
+  let html='';
+  st.forEach(s=>html+=stageNode(s));
+  html+=endNode('redesign','Redesign','Design runs again with the plan\'s notes','pen','pending','Not started');
+  const en=(id,t,sb,i)=>{const e=D.ends[id]||['pending','Not reached'];html+=endNode(id,t,sb,i,e[0],e[1])};
+  en('done','Merged','The pull request is merged','flag');en('stuck','Stuck','A stage could not finish','alert');en('dropped','Stopped','Run stopped or cancelled','ban');
+  world.insertAdjacentHTML('beforeend',html);
+  layout();drawEdges();drawMini();
+}
+function box(id){return pos[id]}
+function layout(){
+  pos={};let y=0;const gap=104;
+  const order=['scoping','design','plan','phase'];
+  order.forEach(id=>{const el=$('n-'+id);const w=320,h=el.offsetHeight;pos[id]={x:-w/2,y,w,h};el.style.left=-w/2+'px';el.style.top=y+'px';y+=h+gap;});
+  const d=pos.design,p=pos.plan,ph=pos.phase;
+  const place=(id,cx,yy)=>{const el=$('n-'+id);const w=280,h=el.offsetHeight;pos[id]={x:cx-w/2,y:yy,w,h};el.style.left=cx-w/2+'px';el.style.top=yy+'px';};
+  place('redesign',470,d.y+d.h-60);
+  const ey=ph.y+ph.h+gap;
+  place('done',0,ey);place('stuck',470,ey);place('dropped',-470,ey);
+}
+const PT={t:(b)=>[b.x+b.w/2,b.y,0,-1],b:(b)=>[b.x+b.w/2,b.y+b.h,0,1],l:(b)=>[b.x,b.y+b.h/2,-1,0],r:(b)=>[b.x+b.w,b.y+b.h/2,1,0]};
+function bez(a,pa,b,pb){
+  const A=PT[pa](box(a)),B=PT[pb](box(b));
+  const dist=Math.hypot(A[0]-B[0],A[1]-B[1]);const k=Math.max(40,Math.min(110,dist/2));
+  const p=[[A[0],A[1]],[A[0]+A[2]*k,A[1]+A[3]*k],[B[0]+B[2]*k,B[1]+B[3]*k],[B[0],B[1]]];
+  const t=.5,u=1-t;
+  const m=[0,1].map(i=>u*u*u*p[0][i]+3*u*u*t*p[1][i]+3*u*t*t*p[2][i]+t*t*t*p[3][i]);
+  return {d:`M${p[0][0]} ${p[0][1]} C${p[1][0]} ${p[1][1]} ${p[2][0]} ${p[2][1]} ${p[3][0]} ${p[3][1]}`,mid:m};
+}
+function drawEdges(){
+  const sts=Object.fromEntries(D.stages.map(s=>[s.id,s.st]));
+  const E=[
+   ['scoping','b','design','t','scope approved','main'],
+   ['design','b','plan','t','design approved','main'],
+   ['plan','b','phase','t','plan approved','main'],
+   ['phase','b','done','t','merged','main'],
+   ['plan','r','redesign','b','needs a redesign','loop'],
+   ['redesign','l','plan','t','redesigned','loop'],
+   ['phase','r','stuck','t','could not finish','end'],
+   ['scoping','l','dropped','t','stopped','stop'],
+   ['design','l','dropped','t','stopped','stop'],
+   ['plan','l','dropped','t','stopped','stop'],
+   ['phase','l','dropped','t','stopped','stop']
+  ];
+  let svg='',pills='';
+  const OX=2000,OY=300;
+  E.forEach(([a,pa,b,pb,label,kind],i)=>{
+    const {d,mid}=bez(a,pa,b,pb);
+    let cls='';
+    if(kind==='main'){
+      if(sts[a]==='done'&&['running','wait','took'].includes(sts[b]))cls='run';
+      else if(a==='phase'&&b==='done'&&D.ends.done&&D.ends.done[0]==='done')cls='';
+      else if(sts[a]==='done'&&sts[b]==='done')cls='';
+      else if(sts[a]==='failed'||sts[a]==='unres'||sts[a]==='canc')cls='dim';
+      else cls='';
+      if(sts[b]==='pending'&&sts[a]!=='done')cls='dim';
+    }
+    if(kind==='loop'||kind==='stop')cls='dim';
+    if(kind==='end'&&sts[a]==='failed')cls='fail';else if(kind==='end'&&sts[a]==='unres')cls='';else if(kind==='end')cls='dim';
+    if(kind==='stop'&&D.ends.dropped&&D.ends.dropped[0]!=='pending'&&(sts[a]==='canc'||sts[a]==='unres'))cls='';
+    svg+=`<g data-gap="recipe-edges" data-from="${a}" data-to="${b}"><path class="${cls}" d="${d.replace(/(-?\d+\.?\d*) (-?\d+\.?\d*)/g,(m,x,y)=>`${+x+OX} ${+y+OY}`)}"/></g>`;
+    pills+=`<span class="chan ${cls==='fail'?'fail':''}" data-gap="recipe-edges" data-from="${a}" data-to="${b}" style="left:${mid[0]}px;top:${mid[1]}px">${label}</span>`;
+  });
+  edges.innerHTML=svg;world.insertAdjacentHTML('beforeend',pills);
+}
+/* wait: "svg g[data-gap]" outlines use stroke override only; pills carry the label */
+
+/* ---------- pan / zoom ---------- */
+function apply(){
+  world.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.k})`;
+  $('zp').textContent=Math.round(view.k*100)+'%';drawMiniVp();
+}
+function zoomAt(f,cx,cy){
+  const k=Math.max(.3,Math.min(1.5,view.k*f));const r=k/view.k;
+  view.x=cx-(cx-view.x)*r;view.y=cy-(cy-view.y)*r;view.k=k;apply();
+}
+function centerOn(id,k){
+  const b=pos[id];if(!b)return;const r=cv.getBoundingClientRect();
+  if(k)view.k=k;
+  view.x=r.width/2-(b.x+b.w/2)*view.k;view.y=Math.min(120,r.height/2)-(b.y)*view.k+0;
+  apply();
+}
+function fit(){
+  const r=cv.getBoundingClientRect();let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  Object.values(pos).forEach(b=>{x0=Math.min(x0,b.x);y0=Math.min(y0,b.y);x1=Math.max(x1,b.x+b.w);y1=Math.max(y1,b.y+b.h)});
+  const k=Math.max(.3,Math.min(1,Math.min((r.width-60)/(x1-x0),(r.height-60)/(y1-y0))));
+  view.k=k;view.x=(r.width-(x1-x0)*k)/2-x0*k;view.y=(r.height-(y1-y0)*k)/2-y0*k;apply();
+}
+function activeId(){const s=D.stages.find(s=>s.st==='running'||s.st==='failed');return s?s.id:'design'}
+function focusSel(){
+  const stg=sel.split('/')[0];const b=pos[stg];if(!b)return;
+  const r=cv.getBoundingClientRect();view.k=1;
+  const vw=(innerWidth<1200&&sel)?r.width-440:r.width;
+  view.x=vw/2-(b.x+b.w/2);
+  const isStage=!!D.stages.find(s=>s.id===stg);
+  view.y=isStage?Math.max(84,(r.height-b.h)/2)-b.y:r.height*.35-b.y;
+  apply();
+}
+let drag=null;
+cv.addEventListener('pointerdown',e=>{if(e.target.closest('.zoom,.mini'))return;drag={x:e.clientX,y:e.clientY,vx:view.x,vy:view.y,moved:false};});
+addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4){drag.moved=true;cv.classList.add('pan')}if(drag.moved){view.x=drag.vx+dx;view.y=drag.vy+dy;apply()}});
+addEventListener('pointerup',e=>{if(drag){const was=drag.moved;drag=null;cv.classList.remove('pan');if(!was&&e.target.closest('.cv')&&!e.target.closest('.zoom,.mini')){const n=e.target.closest('[data-sel]');if(n)select(n.dataset.sel);else{clearSel()}}}});
+cv.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect();if(e.ctrlKey||e.metaKey){zoomAt(e.deltaY<0?1.1:.9,e.clientX-r.left,e.clientY-r.top)}else{view.x-=e.deltaX*.8;view.y-=e.deltaY*.8;apply()}},{passive:false});
+$('zi').onclick=()=>{const r=cv.getBoundingClientRect();zoomAt(1.15,r.width/2,r.height/2)};
+$('zo').onclick=()=>{const r=cv.getBoundingClientRect();zoomAt(1/1.15,r.width/2,r.height/2)};
+$('zf').onclick=fit;$('zc').onclick=()=>focusSel();
+/* hover highlight of connected edges */
+world.addEventListener('mouseover',e=>{const n=e.target.closest('.node');edges.querySelectorAll('g').forEach(g=>g.firstChild.classList.remove('hl'));if(!n)return;const id=n.id.slice(2);edges.querySelectorAll('g').forEach(g=>{if(g.dataset.from===id||g.dataset.to===id)g.firstChild.classList.add('hl')})});
+
+/* minimap */
+function drawMini(){
+  const b=$('miniBox');b.querySelectorAll('i').forEach(i=>i.remove());
+  const bs=Object.entries(pos);let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  bs.forEach(([,p])=>{x0=Math.min(x0,p.x);y0=Math.min(y0,p.y);x1=Math.max(x1,p.x+p.w);y1=Math.max(y1,p.y+p.h)});
+  const W=166,H=130,m=8,sc=Math.min((W-2*m)/(x1-x0),(H-2*m)/(y1-y0));
+  const ox=(W-(x1-x0)*sc)/2-x0*sc,oy=(H-(y1-y0)*sc)/2-y0*sc;
+  mini={sc,ox,oy};
+  bs.forEach(([id,p])=>{const s=D.stages.find(s=>s.id===id);const c=s?(s.st==='done'?'d':s.st==='running'?'a':s.st==='failed'?'f':s.st==='unres'?'u':s.st==='canc'?'c':s.st==='wait'?'w':s.st==='took'?'t':''):'';
+    const i=document.createElement('i');i.className=c+(sel.split('/')[0]===id?' s':'');i.style.cssText=`left:${p.x*sc+ox}px;top:${p.y*sc+oy}px;width:${p.w*sc}px;height:${p.h*sc}px`;b.appendChild(i)});
+  if(!$('miniVp')){const v=document.createElement('div');v.className='vp';v.id='miniVp';b.appendChild(v)}else b.appendChild($('miniVp'));
+  drawMiniVp();
+}
+let mini={sc:1,ox:0,oy:0};
+function drawMiniVp(){
+  const v=$('miniVp');if(!v)return;const r=cv.getBoundingClientRect();
+  const wx=-view.x/view.k,wy=-view.y/view.k,ww=r.width/view.k,wh=r.height/view.k;
+  v.style.cssText=`left:${wx*mini.sc+mini.ox}px;top:${wy*mini.sc+mini.oy}px;width:${ww*mini.sc}px;height:${wh*mini.sc}px`;
+}
+$('miniBox').addEventListener('pointerdown',e=>{
+  const mv=ev=>{const r=$('miniBox').getBoundingClientRect(),c=cv.getBoundingClientRect();const wx=(ev.clientX-r.left-mini.ox)/mini.sc,wy=(ev.clientY-r.top-mini.oy)/mini.sc;view.x=c.width/2-wx*view.k;view.y=c.height/2-wy*view.k;apply()};
+  mv(e);const up=()=>{removeEventListener('pointermove',mv);removeEventListener('pointerup',up)};addEventListener('pointermove',mv);addEventListener('pointerup',up);
+});
+
+/* ---------- header, runs ---------- */
+function renderHeader(){
+  $('h-title').textContent=D.title;
+  const b={running:['b-running','loader'],failed:['b-failed','x'],unres:['b-unres','minus'],canc:['b-canc','x'],done:['b-done','check'],wait:['b-needs','wait'],took:['b-took','you']}[D.status];
+  $('h-badge').innerHTML=`<span class="badge ${b[0]}" ${D.status==='failed'?'data-gap="failed-chip"':''}><svg viewBox="0 0 24 24" ${b[1]==='loader'?'class="spin"':''}>${P[b[1]]}</svg>${D.word}</span>`;
+  $('h-elapsed').textContent=['running','wait','took'].includes(D.status)?'Started '+D.elapsed+' ago':'Run '+D.elapsed;
+  $('h-ref').innerHTML=D.ref+ic('copy');
+  $('h-ref').onclick=()=>{try{navigator.clipboard.writeText(D.ref)}catch(e){}};
+  const cb=$('cancelBtn');cb.classList.toggle('dis',D.status!=='running');
+  $('runsList').innerHTML=RUNS_LIST.map(r=>{const [g,c]=RGL[r.k];return `<div class="rw"><a class="rc ${r.key===S?'sel':''}" href="run-canvas.html?run=${encodeURIComponent(r.ref)}"><div class="t">${r.t}</div><div class="m"><span class="${c}"><svg class="${g==='loader'?'spin':''}" viewBox="0 0 24 24" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round">${P[g]}</svg></span><span class="w ${c}">${r.w}</span><span class="ts">${r.ts}</span></div></a></div>`}).join('');
+  $('statesMenu').innerHTML=[['ITM-01JM8','Running'],['ITM-01JQ7','Failed'],['ITM-01K7H',"Didn't work out"],['ITM-01K8J','Cancelled'],['ITM-01JN2','Waiting for you'],['ITM-01JP4','You took over'],['ITM-01K6G','Done']].map(([k,w])=>`<a href="run-canvas.html?run=${k}/line/1">${w}<small>${STATES[k].title}</small></a>`).join('');
+}
+
+/* ---------- inspector ---------- */
+function find(id){
+  const [sg,st]=id.split('/');
+  const stage=D.stages.find(s=>s.id===sg);
+  if(stage&&!st)return {type:'stage',o:stage,stage};
+  if(stage){const i=stage.steps.findIndex(p=>p.id===st);return {type:'step',o:stage.steps[i],stage,i}}
+  const ends={redesign:['Redesign',WHY.redesign,'pen'],done:['Merged',WHY.merged,'flag'],stuck:['Stuck',WHY.stuck,'alert'],dropped:['Stopped',WHY.dropped,'ban']};
+  if(ends[id])return {type:'end',o:{name:ends[id][0],why:ends[id][1]}};
+}
+const GL={ready:['check','#34d399','Ready'],prog:['loader','#60a5fa','In progress'],wait:['wait','#9096a2','Not yet']};
+function items(list,mode,stOfStep){
+  return list.map(t=>{
+    let g=GL.ready;
+    if(mode==='needs'){g=stOfStep==='pending'?GL.wait:GL.ready}
+    else{g=stOfStep==='done'?GL.ready:stOfStep==='cur'||stOfStep==='running'?GL.prog:stOfStep==='failed'?['x','#f87171','Not produced']:GL.wait}
+    if(mode==='makes'&&/not written|none:|not reached/.test(t)&&stOfStep==='cur')g=GL.wait;
+    return `<div class="li"><svg class="gl ${g[0]==='loader'?'spin':''}" viewBox="0 0 24 24" style="stroke:${g[1]}">${P[g[0]]}</svg><div class="tx">${t}</div><div class="st">${g[2]}</div></div>`;
+  }).join('');
+}
+function renderInspector(){
+  const el=$('insp');const f=find(sel);
+  if(!f){el.classList.add('hide');document.body.classList.remove('insp-open');return}
+  el.classList.remove('hide');document.body.classList.add('insp-open');
+  const o=f.o;let html='';const itemId=D.ref.split('/')[0];
+  const isStep=f.type==='step',isStage=f.type==='stage';
+  const st=isStep?o.st:isStage?(o.st==='running'?'cur':o.st):(D.ends[sel]?({done:'done',unres:'unres',canc:'canc'}[D.ends[sel][0]]||'pending'):'pending');
+  const badge={cur:['b-running','loader','Running'],done:['b-passed','check','Done'],pending:['b-pending','wait','Not started'],failed:['b-failed','x','Failed'],unres:['b-unres','minus',"Didn't work out"],canc:['b-canc','x','Cancelled'],wait:['b-needs','wait',(isStep&&o.waitWord)||'Waiting for you'],took:['b-took','you','You took over']}[st];
+  const sub=isStep?`<span>${f.stage.name} stage, step ${f.i+1} of ${f.stage.steps.length}</span><i>·</i>${kindChip(o.kind)}`:isStage?`<span>Stage ${D.stages.indexOf(o)+1} of 4</span><i>·</i><span class="kind">${ic('sub')}Runs a sub-workflow</span>`:`<span>End of the run</span>`;
+  let meta='';
+  if(isStep&&o.live)meta=`<span>Started 10:53</span><i>·</i><span>running 5h 47m</span><i>·</i><span>work allowance ${o.tok}</span>`;
+  else if(isStep&&(o.st==='wait'||o.st==='took')&&o.runs.length)meta=`<span>${o.runs[0].t}</span><i>·</i><span>${o.runs[0].len}</span>`;
+  else if(isStep&&(o.st==='unres'||o.st==='canc'))meta=`<span>${o.tries||'Ended'}</span>`;
+  else if(isStep&&o.st==='failed')meta=`<span>Ended 13:32</span><i>·</i><span>${o.tries}</span><i>·</i><span>work allowance used ${o.tok}</span>`;
+  else if(isStep&&o.runs.length)meta=`<span>${o.runs.length>1?o.runs.length+' tries, ':''}last: ${o.runs[o.runs.length-1].len}</span>${o.tok?`<i>·</i><span>${o.tok} of work allowance</span>`:''}`;
+  else if(isStage&&o.dur)meta=`<span>${o.st==='running'?'Running for ':''}${o.dur}</span>${o.tok?`<i>·</i><span>work allowance ${o.tok}</span>`:''}`;
+  const title=o.name;
+  let acts='';
+  if(isStep&&o.live)acts=`<a class="btn pri" href="needs-you.html#takeover" title="Pauses the clock. You carry on from here, then hand it back.">${ic('you')}Take over</a><a class="btn" href="context.html?item=${itemId}">${ic('ctx')}See its context</a>`;
+  else if(isStep&&o.protected)acts=`<button class="btn term ${st==='pending'||st==='done'?'dis':''}" data-copy="sindri workflow complete ${D.ref.replace('/line/1','')}/line/1/phase.1 --outcome merged" title="Only you can do this, in a terminal">${ic('term')}Approve the merge &middot; terminal</button><a class="btn" href="context.html?item=${itemId}">${ic('ctx')}See its context</a>`;
+  else if(isStep&&st==='wait')acts=`<a class="btn pri" href="needs-you.html">${ic('hand')}Decide in Needs you</a><a class="btn" href="context.html?item=${itemId}">${ic('ctx')}See its context</a>`;
+  else if(isStep&&st==='took')acts=`<a class="btn pri" href="needs-you.html#takeover">${ic('you')}Hand back</a><a class="btn" href="context.html?item=${itemId}">${ic('ctx')}See its context</a>`;
+  else if(isStage&&o.st==='running')acts=`<a class="btn pri" href="needs-you.html#takeover">${ic('you')}Take over</a><a class="btn" href="context.html?item=${itemId}">${ic('ctx')}See its context</a>`;
+  else if(f.type!=='end')acts=`<a class="btn" href="context.html?item=${itemId}">${ic('ctx')}See its context</a>`;
+  html+=`<div class="sb-chrome"><div style="display:flex;gap:4px"><button class="icbtn" id="iClose" aria-label="Close (Esc)" title="Close (Esc)">${ic('panel')}</button></div><div style="display:flex;gap:4px;align-items:center"><kbd>J</kbd><kbd>K</kbd><button class="icbtn" id="iPrev" aria-label="Previous step" title="Previous (K)">${ic('up')}</button><button class="icbtn" id="iNext" aria-label="Next step" title="Next (J)">${ic('down')}</button><button class="icbtn" aria-label="Copy link">${ic('link')}</button></div></div>`;
+  html+=`<div class="insp-scroll"><div class="run-head"><div class="l1"><span class="badge ${badge[0]} " ${st==='failed'?'data-gap="failed-chip"':''}><svg viewBox="0 0 24 24" ${badge[1]==='loader'?'class="spin"':''}>${P[badge[1]]}</svg>${badge[2]}</span><h2>${title}</h2></div><div class="sub">${sub}</div>${meta?`<div class="sub" style="margin-top:2px">${meta}</div>`:''}${acts?`<div class="acts">${acts}</div>`:''}</div>`;
+  html+=`<div class="why" data-gap="why-text"><span class="lb">Why this step matters</span><p>${o.why}</p></div>`;
+  if(isStep&&o.err){
+    html+=`<div class="err ${o.err.neutral?'neutral':''}"><div class="h">${ic(o.err.neutral?'minus':'alert')}${o.err.neutral?(o.err.label||(st==='canc'?'How it ended':'Why it ended')):'What went wrong'}</div><div class="b">${o.err.head.replace(/\.$/,'')}. ${o.err.body}<small>${o.err.more}</small></div></div>`;
+    if(st==='failed'||st==='unres')html+=`<div class="next" data-gap="failed-next-actions"><span class="lb" style="display:block;font:600 11px/16px var(--font);text-transform:uppercase;letter-spacing:.025em;color:var(--panel-dim);padding:0 4px 6px">What you can do next</span>
+     <div class="opt"><div class="tx"><b>Take over and fix it yourself</b><small>Change the branch, then hand it back. The clock pauses while you have it.</small></div><a class="btn pri" href="needs-you.html#takeover">${ic('you')}Take over</a></div>
+     <div class="opt"><div class="tx"><b>See what the reviewer looked at</b><small>The feature, screens and files this change touches.</small></div><a class="btn" href="context.html?item=${itemId}">${ic('ctx')}See its context</a></div>
+     <div class="opt"><div class="tx"><b>Run this stage again</b><small>Starts the build and ship stage from the beginning.</small></div><button class="btn term">${ic('term')}Run again &middot; terminal</button></div>
+    </div>`;
+  }
+  if(f.type!=='end'){
+    html+=`<div class="sec"><span class="lb">What it needs</span><div class="tl">${items(o.needs,'needs',st)}</div></div>`;
+    html+=`<div class="sec"><span class="lb">What it produced</span><div class="tl">${items(o.makes,'makes',st)}</div></div>`;
+  }
+  if(f.type!=='end'){
+    let rows='';
+    if(o.runs&&o.runs.length){
+      rows=o.runs.map((r,i)=>{const cls=r.state==='cur'?'a':r.state==='f'?'f':(r.state==='c'||r.state==='u')?'n':'d';
+        const tri=isStep&&o.runs.length>1?`Try ${i+1} of ${(o.tries||'').split(' of ')[1]||o.runs.length}`:(isStep&&o.tries?o.tries:'Run');
+        return `<div class="runrow"><div class="dotcol"><b class="${cls}"></b></div><div class="tx"><div class="tt">${isStep?tri:'Started'} <em>&middot; ${r.who}</em></div><small>${r.t}${r.len?' &middot; '+r.len:''}</small><small style="color:#d1d5db">${r.res}</small>${r.state==='cur'&&o.tok?`<div class="bar"><i style="width:41%"></i></div><small>Work allowance ${o.tok}</small>`:''}</div></div>`}).join('');
+    }else{
+      rows=st==='done'?`<div class="runrow"><div class="dotcol"><b class="d"></b></div><div class="tx"><div class="tt">Done</div><small>Its start and end times are not served yet.</small></div></div>`:`<div class="runrow"><div class="dotcol"><b></b></div><div class="tx"><div class="tt">Not started</div><small>${o.ranBefore||'It starts when the steps before it finish.'}</small></div></div>`;
+    }
+    const rowsStage=(isStep&&o.id==='lens'&&false)?'':rows;
+    html+=`<div class="sec"><span class="lb">Step timeline</span><div class="tl" data-gap="step-runs">${rowsStage}</div></div>`;
+  }
+  if(f.type!=='end'){
+    const raw=isStep?rawOf(f):null;
+    if(raw)html+=`<details class="dt"><summary>${ic('right')}Raw output</summary><pre>${raw}</pre></details>`;
+    const tech=isStep?(o.tech||o.id):(o.id);
+    html+=`<details class="dt"><summary>${ic('right')}Technical details</summary><pre>${tech?`name        ${isStep&&o.tech?o.tech:o.id}\n`:''}${isStep?`kind        ${KIND[o.kind][0]}\n`:''}${isStep&&o.ref?`reference   ${o.ref}\n`:`reference   ${D.ref}\n`}</pre></details>`;
+  }else{
+    html+=`<div class="hint">Nothing ran here yet.</div>`;
+  }
+  html+='</div>';
+  el.innerHTML=html;
+  const c=$('iClose');c.onclick=clearSel;$('iPrev').onclick=()=>stepNav(-1);$('iNext').onclick=()=>stepNav(1);
+}
+function rawOf(f){
+  const o=f.o;
+  if(o.id==='lens'&&f.stage.id==='design')return `{\n  <span class="jk">"state"</span>: <span class="js">"lens"</span>,\n  <span class="jk">"step"</span>: <span class="js">"step.lens.run"</span>,\n  <span class="jk">"round"</span>: { <span class="jk">"n"</span>: <span class="jn">2</span>, <span class="jk">"max"</span>: <span class="jn">4</span> },\n  <span class="jk">"outcomes"</span>: [<span class="js">"reviewed"</span>],\n  <span class="jk">"budget"</span>: { <span class="jk">"used"</span>: <span class="jn">61000</span>, <span class="jk">"limit"</span>: <span class="jn">150000</span> },\n  <span class="jk">"output"</span>: <span class="js">null</span>\n}`;
+  if(o.err)return `{\n  <span class="jk">"state"</span>: <span class="js">"wrong"</span>,\n  <span class="jk">"outcome"</span>: <span class="js">"failed"</span>,\n  <span class="jk">"lastReview"</span>: <span class="js">"1 blocking: import accepts rows over the 10,000 row limit"</span>,\n  <span class="jk">"round"</span>: { <span class="jk">"n"</span>: <span class="jn">2</span>, <span class="jk">"max"</span>: <span class="jn">5</span> }\n}`;
+  if(o.runs&&o.runs.length)return `{\n  <span class="jk">"outcome"</span>: <span class="js">"${(o.runs[o.runs.length-1].res||'').toLowerCase()}"</span>,\n  <span class="jk">"runs"</span>: <span class="jn">${o.runs.length}</span>\n}`;
+  return null;
+}
+function flatSteps(){const a=[];D.stages.forEach(s=>{a.push(s.id);s.steps.forEach(p=>a.push(s.id+'/'+p.id))});return a.filter(x=>x.includes('/'))}
+function stepNav(d){const a=flatSteps();let i=a.indexOf(sel);if(i<0)i=0;else i=Math.max(0,Math.min(a.length-1,i+d));select(a[i],true)}
+function select(id,pan){sel=id;renderCanvas();renderInspector();renderMiniSel();if(pan)focusSel();}
+function renderMiniSel(){drawMini()}
+function clearSel(){sel='';renderCanvas();renderInspector()}
+function setState(s){S=s;D=STATES[s];sel=D.sel;renderHeader();renderCanvas();renderInspector();focusSel()}
+
+/* annotations + keys */
+$('annBtn').onclick=()=>{const on=document.body.classList.toggle('ann');$('annBtn').setAttribute('aria-pressed',on)};
+$('runsbtn').onclick=()=>$('runs').classList.toggle('open');
+addEventListener('keydown',e=>{
+  if(e.target.closest('input,textarea'))return;
+  const k=e.key.toLowerCase();
+  if(k==='j')stepNav(1);else if(k==='k')stepNav(-1);else if(k==='escape')clearSel();else if(k==='f')fit();
+  else if(k==='enter'&&!sel)select(D.sel,true);
+});
+document.addEventListener('click',e=>{const c=e.target.closest('[data-copy]');if(c&&!c.classList.contains('dis')){try{navigator.clipboard.writeText(c.dataset.copy)}catch(x){}}});
+function init(){renderHeader();renderCanvas();renderInspector();focusSel();}
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{layout();drawEdgesRedo();focusSel()});
+function drawEdgesRedo(){world.querySelectorAll('.chan').forEach(n=>n.remove());drawEdges();drawMini()}
+init();
+(function(){const q=new URLSearchParams(location.search).get('run');let k=null,sl=null;
+ if(q){k=q.split('/')[0];if(!STATES[k])k=null;
+  if(/\/design\.1/.test(q))sl='design/lens';else if(/\/scoping\.1/.test(q))sl='scoping';else if(/review\.1/.test(q))sl='phase/review';
+  if(k){setState(k);if(sl&&find(sl)&&k==='ITM-01JM8'||(sl&&k==='ITM-01JQ7')){select(sl,true)}}}
+ if(!k&&location.hash.includes('fail'))setState('ITM-01JQ7');
+ else if(!k)setState('ITM-01JM8');})();
+if(location.hash.includes('ann'))document.body.classList.add('ann');
+addEventListener('resize',()=>{focusSel()});
+</script>
+<script>/*aw-tour*/
+(function(){
+var T=[
+['Board','workflows.html'],
+['List','workflows.html?view=list'],
+['A run, step by step','run-canvas.html?run=ITM-01JM8/line/1/design.1'],
+['A failed run','run-canvas.html?run=ITM-01JQ7/line/1'],
+["Didn't work out and Cancelled","run-canvas.html?run=ITM-01K7H/line/1"],
+['Approve the scope','needs-you.html?state=pending'],
+['Send back with a reason','needs-you.html?state=sendback'],
+['Take over and hand back','needs-you.html?state=takeover'],
+['Context map','context.html'],
+['File map','context.html#files'],
+['Setup: two approvals','setup.html#approveall'],
+['Questions for the owner','questions.html']];
+var m=/[?&]tour=(\d+)/.exec(location.search);if(!m)return;
+var n=+m[1];if(n<1||n>T.length)return;
+function href(i){var u=T[i-1][1],h='',k=u.indexOf('#');if(k>=0){h=u.slice(k);u=u.slice(0,k)}return u+(u.indexOf('?')>=0?'&':'?')+'tour='+i+h}
+var st=document.createElement('style');
+st.textContent='.aw-tour{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:200;display:flex;align-items:center;gap:10px;height:32px;padding:0 6px 0 14px;border-radius:16px;background:var(--card,#17191c);border:1px solid var(--border,#33312b);color:var(--fg,#edecec);font:500 12px/16px var(--font,Inter,sans-serif);white-space:nowrap}.aw-tour a{color:inherit;text-decoration:none}.aw-tour .nx{height:22px;padding:0 10px;border-radius:11px;display:inline-flex;align-items:center;background:var(--fg,#edecec);color:var(--bg,#14120b);font-weight:600}.aw-tour .pv,.aw-tour .ex{color:var(--muted-fg,#a3a3a3);padding:0 4px}.aw-tour .pv:hover,.aw-tour .ex:hover{color:var(--fg,#edecec)}';
+document.head.appendChild(st);
+var d=document.createElement('nav');d.className='aw-tour';d.setAttribute('aria-label','Guided tour');
+d.innerHTML='<span>Tour '+n+' of '+T.length+'</span>'+(n>1?'<a class="pv" href="'+href(n-1)+'" aria-label="Previous stop">Back</a>':'')+(n<T.length?'<a class="nx" href="'+href(n+1)+'">Next →</a>':'<a class="nx" href="index.html">Finish</a>')+'<a class="ex" href="index.html" aria-label="Leave the tour">Exit</a>';
+document.body.appendChild(d);
+})();
+</script>
+</body>
+</html>
