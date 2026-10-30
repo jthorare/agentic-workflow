@@ -1,3 +1,4 @@
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Kernel;
 
@@ -32,11 +33,13 @@ public static class AnchorMatch
     /// <param name="graph">The graph a caller may see.</param>
     /// <param name="name">A node key, alias or label.</param>
     /// <param name="repos">The repos in scope; a demoted file's code node is never suggested. Null suggests every node.</param>
+    /// <param name="pins">The pins the caller sees; a whole-alias match resolves to the pin's concept. Null reads none.</param>
     /// <returns>The node; SND-CONTEXT-037 when a label names several (the message lists them); SND-CONTEXT-003 with suggestions when nothing matches.</returns>
-    public static Result<GraphNode> Resolve(GraphSnapshot graph, string name, IReadOnlyList<ContextRepo>? repos = null)
+    public static Result<GraphNode> Resolve(GraphSnapshot graph, string name, IReadOnlyList<ContextRepo>? repos = null, PinSet? pins = null)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(name);
+        _ = pins;   // red stub
         var trimmed = name.Trim();
         if (NodeKey.TryFrom(trimmed, out var key) && graph.Resolve(key) is { } byKey)
         {
@@ -73,11 +76,13 @@ public static class AnchorMatch
     /// <summary>The nodes a question names by their whole label, and others it comes close to.</summary>
     /// <param name="graph">The graph a caller may see.</param>
     /// <param name="question">The question.</param>
+    /// <param name="pins">The pins the caller sees; a question using all the words of one of a pin's aliases anchors on its concept. Null reads none.</param>
     /// <returns>The anchors and suggestions.</returns>
-    public static TextAnchors FromText(GraphSnapshot graph, string question)
+    public static TextAnchors FromText(GraphSnapshot graph, string question, PinSet? pins = null)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(question);
+        _ = pins;   // red stub
         var words = Words(question);
         var whole = graph.Nodes.Select(n => (Node: n, Words: Words(Unbracketed(n.Label))))
             .Where(m => m.Words.Count > 0 && m.Words.IsSubsetOf(words)).ToList();

@@ -1859,6 +1859,8 @@ Aw.Context.Core.Graph.PathView.To.init -> void
 Aw.Context.Core.Graph.RepoScope
 Aw.Context.Core.Graph.TextAnchors
 Aw.Context.Core.Graph.TextAnchors.<Clone>$() -> Aw.Context.Core.Graph.TextAnchors!
+Aw.Context.Core.Graph.TextAnchors.Aliases.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Context.Core.Graph.TextAnchors.Aliases.init -> void
 Aw.Context.Core.Graph.TextAnchors.Anchors.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>!
 Aw.Context.Core.Graph.TextAnchors.Anchors.init -> void
 Aw.Context.Core.Graph.TextAnchors.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Anchors, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Suggested) -> void
@@ -6007,8 +6009,8 @@ static Aw.Context.Core.Extract.RepoFile.operator !=(Aw.Context.Core.Extract.Repo
 static Aw.Context.Core.Extract.RepoFile.operator ==(Aw.Context.Core.Extract.RepoFile? left, Aw.Context.Core.Extract.RepoFile? right) -> bool
 static Aw.Context.Core.Graph.AffectedNode.operator !=(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
 static Aw.Context.Core.Graph.AffectedNode.operator ==(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
-static Aw.Context.Core.Graph.AnchorMatch.FromText(Aw.Context.Core.Graph.GraphSnapshot! graph, string! question) -> Aw.Context.Core.Graph.TextAnchors!
-static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
+static Aw.Context.Core.Graph.AnchorMatch.FromText(Aw.Context.Core.Graph.GraphSnapshot! graph, string! question, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Context.Core.Graph.TextAnchors!
+static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth, Aw.Context.Core.Engine.CascadeOptions! options) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.OwnsHops(System.Collections.Generic.IReadOnlyList<string!>! path) -> int
