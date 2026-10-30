@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Core.Scheduling;
 
-/// <summary>When a refreshed context map becomes the current one (owner decision 2026-10-20, code index spec 6.4): clock in, nothing out.</summary>
+/// <summary>When a refreshed context map becomes the current one (owner decision 2026-10-20, code index spec 6.4): clock in, nothing out. A draft built before its code index is rebuilt once the index is in, never published (#1704).</summary>
 public static class MapPublishDecision
 {
     /// <summary>Decides, first applicable line wins.</summary>
@@ -30,7 +30,9 @@ public static class MapPublishDecision
 
         if (notBuilt.Count == 0)
         {
-            return new MapPublish(MapPublishReason.IndexReady, []);
+            // #1704: every index is in, but a draft built before its repo's index has unresolved symbol citations; it is built again, never published.
+            List<string> unindexed = [.. gated.Where(r => !input.Hold.Heads[r.Repo].BuiltWithIndex).Select(static r => r.Repo)];
+            return unindexed.Count > 0 ? new MapRebuild(unindexed) : new MapPublish(MapPublishReason.IndexReady, []);
         }
 
         return gated.Exists(static r => r.Outlook == IndexOutlook.Broken)

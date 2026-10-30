@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.RunDoctor;
 /// Doctor's 'context:linear' check (context spec §8.8, D-6): whether the approved profile names the native Linear source, which teams it reads, and whether
 /// 'context.sources.linear.token' resolves through <paramref name="secrets"/> (a pointer that doesn't fails with its SND-SECRET code, which names the scheme and the
 /// target, never a value). It makes no call to Linear: reading projects, documents and issues is 'sindri context sources status'.
-/// A profile that names no Linear token, or no approved profile, is 'ok: not configured'.
+/// A profile that lists teams but names no Linear token warns 'Linear needs a token' and names 'sindri index connect linear'; a profile with no Linear entry, or no approved profile, is 'ok: not configured'.
 /// </summary>
 /// <param name="engine">The context engine (checks the settings).</param>
 /// <param name="secrets">Resolves the key's pointer, as Sindri Host does for the engine.</param>
@@ -47,6 +47,12 @@ internal sealed class LinearDoctor(IContextEngine engine, ISecretPointers secret
 
         if (settings.Value.Linear is not { } linear)
         {
+            if (settings.Value.LinearTeams.Count > 0)
+            {
+                return new DoctorCheck(Name, CheckState.Warn,
+                    $"{LinearToken.Missing}: the approved profile lists teams {string.Join(", ", settings.Value.LinearTeams)} but no context.sources.linear.token", LinearToken.Connect);
+            }
+
             return new DoctorCheck(Name, CheckState.Ok, "not configured (the approved profile names no context.sources.linear.token)", Fix: null);
         }
 

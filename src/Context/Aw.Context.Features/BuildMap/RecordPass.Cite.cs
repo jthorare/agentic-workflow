@@ -81,6 +81,8 @@ internal sealed partial class RecordPass
                 continue;
             }
 
+            _ = _indexHeads.TryAdd(scope.Name.Value, hits.Value.Head);
+
             foreach (var path in hits.Value.Rows.Select(h => h.Site.Path).Where(p => _paths.Has(scope.Name.Value, p)).Distinct(StringComparer.Ordinal))
             {
                 if (found.Count < 2 && !found.Contains((scope.Name.Value, path)))

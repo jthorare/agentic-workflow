@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Projects.Facts;
 using Aw.Sindri.Core.Projects.Vocabulary;
 
@@ -191,6 +192,11 @@ public static class ProjectCards
         if (!inputs.LinearConfigured && inputs.Attached.Count == 0)
         {
             return "No projects yet. Connect Linear or add one by hand.";
+        }
+
+        if (inputs.LinearTokenMissing)
+        {
+            return $"{LinearToken.Missing}. Run {LinearToken.Connect} in your terminal to connect it.";
         }
 
         if (!snapshot.FirstReadDone)
