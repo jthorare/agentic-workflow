@@ -3510,6 +3510,7 @@ Aw.Context.Core.Models.IChoicePort
 Aw.Context.Core.Models.IChoicePort.Identity.get -> Aw.Context.Core.Models.ChoiceModel!
 Aw.Context.Core.Models.IChoicePort.InputCapChars(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 Aw.Context.Core.Models.IChoicePort.Pick(Aw.Context.Core.Models.ChoiceKind kind, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Models.ChoiceQuestion!>! questions, int capChars, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Models.ChoiceAnswer!>!>!>
+Aw.Context.Core.Models.IChoicePort.Unavailable(Aw.Context.Core.Models.ChoiceKind kind, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
 Aw.Context.Core.Models.IModelPort
 Aw.Context.Core.Models.IModelPort.Ask(Aw.Context.Core.Models.ModelRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Models.ModelAnswer!>!>
 Aw.Context.Core.Models.IModelPromptBudget
@@ -10457,3 +10458,8 @@ Aw.Context.Core.Engine.RankerSettings.PinLeg.get -> bool
 Aw.Context.Core.Engine.RankerSettings.PinLeg.init -> void
 Aw.Context.Core.Ranking.RankerMode.Pin = 3 -> Aw.Context.Core.Ranking.RankerMode
 Aw.Context.Core.Eval.Backtest.Arm.RankerPin = 10 -> Aw.Context.Core.Eval.Backtest.Arm
+Aw.Context.Core.Map.PageOverlay
+static Aw.Context.Core.Map.PageOverlay.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Graph.GraphSnapshot!
+static Aw.Context.Core.Map.PageOverlay.Without(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
+Aw.Context.Core.Engine.ContextScope.OmitPages.get -> bool
+Aw.Context.Core.Engine.ContextScope.OmitPages.init -> void

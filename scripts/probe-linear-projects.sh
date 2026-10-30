@@ -97,7 +97,8 @@ if [ -z "$key" ]; then
   exit 2
 fi
 
-mapfile -t teams < <(profile_get context.sources.linear.teams)
+teams=()   # a while loop, not mapfile: macOS ships bash 3.2, which has no mapfile
+while IFS= read -r team; do [ -n "$team" ] && teams+=("$team"); done < <(profile_get context.sources.linear.teams)
 repo="$repo_arg"
 [ -n "$repo" ] || repo="$(profile_get context.sources.github.repos | head -n1)"
 window="${window_arg:-$(profile_get context.index.windowDays | head -n1)}"
@@ -266,7 +267,7 @@ fi
 echo
 echo "paste this into the Ph1/Ph6 PR"
 echo '```'
-printf '%s\n' "${lines[@]}"
+printf '%s\n' ${lines[@]+"${lines[@]}"}   # bash 3.2 calls an empty array unbound under set -u
 echo '```'
 if [ "${#failures[@]}" -gt 0 ]; then
   printf 'probe: %d call(s) failed: %s\n' "${#failures[@]}" "$(IFS=';'; echo "${failures[*]}")" >&2

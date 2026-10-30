@@ -100,14 +100,16 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
         var env = new Dictionary<string, string>(StringComparer.Ordinal) { ["SND_A"] = "1", ["SND_B"] = "two words" };
         var session = new HostSession("snd-fake", _tmux.Scratch, ["claude", "--flag"], env);
 
-        _ = await new TmuxSessionHost(new TmuxHostOptions(fake.Path, "sindri-launch")).Start(session, _deadline, CancellationToken.None);
+        _ = await new TmuxSessionHost(new TmuxHostOptions(fake.Path, "sindri-launch", _tmux.TmuxTmpDir)).Start(session, _deadline, CancellationToken.None);
 
         var calls = fake.Calls();
         Expect.True(calls.All(c => !c.Contains("set-environment", StringComparison.Ordinal) && !c.Contains("setenv", StringComparison.Ordinal)));
         var create = Expect.Only([.. calls.Where(c => c.Contains("new-session", StringComparison.Ordinal))]);
         Expect.True(create.StartsWith("-L sindri-launch new-session -d -s snd-fake -c ", StringComparison.Ordinal));
-        Expect.True(create.Contains("-e SND_A=1", StringComparison.Ordinal) && create.Contains("-e SND_B=two words", StringComparison.Ordinal));
-        Expect.True(create.EndsWith("claude --flag", StringComparison.Ordinal));
+        Expect.True(!create.Contains("-e ", StringComparison.Ordinal));   // the env travels in the launch script, not on the tmux line
+        var script = await File.ReadAllLinesAsync(create[(create.LastIndexOf(" sh ", StringComparison.Ordinal) + 4)..], TestContext.Current.CancellationToken);
+        Expect.True(script.Contains("export SND_A='1'") && script.Contains("export SND_B='two words'"));
+        Expect.True(script.Any(l => l.StartsWith("exec ", StringComparison.Ordinal) && l.EndsWith("'claude' '--flag'", StringComparison.Ordinal)));
     }
 
     [Theory]
@@ -216,20 +218,22 @@ public sealed class TmuxSessionHostTests : SessionHostContract, IDisposable
     }
 
     [Fact]
-    public async Task A_value_given_to_new_session_e_is_scoped_to_that_session_and_not_to_tmuxs_global_environment()
+    public async Task A_launch_secret_reaches_the_process_but_never_tmuxs_environment_or_the_pane_command()
     {
         const string Value = "launch-proof-0123456789abcdef";
+        var marker = Path.Combine(_tmux.Scratch, "secret.txt");
         var host = Create();
-        var session = new HostSession("snd-proof", _tmux.Scratch, ["sleep", "60"], new Dictionary<string, string>(StringComparer.Ordinal) { ["AW_SINDRI_LAUNCH_SECRET"] = Value });
+        var session = new HostSession("snd-proof", _tmux.Scratch, ["sh", "-c", $"printf %s \"$AW_SINDRI_LAUNCH_SECRET\" > '{marker}'; sleep 60"], new Dictionary<string, string>(StringComparer.Ordinal) { ["AW_SINDRI_LAUNCH_SECRET"] = Value });
 
         var started = await host.Start(session, _deadline, CancellationToken.None);
 
         Expect.True(started.IsSuccess);
+        Expect.Equal(Value, await ReadWhenWritten(marker));
         var global = _tmux.Run("show-environment", "-g");
         var scoped = _tmux.Run("show-environment", "-t", "=snd-proof");
         var commands = _tmux.Run("list-panes", "-a", "-F", "#{pane_start_command}|#{pane_current_command}");
         Expect.True(global is not null && !global.Contains("AW_SINDRI_LAUNCH_SECRET", StringComparison.Ordinal) && !global.Contains(Value, StringComparison.Ordinal));
-        Expect.True(scoped is not null && scoped.Contains("AW_SINDRI_LAUNCH_SECRET=" + Value, StringComparison.Ordinal));   // the session has it, as new-session -e sets it
+        Expect.True(scoped is not null && !scoped.Contains(Value, StringComparison.Ordinal));   // the launch script exports it inside the pane (#1765): tmux never holds it
         Expect.True(commands is not null && !commands.Contains(Value, StringComparison.Ordinal));
     }
 
