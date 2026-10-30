@@ -221,11 +221,12 @@ Each entry pins one concept: it takes its members first, derived concepts fill t
 | Key | Type | Required | Default | Meaning |
 |---|---|---|---|---|
 | `id` | text | no | derived from `name` | The slug of the concept's key (`scheduling` pins `concept:scheduling`): lowercase words of letters and digits joined by single `-` or `.` (`tabs.tab-manager` pins a derived id). `other` is reserved; ids are unique across the profile's list and the repo's |
-| `name` | text | yes | none | What the map shows. Not empty |
-| `summary` | text | no | none | A line about the concept |
+| `name` | text | yes | none | What the map shows. Not empty, up to 200 characters, no control, format or line-separator characters. A rename rebuilds the map |
+| `summary` | text | no | none | A line about the concept, up to 280 characters with no control, format or line-separator characters. Shown from the approved profile, so an edit rebuilds no map |
 | `features` | string[] | no | none | Feature node keys or key globs (`feature:shifts`, `feature:shifts.*`); each must start with `feature:` |
 | `paths` | string[] | no | none | Repo-relative file globs (same rules as `denyPaths`); the features implemented there belong to the concept. A file two entries both match belongs to the first one in the list (the profile's entries, then the repo's); `sindri doctor` warns on a pair that overlaps on real files |
 | `dependsOn` | string[] | no | none | Ids of other entries this one depends on (`orders`); each becomes a hand-declared `depends-on` edge between the two concepts, made fresh on every build. An id that names no entry is refused |
+| `aliases` | string[] | no | none | Other words you use for the concept (`payments`, `ledger` for billing); a question using one anchors on the concept. Up to 20, each 1 to 60 characters with a letter or digit and no control, format or line-separator characters; a word the matcher skips (`the`, `of`, ...) alone is refused. Compared without case or a plural 's', an alias that equals another entry's id, name or alias is refused, naming both key paths. Not part of the map hash: an alias edit needs approval but rebuilds no map |
 | `owns` | string[] | no | none | Names of the data stores this entry owns, as the map names them (`invoices`, `payments_t`); each becomes a hand-declared `writes` edge from the concept to the table. A name with no letter or digit is refused; one the map has no table for is skipped and counted in the build report |
 
 ```yaml

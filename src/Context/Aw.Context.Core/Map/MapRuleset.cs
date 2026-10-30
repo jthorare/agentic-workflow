@@ -41,8 +41,9 @@ public static class MapRuleset
     public static string? Running(ContextScope? scope) =>
         scope is not null && SettingsReader.Read(scope.Settings) is { IsSuccess: true } settings ? Of(ScopeRules.Mapped(settings.Value, scope.Repos)) : null;
 
+    // why: neither the summary nor the aliases are here. Nothing groups, homes or ranks by them, so an edit to either is read live from the approved profile and rebuilds no map.
     private static string Pin(ConceptPin pin) =>
-        $"{pin.Id?.Value}{Unit}{pin.Name}{Unit}{pin.Summary}{Unit}{Sorted(pin.Features)}{Unit}{Sorted(pin.Paths)}{Unit}{Sorted(pin.DependsOn)}{Unit}{Sorted(pin.Owns)}";
+        $"{pin.Id?.Value}{Unit}{pin.Name}{Unit}{Sorted(pin.Features)}{Unit}{Sorted(pin.Paths)}{Unit}{Sorted(pin.DependsOn)}{Unit}{Sorted(pin.Owns)}";
 
     private static string Sorted(IReadOnlyList<string> values) => string.Join(',', values.Order(StringComparer.Ordinal));
 
