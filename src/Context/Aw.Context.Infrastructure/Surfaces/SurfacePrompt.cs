@@ -68,7 +68,7 @@ internal static class SurfacePrompt
         }
 
         return at > 0 && at - 1 < group.Candidates.Count && LabelPrompt.Clean(group.Candidates[at - 1].Name) is { Length: > 0 } name
-            ? SurfaceVerdict.Merged(group.Key, name)
+            ? SurfaceVerdict.Merged(group.Key, at - 1, group.Candidates[at - 1].NodeKey, name)
             : undecided;
     }
 

@@ -108,6 +108,19 @@ public sealed class SurfacePromptTests
     }
 
     [Fact]
+    public void A_merge_names_the_survivor_by_index_and_by_node_key_even_when_two_candidates_share_a_name()
+    {
+        var group = new SurfaceGroup([SurfaceTestData.Candidate("Billing", "feature:billing"), SurfaceTestData.Candidate("Billing", "surface:billing")]);
+
+        var verdict = Read(group, 2);
+
+        Assert.Equal((SurfaceChoice.Merge, 1, "surface:billing", "Billing"), (verdict.Choice, verdict.Survivor, verdict.SurvivorKey, verdict.MergedName));
+        Assert.Equal(group.Candidates[verdict.Survivor!.Value].NodeKey, verdict.SurvivorKey);
+        Assert.Null(Read(group, 0).Survivor);
+        Assert.Null(Read(group, 3).SurvivorKey);
+    }
+
+    [Fact]
     public void A_group_of_one_answers_separate_or_reject()
     {
         var group = SurfaceTestData.Group("Grant access");

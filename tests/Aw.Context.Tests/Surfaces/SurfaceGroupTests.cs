@@ -17,6 +17,18 @@ public sealed class SurfaceGroupTests
     }
 
     [Fact]
+    public void The_key_bytes_are_pinned_node_key_kind_pass_then_sorted_raw_evidence_with_no_edges_or_names()
+    {
+        var group = new SurfaceGroup([
+            new SurfaceCandidate("action:b", "action", "Whatever", "actions", ["z.ts"], ["writes thing:x"]),
+            new SurfaceCandidate("action:a", "action", "Other", "actions", ["y.ts", "x.ts"], []),
+        ]);
+
+        // sha256 of "action:a\naction\nactions\nx.ts\ny.ts\naction:b\naction\nactions\nz.ts\n"
+        Assert.Equal("20000714e4dca8867cb7557fe07910a264ce22916cc2b89a431f015e69d4a6e1", group.Key);
+    }
+
+    [Fact]
     public void The_key_does_not_depend_on_the_order_the_candidates_or_their_evidence_are_listed_in()
     {
         var a = new SurfaceGroup([SurfaceTestData.Candidate("A", "action:a", "x.ts", "y.ts"), SurfaceTestData.Candidate("B", "action:b", "z.ts")]);

@@ -10212,13 +10212,11 @@ Aw.Context.Core.Surfaces.SurfaceVerdict.Choice.init -> void
 Aw.Context.Core.Surfaces.SurfaceVerdict.<Clone>$() -> Aw.Context.Core.Surfaces.SurfaceVerdict!
 Aw.Context.Core.Surfaces.SurfaceVerdict.Decided.get -> bool
 Aw.Context.Core.Surfaces.SurfaceVerdict.Decided.init -> void
-Aw.Context.Core.Surfaces.SurfaceVerdict.Deconstruct(out string! GroupKey, out Aw.Context.Core.Surfaces.SurfaceChoice Choice, out string? MergedName, out bool Decided) -> void
 Aw.Context.Core.Surfaces.SurfaceVerdict.Equals(Aw.Context.Core.Surfaces.SurfaceVerdict? other) -> bool
 Aw.Context.Core.Surfaces.SurfaceVerdict.GroupKey.get -> string!
 Aw.Context.Core.Surfaces.SurfaceVerdict.GroupKey.init -> void
 Aw.Context.Core.Surfaces.SurfaceVerdict.MergedName.get -> string?
 Aw.Context.Core.Surfaces.SurfaceVerdict.MergedName.init -> void
-Aw.Context.Core.Surfaces.SurfaceVerdict.SurfaceVerdict(string! GroupKey, Aw.Context.Core.Surfaces.SurfaceChoice Choice, string? MergedName, bool Decided) -> void
 const Aw.Context.Core.Surfaces.SurfaceGroup.MaxCandidates = 3 -> int
 override Aw.Context.Core.Surfaces.SurfaceCandidate.Equals(object? obj) -> bool
 override Aw.Context.Core.Surfaces.SurfaceCandidate.GetHashCode() -> int
@@ -10249,8 +10247,14 @@ static Aw.Context.Core.Surfaces.SurfacePickOptions.operator !=(Aw.Context.Core.S
 static Aw.Context.Core.Surfaces.SurfacePickOptions.operator ==(Aw.Context.Core.Surfaces.SurfacePickOptions? left, Aw.Context.Core.Surfaces.SurfacePickOptions? right) -> bool
 static Aw.Context.Core.Surfaces.SurfacePickResult.operator !=(Aw.Context.Core.Surfaces.SurfacePickResult? left, Aw.Context.Core.Surfaces.SurfacePickResult? right) -> bool
 static Aw.Context.Core.Surfaces.SurfacePickResult.operator ==(Aw.Context.Core.Surfaces.SurfacePickResult? left, Aw.Context.Core.Surfaces.SurfacePickResult? right) -> bool
-static Aw.Context.Core.Surfaces.SurfaceVerdict.Merged(string! groupKey, string! name) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
 static Aw.Context.Core.Surfaces.SurfaceVerdict.operator !=(Aw.Context.Core.Surfaces.SurfaceVerdict? left, Aw.Context.Core.Surfaces.SurfaceVerdict? right) -> bool
 static Aw.Context.Core.Surfaces.SurfaceVerdict.operator ==(Aw.Context.Core.Surfaces.SurfaceVerdict? left, Aw.Context.Core.Surfaces.SurfaceVerdict? right) -> bool
 static Aw.Context.Core.Surfaces.SurfaceVerdict.Rejected(string! groupKey) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
 static Aw.Context.Core.Surfaces.SurfaceVerdict.Separate(string! groupKey, bool decided) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+Aw.Context.Core.Surfaces.SurfaceVerdict.Deconstruct(out string! GroupKey, out Aw.Context.Core.Surfaces.SurfaceChoice Choice, out int? Survivor, out string? SurvivorKey, out string? MergedName, out bool Decided) -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.SurfaceVerdict(string! GroupKey, Aw.Context.Core.Surfaces.SurfaceChoice Choice, int? Survivor, string? SurvivorKey, string? MergedName, bool Decided) -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.Survivor.get -> int?
+Aw.Context.Core.Surfaces.SurfaceVerdict.Survivor.init -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.get -> string?
+Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.init -> void
+static Aw.Context.Core.Surfaces.SurfaceVerdict.Merged(string! groupKey, int survivor, string! survivorKey, string! name) -> Aw.Context.Core.Surfaces.SurfaceVerdict!

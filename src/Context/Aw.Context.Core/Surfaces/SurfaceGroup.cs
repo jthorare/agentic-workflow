@@ -1,4 +1,3 @@
-using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -13,18 +12,21 @@ public sealed record SurfaceGroup(IReadOnlyList<SurfaceCandidate> Candidates)
     /// <summary>The most candidates in a group: names plus 'separate' and 'reject' must fit the port's five options.</summary>
     public const int MaxCandidates = 3;
 
-    /// <summary>The group's stable key: the sha256 (lowercase hex) of its candidates' node keys and evidence, each sorted. The same candidates with the same evidence give the same key, so the context lane can skip a group it already decided.</summary>
+    /// <summary>
+    /// The group's stable key: lowercase hex sha256 of the UTF-8 bytes built from the RAW values (before any scrub or cut). For each candidate, sorted ordinally by node key (then kind, then pass): <c lang="text">NodeKey\nKind\nPass\n</c>, then its evidence paths
+    /// sorted ordinally, each followed by <c lang="text">\n</c>; the candidates' texts are concatenated. Edges and names are not in the key. The same candidates with the same evidence give the same key, so the context lane can skip a group it already decided.
+    /// </summary>
     public string Key => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(Canonical())));
 
     private string Canonical()
     {
         var text = new StringBuilder();
-        foreach (var candidate in Candidates.OrderBy(static c => c.NodeKey, StringComparer.Ordinal).ThenBy(static c => c.Name, StringComparer.Ordinal))
+        foreach (var candidate in Candidates.OrderBy(static c => c.NodeKey, StringComparer.Ordinal).ThenBy(static c => c.Kind, StringComparer.Ordinal).ThenBy(static c => c.Pass, StringComparer.Ordinal))
         {
-            _ = text.Append("node ").Append(candidate.NodeKey.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(candidate.NodeKey).Append('\n');
+            _ = text.Append(candidate.NodeKey).Append('\n').Append(candidate.Kind).Append('\n').Append(candidate.Pass).Append('\n');
             foreach (var path in candidate.Evidence.Order(StringComparer.Ordinal))
             {
-                _ = text.Append("evidence ").Append(path.Length.ToString(CultureInfo.InvariantCulture)).Append(':').Append(path).Append('\n');
+                _ = text.Append(path).Append('\n');
             }
         }
 
