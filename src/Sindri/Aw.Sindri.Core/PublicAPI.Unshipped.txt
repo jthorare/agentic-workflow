@@ -21669,3 +21669,36 @@ override Aw.Sindri.Core.Setup.MapFeatureCheck.GetHashCode() -> int
 override Aw.Sindri.Core.Setup.MapFeatureCheck.ToString() -> string!
 static Aw.Sindri.Core.Setup.MapFeatureCheck.operator !=(Aw.Sindri.Core.Setup.MapFeatureCheck? left, Aw.Sindri.Core.Setup.MapFeatureCheck? right) -> bool
 static Aw.Sindri.Core.Setup.MapFeatureCheck.operator ==(Aw.Sindri.Core.Setup.MapFeatureCheck? left, Aw.Sindri.Core.Setup.MapFeatureCheck? right) -> bool
+Aw.Sindri.Core.Setup.ConceptLine
+Aw.Sindri.Core.Setup.ConceptLine.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Setup.ConceptLine.Aliases.init -> void
+Aw.Sindri.Core.Setup.ConceptLine.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptLine!
+Aw.Sindri.Core.Setup.ConceptLine.ConceptLine(string! Name, string? Summary, System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+Aw.Sindri.Core.Setup.ConceptLine.Deconstruct(out string! Name, out string? Summary, out System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+Aw.Sindri.Core.Setup.ConceptLine.Equals(Aw.Sindri.Core.Setup.ConceptLine? other) -> bool
+Aw.Sindri.Core.Setup.ConceptLine.Name.get -> string!
+Aw.Sindri.Core.Setup.ConceptLine.Name.init -> void
+Aw.Sindri.Core.Setup.ConceptLine.Summary.get -> string?
+Aw.Sindri.Core.Setup.ConceptLine.Summary.init -> void
+Aw.Sindri.Core.Setup.ConceptList
+Aw.Sindri.Core.Setup.ConceptListRead
+Aw.Sindri.Core.Setup.ConceptListRead.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptListRead!
+Aw.Sindri.Core.Setup.ConceptListRead.ConceptListRead(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>! Concepts, int Skipped) -> void
+Aw.Sindri.Core.Setup.ConceptListRead.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>!
+Aw.Sindri.Core.Setup.ConceptListRead.Concepts.init -> void
+Aw.Sindri.Core.Setup.ConceptListRead.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>! Concepts, out int Skipped) -> void
+Aw.Sindri.Core.Setup.ConceptListRead.Equals(Aw.Sindri.Core.Setup.ConceptListRead? other) -> bool
+Aw.Sindri.Core.Setup.ConceptListRead.Skipped.get -> int
+Aw.Sindri.Core.Setup.ConceptListRead.Skipped.init -> void
+const Aw.Sindri.Core.Setup.ConceptList.Max = 100 -> int
+override Aw.Sindri.Core.Setup.ConceptLine.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ConceptLine.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ConceptLine.ToString() -> string!
+override Aw.Sindri.Core.Setup.ConceptListRead.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ConceptListRead.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ConceptListRead.ToString() -> string!
+static Aw.Sindri.Core.Setup.ConceptLine.operator !=(Aw.Sindri.Core.Setup.ConceptLine? left, Aw.Sindri.Core.Setup.ConceptLine? right) -> bool
+static Aw.Sindri.Core.Setup.ConceptLine.operator ==(Aw.Sindri.Core.Setup.ConceptLine? left, Aw.Sindri.Core.Setup.ConceptLine? right) -> bool
+static Aw.Sindri.Core.Setup.ConceptList.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Setup.ConceptListRead!>!
+static Aw.Sindri.Core.Setup.ConceptListRead.operator !=(Aw.Sindri.Core.Setup.ConceptListRead? left, Aw.Sindri.Core.Setup.ConceptListRead? right) -> bool
+static Aw.Sindri.Core.Setup.ConceptListRead.operator ==(Aw.Sindri.Core.Setup.ConceptListRead? left, Aw.Sindri.Core.Setup.ConceptListRead? right) -> bool
