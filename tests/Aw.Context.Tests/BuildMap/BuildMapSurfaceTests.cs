@@ -50,6 +50,22 @@ public sealed class BuildMapSurfaceTests : IDisposable
     }
 
     [Fact]
+    public async Task A_rejected_action_is_gone_from_the_draft_as_read_and_back_after_an_undo_of_its_row()
+    {
+        _picker.When(Split, g => SurfaceVerdict.Rejected(g.Key));
+        _ = await Build(PickOn);
+        var draft = (await _world.Store.Snapshot(draft: true, MapWorld.None)).Value!;
+        var jev = draft.Overrides.Where(o => o.Who == MapOverride.JevWho).ToList();
+
+        var served = OverrideApplier.Apply(draft.Graph, draft.Overrides).Graph;
+        Assert.Null(served.Resolve(NodeKey.From(Split)));
+        Assert.NotNull(draft.Graph.Resolve(NodeKey.From(Split)));   // the node stays in the stored draft, so review can show it
+
+        var undo = jev.Select(r => new MapOverride(OverrideAction.Undo, r.Target, "joi", r.At.AddHours(1), Undoes: r.ToId())).ToList();
+        Assert.NotNull(OverrideApplier.Apply(draft.Graph, [.. draft.Overrides, .. undo]).Graph.Resolve(NodeKey.From(Split)));
+    }
+
+    [Fact]
     public async Task A_merge_verdict_puts_a_jev_merge_row_into_the_survivor()
     {
         _picker.When(Split, g => SurfaceVerdict.Merged(g.Key, g.Candidates.ToList().FindIndex(c => c.NodeKey == Split), Split, "Split vertically"));
@@ -102,11 +118,11 @@ public sealed class BuildMapSurfaceTests : IDisposable
     {
         _world.Clusters.Set = new ClusterSet([new FileCluster(ClusterId.From("c1"), ["src/commands/ids.ts", "src/commands/registry.ts"], 0.7)], Available: true);
         _world.Labeler.Spent = 321;
-        _ = await Build("""{"repos":["aw-split-panes"],"labeling":{"enabled":true,"maxTokens":900},"models":{"productSurfaces":{"pick":"jev"}}}""");
+        _ = await Build("""{"repos":["aw-split-panes"],"labeling":{"enabled":true,"maxTokens":1500},"models":{"productSurfaces":{"pick":"jev"}}}""");
 
         var options = _picker.Options.Single();
         Assert.True(options.Pick);
-        Assert.Equal((321, 900), (options.SpentTokens, options.MaxTokens));
+        Assert.Equal((321, 1500), (options.SpentTokens, options.MaxTokens));
     }
 
     private async Task<MapBuildReport> Build(string section) => (await _world.Map.BuildMap(progress: null, MapWorld.HumanWith(section), MapWorld.None)).Value;
