@@ -90,7 +90,6 @@ public sealed class MapPublishGateHostTests : IDisposable
         rig.Outlooks.All = IndexOutlook.Built;
         var refreshes = await Started(rig, "RefreshContextMap");
         var rebuilding = await rig.Tick();
-        await rig.AcceptDeterministic();   // the rebuilt draft's proposals are undecided, as the first draft's were
         var ready = await rig.Tick();
 
         Assert.Contains("held", waiting.Value.Summary, StringComparison.Ordinal);
