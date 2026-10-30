@@ -45,6 +45,11 @@ public static class SandboxPlanner
             PlanPolicy.Build(c, hooks),
             hooks);
         var plan = mechanism == SandboxMechanism.Seatbelt ? SeatbeltPlan.Rewrite(linux, c) : linux;
+        if (mechanism == SandboxMechanism.Seatbelt && SeatbeltPlan.Check(plan, c.RunArea, c.SessionHome) is { } unsafePlan)
+        {
+            return unsafePlan;
+        }
+
         return plan with { PlanHash = PlanHasher.Hash(plan, PerLaunchPaths(request)) };
     }
 

@@ -1,3 +1,5 @@
+using Aw.Kernel;
+
 namespace Aw.Sindri.Core.Sandbox.Plan;
 
 /// <summary>
@@ -18,6 +20,17 @@ internal static class SeatbeltPlan
         };
     }
 
+    /// <summary>The rule for a Seatbelt plan: a link sits inside the run area or the launch's own session home (where control.json is linked) and never on its own target, because the run-area preparer replaces whatever is at a link's path.</summary>
+    /// <param name="plan">The rewritten plan.</param>
+    /// <param name="runArea">The launch's run area.</param>
+    /// <param name="sessionHome">The launch's session home.</param>
+    /// <returns>SND-LAUNCH-016 when a link breaks the rule, else null.</returns>
+    internal static Error? Check(SandboxPlan plan, string runArea, string sessionHome)
+    {
+        var bad = plan.Mounts.FirstOrDefault(m => m.Kind == PlanMountKind.Link && (string.Equals(m.Path, m.Source, StringComparison.Ordinal) || !(Under(m.Path, runArea) || Under(m.Path, sessionHome))));
+        return bad is null ? null : SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsDeny, $"the link '{bad.Path}' would replace a path outside the run area and the session home or point at itself");
+    }
+
     private static bool Under(string path, string directory) =>
         string.Equals(path, directory, StringComparison.Ordinal) || path.StartsWith(directory.TrimEnd('/') + "/", StringComparison.Ordinal);
 
@@ -29,6 +42,7 @@ internal static class SeatbeltPlan
         private readonly string _homeDir = c.RunArea + "/home";
         private readonly string _current = c.StateDir + "/bin/cs/current";
         private readonly string _control = c.SessionHome + "/control.json";
+        private readonly List<string> _linked = [];   // the inside paths a link already stands for: anything below one reaches the owner's folder through it
         private int _homeStart;
         private int _homeEnd;
 
@@ -36,7 +50,7 @@ internal static class SeatbeltPlan
         {
             var ownerCount = c.OwnerDenied().Count;
             var body = all.Take(all.Count - ownerCount).ToList();
-            _homeStart = body.FindIndex(m => m.Kind == PlanMountKind.Tmpfs && string.Equals(m.Path, c.Home, StringComparison.Ordinal)) + 1;
+            _homeStart = body.FindIndex(m => m.Kind == PlanMountKind.Tmpfs && string.Equals(m.Path, c.Home, StringComparison.Ordinal));
             _homeEnd = body.FindIndex(m => m.Kind == PlanMountKind.Deny && string.Equals(m.Path, c.StateDir, StringComparison.Ordinal));
             for (var i = 0; i < body.Count; i++)
             {
@@ -121,8 +135,9 @@ internal static class SeatbeltPlan
             }
 
             var logins = c.Request.Login?.Mounts.Select(x => x.SandboxPath) ?? [];
-            if (logins.Any(r => Under(m.Path, r) && !string.Equals(m.Path, r, StringComparison.Ordinal)) && !_out.Exists(x => x.Kind == PlanMountKind.Link && Under(m.Path, x.Path)))
+            if (logins.Any(r => Under(m.Path, r) && !string.Equals(m.Path, r, StringComparison.Ordinal)) && !_linked.Exists(l => Under(m.Path, l)))
             {
+                _linked.Add(m.Path);
                 _out.Add(new PlanMount(Rebase(m.Path), PlanMountKind.Link, real, Reason: m.Reason));   // the CLI writes under its config directory, so that folder is a link into the owner's
             }
 

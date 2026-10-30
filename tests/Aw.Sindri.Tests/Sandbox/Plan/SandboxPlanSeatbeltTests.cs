@@ -1,3 +1,4 @@
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
@@ -9,6 +10,7 @@ namespace Aw.Sindri.Tests.Sandbox.Plan;
 public sealed class SandboxPlanSeatbeltTests
 {
     private const string RunTmp = Req.RunArea + "/tmp";
+    private static readonly string _session = Req.SindriHome + "-sessions/" + Req.WriteScope.Launch.Value;
     private const string RunHome = Req.RunArea + "/home";
 
     private static SandboxPlan Build(SandboxRequest request, SandboxMechanism mechanism = SandboxMechanism.Seatbelt)
@@ -230,5 +232,40 @@ public sealed class SandboxPlanSeatbeltTests
         Assert.DoesNotContain(", home ", SandboxPlanRenderer.Show(Build(Req.WriteScope)), StringComparison.Ordinal);
         Assert.DoesNotContain(", home ", SandboxPlanRenderer.Lead(Build(Req.WriteScope)), StringComparison.Ordinal);
         Assert.Contains(", home 256MiB", SandboxPlanRenderer.Show(Build(Req.WriteScope, SandboxMechanism.Bubblewrap)), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_memory_folder_inside_a_linked_transcripts_folder_gets_no_link_of_its_own()
+    {
+        var plan = Build(Req.WriteScope);
+        var projects = Req.Home + "/.claude/projects/";
+
+        Assert.DoesNotContain(plan.Mounts, m => m.Kind == PlanMountKind.Link && string.Equals(m.Path, m.Source, StringComparison.Ordinal));
+        Assert.DoesNotContain(plan.Mounts, m => m.Kind == PlanMountKind.Link && m.Path.StartsWith(projects, StringComparison.Ordinal));
+        Assert.All(plan.Mounts.Where(m => m.Kind == PlanMountKind.Link), l => Assert.True(l.Path.StartsWith(Req.RunArea + "/", StringComparison.Ordinal) || l.Path.StartsWith(_session + "/", StringComparison.Ordinal)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_first_home_entry_gets_its_link()
+    {
+        var link = Build(Req.WriteScope).Mounts.Single(m => m.Kind == PlanMountKind.Link && m.Path == RunHome + "/.dotnet");
+
+        Assert.Equal(Req.Home + "/.dotnet", link.Source);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(Req.Home + "/.claude/projects/k/memory", Req.Home + "/.claude/projects/k/memory")]
+    [InlineData(Req.Home + "/.claude", Req.Home + "/.claude-elsewhere")]
+    [InlineData(Req.StateDir + "/judge", Req.Home + "/.judge")]
+    public void A_link_that_replaces_its_own_target_or_sits_outside_the_run_area_is_refused(string path, string source)
+    {
+        var plan = Build(Req.WriteScope);
+        var bad = plan with { Mounts = [.. plan.Mounts, new PlanMount(path, PlanMountKind.Link, source)] };
+
+        var error = SeatbeltPlan.Check(bad, Req.RunArea, _session);
+
+        Assert.NotNull(error);
+        Assert.Equal(SindriErrors.LaunchSelfCheckFailed.Code, error.Code);
+        Assert.Null(SeatbeltPlan.Check(plan, Req.RunArea, _session));
     }
 }
