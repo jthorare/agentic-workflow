@@ -71,6 +71,9 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     /// <summary>Settings' label-choice line, kept up to date by each status.</summary>
     public LabelChoiceViewModel LabelChoice { get; } = new();
 
+    /// <summary>Settings' product-surface-choice line, kept up to date by each status.</summary>
+    public SurfaceChoiceViewModel SurfaceChoice { get; } = new();
+
     /// <summary>The Code index card (code-index spec §7.3, CI-10b); the shell has it followed with the other views.</summary>
     public CodeIndexCardViewModel CodeIndex => field ??= WatchCodeIndex(new CodeIndexCardViewModel(api, clock));
 

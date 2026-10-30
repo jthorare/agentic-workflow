@@ -19,6 +19,7 @@ public static class ModelKinds
         ModelPurpose.Adjudication => ModelKind.Adjudication,
         ModelPurpose.Cleanup => ModelKind.MapCleanup,
         ModelPurpose.Rerank => ModelKind.Rerank,
+        ModelPurpose.ProductSurfaces => ModelKind.ProductSurfaces,
         _ => throw new ArgumentOutOfRangeException(nameof(purpose)),
     };
 
@@ -43,7 +44,7 @@ public static class ModelKinds
 
     /// <summary>The key the profile and the ledger use.</summary>
     /// <param name="kind">The kind.</param>
-    /// <returns>'labeling', 'conceptNaming', 'decisionExtraction', 'adjudication', 'mapCleanup' or 'rerank'.</returns>
+    /// <returns>'labeling', 'conceptNaming', 'decisionExtraction', 'adjudication', 'mapCleanup', 'rerank' or 'productSurfaces'.</returns>
     public static string Key(ModelKind kind) => kind switch
     {
         ModelKind.Labeling => "labeling",
@@ -52,6 +53,7 @@ public static class ModelKinds
         ModelKind.Adjudication => "adjudication",
         ModelKind.MapCleanup => "mapCleanup",
         ModelKind.Rerank => "rerank",
+        ModelKind.ProductSurfaces => "productSurfaces",
         _ => throw new ArgumentOutOfRangeException(nameof(kind)),
     };
 }
