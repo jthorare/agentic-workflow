@@ -19,7 +19,7 @@ public sealed class ProfileDiffDriftGuardTests
         (typeof(IndexSettings), ["DenyPaths", "UtilityGlobs", "MaxFileKB", "MaxTotalMB", "Embeddings", "Graph", "Roles", "Concepts", "Ignore", "Demote"]),
         (typeof(EmbeddingSettings), ["Enabled", "Url", "Model"]),
         (typeof(GraphSettings), ["Enabled", "MaxMB"]),
-        (typeof(ConceptSettings), ["Id", "Name", "Summary", "Features", "Paths", "DependsOn", "Owns"]),
+        (typeof(ConceptSettings), ["Id", "Name", "Summary", "Aliases", "Features", "Paths", "DependsOn", "Owns"]),
         (typeof(SetupSettings), ["Mcp"]),
         (typeof(ApiSettings), ["Port"]),
         (typeof(ServiceSettings), ["Every"]),
