@@ -56,6 +56,9 @@ public static class SeatbeltProfile
             .AppendLine(Port(net.SindriPort))
             .AppendLine(Port(net.ProxyPort))
             .AppendLine(UnixSockets(plan, canonical))
+            // why: denying ~/Library/Keychains is not enough, the keychain is read through securityd, so `security find-generic-password` would hand a Step the owner's login.
+            .AppendLine("; the Keychain service: a Step never reads the owner's Keychain, its login comes from its credential source")
+            .AppendLine("(deny mach-lookup (global-name \"com.apple.SecurityServer\") (global-name \"com.apple.securityd\"))")
             // Known gap, on purpose: loopback stays strict. A test that starts its own localhost server (Kestrel on :0, a dev server) can't run in a Mac Step,
             // because a Mac's loopback is shared with the owner's own services, serve included.
             .AppendLine("; nothing is writable until a rule below says so")

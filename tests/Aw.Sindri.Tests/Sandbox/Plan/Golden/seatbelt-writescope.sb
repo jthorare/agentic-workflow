@@ -8,6 +8,8 @@
 (allow network-bind (local unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
 (allow network-inbound (local unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
 (allow network-outbound (remote unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+; the Keychain service: a Step never reads the owner's Keychain, its login comes from its credential source
+(deny mach-lookup (global-name "com.apple.SecurityServer") (global-name "com.apple.securityd"))
 ; nothing is writable until a rule below says so
 (deny file-write* (subpath "/"))
 ; the terminal and the null device
