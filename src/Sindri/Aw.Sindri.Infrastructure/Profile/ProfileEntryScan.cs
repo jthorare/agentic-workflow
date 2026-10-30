@@ -10,7 +10,8 @@ internal static class ProfileEntryScan
     /// <param name="Start">Its '- ' line.</param>
     /// <param name="End">One past its last content line.</param>
     /// <param name="Id">Its 'id:' value, or null when it has none the edit can read.</param>
-    internal sealed record EntryAt(int Start, int End, string? Id);
+    /// <param name="Name">Its 'name:' value, or null when it has none the edit can read.</param>
+    internal sealed record EntryAt(int Start, int End, string? Id, string? Name);
 
     /// <summary>The entries of <paramref name="list"/>.</summary>
     /// <param name="lines">The file's lines.</param>
@@ -29,7 +30,7 @@ internal static class ProfileEntryScan
         {
             var limit = n + 1 < starts.Count ? starts[n + 1] : list.ContentEnd;
             var end = ProfileBlockLocator.ContentEnd(lines, starts[n] - 1, limit);   // trailing comments and blanks stay with what follows
-            entries.Add(new EntryAt(starts[n], end, IdOf(lines, starts[n], end)));
+            entries.Add(new EntryAt(starts[n], end, KeyOf(lines, starts[n], end, "id:"), KeyOf(lines, starts[n], end, "name:")));
         }
 
         return entries;
@@ -70,8 +71,8 @@ internal static class ProfileEntryScan
         return body.Length > 0 && body[0] is '{' or '[';
     }
 
-    // The entry's 'id:' scalar, or null when it has none or writes it in a way this edit doesn't read.
-    private static string? IdOf(List<string> lines, int start, int end)
+    // The entry's scalar under <key> ('id:', 'name:'), or null when it has none or writes it in a way this edit doesn't read.
+    private static string? KeyOf(List<string> lines, int start, int end, string key)
     {
         var after = lines[start].TrimStart(' ')[1..];
         var keyIndent = YamlProfileLines.Indent(lines[start]) + 1 + (after.Length - after.TrimStart(' ').Length);
@@ -92,9 +93,9 @@ internal static class ProfileEntryScan
                 text = lines[i].TrimStart(' ');
             }
 
-            if (text.StartsWith("id:", StringComparison.Ordinal))
+            if (text.StartsWith(key, StringComparison.Ordinal))
             {
-                return Scalar(ProfileBlockLocator.StripComment(text["id:".Length..]).Trim());
+                return Scalar(ProfileBlockLocator.StripComment(text[key.Length..]).Trim());
             }
         }
 

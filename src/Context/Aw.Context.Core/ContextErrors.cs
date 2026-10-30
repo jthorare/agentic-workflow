@@ -8,7 +8,7 @@ namespace Aw.Context.Core;
 /// retired with the old intent source); later stages
 /// add theirs in their ranges; the pages spec books 250–259 (250–258 used: unknown concept, unknown key, repo, caps, duplicate ids, names, action spec, no such page, no such concept or repo for context_pages). HTTP status follows the kind; the CLI exit code is 1 for attention (<see cref="Attention"/>) and 2 for a tool error.
 /// </summary>
-public static class ContextErrors
+public static partial class ContextErrors
 {
     /// <summary>SND-CONTEXT-001: the profile's 'context:' section is invalid; the message names the key path.</summary>
     public static readonly ErrorDefinition SettingsInvalid = new("SND-CONTEXT-001", ErrorKind.Invalid, "The profile's context section is invalid");
@@ -177,27 +177,6 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-154: a scoping Step's session asked about a node outside its run's graph without saying why (issue 1005). The message names the node and the fix: pass outside: true and a reason.</summary>
     public static readonly ErrorDefinition NodeNotInScopeGraph = new("SND-CONTEXT-154", ErrorKind.NotFound, "That node is not in this run's scoping graph");
 
-    /// <summary>SND-CONTEXT-171: a pin write names a name, summary or alias the profile's rules refuse (concept pins spec §3.6). The message starts with the key path ('index.concepts[2].name: …'); nothing was written.</summary>
-    public static readonly ErrorDefinition PinInvalid = new("SND-CONTEXT-171", ErrorKind.Invalid, "A pin is not valid");
-
-    /// <summary>SND-CONTEXT-172: a pin names a feature that is not in the current published map. The message names the key and the map version; nothing was written.</summary>
-    public static readonly ErrorDefinition PinFeatureUnknown = new("SND-CONTEXT-172", ErrorKind.Invalid, "A pin names a feature that is not in the map");
-
-    /// <summary>SND-CONTEXT-173: two pins of one write would get the same id. The message names both names and the id; nothing was written.</summary>
-    public static readonly ErrorDefinition PinIdClash = new("SND-CONTEXT-173", ErrorKind.Invalid, "Two pins would get the same id");
-
-    /// <summary>SND-CONTEXT-174: an unpin names an id no pin in the profile has. The message lists the nearest ids.</summary>
-    public static readonly ErrorDefinition PinNotInProfile = new("SND-CONTEXT-174", ErrorKind.Invalid, "No pin has that id");
-
-    /// <summary>SND-CONTEXT-175: an unpin would drop a pin's 'paths', 'dependsOn' or 'owns' without being told to ('--with-folder-rules').</summary>
-    public static readonly ErrorDefinition PinHasFolderRules = new("SND-CONTEXT-175", ErrorKind.Invalid, "The pin has folder rules set outside the app");
-
-    /// <summary>SND-CONTEXT-176: an unpin names a pin only a repo's own 'index.concepts' holds; the profile write doesn't touch it.</summary>
-    public static readonly ErrorDefinition PinInRepoProfile = new("SND-CONTEXT-176", ErrorKind.Invalid, "The pin is set in a repo's own profile");
-
-    /// <summary>SND-CONTEXT-177: a '--from-file' line or block has no name to pin. The message names the line; nothing is written.</summary>
-    public static readonly ErrorDefinition PinLineUnreadable = new("SND-CONTEXT-177", ErrorKind.Invalid, "A line of the pin list can't be read");
-
     /// <summary>SND-CONTEXT-133: a 'context.extract.graphify' limit (timeoutMinutes, maxSnapshotMB, maxFileMB, maxGraphMB) isn't a whole number from 0 (no limit) up. The message names the key path.</summary>
     public static readonly ErrorDefinition GraphifyLimitInvalid = new("SND-CONTEXT-133", ErrorKind.Invalid, "A graphify limit is invalid");
 
@@ -289,7 +268,7 @@ public static class ContextErrors
     public static readonly ErrorDefinition PageQueryUnknown = new("SND-CONTEXT-258", ErrorKind.NotFound, "context_pages names no such concept or repo");
 
     /// <summary>Every Context error, for ErrorCatalogue.Validate.</summary>
-    public static IReadOnlyList<ErrorDefinition> All { get; } =
+    public static IReadOnlyList<ErrorDefinition> All =>
         [SettingsInvalid, RecordBatchInvalid, EmbedderUnavailable, VectorScanInvalid, SourceNotConfigured, UnknownAnchor, StoreUnavailable, PathInWorktree, QueryInvalid, SourceUnavailable, AllSourcesUnavailable, SessionsDisabled,
          McpRepoMissing, McpArgumentsInvalid, McpToolUnknown, McpRegisterRepoUnknown, McpRegisterFailed, McpUserWide,
          NoMap, MapFileInvalid, MapNodeUndefined, ExportOutsideHome, MapFileChanged, ProbeFileInvalid, NoProbeFile, AmbiguousAnchor, ProbesRegressed,
