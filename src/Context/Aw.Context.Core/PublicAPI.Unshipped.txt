@@ -10134,3 +10134,129 @@ static Aw.Context.Core.Map.SourceTarget.OfRecord(Aw.Context.Core.Sources.RecordK
 Aw.Context.Core.Extract.ILabelCache
 Aw.Context.Core.Extract.ILabelCache.Find(System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, string!>!>!>
 Aw.Context.Core.Extract.ILabelCache.Save(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, string!>>! labels, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Engine.ModelKind.ProductSurfaces = 6 -> Aw.Context.Core.Engine.ModelKind
+Aw.Context.Core.Engine.ModelsSettings.SurfacePick.get -> Aw.Context.Core.Engine.LabelPick
+Aw.Context.Core.Engine.ModelsSettings.SurfacePick.init -> void
+Aw.Context.Core.Models.ModelPurpose.ProductSurfaces = 8 -> Aw.Context.Core.Models.ModelPurpose
+Aw.Context.Core.Surfaces.ISurfacePicker
+Aw.Context.Core.Surfaces.ISurfacePicker.Decide(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceGroup!>! groups, Aw.Context.Core.Surfaces.SurfacePickOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Surfaces.SurfacePickResult!>
+Aw.Context.Core.Surfaces.SurfaceCandidate
+Aw.Context.Core.Surfaces.SurfaceCandidate.<Clone>$() -> Aw.Context.Core.Surfaces.SurfaceCandidate!
+Aw.Context.Core.Surfaces.SurfaceCandidate.Deconstruct(out string! NodeKey, out string! Kind, out string! Name, out string! Pass, out System.Collections.Generic.IReadOnlyList<string!>! Evidence, out System.Collections.Generic.IReadOnlyList<string!>! Edges) -> void
+Aw.Context.Core.Surfaces.SurfaceCandidate.Edges.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Surfaces.SurfaceCandidate.Edges.init -> void
+Aw.Context.Core.Surfaces.SurfaceCandidate.Equals(Aw.Context.Core.Surfaces.SurfaceCandidate? other) -> bool
+Aw.Context.Core.Surfaces.SurfaceCandidate.Evidence.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Surfaces.SurfaceCandidate.Evidence.init -> void
+Aw.Context.Core.Surfaces.SurfaceCandidate.Kind.get -> string!
+Aw.Context.Core.Surfaces.SurfaceCandidate.Kind.init -> void
+Aw.Context.Core.Surfaces.SurfaceCandidate.Name.get -> string!
+Aw.Context.Core.Surfaces.SurfaceCandidate.Name.init -> void
+Aw.Context.Core.Surfaces.SurfaceCandidate.NodeKey.get -> string!
+Aw.Context.Core.Surfaces.SurfaceCandidate.NodeKey.init -> void
+Aw.Context.Core.Surfaces.SurfaceCandidate.Pass.get -> string!
+Aw.Context.Core.Surfaces.SurfaceCandidate.Pass.init -> void
+Aw.Context.Core.Surfaces.SurfaceCandidate.SurfaceCandidate(string! NodeKey, string! Kind, string! Name, string! Pass, System.Collections.Generic.IReadOnlyList<string!>! Evidence, System.Collections.Generic.IReadOnlyList<string!>! Edges) -> void
+Aw.Context.Core.Surfaces.SurfaceChoice
+Aw.Context.Core.Surfaces.SurfaceChoice.Merge = 1 -> Aw.Context.Core.Surfaces.SurfaceChoice
+Aw.Context.Core.Surfaces.SurfaceChoice.Reject = 2 -> Aw.Context.Core.Surfaces.SurfaceChoice
+Aw.Context.Core.Surfaces.SurfaceChoice.Separate = 0 -> Aw.Context.Core.Surfaces.SurfaceChoice
+Aw.Context.Core.Surfaces.SurfaceCounts
+Aw.Context.Core.Surfaces.SurfaceCounts.<Clone>$() -> Aw.Context.Core.Surfaces.SurfaceCounts!
+Aw.Context.Core.Surfaces.SurfaceCounts.Deconstruct(out int Merged, out int Kept, out int Rejected, out int Undecided) -> void
+Aw.Context.Core.Surfaces.SurfaceCounts.Equals(Aw.Context.Core.Surfaces.SurfaceCounts? other) -> bool
+Aw.Context.Core.Surfaces.SurfaceCounts.Kept.get -> int
+Aw.Context.Core.Surfaces.SurfaceCounts.Kept.init -> void
+Aw.Context.Core.Surfaces.SurfaceCounts.Merged.get -> int
+Aw.Context.Core.Surfaces.SurfaceCounts.Merged.init -> void
+Aw.Context.Core.Surfaces.SurfaceCounts.Rejected.get -> int
+Aw.Context.Core.Surfaces.SurfaceCounts.Rejected.init -> void
+Aw.Context.Core.Surfaces.SurfaceCounts.SurfaceCounts(int Merged, int Kept, int Rejected, int Undecided) -> void
+Aw.Context.Core.Surfaces.SurfaceCounts.Undecided.get -> int
+Aw.Context.Core.Surfaces.SurfaceCounts.Undecided.init -> void
+Aw.Context.Core.Surfaces.SurfaceGroup
+Aw.Context.Core.Surfaces.SurfaceGroup.Candidates.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceCandidate!>!
+Aw.Context.Core.Surfaces.SurfaceGroup.Candidates.init -> void
+Aw.Context.Core.Surfaces.SurfaceGroup.<Clone>$() -> Aw.Context.Core.Surfaces.SurfaceGroup!
+Aw.Context.Core.Surfaces.SurfaceGroup.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceCandidate!>! Candidates) -> void
+Aw.Context.Core.Surfaces.SurfaceGroup.Equals(Aw.Context.Core.Surfaces.SurfaceGroup? other) -> bool
+Aw.Context.Core.Surfaces.SurfaceGroup.Key.get -> string!
+Aw.Context.Core.Surfaces.SurfaceGroups
+Aw.Context.Core.Surfaces.SurfaceGroup.SurfaceGroup(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceCandidate!>! Candidates) -> void
+Aw.Context.Core.Surfaces.SurfacePickOptions
+Aw.Context.Core.Surfaces.SurfacePickOptions.<Clone>$() -> Aw.Context.Core.Surfaces.SurfacePickOptions!
+Aw.Context.Core.Surfaces.SurfacePickOptions.Deconstruct(out bool Pick, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Trust.ScrubPattern!>! ExtraPatterns, out int SpentTokens, out int MaxTokens) -> void
+Aw.Context.Core.Surfaces.SurfacePickOptions.Equals(Aw.Context.Core.Surfaces.SurfacePickOptions? other) -> bool
+Aw.Context.Core.Surfaces.SurfacePickOptions.ExtraPatterns.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Trust.ScrubPattern!>!
+Aw.Context.Core.Surfaces.SurfacePickOptions.ExtraPatterns.init -> void
+Aw.Context.Core.Surfaces.SurfacePickOptions.MaxTokens.get -> int
+Aw.Context.Core.Surfaces.SurfacePickOptions.MaxTokens.init -> void
+Aw.Context.Core.Surfaces.SurfacePickOptions.Pick.get -> bool
+Aw.Context.Core.Surfaces.SurfacePickOptions.Pick.init -> void
+Aw.Context.Core.Surfaces.SurfacePickOptions.SpentTokens.get -> int
+Aw.Context.Core.Surfaces.SurfacePickOptions.SpentTokens.init -> void
+Aw.Context.Core.Surfaces.SurfacePickOptions.SurfacePickOptions(bool Pick, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Trust.ScrubPattern!>! ExtraPatterns, int SpentTokens, int MaxTokens) -> void
+Aw.Context.Core.Surfaces.SurfacePickResult
+Aw.Context.Core.Surfaces.SurfacePickResult.<Clone>$() -> Aw.Context.Core.Surfaces.SurfacePickResult!
+Aw.Context.Core.Surfaces.SurfacePickResult.Counts.get -> Aw.Context.Core.Surfaces.SurfaceCounts!
+Aw.Context.Core.Surfaces.SurfacePickResult.Counts.init -> void
+Aw.Context.Core.Surfaces.SurfacePickResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceVerdict!>! Verdicts, out Aw.Context.Core.Surfaces.SurfaceCounts! Counts, out string? NotDecided) -> void
+Aw.Context.Core.Surfaces.SurfacePickResult.Equals(Aw.Context.Core.Surfaces.SurfacePickResult? other) -> bool
+Aw.Context.Core.Surfaces.SurfacePickResult.NotDecided.get -> string?
+Aw.Context.Core.Surfaces.SurfacePickResult.NotDecided.init -> void
+Aw.Context.Core.Surfaces.SurfacePickResult.StatusLine.get -> string?
+Aw.Context.Core.Surfaces.SurfacePickResult.SurfacePickResult(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceVerdict!>! Verdicts, Aw.Context.Core.Surfaces.SurfaceCounts! Counts, string? NotDecided) -> void
+Aw.Context.Core.Surfaces.SurfacePickResult.Verdicts.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceVerdict!>!
+Aw.Context.Core.Surfaces.SurfacePickResult.Verdicts.init -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict
+Aw.Context.Core.Surfaces.SurfaceVerdict.Choice.get -> Aw.Context.Core.Surfaces.SurfaceChoice
+Aw.Context.Core.Surfaces.SurfaceVerdict.Choice.init -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.<Clone>$() -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+Aw.Context.Core.Surfaces.SurfaceVerdict.Decided.get -> bool
+Aw.Context.Core.Surfaces.SurfaceVerdict.Decided.init -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.Equals(Aw.Context.Core.Surfaces.SurfaceVerdict? other) -> bool
+Aw.Context.Core.Surfaces.SurfaceVerdict.GroupKey.get -> string!
+Aw.Context.Core.Surfaces.SurfaceVerdict.GroupKey.init -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.MergedName.get -> string?
+Aw.Context.Core.Surfaces.SurfaceVerdict.MergedName.init -> void
+const Aw.Context.Core.Surfaces.SurfaceGroup.MaxCandidates = 3 -> int
+override Aw.Context.Core.Surfaces.SurfaceCandidate.Equals(object? obj) -> bool
+override Aw.Context.Core.Surfaces.SurfaceCandidate.GetHashCode() -> int
+override Aw.Context.Core.Surfaces.SurfaceCandidate.ToString() -> string!
+override Aw.Context.Core.Surfaces.SurfaceCounts.Equals(object? obj) -> bool
+override Aw.Context.Core.Surfaces.SurfaceCounts.GetHashCode() -> int
+override Aw.Context.Core.Surfaces.SurfaceCounts.ToString() -> string!
+override Aw.Context.Core.Surfaces.SurfaceGroup.Equals(object? obj) -> bool
+override Aw.Context.Core.Surfaces.SurfaceGroup.GetHashCode() -> int
+override Aw.Context.Core.Surfaces.SurfaceGroup.ToString() -> string!
+override Aw.Context.Core.Surfaces.SurfacePickOptions.Equals(object? obj) -> bool
+override Aw.Context.Core.Surfaces.SurfacePickOptions.GetHashCode() -> int
+override Aw.Context.Core.Surfaces.SurfacePickOptions.ToString() -> string!
+override Aw.Context.Core.Surfaces.SurfacePickResult.Equals(object? obj) -> bool
+override Aw.Context.Core.Surfaces.SurfacePickResult.GetHashCode() -> int
+override Aw.Context.Core.Surfaces.SurfacePickResult.ToString() -> string!
+override Aw.Context.Core.Surfaces.SurfaceVerdict.Equals(object? obj) -> bool
+override Aw.Context.Core.Surfaces.SurfaceVerdict.GetHashCode() -> int
+override Aw.Context.Core.Surfaces.SurfaceVerdict.ToString() -> string!
+static Aw.Context.Core.Surfaces.SurfaceCandidate.operator !=(Aw.Context.Core.Surfaces.SurfaceCandidate? left, Aw.Context.Core.Surfaces.SurfaceCandidate? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceCandidate.operator ==(Aw.Context.Core.Surfaces.SurfaceCandidate? left, Aw.Context.Core.Surfaces.SurfaceCandidate? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceCounts.operator !=(Aw.Context.Core.Surfaces.SurfaceCounts? left, Aw.Context.Core.Surfaces.SurfaceCounts? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceCounts.operator ==(Aw.Context.Core.Surfaces.SurfaceCounts? left, Aw.Context.Core.Surfaces.SurfaceCounts? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceGroup.operator !=(Aw.Context.Core.Surfaces.SurfaceGroup? left, Aw.Context.Core.Surfaces.SurfaceGroup? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceGroup.operator ==(Aw.Context.Core.Surfaces.SurfaceGroup? left, Aw.Context.Core.Surfaces.SurfaceGroup? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceGroups.Cut(System.Collections.Generic.IEnumerable<Aw.Context.Core.Surfaces.SurfaceCandidate!>! lookalikes) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Surfaces.SurfaceGroup!>!
+static Aw.Context.Core.Surfaces.SurfacePickOptions.operator !=(Aw.Context.Core.Surfaces.SurfacePickOptions? left, Aw.Context.Core.Surfaces.SurfacePickOptions? right) -> bool
+static Aw.Context.Core.Surfaces.SurfacePickOptions.operator ==(Aw.Context.Core.Surfaces.SurfacePickOptions? left, Aw.Context.Core.Surfaces.SurfacePickOptions? right) -> bool
+static Aw.Context.Core.Surfaces.SurfacePickResult.operator !=(Aw.Context.Core.Surfaces.SurfacePickResult? left, Aw.Context.Core.Surfaces.SurfacePickResult? right) -> bool
+static Aw.Context.Core.Surfaces.SurfacePickResult.operator ==(Aw.Context.Core.Surfaces.SurfacePickResult? left, Aw.Context.Core.Surfaces.SurfacePickResult? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceVerdict.operator !=(Aw.Context.Core.Surfaces.SurfaceVerdict? left, Aw.Context.Core.Surfaces.SurfaceVerdict? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceVerdict.operator ==(Aw.Context.Core.Surfaces.SurfaceVerdict? left, Aw.Context.Core.Surfaces.SurfaceVerdict? right) -> bool
+static Aw.Context.Core.Surfaces.SurfaceVerdict.Rejected(string! groupKey) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+static Aw.Context.Core.Surfaces.SurfaceVerdict.Separate(string! groupKey, bool decided) -> Aw.Context.Core.Surfaces.SurfaceVerdict!
+Aw.Context.Core.Surfaces.SurfaceVerdict.Deconstruct(out string! GroupKey, out Aw.Context.Core.Surfaces.SurfaceChoice Choice, out int? Survivor, out string? SurvivorKey, out string? MergedName, out bool Decided) -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.SurfaceVerdict(string! GroupKey, Aw.Context.Core.Surfaces.SurfaceChoice Choice, int? Survivor, string? SurvivorKey, string? MergedName, bool Decided) -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.Survivor.get -> int?
+Aw.Context.Core.Surfaces.SurfaceVerdict.Survivor.init -> void
+Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.get -> string?
+Aw.Context.Core.Surfaces.SurfaceVerdict.SurvivorKey.init -> void
+static Aw.Context.Core.Surfaces.SurfaceVerdict.Merged(string! groupKey, int survivor, string! survivorKey, string! name) -> Aw.Context.Core.Surfaces.SurfaceVerdict!

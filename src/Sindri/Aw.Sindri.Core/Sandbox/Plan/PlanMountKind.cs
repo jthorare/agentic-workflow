@@ -23,4 +23,7 @@ public enum PlanMountKind
 
     /// <summary>A fresh /proc.</summary>
     Proc,
+
+    /// <summary>A symbolic link the run-area preparer makes at the path, to the target in <see cref="PlanMount.Source"/> (Seatbelt only: it has no bind mounts, so what the agent expects at a fixed path is a link to the real one).</summary>
+    Link,
 }

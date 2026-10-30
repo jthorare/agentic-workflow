@@ -20,7 +20,8 @@ internal static class ChoicePortRegistration
         })
         .AddSingleton<IModelPromptBudget>(sp => sp.GetRequiredService<IModelPort>() as IModelPromptBudget ?? new WidePromptBudget())
         .AddSingleton<IJevKeyProbe>(sp => new JevKey(environment, sp.GetRequiredService<JudgeCatalog>().ProcessRunner, OperatingSystem.IsMacOS()))
-        .AddScoped<IDoctorChecks>(sp => new LabelPickDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJevKeyProbe>()));   // the 'context:labelpick' row (spec §8.4)
+        .AddScoped<IDoctorChecks>(sp => new LabelPickDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJevKeyProbe>()))   // the 'context:labelpick' row (spec §8.4)
+        .AddScoped<IDoctorChecks>(sp => new SurfacePickDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJevKeyProbe>()));   // the 'context:surfacepick' row (spec §8.4)
 
     // A host whose model port is not the router has no harness list to size against: the wide budget is today's behavior (the generate packs are still bigger, within 60,000 characters).
     private sealed class WidePromptBudget : IModelPromptBudget
