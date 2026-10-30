@@ -10448,3 +10448,5 @@ Aw.Context.Core.Sources.SourceQuery.Pin.get -> Aw.Context.Core.Concepts.PinScope
 Aw.Context.Core.Sources.SourceQuery.Pin.init -> void
 Aw.Context.Core.Sources.SourceQuery.Skipped.get -> Aw.Context.Core.Concepts.PinTally?
 Aw.Context.Core.Sources.SourceQuery.Skipped.init -> void
+Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Results.ContextResult.Notes.init -> void

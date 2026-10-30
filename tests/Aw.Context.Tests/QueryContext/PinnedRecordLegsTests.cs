@@ -106,8 +106,7 @@ public sealed class PinnedRecordLegsTests
 
         var result = await Ask(leg, store, MapOf(billing: [], auth: ["linear:issue/a0", "linear:issue/a1"]), "billing");
 
-        var note = Assert.Single(result.Value.Degraded, d => d.Source.Value == "concept");
-        Assert.Equal("concept billing: no results. Of the results read, 2 were in auth and 1 were in no pin (fix: concept=auth, or drop concept=)", note.Message);
+        Assert.Equal("concept billing: no results. Of the results read, 2 were in auth and 1 were in no pin (fix: concept=auth, or drop concept=)", Assert.Single(result.Value.Notes!));
         Assert.Empty(result.Value.Cites);
     }
 
@@ -118,7 +117,6 @@ public sealed class PinnedRecordLegsTests
 
         var result = await Ask(new FakeLexicalLeg(), store, MapOf(billing: [], auth: []), "billing", FakeContextSource.FixtureDocs());
 
-        var left = Assert.Single(result.Value.Degraded, d => d.Source.Value == "repo-docs");
-        Assert.Equal("left out under concept= (it can't be scoped to a pin)", left.Message);
+        Assert.Contains("repo-docs: left out under concept= (it can't be scoped to a pin)", result.Value.Notes!, StringComparer.Ordinal);
     }
 }

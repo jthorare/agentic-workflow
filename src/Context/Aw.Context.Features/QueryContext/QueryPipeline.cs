@@ -74,11 +74,11 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
             return Unknown(miss, request.Scope);   // not linked by any sync, and no live record carries that tracker key
         }
 
-        await AnswerNotes(graph, (fetched.Count, degraded), cancellationToken).ConfigureAwait(false);
+        var notes = await AnswerNotes(graph, (fetched.Count, degraded, searched.Notes), cancellationToken).ConfigureAwait(false);
         var versions = await Versions(fetched, sources, deadline, degraded, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
         var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
-        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos) };
+        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes };
     }
 
     // The pins of the query go on the graph part, where the legs, the graph and the ranker read them. The map is read again here only when a pin is in play

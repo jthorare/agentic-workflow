@@ -8,21 +8,17 @@ namespace Aw.Context.Features.QueryContext;
 
 internal sealed partial class QueryPipeline
 {
-    private static readonly SourceId _pinNote = SourceId.From("concept");
-
-    private async ValueTask AnswerNotes(GraphPart graph, (int Fetched, List<DegradedSource> Degraded) answer, CancellationToken ct)
+    // The answer's notes: what the search left out under a pin, and for an empty answer where the results read were (concept pins spec §3.2), never a fall back to the unscoped search.
+    private async ValueTask<IReadOnlyList<string>?> AnswerNotes(GraphPart graph, (int Fetched, List<DegradedSource> Degraded, IReadOnlyList<string> Searched) answer, CancellationToken ct)
     {
-        NoteEmptyPin(graph, answer.Fetched, answer.Degraded);
         await NoteQueuedDecisions(graph, answer.Degraded, ct).ConfigureAwait(false);
-    }
-
-    // Under concept= an answer with nothing in it says where the results read were (concept pins spec §3.2), never falling back to the unscoped search.
-    private void NoteEmptyPin(GraphPart graph, int fetched, List<DegradedSource> degraded)
-    {
-        if (graph.Pins.Scope is { } scoped && fetched == 0 && graph.Candidates.Count == 0)
+        List<string> notes = [.. answer.Searched];
+        if (graph.Pins.Scope is { } scoped && answer.Fetched == 0 && graph.Candidates.Count == 0)
         {
-            degraded.Add(new DegradedSource(_pinNote, ContextErrors.SourceUnavailable.Code, graph.Pins.Skipped.EmptyNote(scoped.Pin, matchesNothing: !scoped.HoldsAnyFile()), clock.GetUtcNow()));
+            notes.Add(graph.Pins.Skipped.EmptyNote(scoped.Pin, matchesNothing: !scoped.HoldsAnyFile()));
         }
+
+        return notes.Count == 0 ? null : notes;
     }
 
     private async Task<Searched> Search(IReadOnlyList<IContextSource> sources, IReadOnlyList<string> terms, (DateTimeOffset Deadline, DateTimeOffset? AsOf) when,
@@ -31,12 +27,13 @@ internal sealed partial class QueryPipeline
         var deadline = when.Deadline;
         var answers = new List<SourceAnswer>();
         var degraded = new List<DegradedSource>();
+        var left = new List<string>();
         var searchable = sources.Where(s => s.Describe().Id != _linearLive).ToList();   // Linear answers come from the owned index only (#1531)
         if (pinned.Pin is not null)
         {
             // A source that can't filter by pin is left out and said so, never searched unscoped.
             var unscoped = sources.Where(s => !s.Describe().HonorsPin).ToList();
-            degraded.AddRange(unscoped.Select(s => new DegradedSource(s.Describe().Id, ContextErrors.SourceUnavailable.Code, "left out under concept= (it can't be scoped to a pin)", clock.GetUtcNow())));
+            left.AddRange(unscoped.Select(s => $"{s.Describe().Id.Value}: left out under concept= (it can't be scoped to a pin)"));
             searchable = [.. searchable.Where(s => s.Describe().HonorsPin)];
         }
 
@@ -60,6 +57,6 @@ internal sealed partial class QueryPipeline
             }
         }
 
-        return new Searched(answers, degraded);
+        return new Searched(answers, degraded) { Notes = left };
     }
 }
