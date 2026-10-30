@@ -25,6 +25,12 @@
 (allow file-read* file-write* (subpath "/home/owner/.nuget/packages"))
 ; the npm cache; shared with the owner's builds
 (allow file-read* file-write* (subpath "/home/owner/.npm/_cacache"))
+; allowed by the profile
+(allow file-read* file-write* (subpath "/home/owner/.venv"))
+; allowed by the profile
+(allow file-read* (subpath "/home/owner/.config/gh"))
+; a cache path this repo declares
+(allow file-read* file-write* (subpath "/home/owner/.cache/pip"))
 ; the agent home, from the owner-copy login source
 (allow file-read* (subpath "/home/owner/.claude"))
 ; this worktree's transcripts, in the owner's agent home

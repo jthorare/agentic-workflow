@@ -195,4 +195,33 @@ public sealed class SandboxPlanSeatbeltTests
         Assert.Equal(RunHome, Env(plan, "HOME"));
         Assert.Equal(InnerSandbox.Off, plan.Inner);
     }
+
+    private static SandboxPlan WithHomeEntry() =>
+        Build(Req.WriteScope with { Settings = new SandboxSettings(Fs: new SandboxFs(HomeAllow: [new HomeAllowEntry(".venv", MountMode.ReadWrite)])) });
+
+    [Fact, Trait("Lane", "unit")]
+    public void Explain_follows_a_tilde_path_through_the_run_homes_links()
+    {
+        var text = SandboxPlanRenderer.Explain(WithHomeEntry(), "~/.venv/bin/python");
+
+        Assert.Contains(Req.Home + "/.venv/bin/python is writable", text, StringComparison.Ordinal);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("~/.ssh/id_ed25519")]
+    [InlineData(Req.Home + "/.ssh/id_ed25519")]
+    public void Explain_says_the_real_home_is_denied_for_a_path_no_entry_re_allows(string query)
+    {
+        var text = SandboxPlanRenderer.Explain(WithHomeEntry(), query);
+
+        Assert.Contains("is blocked: on macOS the real home is denied; only the entries listed here are allowed.", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Show_leaves_out_the_home_size_on_seatbelt_and_keeps_it_on_bubblewrap()
+    {
+        Assert.DoesNotContain(", home ", SandboxPlanRenderer.Show(Build(Req.WriteScope)), StringComparison.Ordinal);
+        Assert.DoesNotContain(", home ", SandboxPlanRenderer.Lead(Build(Req.WriteScope)), StringComparison.Ordinal);
+        Assert.Contains(", home 256MiB", SandboxPlanRenderer.Show(Build(Req.WriteScope, SandboxMechanism.Bubblewrap)), StringComparison.Ordinal);
+    }
 }

@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
@@ -128,5 +129,6 @@ public sealed class SeatbeltProfileTests
     public void A_write_scope_step_matches_its_golden() => Match(SeatbeltProfile.Render(Plan(Req.WriteScope)), "seatbelt-writescope.sb");
 
     [Fact, Trait("Lane", "unit")]
-    public void An_attended_session_matches_its_golden() => Match(SeatbeltProfile.Render(Plan(Req.Attended)), "seatbelt-attended.sb");
+    public void An_attended_session_with_home_entries_matches_its_golden() =>
+        Match(SeatbeltProfile.Render(Plan(Req.Attended with { Settings = new SandboxSettings(Fs: new SandboxFs(HomeAllow: [new HomeAllowEntry(".venv", MountMode.ReadWrite), new HomeAllowEntry(".config/gh", MountMode.ReadOnly)]), Repos: new Dictionary<string, SandboxRepoSettings>(StringComparer.Ordinal) { ["web"] = new(CachePaths: [".cache/pip"]) }) })), "seatbelt-attended.sb");
 }

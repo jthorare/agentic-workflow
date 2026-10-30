@@ -11,6 +11,8 @@ public static partial class SandboxPlanRenderer
 
     private const string Always = "always blocked: ";
 
+    private const string RealHome = "the owner's real home";   // SeatbeltPlan's reason for denying it
+
     /// <summary>The whole plan as text.</summary>
     /// <param name="plan">The plan.</param>
     /// <returns>The text.</returns>
@@ -34,7 +36,7 @@ public static partial class SandboxPlanRenderer
         }
 
         _ = text.AppendLine().AppendLine("Environment (names only):").Append("  ").AppendJoin(", ", EnvironmentNames(plan)).AppendLine();
-        _ = text.AppendLine().AppendLine("Limits:").Append("  ").AppendLine(LimitsLine(plan.Limits));
+        _ = text.AppendLine().AppendLine("Limits:").Append("  ").AppendLine(LimitsLine(plan));
         _ = text.AppendLine().AppendLine(CultureInfo.InvariantCulture, $"Credentials: GitHub {SandboxWire.Name(plan.Github)}, model login {SandboxWire.Name(plan.Login)}");
         _ = text.AppendLine(CultureInfo.InvariantCulture, $"The agent's own policy: {(plan.Policy.Mode == InnerMode.Ask ? "asks" : "refuses")}, {plan.Policy.Rules.Count} rules; its own sandbox: {SandboxWire.Name(plan.Inner)}");
         _ = text.AppendLine(CultureInfo.InvariantCulture, $"Hooks kept: {string.Join(", ", plan.Hooks.Kept)}");
@@ -56,7 +58,7 @@ public static partial class SandboxPlanRenderer
         var readable = plan.Mounts.Where(static m => m.Kind == PlanMountKind.ReadOnly).Select(static m => m.Path).Distinct(StringComparer.Ordinal).ToList();
         var shown = string.Join(", ", readable.Take(4)) + (readable.Count > 4 ? string.Create(CultureInfo.InvariantCulture, $" and {readable.Count - 4} more") : string.Empty);
         var network = string.Join(", ", plan.Network.Groups.Select(static g => g.Name));
-        return $"Can write: {(plan.Writable.Count == 0 ? "nothing" : string.Join(", ", plan.Writable))}\nCan read: {(readable.Count == 0 ? "only what it can write" : shown)}\nNetwork: {SandboxWire.Name(plan.Network.Mode)}, {(network.Length == 0 ? "no groups" : network)}\nLimits: {LimitsLine(plan.Limits)}\n";
+        return $"Can write: {(plan.Writable.Count == 0 ? "nothing" : string.Join(", ", plan.Writable))}\nCan read: {(readable.Count == 0 ? "only what it can write" : shown)}\nNetwork: {SandboxWire.Name(plan.Network.Mode)}, {(network.Length == 0 ? "no groups" : network)}\nLimits: {LimitsLine(plan)}\n";
     }
 
     /// <summary>Why a path, a host or a command is allowed or denied, and how the owner can change it.</summary>
@@ -102,29 +104,45 @@ public static partial class SandboxPlanRenderer
         _ => kind.ToString(),
     };
 
-    private static string LimitsLine(PlanLimits l)
+    private static string LimitsLine(SandboxPlan plan)
     {
+        var l = plan.Limits;
+        var home = plan.Mechanism == SandboxMechanism.Seatbelt ? string.Empty : $", home {SandboxUnits.FormatSize(l.HomeTmpfsBytes)}";   // a Seatbelt home is a folder of links, not a sized tmpfs
         var wall = l.Wall is { } w ? SandboxUnits.FormatDuration(w) : "none";
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"memory {SandboxUnits.FormatSize(l.MemoryMaxBytes)} (slowed at {SandboxUnits.FormatSize(l.MemoryHighBytes)}), cpu {l.CpuQuotaPercent}%, processes {l.TasksMax}, sessions {l.Sessions}, home {SandboxUnits.FormatSize(l.HomeTmpfsBytes)}, time {wall}");
+            $"memory {SandboxUnits.FormatSize(l.MemoryMaxBytes)} (slowed at {SandboxUnits.FormatSize(l.MemoryHighBytes)}), cpu {l.CpuQuotaPercent}%, processes {l.TasksMax}, sessions {l.Sessions}{home}, time {wall}");
     }
 
     private static string ExplainPath(SandboxPlan plan, string query)
     {
-        // The home is the first tmpfs other than /run: SB-2 lists the empty /run before it.
-        var home = plan.Mounts.FirstOrDefault(m => m.Kind == PlanMountKind.Tmpfs && !string.Equals(m.Path, "/run", StringComparison.Ordinal))?.Path ?? string.Empty;
+        var seatbelt = plan.Mechanism == SandboxMechanism.Seatbelt;
+        var home = HomeOf(plan, seatbelt);
         var path = Normalize(query.StartsWith('~') ? home + query[1..] : query);
+        path = seatbelt ? ThroughLink(plan, path) : path;
         var mount = plan.Mounts.LastOrDefault(m => string.Equals(m.Path, path, StringComparison.Ordinal) || path.StartsWith(m.Path.TrimEnd('/') + "/", StringComparison.Ordinal));
         return mount switch
         {
             null => $"{path} is not listed; the system is read-only.\n",
+            { Kind: PlanMountKind.Deny } when seatbelt && mount.Reason.StartsWith(RealHome, StringComparison.Ordinal) => $"{path} is blocked: on macOS the real home is denied; only the entries listed here are allowed.\nThe owner can allow it for this repo: add it to sandbox.repos.<repo>.homeAllow in the profile.\n",
             { Kind: PlanMountKind.Deny } => ExplainDenied(path, mount),
             { Kind: PlanMountKind.Tmpfs } when !string.Equals(mount.Path, home, StringComparison.Ordinal) => ExplainDenied(path, new PlanMount(path, PlanMountKind.Deny, Reason: Always + "Sindri's own state is not visible to a session")),
             { Kind: PlanMountKind.Tmpfs } => $"{path} is not bound in the sandbox home, so it does not exist for this session (a tool that writes there loses it with the run).\nThe owner can allow it for this repo: add it to sandbox.repos.<repo>.homeAllow in the profile.\n",
             { Kind: PlanMountKind.ReadOnly } => $"{path} can be read, not changed ({mount.Reason}).\n",
             _ => $"{path} is writable ({mount.Reason}).\n",
         };
+    }
+
+    // The home is the first tmpfs other than /run (SB-2 lists the empty /run before it); on Seatbelt it is HOME, the run's folder of links.
+    private static string HomeOf(SandboxPlan plan, bool seatbelt) => seatbelt
+        ? plan.Environment.FirstOrDefault(static e => string.Equals(e.Name, "HOME", StringComparison.Ordinal))?.Value ?? string.Empty
+        : plan.Mounts.FirstOrDefault(m => m.Kind == PlanMountKind.Tmpfs && !string.Equals(m.Path, "/run", StringComparison.Ordinal))?.Path ?? string.Empty;
+
+    // A path through a link in the run's home is the link's target: the rules are on the real path.
+    private static string ThroughLink(SandboxPlan plan, string path)
+    {
+        var link = plan.Mounts.LastOrDefault(m => m is { Kind: PlanMountKind.Link, Source: not null } && (string.Equals(m.Path, path, StringComparison.Ordinal) || path.StartsWith(m.Path.TrimEnd('/') + "/", StringComparison.Ordinal)));
+        return link?.Source is { } target ? target + path[link.Path.Length..] : path;
     }
 
     private static string ExplainDenied(string path, PlanMount mount)
