@@ -36,6 +36,8 @@ public static class AgentEntries
         SessionIdMode = SessionIdMode.Reported,
         SessionIdPattern = Uuid,
         Usage = "cursor",
+        ModelForm = ModelForm.CursorFlag,
+        PolicyForm = PolicyForm.CursorConfig,
     };
 
     /// <summary>A user-added entry with no id and no resume.</summary>

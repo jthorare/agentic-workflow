@@ -84,6 +84,28 @@ internal static class StepFactWriter
         return null;
     }
 
+    /// <summary>In a git worktree, adds <paramref name="names"/> (paths relative to the worktree) to the local 'info/exclude' (once, under the same marker) so the Step's 'git add' skips files the launcher puts in the checkout, such as a cursor-config policy's .cursor/cli.json.</summary>
+    /// <param name="workDir">The Step's worktree.</param>
+    /// <param name="names">The paths to exclude.</param>
+    /// <param name="cancellationToken">Cancels the git query.</param>
+    /// <returns>An error when the exclude file could not be written; null when the lines are in place or the directory is no checkout.</returns>
+    internal static async ValueTask<Error?> Excluded(string workDir, IEnumerable<string> names, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (await ExcludeFile(Path.GetFullPath(workDir), cancellationToken).ConfigureAwait(false) is { } exclude)
+            {
+                await Exclude(exclude, names, cancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return KernelErrors.Unavailable.With($"the git exclude for the Step's files could not be written: {e.Message}");
+        }
+
+        return null;
+    }
+
     // The refusal for the first name git tracks in the directory; null when none is.
     private static async ValueTask<Error?> Tracked(string root, IEnumerable<string> names, CancellationToken cancellationToken)
     {
