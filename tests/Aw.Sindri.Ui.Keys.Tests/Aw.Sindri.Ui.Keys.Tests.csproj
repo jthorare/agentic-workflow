@@ -1,0 +1,49 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Sindri.Ui.Keys.Tests: the keyboard, the command palette and the dialogs' views under Avalonia's headless platform. Split out of Aw.Sindri.Ui.Tests (#1546): every Avalonia test in a process runs on that process's one
+       headless UI thread, so a second project is a second UI thread and the two halves of the integration lane run side by side.
+       Its own lane-budget row (scripts/ci/lane-budgets.mjs PROJECT_BUDGETS). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <RootNamespace>Aw.Sindri.Ui.Keys.Tests</RootNamespace>
+    <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <!-- Bound by the one UI thread's CPU, as Aw.Sindri.Ui.Tests is: no dynamic PGO instrumentation, no background GC thread. -->
+    <TieredPGO>false</TieredPGO>
+    <ConcurrentGarbageCollection>false</ConcurrentGarbageCollection>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="Avalonia.Headless" />
+    <PackageReference Include="Avalonia.Skia" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Sindri/Aw.Sindri.Ui/Aw.Sindri.Ui.csproj" />
+    <ProjectReference Include="../../src/Sindri/Aw.Sindri.Ui.Desktop/Aw.Sindri.Ui.Desktop.csproj" />
+    <ProjectReference Include="../Aw.Sindri.Ui.Testing/Aw.Sindri.Ui.Testing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="Aw.Sindri.Ui.Tests" />
+    <Using Include="Aw.Sindri.Ui.Tests.Views" />
+  </ItemGroup>
+
+  <!-- Shared with Aw.Sindri.Ui.Tests by link, not copy: the headless app builder (drawing off), the key-frame host and its helpers. -->
+  <ItemGroup>
+    <Compile Include="../Aw.Sindri.Ui.Tests/Views/TestAppBuilder.cs" Link="Shared/TestAppBuilder.cs" />
+    <Compile Include="../Aw.Sindri.Ui.Tests/Views/FrameHost.cs" Link="Shared/FrameHost.cs" />
+    <Compile Include="../Aw.Sindri.Ui.Tests/Views/FrameFile.cs" Link="Shared/FrameFile.cs" />
+    <Compile Include="../Aw.Sindri.Ui.Tests/Views/HeadlessWindows.cs" Link="Shared/HeadlessWindows.cs" />
+    <Compile Include="../Aw.Sindri.Ui.Tests/Views/Heard.cs" Link="Shared/Heard.cs" />
+    <Compile Include="../Aw.Sindri.Ui.Tests/Start/StartFormFixture.cs" Link="Shared/StartFormFixture.cs" />
+  </ItemGroup>
+
+  <!-- The API goldens the fake serves (Aw.Sindri.Ui.Testing reads them from the output folder): the same files as Aw.Sindri.Ui.Tests. -->
+  <ItemGroup>
+    <None Include="../Aw.Sindri.Tests/Golden/Api/**/*.json" Link="Golden/Api/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="../Aw.Sindri.Ui.Tests/Golden/SpecShaped/**/*.json" Link="Golden/SpecShaped/%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>
