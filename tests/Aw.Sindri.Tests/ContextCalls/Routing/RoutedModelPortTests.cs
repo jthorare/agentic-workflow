@@ -333,6 +333,20 @@ public sealed class RoutedModelPortTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_cli_call_for_product_surfaces_is_241_and_starts_no_harness_even_with_both_installed()
+    {
+        var claude = Claude(Said("never asked"));
+        var codex = Codex(Said("never asked"));
+        var rig = new RouterRig(settings: new ModelsSettings { SurfacePick = LabelPick.Jev }, claude, codex);
+
+        var answer = await rig.Ask(RouterRig.Request(ModelPurpose.ProductSurfaces));
+
+        Assert.Equal(ContextErrors.NoModelHarness.Code, answer.Error.Code);
+        Assert.Empty(claude.Asked);
+        Assert.Empty(codex.Asked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_limit_with_no_job_to_park_is_240_at_once_and_names_the_harnesses_and_the_fix()
     {
         var rig = new RouterRig(settings: null, Claude(RouterRig.Limit()), Codex(RouterRig.Limit()));

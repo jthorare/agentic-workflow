@@ -19,7 +19,7 @@ internal sealed class ProcessGroupScopeControl(string directory) : IScopeControl
 
     /// <inheritdoc />
     public Task<string?> Result(string unit, CancellationToken cancellationToken) =>
-        Task.FromResult(ProcessGroupFiles.ReadPgid(directory, unit) is { } pgid && ProcessGroupFiles.MemoryKilled(directory, pgid) ? "oom-kill" : null);
+        Task.FromResult(ProcessGroupFiles.MemoryKilled(directory, unit) ? "oom-kill" : null);
 
     /// <inheritdoc />
     public Task<bool> Kill(string unit, string signal, CancellationToken cancellationToken) =>
@@ -32,15 +32,14 @@ internal sealed class ProcessGroupScopeControl(string directory) : IScopeControl
     /// <inheritdoc />
     public Task<bool> Record(string unit, CancellationToken cancellationToken)
     {
-        if (ProcessGroupFiles.ReadPgid(directory, unit) is not { } pgid)
+        if (ProcessGroupFiles.ReadPgid(directory, unit) is null)
         {
-            return Task.FromResult(false);
+            return Task.FromResult(false);   // why: the watchdog records only for its own session, while the group file is still there (Release removes it after the verdict)
         }
 
         try
         {
-            ProcessGroupFiles.RecordMemoryKill(directory, pgid);
-            return Task.FromResult(true);
+            return Task.FromResult(ProcessGroupFiles.RecordMemoryKill(directory, unit));
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

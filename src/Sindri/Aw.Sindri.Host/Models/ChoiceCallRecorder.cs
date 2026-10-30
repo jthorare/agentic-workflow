@@ -53,7 +53,7 @@ internal sealed class ChoiceCallRecorder(ChoiceModel identity, IJobContextAccess
             output,
             basis,
             call.Questions.Count,
-            mapped.IsSuccess ? How(call, mapped.Value) : null,
+            mapped.IsSuccess ? (call.Kind == ChoiceKind.Labeling ? How(call, mapped.Value) : SurfaceHow(call, mapped.Value)) : null,
             call.StartedAt,
             ms);
     }
@@ -75,6 +75,50 @@ internal sealed class ChoiceCallRecorder(ChoiceModel identity, IJobContextAccess
     {
         var settled = answers.Count(static a => a.Picked is not null && a.Confidence >= LabelPickLimits.MinConfidence);
         return new ModelCallHow(Jev: settled, FirstCandidate: call.Questions.Count - settled);
+    }
+
+    // A product-surface group is settled by the option's position (the last is 'reject', the first 'separate', those between merge) at 0.5 confidence or more; every other group is kept and undecided. merged + kept + rejected is the pack's group count.
+    private static ModelCallHow SurfaceHow(ChoiceCall call, IReadOnlyList<ChoiceAnswer> answers)
+    {
+        var byKey = answers.ToDictionary(static a => a.Key, StringComparer.Ordinal);
+        var (merged, kept, rejected, undecided) = (0, 0, 0, 0);
+        foreach (var question in call.Questions)
+        {
+            var at = byKey.TryGetValue(question.Key, out var answer) && answer is { Picked: { } picked, Confidence: >= LabelPickLimits.MinConfidence }
+                ? IndexOf(question.Options, picked)
+                : -1;
+            if (at < 0)
+            {
+                (kept, undecided) = (kept + 1, undecided + 1);
+            }
+            else if (at == 0)
+            {
+                kept++;
+            }
+            else if (at == question.Options.Count - 1)
+            {
+                rejected++;
+            }
+            else
+            {
+                merged++;
+            }
+        }
+
+        return new ModelCallHow(Merged: merged, Kept: kept, Rejected: rejected, Undecided: undecided);
+    }
+
+    private static int IndexOf(IReadOnlyList<string> options, string picked)
+    {
+        for (var i = 0; i < options.Count; i++)
+        {
+            if (string.Equals(options[i], picked, StringComparison.Ordinal))
+            {
+                return i;
+            }
+        }
+
+        return -1;
     }
 
     private static (int Input, int Output, string Basis) Tokens(ChoiceCall call, Result<IReadOnlyList<ChoiceAnswer>> mapped, BatchUsage? usage)

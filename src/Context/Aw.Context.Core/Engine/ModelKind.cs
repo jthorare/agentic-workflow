@@ -22,4 +22,7 @@ public enum ModelKind
 
     /// <summary>'rerank': the query's rerank arm.</summary>
     Rerank,
+
+    /// <summary>'productSurfaces': Jev's decision on the map's product-surface candidates; it has a 'pick' and no harness, tier or model.</summary>
+    ProductSurfaces,
 }
