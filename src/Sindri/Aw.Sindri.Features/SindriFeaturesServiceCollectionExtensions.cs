@@ -86,6 +86,7 @@ using Aw.Sindri.Features.Scrub;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Features.Sessions;
+using Aw.Sindri.Features.SetProfileKey;
 using Aw.Sindri.Features.SetupWatch;
 using Aw.Sindri.Features.ShowRecipe;
 using Aw.Sindri.Features.StartInstance;
@@ -125,6 +126,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddScoped<IService<ValidateProfileRequest, ValidateProfileResponse>, ValidateProfileService>()
             .AddPlanSandbox().AddRecordLimitHit().AddEndLearnMode().AddListDenials().AddAllowDenial().AddCheckSandbox().AddWorkspacePrepare()
             .AddScoped<IService<InitProfileRequest, InitProfileResponse>, InitProfileService>()
+            .AddScoped<IService<SetProfileKeyRequest, SetProfileKeyResponse>, SetProfileKeyService>()
             .AddScoped<IService<ScrubRequest, ScrubResponse>, ScrubService>()
             .AddDoctor()
             .AddScoped<ServeRecords>()

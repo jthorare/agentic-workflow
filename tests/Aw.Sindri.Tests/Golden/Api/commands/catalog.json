@@ -1416,6 +1416,20 @@
       "confirm": null
     },
     {
+      "action": "SetProfileKey",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri profile set <key> <value> [--json]",
+      "ui": "cli-only:local",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ShowLineHoldout",
       "class": "protected",
       "allowedCallers": [

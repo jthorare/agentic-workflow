@@ -13581,6 +13581,15 @@ Aw.Sindri.Core.Scheduling.MapPublishReason.IndexReady = 0 -> Aw.Sindri.Core.Sche
 Aw.Sindri.Core.Scheduling.MapPublishReason.NoIndex = 1 -> Aw.Sindri.Core.Scheduling.MapPublishReason
 Aw.Sindri.Core.Scheduling.MapPublishReason.TimedOut = 5 -> Aw.Sindri.Core.Scheduling.MapPublishReason
 Aw.Sindri.Core.Scheduling.MapPublishReason.WaitOff = 4 -> Aw.Sindri.Core.Scheduling.MapPublishReason
+Aw.Sindri.Core.Scheduling.MapRebuild
+Aw.Sindri.Core.Scheduling.MapRebuild.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Repos) -> void
+Aw.Sindri.Core.Scheduling.MapRebuild.Equals(Aw.Sindri.Core.Scheduling.MapRebuild? other) -> bool
+Aw.Sindri.Core.Scheduling.MapRebuild.MapRebuild(System.Collections.Generic.IReadOnlyList<string!>! Repos) -> void
+Aw.Sindri.Core.Scheduling.MapRebuild.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Scheduling.MapRebuild.Repos.init -> void
+Aw.Sindri.Core.Scheduling.MapRepoHead.BuiltWithIndex.get -> bool
+Aw.Sindri.Core.Scheduling.MapRepoHead.IndexCommit.get -> string?
+Aw.Sindri.Core.Scheduling.MapRepoHead.IndexCommit.init -> void
 Aw.Sindri.Core.Scheduling.MapRepoHead
 Aw.Sindri.Core.Scheduling.MapRepoHead.<Clone>$() -> Aw.Sindri.Core.Scheduling.MapRepoHead!
 Aw.Sindri.Core.Scheduling.MapRepoHead.Commit.get -> string!
@@ -13642,12 +13651,17 @@ override Aw.Sindri.Core.Scheduling.MapPublishInput.ToString() -> string!
 override Aw.Sindri.Core.Scheduling.MapRepoHead.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Scheduling.MapRepoHead.GetHashCode() -> int
 override Aw.Sindri.Core.Scheduling.MapRepoHead.ToString() -> string!
+override Aw.Sindri.Core.Scheduling.MapRebuild.<Clone>$() -> Aw.Sindri.Core.Scheduling.MapRebuild!
+override Aw.Sindri.Core.Scheduling.MapRebuild.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Scheduling.MapRebuild.GetHashCode() -> int
+override Aw.Sindri.Core.Scheduling.MapRebuild.ToString() -> string!
 override Aw.Sindri.Core.Scheduling.MapWait.<Clone>$() -> Aw.Sindri.Core.Scheduling.MapWait!
 override Aw.Sindri.Core.Scheduling.MapWait.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Scheduling.MapWait.GetHashCode() -> int
 override Aw.Sindri.Core.Scheduling.MapWait.ToString() -> string!
 override sealed Aw.Sindri.Core.Scheduling.MapDrop.Equals(Aw.Sindri.Core.Scheduling.MapPublishAction? other) -> bool
 override sealed Aw.Sindri.Core.Scheduling.MapPublish.Equals(Aw.Sindri.Core.Scheduling.MapPublishAction? other) -> bool
+override sealed Aw.Sindri.Core.Scheduling.MapRebuild.Equals(Aw.Sindri.Core.Scheduling.MapPublishAction? other) -> bool
 override sealed Aw.Sindri.Core.Scheduling.MapWait.Equals(Aw.Sindri.Core.Scheduling.MapPublishAction? other) -> bool
 static Aw.Sindri.Core.Scheduling.IndexAttempt.operator !=(Aw.Sindri.Core.Scheduling.IndexAttempt? left, Aw.Sindri.Core.Scheduling.IndexAttempt? right) -> bool
 static Aw.Sindri.Core.Scheduling.IndexAttempt.operator ==(Aw.Sindri.Core.Scheduling.IndexAttempt? left, Aw.Sindri.Core.Scheduling.IndexAttempt? right) -> bool
@@ -13669,6 +13683,8 @@ static Aw.Sindri.Core.Scheduling.MapPublishInput.operator !=(Aw.Sindri.Core.Sche
 static Aw.Sindri.Core.Scheduling.MapPublishInput.operator ==(Aw.Sindri.Core.Scheduling.MapPublishInput? left, Aw.Sindri.Core.Scheduling.MapPublishInput? right) -> bool
 static Aw.Sindri.Core.Scheduling.MapRepoHead.operator !=(Aw.Sindri.Core.Scheduling.MapRepoHead? left, Aw.Sindri.Core.Scheduling.MapRepoHead? right) -> bool
 static Aw.Sindri.Core.Scheduling.MapRepoHead.operator ==(Aw.Sindri.Core.Scheduling.MapRepoHead? left, Aw.Sindri.Core.Scheduling.MapRepoHead? right) -> bool
+static Aw.Sindri.Core.Scheduling.MapRebuild.operator !=(Aw.Sindri.Core.Scheduling.MapRebuild? left, Aw.Sindri.Core.Scheduling.MapRebuild? right) -> bool
+static Aw.Sindri.Core.Scheduling.MapRebuild.operator ==(Aw.Sindri.Core.Scheduling.MapRebuild? left, Aw.Sindri.Core.Scheduling.MapRebuild? right) -> bool
 static Aw.Sindri.Core.Scheduling.MapWait.operator !=(Aw.Sindri.Core.Scheduling.MapWait? left, Aw.Sindri.Core.Scheduling.MapWait? right) -> bool
 static Aw.Sindri.Core.Scheduling.MapWait.operator ==(Aw.Sindri.Core.Scheduling.MapWait? left, Aw.Sindri.Core.Scheduling.MapWait? right) -> bool
 static Aw.Sindri.Core.Scheduling.MappedHeads.Of(Aw.Sindri.Core.Scheduling.MapHoldState? hold, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? currentHeads) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
@@ -19807,6 +19823,8 @@ Aw.Sindri.Core.Sandbox.CgroupSample.Pids.get -> int
 Aw.Sindri.Core.Sandbox.CgroupSample.Pids.init -> void
 Aw.Sindri.Core.Sandbox.ICgroupStats
 Aw.Sindri.Core.Sandbox.ICgroupStats.Read(string! cgroupPath) -> Aw.Sindri.Core.Sandbox.CgroupSample?
+Aw.Sindri.Core.Sandbox.IMemoryKills
+Aw.Sindri.Core.Sandbox.IMemoryKills.Record(string! unit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
 Aw.Sindri.Core.Sandbox.IScopeControl
 Aw.Sindri.Core.Sandbox.IScopeControl.ControlGroup(string! unit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string?>!
 Aw.Sindri.Core.Sandbox.IScopeControl.Kill(string! unit, string! signal, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
@@ -21310,7 +21328,7 @@ Aw.Sindri.Core.Projects.Cards.ProjectPageInputs
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Attached.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectAttachedRow!>!
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Attached.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.<Clone>$() -> Aw.Sindri.Core.Projects.Cards.ProjectPageInputs!
-Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectAttachedRow!>! Attached, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectHiddenRow!>! Hidden, out Aw.Kernel.Result<Aw.Sindri.Core.Projects.Facts.ProjectFactsSnapshot!>! Facts, out Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Facts.ProjectSourceFreshness!>!>! Freshness, out bool LinearConfigured) -> void
+Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectAttachedRow!>! Attached, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectHiddenRow!>! Hidden, out Aw.Kernel.Result<Aw.Sindri.Core.Projects.Facts.ProjectFactsSnapshot!>! Facts, out Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Facts.ProjectSourceFreshness!>!>! Freshness, out bool LinearConfigured, out bool LinearTokenMissing) -> void
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Equals(Aw.Sindri.Core.Projects.Cards.ProjectPageInputs? other) -> bool
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Facts.get -> Aw.Kernel.Result<Aw.Sindri.Core.Projects.Facts.ProjectFactsSnapshot!>!
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Facts.init -> void
@@ -21320,7 +21338,9 @@ Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Hidden.get -> System.Collections
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Hidden.init -> void
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.LinearConfigured.get -> bool
 Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.LinearConfigured.init -> void
-Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.ProjectPageInputs(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectAttachedRow!>! Attached, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectHiddenRow!>! Hidden, Aw.Kernel.Result<Aw.Sindri.Core.Projects.Facts.ProjectFactsSnapshot!>! Facts, Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Facts.ProjectSourceFreshness!>!>! Freshness, bool LinearConfigured) -> void
+Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.LinearTokenMissing.get -> bool
+Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.LinearTokenMissing.init -> void
+Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.ProjectPageInputs(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectAttachedRow!>! Attached, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.ProjectHiddenRow!>! Hidden, Aw.Kernel.Result<Aw.Sindri.Core.Projects.Facts.ProjectFactsSnapshot!>! Facts, Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Projects.Facts.ProjectSourceFreshness!>!>! Freshness, bool LinearConfigured, bool LinearTokenMissing = false) -> void
 override Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.Equals(object? obj) -> bool
 override Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.GetHashCode() -> int
 override Aw.Sindri.Core.Projects.Cards.ProjectPageInputs.ToString() -> string!
@@ -21482,3 +21502,27 @@ override Aw.Sindri.Core.Jobs.JobModelCall.ToString() -> string!
 static Aw.Sindri.Core.Jobs.JobModelCall.operator !=(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModelCall? left, Aw.Sindri.Core.Jobs.JobModelCall? right) -> bool
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
+Aw.Sindri.Core.Setup.ProfileKeyEdit
+Aw.Sindri.Core.Setup.ProfileKeyEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ProfileKeyEdit!
+Aw.Sindri.Core.Setup.ProfileKeyEdit.ProfileKeyEdit(string! Path, string! Text, bool Changed) -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Deconstruct(out string! Path, out string! Text, out bool Changed) -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Path.get -> string!
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Path.init -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Text.get -> string!
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Text.init -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Changed.get -> bool
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Changed.init -> void
+Aw.Sindri.Core.Setup.ProfileKeyEdit.Equals(Aw.Sindri.Core.Setup.ProfileKeyEdit? other) -> bool
+override Aw.Sindri.Core.Setup.ProfileKeyEdit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ProfileKeyEdit.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ProfileKeyEdit.ToString() -> string!
+static Aw.Sindri.Core.Setup.ProfileKeyEdit.operator !=(Aw.Sindri.Core.Setup.ProfileKeyEdit? left, Aw.Sindri.Core.Setup.ProfileKeyEdit? right) -> bool
+static Aw.Sindri.Core.Setup.ProfileKeyEdit.operator ==(Aw.Sindri.Core.Setup.ProfileKeyEdit? left, Aw.Sindri.Core.Setup.ProfileKeyEdit? right) -> bool
+Aw.Sindri.Core.Setup.IProfileKeyWriter
+Aw.Sindri.Core.Setup.IProfileKeyWriter.Plan(string! keyPath, string! value) -> Aw.Kernel.Result<Aw.Sindri.Core.Setup.ProfileKeyEdit!>!
+Aw.Sindri.Core.Setup.IProfileKeyWriter.Save(Aw.Sindri.Core.Setup.ProfileKeyEdit! edit) -> Aw.Kernel.Result<string!>!
+Aw.Sindri.Core.Profile.IProfileTextParser
+Aw.Sindri.Core.Profile.IProfileTextParser.Parse(string! yaml, string! source) -> Aw.Kernel.Result<Aw.Sindri.Core.Profile.LoadedProfile!>!
+Aw.Sindri.Core.Profile.LinearToken
+const Aw.Sindri.Core.Profile.LinearToken.Connect = "sindri index connect linear" -> string!
+const Aw.Sindri.Core.Profile.LinearToken.Missing = "Linear needs a token" -> string!

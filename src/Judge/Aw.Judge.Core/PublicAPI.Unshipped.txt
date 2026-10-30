@@ -1,4 +1,5 @@
 #nullable enable
+Aw.Judge.Core.Batching.JevModel
 Aw.Judge.Core.Briefs.Brief
 Aw.Judge.Core.Briefs.Brief.<Clone>$() -> Aw.Judge.Core.Briefs.Brief!
 Aw.Judge.Core.Briefs.Brief.AcceptanceCriteria.get -> string!
@@ -981,6 +982,7 @@ Aw.Judge.Core.Questions.ChooseInput.State.init -> void
 Aw.Judge.Core.Questions.ChooseInput.Threshold.get -> double?
 Aw.Judge.Core.Questions.ChooseInput.Threshold.init -> void
 Aw.Judge.Core.Questions.ChooseQuestion
+const Aw.Judge.Core.Batching.JevModel.Id = "jev-1.13.0" -> string!
 const Aw.Judge.Core.Questions.ChooseQuestion.Name = "choose" -> string!
 override Aw.Judge.Core.Questions.ChoiceInput.Equals(object? obj) -> bool
 override Aw.Judge.Core.Questions.ChoiceInput.GetHashCode() -> int

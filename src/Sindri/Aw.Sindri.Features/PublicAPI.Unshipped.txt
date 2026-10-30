@@ -896,14 +896,15 @@ Aw.Sindri.Features.GetStatus.GetStatusResponse.Services.get -> System.Collection
 Aw.Sindri.Features.GetStatus.GetStatusResponse.Services.init -> void
 Aw.Sindri.Features.GetStatus.GetStatusResponse.Views.get -> Aw.Sindri.Core.Views.ViewsStatus?
 Aw.Sindri.Features.GetStatus.GetStatusResponse.Views.init -> void
+Aw.Sindri.Features.GetStatus.IJevKeyProbe.Present(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Sindri.Features.GetStatus.ProfileStatus
 Aw.Sindri.Features.GetStatus.ProfileStatus.<Clone>$() -> Aw.Sindri.Features.GetStatus.ProfileStatus!
 Aw.Sindri.Features.GetStatus.ProfileStatus.Approved.get -> Aw.Sindri.Core.Ids.ProfileHash?
 Aw.Sindri.Features.GetStatus.ProfileStatus.Approved.init -> void
 Aw.Sindri.Features.GetStatus.ProfileStatus.ChangedSinceApproval.get -> bool
 Aw.Sindri.Features.GetStatus.ProfileStatus.ChangedSinceApproval.init -> void
-Aw.Sindri.Features.GetStatus.ProfileStatus.Deconstruct(out Aw.Sindri.Core.Ids.ProfileHash? Approved, out Aw.Sindri.Core.Ids.ProfileHash? Live, out bool ChangedSinceApproval, out string? Problem, out string? Source, out bool NeedsApproval, out string! ModelPick) -> void
 Aw.Sindri.Features.GetStatus.ProfileStatus.Equals(Aw.Sindri.Features.GetStatus.ProfileStatus? other) -> bool
+Aw.Sindri.Features.GetStatus.ProfileStatus.LabelPick.get -> string!
 Aw.Sindri.Features.GetStatus.ProfileStatus.Live.get -> Aw.Sindri.Core.Ids.ProfileHash?
 Aw.Sindri.Features.GetStatus.ProfileStatus.Live.init -> void
 Aw.Sindri.Features.GetStatus.ProfileStatus.NeedsApproval.get -> bool
@@ -912,7 +913,7 @@ Aw.Sindri.Features.GetStatus.ProfileStatus.ModelPick.get -> string!
 Aw.Sindri.Features.GetStatus.ProfileStatus.ModelPick.init -> void
 Aw.Sindri.Features.GetStatus.ProfileStatus.Problem.get -> string?
 Aw.Sindri.Features.GetStatus.ProfileStatus.Problem.init -> void
-Aw.Sindri.Features.GetStatus.ProfileStatus.ProfileStatus(Aw.Sindri.Core.Ids.ProfileHash? Approved, Aw.Sindri.Core.Ids.ProfileHash? Live, bool ChangedSinceApproval, string? Problem, string? Source, bool NeedsApproval, string! ModelPick = "off") -> void
+Aw.Sindri.Features.GetStatus.ProfileStatus.ProfileStatus(Aw.Sindri.Core.Ids.ProfileHash? Approved, Aw.Sindri.Core.Ids.ProfileHash? Live, bool ChangedSinceApproval, string? Problem, string? Source, bool NeedsApproval, string! ModelPick = "off", string! LabelPick = "off") -> void
 Aw.Sindri.Features.GetStatus.ProfileStatus.Source.get -> string?
 Aw.Sindri.Features.GetStatus.ProfileStatus.Source.init -> void
 Aw.Sindri.Features.GetStatus.ServiceStatus
@@ -2976,6 +2977,9 @@ Aw.Sindri.Features.GetItem.ItemView.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Id
 Aw.Sindri.Features.GetItem.ItemView.ItemView(Aw.Sindri.Core.Ids.ItemId Id, string! Title, Aw.Sindri.Core.Ids.RepoName? Repo, Aw.Sindri.Core.Items.Vocabulary.ItemState State, string? Step, System.DateTimeOffset Since, Aw.Sindri.Core.Ids.ActionId? PrimaryAction, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ActionId>! Actions, string? Owner, long Version, string! CreatedBy, string? WaitingOn, string? Instance, System.DateTimeOffset CreatedAt, System.DateTimeOffset UpdatedAt, string? Body, Aw.Sindri.Core.Ids.RecordKey? Link, Aw.Sindri.Core.Launches.ItemLaunch! Launch, Aw.Sindri.Core.Views.AsOf! AsOf) -> void
 Aw.Sindri.Features.GetItem.ItemView.Launch.get -> Aw.Sindri.Core.Launches.ItemLaunch!
 Aw.Sindri.Features.GetItem.ItemView.Launch.init -> void
+Aw.Sindri.Features.GetStatus.IJevKeyProbe
+Aw.Sindri.Features.GetStatus.ProfileStatus.Deconstruct(out Aw.Sindri.Core.Ids.ProfileHash? Approved, out Aw.Sindri.Core.Ids.ProfileHash? Live, out bool ChangedSinceApproval, out string? Problem, out string? Source, out bool NeedsApproval, out string! ModelPick, out string! LabelPick) -> void
+Aw.Sindri.Features.GetStatus.ProfileStatus.LabelPick.init -> void
 override Aw.Sindri.Features.ApproveProfile.StepArgvEntry.Equals(object? obj) -> bool
 override Aw.Sindri.Features.ApproveProfile.StepArgvEntry.GetHashCode() -> int
 override Aw.Sindri.Features.ApproveProfile.StepArgvEntry.ToString() -> string!
@@ -5549,3 +5553,35 @@ override Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.GetHashCode()
 override Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.ToString() -> string!
 static Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.operator !=(Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? left, Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? right) -> bool
 static Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice.operator ==(Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? left, Aw.Sindri.Features.ListLinearProjects.LinearProjectChoice? right) -> bool
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.<Clone>$() -> Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.SetProfileKeyRequest(string! Key, string! Value) -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Deconstruct(out string! Key, out string! Value) -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Key.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Key.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Value.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Value.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Equals(Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? other) -> bool
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.ToString() -> string!
+static Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.operator !=(Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? right) -> bool
+static Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest.operator ==(Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyRequest? right) -> bool
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.<Clone>$() -> Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.SetProfileKeyResponse(string! Path, string! Key, string! Value, bool Changed) -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Deconstruct(out string! Path, out string! Key, out string! Value, out bool Changed) -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Path.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Path.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Key.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Key.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Value.get -> string!
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Value.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Changed.get -> bool
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Changed.init -> void
+Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Equals(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? other) -> bool
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.GetHashCode() -> int
+override Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.ToString() -> string!
+static Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.operator !=(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? right) -> bool
+static Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.operator ==(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? right) -> bool
