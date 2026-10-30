@@ -50,9 +50,9 @@ internal sealed partial class BuildMapService
                 return false;
             }
 
-            // #1704: a draft built before the code index of its commit has unresolved symbol citations; it is reused only when it read the index the build would read now.
+            // #1704: a draft built before the code index of its commit has unresolved symbol citations; it is reused only when the index commit it read is the one the build would read now. Both absent counts as the same (a rebuild would read the same nothing); one absent and the other set does not.
             var index = await inputs.Records.Symbols.Heads(repo.Name, asOf: null, cancellationToken).ConfigureAwait(false);
-            if (index.IsError || held.IndexCommit is not { } used || IndexCommitOf(index.Value, head.Value) is not { } current || !CodeIndexReading.Same(used, current))
+            if (index.IsError || !SameIndexReading(held.IndexCommit, IndexCommitOf(index.Value, head.Value)))
             {
                 return false;
             }
@@ -67,4 +67,8 @@ internal sealed partial class BuildMapService
         || index.Commit is not { } indexed || !CodeIndexReading.Same(indexed, commit)
             ? null
             : indexed;
+
+    // Both absent is the same reading (a rebuild would read the same nothing); one absent is not; both set compare as commits.
+    private static bool SameIndexReading(string? used, string? current) =>
+        used is null || current is null ? used is null && current is null : CodeIndexReading.Same(used, current);
 }
