@@ -27,24 +27,31 @@ public sealed class SurfacePickerTests
         Script = qs => Results.Success<IReadOnlyList<ChoiceAnswer>>([.. qs.Select(q => new ChoiceAnswer(q.Key, q.Options[option < 0 ? q.Options.Count + option : option], confidence))]),
     };
 
+    // Jev answers the groups in the plan by their key (the picker asks in key order, not input order); a group left out of the plan gets no answer. A negative option counts from the back.
+    private static FakeChoicePort Scripted(params (SurfaceGroup Group, int Option, double Confidence)[] plan) => new()
+    {
+        Script = qs => Results.Success<IReadOnlyList<ChoiceAnswer>>([.. plan.SelectMany(p => AnswerTo(qs, p))]),
+    };
+
+    private static IEnumerable<ChoiceAnswer> AnswerTo(IReadOnlyList<ChoiceQuestion> questions, (SurfaceGroup Group, int Option, double Confidence) plan)
+    {
+        if (questions.FirstOrDefault(q => string.Equals(q.Key, plan.Group.Key, StringComparison.Ordinal)) is { } question)
+        {
+            yield return new ChoiceAnswer(question.Key, question.Options[plan.Option < 0 ? question.Options.Count + plan.Option : plan.Option], plan.Confidence);
+        }
+    }
+
     [Fact]
     public async Task Each_group_is_one_question_asked_as_the_product_surface_kind_and_each_gets_its_verdict_in_input_order()
     {
-        var port = new FakeChoicePort
-        {
-            Script = qs => Results.Success<IReadOnlyList<ChoiceAnswer>>([
-                new ChoiceAnswer(qs[0].Key, qs[0].Options[1], 0.9),   // group 1: merge as the first name
-                new ChoiceAnswer(qs[1].Key, qs[1].Options[^1], 0.9),  // group 2: reject
-                new ChoiceAnswer(qs[2].Key, qs[2].Options[0], 0.9),   // group 3: separate
-            ]),
-        };
         var groups = new[] { SurfaceTestData.Group("Grant access", "Share access"), SurfaceTestData.Group("Export"), SurfaceTestData.Group("Invite", "Add") };
+        var port = Scripted((groups[0], 1, 0.9), (groups[1], -1, 0.9), (groups[2], 0, 0.9));   // merge as the first name, reject, separate
 
         var result = await Picker(port).Decide(groups, _on, Ct);
 
         var (kind, asked, _) = Assert.Single(port.Asked);
         Assert.Equal(ChoiceKind.ProductSurfaces, kind);
-        Assert.Equal(groups.Select(g => g.Key), asked.Select(q => q.Key), StringComparer.Ordinal);
+        Assert.Equal(groups.Select(g => g.Key).Order(StringComparer.Ordinal), asked.Select(q => q.Key), StringComparer.Ordinal);
         Assert.Equal(groups.Select(g => g.Key), result.Verdicts.Select(v => v.GroupKey), StringComparer.Ordinal);
         Assert.Equal([SurfaceChoice.Merge, SurfaceChoice.Reject, SurfaceChoice.Separate], result.Verdicts.Select(v => v.Choice));
         Assert.Equal("Grant access", result.Verdicts[0].MergedName);
@@ -54,17 +61,8 @@ public sealed class SurfacePickerTests
     [Fact]
     public async Task The_counts_add_up_to_the_group_count_and_undecided_is_part_of_kept()
     {
-        var port = new FakeChoicePort
-        {
-            Script = qs => Results.Success<IReadOnlyList<ChoiceAnswer>>([
-                new ChoiceAnswer(qs[0].Key, qs[0].Options[1], 0.9),    // merged
-                new ChoiceAnswer(qs[1].Key, qs[1].Options[0], 0.9),    // kept, chosen
-                new ChoiceAnswer(qs[2].Key, qs[2].Options[^1], 0.9),   // rejected
-                new ChoiceAnswer(qs[3].Key, qs[3].Options[^1], 0.49),  // kept, undecided
-                // the fifth group gets no answer: kept, undecided
-            ]),
-        };
         var groups = new[] { SurfaceTestData.Group("A", "B"), SurfaceTestData.Group("C"), SurfaceTestData.Group("D"), SurfaceTestData.Group("E"), SurfaceTestData.Group("F") };
+        var port = Scripted((groups[0], 1, 0.9), (groups[1], 0, 0.9), (groups[2], -1, 0.9), (groups[3], -1, 0.49));   // merged, kept chosen, rejected, kept undecided; the fifth gets no answer
 
         var result = await Picker(port).Decide(groups, _on, Ct);
 
