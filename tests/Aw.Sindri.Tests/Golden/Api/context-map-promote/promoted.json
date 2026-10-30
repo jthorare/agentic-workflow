@@ -8,7 +8,7 @@
       "keyVersion": 1,
       "created": "2026-01-01T00:00:00.0000000Z",
       "status": "current",
-      "ruleset": null
+      "ruleset": "ebbf4b4e98e98942a8d2ddb832a051a178e9e995472ae5f89a4653386c1c6172"
     },
     "retained": {
       "number": 1,
@@ -17,7 +17,7 @@
       "keyVersion": 1,
       "created": "2026-01-01T00:00:00.0000000Z",
       "status": "retained",
-      "ruleset": null
+      "ruleset": "ebbf4b4e98e98942a8d2ddb832a051a178e9e995472ae5f89a4653386c1c6172"
     }
   },
   "sequence": 15
