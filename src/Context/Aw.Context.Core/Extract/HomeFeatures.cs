@@ -139,7 +139,7 @@ public static class HomeFeatures
             }
 
             var id = ClusterId.From("h" + requests.Count.ToString("D5", System.Globalization.CultureInfo.InvariantCulture));
-            requests.Add(new FileCluster(id, [.. slot.Files.Take(LabelFiles)], 1.0));
+            requests.Add(new FileCluster(id, [.. slot.Files.Take(LabelFiles)], 1.0) { FileName = LabelOf(repo.Name, slot) });
             requested[id.Value] = key;
             foreach (var file in slot.Files)
             {

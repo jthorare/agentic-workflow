@@ -32,6 +32,22 @@
       </Border>
     </StackPanel>
 
+    <!-- The label-choice line: read-only (the profile changes it), with its sentence (model routing spec 8.5). -->
+    <StackPanel x:Name="LabelChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasLabelChoice}">
+      <Border AutomationProperties.Name="{Binding LabelChoice.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
+        <TextBlock Classes="detail-title" Text="{Binding LabelChoice.Title}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+              BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+        <StackPanel Spacing="{StaticResource Space.XS}">
+          <TextBlock x:Name="LabelChoiceLine" Classes="body-strong" Text="{Binding LabelChoice.Line}" TextWrapping="Wrap"
+                     AutomationProperties.Name="{Binding LabelChoice.Line}" />
+          <TextBlock x:Name="LabelChoiceSentence" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding LabelChoice.Sentence}" TextWrapping="Wrap"
+                     AutomationProperties.Name="{Binding LabelChoice.Sentence}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
     <!-- The Sandbox section: read-only (the profile changes it), its heading carries the state (sandbox spec 8). -->
     <StackPanel x:Name="SandboxSettingsSlot" IsVisible="{Binding HasSandbox}">
       <sandbox:SandboxSettingsSection x:Name="SandboxSettings" DataContext="{Binding Sandbox}" />

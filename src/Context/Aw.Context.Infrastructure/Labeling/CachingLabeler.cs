@@ -16,7 +16,7 @@ namespace Aw.Context.Infrastructure.Labeling;
 /// <param name="scrubbers">Builds the scrubbers the keys are made through.</param>
 internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubberFactory scrubbers) : ILabeler
 {
-    public async ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, CancellationToken cancellationToken)
+    public async ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(clusters);
         var built = scrubbers.For(extraPatterns);
@@ -25,7 +25,7 @@ internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubbe
             return built.Error;
         }
 
-        var keys = clusters.Select(c => Key(c, built.Value.Egress)).ToList();
+        var keys = clusters.Select(c => Key(c, built.Value.Egress, options)).ToList();
         var known = await cache.Find(keys, cancellationToken).ConfigureAwait(false);
         var saved = known.IsError ? new Dictionary<string, string>(StringComparer.Ordinal) : known.Value;
 
@@ -35,7 +35,7 @@ internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubbe
             return new LabelPass(hits);
         }
 
-        var asked = await inner.Label(misses, extraPatterns, maxTokens, cancellationToken).ConfigureAwait(false);
+        var asked = await inner.Label(misses, extraPatterns, maxTokens, options, cancellationToken).ConfigureAwait(false);
         if (asked.IsError)
         {
             // A model error with answers in hand is an incomplete pass, not a failed one.
@@ -74,9 +74,13 @@ internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubbe
         return (hits, misses, missKeys);
     }
 
-    internal static string Key(FileCluster cluster, IEgressScrubber egress)
+    // The pick mode and the candidate count are in the key: flipping either is a deliberate full miss (a label chosen by Jev is not the model's single label). The file-derived name is the safe candidate, so it is in too, scrubbed like the files.
+    internal static string Key(FileCluster cluster, IEgressScrubber egress, LabelOptions? options = null)
     {
-        var files = cluster.Files.Take(ModelLabeler.FilesPerCluster).Select(f => egress.Scrub(f).Text);
-        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes("label-v1\n" + string.Join('\n', files))));
+        var (mode, candidates) = options is { Pick: true } ? ("jev", options.Candidates) : ("off", 1);
+        var name = cluster.FileName is { } fileName ? egress.Scrub(fileName).Text : string.Empty;
+        var files = cluster.Files.Take(LabelPrompt.FilesPerCluster).Select(f => egress.Scrub(f).Text);
+        var text = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"label-v1\n{mode}\n{candidates}\n{name}\n") + string.Join('\n', files);
+        return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text)));
     }
 }

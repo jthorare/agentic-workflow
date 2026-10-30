@@ -22,8 +22,11 @@ public sealed class FakeLabeler : ILabeler
     /// <summary>The extra scrub patterns each pass was given.</summary>
     public IList<IReadOnlyList<ScrubPattern>> Patterns { get; } = [];
 
+    /// <summary>The options each pass was given (null when the caller gave none).</summary>
+    public IList<LabelOptions?> Options { get; } = [];
+
     /// <inheritdoc/>
-    public ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, CancellationToken cancellationToken)
+    public ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(clusters);
         if (Failure is { } failure)
@@ -37,6 +40,7 @@ public sealed class FakeLabeler : ILabeler
         }
 
         Patterns.Add(extraPatterns);
+        Options.Add(options);
         foreach (var cluster in clusters)
         {
             Shown.Add(cluster);
