@@ -30,35 +30,28 @@ public static partial class RulesLinker
     /// <param name="record">The record the text belongs to (it never links to itself).</param>
     /// <param name="text">The sanitized, scrubbed text.</param>
     /// <param name="graph">The map to link into.</param>
-    /// <param name="known">Every intent record the sync knows, for the issue-key and URL rules.</param>
-    /// <param name="teams">The profile's tracker teams: only their keys link.</param>
+    /// <param name="tracker">Every intent record the sync knows, for the issue-key and URL rules, and the profile's tracker teams: only their keys link.</param>
+    /// <param name="pins">The approved pins' ids and aliases, for the alias rule (see <see cref="Aliases"/>); none runs no alias rule.</param>
     /// <returns>The links, ordered by target then rule.</returns>
-    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, IReadOnlyList<IntentRecord> known, IReadOnlySet<string> teams)
+    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(graph);
-        ArgumentNullException.ThrowIfNull(known);
-        ArgumentNullException.ThrowIfNull(teams);
-        var run = new Run(record, text, graph, known, teams);
+        ArgumentNullException.ThrowIfNull(tracker.Known);
+        ArgumentNullException.ThrowIfNull(tracker.Teams);
+        ArgumentNullException.ThrowIfNull(pins);
+        var run = new Run(record, text, graph, tracker.Known, tracker.Teams);
         run.Urls();
         run.Paths();
         run.QuotedTitles();
         run.IssueKeys();
         run.IdentifierTokens();
         run.Names();
+        run.Aliases(pins);
         return run.Result();
     }
 
-    /// <summary>The alias rule alone (concept pins spec §3.4): the pins' aliases found in one record's text, for the pins whose concept node is in the map. Writes nothing, so a count of what it would link can call it.</summary>
-    /// <param name="record">The record the text belongs to.</param>
-    /// <param name="text">The sanitized, scrubbed text.</param>
-    /// <param name="graph">The map to link into: only pins with a concept:&lt;id&gt; node here are offered.</param>
-    /// <param name="pins">The approved pins' ids and aliases.</param>
-    /// <returns>The alias links, ordered by target.</returns>
-    public static IReadOnlyList<IntentLink> Aliases(RecordKey record, string text, GraphSnapshot graph, IReadOnlyList<PinAliases> pins) =>
-        throw new NotSupportedException("Q9: not built yet");
-
-    private sealed class Run(RecordKey record, string text, GraphSnapshot graph, IReadOnlyList<IntentRecord> known, IReadOnlySet<string> teams)
+    private sealed partial class Run(RecordKey record, string text, GraphSnapshot graph, IReadOnlyList<IntentRecord> known, IReadOnlySet<string> teams)
     {
         private readonly Dictionary<(string Target, LinkRule Rule), IntentLink> _found = [];
         private readonly StringBuilder _rest = new(text);
