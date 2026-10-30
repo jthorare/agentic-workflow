@@ -8094,7 +8094,7 @@ Aw.Context.Core.Map.MapPublishState.CurrentRuleset.get -> string?
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.init -> void
 Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?
 Aw.Context.Core.Map.MapVersion.Ruleset.init -> void
-const Aw.Context.Core.Map.MapRuleset.RulesVersion = "1" -> string!
+const Aw.Context.Core.Map.MapRuleset.RulesVersion = "2" -> string!
 Aw.Context.Core.Map.MapRuleset
 static Aw.Context.Core.Map.MapRuleset.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> string!
 Aw.Context.Core.Map.MapImport.Ruleset.get -> string?
@@ -10137,3 +10137,8 @@ Aw.Context.Core.Extract.ILabelCache.Save(System.Collections.Generic.IReadOnlyLis
 Aw.Context.Core.Graph.EdgeType.Expresses = 15 -> Aw.Context.Core.Graph.EdgeType
 Aw.Context.Core.Concepts.PageExpresses
 static Aw.Context.Core.Concepts.PageExpresses.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
+const Aw.Context.Core.Concepts.PageExpresses.MostPerSource = 3 -> int
+Aw.Context.Core.Graph.PageKinds
+static Aw.Context.Core.Graph.PageKinds.IsPage(Aw.Context.Core.Graph.GraphNode! node, System.Collections.Generic.IEnumerable<Aw.Context.Core.Graph.GraphEdge!>! edges) -> bool
+Aw.Context.Core.Graph.PageNames
+static Aw.Context.Core.Graph.PageNames.Offer(Aw.Context.Core.Graph.GraphNode! node) -> string!

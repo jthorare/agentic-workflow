@@ -209,7 +209,7 @@ public static class MapAccess
             [.. orphaned.Select(x => x.Target).DistinctBy(k => k.Value, o).OrderBy(k => k.Value, o)]);
     }
 
-    // Version 2 only when the map holds a 'tags' edge or a roll-up count, so a plain map still reads in a build that knows only version 1 (spec 2026-10-27 §3).
+    // Version 3 when the map holds an 'expresses' edge (no rollback past it, pages spec §3.2), else 2 for a 'tags' edge or a roll-up count, else 1, so a plain map still reads in a build that knows only version 1 (spec 2026-10-27 §3).
     private static int SchemaVersionFor(GraphSnapshot graph) =>
-        graph.Edges.Any(e => e.Type == EdgeType.Tags || e.Count is not null) ? MapDocumentValidator.SchemaVersions[^1] : MapDocumentValidator.SchemaVersions[0];
+        graph.Edges.Any(e => e.Type == EdgeType.Expresses) ? 3 : graph.Edges.Any(e => e.Type == EdgeType.Tags || e.Count is not null) ? 2 : 1;
 }
