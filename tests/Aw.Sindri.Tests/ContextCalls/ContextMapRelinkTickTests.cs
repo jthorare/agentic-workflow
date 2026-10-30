@@ -1,11 +1,13 @@
 using System.Text.Json;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Kernel;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Features.ContextCalls;
@@ -50,12 +52,23 @@ public sealed class ContextMapRelinkTickTests
         _jobs.Put(new JobRow(JobId.New(_h.Ids), JobKind.From("PublishContextMap"), JobKey.From("map-publish"), Item: null, Repo: null, Service: null, state,
             "service:context-map-refresh", _now - TimeSpan.FromHours(1), state == JobState.Running ? null : _now - TimeSpan.FromMinutes(59), [], Rounds: 0, Summary: null, Code: null, Result: null, CancelledBy: null, Sequence: ++_next));
 
-    private async Task<Result<ScheduledResult>> Tick()
+    // A profile that maps repo 'a' and pins one concept, 'payroll', with these aliases.
+    private static LoadedProfile Pinned(params string[] aliases)
+    {
+        var loaded = Plain();
+        return loaded with { Profile = loaded.Profile with { Repos = [new RepoEntry("a", "/work/a")], Index = new IndexSettings(Concepts: [new ConceptSettings(ConceptPinId.From("payroll"), "Payroll", Aliases: aliases)]) } };
+    }
+
+    private static LoadedProfile Plain()
+    {
+        var loaded = SliceHarness.Profile("5s");
+        return loaded with { Profile = loaded.Profile with { Context = JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() } };
+    }
+
+    private async Task<Result<ScheduledResult>> Tick(LoadedProfile? profile = null)
     {
         _h.Clock.SetUtcNow(_now);
-        var loaded = SliceHarness.Profile("5s");
-        loaded = loaded with { Profile = loaded.Profile with { Context = JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() } };
-        _ = await _h.Profiles.Save(loaded, Ct);
+        _ = await _h.Profiles.Save(profile ?? Plain(), Ct);
         var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _jobs, new ScriptedOutlooks(), new MapJobStarts(_refresh, new PublishStarter(_h), _relink), _h.Clock, NullLogger<ContextMapRefreshService>.Instance);
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
@@ -72,6 +85,23 @@ public sealed class ContextMapRelinkTickTests
 
         Assert.False(result.Value.Idle);
         Assert.Equal("service:context-map-refresh", Assert.Single(_relink.Actors));
+        Assert.Empty(_refresh.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_alias_only_profile_edit_queues_a_relink_and_no_refresh()
+    {
+        MapAt(3);
+        var before = Pinned("pay run");
+        var hash = PinAliasSet.Hash(PinAliasSet.Of(ContextScopes.For(before.Profile, new ContextCaller(ContextCallerKind.Human, Repo: null, ContextClient.Cli))).Value);
+        Relinked(hash, version: 3);
+
+        var unchanged = await Tick(before);
+        var edited = await Tick(Pinned("pay run", "payroll run"));
+
+        Assert.True(unchanged.Value.Idle);
+        Assert.False(edited.Value.Idle);
+        _ = Assert.Single(_relink.Actors);
         Assert.Empty(_refresh.Requests);
     }
 
