@@ -13,6 +13,7 @@ internal static class ModelsRules
 
     private static readonly string[] _entryKeys = ["harnesses", "tier", "models"];
     private static readonly string[] _labelingKeys = ["harnesses", "tier", "models", "pick", "candidates"];
+    private static readonly string[] _surfaceKeys = ["pick"];
 
     internal static Result<ModelsSettings> Read(JsonElement? section, ConceptScanModelsSection? legacy)
     {
@@ -36,7 +37,7 @@ internal static class ModelsRules
         }
 
         var warnings = HasAny(read.Names) && HasAny(Fold(ModelNames.None, legacy)) ? (IReadOnlyList<string>)["context.conceptScan.models is replaced by context.models.names; the new key is used"] : [];
-        return new ModelsSettings { Names = Fold(read.Names, legacy), Default = read.Default, Kinds = read.Kinds, LabelPick = read.Pick, LabelCandidates = read.Candidates, Warnings = warnings };
+        return new ModelsSettings { Names = Fold(read.Names, legacy), Default = read.Default, Kinds = read.Kinds, LabelPick = read.Pick, LabelCandidates = read.Candidates, SurfacePick = read.SurfacePick, Warnings = warnings };
     }
 
     private static bool HasAny(ModelNames names) => ModelHarnesses.DefaultOrder.Any(h => names.Of(h) is { Cheap: not null } or { Strong: not null });
@@ -63,6 +64,8 @@ internal static class ModelsRules
 
         internal int Candidates { get; private set; } = ModelsSettings.DefaultCandidates;
 
+        internal LabelPick SurfacePick { get; private set; } = LabelPick.Off;
+
         internal Error? Add(JsonProperty property)
         {
             var path = $"{Root}.{SettingsReader.Printable(property.Name)}";
@@ -75,7 +78,7 @@ internal static class ModelsRules
 
             if (string.Equals(property.Name, "default", StringComparison.Ordinal))
             {
-                var (entry, error) = ReadEntry(property.Value, path, labeling: false);
+                var (entry, error) = ReadEntry(property.Value, path, Shape.Plain);
                 Default = entry.Entry;
                 return error;
             }
@@ -85,21 +88,33 @@ internal static class ModelsRules
                 return SettingsReader.Invalid(path, $"is not a model setting this build knows (names, default, {string.Join(", ", ModelKinds.All.Select(ModelKinds.Key))})");
             }
 
-            var (read, problem) = ReadEntry(property.Value, path, labeling: kind == ModelKind.Labeling);
+            var (read, problem) = ReadEntry(property.Value, path, kind == ModelKind.Labeling ? Shape.Labeling : kind == ModelKind.ProductSurfaces ? Shape.PickOnly : Shape.Plain);
             _kinds[kind] = read.Entry;
             if (kind == ModelKind.Labeling)
             {
                 Pick = read.Pick;
                 Candidates = read.Candidates;
             }
+            else if (kind == ModelKind.ProductSurfaces)
+            {
+                SurfacePick = read.Pick;
+            }
 
             return problem;
         }
     }
 
+    /// <summary>Which keys an entry may hold: the common three, those and the label pick's two, or only the product-surface pick (it has no harness list, tier or model: spec §3.2 point 3).</summary>
+    private enum Shape
+    {
+        Plain,
+        Labeling,
+        PickOnly,
+    }
+
     private readonly record struct EntryRead(ModelEntry Entry, LabelPick Pick, int Candidates);
 
-    private static (EntryRead Value, Error? Error) ReadEntry(JsonElement element, string path, bool labeling)
+    private static (EntryRead Value, Error? Error) ReadEntry(JsonElement element, string path, Shape shape)
     {
         var none = new EntryRead(new ModelEntry(), LabelPick.Off, ModelsSettings.DefaultCandidates);
         if (element.ValueKind != JsonValueKind.Object)
@@ -107,7 +122,7 @@ internal static class ModelsRules
             return (none, SettingsReader.Invalid(path, "must be a map of settings"));
         }
 
-        var allowed = labeling ? _labelingKeys : _entryKeys;
+        var allowed = shape == Shape.Labeling ? _labelingKeys : shape == Shape.PickOnly ? _surfaceKeys : _entryKeys;
         foreach (var property in element.EnumerateObject())
         {
             if (!allowed.Contains(property.Name, StringComparer.Ordinal))

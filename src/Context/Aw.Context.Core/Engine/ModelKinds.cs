@@ -6,7 +6,7 @@ namespace Aw.Context.Core.Engine;
 public static class ModelKinds
 {
     /// <summary>Every kind, in the order the profile docs list them.</summary>
-    public static IReadOnlyList<ModelKind> All { get; } = [ModelKind.Labeling, ModelKind.ConceptNaming, ModelKind.DecisionExtraction, ModelKind.Adjudication, ModelKind.MapCleanup, ModelKind.Rerank];
+    public static IReadOnlyList<ModelKind> All { get; } = [ModelKind.Labeling, ModelKind.ConceptNaming, ModelKind.DecisionExtraction, ModelKind.Adjudication, ModelKind.MapCleanup, ModelKind.Rerank, ModelKind.ProductSurfaces];
 
     /// <summary>The kind a purpose is routed by: the concept scan, the concept names and the concept synthesis all use conceptNaming.</summary>
     /// <param name="purpose">The purpose.</param>
