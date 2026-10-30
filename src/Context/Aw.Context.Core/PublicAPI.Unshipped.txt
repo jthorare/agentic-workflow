@@ -10434,3 +10434,22 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Ranking.RankedLeg
+Aw.Context.Core.Ranking.RankedLeg.Keys.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
+Aw.Context.Core.Ranking.RankedLeg.Keys.init -> void
+Aw.Context.Core.Ranking.RankedLeg.RankedLeg(Aw.Context.Core.Sources.SourceId Source, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Keys) -> void
+Aw.Context.Core.Ranking.RankedLeg.Source.get -> Aw.Context.Core.Sources.SourceId
+Aw.Context.Core.Ranking.RankedLeg.Source.init -> void
+Aw.Context.Core.Ranking.PinLeg
+static Aw.Context.Core.Ranking.PinLeg.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>! fused, Aw.Context.Core.Concepts.PinScope! scope) -> Aw.Context.Core.Ranking.RankedLeg!
+static Aw.Context.Core.Ranking.PinLeg.Source.get -> Aw.Context.Core.Sources.SourceId
+static Aw.Context.Core.Ranking.RankFusion.Fuse(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.SourceAnswer!>! answers, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.RankedLeg!>! legs) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>!
+Aw.Context.Core.Concepts.PinScope.HoldsRecord(Aw.Context.Core.Sources.RecordKey record) -> bool
+Aw.Context.Core.Ranking.RankedLeg.<Clone>$() -> Aw.Context.Core.Ranking.RankedLeg!
+Aw.Context.Core.Ranking.RankedLeg.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Keys) -> void
+Aw.Context.Core.Ranking.RankedLeg.Equals(Aw.Context.Core.Ranking.RankedLeg? other) -> bool
+override Aw.Context.Core.Ranking.RankedLeg.Equals(object? obj) -> bool
+override Aw.Context.Core.Ranking.RankedLeg.GetHashCode() -> int
+override Aw.Context.Core.Ranking.RankedLeg.ToString() -> string!
+static Aw.Context.Core.Ranking.RankedLeg.operator !=(Aw.Context.Core.Ranking.RankedLeg? left, Aw.Context.Core.Ranking.RankedLeg? right) -> bool
+static Aw.Context.Core.Ranking.RankedLeg.operator ==(Aw.Context.Core.Ranking.RankedLeg? left, Aw.Context.Core.Ranking.RankedLeg? right) -> bool

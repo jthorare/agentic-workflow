@@ -50,6 +50,12 @@ public static class RankFusion
             .ThenBy(i => i.Key.Value, StringComparer.Ordinal)];
     }
 
+    /// <summary>Fuses <paramref name="answers"/> and adds the key-only <paramref name="legs"/>: the r-th key of a leg adds 1/(k + r) to its item and 'rrf:&lt;leg&gt;#r' to its 'why'.</summary>
+    /// <param name="answers">Each source's hits.</param>
+    /// <param name="legs">Key-only legs; a key no source returned is ignored (a leg never adds an item).</param>
+    /// <returns>One item per canonical key, best score first (ties by key, ordinal).</returns>
+    public static IReadOnlyList<FusedItem> Fuse(IReadOnlyList<SourceAnswer> answers, IReadOnlyList<RankedLeg> legs) => throw new NotSupportedException();
+
     /// <summary>
     /// The fused item, with the aliases of every hit of its record (sub-queries and chunks too, not only each source's best
     /// hit): source by source in best-first order, each source's hits by rank, each alias once.

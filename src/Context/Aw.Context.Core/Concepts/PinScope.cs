@@ -40,6 +40,11 @@ public sealed class PinScope
     /// <returns>True when this pin holds it.</returns>
     public bool HoldsNode(NodeKey key) => _set.PinOf(key) is { } held && string.Equals(held.Value, Pin.Value, StringComparison.Ordinal);
 
+    /// <summary>Whether a record is in this pin: the record node a pin holds, or a repo document whose path the pin's paths match.</summary>
+    /// <param name="record">The record's canonical key.</param>
+    /// <returns>True when this pin holds it.</returns>
+    public bool HoldsRecord(Sources.RecordKey record) => throw new NotSupportedException();
+
     /// <summary>The pin an anchor sits in.</summary>
     /// <param name="anchor">The anchor.</param>
     /// <param name="mapped">The repos the map is built from.</param>
