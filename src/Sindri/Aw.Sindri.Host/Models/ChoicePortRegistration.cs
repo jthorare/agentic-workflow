@@ -15,10 +15,10 @@ internal static class ChoicePortRegistration
         .AddSingleton<IChoicePort>(sp =>
         {
             var judge = sp.GetRequiredService<JudgeCatalog>();
-            return new JevChoicePort(judge.Classifier, judge.Providers, sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<Aw.Sindri.Core.Jobs.IJobContextAccessor>(),
-                sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Aw.Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>());
+            return new JevChoicePort(judge.Classifier, judge.Providers, sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<Core.Jobs.IJobContextAccessor>(),
+                sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>());
         })
-        .AddSingleton<IModelPromptBudget>(sp => sp.GetRequiredService<IModelPort>() as IModelPromptBudget ?? new WidePromptBudget())
+        .AddSingleton(sp => sp.GetRequiredService<IModelPort>() as IModelPromptBudget ?? new WidePromptBudget())
         .AddSingleton<IJevKeyProbe>(sp => new JevKey(environment, sp.GetRequiredService<JudgeCatalog>().ProcessRunner, OperatingSystem.IsMacOS()))
         .AddScoped<IDoctorChecks>(sp => new LabelPickDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJevKeyProbe>()))   // the 'context:labelpick' row (spec §8.4)
         .AddScoped<IDoctorChecks>(sp => new SurfacePickDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJevKeyProbe>()));   // the 'context:surfacepick' row (spec §8.4)

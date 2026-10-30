@@ -67,7 +67,7 @@ internal sealed class ChoiceCallRecorder(ChoiceModel identity, IJobContextAccess
 
         // 'off' and 'no-key' mean the pick was never in force; any other reason is a call that failed.
         var reason = mapped.Error.Message;
-        return new ModelCallTry(Harness, identity.Value, Aw.Context.Core.Models.ChoiceReasons.IsQuiet(reason) ? ModelCallOutcome.NotAsked : ModelCallOutcome.Failed, reason, ms, Source);
+        return new ModelCallTry(Harness, identity.Value, ChoiceReasons.IsQuiet(reason) ? ModelCallOutcome.NotAsked : ModelCallOutcome.Failed, reason, ms, Source);
     }
 
     // What Jev settled is counted as Jev's; every other question of the pack takes the model's first candidate (a pack's questions are only the clusters that had candidates).

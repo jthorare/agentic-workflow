@@ -85,7 +85,7 @@ internal sealed class JevChoicePort(
 
     private static Result<IReadOnlyList<ChoiceAnswer>> Map(ProviderResult result, IReadOnlyList<ChoiceQuestion> questions) => result switch
     {
-        BatchDecided decided => Aw.Kernel.Results.Success<IReadOnlyList<ChoiceAnswer>>([.. questions.Select(q => Answer(q, decided)).OfType<ChoiceAnswer>()]),
+        BatchDecided decided => Kernel.Results.Success<IReadOnlyList<ChoiceAnswer>>([.. questions.Select(q => Answer(q, decided)).OfType<ChoiceAnswer>()]),
         ProviderUnavailable { ReasonCode: "no-api-key" } => ContextErrors.ChoiceUnavailable.With(ChoiceReasons.NoKey),
         ProviderUnavailable { ReasonCode: ProviderUnavailable.Timeout } => ContextErrors.ChoiceRejected.With(ProviderUnavailable.Timeout),
         ProviderErrored errored when _refused.Contains(errored.ReasonCode, StringComparer.Ordinal) => ContextErrors.ChoiceRejected.With(errored.ReasonCode),

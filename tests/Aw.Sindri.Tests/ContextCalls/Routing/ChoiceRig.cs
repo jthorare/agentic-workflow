@@ -38,10 +38,10 @@ internal sealed class ChoiceRig
     public IDisposable EnterJob() =>
         _jobs.Enter(new JobContext(JobId.From("JOB-" + new string('a', 32)), JobKind.From("BuildContextMap"), new Progress<string>(), Waiting: null));
 
-    public ValueTask<Aw.Kernel.Result<IReadOnlyList<ChoiceAnswer>>> Pick(params ChoiceQuestion[] questions) =>
+    public ValueTask<Kernel.Result<IReadOnlyList<ChoiceAnswer>>> Pick(params ChoiceQuestion[] questions) =>
         Port.Pick(ChoiceKind.Labeling, questions, capChars: 160_000, TestContext.Current.CancellationToken);
 
-    public ValueTask<Aw.Kernel.Result<IReadOnlyList<ChoiceAnswer>>> PickSurfaces(params ChoiceQuestion[] questions) =>
+    public ValueTask<Kernel.Result<IReadOnlyList<ChoiceAnswer>>> PickSurfaces(params ChoiceQuestion[] questions) =>
         Port.Pick(ChoiceKind.ProductSurfaces, questions, capChars: 160_000, TestContext.Current.CancellationToken);
 
     /// <summary>The approved 'context.models', which a test can change between calls the way an approval does.</summary>

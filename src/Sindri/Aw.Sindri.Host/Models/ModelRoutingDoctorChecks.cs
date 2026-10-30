@@ -115,11 +115,11 @@ internal sealed class ModelRoutingDoctorChecks(IApprovedModels models, IModelCat
         }
     }
 
-    private static string KeyOf(ModelKind kind, Aw.Context.Core.Engine.ModelSource source) => source switch
+    private static string KeyOf(ModelKind kind, Context.Core.Engine.ModelSource source) => source switch
     {
-        Aw.Context.Core.Engine.ModelSource.KindModels => $"context.models.{ModelKinds.Key(kind)}.models.codex",
-        Aw.Context.Core.Engine.ModelSource.DefaultModels => "context.models.default.models.codex",
-        Aw.Context.Core.Engine.ModelSource.Request or Aw.Context.Core.Engine.ModelSource.Names or Aw.Context.Core.Engine.ModelSource.Builtin => "context.models.names",
+        Context.Core.Engine.ModelSource.KindModels => $"context.models.{ModelKinds.Key(kind)}.models.codex",
+        Context.Core.Engine.ModelSource.DefaultModels => "context.models.default.models.codex",
+        Context.Core.Engine.ModelSource.Request or Context.Core.Engine.ModelSource.Names or Context.Core.Engine.ModelSource.Builtin => "context.models.names",
         _ => "context.models.names",
     };
 }
