@@ -127,7 +127,8 @@ public static partial class SandboxPlanRenderer
             { Kind: PlanMountKind.Deny } when seatbelt && mount.Reason.StartsWith(RealHome, StringComparison.Ordinal) => $"{path} is blocked: on macOS the real home is denied; only the entries listed here are allowed.\nThe owner can allow it for this repo: add it to sandbox.repos.<repo>.homeAllow in the profile.\n",
             { Kind: PlanMountKind.Deny } => ExplainDenied(path, mount),
             { Kind: PlanMountKind.Tmpfs } when !string.Equals(mount.Path, home, StringComparison.Ordinal) => ExplainDenied(path, new PlanMount(path, PlanMountKind.Deny, Reason: Always + "Sindri's own state is not visible to a session")),
-            { Kind: PlanMountKind.Tmpfs } => $"{path} is not bound in the sandbox home, so it does not exist for this session (a tool that writes there loses it with the run).\nThe owner can allow it for this repo: add it to sandbox.repos.<repo>.homeAllow in the profile.\n",
+            { Kind: PlanMountKind.Tmpfs } => NotInHome(path),
+            { Kind: PlanMountKind.PerLaunchDir } when seatbelt && string.Equals(mount.Path, home, StringComparison.Ordinal) => NotInHome(path),   // the run's own empty home: no link covers this path
             { Kind: PlanMountKind.ReadOnly } => $"{path} can be read, not changed ({mount.Reason}).\n",
             _ => $"{path} is writable ({mount.Reason}).\n",
         };
@@ -137,6 +138,9 @@ public static partial class SandboxPlanRenderer
     private static string HomeOf(SandboxPlan plan, bool seatbelt) => seatbelt
         ? plan.Environment.FirstOrDefault(static e => string.Equals(e.Name, "HOME", StringComparison.Ordinal))?.Value ?? string.Empty
         : plan.Mounts.FirstOrDefault(m => m.Kind == PlanMountKind.Tmpfs && !string.Equals(m.Path, "/run", StringComparison.Ordinal))?.Path ?? string.Empty;
+
+    private static string NotInHome(string path) =>
+        $"{path} is not bound in the sandbox home, so it does not exist for this session (a tool that writes there loses it with the run).\nThe owner can allow it for this repo: add it to sandbox.repos.<repo>.homeAllow in the profile.\n";
 
     // A path through a link in the run's home is the link's target: the rules are on the real path.
     private static string ThroughLink(SandboxPlan plan, string path)

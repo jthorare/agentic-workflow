@@ -40,7 +40,7 @@ public sealed class SandboxPlanSeatbeltTests
         var plan = Build(Req.WriteScope);
 
         Assert.DoesNotContain(plan.Mounts, m => m.Kind is PlanMountKind.Dev or PlanMountKind.Proc or PlanMountKind.Tmpfs);
-        Assert.DoesNotContain(plan.Mounts, m => m.Path.StartsWith("/run", StringComparison.Ordinal));
+        Assert.DoesNotContain(plan.Mounts, m => string.Equals(m.Path, "/run/sindri/net", StringComparison.Ordinal));   // a Deny under /run (the always-denied sockets) stays: harmless on a Mac
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -207,14 +207,21 @@ public sealed class SandboxPlanSeatbeltTests
         Assert.Contains(Req.Home + "/.venv/bin/python is writable", text, StringComparison.Ordinal);
     }
 
-    [Theory, Trait("Lane", "unit")]
-    [InlineData("~/.ssh/id_ed25519")]
-    [InlineData(Req.Home + "/.ssh/id_ed25519")]
-    public void Explain_says_the_real_home_is_denied_for_a_path_no_entry_re_allows(string query)
+    [Fact, Trait("Lane", "unit")]
+    public void Explain_says_the_real_home_is_denied_for_an_absolute_path_no_entry_re_allows()
     {
-        var text = SandboxPlanRenderer.Explain(WithHomeEntry(), query);
+        var text = SandboxPlanRenderer.Explain(WithHomeEntry(), Req.Home + "/.ssh/id_ed25519");
 
         Assert.Contains("is blocked: on macOS the real home is denied; only the entries listed here are allowed.", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Explain_says_a_tilde_path_no_link_covers_is_not_in_the_launchs_own_home()
+    {
+        var text = SandboxPlanRenderer.Explain(WithHomeEntry(), "~/.ssh/id_ed25519");
+
+        Assert.Contains(Req.RunArea + "/home/.ssh/id_ed25519 is not bound in the sandbox home, so it does not exist for this session", text, StringComparison.Ordinal);
+        Assert.Contains("homeAllow", text, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
