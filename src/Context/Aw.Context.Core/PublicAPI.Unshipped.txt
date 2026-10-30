@@ -10138,6 +10138,23 @@ static Aw.Context.Core.Map.SourceTarget.OfRecord(Aw.Context.Core.Sources.RecordK
 Aw.Context.Core.Extract.ILabelCache
 Aw.Context.Core.Extract.ILabelCache.Find(System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyDictionary<string!, string!>!>!>
 Aw.Context.Core.Extract.ILabelCache.Save(System.Collections.Generic.IReadOnlyList<System.Collections.Generic.KeyValuePair<string!, string!>>! labels, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Concepts.PinScope
+Aw.Context.Core.Concepts.PinScope.HoldsNode(Aw.Context.Core.Graph.NodeKey key) -> bool
+Aw.Context.Core.Concepts.PinScope.HoldsPath(Aw.Context.Core.Engine.ContextRepoName repo, string! repoRelativePath) -> bool
+Aw.Context.Core.Concepts.PinScope.Pin.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Concepts.PinSet
+Aw.Context.Core.Concepts.PinSet.IsEmpty.get -> bool
+Aw.Context.Core.Concepts.PinSet.PinOf(Aw.Context.Core.Graph.NodeKey key) -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Concepts.PinSet.Visible.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>!
+static Aw.Context.Core.Concepts.PinScope.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! visible, string! pin, Aw.Context.Core.Graph.GraphSnapshot! graph, string! mapTag) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.PinScope!>!
+static Aw.Context.Core.Concepts.PinScope.PinOf(Aw.Context.Core.Graph.NodeKey anchor, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Engine.ConceptId?
+static Aw.Context.Core.Concepts.PinSet.Empty.get -> Aw.Context.Core.Concepts.PinSet!
+static Aw.Context.Core.Concepts.PinSet.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! visible, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Concepts.PinSet!
+static readonly Aw.Context.Core.ContextErrors.NoPins -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinNeedsMap -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinNewerThanMap -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinUnknown -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Concepts.PinSet.Scope(string! pin, string! mapTag) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.PinScope!>!
 Aw.Context.Core.Graph.EdgeType.Expresses = 15 -> Aw.Context.Core.Graph.EdgeType
 Aw.Context.Core.Concepts.PageExpresses
 static Aw.Context.Core.Concepts.PageExpresses.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
