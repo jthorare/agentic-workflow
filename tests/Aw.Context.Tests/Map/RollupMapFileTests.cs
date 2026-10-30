@@ -52,13 +52,13 @@ public sealed class RollupMapFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_reader_of_version_1_alone_refuses_a_version_2_file_with_the_file_invalid_code()
+    public void A_reader_of_version_1_alone_refuses_a_version_4_file_with_the_file_invalid_code()
     {
-        var check = MapDocumentValidator.Check(Maps.Parse(Rolled(3, DependsOnCount)), KeyMigrations.Shipped);
+        var check = MapDocumentValidator.Check(Maps.Parse(Rolled(4, DependsOnCount)), KeyMigrations.Shipped);
 
         Assert.True(check.IsError);
         Assert.Equal(ContextErrors.MapFileInvalid.Code, check.Error.Code);
-        Assert.Contains("schemaVersion: 3 isn't supported (this build reads 1, 2)", check.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("schemaVersion: 4 isn't supported (this build reads 1, 2, 3)", check.Error.Message, StringComparison.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]
