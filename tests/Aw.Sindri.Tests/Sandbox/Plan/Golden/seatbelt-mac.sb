@@ -19,6 +19,8 @@
 (allow file-write* (literal "/dev/null"))
 (allow file-write* (literal "/dev/tty"))
 (allow file-write* (regex #"^/dev/ttys[0-9]+$"))
+; private scratch, removed with the run
+(allow file-write* (subpath "/private/tmp/aw-aaaaaaaa"))
 ; the owner's real home: HOME is this run's own folder, and only the entries below are allowed
 (deny file-read* file-write* (subpath "/Users/owner"))
 ; the .NET SDK
@@ -87,8 +89,6 @@
 (allow file-read* (subpath "/Users/owner/.agentic-workflow/bin/cs/current"))
 ; Sindri's real home is empty here: only the entries below exist
 (deny file-read* file-write* (subpath "/Users/owner/.agentic-workflow/sindri-app"))
-; private scratch, removed with the run
-(allow file-write* (subpath "/private/tmp/aw-aaaaaaaa"))
 ; HOME for this run: links to the home entries the session may use, thrown away with the run
 (allow file-read* file-write* (subpath "/Users/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/home"))
 ; the agent home, from the owner-copy login source
