@@ -38,21 +38,27 @@ internal sealed class ProjectPageReader(IViewReader views, IProjectFacts facts, 
         var keys = attached.Value.Select(r => r.Linear).OfType<string>().ToList();
         var snapshot = await facts.Read(keys, cancellationToken).ConfigureAwait(false);
         var freshness = await facts.Freshness(cancellationToken).ConfigureAwait(false);
-        var linear = await LinearConfigured(cancellationToken).ConfigureAwait(false);
-        return ProjectCards.Build(new ProjectPageInputs(attached.Value, hidden.Value, snapshot, freshness, linear), clock.GetUtcNow(), all);
+        var (linear, tokenMissing) = await LinearState(cancellationToken).ConfigureAwait(false);
+        return ProjectCards.Build(new ProjectPageInputs(attached.Value, hidden.Value, snapshot, freshness, linear, tokenMissing), clock.GetUtcNow(), all);
     }
 
     // why: a profile that can't be read or checked reads as "no Linear" here; doctor and setup report that problem, the page only picks its sentence
-    private async ValueTask<bool> LinearConfigured(CancellationToken cancellationToken)
+    private async ValueTask<(bool Configured, bool TokenMissing)> LinearState(CancellationToken cancellationToken)
     {
         var latest = await approvals.Latest(cancellationToken).ConfigureAwait(false);
         if (latest.IsError || latest.Value is not { } loaded)
         {
-            return false;
+            return (false, false);
         }
 
         ProfileRepoEntry[] entries = [.. (loaded.Profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path))];
         var settings = engine.CheckSettings(loaded.Profile.Context, entries);
-        return settings.IsSuccess && (settings.Value.Linear is not null || settings.Value.LinearTeams.Count > 0);
+        if (settings.IsError)
+        {
+            return (false, false);
+        }
+
+        var teamsOnly = settings.Value.Linear is null && settings.Value.LinearTeams.Count > 0;
+        return (settings.Value.Linear is not null || teamsOnly, teamsOnly);
     }
 }

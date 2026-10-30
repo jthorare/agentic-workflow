@@ -18,7 +18,7 @@ internal static class MapGate
 
     /// <summary>The Core view of a stored hold.</summary>
     internal static MapHoldState StateOf(MapHold hold) =>
-        new(hold.Version, hold.Since, hold.Heads.ToDictionary(static h => h.Repo.Value, static h => new MapRepoHead(h.Commit, h.OnDefault), StringComparer.Ordinal));
+        new(hold.Version, hold.Since, hold.Heads.ToDictionary(static h => h.Repo.Value, static h => new MapRepoHead(h.Commit, h.OnDefault) { IndexCommit = h.IndexCommit }, StringComparer.Ordinal));
 
     /// <summary>The Core view of the stored publish state's hold, or null when nothing is held.</summary>
     internal static MapHoldState? HoldOf(MapPublishState state) => state.Hold is null ? null : StateOf(state.Hold);

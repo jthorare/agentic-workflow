@@ -34,7 +34,7 @@ internal static class GraphRows
 
     private sealed class HeadMapper : IRowMapper<MapHead>
     {
-        public MapHead Map(SqliteDataReader r) => new(Core.Engine.ContextRepoName.From(r.GetString(0)), r.GetString(1), r.GetInt64(2) == 1);
+        public MapHead Map(SqliteDataReader r) => new(Core.Engine.ContextRepoName.From(r.GetString(0)), r.GetString(1), r.GetInt64(2) == 1) { IndexCommit = r.IsDBNull(3) ? null : r.GetString(3) };
     }
 
     private sealed class TextMapper : IRowMapper<string>

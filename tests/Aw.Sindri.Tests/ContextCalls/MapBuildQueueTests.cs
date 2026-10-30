@@ -61,7 +61,8 @@ public sealed class MapBuildQueueTests : IDisposable
             hold.SetResult();
             await JobHost.Settle(host, Token);
             Assert.Equal((1, 1), (active, asked));   // while the refresh held graphify, the build had not entered it
-            Assert.Equal((1, 2), (clusters.MostActive, clusters.Asked.Count));   // and after the release it ran graphify too, one at a time
+            Assert.Equal((1, 1), (clusters.MostActive, clusters.Asked.Count));   // and after the release it reused the refresh's draft instead of running graphify again (#1696)
+            Assert.True(await Finished(host, build, "was built from these heads while this build waited, so it was not built again"), $"the build job {build} does not report the reused draft");
         }
         finally
         {
@@ -146,6 +147,13 @@ public sealed class MapBuildQueueTests : IDisposable
     {
         var events = (await host.App.Services.GetRequiredService<ILedgerReader>().ReadAfter(0, 5000, Token)).Value;
         return events.Any(e => e.Envelope.Type == EventTypes.JobProgress && e.Envelope.Payload.Contains(job, StringComparison.Ordinal) && e.Envelope.Payload.Contains($"\"{line}\"", StringComparison.Ordinal));
+    }
+
+    // The job.finished event of that job, its result carrying that text.
+    private static async Task<bool> Finished(GoldenHost host, string job, string text)
+    {
+        var events = (await host.App.Services.GetRequiredService<ILedgerReader>().ReadAfter(0, 5000, Token)).Value;
+        return events.Any(e => e.Envelope.Type == EventTypes.JobFinished && e.Envelope.Payload.Contains(job, StringComparison.Ordinal) && e.Envelope.Payload.Contains(text, StringComparison.Ordinal));
     }
 
     private static async Task Until(string what, Func<Task<bool>> holds)
