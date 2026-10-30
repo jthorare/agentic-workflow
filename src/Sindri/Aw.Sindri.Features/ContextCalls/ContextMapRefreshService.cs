@@ -125,7 +125,32 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return new PublishOutcome(Started: false, string.Create(CultureInfo.InvariantCulture, $"map v{hold.Version} held for the code index"), Error: null);
         }
 
+        if (action is MapRebuild rebuild)
+        {
+            return await Rebuild(rebuild, hold, tick, cancellationToken).ConfigureAwait(false);
+        }
+
         return Stands(action, tick) ? default : await StartPublish(cancellationToken).ConfigureAwait(false);
+    }
+
+    // #1704: the held draft was built before the code index of its commit, which is in now. It never publishes: the refresh builds again (the same start the move check uses; the refresh that is running, or its backoff, means it waits).
+    private async ValueTask<PublishOutcome> Rebuild(MapRebuild rebuild, MapHoldState hold, Tick tick, CancellationToken cancellationToken)
+    {
+        var note = string.Create(CultureInfo.InvariantCulture, $"map v{hold.Version} was built before the code index of {string.Join(", ", rebuild.Repos)}, building it again");
+        if (tick.Refreshes.Concat(tick.Publishes).Any(static j => j.State == JobState.Running) || RefreshBackoffHolds(tick))
+        {
+            return default;
+        }
+
+        var started = await Start(tick.Elsewhere, cancellationToken).ConfigureAwait(false);
+        return started.IsError ? new PublishOutcome(Started: false, Note: null, started.Error) : new PublishOutcome(Started: !started.Value.Idle, note, Error: null);
+    }
+
+    private bool RefreshBackoffHolds(Tick tick)
+    {
+        var finished = Finished(tick.Refreshes);
+        var failures = MainMoveDecision.FailedInARow(Attempts(finished));
+        return failures > 0 && clock.GetUtcNow() < finished[0].EndedAt + SyncGapDecision.Wait(failures);
     }
 
     // The refresh that is running replaces a gone draft, and a running publish or its backoff means the start waits.

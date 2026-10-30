@@ -62,7 +62,7 @@ $SINDRI profile approve
 It asks for the key once (not shown) and checks it can read every team in `teams` (with no team listed, at least one)
 before saving anything. Only then does it store the key in the OS keychain (service `sindri-index`, account `linear`; an
 owner-only file under `$AW_SINDRI_HOME/secrets/` when there is no keychain, and always the file for a loopback `url`) and
-write the pointer into `context.sources.linear.token`. It is the human's verb: an agent session is refused
+write the pointer into `context.sources.linear.token`. When the profile lists no teams it also writes the teams the key reads (sorted) into `context.sources.linear.teams`, so the Projects page has rows to show. It is the human's verb: an agent session is refused
 (`SND-AUTH-002`). A key Linear refuses is `SND-INDEX-009`; a listed team it can't read, or no team at all, is
 `SND-INDEX-010`, naming the teams; an unreachable Linear passes `SND-CONTEXT-010` through. Nothing is saved on any failure.
 
@@ -89,8 +89,8 @@ pointer resolves:
 
 | Result | When | Fix |
 |---|---|---|
-| `ok` | the profile names no `context.sources.linear.token` (`not configured`); or the pointer resolves (`configured: teams ENG, APP; keychain:sindri-index/linear resolves`) | — |
-| `warn` | linear is named but no repo is mapped, so no context source runs | map a repo in `repos` and `context.repos` |
+| `ok` | the profile has no Linear entry (`not configured`); or the pointer resolves (`configured: teams ENG, APP; keychain:sindri-index/linear resolves`) | — |
+| `warn` | linear is named but no repo is mapped, so no context source runs; or the profile lists teams but names no token (`Linear needs a token: the approved profile lists teams ENG but no context.sources.linear.token`) | map a repo in `repos` and `context.repos`; or `sindri index connect linear` |
 | `fail` | the pointer doesn't resolve (`SND-SECRET-001`..`003`: the scheme and the target are named, never a value); or the settings are refused (`SND-CONTEXT-070`) | fix the target as the message says |
 
 Whether Linear accepts the key is `context sources status`, not doctor:

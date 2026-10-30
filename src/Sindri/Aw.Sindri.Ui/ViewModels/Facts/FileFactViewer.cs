@@ -8,12 +8,12 @@ internal sealed class FileFactViewer : ObservableObject, IFactViewer
 {
     private const int HashChars = 12;
 
-    private readonly ILauncher _launcher;
+    private readonly LinkLaunch _launch;
 
     internal FileFactViewer(FactRow row, ILauncher launcher)
     {
         Row = row;
-        _launcher = launcher;
+        _launch = new LinkLaunch(launcher);
         var file = row.Ref;
         Name = FactText.Scrub(file?.Name ?? row.Summary);
         SizeText = file?.Size is { } size ? Labels.FileSize(size) : string.Empty;
@@ -58,7 +58,7 @@ internal sealed class FileFactViewer : ObservableObject, IFactViewer
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that completes once the system answered.</returns>
     public async Task Open(CancellationToken cancellationToken) =>
-        ReportOpened(System.IO.Path.IsPathRooted(Path) && await _launcher.OpenFile(Path, cancellationToken).ConfigureAwait(true));
+        ReportOpened(System.IO.Path.IsPathRooted(Path) && await _launch.OpenPath(Path, cancellationToken).ConfigureAwait(true));
 
     /// <summary>Records what Open found.</summary>
     /// <param name="opened">True when the platform opened the file.</param>

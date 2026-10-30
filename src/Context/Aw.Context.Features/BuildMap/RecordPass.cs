@@ -15,7 +15,7 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
 {
     private const int SymbolHitsAsked = 200;
 
-    private static readonly RecordLinkKind[] _linkKinds = [RecordLinkKind.Parent, RecordLinkKind.Blocks, RecordLinkKind.Duplicates, RecordLinkKind.Relates, RecordLinkKind.Closes, RecordLinkKind.Attachment];
+    private static readonly RecordLinkKind[] _linkKinds = [RecordLinkKind.Parent, RecordLinkKind.Blocks, RecordLinkKind.Duplicates, RecordLinkKind.Relates, RecordLinkKind.Closes, RecordLinkKind.Attachment, RecordLinkKind.InProject];
 
     private readonly RepoPaths _paths = new(input.Repos);
     private readonly Dictionary<string, StoredRecord> _live = stored.ToDictionary(r => r.Key.Value, StringComparer.Ordinal);
@@ -23,6 +23,7 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
     private readonly Dictionary<(string From, string To), GraphEdge> _edges = [];
     private readonly Dictionary<CitationOutcome, int> _cited = [];
     private readonly Dictionary<(string Repo, string Name), IReadOnlyList<(string Repo, string Path)>> _symbolFiles = [];
+    private readonly Dictionary<string, CodeIndexHead> _indexHeads = new(StringComparer.Ordinal);
     private int _notSynced;
     private int _older;
     private int _removedTouches, _removedCited, _overCap, _overCapPaths;
@@ -50,6 +51,16 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
             }
         }
 
+        // why: a repo no citation asked about still has a code index head; it is read now, with the rest of the pass, never at save time (#1704).
+        foreach (var repo in input.Repos.Where(r => !_indexHeads.ContainsKey(r.Name.Value)))
+        {
+            var head = await symbols.Heads(repo.Name, asOf: null, cancellationToken).ConfigureAwait(false);
+            if (!head.IsError)
+            {
+                _indexHeads[repo.Name.Value] = head.Value;
+            }
+        }
+
         return null;
     }
 
@@ -62,7 +73,7 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
             [.. _nodes.Values.OrderBy(n => n.Key.Value, StringComparer.Ordinal)],
             [.. _edges.Values.OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.To.Value, StringComparer.Ordinal)]);
         var (notes, degraded) = Notes(stamp);
-        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)], UnderCap = [.. _underCap.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
+        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, IndexHeads = _indexHeads, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)], UnderCap = [.. _underCap.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
     }
 
     private async ValueTask<Error?> Docs(MapRepoFiles repo, CancellationToken cancellationToken)
@@ -108,7 +119,7 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
         }
 
         var node = Node(record, from);
-        if (Links(record, from) + Emit(record.Key, node, targets) > 0)
+        if (Links(record, from) + Emit(record.Key, node, targets, Project(record)) > 0)
         {
             _ = _nodes.TryAdd(from.Value, node);
         }
@@ -130,6 +141,12 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
 
         return made;
     }
+
+    // The project an issue is in, when the store holds it: the node its features roll up to.
+    private NodeKey? Project(StoredRecord record) =>
+        record.Links.Where(l => l.Kind == RecordLinkKind.InProject).Select(l => l.ToKey).OfType<RecordKey>()
+            .Select(k => _live.TryGetValue(k.Value, out var project) && NodeKey.TryFrom("record:" + project.Key.Value, out var key) ? (NodeKey?)key : null)
+            .FirstOrDefault(k => k is not null);
 
     private NodeKey? Target(StoredRecord target)
     {
@@ -164,9 +181,9 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
     }
 
     // A record's file edges, from everything it touched, cited or defined: past TouchCap (counted by (repo, path), so one relative path in two repos is two) it gets none, is counted, and is handed on to roll up to features once the homes are known. A record under the cap keeps its file edges and is handed on too, to roll up beside them.
-    private int Emit(RecordKey evidence, GraphNode node, HashSet<(string Repo, string Path)> targets)
+    private int Emit(RecordKey evidence, GraphNode node, HashSet<(string Repo, string Path)> targets, NodeKey? project = null)
     {
-        var rolled = new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]);
+        var rolled = new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]) { Project = project };
         if (targets.Count > MapRecordSources.TouchCap)
         {
             _overCap++;

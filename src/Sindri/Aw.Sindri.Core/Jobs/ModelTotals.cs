@@ -6,4 +6,5 @@ namespace Aw.Sindri.Core.Jobs;
 /// <param name="InputTokens">Input tokens over all calls (reported or estimated per call).</param>
 /// <param name="OutputTokens">Output tokens over all calls.</param>
 /// <param name="AnsweredBy">The distinct harness and model pairs that answered, in the order first seen, with counts.</param>
-public sealed record ModelTotals(int Calls, int FailedCalls, long InputTokens, long OutputTokens, IReadOnlyList<ModelAnsweredCount> AnsweredBy);
+/// <param name="FellBack">Calls a later harness answered after an earlier one limited, failed or was skipped.</param>
+public sealed record ModelTotals(int Calls, int FailedCalls, long InputTokens, long OutputTokens, IReadOnlyList<ModelAnsweredCount> AnsweredBy, int FellBack = 0);

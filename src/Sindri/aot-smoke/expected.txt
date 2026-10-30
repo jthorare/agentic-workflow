@@ -25,7 +25,9 @@ ok    launcher:adoption no opens in the last 30 days
 ok    pr-watch          the watcher has not run yet
 warn  setup             not finished: profile (needs-you), recipes (todo), mcp (todo), map (todo), sources (todo) (fix: sindri profile approve <hash>)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
+ok    context:labelpick label choice is off
 ok    model:pick        model choice is off
+ok    context:models    not configured (no profile is approved)
 ok    forge:credential  no forge configured
 warn  codex:read-only   pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:read-only > tests/Aw.Sindri.Tests/Golden/Probe/codex-read-only.json; docs/csharp/sindri.md, 'The harness probe')
 warn  codex:workspace-write pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:workspace-write > tests/Aw.Sindri.Tests/Golden/Probe/codex-workspace-write.json; docs/csharp/sindri.md, 'The harness probe')
@@ -248,6 +250,7 @@ warn  setup             not finished: recipes (needs-you), mcp (todo), map (todo
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 ok    setup:token       WORK/home/auth/human.token can be read by you alone
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
+ok    context:labelpick label choice is off
 ok    model:pick        model choice is off
 ok    forge:credential  no forge configured
 warn  codex:read-only   pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:read-only > tests/Aw.Sindri.Tests/Golden/Probe/codex-read-only.json; docs/csharp/sindri.md, 'The harness probe')

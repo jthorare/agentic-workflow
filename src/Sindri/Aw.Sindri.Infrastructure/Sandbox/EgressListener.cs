@@ -1,8 +1,9 @@
+using System.Net;
 using System.Net.Sockets;
 
 namespace Aw.Sindri.Infrastructure.Sandbox;
 
-/// <summary>A unix-socket listener that hands each accepted connection to a handler until it is disposed.</summary>
+/// <summary>A unix-socket or loopback TCP listener that hands each accepted connection to a handler until it is disposed.</summary>
 internal sealed class EgressListener : IAsyncDisposable
 {
     private readonly Socket _socket;
@@ -12,11 +13,15 @@ internal sealed class EgressListener : IAsyncDisposable
     private readonly Lock _gate = new();
     private int _disposed;
 
-    private EgressListener(Socket socket, Func<Stream, CancellationToken, Task> handler)
+    private EgressListener(Socket socket, int port, Func<Stream, CancellationToken, Task> handler)
     {
         _socket = socket;
+        Port = port;
         _accept = Task.Run(() => Accept(handler), _stop.Token);
     }
+
+    /// <summary>Gets the TCP port a loopback listener is bound to; 0 for a unix socket.</summary>
+    public int Port { get; }
 
     /// <summary>Binds <paramref name="path"/> (0600) and starts accepting.</summary>
     /// <param name="path">The socket path.</param>
@@ -42,7 +47,27 @@ internal sealed class EgressListener : IAsyncDisposable
             throw;
         }
 
-        return new EgressListener(socket, handler);
+        return new EgressListener(socket, 0, handler);
+    }
+
+    /// <summary>Binds 127.0.0.1 on a free port and starts accepting: the macOS proxy, where there is no network namespace and the agent connects straight to loopback.</summary>
+    /// <param name="handler">Serves one connection.</param>
+    /// <returns>The listener; <see cref="Port"/> is the bound port.</returns>
+    public static EgressListener StartLoopback(Func<Stream, CancellationToken, Task> handler)
+    {
+        ArgumentNullException.ThrowIfNull(handler);
+        var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        try
+        {
+            socket.Bind(new IPEndPoint(IPAddress.Loopback, 0));
+            socket.Listen(64);
+            return new EgressListener(socket, ((IPEndPoint)socket.LocalEndPoint!).Port, handler);   // why: a bound socket has a local end point
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
+        }
     }
 
     /// <summary>Stops accepting at once, without waiting: for a start that failed before anything was handed out.</summary>

@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Views;
@@ -87,5 +88,97 @@ public sealed class CliJobVerbsTests : IDisposable
 
         Assert.Equal(2, code);
         Assert.Empty(api.Calls);
+    }
+
+    private static readonly DateTimeOffset _noon = new(2026, 1, 1, 14, 2, 11, TimeSpan.Zero);
+
+    private static JobModelCall Call(string id, DateTimeOffset at, string kind, int input, int output, JobModelAnswerer? answered, JobModelHow? how = null, int? items = null, params JobModelTry[] tries) =>
+        new(ModelCallId.From(id), kind, kind, tries, answered, input, output, ModelTokenBasis.Reported, items, how, at, Ms: 1500);
+
+    private static JobModelTry Try(string harness, string model, string outcome, string? reason, int ms) => new(harness, model, outcome, reason, ms, "builtin");
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Jobs_show_prints_a_Model_calls_block_with_a_row_per_try()
+    {
+        _rig.Clock.SetUtcNow(new DateTimeOffset(2026, 1, 1, 15, 0, 0, TimeSpan.Zero));
+        var calls = new[]
+        {
+            Call("c1", _noon, "labeling", 3000, 1100, new JobModelAnswerer("codex", "gpt-6-luna"),
+                tries: [Try("claude-code", "haiku", "limit", "limit", 1000), Try("codex", "gpt-6-luna", "answered", reason: null, 1200)]),
+            Call("c2", _noon.AddSeconds(29), "labeling", 3000, 800, new JobModelAnswerer("codex", "gpt-6-luna"),
+                tries: [Try("claude-code", "haiku", "skipped", "limited", 0), Try("codex", "gpt-6-luna", "answered", reason: null, 1200)]),
+            Call("c3", _noon.AddSeconds(39), "labeling", 0, 0, new JobModelAnswerer("jev", "jev-1.13.0"), new JobModelHow(Jev: 94, FirstCandidate: 5, FileName: 1), items: 100,
+                tries: [Try("jev", "jev-1.13.0", "answered", reason: null, 800)]),
+        };
+        var api = new JobApi().Ok("GET", "/sindri/jobs/" + Id, ModelView(JobState.Running, waitingOn: null, ["building"], calls, count: 3));
+
+        var code = await Finished(_rig.RunJobs(api, "show", Id));
+
+        Assert.Equal(0, code);
+        Assert.Equal($"{Id}  running  BuildContextMap  map\nstarted by human:local at 2026-01-01T00:00:00Z\nbuilding\n" +
+            "Model calls\n" +
+            "14:02:11  labeling       claude-code haiku        limit\n" +
+            "14:02:12  labeling       codex gpt-6-luna         answered   4.1k tokens\n" +
+            "14:02:40  labeling       claude-code haiku        skipped    limited earlier in this job\n" +
+            "14:02:40  labeling       codex gpt-6-luna         answered   3.8k tokens\n" +
+            "14:02:50  labeling       jev jev-1.13.0           answered   picked 94 of 100, 5 first, 1 file name\n" +
+            $"cancel: sindri jobs cancel {Id}\n", _rig.Out.ToString().ReplaceLineEndings("\n"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_job_parked_on_model_limit_starts_with_why_and_how_to_resume()
+    {
+        _rig.Clock.SetUtcNow(new DateTimeOffset(2026, 1, 1, 15, 0, 0, TimeSpan.Zero));
+        var line = "Paused: claude-code at its usage limit; codex at its usage limit. Resume when one is back.";
+        var api = new JobApi().Ok("GET", "/sindri/jobs/" + Id, ModelView(JobState.Waiting, "model-limit", ["building", line], [], count: 0));
+
+        _ = await Finished(_rig.RunJobs(api, "show", Id));
+
+        Assert.StartsWith($"waiting on model-limit: claude-code at its usage limit; codex at its usage limit. Resume with: sindri jobs resume {Id}\n", _rig.Out.ToString().ReplaceLineEndings("\n"), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_try_that_failed_names_its_code_and_a_skipped_pick_says_why_it_was_not_asked()
+    {
+        _rig.Clock.SetUtcNow(new DateTimeOffset(2026, 1, 1, 15, 0, 0, TimeSpan.Zero));
+        var calls = new[]
+        {
+            Call("c1", _noon, "labeling", 0, 0, answered: null, tries: [Try("claude-code", "haiku", "failed", "exit-1", 400)]),
+            Call("c2", _noon.AddSeconds(5), "labeling", 0, 0, answered: null, tries: [Try("jev", "jev-1.13.0", "not-asked", "no-key", 0)]),
+        };
+        var api = new JobApi().Ok("GET", "/sindri/jobs/" + Id, ModelView(JobState.Running, waitingOn: null, [], calls, count: 2));
+
+        _ = await Finished(_rig.RunJobs(api, "show", Id));
+
+        var text = _rig.Out.ToString().ReplaceLineEndings("\n");
+        Assert.Contains("14:02:11  labeling       claude-code haiku        failed     exit-1\n", text, StringComparison.Ordinal);
+        Assert.Contains("14:02:16  labeling       jev jev-1.13.0           not asked  no key\n", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task More_calls_than_the_job_keeps_say_how_many_are_shown_and_a_row_not_from_today_carries_its_date()
+    {
+        _rig.Clock.SetUtcNow(new DateTimeOffset(2026, 1, 2, 9, 0, 0, TimeSpan.Zero));
+        var calls = new[] { Call("c1", _noon, "labeling", 100, 50, new JobModelAnswerer("codex", "gpt-6-luna"), tries: [Try("codex", "gpt-6-luna", "answered", reason: null, 900)]) };
+        var api = new JobApi().Ok("GET", "/sindri/jobs/" + Id, ModelView(JobState.Running, waitingOn: null, [], calls, count: 205));
+
+        _ = await Finished(_rig.RunJobs(api, "show", Id));
+
+        var text = _rig.Out.ToString().ReplaceLineEndings("\n");
+        Assert.Contains("Model calls\nshowing the last 1 of 205\n2026-01-01 14:02:11  labeling       codex gpt-6-luna         answered   150 tokens\n", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Jobs_show_json_carries_models_waitingOn_and_modelCalls()
+    {
+        var body = ModelView(JobState.Waiting, "model-limit", ["Paused: x. Resume when one is back."], [Call("c1", _noon, "labeling", 1, 1, new JobModelAnswerer("codex", "gpt-6-luna"), tries: [Try("codex", "gpt-6-luna", "answered", reason: null, 1)])], count: 1);
+        var api = new JobApi().Ok("GET", "/sindri/jobs/" + Id, body);
+
+        _ = await Finished(_rig.RunJobs(api, "show", Id, "--json"));
+
+        var json = System.Text.Json.JsonDocument.Parse(_rig.Out.ToString()).RootElement;
+        Assert.Equal("model-limit", json.GetProperty("waitingOn").GetString());
+        Assert.Equal(1, json.GetProperty("models").GetProperty("calls").GetInt32());
+        Assert.Equal("c1", json.GetProperty("modelCalls")[0].GetProperty("callId").GetString());
     }
 }

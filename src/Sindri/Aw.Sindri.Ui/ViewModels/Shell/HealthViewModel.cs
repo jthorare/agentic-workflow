@@ -68,6 +68,9 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     /// <summary>Settings' model-choice line, kept up to date by each status.</summary>
     public ModelChoiceViewModel ModelChoice { get; } = new(clipboard, clock);
 
+    /// <summary>Settings' label-choice line, kept up to date by each status.</summary>
+    public LabelChoiceViewModel LabelChoice { get; } = new();
+
     /// <summary>The Code index card (code-index spec §7.3, CI-10b); the shell has it followed with the other views.</summary>
     public CodeIndexCardViewModel CodeIndex => field ??= WatchCodeIndex(new CodeIndexCardViewModel(api, clock));
 
@@ -175,6 +178,7 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
         ProfileFix = StatusText.ProfileFix(status.Profile);
         LiveProfile = status.Profile.Live;
         ModelChoice.Show(status.Profile);
+        LabelChoice.Show(status.Profile);
         Services = [.. status.Services.Select(StatusText.Service)];
         if (status.Running)
         {
