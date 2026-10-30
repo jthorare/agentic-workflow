@@ -134,18 +134,32 @@ public sealed class CachingLabelerTests
     }
 
     [Fact]
-    public async Task A_pass_that_could_not_ask_jev_saves_nothing_so_the_next_build_asks_again()
+    public async Task A_pass_that_could_not_ask_jev_saves_the_labels_it_named_and_the_next_unchanged_build_makes_no_inner_call()
     {
         var inner = new AnswersOne(new LabelPass([new ClusterLabel(ClusterId.From("h00000"), "Alpha")]) { PickUnavailable = "network-error" });
+        var options = new LabelOptions(Pick: true, Candidates: 3);
+        var clusters = new[] { Cluster("h00000", "a/x.ts") };
+        _ = await new CachingLabeler(inner, _cache, _factory).Label(clusters, [], 1000, options, Ct);
 
-        _ = await new CachingLabeler(inner, _cache, _factory).Label([Cluster("h00000", "a/x.ts")], [], 1000, new LabelOptions(Pick: true, Candidates: 3), Ct);
+        var again = new AnswersOne(new LabelPass([]));
+        var pass = await new CachingLabeler(again, _cache, _factory).Label(clusters, [], 1000, options, Ct);
 
-        Assert.Empty(_cache.Saved);
+        _ = Assert.Single(_cache.Saved);
+        Assert.Equal(0, again.Calls);
+        Assert.Equal("Alpha", Assert.Single(pass.Value.Labels).Label);
     }
 
     private sealed class AnswersOne(LabelPass pass) : ILabeler
     {
+        public int Calls { get; private set; }
+
         public ValueTask<Aw.Kernel.Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken) =>
-            ValueTask.FromResult<Aw.Kernel.Result<LabelPass>>(pass);
+            ValueTask.FromResult<Aw.Kernel.Result<LabelPass>>(Count(pass));
+
+        private LabelPass Count(LabelPass answer)
+        {
+            Calls++;
+            return answer;
+        }
     }
 }

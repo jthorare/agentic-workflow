@@ -43,8 +43,7 @@ internal sealed class CachingLabeler(ILabeler inner, ILabelCache cache, IScrubbe
         }
 
         var named = asked.Value.Labels.Where(l => missKeys.ContainsKey(l.Id.Value)).ToList();
-        // A pass that could not ask Jev named its clusters by the fallback; keeping those would freeze the weaker labels, so the next build asks again.
-        if (named.Count > 0 && asked.Value.PickUnavailable is null)
+        if (named.Count > 0)
         {
             // best effort: a cache that can't be written costs the next build a model call, never this one its labels
             _ = await cache.Save([.. named.Select(l => KeyValuePair.Create(missKeys[l.Id.Value], l.Label))], cancellationToken).ConfigureAwait(false);
