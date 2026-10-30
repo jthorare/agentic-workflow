@@ -15,7 +15,7 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
 {
     private const int SymbolHitsAsked = 200;
 
-    private static readonly RecordLinkKind[] _linkKinds = [RecordLinkKind.Parent, RecordLinkKind.Blocks, RecordLinkKind.Duplicates, RecordLinkKind.Relates, RecordLinkKind.Closes, RecordLinkKind.Attachment];
+    private static readonly RecordLinkKind[] _linkKinds = [RecordLinkKind.Parent, RecordLinkKind.Blocks, RecordLinkKind.Duplicates, RecordLinkKind.Relates, RecordLinkKind.Closes, RecordLinkKind.Attachment, RecordLinkKind.InProject];
 
     private readonly RepoPaths _paths = new(input.Repos);
     private readonly Dictionary<string, StoredRecord> _live = stored.ToDictionary(r => r.Key.Value, StringComparer.Ordinal);
@@ -108,7 +108,7 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
         }
 
         var node = Node(record, from);
-        if (Links(record, from) + Emit(record.Key, node, targets) > 0)
+        if (Links(record, from) + Emit(record.Key, node, targets, Project(record)) > 0)
         {
             _ = _nodes.TryAdd(from.Value, node);
         }
@@ -130,6 +130,12 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
 
         return made;
     }
+
+    // The project an issue is in, when the store holds it: the node its features roll up to.
+    private NodeKey? Project(StoredRecord record) =>
+        record.Links.Where(l => l.Kind == RecordLinkKind.InProject).Select(l => l.ToKey).OfType<RecordKey>()
+            .Select(k => _live.TryGetValue(k.Value, out var project) && NodeKey.TryFrom("record:" + project.Key.Value, out var key) ? (NodeKey?)key : null)
+            .FirstOrDefault(k => k is not null);
 
     private NodeKey? Target(StoredRecord target)
     {
@@ -164,9 +170,9 @@ internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource
     }
 
     // A record's file edges, from everything it touched, cited or defined: past TouchCap (counted by (repo, path), so one relative path in two repos is two) it gets none, is counted, and is handed on to roll up to features once the homes are known. A record under the cap keeps its file edges and is handed on too, to roll up beside them.
-    private int Emit(RecordKey evidence, GraphNode node, HashSet<(string Repo, string Path)> targets)
+    private int Emit(RecordKey evidence, GraphNode node, HashSet<(string Repo, string Path)> targets, NodeKey? project = null)
     {
-        var rolled = new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]);
+        var rolled = new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]) { Project = project };
         if (targets.Count > MapRecordSources.TouchCap)
         {
             _overCap++;

@@ -80,6 +80,22 @@
 #                                  drop the hold and resume the service first; every other state removes the index file again;
 #                                  pause and resume only toggle the service
 #
+#   sindri-ui-fixture.sh projects  (run after 'context up')
+#                                  the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1): seeds six Linear projects into
+#                                  <home>/context/context.db (source_record, record_link; source 'linear-projects', audience linear:SPL, a
+#                                  'led-by' link each): Checkout rewrite (in progress, at risk) and Search relevance v2 (planned), both led
+#                                  by the viewer, Onboarding revamp (completed 3 days ago, led by the viewer: the Finished fold), Billing
+#                                  migration (paused, Dana Okafor), Mobile offline sync and Platform API v3 (in progress, Lee Tran and Mira
+#                                  Costa); open and closed Linear issues with 'in-project' links (the cards' open counts); the viewer's
+#                                  'source_identity' row (Sam Rivera: "Linear says you're Sam Rivera"); and both Linear sources' cursor rows
+#                                  (phase incremental), so the page is past its first read and not counting. It adds
+#                                  context.sources.linear.teams [SPL] to the live profile (a human reads only the profile's teams) and
+#                                  approves that. Then, as the owner: attaches Billing migration, adds a hand-made project (Hiring loop) and
+#                                  hides Search relevance v2 (a project the viewer leads: Hide acts only on a project on the page), each once (the markers <home>/ui-fixture-projects-owner-attach|add|hide; the store rows are rewritten
+#                                  every run, so a repeat adds no row and no project). The store is read when the page asks, so no rebuild is
+#                                  needed; the owner's writes are ledger events and refresh the view. Exit 2 without a context store (run
+#                                  'context up' first) or when the profile already has a context: section without the SPL team.
+#
 #   sindri-ui-fixture.sh sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down
 #                                  the Agents page's data (U11a; run after 'up', and run 'sessions up' right after every 'up': a
 #                                  control plane started without it reads the real box). up copies tests/fixtures/sessions/
@@ -800,6 +816,118 @@ context() {
   case "$1" in up) context_up ;; draft) context_draft ;; down) context_down ;; publish) context_publish "$2" ;; whole) context_whole "$2" ;; esac
 }
 
+# --- projects: the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1) ---
+PROJECTS_TEAM="SPL"
+PROJECTS_AUDIENCE="linear:$PROJECTS_TEAM"
+PROJECTS_VIEWER="fx-viewer"
+PROJECTS_VIEWER_NAME="Sam Rivera"
+projects_marker() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-projects-owner"; }
+
+# A SQL expression for a store timestamp ('2026-10-29T12:00:00.0000000Z', seven fractional digits) at now plus the modifier ($1: '-2 hours').
+projects_ts() { printf "(strftime('%%Y-%%m-%%dT%%H:%%M:%%S', 'now', '%s') || '.0000000Z')" "$1"; }
+
+# A date $1 days from now (YYYY-MM-DD), GNU or BSD date.
+projects_day() { date -u -d "+$1 days" +%F 2>/dev/null || date -u -v+"$1"d +%F; }
+
+# A human reads only the profile's Linear teams (ProfileAudiencePolicy), so the team goes into the live profile (a context: block after user:).
+projects_profile() {
+  local profile
+  profile="$(profile_path)"
+  [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
+  if ! grep -q "teams: \[$PROJECTS_TEAM\]" "$profile"; then
+    ! grep -q '^context:' "$profile" || die "projects: the profile already has a context: section; add 'sources: { linear: { teams: [$PROJECTS_TEAM] } }' to it by hand"
+    awk -v e="context:\n  sources:\n    linear: { teams: [$PROJECTS_TEAM] }" '{print} /^user:/ {print e}' "$profile" > "$profile.new" && mv "$profile.new" "$profile" \
+      || die "projects: can't add the Linear team to $profile"
+  fi
+  # Approve whenever the profile isn't approved (a failed approve is retried here).
+  if needs_approval; then approve >&2 || return; fi
+}
+
+# One stored project and its 'led-by' link, appended to $projects_sql. $1 id, $2 name, $3 state, $4 state_raw, $5 health or '', $6 due in days or '',
+# $7 lead id, $8 lead name, $9 updated ago ('-2 hours'), $10 closed ago or '', $11 description.
+projects_row() {
+  local key="linear:project/fx-$1" health="NULL" due="NULL" closed="NULL"
+  [ -z "$5" ] || health="'$5'"
+  [ -z "$6" ] || due="'$(projects_day "$6")'"
+  [ -z "${10}" ] || closed="$(projects_ts "${10}")"
+  projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description)
+      VALUES ('$key', 'linear-projects', 'project', NULL, '$PROJECTS_AUDIENCE', '$2', 'https://linear.app/fixture/project/fx-$1', '$8', '$3', '$4', $(projects_ts '-60 days'), $(projects_ts "$9"), $closed, 'fixture', 'fixture-$1', 'fixture', 0, NULL, $(projects_ts '+0 seconds'), $health, $due, '${11}');
+    INSERT INTO record_link (from_key, to_ref, to_key, kind, title) VALUES ('$key', 'linear:user/$7', NULL, 'led-by', '$8');
+"
+}
+
+# $1 project id, $2 project name, $3 open issues, $4 closed issues: stored issues with an 'in-project' link (the cards' open counts).
+projects_issues() {
+  local n key project="linear:project/fx-$1"
+  for ((n = 1; n <= $3 + $4; n++)); do
+    key="linear:issue/fx-$1-$n"
+    if [ "$n" -le "$3" ]; then
+      projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+          VALUES ('$key', 'linear', 'issue', NULL, '$PROJECTS_AUDIENCE', '$2 task $n', 'https://linear.app/fixture/issue/$PROJECTS_TEAM-$1-$n', '$PROJECTS_VIEWER_NAME', 'open', 'In Progress', $(projects_ts '-40 days'), $(projects_ts "-$((n * 7)) hours"), NULL, 'fixture', 'fixture-$1-$n', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+"
+    else
+      projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+          VALUES ('$key', 'linear', 'issue', NULL, '$PROJECTS_AUDIENCE', '$2 task $n', 'https://linear.app/fixture/issue/$PROJECTS_TEAM-$1-$n', '$PROJECTS_VIEWER_NAME', 'done', 'Done', $(projects_ts '-40 days'), $(projects_ts "-$((n * 2)) days"), $(projects_ts "-$((n * 2)) days"), 'fixture', 'fixture-$1-$n', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+"
+    fi
+    projects_sql+="INSERT INTO record_link (from_key, to_ref, to_key, kind, title) VALUES ('$key', '$project', '$project', 'in-project', '$2');
+"
+  done
+}
+
+projects() {
+  need_sql
+  local db marker target
+  db="$(context_db)"
+  [ -f "$db" ] || die "no context store at $db: run 'context up' first"
+  sql_on "$db" "SELECT 1 FROM source_identity LIMIT 1" >/dev/null 2>&1 || die "the context store at $db has no source_identity table (migration 0020): rebuild sindri and run 'context up' first"
+  projects_profile || return
+
+  local projects_sql="DELETE FROM record_link WHERE from_key LIKE 'linear:project/fx-%' OR from_key LIKE 'linear:issue/fx-%';
+DELETE FROM source_record WHERE key LIKE 'linear:project/fx-%' OR key LIKE 'linear:issue/fx-%';
+"
+  projects_row checkout    'Checkout rewrite'      open started   atRisk  16  "$PROJECTS_VIEWER" "$PROJECTS_VIEWER_NAME" '-2 hours'  ''        'Rebuild the checkout flow on the new payments API.'
+  projects_row search      'Search relevance v2'   open planned   ''      45  "$PROJECTS_VIEWER" "$PROJECTS_VIEWER_NAME" '-1 days'   ''        'Rank results by what people open, not by title match.'
+  projects_row onboarding  'Onboarding revamp'     done completed onTrack ''  "$PROJECTS_VIEWER" "$PROJECTS_VIEWER_NAME" '-3 days'   '-3 days' 'A shorter first-run flow for new workspaces.'
+  projects_row billing     'Billing migration'     open paused    ''      30  fx-dana Dana\ Okafor                       '-5 days'   ''        'Move invoices to the new billing provider.'
+  projects_row mobile      'Mobile offline sync'   open started   onTrack 21  fx-lee   Lee\ Tran                          '-6 hours'  ''        'Let the mobile app queue edits while offline.'
+  projects_row platform    'Platform API v3'       open started   atRisk  38  fx-mira  Mira\ Costa                        '-2 days'   ''        'The v3 public API and its SDKs.'
+  projects_issues checkout   'Checkout rewrite'    5 1
+  projects_issues search     'Search relevance v2' 3 0
+  projects_issues onboarding 'Onboarding revamp'   0 2
+  projects_issues billing    'Billing migration'   2 1
+  projects_issues mobile     'Mobile offline sync' 3 0
+  projects_issues platform   'Platform API v3'     2 2
+  projects_sql+="INSERT OR REPLACE INTO source_identity (source, user_ref, name, read_at) VALUES ('linear', 'linear:user/$PROJECTS_VIEWER', '$PROJECTS_VIEWER_NAME', $(projects_ts '+0 seconds'));
+INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase) VALUES
+  ('linear-projects', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental'),
+  ('linear', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental');
+UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
+"
+  sql_on "$db" "$projects_sql" >/dev/null || die "projects: can't write the Linear rows to $db"
+
+  # The owner's writes, each once (one marker each, so a run that stopped half way resumes): attach a Linear project, add a hand-made one,
+  # hide one the viewer leads (Hide acts only on a project that is on the page: led, or attached).
+  marker="$(projects_marker)"
+  if [ ! -f "$marker-attach" ]; then
+    "$PROVE" human project add --linear "linear:project/fx-billing" >&2 || return
+    : > "$marker-attach"
+  fi
+  if [ ! -f "$marker-add" ]; then
+    target="$(projects_day 14)"
+    "$PROVE" human project add --name "Hiring loop" --state in-progress --notes "Two onsite slots left this month" --target "$target" >&2 || return
+    : > "$marker-add"
+  fi
+  if [ ! -f "$marker-hide" ]; then
+    if ! "$PROVE" human project hide "linear:project/fx-search" >&2; then
+      echo "projects: hide was refused; this is what the page sees (sindri projects --json):" >&2
+      "$PROVE" human projects --json >&2 || true
+      die "projects: can't hide linear:project/fx-search"
+    fi
+    : > "$marker-hide"
+  fi
+}
+
 SESSIONS_DIRNAME="ui-fixture-sessions"
 sessions_dir() { printf '%s\n' "$AW_SINDRI_HOME/$SESSIONS_DIRNAME"; }
 
@@ -1298,6 +1426,7 @@ case "$verb" in
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   workflows) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: workflows [--large]" ;;
   line-run) [ "$#" -eq 1 ] || die "'line-run' takes no arguments" ;;
+  projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
   park-timeout | changed-recipe) [ "$#" -eq 1 ] || die "'$verb' takes no arguments" ;;
   incident) { [ "$#" -eq 2 ] && { [ "$2" = start ] || [ "$2" = stop ]; }; } || die "usage: incident start|stop" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
