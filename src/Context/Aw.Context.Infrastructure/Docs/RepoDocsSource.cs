@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Aw.Context.Core;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Sources;
@@ -22,7 +23,7 @@ namespace Aw.Context.Infrastructure.Docs;
 internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, ContextDatabase database, GitCli git, Scrubbers scrubbers, TimeProvider clock)
     : IContextSource
 {
-    private static readonly SourceDescriptor _descriptor = new(RepoDocs.Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false);
+    private static readonly SourceDescriptor _descriptor = new(RepoDocs.Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false) { HonorsPin = true };
 
     public SourceDescriptor Describe() => _descriptor;
 
@@ -52,7 +53,7 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
             var now = clock.GetUtcNow();
             return rows.IsError
                 ? Unavailable(rows.Error)
-                : rows.Value.SelectMany(row => Ref(row) is { } reference ? [(Row: row, Ref: reference)] : Array.Empty<(HitRow Row, SourceRef Ref)>())
+                : rows.Value.Where(row => InPin(query, row)).SelectMany(row => Ref(row) is { } reference ? [(Row: row, Ref: reference)] : Array.Empty<(HitRow Row, SourceRef Ref)>())
                     .Select((hit, i) => new SourceHit(hit.Ref, hit.Row.Title, i + 1, now, Leaky: false)).ToList();
         }
     }
@@ -131,6 +132,16 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
         }
 
         return new SourceHealth(SourceState.Ok, string.Create(CultureInfo.InvariantCulture, $"{repos.Count} repos readable"), Code: null);
+    }
+
+    // Under a pin a doc stays when its record is linked into the pin, or failing a link when its path is inside the pin's code paths; the rest are counted by the pin they sit in.
+    private static bool InPin(SourceQuery query, HitRow row) =>
+        query.Pin is not { } pin || (ContextRepoName.TryFrom(row.Repo, out var repo) ? pin.HoldsDoc(repo, row.Path, query.Skipped) : Skip(query.Skipped));
+
+    private static bool Skip(PinTally? skipped)
+    {
+        skipped?.Count(pin: null);
+        return false;
     }
 
     /// <summary>The hit's reference, or null when its repo or path can't be carried by the ids (never indexed since S-1A's review, but an older row is skipped, never thrown).</summary>

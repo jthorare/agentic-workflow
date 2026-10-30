@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Sources;
@@ -9,6 +10,8 @@ namespace Aw.Context.Core.Concepts;
 /// <summary>One pin as a query sees it: what is inside it (concept pins spec §3.1). The map's own grouping decides, so a file is in one pin.</summary>
 public sealed class PinScope
 {
+    private const string RecordPrefix = "record:";
+
     private readonly PinSet _set;
 
     internal PinScope(PinSet set, ConceptId pin)
@@ -45,22 +48,43 @@ public sealed class PinScope
     /// <param name="record">The record.</param>
     /// <param name="skipped">Where a left-out record is counted, or null.</param>
     /// <returns>True when this pin holds it.</returns>
-    public bool HoldsRecord(RecordKey record, PinTally? skipped) => throw new NotSupportedException();
+    public bool HoldsRecord(RecordKey record, PinTally? skipped)
+    {
+        var node = NodeKey.TryFrom(RecordPrefix + record.Value, out var key) ? key : (NodeKey?)null;
+        var held = node is { } found && HoldsNode(found);
+        if (!held)
+        {
+            skipped?.Count(node is { } left ? _set.VisiblePinOf(left) : null);
+        }
+
+        return held;
+    }
 
     /// <summary>Whether a repo doc is in this pin: its record is linked in, or failing a link its path is inside the pin's code paths. One that is not is counted in <paramref name="skipped"/>.</summary>
     /// <param name="repo">The repo.</param>
     /// <param name="repoRelativePath">The path in the repo.</param>
     /// <param name="skipped">Where a left-out doc is counted, or null.</param>
     /// <returns>True when this pin holds it.</returns>
-    public bool HoldsDoc(ContextRepoName repo, string repoRelativePath, PinTally? skipped) => throw new NotSupportedException();
+    public bool HoldsDoc(ContextRepoName repo, string repoRelativePath, PinTally? skipped)
+    {
+        var linked = RepoDocs.TryKey(repo, repoRelativePath, out var record) && NodeKey.TryFrom(RecordPrefix + record.Value, out var node) ? node : (NodeKey?)null;
+        var held = (linked is { } key && HoldsNode(key)) || HoldsPath(repo, repoRelativePath);
+        if (!held)
+        {
+            skipped?.Count((linked is { } left ? _set.VisiblePinOf(left) : null) ?? _set.VisiblePathPin(repo, repoRelativePath));
+        }
+
+        return held;
+    }
 
     /// <summary>The records of the map this pin holds (the ones the dense leg's scan is cut to).</summary>
     /// <returns>Their keys.</returns>
-    public IReadOnlySet<RecordKey> Records() => throw new NotSupportedException();
+    public IReadOnlySet<RecordKey> Records() =>
+        _set.KeysHeldBy(Pin, RecordPrefix).Select(k => RecordKey.TryFrom(k[RecordPrefix.Length..], out var record) ? record : (RecordKey?)null).OfType<RecordKey>().ToHashSet();
 
     /// <summary>Whether the map holds a file in this pin at all.</summary>
     /// <returns>False for a pin whose globs and features match nothing.</returns>
-    public bool HoldsAnyFile() => throw new NotSupportedException();
+    public bool HoldsAnyFile() => _set.KeysHeldBy(Pin, "code:").Any();
 
     /// <summary>The pin an anchor sits in.</summary>
     /// <param name="anchor">The anchor.</param>

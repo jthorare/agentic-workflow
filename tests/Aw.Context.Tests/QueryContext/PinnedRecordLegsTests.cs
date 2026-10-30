@@ -48,7 +48,9 @@ public sealed class PinnedRecordLegsTests
     private static VisibleMap MapOf(IEnumerable<string> billing, IEnumerable<string> auth)
     {
         var graph = new GraphBuilder();
-        _ = graph.Node("concept:billing", "Billing").Node("concept:auth", "Auth");
+        _ = graph.Node("concept:auth", "Auth")
+            .Edge("code:services/billing/charge.cs", EdgeType.Implements, "feature:api.services.billing", provenance: Provenance.Deterministic)
+            .Edge("feature:api.services.billing", EdgeType.BelongsTo, "concept:billing");
         foreach (var key in billing)
         {
             _ = graph.Edge("record:" + key, EdgeType.Mentions, "concept:billing");
@@ -89,5 +91,34 @@ public sealed class PinnedRecordLegsTests
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : null);
         Assert.Equal(inside.Order(StringComparer.Ordinal), result.Value.Cites.Values.Select(c => c.Key.Value).Where(k => k.StartsWith("linear:", StringComparison.Ordinal)).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public async Task An_answer_with_nothing_in_the_pin_says_where_the_results_read_were()
+    {
+        string[] keys = ["linear:issue/a0", "linear:issue/a1", "linear:issue/loose"];
+        var store = await Stored(keys);
+        var leg = new FakeLexicalLeg();
+        foreach (var key in keys)
+        {
+            _ = leg.Add(Chunk(key), _audience);
+        }
+
+        var result = await Ask(leg, store, MapOf(billing: [], auth: ["linear:issue/a0", "linear:issue/a1"]), "billing");
+
+        var note = Assert.Single(result.Value.Degraded, d => d.Source.Value == "concept");
+        Assert.Equal("concept billing: no results. Of the results read, 2 were in auth and 1 were in no pin (fix: concept=auth, or drop concept=)", note.Message);
+        Assert.Empty(result.Value.Cites);
+    }
+
+    [Fact]
+    public async Task A_source_that_cannot_filter_by_pin_is_left_out_and_said_so()
+    {
+        var store = await Stored([]);
+
+        var result = await Ask(new FakeLexicalLeg(), store, MapOf(billing: [], auth: []), "billing", FakeContextSource.FixtureDocs());
+
+        var left = Assert.Single(result.Value.Degraded, d => d.Source.Value == "repo-docs");
+        Assert.Equal("left out under concept= (it can't be scoped to a pin)", left.Message);
     }
 }

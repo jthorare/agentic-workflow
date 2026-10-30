@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Audience;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Vectors;
@@ -21,7 +22,7 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
 
     public static SourceId Id { get; } = SourceId.From("records-dense");
 
-    private static readonly SourceDescriptor _descriptor = new(Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false);
+    private static readonly SourceDescriptor _descriptor = new(Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false) { HonorsPin = true };
 
     private List<string> _notes = [];
 
@@ -56,7 +57,7 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
             return Array.Empty<SourceHit>();   // nothing embedded yet: the lexical leg answers alone, and the empty store is not a failure
         }
 
-        var records = await Nearest(matrix.Value, embedded.Value.Vec, cancellationToken).ConfigureAwait(false);
+        var records = await Nearest(matrix.Value, embedded.Value.Vec, query.Pin, cancellationToken).ConfigureAwait(false);
         return records.IsError
             ? records.Error
             : await RecordHits.Read(search.Store, (scope, teams), clock, records.Value, cancellationToken).ConfigureAwait(false);
@@ -77,9 +78,9 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
     }
 
     // The scan under the mask of records the caller may read, the floor, and the best chunk per record (hits come best first, so a record's first chunk is its best).
-    private async ValueTask<Result<List<RecordKey>>> Nearest(VectorMatrix matrix, ReadOnlyMemory<float> query, CancellationToken cancellationToken)
+    private async ValueTask<Result<List<RecordKey>>> Nearest(VectorMatrix matrix, ReadOnlyMemory<float> query, PinScope? pin, CancellationToken cancellationToken)
     {
-        var allowed = await Allowed(cancellationToken).ConfigureAwait(false);
+        var allowed = await Allowed(pin, cancellationToken).ConfigureAwait(false);
         if (allowed.IsError)
         {
             return allowed.Error;
@@ -100,9 +101,10 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
             .ToList();
     }
 
-    // The live, unblocked records the caller may read: the scan's mask is built from them, and they are the denominator of the coverage line.
-    private async ValueTask<Result<HashSet<RecordKey>>> Allowed(CancellationToken cancellationToken)
+    // The live, unblocked records the caller may read (and, under a pin, only the pin's): the scan's mask is built from them, and they are the denominator of the coverage line.
+    private async ValueTask<Result<HashSet<RecordKey>>> Allowed(PinScope? pin, CancellationToken cancellationToken)
     {
+        var inPin = pin?.Records();
         var allowed = new HashSet<RecordKey>();
         RecordKey? after = null;
         while (true)
@@ -113,7 +115,7 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
                 return page.Error;
             }
 
-            foreach (var record in page.Value.Where(r => r.RemovedAt is null && !r.Blocked && scope.Allows(r.Audience, r.Key)))
+            foreach (var record in page.Value.Where(r => r.RemovedAt is null && !r.Blocked && scope.Allows(r.Audience, r.Key) && (inPin is null || inPin.Contains(r.Key))))
             {
                 _ = allowed.Add(record.Key);
             }
