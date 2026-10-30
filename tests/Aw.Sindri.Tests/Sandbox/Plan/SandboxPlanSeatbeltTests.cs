@@ -40,6 +40,26 @@ public sealed class SandboxPlanSeatbeltTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_seatbelt_plan_points_the_hook_write_folders_at_the_run_areas_spool()
+    {
+        var plan = Build(Req.WriteScope);
+
+        Assert.Equal(Req.RunArea + "/spool/logs", Env(plan, "AW_LOG_DIR"));
+        Assert.Equal(Req.RunArea + "/spool/probe", Env(plan, "AW_PROBE_DIR"));
+        Assert.Equal(Req.RunArea + "/spool/digests", Env(plan, "AW_DIGEST_DIR"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_bubblewrap_plan_leaves_the_hook_folders_to_their_defaults()
+    {
+        var plan = Build(Req.WriteScope, SandboxMechanism.Bubblewrap);
+
+        Assert.Null(Env(plan, "AW_LOG_DIR"));
+        Assert.Null(Env(plan, "AW_PROBE_DIR"));
+        Assert.Null(Env(plan, "AW_DIGEST_DIR"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_seatbelt_plan_has_no_device_proc_run_or_net_entries()
     {
         var plan = Build(Req.WriteScope);
