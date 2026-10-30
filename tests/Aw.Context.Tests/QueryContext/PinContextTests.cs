@@ -77,4 +77,14 @@ public sealed class PinContextTests
 
         Assert.Equal("pins changed after map v41 was built and the refresh for them didn't finish (fix: Refresh map on the Context page, or sindri context map refresh)", pins.Value.StaleNote);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Stale_map_note_says_building_while_the_refresh_job_runs()
+    {
+        var api = Repo(_billing);
+
+        var pins = PinContext.Of([api], [api], Map(ruleset: "built-under-other-pins"), concept: null, []).Value.Rebuilding(new MapRebuild(MapRebuildPhase.Building));
+
+        Assert.Equal("pins changed; map v42 is being built with them, so some features are grouped the old way until it lands", pins.StaleNote);
+    }
 }
