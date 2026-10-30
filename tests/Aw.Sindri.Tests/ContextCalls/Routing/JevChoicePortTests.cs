@@ -254,6 +254,51 @@ public sealed class JevChoicePortTests
         Assert.Equal((ModelCallOutcome.NotAsked, "no-key"), (attempt.Outcome, attempt.Reason));
     }
 
+    // --- whether a call can go out
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Unavailable_says_no_key_when_the_pick_is_jev_and_the_probe_finds_no_key_and_asks_nothing()
+    {
+        var rig = new ChoiceRig(ScriptedBatches.Picking(), key: false);
+
+        Assert.Equal(ChoiceReasons.NoKey, await rig.Port.Unavailable(ChoiceKind.Labeling, Token));
+        Assert.Empty(rig.Batches.Asked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Unavailable_says_off_when_the_approved_pick_is_off_with_or_without_a_key()
+    {
+        var withKey = new ChoiceRig(ScriptedBatches.Picking(), LabelPick.Off);
+        var noKey = new ChoiceRig(ScriptedBatches.Picking(), LabelPick.Off, key: false);
+
+        Assert.Equal(ChoiceReasons.Off, await withKey.Port.Unavailable(ChoiceKind.Labeling, Token));
+        Assert.Equal(ChoiceReasons.Off, await noKey.Port.Unavailable(ChoiceKind.Labeling, Token));
+        Assert.Empty(withKey.Batches.Asked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Unavailable_is_null_when_the_pick_is_jev_and_a_key_is_present_and_asks_nothing()
+    {
+        var rig = new ChoiceRig(ScriptedBatches.Picking());
+
+        Assert.Null(await rig.Port.Unavailable(ChoiceKind.Labeling, Token));
+        Assert.Empty(rig.Batches.Asked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Unavailable_reads_each_kinds_own_setting_from_the_approved_profile_at_every_call()
+    {
+        var rig = new ChoiceRig(ScriptedBatches.Picking(), LabelPick.Jev, surfacePick: LabelPick.Off);
+
+        Assert.Equal(ChoiceReasons.Off, await rig.Port.Unavailable(ChoiceKind.ProductSurfaces, Token));
+        rig.Models.SurfacePick = LabelPick.Jev;   // what an approval changes; an edited live file never reaches here
+        Assert.Null(await rig.Port.Unavailable(ChoiceKind.ProductSurfaces, Token));
+        rig.Models.Pick = LabelPick.Off;
+        Assert.Equal(ChoiceReasons.Off, await rig.Port.Unavailable(ChoiceKind.Labeling, Token));
+        rig.Key.Present = false;
+        Assert.Equal(ChoiceReasons.NoKey, await rig.Port.Unavailable(ChoiceKind.ProductSurfaces, Token));
+    }
+
     // --- the event
 
     [Fact, Trait("Lane", "unit")]
