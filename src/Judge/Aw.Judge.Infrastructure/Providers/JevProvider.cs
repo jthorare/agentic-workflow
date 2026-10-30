@@ -26,7 +26,7 @@ namespace Aw.Judge.Infrastructure.Providers;
 internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor) : IModelProvider, IDisposable
 {
     /// <summary>The model.</summary>
-    public const string Model = Aw.Judge.Core.Batching.JevModel.Id;
+    public const string Model = Core.Batching.JevModel.Id;
 
     /// <summary>The API's choice-option limit.</summary>
     public const int MaxOptions = 255;
