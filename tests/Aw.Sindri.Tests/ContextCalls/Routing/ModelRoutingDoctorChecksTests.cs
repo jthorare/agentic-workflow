@@ -35,8 +35,30 @@ public sealed class ModelRoutingDoctorChecksTests
 
         Expect.Equal("context:models", row.Name);
         Expect.Equal(CheckState.Ok, row.State);
-        Expect.Equal("labeling, decisionExtraction, adjudication, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5", row.Detail);
+        Expect.Equal("labeling, decisionExtraction, adjudication, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model", row.Detail);
         Assert.Null(row.Fix);
+    }
+
+    [Theory]
+    [InlineData(LabelPick.Off, "productSurfaces: no model")]
+    [InlineData(LabelPick.Jev, "productSurfaces: jev, then none")]
+    public async Task The_product_surface_route_is_jev_when_its_pick_is_on_and_no_model_when_off(LabelPick pick, string line)
+    {
+        var settings = Settings() with { SurfacePick = pick };
+
+        var row = await Row(Checks(settings, _both, "gpt-6-luna"));
+
+        Expect.Equal(CheckState.Ok, row.State);
+        Assert.EndsWith("; " + line, row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task The_default_harnesses_never_make_product_surfaces_warn_about_a_missing_harness_or_a_single_one()
+    {
+        var row = await Row(Checks(Settings(new ModelEntry(Harnesses: [ModelHarness.Codex])) with { SurfacePick = LabelPick.Jev }, _both, "gpt-6-luna"));
+
+        Assert.DoesNotContain("productSurfaces", row.Fix ?? string.Empty, StringComparison.Ordinal);
+        Assert.DoesNotContain("productSurfaces lists", row.Detail, StringComparison.Ordinal);
     }
 
     [Fact]

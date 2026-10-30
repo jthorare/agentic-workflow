@@ -11,7 +11,8 @@
     "source": "<home>/profile/profile.yaml",
     "needsApproval": true,
     "modelPick": "off",
-    "labelPick": "off"
+    "labelPick": "off",
+    "surfacePick": "off"
   },
   "services": [],
   "apiVersion": 1,

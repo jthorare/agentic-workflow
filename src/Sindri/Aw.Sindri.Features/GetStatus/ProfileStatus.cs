@@ -15,4 +15,5 @@ namespace Aw.Sindri.Features.GetStatus;
 /// </param>
 /// <param name="ModelPick">'on' when the approved profile has model choice on (workflow.agent.pick), else 'off': computed here so the app never derives it (model-pick spec 8).</param>
 /// <param name="LabelPick">'off', 'on' or 'needs-key' for the Jev label pick (context.models.labeling.pick) of the approved profile; 'needs-key' when it is on and Jev has no key. Computed here so the app never derives it (model routing spec §8.5).</param>
-public sealed record ProfileStatus(ProfileHash? Approved, ProfileHash? Live, bool ChangedSinceApproval, string? Problem, string? Source, bool NeedsApproval, string ModelPick = "off", string LabelPick = "off");
+/// <param name="SurfacePick">'off', 'on' or 'needs-key' for the Jev product-surface pick (context.models.productSurfaces.pick) of the approved profile, computed the way <paramref name="LabelPick"/> is (model routing spec §8.5).</param>
+public sealed record ProfileStatus(ProfileHash? Approved, ProfileHash? Live, bool ChangedSinceApproval, string? Problem, string? Source, bool NeedsApproval, string ModelPick = "off", string LabelPick = "off", string SurfacePick = "off");

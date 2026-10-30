@@ -768,6 +768,35 @@ printf 'schemaVersion: 1\nuser: fixture\ncontext:\n  docs: { globs: [x] }\n' > "
 rm -f "$PJ"/ui-fixture-projects-owner-*
 out="$(proj 2>&1)"; check "projects refuses a profile with its own context: section (exit 2)" "$?" "2"
 contains "that refusal names the key to add" "$out" "teams: [SPL]"
+# --- context sources: the node panel's source links (#1702) ---
+contains "the usage lists context sources" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh context sources"
+SX="$TMPDIR/srcs"
+mkdir -p "$SX/profile" "$SX/context"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$SX/profile/profile.yaml"
+SXDB="$SX/context/context.db"
+srcs() { AW_SINDRI_HOME="$SX" SINDRI="$STUB" bash "$FIXTURE" context sources "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" context sources >/dev/null 2>&1; check "context sources refuses outside a guarded home" "$?" "2"
+srcs extra >/dev/null 2>&1; check "context sources takes no arguments (exit 2)" "$?" "2"
+out="$(srcs 2>&1)"; check "context sources before context up exits 2" "$?" "2"
+contains "context sources before context up says to run context up" "$out" "run 'context up' first"
+AW_SINDRI_HOME="$SX" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
+for m in 0001 0018 0019 0020 0022 0023; do migrate "$SXDB" "$(ls "$ROOT"/src/Context/Aw.Context.Infrastructure/Store/Migrations/${m}_*.sql)"; done
+: > "$STUB_LOG"
+out="$(srcs 2>/dev/null)"; check "context sources exits 0" "$?" "0"
+check "context sources prints the repo, the doc node and the ticket node" "$(printf '%s' "$out" | tr '\n' ' ')" "aw-split-panes feature:staffing.schema record:linear:issue/0e5a1b00-0000-4000-8000-000000000702"
+SXR="$SX/ui-fixture-context/aw-split-panes"
+check "the tabs repo's origin is the GitHub remote" "$(git -C "$SXR" remote get-url origin)" "https://github.com/acme/tabs.git"
+SXM="$SX/ui-fixture-context/sources-map.json"
+check "the imported map names the tabs repo's HEAD as its commit" "$(jq -r .commit "$SXM")" "$(git -C "$SXR" rev-parse HEAD)"
+check "the doc node rests on a migrations/0001_staffing/migration.sql path of the repo" "$(jq -r '.nodes[] | select(.key == "feature:staffing.schema") | .evidence[0].key' "$SXM")" "repo:aw-split-panes/migrations/0001_staffing/migration.sql"
+contains "context sources imports the sources map as the owner" "$(cat "$STUB_LOG")" "context map import $SXM"
+check "the ticket's record is stored with its Linear URL, in the profile team's audience" "$(sqlq "$SXDB" "SELECT url, audience_key, title FROM source_record WHERE key = 'linear:issue/0e5a1b00-0000-4000-8000-000000000702'")" "https://linear.app/acme/issue/SPL-142/roll-out-staffing|linear:SPL|Roll out staffing"
+contains "context sources puts the Linear team in the live profile" "$(cat "$SX/profile/profile.yaml")" "linear: { teams: [SPL] }"
+: > "$STUB_LOG"
+srcs >/dev/null 2>&1; check "a second context sources exits 0" "$?" "0"
+check "a second context sources keeps one record row and one origin" "$(sqlq "$SXDB" "SELECT COUNT(*) FROM source_record") $(git -C "$SXR" remote | wc -l | tr -d ' ')" "1 1"
+check "a second context sources adds the team to the profile once" "$(grep -c 'teams: \[SPL\]' "$SX/profile/profile.yaml")" "1"
+absent "a second context sources imports nothing" "$(cat "$STUB_LOG")" "context map import"
 
 
 exit "$fail"

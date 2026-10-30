@@ -11,9 +11,8 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// which is the safe side of a kill line.
 /// </summary>
 /// <param name="processes">Runs ps.</param>
-/// <param name="directory">The folder of the group files (the memory-kill record).</param>
 /// <param name="ps">The ps program.</param>
-internal sealed class ProcessGroupStats(ISandboxProcesses processes, string directory, string ps = "ps") : ICgroupStats
+internal sealed class ProcessGroupStats(ISandboxProcesses processes, string ps = "ps") : ICgroupStats
 {
     private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(10);
     private readonly ConcurrentDictionary<string, long> _peaks = new(StringComparer.Ordinal);
@@ -43,7 +42,7 @@ internal sealed class ProcessGroupStats(ISandboxProcesses processes, string dire
         var memory = members.Sum(m => m.RssBytes);
         var peak = _peaks.AddOrUpdate(cgroupPath, static (_, now) => now, static (_, before, now) => Math.Max(before, now), memory);
         return new CgroupSample(
-            OomKills: ProcessGroupFiles.MemoryKilled(directory, pgid) ? 1 : 0,
+            OomKills: 0,   // why: the memory-kill record is keyed by unit and read through IScopeControl.Result, which the watchdog asks at its verdict
             MemoryCurrent: memory,
             MemoryPeak: peak,
             Pids: members.Count,
