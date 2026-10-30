@@ -16,12 +16,19 @@ internal static class IndexRules
     private const string FeaturePrefix = "feature:";
 
     internal static Error? Check(SindriProfile profile) =>
-        Section("index", profile.Index, inherited: [.. (profile.Repos ?? []).SelectMany(r => Ids(r.Index?.Concepts))], top: [])
+        RepoPageRepos(profile) ?? Section("index", profile.Index, inherited: [.. (profile.Repos ?? []).SelectMany(r => Ids(r.Index?.Concepts))], top: [])
         ?? (profile.Repos ?? []).Select(r => Repo(profile, r)).FirstOrDefault(static e => e is not null);
 
     private static Error? Repo(SindriProfile profile, RepoEntry r) =>
         Section($"repos.{r.Name}.index", r.Index, Ids(profile.Index?.Concepts), profile.Index?.Concepts ?? [])
         ?? SharedIds($"repos.{r.Name}.index.concepts", profile.Index?.Concepts, r.Index?.Concepts);
+
+    /// <summary>A page under a repo's own 'index.pages' belongs to that repo: its 'repo:' must be absent or equal it (pages spec §3.1). Nothing else about pages is refused here: the write rules run at write and a read never refuses.</summary>
+    private static Error? RepoPageRepos(SindriProfile profile) =>
+        (profile.Repos ?? []).SelectMany(r => (r.Index?.Pages ?? []).Select((page, position) => (Repo: r, Page: page, Position: position)))
+            .Where(static x => x.Page.Repo is { } named && !string.Equals(named, x.Repo.Name, StringComparison.Ordinal))
+            .Select(static x => Invalid(string.Create(CultureInfo.InvariantCulture, $"repos.{x.Repo.Name}.index.pages[{x.Position}].repo"), $"must be absent or '{x.Repo.Name}': a page under a repo's own index belongs to that repo"))
+            .FirstOrDefault();
 
     private static Error? Section(string path, IndexSettings? index, HashSet<string> inherited, IReadOnlyList<ConceptSettings> top)
     {
