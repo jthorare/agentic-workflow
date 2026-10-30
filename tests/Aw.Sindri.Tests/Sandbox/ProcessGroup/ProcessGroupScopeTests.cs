@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Sandbox;
 
 namespace Aw.Sindri.Tests.Sandbox.ProcessGroup;
@@ -74,13 +75,39 @@ public sealed class ProcessGroupScopeTests : IDisposable
     }
 
     [Fact]
-    public async Task A_new_group_id_for_a_unit_clears_the_record_of_a_group_with_that_id()
+    public async Task Removing_the_group_file_ends_the_unit_but_keeps_the_memory_kill_record()
     {
-        ProcessGroupFiles.RecordMemoryKill(_dir, 4242);
+        var session = Session("sindri-a");
+        var control = new ProcessGroupScopeControl(_dir);
+        Assert.True(await control.Record("sindri-a", Token));
+        var slice = new ProcessGroupSliceScopes(_dir);
+        Assert.Equal(["sindri-a"], await slice.Live(Token));
 
-        ProcessGroupFiles.WritePgid(_dir, "sindri-b", 4242);
+        ProcessGroupFiles.Remove(_dir, "sindri-a");
 
-        Assert.Null(await new ProcessGroupScopeControl(_dir).Result("sindri-b", Token));
+        Assert.Null(await control.ControlGroup("sindri-a", Token));
+        Assert.False(await control.Kill("sindri-a", "SIGKILL", Token));
+        Assert.Empty(await slice.Live(Token));
+        Assert.Equal("oom-kill", await control.Result("sindri-a", Token));
+        Assert.False(session.HasExited);
+    }
+
+    [Fact]
+    public void Removing_a_group_file_that_is_not_there_is_fine()
+    {
+        ProcessGroupFiles.Remove(_dir, "sindri-none");
+        ProcessGroupFiles.Remove(Path.Combine(_dir, "no-folder"), "sindri-none");
+        ProcessGroupFiles.Remove(_dir, "../escape");
+    }
+
+    [Fact]
+    public void Signalling_this_processes_own_group_sends_nothing()
+    {
+        var own = Libc.OwnGroup();
+
+        Assert.False(ProcessGroupFiles.Signal(own, "SIGKILL"));
+        _ = Assert.Throws<ArgumentOutOfRangeException>(() => ProcessGroupFiles.WritePgid(_dir, "sindri-own", own));
+        Assert.Null(ProcessGroupFiles.ReadPgid(_dir, "sindri-own"));
     }
 
     [Fact]
