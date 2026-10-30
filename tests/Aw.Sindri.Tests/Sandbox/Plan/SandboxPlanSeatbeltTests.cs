@@ -3,6 +3,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Workflow.Engine;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
@@ -114,9 +115,9 @@ public sealed class SandboxPlanSeatbeltTests
         var plan = Build(Req.WriteScope);
         var lastCoveringDeny = plan.Mounts.ToList().FindLastIndex(m => m.Kind == PlanMountKind.Deny && (Req.RunArea + "/").StartsWith(m.Path + "/", StringComparison.Ordinal));
 
-        Assert.True(IndexOf(plan, RunTmp, PlanMountKind.ReadWrite) > lastCoveringDeny);
         Assert.True(IndexOf(plan, RunHome, PlanMountKind.PerLaunchDir) > lastCoveringDeny);
         Assert.True(IndexOf(plan, Req.RunArea + "/spool/logs", PlanMountKind.PerLaunchDir) > lastCoveringDeny);
+        Assert.True(IndexOf(plan, SandboxPaths.SeatbeltTemp(plan.Launch), PlanMountKind.PerLaunchDir) >= 0);   // the scratch is outside the run area now, under no deny
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -274,21 +275,14 @@ public sealed class SandboxPlanSeatbeltTests
     [Fact, Trait("Lane", "unit")]
     public void On_a_mac_shaped_request_the_pipe_path_under_tmpdir_fits_a_unix_socket_and_the_run_areas_tmp_would_not()
     {
-        const string Home = "/Users/joi";
-        var launch = Aw.Sindri.Core.Workflow.Engine.LaunchId.From("LCH-0123456789abcdef0123456789abcdef");
-        var area = Home + "/.agentic-workflow/sindri-app/workflow/areas/" + launch.Value;
-        var request = Req.WriteScope with
-        {
-            Launch = launch,
-            Host = Req.Host with { Home = Home, StateDir = Home + "/.agentic-workflow", SindriHome = Home + "/.agentic-workflow/sindri-app" },
-            Paths = Req.WriteScope.Paths with { RunArea = area },
-        };
-
-        var plan = Build(request);
+        var launch = LaunchId.From("LCH-0123456789abcdef0123456789abcdef");
+        var plan = Build(Req.WriteScope with { Launch = launch });
+        const string MacArea = "/Users/joi/.agentic-workflow/sindri-app/workflow/areas/LCH-0123456789abcdef0123456789abcdef";   // where a real Mac run area sits
 
         const string Pipe = "/CoreFxPipe_0123456789abcdef0123456789abcdef";   // .NET's name under TMPDIR: CoreFxPipe_ and a 32-char name
+        Assert.Equal(SandboxPaths.SeatbeltTemp(launch), Env(plan, "TMPDIR"));
         Assert.True(Encoding.UTF8.GetByteCount(Env(plan, "TMPDIR") + Pipe) < 104);
-        Assert.True(Encoding.UTF8.GetByteCount(area + "/tmp" + Pipe) >= 104);
+        Assert.True(Encoding.UTF8.GetByteCount(MacArea + "/tmp" + Pipe) >= 104);
     }
 
     [Fact, Trait("Lane", "unit")]
