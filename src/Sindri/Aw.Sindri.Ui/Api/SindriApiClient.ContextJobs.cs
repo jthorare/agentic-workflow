@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Kernel.Json;
 using Aw.Sindri.Ui.Api.Jobs;
 
 namespace Aw.Sindri.Ui.Api;
@@ -13,4 +14,8 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<JobStarted>> BuildContextMap(Uri api, CancellationToken cancellationToken) =>
         Call<JobStarted>(api, HttpMethod.Post, JobRoutes.BuildContextMap, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<JobStarted>> PinConcepts(Uri api, Context.PinConceptsBody request, CancellationToken cancellationToken) =>
+        Call<JobStarted>(api, HttpMethod.Post, JobRoutes.PinConcepts, cancellationToken, new CallOptions(Content: AwJson.Serialize(request, Json)));
 }

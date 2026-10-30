@@ -32,6 +32,7 @@ internal static partial class Labels
         ["EmbedCodeIndex"] = "Embed code index",
         ["BuildContextMap"] = "Build map",
         ["RefreshContextMap"] = "Refresh map",
+        ["PinConcepts"] = "Pin concepts",
         ["PublishContextMap"] = "Publish map",
         ["ScanContextConcepts"] = "Scan for concepts",
         ["RunContextBacktest"] = "Run map backtest",

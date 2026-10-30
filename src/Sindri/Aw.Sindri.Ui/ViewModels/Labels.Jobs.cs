@@ -148,6 +148,7 @@ internal static partial class Labels
         "SyncSources" => "Sync sources",
         "RefreshContextMap" => "Refresh the context map",
         "BuildContextMap" => "Build the context map",
+        "PinConcepts" => "Pin concepts",
         "BuildCodeIndex" => "Build the code index",
         "EmbedCodeIndex" => "Embed the code index",
         "RunService" => "Run a service",
