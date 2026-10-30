@@ -274,5 +274,6 @@ internal sealed partial class ProjectSheetViewModel(ISindriApi api, ILauncher la
 
     private ISindriApi Api { get; } = api;
 
-    private ILauncher Launcher { get; } = launcher;
+    /// <summary>Opens a link of the sheet and keeps the system's answer; <see cref="LinkLaunch.FailedText"/> is the line the sheet shows.</summary>
+    public LinkLaunch LinkLaunch { get; } = new LinkLaunch(launcher);
 }
