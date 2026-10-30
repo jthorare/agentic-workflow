@@ -1,9 +1,9 @@
 {
   "accepted": {
-    "commandId": "00000000-0000-0000-0000-000000000024",
-    "sequence": 13
+    "commandId": "00000000-0000-0000-0000-000000000023",
+    "sequence": 12
   },
-  "project": "prj_0000000000000000000000000J",
+  "project": "prj_00000000000000000000000015",
   "version": 1,
   "name": "Checkout rewrite"
 }
