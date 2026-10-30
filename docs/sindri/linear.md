@@ -89,7 +89,7 @@ pointer resolves:
 
 | Result | When | Fix |
 |---|---|---|
-| `ok` | the profile names no `context.sources.linear.token` (`not configured`); or the pointer resolves (`configured: teams ENG, APP; keychain:sindri-index/linear resolves`) | — |
+| `ok` | the profile has no Linear entry (`not configured`); or the pointer resolves (`configured: teams ENG, APP; keychain:sindri-index/linear resolves`) | — |
 | `warn` | linear is named but no repo is mapped, so no context source runs | map a repo in `repos` and `context.repos` |
 | `fail` | the pointer doesn't resolve (`SND-SECRET-001`..`003`: the scheme and the target are named, never a value); or the settings are refused (`SND-CONTEXT-070`) | fix the target as the message says |
 
