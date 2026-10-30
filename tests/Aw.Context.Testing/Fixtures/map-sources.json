@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "kind": "authored",
+  "repo": "aw-split-panes",
+  "nodes": [
+    {
+      "key": "feature:staffing.rollout",
+      "label": "Staffing rollout"
+    },
+    {
+      "key": "feature:staffing.schema",
+      "label": "Staffing schema migration",
+      "evidence": [
+        {
+          "key": "repo:aw-split-panes/migrations/0001_staffing/migration.sql"
+        }
+      ]
+    },
+    {
+      "key": "record:linear:issue/0e5a1b00-0000-4000-8000-000000000702",
+      "label": "Roll out staffing"
+    }
+  ],
+  "edges": [
+    {
+      "from": "feature:staffing.schema",
+      "to": "feature:staffing.rollout",
+      "type": "part-of"
+    },
+    {
+      "from": "record:linear:issue/0e5a1b00-0000-4000-8000-000000000702",
+      "to": "feature:staffing.rollout",
+      "type": "mentions"
+    }
+  ]
+}
