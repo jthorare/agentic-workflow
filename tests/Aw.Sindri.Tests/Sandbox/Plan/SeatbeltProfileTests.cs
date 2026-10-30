@@ -18,6 +18,8 @@ public sealed class SeatbeltProfileTests
         return result.Value;
     }
 
+    private static string Render(SandboxPlan plan, Func<string, string>? canonical = null, string runArea = Req.RunArea) => SeatbeltProfile.Render(plan, runArea, canonical);
+
     private static SandboxPlan WithMounts(params PlanMount[] mounts) => Plan(Req.WriteScope) with { Mounts = mounts };
 
     private static string[] Lines(string profile) => profile.Split('\n', StringSplitOptions.RemoveEmptyEntries);
@@ -27,7 +29,7 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void The_profile_allows_by_default_denies_the_network_and_all_writes_first()
     {
-        var lines = Lines(SeatbeltProfile.Render(Plan(Req.WriteScope)));
+        var lines = Lines(Render(Plan(Req.WriteScope)));
 
         Assert.Equal("(version 1)", lines[0], StringComparer.Ordinal);
         Assert.Equal("(allow default)", lines[1], StringComparer.Ordinal);
@@ -39,7 +41,7 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void Only_sindris_port_and_the_proxys_port_on_localhost_are_open()
     {
-        var lines = Lines(SeatbeltProfile.Render(Plan(Req.WriteScope)));
+        var lines = Lines(Render(Plan(Req.WriteScope)));
 
         Assert.Equal(["(allow network-outbound (remote ip \"localhost:7480\"))", "(allow network-outbound (remote ip \"localhost:41234\"))"], lines.Where(l => l.Contains("remote ip", StringComparison.Ordinal)), StringComparer.Ordinal);
     }
@@ -47,7 +49,7 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void A_deny_then_a_later_allow_under_it_render_in_that_order()
     {
-        var lines = Lines(SeatbeltProfile.Render(WithMounts(
+        var lines = Lines(Render(WithMounts(
             new PlanMount("/", PlanMountKind.ReadOnly),
             new PlanMount("/home/o", PlanMountKind.Deny, Reason: "the home"),
             new PlanMount("/home/o/.dotnet", PlanMountKind.ReadOnly, Reason: "the SDK"),
@@ -64,7 +66,7 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void A_read_only_entry_under_a_writable_one_denies_writes_again()
     {
-        var text = SeatbeltProfile.Render(WithMounts(
+        var text = Render(WithMounts(
             new PlanMount("/", PlanMountKind.ReadOnly),
             new PlanMount("/work/x", PlanMountKind.ReadWrite),
             new PlanMount("/work/x/.git", PlanMountKind.ReadOnly)));
@@ -76,7 +78,7 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void Every_rule_is_preceded_by_its_reason()
     {
-        var lines = Lines(SeatbeltProfile.Render(WithMounts(new PlanMount("/work/x", PlanMountKind.ReadWrite, Reason: "the run's worktree"))));
+        var lines = Lines(Render(WithMounts(new PlanMount("/work/x", PlanMountKind.ReadWrite, Reason: "the run's worktree"))));
         var rule = Array.IndexOf(lines, "(allow file-write* (subpath \"/work/x\"))");
 
         Assert.Equal("; the run's worktree", lines[rule - 1]);
@@ -85,7 +87,7 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void Links_and_the_root_get_no_rule()
     {
-        var text = SeatbeltProfile.Render(WithMounts(new PlanMount("/", PlanMountKind.ReadOnly), new PlanMount("/run/h/.venv", PlanMountKind.Link, "/home/o/.venv")));
+        var text = Render(WithMounts(new PlanMount("/", PlanMountKind.ReadOnly), new PlanMount("/run/h/.venv", PlanMountKind.Link, "/home/o/.venv")));
 
         Assert.DoesNotContain(".venv", text, StringComparison.Ordinal);
         Assert.DoesNotContain("(subpath \"/\")\n(allow", text, StringComparison.Ordinal);
@@ -106,14 +108,14 @@ public sealed class SeatbeltProfileTests
     {
         var plan = WithMounts(new PlanMount("/var/folders/T/run", PlanMountKind.ReadWrite));
 
-        Assert.Contains("(allow file-write* (subpath \"/private/var/folders/T/run\"))", SeatbeltProfile.Render(plan), StringComparison.Ordinal);
-        Assert.Contains("(allow file-write* (subpath \"/real/run\"))", SeatbeltProfile.Render(plan, _ => "/real/run"), StringComparison.Ordinal);
+        Assert.Contains("(allow file-write* (subpath \"/private/var/folders/T/run\"))", Render(plan), StringComparison.Ordinal);
+        Assert.Contains("(allow file-write* (subpath \"/real/run\"))", Render(plan, _ => "/real/run"), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
     public void A_quote_or_backslash_in_a_path_is_escaped_inside_the_string()
     {
-        var text = SeatbeltProfile.Render(WithMounts(new PlanMount("/work/a\"b\\c", PlanMountKind.ReadWrite)));
+        var text = Render(WithMounts(new PlanMount("/work/a\"b\\c", PlanMountKind.ReadWrite)));
 
         Assert.Contains("(subpath \"/work/a\\\"b\\\\c\")", text, StringComparison.Ordinal);
     }
@@ -121,30 +123,52 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void A_newline_in_a_reason_cannot_start_a_rule()
     {
-        var text = SeatbeltProfile.Render(WithMounts(new PlanMount("/work/x", PlanMountKind.ReadWrite, Reason: "one\n(allow file-write* (subpath \"/\"))")));
+        var text = Render(WithMounts(new PlanMount("/work/x", PlanMountKind.ReadWrite, Reason: "one\n(allow file-write* (subpath \"/\"))")));
 
         Assert.DoesNotContain("\n(allow file-write* (subpath \"/\"))", text, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_write_scope_step_matches_its_golden() => Match(SeatbeltProfile.Render(Plan(Req.WriteScope)), "seatbelt-writescope.sb");
+    public void A_write_scope_step_matches_its_golden() => Match(Render(Plan(Req.WriteScope)), "seatbelt-writescope.sb");
 
     [Fact, Trait("Lane", "unit")]
     public void An_attended_session_with_home_entries_matches_its_golden() =>
-        Match(SeatbeltProfile.Render(Plan(Req.Attended with { Settings = new SandboxSettings(Fs: new SandboxFs(HomeAllow: [new HomeAllowEntry(".venv", MountMode.ReadWrite), new HomeAllowEntry(".config/gh", MountMode.ReadOnly)]), Repos: new Dictionary<string, SandboxRepoSettings>(StringComparer.Ordinal) { ["web"] = new(CachePaths: [".cache/pip"]) }) })), "seatbelt-attended.sb");
+        Match(Render(Plan(Req.Attended with { Settings = new SandboxSettings(Fs: new SandboxFs(HomeAllow: [new HomeAllowEntry(".venv", MountMode.ReadWrite), new HomeAllowEntry(".config/gh", MountMode.ReadOnly)]), Repos: new Dictionary<string, SandboxRepoSettings>(StringComparer.Ordinal) { ["web"] = new(CachePaths: [".cache/pip"]) }) })), "seatbelt-attended.sb");
 
     [Fact, Trait("Lane", "unit")]
-    public void Unix_sockets_are_allowed_under_the_run_area_only_and_the_path_is_canonical()
+    public void Unix_sockets_are_allowed_under_the_run_area_and_the_short_temp_directory_only_and_the_paths_are_canonical()
     {
         var plan = Plan(Req.WriteScope);
 
-        var lines = Lines(SeatbeltProfile.Render(plan, p => p.Replace("/home/owner", "/c", StringComparison.Ordinal)));
+        var lines = Lines(Render(plan, p => p.Replace("/home/owner", "/c", StringComparison.Ordinal)));
 
-        const string Area = "(subpath \"/c/.agentic-workflow/sindri-app/workflow/areas/run-1\")";
-        Assert.Contains($"(allow network-bind (local unix-socket {Area}))", lines, StringComparer.Ordinal);
-        Assert.Contains($"(allow network-inbound (local unix-socket {Area}))", lines, StringComparer.Ordinal);
-        Assert.Contains($"(allow network-outbound (remote unix-socket {Area}))", lines, StringComparer.Ordinal);
-        Assert.Equal(3, lines.Count(l => l.Contains("unix-socket", StringComparison.Ordinal) && !l.StartsWith(';')));
+        foreach (var area in new[] { "(subpath \"/c/.agentic-workflow/sindri-app/workflow/areas/run-1\")", "(subpath \"" + SandboxPaths.SeatbeltTemp(plan.Launch) + "\")" })
+        {
+            Assert.Contains($"(allow network-bind (local unix-socket {area}))", lines, StringComparer.Ordinal);
+            Assert.Contains($"(allow network-inbound (local unix-socket {area}))", lines, StringComparer.Ordinal);
+            Assert.Contains($"(allow network-outbound (remote unix-socket {area}))", lines, StringComparer.Ordinal);
+        }
+
+        Assert.Equal(6, lines.Count(l => l.Contains("unix-socket", StringComparison.Ordinal) && !l.StartsWith(';')));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_run_area_comes_from_the_caller_not_from_where_the_plan_file_sits()
+    {
+        var plan = Plan(Req.WriteScope);
+
+        var text = Render(plan, runArea: "/elsewhere/area");
+
+        Assert.Contains("(allow network-bind (local unix-socket (subpath \"/elsewhere/area\")))", text, StringComparison.Ordinal);
+        Assert.DoesNotContain($"(local unix-socket (subpath \"{Req.RunArea}\"))", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_short_temp_directory_is_writable()
+    {
+        var plan = Plan(Req.WriteScope);
+
+        Assert.Contains($"(allow file-write* (subpath \"{SandboxPaths.SeatbeltTemp(plan.Launch)}\"))", Render(plan), StringComparison.Ordinal);
     }
 
     private static SandboxRequest MacShaped()
@@ -182,7 +206,7 @@ public sealed class SeatbeltProfileTests
     [Fact, Trait("Lane", "unit")]
     public void A_mac_shaped_write_scope_step_matches_its_golden()
     {
-        var text = SeatbeltProfile.Render(Plan(MacShaped()));
+        var text = Render(Plan(MacShaped()), runArea: "/Users/owner/.agentic-workflow/sindri-app/workflow/areas/run-1");
 
         Match(text, "seatbelt-mac.sb");
         Assert.Contains("(allow file-read* file-write* (subpath \"/Users/owner/repos/web/.claude/worktrees/sindri-x-1\"))", text, StringComparison.Ordinal);

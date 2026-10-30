@@ -18864,6 +18864,7 @@ Aw.Sindri.Core.Sandbox.Plan.SandboxPaths.Repo.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.SandboxPaths.Repo.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxPaths.RunArea.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.SandboxPaths.RunArea.init -> void
+static Aw.Sindri.Core.Sandbox.Plan.SandboxPaths.SeatbeltTemp(Aw.Sindri.Core.Workflow.Engine.LaunchId launch) -> string!
 Aw.Sindri.Core.Sandbox.Plan.SandboxPaths.RunDirectory.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.SandboxPaths.RunDirectory.init -> void
 Aw.Sindri.Core.Sandbox.Plan.SandboxPaths.SandboxPaths(string! Repo, string! GitCommonDir, string? Worktree, string! RunDirectory, string! RunArea) -> void
@@ -21505,7 +21506,7 @@ static Aw.Sindri.Core.Jobs.JobModelCall.operator ==(Aw.Sindri.Core.Jobs.JobModel
 static Aw.Sindri.Core.Projects.Cards.ProjectCards.StateOf(string? raw) -> Aw.Sindri.Core.Projects.Vocabulary.ProjectState?
 Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile
 static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.MacOsCanonical(string! path) -> string!
-static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.Render(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, System.Func<string!, string!>? canonical = null) -> string!
+static Aw.Sindri.Core.Sandbox.Plan.SeatbeltProfile.Render(Aw.Sindri.Core.Sandbox.Plan.SandboxPlan! plan, string! runArea, System.Func<string!, string!>? canonical = null) -> string!
 Aw.Sindri.Core.Setup.ProfileKeyEdit
 Aw.Sindri.Core.Setup.ProfileKeyEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ProfileKeyEdit!
 Aw.Sindri.Core.Setup.ProfileKeyEdit.ProfileKeyEdit(string! Path, string! Text, bool Changed) -> void

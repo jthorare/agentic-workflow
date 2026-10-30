@@ -1,3 +1,4 @@
+using System.Text;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
@@ -10,6 +11,7 @@ namespace Aw.Sindri.Tests.Sandbox.Plan;
 public sealed class SandboxPlanSeatbeltTests
 {
     private const string RunTmp = Req.RunArea + "/tmp";
+    private const string ShortTmp = "/private/tmp/aw-aaaaaaaa";   // the launch id of Req.WriteScope is LCH- and 32 a's
     private static readonly string _session = Req.SindriHome + "-sessions/" + Req.WriteScope.Launch.Value;
     private const string RunHome = Req.RunArea + "/home";
 
@@ -46,16 +48,16 @@ public sealed class SandboxPlanSeatbeltTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Tmp_becomes_the_run_areas_tmp_in_the_mounts_and_the_environment()
+    public void Tmp_becomes_the_launchs_short_temp_directory_in_the_mounts_and_the_environment()
     {
         var plan = Build(Req.WriteScope);
 
-        Assert.Equal(PlanMountKind.ReadWrite, plan.Mounts.Last(m => m.Path == RunTmp).Kind);
+        Assert.Equal(PlanMountKind.PerLaunchDir, plan.Mounts.Last(m => m.Path == ShortTmp).Kind);
         Assert.DoesNotContain(plan.Mounts, m => string.Equals(m.Path, "/tmp", StringComparison.Ordinal));
-        Assert.Equal(RunTmp, Env(plan, "TMPDIR"));
-        Assert.Equal(RunTmp + "/dotnet-home", Env(plan, "DOTNET_CLI_HOME"));
-        Assert.Equal(RunTmp + "/nuget-http", Env(plan, "NUGET_HTTP_CACHE_PATH"));
-        Assert.Equal(RunTmp + "/npm-logs", Env(plan, "npm_config_logs_dir"));
+        Assert.Equal(ShortTmp, Env(plan, "TMPDIR"));
+        Assert.Equal(ShortTmp + "/dotnet-home", Env(plan, "DOTNET_CLI_HOME"));
+        Assert.Equal(ShortTmp + "/nuget-http", Env(plan, "NUGET_HTTP_CACHE_PATH"));
+        Assert.Equal(ShortTmp + "/npm-logs", Env(plan, "npm_config_logs_dir"));
         Assert.DoesNotContain(plan.Environment, e => e.Value is { } v && (string.Equals(v, "/tmp", StringComparison.Ordinal) || v.StartsWith("/tmp/", StringComparison.Ordinal)));
     }
 
@@ -267,5 +269,34 @@ public sealed class SandboxPlanSeatbeltTests
         Assert.NotNull(error);
         Assert.Equal(SindriErrors.LaunchSelfCheckFailed.Code, error.Code);
         Assert.Null(SeatbeltPlan.Check(plan, Req.RunArea, _session));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void On_a_mac_shaped_request_the_pipe_path_under_tmpdir_fits_a_unix_socket_and_the_run_areas_tmp_would_not()
+    {
+        const string Home = "/Users/joi";
+        var launch = Aw.Sindri.Core.Workflow.Engine.LaunchId.From("LCH-0123456789abcdef0123456789abcdef");
+        var area = Home + "/.agentic-workflow/sindri-app/workflow/areas/" + launch.Value;
+        var request = Req.WriteScope with
+        {
+            Launch = launch,
+            Host = Req.Host with { Home = Home, StateDir = Home + "/.agentic-workflow", SindriHome = Home + "/.agentic-workflow/sindri-app" },
+            Paths = Req.WriteScope.Paths with { RunArea = area },
+        };
+
+        var plan = Build(request);
+
+        const string Pipe = "/CoreFxPipe_0123456789abcdef0123456789abcdef";   // .NET's name under TMPDIR: CoreFxPipe_ and a 32-char name
+        Assert.True(Encoding.UTF8.GetByteCount(Env(plan, "TMPDIR") + Pipe) < 104);
+        Assert.True(Encoding.UTF8.GetByteCount(area + "/tmp" + Pipe) >= 104);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_bubblewrap_plan_still_sets_tmpdir_to_slash_tmp()
+    {
+        var plan = Build(Req.WriteScope, SandboxMechanism.Bubblewrap);
+
+        Assert.Equal("/tmp", Env(plan, "TMPDIR"));
+        Assert.Contains(plan.Mounts, m => m.Path == "/tmp" && m.Kind == PlanMountKind.ReadWrite && m.Source == RunTmp);
     }
 }

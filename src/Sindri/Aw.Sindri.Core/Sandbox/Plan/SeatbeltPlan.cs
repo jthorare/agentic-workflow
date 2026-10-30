@@ -128,6 +128,16 @@ internal static class SeatbeltPlan
 
         private void AddRemapped(PlanMount m, string real)
         {
+            if (string.Equals(m.Path, "/tmp", StringComparison.Ordinal))
+            {
+                var temp = SandboxPaths.SeatbeltTemp(c.Request.Launch);   // why: a short path, so a unix socket under TMPDIR fits in 104 bytes
+                _rebase.Add((m.Path, temp));
+                var scratch = new PlanMount(temp, PlanMountKind.PerLaunchDir, Reason: m.Reason);
+                _ = _moved.Add(scratch);
+                _out.Add(scratch);
+                return;
+            }
+
             if (string.Equals(m.Path, _current, StringComparison.Ordinal))
             {
                 _out.Add(m with { Source = null, Reason = "the wrappers exec into 'current': the real link exists, and its stamp is allowed above" });

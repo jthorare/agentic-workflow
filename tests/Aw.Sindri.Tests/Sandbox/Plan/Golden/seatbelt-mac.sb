@@ -4,10 +4,13 @@
 (deny network*)
 (allow network-outbound (remote ip "localhost:7480"))
 (allow network-outbound (remote ip "localhost:41234"))
-; unix sockets under the run area only
+; unix sockets under the run area and the launch's short temp directory only
 (allow network-bind (local unix-socket (subpath "/Users/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
 (allow network-inbound (local unix-socket (subpath "/Users/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
 (allow network-outbound (remote unix-socket (subpath "/Users/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-bind (local unix-socket (subpath "/private/tmp/aw-aaaaaaaa")))
+(allow network-inbound (local unix-socket (subpath "/private/tmp/aw-aaaaaaaa")))
+(allow network-outbound (remote unix-socket (subpath "/private/tmp/aw-aaaaaaaa")))
 ; the Keychain service: a Step never reads the owner's Keychain, its login comes from its credential source
 (deny mach-lookup (global-name "com.apple.SecurityServer") (global-name "com.apple.securityd"))
 ; nothing is writable until a rule below says so
@@ -85,7 +88,7 @@
 ; Sindri's real home is empty here: only the entries below exist
 (deny file-read* file-write* (subpath "/Users/owner/.agentic-workflow/sindri-app"))
 ; private scratch, removed with the run
-(allow file-read* file-write* (subpath "/Users/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/tmp"))
+(allow file-write* (subpath "/private/tmp/aw-aaaaaaaa"))
 ; HOME for this run: links to the home entries the session may use, thrown away with the run
 (allow file-read* file-write* (subpath "/Users/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/home"))
 ; the agent home, from the owner-copy login source
