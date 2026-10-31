@@ -405,7 +405,7 @@ public sealed class SetPagesServiceTests : IDisposable
     public async Task Repos_listed_out_of_order_in_the_file_read_back_sorted_in_the_say_which_repo_text()
     {
         const string yaml = "schemaVersion: 1\nuser: thor\nrepos:\n  - name: web\n    path: /work/web\n  - name: admin\n    path: /work/admin\n";
-        var loaded = new Aw.Sindri.Infrastructure.Profile.YamlProfileTextParser(SliceHarness.Json).Parse(yaml, "/home/profile.yaml");
+        var loaded = new Infrastructure.Profile.YamlProfileTextParser(SliceHarness.Json).Parse(yaml, "/home/profile.yaml");
         Assert.True(loaded.IsSuccess);
         _rig.Slice.Profiles.Live = loaded.Value;
 
