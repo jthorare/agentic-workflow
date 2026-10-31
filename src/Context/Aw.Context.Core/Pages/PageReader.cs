@@ -165,7 +165,8 @@ public static class PageReader
             var order = _pins.Select((p, i) => (p.Id.Value, i)).ToDictionary(x => x.Value, x => x.i, StringComparer.Ordinal);
             var entries = owner.OrderBy(o => order.GetValueOrDefault(o.Id, int.MaxValue)).ThenBy(o => o.Node.Key.Value, StringComparer.Ordinal).Select(o => OwnerEntry(o.Id, o.Repo, o.Node)).ToList();
             var taken = new HashSet<string>(entries.Select(e => e.Id), StringComparer.Ordinal);
-            var offered = suggested.Select(n => (Node: n, Name: PageNames.Offer(n), Count: _actionsOn[n.Key.Value].Count())).OrderByDescending(s => s.Count).ThenBy(s => s.Node.Key.Value, StringComparer.Ordinal);
+            var byKey = suggested.ToDictionary(n => n.Key.Value, StringComparer.Ordinal);
+            var offered = WholeMap.PageOrder.Of(suggested, _graph.Edges).Select(k => byKey[k]).Select(n => (Node: n, Name: PageNames.Offer(n)));
             entries.AddRange(offered.Select(s => SuggestedEntry(PageSlugs.Unique(PageSlugs.Of(s.Name), taken), s.Name, s.Node)));
             return entries;
         }
