@@ -101,6 +101,13 @@ internal sealed class RefreshContextMapService(ContextScopes scopes, IContextEng
 
     private async ValueTask<Result<Settled>> CleanAndGate(ContextMapEvents recorder, IProgress<string>? progress, ContextScope scope, MapBuildReport report, CancellationToken cancellationToken)
     {
+        // A build that waited behind one whose draft was already promoted returns that current version (#1775): nothing is left to clean, gate or promote.
+        if (report.Draft.Status == MapVersionStatus.Current)
+        {
+            progress?.Report("already current");
+            return new Settled(report.Draft.Repo.Value, report.Draft.Number, new CleanupReport(0, 0, 0, CleanupMode.None), Held: false);
+        }
+
         var cleaned = await Clean(progress, scope, report.Draft.Number, cancellationToken).ConfigureAwait(false);
         if (cleaned.IsError)
         {

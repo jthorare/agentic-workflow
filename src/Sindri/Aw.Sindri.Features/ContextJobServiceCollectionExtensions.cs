@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
 
-/// <summary>Registers the context engine's jobs on the P6 job runtime: 'SyncSources', 'SyncIndexSource', 'BuildContextMap', 'ScanContextConcepts' and 'RunContextBacktest'.</summary>
+/// <summary>Registers the context engine's jobs on the P6 job runtime: 'SyncSources', 'SyncIndexSource', 'BuildContextMap', 'RelinkPinAliases', 'ScanContextConcepts' and 'RunContextBacktest'.</summary>
 internal static class ContextJobServiceCollectionExtensions
 {
     /// <summary>Adds the jobs, each keyed by a constant: one sync at a time, whatever it names, one build at a time (the profile's one map) and one backtest at a time.</summary>
@@ -31,6 +31,8 @@ internal static class ContextJobServiceCollectionExtensions
                 static _ => JobKey.From("build"), static r => string.Create(CultureInfo.InvariantCulture, $"draft v{r.Draft}: {r.Proposed} proposed"))
             .AddJob<RefreshContextMapRequest, RefreshContextMapResult, RefreshContextMapService>(
                 static _ => JobKey.From("refresh"), static r => RefreshSummary(r))
+            .AddJob<RelinkPinAliasesRequest, RelinkPinAliasesJobResult, RelinkPinAliasesService>(
+                static _ => JobKey.From("relink"), static r => string.Create(CultureInfo.InvariantCulture, $"{r.Changed} of {r.Records} records relinked to pin aliases"))
             .AddJob<PublishContextMapRequest, PublishContextMapResult, PublishContextMapService>(
                 static _ => JobKey.From("map-publish"), static r => PublishSummary(r))
             .AddJob<ScanContextConceptsRequest, ScanContextConceptsResult, ScanContextConceptsService>(

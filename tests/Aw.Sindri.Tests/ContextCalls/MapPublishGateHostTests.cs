@@ -249,8 +249,9 @@ public sealed class MapPublishGateHostTests : IDisposable
         var state = await rig.State();
         Assert.Null(state.Hold);
         Assert.Equal(moved, state.CurrentHeads.Single().Commit);
-        Assert.True(settled.Value.Idle);   // the current map is at trunk: nothing to rebuild
+        Assert.False(settled.Value.Idle);   // the current map is at trunk: nothing to rebuild, but the new map has not been linked to the pins' aliases yet
         Assert.Equal(jobs + 1, await Started(rig, "RefreshContextMap"));
+        Assert.Equal(1, await Started(rig, "RelinkPinAliases"));
     }
 
     [Fact(Timeout = 240_000), Trait("Lane", "integration")]

@@ -115,7 +115,7 @@ internal static partial class CommandTable
             ["onyx", "down", "--purge"] => await OnyxPurgeCommand.Create(services, output, Console.In, Console.Error).Run(session.Human && session.Launch is null, ct).ConfigureAwait(false),
             ["sandbox", ..] => await Sandbox(args, client, output, services, (ct, Headers(session, services))).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
-            ["context", ..] => await Context(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
+            ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
             ["line", "holdout", .. var rest] => await new LineHoldoutVerbs(client, output, Interactive(), Console.In).Run(rest, ct).ConfigureAwait(false),
             ["recipe" or "workflow" or "scoping" or "design" or "plan" or "line" or "pack" or "outbox" or "takeover" or "handback" or "docs" or "pr", ..] => await Workflows(args, new ScopingCommandTable.Host(services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
@@ -171,6 +171,12 @@ internal static partial class CommandTable
             ["repo", "status", .. var rest] => await new RepoStatusVerb(services, output).Run(rest, signals.Interrupt).ConfigureAwait(false),
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
+
+    /// <summary>'sindri context pin …' starts a job a human may have to launch the control plane for; every other context verb is <see cref="Context"/>.</summary>
+    private static async Task<int> ContextOrPin(string[] args, (ControlPlaneClient Client, Output Output) io, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals) =>
+        args is ["context", "pin", ..]
+            ? await new ContextPinVerbs(io.Client, io.Output, new JobFollower(io.Client, io.Output, host.Services.GetRequiredService<TimeProvider>()), host.Services, host.Start.EnsureRunning).Run(args[1..], signals.Interrupt, signals.Again).ConfigureAwait(false)
+            : await Context(args, io.Client, io.Output, host.Services, signals).ConfigureAwait(false);
 
     /// <summary>'sindri context …': one arm per verb family; the first that matches wins.</summary>
     private static async Task<int> Context(string[] args, ControlPlaneClient client, Output output, IServiceProvider services, (CancellationToken Interrupt, CancellationToken Again) signals) =>

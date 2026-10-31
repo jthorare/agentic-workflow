@@ -1,5 +1,4 @@
 using Aw.Context.Core;
-using Aw.Context.Core.Engine;
 using Aw.Context.Core.Models;
 using Aw.Judge.Core.Batching;
 using Aw.Judge.Core.Config;
@@ -17,7 +16,7 @@ namespace Aw.Sindri.Host.Models;
 /// </summary>
 /// <param name="classifier">Judge's batch classifier (built on first use).</param>
 /// <param name="providers">The judge's 'providers' config (its 'inputCapChars'), or null for the defaults.</param>
-/// <param name="models">'context.models' of the approved profile.</param>
+/// <param name="availability">Whether a call can go out: the approved profile's pick and the Jev key.</param>
 /// <param name="jobs">The job the call runs under.</param>
 /// <param name="log">Where the call's event is written.</param>
 /// <param name="ids">Names each call's event.</param>
@@ -25,7 +24,7 @@ namespace Aw.Sindri.Host.Models;
 internal sealed class JevChoicePort(
     Func<IBatchClassifier> classifier,
     Func<CancellationToken, ValueTask<ProvidersConfig?>> providers,
-    IApprovedModels models,
+    JevAvailability availability,
     IJobContextAccessor jobs,
     IModelCallLog log,
     IIdGenerator ids,
@@ -42,12 +41,14 @@ internal sealed class JevChoicePort(
     public async ValueTask<int> InputCapChars(CancellationToken cancellationToken) =>
         (await providers(cancellationToken).ConfigureAwait(false))?.InputCapChars ?? ProvidersConfig.DefaultInputCapChars;
 
+    public ValueTask<string?> Unavailable(ChoiceKind kind, CancellationToken cancellationToken) => availability.Unavailable(kind, cancellationToken);
+
     public async ValueTask<Result<IReadOnlyList<ChoiceAnswer>>> Pick(ChoiceKind kind, IReadOnlyList<ChoiceQuestion> questions, int capChars, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(questions);
         cancellationToken.ThrowIfCancellationRequested();
         var call = _recorder.Start(kind, questions);
-        if (!await IsOn(kind, cancellationToken).ConfigureAwait(false))
+        if (!await availability.IsOn(kind, cancellationToken).ConfigureAwait(false))
         {
             return await End(call, ContextErrors.ChoiceUnavailable.With(ChoiceReasons.Off), result: null).ConfigureAwait(false);
         }
@@ -66,13 +67,6 @@ internal sealed class JevChoicePort(
     {
         await _recorder.Write(call, mapped, result).ConfigureAwait(false);
         return mapped;
-    }
-
-    // The approved profile, read at every call: an edited live file that says 'jev' makes no Jev call until it is approved. Each kind has its own key: 'labeling.pick: jev' alone sends no surface data (spec §6.9, q154).
-    private async ValueTask<bool> IsOn(ChoiceKind kind, CancellationToken cancellationToken)
-    {
-        var settings = await models.Current(cancellationToken).ConfigureAwait(false);
-        return (kind == ChoiceKind.Labeling ? settings.LabelPick : settings.SurfacePick) == LabelPick.Jev;
     }
 
     private static int LabelChars(ChoiceQuestion question) => question.Prompt.Length + question.Options.Sum(static o => o.Length);

@@ -29,6 +29,7 @@ public sealed class ContextMapRefreshServiceTests
     private readonly HeadsEngineProxy _engine = HeadsEngineProxy.Create();
     private Core.Lease.LeaseGrant? _grant;
     private int _next;
+    private int _relinked;
 
     public ContextMapRefreshServiceTests()
     {
@@ -46,7 +47,7 @@ public sealed class ContextMapRefreshServiceTests
         var loaded = SliceHarness.Profile("5s");
         loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
-        return new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish), _h.Clock, new CapturingLogger());
+        return new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
     }
 
     private void Job(JobState state, TimeSpan endedAgo, params (string Repo, string Sha)[] heads)
@@ -82,6 +83,13 @@ public sealed class ContextMapRefreshServiceTests
 
     private async Task<Result<ScheduledResult>> Run(ContextMapRefreshService service)
     {
+        if (_engine.State.Current is { } current && _relinked != current)
+        {
+            // the records are already linked for the map a tick reads (no pins): the relink step has nothing to say in these tests
+            RelinkRig.Put(_jobs, _h, _now, JobState.Succeeded, TimeSpan.FromHours(2), RelinkRig.NoPinsHash, current, sequence: 1000 + current);
+            _relinked = current;
+        }
+
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Run(new ScheduledRun(_grant, _now), Ct);
@@ -244,7 +252,7 @@ public sealed class ContextMapRefreshServiceTests
         Assert.True((await Run(await Service(context: false))).Value.Idle);
         _engine.Heads = [Head("a", "1", onDefault: false)];
         Assert.True((await Run(await Service())).Value.Idle);
-        var unapproved = new ContextMapRefreshService(new ContextScopes(new SliceHarness().Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish), _h.Clock, new CapturingLogger());
+        var unapproved = new ContextMapRefreshService(new ContextScopes(new SliceHarness().Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
         Assert.True((await Run(unapproved)).Value.Idle);
         Assert.Empty(_start.Requests);
     }

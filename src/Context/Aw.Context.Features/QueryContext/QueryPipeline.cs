@@ -104,7 +104,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var map = await graphs.Read(request.Scope, read, cancellationToken).ConfigureAwait(false);
         if (query.Node is { } node)
         {
-            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node, request.Scope.Repos));
+            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node, request.Scope.Repos, PinContext.AliasPins(settings, request.Scope.Repos, m.Graph)));
             if (anchor.IsError)
             {
                 return anchor.Error;
@@ -125,11 +125,11 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
             return unanchored ? (GraphPart.None, valid.Terms) : map.Error;
         }
 
-        var found = AnchorMatch.FromText(map.Value.Graph, query.Text ?? string.Empty);
+        var found = AnchorMatch.FromText(map.Value.Graph, query.Text ?? string.Empty, PinContext.AliasPins(settings, request.Scope.Repos, map.Value.Graph));
         var repos = request.Scope.Repos;
         var anchors = found.Anchors.Where(k => !DemotedCode.IsDemoted(k, repos)).Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
         var suggested = found.Suggested.Where(k => !DemotedCode.IsDemoted(k, repos)).ToList();
-        return (GraphAnswer.Build(map.Value, anchors, suggested, reach, new MapText(scrubbers)), valid.Terms);
+        return (GraphAnswer.Build(map.Value, anchors, suggested, reach, new MapText(scrubbers)) with { AnchorAliases = found.Aliases }, valid.Terms);
     }
 
     private static async ValueTask<Result<(GraphPart Graph, IReadOnlyList<string> Terms, ItemMiss? Miss)>> AnchorFor(QueryContextRequest request, CheckedQuery checkedQuery,
