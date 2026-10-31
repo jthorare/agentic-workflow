@@ -5744,3 +5744,5 @@ override Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.GetHashCode() ->
 override Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? left, Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? left, Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? right) -> bool
+Aw.Sindri.Features.ContextCalls.BacktestArmLine.PinAnchored.get -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
+Aw.Sindri.Features.ContextCalls.BacktestArmLine.PinAnchored.init -> void

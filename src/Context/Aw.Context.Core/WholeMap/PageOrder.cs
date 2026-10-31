@@ -19,5 +19,8 @@ internal static class PageOrder
         return [.. owner, .. suggested];
     }
 
-    private static bool IsOwner(GraphNode node) => node.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith("page:", StringComparison.Ordinal));
+    /// <summary>Whether the owner named <paramref name="node"/> in the profile: it carries a 'page:' evidence ref.</summary>
+    /// <param name="node">The node.</param>
+    /// <returns>True for an owner-named page or action.</returns>
+    internal static bool IsOwner(GraphNode node) => node.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith("page:", StringComparison.Ordinal));
 }

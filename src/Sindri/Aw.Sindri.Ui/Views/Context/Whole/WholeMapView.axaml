@@ -64,6 +64,65 @@
         <wv:WholeMapCanvas x:Name="WholeWorld" />
       </ctl:ZoomBorder>
 
+      <!-- The Pages and actions section (pages spec §3.4, mockup section A): a concept's Why drill lists its pages on the right; the node panel opens over it. -->
+      <Panel IsVisible="{Binding ShowPages}" HorizontalAlignment="Right">
+      <Border x:Name="WholePagesPanel" DataContext="{Binding Pages}" x:DataType="vm:PagesSectionViewModel"
+              HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="14,14,14,56" Width="440" Padding="14,12"
+              Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
+              AutomationProperties.Name="{Binding Head}">
+        <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
+          <TextBlock x:Name="WholePagesHead" Classes="body-strong" Text="{Binding Head}" Focusable="True" AutomationProperties.Name="{Binding Head}" />
+          <StackPanel Grid.Row="1" Spacing="4">
+            <TextBlock x:Name="WholePagesStatus" Classes="caption subtle" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" AutomationProperties.LiveSetting="Polite" />
+            <Button x:Name="WholePagesRetry" Content="{Binding RetryText}" IsVisible="{Binding IsFailed}" Click="OnPagesRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryText}" />
+          </StackPanel>
+          <ScrollViewer Grid.Row="2">
+            <StackPanel Spacing="4">
+              <ItemsControl x:Name="WholePagesRows" ItemsSource="{Binding Rows}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:PageRowViewModel">
+                    <StackPanel Spacing="2" Margin="0,6,0,10" AutomationProperties.Name="{Binding RowName}">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" />
+                        <ItemsControl ItemsSource="{Binding Marks}" VerticalAlignment="Center">
+                          <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                              <StackPanel Orientation="Horizontal" Spacing="4" />
+                            </ItemsPanelTemplate>
+                          </ItemsControl.ItemsPanel>
+                          <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                              <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}" Padding="5,0">
+                                <TextBlock Classes="caption" Text="{Binding}" />
+                              </Border>
+                            </DataTemplate>
+                          </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                      </StackPanel>
+                      <TextBlock Classes="caption subtle" Text="{Binding FromMap}" IsVisible="{Binding HasFromMap}" />
+                      <ItemsControl ItemsSource="{Binding Actions}" Margin="16,2,0,0">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:PageActionRowViewModel">
+                            <WrapPanel>
+                              <Button Click="OnPagesAction" Padding="0,1" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{Binding RowName}">
+                                <TextBlock Classes="body" Text="{Binding Name}" TextDecorations="Underline" />
+                              </Button>
+                              <TextBlock Classes="body subtle" Text="{Binding Detail}" Margin="4,1,0,0" TextWrapping="Wrap" VerticalAlignment="Center" />
+                            </WrapPanel>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
+              <Button x:Name="WholePagesShowAll" Content="{Binding ShowAllText}" IsVisible="{Binding HasMore}" Click="OnPagesShowAll" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ShowAllText}" />
+            </StackPanel>
+          </ScrollViewer>
+        </Grid>
+      </Border>
+      </Panel>
+
       <!-- The node's side panel (owner answer q101): on the right, above the zoom pill, clear of the mini-map strip at the bottom left. -->
       <Border x:Name="WholeNodePanel" DataContext="{Binding Panel}" x:DataType="vm:NodePanelViewModel" IsVisible="{Binding IsOpen}"
               HorizontalAlignment="Right" VerticalAlignment="Stretch" Margin="14,14,14,56" Width="320" Padding="12,10"

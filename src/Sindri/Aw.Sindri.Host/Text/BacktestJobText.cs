@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Aw.Context.Core.Eval.Backtest;
 using Aw.Sindri.Features.ContextCalls;
 
 namespace Aw.Sindri.Host.Text;
@@ -16,6 +17,15 @@ internal static class BacktestJobText
         foreach (var arm in result.Arms)
         {
             _ = text.Append("  ").Append((arm.Arm + (arm.Leaky ? " (leaky)" : string.Empty)).PadRight(NameWidth)).Append(' ').AppendLine(Row(arm));
+            if (arm.PinAnchored is { } pin)
+            {
+                _ = text.Append("    ").AppendLine(PinRow(pin));
+            }
+        }
+
+        if (result.Arms.Any(a => a.PinAnchored is { Count: < BacktestScoring.MinPinAnchored }))
+        {
+            _ = text.AppendLine(Invariant($"fewer than {BacktestScoring.MinPinAnchored} pin-anchored questions: the hand check in tests/fixtures/backtest/pin-questions.md decides"));
         }
 
         _ = text.AppendLine(Invariant($"pass line: {result.PassLine ?? "not measured"}"));
@@ -33,6 +43,10 @@ internal static class BacktestJobText
         { Score: { } s } => Invariant($"node recall {Show(s.NodeRecall)} · node precision {Show(s.NodePrecision)} · file recall@20 {Show(s.FileRecallAt20)} · leaky {s.LeakyShare:0.00} · tokens {s.Tokens}"),
         _ => "did not run",
     };
+
+    private static string PinRow(PinAnchoredScore pin) => pin.Count == 0
+        ? "pin-anchored (0 questions): recall@10 not measured, MRR not measured"
+        : Invariant($"pin-anchored ({pin.Count} question{(pin.Count == 1 ? string.Empty : "s")}): recall@10 {pin.RecallAt10:0.00}, MRR {pin.Mrr:0.00}");
 
     private static string Show(double? value) => value is { } v ? v.ToString("0.00", CultureInfo.InvariantCulture) : "not measured";
 

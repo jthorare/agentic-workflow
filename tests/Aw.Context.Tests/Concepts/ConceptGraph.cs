@@ -38,6 +38,13 @@ internal sealed class ConceptGraph
         return this;
     }
 
+    /// <summary>A node the owner named in the profile: it carries the overlay's 'page:&lt;repo&gt;/&lt;page-id&gt;' evidence ref.</summary>
+    public ConceptGraph OwnerNode(string key, string label, string page)
+    {
+        _nodes.Add(new GraphNode(NodeKey.From(key), label, Provenance.Deterministic, 1.0, [new EvidenceRef(RecordKey.From("page:" + page))]));
+        return this;
+    }
+
     public ConceptGraph Member(string member, string concept)
     {
         _edges.Add(new GraphEdge(NodeKey.From(member), NodeKey.From(concept), EdgeType.BelongsTo));
