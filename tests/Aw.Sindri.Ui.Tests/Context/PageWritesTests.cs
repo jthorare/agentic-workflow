@@ -70,6 +70,17 @@ public sealed class PageWritesTests
     }
 
     [Fact]
+    public async Task Save_and_approve_after_a_hand_edit_leaves_it_waiting()
+    {
+        var api = Server(new RouteAnswer(HttpStatusCode.OK, """{"approved":"h0","live":"live-old","fileHash":"h1","changed":true,"changedPaths":["index.pages.schedule-week"]}"""));
+
+        var saved = await Writes(api).Save(_week, "file-new", approve: true, cancellationToken: Token);
+
+        Assert.Equal(PageSavedState.Waiting, saved.State);
+        Assert.Empty(api.ProfileApprovals);
+    }
+
+    [Fact]
     public async Task Save_maps_a_refusal_to_its_sentence()
     {
         var api = Server(Profile("h1"));
