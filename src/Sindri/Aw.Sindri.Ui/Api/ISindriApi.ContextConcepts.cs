@@ -13,6 +13,13 @@ internal partial interface ISindriApi
     /// <returns>The concepts, the API's refusal, or SND-UI-002/003.</returns>
     public Task<Result<ContextConceptsView>> ContextConcepts(Uri api, ConceptsQuery query, CancellationToken cancellationToken);
 
+    /// <summary>GET /sindri/context/pages: the product's pages with their actions, one slice at a time. A server without the route answers 404.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="query">The repo, the concept and the slice.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The pages, the API's refusal, or SND-UI-002/003.</returns>
+    public Task<Result<PagesView>> ContextPages(Uri api, PagesQuery query, CancellationToken cancellationToken);
+
     /// <summary>GET /sindri/context/concepts/glossary: each concept's top terms. A server without the route answers 404, which the page reads as "no terms".</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="query">The repo and the map version.</param>

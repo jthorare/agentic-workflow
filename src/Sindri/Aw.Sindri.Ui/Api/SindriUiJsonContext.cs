@@ -109,6 +109,8 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Context.PagesPreviewBody))]
 [JsonSerializable(typeof(Context.PagesPreview))]
 [JsonSerializable(typeof(Context.PinSetBody))]
+[JsonSerializable(typeof(Context.PagesView))]
+[JsonSerializable(typeof(Context.PagesSetBody))]
 [JsonSerializable(typeof(Setup.AddRepoRequest))]
 [JsonSerializable(typeof(Setup.RegisterMcpRequest))]
 [JsonSerializable(typeof(Sandbox.SandboxStatusView))]
