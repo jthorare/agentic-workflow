@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Aw.Context.Core;
-using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Sources;
@@ -136,13 +135,7 @@ internal sealed partial class RepoDocsSource(IReadOnlyList<ContextRepo> repos, C
 
     // Under a pin a doc stays when its record is linked into the pin, or failing a link when its path is inside the pin's code paths; the rest are counted by the pin they sit in.
     private static bool InPin(SourceQuery query, HitRow row) =>
-        query.Pin is not { } pin || (ContextRepoName.TryFrom(row.Repo, out var repo) ? pin.HoldsDoc(repo, row.Path, query.Skipped) : Skip(query.Skipped));
-
-    private static bool Skip(PinTally? skipped)
-    {
-        skipped?.Count(pin: null);
-        return false;
-    }
+        query.Pin is not { } pin || (ContextRepoName.TryFrom(row.Repo, out var repo) && pin.HoldsDoc(repo, row.Path));
 
     /// <summary>The hit's reference, or null when its repo or path can't be carried by the ids (never indexed since S-1A's review, but an older row is skipped, never thrown).</summary>
     private static SourceRef? Ref(HitRow row) =>

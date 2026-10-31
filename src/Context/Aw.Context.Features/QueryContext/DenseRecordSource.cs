@@ -1,7 +1,6 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Audience;
-using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Vectors;
@@ -78,7 +77,7 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
     }
 
     // The scan under the mask of records the caller may read, the floor, and the best chunk per record (hits come best first, so a record's first chunk is its best).
-    private async ValueTask<Result<List<RecordKey>>> Nearest(VectorMatrix matrix, ReadOnlyMemory<float> query, PinScope? pin, CancellationToken cancellationToken)
+    private async ValueTask<Result<List<RecordKey>>> Nearest(VectorMatrix matrix, ReadOnlyMemory<float> query, ISourcePin? pin, CancellationToken cancellationToken)
     {
         var allowed = await Allowed(pin, cancellationToken).ConfigureAwait(false);
         if (allowed.IsError)
@@ -102,7 +101,7 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
     }
 
     // The live, unblocked records the caller may read (and, under a pin, only the pin's): the scan's mask is built from them, and they are the denominator of the coverage line.
-    private async ValueTask<Result<HashSet<RecordKey>>> Allowed(PinScope? pin, CancellationToken cancellationToken)
+    private async ValueTask<Result<HashSet<RecordKey>>> Allowed(ISourcePin? pin, CancellationToken cancellationToken)
     {
         var inPin = pin?.Records();
         var allowed = new HashSet<RecordKey>();

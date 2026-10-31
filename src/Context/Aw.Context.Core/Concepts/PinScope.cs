@@ -48,7 +48,7 @@ public sealed class PinScope
     /// <param name="record">The record.</param>
     /// <param name="skipped">Where a left-out record is counted, or null.</param>
     /// <returns>True when this pin holds it.</returns>
-    public bool HoldsRecord(RecordKey record, PinTally? skipped)
+    internal bool HoldsRecord(RecordKey record, PinTally? skipped)
     {
         var node = NodeKey.TryFrom(RecordPrefix + record.Value, out var key) ? key : (NodeKey?)null;
         var held = node is { } found && HoldsNode(found);
@@ -65,7 +65,7 @@ public sealed class PinScope
     /// <param name="repoRelativePath">The path in the repo.</param>
     /// <param name="skipped">Where a left-out doc is counted, or null.</param>
     /// <returns>True when this pin holds it.</returns>
-    public bool HoldsDoc(ContextRepoName repo, string repoRelativePath, PinTally? skipped)
+    internal bool HoldsDoc(ContextRepoName repo, string repoRelativePath, PinTally? skipped)
     {
         var linked = RepoDocs.TryKey(repo, repoRelativePath, out var record) && NodeKey.TryFrom(RecordPrefix + record.Value, out var node) ? node : (NodeKey?)null;
         var held = (linked is { } key && HoldsNode(key)) || HoldsPath(repo, repoRelativePath);
@@ -79,12 +79,26 @@ public sealed class PinScope
 
     /// <summary>The records of the map this pin holds (the ones the dense leg's scan is cut to).</summary>
     /// <returns>Their keys.</returns>
-    public IReadOnlySet<RecordKey> Records() =>
+    internal IReadOnlySet<RecordKey> Records() =>
         _set.KeysHeldBy(Pin, RecordPrefix).Select(k => RecordKey.TryFrom(k[RecordPrefix.Length..], out var record) ? record : (RecordKey?)null).OfType<RecordKey>().ToHashSet();
 
     /// <summary>Whether the map holds a file in this pin at all.</summary>
     /// <returns>False for a pin whose globs and features match nothing.</returns>
     public bool HoldsAnyFile() => _set.KeysHeldBy(Pin, "code:").Any();
+
+    /// <summary>This pin as a source sees it, counting every record or doc it leaves out into <paramref name="skipped"/>.</summary>
+    /// <param name="skipped">Where the left-out results are counted, or null.</param>
+    /// <returns>The port.</returns>
+    public ISourcePin Counting(PinTally? skipped) => new Counted(this, skipped);
+
+    private sealed class Counted(PinScope scope, PinTally? skipped) : ISourcePin
+    {
+        public bool HoldsRecord(RecordKey record) => scope.HoldsRecord(record, skipped);
+
+        public bool HoldsDoc(ContextRepoName repo, string repoRelativePath) => scope.HoldsDoc(repo, repoRelativePath, skipped);
+
+        public IReadOnlySet<RecordKey> Records() => scope.Records();
+    }
 
     /// <summary>The pin an anchor sits in.</summary>
     /// <param name="anchor">The anchor.</param>

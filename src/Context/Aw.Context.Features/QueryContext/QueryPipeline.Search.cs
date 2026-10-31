@@ -39,7 +39,7 @@ internal sealed partial class QueryPipeline
 
         var calls = searchable.Select(async source =>
         {
-            var query = new SourceQuery(terms, when.AsOf, Limit: SourceQuery.DefaultLimit, deadline - clock.GetUtcNow()) { Pin = pinned.Pin, Skipped = pinned.Skipped };
+            var query = new SourceQuery(terms, when.AsOf, Limit: SourceQuery.DefaultLimit, deadline - clock.GetUtcNow()) { Pin = pinned.Pin?.Counting(pinned.Skipped) };
             var hits = await SourceCalls.Within(source, (query.Deadline, clock), t => source.Search(query, t), ct).ConfigureAwait(false);
             var notes = source is ISourceNotes noted ? noted.TakeNotes() : [];
             return (source.Describe().Id, hits, notes);
