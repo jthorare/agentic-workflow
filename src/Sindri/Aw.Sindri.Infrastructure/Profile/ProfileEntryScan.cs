@@ -118,7 +118,7 @@ internal static class ProfileEntryScan
         };
     }
 
-    // A double-quoted scalar as ProfileConceptText writes it (and as a hand-written one with the same escapes); any other escape is not read.
+    // A double-quoted scalar as ProfileIndexText writes it (and as a hand-written one with the same escapes); any other escape is not read.
     private static string? Unescape(string token)
     {
         if (token.Length < 2 || token[^1] != '"')

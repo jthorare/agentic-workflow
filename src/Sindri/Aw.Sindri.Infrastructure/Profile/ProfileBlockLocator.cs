@@ -21,6 +21,12 @@ internal static class ProfileBlockLocator
     /// <param name="ContentEnd">One past the last content line of the list.</param>
     internal sealed record ListAt(int KeyLine, int KeyIndent, int ItemIndent, int ContentEnd);
 
+    /// <summary>A block a key path can start in.</summary>
+    /// <param name="Parent">The line that opens it.</param>
+    /// <param name="From">Its first line under <paramref name="Parent"/>.</param>
+    /// <param name="To">One past its last content line.</param>
+    internal sealed record Block(int Parent, int From, int To);
+
     /// <summary>Whether a line is indented with a tab, which this edit won't touch.</summary>
     /// <param name="lines">The file's lines.</param>
     /// <returns>True when one is.</returns>
@@ -31,11 +37,12 @@ internal static class ProfileBlockLocator
     /// <param name="keyPath">The keys down to the list.</param>
     /// <param name="create">The entry's lines for an indent, or null to only look.</param>
     /// <param name="list">Where the list is, when Yes.</param>
+    /// <param name="within">The block the path starts in: a list entry's '- ' line and its range (see <see cref="Entry"/>), or null for the top level.</param>
     /// <returns>How the path met the file.</returns>
-    internal static Found Locate(List<string> lines, string[] keyPath, Func<int, string[]>? create, out ListAt list)
+    internal static Found Locate(List<string> lines, string[] keyPath, Func<int, string[]>? create, out ListAt list, Block? within = null)
     {
         list = new ListAt(0, 0, 0, 0);
-        var (parent, from, to) = (-1, 0, lines.Count);
+        var (parent, from, to) = within is { } block ? (block.Parent, block.From, block.To) : (-1, 0, lines.Count);
         for (var level = 0; level < keyPath.Length; level++)
         {
             var last = level == keyPath.Length - 1;
@@ -62,6 +69,22 @@ internal static class ProfileBlockLocator
         }
 
         return Found.Refused;
+    }
+
+    /// <summary>The block of the entry of the top-level list <paramref name="key"/> whose 'name:' is <paramref name="name"/> ('repos', 'web'), to start <see cref="Locate"/> in.</summary>
+    /// <param name="lines">The file's lines.</param>
+    /// <param name="key">The top-level list's key.</param>
+    /// <param name="name">The entry's name.</param>
+    /// <returns>The block, or null when there is no such entry or the list has a layout this edit leaves alone.</returns>
+    internal static Block? Entry(List<string> lines, string key, string name)
+    {
+        var look = new List<string>(lines);   // Locate turns 'key: []' into 'key:'; only looking must change nothing
+        if (Locate(look, [key], create: null, out var list) != Found.Yes || ProfileEntryScan.Entries(look, list) is not { } entries)
+        {
+            return null;
+        }
+
+        return entries.Find(e => e.Name == name) is { } entry ? new Block(entry.Start, entry.Start + 1, entry.End) : null;
     }
 
     internal static int ContentEnd(List<string> lines, int key, int rangeEnd)

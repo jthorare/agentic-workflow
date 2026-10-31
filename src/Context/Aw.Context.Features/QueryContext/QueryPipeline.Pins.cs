@@ -31,8 +31,12 @@ internal sealed partial class QueryPipeline
             return pins.Error;
         }
 
-        var part = anchored.Value.Graph with { Pins = pins.Value };
-        var cut = pins.Value.Scope is { } scope && !map.IsError ? PinCut.Apply(part, scope, map.Value.Graph) : part;
-        return (PinNotes.Apply(cut, request.Query.Text is not null, source.Text), anchored.Value.Terms, anchored.Value.Miss);
+        var told = pins.Value.StaleVersion is null || source.Inputs.Rebuild is not { } state ? pins.Value : pins.Value.Rebuilding(await state.Read(cancellationToken).ConfigureAwait(false));
+        var part = anchored.Value.Graph with { Pins = told };
+        return (Told(part, map, request.Query.Text is not null, source.Text), anchored.Value.Terms, anchored.Value.Miss);
     }
+
+    // The part cut to the pin concept= names (when it names one and the map was read), then the notes about the pin.
+    private static GraphPart Told(GraphPart part, Result<VisibleMap> map, bool isText, MapText text) =>
+        PinNotes.Apply(part.Pins.Scope is { } scope && !map.IsError ? PinCut.Apply(part, scope, map.Value.Graph) : part, isText, text);
 }

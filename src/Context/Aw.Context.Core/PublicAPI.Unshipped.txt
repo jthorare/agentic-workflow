@@ -10483,6 +10483,34 @@ Aw.Context.Core.Extract.LabelPass.Spent.init -> void
 Aw.Context.Core.Engine.ContextQuery.Concept.get -> string?
 Aw.Context.Core.Engine.ContextQuery.Concept.init -> void
 const Aw.Context.Core.Engine.QueryRules.ConceptMessage = "concept names a pin: its id or 'concept:<id>' (see context_concepts, rows with pinned: true)" -> string!
+Aw.Context.Core.Map.IMapRebuildState
+Aw.Context.Core.Map.IMapRebuildState.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Map.MapRebuildStatus!>
+Aw.Context.Core.Map.MapRebuildStatus
+Aw.Context.Core.Map.MapRebuildStatus.Building.get -> bool
+Aw.Context.Core.Map.MapRebuildStatus.MapRebuildStatus(Aw.Context.Core.Map.MapRebuildPhase Phase) -> void
+Aw.Context.Core.Map.MapRebuildStatus.Phase.get -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildStatus.Phase.init -> void
+Aw.Context.Core.Map.MapRebuildStatus.Progress.get -> string?
+Aw.Context.Core.Map.MapRebuildStatus.Progress.init -> void
+Aw.Context.Core.Map.MapRebuildStatus.RetryAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Map.MapRebuildStatus.RetryAt.init -> void
+Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.Backoff = 4 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.Building = 1 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.Idle = 0 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.MapHeld = 2 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.NoMainBranch = 3 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Results.ContextResult.Notes.init -> void
+static Aw.Context.Core.Map.MapRebuildStatus.Idle.get -> Aw.Context.Core.Map.MapRebuildStatus!
+override Aw.Context.Core.Map.MapRebuildStatus.ToString() -> string!
+static Aw.Context.Core.Map.MapRebuildStatus.operator !=(Aw.Context.Core.Map.MapRebuildStatus? left, Aw.Context.Core.Map.MapRebuildStatus? right) -> bool
+static Aw.Context.Core.Map.MapRebuildStatus.operator ==(Aw.Context.Core.Map.MapRebuildStatus? left, Aw.Context.Core.Map.MapRebuildStatus? right) -> bool
+override Aw.Context.Core.Map.MapRebuildStatus.GetHashCode() -> int
+override Aw.Context.Core.Map.MapRebuildStatus.Equals(object? obj) -> bool
+Aw.Context.Core.Map.MapRebuildStatus.Equals(Aw.Context.Core.Map.MapRebuildStatus? other) -> bool
+Aw.Context.Core.Map.MapRebuildStatus.<Clone>$() -> Aw.Context.Core.Map.MapRebuildStatus!
+Aw.Context.Core.Map.MapRebuildStatus.Deconstruct(out Aw.Context.Core.Map.MapRebuildPhase Phase) -> void
 Aw.Context.Core.Concepts.PinTally
 Aw.Context.Core.Concepts.PinTally.Count(Aw.Context.Core.Engine.ConceptId? pin) -> void
 Aw.Context.Core.Concepts.PinTally.EmptyNote(Aw.Context.Core.Engine.ConceptId scope, bool matchesNothing) -> string!
@@ -10490,8 +10518,6 @@ Aw.Context.Core.Concepts.PinTally.PinTally() -> void
 Aw.Context.Core.Concepts.PinScope.HoldsAnyFile() -> bool
 Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.get -> bool
 Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.init -> void
-Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
-Aw.Context.Core.Results.ContextResult.Notes.init -> void
 Aw.Context.Core.Ranking.RankedLeg
 Aw.Context.Core.Ranking.RankedLeg.Keys.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
 Aw.Context.Core.Ranking.RankedLeg.Keys.init -> void
