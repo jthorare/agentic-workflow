@@ -12,7 +12,7 @@ internal sealed partial class QueryPipeline
     private async ValueTask<IReadOnlyList<string>?> AnswerNotes(GraphPart graph, (int Fetched, List<DegradedSource> Degraded, IReadOnlyList<string> Searched) answer, CancellationToken ct)
     {
         await NoteQueuedDecisions(graph, answer.Degraded, ct).ConfigureAwait(false);
-        List<string> notes = [.. answer.Searched];
+        List<string> notes = graph.Pins.StaleNote is { } stale ? [stale, .. answer.Searched] : [.. answer.Searched];   // the stale-map note first (concept pins spec §3.1)
         if (graph.Pins.Scope is { } scoped && answer.Fetched == 0 && graph.Candidates.Count == 0)
         {
             notes.Add(graph.Pins.Skipped.EmptyNote(scoped.Pin, matchesNothing: !scoped.HoldsAnyFile()));
