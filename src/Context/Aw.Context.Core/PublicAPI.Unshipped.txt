@@ -6040,8 +6040,8 @@ static Aw.Context.Core.Extract.RepoFile.operator !=(Aw.Context.Core.Extract.Repo
 static Aw.Context.Core.Extract.RepoFile.operator ==(Aw.Context.Core.Extract.RepoFile? left, Aw.Context.Core.Extract.RepoFile? right) -> bool
 static Aw.Context.Core.Graph.AffectedNode.operator !=(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
 static Aw.Context.Core.Graph.AffectedNode.operator ==(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
-static Aw.Context.Core.Graph.AnchorMatch.FromText(Aw.Context.Core.Graph.GraphSnapshot! graph, string! question, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Context.Core.Graph.TextAnchors!
-static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
+static Aw.Context.Core.Graph.AnchorMatch.FromText(Aw.Context.Core.Graph.GraphSnapshot! graph, string! question, Aw.Context.Core.Graph.IAliasPins? pins = null) -> Aw.Context.Core.Graph.TextAnchors!
+static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null, Aw.Context.Core.Graph.IAliasPins? pins = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth, Aw.Context.Core.Engine.CascadeOptions! options) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.OwnsHops(System.Collections.Generic.IReadOnlyList<string!>! path) -> int
@@ -10487,6 +10487,7 @@ Aw.Context.Core.Concepts.ConceptTermsRow.OwnerTerms.get -> System.Collections.Ge
 Aw.Context.Core.Concepts.ConceptTermsRow.OwnerTerms.init -> void
 Aw.Context.Core.Concepts.ConceptRead.Pins.get -> Aw.Context.Core.Concepts.PinSet?
 Aw.Context.Core.Concepts.ConceptRead.Pins.init -> void
+Aw.Context.Core.Concepts.PinSet.AliasesIn(System.Collections.Generic.IReadOnlySet<string!>! words) -> System.Collections.Generic.IReadOnlyList<(string! Pin, string! Alias, int Words)>!
 Aw.Context.Core.Concepts.PinSet.ByAlias(string! name) -> Aw.Context.Core.Engine.ConceptId?
 Aw.Context.Core.Concepts.PinSet.IsPinned(Aw.Context.Core.Graph.NodeKey concept) -> bool
 Aw.Context.Core.Concepts.PinSet.AliasesOf(Aw.Context.Core.Graph.NodeKey concept) -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -10515,3 +10516,6 @@ static Aw.Context.Core.Map.PageOverlay.Apply(Aw.Context.Core.Graph.GraphSnapshot
 static Aw.Context.Core.Map.PageOverlay.Without(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
 Aw.Context.Core.Engine.ContextScope.OmitPages.get -> bool
 Aw.Context.Core.Engine.ContextScope.OmitPages.init -> void
+Aw.Context.Core.Graph.IAliasPins
+Aw.Context.Core.Graph.IAliasPins.AliasesIn(System.Collections.Generic.IReadOnlySet<string!>! words) -> System.Collections.Generic.IReadOnlyList<(string! Pin, string! Alias, int Words)>!
+Aw.Context.Core.Graph.IAliasPins.PinByAlias(string! name) -> string?

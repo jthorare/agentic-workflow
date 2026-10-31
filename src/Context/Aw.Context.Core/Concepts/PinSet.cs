@@ -9,7 +9,7 @@ namespace Aw.Context.Core.Concepts;
 /// Every pin the caller can see, with the node and path each one holds (concept pins spec §3.1). Ids are made over the mapped repos, so
 /// they are the map's own; a node is in the pin its home feature belongs to, and when two pins claim it the first in pin order keeps it.
 /// </summary>
-public sealed class PinSet
+public sealed class PinSet : IAliasPins
 {
     private readonly IReadOnlyList<ResolvedPin> _all;
     private readonly Dictionary<string, IReadOnlyList<ResolvedPin>> _byRepo;
@@ -70,8 +70,11 @@ public sealed class PinSet
     /// <summary>Every alias whose words all sit in <paramref name="words"/>, the longest first.</summary>
     /// <param name="words">The words of a question, as <c xml:lang="en">AnchorMatch.Words</c> reads them.</param>
     /// <returns>Each match's pin and the alias as the owner wrote it.</returns>
-    internal IReadOnlyList<(ConceptId Pin, string Alias, int Words)> AliasesIn(HashSet<string> words) =>
-        [.. _aliases.Where(a => a.Words.IsSubsetOf(words)).OrderByDescending(a => a.Words.Count).ThenBy(a => a.Alias, StringComparer.Ordinal).Select(a => (ConceptId.From(a.Id), a.Alias, a.Words.Count))];
+    public IReadOnlyList<(string Pin, string Alias, int Words)> AliasesIn(IReadOnlySet<string> words) =>
+        [.. _aliases.Where(a => a.Words.IsSubsetOf(words)).OrderByDescending(a => a.Words.Count).ThenBy(a => a.Alias, StringComparer.Ordinal).Select(a => (a.Id, a.Alias, a.Words.Count))];
+
+    /// <inheritdoc />
+    string? IAliasPins.PinByAlias(string name) => ByAlias(name)?.Value;
 
     /// <summary>Whether a concept is an owner's pin the caller sees.</summary>
     /// <param name="concept">The concept's key ('concept:billing').</param>

@@ -1,4 +1,3 @@
-using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Kernel;
 
@@ -35,7 +34,7 @@ public static class AnchorMatch
     /// <param name="repos">The repos in scope; a demoted file's code node is never suggested. Null suggests every node.</param>
     /// <param name="pins">The pins the caller sees; a whole-alias match resolves to the pin's concept. Null reads none.</param>
     /// <returns>The node; SND-CONTEXT-037 when a label names several (the message lists them); SND-CONTEXT-003 with suggestions when nothing matches.</returns>
-    public static Result<GraphNode> Resolve(GraphSnapshot graph, string name, IReadOnlyList<ContextRepo>? repos = null, PinSet? pins = null)
+    public static Result<GraphNode> Resolve(GraphSnapshot graph, string name, IReadOnlyList<ContextRepo>? repos = null, IAliasPins? pins = null)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(name);
@@ -82,7 +81,7 @@ public static class AnchorMatch
     /// <param name="question">The question.</param>
     /// <param name="pins">The pins the caller sees; a question using all the words of one of a pin's aliases anchors on its concept. Null reads none.</param>
     /// <returns>The anchors and suggestions.</returns>
-    public static TextAnchors FromText(GraphSnapshot graph, string question, PinSet? pins = null)
+    public static TextAnchors FromText(GraphSnapshot graph, string question, IAliasPins? pins = null)
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(question);
@@ -96,15 +95,15 @@ public static class AnchorMatch
         return new TextAnchors([.. chosen.Select(m => m.Node.Key)], Suggest(graph, words, [.. whole.Select(m => m.Node.Key.Value)], [])) { Aliases = aliases };
     }
 
-    private static GraphNode? ByAlias(GraphSnapshot graph, string name, PinSet? pins) =>
-        pins?.ByAlias(name) is { } pin ? graph.Resolve(NodeKey.From("concept:" + pin.Value)) : null;
+    private static GraphNode? ByAlias(GraphSnapshot graph, string name, IAliasPins? pins) =>
+        pins?.PinByAlias(name) is { } pin ? graph.Resolve(NodeKey.From("concept:" + pin)) : null;
 
     // A question that uses all the words of one of a pin's aliases anchors on its concept; the node's own label wins a tie, and the longest alias of a pin is the one that counts.
-    private static void AddAliasMatches(List<(GraphNode Node, HashSet<string> Words, string? Alias)> whole, GraphSnapshot graph, HashSet<string> words, PinSet? pins)
+    private static void AddAliasMatches(List<(GraphNode Node, HashSet<string> Words, string? Alias)> whole, GraphSnapshot graph, HashSet<string> words, IAliasPins? pins)
     {
         foreach (var (pin, alias, count) in pins?.AliasesIn(words) ?? [])
         {
-            var node = graph.Resolve(NodeKey.From("concept:" + pin.Value));
+            var node = graph.Resolve(NodeKey.From("concept:" + pin));
             var held = node is null ? -1 : whole.FindIndex(m => m.Node.Key == node.Key);
             if (node is null || (held >= 0 && whole[held].Words.Count >= count))
             {
