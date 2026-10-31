@@ -30,8 +30,8 @@ public sealed class GetPageFactsTests : IDisposable
         Assert.Equal(["approval-workflow", "billing", "self-scheduling"], facts.Facts.ConceptIds.Select(c => c.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(["Billing", "Self-scheduling"], facts.Concepts.Where(c => new[] { "billing", "self-scheduling" }.Contains(c.Id.Value, StringComparer.Ordinal)).Select(c => c.Name).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(["aw-split-panes"], facts.Facts.SurfaceRepos[PagesWorld.Week], StringComparer.Ordinal);
-        Assert.Equal(["aw-split-panes"], facts.Facts.ActionRepos["action:WeekPage.submit"], StringComparer.Ordinal);
-        Assert.Empty(facts.Facts.ActionRepos["action:WeekPage.cancel"]);
+        Assert.Equal(["aw-split-panes"], facts.Facts.ActionRepos["action:weekpage.submit"], StringComparer.Ordinal);
+        Assert.Empty(facts.Facts.ActionRepos["action:weekpage.cancel"]);
         Assert.NotNull(facts.Facts.Stored);
     }
 
