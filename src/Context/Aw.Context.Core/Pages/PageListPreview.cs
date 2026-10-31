@@ -55,13 +55,13 @@ public static partial class PageListPreview
             block.Block, block.Line, block.Name, match, world.Owned.Contains(id) ? id : null, sameAs, reason is null, reason, actions, unknown, problem is null ? pin : null), id);
     }
 
-    // The profile holds at most 200 pages: walking the ticked rows in order, one that adds a page and would pass the cap is not added.
+    // The profile holds at most 200 pages: walking the rows that carry a page in order (an unknown-concept row is unticked but still adds its page), one that would pass the cap is not added.
     private static List<PageListRow> Capped(List<PageListRow> rows, int owners)
     {
         var added = 0;
         for (var i = 0; i < rows.Count; i++)
         {
-            if (!rows[i].Ticked || rows[i].Replaces is not null)
+            if (rows[i].Page is null || rows[i].Replaces is not null)
             {
                 continue;
             }
