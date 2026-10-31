@@ -36,6 +36,7 @@ internal sealed partial class ShellViewModel
         OpenSheet(DeepLink.PinSheet);
         Changed(nameof(ActivePinSheet), nameof(PinSheetContent));
         _ = sheet.Open(open, CancellationToken.None);
+        Changed(nameof(SheetTitle), nameof(SheetName));   // the sheet knows Pin this, Edit pin or New pin only once Open filled it
     }
 
     // Add several: the concept layer's cards match the list's lines; a write that landed closes the sheet and tells the layer.

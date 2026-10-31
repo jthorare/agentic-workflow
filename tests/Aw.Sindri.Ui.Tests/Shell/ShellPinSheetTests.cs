@@ -47,6 +47,24 @@ public sealed class ShellPinSheetTests
     }
 
     [Fact]
+    public async Task Pin_this_tells_the_sheets_title_after_the_sheet_knows_what_opened_it()
+    {
+        var shell = await Shell();
+        List<string> told = [];
+        shell.PropertyChanged += (_, e) =>
+        {
+            if (e.PropertyName == nameof(ShellViewModel.SheetTitle))
+            {
+                told.Add(shell.SheetTitle);
+            }
+        };
+
+        shell.OpenPinSheet(new PinSheetOpen("api", new ConceptTileViewModel("billing", "Billing", string.Empty, new Ui.Api.Context.ConceptSize(0, 0, 0, 0), setByPerson: false, terms: null, _ => { }), Pin: null, Pins: []));
+
+        Assert.Equal("Pin this", told[^1]);
+    }
+
+    [Fact]
     public async Task Esc_on_a_sheet_nothing_was_typed_in_closes_it_and_tells_the_layer()
     {
         var shell = await Shell();
