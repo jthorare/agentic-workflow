@@ -135,6 +135,20 @@ public static class AnchorMatch
     internal static HashSet<string> Words(string text) =>
         QueryRules.Words(text, MaxWords).Where(w => !_small.Contains(w)).Select(Singular).Where(w => !_small.Contains(w)).ToHashSet(StringComparer.Ordinal);
 
+    /// <summary>One lower-case word as matching reads it: a plural 's' dropped; null for a small word, before or after that.</summary>
+    /// <param name="word">The word, lower-cased.</param>
+    /// <returns>The significant word, or null.</returns>
+    internal static string? Significant(string word)
+    {
+        if (_small.Contains(word))
+        {
+            return null;
+        }
+
+        var singular = Singular(word);
+        return _small.Contains(singular) ? null : singular;
+    }
+
     private static GraphNode? NearFeature(GraphSnapshot graph, string name)
     {
         var words = Words(name).Where(w => w.Length >= 3).ToHashSet(StringComparer.Ordinal);

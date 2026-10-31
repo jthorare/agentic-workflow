@@ -15,7 +15,7 @@ internal static class ChoicePortRegistration
         .AddSingleton<IChoicePort>(sp =>
         {
             var judge = sp.GetRequiredService<JudgeCatalog>();
-            return new JevChoicePort(judge.Classifier, judge.Providers, sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<Core.Jobs.IJobContextAccessor>(),
+            return new JevChoicePort(judge.Classifier, judge.Providers, new JevAvailability(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJevKeyProbe>()), sp.GetRequiredService<Core.Jobs.IJobContextAccessor>(),
                 sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>());
         })
         .AddSingleton(sp => sp.GetRequiredService<IModelPort>() as IModelPromptBudget ?? new WidePromptBudget())

@@ -16,6 +16,12 @@ public interface IChoicePort
     /// <returns>The cap.</returns>
     public ValueTask<int> InputCapChars(CancellationToken cancellationToken);
 
+    /// <summary>Whether a pick call of this kind can go out now: a cheap read of the approved settings and the key that makes no model call. The labeler asks it before it writes candidates nobody can pick from, and the label cache keys on it.</summary>
+    /// <param name="kind">Which pick this is.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>Null when a call can go out, otherwise the reason code why not: <see cref="ChoiceReasons.Off"/> (the kind's pick is not 'jev' in the approved profile) or <see cref="ChoiceReasons.NoKey"/> (no Jev key).</returns>
+    public ValueTask<string?> Unavailable(ChoiceKind kind, CancellationToken cancellationToken);
+
     /// <summary>Asks one pack.</summary>
     /// <param name="kind">Which pick this is: it decides which profile key must say 'jev' and which event is written.</param>
     /// <param name="questions">The questions, 2 to 5 options each.</param>
