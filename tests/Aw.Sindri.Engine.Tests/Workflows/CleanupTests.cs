@@ -141,7 +141,7 @@ public sealed class CleanupTests(DevServer server) : IClassFixture<DevServer>, I
         _repos.Add(repo);
         _harness.Recipe(id, recipe);
         var profiles = new InMemoryProfiles();
-        var profile = new SindriProfile(1, "thor", Repos: [new RepoEntry("app", repo.Path)], Workflow: new WorkflowSettings(Effects: ["effect.claim.ref"]));
+        var profile = new SindriProfile(1, "thor", Repos: [new RepoEntry("app", repo.Path)], Workflow: new WorkflowSettings(Effects: ["effect.claim.ref"], DispatchDelay: "5s"));   // why: the shortest delay the profile allows; the dev server runs in real time, and the 10 s default would wait 5 s more in every test
         _ = await profiles.Save(new LoadedProfile(profile, ProfileHash.From(new string('b', 64)), "/home/profile.yaml"), Token);
         await using var sindri = _harness.Sindri(services => _ = services.Replace(ServiceDescriptor.Singleton<IApprovedProfile>(profiles)));
         await WorkflowsHarness.HoldLease(sindri, ct);
