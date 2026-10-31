@@ -18,6 +18,9 @@ namespace Aw.Context.Features.QueryContext;
 /// <param name="StaleNote">Says pins were edited after the map was built, or null.</param>
 internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<ConceptId> AnchorPins, string? StaleNote)
 {
+    /// <summary>Where the pin-scoped sources count the results they read and left out; read for the empty-answer note. Unused without <see cref="Scope"/>.</summary>
+    internal PinTally Skipped { get; } = new();
+
     /// <summary>The context of a query with no pins in play.</summary>
     internal static PinContext None { get; } = new(PinSet.Empty, Scope: null, [], StaleNote: null);
 

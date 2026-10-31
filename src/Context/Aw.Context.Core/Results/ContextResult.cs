@@ -37,7 +37,7 @@ public sealed record ContextResult(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<SkippedComponent>? SkippedComponents { get; init; }
 
-    /// <summary>What the caller should know about this answer beyond its items (the stale-map note of concept pins spec §3.1); left out when there is none.</summary>
+    /// <summary>Plain sentences about how the answer was made (the pin it is scoped to, a source left out under it, why it is empty, the stale-map note of concept pins spec §3.1); left out when none.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? Notes { get; init; }
 
