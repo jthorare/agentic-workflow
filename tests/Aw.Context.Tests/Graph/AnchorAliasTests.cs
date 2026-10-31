@@ -52,7 +52,7 @@ public sealed class AnchorAliasTests
     {
         var graph = Map();
 
-        var scope = PinScope.Of([Api()], [Api()], "customer invoices", graph, "v41");
+        var scope = PinScope.Of([Api()], [Api()], "Customer Invoicing", graph, "v41");
 
         Assert.Equal("billing", scope.Value.Pin.Value);
     }
