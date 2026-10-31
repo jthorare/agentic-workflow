@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.GetJob;
 using Aw.Sindri.Features.PinConcepts;
+using Aw.Sindri.Host.Commands.Pins;
 
 namespace Aw.Sindri.Host.Commands;
 

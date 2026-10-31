@@ -1,7 +1,7 @@
 using System.Text;
 using Aw.Sindri.Core.Profile;
 
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host.Commands.Pins;
 
 /// <summary>The profile's pins and its live hash, as 'context pin list --json' prints them.</summary>
 /// <param name="Hash">The live profile's hash: the one to pass to --if-hash.</param>

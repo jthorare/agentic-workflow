@@ -1,6 +1,6 @@
 using Aw.Sindri.Core.Profile;
 
-namespace Aw.Sindri.Host.Commands;
+namespace Aw.Sindri.Host.Commands.Pins;
 
 /// <summary>One pin of a <see cref="PinList"/>.</summary>
 /// <param name="Id">The pin's id, or null for an entry that gets its id from its name.</param>
