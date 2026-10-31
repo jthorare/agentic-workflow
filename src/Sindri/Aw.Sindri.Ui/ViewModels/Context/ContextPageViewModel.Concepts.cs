@@ -45,6 +45,7 @@ internal sealed partial class ContextPageViewModel
         var read = await ReadConcepts(api, cancellationToken).ConfigureAwait(true);
         _conceptsRead = read.IsSuccess || !string.Equals(read.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
         NoteConcepts(read);
+        CountNoConcept(read.IsSuccess ? read.Value : null);
         if (Concepts.HasConcepts)
         {
             Head = Labels.ContextConceptsHead;
@@ -265,5 +266,6 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(HasHead));
         OnChanged(nameof(SearchNote));
         OnChanged(nameof(HasSearchNote));
+        ChangedNoConcept();
     }
 }
