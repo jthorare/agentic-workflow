@@ -9,16 +9,21 @@ namespace Aw.Context.Core.Concepts;
 /// Every pin the caller can see, with the node and path each one holds (concept pins spec §3.1). Ids are made over the mapped repos, so
 /// they are the map's own; a node is in the pin its home feature belongs to, and when two pins claim it the first in pin order keeps it.
 /// </summary>
-public sealed class PinSet
+public sealed class PinSet : IAliasPins
 {
     private readonly IReadOnlyList<ResolvedPin> _all;
     private readonly Dictionary<string, IReadOnlyList<ResolvedPin>> _byRepo;
     private readonly Dictionary<string, int> _holder;   // node key -> rank of the pin that holds it
     private readonly HashSet<string> _concepts;         // concept node keys the map has
+    private readonly Dictionary<string, ResolvedPin> _shown;   // the visible pins by id
+    private readonly List<(string Id, string Alias, HashSet<string> Words)> _aliases;   // visible pins' aliases, as the matcher reads them
 
     private PinSet(IReadOnlyList<ResolvedPin> all, IReadOnlyList<ConceptId> visible, Dictionary<string, IReadOnlyList<ResolvedPin>> byRepo, Dictionary<string, int> holder, HashSet<string> concepts)
     {
         (_all, Visible, _byRepo, _holder, _concepts) = (all, visible, byRepo, holder, concepts);
+        var ids = visible.Select(v => v.Value).ToHashSet(StringComparer.Ordinal);
+        _shown = all.Where(p => ids.Contains(p.Id)).ToDictionary(p => p.Id, StringComparer.Ordinal);
+        _aliases = [.. _shown.Values.SelectMany(p => p.Pin.Aliases.Select(a => (p.Id, Alias: a, Words: AnchorMatch.Words(a)))).Where(a => a.Words.Count > 0)];
     }
 
     /// <summary>No pins.</summary>
@@ -61,6 +66,42 @@ public sealed class PinSet
         return new PinSet(resolved, ids, byRepo, Holders(resolved, mapped, graph), [.. stored.Nodes.Where(n => n.Key.Kind == NodeKind.Concept).Select(n => n.Key.Value)]);
     }
 
+    /// <summary>The pin whose alias is exactly <paramref name="name"/> (compared as the matcher reads words: lower case, singular, small words left out).</summary>
+    /// <param name="name">The name.</param>
+    /// <returns>The pin's id, or null.</returns>
+    public ConceptId? ByAlias(string name)
+    {
+        ArgumentNullException.ThrowIfNull(name);
+        var words = AnchorMatch.Words(name);
+        return words.Count == 0 || _aliases.Find(a => a.Words.SetEquals(words)) is not { Id: { } id } ? null : ConceptId.From(id);
+    }
+
+    /// <summary>Every alias whose words all sit in <paramref name="words"/>, the longest first.</summary>
+    /// <param name="words">The words of a question, as <c xml:lang="en">AnchorMatch.Words</c> reads them.</param>
+    /// <returns>Each match's pin and the alias as the owner wrote it.</returns>
+    public IReadOnlyList<(string Pin, string Alias, int Words)> AliasesIn(IReadOnlySet<string> words) =>
+        [.. _aliases.Where(a => a.Words.IsSubsetOf(words)).OrderByDescending(a => a.Words.Count).ThenBy(a => a.Alias, StringComparer.Ordinal).Select(a => (a.Id, a.Alias, a.Words.Count))];
+
+    /// <inheritdoc />
+    string? IAliasPins.PinByAlias(string name) => ByAlias(name)?.Value;
+
+    /// <summary>Whether a concept is an owner's pin the caller sees.</summary>
+    /// <param name="concept">The concept's key ('concept:billing').</param>
+    /// <returns>True for a pin.</returns>
+    public bool IsPinned(NodeKey concept) => IdOf(concept) is { } id && _shown.ContainsKey(id);
+
+    /// <summary>The aliases the owner gave a pin.</summary>
+    /// <param name="concept">The concept's key.</param>
+    /// <returns>The aliases, empty for a concept that is no pin.</returns>
+    public IReadOnlyList<string> AliasesOf(NodeKey concept) => IdOf(concept) is { } id && _shown.TryGetValue(id, out var pin) ? pin.Pin.Aliases : [];
+
+    /// <summary>A pin's definition, read from the approved profile (not from the map node, which carries the one of its last build).</summary>
+    /// <param name="concept">The concept's key.</param>
+    /// <returns>The summary, or null when the concept is no pin or it has none.</returns>
+    public string? SummaryOf(NodeKey concept) => IdOf(concept) is { } id && _shown.TryGetValue(id, out var pin) && !string.IsNullOrWhiteSpace(pin.Pin.Summary) ? pin.Pin.Summary : null;
+
+    private static string? IdOf(NodeKey concept) => concept.Kind == NodeKind.Concept && concept.Value.StartsWith("concept:", StringComparison.Ordinal) ? concept.Value["concept:".Length..] : null;
+
     /// <summary>The pin a node sits in: the first in pin order when several claim it.</summary>
     /// <param name="key">The node.</param>
     /// <returns>The pin, or null.</returns>
@@ -82,6 +123,11 @@ public sealed class PinSet
         }
 
         var matches = Visible.Where(id => string.Equals(id.Value, wanted, StringComparison.Ordinal)).ToList();
+        if (matches.Count == 0 && ByAlias(wanted) is { } byAlias)
+        {
+            matches = [byAlias];
+        }
+
         if (matches.Count == 0)
         {
             var near = Visible.Select(id => id.Value).OrderBy(id => Distance(id, wanted)).ThenBy(id => id, StringComparer.Ordinal).Take(MaxSuggestions).ToList();
