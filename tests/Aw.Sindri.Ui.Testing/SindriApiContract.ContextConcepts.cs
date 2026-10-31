@@ -168,6 +168,30 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
+    public async Task ContextPins_answers_the_pins_with_their_states_and_the_file_hash_and_sends_the_repo()
+    {
+        var server = new FakeSindriApi { ContextPinsAnswer = _ => AConcepts.Served(AConcepts.Pinned()) };
+        var api = Reach(server);
+
+        var view = (await api.ContextPins(_api, "aw-split-panes", Token)).Value;
+
+        Expect.Equal(new string('b', 64), view.FileHash);
+        Expect.Sequence(["approved", "waiting", "removing"], view.Pins.Select(p => p.State));
+        Expect.Equal(("v4", "idle"), (view.MapVersion, view.Rebuild.Phase));
+        Expect.Equal("aw-split-panes", server.ContextPinsAsked[^1]);
+    }
+
+    [Fact]
+    public async Task ContextPins_from_a_server_without_the_route_is_an_error_and_not_a_crash()
+    {
+        var api = Reach(new FakeSindriApi());
+
+        var result = await api.ContextPins(_api, string.Empty, Token);
+
+        Expect.True(result.IsError);
+    }
+
+    [Fact]
     public async Task WholeMap_sends_the_concept()
     {
         var server = new FakeSindriApi();

@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// 'Golden/Api/&lt;route-slug&gt;/&lt;scenario&gt;.json' in this project. The body is re-indented as served (same keys,
 /// order and values; only whitespace changes) and normalized only where a field can't be fixed: ProblemDetails'
 /// 'traceId', which AddProblemDetails draws at random (plan G18), the temp home's path (status's 'profile.source'),
-/// written '&lt;home&gt;', and the hash an apply-file challenge draws from that path. Everything else is fixed by the GoldenHost's clock, ids and pid. AW_GOLDEN_UPDATE=1 rewrites
+/// written '&lt;home&gt;', the hash an apply-file challenge draws from that path, and the pins read's 'fileHash' (a hash over that path too). Everything else is fixed by the GoldenHost's clock, ids and pid. AW_GOLDEN_UPDATE=1 rewrites
 /// a file from the current answer (then review the diff).
 /// </summary>
 internal static class ApiGolden
@@ -19,6 +19,9 @@ internal static class ApiGolden
 
     // The apply-file challenge binds its six characters to the review file's path, which sits in the temp home.
     private static readonly NormalizationRule _applyFile = new("apply-file", "review apply-file [0-9a-f]{6}", "review apply-file <hash6>");
+
+    // The profile file's hash covers the repo paths in it, which sit in the temp home (the pins read answers it as 'fileHash').
+    private static readonly NormalizationRule _fileHash = new("file-hash", "\"fileHash\": \"[0-9a-f]{64}\"", "\"fileHash\": \"<file-hash>\"");
 
     private static readonly JsonWriterOptions _indented = new()
     {
@@ -58,7 +61,7 @@ internal static class ApiGolden
             Reindent(body),
             typeof(ApiGolden).Assembly,
             PathOf(slug, scenario),
-            new Normalization([_traceId, _applyFile, .. HomeRules(home), .. masks]));
+            new Normalization([_traceId, _applyFile, _fileHash, .. HomeRules(home), .. masks]));
 
     // The server builds paths from the home's real path, which on macOS ('/private/var/...') is longer than the temp path
     // ('/var/...') the test holds, so the real one goes first: the short one would leave '/private' in front of '<home>'.

@@ -113,6 +113,7 @@ internal static class EndpointTable
         _ = queries.MapGetContextConceptMembers();
         _ = queries.MapGetContextConceptGlossary();
         _ = queries.MapGetContextPinSuggest();
+        _ = queries.MapGetContextPins();
         _ = queries.MapExportContextReview();
         _ = queries.MapFindContextPath();
         _ = queries.MapGetContextFileMap();
