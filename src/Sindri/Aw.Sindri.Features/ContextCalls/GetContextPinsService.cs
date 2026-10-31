@@ -44,7 +44,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         }
 
         var changes = new PinChanges(MapRuleset.RunningPins(scope), state.Value.CurrentPinHashes);
-        var pins = Rows(loaded.Value.Profile, latest.Value?.Profile, repo, changes);
+        var pins = Rows(loaded.Value.Profile, latest.Value?.Profile, repo, changes, state.Value.CurrentHeads);
         var progress = await rebuild.Read(service, cancellationToken).ConfigureAwait(false);
         var failed = await LastFailure(cancellationToken).ConfigureAwait(false);
         // a refresh covers every repo and its retry line carries the error text of a failed build, which can name another repo: a session reads the phase, never the line
@@ -52,9 +52,12 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         return new ContextPinsView(1, repo, loaded.Value.Hash.Value, state.Value.Current is { } current ? MapVersionRef.Tag(current) : null, pins, view);
     }
 
-    // Whether the answer covers every repo the map was built from: no repo addressed, or the profile's only one.
-    private static bool EveryRepo(SindriProfile profile, string? repo) =>
-        repo is null || (profile.Repos ?? []).All(r => string.Equals(r.Name, repo, StringComparison.Ordinal));
+    // Whether the answer covers every repo the map was built from: no repo addressed, or the only repo both of the profile and of the current map's heads
+    // (a repo the profile dropped stays in the map until the rebuild lands, and its pins' ids must not reach an answer for another repo). A map with no heads (an imported one) is judged by the profile alone.
+    private static bool EveryRepo(SindriProfile profile, string? repo, IReadOnlyList<MapHead> heads) =>
+        repo is null
+        || ((profile.Repos ?? []).All(r => string.Equals(r.Name, repo, StringComparison.Ordinal))
+            && heads.All(h => string.Equals(h.Repo.Value, repo, StringComparison.Ordinal)));
 
     // The repo the answer is for, by the rule every map read shares; null is every pin.
     private static Result<string?> Addressed(ContextScope scope, string? asked)
@@ -69,7 +72,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         return addressed.IsError ? addressed.Error : addressed.Value.Name;
     }
 
-    private static List<ContextPinRow> Rows(SindriProfile liveProfile, SindriProfile? approvedProfile, string? repo, PinChanges changes)
+    private static List<ContextPinRow> Rows(SindriProfile liveProfile, SindriProfile? approvedProfile, string? repo, PinChanges changes, IReadOnlyList<MapHead> heads)
     {
         var diff = ProfileDiff.Changes(approvedProfile, liveProfile).ToDictionary(static c => c.Key, StringComparer.Ordinal);
         var live = Identified(liveProfile);
@@ -85,8 +88,8 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
             .Select(p => Row(p.Pin, p.Id, PinStates.Removing, changes.Of(p.Id))));
 
         // pins the map still has that neither profile does any more: only their ids are known, and the map's hashes carry no repo, so only an answer for every repo may list them
-        // (one with no repo, or the profile's only repo). Their state is 'approved' because the removal itself is approved: it is the map that hasn't caught up.
-        rows.AddRange(!EveryRepo(approvedProfile ?? liveProfile, repo) ? [] : changes.RemovedIds().Select(static id => new ContextPinRow(id, id, Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, PinChanges.Removed)));
+        // (one with no repo, or the only repo of the profile and of the current map). Their state is 'approved' because the removal itself is approved: it is the map that hasn't caught up.
+        rows.AddRange(!EveryRepo(approvedProfile ?? liveProfile, repo, heads) ? [] : changes.RemovedIds().Select(static id => new ContextPinRow(id, id, Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, PinChanges.Removed)));
         return rows;
     }
 
