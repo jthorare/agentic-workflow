@@ -1,6 +1,4 @@
-using System.Globalization;
 using System.Text.RegularExpressions;
-using Aw.Kernel;
 
 namespace Aw.Sindri.Core.Setup;
 
@@ -16,24 +14,23 @@ public static partial class ConceptList
 
     /// <summary>Reads <paramref name="text"/>.</summary>
     /// <param name="text">The list.</param>
-    /// <returns>The concepts, or SND-CLI-003 naming the first line that has no name (SND-CONTEXT-177's text; nothing is written).</returns>
-    public static Result<ConceptListRead> Parse(string text)
+    /// <returns>The concepts, or a read with <see cref="ConceptListRead.NamelessLine"/> set to the first line that has no name (the caller makes SND-CONTEXT-177 of it; nothing is written).</returns>
+    public static ConceptListRead Parse(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
         var lines = text.ReplaceLineEndings("\n").Split('\n');
         var concepts = new List<ConceptLine>();
         foreach (var entry in Entries(lines))
         {
-            var read = One(entry);
-            if (read.IsError)
+            if (One(entry) is not { } read)
             {
-                return read.Error;
+                return new ConceptListRead([], 0, entry.Number);
             }
 
-            concepts.Add(read.Value);
+            concepts.Add(read);
         }
 
-        return new ConceptListRead([.. concepts.Take(Max)], Math.Max(0, concepts.Count - Max));
+        return new ConceptListRead([.. concepts.Take(Max)], Math.Max(0, concepts.Count - Max), NamelessLine: null);
     }
 
     // Groups the numbered lines (blank ones dropped) into entries: one per line when the text has no blank line or the block is all bullets, else one per block.
@@ -69,7 +66,7 @@ public static partial class ConceptList
         current.Clear();
     }
 
-    private static Result<ConceptLine> One(Entry entry)
+    private static ConceptLine? One(Entry entry)
     {
         var first = Bullet.Replace(entry.Lines[0], string.Empty).Trim();
         var rest = string.Join(' ', entry.Lines.Skip(1).Select(static l => l.Trim()));
@@ -84,7 +81,7 @@ public static partial class ConceptList
 
         var (name, summary) = rest.Length > 0 ? (first.TrimEnd(':', '.'), rest) : Split(first);
         return !name.Any(char.IsLetterOrDigit)
-            ? SindriErrors.InvalidInput.With(string.Create(CultureInfo.InvariantCulture, $"line {entry.Number} has no name (fix: start the line or block with the concept's name)"))
+            ? null
             : new ConceptLine(name, summary.Length == 0 ? null : summary, aliases);
     }
 

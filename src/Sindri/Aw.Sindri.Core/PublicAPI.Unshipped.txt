@@ -21685,10 +21685,8 @@ Aw.Sindri.Core.Setup.ConceptLine.Summary.init -> void
 Aw.Sindri.Core.Setup.ConceptList
 Aw.Sindri.Core.Setup.ConceptListRead
 Aw.Sindri.Core.Setup.ConceptListRead.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptListRead!
-Aw.Sindri.Core.Setup.ConceptListRead.ConceptListRead(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>! Concepts, int Skipped) -> void
 Aw.Sindri.Core.Setup.ConceptListRead.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>!
 Aw.Sindri.Core.Setup.ConceptListRead.Concepts.init -> void
-Aw.Sindri.Core.Setup.ConceptListRead.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>! Concepts, out int Skipped) -> void
 Aw.Sindri.Core.Setup.ConceptListRead.Equals(Aw.Sindri.Core.Setup.ConceptListRead? other) -> bool
 Aw.Sindri.Core.Setup.ConceptListRead.Skipped.get -> int
 Aw.Sindri.Core.Setup.ConceptListRead.Skipped.init -> void
@@ -21701,6 +21699,10 @@ override Aw.Sindri.Core.Setup.ConceptListRead.GetHashCode() -> int
 override Aw.Sindri.Core.Setup.ConceptListRead.ToString() -> string!
 static Aw.Sindri.Core.Setup.ConceptLine.operator !=(Aw.Sindri.Core.Setup.ConceptLine? left, Aw.Sindri.Core.Setup.ConceptLine? right) -> bool
 static Aw.Sindri.Core.Setup.ConceptLine.operator ==(Aw.Sindri.Core.Setup.ConceptLine? left, Aw.Sindri.Core.Setup.ConceptLine? right) -> bool
-static Aw.Sindri.Core.Setup.ConceptList.Parse(string! text) -> Aw.Kernel.Result<Aw.Sindri.Core.Setup.ConceptListRead!>!
 static Aw.Sindri.Core.Setup.ConceptListRead.operator !=(Aw.Sindri.Core.Setup.ConceptListRead? left, Aw.Sindri.Core.Setup.ConceptListRead? right) -> bool
 static Aw.Sindri.Core.Setup.ConceptListRead.operator ==(Aw.Sindri.Core.Setup.ConceptListRead? left, Aw.Sindri.Core.Setup.ConceptListRead? right) -> bool
+Aw.Sindri.Core.Setup.ConceptListRead.ConceptListRead(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>! Concepts, int Skipped, int? NamelessLine = null) -> void
+Aw.Sindri.Core.Setup.ConceptListRead.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>! Concepts, out int Skipped, out int? NamelessLine) -> void
+Aw.Sindri.Core.Setup.ConceptListRead.NamelessLine.get -> int?
+Aw.Sindri.Core.Setup.ConceptListRead.NamelessLine.init -> void
+static Aw.Sindri.Core.Setup.ConceptList.Parse(string! text) -> Aw.Sindri.Core.Setup.ConceptListRead!

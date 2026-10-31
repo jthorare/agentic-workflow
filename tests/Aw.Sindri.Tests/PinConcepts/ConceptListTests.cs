@@ -11,8 +11,8 @@ public sealed class ConceptListTests
     private static ConceptListRead Read(string text)
     {
         var read = ConceptList.Parse(text);
-        Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : string.Empty);
-        return read.Value;
+        Assert.Null(read.NamelessLine);
+        return read;
     }
 
     [Fact]
@@ -91,8 +91,8 @@ public sealed class ConceptListTests
     {
         var read = ConceptList.Parse("Billing: money\nAuth: login\nShifts: rota\n: nothing before the colon");
 
-        Assert.True(read.IsError);
-        Assert.Contains("line 4 has no name (fix: start the line or block with the concept's name)", read.Error.Message, StringComparison.Ordinal);
+        Assert.Equal(4, read.NamelessLine);
+        Assert.Empty(read.Concepts);
     }
 
     [Fact]
