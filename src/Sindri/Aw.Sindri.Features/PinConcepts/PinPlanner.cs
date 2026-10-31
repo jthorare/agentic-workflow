@@ -45,6 +45,11 @@ internal static class PinPlanner
         var concepts = (profile.Index?.Concepts ?? []).ToList();
         var draft = new Draft();
         var features = Sets(request, concepts, draft);
+        if (features.IsError)
+        {
+            return features.Error;
+        }
+
         var removals = Removals(request, concepts, profile, draft);
         if (removals is not null)
         {
@@ -56,7 +61,7 @@ internal static class PinPlanner
             return invalid;
         }
 
-        return new PinPlan(draft.Edits, draft.Pins, draft.Dropped, features);
+        return new PinPlan(draft.Edits, draft.Pins, draft.Dropped, features.Value);
     }
 
     private static Result<Unit> Clashes(PinConceptsRequest request)
@@ -105,19 +110,26 @@ internal static class PinPlanner
     }
 
     // Merges each set into the working list and returns the exact feature keys they name (a glob is not looked up in the map).
-    private static List<string> Sets(PinConceptsRequest request, List<ConceptSettings> concepts, Draft draft)
+    private static Result<List<string>> Sets(PinConceptsRequest request, List<ConceptSettings> concepts, Draft draft)
     {
         var features = new List<string>();
         foreach (var set in request.Set ?? [])
         {
-            var (entry, existed, matchName) = Merge(set, concepts);
+            var merged = Merge(set, concepts);
+            if (merged.IsError)
+            {
+                return merged.Error;
+            }
+
+            var (entry, existed, matchName) = merged.Value;
             var id = entry.Id!.Value;   // why: Merge always sets the id
             draft.Edits.Add(new ConceptEdit(id, entry, matchName));
             draft.Pins.Add(new PinWritten(id, set.Name, existed ? "updated" : "created"));
             features.AddRange((set.Features ?? []).Where(static f => !f.Contains('*', StringComparison.Ordinal)));
         }
 
-        return [.. features.Distinct(StringComparer.Ordinal)];
+        List<string> distinct = [.. features.Distinct(StringComparer.Ordinal)];
+        return distinct;
     }
 
     private static Error? Removals(PinConceptsRequest request, List<ConceptSettings> concepts, SindriProfile profile, Draft draft)
@@ -139,10 +151,16 @@ internal static class PinPlanner
 
     private static string IdOf(PinSet set) => set.Id?.Value ?? PinSlug.Of(set.Name);
 
-    private static (ConceptSettings Entry, bool Existed, string? MatchName) Merge(PinSet set, List<ConceptSettings> concepts)
+    private static Result<(ConceptSettings Entry, bool Existed, string? MatchName)> Merge(PinSet set, List<ConceptSettings> concepts)
     {
         var id = ConceptPinId.From(IdOf(set));
-        var at = concepts.FindIndex(c => Matches(c, id.Value));
+        var found = Find(concepts, id.Value);
+        if (found.IsError)
+        {
+            return found.Error;
+        }
+
+        var at = found.Value;
         if (at < 0)
         {
             var created = new ConceptSettings(id, set.Name, Text(set.Summary), List(set.Features), Aliases: List(set.Aliases));
@@ -165,7 +183,13 @@ internal static class PinPlanner
 
     private static Result<(string Name, string? MatchName)> Remove(ConceptPinId id, bool withFolderRules, List<ConceptSettings> concepts, SindriProfile profile, List<string> dropped)
     {
-        var at = concepts.FindIndex(c => Matches(c, id.Value));
+        var found = Find(concepts, id.Value);
+        if (found.IsError)
+        {
+            return found.Error;
+        }
+
+        var at = found.Value;
         if (at < 0)
         {
             return Missing(id, concepts, profile);
@@ -195,6 +219,25 @@ internal static class PinPlanner
 
         var near = Nearest(id.Value, concepts.Select(IdOfEntry));
         return ContextErrors.PinNotInProfile.With($"no pin is named '{id.Value}' in the profile" + (near.Count > 0 ? $" (fix: try {string.Join(", ", near)})" : " (fix: list the pins with context pin list)"));
+    }
+
+    // The entry an id names, picked the way the profile writer picks it: an explicit 'id:' first, then the one entry with no id whose name slugs to it (-1: none). Two such entries are refused, since the build gives the
+    // second a '-2' id and a write by name can't tell which one is meant.
+    private static Result<int> Find(List<ConceptSettings> concepts, string id)
+    {
+        var at = concepts.FindIndex(c => string.Equals(c.Id?.Value, id, StringComparison.Ordinal));
+        if (at >= 0)
+        {
+            return at;
+        }
+
+        var named = concepts.Where(c => c.Id is null && Matches(c, id)).Select(static c => c.Name).ToList();
+        if (named.Count > 1)
+        {
+            return ContextErrors.PinIdClash.With($"'{named[0]}' and '{named[1]}' in the profile both make the id {id} (fix: give one of them an id: in the profile)");
+        }
+
+        return named.Count == 1 ? concepts.FindIndex(c => c.Id is null && Matches(c, id)) : -1;
     }
 
     // An entry written by hand may have no 'id': the build gives it the slug of its name, so that is the id a write names it by.

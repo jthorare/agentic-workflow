@@ -20,7 +20,7 @@ public sealed class PinConceptsServiceTests : IDisposable
     private static ConceptSettings Pin(string id, string name, string? summary = null, string[]? aliases = null, string[]? features = null, string[]? paths = null, string[]? dependsOn = null, string[]? owns = null) =>
         new(ConceptPinId.From(id), name, summary, features, paths, dependsOn, owns, aliases);
 
-    private async Task<Aw.Kernel.Result<PinConceptsResult>> Run(PinConceptsRequest request)
+    private async Task<Kernel.Result<PinConceptsResult>> Run(PinConceptsRequest request)
     {
         await _rig.Lease();
         return await _rig.Service().Handle(request, Token);
@@ -335,5 +335,55 @@ public sealed class PinConceptsServiceTests : IDisposable
         Assert.Equal(["auth", "billing"], [.. _rig.Edits.Select(static e => e.Id.Value)]);
         Assert.Null(_rig.Edits[0].MatchName);
         Assert.Equal("Billing", _rig.Edits[1].MatchName);
+    }
+
+    [Fact]
+    public async Task An_explicit_id_wins_over_an_entry_with_no_id_whose_name_slugs_to_it()
+    {
+        _rig.Profile([new ConceptSettings(Name: "Checkout", Summary: "A"), Pin("checkout", "Cart", summary: "B")]);
+
+        var done = await Run(new PinConceptsRequest(Set: [new PinSet("Cart", Id: ConceptPinId.From("checkout"), Aliases: ["basket"])]));
+
+        Assert.Equal("updated", Assert.Single(done.Value.Pins).Action);
+        var edit = Assert.Single(_rig.Edits);
+        Assert.Equal(("checkout", null, "Cart", "B"), (edit.Id.Value, edit.MatchName, edit.Entry?.Name, edit.Entry?.Summary));
+    }
+
+    [Fact]
+    public async Task Removing_an_explicit_id_leaves_the_entry_with_no_id_whose_name_slugs_to_it()
+    {
+        _rig.Profile([new ConceptSettings(Name: "Checkout", Summary: "A"), Pin("checkout", "Cart", summary: "B")]);
+
+        var done = await Run(new PinConceptsRequest(Remove: [ConceptPinId.From("checkout")]));
+
+        Assert.Equal([new PinWritten(ConceptPinId.From("checkout"), "Cart", "removed")], done.Value.Pins);
+        Assert.Null(Assert.Single(_rig.Edits).MatchName);
+    }
+
+    [Fact]
+    public async Task Two_entries_with_no_id_that_slug_alike_are_173_for_a_set_and_a_removal()
+    {
+        _rig.Profile([new ConceptSettings(Name: "Order Flow"), new ConceptSettings(Name: "order flow")]);
+
+        var set = await Run(new PinConceptsRequest(Set: [new PinSet("Order Flow", Summary: "Orders")]));
+        var removed = await Run(new PinConceptsRequest(Remove: [ConceptPinId.From("order-flow")]));
+
+        Assert.Equal("SND-CONTEXT-173", set.Error.Code);
+        Assert.Equal("'Order Flow' and 'order flow' in the profile both make the id order-flow (fix: give one of them an id: in the profile)", set.Error.Message);
+        Assert.Equal("SND-CONTEXT-173", removed.Error.Code);
+        Assert.Empty(_rig.Writer.Writes);
+    }
+
+    [Fact]
+    public async Task A_failed_event_after_the_write_still_returns_the_new_hash()
+    {
+        _rig.AfterWrite = _rig.Slice.Held.Clear;
+
+        var done = await Run(new PinConceptsRequest(Set: [new PinSet("Billing")]));
+
+        Assert.True(done.IsSuccess);
+        Assert.Equal(_rig.Writer.Hash, done.Value.Hash);
+        Assert.Equal(["checking", "written to the profile", "the pin event wasn't recorded: SND-API-001"], _rig.Progress.Seen);
+        Assert.DoesNotContain(_rig.Slice.Store.Events, static e => e.Envelope.Type == EventTypes.ContextPinWritten);
     }
 }

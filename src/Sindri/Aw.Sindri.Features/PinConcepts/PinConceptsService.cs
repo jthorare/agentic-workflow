@@ -2,6 +2,7 @@ using Aw.Context.Core;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
@@ -10,7 +11,7 @@ namespace Aw.Sindri.Features.PinConcepts;
 
 /// <summary>
 /// The work of a PinConcepts job (concept pins spec §3.6): reads the live profile again (progress line 'checking'), works the request out and checks it with the profile's rules, checks the feature keys against the current map,
-/// writes every edit once through <see cref="IProfileConceptWriter"/> with the caller's profile hash (line 'written to the profile'), records 'context.pin.written' with the pins and the actor, and returns the new profile
+/// writes every edit once through <see cref="IProfileConceptWriter"/> with the caller's profile hash (line 'written to the profile'), records 'context.pin.written' with the pins and the actor (a failed record is a progress line, since the file already changed), and returns the new profile
 /// hash. Every refusal comes before the write. It never approves: the profile waits for the owner's approval as its own step.
 /// </summary>
 /// <param name="live">The live profile file.</param>
@@ -54,8 +55,18 @@ internal sealed class PinConceptsService(IProfileSource live, IMapFeatures featu
         }
 
         jobs.Current?.Progress.Report("written to the profile");
-        var recorded = await recorder.Written(written.Value, [.. plan.Value.Pins.Select(static p => $"{p.Id.Value}:{p.Action}")], cancellationToken).ConfigureAwait(false);
-        return recorded.IsError ? recorded.Error : new PinConceptsResult(plan.Value.Pins, written.Value, Approved: false, plan.Value.Dropped);
+        await Record(written.Value, plan.Value.Pins, cancellationToken).ConfigureAwait(false);
+        return new PinConceptsResult(plan.Value.Pins, written.Value, Approved: false, plan.Value.Dropped);
+    }
+
+    // The file has changed by now: a failed event is reported on the job, not returned, so the caller still gets the new hash and doesn't retry against the old one (SND-PROFILE-003).
+    private async ValueTask Record(ProfileHash hash, IReadOnlyList<PinWritten> pins, CancellationToken cancellationToken)
+    {
+        var recorded = await recorder.Written(hash, [.. pins.Select(static p => $"{p.Id.Value}:{p.Action}")], cancellationToken).ConfigureAwait(false);
+        if (recorded.IsError)
+        {
+            jobs.Current?.Progress.Report($"the pin event wasn't recorded: {recorded.Error.Code}");
+        }
     }
 
     // No feature keys, no map read: a pin without features pins before the first map is built. With keys and no map the pin is refused, since nothing could be checked.

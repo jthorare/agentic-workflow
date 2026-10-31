@@ -51,8 +51,11 @@ internal sealed class PinConceptsRig : IDisposable
     internal PinConceptsService Service()
     {
         _entered.Add(Jobs.Enter(new JobContext(JobId.From("JOB-" + new string('a', 32)), JobKind.From("PinConcepts"), Progress)));
-        return new PinConceptsService(Slice.Profiles, Map, Writer, Recorder, Jobs);
+        return new PinConceptsService(Slice.Profiles, Map, AfterWrite is null ? Writer : new Then(Writer, AfterWrite), Recorder, Jobs);
     }
+
+    /// <summary>Runs after each successful write, before the event is recorded.</summary>
+    internal Action? AfterWrite { get; set; }
 
     internal PinConceptsAdmission Admission() => new(Slice.Profiles);
 
@@ -81,6 +84,16 @@ internal sealed class PinConceptsRig : IDisposable
         internal IReadOnlyList<string> Seen => _seen;
 
         public void Report(string value) => _seen.Add(value);
+    }
+
+    private sealed class Then(IProfileConceptWriter inner, Action after) : IProfileConceptWriter
+    {
+        public async ValueTask<Result<ProfileHash>> Write(IReadOnlyList<ConceptEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
+        {
+            var written = await inner.Write(edits, ifHash, cancellationToken).ConfigureAwait(false);
+            after();
+            return written;
+        }
     }
 
     /// <summary>A map that holds some features at a version, or no map at all.</summary>
