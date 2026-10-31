@@ -35,4 +35,7 @@ internal sealed class ContextConceptReads(
 
     public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
         checkPages.Handle(new CheckPagesRequest(scope), cancellationToken);
+
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();   // skeleton: the GetPageFacts slice replaces it
 }
