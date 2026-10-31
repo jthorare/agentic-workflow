@@ -111,7 +111,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>True when it did something.</returns>
     internal bool Back()
     {
-        if (CloseNoConcept())
+        if (ShowNoConcept && CloseNoConcept())
         {
             return true;   // the pages in no concept lie over the concept cards: Esc closes them first
         }

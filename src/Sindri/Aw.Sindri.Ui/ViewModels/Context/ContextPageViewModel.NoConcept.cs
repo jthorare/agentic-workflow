@@ -24,9 +24,6 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Gets a value indicating whether the panel of the pages in no concept shows: it was opened and the concept cards are on the stage.</summary>
     public bool ShowNoConcept => _noConceptOpen && ShowConcepts;
 
-    /// <summary>Gets the panel's close button's words.</summary>
-    public string NoConceptCloseText { get; } = Labels.ContextPagesClose;
-
     /// <summary>Opens the panel and reads the pages in no concept (the link, and Try again).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the pages are listed.</returns>
