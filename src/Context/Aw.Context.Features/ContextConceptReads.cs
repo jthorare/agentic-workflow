@@ -7,6 +7,7 @@ using Aw.Context.Features.CheckPages;
 using Aw.Context.Features.GetConceptGlossary;
 using Aw.Context.Features.GetConceptMembers;
 using Aw.Context.Features.GetConcepts;
+using Aw.Context.Features.GetPageFacts;
 using Aw.Context.Features.GetPages;
 using Aw.Context.Features.GetPinSuggest;
 using Aw.Kernel;
@@ -21,7 +22,8 @@ internal sealed class ContextConceptReads(
     IService<GetConceptGlossaryRequest, ConceptGlossaryView> glossary,
     IService<GetPagesRequest, PagesView> pages,
     IService<CheckPagesRequest, MapHealth> checkPages,
-    IService<GetPinSuggestRequest, PinSuggestView> pinSuggest) : IContextConcepts
+    IService<GetPinSuggestRequest, PinSuggestView> pinSuggest,
+    IService<GetPageFactsRequest, PageMapFacts> pageFacts) : IContextConcepts
 {
     public ValueTask<Result<ConceptsView>> Concepts(ConceptsQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         concepts.Handle(new GetConceptsRequest(query, scope), cancellationToken);
@@ -40,4 +42,7 @@ internal sealed class ContextConceptReads(
 
     public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         pinSuggest.Handle(new GetPinSuggestRequest(query, scope), cancellationToken);
+
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
+        pageFacts.Handle(new GetPageFactsRequest(scope), cancellationToken);
 }

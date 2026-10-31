@@ -147,7 +147,7 @@ public static class SindriFeaturesServiceCollectionExtensions
             .AddLaunchSlices()
             .AddLaunchTargetJob()
             .AddScoped<IRepoCheckouts, ProfileRepoCheckouts>()
-            .AddAddRepo().AddPinConcepts().AddRegisterMcpJob().AddOnboardRepo()
+            .AddAddRepo().AddPinConcepts().AddSetPages().AddRegisterMcpJob().AddOnboardRepo()
             .AddStationSlices();
         return services;
     }

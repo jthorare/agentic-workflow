@@ -847,6 +847,26 @@ Week overview
 
 With no flag it lists the pages a person named (`No pages named yet. Name one in the app, or see sindri context page list --suggested.` when there are none); `--suggested` lists only the suggested ones. `--concept C` keeps pages that express concept C or have an action that does, `--repo R` one repo, `--json` the raw answer. Exit 0 with an answer (an empty list is one), 1 for attention (serve not running, no map yet, an unknown concept or repo `SND-CONTEXT-258`), 2 for a tool error. Agent sessions get both marks, marked, from the MCP tool `context_pages` (arguments `concept`, `page`, `repo`, `limit`, `offset`, `mapVersion`; an unknown page id is `SND-CONTEXT-257`).
 
+### Naming a page from the terminal
+
+`sindri context page set` writes one page into the profile's `index.pages` (replacing the page with that id), `page remove <id>` takes one out, and `--dry-run` checks a set exactly as a write does and shows what would change. Neither approves: the last line names the profile hash to approve.
+
+```
+$ sindri context page set "Schedule week" \
+    --surface surface:route/GET:/schedule/week \
+    --action "Submit a schedule=action:SchedulePage.submit-schedule->self-scheduling,approval-workflow"
+created schedule-week (Schedule week)
+waiting for your approval: sindri profile approve 3f9c...e1
+
+$ sindri profile approve 3f9c...e1
+$ sindri context page list
+Schedule week
+  surface:route/GET:/schedule/week  ·  Set by a person  ·  Code found
+    Submit a schedule  (Set by a person, Code found)  ->  self-scheduling, approval-workflow
+```
+
+`--action "Name=KEY->concept,concept"`: the name, then `=` and the map's action key if the action is one the map knows (leave it out for an action only you name), then `->` and the concepts it expresses. A concept is a pin's or a map concept's id, or its exact name (any case): `->Self-scheduling` works. The keys have to be in the current map (`sindri context page list --suggested` shows them), capital letters in a key are fine. Several repos and no surface to tell which one: say `--repo`. A whole file works too: `sindri context page set --from-file pages.yaml`, the file being the `index: pages:` section of a profile. A mistake is named before anything is written (`SND-CONTEXT-250` unknown concept, `251` unknown surface or action key, `252` which repo, `254` an id twice, `255` a bad name, `256` a bad `--action`, `257` no such page to remove); exit 1 means "an unknown name or key, or Sindri isn't running", exit 2 "this input can't be written".
+
 **Why a page may be missing.** (1) Its route or concept is gone from the current map. (2) A deny rule (`index.denyPaths`) hides the file it lives in. (3) The map only counts a surface as page-like when `PageKinds.IsPage` says so, and that does not yet cover `.ts` or `.cs` routes or `.axaml` views, so a page of those kinds shows up only once a profile page names it. `sindri doctor` has a `context:pages` row that checks the named pages against the map and says which of the first two applies.
 
 ## S-5A: the index sources, secret pointers

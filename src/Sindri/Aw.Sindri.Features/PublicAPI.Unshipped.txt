@@ -5744,5 +5744,61 @@ override Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.GetHashCode() ->
 override Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.ToString() -> string!
 static Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? left, Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? left, Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? right) -> bool
+Aw.Sindri.Features.SetPages.PageWritten
+Aw.Sindri.Features.SetPages.PageWritten.Action.get -> string!
+Aw.Sindri.Features.SetPages.PageWritten.Action.init -> void
+Aw.Sindri.Features.SetPages.PageWritten.<Clone>$() -> Aw.Sindri.Features.SetPages.PageWritten!
+Aw.Sindri.Features.SetPages.PageWritten.Deconstruct(out Aw.Sindri.Core.Ids.PagePinId Id, out string! Name, out string? Repo, out string! Action) -> void
+Aw.Sindri.Features.SetPages.PageWritten.Equals(Aw.Sindri.Features.SetPages.PageWritten? other) -> bool
+Aw.Sindri.Features.SetPages.PageWritten.Id.get -> Aw.Sindri.Core.Ids.PagePinId
+Aw.Sindri.Features.SetPages.PageWritten.Id.init -> void
+Aw.Sindri.Features.SetPages.PageWritten.Name.get -> string!
+Aw.Sindri.Features.SetPages.PageWritten.Name.init -> void
+Aw.Sindri.Features.SetPages.PageWritten.PageWritten(Aw.Sindri.Core.Ids.PagePinId Id, string! Name, string? Repo, string! Action) -> void
+Aw.Sindri.Features.SetPages.PageWritten.Repo.get -> string?
+Aw.Sindri.Features.SetPages.PageWritten.Repo.init -> void
+Aw.Sindri.Features.SetPages.SetPagesRequest
+Aw.Sindri.Features.SetPages.SetPagesRequest.<Clone>$() -> Aw.Sindri.Features.SetPages.SetPagesRequest!
+Aw.Sindri.Features.SetPages.SetPagesRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>? Set, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.PagePinId>? Remove, out Aw.Sindri.Core.Ids.ProfileHash? IfHash, out bool DryRun) -> void
+Aw.Sindri.Features.SetPages.SetPagesRequest.DryRun.get -> bool
+Aw.Sindri.Features.SetPages.SetPagesRequest.DryRun.init -> void
+Aw.Sindri.Features.SetPages.SetPagesRequest.Equals(Aw.Sindri.Features.SetPages.SetPagesRequest? other) -> bool
+Aw.Sindri.Features.SetPages.SetPagesRequest.IfHash.get -> Aw.Sindri.Core.Ids.ProfileHash?
+Aw.Sindri.Features.SetPages.SetPagesRequest.IfHash.init -> void
+Aw.Sindri.Features.SetPages.SetPagesRequest.Remove.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.PagePinId>?
+Aw.Sindri.Features.SetPages.SetPagesRequest.Remove.init -> void
+Aw.Sindri.Features.SetPages.SetPagesRequest.Set.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>?
+Aw.Sindri.Features.SetPages.SetPagesRequest.Set.init -> void
+Aw.Sindri.Features.SetPages.SetPagesRequest.SetPagesRequest(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>? Set = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.PagePinId>? Remove = null, Aw.Sindri.Core.Ids.ProfileHash? IfHash = null, bool DryRun = false) -> void
+Aw.Sindri.Features.SetPages.SetPagesResult
+Aw.Sindri.Features.SetPages.SetPagesResult.Approved.get -> bool
+Aw.Sindri.Features.SetPages.SetPagesResult.Approved.init -> void
+Aw.Sindri.Features.SetPages.SetPagesResult.<Clone>$() -> Aw.Sindri.Features.SetPages.SetPagesResult!
+Aw.Sindri.Features.SetPages.SetPagesResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.SetPages.PageWritten!>! Pages, out Aw.Sindri.Core.Ids.ProfileHash Hash, out bool Written, out bool Approved, out System.Collections.Generic.IReadOnlyList<string!>! Diff) -> void
+Aw.Sindri.Features.SetPages.SetPagesResult.Diff.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Features.SetPages.SetPagesResult.Diff.init -> void
+Aw.Sindri.Features.SetPages.SetPagesResult.Equals(Aw.Sindri.Features.SetPages.SetPagesResult? other) -> bool
+Aw.Sindri.Features.SetPages.SetPagesResult.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash
+Aw.Sindri.Features.SetPages.SetPagesResult.Hash.init -> void
+Aw.Sindri.Features.SetPages.SetPagesResult.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.SetPages.PageWritten!>!
+Aw.Sindri.Features.SetPages.SetPagesResult.Pages.init -> void
+Aw.Sindri.Features.SetPages.SetPagesResult.SetPagesResult(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.SetPages.PageWritten!>! Pages, Aw.Sindri.Core.Ids.ProfileHash Hash, bool Written, bool Approved, System.Collections.Generic.IReadOnlyList<string!>! Diff) -> void
+Aw.Sindri.Features.SetPages.SetPagesResult.Written.get -> bool
+Aw.Sindri.Features.SetPages.SetPagesResult.Written.init -> void
+override Aw.Sindri.Features.SetPages.PageWritten.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetPages.PageWritten.GetHashCode() -> int
+override Aw.Sindri.Features.SetPages.PageWritten.ToString() -> string!
+override Aw.Sindri.Features.SetPages.SetPagesRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetPages.SetPagesRequest.GetHashCode() -> int
+override Aw.Sindri.Features.SetPages.SetPagesRequest.ToString() -> string!
+override Aw.Sindri.Features.SetPages.SetPagesResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.SetPages.SetPagesResult.GetHashCode() -> int
+override Aw.Sindri.Features.SetPages.SetPagesResult.ToString() -> string!
+static Aw.Sindri.Features.SetPages.PageWritten.operator !=(Aw.Sindri.Features.SetPages.PageWritten? left, Aw.Sindri.Features.SetPages.PageWritten? right) -> bool
+static Aw.Sindri.Features.SetPages.PageWritten.operator ==(Aw.Sindri.Features.SetPages.PageWritten? left, Aw.Sindri.Features.SetPages.PageWritten? right) -> bool
+static Aw.Sindri.Features.SetPages.SetPagesRequest.operator !=(Aw.Sindri.Features.SetPages.SetPagesRequest? left, Aw.Sindri.Features.SetPages.SetPagesRequest? right) -> bool
+static Aw.Sindri.Features.SetPages.SetPagesRequest.operator ==(Aw.Sindri.Features.SetPages.SetPagesRequest? left, Aw.Sindri.Features.SetPages.SetPagesRequest? right) -> bool
+static Aw.Sindri.Features.SetPages.SetPagesResult.operator !=(Aw.Sindri.Features.SetPages.SetPagesResult? left, Aw.Sindri.Features.SetPages.SetPagesResult? right) -> bool
+static Aw.Sindri.Features.SetPages.SetPagesResult.operator ==(Aw.Sindri.Features.SetPages.SetPagesResult? left, Aw.Sindri.Features.SetPages.SetPagesResult? right) -> bool
 Aw.Sindri.Features.ContextCalls.BacktestArmLine.PinAnchored.get -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
 Aw.Sindri.Features.ContextCalls.BacktestArmLine.PinAnchored.init -> void

@@ -49,4 +49,10 @@ public interface IContextConcepts
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The view, or SND-CONTEXT-003 for a concept the map lacks, else as <see cref="Concepts"/>.</returns>
     public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>What the current map says about pages: the concept ids, the repos of each surface and action key, and the concepts' names. The page write checks against it.</summary>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The facts (empty, with a null version, when there is no map yet), else as <see cref="Concepts"/>.</returns>
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken);
 }
