@@ -18,7 +18,7 @@ public static class PageSlugs
     {
         var words = new StringBuilder();
         var pending = false;
-        var text = name ?? string.Empty;
+        var text = Nfc(name ?? string.Empty);
         foreach (var ch in text.ToLowerInvariant())
         {
             if (ch is (>= 'a' and <= 'z') or (>= '0' and <= '9'))
@@ -46,6 +46,18 @@ public static class PageSlugs
         return slug.Length == 0 ? Fallback : slug;
     }
 
+    private static string Nfc(string s)
+    {
+        try
+        {
+            return s.Normalize(NormalizationForm.FormC);
+        }
+        catch (ArgumentException)
+        {
+            return s;
+        }
+    }
+
     private static bool HasNonAsciiLetterOrDigit(string text)
     {
         foreach (var rune in text.EnumerateRunes())
@@ -61,7 +73,7 @@ public static class PageSlugs
 
     private static string WithHash(string words, string text)
     {
-        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text.Trim().Normalize(NormalizationForm.FormC).ToLowerInvariant())))[..HashLength];
+        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(text.Trim().ToLowerInvariant())))[..HashLength];
         var room = MaxLength - HashLength - 1;
         var head = words.Length > room ? words[..room].TrimEnd('-') : words;
         return (head.Length == 0 ? Fallback : head) + "-" + hash;
