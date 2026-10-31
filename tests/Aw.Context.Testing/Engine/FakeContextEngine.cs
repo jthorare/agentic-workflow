@@ -12,6 +12,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
@@ -212,6 +213,10 @@ public sealed class FakeContextEngine : IContextEngine
     /// <inheritdoc/>
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<IReadOnlyList<RepoHead>>>(Array.Empty<RepoHead>());
+
+    /// <inheritdoc/>
+    public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken) =>
+        NoMap<RelinkPinAliasesResult>();
 
     /// <inheritdoc/>
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>

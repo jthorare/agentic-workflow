@@ -14,7 +14,7 @@ namespace Aw.Context.Infrastructure.Intent;
 /// The intent layer in context.db (migration 0006_s5b_intent_links): what syncs wrote, outside the map versions. A page's records, links and cursor commit in one transaction, so a cursor never
 /// moves past links that didn't commit and a replay writes nothing new.
 /// </summary>
-internal sealed class SqliteIntentStore(ContextDatabase database) : IIntentStore
+internal sealed partial class SqliteIntentStore(ContextDatabase database) : IIntentStore
 {
     private readonly StampedCache<IntentLayer> _layers = new();
 

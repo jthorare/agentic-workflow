@@ -70,6 +70,19 @@ public sealed class IntentOverlayTests
         Assert.Equal(Provenance.Deterministic, Assert.Single(confirmed.Graph.Edges).Provenance);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void An_alias_link_to_a_concept_is_a_deterministic_mention()
+    {
+        var graph = new GraphBuilder().Node("concept:invoicing", "Invoicing").Build();
+        var alias = new IntentLink(_r103, NodeKey.From("concept:invoicing"), LinkRule.Alias, 0.8, "ef56");
+
+        var result = IntentOverlay.Apply(graph, new IntentLayer([_record], [alias], [], []));
+
+        var edge = Assert.Single(result.Graph.Edges);
+        Assert.Equal((EdgeType.Mentions, Provenance.Deterministic, 0.8), (edge.Type, edge.Provenance, edge.Confidence));
+        Assert.Equal("concept:invoicing", edge.To.Value);
+    }
+
     private static readonly RecordKey _r104 = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000104");
     private static readonly IntentRecord _target = new(_r104, SourceId.From("linear"), "2026-07-22T10:20:00+00:00", "Restore pane layout", ["SPL-104"]);
 

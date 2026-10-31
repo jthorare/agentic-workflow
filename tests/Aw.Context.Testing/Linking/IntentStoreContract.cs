@@ -360,6 +360,46 @@ public abstract class IntentStoreContract
             $"{underOne.Count}/{underTwoBefore.Count} before, {underOneAfter.Count}/{underTwo.Count} after the second page");
     }
 
+    /// <summary>Replacing one rule's links swaps that rule's links only: other rules' links, the map version the record was linked under and its extraction state stay.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task ReplaceRuleLinks_swaps_one_rules_links_and_leaves_the_rest_alone()
+    {
+        const string test = nameof(ReplaceRuleLinks_swaps_one_rules_links_and_leaves_the_rest_alone);
+        var store = CreateStore();
+        var record = Record(_r103, "v1", "SPL-103");
+        var key = Link(_r103, "feature:a");
+        var oldAlias = Link(_r103, "concept:old", LinkRule.Alias);
+        var newAlias = Link(_r103, "concept:new", LinkRule.Alias);
+        _ = Expect.Ok(await store.CommitPage(Page("c1", [record], [key, oldAlias]) with { MapVersion = 1 }, None), test);
+        var (decision, decides) = Decided(_r103, "first", "feature:a");
+        _ = Expect.Ok(await store.SaveDecisions(new DecisionBatch(_r103, "v1", [decision], [decides]), None), test);
+
+        _ = Expect.Ok(await store.ReplaceRuleLinks(_r103, LinkRule.Alias, [newAlias], None), test);
+        var layer = Expect.Ok(await store.Layer(None), test);
+        var under = Expect.Ok(await store.LinkedUnder(_linear, 1, None), test);
+        var queued = Expect.Ok(await store.Queued(_linear, None), test);
+
+        Expect.That(layer.Links.Select(l => (l.Target.Value, l.Rule)).SequenceEqual([("concept:new", LinkRule.Alias), ("feature:a", LinkRule.IssueKey)]), test, $"links {string.Join(", ", layer.Links.Select(l => l.Target.Value + "/" + l.Rule))}");
+        Expect.That(under.Select(k => k.Value).SequenceEqual([_r103.Value], StringComparer.Ordinal), test, $"{under.Count} linked under the old map version");
+        Expect.That(queued.Count == 0 && layer.Decisions.Count == 1, test, $"{queued.Count} queued, {layer.Decisions.Count} decisions kept");
+    }
+
+    /// <summary>An empty list removes the rule's links; another record's links of that rule stay.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task ReplaceRuleLinks_with_none_removes_that_rules_links_of_that_record_only()
+    {
+        const string test = nameof(ReplaceRuleLinks_with_none_removes_that_rules_links_of_that_record_only);
+        var store = CreateStore();
+        _ = Expect.Ok(await store.CommitPage(Page("c1", [Record(_r103, "v1", "SPL-103"), Record(_r104, "v1", "SPL-104")], [Link(_r103, "concept:a", LinkRule.Alias), Link(_r104, "concept:a", LinkRule.Alias)]), None), test);
+
+        _ = Expect.Ok(await store.ReplaceRuleLinks(_r103, LinkRule.Alias, [], None), test);
+        var layer = Expect.Ok(await store.Layer(None), test);
+
+        Expect.That(layer.Links.Count == 1 && layer.Links[0].Record == _r104, test, $"{layer.Links.Count} links left");
+    }
+
     /// <summary>Requeue queues a done record again and leaves its decisions and edges alone; a version that moved on is ignored.</summary>
     /// <returns>The test.</returns>
     [Fact]
