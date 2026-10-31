@@ -33,6 +33,9 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
     /// <summary>When set, <see cref="SaveDraft"/> waits for it before writing (a build held after it stamped its time, as while it names concepts).</summary>
     public Task? SaveDraftHold { get; set; }
 
+    /// <summary>When set, <see cref="SaveDraft"/> promotes the draft it just wrote before it returns (a map refresh whose promote lands before a build parked behind it reads the versions).</summary>
+    public bool PromoteOnSave { get; set; }
+
     /// <summary>How many <see cref="SaveDraft"/> calls are waiting on <see cref="SaveDraftHold"/> right now.</summary>
     public int SaveDraftsWaiting { get; private set; }
 
@@ -132,7 +135,8 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
             }
         }
 
-        return await SaveDraftNow(map, created).ConfigureAwait(false);
+        var saved = await SaveDraftNow(map, created).ConfigureAwait(false);
+        return PromoteOnSave && saved.IsSuccess ? await Promote(saved.Value.Number, cancellationToken).ConfigureAwait(false) : saved;
     }
 
     private ValueTask<Result<MapVersion>> SaveDraftNow(MapImport map, DateTimeOffset created) => Done(() =>

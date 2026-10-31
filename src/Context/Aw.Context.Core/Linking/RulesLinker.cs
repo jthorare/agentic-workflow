@@ -30,26 +30,28 @@ public static partial class RulesLinker
     /// <param name="record">The record the text belongs to (it never links to itself).</param>
     /// <param name="text">The sanitized, scrubbed text.</param>
     /// <param name="graph">The map to link into.</param>
-    /// <param name="known">Every intent record the sync knows, for the issue-key and URL rules.</param>
-    /// <param name="teams">The profile's tracker teams: only their keys link.</param>
+    /// <param name="tracker">Every intent record the sync knows, for the issue-key and URL rules, and the profile's tracker teams: only their keys link.</param>
+    /// <param name="pins">The approved pins' ids and aliases, for the alias rule (see <see cref="Aliases"/>); none runs no alias rule.</param>
     /// <returns>The links, ordered by target then rule.</returns>
-    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, IReadOnlyList<IntentRecord> known, IReadOnlySet<string> teams)
+    public static IReadOnlyList<IntentLink> Link(RecordKey record, string text, GraphSnapshot graph, (IReadOnlyList<IntentRecord> Known, IReadOnlySet<string> Teams) tracker, IReadOnlyList<PinAliases> pins)
     {
         ArgumentNullException.ThrowIfNull(text);
         ArgumentNullException.ThrowIfNull(graph);
-        ArgumentNullException.ThrowIfNull(known);
-        ArgumentNullException.ThrowIfNull(teams);
-        var run = new Run(record, text, graph, known, teams);
+        ArgumentNullException.ThrowIfNull(tracker.Known);
+        ArgumentNullException.ThrowIfNull(tracker.Teams);
+        ArgumentNullException.ThrowIfNull(pins);
+        var run = new Run(record, text, graph, tracker.Known, tracker.Teams);
         run.Urls();
         run.Paths();
         run.QuotedTitles();
         run.IssueKeys();
         run.IdentifierTokens();
         run.Names();
+        run.Aliases(pins);
         return run.Result();
     }
 
-    private sealed class Run(RecordKey record, string text, GraphSnapshot graph, IReadOnlyList<IntentRecord> known, IReadOnlySet<string> teams)
+    private sealed partial class Run(RecordKey record, string text, GraphSnapshot graph, IReadOnlyList<IntentRecord> known, IReadOnlySet<string> teams)
     {
         private readonly Dictionary<(string Target, LinkRule Rule), IntentLink> _found = [];
         private readonly StringBuilder _rest = new(text);
