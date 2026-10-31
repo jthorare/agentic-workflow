@@ -42,7 +42,7 @@ public static class MapDocumentValidator
         var overrides = current ? [.. (document.Overrides ?? []).Select(Normalized)] : document.Overrides ?? [];
         return problems.Any
             ? problems.ToError()
-            : new MapImport(document.Repo, document.Commit, withDecisions with { Edges = [.. edges, .. quotes] }, overrides);
+            : new MapImport(document.Repo, document.Commit, PageOverlay.Without(withDecisions with { Edges = [.. edges, .. quotes] }), overrides);
     }
 
     private static void Header(MapDocument document, int keyVersion, MapProblems problems)

@@ -1,5 +1,4 @@
 using Aw.Kernel.Testing;
-using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
@@ -36,8 +35,8 @@ public sealed class PinConceptsServiceTests : IDisposable
         Assert.Equal([new PinWritten(ConceptPinId.From("billing"), "Billing", "created")], done.Value.Pins);
         Assert.False(done.Value.Approved);
         Assert.Matches("^[0-9a-f]{64}$", done.Value.Hash.Value);
-        Assert.Equal(PinWriterStub.Written, done.Value.Hash);
-        var edit = Assert.Single(_rig.Writer.Edits);
+        Assert.Equal(_rig.Writer.Hash, done.Value.Hash);
+        var edit = Assert.Single(_rig.Edits);
         Assert.Equal(new ConceptSettings(ConceptPinId.From("billing"), "Billing", "How we take money", Aliases: ["payments"]).Id, edit.Entry?.Id);
         Assert.Equal(("Billing", "How we take money", ["payments"]), (edit.Entry?.Name, edit.Entry?.Summary, edit.Entry?.Aliases));
     }
@@ -47,8 +46,8 @@ public sealed class PinConceptsServiceTests : IDisposable
     {
         var done = await Run(new PinConceptsRequest(Set: [new PinSet("Billing"), new PinSet("Auth"), new PinSet("Search")]));
 
-        Assert.Equal(1, _rig.Writer.Calls);
-        Assert.Equal(["billing", "auth", "search"], [.. _rig.Writer.Edits.Select(static e => e.Id.Value)]);
+        _ = Assert.Single(_rig.Writer.Writes);
+        Assert.Equal(["billing", "auth", "search"], [.. _rig.Edits.Select(static e => e.Id.Value)]);
         Assert.Equal(["created", "created", "created"], [.. done.Value.Pins.Select(static p => p.Action)]);
     }
 
@@ -60,7 +59,7 @@ public sealed class PinConceptsServiceTests : IDisposable
         var done = await Run(new PinConceptsRequest(Set: [new PinSet("Payments and billing", Id: ConceptPinId.From("billing"))]));
 
         Assert.Equal([new PinWritten(ConceptPinId.From("billing"), "Payments and billing", "updated")], done.Value.Pins);
-        var entry = Assert.Single(_rig.Writer.Edits).Entry;
+        var entry = Assert.Single(_rig.Edits).Entry;
         Assert.Equal(("billing", "Payments and billing"), (entry?.Id?.Value, entry?.Name));
     }
 
@@ -81,7 +80,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         _ = await Run(new PinConceptsRequest(Set: [new PinSet("Billing", Aliases: ["charges"])]));
 
-        var entry = Assert.Single(_rig.Writer.Edits).Entry;
+        var entry = Assert.Single(_rig.Edits).Entry;
         Assert.Equal("Stored line", entry?.Summary);
         Assert.Equal(["charges"], entry?.Aliases);
         Assert.Equal(["feature:billing.refunds"], entry?.Features);
@@ -94,7 +93,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         _ = await Run(new PinConceptsRequest(Set: [new PinSet("Billing", Aliases: [])]));
 
-        Assert.Null(Assert.Single(_rig.Writer.Edits).Entry?.Aliases);
+        Assert.Null(Assert.Single(_rig.Edits).Entry?.Aliases);
     }
 
     [Fact]
@@ -104,7 +103,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         _ = await Run(new PinConceptsRequest(Set: [new PinSet("Billing", Summary: "Money in")]));
 
-        var entry = Assert.Single(_rig.Writer.Edits).Entry;
+        var entry = Assert.Single(_rig.Edits).Entry;
         Assert.Equal((["src/billing/**"], ["auth"], ["invoices"]), (entry?.Paths, entry?.DependsOn, entry?.Owns));
     }
 
@@ -117,7 +116,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         Assert.Equal([new PinWritten(ConceptPinId.From("billing"), "Billing", "removed")], done.Value.Pins);
         Assert.Equal(["billing.paths", "billing.owns"], done.Value.Dropped);
-        var edit = Assert.Single(_rig.Writer.Edits);
+        var edit = Assert.Single(_rig.Edits);
         Assert.Equal(("billing", null), (edit.Id.Value, edit.Entry));
     }
 
@@ -141,7 +140,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         Assert.Equal("SND-CONTEXT-171", done.Error.Code);
         Assert.StartsWith("index.concepts[2].name: ", done.Error.Message, StringComparison.Ordinal);
-        Assert.Equal(0, _rig.Writer.Calls);
+        Assert.Empty(_rig.Writer.Writes);
     }
 
     [Fact]
@@ -153,7 +152,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         Assert.Equal("SND-CONTEXT-172", done.Error.Code);
         Assert.Equal("feature:billing.refundz is not in map v41 (fix: pick it from context_concepts or the feature picker)", done.Error.Message);
-        Assert.Equal(0, _rig.Writer.Calls);
+        Assert.Empty(_rig.Writer.Writes);
     }
 
     [Fact]
@@ -165,7 +164,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         Assert.Equal("SND-CONTEXT-172", done.Error.Code);
         Assert.Contains("no map is built yet", done.Error.Message, StringComparison.Ordinal);
-        Assert.Equal(0, _rig.Writer.Calls);
+        Assert.Empty(_rig.Writer.Writes);
     }
 
     [Fact]
@@ -199,7 +198,7 @@ public sealed class PinConceptsServiceTests : IDisposable
         Assert.Equal("SND-CONTEXT-173", precheck.Error.Code);
         Assert.Equal("'Billing ' and 'billing' make the same id billing (fix: --id, or rename one)", precheck.Error.Message);
         Assert.Equal("SND-CONTEXT-173", done.Error.Code);
-        Assert.Equal(0, _rig.Writer.Calls);
+        Assert.Empty(_rig.Writer.Writes);
     }
 
     [Fact]
@@ -219,7 +218,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         Assert.Equal("SND-CONTEXT-174", done.Error.Code);
         Assert.Equal("no pin is named 'bilin' in the profile (fix: try billing, auth)", done.Error.Message);
-        Assert.Equal(0, _rig.Writer.Calls);
+        Assert.Empty(_rig.Writer.Writes);
     }
 
     [Fact]
@@ -231,7 +230,7 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         Assert.Equal("SND-CONTEXT-175", done.Error.Code);
         Assert.Equal("pin billing has 2 folder rules set outside the app (fix: --with-folder-rules to drop them too)", done.Error.Message);
-        Assert.Equal(0, _rig.Writer.Calls);
+        Assert.Empty(_rig.Writer.Writes);
     }
 
     [Fact]
@@ -243,27 +242,25 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         Assert.Equal("SND-CONTEXT-176", done.Error.Code);
         Assert.Equal("pin billing is set in repo api's own profile (fix: edit it there)", done.Error.Message);
-        Assert.Equal(0, _rig.Writer.Calls);
+        Assert.Empty(_rig.Writer.Writes);
     }
 
     [Fact]
-    public async Task The_callers_profile_hash_goes_to_the_writer()
+    public async Task The_callers_profile_hash_goes_to_the_writer_which_writes_when_it_still_holds()
     {
-        var hash = ProfileHashing.Of("read"u8);
+        var done = await Run(new PinConceptsRequest(Set: [new PinSet("Billing")], IfHash: _rig.Writer.Hash));
 
-        _ = await Run(new PinConceptsRequest(Set: [new PinSet("Billing")], IfHash: hash));
-
-        Assert.Equal(hash, _rig.Writer.IfHash);
+        Assert.True(done.IsSuccess);
+        _ = Assert.Single(_rig.Writer.Writes);
     }
 
     [Fact]
     public async Task A_moved_file_is_the_writers_003_unchanged_and_no_event_is_recorded()
     {
-        _rig.Writer.Fails = SindriErrors.ProfileHashMismatch.With("the profile changed since you read it (fix: read it again)");
-
         var done = await Run(new PinConceptsRequest(Set: [new PinSet("Billing")], IfHash: ProfileHashing.Of("read"u8)));
 
         Assert.Equal("SND-PROFILE-003", done.Error.Code);
+        Assert.Empty(_rig.Writer.Writes);
         Assert.DoesNotContain(_rig.Slice.Store.Events, static e => e.Envelope.Type == EventTypes.ContextPinWritten);
     }
 
@@ -276,12 +273,12 @@ public sealed class PinConceptsServiceTests : IDisposable
         _ = await Run(new PinConceptsRequest(Set: [new PinSet("Billing")], Remove: [ConceptPinId.From("auth")]));
 
         var recorded = Assert.Single(_rig.Slice.Store.Events, static e => e.Envelope.Type == EventTypes.ContextPinWritten);
-        Assert.Equal("context.pin.written:" + PinWriterStub.Written.Value, recorded.IdempotencyKey);
+        Assert.Equal("context.pin.written:" + _rig.Writer.Hash.Value, recorded.IdempotencyKey);
         var payload = _rig.Slice.Events.Payload<ContextPinWritten>(recorded).Value;
         Assert.StartsWith("session:", payload.Actor, StringComparison.Ordinal);
         Assert.True(payload.Launch.HasValue);
         Assert.Equal(["billing:created", "auth:removed"], payload.Pins);
-        Assert.Equal(PinWriterStub.Written, payload.Hash);
+        Assert.Equal(_rig.Writer.Hash, payload.Hash);
     }
 
     [Fact]
@@ -298,7 +295,7 @@ public sealed class PinConceptsServiceTests : IDisposable
         var done = await _rig.Service().Handle(new PinConceptsRequest(Set: [new PinSet("Billing")]), Token);
 
         Assert.Equal("SND-API-001", done.Error.Code);
-        Assert.Equal(0, _rig.Writer.Calls);
+        Assert.Empty(_rig.Writer.Writes);
     }
 
     [Fact]
@@ -311,5 +308,29 @@ public sealed class PinConceptsServiceTests : IDisposable
 
         Assert.Equal("SND-CONTEXT-175", refused.Error.Code);
         Assert.True(admitted.IsSuccess);
+    }
+
+    [Fact]
+    public async Task An_edit_of_an_entry_with_no_id_carries_its_name_so_the_writer_replaces_it()
+    {
+        _rig.Profile([new ConceptSettings(Name: "Billing", Summary: "Hand written")]);
+
+        var done = await Run(new PinConceptsRequest(Set: [new PinSet("Billing", Aliases: ["payments"])]));
+
+        Assert.Equal("updated", Assert.Single(done.Value.Pins).Action);
+        var edit = Assert.Single(_rig.Edits);
+        Assert.Equal(("billing", "Billing", "Hand written"), (edit.Id.Value, edit.MatchName, edit.Entry?.Summary));
+    }
+
+    [Fact]
+    public async Task A_removal_of_an_entry_with_no_id_carries_its_name_and_an_edit_by_id_does_not()
+    {
+        _rig.Profile([new ConceptSettings(Name: "Billing"), Pin("auth", "Auth")]);
+
+        _ = await Run(new PinConceptsRequest(Set: [new PinSet("Auth", Summary: "Who")], Remove: [ConceptPinId.From("billing")]));
+
+        Assert.Equal(["auth", "billing"], [.. _rig.Edits.Select(static e => e.Id.Value)]);
+        Assert.Null(_rig.Edits[0].MatchName);
+        Assert.Equal("Billing", _rig.Edits[1].MatchName);
     }
 }

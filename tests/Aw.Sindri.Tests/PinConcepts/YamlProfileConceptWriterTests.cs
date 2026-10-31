@@ -333,4 +333,29 @@ public sealed class YamlProfileConceptWriterTests : IDisposable
         Assert.StartsWith("# my profile\r\nschemaVersion: 1\r\n", text, StringComparison.Ordinal);
         Assert.Equal(["billing", "tabs"], Ids(), StringComparer.Ordinal);
     }
+
+    [Fact]
+    public async Task An_entry_without_an_id_is_replaced_by_its_name_and_gets_one()
+    {
+        Put(Head + "index:\n  concepts:\n    - name: Billing   # hand written\n      summary: Old\n    - id: auth\n      name: Auth\n");
+
+        var done = await Writer().Write([new ConceptEdit(ConceptPinId.From("billing"), new ConceptSettings(Name: "Billing", Summary: "New"), MatchName: "Billing")], ifHash: null, Token);
+
+        Assert.True(done.IsSuccess, done.IsSuccess ? null : done.Error.Message);
+        Assert.Equal(["billing", "auth"], Ids(), StringComparer.Ordinal);
+        Assert.Equal("New", Load().Profile.Index!.Concepts![0].Summary);
+        Assert.DoesNotContain("hand written", Text(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task An_id_match_wins_over_a_name_match()
+    {
+        Put(Head + "index:\n  concepts:\n    - name: Billing\n    - id: billing\n      name: Money\n");
+
+        _ = await Writer().Write([new ConceptEdit(ConceptPinId.From("billing"), new ConceptSettings(Name: "Money", Summary: "S"), MatchName: "Billing")], ifHash: null, Token);
+
+        Assert.Equal(["billing"], Ids(), StringComparer.Ordinal);
+        Assert.Equal(2, Load().Profile.Index!.Concepts!.Count);
+        Assert.Equal("S", Load().Profile.Index!.Concepts![1].Summary);
+    }
 }
