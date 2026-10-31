@@ -38,7 +38,7 @@ public sealed class ShellPinSheetTests
     {
         var shell = await Shell();
 
-        shell.OpenPinSheet(new PinSheetOpen("api", new ConceptTileViewModel("billing", "Billing", string.Empty, new Aw.Sindri.Ui.Api.Context.ConceptSize(0, 0, 0, 0), setByPerson: false, terms: null, _ => { }), Pin: null, Pins: []));
+        shell.OpenPinSheet(new PinSheetOpen("api", new ConceptTileViewModel("billing", "Billing", string.Empty, new Ui.Api.Context.ConceptSize(0, 0, 0, 0), setByPerson: false, terms: null, _ => { }), Pin: null, Pins: []));
 
         Assert.Equal("Pin this", shell.SheetName);
         Assert.True(DeepLink.TryParse("context/pin", out var link));

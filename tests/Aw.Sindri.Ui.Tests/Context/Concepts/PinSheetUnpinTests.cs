@@ -57,7 +57,7 @@ public sealed class PinSheetUnpinTests
         await sheet.Unpin(Token);
 
         var body = Assert.Single(kit.Api.PinnedConcepts);
-        Assert.Equal(["billing"], body.Remove!, StringComparer.Ordinal);
+        Assert.Equal(["billing"], body.Remove, StringComparer.Ordinal);
         Assert.Equal((true, FileHash), (body.WithFolderRules, body.IfHash));
         Assert.Null(body.Set);
         Assert.Equal("h1", Assert.Single(kit.Api.ProfileApprovals).Hash);
