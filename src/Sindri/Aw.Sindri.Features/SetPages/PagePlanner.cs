@@ -225,7 +225,7 @@ internal static class PagePlanner
     }
 
     // Where a page is in the profile file, named the way ProfileRules names keys: the top-level list, or a repo's own, counted within that list.
-    private static string PathOf(List<PageSlot> slots, int at)
+    internal static string PathOf(List<PageSlot> slots, int at)
     {
         var slot = slots[at];
         var position = slots.Take(at).Count(s => string.Equals(s.Repo, slot.Repo, StringComparison.Ordinal));

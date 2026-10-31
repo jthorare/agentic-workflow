@@ -1,3 +1,5 @@
+using System.Globalization;
+using System.Text.RegularExpressions;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Kernel;
@@ -7,7 +9,7 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Features.SetPages;
 
 /// <summary>The write rules of pages (pages spec §3.1) over the pages as they will be after a SetPages request.</summary>
-internal static class PageWriteCheck
+internal static partial class PageWriteCheck
 {
     // The write rules (the same ones the app's sheet and Add several pages call) over every planned page, then the profile's own. Caps, duplicate ids and names are checked over the whole list; the map's keys only for the pages this request set, since the facts are the caller's view and may not hold another repo's pages.
     internal static Error? Check(SindriProfile planned, List<PageSlot> slots, PinNames pins, MapPageFacts map)
@@ -19,12 +21,19 @@ internal static class PageWriteCheck
         var errors = PageRules.Check([.. live.Select(s => Pin(s, taken))], facts);
         if (errors.Count > 0)
         {
-            return errors[0];
+            return Located(errors[0], live);
         }
 
         var checkedProfile = ProfileRules.Check(planned);
         return checkedProfile.IsError ? checkedProfile.Error : null;
     }
+
+    // PageRules counts pages in the merged list; the owner's file has the top-level list and each repo's own, so the paths are rewritten to where the page really is.
+    private static Error Located(Error error, List<PageSlot> live) =>
+        error with { Message = MergedIndex.Replace(error.Message, m => PagePlanner.PathOf(live, int.Parse(m.Groups["n"].Value, CultureInfo.InvariantCulture))) };
+
+    [GeneratedRegex(@"index\.pages\[(?<n>\d+)\]", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex MergedIndex { get; }
 
     // An explicit id is used as written, so a repeat reaches the duplicate rule; an id the build makes from the name takes '-2', '-3' as the build does.
     private static PagePin Pin(PageSlot slot, HashSet<string> taken)

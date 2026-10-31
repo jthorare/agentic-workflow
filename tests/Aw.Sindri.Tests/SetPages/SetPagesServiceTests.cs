@@ -413,4 +413,14 @@ public sealed class SetPagesServiceTests : IDisposable
 
         Refused(done, ContextErrors.PageRepoAmbiguous.Code, "say which repo this page is in, admin or web (fix: --repo)");
     }
+
+    [Fact]
+    public async Task A_251_on_a_repos_own_page_reads_the_repos_path()
+    {
+        _rig.Profile([Page("Queue", id: "queue")], new RepoEntry("web", "/work/web", new IndexSettings(Pages: [Page("Week", id: "week")])));
+
+        var done = await Run(new SetPagesRequest(Set: [Page("Week", id: "week", surface: "surface:route/GET:/nope")]));
+
+        Refused(done, ContextErrors.PageKeyUnknown.Code, "repos.web.index.pages[0].surface: ");
+    }
 }
