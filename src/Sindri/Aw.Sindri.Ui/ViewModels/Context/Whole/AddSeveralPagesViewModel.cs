@@ -127,24 +127,15 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
             return;
         }
 
+        var text = Text;   // what is sent is what the rows are read from, whatever is typed while the read runs
         SayText(string.Empty);
         Say(string.Empty);
         IsReading = true;
         OnChanged(nameof(IsReading));
-        PagesPreviewRead read;
-        try
-        {
-            read = await _writes.Preview(Text, _repo, cancellationToken).ConfigureAwait(true);
-            _waiting = read.Preview is null ? null : await _writes.Waiting(cancellationToken).ConfigureAwait(true);
-        }
-        catch (OperationCanceledException)
+        var read = await Read(text, cancellationToken).ConfigureAwait(true);
+        if (read is null)
         {
             return;   // the sheet closed while the list was read
-        }
-        finally
-        {
-            IsReading = false;
-            OnChanged(nameof(IsReading));
         }
 
         if (read.Preview is not { } preview)
@@ -153,8 +144,27 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
             return;
         }
 
-        Fill(preview, Text);
+        Fill(preview, text);
         FocusRequested?.Invoke(this, new ValueEventArgs<AddSeveralPagesFocus>(ProblemRow >= 0 ? AddSeveralPagesFocus.ProblemRow : AddSeveralPagesFocus.SaveAll));
+    }
+
+    private async Task<PagesPreviewRead?> Read(string text, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var read = await _writes.Preview(text, _repo, cancellationToken).ConfigureAwait(true);
+            _waiting = read.Preview is null ? null : await _writes.Waiting(cancellationToken).ConfigureAwait(true);
+            return read;
+        }
+        catch (OperationCanceledException)
+        {
+            return null;
+        }
+        finally
+        {
+            IsReading = false;
+            OnChanged(nameof(IsReading));
+        }
     }
 
     private static string Refusal(PagesPreviewRead read) =>

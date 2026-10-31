@@ -46,15 +46,23 @@ internal sealed class FakePageWrites : IPageWrites
     /// <summary>Gets every paste asked for, in order.</summary>
     public List<string> Previews { get; } = [];
 
-    public Task<PagesPreviewRead> Preview(string text, string? repo, CancellationToken cancellationToken)
+    /// <summary>Gets or sets a gate every preview waits on before it answers; null answers at once.</summary>
+    public TaskCompletionSource? PreviewGate { get; set; }
+
+    public async Task<PagesPreviewRead> Preview(string text, string? repo, CancellationToken cancellationToken)
     {
         Previews.Add(text);
-        if (_previews.Count > 0)
+        if (PreviewGate is { } gate)
         {
-            return Task.FromResult(_previews.Dequeue());
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
 
-        return Task.FromResult(PreviewAnswer ?? new PagesPreviewRead(Preview: null, "SND-API-001"));
+        if (_previews.Count > 0)
+        {
+            return _previews.Dequeue();
+        }
+
+        return PreviewAnswer ?? new PagesPreviewRead(Preview: null, "SND-API-001");
     }
 
     public Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)

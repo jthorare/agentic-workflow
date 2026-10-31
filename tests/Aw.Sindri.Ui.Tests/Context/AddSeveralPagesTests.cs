@@ -223,4 +223,21 @@ public sealed class AddSeveralPagesTests
         shell.ActiveAddSeveralPages?.Close();
         Expect.True(!shell.IsAddSeveralPages && shell.ActiveAddSeveralPages is null, "closing it lets the sheet go");
     }
+
+    [Fact]
+    public async Task A_keystroke_during_the_read_leaves_save_off()
+    {
+        var (sheet, writes) = Sheet(Block(1, "Schedule week"));
+        var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        writes.PreviewGate = gate;
+        sheet.Text = "Schedule week";
+
+        var reading = sheet.ReadList(TestContext.Current.CancellationToken);
+        sheet.Text = "Schedule week\nSubmit";   // typed while the read runs
+        gate.SetResult();
+        await reading;
+
+        Expect.Equal("Schedule week", writes.Previews[0]);
+        Expect.True(!sheet.CanSave, "the rows were read from text that is no longer in the box");
+    }
 }
