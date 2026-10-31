@@ -40,7 +40,7 @@ public static class ConceptBuilder
         var other = new ConceptOther(NodeKey.From(ConceptKeys.Other), OtherName, Size(index, index.MembersOf(ConceptKeys.Other)));
         var pageCounts = PageReader.PagesPerConcept(graph);
         var rows = page.Select(n => Row(index, n, text, pins, pageCounts.GetValueOrDefault(n.Key.Value))).ToList();
-        return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = WholeMap.PagesInNoConcept.Of(graph).Count };
+        return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
     }
 
     /// <summary>One page of one concept's members.</summary>
