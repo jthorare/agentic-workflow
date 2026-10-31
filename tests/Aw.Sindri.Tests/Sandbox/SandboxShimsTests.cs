@@ -167,16 +167,19 @@ public sealed class SandboxShimsTests : IDisposable
 
     private (string Output, int Code) Run(string tool, string args, bool slotHeld)
     {
-        var start = new ProcessStartInfo("/bin/sh") { RedirectStandardOutput = true, UseShellExecute = false };
-        start.ArgumentList.Add("-c");
-        start.ArgumentList.Add($"exec '{Path.Combine(_dir, "shims", tool)}' {args}");
+        var start = new ProcessStartInfo(Path.Combine(_dir, "shims", tool)) { RedirectStandardOutput = true, UseShellExecute = false };
+        foreach (var arg in args.Split(' '))
+        {
+            start.ArgumentList.Add(arg);
+        }
+
         _ = start.Environment.Remove("AW_SANDBOX_SLOT_HELD");
         if (slotHeld)
         {
             start.Environment["AW_SANDBOX_SLOT_HELD"] = "1";
         }
 
-        using var process = Process.Start(start)!;
+        using var process = ExecutableScript.StartWhenNotBusy(start);   // SandboxShims.Write wrote the shim a moment ago: a child another test forked may still hold its write descriptor (#1811)
         var output = process.StandardOutput.ReadToEnd().TrimEnd('\n');
         process.WaitForExit();
         return (output, process.ExitCode);
