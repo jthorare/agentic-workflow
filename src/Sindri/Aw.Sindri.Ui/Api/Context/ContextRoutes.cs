@@ -106,6 +106,13 @@ internal static class ContextRoutes
         return With(Root + "/pins/suggest", parts);
     }
 
+    internal static string Pins(string repo)
+    {
+        var parts = new List<string>();
+        Add(parts, "repo", repo);
+        return With(Root + "/pins", parts);
+    }
+
     /// <summary>QUERY /sindri/context/code: the anchors travel as the JSON body.</summary>
     internal const string Code = Root + "/code";
 
