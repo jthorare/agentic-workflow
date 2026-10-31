@@ -10708,7 +10708,9 @@ Aw.Context.Core.Graph.IAliasPins
 Aw.Context.Core.Graph.IAliasPins.AliasesIn(System.Collections.Generic.IReadOnlySet<string!>! words) -> System.Collections.Generic.IReadOnlyList<(string! Pin, string! Alias, int Words)>!
 Aw.Context.Core.Graph.IAliasPins.PinByAlias(string! name) -> string?
 Aw.Context.Core.WholeMap.PagesInNoConcept
-static Aw.Context.Core.WholeMap.PagesInNoConcept.Of(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Context.Core.WholeMap.PagesInNoConcept.Of(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyDictionary<string!, int>? rank = null) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.WholeMapAsk.PageRank.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.WholeMap.WholeMapAsk.PageRank.init -> void
 Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.get -> bool
 Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.init -> void
 Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool

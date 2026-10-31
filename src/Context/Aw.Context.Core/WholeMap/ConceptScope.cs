@@ -24,8 +24,9 @@ internal static class ConceptScope
     /// <param name="index">The graph's concepts.</param>
     /// <param name="edges">The graph's edges between known nodes.</param>
     /// <param name="concept">A concept key, or 'concept:other'.</param>
+    /// <param name="rank">Each profile page's index by page id, or null to keep owner pages in node order.</param>
     /// <returns>The keys (ordinal), empty for a concept with no members and no node.</returns>
-    internal static HashSet<string> Nodes(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept)
+    internal static HashSet<string> Nodes(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept, IReadOnlyDictionary<string, int>? rank = null)
     {
         var near = new Dictionary<string, List<string>>(StringComparer.Ordinal);
         foreach (var edge in edges.Where(e => e.Type != EdgeType.BelongsTo))
@@ -43,7 +44,7 @@ internal static class ConceptScope
         }
 
         AddProductClosure(index, edges, all);
-        AddExpressed(index, edges, concept, all);
+        AddExpressed(index, edges, concept, all, rank);
 
         if (index.Known.ContainsKey(concept))
         {
@@ -57,13 +58,14 @@ internal static class ConceptScope
     /// <param name="index">The map's concepts.</param>
     /// <param name="edges">The map's edges.</param>
     /// <param name="concept">The concept's key.</param>
+    /// <param name="rank">Each profile page's index by page id, or null to keep owner pages in node order.</param>
     /// <returns>The page keys, owner-named first.</returns>
-    internal static List<string> Pages(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept)
+    internal static List<string> Pages(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept, IReadOnlyDictionary<string, int>? rank = null)
     {
         var (sources, on) = Expressing(index, edges, concept);
         var pages = sources.Where(k => index.Known[k].Key.Kind == NodeKind.Surface).Concat(sources.Where(k => index.Known[k].Key.Kind == NodeKind.Action).SelectMany(k => on[k]))
             .Where(k => index.Known[k].Key.Kind == NodeKind.Surface).Distinct(StringComparer.Ordinal).Select(k => index.Known[k]);
-        return [.. PageOrder.Of(pages, edges).Take(PageCap)];
+        return [.. PageOrder.Of(pages, edges, rank).Take(PageCap)];
     }
 
     // The nodes that express the concept, and each action's pages.
@@ -72,7 +74,7 @@ internal static class ConceptScope
          edges.Where(e => e.Type == EdgeType.On && e.From.Kind == NodeKind.Action && index.Known.ContainsKey(e.To.Value)).ToLookup(e => e.From.Value, e => e.To.Value, StringComparer.Ordinal));
 
     // The second root set: the actions that express the concept and the pages they are on, then every action on a kept page; its own cap, so a big closure does not cut it.
-    private static void AddExpressed(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept, HashSet<string> all)
+    private static void AddExpressed(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept, HashSet<string> all, IReadOnlyDictionary<string, int>? rank)
     {
         var (sources, on) = Expressing(index, edges, concept);
         if (sources.Count == 0)
@@ -80,7 +82,7 @@ internal static class ConceptScope
             return;
         }
 
-        var kept = Pages(index, edges, concept).ToHashSet(StringComparer.Ordinal);
+        var kept = Pages(index, edges, concept, rank).ToHashSet(StringComparer.Ordinal);
         foreach (var page in kept)
         {
             _ = all.Add(page);

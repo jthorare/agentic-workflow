@@ -40,22 +40,27 @@ internal sealed class GetWholeMapService(MapReader reader, IScrubberFactory scru
 
         var map = read.Value;
         var key = CacheKey(map.Snapshot.Version.Number, detail.Value, query, repo.Value, scope);
-        return cache.Get(map.Graph, key, () => Build(map, (query, detail.Value), repo.Value, new MapText(built.Value, FencePolicies.For(scope.Caller))));
+        return cache.Get(map.Graph, key, () => Build(map, (query, detail.Value), (repo.Value, PageRank(scope)), new MapText(built.Value, FencePolicies.For(scope.Caller))));
     }
 
-    private Result<WholeMapView> Build(VisibleMap map, (WholeMapQuery Query, WholeMapDetail Detail) asked, RepoChoice repo, MapText text)
+    private Result<WholeMapView> Build(VisibleMap map, (WholeMapQuery Query, WholeMapDetail Detail) asked, (RepoChoice Repo, IReadOnlyDictionary<string, int> PageRank) how, MapText text)
     {
+        var (repo, pageRank) = how;
         var graph = repo.Cut is { } cut ? map.Graph.ScopedTo(cut) : map.Graph;
         var snapshot = map.Snapshot;
         var commit = snapshot.Version.Commit is { Length: > 0 } c ? c[..Math.Min(7, c.Length)] : null;
         var basis = new WholeMapBasis(snapshot.Tag, commit, asked.Query.Read.Draft, snapshot.Version.Created, repo.Name);
         var repoOf = NodeRepos.Index(map.Graph, snapshot.Version.Repo.Value);
-        var ask = new WholeMapAsk(basis, asked.Detail, asked.Query.Locate, asked.Query.Area) { Concept = asked.Query.Concept, PagesInNoConcept = asked.Query.PagesInNoConcept, Repos = WholeMapBuilder.Repos(repoOf), RepoOf = repoOf };
+        var ask = new WholeMapAsk(basis, asked.Detail, asked.Query.Locate, asked.Query.Area) { Concept = asked.Query.Concept, PagesInNoConcept = asked.Query.PagesInNoConcept, Repos = WholeMapBuilder.Repos(repoOf), RepoOf = repoOf, PageRank = pageRank };
         return WholeMapBuilder.Build(ask, graph, MapAreas.Assign(graph, rules.AreaCap), rules, text);
     }
 
     private static string CacheKey(int version, WholeMapDetail detail, WholeMapQuery query, RepoChoice repo, ContextScope scope) =>
-        string.Join('\n', version, query.Read.Draft, detail, string.Join('\u001f', query.Locate), query.Area, query.Concept, query.PagesInNoConcept, repo.Name, repo.Cut?.Value, FencePolicies.For(scope.Caller), scope.Caller.Kind, scope.Caller.Repo?.Value, scope.Settings?.GetRawText());
+        string.Join('\n', version, query.Read.Draft, detail, string.Join('\u001f', query.Locate), query.Area, query.Concept, query.PagesInNoConcept, repo.Name, repo.Cut?.Value, FencePolicies.For(scope.Caller), scope.Caller.Kind, scope.Caller.Repo?.Value, scope.Settings?.GetRawText(), string.Join(',', PageRank(scope).OrderBy(p => p.Value).Select(p => p.Key)));
+
+    // The profile's pages by id with their index in the order PageOverlay.Apply lays them in.
+    private static Dictionary<string, int> PageRank(ContextScope scope) =>
+        scope.Repos.SelectMany(r => r.Pages).DistinctBy(p => p.Id).Select((p, i) => (Id: p.Id.Value, Index: i)).ToDictionary(p => p.Id, p => p.Index, StringComparer.Ordinal);
 
     private static Result<WholeMapDetail> Detail(WholeMapQuery query)
     {
