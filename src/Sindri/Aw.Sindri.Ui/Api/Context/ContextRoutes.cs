@@ -95,6 +95,11 @@ internal static class ContextRoutes
         Add(parts, "repo", query.Repo);
         Add(parts, "concept", query.Concept);
         Add(parts, "search", query.Search);
+        if (query.Search is { Length: 0 })
+        {
+            parts.Add("search=");   // present but empty: every feature (the picker's first look)
+        }
+
         parts.AddRange(Limit(query.Limit));
         var lines = query.Lines ?? [];
         parts.AddRange(lines.Select(l => "line=" + Uri.EscapeDataString(l.Name)));

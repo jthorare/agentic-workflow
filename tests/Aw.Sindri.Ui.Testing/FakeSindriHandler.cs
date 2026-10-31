@@ -272,6 +272,10 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 return Answer(server.ContextConceptGlossaryAnswer(glossary));
             case "pins/suggest":
                 return await PinSuggest(uri, query, cancellationToken);
+            case "pins":
+                var repo = query["repo"] ?? string.Empty;
+                _ = await server.ContextPins(uri, repo, cancellationToken);
+                return Answer(server.ContextPinsAnswer(repo));
             default:
                 return Text(HttpStatusCode.NotFound, "{}", "application/json");
         }

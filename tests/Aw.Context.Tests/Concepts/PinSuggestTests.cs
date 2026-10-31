@@ -84,8 +84,20 @@ public sealed class PinSuggestTests
         var terms = suggested.Value.Terms;
         Assert.NotNull(terms);
         Assert.Equal([("payment", 2), ("invoice", 0)], terms.Select(t => (t.Word, t.NewRecords)));   // 3 records say "payments", 1 is linked already; the invoice one is removed
-        Assert.Null(suggested.Value.Features);
+        Assert.Equal([("feature:checkout", "Checkout")], suggested.Value.Features!.Select(f => (f.Key.Value, f.Label)));   // the concept's member feature rides along
         Assert.Null(suggested.Value.Matches);
+    }
+
+    [Fact]
+    public async Task Concept_suggest_lists_the_concepts_member_features()
+    {
+        using var world = await Rig();
+
+        var suggested = await world.Engine.PinSuggest(ForConcept("concept:billing"), MapWorld.HumanWith(Profile), Ct);
+
+        Assert.True(suggested.IsSuccess, suggested.IsError ? suggested.Error.Message : null);
+        var feature = Assert.Single(suggested.Value.Features!);
+        Assert.Equal("feature:checkout", feature.Key.Value);
     }
 
     [Fact]
