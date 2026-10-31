@@ -1,0 +1,59 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Context.Concepts"
+             x:Class="Aw.Sindri.Ui.Views.Context.Concepts.PinSeveralView"
+             x:DataType="vm:PinSeveralViewModel">
+  <!-- The Add several sheet (concept pins spec §3.6, mockup several B): the box and the rows on one screen, a wrong split fixed in its row. Tab runs each row's tick, its match picker, then its words. -->
+  <ScrollViewer>
+    <StackPanel Spacing="10" Margin="0,0,0,8">
+      <TextBlock Classes="body-strong" Text="{Binding Title}" />
+      <TextBox x:Name="PinSeveralBox" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120" MaxHeight="240"
+               PlaceholderText="{Binding Hint}" AutomationProperties.Name="{Binding BoxName}" />
+      <Button x:Name="ReadList" Content="{Binding ReadText}" IsEnabled="{Binding CanRead}" Click="OnReadList" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ReadText}" />
+      <TextBlock Classes="caption subtle" Text="{Binding TooManyNote}" IsVisible="{Binding HasTooManyNote}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+      <ItemsControl x:Name="PinSeveralRows" ItemsSource="{Binding Rows}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:PinSeveralRowViewModel">
+            <Border Margin="0,0,0,8" Padding="12,10" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
+                    AutomationProperties.Name="{Binding AccessibleName}">
+              <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnSpacing="10" RowSpacing="4">
+                <CheckBox Grid.RowSpan="2" IsChecked="{Binding Ticked, Mode=TwoWay}" IsEnabled="{Binding CanTick}" AutomationProperties.Name="{Binding LineText}" />
+                <StackPanel Grid.Column="1" Spacing="2">
+                  <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Classes="caption subtle" Text="{Binding LineText}" />
+                    <TextBlock Classes="caption" Text="{Binding SplitText}" TextWrapping="Wrap" />
+                  </StackPanel>
+                  <TextBlock Classes="body" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Note}" />
+                  <TextBlock Classes="caption subtle" Text="{Binding MatchNote}" IsVisible="{Binding HasMatchNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding MatchNote}" />
+                </StackPanel>
+                <ComboBox Grid.Row="2" Grid.Column="1" ItemsSource="{Binding Choices}" SelectedItem="{Binding SelectedChoice, Mode=TwoWay}" SelectionChanged="OnPicked"
+                          HorizontalAlignment="Left" MinWidth="160" AutomationProperties.Name="{Binding $parent[UserControl].((vm:PinSeveralViewModel)DataContext).PickerName}" />
+                <StackPanel Grid.Row="3" Grid.Column="1" Spacing="2">
+                  <TextBlock Classes="caption subtle" Text="{Binding WordsNote}" IsVisible="{Binding HasWordsNote}" TextWrapping="Wrap" />
+                  <ItemsControl ItemsSource="{Binding Words}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:PinWordRow">
+                        <StackPanel Spacing="0">
+                          <CheckBox IsChecked="{Binding Ticked, Mode=TwoWay}" IsEnabled="{Binding !IsRefused}" Content="{Binding Text}" AutomationProperties.Name="{Binding AccessibleName}" />
+                          <TextBlock Classes="caption subtle" Margin="28,0,0,0" Text="{Binding Detail}" IsVisible="{Binding HasDetail}" TextWrapping="Wrap" />
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <TextBlock Classes="caption subtle" Text="{Binding FeaturesText}" IsVisible="{Binding HasFeatures}" TextWrapping="Wrap" />
+                </StackPanel>
+                <Grid Grid.Row="4" Grid.Column="1" ColumnDefinitions="*,*" ColumnSpacing="8">
+                  <TextBox Text="{Binding Name, Mode=TwoWay}" PlaceholderText="Name" AutomationProperties.Name="{Binding $parent[UserControl].((vm:PinSeveralViewModel)DataContext).NameBoxName}" />
+                  <TextBox Grid.Column="1" Text="{Binding Definition, Mode=TwoWay}" PlaceholderText="Definition" AutomationProperties.Name="{Binding $parent[UserControl].((vm:PinSeveralViewModel)DataContext).DefinitionBoxName}" />
+                </Grid>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <TextBlock Classes="body" Text="{Binding Message}" IsVisible="{Binding HasMessage}" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+      <Button x:Name="PinSubmit" Content="{Binding SubmitText}" IsEnabled="{Binding CanSubmit}" Click="OnSubmit" HorizontalAlignment="Left" AutomationProperties.Name="{Binding SubmitText}" />
+      <TextBlock Classes="caption subtle" Text="{Binding SubmitNote}" IsVisible="{Binding HasSubmitNote}" TextWrapping="Wrap" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>
