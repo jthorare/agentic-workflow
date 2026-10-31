@@ -35,7 +35,9 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
     {
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         var latest = await approved.Latest(cancellationToken).ConfigureAwait(false);
-        var state = await engine.Held(scope, cancellationToken).ConfigureAwait(false);
+        // the publish status is a service's read (a session is refused it), and only derived words leave here (the map's version, stale, the phase, the change of a pin)
+        var service = scope with { Caller = new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service) };
+        var state = await engine.Held(service, cancellationToken).ConfigureAwait(false);
         if (loaded.IsError || latest.IsError || state.IsError)
         {
             return loaded.IsError ? loaded.Error : latest.IsError ? latest.Error : state.Error;
@@ -43,7 +45,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
 
         var changes = new PinChanges(MapRuleset.RunningPins(scope), state.Value.CurrentPinHashes);
         var pins = Rows(loaded.Value.Profile, latest.Value?.Profile, repo, changes);
-        var progress = await rebuild.Read(cancellationToken).ConfigureAwait(false);
+        var progress = await rebuild.Read(service, cancellationToken).ConfigureAwait(false);
         var failed = await LastFailure(cancellationToken).ConfigureAwait(false);
         var view = new ContextRebuildView(Phase(progress.Phase), progress.Progress, progress.RetryAt, Stale(state.Value, scope), failed);
         return new ContextPinsView(1, repo, loaded.Value.Hash.Value, state.Value.Current is { } current ? MapVersionRef.Tag(current) : null, pins, view);
