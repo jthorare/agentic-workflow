@@ -10742,3 +10742,5 @@ override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.ToString() -> string!
 static Aw.Context.Core.Eval.Backtest.BacktestScoring.PinAnchored(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Eval.Backtest.SampleScore!>! scores) -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
 static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator !=(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
 static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator ==(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
+Aw.Context.Core.Concepts.PinSet.PinsOf(System.Collections.Generic.IReadOnlyList<string!>! anchors) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>!
+static Aw.Context.Core.Concepts.PinSet.Sole(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>! anchorPins) -> Aw.Context.Core.Engine.ConceptId?

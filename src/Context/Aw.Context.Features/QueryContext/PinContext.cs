@@ -64,10 +64,13 @@ internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<Co
             named = found.Value;
         }
 
-        var anchored = anchors.Select(a => NodeKey.TryFrom(a, out var key) ? pins.PinOf(key) : null).OfType<ConceptId>().DistinctBy(p => p.Value, StringComparer.Ordinal).ToList();
+        var anchored = pins.PinsOf(anchors);
         var stale = Stale(map.Snapshot, mapped);
         return new PinContext(pins, named, anchored, stale) { StaleVersion = stale is null ? null : map.Snapshot.Version.Number };
     }
+
+    /// <summary>The pin the pin leg runs for: the one pin the anchors sit in; null for no anchor pin or two (spec §3.3).</summary>
+    internal ConceptId? SoleAnchorPin => PinSet.Sole(AnchorPins);
 
     /// <summary>The number of the map version the pins changed after (41 for <c xml:lang="en">map v41</c>), or null when the map is current.</summary>
     internal int? StaleVersion { get; init; }
