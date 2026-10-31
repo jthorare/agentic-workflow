@@ -4,6 +4,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Graph;
 using Aw.Context.Core.Pages;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -144,11 +145,15 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
 
     private static string Effective(string? id, string? name) => id ?? PageSlugs.Of(name ?? string.Empty);
 
+    // The profile may hold a key as written ('action:WeekPage.submit') where the map stores it lower-cased.
+    private static bool SameKey(string? written, string? key) =>
+        written is not null && key is not null && string.Equals(EntryKey.Normalized(written), EntryKey.Normalized(key), StringComparison.Ordinal);
+
     // The effective id of the existing action this one keeps, or null.
     private static string? KeptId(PageActionPin action, List<PageActionSettings> existing)
     {
         var slug = PageSlugs.Of(action.Name);
-        var found = existing.FirstOrDefault(e => action.ActionKey is not null && string.Equals(e.Action, action.ActionKey, StringComparison.Ordinal)) ?? existing.FirstOrDefault(e => string.Equals(Effective(id: null, e.Name), slug, StringComparison.Ordinal));
+        var found = existing.FirstOrDefault(e => SameKey(e.Action, action.ActionKey)) ?? existing.FirstOrDefault(e => string.Equals(Effective(id: null, e.Name), slug, StringComparison.Ordinal));
         if (found is null)
         {
             return null;

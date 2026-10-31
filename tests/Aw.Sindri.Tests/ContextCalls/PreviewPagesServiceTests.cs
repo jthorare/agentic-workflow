@@ -116,6 +116,24 @@ public sealed class PreviewPagesServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_kept_action_id_is_found_by_the_map_key_whatever_its_case_in_the_profile()
+    {
+        var owner = new PageSettings(PagePinId.From("week-page"), "Week page", Actions: [new PageActionSettings(PageActionPinId.From("send-it"), "Send schedule", "action:WeekPage.submit")]);
+        var service = await Service(new SindriProfile(1, "thor", Index: new IndexSettings(Pages: [owner])));
+        var key = NodeKey.From("surface:route/GET:/week");
+        var action = new PageActionRow(PageActionId.From("submit-schedule"), NodeKey.From("action:weekpage.submit"), "Submit schedule", "suggested", Code: true, Concepts: []);
+        _engine.Answer = View(
+        [
+            Suggested("week-page", "Week page", key.Value, action),
+            new PageRow(PageId.From("week-page"), key, "Week page", Repo: "app", Mark: "owner", Code: true, Actions: []),
+        ]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule"), Ct);
+
+        Assert.Equal("send-it", answer.Value.Blocks[0].Page?.Actions?[0].Id?.Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_row_that_is_not_added_has_no_page_and_says_why()
     {
         var answer = await (await Service()).Handle(new PreviewPagesRequest("Schedule week\n\nSchedule week\nPay -> aproval"), Ct);
