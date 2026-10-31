@@ -52,6 +52,10 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         return new ContextPinsView(1, repo, loaded.Value.Hash.Value, state.Value.Current is { } current ? MapVersionRef.Tag(current) : null, pins, view);
     }
 
+    // Whether the answer covers every repo the map was built from: no repo addressed, or the profile's only one.
+    private static bool EveryRepo(SindriProfile profile, string? repo) =>
+        repo is null || (profile.Repos ?? []).All(r => string.Equals(r.Name, repo, StringComparison.Ordinal));
+
     // The repo the answer is for, by the rule every map read shares; null is every pin.
     private static Result<string?> Addressed(ContextScope scope, string? asked)
     {
@@ -80,9 +84,9 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         rows.AddRange(approved.Where(p => InScope(p.Pin, repo) && !liveKeys.Contains(p.Pin.Key) && diff.TryGetValue(p.Pin.Key, out var change) && change.After is null)
             .Select(p => Row(p.Pin, p.Id, PinStates.Removing, changes.Of(p.Id))));
 
-        // pins the map still has that neither profile does any more: only their ids are known, and the map's hashes carry no repo, so only an answer for every repo may list them.
-        // Their state is 'approved' because the removal itself is approved: it is the map that hasn't caught up.
-        rows.AddRange(repo is not null ? [] : changes.RemovedIds().Select(static id => new ContextPinRow(id, id, Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, PinChanges.Removed)));
+        // pins the map still has that neither profile does any more: only their ids are known, and the map's hashes carry no repo, so only an answer for every repo may list them
+        // (one with no repo, or the profile's only repo). Their state is 'approved' because the removal itself is approved: it is the map that hasn't caught up.
+        rows.AddRange(!EveryRepo(approvedProfile ?? liveProfile, repo) ? [] : changes.RemovedIds().Select(static id => new ContextPinRow(id, id, Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, PinChanges.Removed)));
         return rows;
     }
 
