@@ -35,8 +35,17 @@ public sealed class PinSet
     /// <param name="visible">The caller's repos; a pin that applies to none of them is not visible.</param>
     /// <param name="graph">The map's graph.</param>
     /// <returns>The set.</returns>
-    public static PinSet Of(IReadOnlyList<ContextRepo> mapped, IReadOnlyList<ContextRepo> visible, GraphSnapshot graph)
+    public static PinSet Of(IReadOnlyList<ContextRepo> mapped, IReadOnlyList<ContextRepo> visible, GraphSnapshot graph) => Of(mapped, visible, graph, graph);
+
+    /// <summary>The pins of a map the caller reads: what each holds comes from the graph the caller sees, whether the map has the pin yet from the stored one.</summary>
+    /// <param name="mapped">The repos the map is built from; the ids are made over these.</param>
+    /// <param name="visible">The caller's repos; a pin that applies to none of them is not visible.</param>
+    /// <param name="graph">The graph the caller sees (the owner's renames, merges and moves applied, the synced record links merged in).</param>
+    /// <param name="stored">The stored graph of the map version, whose concept nodes say which pins the map has been built with.</param>
+    /// <returns>The set.</returns>
+    public static PinSet Of(IReadOnlyList<ContextRepo> mapped, IReadOnlyList<ContextRepo> visible, GraphSnapshot graph, GraphSnapshot stored)
     {
+        ArgumentNullException.ThrowIfNull(stored);
         ArgumentNullException.ThrowIfNull(mapped);
         ArgumentNullException.ThrowIfNull(visible);
         ArgumentNullException.ThrowIfNull(graph);
@@ -49,7 +58,7 @@ public sealed class PinSet
         var byRepo = mapped.ToDictionary(r => r.Name.Value, r => PinIds.Of(resolved, r.Concepts), StringComparer.Ordinal);
         var seen = visible.SelectMany(r => byRepo.TryGetValue(r.Name.Value, out var own) ? own : []).Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
         var ids = resolved.Where(p => seen.Contains(p.Id)).Select(p => ConceptId.From(p.Id)).ToList();
-        return new PinSet(resolved, ids, byRepo, Holders(resolved, mapped, graph), [.. graph.Nodes.Where(n => n.Key.Kind == NodeKind.Concept).Select(n => n.Key.Value)]);
+        return new PinSet(resolved, ids, byRepo, Holders(resolved, mapped, graph), [.. stored.Nodes.Where(n => n.Key.Kind == NodeKind.Concept).Select(n => n.Key.Value)]);
     }
 
     /// <summary>The pin a node sits in: the first in pin order when several claim it.</summary>

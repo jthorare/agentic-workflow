@@ -10259,6 +10259,7 @@ static Aw.Context.Core.Concepts.PinScope.Of(System.Collections.Generic.IReadOnly
 static Aw.Context.Core.Concepts.PinScope.PinOf(Aw.Context.Core.Graph.NodeKey anchor, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Engine.ConceptId?
 static Aw.Context.Core.Concepts.PinSet.Empty.get -> Aw.Context.Core.Concepts.PinSet!
 static Aw.Context.Core.Concepts.PinSet.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! visible, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Concepts.PinSet!
+static Aw.Context.Core.Concepts.PinSet.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! visible, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.GraphSnapshot! stored) -> Aw.Context.Core.Concepts.PinSet!
 static readonly Aw.Context.Core.ContextErrors.NoPins -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PinNeedsMap -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PinNewerThanMap -> Aw.Kernel.ErrorDefinition!
