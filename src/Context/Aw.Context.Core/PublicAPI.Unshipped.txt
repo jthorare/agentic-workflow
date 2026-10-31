@@ -8132,7 +8132,7 @@ Aw.Context.Core.Map.MapPublishState.CurrentRuleset.get -> string?
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.init -> void
 Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?
 Aw.Context.Core.Map.MapVersion.Ruleset.init -> void
-const Aw.Context.Core.Map.MapRuleset.RulesVersion = "2" -> string!
+const Aw.Context.Core.Map.MapRuleset.RulesVersion = "3" -> string!
 Aw.Context.Core.Map.MapRuleset
 static Aw.Context.Core.Map.MapRuleset.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> string!
 Aw.Context.Core.Map.MapImport.Ruleset.get -> string?
@@ -10306,6 +10306,7 @@ static Aw.Context.Core.Concepts.PinScope.Of(System.Collections.Generic.IReadOnly
 static Aw.Context.Core.Concepts.PinScope.PinOf(Aw.Context.Core.Graph.NodeKey anchor, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Engine.ConceptId?
 static Aw.Context.Core.Concepts.PinSet.Empty.get -> Aw.Context.Core.Concepts.PinSet!
 static Aw.Context.Core.Concepts.PinSet.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! visible, Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Concepts.PinSet!
+static Aw.Context.Core.Concepts.PinSet.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! mapped, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! visible, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.GraphSnapshot! stored) -> Aw.Context.Core.Concepts.PinSet!
 static readonly Aw.Context.Core.ContextErrors.NoPins -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PinNeedsMap -> Aw.Kernel.ErrorDefinition!
 static readonly Aw.Context.Core.ContextErrors.PinNewerThanMap -> Aw.Kernel.ErrorDefinition!
@@ -10481,6 +10482,29 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Ranking.RankedLeg
+Aw.Context.Core.Ranking.RankedLeg.Keys.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
+Aw.Context.Core.Ranking.RankedLeg.Keys.init -> void
+Aw.Context.Core.Ranking.RankedLeg.RankedLeg(Aw.Context.Core.Sources.SourceId Source, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Keys) -> void
+Aw.Context.Core.Ranking.RankedLeg.Source.get -> Aw.Context.Core.Sources.SourceId
+Aw.Context.Core.Ranking.RankedLeg.Source.init -> void
+Aw.Context.Core.Ranking.PinLeg
+static Aw.Context.Core.Ranking.PinLeg.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>! fused, Aw.Context.Core.Concepts.PinScope! scope) -> Aw.Context.Core.Ranking.RankedLeg!
+static Aw.Context.Core.Ranking.PinLeg.Source.get -> Aw.Context.Core.Sources.SourceId
+static Aw.Context.Core.Ranking.RankFusion.Fuse(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.SourceAnswer!>! answers, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.RankedLeg!>! legs) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Ranking.FusedItem!>!
+Aw.Context.Core.Concepts.PinScope.HoldsRecord(Aw.Context.Core.Sources.RecordKey record) -> bool
+Aw.Context.Core.Ranking.RankedLeg.<Clone>$() -> Aw.Context.Core.Ranking.RankedLeg!
+Aw.Context.Core.Ranking.RankedLeg.Deconstruct(out Aw.Context.Core.Sources.SourceId Source, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>! Keys) -> void
+Aw.Context.Core.Ranking.RankedLeg.Equals(Aw.Context.Core.Ranking.RankedLeg? other) -> bool
+override Aw.Context.Core.Ranking.RankedLeg.Equals(object? obj) -> bool
+override Aw.Context.Core.Ranking.RankedLeg.GetHashCode() -> int
+override Aw.Context.Core.Ranking.RankedLeg.ToString() -> string!
+static Aw.Context.Core.Ranking.RankedLeg.operator !=(Aw.Context.Core.Ranking.RankedLeg? left, Aw.Context.Core.Ranking.RankedLeg? right) -> bool
+static Aw.Context.Core.Ranking.RankedLeg.operator ==(Aw.Context.Core.Ranking.RankedLeg? left, Aw.Context.Core.Ranking.RankedLeg? right) -> bool
+Aw.Context.Core.Engine.RankerSettings.PinLeg.get -> bool
+Aw.Context.Core.Engine.RankerSettings.PinLeg.init -> void
+Aw.Context.Core.Ranking.RankerMode.Pin = 3 -> Aw.Context.Core.Ranking.RankerMode
+Aw.Context.Core.Eval.Backtest.Arm.RankerPin = 10 -> Aw.Context.Core.Eval.Backtest.Arm
 Aw.Context.Core.Extract.PinSlug
 static Aw.Context.Core.Extract.PinSlug.Of(string! name) -> string!
 static readonly Aw.Context.Core.ContextErrors.PinFeatureUnknown -> Aw.Kernel.ErrorDefinition!

@@ -9,7 +9,7 @@ public static class Arms
     public static IReadOnlyList<Arm> Available { get; } = [Arm.Brief, Arm.Docs, Arm.Graph, Arm.GraphReviewed, Arm.All];
 
     /// <summary>The ranker comparison's arms (S-8), in report order: only '--arms ranker' (or each by name) runs them, never 'all', because the rerank row asks a model.</summary>
-    public static IReadOnlyList<Arm> Ranker { get; } = [Arm.RankerRrf, Arm.RankerFeatures, Arm.RankerRerank];
+    public static IReadOnlyList<Arm> Ranker { get; } = [Arm.RankerRrf, Arm.RankerFeatures, Arm.RankerPin, Arm.RankerRerank];
 
     /// <summary>The arms that print "not available", in report order.</summary>
     public static IReadOnlyList<Arm> NotAvailable { get; } = [Arm.Linear, Arm.Code];
@@ -28,6 +28,7 @@ public static class Arms
         Arm.All => "all",
         Arm.RankerRrf => "ranker-rrf",
         Arm.RankerFeatures => "ranker-features",
+        Arm.RankerPin => "ranker-pin",
         Arm.RankerRerank => "ranker-rerank",
         _ => throw new ArgumentOutOfRangeException(nameof(arm)),
     };
@@ -39,7 +40,7 @@ public static class Arms
     {
         Arm.Linear => "S-6",
         Arm.Code => "S-9",
-        Arm.Brief or Arm.Docs or Arm.Graph or Arm.GraphReviewed or Arm.All or Arm.RankerRrf or Arm.RankerFeatures or Arm.RankerRerank => null,
+        Arm.Brief or Arm.Docs or Arm.Graph or Arm.GraphReviewed or Arm.All or Arm.RankerRrf or Arm.RankerFeatures or Arm.RankerPin or Arm.RankerRerank => null,
         _ => throw new ArgumentOutOfRangeException(nameof(arm)),
     };
 
@@ -79,7 +80,7 @@ public static class Arms
 
     private static Error Unknown(string name)
     {
-        var listed = string.Join(", ", Available.Concat(Ranker).Select(Name)) + " ('ranker' runs the three ranker arms); not available yet: " + string.Join(", ", NotAvailable.Select(a => $"{Name(a)} ({PendingStage(a)})"));
+        var listed = string.Join(", ", Available.Concat(Ranker).Select(Name)) + " ('ranker' runs the four ranker arms); not available yet: " + string.Join(", ", NotAvailable.Select(a => $"{Name(a)} ({PendingStage(a)})"));
         return ContextErrors.UnknownArm.With($"'{Printable(name)}' is not an arm (arms: {listed}); fix: use a listed arm or 'all'");
     }
 
