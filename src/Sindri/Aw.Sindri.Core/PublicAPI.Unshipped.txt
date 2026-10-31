@@ -21770,3 +21770,29 @@ static Aw.Sindri.Core.Setup.PageEdit.operator ==(Aw.Sindri.Core.Setup.PageEdit? 
 virtual Aw.Sindri.Core.Setup.IndexEdit.EqualityContract.get -> System.Type!
 virtual Aw.Sindri.Core.Setup.IndexEdit.Equals(Aw.Sindri.Core.Setup.IndexEdit? other) -> bool
 virtual Aw.Sindri.Core.Setup.IndexEdit.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Sindri.Core.Events.ContextPageWritten
+Aw.Sindri.Core.Events.ContextPageWritten.<Clone>$() -> Aw.Sindri.Core.Events.ContextPageWritten!
+Aw.Sindri.Core.Events.ContextPageWritten.Actor.get -> string!
+Aw.Sindri.Core.Events.ContextPageWritten.Actor.init -> void
+Aw.Sindri.Core.Events.ContextPageWritten.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ContextPageWritten.CommandId.init -> void
+Aw.Sindri.Core.Events.ContextPageWritten.ContextPageWritten(Aw.Sindri.Core.Ids.CommandId CommandId, string! Actor, Aw.Sindri.Core.Workflow.Engine.LaunchId? Launch, Aw.Sindri.Core.Ids.ProfileHash Hash, System.Collections.Generic.IReadOnlyList<string!>! Pages) -> void
+Aw.Sindri.Core.Events.ContextPageWritten.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out string! Actor, out Aw.Sindri.Core.Workflow.Engine.LaunchId? Launch, out Aw.Sindri.Core.Ids.ProfileHash Hash, out System.Collections.Generic.IReadOnlyList<string!>! Pages) -> void
+Aw.Sindri.Core.Events.ContextPageWritten.Equals(Aw.Sindri.Core.Events.ContextPageWritten? other) -> bool
+Aw.Sindri.Core.Events.ContextPageWritten.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash
+Aw.Sindri.Core.Events.ContextPageWritten.Hash.init -> void
+Aw.Sindri.Core.Events.ContextPageWritten.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId?
+Aw.Sindri.Core.Events.ContextPageWritten.Launch.init -> void
+Aw.Sindri.Core.Events.ContextPageWritten.Pages.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.ContextPageWritten.Pages.init -> void
+Aw.Sindri.Core.Setup.PageEvents
+Aw.Sindri.Core.Setup.PageEvents.CanRecord() -> bool
+Aw.Sindri.Core.Setup.PageEvents.PageEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers) -> void
+Aw.Sindri.Core.Setup.PageEvents.Written(Aw.Sindri.Core.Ids.ProfileHash hash, System.Collections.Generic.IReadOnlyList<string!>! pages, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+const Aw.Sindri.Core.Events.EventTypes.ContextPageWritten = "context.page.written" -> string!
+override Aw.Sindri.Core.Events.ContextPageWritten.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ContextPageWritten.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ContextPageWritten.ToString() -> string!
+static Aw.Sindri.Core.Events.ContextPageWritten.operator !=(Aw.Sindri.Core.Events.ContextPageWritten? left, Aw.Sindri.Core.Events.ContextPageWritten? right) -> bool
+static Aw.Sindri.Core.Events.ContextPageWritten.operator ==(Aw.Sindri.Core.Events.ContextPageWritten? left, Aw.Sindri.Core.Events.ContextPageWritten? right) -> bool
+static Aw.Sindri.Core.Setup.PageEvents.KeyOf(Aw.Sindri.Core.Ids.ProfileHash hash) -> string!
