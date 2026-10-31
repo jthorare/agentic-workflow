@@ -11,11 +11,11 @@ namespace Aw.Sindri.Tests.PinConcepts;
 
 /// <summary>The profile edit PinConcepts makes on the live file (concept pins spec §3.6, "The write"): only 'index.concepts' changes, every other key and comment stays, and the write is versioned.</summary>
 [Lane(TestLane.Integration)]
-public sealed class YamlProfileConceptWriterTests : IDisposable
+public sealed class YamlProfileIndexWriterTests : IDisposable
 {
     private const string Head = "# my profile\nschemaVersion: 1\nuser: thor   # me\nrepos: []\n";
 
-    private readonly string _dir = Path.Combine(Path.GetTempPath(), "aw-concept-writer-" + RealTime.NewGuid().ToString("N"));
+    private readonly string _dir = Path.Combine(Path.GetTempPath(), "aw-index-writer-" + RealTime.NewGuid().ToString("N"));
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -29,7 +29,7 @@ public sealed class YamlProfileConceptWriterTests : IDisposable
         }
     }
 
-    private YamlProfileConceptWriter Writer() => new(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options);
+    private YamlProfileIndexWriter Writer() => new(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options);
 
     private void Put(string text)
     {
@@ -273,7 +273,7 @@ public sealed class YamlProfileConceptWriterTests : IDisposable
     public async Task A_file_that_changes_once_between_the_read_and_the_write_is_read_again_and_lands()
     {
         Put(Head + Block);
-        var writer = new YamlProfileConceptWriter(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options) { BeforeWrite = static (path, attempt) => { if (attempt == 0) { File.AppendAllText(path, "# changed\n"); } } };
+        var writer = new YamlProfileIndexWriter(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options) { BeforeWrite = static (path, attempt) => { if (attempt == 0) { File.AppendAllText(path, "# changed\n"); } } };
 
         var done = await writer.Write([Set("tabs", "Tabs")], ifHash: null, Token);
 
@@ -286,7 +286,7 @@ public sealed class YamlProfileConceptWriterTests : IDisposable
     public async Task A_file_that_changes_twice_is_SND_PROFILE_002_and_the_entry_is_not_written()
     {
         Put(Head + Block);
-        var writer = new YamlProfileConceptWriter(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options) { BeforeWrite = static (path, attempt) => File.AppendAllText(path, string.Create(CultureInfo.InvariantCulture, $"# changed {attempt}\n")) };
+        var writer = new YamlProfileIndexWriter(new SindriSettings(_dir, ProfilePath), ProfileFiles.Options) { BeforeWrite = static (path, attempt) => File.AppendAllText(path, string.Create(CultureInfo.InvariantCulture, $"# changed {attempt}\n")) };
 
         var done = await writer.Write([Set("tabs", "Tabs")], ifHash: null, Token);
 

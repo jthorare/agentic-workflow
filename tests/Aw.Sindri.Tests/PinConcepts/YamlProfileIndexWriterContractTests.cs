@@ -9,9 +9,9 @@ using Aw.Sindri.Tests.Profile;
 namespace Aw.Sindri.Tests.PinConcepts;
 
 [Lane(TestLane.Integration)]
-public sealed class YamlProfileConceptWriterContractTests : ProfileConceptWriterContract, IDisposable
+public sealed class YamlProfileIndexWriterContractTests : ProfileIndexWriterContract, IDisposable
 {
-    private readonly string _dir = Path.Combine(Path.GetTempPath(), "aw-concept-writer-contract-" + RealTime.NewGuid().ToString("N"));
+    private readonly string _dir = Path.Combine(Path.GetTempPath(), "aw-index-writer-contract-" + RealTime.NewGuid().ToString("N"));
 
     public void Dispose()
     {
@@ -21,13 +21,13 @@ public sealed class YamlProfileConceptWriterContractTests : ProfileConceptWriter
         }
     }
 
-    protected override (IProfileConceptWriter Writer, ProfileHash Hash) Create()
+    protected override (IProfileIndexWriter Writer, ProfileHash Hash) Create()
     {
         _ = Directory.CreateDirectory(_dir);
         var path = Path.Combine(_dir, "profile.yaml");
         File.WriteAllText(path, "schemaVersion: 1\nuser: thor\nrepos: []\n");
         Assert.Null(YamlToJson.TryConvert(File.ReadAllText(path), out var json));
         var loaded = ProfileReading.FromJson(json, path, ProfileFiles.Options);
-        return (new YamlProfileConceptWriter(new SindriSettings(_dir, path), ProfileFiles.Options), loaded.Value.Hash);
+        return (new YamlProfileIndexWriter(new SindriSettings(_dir, path), ProfileFiles.Options), loaded.Value.Hash);
     }
 }
