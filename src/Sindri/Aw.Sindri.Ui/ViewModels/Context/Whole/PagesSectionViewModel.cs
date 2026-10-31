@@ -13,13 +13,18 @@ internal sealed class PagesSectionViewModel : ObservableObject
 
     private List<PageRowViewModel> _all = [];
     private bool _showingAll;
-    private bool _noConcept;
 
     /// <summary>Gets the section's head.</summary>
-    public string Head => _noConcept ? Labels.ContextPagesNoConceptHead : Labels.ContextPagesHead;
+    public string Head => CanClose ? Labels.ContextPagesNoConceptHead : Labels.ContextPagesHead;
 
     /// <summary>Gets the pages shown, in the section's order.</summary>
     public IReadOnlyList<PageRowViewModel> Rows => _showingAll ? _all : [.. _all.Take(Cap)];
+
+    /// <summary>Gets a value indicating whether the section has a close button: the pages in no concept lie over the concept cards, a concept's sit in its drill.</summary>
+    public bool CanClose { get; private set; }
+
+    /// <summary>Gets the close button's words.</summary>
+    public string CloseText { get; } = Labels.ContextPagesClose;
 
     /// <summary>Gets a value indicating whether a read runs.</summary>
     public bool IsLoading { get; private set; }
@@ -31,7 +36,7 @@ internal sealed class PagesSectionViewModel : ObservableObject
     public string LoadingText { get; } = Labels.ContextPagesLoading;
 
     /// <summary>Gets the failure line.</summary>
-    public string FailedText => _noConcept ? Labels.ContextPagesNoConceptFailed : Labels.ContextPagesFailed;
+    public string FailedText => CanClose ? Labels.ContextPagesNoConceptFailed : Labels.ContextPagesFailed;
 
     /// <summary>Gets the Try again button's words.</summary>
     public string RetryText { get; } = Labels.ContextPagesRetry;
@@ -40,7 +45,7 @@ internal sealed class PagesSectionViewModel : ObservableObject
     public bool IsEmpty => !IsLoading && !IsFailed && _all.Count == 0;
 
     /// <summary>Gets the empty line.</summary>
-    public string EmptyText => _noConcept ? Labels.ContextPagesNoConceptEmpty : Labels.ContextPagesEmpty;
+    public string EmptyText => CanClose ? Labels.ContextPagesNoConceptEmpty : Labels.ContextPagesEmpty;
 
     /// <summary>Gets a value indicating whether Show all shows: more pages than the cap, not all shown yet.</summary>
     public bool HasMore => !_showingAll && _all.Count > Cap;
@@ -55,7 +60,7 @@ internal sealed class PagesSectionViewModel : ObservableObject
     /// <param name="noConcept">True for the pages in no concept.</param>
     internal void Loading(bool noConcept = false)
     {
-        (_noConcept, IsLoading, IsFailed) = (noConcept, true, false);
+        (CanClose, IsLoading, IsFailed) = (noConcept, true, false);
         Changed();
     }
 
@@ -73,8 +78,9 @@ internal sealed class PagesSectionViewModel : ObservableObject
     internal void Show(WholeMapView answer, string? concept = null, bool noConcept = false)
     {
         ArgumentNullException.ThrowIfNull(answer);
-        _all = PageRows.Of(answer, concept);
-        (_noConcept, _showingAll, IsLoading, IsFailed) = (noConcept, false, false, false);
+        var rows = PageRows.Of(answer, concept);
+        _all = noConcept ? [.. rows.Select(static r => r with { Actions = [.. r.Actions.Select(static a => a with { Opens = false })] })] : rows;
+        (CanClose, _showingAll, IsLoading, IsFailed) = (noConcept, false, false, false);
         Changed();
     }
 
@@ -97,7 +103,7 @@ internal sealed class PagesSectionViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(Head), nameof(Rows), nameof(IsLoading), nameof(IsFailed), nameof(FailedText), nameof(IsEmpty), nameof(EmptyText), nameof(HasMore), nameof(ShowAllText), nameof(StatusText)])
+        foreach (var name in (string[])[nameof(Head), nameof(CanClose), nameof(Rows), nameof(IsLoading), nameof(IsFailed), nameof(FailedText), nameof(IsEmpty), nameof(EmptyText), nameof(HasMore), nameof(ShowAllText), nameof(StatusText)])
         {
             OnChanged(name);
         }

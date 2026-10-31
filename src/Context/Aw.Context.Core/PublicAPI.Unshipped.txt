@@ -10894,3 +10894,5 @@ static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator !=(Aw.Context.Cor
 static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator ==(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
 Aw.Context.Core.Concepts.PinSet.PinsOf(System.Collections.Generic.IReadOnlyList<string!>! anchors) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>!
 static Aw.Context.Core.Concepts.PinSet.Sole(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>! anchorPins) -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.get -> int?
+Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.init -> void
