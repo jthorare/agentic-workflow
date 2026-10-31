@@ -30,6 +30,20 @@ public sealed class LensesBuilderTests
     private static string[] Keys(IEnumerable<NodeKey> keys) => [.. keys.Select(k => k.Value)];
 
     [Fact, Trait("Lane", "unit")]
+    public void An_actions_why_lists_a_decision_about_its_page()
+    {
+        var graph = new GraphSnapshot(
+            [new(NodeKey.From("surface:screen/week"), "Schedule week"), new(NodeKey.From("action:submit"), "Submit"), new(NodeKey.From("decision:cutoff"), "Cutoff"), new(NodeKey.From("record:note"), "Note")],
+            [new(NodeKey.From("action:submit"), NodeKey.From("surface:screen/week"), EdgeType.On), new(NodeKey.From("decision:cutoff"), NodeKey.From("surface:screen/week"), EdgeType.Decides),
+             new(NodeKey.From("record:note"), NodeKey.From("action:submit"), EdgeType.Mentions)], [], []);
+
+        var intent = Build(graph, "action:submit", depth: 0).Bands.Intent;
+
+        Assert.Equal(["decision:cutoff"], Keys(intent.Decisions.Select(d => d.Node)));
+        Assert.Equal(["record:note"], Keys(intent.Records.Select(r => r.Key)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_envelope_names_the_map_the_anchor_the_depth_and_when_and_has_no_cites_or_degraded_sources()
     {
         var view = Build(Tabs(), Anchor, depth: 2, draft: true);
