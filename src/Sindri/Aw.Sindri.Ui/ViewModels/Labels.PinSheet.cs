@@ -132,6 +132,9 @@ internal static partial class Labels
     /// <summary>Under the button: after a clash on Edit pin, the pin itself changed in the file, so the next press replaces that change.</summary>
     internal static string PinSheetChangedInFile(string name) => name + " changed in the file since you opened it; Save replaces it.";
 
+    /// <summary>Under the button: after a clash on Edit pin, the pin is gone from the file, so the next press pins it again.</summary>
+    internal static string PinSheetUnpinnedInFile(string name) => name + " was unpinned in the file since you opened it; Save pins it again.";
+
     /// <summary>Under the button: the page has no pins read, so there is no file hash to write against.</summary>
     internal const string PinSheetNoHash = "Couldn't read your pins just now. Close this and open it again.";
 

@@ -108,4 +108,49 @@ public sealed class PinSheetClashTests
         var login = Assert.Single(sheet.Words, w => w.Word == "login");
         Assert.Equal((false, string.Empty), (login.IsRefused, login.Detail));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Edit_pin_after_a_clash_that_unpinned_it_in_the_file_says_save_pins_it_again()
+    {
+        var kit = new PinSheetFixtures();
+        var pin = Pin("billing", "Billing", aliases: ["payments"]);
+
+        var sheet = await EditBilling(kit, pin, Pin("auth", "Auth", aliases: ["login"]));
+
+        Assert.Equal("Billing was unpinned in the file since you opened it; Save pins it again.", sheet.ChangedNote);
+        Assert.True(sheet.HasChangedNote);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Edit_pin_after_a_clash_that_renamed_it_in_the_file_says_the_pin_changed()
+    {
+        var kit = new PinSheetFixtures();
+        var pin = Pin("billing", "Billing", aliases: ["payments"]);
+
+        var sheet = await EditBilling(kit, pin, Pin("billing", "Payments", aliases: ["payments"]));
+
+        Assert.Equal(Changed, sheet.ChangedNote);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_word_the_reread_leaves_alone_keeps_its_tick()
+    {
+        var kit = new PinSheetFixtures();
+        kit.Suggests([new PinSuggestTerm("payments", 41)], []);
+        var sheet = kit.Sheet();
+        await sheet.Open(new PinSheetOpen("api", Card("billing", terms: ["payments", "invoice"]), Pin: null, [], FileHash: FileHash), Token);
+        sheet.NewWord = "ledger";
+        sheet.AddWord();
+        Assert.Single(sheet.Words, w => w.Word == "payments").Ticked = false;
+        var ledgerBefore = Assert.Single(sheet.Words, w => w.Word == "ledger");
+        Rereads(kit, Pin("auth", "Auth", aliases: ["login"]));
+        kit.Fails("SND-PROFILE-003", "the profile changed since you read it");
+
+        await sheet.Submit(Token);
+
+        var ledger = Assert.Single(sheet.Words, w => w.Word == "ledger");
+        Assert.Same(ledgerBefore, ledger);
+        Assert.True(ledger.Ticked);
+        Assert.False(Assert.Single(sheet.Words, w => w.Word == "payments").Ticked);
+    }
 }
