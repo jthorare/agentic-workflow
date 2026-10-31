@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.ViewModels.Context;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>The live profile: its hash and the key paths that differ from the approved one ('index.pages.schedule-week', 'repos.web.index.pages.x').</summary>
 /// <param name="LiveHash">The live hash, or null when none was read.</param>

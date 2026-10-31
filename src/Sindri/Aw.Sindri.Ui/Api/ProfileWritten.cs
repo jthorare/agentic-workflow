@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.ViewModels.Context;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>What <see cref="ProfileWriteFlow.Run"/> did.</summary>
 /// <param name="State">How it ended.</param>

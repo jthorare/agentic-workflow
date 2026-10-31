@@ -1,8 +1,8 @@
 using System.Net;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
-using Aw.Sindri.Ui.ViewModels.Context;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Context;
@@ -209,6 +209,30 @@ public sealed class ProfileWriteFlowTests
 
         Assert.Equal(ProfileWriteState.Waiting, (await run).State);
         _ = Assert.Single(api.PagesSet);
+    }
+
+    [Fact]
+    public async Task Keeps_polling_a_job_parked_on_a_signal()
+    {
+        var clock = new FakeTimeProvider(A.Noon);
+        var api = Server(Profile("h1", "index.pages.schedule-week"), state: "waiting");
+        var run = Run(Flow(api, clock), api, approve: false);
+
+        while (api.JobCalls < 2)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(250));
+            await Task.Yield();
+        }
+
+        Assert.False(run.IsCompleted);
+        api.JobAnswers[JobId] = new RouteAnswer(HttpStatusCode.OK, Job("succeeded", code: null, summary: null, hash: "h1"));
+        while (!run.IsCompleted)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(250));
+            await Task.Yield();
+        }
+
+        Assert.Equal(ProfileWriteState.Waiting, (await run).State);
     }
 
     [Fact]

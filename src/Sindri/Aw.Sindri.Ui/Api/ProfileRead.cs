@@ -5,4 +5,4 @@ namespace Aw.Sindri.Ui.Api;
 /// <param name="Approved">The approved profile's hash, or null when none is approved.</param>
 /// <param name="Live">The live profile's hash at the last check, or null.</param>
 /// <param name="ChangedPaths">The key paths that differ from the approved profile; null from a server before the field.</param>
-internal sealed record ProfileRead(ProfileSummaryView? Summary, string? Approved = null, string? Live = null, IReadOnlyList<string>? ChangedPaths = null);
+internal sealed record ProfileRead(ProfileSummaryView? Summary = null, string? Approved = null, string? Live = null, IReadOnlyList<string>? ChangedPaths = null);

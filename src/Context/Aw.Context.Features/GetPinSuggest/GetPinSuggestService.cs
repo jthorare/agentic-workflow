@@ -130,34 +130,16 @@ internal sealed class GetPinSuggestService(ConceptReader reader, IIntentStore in
             return resolved.Error;
         }
 
+        // UnknownAnchor is "no repo in scope": count over no repo's audience rather than fail the read
         var inScope = resolved.IsError ? [] : resolved.Value;
-        var policy = new ProfileAudiencePolicy(settings, [.. inScope.Select(static r => r.Name)]);
-        var allowed = new HashSet<AudienceKey>();
-        foreach (var covered in inScope.Where(r => repo is null || string.Equals(r.Name.Value, repo, StringComparison.Ordinal)))
+        var covered = inScope.Where(r => repo is null || string.Equals(r.Name.Value, repo, StringComparison.Ordinal)).ToList();
+        var allowed = await RecordMask.Allowed(settings, covered, scope.Caller.Kind, cancellationToken).ConfigureAwait(false);
+        if (allowed.IsError)
         {
-            var own = await policy.For(covered.Name, cancellationToken).ConfigureAwait(false);
-            if (own.IsError)
-            {
-                return own.Error;
-            }
-
-            allowed.UnionWith(own.Value.Allowed);
+            return allowed.Error;
         }
 
-        var session = scope.Caller.Kind == ContextCallerKind.Session;
-        if (!session)
-        {
-            allowed.UnionWith(ProfileAudiencePolicy.HumanExtras(settings));
-        }
-
-        return new AudienceScope(allowed) { Records = session ? LinkedRecords(graph) : [] };
-    }
-
-    // Rule (c): the 'record:' nodes of the session's scoped map.
-    private static HashSet<RecordKey> LinkedRecords(GraphSnapshot graph)
-    {
-        const string prefix = "record:";
-        return [.. graph.Nodes.Where(static n => n.Key.Kind == NodeKind.Record).Select(static n => RecordKey.TryFrom(n.Key.Value[prefix.Length..], out var key) ? key : (RecordKey?)null).OfType<RecordKey>()];
+        return new AudienceScope(allowed.Value) { Records = scope.Caller.Kind == ContextCallerKind.Session ? RecordMask.Linked(graph) : new HashSet<RecordKey>() };
     }
 
     // The records a count is made over: live, unblocked, in the layer but not linked to the concept yet, and visible. The audience is allowed (or, for a session, the record is in its scoped map);

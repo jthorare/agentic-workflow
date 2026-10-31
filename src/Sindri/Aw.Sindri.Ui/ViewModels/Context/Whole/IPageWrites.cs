@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.Api;
+
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>
