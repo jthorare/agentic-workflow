@@ -152,7 +152,7 @@ public static class PageOverlay
         private List<string> ReposOf(string key) =>
             [.. _graph.Edges.Where(e => e.Type == EdgeType.Implements && e.To.Value == key).SelectMany(e => e.EvidenceOrEmpty).Select(RepoOf).OfType<string>().Distinct(StringComparer.Ordinal)];
 
-        // Relabels the map node the owner named when this repo alone holds it; else makes (or finds) the owner node.
+        // Relabels the map node the owner named when this repo alone holds it (the first page to name it keeps the label); else makes (or finds) the owner node.
         private (string Key, bool Owner) Name(Target target, ContextRepoName home, EvidenceRef mark)
         {
             var (written, kind, ownerKey, label) = target;
@@ -164,7 +164,8 @@ public static class PageOverlay
                 {
                     var node = _nodes[at];
                     var evidence = node.EvidenceOrEmpty.Any(r => r.Key.Value == mark.Key.Value) ? node.EvidenceOrEmpty : [.. node.EvidenceOrEmpty, mark];
-                    _nodes[at] = node with { Label = label, Evidence = evidence };
+                    var namedByPage = node.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith(Scheme, StringComparison.Ordinal));
+                    _nodes[at] = node with { Label = namedByPage ? node.Label : label, Evidence = evidence };
                     return (named, false);
                 }
 

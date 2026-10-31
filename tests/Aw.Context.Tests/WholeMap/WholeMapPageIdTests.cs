@@ -40,4 +40,26 @@ public sealed class WholeMapPageIdTests : IDisposable
         Assert.Equal("x", byKey[OwnerScreen]);
         Assert.Null(byKey[Suggested]);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Two_pages_on_one_surface_take_the_first_pages_label_and_id()
+    {
+        _ = await _world.ImportYaml(MapWorld.Yaml(
+            "schemaVersion: 1", "kind: authored", "repo: aw-split-panes", "nodes:",
+            $"  - {{key: \"{Route}\", label: \"GET /schedule/week\"}}"));
+        var repo = ContextRepoName.From(FixtureMap.Repo);
+        var scope = MapWorld.Human with
+        {
+            Repos = [new ContextRepo(repo, "/work/aw-split-panes")
+            {
+                Pages = [new PagePin(PageId.From("zeta"), "Zeta", repo, Route, []), new PagePin(PageId.From("alpha"), "Alpha", repo, Route, [])],
+            }],
+        };
+
+        var view = (await _world.Engine.WholeMap(new WholeMapQuery("nodes", [], MapRead.Current), scope, MapWorld.None)).Value;
+
+        var node = view.Nodes!.Single(n => n.Key.Value == Route);
+        Assert.Equal("zeta", node.PageId?.Value);
+        Assert.Equal("Zeta", node.Label);
+    }
 }
