@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Features;
 using Aw.Sindri.Features.SetPages;
 using Aw.Sindri.Testing;
 
@@ -14,9 +15,12 @@ namespace Aw.Sindri.Tests.SetPages;
 internal sealed class SetPagesRig : IDisposable
 {
     private readonly List<IDisposable> _entered = [];
+    private bool _leased;
 
     internal SetPagesRig()
     {
+        Recorder = new PageEvents(Slice.Held, Slice.Store, Slice.Events, Slice.Callers);
+        _entered.Add(Slice.Callers.EnterService("test"));
         Profile([], new RepoEntry("web", "/work/web"));
     }
 
@@ -31,12 +35,31 @@ internal sealed class SetPagesRig : IDisposable
 
     internal FakeJobContextAccessor Jobs { get; } = new();
 
+    internal PageEvents Recorder { get; }
+
+    internal Lines Progress { get; } = new();
+
+    /// <summary>Holds the lease, once.</summary>
+    internal async Task Lease()
+    {
+        if (!_leased)
+        {
+            _ = await Slice.HoldLease();
+            _leased = true;
+        }
+    }
+
+    internal SetPagesAdmission Admission() => new(Slice.Profiles, Map);
+
+    /// <summary>The caller of the calls that follow.</summary>
+    internal void CallerIs(Core.Commands.CallerContext caller) => _entered.Add(Slice.Callers.Enter(caller));
+
     internal static CancellationToken Token => TestContext.Current.CancellationToken;
 
     internal SetPagesService Service()
     {
-        _entered.Add(Jobs.Enter(new JobContext(JobId.From("JOB-" + new string('a', 32)), JobKind.From("SetPages"), new Lines())));
-        return new SetPagesService(Slice.Profiles, Map, Writer, Jobs);
+        _entered.Add(Jobs.Enter(new JobContext(JobId.From("JOB-" + new string('a', 32)), JobKind.From("SetPages"), Progress)));
+        return new SetPagesService(Slice.Profiles, Map, Writer, Recorder, Jobs);
     }
 
     /// <summary>The live profile names these top-level pages and these repos.</summary>
@@ -54,23 +77,27 @@ internal sealed class SetPagesRig : IDisposable
         }
     }
 
-    private sealed class Lines : IProgress<string>
+    internal sealed class Lines : IProgress<string>
     {
-        public void Report(string value)
-        {
-        }
+        private readonly List<string> _seen = [];
+
+        internal IReadOnlyList<string> Seen => _seen;
+
+        public void Report(string value) => _seen.Add(value);
     }
 
-    /// <summary>A map holding two concepts, one surface and one action, all in the repo 'web'.</summary>
+    /// <summary>A map holding two concepts, one surface and one action, all in the repo 'web'; a test adds to it or empties it.</summary>
     internal sealed class MapFactsStub : IMapPageFacts
     {
+        internal string? Version { get; set; } = "v41";
+
+        internal List<PageMapConcept> Concepts { get; } = [new(ConceptId.From("self-scheduling"), "Self-scheduling"), new(ConceptId.From("approval-workflow"), "Approval workflow")];
+
+        internal Dictionary<string, IReadOnlyList<string>> Surfaces { get; } = new(StringComparer.Ordinal) { ["surface:route/GET:/schedule/week"] = ["web"] };
+
+        internal Dictionary<string, IReadOnlyList<string>> Actions { get; } = new(StringComparer.Ordinal) { ["action:schedulepage.submit-schedule"] = ["web"] };
+
         public ValueTask<Result<PageMapFacts>> Read(CancellationToken cancellationToken) =>
-            ValueTask.FromResult<Result<PageMapFacts>>(new PageMapFacts(
-                "v41",
-                new PageFacts(
-                    new HashSet<ConceptId> { ConceptId.From("self-scheduling"), ConceptId.From("approval-workflow") },
-                    new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["surface:route/GET:/schedule/week"] = ["web"] },
-                    new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["action:schedulepage.submit-schedule"] = ["web"] }),
-                [new PageMapConcept(ConceptId.From("self-scheduling"), "Self-scheduling"), new PageMapConcept(ConceptId.From("approval-workflow"), "Approval workflow")]));
+            ValueTask.FromResult<Result<PageMapFacts>>(new PageMapFacts(Version, new PageFacts(Concepts.Select(static c => c.Id).ToHashSet(), Surfaces, Actions), [.. Concepts]));
     }
 }

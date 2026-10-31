@@ -1,7 +1,7 @@
 using Aw.Context.Core.Pages;
 using Aw.Kernel;
 
-namespace Aw.Sindri.Features.SetPages;
+namespace Aw.Sindri.Features;
 
 /// <summary>Asks the current published map what a page write checks against: the concept ids and names, and the repos of each surface and action key (pages spec §3.1). The context slice implements it over the engine.</summary>
 public interface IMapPageFacts
