@@ -289,6 +289,6 @@ public static class ContextErrors
         LabelingUnavailable.Code, ReviewFileNoMatch.Code, NoDraftMap.Code, RepoOutsideScope.Code, PromoteRefused.Code, ReviewTargetStale.Code, SyncRunning.Code, SyncSourceUnknown.Code,
         NoEligibleSample.Code, NoBriefSource.Code, UnknownArm.Code,
         CommitUnknown.Code, NoMergeBase.Code, MapVersionNotRetained.Code, CodeGlobInvalid.Code, CodeGlobsTooMany.Code, DraftChanged.Code, MapHeadInvalid.Code, AreaUnknown.Code,
-        PinUnknown.Code, NoPins.Code, PinNewerThanMap.Code, PinNeedsMap.Code,
+        PinUnknown.Code, NoPins.Code, PinNewerThanMap.Code, PinNeedsMap.Code, PageNotFound.Code, PageQueryUnknown.Code,
     };
 }

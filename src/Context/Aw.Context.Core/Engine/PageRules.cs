@@ -130,11 +130,17 @@ public static class PageRules
         }
     }
 
-    private static string? Nearest(string written, IReadOnlySet<ConceptId> ids)
+    private static string? Nearest(string written, IReadOnlySet<ConceptId> ids) => NearestId(written, ids.Select(static i => i.Value));
+
+    /// <summary>The candidate closest to a written id, for a "fix: try" hint.</summary>
+    /// <param name="written">What the caller wrote.</param>
+    /// <param name="candidates">The ids that exist.</param>
+    /// <returns>The nearest id within three edits (ties go to the first in ordinal order), or null.</returns>
+    internal static string? NearestId(string written, IEnumerable<string> candidates)
     {
         string? best = null;
         var bestDistance = FixDistance + 1;
-        foreach (var id in ids.Select(static i => i.Value).Order(StringComparer.Ordinal))
+        foreach (var id in candidates.Order(StringComparer.Ordinal))
         {
             var distance = Distance(written, id);
             if (distance < bestDistance)

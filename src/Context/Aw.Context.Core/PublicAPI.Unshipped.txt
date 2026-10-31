@@ -10598,3 +10598,13 @@ static Aw.Context.Core.Pages.PagesQuery.operator !=(Aw.Context.Core.Pages.PagesQ
 static Aw.Context.Core.Pages.PagesQuery.operator ==(Aw.Context.Core.Pages.PagesQuery? left, Aw.Context.Core.Pages.PagesQuery? right) -> bool
 static Aw.Context.Core.Pages.PagesView.operator !=(Aw.Context.Core.Pages.PagesView? left, Aw.Context.Core.Pages.PagesView? right) -> bool
 static Aw.Context.Core.Pages.PagesView.operator ==(Aw.Context.Core.Pages.PagesView? left, Aw.Context.Core.Pages.PagesView? right) -> bool
+Aw.Context.Core.Pages.PageHealth
+const Aw.Context.Core.Pages.PageHealth.Name = "context:pages" -> string!
+static Aw.Context.Core.Pages.PageHealth.NoPages.get -> Aw.Context.Core.Map.MapHealth!
+static Aw.Context.Core.Pages.PageHealth.NoMap.get -> Aw.Context.Core.Map.MapHealth!
+static Aw.Context.Core.Pages.PageHealth.Check(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Graph.GraphSnapshot! stored, Aw.Context.Core.Graph.GraphSnapshot! visible) -> Aw.Context.Core.Map.MapHealth!
+Aw.Context.Core.Pages.PageReader
+const Aw.Context.Core.Pages.PageReader.DefaultLimit = 50 -> int
+const Aw.Context.Core.Pages.PageReader.MaxLimit = 200 -> int
+static Aw.Context.Core.Pages.PageReader.Build(Aw.Context.Core.Pages.PagesQuery! query, string! mapVersion, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Pages.PagesView!>!
+static Aw.Context.Core.Pages.PageReader.PagesPerConcept(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!

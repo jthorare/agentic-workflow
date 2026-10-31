@@ -33,6 +33,7 @@ using Aw.Context.Features.Adjudicate;
 using Aw.Context.Features.ApplyReviewFile;
 using Aw.Context.Features.BuildMap;
 using Aw.Context.Features.CheckMap;
+using Aw.Context.Features.CheckPages;
 using Aw.Context.Features.CheckRetention;
 using Aw.Context.Features.CleanMap;
 using Aw.Context.Features.EmbedRecords;
@@ -209,6 +210,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetWholeMapRequest, WholeMapView>, GetWholeMapService>()
         .AddScoped<IService<GetConceptsRequest, ConceptsView>, GetConceptsService>()
         .AddScoped<IService<GetPagesRequest, PagesView>, GetPagesService>()
+        .AddScoped<IService<CheckPagesRequest, MapHealth>, CheckPagesService>()
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
         .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
         .AddScoped<ConceptReader>()

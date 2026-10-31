@@ -3,6 +3,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Pages;
+using Aw.Context.Features.CheckPages;
 using Aw.Context.Features.GetConceptGlossary;
 using Aw.Context.Features.GetConceptMembers;
 using Aw.Context.Features.GetConcepts;
@@ -17,7 +18,8 @@ internal sealed class ContextConceptReads(
     IService<GetConceptsRequest, ConceptsView> concepts,
     IService<GetConceptMembersRequest, ConceptMembersView> members,
     IService<GetConceptGlossaryRequest, ConceptGlossaryView> glossary,
-    IService<GetPagesRequest, PagesView> pages) : IContextConcepts
+    IService<GetPagesRequest, PagesView> pages,
+    IService<CheckPagesRequest, MapHealth> checkPages) : IContextConcepts
 {
     public ValueTask<Result<ConceptsView>> Concepts(ConceptsQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         concepts.Handle(new GetConceptsRequest(query, scope), cancellationToken);
@@ -32,5 +34,5 @@ internal sealed class ContextConceptReads(
         pages.Handle(new GetPagesRequest(query, scope), cancellationToken);
 
     public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
-        throw new NotSupportedException("The pages check is not built yet.");
+        checkPages.Handle(new CheckPagesRequest(scope), cancellationToken);
 }
