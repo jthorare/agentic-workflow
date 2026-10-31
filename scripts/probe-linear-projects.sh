@@ -238,10 +238,10 @@ else
   for page in 1 2 3 4 5; do
     gh api "repos/$repo/pulls?state=closed&sort=updated&direction=desc&per_page=100&page=$page" > "$work/pulls.json" 2>/dev/null || { failed "gh api pulls"; break; }
     jq -c '.[] | select(.merged_at != null) | {n:.number, text:((.title // "") + " " + (.body // ""))}' "$work/pulls.json" >> "$work/prs.ndjson"
-    if [ "$(wc -l < "$work/prs.ndjson")" -ge 50 ] || [ "$(jq length "$work/pulls.json")" -lt 100 ]; then break; fi
+    if [ "$(wc -l < "$work/prs.ndjson" | tr -d " ")" -ge 50 ] || [ "$(jq length "$work/pulls.json")" -lt 100 ]; then break; fi
   done
   head -n 50 "$work/prs.ndjson" > "$work/prs50.ndjson"
-  emit pr.merged_checked "$(wc -l < "$work/prs50.ndjson")"
+  emit pr.merged_checked "$(wc -l < "$work/prs50.ndjson" | tr -d " ")"   # BSD wc (macOS) pads the count with spaces
   att_query='query PrAttachments($filter: AttachmentFilter, $first: Int, $after: String) { attachments(filter: $filter, first: $first, after: $after) { nodes { url } pageInfo { hasNextPage endCursor } } }'
   afilter="$(jq -nc --arg r "github.com/$repo/pull/" '{url:{contains:$r}}')"
   after="null"; : > "$work/att.txt"; att_ok=1
