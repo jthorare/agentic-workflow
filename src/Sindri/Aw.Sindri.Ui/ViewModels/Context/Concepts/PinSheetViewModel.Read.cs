@@ -183,6 +183,33 @@ internal sealed partial class PinSheetViewModel
         return new PinWordRow(word, newRecords: null, ticked: refusal is null, refusal, counting: false, typed) { IsRefused = refusal is not null };
     }
 
+    // The pins moved under the sheet: every word is judged again, and only a row whose refusal changed is replaced (the others keep their tick).
+    private void Rejudge()
+    {
+        _filling = true;
+        try
+        {
+            for (var i = 0; i < Words.Count; i++)
+            {
+                var row = Words[i];
+                var refusal = PinWordRules.Refusal(row.Word, _pins, _self);
+                if (string.Equals(refusal, row.IsRefused ? row.Note : null, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
+                var note = refusal ?? (row.NewRecords > TooBroad ? Labels.PinSheetTooBroad(row.NewRecords.Value) : null);
+                Words[i] = Watched(new PinWordRow(row.Word, row.NewRecords, ticked: false, note, row.IsCounting, row.IsTyped) { IsRefused = refusal is not null });
+            }
+        }
+        finally
+        {
+            _filling = false;
+        }
+
+        OnWordsChanged();
+    }
+
     // The write's key paths: this pin's, by the ids it may get (Edit keeps its id; a card's or a name's derived one).
     private bool Mine(string path) => Ids().Any(id => path.EndsWith(".concepts." + id, StringComparison.Ordinal));
 
