@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Context.Core;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
@@ -54,6 +55,21 @@ public sealed class PinSuggestTests
         return world;
     }
 
+    // Two issues say "payments": one in this repo's audience, one in another repo's. The concept is implemented by code evidenced in this repo, so a session of it sees the concept.
+    private static async Task<MapWorld> TwoRepos()
+    {
+        var now = DateTimeOffset.Parse("2026-08-01T12:00:00Z", CultureInfo.InvariantCulture);
+        RecordItem Own(RecordKey key, string audience) => Issue(key, "Slow checkout", "Payments take ten seconds.", now) with { Audience = AudienceKey.From(audience) };
+        var items = new[] { Own(_linked, "repo:acme/aw-split-panes"), Own(_second, "repo:acme/other") };
+        var world = new MapWorld(feeds: new FakeRecordFeedCatalog(new FakeRecordFeed(RecordSamples.Github, items)));
+        var graph = new ConceptGraph().ConceptWithTerms("concept:billing", "Billing", "payment").Node("feature:checkout", "Checkout").Member("feature:checkout", "concept:billing")
+            .Node("code:src/pay.cs").Implements("code:src/pay.cs", "feature:checkout", "repo:aw-split-panes/src/pay.cs").Build();
+        Assert.True((await world.Store.SaveCurrent(new MapImport(ContextRepoName.From(FixtureMap.Repo), Commit: null, graph, []), now, Ct)).IsSuccess);
+        var synced = await world.Engine.Sync(source: null, MapWorld.HumanWith(Section), Ct);
+        Assert.True(synced.IsSuccess, synced.IsError ? synced.Error.Message : null);
+        return world;
+    }
+
     private static PinSuggestQuery ForConcept(string key) => new(MapRead.Current, Repo: null, NodeKey.From(key), Search: null, Limit: 50, Lines: null);
 
     [Fact]
@@ -69,5 +85,33 @@ public sealed class PinSuggestTests
         Assert.Equal([("payment", 2), ("invoice", 0)], terms.Select(t => (t.Word, t.NewRecords)));   // 3 records say "payments", 1 is linked already; the invoice one is removed
         Assert.Null(suggested.Value.Features);
         Assert.Null(suggested.Value.Matches);
+    }
+
+    [Fact]
+    public async Task A_sessions_count_leaves_out_another_repos_records()
+    {
+        using var world = await TwoRepos();
+        using var section = System.Text.Json.JsonDocument.Parse("{\"sessions\":{\"enabled\":true},\"sources\":{\"github\":{\"repos\":[\"acme/aw-split-panes\",\"acme/other\"]}}}");
+        var session = new ContextScope(section.RootElement.Clone(), MapWorld.Repos, new ContextCaller(ContextCallerKind.Session, ContextRepoName.From(FixtureMap.Repo), ContextClient.Http));
+        var human = MapWorld.HumanWith("{\"sources\":{\"github\":{\"repos\":[\"acme/aw-split-panes\",\"acme/other\"]}}}");
+
+        var asSession = await world.Engine.PinSuggest(ForConcept("concept:billing"), session, Ct);
+        var asHuman = await world.Engine.PinSuggest(ForConcept("concept:billing"), human, Ct);
+
+        Assert.True(asSession.IsSuccess, asSession.IsError ? asSession.Error.Message : null);
+        Assert.True(asHuman.IsSuccess, asHuman.IsError ? asHuman.Error.Message : null);
+        Assert.Equal(1, Assert.Single(asSession.Value.Terms!).NewRecords);   // only its own repo's issue
+        Assert.Equal(2, Assert.Single(asHuman.Value.Terms!).NewRecords);   // a human covering both repos sees both
+    }
+
+    [Fact]
+    public async Task A_concept_the_map_lacks_is_an_unknown_anchor()
+    {
+        using var world = await Rig();
+
+        var suggested = await world.Engine.PinSuggest(ForConcept("concept:ghost"), MapWorld.HumanWith(Profile), Ct);
+
+        Assert.True(suggested.IsError);
+        Assert.Equal(ContextErrors.UnknownAnchor.Code, suggested.Error.Code);
     }
 }

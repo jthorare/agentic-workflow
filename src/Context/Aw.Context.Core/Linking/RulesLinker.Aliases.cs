@@ -38,8 +38,20 @@ public static partial class RulesLinker
         return [.. found.Values.OrderBy(l => l.Target.Value, StringComparer.Ordinal)];
     }
 
+    /// <summary>The given words (aliases) the alias rule finds in a text (concept pins spec §3.6): the same match as <see cref="Aliases"/>, for many words at once and on one reading of the text. Writes nothing.</summary>
+    /// <param name="text">The sanitized, scrubbed text.</param>
+    /// <param name="words">The words to look for; one that normalises to nothing never matches.</param>
+    /// <returns>The words found, in the order given.</returns>
+    public static IReadOnlyList<string> Matching(string text, IReadOnlyList<string> words)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(words);
+        var found = Significant(text);
+        return [.. words.Where(w => Contains(found, Significant(w)))];
+    }
+
     // The words of a text as the alias rule reads them: letter and digit runs, lower-case, a plural 's' dropped, small words left out.
-    private static List<string> Significant(string text) =>
+    internal static List<string> Significant(string text) =>
         [.. Word.Matches(text).Select(m => AnchorMatch.Significant(m.Value.ToLowerInvariant())).OfType<string>()];
 
     // An alias that normalises to nothing never matches; one word is enough.

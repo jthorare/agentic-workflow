@@ -10705,3 +10705,13 @@ override Aw.Context.Core.Concepts.PinSuggestView.ToString() -> string!
 static Aw.Context.Core.Concepts.PinSuggestView.operator !=(Aw.Context.Core.Concepts.PinSuggestView? left, Aw.Context.Core.Concepts.PinSuggestView? right) -> bool
 static Aw.Context.Core.Concepts.PinSuggestView.operator ==(Aw.Context.Core.Concepts.PinSuggestView? left, Aw.Context.Core.Concepts.PinSuggestView? right) -> bool
 Aw.Context.Core.Facade.IContextConcepts.PinSuggest(Aw.Context.Core.Concepts.PinSuggestQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.PinSuggestView!>!>
+static readonly Aw.Context.Core.ContextErrors.PinSuggestInvalid -> Aw.Kernel.ErrorDefinition!
+static Aw.Context.Core.Linking.RulesLinker.Matching(string! text, System.Collections.Generic.IReadOnlyList<string!>! words) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Concepts.PinSuggestBuilder
+const Aw.Context.Core.Concepts.PinSuggestBuilder.DefaultLimit = 50 -> int
+const Aw.Context.Core.Concepts.PinSuggestBuilder.MaxLimit = 200 -> int
+const Aw.Context.Core.Concepts.PinSuggestBuilder.MaxTerms = 20 -> int
+static Aw.Context.Core.Concepts.PinSuggestBuilder.TermsOf(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.TermRows(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept, Aw.Context.Core.Map.MapText! text, System.Collections.Generic.IReadOnlyList<string!>! words, System.Collections.Generic.IReadOnlyDictionary<string!, int>! counts) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.Search(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, string! search, int limit) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.Match(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>! lines) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>!
