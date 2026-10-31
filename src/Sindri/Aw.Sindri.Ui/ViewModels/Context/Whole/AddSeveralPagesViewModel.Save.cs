@@ -96,6 +96,7 @@ internal sealed partial class AddSeveralPagesViewModel
     private async Task Clashed(CancellationToken cancellationToken)
     {
         var ticked = Rows.Where(static r => r.Ticked).Select(static r => r.Block).ToHashSet();
+        var picks = Rows.ToDictionary(static r => r.Block, static r => r.Picks);
         var read = await _writes.Preview(_readText, _repo, cancellationToken).ConfigureAwait(true);
         _waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
         if (read.Preview is { } preview)
@@ -103,6 +104,11 @@ internal sealed partial class AddSeveralPagesViewModel
             Fill(preview, _readText);
             foreach (var row in Rows)
             {
+                if (picks.TryGetValue(row.Block, out var picked))
+                {
+                    row.Restore(picked);   // the pickers come back with their picks, so a ticked row stays tickable
+                }
+
                 row.Ticked = ticked.Contains(row.Block);   // a row that can't be ticked any more stays off
             }
 
