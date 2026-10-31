@@ -44,6 +44,15 @@ internal sealed partial class ContextPageViewModel
 
             _ = reread();
         };
+        Show(sheet);
+        _ = key is null ? sheet.OpenNew(CancellationToken.None) : sheet.OpenPage(key, CancellationToken.None);
+    }
+
+    /// <summary>Puts a sheet on show: the shell mounts it, and it goes when it closes.</summary>
+    /// <param name="sheet">The sheet.</param>
+    internal void Show(PageSheetViewModel sheet)
+    {
+        ArgumentNullException.ThrowIfNull(sheet);
         sheet.Closed += (_, _) =>
         {
             if (ReferenceEquals(PageSheet, sheet))
@@ -54,7 +63,6 @@ internal sealed partial class ContextPageViewModel
         };
         PageSheet = sheet;
         ChangedPageSheet();
-        _ = key is null ? sheet.OpenNew(CancellationToken.None) : sheet.OpenPage(key, CancellationToken.None);
     }
 
     private void ChangedPageSheet()

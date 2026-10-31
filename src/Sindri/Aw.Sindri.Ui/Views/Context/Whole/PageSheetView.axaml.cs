@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Views.Context.Whole;
@@ -17,6 +18,16 @@ internal sealed partial class PageSheetView : UserControl
     {
         InitializeComponent();
         DataContextChanged += (_, _) => Watch();
+    }
+
+    /// <inheritdoc/>
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        if (Sheet is { IsReady: true })
+        {
+            FocusLater("PageSheetName");
+        }
     }
 
     private PageSheetViewModel? Sheet => DataContext as PageSheetViewModel;
