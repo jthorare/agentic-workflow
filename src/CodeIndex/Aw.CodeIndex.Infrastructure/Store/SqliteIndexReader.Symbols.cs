@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.Json;
 using Aw.CodeIndex.Core;
 using Aw.CodeIndex.Core.Facade;
 using Aw.CodeIndex.Core.Ports;
@@ -19,6 +20,13 @@ internal sealed partial class SqliteIndexReader
     private const string FindPrefixOpen = "SELECT " + HitColumns + " FROM symbols s WHERE s.name >= $low ORDER BY s.file, s.start_line, s.id LIMIT $limit";
 
     private const string FindPrefix = "SELECT " + HitColumns + " FROM symbols s WHERE s.name >= $low AND s.name < $high ORDER BY s.file, s.start_line, s.id LIMIT $limit";
+
+    // Within filters in SQL before the LIMIT, so the limit fills with in-set rows and an empty answer means none (concept pins spec §3.5).
+    private static readonly string _findExactWithin = Narrowed(FindExact);
+
+    private static readonly string _findPrefixOpenWithin = Narrowed(FindPrefixOpen);
+
+    private static readonly string _findPrefixWithin = Narrowed(FindPrefix);
 
     private const string InFile = "SELECT " + HitColumns + " FROM symbols s WHERE s.file = $path ORDER BY s.start_line, s.id";
 
@@ -42,28 +50,36 @@ internal sealed partial class SqliteIndexReader
         }
 
         var limit = query.Limit;
-        var command = query.Match == SymbolMatch.Prefix ? PrefixCommand(query.Text) : ExactCommand(query.Text);
+        var within = query.Within is { } files ? JsonSerializer.Serialize(files.Select(static f => f.Path).Distinct(StringComparer.Ordinal).ToArray(), WithinWire.Options) : null;
+        var command = query.Match == SymbolMatch.Prefix ? PrefixCommand(query.Text, within is not null) : ExactCommand(query.Text, within is not null);
         await using (command.ConfigureAwait(false))
         {
             _ = command.With("$limit", limit + 1);
+            if (within is not null)
+            {
+                _ = command.With("$within", within);
+            }
+
             var hits = await ReadHits(command, cancellationToken).ConfigureAwait(false);
             return new SymbolPage([.. hits.Take(limit)], hits.Count > limit);
         }
     }
 
-    private SqliteCommand ExactCommand(string text)
+    private static string Narrowed(string sql) => sql.Replace(" ORDER BY", " AND s.file IN (SELECT value FROM json_each($within)) ORDER BY", StringComparison.Ordinal);
+
+    private SqliteCommand ExactCommand(string text, bool within)
     {
         var split = text.LastIndexOf('#');
-        return Sql.Command(connection, FindExact)
+        return Sql.Command(connection, within ? _findExactWithin : FindExact)
             .With("$text", text)
             .With("$path", split > 0 ? text[..split] : null)
             .With("$name", split > 0 ? text[(split + 1)..] : null);
     }
 
-    private SqliteCommand PrefixCommand(string text)
+    private SqliteCommand PrefixCommand(string text, bool within)
     {
         var high = PrefixUpperBound(text);
-        var command = Sql.Command(connection, high is null ? FindPrefixOpen : FindPrefix).With("$low", text);
+        var command = Sql.Command(connection, high is null ? (within ? _findPrefixOpenWithin : FindPrefixOpen) : (within ? _findPrefixWithin : FindPrefix)).With("$low", text);
         return high is null ? command : command.With("$high", high);
     }
 

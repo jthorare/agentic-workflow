@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
@@ -17,6 +18,9 @@ namespace Aw.Context.Features.QueryContext;
 /// <param name="StaleNote">Says pins were edited after the map was built, or null.</param>
 internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<ConceptId> AnchorPins, string? StaleNote)
 {
+    /// <summary>Where the pin-scoped sources count the results they read and left out; read for the empty-answer note. Unused without <see cref="Scope"/>.</summary>
+    internal PinTally Skipped { get; } = new();
+
     /// <summary>The context of a query with no pins in play.</summary>
     internal static PinContext None { get; } = new(PinSet.Empty, Scope: null, [], StaleNote: null);
 
@@ -61,12 +65,25 @@ internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<Co
         }
 
         var anchored = anchors.Select(a => NodeKey.TryFrom(a, out var key) ? pins.PinOf(key) : null).OfType<ConceptId>().DistinctBy(p => p.Value, StringComparer.Ordinal).ToList();
-        return new PinContext(pins, named, anchored, Stale(map.Snapshot, mapped));
+        var stale = Stale(map.Snapshot, mapped);
+        return new PinContext(pins, named, anchored, stale) { StaleVersion = stale is null ? null : map.Snapshot.Version.Number };
     }
+
+    /// <summary>The number of the map version the pins changed after (41 for <c xml:lang="en">map v41</c>), or null when the map is current.</summary>
+    internal int? StaleVersion { get; init; }
+
+    /// <summary>Tells the stale-map note by where the rebuild stands: while a refresh is queued or running the map is being built, so the note says that and no fix.</summary>
+    /// <param name="rebuild">Where the rebuild stands.</param>
+    /// <returns>This context, with the note changed when a refresh runs for a stale map.</returns>
+    internal PinContext Rebuilding(MapRebuildStatus rebuild) =>
+        StaleVersion is { } built && rebuild.Building ? this with { StaleNote = BuildingNote(built + 1) } : this;
 
     // Pins are in the rules hash the map was built with, so a different hash means they (or a deny glob) changed since. Computed over the mapped repos, not the caller's narrower view.
     private static string? Stale(MapSnapshot snapshot, IReadOnlyList<ContextRepo> mapped) =>
         snapshot.Version.Ruleset is { } built && MapRuleset.Of(mapped) is var running && !string.Equals(built, running, StringComparison.Ordinal)
             ? $"pins changed after map {snapshot.Tag} was built and the refresh for them didn't finish (fix: Refresh map on the Context page, or sindri context map refresh)"
             : null;
+
+    private static string BuildingNote(int building) =>
+        string.Create(CultureInfo.InvariantCulture, $"pins changed; map v{building} is being built with them, so some features are grouped the old way until it lands");
 }

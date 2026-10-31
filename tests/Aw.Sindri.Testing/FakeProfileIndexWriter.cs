@@ -8,17 +8,17 @@ using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Testing;
 
-/// <summary>The profile's 'index.concepts' in memory, with a hash that changes with its content. Kept honest by <see cref="ProfileConceptWriterContract"/>.</summary>
-public sealed class FakeProfileConceptWriter : IProfileConceptWriter
+/// <summary>The profile's 'index.concepts' in memory, with a hash that changes with its content. Kept honest by <see cref="ProfileIndexWriterContract"/>.</summary>
+public sealed class FakeProfileIndexWriter : IProfileIndexWriter
 {
     private readonly List<ConceptSettings> _concepts = [];
-    private readonly List<IReadOnlyList<ConceptEdit>> _writes = [];
+    private readonly List<IReadOnlyList<IndexEdit>> _writes = [];
 
     /// <summary>Gets the entries now in 'index.concepts', in order.</summary>
     public IReadOnlyList<ConceptSettings> Concepts => _concepts;
 
     /// <summary>Gets the edits of each write, in order.</summary>
-    public IReadOnlyList<IReadOnlyList<ConceptEdit>> Writes => _writes;
+    public IReadOnlyList<IReadOnlyList<IndexEdit>> Writes => _writes;
 
     /// <summary>Gets or sets the profile's hash: a test sets it to play a profile that changed since the caller read it.</summary>
     public ProfileHash Hash { get; set; } = HashOf([]);
@@ -27,7 +27,7 @@ public sealed class FakeProfileConceptWriter : IProfileConceptWriter
     public Error? Fails { get; set; }
 
     /// <inheritdoc/>
-    public ValueTask<Result<ProfileHash>> Write(IReadOnlyList<ConceptEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
+    public ValueTask<Result<ProfileHash>> Write(IReadOnlyList<IndexEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(edits);
         if (Fails is { } error)
@@ -40,7 +40,7 @@ public sealed class FakeProfileConceptWriter : IProfileConceptWriter
             return ValueTask.FromResult<Result<ProfileHash>>(SindriErrors.ProfileHashMismatch.With("the profile changed since you read it (fix: read it again; the sheet keeps your changes)"));
         }
 
-        foreach (var edit in edits)
+        foreach (var edit in edits.OfType<ConceptEdit>())
         {
             var at = _concepts.FindIndex(c => c.Id == edit.Id);
             if (edit.Entry is null)

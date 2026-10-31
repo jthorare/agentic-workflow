@@ -21541,9 +21541,7 @@ Aw.Sindri.Core.Setup.ConceptEdit.Entry.get -> Aw.Sindri.Core.Profile.ConceptSett
 Aw.Sindri.Core.Setup.ConceptEdit.Entry.init -> void
 Aw.Sindri.Core.Setup.ConceptEdit.Id.get -> Aw.Sindri.Core.Ids.ConceptPinId
 Aw.Sindri.Core.Setup.ConceptEdit.Id.init -> void
-Aw.Sindri.Core.Setup.IProfileConceptWriter
-Aw.Sindri.Core.Setup.IProfileConceptWriter.Write(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptEdit!>! edits, Aw.Sindri.Core.Ids.ProfileHash? ifHash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ProfileHash>!>
-Aw.Sindri.Core.Setup.ConceptEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptEdit!
+Aw.Sindri.Core.Setup.IProfileIndexWriter
 Aw.Sindri.Core.Setup.ConceptEdit.Deconstruct(out Aw.Sindri.Core.Ids.ConceptPinId Id, out Aw.Sindri.Core.Profile.ConceptSettings? Entry, out string? MatchName) -> void
 Aw.Sindri.Core.Setup.ConceptEdit.Equals(Aw.Sindri.Core.Setup.ConceptEdit? other) -> bool
 override Aw.Sindri.Core.Setup.ConceptEdit.Equals(object? obj) -> bool
@@ -21629,6 +21627,40 @@ static Aw.Sindri.Core.Profile.PageActionSettings.operator ==(Aw.Sindri.Core.Prof
 static Aw.Sindri.Core.Profile.PageSettings.operator !=(Aw.Sindri.Core.Profile.PageSettings? left, Aw.Sindri.Core.Profile.PageSettings? right) -> bool
 static Aw.Sindri.Core.Profile.PageSettings.operator ==(Aw.Sindri.Core.Profile.PageSettings? left, Aw.Sindri.Core.Profile.PageSettings? right) -> bool
 static Aw.Sindri.Core.Profile.RepoPages.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>!
+Aw.Sindri.Core.IPinnedCode
+Aw.Sindri.Core.IPinnedCode.Files(string! concept, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.PinnedCode!>!>
+Aw.Sindri.Core.PinnedCode
+Aw.Sindri.Core.PinnedCode.<Clone>$() -> Aw.Sindri.Core.PinnedCode!
+Aw.Sindri.Core.PinnedCode.Deconstruct(out string! Pin, out string! MapTag, out string? MapCommit, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.PinnedFile!>! Files) -> void
+Aw.Sindri.Core.PinnedCode.Equals(Aw.Sindri.Core.PinnedCode? other) -> bool
+Aw.Sindri.Core.PinnedCode.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.PinnedFile!>!
+Aw.Sindri.Core.PinnedCode.Files.init -> void
+Aw.Sindri.Core.PinnedCode.MapCommit.get -> string?
+Aw.Sindri.Core.PinnedCode.MapCommit.init -> void
+Aw.Sindri.Core.PinnedCode.MapTag.get -> string!
+Aw.Sindri.Core.PinnedCode.MapTag.init -> void
+Aw.Sindri.Core.PinnedCode.Pin.get -> string!
+Aw.Sindri.Core.PinnedCode.Pin.init -> void
+Aw.Sindri.Core.PinnedCode.PinnedCode(string! Pin, string! MapTag, string? MapCommit, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.PinnedFile!>! Files) -> void
+Aw.Sindri.Core.PinnedFile
+Aw.Sindri.Core.PinnedFile.<Clone>$() -> Aw.Sindri.Core.PinnedFile!
+Aw.Sindri.Core.PinnedFile.Deconstruct(out string! Repo, out string! Path) -> void
+Aw.Sindri.Core.PinnedFile.Equals(Aw.Sindri.Core.PinnedFile? other) -> bool
+Aw.Sindri.Core.PinnedFile.Path.get -> string!
+Aw.Sindri.Core.PinnedFile.Path.init -> void
+Aw.Sindri.Core.PinnedFile.PinnedFile(string! Repo, string! Path) -> void
+Aw.Sindri.Core.PinnedFile.Repo.get -> string!
+Aw.Sindri.Core.PinnedFile.Repo.init -> void
+override Aw.Sindri.Core.PinnedCode.Equals(object? obj) -> bool
+override Aw.Sindri.Core.PinnedCode.GetHashCode() -> int
+override Aw.Sindri.Core.PinnedCode.ToString() -> string!
+override Aw.Sindri.Core.PinnedFile.Equals(object? obj) -> bool
+override Aw.Sindri.Core.PinnedFile.GetHashCode() -> int
+override Aw.Sindri.Core.PinnedFile.ToString() -> string!
+static Aw.Sindri.Core.PinnedCode.operator !=(Aw.Sindri.Core.PinnedCode? left, Aw.Sindri.Core.PinnedCode? right) -> bool
+static Aw.Sindri.Core.PinnedCode.operator ==(Aw.Sindri.Core.PinnedCode? left, Aw.Sindri.Core.PinnedCode? right) -> bool
+static Aw.Sindri.Core.PinnedFile.operator !=(Aw.Sindri.Core.PinnedFile? left, Aw.Sindri.Core.PinnedFile? right) -> bool
+static Aw.Sindri.Core.PinnedFile.operator ==(Aw.Sindri.Core.PinnedFile? left, Aw.Sindri.Core.PinnedFile? right) -> bool
 Aw.Sindri.Core.Events.ContextPinWritten
 Aw.Sindri.Core.Events.ContextPinWritten.Actor.get -> string!
 Aw.Sindri.Core.Events.ContextPinWritten.Actor.init -> void
@@ -21706,3 +21738,35 @@ Aw.Sindri.Core.Setup.ConceptListRead.Deconstruct(out System.Collections.Generic.
 Aw.Sindri.Core.Setup.ConceptListRead.NamelessLine.get -> int?
 Aw.Sindri.Core.Setup.ConceptListRead.NamelessLine.init -> void
 static Aw.Sindri.Core.Setup.ConceptList.Parse(string! text) -> Aw.Sindri.Core.Setup.ConceptListRead!
+abstract Aw.Sindri.Core.Setup.IndexEdit.<Clone>$() -> Aw.Sindri.Core.Setup.IndexEdit!
+Aw.Sindri.Core.Setup.IndexEdit
+Aw.Sindri.Core.Setup.IndexEdit.IndexEdit(Aw.Sindri.Core.Setup.IndexEdit! original) -> void
+Aw.Sindri.Core.Setup.IndexEdit.IndexEdit() -> void
+Aw.Sindri.Core.Setup.IProfileIndexWriter.Write(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.IndexEdit!>! edits, Aw.Sindri.Core.Ids.ProfileHash? ifHash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ProfileHash>!>
+Aw.Sindri.Core.Setup.PageEdit
+Aw.Sindri.Core.Setup.PageEdit.Deconstruct(out Aw.Sindri.Core.Ids.PagePinId Id, out Aw.Sindri.Core.Profile.PageSettings? Entry, out string? Repo) -> void
+Aw.Sindri.Core.Setup.PageEdit.Entry.get -> Aw.Sindri.Core.Profile.PageSettings?
+Aw.Sindri.Core.Setup.PageEdit.Entry.init -> void
+Aw.Sindri.Core.Setup.PageEdit.Equals(Aw.Sindri.Core.Setup.PageEdit? other) -> bool
+Aw.Sindri.Core.Setup.PageEdit.Id.get -> Aw.Sindri.Core.Ids.PagePinId
+Aw.Sindri.Core.Setup.PageEdit.Id.init -> void
+Aw.Sindri.Core.Setup.PageEdit.PageEdit(Aw.Sindri.Core.Ids.PagePinId Id, Aw.Sindri.Core.Profile.PageSettings? Entry, string? Repo = null) -> void
+Aw.Sindri.Core.Setup.PageEdit.Repo.get -> string?
+Aw.Sindri.Core.Setup.PageEdit.Repo.init -> void
+override Aw.Sindri.Core.Setup.ConceptEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptEdit!
+override Aw.Sindri.Core.Setup.IndexEdit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.IndexEdit.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.IndexEdit.ToString() -> string!
+override Aw.Sindri.Core.Setup.PageEdit.<Clone>$() -> Aw.Sindri.Core.Setup.PageEdit!
+override Aw.Sindri.Core.Setup.PageEdit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.PageEdit.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.PageEdit.ToString() -> string!
+override sealed Aw.Sindri.Core.Setup.ConceptEdit.Equals(Aw.Sindri.Core.Setup.IndexEdit? other) -> bool
+override sealed Aw.Sindri.Core.Setup.PageEdit.Equals(Aw.Sindri.Core.Setup.IndexEdit? other) -> bool
+static Aw.Sindri.Core.Setup.IndexEdit.operator !=(Aw.Sindri.Core.Setup.IndexEdit? left, Aw.Sindri.Core.Setup.IndexEdit? right) -> bool
+static Aw.Sindri.Core.Setup.IndexEdit.operator ==(Aw.Sindri.Core.Setup.IndexEdit? left, Aw.Sindri.Core.Setup.IndexEdit? right) -> bool
+static Aw.Sindri.Core.Setup.PageEdit.operator !=(Aw.Sindri.Core.Setup.PageEdit? left, Aw.Sindri.Core.Setup.PageEdit? right) -> bool
+static Aw.Sindri.Core.Setup.PageEdit.operator ==(Aw.Sindri.Core.Setup.PageEdit? left, Aw.Sindri.Core.Setup.PageEdit? right) -> bool
+virtual Aw.Sindri.Core.Setup.IndexEdit.EqualityContract.get -> System.Type!
+virtual Aw.Sindri.Core.Setup.IndexEdit.Equals(Aw.Sindri.Core.Setup.IndexEdit? other) -> bool
+virtual Aw.Sindri.Core.Setup.IndexEdit.PrintMembers(System.Text.StringBuilder! builder) -> bool

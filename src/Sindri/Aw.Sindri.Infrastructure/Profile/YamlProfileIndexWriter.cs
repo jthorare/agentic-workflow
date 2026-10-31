@@ -8,14 +8,14 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Infrastructure.Profile;
 
 /// <summary>
-/// <see cref="IProfileConceptWriter"/> over the live profile file (concept pins spec §3.6): the same versioned write as <see cref="YamlProfileRepoWriter"/>. The file is read and hashed, the caller's hash is checked, the new
+/// <see cref="IProfileIndexWriter"/> over the live profile file (concept pins spec §3.6, pages spec §3.1): the same versioned write as <see cref="YamlProfileRepoWriter"/>. The file is read and hashed, the caller's hash is checked, the new
 /// text is built and checked (it must parse, pass the profile's rules and hold every set entry and none of the removed ones) and it replaces the file only if the file is still the text that was read; on a conflict it
 /// reads again and tries once more. Nothing is written when any check fails.
 /// </summary>
 /// <param name="settings">Where the profile is.</param>
 /// <param name="options">The package's AwJson options.</param>
 /// <param name="box">The box's limits the profile must stay inside, read each time; null checks the profile alone.</param>
-internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSerializerOptions options, Func<BoxLimits>? box = null) : IProfileConceptWriter
+internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerializerOptions options, Func<BoxLimits>? box = null) : IProfileIndexWriter
 {
     private const string Conflict = "The profile changed while Sindri was writing it. Try again.";
     private const int Attempts = 2;
@@ -25,9 +25,10 @@ internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSeri
     /// <summary>Called with the profile path and the attempt number just before the write is checked against what was read: the point a concurrent edit can land. Tests use it to make one.</summary>
     internal Action<string, int>? BeforeWrite { get; init; }
 
-    public ValueTask<Result<ProfileHash>> Write(IReadOnlyList<ConceptEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
+    public ValueTask<Result<ProfileHash>> Write(IReadOnlyList<IndexEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(edits);
+
         for (var attempt = 0; attempt < Attempts; attempt++)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -47,7 +48,7 @@ internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSeri
     }
 
     // null: the file changed under us, read again.
-    private Result<ProfileHash>? Try(IReadOnlyList<ConceptEdit> edits, ProfileHash? ifHash, int attempt)
+    private Result<ProfileHash>? Try(IReadOnlyList<IndexEdit> edits, ProfileHash? ifHash, int attempt)
     {
         var path = settings.ProfilePath;
         var planned = Plan(path, edits, ifHash);
@@ -74,7 +75,7 @@ internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSeri
     }
 
     // The text read, the text to write (null: nothing to change) and the hash the file has after the write.
-    private Result<(string Before, string? After, ProfileHash Hash)> Plan(string path, IReadOnlyList<ConceptEdit> edits, ProfileHash? ifHash)
+    private Result<(string Before, string? After, ProfileHash Hash)> Plan(string path, IReadOnlyList<IndexEdit> edits, ProfileHash? ifHash)
     {
         var read = Read(path);
         if (read.IsError)
@@ -94,12 +95,12 @@ internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSeri
             return SindriErrors.ProfileHashMismatch.With("the profile changed since you read it (fix: read it again; the sheet keeps your changes)");
         }
 
-        var after = ProfileConceptText.Apply(before, edits);
+        var after = ProfileIndexText.Apply(before, edits);
         return after is null ? Refused(path, edits) : Check(path, edits, before, after, current.Value.Hash);
     }
 
     // The new text must be YAML, keep the profile's rules and hold the edits; when it equals the old text there is nothing to write.
-    private Result<(string Before, string? After, ProfileHash Hash)> Check(string path, IReadOnlyList<ConceptEdit> edits, string before, string after, ProfileHash current)
+    private Result<(string Before, string? After, ProfileHash Hash)> Check(string path, IReadOnlyList<IndexEdit> edits, string before, string after, ProfileHash current)
     {
         if (YamlToJson.TryConvert(after, out var json) is not null)
         {
@@ -139,25 +140,43 @@ internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSeri
             ? SindriErrors.ProfileInvalid.With($"{path}: {problem} ({ProfileReading.Fix})")
             : ProfileReading.FromJson(json, path, options, box?.Invoke());
 
-    private static bool Holds(SindriProfile profile, IReadOnlyList<ConceptEdit> edits)
+    private static bool Holds(SindriProfile profile, IReadOnlyList<IndexEdit> edits)
     {
-        var concepts = profile.Index?.Concepts ?? [];
-        var last = new Dictionary<string, ConceptEdit>(StringComparer.Ordinal);
+        var last = new Dictionary<(string Where, string Id), bool>();
         foreach (var edit in edits)
         {
-            last[edit.Id.Value] = edit;   // the last edit of an id is the one that stands
+            last[(ProfileIndexText.Where(edit), Id(edit))] = Sets(edit);   // the last edit of an entry is the one that stands
         }
 
-        return last.Values.All(edit => edit.Entry is null
-            ? !concepts.Any(c => c.Id is { } id && id.Value == edit.Id.Value)
-            : concepts.Any(c => c.Id is { } id && id.Value == edit.Id.Value));
+        return last.All(e => e.Value == Ids(profile, e.Key.Where).Contains(e.Key.Id));
     }
 
-    private static Error Refused(string path, IReadOnlyList<ConceptEdit> edits)
+    private static string Id(IndexEdit edit) => edit switch
     {
-        var lines = edits.Select(static e => e.Entry is { } entry
-            ? string.Join(" / ", ProfileConceptText.Entry(e.Id.Value, entry, 4))
-            : $"remove the entry with id {e.Id.Value}");
-        return SindriErrors.ProfileInvalid.With($"{path} has a layout Sindri won't edit (fix: change these under index.concepts by hand, then try again): {string.Join(" ; ", lines)}");
+        ConceptEdit c => c.Id.Value,
+        PageEdit p => p.Id.Value,
+        _ => throw new ArgumentOutOfRangeException(nameof(edit), edit, "an index edit is a concept or a page"),
+    };
+
+    private static bool Sets(IndexEdit edit) => edit is ConceptEdit { Entry: not null } or PageEdit { Entry: not null };
+
+    // The ids now in the list at <where> (ProfileIndexText.Where's key paths).
+    private static HashSet<string> Ids(SindriProfile profile, string where)
+    {
+        var ids = string.Equals(where, "index.concepts", StringComparison.Ordinal)
+            ? (profile.Index?.Concepts ?? []).Select(static c => c.Id?.Value)
+            : Pages(profile, where).Select(static p => p.Id?.Value);
+        return [.. ids.OfType<string>()];
+    }
+
+    private static IReadOnlyList<PageSettings> Pages(SindriProfile profile, string where) =>
+        string.Equals(where, "index.pages", StringComparison.Ordinal)
+            ? profile.Index?.Pages ?? []
+            : (profile.Repos ?? []).FirstOrDefault(r => string.Equals(where, $"repos.{r.Name}.index.pages", StringComparison.Ordinal))?.Index?.Pages ?? [];
+
+    private static Error Refused(string path, IReadOnlyList<IndexEdit> edits)
+    {
+        var where = string.Join(" and ", edits.Select(ProfileIndexText.Where).Distinct(StringComparer.Ordinal));
+        return SindriErrors.ProfileInvalid.With($"{path} has a layout Sindri won't edit (fix: change these under {where} by hand, then try again): {string.Join(" ; ", edits.Select(ProfileIndexText.Describe))}");
     }
 }
