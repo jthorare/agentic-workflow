@@ -57,7 +57,7 @@ internal sealed class GetContextPagesService(ContextScopes scopes, IContextEngin
         return ConceptId.TryFrom(bare, out var id) ? id : ContextErrors.PageQueryUnknown.With($"context_pages: no concept '{text}' (fix: sindri context map status lists the concepts)");
     }
 
-    private static Result<ContextRepoName?> Repo(string? text)
+    internal static Result<ContextRepoName?> Repo(string? text)
     {
         if (text is null)
         {

@@ -56,12 +56,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
             return Ended(started.Error.Code, started.Error.Message);
         }
 
-        var (view, error) = await Wait(url, started.Value.JobId, cancellationToken).ConfigureAwait(true);
-        if (error is not null)
-        {
-            return Ended(error.Code, error.Message);
-        }
-
+        var view = await Wait(url, started.Value.JobId, cancellationToken).ConfigureAwait(true);
         if (view is not { State: "succeeded" })
         {
             return view is null ? new ProfileWritten(ProfileWriteState.Failed, Code: TimedOut) : Ended(view.Code, view.Summary);
@@ -86,29 +81,30 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
             return new ProfileWritten(ProfileWriteState.Approved, hash);
         }
 
-        return string.Equals(approved.Error.Code, Clash, StringComparison.Ordinal) ? new ProfileWritten(ProfileWriteState.Waiting, hash) : Ended(approved.Error.Code, approved.Error.Message);
+        // The write job already landed with this hash, so any approve error (a clash included) leaves it waiting for Review and approve, never failed.
+        return new ProfileWritten(ProfileWriteState.Waiting, hash, approved.Error.Code, approved.Error.Message);
     }
 
-    // The job's last read: its view once it ended, or no view when it still ran after the wait; an error when the poll itself failed.
-    private async Task<(JobView? View, Error? Error)> Wait(Uri url, string jobId, CancellationToken cancellationToken)
+    // The job's last read: its view once it ended, or no view when it still ran after the wait or a poll failed (the job may still land, so both read as still running).
+    private async Task<JobView?> Wait(Uri url, string jobId, CancellationToken cancellationToken)
     {
         for (var poll = 0; poll < MaxPolls; poll++)
         {
             var read = await api.Job(url, jobId, cancellationToken).ConfigureAwait(true);
             if (!read.IsSuccess)
             {
-                return (null, read.Error);
+                return null;
             }
 
             if (read.Value.State is not ("running" or "waiting"))   // a job parked on a signal ('model-limit') has not ended either
             {
-                return (read.Value, null);
+                return read.Value;
             }
 
             await Task.Delay(_pollEvery, clock, cancellationToken).ConfigureAwait(true);
         }
 
-        return (null, null);
+        return null;
     }
 
     // What an error id means for a sheet: a moved profile, a refusal with the server's sentence, or anything else.
