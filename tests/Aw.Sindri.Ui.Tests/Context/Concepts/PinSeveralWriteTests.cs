@@ -90,8 +90,8 @@ public sealed class PinSeveralWriteTests
     public async Task A_write_that_lands_and_is_approved_closes_the_sheet_and_approves_the_jobs_hash()
     {
         var fixtures = new PinSeveralFixtures();
-        fixtures.Api.ProfileAnswer = PinSeveralFixtures.Profile("h1", "index.concepts.payments", "repos.api.index.concepts.refunds");
         var (_, box) = await Ready("Payments\nRefunds", fixtures);
+        fixtures.Api.ProfileAnswer = PinSeveralFixtures.Profile("h1", "index.concepts.payments", "repos.api.index.concepts.refunds");   // the write's own paths show up only after the sheet opened with nothing waiting
 
         await box.Sheet!.PinAllAsync(PinSeveralFixtures.Token);
 
