@@ -62,7 +62,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
 
         if (view is not { State: "succeeded" })
         {
-            return view is null ? new ProfileWritten(ProfileWriteState.Failed, Message: Labels.ContextPagesSaveTimedOut) : Ended(view.Code, view.Summary);
+            return view is null ? new ProfileWritten(ProfileWriteState.Failed, Message: Labels.ProfileWriteTimedOut) : Ended(view.Code, view.Summary);
         }
 
         var hash = HashOf(view.Result);
@@ -87,7 +87,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
         return string.Equals(approved.Error.Code, Clash, StringComparison.Ordinal) ? new ProfileWritten(ProfileWriteState.Waiting, hash) : Ended(approved.Error.Code, approved.Error.Message);
     }
 
-    // The job's last read: its view once it is not running, or no view when it still ran after the wait; an error when the poll itself failed.
+    // The job's last read: its view once it ended, or no view when it still ran after the wait; an error when the poll itself failed.
     private async Task<(JobView? View, Error? Error)> Wait(Uri url, string jobId, CancellationToken cancellationToken)
     {
         for (var poll = 0; poll < MaxPolls; poll++)
@@ -98,7 +98,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
                 return (null, read.Error);
             }
 
-            if (!string.Equals(read.Value.State, "running", StringComparison.Ordinal))
+            if (read.Value.State is not ("running" or "waiting"))   // a job parked on a signal ('model-limit') has not ended either
             {
                 return (read.Value, null);
             }

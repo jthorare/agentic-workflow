@@ -212,6 +212,30 @@ public sealed class ProfileWriteFlowTests
     }
 
     [Fact]
+    public async Task Keeps_polling_a_job_parked_on_a_signal()
+    {
+        var clock = new FakeTimeProvider(A.Noon);
+        var api = Server(Profile("h1", "index.pages.schedule-week"), state: "waiting");
+        var run = Run(Flow(api, clock), api, approve: false);
+
+        while (api.JobCalls < 2)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(250));
+            await Task.Yield();
+        }
+
+        Assert.False(run.IsCompleted);
+        api.JobAnswers[JobId] = new RouteAnswer(HttpStatusCode.OK, Job("succeeded", code: null, summary: null, hash: "h1"));
+        while (!run.IsCompleted)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(250));
+            await Task.Yield();
+        }
+
+        Assert.Equal(ProfileWriteState.Waiting, (await run).State);
+    }
+
+    [Fact]
     public async Task Waiting_reads_the_live_hash_and_changed_paths()
     {
         var waiting = await Flow(new FakeSindriApi { ProfileAnswer = Profile("h1", "index.pages.x") }).Waiting(Token);
