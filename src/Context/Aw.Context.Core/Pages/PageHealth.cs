@@ -87,7 +87,7 @@ public static class PageHealth
         foreach (var concept in action.Concepts)
         {
             var conceptKey = concept.StartsWith(ConceptPrefix, StringComparison.Ordinal) ? concept : ConceptPrefix + concept;
-            if (!keys.Shown.Contains(conceptKey))
+            if (!Has(keys.Shown, conceptKey))
             {
                 problems.Add($"page '{page}': action '{action.Id.Value}': concept {conceptKey} is gone from the map");
             }
@@ -96,7 +96,9 @@ public static class PageHealth
 
     // Null when the key is on the map as the caller sees it; else whether a deny rule hides it or it is gone.
     private static string? Missing((HashSet<string> Stored, HashSet<string> Shown) keys, string key) =>
-        keys.Shown.Contains(key) ? null : keys.Stored.Contains(key) ? "is hidden by a deny rule" : "is gone from the map";
+        Has(keys.Shown, key) ? null : Has(keys.Stored, key) ? "is hidden by a deny rule" : "is gone from the map";
+
+    private static bool Has(HashSet<string> set, string key) => set.Contains(key) || set.Contains(EntryKey.Normalized(key));
 
     private static string Text(FormattableString text) => text.ToString(CultureInfo.InvariantCulture);
 }

@@ -10616,3 +10616,4 @@ Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool
 Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.init -> void
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.get -> int
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void
+static Aw.Context.Core.Graph.EntryKey.Normalized(string! key) -> string!

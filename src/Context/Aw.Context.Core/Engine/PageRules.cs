@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Context.Core.Graph;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Engine;
@@ -53,17 +54,7 @@ public static class PageRules
     private static void CheckPage(PagePin page, string at, PageFacts facts, List<Error> errors)
     {
         CheckName(page.Name, $"{at}.name", errors);
-        if (page.SurfaceKey is { } surface)
-        {
-            if (!facts.SurfaceRepos.TryGetValue(surface, out var repos))
-            {
-                errors.Add(ContextErrors.PageKeyUnknown.With($"{at}.surface: '{surface}' is not in the current map (fix: sindri context page list --suggested, or pick it in the app)"));
-            }
-            else if (page.Repo is null && repos.Count > 1)
-            {
-                errors.Add(ContextErrors.PageRepoAmbiguous.With($"{at}: this page is in {string.Join(" and ", repos)}: say which (fix: --repo)"));
-            }
-        }
+        CheckSurface(page, at, facts, errors);
 
         if (page.Actions.Count > MaxActions)
         {
@@ -82,12 +73,29 @@ public static class PageRules
                 errors.Add(ContextErrors.PageIdDuplicate.With($"{actionAt}.id: '{action.Id.Value}' is already actions[{Count(first)}]'s"));
             }
 
-            if (action.ActionKey is { } key && !facts.ActionRepos.ContainsKey(key))
+            if (action.ActionKey is { } key && !facts.ActionRepos.ContainsKey(key) && !facts.ActionRepos.ContainsKey(EntryKey.Normalized(key)))
             {
                 errors.Add(ContextErrors.PageKeyUnknown.With($"{actionAt}.action: '{key}' is not in the current map (fix: sindri context page list --suggested, or pick it in the app)"));
             }
 
             CheckConcepts(action, actionAt, facts, errors);
+        }
+    }
+
+    private static void CheckSurface(PagePin page, string at, PageFacts facts, List<Error> errors)
+    {
+        if (page.SurfaceKey is not { } surface)
+        {
+            return;
+        }
+
+        if (!facts.SurfaceRepos.TryGetValue(surface, out var repos) && !facts.SurfaceRepos.TryGetValue(EntryKey.Normalized(surface), out repos))
+        {
+            errors.Add(ContextErrors.PageKeyUnknown.With($"{at}.surface: '{surface}' is not in the current map (fix: sindri context page list --suggested, or pick it in the app)"));
+        }
+        else if (page.Repo is null && repos.Count > 1)
+        {
+            errors.Add(ContextErrors.PageRepoAmbiguous.With($"{at}: this page is in {string.Join(" and ", repos)}: say which (fix: --repo)"));
         }
     }
 

@@ -220,7 +220,7 @@ public static class PageReader
             var prefix = $"action:owner/{pin.Id.Value}/";
             for (var i = 0; i < pin.Actions.Count; i++)
             {
-                if (string.Equals(pin.Actions[i].ActionKey, action.Key.Value, StringComparison.Ordinal) || action.Key.Value == prefix + pin.Actions[i].Id.Value)
+                if ((pin.Actions[i].ActionKey is { } written && string.Equals(EntryKey.Normalized(written), EntryKey.Normalized(action.Key.Value), StringComparison.Ordinal)) || action.Key.Value == prefix + pin.Actions[i].Id.Value)
                 {
                     return i;
                 }

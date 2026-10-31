@@ -112,8 +112,10 @@ public sealed class GetPagesReadTests : IDisposable
         var first = await Read(PagesWorld.Query(limit: 1), PagesWorld.Human());
         var second = await Read(PagesWorld.Query(limit: 1, offset: 1), PagesWorld.Human());
 
-        Assert.Equal((["schedule-week"], 2, true), (first.Pages.Select(p => p.Id.Value).ToList(), first.Total, first.Truncated));
-        Assert.Equal((["settings"], 2, false), (second.Pages.Select(p => p.Id.Value).ToList(), second.Total, second.Truncated));
+        Assert.Equal(["schedule-week"], [.. first.Pages.Select(p => p.Id.Value)], StringComparer.Ordinal);
+        Assert.Equal((2, true), (first.Total, first.Truncated));
+        Assert.Equal(["settings"], [.. second.Pages.Select(p => p.Id.Value)], StringComparer.Ordinal);
+        Assert.Equal((2, false), (second.Total, second.Truncated));
     }
 
     [Theory, Trait("Lane", "unit")]
