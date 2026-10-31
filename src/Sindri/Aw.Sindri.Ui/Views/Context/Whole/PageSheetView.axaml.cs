@@ -7,6 +7,7 @@ using Aw.Sindri.Ui.ViewModels.Context.Whole;
 namespace Aw.Sindri.Ui.Views.Context.Whole;
 
 /// <summary>The page sheet (pages spec §3.6), bound to a <see cref="PageSheetViewModel"/>: focus starts on Name, a question puts focus on its safe button, and Esc answers the sheet from anywhere inside it.</summary>
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 internal sealed partial class PageSheetView : UserControl
 {
     private PageSheetViewModel? _watched;
@@ -97,3 +98,4 @@ internal sealed partial class PageSheetView : UserControl
 
     private void OnKeepEditing(object? sender, RoutedEventArgs e) => Sheet?.KeepEditing();
 }
+#pragma warning restore MA0182

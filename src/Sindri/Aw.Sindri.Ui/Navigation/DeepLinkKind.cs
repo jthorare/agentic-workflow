@@ -50,4 +50,7 @@ internal enum DeepLinkKind
 
     /// <summary>'projects/add': the Add project sheet over the Projects page (projects page spec §3.2); it has no subject.</summary>
     ProjectAdd,
+
+    /// <summary>'context/page': the page sheet (Name this page, Edit page, New page) opened from the Context page's Pages and actions.</summary>
+    PageSheet,
 }

@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 
 /// <summary>
 /// The page sheet (<see cref="ContextPageViewModel"/>, continued, pages spec §3.6): Name this page, Edit page and New page from either Pages and actions section open in a right sheet
-/// over the stage; a saved page reads the section again.
+/// in the shell's one sheet; a saved page reads the section again.
 /// </summary>
 internal sealed partial class ContextPageViewModel
 {
@@ -13,6 +13,9 @@ internal sealed partial class ContextPageViewModel
 
     /// <summary>Gets a value indicating whether the sheet shows.</summary>
     public bool ShowPageSheet => PageSheet is not null;
+
+    /// <summary>Raised when the sheet opens or goes: the shell mounts it in its one sheet, or lets it go.</summary>
+    internal event EventHandler? PageSheetChanged;
 
     // Called once the page's parts exist: both sections write through the same port and open the sheet from their buttons.
     private void InitPageSheet()
@@ -26,7 +29,7 @@ internal sealed partial class ContextPageViewModel
     // The sheet reads its page and the profile, fills, and goes away when it is saved or closed; a saved page makes the section read again.
     private void OpenPageSheet(PagesSectionViewModel section, string? key, string? concept, Func<Task> reread)
     {
-        if (Ports.Pages is not { } writes || PageSheet is not null)
+        if (Ports.Pages is not { } writes)
         {
             return;
         }
@@ -43,8 +46,11 @@ internal sealed partial class ContextPageViewModel
         };
         sheet.Closed += (_, _) =>
         {
-            PageSheet = null;
-            ChangedPageSheet();
+            if (ReferenceEquals(PageSheet, sheet))
+            {
+                PageSheet = null;
+                ChangedPageSheet();
+            }
         };
         PageSheet = sheet;
         ChangedPageSheet();
@@ -55,5 +61,6 @@ internal sealed partial class ContextPageViewModel
     {
         OnChanged(nameof(PageSheet));
         OnChanged(nameof(ShowPageSheet));
+        PageSheetChanged?.Invoke(this, EventArgs.Empty);
     }
 }

@@ -16,6 +16,7 @@ internal sealed partial class ShellViewModel
     private void InitContext(ISindriApi api, IClipboard clipboard, ILauncher launcher)
     {
         Context = new ContextPageViewModel(new ContextPorts(api, Health.ApiUrl, clipboard, _clock, Health.Catalog, Health.Follow, launcher));
+        WirePageSheet();
         Context.JobRequested += (_, e) => Navigate(e.Link);   // the Building overlay's "View build job"
     }
 }
