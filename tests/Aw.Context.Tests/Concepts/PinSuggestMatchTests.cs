@@ -77,6 +77,23 @@ public sealed class PinSuggestMatchTests
     }
 
     [Fact]
+    public void A_concept_with_250_member_features_answers_200_best_first_by_label()
+    {
+        var graph = new ConceptGraph().Concept("concept:big", "Big");
+        foreach (var n in Enumerable.Range(0, 250))
+        {
+            var key = "feature:f" + n.ToString("000", System.Globalization.CultureInfo.InvariantCulture);
+            graph = graph.Node(key, "Feature " + n.ToString("000", System.Globalization.CultureInfo.InvariantCulture)).Member(key, "concept:big");
+        }
+
+        var members = PinSuggestBuilder.MembersOf(graph.Build(), NodeKey.From("concept:big"), ConceptGraph.Text);
+
+        Assert.Equal(200, members.Count);
+        Assert.Equal(["feature:f000", "feature:f001"], members.Take(2).Select(f => f.Key.Value), StringComparer.Ordinal);
+        Assert.Equal("feature:f199", members[^1].Key.Value);
+    }
+
+    [Fact]
     public void A_search_lists_the_features_whose_label_or_key_holds_the_text_starts_first_and_stops_at_the_limit()
     {
         var graph = new ConceptGraph().Node("feature:invoices", "Invoices").Node("feature:pay-invoice", "Pay now").Node("feature:late-invoice", "Late invoice").Node("feature:invoice-pdf", "Invoice PDF").Node("feature:other", "Other").Node("code:invoice.cs", "invoice").Build();

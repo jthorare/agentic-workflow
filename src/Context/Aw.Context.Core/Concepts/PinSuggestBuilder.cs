@@ -71,7 +71,7 @@ public static class PinSuggestBuilder
             .Select(n => new PinSuggestFeature(n.Key, text.Label(n.Label, TrustPolicy.ForNode(n, n.Provenance == Provenance.Human))))];
     }
 
-    /// <summary>The features that belong to a concept (a belongs-to edge into it), by label then key, each labelled like every answer's.</summary>
+    /// <summary>The features that belong to a concept (a belongs-to edge into it), by label then key, up to <see cref="MaxLimit"/>, each labelled like every answer's.</summary>
     /// <param name="graph">The graph the caller may see.</param>
     /// <param name="concept">The concept's key.</param>
     /// <param name="text">The caller's text policy.</param>
@@ -89,6 +89,7 @@ public static class PinSuggestBuilder
         var index = ConceptIndex.Of(known, [.. graph.Edges.Where(e => known.ContainsKey(e.From.Value) && known.ContainsKey(e.To.Value))]);
         return [.. index.MembersOf(concept.Value).Select(m => known[m]).Where(n => n.Key.Kind == NodeKind.Feature)
             .OrderBy(n => n.Label, StringComparer.Ordinal).ThenBy(n => n.Key.Value, StringComparer.Ordinal)
+            .Take(MaxLimit)
             .Select(n => new PinSuggestFeature(n.Key, text.Label(n.Label, TrustPolicy.ForNode(n, n.Provenance == Provenance.Human))))];
     }
 
