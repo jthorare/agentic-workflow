@@ -38,7 +38,8 @@ public sealed class PinConceptsServiceTests : IDisposable
         Assert.Equal(_rig.Writer.Hash, done.Value.Hash);
         var edit = Assert.Single(_rig.Edits);
         Assert.Equal(new ConceptSettings(ConceptPinId.From("billing"), "Billing", "How we take money", Aliases: ["payments"]).Id, edit.Entry?.Id);
-        Assert.Equal(("Billing", "How we take money", ["payments"]), (edit.Entry?.Name, edit.Entry?.Summary, edit.Entry?.Aliases));
+        Assert.Equal(("Billing", "How we take money"), (edit.Entry?.Name, edit.Entry?.Summary));
+        Assert.Equal(["payments"], edit.Entry?.Aliases ?? []);
     }
 
     [Fact]
@@ -104,7 +105,9 @@ public sealed class PinConceptsServiceTests : IDisposable
         _ = await Run(new PinConceptsRequest(Set: [new PinSet("Billing", Summary: "Money in")]));
 
         var entry = Assert.Single(_rig.Edits).Entry;
-        Assert.Equal((["src/billing/**"], ["auth"], ["invoices"]), (entry?.Paths, entry?.DependsOn, entry?.Owns));
+        Assert.Equal(["src/billing/**"], entry?.Paths ?? []);   // lists compare by item one at a time; inside a tuple they would compare by reference
+        Assert.Equal(["auth"], entry?.DependsOn ?? []);
+        Assert.Equal(["invoices"], entry?.Owns ?? []);
     }
 
     [Fact]
