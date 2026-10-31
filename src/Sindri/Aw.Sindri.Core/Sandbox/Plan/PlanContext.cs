@@ -62,6 +62,12 @@ internal sealed record PlanContext(
         if (host.IsMacOs)
         {
             denied.Add(new DeniedPath(Home + "/Library/Keychains", Always + "the owner's logins and keys"));
+
+            // why: serve's TMPDIR (/private/var/folders/..../T) is per user and holds the ssh-agent and launchd sockets; the random part can only come from the host's environment
+            if (host.Environment.TryGetValue("TMPDIR", out var hostTemp) && hostTemp.StartsWith('/') && hostTemp.TrimEnd('/').Length > 1)
+            {
+                denied.Add(new DeniedPath(hostTemp.TrimEnd('/'), Always + "the per-user temp directory holds the ssh-agent and launchd sockets"));
+            }
         }
 
         return denied;
