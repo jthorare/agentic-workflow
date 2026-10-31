@@ -1,6 +1,7 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Graph;
 
 namespace Aw.Context.Tests.Engine;
 
@@ -31,7 +32,8 @@ public sealed class PageRulesTests
         var facts = new PageFacts(
             new HashSet<ConceptId>(),
             new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["surface:screen/SettingsScreen"] = ["web"] },
-            new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["action:weekpage.submit"] = ["web"] });
+            new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["action:weekpage.submit"] = ["web"] })
+        { Stored = EntryKey.Normalized };
 
         var errors = PageRules.Check([Page(surface: "surface:screen/SettingsScreen", actions: Action(key: "action:WeekPage.submit"))], facts);
 

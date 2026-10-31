@@ -1,5 +1,4 @@
 using System.Globalization;
-using Aw.Context.Core.Graph;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Engine;
@@ -73,7 +72,7 @@ public static class PageRules
                 errors.Add(ContextErrors.PageIdDuplicate.With($"{actionAt}.id: '{action.Id.Value}' is already actions[{Count(first)}]'s"));
             }
 
-            if (action.ActionKey is { } key && !facts.ActionRepos.ContainsKey(key) && !facts.ActionRepos.ContainsKey(EntryKey.Normalized(key)))
+            if (action.ActionKey is { } key && !facts.ActionRepos.ContainsKey(key) && (facts.Stored is not { } stored || !facts.ActionRepos.ContainsKey(stored(key))))
             {
                 errors.Add(ContextErrors.PageKeyUnknown.With($"{actionAt}.action: '{key}' is not in the current map (fix: sindri context page list --suggested, or pick it in the app)"));
             }
@@ -89,7 +88,7 @@ public static class PageRules
             return;
         }
 
-        if (!facts.SurfaceRepos.TryGetValue(surface, out var repos) && !facts.SurfaceRepos.TryGetValue(EntryKey.Normalized(surface), out repos))
+        if (!facts.SurfaceRepos.TryGetValue(surface, out var repos) && (facts.Stored is not { } stored || !facts.SurfaceRepos.TryGetValue(stored(surface), out repos)))
         {
             errors.Add(ContextErrors.PageKeyUnknown.With($"{at}.surface: '{surface}' is not in the current map (fix: sindri context page list --suggested, or pick it in the app)"));
         }
