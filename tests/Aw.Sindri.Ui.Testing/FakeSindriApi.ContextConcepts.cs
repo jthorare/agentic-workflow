@@ -8,6 +8,7 @@ internal sealed partial class FakeSindriApi
 {
     private readonly List<ConceptsQuery> _conceptsAsked = [];
     private readonly List<ConceptGlossaryQuery> _glossaryAsked = [];
+    private readonly List<PinSuggestQuery> _pinSuggestAsked = [];
 
     /// <summary>GET /sindri/context/concepts's answer per page asked (a 404 by default: a server without the route).</summary>
     public Func<ConceptsQuery, RouteAnswer> ContextConceptsAnswer { get; set; } = _ => _notServed;
@@ -23,6 +24,12 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>The glossary reads asked, in order.</summary>
     public IReadOnlyList<ConceptGlossaryQuery> ContextConceptGlossaryAsked { get { lock (_gate) { return [.. _glossaryAsked]; } } }
+
+    /// <summary>GET /sindri/context/pins/suggest's answer per call (a 404 by default: a server without the route). A pasted list of more than 25 lines is asked in calls of 25, as the client sends it.</summary>
+    public Func<PinSuggestQuery, RouteAnswer> ContextPinSuggestAnswer { get; set; } = _ => _notServed;
+
+    /// <summary>The pin suggestions asked, one entry per call, in order.</summary>
+    public IReadOnlyList<PinSuggestQuery> ContextPinSuggestAsked { get { lock (_gate) { return [.. _pinSuggestAsked]; } } }
 
     // Counted apart from ContextCalls, which the Context page's tests hold at zero before a read of the lenses.
     public async Task<Result<ContextConceptsView>> ContextConcepts(Uri api, ConceptsQuery query, CancellationToken cancellationToken)
@@ -45,4 +52,15 @@ internal sealed partial class FakeSindriApi
 
         return Task.FromResult(NotReceived<ConceptGlossaryView>(api) ?? Answer<ConceptGlossaryView>(api, "/sindri/context/concepts/glossary", ContextConceptGlossaryAnswer(query)));
     }
+
+    public Task<Result<PinSuggestView>> ContextPinSuggest(Uri api, PinSuggestQuery query, CancellationToken cancellationToken) =>
+        PinSuggestBatches.Run(query, one =>
+        {
+            lock (_gate)
+            {
+                _pinSuggestAsked.Add(one);
+            }
+
+            return Task.FromResult(NotReceived<PinSuggestView>(api) ?? Answer<PinSuggestView>(api, "/sindri/context/pins/suggest", ContextPinSuggestAnswer(one)));
+        });
 }

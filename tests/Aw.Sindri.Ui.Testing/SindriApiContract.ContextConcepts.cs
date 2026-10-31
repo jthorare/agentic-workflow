@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.Testing;
@@ -71,6 +72,68 @@ public abstract partial class SindriApiContract
         var api = Reach(new FakeSindriApi());
 
         var result = await api.ContextConceptGlossary(_api, new ConceptGlossaryQuery(string.Empty), Token);
+
+        Expect.True(result.IsError);
+    }
+
+    [Fact]
+    public async Task ContextPinSuggest_answers_a_concepts_terms_with_the_records_each_would_link_and_sends_the_concept()
+    {
+        var server = new FakeSindriApi { ContextPinSuggestAnswer = _ => AConcepts.Served(AConcepts.Suggested(new PinSuggestTerm("payment", 2), new PinSuggestTerm("invoice", 0))) };
+        var api = Reach(server);
+
+        var view = (await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Concept: "concept:billing"), Token)).Value;
+
+        Expect.Sequence([new PinSuggestTerm("payment", 2), new PinSuggestTerm("invoice", 0)], view.Terms);
+        Expect.Equal(("aw-split-panes", "concept:billing"), (server.ContextPinSuggestAsked[^1].Repo, server.ContextPinSuggestAsked[^1].Concept));
+    }
+
+    [Fact]
+    public async Task ContextPinSuggest_sends_the_search_and_the_limit()
+    {
+        var server = new FakeSindriApi { ContextPinSuggestAnswer = _ => AConcepts.Served(new PinSuggestView(1, "aw-split-panes", "v1", Terms: null, [new PinSuggestFeature("feature:shifts", "Shifts")], Matches: null)) };
+        var api = Reach(server);
+
+        var view = (await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Search: "sh", Limit: 20), Token)).Value;
+
+        Expect.Sequence([new PinSuggestFeature("feature:shifts", "Shifts")], view.Features);
+        Expect.Equal(("sh", 20), (server.ContextPinSuggestAsked[^1].Search, server.ContextPinSuggestAsked[^1].Limit));
+    }
+
+    [Fact]
+    public async Task ContextPinSuggest_sends_each_definition_beside_its_line()
+    {
+        var server = new FakeSindriApi { ContextPinSuggestAnswer = _ => AConcepts.Served(AConcepts.Matched("concept:billing", null)) };
+        var api = Reach(server);
+
+        var view = (await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Lines: [new PinSuggestLine("Payments", "take money"), new PinSuggestLine("Weather")]), Token)).Value;
+
+        Expect.Equal("concept:billing", view.Matches![0].Concept);
+        Expect.True(view.Matches[1].Concept is null);
+        Expect.Sequence([new PinSuggestLine("Payments", "take money"), new PinSuggestLine("Weather")], server.ContextPinSuggestAsked[^1].Lines);
+    }
+
+    [Fact]
+    public async Task ContextPinSuggest_sends_sixty_lines_as_three_calls_and_numbers_the_matches_0_to_59()
+    {
+        var server = new FakeSindriApi { ContextPinSuggestAnswer = q => AConcepts.Served(AConcepts.Matched([.. q.Lines!.Select(l => (string?)("concept:" + l.Name))])) };
+        var api = Reach(server);
+        var lines = Enumerable.Range(0, 60).Select(i => new PinSuggestLine("n" + i.ToString(CultureInfo.InvariantCulture), "d" + i.ToString(CultureInfo.InvariantCulture))).ToList();
+
+        var view = (await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Lines: lines), Token)).Value;
+
+        Expect.Sequence([25, 25, 10], server.ContextPinSuggestAsked.Select(q => q.Lines!.Count));
+        Expect.Sequence(Enumerable.Range(0, 60), view.Matches!.Select(m => m.Line));
+        Expect.Sequence(lines.Select(l => "concept:" + l.Name), view.Matches!.Select(m => m.Concept));
+        Expect.Sequence(lines, server.ContextPinSuggestAsked.SelectMany(q => q.Lines!));   // each definition went beside its line
+    }
+
+    [Fact]
+    public async Task ContextPinSuggest_from_a_server_without_the_route_is_an_error_and_not_a_crash()
+    {
+        var api = Reach(new FakeSindriApi());
+
+        var result = await api.ContextPinSuggest(_api, new PinSuggestQuery(string.Empty, Concept: "concept:billing"), Token);
 
         Expect.True(result.IsError);
     }

@@ -58,6 +58,24 @@ internal static class ContextRoutes
         return With(Root + "/concepts/glossary", parts);
     }
 
+    internal static string PinSuggest(PinSuggestQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string>();
+        Add(parts, "repo", query.Repo);
+        Add(parts, "concept", query.Concept);
+        Add(parts, "search", query.Search);
+        parts.AddRange(Limit(query.Limit));
+        var lines = query.Lines ?? [];
+        parts.AddRange(lines.Select(l => "line=" + Uri.EscapeDataString(l.Name)));
+        if (lines.Any(l => !string.IsNullOrEmpty(l.Definition)))
+        {
+            parts.AddRange(lines.Select(l => "def=" + Uri.EscapeDataString(l.Definition ?? string.Empty)));   // by index: an empty value keeps the line's place
+        }
+
+        return With(Root + "/pins/suggest", parts);
+    }
+
     /// <summary>QUERY /sindri/context/code: the anchors travel as the JSON body.</summary>
     internal const string Code = Root + "/code";
 
