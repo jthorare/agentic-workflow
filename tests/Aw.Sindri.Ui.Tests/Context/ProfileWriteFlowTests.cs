@@ -332,6 +332,26 @@ public sealed class ProfileWriteFlowTests
         Assert.Equal(["index.pages.x"], waiting.ChangedPaths);
     }
 
+    [Fact]
+    public async Task Waiting_reads_the_file_hash_beside_the_live_one()
+    {
+        var answer = new RouteAnswer(HttpStatusCode.OK, """{"approved":"h0","live":"h1","fileHash":"h2","changed":true,"changedPaths":[]}""");
+
+        var waiting = await Flow(new FakeSindriApi { ProfileAnswer = answer }).Waiting(Token);
+
+        Assert.NotNull(waiting);
+        Assert.Equal(("h1", "h2"), (waiting.LiveHash, waiting.FileHash));
+    }
+
+    [Fact]
+    public async Task Waiting_from_a_server_before_the_file_hash_reads_it_as_null()
+    {
+        var waiting = await Flow(new FakeSindriApi { ProfileAnswer = Profile("h1") }).Waiting(Token);
+
+        Assert.NotNull(waiting);
+        Assert.Null(waiting.FileHash);
+    }
+
     [Theory]
     [InlineData("index.pages.a", true)]
     [InlineData("index.concepts.a", false)]
