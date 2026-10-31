@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Features.SetPages;
 

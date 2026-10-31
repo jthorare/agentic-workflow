@@ -2,7 +2,6 @@ using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
-using Aw.Context.Core.Pages;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
@@ -34,7 +33,7 @@ internal static class PagePlanner
     /// <param name="profile">The live profile.</param>
     /// <param name="map">What the current map says.</param>
     /// <returns>The plan, or the first refusal (SND-CONTEXT-250 to 257, or the profile's own).</returns>
-    internal static Result<PagePlan> Plan(SetPagesRequest request, SindriProfile profile, PageMapFacts map)
+    internal static Result<PagePlan> Plan(SetPagesRequest request, SindriProfile profile, MapPageFacts map)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentNullException.ThrowIfNull(profile);
@@ -61,7 +60,7 @@ internal static class PagePlanner
     }
 
     // The sets, then the removals, in request order; the first refusal stops.
-    private static Error? Apply(SetPagesRequest request, (List<PageSlot> Slots, PinNames Pins, SindriProfile Profile) live, PageMapFacts map, List<PageEdit> edits, List<PageWritten> written)
+    private static Error? Apply(SetPagesRequest request, (List<PageSlot> Slots, PinNames Pins, SindriProfile Profile) live, MapPageFacts map, List<PageEdit> edits, List<PageWritten> written)
     {
         foreach (var set in request.Set ?? [])
         {
@@ -162,7 +161,7 @@ internal static class PagePlanner
 
     private static string PinIdOf(ConceptSettings pin) => pin.Id?.Value ?? PinSlug.Of(pin.Name ?? string.Empty);
 
-    private static Result<(PageEdit Edit, PageWritten Page)> Set(PageSettings set, List<PageSlot> slots, SindriProfile profile, PinNames pins, PageMapFacts map)
+    private static Result<(PageEdit Edit, PageWritten Page)> Set(PageSettings set, List<PageSlot> slots, SindriProfile profile, PinNames pins, MapPageFacts map)
     {
         var id = PagePinId.From(IdOf(set));
         var at = slots.Find(s => !s.Removed && string.Equals(s.Entry.Id?.Value, id.Value, StringComparison.Ordinal));
@@ -227,7 +226,7 @@ internal static class PagePlanner
     private static string OneOf(List<string> repos) => repos.Count == 0 ? "add the repo to the profile first" : "one of " + string.Join(", ", repos);
 
     // Every action gets an id (its name's slug, made unique within the page) and its concepts as ids.
-    private static List<PageActionSettings>? Actions(PageSettings set, PinNames pins, PageMapFacts map)
+    private static List<PageActionSettings>? Actions(PageSettings set, PinNames pins, MapPageFacts map)
     {
         if (set.Actions is null)
         {
@@ -243,11 +242,11 @@ internal static class PagePlanner
     }
 
     // An id (a pin's or the map's, with or without 'concept:') stays as written; otherwise an exact name ignoring case, the pins' before the map's, becomes its id; otherwise it stays as written for the rules to refuse.
-    private static string Concept(string written, PinNames pins, PageMapFacts map)
+    private static string Concept(string written, PinNames pins, MapPageFacts map)
     {
         var text = written.Trim();
         var bare = text.StartsWith(ConceptPrefix, StringComparison.Ordinal) ? text[ConceptPrefix.Length..] : text;
-        if (pins.Ids.Contains(bare) || (ConceptId.TryFrom(bare, out var id) && map.Facts.ConceptIds.Contains(id)))
+        if (pins.Ids.Contains(bare) || map.Concepts.Any(c => string.Equals(c.Key, bare, StringComparison.Ordinal)))
         {
             return text;
         }
@@ -257,7 +256,7 @@ internal static class PagePlanner
             return pin;
         }
 
-        return map.Concepts.FirstOrDefault(c => string.Equals(c.Name, text, StringComparison.OrdinalIgnoreCase)) is { } derived ? derived.Id.Value : text;
+        return map.Concepts.FirstOrDefault(c => string.Equals(c.Name, text, StringComparison.OrdinalIgnoreCase)) is { } derived ? derived.Key : text;
     }
 
     private static Result<PageWritten> Remove(PagePinId id, List<PageSlot> slots)

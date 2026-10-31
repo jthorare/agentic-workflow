@@ -1,11 +1,8 @@
-using Aw.Context.Core.Engine;
-using Aw.Context.Core.Pages;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
-using Aw.Sindri.Features;
 using Aw.Sindri.Features.SetPages;
 using Aw.Sindri.Testing;
 
@@ -91,13 +88,13 @@ internal sealed class SetPagesRig : IDisposable
     {
         internal string? Version { get; set; } = "v41";
 
-        internal List<PageMapConcept> Concepts { get; } = [new(ConceptId.From("self-scheduling"), "Self-scheduling"), new(ConceptId.From("approval-workflow"), "Approval workflow")];
+        internal List<MapConcept> Concepts { get; } = [new("self-scheduling", "Self-scheduling"), new("approval-workflow", "Approval workflow")];
 
         internal Dictionary<string, IReadOnlyList<string>> Surfaces { get; } = new(StringComparer.Ordinal) { ["surface:route/GET:/schedule/week"] = ["web"] };
 
         internal Dictionary<string, IReadOnlyList<string>> Actions { get; } = new(StringComparer.Ordinal) { ["action:schedulepage.submit-schedule"] = ["web"] };
 
-        public ValueTask<Result<PageMapFacts>> Read(CancellationToken cancellationToken) =>
-            ValueTask.FromResult<Result<PageMapFacts>>(new PageMapFacts(Version, new PageFacts(Concepts.Select(static c => c.Id).ToHashSet(), Surfaces, Actions), [.. Concepts]));
+        public ValueTask<Result<MapPageFacts>> Read(CancellationToken cancellationToken) =>
+            ValueTask.FromResult<Result<MapPageFacts>>(new MapPageFacts(Version, [.. Concepts], Surfaces, Actions));
     }
 }

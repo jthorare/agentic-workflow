@@ -1,8 +1,8 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
-using Aw.Context.Core.Pages;
 using Aw.Kernel;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Features.SetPages;
 
@@ -10,13 +10,10 @@ namespace Aw.Sindri.Features.SetPages;
 internal static class PageWriteCheck
 {
     // The write rules (the same ones the app's sheet and Add several pages call) over every planned page, without the read-time caps, then the profile's own.
-    internal static Error? Check(SindriProfile planned, List<PageSlot> slots, PinNames pins, PageMapFacts map)
+    internal static Error? Check(SindriProfile planned, List<PageSlot> slots, PinNames pins, MapPageFacts map)
     {
-        var facts = map.Facts with
-        {
-            Stored = EntryKey.Normalized,
-            ConceptIds = new HashSet<ConceptId>(map.Facts.ConceptIds.Concat(pins.Ids.Where(static i => ConceptId.TryFrom(i, out _)).Select(static i => ConceptId.From(i)))),
-        };
+        var ids = map.Concepts.Select(static c => c.Key).Concat(pins.Ids).Where(static i => ConceptId.TryFrom(i, out _)).Select(static i => ConceptId.From(i));
+        var facts = new PageFacts(new HashSet<ConceptId>(ids), map.SurfaceRepos, map.ActionRepos) { Stored = EntryKey.Normalized };   // the MUST: a key typed with capitals finds the map's lower-cased one
         var live = slots.Where(static s => !s.Removed).ToList();
         var taken = new HashSet<string>(live.Select(static s => s.Entry.Id?.Value).OfType<string>(), StringComparer.Ordinal);
         var errors = PageRules.Check([.. live.Select(s => Pin(s, taken))], facts);

@@ -21813,3 +21813,37 @@ override Aw.Sindri.Core.Profile.ProfileChange.ToString() -> string!
 static Aw.Sindri.Core.Profile.ProfileChange.operator !=(Aw.Sindri.Core.Profile.ProfileChange? left, Aw.Sindri.Core.Profile.ProfileChange? right) -> bool
 static Aw.Sindri.Core.Profile.ProfileChange.operator ==(Aw.Sindri.Core.Profile.ProfileChange? left, Aw.Sindri.Core.Profile.ProfileChange? right) -> bool
 static Aw.Sindri.Core.Profile.ProfileDiff.Changes(Aw.Sindri.Core.Profile.SindriProfile? approved, Aw.Sindri.Core.Profile.SindriProfile! live) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ProfileChange!>!
+Aw.Sindri.Core.Setup.IMapPageFacts
+Aw.Sindri.Core.Setup.IMapPageFacts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.MapPageFacts!>!>
+Aw.Sindri.Core.Setup.MapConcept
+Aw.Sindri.Core.Setup.MapConcept.<Clone>$() -> Aw.Sindri.Core.Setup.MapConcept!
+Aw.Sindri.Core.Setup.MapConcept.Equals(Aw.Sindri.Core.Setup.MapConcept? other) -> bool
+Aw.Sindri.Core.Setup.MapConcept.Name.get -> string!
+Aw.Sindri.Core.Setup.MapConcept.Name.init -> void
+Aw.Sindri.Core.Setup.MapPageFacts
+Aw.Sindri.Core.Setup.MapPageFacts.<Clone>$() -> Aw.Sindri.Core.Setup.MapPageFacts!
+Aw.Sindri.Core.Setup.MapPageFacts.ActionRepos.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Setup.MapPageFacts.ActionRepos.init -> void
+Aw.Sindri.Core.Setup.MapPageFacts.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.MapConcept!>!
+Aw.Sindri.Core.Setup.MapPageFacts.Concepts.init -> void
+Aw.Sindri.Core.Setup.MapPageFacts.Deconstruct(out string? Version, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.MapConcept!>! Concepts, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! SurfaceRepos, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! ActionRepos) -> void
+Aw.Sindri.Core.Setup.MapPageFacts.Equals(Aw.Sindri.Core.Setup.MapPageFacts? other) -> bool
+Aw.Sindri.Core.Setup.MapPageFacts.MapPageFacts(string? Version, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.MapConcept!>! Concepts, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! SurfaceRepos, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! ActionRepos) -> void
+Aw.Sindri.Core.Setup.MapPageFacts.SurfaceRepos.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Setup.MapPageFacts.SurfaceRepos.init -> void
+Aw.Sindri.Core.Setup.MapPageFacts.Version.get -> string?
+Aw.Sindri.Core.Setup.MapPageFacts.Version.init -> void
+override Aw.Sindri.Core.Setup.MapConcept.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.MapConcept.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.MapConcept.ToString() -> string!
+override Aw.Sindri.Core.Setup.MapPageFacts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.MapPageFacts.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.MapPageFacts.ToString() -> string!
+static Aw.Sindri.Core.Setup.MapConcept.operator !=(Aw.Sindri.Core.Setup.MapConcept? left, Aw.Sindri.Core.Setup.MapConcept? right) -> bool
+static Aw.Sindri.Core.Setup.MapConcept.operator ==(Aw.Sindri.Core.Setup.MapConcept? left, Aw.Sindri.Core.Setup.MapConcept? right) -> bool
+static Aw.Sindri.Core.Setup.MapPageFacts.operator !=(Aw.Sindri.Core.Setup.MapPageFacts? left, Aw.Sindri.Core.Setup.MapPageFacts? right) -> bool
+static Aw.Sindri.Core.Setup.MapPageFacts.operator ==(Aw.Sindri.Core.Setup.MapPageFacts? left, Aw.Sindri.Core.Setup.MapPageFacts? right) -> bool
+Aw.Sindri.Core.Setup.MapConcept.Deconstruct(out string! Key, out string! Name) -> void
+Aw.Sindri.Core.Setup.MapConcept.Key.get -> string!
+Aw.Sindri.Core.Setup.MapConcept.Key.init -> void
+Aw.Sindri.Core.Setup.MapConcept.MapConcept(string! Key, string! Name) -> void

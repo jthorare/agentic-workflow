@@ -5778,5 +5778,3 @@ static Aw.Sindri.Features.SetPages.SetPagesRequest.operator !=(Aw.Sindri.Feature
 static Aw.Sindri.Features.SetPages.SetPagesRequest.operator ==(Aw.Sindri.Features.SetPages.SetPagesRequest? left, Aw.Sindri.Features.SetPages.SetPagesRequest? right) -> bool
 static Aw.Sindri.Features.SetPages.SetPagesResult.operator !=(Aw.Sindri.Features.SetPages.SetPagesResult? left, Aw.Sindri.Features.SetPages.SetPagesResult? right) -> bool
 static Aw.Sindri.Features.SetPages.SetPagesResult.operator ==(Aw.Sindri.Features.SetPages.SetPagesResult? left, Aw.Sindri.Features.SetPages.SetPagesResult? right) -> bool
-Aw.Sindri.Features.IMapPageFacts
-Aw.Sindri.Features.IMapPageFacts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Pages.PageMapFacts!>!>

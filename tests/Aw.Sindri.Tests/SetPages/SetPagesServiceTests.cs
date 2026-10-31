@@ -1,10 +1,9 @@
 using Aw.Context.Core;
-using Aw.Context.Core.Engine;
-using Aw.Context.Core.Pages;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.SetPages;
 using Aw.Sindri.Testing;
 
@@ -169,7 +168,7 @@ public sealed class SetPagesServiceTests : IDisposable
     [Fact]
     public async Task A_name_matching_a_pin_and_a_derived_concept_resolves_to_the_pin()
     {
-        _rig.Map.Concepts.Add(new PageMapConcept(ConceptId.From("billing-derived"), "Billing"));
+        _rig.Map.Concepts.Add(new MapConcept("billing-derived", "Billing"));
         _rig.Profile([], new RepoEntry("web", "/work/web", new IndexSettings(Concepts: [new ConceptSettings(ConceptPinId.From("billing"), "Billing")])));
 
         var done = await Run(new SetPagesRequest(Set: [Page("Week", actions: [Action("Pay", concepts: ["Billing"])])]));
