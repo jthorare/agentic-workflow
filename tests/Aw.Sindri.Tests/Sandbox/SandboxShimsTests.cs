@@ -84,6 +84,25 @@ public sealed class SandboxShimsTests : IDisposable
         Assert.Equal($"tool {tool} {args}", output);
     }
 
+    // #1811: a child another thread forks during SandboxShims.Write holds the shim's write descriptor until it execs, and an exec of the shim in that moment fails with ETXTBSY
+    // ('text file busy', sh exit 126). The test holds a write descriptor itself for that moment, so the race is certain instead of rare.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_shim_starts_after_a_moment_of_text_file_busy()
+    {
+        var shim = Path.Combine(_dir, "shims", "dotnet");
+        var held = new FileStream(shim, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+        var release = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(200), TestContext.Current.CancellationToken);
+            await held.DisposeAsync();
+        }, TestContext.Current.CancellationToken);
+
+        var (output, code) = Run("dotnet", "--version", slotHeld: false);
+        await release;
+        Assert.Equal(0, code);
+        Assert.Equal("tool dotnet --version", output);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void Paths_with_quotes_and_spaces_survive()
     {
