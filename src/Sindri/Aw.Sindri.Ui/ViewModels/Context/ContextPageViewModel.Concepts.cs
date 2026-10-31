@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 internal sealed partial class ContextPageViewModel
 {
     private bool _conceptsRead;
+    private string? _conceptsVersion;
 
     /// <summary>The first layer of the map: the product's concepts.</summary>
     public ConceptLayerViewModel Concepts { get; }
@@ -25,9 +26,16 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The back button's words.</summary>
     public string BackText { get; } = Labels.ContextConceptsBack;
 
-    // Registered once: the whole map's crumbs and back button ask the page to go up.
+    /// <summary>A pinned card's Review and approve was pressed: the shell opens the needs-you review the setup step uses.</summary>
+    internal event EventHandler? ReviewAndApproveRequested;
+
+    // Registered once: the whole map's crumbs and back button ask the page to go up; the layer's pin side opens the sheet and answers its footer buttons.
     private void InitConcepts()
     {
+        Concepts.WirePins(Ports.OpenPin, () => _repo ?? string.Empty);
+        Concepts.ReviewAndApprove = () => ReviewAndApproveRequested?.Invoke(this, EventArgs.Empty);
+        Concepts.TryAgain = () => _ = TryRefreshAgain();
+        Ports.Follow(RefreshPins);
         Whole.ConceptsRequested += (_, _) => CloseConcept();
         Whole.UpRequested += (_, _) => _ = Up();
     }
@@ -51,7 +59,9 @@ internal sealed partial class ContextPageViewModel
             Head = Labels.ContextConceptsHead;
             ChangedConcepts();
             ChangedWhole();
+            _conceptsVersion = read.Value.MapVersion;
             await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
+            await ReadPins(api, cancellationToken).ConfigureAwait(true);
             return;
         }
 

@@ -74,7 +74,7 @@ public sealed class ShellSheetKindTests
     {
         var shell = await Shell();
 
-        foreach (var kind in Enum.GetValues<DeepLinkKind>().Where(k => k != DeepLinkKind.ProjectAdd))   // ProjectAdd has no subject: ProjectAddShellTests
+        foreach (var kind in Enum.GetValues<DeepLinkKind>().Where(k => k is not (DeepLinkKind.ProjectAdd or DeepLinkKind.PinSheet)))   // ProjectAdd and PinSheet have no subject: ProjectAddShellTests, ShellPinSheetTests
         {
             shell.OpenSheet(new DeepLink(kind, kind == DeepLinkKind.HomeNeedsYou ? null : "X"));
 
