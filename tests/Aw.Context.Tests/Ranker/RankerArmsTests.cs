@@ -6,17 +6,17 @@ namespace Aw.Context.Tests.Ranker;
 public sealed class RankerArmsTests
 {
     [Fact, Trait("Lane", "unit")]
-    public void The_ranker_arm_expands_to_the_three_rows_in_order()
+    public void The_ranker_arm_expands_to_the_four_rows_in_order()
     {
         var parsed = Arms.Parse("ranker");
 
-        Assert.Equal([Arm.RankerRrf, Arm.RankerFeatures, Arm.RankerRerank], parsed.Value);
+        Assert.Equal([Arm.RankerRrf, Arm.RankerFeatures, Arm.RankerPin, Arm.RankerRerank], parsed.Value);
     }
 
     [Fact, Trait("Lane", "unit")]
     public void The_arms_have_their_names_and_run_today()
     {
-        Assert.Equal(["ranker-rrf", "ranker-features", "ranker-rerank"], Arms.Ranker.Select(Arms.Name), StringComparer.Ordinal);
+        Assert.Equal(["ranker-rrf", "ranker-features", "ranker-pin", "ranker-rerank"], Arms.Ranker.Select(Arms.Name), StringComparer.Ordinal);
         Assert.All(Arms.Ranker, a => Assert.Null(Arms.PendingStage(a)));
     }
 
@@ -30,7 +30,7 @@ public sealed class RankerArmsTests
 
     [Fact, Trait("Lane", "unit")]
     public void The_ranker_token_and_one_of_its_rows_do_not_repeat() =>
-        Assert.Equal([Arm.RankerRrf, Arm.RankerFeatures, Arm.RankerRerank], Arms.Parse("ranker,ranker-rrf").Value);
+        Assert.Equal([Arm.RankerRrf, Arm.RankerFeatures, Arm.RankerPin, Arm.RankerRerank], Arms.Parse("ranker,ranker-rrf").Value);
 
     [Fact, Trait("Lane", "unit")]
     public void A_misspelt_ranker_arm_is_SND_CONTEXT_082_listing_the_ranker_arms()

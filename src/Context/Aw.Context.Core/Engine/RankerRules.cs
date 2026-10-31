@@ -12,6 +12,7 @@ internal static class RankerRules
     {
         Features = section?.Features ?? true,
         Rerank = section?.Rerank ?? false,
+        PinLeg = section?.PinLeg ?? false,
         RerankTop = section?.RerankTop ?? RankerSettings.DefaultRerankTop,
         Weights = Weights(section?.Weights),
     };
