@@ -36,6 +36,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         var latest = await approved.Latest(cancellationToken).ConfigureAwait(false);
         // the publish status is a service's read (a session is refused it), and only derived words leave here (the map's version, stale, the phase, the change of a pin)
+        // Repos is deliberately the whole profile's (ContextScopes builds it from every profile repo for any caller), so Running(scope) is the whole-map ruleset and stale matches the refresh tick
         var service = scope with { Caller = new ContextCaller(ContextCallerKind.Service, Repo: null, ContextClient.Service) };
         var state = await engine.Held(service, cancellationToken).ConfigureAwait(false);
         if (loaded.IsError || latest.IsError || state.IsError)
@@ -80,8 +81,8 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
             rows.AddRange(ProfilePins.Of(approvedProfile).Where(p => InScope(p, repo) && !liveKeys.Contains(p.Key) && diff.TryGetValue(p.Key, out var change) && change.After is null).Select(p => Row(p, PinStates.Removing, changes)));
         }
 
-        // pins the map still has that neither profile does any more: only their ids are known
-        rows.AddRange(changes.RemovedIds().Select(static id => new ContextPinRow(id, id, Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, PinChanges.Removed)));
+        // pins the map still has that neither profile does any more: only their ids are known, and the map's hashes carry no repo, so only an answer for every repo may list them
+        rows.AddRange(repo is not null ? [] : changes.RemovedIds().Select(static id => new ContextPinRow(id, id, Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, PinChanges.Removed)));
         return rows;
     }
 
