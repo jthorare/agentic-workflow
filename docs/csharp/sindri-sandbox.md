@@ -46,7 +46,7 @@ code form, and `Code_kinds_match_the_engine_table` pins them together.
 
 | Code | Kind | HTTP | Reasons (`reason` extension) |
 |---|---|---|---|
-| `SND-LAUNCH-014` | no runtime | 503 | `no-bwrap`, `no-user-namespace`, `no-user-manager`, `no-cgroup-controllers` (which), `no-forwarder`, `unsupported-platform` |
+| `SND-LAUNCH-014` | no runtime | 503 | `no-bwrap`, `no-user-namespace`, `no-user-manager`, `no-cgroup-controllers` (which), `no-forwarder`, `no-seatbelt`, `unsupported-platform` |
 | `SND-LAUNCH-015` | launch park | 409 | `form-none`, `form-reserved`, `tool-not-expressible`, `bin-denied`, `host-not-tmux`, `worktree-outside-repo`, `no-stored-plan` |
 | `SND-LAUNCH-016` | launch park | 409 | the failing canary: `fs-deny`, `fs-write`, `git-ref`, `env`, `login`, `hooks-run`, `net-forward`, `net-deny` |
 | `SND-LAUNCH-017` | no runtime | 409 | `no-login`, `expired`, `source-unsupported`, with the `source` extension (`owner-copy`, `separate-login`) |

@@ -11587,6 +11587,7 @@ const Aw.Sindri.Core.Sandbox.SandboxReasons.Memory = "memory" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NetDeny = "net-deny" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NetForward = "net-forward" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NoBwrap = "no-bwrap" -> string!
+const Aw.Sindri.Core.Sandbox.SandboxReasons.NoSeatbelt = "no-seatbelt" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NoCgroupControllers = "no-cgroup-controllers" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NoForwarder = "no-forwarder" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NoKey = "no-key" -> string!

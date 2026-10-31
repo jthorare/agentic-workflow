@@ -20,6 +20,9 @@ public static partial class SandboxReasons
     /// <summary>-014: no socat for the forwarders.</summary>
     public const string NoForwarder = "no-forwarder";
 
+    /// <summary>-014: macOS has no working sandbox-exec.</summary>
+    public const string NoSeatbelt = "no-seatbelt";
+
     /// <summary>-014: macOS (until SB-9) and other platforms.</summary>
     public const string UnsupportedPlatform = "unsupported-platform";
 
@@ -108,7 +111,7 @@ public static partial class SandboxReasons
     public static IReadOnlyList<(string Code, string Reason)> All { get; } =
     [
         (SindriErrors.LaunchSandboxUnavailable.Code, NoBwrap), (SindriErrors.LaunchSandboxUnavailable.Code, NoUserNamespace), (SindriErrors.LaunchSandboxUnavailable.Code, NoUserManager),
-        (SindriErrors.LaunchSandboxUnavailable.Code, NoCgroupControllers), (SindriErrors.LaunchSandboxUnavailable.Code, NoForwarder), (SindriErrors.LaunchSandboxUnavailable.Code, UnsupportedPlatform),
+        (SindriErrors.LaunchSandboxUnavailable.Code, NoCgroupControllers), (SindriErrors.LaunchSandboxUnavailable.Code, NoForwarder), (SindriErrors.LaunchSandboxUnavailable.Code, UnsupportedPlatform), (SindriErrors.LaunchSandboxUnavailable.Code, NoSeatbelt),
         (SindriErrors.LaunchUnconfinable.Code, FormNone), (SindriErrors.LaunchUnconfinable.Code, FormReserved), (SindriErrors.LaunchUnconfinable.Code, ToolNotExpressible), (SindriErrors.LaunchUnconfinable.Code, BinDenied),
         (SindriErrors.LaunchUnconfinable.Code, HostNotTmux), (SindriErrors.LaunchUnconfinable.Code, WorktreeOutsideRepo), (SindriErrors.LaunchUnconfinable.Code, NoStoredPlan),
         (SindriErrors.LaunchSelfCheckFailed.Code, FsDeny), (SindriErrors.LaunchSelfCheckFailed.Code, FsWrite), (SindriErrors.LaunchSelfCheckFailed.Code, GitRef), (SindriErrors.LaunchSelfCheckFailed.Code, Env), (SindriErrors.LaunchSelfCheckFailed.Code, Login),
