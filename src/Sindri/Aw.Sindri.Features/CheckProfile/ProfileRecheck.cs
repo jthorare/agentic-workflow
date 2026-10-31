@@ -1,8 +1,6 @@
 using Aw.Kernel;
-using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Lease;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features.CheckProfile;
@@ -12,11 +10,11 @@ namespace Aw.Sindri.Features.CheckProfile;
 /// the write's job settles; the profile watch calls it on its tick. Without the lease (the CLI process, or serve before it holds one) nothing is recorded. One gate serves both callers: two checks read the same
 /// latest 'profile.checked' and append with the same idempotency key, so racing ones would drop the later.
 /// </summary>
-/// <param name="scopes">Makes the scope the check service lives in.</param>
+/// <param name="check">Runs one check in a scope of its own (the registration opens it).</param>
 /// <param name="held">The grant this process holds.</param>
 /// <param name="callers">Names the caller.</param>
 /// <param name="log">Where a failed check is reported.</param>
-internal sealed partial class ProfileRecheck(IServiceScopeFactory scopes, HeldLease held, ICallerContextAccessor callers, ILogger<ProfileRecheck> log) : IDisposable
+internal sealed partial class ProfileRecheck(Func<CheckProfileRequest, CancellationToken, ValueTask<Result<CheckProfileResponse>>> check, HeldLease held, ICallerContextAccessor callers, ILogger<ProfileRecheck> log) : IDisposable
 {
     private readonly SemaphoreSlim _gate = new(1, 1);
     private string? _problem;
@@ -55,18 +53,13 @@ internal sealed partial class ProfileRecheck(IServiceScopeFactory scopes, HeldLe
     private async Task<Result<CheckProfileResponse>> Check(LeaseGrant grant, CancellationToken ct)
     {
         using var caller = callers.EnterService("profile-watch");
-        var scope = scopes.CreateAsyncScope();
-        await using (scope.ConfigureAwait(false))
+        try
         {
-            try
-            {
-                var service = scope.ServiceProvider.GetRequiredService<IService<CheckProfileRequest, CheckProfileResponse>>();
-                return await service.Handle(new CheckProfileRequest(grant), ct).ConfigureAwait(false);
-            }
-            catch (Exception e) when (!ct.IsCancellationRequested)   // boundary: one failed check must not fail the write or stop the watch
-            {
-                return Core.SindriErrors.ServiceFailed.With(e.Message);
-            }
+            return await check(new CheckProfileRequest(grant), ct).ConfigureAwait(false);
+        }
+        catch (Exception e) when (!ct.IsCancellationRequested)   // boundary: one failed check must not fail the write or stop the watch
+        {
+            return Core.SindriErrors.ServiceFailed.With(e.Message);
         }
     }
 

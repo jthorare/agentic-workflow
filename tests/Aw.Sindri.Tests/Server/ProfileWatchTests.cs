@@ -1,8 +1,4 @@
-using Aw.Kernel.Ids;
-using Aw.Kernel.Services;
 using Aw.Sindri.Core.Events;
-using Aw.Sindri.Core.Ledger;
-using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Host.Server;
 using Microsoft.Extensions.DependencyInjection;
@@ -57,17 +53,9 @@ public sealed class ProfileWatchTests
     /// <summary>Starts a watch and lets its first pass run; then, <paramref name="steps"/> times, runs <paramref name="between"/> and steps the clock by <paramref name="by"/>.</summary>
     private async Task Run(Action? between = null, TimeSpan by = default, int steps = 0)
     {
-        await using var provider = new ServiceCollection()
-            .AddSingleton<IProfileSource>(_h.Profiles)
-            .AddSingleton<IApprovedProfile>(_h.Profiles)
-            .AddSingleton<ILedgerStore>(_h.Store)
-            .AddSingleton(_h.Events)
-            .AddSingleton(_h.Callers)
-            .AddSingleton<IIdGenerator>(_h.Ids)
-            .AddScoped<IService<CheckProfileRequest, CheckProfileResponse>, CheckProfileService>()
-            .BuildServiceProvider();
+        var service = new CheckProfileService(_h.Profiles, _h.Profiles, _h.Store, _h.Events, _h.Callers, _h.Ids);
         var clock = new SteppedClock(_h.Clock);
-        using var watch = new ProfileWatch(new ProfileRecheck(provider.GetRequiredService<IServiceScopeFactory>(), _h.Held, _h.Callers, _log), _h.Held, clock);
+        using var watch = new ProfileWatch(new ProfileRecheck(service.Handle, _h.Held, _h.Callers, _log), _h.Held, clock);
         await watch.StartAsync(Token);
         await clock.Armed();
         for (var i = 0; i < steps; i++)

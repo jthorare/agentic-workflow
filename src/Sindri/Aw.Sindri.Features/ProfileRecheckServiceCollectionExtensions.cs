@@ -1,6 +1,10 @@
+using Aw.Kernel.Services;
+using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.CheckProfile;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Sindri.Features;
 
@@ -17,7 +21,18 @@ public static class ProfileRecheckServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         return services
-            .AddSingleton<ProfileRecheck>()
+            .AddSingleton(static sp =>
+            {
+                var scopes = sp.GetRequiredService<IServiceScopeFactory>();
+                return new ProfileRecheck(async (request, ct) =>
+                {
+                    var scope = scopes.CreateAsyncScope();
+                    await using (scope.ConfigureAwait(false))
+                    {
+                        return await scope.ServiceProvider.GetRequiredService<IService<CheckProfileRequest, CheckProfileResponse>>().Handle(request, ct).ConfigureAwait(false);
+                    }
+                }, sp.GetRequiredService<HeldLease>(), sp.GetRequiredService<ICallerContextAccessor>(), sp.GetRequiredService<ILogger<ProfileRecheck>>());
+            })
             .Decorate<IProfileIndexWriter>(static (inner, recheck) => new RecheckingProfileIndexWriter(inner, recheck))
             .Decorate<IProfileRepoWriter>(static (inner, recheck) => new RecheckingProfileRepoWriter(inner, recheck))
             .Decorate<IProfileSandboxWriter>(static (inner, recheck) => new RecheckingProfileSandboxWriter(inner, recheck));

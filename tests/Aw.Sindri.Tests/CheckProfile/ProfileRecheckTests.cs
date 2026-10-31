@@ -1,14 +1,11 @@
 using Aw.Kernel;
-using Aw.Kernel.Ids;
 using Aw.Kernel.Services;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Tests.Server;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.CheckProfile;
 
@@ -20,18 +17,10 @@ public sealed class ProfileRecheckTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private ProfileRecheck Recheck(Action<IServiceCollection>? replace = null)
+    private ProfileRecheck Recheck(IService<CheckProfileRequest, CheckProfileResponse>? service = null)
     {
-        var services = new ServiceCollection()
-            .AddSingleton<IProfileSource>(_h.Profiles)
-            .AddSingleton<IApprovedProfile>(_h.Profiles)
-            .AddSingleton<ILedgerStore>(_h.Store)
-            .AddSingleton(_h.Events)
-            .AddSingleton(_h.Callers)
-            .AddSingleton<IIdGenerator>(_h.Ids)
-            .AddScoped<IService<CheckProfileRequest, CheckProfileResponse>, CheckProfileService>();
-        replace?.Invoke(services);
-        return new ProfileRecheck(services.BuildServiceProvider().GetRequiredService<IServiceScopeFactory>(), _h.Held, _h.Callers, _log);
+        service ??= new CheckProfileService(_h.Profiles, _h.Profiles, _h.Store, _h.Events, _h.Callers, _h.Ids);
+        return new ProfileRecheck(service.Handle, _h.Held, _h.Callers, _log);
     }
 
     private async Task Drifted()
@@ -68,7 +57,7 @@ public sealed class ProfileRecheckTests
     public async Task A_check_that_throws_or_fails_is_logged_once_and_never_thrown()
     {
         _ = await _h.HoldLease();
-        var recheck = Recheck(s => s.AddScoped<IService<CheckProfileRequest, CheckProfileResponse>>(_ => new ThrowingCheck()));
+        var recheck = Recheck(new ThrowingCheck());
 
         await recheck.Now(Token);
         await recheck.Now(Token);
@@ -82,7 +71,7 @@ public sealed class ProfileRecheckTests
     {
         _ = await _h.HoldLease();
         var slow = new SlowCheck();
-        var recheck = Recheck(s => s.AddScoped<IService<CheckProfileRequest, CheckProfileResponse>>(_ => slow));
+        var recheck = Recheck(slow);
 
         var first = recheck.Now(Token).AsTask();
         await slow.Entered.Task.WaitAsync(Token);
