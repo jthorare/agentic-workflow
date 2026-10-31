@@ -129,7 +129,7 @@ public sealed class SetPagesServiceTests : IDisposable
 
         var done = await Run(new SetPagesRequest(Set: [Page("Week")]));
 
-        Refused(done, ContextErrors.PageRepoAmbiguous.Code, "say which repo this page is in, web or admin (fix: --repo)");
+        Refused(done, ContextErrors.PageRepoAmbiguous.Code, "say which repo this page is in, admin or web (fix: --repo)");
     }
 
     [Fact]
@@ -293,7 +293,7 @@ public sealed class SetPagesServiceTests : IDisposable
         Assert.False(done.Value.Written);
         Assert.False(done.Value.Approved);
         Assert.Empty(_rig.Writer.Writes);
-        Assert.Equal(["index.pages.schedule-week"], done.Value.Diff);
+        Assert.Equal(["index.pages.schedule-week: (none) -> Schedule week |  | surface:route/GET:/schedule/week | "], done.Value.Diff);
         Assert.Equal(_rig.Slice.Profiles.Live.Value.Hash, done.Value.Hash);
         Assert.DoesNotContain(_rig.Slice.Store.Events, static e => e.Envelope.Type == EventTypes.ContextPageWritten);
     }

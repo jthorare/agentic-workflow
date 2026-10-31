@@ -278,7 +278,9 @@ internal static class PagePlanner
         return new PageWritten(id, slots[at].Entry.Name ?? id.Value, slots[at].Repo, "removed");
     }
 
-    // The page rows of the profile's own diff: the key paths that change under 'index.pages.' and 'repos.<r>.index.pages.'.
+    // The page rows of the profile's own diff, with their values: 'key: before -> after' under 'index.pages.' and 'repos.<r>.index.pages.'.
     private static List<string> DiffOf(SindriProfile live, SindriProfile planned) =>
-        [.. ProfileDiff.Between(live, planned).Where(static k => k.StartsWith("index.pages.", StringComparison.Ordinal) || (k.StartsWith("repos.", StringComparison.Ordinal) && k.Contains(".index.pages.", StringComparison.Ordinal)))];
+        [.. ProfileDiff.Changes(live, planned)
+            .Where(static c => c.Key.StartsWith("index.pages.", StringComparison.Ordinal) || (c.Key.StartsWith("repos.", StringComparison.Ordinal) && c.Key.Contains(".index.pages.", StringComparison.Ordinal)))
+            .Select(static c => $"{c.Key}: {c.Before ?? "(none)"} -> {c.After ?? "(none)"}")];
 }
