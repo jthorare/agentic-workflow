@@ -13,6 +13,8 @@
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
         xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
+        xmlns:cnv="using:Aw.Sindri.Ui.Views.Context.Concepts"
+        xmlns:cnvm="using:Aw.Sindri.Ui.ViewModels.Context.Concepts"
         xmlns:ctxv="using:Aw.Sindri.Ui.Views.Context"
         xmlns:item="using:Aw.Sindri.Ui.Views.Item"
         xmlns:startv="using:Aw.Sindri.Ui.Views.Start"
@@ -386,6 +388,13 @@
                       <DataTemplate><pv:ProjectAddView x:Name="ProjectAddContent" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="PinSheetScroll" IsVisible="{Binding IsPinSheet}">
+                  <ContentControl x:Name="PinSheetSlot" Content="{Binding PinSheetContent}">
+                    <ContentControl.DataTemplates>
+                      <DataTemplate DataType="cnvm:PinSheetViewModel"><cnv:PinSheetView x:Name="PinSheetContent" /></DataTemplate>
+                    </ContentControl.DataTemplates>
+                  </ContentControl>
                 </ScrollViewer>
                 <ScrollViewer x:Name="SessionSheetScroll" IsVisible="{Binding IsSessionSheet}">
                   <controls:Deferred DataContext="{Binding AgentSheet}">

@@ -97,6 +97,11 @@ internal sealed partial class ShellWindow
                 return true;   // the Remove question closes first, as Keep
             }
 
+            if (shell.IsPinSheet && shell.ActivePinSheet is { } pinSheet)
+            {
+                return pinSheet.Escape();   // a question answers first, changes ask before the sheet goes
+            }
+
             shell.CloseSheet();
             return true;
         }

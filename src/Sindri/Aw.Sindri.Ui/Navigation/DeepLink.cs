@@ -22,6 +22,9 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     /// <summary>The Add project sheet.</summary>
     internal static DeepLink ProjectAdd { get; } = new(DeepLinkKind.ProjectAdd, Subject: null);
 
+    /// <summary>The Pin sheet.</summary>
+    internal static DeepLink PinSheet { get; } = new(DeepLinkKind.PinSheet, Subject: null);
+
     /// <summary>Parses a deep link's text.</summary>
     /// <param name="text">The text (from a second launch, the tray or the palette).</param>
     /// <param name="link">The link, when the text is one.</param>
@@ -55,7 +58,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     // The links that have no subject: 'home/needs-you', 'setup', 'projects' and 'projects/add'.
     private static bool TryParsePage(string? text, [System.Diagnostics.CodeAnalysis.NotNullWhen(true)] out DeepLink? link)
     {
-        link = string.Equals(text, HomeNeedsYouText, StringComparison.Ordinal) ? HomeNeedsYou : string.Equals(text, SetupText, StringComparison.Ordinal) ? Setup : string.Equals(text, ProjectsText, StringComparison.Ordinal) ? Projects : string.Equals(text, ProjectAddText, StringComparison.Ordinal) ? ProjectAdd : ContextItemOf(text);
+        link = string.Equals(text, HomeNeedsYouText, StringComparison.Ordinal) ? HomeNeedsYou : string.Equals(text, SetupText, StringComparison.Ordinal) ? Setup : string.Equals(text, ProjectsText, StringComparison.Ordinal) ? Projects : string.Equals(text, ProjectAddText, StringComparison.Ordinal) ? ProjectAdd : string.Equals(text, PinSheetText, StringComparison.Ordinal) ? PinSheet : ContextItemOf(text);
         return link is not null;
     }
 
@@ -68,7 +71,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     /// <summary>The link's text, the form <see cref="TryParse"/> reads.</summary>
     /// <returns>The text.</returns>
     public override string ToString() =>
-        Kind == DeepLinkKind.HomeNeedsYou ? HomeNeedsYouText : Kind == DeepLinkKind.Setup ? SetupText : Kind == DeepLinkKind.Projects ? ProjectsText : Kind == DeepLinkKind.ProjectAdd ? ProjectAddText : Kind == DeepLinkKind.ContextItem ? ContextItemPrefix + Subject : _kinds.First(k => k.Kind == Kind).Prefix + "/" + Subject;
+        Kind == DeepLinkKind.HomeNeedsYou ? HomeNeedsYouText : Kind == DeepLinkKind.Setup ? SetupText : Kind == DeepLinkKind.Projects ? ProjectsText : Kind == DeepLinkKind.ProjectAdd ? ProjectAddText : Kind == DeepLinkKind.PinSheet ? PinSheetText : Kind == DeepLinkKind.ContextItem ? ContextItemPrefix + Subject : _kinds.First(k => k.Kind == Kind).Prefix + "/" + Subject;
 
     private const string HomeNeedsYouText = "home/needs-you";
 
@@ -77,6 +80,8 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
     private const string ProjectsText = "projects";
 
     private const string ProjectAddText = "projects/add";
+
+    private const string PinSheetText = "context/pin";
 
     private const string ContextItemPrefix = "context?item=";
 
@@ -104,7 +109,7 @@ internal sealed record DeepLink(DeepLinkKind Kind, string? Subject)
         DeepLinkKind.Recipe => IsRecipe(subject),
         DeepLinkKind.Session => IsSessionRef(subject),
         DeepLinkKind.Project => IsEscapedId(subject),
-        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.ProjectAdd => IsSubject(subject),
+        DeepLinkKind.HomeNeedsYou or DeepLinkKind.NeedsYou or DeepLinkKind.Item or DeepLinkKind.Decision or DeepLinkKind.Service or DeepLinkKind.Job or DeepLinkKind.Node or DeepLinkKind.ContextItem or DeepLinkKind.System or DeepLinkKind.Setup or DeepLinkKind.Projects or DeepLinkKind.ProjectAdd or DeepLinkKind.PinSheet => IsSubject(subject),
         _ => false,
     };
 
