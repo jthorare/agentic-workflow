@@ -58,7 +58,7 @@ internal static class AConcepts
             1, 1, "Schedule week", new PagesPreviewMatch("surface:route/GET:/schedule/week", "schedule-week", "Schedule week", 4), Replaces: null, SameAs: null, Ticked: true, Reason: null,
             [new PagesPreviewAction("Submit schedule", new PagesPreviewActionMatch("action:WeekPage.submit", "Submit schedule"), [new PagesPreviewConcept("self-scheduling", "self-scheduling")])], [],
             new PagesPreviewPage(Id: null, "Schedule week", "aw-split-panes", "surface:route/GET:/schedule/week",
-                [new PagesPreviewPageAction("Submit schedule", "action:WeekPage.submit", ["self-scheduling"])])),
+                [new PagesPreviewPageAction(Id: null, "Submit schedule", "action:WeekPage.submit", ["self-scheduling"])])),
         new PagesPreviewBlock(
             2, 5, "Billing", Match: null, Replaces: null, SameAs: null, Ticked: false, "No concept called \"aproval\": pick one",
             [new PagesPreviewAction("Send invoice", Match: null, [new PagesPreviewConcept("aproval", Id: null)])], ["aproval"], Page: null),

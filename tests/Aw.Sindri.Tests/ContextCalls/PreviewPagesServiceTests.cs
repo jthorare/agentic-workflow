@@ -86,6 +86,71 @@ public sealed class PreviewPagesServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_block_that_replaces_an_owner_page_keeps_its_actions_ids()
+    {
+        var owner = new PageSettings(PagePinId.From("week-page"), "Week page", Actions:
+        [
+            new PageActionSettings(PageActionPinId.From("send-it"), "Submit schedule", "action:WeekPage.submit"),
+            new PageActionSettings(PageActionPinId.From("my-swap"), "Swap shift"),
+        ]);
+        var service = await Service(new SindriProfile(1, "thor", Index: new IndexSettings(Pages: [owner])));
+        _engine.Answer = View([new PageRow(PageId.From("week-page"), NodeKey.From("surface:route/GET:/week"), "Week page", Repo: "app", Mark: "owner", Code: true, Actions: [])]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule\nSwap shift\nAdd note"), Ct);
+
+        var page = answer.Value.Blocks[0].Page;
+        Assert.Equal("week-page", answer.Value.Blocks[0].Replaces?.Value);
+        Assert.Equal("send-it|my-swap|", string.Join('|', page?.Actions?.Select(static a => a.Id?.Value) ?? []));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_kept_action_id_does_not_collide_with_a_new_actions_slug()
+    {
+        var owner = new PageSettings(PagePinId.From("week-page"), "Week page", Actions: [new PageActionSettings(PageActionPinId.From("send-it"), "Submit schedule")]);
+        var service = await Service(new SindriProfile(1, "thor", Index: new IndexSettings(Pages: [owner])));
+        _engine.Answer = View([new PageRow(PageId.From("week-page"), NodeKey.From("surface:route/GET:/week"), "Week page", Repo: "app", Mark: "owner", Code: true, Actions: [])]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule\nSend it"), Ct);
+
+        Assert.Equal("send-it|send-it-2", string.Join('|', answer.Value.Blocks[0].Page?.Actions?.Select(static a => a.Id?.Value ?? PageSlugs.Of(a.Name)) ?? []));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_kept_action_id_is_found_by_the_map_key_whatever_its_case_in_the_profile()
+    {
+        var owner = new PageSettings(PagePinId.From("week-page"), "Week page", Actions: [new PageActionSettings(PageActionPinId.From("send-it"), "Send schedule", "action:WeekPage.submit")]);
+        var service = await Service(new SindriProfile(1, "thor", Index: new IndexSettings(Pages: [owner])));
+        var key = NodeKey.From("surface:route/GET:/week");
+        var action = new PageActionRow(PageActionId.From("submit-schedule"), NodeKey.From("action:weekpage.submit"), "Submit schedule", "suggested", Code: true, Concepts: []);
+        _engine.Answer = View(
+        [
+            Suggested("week-page", "Week page", key.Value, action),
+            new PageRow(PageId.From("week-page"), key, "Week page", Repo: "app", Mark: "owner", Code: true, Actions: []),
+        ]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule"), Ct);
+
+        Assert.Equal("send-it", answer.Value.Blocks[0].Page?.Actions?[0].Id?.Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_replaced_page_s_action_ids_come_from_the_rows_repo_first()
+    {
+        static PageSettings Week(string id) => new(PagePinId.From("week-page"), "Week page", Actions: [new PageActionSettings(PageActionPinId.From(id), "Submit schedule")]);
+        var profile = new SindriProfile(1, "thor", Repos:
+        [
+            new RepoEntry("app", "/work/app", Index: new IndexSettings(Pages: [Week("app-submit")])),
+            new RepoEntry("web", "/work/web", Index: new IndexSettings(Pages: [Week("web-submit")])),
+        ]);
+        var service = await Service(profile);
+        _engine.Answer = View([new PageRow(PageId.From("week-page"), NodeKey.From("surface:route/GET:/week"), "Week page", Repo: "web", Mark: "owner", Code: true, Actions: [])]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule", "web"), Ct);
+
+        Assert.Equal("web-submit", answer.Value.Blocks[0].Page?.Actions?[0].Id?.Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_row_that_is_not_added_has_no_page_and_says_why()
     {
         var answer = await (await Service()).Handle(new PreviewPagesRequest("Schedule week\n\nSchedule week\nPay -> aproval"), Ct);
