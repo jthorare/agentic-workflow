@@ -1,4 +1,5 @@
 using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
@@ -125,7 +126,7 @@ internal static class ContextPageArguments
 
     private static Error? TakeId(Parsed parsed, string value)
     {
-        if (!PagePinId.TryFrom(value, out var id))
+        if (!IsId(value) || !PagePinId.TryFrom(value, out var id))
         {
             return SindriErrors.InvalidInput.With($"'{value}' is not a page id (1 to 64 lower-case letters, digits, '.' or '-')");
         }
@@ -180,7 +181,7 @@ internal static class ContextPageArguments
     {
         if (parsed.Verb == Verb.Remove)
         {
-            return words.Count != 1 || !PagePinId.TryFrom(words[0], out var id)
+            return words.Count != 1 || !IsId(words[0]) || !PagePinId.TryFrom(words[0], out var id)
                 ? SindriErrors.InvalidInput.With($"'context page remove' takes one page id: {Usage}")
                 : With(parsed, id);
         }
@@ -195,6 +196,9 @@ internal static class ContextPageArguments
         parsed.Name = words.Count == 1 ? words[0] : string.Empty;
         return words.Count == 1 ? null : SindriErrors.InvalidInput.With($"'context page set' takes one name (quote it) or --from-file: {Usage}");
     }
+
+    // The shape the build and the profile reader give a page id; PagePinId alone only bounds the length.
+    private static bool IsId(string value) => PageId.TryFrom(value, out _);
 
     private static bool PageFlagsGiven(Parsed parsed) => parsed.Id is not null || parsed.Repo is not null || parsed.Surface is not null || parsed.Actions.Count > 0;
 

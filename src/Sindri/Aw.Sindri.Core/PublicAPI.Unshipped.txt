@@ -21796,3 +21796,20 @@ override Aw.Sindri.Core.Events.ContextPageWritten.ToString() -> string!
 static Aw.Sindri.Core.Events.ContextPageWritten.operator !=(Aw.Sindri.Core.Events.ContextPageWritten? left, Aw.Sindri.Core.Events.ContextPageWritten? right) -> bool
 static Aw.Sindri.Core.Events.ContextPageWritten.operator ==(Aw.Sindri.Core.Events.ContextPageWritten? left, Aw.Sindri.Core.Events.ContextPageWritten? right) -> bool
 static Aw.Sindri.Core.Setup.PageEvents.KeyOf(Aw.Sindri.Core.Ids.ProfileHash hash) -> string!
+Aw.Sindri.Core.Profile.ProfileChange
+Aw.Sindri.Core.Profile.ProfileChange.<Clone>$() -> Aw.Sindri.Core.Profile.ProfileChange!
+Aw.Sindri.Core.Profile.ProfileChange.After.get -> string?
+Aw.Sindri.Core.Profile.ProfileChange.After.init -> void
+Aw.Sindri.Core.Profile.ProfileChange.Before.get -> string?
+Aw.Sindri.Core.Profile.ProfileChange.Before.init -> void
+Aw.Sindri.Core.Profile.ProfileChange.Deconstruct(out string! Key, out string? Before, out string? After) -> void
+Aw.Sindri.Core.Profile.ProfileChange.Equals(Aw.Sindri.Core.Profile.ProfileChange? other) -> bool
+Aw.Sindri.Core.Profile.ProfileChange.Key.get -> string!
+Aw.Sindri.Core.Profile.ProfileChange.Key.init -> void
+Aw.Sindri.Core.Profile.ProfileChange.ProfileChange(string! Key, string? Before, string? After) -> void
+override Aw.Sindri.Core.Profile.ProfileChange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ProfileChange.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ProfileChange.ToString() -> string!
+static Aw.Sindri.Core.Profile.ProfileChange.operator !=(Aw.Sindri.Core.Profile.ProfileChange? left, Aw.Sindri.Core.Profile.ProfileChange? right) -> bool
+static Aw.Sindri.Core.Profile.ProfileChange.operator ==(Aw.Sindri.Core.Profile.ProfileChange? left, Aw.Sindri.Core.Profile.ProfileChange? right) -> bool
+static Aw.Sindri.Core.Profile.ProfileDiff.Changes(Aw.Sindri.Core.Profile.SindriProfile? approved, Aw.Sindri.Core.Profile.SindriProfile! live) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ProfileChange!>!

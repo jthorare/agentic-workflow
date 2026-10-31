@@ -205,7 +205,7 @@ public sealed class ContextPageWriteVerbsTests : IDisposable
     [Fact]
     public void A_written_result_prints_a_line_per_page_and_the_hash_to_approve()
     {
-        var done = new SetPagesResult([new PageWritten(PagePinId.From("week"), "Week", Repo: null, "created"), new PageWritten(PagePinId.From("old"), "Old", Repo: null, "removed")], ProfileHash.From(_hash), Written: true, Approved: false, ["index.pages.week"]);
+        var done = new SetPagesResult([new PageWritten(PagePinId.From("week"), "Week", Repo: null, "created"), new PageWritten(PagePinId.From("old"), "Old", Repo: null, "removed")], ProfileHash.From(_hash), Written: true, Approved: false, ["index.pages.week: (none) -> Week"]);
 
         Assert.Equal($"created week (Week)\nremoved old (Old)\nwaiting for your approval: sindri profile approve {_hash}\n", ContextPageWriteVerbs.Text(done).ReplaceLineEndings("\n"));
     }
@@ -213,9 +213,9 @@ public sealed class ContextPageWriteVerbsTests : IDisposable
     [Fact]
     public void A_dry_run_prints_the_rows_and_that_nothing_was_written()
     {
-        var done = new SetPagesResult([new PageWritten(PagePinId.From("week"), "Week", Repo: null, "created")], ProfileHash.From(_hash), Written: false, Approved: false, ["index.pages.week", "repos.web.index.pages.q"]);
+        var done = new SetPagesResult([new PageWritten(PagePinId.From("week"), "Week", Repo: null, "created")], ProfileHash.From(_hash), Written: false, Approved: false, ["index.pages.week: (none) -> Week", "repos.web.index.pages.q: Q -> (none)"]);
 
-        Assert.Equal("index.pages.week\nrepos.web.index.pages.q\ndry run: nothing written\n", ContextPageWriteVerbs.Text(done).ReplaceLineEndings("\n"));
+        Assert.Equal("index.pages.week: (none) -> Week\nrepos.web.index.pages.q: Q -> (none)\ndry run: nothing written\n", ContextPageWriteVerbs.Text(done).ReplaceLineEndings("\n"));
     }
 
     private static async Task<string> Write(string text)
