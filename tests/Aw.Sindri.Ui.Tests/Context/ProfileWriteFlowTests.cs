@@ -97,6 +97,43 @@ public sealed class ProfileWriteFlowTests
     }
 
     [Fact]
+    public async Task An_approve_that_errors_after_the_job_landed_leaves_it_waiting_with_the_jobs_hash()
+    {
+        var api = Server(Profile("h2", "index.pages.schedule-week"), hash: "h2");
+        api.ApproveProfileAnswer = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-001", "The control plane is restarting.");
+
+        var written = await Run(Flow(api), api);
+
+        Assert.Equal(ProfileWriteState.Waiting, written.State);
+        Assert.Equal("h2", written.Hash);
+        Assert.Equal("SND-API-001", written.Code);
+        Assert.Equal("The control plane is restarting.", written.Message);
+    }
+
+    [Fact]
+    public async Task A_failed_job_poll_is_still_running_not_failed()
+    {
+        var api = Server(Profile("h1", "index.pages.schedule-week"));
+        api.JobAnswers[JobId] = RouteAnswer.Problem(HttpStatusCode.ServiceUnavailable, "SND-API-001", "The control plane is restarting.");
+
+        var written = await Run(Flow(api), api);
+
+        Assert.Equal(ProfileWriteFlow.TimedOut, written.Code);
+        Assert.Empty(api.ProfileApprovals);
+    }
+
+    [Fact]
+    public async Task A_job_that_fails_on_a_moved_profile_is_a_clash()
+    {
+        var api = Server(Profile("h1"), state: "failed", code: "SND-PROFILE-003", summary: "The profile moved.");
+
+        var written = await Run(Flow(api), api);
+
+        Assert.Equal(ProfileWriteState.Clash, written.State);
+        Assert.Empty(api.ProfileApprovals);
+    }
+
+    [Fact]
     public async Task Without_approve_it_never_approves()
     {
         var api = Server(Profile("h1", "index.pages.schedule-week"));
