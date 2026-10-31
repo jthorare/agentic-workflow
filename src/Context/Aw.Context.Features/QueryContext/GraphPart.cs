@@ -35,6 +35,9 @@ internal sealed record GraphPart(IReadOnlyList<PackCandidate> Candidates, IReadO
     /// <summary>The diff shape's facts, or null for every other shape.</summary>
     internal DiffPart? Diff { get; init; }
 
+    /// <summary>What the answer says about the pin it was read under; empty when none.</summary>
+    internal IReadOnlyList<string> Notes { get; init; } = [];
+
     /// <summary>For an anchor reached through a pin's alias: the concept's key to the alias that matched, for the anchor line (AnchorMatch.AliasLine writes it).</summary>
     internal IReadOnlyDictionary<string, string> AnchorAliases { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
 

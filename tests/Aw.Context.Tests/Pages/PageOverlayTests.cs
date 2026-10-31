@@ -61,6 +61,22 @@ public sealed class PageOverlayTests
     }
 
     [Fact]
+    public void A_pin_naming_its_action_with_capitals_relabels_the_map_action()
+    {
+        var stored = "action:weekpage.submit";
+        var graph = MapOf();
+        var map = new GraphSnapshot(
+            [.. graph.Nodes.Select(n => n.Key.Value == Action ? n with { Key = NodeKey.From(stored) } : n)],
+            [.. graph.Edges.Select(e => e.From.Value == Action ? e with { From = NodeKey.From(stored) } : e)], [], []);
+
+        var applied = PageOverlay.Apply(map, Repos(Page()));
+
+        var action = Assert.Single(applied.Nodes, n => n.Key.Kind == NodeKind.Action);
+        Assert.Equal((stored, "Submit a schedule"), (action.Key.Value, action.Label));
+        Assert.Contains(action.EvidenceOrEmpty, r => r.Key.Value == "page:web/schedule-week");
+    }
+
+    [Fact]
     public void A_page_without_a_surface_key_adds_an_owner_screen_and_an_owner_edge_replaces_the_suggested_one()
     {
         var applied = PageOverlay.Apply(MapOf(), Repos(Page(surface: null, concepts: ["self-scheduling"])));

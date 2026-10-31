@@ -102,7 +102,7 @@ public static class PageOverlay
 
         public void Lay(PagePin page)
         {
-            var repo = page.Repo ?? (page.SurfaceKey is { } k ? OnlyRepoOf(k) : null) ?? _onlyRepo;
+            var repo = page.Repo ?? (Found(page.SurfaceKey) is { } k ? OnlyRepoOf(k) : null) ?? _onlyRepo;
             if (repo is not { } home)
             {
                 return;
@@ -138,6 +138,10 @@ public static class PageOverlay
             }
         }
 
+        // The key as the map stores it: the pin's own spelling when the map holds it, else the stored form (keys are lower-cased on entry, issue 1790).
+        private string? Found(string? written) =>
+            written is null ? null : _index.ContainsKey(written) ? written : EntryKey.Normalized(written);
+
         // The repo of a surface key, when its code is in one repo only.
         private ContextRepoName? OnlyRepoOf(string key)
         {
@@ -151,7 +155,8 @@ public static class PageOverlay
         // Relabels the map node the owner named when this repo alone holds it; else makes (or finds) the owner node.
         private (string Key, bool Owner) Name(Target target, ContextRepoName home, EvidenceRef mark)
         {
-            var (named, kind, ownerKey, label) = target;
+            var (written, kind, ownerKey, label) = target;
+            var named = Found(written);
             if (named is not null && _index.TryGetValue(named, out var at) && _nodes[at].Key.Kind == kind)
             {
                 var repos = ReposOf(named);

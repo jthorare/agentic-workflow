@@ -1,5 +1,7 @@
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Facade;
@@ -27,6 +29,19 @@ public interface IContextConcepts
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The view (state 'empty' when no concept carries a term), else as <see cref="Concepts"/>.</returns>
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>The product's pages with their actions and the concepts each expresses: the owner's named pages and the map's suggested ones.</summary>
+    /// <param name="query">The filter, the slice and which map.</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The view, or SND-CONTEXT-257 for a page the map lacks, SND-CONTEXT-258 for a concept or repo it lacks, else as <see cref="Concepts"/>.</returns>
+    public ValueTask<Result<PagesView>> Pages(PagesQuery query, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>Checks the approved profile's pages against the map (the doctor row 'context:pages').</summary>
+    /// <param name="scope">The approved scope, or null when none is approved.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The health row.</returns>
+    public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken);
 
     /// <summary>What the "Pin this" and "Add several" forms offer (concept pins spec §3.6): one concept's terms with the records each would newly link, the features a search finds, or the concept each line of a pasted list matches. Reads only; writes and queues nothing.</summary>
     /// <param name="query">Which map, whose repo, and the one thing to suggest.</param>

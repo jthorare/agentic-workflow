@@ -16,6 +16,7 @@ using Aw.Context.Core.Linking;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
@@ -32,6 +33,7 @@ using Aw.Context.Features.Adjudicate;
 using Aw.Context.Features.ApplyReviewFile;
 using Aw.Context.Features.BuildMap;
 using Aw.Context.Features.CheckMap;
+using Aw.Context.Features.CheckPages;
 using Aw.Context.Features.CheckRetention;
 using Aw.Context.Features.CleanMap;
 using Aw.Context.Features.EmbedRecords;
@@ -48,6 +50,7 @@ using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
+using Aw.Context.Features.GetPages;
 using Aw.Context.Features.GetPinSuggest;
 using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.GetProposals;
@@ -208,6 +211,8 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<ContextScopeGraph>()
         .AddScoped<IService<GetWholeMapRequest, WholeMapView>, GetWholeMapService>()
         .AddScoped<IService<GetConceptsRequest, ConceptsView>, GetConceptsService>()
+        .AddScoped<IService<GetPagesRequest, PagesView>, GetPagesService>()
+        .AddScoped<IService<CheckPagesRequest, MapHealth>, CheckPagesService>()
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
         .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
         .AddScoped<IService<GetPinSuggestRequest, PinSuggestView>, GetPinSuggestService>()

@@ -39,6 +39,7 @@ internal sealed class ResultAssembly(IEgressScrubber egress, QueryId queryId, Da
             cites, graph.Diff)
         {
             SkippedComponents = graph.SkippedComponents.Count == 0 ? null : graph.SkippedComponents,
+            Notes = graph.Notes.Count == 0 ? null : graph.Notes,
         };
     }
 
