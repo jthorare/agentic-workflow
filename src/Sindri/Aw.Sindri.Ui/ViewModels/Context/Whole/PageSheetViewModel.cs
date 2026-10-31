@@ -185,10 +185,11 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     internal bool HasChanges => IsReady && !string.Equals(Snapshot(), _initial, StringComparison.Ordinal);
 
     // The button's label and the hash come from the profile as it is now: only this page waiting means one click saves and approves.
+    // The hash is the file's at open, what the writer compares with (#1826): the live hash can lag a hand edit, and a change after open still clashes.
     private async Task ReadProfile(IReadOnlyList<string> pageIds, CancellationToken cancellationToken)
     {
         var waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
-        (_hash, _approve, _before) = (waiting?.LiveHash, waiting?.OnlyPages(pageIds) == true, waiting?.ChangedPaths ?? []);
+        (_hash, _approve, _before) = (waiting?.FileHash ?? waiting?.LiveHash, waiting?.OnlyPages(pageIds) == true, waiting?.ChangedPaths ?? []);
     }
 
     private void Fill(PageDraft draft)
