@@ -25,6 +25,9 @@ internal sealed class PinSeveralRowViewModel : ObservableObject
         Choices = [PinSeveralChoice.New];
     }
 
+    /// <summary>Gets a value indicating whether the person changed the row's name, definition or tick.</summary>
+    internal bool Edited { get; private set; }
+
     /// <summary>The row's 1-based place in the list.</summary>
     public int Number { get; }
 
@@ -46,6 +49,7 @@ internal sealed class PinSeveralRowViewModel : ObservableObject
             }
 
             _name = value ?? string.Empty;
+            Edited = true;
             OnChanged(nameof(Name));
             OnChanged(nameof(SplitText));
             _edited();
@@ -64,6 +68,7 @@ internal sealed class PinSeveralRowViewModel : ObservableObject
             }
 
             _definition = value ?? string.Empty;
+            Edited = true;
             OnChanged(nameof(Definition));
             OnChanged(nameof(SplitText));
         }
@@ -92,6 +97,7 @@ internal sealed class PinSeveralRowViewModel : ObservableObject
             if (_ticked != value)
             {
                 _ticked = value;
+                Edited = true;
                 OnChanged(nameof(Ticked));
                 OnChanged(nameof(IsWritten));
                 _edited();

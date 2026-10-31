@@ -28,10 +28,12 @@ internal sealed partial class PinSeveralView : UserControl
     private void OnDataContextChanged(object? sender, EventArgs e)
     {
         _bound?.RowsRead -= OnRowsRead;
+        _bound?.KeepEditingFocusRequested -= OnKeepEditingFocus;
         _bound = DataContext as PinSeveralViewModel;
         if (_bound is not null)
         {
             _bound.RowsRead += OnRowsRead;
+            _bound.KeepEditingFocusRequested += OnKeepEditingFocus;
             _ = _bound.StartAsync(Token);
         }
     }
@@ -43,6 +45,12 @@ internal sealed partial class PinSeveralView : UserControl
             _ = sheet.ReadListAsync(Token);
         }
     }
+
+    private void OnDiscard(object? sender, RoutedEventArgs e) => _bound?.Discard();
+
+    private void OnKeepEditing(object? sender, RoutedEventArgs e) => _bound?.KeepEditing();
+
+    private void OnKeepEditingFocus(object? sender, EventArgs e) => Dispatcher.UIThread.Post(() => _ = this.FindControl<Button>("PinSheetKeepEditing")?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
 
     private void OnSubmit(object? sender, RoutedEventArgs e)
     {
