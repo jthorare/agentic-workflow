@@ -18,4 +18,17 @@ public sealed class PinSheetTests
         Assert.Equal([new PinWordRow("payments", 41, Ticked: true), new PinWordRow("invoice", 7, Ticked: true)], sheet.Words);
         Assert.Equal([new PinFeatureRow("feature:checkout", "Checkout", Ticked: true), new PinFeatureRow("feature:refunds", "Refunds", Ticked: true)], sheet.Features);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Pin_this_fills_at_most_20_words_and_unticks_one_that_would_link_over_200_records()
+    {
+        var card = new ConceptTileViewModel("billing", "Billing", string.Empty, new ConceptSize(0, 0, 0, 0), setByPerson: false, terms: null, _ => { });
+        PinSuggestTerm[] terms = [new("payment", 1240), .. Enumerable.Range(1, 25).Select(i => new PinSuggestTerm("word" + i.ToString(System.Globalization.CultureInfo.InvariantCulture), i))];
+
+        var sheet = PinSheetViewModel.ForCard(card, terms, []);
+
+        Assert.Equal(20, sheet.Words.Count);
+        Assert.Equal(new PinWordRow("payment", 1240, Ticked: false), sheet.Words[0]);
+        Assert.All(sheet.Words.Skip(1), w => Assert.True(w.Ticked));
+    }
 }
