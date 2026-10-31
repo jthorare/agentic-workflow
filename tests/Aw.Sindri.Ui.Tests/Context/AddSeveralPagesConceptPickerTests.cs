@@ -17,11 +17,12 @@ public sealed class AddSeveralPagesConceptPickerTests
         new(number, number, name, Match: null, Replaces: null, SameAs: null, Ticked: true, Reason: null, [], [],
             new PagesPreviewPage(Id: null, name, "web", Surface: null, [new PagesPreviewPageAction("Submit", Action: null, ["self-scheduling"])]));
 
-    // The server's answer for a block with an unknown concept: a reason, the unknown names, no page to send.
+    // The server's answer for a block whose only problem is an unknown concept: a reason, the unknown names, and the page with each name as written.
     private static PagesPreviewBlock Unresolved(int number, string name) =>
         new(number, number, name, Match: null, Replaces: null, SameAs: null, Ticked: false, Unknown,
             [new PagesPreviewAction("Submit", Match: null, [new PagesPreviewConcept("aproval", Id: null), new PagesPreviewConcept("self-scheduling", "self-scheduling")])],
-            ["aproval"], Page: null);
+            ["aproval"],
+            new PagesPreviewPage("billing-id", name, "api", Surface: null, [new PagesPreviewPageAction("Submit", Action: null, ["aproval", "self-scheduling"])]));
 
     private static async Task<(AddSeveralPagesViewModel Sheet, FakePageWrites Writes)> Read(params PagesPreviewBlock[] blocks)
     {
@@ -84,6 +85,32 @@ public sealed class AddSeveralPagesConceptPickerTests
         var page = Assert.Single(Assert.Single(writes.Saves).Save.Set);
         Expect.Equal("Billing", page.Name);
         Expect.Sequence(["approval-workflow", "self-scheduling"], Assert.Single(page.Actions).Concepts);
+    }
+
+    [Fact]
+    public async Task Save_all_sends_the_server_pages_id_and_repo_unchanged_with_the_pick_swapped_in()
+    {
+        var (sheet, writes) = await Read(Unresolved(1, "Billing"));
+        sheet.Rows[0].Unknowns[0].Selected = _known[1];
+        sheet.Rows[0].Ticked = true;
+
+        await sheet.SaveAll(TestContext.Current.CancellationToken);
+
+        var page = Assert.Single(Assert.Single(writes.Saves).Save.Set);
+        Expect.Equal("billing-id", page.Id);
+        Expect.Equal("api", page.Repo);
+        Expect.Sequence(["self-scheduling"], Assert.Single(page.Actions).Concepts);
+    }
+
+    [Fact]
+    public async Task A_block_with_an_unknown_concept_and_no_page_has_no_picker()
+    {
+        var block = Unresolved(1, "Billing") with { Page = null };
+        var (sheet, _) = await Read(block);
+
+        Expect.Equal(0, sheet.Rows[0].Unknowns.Count);
+        Expect.True(!sheet.Rows[0].CanTick, "the server's reason keeps it off");
+        Expect.Equal(Unknown, sheet.Rows[0].Reason);
     }
 
     [Fact]

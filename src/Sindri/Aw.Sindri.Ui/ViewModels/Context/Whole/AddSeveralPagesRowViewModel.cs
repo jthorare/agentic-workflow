@@ -6,19 +6,16 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 internal sealed class AddSeveralPagesRowViewModel : ObservableObject
 {
     private readonly PagesPreviewBlock _block;
-    private readonly string? _repo;
 
     /// <summary>Builds the row of a block; a block the server didn't tick starts unticked and stays so.</summary>
     /// <param name="block">The block.</param>
     /// <param name="known">The concepts a picker offers for a concept name that matched none.</param>
-    /// <param name="repo">The repo the sheet read the list for, which a page built here is written into; null when none was asked for.</param>
-    internal AddSeveralPagesRowViewModel(PagesPreviewBlock block, IReadOnlyList<ConceptChoice>? known = null, string? repo = null)
+    internal AddSeveralPagesRowViewModel(PagesPreviewBlock block, IReadOnlyList<ConceptChoice>? known = null)
     {
         ArgumentNullException.ThrowIfNull(block);
         _block = block;
-        _repo = repo;
-        // The server leaves a block with an unknown concept unticked with its reason and no page: the owner picks a concept for each unknown name and the page is built from the block.
-        if (block.Page is null && block.Reason is { } reason && reason.StartsWith(Labels.AddSeveralPagesUnknownConceptStart, StringComparison.Ordinal))
+        // The server sends the page of a block with an unknown concept, unticked with its reason: the owner picks a concept for each unknown name and Save all swaps the picks into that page.
+        if (block.UnknownConcepts.Count > 0 && block.Page is not null)
         {
             Unknowns = [.. block.UnknownConcepts.Select(name => new UnknownConceptViewModel(name, known ?? []))];
             foreach (var unknown in Unknowns)
@@ -82,8 +79,8 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     /// <summary>Gets the action lines: each name, with "Matches ..." after it when it names an action of the matched page.</summary>
     public IReadOnlyList<string> ActionLines => [.. _block.Actions.Select(static a => a.Match is { } m ? a.Name + " - " + Labels.AddSeveralPagesActionMatches(m.Name) : a.Name)];
 
-    /// <summary>Gets the page Save all sends for this row, or null when the row has none: the server's page, else the block with every unknown concept replaced by its pick.</summary>
-    internal PagesPreviewPage? Page => NeedsConcept && CanTick ? Built() : _block.Page;
+    /// <summary>Gets the page Save all sends for this row, or null when the row has none: the server's page, with each unknown concept name in its actions replaced by its pick.</summary>
+    internal PagesPreviewPage? Page => NeedsConcept && CanTick && _block.Page is { } page ? WithPicks(page) : _block.Page;
 
     /// <summary>Gets the picks made, by the name written.</summary>
     internal IReadOnlyDictionary<string, string> Picks =>
@@ -105,12 +102,9 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
         OnChanged(nameof(CanTick));
     }
 
-    private PagesPreviewPage Built() =>
-        new(_block.Replaces, _block.Name, _repo, _block.Match?.Key, [.. _block.Actions.Select(Built)]);
+    private PagesPreviewPage WithPicks(PagesPreviewPage page) =>
+        page with { Actions = [.. page.Actions.Select(a => a with { Concepts = [.. a.Concepts.Select(Concept).Distinct(StringComparer.Ordinal)] })] };
 
-    private PagesPreviewPageAction Built(PagesPreviewAction action) =>
-        new(action.Name, action.Match?.Key, [.. action.Concepts.Select(Concept).OfType<string>().Distinct(StringComparer.Ordinal)]);
-
-    private string? Concept(PagesPreviewConcept concept) =>
-        concept.Id ?? Unknowns.FirstOrDefault(u => string.Equals(u.Written, concept.Written, StringComparison.OrdinalIgnoreCase))?.Selected?.Id;
+    private string Concept(string written) =>
+        Unknowns.FirstOrDefault(u => string.Equals(u.Written, written, StringComparison.OrdinalIgnoreCase))?.Selected?.Id ?? written;
 }

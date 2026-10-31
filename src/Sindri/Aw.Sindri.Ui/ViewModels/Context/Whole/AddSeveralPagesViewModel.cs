@@ -175,7 +175,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     private void Fill(Api.Context.PagesPreview preview, string text)
     {
         (_hash, _readText) = (preview.ProfileHash, text);
-        Rows = [.. preview.Blocks.Select(b => new AddSeveralPagesRowViewModel(b, _known, _repo))];
+        Rows = [.. preview.Blocks.Select(b => new AddSeveralPagesRowViewModel(b, _known))];
         foreach (var row in Rows)
         {
             row.PropertyChanged += (_, _) => ChangedSave();
