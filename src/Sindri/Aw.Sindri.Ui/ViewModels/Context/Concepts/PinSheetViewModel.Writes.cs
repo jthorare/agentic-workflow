@@ -170,17 +170,25 @@ internal sealed partial class PinSheetViewModel
         OnChanged(nameof(CanSubmit));
     }
 
-    // Edit pin: when the re-read copy of this pin differs from the one the sheet opened with, the next press would overwrite that change, so say so.
+    // Edit pin: when the re-read file no longer has this pin, or its copy differs from the one the sheet opened with (name, aliases, features or summary),
+    // the next press would pin it again or overwrite that change, so say so.
     private void NoteChange()
     {
         var note = string.Empty;
-        if (_open?.Pin is { } opened
-            && _pins.FirstOrDefault(p => string.Equals(p.Id, opened.Id, StringComparison.Ordinal)) is { } now
-            && (!now.Aliases.SequenceEqual(opened.Aliases, StringComparer.Ordinal)
-                || !now.Features.SequenceEqual(opened.Features, StringComparer.Ordinal)
-                || !string.Equals(now.Summary ?? string.Empty, opened.Summary ?? string.Empty, StringComparison.Ordinal)))
+        if (_open?.Pin is { } opened)
         {
-            note = Labels.PinSheetChangedInFile(opened.Name);
+            var now = _pins.FirstOrDefault(p => string.Equals(p.Id, opened.Id, StringComparison.Ordinal));
+            if (now is null)
+            {
+                note = Labels.PinSheetUnpinnedInFile(opened.Name);
+            }
+            else if (!string.Equals(now.Name, opened.Name, StringComparison.Ordinal)
+                || !now.Aliases.SequenceEqual(opened.Aliases, StringComparer.Ordinal)
+                || !now.Features.SequenceEqual(opened.Features, StringComparer.Ordinal)
+                || !string.Equals(now.Summary ?? string.Empty, opened.Summary ?? string.Empty, StringComparison.Ordinal))
+            {
+                note = Labels.PinSheetChangedInFile(opened.Name);
+            }
         }
 
         ChangedNote = note;
