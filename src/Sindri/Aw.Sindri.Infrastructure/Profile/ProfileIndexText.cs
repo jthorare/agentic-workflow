@@ -32,6 +32,13 @@ internal static class ProfileIndexText
         return [.. lines];
     }
 
+    /// <summary>The page as block lines at <paramref name="indent"/>.</summary>
+    /// <param name="id">The page's id.</param>
+    /// <param name="page">The page; its own Id is ignored.</param>
+    /// <param name="indent">The indent of the '- '.</param>
+    /// <returns>The lines.</returns>
+    internal static string[] Entry(string id, PageSettings page, int indent) => throw new NotSupportedException("pages are written in P1b-2's next commit");
+
     /// <summary>Applies <paramref name="edits"/> to <paramref name="text"/> in order.</summary>
     /// <param name="text">The profile file's text.</param>
     /// <param name="edits">The changes.</param>

@@ -25,16 +25,23 @@ internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerial
     /// <summary>Called with the profile path and the attempt number just before the write is checked against what was read: the point a concurrent edit can land. Tests use it to make one.</summary>
     internal Action<string, int>? BeforeWrite { get; init; }
 
-    public ValueTask<Result<ProfileHash>> Write(IReadOnlyList<ConceptEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
+    public ValueTask<Result<ProfileHash>> Write(IReadOnlyList<IndexEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(edits);
+        if (edits.Any(static e => e is PageEdit))
+        {
+            throw new NotSupportedException("pages are written in P1b-2's next commit");
+        }
+
+        var concepts = edits.Cast<ConceptEdit>().ToList();
+
         for (var attempt = 0; attempt < Attempts; attempt++)
         {
             cancellationToken.ThrowIfCancellationRequested();
             Result<ProfileHash>? done;
             lock (_gate)
             {
-                done = Try(edits, ifHash, attempt);
+                done = Try(concepts, ifHash, attempt);
             }
 
             if (done is { } finished)
