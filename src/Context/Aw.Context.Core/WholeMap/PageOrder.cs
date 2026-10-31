@@ -1,3 +1,4 @@
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 
 namespace Aw.Context.Core.WholeMap;
@@ -26,6 +27,13 @@ internal static class PageOrder
     /// <param name="node">The node.</param>
     /// <returns>True for an owner-named page or action.</returns>
     internal static bool IsOwner(GraphNode node) => node.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith("page:", StringComparison.Ordinal));
+
+    /// <summary>The id of the first owner page that named <paramref name="node"/>: the part after the last '/' of its 'page:&lt;repo&gt;/&lt;id&gt;' evidence ref (the same parse as <see cref="RankOf"/>).</summary>
+    /// <param name="node">The node.</param>
+    /// <returns>The page id, or null when no page named the node.</returns>
+    internal static PageId? PageIdOf(GraphNode node) =>
+        node.EvidenceOrEmpty.Select(r => r.Key.Value).Where(v => v.StartsWith("page:", StringComparison.Ordinal))
+            .Select(v => v[(v.LastIndexOf('/') + 1)..]).Select(id => PageId.TryFrom(id, out var page) ? page : (PageId?)null).FirstOrDefault(page => page is not null);
 
     // The lowest index among the profile pages the node carries a ref of: two pages naming one surface both mark it.
     private static int RankOf(GraphNode node, IReadOnlyDictionary<string, int> rank) =>
