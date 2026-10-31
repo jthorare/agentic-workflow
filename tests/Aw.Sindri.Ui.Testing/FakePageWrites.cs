@@ -35,6 +35,18 @@ internal sealed class FakePageWrites : IPageWrites
 
     public Task<PageDraft?> Page(string key, string? concept, CancellationToken cancellationToken) => Task.FromResult(_pages.GetValueOrDefault(key));
 
+    /// <summary>Gets or sets the answer every preview gets; null answers a refusal with no code.</summary>
+    public PagesPreviewRead? PreviewAnswer { get; set; }
+
+    /// <summary>Gets every paste asked for, in order.</summary>
+    public List<string> Previews { get; } = [];
+
+    public Task<PagesPreviewRead> Preview(string text, string? repo, CancellationToken cancellationToken)
+    {
+        Previews.Add(text);
+        return Task.FromResult(PreviewAnswer ?? new PagesPreviewRead(Preview: null, "SND-API-001"));
+    }
+
     public Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
     {
         Saves.Add(new SavedCall(save, ifHash, approve));
