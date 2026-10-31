@@ -75,6 +75,7 @@ public sealed class PageListTextTests
     {
         var blocks = PageListText.Parse("Home\n-> orphan\n-5% discount\n*bold*\n- Real action");
 
-        Assert.Equal("-> orphan|-5% discount|*bold*|Real action", string.Join('|', blocks[0].Actions.Select(static a => a.Name)));
+        Assert.Equal("|-5% discount|*bold*|Real action", string.Join('|', blocks[0].Actions.Select(static a => a.Name)));   // '-> orphan' is an action line with no name and one concept, not a bullet
+        Assert.Equal(["orphan"], blocks[0].Actions[0].Concepts);
     }
 }
