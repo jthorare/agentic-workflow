@@ -10480,6 +10480,15 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Extract.PinSlug
+static Aw.Context.Core.Extract.PinSlug.Of(string! name) -> string!
+static readonly Aw.Context.Core.ContextErrors.PinFeatureUnknown -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinHasFolderRules -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinIdClash -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinInRepoProfile -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinInvalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinLineUnreadable -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Context.Core.ContextErrors.PinNotInProfile -> Aw.Kernel.ErrorDefinition!
 Aw.Context.Core.Concepts.ConceptRow.Pinned.get -> bool
 Aw.Context.Core.Concepts.ConceptRow.Pinned.init -> void
 Aw.Context.Core.Concepts.ConceptRow.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>?

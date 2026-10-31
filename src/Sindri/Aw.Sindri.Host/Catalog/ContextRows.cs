@@ -2,6 +2,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Features.PinConcepts;
 
 namespace Aw.Sindri.Host.Catalog;
 
@@ -70,6 +71,7 @@ internal static class ContextRows
             "POST", "/sindri/context/map/import", ShellRows.Form("sindri context map import <file>"), "ready"),
         JobRows.Job("SyncSources", typeof(SyncContextSourcesRequest), "/sindri/context/sources/sync", "sindri context sources sync"),
         JobRows.Job("SyncIndexSource", typeof(SyncIndexSourceRequest), "/sindri/index/sync", "sindri index sync <source>"),
+        JobRows.Job("PinConcepts", typeof(PinConceptsRequest), "/sindri/context/pins", "sindri context pin set <name>") with { SessionOk = true },
         JobRows.Job(BacktestAction, typeof(RunContextBacktestRequest), "/sindri/context/eval/backtest", "sindri context eval backtest") with { SessionOk = true },
     ];
 
