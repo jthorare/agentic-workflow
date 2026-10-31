@@ -52,7 +52,9 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
         var body = new PagesSetBody([.. save.Set.Select(Body)], [.. save.Remove], IfHash: ifHash);
         List<string> ids = [.. save.Set.Select(p => p.Id), .. save.Remove];
         var written = await flow.Run((url, token) => api.SetContextPages(url, body, token), path => ProfileWaiting.IsPage(path, ids), approve, cancellationToken).ConfigureAwait(true);
-        return new PageSaved(State(written.State), written.Code, written.Message);
+        return string.Equals(written.Code, ProfileWriteFlow.TimedOut, StringComparison.Ordinal)
+            ? new PageSaved(PageSavedState.Failed, Message: Labels.ProfileWriteTimedOut)
+            : new PageSaved(State(written.State), written.Code, written.Message);
     }
 
     private static PageSavedState State(ProfileWriteState state) => state switch

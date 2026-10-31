@@ -1,9 +1,8 @@
 using System.Text.Json;
 using Aw.Kernel;
-using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Jobs;
 
-namespace Aw.Sindri.Ui.ViewModels.Context;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>
 /// The write-then-approve flow every profile sheet shares (concept pins spec §3.6): start the write job once, poll it, and approve the hash the job returned only when the live profile is still that hash and nothing but the
@@ -14,6 +13,9 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 /// <param name="clock">The clock for the job poll.</param>
 internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimeProvider clock)
 {
+    /// <summary>The code of a <see cref="ProfileWritten"/> that failed because its job still ran after the wait (not a server code).</summary>
+    internal const string TimedOut = "AW-UI-TIMEOUT";
+
     private const string Clash = "SND-PROFILE-003";
     private const string RefusedPrefix = "SND-CONTEXT-";
     private const int MaxPolls = 120;
@@ -62,7 +64,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
 
         if (view is not { State: "succeeded" })
         {
-            return view is null ? new ProfileWritten(ProfileWriteState.Failed, Message: Labels.ProfileWriteTimedOut) : Ended(view.Code, view.Summary);
+            return view is null ? new ProfileWritten(ProfileWriteState.Failed, Code: TimedOut) : Ended(view.Code, view.Summary);
         }
 
         var hash = HashOf(view.Result);

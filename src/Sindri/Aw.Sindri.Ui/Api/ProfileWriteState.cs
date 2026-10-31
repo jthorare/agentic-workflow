@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Ui.ViewModels.Context;
+namespace Aw.Sindri.Ui.Api;
 
 /// <summary>How a <see cref="ProfileWriteFlow.Run"/> ended.</summary>
 internal enum ProfileWriteState
