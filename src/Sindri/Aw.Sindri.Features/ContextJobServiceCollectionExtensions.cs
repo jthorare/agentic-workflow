@@ -24,7 +24,7 @@ internal static class ContextJobServiceCollectionExtensions
         return services
             .AddScoped<MapEventSource>()
             .AddScoped<MapJobStarts>()
-            .AddScoped<Aw.Context.Core.Map.IMapRebuildState>(static sp => new MapRebuildState(sp.GetRequiredService<ContextScopes>(), () => sp.GetRequiredService<IContextEngine>(), sp.GetRequiredService<IJobViews>(), sp.GetRequiredService<TimeProvider>()))   // replaces Context's NoMapRebuild (the last registration wins); the engine resolved on use, since its query path asks this state
+            .AddScoped<Context.Core.Map.IMapRebuildState>(static sp => new MapRebuildState(sp.GetRequiredService<ContextScopes>(), () => sp.GetRequiredService<IContextEngine>(), sp.GetRequiredService<IJobViews>(), sp.GetRequiredService<TimeProvider>()))   // replaces Context's NoMapRebuild (the last registration wins); the engine resolved on use, since its query path asks this state
             .AddJob<SyncContextSourcesRequest, SyncContextSourcesResult, SyncContextSourcesService>(
                 static _ => JobKey.From("sync"), static r => SyncSummary(r), PrecheckSync)
             .AddJob<SyncIndexSourceRequest, SyncIndexSourceResult, SyncIndexSourceService>(
