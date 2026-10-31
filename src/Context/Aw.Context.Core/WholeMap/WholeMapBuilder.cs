@@ -11,6 +11,9 @@ namespace Aw.Context.Core.WholeMap;
 /// </summary>
 public static class WholeMapBuilder
 {
+    // The most pages the pages-in-no-concept read lists (the same cap as a concept's drill).
+    private const int PageCap = 200;
+
     private const string OverBudget = "over-budget";
 
     /// <summary>The answer for one graph.</summary>
@@ -30,7 +33,13 @@ public static class WholeMapBuilder
         var known = graph.Nodes.GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         var edges = graph.Edges.Where(e => known.ContainsKey(e.From.Value) && known.ContainsKey(e.To.Value)).ToList();
         var concepts = ConceptIndex.Of(known, edges);
-        var overview = Overview(ask, (known, edges), (areas, concepts), (rules, text));
+        var pagesOut = PagesInNoConcept.Of(graph);
+        var overview = Overview(ask, (known, edges), (areas, concepts), (rules, text)) with { PagesInNoConcept = pagesOut.Count };
+        if (ask.PagesInNoConcept)
+        {
+            return OpenedPages(pagesOut, overview, (known, edges), (areas, text, ask.RepoOf));
+        }
+
         if (ask.Area is not null)
         {
             if (ask.Concept is not null && !concepts.Has(ask.Concept))
@@ -109,6 +118,21 @@ public static class WholeMapBuilder
             Detail = WholeMapDetail.Nodes,
             Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
+        };
+    }
+
+    // The pages that relate to no concept (the first 200 in the section's order) with their actions, and the edges among them.
+    private static WholeMapView OpenedPages(IReadOnlyList<string> pages, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
+    {
+        var kept = pages.Take(PageCap).ToHashSet(StringComparer.Ordinal);
+        var actions = graph.Edges.Where(e => e is { Type: EdgeType.On, From.Kind: NodeKind.Action } && kept.Contains(e.To.Value)).Select(e => e.From.Value);
+        var shownKeys = kept.Concat(actions).ToHashSet(StringComparer.Ordinal);
+        return overview with
+        {
+            Detail = WholeMapDetail.Nodes,
+            Nodes = Nodes(shownKeys.Select(k => graph.Known[k]), how.Areas, how.Text, how.RepoOf),
+            Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
+            Truncated = pages.Count > PageCap,
         };
     }
 

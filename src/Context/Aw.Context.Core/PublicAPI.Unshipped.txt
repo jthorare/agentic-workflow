@@ -10509,3 +10509,11 @@ static Aw.Context.Core.Map.PageOverlay.Apply(Aw.Context.Core.Graph.GraphSnapshot
 static Aw.Context.Core.Map.PageOverlay.Without(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
 Aw.Context.Core.Engine.ContextScope.OmitPages.get -> bool
 Aw.Context.Core.Engine.ContextScope.OmitPages.init -> void
+Aw.Context.Core.WholeMap.PagesInNoConcept
+static Aw.Context.Core.WholeMap.PagesInNoConcept.Of(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.get -> bool
+Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool
+Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.get -> int
+Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void
