@@ -1,7 +1,7 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Context.Whole;
-using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Tests.Context;
@@ -147,6 +147,31 @@ public sealed class PageSheetTests
         await sheet.Save(TestContext.Current.CancellationToken);
         Expect.Equal("hash-2", writes.Saves[1].IfHash);
         Expect.True(closed, "the second save lands");
+    }
+
+    [Fact]
+    public async Task A_write_still_running_says_so_and_never_reads_as_failed()
+    {
+        var (sheet, writes) = await Opened();
+        writes.Answer(new PageSaved(PageSavedState.Failed, Message: "The write is still running. Check Jobs, then try again."));
+
+        await sheet.Save(TestContext.Current.CancellationToken);
+
+        Expect.Equal("The write is still running. Check Jobs, then try again.", sheet.Note);
+    }
+
+    [Fact]
+    public async Task A_failed_approve_after_the_write_landed_closes_as_waiting()
+    {
+        var (sheet, writes) = await Opened();
+        writes.Answer(new PageSaved(PageSavedState.Waiting, "SND-API-001", "The control plane is restarting."));
+        var closed = false;
+        sheet.Closed += (_, _) => closed = true;
+
+        await sheet.Save(TestContext.Current.CancellationToken);
+
+        Expect.True(closed, "the write landed: the sheet closes and the row waits for approval");
+        Expect.Equal(string.Empty, sheet.Note);
     }
 
     [Fact]

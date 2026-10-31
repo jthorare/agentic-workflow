@@ -193,12 +193,22 @@ internal sealed partial class PageSheetViewModel
         {
             saved = await _writes.Save(save, _hash, _approve, cancellationToken).ConfigureAwait(true);
         }
+        catch (OperationCanceledException)
+        {
+            return;   // the sheet closed while the job ran: the write was sent and may still land, so nothing reads as failed
+        }
         finally
         {
             IsSaving = false;
             ChangedSaving();
         }
 
+        await Answer(saved, id, rows, cancellationToken).ConfigureAwait(true);
+    }
+
+    // What the sheet does with the write's answer: a landed write closes it, a clash re-reads the hash, a refusal goes under its field, anything else says so.
+    private async Task Answer(PageSaved saved, string? id, IReadOnlyList<PageSheetActionViewModel> rows, CancellationToken cancellationToken)
+    {
         switch (saved.State)
         {
             case PageSavedState.Approved or PageSavedState.Waiting:
@@ -216,7 +226,7 @@ internal sealed partial class PageSheetViewModel
                 break;
             case PageSavedState.Failed:
             default:
-                Say(Labels.PageSheetFailed);
+                Say(saved.Message is { Length: > 0 } message ? message : Labels.PageSheetFailed);   // a write still running says so (Labels.ProfileWriteTimedOut), never "couldn't save"
                 break;
         }
     }
