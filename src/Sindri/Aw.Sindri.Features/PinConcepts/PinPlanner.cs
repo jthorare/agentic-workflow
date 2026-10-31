@@ -110,9 +110,9 @@ internal static class PinPlanner
         var features = new List<string>();
         foreach (var set in request.Set ?? [])
         {
-            var (entry, existed) = Merge(set, concepts);
+            var (entry, existed, matchName) = Merge(set, concepts);
             var id = entry.Id!.Value;   // why: Merge always sets the id
-            draft.Edits.Add(new ConceptEdit(id, entry));
+            draft.Edits.Add(new ConceptEdit(id, entry, matchName));
             draft.Pins.Add(new PinWritten(id, set.Name, existed ? "updated" : "created"));
             features.AddRange((set.Features ?? []).Where(static f => !f.Contains('*', StringComparison.Ordinal)));
         }
@@ -130,8 +130,8 @@ internal static class PinPlanner
                 return removed.Error;
             }
 
-            draft.Edits.Add(new ConceptEdit(id, Entry: null));
-            draft.Pins.Add(new PinWritten(id, removed.Value, "removed"));
+            draft.Edits.Add(new ConceptEdit(id, Entry: null, removed.Value.MatchName));
+            draft.Pins.Add(new PinWritten(id, removed.Value.Name, "removed"));
         }
 
         return null;
@@ -139,7 +139,7 @@ internal static class PinPlanner
 
     private static string IdOf(PinSet set) => set.Id?.Value ?? PinSlug.Of(set.Name);
 
-    private static (ConceptSettings Entry, bool Existed) Merge(PinSet set, List<ConceptSettings> concepts)
+    private static (ConceptSettings Entry, bool Existed, string? MatchName) Merge(PinSet set, List<ConceptSettings> concepts)
     {
         var id = ConceptPinId.From(IdOf(set));
         var at = concepts.FindIndex(c => Matches(c, id.Value));
@@ -147,7 +147,7 @@ internal static class PinPlanner
         {
             var created = new ConceptSettings(id, set.Name, Text(set.Summary), List(set.Features), Aliases: List(set.Aliases));
             concepts.Add(created);
-            return (created, false);
+            return (created, false, null);
         }
 
         var stored = concepts[at];
@@ -160,10 +160,10 @@ internal static class PinPlanner
             Aliases = set.Aliases is null ? stored.Aliases : List(set.Aliases),
         };
         concepts[at] = merged;
-        return (merged, true);
+        return (merged, true, stored.Id is null ? stored.Name : null);
     }
 
-    private static Result<string> Remove(ConceptPinId id, bool withFolderRules, List<ConceptSettings> concepts, SindriProfile profile, List<string> dropped)
+    private static Result<(string Name, string? MatchName)> Remove(ConceptPinId id, bool withFolderRules, List<ConceptSettings> concepts, SindriProfile profile, List<string> dropped)
     {
         var at = concepts.FindIndex(c => Matches(c, id.Value));
         if (at < 0)
@@ -182,7 +182,7 @@ internal static class PinPlanner
 
         dropped.AddRange(rules.Select(r => $"{id.Value}.{r.Key}"));
         concepts.RemoveAt(at);
-        return pin.Name ?? id.Value;
+        return (pin.Name ?? id.Value, pin.Id is null ? pin.Name : null);
     }
 
     private static Error Missing(ConceptPinId id, List<ConceptSettings> concepts, SindriProfile profile)

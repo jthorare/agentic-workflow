@@ -23,7 +23,10 @@ internal sealed class PinConceptsRig : IDisposable
 
     internal SliceHarness Slice { get; } = new();
 
-    internal PinWriterStub Writer { get; } = new();
+    internal FakeProfileConceptWriter Writer { get; } = new();
+
+    /// <summary>Every edit written, in order.</summary>
+    internal IReadOnlyList<ConceptEdit> Edits => [.. Writer.Writes.SelectMany(static w => w)];
 
     internal MapStub Map { get; } = new();
 

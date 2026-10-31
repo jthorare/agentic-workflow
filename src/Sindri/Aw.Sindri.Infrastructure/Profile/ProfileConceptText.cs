@@ -50,8 +50,8 @@ internal static class ProfileConceptText
         {
             var id = edit.Id.Value;
             var done = edit.Entry is { } entry
-                ? ProfileEntryBlock.Set(lines, _path, id, indent => Entry(id, entry, indent))
-                : ProfileEntryBlock.Remove(lines, _path, id);
+                ? ProfileEntryBlock.Set(lines, _path, id, indent => Entry(id, entry, indent), edit.MatchName)
+                : ProfileEntryBlock.Remove(lines, _path, id, edit.MatchName);
             if (!done)
             {
                 return null;
