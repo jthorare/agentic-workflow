@@ -4,6 +4,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Graph;
 using Aw.Context.Core.Pages;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -38,7 +39,7 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
 
         var (pages, version, profile, hash, map) = read.Value;
         var rows = PageListPreview.Of(PageListText.Parse(request.Text), pages, Concepts(profile, map), OwnerPages(profile));
-        return new PagesPreview(map.Version ?? version, hash, [.. rows.Select(r => Block(r, request.Repo))]);
+        return new PagesPreview(map.Version ?? version, hash, [.. rows.Select(r => Block(r, request.Repo, profile))]);
     }
 
     // The repo, the caller's scope, every page it may read, the live profile and the map's facts; the first refusal stops.
@@ -109,18 +110,67 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
             .Where(static c => ConceptId.TryFrom(c.Id, out _)).Select(static c => (ConceptId.From(c.Id), c.Name))];
     }
 
-    private static PagesPreviewBlock Block(PageListRow row, string? repo) =>
-        new(row.Block, row.Line, row.Name, row.Match, row.Replaces, row.SameAs, row.Ticked, row.Reason, row.Actions, row.UnknownConcepts, row.Page is { } page ? Settings(page, repo) : null);
+    private static PagesPreviewBlock Block(PageListRow row, string? repo, SindriProfile profile) =>
+        new(row.Block, row.Line, row.Name, row.Match, row.Replaces, row.SameAs, row.Ticked, row.Reason, row.Actions, row.UnknownConcepts, row.Page is { } page ? Settings(page, repo, row.Replaces is { } replaced ? OwnerActions(profile, replaced.Value, page.Repo?.Value ?? repo) : []) : null);
+
+    // The actions of the profile page a block replaces, or none.
+    private static List<PageActionSettings> OwnerActions(SindriProfile profile, string pageId, string? repo)
+    {
+        var owner = PagesFor(profile, repo).FirstOrDefault(p => string.Equals(Effective(p.Id?.Value, p.Name), pageId, StringComparison.Ordinal));
+        return [.. owner?.Actions ?? []];
+    }
+
+    // With a repo: that repo's own pages, then the top-level list; without: the top-level list, then each repo's.
+    private static IEnumerable<PageSettings> PagesFor(SindriProfile profile, string? repo)
+    {
+        var top = profile.Index?.Pages ?? [];
+        if (repo is null)
+        {
+            return top.Concat((profile.Repos ?? []).SelectMany(static r => r.Index?.Pages ?? []));
+        }
+
+        return (profile.Repos ?? []).Where(r => string.Equals(r.Name, repo, StringComparison.Ordinal)).SelectMany(static r => r.Index?.Pages ?? []).Concat(top);
+    }
 
     // The page as POST /sindri/context/pages takes it. The id is left to the name's slug unless the page matched a suggested one with another id: then the save must use that id, or 'replaces' and 'same as' would not hold.
-    private static PageSettings Settings(PagePin page, string? repo)
+    // An action of a replaced page keeps its id: the first unused existing action with the same map action key, else the same name slug. Every other action gets its name's slug, numbered past the kept ids and each other ('send-it-2'); an id equal to the bare slug is left null.
+    private static PageSettings Settings(PagePin page, string? repo, List<PageActionSettings> existing)
     {
         var slug = PageSlugs.Of(page.Name);
+        var kept = page.Actions.Select(a => KeptId(a, existing)).ToList();
+        var taken = new HashSet<string>(kept.OfType<string>(), StringComparer.Ordinal);
         return new PageSettings(
             string.Equals(page.Id.Value, slug, StringComparison.Ordinal) ? null : PagePinId.From(page.Id.Value),
             page.Name,
             page.Repo?.Value ?? repo,
             page.SurfaceKey,
-            [.. page.Actions.Select(static a => new PageActionSettings(Id: null, a.Name, a.ActionKey, [.. a.Concepts]))]);
+            [.. page.Actions.Select((a, i) => new PageActionSettings(ActionId(a.Name, kept[i], taken), a.Name, a.ActionKey, [.. a.Concepts]))]);
+    }
+
+    private static PageActionPinId? ActionId(string name, string? kept, HashSet<string> taken)
+    {
+        var slug = PageSlugs.Of(name);
+        var id = kept ?? PageSlugs.Unique(slug, taken);
+        return string.Equals(id, slug, StringComparison.Ordinal) ? null : PageActionPinId.From(id);
+    }
+
+    private static string Effective(string? id, string? name) => id ?? PageSlugs.Of(name ?? string.Empty);
+
+    // The profile may hold a key as written ('action:WeekPage.submit') where the map stores it lower-cased.
+    private static bool SameKey(string? written, string? key) =>
+        written is not null && key is not null && string.Equals(EntryKey.Normalized(written), EntryKey.Normalized(key), StringComparison.Ordinal);
+
+    // The effective id of the existing action this one keeps, or null.
+    private static string? KeptId(PageActionPin action, List<PageActionSettings> existing)
+    {
+        var slug = PageSlugs.Of(action.Name);
+        var found = existing.FirstOrDefault(e => SameKey(e.Action, action.ActionKey)) ?? existing.FirstOrDefault(e => string.Equals(Effective(id: null, e.Name), slug, StringComparison.Ordinal));
+        if (found is null)
+        {
+            return null;
+        }
+
+        _ = existing.Remove(found);
+        return Effective(found.Id?.Value, found.Name);
     }
 }
