@@ -276,6 +276,35 @@ public sealed class GetContextPinsServiceTests
         Assert.Equal(["alpha-only"], session.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pin_of_a_repo_the_profile_dropped_is_not_listed_until_the_map_is_rebuilt()
+    {
+        var profile = Loaded(Sessions, [], "same", new RepoEntry("alpha", "/r/alpha", new IndexSettings(Concepts: [Pin("Alpha only", id: "alpha-only")])));
+        var hashes = new Dictionary<string, string>(MapRuleset.RunningPins(ContextScopes.For(profile.Profile, ContextScopes.Caller(caller: null)))!, StringComparer.Ordinal) { ["refunds"] = "beta's pin" };
+        var alpha = new MapHead(ContextRepoName.From("alpha"), "1", OnDefault: true);
+        var beta = new MapHead(ContextRepoName.From("beta"), "2", OnDefault: true);
+        _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 4, CurrentHeads: [alpha, beta]) { CurrentRuleset = "r", CurrentPinHashes = hashes };
+
+        var humanOneRepo = await Read(profile, profile, repo: "alpha");
+        using var caller = _h.Callers.Enter(new CallerContextBuilder().Session().InRepo("alpha").Build());
+        var session = await Read(profile, profile);
+
+        Assert.Equal(["alpha-only"], humanOneRepo.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
+        Assert.Equal(["alpha-only"], session.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_map_over_the_profiles_only_repo_may_list_its_removed_pins()
+    {
+        var profile = Loaded(Sessions, [], "same", new RepoEntry("alpha", "/r/alpha", new IndexSettings(Concepts: [Pin("Alpha only", id: "alpha-only")])));
+        var hashes = new Dictionary<string, string>(MapRuleset.RunningPins(ContextScopes.For(profile.Profile, ContextScopes.Caller(caller: null)))!, StringComparer.Ordinal) { ["refunds"] = "alpha's removed pin" };
+        _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 4, CurrentHeads: [new MapHead(ContextRepoName.From("alpha"), "1", OnDefault: true)]) { CurrentRuleset = "r", CurrentPinHashes = hashes };
+
+        var human = await Read(profile, profile);
+
+        Assert.Equal(["alpha-only", "refunds"], human.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
+    }
+
     private void Refresh(JobState state, TimeSpan endedAgo, long sequence, string? code = null, params string[] lines) =>
         _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RefreshKind, JobKey.From("refresh"), Item: null, Repo: null, Service: null, state,
             "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), _now - endedAgo, [.. lines.Select((l, i) => new JobLine(i + 1, l, _now))], Rounds: 0, Summary: null, code, Result: null, CancelledBy: null, Sequence: sequence));
