@@ -161,8 +161,19 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
             return removed;
         }
 
-        var liveFolders = Launches().Where(live).Select(l => Path.GetFileName(SandboxPaths.SeatbeltTemp(l))).ToHashSet(StringComparer.Ordinal);
+        var liveFolders = Launches().Concat(SessionHomeLaunches()).Distinct().Where(live).Select(l => Path.GetFileName(SandboxPaths.SeatbeltTemp(l))).ToHashSet(StringComparer.Ordinal);
         return removed + StaleSandboxFiles.SweepSeatbeltTemp(sweep.TempRoot, liveFolders, sweep.Owned ?? MacTempOwner.Owns);
+    }
+
+    /// <summary>The launches that have a session home: a live Seatbelt launch has one until its release, before any capture or session-id file exists.</summary>
+    private List<LaunchId> SessionHomeLaunches()
+    {
+        if (options.SindriHome is not { } home || !Directory.Exists(SessionHomePaths.Sessions(home)))
+        {
+            return [];
+        }
+
+        return [.. Directory.EnumerateDirectories(SessionHomePaths.Sessions(home)).Select(d => LaunchId.TryParse(Path.GetFileName(d), provider: null, out var launch) ? (LaunchId?)launch : null).OfType<LaunchId>()];
     }
 
     /// <summary>Removes the session homes (sandbox spec §3.1) of launches that are not live.</summary>

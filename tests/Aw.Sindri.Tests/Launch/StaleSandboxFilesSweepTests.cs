@@ -99,6 +99,21 @@ public sealed class StaleSandboxFilesSweepTests : IDisposable
     }
 
     [Fact]
+    public void A_live_launch_with_only_a_session_home_keeps_its_temp_folder()
+    {
+        var sindriHome = Path.Combine(_home, "sindri");
+        _ = Directory.CreateDirectory(Path.Combine(SessionHomePaths.Sessions(sindriHome), Alive.Value));
+        var kept = MakeTemp(Alive);
+        var stale = MakeTemp(Dead);
+        var store = new LaunchFileStore(new LauncherOptions(_home) { SindriHome = sindriHome }, new StaleSweepSeams(Mac: true, TempRoot: _tmp, Owned: static _ => true, Alive: static _ => false));
+
+        _ = Sweep(store, Alive);
+
+        Assert.True(Directory.Exists(kept));
+        Assert.False(Directory.Exists(stale));
+    }
+
+    [Fact]
     public void Other_names_symlinks_and_folders_of_another_user_are_left_alone()
     {
         var other = Path.Combine(_tmp, "aw-notes");
