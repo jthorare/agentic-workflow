@@ -101,6 +101,17 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
+    public async Task ContextPinSuggest_sends_an_empty_search_as_search_equals()
+    {
+        var server = new FakeSindriApi { ContextPinSuggestAnswer = _ => AConcepts.Served(new PinSuggestView(1, "aw-split-panes", "v1", Terms: null, [new PinSuggestFeature("feature:shifts", "Shifts")], Matches: null)) };
+        var api = Reach(server);
+
+        _ = await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Search: string.Empty), Token);
+
+        Expect.Equal(string.Empty, server.ContextPinSuggestAsked[^1].Search);   // the fake handler rebuilds the query from search=; absent would be null
+    }
+
+    [Fact]
     public async Task ContextPinSuggest_sends_each_definition_beside_its_line()
     {
         var server = new FakeSindriApi { ContextPinSuggestAnswer = _ => AConcepts.Served(AConcepts.Matched("concept:billing", null)) };

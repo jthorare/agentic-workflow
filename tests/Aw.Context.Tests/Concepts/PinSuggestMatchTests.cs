@@ -67,6 +67,16 @@ public sealed class PinSuggestMatchTests
     }
 
     [Fact]
+    public void An_empty_search_lists_the_maps_features_by_label()
+    {
+        var graph = new ConceptGraph().Node("feature:b", "Beta").Node("feature:a", "Alpha").Node("code:x.cs", "x").Build();
+
+        var found = PinSuggestBuilder.Search(graph, ConceptGraph.Text, string.Empty, 50);
+
+        Assert.Equal(["feature:a", "feature:b"], found.Select(f => f.Key.Value), StringComparer.Ordinal);
+    }
+
+    [Fact]
     public void A_search_lists_the_features_whose_label_or_key_holds_the_text_starts_first_and_stops_at_the_limit()
     {
         var graph = new ConceptGraph().Node("feature:invoices", "Invoices").Node("feature:pay-invoice", "Pay now").Node("feature:late-invoice", "Late invoice").Node("feature:invoice-pdf", "Invoice PDF").Node("feature:other", "Other").Node("code:invoice.cs", "invoice").Build();

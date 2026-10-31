@@ -146,6 +146,7 @@ internal static class ContextApiScenarios
         ("context-concepts-glossary", "no-map-030", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
         ("context-pins-suggest", "terms", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?concept=concept%3Abilling", ct)),
         ("context-pins-suggest", "features", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?search=sh", ct)),
+        ("context-pins-suggest", "empty-search", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?search=", ct)),   // binds as "", not absent: every feature by label
         ("context-pins-suggest", "matches", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?line=Invoices&def=payment%20runs&line=Weather&def=rain%20and%20snow", ct)),
         ("context-pins-suggest", "invalid-179", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?concept=concept%3Abilling&search=sh", ct)),
         ("context-pins", "approved", async (s, ct) => await s.Fetch("/sindri/context/pins", ct)),
