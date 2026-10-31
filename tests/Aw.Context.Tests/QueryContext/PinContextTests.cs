@@ -77,4 +77,40 @@ public sealed class PinContextTests
 
         Assert.Equal("pins changed after map v41 was built and the refresh for them didn't finish (fix: Refresh map on the Context page, or sindri context map refresh)", pins.Value.StaleNote);
     }
+
+    // The map a caller reads is the stored graph with the owner's overrides and the synced records laid over it; the pins hold what that map shows.
+    private static VisibleMap Overlaid(GraphSnapshot visible)
+    {
+        var stored = Map(MapRuleset.Of([Repo(_billing)]));
+        return new VisibleMap(stored.Snapshot, visible);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_record_linked_in_the_overlaid_map_sits_in_the_pin()
+    {
+        var api = Repo(_billing);
+        var visible = new GraphBuilder()
+            .Edge("feature:api.services.billing", EdgeType.BelongsTo, "concept:billing")
+            .Edge("record:refunds-ticket", EdgeType.Mentions, "feature:api.services.billing")
+            .Build();
+
+        var pins = PinContext.Of([api], [api], Overlaid(visible), concept: null, ["record:refunds-ticket"]);
+
+        Assert.Equal("billing", Assert.Single(pins.Value.AnchorPins).Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_pin_naming_a_feature_the_owner_renamed_still_holds_its_files()
+    {
+        var api = Repo(_billing);
+        var visible = new GraphBuilder()
+            .Node("feature:api.services.billing", label: "Payments")
+            .Edge("code:services/billing/charge.cs", EdgeType.Implements, "feature:api.services.billing", provenance: Provenance.Deterministic)
+            .Edge("feature:api.services.billing", EdgeType.BelongsTo, "concept:billing")
+            .Build();
+
+        var pins = PinContext.Of([api], [api], Overlaid(visible), concept: "billing", []);
+
+        Assert.True(pins.Value.Scope?.HoldsNode(NodeKey.From("code:services/billing/charge.cs")));
+    }
 }
