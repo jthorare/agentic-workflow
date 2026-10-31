@@ -26,8 +26,12 @@ public sealed class PinSuggestQueriesTests
         Assert.Contains("three different questions", Refused(new GetContextPinSuggestRequest(Concept: "concept:billing", Search: "pay")), StringComparison.Ordinal);
 
     [Fact]
-    public void An_empty_search_is_refused() =>
-        Assert.Contains("search= is empty", Refused(new GetContextPinSuggestRequest(Search: "  ")), StringComparison.Ordinal);
+    public void A_blank_search_is_refused() =>
+        Assert.Contains("search= is blank", Refused(new GetContextPinSuggestRequest(Search: "  ")), StringComparison.Ordinal);
+
+    [Fact]
+    public void An_empty_search_asks_for_every_feature() =>
+        Assert.Equal(string.Empty, PinSuggestQueries.Of(new GetContextPinSuggestRequest(Search: string.Empty)).Value.Search);
 
     [Fact]
     public void A_concept_that_is_not_a_concept_key_is_refused() =>

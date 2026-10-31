@@ -12,6 +12,11 @@
       "newRecords": 0
     }
   ],
-  "features": null,
+  "features": [
+    {
+      "key": "feature:invoices",
+      "label": "Invoices"
+    }
+  ],
   "matches": null
 }

@@ -1,3 +1,4 @@
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
 using Aw.Sindri.Core.Jobs;
@@ -33,14 +34,36 @@ internal sealed class MapRebuildState(ContextScopes scopes, Func<IContextEngine>
         }
 
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
-        if (scope.IsError || scope.Value.Settings is null)
+        return scope.IsError ? MapRebuildStatus.Idle : await Stand(scope.Value, refreshes.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Where the rebuild stands when no refresh runs: the held map, the main branch and the backoff, read under <paramref name="scope"/> (the publish status is a service's read, so a session's caller passes the service scope).</summary>
+    /// <param name="scope">The scope to read the publish status and heads under.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The state; Idle when a read fails.</returns>
+    internal async ValueTask<MapRebuildStatus> Read(ContextScope scope, CancellationToken cancellationToken)
+    {
+        var refreshes = await jobs.List(state: null, ContextMapRefreshService.RefreshKind, cancellationToken).ConfigureAwait(false);
+        if (refreshes.IsError)
+        {
+            return MapRebuildStatus.Idle;
+        }
+
+        return refreshes.Value.FirstOrDefault(static j => j.State is JobState.Running or JobState.Waiting) is { } running
+            ? new MapRebuildStatus(MapRebuildPhase.Building) { Progress = running.Progress.MaxBy(static l => l.Round)?.Line }
+            : await Stand(scope, refreshes.Value, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<MapRebuildStatus> Stand(ContextScope scope, IReadOnlyList<JobRow> refreshes, CancellationToken cancellationToken)
+    {
+        if (scope.Settings is null)
         {
             return MapRebuildStatus.Idle;
         }
 
         var context = engine();
-        var state = await context.Held(scope.Value, cancellationToken).ConfigureAwait(false);
-        var heads = await context.MapHeads(scope.Value, cancellationToken).ConfigureAwait(false);
+        var state = await context.Held(scope, cancellationToken).ConfigureAwait(false);
+        var heads = await context.MapHeads(scope, cancellationToken).ConfigureAwait(false);
         if (state.IsError || heads.IsError)
         {
             return MapRebuildStatus.Idle;
@@ -51,7 +74,7 @@ internal sealed class MapRebuildState(ContextScopes scopes, Func<IContextEngine>
             return new MapRebuildStatus(MapRebuildPhase.MapHeld);
         }
 
-        return !heads.Value.Any(static h => h.OnDefault) ? new MapRebuildStatus(MapRebuildPhase.NoMainBranch) : Backoff(refreshes.Value);
+        return !heads.Value.Any(static h => h.OnDefault) ? new MapRebuildStatus(MapRebuildPhase.NoMainBranch) : Backoff(refreshes);
     }
 
     private MapRebuildStatus Backoff(IReadOnlyList<JobRow> refreshes)

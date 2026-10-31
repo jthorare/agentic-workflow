@@ -8132,6 +8132,15 @@ Aw.Context.Core.ConceptScan.IConceptScanSearch.Search(Aw.Context.Core.Search.Map
 Aw.Context.Core.Facade.IContextMap.ScanConcepts(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken, int? expectedVersion = null) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.ConceptScan.ConceptScanReport!>!>
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.get -> string?
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.init -> void
+Aw.Context.Core.Map.MapVersion.PinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapVersion.PinHashes.init -> void
+Aw.Context.Core.Map.MapImport.PinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapImport.PinHashes.init -> void
+Aw.Context.Core.Map.MapPublishState.CurrentPinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapPublishState.CurrentPinHashes.init -> void
+static Aw.Context.Core.Extract.PinSlug.IdsIn(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! build, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! wanted) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Context.Core.Map.MapRuleset.PinHashes(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static Aw.Context.Core.Map.MapRuleset.RunningPins(Aw.Context.Core.Engine.ContextScope? scope) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?
 Aw.Context.Core.Map.MapVersion.Ruleset.init -> void
 const Aw.Context.Core.Map.MapRuleset.RulesVersion = "3" -> string!
@@ -10830,6 +10839,7 @@ const Aw.Context.Core.Concepts.PinSuggestBuilder.MaxLimit = 200 -> int
 const Aw.Context.Core.Concepts.PinSuggestBuilder.MaxTerms = 20 -> int
 static Aw.Context.Core.Concepts.PinSuggestBuilder.TermsOf(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
 static Aw.Context.Core.Concepts.PinSuggestBuilder.TermRows(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept, Aw.Context.Core.Map.MapText! text, System.Collections.Generic.IReadOnlyList<string!>! words, System.Collections.Generic.IReadOnlyDictionary<string!, int>! counts) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.MembersOf(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept, Aw.Context.Core.Map.MapText! text) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>!
 static Aw.Context.Core.Concepts.PinSuggestBuilder.Search(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, string! search, int limit) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>!
 static Aw.Context.Core.Concepts.PinSuggestBuilder.Match(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>! lines) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>!
 Aw.Context.Core.WholeMap.WholeMapView.Pages.get -> System.Collections.Generic.IReadOnlyList<string!>?
