@@ -98,15 +98,17 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
             return written.Error;
         }
 
-        var scoped = SystemdScopeArgv.Start(options.SystemdRun, plan.Launch, limits, wrapped.Value);
+        var scoped = options.Scope is { } scope ? scope(plan.Launch, limits, wrapped.Value) : SystemdScopeArgv.Start(options.SystemdRun, plan.Launch, limits, wrapped.Value);
         return new PreparedSandbox(plan.ToSummary(), scoped, staged.Value.Home, plan.RunDirectory);
     }
 
+    private string UnitOf(LaunchId launch) => options.UnitFor is { } unit ? unit(launch) : SystemdScopeArgv.UnitFor(launch);
+
     /// <summary>Writes the scope's limits where 'session wrap --limits' reads them; a sandboxed agent must never run unwatched, so a failed write refuses the start (#1553).</summary>
-    private static Result<Unit> WriteWrapLimits(SandboxPlan plan, ScopeLimits limits)
+    private Result<Unit> WriteWrapLimits(SandboxPlan plan, ScopeLimits limits)
     {
         var file = new WrapLimitsFile(
-            SystemdScopeArgv.UnitFor(plan.Launch),
+            UnitOf(plan.Launch),
             (long)limits.WallGrace.TotalSeconds,
             (long)limits.ParkMax.TotalSeconds,
             limits.MemoryMaxBytes,

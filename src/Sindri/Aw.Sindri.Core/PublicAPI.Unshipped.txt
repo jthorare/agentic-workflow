@@ -11567,6 +11567,7 @@ const Aw.Sindri.Core.Profile.SandboxDefaults.Tasks = 2048 -> int
 const Aw.Sindri.Core.Profile.SandboxDefaults.Total = "60%" -> string!
 const Aw.Sindri.Core.Profile.SandboxDefaults.WallGrace = "10m" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxEnvironment.Bwrap = "AW_SANDBOX_BWRAP" -> string!
+const Aw.Sindri.Core.Sandbox.SandboxEnvironment.SeatbeltExec = "AW_SANDBOX_SEATBELT_EXEC" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxEnvironment.Socat = "AW_SANDBOX_SOCAT" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxEnvironment.SystemdRun = "AW_SANDBOX_SYSTEMD_RUN" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.BinDenied = "bin-denied" -> string!
