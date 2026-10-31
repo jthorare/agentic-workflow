@@ -7310,6 +7310,8 @@ Aw.Context.Core.WholeMap.WholeMapNode.Repo.get -> string?
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.init -> void
 Aw.Context.Core.WholeMap.WholeMapNode.Owner.get -> bool
 Aw.Context.Core.WholeMap.WholeMapNode.Owner.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.PageId.get -> Aw.Context.Core.Engine.PageId?
+Aw.Context.Core.WholeMap.WholeMapNode.PageId.init -> void
 Aw.Context.Core.Lenses.LensBasis.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!
 Aw.Context.Core.Lenses.LensBasis.Repos.init -> void
 Aw.Context.Core.Lenses.LensBasis.MapRepo.get -> string?
