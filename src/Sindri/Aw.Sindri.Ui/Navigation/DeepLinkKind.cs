@@ -53,4 +53,7 @@ internal enum DeepLinkKind
 
     /// <summary>'context/page': the page sheet (Name this page, Edit page, New page) opened from the Context page's Pages and actions.</summary>
     PageSheet,
+
+    /// <summary>'context/pages/add': the Add several pages sheet opened from the Context page's Pages and actions.</summary>
+    AddSeveralPages,
 }

@@ -102,6 +102,11 @@ internal sealed partial class ShellWindow
                 return pageSheet.Escape();   // a question answers first, changes ask before the sheet goes
             }
 
+            if (shell.IsAddSeveralPages && shell.ActiveAddSeveralPages is { } several)
+            {
+                return several.Escape();   // the discard question answers first, changes ask before the sheet goes
+            }
+
             shell.CloseSheet();
             return true;
         }

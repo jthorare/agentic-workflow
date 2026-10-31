@@ -116,6 +116,11 @@ internal sealed partial class ContextPageViewModel
             return sheet.Escape();   // the page sheet lies over everything: Esc answers its question or closes it first
         }
 
+        if (AddSeveralPages is { } several)
+        {
+            return several.Escape();   // the Add several pages sheet lies over everything too
+        }
+
         if (ShowNoConcept && CloseNoConcept())
         {
             return true;   // the pages in no concept lie over the concept cards: Esc closes them first

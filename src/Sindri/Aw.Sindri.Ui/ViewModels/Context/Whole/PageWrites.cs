@@ -56,6 +56,18 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
             : new PageSaved(State(written.State), written.Code, written.Message);
     }
 
+    /// <inheritdoc />
+    public async Task<PagesPreviewRead> Preview(string text, string? repo, CancellationToken cancellationToken)
+    {
+        if (apiUrl() is not { } url)
+        {
+            return new PagesPreviewRead(Preview: null, "SND-API-001");
+        }
+
+        var answer = await api.ContextPagesPreview(url, text, repo, cancellationToken).ConfigureAwait(true);
+        return answer.IsSuccess ? new PagesPreviewRead(answer.Value) : new PagesPreviewRead(Preview: null, answer.Error.Code, answer.Error.Message);
+    }
+
     /// <summary>Gets which waiting key paths belong to a write: the ids it sets or removes, and, for a page with no id yet, any '.pages.' path that was not already waiting when the sheet read the profile.</summary>
     /// <param name="save">The write.</param>
     /// <returns>The test for one key path.</returns>

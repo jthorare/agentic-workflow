@@ -395,6 +395,13 @@
                     </controls:Deferred.Template>
                   </controls:Deferred>
                 </ScrollViewer>
+                <ScrollViewer x:Name="AddSeveralPagesScroll" IsVisible="{Binding IsAddSeveralPages}">
+                  <controls:Deferred DataContext="{Binding ActiveAddSeveralPages}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><cwv:AddSeveralPagesView x:Name="AddSeveralPagesContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
                 <ScrollViewer x:Name="SessionSheetScroll" IsVisible="{Binding IsSessionSheet}">
                   <controls:Deferred DataContext="{Binding AgentSheet}">
                     <controls:Deferred.Template>
