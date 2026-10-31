@@ -51,7 +51,7 @@ public sealed class PagesHealthTests : IDisposable
 
         var health = await Check(PagesWorld.Human(page));
 
-        Assert.Equal((MapHealthState.Ok, "1 pages, all on the map"), (health.State, health.Detail));
+        Assert.Equal((MapHealthState.Ok, "1 page, all on the map"), (health.State, health.Detail));
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -50,7 +50,7 @@ public static class PageHealth
         }
 
         return problems.Count == 0
-            ? new MapHealth(Name, MapHealthState.Ok, Text($"{pages.Count} pages, all on the map"), Fix: null)
+            ? new MapHealth(Name, MapHealthState.Ok, Text($"{pages.Count} {(pages.Count == 1 ? "page" : "pages")}, all on the map"), Fix: null)
             : new MapHealth(Name, MapHealthState.Warn, problems.Count == 1 ? problems[0] : Text($"{problems.Count} problems; first: {problems[0]}"), Fix);
     }
 
