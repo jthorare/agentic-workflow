@@ -121,21 +121,31 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
     }
 
     // The page as POST /sindri/context/pages takes it. The id is left to the name's slug unless the page matched a suggested one with another id: then the save must use that id, or 'replaces' and 'same as' would not hold.
-    // An action of a replaced page keeps its id: the first unused existing action with the same map action key, else the same name slug; null (the name's slug) when it has none or that is the slug already.
+    // An action of a replaced page keeps its id: the first unused existing action with the same map action key, else the same name slug. Every other action gets its name's slug, numbered past the kept ids and each other ('send-it-2'); an id equal to the bare slug is left null.
     private static PageSettings Settings(PagePin page, string? repo, List<PageActionSettings> existing)
     {
         var slug = PageSlugs.Of(page.Name);
+        var kept = page.Actions.Select(a => KeptId(a, existing)).ToList();
+        var taken = new HashSet<string>(kept.OfType<string>(), StringComparer.Ordinal);
         return new PageSettings(
             string.Equals(page.Id.Value, slug, StringComparison.Ordinal) ? null : PagePinId.From(page.Id.Value),
             page.Name,
             page.Repo?.Value ?? repo,
             page.SurfaceKey,
-            [.. page.Actions.Select(a => new PageActionSettings(KeptId(a, existing), a.Name, a.ActionKey, [.. a.Concepts]))]);
+            [.. page.Actions.Select((a, i) => new PageActionSettings(ActionId(a.Name, kept[i], taken), a.Name, a.ActionKey, [.. a.Concepts]))]);
+    }
+
+    private static PageActionPinId? ActionId(string name, string? kept, HashSet<string> taken)
+    {
+        var slug = PageSlugs.Of(name);
+        var id = kept ?? PageSlugs.Unique(slug, taken);
+        return string.Equals(id, slug, StringComparison.Ordinal) ? null : PageActionPinId.From(id);
     }
 
     private static string Effective(string? id, string? name) => id ?? PageSlugs.Of(name ?? string.Empty);
 
-    private static PageActionPinId? KeptId(PageActionPin action, List<PageActionSettings> existing)
+    // The effective id of the existing action this one keeps, or null.
+    private static string? KeptId(PageActionPin action, List<PageActionSettings> existing)
     {
         var slug = PageSlugs.Of(action.Name);
         var found = existing.FirstOrDefault(e => action.ActionKey is not null && string.Equals(e.Action, action.ActionKey, StringComparison.Ordinal)) ?? existing.FirstOrDefault(e => string.Equals(Effective(id: null, e.Name), slug, StringComparison.Ordinal));
@@ -145,7 +155,6 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
         }
 
         _ = existing.Remove(found);
-        var id = Effective(found.Id?.Value, found.Name);
-        return string.Equals(id, slug, StringComparison.Ordinal) ? null : PageActionPinId.From(id);
+        return Effective(found.Id?.Value, found.Name);
     }
 }
