@@ -15,4 +15,5 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 /// <param name="Catalog">The command catalog, for the desk rows and the lock buttons' CLI.</param>
 /// <param name="Follow">Registers a view to re-read on connect and after every event (the shell's Health.Follow), so a stage registers its own refresh from its own view model.</param>
 /// <param name="Launcher">Hands a link to the system; null when the host has none.</param>
-internal sealed record ContextPorts(ISindriApi Api, Func<Uri?> ApiUrl, IClipboard Clipboard, TimeProvider Clock, CatalogViewModel Catalog, Action<Func<Uri, CancellationToken, Task>> Follow, ILauncher? Launcher = null);
+/// <param name="Pages">Reads and writes the owner's pages for the page sheet (pages spec §3.6); null until the host wires it.</param>
+internal sealed record ContextPorts(ISindriApi Api, Func<Uri?> ApiUrl, IClipboard Clipboard, TimeProvider Clock, CatalogViewModel Catalog, Action<Func<Uri, CancellationToken, Task>> Follow, ILauncher? Launcher = null, Whole.IPageWrites? Pages = null);
