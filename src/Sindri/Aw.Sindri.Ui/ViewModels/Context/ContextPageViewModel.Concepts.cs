@@ -168,10 +168,13 @@ internal sealed partial class ContextPageViewModel
         AnchorText = string.Empty;
         _ = Concepts.EndSearch();
         OpenedConceptId = id;
-        Whole.EnterConcept(name);
+        Whole.EnterConcept(name, ConceptKey(id));
         ChangedConcepts();
         return ReadWhole(cancellationToken);
     }
+
+    // The concept's node key on the map: its id, except "other", which is no concept.
+    private static string? ConceptKey(string id) => string.Equals(id, "other", StringComparison.Ordinal) ? null : id;
 
     /// <summary>Goes back to the concepts: the scoped map goes and the layer shows again.</summary>
     internal void CloseConcept()
