@@ -18,9 +18,9 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
     private readonly Func<Uri?> _apiUrl;
     private readonly ProfileWriteFlow _writes;
     private readonly Action _close;
-    private readonly Func<CancellationToken, Task<string?>> _pinsHash;
     private readonly List<PinSeveralChoice> _derived;
     private readonly ConcurrentDictionary<string, PinSuggestView?> _concepts = new(StringComparer.Ordinal);
+    private IReadOnlyList<PinView> _pins;
     private string? _ifHash;
     private bool _approve;
     private bool _started;
@@ -35,14 +35,13 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
     /// <param name="apiUrl">The control plane's API address now, or null when none is known.</param>
     /// <param name="writes">The write-then-approve flow (it holds the clock for the job wait).</param>
     /// <param name="close">Closes the sheet (a write that landed, approved or waiting).</param>
-    /// <param name="pinsHash">Reads the hash of the profile file the pins came from, the write's ifHash; null reads it through <paramref name="api"/>'s pins read.</param>
     internal PinSeveralViewModel(
-        PinSheetOpen open, IReadOnlyList<ConceptTileViewModel> concepts, ISindriApi api, Func<Uri?> apiUrl, ProfileWriteFlow writes, Action close, Func<CancellationToken, Task<string?>>? pinsHash = null)
+        PinSheetOpen open, IReadOnlyList<ConceptTileViewModel> concepts, ISindriApi api, Func<Uri?> apiUrl, ProfileWriteFlow writes, Action close)
     {
         ArgumentNullException.ThrowIfNull(open);
         ArgumentNullException.ThrowIfNull(concepts);
         (_open, _api, _apiUrl, _writes, _close) = (open, api, apiUrl, writes, close);
-        _pinsHash = pinsHash ?? ReadPinsHash;
+        (_pins, _ifHash) = (open.Pins, open.FileHash);
         _derived = [.. concepts.Where(c => !c.IsSetByPerson && !string.Equals(c.Id, "concept:other", StringComparison.Ordinal)).Select(c => new PinSeveralChoice(c.Id, c.Name))];
     }
 
@@ -106,7 +105,7 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
     public bool HasTooManyNote => TooManyNote.Length > 0;
 
     /// <summary>The line under the rows after a write that did not land: the clash, the server's sentence or the failure; empty otherwise.</summary>
-    public string Message { get; private set; } = string.Empty;
+    public string Message => Said.Length > 0 ? Said : _ifHash is null ? Labels.PinSheetNoHash : string.Empty;
 
     /// <summary>Whether the message has words.</summary>
     public bool HasMessage => Message.Length > 0;
@@ -115,7 +114,7 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
     public string SubmitText => _writing ? Labels.PinSeveralSubmitting(WrittenRows().Count) : Labels.PinSeveralSubmit(_approve);
 
     /// <summary>Gets a value indicating whether the submit button works: a row is ticked and nothing is being matched or written.</summary>
-    public bool CanSubmit => !_writing && !_matching && WrittenRows().Count > 0;
+    public bool CanSubmit => _ifHash is not null && !_writing && !_matching && WrittenRows().Count > 0;
 
     /// <summary>"Tick at least one line." once the list is read and no row is ticked; empty otherwise.</summary>
     public string SubmitNote => Rows.Count > 0 && !_matching && !_writing && WrittenRows().Count == 0 ? Labels.PinSeveralTickOne : string.Empty;
@@ -123,9 +122,9 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
     /// <summary>Whether the submit note has words.</summary>
     public bool HasSubmitNote => SubmitNote.Length > 0;
 
-    /// <summary>Reads the pins hash and what waits for approval, once, when the sheet opens: the write's ifHash and whether its button approves.</summary>
+    /// <summary>Reads what waits for approval, once, when the sheet opens: whether its button approves. The write's ifHash is the one the page's pins read gave (<see cref="PinSheetOpen.FileHash"/>).</summary>
     /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>A task that ends when both are read.</returns>
+    /// <returns>A task that ends when it is read.</returns>
     internal async Task StartAsync(CancellationToken cancellationToken)
     {
         if (_started)
@@ -134,26 +133,14 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
         }
 
         _started = true;
-        await ReadStateAsync(cancellationToken).ConfigureAwait(true);
+        await ReadWaitingAsync(cancellationToken).ConfigureAwait(true);
     }
 
-    private async Task ReadStateAsync(CancellationToken cancellationToken)
+    private async Task ReadWaitingAsync(CancellationToken cancellationToken)
     {
-        _ifHash = await _pinsHash(cancellationToken).ConfigureAwait(true);
         var waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
         _approve = waiting is { ChangedPaths.Count: 0 };
         Changed();
-    }
-
-    private async Task<string?> ReadPinsHash(CancellationToken cancellationToken)
-    {
-        if (_apiUrl() is not { } url)
-        {
-            return null;
-        }
-
-        var read = await _api.ContextPins(url, _open.Repo, cancellationToken).ConfigureAwait(true);
-        return read.IsSuccess ? read.Value.FileHash : null;
     }
 
     private IReadOnlyList<PinSeveralRowViewModel> WrittenRows() => [.. Rows.Where(r => r.IsWritten).DistinctBy(IdOf, StringComparer.Ordinal)];
@@ -170,9 +157,12 @@ internal sealed partial class PinSeveralViewModel : ObservableObject
         OnChanged(nameof(HasSubmitNote));
     }
 
+    // What the last write or read said, before the no-hash line.
+    private string Said { get; set; } = string.Empty;
+
     private void SetMessage(string message)
     {
-        Message = message;
+        Said = message;
         OnChanged(nameof(Message));
         OnChanged(nameof(HasMessage));
     }

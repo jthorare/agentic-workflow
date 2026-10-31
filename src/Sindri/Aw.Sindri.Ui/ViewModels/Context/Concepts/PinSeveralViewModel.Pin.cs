@@ -24,7 +24,6 @@ internal sealed partial class PinSeveralViewModel
         Changed();
         try
         {
-            _ifHash ??= await _pinsHash(cancellationToken).ConfigureAwait(true);
             var body = new PinConceptsBody(Set: [.. rows.Select(Body)], IfHash: _ifHash);
             var kept = rows.Where(r => r.Updates is not null).Select(IdOf).ToList();
             var derived = rows.Where(r => r.Updates is null).Select(IdOf).ToList();
@@ -59,11 +58,32 @@ internal sealed partial class PinSeveralViewModel
         if (written.State == ProfileWriteState.Clash)
         {
             SetMessage(Labels.PinSheetClash(button));
-            await ReadStateAsync(cancellationToken).ConfigureAwait(true);
+            await ReadPinsAsync(cancellationToken).ConfigureAwait(true);
             return;
         }
 
         SetMessage(Sentence(written));
+    }
+
+    // After a clash the page's pins are stale: read the pins and the file hash together, match the rows against the new pins and retry with that hash. A read that fails leaves no hash, so nothing is written.
+    private async Task ReadPinsAsync(CancellationToken cancellationToken)
+    {
+        var read = _apiUrl() is { } url ? await _api.ContextPins(url, _open.Repo, cancellationToken).ConfigureAwait(true) : null;
+        if (read is not { IsSuccess: true })
+        {
+            _ifHash = null;
+            SetMessage(string.Empty);
+            Changed();
+            return;
+        }
+
+        (_pins, _ifHash) = (read.Value.Pins, read.Value.FileHash);
+        foreach (var row in Rows)
+        {
+            Fill(row);
+        }
+
+        Evaluate();
     }
 
     // A timeout is the sheet's own sentence; a refusal shows the server's.

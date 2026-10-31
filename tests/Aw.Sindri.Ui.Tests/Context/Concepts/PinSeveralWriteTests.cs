@@ -133,8 +133,7 @@ public sealed class PinSeveralWriteTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_file_that_changed_since_the_pins_read_is_refused_with_the_hash_that_was_read_and_everything_is_kept()
     {
-        var fixtures = new PinSeveralFixtures();
-        fixtures.Api.ContextPinsAnswer = _ => PinSeveralFixtures.Served(new PinsView(1, "api", "h1", "v1", [], new("idle", Progress: null, RetryAt: null, Stale: false, Failed: null)));
+        var fixtures = new PinSeveralFixtures { OpenFileHash = "h1" };
         fixtures.Api.PinConceptsAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-PROFILE-003", "the profile changed since you read it");
         var (_, box) = await Ready("Payments: money\nRefunds: back\nSync", fixtures);
         box.Sheet!.Rows[0].Name = "Card payments";
@@ -175,25 +174,5 @@ public sealed class PinSeveralWriteTests
 
         Assert.Equal("The pin write is still running. Check Jobs, then try again.", box.Sheet.Message);
         Assert.Equal(0, box.Closed);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public async Task The_pins_hash_comes_from_one_swappable_read_made_once_at_open()
-    {
-        var fixtures = new PinSeveralFixtures();
-        var reads = 0;
-        var sheet = fixtures.Sheet(hash: _ =>
-        {
-            reads++;
-            return Task.FromResult<string?>("swapped");
-        });
-        await sheet.StartAsync(PinSeveralFixtures.Token);
-        sheet.Text = "Payments";
-        await sheet.ReadListAsync(PinSeveralFixtures.Token);
-
-        await sheet.PinAllAsync(PinSeveralFixtures.Token);
-
-        Assert.Equal("swapped", Assert.Single(fixtures.Api.PinnedConcepts).IfHash);
-        Assert.Equal(1, reads);
     }
 }

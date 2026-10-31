@@ -78,8 +78,8 @@ internal sealed class PinSeveralFixtures
 
     internal PinSheetOpen Open() => new("api", Card: null, Pin: null, Pins, Several: true, FileHash: OpenFileHash);
 
-    internal PinSeveralViewModel Sheet(Action? close = null, Func<CancellationToken, Task<string?>>? hash = null) =>
-        new(Open(), Layer, Api, () => Url, new ProfileWriteFlow(Api, () => Url, Clock), close ?? (() => { }), hash);
+    internal PinSeveralViewModel Sheet(Action? close = null) =>
+        new(Open(), Layer, Api, () => Url, new ProfileWriteFlow(Api, () => Url, Clock), close ?? (() => { }));
 
     // Starts the sheet, pastes the list and reads it.
     internal async Task<PinSeveralViewModel> Read(string list, Action? close = null)

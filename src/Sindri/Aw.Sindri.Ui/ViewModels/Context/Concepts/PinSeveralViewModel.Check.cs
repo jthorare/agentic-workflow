@@ -43,7 +43,7 @@ internal sealed partial class PinSeveralViewModel
     {
         var key = NameKey(name);
         var id = PinSeveralIds.Slug(name);
-        return _open.Pins.FirstOrDefault(p => string.Equals(NameKey(p.Name), key, StringComparison.Ordinal) || string.Equals(NameKey(p.Id), key, StringComparison.Ordinal) || (id.Length > 0 && string.Equals(p.Id, id, StringComparison.Ordinal)));
+        return _pins.FirstOrDefault(p => string.Equals(NameKey(p.Name), key, StringComparison.Ordinal) || string.Equals(NameKey(p.Id), key, StringComparison.Ordinal) || (id.Length > 0 && string.Equals(p.Id, id, StringComparison.Ordinal)));
     }
 
     private string MatchNote(PinSeveralRowViewModel row, Dictionary<string, PinSeveralRowViewModel> matches)
@@ -111,7 +111,7 @@ internal sealed partial class PinSeveralViewModel
             return new PinWordRow(word, records, ticked: false, Labels.PinSeveralOverWords) { IsRefused = true };
         }
 
-        if (PinWordRules.Refusal(word, _open.Pins, self) is { } why)
+        if (PinWordRules.Refusal(word, _pins, self) is { } why)
         {
             return new PinWordRow(word, newRecords: null, ticked: false, why) { IsRefused = true };
         }
