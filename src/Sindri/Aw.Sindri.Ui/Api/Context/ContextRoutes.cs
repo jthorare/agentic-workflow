@@ -54,6 +54,21 @@ internal static class ContextRoutes
         return With(Root + "/concepts", parts);
     }
 
+    internal static string Pages(PagesQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string>();
+        Add(parts, "repo", query.Repo);
+        Add(parts, "concept", query.Concept);
+        parts.AddRange(Limit(query.Limit));
+        if (query.Offset is { } offset)
+        {
+            parts.Add("offset=" + offset.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return With(Root + "/pages", parts);
+    }
+
     internal static string ConceptGlossary(ConceptGlossaryQuery query)
     {
         ArgumentNullException.ThrowIfNull(query);

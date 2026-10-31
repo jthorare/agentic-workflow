@@ -46,6 +46,9 @@ internal static partial class Labels
     /// <returns>The link's words.</returns>
     internal static string ContextPagesNoConceptLink(int count) => string.Create(CultureInfo.InvariantCulture, $"Pages in no concept ({count})");
 
+    /// <summary>The sentence when a profile write's job (a page or a pin) was still running after the app stopped waiting for it.</summary>
+    internal static string ProfileWriteTimedOut => "The write is still running. Check Jobs, then try again.";
+
     /// <summary>The line under a page that names the map's own page: "From the map: GET /schedule/week".</summary>
     /// <param name="surface">The map's page, in words.</param>
     /// <returns>The line.</returns>

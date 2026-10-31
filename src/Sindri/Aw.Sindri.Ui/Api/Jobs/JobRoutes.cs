@@ -14,6 +14,9 @@ internal static class JobRoutes
     /// <summary>The pin write's start (a job route; the pin sheet's Pin).</summary>
     internal const string PinConcepts = "/sindri/context/pins";
 
+    /// <summary>The page write's start (a job route; the page sheet's Save).</summary>
+    internal const string SetContextPages = "/sindri/context/pages";
+
     internal static string List(JobQuery query)
     {
         var parts = new List<string>();
