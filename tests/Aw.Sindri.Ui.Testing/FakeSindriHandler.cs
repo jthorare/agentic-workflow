@@ -142,6 +142,8 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 Answer(Counted(await server.FileRequest(uri, await Body<FileRequestRequest>(request, cancellationToken), cancellationToken), server.Filed)),
             "/sindri/requests" when request.Method == HttpMethod.Get => Answer(Counted(await server.Requests(uri, Query(uri, "state"), Query(uri, "item"), after, cancellationToken), server.RequestsAnswer(Query(uri, "item")))),
             "/sindri/context/map/build" when request.Method == HttpMethod.Post => Answer(Counted(await server.BuildContextMap(uri, cancellationToken), server.BuildContextMapAnswer)),
+            "/sindri/context/pages" when request.Method == HttpMethod.Post =>
+                Answer(Counted(await server.SetContextPages(uri, await Body<PagesSetBody>(request, cancellationToken), cancellationToken), server.SetContextPagesAnswer)),
             _ => null,
         };
     }
@@ -161,6 +163,13 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
 
             _ = await server.ReviewDecision(uri, await Body<ReviewDecisionRequest>(request, cancellationToken), cancellationToken);
             return Answer(server.ReviewDecided);
+        }
+
+        if (request.Method == HttpMethod.Query && string.Equals(uri.AbsolutePath, "/sindri/context/pages/preview", StringComparison.Ordinal))
+        {
+            var paste = await Body<PagesPreviewBody>(request, cancellationToken).ConfigureAwait(false);
+            _ = await server.ContextPagesPreview(uri, paste.Text, paste.Repo, cancellationToken).ConfigureAwait(false);
+            return Answer(server.ContextPagesPreviewAnswer(paste));
         }
 
         if (request.Method == HttpMethod.Query

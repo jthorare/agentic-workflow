@@ -19,6 +19,10 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
     private const string Clash = "SND-PROFILE-003";
     private const string RefusedPrefix = "SND-CONTEXT-";
     private const int MaxPolls = 120;
+    private const string JobNotFound = "SND-JOB-404";
+
+    // The job is recorded before the POST answers but the jobs view folds it after, so a first read can miss it: read again; a not-found counts as "not yet" for MaxNotFound reads in total, then reads as still running like any failed poll.
+    private const int MaxNotFound = 8;
     private static readonly TimeSpan _pollEvery = TimeSpan.FromMilliseconds(250);
 
     /// <summary>Reads the live profile's hash and the key paths that wait for approval.</summary>
@@ -86,17 +90,26 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
     }
 
     // The job's last read: its view once it ended, or no view when it still ran after the wait or a poll failed (the job may still land, so both read as still running).
+    // A job not found counts as "not yet" for MaxNotFound reads; past that it reads as still running like any failed poll (the POST was accepted, so a stalled jobs view may still fold it).
     private async Task<JobView?> Wait(Uri url, string jobId, CancellationToken cancellationToken)
     {
+        var notFound = 0;
         for (var poll = 0; poll < MaxPolls; poll++)
         {
             var read = await api.Job(url, jobId, cancellationToken).ConfigureAwait(true);
             if (!read.IsSuccess)
             {
-                return null;
-            }
+                if (!string.Equals(read.Error.Code, JobNotFound, StringComparison.Ordinal))
+                {
+                    return null;
+                }
 
-            if (read.Value.State is not ("running" or "waiting"))   // a job parked on a signal ('model-limit') has not ended either
+                if (++notFound >= MaxNotFound)
+                {
+                    return null;
+                }
+            }
+            else if (read.Value.State is not ("running" or "waiting"))   // a job parked on a signal ('model-limit') has not ended either
             {
                 return read.Value;
             }
