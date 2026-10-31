@@ -94,6 +94,26 @@ public sealed class PinSheetWritesTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_file_changed_after_the_sheet_opened_is_refused_and_keeps_the_typed_fields()
+    {
+        var kit = Billing();
+        kit.Api.ContextPinsAnswer = _ => Served(new PinsView(1, "api", "h1", "v1", [], new MapRebuildView("idle", Progress: null, RetryAt: null, Stale: false, Failed: null)));
+        var (sheet, closed) = await Opened(kit, PinThis());
+        sheet.Definition = "Money in";
+        sheet.NewWord = "ledger";
+        sheet.AddWord();
+        kit.Fails("SND-PROFILE-003", "the profile changed since you read it");
+
+        await sheet.Submit(Token);
+
+        Assert.Equal("h1", Assert.Single(kit.Api.PinnedConcepts).IfHash);
+        Assert.Empty(closed);
+        Assert.Equal("The settings changed while you were editing. Your changes are still here. Press Pin and approve again.", sheet.SubmitError);
+        Assert.Equal(("Billing", "Money in"), (sheet.Name, sheet.Definition));
+        Assert.Equal(["payments", "ledger"], [.. sheet.Words.Where(w => w.Ticked).Select(w => w.Word)], StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_refusal_shows_the_servers_sentence_under_the_button()
     {
         var kit = Billing();
