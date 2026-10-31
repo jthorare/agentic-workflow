@@ -232,6 +232,33 @@ public sealed class GetContextPinsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_sessions_rebuild_carries_no_progress_line_and_a_humans_does()
+    {
+        var profile = Loaded(Sessions, [], "same", new RepoEntry("alpha", "/r/alpha"));
+        Refresh(JobState.Running, TimeSpan.Zero, 1, code: null, "retrying (attempt 2 of 4) in 30 s after SND-CONTEXT-030: could not read /r/beta");
+        var human = await Read(profile, profile);
+        using var caller = _h.Callers.Enter(new CallerContextBuilder().Session().InRepo("alpha").Build());
+
+        var session = await Read(profile, profile);
+
+        Assert.Contains("beta", human.Value.Rebuild.Progress, StringComparison.Ordinal);
+        Assert.Equal(("building", null), (session.Value.Rebuild.Phase, session.Value.Rebuild.Progress));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Two_id_less_pins_that_slug_alike_are_foo_and_foo_2_each_with_its_own_change()
+    {
+        var profile = Loaded(Human, [Pin("Foo", features: ["feature:a"]), Pin("Foo", features: ["feature:b"])], "same", new RepoEntry("alpha", "/r/alpha"));
+        var hashes = new Dictionary<string, string>(MapRuleset.RunningPins(ContextScopes.For(profile.Profile, ContextScopes.Caller(caller: null)))!, StringComparer.Ordinal) { ["foo-2"] = "built-with-another-version" };
+        _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 4, CurrentHeads: []) { CurrentRuleset = "r", CurrentPinHashes = hashes };
+
+        var read = await Read(profile, profile);
+
+        Assert.Equal(["foo", "foo-2"], read.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
+        Assert.Equal([null, "updated"], read.Value.Pins.Select(p => p.Change), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_pin_only_the_map_has_is_listed_for_an_answer_over_every_repo_and_never_for_one_repo()
     {
         var repos = new[] { new RepoEntry("alpha", "/r/alpha", new IndexSettings(Concepts: [Pin("Alpha only", id: "alpha-only")])), new RepoEntry("beta", "/r/beta") };
@@ -249,7 +276,7 @@ public sealed class GetContextPinsServiceTests
         Assert.Equal(["alpha-only"], session.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
     }
 
-    private void Refresh(JobState state, TimeSpan endedAgo, long sequence, string? code = null) =>
+    private void Refresh(JobState state, TimeSpan endedAgo, long sequence, string? code = null, params string[] lines) =>
         _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RefreshKind, JobKey.From("refresh"), Item: null, Repo: null, Service: null, state,
-            "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), _now - endedAgo, [], Rounds: 0, Summary: null, code, Result: null, CancelledBy: null, Sequence: sequence));
+            "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), _now - endedAgo, [.. lines.Select((l, i) => new JobLine(i + 1, l, _now))], Rounds: 0, Summary: null, code, Result: null, CancelledBy: null, Sequence: sequence));
 }

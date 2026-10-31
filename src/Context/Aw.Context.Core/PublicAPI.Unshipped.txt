@@ -8138,6 +8138,7 @@ Aw.Context.Core.Map.MapImport.PinHashes.get -> System.Collections.Generic.IReadO
 Aw.Context.Core.Map.MapImport.PinHashes.init -> void
 Aw.Context.Core.Map.MapPublishState.CurrentPinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Aw.Context.Core.Map.MapPublishState.CurrentPinHashes.init -> void
+static Aw.Context.Core.Extract.PinSlug.IdsIn(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! build, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! wanted) -> System.Collections.Generic.IReadOnlyList<string!>!
 static Aw.Context.Core.Map.MapRuleset.PinHashes(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
 static Aw.Context.Core.Map.MapRuleset.RunningPins(Aw.Context.Core.Engine.ContextScope? scope) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?

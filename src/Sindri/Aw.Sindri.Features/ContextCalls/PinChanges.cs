@@ -13,8 +13,8 @@ internal sealed class PinChanges(IReadOnlyDictionary<string, string>? Approved, 
     internal const string Removed = "removed";
 
     /// <summary>'created', 'updated', or null (the map has it, the approved profile lacks it, or nothing is known) for the approved pin with this id.</summary>
-    internal string? Of(string id) =>
-        Approved is null || Built is null || !Approved.TryGetValue(id, out var approved) ? null
+    internal string? Of(string? id) =>
+        Approved is null || Built is null || id is null || !Approved.TryGetValue(id, out var approved) ? null
         : !Built.TryGetValue(id, out var built) ? Created
         : string.Equals(approved, built, StringComparison.Ordinal) ? null : Updated;
 

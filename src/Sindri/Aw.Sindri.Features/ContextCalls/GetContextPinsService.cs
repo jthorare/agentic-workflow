@@ -1,5 +1,4 @@
 using Aw.Context.Core.Engine;
-using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
 using Aw.Kernel;
@@ -48,7 +47,8 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         var pins = Rows(loaded.Value.Profile, latest.Value?.Profile, repo, changes);
         var progress = await rebuild.Read(service, cancellationToken).ConfigureAwait(false);
         var failed = await LastFailure(cancellationToken).ConfigureAwait(false);
-        var view = new ContextRebuildView(Phase(progress.Phase), progress.Progress, progress.RetryAt, Stale(state.Value, scope), failed);
+        // a refresh covers every repo and its retry line carries the error text of a failed build, which can name another repo: a session reads the phase, never the line
+        var view = new ContextRebuildView(Phase(progress.Phase), scope.Caller.Kind == ContextCallerKind.Session ? null : progress.Progress, progress.RetryAt, Stale(state.Value, scope), failed);
         return new ContextPinsView(1, repo, loaded.Value.Hash.Value, state.Value.Current is { } current ? MapVersionRef.Tag(current) : null, pins, view);
     }
 
@@ -68,35 +68,41 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
     private static List<ContextPinRow> Rows(SindriProfile liveProfile, SindriProfile? approvedProfile, string? repo, PinChanges changes)
     {
         var diff = ProfileDiff.Changes(approvedProfile, liveProfile).ToDictionary(static c => c.Key, StringComparer.Ordinal);
-        var liveKeys = new HashSet<string>(StringComparer.Ordinal);
+        var live = Identified(liveProfile);
+        var approved = approvedProfile is null ? [] : Identified(approvedProfile);
+        var liveKeys = live.Select(static p => p.Pin.Key).ToHashSet(StringComparer.Ordinal);
         var rows = new List<ContextPinRow>();
-        foreach (var pin in ProfilePins.Of(liveProfile).Where(p => InScope(p, repo)))
+        foreach (var (pin, id) in live.Where(p => InScope(p.Pin, repo)))
         {
-            _ = liveKeys.Add(pin.Key);
-            rows.Add(Row(pin, diff.ContainsKey(pin.Key) ? PinStates.Waiting : PinStates.Approved, changes));
+            rows.Add(Row(pin, id, diff.ContainsKey(pin.Key) ? PinStates.Waiting : PinStates.Approved, changes.Of(approved.FirstOrDefault(a => a.Pin.Key == pin.Key).Id)));
         }
 
-        if (approvedProfile is not null)
-        {
-            rows.AddRange(ProfilePins.Of(approvedProfile).Where(p => InScope(p, repo) && !liveKeys.Contains(p.Key) && diff.TryGetValue(p.Key, out var change) && change.After is null).Select(p => Row(p, PinStates.Removing, changes)));
-        }
+        rows.AddRange(approved.Where(p => InScope(p.Pin, repo) && !liveKeys.Contains(p.Pin.Key) && diff.TryGetValue(p.Pin.Key, out var change) && change.After is null)
+            .Select(p => Row(p.Pin, p.Id, PinStates.Removing, changes.Of(p.Id))));
 
-        // pins the map still has that neither profile does any more: only their ids are known, and the map's hashes carry no repo, so only an answer for every repo may list them
+        // pins the map still has that neither profile does any more: only their ids are known, and the map's hashes carry no repo, so only an answer for every repo may list them.
+        // Their state is 'approved' because the removal itself is approved: it is the map that hasn't caught up.
         rows.AddRange(repo is not null ? [] : changes.RemovedIds().Select(static id => new ContextPinRow(id, id, Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, PinChanges.Removed)));
         return rows;
+    }
+
+    // Each entry with the id the map gives it (null id for an entry the approved profile lacks is never asked for).
+    private static List<(ProfilePin Pin, string Id)> Identified(SindriProfile profile)
+    {
+        var pins = ProfilePins.Of(profile);
+        var ids = ProfilePins.Ids(profile, pins);
+        return [.. pins.Select((p, i) => (p, ids[i]))];
     }
 
     // The profile's own pins belong to every repo; a repo's own entry only to it. No repo named (a human on a profile with several) is every pin.
     private static bool InScope(ProfilePin pin, string? repo) =>
         repo is null || pin.Repo is null || string.Equals(pin.Repo, repo, StringComparison.Ordinal);
 
-    private static ContextPinRow Row(ProfilePin pin, string state, PinChanges changes)
+    private static ContextPinRow Row(ProfilePin pin, string id, string state, string? change)
     {
         var settings = pin.Settings;
-        var name = settings.Name ?? string.Empty;
-        var id = settings.Id?.Value ?? PinSlug.Of(name);
-        return new ContextPinRow(id, name, settings.Summary, Listed(settings.Aliases), Listed(settings.Features),
-            Listed(settings.Paths).Count + Listed(settings.DependsOn).Count + Listed(settings.Owns).Count, pin.SetIn, state, changes.Of(id));
+        return new ContextPinRow(id, settings.Name ?? string.Empty, settings.Summary, Listed(settings.Aliases), Listed(settings.Features),
+            Listed(settings.Paths).Count + Listed(settings.DependsOn).Count + Listed(settings.Owns).Count, pin.SetIn, state, change);
     }
 
     private static IReadOnlyList<string> Listed(IReadOnlyList<string>? list) => list ?? [];
