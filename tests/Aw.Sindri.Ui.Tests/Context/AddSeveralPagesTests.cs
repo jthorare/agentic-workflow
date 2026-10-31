@@ -121,14 +121,15 @@ public sealed class AddSeveralPagesTests
     }
 
     [Fact]
-    public async Task A_clash_keeps_every_tick_and_the_text()
+    public async Task A_clash_reads_the_list_again_and_the_next_save_uses_the_new_hash()
     {
         var (sheet, writes) = Sheet(Block(1, "Schedule week"), Block(2, "Billing"));
         sheet.Text = "the paste";
         await sheet.ReadList(TestContext.Current.CancellationToken);
-        sheet.Rows[1].Ticked = false;
+        sheet.Rows[0].Ticked = false;
+        var replaced = new PagesPreviewBlock(2, 5, "Billing", Match: null, Replaces: "billing", SameAs: null, Ticked: true, Reason: null, [], [], new PagesPreviewPage("billing", "Billing", "web", Surface: null, []));
+        writes.AnswerPreview(new PagesPreviewRead(new PagesPreview("v42", "hash-2", [Block(1, "Schedule week"), replaced])));
         writes.Answer(new PageSaved(PageSavedState.Clash, "SND-PROFILE-003"));
-        writes.Profile = new ProfileWaiting("hash-2", []);
         var closed = false;
         sheet.Closed += (_, _) => closed = true;
 
@@ -137,10 +138,24 @@ public sealed class AddSeveralPagesTests
         Expect.Equal("The profile changed since you read the list. Your ticks and names are kept: Save again to apply them on top.", sheet.Note);
         Expect.True(!closed, "a clash leaves the sheet open");
         Expect.Equal("the paste", sheet.Text);
-        Expect.Sequence([true, false], sheet.Rows.Select(r => r.Ticked));
+        Expect.Equal("Replaces a page you already named", sheet.Rows[1].ReplacesText);
+        Expect.Sequence([false, true], sheet.Rows.Select(r => r.Ticked));
         await sheet.SaveAll(TestContext.Current.CancellationToken);
         Expect.Equal("hash-2", writes.Saves[1].IfHash);
         Expect.True(closed, "the second save lands");
+    }
+
+    [Fact]
+    public async Task Editing_the_text_after_reading_turns_save_off()
+    {
+        var (sheet, _) = Sheet(Block(1, "Schedule week"));
+        sheet.Text = "Schedule week";
+        await sheet.ReadList(TestContext.Current.CancellationToken);
+        Expect.True(sheet.CanSave, "the rows were read from this text");
+
+        sheet.Text = "Schedule week\nSubmit";
+
+        Expect.True(!sheet.CanSave, "the rows are stale until Read the list runs again");
     }
 
     [Fact]

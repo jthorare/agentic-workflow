@@ -8,6 +8,7 @@ internal sealed class FakePageWrites : IPageWrites
 {
     private readonly Dictionary<string, PageDraft> _pages = new(StringComparer.Ordinal);
     private readonly Queue<PageSaved> _answers = new();
+    private readonly Queue<PagesPreviewRead> _previews = new();
 
     /// <summary>Gets or sets the profile the fake reports; null makes it unreadable.</summary>
     public ProfileWaiting? Profile { get; set; } = new("hash-1", []);
@@ -38,12 +39,21 @@ internal sealed class FakePageWrites : IPageWrites
     /// <summary>Gets or sets the answer every preview gets; null answers a refusal with no code.</summary>
     public PagesPreviewRead? PreviewAnswer { get; set; }
 
+    /// <summary>Queues the answer of the next preview; once the queue is empty, previews answer <see cref="PreviewAnswer"/>.</summary>
+    /// <param name="read">The answer.</param>
+    public void AnswerPreview(PagesPreviewRead read) => _previews.Enqueue(read);
+
     /// <summary>Gets every paste asked for, in order.</summary>
     public List<string> Previews { get; } = [];
 
     public Task<PagesPreviewRead> Preview(string text, string? repo, CancellationToken cancellationToken)
     {
         Previews.Add(text);
+        if (_previews.Count > 0)
+        {
+            return Task.FromResult(_previews.Dequeue());
+        }
+
         return Task.FromResult(PreviewAnswer ?? new PagesPreviewRead(Preview: null, "SND-API-001"));
     }
 

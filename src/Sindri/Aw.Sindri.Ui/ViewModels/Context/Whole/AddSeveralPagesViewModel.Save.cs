@@ -25,7 +25,7 @@ internal sealed partial class AddSeveralPagesViewModel
         PageSaved saved;
         try
         {
-            // TODO(#1826): fileHash ?? live at open, wired with the page sheet's
+            // The rows are built on the preview's profileHash, so that is this sheet's ifHash; #1826's fileHash wiring is for the single page sheet only.
             saved = await _writes.Save(save, _hash, approve, cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
@@ -92,12 +92,28 @@ internal sealed partial class AddSeveralPagesViewModel
     private static PageDraft Draft(PagesPreviewPage page) =>
         new(page.Id, page.Name, page.Repo, page.Surface, Owner: false, [.. page.Actions.Select(static a => new PageActionDraft(Id: null, a.Name, a.Action, a.Concepts))]);
 
-    // The profile moved: read its hash again so Save all lands on top; every tick and name stays.
+    // The profile moved: read the same list again so the rows show what is there now, keep the ticks of the rows that can still be ticked, and take the new hash.
     private async Task Clashed(CancellationToken cancellationToken)
     {
+        var ticked = Rows.Where(static r => r.Ticked).Select(static r => r.Block).ToHashSet();
+        var read = await _writes.Preview(_readText, _repo, cancellationToken).ConfigureAwait(true);
         _waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
-        _hash = _waiting?.LiveHash ?? _hash;
-        Say(Labels.AddSeveralPagesClash);
+        if (read.Preview is { } preview)
+        {
+            Fill(preview, _readText);
+            foreach (var row in Rows)
+            {
+                row.Ticked = ticked.Contains(row.Block);   // a row that can't be ticked any more stays off
+            }
+
+            Say(Labels.AddSeveralPagesClash);
+        }
+        else
+        {
+            Fill(new PagesPreview(string.Empty, string.Empty, []), string.Empty);   // no fresh read, no stale rows to save
+            SayText(Refusal(read));
+        }
+
         ChangedSave();
     }
 

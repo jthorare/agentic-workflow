@@ -14,6 +14,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     private ProfileWaiting? _waiting;
     private string? _hash;
     private string _initialTicks = string.Empty;
+    private string _readText = string.Empty;
 
     /// <summary>Builds a sheet that has read nothing yet.</summary>
     /// <param name="writes">Where the list is read and the pages are written.</param>
@@ -52,7 +53,15 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     public string CloseName { get; } = Labels.AddSeveralPagesCloseName;
 
     /// <summary>Gets or sets the pasted list.</summary>
-    public string Text { get; set; } = string.Empty;
+    public string Text
+    {
+        get;
+        set
+        {
+            field = value;
+            ChangedSave();   // rows read from other text are stale until Read the list runs again
+        }
+    } = string.Empty;
 
     /// <summary>Gets the line under the box: nothing pasted, a refusal of the paste, or a read that failed.</summary>
     public string TextNote { get; private set; } = string.Empty;
@@ -75,8 +84,8 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     /// <summary>Gets a value indicating whether a write is in flight.</summary>
     public bool IsSaving { get; private set; }
 
-    /// <summary>Gets a value indicating whether Save all can be pressed: some row is ticked and nothing is in flight.</summary>
-    public bool CanSave => !IsSaving && Rows.Any(static r => r.Ticked);
+    /// <summary>Gets a value indicating whether Save all can be pressed: the rows were read from this text, some row is ticked and nothing is in flight.</summary>
+    public bool CanSave => !IsSaving && string.Equals(Text, _readText, StringComparison.Ordinal) && Rows.Any(static r => r.Ticked);
 
     /// <summary>Gets the save button's words: "Saving…", "Save all and approve" when only these pages wait, else "Save all".</summary>
     public string SaveText => IsSaving ? Labels.PageSheetSaving : Approves(Pending()) ? Labels.AddSeveralPagesSaveAllAndApprove : Labels.AddSeveralPagesSaveAll;
@@ -140,17 +149,20 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
 
         if (read.Preview is not { } preview)
         {
-            SayText(read is { Code: { } code, Message: { Length: > 0 } message } && code.StartsWith("SND-CONTEXT-", StringComparison.Ordinal) ? message : Labels.AddSeveralPagesUnreadable);
+            SayText(Refusal(read));
             return;
         }
 
-        Fill(preview);
+        Fill(preview, Text);
         FocusRequested?.Invoke(this, new ValueEventArgs<AddSeveralPagesFocus>(ProblemRow >= 0 ? AddSeveralPagesFocus.ProblemRow : AddSeveralPagesFocus.SaveAll));
     }
 
-    private void Fill(Api.Context.PagesPreview preview)
+    private static string Refusal(PagesPreviewRead read) =>
+        read is { Code: { } code, Message: { Length: > 0 } message } && code.StartsWith("SND-CONTEXT-", StringComparison.Ordinal) ? message : Labels.AddSeveralPagesUnreadable;
+
+    private void Fill(Api.Context.PagesPreview preview, string text)
     {
-        _hash = preview.ProfileHash;
+        (_hash, _readText) = (preview.ProfileHash, text);
         Rows = [.. preview.Blocks.Select(static b => new AddSeveralPagesRowViewModel(b))];
         foreach (var row in Rows)
         {
