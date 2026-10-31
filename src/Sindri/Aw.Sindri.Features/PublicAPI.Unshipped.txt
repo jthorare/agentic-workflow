@@ -4054,9 +4054,11 @@ Aw.Sindri.Features.CodeIndexReads.CodeIndexStatusView.Repos.get -> System.Collec
 Aw.Sindri.Features.CodeIndexReads.CodeIndexStatusView.Repos.init -> void
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.<Clone>$() -> Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest!
-Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Deconstruct(out string! Query, out string? Repo, out string? Match) -> void
+Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Deconstruct(out string! Query, out string? Repo, out string? Match, out string? Concept) -> void
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Equals(Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest? other) -> bool
-Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.FindCodeSymbolsRequest(string! Query, string? Repo = null, string? Match = null) -> void
+Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.FindCodeSymbolsRequest(string! Query, string? Repo = null, string? Match = null, string? Concept = null) -> void
+Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Concept.get -> string?
+Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Concept.init -> void
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Match.get -> string?
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Match.init -> void
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Query.get -> string!
@@ -5589,3 +5591,108 @@ static Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.operator !=(Aw.Sin
 static Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.operator ==(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? right) -> bool
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Concept.get -> string?
 Aw.Sindri.Features.ContextCalls.QueryContextRequest.Concept.init -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.<Clone>$() -> Aw.Sindri.Features.PinConcepts.PinConceptsRequest!
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.PinConcepts.PinSet!>? Set, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ConceptPinId>? Remove, out Aw.Sindri.Core.Ids.ProfileHash? IfHash, out bool WithFolderRules) -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.Equals(Aw.Sindri.Features.PinConcepts.PinConceptsRequest? other) -> bool
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.IfHash.get -> Aw.Sindri.Core.Ids.ProfileHash?
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.IfHash.init -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.PinConceptsRequest(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.PinConcepts.PinSet!>? Set = null, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ConceptPinId>? Remove = null, Aw.Sindri.Core.Ids.ProfileHash? IfHash = null, bool WithFolderRules = false) -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.Remove.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ConceptPinId>?
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.Remove.init -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.Set.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.PinConcepts.PinSet!>?
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.Set.init -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.WithFolderRules.get -> bool
+Aw.Sindri.Features.PinConcepts.PinConceptsRequest.WithFolderRules.init -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsResult
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Approved.get -> bool
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Approved.init -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.<Clone>$() -> Aw.Sindri.Features.PinConcepts.PinConceptsResult!
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.PinConcepts.PinWritten!>! Pins, out Aw.Sindri.Core.Ids.ProfileHash Hash, out bool Approved, out System.Collections.Generic.IReadOnlyList<string!>! Dropped) -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Dropped.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Dropped.init -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Equals(Aw.Sindri.Features.PinConcepts.PinConceptsResult? other) -> bool
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Hash.init -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.PinConceptsResult(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.PinConcepts.PinWritten!>! Pins, Aw.Sindri.Core.Ids.ProfileHash Hash, bool Approved, System.Collections.Generic.IReadOnlyList<string!>! Dropped) -> void
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Pins.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.PinConcepts.PinWritten!>!
+Aw.Sindri.Features.PinConcepts.PinConceptsResult.Pins.init -> void
+Aw.Sindri.Features.PinConcepts.PinSet
+Aw.Sindri.Features.PinConcepts.PinSet.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.PinConcepts.PinSet.Aliases.init -> void
+Aw.Sindri.Features.PinConcepts.PinSet.<Clone>$() -> Aw.Sindri.Features.PinConcepts.PinSet!
+Aw.Sindri.Features.PinConcepts.PinSet.Deconstruct(out string! Name, out Aw.Sindri.Core.Ids.ConceptPinId? Id, out string? Summary, out System.Collections.Generic.IReadOnlyList<string!>? Aliases, out System.Collections.Generic.IReadOnlyList<string!>? Features) -> void
+Aw.Sindri.Features.PinConcepts.PinSet.Equals(Aw.Sindri.Features.PinConcepts.PinSet? other) -> bool
+Aw.Sindri.Features.PinConcepts.PinSet.Features.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.PinConcepts.PinSet.Features.init -> void
+Aw.Sindri.Features.PinConcepts.PinSet.Id.get -> Aw.Sindri.Core.Ids.ConceptPinId?
+Aw.Sindri.Features.PinConcepts.PinSet.Id.init -> void
+Aw.Sindri.Features.PinConcepts.PinSet.Name.get -> string!
+Aw.Sindri.Features.PinConcepts.PinSet.Name.init -> void
+Aw.Sindri.Features.PinConcepts.PinSet.PinSet(string! Name, Aw.Sindri.Core.Ids.ConceptPinId? Id = null, string? Summary = null, System.Collections.Generic.IReadOnlyList<string!>? Aliases = null, System.Collections.Generic.IReadOnlyList<string!>? Features = null) -> void
+Aw.Sindri.Features.PinConcepts.PinSet.Summary.get -> string?
+Aw.Sindri.Features.PinConcepts.PinSet.Summary.init -> void
+Aw.Sindri.Features.PinConcepts.PinWritten
+Aw.Sindri.Features.PinConcepts.PinWritten.Action.get -> string!
+Aw.Sindri.Features.PinConcepts.PinWritten.Action.init -> void
+Aw.Sindri.Features.PinConcepts.PinWritten.<Clone>$() -> Aw.Sindri.Features.PinConcepts.PinWritten!
+Aw.Sindri.Features.PinConcepts.PinWritten.Deconstruct(out Aw.Sindri.Core.Ids.ConceptPinId Id, out string! Name, out string! Action) -> void
+Aw.Sindri.Features.PinConcepts.PinWritten.Equals(Aw.Sindri.Features.PinConcepts.PinWritten? other) -> bool
+Aw.Sindri.Features.PinConcepts.PinWritten.Id.get -> Aw.Sindri.Core.Ids.ConceptPinId
+Aw.Sindri.Features.PinConcepts.PinWritten.Id.init -> void
+Aw.Sindri.Features.PinConcepts.PinWritten.Name.get -> string!
+Aw.Sindri.Features.PinConcepts.PinWritten.Name.init -> void
+Aw.Sindri.Features.PinConcepts.PinWritten.PinWritten(Aw.Sindri.Core.Ids.ConceptPinId Id, string! Name, string! Action) -> void
+override Aw.Sindri.Features.PinConcepts.PinConceptsRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.PinConcepts.PinConceptsRequest.GetHashCode() -> int
+override Aw.Sindri.Features.PinConcepts.PinConceptsRequest.ToString() -> string!
+override Aw.Sindri.Features.PinConcepts.PinConceptsResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.PinConcepts.PinConceptsResult.GetHashCode() -> int
+override Aw.Sindri.Features.PinConcepts.PinConceptsResult.ToString() -> string!
+override Aw.Sindri.Features.PinConcepts.PinSet.Equals(object? obj) -> bool
+override Aw.Sindri.Features.PinConcepts.PinSet.GetHashCode() -> int
+override Aw.Sindri.Features.PinConcepts.PinSet.ToString() -> string!
+override Aw.Sindri.Features.PinConcepts.PinWritten.Equals(object? obj) -> bool
+override Aw.Sindri.Features.PinConcepts.PinWritten.GetHashCode() -> int
+override Aw.Sindri.Features.PinConcepts.PinWritten.ToString() -> string!
+static Aw.Sindri.Features.PinConcepts.PinConceptsRequest.operator !=(Aw.Sindri.Features.PinConcepts.PinConceptsRequest? left, Aw.Sindri.Features.PinConcepts.PinConceptsRequest? right) -> bool
+static Aw.Sindri.Features.PinConcepts.PinConceptsRequest.operator ==(Aw.Sindri.Features.PinConcepts.PinConceptsRequest? left, Aw.Sindri.Features.PinConcepts.PinConceptsRequest? right) -> bool
+static Aw.Sindri.Features.PinConcepts.PinConceptsResult.operator !=(Aw.Sindri.Features.PinConcepts.PinConceptsResult? left, Aw.Sindri.Features.PinConcepts.PinConceptsResult? right) -> bool
+static Aw.Sindri.Features.PinConcepts.PinConceptsResult.operator ==(Aw.Sindri.Features.PinConcepts.PinConceptsResult? left, Aw.Sindri.Features.PinConcepts.PinConceptsResult? right) -> bool
+static Aw.Sindri.Features.PinConcepts.PinSet.operator !=(Aw.Sindri.Features.PinConcepts.PinSet? left, Aw.Sindri.Features.PinConcepts.PinSet? right) -> bool
+static Aw.Sindri.Features.PinConcepts.PinSet.operator ==(Aw.Sindri.Features.PinConcepts.PinSet? left, Aw.Sindri.Features.PinConcepts.PinSet? right) -> bool
+static Aw.Sindri.Features.PinConcepts.PinWritten.operator !=(Aw.Sindri.Features.PinConcepts.PinWritten? left, Aw.Sindri.Features.PinConcepts.PinWritten? right) -> bool
+static Aw.Sindri.Features.PinConcepts.PinWritten.operator ==(Aw.Sindri.Features.PinConcepts.PinWritten? left, Aw.Sindri.Features.PinConcepts.PinWritten? right) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.PagesInNoConcept.get -> bool
+Aw.Sindri.Features.ContextCalls.GetContextWholeMapRequest.PagesInNoConcept.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult!
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.AliasesHash.get -> string!
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.AliasesHash.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Changed.get -> int
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Changed.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Deconstruct(out string! AliasesHash, out int MapVersion, out int Records, out int Changed, out long ElapsedMs, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>! Pins) -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.ElapsedMs.get -> long
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.ElapsedMs.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Equals(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? other) -> bool
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.MapVersion.get -> int
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.MapVersion.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Pins.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>!
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Pins.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Records.get -> int
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Records.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.RelinkPinAliasesJobResult(string! AliasesHash, int MapVersion, int Records, int Changed, long ElapsedMs, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>! Pins) -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest!
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.Equals(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.RelinkPinAliasesRequest() -> void
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.ToString() -> string!
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.operator !=(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.operator ==(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.operator !=(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.operator ==(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? right) -> bool

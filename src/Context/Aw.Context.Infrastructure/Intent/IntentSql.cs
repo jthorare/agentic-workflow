@@ -22,6 +22,12 @@ internal static class IntentSql
 
     internal const string DeleteLinks = "DELETE FROM intent_link WHERE record = @record";
 
+    internal const string DeleteRuleLinks = "DELETE FROM intent_link WHERE record = @record AND rule = @rule";
+
+    // synced_at is the record's own fetched_at: a rule rewrite is not a sync, and a record that isn't stored takes no link.
+    internal const string InsertRuleLink =
+        "INSERT INTO intent_link (record, target, rule, confidence, span_hash, synced_at) SELECT @record, @target, @rule, @confidence, @span, fetched_at FROM intent_record WHERE key = @record ON CONFLICT DO NOTHING";
+
     internal const string InsertLink =
         "INSERT INTO intent_link (record, target, rule, confidence, span_hash, synced_at) VALUES (@record, @target, @rule, @confidence, @span, @at) ON CONFLICT DO NOTHING";
 

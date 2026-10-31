@@ -1,8 +1,10 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Extract;
+using Aw.Context.Core.Models;
 using Aw.Context.Core.Trust;
 using Aw.Context.Infrastructure.Labeling;
 using Aw.Context.Infrastructure.Scrubbing;
+using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Extract;
 using Microsoft.Extensions.Time.Testing;
 
@@ -147,6 +149,63 @@ public sealed class CachingLabelerTests
         _ = Assert.Single(_cache.Saved);
         Assert.Equal(0, again.Calls);
         Assert.Equal("Alpha", Assert.Single(pass.Value.Labels).Label);
+    }
+
+    [Fact]
+    public void The_keys_for_a_pick_that_is_off_and_for_three_candidates_are_unchanged()
+    {
+        var egress = _factory.For([]).Value.Egress;
+        var cluster = Cluster("c1", "a/x.ts", "a/y.ts");
+
+        Assert.Equal("2d71a3abab6d284d05bcad406c657a85496bca2eafdabb3218b3dba928746542", CachingLabeler.Key(cluster, egress), StringComparer.Ordinal);
+        Assert.Equal("2d71a3abab6d284d05bcad406c657a85496bca2eafdabb3218b3dba928746542", CachingLabeler.Key(cluster, egress, new LabelOptions(Pick: false, Candidates: 3)), StringComparer.Ordinal);
+        Assert.Equal("72f9f872c255ebb9a51aa640da85cd5359be875db92482cd77d93ea59466de09", CachingLabeler.Key(cluster, egress, new LabelOptions(Pick: true, Candidates: 3)), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void A_pick_with_no_key_has_a_key_of_its_own_and_one_that_is_off_is_the_off_key()
+    {
+        var egress = _factory.For([]).Value.Egress;
+        var cluster = Cluster("c1", "a/x.ts", "a/y.ts");
+        var on = new LabelOptions(Pick: true, Candidates: 3);
+
+        var noKey = CachingLabeler.Key(cluster, egress, on, unavailable: ChoiceReasons.NoKey);
+
+        Assert.NotEqual(CachingLabeler.Key(cluster, egress, on), noKey, StringComparer.Ordinal);
+        Assert.NotEqual(CachingLabeler.Key(cluster, egress), noKey, StringComparer.Ordinal);
+        Assert.Equal(CachingLabeler.Key(cluster, egress), CachingLabeler.Key(cluster, egress, on, unavailable: ChoiceReasons.Off), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_pass_with_no_key_misses_once_when_the_key_arrives_and_the_pass_after_that_hits()
+    {
+        var port = new FakeChoicePort { UnavailableReason = ChoiceReasons.NoKey };
+        var options = new LabelOptions(Pick: true, Candidates: 3);
+        var clusters = new[] { Cluster("h00000", "a/x.ts"), Cluster("h00001", "b/y.ts") };
+        CachingLabeler Caching() => new(_inner, _cache, _factory, port);
+
+        _ = await Caching().Label(clusters, [], 1000, options, Ct);
+        port.UnavailableReason = null;   // the owner adds the key
+        _ = await Caching().Label(clusters, [], 1000, options, Ct);
+        _inner.Shown.Clear();
+        _ = await Caching().Label(clusters, [], 1000, options, Ct);
+
+        Assert.Empty(_inner.Shown);
+        Assert.Empty(port.Asked);
+        Assert.Equal(4, _cache.Saved.Count);   // a key per cluster for the no-key pass and a key per cluster for the Jev pass
+    }
+
+    [Fact]
+    public async Task The_port_is_asked_only_when_the_options_say_pick()
+    {
+        var port = new FakeChoicePort { UnavailableReason = ChoiceReasons.NoKey };
+        var clusters = new[] { Cluster("h00000", "a/x.ts") };
+
+        _ = await new CachingLabeler(_inner, _cache, _factory, port).Label(clusters, [], 1000, new LabelOptions(Pick: false, Candidates: 3), Ct);
+        _inner.Shown.Clear();
+        _ = await new CachingLabeler(_inner, _cache, _factory, port).Label(clusters, [], 1000, options: null, Ct);
+
+        Assert.Empty(_inner.Shown);   // both passes use the off key, so the second hits
     }
 
     private sealed class AnswersOne(LabelPass pass) : ILabeler

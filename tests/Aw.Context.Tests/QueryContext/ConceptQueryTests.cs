@@ -73,7 +73,24 @@ public sealed class ConceptQueryTests : IDisposable
 
         var result = (await _world.Engine.Query(new ContextQuery("Tabs"), Scope("tabs", "billing"), MapWorld.None)).Value;
 
-        Assert.Equal(["anchored on concept:tabs; add concept=tabs to see only tabs"], result.Notes);
+        Assert.Contains("anchored on concept:tabs; add concept=tabs to see only tabs", result.Notes ?? [], StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_text_question_that_anchors_on_a_pin_through_its_alias_names_the_alias()
+    {
+        await Import();
+        var scope = MapWorld.HumanWith(MapWorld.OnlyFixtureRepo,
+        [
+            new ContextRepo(ContextRepoName.From(FixtureMap.Repo), "/work/aw-split-panes")
+            {
+                Concepts = [ConceptPin.Of(ConceptId.From("tabs"), "tabs", summary: null, features: null, paths: null).WithAliases(["browsing"]), ConceptPin.Of(ConceptId.From("billing"), "billing", summary: null, features: null, paths: null)],
+            },
+        ]);
+
+        var result = (await _world.Engine.Query(new ContextQuery("how does browsing work"), scope, MapWorld.None)).Value;
+
+        Assert.Contains("anchored on concept:tabs (alias \"browsing\"); add concept=tabs to see only tabs", result.Notes ?? [], StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -52,7 +52,8 @@ public static class MapExtractor
         var depends = imports.Select(p => new GraphEdge(CodeKey(p.From)!.Value, CodeKey(p.To)!.Value, EdgeType.DependsOn, Provenance.Deterministic, 1.0, Evidence(repo, p.From) is { } e ? [e] : null));   // why: the filter above keeps valid keys
         var found = ExtractedMap.Empty.Plus(new ExtractedMap([.. nodes, .. codeNodes, .. importNodes], [.. implements, .. related, .. depends]));
         var withStores = found.Plus(DataStorePass.Run(repo, files, DataStoreAdapters.All, schemaGlobs ?? ContextSettings.DefaultSchemaGlobs));
-        return (withStores.Plus(ActionPass.Run(repo, files, withStores)), timedOut);
+        var withPages = withStores.Plus(AxamlPass.Run(repo, files));
+        return (withPages.Plus(ActionPass.Run(repo, files, withPages)), timedOut);
     }
 
     private static GraphNode Node(ContextRepoName repo, List<(RepoFile File, Found Found)> hits)

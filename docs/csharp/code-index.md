@@ -57,7 +57,7 @@ Sindri's reads of the facade live in `Aw.Sindri.Features/CodeIndexReads` (the sl
 | Surface | What |
 |---|---|
 | `sindri code-index status [--repo R] [--json]` | each repo's state, commit, layers and counts; exit 1 when a repo is not `ok` |
-| `sindri code-index symbols <query> [--repo R] [--prefix] [--json]` | symbols by name, path, `path#name` or ref (exact), or by name prefix |
+| `sindri code-index symbols <query> [--repo R] [--prefix] [--concept C] [--json]` | symbols by name, path, `path#name` or ref (exact), or by name prefix; `--concept C` only those of one concept pin (files the current map puts in it; the note lines say which map, and when the code index and map are at different commits) |
 | `sindri code-index callers\|callees <ref> [--depth 1..8] [--repo R] [--json]` | edges with basis, confidence and coverage; `--repo` lets a ref be written `path#name` |
 | `GET /sindri/code-index/status`, `/symbols`, `/callers`, `/callees` | the same, query class, goldens in `tests/Aw.Sindri.Tests/Golden/Api/code-index-*` |
 

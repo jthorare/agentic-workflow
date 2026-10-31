@@ -10,7 +10,7 @@ namespace Aw.Context.Core.Extract;
 public static partial class Recognizers
 {
     internal const int MaxFileLength = 512_000;
-    private static readonly string[] _extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".json", ".cs"];
+    private static readonly string[] _extensions = [".ts", ".tsx", ".js", ".jsx", ".mjs", ".json", ".cs", ".axaml"];
     private static readonly HashSet<string> _localeFolders = new(["i18n", "l10n", "locale", "locales", "lang", "translations"], StringComparer.OrdinalIgnoreCase);
     private static readonly string[] _notComponents = ["Context", "Schema", "Props"];
     private static readonly string[] _skipped = ["node_modules/", "dist/", "build/", "coverage/", ".git/", "tests/", "__tests__/"];
@@ -50,8 +50,8 @@ public static partial class Recognizers
             && !path.Contains(".spec.", StringComparison.Ordinal);
     }
 
-    // The TypeScript and JavaScript forms: C# named arguments (id: "a", title: "b") would read as a command registry entry.
-    internal static bool Script(RepoFile file) => Source(file) && !IsCSharp(file.Path);
+    // The TypeScript and JavaScript forms (not Avalonia views, which AxamlPass reads): C# named arguments (id: "a", title: "b") would read as a command registry entry.
+    internal static bool Script(RepoFile file) => Source(file) && !IsCSharp(file.Path) && !AxamlPass.IsView(file.Path);
 
     internal static bool IsCSharp(string path) => path.EndsWith(".cs", StringComparison.Ordinal);
 

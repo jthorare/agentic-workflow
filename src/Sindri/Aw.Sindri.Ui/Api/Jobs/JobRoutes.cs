@@ -11,6 +11,9 @@ internal static class JobRoutes
     /// <summary>The map build's start (a job route; the Context page's "Build the map").</summary>
     internal const string BuildContextMap = "/sindri/context/map/build";
 
+    /// <summary>The pin write's start (a job route; the pin sheet's Pin).</summary>
+    internal const string PinConcepts = "/sindri/context/pins";
+
     internal static string List(JobQuery query)
     {
         var parts = new List<string>();

@@ -838,6 +838,25 @@
       "confirm": null
     },
     {
+      "action": "PinConcepts",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/context/pins",
+      "cli": "sindri context pin set <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ProbeLaunchTargets",
       "class": "job",
       "allowedCallers": [
@@ -1014,6 +1033,25 @@
       "method": "POST",
       "route": "/sindri/workflow/recipes",
       "cli": "sindri recipe register <file>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "RelinkPinAliases",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri services run context-map-refresh",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
