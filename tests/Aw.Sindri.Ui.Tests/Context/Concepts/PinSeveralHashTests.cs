@@ -58,6 +58,26 @@ public sealed class PinSeveralHashTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_clash_never_retries_by_itself_only_the_next_press_writes_again()
+    {
+        var fixtures = new PinSeveralFixtures();
+        fixtures.Api.PinConceptsAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-PROFILE-003", "the profile changed since you read it");
+        fixtures.Api.ContextPinsAnswer = _ => PinSeveralFixtures.Served(new PinsView(1, "api", "h9", "v1", [PinSeveralFixtures.Pin("payments", "Payments")], _idle));
+        var sheet = await fixtures.Read("Payments\nRefunds");
+
+        await sheet.PinAllAsync(PinSeveralFixtures.Token);
+
+        _ = Assert.Single(fixtures.Api.PinnedConcepts);
+        Assert.Equal("Updates your pin Payments", sheet.Rows[0].Note);
+        fixtures.Api.PinConceptsAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"accepted":{"commandId":"00000000-0000-0000-0000-000000000009","sequence":12},"jobId":"{{PinSeveralFixtures.JobId}}"}""");
+
+        await sheet.PinAllAsync(PinSeveralFixtures.Token);
+
+        Assert.Equal(2, fixtures.Api.PinnedConcepts.Count);
+        Assert.Equal("h9", fixtures.Api.PinnedConcepts[1].IfHash);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_clash_whose_re_read_fails_leaves_no_hash_and_the_button_disabled()
     {
         var fixtures = new PinSeveralFixtures();

@@ -57,6 +57,7 @@ public sealed class PinSheetReviewTests
         await sheet.Submit(Token);
         Assert.StartsWith("The settings changed while you were editing.", sheet.SubmitError, StringComparison.Ordinal);
         Assert.True(sheet.CanSubmit);
+        Assert.Equal(FileHash, Assert.Single(kit.Api.PinnedConcepts).IfHash);   // the re-read writes nothing by itself
         kit.Succeeds();
 
         await sheet.Submit(Token);
