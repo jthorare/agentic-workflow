@@ -92,18 +92,7 @@ internal sealed partial class ShellWindow
     {
         if (shell.IsSheetShown)
         {
-            if (shell.IsProjectSheet && shell.ProjectSheet.Escape())
-            {
-                return true;   // the Remove question closes first, as Keep
-            }
-
-            if (shell.IsPageSheet && shell.ActivePageSheet is { } pageSheet)
-            {
-                return pageSheet.Escape();   // a question answers first, changes ask before the sheet goes
-            }
-
-            shell.CloseSheet();
-            return true;
+            return EscapeSheet(shell);
         }
 
         if (shell.IsNeedsYouInbox && shell.Inbox.Bar.HasOpenQuestion)
@@ -113,6 +102,33 @@ internal sealed partial class ShellWindow
         }
 
         return shell.LeaveNeedsYouInbox();
+    }
+
+    // Esc over a sheet: the sheet's own question or Add several closes first; a page or pin sheet asks before changes go.
+    private static bool EscapeSheet(ShellViewModel shell)
+    {
+        if (shell.IsProjectSheet && shell.ProjectSheet.Escape())
+        {
+            return true;   // the Remove question closes first, as Keep
+        }
+
+        if (shell.IsPageSheet && shell.ActivePageSheet is { } pageSheet)
+        {
+            return pageSheet.Escape();   // a question answers first, changes ask before the sheet goes
+        }
+
+        if (shell.IsPinSheet && shell.ActivePinSheet is { } pinSheet)
+        {
+            return pinSheet.Escape();   // a question answers first, changes ask before the sheet goes
+        }
+
+        if (shell.IsPinSheet && shell.EscapePinSeveral())
+        {
+            return true;   // Add several closes without writing
+        }
+
+        shell.CloseSheet();
+        return true;
     }
 
     // The inbox opened or closed: focus goes to the selected row, on the inbox or back on Home, so it is never lost.

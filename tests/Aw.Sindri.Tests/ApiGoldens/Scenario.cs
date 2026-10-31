@@ -46,6 +46,14 @@ internal sealed class Scenario(GoldenHost host)
         return (await host.Http.Ask(Get(route, AppHeaders()))).Body;
     }
 
+    /// <summary>Rewrites the live profile file with <paramref name="edit"/> (the approved profile stays as it was), then GET as the app.</summary>
+    public async Task<string> FetchAfterProfileEdit(string route, Func<string, string> edit, CancellationToken ct)
+    {
+        var file = Path.Combine(host.Home, "profile", "profile.yaml");
+        await File.WriteAllTextAsync(file, edit(await File.ReadAllTextAsync(file, ct)), ct);
+        return await Fetch(route, ct);
+    }
+
     /// <summary>POST a pasted page list to the preview as the app: the answer, a refusal included.</summary>
     public async Task<string> PreviewPages(string text, CancellationToken ct)
     {
