@@ -8,7 +8,7 @@
       "keyVersion": 1,
       "created": "2026-01-01T00:00:00.0000000Z",
       "status": "current",
-      "ruleset": "ebbf4b4e98e98942a8d2ddb832a051a178e9e995472ae5f89a4653386c1c6172"
+      "ruleset": "6de4e788f45cbeb52b05c6d063ee63ceb7b026baf471b39fab61123ed448f7a0"
     },
     "retained": {
       "number": 1,
@@ -17,7 +17,7 @@
       "keyVersion": 1,
       "created": "2026-01-01T00:00:00.0000000Z",
       "status": "retained",
-      "ruleset": "ebbf4b4e98e98942a8d2ddb832a051a178e9e995472ae5f89a4653386c1c6172"
+      "ruleset": "6de4e788f45cbeb52b05c6d063ee63ceb7b026baf471b39fab61123ed448f7a0"
     }
   },
   "sequence": 15

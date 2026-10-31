@@ -12,4 +12,7 @@ public sealed record WholeMapQuery(string? Detail, IReadOnlyList<string> Locate,
 {
     /// <summary>The key of one concept to open on its own, like <see cref="Area"/> but scoped to the concept's members, what lies two levels below them and the product structure under what those reach (the surfaces and actions on a reached thing, and what they in turn point to); together with an area, the area's nodes that scope holds.</summary>
     public string? Concept { get; init; }
+
+    /// <summary>True to ask for the pages that relate to no concept and their actions.</summary>
+    public bool PagesInNoConcept { get; init; }
 }

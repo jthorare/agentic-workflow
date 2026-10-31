@@ -21,7 +21,8 @@ public static class RepoScope
             .Where(e => e.Type is EdgeType.Implements or EdgeType.Tags && InRepo(e))
             .SelectMany(e => new[] { e.To.Value, e.From.Value });
         var ownFiles = graph.Edges.Where(e => e.From.Kind == NodeKind.Code && InRepo(e)).Select(e => e.From.Value);
-        return implemented.Concat(ownFiles).ToHashSet(StringComparer.Ordinal);
+        var named = graph.Nodes.Where(n => n.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith($"page:{repo.Value}/", StringComparison.Ordinal))).Select(n => n.Key.Value);
+        return implemented.Concat(ownFiles).Concat(named).ToHashSet(StringComparer.Ordinal);
     }
 
     /// <summary>
@@ -112,7 +113,7 @@ public static class RepoScope
     }
 
     /// <summary>
-    /// <paramref name="scope"/> and the concepts its members belong to: a concept node with a 'belongs-to' edge from a node in <paramref name="scope"/>. A concept with no member in scope stays out, so a session
+    /// <paramref name="scope"/> and the concepts its members belong to: a concept node with a 'belongs-to' or 'expresses' edge from a node in <paramref name="scope"/>. A concept with no member in scope stays out, so a session
     /// sees its repo's concepts, sized by its repo's members.
     /// </summary>
     /// <param name="graph">The graph.</param>
@@ -121,7 +122,7 @@ public static class RepoScope
     internal static IReadOnlySet<string> WithConcepts(GraphSnapshot graph, IReadOnlySet<string> scope)
     {
         var all = new HashSet<string>(scope, StringComparer.Ordinal);
-        all.UnionWith(graph.Edges.Where(e => e.Type == EdgeType.BelongsTo && e.To.Kind == NodeKind.Concept && scope.Contains(e.From.Value)).Select(e => e.To.Value));
+        all.UnionWith(graph.Edges.Where(e => e.Type is EdgeType.BelongsTo or EdgeType.Expresses && e.To.Kind == NodeKind.Concept && scope.Contains(e.From.Value)).Select(e => e.To.Value));
         return all;
     }
 }

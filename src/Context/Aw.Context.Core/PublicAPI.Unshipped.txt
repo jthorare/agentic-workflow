@@ -1288,6 +1288,7 @@ Aw.Context.Core.Extract.LabelPass.PickUnavailable.get -> string?
 Aw.Context.Core.Extract.LabelPass.PickUnavailable.init -> void
 Aw.Context.Core.Extract.LabelPass.Unavailable.get -> string?
 Aw.Context.Core.Extract.LabelPass.Unavailable.init -> void
+Aw.Context.Core.Facade.IContextEngine.RelinkPinAliases(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Linking.RelinkPinAliasesResult!>!>
 Aw.Context.Core.Map.CheckMeasure
 Aw.Context.Core.Map.CheckMeasure.<Clone>$() -> Aw.Context.Core.Map.CheckMeasure!
 Aw.Context.Core.Map.CheckMeasure.CheckMeasure(string! Name, int Count, int Total, int DegradedPermille, int RefusePermille, string? Skipped = null) -> void
@@ -1859,6 +1860,8 @@ Aw.Context.Core.Graph.PathView.To.init -> void
 Aw.Context.Core.Graph.RepoScope
 Aw.Context.Core.Graph.TextAnchors
 Aw.Context.Core.Graph.TextAnchors.<Clone>$() -> Aw.Context.Core.Graph.TextAnchors!
+Aw.Context.Core.Graph.TextAnchors.Aliases.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Aw.Context.Core.Graph.TextAnchors.Aliases.init -> void
 Aw.Context.Core.Graph.TextAnchors.Anchors.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>!
 Aw.Context.Core.Graph.TextAnchors.Anchors.init -> void
 Aw.Context.Core.Graph.TextAnchors.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Anchors, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Graph.NodeKey>! Suggested) -> void
@@ -2903,6 +2906,13 @@ Aw.Context.Core.Lenses.SearchedSync.JobId.init -> void
 Aw.Context.Core.Lenses.SearchedSync.SearchedSync(string! State, Aw.Context.Core.Lenses.SyncJobId JobId) -> void
 Aw.Context.Core.Lenses.SearchedSync.State.get -> string!
 Aw.Context.Core.Lenses.SearchedSync.State.init -> void
+Aw.Context.Core.Linking.PinLinkCount.<Clone>$() -> Aw.Context.Core.Linking.PinLinkCount!
+Aw.Context.Core.Linking.PinLinkCount.Before.init -> void
+Aw.Context.Core.Linking.PinLinkCount.PinLinkCount(Aw.Context.Core.Engine.ConceptId Id, int Before, int After) -> void
+Aw.Context.Core.Linking.RelinkPinAliasesResult.<Clone>$() -> Aw.Context.Core.Linking.RelinkPinAliasesResult!
+Aw.Context.Core.Linking.RelinkPinAliasesResult.AliasesHash.get -> string!
+Aw.Context.Core.Linking.RelinkPinAliasesResult.Equals(Aw.Context.Core.Linking.RelinkPinAliasesResult? other) -> bool
+Aw.Context.Core.Linking.RelinkPinAliasesResult.Pins.init -> void
 Aw.Context.Core.Symbols.SymbolsState
 Aw.Context.Core.Symbols.SymbolsState.Ok = 2 -> Aw.Context.Core.Symbols.SymbolsState
 Aw.Context.Core.Symbols.SymbolsState.Stale = 1 -> Aw.Context.Core.Symbols.SymbolsState
@@ -3088,6 +3098,28 @@ Aw.Context.Core.Linking.LinkRule.Name = 5 -> Aw.Context.Core.Linking.LinkRule
 Aw.Context.Core.Linking.LinkRule.Path = 2 -> Aw.Context.Core.Linking.LinkRule
 Aw.Context.Core.Linking.LinkRule.QuotedTitle = 4 -> Aw.Context.Core.Linking.LinkRule
 Aw.Context.Core.Linking.LinkRule.Url = 1 -> Aw.Context.Core.Linking.LinkRule
+Aw.Context.Core.Linking.PinAliasSet
+Aw.Context.Core.Linking.PinLinkCount
+Aw.Context.Core.Linking.PinLinkCount.After.get -> int
+Aw.Context.Core.Linking.PinLinkCount.After.init -> void
+Aw.Context.Core.Linking.PinLinkCount.Before.get -> int
+Aw.Context.Core.Linking.PinLinkCount.Deconstruct(out Aw.Context.Core.Engine.ConceptId Id, out int Before, out int After) -> void
+Aw.Context.Core.Linking.PinLinkCount.Equals(Aw.Context.Core.Linking.PinLinkCount? other) -> bool
+Aw.Context.Core.Linking.PinLinkCount.Id.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Linking.PinLinkCount.Id.init -> void
+Aw.Context.Core.Linking.RelinkPinAliasesResult
+Aw.Context.Core.Linking.RelinkPinAliasesResult.AliasesHash.init -> void
+Aw.Context.Core.Linking.RelinkPinAliasesResult.Changed.get -> int
+Aw.Context.Core.Linking.RelinkPinAliasesResult.Changed.init -> void
+Aw.Context.Core.Linking.RelinkPinAliasesResult.Deconstruct(out string! AliasesHash, out int MapVersion, out int Records, out int Changed, out long ElapsedMs, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>! Pins) -> void
+Aw.Context.Core.Linking.RelinkPinAliasesResult.ElapsedMs.get -> long
+Aw.Context.Core.Linking.RelinkPinAliasesResult.ElapsedMs.init -> void
+Aw.Context.Core.Linking.RelinkPinAliasesResult.MapVersion.get -> int
+Aw.Context.Core.Linking.RelinkPinAliasesResult.MapVersion.init -> void
+Aw.Context.Core.Linking.RelinkPinAliasesResult.Pins.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>!
+Aw.Context.Core.Linking.RelinkPinAliasesResult.Records.get -> int
+Aw.Context.Core.Linking.RelinkPinAliasesResult.Records.init -> void
+Aw.Context.Core.Linking.RelinkPinAliasesResult.RelinkPinAliasesResult(string! AliasesHash, int MapVersion, int Records, int Changed, long ElapsedMs, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>! Pins) -> void
 Aw.Context.Core.Linking.RulesLinker
 Aw.Context.Core.Locks.IHeavyJobLock
 Aw.Context.Core.Locks.IHeavyJobLock.Take(System.IProgress<string!>? waiting, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.IAsyncDisposable!>!>
@@ -3510,6 +3542,7 @@ Aw.Context.Core.Models.IChoicePort
 Aw.Context.Core.Models.IChoicePort.Identity.get -> Aw.Context.Core.Models.ChoiceModel!
 Aw.Context.Core.Models.IChoicePort.InputCapChars(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
 Aw.Context.Core.Models.IChoicePort.Pick(Aw.Context.Core.Models.ChoiceKind kind, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Models.ChoiceQuestion!>! questions, int capChars, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Models.ChoiceAnswer!>!>!>
+Aw.Context.Core.Models.IChoicePort.Unavailable(Aw.Context.Core.Models.ChoiceKind kind, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string?>
 Aw.Context.Core.Models.IModelPort
 Aw.Context.Core.Models.IModelPort.Ask(Aw.Context.Core.Models.ModelRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Models.ModelAnswer!>!>
 Aw.Context.Core.Models.IModelPromptBudget
@@ -6007,8 +6040,8 @@ static Aw.Context.Core.Extract.RepoFile.operator !=(Aw.Context.Core.Extract.Repo
 static Aw.Context.Core.Extract.RepoFile.operator ==(Aw.Context.Core.Extract.RepoFile? left, Aw.Context.Core.Extract.RepoFile? right) -> bool
 static Aw.Context.Core.Graph.AffectedNode.operator !=(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
 static Aw.Context.Core.Graph.AffectedNode.operator ==(Aw.Context.Core.Graph.AffectedNode? left, Aw.Context.Core.Graph.AffectedNode? right) -> bool
-static Aw.Context.Core.Graph.AnchorMatch.FromText(Aw.Context.Core.Graph.GraphSnapshot! graph, string! question) -> Aw.Context.Core.Graph.TextAnchors!
-static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
+static Aw.Context.Core.Graph.AnchorMatch.FromText(Aw.Context.Core.Graph.GraphSnapshot! graph, string! question, Aw.Context.Core.Graph.IAliasPins? pins = null) -> Aw.Context.Core.Graph.TextAnchors!
+static Aw.Context.Core.Graph.AnchorMatch.Resolve(Aw.Context.Core.Graph.GraphSnapshot! graph, string! name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>? repos = null, Aw.Context.Core.Graph.IAliasPins? pins = null) -> Aw.Kernel.Result<Aw.Context.Core.Graph.GraphNode!>!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.Affects(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey anchor, int depth, Aw.Context.Core.Engine.CascadeOptions! options) -> Aw.Context.Core.Graph.CascadeResult!
 static Aw.Context.Core.Graph.Cascade.OwnsHops(System.Collections.Generic.IReadOnlyList<string!>! path) -> int
@@ -6271,7 +6304,7 @@ static Aw.Context.Core.Linking.IntentRecord.operator !=(Aw.Context.Core.Linking.
 static Aw.Context.Core.Linking.IntentRecord.operator ==(Aw.Context.Core.Linking.IntentRecord? left, Aw.Context.Core.Linking.IntentRecord? right) -> bool
 static Aw.Context.Core.Linking.IntentSourceState.operator !=(Aw.Context.Core.Linking.IntentSourceState? left, Aw.Context.Core.Linking.IntentSourceState? right) -> bool
 static Aw.Context.Core.Linking.IntentSourceState.operator ==(Aw.Context.Core.Linking.IntentSourceState? left, Aw.Context.Core.Linking.IntentSourceState? right) -> bool
-static Aw.Context.Core.Linking.RulesLinker.Link(Aw.Context.Core.Sources.RecordKey record, string! text, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentRecord!>! known, System.Collections.Generic.IReadOnlySet<string!>! teams) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentLink!>!
+static Aw.Context.Core.Linking.RulesLinker.Link(Aw.Context.Core.Sources.RecordKey record, string! text, Aw.Context.Core.Graph.GraphSnapshot! graph, (System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentRecord!>! Known, System.Collections.Generic.IReadOnlySet<string!>! Teams) tracker, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinAliases!>! pins) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentLink!>!
 static Aw.Context.Core.Map.CheckMeasure.operator !=(Aw.Context.Core.Map.CheckMeasure? left, Aw.Context.Core.Map.CheckMeasure? right) -> bool
 static Aw.Context.Core.Map.CheckMeasure.operator ==(Aw.Context.Core.Map.CheckMeasure? left, Aw.Context.Core.Map.CheckMeasure? right) -> bool
 static Aw.Context.Core.Map.CheckOffender.operator !=(Aw.Context.Core.Map.CheckOffender? left, Aw.Context.Core.Map.CheckOffender? right) -> bool
@@ -7818,7 +7851,7 @@ const Aw.Context.Core.Concepts.ConceptStates.Empty = "empty" -> string!
 const Aw.Context.Core.Concepts.ConceptStates.Building = "building" -> string!
 const Aw.Context.Core.Concepts.ConceptStates.Unavailable = "unavailable" -> string!
 Aw.Context.Core.Concepts.ConceptBuilder
-static Aw.Context.Core.Concepts.ConceptBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptsQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptsView!>!
+static Aw.Context.Core.Concepts.ConceptBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptsQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptsView!>!
 static Aw.Context.Core.Concepts.ConceptBuilder.Members(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptMembersQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptMembersView!>!
 Aw.Context.Core.Facade.IContextConcepts
 Aw.Context.Core.Facade.IContextConcepts.ConceptMembers(Aw.Context.Core.Concepts.ConceptMembersQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptMembersView!>!>
@@ -8419,7 +8452,7 @@ static Aw.Context.Core.Concepts.ConceptGlossaryView.operator ==(Aw.Context.Core.
 Aw.Context.Core.Glossary.ISymbolVectors
 Aw.Context.Core.Glossary.ISymbolVectors.Read(Aw.Context.Core.Engine.ContextRepoName repo, System.Collections.Generic.IReadOnlyList<string!>! paths, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Glossary.SymbolVectorsRead!>!>
 Aw.Context.Core.Concepts.ConceptGlossaryBuilder
-static Aw.Context.Core.Concepts.ConceptGlossaryBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text) -> Aw.Context.Core.Concepts.ConceptGlossaryView!
+static Aw.Context.Core.Concepts.ConceptGlossaryBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Context.Core.Concepts.ConceptGlossaryView!
 static Aw.Context.Core.Concepts.ConceptDeriver.Groups(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! pins, Aw.Context.Core.Glossary.MapGlossary? glossary) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.ConceptGroup!>!
 static Aw.Context.Core.Concepts.ConceptDeriver.Derive(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! pins, Aw.Context.Core.Concepts.ConceptNames? names, Aw.Context.Core.Glossary.MapGlossary? glossary) -> Aw.Context.Core.Extract.ExtractedMap!
 Aw.Context.Core.Concepts.ConceptGroup.Terms.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -8947,6 +8980,12 @@ abstract Aw.Context.Core.Sync.RecordFeed.Pull(Aw.Context.Core.Sync.RecordPull! p
 override Aw.Context.Core.Audience.AudienceScope.Equals(object? obj) -> bool
 override Aw.Context.Core.Audience.AudienceScope.GetHashCode() -> int
 override Aw.Context.Core.Audience.AudienceScope.ToString() -> string!
+override Aw.Context.Core.Linking.PinLinkCount.Equals(object? obj) -> bool
+override Aw.Context.Core.Linking.PinLinkCount.GetHashCode() -> int
+override Aw.Context.Core.Linking.PinLinkCount.ToString() -> string!
+override Aw.Context.Core.Linking.RelinkPinAliasesResult.Equals(object? obj) -> bool
+override Aw.Context.Core.Linking.RelinkPinAliasesResult.GetHashCode() -> int
+override Aw.Context.Core.Linking.RelinkPinAliasesResult.ToString() -> string!
 override Aw.Context.Core.Records.AudienceKey.Equals(object? obj) -> bool
 override Aw.Context.Core.Records.AudienceKey.GetHashCode() -> int
 override Aw.Context.Core.Records.AudienceKey.ToString() -> string!
@@ -9009,6 +9048,12 @@ override Aw.Context.Core.Vectors.VectorMatrix.ToString() -> string!
 static Aw.Context.Core.Audience.AudienceScope.None.get -> Aw.Context.Core.Audience.AudienceScope!
 static Aw.Context.Core.Audience.AudienceScope.operator !=(Aw.Context.Core.Audience.AudienceScope? left, Aw.Context.Core.Audience.AudienceScope? right) -> bool
 static Aw.Context.Core.Audience.AudienceScope.operator ==(Aw.Context.Core.Audience.AudienceScope? left, Aw.Context.Core.Audience.AudienceScope? right) -> bool
+static Aw.Context.Core.Linking.PinAliasSet.Hash(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinAliases!>! pins) -> string!
+static Aw.Context.Core.Linking.PinAliasSet.Of(Aw.Context.Core.Engine.ContextScope! scope) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinAliases!>!>!
+static Aw.Context.Core.Linking.PinLinkCount.operator !=(Aw.Context.Core.Linking.PinLinkCount? left, Aw.Context.Core.Linking.PinLinkCount? right) -> bool
+static Aw.Context.Core.Linking.PinLinkCount.operator ==(Aw.Context.Core.Linking.PinLinkCount? left, Aw.Context.Core.Linking.PinLinkCount? right) -> bool
+static Aw.Context.Core.Linking.RelinkPinAliasesResult.operator !=(Aw.Context.Core.Linking.RelinkPinAliasesResult? left, Aw.Context.Core.Linking.RelinkPinAliasesResult? right) -> bool
+static Aw.Context.Core.Linking.RelinkPinAliasesResult.operator ==(Aw.Context.Core.Linking.RelinkPinAliasesResult? left, Aw.Context.Core.Linking.RelinkPinAliasesResult? right) -> bool
 static Aw.Context.Core.Records.AudienceKey.From(string! value) -> Aw.Context.Core.Records.AudienceKey
 static Aw.Context.Core.Records.AudienceKey.Parse(string! s, System.IFormatProvider? provider) -> Aw.Context.Core.Records.AudienceKey
 static Aw.Context.Core.Records.AudienceKey.TryFrom(string? value, out Aw.Context.Core.Records.AudienceKey vo) -> bool
@@ -10434,3 +10479,51 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Concepts.ConceptRow.Pinned.get -> bool
+Aw.Context.Core.Concepts.ConceptRow.Pinned.init -> void
+Aw.Context.Core.Concepts.ConceptRow.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Concepts.ConceptRow.Aliases.init -> void
+Aw.Context.Core.Concepts.ConceptTermsRow.OwnerTerms.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Concepts.ConceptTermsRow.OwnerTerms.init -> void
+Aw.Context.Core.Concepts.ConceptRead.Pins.get -> Aw.Context.Core.Concepts.PinSet?
+Aw.Context.Core.Concepts.ConceptRead.Pins.init -> void
+Aw.Context.Core.Concepts.PinSet.AliasesIn(System.Collections.Generic.IReadOnlySet<string!>! words) -> System.Collections.Generic.IReadOnlyList<(string! Pin, string! Alias, int Words)>!
+Aw.Context.Core.Concepts.PinSet.ByAlias(string! name) -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Concepts.PinSet.IsPinned(Aw.Context.Core.Graph.NodeKey concept) -> bool
+Aw.Context.Core.Concepts.PinSet.AliasesOf(Aw.Context.Core.Graph.NodeKey concept) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Concepts.PinSet.SummaryOf(Aw.Context.Core.Graph.NodeKey concept) -> string?
+static Aw.Context.Core.Graph.AnchorMatch.AliasLine(Aw.Context.Core.Graph.NodeKey concept, string! alias) -> string!
+Aw.Context.Core.Linking.IIntentStore.ReplaceRuleLinks(Aw.Context.Core.Sources.RecordKey record, Aw.Context.Core.Linking.LinkRule rule, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentLink!>! links, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Context.Core.Linking.LinkRule.Alias = 6 -> Aw.Context.Core.Linking.LinkRule
+Aw.Context.Core.Linking.PinAliases
+static Aw.Context.Core.Linking.PinAliases.Of(System.Collections.Generic.IEnumerable<Aw.Context.Core.Engine.ConceptPin!>! pins) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinAliases!>!
+Aw.Context.Core.Linking.PinAliases.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Linking.PinAliases.Aliases.init -> void
+Aw.Context.Core.Linking.PinAliases.<Clone>$() -> Aw.Context.Core.Linking.PinAliases!
+Aw.Context.Core.Linking.PinAliases.Deconstruct(out Aw.Context.Core.Engine.ConceptId Id, out System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+Aw.Context.Core.Linking.PinAliases.Equals(Aw.Context.Core.Linking.PinAliases? other) -> bool
+Aw.Context.Core.Linking.PinAliases.Id.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Linking.PinAliases.Id.init -> void
+Aw.Context.Core.Linking.PinAliases.PinAliases(Aw.Context.Core.Engine.ConceptId Id, System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+override Aw.Context.Core.Linking.PinAliases.Equals(object? obj) -> bool
+override Aw.Context.Core.Linking.PinAliases.GetHashCode() -> int
+override Aw.Context.Core.Linking.PinAliases.ToString() -> string!
+static Aw.Context.Core.Linking.PinAliases.operator !=(Aw.Context.Core.Linking.PinAliases? left, Aw.Context.Core.Linking.PinAliases? right) -> bool
+static Aw.Context.Core.Linking.PinAliases.operator ==(Aw.Context.Core.Linking.PinAliases? left, Aw.Context.Core.Linking.PinAliases? right) -> bool
+static Aw.Context.Core.Linking.RulesLinker.Aliases(Aw.Context.Core.Sources.RecordKey record, string! text, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinAliases!>! pins) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.IntentLink!>!
+Aw.Context.Core.Map.PageOverlay
+static Aw.Context.Core.Map.PageOverlay.Apply(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> Aw.Context.Core.Graph.GraphSnapshot!
+static Aw.Context.Core.Map.PageOverlay.Without(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
+Aw.Context.Core.Engine.ContextScope.OmitPages.get -> bool
+Aw.Context.Core.Engine.ContextScope.OmitPages.init -> void
+Aw.Context.Core.Graph.IAliasPins
+Aw.Context.Core.Graph.IAliasPins.AliasesIn(System.Collections.Generic.IReadOnlySet<string!>! words) -> System.Collections.Generic.IReadOnlyList<(string! Pin, string! Alias, int Words)>!
+Aw.Context.Core.Graph.IAliasPins.PinByAlias(string! name) -> string?
+Aw.Context.Core.WholeMap.PagesInNoConcept
+static Aw.Context.Core.WholeMap.PagesInNoConcept.Of(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.get -> bool
+Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool
+Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.get -> int
+Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void
