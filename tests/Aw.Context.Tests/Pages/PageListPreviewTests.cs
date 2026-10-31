@@ -181,14 +181,15 @@ public sealed class PageListPreviewTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_block_with_an_unknown_concept_does_not_count_against_the_200_page_cap()
+    public void A_block_with_an_unknown_concept_counts_against_the_200_page_cap()
     {
         var rows = PageListPreview.Of(PageListText.Parse("Home\nPay -> aproval\n\nBilling"), [], _concepts, ownerPages: 199);
 
         Assert.False(rows[0].Ticked);
         Assert.NotNull(rows[0].Page);
-        Assert.True(rows[1].Ticked);
-        Assert.Null(rows[1].Reason);
+        Assert.False(rows[1].Ticked);
+        Assert.Equal("Not added: The profile holds at most 200 pages", rows[1].Reason);
+        Assert.Null(rows[1].Page);
     }
 
     [Fact, Trait("Lane", "unit")]
