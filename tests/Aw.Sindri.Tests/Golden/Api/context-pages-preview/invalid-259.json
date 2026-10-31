@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.1",
+  "title": "SND-CONTEXT-259",
+  "status": 400,
+  "detail": "pages preview: nothing pasted (fix: one page per block: its name, then one action per line)",
+  "traceId": "<trace>"
+}
