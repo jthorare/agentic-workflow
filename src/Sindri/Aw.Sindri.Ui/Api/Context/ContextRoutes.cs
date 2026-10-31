@@ -34,6 +34,11 @@ internal static class ContextRoutes
             parts.Add("draft=true");
         }
 
+        if (query.PagesInNoConcept)
+        {
+            parts.Add("pagesInNoConcept=true");
+        }
+
         Add(parts, "mapVersion", query.MapVersion);
         return With(Root + "/map/whole", parts);
     }
