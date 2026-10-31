@@ -9,6 +9,13 @@ internal sealed partial class FakeSindriApi
     private readonly List<ConceptsQuery> _conceptsAsked = [];
     private readonly List<ConceptGlossaryQuery> _glossaryAsked = [];
     private readonly List<PinSuggestQuery> _pinSuggestAsked = [];
+    private readonly List<PagesQuery> _pagesAsked = [];
+
+    /// <summary>GET /sindri/context/pages's answer per slice asked (a 404 by default: a server without the route).</summary>
+    public Func<PagesQuery, RouteAnswer> ContextPagesAnswer { get; set; } = _ => _notServed;
+
+    /// <summary>The page reads asked, in order.</summary>
+    public IReadOnlyList<PagesQuery> ContextPagesAsked { get { lock (_gate) { return [.. _pagesAsked]; } } }
 
     /// <summary>GET /sindri/context/concepts's answer per page asked (a 404 by default: a server without the route).</summary>
     public Func<ConceptsQuery, RouteAnswer> ContextConceptsAnswer { get; set; } = _ => _notServed;
@@ -41,6 +48,16 @@ internal sealed partial class FakeSindriApi
 
         await WaitFor(ContextConceptsGate, cancellationToken).ConfigureAwait(false);
         return NotReceived<ContextConceptsView>(api) ?? Answer<ContextConceptsView>(api, "/sindri/context/concepts", ContextConceptsAnswer(query));
+    }
+
+    public Task<Result<PagesView>> ContextPages(Uri api, PagesQuery query, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _pagesAsked.Add(query);
+        }
+
+        return Task.FromResult(NotReceived<PagesView>(api) ?? Answer<PagesView>(api, "/sindri/context/pages", ContextPagesAnswer(query)));
     }
 
     public Task<Result<ConceptGlossaryView>> ContextConceptGlossary(Uri api, ConceptGlossaryQuery query, CancellationToken cancellationToken)
