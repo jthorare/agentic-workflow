@@ -26,7 +26,7 @@ internal sealed class ModelLabeler(IModelPort model, IScrubberFactory scrubbers,
         }
 
         var promptBudget = (budget is null ? null : await budget.For(ModelPurpose.Labeling, cancellationToken).ConfigureAwait(false)) ?? PromptBudget.Wide;
-        var candidates = choice is not null && options is { Pick: true } ? options.Candidates : 1;
+        var (candidates, skipped) = await Candidates(options, cancellationToken).ConfigureAwait(false);
         var generated = await new LabelGenerator(model, built.Value.Egress, promptBudget, candidates, scrubLabels: candidates > 1).Generate(clusters, maxTokens, cancellationToken).ConfigureAwait(false);
         if (generated.IsError)
         {
@@ -36,9 +36,24 @@ internal sealed class ModelLabeler(IModelPort model, IScrubberFactory scrubbers,
         // A pass that stopped early (a failed call, no model) has nothing to pick from; the pick step runs only on a whole generate step.
         return candidates > 1 && choice is not null && generated.Value is { Complete: true, Unavailable: null }
             ? await new LabelPicker(choice, built.Value.Egress).Pick(clusters, generated.Value.Named, (generated.Value.Spent, maxTokens), cancellationToken).ConfigureAwait(false)
-            : Named(generated.Value);
+            : Named(generated.Value, quiet: skipped && generated.Value is { Complete: true, Unavailable: null }, clusters.Count);
     }
 
-    private static LabelPass Named(Generated generated) =>
-        new([.. generated.Named.Select(static n => new ClusterLabel(n.Cluster.Id, n.Labels[0]))], generated.Complete, generated.Unavailable) { Spent = generated.Spent };
+    // The port is asked once a pass. With the pick on but no call able to go out (no key), candidates nobody can pick from would cost the model several times the tokens, so it names one label per cluster.
+    private async ValueTask<(int Candidates, bool Skipped)> Candidates(LabelOptions? options, CancellationToken cancellationToken)
+    {
+        if (choice is null || options is not { Pick: true })
+        {
+            return (1, false);
+        }
+
+        return await choice.Unavailable(ChoiceKind.Labeling, cancellationToken).ConfigureAwait(false) is null ? (options.Candidates, false) : (1, true);
+    }
+
+    // A pick that could not be asked reports as it always did: how each label was chosen, and no degradation ('off' and 'no-key' are quiet).
+    private static LabelPass Named(Generated generated, bool quiet, int clusterCount)
+    {
+        var labels = generated.Named.Select(static n => new ClusterLabel(n.Cluster.Id, n.Labels[0])).ToList();
+        return new(labels, generated.Complete, generated.Unavailable) { Spent = generated.Spent, Chosen = quiet ? new LabelHow(0, labels.Count, clusterCount - labels.Count) : null };
+    }
 }

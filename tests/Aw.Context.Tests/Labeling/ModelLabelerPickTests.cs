@@ -226,4 +226,43 @@ public sealed class ModelLabelerPickTests
         Assert.Equal("Tab groups", Assert.Single(pass.Value.Labels).Label);
         Assert.Equal("token-cap", pass.Value.PickUnavailable);
     }
+
+    [Fact]
+    public async Task With_no_key_the_model_is_asked_for_one_label_per_cluster_and_jev_is_not_asked()
+    {
+        var port = new FakeChoicePort { UnavailableReason = ChoiceReasons.NoKey };
+        var model = Model(Labels(0, "Tab groups"), Labels(1, "Split panes"));
+
+        var pass = await Labeler(model, port).Label([Cluster(0), Cluster(1)], [], 1_000_000, _on, Ct);
+
+        var prompt = Assert.Single(model.Requests).Prompt;
+        Assert.DoesNotContain("3 labels", prompt, StringComparison.Ordinal);
+        Assert.Empty(port.Asked);
+        Assert.Equal([(Id(0), "Tab groups"), (Id(1), "Split panes")], pass.Value.Labels.Select(l => (l.Id.Value, l.Label)));
+        Assert.Equal(new LabelHow(Jev: 0, FirstCandidate: 2, FileName: 0), pass.Value.Chosen);
+        Assert.Null(pass.Value.PickUnavailable);   // a pick that has no key is today's behavior, not a degradation
+    }
+
+    [Fact]
+    public async Task A_pick_the_port_says_is_off_is_handled_as_no_key_is()
+    {
+        var port = new FakeChoicePort { UnavailableReason = ChoiceReasons.Off };
+        var model = Model(Labels(0, "Tab groups"));
+
+        var pass = await Labeler(model, port).Label([Cluster(0)], [], 1_000_000, _on, Ct);
+
+        Assert.DoesNotContain("3 labels", Assert.Single(model.Requests).Prompt, StringComparison.Ordinal);
+        Assert.Empty(port.Asked);
+        Assert.Equal("Tab groups", Assert.Single(pass.Value.Labels).Label);
+    }
+
+    [Fact]
+    public async Task The_port_is_asked_once_a_pass_and_not_at_all_when_the_options_say_off()
+    {
+        var port = new FakeChoicePort();
+
+        _ = await Labeler(Model(Labels(0, "Tab groups", "Tabs")), port).Label([Cluster(0)], [], 1_000_000, new LabelOptions(Pick: false, Candidates: 3), Ct);
+
+        Assert.Empty(port.Asked);
+    }
 }

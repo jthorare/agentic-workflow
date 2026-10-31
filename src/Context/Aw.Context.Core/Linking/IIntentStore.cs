@@ -64,6 +64,14 @@ public interface IIntentStore
     /// <returns>Unit, or SND-CONTEXT-004.</returns>
     public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken);
 
+    /// <summary>Replaces one rule's links of a record and nothing else: its other links, extraction state and <see cref="LinkedUnder"/> map version stay as they are (concept pins spec §3.4).</summary>
+    /// <param name="record">The record.</param>
+    /// <param name="rule">The rule whose links are replaced.</param>
+    /// <param name="links">The new links of that rule (all from <paramref name="record"/>, all of <paramref name="rule"/>); empty removes them.</param>
+    /// <param name="cancellationToken">Cancels the write.</param>
+    /// <returns>Unit, or SND-CONTEXT-004.</returns>
+    public ValueTask<Result<Unit>> ReplaceRuleLinks(RecordKey record, LinkRule rule, IReadOnlyList<IntentLink> links, CancellationToken cancellationToken);
+
     /// <summary>Stores a checked pair (a pair is stored once).</summary>
     /// <param name="conflict">The pair and its verdict.</param>
     /// <param name="cancellationToken">Cancels the write.</param>

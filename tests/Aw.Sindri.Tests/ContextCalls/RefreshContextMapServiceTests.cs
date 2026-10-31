@@ -56,6 +56,20 @@ public sealed class RefreshContextMapServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_build_that_returned_an_already_current_version_is_not_cleaned_or_promoted_again()
+    {
+        _engine.Built = new MapBuildReport(new MapVersion(2, ContextRepoName.From("app"), "abc123", KeyVersion: 1, DateTimeOffset.UnixEpoch, MapVersionStatus.Current), [], [], [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true)]);
+
+        var result = await Run();
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Code : null);
+        Assert.Equal(["MapHeads", "BuildMap"], _engine.Log);
+        Assert.Equal(("app", 2, false), (result.Value.Repo, result.Value.Version, result.Value.Held));
+        Assert.Equal([EventTypes.ContextMapBuilt, EventTypes.ContextMapRefreshed], Types());
+        Assert.Equal(["building", "already current"], _progress);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task The_refreshed_event_carries_the_version_the_heads_and_the_cleanup_counts()
     {
         _ = await Run();

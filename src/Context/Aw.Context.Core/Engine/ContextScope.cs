@@ -11,4 +11,7 @@ public sealed record ContextScope(JsonElement? Settings, IReadOnlyList<ContextRe
 {
     /// <summary>The job this call runs for (as the host prints its id), or null when it runs for no job. A call that has to wait behind another names this job in its progress line, so a waiting job doesn't look like it runs.</summary>
     public string? Job { get; init; }
+
+    /// <summary>True to read the map without the owner's named pages laid over it (<see cref="Map.PageOverlay"/>): an export writes the map, never the overlay.</summary>
+    public bool OmitPages { get; init; }
 }

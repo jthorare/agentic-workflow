@@ -36,6 +36,7 @@ internal sealed class FeedDecisions(RecordFeedSync feeds, MapReader graphs, IInt
     internal async ValueTask<AfterTick> For(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, bool reportNoMap, CancellationToken cancellationToken)
     {
         var map = await graphs.ReadWithoutIntent(scope, draft: false, cancellationToken).ConfigureAwait(false);   // no map yet (the first build needs these records): the feeds still sync, the pass waits for one
+        var pins = PinAliases.Of(ScopeRules.Mapped(context.Settings, scope.Repos).SelectMany(r => r.Concepts));   // the pins the build used, so concept:<id> is its node
         return feed =>
         {
             if (map.IsError && reportNoMap && feed.Source != _projects)
@@ -49,7 +50,7 @@ internal sealed class FeedDecisions(RecordFeedSync feeds, MapReader graphs, IInt
                 return null;
             }
 
-            var decisions = new RecordDecisionRun(feed.Source, map.Value, context, (feeds.OwnedRecords(), intents, model, clock));
+            var decisions = new RecordDecisionRun(feed.Source, map.Value, context, (feeds.OwnedRecords(), intents, model, clock), pins);
             return tick => decisions.Execute(tick, cancellationToken);
         };
     }

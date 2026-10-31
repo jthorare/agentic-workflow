@@ -11,6 +11,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
@@ -153,6 +154,9 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) =>
         reads.Heads(scope, cancellationToken);
+
+    public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken) =>
+        reads.RelinkPinAliases(scope, cancellationToken);
 
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         map.Propose(proposal, scope, cancellationToken);
