@@ -7,7 +7,7 @@ internal sealed partial class ConceptLayerViewModel
 {
     private const string OtherKey = "other";
 
-    // Waiting cards first, then pinned cards in profile order, then the cards of removed pins, then the suggestions. Without the pins route the cards are as they were.
+    // Pinned cards in profile order (a pin the map has no node for is a waiting card in its own slot), then the cards of removed pins, then the suggestions. Without the pins route the cards are as they were.
     private void Compose()
     {
         if (_pins is not { } pins || _openPin is null)
@@ -19,34 +19,21 @@ internal sealed partial class ConceptLayerViewModel
 
         var byKey = _all.ToDictionary(t => KeyOf(t.Id), StringComparer.Ordinal);
         var live = pins.Pins.Where(p => !string.Equals(p.State, PinStates.Removing, StringComparison.Ordinal) || byKey.ContainsKey(p.Id)).ToList();
-        var waiting = new List<ConceptTileViewModel>();
         var pinned = new List<ConceptTileViewModel>();
         for (var i = 0; i < live.Count; i++)
         {
             var found = byKey.GetValueOrDefault(live[i].Id);
             var card = PinnedCard(live[i], found, [.. live.Take(i)], pins.Rebuild);
-            Place(waiting, pinned, found, live[i], card);
+            pinned.Add(found is null ? WaitingCard(live[i], card) : found.WithCard(card));
         }
 
         var claimed = live.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
-        var waitingNames = waiting.Select(t => t.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var waitingNames = pinned.Where(t => t.Card.Waiting).Select(t => t.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var others = _all.Where(t => !claimed.Contains(KeyOf(t.Id))).ToList();
         var removed = others.Where(t => t.IsSetByPerson && !IsOther(t)).Select(t => t.WithCard(RemovedCard(t, pins.Rebuild))).ToList();
         var suggested = others.Where(t => !t.IsSetByPerson && !waitingNames.Contains(t.Name)).Select(Suggested);
-        Composed = [.. waiting, .. pinned, .. removed, .. suggested];
-        PinHeadText = pinned.Count + waiting.Count + removed.Count == 0 ? Labels.PinNoPinsYet : Coverage(pinned);
-    }
-
-    private static void Place(List<ConceptTileViewModel> waiting, List<ConceptTileViewModel> pinned, ConceptTileViewModel? found, PinView pin, PinCardState card)
-    {
-        if (found is null)
-        {
-            waiting.Add(WaitingCard(pin, card));
-        }
-        else
-        {
-            pinned.Add(found.WithCard(card));
-        }
+        Composed = [.. pinned, .. removed, .. suggested];
+        PinHeadText = pinned.Count + removed.Count == 0 ? Labels.PinNoPinsYet : Coverage([.. pinned.Where(t => !t.Card.Waiting)]);
     }
 
     private PinCardState PinnedCard(PinView pin, ConceptTileViewModel? found, IReadOnlyList<PinView> earlier, MapRebuildView rebuild)

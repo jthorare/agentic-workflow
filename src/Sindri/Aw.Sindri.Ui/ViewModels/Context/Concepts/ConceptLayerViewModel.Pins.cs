@@ -89,7 +89,7 @@ internal sealed partial class ConceptLayerViewModel
 
     /// <summary>Pin this: hands the shell the derived card.</summary>
     /// <param name="tile">The card.</param>
-    internal void PinThis(ConceptTileViewModel tile) => Open(new PinSheetOpen(_repo(), tile, Pin: null, PinList));
+    internal void PinThis(ConceptTileViewModel tile) => Open(new PinSheetOpen(_repo(), tile, Pin: null, PinList, Concepts: Composed));
 
     /// <summary>Edit pin: hands the shell the card's pin.</summary>
     /// <param name="tile">The card.</param>
@@ -98,15 +98,15 @@ internal sealed partial class ConceptLayerViewModel
         ArgumentNullException.ThrowIfNull(tile);
         if (tile.Card.Pin is { } pin)
         {
-            Open(new PinSheetOpen(_repo(), Card: null, pin, PinList));
+            Open(new PinSheetOpen(_repo(), Card: null, pin, PinList, Concepts: Composed));
         }
     }
 
     /// <summary>New pin: the sheet from nothing.</summary>
-    internal void NewPin() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList));
+    internal void NewPin() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Concepts: Composed));
 
     /// <summary>Add several: the sheet for a list.</summary>
-    internal void AddSeveral() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Several: true));
+    internal void AddSeveral() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Several: true, Concepts: Composed));
 
     /// <summary>The footer button of a card.</summary>
     /// <param name="tile">The card.</param>

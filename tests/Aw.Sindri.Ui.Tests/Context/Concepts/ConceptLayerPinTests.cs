@@ -77,17 +77,40 @@ public sealed class ConceptLayerPinTests
     }
 
     [Fact]
-    public void A_pin_with_no_node_in_the_map_is_a_waiting_card_at_the_head_of_the_pinned_cards()
+    public void A_pin_with_no_node_in_the_map_is_a_waiting_card_in_its_own_profile_order_slot()
     {
         var layer = Layer(
             [AConcepts.Concept("concept:billing", "Billing", source: "override"), AConcepts.Concept("concept:auth", "Auth")],
             pins: Pins(rebuild: null, Pin("billing", "Billing"), Pin("refunds", "Refunds", PinStates.Waiting)));
 
-        var waiting = layer.Tiles[0];
-        Assert.Equal(["Refunds", "Billing", "Auth"], [.. layer.Tiles.Select(t => t.Name)]);
+        var waiting = layer.Tiles[1];
+        Assert.Equal(["Billing", "Refunds", "Auth"], [.. layer.Tiles.Select(t => t.Name)]);
         Assert.Equal(("Set by a person", "PinCard.refunds", "def of Refunds"), (waiting.MarkText, waiting.AutomationId, waiting.Summary));
         Assert.Equal(["word"], waiting.Terms);
         Assert.Equal(["Pinned, not approved yet", "Other changes are waiting, so this needs your review."], waiting.Lines);
+    }
+
+    [Fact]
+    public void A_waiting_card_sits_between_the_pinned_cards_where_the_real_card_will()
+    {
+        var layer = Layer(
+            [AConcepts.Concept("concept:auth", "Auth", source: "override"), AConcepts.Concept("concept:notify", "Notify", source: "override")],
+            pins: Pins(rebuild: null, Pin("auth", "Auth"), Pin("billing", "Billing", PinStates.Waiting), Pin("notify", "Notify")));
+
+        Assert.Equal(["Auth", "Billing", "Notify"], [.. layer.Tiles.Select(t => t.Name)]);
+        Assert.Equal([false, true, false], [.. layer.Tiles.Select(t => t.Card.Waiting)]);
+    }
+
+    [Fact]
+    public void Every_sheet_the_layer_opens_carries_its_cards_for_the_match_picker()
+    {
+        List<PinSheetOpen> opened = [];
+        var layer = Layer([AConcepts.Concept("concept:auth", "Auth")], opened, Pins());
+
+        layer.NewPin();
+        layer.AddSeveral();
+
+        Assert.All(opened, o => Assert.Equal(["Auth"], [.. o.Concepts!.Select(t => t.Name)]));
     }
 
     [Fact]
