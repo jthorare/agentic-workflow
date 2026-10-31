@@ -109,6 +109,7 @@ internal static class EndpointTable
     {
         _ = queries.MapExportContextMap().MapGetIndexStatus();
         _ = queries.MapGetContextConcepts();
+        _ = queries.MapGetContextPages();
         _ = queries.MapGetContextConceptMembers();
         _ = queries.MapGetContextConceptGlossary();
         _ = queries.MapExportContextReview();
