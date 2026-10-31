@@ -23,12 +23,12 @@ internal sealed partial class QueryPipeline
     {
         var plain = RankFusion.Fuse(answers);
         var pins = ranker.Graph.Pins;
-        if (!ranker.Plan.PinLeg || pins.Scope is not null || pins.AnchorPins.Count != 1)
+        if (!ranker.Plan.PinLeg || pins.Scope is not null || pins.SoleAnchorPin is not { } anchorPin)
         {
             return plain;
         }
 
-        var scope = pins.Pins.Scope(pins.AnchorPins[0].Value, ranker.Graph.MapVersion ?? string.Empty);
+        var scope = pins.Pins.Scope(anchorPin.Value, ranker.Graph.MapVersion ?? string.Empty);
         if (scope.IsError)
         {
             return plain;

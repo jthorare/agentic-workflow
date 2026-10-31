@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Context.Core.Eval.Backtest;
 
 /// <summary>One arm's row in a report.</summary>
@@ -8,4 +10,9 @@ namespace Aw.Context.Core.Eval.Backtest;
 /// <param name="Score">The arm's means; null when it did not run.</param>
 /// <param name="PassLine">The arm against the §9.4 bars; null when it did not run.</param>
 /// <param name="Samples">Each sample's score on this arm.</param>
-public sealed record ArmReport(string Arm, string Dimension, bool Leaky, string? NotAvailable, ArmScore? Score, ArmPassLine? PassLine, IReadOnlyList<SampleScore> Samples);
+public sealed record ArmReport(string Arm, string Dimension, bool Leaky, string? NotAvailable, ArmScore? Score, ArmPassLine? PassLine, IReadOnlyList<SampleScore> Samples)
+{
+    /// <summary>The scores over only the pin-anchored questions; null on a source arm and when no question was pin-anchored.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public PinAnchoredScore? PinAnchored { get; init; }
+}
