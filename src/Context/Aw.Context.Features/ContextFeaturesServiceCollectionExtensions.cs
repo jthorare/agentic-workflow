@@ -50,6 +50,7 @@ using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
+using Aw.Context.Features.GetPageFacts;
 using Aw.Context.Features.GetPages;
 using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.GetProposals;
@@ -212,6 +213,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetConceptsRequest, ConceptsView>, GetConceptsService>()
         .AddScoped<IService<GetPagesRequest, PagesView>, GetPagesService>()
         .AddScoped<IService<CheckPagesRequest, MapHealth>, CheckPagesService>()
+        .AddScoped<IService<GetPageFactsRequest, PageMapFacts>, GetPageFactsService>()
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
         .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
         .AddScoped<ConceptReader>()

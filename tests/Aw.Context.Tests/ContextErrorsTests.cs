@@ -29,6 +29,10 @@ public sealed class ContextErrorsTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void An_unknown_page_concept_or_a_stale_page_key_at_write_is_attention() =>
+        Assert.All([ContextErrors.PageConceptUnknown, ContextErrors.PageKeyUnknown], e => Assert.Contains(e.Code, ContextErrors.Attention));
+
+    [Fact, Trait("Lane", "unit")]
     public void The_S5B_sync_codes_are_056_to_059_and_a_running_or_unknown_sync_is_attention()
     {
         Assert.Equal(["SND-CONTEXT-056", "SND-CONTEXT-057", "SND-CONTEXT-058", "SND-CONTEXT-059"],
