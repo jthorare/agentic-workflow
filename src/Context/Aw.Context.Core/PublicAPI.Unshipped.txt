@@ -7308,6 +7308,8 @@ Aw.Context.Core.Graph.NodeFact.Repo.get -> string?
 Aw.Context.Core.Graph.NodeFact.Repo.init -> void
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.get -> string?
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Owner.get -> bool
+Aw.Context.Core.WholeMap.WholeMapNode.Owner.init -> void
 Aw.Context.Core.Lenses.LensBasis.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!
 Aw.Context.Core.Lenses.LensBasis.Repos.init -> void
 Aw.Context.Core.Lenses.LensBasis.MapRepo.get -> string?
@@ -10713,6 +10715,8 @@ Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool
 Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.init -> void
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.get -> int
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Pages.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.WholeMap.WholeMapView.Pages.init -> void
 static Aw.Context.Core.Graph.EntryKey.Normalized(string! key) -> string!
 Aw.Context.Core.Engine.PageFacts.Stored.get -> System.Func<string!, string!>?
 Aw.Context.Core.Engine.PageFacts.Stored.init -> void

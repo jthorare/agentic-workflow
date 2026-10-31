@@ -53,19 +53,34 @@ internal static class ConceptScope
         return all;
     }
 
+    /// <summary>The concept's pages in the Pages section's order, at most 200: the pages that express it and the pages of the actions that do.</summary>
+    /// <param name="index">The map's concepts.</param>
+    /// <param name="edges">The map's edges.</param>
+    /// <param name="concept">The concept's key.</param>
+    /// <returns>The page keys, owner-named first.</returns>
+    internal static List<string> Pages(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept)
+    {
+        var (sources, on) = Expressing(index, edges, concept);
+        var pages = sources.Where(k => index.Known[k].Key.Kind == NodeKind.Surface).Concat(sources.Where(k => index.Known[k].Key.Kind == NodeKind.Action).SelectMany(k => on[k]))
+            .Where(k => index.Known[k].Key.Kind == NodeKind.Surface).Distinct(StringComparer.Ordinal).Select(k => index.Known[k]);
+        return [.. PageOrder.Of(pages, edges).Take(PageCap)];
+    }
+
+    // The nodes that express the concept, and each action's pages.
+    private static (HashSet<string> Sources, ILookup<string, string> On) Expressing(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept) =>
+        (edges.Where(e => e.Type == EdgeType.Expresses && e.To.Value == concept && index.Known.ContainsKey(e.From.Value)).Select(e => e.From.Value).ToHashSet(StringComparer.Ordinal),
+         edges.Where(e => e.Type == EdgeType.On && e.From.Kind == NodeKind.Action && index.Known.ContainsKey(e.To.Value)).ToLookup(e => e.From.Value, e => e.To.Value, StringComparer.Ordinal));
+
     // The second root set: the actions that express the concept and the pages they are on, then every action on a kept page; its own cap, so a big closure does not cut it.
     private static void AddExpressed(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept, HashSet<string> all)
     {
-        var sources = edges.Where(e => e.Type == EdgeType.Expresses && e.To.Value == concept && index.Known.ContainsKey(e.From.Value)).Select(e => e.From.Value).ToHashSet(StringComparer.Ordinal);
+        var (sources, on) = Expressing(index, edges, concept);
         if (sources.Count == 0)
         {
             return;
         }
 
-        var on = edges.Where(e => e.Type == EdgeType.On && e.From.Kind == NodeKind.Action && index.Known.ContainsKey(e.To.Value)).ToLookup(e => e.From.Value, e => e.To.Value, StringComparer.Ordinal);
-        var pages = sources.Where(k => index.Known[k].Key.Kind == NodeKind.Surface).Concat(sources.Where(k => index.Known[k].Key.Kind == NodeKind.Action).SelectMany(k => on[k]))
-            .Where(k => index.Known[k].Key.Kind == NodeKind.Surface).Distinct(StringComparer.Ordinal).Select(k => index.Known[k]);
-        var kept = PageOrder.Of(pages, edges).Take(PageCap).ToHashSet(StringComparer.Ordinal);
+        var kept = Pages(index, edges, concept).ToHashSet(StringComparer.Ordinal);
         foreach (var page in kept)
         {
             _ = all.Add(page);
