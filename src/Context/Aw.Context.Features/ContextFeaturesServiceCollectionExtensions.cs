@@ -48,6 +48,7 @@ using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
+using Aw.Context.Features.GetPinSuggest;
 using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.GetProposals;
 using Aw.Context.Features.GetScopeGraph;
@@ -209,6 +210,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<GetConceptsRequest, ConceptsView>, GetConceptsService>()
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
         .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
+        .AddScoped<IService<GetPinSuggestRequest, PinSuggestView>, GetPinSuggestService>()
         .AddScoped<ConceptReader>()
         .AddSingleton<WholeMapCache>()
         .AddScoped<IService<SearchMapRequest, MapSearchView>, SearchMapService>()

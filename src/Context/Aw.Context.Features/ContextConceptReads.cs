@@ -4,6 +4,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Features.GetConceptGlossary;
 using Aw.Context.Features.GetConceptMembers;
 using Aw.Context.Features.GetConcepts;
+using Aw.Context.Features.GetPinSuggest;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 
@@ -13,7 +14,8 @@ namespace Aw.Context.Features;
 internal sealed class ContextConceptReads(
     IService<GetConceptsRequest, ConceptsView> concepts,
     IService<GetConceptMembersRequest, ConceptMembersView> members,
-    IService<GetConceptGlossaryRequest, ConceptGlossaryView> glossary) : IContextConcepts
+    IService<GetConceptGlossaryRequest, ConceptGlossaryView> glossary,
+    IService<GetPinSuggestRequest, PinSuggestView> pinSuggest) : IContextConcepts
 {
     public ValueTask<Result<ConceptsView>> Concepts(ConceptsQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         concepts.Handle(new GetConceptsRequest(query, scope), cancellationToken);
@@ -23,4 +25,7 @@ internal sealed class ContextConceptReads(
 
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         glossary.Handle(new GetConceptGlossaryRequest(query, scope), cancellationToken);
+
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        pinSuggest.Handle(new GetPinSuggestRequest(query, scope), cancellationToken);
 }

@@ -214,6 +214,9 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         inner.ConceptGlossary(query, scope, cancellationToken);
 
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        inner.PinSuggest(query, scope, cancellationToken);
+
     public ValueTask<Result<MapHealth>> CheckMap(ContextScope? scope, CancellationToken cancellationToken) => inner.CheckMap(scope, cancellationToken);
 
     public ValueTask<Result<MapChecksView>> MapStructure(MapChecksSource source, IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken) => inner.MapStructure(source, progress, scope, cancellationToken);

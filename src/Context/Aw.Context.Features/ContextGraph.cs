@@ -89,4 +89,7 @@ internal sealed class ContextGraph(
 
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         codeHistory.ConceptGlossary(query, scope, cancellationToken);
+
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        codeHistory.PinSuggest(query, scope, cancellationToken);
 }

@@ -210,4 +210,7 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         graph.ConceptGlossary(query, scope, cancellationToken);
+
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        graph.PinSuggest(query, scope, cancellationToken);
 }
