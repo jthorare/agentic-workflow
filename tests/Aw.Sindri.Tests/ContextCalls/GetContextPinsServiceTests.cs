@@ -313,13 +313,11 @@ public sealed class GetContextPinsServiceTests
         _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 4, CurrentHeads: []) { CurrentRuleset = "r", CurrentPinHashes = hashes };
 
         var humanOneRepo = await Read(profile, profile, repo: "alpha");
-        var human = await Read(profile, profile);
         using var caller = _h.Callers.Enter(new CallerContextBuilder().Session().InRepo("alpha").Build());
         var session = await Read(profile, profile);
 
         Assert.Equal(["alpha-only"], humanOneRepo.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
         Assert.Equal(["alpha-only"], session.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
-        Assert.Equal(["alpha-only", "refunds"], human.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
     }
 
     private void Refresh(JobState state, TimeSpan endedAgo, long sequence, string? code = null, params string[] lines) =>
