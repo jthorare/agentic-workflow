@@ -86,7 +86,22 @@ internal sealed class RunServiceService(IEnumerable<IScheduledService> scheduled
         }
         catch (Exception e) when (e is not OperationCanceledException && !cancellationToken.IsCancellationRequested)   // boundary: whatever the service throws is a failed run, as the scheduler's
         {
-            return SindriErrors.ServiceFailed.With(e.Message);
+            return SindriErrors.ServiceFailed.With($"{e.Message} ({e.GetType().Name} at {ThrownBy(e)})");
         }
+    }
+
+    /// <summary>The method that threw, as Type.Method: no file paths, nothing from the exception's data. An async method's compiler-made state machine reads as the method it belongs to.</summary>
+    private static string ThrownBy(Exception e)
+    {
+        if (new System.Diagnostics.StackTrace(e).GetFrame(0) is not { } frame || System.Diagnostics.DiagnosticMethodInfo.Create(frame) is not { } method)
+        {
+            return "unknown";
+        }
+
+        var type = (method.DeclaringTypeName ?? string.Empty).Split('+');
+        var machine = type.Length > 1 && type[^1].StartsWith('<') && type[^1].IndexOf('>', StringComparison.Ordinal) is > 1;
+        var owner = type[machine ? ^2 : ^1];
+        var name = machine ? type[^1][1..type[^1].IndexOf('>', StringComparison.Ordinal)] : method.Name;   // <Run>d__3 -> Run
+        return $"{owner[(owner.LastIndexOf('.') + 1)..]}.{name}";
     }
 }
