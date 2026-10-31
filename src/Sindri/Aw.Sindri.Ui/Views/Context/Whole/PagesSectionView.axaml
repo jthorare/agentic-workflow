@@ -45,9 +45,10 @@
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="vm:PageActionRowViewModel">
                         <WrapPanel>
-                          <Button Click="OnAction" Padding="0,1" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{Binding RowName}">
+                          <Button Click="OnAction" IsVisible="{Binding Opens}" Padding="0,1" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{Binding RowName}">
                             <TextBlock Classes="body" Text="{Binding Name}" TextDecorations="Underline" />
                           </Button>
+                          <TextBlock Classes="body" Text="{Binding Name}" IsVisible="{Binding !Opens}" Margin="0,1,0,0" VerticalAlignment="Center" />
                           <TextBlock Classes="body subtle" Text="{Binding Detail}" Margin="4,1,0,0" TextWrapping="Wrap" VerticalAlignment="Center" />
                         </WrapPanel>
                       </DataTemplate>

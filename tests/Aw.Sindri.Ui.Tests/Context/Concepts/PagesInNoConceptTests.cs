@@ -63,6 +63,16 @@ public sealed class PagesInNoConceptTests
     }
 
     [Fact]
+    public async Task Over_the_pages_in_no_concept_an_action_name_is_plain_text()
+    {
+        var page = await ConceptPage.Shown(Serving(3));
+
+        await page.OpenNoConcept(Token);
+
+        Expect.True(page.NoConceptPages.Rows.SelectMany(static r => r.Actions).All(static a => !a.Opens));
+    }
+
+    [Fact]
     public async Task A_failed_read_says_so_and_Try_again_reads_again()
     {
         var api = Serving(3);

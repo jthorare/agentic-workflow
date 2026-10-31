@@ -22,7 +22,6 @@ internal sealed partial class ContextPage : UserControl
     {
         InitializeComponent();
         ContextStack.Canvas.EmptyClicked += (_, _) => _page?.CloseInspector();   // a click on the empty canvas closes the inspector
-        NoConceptPages.ActionChosen += (_, e) => _ = _page?.Pick(e.Key);   // an action's name opens its neighbourhood; back returns to the list
         NoConceptPages.RetryRequested += (_, _) => _ = _page?.OpenNoConcept();
         NoConceptPages.CloseRequested += (_, _) =>
         {

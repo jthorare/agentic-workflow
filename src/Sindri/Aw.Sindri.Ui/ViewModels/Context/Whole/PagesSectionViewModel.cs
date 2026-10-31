@@ -78,7 +78,8 @@ internal sealed class PagesSectionViewModel : ObservableObject
     internal void Show(WholeMapView answer, string? concept = null, bool noConcept = false)
     {
         ArgumentNullException.ThrowIfNull(answer);
-        _all = PageRows.Of(answer, concept);
+        var rows = PageRows.Of(answer, concept);
+        _all = noConcept ? [.. rows.Select(static r => r with { Actions = [.. r.Actions.Select(static a => a with { Opens = false })] })] : rows;
         (CanClose, _showingAll, IsLoading, IsFailed) = (noConcept, false, false, false);
         Changed();
     }
