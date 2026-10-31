@@ -11,6 +11,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
 {
     private readonly IPageWrites _writes;
     private readonly string? _repo;
+    private readonly IReadOnlyList<ConceptChoice> _known;
     private ProfileWaiting? _waiting;
     private string? _hash;
     private string _initialTicks = string.Empty;
@@ -19,10 +20,11 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     /// <summary>Builds a sheet that has read nothing yet.</summary>
     /// <param name="writes">Where the list is read and the pages are written.</param>
     /// <param name="repo">The repo to read the list for, or null.</param>
-    internal AddSeveralPagesViewModel(IPageWrites writes, string? repo)
+    /// <param name="known">The concepts a row can pick for a concept name that matched none, in the Context page's order.</param>
+    internal AddSeveralPagesViewModel(IPageWrites writes, string? repo, IReadOnlyList<ConceptChoice>? known = null)
     {
         ArgumentNullException.ThrowIfNull(writes);
-        (_writes, _repo) = (writes, repo);
+        (_writes, _repo, _known) = (writes, repo, known ?? []);
     }
 
     /// <summary>Raised once the pages are written: the section reads again.</summary>
@@ -173,7 +175,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     private void Fill(Api.Context.PagesPreview preview, string text)
     {
         (_hash, _readText) = (preview.ProfileHash, text);
-        Rows = [.. preview.Blocks.Select(static b => new AddSeveralPagesRowViewModel(b))];
+        Rows = [.. preview.Blocks.Select(b => new AddSeveralPagesRowViewModel(b, _known))];
         foreach (var row in Rows)
         {
             row.PropertyChanged += (_, _) => ChangedSave();

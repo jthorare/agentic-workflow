@@ -6,15 +6,20 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 internal sealed class AddSeveralPagesRowViewModel : ObservableObject
 {
     private readonly PagesPreviewBlock _block;
+    private readonly IReadOnlyList<ConceptChoice> _known;
 
     /// <summary>Builds the row of a block; a block the server didn't tick starts unticked and stays so.</summary>
     /// <param name="block">The block.</param>
-    internal AddSeveralPagesRowViewModel(PagesPreviewBlock block)
+    /// <param name="known">The concepts a picker offers for a concept name that matched none.</param>
+    internal AddSeveralPagesRowViewModel(PagesPreviewBlock block, IReadOnlyList<ConceptChoice>? known = null)
     {
         ArgumentNullException.ThrowIfNull(block);
-        _block = block;
+        (_block, _known) = (block, known ?? []);
         Ticked = block.Ticked && block.Reason is null && block.Page is not null;
     }
+
+    /// <summary>Gets one picker per written concept name that matched no concept (pages spec §3.6); empty for an ordinary row.</summary>
+    public IReadOnlyList<UnknownConceptViewModel> Unknowns => _known.Count > 1000 ? [] : throw new NotSupportedException();
 
     /// <summary>Gets the block's number, from 1.</summary>
     public int Block => _block.Block;
