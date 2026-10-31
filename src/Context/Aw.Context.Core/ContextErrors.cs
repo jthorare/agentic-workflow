@@ -6,7 +6,7 @@ namespace Aw.Context.Core;
 /// The context engine's error catalogue (spec §8.6), codes SND-CONTEXT-NNN. Stage S-1A owns 001–019 and defines 020
 /// (the session gate, spec §3); S-3a adds 030–034 (the map file and its store); S-3b adds 035–038 (the probe runner and anchors; 039 is reserved); S-4 adds 040 and 042–048 (041 stays retired, 049 is reserved); S-7A adds 080–083 (backtest; 084–086 reserved for review findings); S-5A/B own 050–069 (050–055 are
 /// retired with the old intent source); later stages
-/// add theirs in their ranges; the pages spec books 250–259 (250–258 used: unknown concept, unknown key, repo, caps, duplicate ids, names, action spec, no such page, no such concept or repo for context_pages). HTTP status follows the kind; the CLI exit code is 1 for attention (<see cref="Attention"/>) and 2 for a tool error.
+/// add theirs in their ranges; the pages spec books 250–259 (all used: unknown concept, unknown key, repo, caps, duplicate ids, names, action spec, no such page, no such concept or repo for context_pages, a pasted page list that is empty or too long). HTTP status follows the kind; the CLI exit code is 1 for attention (<see cref="Attention"/>) and 2 for a tool error.
 /// </summary>
 public static partial class ContextErrors
 {
@@ -267,6 +267,9 @@ public static partial class ContextErrors
     /// <summary>SND-CONTEXT-258: an unknown concept or repo in context_pages.</summary>
     public static readonly ErrorDefinition PageQueryUnknown = new("SND-CONTEXT-258", ErrorKind.NotFound, "context_pages names no such concept or repo");
 
+    /// <summary>SND-CONTEXT-259: a pasted page list that is empty, or over 65,536 UTF-8 bytes.</summary>
+    public static readonly ErrorDefinition PagePreviewInvalid = new("SND-CONTEXT-259", ErrorKind.Invalid, "A pasted page list is empty or too long");
+
     /// <summary>Every Context error, for ErrorCatalogue.Validate. Built on first use: the pin write's codes live in another part of this class, and fields of different parts initialize in no fixed order.</summary>
     public static IReadOnlyList<ErrorDefinition> All => field ??=
         [SettingsInvalid, RecordBatchInvalid, EmbedderUnavailable, VectorScanInvalid, SourceNotConfigured, UnknownAnchor, StoreUnavailable, PathInWorktree, QueryInvalid, SourceUnavailable, AllSourcesUnavailable, SessionsDisabled,
@@ -275,7 +278,7 @@ public static partial class ContextErrors
          HeavyLockBusy, LabelingUnavailable, ReviewFileNoMatch, NoDraftMap, RepoOutsideScope, PromoteRefused, ReviewTargetStale, ExtractionUnreadable,
          LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
          NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph, PinUnknown, NoPins, PinNewerThanMap, PinNeedsMap,
-         PageConceptUnknown, PageKeyUnknown, PageRepoAmbiguous, PageOverCap, PageIdDuplicate, PageNameInvalid, PageActionSpecInvalid, PageNotFound, PageQueryUnknown,
+         PageConceptUnknown, PageKeyUnknown, PageRepoAmbiguous, PageOverCap, PageIdDuplicate, PageNameInvalid, PageActionSpecInvalid, PageNotFound, PageQueryUnknown, PagePreviewInvalid,
          PinInvalid, PinFeatureUnknown, PinIdClash, PinNotInProfile, PinHasFolderRules, PinInRepoProfile, PinLineUnreadable, PinSuggestInvalid];
 
     /// <summary>

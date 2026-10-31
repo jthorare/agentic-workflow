@@ -1,0 +1,79 @@
+{
+  "mapVersion": "v1",
+  "profileHash": "<hash>",
+  "blocks": [
+    {
+      "block": 1,
+      "line": 1,
+      "name": "Schedule week",
+      "match": {
+        "key": "surface:route/GET:/schedule/week",
+        "id": "schedule-week",
+        "name": "Schedule week",
+        "actions": 2
+      },
+      "replaces": null,
+      "sameAs": null,
+      "ticked": true,
+      "reason": null,
+      "actions": [
+        {
+          "name": "Submit",
+          "match": {
+            "key": "action:weekpage.submit",
+            "name": "submit"
+          },
+          "concepts": [
+            {
+              "written": "Self-scheduling",
+              "id": "self-scheduling"
+            }
+          ]
+        }
+      ],
+      "unknownConcepts": [],
+      "page": {
+        "id": null,
+        "name": "Schedule week",
+        "repo": "aw-split-panes",
+        "surface": "surface:route/GET:/schedule/week",
+        "actions": [
+          {
+            "id": null,
+            "name": "Submit",
+            "action": "action:weekpage.submit",
+            "concepts": [
+              "self-scheduling"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "block": 2,
+      "line": 4,
+      "name": "Billing",
+      "match": null,
+      "replaces": null,
+      "sameAs": null,
+      "ticked": false,
+      "reason": "No concept called \"aproval\": pick one",
+      "actions": [
+        {
+          "name": "Send invoice",
+          "match": null,
+          "concepts": [
+            {
+              "written": "aproval",
+              "id": null
+            }
+          ]
+        }
+      ],
+      "unknownConcepts": [
+        "aproval"
+      ],
+      "page": null
+    }
+  ]
+}
