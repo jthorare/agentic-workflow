@@ -167,7 +167,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
     }
 
     /// <summary>The launches that have a session home: a live Seatbelt launch has one until its release, before any capture or session-id file exists.</summary>
-    private List<LaunchId> SessionHomeLaunches()
+    public IReadOnlyList<LaunchId> SessionHomeLaunches()
     {
         if (options.SindriHome is not { } home || !Directory.Exists(SessionHomePaths.Sessions(home)))
         {

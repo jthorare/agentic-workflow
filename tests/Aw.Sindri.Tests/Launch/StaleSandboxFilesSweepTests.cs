@@ -131,6 +131,28 @@ public sealed class StaleSandboxFilesSweepTests : IDisposable
     }
 
     [Fact]
+    public void An_old_session_home_only_launch_is_listed_and_kept_when_live_and_removed_with_its_folder_when_dead()
+    {
+        var sindriHome = Path.Combine(_home, "sindri");
+        foreach (var launch in new[] { Alive, Dead })
+        {
+            var sessionHome = Path.Combine(SessionHomePaths.Sessions(sindriHome), launch.Value);
+            _ = Directory.CreateDirectory(sessionHome);
+            Directory.SetLastWriteTimeUtc(sessionHome, KnownInstants.Epoch.UtcDateTime);
+            _ = MakeTemp(launch);
+        }
+
+        var store = new LaunchFileStore(new LauncherOptions(_home) { SindriHome = sindriHome }, new StaleSweepSeams(Mac: true, TempRoot: _tmp, Owned: static _ => true, Alive: static _ => false));
+        Assert.Equal([Alive, Dead], [.. store.SessionHomeLaunches().Order(Comparer<LaunchId>.Create(static (x, y) => string.CompareOrdinal(x.Value, y.Value)))]);   // Launches() stays files only
+        Assert.Empty(store.Launches());
+
+        _ = Sweep(store, Alive);
+
+        Assert.True(Directory.Exists(Path.Combine(SessionHomePaths.Sessions(sindriHome), Alive.Value)) && Directory.Exists(TempOf(Alive)));
+        Assert.False(Directory.Exists(Path.Combine(SessionHomePaths.Sessions(sindriHome), Dead.Value)) || Directory.Exists(TempOf(Dead)));
+    }
+
+    [Fact]
     public void A_freshly_prepared_launchs_temp_folder_stays_until_it_is_older_than_the_limit()
     {
         var fresh = MakeTemp(Dead);
