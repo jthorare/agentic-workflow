@@ -1,0 +1,59 @@
+using Avalonia.Controls;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Threading;
+using Avalonia.VisualTree;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
+
+namespace Aw.Sindri.Ui.Views.Context.Whole;
+
+/// <summary>The Pages and actions section (pages spec §3.4, §3.6 "Keyboard"), bound to a <see cref="PagesSectionViewModel"/>: its host answers an action's name, Try again and close.</summary>
+internal sealed partial class PagesSectionView : UserControl
+{
+    /// <summary>Builds the section.</summary>
+    public PagesSectionView()
+    {
+        InitializeComponent();
+    }
+
+    /// <summary>An action's name was pressed.</summary>
+    internal event EventHandler<PageActionChosenEventArgs>? ActionChosen;
+
+    /// <summary>Try again was pressed.</summary>
+    internal event EventHandler? RetryRequested;
+
+    /// <summary>The close button was pressed.</summary>
+    internal event EventHandler? CloseRequested;
+
+    /// <summary>Moves focus to the section's head.</summary>
+    internal void FocusHead() => _ = PagesHead.Focus(NavigationMethod.Tab);
+
+    private void OnAction(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: PageActionRowViewModel row })
+        {
+            ActionChosen?.Invoke(this, new PageActionChosenEventArgs(row.Key));
+        }
+    }
+
+    // Try again reads the pages again; focus goes to the section head.
+    private void OnRetry(object? sender, RoutedEventArgs e)
+    {
+        RetryRequested?.Invoke(this, EventArgs.Empty);
+        FocusHead();
+    }
+
+    private void OnClose(object? sender, RoutedEventArgs e) => CloseRequested?.Invoke(this, EventArgs.Empty);
+
+    // Show all lists the rest; focus goes to the first newly shown row.
+    private void OnShowAll(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is not PagesSectionViewModel pages)
+        {
+            return;
+        }
+
+        pages.ShowAll();
+        Dispatcher.UIThread.Post(() => _ = PagesRows.ContainerFromIndex(PagesSectionViewModel.Cap)?.GetVisualDescendants().OfType<Button>().FirstOrDefault()?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
+    }
+}

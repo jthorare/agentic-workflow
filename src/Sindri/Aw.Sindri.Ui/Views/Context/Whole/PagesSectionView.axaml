@@ -1,0 +1,66 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Context.Whole"
+             x:Class="Aw.Sindri.Ui.Views.Context.Whole.PagesSectionView"
+             x:DataType="vm:PagesSectionViewModel">
+  <!-- The Pages and actions section (pages spec §3.4, mockup section A): a concept's pages in its Why drill, or the pages in no concept over the concept cards (with a close button). -->
+  <Border Width="440" Padding="14,12"
+          Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
+          AutomationProperties.Name="{Binding Head}">
+    <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
+      <Grid ColumnDefinitions="*,Auto">
+        <TextBlock x:Name="PagesHead" Classes="body-strong" Text="{Binding Head}" Focusable="True" VerticalAlignment="Center" AutomationProperties.Name="{Binding Head}" />
+        <Button x:Name="PagesClose" Grid.Column="1" Content="×" IsVisible="{Binding CanClose}" Click="OnClose" Padding="6,0" Background="Transparent" BorderThickness="0"
+                AutomationProperties.Name="{Binding CloseText}" ToolTip.Tip="{Binding CloseText}" />
+      </Grid>
+      <StackPanel Grid.Row="1" Spacing="4">
+        <TextBlock x:Name="PagesStatus" Classes="caption subtle" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" AutomationProperties.LiveSetting="Polite" />
+        <Button x:Name="PagesRetry" Content="{Binding RetryText}" IsVisible="{Binding IsFailed}" Click="OnRetry" HorizontalAlignment="Left" AutomationProperties.Name="{Binding RetryText}" />
+      </StackPanel>
+      <ScrollViewer Grid.Row="2">
+        <StackPanel Spacing="4">
+          <ItemsControl x:Name="PagesRows" ItemsSource="{Binding Rows}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate x:DataType="vm:PageRowViewModel">
+                <StackPanel Spacing="2" Margin="0,6,0,10" AutomationProperties.Name="{Binding RowName}">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Classes="body-strong" Text="{Binding Name}" VerticalAlignment="Center" />
+                    <ItemsControl ItemsSource="{Binding Marks}" VerticalAlignment="Center">
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                          <StackPanel Orientation="Horizontal" Spacing="4" />
+                        </ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                          <Border BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.SM}" Padding="5,0">
+                            <TextBlock Classes="caption" Text="{Binding}" />
+                          </Border>
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                  </StackPanel>
+                  <TextBlock Classes="caption subtle" Text="{Binding FromMap}" IsVisible="{Binding HasFromMap}" />
+                  <ItemsControl ItemsSource="{Binding Actions}" Margin="16,2,0,0">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:PageActionRowViewModel">
+                        <WrapPanel>
+                          <Button Click="OnAction" IsVisible="{Binding Opens}" Padding="0,1" Background="Transparent" BorderThickness="0" AutomationProperties.Name="{Binding RowName}">
+                            <TextBlock Classes="body" Text="{Binding Name}" TextDecorations="Underline" />
+                          </Button>
+                          <TextBlock Classes="body" Text="{Binding Name}" IsVisible="{Binding !Opens}" Margin="0,1,0,0" VerticalAlignment="Center" />
+                          <TextBlock Classes="body subtle" Text="{Binding Detail}" Margin="4,1,0,0" TextWrapping="Wrap" VerticalAlignment="Center" />
+                        </WrapPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+          <Button x:Name="PagesShowAll" Content="{Binding ShowAllText}" IsVisible="{Binding HasMore}" Click="OnShowAll" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ShowAllText}" />
+        </StackPanel>
+      </ScrollViewer>
+    </Grid>
+  </Border>
+</UserControl>

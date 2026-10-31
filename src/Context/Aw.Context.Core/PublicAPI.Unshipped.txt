@@ -11025,3 +11025,8 @@ static Aw.Context.Core.Pages.PageListRow.operator !=(Aw.Context.Core.Pages.PageL
 static Aw.Context.Core.Pages.PageListRow.operator ==(Aw.Context.Core.Pages.PageListRow? left, Aw.Context.Core.Pages.PageListRow? right) -> bool
 static Aw.Context.Core.Pages.PageListText.Parse(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListBlock!>!
 static readonly Aw.Context.Core.ContextErrors.PagePreviewInvalid -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.get -> int?
+Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.init -> void
+Aw.Context.Core.Audience.RecordMask
+static Aw.Context.Core.Audience.RecordMask.Allowed(Aw.Context.Core.Engine.ContextSettings! settings, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Engine.ContextCallerKind caller, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.HashSet<Aw.Context.Core.Records.AudienceKey>!>!>
+static Aw.Context.Core.Audience.RecordMask.Linked(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
