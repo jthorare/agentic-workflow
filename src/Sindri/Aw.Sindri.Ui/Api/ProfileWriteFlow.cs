@@ -21,7 +21,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
     private const int MaxPolls = 120;
     private const string JobNotFound = "SND-JOB-404";
 
-    // The job is recorded before the POST answers but the jobs view folds it after, so a first read can miss it: read again; the MaxNotFound-th not-found read in total ends the wait.
+    // The job is recorded before the POST answers but the jobs view folds it after, so a first read can miss it: read again; a not-found counts as "not yet" for MaxNotFound reads in total, then reads as still running like any failed poll.
     private const int MaxNotFound = 8;
     private static readonly TimeSpan _pollEvery = TimeSpan.FromMilliseconds(250);
 
@@ -60,12 +60,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
             return Ended(started.Error.Code, started.Error.Message);
         }
 
-        var (view, missing) = await Wait(url, started.Value.JobId, cancellationToken).ConfigureAwait(true);
-        if (missing is not null)
-        {
-            return Ended(missing.Code, missing.Message);
-        }
-
+        var view = await Wait(url, started.Value.JobId, cancellationToken).ConfigureAwait(true);
         if (view is not { State: "succeeded" })
         {
             return view is null ? new ProfileWritten(ProfileWriteState.Failed, Code: TimedOut) : Ended(view.Code, view.Summary);
@@ -95,8 +90,8 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
     }
 
     // The job's last read: its view once it ended, or no view when it still ran after the wait or a poll failed (the job may still land, so both read as still running).
-    // A job not found counts as "not yet" for MaxNotFound reads; past that the server's error comes back as the second value.
-    private async Task<(JobView? View, Error? Missing)> Wait(Uri url, string jobId, CancellationToken cancellationToken)
+    // A job not found counts as "not yet" for MaxNotFound reads; past that it reads as still running like any failed poll (the POST was accepted, so a stalled jobs view may still fold it).
+    private async Task<JobView?> Wait(Uri url, string jobId, CancellationToken cancellationToken)
     {
         var notFound = 0;
         for (var poll = 0; poll < MaxPolls; poll++)
@@ -106,23 +101,23 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
             {
                 if (!string.Equals(read.Error.Code, JobNotFound, StringComparison.Ordinal))
                 {
-                    return (null, null);
+                    return null;
                 }
 
                 if (++notFound >= MaxNotFound)
                 {
-                    return (null, read.Error);
+                    return null;
                 }
             }
             else if (read.Value.State is not ("running" or "waiting"))   // a job parked on a signal ('model-limit') has not ended either
             {
-                return (read.Value, null);
+                return read.Value;
             }
 
             await Task.Delay(_pollEvery, clock, cancellationToken).ConfigureAwait(true);
         }
 
-        return (null, null);
+        return null;
     }
 
     // What an error id means for a sheet: a moved profile, a refusal with the server's sentence, or anything else.
