@@ -37,6 +37,7 @@ public sealed class StaleSandboxFilesSweepTests : IDisposable
         var folder = TempOf(launch);
         _ = Directory.CreateDirectory(folder);
         File.WriteAllText(Path.Combine(folder, "scratch"), "x");
+        Directory.SetLastWriteTimeUtc(folder, KnownInstants.Epoch.UtcDateTime);   // old by default: the sweep runs an hour after the epoch
         return folder;
     }
 
@@ -111,6 +112,34 @@ public sealed class StaleSandboxFilesSweepTests : IDisposable
 
         Assert.True(Directory.Exists(kept));
         Assert.False(Directory.Exists(stale));
+    }
+
+    [Fact]
+    public void A_session_home_without_a_launch_file_or_a_live_row_keeps_its_temp_folder()
+    {
+        var sindriHome = Path.Combine(_home, "sindri");
+        var sessionHome = Path.Combine(SessionHomePaths.Sessions(sindriHome), Alive.Value);
+        _ = Directory.CreateDirectory(sessionHome);
+        Directory.SetLastWriteTimeUtc(sessionHome, KnownInstants.Epoch.AddHours(1).AddSeconds(-10).UtcDateTime);   // just prepared; nothing is live by the views yet
+        var kept = MakeTemp(Alive);
+        var store = new LaunchFileStore(new LauncherOptions(_home) { SindriHome = sindriHome }, new StaleSweepSeams(Mac: true, TempRoot: _tmp, Owned: static _ => true, Alive: static _ => false));
+
+        _ = Sweep(store);
+
+        Assert.True(Directory.Exists(sessionHome));
+        Assert.True(Directory.Exists(kept));
+    }
+
+    [Fact]
+    public void A_freshly_prepared_launchs_temp_folder_stays_until_it_is_older_than_the_limit()
+    {
+        var fresh = MakeTemp(Dead);
+        Directory.SetLastWriteTimeUtc(fresh, KnownInstants.Epoch.AddHours(1).AddSeconds(-10).UtcDateTime);
+
+        var removed = Sweep(Store());
+
+        Assert.Equal(0, removed);
+        Assert.True(Directory.Exists(fresh));
     }
 
     [Fact]

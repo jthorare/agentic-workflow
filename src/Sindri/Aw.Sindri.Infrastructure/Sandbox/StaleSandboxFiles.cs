@@ -39,8 +39,10 @@ internal static partial class StaleSandboxFiles
     /// <param name="root">The temp root (/private/tmp).</param>
     /// <param name="liveFolders">The folder names of live launches.</param>
     /// <param name="owned">Whether this user owns the folder.</param>
+    /// <param name="now">The time of the sweep.</param>
+    /// <param name="olderThan">A folder changed within this long is kept: a launch just set up has no live view row yet.</param>
     /// <returns>How many folders were removed.</returns>
-    internal static int SweepSeatbeltTemp(string root, IReadOnlySet<string> liveFolders, Func<string, bool> owned)
+    internal static int SweepSeatbeltTemp(string root, IReadOnlySet<string> liveFolders, Func<string, bool> owned, DateTimeOffset now, TimeSpan olderThan)
     {
         ArgumentNullException.ThrowIfNull(liveFolders);
         ArgumentNullException.ThrowIfNull(owned);
@@ -53,7 +55,7 @@ internal static partial class StaleSandboxFiles
         foreach (var path in Directory.EnumerateDirectories(root))
         {
             var name = Path.GetFileName(path);
-            if (!TempName.IsMatch(name) || liveFolders.Contains(name) || new DirectoryInfo(path).LinkTarget is not null || !owned(path))
+            if (!TempName.IsMatch(name) || liveFolders.Contains(name) || new DirectoryInfo(path).LinkTarget is not null || now - new DateTimeOffset(Directory.GetLastWriteTimeUtc(path)) <= olderThan || !owned(path))
             {
                 continue;
             }

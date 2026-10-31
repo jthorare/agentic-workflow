@@ -128,7 +128,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
     public int SweepStale(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
         ArgumentNullException.ThrowIfNull(live);
-        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live) + SweepSessionHomes(live) + SweepSandboxFiles(live);
+        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live) + SweepSessionHomes(now, olderThan, live) + SweepSandboxFiles(now, olderThan, live);
         if (!Directory.Exists(options.LaunchesDirectory))
         {
             return removed;
@@ -151,7 +151,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
     /// SB-9c: the '.pgid' files of dead groups (any OS) and, on macOS, the 'aw-&lt;8 hex&gt;' temp folders of launches that are not live. A launch counts as live when
     /// it has a live session; the folder name carries only 8 hex digits of the id, so live launches are matched by it, from the launches that have files here.
     /// </summary>
-    private int SweepSandboxFiles(Func<LaunchId, bool> live)
+    private int SweepSandboxFiles(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
         var groups = ProcessGroupFiles.Directory(options.LaunchDirectory);
         var sweep = seams ?? new StaleSweepSeams();
@@ -161,8 +161,9 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
             return removed;
         }
 
-        var liveFolders = Launches().Concat(SessionHomeLaunches()).Distinct().Where(live).Select(l => Path.GetFileName(SandboxPaths.SeatbeltTemp(l))).ToHashSet(StringComparer.Ordinal);
-        return removed + StaleSandboxFiles.SweepSeatbeltTemp(sweep.TempRoot, liveFolders, sweep.Owned ?? MacTempOwner.Owns);
+        // why: SweepSessionHomes ran first, so a session home that is still here is a live or just-prepared launch's, whether or not it has a launch file or a Live view row yet
+        var liveFolders = Launches().Where(live).Concat(SessionHomeLaunches()).Select(l => Path.GetFileName(SandboxPaths.SeatbeltTemp(l))).ToHashSet(StringComparer.Ordinal);
+        return removed + StaleSandboxFiles.SweepSeatbeltTemp(sweep.TempRoot, liveFolders, sweep.Owned ?? MacTempOwner.Owns, now, olderThan);
     }
 
     /// <summary>The launches that have a session home: a live Seatbelt launch has one until its release, before any capture or session-id file exists.</summary>
@@ -176,10 +177,11 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
         return [.. Directory.EnumerateDirectories(SessionHomePaths.Sessions(home)).Select(d => LaunchId.TryParse(Path.GetFileName(d), provider: null, out var launch) ? (LaunchId?)launch : null).OfType<LaunchId>()];
     }
 
-    /// <summary>Removes the session homes (sandbox spec §3.1) of launches that are not live.</summary>
-    private int SweepSessionHomes(Func<LaunchId, bool> live) =>
+    /// <summary>Removes the session homes (sandbox spec §3.1) of launches that are not live and older than the limit: a launch just prepared has no live view row yet.</summary>
+    private int SweepSessionHomes(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live) =>
         options.SindriHome is { } home
-            ? SessionHome.Sweep(home, id => LaunchId.TryParse(id, provider: null, out var launch) && live(launch)).Count
+            ? SessionHome.Sweep(home, id => (LaunchId.TryParse(id, provider: null, out var launch) && live(launch))
+                || now - new DateTimeOffset(Directory.GetLastWriteTimeUtc(Path.Combine(SessionHomePaths.Sessions(home), id))) <= olderThan).Count
             : 0;
 
     /// <summary>Deletes secret files that no wrap read (it never ran): older than the limit and not of a live launch.</summary>
