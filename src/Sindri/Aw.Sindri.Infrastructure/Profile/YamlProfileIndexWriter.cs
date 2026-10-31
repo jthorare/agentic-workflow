@@ -8,14 +8,14 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Infrastructure.Profile;
 
 /// <summary>
-/// <see cref="IProfileConceptWriter"/> over the live profile file (concept pins spec §3.6): the same versioned write as <see cref="YamlProfileRepoWriter"/>. The file is read and hashed, the caller's hash is checked, the new
+/// <see cref="IProfileIndexWriter"/> over the live profile file (concept pins spec §3.6): the same versioned write as <see cref="YamlProfileRepoWriter"/>. The file is read and hashed, the caller's hash is checked, the new
 /// text is built and checked (it must parse, pass the profile's rules and hold every set entry and none of the removed ones) and it replaces the file only if the file is still the text that was read; on a conflict it
 /// reads again and tries once more. Nothing is written when any check fails.
 /// </summary>
 /// <param name="settings">Where the profile is.</param>
 /// <param name="options">The package's AwJson options.</param>
 /// <param name="box">The box's limits the profile must stay inside, read each time; null checks the profile alone.</param>
-internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSerializerOptions options, Func<BoxLimits>? box = null) : IProfileConceptWriter
+internal sealed class YamlProfileIndexWriter(SindriSettings settings, JsonSerializerOptions options, Func<BoxLimits>? box = null) : IProfileIndexWriter
 {
     private const string Conflict = "The profile changed while Sindri was writing it. Try again.";
     private const int Attempts = 2;
@@ -94,7 +94,7 @@ internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSeri
             return SindriErrors.ProfileHashMismatch.With("the profile changed since you read it (fix: read it again; the sheet keeps your changes)");
         }
 
-        var after = ProfileConceptText.Apply(before, edits);
+        var after = ProfileIndexText.Apply(before, edits);
         return after is null ? Refused(path, edits) : Check(path, edits, before, after, current.Value.Hash);
     }
 
@@ -156,7 +156,7 @@ internal sealed class YamlProfileConceptWriter(SindriSettings settings, JsonSeri
     private static Error Refused(string path, IReadOnlyList<ConceptEdit> edits)
     {
         var lines = edits.Select(static e => e.Entry is { } entry
-            ? string.Join(" / ", ProfileConceptText.Entry(e.Id.Value, entry, 4))
+            ? string.Join(" / ", ProfileIndexText.Entry(e.Id.Value, entry, 4))
             : $"remove the entry with id {e.Id.Value}");
         return SindriErrors.ProfileInvalid.With($"{path} has a layout Sindri won't edit (fix: change these under index.concepts by hand, then try again): {string.Join(" ; ", lines)}");
     }

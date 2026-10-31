@@ -8,7 +8,7 @@ namespace Aw.Sindri.Core.Setup;
 /// file only if the file is still what was read; on a conflict it re-reads and tries once more. It is a text edit, so every other key and comment is kept; a comment inside an entry it replaces or removes goes with it.
 /// Every entry it writes has an 'id'.
 /// </summary>
-public interface IProfileConceptWriter
+public interface IProfileIndexWriter
 {
     /// <summary>Applies <paramref name="edits"/> in one write.</summary>
     /// <param name="edits">Each one sets an entry (inserted after the last entry when its id is new, replaced in place when it is there) or removes one.</param>

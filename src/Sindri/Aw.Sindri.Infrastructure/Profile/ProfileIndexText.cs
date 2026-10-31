@@ -5,10 +5,10 @@ using Aw.Sindri.Core.Setup;
 namespace Aw.Sindri.Infrastructure.Profile;
 
 /// <summary>
-/// The text edit behind <see cref="YamlProfileConceptWriter"/>: sets and removes entries of the top-level 'index.concepts' by id, line by line (see <see cref="ProfileEntryBlock"/>), so every other key and comment stays
+/// The text edit behind <see cref="YamlProfileIndexWriter"/>: sets and removes entries of the top-level 'index.concepts' by id, line by line (see <see cref="ProfileEntryBlock"/>), so every other key and comment stays
 /// as it was and the file keeps its line ending. An entry is written with 'id' first; a null field is left out and an empty list is written as '[]', so what is read back is what was set.
 /// </summary>
-internal static class ProfileConceptText
+internal static class ProfileIndexText
 {
     private static readonly string[] _path = ["index", "concepts"];
 

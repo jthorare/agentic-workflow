@@ -21541,8 +21541,8 @@ Aw.Sindri.Core.Setup.ConceptEdit.Entry.get -> Aw.Sindri.Core.Profile.ConceptSett
 Aw.Sindri.Core.Setup.ConceptEdit.Entry.init -> void
 Aw.Sindri.Core.Setup.ConceptEdit.Id.get -> Aw.Sindri.Core.Ids.ConceptPinId
 Aw.Sindri.Core.Setup.ConceptEdit.Id.init -> void
-Aw.Sindri.Core.Setup.IProfileConceptWriter
-Aw.Sindri.Core.Setup.IProfileConceptWriter.Write(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptEdit!>! edits, Aw.Sindri.Core.Ids.ProfileHash? ifHash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ProfileHash>!>
+Aw.Sindri.Core.Setup.IProfileIndexWriter
+Aw.Sindri.Core.Setup.IProfileIndexWriter.Write(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptEdit!>! edits, Aw.Sindri.Core.Ids.ProfileHash? ifHash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ProfileHash>!>
 Aw.Sindri.Core.Setup.ConceptEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptEdit!
 Aw.Sindri.Core.Setup.ConceptEdit.Deconstruct(out Aw.Sindri.Core.Ids.ConceptPinId Id, out Aw.Sindri.Core.Profile.ConceptSettings? Entry, out string? MatchName) -> void
 Aw.Sindri.Core.Setup.ConceptEdit.Equals(Aw.Sindri.Core.Setup.ConceptEdit? other) -> bool

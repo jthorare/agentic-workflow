@@ -8,8 +8,8 @@ using Aw.Sindri.Core.Setup;
 
 namespace Aw.Sindri.Testing;
 
-/// <summary>The profile's 'index.concepts' in memory, with a hash that changes with its content. Kept honest by <see cref="ProfileConceptWriterContract"/>.</summary>
-public sealed class FakeProfileConceptWriter : IProfileConceptWriter
+/// <summary>The profile's 'index.concepts' in memory, with a hash that changes with its content. Kept honest by <see cref="ProfileIndexWriterContract"/>.</summary>
+public sealed class FakeProfileIndexWriter : IProfileIndexWriter
 {
     private readonly List<ConceptSettings> _concepts = [];
     private readonly List<IReadOnlyList<ConceptEdit>> _writes = [];
