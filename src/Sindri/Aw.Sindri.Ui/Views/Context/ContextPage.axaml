@@ -204,6 +204,10 @@
             <cv:CodeCallsPanel x:Name="CodeHost" DataContext="{Binding Code}" />
           </StackPanel>
         </Border>
+        <!-- The page sheet (pages spec §3.6): Name this page, Edit page and New page, over everything on the stage; Esc and the buttons close it. -->
+        <Panel x:Name="PageSheetHost" IsVisible="{Binding ShowPageSheet}" HorizontalAlignment="Right">
+          <wv:PageSheetView x:Name="PageSheet" DataContext="{Binding PageSheet}" />
+        </Panel>
       </Panel>
     </Grid>
   </Grid>

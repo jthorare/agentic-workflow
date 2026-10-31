@@ -8,6 +8,18 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 /// <param name="Actions">Its actions.</param>
 internal sealed record PageRowViewModel(string Key, string Name, IReadOnlyList<string> Marks, string FromMap, IReadOnlyList<PageActionRowViewModel> Actions)
 {
+    /// <summary>Gets a value indicating whether the owner named the page (its button is Edit page, not Name this page).</summary>
+    public bool Owner { get; init; }
+
+    /// <summary>Gets a value indicating whether the host wired the sheet, so the row's button shows.</summary>
+    public bool CanWrite { get; init; }
+
+    /// <summary>Gets the row's button: "Edit page" on an owner page, "Name this page" on a suggested one.</summary>
+    public string ButtonText => Owner ? Labels.ContextPagesEditPage : Labels.ContextPagesNameThis;
+
+    /// <summary>Gets the button's name for a screen reader: the words and the page.</summary>
+    public string ButtonName => ButtonText + ": " + Name;
+
     /// <summary>Gets a value indicating whether the From the map line shows.</summary>
     public bool HasFromMap => FromMap.Length > 0;
 

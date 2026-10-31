@@ -23,6 +23,7 @@ internal sealed partial class ContextPageViewModel : ObservableObject
         InitRules();
         Concepts = new ConceptLayerViewModel(id => _ = OpenConcept(id));
         InitConcepts();
+        InitPageSheet();
     }
 
     /// <summary>What the page and its stages read through.</summary>
