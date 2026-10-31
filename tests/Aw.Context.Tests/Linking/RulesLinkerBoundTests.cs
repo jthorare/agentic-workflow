@@ -33,17 +33,25 @@ public sealed class RulesLinkerBoundTests
     [Fact, Trait("Lane", "unit")]
     public void Longer_text_is_cut_at_the_last_newline_before_the_limit()
     {
-        var text = new string('a', 100) + "\n" + new string('b', Max);
+        var text = new string('a', Max - 100) + "\n" + new string('b', Max);
 
-        Assert.Equal(new string('a', 100), RulesLinker.Bounded(text));
+        Assert.Equal(new string('a', Max - 100), RulesLinker.Bounded(text));
     }
 
     [Fact, Trait("Lane", "unit")]
     public void With_no_newline_the_cut_is_at_the_last_whitespace()
     {
-        var text = new string('a', 50) + " " + new string('b', 20) + "\t" + new string('c', Max);
+        var text = new string('a', Max - 50) + " " + new string('b', 20) + "\t" + new string('c', Max);
 
-        Assert.Equal(new string('a', 50) + " " + new string('b', 20), RulesLinker.Bounded(text));
+        Assert.Equal(new string('a', Max - 50) + " " + new string('b', 20), RulesLinker.Bounded(text));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_edge_far_before_the_limit_is_ignored_and_the_cut_is_the_limit()
+    {
+        var text = new string('a', 100) + "\n" + new string('b', Max);
+
+        Assert.Equal(Max, RulesLinker.Bounded(text).Length);
     }
 
     [Fact, Trait("Lane", "unit")]
