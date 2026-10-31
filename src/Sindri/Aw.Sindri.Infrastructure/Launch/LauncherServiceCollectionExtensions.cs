@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Mcp;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox.Credentials;
+using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Infrastructure.Launch.Usage;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -37,7 +38,7 @@ internal static class LauncherServiceCollectionExtensions
             .AddScoped<ILaunchProbes, LaunchProbeRecorder>()
             .AddScoped<LaunchStopEnd>()
             .AddSingleton(_ => Options(environment, settings))
-            .AddSingleton<ILaunchFiles>(static sp => new LaunchFileStore(sp.GetRequiredService<LauncherOptions>()))
+            .AddSingleton<ILaunchFiles>(static sp => new LaunchFileStore(sp.GetRequiredService<LauncherOptions>(), new StaleSweepSeams(Mac: OperatingSystem.IsMacOS())))
             .AddSingleton<IAgentTrust>(new ClaudeCodeTrust(ClaudeCodeTrust.PathFor(environment)))
             .AddSingleton(sp => new Launcher(Parts(sp, BuiltinHash)))
             .AddSingleton<ILauncher>(static sp => sp.GetRequiredService<Launcher>())
