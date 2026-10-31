@@ -10717,6 +10717,119 @@ Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool
 Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.init -> void
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.get -> int
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void
+Aw.Context.Core.Concepts.PinSuggestLine
+Aw.Context.Core.Concepts.PinSuggestLine.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestLine!
+Aw.Context.Core.Concepts.PinSuggestLine.PinSuggestLine(string! Name, string? Definition) -> void
+Aw.Context.Core.Concepts.PinSuggestLine.Deconstruct(out string! Name, out string? Definition) -> void
+Aw.Context.Core.Concepts.PinSuggestLine.Equals(Aw.Context.Core.Concepts.PinSuggestLine? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestLine.Name.get -> string!
+Aw.Context.Core.Concepts.PinSuggestLine.Name.init -> void
+Aw.Context.Core.Concepts.PinSuggestLine.Definition.get -> string?
+Aw.Context.Core.Concepts.PinSuggestLine.Definition.init -> void
+override Aw.Context.Core.Concepts.PinSuggestLine.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestLine.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestLine.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestLine.operator !=(Aw.Context.Core.Concepts.PinSuggestLine? left, Aw.Context.Core.Concepts.PinSuggestLine? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestLine.operator ==(Aw.Context.Core.Concepts.PinSuggestLine? left, Aw.Context.Core.Concepts.PinSuggestLine? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestQuery
+Aw.Context.Core.Concepts.PinSuggestQuery.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestQuery!
+Aw.Context.Core.Concepts.PinSuggestQuery.PinSuggestQuery(Aw.Context.Core.Map.MapRead Read, string? Repo, Aw.Context.Core.Graph.NodeKey? Concept, string? Search, int Limit, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>? Lines) -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Deconstruct(out Aw.Context.Core.Map.MapRead Read, out string? Repo, out Aw.Context.Core.Graph.NodeKey? Concept, out string? Search, out int Limit, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>? Lines) -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Equals(Aw.Context.Core.Concepts.PinSuggestQuery? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestQuery.Read.get -> Aw.Context.Core.Map.MapRead
+Aw.Context.Core.Concepts.PinSuggestQuery.Read.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Repo.get -> string?
+Aw.Context.Core.Concepts.PinSuggestQuery.Repo.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Concept.get -> Aw.Context.Core.Graph.NodeKey?
+Aw.Context.Core.Concepts.PinSuggestQuery.Concept.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Search.get -> string?
+Aw.Context.Core.Concepts.PinSuggestQuery.Search.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Limit.get -> int
+Aw.Context.Core.Concepts.PinSuggestQuery.Limit.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Lines.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>?
+Aw.Context.Core.Concepts.PinSuggestQuery.Lines.init -> void
+override Aw.Context.Core.Concepts.PinSuggestQuery.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestQuery.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestQuery.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestQuery.operator !=(Aw.Context.Core.Concepts.PinSuggestQuery? left, Aw.Context.Core.Concepts.PinSuggestQuery? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestQuery.operator ==(Aw.Context.Core.Concepts.PinSuggestQuery? left, Aw.Context.Core.Concepts.PinSuggestQuery? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestTerm
+Aw.Context.Core.Concepts.PinSuggestTerm.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestTerm!
+Aw.Context.Core.Concepts.PinSuggestTerm.PinSuggestTerm(string! Word, int NewRecords) -> void
+Aw.Context.Core.Concepts.PinSuggestTerm.Deconstruct(out string! Word, out int NewRecords) -> void
+Aw.Context.Core.Concepts.PinSuggestTerm.Equals(Aw.Context.Core.Concepts.PinSuggestTerm? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestTerm.Word.get -> string!
+Aw.Context.Core.Concepts.PinSuggestTerm.Word.init -> void
+Aw.Context.Core.Concepts.PinSuggestTerm.NewRecords.get -> int
+Aw.Context.Core.Concepts.PinSuggestTerm.NewRecords.init -> void
+override Aw.Context.Core.Concepts.PinSuggestTerm.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestTerm.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestTerm.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestTerm.operator !=(Aw.Context.Core.Concepts.PinSuggestTerm? left, Aw.Context.Core.Concepts.PinSuggestTerm? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestTerm.operator ==(Aw.Context.Core.Concepts.PinSuggestTerm? left, Aw.Context.Core.Concepts.PinSuggestTerm? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestFeature
+Aw.Context.Core.Concepts.PinSuggestFeature.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestFeature!
+Aw.Context.Core.Concepts.PinSuggestFeature.PinSuggestFeature(Aw.Context.Core.Graph.NodeKey Key, string! Label) -> void
+Aw.Context.Core.Concepts.PinSuggestFeature.Deconstruct(out Aw.Context.Core.Graph.NodeKey Key, out string! Label) -> void
+Aw.Context.Core.Concepts.PinSuggestFeature.Equals(Aw.Context.Core.Concepts.PinSuggestFeature? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestFeature.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Concepts.PinSuggestFeature.Key.init -> void
+Aw.Context.Core.Concepts.PinSuggestFeature.Label.get -> string!
+Aw.Context.Core.Concepts.PinSuggestFeature.Label.init -> void
+override Aw.Context.Core.Concepts.PinSuggestFeature.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestFeature.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestFeature.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestFeature.operator !=(Aw.Context.Core.Concepts.PinSuggestFeature? left, Aw.Context.Core.Concepts.PinSuggestFeature? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestFeature.operator ==(Aw.Context.Core.Concepts.PinSuggestFeature? left, Aw.Context.Core.Concepts.PinSuggestFeature? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestMatch
+Aw.Context.Core.Concepts.PinSuggestMatch.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestMatch!
+Aw.Context.Core.Concepts.PinSuggestMatch.PinSuggestMatch(int Line, Aw.Context.Core.Graph.NodeKey? Concept, string? Name) -> void
+Aw.Context.Core.Concepts.PinSuggestMatch.Deconstruct(out int Line, out Aw.Context.Core.Graph.NodeKey? Concept, out string? Name) -> void
+Aw.Context.Core.Concepts.PinSuggestMatch.Equals(Aw.Context.Core.Concepts.PinSuggestMatch? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestMatch.Line.get -> int
+Aw.Context.Core.Concepts.PinSuggestMatch.Line.init -> void
+Aw.Context.Core.Concepts.PinSuggestMatch.Concept.get -> Aw.Context.Core.Graph.NodeKey?
+Aw.Context.Core.Concepts.PinSuggestMatch.Concept.init -> void
+Aw.Context.Core.Concepts.PinSuggestMatch.Name.get -> string?
+Aw.Context.Core.Concepts.PinSuggestMatch.Name.init -> void
+override Aw.Context.Core.Concepts.PinSuggestMatch.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestMatch.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestMatch.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestMatch.operator !=(Aw.Context.Core.Concepts.PinSuggestMatch? left, Aw.Context.Core.Concepts.PinSuggestMatch? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestMatch.operator ==(Aw.Context.Core.Concepts.PinSuggestMatch? left, Aw.Context.Core.Concepts.PinSuggestMatch? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestView
+Aw.Context.Core.Concepts.PinSuggestView.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestView!
+Aw.Context.Core.Concepts.PinSuggestView.PinSuggestView(int ApiVersion, string? Repo, string! MapVersion, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>? Terms, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>? Features, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>? Matches) -> void
+Aw.Context.Core.Concepts.PinSuggestView.Deconstruct(out int ApiVersion, out string? Repo, out string! MapVersion, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>? Terms, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>? Features, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>? Matches) -> void
+Aw.Context.Core.Concepts.PinSuggestView.Equals(Aw.Context.Core.Concepts.PinSuggestView? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestView.ApiVersion.get -> int
+Aw.Context.Core.Concepts.PinSuggestView.ApiVersion.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.Repo.get -> string?
+Aw.Context.Core.Concepts.PinSuggestView.Repo.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.MapVersion.get -> string!
+Aw.Context.Core.Concepts.PinSuggestView.MapVersion.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.Terms.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>?
+Aw.Context.Core.Concepts.PinSuggestView.Terms.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.Features.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>?
+Aw.Context.Core.Concepts.PinSuggestView.Features.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.Matches.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>?
+Aw.Context.Core.Concepts.PinSuggestView.Matches.init -> void
+override Aw.Context.Core.Concepts.PinSuggestView.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestView.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestView.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestView.operator !=(Aw.Context.Core.Concepts.PinSuggestView? left, Aw.Context.Core.Concepts.PinSuggestView? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestView.operator ==(Aw.Context.Core.Concepts.PinSuggestView? left, Aw.Context.Core.Concepts.PinSuggestView? right) -> bool
+Aw.Context.Core.Facade.IContextConcepts.PinSuggest(Aw.Context.Core.Concepts.PinSuggestQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.PinSuggestView!>!>
+static readonly Aw.Context.Core.ContextErrors.PinSuggestInvalid -> Aw.Kernel.ErrorDefinition!
+static Aw.Context.Core.Linking.RulesLinker.Matching(string! text, System.Collections.Generic.IReadOnlyList<string!>! words) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Concepts.PinSuggestBuilder
+const Aw.Context.Core.Concepts.PinSuggestBuilder.DefaultLimit = 50 -> int
+const Aw.Context.Core.Concepts.PinSuggestBuilder.MaxLimit = 200 -> int
+const Aw.Context.Core.Concepts.PinSuggestBuilder.MaxTerms = 20 -> int
+static Aw.Context.Core.Concepts.PinSuggestBuilder.TermsOf(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.TermRows(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept, Aw.Context.Core.Map.MapText! text, System.Collections.Generic.IReadOnlyList<string!>! words, System.Collections.Generic.IReadOnlyDictionary<string!, int>! counts) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.Search(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, string! search, int limit) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.Match(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>! lines) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>!
 Aw.Context.Core.WholeMap.WholeMapView.Pages.get -> System.Collections.Generic.IReadOnlyList<string!>?
 Aw.Context.Core.WholeMap.WholeMapView.Pages.init -> void
 static Aw.Context.Core.Graph.EntryKey.Normalized(string! key) -> string!

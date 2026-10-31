@@ -261,9 +261,20 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 var glossary = new ConceptGlossaryQuery(query["repo"] ?? string.Empty, query["mapVersion"]);
                 _ = await server.ContextConceptGlossary(uri, glossary, cancellationToken);
                 return Answer(server.ContextConceptGlossaryAnswer(glossary));
+            case "pins/suggest":
+                return await PinSuggest(uri, query, cancellationToken);
             default:
                 return Text(HttpStatusCode.NotFound, "{}", "application/json");
         }
+    }
+
+    private async Task<HttpResponseMessage> PinSuggest(Uri uri, System.Collections.Specialized.NameValueCollection query, CancellationToken cancellationToken)
+    {
+        var defs = query.GetValues("def") ?? [];
+        var lines = (query.GetValues("line") ?? []).Select((name, i) => new PinSuggestLine(name, defs.Length > i && defs[i].Length > 0 ? defs[i] : null)).ToList();
+        var suggest = new PinSuggestQuery(query["repo"] ?? string.Empty, query["concept"], query["search"], int.TryParse(query["limit"], NumberStyles.Integer, CultureInfo.InvariantCulture, out var most) ? most : null, lines.Count == 0 ? null : lines);
+        _ = await server.ContextPinSuggest(uri, suggest, cancellationToken);
+        return Answer(server.ContextPinSuggestAnswer(suggest));
     }
 
     // The workflow reads (API §3.8): the call goes through the model (so a down server or a refusal answers as it does there),

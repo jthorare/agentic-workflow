@@ -63,6 +63,31 @@ internal static class ContextRoutes
         return With(Root + "/concepts/glossary", parts);
     }
 
+    // The characters one row adds to a pin-suggest query: its line= and its def= (counted even when empty, the worst case) and their separators.
+    internal static int PinSuggestRowSize(PinSuggestLine line)
+    {
+        ArgumentNullException.ThrowIfNull(line);
+        return "line=".Length + Uri.EscapeDataString(line.Name).Length + 1 + "def=".Length + Uri.EscapeDataString(line.Definition ?? string.Empty).Length + 1;
+    }
+
+    internal static string PinSuggest(PinSuggestQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string>();
+        Add(parts, "repo", query.Repo);
+        Add(parts, "concept", query.Concept);
+        Add(parts, "search", query.Search);
+        parts.AddRange(Limit(query.Limit));
+        var lines = query.Lines ?? [];
+        parts.AddRange(lines.Select(l => "line=" + Uri.EscapeDataString(l.Name)));
+        if (lines.Any(l => !string.IsNullOrEmpty(l.Definition)))
+        {
+            parts.AddRange(lines.Select(l => "def=" + Uri.EscapeDataString(l.Definition ?? string.Empty)));   // by index: an empty value keeps the line's place
+        }
+
+        return With(Root + "/pins/suggest", parts);
+    }
+
     /// <summary>QUERY /sindri/context/code: the anchors travel as the JSON body.</summary>
     internal const string Code = Root + "/code";
 

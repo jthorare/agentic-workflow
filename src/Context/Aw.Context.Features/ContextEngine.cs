@@ -218,6 +218,9 @@ internal sealed class ContextEngine(
     public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
         graph.CheckPages(scope, cancellationToken);
 
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        graph.PinSuggest(query, scope, cancellationToken);
+
     public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
         graph.PageFacts(scope, cancellationToken);
 }

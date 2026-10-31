@@ -71,6 +71,9 @@ internal sealed class ContextCodeHistory(
     public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
         conceptReads.CheckPages(scope, cancellationToken);
 
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        conceptReads.PinSuggest(query, scope, cancellationToken);
+
     public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
         conceptReads.PageFacts(scope, cancellationToken);
 }

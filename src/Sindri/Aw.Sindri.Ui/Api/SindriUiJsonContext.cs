@@ -67,6 +67,7 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(Context.NodeView))]
 [JsonSerializable(typeof(Context.ContextConceptsView))]
 [JsonSerializable(typeof(Context.ConceptGlossaryView))]
+[JsonSerializable(typeof(Context.PinSuggestView))]
 [JsonSerializable(typeof(Context.SourcesView))]
 [JsonSerializable(typeof(CodeIndex.CodeIndexStatusView))]
 [JsonSerializable(typeof(Sources.IndexStatusView))]

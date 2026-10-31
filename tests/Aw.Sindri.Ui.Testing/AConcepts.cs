@@ -41,4 +41,13 @@ internal static class AConcepts
 
     /// <summary>The glossary answer as the route serves it.</summary>
     internal static RouteAnswer Served(ConceptGlossaryView view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
+
+    /// <summary>A pin-suggest answer for a concept: its terms and the new records each would link.</summary>
+    internal static PinSuggestView Suggested(params PinSuggestTerm[] terms) => new(1, "aw-split-panes", "v1", terms, Features: null, Matches: null);
+
+    /// <summary>A pin-suggest answer for a pasted list: one match per concept key given (null for none), numbered from 0.</summary>
+    internal static PinSuggestView Matched(params string?[] concepts) => new(1, "aw-split-panes", "v1", Terms: null, Features: null, [.. concepts.Select((c, i) => new PinSuggestMatch(i, c, c is { } key ? key["concept:".Length..] : null))]);
+
+    /// <summary>The pin-suggest answer as the route serves it.</summary>
+    internal static RouteAnswer Served(PinSuggestView view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
 }
