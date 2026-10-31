@@ -22,6 +22,12 @@ internal sealed partial class ContextPage : UserControl
     {
         InitializeComponent();
         ContextStack.Canvas.EmptyClicked += (_, _) => _page?.CloseInspector();   // a click on the empty canvas closes the inspector
+        NoConceptPages.RetryRequested += (_, _) => _ = _page?.OpenNoConcept();
+        NoConceptPages.CloseRequested += (_, _) =>
+        {
+            _ = _page?.CloseNoConcept();
+            _ = ContextNoConceptLink.Focus(NavigationMethod.Tab);
+        };
     }
 
     /// <inheritdoc/>
@@ -145,6 +151,13 @@ internal sealed partial class ContextPage : UserControl
         {
             page.ClearSearch();
         }
+    }
+
+    // The head's "Pages in no concept (N)": the panel opens and reads them; focus goes to its head.
+    private void OnNoConcept(object? sender, RoutedEventArgs e)
+    {
+        _ = _page?.OpenNoConcept();
+        NoConceptPages.FocusHead();
     }
 
     // The back button on the failure row of a concept's map: up to the concepts.

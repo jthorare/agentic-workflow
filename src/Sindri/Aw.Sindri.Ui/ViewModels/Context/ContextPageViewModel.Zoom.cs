@@ -107,10 +107,15 @@ internal sealed partial class ContextPageViewModel
     private bool IsConceptNode(string key) =>
         Whole.Geometry?.Nodes.Any(n => string.Equals(n.Key, key, StringComparison.Ordinal) && string.Equals(n.Kind, "concept", StringComparison.Ordinal)) == true;
 
-    /// <summary>Esc: the inspector closes first, then the camera goes back to the whole map.</summary>
+    /// <summary>Esc: the pages in no concept close first, then the inspector, then the camera goes back to the whole map.</summary>
     /// <returns>True when it did something.</returns>
     internal bool Back()
     {
+        if (ShowNoConcept && CloseNoConcept())
+        {
+            return true;   // the pages in no concept lie over the concept cards: Esc closes them first
+        }
+
         if (Whole.Panel.Close())
         {
             return true;   // Esc closes the node panel first and the pin stays
