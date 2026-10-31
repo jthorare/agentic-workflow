@@ -40,7 +40,7 @@ public static partial class RulesLinker
         ArgumentNullException.ThrowIfNull(tracker.Known);
         ArgumentNullException.ThrowIfNull(tracker.Teams);
         ArgumentNullException.ThrowIfNull(pins);
-        var run = new Run(record, text, graph, tracker.Known, tracker.Teams);
+        var run = new Run(record, Bounded(text), graph, tracker.Known, tracker.Teams);
         run.Urls();
         run.Paths();
         run.QuotedTitles();
