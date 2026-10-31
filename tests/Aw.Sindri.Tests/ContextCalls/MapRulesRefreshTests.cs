@@ -29,6 +29,14 @@ public sealed class MapRulesRefreshTests
         _start = new Starter(_h);
     }
 
+    // The records are already linked for the map these ticks read (version 1, no pins): the relink step has nothing to say.
+    private InMemoryJobViews Relinked()
+    {
+        var jobs = new InMemoryJobViews();
+        RelinkRig.Put(jobs, _h, _now, JobState.Succeeded, TimeSpan.FromHours(1), RelinkRig.NoPinsHash, version: 1, sequence: 1);
+        return jobs;
+    }
+
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private static Dictionary<string, string> Heads(params (string Repo, string Sha)[] heads) => heads.ToDictionary(static h => h.Repo, static h => h.Sha, StringComparer.Ordinal);
@@ -41,7 +49,7 @@ public sealed class MapRulesRefreshTests
         _ = await _h.Profiles.Save(loaded, Ct);
         _engine.Heads = [new RepoHead(ContextRepoName.From("a"), "1", OnDefault: true)];
         _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 1, [new MapHead(ContextRepoName.From("a"), "1", OnDefault: true)]) { CurrentRuleset = builtUnder };
-        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, new InMemoryJobViews(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h)), _h.Clock, new QuietLogger()) { RunningRuleset = running };
+        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, Relinked(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h), new RelinkStarter(_h)), _h.Clock, new QuietLogger()) { RunningRuleset = running };
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Run(new ScheduledRun(_grant, _now), Ct);
@@ -61,7 +69,7 @@ public sealed class MapRulesRefreshTests
         _ = await _h.Profiles.Save(loaded, Ct);
         _engine.Heads = [new RepoHead(ContextRepoName.From("a"), "1", OnDefault: true)];
         _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 1, [new MapHead(ContextRepoName.From("a"), importedAt, OnDefault: true)]) { CurrentRuleset = recorded };
-        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, new InMemoryJobViews(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h)), _h.Clock, new QuietLogger()) { RulesFromScope = true };
+        var service = new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, Relinked(), new ScriptedOutlooks(), new MapJobStarts(_start, new PublishStarter(_h), new RelinkStarter(_h)), _h.Clock, new QuietLogger()) { RulesFromScope = true };
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Run(new ScheduledRun(_grant, _now), Ct);

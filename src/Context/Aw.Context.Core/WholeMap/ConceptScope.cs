@@ -15,6 +15,9 @@ internal static class ConceptScope
     // The most nodes the product-structure closure adds, in ordinal key order, so a thing written by hundreds of actions cannot turn a concept's map into the whole map.
     private const int ClosureCap = 200;
 
+    // The most pages the 'expresses' roots add, in the Pages section's order (<see cref="PageOrder"/>), with their actions.
+    private const int PageCap = 200;
+
     private static readonly HashSet<EdgeType> _forward = [EdgeType.On, EdgeType.PartOf, EdgeType.StepOf, EdgeType.Reads, EdgeType.Writes, EdgeType.DependsOn, EdgeType.MovesTo];
 
     /// <summary>The keys of the nodes <paramref name="concept"/> opens, the concept's own node first when the map has one.</summary>
@@ -40,6 +43,7 @@ internal static class ConceptScope
         }
 
         AddProductClosure(index, edges, all);
+        AddExpressed(index, edges, concept, all);
 
         if (index.Known.ContainsKey(concept))
         {
@@ -47,6 +51,30 @@ internal static class ConceptScope
         }
 
         return all;
+    }
+
+    // The second root set: the actions that express the concept and the pages they are on, then every action on a kept page; its own cap, so a big closure does not cut it.
+    private static void AddExpressed(ConceptIndex index, IReadOnlyList<GraphEdge> edges, string concept, HashSet<string> all)
+    {
+        var sources = edges.Where(e => e.Type == EdgeType.Expresses && e.To.Value == concept && index.Known.ContainsKey(e.From.Value)).Select(e => e.From.Value).ToHashSet(StringComparer.Ordinal);
+        if (sources.Count == 0)
+        {
+            return;
+        }
+
+        var on = edges.Where(e => e.Type == EdgeType.On && e.From.Kind == NodeKind.Action && index.Known.ContainsKey(e.To.Value)).ToLookup(e => e.From.Value, e => e.To.Value, StringComparer.Ordinal);
+        var pages = sources.Where(k => index.Known[k].Key.Kind == NodeKind.Surface).Concat(sources.Where(k => index.Known[k].Key.Kind == NodeKind.Action).SelectMany(k => on[k]))
+            .Where(k => index.Known[k].Key.Kind == NodeKind.Surface).Distinct(StringComparer.Ordinal).Select(k => index.Known[k]);
+        var kept = PageOrder.Of(pages, edges).Take(PageCap).ToHashSet(StringComparer.Ordinal);
+        foreach (var page in kept)
+        {
+            _ = all.Add(page);
+        }
+
+        foreach (var action in sources.Where(k => index.Known[k].Key.Kind == NodeKind.Action && (!on[k].Any() || on[k].Any(kept.Contains))))
+        {
+            _ = all.Add(action);
+        }
     }
 
     private static bool IsProduct(NodeKind kind) => kind is NodeKind.Surface or NodeKind.Action or NodeKind.Thing or NodeKind.Flow;

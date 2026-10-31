@@ -20,6 +20,14 @@ internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<Co
     /// <summary>The context of a query with no pins in play.</summary>
     internal static PinContext None { get; } = new(PinSet.Empty, Scope: null, [], StaleNote: null);
 
+    /// <summary>The pins whose aliases anchor a name or a question.</summary>
+    /// <param name="settings">The profile's context section.</param>
+    /// <param name="repos">The caller's repos.</param>
+    /// <param name="graph">The map the caller may read.</param>
+    /// <returns>The pins; null (so nothing is read) when no mapped repo has a pin with an alias.</returns>
+    internal static PinSet? AliasPins(ContextSettings settings, IReadOnlyList<ContextRepo> repos, GraphSnapshot graph) =>
+        ScopeRules.Mapped(settings, repos) is var mapped && mapped.Any(r => r.Concepts.Any(c => c.Aliases.Count > 0)) ? PinSet.Of(mapped, repos, graph) : null;
+
     /// <summary>Resolves the pins of a query.</summary>
     /// <param name="mapped">The repos the map is built from.</param>
     /// <param name="visible">The repos the caller may read.</param>
