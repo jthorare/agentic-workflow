@@ -8132,6 +8132,14 @@ Aw.Context.Core.ConceptScan.IConceptScanSearch.Search(Aw.Context.Core.Search.Map
 Aw.Context.Core.Facade.IContextMap.ScanConcepts(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken, int? expectedVersion = null) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.ConceptScan.ConceptScanReport!>!>
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.get -> string?
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.init -> void
+Aw.Context.Core.Map.MapVersion.PinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapVersion.PinHashes.init -> void
+Aw.Context.Core.Map.MapImport.PinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapImport.PinHashes.init -> void
+Aw.Context.Core.Map.MapPublishState.CurrentPinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapPublishState.CurrentPinHashes.init -> void
+static Aw.Context.Core.Map.MapRuleset.PinHashes(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static Aw.Context.Core.Map.MapRuleset.RunningPins(Aw.Context.Core.Engine.ContextScope? scope) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?
 Aw.Context.Core.Map.MapVersion.Ruleset.init -> void
 const Aw.Context.Core.Map.MapRuleset.RulesVersion = "3" -> string!

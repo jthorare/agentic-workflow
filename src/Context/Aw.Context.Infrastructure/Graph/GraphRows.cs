@@ -25,6 +25,8 @@ internal static class GraphRows
     public static readonly IRowMapper<string> Since = new TextMapper();
     public static readonly IRowMapper<(int Version, string Since)> Hold = new HoldMapper();
 
+    public static readonly IRowMapper<(int Version, string Hashes)> PinHashes = new HoldMapper();   // the same shape: a version and a text
+
     private static string? Text(SqliteDataReader r, int i) => r.IsDBNull(i) ? null : r.GetString(i);
 
     private sealed class IdMapper : IRowMapper<long>
