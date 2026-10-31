@@ -53,10 +53,12 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
     }
 
     // Whether the answer covers every repo the map was built from: no repo addressed, or the only repo both of the profile and of the current map's heads
-    // (a repo the profile dropped stays in the map until the rebuild lands, and its pins' ids must not reach an answer for another repo). A map with no heads (an imported one) is judged by the profile alone.
+    // (a repo the profile dropped stays in the map until the rebuild lands, and its pins' ids must not reach an answer for another repo). A map with no heads (an imported one)
+    // can't say which repos it covers, so a one-repo answer never lists its removed pins.
     private static bool EveryRepo(SindriProfile profile, string? repo, IReadOnlyList<MapHead> heads) =>
         repo is null
-        || ((profile.Repos ?? []).All(r => string.Equals(r.Name, repo, StringComparison.Ordinal))
+        || (heads.Count > 0
+            && (profile.Repos ?? []).All(r => string.Equals(r.Name, repo, StringComparison.Ordinal))
             && heads.All(h => string.Equals(h.Repo.Value, repo, StringComparison.Ordinal)));
 
     // The repo the answer is for, by the rule every map read shares; null is every pin.
