@@ -104,6 +104,18 @@ public sealed class PreviewPagesServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_kept_action_id_does_not_collide_with_a_new_actions_slug()
+    {
+        var owner = new PageSettings(PagePinId.From("week-page"), "Week page", Actions: [new PageActionSettings(PageActionPinId.From("send-it"), "Submit schedule")]);
+        var service = await Service(new SindriProfile(1, "thor", Index: new IndexSettings(Pages: [owner])));
+        _engine.Answer = View([new PageRow(PageId.From("week-page"), NodeKey.From("surface:route/GET:/week"), "Week page", Repo: "app", Mark: "owner", Code: true, Actions: [])]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule\nSend it"), Ct);
+
+        Assert.Equal("send-it|send-it-2", string.Join('|', answer.Value.Blocks[0].Page?.Actions?.Select(static a => a.Id?.Value ?? PageSlugs.Of(a.Name)) ?? []));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_row_that_is_not_added_has_no_page_and_says_why()
     {
         var answer = await (await Service()).Handle(new PreviewPagesRequest("Schedule week\n\nSchedule week\nPay -> aproval"), Ct);
