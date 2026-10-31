@@ -12,7 +12,7 @@ public sealed class PinSheetUnpinTests
         var sheet = kit.Sheet();
         List<PinSheetClosedEventArgs> closed = [];
         sheet.Closed += (_, e) => closed.Add(e);
-        await sheet.Open(new PinSheetOpen("api", Card: null, pin, [pin]), Token);
+        await sheet.Open(new PinSheetOpen("api", Card: null, pin, [pin], FileHash: FileHash), Token);
         return (sheet, closed);
     }
 

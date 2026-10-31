@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.Tests.Context.Concepts;
 /// <summary>The Pin sheet's feature picker (concept pins spec §3.6): its states, and a search that waits for the typing to rest.</summary>
 public sealed class PinSheetPickerTests
 {
-    private static readonly PinSheetOpen _new = new("api", Card: null, Pin: null, Pins: []);
+    private static readonly PinSheetOpen _new = new("api", Card: null, Pin: null, Pins: [], FileHash: FileHash);
 
     [Fact, Trait("Lane", "unit")]
     public async Task New_pin_lists_the_maps_features_to_add()
@@ -78,7 +78,7 @@ public sealed class PinSheetPickerTests
         var kit = new PinSheetFixtures();
         var sheet = kit.Sheet();
 
-        await sheet.Open(new PinSheetOpen("api", Card("billing"), Pin: null, []), Token);
+        await sheet.Open(new PinSheetOpen("api", Card("billing"), Pin: null, [], FileHash: FileHash), Token);
 
         Assert.False(sheet.HasPicker);
     }

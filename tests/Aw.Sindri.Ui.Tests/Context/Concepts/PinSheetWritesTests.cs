@@ -16,7 +16,7 @@ public sealed class PinSheetWritesTests
         return (sheet, closed);
     }
 
-    private static PinSheetOpen PinThis(params PinView[] pins) => new("api", Card("billing", terms: ["payments"]), Pin: null, pins);
+    private static PinSheetOpen PinThis(params PinView[] pins) => new("api", Card("billing", terms: ["payments"]), Pin: null, pins, FileHash: FileHash);
 
     private static PinSheetFixtures Billing()
     {
@@ -97,8 +97,8 @@ public sealed class PinSheetWritesTests
     public async Task A_file_changed_after_the_sheet_opened_is_refused_and_keeps_the_typed_fields()
     {
         var kit = Billing();
-        kit.Api.ContextPinsAnswer = _ => Served(new PinsView(1, "api", "h1", "v1", [], new MapRebuildView("idle", Progress: null, RetryAt: null, Stale: false, Failed: null)));
-        var (sheet, closed) = await Opened(kit, PinThis());
+        kit.Api.ContextPinsAnswer = _ => Served(new PinsView(1, "api", "h2", "v1", [], new MapRebuildView("idle", Progress: null, RetryAt: null, Stale: false, Failed: null)));
+        var (sheet, closed) = await Opened(kit, PinThis() with { FileHash = "h1" });
         sheet.Definition = "Money in";
         sheet.NewWord = "ledger";
         sheet.AddWord();
@@ -166,7 +166,7 @@ public sealed class PinSheetWritesTests
     {
         var kit = Billing();
         var pin = Pin("billing", "Billing", aliases: ["payments"]);
-        var (sheet, closed) = await Opened(kit, new PinSheetOpen("api", Card: null, pin, [pin]));
+        var (sheet, closed) = await Opened(kit, new PinSheetOpen("api", Card: null, pin, [pin], FileHash: FileHash));
         sheet.Name = "Payments";
 
         await sheet.Submit(Token);
@@ -181,7 +181,7 @@ public sealed class PinSheetWritesTests
     public async Task A_name_is_needed_and_nothing_is_sent_without_one()
     {
         var kit = Billing();
-        var (sheet, closed) = await Opened(kit, new PinSheetOpen("api", Card: null, Pin: null, Pins: []));
+        var (sheet, closed) = await Opened(kit, new PinSheetOpen("api", Card: null, Pin: null, Pins: [], FileHash: FileHash));
 
         await sheet.Submit(Token);
 
