@@ -193,6 +193,19 @@ public sealed class SandboxPlannerTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void On_a_mac_the_hosts_per_user_temp_directory_is_denied_and_on_linux_it_is_not()
+    {
+        var env = new Dictionary<string, string>(Req.Host.Environment, StringComparer.Ordinal) { ["TMPDIR"] = "/var/folders/ab/cdef/T/" };
+
+        var mac = Build(Req.WriteScope with { Host = Req.Host with { IsMacOs = true, Environment = env } });
+        var linux = Build(Req.WriteScope with { Host = Req.Host with { Environment = env } });
+
+        Assert.Equal(PlanMountKind.Deny, Last(mac, "/var/folders/ab/cdef/T")!.Kind);
+        Assert.Null(Last(linux, "/var/folders/ab/cdef/T"));
+        Assert.Null(Last(Build(Req.WriteScope with { Host = Req.Host with { IsMacOs = true } }), "/var/folders/ab/cdef/T"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_Step_cannot_widen_the_profile_floor()
     {
         var outside = SandboxPlanner.Build(SandboxMechanism.PassThrough, Req.WriteScope with { Policy = new StepPolicy([], StepPermissionMode.Default, Req.StateDir) });

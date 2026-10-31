@@ -378,6 +378,18 @@ A Step with `sandbox.credentials.github: agent-app` (never an attended session) 
 | SB-7, SB-8, SB-9, SB-10 | the GitHub App token; `separate-login`; macOS; the first unattended run |
 | SB-11 | the per-repo prepare: the launcher hook, `BaseCommit` on the launch, the cache per lockfile hash (built; the onboarding offer is separate) |
 
+## macOS (SB-9)
+
+A Step on a Mac runs under Seatbelt (`sandbox-exec` with a profile Sindri renders from the plan). What it gets:
+
+- Its own per-launch HOME, and `TMPDIR` set to `/private/tmp/aw-<8hex>`, outside the run area and short enough for a unix socket.
+- Network only to Sindri's port and the loopback egress proxy. Nothing else on localhost.
+- The Keychain blocked: `~/Library/Keychains` and the `securityd` service, so `security find-generic-password` hands it nothing. Serve's own `TMPDIR` (`/private/var/folders/.../T`) is denied too, because the ssh-agent and launchd sockets live there.
+- The agents' own sandboxes off inside ours, so there is one wall, not two.
+- Claude's login copied from the Keychain. On a Mac Claude Code keeps it in the item `Claude Code-credentials`, not in `~/.claude/.credentials.json`. When the file is missing, `owner-copy` reads the item with `security find-generic-password -s "Claude Code-credentials" -w` and writes it as a 0600 `.credentials.json` in the per-launch copy. Expiry is checked on those same bytes. If the item is missing or isn't a JSON object, the Step is refused like a missing file, and the refusal never carries what `security` printed. The `separate-login` source does not read the Keychain yet: the login it runs writes there on a Mac, and a Step on that source still looks for the file in the agent home.
+
+Known gaps: a localhost test server can't run inside a Step, and `/private/tmp` and `/private/var/folders` stay readable apart from the denies above. `sindri open` stays refused on macOS.
+
 ## Environment
 
 `AW_SANDBOX_BWRAP`, `AW_SANDBOX_SYSTEMD_RUN` and `AW_SANDBOX_SOCAT` redirect the three host binaries for a test. `AW_SANDBOX_PLAN` is set by the launcher and read only by `sandbox explain`. No variable switches the
