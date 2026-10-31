@@ -9,6 +9,7 @@ using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Context.Features.SyncSources;
 
@@ -18,7 +19,7 @@ namespace Aw.Context.Features.SyncSources;
 /// apply, so the links it writes are the same whoever asks. The repo docs are refreshed by the facade next to it (ContextSources).
 /// </summary>
 internal sealed class SyncSourcesService(
-    RecordFeedSync feeds, IScrubberFactory scrubberFactory, MapReader graphs, IIntentStore intents, IModelPort model, TimeProvider clock)
+    RecordFeedSync feeds, IScrubberFactory scrubberFactory, MapReader graphs, IIntentStore intents, IModelPort model, TimeProvider clock, ILogger<FeedDecisions>? logger = null)
     : IService<SyncSourcesRequest, SyncReport>
 {
     /// <summary>The longest one run may take before it stops and saves its cursor (spec §8.8).</summary>
@@ -57,7 +58,7 @@ internal sealed class SyncSourcesService(
             return rows;
         }
 
-        var after = await new FeedDecisions(feeds, graphs, intents, model, clock).For(scope, context, cancellationToken).ConfigureAwait(false);
+        var after = await new FeedDecisions(feeds, graphs, intents, model, clock, logger).For(scope, context, cancellationToken).ConfigureAwait(false);
         foreach (var feed in wanted)
         {
             var row = await feeds.Run(feed, (context.Scrubbers, context.Settings), after(feed), cancellationToken).ConfigureAwait(false);
