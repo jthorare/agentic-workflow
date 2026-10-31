@@ -20,7 +20,7 @@ public sealed class ContextPagesHostTests : IDisposable
 
     public void Dispose() => _repo.Dispose();
 
-    private async Task<GoldenHost> Host(bool sessions = true) => await ContextHosts.Approved(_repo, sessions, TestContext.Current.CancellationToken,
+    private async Task<GoldenHost> Host() => await ContextHosts.Approved(_repo, sessions: true, TestContext.Current.CancellationToken,
         services => RecordingEngine.Install(services, [], pages: (query, scope) =>
         {
             _asked.Add((query, scope));
@@ -113,17 +113,15 @@ public sealed class ContextPagesHostTests : IDisposable
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
-    public async Task Context_pages_without_a_repo_header_is_refused_and_sessions_off_is_020()
+    public async Task Context_pages_without_a_repo_header_is_refused_before_the_engine_is_asked()
     {
         var ct = TestContext.Current.CancellationToken;
         await using var host = await Host();
-        await using var off = await Host(sessions: false);
         await using var bare = await McpSession.Open(host, repo: null, ct);
-        await using var offMcp = await McpSession.Open(off, "split-panes", ct);
 
         var refused = await bare.Call("context_pages", "{}", ct);
 
         Assert.Equal(true, refused.IsError);
-        Assert.Equal("SND-CONTEXT-020", Code(await offMcp.Call("context_pages", "{}", ct)));
+        Assert.Empty(_asked);   // why: the session gate (020) lives in the real engine, which this script replaces
     }
 }
