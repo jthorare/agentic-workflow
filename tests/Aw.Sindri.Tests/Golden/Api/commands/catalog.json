@@ -1454,6 +1454,25 @@
       "confirm": null
     },
     {
+      "action": "SetPages",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/context/pages",
+      "cli": "sindri context page set <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "SetProfileKey",
       "class": "local",
       "allowedCallers": [],

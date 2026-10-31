@@ -10722,6 +10722,37 @@ Aw.Context.Core.WholeMap.WholeMapView.Pages.init -> void
 static Aw.Context.Core.Graph.EntryKey.Normalized(string! key) -> string!
 Aw.Context.Core.Engine.PageFacts.Stored.get -> System.Func<string!, string!>?
 Aw.Context.Core.Engine.PageFacts.Stored.init -> void
+Aw.Context.Core.Facade.IContextConcepts.PageFacts(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Pages.PageMapFacts!>!>
+Aw.Context.Core.Pages.PageMapFacts
+Aw.Context.Core.Pages.PageMapFacts.<Clone>$() -> Aw.Context.Core.Pages.PageMapFacts!
+Aw.Context.Core.Pages.PageMapFacts.MapVersion.get -> string?
+Aw.Context.Core.Pages.PageMapFacts.MapVersion.init -> void
+Aw.Context.Core.Pages.PageMapFacts.Facts.get -> Aw.Context.Core.Engine.PageFacts!
+Aw.Context.Core.Pages.PageMapFacts.Facts.init -> void
+Aw.Context.Core.Pages.PageMapFacts.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageMapConcept!>!
+Aw.Context.Core.Pages.PageMapFacts.Concepts.init -> void
+Aw.Context.Core.Pages.PageMapFacts.Deconstruct(out string? MapVersion, out Aw.Context.Core.Engine.PageFacts! Facts, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageMapConcept!>! Concepts) -> void
+Aw.Context.Core.Pages.PageMapFacts.Equals(Aw.Context.Core.Pages.PageMapFacts? other) -> bool
+Aw.Context.Core.Pages.PageMapFacts.PageMapFacts(string? MapVersion, Aw.Context.Core.Engine.PageFacts! Facts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageMapConcept!>! Concepts) -> void
+override Aw.Context.Core.Pages.PageMapFacts.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageMapFacts.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageMapFacts.ToString() -> string!
+static Aw.Context.Core.Pages.PageMapFacts.operator !=(Aw.Context.Core.Pages.PageMapFacts? left, Aw.Context.Core.Pages.PageMapFacts? right) -> bool
+static Aw.Context.Core.Pages.PageMapFacts.operator ==(Aw.Context.Core.Pages.PageMapFacts? left, Aw.Context.Core.Pages.PageMapFacts? right) -> bool
+Aw.Context.Core.Pages.PageMapConcept
+Aw.Context.Core.Pages.PageMapConcept.<Clone>$() -> Aw.Context.Core.Pages.PageMapConcept!
+Aw.Context.Core.Pages.PageMapConcept.Id.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Pages.PageMapConcept.Id.init -> void
+Aw.Context.Core.Pages.PageMapConcept.Name.get -> string!
+Aw.Context.Core.Pages.PageMapConcept.Name.init -> void
+Aw.Context.Core.Pages.PageMapConcept.Deconstruct(out Aw.Context.Core.Engine.ConceptId Id, out string! Name) -> void
+Aw.Context.Core.Pages.PageMapConcept.Equals(Aw.Context.Core.Pages.PageMapConcept? other) -> bool
+Aw.Context.Core.Pages.PageMapConcept.PageMapConcept(Aw.Context.Core.Engine.ConceptId Id, string! Name) -> void
+override Aw.Context.Core.Pages.PageMapConcept.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageMapConcept.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageMapConcept.ToString() -> string!
+static Aw.Context.Core.Pages.PageMapConcept.operator !=(Aw.Context.Core.Pages.PageMapConcept? left, Aw.Context.Core.Pages.PageMapConcept? right) -> bool
+static Aw.Context.Core.Pages.PageMapConcept.operator ==(Aw.Context.Core.Pages.PageMapConcept? left, Aw.Context.Core.Pages.PageMapConcept? right) -> bool
 Aw.Context.Core.Eval.Backtest.ArmReport.PinAnchored.get -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
 Aw.Context.Core.Eval.Backtest.ArmReport.PinAnchored.init -> void
 Aw.Context.Core.Eval.Backtest.PinAnchoredScore
