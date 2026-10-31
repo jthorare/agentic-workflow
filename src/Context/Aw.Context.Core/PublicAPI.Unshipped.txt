@@ -10515,8 +10515,6 @@ Aw.Context.Core.Concepts.PinTally.PinTally() -> void
 Aw.Context.Core.Concepts.PinScope.HoldsAnyFile() -> bool
 Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.get -> bool
 Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.init -> void
-Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
-Aw.Context.Core.Results.ContextResult.Notes.init -> void
 Aw.Context.Core.Ranking.RankedLeg
 Aw.Context.Core.Ranking.RankedLeg.Keys.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
 Aw.Context.Core.Ranking.RankedLeg.Keys.init -> void
