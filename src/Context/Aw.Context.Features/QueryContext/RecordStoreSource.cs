@@ -41,7 +41,7 @@ internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, Aud
         var records = found.Value.Hits.Select(h => h.Chunk.Record);
         if (pin is not null)
         {
-            records = records.Where(r => pin.HoldsRecord(r)).ToList().Take(ILexicalLeg.DefaultLimit);
+            records = records.Where(pin.HoldsRecord).ToList().Take(ILexicalLeg.DefaultLimit);
         }
 
         return await RecordHits.Read(store, (scope, teams), clock, records, cancellationToken).ConfigureAwait(false);
