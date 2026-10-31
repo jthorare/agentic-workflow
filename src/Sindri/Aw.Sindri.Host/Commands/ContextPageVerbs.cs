@@ -24,7 +24,7 @@ internal sealed class ContextPageVerbs(ControlPlaneClient client, Output output)
         }
 
         var o = parsed.Value;
-        var answer = await client.Get<PagesView>("/sindri/context/pages" + Query(o), ct).ConfigureAwait(false);
+        var answer = await client.Get<PagesView>("/sindri/context/pages" + o.Query, ct).ConfigureAwait(false);
         return answer.IsError ? ContextExit.For(answer.Error, await output.Error(answer.Error).ConfigureAwait(false))
             : o.Json ? await output.Raw(answer.Value.Body, 0).ConfigureAwait(false)
             : await output.Text(Text(answer.Value.Value, o.Suggested), 0).ConfigureAwait(false);
@@ -65,24 +65,8 @@ internal sealed class ContextPageVerbs(ControlPlaneClient client, Output output)
 
     private static string Code(bool found) => found ? "Code found" : "No code found yet";
 
-    private static string Query(Options o)
-    {
-        var parts = new List<string> { o.Suggested ? "marks=suggested" : "marks=owner" };
-        if (o.Concept is not null)
-        {
-            parts.Add("concept=" + Uri.EscapeDataString(o.Concept));
-        }
-
-        if (o.Repo is not null)
-        {
-            parts.Add("repo=" + Uri.EscapeDataString(o.Repo));
-        }
-
-        return "?" + string.Join('&', parts);
-    }
-
     /// <summary>'list' then the flags in any order; anything else (another verb, a word, an unknown flag, a flag without its value) is SND-CONTEXT-006, exit 1.</summary>
-    private static Kernel.Result<Options> Parse(string[] args)
+    internal static Kernel.Result<Options> Parse(string[] args)
     {
         if (args is not ["list", .. var flags])
         {
@@ -116,5 +100,31 @@ internal sealed class ContextPageVerbs(ControlPlaneClient client, Output output)
 
     private static Kernel.Error Invalid(string reason) => ContextErrors.QueryInvalid.With(reason + " " + Fix);
 
-    private sealed record Options(bool Suggested, string? Concept, string? Repo, bool Json);
+    /// <summary>The list's flags.</summary>
+    /// <param name="Suggested">True for --suggested.</param>
+    /// <param name="Concept">--concept's value, or null.</param>
+    /// <param name="Repo">--repo's value, or null.</param>
+    /// <param name="Json">True for --json.</param>
+    internal sealed record Options(bool Suggested, string? Concept, string? Repo, bool Json)
+    {
+        /// <summary>The route's query string: owner pages unless --suggested, then the filters.</summary>
+        internal string Query
+        {
+            get
+            {
+                var parts = new List<string> { Suggested ? "marks=suggested" : "marks=owner" };
+                if (Concept is not null)
+                {
+                    parts.Add("concept=" + Uri.EscapeDataString(Concept));
+                }
+
+                if (Repo is not null)
+                {
+                    parts.Add("repo=" + Uri.EscapeDataString(Repo));
+                }
+
+                return "?" + string.Join('&', parts);
+            }
+        }
+    }
 }
