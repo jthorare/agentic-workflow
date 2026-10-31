@@ -1040,6 +1040,25 @@
       "confirm": null
     },
     {
+      "action": "RelinkPinAliases",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri services run context-map-refresh",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RerunInstance",
       "class": "desk",
       "allowedCallers": [

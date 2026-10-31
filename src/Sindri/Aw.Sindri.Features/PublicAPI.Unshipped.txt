@@ -5659,3 +5659,34 @@ static Aw.Sindri.Features.PinConcepts.PinSet.operator !=(Aw.Sindri.Features.PinC
 static Aw.Sindri.Features.PinConcepts.PinSet.operator ==(Aw.Sindri.Features.PinConcepts.PinSet? left, Aw.Sindri.Features.PinConcepts.PinSet? right) -> bool
 static Aw.Sindri.Features.PinConcepts.PinWritten.operator !=(Aw.Sindri.Features.PinConcepts.PinWritten? left, Aw.Sindri.Features.PinConcepts.PinWritten? right) -> bool
 static Aw.Sindri.Features.PinConcepts.PinWritten.operator ==(Aw.Sindri.Features.PinConcepts.PinWritten? left, Aw.Sindri.Features.PinConcepts.PinWritten? right) -> bool
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult!
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.AliasesHash.get -> string!
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.AliasesHash.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Changed.get -> int
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Changed.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Deconstruct(out string! AliasesHash, out int MapVersion, out int Records, out int Changed, out long ElapsedMs, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>! Pins) -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.ElapsedMs.get -> long
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.ElapsedMs.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Equals(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? other) -> bool
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.MapVersion.get -> int
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.MapVersion.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Pins.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>!
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Pins.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Records.get -> int
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Records.init -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.RelinkPinAliasesJobResult(string! AliasesHash, int MapVersion, int Records, int Changed, long ElapsedMs, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Linking.PinLinkCount!>! Pins) -> void
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest!
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.Equals(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.RelinkPinAliasesRequest() -> void
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.ToString() -> string!
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.operator !=(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.operator ==(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? right) -> bool
+static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.operator !=(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.operator ==(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? right) -> bool

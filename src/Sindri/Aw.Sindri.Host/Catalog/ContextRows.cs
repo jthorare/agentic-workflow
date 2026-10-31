@@ -50,6 +50,10 @@ internal static class ContextRows
         new(ActionId.From("PublishContextMap"), typeof(PublishContextMapRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             Method: null, Route: null, ShellRows.Form("sindri services run context-map-refresh"), "ready"),
+        // RelinkPinAliases has no route and no verb of its own (concept pins spec 3.7): the context-map-refresh service starts it as itself, so the row names the verb that runs that service.
+        new(ActionId.From("RelinkPinAliases"), typeof(RelinkPinAliasesRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            Method: null, Route: null, ShellRows.Form("sindri services run context-map-refresh"), "ready"),
         // ScanContextConcepts has no route and no verb of its own (q110 C): the context-concept-scan service starts it as itself, so the row names the verb that runs that service.
         new(ActionId.From("ScanContextConcepts"), typeof(ScanContextConceptsRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,

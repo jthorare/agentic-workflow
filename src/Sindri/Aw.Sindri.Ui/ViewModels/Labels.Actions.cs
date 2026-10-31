@@ -34,6 +34,7 @@ internal static partial class Labels
         ["RefreshContextMap"] = "Refresh map",
         ["PinConcepts"] = "Pin concepts",
         ["PublishContextMap"] = "Publish map",
+        ["RelinkPinAliases"] = "Link records to pins",
         ["ScanContextConcepts"] = "Scan for concepts",
         ["RunContextBacktest"] = "Run map backtest",
         ["CancelJob"] = "Cancel job",
