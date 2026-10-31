@@ -22,6 +22,14 @@
       ]
     },
     {
+      "type": "context.pin.written",
+      "keyShape": "context.pin.written:<hash>",
+      "invalidates": [
+        "profile",
+        "needs-you"
+      ]
+    },
+    {
       "type": "decision.recorded",
       "keyShape": "decision.recorded:<decisionId>",
       "invalidates": [
