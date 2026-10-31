@@ -71,6 +71,27 @@ public static class PinSuggestBuilder
             .Select(n => new PinSuggestFeature(n.Key, text.Label(n.Label, TrustPolicy.ForNode(n, n.Provenance == Provenance.Human))))];
     }
 
+    /// <summary>The features that belong to a concept (a belongs-to edge into it), by label then key, each labelled like every answer's.</summary>
+    /// <param name="graph">The graph the caller may see.</param>
+    /// <param name="concept">The concept's key.</param>
+    /// <param name="text">The caller's text policy.</param>
+    /// <returns>The member features; none for a concept the graph lacks.</returns>
+    public static IReadOnlyList<PinSuggestFeature> MembersOf(GraphSnapshot graph, NodeKey concept, MapText text)
+    {
+        ArgumentNullException.ThrowIfNull(graph);
+        ArgumentNullException.ThrowIfNull(text);
+        if (Find(graph, concept) is null)
+        {
+            return [];
+        }
+
+        var known = graph.Nodes.GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+        var index = ConceptIndex.Of(known, [.. graph.Edges.Where(e => known.ContainsKey(e.From.Value) && known.ContainsKey(e.To.Value))]);
+        return [.. index.MembersOf(concept.Value).Select(m => known[m]).Where(n => n.Key.Kind == NodeKind.Feature)
+            .OrderBy(n => n.Label, StringComparer.Ordinal).ThenBy(n => n.Key.Value, StringComparer.Ordinal)
+            .Select(n => new PinSuggestFeature(n.Key, text.Label(n.Label, TrustPolicy.ForNode(n, n.Provenance == Provenance.Human))))];
+    }
+
     /// <summary>
     /// The concept each line matches. First a concept whose label has the same significant words as the line's name (the name only, never the definition); the larger concept when several do.
     /// Otherwise the concept whose terms share the most distinct significant words with the name and definition (at least one). Ties go to the larger concept, then to the lower key.
