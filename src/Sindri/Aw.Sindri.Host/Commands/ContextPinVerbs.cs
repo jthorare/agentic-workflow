@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using Aw.Context.Core;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Jobs;
@@ -22,6 +23,8 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="ensureRunning">Starts the control plane (true: this verb may launch it) or names why not; null: never start it.</param>
 internal sealed class ContextPinVerbs(ControlPlaneClient client, Output output, JobFollower follower, IServiceProvider services, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null)
 {
+    private static readonly string[] _refusals = ["SND-CONTEXT-171", "SND-CONTEXT-172", "SND-CONTEXT-173", "SND-CONTEXT-174", "SND-CONTEXT-175", "SND-CONTEXT-176", "SND-CONTEXT-177", "SND-PROFILE-003"];
+
     internal async Task<int> Run(string[] args, CancellationToken interrupt, CancellationToken again)
     {
         ArgumentNullException.ThrowIfNull(args);
@@ -57,12 +60,20 @@ internal sealed class ContextPinVerbs(ControlPlaneClient client, Output output, 
 
         if (!line.Detach)
         {
-            return await follower.Follow(started.Value.Value, line.Json, interrupt, again, Describe).ConfigureAwait(false);
+            var followed = await follower.Follow(started.Value.Value, line.Json, interrupt, again, Describe).ConfigureAwait(false);
+            return followed == 1 ? await RefusedExit(started.Value.Value, interrupt).ConfigureAwait(false) : followed;
         }
 
         return line.Json
             ? await output.Raw(started.Value.Body, 0).ConfigureAwait(false)
             : await output.Text($"job {started.Value.Value.JobId.Value} started\n", 0).ConfigureAwait(false);
+    }
+
+    // A job that failed with one of the pin refusals (SND-CONTEXT-171..177, SND-PROFILE-003) is invalid input: exit 2, as the spec's error table says. Any other end stays 1.
+    private async Task<int> RefusedExit(JobStartedResponse started, CancellationToken ct)
+    {
+        var job = await client.Get<JobView>(started.Links.Job, ct).ConfigureAwait(false);
+        return job.IsSuccess && job.Value.Value.Code is { } code && _refusals.Contains(code, StringComparer.Ordinal) ? 2 : 1;
     }
 
     // What the flags ask the job to write: a flag left out keeps the stored value (null), a given list replaces it, --clear-* empties it.
@@ -100,26 +111,26 @@ internal sealed class ContextPinVerbs(ControlPlaneClient client, Output output, 
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return SindriErrors.InvalidInput.With($"can't read '{path}': {e.Message}");   // TODO(lead): ContextErrors.FromFileLineUnreadable
+            return ContextErrors.PinLineUnreadable.With($"can't read '{path}': {e.Message}");
         }
 
         var list = ConceptList.Parse(text);
-        if (list.IsError)
+        if (list.NamelessLine is { } nameless)
         {
-            return list.Error;
+            return ContextErrors.PinLineUnreadable.With(string.Create(CultureInfo.InvariantCulture, $"line {nameless} has no name (fix: start the line or block with the concept's name)"));
         }
 
-        if (list.Value.Skipped > 0)
+        if (list.Skipped > 0)
         {
-            await output.Notice(string.Create(CultureInfo.InvariantCulture, $"the list has more than {ConceptList.Max} concepts: pinning the first {ConceptList.Max}, {list.Value.Skipped} left out")).ConfigureAwait(false);
+            await output.Notice(string.Create(CultureInfo.InvariantCulture, $"the list has more than {ConceptList.Max} concepts: pinning the first {ConceptList.Max}, {list.Skipped} left out")).ConfigureAwait(false);
         }
 
-        if (list.Value.Concepts.Count == 0)
+        if (list.Concepts.Count == 0)
         {
             return SindriErrors.InvalidInput.With($"'{path}' has no concepts (fix: one concept per line, or blocks with a blank line between)");
         }
 
-        IReadOnlyList<PinSet> sets = [.. list.Value.Concepts.Select(static c => new PinSet(c.Name, Summary: c.Summary, Aliases: c.Aliases.Count == 0 ? null : c.Aliases))];
+        IReadOnlyList<PinSet> sets = [.. list.Concepts.Select(static c => new PinSet(c.Name, Summary: c.Summary, Aliases: c.Aliases.Count == 0 ? null : c.Aliases))];
         return Kernel.Results.Success(sets);
     }
 
