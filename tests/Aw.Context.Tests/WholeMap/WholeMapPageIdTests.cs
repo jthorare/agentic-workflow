@@ -40,4 +40,48 @@ public sealed class WholeMapPageIdTests : IDisposable
         Assert.Equal("x", byKey[OwnerScreen]);
         Assert.Null(byKey[Suggested]);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_action_of_a_named_page_carries_the_page_id()
+    {
+        _ = await _world.ImportYaml(MapWorld.Yaml(
+            "schemaVersion: 1", "kind: authored", "repo: aw-split-panes", "nodes:",
+            $"  - {{key: \"{Route}\", label: \"GET /schedule/week\"}}"));
+        var repo = ContextRepoName.From(FixtureMap.Repo);
+        var scope = MapWorld.Human with
+        {
+            Repos = [new ContextRepo(repo, "/work/aw-split-panes")
+            {
+                Pages = [new PagePin(PageId.From("schedule-week"), "Week", repo, Route, [new PageActionPin(PageActionId.From("save"), "Save", ActionKey: null, [])])],
+            }],
+        };
+
+        var view = (await _world.Engine.WholeMap(new WholeMapQuery("nodes", [], MapRead.Current), scope, MapWorld.None)).Value;
+
+        var byKey = view.Nodes!.ToDictionary(n => n.Key.Value, n => n.PageId?.Value, StringComparer.Ordinal);
+        Assert.Equal("schedule-week", byKey["action:owner/schedule-week/save"]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_surface_two_pages_name_carries_the_first_page_in_profile_order()
+    {
+        _ = await _world.ImportYaml(MapWorld.Yaml(
+            "schemaVersion: 1", "kind: authored", "repo: aw-split-panes", "nodes:",
+            $"  - {{key: \"{Route}\", label: \"GET /schedule/week\"}}"));
+        var repo = ContextRepoName.From(FixtureMap.Repo);
+
+        // "zeta" comes first in the profile but last by name, so only the profile order gives this answer.
+        var scope = MapWorld.Human with
+        {
+            Repos = [new ContextRepo(repo, "/work/aw-split-panes")
+            {
+                Pages = [new PagePin(PageId.From("zeta"), "Zeta", repo, Route, []), new PagePin(PageId.From("alpha"), "Alpha", repo, Route, [])],
+            }],
+        };
+
+        var view = (await _world.Engine.WholeMap(new WholeMapQuery("nodes", [], MapRead.Current), scope, MapWorld.None)).Value;
+
+        var byKey = view.Nodes!.ToDictionary(n => n.Key.Value, n => n.PageId?.Value, StringComparer.Ordinal);
+        Assert.Equal("zeta", byKey[Route]);
+    }
 }
