@@ -13,6 +13,9 @@ public sealed record WholeMapAsk(WholeMapBasis Basis, WholeMapDetail Detail, IRe
     /// <summary>True to answer with the pages that relate to no concept (<see cref="PagesInNoConcept"/>) and their actions, up to the section's cap, in place of the whole map.</summary>
     public bool PagesInNoConcept { get; init; }
 
+    /// <summary>Each of the profile's pages by id with its index in the profile (the order <see cref="Map.PageOverlay"/> lays them in), so owner-named pages list in profile order; empty keeps them in node order.</summary>
+    public IReadOnlyDictionary<string, int> PageRank { get; init; } = new Dictionary<string, int>(StringComparer.Ordinal);
+
     /// <summary>The repos the whole map holds nodes of (counted over the map before any repo cut), for the page's repo picker.</summary>
     public IReadOnlyList<WholeMapRepo> Repos { get; init; } = [];
 
