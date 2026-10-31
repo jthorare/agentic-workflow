@@ -37,7 +37,7 @@ public static class WholeMapBuilder
         var overview = Overview(ask, (known, edges), (areas, concepts), (rules, text)) with { PagesInNoConcept = pagesOut.Count };
         if (ask.PagesInNoConcept)
         {
-            return OpenedPages(pagesOut, overview, (known, edges), (areas, text, ask.RepoOf, ask.PageRank));
+            return OpenedPages(pagesOut, overview, (known, edges), (areas, text, ask.RepoOf));
         }
 
         if (ask.Area is not null)
@@ -48,12 +48,12 @@ public static class WholeMapBuilder
             }
 
             var scope = ask.Concept is null ? null : ConceptScope.Nodes(concepts, edges, ask.Concept, ask.PageRank);
-            return Opened(ask.Area, scope, overview, (known, edges), (areas, rules, text, ask.RepoOf, ask.PageRank));
+            return Opened(ask.Area, scope, overview, (known, edges), (areas, rules, text, ask.RepoOf));
         }
 
         if (ask.Concept is not null)
         {
-            return OpenedConcept((ask.Concept, ask.PageRank), overview, (concepts, edges), (areas, rules, text, ask.RepoOf, ask.PageRank));
+            return OpenedConcept((ask.Concept, ask.PageRank), overview, (concepts, edges), (areas, rules, text, ask.RepoOf));
         }
 
         if (ask.Detail == WholeMapDetail.Areas)
@@ -63,7 +63,7 @@ public static class WholeMapBuilder
 
         return known.Count > rules.NodeBudget
             ? overview with { Fallback = OverBudget }
-            : overview with { Detail = WholeMapDetail.Nodes, Nodes = Nodes(known.Values, areas, text, ask.RepoOf, ask.PageRank), Edges = Edges(edges) };
+            : overview with { Detail = WholeMapDetail.Nodes, Nodes = Nodes(known.Values, areas, text, ask.RepoOf), Edges = Edges(edges) };
     }
 
     private static WholeMapView Overview(WholeMapAsk ask, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, ConceptIndex Concepts) map, (WholeMapRules Rules, MapText Text) how)
@@ -80,7 +80,7 @@ public static class WholeMapBuilder
     }
 
     // One area on its own: all its nodes in kind and key order, and the edges among them. Nothing is cut. With a concept's scope, only the area's nodes that scope holds.
-    private static Result<WholeMapView> Opened(string key, HashSet<string>? scope, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf, IReadOnlyDictionary<string, int> PageRank) how)
+    private static Result<WholeMapView> Opened(string key, HashSet<string>? scope, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
     {
         var members = graph.Known.Values.Where(n => n.Key.Kind != NodeKind.Concept && how.Areas.ByNode[n.Key.Value].Area == key && (scope is null || scope.Contains(n.Key.Value))).ToList();
         if (members.Count == 0)
@@ -96,14 +96,14 @@ public static class WholeMapBuilder
         return overview with
         {
             Detail = WholeMapDetail.Nodes,
-            Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf, how.PageRank),
+            Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
             Area = new WholeMapAreaInfo(key, Truncated: false, Counts(members, graph.Edges.Count(e => memberKeys.Contains(e.From.Value) && memberKeys.Contains(e.To.Value)))),
         };
     }
 
     // One concept on its own: its members and what lies two levels below them (see ConceptScope), in band, kind and key order, and the edges among them. Nothing is cut.
-    private static Result<WholeMapView> OpenedConcept((string Key, IReadOnlyDictionary<string, int> Rank) concept, WholeMapView overview, (ConceptIndex Concepts, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf, IReadOnlyDictionary<string, int> PageRank) how)
+    private static Result<WholeMapView> OpenedConcept((string Key, IReadOnlyDictionary<string, int> Rank) concept, WholeMapView overview, (ConceptIndex Concepts, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
     {
         var key = concept.Key;
         if (!graph.Concepts.Has(key))
@@ -117,14 +117,14 @@ public static class WholeMapBuilder
         return overview with
         {
             Detail = WholeMapDetail.Nodes,
-            Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf, how.PageRank),
+            Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
             Pages = ConceptScope.Pages(graph.Concepts, graph.Edges, key, concept.Rank),
         };
     }
 
     // The pages that relate to no concept (the first 200 in the section's order) with their actions, and the edges among them.
-    private static WholeMapView OpenedPages(IReadOnlyList<string> pages, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf, IReadOnlyDictionary<string, int> PageRank) how)
+    private static WholeMapView OpenedPages(IReadOnlyList<string> pages, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
     {
         List<string> listed = [.. pages.Take(PageCap)];
         var kept = listed.ToHashSet(StringComparer.Ordinal);
@@ -133,7 +133,7 @@ public static class WholeMapBuilder
         return overview with
         {
             Detail = WholeMapDetail.Nodes,
-            Nodes = Nodes(shownKeys.Select(k => graph.Known[k]), how.Areas, how.Text, how.RepoOf, how.PageRank),
+            Nodes = Nodes(shownKeys.Select(k => graph.Known[k]), how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
             Truncated = pages.Count > PageCap,
             Pages = listed,
@@ -186,19 +186,19 @@ public static class WholeMapBuilder
         return [.. repoOf.Values.OfType<string>().GroupBy(r => r, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => new WholeMapRepo(g.Key, g.Count()))];
     }
 
-    private static List<WholeMapNode> Nodes(IEnumerable<GraphNode> nodes, AreaIndex areas, MapText text, IReadOnlyDictionary<string, string?>? repoOf, IReadOnlyDictionary<string, int> pageRank) =>
+    private static List<WholeMapNode> Nodes(IEnumerable<GraphNode> nodes, AreaIndex areas, MapText text, IReadOnlyDictionary<string, string?>? repoOf) =>
         [.. nodes
             .Select(n => (Node: n, Area: AreaOf(areas, n)))
             .OrderBy(p => p.Area.Area, StringComparer.Ordinal).ThenBy(p => p.Node.Key.Kind).ThenBy(p => p.Node.Key.Value, StringComparer.Ordinal)
-            .Select(p => Node(p.Node, p.Area, text, repoOf?.GetValueOrDefault(p.Node.Key.Value), pageRank))];
+            .Select(p => Node(p.Node, p.Area, text, repoOf?.GetValueOrDefault(p.Node.Key.Value)))];
 
     private static NodeArea AreaOf(AreaIndex areas, GraphNode node) => node.Key.Kind == NodeKind.Concept ? new NodeArea(AreaIndex.ConceptBandKey, []) : areas.ByNode[node.Key.Value];
 
-    private static WholeMapNode Node(GraphNode node, NodeArea area, MapText text, string? repo, IReadOnlyDictionary<string, int> pageRank)
+    private static WholeMapNode Node(GraphNode node, NodeArea area, MapText text, string? repo)
     {
         var confirmed = node.Provenance == Provenance.Human;
         var trust = TrustPolicy.ForNode(node, confirmed);
-        return new WholeMapNode(node.Key, text.Label(node.Label, trust), node.Key.Kind, area.Area, area.AlsoIn, trust, node.Provenance, node.Confidence, confirmed) { Repo = repo, Owner = PageOrder.IsOwner(node), PageId = PageOrder.PageIdOf(node, pageRank) };
+        return new WholeMapNode(node.Key, text.Label(node.Label, trust), node.Key.Kind, area.Area, area.AlsoIn, trust, node.Provenance, node.Confidence, confirmed) { Repo = repo, Owner = PageOrder.IsOwner(node), PageId = PageOrder.PageIdOf(node) };
     }
 
     private static List<WholeMapEdge> Edges(List<GraphEdge> edges) =>
