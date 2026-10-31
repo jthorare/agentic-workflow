@@ -77,7 +77,7 @@ public sealed class StaleSandboxFilesSweepTests : IDisposable
     {
         _ = Directory.CreateDirectory(Groups);
         var file = Path.Combine(Groups, Alive.Value + ".pgid");
-        File.WriteAllText(file, Aw.Sindri.Infrastructure.Locks.Libc.OwnGroup().ToString(System.Globalization.CultureInfo.InvariantCulture) + "\n");
+        File.WriteAllText(file, Infrastructure.Locks.Libc.OwnGroup().ToString(System.Globalization.CultureInfo.InvariantCulture) + "\n");
 
         _ = Sweep(new LaunchFileStore(new LauncherOptions(_home), new StaleSweepSeams(Mac: false)));
 

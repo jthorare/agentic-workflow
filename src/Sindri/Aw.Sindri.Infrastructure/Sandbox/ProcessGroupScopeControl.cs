@@ -8,10 +8,13 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// group id file is the unit, a signal goes to the whole group, and there is no kernel memory kill, so 'oom-kill' is whatever the watchdog wrote down itself.
 /// </summary>
 /// <param name="directory">The folder of the group files.</param>
-internal sealed class ProcessGroupScopeControl(string directory) : IScopeControl, IMemoryKills
+internal sealed class ProcessGroupScopeControl(string directory) : IScopeControl, IMemoryKills, IScopeRelease
 {
     /// <summary>The prefix of the cgroup-path-shaped handle the stats adapter reads back.</summary>
     internal const string Prefix = "pgid:";
+
+    /// <inheritdoc />
+    public void Release(string unit) => ProcessGroupFiles.Remove(directory, unit);
 
     /// <inheritdoc />
     public Task<string?> ControlGroup(string unit, CancellationToken cancellationToken) =>

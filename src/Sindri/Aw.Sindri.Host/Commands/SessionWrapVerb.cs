@@ -2,8 +2,6 @@ using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Host.Commands.SessionWrap;
-using Aw.Sindri.Infrastructure.Launch;
-using Aw.Sindri.Infrastructure.Sandbox;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -37,8 +35,7 @@ internal static class SessionWrapVerb
             return new WatchdogPorts(scope, stats);
         }
 
-        var groups = ProcessGroupFiles.Directory(services.GetRequiredService<LauncherOptions>().LaunchDirectory);
-        return new WatchdogPorts(scope, stats, services.GetRequiredService<IMemoryKills>(), unit => ProcessGroupFiles.Remove(groups, unit));
+        return new WatchdogPorts(scope, stats, services.GetRequiredService<IMemoryKills>(), services.GetRequiredService<IScopeRelease>().Release);
     }
 
     private static string LocksDir(Func<string, string?> environment) =>

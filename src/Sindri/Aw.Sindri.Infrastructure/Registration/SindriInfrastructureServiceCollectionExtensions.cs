@@ -105,6 +105,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
         ? services.AddSingleton(static sp => new ProcessGroupScopeControl(ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory)))
             .AddSingleton<IScopeControl>(static sp => sp.GetRequiredService<ProcessGroupScopeControl>())
             .AddSingleton<IMemoryKills>(static sp => sp.GetRequiredService<ProcessGroupScopeControl>())
+            .AddSingleton<IScopeRelease>(static sp => sp.GetRequiredService<ProcessGroupScopeControl>())
             .AddSingleton<ICgroupStats>(static _ => new ProcessGroupStats(new SandboxProcesses(), footprint: new LibprocPhysFootprint()))
         : services.AddSingleton<IScopeControl>(static _ => new SystemctlScopeControl(new SandboxProcesses())).AddSingleton<ICgroupStats, CgroupFiles>();
 

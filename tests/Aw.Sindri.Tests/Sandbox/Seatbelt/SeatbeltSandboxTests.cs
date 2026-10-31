@@ -99,7 +99,8 @@ public sealed class SeatbeltSandboxTests
 
         Assert.DoesNotContain(argv, a => a.Contains(LaunchValue, StringComparison.Ordinal));
         var at = argv.ToList().IndexOf("sh");
-        Assert.Equal("/bin/sh", argv[at - 2]);
+        Assert.Equal("/bin/sh", argv[at - 3]);
+        Assert.Equal("-c", argv[at - 2]);
         Assert.Equal(". \"$1\" && rm -f \"$1\" && shift && exec \"$@\"", argv[at - 1]);
         var file = argv[at + 1];
         Assert.StartsWith(area.Root + "/area/secrets/" + area.Plan.Launch.Value + "/", file, StringComparison.Ordinal);
