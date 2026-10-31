@@ -54,6 +54,17 @@ internal sealed partial class ContextPageViewModel
         await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
     }
 
+    /// <summary>The Pin sheet wrote something: the pins are read again so the card shows its new state at once.</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the cards are drawn.</returns>
+    internal async Task ReadPinsNow(CancellationToken cancellationToken)
+    {
+        if (Ports.ApiUrl() is { } api)
+        {
+            await RefreshPins(api, cancellationToken).ConfigureAwait(true);
+        }
+    }
+
     // A pinned card's Try again: queues the refresh the Context page's own Refresh map queues, and reads the pins again.
     private async Task TryRefreshAgain()
     {

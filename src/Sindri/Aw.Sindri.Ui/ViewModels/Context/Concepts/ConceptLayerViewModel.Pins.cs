@@ -36,11 +36,8 @@ internal sealed partial class ConceptLayerViewModel
     /// <summary>Whether the layer head carries New pin.</summary>
     public bool ShowNewPin => PinsServed;
 
-    /// <summary>Whether the layer head carries Add several; off until the Add several sheet is built.</summary>
-    public bool ShowAddSeveral => PinsServed && SeveralAvailable;
-
-    /// <summary>Whether the Add several sheet is built; the shell sets it when it is.</summary>
-    internal bool SeveralAvailable { get; set; }
+    /// <summary>Whether the layer head carries Add several; with the Pin sheet and New pin.</summary>
+    public bool ShowAddSeveral => PinsServed;
 
     /// <summary>The New pin button's words.</summary>
     public string NewPinText { get; } = Labels.PinNew;
