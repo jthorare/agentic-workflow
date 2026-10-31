@@ -21533,6 +21533,24 @@ Aw.Sindri.Core.Profile.IProfileTextParser.Parse(string! yaml, string! source) ->
 Aw.Sindri.Core.Profile.LinearToken
 const Aw.Sindri.Core.Profile.LinearToken.Connect = "sindri index connect linear" -> string!
 const Aw.Sindri.Core.Profile.LinearToken.Missing = "Linear needs a token" -> string!
+Aw.Sindri.Core.Setup.ConceptEdit
+Aw.Sindri.Core.Setup.ConceptEdit.ConceptEdit(Aw.Sindri.Core.Ids.ConceptPinId Id, Aw.Sindri.Core.Profile.ConceptSettings? Entry, string? MatchName = null) -> void
+Aw.Sindri.Core.Setup.ConceptEdit.MatchName.get -> string?
+Aw.Sindri.Core.Setup.ConceptEdit.MatchName.init -> void
+Aw.Sindri.Core.Setup.ConceptEdit.Entry.get -> Aw.Sindri.Core.Profile.ConceptSettings?
+Aw.Sindri.Core.Setup.ConceptEdit.Entry.init -> void
+Aw.Sindri.Core.Setup.ConceptEdit.Id.get -> Aw.Sindri.Core.Ids.ConceptPinId
+Aw.Sindri.Core.Setup.ConceptEdit.Id.init -> void
+Aw.Sindri.Core.Setup.IProfileConceptWriter
+Aw.Sindri.Core.Setup.IProfileConceptWriter.Write(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptEdit!>! edits, Aw.Sindri.Core.Ids.ProfileHash? ifHash, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Ids.ProfileHash>!>
+Aw.Sindri.Core.Setup.ConceptEdit.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptEdit!
+Aw.Sindri.Core.Setup.ConceptEdit.Deconstruct(out Aw.Sindri.Core.Ids.ConceptPinId Id, out Aw.Sindri.Core.Profile.ConceptSettings? Entry, out string? MatchName) -> void
+Aw.Sindri.Core.Setup.ConceptEdit.Equals(Aw.Sindri.Core.Setup.ConceptEdit? other) -> bool
+override Aw.Sindri.Core.Setup.ConceptEdit.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ConceptEdit.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ConceptEdit.ToString() -> string!
+static Aw.Sindri.Core.Setup.ConceptEdit.operator !=(Aw.Sindri.Core.Setup.ConceptEdit? left, Aw.Sindri.Core.Setup.ConceptEdit? right) -> bool
+static Aw.Sindri.Core.Setup.ConceptEdit.operator ==(Aw.Sindri.Core.Setup.ConceptEdit? left, Aw.Sindri.Core.Setup.ConceptEdit? right) -> bool
 Aw.Sindri.Core.Ids.PageActionPinId
 Aw.Sindri.Core.Ids.PageActionPinId.Equals(Aw.Sindri.Core.Ids.PageActionPinId other) -> bool
 Aw.Sindri.Core.Ids.PageActionPinId.Equals(Aw.Sindri.Core.Ids.PageActionPinId other, System.Collections.Generic.IEqualityComparer<Aw.Sindri.Core.Ids.PageActionPinId>! comparer) -> bool
@@ -21645,3 +21663,80 @@ static Aw.Sindri.Core.PinnedCode.operator !=(Aw.Sindri.Core.PinnedCode? left, Aw
 static Aw.Sindri.Core.PinnedCode.operator ==(Aw.Sindri.Core.PinnedCode? left, Aw.Sindri.Core.PinnedCode? right) -> bool
 static Aw.Sindri.Core.PinnedFile.operator !=(Aw.Sindri.Core.PinnedFile? left, Aw.Sindri.Core.PinnedFile? right) -> bool
 static Aw.Sindri.Core.PinnedFile.operator ==(Aw.Sindri.Core.PinnedFile? left, Aw.Sindri.Core.PinnedFile? right) -> bool
+Aw.Sindri.Core.Events.ContextPinWritten
+Aw.Sindri.Core.Events.ContextPinWritten.Actor.get -> string!
+Aw.Sindri.Core.Events.ContextPinWritten.Actor.init -> void
+Aw.Sindri.Core.Events.ContextPinWritten.<Clone>$() -> Aw.Sindri.Core.Events.ContextPinWritten!
+Aw.Sindri.Core.Events.ContextPinWritten.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ContextPinWritten.CommandId.init -> void
+Aw.Sindri.Core.Events.ContextPinWritten.ContextPinWritten(Aw.Sindri.Core.Ids.CommandId CommandId, string! Actor, Aw.Sindri.Core.Workflow.Engine.LaunchId? Launch, Aw.Sindri.Core.Ids.ProfileHash Hash, System.Collections.Generic.IReadOnlyList<string!>! Pins) -> void
+Aw.Sindri.Core.Events.ContextPinWritten.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out string! Actor, out Aw.Sindri.Core.Workflow.Engine.LaunchId? Launch, out Aw.Sindri.Core.Ids.ProfileHash Hash, out System.Collections.Generic.IReadOnlyList<string!>! Pins) -> void
+Aw.Sindri.Core.Events.ContextPinWritten.Equals(Aw.Sindri.Core.Events.ContextPinWritten? other) -> bool
+Aw.Sindri.Core.Events.ContextPinWritten.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash
+Aw.Sindri.Core.Events.ContextPinWritten.Hash.init -> void
+Aw.Sindri.Core.Events.ContextPinWritten.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId?
+Aw.Sindri.Core.Events.ContextPinWritten.Launch.init -> void
+Aw.Sindri.Core.Events.ContextPinWritten.Pins.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.ContextPinWritten.Pins.init -> void
+Aw.Sindri.Core.Setup.PinEvents
+Aw.Sindri.Core.Setup.PinEvents.CanRecord() -> bool
+Aw.Sindri.Core.Setup.PinEvents.PinEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers) -> void
+Aw.Sindri.Core.Setup.PinEvents.Written(Aw.Sindri.Core.Ids.ProfileHash hash, System.Collections.Generic.IReadOnlyList<string!>! pins, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+const Aw.Sindri.Core.Events.EventTypes.ContextPinWritten = "context.pin.written" -> string!
+override Aw.Sindri.Core.Events.ContextPinWritten.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ContextPinWritten.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ContextPinWritten.ToString() -> string!
+static Aw.Sindri.Core.Events.ContextPinWritten.operator !=(Aw.Sindri.Core.Events.ContextPinWritten? left, Aw.Sindri.Core.Events.ContextPinWritten? right) -> bool
+static Aw.Sindri.Core.Events.ContextPinWritten.operator ==(Aw.Sindri.Core.Events.ContextPinWritten? left, Aw.Sindri.Core.Events.ContextPinWritten? right) -> bool
+static Aw.Sindri.Core.Setup.PinEvents.KeyOf(Aw.Sindri.Core.Ids.ProfileHash hash) -> string!
+Aw.Sindri.Core.Setup.IMapFeatures
+Aw.Sindri.Core.Setup.IMapFeatures.Check(System.Collections.Generic.IReadOnlyList<string!>! keys, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.MapFeatureCheck!>!>
+Aw.Sindri.Core.Setup.MapFeatureCheck
+Aw.Sindri.Core.Setup.MapFeatureCheck.<Clone>$() -> Aw.Sindri.Core.Setup.MapFeatureCheck!
+Aw.Sindri.Core.Setup.MapFeatureCheck.Deconstruct(out string? Version, out System.Collections.Generic.IReadOnlyList<string!>! Missing) -> void
+Aw.Sindri.Core.Setup.MapFeatureCheck.Equals(Aw.Sindri.Core.Setup.MapFeatureCheck? other) -> bool
+Aw.Sindri.Core.Setup.MapFeatureCheck.MapFeatureCheck(string? Version, System.Collections.Generic.IReadOnlyList<string!>! Missing) -> void
+Aw.Sindri.Core.Setup.MapFeatureCheck.Missing.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Setup.MapFeatureCheck.Missing.init -> void
+Aw.Sindri.Core.Setup.MapFeatureCheck.Version.get -> string?
+Aw.Sindri.Core.Setup.MapFeatureCheck.Version.init -> void
+override Aw.Sindri.Core.Setup.MapFeatureCheck.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.MapFeatureCheck.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.MapFeatureCheck.ToString() -> string!
+static Aw.Sindri.Core.Setup.MapFeatureCheck.operator !=(Aw.Sindri.Core.Setup.MapFeatureCheck? left, Aw.Sindri.Core.Setup.MapFeatureCheck? right) -> bool
+static Aw.Sindri.Core.Setup.MapFeatureCheck.operator ==(Aw.Sindri.Core.Setup.MapFeatureCheck? left, Aw.Sindri.Core.Setup.MapFeatureCheck? right) -> bool
+Aw.Sindri.Core.Setup.ConceptLine
+Aw.Sindri.Core.Setup.ConceptLine.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Setup.ConceptLine.Aliases.init -> void
+Aw.Sindri.Core.Setup.ConceptLine.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptLine!
+Aw.Sindri.Core.Setup.ConceptLine.ConceptLine(string! Name, string? Summary, System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+Aw.Sindri.Core.Setup.ConceptLine.Deconstruct(out string! Name, out string? Summary, out System.Collections.Generic.IReadOnlyList<string!>! Aliases) -> void
+Aw.Sindri.Core.Setup.ConceptLine.Equals(Aw.Sindri.Core.Setup.ConceptLine? other) -> bool
+Aw.Sindri.Core.Setup.ConceptLine.Name.get -> string!
+Aw.Sindri.Core.Setup.ConceptLine.Name.init -> void
+Aw.Sindri.Core.Setup.ConceptLine.Summary.get -> string?
+Aw.Sindri.Core.Setup.ConceptLine.Summary.init -> void
+Aw.Sindri.Core.Setup.ConceptList
+Aw.Sindri.Core.Setup.ConceptListRead
+Aw.Sindri.Core.Setup.ConceptListRead.<Clone>$() -> Aw.Sindri.Core.Setup.ConceptListRead!
+Aw.Sindri.Core.Setup.ConceptListRead.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>!
+Aw.Sindri.Core.Setup.ConceptListRead.Concepts.init -> void
+Aw.Sindri.Core.Setup.ConceptListRead.Equals(Aw.Sindri.Core.Setup.ConceptListRead? other) -> bool
+Aw.Sindri.Core.Setup.ConceptListRead.Skipped.get -> int
+Aw.Sindri.Core.Setup.ConceptListRead.Skipped.init -> void
+const Aw.Sindri.Core.Setup.ConceptList.Max = 100 -> int
+override Aw.Sindri.Core.Setup.ConceptLine.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ConceptLine.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ConceptLine.ToString() -> string!
+override Aw.Sindri.Core.Setup.ConceptListRead.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.ConceptListRead.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.ConceptListRead.ToString() -> string!
+static Aw.Sindri.Core.Setup.ConceptLine.operator !=(Aw.Sindri.Core.Setup.ConceptLine? left, Aw.Sindri.Core.Setup.ConceptLine? right) -> bool
+static Aw.Sindri.Core.Setup.ConceptLine.operator ==(Aw.Sindri.Core.Setup.ConceptLine? left, Aw.Sindri.Core.Setup.ConceptLine? right) -> bool
+static Aw.Sindri.Core.Setup.ConceptListRead.operator !=(Aw.Sindri.Core.Setup.ConceptListRead? left, Aw.Sindri.Core.Setup.ConceptListRead? right) -> bool
+static Aw.Sindri.Core.Setup.ConceptListRead.operator ==(Aw.Sindri.Core.Setup.ConceptListRead? left, Aw.Sindri.Core.Setup.ConceptListRead? right) -> bool
+Aw.Sindri.Core.Setup.ConceptListRead.ConceptListRead(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>! Concepts, int Skipped, int? NamelessLine = null) -> void
+Aw.Sindri.Core.Setup.ConceptListRead.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.ConceptLine!>! Concepts, out int Skipped, out int? NamelessLine) -> void
+Aw.Sindri.Core.Setup.ConceptListRead.NamelessLine.get -> int?
+Aw.Sindri.Core.Setup.ConceptListRead.NamelessLine.init -> void
+static Aw.Sindri.Core.Setup.ConceptList.Parse(string! text) -> Aw.Sindri.Core.Setup.ConceptListRead!
