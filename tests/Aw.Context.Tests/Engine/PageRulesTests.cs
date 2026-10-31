@@ -26,6 +26,19 @@ public sealed class PageRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_page_naming_its_map_action_and_surface_with_capitals_passes_the_write_check()
+    {
+        var facts = new PageFacts(
+            new HashSet<ConceptId>(),
+            new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["surface:screen/SettingsScreen"] = ["web"] },
+            new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["action:weekpage.submit"] = ["web"] });
+
+        var errors = PageRules.Check([Page(surface: "surface:screen/SettingsScreen", actions: Action(key: "action:WeekPage.submit"))], facts);
+
+        Assert.Empty(errors);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_pin_id_and_a_derived_concept_key_both_name_a_concept()
         => Assert.Empty(Codes(Page(actions: Action(concepts: ["self-scheduling", "concept:approval-workflow"]))));
 
