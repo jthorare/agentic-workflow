@@ -6,6 +6,6 @@ namespace Aw.Context.Core.Engine;
 /// <param name="ActionRepos">Each action key in the map to the repos its evidence is in.</param>
 public sealed record PageFacts(IReadOnlySet<ConceptId> ConceptIds, IReadOnlyDictionary<string, IReadOnlyList<string>> SurfaceRepos, IReadOnlyDictionary<string, IReadOnlyList<string>> ActionRepos)
 {
-    /// <summary>The stored form of a key a person wrote (the map's builder passes EntryKey.Normalized, issue 1790); null looks keys up only as written.</summary>
+    /// <summary>The stored form of a key a person wrote (the map's builder passes EntryKey.Normalized, issue 1790); null looks keys up only as written. TODO(P1d-2): the page write (ui P1b-2 writer) must pass it, with a test on that caller.</summary>
     public Func<string, string>? Stored { get; init; }
 }

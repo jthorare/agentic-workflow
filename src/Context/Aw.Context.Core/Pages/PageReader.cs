@@ -2,7 +2,6 @@ using System.Globalization;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
-using Aw.Context.Core.Results;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Pages;
@@ -109,10 +108,11 @@ public static class PageReader
         && (concept is null || entry.ConceptKeys.Contains(concept, StringComparer.Ordinal));
 
     private static PageRow Row(PageEntry entry, MapText text) => new(
-        PageId.From(entry.Id), entry.Node.Key, Label(entry.Name, entry.Node, text), entry.Repos.Count == 1 ? entry.Repos[0] : null, entry.Owner ? OwnerMark : SuggestedMark, entry.Code,
-        [.. entry.Actions.Select(a => new PageActionRow(PageActionId.From(a.Id), a.Node.Key, Label(a.Name, a.Node, text), a.Owner ? OwnerMark : SuggestedMark, a.Code, a.Concepts))]);
+        PageId.From(entry.Id), entry.Node.Key, Label(entry.Name, text), entry.Repos.Count == 1 ? entry.Repos[0] : null, entry.Owner ? OwnerMark : SuggestedMark, entry.Code,
+        [.. entry.Actions.Select(a => new PageActionRow(PageActionId.From(a.Id), a.Node.Key, Label(a.Name, text), a.Owner ? OwnerMark : SuggestedMark, a.Code, a.Concepts))]);
 
-    private static string Label(string name, GraphNode node, MapText text) => text.Label(name, TrustPolicy.ForNode(node, node.Provenance == Provenance.Human));
+    // Page and action names are always untrusted, an owner's too (pages spec §3.5, §7): fenced for agents, clean for a person at the CLI or plain HTTP.
+    private static string Label(string name, MapText text) => text.Label(name, Results.Trust.Untrusted);
 
     private sealed record ActionEntry(string Id, GraphNode Node, string Name, bool Owner, bool Code, IReadOnlyList<string> Concepts);
 

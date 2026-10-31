@@ -53,4 +53,22 @@ public sealed class GetPagesTests : IDisposable
         Assert.Equal(["approval-workflow", "self-scheduling"], action.Concepts, StringComparer.Ordinal);
         Assert.Equal((1, false), (view.Total, view.Truncated));
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(ContextCallerKind.Human, ContextClient.Mcp)]
+    [InlineData(ContextCallerKind.Session, ContextClient.Http)]
+    public async Task Page_and_action_names_are_fenced_for_an_agent(ContextCallerKind kind, ContextClient client)
+    {
+        var world = new MapWorld();
+        _worlds.Add(world);
+        _ = await world.ImportYaml(Yaml());
+        var scope = Scope() with { Caller = new ContextCaller(kind, kind == ContextCallerKind.Session ? ContextRepoName.From("aw-split-panes") : null, client) };
+
+        var query = new PagesQuery(Concept: null, Page: null, Repo: null, PageMarks.All, Limit: null, Offset: null, Draft: false, MapVersion: null);
+        var page = Assert.Single((await world.Engine.Pages(query, scope, MapWorld.None)).Value.Pages);
+
+        Assert.StartsWith("<untrusted", page.Name, StringComparison.Ordinal);
+        Assert.Contains("Schedule week", page.Name, StringComparison.Ordinal);
+        Assert.StartsWith("<untrusted", Assert.Single(page.Actions).Name, StringComparison.Ordinal);
+    }
 }
