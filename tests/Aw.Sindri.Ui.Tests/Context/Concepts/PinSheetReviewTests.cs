@@ -62,14 +62,14 @@ public sealed class PinSheetReviewTests
 
         await sheet.Submit(Token);
 
-        Assert.Equal([FileHash, "h2"], [.. kit.Api.PinnedConcepts.Select(b => b.IfHash!)], StringComparer.Ordinal);
+        Assert.Equal([FileHash, "h2"], [.. kit.Api.PinnedConcepts.Select(b => b.IfHash)], StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task After_a_clash_whose_reread_fails_nothing_more_is_written()
     {
         var kit = Billing();
-        kit.Api.ContextPinsAnswer = _ => new Aw.Sindri.Ui.Testing.RouteAnswer(System.Net.HttpStatusCode.NotFound, "{}");
+        kit.Api.ContextPinsAnswer = _ => new Testing.RouteAnswer(System.Net.HttpStatusCode.NotFound, "{}");
         var sheet = kit.Sheet();
         await sheet.Open(PinThis(), Token);
         kit.Fails("SND-PROFILE-003", "the profile changed since you read it");
