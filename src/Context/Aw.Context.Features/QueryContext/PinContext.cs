@@ -17,6 +17,9 @@ namespace Aw.Context.Features.QueryContext;
 /// <param name="StaleNote">Says pins were edited after the map was built, or null.</param>
 internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<ConceptId> AnchorPins, string? StaleNote)
 {
+    /// <summary>Where the pin-scoped sources count the results they read and left out; read for the empty-answer note. Unused without <see cref="Scope"/>.</summary>
+    internal PinTally Skipped { get; } = new();
+
     /// <summary>The context of a query with no pins in play.</summary>
     internal static PinContext None { get; } = new(PinSet.Empty, Scope: null, [], StaleNote: null);
 
@@ -31,7 +34,7 @@ internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<Co
     /// <summary>Resolves the pins of a query.</summary>
     /// <param name="mapped">The repos the map is built from.</param>
     /// <param name="visible">The repos the caller may read.</param>
-    /// <param name="map">The map the query read (its whole stored graph), or null when there is none.</param>
+    /// <param name="map">The map the query read (what the caller sees decides what a pin holds; the stored graph says whether the map has the pin), or null when there is none.</param>
     /// <param name="concept">The pin <c xml:lang="en">concept=</c> names, or null.</param>
     /// <param name="anchors">The anchors' keys.</param>
     /// <returns>The context; SND-CONTEXT-105 when <paramref name="concept"/> is set and there is no map; 102 to 104 from the pin lookup.</returns>
@@ -47,8 +50,7 @@ internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<Co
             return concept is null ? None : ContextErrors.PinNeedsMap.With("concept= needs a built map (fix: sindri context map build)");
         }
 
-        var graph = map.Snapshot.Graph;
-        var pins = PinSet.Of(mapped, visible, graph);
+        var pins = PinSet.Of(mapped, visible, map.Graph, map.Snapshot.Graph);
         PinScope? named = null;
         if (concept is not null)
         {

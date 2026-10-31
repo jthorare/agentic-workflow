@@ -40,8 +40,17 @@ public sealed class PinSet : IAliasPins
     /// <param name="visible">The caller's repos; a pin that applies to none of them is not visible.</param>
     /// <param name="graph">The map's graph.</param>
     /// <returns>The set.</returns>
-    public static PinSet Of(IReadOnlyList<ContextRepo> mapped, IReadOnlyList<ContextRepo> visible, GraphSnapshot graph)
+    public static PinSet Of(IReadOnlyList<ContextRepo> mapped, IReadOnlyList<ContextRepo> visible, GraphSnapshot graph) => Of(mapped, visible, graph, graph);
+
+    /// <summary>The pins of a map the caller reads: what each holds comes from the graph the caller sees, whether the map has the pin yet from the stored one.</summary>
+    /// <param name="mapped">The repos the map is built from; the ids are made over these.</param>
+    /// <param name="visible">The caller's repos; a pin that applies to none of them is not visible.</param>
+    /// <param name="graph">The graph the caller sees (the owner's renames, merges and moves applied, the synced record links merged in).</param>
+    /// <param name="stored">The stored graph of the map version, whose concept nodes say which pins the map has been built with.</param>
+    /// <returns>The set.</returns>
+    public static PinSet Of(IReadOnlyList<ContextRepo> mapped, IReadOnlyList<ContextRepo> visible, GraphSnapshot graph, GraphSnapshot stored)
     {
+        ArgumentNullException.ThrowIfNull(stored);
         ArgumentNullException.ThrowIfNull(mapped);
         ArgumentNullException.ThrowIfNull(visible);
         ArgumentNullException.ThrowIfNull(graph);
@@ -54,7 +63,7 @@ public sealed class PinSet : IAliasPins
         var byRepo = mapped.ToDictionary(r => r.Name.Value, r => PinIds.Of(resolved, r.Concepts), StringComparer.Ordinal);
         var seen = visible.SelectMany(r => byRepo.TryGetValue(r.Name.Value, out var own) ? own : []).Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
         var ids = resolved.Where(p => seen.Contains(p.Id)).Select(p => ConceptId.From(p.Id)).ToList();
-        return new PinSet(resolved, ids, byRepo, Holders(resolved, mapped, graph), [.. graph.Nodes.Where(n => n.Key.Kind == NodeKind.Concept).Select(n => n.Key.Value)]);
+        return new PinSet(resolved, ids, byRepo, Holders(resolved, mapped, graph), [.. stored.Nodes.Where(n => n.Key.Kind == NodeKind.Concept).Select(n => n.Key.Value)]);
     }
 
     /// <summary>The pin whose alias is exactly <paramref name="name"/> (compared as the matcher reads words: lower case, singular, small words left out).</summary>
@@ -98,6 +107,29 @@ public sealed class PinSet : IAliasPins
     /// <returns>The pin, or null.</returns>
     public ConceptId? PinOf(NodeKey key) => _holder.TryGetValue(key.Value, out var rank) ? ConceptId.From(_all[rank].Id) : null;
 
+    /// <summary>The pin a node sits in, when the caller can see it; a pin they can't is none.</summary>
+    internal ConceptId? VisiblePinOf(NodeKey key) => PinOf(key) is { } pin && IsVisible(pin) ? pin : null;
+
+    /// <summary>The visible pin a repo file's path sits in, or null.</summary>
+    internal ConceptId? VisiblePathPin(ContextRepoName repo, string path) => PathPin(repo, path) is { } id && ConceptId.From(id) is var pin && IsVisible(pin) ? pin : null;
+
+    /// <summary>The keys the pin holds that start with a prefix ('record:', 'code:').</summary>
+    internal IEnumerable<string> KeysHeldBy(ConceptId pin, string prefix)
+    {
+        var rank = -1;
+        for (var i = 0; i < _all.Count; i++)
+        {
+            if (string.Equals(_all[i].Id, pin.Value, StringComparison.Ordinal))
+            {
+                rank = i;
+            }
+        }
+
+        return _holder.Where(h => h.Value == rank && h.Key.StartsWith(prefix, StringComparison.Ordinal)).Select(h => h.Key);
+    }
+
+    private bool IsVisible(ConceptId pin) => Visible.Any(v => string.Equals(v.Value, pin.Value, StringComparison.Ordinal));
+
     /// <summary>The scope of one pin the caller can see.</summary>
     /// <param name="pin">A pin id, or 'concept:&lt;id&gt;'.</param>
     /// <param name="mapTag">How answers name the map ('v41').</param>
@@ -137,6 +169,22 @@ public sealed class PinSet : IAliasPins
     /// <returns>The pin's id, or null.</returns>
     internal string? PathPin(ContextRepoName repo, string path) =>
         _byRepo.TryGetValue(repo.Value, out var pins) ? pins.FirstOrDefault(p => PathDenylist.MatchesExactCase(path, p.Pin.Paths))?.Id : null;
+
+    /// <summary>The pin a repo document's canonical key ('repo:&lt;repo&gt;/&lt;path&gt;') is in, by its path.</summary>
+    /// <param name="recordKey">The record's canonical key.</param>
+    /// <returns>The pin's id, or null for any other key or a path no pin matches.</returns>
+    internal string? RecordPathPin(string recordKey)
+    {
+        const string prefix = "repo:";
+        if (!recordKey.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var rest = recordKey[prefix.Length..];
+        return _byRepo.Keys.Where(r => rest.StartsWith(r + "/", StringComparison.Ordinal)).OrderByDescending(r => r.Length)
+            .Select(r => PathPin(ContextRepoName.From(r), rest[(r.Length + 1)..])).FirstOrDefault(p => p is not null);
+    }
 
     private const int MaxSuggestions = 5;
 

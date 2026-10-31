@@ -37,6 +37,10 @@ public sealed record ContextResult(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<SkippedComponent>? SkippedComponents { get; init; }
 
+    /// <summary>Plain sentences about how the answer was made (the pin it is scoped to, a source left out under it, why it is empty); left out when none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Notes { get; init; }
+
     /// <summary>How many demoted files the answer carries, per role ('index.demote'); left out when none.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public FilteredCounts? Filtered { get; init; }

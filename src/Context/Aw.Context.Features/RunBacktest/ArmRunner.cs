@@ -30,7 +30,7 @@ internal sealed class ArmRunner(IArmQuery planner, TimeProvider clock)
             Arm.Docs => (empty, docs, null),
             Arm.Graph => (inputs.AsOfMap, [], null),
             Arm.GraphReviewed => (null, [], null),   // the ceiling: today's map with every review decision
-            Arm.All or Arm.RankerRrf or Arm.RankerFeatures or Arm.RankerRerank => (inputs.AsOfMap, docs, null),   // the ranker arms read what 'all' reads and differ only in the ranker stages
+            Arm.All or Arm.RankerRrf or Arm.RankerFeatures or Arm.RankerPin or Arm.RankerRerank => (inputs.AsOfMap, docs, null),   // the ranker arms read what 'all' reads and differ only in the ranker stages
             Arm.Linear or Arm.Code => throw new ArgumentOutOfRangeException(nameof(arm), "that arm is not available yet"),
             _ => throw new ArgumentOutOfRangeException(nameof(arm)),
         };
@@ -41,7 +41,7 @@ internal sealed class ArmRunner(IArmQuery planner, TimeProvider clock)
     }
 
     // The other arms run the profile's ranker (off unless a person turned it on).
-    private static RankerMode? Ranker(Arm arm) => arm == Arm.RankerRrf ? RankerMode.Rrf : arm == Arm.RankerFeatures ? RankerMode.Features : arm == Arm.RankerRerank ? RankerMode.Rerank : null;
+    private static RankerMode? Ranker(Arm arm) => arm == Arm.RankerRrf ? RankerMode.Rrf : arm == Arm.RankerFeatures ? RankerMode.Features : arm == Arm.RankerPin ? RankerMode.Pin : arm == Arm.RankerRerank ? RankerMode.Rerank : null;
 
     private ContextResult Nothing(ContextQuery query) =>
         new(ContextResult.CurrentSchemaVersion, QueryId.From("q_backtest"), query, [], MapVersion: null, clock.GetUtcNow(), [], [], [], [],

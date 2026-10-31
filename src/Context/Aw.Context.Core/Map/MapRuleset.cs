@@ -11,7 +11,7 @@ namespace Aw.Context.Core.Map;
 public static class MapRuleset
 {
     /// <summary>The version of the built-in rules (the clustering and extraction code). Bump it in every change to those rules, so every map built before it is rebuilt once.</summary>
-    public const string RulesVersion = "2";
+    public const string RulesVersion = "3";
 
     private const char Unit = '\u001f';
 

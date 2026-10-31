@@ -20,9 +20,16 @@ public static class RankFusion
     /// <summary>Fuses <paramref name="answers"/>.</summary>
     /// <param name="answers">Each source's hits.</param>
     /// <returns>One item per canonical key, best score first (ties by key, ordinal).</returns>
-    public static IReadOnlyList<FusedItem> Fuse(IReadOnlyList<SourceAnswer> answers)
+    public static IReadOnlyList<FusedItem> Fuse(IReadOnlyList<SourceAnswer> answers) => Fuse(answers, []);
+
+    /// <summary>Fuses <paramref name="answers"/> and adds the key-only <paramref name="legs"/>: the r-th key of a leg adds 1/(k + r) to its item and 'rrf:&lt;leg&gt;#r' to its 'why'.</summary>
+    /// <param name="answers">Each source's hits.</param>
+    /// <param name="legs">Key-only legs; a key no source returned is ignored (a leg never adds an item) and doesn't count toward the rank.</param>
+    /// <returns>One item per canonical key, best score first (ties by key, ordinal).</returns>
+    public static IReadOnlyList<FusedItem> Fuse(IReadOnlyList<SourceAnswer> answers, IReadOnlyList<RankedLeg> legs)
     {
         ArgumentNullException.ThrowIfNull(answers);
+        ArgumentNullException.ThrowIfNull(legs);
         var items = new Dictionary<string, (double Score, List<Sources.SourceHit> Hits, List<string> Why)>(StringComparer.Ordinal);
         foreach (var answer in answers)
         {
@@ -40,6 +47,18 @@ public static class RankFusion
                 entry.Hits.Add(hit);
                 entry.Why.Add(string.Create(CultureInfo.InvariantCulture, $"rrf:{answer.Source.Value}#{rank}"));
                 items[key] = (entry.Item1 + (1d / (K + rank)), entry.Hits, entry.Why);
+            }
+        }
+
+        foreach (var leg in legs)
+        {
+            var rank = 0;
+            foreach (var key in leg.Keys.Select(k => k.Value).Distinct(StringComparer.Ordinal).Where(items.ContainsKey))
+            {
+                rank++;
+                var (score, hits, why) = items[key];
+                why.Add(string.Create(CultureInfo.InvariantCulture, $"rrf:{leg.Source.Value}#{rank}"));
+                items[key] = (score + (1d / (K + rank)), hits, why);
             }
         }
 
