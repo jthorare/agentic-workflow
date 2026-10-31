@@ -5694,3 +5694,29 @@ static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.operator !=(Aw.
 static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.operator ==(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? right) -> bool
 static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.operator !=(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.operator ==(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? right) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextPagesRequest!
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Concept.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Concept.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Deconstruct(out string? Repo, out string? Concept, out string? Page, out Aw.Context.Core.Pages.PageMarks Marks, out int? Limit, out int? Offset, out bool Draft, out string? MapVersion) -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Draft.get -> bool
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Draft.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Equals(Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.GetContextPagesRequest(string? Repo = null, string? Concept = null, string? Page = null, Aw.Context.Core.Pages.PageMarks Marks = Aw.Context.Core.Pages.PageMarks.All, int? Limit = null, int? Offset = null, bool Draft = false, string? MapVersion = null) -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Limit.get -> int?
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Limit.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.MapVersion.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.MapVersion.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Offset.get -> int?
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Offset.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Page.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Page.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Repo.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Repo.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Marks.get -> Aw.Context.Core.Pages.PageMarks
+Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Marks.init -> void
+override Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? left, Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.GetContextPagesRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? left, Aw.Sindri.Features.ContextCalls.GetContextPagesRequest? right) -> bool
