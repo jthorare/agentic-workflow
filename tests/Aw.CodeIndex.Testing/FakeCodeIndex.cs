@@ -163,7 +163,7 @@ public sealed class FakeCodeIndex : ICodeIndex
             return Fail<FindSymbolsAnswer>(CodeIndexErrors.IndexNotBuilt);
         }
 
-        var hits = repos.SelectMany(r => r.Symbols.Where(s => Matches(query, s))).OrderBy(static s => s.File, StringComparer.Ordinal).ThenBy(static s => s.StartLine).ToList();
+        var hits = repos.SelectMany(r => r.Symbols.Where(s => Matches(query, s) && (query.Within is not { } within || within.Contains(new RepoFile(r.Name, s.File))))).OrderBy(static s => s.File, StringComparer.Ordinal).ThenBy(static s => s.StartLine).ToList();
         var limit = query.Limit;
         return Ok(new FindSymbolsAnswer(Stamp(repos[0]), [.. hits.Take(limit)], hits.Count > limit));
     }

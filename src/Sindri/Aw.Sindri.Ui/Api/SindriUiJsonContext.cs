@@ -104,6 +104,8 @@ namespace Aw.Sindri.Ui.Api;
 [JsonSerializable(typeof(ProjectAcceptedView))]
 [JsonSerializable(typeof(ProfileRead))]
 [JsonSerializable(typeof(Setup.SetupView))]
+[JsonSerializable(typeof(Context.PinConceptsBody))]
+[JsonSerializable(typeof(Context.PinSetBody))]
 [JsonSerializable(typeof(Setup.AddRepoRequest))]
 [JsonSerializable(typeof(Setup.RegisterMcpRequest))]
 [JsonSerializable(typeof(Sandbox.SandboxStatusView))]

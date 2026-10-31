@@ -1,8 +1,10 @@
 using Aw.CodeIndex.Core.Facade;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core;
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Features.Commands;
+using Aw.Sindri.Features.ContextCalls;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
@@ -15,7 +17,7 @@ internal static class CodeIndexReadsServiceCollectionExtensions
     /// <returns>The same collection.</returns>
     internal static IServiceCollection AddCodeIndexReads(this IServiceCollection services)
     {
-        _ = services.AddScoped<CodeIndexScopes>().AddScoped<RepoHealths>().AddScoped<ICodeIndexHealth, CodeIndexHealth>();
+        _ = services.AddScoped<CodeIndexScopes>().AddScoped<IPinnedCode, PinnedCodeReader>().AddScoped<RepoHealths>().AddScoped<ICodeIndexHealth, CodeIndexHealth>();
         _ = services.AddScoped<IValidator<GetCodeIndexStatusRequest>, AcceptAllValidator<GetCodeIndexStatusRequest>>().AddQuery<GetCodeIndexStatusRequest, CodeIndexStatusView, GetCodeIndexStatusService>();
         _ = services.AddScoped<IValidator<FindCodeSymbolsRequest>, AcceptAllValidator<FindCodeSymbolsRequest>>().AddQuery<FindCodeSymbolsRequest, FindSymbolsAnswer, FindCodeSymbolsService>();
         _ = services.AddScoped<IValidator<GetCodeCallersRequest>, AcceptAllValidator<GetCodeCallersRequest>>().AddQuery<GetCodeCallersRequest, CodeCallsView, GetCodeCallersService>();
