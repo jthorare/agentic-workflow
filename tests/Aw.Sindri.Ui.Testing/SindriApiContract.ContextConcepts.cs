@@ -153,7 +153,7 @@ public abstract partial class SindriApiContract
         var view = (await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Lines: lines), Token)).Value;
 
         Expect.True(server.ContextPinSuggestAsked.Count > 1);
-        Expect.True(server.ContextPinSuggestAsked.All(q => q.Lines!.Sum(Aw.Sindri.Ui.Api.Context.ContextRoutes.PinSuggestRowSize) <= 6000));
+        Expect.True(server.ContextPinSuggestAsked.All(q => q.Lines!.Sum(ContextRoutes.PinSuggestRowSize) <= 6000));
         Expect.Sequence(Enumerable.Range(0, 25), view.Matches!.Select(m => m.Line));
     }
 
