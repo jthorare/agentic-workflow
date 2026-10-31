@@ -2,7 +2,11 @@ using System.Globalization;
 using System.Net;
 using System.Text.Json;
 using Aw.Context.Testing.Fixtures;
+using Aw.Kernel.Services;
+using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.Lease;
+using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Tests.ApiGoldens;
 using Aw.Sindri.Tests.ContextCalls;
@@ -28,12 +32,17 @@ public sealed class ProfileLiveAfterWriteTests : IDisposable
     {
         var host = await ContextHosts.Approved(_repo, sessions: true, Token, services => services.Replace(ServiceDescriptor.Singleton<IRepoInspector>(SetupRepoScenarios.Inspector())));
         var approved = (await host.LiveHash(Token)).Value;
-        for (var i = 0; i < 200 && await ViewLive(host) != approved; i++)
+
+        // why: the golden host runs no projector and its clock is fake, so the watch's start check never lands here; record it the way ProfileWatch does (the lease grant, as service:profile-watch) and fold it
+        var grant = host.App.Services.GetRequiredService<HeldLease>().Current!;
+        using (host.App.Services.GetRequiredService<ICallerContextAccessor>().EnterService("profile-watch"))
         {
-            await Task.Delay(50, Token);
+            await using var scope = host.App.Services.CreateAsyncScope();
+            var check = await scope.ServiceProvider.GetRequiredService<IService<CheckProfileRequest, CheckProfileResponse>>().Handle(new CheckProfileRequest(grant), Token);
+            Assert.True(check.IsSuccess);
         }
 
-        Assert.Equal(approved, await ViewLive(host));   // the start check landed: the view begins fresh
+        Assert.Equal(approved, await ViewLive(host), StringComparer.Ordinal);   // the view begins fresh
         return host;
     }
 
