@@ -51,6 +51,13 @@ internal sealed class ConceptGraph
         return this;
     }
 
+    /// <summary>A code node that implements a feature, evidenced in a repo ('repo:web/src/a.cs'): the edge a repo scope keeps the feature and its concepts by.</summary>
+    public ConceptGraph Implements(string code, string feature, string evidence)
+    {
+        _edges.Add(new GraphEdge(NodeKey.From(code), NodeKey.From(feature), EdgeType.Implements, Provenance.Human, 1.0, Order: null, Evidence: [new EvidenceRef(RecordKey.From(evidence))]));
+        return this;
+    }
+
     public ConceptGraph Edge(string from, EdgeType type, string to)
     {
         _edges.Add(new GraphEdge(NodeKey.From(from), NodeKey.From(to), type));

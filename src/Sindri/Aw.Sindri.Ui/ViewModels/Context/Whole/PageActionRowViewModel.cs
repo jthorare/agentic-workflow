@@ -8,4 +8,7 @@ internal sealed record PageActionRowViewModel(string Key, string Name, string De
 {
     /// <summary>Gets the row as a screen reader reads it, one tab stop: its name, then the rest.</summary>
     public string RowName => Name + " " + Detail;
+
+    /// <summary>Gets a value indicating whether the name is a link to the node's panel: in a concept's drill it is; over the pages in no concept, where no map is drawn, it is plain text.</summary>
+    public bool Opens { get; init; } = true;
 }

@@ -271,6 +271,9 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult(Results.Success(new MapHealth("context:pages", MapHealthState.Ok, "no map yet", string.Empty)));
 
     /// <inheritdoc/>
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<PinSuggestView>();
+
+    /// <inheritdoc/>
     public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(new PageMapFacts(MapVersion: null, new PageFacts(new HashSet<ConceptId>(), new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal), new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)), [])));
 

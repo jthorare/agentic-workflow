@@ -69,6 +69,11 @@
       <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
         <TextBlock x:Name="ContextTitle" Classes="page-title" Text="{Binding Title}" />
         <TextBlock x:Name="ContextHead" Classes="caption subtle" Text="{Binding Head}" IsVisible="{Binding HasHead}" VerticalAlignment="Center" />
+        <!-- The pages no concept takes (pages spec §3.4): counted by the concepts read, read only when pressed. -->
+        <Button x:Name="ContextNoConceptLink" IsVisible="{Binding ShowNoConceptLink}" Click="OnNoConcept" Padding="0,1" Background="Transparent" BorderThickness="0" VerticalAlignment="Center"
+                AutomationProperties.Name="{Binding NoConceptLinkText}">
+          <TextBlock Classes="caption" Text="{Binding NoConceptLinkText}" TextDecorations="Underline" />
+        </Button>
         <TextBlock x:Name="ContextItemNote" Classes="caption" Text="{Binding ItemNote}" IsVisible="{Binding HasItemNote}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
                    AutomationProperties.Name="{Binding ItemNote}" />
         <Button x:Name="ItemRetry" Content="{Binding ItemRetryText}" IsVisible="{Binding IsItemFailed}" Click="OnRetryItem" AutomationProperties.Name="{Binding ItemRetryText}" />
@@ -137,6 +142,10 @@
         <!-- The concept band: the first layer, over the whole map; a concept opens the bands scoped to it. -->
         <Panel x:Name="ConceptsHost" IsVisible="{Binding ShowConcepts}">
           <cv2:ConceptLayerView x:Name="ConceptLayer" DataContext="{Binding Concepts}" />
+        </Panel>
+        <!-- The pages in no concept, over the concept cards on the right; the close button and Esc close it. -->
+        <Panel IsVisible="{Binding ShowNoConcept}" HorizontalAlignment="Right">
+          <wv:PagesSectionView x:Name="NoConceptPages" DataContext="{Binding NoConceptPages}" VerticalAlignment="Stretch" Margin="14" />
         </Panel>
         <!-- The page's first state: the whole map, read when the page opens (whole-map spec §3.1); a query's neighbourhood replaces it for now. -->
         <Panel x:Name="WholeMapHost" IsVisible="{Binding ShowWhole}">

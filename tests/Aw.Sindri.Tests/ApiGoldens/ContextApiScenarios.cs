@@ -136,6 +136,10 @@ internal static class ContextApiScenarios
         ("context-concepts-glossary", "terms", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
         ("context-concepts-glossary", "no-terms-empty", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
         ("context-concepts-glossary", "no-map-030", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
+        ("context-pins-suggest", "terms", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?concept=concept%3Abilling", ct)),
+        ("context-pins-suggest", "features", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?search=sh", ct)),
+        ("context-pins-suggest", "matches", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?line=Invoices&def=payment%20runs&line=Weather&def=rain%20and%20snow", ct)),
+        ("context-pins-suggest", "invalid-179", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?concept=concept%3Abilling&search=sh", ct)),
         ("context-concepts-id-members", "scheduling", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members", ct)),
         ("context-concepts-id-members", "other", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Aother/members", ct)),
         ("context-concepts-id-members", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members?limit=1", ct)),
@@ -297,9 +301,9 @@ internal static class ContextApiScenarios
             return HopsMap(host.Home);
         }
 
-        if ((slug.StartsWith("context-concepts", StringComparison.Ordinal) && !string.Equals(scenario, "no-concepts-empty", StringComparison.Ordinal)) || scenario.StartsWith("concept-", StringComparison.Ordinal))
+        if ((slug.StartsWith("context-concepts", StringComparison.Ordinal) && !string.Equals(scenario, "no-concepts-empty", StringComparison.Ordinal)) || scenario.StartsWith("concept-", StringComparison.Ordinal) || string.Equals(slug, "context-pins-suggest", StringComparison.Ordinal))
         {
-            return ConceptMapFile.Write(host.Home, terms: (slug, scenario) is ("context-concepts-glossary", "terms"));   // the tabs map has no concept: its own scenario reads that answer
+            return ConceptMapFile.Write(host.Home, terms: (slug, scenario) is ("context-concepts-glossary", "terms") or ("context-pins-suggest", _));   // the tabs map has no concept: its own scenario reads that answer
         }
 
         if ((slug, scenario) is not ("context-lenses", "ambiguous-037"))

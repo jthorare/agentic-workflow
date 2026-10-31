@@ -43,6 +43,13 @@ public interface IContextConcepts
     /// <returns>The health row.</returns>
     public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken);
 
+    /// <summary>What the "Pin this" and "Add several" forms offer (concept pins spec §3.6): one concept's terms with the records each would newly link, the features a search finds, or the concept each line of a pasted list matches. Reads only; writes and queues nothing.</summary>
+    /// <param name="query">Which map, whose repo, and the one thing to suggest.</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The view, or SND-CONTEXT-003 for a concept the map lacks, else as <see cref="Concepts"/>.</returns>
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken);
+
     /// <summary>What the current map says about pages: the concept ids, the repos of each surface and action key, and the concepts' names. The page write checks against it.</summary>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
