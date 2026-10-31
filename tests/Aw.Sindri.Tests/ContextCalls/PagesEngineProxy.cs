@@ -14,6 +14,9 @@ public class PagesEngineProxy : DispatchProxy
     /// <summary>What the pages read answers.</summary>
     public Result<PagesView> Answer { get; set; } = new PagesView([], Total: 0, Truncated: false, "v1");
 
+    /// <summary>When set, answers each pages query itself (a slice by offset, say) in place of <see cref="Answer"/>.</summary>
+    public Func<PagesQuery, Result<PagesView>>? AnswerFor { get; set; }
+
     /// <summary>The pages queries asked, in order.</summary>
     public IList<PagesQuery> Queries { get; } = [];
 
@@ -31,14 +34,19 @@ public class PagesEngineProxy : DispatchProxy
             [new PageActionRow(PageActionId.From("submit-schedule"), NodeKey.From("action:WeekPage.submit"), "Submit schedule", "owner", Code: false, ["scheduling"])])],
         Total: 1, Truncated: false, "v13");
 
+    private Result<PagesView> Pages(PagesQuery query, ContextScope scope)
+    {
+        Queries.Add(query);
+        Scopes.Add(scope);
+        return AnswerFor?.Invoke(query) ?? Answer;
+    }
+
     protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
     {
         switch (targetMethod?.Name)
         {
             case nameof(IContextEngine.Pages):
-                Queries.Add((PagesQuery)args![0]!);
-                Scopes.Add((ContextScope)args[1]!);
-                return new ValueTask<Result<PagesView>>(Answer);
+                return new ValueTask<Result<PagesView>>(Pages((PagesQuery)args![0]!, (ContextScope)args[1]!));
             case nameof(IContextEngine.CheckPages):
                 Scopes.Add((ContextScope?)args![0]);
                 return new ValueTask<Result<MapHealth>>(new MapHealth("context:pages", MapHealthState.Ok, "no pages named", string.Empty));

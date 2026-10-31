@@ -11024,3 +11024,4 @@ static Aw.Context.Core.Pages.PageListPreview.Of(System.Collections.Generic.IRead
 static Aw.Context.Core.Pages.PageListRow.operator !=(Aw.Context.Core.Pages.PageListRow? left, Aw.Context.Core.Pages.PageListRow? right) -> bool
 static Aw.Context.Core.Pages.PageListRow.operator ==(Aw.Context.Core.Pages.PageListRow? left, Aw.Context.Core.Pages.PageListRow? right) -> bool
 static Aw.Context.Core.Pages.PageListText.Parse(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListBlock!>!
+static readonly Aw.Context.Core.ContextErrors.PagePreviewInvalid -> Aw.Kernel.ErrorDefinition!
