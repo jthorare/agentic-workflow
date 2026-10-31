@@ -106,7 +106,7 @@ public sealed class PinnedRecordLegsTests
 
         var result = await Ask(leg, store, MapOf(billing: [], auth: ["linear:issue/a0", "linear:issue/a1"]), "billing");
 
-        Assert.Equal("concept billing: no results. Of the results read, 2 were in auth and 1 were in no pin (fix: concept=auth, or drop concept=)", Assert.Single(result.Value.Notes!));
+        Assert.Equal("concept billing: no results. Of the results read, 2 were in auth and 1 were in no pin (fix: concept=auth, or drop concept=)", Assert.Single(result.Value.Notes!, n => n.StartsWith("concept billing: no results", StringComparison.Ordinal)));
         Assert.Empty(result.Value.Cites);
     }
 

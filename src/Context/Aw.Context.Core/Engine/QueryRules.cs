@@ -40,6 +40,9 @@ public static partial class QueryRules
     /// <summary>The 006 message for a repo given without a diff.</summary>
     public const string RepoMessage = "a repo goes with a diff only (it names the repo whose commits the range is read in)";
 
+    /// <summary>The 006 message for a blank concept.</summary>
+    public const string ConceptMessage = "concept names a pin: its id or 'concept:<id>' (see context_concepts, rows with pinned: true)";
+
     /// <summary>Whether a value, percent-encoded, fits <see cref="MaxEncodedText"/>.</summary>
     /// <param name="value">The question text or node name.</param>
     /// <returns>True when a GET query string can carry it.</returns>
@@ -66,6 +69,11 @@ public static partial class QueryRules
         if (query.Repo is not null && query.Diff is null)
         {
             return ContextErrors.QueryInvalid.With(RepoMessage);
+        }
+
+        if (query.Concept is { } concept && string.IsNullOrWhiteSpace(concept))
+        {
+            return ContextErrors.QueryInvalid.With(ConceptMessage);
         }
 
         if (CheckDepth(query.Depth) is { } depthError)

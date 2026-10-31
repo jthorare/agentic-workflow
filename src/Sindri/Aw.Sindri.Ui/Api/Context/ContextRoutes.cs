@@ -97,7 +97,8 @@ internal static class ContextRoutes
         return With(Root + "/map", parts);
     }
 
-    internal static string Query(string text) => With(Root + "/query", ["q=" + Uri.EscapeDataString(text)]);
+    internal static string Query(string text, string? concept = null) =>
+        With(Root + "/query", concept is null ? ["q=" + Uri.EscapeDataString(text)] : ["q=" + Uri.EscapeDataString(text), "concept=" + Uri.EscapeDataString(concept)]);
 
     internal static string Node(string key) => With(Root + "/node", ["key=" + Uri.EscapeDataString(key)]);
 
