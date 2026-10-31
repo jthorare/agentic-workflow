@@ -198,7 +198,7 @@ public static class WholeMapBuilder
     {
         var confirmed = node.Provenance == Provenance.Human;
         var trust = TrustPolicy.ForNode(node, confirmed);
-        return new WholeMapNode(node.Key, text.Label(node.Label, trust), node.Key.Kind, area.Area, area.AlsoIn, trust, node.Provenance, node.Confidence, confirmed) { Repo = repo, Owner = PageOrder.IsOwner(node) };
+        return new WholeMapNode(node.Key, text.Label(node.Label, trust), node.Key.Kind, area.Area, area.AlsoIn, trust, node.Provenance, node.Confidence, confirmed) { Repo = repo, Owner = PageOrder.IsOwner(node), PageId = PageOrder.PageIdOf(node) };
     }
 
     private static List<WholeMapEdge> Edges(List<GraphEdge> edges) =>
