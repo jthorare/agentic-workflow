@@ -140,6 +140,9 @@ internal static class ContextApiScenarios
         ("context-pins-suggest", "features", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?search=sh", ct)),
         ("context-pins-suggest", "matches", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?line=Invoices&def=payment%20runs&line=Weather&def=rain%20and%20snow", ct)),
         ("context-pins-suggest", "invalid-179", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?concept=concept%3Abilling&search=sh", ct)),
+        ("context-pages-preview", "matched", async (s, ct) => await s.PreviewPages("Schedule week\nSubmit -> Self-scheduling\n\nBilling\nSend invoice -> aproval", ct)),
+        ("context-pages-preview", "same-page", async (s, ct) => await s.PreviewPages("Schedule week\nSubmit\n\nSchedule weeks\nCancel", ct)),
+        ("context-pages-preview", "invalid-259", async (s, ct) => await s.PreviewPages("  \n", ct)),
         ("context-concepts-id-members", "scheduling", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members", ct)),
         ("context-concepts-id-members", "other", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Aother/members", ct)),
         ("context-concepts-id-members", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members?limit=1", ct)),
@@ -299,6 +302,11 @@ internal static class ContextApiScenarios
         if (scenario.StartsWith("hops-", StringComparison.Ordinal))
         {
             return HopsMap(host.Home);
+        }
+
+        if (string.Equals(slug, "context-pages-preview", StringComparison.Ordinal))
+        {
+            return PagesMapFile.Write(host.Home);
         }
 
         if ((slug.StartsWith("context-concepts", StringComparison.Ordinal) && !string.Equals(scenario, "no-concepts-empty", StringComparison.Ordinal)) || scenario.StartsWith("concept-", StringComparison.Ordinal) || string.Equals(slug, "context-pins-suggest", StringComparison.Ordinal))

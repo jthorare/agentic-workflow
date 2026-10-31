@@ -67,6 +67,7 @@ public sealed class GoldenContractTests
         ["context-code"] = As<CodeView>,   // GET /sindri/context/code: the code lens' callers and callees (S-9)
         ["context-map"] = As<MapStatusView>,
         ["context-map-publish"] = As<MapPublishView>,
+        ["context-pages-preview"] = As<PagesPreview>,   // POST /context/pages/preview (Add several pages); invalid-259 is ProblemDetails
         ["context-map-promote"] = As<PromotePreview>,
         ["context-map-review"] = AsReview,
         ["context-map-review-history"] = As<ReviewHistoryView>,

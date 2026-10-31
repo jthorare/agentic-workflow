@@ -46,6 +46,14 @@ internal sealed class Scenario(GoldenHost host)
         return (await host.Http.Ask(Get(route, AppHeaders()))).Body;
     }
 
+    /// <summary>POST a pasted page list to the preview as the app: the answer, a refusal included.</summary>
+    public async Task<string> PreviewPages(string text, CancellationToken ct)
+    {
+        ct.ThrowIfCancellationRequested();
+        var body = JsonSerializer.Serialize(new Dictionary<string, object?>(StringComparer.Ordinal) { ["text"] = text });
+        return (await host.Http.Ask(Post("/sindri/context/pages/preview", body, AppHeaders()))).Body;
+    }
+
     /// <summary>Lets the views follow the ledger (the golden host hosts no projector), then GET as the app: what the profile's approval row says is there.</summary>
     public async Task<string> FetchWithViews(string route, CancellationToken ct)
     {

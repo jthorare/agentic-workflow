@@ -209,6 +209,7 @@ namespace Aw.Sindri.Host;
 [JsonSerializable(typeof(ImportContextMapRequest)), JsonSerializable(typeof(ImportContextMapResponse))]
 [JsonSerializable(typeof(GetIndexStatusRequest)), JsonSerializable(typeof(IndexStatusView)), JsonSerializable(typeof(IndexSourceRow)), JsonSerializable(typeof(IndexConceptsView)), JsonSerializable(typeof(PurgeIndexSourceRequest)), JsonSerializable(typeof(IndexPurgeView))]   // the index verbs (owned-index spec §5.8)
 [JsonSerializable(typeof(CheckContextMapStructureRequest)), JsonSerializable(typeof(MapChecksView))]   // map structure spec §4.3
+[JsonSerializable(typeof(PreviewPagesRequest)), JsonSerializable(typeof(PagesPreview)), JsonSerializable(typeof(PagesPreviewBlock)), JsonSerializable(typeof(PageListMatch)), JsonSerializable(typeof(PageListActionRow)), JsonSerializable(typeof(PageListActionMatch)), JsonSerializable(typeof(PageListConcept))]   // pages spec §3.6: Add several pages
 // Two RecordKey types meet here: Sindri's item link key and the context lane's source key; name Sindri's apart (SYSLIB1031).
 [JsonSerializable(typeof(Core.Ids.RecordKey), TypeInfoPropertyName = "ItemRecordKey")]
 [JsonSerializable(typeof(BudgetFigures)), JsonSerializable(typeof(ChildGroup)), JsonSerializable(typeof(ChildRow)), JsonSerializable(typeof(CurrentState))]

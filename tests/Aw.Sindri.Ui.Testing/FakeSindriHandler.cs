@@ -163,6 +163,13 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
             return Answer(server.ReviewDecided);
         }
 
+        if (request.Method == HttpMethod.Post && string.Equals(uri.AbsolutePath, "/sindri/context/pages/preview", StringComparison.Ordinal))
+        {
+            var paste = await Body<PagesPreviewBody>(request, cancellationToken).ConfigureAwait(false);
+            _ = await server.ContextPagesPreview(uri, paste.Text, paste.Repo, cancellationToken).ConfigureAwait(false);
+            return Answer(server.ContextPagesPreviewAnswer(paste));
+        }
+
         if (request.Method == HttpMethod.Query
             && (string.Equals(uri.AbsolutePath, "/sindri/context/lenses", StringComparison.Ordinal) || string.Equals(uri.AbsolutePath, "/sindri/context/code", StringComparison.Ordinal)))
         {

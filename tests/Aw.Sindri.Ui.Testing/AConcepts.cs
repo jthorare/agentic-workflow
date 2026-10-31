@@ -50,4 +50,20 @@ internal static class AConcepts
 
     /// <summary>The pin-suggest answer as the route serves it.</summary>
     internal static RouteAnswer Served(PinSuggestView view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
+
+    /// <summary>A pasted-pages preview with one matched, ticked block and one new block with an unknown concept.</summary>
+    internal static PagesPreview Previewed() => new("v41",
+    [
+        new PagesPreviewBlock(
+            1, 1, "Schedule week", new PagesPreviewMatch("surface:route/GET:/schedule/week", "schedule-week", "Schedule week", 4), Replaces: null, SameAs: null, Ticked: true, Reason: null,
+            [new PagesPreviewAction("Submit schedule", new PagesPreviewActionMatch("action:WeekPage.submit", "Submit schedule"), [new PagesPreviewConcept("self-scheduling", "self-scheduling")])], [],
+            new PagesPreviewPage(Id: null, "Schedule week", "aw-split-panes", "surface:route/GET:/schedule/week",
+                [new PagesPreviewPageAction("Submit schedule", "action:WeekPage.submit", ["self-scheduling"])])),
+        new PagesPreviewBlock(
+            2, 5, "Billing", Match: null, Replaces: null, SameAs: null, Ticked: false, "No concept called \"aproval\": pick one",
+            [new PagesPreviewAction("Send invoice", Match: null, [new PagesPreviewConcept("aproval", Id: null)])], ["aproval"], Page: null),
+    ]);
+
+    /// <summary>The pasted-pages preview as the route serves it.</summary>
+    internal static RouteAnswer Served(PagesPreview view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
 }

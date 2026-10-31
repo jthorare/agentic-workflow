@@ -70,6 +70,7 @@ internal static partial class Labels
         ["ProbeLaunchTargets"] = "Check launch targets again",
         ["PromoteContextMap"] = "Promote map",
         ["CheckContextMapStructure"] = "Check map structure",
+        ["PreviewContextPages"] = "Read a pasted page list",
         ["PurgeIndexSource"] = "Purge index source",
         ["ProposeContextMap"] = "Propose map from scope",
         ["BuildCodeIndex"] = "Build code index",

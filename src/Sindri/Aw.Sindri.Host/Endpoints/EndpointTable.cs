@@ -155,6 +155,7 @@ internal static class EndpointTable
         _ = commands.MapRebuildViews();
         _ = commands.MapImportContextMap();
         _ = commands.MapPromoteContextMap().MapCheckContextMapStructure().MapPurgeIndexSource();
+        _ = commands.MapPreviewContextPages();
         _ = commands.MapProposeContextMap();
         _ = commands.MapReviewContextMap();
         _ = commands.MapShowLineHoldout();
