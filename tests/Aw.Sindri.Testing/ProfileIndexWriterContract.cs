@@ -5,14 +5,14 @@ using Xunit;
 
 namespace Aw.Sindri.Testing;
 
-/// <summary>The contract every <see cref="IProfileConceptWriter"/> honours, over a profile with no concepts: a write returns the new hash, a hash that isn't the profile's writes nothing (SND-PROFILE-003), and the returned hash is the profile's next one.</summary>
-public abstract class ProfileConceptWriterContract
+/// <summary>The contract every <see cref="IProfileIndexWriter"/> honours, over a profile with no concepts: a write returns the new hash, a hash that isn't the profile's writes nothing (SND-PROFILE-003), and the returned hash is the profile's next one.</summary>
+public abstract class ProfileIndexWriterContract
 {
     private static readonly ConceptPinId _billing = ConceptPinId.From("billing");
 
     /// <summary>A writer over a profile with no concepts, and that profile's hash.</summary>
     /// <returns>The writer and the hash.</returns>
-    protected abstract (IProfileConceptWriter Writer, ProfileHash Hash) Create();
+    protected abstract (IProfileIndexWriter Writer, ProfileHash Hash) Create();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 

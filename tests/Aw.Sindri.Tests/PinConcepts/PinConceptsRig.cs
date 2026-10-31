@@ -23,10 +23,10 @@ internal sealed class PinConceptsRig : IDisposable
 
     internal SliceHarness Slice { get; } = new();
 
-    internal FakeProfileConceptWriter Writer { get; } = new();
+    internal FakeProfileIndexWriter Writer { get; } = new();
 
     /// <summary>Every edit written, in order.</summary>
-    internal IReadOnlyList<ConceptEdit> Edits => [.. Writer.Writes.SelectMany(static w => w)];
+    internal IReadOnlyList<ConceptEdit> Edits => [.. Writer.Writes.SelectMany(static w => w).OfType<ConceptEdit>()];
 
     internal MapStub Map { get; } = new();
 
@@ -86,9 +86,9 @@ internal sealed class PinConceptsRig : IDisposable
         public void Report(string value) => _seen.Add(value);
     }
 
-    private sealed class Then(IProfileConceptWriter inner, Action after) : IProfileConceptWriter
+    private sealed class Then(IProfileIndexWriter inner, Action after) : IProfileIndexWriter
     {
-        public async ValueTask<Result<ProfileHash>> Write(IReadOnlyList<ConceptEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
+        public async ValueTask<Result<ProfileHash>> Write(IReadOnlyList<IndexEdit> edits, ProfileHash? ifHash, CancellationToken cancellationToken)
         {
             var written = await inner.Write(edits, ifHash, cancellationToken).ConfigureAwait(false);
             after();

@@ -31,7 +31,8 @@ internal sealed partial class QueryPipeline
             return pins.Error;
         }
 
-        var part = anchored.Value.Graph with { Pins = pins.Value };
-        return (pins.Value.Scope is { } scope && !map.IsError ? PinCut.Apply(part, scope, map.Value.Graph) : part, anchored.Value.Terms, anchored.Value.Miss);
+        var told = pins.Value.StaleVersion is null || source.Inputs.Rebuild is not { } state ? pins.Value : pins.Value.Rebuilding(await state.Read(cancellationToken).ConfigureAwait(false));
+        var part = anchored.Value.Graph with { Pins = told };
+        return (told.Scope is { } scope && !map.IsError ? PinCut.Apply(part, scope, map.Value.Graph) : part, anchored.Value.Terms, anchored.Value.Miss);
     }
 }
