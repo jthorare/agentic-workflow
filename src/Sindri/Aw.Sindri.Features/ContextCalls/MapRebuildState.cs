@@ -3,7 +3,6 @@ using Aw.Context.Core.Map;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -13,10 +12,10 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// main branch, or the backoff after failed refreshes. Any read that fails answers Idle: the caller then tells the fix, which is never wrong.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
-/// <param name="services">The engine is resolved on use: the engine's query path asks this state, so a constructor dependency would be a cycle.</param>
+/// <param name="engine">Resolves the engine on use: the engine's query path asks this state, so a constructor dependency would be a cycle.</param>
 /// <param name="jobs">The 'jobs' view.</param>
 /// <param name="clock">Dates the backoff.</param>
-internal sealed class MapRebuildState(ContextScopes scopes, IServiceProvider services, IJobViews jobs, TimeProvider clock) : IMapRebuildState
+internal sealed class MapRebuildState(ContextScopes scopes, Func<IContextEngine> engine, IJobViews jobs, TimeProvider clock) : IMapRebuildState
 {
     private const int RecentRuns = 8;
 
@@ -39,9 +38,9 @@ internal sealed class MapRebuildState(ContextScopes scopes, IServiceProvider ser
             return MapRebuildStatus.Idle;
         }
 
-        var engine = services.GetRequiredService<IContextEngine>();
-        var state = await engine.Held(scope.Value, cancellationToken).ConfigureAwait(false);
-        var heads = await engine.MapHeads(scope.Value, cancellationToken).ConfigureAwait(false);
+        var context = engine();
+        var state = await context.Held(scope.Value, cancellationToken).ConfigureAwait(false);
+        var heads = await context.MapHeads(scope.Value, cancellationToken).ConfigureAwait(false);
         if (state.IsError || heads.IsError)
         {
             return MapRebuildStatus.Idle;

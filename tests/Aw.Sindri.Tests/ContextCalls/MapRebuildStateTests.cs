@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Features.ContextCalls;
 using Aw.Sindri.Testing;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.ContextCalls;
 
@@ -26,8 +25,7 @@ public sealed class MapRebuildStateTests
         var loaded = SliceHarness.Profile("5s");
         loaded = loaded with { Profile = loaded.Profile with { Context = JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() } };
         _ = await _h.Profiles.Save(loaded, Ct);
-        var services = new ServiceCollection().AddSingleton(_engine.Proxy).BuildServiceProvider();
-        return new MapRebuildState(new ContextScopes(_h.Profiles, _h.Callers), services, _jobs, _h.Clock);
+        return new MapRebuildState(new ContextScopes(_h.Profiles, _h.Callers), () => _engine.Proxy, _jobs, _h.Clock);
     }
 
     private void Refresh(JobState state, TimeSpan endedAgo, params string[] lines)
