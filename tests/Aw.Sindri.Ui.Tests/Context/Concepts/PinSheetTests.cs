@@ -15,8 +15,8 @@ public sealed class PinSheetTests
 
         Assert.Equal("Billing", sheet.Name);
         Assert.Equal("How we take money", sheet.Definition);
-        Assert.Equal([new PinWordRow("payments", 41, Ticked: true), new PinWordRow("invoice", 7, Ticked: true)], sheet.Words);
-        Assert.Equal([new PinFeatureRow("feature:checkout", "Checkout", Ticked: true), new PinFeatureRow("feature:refunds", "Refunds", Ticked: true)], sheet.Features);
+        Assert.Equal([("payments", 41, true), ("invoice", 7, true)], sheet.Words.Select(w => (w.Word, w.NewRecords, w.Ticked)));
+        Assert.Equal([("feature:checkout", "Checkout", true), ("feature:refunds", "Refunds", true)], sheet.Features.Select(f => (f.Key, f.Label, f.Ticked)));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -28,7 +28,7 @@ public sealed class PinSheetTests
         var sheet = PinSheetViewModel.ForCard(card, terms, []);
 
         Assert.Equal(20, sheet.Words.Count);
-        Assert.Equal(new PinWordRow("payment", 1240, Ticked: false), sheet.Words[0]);
+        Assert.Equal(("payment", 1240, false), (sheet.Words[0].Word, sheet.Words[0].NewRecords, sheet.Words[0].Ticked));
         Assert.All(sheet.Words.Skip(1), w => Assert.True(w.Ticked));
     }
 }
