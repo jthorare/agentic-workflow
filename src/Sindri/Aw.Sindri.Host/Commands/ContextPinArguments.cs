@@ -84,7 +84,7 @@ internal static class ContextPinArguments
 
         if (_valued.TryGetValue(flag, out var valued) && valued.Verbs.Contains(parsed.Verb))
         {
-            if (i + 1 >= rest.Length)
+            if (i + 1 >= rest.Length || rest[i + 1].StartsWith("--", StringComparison.Ordinal))   // the next flag is not this flag's value
             {
                 return SindriErrors.InvalidInput.With($"{flag} needs a value: {Usage}");
             }
