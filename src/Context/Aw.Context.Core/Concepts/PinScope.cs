@@ -44,21 +44,11 @@ public sealed class PinScope
     /// <returns>True when this pin holds it.</returns>
     public bool HoldsNode(NodeKey key) => _set.PinOf(key) is { } held && string.Equals(held.Value, Pin.Value, StringComparison.Ordinal);
 
-    /// <summary>Whether a record is in this pin: the record node <c xml:lang="en">record:&lt;key&gt;</c> is held through a link to the pin or a member feature. One that is not is counted in <paramref name="skipped"/> under the pin it sits in.</summary>
-    /// <param name="record">The record.</param>
-    /// <param name="skipped">Where a left-out record is counted, or null.</param>
+    /// <summary>Whether a record is in this pin: the record node a pin holds, or a repo document whose path the pin's paths match.</summary>
+    /// <param name="record">The record's canonical key.</param>
     /// <returns>True when this pin holds it.</returns>
-    internal bool HoldsRecord(RecordKey record, PinTally? skipped)
-    {
-        var node = NodeKey.TryFrom(RecordPrefix + record.Value, out var key) ? key : (NodeKey?)null;
-        var held = node is { } found && HoldsNode(found);
-        if (!held)
-        {
-            skipped?.Count(node is { } left ? _set.VisiblePinOf(left) : null);
-        }
-
-        return held;
-    }
+    public bool HoldsRecord(Sources.RecordKey record) =>
+        HoldsNode(NodeKey.From("record:" + record.Value)) || (_set.RecordPathPin(record.Value) is { } pin && string.Equals(pin, Pin.Value, StringComparison.Ordinal));
 
     /// <summary>Whether a repo doc is in this pin: its record is linked in, or failing a link its path is inside the pin's code paths. One that is not is counted in <paramref name="skipped"/>.</summary>
     /// <param name="repo">The repo.</param>
@@ -93,7 +83,16 @@ public sealed class PinScope
 
     private sealed class Counted(PinScope scope, PinTally? skipped) : ISourcePin
     {
-        public bool HoldsRecord(RecordKey record) => scope.HoldsRecord(record, skipped);
+        public bool HoldsRecord(RecordKey record)
+        {
+            var held = scope.HoldsRecord(record);
+            if (!held)
+            {
+                skipped?.Count(NodeKey.TryFrom(RecordPrefix + record.Value, out var node) ? scope._set.VisiblePinOf(node) : null);
+            }
+
+            return held;
+        }
 
         public bool HoldsDoc(string repo, string repoRelativePath) => ContextRepoName.TryFrom(repo, out var name) ? scope.HoldsDoc(name, repoRelativePath, skipped) : Left();
 

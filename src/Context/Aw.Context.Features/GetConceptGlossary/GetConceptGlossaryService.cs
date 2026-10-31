@@ -11,6 +11,6 @@ internal sealed class GetConceptGlossaryService(ConceptReader reader) : IService
     {
         var query = request.Query;
         var read = await reader.Read(request.Scope, query.Read, query.Repo, cancellationToken).ConfigureAwait(false);
-        return read.IsError ? read.Error : ConceptGlossaryBuilder.Build(read.Value.Basis, read.Value.Graph, read.Value.Text);
+        return read.IsError ? read.Error : ConceptGlossaryBuilder.Build(read.Value.Basis, read.Value.Graph, read.Value.Text, read.Value.Pins);
     }
 }
