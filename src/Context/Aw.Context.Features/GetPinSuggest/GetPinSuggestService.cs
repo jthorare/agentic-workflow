@@ -6,7 +6,6 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
-using Aw.Context.Features.RecordAccess;
 using Aw.Kernel;
 using Aw.Kernel.Services;
 
@@ -140,7 +139,7 @@ internal sealed class GetPinSuggestService(ConceptReader reader, IIntentStore in
             return allowed.Error;
         }
 
-        return new AudienceScope(allowed.Value) { Records = scope.Caller.Kind == ContextCallerKind.Session ? RecordMask.Linked(graph) : [] };
+        return new AudienceScope(allowed.Value) { Records = scope.Caller.Kind == ContextCallerKind.Session ? RecordMask.Linked(graph) : new HashSet<RecordKey>() };
     }
 
     // The records a count is made over: live, unblocked, in the layer but not linked to the concept yet, and visible. The audience is allowed (or, for a session, the record is in its scoped map);
