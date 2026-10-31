@@ -10894,3 +10894,133 @@ static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator !=(Aw.Context.Cor
 static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator ==(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
 Aw.Context.Core.Concepts.PinSet.PinsOf(System.Collections.Generic.IReadOnlyList<string!>! anchors) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>!
 static Aw.Context.Core.Concepts.PinSet.Sole(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>! anchorPins) -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Pages.PageListAction
+Aw.Context.Core.Pages.PageListAction.<Clone>$() -> Aw.Context.Core.Pages.PageListAction!
+Aw.Context.Core.Pages.PageListAction.Concepts.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Pages.PageListAction.Concepts.init -> void
+Aw.Context.Core.Pages.PageListAction.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<string!>! Concepts) -> void
+Aw.Context.Core.Pages.PageListAction.Equals(Aw.Context.Core.Pages.PageListAction? other) -> bool
+Aw.Context.Core.Pages.PageListActionMatch
+Aw.Context.Core.Pages.PageListActionMatch.<Clone>$() -> Aw.Context.Core.Pages.PageListActionMatch!
+Aw.Context.Core.Pages.PageListActionMatch.Deconstruct(out Aw.Context.Core.Graph.NodeKey Key, out string! Name) -> void
+Aw.Context.Core.Pages.PageListActionMatch.Equals(Aw.Context.Core.Pages.PageListActionMatch? other) -> bool
+Aw.Context.Core.Pages.PageListActionMatch.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Pages.PageListActionMatch.Key.init -> void
+Aw.Context.Core.Pages.PageListActionMatch.Name.get -> string!
+Aw.Context.Core.Pages.PageListActionMatch.Name.init -> void
+Aw.Context.Core.Pages.PageListActionMatch.PageListActionMatch(Aw.Context.Core.Graph.NodeKey Key, string! Name) -> void
+Aw.Context.Core.Pages.PageListAction.Name.get -> string!
+Aw.Context.Core.Pages.PageListAction.Name.init -> void
+Aw.Context.Core.Pages.PageListAction.PageListAction(string! Name, System.Collections.Generic.IReadOnlyList<string!>! Concepts) -> void
+Aw.Context.Core.Pages.PageListActionRow
+Aw.Context.Core.Pages.PageListActionRow.<Clone>$() -> Aw.Context.Core.Pages.PageListActionRow!
+Aw.Context.Core.Pages.PageListActionRow.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListConcept!>!
+Aw.Context.Core.Pages.PageListActionRow.Concepts.init -> void
+Aw.Context.Core.Pages.PageListActionRow.Deconstruct(out string! Name, out Aw.Context.Core.Pages.PageListActionMatch? Match, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListConcept!>! Concepts) -> void
+Aw.Context.Core.Pages.PageListActionRow.Equals(Aw.Context.Core.Pages.PageListActionRow? other) -> bool
+Aw.Context.Core.Pages.PageListActionRow.Match.get -> Aw.Context.Core.Pages.PageListActionMatch?
+Aw.Context.Core.Pages.PageListActionRow.Match.init -> void
+Aw.Context.Core.Pages.PageListActionRow.Name.get -> string!
+Aw.Context.Core.Pages.PageListActionRow.Name.init -> void
+Aw.Context.Core.Pages.PageListActionRow.PageListActionRow(string! Name, Aw.Context.Core.Pages.PageListActionMatch? Match, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListConcept!>! Concepts) -> void
+Aw.Context.Core.Pages.PageListBlock
+Aw.Context.Core.Pages.PageListBlock.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListAction!>!
+Aw.Context.Core.Pages.PageListBlock.Actions.init -> void
+Aw.Context.Core.Pages.PageListBlock.Block.get -> int
+Aw.Context.Core.Pages.PageListBlock.Block.init -> void
+Aw.Context.Core.Pages.PageListBlock.<Clone>$() -> Aw.Context.Core.Pages.PageListBlock!
+Aw.Context.Core.Pages.PageListBlock.Deconstruct(out int Block, out int Line, out string! Name, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListAction!>! Actions) -> void
+Aw.Context.Core.Pages.PageListBlock.Equals(Aw.Context.Core.Pages.PageListBlock? other) -> bool
+Aw.Context.Core.Pages.PageListBlock.Line.get -> int
+Aw.Context.Core.Pages.PageListBlock.Line.init -> void
+Aw.Context.Core.Pages.PageListBlock.Name.get -> string!
+Aw.Context.Core.Pages.PageListBlock.Name.init -> void
+Aw.Context.Core.Pages.PageListBlock.PageListBlock(int Block, int Line, string! Name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListAction!>! Actions) -> void
+Aw.Context.Core.Pages.PageListConcept
+Aw.Context.Core.Pages.PageListConcept.<Clone>$() -> Aw.Context.Core.Pages.PageListConcept!
+Aw.Context.Core.Pages.PageListConcept.Deconstruct(out string! Written, out Aw.Context.Core.Engine.ConceptId? Id) -> void
+Aw.Context.Core.Pages.PageListConcept.Equals(Aw.Context.Core.Pages.PageListConcept? other) -> bool
+Aw.Context.Core.Pages.PageListConcept.Id.get -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Pages.PageListConcept.Id.init -> void
+Aw.Context.Core.Pages.PageListConcept.PageListConcept(string! Written, Aw.Context.Core.Engine.ConceptId? Id) -> void
+Aw.Context.Core.Pages.PageListConcept.Written.get -> string!
+Aw.Context.Core.Pages.PageListConcept.Written.init -> void
+Aw.Context.Core.Pages.PageListMatch
+Aw.Context.Core.Pages.PageListMatch.Actions.get -> int
+Aw.Context.Core.Pages.PageListMatch.Actions.init -> void
+Aw.Context.Core.Pages.PageListMatch.<Clone>$() -> Aw.Context.Core.Pages.PageListMatch!
+Aw.Context.Core.Pages.PageListMatch.Deconstruct(out Aw.Context.Core.Graph.NodeKey Key, out Aw.Context.Core.Engine.PageId Id, out string! Name, out int Actions) -> void
+Aw.Context.Core.Pages.PageListMatch.Equals(Aw.Context.Core.Pages.PageListMatch? other) -> bool
+Aw.Context.Core.Pages.PageListMatch.Id.get -> Aw.Context.Core.Engine.PageId
+Aw.Context.Core.Pages.PageListMatch.Id.init -> void
+Aw.Context.Core.Pages.PageListMatch.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Pages.PageListMatch.Key.init -> void
+Aw.Context.Core.Pages.PageListMatch.Name.get -> string!
+Aw.Context.Core.Pages.PageListMatch.Name.init -> void
+Aw.Context.Core.Pages.PageListMatch.PageListMatch(Aw.Context.Core.Graph.NodeKey Key, Aw.Context.Core.Engine.PageId Id, string! Name, int Actions) -> void
+Aw.Context.Core.Pages.PageListPreview
+Aw.Context.Core.Pages.PageListRow
+Aw.Context.Core.Pages.PageListRow.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListActionRow!>!
+Aw.Context.Core.Pages.PageListRow.Actions.init -> void
+Aw.Context.Core.Pages.PageListRow.Block.get -> int
+Aw.Context.Core.Pages.PageListRow.Block.init -> void
+Aw.Context.Core.Pages.PageListRow.<Clone>$() -> Aw.Context.Core.Pages.PageListRow!
+Aw.Context.Core.Pages.PageListRow.Deconstruct(out int Block, out int Line, out string! Name, out Aw.Context.Core.Pages.PageListMatch? Match, out Aw.Context.Core.Engine.PageId? Replaces, out int? SameAs, out bool Ticked, out string? Reason, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListActionRow!>! Actions, out System.Collections.Generic.IReadOnlyList<string!>! UnknownConcepts, out Aw.Context.Core.Engine.PagePin? Page) -> void
+Aw.Context.Core.Pages.PageListRow.Equals(Aw.Context.Core.Pages.PageListRow? other) -> bool
+Aw.Context.Core.Pages.PageListRow.Line.get -> int
+Aw.Context.Core.Pages.PageListRow.Line.init -> void
+Aw.Context.Core.Pages.PageListRow.Match.get -> Aw.Context.Core.Pages.PageListMatch?
+Aw.Context.Core.Pages.PageListRow.Match.init -> void
+Aw.Context.Core.Pages.PageListRow.Name.get -> string!
+Aw.Context.Core.Pages.PageListRow.Name.init -> void
+Aw.Context.Core.Pages.PageListRow.Page.get -> Aw.Context.Core.Engine.PagePin?
+Aw.Context.Core.Pages.PageListRow.Page.init -> void
+Aw.Context.Core.Pages.PageListRow.PageListRow(int Block, int Line, string! Name, Aw.Context.Core.Pages.PageListMatch? Match, Aw.Context.Core.Engine.PageId? Replaces, int? SameAs, bool Ticked, string? Reason, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListActionRow!>! Actions, System.Collections.Generic.IReadOnlyList<string!>! UnknownConcepts, Aw.Context.Core.Engine.PagePin? Page) -> void
+Aw.Context.Core.Pages.PageListRow.Reason.get -> string?
+Aw.Context.Core.Pages.PageListRow.Reason.init -> void
+Aw.Context.Core.Pages.PageListRow.Replaces.get -> Aw.Context.Core.Engine.PageId?
+Aw.Context.Core.Pages.PageListRow.Replaces.init -> void
+Aw.Context.Core.Pages.PageListRow.SameAs.get -> int?
+Aw.Context.Core.Pages.PageListRow.SameAs.init -> void
+Aw.Context.Core.Pages.PageListRow.Ticked.get -> bool
+Aw.Context.Core.Pages.PageListRow.Ticked.init -> void
+Aw.Context.Core.Pages.PageListRow.UnknownConcepts.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Pages.PageListRow.UnknownConcepts.init -> void
+Aw.Context.Core.Pages.PageListText
+override Aw.Context.Core.Pages.PageListAction.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListAction.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListActionMatch.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListActionMatch.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListActionMatch.ToString() -> string!
+override Aw.Context.Core.Pages.PageListActionRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListActionRow.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListActionRow.ToString() -> string!
+override Aw.Context.Core.Pages.PageListAction.ToString() -> string!
+override Aw.Context.Core.Pages.PageListBlock.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListBlock.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListBlock.ToString() -> string!
+override Aw.Context.Core.Pages.PageListConcept.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListConcept.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListConcept.ToString() -> string!
+override Aw.Context.Core.Pages.PageListMatch.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListMatch.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListMatch.ToString() -> string!
+override Aw.Context.Core.Pages.PageListRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListRow.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListRow.ToString() -> string!
+static Aw.Context.Core.Pages.PageListActionMatch.operator !=(Aw.Context.Core.Pages.PageListActionMatch? left, Aw.Context.Core.Pages.PageListActionMatch? right) -> bool
+static Aw.Context.Core.Pages.PageListActionMatch.operator ==(Aw.Context.Core.Pages.PageListActionMatch? left, Aw.Context.Core.Pages.PageListActionMatch? right) -> bool
+static Aw.Context.Core.Pages.PageListAction.operator !=(Aw.Context.Core.Pages.PageListAction? left, Aw.Context.Core.Pages.PageListAction? right) -> bool
+static Aw.Context.Core.Pages.PageListAction.operator ==(Aw.Context.Core.Pages.PageListAction? left, Aw.Context.Core.Pages.PageListAction? right) -> bool
+static Aw.Context.Core.Pages.PageListActionRow.operator !=(Aw.Context.Core.Pages.PageListActionRow? left, Aw.Context.Core.Pages.PageListActionRow? right) -> bool
+static Aw.Context.Core.Pages.PageListActionRow.operator ==(Aw.Context.Core.Pages.PageListActionRow? left, Aw.Context.Core.Pages.PageListActionRow? right) -> bool
+static Aw.Context.Core.Pages.PageListBlock.operator !=(Aw.Context.Core.Pages.PageListBlock? left, Aw.Context.Core.Pages.PageListBlock? right) -> bool
+static Aw.Context.Core.Pages.PageListBlock.operator ==(Aw.Context.Core.Pages.PageListBlock? left, Aw.Context.Core.Pages.PageListBlock? right) -> bool
+static Aw.Context.Core.Pages.PageListConcept.operator !=(Aw.Context.Core.Pages.PageListConcept? left, Aw.Context.Core.Pages.PageListConcept? right) -> bool
+static Aw.Context.Core.Pages.PageListConcept.operator ==(Aw.Context.Core.Pages.PageListConcept? left, Aw.Context.Core.Pages.PageListConcept? right) -> bool
+static Aw.Context.Core.Pages.PageListMatch.operator !=(Aw.Context.Core.Pages.PageListMatch? left, Aw.Context.Core.Pages.PageListMatch? right) -> bool
+static Aw.Context.Core.Pages.PageListMatch.operator ==(Aw.Context.Core.Pages.PageListMatch? left, Aw.Context.Core.Pages.PageListMatch? right) -> bool
+static Aw.Context.Core.Pages.PageListPreview.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListBlock!>! blocks, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageRow!>! pages, System.Collections.Generic.IReadOnlyList<(Aw.Context.Core.Engine.ConceptId Id, string! Name)>! concepts) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListRow!>!
+static Aw.Context.Core.Pages.PageListRow.operator !=(Aw.Context.Core.Pages.PageListRow? left, Aw.Context.Core.Pages.PageListRow? right) -> bool
+static Aw.Context.Core.Pages.PageListRow.operator ==(Aw.Context.Core.Pages.PageListRow? left, Aw.Context.Core.Pages.PageListRow? right) -> bool
+static Aw.Context.Core.Pages.PageListText.Parse(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListBlock!>!
