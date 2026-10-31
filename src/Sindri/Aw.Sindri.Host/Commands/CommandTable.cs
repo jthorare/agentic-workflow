@@ -172,11 +172,13 @@ internal static partial class CommandTable
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
 
-    /// <summary>'sindri context pin …' starts a job a human may have to launch the control plane for; every other context verb is <see cref="Context"/>.</summary>
+    /// <summary>'sindri context pin …' and 'sindri context page set|remove' start a job a human may have to launch the control plane for; every other context verb is <see cref="Context"/>.</summary>
     private static async Task<int> ContextOrPin(string[] args, (ControlPlaneClient Client, Output Output) io, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals) =>
         args is ["context", "pin", ..]
             ? await new ContextPinVerbs(io.Client, io.Output, new JobFollower(io.Client, io.Output, host.Services.GetRequiredService<TimeProvider>()), host.Services, host.Start.EnsureRunning).Run(args[1..], signals.Interrupt, signals.Again).ConfigureAwait(false)
-            : await Context(args, io.Client, io.Output, host.Services, signals).ConfigureAwait(false);
+            : args is ["context", "page", "set" or "remove", ..]
+                ? await new ContextPageWriteVerbs(io.Client, io.Output, new JobFollower(io.Client, io.Output, host.Services.GetRequiredService<TimeProvider>()), host.Services, host.Start.EnsureRunning).Run(args[1..], signals.Interrupt, signals.Again).ConfigureAwait(false)
+                : await Context(args, io.Client, io.Output, host.Services, signals).ConfigureAwait(false);
 
     /// <summary>'sindri context …': one arm per verb family; the first that matches wins.</summary>
     private static async Task<int> Context(string[] args, ControlPlaneClient client, Output output, IServiceProvider services, (CancellationToken Interrupt, CancellationToken Again) signals) =>
