@@ -50,7 +50,7 @@ public sealed class PageListTextTests
     {
         var actions = PageListText.Parse("Home\nSubmit ->\nCancel -> a -> b")[0].Actions;
 
-        Assert.Equal(("Submit", 0), (actions[0].Name, actions[0].Concepts.Count));
+        Assert.Equal(("Submit", 0), (actions[0].Name, actions[0].Concepts?.Count));
         Assert.Equal(["a -> b"], actions[1].Concepts);
     }
 
@@ -77,5 +77,14 @@ public sealed class PageListTextTests
 
         Assert.Equal("|-5% discount|*bold*|Real action", string.Join('|', blocks[0].Actions.Select(static a => a.Name)));   // '-> orphan' is an action line with no name and one concept, not a bullet
         Assert.Equal(["orphan"], blocks[0].Actions[0].Concepts);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_line_without_an_arrow_has_null_concepts_and_one_with_an_empty_arrow_has_none()
+    {
+        var actions = PageListText.Parse("Home\nSubmit\nCancel ->")[0].Actions;
+
+        Assert.Null(actions[0].Concepts);
+        Assert.Empty(actions[1].Concepts!);
     }
 }

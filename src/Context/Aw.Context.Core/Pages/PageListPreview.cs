@@ -16,8 +16,9 @@ public static partial class PageListPreview
     /// <param name="blocks">The parsed paste.</param>
     /// <param name="pages">Every page the caller sees (owner and suggested).</param>
     /// <param name="concepts">Pins first, then the map's concepts, each (id, name).</param>
+    /// <param name="ownerPages">How many pages the profile names (the 200-page cap counts them); null counts the owner pages in <paramref name="pages"/>.</param>
     /// <returns>One row per block.</returns>
-    public static IReadOnlyList<PageListRow> Of(IReadOnlyList<PageListBlock> blocks, IReadOnlyList<PageRow> pages, IReadOnlyList<(ConceptId Id, string Name)> concepts)
+    public static IReadOnlyList<PageListRow> Of(IReadOnlyList<PageListBlock> blocks, IReadOnlyList<PageRow> pages, IReadOnlyList<(ConceptId Id, string Name)> concepts, int? ownerPages = null)
     {
         ArgumentNullException.ThrowIfNull(blocks);
         ArgumentNullException.ThrowIfNull(pages);
@@ -29,17 +30,48 @@ public static partial class PageListPreview
         var ids = new List<PageId>(blocks.Count);
         foreach (var block in blocks)
         {
-            var match = MatchPage(block.Name, suggested);
-            var id = match?.Id ?? PageId.From(PageSlugs.Of(block.Name));
-            var row = match is null ? null : suggested.First(s => s.Row.Key == match.Key).Row;
-            var sameAs = SameAs(rows, ids, match, id);
-            var actions = block.Actions.Select(a => ActionRow(a, row, concepts)).ToList();
-            var unknown = actions.SelectMany(static a => a.Concepts).Where(static c => c.Id is null).Select(static c => c.Written).Distinct(StringComparer.Ordinal).ToList();
-            var pin = Pin(block, id, row, actions);
-            var reason = Reason(sameAs, pin, facts, block, unknown);
+            var (row, id) = BlockRow(block, (suggested, owned, facts, concepts), rows, ids);
             ids.Add(id);
-            rows.Add(new PageListRow(
-                block.Block, block.Line, block.Name, match, owned.Contains(id) ? id : null, sameAs, reason is null, reason, actions, unknown, reason is null ? pin : null));
+            rows.Add(row);
+        }
+
+        return Capped(rows, ownerPages ?? owned.Count);
+    }
+
+    private static (PageListRow Row, PageId Id) BlockRow(
+        PageListBlock block, (List<(PageRow Row, HashSet<string> Words)> Suggested, HashSet<PageId> Owned, PageFacts Facts, IReadOnlyList<(ConceptId Id, string Name)> Concepts) world, List<PageListRow> rows, List<PageId> ids)
+    {
+        var page = MatchPage(block.Name, world.Suggested);
+        var match = page is null ? null : new PageListMatch(page.Key, page.Id, page.Name, page.Actions.Count);
+        var id = page?.Id ?? PageId.From(PageSlugs.Of(block.Name));
+        var sameAs = SameAs(rows, ids, match, id);
+        var actions = block.Actions.Select(a => ActionRow(a, page, world.Concepts)).ToList();
+        var unknown = actions.SelectMany(static a => a.Concepts).Where(static c => c.Id is null).Select(static c => c.Written).Distinct(StringComparer.Ordinal).ToList();
+        var pin = Pin(block, id, page, actions);
+        var reason = Reason(sameAs, pin, world.Facts, block, actions) ?? (unknown.Count > 0 ? $"No concept called \"{unknown[0]}\": pick one" : null);
+        return (new PageListRow(
+            block.Block, block.Line, block.Name, match, world.Owned.Contains(id) ? id : null, sameAs, reason is null, reason, actions, unknown, reason is null ? pin : null), id);
+    }
+
+    // The profile holds at most 200 pages: walking the ticked rows in order, one that adds a page and would pass the cap is not added.
+    private static List<PageListRow> Capped(List<PageListRow> rows, int owners)
+    {
+        var added = 0;
+        for (var i = 0; i < rows.Count; i++)
+        {
+            if (!rows[i].Ticked || rows[i].Replaces is not null)
+            {
+                continue;
+            }
+
+            if (owners + added + 1 > PageRules.MaxPages)
+            {
+                rows[i] = rows[i] with { Ticked = false, Reason = $"Not added: The profile holds at most {Count(PageRules.MaxPages)} pages", Page = null };
+            }
+            else
+            {
+                added++;
+            }
         }
 
         return rows;
@@ -59,18 +91,27 @@ public static partial class PageListPreview
         return null;
     }
 
-    // The row's one sentence: a repeated page, then a name, size or repeat problem, then an unknown concept.
-    private static string? Reason(int? sameAs, PagePin pin, PageFacts facts, PageListBlock block, List<string> unknown)
+    // The row's one sentence before concepts: a repeated page, then a name, size or repeat problem, then two lines naming one map action.
+    private static string? Reason(int? sameAs, PagePin pin, PageFacts facts, PageListBlock block, List<PageListActionRow> actions) =>
+        sameAs is { } first ? $"Same page as block {Count(first)}" : Problem(pin, facts, block.Actions) ?? SameAction(block, actions);
+
+    private static string? SameAction(PageListBlock block, List<PageListActionRow> actions)
     {
-        if (sameAs is { } first)
+        for (var i = 1; i < actions.Count; i++)
         {
-            return $"Not added: Same page as block {Count(first)}";
+            for (var j = 0; j < i; j++)
+            {
+                if (actions[i].Match is { } match && actions[j].Match?.Key == match.Key)
+                {
+                    return $"Not added: {block.Actions[j].Name} and {block.Actions[i].Name} are the same action";
+                }
+            }
         }
 
-        return Problem(pin, facts, block.Actions) ?? (unknown.Count > 0 ? $"No concept called \"{unknown[0]}\": pick one" : null);
+        return null;
     }
 
-    private static PageListMatch? MatchPage(string name, List<(PageRow Row, HashSet<string> Words)> suggested)
+    private static PageRow? MatchPage(string name, List<(PageRow Row, HashSet<string> Words)> suggested)
     {
         var words = AnchorMatch.Words(name);
         if (words.Count == 0)
@@ -78,10 +119,9 @@ public static partial class PageListPreview
             return null;
         }
 
-        var best = suggested.Where(s => s.Words.SetEquals(words)).OrderByDescending(static s => s.Row.Actions.Count).ThenBy(static s => s.Row.Key.Value, StringComparer.Ordinal).Select(static s => s.Row).FirstOrDefault()
+        return suggested.Where(s => s.Words.SetEquals(words)).OrderByDescending(static s => s.Row.Actions.Count).ThenBy(static s => s.Row.Key.Value, StringComparer.Ordinal).Select(static s => s.Row).FirstOrDefault()
             ?? suggested.Select(s => (s.Row, Shared: s.Words.Count(words.Contains))).Where(static s => s.Shared > 0)
                 .OrderByDescending(static s => s.Shared).ThenByDescending(static s => s.Row.Actions.Count).ThenBy(static s => s.Row.Key.Value, StringComparer.Ordinal).Select(static s => s.Row).FirstOrDefault();
-        return best is null ? null : new PageListMatch(best.Key, best.Id, best.Name, best.Actions.Count);
     }
 
     private static PageListActionRow ActionRow(PageListAction action, PageRow? page, IReadOnlyList<(ConceptId Id, string Name)> concepts)
@@ -90,12 +130,12 @@ public static partial class PageListPreview
         var match = page is null || words.Count == 0 ? null
             : page.Actions.Where(a => AnchorMatch.Words(a.Name).SetEquals(words)).OrderBy(static a => a.Key.Value, StringComparer.Ordinal).FirstOrDefault();
         var matched = match is null ? null : new PageListActionMatch(match.Key, match.Name);
-        if (match is not null && action.Concepts.Count == 0)
+        if (match is not null && action.Concepts is null)
         {
             return new PageListActionRow(action.Name, matched, [.. match.Concepts.Select(static c => new PageListConcept(c, ConceptId.From(c)))]);
         }
 
-        return new PageListActionRow(action.Name, matched, [.. action.Concepts.Select(c => new PageListConcept(c, Resolve(c, concepts)))]);
+        return new PageListActionRow(action.Name, matched, [.. (action.Concepts ?? []).Select(c => new PageListConcept(c, Resolve(c, concepts)))]);
     }
 
     // As PagePlanner.Concept does: an id (with or without 'concept:') the pins or the map have, else an exact name ignoring case, pins before the map.

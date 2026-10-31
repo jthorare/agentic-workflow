@@ -114,7 +114,7 @@ public static class PageListText
         var arrow = line.IndexOf(Arrow, StringComparison.Ordinal);
         if (arrow < 0)
         {
-            return new PageListAction(line, []);
+            return new PageListAction(line, Concepts: null);
         }
 
         var concepts = line[(arrow + Arrow.Length)..].Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);

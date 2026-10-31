@@ -39,7 +39,7 @@ public sealed class PageListPreviewTests
         Assert.Equal(Week, rows[1].Match?.Key.Value);
         Assert.Equal(1, rows[1].SameAs);
         Assert.False(rows[1].Ticked);
-        Assert.Equal("Not added: Same page as block 1", rows[1].Reason);
+        Assert.Equal("Same page as block 1", rows[1].Reason);
         Assert.Null(rows[1].Page);
     }
 
@@ -106,7 +106,7 @@ public sealed class PageListPreviewTests
         var rows = Preview("Billing\n\nbilling");
 
         Assert.Equal(1, rows[1].SameAs);
-        Assert.Equal("Not added: Same page as block 1", rows[1].Reason);
+        Assert.Equal("Same page as block 1", rows[1].Reason);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -207,7 +207,7 @@ public sealed class PageListPreviewTests
         var rows = Preview(
             "Schedule week\n\nSchedule week\nPay -> aproval\n\n" + new string('x', 81) + "\nPay -> aproval\n\nHome\nPay -> aproval", ScheduleWeek());
 
-        Assert.Equal("Not added: Same page as block 1", rows[1].Reason);
+        Assert.Equal("Same page as block 1", rows[1].Reason);
         Assert.Equal("Not added: the name is 81 characters; at most 80", rows[2].Reason);
         Assert.Equal("No concept called \"aproval\": pick one", rows[3].Reason);
     }
@@ -230,5 +230,65 @@ public sealed class PageListPreviewTests
         Assert.Equal("Aproval|aproval", string.Join('|', row.UnknownConcepts));
         var written = row.Actions.SelectMany(static a => a.Concepts).Where(static c => c.Id is null).Select(static c => c.Written).ToList();
         Assert.All(row.UnknownConcepts, u => Assert.Contains(u, written, StringComparer.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Two_rows_with_one_surface_key_in_two_repos_match_the_row_with_more_actions_and_take_its_repo_and_actions()
+    {
+        var first = Page("a", "Schedule week", Week, "suggested", Action("submit", "Submit schedule"));
+        var second = new PageRow(PageId.From("b"), NodeKey.From(Week), "Schedule week", Repo: "other-repo", Mark: "suggested", Code: true,
+            Actions: [Action("submit", "Submit schedule", "approval-workflow"), Action("cancel", "Cancel schedule")]);
+
+        var row = Preview("Schedule week\nSubmit schedule", first, second)[0];
+
+        Assert.Equal("b", row.Match?.Id.Value);
+        Assert.Equal("other-repo", row.Page?.Repo?.Value);
+        Assert.Equal(2, row.Match?.Actions);
+        Assert.Equal("approval-workflow", string.Join('|', row.Page?.Actions[0].Concepts ?? []));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_matched_action_with_an_empty_arrow_has_no_concepts_and_one_without_an_arrow_keeps_the_maps()
+    {
+        var row = Preview("Schedule week\nSubmit schedule ->\nCancel schedule", ScheduleWeek())[0];
+        var kept = Preview("Schedule week\nSubmit schedule", ScheduleWeek())[0];
+
+        Assert.Empty(row.Actions[0].Concepts);
+        Assert.Empty(row.Page!.Actions[0].Concepts);
+        Assert.Equal("self-scheduling", string.Join('|', kept.Page!.Actions[0].Concepts));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_200_page_cap_counts_the_owner_pages_and_unticks_the_row_that_would_pass_it()
+    {
+        var owners = Enumerable.Range(0, 199).Select(static i => Page("owner-" + i.ToString(CultureInfo.InvariantCulture), "Owner " + i.ToString(CultureInfo.InvariantCulture), "surface:screen/O" + i.ToString(CultureInfo.InvariantCulture), "owner")).ToArray();
+
+        var rows = Preview("Alpha\n\nBeta", owners);
+
+        Assert.True(rows[0].Ticked);
+        Assert.False(rows[1].Ticked);
+        Assert.Equal("Not added: The profile holds at most 200 pages", rows[1].Reason);
+        Assert.Null(rows[1].Page);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_row_that_replaces_an_owner_page_does_not_count_against_the_cap()
+    {
+        var owners = Enumerable.Range(0, 199).Select(static i => Page("owner-" + i.ToString(CultureInfo.InvariantCulture), "Owner " + i.ToString(CultureInfo.InvariantCulture), "surface:screen/O" + i.ToString(CultureInfo.InvariantCulture), "owner")).Append(Page("billing", "Billing", "surface:screen/Billing", "owner")).ToArray();
+
+        var rows = Preview("Billing\n\nAlpha", owners);
+
+        Assert.True(rows[0].Ticked);
+        Assert.False(rows[1].Ticked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Two_lines_naming_one_map_action_are_not_added()
+    {
+        var row = Preview("Schedule week\nSubmit schedule\nSubmit schedules", ScheduleWeek())[0];
+
+        Assert.False(row.Ticked);
+        Assert.Equal("Not added: Submit schedule and Submit schedules are the same action", row.Reason);
+        Assert.Null(row.Page);
     }
 }

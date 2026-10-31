@@ -37,7 +37,7 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
         }
 
         var (pages, version, profile, hash, map) = read.Value;
-        var rows = PageListPreview.Of(PageListText.Parse(request.Text), pages, Concepts(profile, map));
+        var rows = PageListPreview.Of(PageListText.Parse(request.Text), pages, Concepts(profile, map), OwnerPages(profile));
         return new PagesPreview(map.Version ?? version, hash, [.. rows.Select(r => Block(r, request.Repo))]);
     }
 
@@ -95,6 +95,10 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
             }
         }
     }
+
+    // Every page the profile names, the top-level list and each repo's own: the 200-page cap counts them all.
+    private static int OwnerPages(SindriProfile profile) =>
+        (profile.Index?.Pages?.Count ?? 0) + (profile.Repos ?? []).Sum(static r => r.Index?.Pages?.Count ?? 0);
 
     // The pins first, in profile order (the top-level list, then each repo's), then the map's concepts; one whose id can't be a concept id is left out.
     private static List<(ConceptId Id, string Name)> Concepts(SindriProfile profile, MapPageFacts map)

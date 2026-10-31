@@ -91,7 +91,7 @@ public sealed class PreviewPagesServiceTests
         var answer = await (await Service()).Handle(new PreviewPagesRequest("Schedule week\n\nSchedule week\nPay -> aproval"), Ct);
 
         var second = answer.Value.Blocks[1];
-        Assert.Equal((false, 1, "Not added: Same page as block 1"), (second.Ticked, second.SameAs, second.Reason));
+        Assert.Equal((false, 1, "Same page as block 1"), (second.Ticked, second.SameAs, second.Reason));
         Assert.Null(second.Page);
     }
 
