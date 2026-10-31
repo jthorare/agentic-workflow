@@ -1,7 +1,7 @@
 using System.Net;
 using Aw.Kernel.Testing;
-using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 using Microsoft.Extensions.Time.Testing;
 
