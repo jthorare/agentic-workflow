@@ -49,19 +49,29 @@ internal static class PageRows
         return new PageActionRowViewModel(action.Key, action.Label, "· " + string.Join(" · ", parts));
     }
 
+    /// <summary>Gets a value indicating whether a page key is an owner page with no map page of its own ('surface:owner-…').</summary>
+    /// <param name="key">The page's node key.</param>
+    /// <returns>True for a page the owner added with no map page.</returns>
+    internal static bool OwnerOnly(string key) => SurfaceName(key).Name.StartsWith("owner-", StringComparison.Ordinal);
+
     // The map's page in words: a route's method and path ("GET /schedule/week"), else the component's name; empty for a page the owner added with no map page.
     private static string FromMap(string key)
     {
-        var rest = key.StartsWith("surface:", StringComparison.Ordinal) ? key["surface:".Length..] : key;
-        var slash = rest.IndexOf('/', StringComparison.Ordinal);
-        var (kind, name) = slash < 0 ? (string.Empty, rest) : (rest[..slash], rest[(slash + 1)..]);
-        if (name.StartsWith("owner-", StringComparison.Ordinal))
+        var (kind, name) = SurfaceName(key);
+        if (OwnerOnly(key))
         {
             return string.Empty;
         }
 
         var colon = name.IndexOf(':', StringComparison.Ordinal);
         return Labels.ContextPagesFromMap(kind == "route" && colon > 0 ? name[..colon] + " " + name[(colon + 1)..] : name);
+    }
+
+    private static (string Kind, string Name) SurfaceName(string key)
+    {
+        var rest = key.StartsWith("surface:", StringComparison.Ordinal) ? key["surface:".Length..] : key;
+        var slash = rest.IndexOf('/', StringComparison.Ordinal);
+        return slash < 0 ? (string.Empty, rest) : (rest[..slash], rest[(slash + 1)..]);
     }
 
     // The answer's nodes by key and its edges by each end.
