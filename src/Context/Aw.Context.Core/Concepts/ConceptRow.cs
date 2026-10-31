@@ -15,4 +15,8 @@ public sealed record ConceptRow(NodeKey Id, string Name, string Summary, string 
     /// <summary>The words that characterize the concept, the most telling first; null (left out of the answer) when the map was built without a glossary.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? Terms { get; init; }
+
+    /// <summary>How many pages (owner or suggested) express the concept directly or through an action on them; null (left out of the answer) until the concept rows carry it.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Pages { get; init; }
 }

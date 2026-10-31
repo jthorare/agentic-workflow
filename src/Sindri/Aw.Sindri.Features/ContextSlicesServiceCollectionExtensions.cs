@@ -6,6 +6,7 @@ using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.Search;
@@ -103,6 +104,7 @@ internal static class ContextSlicesServiceCollectionExtensions
         _ = services.AddScoped<ConceptsNotReady>().AddScoped<IValidator<GetContextConceptsRequest>, AcceptAllValidator<GetContextConceptsRequest>>().AddQuery<GetContextConceptsRequest, ConceptsView, GetContextConceptsService>();
         _ = services.AddScoped<IValidator<GetContextConceptMembersRequest>, AcceptAllValidator<GetContextConceptMembersRequest>>().AddQuery<GetContextConceptMembersRequest, ConceptMembersView, GetContextConceptMembersService>();
         _ = services.AddScoped<IValidator<GetContextConceptGlossaryRequest>, AcceptAllValidator<GetContextConceptGlossaryRequest>>().AddQuery<GetContextConceptGlossaryRequest, ConceptGlossaryView, GetContextConceptGlossaryService>();
+        _ = services.AddScoped<IValidator<GetContextPagesRequest>, AcceptAllValidator<GetContextPagesRequest>>().AddQuery<GetContextPagesRequest, PagesView, GetContextPagesService>();
         return services;
     }
 
