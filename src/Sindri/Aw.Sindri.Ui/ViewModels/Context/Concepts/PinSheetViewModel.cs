@@ -132,7 +132,7 @@ internal sealed partial class PinSheetViewModel : ObservableObject
     public string UnpinConfirmText => IsWriting ? Labels.PinSheetUnpinning : Labels.PinSheetUnpinConfirm(_approve);
 
     /// <summary>True when the submit button can be pressed: not while writing, and a name is there.</summary>
-    public bool CanSubmit => !IsWriting && Name.Trim().Length > 0;
+    public bool CanSubmit => !IsWriting && _ifHash is not null && Name.Trim().Length > 0;
 
     /// <summary>Under the button: why the last write failed, or that the settings moved; empty otherwise.</summary>
     public string SubmitError { get; private set => Set(ref field, value); } = string.Empty;

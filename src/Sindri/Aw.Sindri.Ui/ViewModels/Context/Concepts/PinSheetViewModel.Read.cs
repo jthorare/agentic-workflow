@@ -3,10 +3,10 @@ using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
-/// <summary>The sheet's opening (<see cref="PinSheetViewModel"/>, continued): the fields fill at once from the card or the pin, then the button's rule, the file hash, the terms and the features arrive.</summary>
+/// <summary>The sheet's opening (<see cref="PinSheetViewModel"/>, continued): the fields fill at once from the card or the pin, then the button's rule, the terms and the features arrive.</summary>
 internal sealed partial class PinSheetViewModel
 {
-    /// <summary>Fills the sheet from what opened it and reads the rest: whether anything else waits, the profile file's hash, the concept's terms and the map's features.</summary>
+    /// <summary>Fills the sheet from what opened it and reads the rest: whether anything else waits, the concept's terms and the map's features.</summary>
     /// <param name="open">What opened the sheet.</param>
     /// <param name="cancellationToken">Cancels the reads (closing the sheet).</param>
     /// <returns>A task that ends when the reads are drawn.</returns>
@@ -21,7 +21,7 @@ internal sealed partial class PinSheetViewModel
 
         try
         {
-            await Task.WhenAll(ReadRule(cancellationToken), ReadHash(cancellationToken), ReadTerms(cancellationToken), ReadFeatures(string.Empty, cancellationToken)).ConfigureAwait(true);
+            await Task.WhenAll(ReadRule(cancellationToken), ReadTerms(cancellationToken), ReadFeatures(string.Empty, cancellationToken)).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
         {
@@ -35,7 +35,7 @@ internal sealed partial class PinSheetViewModel
         _filling = true;
         try
         {
-            (_open, _pins, _repo) = (open, open.Pins, open.Repo);
+            (_open, _pins, _repo, _ifHash) = (open, open.Pins, open.Repo, open.FileHash);
             Mode = open.Pin is not null ? PinSheetMode.EditPin : open.Card is not null ? PinSheetMode.PinThis : PinSheetMode.NewPin;
             Words.Clear();
             Features.Clear();
@@ -53,7 +53,13 @@ internal sealed partial class PinSheetViewModel
             _filling = false;
         }
 
-        foreach (var name in new[] { nameof(Mode), nameof(Heading), nameof(IsEdit), nameof(HasPicker), nameof(CanUnpin), nameof(FolderRulesNote), nameof(HasFolderRulesNote), nameof(RenameNote), nameof(HasRenameNote), nameof(EmptyNote), nameof(HasEmptyNote), nameof(SubmitText), nameof(UnpinConfirmText) })
+        if (_ifHash is null)
+        {
+            SubmitError = Labels.PinSheetNoHash;   // the sheet writes nothing without the hash its fields were read under
+            OnChanged(nameof(HasSubmitError));
+        }
+
+        foreach (var name in new[] { nameof(CanSubmit), nameof(Mode), nameof(Heading), nameof(IsEdit), nameof(HasPicker), nameof(CanUnpin), nameof(FolderRulesNote), nameof(HasFolderRulesNote), nameof(RenameNote), nameof(HasRenameNote), nameof(EmptyNote), nameof(HasEmptyNote), nameof(SubmitText), nameof(UnpinConfirmText) })
         {
             OnChanged(name);
         }
@@ -87,21 +93,27 @@ internal sealed partial class PinSheetViewModel
     }
 
     // Pin this: the terms arrive with their counts (20 at most, a too-broad one unticked, another pin's word refused) and the concept's member features.
-    private void FillTerms(IReadOnlyList<PinSuggestTerm> terms, IReadOnlyList<PinSuggestFeature> features)
+    internal void FillTerms(IReadOnlyList<PinSuggestTerm> terms, IReadOnlyList<PinSuggestFeature> features)
     {
         _filling = true;
         try
         {
             var typed = Words.Where(w => w.IsTyped).ToList();
+            var ticks = new Dictionary<string, bool>(StringComparer.Ordinal);
+            foreach (var row in Words)
+            {
+                _ = ticks.TryAdd(PinWordRules.Normalized(row.Word), row.Ticked);   // an untick made while the counts were out survives them
+            }
+
             Words.Clear();
             foreach (var term in terms.Take(WordsShown))
             {
                 var refusal = PinWordRules.Refusal(term.Word, _pins, _self);
                 var note = refusal ?? (term.NewRecords > TooBroad ? Labels.PinSheetTooBroad(term.NewRecords) : null);
-                Words.Add(Watched(new PinWordRow(term.Word, term.NewRecords, ticked: note is null, note) { IsRefused = refusal is not null }));
+                Words.Add(Watched(new PinWordRow(term.Word, term.NewRecords, ticked: note is null && ticks.GetValueOrDefault(PinWordRules.Normalized(term.Word), defaultValue: true), note) { IsRefused = refusal is not null }));
             }
 
-            foreach (var row in typed)
+            foreach (var row in typed.Where(t => Words.All(w => !string.Equals(PinWordRules.Normalized(w.Word), PinWordRules.Normalized(t.Word), StringComparison.Ordinal))))
             {
                 Words.Add(row);
             }
@@ -134,20 +146,6 @@ internal sealed partial class PinSheetViewModel
         _approve = waiting is not null && waiting.OnlyMine(Mine);
         OnChanged(nameof(SubmitText));
         OnChanged(nameof(UnpinConfirmText));
-    }
-
-    // The profile file's hash the pins were read from: the write's ifHash. One method, so the source is a one-line swap.
-    private async Task ReadHash(CancellationToken cancellationToken) => _ifHash = await IfHashAtOpen(cancellationToken).ConfigureAwait(true);
-
-    private async Task<string?> IfHashAtOpen(CancellationToken cancellationToken)
-    {
-        if (Ports.ApiUrl() is not { } url)
-        {
-            return null;
-        }
-
-        var read = await Ports.Api.ContextPins(url, _repo, cancellationToken).ConfigureAwait(true);
-        return read.IsSuccess ? read.Value.FileHash : null;
     }
 
     private async Task ReadTerms(CancellationToken cancellationToken)

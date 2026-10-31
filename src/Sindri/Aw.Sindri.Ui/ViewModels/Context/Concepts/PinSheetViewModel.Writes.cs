@@ -12,6 +12,11 @@ internal sealed partial class PinSheetViewModel
     internal Task Submit(CancellationToken cancellationToken)
     {
         var name = Name.Trim();
+        if (_ifHash is null)
+        {
+            return Task.CompletedTask;   // never written without the hash: a missing one reads as no check
+        }
+
         if (name.Length == 0 || name.Length > MaxName || Definition.Trim().Length > MaxDefinition)
         {
             SubmitError = name.Length == 0 ? Labels.PinSheetNameRequired : Labels.PinSheetTooLong;
@@ -22,11 +27,14 @@ internal sealed partial class PinSheetViewModel
         var set = new PinSetBody(
             name,
             Id: _open?.Pin?.Id,
-            Summary: Definition.Trim().Length > 0 ? Definition.Trim() : null,
+            Summary: SummaryToSend(),
             Aliases: [.. Words.Where(w => w.Ticked).Select(w => w.Word)],
             Features: [.. Features.Where(f => f.Ticked).Select(f => f.Key)]);
         return Write(new PinConceptsBody(Set: [set], IfHash: _ifHash), cancellationToken);
     }
+
+    // The definition line; an edited pin's emptied box sends "" (it clears the stored one), any other empty box sends none.
+    private string? SummaryToSend() => Definition.Trim() is { Length: > 0 } text ? text : _open?.Pin is not null ? string.Empty : null;
 
     /// <summary>Asks "Unpin Billing?"; focus goes to Keep pin.</summary>
     internal void AskUnpin()
@@ -58,7 +66,7 @@ internal sealed partial class PinSheetViewModel
     /// <param name="cancellationToken">Cancels the wait for the write's job.</param>
     /// <returns>A task that ends when the answer is drawn.</returns>
     internal Task Unpin(CancellationToken cancellationToken) =>
-        _open?.Pin is { } pin && IsConfirmingUnpin ? Write(new PinConceptsBody(Remove: [pin.Id], IfHash: _ifHash, WithFolderRules: _folderRules > 0), cancellationToken) : Task.CompletedTask;
+        _open?.Pin is { } pin && IsConfirmingUnpin && _ifHash is not null ? Write(new PinConceptsBody(Remove: [pin.Id], IfHash: _ifHash, WithFolderRules: _folderRules > 0), cancellationToken) : Task.CompletedTask;
 
     /// <summary>Esc: answers the question that shows, else asks before throwing changes away, else closes without writing.</summary>
     /// <returns>True: Esc was spent here (the sheet closes itself through <see cref="Closed"/>).</returns>
@@ -135,6 +143,28 @@ internal sealed partial class PinSheetViewModel
 
         SubmitError = ErrorOf(written);
         OnChanged(nameof(HasSubmitError));
+        if (written.State == ProfileWriteState.Clash)
+        {
+            await Reread(cancellationToken).ConfigureAwait(true);
+        }
+    }
+
+    // The profile moved: the pins are read again so the next press carries the fresh hash; when that read fails nothing can be written until the sheet is opened again.
+    private async Task Reread(CancellationToken cancellationToken)
+    {
+        var read = Ports.ApiUrl() is { } url ? await Ports.Api.ContextPins(url, _repo, cancellationToken).ConfigureAwait(true) : null;
+        if (read is { IsSuccess: true })
+        {
+            (_ifHash, _pins) = (read.Value.FileHash, read.Value.Pins);
+            await ReadRule(cancellationToken).ConfigureAwait(true);
+        }
+        else
+        {
+            (_ifHash, SubmitError) = (null, Labels.PinSheetNoHash);
+            OnChanged(nameof(HasSubmitError));
+        }
+
+        OnChanged(nameof(CanSubmit));
     }
 
     // What shows under the button: the moved profile's own line, the server's sentence, the timeout's, or a plain failure.
