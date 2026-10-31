@@ -134,6 +134,23 @@ public sealed class PreviewPagesServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_replaced_page_s_action_ids_come_from_the_rows_repo_first()
+    {
+        static PageSettings Week(string id) => new(PagePinId.From("week-page"), "Week page", Actions: [new PageActionSettings(PageActionPinId.From(id), "Submit schedule")]);
+        var profile = new SindriProfile(1, "thor", Repos:
+        [
+            new RepoEntry("app", "/work/app", Index: new IndexSettings(Pages: [Week("app-submit")])),
+            new RepoEntry("web", "/work/web", Index: new IndexSettings(Pages: [Week("web-submit")])),
+        ]);
+        var service = await Service(profile);
+        _engine.Answer = View([new PageRow(PageId.From("week-page"), NodeKey.From("surface:route/GET:/week"), "Week page", Repo: "web", Mark: "owner", Code: true, Actions: [])]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule", "web"), Ct);
+
+        Assert.Equal("web-submit", answer.Value.Blocks[0].Page?.Actions?[0].Id?.Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_row_that_is_not_added_has_no_page_and_says_why()
     {
         var answer = await (await Service()).Handle(new PreviewPagesRequest("Schedule week\n\nSchedule week\nPay -> aproval"), Ct);

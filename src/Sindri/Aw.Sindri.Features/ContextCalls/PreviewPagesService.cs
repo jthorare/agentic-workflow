@@ -111,14 +111,25 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
     }
 
     private static PagesPreviewBlock Block(PageListRow row, string? repo, SindriProfile profile) =>
-        new(row.Block, row.Line, row.Name, row.Match, row.Replaces, row.SameAs, row.Ticked, row.Reason, row.Actions, row.UnknownConcepts, row.Page is { } page ? Settings(page, repo, row.Replaces is { } replaced ? OwnerActions(profile, replaced.Value) : []) : null);
+        new(row.Block, row.Line, row.Name, row.Match, row.Replaces, row.SameAs, row.Ticked, row.Reason, row.Actions, row.UnknownConcepts, row.Page is { } page ? Settings(page, repo, row.Replaces is { } replaced ? OwnerActions(profile, replaced.Value, page.Repo?.Value ?? repo) : []) : null);
 
-    // The actions of the profile page a block replaces (the top-level list, then each repo's), or none.
-    private static List<PageActionSettings> OwnerActions(SindriProfile profile, string pageId)
+    // The actions of the profile page a block replaces, or none.
+    private static List<PageActionSettings> OwnerActions(SindriProfile profile, string pageId, string? repo)
     {
-        var pages = (profile.Index?.Pages ?? []).Concat((profile.Repos ?? []).SelectMany(static r => r.Index?.Pages ?? []));
-        var owner = pages.FirstOrDefault(p => string.Equals(Effective(p.Id?.Value, p.Name), pageId, StringComparison.Ordinal));
+        var owner = PagesFor(profile, repo).FirstOrDefault(p => string.Equals(Effective(p.Id?.Value, p.Name), pageId, StringComparison.Ordinal));
         return [.. owner?.Actions ?? []];
+    }
+
+    // With a repo: that repo's own pages, then the top-level list; without: the top-level list, then each repo's.
+    private static IEnumerable<PageSettings> PagesFor(SindriProfile profile, string? repo)
+    {
+        var top = profile.Index?.Pages ?? [];
+        if (repo is null)
+        {
+            return top.Concat((profile.Repos ?? []).SelectMany(static r => r.Index?.Pages ?? []));
+        }
+
+        return (profile.Repos ?? []).Where(r => string.Equals(r.Name, repo, StringComparison.Ordinal)).SelectMany(static r => r.Index?.Pages ?? []).Concat(top);
     }
 
     // The page as POST /sindri/context/pages takes it. The id is left to the name's slug unless the page matched a suggested one with another id: then the save must use that id, or 'replaces' and 'same as' would not hold.
