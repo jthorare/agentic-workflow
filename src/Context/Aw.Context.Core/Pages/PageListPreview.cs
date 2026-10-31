@@ -48,9 +48,11 @@ public static partial class PageListPreview
         var actions = block.Actions.Select(a => ActionRow(a, page, world.Concepts)).ToList();
         var unknown = actions.SelectMany(static a => a.Concepts).Where(static c => c.Id is null).Select(static c => c.Written).Distinct(StringComparer.Ordinal).ToList();
         var pin = Pin(block, id, page, actions);
-        var reason = Reason(sameAs, pin, world.Facts, block, actions) ?? (unknown.Count > 0 ? $"No concept called \"{unknown[0]}\": pick one" : null);
+        var problem = Reason(sameAs, pin, world.Facts, block, actions);
+        var reason = problem ?? (unknown.Count > 0 ? $"No concept called \"{unknown[0]}\": pick one" : null);
+        // A row whose only problem is an unknown concept keeps its page (the concept as written), so the app can swap in the owner's pick and save it.
         return (new PageListRow(
-            block.Block, block.Line, block.Name, match, world.Owned.Contains(id) ? id : null, sameAs, reason is null, reason, actions, unknown, reason is null ? pin : null), id);
+            block.Block, block.Line, block.Name, match, world.Owned.Contains(id) ? id : null, sameAs, reason is null, reason, actions, unknown, problem is null ? pin : null), id);
     }
 
     // The profile holds at most 200 pages: walking the ticked rows in order, one that adds a page and would pass the cap is not added.

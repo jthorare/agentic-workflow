@@ -153,8 +153,42 @@ public sealed class PageListPreviewTests
         Assert.Equal(["aproval"], row.UnknownConcepts);
         Assert.False(row.Ticked);
         Assert.Equal("No concept called \"aproval\": pick one", row.Reason);
-        Assert.Null(row.Page);
+        Assert.NotNull(row.Page);
         Assert.Null(row.Actions[0].Concepts[0].Id);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_block_whose_only_problem_is_an_unknown_concept_keeps_the_matched_pages_pin_with_the_concept_as_written()
+    {
+        var row = Preview("Schedule weeks\nSubmit schedule -> aproval, Self-scheduling", ScheduleWeek())[0];
+
+        Assert.False(row.Ticked);
+        Assert.Equal("No concept called \"aproval\": pick one", row.Reason);
+        Assert.Equal(["aproval"], row.UnknownConcepts);
+        Assert.Equal("schedule-week", row.Page?.Id.Value);
+        Assert.Equal("aw-split-panes", row.Page?.Repo?.Value);
+        Assert.Equal(Week, row.Page?.SurfaceKey);
+        Assert.Equal(["aproval", "self-scheduling"], row.Page?.Actions[0].Concepts);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_block_with_another_reason_and_an_unknown_concept_still_gets_no_page()
+    {
+        var row = Preview($"{new string('a', 81)}\nPay -> aproval")[0];
+
+        Assert.False(row.Ticked);
+        Assert.Null(row.Page);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_block_with_an_unknown_concept_does_not_count_against_the_200_page_cap()
+    {
+        var rows = PageListPreview.Of(PageListText.Parse("Home\nPay -> aproval\n\nBilling"), [], _concepts, ownerPages: 199);
+
+        Assert.False(rows[0].Ticked);
+        Assert.NotNull(rows[0].Page);
+        Assert.True(rows[1].Ticked);
+        Assert.Null(rows[1].Reason);
     }
 
     [Fact, Trait("Lane", "unit")]
