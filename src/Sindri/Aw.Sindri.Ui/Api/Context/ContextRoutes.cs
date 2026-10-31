@@ -58,6 +58,13 @@ internal static class ContextRoutes
         return With(Root + "/concepts/glossary", parts);
     }
 
+    // The characters one row adds to a pin-suggest query: its line= and its def= (counted even when empty, the worst case) and their separators.
+    internal static int PinSuggestRowSize(PinSuggestLine line)
+    {
+        ArgumentNullException.ThrowIfNull(line);
+        return "line=".Length + Uri.EscapeDataString(line.Name).Length + 1 + "def=".Length + Uri.EscapeDataString(line.Definition ?? string.Empty).Length + 1;
+    }
+
     internal static string PinSuggest(PinSuggestQuery query)
     {
         ArgumentNullException.ThrowIfNull(query);

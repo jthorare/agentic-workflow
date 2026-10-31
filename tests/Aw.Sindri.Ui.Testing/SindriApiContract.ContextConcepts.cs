@@ -114,18 +114,47 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
-    public async Task ContextPinSuggest_sends_sixty_lines_as_three_calls_and_numbers_the_matches_0_to_59()
+    public async Task ContextPinSuggest_sends_sixty_long_lines_as_two_calls_and_numbers_the_matches_0_to_59()
     {
         var server = new FakeSindriApi { ContextPinSuggestAnswer = q => AConcepts.Served(AConcepts.Matched([.. q.Lines!.Select(l => (string?)("concept:" + l.Name))])) };
         var api = Reach(server);
-        var lines = Enumerable.Range(0, 60).Select(i => new PinSuggestLine("n" + i.ToString(CultureInfo.InvariantCulture), "d" + i.ToString(CultureInfo.InvariantCulture))).ToList();
+        var lines = Enumerable.Range(0, 60).Select(i => new PinSuggestLine(new string('\u00e9', 9) + i.ToString(CultureInfo.InvariantCulture), new string('\u00e9', 10))).ToList();   // about 125 encoded characters a row
 
         var view = (await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Lines: lines), Token)).Value;
 
-        Expect.Sequence([25, 25, 10], server.ContextPinSuggestAsked.Select(q => q.Lines!.Count));
+        Expect.Equal(2, server.ContextPinSuggestAsked.Count);
+        Expect.Equal(60, server.ContextPinSuggestAsked.Sum(q => q.Lines!.Count));
         Expect.Sequence(Enumerable.Range(0, 60), view.Matches!.Select(m => m.Line));
         Expect.Sequence(lines.Select(l => "concept:" + l.Name), view.Matches!.Select(m => m.Concept));
         Expect.Sequence(lines, server.ContextPinSuggestAsked.SelectMany(q => q.Lines!));   // each definition went beside its line
+    }
+
+    [Fact]
+    public async Task ContextPinSuggest_refuses_more_than_a_hundred_lines_before_sending_any()
+    {
+        var server = new FakeSindriApi { ContextPinSuggestAnswer = _ => AConcepts.Served(AConcepts.Matched()) };
+        var api = Reach(server);
+        var lines = Enumerable.Range(0, 101).Select(i => new PinSuggestLine("n" + i.ToString(CultureInfo.InvariantCulture))).ToList();
+
+        var result = await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Lines: lines), Token);
+
+        Expect.True(result.IsError);
+        Expect.Equal("SND-CONTEXT-179", result.Error.Code);
+        Expect.Equal(0, server.ContextPinSuggestAsked.Count);
+    }
+
+    [Fact]
+    public async Task ContextPinSuggest_splits_a_list_by_encoded_size_and_keeps_the_indexes_in_order()
+    {
+        var server = new FakeSindriApi { ContextPinSuggestAnswer = q => AConcepts.Served(AConcepts.Matched([.. q.Lines!.Select(l => (string?)"concept:x")])) };
+        var api = Reach(server);
+        var lines = Enumerable.Range(0, 25).Select(_ => new PinSuggestLine(new string('\u00e9', 80))).ToList();   // 480 encoded characters a row: 25 rows are over 12,000
+
+        var view = (await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Lines: lines), Token)).Value;
+
+        Expect.True(server.ContextPinSuggestAsked.Count > 1);
+        Expect.True(server.ContextPinSuggestAsked.All(q => q.Lines!.Sum(Aw.Sindri.Ui.Api.Context.ContextRoutes.PinSuggestRowSize) <= 6000));
+        Expect.Sequence(Enumerable.Range(0, 25), view.Matches!.Select(m => m.Line));
     }
 
     [Fact]

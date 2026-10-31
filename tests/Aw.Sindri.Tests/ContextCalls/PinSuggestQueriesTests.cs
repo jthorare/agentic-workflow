@@ -70,4 +70,12 @@ public sealed class PinSuggestQueriesTests
 
         Assert.Equal([new PinSuggestLine("Payments", "take money"), new PinSuggestLine("Auth", Definition: null)], query.Lines);
     }
+
+    [Fact]
+    public void The_eighty_character_check_trims_first()
+    {
+        var padded = "  " + new string('n', 40) + "  ";
+
+        Assert.True(PinSuggestQueries.Of(new GetContextPinSuggestRequest(Line: [padded], Def: ["  " + new string('d', 40) + "  "])).IsSuccess);   // 40 + 40 once trimmed
+    }
 }

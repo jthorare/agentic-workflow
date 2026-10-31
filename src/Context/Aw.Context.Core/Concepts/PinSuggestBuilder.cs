@@ -27,7 +27,7 @@ public static class PinSuggestBuilder
     {
         ArgumentNullException.ThrowIfNull(graph);
         return Find(graph, concept) is { } node
-            ? ConceptTermsAttribute.Of(node).Distinct(StringComparer.Ordinal).Take(MaxTerms).ToList()
+            ? ConceptTermsAttribute.Of(node).Where(static t => !string.IsNullOrWhiteSpace(t)).Distinct(StringComparer.Ordinal).Take(MaxTerms).ToList()
             : ContextErrors.UnknownAnchor.With("that concept isn't in this map (fix: read the concepts first, and name one of their ids)");
     }
 

@@ -60,7 +60,8 @@ public sealed class PinSuggestTests
     {
         var now = DateTimeOffset.Parse("2026-08-01T12:00:00Z", CultureInfo.InvariantCulture);
         RecordItem Own(RecordKey key, string audience) => Issue(key, "Slow checkout", "Payments take ten seconds.", now) with { Audience = AudienceKey.From(audience) };
-        var items = new[] { Own(_linked, "repo:acme/aw-split-panes"), Own(_second, "repo:acme/other") };
+        // The third is in this repo's audience but names the other repo: a session of this repo leaves it out, a human covering both counts it.
+        var items = new[] { Own(_linked, "repo:acme/aw-split-panes"), Own(_second, "repo:acme/other"), Own(_third, "repo:acme/aw-split-panes") with { Repo = ContextRepoName.From("other") } };
         var world = new MapWorld(feeds: new FakeRecordFeedCatalog(new FakeRecordFeed(RecordSamples.Github, items)));
         var graph = new ConceptGraph().ConceptWithTerms("concept:billing", "Billing", "payment").Node("feature:checkout", "Checkout").Member("feature:checkout", "concept:billing")
             .Node("code:src/pay.cs").Implements("code:src/pay.cs", "feature:checkout", "repo:aw-split-panes/src/pay.cs").Build();
@@ -100,8 +101,8 @@ public sealed class PinSuggestTests
 
         Assert.True(asSession.IsSuccess, asSession.IsError ? asSession.Error.Message : null);
         Assert.True(asHuman.IsSuccess, asHuman.IsError ? asHuman.Error.Message : null);
-        Assert.Equal(1, Assert.Single(asSession.Value.Terms!).NewRecords);   // only its own repo's issue
-        Assert.Equal(2, Assert.Single(asHuman.Value.Terms!).NewRecords);   // a human covering both repos sees both
+        Assert.Equal(1, Assert.Single(asSession.Value.Terms!).NewRecords);   // only its own repo's issue: not the other audience's, not the one that names the other repo
+        Assert.Equal(3, Assert.Single(asHuman.Value.Terms!).NewRecords);   // a human covering both repos with no repo= sees all three
     }
 
     [Fact]

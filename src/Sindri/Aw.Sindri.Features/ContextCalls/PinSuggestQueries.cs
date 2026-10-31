@@ -44,7 +44,7 @@ internal static class PinSuggestQueries
         var defs = request.Def ?? [];
         if (names.Count > MaxLines)
         {
-            return Invalid(Say($"line= has {names.Count} lines; at most {MaxLines} (fix: send them in batches of 25)"));
+            return Invalid(Say($"line= has {names.Count} lines; at most {MaxLines} (fix: send at most {MaxLines} lines)"));
         }
 
         if (defs.Count != 0 && defs.Count != names.Count)
@@ -70,7 +70,7 @@ internal static class PinSuggestQueries
     // Why a line can't be matched, or null. The definition is a clipped fragment, so only its length counts.
     private static string? Refusal(int index, string name, string? definition) =>
         string.IsNullOrWhiteSpace(name) ? Say($"line {index + 1} has no name (fix: send a name on every line)")
-        : name.Length + (definition?.Length ?? 0) > MaxRow ? Say($"line {index + 1} is over {MaxRow} characters with its definition (fix: clip the definition so name + definition stay at {MaxRow})")
+        : name.Trim().Length + (definition?.Trim().Length ?? 0) > MaxRow ? Say($"line {index + 1} is over {MaxRow} characters with its definition (fix: clip the definition so name + definition stay at {MaxRow})")
         : null;
 
     private static string Say(FormattableString message) => message.ToString(CultureInfo.InvariantCulture);
