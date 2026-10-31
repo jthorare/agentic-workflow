@@ -116,7 +116,7 @@ internal sealed class ContextPageWriteVerbs(ControlPlaneClient client, Output ou
         var pages = parsed.Value.Profile.Index?.Pages ?? [];
         return pages.Count == 0
             ? SindriErrors.InvalidInput.With($"'{path}' has no pages (fix: an 'index:' with 'pages:', or a bare 'pages:' list)")
-            : Kernel.Results.Success<IReadOnlyList<PageSettings>>(pages);
+            : Kernel.Results.Success(pages);
     }
 
     // The text as a whole profile: a bare 'pages:' list goes under 'index:'.
