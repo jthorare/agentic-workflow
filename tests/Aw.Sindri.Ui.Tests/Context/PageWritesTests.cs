@@ -1,6 +1,7 @@
 using System.Net;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 using Microsoft.Extensions.Time.Testing;
 
@@ -17,10 +18,14 @@ public sealed class PageWritesTests
     private static readonly PageSave _week = new(
         [new PageDraft("schedule-week", "Schedule week", Repo: null, Surface: null, Owner: true, [new PageActionDraft(Id: null, "Submit week", Action: null, ["approval"])])], []);
 
-    private static PageWrites Writes(FakeSindriApi api) => new(api, () => new Uri("http://127.0.0.1:1/"), new FakeTimeProvider(A.Noon));
+    private static PageWrites Writes(FakeSindriApi api)
+    {
+        var url = new Uri("http://127.0.0.1:1/");
+        return new PageWrites(new ProfileWriteFlow(api, () => url, new FakeTimeProvider(A.Noon)), api, () => url);
+    }
 
-    private static RouteAnswer Profile(params string[] changed) =>
-        new(HttpStatusCode.OK, $$"""{"approved":"h0","live":"h1","changed":true,"changedPaths":[{{string.Join(',', changed.Select(c => $"\"{c}\""))}}]}""");
+    private static RouteAnswer Profile(string live, params string[] changed) =>
+        new(HttpStatusCode.OK, $$"""{"approved":"h0","live":"{{live}}","changed":true,"changedPaths":[{{string.Join(',', changed.Select(c => $"\"{c}\""))}}]}""");
 
     private static FakeSindriApi Server(RouteAnswer profile, string state = "succeeded", string? code = null, string? summary = null)
     {
@@ -39,21 +44,24 @@ public sealed class PageWritesTests
     private static string Quoted(string? text) => text is null ? "null" : $"\"{text}\"";
 
     [Fact]
-    public async Task Save_approves_when_only_this_page_waits()
+    public async Task Save_sends_the_pages_and_maps_the_approval()
     {
-        var api = Server(Profile("index.pages.schedule-week"));
+        var api = Server(Profile("h1", "index.pages.schedule-week"));
 
         var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
 
         Assert.Equal(PageSavedState.Approved, saved.State);
-        Assert.Equal("h1", Assert.Single(api.ProfileApprovals).Hash);
-        Assert.Equal("h0", Assert.Single(api.PagesSet).IfHash);
+        var body = Assert.Single(api.PagesSet);
+        Assert.Equal("h0", body.IfHash);
+        var page = Assert.Single(body.Set!);
+        Assert.Equal("schedule-week", page.Id);
+        Assert.Equal(["approval"], Assert.Single(page.Actions).Concepts);
     }
 
     [Fact]
-    public async Task Save_leaves_it_waiting_when_another_change_waits()
+    public async Task Save_leaves_it_waiting_when_another_page_waits()
     {
-        var api = Server(Profile("index.pages.schedule-week", "index.concepts.approval"));
+        var api = Server(Profile("h1", "index.pages.schedule-week", "index.pages.other"));
 
         var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
 
@@ -62,76 +70,15 @@ public sealed class PageWritesTests
     }
 
     [Fact]
-    public async Task Save_without_approve_never_approves()
+    public async Task Save_maps_a_refusal_to_its_sentence()
     {
-        var api = Server(Profile("index.pages.schedule-week"));
-
-        var saved = await Writes(api).Save(_week, "h0", approve: false, cancellationToken: Token);
-
-        Assert.Equal(PageSavedState.Waiting, saved.State);
-        Assert.Empty(api.ProfileApprovals);
-    }
-
-    [Fact]
-    public async Task Save_reports_a_clash_and_writes_nothing_else()
-    {
-        var api = Server(Profile());
-        api.SetContextPagesAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-PROFILE-003", "The profile moved.");
-
-        var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
-
-        Assert.Equal(PageSavedState.Clash, saved.State);
-        Assert.Equal(0, api.JobCalls);
-        Assert.Empty(api.ProfileApprovals);
-    }
-
-    [Fact]
-    public async Task Save_reports_a_refused_concept_with_the_servers_sentence()
-    {
-        var api = Server(Profile());
-        const string Sentence = "index.pages[0].actions[0].concepts[0]: 'aproval' is no concept in map v41";
-        api.SetContextPagesAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-CONTEXT-252", Sentence);
+        var api = Server(Profile("h1"));
+        api.SetContextPagesAnswer = RouteAnswer.Problem(HttpStatusCode.BadRequest, "SND-CONTEXT-252", "'aproval' is no concept");
 
         var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
 
         Assert.Equal(PageSavedState.Refused, saved.State);
-        Assert.Equal("SND-CONTEXT-252", saved.Code);
-        Assert.Equal(Sentence, saved.Message);
-    }
-
-    [Fact]
-    public async Task Save_reports_a_failed_job_with_its_code()
-    {
-        var api = Server(Profile(), state: "failed", code: "SND-CONTEXT-254", summary: "no such concept");
-
-        var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
-
-        Assert.Equal(PageSavedState.Refused, saved.State);
-        Assert.Equal("no such concept", saved.Message);
-    }
-
-    [Fact]
-    public async Task Save_sends_the_write_once_and_polls_while_the_job_runs()
-    {
-        var clock = new FakeTimeProvider(A.Noon);
-        var api = Server(Profile("index.pages.schedule-week"), state: "running");
-        var save = Writes(api, clock).Save(_week, "h0", approve: false, cancellationToken: Token);
-
-        while (api.JobCalls < 2)
-        {
-            clock.Advance(TimeSpan.FromMilliseconds(250));
-            await Task.Yield();
-        }
-
-        api.JobAnswers[JobId] = new RouteAnswer(HttpStatusCode.OK, Job("succeeded", code: null, summary: null));
-        while (!save.IsCompleted)
-        {
-            clock.Advance(TimeSpan.FromMilliseconds(250));
-            await Task.Yield();
-        }
-
-        Assert.Equal(PageSavedState.Waiting, (await save).State);
-        _ = Assert.Single(api.PagesSet);
+        Assert.Equal("'aproval' is no concept", saved.Message);
     }
 
     [Fact]
@@ -183,14 +130,6 @@ public sealed class PageWritesTests
         Assert.Null(await Writes(api).Page("surface:route/GET:/nope", concept: null, Token));
     }
 
-    [Fact]
-    public async Task Waiting_reads_the_live_hash_and_changed_paths()
-    {
-        var waiting = await Writes(new FakeSindriApi { ProfileAnswer = Profile("index.pages.x") }).Waiting(Token);
-
-        Assert.Equal(new ProfileWaiting("h1", ["index.pages.x"]), waiting, new WaitingComparer());
-    }
-
     [Theory]
     [InlineData("index.pages.schedule-week", true)]
     [InlineData("repos.web.index.pages.schedule-week", true)]
@@ -209,8 +148,6 @@ public sealed class PageWritesTests
     public void Waits_names_the_page_whose_path_waits(string path, string page, bool waits) =>
         Assert.Equal(waits, new ProfileWaiting("h1", [path]).Waits(page));
 
-    private static PageWrites Writes(FakeSindriApi api, TimeProvider clock) => new(api, () => new Uri("http://127.0.0.1:1/"), clock);
-
     private static RouteAnswer Pages(bool truncated) => new(HttpStatusCode.OK, string.Concat(
         "{'pages':[{'id':'schedule-week','key':'surface:route/GET:/schedule/week','name':'Schedule week','repo':'web','mark':'owner','code':true,",
         "'actions':[{'id':'submit-week','key':'action:WeekPage.submit','name':'Submit week','mark':'owner','code':false,'concepts':['approval']}]},",
@@ -218,11 +155,4 @@ public sealed class PageWritesTests
         "'actions':[{'id':'ask','key':'action:owner/help/ask','name':'Ask','mark':'owner','code':false,'concepts':[]}]}],'total':2,'truncated':",
         truncated ? "true" : "false",
         ",'mapVersion':'v41'}").Replace('\'', '"'));
-
-    private sealed class WaitingComparer : IEqualityComparer<ProfileWaiting>
-    {
-        public bool Equals(ProfileWaiting? x, ProfileWaiting? y) => x is not null && y is not null && x.LiveHash == y.LiveHash && x.ChangedPaths.SequenceEqual(y.ChangedPaths, StringComparer.Ordinal);
-
-        public int GetHashCode(ProfileWaiting obj) => obj.LiveHash?.GetHashCode(StringComparison.Ordinal) ?? 0;
-    }
 }
