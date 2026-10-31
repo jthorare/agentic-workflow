@@ -10511,7 +10511,7 @@ Aw.Context.Core.Engine.ContextScope.OmitPages.get -> bool
 Aw.Context.Core.Engine.ContextScope.OmitPages.init -> void
 Aw.Context.Core.Concepts.PinScope.Counting(Aw.Context.Core.Concepts.PinTally? skipped) -> Aw.Context.Core.Sources.ISourcePin!
 Aw.Context.Core.Sources.ISourcePin
-Aw.Context.Core.Sources.ISourcePin.HoldsDoc(Aw.Context.Core.Engine.ContextRepoName repo, string! repoRelativePath) -> bool
+Aw.Context.Core.Sources.ISourcePin.HoldsDoc(string! repo, string! repoRelativePath) -> bool
 Aw.Context.Core.Sources.ISourcePin.HoldsRecord(Aw.Context.Core.Sources.RecordKey record) -> bool
 Aw.Context.Core.Sources.ISourcePin.Records() -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
 Aw.Context.Core.Sources.SourceQuery.Pin.get -> Aw.Context.Core.Sources.ISourcePin?

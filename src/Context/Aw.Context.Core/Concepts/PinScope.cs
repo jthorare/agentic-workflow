@@ -95,7 +95,13 @@ public sealed class PinScope
     {
         public bool HoldsRecord(RecordKey record) => scope.HoldsRecord(record, skipped);
 
-        public bool HoldsDoc(ContextRepoName repo, string repoRelativePath) => scope.HoldsDoc(repo, repoRelativePath, skipped);
+        public bool HoldsDoc(string repo, string repoRelativePath) => ContextRepoName.TryFrom(repo, out var name) ? scope.HoldsDoc(name, repoRelativePath, skipped) : Left();
+
+        private bool Left()
+        {
+            skipped?.Count(pin: null);
+            return false;
+        }
 
         public IReadOnlySet<RecordKey> Records() => scope.Records();
     }
