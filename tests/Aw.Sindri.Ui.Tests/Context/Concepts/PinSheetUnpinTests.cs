@@ -30,7 +30,8 @@ public sealed class PinSheetUnpinTests
         Assert.Empty(kit.Api.PinnedConcepts);
         sheet.KeepPin();
 
-        Assert.Equal((false, ["keep", "unpin"]), (sheet.IsConfirmingUnpin, focus));
+        Assert.False(sheet.IsConfirmingUnpin);
+        Assert.Equal(["keep", "unpin"], focus, StringComparer.Ordinal);
         Assert.Empty(closed);
     }
 
@@ -56,7 +57,8 @@ public sealed class PinSheetUnpinTests
         await sheet.Unpin(Token);
 
         var body = Assert.Single(kit.Api.PinnedConcepts);
-        Assert.Equal((["billing"], true, FileHash), (body.Remove, body.WithFolderRules, body.IfHash));
+        Assert.Equal(["billing"], body.Remove!, StringComparer.Ordinal);
+        Assert.Equal((true, FileHash), (body.WithFolderRules, body.IfHash));
         Assert.Null(body.Set);
         Assert.Equal("h1", Assert.Single(kit.Api.ProfileApprovals).Hash);
         Assert.True(Assert.Single(closed).Written);
