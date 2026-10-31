@@ -13,6 +13,7 @@ using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Records;
@@ -210,4 +211,10 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         graph.ConceptGlossary(query, scope, cancellationToken);
+
+    public ValueTask<Result<PagesView>> Pages(PagesQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        graph.Pages(query, scope, cancellationToken);
+
+    public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
+        graph.CheckPages(scope, cancellationToken);
 }

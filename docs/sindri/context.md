@@ -422,7 +422,7 @@ $SINDRI context map export [<name-or-path>] [--json]
 
 ### Doctor and the purge
 
-`$SINDRI doctor` adds `context:map` (warns with no map, with orphaned overrides or when the current map was built under older map rules, or none recorded, with the fix `sindri context map build`; how far the map is behind HEAD is
+`$SINDRI doctor` adds `context:pages` (right after `context:map`: the profile's named pages against the map; ok with "no pages named" or "no map yet", a warning per page, action or concept the map lacks, fix `sindri context page list --suggested`) and `context:map` (warns with no map, with orphaned overrides or when the current map was built under older map rules, or none recorded, with the fix `sindri context map build`; how far the map is behind HEAD is
 unknown until a build records its commit, S-4) `context:roles` (issue 1105: warns when indexed files look like a role but match no glob, naming the repo, the count and up to 5 example paths, with the fix "add a glob to index.demote or index.ignore in the profile"; ok otherwise, with the per-role counts, an ignored role as `<role> 312 dropped`), and `context:retention` (warns while exports older than 14 days or
 retained versions past the newest 100 are still there, except those replaced within the last 90 days, which a backtest can still read). The `context-purge` service removes both: name it under
 `services:` in the profile.
@@ -823,6 +823,31 @@ the store, a usage error · `75` the heavy-job lock stayed busy (`040`).
 | `SND-CONTEXT-058` | `sources sync <source>` names a source that isn't configured or has nothing to sync (404) | `context sources status` for the names |
 | `SND-CONTEXT-133` | A `context.extract.graphify` limit (`timeoutMinutes`, `maxSnapshotMB`, `maxFileMB`, `maxGraphMB`) is negative, fractional, over 10,000,000 or, for `timeoutMinutes`, over 70,000 (`profile validate`, exit 2; the message names the key path) | Write a whole number, or `0` for no limit |
 | `SND-CONTEXT-059` | A sync stopped at its time cap: partial, it resumes from its cursor (`sources status` shows `059`, the source stays `ok` or `degraded`, exit 0; the sync job's summary leads with `partial:`). Every run completes at least one record, so a slow source still finishes across runs. A model or store failure in the same run shows instead of `059` | None; the next run continues. Raise the cadence if persistent |
+
+## Pages: `context page list`, `context_pages`
+
+A page is a screen or route of the product. Each has actions (submit the schedule, open the menu) and each action expresses concepts. A page comes in two marks:
+
+- **Set by a person** (`owner`): the profile's `index.pages` names it.
+- **Suggested**: the map has a page-like surface (a route or a view) that no profile page names. Its id is the slug of its name. A suggested page is an offer, nothing more; it never changes the map.
+
+Owner pages come first, in the profile's order, then suggested ones with the most actions first. Each page says whether code was found (a file implements the surface) and each action lists its concepts.
+
+```
+$ sindri context page list
+Schedule week
+  surface:route/GET:/schedule/week  ·  Set by a person  ·  Code found
+    Submit schedule  (Set by a person, No code found yet)  ->  scheduling
+
+$ sindri context page list --suggested --concept scheduling
+Week overview
+  surface:route/GET:/schedule/overview  ·  Suggested  ·  Code found
+    Export week  (Suggested, Code found)  ->  scheduling
+```
+
+With no flag it lists the pages a person named (`No pages named yet. Name one in the app, or see sindri context page list --suggested.` when there are none); `--suggested` lists only the suggested ones. `--concept C` keeps pages that express concept C or have an action that does, `--repo R` one repo, `--json` the raw answer. Exit 0 with an answer (an empty list is one), 1 for attention (serve not running, no map yet, an unknown concept or repo `SND-CONTEXT-258`), 2 for a tool error. Agent sessions get both marks, marked, from the MCP tool `context_pages` (arguments `concept`, `page`, `repo`, `limit`, `offset`, `mapVersion`; an unknown page id is `SND-CONTEXT-257`).
+
+**Why a page may be missing.** (1) Its route or concept is gone from the current map. (2) A deny rule (`index.denyPaths`) hides the file it lives in. (3) The map only counts a surface as page-like when `PageKinds.IsPage` says so, and that does not yet cover `.ts` or `.cs` routes or `.axaml` views, so a page of those kinds shows up only once a profile page names it. `sindri doctor` has a `context:pages` row that checks the named pages against the map and says which of the first two applies.
 
 ## S-5A: the index sources, secret pointers
 

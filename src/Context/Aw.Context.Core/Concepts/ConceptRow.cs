@@ -16,6 +16,10 @@ public sealed record ConceptRow(NodeKey Id, string Name, string Summary, string 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? Terms { get; init; }
 
+    /// <summary>How many pages (owner or suggested) express the concept directly or through an action on them; null (left out of the answer) until the concept rows carry it.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Pages { get; init; }
+
     /// <summary>True for a concept the owner pinned in the profile (<see cref="Source"/> says 'override' for it too, so this is how an agent finds a pin id); left out when false.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
     public bool Pinned { get; init; }
