@@ -10716,3 +10716,29 @@ Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void
 static Aw.Context.Core.Graph.EntryKey.Normalized(string! key) -> string!
 Aw.Context.Core.Engine.PageFacts.Stored.get -> System.Func<string!, string!>?
 Aw.Context.Core.Engine.PageFacts.Stored.init -> void
+Aw.Context.Core.Eval.Backtest.ArmReport.PinAnchored.get -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
+Aw.Context.Core.Eval.Backtest.ArmReport.PinAnchored.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.<Clone>$() -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore!
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Count.get -> int
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Count.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Deconstruct(out int Count, out double RecallAt10, out double Mrr) -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Equals(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? other) -> bool
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Mrr.get -> double
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Mrr.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.PinAnchoredScore(int Count, double RecallAt10, double Mrr) -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.RecallAt10.get -> double
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.RecallAt10.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.FileRecallAt10.get -> double
+Aw.Context.Core.Eval.Backtest.SampleScore.FileRecallAt10.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.Pin.get -> string?
+Aw.Context.Core.Eval.Backtest.SampleScore.Pin.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.ReciprocalRank.get -> double
+Aw.Context.Core.Eval.Backtest.SampleScore.ReciprocalRank.init -> void
+const Aw.Context.Core.Eval.Backtest.BacktestScoring.MinPinAnchored = 20 -> int
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Equals(object? obj) -> bool
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.GetHashCode() -> int
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.ToString() -> string!
+static Aw.Context.Core.Eval.Backtest.BacktestScoring.PinAnchored(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Eval.Backtest.SampleScore!>! scores) -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
+static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator !=(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
+static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator ==(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool

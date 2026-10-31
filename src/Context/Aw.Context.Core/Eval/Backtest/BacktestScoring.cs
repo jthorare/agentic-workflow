@@ -77,6 +77,14 @@ public static class BacktestScoring
         };
     }
 
+    /// <summary>Fewer pin-anchored questions than this and the hand check decides, not the numbers.</summary>
+    public const int MinPinAnchored = 20;
+
+    /// <summary>One ranker arm's scores over its pin-anchored samples.</summary>
+    /// <param name="scores">The arm's sample scores.</param>
+    /// <returns>The count and the means; null when no sample was pin-anchored.</returns>
+    public static PinAnchoredScore? PinAnchored(IReadOnlyList<SampleScore> scores) => throw new NotSupportedException();
+
     private static double? Mean(IEnumerable<double?> values)
     {
         var list = values.OfType<double>().ToList();
