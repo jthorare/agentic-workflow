@@ -140,6 +140,12 @@ internal sealed partial class PinSheetViewModel : ObservableObject
     /// <summary>True when the submit button has an error under it.</summary>
     public bool HasSubmitError => SubmitError.Length > 0;
 
+    /// <summary>Edit pin after a clash: "Billing changed in the file since you opened it; Save replaces it." when the re-read shows this pin changed; empty otherwise.</summary>
+    public string ChangedNote { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when the changed note shows.</summary>
+    public bool HasChangedNote => ChangedNote.Length > 0;
+
     /// <summary>"Nothing in the map will match this pin yet; you can still save it." while no word and no feature is ticked.</summary>
     public string EmptyNote => Words.Any(w => w.Ticked) || Features.Any(f => f.Ticked) ? string.Empty : Labels.PinSheetEmpty;
 

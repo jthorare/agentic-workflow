@@ -118,7 +118,8 @@ internal sealed partial class PinSheetViewModel
         }
 
         List<string> removed = [.. body.Remove ?? []];
-        (SubmitError, IsWriting) = (string.Empty, true);
+        (SubmitError, ChangedNote, IsWriting) = (string.Empty, string.Empty, true);
+        OnChanged(nameof(HasChangedNote));
         Wrote();
         ProfileWritten written;
         try
@@ -156,6 +157,8 @@ internal sealed partial class PinSheetViewModel
         if (read is { IsSuccess: true })
         {
             (_ifHash, _pins) = (read.Value.FileHash, read.Value.Pins);
+            NoteChange();
+            Rejudge();
             await ReadRule(cancellationToken).ConfigureAwait(true);
         }
         else
@@ -165,6 +168,23 @@ internal sealed partial class PinSheetViewModel
         }
 
         OnChanged(nameof(CanSubmit));
+    }
+
+    // Edit pin: when the re-read copy of this pin differs from the one the sheet opened with, the next press would overwrite that change, so say so.
+    private void NoteChange()
+    {
+        var note = string.Empty;
+        if (_open?.Pin is { } opened
+            && _pins.FirstOrDefault(p => string.Equals(p.Id, opened.Id, StringComparison.Ordinal)) is { } now
+            && (!now.Aliases.SequenceEqual(opened.Aliases, StringComparer.Ordinal)
+                || !now.Features.SequenceEqual(opened.Features, StringComparer.Ordinal)
+                || !string.Equals(now.Summary ?? string.Empty, opened.Summary ?? string.Empty, StringComparison.Ordinal)))
+        {
+            note = Labels.PinSheetChangedInFile(opened.Name);
+        }
+
+        ChangedNote = note;
+        OnChanged(nameof(HasChangedNote));
     }
 
     // What shows under the button: the moved profile's own line, the server's sentence, the timeout's, or a plain failure.

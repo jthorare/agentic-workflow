@@ -92,5 +92,6 @@
     <TextBlock x:Name="PinSheetEmptyNote" Classes="caption subtle" Text="{Binding EmptyNote}" IsVisible="{Binding HasEmptyNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding EmptyNote}" />
     <TextBlock x:Name="PinSheetError" Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding SubmitError}" IsVisible="{Binding HasSubmitError}" TextWrapping="Wrap"
                AutomationProperties.Name="{Binding SubmitError}" AutomationProperties.LiveSetting="Assertive" />
+    <TextBlock x:Name="PinSheetChangedNote" Classes="caption subtle" Text="{Binding ChangedNote}" IsVisible="{Binding HasChangedNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ChangedNote}" />
   </StackPanel>
 </UserControl>
