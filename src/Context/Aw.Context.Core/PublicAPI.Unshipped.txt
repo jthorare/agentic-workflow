@@ -10608,3 +10608,11 @@ const Aw.Context.Core.Pages.PageReader.DefaultLimit = 50 -> int
 const Aw.Context.Core.Pages.PageReader.MaxLimit = 200 -> int
 static Aw.Context.Core.Pages.PageReader.Build(Aw.Context.Core.Pages.PagesQuery! query, string! mapVersion, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Pages.PagesView!>!
 static Aw.Context.Core.Pages.PageReader.PagesPerConcept(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.WholeMap.PagesInNoConcept
+static Aw.Context.Core.WholeMap.PagesInNoConcept.Of(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.get -> bool
+Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.init -> void
+Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool
+Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.get -> int
+Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void

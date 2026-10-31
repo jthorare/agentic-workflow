@@ -60,8 +60,14 @@ internal sealed class BuildContextMapService(ContextScopes scopes, IContextEngin
     }
 
     // A clean draft is held for the service's publish step; a queue that can't be read leaves the draft for a person's promote, never failing the build that already succeeded.
+    // A build that waited behind one whose draft was already promoted returns that current version (#1775): there is no draft to hold or publish.
     private async ValueTask<Result<Unit>> HoldWhenClean(ContextMapEvents recorder, ContextScope scope, MapBuildReport report, CancellationToken cancellationToken)
     {
+        if (report.Draft.Status == MapVersionStatus.Current)
+        {
+            return Unit.Value;
+        }
+
         var queue = await engine.ReviewQueue(limit: null, scope, cancellationToken).ConfigureAwait(false);
         if (queue.IsError || queue.Value.Undecided != 0)
         {
