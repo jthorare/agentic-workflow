@@ -5589,6 +5589,8 @@ override Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.GetHashCode() ->
 override Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.ToString() -> string!
 static Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.operator !=(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? right) -> bool
 static Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse.operator ==(Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? left, Aw.Sindri.Features.SetProfileKey.SetProfileKeyResponse? right) -> bool
+Aw.Sindri.Features.ContextCalls.QueryContextRequest.Concept.get -> string?
+Aw.Sindri.Features.ContextCalls.QueryContextRequest.Concept.init -> void
 Aw.Sindri.Features.PinConcepts.PinConceptsRequest
 Aw.Sindri.Features.PinConcepts.PinConceptsRequest.<Clone>$() -> Aw.Sindri.Features.PinConcepts.PinConceptsRequest!
 Aw.Sindri.Features.PinConcepts.PinConceptsRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.PinConcepts.PinSet!>? Set, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.ConceptPinId>? Remove, out Aw.Sindri.Core.Ids.ProfileHash? IfHash, out bool WithFolderRules) -> void

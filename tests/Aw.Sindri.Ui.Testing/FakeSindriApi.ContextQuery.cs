@@ -25,9 +25,9 @@ internal sealed partial class FakeSindriApi
     internal static RouteAnswer QueryAnchorsBody(IEnumerable<string> anchors, IEnumerable<string> suggested) =>
         new(HttpStatusCode.OK, System.Text.Json.JsonSerializer.Serialize(new { anchors, suggestedAnchors = suggested }));
 
-    public Task<Result<QueryAnchorsView>> QueryAnchors(Uri api, string text, CancellationToken cancellationToken)
+    public Task<Result<QueryAnchorsView>> QueryAnchors(Uri api, string text, CancellationToken cancellationToken, string? concept = null)
     {
-        Log("query:" + text);
+        Log(concept is null ? "query:" + text : $"query:{text} concept={concept}");
         return Context<QueryAnchorsView>(api, "/sindri/context/query", QueryAnswer(text), QueryGate, cancellationToken);
     }
 
