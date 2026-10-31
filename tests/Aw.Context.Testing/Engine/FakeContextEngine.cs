@@ -271,6 +271,10 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult(Results.Success(new MapHealth("context:pages", MapHealthState.Ok, "no map yet", string.Empty)));
 
     /// <inheritdoc/>
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(new PageMapFacts(MapVersion: null, new PageFacts(new HashSet<ConceptId>(), new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal), new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)), [])));
+
+    /// <inheritdoc/>
     public ValueTask<Result<MapHealth>> CheckMap(ContextScope? scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(new MapHealth("context:map", MapHealthState.Warn, "no map yet", "sindri context map import <file>")));
 

@@ -22,6 +22,14 @@
       ]
     },
     {
+      "type": "context.page.written",
+      "keyShape": "context.page.written:<hash>",
+      "invalidates": [
+        "profile",
+        "needs-you"
+      ]
+    },
+    {
       "type": "context.pin.written",
       "keyShape": "context.pin.written:<hash>",
       "invalidates": [

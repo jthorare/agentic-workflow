@@ -96,4 +96,7 @@ internal sealed class ContextGraph(
 
     public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
         codeHistory.CheckPages(scope, cancellationToken);
+
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
+        codeHistory.PageFacts(scope, cancellationToken);
 }

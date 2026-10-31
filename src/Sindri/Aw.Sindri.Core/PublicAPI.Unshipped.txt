@@ -21770,3 +21770,80 @@ static Aw.Sindri.Core.Setup.PageEdit.operator ==(Aw.Sindri.Core.Setup.PageEdit? 
 virtual Aw.Sindri.Core.Setup.IndexEdit.EqualityContract.get -> System.Type!
 virtual Aw.Sindri.Core.Setup.IndexEdit.Equals(Aw.Sindri.Core.Setup.IndexEdit? other) -> bool
 virtual Aw.Sindri.Core.Setup.IndexEdit.PrintMembers(System.Text.StringBuilder! builder) -> bool
+Aw.Sindri.Core.Events.ContextPageWritten
+Aw.Sindri.Core.Events.ContextPageWritten.<Clone>$() -> Aw.Sindri.Core.Events.ContextPageWritten!
+Aw.Sindri.Core.Events.ContextPageWritten.Actor.get -> string!
+Aw.Sindri.Core.Events.ContextPageWritten.Actor.init -> void
+Aw.Sindri.Core.Events.ContextPageWritten.CommandId.get -> Aw.Sindri.Core.Ids.CommandId
+Aw.Sindri.Core.Events.ContextPageWritten.CommandId.init -> void
+Aw.Sindri.Core.Events.ContextPageWritten.ContextPageWritten(Aw.Sindri.Core.Ids.CommandId CommandId, string! Actor, Aw.Sindri.Core.Workflow.Engine.LaunchId? Launch, Aw.Sindri.Core.Ids.ProfileHash Hash, System.Collections.Generic.IReadOnlyList<string!>! Pages) -> void
+Aw.Sindri.Core.Events.ContextPageWritten.Deconstruct(out Aw.Sindri.Core.Ids.CommandId CommandId, out string! Actor, out Aw.Sindri.Core.Workflow.Engine.LaunchId? Launch, out Aw.Sindri.Core.Ids.ProfileHash Hash, out System.Collections.Generic.IReadOnlyList<string!>! Pages) -> void
+Aw.Sindri.Core.Events.ContextPageWritten.Equals(Aw.Sindri.Core.Events.ContextPageWritten? other) -> bool
+Aw.Sindri.Core.Events.ContextPageWritten.Hash.get -> Aw.Sindri.Core.Ids.ProfileHash
+Aw.Sindri.Core.Events.ContextPageWritten.Hash.init -> void
+Aw.Sindri.Core.Events.ContextPageWritten.Launch.get -> Aw.Sindri.Core.Workflow.Engine.LaunchId?
+Aw.Sindri.Core.Events.ContextPageWritten.Launch.init -> void
+Aw.Sindri.Core.Events.ContextPageWritten.Pages.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Events.ContextPageWritten.Pages.init -> void
+Aw.Sindri.Core.Setup.PageEvents
+Aw.Sindri.Core.Setup.PageEvents.CanRecord() -> bool
+Aw.Sindri.Core.Setup.PageEvents.PageEvents(Aw.Sindri.Core.Lease.HeldLease! held, Aw.Sindri.Core.Ledger.ILedgerStore! ledger, Aw.Sindri.Core.Events.EventFactory! events, Aw.Sindri.Core.Commands.ICallerContextAccessor! callers) -> void
+Aw.Sindri.Core.Setup.PageEvents.Written(Aw.Sindri.Core.Ids.ProfileHash hash, System.Collections.Generic.IReadOnlyList<string!>! pages, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+const Aw.Sindri.Core.Events.EventTypes.ContextPageWritten = "context.page.written" -> string!
+override Aw.Sindri.Core.Events.ContextPageWritten.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Events.ContextPageWritten.GetHashCode() -> int
+override Aw.Sindri.Core.Events.ContextPageWritten.ToString() -> string!
+static Aw.Sindri.Core.Events.ContextPageWritten.operator !=(Aw.Sindri.Core.Events.ContextPageWritten? left, Aw.Sindri.Core.Events.ContextPageWritten? right) -> bool
+static Aw.Sindri.Core.Events.ContextPageWritten.operator ==(Aw.Sindri.Core.Events.ContextPageWritten? left, Aw.Sindri.Core.Events.ContextPageWritten? right) -> bool
+static Aw.Sindri.Core.Setup.PageEvents.KeyOf(Aw.Sindri.Core.Ids.ProfileHash hash) -> string!
+Aw.Sindri.Core.Profile.ProfileChange
+Aw.Sindri.Core.Profile.ProfileChange.<Clone>$() -> Aw.Sindri.Core.Profile.ProfileChange!
+Aw.Sindri.Core.Profile.ProfileChange.After.get -> string?
+Aw.Sindri.Core.Profile.ProfileChange.After.init -> void
+Aw.Sindri.Core.Profile.ProfileChange.Before.get -> string?
+Aw.Sindri.Core.Profile.ProfileChange.Before.init -> void
+Aw.Sindri.Core.Profile.ProfileChange.Deconstruct(out string! Key, out string? Before, out string? After) -> void
+Aw.Sindri.Core.Profile.ProfileChange.Equals(Aw.Sindri.Core.Profile.ProfileChange? other) -> bool
+Aw.Sindri.Core.Profile.ProfileChange.Key.get -> string!
+Aw.Sindri.Core.Profile.ProfileChange.Key.init -> void
+Aw.Sindri.Core.Profile.ProfileChange.ProfileChange(string! Key, string? Before, string? After) -> void
+override Aw.Sindri.Core.Profile.ProfileChange.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Profile.ProfileChange.GetHashCode() -> int
+override Aw.Sindri.Core.Profile.ProfileChange.ToString() -> string!
+static Aw.Sindri.Core.Profile.ProfileChange.operator !=(Aw.Sindri.Core.Profile.ProfileChange? left, Aw.Sindri.Core.Profile.ProfileChange? right) -> bool
+static Aw.Sindri.Core.Profile.ProfileChange.operator ==(Aw.Sindri.Core.Profile.ProfileChange? left, Aw.Sindri.Core.Profile.ProfileChange? right) -> bool
+static Aw.Sindri.Core.Profile.ProfileDiff.Changes(Aw.Sindri.Core.Profile.SindriProfile? approved, Aw.Sindri.Core.Profile.SindriProfile! live) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.ProfileChange!>!
+Aw.Sindri.Core.Setup.IMapPageFacts
+Aw.Sindri.Core.Setup.IMapPageFacts.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Setup.MapPageFacts!>!>
+Aw.Sindri.Core.Setup.MapConcept
+Aw.Sindri.Core.Setup.MapConcept.<Clone>$() -> Aw.Sindri.Core.Setup.MapConcept!
+Aw.Sindri.Core.Setup.MapConcept.Equals(Aw.Sindri.Core.Setup.MapConcept? other) -> bool
+Aw.Sindri.Core.Setup.MapConcept.Name.get -> string!
+Aw.Sindri.Core.Setup.MapConcept.Name.init -> void
+Aw.Sindri.Core.Setup.MapPageFacts
+Aw.Sindri.Core.Setup.MapPageFacts.<Clone>$() -> Aw.Sindri.Core.Setup.MapPageFacts!
+Aw.Sindri.Core.Setup.MapPageFacts.ActionRepos.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Setup.MapPageFacts.ActionRepos.init -> void
+Aw.Sindri.Core.Setup.MapPageFacts.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.MapConcept!>!
+Aw.Sindri.Core.Setup.MapPageFacts.Concepts.init -> void
+Aw.Sindri.Core.Setup.MapPageFacts.Deconstruct(out string? Version, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.MapConcept!>! Concepts, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! SurfaceRepos, out System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! ActionRepos) -> void
+Aw.Sindri.Core.Setup.MapPageFacts.Equals(Aw.Sindri.Core.Setup.MapPageFacts? other) -> bool
+Aw.Sindri.Core.Setup.MapPageFacts.MapPageFacts(string? Version, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Setup.MapConcept!>! Concepts, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! SurfaceRepos, System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>! ActionRepos) -> void
+Aw.Sindri.Core.Setup.MapPageFacts.SurfaceRepos.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Collections.Generic.IReadOnlyList<string!>!>!
+Aw.Sindri.Core.Setup.MapPageFacts.SurfaceRepos.init -> void
+Aw.Sindri.Core.Setup.MapPageFacts.Version.get -> string?
+Aw.Sindri.Core.Setup.MapPageFacts.Version.init -> void
+override Aw.Sindri.Core.Setup.MapConcept.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.MapConcept.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.MapConcept.ToString() -> string!
+override Aw.Sindri.Core.Setup.MapPageFacts.Equals(object? obj) -> bool
+override Aw.Sindri.Core.Setup.MapPageFacts.GetHashCode() -> int
+override Aw.Sindri.Core.Setup.MapPageFacts.ToString() -> string!
+static Aw.Sindri.Core.Setup.MapConcept.operator !=(Aw.Sindri.Core.Setup.MapConcept? left, Aw.Sindri.Core.Setup.MapConcept? right) -> bool
+static Aw.Sindri.Core.Setup.MapConcept.operator ==(Aw.Sindri.Core.Setup.MapConcept? left, Aw.Sindri.Core.Setup.MapConcept? right) -> bool
+static Aw.Sindri.Core.Setup.MapPageFacts.operator !=(Aw.Sindri.Core.Setup.MapPageFacts? left, Aw.Sindri.Core.Setup.MapPageFacts? right) -> bool
+static Aw.Sindri.Core.Setup.MapPageFacts.operator ==(Aw.Sindri.Core.Setup.MapPageFacts? left, Aw.Sindri.Core.Setup.MapPageFacts? right) -> bool
+Aw.Sindri.Core.Setup.MapConcept.Deconstruct(out string! Key, out string! Name) -> void
+Aw.Sindri.Core.Setup.MapConcept.Key.get -> string!
+Aw.Sindri.Core.Setup.MapConcept.Key.init -> void
+Aw.Sindri.Core.Setup.MapConcept.MapConcept(string! Key, string! Name) -> void
