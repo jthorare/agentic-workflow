@@ -118,13 +118,15 @@ public static class WholeMapBuilder
             Detail = WholeMapDetail.Nodes,
             Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
+            Pages = ConceptScope.Pages(graph.Concepts, graph.Edges, key),
         };
     }
 
     // The pages that relate to no concept (the first 200 in the section's order) with their actions, and the edges among them.
     private static WholeMapView OpenedPages(IReadOnlyList<string> pages, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
     {
-        var kept = pages.Take(PageCap).ToHashSet(StringComparer.Ordinal);
+        List<string> listed = [.. pages.Take(PageCap)];
+        var kept = listed.ToHashSet(StringComparer.Ordinal);
         var actions = graph.Edges.Where(e => e is { Type: EdgeType.On, From.Kind: NodeKind.Action } && kept.Contains(e.To.Value)).Select(e => e.From.Value);
         var shownKeys = kept.Concat(actions).ToHashSet(StringComparer.Ordinal);
         return overview with
@@ -133,6 +135,7 @@ public static class WholeMapBuilder
             Nodes = Nodes(shownKeys.Select(k => graph.Known[k]), how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
             Truncated = pages.Count > PageCap,
+            Pages = listed,
         };
     }
 
@@ -194,7 +197,7 @@ public static class WholeMapBuilder
     {
         var confirmed = node.Provenance == Provenance.Human;
         var trust = TrustPolicy.ForNode(node, confirmed);
-        return new WholeMapNode(node.Key, text.Label(node.Label, trust), node.Key.Kind, area.Area, area.AlsoIn, trust, node.Provenance, node.Confidence, confirmed) { Repo = repo };
+        return new WholeMapNode(node.Key, text.Label(node.Label, trust), node.Key.Kind, area.Area, area.AlsoIn, trust, node.Provenance, node.Confidence, confirmed) { Repo = repo, Owner = PageOrder.IsOwner(node) };
     }
 
     private static List<WholeMapEdge> Edges(List<GraphEdge> edges) =>
