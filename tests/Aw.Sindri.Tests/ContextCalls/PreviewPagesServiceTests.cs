@@ -104,6 +104,55 @@ public sealed class PreviewPagesServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task An_unknown_concept_still_answers_the_matched_pages_id_with_the_concept_as_written()
+    {
+        var answer = await (await Service()).Handle(new PreviewPagesRequest("Schedule weeks\nSubmit schedule -> aproval"), Ct);
+
+        var block = answer.Value.Blocks[0];
+        Assert.False(block.Ticked);
+        Assert.Equal("No concept called \"aproval\": pick one", block.Reason);
+        Assert.Equal(["aproval"], block.UnknownConcepts);
+        Assert.Equal("schedule-week", block.Page?.Id?.Value);
+        Assert.Equal(["aproval"], block.Page?.Actions?[0].Concepts);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_unknown_concept_in_a_two_repo_profile_answers_the_matched_pages_repo()
+    {
+        var profile = new SindriProfile(1, "thor", Repos: [new RepoEntry("app", "/r/app"), new RepoEntry("other", "/r/other")]);
+        var service = await Service(profile);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Schedule weeks\nSubmit schedule -> aproval"), Ct);
+
+        Assert.Equal("app", answer.Value.Blocks[0].Page?.Repo);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_unknown_concept_on_a_block_replacing_an_owner_page_keeps_its_actions_ids()
+    {
+        var owner = new PageSettings(PagePinId.From("week-page"), "Week page", Actions: [new PageActionSettings(PageActionPinId.From("send-it"), "Submit schedule", "action:WeekPage.submit")]);
+        var service = await Service(new SindriProfile(1, "thor", Index: new IndexSettings(Pages: [owner])));
+        _engine.Answer = View([new PageRow(PageId.From("week-page"), NodeKey.From("surface:route/GET:/week"), "Week page", Repo: "app", Mark: "owner", Code: true, Actions: [])]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule -> aproval"), Ct);
+
+        var block = answer.Value.Blocks[0];
+        Assert.False(block.Ticked);
+        Assert.Equal(["aproval"], block.UnknownConcepts);
+        Assert.Equal("send-it", block.Page?.Actions?[0].Id?.Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_block_with_another_reason_and_an_unknown_concept_answers_no_page()
+    {
+        var answer = await (await Service()).Handle(new PreviewPagesRequest($"{new string('a', 81)}\nPay -> aproval\n\nBilling\n\nbilling\nPay -> aproval"), Ct);
+
+        Assert.Null(answer.Value.Blocks[0].Page);
+        Assert.Equal("Same page as block 2", answer.Value.Blocks[2].Reason);
+        Assert.Null(answer.Value.Blocks[2].Page);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_kept_action_id_does_not_collide_with_a_new_actions_slug()
     {
         var owner = new PageSettings(PagePinId.From("week-page"), "Week page", Actions: [new PageActionSettings(PageActionPinId.From("send-it"), "Submit schedule")]);
