@@ -351,4 +351,66 @@ public sealed class SetPagesServiceTests : IDisposable
         Assert.True(fine.IsSuccess);
         Assert.Empty(_rig.Writer.Writes);
     }
+
+    [Fact]
+    public async Task A_session_sets_its_page_while_another_repos_page_is_out_of_its_view()
+    {
+        _rig.Profile(
+            [Page("Users", id: "users", surface: "surface:route/GET:/admin/users")],
+            new RepoEntry("web", "/work/web"),
+            new RepoEntry("admin", "/work/admin"));   // the session's map view holds only the web surface
+
+        var done = await Run(new SetPagesRequest(Set: [Page("Schedule week", repo: "web", surface: Surface)]));
+
+        Assert.True(done.IsSuccess);
+        Assert.Equal([PagePinId.From("schedule-week")], _rig.Edits.Select(static e => e.Id));
+    }
+
+    [Fact]
+    public async Task A_set_pages_own_unknown_key_is_still_251_beside_a_page_out_of_view()
+    {
+        _rig.Profile([Page("Users", id: "users", surface: "surface:route/GET:/admin/users")], new RepoEntry("web", "/work/web"));
+
+        var done = await Run(new SetPagesRequest(Set: [Page("Week", surface: "surface:route/GET:/nope")]));
+
+        Refused(done, ContextErrors.PageKeyUnknown.Code, "index.pages[1].surface");
+    }
+
+    [Fact]
+    public async Task A_made_id_clash_names_the_repos_own_list_not_a_merged_index()
+    {
+        _rig.Profile(
+            [Page("Queue", id: "queue")],
+            new RepoEntry("web", "/work/web", new IndexSettings(Pages: [Page("Schedule week")])),
+            new RepoEntry("admin", "/work/admin"));
+
+        var done = await Run(new SetPagesRequest(Set: [Page("Schedule week")]));
+
+        Refused(done, ContextErrors.PageIdDuplicate.Code, "index.pages[1].id: 'schedule-week' is already repos.web.index.pages[0]'s, made from its name (fix: give repos.web.index.pages[0] an id: in the profile)");
+    }
+
+    [Fact]
+    public async Task A_remove_by_a_made_id_names_where_the_page_is_and_asks_for_an_id()
+    {
+        _rig.Profile(
+            [Page("Queue", id: "queue")],
+            new RepoEntry("web", "/work/web", new IndexSettings(Pages: [Page("Schedule week")])));
+
+        var done = await Run(new SetPagesRequest(Remove: [PagePinId.From("schedule-week")]));
+
+        Refused(done, ContextErrors.PageIdDuplicate.Code, "no page has the id 'schedule-week': repos.web.index.pages[0] has no id: in the profile (fix: give it an id:, then remove it)");
+    }
+
+    [Fact]
+    public async Task Repos_listed_out_of_order_in_the_file_read_back_sorted_in_the_say_which_repo_text()
+    {
+        const string yaml = "schemaVersion: 1\nuser: thor\nrepos:\n  - name: web\n    path: /work/web\n  - name: admin\n    path: /work/admin\n";
+        var loaded = new Aw.Sindri.Infrastructure.Profile.YamlProfileTextParser(SliceHarness.Json).Parse(yaml, "/home/profile.yaml");
+        Assert.True(loaded.IsSuccess);
+        _rig.Slice.Profiles.Live = loaded.Value;
+
+        var done = await Run(new SetPagesRequest(Set: [Page("Week")]));
+
+        Refused(done, ContextErrors.PageRepoAmbiguous.Code, "say which repo this page is in, admin or web (fix: --repo)");
+    }
 }

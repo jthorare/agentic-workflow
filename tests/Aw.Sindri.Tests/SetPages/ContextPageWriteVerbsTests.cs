@@ -174,6 +174,26 @@ public sealed class ContextPageWriteVerbsTests : IDisposable
     }
 
     [Theory]
+    [InlineData("---\npages:\n  - name: Queue\n")]
+    [InlineData("# the pages\n\npages:\n  - name: Queue\n")]
+    [InlineData("---\n# the pages\nindex:\n  pages:\n    - name: Queue\n")]
+    public async Task From_file_reads_a_leading_document_marker_or_comments(string text)
+    {
+        var path = await Write(text);
+        try
+        {
+            var (exit, api) = await Run("set", "--from-file", path);
+
+            Assert.Equal(0, exit);
+            Assert.Equal("Queue", Body(api).GetProperty("set")[0].GetProperty("name").GetString());
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Theory]
     [InlineData("pages: []\n", "has no pages")]
     [InlineData("pages:\n  - name: Q\n    colour: red\n", "colour")]
     public async Task From_file_with_nothing_or_a_typo_is_exit_2_naming_it(string text, string expected)
