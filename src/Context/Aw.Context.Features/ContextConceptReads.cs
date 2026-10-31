@@ -7,6 +7,7 @@ using Aw.Context.Features.CheckPages;
 using Aw.Context.Features.GetConceptGlossary;
 using Aw.Context.Features.GetConceptMembers;
 using Aw.Context.Features.GetConcepts;
+using Aw.Context.Features.GetPageFacts;
 using Aw.Context.Features.GetPages;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -19,7 +20,8 @@ internal sealed class ContextConceptReads(
     IService<GetConceptMembersRequest, ConceptMembersView> members,
     IService<GetConceptGlossaryRequest, ConceptGlossaryView> glossary,
     IService<GetPagesRequest, PagesView> pages,
-    IService<CheckPagesRequest, MapHealth> checkPages) : IContextConcepts
+    IService<CheckPagesRequest, MapHealth> checkPages,
+    IService<GetPageFactsRequest, PageMapFacts> pageFacts) : IContextConcepts
 {
     public ValueTask<Result<ConceptsView>> Concepts(ConceptsQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         concepts.Handle(new GetConceptsRequest(query, scope), cancellationToken);
@@ -37,5 +39,5 @@ internal sealed class ContextConceptReads(
         checkPages.Handle(new CheckPagesRequest(scope), cancellationToken);
 
     public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
-        throw new NotSupportedException();   // skeleton: the GetPageFacts slice replaces it
+        pageFacts.Handle(new GetPageFactsRequest(scope), cancellationToken);
 }

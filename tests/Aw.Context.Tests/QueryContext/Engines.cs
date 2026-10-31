@@ -93,7 +93,7 @@ internal static class Engines
                     new GetWholeMapService(graphs, scrubbers, new WholeMapCache(), WholeMapRules.Default),
                     new Features.SearchMap.SearchMapService(graphs, scrubbers, new SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
                     new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
-                        new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers)), new Features.GetPages.GetPagesService(new ConceptReader(graphs, scrubbers)), new Features.CheckPages.CheckPagesService(store)),
+                        new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers)), new Features.GetPages.GetPagesService(new ConceptReader(graphs, scrubbers)), new Features.CheckPages.CheckPagesService(store), new Features.GetPageFacts.GetPageFactsService(store)),
                     new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),
             new ContextReads(new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()),
