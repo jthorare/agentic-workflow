@@ -58,15 +58,20 @@ internal sealed class ContextPinVerbs(ControlPlaneClient client, Output output, 
             return ContextExit.For(started.Error, await output.Error(started.Error).ConfigureAwait(false));
         }
 
+        return await Finish(started.Value, line, (interrupt, again)).ConfigureAwait(false);
+    }
+
+    private async Task<int> Finish(ApiAnswer<JobStartedResponse> started, ContextPinArguments.Parsed line, (CancellationToken Interrupt, CancellationToken Again) signals)
+    {
         if (!line.Detach)
         {
-            var followed = await follower.Follow(started.Value.Value, line.Json, interrupt, again, Describe).ConfigureAwait(false);
-            return followed == 1 ? await RefusedExit(started.Value.Value, interrupt).ConfigureAwait(false) : followed;
+            var followed = await follower.Follow(started.Value, line.Json, signals.Interrupt, signals.Again, Describe).ConfigureAwait(false);
+            return followed == 1 ? await RefusedExit(started.Value, signals.Interrupt).ConfigureAwait(false) : followed;
         }
 
         return line.Json
-            ? await output.Raw(started.Value.Body, 0).ConfigureAwait(false)
-            : await output.Text($"job {started.Value.Value.JobId.Value} started\n", 0).ConfigureAwait(false);
+            ? await output.Raw(started.Body, 0).ConfigureAwait(false)
+            : await output.Text($"job {started.Value.JobId.Value} started\n", 0).ConfigureAwait(false);
     }
 
     // A job that failed with one of the pin refusals (SND-CONTEXT-171..177, SND-PROFILE-003) is invalid input: exit 2, as the spec's error table says. Any other end stays 1.
