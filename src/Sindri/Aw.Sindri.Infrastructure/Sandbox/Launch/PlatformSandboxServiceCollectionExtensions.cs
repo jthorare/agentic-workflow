@@ -27,12 +27,17 @@ public static class PlatformSandboxServiceCollectionExtensions
     /// <param name="environment">Reads an environment variable.</param>
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddSindriPlatformSandbox(this IServiceCollection services, Func<string, string?> environment)
-        => services.AddSindriPlatformSandbox(environment, OperatingSystem.IsLinux(), OwnUid.Read());
+        => services.AddSindriPlatformSandbox(environment, OperatingSystem.IsLinux(), OwnUid.Read(), OperatingSystem.IsMacOS());
 
-    internal static IServiceCollection AddSindriPlatformSandbox(this IServiceCollection services, Func<string, string?> environment, bool linux, int uid)
+    internal static IServiceCollection AddSindriPlatformSandbox(this IServiceCollection services, Func<string, string?> environment, bool linux, int uid, bool mac = false)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(environment);
+        if (mac && !linux)
+        {
+            return services.AddSindriSeatbeltSandbox(environment);
+        }
+
         if (!linux)
         {
             return services;
@@ -48,10 +53,19 @@ public static class PlatformSandboxServiceCollectionExtensions
             .AddSingleton(sp => new EgressService(
                 sp.GetRequiredService<SystemEgressNetwork>(), sp.GetRequiredService<SystemEgressNetwork>(), environment, EgressLogDirectory(sp.GetRequiredService<SindriSettings>().Home)))
             .AddSingleton<LaunchSandboxRegistry>()
-            .AddSingleton<ISandboxLaunchStages>(sp => new SandboxLaunchStages(
+            .AddSingleton<ISandboxLaunchStages>(StagesFor)
+            .AddSingleton<ISandboxLaunchInputs>(sp => InputsFor(sp, environment))
+            .AddSandboxVerbs(environment)
+            .AddSingleton<ISandboxLaunch>(sp => new SandboxLaunch(sp.GetRequiredService<ISandbox>(), sp.GetRequiredService<ISessionCap>(), sp.GetRequiredService<ISandboxLaunchStages>(), LaunchOptions(sp, environment)));
+    }
+
+    private static SandboxLaunchStages StagesFor(IServiceProvider sp) =>
+        new(
                 sp.GetRequiredService<IApprovedProfile>(), sp.GetRequiredService<ILearnHistory>(), [.. sp.GetServices<IModelCredentialSource>()], sp.GetRequiredService<ISandboxLaunchInputs>(),
-                sp.GetRequiredService<LaunchSandboxRegistry>(), sp.GetRequiredService<TimeProvider>(), new AgentTokenRenewal(sp.GetRequiredService<IAgentTokenSource>(), sp.GetRequiredService<TimeProvider>(), static message => Console.Error.WriteLine("{\"level\":\"warn\",\"source\":\"sindri.agent-token\",\"message\":\"" + System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(message) + "\"}"))))   // the JSON line serve's stderr carries, as the egress warns
-            .AddSingleton<ISandboxLaunchInputs>(sp => new LinuxSandboxLaunchInputs(
+                sp.GetRequiredService<LaunchSandboxRegistry>(), sp.GetRequiredService<TimeProvider>(), new AgentTokenRenewal(sp.GetRequiredService<IAgentTokenSource>(), sp.GetRequiredService<TimeProvider>(), static message => Console.Error.WriteLine("{\"level\":\"warn\",\"source\":\"sindri.agent-token\",\"message\":\"" + System.Text.Encodings.Web.JavaScriptEncoder.Default.Encode(message) + "\"}")));   // the JSON line serve's stderr carries, as the egress warns
+
+    private static LinuxSandboxLaunchInputs InputsFor(IServiceProvider sp, Func<string, string?> environment) =>
+        new(
                 sp.GetRequiredService<LauncherOptions>(), sp.GetRequiredService<ReloadingAgentCatalog>(), sp.GetRequiredService<ISandboxProcesses>(),
                 () => BoxHostFacts.Read(environment, sp.GetRequiredService<SindriSettings>().Home, sp.GetRequiredService<ISandboxMachine>()), ControlFor(sp),
                 new DenialCounterParts(
@@ -67,9 +81,38 @@ public static class PlatformSandboxServiceCollectionExtensions
                             await scope.DisposeAsync().ConfigureAwait(false);
                         }
                     }),
-                    sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>(), sp.GetRequiredService<ITextScrubber>(), sp.GetRequiredService<TimeProvider>())))
-            .AddSandboxVerbs(environment)
-            .AddSingleton<ISandboxLaunch>(sp => new SandboxLaunch(sp.GetRequiredService<ISandbox>(), sp.GetRequiredService<ISessionCap>(), sp.GetRequiredService<ISandboxLaunchStages>(), LaunchOptions(sp, environment)));
+                    sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>(), sp.GetRequiredService<ITextScrubber>(), sp.GetRequiredService<TimeProvider>()));
+
+    /// <summary>Registers the macOS sandbox (SB-9c): Seatbelt, the same login sources, a session that is its own process group (the group id file is the scope), the cap over the live groups and the loopback egress. The fixture self-check and the exec and login verbs stay as Core's refusing defaults.</summary>
+    private static IServiceCollection AddSindriSeatbeltSandbox(this IServiceCollection services, Func<string, string?> environment)
+    {
+        _ = services.RemoveAll<ISandbox>().AddSingleton<IAgentTokenSource>(sp => new GitHubAppTokenSource(environment, GitHubAppTokenSource.CreateClient(), sp.GetRequiredService<TimeProvider>()));
+        return services
+            .AddSandboxParts(environment)
+            .AddSingleton<ISandbox>(sp =>
+            {
+                var registry = sp.GetRequiredService<LaunchSandboxRegistry>();
+                return new SeatbeltSandbox(
+                    SeatbeltOptions.From(environment), sp.GetRequiredService<ISandboxProcesses>(), sp.GetRequiredService<ILaunchSecrets>(), sp.GetRequiredService<TimeProvider>(),
+                    launch => registry.Get(launch)?.ProxyPort, SandboxPaths.SeatbeltTemp);
+            })
+            .AddSingleton<ISliceScopes>(sp => new ProcessGroupSliceScopes(ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory)))
+            .AddSingleton<ISessionCap>(sp => new FileSessionCap(LockFile(sp.GetRequiredService<SindriSettings>().Home), sp.GetRequiredService<ISliceScopes>()))
+            .AddSingleton<SystemEgressNetwork>()
+            .AddSingleton(sp => new EgressService(
+                sp.GetRequiredService<SystemEgressNetwork>(), sp.GetRequiredService<SystemEgressNetwork>(), environment, EgressLogDirectory(sp.GetRequiredService<SindriSettings>().Home)))
+            .AddSingleton(sp => new LaunchSandboxRegistry(sp.GetRequiredService<EgressService>(), loopback: true))
+            .AddSingleton<ISandboxLaunchStages>(StagesFor)
+            .AddSingleton<ISandboxLaunchInputs>(sp => InputsFor(sp, environment))
+            .AddSingleton<ISandboxLaunch>(sp =>
+            {
+                var pgroups = ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory);
+                return new SandboxLaunch(sp.GetRequiredService<ISandbox>(), sp.GetRequiredService<ISessionCap>(), sp.GetRequiredService<ISandboxLaunchStages>(), LaunchOptions(sp, environment) with
+                {
+                    Scope = (launch, _, inner) => ProcessGroupScopeArgv.Prepare(pgroups, launch.Value, inner),
+                    UnitFor = static launch => launch.Value,
+                });
+            });
     }
 
     // The human-only verbs' ports: 'sandbox exec' and 'sandbox login'.

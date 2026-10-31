@@ -48,6 +48,10 @@ public interface ILaunchFiles
     /// <returns>Their ids, each once.</returns>
     public IReadOnlyList<LaunchId> Launches();
 
+    /// <summary>The launches that have a session home, even with no capture rule or id file: a live Seatbelt launch has only that until its first report.</summary>
+    /// <returns>Their ids, each once.</returns>
+    public IReadOnlyList<LaunchId> SessionHomeLaunches();
+
     /// <summary>Removes the capture rules and id files older than <paramref name="olderThan"/> whose launch has no live session (the launcher service's start-up sweep).</summary>
     /// <param name="now">The time now.</param>
     /// <param name="olderThan">How old a file must be.</param>

@@ -102,6 +102,10 @@ internal static class SeatbeltPlan
             {
                 _out.Add(m);
                 AddHomeLink(m, index);
+                if (m.Kind == PlanMountKind.ReadWrite && string.Equals(m.Path, c.Request.Host.SindriHome + "/launches", StringComparison.Ordinal))
+                {
+                    _out.Add(new PlanMount(c.Request.Host.SindriHome + "/launch/pgroups", PlanMountKind.ReadWrite, Reason: "the watchdog's process-group files: session wrap writes the memory-kill record here and removes its own group id file (no cgroups on macOS)"));
+                }
             }
         }
 

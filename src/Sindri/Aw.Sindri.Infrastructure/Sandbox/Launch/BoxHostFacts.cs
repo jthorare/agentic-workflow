@@ -18,7 +18,7 @@ internal static class BoxHostFacts
         ArgumentNullException.ThrowIfNull(machine);
         var home = environment("HOME") is { Length: > 0 } configured ? configured : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         var state = StateDir(environment, home);
-        return new SandboxHostFacts(home, state, sindriHome, CsBinDir(state), OwnUid.Read(), machine.RamBytes, machine.Cores, IsMacOs: false, ProcessEnvironment(), OtherHomes(Path.GetDirectoryName(home) ?? "/home", home));
+        return new SandboxHostFacts(home, state, sindriHome, CsBinDir(state), OwnUid.Read(), machine.RamBytes, machine.Cores, IsMacOs: OperatingSystem.IsMacOS(), ProcessEnvironment(), OtherHomes(Path.GetDirectoryName(home) ?? "/home", home));
     }
 
     /// <summary>Gets AW_STATE_DIR, or ~/.agentic-workflow.</summary>

@@ -140,6 +140,22 @@ public sealed class LostSessionsTests
     }
 
     [Fact]
+    public async Task The_start_sweep_judges_a_launch_with_only_a_session_home_by_its_view()
+    {
+        await _s.Started();   // A.FirstLaunchId has a live session
+        _s.Files.Forget(A.FirstLaunchId);   // its launch file is not there: only the session home is
+        var dead = LaunchId.From("LCH-" + new string('0', 31) + "9");
+        _s.Files.OpenSessionHome(A.FirstLaunchId);
+        _s.Files.OpenSessionHome(dead);
+
+        var removed = await Sweeper().SweepFiles(TimeSpan.FromSeconds(60), Token);
+
+        Expect.Equal(1, removed);
+        Expect.Equal(dead, Assert.Single(_s.Files.Swept));
+        Expect.Equal(A.FirstLaunchId, Assert.Single(_s.Files.SessionHomeLaunches()));
+    }
+
+    [Fact]
     public async Task The_start_sweep_waits_for_the_views_to_catch_up()
     {
         await _s.Started();

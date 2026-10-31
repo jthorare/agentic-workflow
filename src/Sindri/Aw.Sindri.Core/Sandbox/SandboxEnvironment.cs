@@ -12,6 +12,9 @@ public static class SandboxEnvironment
     /// <summary>The systemd-run binary.</summary>
     public const string SystemdRun = "AW_SANDBOX_SYSTEMD_RUN";
 
+    /// <summary>The sandbox-exec binary (macOS; default /usr/bin/sandbox-exec).</summary>
+    public const string SeatbeltExec = "AW_SANDBOX_SEATBELT_EXEC";
+
     /// <summary>The socat binary.</summary>
     public const string Socat = "AW_SANDBOX_SOCAT";
 

@@ -5,7 +5,7 @@ namespace Aw.Sindri.Core;
 // The sandbox launch codes (sandbox spec §6, -014 to -021); the session id pattern timeout in SindriErrors.cs is -030, since the sandbox reserved -015 first.
 public static partial class SindriErrors
 {
-    /// <summary>SND-LAUNCH-014: the sandbox isn't available on this box (sandbox spec §6; kind no-runtime); detail 'reason' is no-bwrap, no-user-namespace, no-user-manager, no-cgroup-controllers, no-forwarder or unsupported-platform.</summary>
+    /// <summary>SND-LAUNCH-014: the sandbox isn't available on this box (sandbox spec §6; kind no-runtime); detail 'reason' is no-bwrap, no-user-namespace, no-user-manager, no-cgroup-controllers, no-forwarder, no-seatbelt or unsupported-platform.</summary>
     public static readonly ErrorDefinition LaunchSandboxUnavailable = new("SND-LAUNCH-014", ErrorKind.Unavailable, "The sandbox isn't available on this machine");
 
     /// <summary>SND-LAUNCH-015: the target or its form can't be confined to this policy (kind launch-park; Resume starts a new run).</summary>

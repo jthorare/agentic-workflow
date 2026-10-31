@@ -130,6 +130,14 @@ public sealed class SandboxPlanSeatbeltTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void The_process_group_files_folder_is_writable_after_the_sindri_home_deny()
+    {
+        var plan = Build(Req.WriteScope);
+
+        Assert.True(IndexOf(plan, Req.SindriHome + "/launch/pgroups", PlanMountKind.ReadWrite) > IndexOf(plan, Req.SindriHome, PlanMountKind.Deny));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void The_run_areas_own_folders_come_back_after_the_deny_that_covers_them()
     {
         var plan = Build(Req.WriteScope);

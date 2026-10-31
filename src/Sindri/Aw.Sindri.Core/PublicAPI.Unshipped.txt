@@ -10555,6 +10555,7 @@ static Aw.Sindri.Core.Sessions.SessionIdScan.None.get -> Aw.Sindri.Core.Sessions
 static Aw.Sindri.Core.Sessions.SessionIdScan.operator !=(Aw.Sindri.Core.Sessions.SessionIdScan? left, Aw.Sindri.Core.Sessions.SessionIdScan? right) -> bool
 static Aw.Sindri.Core.Sessions.SessionIdScan.operator ==(Aw.Sindri.Core.Sessions.SessionIdScan? left, Aw.Sindri.Core.Sessions.SessionIdScan? right) -> bool
 Aw.Sindri.Core.Launches.ILaunchFiles.Launches() -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.LaunchId>!
+Aw.Sindri.Core.Launches.ILaunchFiles.SessionHomeLaunches() -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Workflow.Engine.LaunchId>!
 Aw.Sindri.Core.Launches.ILostSessions.SweepFiles(System.TimeSpan olderThan, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int?>
 Aw.Sindri.Core.Profile.WorkflowAgentSettings
 Aw.Sindri.Core.Profile.WorkflowAgentSettings.<Clone>$() -> Aw.Sindri.Core.Profile.WorkflowAgentSettings!
@@ -11567,6 +11568,7 @@ const Aw.Sindri.Core.Profile.SandboxDefaults.Tasks = 2048 -> int
 const Aw.Sindri.Core.Profile.SandboxDefaults.Total = "60%" -> string!
 const Aw.Sindri.Core.Profile.SandboxDefaults.WallGrace = "10m" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxEnvironment.Bwrap = "AW_SANDBOX_BWRAP" -> string!
+const Aw.Sindri.Core.Sandbox.SandboxEnvironment.SeatbeltExec = "AW_SANDBOX_SEATBELT_EXEC" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxEnvironment.Socat = "AW_SANDBOX_SOCAT" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxEnvironment.SystemdRun = "AW_SANDBOX_SYSTEMD_RUN" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.BinDenied = "bin-denied" -> string!
@@ -11587,6 +11589,7 @@ const Aw.Sindri.Core.Sandbox.SandboxReasons.Memory = "memory" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NetDeny = "net-deny" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NetForward = "net-forward" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NoBwrap = "no-bwrap" -> string!
+const Aw.Sindri.Core.Sandbox.SandboxReasons.NoSeatbelt = "no-seatbelt" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NoCgroupControllers = "no-cgroup-controllers" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NoForwarder = "no-forwarder" -> string!
 const Aw.Sindri.Core.Sandbox.SandboxReasons.NoKey = "no-key" -> string!
@@ -19828,6 +19831,8 @@ Aw.Sindri.Core.Sandbox.CgroupSample.Pids.init -> void
 Aw.Sindri.Core.Sandbox.ICgroupStats
 Aw.Sindri.Core.Sandbox.ICgroupStats.Read(string! cgroupPath) -> Aw.Sindri.Core.Sandbox.CgroupSample?
 Aw.Sindri.Core.Sandbox.IMemoryKills
+Aw.Sindri.Core.Sandbox.IScopeRelease
+Aw.Sindri.Core.Sandbox.IScopeRelease.Release(string! unit) -> void
 Aw.Sindri.Core.Sandbox.IMemoryKills.Record(string! unit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
 Aw.Sindri.Core.Sandbox.IScopeControl
 Aw.Sindri.Core.Sandbox.IScopeControl.ControlGroup(string! unit, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<string?>!
