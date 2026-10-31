@@ -5864,3 +5864,5 @@ Aw.Sindri.Features.ContextCalls.PagesPreview.Deconstruct(out string! MapVersion,
 Aw.Sindri.Features.ContextCalls.PagesPreview.PagesPreview(string! MapVersion, Aw.Sindri.Core.Ids.ProfileHash ProfileHash, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Features.ContextCalls.PagesPreviewBlock!>! Blocks) -> void
 Aw.Sindri.Features.ContextCalls.PagesPreview.ProfileHash.get -> Aw.Sindri.Core.Ids.ProfileHash
 Aw.Sindri.Features.ContextCalls.PagesPreview.ProfileHash.init -> void
+static Aw.Sindri.Features.ProfileRecheckServiceCollectionExtensions.AddProfileRecheck(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+Aw.Sindri.Features.ProfileRecheckServiceCollectionExtensions

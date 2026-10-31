@@ -13,7 +13,7 @@ namespace Aw.Sindri.Tests.Server;
 public sealed class ProfileWatchTests
 {
     private readonly SliceHarness _h = new();
-    private readonly ListLogger<ProfileWatch> _log = new();
+    private readonly ListLogger<ProfileRecheck> _log = new();
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -67,7 +67,7 @@ public sealed class ProfileWatchTests
             .AddScoped<IService<CheckProfileRequest, CheckProfileResponse>, CheckProfileService>()
             .BuildServiceProvider();
         var clock = new SteppedClock(_h.Clock);
-        using var watch = new ProfileWatch(provider.GetRequiredService<IServiceScopeFactory>(), _h.Held, _h.Callers, clock, _log);
+        using var watch = new ProfileWatch(new ProfileRecheck(provider.GetRequiredService<IServiceScopeFactory>(), _h.Held, _h.Callers, _log), _h.Held, clock);
         await watch.StartAsync(Token);
         await clock.Armed();
         for (var i = 0; i < steps; i++)
