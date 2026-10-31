@@ -4054,9 +4054,11 @@ Aw.Sindri.Features.CodeIndexReads.CodeIndexStatusView.Repos.get -> System.Collec
 Aw.Sindri.Features.CodeIndexReads.CodeIndexStatusView.Repos.init -> void
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.<Clone>$() -> Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest!
-Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Deconstruct(out string! Query, out string? Repo, out string? Match) -> void
+Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Deconstruct(out string! Query, out string? Repo, out string? Match, out string? Concept) -> void
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Equals(Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest? other) -> bool
-Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.FindCodeSymbolsRequest(string! Query, string? Repo = null, string? Match = null) -> void
+Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.FindCodeSymbolsRequest(string! Query, string? Repo = null, string? Match = null, string? Concept = null) -> void
+Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Concept.get -> string?
+Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Concept.init -> void
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Match.get -> string?
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Match.init -> void
 Aw.Sindri.Features.CodeIndexReads.FindCodeSymbolsRequest.Query.get -> string!

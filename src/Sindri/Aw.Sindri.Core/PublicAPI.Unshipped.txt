@@ -21629,6 +21629,40 @@ static Aw.Sindri.Core.Profile.PageActionSettings.operator ==(Aw.Sindri.Core.Prof
 static Aw.Sindri.Core.Profile.PageSettings.operator !=(Aw.Sindri.Core.Profile.PageSettings? left, Aw.Sindri.Core.Profile.PageSettings? right) -> bool
 static Aw.Sindri.Core.Profile.PageSettings.operator ==(Aw.Sindri.Core.Profile.PageSettings? left, Aw.Sindri.Core.Profile.PageSettings? right) -> bool
 static Aw.Sindri.Core.Profile.RepoPages.For(Aw.Sindri.Core.Profile.SindriProfile! profile, Aw.Sindri.Core.Profile.RepoEntry! repo) -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.PageSettings!>!
+Aw.Sindri.Core.IPinnedCode
+Aw.Sindri.Core.IPinnedCode.Files(string! concept, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.PinnedCode!>!>
+Aw.Sindri.Core.PinnedCode
+Aw.Sindri.Core.PinnedCode.<Clone>$() -> Aw.Sindri.Core.PinnedCode!
+Aw.Sindri.Core.PinnedCode.Deconstruct(out string! Pin, out string! MapTag, out string? MapCommit, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.PinnedFile!>! Files) -> void
+Aw.Sindri.Core.PinnedCode.Equals(Aw.Sindri.Core.PinnedCode? other) -> bool
+Aw.Sindri.Core.PinnedCode.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.PinnedFile!>!
+Aw.Sindri.Core.PinnedCode.Files.init -> void
+Aw.Sindri.Core.PinnedCode.MapCommit.get -> string?
+Aw.Sindri.Core.PinnedCode.MapCommit.init -> void
+Aw.Sindri.Core.PinnedCode.MapTag.get -> string!
+Aw.Sindri.Core.PinnedCode.MapTag.init -> void
+Aw.Sindri.Core.PinnedCode.Pin.get -> string!
+Aw.Sindri.Core.PinnedCode.Pin.init -> void
+Aw.Sindri.Core.PinnedCode.PinnedCode(string! Pin, string! MapTag, string? MapCommit, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.PinnedFile!>! Files) -> void
+Aw.Sindri.Core.PinnedFile
+Aw.Sindri.Core.PinnedFile.<Clone>$() -> Aw.Sindri.Core.PinnedFile!
+Aw.Sindri.Core.PinnedFile.Deconstruct(out string! Repo, out string! Path) -> void
+Aw.Sindri.Core.PinnedFile.Equals(Aw.Sindri.Core.PinnedFile? other) -> bool
+Aw.Sindri.Core.PinnedFile.Path.get -> string!
+Aw.Sindri.Core.PinnedFile.Path.init -> void
+Aw.Sindri.Core.PinnedFile.PinnedFile(string! Repo, string! Path) -> void
+Aw.Sindri.Core.PinnedFile.Repo.get -> string!
+Aw.Sindri.Core.PinnedFile.Repo.init -> void
+override Aw.Sindri.Core.PinnedCode.Equals(object? obj) -> bool
+override Aw.Sindri.Core.PinnedCode.GetHashCode() -> int
+override Aw.Sindri.Core.PinnedCode.ToString() -> string!
+override Aw.Sindri.Core.PinnedFile.Equals(object? obj) -> bool
+override Aw.Sindri.Core.PinnedFile.GetHashCode() -> int
+override Aw.Sindri.Core.PinnedFile.ToString() -> string!
+static Aw.Sindri.Core.PinnedCode.operator !=(Aw.Sindri.Core.PinnedCode? left, Aw.Sindri.Core.PinnedCode? right) -> bool
+static Aw.Sindri.Core.PinnedCode.operator ==(Aw.Sindri.Core.PinnedCode? left, Aw.Sindri.Core.PinnedCode? right) -> bool
+static Aw.Sindri.Core.PinnedFile.operator !=(Aw.Sindri.Core.PinnedFile? left, Aw.Sindri.Core.PinnedFile? right) -> bool
+static Aw.Sindri.Core.PinnedFile.operator ==(Aw.Sindri.Core.PinnedFile? left, Aw.Sindri.Core.PinnedFile? right) -> bool
 Aw.Sindri.Core.Events.ContextPinWritten
 Aw.Sindri.Core.Events.ContextPinWritten.Actor.get -> string!
 Aw.Sindri.Core.Events.ContextPinWritten.Actor.init -> void
