@@ -46,16 +46,15 @@ public sealed class AddSeveralPagesConceptPickerTests
     }
 
     [Fact]
-    public async Task Picking_a_concept_makes_the_row_tickable()
+    public async Task Picking_every_concept_ticks_the_row()
     {
         var (sheet, _) = await Read(Unresolved(1, "Billing"));
         var row = sheet.Rows[0];
 
         row.Unknowns[0].Selected = _known[0];
-        row.Ticked = true;
 
         Expect.True(row.CanTick, "a picked concept settles the row");
-        Expect.True(row.Ticked, "so the tick holds");
+        Expect.True(row.Ticked, "and ticks it");
         Expect.True(sheet.CanSave, "and Save all turns on");
     }
 

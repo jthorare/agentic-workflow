@@ -101,11 +101,7 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
 
     private void Picked()
     {
-        if (!CanTick)
-        {
-            Ticked = false;
-        }
-
+        Ticked = CanTick;   // a row whose every concept is picked is ticked, as Accept all's filled picker is (pages spec §3.6)
         OnChanged(nameof(CanTick));
     }
 
