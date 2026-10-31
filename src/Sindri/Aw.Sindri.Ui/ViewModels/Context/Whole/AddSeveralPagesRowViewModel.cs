@@ -28,6 +28,12 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     /// <summary>Gets the replaces flag's words, or empty.</summary>
     public string ReplacesText => _block.Replaces is null ? string.Empty : Labels.AddSeveralPagesReplaces;
 
+    /// <summary>Gets a value indicating whether the replaces flag shows.</summary>
+    public bool HasReplaces => _block.Replaces is not null;
+
+    /// <summary>Gets a value indicating whether the same-page line shows.</summary>
+    public bool HasSameAs => _block.SameAs is not null;
+
     /// <summary>Gets "Same page as block 1", or empty.</summary>
     public string SameAsText => _block.SameAs is { } block ? Labels.AddSeveralPagesSameAs(block) : string.Empty;
 
