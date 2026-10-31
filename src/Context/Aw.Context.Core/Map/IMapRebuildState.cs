@@ -8,6 +8,6 @@ public interface IMapRebuildState
 {
     /// <summary>Reads the rebuild's state now.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The state; <see cref="MapRebuild.Idle"/> when nothing is known or nothing blocks.</returns>
-    public ValueTask<MapRebuild> Read(CancellationToken cancellationToken);
+    /// <returns>The state; <see cref="MapRebuildStatus.Idle"/> when nothing is known or nothing blocks.</returns>
+    public ValueTask<MapRebuildStatus> Read(CancellationToken cancellationToken);
 }

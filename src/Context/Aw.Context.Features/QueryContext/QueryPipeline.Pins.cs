@@ -31,7 +31,7 @@ internal sealed partial class QueryPipeline
             return pins.Error;
         }
 
-        var told = pins.Value.StaleTag is null || source.Inputs.Rebuild is not { } state ? pins.Value : pins.Value.Rebuilding(await state.Read(cancellationToken).ConfigureAwait(false));
+        var told = pins.Value.StaleVersion is null || source.Inputs.Rebuild is not { } state ? pins.Value : pins.Value.Rebuilding(await state.Read(cancellationToken).ConfigureAwait(false));
         return (anchored.Value.Graph with { Pins = told }, anchored.Value.Terms, anchored.Value.Miss);
     }
 }

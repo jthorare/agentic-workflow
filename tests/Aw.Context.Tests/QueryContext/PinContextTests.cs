@@ -83,7 +83,7 @@ public sealed class PinContextTests
     {
         var api = Repo(_billing);
 
-        var pins = PinContext.Of([api], [api], Map(ruleset: "built-under-other-pins"), concept: null, []).Value.Rebuilding(new MapRebuild(MapRebuildPhase.Building));
+        var pins = PinContext.Of([api], [api], Map(ruleset: "built-under-other-pins"), concept: null, []).Value.Rebuilding(new MapRebuildStatus(MapRebuildPhase.Building));
 
         Assert.Equal("pins changed; map v42 is being built with them, so some features are grouped the old way until it lands", pins.StaleNote);
     }

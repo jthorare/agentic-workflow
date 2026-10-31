@@ -22,6 +22,7 @@ internal static class ContextJobServiceCollectionExtensions
         return services
             .AddScoped<MapEventSource>()
             .AddScoped<MapJobStarts>()
+            .AddScoped<Aw.Context.Core.Map.IMapRebuildState, MapRebuildState>()   // replaces Context's NoMapRebuild (the last registration wins)
             .AddJob<SyncContextSourcesRequest, SyncContextSourcesResult, SyncContextSourcesService>(
                 static _ => JobKey.From("sync"), static r => SyncSummary(r), PrecheckSync)
             .AddJob<SyncIndexSourceRequest, SyncIndexSourceResult, SyncIndexSourceService>(

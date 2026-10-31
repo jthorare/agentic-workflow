@@ -15,6 +15,6 @@ public enum MapRebuildPhase
     /// <summary>No mapped repo is on its main branch.</summary>
     NoMainBranch,
 
-    /// <summary>The service waits out the backoff after failed refreshes (<see cref="MapRebuild.RetryAt"/>).</summary>
+    /// <summary>The service waits out the backoff after failed refreshes (<see cref="MapRebuildStatus.RetryAt"/>).</summary>
     Backoff,
 }
