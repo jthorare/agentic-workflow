@@ -11,9 +11,6 @@ internal static partial class Labels
     /// <summary>The section's head over the pages in no concept.</summary>
     internal const string ContextPagesNoConceptHead = "Pages in no concept";
 
-    /// <summary>The mark of a page or action the owner named in the profile.</summary>
-    internal const string ContextPagesOwner = "Set by a person";
-
     /// <summary>The mark of a page the map found and nobody named yet.</summary>
     internal const string ContextPagesSuggested = "Suggested";
 

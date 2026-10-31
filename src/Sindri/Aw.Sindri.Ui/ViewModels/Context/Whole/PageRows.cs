@@ -24,7 +24,7 @@ internal static class PageRows
         var actions = into[page.Key].Where(e => e.Type == "on" && nodes.TryGetValue(e.From, out var n) && n.Kind == "action").Select(e => nodes[e.From])
             .DistinctBy(n => n.Key, StringComparer.Ordinal).OrderByDescending(n => n.Owner).ThenBy(n => n.Label, StringComparer.CurrentCultureIgnoreCase).ThenBy(n => n.Key, StringComparer.Ordinal).ToList();
         var code = actions.Select(a => a.Key).Prepend(page.Key).Any(k => into[k].Any(e => e.Type == "implements"));
-        string[] marks = [page.Owner ? Labels.ContextPagesOwner : Labels.ContextPagesSuggested, code ? Labels.ContextPagesCode : Labels.ContextPagesNoCode];
+        string[] marks = [page.Owner ? Labels.ContextConceptSetByPerson : Labels.ContextPagesSuggested, code ? Labels.ContextPagesCode : Labels.ContextPagesNoCode];
         return new PageRowViewModel(page.Key, page.Label, marks, FromMap(page.Key), [.. actions.Select(a => Action(a, page, graph, concept))]);
     }
 
