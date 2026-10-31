@@ -3,7 +3,8 @@ namespace Aw.Sindri.Ui.Api;
 /// <summary>The live profile: its hash and the key paths that differ from the approved one ('index.pages.schedule-week', 'repos.web.index.pages.x').</summary>
 /// <param name="LiveHash">The live hash, or null when none was read.</param>
 /// <param name="ChangedPaths">The waiting key paths.</param>
-internal sealed record ProfileWaiting(string? LiveHash, IReadOnlyList<string> ChangedPaths)
+/// <param name="FileHash">The hash of the profile file on disk at the read, or null; a sheet sends it as its ifHash, since the live hash can lag the file (#1826).</param>
+internal sealed record ProfileWaiting(string? LiveHash, IReadOnlyList<string> ChangedPaths, string? FileHash = null)
 {
     /// <summary>Gets a value indicating whether every waiting key path is one the caller wrote, so the app may approve: nothing waits, or each waiting path satisfies <paramref name="mine"/>.</summary>
     /// <param name="mine">Says whether a waiting key path is the caller's.</param>
