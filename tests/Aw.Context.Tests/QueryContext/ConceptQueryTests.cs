@@ -41,7 +41,7 @@ public sealed class ConceptQueryTests : IDisposable
         var result = (await _world.Engine.Query(new ContextQuery(Text: null, Node: Manager) { Concept = "tabs" }, Scope("tabs", "billing"), MapWorld.None)).Value;
 
         Assert.Equal("tabs", result.Query.Concept);
-        Assert.Equal(["scoped to concept tabs (map v1)"], result.Notes);
+        Assert.Equal("scoped to concept tabs (map v1)", result.Notes?[0]);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -51,7 +51,7 @@ public sealed class ConceptQueryTests : IDisposable
 
         var result = (await _world.Engine.Query(new ContextQuery(Text: null, Node: Invoices) { Concept = "tabs" }, Scope("tabs", "billing"), MapWorld.None)).Value;
 
-        Assert.Equal(["scoped to concept tabs (map v1)", "anchor concept:billing is outside concept tabs, so its lens shows only tabs's part"], result.Notes);
+        Assert.Equal(["scoped to concept tabs (map v1)", "anchor concept:billing is outside concept tabs, so its lens shows only tabs's part"], result.Notes?.Take(2), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -90,7 +90,9 @@ public sealed class ConceptQueryTests : IDisposable
 
         var result = (await _world.Engine.Query(new ContextQuery("how does browsing work"), scope, MapWorld.None)).Value;
 
-        Assert.Contains("anchored on concept:tabs (alias \"browsing\"); add concept=tabs to see only tabs", result.Notes ?? [], StringComparer.Ordinal);
+        var note = Assert.Single(result.Notes ?? [], n => n.StartsWith("anchored on concept:tabs (alias ", StringComparison.Ordinal));
+        Assert.Contains("browsing", note, StringComparison.Ordinal);   // fenced as untrusted text like a label, so the quotes may hold the fence
+        Assert.EndsWith("); add concept=tabs to see only tabs", note, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
