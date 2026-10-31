@@ -35,7 +35,7 @@ internal static class CodeIndexText
             _ = text.AppendLine(Invariant($"  {Clean(hit.Name)}  {hit.Kind.ToString().ToLowerInvariant()}  {Clean(hit.File)}:{hit.StartLine}-{hit.EndLine}{(hit.Exported ? "  exported" : string.Empty)}  {Clean(hit.Signature)}"));
         }
 
-        foreach (var note in answer.Notes)
+        foreach (var note in answer.Notes ?? [])
         {
             _ = text.AppendLine(Clean(note));
         }
