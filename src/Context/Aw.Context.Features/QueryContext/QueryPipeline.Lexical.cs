@@ -13,6 +13,10 @@ namespace Aw.Context.Features.QueryContext;
 internal sealed partial class QueryPipeline
 {
     // The record store answering with no hit is not an answer of the catalog's sources: every one of them missing is still SND-CONTEXT-011.
+    // Under a pin, sources left out on purpose aren't missing: only a source that failed makes it SND-CONTEXT-011, otherwise the answer is empty with its note.
+    private static bool NothingAnswered(Searched searched, GraphPart graph) =>
+        (graph.Pins.Scope is null || searched.Degraded.Count > 0) && NothingAnswered(searched);
+
     private static bool NothingAnswered(Searched searched) => searched.Answers.All(a => (a.Source == RecordStoreSource.Id || a.Source == DenseRecordSource.Id) && a.Hits.Count == 0);
 
     private static Error NoSourceAnswered(IEnumerable<DegradedSource> degraded) =>

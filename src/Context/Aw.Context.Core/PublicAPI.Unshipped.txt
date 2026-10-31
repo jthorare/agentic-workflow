@@ -10480,6 +10480,15 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Concepts.PinTally
+Aw.Context.Core.Concepts.PinTally.Count(Aw.Context.Core.Engine.ConceptId? pin) -> void
+Aw.Context.Core.Concepts.PinTally.EmptyNote(Aw.Context.Core.Engine.ConceptId scope, bool matchesNothing) -> string!
+Aw.Context.Core.Concepts.PinTally.PinTally() -> void
+Aw.Context.Core.Concepts.PinScope.HoldsAnyFile() -> bool
+Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.get -> bool
+Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.init -> void
+Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Results.ContextResult.Notes.init -> void
 Aw.Context.Core.Ranking.RankedLeg
 Aw.Context.Core.Ranking.RankedLeg.Keys.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
 Aw.Context.Core.Ranking.RankedLeg.Keys.init -> void
@@ -10657,6 +10666,13 @@ const Aw.Context.Core.Pages.PageReader.DefaultLimit = 50 -> int
 const Aw.Context.Core.Pages.PageReader.MaxLimit = 200 -> int
 static Aw.Context.Core.Pages.PageReader.Build(Aw.Context.Core.Pages.PagesQuery! query, string! mapVersion, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Pages.PagesView!>!
 static Aw.Context.Core.Pages.PageReader.PagesPerConcept(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.Concepts.PinScope.Counting(Aw.Context.Core.Concepts.PinTally? skipped) -> Aw.Context.Core.Sources.ISourcePin!
+Aw.Context.Core.Sources.ISourcePin
+Aw.Context.Core.Sources.ISourcePin.HoldsDoc(string! repo, string! repoRelativePath) -> bool
+Aw.Context.Core.Sources.ISourcePin.HoldsRecord(Aw.Context.Core.Sources.RecordKey record) -> bool
+Aw.Context.Core.Sources.ISourcePin.Records() -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
+Aw.Context.Core.Sources.SourceQuery.Pin.get -> Aw.Context.Core.Sources.ISourcePin?
+Aw.Context.Core.Sources.SourceQuery.Pin.init -> void
 Aw.Context.Core.Graph.IAliasPins
 Aw.Context.Core.Graph.IAliasPins.AliasesIn(System.Collections.Generic.IReadOnlySet<string!>! words) -> System.Collections.Generic.IReadOnlyList<(string! Pin, string! Alias, int Words)>!
 Aw.Context.Core.Graph.IAliasPins.PinByAlias(string! name) -> string?
