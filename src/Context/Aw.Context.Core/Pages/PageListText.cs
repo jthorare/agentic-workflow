@@ -88,10 +88,10 @@ public static class PageListText
         return clean.ToString();
     }
 
-    // A leading bullet, or digits and a '.' or ')' followed by a space (so '1.5 hours' stays), and the spaces after it.
+    // A leading bullet (followed by a space, so '-> x' and '-5% discount' stay), or digits and a '.' or ')' followed by a space (so '1.5 hours' stays), and the spaces after it.
     private static string Unmarked(string line)
     {
-        if (Bullets.Contains(line[0], StringComparison.Ordinal))
+        if (IsBullet(line))
         {
             return line[1..].TrimStart();
         }
@@ -105,6 +105,9 @@ public static class PageListText
         var marked = digits > 0 && digits < line.Length && line[digits] is '.' or ')' && (digits + 1 == line.Length || line[digits + 1] == ' ');
         return marked ? line[(digits + 1)..].TrimStart() : line;
     }
+
+    private static bool IsBullet(string line) =>
+        Bullets.Contains(line[0], StringComparison.Ordinal) && (line.Length == 1 || char.IsWhiteSpace(line[1]));
 
     private static PageListAction Action(string line)
     {

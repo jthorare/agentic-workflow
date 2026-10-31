@@ -69,4 +69,12 @@ public sealed class PageListTextTests
         Assert.Empty(PageListText.Parse(string.Empty));
         Assert.Empty(PageListText.Parse("\n \n\t\n-\n"));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_bullet_only_counts_when_a_space_follows_it()
+    {
+        var blocks = PageListText.Parse("Home\n-> orphan\n-5% discount\n*bold*\n- Real action");
+
+        Assert.Equal("-> orphan|-5% discount|*bold*|Real action", string.Join('|', blocks[0].Actions.Select(static a => a.Name)));
+    }
 }
