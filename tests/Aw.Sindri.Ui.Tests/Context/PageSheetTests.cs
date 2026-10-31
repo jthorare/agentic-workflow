@@ -1,6 +1,7 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.Tests.Context.Whole;
+using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Tests.Context;
@@ -89,8 +90,24 @@ public sealed class PageSheetTests
 
         var page = bare.Saves[0].Save.Set[0];
         Expect.Equal("Time off", page.Name);
-        Expect.Equal("time-off", page.Id);
+        Expect.True(page.Id is null, "a new page sends no id: the server makes one");
         Expect.Equal(0, page.Actions.Count);
+    }
+
+    [Fact]
+    public async Task New_page_sends_no_id_and_never_overwrites()
+    {
+        var writes = new FakePageWrites { Profile = new ProfileWaiting("h", ["index.pages.time-off"]) };
+        var sheet = new PageSheetViewModel(writes, [], [], openConcept: null);
+        await sheet.OpenNew(TestContext.Current.CancellationToken);
+        sheet.Name = "Time off";
+
+        await sheet.Save(TestContext.Current.CancellationToken);
+
+        var call = Assert.Single(writes.Saves);
+        Expect.True(call.Save.Set[0].Id is null, "the draft carries no id, so no existing page is replaced");
+        Expect.Sequence(["index.pages.time-off"], call.Save.Before);
+        Expect.True(!call.Approve, "another page already waits, so a new page is only saved");
     }
 
     [Fact]

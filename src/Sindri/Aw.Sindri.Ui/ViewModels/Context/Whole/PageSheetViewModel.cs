@@ -14,6 +14,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     private PageDraft? _draft;
     private string? _hash;
     private bool _approve;
+    private IReadOnlyList<string> _before = [];
     private string _initial = string.Empty;
 
     /// <summary>Builds a sheet that has read nothing yet.</summary>
@@ -152,7 +153,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
             return;
         }
 
-        await ReadProfile(draft.Id.Length > 0 ? [draft.Id] : [], cancellationToken).ConfigureAwait(true);
+        await ReadProfile(draft.Id is { Length: > 0 } id ? [id] : [], cancellationToken).ConfigureAwait(true);
         Fill(draft);
     }
 
@@ -162,7 +163,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     internal async Task OpenNew(CancellationToken cancellationToken)
     {
         await ReadProfile([], cancellationToken).ConfigureAwait(true);
-        Fill(new PageDraft(Id: string.Empty, Name: string.Empty, Repo: null, Surface: null, Owner: false, Actions: [new PageActionDraft(Id: null, Name: string.Empty, Action: null, Concepts: [])]));
+        Fill(new PageDraft(Id: null, Name: string.Empty, Repo: null, Surface: null, Owner: false, Actions: [new PageActionDraft(Id: null, Name: string.Empty, Action: null, Concepts: [])]));
     }
 
     /// <summary>Adds an empty action row, with an unticked box in every column.</summary>
@@ -187,13 +188,13 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     private async Task ReadProfile(IReadOnlyList<string> pageIds, CancellationToken cancellationToken)
     {
         var waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
-        (_hash, _approve) = (waiting?.LiveHash, waiting?.OnlyPages(pageIds) == true);
+        (_hash, _approve, _before) = (waiting?.LiveHash, waiting?.OnlyPages(pageIds) == true, waiting?.ChangedPaths ?? []);
     }
 
     private void Fill(PageDraft draft)
     {
         _draft = draft;
-        Title = draft.Owner ? Labels.ContextPagesEditPage : draft.Surface is null && draft.Id.Length == 0 ? Labels.ContextPagesNewPage : Labels.ContextPagesNameThis;
+        Title = draft.Owner ? Labels.ContextPagesEditPage : draft.Surface is null && draft.Id is null ? Labels.ContextPagesNewPage : Labels.ContextPagesNameThis;
         _columns = [];
         foreach (var id in (_openConcept is null ? [] : (string[])[_openConcept]).Concat(draft.Actions.SelectMany(a => a.Concepts)))
         {

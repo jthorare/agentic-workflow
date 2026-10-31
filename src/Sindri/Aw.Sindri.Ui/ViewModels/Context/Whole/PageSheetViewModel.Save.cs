@@ -9,9 +9,6 @@ internal sealed partial class PageSheetViewModel
     [GeneratedRegex(@"^index\.pages\[\d+\](?:\.(?<field>name)|\.actions\[(?<action>\d+)\]\.(?:name|concepts\[\d+\]))?: (?<text>.+)$", RegexOptions.Singleline | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
     private static partial Regex RefusalPath { get; }
 
-    [GeneratedRegex("[^a-z0-9]+", RegexOptions.None, matchTimeoutMilliseconds: 1000)]
-    private static partial Regex NonWord { get; }
-
     /// <summary>Raised when the Remove page question has just been drawn: focus goes to Cancel.</summary>
     internal event EventHandler? CancelRemoveFocusRequested;
 
@@ -80,14 +77,14 @@ internal sealed partial class PageSheetViewModel
         }
 
         var kept = Actions.Where(static a => a.Name.Trim().Length > 0).ToList();
-        var id = _draft.Id.Length > 0 ? _draft.Id : Slug(Name);
+        var id = _draft.Id;
         var draft = _draft with
         {
             Id = id,
             Name = Name.Trim(),
             Actions = [.. kept.Select(static a => new PageActionDraft(a.Id, a.Name.Trim(), a.Action, a.TickedIds))],
         };
-        await Write(new PageSave([draft], []), id, kept, cancellationToken).ConfigureAwait(true);
+        await Write(new PageSave([draft], []) { Before = _before }, id, kept, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>Asks before removing the page (Edit page only); focus goes to Cancel.</summary>
@@ -122,14 +119,14 @@ internal sealed partial class PageSheetViewModel
     /// <returns>When the answer is drawn.</returns>
     internal async Task Remove(CancellationToken cancellationToken)
     {
-        if (!IsConfirmingRemove || _draft is null || IsSaving)
+        if (!IsConfirmingRemove || _draft?.Id is not { } pageId || IsSaving)
         {
             return;
         }
 
         IsConfirmingRemove = false;
         OnChanged(nameof(IsConfirmingRemove));
-        await Write(new PageSave([], [_draft.Id]), _draft.Id, [], cancellationToken).ConfigureAwait(true);
+        await Write(new PageSave([], [pageId]), pageId, [], cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>Esc, or the close affordance: a question that shows is answered with its safe choice; changes ask first; otherwise the sheet closes.</summary>
@@ -181,7 +178,7 @@ internal sealed partial class PageSheetViewModel
     /// <summary>Closes the sheet and drops the changes.</summary>
     internal void Close() => Closed?.Invoke(this, EventArgs.Empty);
 
-    private async Task Write(PageSave save, string id, IReadOnlyList<PageSheetActionViewModel> rows, CancellationToken cancellationToken)
+    private async Task Write(PageSave save, string? id, IReadOnlyList<PageSheetActionViewModel> rows, CancellationToken cancellationToken)
     {
         ShowNameError(string.Empty);
         foreach (var row in Actions)
@@ -210,7 +207,7 @@ internal sealed partial class PageSheetViewModel
                 Close();
                 break;
             case PageSavedState.Clash:
-                await ReadProfile(string.IsNullOrEmpty(id) ? [] : [id], cancellationToken).ConfigureAwait(true);   // the new hash, so Save again lands on top
+                await ReadProfile(id is null ? [] : [id], cancellationToken).ConfigureAwait(true);   // the new hash, so Save again lands on top
                 Say(Labels.PageSheetClash);
                 OnChanged(nameof(SaveText));
                 break;
@@ -275,6 +272,4 @@ internal sealed partial class PageSheetViewModel
         OnChanged(nameof(SaveText));
     }
 
-    // The id the server would make from a name: words in lower case joined with hyphens.
-    private static string Slug(string name) => string.Join('-', NonWord.Split(name.Trim().ToLowerInvariant()).Where(static w => w.Length > 0));
 }
