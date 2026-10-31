@@ -102,6 +102,24 @@ public sealed class PinSet : IAliasPins
 
     private static string? IdOf(NodeKey concept) => concept.Kind == NodeKind.Concept && concept.Value.StartsWith("concept:", StringComparison.Ordinal) ? concept.Value["concept:".Length..] : null;
 
+    /// <summary>The distinct pins a query's anchors sit in, in anchor order.</summary>
+    /// <param name="anchors">The anchors' keys; one that is not a node key is skipped.</param>
+    /// <returns>The pins.</returns>
+    public IReadOnlyList<ConceptId> PinsOf(IReadOnlyList<string> anchors)
+    {
+        ArgumentNullException.ThrowIfNull(anchors);
+        return [.. anchors.Select(a => NodeKey.TryFrom(a, out var key) ? PinOf(key) : null).OfType<ConceptId>().DistinctBy(p => p.Value, StringComparer.Ordinal)];
+    }
+
+    /// <summary>The pin the pin leg runs for (concept pins spec §3.3): the one pin the anchors sit in.</summary>
+    /// <param name="anchorPins">The pins the anchors sit in (<see cref="PinsOf"/>).</param>
+    /// <returns>That pin; null when the anchors sit in no pin or in two or more.</returns>
+    public static ConceptId? Sole(IReadOnlyList<ConceptId> anchorPins)
+    {
+        ArgumentNullException.ThrowIfNull(anchorPins);
+        return anchorPins.Count == 1 ? anchorPins[0] : null;
+    }
+
     /// <summary>The pin a node sits in: the first in pin order when several claim it.</summary>
     /// <param name="key">The node.</param>
     /// <returns>The pin, or null.</returns>

@@ -5778,3 +5778,5 @@ static Aw.Sindri.Features.SetPages.SetPagesRequest.operator !=(Aw.Sindri.Feature
 static Aw.Sindri.Features.SetPages.SetPagesRequest.operator ==(Aw.Sindri.Features.SetPages.SetPagesRequest? left, Aw.Sindri.Features.SetPages.SetPagesRequest? right) -> bool
 static Aw.Sindri.Features.SetPages.SetPagesResult.operator !=(Aw.Sindri.Features.SetPages.SetPagesResult? left, Aw.Sindri.Features.SetPages.SetPagesResult? right) -> bool
 static Aw.Sindri.Features.SetPages.SetPagesResult.operator ==(Aw.Sindri.Features.SetPages.SetPagesResult? left, Aw.Sindri.Features.SetPages.SetPagesResult? right) -> bool
+Aw.Sindri.Features.ContextCalls.BacktestArmLine.PinAnchored.get -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
+Aw.Sindri.Features.ContextCalls.BacktestArmLine.PinAnchored.init -> void

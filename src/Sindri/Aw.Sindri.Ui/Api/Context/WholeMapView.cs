@@ -21,6 +21,8 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Located">Where the located keys are.</param>
 /// <param name="Truncated">True when the answer was cut.</param>
 /// <param name="Repos">The repos the map covers; null until Sindri serves it, which reads as one repo.</param>
+/// <param name="Pages">The page keys of a concept open or of the pages in no concept, in the Pages and actions section's order (pages spec §3.4); null on any other answer.</param>
+/// <param name="PagesInNoConcept">How many pages relate to no concept, for the Context page's link.</param>
 internal sealed record WholeMapView(
     int SchemaVersion,
     string MapVersion,
@@ -38,4 +40,6 @@ internal sealed record WholeMapView(
     IReadOnlyList<WholeEdge>? Edges = null,
     WholeAreaInfo? Area = null,
     IReadOnlyList<WholeLocated>? Located = null,
-    IReadOnlyList<WholeRepoSummary>? Repos = null);
+    IReadOnlyList<WholeRepoSummary>? Repos = null,
+    IReadOnlyList<string>? Pages = null,
+    int PagesInNoConcept = 0);

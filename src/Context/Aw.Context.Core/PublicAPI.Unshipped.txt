@@ -7308,6 +7308,8 @@ Aw.Context.Core.Graph.NodeFact.Repo.get -> string?
 Aw.Context.Core.Graph.NodeFact.Repo.init -> void
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.get -> string?
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Owner.get -> bool
+Aw.Context.Core.WholeMap.WholeMapNode.Owner.init -> void
 Aw.Context.Core.Lenses.LensBasis.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!
 Aw.Context.Core.Lenses.LensBasis.Repos.init -> void
 Aw.Context.Core.Lenses.LensBasis.MapRepo.get -> string?
@@ -10713,6 +10715,8 @@ Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool
 Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.init -> void
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.get -> int
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void
+Aw.Context.Core.WholeMap.WholeMapView.Pages.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.WholeMap.WholeMapView.Pages.init -> void
 static Aw.Context.Core.Graph.EntryKey.Normalized(string! key) -> string!
 Aw.Context.Core.Engine.PageFacts.Stored.get -> System.Func<string!, string!>?
 Aw.Context.Core.Engine.PageFacts.Stored.init -> void
@@ -10747,3 +10751,31 @@ override Aw.Context.Core.Pages.PageMapConcept.GetHashCode() -> int
 override Aw.Context.Core.Pages.PageMapConcept.ToString() -> string!
 static Aw.Context.Core.Pages.PageMapConcept.operator !=(Aw.Context.Core.Pages.PageMapConcept? left, Aw.Context.Core.Pages.PageMapConcept? right) -> bool
 static Aw.Context.Core.Pages.PageMapConcept.operator ==(Aw.Context.Core.Pages.PageMapConcept? left, Aw.Context.Core.Pages.PageMapConcept? right) -> bool
+Aw.Context.Core.Eval.Backtest.ArmReport.PinAnchored.get -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
+Aw.Context.Core.Eval.Backtest.ArmReport.PinAnchored.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.<Clone>$() -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore!
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Count.get -> int
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Count.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Deconstruct(out int Count, out double RecallAt10, out double Mrr) -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Equals(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? other) -> bool
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Mrr.get -> double
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Mrr.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.PinAnchoredScore(int Count, double RecallAt10, double Mrr) -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.RecallAt10.get -> double
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.RecallAt10.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.FileRecallAt10.get -> double
+Aw.Context.Core.Eval.Backtest.SampleScore.FileRecallAt10.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.Pin.get -> string?
+Aw.Context.Core.Eval.Backtest.SampleScore.Pin.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.ReciprocalRank.get -> double
+Aw.Context.Core.Eval.Backtest.SampleScore.ReciprocalRank.init -> void
+const Aw.Context.Core.Eval.Backtest.BacktestScoring.MinPinAnchored = 20 -> int
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Equals(object? obj) -> bool
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.GetHashCode() -> int
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.ToString() -> string!
+static Aw.Context.Core.Eval.Backtest.BacktestScoring.PinAnchored(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Eval.Backtest.SampleScore!>! scores) -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
+static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator !=(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
+static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator ==(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
+Aw.Context.Core.Concepts.PinSet.PinsOf(System.Collections.Generic.IReadOnlyList<string!>! anchors) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>!
+static Aw.Context.Core.Concepts.PinSet.Sole(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>! anchorPins) -> Aw.Context.Core.Engine.ConceptId?
