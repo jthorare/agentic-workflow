@@ -65,6 +65,20 @@ internal sealed partial class ContextPageViewModel
         }
     }
 
+    /// <summary>The Pin sheet closed: the pins are read again when a write went through, then focus goes back to the button that opened the sheet.</summary>
+    /// <param name="written">Whether a write went through.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>When the focus was asked for.</returns>
+    internal async Task PinSheetClosed(bool written, CancellationToken cancellationToken)
+    {
+        if (written)
+        {
+            await ReadPinsNow(cancellationToken).ConfigureAwait(true);
+        }
+
+        Concepts.SheetClosed();
+    }
+
     // A pinned card's Try again: queues the refresh the Context page's own Refresh map queues, and reads the pins again.
     private async Task TryRefreshAgain()
     {

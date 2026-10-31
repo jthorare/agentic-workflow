@@ -72,6 +72,8 @@ internal sealed partial class ConceptLayerViewModel
     private string Coverage(List<ConceptTileViewModel> pinned) =>
         Labels.PinCoverage(pinned.Sum(t => t.Size.Features), _all.Sum(t => t.Size.Features), pinned.Sum(t => t.Size.Records), _all.Sum(t => t.Size.Records));
 
+    private static bool SameConcept(ConceptTileViewModel left, ConceptTileViewModel right) => string.Equals(KeyOf(left.Id), KeyOf(right.Id), StringComparison.Ordinal);
+
     private static bool IsOther(ConceptTileViewModel tile) => string.Equals(KeyOf(tile.Id), OtherKey, StringComparison.Ordinal);
 
     // "concept:billing" and "billing" are one concept.

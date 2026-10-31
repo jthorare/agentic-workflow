@@ -6,6 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 internal sealed partial class ConceptLayerViewModel
 {
     private PinsView? _pins;
+    private (PinFocus Kind, ConceptTileViewModel? Tile) _opener = (PinFocus.NewPin, null);
     private bool _wasBuilding;
     private Action<PinSheetOpen>? _openPin;
     private Func<string> _repo = static () => string.Empty;
@@ -89,7 +90,7 @@ internal sealed partial class ConceptLayerViewModel
 
     /// <summary>Pin this: hands the shell the derived card.</summary>
     /// <param name="tile">The card.</param>
-    internal void PinThis(ConceptTileViewModel tile) => Open(new PinSheetOpen(_repo(), tile, Pin: null, PinList, Concepts: Composed));
+    internal void PinThis(ConceptTileViewModel tile) => Open(new PinSheetOpen(_repo(), tile, Pin: null, PinList, Concepts: Composed), PinFocus.PinThis, tile);
 
     /// <summary>Edit pin: hands the shell the card's pin.</summary>
     /// <param name="tile">The card.</param>
@@ -98,15 +99,15 @@ internal sealed partial class ConceptLayerViewModel
         ArgumentNullException.ThrowIfNull(tile);
         if (tile.Card.Pin is { } pin)
         {
-            Open(new PinSheetOpen(_repo(), Card: null, pin, PinList, Concepts: Composed));
+            Open(new PinSheetOpen(_repo(), Card: null, pin, PinList, Concepts: Composed), PinFocus.EditPin, tile);
         }
     }
 
     /// <summary>New pin: the sheet from nothing.</summary>
-    internal void NewPin() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Concepts: Composed));
+    internal void NewPin() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Concepts: Composed), PinFocus.NewPin, tile: null);
 
     /// <summary>Add several: the sheet for a list.</summary>
-    internal void AddSeveral() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Several: true, Concepts: Composed));
+    internal void AddSeveral() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Several: true, Concepts: Composed), PinFocus.AddSeveral, tile: null);
 
     /// <summary>The footer button of a card.</summary>
     /// <param name="tile">The card.</param>
@@ -126,5 +127,32 @@ internal sealed partial class ConceptLayerViewModel
 
     private IReadOnlyList<PinView> PinList => _pins?.Pins ?? [];
 
-    private void Open(PinSheetOpen request) => _openPin?.Invoke(request);
+    private void Open(PinSheetOpen request, PinFocus kind, ConceptTileViewModel? tile)
+    {
+        _opener = (kind, tile);
+        _openPin?.Invoke(request);
+    }
+
+    /// <summary>Asks the view to move focus (after the Pin sheet closes and the pins were read again), to the button that opened the sheet.</summary>
+    internal event EventHandler<PinFocusEventArgs>? FocusRequested;
+
+    /// <summary>The Pin sheet closed: focus goes back to the button that opened it. A Pin this card that became a waiting or pinned card gives it to that card's Edit pin; a card that is gone gives it to New pin.</summary>
+    internal void SheetClosed()
+    {
+        var (kind, opener) = _opener;
+        var request = opener is null ? new PinFocusEventArgs(kind, cardId: null) : Landed(kind, opener);
+        FocusRequested?.Invoke(this, request);
+    }
+
+    private PinFocusEventArgs Landed(PinFocus kind, ConceptTileViewModel opener)
+    {
+        var pinned = Tiles.FirstOrDefault(t => t.Card.Pin is not null && (SameConcept(t, opener) || string.Equals(t.Name, opener.Name, StringComparison.OrdinalIgnoreCase)));
+        if (pinned is not null)
+        {
+            return new PinFocusEventArgs(PinFocus.EditPin, pinned.Id);
+        }
+
+        var same = kind == PinFocus.PinThis ? Tiles.FirstOrDefault(t => t.ShowPinThis && SameConcept(t, opener)) : null;
+        return same is null ? new PinFocusEventArgs(PinFocus.NewPin, cardId: null) : new PinFocusEventArgs(PinFocus.PinThis, same.Id);
+    }
 }
