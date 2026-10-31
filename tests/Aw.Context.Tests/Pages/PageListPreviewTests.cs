@@ -153,7 +153,7 @@ public sealed class PageListPreviewTests
         Assert.Equal(["aproval"], row.UnknownConcepts);
         Assert.False(row.Ticked);
         Assert.Equal("No concept called \"aproval\": pick one", row.Reason);
-        Assert.Null(row.Page);
+        Assert.NotNull(row.Page);
         Assert.Null(row.Actions[0].Concepts[0].Id);
     }
 
