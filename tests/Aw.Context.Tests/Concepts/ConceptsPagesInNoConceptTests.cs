@@ -23,5 +23,12 @@ public sealed class ConceptsPagesInNoConceptTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_map_where_every_page_has_a_concept_counts_none() => Assert.Equal(0, Read(ConceptGraph.Product()).PagesInNoConcept);
+    public void A_map_where_every_page_has_a_concept_counts_none()
+    {
+        var graph = new ConceptGraph().Concept("concept:scheduling", "Self scheduling")
+            .Node("surface:screen/week", "Schedule week").Node("action:submit", "Submit schedule")
+            .Edge("action:submit", EdgeType.On, "surface:screen/week").Edge("action:submit", EdgeType.Expresses, "concept:scheduling");
+
+        Assert.Equal(0, Read(graph).PagesInNoConcept);
+    }
 }
