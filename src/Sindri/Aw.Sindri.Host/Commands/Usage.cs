@@ -101,7 +101,7 @@ internal static class Usage
         "       sindri context search <words> [--limit N] [--area <key>] [--repo R] [--map-version V | --draft] [--json]   ranked full-text search over the map: node labels, file paths, record titles, decision wording and quotes, best match first (default 50 hits, at most 200; the last word also matches as a prefix)",
         "       sindri context history <anchor>... [--since T] [--before T] [--draft | --map-version V] [--json]   the stored records, decisions and landed changes behind one or more nodes; --before cuts them to the world as of that time (T: RFC 3339 or YYYY-MM-DD)",
         "       sindri code-index status [--repo R] [--json]   each repo's code index: state, commit, layers and counts (exit 1 when a repo is not ok)",
-        "       sindri code-index symbols <query> [--repo R] [--prefix] [--json]   symbols by name, path, path#name or ref (exact), or by name prefix",
+        "       sindri code-index symbols <query> [--repo R] [--prefix] [--concept C] [--json]   symbols by name, path, path#name or ref (exact), or by name prefix; --concept C only those of one concept pin",
         "       sindri code-index callers|callees <ref> [--depth 1..8] [--repo R] [--json]   the edges into or out of a symbol, each with its basis, confidence and coverage (partial reads 'none found', never 'none')",
         "       sindri context code <anchor>... [--draft | --map-version V] [--json]   the files, tests, data things and schema files of one or more nodes, with a lexical search of the repo at the map's commit",
         "       sindri context filemap --repo <repo> [--path <dir>] [--unmapped] [--draft] [--json]   a directory's children with their map status; filemap accept|reject <link-id> decides a suggested file link",
