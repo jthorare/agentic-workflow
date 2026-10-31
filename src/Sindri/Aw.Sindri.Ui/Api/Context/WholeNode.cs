@@ -12,4 +12,5 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Confirmed">True when a person confirmed it.</param>
 /// <param name="Repo">The repo it belongs to, or null (left out of the answer) when it belongs to no single repo.</param>
 /// <param name="Owner">True when the owner named it in the profile (pages spec §3.5 "Set by a person"); left out of the answer when false.</param>
-internal sealed record WholeNode(string Key, string Label, string Kind, string Area, IReadOnlyList<string> AlsoIn, string Trust, string Provenance, double Confidence, bool Confirmed, string? Repo = null, bool Owner = false);
+/// <param name="PageId">The id of the owner's page that named this node, or null (left out of the answer) when no page did.</param>
+internal sealed record WholeNode(string Key, string Label, string Kind, string Area, IReadOnlyList<string> AlsoIn, string Trust, string Provenance, double Confidence, bool Confirmed, string? Repo = null, bool Owner = false, string? PageId = null);
