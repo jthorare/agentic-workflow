@@ -133,7 +133,7 @@ internal sealed class PagesSectionViewModel : ObservableObject
     /// <param name="id">The page id it wrote.</param>
     internal void Remember(string key, string id) => _savedIds[key] = id;
 
-    /// <summary>Reads which pages wait for approval and marks their rows. Only the rows it can match are marked: an owner page whose key carries its id, and a page this session saved.</summary>
+    /// <summary>Reads which pages wait for approval and marks their rows. Only the rows it can match are marked: a page this session saved, a page the map says an owner page named, and an owner page whose key carries its id.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the rows are marked.</returns>
     internal async Task MarkWaiting(CancellationToken cancellationToken)
@@ -153,7 +153,7 @@ internal sealed class PagesSectionViewModel : ObservableObject
         [.. rows.Select(r => r with { CanWrite = CanWrite, Marks = Waits(r) && !r.Marks.Contains(Labels.ContextPagesWaiting, StringComparer.Ordinal) ? [.. r.Marks, Labels.ContextPagesWaiting] : r.Marks })];
 
     private bool Waits(PageRowViewModel row) =>
-        _waiting is { } waiting && (_savedIds.TryGetValue(row.Key, out var saved) ? saved : row.Owner ? PageRows.OwnerId(row.Key) : null) is { } id && waiting.Waits(id);
+        _waiting is { } waiting && (_savedIds.TryGetValue(row.Key, out var saved) ? saved : row.PageId ?? (row.Owner ? PageRows.OwnerId(row.Key) : null)) is { } id && waiting.Waits(id);
 
     /// <summary>Lists every page past the cap.</summary>
     internal void ShowAll()
