@@ -103,6 +103,7 @@ internal static class ContextSlicesServiceCollectionExtensions
         _ = services.AddScoped<ConceptsNotReady>().AddScoped<IValidator<GetContextConceptsRequest>, AcceptAllValidator<GetContextConceptsRequest>>().AddQuery<GetContextConceptsRequest, ConceptsView, GetContextConceptsService>();
         _ = services.AddScoped<IValidator<GetContextConceptMembersRequest>, AcceptAllValidator<GetContextConceptMembersRequest>>().AddQuery<GetContextConceptMembersRequest, ConceptMembersView, GetContextConceptMembersService>();
         _ = services.AddScoped<IValidator<GetContextConceptGlossaryRequest>, AcceptAllValidator<GetContextConceptGlossaryRequest>>().AddQuery<GetContextConceptGlossaryRequest, ConceptGlossaryView, GetContextConceptGlossaryService>();
+        _ = services.AddScoped<IValidator<GetContextPinSuggestRequest>, AcceptAllValidator<GetContextPinSuggestRequest>>().AddQuery<GetContextPinSuggestRequest, PinSuggestView, GetContextPinSuggestService>();
         return services;
     }
 

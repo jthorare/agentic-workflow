@@ -5694,3 +5694,25 @@ static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.operator !=(Aw.
 static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult.operator ==(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesJobResult? right) -> bool
 static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.operator !=(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? right) -> bool
 static Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest.operator ==(Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? left, Aw.Sindri.Features.ContextCalls.RelinkPinAliasesRequest? right) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.<Clone>$() -> Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest!
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.GetContextPinSuggestRequest(string? Concept = null, string? Search = null, System.Collections.Generic.IReadOnlyList<string!>? Line = null, System.Collections.Generic.IReadOnlyList<string!>? Def = null, int? Limit = null, string? Repo = null) -> void
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Deconstruct(out string? Concept, out string? Search, out System.Collections.Generic.IReadOnlyList<string!>? Line, out System.Collections.Generic.IReadOnlyList<string!>? Def, out int? Limit, out string? Repo) -> void
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Equals(Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest? other) -> bool
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Concept.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Concept.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Search.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Search.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Line.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Line.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Def.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Def.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Limit.get -> int?
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Limit.init -> void
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Repo.get -> string?
+Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Repo.init -> void
+override Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.Equals(object? obj) -> bool
+override Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.GetHashCode() -> int
+override Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.ToString() -> string!
+static Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.operator !=(Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest? left, Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest? right) -> bool
+static Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest.operator ==(Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest? left, Aw.Sindri.Features.ContextCalls.GetContextPinSuggestRequest? right) -> bool
