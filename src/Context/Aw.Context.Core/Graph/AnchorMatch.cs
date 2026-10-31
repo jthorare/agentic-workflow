@@ -39,7 +39,6 @@ public static class AnchorMatch
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(name);
-        _ = pins;   // red stub
         var trimmed = name.Trim();
         if (NodeKey.TryFrom(trimmed, out var key) && graph.Resolve(key) is { } byKey)
         {
@@ -58,6 +57,11 @@ public static class AnchorMatch
             return ContextErrors.AmbiguousAnchor
                 .With($"'{Shown(trimmed)}' is the name of {byLabel.Count} nodes: {string.Join(", ", byLabel.Select(n => n.Key.Value))} (fix: ask by key)")
                 .WithExtension("candidates", [.. byLabel.Select(n => n.Key.Value).Where(Listable)], SettingsJsonContext.Default.ListString);
+        }
+
+        if (ByAlias(graph, trimmed, pins) is { } aliased)
+        {
+            return aliased;
         }
 
         if (NearFeature(graph, trimmed) is { } near)
@@ -82,14 +86,45 @@ public static class AnchorMatch
     {
         ArgumentNullException.ThrowIfNull(graph);
         ArgumentNullException.ThrowIfNull(question);
-        _ = pins;   // red stub
         var words = Words(question);
-        var whole = graph.Nodes.Select(n => (Node: n, Words: Words(Unbracketed(n.Label))))
+        var whole = graph.Nodes.Select(n => (Node: n, Words: Words(Unbracketed(n.Label)), Alias: (string?)null))
             .Where(m => m.Words.Count > 0 && m.Words.IsSubsetOf(words)).ToList();
-        var anchors = whole.Where(m => !whole.Exists(o => o.Words.Count > m.Words.Count && m.Words.IsSubsetOf(o.Words)))
-            .OrderByDescending(m => m.Words.Count).ThenBy(m => m.Node.Key.Value, StringComparer.Ordinal).Select(m => m.Node.Key).ToList();
-        return new TextAnchors(anchors, Suggest(graph, words, [.. whole.Select(m => m.Node.Key.Value)], []));
+        AddAliasMatches(whole, graph, words, pins);
+        var chosen = whole.Where(m => !whole.Exists(o => o.Words.Count > m.Words.Count && m.Words.IsSubsetOf(o.Words)))
+            .OrderByDescending(m => m.Words.Count).ThenBy(m => m.Node.Key.Value, StringComparer.Ordinal).ToList();
+        var aliases = chosen.Where(m => m.Alias is not null).ToDictionary(m => m.Node.Key.Value, m => m.Alias ?? string.Empty, StringComparer.Ordinal);
+        return new TextAnchors([.. chosen.Select(m => m.Node.Key)], Suggest(graph, words, [.. whole.Select(m => m.Node.Key.Value)], [])) { Aliases = aliases };
     }
+
+    private static GraphNode? ByAlias(GraphSnapshot graph, string name, PinSet? pins) =>
+        pins?.ByAlias(name) is { } pin ? graph.Resolve(NodeKey.From("concept:" + pin.Value)) : null;
+
+    // A question that uses all the words of one of a pin's aliases anchors on its concept; the node's own label wins a tie, and the longest alias of a pin is the one that counts.
+    private static void AddAliasMatches(List<(GraphNode Node, HashSet<string> Words, string? Alias)> whole, GraphSnapshot graph, HashSet<string> words, PinSet? pins)
+    {
+        foreach (var (pin, alias, count) in pins?.AliasesIn(words) ?? [])
+        {
+            var node = graph.Resolve(NodeKey.From("concept:" + pin.Value));
+            var held = node is null ? -1 : whole.FindIndex(m => m.Node.Key == node.Key);
+            if (node is null || (held >= 0 && whole[held].Words.Count >= count))
+            {
+                continue;
+            }
+
+            if (held >= 0)
+            {
+                whole.RemoveAt(held);
+            }
+
+            whole.Add((node, Words(alias), alias));
+        }
+    }
+
+    /// <summary>The line that says an anchor came from a pin's alias.</summary>
+    /// <param name="concept">The concept's key.</param>
+    /// <param name="alias">The alias, as the owner wrote it; the caller fences it as untrusted text.</param>
+    /// <returns>'anchored on concept:billing (alias "payments")'.</returns>
+    public static string AliasLine(NodeKey concept, string alias) => $"anchored on {concept.Value} (alias \"{alias}\")";
 
     /// <summary>The most words of a question matching reads (raised from 256 per owner q93, 2026-10-23).</summary>
     internal const int MaxWords = 4_000;

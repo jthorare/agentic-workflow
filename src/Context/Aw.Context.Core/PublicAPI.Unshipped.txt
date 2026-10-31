@@ -7820,7 +7820,7 @@ const Aw.Context.Core.Concepts.ConceptStates.Empty = "empty" -> string!
 const Aw.Context.Core.Concepts.ConceptStates.Building = "building" -> string!
 const Aw.Context.Core.Concepts.ConceptStates.Unavailable = "unavailable" -> string!
 Aw.Context.Core.Concepts.ConceptBuilder
-static Aw.Context.Core.Concepts.ConceptBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptsQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptsView!>!
+static Aw.Context.Core.Concepts.ConceptBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptsQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptsView!>!
 static Aw.Context.Core.Concepts.ConceptBuilder.Members(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Concepts.ConceptMembersQuery! query, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptMembersView!>!
 Aw.Context.Core.Facade.IContextConcepts
 Aw.Context.Core.Facade.IContextConcepts.ConceptMembers(Aw.Context.Core.Concepts.ConceptMembersQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.ConceptMembersView!>!>
@@ -8421,7 +8421,7 @@ static Aw.Context.Core.Concepts.ConceptGlossaryView.operator ==(Aw.Context.Core.
 Aw.Context.Core.Glossary.ISymbolVectors
 Aw.Context.Core.Glossary.ISymbolVectors.Read(Aw.Context.Core.Engine.ContextRepoName repo, System.Collections.Generic.IReadOnlyList<string!>! paths, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Glossary.SymbolVectorsRead!>!>
 Aw.Context.Core.Concepts.ConceptGlossaryBuilder
-static Aw.Context.Core.Concepts.ConceptGlossaryBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text) -> Aw.Context.Core.Concepts.ConceptGlossaryView!
+static Aw.Context.Core.Concepts.ConceptGlossaryBuilder.Build(Aw.Context.Core.Concepts.ConceptsBasis! basis, Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, Aw.Context.Core.Concepts.PinSet? pins = null) -> Aw.Context.Core.Concepts.ConceptGlossaryView!
 static Aw.Context.Core.Concepts.ConceptDeriver.Groups(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! pins, Aw.Context.Core.Glossary.MapGlossary? glossary) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.ConceptGroup!>!
 static Aw.Context.Core.Concepts.ConceptDeriver.Derive(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! pins, Aw.Context.Core.Concepts.ConceptNames? names, Aw.Context.Core.Glossary.MapGlossary? glossary) -> Aw.Context.Core.Extract.ExtractedMap!
 Aw.Context.Core.Concepts.ConceptGroup.Terms.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -10436,3 +10436,16 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Concepts.ConceptRow.Pinned.get -> bool
+Aw.Context.Core.Concepts.ConceptRow.Pinned.init -> void
+Aw.Context.Core.Concepts.ConceptRow.Aliases.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Concepts.ConceptRow.Aliases.init -> void
+Aw.Context.Core.Concepts.ConceptTermsRow.OwnerTerms.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Concepts.ConceptTermsRow.OwnerTerms.init -> void
+Aw.Context.Core.Concepts.ConceptRead.Pins.get -> Aw.Context.Core.Concepts.PinSet?
+Aw.Context.Core.Concepts.ConceptRead.Pins.init -> void
+Aw.Context.Core.Concepts.PinSet.ByAlias(string! name) -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Concepts.PinSet.IsPinned(Aw.Context.Core.Graph.NodeKey concept) -> bool
+Aw.Context.Core.Concepts.PinSet.AliasesOf(Aw.Context.Core.Graph.NodeKey concept) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Concepts.PinSet.SummaryOf(Aw.Context.Core.Graph.NodeKey concept) -> string?
+static Aw.Context.Core.Graph.AnchorMatch.AliasLine(Aw.Context.Core.Graph.NodeKey concept, string! alias) -> string!
