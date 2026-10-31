@@ -4,13 +4,16 @@ using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Infrastructure.Sandbox;
 
 namespace Aw.Sindri.Infrastructure.Launch;
 
 /// <summary>The disk side of <see cref="ILaunchFiles"/> (API spec §8.1, launcher L-9): the secret hashes under <c lang="text">launch/secrets/</c> and the flat files under <c lang="text">launches/</c>.</summary>
 /// <param name="options">Where the files live.</param>
-internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunchFiles
+/// <param name="seams">What the sweep of a dead launch's sandbox files asks of the box (SB-9c); null is this box.</param>
+internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSweepSeams? seams = null) : ILaunchFiles
 {
     public Result<Unit> Verify(LaunchId launch, LaunchSecret secret)
     {
@@ -125,7 +128,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
     public int SweepStale(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
         ArgumentNullException.ThrowIfNull(live);
-        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live) + SweepSessionHomes(live);
+        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live) + SweepSessionHomes(live) + SweepSandboxFiles(live);
         if (!Directory.Exists(options.LaunchesDirectory))
         {
             return removed;
@@ -142,6 +145,35 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         }
 
         return removed;
+    }
+
+    /// <summary>
+    /// SB-9c: the '.pgid' files of dead groups (any OS) and, on macOS, the 'aw-&lt;8 hex&gt;' temp folders of launches that are not live. A launch counts as live when
+    /// it has a live session; the folder name carries only 8 hex digits of the id, so live launches are matched by it, from the launches that have files here.
+    /// </summary>
+    private int SweepSandboxFiles(Func<LaunchId, bool> live)
+    {
+        var groups = ProcessGroupFiles.Directory(options.LaunchDirectory);
+        var sweep = seams ?? new StaleSweepSeams();
+        var removed = Directory.Exists(groups) ? StaleSandboxFiles.SweepGroupFiles(groups, live, sweep.Alive ?? ProcessGroupFiles.Alive) : 0;
+        if (!sweep.Mac)
+        {
+            return removed;
+        }
+
+        var liveFolders = Launches().Concat(SessionHomeLaunches()).Distinct().Where(live).Select(l => Path.GetFileName(SandboxPaths.SeatbeltTemp(l))).ToHashSet(StringComparer.Ordinal);
+        return removed + StaleSandboxFiles.SweepSeatbeltTemp(sweep.TempRoot, liveFolders, sweep.Owned ?? MacTempOwner.Owns);
+    }
+
+    /// <summary>The launches that have a session home: a live Seatbelt launch has one until its release, before any capture or session-id file exists.</summary>
+    private List<LaunchId> SessionHomeLaunches()
+    {
+        if (options.SindriHome is not { } home || !Directory.Exists(SessionHomePaths.Sessions(home)))
+        {
+            return [];
+        }
+
+        return [.. Directory.EnumerateDirectories(SessionHomePaths.Sessions(home)).Select(d => LaunchId.TryParse(Path.GetFileName(d), provider: null, out var launch) ? (LaunchId?)launch : null).OfType<LaunchId>()];
     }
 
     /// <summary>Removes the session homes (sandbox spec §3.1) of launches that are not live.</summary>
