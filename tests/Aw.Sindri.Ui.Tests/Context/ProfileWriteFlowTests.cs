@@ -277,7 +277,7 @@ public sealed class ProfileWriteFlowTests
 
     // "Not found" right after the start is "not yet", but only for so long: after 8 reads (2 s of polls) the server's own error ends the wait.
     [Fact]
-    public async Task A_job_still_not_found_after_two_seconds_ends_with_the_servers_error()
+    public async Task A_job_still_not_found_after_two_seconds_reads_as_still_running()
     {
         const string Sentence = "No such job (fix: run `sindri jobs` to list them)";
         var clock = new FakeTimeProvider(A.Noon);
@@ -293,8 +293,8 @@ public sealed class ProfileWriteFlowTests
 
         var written = await run;
         Assert.Equal(ProfileWriteState.Failed, written.State);
-        Assert.Equal("SND-JOB-404", written.Code);
-        Assert.Equal(Sentence, written.Message);
+        Assert.Equal(ProfileWriteFlow.TimedOut, written.Code);
+        Assert.Null(written.Message);
         Assert.Equal(8, api.JobCalls);
     }
 
