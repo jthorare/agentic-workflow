@@ -13,8 +13,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <summary>
 /// The pins read (concept pins spec §3.6 to §3.8). The pins and the file hash come from one load of the live profile file, so they can't disagree. A pin's state comes only from the approved-vs-live
 /// diff of the profile (<see cref="ProfileDiff"/>, keyed by the entry's id): no diff row is 'approved', a new or changed entry is 'waiting', an approved entry the live file dropped is 'removing' and listed after the live ones.
-/// The repo scope is the engine's (<see cref="RepoAddressing"/>): a session sees the profile's pins and its own repo's only. The map records the rules it was built under as one hash, never per pin, so a pin's
-/// <c xml:lang="en">change</c> is null; <c xml:lang="en">rebuild.stale</c> says whether any pin differs from the map.
+/// The repo scope is the engine's (<see cref="RepoAddressing"/>): a session sees the profile's pins and its own repo's only. A pin's <c xml:lang="en">change</c> compares the approved entry's hash with the one the
+/// current map stored for that pin (<see cref="PinChanges"/>); a map that stored none leaves it null.
 /// </summary>
 internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine engine, IProfileSource live, IApprovedProfile approved, IMapRebuildState rebuild, IJobViews jobs) : IService<GetContextPinsRequest, ContextPinsView>
 {
@@ -41,7 +41,8 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
             return loaded.IsError ? loaded.Error : latest.IsError ? latest.Error : state.Error;
         }
 
-        var pins = Rows(loaded.Value.Profile, latest.Value?.Profile, repo);
+        var changes = new PinChanges(MapRuleset.RunningPins(scope), state.Value.CurrentPinHashes);
+        var pins = Rows(loaded.Value.Profile, latest.Value?.Profile, repo, changes);
         var progress = await rebuild.Read(cancellationToken).ConfigureAwait(false);
         var failed = await LastFailure(cancellationToken).ConfigureAwait(false);
         var view = new ContextRebuildView(Phase(progress.Phase), progress.Progress, progress.RetryAt, Stale(state.Value, scope), failed);
@@ -61,7 +62,7 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         return addressed.IsError ? addressed.Error : addressed.Value.Name;
     }
 
-    private static List<ContextPinRow> Rows(SindriProfile liveProfile, SindriProfile? approvedProfile, string? repo)
+    private static List<ContextPinRow> Rows(SindriProfile liveProfile, SindriProfile? approvedProfile, string? repo, PinChanges changes)
     {
         var diff = ProfileDiff.Changes(approvedProfile, liveProfile).ToDictionary(static c => c.Key, StringComparer.Ordinal);
         var liveKeys = new HashSet<string>(StringComparer.Ordinal);
@@ -69,14 +70,16 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
         foreach (var pin in ProfilePins.Of(liveProfile).Where(p => InScope(p, repo)))
         {
             _ = liveKeys.Add(pin.Key);
-            rows.Add(Row(pin, diff.ContainsKey(pin.Key) ? PinStates.Waiting : PinStates.Approved));
+            rows.Add(Row(pin, diff.ContainsKey(pin.Key) ? PinStates.Waiting : PinStates.Approved, changes));
         }
 
         if (approvedProfile is not null)
         {
-            rows.AddRange(ProfilePins.Of(approvedProfile).Where(p => InScope(p, repo) && !liveKeys.Contains(p.Key) && diff.TryGetValue(p.Key, out var change) && change.After is null).Select(p => Row(p, PinStates.Removing)));
+            rows.AddRange(ProfilePins.Of(approvedProfile).Where(p => InScope(p, repo) && !liveKeys.Contains(p.Key) && diff.TryGetValue(p.Key, out var change) && change.After is null).Select(p => Row(p, PinStates.Removing, changes)));
         }
 
+        // pins the map still has that neither profile does any more: only their ids are known
+        rows.AddRange(changes.RemovedIds().Select(static id => new ContextPinRow(id, id, Summary: null, [], [], FolderRules: 0, "profile", PinStates.Approved, PinChanges.Removed)));
         return rows;
     }
 
@@ -84,12 +87,13 @@ internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine
     private static bool InScope(ProfilePin pin, string? repo) =>
         repo is null || pin.Repo is null || string.Equals(pin.Repo, repo, StringComparison.Ordinal);
 
-    private static ContextPinRow Row(ProfilePin pin, string state)
+    private static ContextPinRow Row(ProfilePin pin, string state, PinChanges changes)
     {
         var settings = pin.Settings;
         var name = settings.Name ?? string.Empty;
-        return new ContextPinRow(settings.Id?.Value ?? PinSlug.Of(name), name, settings.Summary, Listed(settings.Aliases), Listed(settings.Features),
-            Listed(settings.Paths).Count + Listed(settings.DependsOn).Count + Listed(settings.Owns).Count, pin.SetIn, state, Change: null);
+        var id = settings.Id?.Value ?? PinSlug.Of(name);
+        return new ContextPinRow(id, name, settings.Summary, Listed(settings.Aliases), Listed(settings.Features),
+            Listed(settings.Paths).Count + Listed(settings.DependsOn).Count + Listed(settings.Owns).Count, pin.SetIn, state, changes.Of(id));
     }
 
     private static IReadOnlyList<string> Listed(IReadOnlyList<string>? list) => list ?? [];

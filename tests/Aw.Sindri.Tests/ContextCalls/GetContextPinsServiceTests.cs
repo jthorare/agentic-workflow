@@ -184,6 +184,48 @@ public sealed class GetContextPinsServiceTests
         Assert.Null(recovered.Value.Rebuild.Failed);
     }
 
+    // The approved profile pins billing and refunds on one repo; the map was built with the hashes the test hands over (null: a map from before migration 0028).
+    private async Task<IReadOnlyList<(string Id, string State, string? Change)>> Changes(Func<IReadOnlyDictionary<string, string>, Dictionary<string, string>?> built, LoadedProfile? live = null)
+    {
+        var approved = Loaded(Human, [Pin("Billing", id: "billing"), Pin("Refunds", id: "refunds")], "approved", new RepoEntry("alpha", "/r/alpha"));
+        var hashes = MapRuleset.RunningPins(ContextScopes.For(approved.Profile, ContextScopes.Caller(caller: null)))!;
+        _engine.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 4, CurrentHeads: []) { CurrentRuleset = "r", CurrentPinHashes = built(hashes) };
+
+        var read = await Read(approved, live ?? approved);
+
+        return [.. read.Value.Pins.Select(p => (p.Id, p.State, p.Change))];
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pin_the_map_was_built_with_unchanged_has_no_change() =>
+        Assert.Equal([("billing", "approved", null), ("refunds", "approved", null)], await Changes(h => new Dictionary<string, string>(h, StringComparer.Ordinal)));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_approved_pin_the_map_has_no_hash_for_is_created() =>
+        Assert.Equal([("billing", "approved", null), ("refunds", "approved", "created")], await Changes(h => h.Where(p => p.Key == "billing").ToDictionary(p => p.Key, p => p.Value, StringComparer.Ordinal)));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_approved_pin_whose_hash_differs_from_the_maps_is_updated() =>
+        Assert.Equal([("billing", "approved", "updated"), ("refunds", "approved", null)], await Changes(h => new Dictionary<string, string>(h, StringComparer.Ordinal) { ["billing"] = "built-with-another-version" }));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pin_the_map_has_that_the_approved_profile_lacks_is_listed_after_the_live_pins_as_removed() =>
+        Assert.Equal([("billing", "approved", null), ("refunds", "approved", null), ("ghost", "approved", "removed")], await Changes(h => new Dictionary<string, string>(h, StringComparer.Ordinal) { ["ghost"] = "gone" }));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_map_with_no_per_pin_hashes_leaves_every_change_unknown() =>
+        Assert.Equal([("billing", "approved", null), ("refunds", "approved", null)], await Changes(_ => null));
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task An_unapproved_live_edit_is_the_states_job_and_never_a_change()
+    {
+        var live = Loaded(Human, [Pin("Billing", id: "billing", summary: "edited"), Pin("Refunds", id: "refunds"), Pin("New", id: "new")], "live", new RepoEntry("alpha", "/r/alpha"));
+
+        var rows = await Changes(h => new Dictionary<string, string>(h, StringComparer.Ordinal), live);
+
+        Assert.Equal([("billing", "waiting", null), ("refunds", "approved", null), ("new", "waiting", null)], rows);
+    }
+
     private void Refresh(JobState state, TimeSpan endedAgo, long sequence, string? code = null) =>
         _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RefreshKind, JobKey.From("refresh"), Item: null, Repo: null, Service: null, state,
             "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), _now - endedAgo, [], Rounds: 0, Summary: null, code, Result: null, CancelledBy: null, Sequence: sequence));
