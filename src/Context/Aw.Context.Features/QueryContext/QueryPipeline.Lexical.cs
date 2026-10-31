@@ -1,9 +1,7 @@
 using Aw.Context.Core;
 using Aw.Context.Core.Audience;
 using Aw.Context.Core.Engine;
-using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
-using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
@@ -27,28 +25,14 @@ internal sealed partial class QueryPipeline
     /// </summary>
     private static async ValueTask<IReadOnlySet<RecordKey>> LinkedRecords(QueryContextRequest request, MapRead read, IMapProvider graphs, CancellationToken ct)
     {
-        var linked = new HashSet<RecordKey>();
+        HashSet<RecordKey> none = [];
         if (request.Scope.Caller.Kind != ContextCallerKind.Session)
         {
-            return linked;
+            return none;
         }
 
         var map = await graphs.Read(request.Scope, read, ct).ConfigureAwait(false);
-        if (map.IsError)
-        {
-            return linked;
-        }
-
-        const string prefix = "record:";
-        foreach (var node in map.Value.Graph.Nodes.Where(n => n.Key.Kind == NodeKind.Record))
-        {
-            if (RecordKey.TryFrom(node.Key.Value[prefix.Length..], out var key))
-            {
-                _ = linked.Add(key);
-            }
-        }
-
-        return linked;
+        return map.IsError ? none : RecordMask.Linked(map.Value.Graph);
     }
 
     /// <summary>
@@ -65,26 +49,14 @@ internal sealed partial class QueryPipeline
             return (catalogSources, degraded);   // the store keeps no past: a backtest arm reads the sources alone
         }
 
-        var policy = new ProfileAudiencePolicy(profile.Settings, [.. profile.Repos.Select(r => r.Name)]);
-        var allowed = new HashSet<AudienceKey>();
-        foreach (var repo in profile.Repos)
+        var allowed = await RecordMask.Allowed(profile.Settings, profile.Repos, caller.Request.Scope.Caller.Kind, ct).ConfigureAwait(false);
+        if (allowed.IsError)
         {
-            var scope = await policy.For(repo.Name, ct).ConfigureAwait(false);
-            if (scope.IsError)
-            {
-                degraded.Add(SourceCalls.Degraded(RecordStoreSource.Id, scope.Error, clock.GetUtcNow()));
-                return (catalogSources, degraded);
-            }
-
-            allowed.UnionWith(scope.Value.Allowed);
+            degraded.Add(SourceCalls.Degraded(RecordStoreSource.Id, allowed.Error, clock.GetUtcNow()));
+            return (catalogSources, degraded);
         }
 
-        if (caller.Request.Scope.Caller.Kind != ContextCallerKind.Session)
-        {
-            allowed.UnionWith(ProfileAudiencePolicy.HumanExtras(profile.Settings));   // a human is not scoped to the session rule (spec §4.4)
-        }
-
-        var audience = new AudienceScope(allowed) { Records = await LinkedRecords(caller.Request, caller.Read, caller.Graphs, ct).ConfigureAwait(false) };
+        var audience = new AudienceScope(allowed.Value) { Records = await LinkedRecords(caller.Request, caller.Read, caller.Graphs, ct).ConfigureAwait(false) };
         var teams = profile.Settings.LinearTeams.ToHashSet(StringComparer.Ordinal);
         return ([.. catalogSources, new RecordStoreSource(lexical.Leg, lexical.Store, audience, clock, teams), new DenseRecordSource(lexical, audience, clock, teams)], degraded);
     }
