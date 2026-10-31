@@ -276,7 +276,7 @@ public static partial class ContextErrors
          LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
          NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph, PinUnknown, NoPins, PinNewerThanMap, PinNeedsMap,
          PageConceptUnknown, PageKeyUnknown, PageRepoAmbiguous, PageOverCap, PageIdDuplicate, PageNameInvalid, PageActionSpecInvalid, PageNotFound, PageQueryUnknown,
-         PinInvalid, PinFeatureUnknown, PinIdClash, PinNotInProfile, PinHasFolderRules, PinInRepoProfile, PinLineUnreadable];
+         PinInvalid, PinFeatureUnknown, PinIdClash, PinNotInProfile, PinHasFolderRules, PinInRepoProfile, PinLineUnreadable, PinSuggestInvalid];
 
     /// <summary>
     /// The codes the CLI answers with exit 1 (attention, spec §8.6): an unknown or ambiguous anchor, a refused input or

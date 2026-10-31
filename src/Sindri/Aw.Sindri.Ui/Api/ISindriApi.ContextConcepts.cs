@@ -19,4 +19,11 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The glossary, the API's refusal, or SND-UI-002/003.</returns>
     public Task<Result<ConceptGlossaryView>> ContextConceptGlossary(Uri api, ConceptGlossaryQuery query, CancellationToken cancellationToken);
+
+    /// <summary>GET /sindri/context/pins/suggest: a concept's terms with the records each would newly link, the features a search finds, or the concept each line of a pasted list matches (sent 25 lines at a time, the answers joined). A server without the route answers 404.</summary>
+    /// <param name="api">The base URL.</param>
+    /// <param name="query">The repo and the one thing to suggest.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The suggestions, the API's refusal (SND-CONTEXT-179 for a request it can't read), or SND-UI-002/003.</returns>
+    public Task<Result<PinSuggestView>> ContextPinSuggest(Uri api, PinSuggestQuery query, CancellationToken cancellationToken);
 }
