@@ -59,4 +59,21 @@ public sealed class ShellPinSheetTests
         Assert.Equal((false, false, null), (shell.IsSheetOpen, shell.IsPinSheet, shell.ActivePinSheet));
         Assert.False(Assert.Single(told).Written);
     }
+
+    [Fact]
+    public async Task Add_several_mounts_its_own_sheet_and_Esc_closes_it_without_writing()
+    {
+        var shell = await Shell();
+        List<PinSheetClosedEventArgs> told = [];
+        shell.PinSheetClosed += (_, e) => told.Add(e);
+
+        shell.OpenPinSheet(new PinSheetOpen("api", Card: null, Pin: null, Pins: [], Several: true));
+
+        Assert.True(shell.IsPinSheet);
+        _ = Assert.IsType<PinSeveralViewModel>(shell.PinSheetContent);
+        Assert.Null(shell.ActivePinSheet);
+        Assert.True(shell.EscapePinSeveral());
+        Assert.Equal((false, false, null), (shell.IsSheetOpen, shell.IsPinSheet, shell.PinSheetContent));
+        Assert.False(Assert.Single(told).Written);
+    }
 }

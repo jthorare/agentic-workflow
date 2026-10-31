@@ -393,6 +393,7 @@
                   <ContentControl x:Name="PinSheetSlot" Content="{Binding PinSheetContent}">
                     <ContentControl.DataTemplates>
                       <DataTemplate DataType="cnvm:PinSheetViewModel"><cnv:PinSheetView x:Name="PinSheetContent" /></DataTemplate>
+                      <DataTemplate DataType="cnvm:PinSeveralViewModel"><cnv:PinSeveralView x:Name="PinSeveralContent" /></DataTemplate>
                     </ContentControl.DataTemplates>
                   </ContentControl>
                 </ScrollViewer>

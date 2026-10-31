@@ -102,6 +102,11 @@ internal sealed partial class ShellWindow
                 return pinSheet.Escape();   // a question answers first, changes ask before the sheet goes
             }
 
+            if (shell.IsPinSheet && shell.EscapePinSeveral())
+            {
+                return true;   // Add several closes without writing
+            }
+
             shell.CloseSheet();
             return true;
         }
