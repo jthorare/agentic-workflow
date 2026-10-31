@@ -174,11 +174,12 @@ internal static class PagePlanner
         var entry = set with { Id = id, Actions = Actions(set, pins, map) };
         if (at is null)
         {
-            slots.Add(new PageSlot(entry, repo: null));   // new pages are top-level; the writer inserts after the last top-level entry
+            slots.Add(new PageSlot(entry, repo: null) { Touched = true });   // new pages are top-level; the writer inserts after the last top-level entry
         }
         else
         {
             at.Entry = entry;
+            at.Touched = true;
         }
 
         return (new PageEdit(id, entry, at?.Repo), new PageWritten(id, set.Name ?? string.Empty, at?.Repo, at is null ? "created" : "updated"));
@@ -190,28 +191,28 @@ internal static class PagePlanner
         var id = IdOf(set);
         if (at is null && MadeFrom(slots, id) is var made and >= 0)
         {
-            return ContextErrors.PageIdDuplicate.With(Text($"index.pages[{slots.Count}].id: '{id}' is already index.pages[{made}]'s, made from its name (fix: give index.pages[{made}] an id: in the profile)"));
+            return ContextErrors.PageIdDuplicate.With(Text($"{NewPath(slots)}.id: '{id}' is already {PathOf(slots, made)}'s, made from its name (fix: give {PathOf(slots, made)} an id: in the profile)"));
         }
 
-        var placed = at is null ? Placement(set, slots.Count(static s => !s.Removed), repos) : Existing(set, at, slots.IndexOf(at));
+        var placed = at is null ? Placement(set, NewPath(slots), repos) : Existing(set, at, PathOf(slots, slots.IndexOf(at)));
         return placed.IsError ? placed.Error : null;
     }
 
     // The entry with no 'id:' that the build gives this id (-1: none). The writer matches by id only, so a write can't reach it.
     private static int MadeFrom(List<PageSlot> slots, string id) => slots.FindIndex(s => !s.Removed && s.Entry.Id is null && string.Equals(s.Key, id, StringComparison.Ordinal));
 
-    private static Result<Unit> Existing(PageSettings set, PageSlot at, int position)
+    private static Result<Unit> Existing(PageSettings set, PageSlot at, string path)
     {
         if (at.Repo is { } repo && set.Repo is { } asked && !string.Equals(asked, repo, StringComparison.Ordinal))
         {
-            return ContextErrors.PageRepoAmbiguous.With(Text($"repos.{repo}.index.pages: the page's repo is '{repo}', not '{asked}' (fix: leave --repo out, or remove the page and set it again; it is index.pages[{position}])"));
+            return ContextErrors.PageRepoAmbiguous.With(Text($"repos.{repo}.index.pages: the page's repo is '{repo}', not '{asked}' (fix: leave --repo out, or remove the page and set it again; it is {path})"));
         }
 
         return Unit.Value;
     }
 
     // A new page goes top-level: the repo it is in is the one named, the surface's (PageRules refuses several), or the profile's only one.
-    private static Result<Unit> Placement(PageSettings set, int position, List<string> repos)
+    private static Result<Unit> Placement(PageSettings set, string path, List<string> repos)
     {
         if (set.Repo is { } named)
         {
@@ -220,8 +221,19 @@ internal static class PagePlanner
 
         return set.Surface is not null || repos.Count < 2
             ? Unit.Value
-            : ContextErrors.PageRepoAmbiguous.With(Text($"index.pages[{position}]: say which repo this page is in, {string.Join(" or ", repos)} (fix: --repo)"));
+            : ContextErrors.PageRepoAmbiguous.With(Text($"{path}: say which repo this page is in, {string.Join(" or ", repos)} (fix: --repo)"));
     }
+
+    // Where a page is in the profile file, named the way ProfileRules names keys: the top-level list, or a repo's own, counted within that list.
+    private static string PathOf(List<PageSlot> slots, int at)
+    {
+        var slot = slots[at];
+        var position = slots.Take(at).Count(s => string.Equals(s.Repo, slot.Repo, StringComparison.Ordinal));
+        return slot.Repo is null ? Text($"index.pages[{position}]") : Text($"repos.{slot.Repo}.index.pages[{position}]");
+    }
+
+    // A new page goes top-level, after the pages that stay there.
+    private static string NewPath(List<PageSlot> slots) => Text($"index.pages[{slots.Count(static s => s.Repo is null && !s.Removed)}]");
 
     private static string OneOf(List<string> repos) => repos.Count == 0 ? "add the repo to the profile first" : "one of " + string.Join(", ", repos);
 
@@ -266,7 +278,7 @@ internal static class PagePlanner
         {
             if (MadeFrom(slots, id.Value) is var made and >= 0)
             {
-                return ContextErrors.PageIdDuplicate.With(Text($"index.pages[{made}] has no id: and makes the id '{id.Value}' from its name (fix: give it an id: in the profile)"));
+                return ContextErrors.PageIdDuplicate.With(Text($"no page has the id '{id.Value}': {PathOf(slots, made)} has no id: in the profile (fix: give it an id:, then remove it)"));
             }
 
             var near = PageNearest.Of(id.Value, slots.Where(static s => !s.Removed).Select(static s => s.Key));

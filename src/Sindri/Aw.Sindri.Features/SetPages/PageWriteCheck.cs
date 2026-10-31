@@ -9,7 +9,7 @@ namespace Aw.Sindri.Features.SetPages;
 /// <summary>The write rules of pages (pages spec §3.1) over the pages as they will be after a SetPages request.</summary>
 internal static class PageWriteCheck
 {
-    // The write rules (the same ones the app's sheet and Add several pages call) over every planned page, without the read-time caps, then the profile's own.
+    // The write rules (the same ones the app's sheet and Add several pages call) over every planned page, then the profile's own. Caps, duplicate ids and names are checked over the whole list; the map's keys only for the pages this request set, since the facts are the caller's view and may not hold another repo's pages.
     internal static Error? Check(SindriProfile planned, List<PageSlot> slots, PinNames pins, MapPageFacts map)
     {
         var ids = map.Concepts.Select(static c => c.Key).Concat(pins.Ids).Where(static i => ConceptId.TryFrom(i, out _)).Select(static i => ConceptId.From(i));
@@ -32,15 +32,18 @@ internal static class PageWriteCheck
         var page = slot.Entry;
         var name = page.Name ?? string.Empty;
         var repo = slot.Repo ?? page.Repo;
-        return new PagePin(PageId.From(Own(page.Id?.Value, name, taken)), name, RepoOf(repo), page.Surface, Actions(page));
+        var id = PageId.From(Own(page.Id?.Value, name, taken));
+        return slot.Touched
+            ? new PagePin(id, name, RepoOf(repo), page.Surface, Actions(page, keyed: true))
+            : new PagePin(id, name, RepoOf(repo), SurfaceKey: null, Actions(page, keyed: false));
     }
 
     private static ContextRepoName? RepoOf(string? repo) => repo is not null && ContextRepoName.TryFrom(repo, out var name) ? name : null;
 
-    private static List<PageActionPin> Actions(PageSettings page)
+    private static List<PageActionPin> Actions(PageSettings page, bool keyed)
     {
         var taken = new HashSet<string>((page.Actions ?? []).Select(static a => a.Id?.Value).OfType<string>(), StringComparer.Ordinal);
-        return [.. (page.Actions ?? []).Select(a => new PageActionPin(PageActionId.From(Own(a.Id?.Value, a.Name, taken)), a.Name ?? string.Empty, a.Action, a.Concepts ?? []))];
+        return [.. (page.Actions ?? []).Select(a => new PageActionPin(PageActionId.From(Own(a.Id?.Value, a.Name, taken)), a.Name ?? string.Empty, keyed ? a.Action : null, keyed ? a.Concepts ?? [] : []))];
     }
 
     private static string Own(string? written, string? name, HashSet<string> taken) =>

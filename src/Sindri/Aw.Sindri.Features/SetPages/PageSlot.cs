@@ -14,6 +14,9 @@ internal sealed class PageSlot(PageSettings entry, string? repo)
 
     internal bool Removed { get; set; }
 
+    /// <summary>Whether this request set the page: only these have their surface, action and concept keys checked against the caller's view of the map.</summary>
+    internal bool Touched { get; set; }
+
     /// <summary>The id the page has: the one written, else the slug of its name.</summary>
     internal string Key => Entry.Id?.Value ?? PageSlugs.Of(Entry.Name);
 }

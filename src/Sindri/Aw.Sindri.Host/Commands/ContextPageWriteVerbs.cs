@@ -1,4 +1,5 @@
 using System.Text;
+using System.Text.RegularExpressions;
 using Aw.Context.Core;
 using Aw.Kernel;
 using Aw.Sindri.Core;
@@ -19,7 +20,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="follower">Follows the job the start answers.</param>
 /// <param name="services">Gives the profile text parser '--from-file' reads with.</param>
 /// <param name="ensureRunning">Starts the control plane (true: this verb may launch it) or names why not; null: never start it.</param>
-internal sealed class ContextPageWriteVerbs(ControlPlaneClient client, Output output, JobFollower follower, IServiceProvider services, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null)
+internal sealed partial class ContextPageWriteVerbs(ControlPlaneClient client, Output output, JobFollower follower, IServiceProvider services, Func<bool, CancellationToken, Task<Error?>>? ensureRunning = null)
 {
     internal async Task<int> Run(string[] args, CancellationToken interrupt, CancellationToken again)
     {
@@ -119,14 +120,19 @@ internal sealed class ContextPageWriteVerbs(ControlPlaneClient client, Output ou
             : Kernel.Results.Success(pages);
     }
 
-    // The text as a whole profile: a bare 'pages:' list goes under 'index:'.
+    // The text as a whole profile: a bare 'pages:' list goes under 'index:'. The top-level keys are read line by line, so a leading '---' or comments before 'pages:' don't hide them.
     private static string Wrapped(string text)
     {
         const string head = "schemaVersion: 1\nuser: pages-file\n";
-        var lines = text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n');
-        var bare = lines.Any(static l => l.StartsWith("pages:", StringComparison.Ordinal)) && !lines.Any(static l => l.StartsWith("index:", StringComparison.Ordinal));
-        return head + (bare ? "index:\n" + string.Join('\n', lines.Select(static l => l.Length == 0 ? l : "  " + l)) : text);
+        var lines = text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n')
+            .Where(static l => l.TrimEnd() is not ("---" or "...")).ToList();
+        var keys = lines.Select(static l => TopKey.Match(l)).Where(static m => m.Success).Select(static m => m.Groups["key"].Value).ToList();
+        var bare = keys.Contains("pages", StringComparer.Ordinal) && !keys.Contains("index", StringComparer.Ordinal);
+        return head + (bare ? "index:\n" + string.Join('\n', lines.Select(static l => l.Length == 0 ? l : "  " + l)) : string.Join('\n', lines));
     }
+
+    [GeneratedRegex(@"^(?<key>[A-Za-z_][A-Za-z0-9_-]*)\s*:", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex TopKey { get; }
 
     /// <summary>The final job's lines; nothing when the result isn't there or doesn't read.</summary>
     private string? Describe(JobView job)
