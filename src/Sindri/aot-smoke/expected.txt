@@ -7,6 +7,7 @@ fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 ok    build             not running from an installed build
 warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:pages     no pages named
 ok    context:roles     not configured: no approved profile
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
 ok    context:publish   no approved profile, so no map to publish
@@ -77,7 +78,7 @@ Approved HASH
 {"running":true,"apiVersion":1}
 ## /sindri/mcp initialize, then tools/list (stateless)
 "sindri"
-["context_query","context_sources","context_lenses","context_concepts","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_projects","sindri_request"]
+["context_query","context_sources","context_lenses","context_concepts","context_pages","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_projects","sindri_request"]
 ## /sindri/mcp sindri_queue, sindri_request (files as session:mcp), sindri_item (not an id), sindri_decide (no such tool)
 {"isError":null,"groups":["waitingOnYou","withYou","running","queued"]}
 {"isError":null,"request":"REQ-ID"}
@@ -229,6 +230,7 @@ fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 ok    build             not running from an installed build
 warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:pages     no pages named
 ok    context:roles     no map yet
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
 ok    context:publish   no map yet, so nothing to publish

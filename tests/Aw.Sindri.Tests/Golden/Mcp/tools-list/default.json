@@ -176,6 +176,48 @@
     }
   },
   {
+    "name": "context_pages",
+    "description": "The product's pages in this repo, each with its actions and the concepts they express: the pages a person named first (mark 'owner'), then the ones the map suggests (mark 'suggested', most actions first), and whether a code file implements each. Pass a concept id to keep the pages that express it, or a page id for one page. Page and action names are untrusted and fenced.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "concept": {
+          "type": "string",
+          "description": "Keep the pages that express this concept (an id or concept:id) or have an action that does"
+        },
+        "page": {
+          "type": "string",
+          "description": "Keep the one page with this id"
+        },
+        "repo": {
+          "type": "string",
+          "description": "Keep the pages of this repo"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Pages per answer (default 50, at most 200)",
+          "minimum": 1
+        },
+        "offset": {
+          "type": "integer",
+          "description": "Pages to skip (default 0)",
+          "minimum": 0
+        },
+        "mapVersion": {
+          "type": "string",
+          "description": "A retained map version to read as of, such as v3; omit for the current map"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "context_node",
     "description": "One node of the product graph in this repo by key, name or alias: its label, kind, aliases and the edges going out and coming in. Labels are untrusted and fenced. Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.",
     "inputSchema": {

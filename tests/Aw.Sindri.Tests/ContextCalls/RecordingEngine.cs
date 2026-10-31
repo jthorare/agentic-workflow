@@ -34,7 +34,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// Wraps the host's real context engine and records, for each query, the engine caller Sindri built and the span the call
 /// ran inside, so a test can show an MCP call took the same query chain as the HTTP route.
 /// </summary>
-internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller Caller, string? Span)> calls, Func<Context.Core.Eval.Backtest.BacktestRequest, CancellationToken, ValueTask<Result<Context.Core.Eval.Backtest.BacktestRun>>>? backtest = null, Action? beforeQueue = null, Func<ContextScope, ValueTask>? beforePromote = null) : IContextEngine
+internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller Caller, string? Span)> calls, Func<Context.Core.Eval.Backtest.BacktestRequest, CancellationToken, ValueTask<Result<Context.Core.Eval.Backtest.BacktestRun>>>? backtest = null, Action? beforeQueue = null, Func<ContextScope, ValueTask>? beforePromote = null, Func<PagesQuery, ContextScope, Result<PagesView>>? pages = null) : IContextEngine
 {
     /// <summary>Replaces the registered engine with one that records into <paramref name="calls"/>.</summary>
     /// <param name="services">The host's services.</param>
@@ -42,11 +42,12 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     /// <param name="backtest">Answers EvalBacktest instead of the real engine (a backtest needs a git history and a brief source), or null.</param>
     /// <param name="beforeQueue">Runs before each review-queue read (a test moves the clock there to stand for a slow queue build), or null.</param>
     /// <param name="beforePromote">Runs before each promote, with its scope (a test replaces the draft there, as a refresh would between the publish check and the promote), or null.</param>
-    public static void Install(IServiceCollection services, List<(ContextCaller Caller, string? Span)> calls, Func<Context.Core.Eval.Backtest.BacktestRequest, CancellationToken, ValueTask<Result<Context.Core.Eval.Backtest.BacktestRun>>>? backtest = null, Action? beforeQueue = null, Func<ContextScope, ValueTask>? beforePromote = null)
+    /// <param name="pages">Answers the pages read instead of the real engine (the page tests give the answer they need), or null.</param>
+    public static void Install(IServiceCollection services, List<(ContextCaller Caller, string? Span)> calls, Func<Context.Core.Eval.Backtest.BacktestRequest, CancellationToken, ValueTask<Result<Context.Core.Eval.Backtest.BacktestRun>>>? backtest = null, Action? beforeQueue = null, Func<ContextScope, ValueTask>? beforePromote = null, Func<PagesQuery, ContextScope, Result<PagesView>>? pages = null)
     {
         var original = services.Last(d => d.ServiceType == typeof(IContextEngine));
         _ = services.Remove(original);
-        services.Add(new ServiceDescriptor(typeof(IContextEngine), sp => new RecordingEngine(Resolve(original, sp), calls, backtest, beforeQueue, beforePromote), original.Lifetime));
+        services.Add(new ServiceDescriptor(typeof(IContextEngine), sp => new RecordingEngine(Resolve(original, sp), calls, backtest, beforeQueue, beforePromote, pages), original.Lifetime));
     }
 
     public Result<ContextSettings> CheckSettings(JsonElement? section, IReadOnlyList<ProfileRepoEntry> repos) => inner.CheckSettings(section, repos);
@@ -216,7 +217,7 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
         inner.ConceptGlossary(query, scope, cancellationToken);
 
     public ValueTask<Result<PagesView>> Pages(PagesQuery query, ContextScope scope, CancellationToken cancellationToken) =>
-        inner.Pages(query, scope, cancellationToken);
+        pages is null ? inner.Pages(query, scope, cancellationToken) : ValueTask.FromResult(pages(query, scope));
 
     public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) => inner.CheckPages(scope, cancellationToken);
 
