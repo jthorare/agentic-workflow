@@ -25,6 +25,18 @@ public sealed class ProcessGroupScopeArgvTests : IDisposable
     }
 
     [Fact]
+    public void Prepare_removes_a_group_file_left_by_an_earlier_start_even_when_this_start_then_fails()
+    {
+        var groups = _dir + "/pgroups";
+        ProcessGroupFiles.WritePgid(groups, "LCH-a", 600);
+
+        var argv = ProcessGroupScopeArgv.Prepare(groups, "LCH-a", ["true"]);   // the start itself is never run here, as if it failed at once
+
+        Assert.False(File.Exists(groups + "/LCH-a.pgid"));
+        Assert.Equal(ProcessGroupScopeArgv.Start(groups, "LCH-a", ["true"]), argv, StringComparer.Ordinal);
+    }
+
+    [Fact]
     public void A_unit_with_a_path_separator_is_refused() =>
         _ = Assert.Throws<ArgumentException>(() => ProcessGroupScopeArgv.Start("/l/pgroups", "../x", ["true"]));
 

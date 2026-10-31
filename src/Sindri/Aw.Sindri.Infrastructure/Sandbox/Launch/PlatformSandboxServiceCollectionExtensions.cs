@@ -109,7 +109,7 @@ public static class PlatformSandboxServiceCollectionExtensions
                 var pgroups = ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory);
                 return new SandboxLaunch(sp.GetRequiredService<ISandbox>(), sp.GetRequiredService<ISessionCap>(), sp.GetRequiredService<ISandboxLaunchStages>(), LaunchOptions(sp, environment) with
                 {
-                    Scope = (launch, _, inner) => ProcessGroupScopeArgv.Start(pgroups, launch.Value, inner),
+                    Scope = (launch, _, inner) => ProcessGroupScopeArgv.Prepare(pgroups, launch.Value, inner),
                     UnitFor = static launch => launch.Value,
                 });
             });

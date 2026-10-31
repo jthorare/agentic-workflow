@@ -19,4 +19,16 @@ internal static class ProcessGroupScopeArgv
         var file = ProcessGroupFiles.PgidPath(pgroupsDirectory, unit) ?? throw new ArgumentException("the unit is not a file name", nameof(unit));
         return ["/bin/sh", "-c", Script, "sh", file, .. inner];
     }
+
+    /// <summary>Removes the unit's group id file left by an earlier start, then builds the command: if this start fails before it writes its own, a stale id must not name an unrelated group.</summary>
+    /// <param name="pgroupsDirectory">The folder of the group files (<see cref="ProcessGroupFiles.Directory"/>).</param>
+    /// <param name="unit">The unit: the launch id.</param>
+    /// <param name="inner">The command to run (the sandbox-exec command).</param>
+    /// <returns>The argv.</returns>
+    internal static IReadOnlyList<string> Prepare(string pgroupsDirectory, string unit, IReadOnlyList<string> inner)
+    {
+        var argv = Start(pgroupsDirectory, unit, inner);
+        ProcessGroupFiles.Remove(pgroupsDirectory, unit);
+        return argv;
+    }
 }
