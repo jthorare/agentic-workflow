@@ -43,4 +43,19 @@ public sealed class NonLatinPageIdsTests
     [Fact, Trait("Lane", "unit")]
     public void A_blank_name_still_gets_page() =>
         Assert.Equal("page", PageSlugs.Of("  "));
+
+    [Fact, Trait("Lane", "unit")]
+    public void Mixed_names_that_differ_only_in_non_latin_letters_get_different_ids()
+    {
+        var japanese = PageSlugs.Of("日本語 v2");
+        var chinese = PageSlugs.Of("中文 v2");
+
+        Assert.NotEqual(japanese, chinese, StringComparer.Ordinal);
+        Assert.True(PageId.TryFrom(japanese, out _));
+        Assert.True(PageId.TryFrom(chinese, out _));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_ascii_name_keeps_its_slug() =>
+        Assert.Equal("schedule-week", PageSlugs.Of("Schedule week"));
 }
