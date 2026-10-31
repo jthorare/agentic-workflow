@@ -15,7 +15,8 @@
         "decisions": 0,
         "code": 1
       },
-      "citations": []
+      "citations": [],
+      "pages": 0
     },
     {
       "id": "concept:scheduling",
@@ -32,7 +33,8 @@
         {
           "key": "repo:aw-split-panes/docs/scheduling.md"
         }
-      ]
+      ],
+      "pages": 0
     }
   ],
   "other": {
