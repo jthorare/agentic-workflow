@@ -73,7 +73,10 @@ internal sealed class PinSeveralFixtures
 
     internal static PinSuggestView WithFeatures(PinSuggestTerm[] terms, params PinSuggestFeature[] features) => new(1, "api", "v1", terms, features, Matches: null);
 
-    internal PinSheetOpen Open() => new("api", Card: null, Pin: null, Pins, Several: true);
+    /// <summary>The profile file hash the page's pins read gave the sheet; null when the page had none.</summary>
+    internal string? OpenFileHash { get; set; } = FileHash;
+
+    internal PinSheetOpen Open() => new("api", Card: null, Pin: null, Pins, Several: true, FileHash: OpenFileHash);
 
     internal PinSeveralViewModel Sheet(Action? close = null, Func<CancellationToken, Task<string?>>? hash = null) =>
         new(Open(), Layer, Api, () => Url, new ProfileWriteFlow(Api, () => Url, Clock), close ?? (() => { }), hash);
