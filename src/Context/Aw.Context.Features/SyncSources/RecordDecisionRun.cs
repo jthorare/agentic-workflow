@@ -20,7 +20,7 @@ namespace Aw.Context.Features.SyncSources;
 /// extraction, whatever the map version: one model call per record version, so a replay and a map rebuild ask the model about nothing for unchanged records. Their intent links stay as last
 /// computed (the map build links owned records to code and features itself, RecordPass) and are refreshed when the record changes. The intent source cursor is left alone (the page's cursor is null).
 /// </summary>
-internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (ContextSettings Settings, Scrubbers Scrubbers) context, (IRecordStore Records, IIntentStore Intents, IModelPort Model, TimeProvider Clock) ports)
+internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (ContextSettings Settings, Scrubbers Scrubbers) context, (IRecordStore Records, IIntentStore Intents, IModelPort Model, TimeProvider Clock) ports, IReadOnlyList<PinAliases> pins)
 {
     private const int PageSize = 100;
 
@@ -143,7 +143,7 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
         var record = new IntentRecord(stored.Key, source, stored.Version.Value, stored.Title, Aliases(stored)) { CreatedAt = stored.CreatedAt };
         var before = known.GetValueOrDefault(record.Key.Value);
         known[record.Key.Value] = record;
-        var found = RulesLinker.Link(record.Key, text, map.Graph, [.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal));
+        var found = RulesLinker.Link(record.Key, text, map.Graph, ([.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal)), pins);
         _fetched++;
         _linked += found.Count;
         _unlinked += found.Count == 0 ? 1 : 0;

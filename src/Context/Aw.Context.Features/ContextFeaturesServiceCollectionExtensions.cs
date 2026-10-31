@@ -12,6 +12,7 @@ using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
@@ -65,6 +66,7 @@ using Aw.Context.Features.PurgeMap;
 using Aw.Context.Features.QueryContext;
 using Aw.Context.Features.RefreshDocs;
 using Aw.Context.Features.ReleaseMap;
+using Aw.Context.Features.RelinkPinAliases;
 using Aw.Context.Features.ReviewHistory;
 using Aw.Context.Features.ReviewMap;
 using Aw.Context.Features.ReviewQueue;
@@ -114,7 +116,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddMapHeads().AddProjectFacts().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
+        return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
 
     private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();
@@ -185,6 +187,9 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<ShowPublishStatusRequest, MapPublishView>, ShowPublishStatusService>();
 
     // The repo heads the map watcher reads (F1).
+    private static IServiceCollection AddRelinkPinAliases(this IServiceCollection services) =>
+        services.AddScoped<IService<RelinkPinAliasesRequest, RelinkPinAliasesResult>, RelinkPinAliasesService>();
+
     private static IServiceCollection AddMapHeads(this IServiceCollection services) =>
         services.AddScoped<IService<MapHeadsRequest, IReadOnlyList<RepoHead>>, MapHeadsService>();
 
