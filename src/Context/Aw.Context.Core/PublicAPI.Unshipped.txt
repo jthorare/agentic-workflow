@@ -8128,7 +8128,7 @@ Aw.Context.Core.Map.MapPublishState.CurrentRuleset.get -> string?
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.init -> void
 Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?
 Aw.Context.Core.Map.MapVersion.Ruleset.init -> void
-const Aw.Context.Core.Map.MapRuleset.RulesVersion = "2" -> string!
+const Aw.Context.Core.Map.MapRuleset.RulesVersion = "3" -> string!
 Aw.Context.Core.Map.MapRuleset
 static Aw.Context.Core.Map.MapRuleset.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> string!
 Aw.Context.Core.Map.MapImport.Ruleset.get -> string?
