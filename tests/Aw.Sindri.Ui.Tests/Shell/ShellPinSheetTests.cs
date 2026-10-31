@@ -76,4 +76,18 @@ public sealed class ShellPinSheetTests
         Assert.Equal((false, false, null), (shell.IsSheetOpen, shell.IsPinSheet, shell.PinSheetContent));
         Assert.False(Assert.Single(told).Written);
     }
+
+    [Fact]
+    public async Task Esc_on_Add_several_with_a_typed_box_asks_to_discard_and_leaves_the_sheet_open()
+    {
+        var shell = await Shell();
+        shell.OpenPinSheet(new PinSheetOpen("api", Card: null, Pin: null, Pins: [], Several: true));
+        var several = Assert.IsType<PinSeveralViewModel>(shell.PinSheetContent);
+        several.Text = "Payments: how we take money";
+
+        Assert.True(shell.EscapePinSeveral());
+
+        Assert.True(shell.IsSheetOpen);
+        Assert.True(several.IsConfirmingDiscard);
+    }
 }

@@ -41,24 +41,34 @@ internal sealed partial class ShellViewModel
     // Add several: the concept layer's cards match the list's lines; a write that landed closes the sheet and tells the layer.
     private void OpenSeveral(PinSheetOpen open)
     {
-        var several = new PinSeveralViewModel(open, open.Concepts ?? [], _api, Health.ApiUrl, new ProfileWriteFlow(_api, Health.ApiUrl, _clock), () => ClosePinSheet(written: true));
+        var several = new PinSeveralViewModel(open, open.Concepts ?? [], _api, Health.ApiUrl, new ProfileWriteFlow(_api, Health.ApiUrl, _clock), () => ClosePinSheet(written: !_severalEscaping));
         (ActivePinSheet, PinSheetContent) = (null, several);
         OpenSheet(DeepLink.PinSheet);
         Changed(nameof(ActivePinSheet), nameof(PinSheetContent));
         _ = several.StartAsync(CancellationToken.None);
     }
 
-    /// <summary>Esc on the sheet's slot: Add several closes without writing.</summary>
-    /// <returns>True when the slot was Add several's and it closed.</returns>
+    // Esc closes Add several through its own close action: that close wrote nothing.
+    private bool _severalEscaping;
+
+    /// <summary>Esc on the sheet's slot: Add several answers its question, asks before throwing changes away, or closes without writing.</summary>
+    /// <returns>True when the slot was Add several's and Esc was spent on it.</returns>
     internal bool EscapePinSeveral()
     {
-        if (PinSheetContent is not PinSeveralViewModel)
+        if (PinSheetContent is not PinSeveralViewModel several)
         {
             return false;
         }
 
-        ClosePinSheet(written: false);
-        return true;
+        _severalEscaping = true;
+        try
+        {
+            return several.Escape();
+        }
+        finally
+        {
+            _severalEscaping = false;
+        }
     }
 
     private void OnPinSheetOpened() => Changed(nameof(IsPinSheet), nameof(SheetTitleIsMono));
