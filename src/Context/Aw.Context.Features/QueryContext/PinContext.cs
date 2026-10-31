@@ -20,10 +20,18 @@ internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<Co
     /// <summary>The context of a query with no pins in play.</summary>
     internal static PinContext None { get; } = new(PinSet.Empty, Scope: null, [], StaleNote: null);
 
+    /// <summary>The pins whose aliases anchor a name or a question.</summary>
+    /// <param name="settings">The profile's context section.</param>
+    /// <param name="repos">The caller's repos.</param>
+    /// <param name="graph">The map the caller may read.</param>
+    /// <returns>The pins; null (so nothing is read) when no mapped repo has a pin with an alias.</returns>
+    internal static PinSet? AliasPins(ContextSettings settings, IReadOnlyList<ContextRepo> repos, GraphSnapshot graph) =>
+        ScopeRules.Mapped(settings, repos) is var mapped && mapped.Any(r => r.Concepts.Any(c => c.Aliases.Count > 0)) ? PinSet.Of(mapped, repos, graph) : null;
+
     /// <summary>Resolves the pins of a query.</summary>
     /// <param name="mapped">The repos the map is built from.</param>
     /// <param name="visible">The repos the caller may read.</param>
-    /// <param name="map">The map the query read (its whole stored graph), or null when there is none.</param>
+    /// <param name="map">The map the query read (what the caller sees decides what a pin holds; the stored graph says whether the map has the pin), or null when there is none.</param>
     /// <param name="concept">The pin <c xml:lang="en">concept=</c> names, or null.</param>
     /// <param name="anchors">The anchors' keys.</param>
     /// <returns>The context; SND-CONTEXT-105 when <paramref name="concept"/> is set and there is no map; 102 to 104 from the pin lookup.</returns>
@@ -39,8 +47,7 @@ internal sealed record PinContext(PinSet Pins, PinScope? Scope, IReadOnlyList<Co
             return concept is null ? None : ContextErrors.PinNeedsMap.With("concept= needs a built map (fix: sindri context map build)");
         }
 
-        var graph = map.Snapshot.Graph;
-        var pins = PinSet.Of(mapped, visible, graph);
+        var pins = PinSet.Of(mapped, visible, map.Graph, map.Snapshot.Graph);
         PinScope? named = null;
         if (concept is not null)
         {
