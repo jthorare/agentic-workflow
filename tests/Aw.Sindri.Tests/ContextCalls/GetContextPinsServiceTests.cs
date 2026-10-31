@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
@@ -19,7 +20,6 @@ public sealed class GetContextPinsServiceTests
     private readonly SliceHarness _h = new();
     private readonly InMemoryJobViews _jobs = new();
     private readonly HeadsEngineProxy _engine = HeadsEngineProxy.Create();
-    private MapRebuildStatus _rebuild = MapRebuildStatus.Idle;
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -40,9 +40,11 @@ public sealed class GetContextPinsServiceTests
     private async Task<Result<ContextPinsView>> Read(LoadedProfile approved, LoadedProfile live, string? repo = null)
     {
         _h.Clock.SetUtcNow(_now);
+        _engine.Heads = _engine.Heads.Count == 0 ? [new RepoHead(ContextRepoName.From("alpha"), "1", OnDefault: true)] : _engine.Heads;
         _ = await _h.Profiles.Save(approved, Ct);
         _h.Profiles.Live = live;
-        var service = new GetContextPinsService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _h.Profiles, _h.Profiles, new FixedRebuild(this), _jobs);
+        var scopes = new ContextScopes(_h.Profiles, _h.Callers);
+        var service = new GetContextPinsService(scopes, _engine.Proxy, _h.Profiles, _h.Profiles, new MapRebuildState(scopes, () => _engine.Proxy, _jobs, _h.Clock), _jobs);
         return await service.Handle(new GetContextPinsRequest(repo), Ct);
     }
 
@@ -98,7 +100,8 @@ public sealed class GetContextPinsServiceTests
         var other = await Read(profile, profile, repo: "beta");
 
         Assert.True(read.IsSuccess, read.IsError ? read.Error.Message : null);
-        Assert.Equal(("alpha", ["shared", "alpha-only"]), (read.Value.Repo, read.Value.Pins.Select(p => p.Id).ToArray()));
+        Assert.Equal("alpha", read.Value.Repo);
+        Assert.Equal(["shared", "alpha-only"], read.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
         Assert.Equal("repo alpha", read.Value.Pins[1].SetIn);
         Assert.Equal(ContextErrors.RepoOutsideScope.Code, other.Error.Code);   // naming another repo is refused, never answered
     }
@@ -123,8 +126,10 @@ public sealed class GetContextPinsServiceTests
         var all = await Read(profile, profile);
         var beta = await Read(profile, profile, repo: "beta");
 
-        Assert.Equal((null, ["shared", "alpha-only", "beta-only"]), (all.Value.Repo, all.Value.Pins.Select(p => p.Id).ToArray()));
-        Assert.Equal(("beta", ["shared", "beta-only"]), (beta.Value.Repo, beta.Value.Pins.Select(p => p.Id).ToArray()));
+        Assert.Null(all.Value.Repo);
+        Assert.Equal(["shared", "alpha-only", "beta-only"], all.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
+        Assert.Equal("beta", beta.Value.Repo);
+        Assert.Equal(["shared", "beta-only"], beta.Value.Pins.Select(p => p.Id), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -152,21 +157,21 @@ public sealed class GetContextPinsServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task The_rebuild_phase_progress_and_retry_come_from_the_rebuild_state()
+    public async Task The_rebuild_phase_comes_from_the_refresh_jobs_and_the_heads()
     {
         var profile = Loaded(Human, [], "same");
-        var retry = _now.AddMinutes(10);
-        _rebuild = new MapRebuildStatus(MapRebuildPhase.Backoff) { RetryAt = retry };
-
-        var backoff = await Read(profile, profile);
-        _rebuild = new MapRebuildStatus(MapRebuildPhase.Building) { Progress = "resolving calls" };
-        var building = await Read(profile, profile);
-        _rebuild = new MapRebuildStatus(MapRebuildPhase.NoMainBranch);
+        _engine.Heads = [new RepoHead(ContextRepoName.From("alpha"), "1", OnDefault: false)];
         var none = await Read(profile, profile);
+        _engine.Heads = [new RepoHead(ContextRepoName.From("alpha"), "1", OnDefault: true)];
+        Refresh(JobState.Failed, TimeSpan.FromMinutes(1), 1, "SND-CONTEXT-030");
+        var backoff = await Read(profile, profile);
+        Refresh(JobState.Running, TimeSpan.Zero, 2);
+        var building = await Read(profile, profile);
 
-        Assert.Equal(("backoff", retry), (backoff.Value.Rebuild.Phase, backoff.Value.Rebuild.RetryAt));
-        Assert.Equal(("building", "resolving calls"), (building.Value.Rebuild.Phase, building.Value.Rebuild.Progress));
         Assert.Equal("noMainBranch", none.Value.Rebuild.Phase);
+        Assert.Equal("backoff", backoff.Value.Rebuild.Phase);
+        Assert.True(backoff.Value.Rebuild.RetryAt is not null);
+        Assert.Equal("building", building.Value.Rebuild.Phase);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -229,9 +234,4 @@ public sealed class GetContextPinsServiceTests
     private void Refresh(JobState state, TimeSpan endedAgo, long sequence, string? code = null) =>
         _jobs.Put(new JobRow(JobId.New(_h.Ids), ContextMapRefreshService.RefreshKind, JobKey.From("refresh"), Item: null, Repo: null, Service: null, state,
             "service:context-map-refresh", _now - endedAgo - TimeSpan.FromSeconds(5), _now - endedAgo, [], Rounds: 0, Summary: null, code, Result: null, CancelledBy: null, Sequence: sequence));
-
-    private sealed class FixedRebuild(GetContextPinsServiceTests test) : IMapRebuildState
-    {
-        public ValueTask<MapRebuildStatus> Read(CancellationToken cancellationToken) => ValueTask.FromResult(test._rebuild);
-    }
 }

@@ -16,7 +16,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// The repo scope is the engine's (<see cref="RepoAddressing"/>): a session sees the profile's pins and its own repo's only. A pin's <c xml:lang="en">change</c> compares the approved entry's hash with the one the
 /// current map stored for that pin (<see cref="PinChanges"/>); a map that stored none leaves it null.
 /// </summary>
-internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine engine, IProfileSource live, IApprovedProfile approved, IMapRebuildState rebuild, IJobViews jobs) : IService<GetContextPinsRequest, ContextPinsView>
+internal sealed class GetContextPinsService(ContextScopes scopes, IContextEngine engine, IProfileSource live, IApprovedProfile approved, MapRebuildState rebuild, IJobViews jobs) : IService<GetContextPinsRequest, ContextPinsView>
 {
     public async ValueTask<Result<ContextPinsView>> Handle(GetContextPinsRequest request, CancellationToken cancellationToken)
     {
