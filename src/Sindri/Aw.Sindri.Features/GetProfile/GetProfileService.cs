@@ -31,16 +31,17 @@ internal sealed class GetProfileService(IViewReader views, IProjectorStatus stat
         }
 
         var changed = row.Value?.Changed == true;
-        var summary = latest.IsSuccess && (changed || latest.Value is null) ? await Summarise(latest.Value?.Profile, cancellationToken).ConfigureAwait(false) : null;
+        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);   // the file as it is now: one load serves the file hash and the summary
+        var fileHash = loaded.IsSuccess ? loaded.Value.Hash : (ProfileHash?)null;
+        var summary = latest.IsSuccess && (changed || latest.Value is null) ? await Summarise(latest.Value?.Profile, loaded, cancellationToken).ConfigureAwait(false) : null;
         return row.Value is { } r
-            ? new GetProfileResponse(r.Approved, r.ApprovedAt, r.Live, r.CheckedAt, r.Changed, r.ChangedPaths, asOf, packs, summary)
-            : new GetProfileResponse(Approved: null, ApprovedAt: null, Live: null, CheckedAt: null, Changed: false, ChangedPaths: [], asOf, packs, summary);
+            ? new GetProfileResponse(r.Approved, r.ApprovedAt, r.Live, fileHash, r.CheckedAt, r.Changed, r.ChangedPaths, asOf, packs, summary)
+            : new GetProfileResponse(Approved: null, ApprovedAt: null, Live: null, fileHash, CheckedAt: null, Changed: false, ChangedPaths: [], asOf, packs, summary);
     }
 
     // Null when the live profile does not load (the problem shows elsewhere) or asks for nothing new.
-    private async ValueTask<ProfileSummary?> Summarise(SindriProfile? approvedProfile, CancellationToken cancellationToken)
+    private async ValueTask<ProfileSummary?> Summarise(SindriProfile? approvedProfile, Result<LoadedProfile> loaded, CancellationToken cancellationToken)
     {
-        var loaded = await live.Load(cancellationToken).ConfigureAwait(false);
         if (loaded.IsError)
         {
             return null;
