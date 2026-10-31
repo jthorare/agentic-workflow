@@ -9,6 +9,9 @@ public sealed class ConceptQueryTests : IDisposable
 {
     private const string Manager = "feature:tabs.tab-manager";
     private const string Invoices = "feature:billing.invoices";
+
+    // The imported map predates the pins, so the stale-map note comes first (spec §3.1), before the pin notes.
+    private const string Stale = "pins changed after map v1 was built and the refresh for them didn't finish (fix: Refresh map on the Context page, or sindri context map refresh)";
     private readonly MapWorld _world = new();
 
     public void Dispose() => _world.Dispose();
@@ -41,7 +44,7 @@ public sealed class ConceptQueryTests : IDisposable
         var result = (await _world.Engine.Query(new ContextQuery(Text: null, Node: Manager) { Concept = "tabs" }, Scope("tabs", "billing"), MapWorld.None)).Value;
 
         Assert.Equal("tabs", result.Query.Concept);
-        Assert.Equal("scoped to concept tabs (map v1)", result.Notes?[0]);
+        Assert.Equal([Stale, "scoped to concept tabs (map v1)"], result.Notes?.Take(2), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -51,7 +54,7 @@ public sealed class ConceptQueryTests : IDisposable
 
         var result = (await _world.Engine.Query(new ContextQuery(Text: null, Node: Invoices) { Concept = "tabs" }, Scope("tabs", "billing"), MapWorld.None)).Value;
 
-        Assert.Equal(["scoped to concept tabs (map v1)", "anchor concept:billing is outside concept tabs, so its lens shows only tabs's part"], result.Notes?.Take(2), StringComparer.Ordinal);
+        Assert.Equal([Stale, "scoped to concept tabs (map v1)", "anchor concept:billing is outside concept tabs, so its lens shows only tabs's part"], result.Notes?.Take(3), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
