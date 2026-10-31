@@ -9,8 +9,9 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 /// <param name="Pins">Every pin of the live profile (refused words, Add several's "Updates your pin" rows).</param>
 /// <param name="Several">Add several rather than one pin.</param>
 /// <param name="Concepts">The concept layer's cards, for Add several's matching; null reads as none.</param>
+/// <param name="FileHash">The profile file's hash from the same pins read as <paramref name="Pins"/> and <paramref name="Pin"/>: the write's ifHash, so a file changed after the page read them is refused. Null when the page has no pins read; the sheet then writes nothing.</param>
 #pragma warning disable MA0182 // Q7b: the concept layer and the shell use it in the next commits
-internal sealed record PinSheetOpen(string Repo, ConceptTileViewModel? Card, PinView? Pin, IReadOnlyList<PinView> Pins, bool Several = false, IReadOnlyList<ConceptTileViewModel>? Concepts = null)
+internal sealed record PinSheetOpen(string Repo, ConceptTileViewModel? Card, PinView? Pin, IReadOnlyList<PinView> Pins, bool Several = false, IReadOnlyList<ConceptTileViewModel>? Concepts = null, string? FileHash = null)
 {
     /// <summary>New pin: neither a card nor a pin.</summary>
     internal bool IsNew => Card is null && Pin is null && !Several;

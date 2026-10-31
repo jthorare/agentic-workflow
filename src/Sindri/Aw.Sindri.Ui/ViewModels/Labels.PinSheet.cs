@@ -129,6 +129,9 @@ internal static partial class Labels
     /// <summary>Under the button: the profile moved while the sheet was open.</summary>
     internal static string PinSheetClash(string button) => "The settings changed while you were editing. Your changes are still here. Press " + button + " again.";
 
+    /// <summary>Under the button: the page has no pins read, so there is no file hash to write against.</summary>
+    internal const string PinSheetNoHash = "Couldn't read your pins just now. Close this and open it again.";
+
     /// <summary>Under the button: the write ran past the wait.</summary>
     internal const string PinSheetTimedOut = "The pin write is still running. Check Jobs, then try again.";
 

@@ -90,7 +90,7 @@ internal sealed partial class ConceptLayerViewModel
 
     /// <summary>Pin this: hands the shell the derived card.</summary>
     /// <param name="tile">The card.</param>
-    internal void PinThis(ConceptTileViewModel tile) => Open(new PinSheetOpen(_repo(), tile, Pin: null, PinList, Concepts: Composed), PinFocus.PinThis, tile);
+    internal void PinThis(ConceptTileViewModel tile) => Open(new PinSheetOpen(_repo(), tile, Pin: null, PinList, Concepts: Composed, FileHash: _pins?.FileHash), PinFocus.PinThis, tile);
 
     /// <summary>Edit pin: hands the shell the card's pin.</summary>
     /// <param name="tile">The card.</param>
@@ -99,15 +99,15 @@ internal sealed partial class ConceptLayerViewModel
         ArgumentNullException.ThrowIfNull(tile);
         if (tile.Card.Pin is { } pin)
         {
-            Open(new PinSheetOpen(_repo(), Card: null, pin, PinList, Concepts: Composed), PinFocus.EditPin, tile);
+            Open(new PinSheetOpen(_repo(), Card: null, pin, PinList, Concepts: Composed, FileHash: _pins?.FileHash), PinFocus.EditPin, tile);
         }
     }
 
     /// <summary>New pin: the sheet from nothing.</summary>
-    internal void NewPin() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Concepts: Composed), PinFocus.NewPin, tile: null);
+    internal void NewPin() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Concepts: Composed, FileHash: _pins?.FileHash), PinFocus.NewPin, tile: null);
 
     /// <summary>Add several: the sheet for a list.</summary>
-    internal void AddSeveral() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Several: true, Concepts: Composed), PinFocus.AddSeveral, tile: null);
+    internal void AddSeveral() => Open(new PinSheetOpen(_repo(), Card: null, Pin: null, PinList, Several: true, Concepts: Composed, FileHash: _pins?.FileHash), PinFocus.AddSeveral, tile: null);
 
     /// <summary>The footer button of a card.</summary>
     /// <param name="tile">The card.</param>
