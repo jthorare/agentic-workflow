@@ -86,6 +86,24 @@ public sealed class PreviewPagesServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_block_that_replaces_an_owner_page_keeps_its_actions_ids()
+    {
+        var owner = new PageSettings(PagePinId.From("week-page"), "Week page", Actions:
+        [
+            new PageActionSettings(PageActionPinId.From("send-it"), "Submit schedule", "action:WeekPage.submit"),
+            new PageActionSettings(PageActionPinId.From("my-swap"), "Swap shift"),
+        ]);
+        var service = await Service(new SindriProfile(1, "thor", Index: new IndexSettings(Pages: [owner])));
+        _engine.Answer = View([new PageRow(PageId.From("week-page"), NodeKey.From("surface:route/GET:/week"), "Week page", Repo: "app", Mark: "owner", Code: true, Actions: [])]);
+
+        var answer = await service.Handle(new PreviewPagesRequest("Week page\nSubmit schedule\nSwap shift\nAdd note"), Ct);
+
+        var page = answer.Value.Blocks[0].Page;
+        Assert.Equal("week-page", answer.Value.Blocks[0].Replaces?.Value);
+        Assert.Equal("send-it|my-swap|", string.Join('|', page?.Actions?.Select(static a => a.Id?.Value) ?? []));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_row_that_is_not_added_has_no_page_and_says_why()
     {
         var answer = await (await Service()).Handle(new PreviewPagesRequest("Schedule week\n\nSchedule week\nPay -> aproval"), Ct);
