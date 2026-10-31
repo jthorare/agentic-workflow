@@ -248,6 +248,56 @@ public sealed class ProfileWriteFlowTests
         _ = Assert.Single(api.PagesSet);
     }
 
+    // The 202 of a job start comes before the jobs view has the job, so a read right after it can say SND-JOB-404; that is "not yet", not the end.
+    [Fact]
+    public async Task A_job_not_found_right_after_the_start_is_read_again()
+    {
+        var clock = new FakeTimeProvider(A.Noon);
+        var api = Server(Profile("h1", "index.pages.schedule-week"));
+        api.JobAnswers[JobId] = RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-JOB-404", "No such job (fix: run `sindri jobs` to list them)");
+        var run = Run(Flow(api, clock), api);
+
+        while (api.JobCalls < 2 && !run.IsCompleted)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(250));
+            await Task.Yield();
+        }
+
+        api.JobAnswers[JobId] = new RouteAnswer(HttpStatusCode.OK, Job("succeeded", code: null, summary: null, hash: "h1"));
+        while (!run.IsCompleted)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(250));
+            await Task.Yield();
+        }
+
+        var written = await run;
+        Assert.Equal(ProfileWriteState.Approved, written.State);
+        Assert.Equal("h1", written.Hash);
+    }
+
+    // "Not found" right after the start is "not yet", but only for so long: after 8 reads (2 s of polls) the server's own error ends the wait.
+    [Fact]
+    public async Task A_job_still_not_found_after_two_seconds_reads_as_still_running()
+    {
+        const string Sentence = "No such job (fix: run `sindri jobs` to list them)";
+        var clock = new FakeTimeProvider(A.Noon);
+        var api = Server(Profile("h1", "index.pages.schedule-week"));
+        api.JobAnswers[JobId] = RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-JOB-404", Sentence);
+        var run = Run(Flow(api, clock), api);
+
+        while (!run.IsCompleted)
+        {
+            clock.Advance(TimeSpan.FromMilliseconds(250));
+            await Task.Yield();
+        }
+
+        var written = await run;
+        Assert.Equal(ProfileWriteState.Failed, written.State);
+        Assert.Equal(ProfileWriteFlow.TimedOut, written.Code);
+        Assert.Null(written.Message);
+        Assert.Equal(8, api.JobCalls);
+    }
+
     [Fact]
     public async Task Keeps_polling_a_job_parked_on_a_signal()
     {
