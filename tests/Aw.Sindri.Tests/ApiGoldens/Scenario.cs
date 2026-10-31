@@ -51,7 +51,7 @@ internal sealed class Scenario(GoldenHost host)
     {
         ct.ThrowIfCancellationRequested();
         var body = JsonSerializer.Serialize(new Dictionary<string, object?>(StringComparer.Ordinal) { ["text"] = text });
-        return (await host.Http.Ask(Post("/sindri/context/pages/preview", body, AppHeaders()))).Body;
+        return (await host.Http.Ask(CallerRequests.Query("/sindri/context/pages/preview", body, AppHeaders()))).Body;
     }
 
     /// <summary>Lets the views follow the ledger (the golden host hosts no projector), then GET as the app: what the profile's approval row says is there.</summary>

@@ -22,6 +22,7 @@ public sealed class PreviewPagesServiceTests
     private readonly SliceHarness _h = new();
     private readonly PagesEngineProxy _engine = PagesEngineProxy.Create();
     private readonly MapFacts _map = new();
+    private ProfileHash _hash;
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -37,7 +38,8 @@ public sealed class PreviewPagesServiceTests
     {
         _ = await _h.Profiles.Save(SliceHarness.Profile(), Ct);
         var profile = live ?? new SindriProfile(1, "thor");
-        _h.Profiles.Live = new LoadedProfile(profile, ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json)), "/home/profile.yaml");
+        _hash = ProfileHashing.Of(AwJson.Serialize(profile, SliceHarness.Json));
+        _h.Profiles.Live = new LoadedProfile(profile, _hash, "/home/profile.yaml");
         _engine.Answer = View([Suggested("schedule-week", "Schedule week", Week, Submit())]);
         return new PreviewPagesService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _h.Profiles, _map);
     }
@@ -54,6 +56,14 @@ public sealed class PreviewPagesServiceTests
         var second = answer.Value.Blocks[1];
         Assert.Equal((2, 5, true, null), (second.Block, second.Line, second.Ticked, second.Match?.Key.Value));
         Assert.Equal(("Billing", null), (second.Page?.Name, second.Page?.Surface));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_answer_carries_the_hash_of_the_live_profile_it_read()
+    {
+        var answer = await (await Service()).Handle(new PreviewPagesRequest("Home"), Ct);
+
+        Assert.Equal(_hash, answer.Value.ProfileHash);
     }
 
     [Fact, Trait("Lane", "unit")]

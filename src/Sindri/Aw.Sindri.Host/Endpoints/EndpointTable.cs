@@ -121,6 +121,7 @@ internal static class EndpointTable
         _ = queries.MapGetContextSubgraph();
         _ = queries.MapSearchContextMap();
         _ = queries.MapGetContextCode();
+        _ = queries.MapPreviewContextPages();
         _ = queries.MapGetContextEvalMap();
         _ = queries.MapGetContextMap();
         _ = queries.MapGetContextWholeMap();
@@ -155,7 +156,6 @@ internal static class EndpointTable
         _ = commands.MapRebuildViews();
         _ = commands.MapImportContextMap();
         _ = commands.MapPromoteContextMap().MapCheckContextMapStructure().MapPurgeIndexSource();
-        _ = commands.MapPreviewContextPages();
         _ = commands.MapProposeContextMap();
         _ = commands.MapReviewContextMap();
         _ = commands.MapShowLineHoldout();

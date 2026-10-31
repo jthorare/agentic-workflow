@@ -36,13 +36,13 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
             return read.Error;
         }
 
-        var (pages, version, profile, map) = read.Value;
+        var (pages, version, profile, hash, map) = read.Value;
         var rows = PageListPreview.Of(PageListText.Parse(request.Text), pages, Concepts(profile, map));
-        return new PagesPreview(map.Version ?? version, [.. rows.Select(r => Block(r, request.Repo))]);
+        return new PagesPreview(map.Version ?? version, hash, [.. rows.Select(r => Block(r, request.Repo))]);
     }
 
     // The repo, the caller's scope, every page it may read, the live profile and the map's facts; the first refusal stops.
-    private async ValueTask<Result<(List<PageRow> Pages, string Version, SindriProfile Profile, MapPageFacts Map)>> Read(string? repoText, CancellationToken cancellationToken)
+    private async ValueTask<Result<(List<PageRow> Pages, string Version, SindriProfile Profile, ProfileHash Hash, MapPageFacts Map)>> Read(string? repoText, CancellationToken cancellationToken)
     {
         var repo = GetContextPagesService.Repo(repoText);
         var scope = await scopes.Current(cancellationToken).ConfigureAwait(false);
@@ -59,7 +59,7 @@ internal sealed class PreviewPagesService(ContextScopes scopes, IContextEngine e
             return pages.IsError ? pages.Error : profile.IsError ? profile.Error : map.Error;
         }
 
-        return (pages.Value.Rows, pages.Value.MapVersion, profile.Value.Profile, map.Value);
+        return (pages.Value.Rows, pages.Value.MapVersion, profile.Value.Profile, profile.Value.Hash, map.Value);
     }
 
     private static Error? Check(string? text)

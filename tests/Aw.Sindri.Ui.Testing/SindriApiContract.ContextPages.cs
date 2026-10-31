@@ -15,6 +15,7 @@ public abstract partial class SindriApiContract
         var view = (await api.ContextPagesPreview(_api, "Schedule week\nSubmit schedule", "aw-split-panes", Token)).Value;
 
         Expect.Equal(("v41", 2), (view.MapVersion, view.Blocks.Count));
+        Expect.True(view.ProfileHash.Length > 0);
         var first = view.Blocks[0];
         Expect.Equal((1, true, "surface:route/GET:/schedule/week", 4), (first.Block, first.Ticked, first.Match!.Key, first.Match.Actions));
         Expect.Equal("action:WeekPage.submit", first.Page!.Actions[0].Action);

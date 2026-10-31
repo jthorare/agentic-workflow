@@ -6,7 +6,7 @@ namespace Aw.Sindri.Ui.Api;
 /// <summary>The app's read of a pasted page list (<see cref="ISindriApi"/>, continued).</summary>
 internal partial interface ISindriApi
 {
-    /// <summary>POST /sindri/context/pages/preview: reads a pasted list of pages against the map's pages and concepts; writes nothing. A server without the route answers 404, which the sheet reads as "can't read the list".</summary>
+    /// <summary>QUERY /sindri/context/pages/preview: reads a pasted list of pages against the map's pages and concepts; writes nothing. A server without the route answers 404, which the sheet reads as "can't read the list".</summary>
     /// <param name="api">The base URL.</param>
     /// <param name="text">The paste (1 to 65,536 UTF-8 bytes).</param>
     /// <param name="repo">The repo to read and fill in, or null.</param>

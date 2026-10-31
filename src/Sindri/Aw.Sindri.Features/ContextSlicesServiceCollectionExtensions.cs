@@ -92,7 +92,7 @@ internal static class ContextSlicesServiceCollectionExtensions
     // The reads that follow the lenses: the eval, proposals and review queries.
     private static IServiceCollection AddContextReads(this IServiceCollection services)
     {
-        _ = services.AddScoped<IValidator<PreviewPagesRequest>, AcceptAllValidator<PreviewPagesRequest>>().AddCommand<PreviewPagesRequest, PagesPreview, PreviewPagesService>();
+        _ = services.AddScoped<IValidator<PreviewPagesRequest>, AcceptAllValidator<PreviewPagesRequest>>().AddQuery<PreviewPagesRequest, PagesPreview, PreviewPagesService>();
         _ = services.AddScoped<IValidator<GetContextEvalMapRequest>, AcceptAllValidator<GetContextEvalMapRequest>>().AddQuery<GetContextEvalMapRequest, MapQualityRun, GetContextEvalMapService>();
         _ = services.AddScoped<IValidator<GetContextProposalsRequest>, AcceptAllValidator<GetContextProposalsRequest>>().AddQuery<GetContextProposalsRequest, ProposalsView, GetContextProposalsService>();
         _ = services.AddScoped<IValidator<GetContextReviewRequest>, AcceptAllValidator<GetContextReviewRequest>>().AddQuery<GetContextReviewRequest, ReviewQueueView, GetContextReviewService>();

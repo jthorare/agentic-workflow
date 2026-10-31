@@ -52,7 +52,7 @@ internal static class AConcepts
     internal static RouteAnswer Served(PinSuggestView view) => new(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(view, SindriApiClient.Json)));
 
     /// <summary>A pasted-pages preview with one matched, ticked block and one new block with an unknown concept.</summary>
-    internal static PagesPreview Previewed() => new("v41",
+    internal static PagesPreview Previewed() => new("v41", new string('a', 64),
     [
         new PagesPreviewBlock(
             1, 1, "Schedule week", new PagesPreviewMatch("surface:route/GET:/schedule/week", "schedule-week", "Schedule week", 4), Replaces: null, SameAs: null, Ticked: true, Reason: null,

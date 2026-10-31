@@ -211,4 +211,24 @@ public sealed class PageListPreviewTests
         Assert.Equal("Not added: the name is 81 characters; at most 80", rows[2].Reason);
         Assert.Equal("No concept called \"aproval\": pick one", rows[3].Reason);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_row_has_a_reason_exactly_when_it_is_not_ticked()
+    {
+        var rows = Preview("Schedule week\n\nSchedule week\n\nHome\nPay -> aproval\n\nBilling", ScheduleWeek());
+
+        Assert.Equal(4, rows.Count);
+        Assert.All(rows, static r => Assert.Equal(r.Ticked, r.Reason is null));
+        Assert.Equal("true|false|false|true", string.Join('|', rows.Select(static r => r.Ticked ? "true" : "false")));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Unknown_concepts_are_the_written_text_as_it_is_in_first_seen_order_without_ordinal_duplicates()
+    {
+        var row = Preview("Home\nPay -> Aproval, aproval, Aproval\nSend -> aproval, Self-scheduling")[0];
+
+        Assert.Equal("Aproval|aproval", string.Join('|', row.UnknownConcepts));
+        var written = row.Actions.SelectMany(static a => a.Concepts).Where(static c => c.Id is null).Select(static c => c.Written).ToList();
+        Assert.All(row.UnknownConcepts, u => Assert.Contains(u, written, StringComparer.Ordinal));
+    }
 }

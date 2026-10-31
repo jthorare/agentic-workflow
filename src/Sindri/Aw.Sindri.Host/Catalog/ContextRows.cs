@@ -35,10 +35,6 @@ internal static class ContextRows
         new(ActionId.From("CheckContextMapStructure"), typeof(CheckContextMapStructureRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/checks", ShellRows.Form("sindri context map checks [--draft] [--build]"), "ready"),
-        // PreviewContextPages has no verb of its own (pages spec 3.6): the app's Add several pages sheet reads a paste through it and saves with SetPages, so the row names the verb that saves.
-        new(ActionId.From("PreviewContextPages"), typeof(PreviewPagesRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
-            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
-            "POST", "/sindri/context/pages/preview", ShellRows.Form("sindri context page set <name>"), "ready"),
         // PurgeIndexSource is the human's alone (owned-index spec §10): the row needs a terminal, so a session (launched or not) and the app are refused with SND-AUTH-002; the CLI also asks a typed yes.
         new(ActionId.From("PurgeIndexSource"), typeof(PurgeIndexSourceRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: true, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,

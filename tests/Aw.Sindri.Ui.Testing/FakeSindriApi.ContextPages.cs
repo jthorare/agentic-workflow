@@ -8,7 +8,7 @@ internal sealed partial class FakeSindriApi
 {
     private readonly List<PagesPreviewBody> _pagesPreviewAsked = [];
 
-    /// <summary>POST /sindri/context/pages/preview's answer per paste (a 404 by default: a server without the route).</summary>
+    /// <summary>QUERY /sindri/context/pages/preview's answer per paste (a 404 by default: a server without the route).</summary>
     public Func<PagesPreviewBody, RouteAnswer> ContextPagesPreviewAnswer { get; set; } = _ => _notServed;
 
     /// <summary>The pastes asked, in order.</summary>
