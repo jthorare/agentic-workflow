@@ -50,12 +50,12 @@ internal sealed class GetWholeMapService(MapReader reader, IScrubberFactory scru
         var commit = snapshot.Version.Commit is { Length: > 0 } c ? c[..Math.Min(7, c.Length)] : null;
         var basis = new WholeMapBasis(snapshot.Tag, commit, asked.Query.Read.Draft, snapshot.Version.Created, repo.Name);
         var repoOf = NodeRepos.Index(map.Graph, snapshot.Version.Repo.Value);
-        var ask = new WholeMapAsk(basis, asked.Detail, asked.Query.Locate, asked.Query.Area) { Concept = asked.Query.Concept, Repos = WholeMapBuilder.Repos(repoOf), RepoOf = repoOf };
+        var ask = new WholeMapAsk(basis, asked.Detail, asked.Query.Locate, asked.Query.Area) { Concept = asked.Query.Concept, PagesInNoConcept = asked.Query.PagesInNoConcept, Repos = WholeMapBuilder.Repos(repoOf), RepoOf = repoOf };
         return WholeMapBuilder.Build(ask, graph, MapAreas.Assign(graph, rules.AreaCap), rules, text);
     }
 
     private static string CacheKey(int version, WholeMapDetail detail, WholeMapQuery query, RepoChoice repo, ContextScope scope) =>
-        string.Join('\n', version, query.Read.Draft, detail, string.Join('\u001f', query.Locate), query.Area, query.Concept, repo.Name, repo.Cut?.Value, FencePolicies.For(scope.Caller), scope.Caller.Kind, scope.Caller.Repo?.Value, scope.Settings?.GetRawText());
+        string.Join('\n', version, query.Read.Draft, detail, string.Join('\u001f', query.Locate), query.Area, query.Concept, query.PagesInNoConcept, repo.Name, repo.Cut?.Value, FencePolicies.For(scope.Caller), scope.Caller.Kind, scope.Caller.Repo?.Value, scope.Settings?.GetRawText());
 
     private static Result<WholeMapDetail> Detail(WholeMapQuery query)
     {
