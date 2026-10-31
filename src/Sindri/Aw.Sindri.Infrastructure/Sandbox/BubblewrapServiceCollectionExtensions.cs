@@ -24,7 +24,7 @@ public static class BubblewrapServiceCollectionExtensions
             .AddSingleton<ILaunchSecrets>(static sp => sp.GetRequiredService<LaunchSecretRegistry>())
             .AddSingleton<ISandbox>(sp => new BubblewrapSandbox(BubblewrapOptions.From(environment), sp.GetRequiredService<ISandboxProcesses>(), new HostPaths(), sp.GetRequiredService<ILaunchSecrets>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IModelCredentialSource>(sp => new OwnerCopyCredentialSource(
-                new OwnerCopyOptions(home, sp.GetRequiredService<SindriSettings>().Home), sp.GetRequiredService<TimeProvider>()))
+                new OwnerCopyOptions(home, sp.GetRequiredService<SindriSettings>().Home, new SecurityCliKeychainLogin(sp.GetRequiredService<ISandboxProcesses>(), OperatingSystem.IsMacOS())), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IModelCredentialSource>(sp => new SeparateLoginCredentialSource(sp.GetRequiredService<SindriSettings>().Home, sp.GetRequiredService<TimeProvider>()));
     }
 }

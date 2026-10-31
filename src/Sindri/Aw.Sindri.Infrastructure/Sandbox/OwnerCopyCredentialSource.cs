@@ -200,15 +200,33 @@ internal sealed class OwnerCopyCredentialSource : IModelCredentialSource
     private static Result<PreparedLogin> Unavailable(string reason, string? detail) =>
         SandboxRefusal.For(SindriErrors.LaunchLoginUnavailable, reason, detail, ModelLoginSource.OwnerCopy);
 
-    private LoginStatus ProbeClaude()
+    // The login's bytes: the file when there is one, else (macOS) the Keychain item. Probe and the copy both read here, so they see the same bytes.
+    private byte[]? ClaudeLogin()
     {
         var file = _claudeHome + "/.credentials.json";
-        if (!File.Exists(file))
+        if (File.Exists(file))
+        {
+            try
+            {
+                return File.ReadAllBytes(file);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                return [];   // unreadable: Parsed reports it as corrupt, as before
+            }
+        }
+
+        return _options.Keychain?.Read() is { Length: > 0 } json ? System.Text.Encoding.UTF8.GetBytes(json) : null;
+    }
+
+    private LoginStatus ProbeClaude()
+    {
+        if (ClaudeLogin() is not { } bytes)
         {
             return Status(LoginState.Missing, "no Claude Code login in " + _claudeHome);
         }
 
-        return Parsed(file, "the Claude Code login", LoginFiles.ClaudeExpiry, "the Claude Code login has expired; open Claude Code once to refresh it");
+        return Parsed(() => bytes, "the Claude Code login", LoginFiles.ClaudeExpiry, "the Claude Code login has expired; open Claude Code once to refresh it");
     }
 
     private LoginStatus ProbeCodex()
@@ -219,15 +237,15 @@ internal sealed class OwnerCopyCredentialSource : IModelCredentialSource
             return Status(LoginState.Missing, "no Codex login in " + _codexHome);
         }
 
-        return Parsed(file, "the Codex login", LoginFiles.CodexExpiry, "the Codex login is older than Codex's refresh window; sign in to Codex again");
+        return Parsed(() => File.ReadAllBytes(file), "the Codex login", LoginFiles.CodexExpiry, "the Codex login is older than Codex's refresh window; sign in to Codex again");
     }
 
     // Ready with its expiry when it is still valid, Expired when it has run out; a file that cannot be read is no login.
-    private LoginStatus Parsed(string file, string what, Func<JsonElement, DateTimeOffset?> expiry, string expired)
+    private LoginStatus Parsed(Func<byte[]> read, string what, Func<JsonElement, DateTimeOffset?> expiry, string expired)
     {
         try
         {
-            using var document = JsonDocument.Parse(File.ReadAllBytes(file));
+            using var document = JsonDocument.Parse(read());
             var at = expiry(document.RootElement);
             return at is { } when && when <= _clock.GetUtcNow() ? Status(LoginState.Expired, expired) : new LoginStatus(LoginState.Ready, ModelLoginSource.OwnerCopy, ExpiresAt: at);
         }
@@ -242,7 +260,12 @@ internal sealed class OwnerCopyCredentialSource : IModelCredentialSource
         OwnerOnly.EnsureDirectory(Path.GetDirectoryName(directory)!);   // why: the copy directory always has a parent
         OwnerOnly.EnsureDirectory(directory);
         Stamp(directory);   // first: a sweep that meets the copy mid-Prepare sees it as new
-        CopyFile(_claudeHome + "/.credentials.json", directory + "/.credentials.json");
+        if (ClaudeLogin() is not { } login)
+        {
+            throw new IOException("no Claude Code login");   // why: Probe saw one a moment ago; Prepare turns this into the no-login refusal
+        }
+
+        OwnerOnly.WriteAtomically(directory + "/.credentials.json", login);
         if (File.Exists(_options.Home + "/.claude.json") && LoginFiles.WithoutMcpSecrets(File.ReadAllBytes(_options.Home + "/.claude.json")) is { } settings)
         {
             OwnerOnly.WriteAtomically(directory + "/.claude.json", settings);   // the owner's MCP servers keep their names, not the tokens they were given
