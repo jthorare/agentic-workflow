@@ -159,11 +159,22 @@ public sealed class YamlProfileIndexWriterPageTests : IDisposable
         Put(Profile);
         Assert.Null(YamlToJson.TryConvert(Text(), out var json));
         var hash = ProfileReading.FromJson(json, ProfilePath, ProfileFiles.Options).Value.Hash;
-        await File.AppendAllTextAsync(ProfilePath, "# edited by hand\n", Token);
+        await File.WriteAllTextAsync(ProfilePath, Profile.Replace("maxFileKB: 100", "maxFileKB: 120", StringComparison.Ordinal), Token);   // a value, since the hash is over the parsed profile and ignores comments
 
         var done = await Writer().Write([Set("schedule-week", Week)], hash, Token);
 
         Assert.Equal("SND-PROFILE-003", done.Error.Code);
         Assert.DoesNotContain("schedule-week", Text(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_written_page_is_a_row_of_the_approve_diff()
+    {
+        Put(Profile);
+        var before = Load();
+
+        _ = await Writer().Write([Set("schedule-week", Week, repo: "web"), new PageEdit(PagePinId.From("settings"), Entry: null)], ifHash: null, Token);
+
+        Assert.Equal(["index.pages.settings", "repos.web.index.pages.schedule-week"], [.. ProfileDiff.Between(before, Load()).Order(StringComparer.Ordinal)], StringComparer.Ordinal);
     }
 }
