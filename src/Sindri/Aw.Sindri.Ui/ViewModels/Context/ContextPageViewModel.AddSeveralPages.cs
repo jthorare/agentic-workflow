@@ -23,7 +23,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        var sheet = new AddSeveralPagesViewModel(writes, repo: null);
+        var sheet = new AddSeveralPagesViewModel(writes, repo: null, known: [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: t.Id, Name: t.Name))]);
         sheet.Saved += (_, _) => _ = noConcept ? OpenNoConcept() : ReadWhole(CancellationToken.None);
         sheet.Closed += (_, _) =>
         {

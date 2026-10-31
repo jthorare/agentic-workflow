@@ -68,4 +68,20 @@ internal static partial class Labels
     /// <param name="name">The page's name.</param>
     /// <returns>"Add Schedule week".</returns>
     internal static string AddSeveralPagesTick(string name) => "Add " + name;
+
+    /// <summary>What the server's reason starts with when a block names a concept that matches none.</summary>
+    internal const string AddSeveralPagesUnknownConceptStart = "No concept called";
+
+    /// <summary>The line beside the picker of a concept name that matched none.</summary>
+    /// <param name="name">The name as pasted.</param>
+    /// <returns>"No concept called "aproval": pick one".</returns>
+    internal static string AddSeveralPagesUnknownConcept(string name) => "No concept called \"" + name + "\": pick one";
+
+    /// <summary>The picker's placeholder.</summary>
+    internal const string AddSeveralPagesPickPlaceholder = "Pick a concept";
+
+    /// <summary>The picker's name for a screen reader.</summary>
+    /// <param name="name">The name as pasted.</param>
+    /// <returns>"Concept for aproval".</returns>
+    internal static string AddSeveralPagesPickName(string name) => "Concept for " + name;
 }

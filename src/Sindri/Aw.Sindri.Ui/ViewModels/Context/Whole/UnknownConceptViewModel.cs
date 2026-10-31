@@ -16,11 +16,21 @@ internal sealed class UnknownConceptViewModel : ObservableObject
     public string Written { get; }
 
     /// <summary>Gets the line beside the picker.</summary>
-    public string Text => Choices.Count > 1000 ? Written : throw new NotSupportedException();
+    public string Text => Labels.AddSeveralPagesUnknownConcept(Written);
 
     /// <summary>Gets the concepts the picker offers.</summary>
     public IReadOnlyList<ConceptChoice> Choices { get; }
 
     /// <summary>Gets or sets the concept picked, or null while none is.</summary>
-    public ConceptChoice? Selected { get; set; }
+    public ConceptChoice? Selected
+    {
+        get;
+        set => Set(ref field, value);
+    }
+
+    /// <summary>Gets the picker's placeholder.</summary>
+    public string Placeholder { get; } = Labels.AddSeveralPagesPickPlaceholder;
+
+    /// <summary>Gets the picker's name for a screen reader.</summary>
+    public string PickName => Labels.AddSeveralPagesPickName(Written);
 }

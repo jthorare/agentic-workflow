@@ -175,13 +175,13 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     private void Fill(Api.Context.PagesPreview preview, string text)
     {
         (_hash, _readText) = (preview.ProfileHash, text);
-        Rows = [.. preview.Blocks.Select(b => new AddSeveralPagesRowViewModel(b, _known))];
+        Rows = [.. preview.Blocks.Select(b => new AddSeveralPagesRowViewModel(b, _known, _repo))];
         foreach (var row in Rows)
         {
             row.PropertyChanged += (_, _) => ChangedSave();
         }
 
-        ProblemRow = Rows.ToList().FindIndex(static r => r.HasReason);
+        ProblemRow = Rows.ToList().FindIndex(static r => r.HasProblem);
         _initialTicks = Ticks();
         OnChanged(nameof(Rows));
         OnChanged(nameof(HasRows));
