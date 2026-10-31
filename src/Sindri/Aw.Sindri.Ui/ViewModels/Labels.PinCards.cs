@@ -44,6 +44,11 @@ internal static partial class Labels
     /// <summary>The layer's one status line while the map rebuilds.</summary>
     internal const string PinRebuildingMap = "Rebuilding the map";
 
+    /// <summary>The layer's status line while the refresh runs.</summary>
+    /// <param name="progress">The job's latest progress line, or null.</param>
+    /// <returns>"Rebuilding the map: resolving calls".</returns>
+    internal static string PinRebuildingText(string? progress) => string.IsNullOrEmpty(progress) ? PinRebuildingMap : $"{PinRebuildingMap}: {progress}";
+
     /// <summary>The layer's one status line when the rebuild has landed.</summary>
     internal const string PinMapReady = "The map is ready";
 

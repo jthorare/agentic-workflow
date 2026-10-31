@@ -7,7 +7,7 @@ namespace Aw.Sindri.Ui.Tests.Context.Concepts;
 public sealed class PinCardLinesTests
 {
     private static PinView Pin(string state = "approved", string? change = "created") =>
-        new("billing", "Billing", null, [], [], 0, "profile", state, change);
+        new("billing", "Billing", Summary: null, [], [], FolderRules: 0, "profile", state, change);
 
     private static MapRebuildView Rebuild(string phase = "idle", string? progress = null, DateTimeOffset? retryAt = null, bool stale = false, string? failed = null) =>
         new(phase, progress, retryAt, stale, failed);

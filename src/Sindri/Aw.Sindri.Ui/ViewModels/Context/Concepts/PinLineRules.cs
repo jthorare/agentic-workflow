@@ -3,7 +3,6 @@ using Aw.Sindri.Ui.Api.Context;
 
 namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
-#pragma warning disable MA0182 // Q7b: the concept layer uses it in the next commit
 /// <summary>The §3.7 table as one pure function: where a pin stands against the approval and the map rebuild decides the card's state line and button.</summary>
 internal static class PinLineRules
 {
@@ -51,4 +50,3 @@ internal static class PinLineRules
         return new PinCardLines(rest is null ? [] : [Labels.PinStateLine(pin.Change, rest)], action);
     }
 }
-#pragma warning restore MA0182
