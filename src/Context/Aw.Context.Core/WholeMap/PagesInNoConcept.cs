@@ -8,5 +8,13 @@ public static class PagesInNoConcept
     /// <summary>The keys of those pages, in ordinal key order.</summary>
     /// <param name="graph">The graph a caller may see.</param>
     /// <returns>The page keys; the count is the list's length.</returns>
-    public static IReadOnlyList<string> Of(GraphSnapshot graph) => throw new NotSupportedException();
+    public static IReadOnlyList<string> Of(GraphSnapshot graph)
+    {
+        ArgumentNullException.ThrowIfNull(graph);
+        var expressing = graph.Edges.Where(e => e.Type == EdgeType.Expresses).Select(e => e.From.Value).ToHashSet(StringComparer.Ordinal);
+        var related = graph.Edges.Where(e => e is { Type: EdgeType.On, From.Kind: NodeKind.Action } && expressing.Contains(e.From.Value)).Select(e => e.To.Value).ToHashSet(StringComparer.Ordinal);
+        var pages = graph.Nodes.DistinctBy(n => n.Key.Value, StringComparer.Ordinal)
+            .Where(n => !expressing.Contains(n.Key.Value) && !related.Contains(n.Key.Value) && PageKinds.IsPage(n, graph.Edges));
+        return PageOrder.Of(pages, graph.Edges);
+    }
 }
