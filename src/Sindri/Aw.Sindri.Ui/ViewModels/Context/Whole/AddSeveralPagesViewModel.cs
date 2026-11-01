@@ -18,6 +18,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     private string _readText = string.Empty;
     private string? _acceptConcept;
     private IReadOnlyList<string>? _acceptKeys;   // null in paste mode
+    private bool _pickConcepts;
 
     /// <summary>Builds a sheet that has read nothing yet.</summary>
     /// <param name="writes">Where the list is read and the pages are written.</param>
@@ -39,6 +40,17 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(keys);
         return new AddSeveralPagesViewModel(writes, repo: null, known) { Title = Labels.AcceptAllSuggested, _acceptConcept = concept, _acceptKeys = [.. keys] };
+    }
+
+    /// <summary>Builds the Accept all suggested sheet of the pages in no concept: each row gets a concept picker, and the pick is written onto every action of the page.</summary>
+    /// <param name="writes">Where the pages are read and written.</param>
+    /// <param name="keys">The section's page keys, in its order.</param>
+    /// <param name="known">The concepts a row can pick.</param>
+    /// <returns>The sheet.</returns>
+    internal static AddSeveralPagesViewModel AcceptAllNoConcept(IPageWrites writes, IReadOnlyList<string> keys, IReadOnlyList<ConceptChoice> known)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        return new AddSeveralPagesViewModel(writes, repo: null, known) { Title = Labels.AcceptAllSuggested, _acceptKeys = [.. keys], _pickConcepts = true };
     }
 
     /// <summary>Raised once the pages are written: the section reads again.</summary>

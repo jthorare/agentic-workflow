@@ -72,7 +72,7 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
     internal void Show(ContextConceptsView view)
     {
         ArgumentNullException.ThrowIfNull(view);
-        var tiles = (view.Concepts ?? []).Select(c => new ConceptTileViewModel(c.Id, c.Name, c.Summary, c.Size, string.Equals(c.Source, "override", StringComparison.Ordinal), terms: null, _open)).ToList();
+        var tiles = (view.Concepts ?? []).Select(c => new ConceptTileViewModel(c.Id, c.Name, c.Summary, c.Size, string.Equals(c.Source, "override", StringComparison.Ordinal), terms: null, _open) { Pages = c.Pages ?? 0 }).ToList();
         if (view.Other is { } other && other.Size.Total > 0)
         {
             tiles.Add(new ConceptTileViewModel(other.Id, other.Name.Length > 0 ? other.Name : Labels.ContextWholeBandOther, string.Empty, other.Size, setByPerson: false, terms: null, _open));

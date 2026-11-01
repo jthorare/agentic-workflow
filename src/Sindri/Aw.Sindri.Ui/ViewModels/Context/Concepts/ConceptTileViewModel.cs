@@ -26,6 +26,9 @@ internal sealed class ConceptTileViewModel
     /// <summary>The concept's name.</summary>
     public string Name { get; }
 
+    /// <summary>How many pages express the concept; 0 when the server does not count them.</summary>
+    internal int Pages { get; init; }
+
     /// <summary>The summary; empty when the server gave none.</summary>
     public string Summary { get; }
 
@@ -59,7 +62,7 @@ internal sealed class ConceptTileViewModel
     /// <summary>The same card with the terms the glossary gave it.</summary>
     /// <param name="terms">The terms, best first.</param>
     /// <returns>The new card.</returns>
-    internal ConceptTileViewModel WithTerms(IReadOnlyList<string> terms) => new(Id, Name, Summary, Size, IsSetByPerson, terms, _open) { Card = Card };
+    internal ConceptTileViewModel WithTerms(IReadOnlyList<string> terms) => new(Id, Name, Summary, Size, IsSetByPerson, terms, _open) { Card = Card, Pages = Pages };
 
     /// <summary>The pin side of the card: its mark, footer and buttons.</summary>
     internal PinCardState Card { get; private init; } = PinCardState.None;

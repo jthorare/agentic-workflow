@@ -7,4 +7,5 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Size">What it holds.</param>
 /// <param name="Source">derived (the model proposed it) or override (a person set it).</param>
 /// <param name="Citations">The nodes the concept was derived from; absent when none is served.</param>
-internal sealed record ContextConcept(string Id, string Name, string Summary, ConceptSize Size, string Source = "derived", IReadOnlyList<ConceptCitation>? Citations = null);
+/// <param name="Pages">How many pages express the concept; null from a server that does not count them.</param>
+internal sealed record ContextConcept(string Id, string Name, string Summary, ConceptSize Size, string Source = "derived", IReadOnlyList<ConceptCitation>? Citations = null, [property: System.Text.Json.Serialization.JsonIgnore] int? Pages = null);

@@ -51,7 +51,7 @@ public sealed class AcceptAllEntryTests
     }
 
     [Fact]
-    public void No_button_without_writes_or_without_a_suggested_row_or_for_the_pages_in_no_concept()
+    public void No_button_without_writes_or_without_a_suggested_row()
     {
         var answer = PagesSectionTests.Scheduling();
         var noWrites = new PagesSectionViewModel();
@@ -60,10 +60,9 @@ public sealed class AcceptAllEntryTests
         ownerOnly.Show(answer with { Pages = ["surface:screen/time-off"] });
         var noConcept = new PagesSectionViewModel { Writes = new FakePageWrites() };
         noConcept.Show(answer, noConcept: true);
-
         Expect.True(!noWrites.CanAcceptAll, "no writes, no button");
         Expect.True(!ownerOnly.CanAcceptAll, "no suggested row, no button");
-        Expect.True(!noConcept.CanAcceptAll, "the pages in no concept get their own entry later");
+        Expect.True(noConcept.CanAcceptAll, "the pages in no concept have the button too");
     }
 
     [Fact]

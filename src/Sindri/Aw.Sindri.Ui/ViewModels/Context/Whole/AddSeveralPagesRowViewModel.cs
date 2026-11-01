@@ -121,6 +121,9 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
         }
     }
 
+    /// <summary>Gets the concept picker of a page in no concept; null on every other row.</summary>
+    public UnknownConceptViewModel? Picker { get; private set; }
+
     /// <summary>Gets the page's surface key (its name when it has none): what a re-read matches the row by, as block numbers are not stable.</summary>
     internal string Key => _block.Page?.Surface ?? _block.Name;
 

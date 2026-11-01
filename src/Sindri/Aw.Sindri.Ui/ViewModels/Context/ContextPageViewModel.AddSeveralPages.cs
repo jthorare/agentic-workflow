@@ -42,6 +42,14 @@ internal sealed partial class ContextPageViewModel
         _ = sheet.LoadSuggested(CancellationToken.None);
     }
 
+    /// <summary>Opens the Accept all suggested sheet over the pages in no concept; a saved list reads that list again.</summary>
+    /// <param name="keys">The suggested rows' node keys, in the list's order.</param>
+    internal void OpenAcceptAllNoConcept(IReadOnlyList<string> keys)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        _ = (Ports, keys);
+    }
+
     private List<ConceptChoice> Known() => [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: t.Id, Name: t.Name))];
 
     // Shows the sheet in the shell's one sheet; a saved list reads the section again, and the sheet goes when it is closed.
