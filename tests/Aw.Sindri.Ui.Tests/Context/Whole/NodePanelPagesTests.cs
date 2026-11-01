@@ -156,8 +156,8 @@ public sealed class NodePanelPagesTests
         await panel.Open(Page, Token);
 
         Assert.Equal(["Actions", "Relates to", "Why", "Code"], panel.Sections.Select(s => s.Heading), StringComparer.Ordinal);
-        Assert.Equal([Submit, Approve], Keys(Section(panel, "Actions")).Order(StringComparer.Ordinal), StringComparer.Ordinal);
-        Assert.Equal([Approval, Plan], Keys(Section(panel, "Relates to")).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal([Submit, Approve], Keys(Section(panel, "Actions")), StringComparer.Ordinal);
+        Assert.Equal([Plan, Approval], Keys(Section(panel, "Relates to")), StringComparer.Ordinal);
         Assert.Equal([PageFile], Keys(Section(panel, "Code")));
         Assert.Equal([Page], anchors);
     }

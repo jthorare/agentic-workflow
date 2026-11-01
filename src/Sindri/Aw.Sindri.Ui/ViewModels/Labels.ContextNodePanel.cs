@@ -56,12 +56,6 @@ internal static partial class Labels
     /// <summary>The heading over the concepts an action (or a page's actions) expresses.</summary>
     internal const string ContextNodePanelRelatesTo = "Relates to";
 
-    /// <summary>The heading over the decisions and records about the node.</summary>
-    internal const string ContextNodePanelWhy = "Why";
-
-    /// <summary>The heading over the code that implements the node.</summary>
-    internal const string ContextNodePanelCode = "Code";
-
     /// <summary>An action with no concept.</summary>
     internal const string ContextNodePanelNoConcept = "Not linked to a concept yet. Edit page to pick one.";
 

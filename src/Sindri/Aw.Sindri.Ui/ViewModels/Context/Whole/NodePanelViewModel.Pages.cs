@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>
 /// The sections of an action's or a page's panel (<see cref="NodePanelViewModel"/>, continued, pages spec §3.4). A page is judged by <see cref="NodePageKinds"/> (an action
-/// is "on" one); a page's concepts are its own "expresses" edges plus those of its first <see cref="ActionReadCap"/> actions, each read through <see cref="NodePanelViewModel.Loader"/>.
+/// is "on" one); a page's concepts are its own "expresses" edges plus those of its first <see cref="ActionReadCap"/> actions, each read through <see cref="Loader"/>.
 /// </summary>
 internal sealed partial class NodePanelViewModel
 {
@@ -86,10 +86,10 @@ internal sealed partial class NodePanelViewModel
         var relates = d.Concepts is { } concepts
             ? NodeSectionViewModel.Of(Labels.ContextNodePanelRelatesTo, concepts, d.IsAction ? Labels.ContextNodePanelNoConcept : Labels.ContextNodePanelNoActionConcept)
             : NodeSectionViewModel.Loading(Labels.ContextNodePanelRelatesTo);
-        var why = d.WhyFailed ? NodeSectionViewModel.Failed(Labels.ContextNodePanelWhy, FailedText)
-            : d.Why is { } rows ? NodeSectionViewModel.Of(Labels.ContextNodePanelWhy, rows, Labels.ContextNodePanelNoWhy)
-            : NodeSectionViewModel.Loading(Labels.ContextNodePanelWhy);
-        return [first, relates, why, NodeSectionViewModel.Of(Labels.ContextNodePanelCode, d.Code, Labels.ContextPagesNoCode, d.Code.Count > 0 ? Labels.ContextPagesCode : string.Empty)];
+        var why = d.WhyFailed ? NodeSectionViewModel.Failed(Labels.ContextWholeBandWhy, FailedText)
+            : d.Why is { } rows ? NodeSectionViewModel.Of(Labels.ContextWholeBandWhy, rows, Labels.ContextNodePanelNoWhy)
+            : NodeSectionViewModel.Loading(Labels.ContextWholeBandWhy);
+        return [first, relates, why, NodeSectionViewModel.Of(Labels.ContextMapAreaCode, d.Code, Labels.ContextPagesNoCode, d.Code.Count > 0 ? Labels.ContextPagesCode : string.Empty)];
     }
 
     // The decisions, then the records, the intent lens serves for the node (the server widens an action's or page's scope to its page or actions).
