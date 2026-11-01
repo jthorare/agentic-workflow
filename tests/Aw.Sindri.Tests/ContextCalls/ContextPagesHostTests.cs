@@ -63,6 +63,18 @@ public sealed class ContextPagesHostTests : IDisposable
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]
+    public async Task The_route_hands_q_to_the_engine()
+    {
+        TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
+        await using var host = await Host();
+
+        _ = await host.Http.Ask(Get("/sindri/context/pages?q=schedul&limit=50", Human(host.Token.Value)));
+
+        var (query, _) = Assert.Single(_asked);
+        Assert.Equal(("schedul", 50), (query.Q, query.Limit));
+    }
+
+    [Fact(Timeout = 120_000), Trait("Lane", "integration")]
     public async Task An_unknown_page_is_a_404_with_257()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();

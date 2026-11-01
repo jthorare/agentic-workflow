@@ -15,6 +15,9 @@ public static class PageReader
     /// <summary>The most pages one answer holds.</summary>
     public const int MaxLimit = 200;
 
+    /// <summary>The most suggested page keys a concept row carries.</summary>
+    public const int SuggestedCap = 200;
+
     private const string Scheme = "page:";
     private const string ConceptPrefix = "concept:";
     private const string OwnerMark = "owner";
