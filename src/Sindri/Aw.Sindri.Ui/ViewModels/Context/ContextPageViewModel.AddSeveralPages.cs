@@ -57,7 +57,7 @@ internal sealed partial class ContextPageViewModel
         _ = sheet.LoadSuggested(CancellationToken.None);
     }
 
-    private List<ConceptChoice> Known() => [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: ConceptChoice.BareId(t.Id), Name: t.Name, Pages: t.Pages))];
+    private List<ConceptChoice> Known() => [.. Concepts.Tiles.Where(static t => !string.Equals(t.Id, ConceptChoice.OtherKey, StringComparison.Ordinal)).Select(static t => new ConceptChoice(Id: ConceptChoice.BareId(t.Id), Name: t.Name, Pages: t.Pages))];
 
     // Shows the sheet in the shell's one sheet; a saved list reads the section again, and the sheet goes when it is closed.
     private void Mount(AddSeveralPagesViewModel sheet, Func<Task> reread)
