@@ -36,7 +36,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        var sheet = new PageSheetViewModel(writes, known: [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: t.Id, Name: t.Name))], otherNames: section.NamesExcept(key), openConcept: concept);
+        var sheet = new PageSheetViewModel(writes, known: Known(), otherNames: section.NamesExcept(key), openConcept: concept is null ? null : ConceptChoice.BareId(concept));
         sheet.Saved += (_, _) =>
         {
             if (key is not null && sheet.SavedId is { } id)
