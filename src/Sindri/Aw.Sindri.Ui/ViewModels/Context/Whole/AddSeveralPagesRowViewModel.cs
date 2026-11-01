@@ -9,12 +9,29 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
 
     /// <summary>Builds the row of a block; a block the server didn't tick starts unticked and stays so.</summary>
     /// <param name="block">The block.</param>
-    internal AddSeveralPagesRowViewModel(PagesPreviewBlock block)
+    /// <param name="known">The concepts a picker offers for a concept name that matched none.</param>
+    internal AddSeveralPagesRowViewModel(PagesPreviewBlock block, IReadOnlyList<ConceptChoice>? known = null)
     {
         ArgumentNullException.ThrowIfNull(block);
         _block = block;
+        // The server sends the page of a block with an unknown concept, unticked with its reason: the owner picks a concept for each unknown name and Save all swaps the picks into that page.
+        if (block.UnknownConcepts.Count > 0 && block.Page is not null)
+        {
+            Unknowns = [.. block.UnknownConcepts.Select(name => new UnknownConceptViewModel(name, known ?? []))];
+            foreach (var unknown in Unknowns)
+            {
+                unknown.PropertyChanged += (_, _) => Picked();
+            }
+        }
+
         Ticked = block.Ticked && block.Reason is null && block.Page is not null;
     }
+
+    /// <summary>Gets one picker per written concept name that matched no concept (pages spec §3.6); empty for an ordinary row.</summary>
+    public IReadOnlyList<UnknownConceptViewModel> Unknowns { get; } = [];
+
+    /// <summary>Gets a value indicating whether the row shows pickers.</summary>
+    public bool NeedsConcept => Unknowns.Count > 0;
 
     /// <summary>Gets the block's number, from 1.</summary>
     public int Block => _block.Block;
@@ -38,13 +55,16 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     public string SameAsText => _block.SameAs is { } block ? Labels.AddSeveralPagesSameAs(block) : string.Empty;
 
     /// <summary>Gets why the row is not added, in the server's sentence, or empty.</summary>
-    public string Reason => _block.Reason ?? string.Empty;
+    public string Reason => NeedsConcept ? string.Empty : _block.Reason ?? string.Empty;
 
-    /// <summary>Gets a value indicating whether the row has a reason.</summary>
-    public bool HasReason => _block.Reason is not null;
+    /// <summary>Gets a value indicating whether the row has a reason line; a row with pickers shows their lines instead.</summary>
+    public bool HasReason => !NeedsConcept && _block.Reason is not null;
 
-    /// <summary>Gets a value indicating whether the row can be ticked: the server ticked it and gave no reason.</summary>
-    public bool CanTick => _block.Reason is null && _block.Page is not null;
+    /// <summary>Gets a value indicating whether the row has something for the owner to settle: a reason, or a concept to pick.</summary>
+    public bool HasProblem => HasReason || NeedsConcept;
+
+    /// <summary>Gets a value indicating whether the row can be ticked: the server ticked it and gave no reason, or every unknown concept has a pick.</summary>
+    public bool CanTick => NeedsConcept ? Unknowns.All(static u => u.Selected is not null) : _block.Reason is null && _block.Page is not null;
 
     /// <summary>Gets the tick's name for a screen reader.</summary>
     public string TickName => Labels.AddSeveralPagesTick(Name);
@@ -59,6 +79,32 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     /// <summary>Gets the action lines: each name, with "Matches ..." after it when it names an action of the matched page.</summary>
     public IReadOnlyList<string> ActionLines => [.. _block.Actions.Select(static a => a.Match is { } m ? a.Name + " - " + Labels.AddSeveralPagesActionMatches(m.Name) : a.Name)];
 
-    /// <summary>Gets the page Save all sends for this row, or null when the row has none.</summary>
-    internal PagesPreviewPage? Page => _block.Page;
+    /// <summary>Gets the page Save all sends for this row, or null when the row has none: the server's page, with each unknown concept name in its actions replaced by its pick.</summary>
+    internal PagesPreviewPage? Page => NeedsConcept && CanTick && _block.Page is { } page ? WithPicks(page) : _block.Page;
+
+    /// <summary>Gets the picks made, by the name written.</summary>
+    internal IReadOnlyDictionary<string, string> Picks =>
+        Unknowns.Select(static u => (u.Written, u.Selected?.Id)).Where(static p => p.Id is not null).ToDictionary(static p => p.Written, static p => p.Id ?? string.Empty, StringComparer.Ordinal);
+
+    /// <summary>Picks a concept for each unknown name, as a refreshed list's row gets back the picks of the row it replaces.</summary>
+    /// <param name="picks">The picked concept ids by the name written.</param>
+    internal void Restore(IReadOnlyDictionary<string, string> picks)
+    {
+        foreach (var unknown in Unknowns)
+        {
+            unknown.Selected = picks.TryGetValue(unknown.Written, out var id) ? unknown.Choices.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.Ordinal)) : null;
+        }
+    }
+
+    private void Picked()
+    {
+        Ticked = CanTick;   // a row whose every concept is picked is ticked, as Accept all's filled picker is (pages spec §3.6)
+        OnChanged(nameof(CanTick));
+    }
+
+    private PagesPreviewPage WithPicks(PagesPreviewPage page) =>
+        page with { Actions = [.. page.Actions.Select(a => a with { Concepts = [.. a.Concepts.Select(Concept).Distinct(StringComparer.Ordinal)] })] };
+
+    private string Concept(string written) =>
+        Unknowns.FirstOrDefault(u => string.Equals(u.Written, written, StringComparison.OrdinalIgnoreCase))?.Selected?.Id ?? written;
 }

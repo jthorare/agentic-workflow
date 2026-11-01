@@ -72,12 +72,16 @@ internal sealed partial class AddSeveralPagesView : UserControl
         }
     }
 
-    // The first row with a reason takes focus on its reason line, which a screen reader reads.
+    // The first row with a problem takes focus: on its reason line, which a screen reader reads, or on its concept picker.
     private void FocusProblemRow()
     {
         if (Sheet is { ProblemRow: >= 0 } sheet && AddSeveralRows.ContainerFromIndex(sheet.ProblemRow) is { } container)
         {
-            _ = container.GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(static t => string.Equals(t.Name, "AddSeveralReason", StringComparison.Ordinal))?.Focus(NavigationMethod.Tab);
+            // A row with a concept to pick takes focus on its first picker; any other on its reason line.
+            var descendants = container.GetVisualDescendants().ToList();
+            var target = (Control?)descendants.OfType<ComboBox>().FirstOrDefault(static c => string.Equals(c.Name, "AddSeveralPick", StringComparison.Ordinal))
+                ?? descendants.OfType<TextBlock>().FirstOrDefault(static t => string.Equals(t.Name, "AddSeveralReason", StringComparison.Ordinal));
+            _ = target?.Focus(NavigationMethod.Tab);
         }
     }
 
