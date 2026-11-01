@@ -142,7 +142,7 @@ public sealed class PageWritesTests
     }
 
     private static string Row(string key, string mark, string? concept) =>
-        $"{{'id':null,'key':'{key}','name':'{key}','repo':null,'mark':'{mark}','code':false,'actions':[{{'id':null,'key':'action:{key}','name':'Go','mark':'{mark}','code':false,'concepts':[{(concept is null ? "" : $"'{concept}'")}]}}]}}";
+        $"{{'id':'p-{key}','key':'{key}','name':'{key}','repo':null,'mark':'{mark}','code':false,'actions':[{{'id':'a-{key}','key':'action:{key}','name':'Go','mark':'{mark}','code':false,'concepts':[{(concept is null ? "" : $"'{concept}'")}]}}]}}";
 
     private static RouteAnswer Rows(bool truncated, params string[] rows) =>
         new(HttpStatusCode.OK, ("{'pages':[" + string.Join(',', rows) + "],'total':" + rows.Length.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",'truncated':" + (truncated ? "true" : "false") + ",'mapVersion':'v41'}").Replace('\'', '"'));
