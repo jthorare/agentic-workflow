@@ -659,7 +659,7 @@ the scan itself never touches the graph, the overrides or the pins, and a featur
 The scan picks its model from the size of the map (owner, q121; issue 1172). Before the first call it counts the map's features and estimates the first prompt's tokens
 (characters / 4, rounded up). Above `context.conceptScan.strongAboveFeatures` (default 150) features or `context.conceptScan.strongAbovePromptTokens` (default 10,000;
 the input cap allows about 15,000) tokens it asks for the `strong` tier, otherwise the `cheap` one, and both calls of the scan ask for the same tier. The scan sends the tier only, never a model name. Which harness and which model a tier means comes from `context.models` (see "Model routing: `context.models`" below);
-the old `context.conceptScan.models.<claude|codex|cursor>.<cheap|strong>` is still read and supplies `context.models.names` when that key is absent. Without either, the tier means
+without `context.models.names`, the tier means
 the built-in names: Claude Code `haiku` and `sonnet`, Codex `gpt-6-luna` and `gpt-5.5`, Cursor `gpt-5.6-luna-none-fast` and `gpt-5`. The scan's report, and so the job result, records the tier and the model the
 answering CLI was asked for; the scan is the only caller that picks its own tier, and `context.models.conceptNaming.tier` does not change it.
 
@@ -1108,8 +1108,8 @@ one the request itself names, else the kind's `models`, else `default.models`, e
 | `codex` | `gpt-6-luna` | `gpt-5.5` |
 | `cursor` | `gpt-5.6-luna-none-fast` | `gpt-5` |
 
-The old `context.conceptScan.models` supplies `names` for the matching harness (`claude` is `claude-code`) when `names` doesn't say. If both are written, `names` wins name by name and `profile validate` prints
-"context.conceptScan.models is replaced by context.models.names; the new key is used". Nothing in the profile is rewritten.
+The old `context.conceptScan.models` key is no longer read (issue 1867): `profile validate` and `profile approve` refuse it with SND-CONTEXT-001,
+"context.conceptScan.models: was replaced by context.models.names (claude is claude-code there); move the model names there".
 
 Two errors belong to routing: `SND-CONTEXT-240` (every harness for the call is at its usage limit or failing) and `SND-CONTEXT-241` (no harness for the call is installed).
 

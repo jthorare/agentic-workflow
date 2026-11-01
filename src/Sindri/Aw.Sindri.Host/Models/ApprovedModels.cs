@@ -4,7 +4,7 @@ using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Host.Models;
 
-/// <summary>'context.models' read from the approved profile's 'context' section, once per approved hash (model routing spec §4 "Settings"). The old 'context.conceptScan.models' key is folded in by the context reader.</summary>
+/// <summary>'context.models' read from the approved profile's 'context' section, once per approved hash (model routing spec §4 "Settings").</summary>
 /// <param name="approved">The approved profile.</param>
 internal sealed class ApprovedModels(IApprovedProfile approved) : IApprovedModels
 {
