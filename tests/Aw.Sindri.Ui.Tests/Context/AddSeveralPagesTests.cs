@@ -108,6 +108,21 @@ public sealed class AddSeveralPagesTests
     }
 
     [Fact]
+    public async Task Save_all_keeps_the_id_of_an_action_the_page_already_has()
+    {
+        var replaced = new PagesPreviewBlock(1, 1, "Billing", Match: null, Replaces: "billing", SameAs: null, Ticked: true, Reason: null, [], [],
+            new PagesPreviewPage("billing", "Billing", "web", Surface: null, [new PagesPreviewPageAction("send-it-2", "Send it", Action: null, [])]));
+        var (sheet, writes) = Sheet(replaced);
+        sheet.Text = "x";
+        await sheet.ReadList(TestContext.Current.CancellationToken);
+
+        await sheet.SaveAll(TestContext.Current.CancellationToken);
+
+        var action = Assert.Single(Assert.Single(Assert.Single(writes.Saves).Save.Set).Actions);
+        Expect.Equal("send-it-2", action.Id);
+    }
+
+    [Fact]
     public async Task Save_all_only_saves_when_other_changes_wait()
     {
         var (sheet, writes) = Sheet(Block(1, "Schedule week"));
