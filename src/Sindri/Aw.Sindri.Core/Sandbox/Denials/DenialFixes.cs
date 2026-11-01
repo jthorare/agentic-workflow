@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Events;
+using Aw.Sindri.Core.Profile;
 
 namespace Aw.Sindri.Core.Sandbox.Denials;
 
@@ -14,6 +15,8 @@ public static class DenialFixes
         return entry.Kind switch
         {
             DenialKind.Policy => entry with { Fix = DenialFix.OwnTerminal, Reason = null },
+            DenialKind.Network when SandboxRules.IsLinkLocal(entry.Target) =>
+                entry with { Fix = DenialFix.Never, Reason = "it is the cloud metadata address, which holds this machine's credentials" },
             DenialKind.Network when string.Equals(entry.Rule, DenialRules.PrivateAddress, StringComparison.Ordinal) =>
                 entry with { Fix = DenialFix.Never, Reason = "it points at this machine or its own network" },
             DenialKind.Network when string.Equals(entry.Rule, DenialRules.Cap, StringComparison.Ordinal) =>
