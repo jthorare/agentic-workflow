@@ -238,6 +238,11 @@ internal sealed partial class ShellWindow
             return;   // the Start form is modal: an instance it opened (an existing attempt) stays behind it, and focus stays in the form
         }
 
+        if (Shell is { IsSheetShown: true, IsPageSheet: true })
+        {
+            return;   // the page sheet puts focus on its Name box itself, once its page is read
+        }
+
         if (Shell is { IsSheetShown: true } shell && (Covering || !HasRealFocus))
         {
             _ = this.Get<Border>("SheetTitle").Focus(Method());

@@ -25,7 +25,7 @@ internal static class PageRows
             .DistinctBy(n => n.Key, StringComparer.Ordinal).OrderByDescending(n => n.Owner).ThenBy(n => n.Label, StringComparer.CurrentCultureIgnoreCase).ThenBy(n => n.Key, StringComparer.Ordinal).ToList();
         var code = actions.Select(a => a.Key).Prepend(page.Key).Any(k => into[k].Any(e => e.Type == "implements"));
         string[] marks = [page.Owner ? Labels.ContextConceptSetByPerson : Labels.ContextPagesSuggested, code ? Labels.ContextPagesCode : Labels.ContextPagesNoCode];
-        return new PageRowViewModel(page.Key, page.Label, marks, FromMap(page.Key), [.. actions.Select(a => Action(a, page, graph, concept))]);
+        return new PageRowViewModel(page.Key, page.Label, marks, FromMap(page.Key), [.. actions.Select(a => Action(a, page, graph, concept))]) { Owner = page.Owner };
     }
 
     private static PageActionRowViewModel Action(WholeNode action, WholeNode page, Graph graph, string? concept)
@@ -54,9 +54,26 @@ internal static class PageRows
     /// <returns>True for a page the owner added with no map page.</returns>
     internal static bool OwnerOnly(string key) => SurfaceName(key).Name.StartsWith("owner-", StringComparison.Ordinal);
 
-    // The map's page in words: a route's method and path ("GET /schedule/week"), else the component's name; empty for a page the owner added with no map page.
-    private static string FromMap(string key)
+    /// <summary>The id of an owner-named page from its node key ("surface:screen/owner-schedule-week" is "schedule-week"), or null for a key that carries none.</summary>
+    /// <param name="key">The page's node key.</param>
+    /// <returns>The page id, or null.</returns>
+    internal static string? OwnerId(string key)
     {
+        ArgumentNullException.ThrowIfNull(key);
+        var at = key.LastIndexOf("/owner-", StringComparison.Ordinal);
+        return at < 0 ? null : key[(at + "/owner-".Length)..];
+    }
+
+    /// <summary>The map's page or action in words: a route's method and path ("From the map: GET /schedule/week"), else the component's name; empty for none or a page the owner added with no map page.</summary>
+    /// <param name="key">The node key, or null.</param>
+    /// <returns>The line, or empty.</returns>
+    internal static string FromMap(string? key)
+    {
+        if (key is null)
+        {
+            return string.Empty;
+        }
+
         var (kind, name) = SurfaceName(key);
         if (OwnerOnly(key))
         {
@@ -69,7 +86,7 @@ internal static class PageRows
 
     private static (string Kind, string Name) SurfaceName(string key)
     {
-        var rest = key.StartsWith("surface:", StringComparison.Ordinal) ? key["surface:".Length..] : key;
+        var rest = key.StartsWith("surface:", StringComparison.Ordinal) ? key["surface:".Length..] : key.StartsWith("action:", StringComparison.Ordinal) ? key["action:".Length..] : key;
         var slash = rest.IndexOf('/', StringComparison.Ordinal);
         return slash < 0 ? (string.Empty, rest) : (rest[..slash], rest[(slash + 1)..]);
     }

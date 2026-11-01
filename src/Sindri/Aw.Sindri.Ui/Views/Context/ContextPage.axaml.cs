@@ -17,6 +17,7 @@ internal sealed partial class ContextPage : UserControl
     private const double PageEdge = 24;   // the room the page keeps under the stage
     private ContextPageViewModel? _page;
     private ScrollViewer? _scroller;
+    private Control? _opener;   // the button that opened the page sheet, for the focus to return to
 
     public ContextPage()
     {
@@ -204,10 +205,43 @@ internal sealed partial class ContextPage : UserControl
         {
             Sync(_page);
         }
+        else if (_page is not null && string.Equals(e.PropertyName, nameof(ContextPageViewModel.ShowPageSheet), StringComparison.Ordinal))
+        {
+            if (_page.ShowPageSheet)
+            {
+                _opener = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control;
+            }
+            else
+            {
+                ReturnFocus();
+            }
+        }
         else if (_page is not null && string.Equals(e.PropertyName, nameof(ContextPageViewModel.AnchorText), StringComparison.Ordinal))
         {
             ShowClear(_page.AnchorText.Length > 0);   // the clear button shows while the box holds something
         }
+    }
+
+    // Closing the page sheet puts focus back on the button that opened it; that button was drawn again when the section read its pages, so the section's head takes it then.
+    private void ReturnFocus()
+    {
+        var opener = _opener;
+        _opener = null;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (opener is { IsEffectivelyVisible: true } && TopLevel.GetTopLevel(opener) is not null)
+            {
+                _ = opener.Focus(NavigationMethod.Tab);
+            }
+            else if (NoConceptPages.IsEffectivelyVisible)
+            {
+                NoConceptPages.FocusHead();
+            }
+            else
+            {
+                WholeMap.FindControl<Whole.PagesSectionView>("WholePages")?.FocusHead();
+            }
+        }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
 
     // The parts of the control row that take lists or controls the view model does not bind: the coverage strip.

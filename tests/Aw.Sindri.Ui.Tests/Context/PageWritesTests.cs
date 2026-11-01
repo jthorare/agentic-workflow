@@ -16,7 +16,7 @@ public sealed class PageWritesTests
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static readonly PageSave _week = new(
-        [new PageDraft("schedule-week", "Schedule week", Repo: null, Surface: null, Owner: true, [new PageActionDraft(Id: null, "Submit week", Action: null, ["approval"])])], []);
+        [new PageDraft(Id: "schedule-week", "Schedule week", Repo: null, Surface: null, Owner: true, [new PageActionDraft(Id: null, "Submit week", Action: null, ["approval"])])], []);
 
     private static PageWrites Writes(FakeSindriApi api)
     {
@@ -64,6 +64,17 @@ public sealed class PageWritesTests
         var api = Server(Profile("h1", "index.pages.schedule-week", "index.pages.other"));
 
         var saved = await Writes(api).Save(_week, "h0", approve: true, cancellationToken: Token);
+
+        Assert.Equal(PageSavedState.Waiting, saved.State);
+        Assert.Empty(api.ProfileApprovals);
+    }
+
+    [Fact]
+    public async Task Save_and_approve_after_a_hand_edit_leaves_it_waiting()
+    {
+        var api = Server(new RouteAnswer(HttpStatusCode.OK, """{"approved":"h0","live":"live-old","fileHash":"h1","changed":true,"changedPaths":["index.pages.schedule-week"]}"""));
+
+        var saved = await Writes(api).Save(_week, "file-new", approve: true, cancellationToken: Token);
 
         Assert.Equal(PageSavedState.Waiting, saved.State);
         Assert.Empty(api.ProfileApprovals);
@@ -155,4 +166,16 @@ public sealed class PageWritesTests
         "'actions':[{'id':'ask','key':'action:owner/help/ask','name':'Ask','mark':'owner','code':false,'concepts':[]}]}],'total':2,'truncated':",
         truncated ? "true" : "false",
         ",'mapVersion':'v41'}").Replace('\'', '"'));
+
+    [Fact]
+    public void A_new_page_is_mine_when_its_path_was_not_already_waiting()
+    {
+        var save = new PageSave([new PageDraft(Id: null, "Time off", Repo: null, Surface: null, Owner: false, [])], []) { Before = ["index.pages.old"] };
+        var mine = PageWrites.Mine(save);
+
+        Expect.True(new ProfileWaiting("h", ["index.pages.old", "index.pages.time-off"]).OnlyMine(path => mine(path) || path == "index.pages.old") && mine("index.pages.time-off"), "the new path is the write's");
+        Expect.True(!mine("index.pages.old"), "a path that already waited is not the write's");
+        Expect.True(!new ProfileWaiting("h", ["index.pages.old", "index.pages.time-off"]).OnlyMine(mine), "so the write stays Waiting while that other path is still there");
+        Expect.True(new ProfileWaiting("h", ["index.pages.time-off-2"]).OnlyMine(mine), "alone, the new path approves");
+    }
 }

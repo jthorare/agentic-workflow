@@ -8,9 +8,10 @@
           Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
           AutomationProperties.Name="{Binding Head}">
     <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
-      <Grid ColumnDefinitions="*,Auto">
+      <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="6">
         <TextBlock x:Name="PagesHead" Classes="body-strong" Text="{Binding Head}" Focusable="True" VerticalAlignment="Center" AutomationProperties.Name="{Binding Head}" />
-        <Button x:Name="PagesClose" Grid.Column="1" Content="×" IsVisible="{Binding CanClose}" Click="OnClose" Padding="6,0" Background="Transparent" BorderThickness="0"
+        <Button x:Name="PagesNewPage" Grid.Column="1" Content="{Binding NewPageText}" IsVisible="{Binding CanWrite}" Click="OnNewPage" Padding="8,2" AutomationProperties.Name="{Binding NewPageText}" />
+        <Button x:Name="PagesClose" Grid.Column="2" Content="×" IsVisible="{Binding CanClose}" Click="OnClose" Padding="6,0" Background="Transparent" BorderThickness="0"
                 AutomationProperties.Name="{Binding CloseText}" ToolTip.Tip="{Binding CloseText}" />
       </Grid>
       <StackPanel Grid.Row="1" Spacing="4">
@@ -41,6 +42,7 @@
                     </ItemsControl>
                   </StackPanel>
                   <TextBlock Classes="caption subtle" Text="{Binding FromMap}" IsVisible="{Binding HasFromMap}" />
+                  <Button x:Name="PagesRowSheet" Content="{Binding ButtonText}" IsVisible="{Binding CanWrite}" Click="OnRowSheet" HorizontalAlignment="Left" Padding="8,2" AutomationProperties.Name="{Binding ButtonName}" />
                   <ItemsControl ItemsSource="{Binding Actions}" Margin="16,2,0,0">
                     <ItemsControl.ItemTemplate>
                       <DataTemplate x:DataType="vm:PageActionRowViewModel">

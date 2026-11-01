@@ -50,11 +50,21 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
     {
         ArgumentNullException.ThrowIfNull(save);
         var body = new PagesSetBody([.. save.Set.Select(Body)], [.. save.Remove], IfHash: ifHash);
-        List<string> ids = [.. save.Set.Select(p => p.Id), .. save.Remove];
-        var written = await flow.Run((url, token) => api.SetContextPages(url, body, token), path => ProfileWaiting.IsPage(path, ids), approve, cancellationToken).ConfigureAwait(true);
+        var written = await flow.Run((url, token) => api.SetContextPages(url, body, token), Mine(save), approve, cancellationToken).ConfigureAwait(true);
         return string.Equals(written.Code, ProfileWriteFlow.TimedOut, StringComparison.Ordinal)
             ? new PageSaved(PageSavedState.Failed, Message: Labels.ProfileWriteTimedOut)
             : new PageSaved(State(written.State), written.Code, written.Message);
+    }
+
+    /// <summary>Gets which waiting key paths belong to a write: the ids it sets or removes, and, for a page with no id yet, any '.pages.' path that was not already waiting when the sheet read the profile.</summary>
+    /// <param name="save">The write.</param>
+    /// <returns>The test for one key path.</returns>
+    internal static Func<string, bool> Mine(PageSave save)
+    {
+        ArgumentNullException.ThrowIfNull(save);
+        List<string> ids = [.. save.Set.Select(static p => p.Id).OfType<string>(), .. save.Remove];
+        var adds = save.Set.Any(static p => p.Id is null);
+        return path => ProfileWaiting.IsPage(path, ids) || (adds && path.Contains(".pages.", StringComparison.Ordinal) && !save.Before.Contains(path, StringComparer.Ordinal));
     }
 
     private static PageSavedState State(ProfileWriteState state) => state switch

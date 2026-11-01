@@ -36,6 +36,17 @@ internal sealed partial class PagesSectionView : UserControl
         }
     }
 
+    // Name this page or Edit page on a row; New page in the head. The host opens the sheet and gives focus back to the button that asked.
+    private void OnRowSheet(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: PageRowViewModel row } && DataContext is PagesSectionViewModel pages)
+        {
+            pages.OpenSheet(row);
+        }
+    }
+
+    private void OnNewPage(object? sender, RoutedEventArgs e) => (DataContext as PagesSectionViewModel)?.NewPage();
+
     // Try again reads the pages again; focus goes to the section head.
     private void OnRetry(object? sender, RoutedEventArgs e)
     {

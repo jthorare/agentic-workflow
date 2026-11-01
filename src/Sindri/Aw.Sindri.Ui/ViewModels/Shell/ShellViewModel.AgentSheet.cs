@@ -19,6 +19,7 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.Job => JobSheet.Heading,
         DeepLinkKind.Project => ProjectSheet.Heading,
         DeepLinkKind.ProjectAdd => Labels.ProjectAddHeading,
+        DeepLinkKind.PageSheet => ActivePageSheet?.Title ?? string.Empty,
         DeepLinkKind.PinSheet => ActivePinSheet?.Heading ?? (PinSheetContent as Context.Concepts.PinSeveralViewModel)?.Title ?? string.Empty,
         DeepLinkKind.Item => Item.Title,
         DeepLinkKind.Workflow => Instance.Title,
