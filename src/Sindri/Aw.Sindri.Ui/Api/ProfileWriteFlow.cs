@@ -25,7 +25,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
     private const int MaxNotFound = 8;
     private static readonly TimeSpan _pollEvery = TimeSpan.FromMilliseconds(250);
 
-    /// <summary>Reads the live profile's hash and the key paths that wait for approval.</summary>
+    /// <summary>Reads the live profile's hash, the file's hash and the key paths that wait for approval.</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>The state, or null when the profile can't be read.</returns>
     public async Task<ProfileWaiting?> Waiting(CancellationToken cancellationToken)
@@ -36,7 +36,7 @@ internal sealed class ProfileWriteFlow(ISindriApi api, Func<Uri?> apiUrl, TimePr
         }
 
         var read = await api.ProfileSummary(url, cancellationToken).ConfigureAwait(true);
-        return read.IsSuccess ? new ProfileWaiting(read.Value.Live, read.Value.ChangedPaths ?? []) : null;
+        return read.IsSuccess ? new ProfileWaiting(read.Value.Live, read.Value.ChangedPaths ?? [], read.Value.FileHash) : null;
     }
 
     /// <summary>Starts a write job once, waits up to 30 s for it, and approves its hash when asked and safe.</summary>

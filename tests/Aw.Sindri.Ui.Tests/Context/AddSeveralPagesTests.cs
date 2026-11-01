@@ -17,7 +17,7 @@ public sealed class AddSeveralPagesTests
 
     private static PagesPreviewBlock Block(int number, string name, int? sameAs = null, string? reason = null, bool ticked = true, PagesPreviewMatch? match = null, IReadOnlyList<PagesPreviewAction>? actions = null) =>
         new(number, number, name, match, Replaces: null, sameAs, ticked && reason is null, reason, actions ?? [], [],
-            ticked && reason is null ? new PagesPreviewPage(Id: null, name, "web", Surface: null, [new PagesPreviewPageAction("Submit", Action: null, ["self-scheduling"])]) : null);
+            ticked && reason is null ? new PagesPreviewPage(Id: null, name, "web", Surface: null, [new PagesPreviewPageAction(Id: null, "Submit", Action: null, ["self-scheduling"])]) : null);
 
     private static (AddSeveralPagesViewModel Sheet, FakePageWrites Writes) Sheet(params PagesPreviewBlock[] blocks) =>
         Sheet(new PagesPreviewRead(new PagesPreview("v41", Hash, blocks)));

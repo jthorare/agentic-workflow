@@ -73,7 +73,22 @@
       "unknownConcepts": [
         "aproval"
       ],
-      "page": null
+      "page": {
+        "id": null,
+        "name": "Billing",
+        "repo": null,
+        "surface": null,
+        "actions": [
+          {
+            "id": null,
+            "name": "Send invoice",
+            "action": null,
+            "concepts": [
+              "aproval"
+            ]
+          }
+        ]
+      }
     }
   ]
 }

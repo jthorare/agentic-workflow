@@ -1,0 +1,41 @@
+{
+  "apiVersion": 1,
+  "repo": "aw-split-panes",
+  "fileHash": "<file-hash>",
+  "mapVersion": "v1",
+  "pins": [
+    {
+      "id": "billing",
+      "name": "Billing",
+      "summary": "Invoices and payment.",
+      "aliases": [
+        "payments"
+      ],
+      "features": [
+        "feature:invoices"
+      ],
+      "folderRules": 0,
+      "setIn": "profile",
+      "state": "approved",
+      "change": null
+    },
+    {
+      "id": "auth",
+      "name": "Sign in",
+      "summary": null,
+      "aliases": [],
+      "features": [],
+      "folderRules": 0,
+      "setIn": "profile",
+      "state": "approved",
+      "change": null
+    }
+  ],
+  "rebuild": {
+    "phase": "idle",
+    "progress": null,
+    "retryAt": null,
+    "stale": false,
+    "failed": null
+  }
+}

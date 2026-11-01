@@ -3,6 +3,11 @@
              xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Context.Concepts"
              x:Class="Aw.Sindri.Ui.Views.Context.Concepts.ConceptLayerView"
              x:DataType="vm:ConceptLayerViewModel">
+  <UserControl.Styles>
+    <Style Selector="Border.needs-you">
+      <Setter Property="BorderBrush" Value="{DynamicResource Brush.Attention}" />
+    </Style>
+  </UserControl.Styles>
   <!-- The concept band: the first layer of the context map. One card per concept with its name, its summary and its size; a click opens the bands scoped to it. -->
   <Panel>
     <Border x:Name="ConceptsLoading" IsVisible="{Binding IsLoading}" VerticalAlignment="Top" HorizontalAlignment="Center" Margin="0,16,0,0" Padding="14,8"
@@ -12,6 +17,13 @@
     <ScrollViewer IsVisible="{Binding !IsLoading}">
       <StackPanel>
       <TextBlock x:Name="ConceptsTermsNote" Classes="caption subtle" Text="{Binding TermsNote}" IsVisible="{Binding HasTermsNote}" Margin="0,0,0,8" />
+      <Grid ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8" IsVisible="{Binding ShowNewPin}">
+        <TextBlock x:Name="PinHead" Classes="body" Text="{Binding PinHeadText}" IsVisible="{Binding HasPinHead}" TextWrapping="Wrap" VerticalAlignment="Center" />
+        <Button x:Name="NewPinButton" Grid.Column="1" Content="{Binding NewPinText}" Click="OnNewPin" Margin="12,0,0,0" AutomationProperties.AutomationId="NewPin" />
+        <Button x:Name="AddSeveralButton" Grid.Column="2" Content="{Binding AddSeveralText}" Click="OnAddSeveral" IsVisible="{Binding ShowAddSeveral}" Margin="8,0,0,0" AutomationProperties.AutomationId="AddSeveral" />
+      </Grid>
+      <!-- The layer's one status line: a polite live region, so a screen reader hears "Rebuilding the map" and "The map is ready" (pattern: CommandControl's announcer). -->
+      <TextBlock x:Name="RebuildLine" Classes="caption" Text="{Binding RebuildText}" IsVisible="{Binding HasRebuildText}" Margin="0,0,0,8" AutomationProperties.LiveSetting="Polite" />
       <ItemsControl x:Name="ConceptList" ItemsSource="{Binding Tiles}" AutomationProperties.Name="{Binding ListName}">
         <ItemsControl.ItemsPanel>
           <ItemsPanelTemplate>
@@ -20,17 +32,37 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="vm:ConceptTileViewModel">
-            <Button Click="OnOpen" Width="300" Margin="0,0,12,12" Padding="14,12" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top"
+            <!-- A card is its open button, a footer for a pinned card's state (tinted; a card that needs you has an accent edge) and its pin button. -->
+            <Border Width="300" Margin="0,0,12,12" AutomationProperties.AutomationId="{Binding AutomationId}"
                     Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
-                    AutomationProperties.Name="{Binding AccessibleName}">
-              <StackPanel Spacing="6">
-                <TextBlock Classes="body-strong" Text="{Binding Name}" TextWrapping="Wrap" />
-                <TextBlock Classes="body" Text="{Binding Summary}" IsVisible="{Binding HasSummary}" TextWrapping="Wrap" />
-                <TextBlock Classes="caption subtle" Text="{Binding SizeText}" TextWrapping="Wrap" />
-                <TextBlock Classes="caption subtle" Text="{Binding TermsText}" IsVisible="{Binding HasTerms}" TextWrapping="Wrap" />
-                <TextBlock Classes="caption subtle" Text="{Binding SetByPersonText}" IsVisible="{Binding IsSetByPerson}" />
+                    Classes.needs-you="{Binding NeedsYou}" ClipToBounds="True">
+              <StackPanel>
+                <Button Click="OnOpen" Padding="14,12" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Top" Background="Transparent" BorderThickness="0"
+                        AutomationProperties.Name="{Binding AccessibleName}">
+                  <StackPanel Spacing="6">
+                    <TextBlock Classes="body-strong" Text="{Binding Name}" TextWrapping="Wrap" />
+                    <TextBlock Classes="body" Text="{Binding Summary}" IsVisible="{Binding HasSummary}" TextWrapping="Wrap" />
+                    <TextBlock Classes="caption subtle" Text="{Binding SizeText}" TextWrapping="Wrap" />
+                    <TextBlock Classes="caption subtle" Text="{Binding TermsText}" IsVisible="{Binding HasTerms}" TextWrapping="Wrap" />
+                    <TextBlock Classes="caption subtle" Text="{Binding MarkText}" IsVisible="{Binding HasMark}" />
+                  </StackPanel>
+                </Button>
+                <Border IsVisible="{Binding HasFooter}" Padding="14,8" Background="{DynamicResource Brush.Surface2}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="0,1,0,0">
+                  <StackPanel Spacing="4">
+                    <ItemsControl ItemsSource="{Binding Lines}">
+                      <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="x:String">
+                          <TextBlock Classes="caption" Text="{Binding}" TextWrapping="Wrap" />
+                        </DataTemplate>
+                      </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="{Binding ActionText}" IsVisible="{Binding HasAction}" Click="OnAction" HorizontalAlignment="Left" />
+                  </StackPanel>
+                </Border>
+                <Button Content="{Binding PinThisText}" IsVisible="{Binding ShowPinThis}" Click="OnPinThis" Margin="14,0,14,10" HorizontalAlignment="Left" AutomationProperties.AutomationId="PinThis" />
+                <Button Content="{Binding EditPinText}" IsVisible="{Binding ShowEditPin}" Click="OnEditPin" Margin="14,0,14,10" HorizontalAlignment="Left" AutomationProperties.AutomationId="EditPin" />
               </StackPanel>
-            </Button>
+            </Border>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>

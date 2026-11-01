@@ -305,6 +305,8 @@ index:
 | sheet, counting | `Counting records…` |
 | sheet, terms unreadable | `Couldn't read this concept's words just now. Type them, or try again later.` |
 | sheet, version clash | `The settings changed while you were editing. Your changes are still here. Press Pin again.` |
+| sheet, version clash on Edit pin, the pin changed or renamed in the file | `Billing changed in the file since you opened it; Save replaces it.` |
+| sheet, version clash on Edit pin, the pin unpinned in the file | `Billing was unpinned in the file since you opened it; Save pins it again.` |
 | sheet, read-only keys | `Set outside the app; kept as is.` |
 | sheet, unpin confirm | `Unpin Billing? It comes back as a suggestion once the map rebuilds.` |
 | sheet, unpin with YAML keys | `It also has 2 folder rules set outside the app; Unpin removes them too.` |

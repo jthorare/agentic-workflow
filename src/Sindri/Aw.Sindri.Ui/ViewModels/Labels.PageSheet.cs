@@ -23,6 +23,9 @@ internal static partial class Labels
     /// <summary>The close affordance's name for a screen reader.</summary>
     internal const string PageSheetCloseName = "Close";
 
+    /// <summary>The note when the profile's hash can't be read: the sheet writes nothing without it.</summary>
+    internal const string PageSheetNoHash = "Couldn't read your settings just now. Close this and open it again.";
+
     /// <summary>The Name field's label.</summary>
     internal const string PageSheetNameLabel = "Name";
 

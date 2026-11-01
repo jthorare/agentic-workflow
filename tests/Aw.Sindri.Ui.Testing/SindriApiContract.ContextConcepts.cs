@@ -101,6 +101,17 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
+    public async Task ContextPinSuggest_sends_an_empty_search_as_search_equals()
+    {
+        var server = new FakeSindriApi { ContextPinSuggestAnswer = _ => AConcepts.Served(new PinSuggestView(1, "aw-split-panes", "v1", Terms: null, [new PinSuggestFeature("feature:shifts", "Shifts")], Matches: null)) };
+        var api = Reach(server);
+
+        _ = await api.ContextPinSuggest(_api, new PinSuggestQuery("aw-split-panes", Search: string.Empty), Token);
+
+        Expect.Equal(string.Empty, server.ContextPinSuggestAsked[^1].Search);   // the fake handler rebuilds the query from search=; absent would be null
+    }
+
+    [Fact]
     public async Task ContextPinSuggest_sends_each_definition_beside_its_line()
     {
         var server = new FakeSindriApi { ContextPinSuggestAnswer = _ => AConcepts.Served(AConcepts.Matched("concept:billing", null)) };
@@ -163,6 +174,30 @@ public abstract partial class SindriApiContract
         var api = Reach(new FakeSindriApi());
 
         var result = await api.ContextPinSuggest(_api, new PinSuggestQuery(string.Empty, Concept: "concept:billing"), Token);
+
+        Expect.True(result.IsError);
+    }
+
+    [Fact]
+    public async Task ContextPins_answers_the_pins_with_their_states_and_the_file_hash_and_sends_the_repo()
+    {
+        var server = new FakeSindriApi { ContextPinsAnswer = _ => AConcepts.Served(AConcepts.Pinned()) };
+        var api = Reach(server);
+
+        var view = (await api.ContextPins(_api, "aw-split-panes", Token)).Value;
+
+        Expect.Equal(new string('b', 64), view.FileHash);
+        Expect.Sequence(["approved", "waiting", "removing"], view.Pins.Select(p => p.State));
+        Expect.Equal(("v4", "idle"), (view.MapVersion, view.Rebuild.Phase));
+        Expect.Equal("aw-split-panes", server.ContextPinsAsked[^1]);
+    }
+
+    [Fact]
+    public async Task ContextPins_from_a_server_without_the_route_is_an_error_and_not_a_crash()
+    {
+        var api = Reach(new FakeSindriApi());
+
+        var result = await api.ContextPins(_api, string.Empty, Token);
 
         Expect.True(result.IsError);
     }
