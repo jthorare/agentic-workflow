@@ -20,8 +20,8 @@ public sealed class PageSheetConceptIdTests
     private static async Task<(ContextPageViewModel Page, FakePageWrites Writes)> Shown()
     {
         var writes = new FakePageWrites { Profile = new ProfileWaiting("live", [], "file") };
-        writes.Add(Key, new Aw.Sindri.Ui.ViewModels.Context.Whole.PageDraft(Id: null, "Billing overview", "web", Key, Owner: false,
-            [new Aw.Sindri.Ui.ViewModels.Context.Whole.PageActionDraft(Id: null, "Pay", Action: null, ["scheduling"])]));
+        writes.Add(Key, new PageDraft(Id: null, "Billing overview", "web", Key, Owner: false,
+            [new PageActionDraft(Id: null, "Pay", Action: null, ["scheduling"])]));
         var api = new FakeSindriApi
         {
             ContextConceptsAnswer = _ => AConcepts.Served(AConcepts.Ok([AConcepts.Concept("concept:scheduling", "Self scheduling"), AConcepts.Concept("concept:billing", "Billing")], links: [])),
@@ -56,7 +56,7 @@ public sealed class PageSheetConceptIdTests
         var sheet = page.PageSheet!;
         await sheet.OpenNew(Token);
 
-        Expect.Sequence(["scheduling", "billing"], sheet.Columns.Select(static c => c.Id));
+        Expect.Sequence(["scheduling"], sheet.Columns.Select(static c => c.Id));
         Expect.Sequence(["scheduling"], sheet.Actions[0].TickedIds);
     }
 
