@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Linear;
@@ -9,6 +10,7 @@ using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Trust;
 using Aw.Kernel;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Context.Features.SyncSources;
 
@@ -20,7 +22,7 @@ namespace Aw.Context.Features.SyncSources;
 /// extraction, whatever the map version: one model call per record version, so a replay and a map rebuild ask the model about nothing for unchanged records. Their intent links stay as last
 /// computed (the map build links owned records to code and features itself, RecordPass) and are refreshed when the record changes. The intent source cursor is left alone (the page's cursor is null).
 /// </summary>
-internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (ContextSettings Settings, Scrubbers Scrubbers) context, (IRecordStore Records, IIntentStore Intents, IModelPort Model, TimeProvider Clock) ports)
+internal sealed partial class RecordDecisionRun(SourceId source, VisibleMap map, (ContextSettings Settings, Scrubbers Scrubbers) context, (IRecordStore Records, IIntentStore Intents, IModelPort Model, TimeProvider Clock) ports, IReadOnlyList<PinAliases> pins, ILogger? logger = null)
 {
     private const int PageSize = 100;
 
@@ -143,7 +145,7 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
         var record = new IntentRecord(stored.Key, source, stored.Version.Value, stored.Title, Aliases(stored)) { CreatedAt = stored.CreatedAt };
         var before = known.GetValueOrDefault(record.Key.Value);
         known[record.Key.Value] = record;
-        var found = RulesLinker.Link(record.Key, text, map.Graph, [.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal));
+        var found = Link(record.Key, text, known);
         _fetched++;
         _linked += found.Count;
         _unlinked += found.Count == 0 ? 1 : 0;
@@ -167,6 +169,27 @@ internal sealed class RecordDecisionRun(SourceId source, VisibleMap map, (Contex
         await Decisions.Run([new PendingRecord(record, text, found)], cancellationToken).ConfigureAwait(false);
         return null;
     }
+
+    /// <summary>Links one record; a record whose linking times out gets no links (it is still committed, so it is done for this version and later runs skip it) and a warning that names its key and text length.</summary>
+    private IReadOnlyList<IntentLink> Link(RecordKey key, string text, Dictionary<string, IntentRecord> known)
+    {
+        try
+        {
+            return RulesLinker.Link(key, text, map.Graph, ([.. known.Values], new HashSet<string>(context.Settings.LinearTeams, StringComparer.Ordinal)), pins);
+        }
+        catch (RegexMatchTimeoutException)   // boundary: one pathological record must not fail the run for the rest of its feed (#1769)
+        {
+            if (logger is not null)
+            {
+                LogLinkTimeout(logger, key.Value, text.Length);
+            }
+
+            return [];
+        }
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "record {Key} ({Length} chars) timed out while linking; it is stored without links")]
+    private static partial void LogLinkTimeout(ILogger logger, string key, int length);
 
     /// <summary>Writes only the aliases of a done record whose stored ones differ from the permalink's identifier; a code when the run must stop.</summary>
     private async ValueTask<string?> Realias(StoredRecord stored, Dictionary<string, IntentRecord> known, CancellationToken cancellationToken)

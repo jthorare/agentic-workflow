@@ -38,6 +38,7 @@ internal sealed partial class ContextPageViewModel
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
         Whole.NodeChosen += (_, e) => _ = ChooseWholeNode(e.Value, CancellationToken.None);
+        Whole.PagesRetryRequested += (_, _) => _ = ReadWhole(CancellationToken.None);
         Ports.Follow((_, cancellationToken) => FollowWhole(cancellationToken));
     }
 

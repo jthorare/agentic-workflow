@@ -23,6 +23,8 @@ namespace Aw.Sindri.Core.Jobs;
 /// <param name="Sequence">The ledger sequence that last changed the row.</param>
 /// <param name="Models">The job's model calls added up, or null when it made none.</param>
 /// <param name="WaitingOn">The signal a waiting job is parked on ('model-limit', ...), or null when it isn't waiting.</param>
+/// <param name="ModelCalls">The job's last 200 model calls, oldest first (the sheet's list; <see cref="Models"/> counts all of them), or null when it made none.</param>
 public sealed record JobRow(JobId Id, JobKind Kind, JobKey Key, ItemId? Item, RepoName? Repo, ServiceName? Service, JobState State,
     string StartedBy, DateTimeOffset StartedAt, DateTimeOffset? EndedAt, IReadOnlyList<JobLine> Progress, int Rounds,
-    string? Summary, string? Code, JsonElement? Result, string? CancelledBy, long Sequence, ModelTotals? Models = null, string? WaitingOn = null);
+    string? Summary, string? Code, JsonElement? Result, string? CancelledBy, long Sequence, ModelTotals? Models = null, string? WaitingOn = null,
+    IReadOnlyList<JobModelCall>? ModelCalls = null);

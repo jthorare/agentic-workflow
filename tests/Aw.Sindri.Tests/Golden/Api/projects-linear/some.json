@@ -1,0 +1,36 @@
+{
+  "asOf": {
+    "cursor": 11,
+    "ledgerHead": 11,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "error": null,
+  "projects": [
+    {
+      "key": "linear:project/00000000-0000-4000-8000-0000000000a3",
+      "name": "api cleanup",
+      "lead": "Ana Ruiz",
+      "state": "backlog",
+      "openIssues": 2,
+      "url": "https://linear.app/acme/project/3"
+    },
+    {
+      "key": "linear:project/00000000-0000-4000-8000-0000000000a2",
+      "name": "Billing exports",
+      "lead": null,
+      "state": "planned",
+      "openIssues": 0,
+      "url": null
+    },
+    {
+      "key": "linear:project/00000000-0000-4000-8000-0000000000a1",
+      "name": "Mobile push settings",
+      "lead": "Ana Ruiz",
+      "state": "inProgress",
+      "openIssues": 6,
+      "url": "https://linear.app/acme/project/1"
+    }
+  ]
+}

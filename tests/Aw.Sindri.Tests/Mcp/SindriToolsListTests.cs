@@ -5,17 +5,17 @@ using Aw.Sindri.Tests.ContextCalls;
 
 namespace Aw.Sindri.Tests.Mcp;
 
-/// <summary>/sindri/mcp tools/list after API P8: the six context tools first, then the eight sindri_* tools (API spec §8; sindri_projects from the Projects page spec §6.2).</summary>
+/// <summary>/sindri/mcp tools/list after API P8: the seven context tools first, then the eight sindri_* tools (API spec §8; sindri_projects from the Projects page spec §6.2).</summary>
 public sealed class SindriToolsListTests(PlainMcpHost plain) : IClassFixture<PlainMcpHost>
 {
     private static readonly string[] _expected =
     [
-        "context_query", "context_sources", "context_lenses", "context_concepts", "context_node", "context_neighbors",
+        "context_query", "context_sources", "context_lenses", "context_concepts", "context_pages", "context_node", "context_neighbors",
         "sindri_status", "sindri_queue", "sindri_item", "sindri_item_timeline", "sindri_pending_decisions", "sindri_job", "sindri_projects", "sindri_request",
     ];
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
-    public async Task Tools_list_names_fourteen_tools_context_first_then_the_eight_sindri_tools()
+    public async Task Tools_list_names_fifteen_tools_context_first_then_the_eight_sindri_tools()
     {
         var ct = TestContext.Current.CancellationToken;
         var host = plain.Host;

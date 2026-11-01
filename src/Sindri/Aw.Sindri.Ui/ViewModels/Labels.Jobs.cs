@@ -45,6 +45,12 @@ internal static partial class Labels
     /// <summary>The result disclosure's note when the result was cut.</summary>
     internal const string JobResultCut = "Cut short";
 
+    /// <summary>The sheet's heading over the list of a job's model calls.</summary>
+    internal const string JobModelCalls = "Model calls";
+
+    /// <summary>The model line of a job paused for a model harness when it has no progress line yet.</summary>
+    internal const string JobModelPausedFallback = "Waiting for a model harness. Resume when one is back.";
+
     /// <summary>The line when a job has said nothing yet.</summary>
     internal const string JobNoProgress = "No progress yet.";
 
@@ -142,6 +148,7 @@ internal static partial class Labels
         "SyncSources" => "Sync sources",
         "RefreshContextMap" => "Refresh the context map",
         "BuildContextMap" => "Build the context map",
+        "PinConcepts" => "Pin concepts",
         "BuildCodeIndex" => "Build the code index",
         "EmbedCodeIndex" => "Embed the code index",
         "RunService" => "Run a service",

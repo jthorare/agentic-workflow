@@ -51,6 +51,32 @@ public abstract partial class IndexStoreContract
         }
     }
 
+    /// <summary>The Within filter runs before the limit: a pin's symbols fill the limit with in-pin hits, and an empty set matches nothing (concept pins spec §3.5).</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Symbols_under_a_pin_fill_the_limit_with_in_pin_hits()
+    {
+        var store = Create();
+        _ = await Publish(store, [
+            FileOf("src/A.cs", SymbolOf("src/A.cs", "A.Run"), SymbolOf("src/A.cs", "A.Runner", line: 9)),
+            FileOf("src/B.cs", SymbolOf("src/B.cs", "B.Run"), SymbolOf("src/B.cs", "B.Runner", line: 9)),
+            FileOf("src/C.cs", SymbolOf("src/C.cs", "C.Run"), SymbolOf("src/C.cs", "C.Runner", line: 9))]);
+
+        var reader = await Reader(store);
+        await using (reader)
+        {
+            var pin = new[] { new RepoFile(Repo, "src/C.cs") };
+            var exact = Ok(await reader.FindSymbols(Exact("Run") with { Limit = 1, Within = pin }, _none), "exact under a pin");
+            Expect.That(Refs(exact.Hits).SequenceEqual(["fixture:src/C.cs#C.Run"]) && !exact.Truncated, "the only in-pin hit fills a limit of 1, though two files sort first");
+            var prefix = Ok(await reader.FindSymbols(Prefix("Run", limit: 1) with { Within = [new RepoFile(Repo, "src/B.cs"), new RepoFile(Repo, "src/C.cs")] }, _none), "prefix under a pin");
+            Expect.That(prefix.Hits.Count == 1 && prefix.Hits[0].File == "src/B.cs" && prefix.Truncated, "a prefix search takes in-pin hits first and marks the cut");
+            var path = Ok(await reader.FindSymbols(Exact("src/A.cs") with { Within = pin }, _none), "a path outside the pin");
+            Expect.That(path.Hits.Count == 0, "a file outside the pin answers nothing");
+            var none = Ok(await reader.FindSymbols(Exact("Run") with { Within = [] }, _none), "an empty pin");
+            Expect.That(none.Hits.Count == 0 && !none.Truncated, "an empty set matches nothing");
+        }
+    }
+
     /// <summary>An empty text or a limit under 1 is SND-CODEIDX-012.</summary>
     /// <returns>A task.</returns>
     [Fact]

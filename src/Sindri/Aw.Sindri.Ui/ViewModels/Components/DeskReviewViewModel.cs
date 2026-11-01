@@ -10,15 +10,17 @@ namespace Aw.Sindri.Ui.ViewModels.Components;
 internal sealed class DeskReviewViewModel
 {
     private readonly DeskReview _review;
-    private readonly ILauncher _launcher;
     private readonly Action<string> _showFact;
 
     internal DeskReviewViewModel(DeskReview review, ILauncher launcher, Action<string> showFact)
     {
-        (_review, _launcher, _showFact) = (review, launcher, showFact);
+        (_review, _showFact, Launch) = (review, showFact, new LinkLaunch(launcher));
         Label = Labels.ReviewButton(review.Kind);
         Name = Labels.ReviewButtonName(Label, review.Fact);
     }
+
+    /// <summary>The launch of the review's link or file, with its failed line.</summary>
+    public LinkLaunch Launch { get; }
 
     /// <summary>The button's words.</summary>
     public string Label { get; }
@@ -44,10 +46,10 @@ internal sealed class DeskReviewViewModel
         switch (Target(_review))
         {
             case ReviewTarget.Link:
-                _ = await _launcher.OpenUri(new Uri(_review.Url!, UriKind.Absolute), CancellationToken.None).ConfigureAwait(true);   // why: Target is Link only for an absolute http(s) url
+                _ = await Launch.Open(new Uri(_review.Url!, UriKind.Absolute), CancellationToken.None).ConfigureAwait(true);   // why: Target is Link only for an absolute http(s) url
                 break;
             case ReviewTarget.File:
-                _ = await _launcher.OpenFile(_review.Path!, CancellationToken.None).ConfigureAwait(true);   // why: Target is File only for a non-empty path
+                _ = await Launch.OpenPath(_review.Path!, CancellationToken.None).ConfigureAwait(true);   // why: Target is File only for a non-empty path
                 break;
             case ReviewTarget.Fact:
             default:

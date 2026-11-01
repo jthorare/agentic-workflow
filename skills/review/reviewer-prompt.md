@@ -50,6 +50,10 @@ Do not invoke rootCause yourself. The orchestrator will confirm with the user an
 
 If no blocking bugs with error traces are found, omit both fields.
 
+### 6. Say when a finding is a pattern
+
+If a finding is one instance of a repeatable pattern (the same mistake made through the same API or idiom elsewhere), search for the others and say so in the `body`: name the class (one sentence) and list the other instances you found with `file:line`, or say you searched and found none. The fixer then starts from the class (`_shared/prevent-the-class.md`) rather than the one line. Don't invent instances you haven't seen.
+
 ---
 
 ## Output Format

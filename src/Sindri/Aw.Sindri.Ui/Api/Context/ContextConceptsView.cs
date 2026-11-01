@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Links">The weighted links between concepts.</param>
 /// <param name="Next">The cursor of the next page; null on the last.</param>
 /// <param name="Code">The error code when the state is unavailable.</param>
+/// <param name="PagesInNoConcept">How many pages relate to no concept, for the head's "Pages in no concept (N)" link; null from a server that doesn't count them.</param>
 internal sealed record ContextConceptsView(
     int ApiVersion,
     string? Repo,
@@ -21,4 +22,5 @@ internal sealed record ContextConceptsView(
     ConceptOther? Other = null,
     IReadOnlyList<ConceptLink>? Links = null,
     string? Next = null,
-    string? Code = null);
+    string? Code = null,
+    int? PagesInNoConcept = null);

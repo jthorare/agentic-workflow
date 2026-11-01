@@ -32,6 +32,14 @@ public sealed class RankerSettingsTests
         Assert.Equal((2.5, 0d, 1d), (settings.Weights.Recency, settings.Weights.CascadeDistance, settings.Weights.EdgeType));
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void The_pin_leg_is_off_unless_the_profile_turns_it_on()
+    {
+        Assert.False(SettingsReader.Read(section: null).Value.Ranker.PinLeg);
+        Assert.True(Read("""{"ranker":{"pinLeg":true}}""").Value.Ranker.PinLeg);
+        Assert.Equal(ContextErrors.SettingsInvalid.Code, Read("""{"ranker":{"pinLeg":"on"}}""").Error.Code);
+    }
+
     [Theory, Trait("Lane", "unit")]
     [InlineData("""{"ranker":{"weights":{"recency":-1}}}""", "context.ranker.weights.recency")]
     [InlineData("""{"ranker":{"weights":{"edgeType":10.5}}}""", "context.ranker.weights.edgeType")]

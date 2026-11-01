@@ -10,6 +10,9 @@ namespace Aw.Context.Core.WholeMap;
 /// <param name="Area">The key of one area to open on its own (its nodes and edges in full, up to the area cap), or null.</param>
 public sealed record WholeMapQuery(string? Detail, IReadOnlyList<string> Locate, MapRead Read, string? Repo = null, string? Area = null)
 {
-    /// <summary>The key of one concept to open on its own, like <see cref="Area"/> but scoped to the concept's members and what lies two levels below them; together with an area, the area's nodes that scope holds.</summary>
+    /// <summary>The key of one concept to open on its own, like <see cref="Area"/> but scoped to the concept's members, what lies two levels below them and the product structure under what those reach (the surfaces and actions on a reached thing, and what they in turn point to); together with an area, the area's nodes that scope holds.</summary>
     public string? Concept { get; init; }
+
+    /// <summary>True to ask for the pages that relate to no concept and their actions.</summary>
+    public bool PagesInNoConcept { get; init; }
 }

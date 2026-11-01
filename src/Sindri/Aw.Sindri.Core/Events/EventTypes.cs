@@ -122,6 +122,9 @@ public static class EventTypes
     /// <summary>The owner hid or unhid a project they lead.</summary>
     public const string ProjectHidden = "project.hidden";
 
+    /// <summary>The owner wrote or cleared the notes on a Linear project they lead.</summary>
+    public const string ProjectLedNoted = "project.led.noted";
+
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
 
@@ -208,6 +211,12 @@ public static class EventTypes
 
     /// <summary>The approved profile names a repo and its onboarding ran (setup-once spec §7.5).</summary>
     public const string RepoOnboarded = "repo.onboarded";
+
+    /// <summary>Pins were written into the live profile's 'index.concepts' (concept pins spec §3.6).</summary>
+    public const string ContextPinWritten = "context.pin.written";
+
+    /// <summary>Pages were written into the live profile's 'index.pages' (pages spec §3.1).</summary>
+    public const string ContextPageWritten = "context.page.written";
 
     /// <summary>The shipped recipes were registered at start (setup-once spec §7.5).</summary>
     public const string RecipeRegistrationCompleted = "recipe.registration.completed";

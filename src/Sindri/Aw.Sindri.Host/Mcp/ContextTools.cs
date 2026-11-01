@@ -29,7 +29,7 @@ internal static partial class ContextTools
     internal const string PageSentence = " Every top-level list is paged: limit (1 or more, default 100) keeps that many items and offset (0 or more, default 0) skips that many, "
         + "each list on its own. page.more says another page follows in some list and page.lists gives each list's total; items are never cut inside, and the counts stay the full totals.";
 
-    private static readonly string[] _texts = ["q", "node", "item", "symbol", "diff", "hops", "mapVersion"];
+    private static readonly string[] _texts = ["q", "node", "item", "symbol", "diff", "hops", "mapVersion", "concept"];
     private static readonly string[] _lensesArguments = ["anchor", "anchors", "mapVersion", "hops", "limit", "offset"];
     private static readonly string[] _numbers = ["depth", "budget"];
 
@@ -47,6 +47,7 @@ internal static partial class ContextTools
             ["item"] = Property("string", "A Sindri item id or tracker key"),
             ["symbol"] = Property("string", "A file path or symbol"),
             ["diff"] = Property("string", "Two commit shas joined by '..' (base..head), not branch names"),
+            ["concept"] = Property("string", "a pin id from context_concepts (rows with pinned: true); only results inside that pin"),
             ["depth"] = Property("integer", "Cascade depth (deeper than 8 is read as 8)", minimum: 0),
             ["hops"] = Property("string", HopsText),
             ["budget"] = Property("integer", "Ignored: the answer holds every ranked item (page it with limit and offset)"),

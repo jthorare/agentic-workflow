@@ -28,6 +28,15 @@ internal sealed class ProfileChecks(IContextEngine context, IAgentCatalog catalo
         return checkedContext.IsError ? checkedContext.Error : null;
     }
 
+    /// <summary>What the profile check prints as warnings about the context section: today the old 'context.conceptScan.models' written beside 'context.models.names' (model routing spec §9).</summary>
+    /// <param name="profile">The live profile.</param>
+    /// <returns>The lines, or null when there are none.</returns>
+    public IReadOnlyList<string>? ContextWarnings(SindriProfile profile)
+    {
+        var checkedContext = context.CheckSettings(profile.Context, [.. (profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path))]);
+        return checkedContext.IsSuccess && checkedContext.Value.Models.Warnings is { Count: > 0 } warnings ? warnings : null;
+    }
+
     /// <summary>For each stepArgvHash key in <paramref name="changes"/>, each listed hash with the entry that has it.</summary>
     /// <param name="profile">The live profile.</param>
     /// <param name="changes">The changed key paths.</param>

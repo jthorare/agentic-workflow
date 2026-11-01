@@ -40,4 +40,9 @@ public static class ModelHarnesses
     /// <param name="harness">The harness.</param>
     /// <returns>The request key.</returns>
     public static string RequestKey(ModelHarness harness) => harness == ModelHarness.ClaudeCode ? "claude" : Name(harness);
+
+    /// <summary>How much one prompt to the harness may hold (spec §6.2): Cursor's CLI takes the prompt as an argument and cuts it at 30,000 characters; the others take 60,000.</summary>
+    /// <param name="harness">The harness.</param>
+    /// <returns>The prompt characters and the most clusters in a pack.</returns>
+    public static Models.PromptBudget PromptBudget(ModelHarness harness) => harness == ModelHarness.Cursor ? Models.PromptBudget.Narrow : Models.PromptBudget.Wide;
 }

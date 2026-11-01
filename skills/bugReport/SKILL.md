@@ -56,6 +56,8 @@ For each failure, warning, or error found in Step 2:
 
 Rate each `bug` with the shared severity scale from `skills/_shared/severity.md`: **CRITICAL / HIGH / MEDIUM / LOW** (same vocabulary as `/review` and `/cso`).
 
+For each `bug`, read `$SHARED_DIR/prevent-the-class.md` and answer its question (how to prevent this class, not just this instance) without fixing anything: name the **Failure class** and the **Invariant**, search for the **Affected scope** (other instances, file:line, or how you searched and found none), and recommend the smallest prevention mechanism (an existing guard, a lint or analyzer rule, a type or API change, a shared primitive, a reusable check). Don't invent defects you haven't seen.
+
 Static tool output alone cannot confirm runtime behavior — without `--runtime`, mark suspected behavior defects as `bug (suspected — static evidence only)`.
 
 ## Step 3.5: Runtime Verification (only with `--runtime`)
@@ -129,6 +131,13 @@ Report format:
 | 1 | {CRITICAL/HIGH/MEDIUM/LOW} | {static \| runtime \| suspected} | `{file}` | {line} | {description} |
 
 {If no bugs found: "No bugs detected."}
+
+For each bug row, also:
+
+| # | Failure class | Invariant | Affected scope | Recommended prevention |
+|---|---------------|-----------|----------------|------------------------|
+| 1 | {the mistake that can recur} | {what should always hold} | {other instances file:line, or "searched <how>, none found"} | {existing guard <which> \| mechanism <which> — why it covers the class} |
+
 {If --runtime ran: "Runtime evidence pack: {path to verification/<run-id>/pack.json} — verdict {PASS|WARN|FAIL}"}
 
 ## Tech Debt

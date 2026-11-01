@@ -23,6 +23,7 @@ public sealed class FakeRecordStore : IRecordStore
     public ValueTask<Result<CommitReport>> Commit(RecordBatch batch, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(batch);
+        cancellationToken.ThrowIfCancellationRequested();   // a real store's transaction does not start under a cancelled token
         lock (_gate)
         {
             if (Validate(batch) is { } invalid)

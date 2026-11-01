@@ -302,8 +302,8 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/projects",
-      "cli": "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--note <text>] [--target <date>]",
-      "ui": "pending:Projects",
+      "cli": "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null,
@@ -377,8 +377,8 @@
       "terminal": false,
       "method": "POST",
       "route": "/sindri/projects/{projectId}/change",
-      "cli": "sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--note <text>] [--target <date>]",
-      "ui": "pending:Projects",
+      "cli": "sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null,
@@ -534,7 +534,7 @@
       "method": "POST",
       "route": "/sindri/projects/{projectId}/detach",
       "cli": "sindri project remove <project> --version <n>",
-      "ui": "pending:Projects",
+      "ui": "ready",
       "destructive": true,
       "readsViews": true,
       "shortcut": null,
@@ -626,7 +626,7 @@
       "method": "POST",
       "route": "/sindri/projects/hide",
       "cli": "sindri project hide <project> --version <n>",
-      "ui": "pending:Projects",
+      "ui": "ready",
       "destructive": false,
       "readsViews": true,
       "shortcut": null,
@@ -838,6 +838,25 @@
       "confirm": null
     },
     {
+      "action": "PinConcepts",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/context/pins",
+      "cli": "sindri context pin set <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ProbeLaunchTargets",
       "class": "job",
       "allowedCallers": [
@@ -1021,6 +1040,25 @@
       "confirm": null
     },
     {
+      "action": "RelinkPinAliases",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri services run context-map-refresh",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RerunInstance",
       "class": "desk",
       "allowedCallers": [
@@ -1032,6 +1070,24 @@
       "method": "POST",
       "route": "/sindri/workflow/instances/{instanceId}/rerun",
       "cli": "sindri workflow start <recipe> --item <itemId> --attempt next",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ResumeJob",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/jobs/{jobId}/resume",
+      "cli": "sindri jobs resume <jobId>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -1392,6 +1448,39 @@
       "route": "/sindri/sessions/{launchId}/heartbeat",
       "cli": "sindri session wrap --launch <launchId>",
       "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "SetPages",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/context/pages",
+      "cli": "sindri context page set <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "SetProfileKey",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri profile set <key> <value> [--json]",
+      "ui": "cli-only:local",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,

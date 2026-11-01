@@ -9,9 +9,14 @@ public static class ModelRouting
     /// <param name="settings">'context.models'.</param>
     /// <param name="request">The call. Its Models and Model win over the profile; its Tier counts only for a concept scan, which picks its own from the map's size.</param>
     /// <param name="installed">The harnesses found on PATH, in the default order (the AW_PROVIDER one first).</param>
-    /// <returns>The harnesses to try, in order, each with its model and where the name came from; empty when none is installed.</returns>
+    /// <returns>The harnesses to try, in order, each with its model and where the name came from; empty when none is installed, and always empty for the product-surface kind (its route is Jev through the choice port, never a CLI: spec §3.2 point 3).</returns>
     public static IReadOnlyList<RoutedModel> Resolve(ModelsSettings settings, ModelRequest request, IReadOnlyList<ModelHarness> installed)
     {
+        if (ModelKinds.Of(request.Purpose) == ModelKind.ProductSurfaces)
+        {
+            return [];
+        }
+
         var entry = settings.Entry(ModelKinds.Of(request.Purpose));
         var wanted = entry.Harnesses ?? settings.Default.Harnesses;
         var order = wanted is null ? installed : [.. wanted.Where(installed.Contains)];

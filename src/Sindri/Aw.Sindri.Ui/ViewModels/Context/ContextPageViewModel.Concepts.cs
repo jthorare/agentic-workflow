@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 internal sealed partial class ContextPageViewModel
 {
     private bool _conceptsRead;
+    private string? _conceptsVersion;
 
     /// <summary>The first layer of the map: the product's concepts.</summary>
     public ConceptLayerViewModel Concepts { get; }
@@ -25,9 +26,16 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The back button's words.</summary>
     public string BackText { get; } = Labels.ContextConceptsBack;
 
-    // Registered once: the whole map's crumbs and back button ask the page to go up.
+    /// <summary>A pinned card's Review and approve was pressed: the shell opens the needs-you review the setup step uses.</summary>
+    internal event EventHandler? ReviewAndApproveRequested;
+
+    // Registered once: the whole map's crumbs and back button ask the page to go up; the layer's pin side opens the sheet and answers its footer buttons.
     private void InitConcepts()
     {
+        Concepts.WirePins(Ports.OpenPin, () => _repo ?? string.Empty);
+        Concepts.ReviewAndApprove = () => ReviewAndApproveRequested?.Invoke(this, EventArgs.Empty);
+        Concepts.TryAgain = () => _ = TryRefreshAgain();
+        Ports.Follow(RefreshPins);
         Whole.ConceptsRequested += (_, _) => CloseConcept();
         Whole.UpRequested += (_, _) => _ = Up();
     }
@@ -45,12 +53,15 @@ internal sealed partial class ContextPageViewModel
         var read = await ReadConcepts(api, cancellationToken).ConfigureAwait(true);
         _conceptsRead = read.IsSuccess || !string.Equals(read.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
         NoteConcepts(read);
+        CountNoConcept(read.IsSuccess ? read.Value : null);
         if (Concepts.HasConcepts)
         {
             Head = Labels.ContextConceptsHead;
             ChangedConcepts();
             ChangedWhole();
+            _conceptsVersion = read.Value.MapVersion;
             await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
+            await ReadPins(api, cancellationToken).ConfigureAwait(true);
             return;
         }
 
@@ -168,10 +179,13 @@ internal sealed partial class ContextPageViewModel
         AnchorText = string.Empty;
         _ = Concepts.EndSearch();
         OpenedConceptId = id;
-        Whole.EnterConcept(name);
+        Whole.EnterConcept(name, ConceptKey(id));
         ChangedConcepts();
         return ReadWhole(cancellationToken);
     }
+
+    // The concept's node key on the map: its id, except "other", which is no concept.
+    private static string? ConceptKey(string id) => string.Equals(id, "other", StringComparison.Ordinal) ? null : id;
 
     /// <summary>Goes back to the concepts: the scoped map goes and the layer shows again.</summary>
     internal void CloseConcept()
@@ -216,7 +230,8 @@ internal sealed partial class ContextPageViewModel
         return true;
     }
 
-    // A query at the concept layer: the concepts whose name or summary hold the words, and the ones that hold a node the words (or the anchors they resolve to) name.
+    // A query at the concept layer: the concepts whose name, summary or terms hold the words, and the ones that hold a node the words (or the anchors the question
+    // resolved to) name. The question's suggestions are choices, never matches (#1699).
     private async Task SearchConcepts(Uri api, List<string> words, int generation, CancellationToken cancellationToken)
     {
         var matches = new HashSet<string>(Concepts.Matching(AnchorText.Trim()), StringComparer.Ordinal);
@@ -226,6 +241,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
+        Choices = [];
         if (resolved is { } found)
         {
             var located = await Ports.Api.WholeMap(api, new WholeMapQuery("areas", Area: null, [.. found.Anchors.Take(MaxLocate)], MapVersion: null, Draft: false, Repo: _repo), cancellationToken).ConfigureAwait(true);
@@ -241,7 +257,13 @@ internal sealed partial class ContextPageViewModel
         }
 
         Concepts.ApplySearch(matches);
+        if (matches.Count == 0 && resolved is { Suggested.Count: > 0 } missed)
+        {
+            Choices = missed.Suggested;
+        }
+
         ChangedConcepts();
+        Refresh();
     }
 
     private void ChangedConcepts()
@@ -254,5 +276,6 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(HasHead));
         OnChanged(nameof(SearchNote));
         OnChanged(nameof(HasSearchNote));
+        ChangedNoConcept();
     }
 }

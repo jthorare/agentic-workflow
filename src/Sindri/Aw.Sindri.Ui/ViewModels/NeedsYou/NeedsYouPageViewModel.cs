@@ -24,6 +24,7 @@ internal sealed partial class NeedsYouPageViewModel : ObservableObject
         _clock = clock;
         _clipboard = clipboard;
         Bar = new NeedsYouBarViewModel(desk, clock, confirm);
+        PrLaunch = new LinkLaunch(desk.Launcher);
         _list.PropertyChanged += OnListChanged;
         Rebuild();
         _lastRow = Selected;

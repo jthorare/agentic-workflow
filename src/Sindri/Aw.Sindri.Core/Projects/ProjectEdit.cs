@@ -7,8 +7,8 @@ namespace Aw.Sindri.Core.Projects;
 /// <param name="State">A new state, or null.</param>
 /// <param name="ClearState">Drops the owner's state.</param>
 /// <param name="Links">The new whole list of links, or null.</param>
-/// <param name="Note">A new note, or null.</param>
-/// <param name="ClearNote">Drops the note.</param>
+/// <param name="Notes">New notes, or null.</param>
+/// <param name="ClearNotes">Drops the notes.</param>
 /// <param name="Target">A new target date, or null.</param>
 /// <param name="ClearTarget">Drops the target date.</param>
 public sealed record ProjectEdit(
@@ -16,7 +16,7 @@ public sealed record ProjectEdit(
     ProjectState? State = null,
     bool ClearState = false,
     IReadOnlyList<string>? Links = null,
-    string? Note = null,
-    bool ClearNote = false,
+    string? Notes = null,
+    bool ClearNotes = false,
     DateOnly? Target = null,
     bool ClearTarget = false);

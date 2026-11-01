@@ -3,6 +3,8 @@ using System.Net;
 using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.Api.Jobs;
+using Aw.Sindri.Ui.Api.Workflow;
 
 namespace Aw.Sindri.Ui.Api;
 
@@ -94,8 +96,8 @@ internal sealed partial class SindriApiClient
 
         _ = _unreadable.TryRemove(path, out _);
 
-        // An accepted command (CreateItem nests it) is waited for by the next query.
-        if ((object?)value.Value switch { CommandAcceptedView a => a.Sequence, ItemCreatedView c => c.Accepted.Sequence, RequestFiledView f => f.Accepted.Sequence, RecipeApproved r => r.Accepted.Sequence, _ => (long?)null } is { } sequence)
+        // Any answer that is or nests an accepted command (CreateItem, a job start) is waited for by the next query.
+        if (AcceptedSequence(value.Value) is { } sequence)
         {
             _ = Interlocked.Exchange(ref _after, sequence);
         }
@@ -106,6 +108,21 @@ internal sealed partial class SindriApiClient
 
         return value;
     }
+
+    // The ledger sequence of the command an answer accepted, or null when the answer is not one.
+    private static long? AcceptedSequence(object? answer) => answer switch
+    {
+        CommandAcceptedView a => a.Sequence,
+        ItemCreatedView c => c.Accepted.Sequence,
+        RequestFiledView f => f.Accepted.Sequence,
+        RecipeApproved r => r.Accepted.Sequence,
+        JobStarted j => j.Accepted.Sequence,
+        ApproveAllStarted s => s.Accepted.Sequence,
+        JobResumedView r => r.Accepted.Sequence,
+        ProjectAcceptedView p => p.Accepted.Sequence,
+        OpenAcceptedView o => o.Accepted.Sequence,
+        _ => null,
+    };
 
     // A call, and its one retry when the token was stale.
     // A view query carries the pending sequence on both tries, and has used it once it got any answer, SND-API-011

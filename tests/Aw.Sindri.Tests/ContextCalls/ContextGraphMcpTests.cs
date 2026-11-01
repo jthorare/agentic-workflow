@@ -64,7 +64,7 @@ public sealed class ContextGraphMcpTests : IDisposable
 
         var tools = await mcp.Client.ListToolsAsync(cancellationToken: ct);
 
-        Assert.Equal(["context_query", "context_sources", "context_lenses", "context_concepts", "context_node", "context_neighbors"], tools.Select(t => t.Name).Take(6), StringComparer.Ordinal);
+        Assert.Equal(["context_query", "context_sources", "context_lenses", "context_concepts", "context_pages", "context_node", "context_neighbors"], tools.Select(t => t.Name).Take(7), StringComparer.Ordinal);
         var node = tools.Single(t => t.Name == "context_node");
         var neighbors = tools.Single(t => t.Name == "context_neighbors");
         Assert.All([node, neighbors], t =>

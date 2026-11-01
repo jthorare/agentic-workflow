@@ -1,0 +1,13 @@
+Sindri Step brief. Instance ITM-00000000000000000000000000000001/bugfix/1, run 1.1, state s.
+Goal: the resolution report for this bug, true to what was proven, for a fixed or an unfixed bug alike.
+Read fact:issue and fact:rootCause from your inputs. fact:rootCause holds the handoff block (failure class, invariant, affected scope, prevention decision, mitigation, proof). Copy that block into the report as it stands and add the proof you find; don't rewrite it.
+Write fact:resolution with three separate lines, never merged into one 'fixed'. 'Original bug:' the reproduction check's result before and after the fix, and the verdict. 'Class prevention:' what was built and its proof, or 'existing guard <which>', or 'none built'. 'Deferred:' the follow-ups recorded, with links, or 'none'.
+Never claim the class is gone without the mechanism's own proof; say what it covers and what it doesn't. A passing check for the instance is not prevention.
+The question the investigation asked, so the 'Class prevention' line answers it: How can we prevent this class of bugs from happening again—not just fix this instance? Consider enforceable constraints such as lint rules, analyzers, type/API design, shared primitives, state-machine or architecture changes, and checks that catch other instances of the same failure.
+The full rule: $HOME/.agentic-workflow/toolkit/skills/_shared/prevent-the-class.md. Report done.
+You read: fact:issue, fact:rootCause.
+The facts you read that are set are already in the run folder $AW_SINDRI_RUN_DIR, one JSON file each: fact-issue.json.
+Outcome done: write fact:resolution.
+Put each output in its own file under the output folder $AW_SINDRI_RUN_DIR/.sindri-out, named after the fact.
+Report with: sindri workflow complete ITM-00000000000000000000000000000001/bugfix/1 --run 1.1 --outcome done --output fact:resolution=$AW_SINDRI_RUN_DIR/.sindri-out/resolution
+Your Step ends only when this command succeeds; if it's refused, read the error and fix it.

@@ -14,6 +14,9 @@ internal static class ContextRoutes
     /// <summary>GET /sindri/context/map/publish.</summary>
     internal const string MapPublish = Root + "/map/publish";
 
+    /// <summary>QUERY /sindri/context/pages/preview: the paste is the JSON body.</summary>
+    internal const string PagesPreview = Root + "/pages/preview";
+
     /// <summary>GET /sindri/context/sources.</summary>
     internal const string Sources = Root + "/sources";
 
@@ -34,6 +37,11 @@ internal static class ContextRoutes
             parts.Add("draft=true");
         }
 
+        if (query.PagesInNoConcept)
+        {
+            parts.Add("pagesInNoConcept=true");
+        }
+
         Add(parts, "mapVersion", query.MapVersion);
         return With(Root + "/map/whole", parts);
     }
@@ -49,6 +57,21 @@ internal static class ContextRoutes
         return With(Root + "/concepts", parts);
     }
 
+    internal static string Pages(PagesQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string>();
+        Add(parts, "repo", query.Repo);
+        Add(parts, "concept", query.Concept);
+        parts.AddRange(Limit(query.Limit));
+        if (query.Offset is { } offset)
+        {
+            parts.Add("offset=" + offset.ToString(CultureInfo.InvariantCulture));
+        }
+
+        return With(Root + "/pages", parts);
+    }
+
     internal static string ConceptGlossary(ConceptGlossaryQuery query)
     {
         ArgumentNullException.ThrowIfNull(query);
@@ -56,6 +79,43 @@ internal static class ContextRoutes
         Add(parts, "repo", query.Repo);
         Add(parts, "mapVersion", query.MapVersion);
         return With(Root + "/concepts/glossary", parts);
+    }
+
+    // The characters one row adds to a pin-suggest query: its line= and its def= (counted even when empty, the worst case) and their separators.
+    internal static int PinSuggestRowSize(PinSuggestLine line)
+    {
+        ArgumentNullException.ThrowIfNull(line);
+        return "line=".Length + Uri.EscapeDataString(line.Name).Length + 1 + "def=".Length + Uri.EscapeDataString(line.Definition ?? string.Empty).Length + 1;
+    }
+
+    internal static string PinSuggest(PinSuggestQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var parts = new List<string>();
+        Add(parts, "repo", query.Repo);
+        Add(parts, "concept", query.Concept);
+        Add(parts, "search", query.Search);
+        if (query.Search is { Length: 0 })
+        {
+            parts.Add("search=");   // present but empty: every feature (the picker's first look)
+        }
+
+        parts.AddRange(Limit(query.Limit));
+        var lines = query.Lines ?? [];
+        parts.AddRange(lines.Select(l => "line=" + Uri.EscapeDataString(l.Name)));
+        if (lines.Any(l => !string.IsNullOrEmpty(l.Definition)))
+        {
+            parts.AddRange(lines.Select(l => "def=" + Uri.EscapeDataString(l.Definition ?? string.Empty)));   // by index: an empty value keeps the line's place
+        }
+
+        return With(Root + "/pins/suggest", parts);
+    }
+
+    internal static string Pins(string repo)
+    {
+        var parts = new List<string>();
+        Add(parts, "repo", repo);
+        return With(Root + "/pins", parts);
     }
 
     /// <summary>QUERY /sindri/context/code: the anchors travel as the JSON body.</summary>
@@ -92,7 +152,8 @@ internal static class ContextRoutes
         return With(Root + "/map", parts);
     }
 
-    internal static string Query(string text) => With(Root + "/query", ["q=" + Uri.EscapeDataString(text)]);
+    internal static string Query(string text, string? concept = null) =>
+        With(Root + "/query", concept is null ? ["q=" + Uri.EscapeDataString(text)] : ["q=" + Uri.EscapeDataString(text), "concept=" + Uri.EscapeDataString(concept)]);
 
     internal static string Node(string key) => With(Root + "/node", ["key=" + Uri.EscapeDataString(key)]);
 

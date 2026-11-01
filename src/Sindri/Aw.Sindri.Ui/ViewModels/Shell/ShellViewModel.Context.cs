@@ -2,6 +2,7 @@ using System.Diagnostics.CodeAnalysis;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Context;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
@@ -15,7 +16,12 @@ internal sealed partial class ShellViewModel
     [MemberNotNull(nameof(Context))]
     private void InitContext(ISindriApi api, IClipboard clipboard, ILauncher launcher)
     {
-        Context = new ContextPageViewModel(new ContextPorts(api, Health.ApiUrl, clipboard, _clock, Health.Catalog, Health.Follow, launcher));
+        var writes = new ProfileWriteFlow(api, Health.ApiUrl, _clock);
+        Context = new ContextPageViewModel(new ContextPorts(api, Health.ApiUrl, clipboard, _clock, Health.Catalog, Health.Follow, launcher, new PageWrites(writes, api, Health.ApiUrl), writes, OpenPinSheet));
+        WirePageSheet();
+        WireAddSeveralPages();
+        Context.ReviewAndApproveRequested += (_, _) => Navigate(LinkOf(ProfileDriftRow));   // a pinned card's Review and approve: the needs-you review the setup step uses
+        PinSheetClosed += (_, e) => _ = Context.PinSheetClosed(e.Written, CancellationToken.None);   // a written pin shows its new state, and focus goes back to the button that opened the sheet
         Context.JobRequested += (_, e) => Navigate(e.Link);   // the Building overlay's "View build job"
     }
 }

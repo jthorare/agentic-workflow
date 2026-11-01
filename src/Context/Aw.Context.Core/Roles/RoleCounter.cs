@@ -15,7 +15,7 @@ public static class RoleCounter
         ArgumentNullException.ThrowIfNull(graph);
         var repoOf = NodeRepos.Index(graph, mapRepo);
         return graph.Nodes
-            .Where(n => n.Key.Kind == NodeKind.Code && repoOf.TryGetValue(n.Key.Value, out var repo) && repo is not null)
+            .Where(n => n.Key.Kind == NodeKind.Code && !UnreadFileNodes.Is(n) && repoOf.TryGetValue(n.Key.Value, out var repo) && repo is not null)
             .GroupBy(n => repoOf[n.Key.Value]!, StringComparer.Ordinal)   // why: the filter above keeps only nodes whose repo is not null
             .ToDictionary(g => g.Key, g => (IReadOnlyList<string>)[.. g.Select(n => n.Key.Name)], StringComparer.Ordinal);
     }

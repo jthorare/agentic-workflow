@@ -15,11 +15,11 @@ public sealed class MapCheckLimitsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_defaults_are_the_numbers_the_checks_had_before_they_were_configurable()
+    public void The_defaults_are_the_numbers_measured_on_real_maps()
     {
         var limits = Read("{}").Value.CheckLimits;
 
-        Assert.Equal((5, 20, 30, 60, 2, 10), (limits.MinFilesIsolated, limits.MinFeaturesIsolated, limits.IsolatedDegradedPercent, limits.IsolatedRefusePercent, limits.OverCapDegradedPercent, limits.OverCapRefusePercent));
+        Assert.Equal((5, 20, 5, 60, 2, 10), (limits.MinFilesIsolated, limits.MinFeaturesIsolated, limits.IsolatedDegradedPercent, limits.IsolatedRefusePercent, limits.OverCapDegradedPercent, limits.OverCapRefusePercent));
     }
 
     [Fact, Trait("Lane", "unit")]

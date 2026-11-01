@@ -25,7 +25,8 @@ internal sealed partial class SlackConnector(
     {
         var parsed = SlackCursor.Parse(after?.Value);
         var cursor = parsed ?? SlackCursor.Empty;
-        var result = await pull.Handle(new PullSlackRequest(settings.Channels, settings.Workspace, cursor, limit) { WindowStart = window is { } back ? (clock ?? TimeProvider.System).GetUtcNow() - back : null, Before = before }, cancellationToken).ConfigureAwait(false);
+        var now = (clock ?? TimeProvider.System).GetUtcNow();
+        var result = await pull.Handle(new PullSlackRequest(settings.Channels, settings.Workspace, cursor, limit) { WindowStart = window is { } back ? now - back : null, Before = before, Now = now }, cancellationToken).ConfigureAwait(false);
         if (result.IsError)
         {
             return result.Error;
@@ -34,7 +35,7 @@ internal sealed partial class SlackConnector(
         var read = result.Value;
         return read.RateLimitedUntil is { } until && string.Equals(read.Next.ToText(), cursor.ToText(), StringComparison.Ordinal)
             ? Limited(until)
-            : new ConnectorPage(read.Items, [], new SourceCursor(read.Next.ToText()), CursorReset: parsed is null);
+            : new ConnectorPage(read.Items, [], new SourceCursor(CursorText(read.Next)), CursorReset: parsed is null);
     }
 
     public async ValueTask<Result<IReadOnlyDictionary<string, string>>> Versions(IReadOnlyList<string> keys, CancellationToken cancellationToken)
@@ -75,6 +76,9 @@ internal sealed partial class SlackConnector(
 
         return probe.Value is { } until ? Limited(until) : Unit.Value;
     }
+
+    // why: a cursor with nothing read (an empty channel, or a backfill with nothing before its bound) has no text, and the feed refuses an empty cursor.
+    private static string CursorText(SlackCursor cursor) => cursor.ToText() is { Length: > 0 } text ? text : SlackCursor.NothingReadText;
 
     private static Error Limited(DateTimeOffset until)
         => ConnectorsErrors.RateLimited.With($"Slack is rate limited until {until.UtcDateTime.ToString("O", CultureInfo.InvariantCulture)}.");

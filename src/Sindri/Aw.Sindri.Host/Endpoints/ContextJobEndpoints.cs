@@ -1,8 +1,10 @@
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Features.PinConcepts;
+using Aw.Sindri.Features.SetPages;
 
 namespace Aw.Sindri.Host.Endpoints;
 
-/// <summary>POST /sindri/context/sources/sync, /index/sync, /map/build and /eval/backtest: the context engine's jobs on the generic job route.</summary>
+/// <summary>POST /sindri/context/sources/sync, /index/sync, /map/build and /eval/backtest and /context/pins and POST /context/pages: the context engine's jobs on the generic job route.</summary>
 internal static class ContextJobEndpoints
 {
     internal static RouteGroupBuilder MapContextJobs(this RouteGroupBuilder group) =>
@@ -10,5 +12,7 @@ internal static class ContextJobEndpoints
             .MapJob<SyncIndexSourceRequest, SyncIndexSourceResult>("/index/sync")   // the named source's own job: the body names it
             .MapJob<BuildContextMapRequest, BuildContextMapResult>("/context/map/build", static _ => new BuildContextMapRequest())   // the build takes no input: any body, or none, starts it
             .MapJob<RefreshContextMapRequest, RefreshContextMapResult>("/context/map/refresh", static _ => new RefreshContextMapRequest())   // the refresh takes no input either
-            .MapJob<RunContextBacktestRequest, RunContextBacktestResult>("/context/eval/backtest");
+            .MapJob<RunContextBacktestRequest, RunContextBacktestResult>("/context/eval/backtest")
+            .MapJob<PinConceptsRequest, PinConceptsResult>("/context/pins")
+            .MapJob<SetPagesRequest, SetPagesResult>("/context/pages");   // the GET read of the same path is GetContextPagesEndpoint
 }

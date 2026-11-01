@@ -46,6 +46,14 @@ internal static class ContextApiScenarios
 
     private static string CodeRoute(string? second = null) => $"/sindri/context/code?anchor={CodeAnchor}" + (second is null ? string.Empty : $"&anchor={second}");
 
+    // The pins goldens: two approved pins; the edit then rewrites 'billing', drops 'auth' and adds 'refunds' in the live file only.
+    private const string PinsYaml = "index:\n  concepts:\n    - { id: billing, name: Billing, summary: \"Invoices and payment.\", aliases: [payments], features: [\"feature:invoices\"] }\n    - { id: auth, name: Sign in }\n";
+
+    private static string? ProfileExtra(string slug) => string.Equals(slug, "context-pins", StringComparison.Ordinal) ? PinsYaml : null;
+
+    private static string EditPins(string yaml) => yaml.Replace(PinsYaml,
+        "index:\n  concepts:\n    - { id: billing, name: Billing, summary: \"Invoices, payment and refunds.\", aliases: [payments], features: [\"feature:invoices\"] }\n    - { id: refunds, name: Refunds }\n", StringComparison.Ordinal);
+
     private static readonly (string Slug, string Scenario, Run Body)[] _table =
     [
         ("context-lenses", "map-tabs", async (s, ct) => await s.Fetch($"/sindri/context/lenses?anchor={Anchor}", ct)),
@@ -136,6 +144,17 @@ internal static class ContextApiScenarios
         ("context-concepts-glossary", "terms", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
         ("context-concepts-glossary", "no-terms-empty", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
         ("context-concepts-glossary", "no-map-030", async (s, ct) => await s.Fetch("/sindri/context/concepts/glossary", ct)),
+        ("context-pins-suggest", "terms", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?concept=concept%3Abilling", ct)),
+        ("context-pins-suggest", "features", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?search=sh", ct)),
+        ("context-pins-suggest", "empty-search", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?search=", ct)),   // binds as "", not absent: every feature by label
+        ("context-pins-suggest", "matches", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?line=Invoices&def=payment%20runs&line=Weather&def=rain%20and%20snow", ct)),
+        ("context-pins-suggest", "invalid-179", async (s, ct) => await s.Fetch("/sindri/context/pins/suggest?concept=concept%3Abilling&search=sh", ct)),
+        ("context-pins", "approved", async (s, ct) => await s.Fetch("/sindri/context/pins", ct)),
+        ("context-pins", "waiting-and-removing", async (s, ct) => await s.FetchAfterProfileEdit("/sindri/context/pins", EditPins, ct)),
+        ("context-pins", "session-own-repo", async (s, ct) => await s.FetchAsSession("/sindri/context/pins", ct)),
+        ("context-pages-preview", "matched", async (s, ct) => await s.PreviewPages("Schedule week\nSubmit -> Self-scheduling\n\nBilling\nSend invoice -> aproval", ct)),
+        ("context-pages-preview", "same-page", async (s, ct) => await s.PreviewPages("Schedule week\nSubmit\n\nSchedule weeks\nCancel", ct)),
+        ("context-pages-preview", "invalid-259", async (s, ct) => await s.PreviewPages("  \n", ct)),
         ("context-concepts-id-members", "scheduling", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members", ct)),
         ("context-concepts-id-members", "other", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Aother/members", ct)),
         ("context-concepts-id-members", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members?limit=1", ct)),
@@ -198,7 +217,7 @@ internal static class ContextApiScenarios
         var locks = Directory.CreateTempSubdirectory("aw-golden-locks-");
         IDisposable repo = bulk ? FixtureRepo.Build() : MapTabsRepo.Build();
         var path = repo is FixtureRepo fixture ? fixture.Path : ((MapTabsRepo)repo).Path;
-        var host = await ContextHosts.Approved(path, sessions: true, ct, Wiring(Path.Combine(locks.FullName, "heavy-job.lock"), scenario), bulk ? "split-panes" : Repo);
+        var host = await ContextHosts.Approved(path, sessions: true, ct, Wiring(Path.Combine(locks.FullName, "heavy-job.lock"), scenario), bulk ? "split-panes" : Repo, profileExtra: ProfileExtra(slug));
         host.Own(repo);
         host.Own(new Deleted(locks.FullName));
         if (bulk)
@@ -297,9 +316,14 @@ internal static class ContextApiScenarios
             return HopsMap(host.Home);
         }
 
-        if ((slug.StartsWith("context-concepts", StringComparison.Ordinal) && !string.Equals(scenario, "no-concepts-empty", StringComparison.Ordinal)) || scenario.StartsWith("concept-", StringComparison.Ordinal))
+        if (string.Equals(slug, "context-pages-preview", StringComparison.Ordinal))
         {
-            return ConceptMapFile.Write(host.Home, terms: (slug, scenario) is ("context-concepts-glossary", "terms"));   // the tabs map has no concept: its own scenario reads that answer
+            return PagesMapFile.Write(host.Home);
+        }
+
+        if ((slug.StartsWith("context-concepts", StringComparison.Ordinal) && !string.Equals(scenario, "no-concepts-empty", StringComparison.Ordinal)) || scenario.StartsWith("concept-", StringComparison.Ordinal) || string.Equals(slug, "context-pins-suggest", StringComparison.Ordinal))
+        {
+            return ConceptMapFile.Write(host.Home, terms: (slug, scenario) is ("context-concepts-glossary", "terms") or ("context-pins-suggest", _));   // the tabs map has no concept: its own scenario reads that answer
         }
 
         if ((slug, scenario) is not ("context-lenses", "ambiguous-037"))

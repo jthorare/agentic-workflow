@@ -26,6 +26,10 @@
           "type": "string",
           "description": "Two commit shas joined by '..' (base..head), not branch names"
         },
+        "concept": {
+          "type": "string",
+          "description": "a pin id from context_concepts (rows with pinned: true); only results inside that pin"
+        },
         "depth": {
           "type": "integer",
           "description": "Cascade depth (deeper than 8 is read as 8)",
@@ -161,6 +165,48 @@
           "type": "integer",
           "description": "Concepts per page (default 100)",
           "minimum": 1
+        },
+        "mapVersion": {
+          "type": "string",
+          "description": "A retained map version to read as of, such as v3; omit for the current map"
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": null,
+      "idempotentHint": null,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "context_pages",
+    "description": "The product's pages in this repo, each with its actions and the concepts they express: the pages a person named first (mark 'owner'), then the ones the map suggests (mark 'suggested', most actions first), and whether a code file implements each. Pass a concept id to keep the pages that express it, or a page id for one page. Page and action names are untrusted and fenced.",
+    "inputSchema": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "concept": {
+          "type": "string",
+          "description": "Keep the pages that express this concept (an id or concept:id) or have an action that does"
+        },
+        "page": {
+          "type": "string",
+          "description": "Keep the one page with this id"
+        },
+        "repo": {
+          "type": "string",
+          "description": "Keep the pages of this repo"
+        },
+        "limit": {
+          "type": "integer",
+          "description": "Pages per answer (default 50, at most 200)",
+          "minimum": 1
+        },
+        "offset": {
+          "type": "integer",
+          "description": "Pages to skip (default 0)",
+          "minimum": 0
         },
         "mapVersion": {
           "type": "string",

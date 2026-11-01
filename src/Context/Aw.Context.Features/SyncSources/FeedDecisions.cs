@@ -7,6 +7,7 @@ using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
+using Microsoft.Extensions.Logging;
 
 namespace Aw.Context.Features.SyncSources;
 
@@ -20,7 +21,8 @@ namespace Aw.Context.Features.SyncSources;
 /// <param name="intents">The decision store.</param>
 /// <param name="model">The model the pass asks.</param>
 /// <param name="clock">The clock.</param>
-internal sealed class FeedDecisions(RecordFeedSync feeds, MapReader graphs, IIntentStore intents, IModelPort model, TimeProvider clock)
+/// <param name="logger">Where a record skipped for linking is warned about; none logs nothing.</param>
+internal sealed class FeedDecisions(RecordFeedSync feeds, MapReader graphs, IIntentStore intents, IModelPort model, TimeProvider clock, ILogger<FeedDecisions>? logger = null)
 {
     // why: the project feed's records are not read for decisions
     private static readonly SourceId _projects = LinearSourceIds.Projects;
@@ -36,6 +38,7 @@ internal sealed class FeedDecisions(RecordFeedSync feeds, MapReader graphs, IInt
     internal async ValueTask<AfterTick> For(ContextScope scope, (ContextSettings Settings, Scrubbers Scrubbers) context, bool reportNoMap, CancellationToken cancellationToken)
     {
         var map = await graphs.ReadWithoutIntent(scope, draft: false, cancellationToken).ConfigureAwait(false);   // no map yet (the first build needs these records): the feeds still sync, the pass waits for one
+        var pins = PinAliases.Of(ScopeRules.Mapped(context.Settings, scope.Repos).SelectMany(r => r.Concepts));   // the pins the build used, so concept:<id> is its node
         return feed =>
         {
             if (map.IsError && reportNoMap && feed.Source != _projects)
@@ -49,7 +52,7 @@ internal sealed class FeedDecisions(RecordFeedSync feeds, MapReader graphs, IInt
                 return null;
             }
 
-            var decisions = new RecordDecisionRun(feed.Source, map.Value, context, (feeds.OwnedRecords(), intents, model, clock));
+            var decisions = new RecordDecisionRun(feed.Source, map.Value, context, (feeds.OwnedRecords(), intents, model, clock), pins, logger);
             return tick => decisions.Execute(tick, cancellationToken);
         };
     }
