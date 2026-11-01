@@ -139,39 +139,6 @@ public sealed class ModelsSettingsTests
         Assert.Empty(models.Warnings);
     }
 
-    // The old key and the new one
-
-    [Fact, Trait("Lane", "unit")]
-    public void The_old_concept_scan_models_key_alone_supplies_the_names()
-    {
-        var models = Read("""{"conceptScan":{"models":{"claude":{"cheap":"claude-haiku-5-5"},"codex":{"strong":"codex-big"}}}}""").Value.Models;
-
-        Assert.Equal(new CliModels("claude-haiku-5-5", Strong: null), models.Names.ClaudeCode);
-        Assert.Equal(new CliModels(Cheap: null, Strong: "codex-big"), models.Names.Codex);
-        Assert.Empty(models.Warnings);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void An_old_key_profile_resolves_to_the_same_models_as_its_new_key_equivalent()
-    {
-        var old = Read("""{"conceptScan":{"models":{"claude":{"strong":"opus"},"codex":{"strong":"codex-big"}}}}""").Value.Models;
-        var current = Read("""{"models":{"names":{"claude-code":{"strong":"opus"},"codex":{"strong":"codex-big"}}}}""").Value.Models;
-        var request = new ModelRequest(ModelPurpose.ConceptScan, "p", 100, TimeSpan.FromSeconds(1), ModelTier.Strong);
-
-        Assert.Equal(ModelRouting.Resolve(current, request, ModelHarnesses.DefaultOrder), ModelRouting.Resolve(old, request, ModelHarnesses.DefaultOrder));
-        Assert.Equal("opus", ModelRouting.Resolve(old, request, ModelHarnesses.DefaultOrder)[0].Model);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void The_new_key_wins_when_both_exist_and_the_profile_check_warns()
-    {
-        var models = Read("""{"conceptScan":{"models":{"claude":{"cheap":"old-cheap","strong":"old-strong"}}},"models":{"names":{"claude-code":{"cheap":"new-cheap"}}}}""").Value.Models;
-
-        Assert.Equal("new-cheap", models.Names.ClaudeCode.Cheap);
-        Assert.Equal("old-strong", models.Names.ClaudeCode.Strong);   // the old key still fills what the new one leaves out
-        Assert.Equal(["context.conceptScan.models is replaced by context.models.names; the new key is used"], models.Warnings);
-    }
-
     // The kind map
 
     [Theory, Trait("Lane", "unit")]

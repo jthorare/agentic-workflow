@@ -158,7 +158,7 @@ public sealed class ScanConceptsTests : IDisposable
     {
         _ = await Seed(Shifts().Build());   // three features
         _world.Model.Responder = TwoPasses;
-        var scope = MapWorld.HumanWith("""{"repos":["aw-split-panes"],"conceptScan":{"strongAboveFeatures":2,"models":{"codex":{"strong":"codex-big"},"claude":{"strong":"opus"}}}}""");
+        var scope = MapWorld.HumanWith("""{"repos":["aw-split-panes"],"conceptScan":{"strongAboveFeatures":2},"models":{"names":{"codex":{"strong":"codex-big"},"claude-code":{"strong":"opus"}}}}""");
 
         var report = (await Scan(scope: scope)).Value;
 
@@ -167,7 +167,7 @@ public sealed class ScanConceptsTests : IDisposable
         {
             Assert.Equal(ModelPurpose.ConceptScan, r.Purpose);
             Assert.Equal(ModelTier.Strong, r.Tier);
-            Assert.Null(r.Models);   // the router reads context.conceptScan.models as names; the request never carries it
+            Assert.Null(r.Models);   // the router reads context.models.names; the request never carries it
             Assert.Null(r.Model);
         });
     }
