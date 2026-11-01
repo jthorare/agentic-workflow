@@ -70,7 +70,7 @@ public sealed class AcceptAllEntryTests
     {
         var api = new FakeSindriApi();
         var writes = new FakePageWrites { Profile = new ProfileWaiting("live", [], "file") };
-        writes.Add("surface:p1", new PageDraft(Id: null, "P1", Repo: null, "surface:p1", Owner: false, []));
+        writes.Add("surface:p1", new PageDraft(Id: null, "P1", Repo: null, "surface:p1", Owner: false, [new PageActionDraft(Id: null, "Approve", Action: null, ["approval"])]));
         var page = Page(api, writes);
         await page.Opened(Token);
         var before = api.WholeMapAsked.Count;
