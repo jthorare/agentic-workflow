@@ -91,6 +91,32 @@ public sealed class AcceptAllSuggestedTests
     }
 
     [Fact]
+    public async Task A_clash_whose_reread_fails_says_so_and_not_that_the_profile_changed()
+    {
+        var (sheet, writes) = Sheet(2);
+        await sheet.LoadSuggested(Token);
+        writes.SuggestedFails = true;
+        writes.Answer(new PageSaved(PageSavedState.Clash));
+
+        await sheet.SaveAll(Token);
+
+        Expect.Equal(Labels.AddSeveralPagesUnreadable, sheet.Note);
+    }
+
+    [Fact]
+    public async Task A_concept_page_with_no_actions_is_not_added_and_says_why()
+    {
+        var writes = new FakePageWrites { Profile = new ProfileWaiting("live", [], "file") };
+        writes.Add("surface:empty", new PageDraft(Id: null, "Empty", "web", "surface:empty", Owner: false, []));
+        var sheet = AddSeveralPagesViewModel.AcceptAll(writes, "concept:scheduling", ["surface:empty"]);
+
+        await sheet.LoadSuggested(Token);
+
+        Expect.True(!sheet.Rows[0].Ticked, "unticked");
+        Expect.Equal("Not added: this page has no actions to link a concept to", sheet.Rows[0].Reason);
+    }
+
+    [Fact]
     public async Task Save_all_sends_the_ticked_pages_once_with_the_files_hash()
     {
         var (sheet, writes) = Sheet(3);

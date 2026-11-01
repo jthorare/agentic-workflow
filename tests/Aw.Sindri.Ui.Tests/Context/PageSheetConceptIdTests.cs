@@ -17,14 +17,14 @@ public sealed class PageSheetConceptIdTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static async Task<(ContextPageViewModel Page, FakePageWrites Writes)> Shown()
+    private static async Task<(ContextPageViewModel Page, FakePageWrites Writes)> Shown(bool withOther = false)
     {
         var writes = new FakePageWrites { Profile = new ProfileWaiting("live", [], "file") };
         writes.Add(Key, new PageDraft(Id: null, "Billing overview", "web", Key, Owner: false,
             [new PageActionDraft(Id: null, "Pay", Action: null, ["scheduling"])]));
         var api = new FakeSindriApi
         {
-            ContextConceptsAnswer = _ => AConcepts.Served(AConcepts.Ok([AConcepts.Concept("concept:scheduling", "Self scheduling"), AConcepts.Concept("concept:billing", "Billing")], links: [])),
+            ContextConceptsAnswer = _ => AConcepts.Served(AConcepts.Ok([AConcepts.Concept("concept:scheduling", "Self scheduling"), AConcepts.Concept("concept:billing", "Billing")], withOther ? AConcepts.Other(features: 1) : null, links: [])),
         };
         var clipboard = new FakeClipboard();
         var clock = new FakeTimeProvider(A.Noon);
@@ -45,6 +45,29 @@ public sealed class PageSheetConceptIdTests
 
         Expect.Sequence(["Self scheduling", "Billing"], ticks.Select(t => t.Name));
         Expect.Sequence([true, false], ticks.Select(t => t.IsTicked));
+    }
+
+    [Fact]
+    public async Task The_catch_all_Other_is_not_offered_by_the_accept_all_row()
+    {
+        var (page, _) = await Shown(withOther: true);
+        page.OpenAcceptAllSuggested("concept:scheduling", [Key]);
+        var sheet = page.AddSeveralPages!;
+        await sheet.LoadSuggested(Token);
+
+        Expect.Sequence(["Self scheduling", "Billing"], sheet.Rows[0].Actions[0].Ticks.Select(static t => t.Name));
+    }
+
+    [Fact]
+    public async Task The_catch_all_Other_is_not_offered_by_the_single_page_sheet()
+    {
+        var (page, _) = await Shown(withOther: true);
+        await page.OpenConcept("concept:scheduling", Token);
+        page.Whole.Pages.NewPage();
+        var sheet = page.PageSheet!;
+        await sheet.OpenNew(Token);
+
+        Expect.Sequence(["Billing"], sheet.RelateChoices.Select(static c => c.Name));
     }
 
     [Fact]

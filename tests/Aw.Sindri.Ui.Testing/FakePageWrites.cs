@@ -42,6 +42,9 @@ internal sealed class FakePageWrites : IPageWrites
     /// <summary>Gets or sets a value indicating whether <see cref="Suggested"/> answers its pages in the reverse of the keys' order.</summary>
     public bool Reverse { get; set; }
 
+    /// <summary>Gets or sets a value indicating whether <see cref="Suggested"/> fails (answers null).</summary>
+    public bool SuggestedFails { get; set; }
+
     /// <summary>Gets how many times the suggested pages were read.</summary>
     public int SuggestedReads { get; private set; }
 
@@ -51,6 +54,11 @@ internal sealed class FakePageWrites : IPageWrites
     {
         ArgumentNullException.ThrowIfNull(keys);
         SuggestedReads++;
+        if (SuggestedFails)
+        {
+            return Task.FromResult<IReadOnlyList<PageDraft>?>(null);
+        }
+
         List<PageDraft> list = [.. keys.Where(_pages.ContainsKey).Select(k => _pages[k]).Where(static p => !p.Owner)];
         if (Reverse)
         {

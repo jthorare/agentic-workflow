@@ -83,6 +83,19 @@ public sealed class AcceptAllNoConceptTests
     }
 
     [Fact]
+    public async Task A_clash_keeps_a_None_pick_and_its_reason()
+    {
+        var (sheet, writes) = await Opened(_known, Page("Weekly schedule"), Page("Billing"));   // the second row stays ticked, so Save all can be pressed
+        sheet.Rows[0].Picker!.Selected = sheet.Rows[0].Picker!.Choices[0];   // None
+        writes.Answer(new PageSaved(PageSavedState.Clash));
+
+        await sheet.SaveAll(Token);
+
+        Expect.Equal(string.Empty, sheet.Rows[0].Picker?.Selected?.Id);
+        Expect.Equal("Not added: no concept picked", sheet.Rows[0].Reason);
+    }
+
+    [Fact]
     public async Task A_page_with_no_actions_is_not_added_and_has_no_picker()
     {
         var (sheet, _) = await Opened(_known, Page("Weekly schedule", actions: 0));
