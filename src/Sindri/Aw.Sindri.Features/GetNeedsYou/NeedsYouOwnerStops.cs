@@ -50,13 +50,32 @@ internal sealed class NeedsYouOwnerStops(OwnerStopReader stops, IViewReader view
                 return null;
             }
 
-            var wait = new OwnerStopInput(candidate.State.DisplayName?.ToLowerInvariant() ?? FallbackLabel, Reason(view), await Pr(view, cancellationToken).ConfigureAwait(false));
+            var wait = new OwnerStopInput(Label(candidate.State.DisplayName), Reason(view), await Pr(view, cancellationToken).ConfigureAwait(false));
             return NeedsYouRows.ForOwnerStop(row, view.Address, wait, view.Since, scrubber);
         }
         catch (Exception e) when (e is not OperationCanceledException)
         {
             return null;
         }
+    }
+
+    // Lower-cases only the first letter, and not when the first word is an acronym (2+ letters, all upper-case): "Review PR" -> "review PR".
+    private static string Label(string? displayName)
+    {
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            return FallbackLabel;
+        }
+
+        var end = displayName.IndexOf(' ', StringComparison.Ordinal);
+        var firstWord = end < 0 ? displayName : displayName[..end];
+        var letters = firstWord.Where(char.IsLetter).ToArray();
+        if (letters.Length >= 2 && letters.All(char.IsUpper))
+        {
+            return displayName;
+        }
+
+        return char.ToLowerInvariant(displayName[0]) + displayName[1..];
     }
 
     // The instance's own sentence for the wait; a view whose status can't be built falls back to the address.
