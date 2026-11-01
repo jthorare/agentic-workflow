@@ -125,7 +125,13 @@ public static class PageOverlay
             }
             else
             {
-                _ = _edges.RemoveAll(e => e is { Type: EdgeType.Expresses, Provenance: Provenance.Deterministic } && e.From.Value == key);
+                var dropped = _edges.FindAll(e => e is { Type: EdgeType.Expresses, Provenance: Provenance.Deterministic } && e.From.Value == key);
+                foreach (var e in dropped)
+                {
+                    _ = _facts.Remove((e.From.Value, e.To.Value, e.Type));
+                }
+
+                _ = _edges.RemoveAll(dropped.Contains);
             }
 
             foreach (var concept in action.Concepts.Take(PageRules.MaxConcepts))
