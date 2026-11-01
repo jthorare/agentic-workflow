@@ -77,6 +77,18 @@ public sealed class PageSheetPickAnotherTests
     }
 
     [Fact]
+    public async Task A_blank_search_that_finds_nothing_says_the_map_has_no_other_page()
+    {
+        var (sheet, writes, clock) = await Opened();
+        writes.Matches = [];
+        sheet.OpenPick();
+
+        await Type(sheet, clock, "   ");
+
+        Expect.Equal("No other pages on the map yet.", sheet.PickStatus);
+    }
+
+    [Fact]
     public async Task A_failed_read_shows_the_error_line()
     {
         var (sheet, writes, clock) = await Opened();

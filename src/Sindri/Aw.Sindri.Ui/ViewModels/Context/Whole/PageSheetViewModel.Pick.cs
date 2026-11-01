@@ -155,10 +155,13 @@ internal sealed partial class PageSheetViewModel
                 PickRows.Add(match);
             }
 
-            PickStatus = PickRows.Count == 0 ? Labels.PageSheetPickNone(text) : string.Empty;
+            PickStatus = PickRows.Count == 0 ? NoneText(text) : string.Empty;
         }
 
         OnChanged(nameof(PickStatus));
         OnChanged(nameof(HasPickStatus));
     }
+
+    // A blank search names no query, so its empty answer says the map has no other page instead.
+    private static string NoneText(string text) => text.Trim().Length == 0 ? Labels.PageSheetPickNoPages : Labels.PageSheetPickNone(text);
 }

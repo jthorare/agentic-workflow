@@ -52,6 +52,9 @@ internal static partial class Labels
     /// <returns>The line.</returns>
     internal static string PageSheetPickNone(string query) => "No page matches \"" + query + "\"";
 
+    /// <summary>Pick another's status line when a blank search finds no other page on the map.</summary>
+    internal const string PageSheetPickNoPages = "No other pages on the map yet.";
+
     /// <summary>The Name field's label.</summary>
     internal const string PageSheetNameLabel = "Name";
 
