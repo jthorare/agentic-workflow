@@ -46,6 +46,10 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
     }
 
     /// <inheritdoc />
+    public Task<IReadOnlyList<PageDraft>?> Suggested(string? concept, IReadOnlyList<string> keys, CancellationToken cancellationToken) =>
+        throw new NotSupportedException();
+
+    /// <inheritdoc />
     public async Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(save);

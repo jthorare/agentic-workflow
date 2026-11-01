@@ -36,6 +36,13 @@ internal sealed class FakePageWrites : IPageWrites
 
     public Task<PageDraft?> Page(string key, string? concept, CancellationToken cancellationToken) => Task.FromResult(_pages.GetValueOrDefault(key));
 
+    public Task<IReadOnlyList<PageDraft>?> Suggested(string? concept, IReadOnlyList<string> keys, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        IReadOnlyList<PageDraft>? found = [.. keys.Where(_pages.ContainsKey).Select(k => _pages[k]).Where(static p => !p.Owner)];
+        return Task.FromResult<IReadOnlyList<PageDraft>?>(found);
+    }
+
     /// <summary>Gets or sets the answer every preview gets; null answers a refusal with no code.</summary>
     public PagesPreviewRead? PreviewAnswer { get; set; }
 
