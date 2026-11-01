@@ -50,6 +50,8 @@ internal sealed partial class PageSheetView : UserControl
             old.RemovePageFocusRequested -= OnRemovePageFocus;
             old.KeepEditingFocusRequested -= OnKeepEditingFocus;
             old.NameFocusRequested -= OnNameFocus;
+            old.PickBoxFocusRequested -= OnPickBoxFocus;
+            old.PickButtonFocusRequested -= OnPickButtonFocus;
             old.PropertyChanged -= OnSheetChanged;
         }
 
@@ -60,6 +62,8 @@ internal sealed partial class PageSheetView : UserControl
             now.RemovePageFocusRequested += OnRemovePageFocus;
             now.KeepEditingFocusRequested += OnKeepEditingFocus;
             now.NameFocusRequested += OnNameFocus;
+            now.PickBoxFocusRequested += OnPickBoxFocus;
+            now.PickButtonFocusRequested += OnPickButtonFocus;
             now.PropertyChanged += OnSheetChanged;
             FocusLater("PageSheetName");
         }
@@ -81,6 +85,22 @@ internal sealed partial class PageSheetView : UserControl
     private void OnKeepEditingFocus(object? sender, EventArgs e) => FocusLater("PageSheetKeepEditing");
 
     private void OnNameFocus(object? sender, EventArgs e) => FocusLater("PageSheetName");
+
+    private void OnPickBoxFocus(object? sender, EventArgs e) => FocusLater("PageSheetPickBox");
+
+    private void OnPickButtonFocus(object? sender, EventArgs e) => FocusLater("PageSheetPickAnother");
+
+    private void OnPickAnother(object? sender, RoutedEventArgs e) => Sheet?.OpenPick();
+
+    private void OnPickBack(object? sender, RoutedEventArgs e) => Sheet?.ClosePick();
+
+    private void OnPickRow(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: PageMatch match })
+        {
+            Sheet?.Choose(match);
+        }
+    }
 
     private void FocusLater(string name) =>
         Dispatcher.UIThread.Post(() => _ = this.FindControl<Control>(name)?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);

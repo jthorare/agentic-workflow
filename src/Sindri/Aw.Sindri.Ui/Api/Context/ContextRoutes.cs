@@ -64,6 +64,7 @@ internal static class ContextRoutes
         Add(parts, "repo", query.Repo);
         Add(parts, "concept", query.Concept);
         Add(parts, "marks", query.Marks);
+        Add(parts, "q", query.Q);
         parts.AddRange(Limit(query.Limit));
         if (query.Offset is { } offset)
         {

@@ -10,13 +10,13 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     private readonly IReadOnlyList<ConceptChoice> _known;
     private readonly IReadOnlyList<string> _otherNames;
     private readonly string? _openConcept;
+    private readonly TimeProvider _clock;
     private List<ConceptChoice> _columns = [];
     private PageDraft? _draft;
     private string? _hash;
     private bool _approve;
     private IReadOnlyList<string> _before = [];
     private string _initial = string.Empty;
-    private readonly TimeProvider _clock;
 
     /// <summary>Builds a sheet that has read nothing yet.</summary>
     /// <param name="writes">Where the page is read and written.</param>
@@ -261,7 +261,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
         OnChanged(nameof(IsUnderNoConcept));
     }
 
-    private string Snapshot() => Name + '\n' + string.Join('\n', Actions.Select(static a => a.Name + "|" + string.Join(',', a.TickedIds)));
+    private string Snapshot() => Name + '\n' + _draft?.Surface + '\n' + string.Join('\n', Actions.Select(static a => a.Name + "|" + string.Join(',', a.TickedIds)));
 
     private void ChangedState()
     {

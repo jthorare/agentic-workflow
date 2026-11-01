@@ -91,7 +91,16 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<PageMatch>?> Search(string? repo, string query, int limit, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async Task<IReadOnlyList<PageMatch>?> Search(string? repo, string query, int limit, CancellationToken cancellationToken)
+    {
+        if (apiUrl() is not { } url)
+        {
+            return null;
+        }
+
+        var answer = await api.ContextPages(url, new PagesQuery(Repo: repo, Limit: limit, Marks: "all") { Q = query }, cancellationToken).ConfigureAwait(true);
+        return answer.IsSuccess ? [.. answer.Value.Pages.Where(static p => !PageRows.OwnerOnly(p.Key)).Select(static p => new PageMatch(p.Key, p.Name))] : null;
+    }
 
     /// <inheritdoc />
     public async Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)

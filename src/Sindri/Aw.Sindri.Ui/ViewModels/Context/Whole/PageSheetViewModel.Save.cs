@@ -141,7 +141,7 @@ internal sealed partial class PageSheetViewModel
     /// <returns>True when the key was spent on the sheet.</returns>
     internal bool Escape()
     {
-        if (IsSaving)
+        if (IsSaving || ClosePick())   // Esc closes an open pick search first
         {
             return true;
         }
