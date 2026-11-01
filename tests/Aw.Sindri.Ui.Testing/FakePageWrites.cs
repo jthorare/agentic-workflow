@@ -8,6 +8,7 @@ internal sealed class FakePageWrites : IPageWrites
 {
     private readonly Dictionary<string, PageDraft> _pages = new(StringComparer.Ordinal);
     private readonly Queue<PageSaved> _answers = new();
+    private readonly Queue<PagesPreviewRead> _previews = new();
 
     /// <summary>Gets or sets the profile the fake reports; null makes it unreadable.</summary>
     public ProfileWaiting? Profile { get; set; } = new("hash-1", []);
@@ -34,6 +35,35 @@ internal sealed class FakePageWrites : IPageWrites
     }
 
     public Task<PageDraft?> Page(string key, string? concept, CancellationToken cancellationToken) => Task.FromResult(_pages.GetValueOrDefault(key));
+
+    /// <summary>Gets or sets the answer every preview gets; null answers a refusal with no code.</summary>
+    public PagesPreviewRead? PreviewAnswer { get; set; }
+
+    /// <summary>Queues the answer of the next preview; once the queue is empty, previews answer <see cref="PreviewAnswer"/>.</summary>
+    /// <param name="read">The answer.</param>
+    public void AnswerPreview(PagesPreviewRead read) => _previews.Enqueue(read);
+
+    /// <summary>Gets every paste asked for, in order.</summary>
+    public List<string> Previews { get; } = [];
+
+    /// <summary>Gets or sets a gate every preview waits on before it answers; null answers at once.</summary>
+    public TaskCompletionSource? PreviewGate { get; set; }
+
+    public async Task<PagesPreviewRead> Preview(string text, string? repo, CancellationToken cancellationToken)
+    {
+        Previews.Add(text);
+        if (PreviewGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (_previews.Count > 0)
+        {
+            return _previews.Dequeue();
+        }
+
+        return PreviewAnswer ?? new PagesPreviewRead(Preview: null, "SND-API-001");
+    }
 
     public Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
     {
