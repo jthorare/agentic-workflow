@@ -12,7 +12,7 @@ public enum ModelSource
     /// <summary>'context.models.default.models'.</summary>
     DefaultModels,
 
-    /// <summary>'context.models.names' (or the old 'context.conceptScan.models', folded into it).</summary>
+    /// <summary>'context.models.names'.</summary>
     Names,
 
     /// <summary>The built-in table.</summary>

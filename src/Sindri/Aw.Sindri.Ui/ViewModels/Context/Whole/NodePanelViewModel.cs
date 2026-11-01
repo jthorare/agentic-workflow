@@ -8,7 +8,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 /// The whole map's side panel for the node a click pinned: its kind and title, where it came from (with a link when one is served), a short
 /// description, and its links grouped by band. Source and description are optional; when the control plane does not serve them nothing shows.
 /// </summary>
-internal sealed class NodePanelViewModel : ObservableObject
+internal sealed partial class NodePanelViewModel : ObservableObject
 {
     private readonly Func<string, (string Label, string Kind)?> _lookup;
     private readonly Action<string> _jump;
@@ -130,12 +130,12 @@ internal sealed class NodePanelViewModel : ObservableObject
         if (answer is { IsSuccess: true } ok)
         {
             Fill(ok.Value);
-        }
-        else
-        {
-            (IsLoading, IsFailed) = (false, true);
+            Changed();
+            await ReadSections(ok.Value, version, cancellationToken).ConfigureAwait(true);
+            return;
         }
 
+        (IsLoading, IsFailed) = (false, true);
         Changed();
     }
 
@@ -177,7 +177,7 @@ internal sealed class NodePanelViewModel : ObservableObject
     private void Clear()
     {
         (Kind, Title, SourceText, Description, _link) = (string.Empty, string.Empty, string.Empty, string.Empty, null);
-        Groups = [];
+        (Groups, Sections) = ([], []);
         _launch.Reset();
     }
 
@@ -195,7 +195,9 @@ internal sealed class NodePanelViewModel : ObservableObject
             OpenSourceName = Labels.ContextNodePanelOpenSourceName(source.Kind);
         }
 
-        var rows = view.Out.Select(e => Row(e.To, e, outgoing: true)).Concat(view.In.Select(e => Row(e.From, e, outgoing: false)));
+        var covered = IsAction(node.Kind) || NodePageKinds.IsPage(view);   // the sections already list these edges: the groups keep the rest
+        bool Kept(NodeEdge e) => !covered || !_sectionEdgeTypes.Contains(e.Type);
+        var rows = view.Out.Where(Kept).Select(e => Row(e.To, e, outgoing: true)).Concat(view.In.Where(Kept).Select(e => Row(e.From, e, outgoing: false)));
         Groups =
         [
             .. rows.GroupBy(r => r.Band)
@@ -218,7 +220,7 @@ internal sealed class NodePanelViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups)])
+        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
         {
             OnChanged(name);
         }
