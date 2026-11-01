@@ -15,14 +15,14 @@ public sealed class AddSeveralPagesConceptPickerTests
 
     private static PagesPreviewBlock Ok(int number, string name) =>
         new(number, number, name, Match: null, Replaces: null, SameAs: null, Ticked: true, Reason: null, [], [],
-            new PagesPreviewPage(Id: null, name, "web", Surface: null, [new PagesPreviewPageAction("Submit", Action: null, ["self-scheduling"])]));
+            new PagesPreviewPage(Id: null, name, "web", Surface: null, [new PagesPreviewPageAction(Id: null, "Submit", Action: null, ["self-scheduling"])]));
 
     // The server's answer for a block whose only problem is an unknown concept: a reason, the unknown names, and the page with each name as written.
     private static PagesPreviewBlock Unresolved(int number, string name) =>
         new(number, number, name, Match: null, Replaces: null, SameAs: null, Ticked: false, Unknown,
             [new PagesPreviewAction("Submit", Match: null, [new PagesPreviewConcept("aproval", Id: null), new PagesPreviewConcept("self-scheduling", "self-scheduling")])],
             ["aproval"],
-            new PagesPreviewPage("billing-id", name, "api", Surface: null, [new PagesPreviewPageAction("Submit", Action: null, ["aproval", "self-scheduling"])]));
+            new PagesPreviewPage("billing-id", name, "api", Surface: null, [new PagesPreviewPageAction(Id: null, "Submit", Action: null, ["aproval", "self-scheduling"])]));
 
     private static async Task<(AddSeveralPagesViewModel Sheet, FakePageWrites Writes)> Read(params PagesPreviewBlock[] blocks)
     {
