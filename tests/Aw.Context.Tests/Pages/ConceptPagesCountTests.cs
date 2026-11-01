@@ -4,7 +4,7 @@ using Aw.Context.Tests.Map;
 
 namespace Aw.Context.Tests.Pages;
 
-/// <summary>ConceptRow.Pages: the pages that express a concept directly or through an action on them.</summary>
+/// <summary>ConceptRow.Pages and SuggestedPages: the pages that express a concept directly or through an action on them, and the map keys of the suggested ones.</summary>
 public sealed class ConceptPagesCountTests : IDisposable
 {
     private readonly MapWorld _world = new();
@@ -20,5 +20,30 @@ public sealed class ConceptPagesCountTests : IDisposable
 
         var counts = view.Concepts.ToDictionary(c => c.Id.Value, c => c.Pages, StringComparer.Ordinal);
         Assert.Equal((1, 1, 0), (counts["concept:self-scheduling"], counts["concept:approval-workflow"], counts["concept:billing"]));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_concept_row_lists_its_suggested_pages_by_map_key_and_none_when_it_has_none()
+    {
+        _ = await _world.ImportYaml(PagesWorld.Yaml());
+
+        var view = (await _world.Engine.Concepts(new ConceptsQuery(MapRead.Current, new ConceptPage()), PagesWorld.Human(), MapWorld.None)).Value;
+
+        var suggested = view.Concepts.ToDictionary(c => c.Id.Value, c => c.SuggestedPages, StringComparer.Ordinal);
+        Assert.Equal([PagesWorld.Week], suggested["concept:self-scheduling"]);
+        Assert.Equal([PagesWorld.Settings], suggested["concept:approval-workflow"]);
+        Assert.Null(suggested["concept:billing"]);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_page_the_owner_named_is_counted_but_not_listed_as_suggested()
+    {
+        _ = await _world.ImportYaml(PagesWorld.Yaml());
+        var named = PagesWorld.Named("schedule-week", "Schedule week", PagesWorld.Week);
+
+        var view = (await _world.Engine.Concepts(new ConceptsQuery(MapRead.Current, new ConceptPage()), PagesWorld.Human(named), MapWorld.None)).Value;
+
+        var row = view.Concepts.Single(c => c.Id.Value == "concept:self-scheduling");
+        Assert.Equal((1, null), (row.Pages, row.SuggestedPages));
     }
 }
