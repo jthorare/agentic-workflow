@@ -4,7 +4,7 @@ using Aw.Sindri.Ui.Api.Context;
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>
-/// The sections of an action's or a page's panel (<see cref="NodePanelViewModel"/>, continued, pages spec §3.4). A page is a node of kind "surface" (an action
+/// The sections of an action's or a page's panel (<see cref="NodePanelViewModel"/>, continued, pages spec §3.4). A page is judged by <see cref="NodePageKinds"/> (an action
 /// is "on" one); a page's concepts are its own "expresses" edges plus those of its first <see cref="ActionReadCap"/> actions, each read through <see cref="NodePanelViewModel.Loader"/>.
 /// </summary>
 internal sealed partial class NodePanelViewModel
@@ -22,8 +22,6 @@ internal sealed partial class NodePanelViewModel
     public bool HasSections => Sections.Count > 0;
 
     private static bool IsAction(string kind) => string.Equals(kind, "action", StringComparison.Ordinal);
-
-    private static bool IsPage(string kind) => string.Equals(kind, "surface", StringComparison.Ordinal);
 
     private NodeEdgeRowViewModel Link(string key, string? label, string? kind)
     {
@@ -49,7 +47,7 @@ internal sealed partial class NodePanelViewModel
     private async Task ReadSections(NodeView view, int version, CancellationToken cancellationToken)
     {
         var action = IsAction(view.Node.Kind);
-        if (!action && !IsPage(view.Node.Kind))
+        if (!action && !NodePageKinds.IsPage(view))
         {
             return;
         }

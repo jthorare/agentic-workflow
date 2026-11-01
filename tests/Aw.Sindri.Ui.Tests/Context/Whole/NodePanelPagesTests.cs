@@ -202,4 +202,38 @@ public sealed class NodePanelPagesTests
         Assert.Empty(Section(panel, "Why").Rows);
         Assert.True(Section(panel, "Why").IsEmpty);
     }
+
+    [Fact]
+    public async Task A_pane_surface_shows_none_of_the_new_sections()
+    {
+        const string Pane = "surface:pane/sidebar";
+        var (panel, _, anchors) = Panel(nodes: new Dictionary<string, NodeView>(_nodes, StringComparer.Ordinal) { [Pane] = View(Pane, "surface", [], [Edge(PageFile, "implements", Pane)]) });
+
+        await panel.Open(Pane, Token);
+
+        Assert.Empty(panel.Sections);
+        Assert.Empty(anchors);
+    }
+
+    [Fact]
+    public async Task An_api_route_implemented_from_a_cs_file_shows_none_of_the_new_sections()
+    {
+        const string Route = "surface:route/GET:/health";
+        var (panel, _, _) = Panel(nodes: new Dictionary<string, NodeView>(_nodes, StringComparer.Ordinal) { [Route] = View(Route, "surface", [], [Edge("code:src/Host/Endpoints/Health.cs", "implements", Route)]) });
+
+        await panel.Open(Route, Token);
+
+        Assert.Empty(panel.Sections);
+    }
+
+    [Fact]
+    public async Task A_route_implemented_from_a_tsx_file_shows_the_page_sections()
+    {
+        const string Route = "surface:route/GET:/schedule/week";
+        var (panel, _, _) = Panel(nodes: new Dictionary<string, NodeView>(_nodes, StringComparer.Ordinal) { [Route] = View(Route, "surface", [], [Edge("code:src/Week.TSX", "implements", Route)]) });
+
+        await panel.Open(Route, Token);
+
+        Assert.Equal(["Actions", "Relates to", "Why", "Code"], panel.Sections.Select(s => s.Heading), StringComparer.Ordinal);
+    }
 }
