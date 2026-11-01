@@ -319,6 +319,28 @@ public sealed class PageSheetTests
         Expect.True(!suggested.ShowRemovePage, "a suggested page has nothing to remove");
     }
 
+    [Theory]
+    [InlineData(nameof(PageSavedState.Clash))]
+    [InlineData(nameof(PageSavedState.Refused))]
+    [InlineData(nameof(PageSavedState.Failed))]
+    public async Task A_remove_that_does_not_land_sends_focus_back_to_Remove_page(string answer)
+    {
+        var state = Enum.Parse<PageSavedState>(answer);
+        var (sheet, writes) = await Opened(Week() with { Owner = true });
+        var back = 0;
+        var closed = 0;
+        sheet.RemovePageFocusRequested += (_, _) => back++;
+        sheet.Closed += (_, _) => closed++;
+
+        sheet.AskRemove();
+        writes.Answer(new PageSaved(state, "SND-X"));
+        await sheet.Remove(TestContext.Current.CancellationToken);
+
+        Expect.True(!sheet.IsConfirmingRemove && closed == 0, "the question closes and the sheet stays");
+        Expect.True(sheet.ShowRemovePage, "the Remove page button is still there to take focus");
+        Expect.Equal(1, back);
+    }
+
     [Fact]
     public async Task Esc_with_changes_asks_to_discard()
     {
