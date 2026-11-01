@@ -60,6 +60,17 @@ public sealed class PageOverlayTests
         Assert.All(expresses, e => Assert.Contains(e.EvidenceOrEmpty, r => r.Key.Value == "page:web/schedule-week"));
     }
 
+    // Issue 1870: the map already suggests action -> billing; ticking billing (as Accept all does) must keep the link as the owner's.
+    [Fact]
+    public void Ticking_a_concept_the_map_already_suggested_keeps_the_link_as_the_owners()
+    {
+        var applied = PageOverlay.Apply(MapOf(), Repos(Page(concepts: ["billing", "self-scheduling"])));
+
+        var expresses = applied.Edges.Where(e => e.Type == EdgeType.Expresses && e.From.Value == Action).ToList();
+        Assert.Equal("concept:billing,concept:self-scheduling", string.Join(',', expresses.Select(e => e.To.Value).Order(StringComparer.Ordinal)));
+        Assert.All(expresses, e => Assert.Equal(Provenance.Human, e.Provenance));
+    }
+
     [Fact]
     public void A_pin_naming_its_action_with_capitals_relabels_the_map_action()
     {
