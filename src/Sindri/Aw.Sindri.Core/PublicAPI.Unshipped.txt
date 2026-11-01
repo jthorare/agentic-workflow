@@ -21847,3 +21847,29 @@ Aw.Sindri.Core.Setup.MapConcept.Deconstruct(out string! Key, out string! Name) -
 Aw.Sindri.Core.Setup.MapConcept.Key.get -> string!
 Aw.Sindri.Core.Setup.MapConcept.Key.init -> void
 Aw.Sindri.Core.Setup.MapConcept.MapConcept(string! Key, string! Name) -> void
+Aw.Sindri.Core.NeedsYou.NeedsYouRoutes
+const Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Setup = "setup" -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Decision(Aw.Sindri.Core.Ids.DecisionId id) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Desk(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Park(Aw.Sindri.Core.Workflow.Engine.InstanceAddress root, Aw.Sindri.Core.Workflow.Engine.InstanceAddress? deepest) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Recipe(Aw.Sindri.Core.Workflow.Ids.RecipeId id) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Row(Aw.Sindri.Core.Ids.NeedsYouRowId id) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Service(string! name) -> string!
+static Aw.Sindri.Core.NeedsYou.NeedsYouRoutes.Workflow(Aw.Sindri.Core.Workflow.Engine.InstanceAddress address) -> string!
+Aw.Sindri.Core.NeedsYou.OwnerStopInput
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.<Clone>$() -> Aw.Sindri.Core.NeedsYou.OwnerStopInput!
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.Deconstruct(out string! Label, out string! Reason, out Aw.Sindri.Core.OpenTargets.NeedsYouOpenPr? Pr) -> void
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.Equals(Aw.Sindri.Core.NeedsYou.OwnerStopInput? other) -> bool
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.OwnerStopInput(string! Label, string! Reason, Aw.Sindri.Core.OpenTargets.NeedsYouOpenPr? Pr) -> void
+override Aw.Sindri.Core.NeedsYou.OwnerStopInput.Equals(object? obj) -> bool
+override Aw.Sindri.Core.NeedsYou.OwnerStopInput.GetHashCode() -> int
+override Aw.Sindri.Core.NeedsYou.OwnerStopInput.ToString() -> string!
+static Aw.Sindri.Core.NeedsYou.OwnerStopInput.operator !=(Aw.Sindri.Core.NeedsYou.OwnerStopInput? left, Aw.Sindri.Core.NeedsYou.OwnerStopInput? right) -> bool
+static Aw.Sindri.Core.NeedsYou.OwnerStopInput.operator ==(Aw.Sindri.Core.NeedsYou.OwnerStopInput? left, Aw.Sindri.Core.NeedsYou.OwnerStopInput? right) -> bool
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.Label.get -> string!
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.Label.init -> void
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.Reason.get -> string!
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.Reason.init -> void
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.Pr.get -> Aw.Sindri.Core.OpenTargets.NeedsYouOpenPr?
+Aw.Sindri.Core.NeedsYou.OwnerStopInput.Pr.init -> void
+static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForOwnerStop(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, Aw.Sindri.Core.NeedsYou.OwnerStopInput! wait, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
