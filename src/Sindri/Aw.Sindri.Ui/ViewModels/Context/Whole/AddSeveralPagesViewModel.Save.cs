@@ -95,6 +95,17 @@ internal sealed partial class AddSeveralPagesViewModel
     // The profile moved: read the same list again so the rows show what is there now, keep the ticks of the rows that can still be ticked, and take the new hash.
     private async Task Clashed(CancellationToken cancellationToken)
     {
+        if (_acceptKeys is not null)
+        {
+            await LoadSuggested(cancellationToken).ConfigureAwait(true);
+            if (_hash is not null)
+            {
+                Say(Labels.AddSeveralPagesClash);
+            }
+
+            return;
+        }
+
         var ticked = Rows.Where(static r => r.Ticked).Select(static r => r.Block).ToHashSet();
         var picks = Rows.ToDictionary(static r => r.Block, static r => r.Picks);
         var read = await _writes.Preview(_readText, _repo, cancellationToken).ConfigureAwait(true);
