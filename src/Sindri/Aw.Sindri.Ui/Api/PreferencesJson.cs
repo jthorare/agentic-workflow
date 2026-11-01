@@ -28,7 +28,7 @@ internal static class PreferencesJson
             f.PaletteHistory ?? [],
             f.TextScale ?? d.TextScale,
             f.ReduceMotion ?? d.ReduceMotion,
-            d.SeenPages).Clamp();
+            f.SeenPages ?? d.SeenPages).Clamp();
     }
 
     /// <summary>The preferences as the file's bytes (UTF-8 JSON, camelCase), clamped first, so a file never holds a value out of range.</summary>
@@ -37,6 +37,6 @@ internal static class PreferencesJson
     internal static byte[] Write(UiPreferences preferences)
     {
         var p = preferences.Clamp();
-        return AwJson.Serialize(new PreferencesFile(p.Version, p.Window, p.SheetWidth, p.LastPage, p.SeenIds, p.PaletteHistory, p.TextScale, p.ReduceMotion), SindriApiClient.Json);
+        return AwJson.Serialize(new PreferencesFile(p.Version, p.Window, p.SheetWidth, p.LastPage, p.SeenIds, p.PaletteHistory, p.TextScale, p.ReduceMotion, p.SeenPages), SindriApiClient.Json);
     }
 }
