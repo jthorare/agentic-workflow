@@ -11,6 +11,9 @@ internal sealed record PageRowViewModel(string Key, string Name, IReadOnlyList<s
     /// <summary>Gets a value indicating whether the owner named the page (its button is Edit page, not Name this page).</summary>
     public bool Owner { get; init; }
 
+    /// <summary>Gets the id of the owner's page that named this row, from the whole map; null for a suggested page.</summary>
+    public string? PageId { get; init; }
+
     /// <summary>Gets a value indicating whether the host wired the sheet, so the row's button shows.</summary>
     public bool CanWrite { get; init; }
 
