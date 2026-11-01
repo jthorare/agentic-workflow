@@ -15,7 +15,9 @@ that is filled in by the run.
 ## Pins used
 
 Paste into the profile (`index.concepts`), then `sindri profile approve`. Paths are this repo's folders, so no feature keys
-are needed and the pins hold the same files on every rebuild.
+are needed and the pins hold the same files on every rebuild. Each pin also lists its own doc: a doc sits in a pin only
+when a pin's `paths` match it, so without that line `--concept` would filter out the expected answer and the pin leg could
+never lift it. Row 2's `AGENTS.md` stays out of every pin on purpose: it is the distractor.
 
 ```yaml
 index:
@@ -23,32 +25,32 @@ index:
     - id: meta
       name: Meta harness
       summary: The team of lane sessions, their gates, merges and worktrees
-      paths: ["src/Meta/**", "skills/meta/**", "scripts/meta-launch.sh", "scripts/install-meta.sh"]
+      paths: ["src/Meta/**", "skills/meta/**", "scripts/meta-launch.sh", "scripts/install-meta.sh", "docs/csharp/meta.md"]
       aliases: ["lanes", "merge gate"]
     - id: bugfix
       name: Bug fix orchestrator
       summary: A bug is fixed only when the check that failed before the fix passes after it
-      paths: ["src/BugFix/**", "skills/bugFixOrchestrator/**"]
+      paths: ["src/BugFix/**", "skills/bugFixOrchestrator/**", "docs/csharp/bugfix.md"]
       aliases: ["red check", "repro"]
     - id: evidence
       name: UI evidence
       summary: Screenshot runs, pixel parity and publishing them to a PR
-      paths: ["src/Evidence/**", "skills/ui-evidence/**"]
+      paths: ["src/Evidence/**", "skills/ui-evidence/**", "docs/csharp/evidence.md"]
       aliases: ["ui-evidence", "parity", "screenshots"]
     - id: sandbox
       name: Sandbox
       summary: What an agent Step may read, write and reach on the network
-      paths: ["src/Sindri/*/Sandbox/**", "src/Sindri/Aw.Sindri.Ui/*/Sandbox/**"]
+      paths: ["src/Sindri/*/Sandbox/**", "src/Sindri/Aw.Sindri.Ui/*/Sandbox/**", "docs/csharp/sindri-sandbox.md"]
       aliases: ["learn mode", "agent home"]
     - id: code-index
       name: Code index
       summary: Symbols, callers and callees per repo
-      paths: ["src/CodeIndex/**", "context/code-index*"]
+      paths: ["src/CodeIndex/**", "context/code-index*", "scripts/code-index-lock.sh", "docs/csharp/code-index.md"]
       aliases: ["graphify", "callers", "callees"]
     - id: scoping
       name: Scoping station
       summary: Turning an item into a frozen scoping packet
-      paths: ["src/Sindri/*/Scoping/**", "src/Sindri/Aw.Sindri.Host/Commands/Scoping/**", "src/Packets/Aw.Packets.Core/Kinds/Scoping/**"]
+      paths: ["src/Sindri/*/Scoping/**", "src/Sindri/Aw.Sindri.Host/Commands/Scoping/**", "src/Packets/Aw.Packets.Core/Kinds/Scoping/**", "docs/csharp/sindri-scoping.md"]
       aliases: ["intake", "scoping desk"]
 ```
 
