@@ -37,7 +37,7 @@ internal sealed partial class ShellViewModel
     public bool IsSheetShown => IsSheetOpen && IsConnected;
 
     /// <summary>The sheet's accessible name: the kind's noun and the subject ("Workflow X"); an id that names itself stays bare.</summary>
-    public string SheetName => SheetLink is { } link && Labels.KindNoun(link.Kind) is { Length: > 0 } noun ? noun + " " + NamedSubject : SheetLink?.Kind == DeepLinkKind.ProjectAdd ? Labels.ProjectAddHeading : SheetLink?.Kind == DeepLinkKind.PageSheet ? NamedSubject : SheetSubject;
+    public string SheetName => SheetLink is { } link && Labels.KindNoun(link.Kind) is { Length: > 0 } noun ? noun + " " + NamedSubject : SheetLink?.Kind == DeepLinkKind.ProjectAdd ? Labels.ProjectAddHeading : SheetLink?.Kind is DeepLinkKind.PinSheet or DeepLinkKind.PageSheet ? NamedSubject : SheetSubject;
 
     /// <summary>The edge tab's accessible name: "Reopen" and the sheet's name, its kind's noun in lower case; an item or workflow reads its title, or the bare noun while it loads, never the raw address.</summary>
     public string EdgeTabName => Labels.Reopen + " " + EdgeTabSubject;
@@ -95,6 +95,7 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.Project => false,
         DeepLinkKind.ProjectAdd => false,
         DeepLinkKind.PageSheet => false,
+        DeepLinkKind.PinSheet => false,
         _ => true,
     };
 #pragma warning restore IDE0072

@@ -10,6 +10,13 @@ internal sealed partial class FakeSindriApi
     private readonly List<ConceptGlossaryQuery> _glossaryAsked = [];
     private readonly List<PinSuggestQuery> _pinSuggestAsked = [];
     private readonly List<PagesQuery> _pagesAsked = [];
+    private readonly List<string> _pinsAsked = [];
+
+    /// <summary>GET /sindri/context/pins's answer per repo asked (a 404 by default: a server without the route).</summary>
+    public Func<string, RouteAnswer> ContextPinsAnswer { get; set; } = _ => _notServed;
+
+    /// <summary>The pin reads asked (their repo), in order.</summary>
+    public IReadOnlyList<string> ContextPinsAsked { get { lock (_gate) { return [.. _pinsAsked]; } } }
 
     /// <summary>GET /sindri/context/pages's answer per slice asked (a 404 by default: a server without the route).</summary>
     public Func<PagesQuery, RouteAnswer> ContextPagesAnswer { get; set; } = _ => _notServed;
@@ -80,4 +87,14 @@ internal sealed partial class FakeSindriApi
 
             return Task.FromResult(NotReceived<PinSuggestView>(api) ?? Answer<PinSuggestView>(api, "/sindri/context/pins/suggest", ContextPinSuggestAnswer(one)));
         });
+
+    public Task<Result<PinsView>> ContextPins(Uri api, string repo, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            _pinsAsked.Add(repo);
+        }
+
+        return Task.FromResult(NotReceived<PinsView>(api) ?? Answer<PinsView>(api, "/sindri/context/pins", ContextPinsAnswer(repo)));
+    }
 }

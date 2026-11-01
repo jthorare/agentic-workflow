@@ -25,7 +25,7 @@ internal sealed partial class PageSheetViewModel
     public bool IsSaving { get; private set; }
 
     /// <summary>Gets a value indicating whether the save button can be pressed.</summary>
-    public bool CanSave => IsReady && !IsSaving;
+    public bool CanSave => IsReady && !IsSaving && _hash is not null;   // no hash, no write: a null ifHash writes over the file unchecked
 
     /// <summary>Gets the save button's words: "Saving…", "Save and approve" when only this page waits, else "Save".</summary>
     public string SaveText => IsSaving ? Labels.PageSheetSaving : _approve ? Labels.PageSheetSaveAndApprove : Labels.PageSheetSave;
@@ -119,7 +119,7 @@ internal sealed partial class PageSheetViewModel
     /// <returns>When the answer is drawn.</returns>
     internal async Task Remove(CancellationToken cancellationToken)
     {
-        if (!IsConfirmingRemove || _draft?.Id is not { } pageId || IsSaving)
+        if (!IsConfirmingRemove || _draft?.Id is not { } pageId || IsSaving || _hash is null)
         {
             return;
         }
@@ -217,9 +217,7 @@ internal sealed partial class PageSheetViewModel
                 Close();
                 break;
             case PageSavedState.Clash:
-                await ReadProfile(id is null ? [] : [id], cancellationToken).ConfigureAwait(true);   // the new hash, so Save again lands on top
-                Say(Labels.PageSheetClash);
-                OnChanged(nameof(SaveText));
+                await Clashed(id, cancellationToken).ConfigureAwait(true);
                 break;
             case PageSavedState.Refused:
                 Refuse(saved.Message ?? string.Empty, rows);
@@ -229,6 +227,15 @@ internal sealed partial class PageSheetViewModel
                 Say(saved.Message is { Length: > 0 } message ? message : Labels.PageSheetFailed);   // a write still running says so (Labels.ProfileWriteTimedOut), never "couldn't save"
                 break;
         }
+    }
+
+    // A clash re-reads the hash, so Save again lands on top; a re-read that fails leaves Save off, never a second write without the check.
+    private async Task Clashed(string? id, CancellationToken cancellationToken)
+    {
+        await ReadProfile(id is null ? [] : [id], cancellationToken).ConfigureAwait(true);
+        Say(_hash is null ? Labels.PageSheetNoHash : Labels.PageSheetClash);
+        OnChanged(nameof(SaveText));
+        OnChanged(nameof(CanSave));
     }
 
     // A refusal's sentence goes under the field its path names; one that names none goes under the buttons.

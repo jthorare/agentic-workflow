@@ -95,6 +95,11 @@ internal static class ContextRoutes
         Add(parts, "repo", query.Repo);
         Add(parts, "concept", query.Concept);
         Add(parts, "search", query.Search);
+        if (query.Search is { Length: 0 })
+        {
+            parts.Add("search=");   // present but empty: every feature (the picker's first look)
+        }
+
         parts.AddRange(Limit(query.Limit));
         var lines = query.Lines ?? [];
         parts.AddRange(lines.Select(l => "line=" + Uri.EscapeDataString(l.Name)));
@@ -104,6 +109,13 @@ internal static class ContextRoutes
         }
 
         return With(Root + "/pins/suggest", parts);
+    }
+
+    internal static string Pins(string repo)
+    {
+        var parts = new List<string>();
+        Add(parts, "repo", repo);
+        return With(Root + "/pins", parts);
     }
 
     /// <summary>QUERY /sindri/context/code: the anchors travel as the JSON body.</summary>

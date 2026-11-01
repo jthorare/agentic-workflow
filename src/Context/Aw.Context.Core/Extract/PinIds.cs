@@ -35,6 +35,6 @@ internal static class PinIds
         return [.. wanted.Distinct(StringComparer.Ordinal).Select(w => resolved.FirstOrDefault(p => Identity(p.Pin) == w)).OfType<ResolvedPin>()];
     }
 
-    private static string Identity(ConceptPin pin) =>
+    internal static string Identity(ConceptPin pin) =>
         string.Join(Unit, pin.Id?.Value, pin.Name, pin.Summary, string.Join(',', pin.Features), string.Join(',', pin.Paths), string.Join(',', pin.DependsOn), string.Join(',', pin.Owns), string.Join(',', pin.Aliases));
 }

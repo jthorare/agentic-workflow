@@ -53,4 +53,7 @@ internal enum DeepLinkKind
 
     /// <summary>'context/page': the page sheet (Name this page, Edit page, New page) opened from the Context page's Pages and actions.</summary>
     PageSheet,
+
+    /// <summary>'context/pin': the Pin sheet (Pin this, Edit pin, New pin) opened from the Context page's concept layer; it has no subject.</summary>
+    PinSheet,
 }

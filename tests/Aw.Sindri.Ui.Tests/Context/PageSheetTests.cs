@@ -150,6 +150,62 @@ public sealed class PageSheetTests
     }
 
     [Fact]
+    public async Task A_hand_edit_before_the_sheet_opened_saves_on_the_file_hash()
+    {
+        var (sheet, writes) = await Opened(profile: new ProfileWaiting("live-old", [], FileHash: "file-new"));
+        sheet.Name = "Week schedule";
+
+        await sheet.Save(TestContext.Current.CancellationToken);
+
+        Expect.Equal("file-new", Assert.Single(writes.Saves).IfHash);
+    }
+
+    [Fact]
+    public async Task A_hand_edit_after_the_sheet_opened_sends_the_hash_read_at_open()
+    {
+        var (sheet, writes) = await Opened(profile: new ProfileWaiting("live-old", [], FileHash: "file-new"));
+        sheet.Name = "Week schedule";
+        writes.Profile = new ProfileWaiting("live-old", [], FileHash: "file-newer");
+
+        await sheet.Save(TestContext.Current.CancellationToken);
+
+        Expect.Equal("file-new", Assert.Single(writes.Saves).IfHash);
+    }
+
+    [Fact]
+    public async Task An_unreadable_profile_at_open_writes_nothing()
+    {
+        var writes = new FakePageWrites { Profile = null };
+        writes.Add(WeekKey, Week());
+        var sheet = new PageSheetViewModel(writes, [_selfScheduling], [], "self-scheduling");
+        await sheet.OpenPage(WeekKey, TestContext.Current.CancellationToken);
+        sheet.Name = "Week schedule";
+
+        await sheet.Save(TestContext.Current.CancellationToken);
+
+        Expect.True(!sheet.CanSave, "no hash to guard the write, so Save is off");
+        Expect.Equal("Couldn't read your settings just now. Close this and open it again.", sheet.Note);
+        Expect.Sequence([], writes.Saves.Select(s => s.IfHash));
+    }
+
+    [Fact]
+    public async Task A_clash_then_an_unreadable_profile_writes_nothing_more()
+    {
+        var (sheet, writes) = await Opened();
+        sheet.Name = "Week schedule";
+        writes.Answer(new PageSaved(PageSavedState.Clash, "SND-PROFILE-003"));
+        writes.Profile = null;
+
+        await sheet.Save(TestContext.Current.CancellationToken);
+        await sheet.Save(TestContext.Current.CancellationToken);
+
+        Expect.Equal("Couldn't read your settings just now. Close this and open it again.", sheet.Note);
+        Expect.True(!sheet.CanSave, "the re-read failed, so a second press can't overwrite the hand edit");
+        Expect.Equal("Week schedule", sheet.Name);
+        _ = Assert.Single(writes.Saves);
+    }
+
+    [Fact]
     public async Task A_write_still_running_says_so_and_never_reads_as_failed()
     {
         var (sheet, writes) = await Opened();

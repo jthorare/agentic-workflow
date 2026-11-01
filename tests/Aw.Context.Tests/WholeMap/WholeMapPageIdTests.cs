@@ -63,14 +63,12 @@ public sealed class WholeMapPageIdTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_surface_two_pages_name_carries_the_first_page_in_profile_order()
+    public async Task Two_pages_on_one_surface_take_the_first_pages_label_and_id()
     {
         _ = await _world.ImportYaml(MapWorld.Yaml(
             "schemaVersion: 1", "kind: authored", "repo: aw-split-panes", "nodes:",
             $"  - {{key: \"{Route}\", label: \"GET /schedule/week\"}}"));
         var repo = ContextRepoName.From(FixtureMap.Repo);
-
-        // "zeta" comes first in the profile but last by name, so only the profile order gives this answer.
         var scope = MapWorld.Human with
         {
             Repos = [new ContextRepo(repo, "/work/aw-split-panes")
@@ -81,7 +79,8 @@ public sealed class WholeMapPageIdTests : IDisposable
 
         var view = (await _world.Engine.WholeMap(new WholeMapQuery("nodes", [], MapRead.Current), scope, MapWorld.None)).Value;
 
-        var byKey = view.Nodes!.ToDictionary(n => n.Key.Value, n => n.PageId?.Value, StringComparer.Ordinal);
-        Assert.Equal("zeta", byKey[Route]);
+        var node = view.Nodes!.Single(n => n.Key.Value == Route);
+        Assert.Equal("zeta", node.PageId?.Value);
+        Assert.Equal("Zeta", node.Label);
     }
 }
