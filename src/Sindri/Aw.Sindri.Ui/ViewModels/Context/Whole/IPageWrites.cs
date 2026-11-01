@@ -32,7 +32,7 @@ internal interface IPageWrites
     /// <returns>The count, or null when the read failed or no API address is known.</returns>
     public Task<int?> OwnerCount(CancellationToken cancellationToken);
 
-    /// <summary>Searches the map's pages by name (GET /sindri/context/pages with q and marks=all): the "Pick another" search (pages spec §3.6).</summary>
+    /// <summary>Searches the map's pages by name (GET /sindri/context/pages with q and marks=suggested; owner pages are never offered, since two pages on one surface fold together on the map): the "Pick another" search (pages spec §3.6).</summary>
     /// <param name="repo">The repo to read, or null.</param>
     /// <param name="query">The text a page's name or map label contains; blank keeps every page.</param>
     /// <param name="limit">The most rows to read.</param>

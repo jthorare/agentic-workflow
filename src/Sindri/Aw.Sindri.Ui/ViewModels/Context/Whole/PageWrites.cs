@@ -98,8 +98,9 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
             return null;
         }
 
-        var answer = await api.ContextPages(url, new PagesQuery(Repo: repo, Limit: limit, Marks: "all") { Q = query }, cancellationToken).ConfigureAwait(true);
-        return answer.IsSuccess ? [.. answer.Value.Pages.Where(static p => !PageRows.OwnerOnly(p.Key)).Select(static p => new PageMatch(p.Key, p.Name))] : null;
+        var answer = await api.ContextPages(url, new PagesQuery(Repo: repo, Limit: limit, Marks: "suggested") { Q = query }, cancellationToken).ConfigureAwait(true);
+        // Only the map's suggestions: an owner page already holds its surface, and a second page on it would fold into the first on the map with no refusal.
+        return answer.IsSuccess ? [.. answer.Value.Pages.Where(static p => string.Equals(p.Mark, "suggested", StringComparison.Ordinal)).Select(static p => new PageMatch(p.Key, p.Name))] : null;
     }
 
     /// <inheritdoc />
