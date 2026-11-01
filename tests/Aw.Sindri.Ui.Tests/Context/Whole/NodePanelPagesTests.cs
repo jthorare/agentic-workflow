@@ -236,4 +236,39 @@ public sealed class NodePanelPagesTests
 
         Assert.Equal(["Actions", "Relates to", "Why", "Code"], panel.Sections.Select(s => s.Heading), StringComparer.Ordinal);
     }
+
+    private static string[] GroupKeys(NodePanelViewModel panel) => [.. panel.Groups.SelectMany(g => g.Rows).Select(r => r.Key)];
+
+    [Fact]
+    public async Task An_action_panels_groups_leave_out_what_the_sections_list_and_keep_other_edge_types()
+    {
+        const string Helper = "action:schedule/helper";
+        var (panel, _, _) = Panel(nodes: new Dictionary<string, NodeView>(_nodes, StringComparer.Ordinal) { [Submit] = View(Submit, "action", [Edge(Submit, "on", Page), Edge(Submit, "expresses", Plan), Edge(Submit, "calls", Helper)], [Edge(File, "implements", Submit)]) });
+
+        await panel.Open(Submit, Token);
+
+        Assert.Equal([Helper], GroupKeys(panel), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_page_panels_groups_hold_none_of_its_actions_concepts_or_code()
+    {
+        var (panel, _, _) = Panel();
+
+        await panel.Open(Page, Token);
+
+        Assert.Empty(GroupKeys(panel));
+    }
+
+    [Fact]
+    public async Task A_feature_nodes_groups_still_show_its_implements_rows()
+    {
+        var (panel, _, _) = Panel(nodes: new Dictionary<string, NodeView>(_nodes, StringComparer.Ordinal) { [Feature] = View(Feature, "feature", [Edge(Feature, "touches", Page)], [Edge(File, "implements", Feature)]) });
+
+        await panel.Open(Feature, Token);
+
+        var keys = GroupKeys(panel);
+        Assert.Contains(File, keys, StringComparer.Ordinal);
+        Assert.Contains(Page, keys, StringComparer.Ordinal);
+    }
 }

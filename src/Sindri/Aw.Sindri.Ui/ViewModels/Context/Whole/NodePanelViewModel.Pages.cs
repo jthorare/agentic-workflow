@@ -21,6 +21,9 @@ internal sealed partial class NodePanelViewModel
     /// <summary>Gets a value indicating whether the sections show.</summary>
     public bool HasSections => Sections.Count > 0;
 
+    // The edge types an action's or page's sections cover (Why covers decides and mentions).
+    private static readonly HashSet<string> _sectionEdgeTypes = new(["on", "expresses", "implements", "decides", "mentions"], StringComparer.Ordinal);
+
     private static bool IsAction(string kind) => string.Equals(kind, "action", StringComparison.Ordinal);
 
     private NodeEdgeRowViewModel Link(string key, string? label, string? kind)

@@ -195,7 +195,9 @@ internal sealed partial class NodePanelViewModel : ObservableObject
             OpenSourceName = Labels.ContextNodePanelOpenSourceName(source.Kind);
         }
 
-        var rows = view.Out.Select(e => Row(e.To, e, outgoing: true)).Concat(view.In.Select(e => Row(e.From, e, outgoing: false)));
+        var covered = IsAction(node.Kind) || NodePageKinds.IsPage(view);   // the sections already list these edges: the groups keep the rest
+        bool Kept(NodeEdge e) => !covered || !_sectionEdgeTypes.Contains(e.Type);
+        var rows = view.Out.Where(Kept).Select(e => Row(e.To, e, outgoing: true)).Concat(view.In.Where(Kept).Select(e => Row(e.From, e, outgoing: false)));
         Groups =
         [
             .. rows.GroupBy(r => r.Band)
