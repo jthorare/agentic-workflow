@@ -14,6 +14,7 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(block);
         _block = block;
+        Name = block.Name;
         // The server sends the page of a block with an unknown concept, unticked with its reason: the owner picks a concept for each unknown name and Save all swaps the picks into that page.
         if (block.UnknownConcepts.Count > 0 && block.Page is not null)
         {
@@ -36,8 +37,29 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     /// <summary>Gets the block's number, from 1.</summary>
     public int Block => _block.Block;
 
-    /// <summary>Gets the page's name as cleaned.</summary>
-    public string Name => _block.Name;
+    /// <summary>Builds the row of a page the map already holds, as Accept all suggested lists it: no match, no paste block, ticked unless a reason says otherwise.</summary>
+    /// <param name="draft">The page.</param>
+    /// <param name="number">Its place in the list, from 1.</param>
+    /// <param name="reason">Why the row is not added, or null.</param>
+    /// <param name="known">The concepts a picker offers.</param>
+    /// <returns>The row.</returns>
+    internal static AddSeveralPagesRowViewModel FromDraft(PageDraft draft, int number, string? reason, IReadOnlyList<ConceptChoice>? known = null)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        var page = new PagesPreviewPage(draft.Id, draft.Name, draft.Repo, draft.Surface, [.. draft.Actions.Select(static a => new PagesPreviewPageAction(a.Id, a.Name, a.Action, a.Concepts))]);
+        var block = new PagesPreviewBlock(number, number, draft.Name, Match: null, Replaces: null, SameAs: null, Ticked: reason is null, reason, [.. draft.Actions.Select(static a => new PagesPreviewAction(a.Name, Match: null, []))], [], page);
+        return new AddSeveralPagesRowViewModel(block, known);
+    }
+
+    /// <summary>Gets the page's surface key (its name when it has none): what a re-read matches the row by, as block numbers are not stable.</summary>
+    internal string Key => _block.Page?.Surface ?? _block.Name;
+
+    /// <summary>Gets or sets the page's name: as cleaned, or as the owner renamed it.</summary>
+    public string Name
+    {
+        get;
+        set => Set(ref field, value);
+    }
 
     /// <summary>Gets "Matches Schedule week (4 actions found)" or "New page".</summary>
     public string MatchText => _block.Match is { } match ? Labels.AddSeveralPagesMatches(match.Name, match.Actions) : Labels.AddSeveralPagesNewPage;
@@ -80,7 +102,7 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     public IReadOnlyList<string> ActionLines => [.. _block.Actions.Select(static a => a.Match is { } m ? a.Name + " - " + Labels.AddSeveralPagesActionMatches(m.Name) : a.Name)];
 
     /// <summary>Gets the page Save all sends for this row, or null when the row has none: the server's page, with each unknown concept name in its actions replaced by its pick.</summary>
-    internal PagesPreviewPage? Page => NeedsConcept && CanTick && _block.Page is { } page ? WithPicks(page) : _block.Page;
+    internal PagesPreviewPage? Page => (NeedsConcept && CanTick && _block.Page is { } page ? WithPicks(page) : _block.Page) is { } sent ? sent with { Name = Name } : null;
 
     /// <summary>Gets the picks made, by the name written.</summary>
     internal IReadOnlyDictionary<string, string> Picks =>

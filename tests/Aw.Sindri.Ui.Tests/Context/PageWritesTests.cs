@@ -195,6 +195,18 @@ public sealed class PageWritesTests
         Assert.Null(await Writes(api).Suggested(concept: null, ["k1"], Token));
     }
 
+    [Fact]
+    public async Task OwnerCount_reads_one_owner_row_and_reports_the_total()
+    {
+        var api = new FakeSindriApi { ContextPagesAnswer = _ => new RouteAnswer(HttpStatusCode.OK, ("{'pages':[" + Row("k1", "owner", concept: null) + "],'total':190,'truncated':true,'mapVersion':'v41'}").Replace('\'', '"')) };
+
+        var count = await Writes(api).OwnerCount(Token);
+
+        Assert.Equal(190, count);
+        var asked = Assert.Single(api.ContextPagesAsked);
+        Assert.Equal(("owner", 1, null), (asked.Marks, asked.Limit, asked.Concept));
+    }
+
     [Theory]
     [InlineData("index.pages.schedule-week", true)]
     [InlineData("repos.web.index.pages.schedule-week", true)]

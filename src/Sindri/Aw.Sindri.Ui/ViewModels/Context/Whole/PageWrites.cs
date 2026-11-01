@@ -79,6 +79,9 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
     }
 
     /// <inheritdoc />
+    public Task<int?> OwnerCount(CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc />
     public async Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(save);

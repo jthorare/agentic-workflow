@@ -27,6 +27,11 @@ internal interface IPageWrites
     /// <returns>The suggested pages found, or null when the read failed or no API address is known.</returns>
     public Task<IReadOnlyList<PageDraft>?> Suggested(string? concept, IReadOnlyList<string> keys, CancellationToken cancellationToken);
 
+    /// <summary>Counts the pages the profile already names (one read of GET /sindri/context/pages with marks=owner and a slice of one).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The count, or null when the read failed or no API address is known.</returns>
+    public Task<int?> OwnerCount(CancellationToken cancellationToken);
+
     /// <summary>Writes the pages in one profile write, waits for the job, then approves its hash when <paramref name="approve"/> is set and nothing else waits.</summary>
     /// <param name="save">The pages to set and the page ids to remove.</param>
     /// <param name="ifHash">The live hash the sheet read when it opened.</param>

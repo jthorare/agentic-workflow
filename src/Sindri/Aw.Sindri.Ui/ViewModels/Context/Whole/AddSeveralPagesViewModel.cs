@@ -16,6 +16,8 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     private string? _hash;
     private string _initialTicks = string.Empty;
     private string _readText = string.Empty;
+    private string? _acceptConcept;
+    private IReadOnlyList<string>? _acceptKeys;   // null in paste mode
 
     /// <summary>Builds a sheet that has read nothing yet.</summary>
     /// <param name="writes">Where the list is read and the pages are written.</param>
@@ -25,6 +27,18 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     {
         ArgumentNullException.ThrowIfNull(writes);
         (_writes, _repo, _known) = (writes, repo, known ?? []);
+    }
+
+    /// <summary>Builds the Accept all suggested sheet: no paste box, the section's suggested pages as ticked rows once <see cref="LoadSuggested"/> has read them.</summary>
+    /// <param name="writes">Where the pages are read and written.</param>
+    /// <param name="concept">The concept the section is open on, or null.</param>
+    /// <param name="keys">The section's page keys, in its order.</param>
+    /// <param name="known">The concepts a row can pick.</param>
+    /// <returns>The sheet.</returns>
+    internal static AddSeveralPagesViewModel AcceptAll(IPageWrites writes, string? concept, IReadOnlyList<string> keys, IReadOnlyList<ConceptChoice>? known = null)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        return new AddSeveralPagesViewModel(writes, repo: null, known) { Title = Labels.AcceptAllSuggested, _acceptConcept = concept, _acceptKeys = [.. keys] };
     }
 
     /// <summary>Raised once the pages are written: the section reads again.</summary>
@@ -37,7 +51,16 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     internal event EventHandler<ValueEventArgs<AddSeveralPagesFocus>>? FocusRequested;
 
     /// <summary>Gets the sheet's title.</summary>
-    public string Title { get; } = Labels.AddSeveralPages;
+    public string Title { get; private init; } = Labels.AddSeveralPages;
+
+    /// <summary>Gets a value indicating whether the paste box shows: not in Accept all suggested.</summary>
+    public bool HasPasteBox => _acceptKeys is null;
+
+    /// <summary>Gets "186 more: accept these first" when the sheet lists fewer suggested pages than the section has, else empty.</summary>
+    public string MoreText { get; private set; } = string.Empty;
+
+    /// <summary>Gets a value indicating whether the more line shows.</summary>
+    public bool HasMore => MoreText.Length > 0;
 
     /// <summary>Gets the paste box's label.</summary>
     public string BoxLabel { get; } = Labels.AddSeveralPagesBoxLabel;
@@ -87,7 +110,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     public bool IsSaving { get; private set; }
 
     /// <summary>Gets a value indicating whether Save all can be pressed: the rows were read from this text, some row is ticked and nothing is in flight.</summary>
-    public bool CanSave => !IsSaving && string.Equals(Text, _readText, StringComparison.Ordinal) && Rows.Any(static r => r.Ticked);
+    public bool CanSave => !IsSaving && (_acceptKeys is null || _hash is not null) && string.Equals(Text, _readText, StringComparison.Ordinal) && Rows.Any(static r => r.Ticked);
 
     /// <summary>Gets the save button's words: "Saving…", "Save all and approve" when only these pages wait, else "Save all".</summary>
     public string SaveText => IsSaving ? Labels.PageSheetSaving : Approves(Pending()) ? Labels.AddSeveralPagesSaveAllAndApprove : Labels.AddSeveralPagesSaveAll;
@@ -175,7 +198,12 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     private void Fill(Api.Context.PagesPreview preview, string text)
     {
         (_hash, _readText) = (preview.ProfileHash, text);
-        Rows = [.. preview.Blocks.Select(b => new AddSeveralPagesRowViewModel(b, _known))];
+        SetRows([.. preview.Blocks.Select(b => new AddSeveralPagesRowViewModel(b, _known))]);
+    }
+
+    private void SetRows(IReadOnlyList<AddSeveralPagesRowViewModel> rows)
+    {
+        Rows = rows;
         foreach (var row in Rows)
         {
             row.PropertyChanged += (_, _) => ChangedSave();

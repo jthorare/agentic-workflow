@@ -8,6 +8,17 @@ internal static partial class Labels
     /// <summary>The Pages and actions section's button, and the sheet's title.</summary>
     internal const string AddSeveralPages = "Add several pages";
 
+    /// <summary>The Accept all suggested sheet's title.</summary>
+    internal const string AcceptAllSuggested = "Accept all suggested";
+
+    /// <summary>The line under the rows when more suggested pages wait than the sheet lists.</summary>
+    /// <param name="more">How many suggested pages are not listed.</param>
+    /// <returns>"186 more: accept these first".</returns>
+    internal static string AcceptAllMore(int more) => string.Create(CultureInfo.InvariantCulture, $"{more} more: accept these first");
+
+    /// <summary>The reason of a row past the profile's page cap.</summary>
+    internal const string AcceptAllProfileFull = "The profile holds at most 200 pages";
+
     /// <summary>The paste box's label.</summary>
     internal const string AddSeveralPagesBoxLabel = "Pages to add";
 

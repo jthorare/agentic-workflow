@@ -36,10 +36,28 @@ internal sealed class FakePageWrites : IPageWrites
 
     public Task<PageDraft?> Page(string key, string? concept, CancellationToken cancellationToken) => Task.FromResult(_pages.GetValueOrDefault(key));
 
+    /// <summary>Gets or sets how many pages the profile already names, as <see cref="OwnerCount"/> reports.</summary>
+    public int Owners { get; set; }
+
+    /// <summary>Gets or sets a value indicating whether <see cref="Suggested"/> answers its pages in the reverse of the keys' order.</summary>
+    public bool Reverse { get; set; }
+
+    /// <summary>Gets how many times the suggested pages were read.</summary>
+    public int SuggestedReads { get; private set; }
+
+    public Task<int?> OwnerCount(CancellationToken cancellationToken) => Task.FromResult<int?>(Owners);
+
     public Task<IReadOnlyList<PageDraft>?> Suggested(string? concept, IReadOnlyList<string> keys, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(keys);
-        IReadOnlyList<PageDraft>? found = [.. keys.Where(_pages.ContainsKey).Select(k => _pages[k]).Where(static p => !p.Owner)];
+        SuggestedReads++;
+        List<PageDraft> list = [.. keys.Where(_pages.ContainsKey).Select(k => _pages[k]).Where(static p => !p.Owner)];
+        if (Reverse)
+        {
+            list.Reverse();
+        }
+
+        IReadOnlyList<PageDraft>? found = list;
         return Task.FromResult<IReadOnlyList<PageDraft>?>(found);
     }
 
