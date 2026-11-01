@@ -130,12 +130,12 @@ internal sealed partial class NodePanelViewModel : ObservableObject
         if (answer is { IsSuccess: true } ok)
         {
             Fill(ok.Value);
-        }
-        else
-        {
-            (IsLoading, IsFailed) = (false, true);
+            Changed();
+            await ReadSections(ok.Value, version, cancellationToken).ConfigureAwait(true);
+            return;
         }
 
+        (IsLoading, IsFailed) = (false, true);
         Changed();
     }
 
@@ -177,7 +177,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
     private void Clear()
     {
         (Kind, Title, SourceText, Description, _link) = (string.Empty, string.Empty, string.Empty, string.Empty, null);
-        Groups = [];
+        (Groups, Sections) = ([], []);
         _launch.Reset();
     }
 
@@ -218,7 +218,7 @@ internal sealed partial class NodePanelViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups)])
+        foreach (var name in (string[])[nameof(IsOpen), nameof(IsLoading), nameof(IsFailed), nameof(Kind), nameof(Title), nameof(SourceText), nameof(HasSource), nameof(HasLink), nameof(HasNoLink), nameof(OpenSourceName), nameof(LaunchFailed), nameof(LaunchFailedText), nameof(Description), nameof(HasDescription), nameof(Groups), nameof(HasGroups), nameof(Sections), nameof(HasSections)])
         {
             OnChanged(name);
         }

@@ -93,6 +93,28 @@
                 <TextBlock x:Name="WholeNodeNoLink" Classes="caption subtle" Text="{Binding NoLinkText}" IsVisible="{Binding HasNoLink}" AutomationProperties.Name="{Binding NoLinkText}" />
               </StackPanel>
               <TextBlock x:Name="WholeNodeDescription" Classes="body" Text="{Binding Description}" IsVisible="{Binding HasDescription}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Description}" />
+              <ItemsControl x:Name="WholeNodeSections" ItemsSource="{Binding Sections}" IsVisible="{Binding HasSections}">
+                <ItemsControl.ItemTemplate>
+                  <DataTemplate x:DataType="vm:NodeSectionViewModel">
+                    <StackPanel Spacing="2" Margin="0,0,0,8">
+                      <TextBlock Classes="caption subtle" Text="{Binding Heading}" AutomationProperties.HeadingLevel="2" />
+                      <TextBlock Classes="caption subtle" Text="{Binding Mark}" IsVisible="{Binding HasMark}" />
+                      <TextBlock Classes="caption subtle" Text="{Binding LoadingText}" IsVisible="{Binding IsLoading}" />
+                      <TextBlock Classes="caption" Text="{Binding FailedText}" IsVisible="{Binding IsFailed}" TextWrapping="Wrap" />
+                      <TextBlock Classes="caption subtle" Text="{Binding EmptyText}" IsVisible="{Binding IsEmpty}" TextWrapping="Wrap" />
+                      <ItemsControl ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemTemplate>
+                          <DataTemplate x:DataType="vm:NodeEdgeRowViewModel">
+                            <Button Click="OnNodePanelEdge" Padding="4,2" Background="Transparent" BorderThickness="0" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" AutomationProperties.Name="{Binding Text}">
+                              <TextBlock Classes="body" Text="{Binding Text}" TextWrapping="Wrap" />
+                            </Button>
+                          </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                      </ItemsControl>
+                    </StackPanel>
+                  </DataTemplate>
+                </ItemsControl.ItemTemplate>
+              </ItemsControl>
               <ItemsControl x:Name="WholeNodeGroups" ItemsSource="{Binding Groups}" IsVisible="{Binding HasGroups}">
                 <ItemsControl.ItemTemplate>
                   <DataTemplate x:DataType="vm:NodeEdgeGroupViewModel">
