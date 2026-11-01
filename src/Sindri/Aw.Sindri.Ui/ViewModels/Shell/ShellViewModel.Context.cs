@@ -17,7 +17,7 @@ internal sealed partial class ShellViewModel
     private void InitContext(ISindriApi api, IClipboard clipboard, ILauncher launcher)
     {
         var writes = new ProfileWriteFlow(api, Health.ApiUrl, _clock);
-        Context = new ContextPageViewModel(new ContextPorts(api, Health.ApiUrl, clipboard, _clock, Health.Catalog, Health.Follow, launcher, new PageWrites(writes, api, Health.ApiUrl), writes, OpenPinSheet));
+        Context = new ContextPageViewModel(new ContextPorts(api, Health.ApiUrl, clipboard, _clock, Health.Catalog, Health.Follow, launcher, new PageWrites(writes, api, Health.ApiUrl), writes, OpenPinSheet, Prefs: _store));
         WirePageSheet();
         WireAddSeveralPages();
         Context.ReviewAndApproveRequested += (_, _) => Navigate(LinkOf(ProfileDriftRow));   // a pinned card's Review and approve: the needs-you review the setup step uses
