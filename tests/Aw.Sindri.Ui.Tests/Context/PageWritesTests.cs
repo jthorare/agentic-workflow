@@ -111,6 +111,21 @@ public sealed class PageWritesTests
     }
 
     [Fact]
+    public async Task Search_offers_only_suggested_map_pages_never_an_owner_page()
+    {
+        var answer = new RouteAnswer(HttpStatusCode.OK, string.Concat(
+            "{'pages':[{'id':'schedule-week','key':'surface:route/GET:/schedule/week','name':'Schedule week','repo':'web','mark':'owner','code':true,'actions':[]},",
+            "{'id':'help','key':'surface:owner-help','name':'Help','repo':null,'mark':'owner','code':false,'actions':[]},",
+            "{'id':'schedule-day','key':'surface:route/GET:/schedule/day','name':'Schedule day','repo':'web','mark':'suggested','code':true,'actions':[]}],",
+            "'total':3,'truncated':false,'mapVersion':'v41'}").Replace('\'', '"'));
+        var api = new FakeSindriApi { ContextPagesAnswer = _ => answer };
+
+        var found = await Writes(api).Search("web", "schedule", 50, Token);
+
+        Assert.Equal(["surface:route/GET:/schedule/day"], found!.Select(m => m.Key), StringComparer.Ordinal);
+    }
+
+    [Fact]
     public async Task Page_drops_the_owner_surface_key()
     {
         var api = new FakeSindriApi { ContextPagesAnswer = _ => Pages(truncated: false) };
