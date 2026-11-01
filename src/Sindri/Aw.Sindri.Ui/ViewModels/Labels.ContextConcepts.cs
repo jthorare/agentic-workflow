@@ -53,6 +53,11 @@ internal static partial class Labels
         return parts.Count == 0 ? "nothing yet" : string.Join(" · ", parts);
     }
 
+    /// <summary>The line on a concept card when a rebuild found suggested pages the owner has not opened yet (pages spec §3.5).</summary>
+    /// <param name="count">How many are new.</param>
+    /// <returns>"1 new suggested page" or "2 new suggested pages".</returns>
+    internal static string ContextConceptNewSuggested(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} new suggested {(count == 1 ? "page" : "pages")}");
+
     /// <summary>A concept card's top terms.</summary>
     /// <param name="shown">The terms to name, best first.</param>
     /// <param name="more">How many more there are.</param>

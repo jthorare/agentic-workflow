@@ -43,6 +43,7 @@
                     <TextBlock Classes="body-strong" Text="{Binding Name}" TextWrapping="Wrap" />
                     <TextBlock Classes="body" Text="{Binding Summary}" IsVisible="{Binding HasSummary}" TextWrapping="Wrap" />
                     <TextBlock Classes="caption subtle" Text="{Binding SizeText}" TextWrapping="Wrap" />
+                    <TextBlock Classes="caption" Text="{Binding NewSuggestedText}" IsVisible="{Binding HasNewSuggested}" TextWrapping="Wrap" />
                     <TextBlock Classes="caption subtle" Text="{Binding TermsText}" IsVisible="{Binding HasTerms}" TextWrapping="Wrap" />
                     <TextBlock Classes="caption subtle" Text="{Binding MarkText}" IsVisible="{Binding HasMark}" />
                   </StackPanel>

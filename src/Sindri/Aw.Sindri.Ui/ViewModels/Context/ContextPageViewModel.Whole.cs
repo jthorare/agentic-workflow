@@ -128,6 +128,11 @@ internal sealed partial class ContextPageViewModel
         {
             Whole.Show(read.Value);
             NoteRepos(read.Value);
+            if (OpenedConceptId is { } opened)
+            {
+                await MarkSuggestedSeen(opened).ConfigureAwait(true);
+            }
+
             if (_servedBuilding)
             {
                 (IsBuilding, _buildJob, _servedBuilding, _notReady, NoMap) = (false, null, false, MapNotReadyView.None, false);   // the build the answer named is done: the map is here
