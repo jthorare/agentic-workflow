@@ -42,12 +42,12 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     /// <param name="number">Its place in the list, from 1.</param>
     /// <param name="reason">Why the row is not added, or null.</param>
     /// <param name="known">The concepts a picker offers.</param>
-    /// <param name="pickConcept">True for a page in no concept: the row gets a concept picker, and a page with no actions is not added.</param>
+    /// <param name="pickConcept">True for a page in no concept: the row gets a concept picker. A page with no actions is never added.</param>
     /// <returns>The row.</returns>
     internal static AddSeveralPagesRowViewModel FromDraft(PageDraft draft, int number, string? reason, IReadOnlyList<ConceptChoice>? known = null, bool pickConcept = false)
     {
         ArgumentNullException.ThrowIfNull(draft);
-        reason = pickConcept && draft.Actions.Count == 0 ? Labels.AcceptAllNoActions : reason;   // nothing to link a concept to
+        reason = draft.Actions.Count == 0 ? Labels.AcceptAllNoActions : reason;   // nothing to link a concept to, so the page would be written under no concept
         var page = new PagesPreviewPage(draft.Id, draft.Name, draft.Repo, draft.Surface, [.. draft.Actions.Select(static a => new PagesPreviewPageAction(a.Id, a.Name, a.Action, a.Concepts))]);
         var block = new PagesPreviewBlock(number, number, draft.Name, Match: null, Replaces: null, SameAs: null, Ticked: reason is null, reason, [.. draft.Actions.Select(static a => new PagesPreviewAction(a.Name, Match: null, []))], [], page);
         var columns = Columns(known, draft);
@@ -150,8 +150,8 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     private bool NoneIsPicked => Picker?.Selected is { Id.Length: 0 };
 
     /// <summary>Picks a concept again, as a refreshed list's row gets back the pick of the row it replaces.</summary>
-    /// <param name="id">The concept id.</param>
-    internal void RestorePick(string id) => Picker?.Selected = Picker.Choices.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.Ordinal));
+    /// <param name="id">The concept id, the empty id for None, or null for an empty picker.</param>
+    internal void RestorePick(string? id) => Picker?.Selected = id is null ? null : Picker.Choices.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.Ordinal));
 
     /// <summary>Gets the page's surface key (its name when it has none): what a re-read matches the row by, as block numbers are not stable.</summary>
     internal string Key => _block.Page?.Surface ?? _block.Name;

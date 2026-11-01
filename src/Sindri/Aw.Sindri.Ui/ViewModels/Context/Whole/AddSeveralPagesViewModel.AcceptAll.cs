@@ -66,9 +66,9 @@ internal sealed partial class AddSeveralPagesViewModel
             row.Name = kept.Name;
             row.Restore(kept.Picks);
             row.RestoreTicks(kept.ActionTicks);
-            if (kept.PickedId is { } pick)
+            if (kept.Picker is { } picker)
             {
-                row.RestorePick(pick);
+                row.RestorePick(picker.Selected?.Id);   // None (the empty id) and an empty picker come back too
             }
 
             row.Ticked = kept.Ticked;

@@ -25,7 +25,7 @@ internal sealed partial class AddSeveralPagesViewModel
         PageSaved saved;
         try
         {
-            // The rows are built on the preview's profileHash, so that is this sheet's ifHash; #1826's fileHash wiring is for the single page sheet only.
+            // The ifHash is the hash the rows were built on: the preview's profileHash in paste mode, FileHash ?? LiveHash in Accept all suggested (#1826's rule, as the single page sheet).
             saved = await _writes.Save(save, _hash, approve, cancellationToken).ConfigureAwait(true);
         }
         catch (OperationCanceledException)
@@ -98,9 +98,9 @@ internal sealed partial class AddSeveralPagesViewModel
         if (_acceptKeys is not null)
         {
             await LoadSuggested(cancellationToken).ConfigureAwait(true);
-            if (_hash is not null)
+            if (_hash is not null && Rows.Count > 0)
             {
-                Say(Labels.AddSeveralPagesClash);
+                Say(Labels.AddSeveralPagesClash);   // not over the unreadable line a failed re-read leaves
             }
 
             return;
