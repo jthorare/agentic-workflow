@@ -76,6 +76,11 @@ internal sealed partial class PageSheetViewModel
             return;
         }
 
+        if (ClearedSavedActions())
+        {
+            return;
+        }
+
         var kept = Actions.Where(static a => a.Name.Trim().Length > 0).ToList();
         var id = _draft.Id;
         var draft = _draft with
