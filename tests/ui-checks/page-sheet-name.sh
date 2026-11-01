@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # tests/ui-checks/page-sheet-name.sh — proof check for the page sheet (#1724, P2b-2a) in the real app: inside a concept's Why drill
-# the Pages and actions section's New page opens the page sheet on the shell's sheet; a name and Save and approve write the page
-# and approve it, so the section lists it as the owner's page ("Edit page") with no "Waiting for approval" mark. Two clicks from
-# the drill (New page, Save and approve) and the typed name.
+# the Pages and actions section's New page opens the page sheet on the shell's sheet with the concept ticked on its first action
+# (#1851); a name, that action's name and Save and approve write the page and approve it, so the section lists it as the owner's
+# page ("Edit page") with no "Waiting for approval" mark. Two clicks from the drill (New page, Save and approve) and the typed names.
 # Expected: step 1 the Why drill shows "New page"; step 2 the sheet opens with a Name field and "Save and approve"; step 3 Save
 # and approve closes the sheet and a row reads "Edit page: Week schedule" without "Waiting for approval". On main it FAILs at step 1
 # (no page sheet, no New page).
@@ -67,6 +67,9 @@ d screenshot --out "$OUT/1-pages-section.png" >/dev/null 2>&1 || true
 d click --type Button --name "New page" >/dev/null 2>&1 || fail "step 2: could not click 'New page'"
 d wait-for --type TextBox --name "Name" --state visible --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the page sheet has no Name field"
 d type --type TextBox --name "Name" --value "Week schedule" --replace >/dev/null 2>&1 || fail "step 2: could not type the page's name"
+# A page is listed under a concept through its actions' ticks: New page from Self scheduling starts with it ticked on the first
+# action (#1851), so naming that action is enough (a page with no named action saves but sits under no concept, spec §3.6).
+d type --type TextBox --name "Action name" --value "Submit week" --replace >/dev/null 2>&1 || fail "step 2: could not type the action's name"
 poll_vis Button "Save and approve" || fail "step 2: the page sheet shows no 'Save and approve' button"
 d screenshot --out "$OUT/2-page-sheet.png" >/dev/null 2>&1 || true
 
@@ -77,4 +80,4 @@ vis Button "Save and approve" && fail "step 3: the sheet is still open after Sav
 d search --contains "Waiting for approval" --limit 20 2>/dev/null | jq -e 'any(.matches[]; .visible)' >/dev/null \
   && fail "step 3: a row reads 'Waiting for approval' after Save and approve (the approve did not land)"
 d screenshot --out "$OUT/3-saved.png" >/dev/null 2>&1 || true
-echo "PASS: Why drill -> New page -> name -> Save and approve (2 clicks) wrote the page and approved it ($OUT)"
+echo "PASS: Why drill -> New page -> name, one action (pre-ticked) -> Save and approve (2 clicks) wrote the page and approved it ($OUT)"

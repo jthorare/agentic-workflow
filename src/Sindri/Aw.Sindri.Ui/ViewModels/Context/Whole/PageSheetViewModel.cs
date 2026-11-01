@@ -109,6 +109,12 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     /// <summary>Gets the action rows.</summary>
     public IReadOnlyList<PageSheetActionViewModel> Actions { get; private set; } = [];
 
+    /// <summary>Gets a value indicating whether no named action relates to a concept, so the saved page would sit under none (#1851).</summary>
+    public bool IsUnderNoConcept => IsReady && !Actions.Any(static a => a.Name.Trim().Length > 0 && a.TickedIds.Count > 0);
+
+    /// <summary>Gets the caption shown while the page is under no concept.</summary>
+    public string UnderNoConceptText { get; } = Labels.PageSheetUnderNoConcept;
+
     /// <summary>Gets the Add an action button's words.</summary>
     public string AddActionText { get; } = Labels.PageSheetAddAction;
 
@@ -163,7 +169,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     internal async Task OpenNew(CancellationToken cancellationToken)
     {
         await ReadProfile([], cancellationToken).ConfigureAwait(true);
-        Fill(new PageDraft(Id: null, Name: string.Empty, Repo: null, Surface: null, Owner: false, Actions: [new PageActionDraft(Id: null, Name: string.Empty, Action: null, Concepts: [])]));
+        Fill(new PageDraft(Id: null, Name: string.Empty, Repo: null, Surface: null, Owner: false, Actions: [new PageActionDraft(Id: null, Name: string.Empty, Action: null, Concepts: _openConcept is null ? [] : [_openConcept])]));   // opened from a concept: its first action relates to it (#1851)
     }
 
     /// <summary>Adds an empty action row, with an unticked box in every column.</summary>
@@ -185,10 +191,15 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     internal bool HasChanges => IsReady && !string.Equals(Snapshot(), _initial, StringComparison.Ordinal);
 
     // The button's label and the hash come from the profile as it is now: only this page waiting means one click saves and approves.
+    // The hash is the file's at open, what the writer compares with (#1826): the live hash can lag a hand edit, and a change after open still clashes.
     private async Task ReadProfile(IReadOnlyList<string> pageIds, CancellationToken cancellationToken)
     {
         var waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
-        (_hash, _approve, _before) = (waiting?.LiveHash, waiting?.OnlyPages(pageIds) == true, waiting?.ChangedPaths ?? []);
+        (_hash, _approve, _before) = (waiting?.FileHash ?? waiting?.LiveHash, waiting?.OnlyPages(pageIds) == true, waiting?.ChangedPaths ?? []);
+        if (_hash is null)
+        {
+            Say(Labels.PageSheetNoHash);
+        }
     }
 
     private void Fill(PageDraft draft)
@@ -212,8 +223,12 @@ internal sealed partial class PageSheetViewModel : ObservableObject
         ChangedState();
     }
 
-    private PageSheetActionViewModel Row(PageActionDraft action) =>
-        new(action.Id, action.Name, action.Action, [.. _columns.Select(c => new ConceptTickViewModel(c, action.Concepts.Contains(c.Id, StringComparer.Ordinal)))]);
+    private PageSheetActionViewModel Row(PageActionDraft action)
+    {
+        var row = new PageSheetActionViewModel(action.Id, action.Name, action.Action, [.. _columns.Select(c => new ConceptTickViewModel(c, action.Concepts.Contains(c.Id, StringComparer.Ordinal)))]);
+        row.PropertyChanged += (_, _) => OnChanged(nameof(IsUnderNoConcept));   // a name or a tick moves the page in or out of every concept
+        return row;
+    }
 
     private void AddColumn(ConceptChoice concept)
     {
@@ -241,6 +256,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
         }
 
         OnChanged(nameof(Actions));
+        OnChanged(nameof(IsUnderNoConcept));
     }
 
     private string Snapshot() => Name + '\n' + string.Join('\n', Actions.Select(static a => a.Name + "|" + string.Join(',', a.TickedIds)));

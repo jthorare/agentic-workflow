@@ -52,7 +52,7 @@ internal sealed class GetPinSuggestService(ConceptReader reader, IIntentStore in
         var counts = await NewRecords(request, read, concept, words.Value, cancellationToken).ConfigureAwait(false);
         return counts.IsError
             ? counts.Error
-            : new PinSuggestView(1, read.Basis.Repo, read.Basis.MapVersion, PinSuggestBuilder.TermRows(read.Graph, concept, read.Text, words.Value, counts.Value), Features: null, Matches: null);
+            : new PinSuggestView(1, read.Basis.Repo, read.Basis.MapVersion, PinSuggestBuilder.TermRows(read.Graph, concept, read.Text, words.Value, counts.Value), PinSuggestBuilder.MembersOf(read.Graph, concept, read.Text), Matches: null);
     }
 
     // Per term, the visible live records in the intent layer that hold it by the alias rule and that the concept doesn't link yet. Each record is read once.

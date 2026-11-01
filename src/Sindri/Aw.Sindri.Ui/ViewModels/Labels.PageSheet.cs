@@ -23,6 +23,15 @@ internal static partial class Labels
     /// <summary>The close affordance's name for a screen reader.</summary>
     internal const string PageSheetCloseName = "Close";
 
+    /// <summary>The note when the profile's hash can't be read: the sheet writes nothing without it.</summary>
+    internal const string PageSheetNoHash = "Couldn't read your settings just now. Close this and open it again.";
+
+    /// <summary>The caption while no named action relates to a concept: the page saves, but sits under no concept (#1851).</summary>
+    internal const string PageSheetUnderNoConcept = "Not under any concept yet. Name an action and tick a concept to list it under one.";
+
+    /// <summary>A saved action's row whose name was cleared: Save writes nothing until it is named or removed (#1853).</summary>
+    internal const string PageSheetActionNameNeeded = "Name this action, or remove it";
+
     /// <summary>The Name field's label.</summary>
     internal const string PageSheetNameLabel = "Name";
 

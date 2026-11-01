@@ -17,7 +17,7 @@ public sealed class AddSeveralPagesTests
 
     private static PagesPreviewBlock Block(int number, string name, int? sameAs = null, string? reason = null, bool ticked = true, PagesPreviewMatch? match = null, IReadOnlyList<PagesPreviewAction>? actions = null) =>
         new(number, number, name, match, Replaces: null, sameAs, ticked && reason is null, reason, actions ?? [], [],
-            ticked && reason is null ? new PagesPreviewPage(Id: null, name, "web", Surface: null, [new PagesPreviewPageAction("Submit", Action: null, ["self-scheduling"])]) : null);
+            ticked && reason is null ? new PagesPreviewPage(Id: null, name, "web", Surface: null, [new PagesPreviewPageAction(Id: null, "Submit", Action: null, ["self-scheduling"])]) : null);
 
     private static (AddSeveralPagesViewModel Sheet, FakePageWrites Writes) Sheet(params PagesPreviewBlock[] blocks) =>
         Sheet(new PagesPreviewRead(new PagesPreview("v41", Hash, blocks)));
@@ -105,6 +105,21 @@ public sealed class AddSeveralPagesTests
         Expect.Equal(Hash, call.IfHash);
         Expect.True(call.Approve, "nothing else waits, so one click approves");
         Expect.True(saved && closed, "a saved list reads the section again and closes the sheet");
+    }
+
+    [Fact]
+    public async Task Save_all_keeps_the_id_of_an_action_the_page_already_has()
+    {
+        var replaced = new PagesPreviewBlock(1, 1, "Billing", Match: null, Replaces: "billing", SameAs: null, Ticked: true, Reason: null, [], [],
+            new PagesPreviewPage("billing", "Billing", "web", Surface: null, [new PagesPreviewPageAction("send-it-2", "Send it", Action: null, [])]));
+        var (sheet, writes) = Sheet(replaced);
+        sheet.Text = "x";
+        await sheet.ReadList(TestContext.Current.CancellationToken);
+
+        await sheet.SaveAll(TestContext.Current.CancellationToken);
+
+        var action = Assert.Single(Assert.Single(Assert.Single(writes.Saves).Save.Set).Actions);
+        Expect.Equal("send-it-2", action.Id);
     }
 
     [Fact]

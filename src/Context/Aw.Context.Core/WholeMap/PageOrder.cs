@@ -28,7 +28,7 @@ internal static class PageOrder
     /// <returns>True for an owner-named page or action.</returns>
     internal static bool IsOwner(GraphNode node) => node.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith("page:", StringComparison.Ordinal));
 
-    /// <summary>The id of the first owner page that named <paramref name="node"/>: the part after the last '/' of its 'page:&lt;repo&gt;/&lt;id&gt;' evidence ref (the same parse as <see cref="RankOf"/>).</summary>
+    /// <summary>The id of the first owner page that named <paramref name="node"/>: the part after the last '/' of its 'page:&lt;repo&gt;/&lt;id&gt;' evidence ref (the same parse as <see cref="RankOf"/>). PageOverlay lays pages in the profile's order, so the first ref is also the lowest-ranked page and a surface two pages name keeps its id and its rank on one page.</summary>
     /// <param name="node">The node.</param>
     /// <returns>The page id, or null when no page named the node.</returns>
     internal static PageId? PageIdOf(GraphNode node) =>

@@ -74,7 +74,7 @@ public sealed class ShellSheetKindTests
     {
         var shell = await Shell();
 
-        foreach (var kind in Enum.GetValues<DeepLinkKind>().Where(k => k is not (DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages)))   // ProjectAdd has no subject: ProjectAddShellTests; PageSheet is the Context page's: PageSheetShellFocusTests; AddSeveralPages is the same sheet slot, AddSeveralPagesTests
+        foreach (var kind in Enum.GetValues<DeepLinkKind>().Where(k => k is not (DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.PinSheet or DeepLinkKind.AddSeveralPages)))   // ProjectAdd and PinSheet have no subject: ProjectAddShellTests, ShellPinSheetTests; PageSheet is the Context page's: PageSheetShellFocusTests; AddSeveralPages is the same sheet slot, AddSeveralPagesTests
         {
             shell.OpenSheet(new DeepLink(kind, kind == DeepLinkKind.HomeNeedsYou ? null : "X"));
 

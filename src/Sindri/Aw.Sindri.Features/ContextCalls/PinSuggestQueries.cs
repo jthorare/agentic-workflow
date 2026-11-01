@@ -35,8 +35,8 @@ internal static class PinSuggestQueries
             : Invalid($"concept= '{concept}' is not a concept key (fix: name one like concept:billing)");
 
     private static Result<PinSuggestQuery> Search(GetContextPinSuggestRequest request, string search) =>
-        string.IsNullOrWhiteSpace(search)
-            ? Invalid("search= is empty (fix: send the text to find)")
+        search.Length > 0 && string.IsNullOrWhiteSpace(search)
+            ? Invalid("search= is blank (fix: send the text to find, or nothing after = for every feature)")
             : new PinSuggestQuery(MapRead.Current, request.Repo, Concept: null, search.Trim(), Math.Clamp(request.Limit ?? PinSuggestBuilder.DefaultLimit, 1, PinSuggestBuilder.MaxLimit), Lines: null);
 
     private static Result<PinSuggestQuery> Lines(GetContextPinSuggestRequest request, IReadOnlyList<string> names)

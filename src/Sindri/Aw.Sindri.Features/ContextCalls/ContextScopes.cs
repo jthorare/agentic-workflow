@@ -51,8 +51,14 @@ internal sealed class ContextScopes(IApprovedProfile approvals, ICallerContextAc
     internal static IReadOnlyList<ProfileRepoEntry> Entries(SindriProfile profile)
     {
         ArgumentNullException.ThrowIfNull(profile);
-        return [.. (profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path, RepoDenyGlobs.For(profile, r), [.. RepoConcepts.For(profile, r).Select(c => ConceptPin.Of(c.Id is { } id ? ConceptId.From(id.Value) : null, c.Name, c.Summary, c.Features, c.Paths).Declaring(c.DependsOn, c.Owns).WithAliases(c.Aliases))], DemotePaths: RepoDemoteGlobs.For(profile, r)) { Roles = RepoRoleSets.For(profile, r) is { } sets ? [.. sets.Select(x => new RepoRole(x.Name, x.Demoted, x.Globs))] : null, Pages = Pages(profile, r) })];
+        return [.. (profile.Repos ?? []).Select(r => new ProfileRepoEntry(r.Name, r.Path, RepoDenyGlobs.For(profile, r), [.. RepoConcepts.For(profile, r).Select(PinOf)], DemotePaths: RepoDemoteGlobs.For(profile, r)) { Roles = RepoRoleSets.For(profile, r) is { } sets ? [.. sets.Select(x => new RepoRole(x.Name, x.Demoted, x.Globs))] : null, Pages = Pages(profile, r) })];
     }
+
+    /// <summary>The pin the engine reads an 'index.concepts' entry as.</summary>
+    /// <param name="c">The entry.</param>
+    /// <returns>The pin.</returns>
+    internal static ConceptPin PinOf(ConceptSettings c) =>
+        ConceptPin.Of(c.Id is { } id ? ConceptId.From(id.Value) : null, c.Name, c.Summary, c.Features, c.Paths).Declaring(c.DependsOn, c.Owns).WithAliases(c.Aliases);
 
     /// <summary>
     /// The pages of 'index.pages' as page pins: an id the profile leaves out is the name's slug (a clash takes '-2', '-3'), and the

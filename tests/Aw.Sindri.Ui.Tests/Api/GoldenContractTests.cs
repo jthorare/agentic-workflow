@@ -61,6 +61,7 @@ public sealed class GoldenContractTests
         ["context-lenses"] = As<LensesView>,
         ["context-concepts"] = As<ContextConceptsView>,   // GET /sindri/context/concepts: the Context page's concept band (ui #1012); the refusals are ProblemDetails
         ["context-concepts-glossary"] = As<ConceptGlossaryView>,   // GET /sindri/context/concepts/glossary: the concept cards' top terms (ui #1036); no-map-030 is a ProblemDetails
+        ["context-pins"] = As<PinsView>,   // GET /sindri/context/pins: the live pins against the approved profile and the map, and the rebuild state
         ["context-pins-suggest"] = As<PinSuggestView>,   // GET /sindri/context/pins/suggest: the "Pin this" and "Add several" suggestions; invalid-179 is a ProblemDetails
         ["context-whole"] = As<WholeMapView>,   // GET /context/map/whole (whole-map spec §2.1); the refusals (006, 030, 044, 045, 120, 200) are ProblemDetails
         ["context-filemap"] = As<FileMapView>,

@@ -41,6 +41,7 @@ internal static class Composition
             .AddSindriCore()
             .AddSindriFeatures()
             .AddSindriInfrastructure(environment)
+            .AddProfileRecheck()   // wraps the profile writer ports Infrastructure just registered: Sindri's own writes record a profile check at once (#1826)
             .AddSindriPlatformSandbox(environment)   // SB-5a: the one switch (bubblewrap + session cap on Linux, UnavailableSandbox elsewhere)
             .AddSindriWorkflows(environment, ChildEnvironment.Start)   // the Temporal dev server serve keeps beside itself (engine spec rev 8 §0), the worker and 'workflow complete'
             .AddContextCore()

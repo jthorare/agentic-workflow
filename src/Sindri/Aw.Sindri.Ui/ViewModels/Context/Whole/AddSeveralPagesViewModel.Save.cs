@@ -90,7 +90,7 @@ internal sealed partial class AddSeveralPagesViewModel
     private bool Approves(PageSave save) => _waiting?.OnlyMine(PageWrites.Mine(save)) == true;
 
     private static PageDraft Draft(PagesPreviewPage page) =>
-        new(page.Id, page.Name, page.Repo, page.Surface, Owner: false, [.. page.Actions.Select(static a => new PageActionDraft(Id: null, a.Name, a.Action, a.Concepts))]);
+        new(page.Id, page.Name, page.Repo, page.Surface, Owner: false, [.. page.Actions.Select(static a => new PageActionDraft(a.Id, a.Name, a.Action, a.Concepts))]);
 
     // The profile moved: read the same list again so the rows show what is there now, keep the ticks of the rows that can still be ticked, and take the new hash.
     private async Task Clashed(CancellationToken cancellationToken)
