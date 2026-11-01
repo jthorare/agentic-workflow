@@ -3,6 +3,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Views.Context.Whole;
@@ -14,7 +15,12 @@ internal sealed partial class PagesSectionView : UserControl
     public PagesSectionView()
     {
         InitializeComponent();
+        PagesAddSeveral.Content = Labels.AddSeveralPages;   // an internal const is no x:Static
+        Avalonia.Automation.AutomationProperties.SetName(PagesAddSeveral, Labels.AddSeveralPages);
     }
+
+    /// <summary>Raised from the Add several pages button and bubbles to the Context page, which opens the sheet.</summary>
+    internal static readonly RoutedEvent<RoutedEventArgs> AddSeveralRequestedEvent = RoutedEvent.Register<PagesSectionView, RoutedEventArgs>(nameof(AddSeveralRequestedEvent), RoutingStrategies.Bubble);
 
     /// <summary>An action's name was pressed.</summary>
     internal event EventHandler<PageActionChosenEventArgs>? ActionChosen;
@@ -44,6 +50,8 @@ internal sealed partial class PagesSectionView : UserControl
             pages.OpenSheet(row);
         }
     }
+
+    private void OnAddSeveral(object? sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(AddSeveralRequestedEvent, this));
 
     private void OnNewPage(object? sender, RoutedEventArgs e) => (DataContext as PagesSectionViewModel)?.NewPage();
 

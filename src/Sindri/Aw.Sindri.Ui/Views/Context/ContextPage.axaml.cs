@@ -23,6 +23,7 @@ internal sealed partial class ContextPage : UserControl
     {
         InitializeComponent();
         ContextStack.Canvas.EmptyClicked += (_, _) => _page?.CloseInspector();   // a click on the empty canvas closes the inspector
+        AddHandler(Whole.PagesSectionView.AddSeveralRequestedEvent, (_, e) => _page?.OpenAddSeveralPages(noConcept: ReferenceEquals(e.Source, NoConceptPages)));
         NoConceptPages.RetryRequested += (_, _) => _ = _page?.OpenNoConcept();
         NoConceptPages.CloseRequested += (_, _) =>
         {
@@ -205,16 +206,9 @@ internal sealed partial class ContextPage : UserControl
         {
             Sync(_page);
         }
-        else if (_page is not null && string.Equals(e.PropertyName, nameof(ContextPageViewModel.ShowPageSheet), StringComparison.Ordinal))
+        else if (_page is not null && IsSheetProperty(e.PropertyName))
         {
-            if (_page.ShowPageSheet)
-            {
-                _opener = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Control;
-            }
-            else
-            {
-                ReturnFocus();
-            }
+            SheetFocus(_page.ShowPageSheet || _page.ShowAddSeveralPages);
         }
         else if (_page is not null && string.Equals(e.PropertyName, nameof(ContextPageViewModel.AnchorText), StringComparison.Ordinal))
         {

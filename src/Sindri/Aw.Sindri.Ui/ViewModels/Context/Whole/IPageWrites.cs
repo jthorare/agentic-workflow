@@ -27,4 +27,11 @@ internal interface IPageWrites
     /// <param name="cancellationToken">Cancels the wait (the write itself is sent once).</param>
     /// <returns>What happened.</returns>
     public Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken);
+
+    /// <summary>Reads a pasted list as one row per page (QUERY /sindri/context/pages/preview): the page each block names, what it matches and the page to send in the save.</summary>
+    /// <param name="text">The paste.</param>
+    /// <param name="repo">The repo to read, or null.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The preview, or the server's refusal.</returns>
+    public Task<PagesPreviewRead> Preview(string text, string? repo, CancellationToken cancellationToken);
 }

@@ -112,14 +112,9 @@ internal sealed partial class ShellWindow
             return true;   // the Remove question closes first, as Keep
         }
 
-        if (shell.IsPageSheet && shell.ActivePageSheet is { } pageSheet)
+        if (EscapeSheetWithQuestion(shell) is { } answered)
         {
-            return pageSheet.Escape();   // a question answers first, changes ask before the sheet goes
-        }
-
-        if (shell.IsPinSheet && shell.ActivePinSheet is { } pinSheet)
-        {
-            return pinSheet.Escape();   // a question answers first, changes ask before the sheet goes
+            return answered;
         }
 
         if (shell.IsPinSheet && shell.EscapePinSeveral())
@@ -129,6 +124,22 @@ internal sealed partial class ShellWindow
 
         shell.CloseSheet();
         return true;
+    }
+
+    // The Context page's sheets that ask before they go: a question answers first, changes ask before the sheet goes. Null when the open sheet isn't one of them.
+    private static bool? EscapeSheetWithQuestion(ShellViewModel shell)
+    {
+        if (shell.IsPageSheet && shell.ActivePageSheet is { } pageSheet)
+        {
+            return pageSheet.Escape();
+        }
+
+        if (shell.IsAddSeveralPages && shell.ActiveAddSeveralPages is { } several)
+        {
+            return several.Escape();
+        }
+
+        return shell.IsPinSheet && shell.ActivePinSheet is { } pinSheet ? pinSheet.Escape() : null;
     }
 
     // The inbox opened or closed: focus goes to the selected row, on the inbox or back on Home, so it is never lost.
