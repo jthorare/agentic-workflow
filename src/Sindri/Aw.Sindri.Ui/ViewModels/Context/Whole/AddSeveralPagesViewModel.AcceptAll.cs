@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.ViewModels.Run;
+
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>The Accept all suggested mode (<see cref="AddSeveralPagesViewModel"/>, continued).</summary>
@@ -43,6 +45,7 @@ internal sealed partial class AddSeveralPagesViewModel
         _hash = _waiting?.FileHash ?? _waiting?.LiveHash;   // never a null hash written: no hash, no Save
         DrawSuggested(drafts, owners, before);
         ChangedSave();
+        FocusRequested?.Invoke(this, new ValueEventArgs<AddSeveralPagesFocus>(AddSeveralPagesFocus.FirstRow));
     }
 
     private void DrawSuggested(IReadOnlyList<PageDraft>? drafts, int? owners, Dictionary<string, AddSeveralPagesRowViewModel> before)

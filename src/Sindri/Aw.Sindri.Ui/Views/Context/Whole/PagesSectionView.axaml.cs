@@ -53,6 +53,8 @@ internal sealed partial class PagesSectionView : UserControl
 
     private void OnAddSeveral(object? sender, RoutedEventArgs e) => RaiseEvent(new RoutedEventArgs(AddSeveralRequestedEvent, this));
 
+    private void OnAcceptAll(object? sender, RoutedEventArgs e) => (DataContext as PagesSectionViewModel)?.AcceptAll();
+
     private void OnNewPage(object? sender, RoutedEventArgs e) => (DataContext as PagesSectionViewModel)?.NewPage();
 
     // Try again reads the pages again; focus goes to the section head.

@@ -23,8 +23,31 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        var sheet = new AddSeveralPagesViewModel(writes, repo: null, known: [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: t.Id, Name: t.Name))]);
-        sheet.Saved += (_, _) => _ = noConcept ? OpenNoConcept() : ReadWhole(CancellationToken.None);
+        Mount(new AddSeveralPagesViewModel(writes, repo: null, known: Known()), () => noConcept ? OpenNoConcept() : ReadWhole(CancellationToken.None));
+    }
+
+    /// <summary>Opens the Accept all suggested sheet over a concept's suggested pages; a saved list reads the section again.</summary>
+    /// <param name="concept">The concept the section is open on.</param>
+    /// <param name="keys">The suggested rows' node keys, in the section's order.</param>
+    internal void OpenAcceptAllSuggested(string? concept, IReadOnlyList<string> keys)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        if (Ports.Pages is not { } writes)
+        {
+            return;
+        }
+
+        var sheet = AddSeveralPagesViewModel.AcceptAll(writes, concept, keys, Known());
+        Mount(sheet, () => ReadWhole(CancellationToken.None));
+        _ = sheet.LoadSuggested(CancellationToken.None);
+    }
+
+    private List<ConceptChoice> Known() => [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: t.Id, Name: t.Name))];
+
+    // Shows the sheet in the shell's one sheet; a saved list reads the section again, and the sheet goes when it is closed.
+    private void Mount(AddSeveralPagesViewModel sheet, Func<Task> reread)
+    {
+        sheet.Saved += (_, _) => _ = reread();
         sheet.Closed += (_, _) =>
         {
             if (ReferenceEquals(AddSeveralPages, sheet))
@@ -35,15 +58,6 @@ internal sealed partial class ContextPageViewModel
         };
         AddSeveralPages = sheet;
         ChangedAddSeveralPages();
-    }
-
-    /// <summary>Opens the Accept all suggested sheet over a concept's suggested pages; a saved list reads the section again.</summary>
-    /// <param name="concept">The concept the section is open on.</param>
-    /// <param name="keys">The suggested rows' node keys, in the section's order.</param>
-    internal void OpenAcceptAllSuggested(string? concept, IReadOnlyList<string> keys)
-    {
-        ArgumentNullException.ThrowIfNull(keys);
-        _ = (Ports, concept);
     }
 
     private void ChangedAddSeveralPages()

@@ -26,7 +26,7 @@ internal sealed partial class AddSeveralPagesView : UserControl
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
     {
         base.OnAttachedToVisualTree(e);
-        FocusLater(AddSeveralText);
+        FocusFirst();
     }
 
     private AddSeveralPagesViewModel? Sheet => DataContext as AddSeveralPagesViewModel;
@@ -48,7 +48,7 @@ internal sealed partial class AddSeveralPagesView : UserControl
         if (_watched is { } now)
         {
             now.FocusRequested += OnFocusRequested;
-            FocusLater(AddSeveralText);
+            FocusFirst();
         }
     }
 
@@ -58,6 +58,9 @@ internal sealed partial class AddSeveralPagesView : UserControl
         {
             case AddSeveralPagesFocus.Text:
                 FocusLater(AddSeveralText);
+                break;
+            case AddSeveralPagesFocus.FirstRow:
+                Dispatcher.UIThread.Post(FocusFirstRow, DispatcherPriority.Loaded);
                 break;
             case AddSeveralPagesFocus.KeepEditing:
                 FocusLater(AddSeveralKeepEditing);
@@ -70,6 +73,25 @@ internal sealed partial class AddSeveralPagesView : UserControl
                 FocusLater(AddSeveralSaveAll);
                 break;
         }
+    }
+
+    // The paste box starts with focus; Accept all suggested has none, so focus waits for its rows (the Save all button until they come).
+    private void FocusFirst()
+    {
+        if (Sheet is { HasPasteBox: false })
+        {
+            FocusLater(AddSeveralSaveAll);
+            return;
+        }
+
+        FocusLater(AddSeveralText);
+    }
+
+    // The first row's tick takes focus, else Save all.
+    private void FocusFirstRow()
+    {
+        var tick = AddSeveralRows.ContainerFromIndex(0)?.GetVisualDescendants().OfType<CheckBox>().FirstOrDefault(static c => string.Equals(c.Name, "AddSeveralTick", StringComparison.Ordinal));
+        _ = (tick ?? (Control)AddSeveralSaveAll).Focus(NavigationMethod.Tab);
     }
 
     // The first row with a problem takes focus: on its reason line, which a screen reader reads, or on its concept picker.
