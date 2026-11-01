@@ -20,7 +20,7 @@ public sealed record ConceptRow(NodeKey Id, string Name, string Summary, string 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Pages { get; init; }
 
-    /// <summary>The map keys of the suggested pages among <see cref="Pages"/> ('surface:route/GET:/schedule/week'), in the Pages section's order, at most <see cref="Aw.Context.Core.Pages.PageReader.SuggestedCap"/>; null (left out of the answer) when it has none. A key outlives a rebuild, so the app tells a new suggestion from one the owner has seen (pages spec §3.5).</summary>
+    /// <summary>The map keys of the suggested pages among <see cref="Pages"/> ('surface:route/GET:/schedule/week'), in the Pages section's order, at most <see cref="Pages.PageReader.SuggestedCap"/>; null (left out of the answer) when it has none. A key outlives a rebuild, so the app tells a new suggestion from one the owner has seen (pages spec §3.5).</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? SuggestedPages { get; init; }
 
