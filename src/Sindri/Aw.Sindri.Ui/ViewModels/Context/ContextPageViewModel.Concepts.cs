@@ -52,7 +52,8 @@ internal sealed partial class ContextPageViewModel
         ChangedConcepts();
         var read = await ReadConcepts(api, cancellationToken).ConfigureAwait(true);
         _conceptsRead = read.IsSuccess || !string.Equals(read.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        NoteConcepts(read);
+        var fresh = read.IsSuccess && string.Equals(read.Value.State, "ok", StringComparison.Ordinal) ? await ReadSuggestedSeen(read.Value, cancellationToken).ConfigureAwait(true) : null;
+        NoteConcepts(read, fresh);
         CountNoConcept(read.IsSuccess ? read.Value : null);
         if (Concepts.HasConcepts)
         {
@@ -129,7 +130,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>When the answer is drawn.</returns>
     internal Task ReadMapTop(CancellationToken cancellationToken) => OpenedConceptId is null ? OpenFirst(cancellationToken) : ReadWhole(cancellationToken);
 
-    private void NoteConcepts(Result<ContextConceptsView> read)
+    private void NoteConcepts(Result<ContextConceptsView> read, IReadOnlyDictionary<string, int>? newSuggested = null)
     {
         if (read.IsError)
         {
@@ -148,7 +149,7 @@ internal sealed partial class ContextPageViewModel
         switch (read.Value.State)
         {
             case "ok":
-                Concepts.Show(read.Value);
+                Concepts.Show(read.Value, newSuggested);
                 break;
             case "building":
                 Concepts.Building();

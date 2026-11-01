@@ -1,9 +1,9 @@
 using System.Net;
 using System.Text.Json;
 using Aw.Context.Testing.Fixtures;
+using Aw.Kernel.Services;
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Lease;
-using Aw.Kernel.Services;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Tests.ApiGoldens;
 using Aw.Sindri.Tests.ContextCalls;
