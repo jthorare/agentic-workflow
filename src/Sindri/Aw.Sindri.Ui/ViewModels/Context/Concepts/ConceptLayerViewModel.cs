@@ -69,10 +69,16 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
 
     /// <summary>The concepts were read.</summary>
     /// <param name="view">The ok answer.</param>
-    internal void Show(ContextConceptsView view)
+    /// <param name="newSuggested">Per concept id, how many suggested pages are new; null or a missing id means none.</param>
+    internal void Show(ContextConceptsView view, IReadOnlyDictionary<string, int>? newSuggested = null)
     {
         ArgumentNullException.ThrowIfNull(view);
-        var tiles = (view.Concepts ?? []).Select(c => new ConceptTileViewModel(c.Id, c.Name, c.Summary, c.Size, string.Equals(c.Source, "override", StringComparison.Ordinal), terms: null, _open) { Pages = c.Pages ?? 0 }).ToList();
+        var tiles = (view.Concepts ?? []).Select(c => new ConceptTileViewModel(c.Id, c.Name, c.Summary, c.Size, string.Equals(c.Source, "override", StringComparison.Ordinal), terms: null, _open)
+        {
+            Pages = c.Pages ?? 0,
+            SuggestedPages = c.SuggestedPages ?? [],
+            NewSuggested = newSuggested is not null && newSuggested.TryGetValue(c.Id, out var count) ? count : 0,
+        }).ToList();
         if (view.Other is { } other && other.Size.Total > 0)
         {
             tiles.Add(new ConceptTileViewModel(other.Id, other.Name.Length > 0 ? other.Name : Labels.ContextWholeBandOther, string.Empty, other.Size, setByPerson: false, terms: null, _open));
@@ -86,6 +92,15 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
 
         (_all, IsLoading, Note) = (tiles, false, string.Empty);
         ResetSearch();
+        Changed();
+    }
+
+    /// <summary>The owner opened a concept's Pages section: its card loses the new suggested pages line.</summary>
+    /// <param name="id">The concept's id.</param>
+    internal void ClearNewSuggested(string id)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        _all = [.. _all.Select(t => string.Equals(t.Id, id, StringComparison.Ordinal) && t.HasNewSuggested ? t.WithoutNewSuggested() : t)];
         Changed();
     }
 

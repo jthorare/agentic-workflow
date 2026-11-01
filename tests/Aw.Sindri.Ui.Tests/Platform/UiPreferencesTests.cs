@@ -21,6 +21,25 @@ public sealed class UiPreferencesTests
     }
 
     [Fact]
+    public void Seen_suggested_pages_round_trip_through_the_file()
+    {
+        var seen = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["aw/concept:billing"] = ["surface:route/GET:/a", "surface:route/GET:/b"] };
+
+        var read = PreferencesJson.Read(PreferencesJson.Write(UiPreferences.Defaults with { SeenPages = seen }));
+
+        Assert.Equal(["surface:route/GET:/a", "surface:route/GET:/b"], read.SeenPages["aw/concept:billing"]);
+    }
+
+    [Fact]
+    public void A_file_without_seen_pages_reads_them_as_empty()
+    {
+        var read = PreferencesJson.Read("""{"version":1,"lastPage":"Context"}"""u8);
+
+        Assert.Equal("Context", read.LastPage);
+        Assert.Empty(read.SeenPages);
+    }
+
+    [Fact]
     public void The_file_is_camel_case_json_with_a_version()
     {
         var json = Encoding.UTF8.GetString(PreferencesJson.Write(UiPreferences.Defaults with { Window = new WindowBounds(1, 2, 1000, 700), SeenIds = ["a"] }));

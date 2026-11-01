@@ -27,7 +27,8 @@ internal static class PreferencesJson
             f.SeenIds ?? [],
             f.PaletteHistory ?? [],
             f.TextScale ?? d.TextScale,
-            f.ReduceMotion ?? d.ReduceMotion).Clamp();
+            f.ReduceMotion ?? d.ReduceMotion,
+            d.SeenPages).Clamp();
     }
 
     /// <summary>The preferences as the file's bytes (UTF-8 JSON, camelCase), clamped first, so a file never holds a value out of range.</summary>

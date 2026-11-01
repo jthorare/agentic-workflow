@@ -29,6 +29,22 @@ internal sealed class ConceptTileViewModel
     /// <summary>How many pages express the concept; 0 when the server does not count them.</summary>
     internal int Pages { get; init; }
 
+    /// <summary>The map keys of the concept's suggested pages, as the server listed them; empty when none.</summary>
+    internal IReadOnlyList<string> SuggestedPages { get; init; } = [];
+
+    /// <summary>How many suggested pages a rebuild found that the owner has not opened yet.</summary>
+    internal int NewSuggested { get; init; }
+
+    /// <summary>"2 new suggested pages"; empty when none is new.</summary>
+    public string NewSuggestedText => NewSuggested > 0 ? Labels.ContextConceptNewSuggested(NewSuggested) : string.Empty;
+
+    /// <summary>Whether the card shows the new suggested pages line.</summary>
+    public bool HasNewSuggested => NewSuggested > 0;
+
+    /// <summary>The same card with its new suggested pages line gone (the owner opened the concept's Pages section).</summary>
+    /// <returns>The new card.</returns>
+    internal ConceptTileViewModel WithoutNewSuggested() => new(Id, Name, Summary, Size, IsSetByPerson, Terms, _open) { Card = Card, Pages = Pages, SuggestedPages = SuggestedPages };
+
     /// <summary>The summary; empty when the server gave none.</summary>
     public string Summary { get; }
 
@@ -62,7 +78,7 @@ internal sealed class ConceptTileViewModel
     /// <summary>The same card with the terms the glossary gave it.</summary>
     /// <param name="terms">The terms, best first.</param>
     /// <returns>The new card.</returns>
-    internal ConceptTileViewModel WithTerms(IReadOnlyList<string> terms) => new(Id, Name, Summary, Size, IsSetByPerson, terms, _open) { Card = Card, Pages = Pages };
+    internal ConceptTileViewModel WithTerms(IReadOnlyList<string> terms) => new(Id, Name, Summary, Size, IsSetByPerson, terms, _open) { Card = Card, Pages = Pages, SuggestedPages = SuggestedPages, NewSuggested = NewSuggested };
 
     /// <summary>The pin side of the card: its mark, footer and buttons.</summary>
     internal PinCardState Card { get; private init; } = PinCardState.None;
@@ -113,7 +129,7 @@ internal sealed class ConceptTileViewModel
     /// <summary>The same card with the pin side the layer worked out.</summary>
     /// <param name="card">The pin side.</param>
     /// <returns>The new card.</returns>
-    internal ConceptTileViewModel WithCard(PinCardState card) => new(Id, Name, Summary, Size, IsSetByPerson, Terms, _open) { Card = card };
+    internal ConceptTileViewModel WithCard(PinCardState card) => new(Id, Name, Summary, Size, IsSetByPerson, Terms, _open) { Card = card, Pages = Pages, SuggestedPages = SuggestedPages, NewSuggested = NewSuggested };
 
     /// <summary>Opens the concept (click, Enter).</summary>
     public void Open() => _open(Id);
