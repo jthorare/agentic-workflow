@@ -48,7 +48,26 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(draft);
         var page = new PagesPreviewPage(draft.Id, draft.Name, draft.Repo, draft.Surface, [.. draft.Actions.Select(static a => new PagesPreviewPageAction(a.Id, a.Name, a.Action, a.Concepts))]);
         var block = new PagesPreviewBlock(number, number, draft.Name, Match: null, Replaces: null, SameAs: null, Ticked: reason is null, reason, [.. draft.Actions.Select(static a => new PagesPreviewAction(a.Name, Match: null, []))], [], page);
-        return new AddSeveralPagesRowViewModel(block, known);
+        var columns = Columns(known, draft);
+        var row = new AddSeveralPagesRowViewModel(block, known) { Actions = [.. draft.Actions.Select(a => new AddSeveralPagesActionViewModel(a, columns))] };
+        foreach (var action in row.Actions)
+        {
+            action.PropertyChanged += (_, _) => row.OnChanged(nameof(Page));
+        }
+
+        return row;
+    }
+
+    // The concepts the sheet knows, then any the page's actions relate to that it doesn't (shown under their id).
+    private static List<ConceptChoice> Columns(IReadOnlyList<ConceptChoice>? known, PageDraft draft)
+    {
+        List<ConceptChoice> columns = [.. known ?? []];
+        foreach (var id in draft.Actions.SelectMany(static a => a.Concepts).Distinct(StringComparer.Ordinal).Where(id => !columns.Exists(c => string.Equals(c.Id, id, StringComparison.Ordinal))))
+        {
+            columns.Add(new ConceptChoice(id, id));
+        }
+
+        return columns;
     }
 
     /// <summary>Gets or sets a value indicating whether the row is open into its fields; a row with no fields (a pasted block) stays shut.</summary>
@@ -60,6 +79,15 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
 
     /// <summary>Gets the row's actions with their concept boxes; empty for a pasted block.</summary>
     public IReadOnlyList<AddSeveralPagesActionViewModel> Actions { get; private set; } = [];
+
+    /// <summary>Gets the toggle's words.</summary>
+    public string OpenText { get; } = Labels.AcceptAllEdit;
+
+    /// <summary>Gets the toggle's name for a screen reader.</summary>
+    public string OpenName => Labels.AcceptAllEditName(Name);
+
+    /// <summary>Gets the name box's label.</summary>
+    public string NameLabel { get; } = Labels.AcceptAllNameLabel;
 
     /// <summary>Gets a value indicating whether the row can open into fields.</summary>
     public bool HasFields => Actions.Count > 0;
@@ -144,7 +172,7 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     public IReadOnlyList<string> ActionLines => [.. _block.Actions.Select(static a => a.Match is { } m ? a.Name + " - " + Labels.AddSeveralPagesActionMatches(m.Name) : a.Name)];
 
     /// <summary>Gets the page Save all sends for this row, or null when the row has none: the server's page, with each unknown concept name in its actions replaced by its pick.</summary>
-    internal PagesPreviewPage? Page => (NeedsConcept && CanTick && _block.Page is { } page ? WithPicks(page) : _block.Page) is { } sent ? sent with { Name = Name } : null;
+    internal PagesPreviewPage? Page => (NeedsConcept && CanTick && _block.Page is { } page ? WithPicks(page) : _block.Page) is { } sent ? sent with { Name = Name, Actions = WithTicks(sent.Actions) } : null;
 
     /// <summary>Gets the picks made, by the name written.</summary>
     internal IReadOnlyDictionary<string, string> Picks =>
@@ -165,6 +193,10 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
         Ticked = CanTick;   // a row whose every concept is picked is ticked, as Accept all's filled picker is (pages spec §3.6)
         OnChanged(nameof(CanTick));
     }
+
+    // An opened row's boxes are the actions' concepts; the actions keep the order they were listed in.
+    private IReadOnlyList<PagesPreviewPageAction> WithTicks(IReadOnlyList<PagesPreviewPageAction> sent) =>
+        Actions.Count != sent.Count ? sent : [.. sent.Select((a, i) => a with { Concepts = Actions[i].TickedIds })];
 
     private PagesPreviewPage WithPicks(PagesPreviewPage page) =>
         page with { Actions = [.. page.Actions.Select(a => a with { Concepts = [.. a.Concepts.Select(Concept).Distinct(StringComparer.Ordinal)] })] };

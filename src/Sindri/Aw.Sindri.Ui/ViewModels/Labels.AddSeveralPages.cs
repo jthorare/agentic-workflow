@@ -16,6 +16,17 @@ internal static partial class Labels
     /// <returns>"186 more: accept these first".</returns>
     internal static string AcceptAllMore(int more) => string.Create(CultureInfo.InvariantCulture, $"{more} more: accept these first");
 
+    /// <summary>The button that opens a row into its fields.</summary>
+    internal const string AcceptAllEdit = "Edit";
+
+    /// <summary>The open button's name for a screen reader.</summary>
+    /// <param name="name">The page's name.</param>
+    /// <returns>"Edit Schedule week".</returns>
+    internal static string AcceptAllEditName(string name) => "Edit " + name;
+
+    /// <summary>The open row's name box label.</summary>
+    internal const string AcceptAllNameLabel = "Page name";
+
     /// <summary>The reason of a row past the profile's page cap.</summary>
     internal const string AcceptAllProfileFull = "The profile holds at most 200 pages";
 

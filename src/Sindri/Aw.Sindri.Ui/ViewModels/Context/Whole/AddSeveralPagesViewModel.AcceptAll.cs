@@ -62,6 +62,7 @@ internal sealed partial class AddSeveralPagesViewModel
             var kept = before[row.Key];
             row.Name = kept.Name;
             row.Restore(kept.Picks);
+            row.RestoreTicks(kept.ActionTicks);
             row.Ticked = kept.Ticked;
         }
 

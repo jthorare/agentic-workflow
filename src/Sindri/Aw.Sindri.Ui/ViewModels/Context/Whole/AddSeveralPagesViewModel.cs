@@ -220,7 +220,7 @@ internal sealed partial class AddSeveralPagesViewModel : ObservableObject
     /// <summary>Closes the sheet and drops the changes.</summary>
     internal void Close() => Closed?.Invoke(this, EventArgs.Empty);
 
-    private string Ticks() => string.Concat(Rows.Select(static r => r.Ticked ? '1' : '0'));
+    private string Ticks() => string.Concat(Rows.Select(static r => (r.Ticked ? '1' : '0') + r.Signature));
 
     private void SayText(string note)
     {
