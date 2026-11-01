@@ -39,7 +39,7 @@ public sealed class ShippedBlocksTests
                 "step.design.check", "step.design.draft", "step.design.evidence", "step.design.intake", "step.design.lens-desk",
                 "step.design.revise", "step.desk.choose", "step.docs.check", "step.docs.scope", "step.docs.update", "step.evidence.api-plan",
                 "step.evidence.api-run", "step.evidence.combine", "step.evidence.db-plan", "step.evidence.db-run", "step.evidence.desk", "step.evidence.desktop-review", "step.evidence.desktop-run",
-                "step.evidence.none", "step.evidence.ui-plan", "step.evidence.ui-run", "step.handtest.run", "step.intake.ticket",
+                "step.evidence.none", "step.evidence.ui-plan", "step.evidence.ui-run", "step.handtest.run", "step.implement.fix", "step.intake.ticket",
                 "step.interview.answer", "step.interview.apply", "step.interview.questions", "step.interview.record", "step.judge.choose",
                 "step.lens.ask", "step.lens.log", "step.lens.round", "step.lens.run", "step.line.decide", "step.line.dispatch", "step.line.seed", "step.owner.decide", "step.phase.decide",
                 "step.phase.drift", "step.phase.seed", "step.plan.check", "step.plan.evidence", "step.plan.exec-review", "step.plan.freeze",

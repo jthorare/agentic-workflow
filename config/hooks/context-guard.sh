@@ -127,7 +127,7 @@ jq -nc --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" --arg agent "$AGENT_ID" --arg s
   '{"ts": $ts, "agentId": (if $agent == "" then null else $agent end), "sessionId": $sid, "tokens": $tokens}' \
   >> "$CONFIG_DIR/fires.jsonl" 2>/dev/null || true
 
-DIGESTS_DIR="${AW_STATE_DIR:-$HOME/.agentic-workflow}/digests"
+DIGESTS_DIR="${AW_DIGEST_DIR:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/digests}"
 if [ -n "$AGENT_ID" ]; then
   MSG="This session's context is now ~$TOKENS tokens (past the ${THRESHOLD}-token guard). If your task can be handed off, consider writing a short handoff to $DIGESTS_DIR/<task-slug>.md (goal, what's done, what's left, exact file paths) and returning your result now, so the orchestrator can re-dispatch a fresh agent from that digest instead of continuing here."
 else

@@ -11,4 +11,7 @@ internal enum CitationOutcome
 
     /// <summary>More than one repo has it and the record's own repo (when it names one) is not among them.</summary>
     Ambiguous,
+
+    /// <summary>No file at HEAD, but a mapped repo once had the exact path and deleted it: history, not a broken citation.</summary>
+    History,
 }

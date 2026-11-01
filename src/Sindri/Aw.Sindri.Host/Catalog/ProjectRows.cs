@@ -7,11 +7,9 @@ using Aw.Sindri.Features.HideProject;
 
 namespace Aw.Sindri.Host.Catalog;
 
-/// <summary>The Projects page's writes (projects page spec §5.3): attach, change, remove, and hide or unhide one. Desk class like the item writes, so a session is refused; the page itself comes later, hence 'pending'.</summary>
+/// <summary>The Projects page's writes (projects page spec §5.3): attach, change, remove, and hide or unhide one. Desk class like the item writes, so a session is refused. The page adds, edits, removes and hides a project.</summary>
 internal static class ProjectRows
 {
-    private const string Ui = "pending:Projects";
-
     internal static IReadOnlyList<CommandRow> All { get; } =
     [
         Row("AttachProject", typeof(AttachProjectRequest), "/sindri/projects", "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]", destructive: false),
@@ -23,5 +21,5 @@ internal static class ProjectRows
     private static CommandRow Row(string action, Type request, string route, string cli, bool destructive) =>
         new(ActionId.From(action), request, Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, destructive, ReadsViews: true, Shortcut: null,
-            "POST", route, ShellRows.Form(cli), Ui);
+            "POST", route, ShellRows.Form(cli), "ready");
 }

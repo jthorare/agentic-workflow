@@ -142,6 +142,8 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 Answer(Counted(await server.FileRequest(uri, await Body<FileRequestRequest>(request, cancellationToken), cancellationToken), server.Filed)),
             "/sindri/requests" when request.Method == HttpMethod.Get => Answer(Counted(await server.Requests(uri, Query(uri, "state"), Query(uri, "item"), after, cancellationToken), server.RequestsAnswer(Query(uri, "item")))),
             "/sindri/context/map/build" when request.Method == HttpMethod.Post => Answer(Counted(await server.BuildContextMap(uri, cancellationToken), server.BuildContextMapAnswer)),
+            "/sindri/context/pages" when request.Method == HttpMethod.Post =>
+                Answer(Counted(await server.SetContextPages(uri, await Body<PagesSetBody>(request, cancellationToken), cancellationToken), server.SetContextPagesAnswer)),
             _ => null,
         };
     }
@@ -161,6 +163,13 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
 
             _ = await server.ReviewDecision(uri, await Body<ReviewDecisionRequest>(request, cancellationToken), cancellationToken);
             return Answer(server.ReviewDecided);
+        }
+
+        if (request.Method == HttpMethod.Query && string.Equals(uri.AbsolutePath, "/sindri/context/pages/preview", StringComparison.Ordinal))
+        {
+            var paste = await Body<PagesPreviewBody>(request, cancellationToken).ConfigureAwait(false);
+            _ = await server.ContextPagesPreview(uri, paste.Text, paste.Repo, cancellationToken).ConfigureAwait(false);
+            return Answer(server.ContextPagesPreviewAnswer(paste));
         }
 
         if (request.Method == HttpMethod.Query
@@ -218,7 +227,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 return Answer(server.NodeAnswer);
             case "query":
                 var asked = query["q"] ?? string.Empty;
-                _ = await server.QueryAnchors(uri, asked, cancellationToken);
+                _ = await server.QueryAnchors(uri, asked, cancellationToken, query["concept"]);
                 return Answer(server.QueryAnswer(asked));
             case "sources":
                 _ = await server.Sources(uri, cancellationToken);
@@ -237,7 +246,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 _ = await server.MapStatus(uri, query["anchor"], cancellationToken);
                 return Answer(server.MapStatusAnswer);
             case "map/whole":
-                var whole = new WholeMapQuery(query["detail"], query["area"], [.. query.GetValues("locate") ?? []], query["mapVersion"], query["draft"] == "true", query["repo"], query["concept"]);
+                var whole = new WholeMapQuery(query["detail"], query["area"], [.. query.GetValues("locate") ?? []], query["mapVersion"], query["draft"] == "true", query["repo"], query["concept"], query["pagesInNoConcept"] == "true");
                 _ = await server.WholeMap(uri, whole, cancellationToken);
                 return Answer(server.WholeMapAnswer(whole));
             case "map/publish":
@@ -261,9 +270,24 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
                 var glossary = new ConceptGlossaryQuery(query["repo"] ?? string.Empty, query["mapVersion"]);
                 _ = await server.ContextConceptGlossary(uri, glossary, cancellationToken);
                 return Answer(server.ContextConceptGlossaryAnswer(glossary));
+            case "pins/suggest":
+                return await PinSuggest(uri, query, cancellationToken);
+            case "pins":
+                var repo = query["repo"] ?? string.Empty;
+                _ = await server.ContextPins(uri, repo, cancellationToken);
+                return Answer(server.ContextPinsAnswer(repo));
             default:
                 return Text(HttpStatusCode.NotFound, "{}", "application/json");
         }
+    }
+
+    private async Task<HttpResponseMessage> PinSuggest(Uri uri, System.Collections.Specialized.NameValueCollection query, CancellationToken cancellationToken)
+    {
+        var defs = query.GetValues("def") ?? [];
+        var lines = (query.GetValues("line") ?? []).Select((name, i) => new PinSuggestLine(name, defs.Length > i && defs[i].Length > 0 ? defs[i] : null)).ToList();
+        var suggest = new PinSuggestQuery(query["repo"] ?? string.Empty, query["concept"], query["search"], int.TryParse(query["limit"], NumberStyles.Integer, CultureInfo.InvariantCulture, out var most) ? most : null, lines.Count == 0 ? null : lines);
+        _ = await server.ContextPinSuggest(uri, suggest, cancellationToken);
+        return Answer(server.ContextPinSuggestAnswer(suggest));
     }
 
     // The workflow reads (API §3.8): the call goes through the model (so a down server or a refusal answers as it does there),
@@ -471,7 +495,7 @@ internal sealed partial class FakeSindriHandler(FakeSindriApi server) : HttpMess
 
     /// <summary>A status body as this handler writes it.</summary>
     internal static string Status(StatusView s) => string.Create(CultureInfo.InvariantCulture,
-        $$"""{"running":{{Bool(s.Running)}},"pid":{{s.Pid}},"epoch":{{s.Epoch}},"leaseExpiresAt":{{Quoted(s.LeaseExpiresAt)}},"profile":{"approved":{{Quoted(s.Profile.Approved)}},"live":{{Quoted(s.Profile.Live)}},"changedSinceApproval":{{Bool(s.Profile.ChangedSinceApproval)}},"problem":{{Quoted(s.Profile.Problem)}},"source":{{Quoted(s.Profile.Source)}},"needsApproval":{{Bool(s.Profile.NeedsApproval)}},"modelPick":{{Quoted(s.Profile.ModelPick)}}},"services":[{{string.Join(',', s.Services.Select(Service))}}]{{ApiVersion(s.ApiVersion)}}{{Views(s.Views)}}{{Health(s.Health)}}{{Sessions(s.Sessions)}}}""");
+        $$"""{"running":{{Bool(s.Running)}},"pid":{{s.Pid}},"epoch":{{s.Epoch}},"leaseExpiresAt":{{Quoted(s.LeaseExpiresAt)}},"profile":{"approved":{{Quoted(s.Profile.Approved)}},"live":{{Quoted(s.Profile.Live)}},"changedSinceApproval":{{Bool(s.Profile.ChangedSinceApproval)}},"problem":{{Quoted(s.Profile.Problem)}},"source":{{Quoted(s.Profile.Source)}},"needsApproval":{{Bool(s.Profile.NeedsApproval)}},"modelPick":{{Quoted(s.Profile.ModelPick)}},"labelPick":{{Quoted(s.Profile.LabelPick)}},"surfacePick":{{Quoted(s.Profile.SurfacePick)}}},"services":[{{string.Join(',', s.Services.Select(Service))}}]{{ApiVersion(s.ApiVersion)}}{{Views(s.Views)}}{{Health(s.Health)}}{{Sessions(s.Sessions)}}}""");
 
     // Absent before API P1 (the field doesn't exist on S1's status), so the app must read a status without it.
     private static string ApiVersion(int? version) => version is { } v ? string.Create(CultureInfo.InvariantCulture, $",\"apiVersion\":{v}") : string.Empty;

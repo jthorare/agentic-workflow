@@ -28,7 +28,7 @@ public sealed class PublishContextMapServiceTests
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     private void Hold(DateTimeOffset since, int? latestDraft, int? current, int version = 2) =>
-        _engine.State = new MapPublishState(new MapHold(version, since, [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true)]), latestDraft, current, CurrentHeads: []);
+        _engine.State = new MapPublishState(new MapHold(version, since, [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true) { IndexCommit = "abc123" }]), latestDraft, current, CurrentHeads: []);
 
     private async Task<Kernel.Result<PublishContextMapResult>> Run()
     {

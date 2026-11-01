@@ -20,15 +20,22 @@ internal static class GraphPublishReads
         var draft = versions.Value.Where(v => v.Status == MapVersionStatus.Draft).Select(v => (int?)v.Number).FirstOrDefault();
         var current = versions.Value.Where(v => v.Status == MapVersionStatus.Current).Select(v => (int?)v.Number).FirstOrDefault();
         var state = upgraded.Value < 3 ? new MapPublishState(Hold: null, draft, current, CurrentHeads: []) : await WithHold(session, draft, current, cancellationToken).ConfigureAwait(false);
-        return state.IsError ? state : state.Value with { CurrentRuleset = versions.Value.FirstOrDefault(static v => v.Status == MapVersionStatus.Current)?.Ruleset };
+        return state.IsError ? state : state.Value with { CurrentRuleset = Current(versions.Value)?.Ruleset, CurrentPinHashes = Current(versions.Value)?.PinHashes };
     }
+
+    private static MapVersion? Current(IReadOnlyList<MapVersion> versions) => versions.FirstOrDefault(static v => v.Status == MapVersionStatus.Current);
 
     public static async ValueTask<Result<IReadOnlyList<MapHead>>> Heads(SqliteReadSession session, int version, CancellationToken cancellationToken)
     {
         var upgraded = await SqliteQueries.One(session, new SqlStatement(GraphSql.HasPublishTables), GraphRows.Id, cancellationToken).ConfigureAwait(false);
-        return upgraded.IsError ? upgraded.Error
-            : upgraded.Value < 3 ? Results.Success<IReadOnlyList<MapHead>>([])
-            : await SqliteQueries.List(session, new SqlStatement(GraphSql.SelectHeads, c => c.Bind("$v", (long)version)), GraphRows.Head, cancellationToken).ConfigureAwait(false);
+        if (upgraded.IsError || upgraded.Value < 3)
+        {
+            return upgraded.IsError ? upgraded.Error : Results.Success<IReadOnlyList<MapHead>>([]);
+        }
+
+        var indexed = await SqliteQueries.One(session, new SqlStatement(GraphSql.HasIndexCommitColumn), GraphRows.Id, cancellationToken).ConfigureAwait(false);
+        return indexed.IsError ? indexed.Error
+            : await SqliteQueries.List(session, new SqlStatement(indexed.Value == 0 ? GraphSql.SelectHeadsBeforeIndexCommit : GraphSql.SelectHeads, c => c.Bind("$v", (long)version)), GraphRows.Head, cancellationToken).ConfigureAwait(false);
     }
 
     private static async ValueTask<Result<MapPublishState>> WithHold(SqliteReadSession session, int? draft, int? current, CancellationToken cancellationToken)

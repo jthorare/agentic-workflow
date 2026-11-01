@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <summary>
 /// The work of a named index sync job (owned-index spec §5.5; #1597): one tick of the named source's feed through <see cref="IContextEngine"/>, under the starting caller. It does
 /// not go through the 'index-sync' service or its run guard, so the scheduled all-sources run being in flight never refuses it; only a sync of this same source already
-/// running does, as that source's row code (SND-CONTEXT-056). A source that is down or capped is a row with its code, not a failed job.
+/// running does, as that source's row code (SND-CONTEXT-056). A source that is down, capped or rate limited is a row with its code, not a failed job; the job's summary (<see cref="SourceStops"/>) says 'partial' for the last two.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
 /// <param name="engine">Context's facade: its named Tick.</param>

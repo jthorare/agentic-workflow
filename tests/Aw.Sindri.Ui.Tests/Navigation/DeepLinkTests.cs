@@ -36,6 +36,16 @@ public sealed class DeepLinkTests
     }
 
     [Fact]
+    public void The_projects_link_is_a_page_link_with_no_subject()
+    {
+        Assert.True(DeepLink.TryParse("projects", out var link));
+        Assert.Equal(new DeepLink(DeepLinkKind.Projects, Subject: null), link);
+        Assert.Equal("projects", link.ToString());
+        Assert.False(DeepLink.TryParse("projects/x", out _));
+        Assert.False(DeepLink.TryParse("Projects", out _));
+    }
+
+    [Fact]
     public void A_context_link_names_the_item_whose_scope_it_opens()
     {
         Assert.True(DeepLink.TryParse("context?item=ITM-01JC8", out var link));

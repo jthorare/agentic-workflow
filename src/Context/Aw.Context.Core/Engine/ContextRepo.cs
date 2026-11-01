@@ -13,6 +13,9 @@ public sealed record ContextRepo(ContextRepoName Name, string Path)
     /// <summary>The concepts the profile's 'index.concepts' pins for this repo (its own added to the profile's); none by default.</summary>
     public IReadOnlyList<ConceptPin> Concepts { get; init; } = [];
 
+    /// <summary>The pages the profile's 'index.pages' names for this repo (its own added to the profile's); none by default.</summary>
+    public IReadOnlyList<PagePin> Pages { get; init; } = [];
+
     /// <summary>Whether extraction must leave a path alone.</summary>
     /// <param name="path">The repo-relative path.</param>
     /// <returns>True when a deny glob matches it.</returns>

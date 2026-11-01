@@ -175,7 +175,7 @@ public sealed class PullSlackTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_rate_limit_while_reading_a_thread_drops_that_channels_records_so_it_comes_again_whole()
+    public async Task A_rate_limit_while_reading_a_thread_keeps_the_records_already_read_and_the_place_inside_the_channel()
     {
         var reset = new DateTimeOffset(2026, 10, 27, 10, 0, 0, TimeSpan.Zero);
         var reader = Reader()
@@ -188,8 +188,9 @@ public sealed class PullSlackTests
         var response = (await Service(reader).Handle(Request(after: null, 100, General, Ops), Ct)).Value;
 
         Assert.Equal(reset, response.RateLimitedUntil);
-        Assert.Equal(["slack:C0001GEN/day/2026-10-27"], response.Items.Select(static i => i.Key), StringComparer.Ordinal);
+        Assert.Equal(["slack:C0001GEN/day/2026-10-27", "slack:C0002OPS/day/2026-10-27"], response.Items.Select(static i => i.Key), StringComparer.Ordinal);
         Assert.Null(response.Next.Newest(Ops.Channel));
+        Assert.Equal(Today_(2), response.Next.Pass(Ops.Channel)!.Top);
     }
 
     [Fact, Trait("Lane", "unit")]

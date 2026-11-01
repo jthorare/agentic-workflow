@@ -62,6 +62,7 @@ internal static class EndpointTable
 
     private static RouteGroupBuilder MapProjectQueries(RouteGroupBuilder queries)
     {
+        _ = queries.MapListLinearProjects();
         _ = queries.MapGetProject();
         _ = queries.MapGetProjects();
         return queries;
@@ -108,8 +109,11 @@ internal static class EndpointTable
     {
         _ = queries.MapExportContextMap().MapGetIndexStatus();
         _ = queries.MapGetContextConcepts();
+        _ = queries.MapGetContextPages();
         _ = queries.MapGetContextConceptMembers();
         _ = queries.MapGetContextConceptGlossary();
+        _ = queries.MapGetContextPinSuggest();
+        _ = queries.MapGetContextPins();
         _ = queries.MapExportContextReview();
         _ = queries.MapFindContextPath();
         _ = queries.MapGetContextFileMap();
@@ -118,6 +122,7 @@ internal static class EndpointTable
         _ = queries.MapGetContextSubgraph();
         _ = queries.MapSearchContextMap();
         _ = queries.MapGetContextCode();
+        _ = queries.MapPreviewContextPages();
         _ = queries.MapGetContextEvalMap();
         _ = queries.MapGetContextMap();
         _ = queries.MapGetContextWholeMap();
@@ -137,6 +142,7 @@ internal static class EndpointTable
         // ---- commands: one line per slice, sorted ----
         _ = commands.MapApproveProfile();
         _ = commands.MapCancelJob();
+        _ = commands.MapResumeJob();
         _ = commands.MapCloseItem().MapProjectWrites();
         _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();

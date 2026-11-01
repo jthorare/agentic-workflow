@@ -356,7 +356,7 @@ public sealed class UsageLimitProviderTests
 
     private async Task<ProviderResult> Decide(string binary, bool minimal = false)
     {
-        Aw.Judge.Core.Ports.IModelProvider provider = binary switch
+        Core.Ports.IModelProvider provider = binary switch
         {
             "claude" => new ClaudeCliProvider(_runner),
             "codex" => new CodexCliProvider(_runner),

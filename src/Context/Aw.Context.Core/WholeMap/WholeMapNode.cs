@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Results;
 
@@ -19,4 +20,12 @@ public sealed record WholeMapNode(NodeKey Key, string Label, NodeKind Kind, stri
     /// <summary>The repo it belongs to (see <see cref="NodeRepos"/>), or null for a node of no single repo, such as a decision that spans repos; left out when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Repo { get; init; }
+
+    /// <summary>True when the owner named it in the profile (a 'page:' evidence ref, pages spec §3.5 "Set by a person"); left out when false.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Owner { get; init; }
+
+    /// <summary>The id of the owner's page ('index.pages') that named this node, from its 'page:&lt;repo&gt;/&lt;id&gt;' evidence ref (pages spec §3.3); null for a node no page named, and then left out.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public PageId? PageId { get; init; }
 }

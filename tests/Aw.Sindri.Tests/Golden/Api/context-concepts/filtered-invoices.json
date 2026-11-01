@@ -15,7 +15,8 @@
         "decisions": 0,
         "code": 1
       },
-      "citations": []
+      "citations": [],
+      "pages": 0
     }
   ],
   "other": {
@@ -39,5 +40,6 @@
       "to": "concept:billing",
       "weight": 1
     }
-  ]
+  ],
+  "pagesInNoConcept": 1
 }

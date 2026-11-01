@@ -16,10 +16,21 @@ internal static class IndexRules
     private const string FeaturePrefix = "feature:";
 
     internal static Error? Check(SindriProfile profile) =>
-        Section("index", profile.Index, inherited: [.. (profile.Repos ?? []).SelectMany(r => Ids(r.Index?.Concepts))])
-        ?? (profile.Repos ?? []).Select(r => Section($"repos.{r.Name}.index", r.Index, Ids(profile.Index?.Concepts)) ?? SharedIds($"repos.{r.Name}.index.concepts", profile.Index?.Concepts, r.Index?.Concepts)).FirstOrDefault(static e => e is not null);
+        RepoPageRepos(profile) ?? Section("index", profile.Index, inherited: [.. (profile.Repos ?? []).SelectMany(r => Ids(r.Index?.Concepts))], top: [])
+        ?? (profile.Repos ?? []).Select(r => Repo(profile, r)).FirstOrDefault(static e => e is not null);
 
-    private static Error? Section(string path, IndexSettings? index, HashSet<string> inherited)
+    private static Error? Repo(SindriProfile profile, RepoEntry r) =>
+        Section($"repos.{r.Name}.index", r.Index, Ids(profile.Index?.Concepts), profile.Index?.Concepts ?? [])
+        ?? SharedIds($"repos.{r.Name}.index.concepts", profile.Index?.Concepts, r.Index?.Concepts);
+
+    /// <summary>A page under a repo's own 'index.pages' belongs to that repo: its 'repo:' must be absent or equal it (pages spec §3.1). Nothing else about pages is refused here: the write rules run at write and a read never refuses.</summary>
+    private static Error? RepoPageRepos(SindriProfile profile) =>
+        (profile.Repos ?? []).SelectMany(r => (r.Index?.Pages ?? []).Select((page, position) => (Repo: r, Page: page, Position: position)))
+            .Where(static x => x.Page.Repo is { } named && !string.Equals(named, x.Repo.Name, StringComparison.Ordinal))
+            .Select(static x => Invalid(string.Create(CultureInfo.InvariantCulture, $"repos.{x.Repo.Name}.index.pages[{x.Position}].repo"), $"must be absent or '{x.Repo.Name}': a page under a repo's own index belongs to that repo"))
+            .FirstOrDefault();
+
+    private static Error? Section(string path, IndexSettings? index, HashSet<string> inherited, IReadOnlyList<ConceptSettings> top)
     {
         if (index is null)
         {
@@ -31,15 +42,16 @@ internal static class IndexRules
             ?? Range($"{path}.graph.maxMB", index.Graph?.MaxMB, MaxGraphMegabytes)
             ?? Embeddings($"{path}.embeddings", index.Embeddings)
             ?? Globs($"{path}.utilityGlobs", index.UtilityGlobs)
-            ?? Concepts($"{path}.concepts", index.Concepts, inherited);
+            ?? Concepts($"{path}.concepts", index.Concepts, inherited, top);
     }
 
     private const int MaxName = 200;
+    private const int MaxSummary = 280;
 
     private static HashSet<string> Ids(IReadOnlyList<ConceptSettings>? concepts) =>
         [.. (concepts ?? []).Select(c => c.Id?.Value).OfType<string>()];
 
-    private static Error? Concepts(string path, IReadOnlyList<ConceptSettings>? concepts, HashSet<string> inherited)
+    private static Error? Concepts(string path, IReadOnlyList<ConceptSettings>? concepts, HashSet<string> inherited, IReadOnlyList<ConceptSettings> top)
     {
         var known = Ids(concepts);
         known.UnionWith(inherited);
@@ -59,12 +71,12 @@ internal static class IndexRules
             }
         }
 
-        return null;
+        return AliasRules.Clashes(path, concepts, top);
     }
 
     private static Error? Pin(string at, ConceptSettings pin, HashSet<string> known) =>
-        Name($"{at}.name", pin.Name) ?? Reserved($"{at}.id", pin.Id) ?? Features($"{at}.features", pin.Features) ?? Globs($"{at}.paths", pin.Paths)
-        ?? DependsOn($"{at}.dependsOn", pin.DependsOn, known) ?? Owns($"{at}.owns", pin.Owns);
+        Name($"{at}.name", pin.Name) ?? Summary($"{at}.summary", pin.Summary) ?? Reserved($"{at}.id", pin.Id) ?? Features($"{at}.features", pin.Features) ?? Globs($"{at}.paths", pin.Paths)
+        ?? DependsOn($"{at}.dependsOn", pin.DependsOn, known) ?? Owns($"{at}.owns", pin.Owns) ?? AliasRules.Aliases($"{at}.aliases", pin.Aliases);
 
     private static Error? DependsOn(string path, IReadOnlyList<string>? ids, HashSet<string> known)
     {
@@ -96,9 +108,18 @@ internal static class IndexRules
     }
 
     private static Error? Name(string path, string? name) =>
-        string.IsNullOrWhiteSpace(name) || name.Length > MaxName || name.Any(char.IsControl)
-            ? Invalid(path, string.Create(CultureInfo.InvariantCulture, $"must not be empty, over {MaxName} characters or hold control characters"))
+        string.IsNullOrWhiteSpace(name) || name.Length > MaxName || name.Any(Invisible)
+            ? Invalid(path, string.Create(CultureInfo.InvariantCulture, $"must not be empty, over {MaxName} characters or hold control, format or line-separator characters"))
             : null;
+
+    private static Error? Summary(string path, string? summary) =>
+        summary is not null && (summary.Length > MaxSummary || summary.Any(Invisible))
+            ? Invalid(path, string.Create(CultureInfo.InvariantCulture, $"must be up to {MaxSummary} characters with no control, format or line-separator characters"))
+            : null;
+
+    // Control (Cc), format (Cf) and line or paragraph separator (Zl, Zp) characters: they hide text or break a line.
+    internal static bool Invisible(char c) =>
+        char.IsControl(c) || CharUnicodeInfo.GetUnicodeCategory(c) is UnicodeCategory.Format or UnicodeCategory.LineSeparator or UnicodeCategory.ParagraphSeparator;
 
     private static Error? Reserved(string path, ConceptPinId? id) =>
         id switch
@@ -187,5 +208,5 @@ internal static class IndexRules
     private static string Redacted(string url) =>
         Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.UserInfo.Length > 0 ? uri.GetComponents(UriComponents.SchemeAndServer, UriFormat.Unescaped) : url;
 
-    private static Error Invalid(string keyPath, string problem) => SindriErrors.ProfileInvalid.With($"{keyPath}: {problem}");
+    internal static Error Invalid(string keyPath, string problem) => SindriErrors.ProfileInvalid.With($"{keyPath}: {problem}");
 }

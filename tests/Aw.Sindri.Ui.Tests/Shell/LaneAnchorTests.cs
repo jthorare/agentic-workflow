@@ -223,11 +223,11 @@ public sealed class LaneAnchorTests
         }
     }
 
-    // arch-3: every kind has an owner: one of the two lanes, U2's item sheet, a page link (Home's Needs you, Settings' setup checklist), or the phase that renders it later.
+    // arch-3: every kind has an owner: one of the two lanes, U2's item sheet, a page link (Home's Needs you, Settings' setup checklist, Projects and a project's sheet, the Context page's page sheet), or the phase that renders it later.
     [Fact]
     public void Every_deep_link_kind_is_claimed_by_a_lane_or_named_as_later()
     {
-        string[] owned = ["Item", "HomeNeedsYou", "Setup", "ContextItem"];
+        string[] owned = ["Item", "HomeNeedsYou", "Setup", "ContextItem", "Projects", "Project", "ProjectAdd", "PageSheet", "PinSheet", "AddSeveralPages"];
         string[] later = ["System", "Service", "Job"];
         var claimed = Kinds(SheetPath, "LANE ANCHOR U3'").Concat(Kinds(SheetPath, "LANE ANCHOR U8")).Concat(Kinds(SheetPath, "LANE ANCHOR U10")).Concat(Kinds(SheetPath, "LANE ANCHOR U9")).Concat(Kinds(SheetPath, "LANE ANCHOR U11a")).Concat(owned).Concat(later);
 

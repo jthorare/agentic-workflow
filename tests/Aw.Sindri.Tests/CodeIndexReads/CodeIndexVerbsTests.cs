@@ -58,6 +58,17 @@ public sealed class CodeIndexVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Symbols_send_the_concept_flag_as_concept()
+    {
+        var api = new ScriptedApi(Ok("code-index-symbols", "prefix"));
+
+        var exit = await Run(api, "symbols", "Worker.", "--concept", "billing");
+
+        Assert.Equal("/sindri/code-index/symbols?query=Worker.&concept=billing", api.Calls[0].Route);
+        Assert.Equal(0, exit);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Symbols_send_the_query_the_repo_and_the_prefix_match_and_print_each_hit_with_its_span()
     {
         var api = new ScriptedApi(Ok("code-index-symbols", "prefix"));

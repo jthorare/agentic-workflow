@@ -33,17 +33,28 @@ const BUDGETS = { unit: 10, integration: 60 };
 // Raised by the owner on 2026-10-28 (q148, superseding q147's measured + 25%) to about twice the slowest main CI run seen, since
 // the same lanes swing 35-80% between runs on GitHub's shared runners (run 40734081015 then 40747387454: Sindri unit 27.3 s then
 // 48.4 s, SindriUi integration 224.7 s then 303.3 s, Context unit 9.66 s then 14.9 s). Still blocking; #1546 brings them back down.
+// Sindri unit brought back down by the owner on 2026-10-30 (#1546) to the slowest of the last six main CI runs + 25%: 29.4 s
+// (job 123538665909; the others 12.8-23.8 s) -> 37 s.
+// SindriUi unit brought down on 2026-10-31 (#1546) by the same rule, after 8 test threads (#1801): the slowest of the 9 main CI
+// runs since, 12.9 s (run 41224242504; the others 9.2-12.5 s), + 25% -> 17 s.
 const PACKAGE_BUDGETS = {
-  SindriUi: { unit: 28, integration: 600 },
-  Sindri: { unit: 100, integration: 340 },
+  SindriUi: { unit: 17, integration: 600 },
+  Sindri: { unit: 37, integration: 340 },
   Context: { unit: 30 },
 };
 // Per-test-project rows: a test project named here is measured as a row of its own (the row is the project's name) and kept out
 // of its package's sum, with its own limits. For a package whose slow suites cannot fit one project's budget: Aw.Sindri.Engine.Tests
 // holds the Temporal-bound suites split out of Aw.Sindri.Tests so that package's integration lane fits 120 s (owner, 2026-10-18).
 // An explicit --budget for a lane overrides this table too. Raised by the owner on 2026-10-28 (q148, superseding q147) to about
-// twice the slowest run seen (125.3 s in run 40734081015); #1546 brings it back down.
-const PROJECT_BUDGETS = { "Aw.Sindri.Engine.Tests": { integration: 250 } };
+// twice the slowest run seen (125.3 s in run 40734081015); #1546 brings it back down. Aw.Sindri.Ui.Controls.Tests and
+// Aw.Sindri.Ui.Frames.Tests hold the view tests split out of Aw.Sindri.Ui.Tests (#1546, owner 2026-10-29: each its own row), so
+// each runs on a headless UI thread of its own: 55 s and 69 s alone on a 4-core box, budgeted at about 3x that (CI runs these
+// lanes 1.2-1.7x slower than a local run, and q148 allows twice the slowest CI run).
+const PROJECT_BUDGETS = {
+  "Aw.Sindri.Engine.Tests": { integration: 250 },
+  "Aw.Sindri.Ui.Controls.Tests": { integration: 180 },
+  "Aw.Sindri.Ui.Frames.Tests": { integration: 220 },
+};
 const SOLUTION = "AgenticWorkflow.slnx";
 
 class ToolError extends Error {}

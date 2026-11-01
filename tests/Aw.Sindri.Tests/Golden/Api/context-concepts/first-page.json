@@ -15,7 +15,8 @@
         "decisions": 0,
         "code": 1
       },
-      "citations": []
+      "citations": [],
+      "pages": 0
     }
   ],
   "other": {
@@ -40,5 +41,6 @@
       "weight": 1
     }
   ],
-  "next": "v1:1"
+  "next": "v1:1",
+  "pagesInNoConcept": 1
 }

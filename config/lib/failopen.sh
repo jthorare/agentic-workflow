@@ -6,7 +6,8 @@
 #   aw_failopen <hook> <cause>
 # right before it allows (or lets through) because of its own internal error:
 # judge missing or erroring, input it can't read, unreadable state. One JSON
-# line goes to ${AW_STATE_DIR:-$HOME/.agentic-workflow}/logs/failopen.log:
+# line goes to ${AW_LOG_DIR:-${AW_STATE_DIR:-$HOME/.agentic-workflow}/logs}/failopen.log
+# (AW_LOG_DIR lets a sandbox point the folder at a spool it may write):
 #   {"ts":"…Z","event":"HOOK-FAILOPEN","hook":"send-gate","cause":"judge-exit-127","provider":"claude"}
 # Read the log as untrusted input; it is general observability, not a gate.
 #
@@ -19,7 +20,7 @@
 # decision. Hooks still call it from a subshell (see their failopen() wrapper)
 # so the caller's set -e/-u can't reach it. Payload content is never written:
 # only the hook name and a cause built from fixed words, both reduced to
-# [A-Za-z0-9._:-]. With neither AW_STATE_DIR nor HOME set it logs nothing.
+# [A-Za-z0-9._:-]. With none of AW_LOG_DIR, AW_STATE_DIR or HOME set it logs nothing.
 # It writes only to a regular file (or creates one): a symlink, FIFO or device
 # at the log path is never opened, since opening a FIFO would block the hook.
 # The log rotates to failopen.log.1 past AW_FAILOPEN_MAX_BYTES (default 1 MiB),
@@ -43,7 +44,9 @@ aw_failopen() {
       return 0
     fi
   fi
-  if [ -n "${AW_STATE_DIR:-}" ]; then
+  if [ -n "${AW_LOG_DIR:-}" ]; then
+    dir="$AW_LOG_DIR"
+  elif [ -n "${AW_STATE_DIR:-}" ]; then
     dir="$AW_STATE_DIR/logs"
   elif [ -n "${HOME:-}" ]; then
     dir="$HOME/.agentic-workflow/logs"

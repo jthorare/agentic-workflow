@@ -33,7 +33,7 @@ internal sealed class RunContextBacktestService(ContextScopes scopes, IContextEn
             return scope.Error;
         }
 
-        var run = await engine.EvalBacktest(new BacktestRequest(scope.Value, arms.Value, request.Since, request.Until, request.Limit, jobs.Current?.Progress), cancellationToken).ConfigureAwait(false);
+        var run = await engine.EvalBacktest(new BacktestRequest(scope.Value with { Job = jobs.Current?.Job.Value }, arms.Value, request.Since, request.Until, request.Limit, jobs.Current?.Progress), cancellationToken).ConfigureAwait(false);
         return run.IsError ? run.Error : Summarize(run.Value);
     }
 
@@ -47,5 +47,8 @@ internal sealed class RunContextBacktestService(ContextScopes scopes, IContextEn
     }
 
     private static BacktestArmLine Line(ArmReport arm) => new(arm.Arm, arm.NotAvailable, arm.PassLine?.Overall, arm.Leaky,
-        arm.Score is { } s ? new BacktestArmScore(s.Samples, s.NodeRecall, s.NodePrecision, s.FileRecallAt20, s.LeakyShare, s.Tokens) : null);
+        arm.Score is { } s ? new BacktestArmScore(s.Samples, s.NodeRecall, s.NodePrecision, s.FileRecallAt20, s.LeakyShare, s.Tokens) : null)
+    {
+        PinAnchored = string.Equals(arm.Dimension, "ranker", StringComparison.Ordinal) && arm.Score is not null ? arm.PinAnchored ?? new PinAnchoredScore(0, 0, 0) : null,
+    };
 }

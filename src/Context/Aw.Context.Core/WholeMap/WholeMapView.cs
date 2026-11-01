@@ -25,6 +25,15 @@ public sealed record WholeMapView(
     [property: JsonPropertyOrder(11)] IReadOnlyList<WholeMapAreaEdge> AreaEdges,
     [property: JsonPropertyOrder(16)] bool Truncated)
 {
+    /// <summary>How many pages relate to no concept (all of them, before the 200 cap), for the Context page's link; always there.</summary>
+    [JsonPropertyOrder(18)]
+    public int PagesInNoConcept { get; init; }
+
+    /// <summary>The page keys of a concept open or of the pages in no concept, in the Pages section's order (owner-named first, then suggested by number of actions); left out on any other answer.</summary>
+    [JsonPropertyOrder(19)]
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Pages { get; init; }
+
     /// <summary>Every repo the map holds nodes of with its node count, sorted by name; always there (empty when no node names a repo), so a page can offer a repo picker from any answer.</summary>
     [JsonPropertyOrder(17)]
     public IReadOnlyList<WholeMapRepo> Repos { get; init; } = [];

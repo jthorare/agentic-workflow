@@ -11,6 +11,12 @@ internal static class JobRoutes
     /// <summary>The map build's start (a job route; the Context page's "Build the map").</summary>
     internal const string BuildContextMap = "/sindri/context/map/build";
 
+    /// <summary>The pin write's start (a job route; the pin sheet's Pin).</summary>
+    internal const string PinConcepts = "/sindri/context/pins";
+
+    /// <summary>The page write's start (a job route; the page sheet's Save).</summary>
+    internal const string SetContextPages = "/sindri/context/pages";
+
     internal static string List(JobQuery query)
     {
         var parts = new List<string>();
@@ -22,6 +28,8 @@ internal static class JobRoutes
     internal static string One(string id) => $"{Root}/{Uri.EscapeDataString(id)}";
 
     internal static string Cancel(string id) => $"{One(id)}/cancel";
+
+    internal static string Resume(string id) => $"{One(id)}/resume";
 
     private static void Add(List<string> parts, string name, string? value)
     {

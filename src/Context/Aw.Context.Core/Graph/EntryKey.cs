@@ -28,4 +28,13 @@ public static class EntryKey
         var scheme = key.Value[..key.Value.IndexOf(':', StringComparison.Ordinal)];
         return NodeKey.From($"{scheme}:{name}");
     }
+
+    /// <summary>The stored form of a key a person wrote ('action:WeekPage.submit' is stored as 'action:weekpage.submit').</summary>
+    /// <param name="key">The key as written.</param>
+    /// <returns>The key through <see cref="For"/>; the text itself when it is no key.</returns>
+    public static string Normalized(string key)
+    {
+        ArgumentNullException.ThrowIfNull(key);
+        return NodeKey.TryFrom(key, out var parsed) ? For(parsed).Value : key;
+    }
 }

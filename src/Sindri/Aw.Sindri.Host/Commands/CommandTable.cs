@@ -99,7 +99,7 @@ internal static partial class CommandTable
             ["status", .. var rest] when Json(rest) is { } json => await verbs.Status(json, ct).ConfigureAwait(false),
             ["scrub", .. var rest] => await new ScrubCommand(services, output, Console.In).Run(rest, ct).ConfigureAwait(false),
             ["stop"] => await verbs.Stop(ct).ConfigureAwait(false),
-            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), output, ct).ConfigureAwait(false),
+            ["profile", ..] => await Profile(args, verbs, a => new Verbs(client, probe, output, services, c => start.EnsureRunning(!a.NoStart, c)), (output, Headers(session, services)), ct).ConfigureAwait(false),
             ["views", "rebuild", .. var rest] when NoStart(rest) is { } noStart => await new Verbs(client, probe, output, services, c => start.EnsureRunning(!noStart, c))
                 .RebuildViews(ct).ConfigureAwait(false),
             ["open", .. var rest] => await new OpenCommand(client, output, start.EnsureRunning, services.GetRequiredService<TimeProvider>()).Run(rest, ct).ConfigureAwait(false),
@@ -115,7 +115,7 @@ internal static partial class CommandTable
             ["onyx", "down", "--purge"] => await OnyxPurgeCommand.Create(services, output, Console.In, Console.Error).Run(session.Human && session.Launch is null, ct).ConfigureAwait(false),
             ["sandbox", ..] => await Sandbox(args, client, output, services, (ct, Headers(session, services))).ConfigureAwait(false),
             ["mcp", .. var rest] => await new McpVerbs(services, output).Run(rest, ct).ConfigureAwait(false),
-            ["context", ..] => await Context(args, client, output, services, (ct, interrupt.Again)).ConfigureAwait(false),
+            ["context", ..] => await ContextOrPin(args, (client, output), (services, start), (ct, interrupt.Again)).ConfigureAwait(false),
             ["line", "holdout", .. var rest] => await new LineHoldoutVerbs(client, output, Interactive(), Console.In).Run(rest, ct).ConfigureAwait(false),
             ["recipe" or "workflow" or "scoping" or "design" or "plan" or "line" or "pack" or "outbox" or "takeover" or "handback" or "docs" or "pr", ..] => await Workflows(args, new ScopingCommandTable.Host(services, output, new RecipeDesk(client, Console.In, c => start.EnsureRunning(launch: true, c), environment), environment), ct).ConfigureAwait(false),
             ["help" or "--help" or "-h"] => await output.Text(Usage.Text + "\n", 0).ConfigureAwait(false),
@@ -172,6 +172,14 @@ internal static partial class CommandTable
             _ => await UnknownVerb(args, output).ConfigureAwait(false),
         };
 
+    /// <summary>'sindri context pin …' and 'sindri context page set|remove' start a job a human may have to launch the control plane for; every other context verb is <see cref="Context"/>.</summary>
+    private static async Task<int> ContextOrPin(string[] args, (ControlPlaneClient Client, Output Output) io, (IServiceProvider Services, StartCommand Start) host, (CancellationToken Interrupt, CancellationToken Again) signals) =>
+        args is ["context", "pin", ..]
+            ? await new ContextPinVerbs(io.Client, io.Output, new JobFollower(io.Client, io.Output, host.Services.GetRequiredService<TimeProvider>()), host.Services, host.Start.EnsureRunning).Run(args[1..], signals.Interrupt, signals.Again).ConfigureAwait(false)
+            : args is ["context", "page", "set" or "remove", ..]
+                ? await new ContextPageWriteVerbs(io.Client, io.Output, new JobFollower(io.Client, io.Output, host.Services.GetRequiredService<TimeProvider>()), host.Services, host.Start.EnsureRunning).Run(args[1..], signals.Interrupt, signals.Again).ConfigureAwait(false)
+                : await Context(args, io.Client, io.Output, host.Services, signals).ConfigureAwait(false);
+
     /// <summary>'sindri context …': one arm per verb family; the first that matches wins.</summary>
     private static async Task<int> Context(string[] args, ControlPlaneClient client, Output output, IServiceProvider services, (CancellationToken Interrupt, CancellationToken Again) signals) =>
         args switch
@@ -183,6 +191,7 @@ internal static partial class CommandTable
             ["context", "eval", "backtest", .. var rest] => await new ContextJobVerbs(client, output, new JobFollower(client, output, services.GetRequiredService<TimeProvider>())).Run(["eval", "backtest", .. rest], signals.Interrupt, signals.Again).ConfigureAwait(false),
             ["context", "eval", .. var rest] => await new ContextEvalVerbs(client, output, services.GetRequiredService<IContextEngine>()).Run(rest, signals.Interrupt).ConfigureAwait(false),
             ["context", "filemap", "accept" or "reject", var link] => await new ContextMapVerbs(client, output, Interactive(), Console.In).Run(["review", args[2], link], signals.Interrupt).ConfigureAwait(false),
+            ["context", "page", .. var rest] => await new ContextPageVerbs(client, output).Run(rest, signals.Interrupt).ConfigureAwait(false),
             ["context", "search", .. var rest] => await new ContextSearchVerb(client, output).Run(rest, signals.Interrupt).ConfigureAwait(false),
             ["context", "subgraph", .. var rest] => await new ContextSubgraphVerbs(client, output, Console.In).Run(rest, signals.Interrupt).ConfigureAwait(false),
             ["context", "code", ..] => await new ContextCodeVerbs(client, output).Run(args[2..], signals.Interrupt).ConfigureAwait(false),

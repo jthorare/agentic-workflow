@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aw.Kernel.Json;
 using Aw.Sindri.Features.GetProject;
+using Aw.Sindri.Features.ListLinearProjects;
 using Aw.Sindri.Features.ListProjects;
 using Aw.Sindri.Host.Endpoints;
 
@@ -13,6 +14,8 @@ internal sealed class ProjectFencing(JsonSerializerOptions json) : IProjectFenci
     public IResult Page(ListProjectsResponse page) => Fenced(AwJson.Serialize(page, json), FencePlan.Projects);
 
     public IResult One(GetProjectResponse project) => Fenced(AwJson.Serialize(project, json), FencePlan.OneProject);
+
+    public IResult Choices(ListLinearProjectsResponse rows) => Fenced(AwJson.Serialize(rows, json), FencePlan.LinearProjects);
 
     private static Microsoft.AspNetCore.Http.HttpResults.ContentHttpResult Fenced(byte[] body, FencePlan plan)
     {

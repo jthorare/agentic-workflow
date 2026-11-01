@@ -8,6 +8,7 @@ using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.CodeIndex;
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
+using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Api.Sessions;
 using Aw.Sindri.Ui.Api.Setup;
 using Aw.Sindri.Ui.Api.Sources;
@@ -60,11 +61,14 @@ public sealed class GoldenContractTests
         ["context-lenses"] = As<LensesView>,
         ["context-concepts"] = As<ContextConceptsView>,   // GET /sindri/context/concepts: the Context page's concept band (ui #1012); the refusals are ProblemDetails
         ["context-concepts-glossary"] = As<ConceptGlossaryView>,   // GET /sindri/context/concepts/glossary: the concept cards' top terms (ui #1036); no-map-030 is a ProblemDetails
+        ["context-pins"] = As<PinsView>,   // GET /sindri/context/pins: the live pins against the approved profile and the map, and the rebuild state
+        ["context-pins-suggest"] = As<PinSuggestView>,   // GET /sindri/context/pins/suggest: the "Pin this" and "Add several" suggestions; invalid-179 is a ProblemDetails
         ["context-whole"] = As<WholeMapView>,   // GET /context/map/whole (whole-map spec §2.1); the refusals (006, 030, 044, 045, 120, 200) are ProblemDetails
         ["context-filemap"] = As<FileMapView>,
         ["context-code"] = As<CodeView>,   // GET /sindri/context/code: the code lens' callers and callees (S-9)
         ["context-map"] = As<MapStatusView>,
         ["context-map-publish"] = As<MapPublishView>,
+        ["context-pages-preview"] = As<PagesPreview>,   // QUERY /context/pages/preview (Add several pages); invalid-259 is ProblemDetails
         ["context-map-promote"] = As<PromotePreview>,
         ["context-map-review"] = AsReview,
         ["context-map-review-history"] = As<ReviewHistoryView>,
@@ -73,6 +77,13 @@ public sealed class GoldenContractTests
         ["jobs"] = As<JobList>,   // GET /jobs: the Jobs page's list; the 400 SND-CLI-003 bodies are ProblemDetails
         ["jobs-id"] = As<JobView>,   // GET /jobs/{id}: the job sheet; the 404 is ProblemDetails
         ["jobs-id-cancel"] = As<CommandAcceptedView>,   // POST /jobs/{id}/cancel's accepted answer; the refusals are ProblemDetails
+        ["projects"] = As<ProjectList>,   // GET /projects: the Projects page's three groups (projects page spec §6.2)
+        ["projects-linear"] = As<ProjectLinearList>,   // GET /projects/linear: the Add project sheet's From Linear rows (projects page spec §3.2)
+        ["projects-id"] = As<ProjectOne>,   // GET /projects/{id}: one card with its hidden flag
+        ["projects-attach"] = As<ProjectAcceptedView>,   // POST /projects' accepted answer: the new prj_ id at version 1 (hand-written until the route's scenario records it)
+        ["projects-id-change"] = As<ProjectAcceptedView>,   // POST /projects/{id}/change's accepted answers (a prj_ id, or a led project's key for its notes); the stale 409 is ProblemDetails
+        ["projects-id-detach"] = As<ProjectAcceptedView>,   // POST /projects/{id}/detach's accepted answer
+        ["projects-hide"] = As<ProjectAcceptedView>,   // POST /projects/hide's accepted answer
         ["setup"] = As<SetupView>,   // GET /setup (setup-once spec §7, api #458): the Setup card and page; the "extra-" scenarios are the app's own (SpecShaped)
         ["index-status"] = As<IndexStatusView>,   // GET /index/status (#1597, spec-shaped until the context lane's PR lands): the Health Context index card
         ["context-map-refresh"] = As<JobStarted>,   // POST /context/map/refresh's 202 (the setup map row's Retry); the 409 is ProblemDetails
@@ -113,7 +124,6 @@ public sealed class GoldenContractTests
         "items-id-scope",   // an item's scope: the Context page reads it once it lands (UI lane, with the lenses routes)
         "sandbox-status", "sandbox-check", "sandbox-denials", "sandbox-allow",   // SB-6a serves them; the app reads them in SB-6b (Health, Settings, the park card and the item sheet)
         "code-index-symbols", "code-index-callers", "code-index-callees",   // the code-index reads (CI-10a) are the CLI's; status is read below for the Health card (CI-10b)
-        "projects", "projects-id",   // the Projects page reads (Ph4 goldens): the app reads them when its page lands
         "events-catalog",   // API P5 (E-15): the app reads each type's invalidates once it switches from re-querying every view on each event (UI lane)
     };
 

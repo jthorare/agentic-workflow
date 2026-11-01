@@ -12,7 +12,9 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Records;
@@ -214,6 +216,10 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult<Result<IReadOnlyList<RepoHead>>>(Array.Empty<RepoHead>());
 
     /// <inheritdoc/>
+    public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken) =>
+        NoMap<RelinkPinAliasesResult>();
+
+    /// <inheritdoc/>
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         proposal.Surfaces.Count == 0 ? ValueTask.FromResult(Results.Success(new ProposeResult(Draft: null, Added: 0, Existing: 0, Rejected: 0))) : NoMap<ProposeResult>();   // like the engine: with no map a withdrawal has nothing to take back
 
@@ -256,6 +262,20 @@ public sealed class FakeContextEngine : IContextEngine
 
     /// <inheritdoc/>
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<ConceptGlossaryView>();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<PagesView>> Pages(PagesQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<PagesView>();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(new MapHealth("context:pages", MapHealthState.Ok, "no map yet", string.Empty)));
+
+    /// <inheritdoc/>
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<PinSuggestView>();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(new PageMapFacts(MapVersion: null, new PageFacts(new HashSet<ConceptId>(), new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal), new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)), [])));
 
     /// <inheritdoc/>
     public ValueTask<Result<MapHealth>> CheckMap(ContextScope? scope, CancellationToken cancellationToken) =>

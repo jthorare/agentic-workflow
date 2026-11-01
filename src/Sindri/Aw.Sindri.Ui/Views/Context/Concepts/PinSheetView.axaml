@@ -1,0 +1,97 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Context.Concepts"
+             x:Class="Aw.Sindri.Ui.Views.Context.Concepts.PinSheetView"
+             x:DataType="vm:PinSheetViewModel">
+  <!-- The Pin sheet (concept pins spec §3.6, mockup sheet A): one column inside the shell's sheet, which supplies the title and the close button. Name (focus starts here), the definition and its hint, the words people use
+       (a tick, the word with its count, and the reason under a word that isn't ticked), the features, the folder rules read-only, then the button. Unpin and a discard ask inline; Esc answers the question that shows, else asks or closes. -->
+  <StackPanel x:Name="PinSheet" Spacing="8">
+    <StackPanel Spacing="2">
+      <TextBlock Classes="caption subtle" Text="{Binding NameLabel}" AutomationProperties.AccessibilityView="Raw" />
+      <TextBox x:Name="PinSheetName" Text="{Binding Name, Mode=TwoWay}" AutomationProperties.Name="{Binding NameLabel}" />
+      <TextBlock x:Name="PinSheetRenameNote" Classes="caption subtle" Text="{Binding RenameNote}" IsVisible="{Binding HasRenameNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding RenameNote}" />
+    </StackPanel>
+    <StackPanel Spacing="2">
+      <TextBlock Classes="caption subtle" Text="{Binding DefinitionLabel}" AutomationProperties.AccessibilityView="Raw" />
+      <TextBox x:Name="PinSheetDefinition" Text="{Binding Definition, Mode=TwoWay}" AutomationProperties.Name="{Binding DefinitionLabel}" />
+      <TextBlock Classes="caption subtle" Text="{Binding DefinitionHint}" TextWrapping="Wrap" />
+    </StackPanel>
+    <StackPanel Spacing="2">
+      <TextBlock Classes="caption subtle" Text="{Binding WordsLabel}" AutomationProperties.AccessibilityView="Raw" />
+      <TextBlock x:Name="PinSheetWordsNote" Classes="caption" Text="{Binding WordsNote}" IsVisible="{Binding HasWordsNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding WordsNote}" />
+      <ItemsControl x:Name="PinSheetWords" ItemsSource="{Binding Words}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:PinWordRow">
+            <CheckBox IsChecked="{Binding Ticked, Mode=TwoWay}" IsEnabled="{Binding !IsRefused}" AutomationProperties.Name="{Binding AccessibleName}">
+              <StackPanel Spacing="0">
+                <TextBlock Classes="body mono" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                <TextBlock Classes="caption" Foreground="{DynamicResource Brush.Attention}" Text="{Binding Detail}" IsVisible="{Binding HasDetail}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              </StackPanel>
+            </CheckBox>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+        <TextBox x:Name="PinSheetNewWord" Text="{Binding NewWord, Mode=TwoWay}" PlaceholderText="{Binding AddWordBox}" KeyDown="OnNewWordKey" AutomationProperties.Name="{Binding AddWordBox}" />
+        <Button x:Name="PinSheetAddWord" Grid.Column="1" Content="{Binding AddWordText}" Click="OnAddWord" AutomationProperties.Name="{Binding AddWordText}" />
+      </Grid>
+    </StackPanel>
+    <StackPanel Spacing="2">
+      <TextBlock Classes="caption subtle" Text="{Binding FeaturesLabel}" AutomationProperties.AccessibilityView="Raw" />
+      <ItemsControl x:Name="PinSheetFeatures" ItemsSource="{Binding Features}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="vm:PinFeatureRow">
+            <CheckBox IsChecked="{Binding Ticked, Mode=TwoWay}" AutomationProperties.Name="{Binding Label}">
+              <TextBlock Classes="body mono" Text="{Binding Key}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </CheckBox>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <StackPanel x:Name="PinSheetPicker" Spacing="4" IsVisible="{Binding HasPicker}">
+        <TextBox x:Name="PinSheetFindFeature" Text="{Binding FeatureSearch, Mode=TwoWay}" PlaceholderText="{Binding FindFeatureLabel}" AutomationProperties.Name="{Binding FindFeatureLabel}" />
+        <TextBlock x:Name="PinSheetFeaturesNote" Classes="caption" Text="{Binding FeaturesNote}" IsVisible="{Binding HasFeaturesNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding FeaturesNote}" AutomationProperties.LiveSetting="Polite" />
+        <Button x:Name="PinSheetTryAgain" Content="{Binding TryAgainText}" IsVisible="{Binding CanTryAgain}" Click="OnTryAgain" AutomationProperties.Name="{Binding TryAgainText}" />
+        <ItemsControl x:Name="PinSheetFeatureMatches" ItemsSource="{Binding FeatureMatches}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate x:DataType="vm:PinFeatureRow">
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                <TextBlock Classes="body mono" Text="{Binding Key}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                <Button Grid.Column="1" Content="{Binding AddText}" Click="OnAddFeature" AutomationProperties.Name="{Binding Label}" />
+              </Grid>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </StackPanel>
+      <TextBlock x:Name="PinSheetFolderRules" Classes="caption subtle" Text="{Binding FolderRulesNote}" IsVisible="{Binding HasFolderRulesNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding FolderRulesNote}" />
+    </StackPanel>
+
+    <Border x:Name="PinSheetUnpinAsk" Classes="card" IsVisible="{Binding IsConfirmingUnpin}">
+      <StackPanel Spacing="8">
+        <TextBlock Classes="body" Text="{Binding UnpinQuestion}" TextWrapping="Wrap" AutomationProperties.Name="{Binding UnpinQuestion}" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button x:Name="UnpinConfirm" Content="{Binding UnpinConfirmText}" IsEnabled="{Binding !IsWriting}" Click="OnUnpinConfirm" AutomationProperties.Name="{Binding UnpinConfirmText}" />
+          <Button x:Name="PinSheetKeepPin" Content="{Binding KeepPinText}" IsEnabled="{Binding !IsWriting}" Click="OnKeepPin" AutomationProperties.Name="{Binding KeepPinText}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+    <Border x:Name="PinSheetDiscardAsk" Classes="card" IsVisible="{Binding IsConfirmingDiscard}">
+      <StackPanel Spacing="8">
+        <TextBlock Classes="body" Text="{Binding DiscardQuestion}" TextWrapping="Wrap" AutomationProperties.Name="{Binding DiscardQuestion}" />
+        <StackPanel Orientation="Horizontal" Spacing="8">
+          <Button x:Name="PinSheetDiscard" Content="{Binding DiscardText}" Click="OnDiscard" AutomationProperties.Name="{Binding DiscardText}" />
+          <Button x:Name="PinSheetKeepEditing" Content="{Binding KeepEditingText}" Click="OnKeepEditing" AutomationProperties.Name="{Binding KeepEditingText}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+
+    <Grid ColumnDefinitions="Auto,Auto,*,Auto" ColumnSpacing="8">
+      <Button x:Name="PinSubmit" Classes="accent" Content="{Binding SubmitText}" IsEnabled="{Binding CanSubmit}" Click="OnSubmit" AutomationProperties.Name="{Binding SubmitText}" />
+      <Button x:Name="PinSheetEsc" Grid.Column="1" Content="{Binding EscText}" Click="OnEsc" AutomationProperties.Name="{Binding EscText}" />
+      <Button x:Name="Unpin" Grid.Column="3" Content="{Binding UnpinText}" IsVisible="{Binding CanUnpin}" IsEnabled="{Binding !IsWriting}" Click="OnAskUnpin" AutomationProperties.Name="{Binding UnpinText}" />
+    </Grid>
+    <TextBlock x:Name="PinSheetEmptyNote" Classes="caption subtle" Text="{Binding EmptyNote}" IsVisible="{Binding HasEmptyNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding EmptyNote}" />
+    <TextBlock x:Name="PinSheetError" Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding SubmitError}" IsVisible="{Binding HasSubmitError}" TextWrapping="Wrap"
+               AutomationProperties.Name="{Binding SubmitError}" AutomationProperties.LiveSetting="Assertive" />
+    <TextBlock x:Name="PinSheetChangedNote" Classes="caption subtle" Text="{Binding ChangedNote}" IsVisible="{Binding HasChangedNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ChangedNote}" />
+  </StackPanel>
+</UserControl>

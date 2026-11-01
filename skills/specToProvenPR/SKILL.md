@@ -80,6 +80,7 @@ Zero blocking findings is a hard gate, not a target. The only way to *know* you 
 - The loop starts only after steps 4–6 are done. `/review` is not a way to find out whether the feature works, and a clean review never substitutes for a hand test or an evidence pack.
 - After fixing a blocking finding you **must** re-run `/review`. No exceptions for "trivial" deltas.
 - Every blocking finding is **fixed** on this PR, not deferred. A blocking finding you believe is wrong is still resolved explicitly: reply on the thread with the technical reason, mark it resolved in `~/.agentic-workflow/<repo-slug>/reviews/<pr>.json`, then re-run `/review`.
+- A blocking finding that is a bug is fixed prevention-first: ask the question in `$HOME/.agentic-workflow/toolkit/skills/_shared/prevent-the-class.md` (class, invariant, other instances, smallest mechanism) before choosing the fix, and carry its handoff block into the fix's reply.
 - Every non-blocking finding is resolved too, but in writing: reply on the thread (accepted as a follow-up, or why not), mark it resolved in the state file. Fold in a fix only when it is a trivial edit (a one-line doc or name fix). Non-blocking findings alone never trigger another review run.
 - The loop ends ONLY when a `/review` run returns zero blocking findings — or the cap of 5 triggers report-and-ask.
 

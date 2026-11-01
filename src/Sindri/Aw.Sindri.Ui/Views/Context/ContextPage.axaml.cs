@@ -17,11 +17,19 @@ internal sealed partial class ContextPage : UserControl
     private const double PageEdge = 24;   // the room the page keeps under the stage
     private ContextPageViewModel? _page;
     private ScrollViewer? _scroller;
+    private Control? _opener;   // the button that opened the page sheet, for the focus to return to
 
     public ContextPage()
     {
         InitializeComponent();
         ContextStack.Canvas.EmptyClicked += (_, _) => _page?.CloseInspector();   // a click on the empty canvas closes the inspector
+        AddHandler(Whole.PagesSectionView.AddSeveralRequestedEvent, (_, e) => _page?.OpenAddSeveralPages(noConcept: ReferenceEquals(e.Source, NoConceptPages)));
+        NoConceptPages.RetryRequested += (_, _) => _ = _page?.OpenNoConcept();
+        NoConceptPages.CloseRequested += (_, _) =>
+        {
+            _ = _page?.CloseNoConcept();
+            _ = ContextNoConceptLink.Focus(NavigationMethod.Tab);
+        };
     }
 
     /// <inheritdoc/>
@@ -147,6 +155,13 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // The head's "Pages in no concept (N)": the panel opens and reads them; focus goes to its head.
+    private void OnNoConcept(object? sender, RoutedEventArgs e)
+    {
+        _ = _page?.OpenNoConcept();
+        NoConceptPages.FocusHead();
+    }
+
     // The back button on the failure row of a concept's map: up to the concepts.
     private void OnUp(object? sender, RoutedEventArgs e) => _page?.Up();
 
@@ -191,10 +206,36 @@ internal sealed partial class ContextPage : UserControl
         {
             Sync(_page);
         }
+        else if (_page is not null && IsSheetProperty(e.PropertyName))
+        {
+            SheetFocus(_page.ShowPageSheet || _page.ShowAddSeveralPages);
+        }
         else if (_page is not null && string.Equals(e.PropertyName, nameof(ContextPageViewModel.AnchorText), StringComparison.Ordinal))
         {
             ShowClear(_page.AnchorText.Length > 0);   // the clear button shows while the box holds something
         }
+    }
+
+    // Closing the page sheet puts focus back on the button that opened it; that button was drawn again when the section read its pages, so the section's head takes it then.
+    private void ReturnFocus()
+    {
+        var opener = _opener;
+        _opener = null;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (opener is { IsEffectivelyVisible: true } && TopLevel.GetTopLevel(opener) is not null)
+            {
+                _ = opener.Focus(NavigationMethod.Tab);
+            }
+            else if (NoConceptPages.IsEffectivelyVisible)
+            {
+                NoConceptPages.FocusHead();
+            }
+            else
+            {
+                WholeMap.FindControl<Whole.PagesSectionView>("WholePages")?.FocusHead();
+            }
+        }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
 
     // The parts of the control row that take lists or controls the view model does not bind: the coverage strip.

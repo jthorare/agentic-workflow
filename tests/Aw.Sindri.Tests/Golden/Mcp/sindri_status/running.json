@@ -12,7 +12,9 @@
       "problem": null,
       "source": "<home>/profile/profile.yaml",
       "needsApproval": false,
-      "modelPick": "off"
+      "modelPick": "off",
+      "labelPick": "off",
+      "surfacePick": "off"
     },
     "services": [
       {

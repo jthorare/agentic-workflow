@@ -7,6 +7,7 @@ fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 ok    build             not running from an installed build
 warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:pages     no pages named
 ok    context:roles     not configured: no approved profile
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
 ok    context:publish   no approved profile, so no map to publish
@@ -25,7 +26,10 @@ ok    launcher:adoption no opens in the last 30 days
 ok    pr-watch          the watcher has not run yet
 warn  setup             not finished: profile (needs-you), recipes (todo), mcp (todo), map (todo), sources (todo) (fix: sindri profile approve <hash>)
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
+ok    context:labelpick label choice is off
+ok    context:surfacepick product surface choice is off
 ok    model:pick        model choice is off
+ok    context:models    not configured (no profile is approved)
 ok    forge:credential  no forge configured
 warn  codex:read-only   pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:read-only > tests/Aw.Sindri.Tests/Golden/Probe/codex-read-only.json; docs/csharp/sindri.md, 'The harness probe')
 warn  codex:workspace-write pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:workspace-write > tests/Aw.Sindri.Tests/Golden/Probe/codex-workspace-write.json; docs/csharp/sindri.md, 'The harness probe')
@@ -74,7 +78,7 @@ Approved HASH
 {"running":true,"apiVersion":1}
 ## /sindri/mcp initialize, then tools/list (stateless)
 "sindri"
-["context_query","context_sources","context_lenses","context_concepts","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_projects","sindri_request"]
+["context_query","context_sources","context_lenses","context_concepts","context_pages","context_node","context_neighbors","sindri_status","sindri_queue","sindri_item","sindri_item_timeline","sindri_pending_decisions","sindri_job","sindri_projects","sindri_request"]
 ## /sindri/mcp sindri_queue, sindri_request (files as session:mcp), sindri_item (not an id), sindri_decide (no such tool)
 {"isError":null,"groups":["waitingOnYou","withYou","running","queued"]}
 {"isError":null,"request":"REQ-ID"}
@@ -226,6 +230,7 @@ fail  api               unreachable: no control plane is recorded (fix: sindri)
 fail  temporal          not running: no dev server on this home's temporal.db (fix: sindri)
 ok    build             not running from an installed build
 warn  context:map       no map yet (fix: sindri context map import <file>)
+ok    context:pages     no pages named
 ok    context:roles     no map yet
 ok    context:retention no expired exports; retained map versions are within the newest 100 and the 90-day eval window
 ok    context:publish   no map yet, so nothing to publish
@@ -248,6 +253,8 @@ warn  setup             not finished: recipes (needs-you), mcp (todo), map (todo
 warn  pre-commit:smoke  no pre-commit hook, so staged secrets are not scanned (fix: sindri scrub --install-pre-commit --repo WORK/repo)
 ok    setup:token       WORK/home/auth/human.token can be read by you alone
 warn  setup:ui-evidence ui-evidence not found (ROOT/artifacts/aot-sindri-smoke/bin/ui-evidence) (fix: run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri))
+ok    context:labelpick label choice is off
+ok    context:surfacepick product surface choice is off
 ok    model:pick        model choice is off
 ok    forge:credential  no forge configured
 warn  codex:read-only   pending: owner probe (fix: in that harness, sindri doctor --probe --harness codex:read-only > tests/Aw.Sindri.Tests/Golden/Probe/codex-read-only.json; docs/csharp/sindri.md, 'The harness probe')

@@ -112,6 +112,19 @@ public sealed class IndexConceptsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void An_alias_that_clashes_ignoring_case_and_plural_is_refused()
+    {
+        var profile = Profile(Pins(
+            new ConceptSettings(ConceptPinId.From("billing"), "Billing", Aliases: ["payments", "Invoices"]),
+            new ConceptSettings(ConceptPinId.From("orders"), "Orders", Aliases: ["invoice"])));
+
+        var error = ProfileRules.Check(profile).Error;
+
+        Assert.Equal(SindriErrors.ProfileInvalid.Code, error.Code);
+        Assert.Contains("index.concepts[0].aliases[1]: 'Invoices' clashes with index.concepts[1].aliases[0] 'invoice' (aliases match without case or plural)", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Duplicate_ids_are_refused_in_a_list_and_between_the_profile_and_a_repo()
     {
         var twice = Profile(Pins(new ConceptSettings(ConceptPinId.From("billing"), "Billing"), new ConceptSettings(ConceptPinId.From("billing"), "Invoices")));

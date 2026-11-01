@@ -14,16 +14,19 @@ namespace Aw.Context.Features.QueryContext;
 /// </summary>
 internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, AudienceScope scope, TimeProvider clock, IReadOnlySet<string> teams) : IContextSource
 {
+    private const int MaxChunks = 1000;
+
     public static SourceId Id { get; } = SourceId.From("records");
 
-    private static readonly SourceDescriptor _descriptor = new(Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false);
+    private static readonly SourceDescriptor _descriptor = new(Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false) { HonorsPin = true };
 
     public SourceDescriptor Describe() => _descriptor;
 
     public async ValueTask<Result<IReadOnlyList<SourceHit>>> Search(SourceQuery query, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(query);
-        var found = await leg.Search(query.Terms, scope, ILexicalLeg.DefaultLimit, cancellationToken).ConfigureAwait(false);
+        var pin = query.Pin;
+        var found = await leg.Search(query.Terms, scope, pin is null ? ILexicalLeg.DefaultLimit : MaxChunks, cancellationToken).ConfigureAwait(false);
         if (found.IsError)
         {
             return found.Error;
@@ -34,7 +37,14 @@ internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, Aud
             return ContextErrors.SourceUnavailable.With(degraded.Message);
         }
 
-        return await RecordHits.Read(store, (scope, teams), clock, found.Value.Hits.Select(h => h.Chunk.Record), cancellationToken).ConfigureAwait(false);
+        // Under a pin the leg is asked for its most chunks and the limit is applied here, to the in-pin records, so an in-pin record is not lost behind fifty out-of-pin ones.
+        var records = found.Value.Hits.Select(h => h.Chunk.Record);
+        if (pin is not null)
+        {
+            records = records.Where(pin.HoldsRecord).ToList().Take(ILexicalLeg.DefaultLimit);
+        }
+
+        return await RecordHits.Read(store, (scope, teams), clock, records, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>One record of the store as a hit, the way the lexical leg's hits are read (live and allowed only); none when it is gone or not the caller's.</summary>

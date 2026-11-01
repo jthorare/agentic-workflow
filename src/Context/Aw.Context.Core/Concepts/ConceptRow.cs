@@ -15,4 +15,16 @@ public sealed record ConceptRow(NodeKey Id, string Name, string Summary, string 
     /// <summary>The words that characterize the concept, the most telling first; null (left out of the answer) when the map was built without a glossary.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? Terms { get; init; }
+
+    /// <summary>How many pages (owner or suggested) express the concept directly or through an action on them; null (left out of the answer) until the concept rows carry it.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Pages { get; init; }
+
+    /// <summary>True for a concept the owner pinned in the profile (<see cref="Source"/> says 'override' for it too, so this is how an agent finds a pin id); left out when false.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+    public bool Pinned { get; init; }
+
+    /// <summary>The owner's other words for a pin; null (left out of the answer) when it has none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Aliases { get; init; }
 }

@@ -29,6 +29,13 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- 8 parallel test classes: at 4 the unit lane keeps 3.8 tests running but only 2.3 cores busy (its view models wait on
+         the fake API), so 8 fill the CPU: 11.1 s -> 9.3 s, four interleaved runs each at load ~18. The integration lane is
+         bound by its UI threads and runs ~6% slower at 8 (75 s -> 80 s), well inside its budget (#1546, LANE-PKG-001). -->
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
   <!-- The API goldens the fake serves (UI spec E-17): Sindri's own, recorded by its tests, and the spec-shaped stand-ins
        for routes whose API phase isn't built yet (Golden/SpecShaped). -->
   <ItemGroup>

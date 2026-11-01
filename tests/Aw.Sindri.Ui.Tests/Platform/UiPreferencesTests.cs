@@ -63,8 +63,8 @@ public sealed class UiPreferencesTests
             PreferencesJson.Read("""{"version":1,"sheetWidth":520,"lastPage":"Work","textScale":1,"reduceMotion":false}"""u8));
 
     [Theory]
-    [InlineData(300, 200, 900, 600)]
-    [InlineData(899, 599, 900, 600)]
+    [InlineData(300, 200, 1000, 600)]
+    [InlineData(999, 599, 1000, 600)]
     [InlineData(1280, 800, 1280, 800)]
     public void The_window_grows_to_the_minimum(double width, double height, double clampedWidth, double clampedHeight) =>
         Assert.Equal(new WindowBounds(5, 6, clampedWidth, clampedHeight), (UiPreferences.Defaults with { Window = new WindowBounds(5, 6, width, height) }).Clamp().Window);

@@ -2,6 +2,7 @@
   "approved": "70e1581b3ecaf617318482f6b0844b67f79a287a7136b4e4b6ff5d26005e4261",
   "approvedAt": "2026-01-01T00:00:00.0000000Z",
   "live": "cc73e26e84c70b5c151d3b0ea90bb7f048a85174433c1b8620f8ba68d8479ee2",
+  "fileHash": "cc73e26e84c70b5c151d3b0ea90bb7f048a85174433c1b8620f8ba68d8479ee2",
   "checkedAt": "2026-01-01T00:00:00.0000000Z",
   "changed": true,
   "changedPaths": [

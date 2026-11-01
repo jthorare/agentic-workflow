@@ -45,6 +45,17 @@ public static class HomeFeatures
         return Build(repo, SplitByPins(slots, PinIds.Of(resolved, repo.Concepts)), extracted);
     }
 
+    /// <summary>Whether a feature key is a home feature of <paramref name="repo"/> (its key starts with the repo's escaped name), as opposed to a feature a recognizer or tag made.</summary>
+    /// <param name="repo">The repo.</param>
+    /// <param name="key">A feature key.</param>
+    /// <returns>True for a home feature (the repo's root, a directory, a loose-files leaf or a pin's leaf).</returns>
+    internal static bool IsHomeKey(ContextRepoName repo, NodeKey key)
+    {
+        var prefix = "feature:" + Escape(repo.Value);
+        var value = key.Value;
+        return value.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && (value.Length == prefix.Length || value[prefix.Length] is '.' or '~');
+    }
+
     // A pin splits the final leaves (spec 2026-10-27 §10.1): a leaf whose files all belong to one pin, or to none, keeps its plain key; one that spans pins gets a leaf per pin ('~<id>') and the unpinned rest keeps the plain key.
     private static List<HomeSlot> SplitByPins(List<HomeSlot> slots, IReadOnlyList<ResolvedPin> pins)
     {
@@ -139,7 +150,7 @@ public static class HomeFeatures
             }
 
             var id = ClusterId.From("h" + requests.Count.ToString("D5", System.Globalization.CultureInfo.InvariantCulture));
-            requests.Add(new FileCluster(id, [.. slot.Files.Take(LabelFiles)], 1.0));
+            requests.Add(new FileCluster(id, [.. slot.Files.Take(LabelFiles)], 1.0) { FileName = LabelOf(repo.Name, slot) });
             requested[id.Value] = key;
             foreach (var file in slot.Files)
             {
