@@ -39,8 +39,8 @@ internal sealed class PagesSectionViewModel : ObservableObject
     /// <summary>Gets a value indicating whether the section's buttons show.</summary>
     public bool CanWrite => Writes is not null;
 
-    /// <summary>Gets a value indicating whether Accept all suggested shows: a concept's section, writes wired, at least one suggested row. The pages in no concept have their own entry.</summary>
-    public bool CanAcceptAll => CanWrite && !CanClose && _all.Exists(static r => !r.Owner);
+    /// <summary>Gets a value indicating whether Accept all suggested shows: writes wired, at least one suggested row.</summary>
+    public bool CanAcceptAll => CanWrite && _all.Exists(static r => !r.Owner);
 
     /// <summary>Gets the Accept all suggested button's words, "Accept all suggested (3)".</summary>
     public string AcceptAllText => Labels.AcceptAllButton(_all.Count(static r => !r.Owner));

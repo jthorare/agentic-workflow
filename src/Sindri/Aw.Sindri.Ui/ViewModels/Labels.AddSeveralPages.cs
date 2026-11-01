@@ -13,6 +13,15 @@ internal static partial class Labels
     /// <returns>"Accept all suggested (14)".</returns>
     internal static string AcceptAllButton(int count) => string.Create(CultureInfo.InvariantCulture, $"Accept all suggested ({count})");
 
+    /// <summary>The first choice of a page's concept picker: add the page under no concept.</summary>
+    internal const string AcceptAllNone = "None";
+
+    /// <summary>The reason of a row whose picker says None.</summary>
+    internal const string AcceptAllNoPick = "Not added: no concept picked";
+
+    /// <summary>The reason of a page with no actions to link a concept to.</summary>
+    internal const string AcceptAllNoActions = "Not added: this page has no actions to link a concept to";
+
     /// <summary>The Accept all suggested sheet's title.</summary>
     internal const string AcceptAllSuggested = "Accept all suggested";
 

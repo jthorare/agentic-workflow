@@ -24,6 +24,7 @@ internal sealed partial class ContextPageViewModel
         NoConceptPages.Writes = Ports.Pages;
         Whole.Pages.SheetRequested += (_, e) => OpenPageSheet(Whole.Pages, e.Value, concept: OpenedConceptId, () => ReadWhole(CancellationToken.None));
         Whole.Pages.AcceptAllRequested += (_, e) => OpenAcceptAllSuggested(OpenedConceptId, e.Value);
+        NoConceptPages.AcceptAllRequested += (_, e) => OpenAcceptAllNoConcept(e.Value);
         NoConceptPages.SheetRequested += (_, e) => OpenPageSheet(NoConceptPages, e.Value, concept: null, () => OpenNoConcept());
     }
 

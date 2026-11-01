@@ -46,6 +46,13 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <StackPanel IsVisible="{Binding HasPicker}"><ComboBox x:Name="AddSeveralConceptPick" DataContext="{Binding Picker}" x:DataType="vm:UnknownConceptViewModel" ItemsSource="{Binding Choices}"
+                          SelectedItem="{Binding Selected, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" MinWidth="220" HorizontalAlignment="Left"
+                          AutomationProperties.Name="{Binding PickName}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ConceptChoice"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox></StackPanel>
                 <ToggleButton x:Name="AddSeveralOpen" Content="{Binding OpenText}" IsChecked="{Binding IsOpen, Mode=TwoWay}" IsVisible="{Binding HasFields}" HorizontalAlignment="Left"
                               AutomationProperties.Name="{Binding OpenName}" />
                 <StackPanel x:Name="AddSeveralFields" Spacing="6" IsVisible="{Binding IsOpen}">

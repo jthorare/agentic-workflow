@@ -58,15 +58,19 @@ internal sealed partial class AddSeveralPagesViewModel
             return;
         }
 
-        _ = _pickConcepts;
         var room = Math.Max(0, PageCap - (owners ?? 0));   // an unreadable count is left to the server's refusal
-        SetRows([.. drafts.Take(PageCap).Select((d, i) => AddSeveralPagesRowViewModel.FromDraft(d, i + 1, i >= room ? Labels.AcceptAllProfileFull : null, _known))]);
+        SetRows([.. drafts.Take(PageCap).Select((d, i) => AddSeveralPagesRowViewModel.FromDraft(d, i + 1, i >= room ? Labels.AcceptAllProfileFull : null, _known, _pickConcepts))]);
         foreach (var row in Rows.Where(r => before.ContainsKey(r.Key)))
         {
             var kept = before[row.Key];
             row.Name = kept.Name;
             row.Restore(kept.Picks);
             row.RestoreTicks(kept.ActionTicks);
+            if (kept.PickedId is { } pick)
+            {
+                row.RestorePick(pick);
+            }
+
             row.Ticked = kept.Ticked;
         }
 

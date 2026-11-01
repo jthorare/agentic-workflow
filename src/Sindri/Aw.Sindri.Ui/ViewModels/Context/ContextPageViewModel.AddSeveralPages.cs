@@ -47,10 +47,17 @@ internal sealed partial class ContextPageViewModel
     internal void OpenAcceptAllNoConcept(IReadOnlyList<string> keys)
     {
         ArgumentNullException.ThrowIfNull(keys);
-        _ = (Ports, keys);
+        if (Ports.Pages is not { } writes)
+        {
+            return;
+        }
+
+        var sheet = AddSeveralPagesViewModel.AcceptAllNoConcept(writes, keys, Known());
+        Mount(sheet, () => OpenNoConcept());
+        _ = sheet.LoadSuggested(CancellationToken.None);
     }
 
-    private List<ConceptChoice> Known() => [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: t.Id, Name: t.Name))];
+    private List<ConceptChoice> Known() => [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: t.Id, Name: t.Name, Pages: t.Pages))];
 
     // Shows the sheet in the shell's one sheet; a saved list reads the section again, and the sheet goes when it is closed.
     private void Mount(AddSeveralPagesViewModel sheet, Func<Task> reread)

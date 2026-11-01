@@ -42,10 +42,12 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     /// <param name="number">Its place in the list, from 1.</param>
     /// <param name="reason">Why the row is not added, or null.</param>
     /// <param name="known">The concepts a picker offers.</param>
+    /// <param name="pickConcept">True for a page in no concept: the row gets a concept picker, and a page with no actions is not added.</param>
     /// <returns>The row.</returns>
-    internal static AddSeveralPagesRowViewModel FromDraft(PageDraft draft, int number, string? reason, IReadOnlyList<ConceptChoice>? known = null)
+    internal static AddSeveralPagesRowViewModel FromDraft(PageDraft draft, int number, string? reason, IReadOnlyList<ConceptChoice>? known = null, bool pickConcept = false)
     {
         ArgumentNullException.ThrowIfNull(draft);
+        reason = pickConcept && draft.Actions.Count == 0 ? Labels.AcceptAllNoActions : reason;   // nothing to link a concept to
         var page = new PagesPreviewPage(draft.Id, draft.Name, draft.Repo, draft.Surface, [.. draft.Actions.Select(static a => new PagesPreviewPageAction(a.Id, a.Name, a.Action, a.Concepts))]);
         var block = new PagesPreviewBlock(number, number, draft.Name, Match: null, Replaces: null, SameAs: null, Ticked: reason is null, reason, [.. draft.Actions.Select(static a => new PagesPreviewAction(a.Name, Match: null, []))], [], page);
         var columns = Columns(known, draft);
@@ -55,7 +57,22 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
             action.PropertyChanged += (_, _) => row.OnChanged(nameof(Page));
         }
 
+        if (pickConcept && draft.Actions.Count > 0)
+        {
+            row.AddPicker(draft.Name, known ?? []);
+        }
+
         return row;
+    }
+
+    // The picker offers None and the known concepts, and starts on the one the page's name points at, if any.
+    private void AddPicker(string pageName, IReadOnlyList<ConceptChoice> known)
+    {
+        Picker = new UnknownConceptViewModel(pageName, [new ConceptChoice(string.Empty, Labels.AcceptAllNone), .. known]);
+        Picker.PropertyChanged += (_, _) => Picked();
+        Picker.Selected = ConceptMatch.Best(pageName, known);
+        Ticked = CanTick;   // an empty picker leaves the row unticked
+        OnChanged(nameof(HasPicker));
     }
 
     // The concepts the sheet knows, then any the page's actions relate to that it doesn't (shown under their id).
@@ -124,6 +141,18 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     /// <summary>Gets the concept picker of a page in no concept; null on every other row.</summary>
     public UnknownConceptViewModel? Picker { get; private set; }
 
+    /// <summary>Gets a value indicating whether the row shows a concept picker.</summary>
+    public bool HasPicker => Picker is not null;
+
+    /// <summary>Gets the concept id the picker holds, or null when it is empty, says None or the row has none.</summary>
+    internal string? PickedId => Picker?.Selected is { Id.Length: > 0 } picked ? picked.Id : null;
+
+    private bool NoneIsPicked => Picker?.Selected is { Id.Length: 0 };
+
+    /// <summary>Picks a concept again, as a refreshed list's row gets back the pick of the row it replaces.</summary>
+    /// <param name="id">The concept id.</param>
+    internal void RestorePick(string id) => Picker?.Selected = Picker.Choices.FirstOrDefault(c => string.Equals(c.Id, id, StringComparison.Ordinal));
+
     /// <summary>Gets the page's surface key (its name when it has none): what a re-read matches the row by, as block numbers are not stable.</summary>
     internal string Key => _block.Page?.Surface ?? _block.Name;
 
@@ -150,16 +179,16 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     public string SameAsText => _block.SameAs is { } block ? Labels.AddSeveralPagesSameAs(block) : string.Empty;
 
     /// <summary>Gets why the row is not added, in the server's sentence, or empty.</summary>
-    public string Reason => NeedsConcept ? string.Empty : _block.Reason ?? string.Empty;
+    public string Reason => NeedsConcept ? string.Empty : _block.Reason ?? (NoneIsPicked ? Labels.AcceptAllNoPick : string.Empty);
 
     /// <summary>Gets a value indicating whether the row has a reason line; a row with pickers shows their lines instead.</summary>
-    public bool HasReason => !NeedsConcept && _block.Reason is not null;
+    public bool HasReason => !NeedsConcept && (_block.Reason is not null || NoneIsPicked);
 
     /// <summary>Gets a value indicating whether the row has something for the owner to settle: a reason, or a concept to pick.</summary>
     public bool HasProblem => HasReason || NeedsConcept;
 
     /// <summary>Gets a value indicating whether the row can be ticked: the server ticked it and gave no reason, or every unknown concept has a pick.</summary>
-    public bool CanTick => NeedsConcept ? Unknowns.All(static u => u.Selected is not null) : _block.Reason is null && _block.Page is not null;
+    public bool CanTick => NeedsConcept ? Unknowns.All(static u => u.Selected is not null) : _block.Reason is null && _block.Page is not null && (Picker is null || PickedId is not null);
 
     /// <summary>Gets the tick's name for a screen reader.</summary>
     public string TickName => Labels.AddSeveralPagesTick(Name);
@@ -175,7 +204,7 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     public IReadOnlyList<string> ActionLines => [.. _block.Actions.Select(static a => a.Match is { } m ? a.Name + " - " + Labels.AddSeveralPagesActionMatches(m.Name) : a.Name)];
 
     /// <summary>Gets the page Save all sends for this row, or null when the row has none: the server's page, with each unknown concept name in its actions replaced by its pick.</summary>
-    internal PagesPreviewPage? Page => (NeedsConcept && CanTick && _block.Page is { } page ? WithPicks(page) : _block.Page) is { } sent ? sent with { Name = Name, Actions = WithTicks(sent.Actions) } : null;
+    internal PagesPreviewPage? Page => (NeedsConcept && CanTick && _block.Page is { } page ? WithPicks(page) : _block.Page) is { } sent ? sent with { Name = Name, Actions = WithPick(WithTicks(sent.Actions)) } : null;
 
     /// <summary>Gets the picks made, by the name written.</summary>
     internal IReadOnlyDictionary<string, string> Picks =>
@@ -195,11 +224,18 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
     {
         Ticked = CanTick;   // a row whose every concept is picked is ticked, as Accept all's filled picker is (pages spec §3.6)
         OnChanged(nameof(CanTick));
+        OnChanged(nameof(Reason));
+        OnChanged(nameof(HasReason));
+        OnChanged(nameof(Page));
     }
 
     // An opened row's boxes are the actions' concepts; the actions keep the order they were listed in.
     private IReadOnlyList<PagesPreviewPageAction> WithTicks(IReadOnlyList<PagesPreviewPageAction> sent) =>
         Actions.Count != sent.Count ? sent : [.. sent.Select((a, i) => a with { Concepts = Actions[i].TickedIds })];
+
+    // The concept picked for a page in no concept goes onto every action (a page has no concepts of its own).
+    private IReadOnlyList<PagesPreviewPageAction> WithPick(IReadOnlyList<PagesPreviewPageAction> actions) =>
+        PickedId is { } id ? [.. actions.Select(a => a with { Concepts = [.. a.Concepts.Append(id).Distinct(StringComparer.Ordinal)] })] : actions;
 
     private PagesPreviewPage WithPicks(PagesPreviewPage page) =>
         page with { Actions = [.. page.Actions.Select(a => a with { Concepts = [.. a.Concepts.Select(Concept).Distinct(StringComparer.Ordinal)] })] };
