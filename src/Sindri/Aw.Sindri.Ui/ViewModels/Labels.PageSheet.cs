@@ -32,6 +32,29 @@ internal static partial class Labels
     /// <summary>A saved action's row whose name was cleared: Save writes nothing until it is named or removed (#1853).</summary>
     internal const string PageSheetActionNameNeeded = "Name this action, or remove it";
 
+    /// <summary>The button at the end of the From the map line: swaps the page's map page.</summary>
+    internal const string PageSheetPickAnother = "Pick another";
+
+    /// <summary>The search box's name for a screen reader.</summary>
+    internal const string PageSheetPickBoxName = "Search the map's pages";
+
+    /// <summary>The line while the search reads.</summary>
+    internal const string PageSheetPickSearching = "Searching…";
+
+    /// <summary>The line when the search can't be read.</summary>
+    internal const string PageSheetPickFailed = "Couldn't read the map's pages. Try again.";
+
+    /// <summary>The button that closes the search without a pick.</summary>
+    internal const string PageSheetPickBack = "Back";
+
+    /// <summary>The line when no page matches the search.</summary>
+    /// <param name="query">The text searched.</param>
+    /// <returns>The line.</returns>
+    internal static string PageSheetPickNone(string query) => "No page matches \"" + query + "\"";
+
+    /// <summary>Pick another's status line when a blank search finds no other page on the map.</summary>
+    internal const string PageSheetPickNoPages = "No other pages on the map yet.";
+
     /// <summary>The Name field's label.</summary>
     internal const string PageSheetNameLabel = "Name";
 

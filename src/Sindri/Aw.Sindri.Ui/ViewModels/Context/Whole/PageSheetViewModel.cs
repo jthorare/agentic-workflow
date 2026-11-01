@@ -10,6 +10,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     private readonly IReadOnlyList<ConceptChoice> _known;
     private readonly IReadOnlyList<string> _otherNames;
     private readonly string? _openConcept;
+    private readonly TimeProvider _clock;
     private List<ConceptChoice> _columns = [];
     private PageDraft? _draft;
     private string? _hash;
@@ -22,12 +23,13 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     /// <param name="known">The concepts the Context page read, in its order, for the names and the "Relate to another concept" picker.</param>
     /// <param name="otherNames">The names of the section's other pages, for the same-name warning.</param>
     /// <param name="openConcept">The concept id the section is open on, or null.</param>
-    internal PageSheetViewModel(IPageWrites writes, IReadOnlyList<ConceptChoice> known, IReadOnlyList<string> otherNames, string? openConcept)
+    /// <param name="clock">Times the search's rest after typing; null for the system clock.</param>
+    internal PageSheetViewModel(IPageWrites writes, IReadOnlyList<ConceptChoice> known, IReadOnlyList<string> otherNames, string? openConcept, TimeProvider? clock = null)
     {
         ArgumentNullException.ThrowIfNull(writes);
         ArgumentNullException.ThrowIfNull(known);
         ArgumentNullException.ThrowIfNull(otherNames);
-        (_writes, _known, _otherNames, _openConcept) = (writes, known, otherNames, openConcept);
+        (_writes, _known, _otherNames, _openConcept, _clock) = (writes, known, otherNames, openConcept, clock ?? TimeProvider.System);
         IsLoading = true;
     }
 
@@ -259,7 +261,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
         OnChanged(nameof(IsUnderNoConcept));
     }
 
-    private string Snapshot() => Name + '\n' + string.Join('\n', Actions.Select(static a => a.Name + "|" + string.Join(',', a.TickedIds)));
+    private string Snapshot() => Name + '\n' + _draft?.Surface + '\n' + string.Join('\n', Actions.Select(static a => a.Name + "|" + string.Join(',', a.TickedIds)));
 
     private void ChangedState()
     {

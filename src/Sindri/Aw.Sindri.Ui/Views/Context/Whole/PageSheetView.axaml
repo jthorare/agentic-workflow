@@ -14,7 +14,27 @@
           <TextBox x:Name="PageSheetName" Text="{Binding Name, Mode=TwoWay}" AutomationProperties.Name="{Binding NameLabel}" />
           <TextBlock x:Name="PageSheetSameName" Classes="caption" Text="{Binding SameNameText}" IsVisible="{Binding HasSameName}" TextWrapping="Wrap" AutomationProperties.Name="{Binding SameNameText}" />
           <TextBlock x:Name="PageSheetNameError" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding NameError}" IsVisible="{Binding HasNameError}" TextWrapping="Wrap" AutomationProperties.Name="{Binding NameError}" />
-          <TextBlock x:Name="PageSheetFromMap" Classes="caption subtle" Text="{Binding FromMap}" IsVisible="{Binding HasFromMap}" AutomationProperties.Name="{Binding FromMap}" />
+          <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8" IsVisible="{Binding HasFromMap}">
+            <TextBlock x:Name="PageSheetFromMap" Classes="caption subtle" VerticalAlignment="Center" Text="{Binding FromMap}" AutomationProperties.Name="{Binding FromMap}" />
+            <Button x:Name="PageSheetPickAnother" Grid.Column="1" Padding="8,2" Content="{Binding PickAnotherText}" Click="OnPickAnother" AutomationProperties.Name="{Binding PickAnotherText}" />
+          </Grid>
+          <StackPanel x:Name="PageSheetPick" Spacing="4" IsVisible="{Binding IsPicking}">
+            <TextBox x:Name="PageSheetPickBox" Text="{Binding PickQuery, Mode=TwoWay}" AutomationProperties.Name="{Binding PickBoxName}" />
+            <TextBlock x:Name="PageSheetPickStatus" Classes="caption subtle" Text="{Binding PickStatus}" IsVisible="{Binding HasPickStatus}" TextWrapping="Wrap" AutomationProperties.Name="{Binding PickStatus}" AutomationProperties.LiveSetting="Polite" />
+            <ItemsControl x:Name="PageSheetPickRows" ItemsSource="{Binding PickRows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="vm:PageMatch">
+                  <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="OnPickRow" AutomationProperties.Name="{Binding Name}">
+                    <StackPanel>
+                      <TextBlock Classes="body" Text="{Binding Name}" />
+                      <TextBlock Classes="caption subtle" Text="{Binding FromMap}" />
+                    </StackPanel>
+                  </Button>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <Button x:Name="PageSheetPickBack" Content="{Binding PickBackText}" Click="OnPickBack" HorizontalAlignment="Left" AutomationProperties.Name="{Binding PickBackText}" />
+          </StackPanel>
         </StackPanel>
         <TextBlock Classes="caption subtle" Text="{Binding ActionsHeading}" Margin="0,4,0,0" AutomationProperties.AccessibilityView="Raw" />
         <ItemsControl x:Name="PageSheetActions" ItemsSource="{Binding Actions}">

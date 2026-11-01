@@ -98,6 +98,29 @@ internal sealed class FakePageWrites : IPageWrites
         return PreviewAnswer ?? new PagesPreviewRead(Preview: null, "SND-API-001");
     }
 
+    /// <summary>Gets or sets the pages every search finds.</summary>
+    public List<PageMatch> Matches { get; set; } = [];
+
+    /// <summary>Gets or sets a value indicating whether searches fail (answer null).</summary>
+    public bool SearchFails { get; set; }
+
+    /// <summary>Gets or sets a gate every search waits on before it answers; null answers at once.</summary>
+    public TaskCompletionSource? SearchGate { get; set; }
+
+    /// <summary>Gets every search asked for, in order: repo, text and limit.</summary>
+    public List<(string? Repo, string Query, int Limit)> Searches { get; } = [];
+
+    public async Task<IReadOnlyList<PageMatch>?> Search(string? repo, string query, int limit, CancellationToken cancellationToken)
+    {
+        Searches.Add((repo, query, limit));
+        if (SearchGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return SearchFails ? null : Matches;
+    }
+
     public Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
     {
         Saves.Add(new SavedCall(save, ifHash, approve));
