@@ -8,6 +8,11 @@ internal static partial class Labels
     /// <summary>The Pages and actions section's button, and the sheet's title.</summary>
     internal const string AddSeveralPages = "Add several pages";
 
+    /// <summary>The section's button that opens Accept all suggested.</summary>
+    /// <param name="count">How many suggested pages the section lists.</param>
+    /// <returns>"Accept all suggested (14)".</returns>
+    internal static string AcceptAllButton(int count) => string.Create(CultureInfo.InvariantCulture, $"Accept all suggested ({count})");
+
     /// <summary>The Accept all suggested sheet's title.</summary>
     internal const string AcceptAllSuggested = "Accept all suggested";
 

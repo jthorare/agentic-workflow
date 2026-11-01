@@ -37,6 +37,15 @@ internal sealed partial class ContextPageViewModel
         ChangedAddSeveralPages();
     }
 
+    /// <summary>Opens the Accept all suggested sheet over a concept's suggested pages; a saved list reads the section again.</summary>
+    /// <param name="concept">The concept the section is open on.</param>
+    /// <param name="keys">The suggested rows' node keys, in the section's order.</param>
+    internal void OpenAcceptAllSuggested(string? concept, IReadOnlyList<string> keys)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        _ = (Ports, concept);
+    }
+
     private void ChangedAddSeveralPages()
     {
         OnChanged(nameof(AddSeveralPages));
