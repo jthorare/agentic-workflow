@@ -12,7 +12,7 @@ internal sealed partial class PageSheetViewModel
     /// <summary>Raised when the Remove page question has just been drawn: focus goes to Cancel.</summary>
     internal event EventHandler? CancelRemoveFocusRequested;
 
-    /// <summary>Raised when the Remove page question has closed: focus goes back to the Remove page button.</summary>
+    /// <summary>Raised when the Remove page question has closed and the sheet stays open (Cancel, or a Remove whose answer didn't land): focus goes back to the Remove page button.</summary>
     internal event EventHandler? RemovePageFocusRequested;
 
     /// <summary>Raised when the discard question has just been drawn: focus goes to Keep editing.</summary>
@@ -89,7 +89,7 @@ internal sealed partial class PageSheetViewModel
             Name = Name.Trim(),
             Actions = [.. kept.Select(static a => new PageActionDraft(a.Id, a.Name.Trim(), a.Action, a.TickedIds))],
         };
-        await Write(new PageSave([draft], []) { Before = _before }, id, kept, cancellationToken).ConfigureAwait(true);
+        _ = await Write(new PageSave([draft], []) { Before = _before }, id, kept, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>Asks before removing the page (Edit page only); focus goes to Cancel.</summary>
@@ -131,7 +131,10 @@ internal sealed partial class PageSheetViewModel
 
         IsConfirmingRemove = false;
         OnChanged(nameof(IsConfirmingRemove));
-        await Write(new PageSave([], [pageId]), pageId, [], cancellationToken).ConfigureAwait(true);
+        if (!await Write(new PageSave([], [pageId]), pageId, [], cancellationToken).ConfigureAwait(true))
+        {
+            RemovePageFocusRequested?.Invoke(this, EventArgs.Empty);   // a clash, refusal or failure keeps the sheet open: focus has to land somewhere
+        }
     }
 
     /// <summary>Esc, or the close affordance: a question that shows is answered with its safe choice; changes ask first; otherwise the sheet closes.</summary>
@@ -183,7 +186,8 @@ internal sealed partial class PageSheetViewModel
     /// <summary>Closes the sheet and drops the changes.</summary>
     internal void Close() => Closed?.Invoke(this, EventArgs.Empty);
 
-    private async Task Write(PageSave save, string? id, IReadOnlyList<PageSheetActionViewModel> rows, CancellationToken cancellationToken)
+    // True when the sheet is done with the write: it landed and closed, or the sheet closed while the job ran. False when the sheet stays open.
+    private async Task<bool> Write(PageSave save, string? id, IReadOnlyList<PageSheetActionViewModel> rows, CancellationToken cancellationToken)
     {
         ShowNameError(string.Empty);
         foreach (var row in Actions)
@@ -200,7 +204,7 @@ internal sealed partial class PageSheetViewModel
         }
         catch (OperationCanceledException)
         {
-            return;   // the sheet closed while the job ran: the write was sent and may still land, so nothing reads as failed
+            return true;   // the sheet closed while the job ran: the write was sent and may still land, so nothing reads as failed
         }
         finally
         {
@@ -208,11 +212,11 @@ internal sealed partial class PageSheetViewModel
             ChangedSaving();
         }
 
-        await Answer(saved, id, rows, cancellationToken).ConfigureAwait(true);
+        return await Answer(saved, id, rows, cancellationToken).ConfigureAwait(true);
     }
 
-    // What the sheet does with the write's answer: a landed write closes it, a clash re-reads the hash, a refusal goes under its field, anything else says so.
-    private async Task Answer(PageSaved saved, string? id, IReadOnlyList<PageSheetActionViewModel> rows, CancellationToken cancellationToken)
+    // What the sheet does with the write's answer: a landed write closes it, a clash re-reads the hash, a refusal goes under its field, anything else says so. True when it landed.
+    private async Task<bool> Answer(PageSaved saved, string? id, IReadOnlyList<PageSheetActionViewModel> rows, CancellationToken cancellationToken)
     {
         switch (saved.State)
         {
@@ -220,17 +224,17 @@ internal sealed partial class PageSheetViewModel
                 SavedId = id;
                 Saved?.Invoke(this, EventArgs.Empty);
                 Close();
-                break;
+                return true;
             case PageSavedState.Clash:
                 await Clashed(id, cancellationToken).ConfigureAwait(true);
-                break;
+                return false;
             case PageSavedState.Refused:
                 Refuse(saved.Message ?? string.Empty, rows);
-                break;
+                return false;
             case PageSavedState.Failed:
             default:
                 Say(saved.Message is { Length: > 0 } message ? message : Labels.PageSheetFailed);   // a write still running says so (Labels.ProfileWriteTimedOut), never "couldn't save"
-                break;
+                return false;
         }
     }
 
@@ -293,5 +297,4 @@ internal sealed partial class PageSheetViewModel
         OnChanged(nameof(CanSave));
         OnChanged(nameof(SaveText));
     }
-
 }
