@@ -109,7 +109,8 @@ d screenshot --out "$OUT/accept-all-saved.png" >/dev/null 2>&1 || true
 # Step 4: back to the concept list, then Pages in no concept: its Accept all has a picker per row that has actions.
 for _ in 1 2 3 4; do
   [ -n "$(card_id "Pages in no concept")" ] && break
-  d key --chord Escape >/dev/null 2>&1 || true
+  # The breadcrumb's Back, not Esc: focus sits in the search box after the save, which keeps Esc.
+  d click --type Button --name Back >/dev/null 2>&1 || true
   sleep 1
 done
 click_card "Pages in no concept" || fail "step 4: could not click the 'Pages in no concept' link"
