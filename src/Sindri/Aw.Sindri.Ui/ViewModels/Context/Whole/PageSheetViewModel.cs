@@ -109,6 +109,12 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     /// <summary>Gets the action rows.</summary>
     public IReadOnlyList<PageSheetActionViewModel> Actions { get; private set; } = [];
 
+    /// <summary>Gets a value indicating whether no named action relates to a concept, so the saved page would sit under none (#1851).</summary>
+    public bool IsUnderNoConcept => IsReady && false;
+
+    /// <summary>Gets the caption shown while the page is under no concept.</summary>
+    public string UnderNoConceptText { get; } = string.Empty;
+
     /// <summary>Gets the Add an action button's words.</summary>
     public string AddActionText { get; } = Labels.PageSheetAddAction;
 

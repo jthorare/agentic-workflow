@@ -206,6 +206,41 @@ public sealed class PageSheetTests
     }
 
     [Fact]
+    public async Task New_page_from_a_concept_ticks_it_and_says_when_the_page_is_under_none()
+    {
+        var writes = new FakePageWrites();
+        var sheet = new PageSheetViewModel(writes, [_selfScheduling, _approval], [], "self-scheduling");
+        await sheet.OpenNew(TestContext.Current.CancellationToken);
+
+        Expect.Sequence([true], sheet.Actions[0].Ticks.Select(t => t.IsTicked));
+        Expect.True(!sheet.HasChanges, "the pre-tick is no change to discard");
+        sheet.Name = "Week schedule";
+        Expect.True(sheet.IsUnderNoConcept, "no named action relates to a concept yet");
+        Expect.Equal("Not under any concept yet. Name an action and tick a concept to list it under one.", sheet.UnderNoConceptText);
+        sheet.Actions[0].Name = "Submit week";
+        Expect.True(!sheet.IsUnderNoConcept, "a named, ticked action puts the page under Self scheduling");
+        sheet.Actions[0].Ticks[0].IsTicked = false;
+        Expect.True(sheet.IsUnderNoConcept, "unticking it takes the page out again");
+    }
+
+    [Fact]
+    public async Task Clearing_a_saved_actions_name_asks_instead_of_deleting_it()
+    {
+        var page = Week() with { Actions = [new PageActionDraft(Id: "submit", Name: "Submit schedule", Action: "action:submit", Concepts: ["self-scheduling"]), new PageActionDraft(Id: null, Name: string.Empty, Action: null, Concepts: [])] };
+        var (sheet, writes) = await Opened(page);
+        sheet.Actions[0].Name = "  ";
+
+        await sheet.Save(TestContext.Current.CancellationToken);
+
+        Expect.Sequence([], writes.Saves.Select(s => s.IfHash));
+        Expect.Equal("Name this action, or remove it", sheet.Actions[0].Error);
+        Expect.Equal(string.Empty, sheet.Actions[1].Error);
+        sheet.Actions[0].Name = "Submit week";
+        await sheet.Save(TestContext.Current.CancellationToken);
+        Expect.Sequence(["Submit week"], Assert.Single(writes.Saves).Save.Set[0].Actions.Select(a => a.Name));
+    }
+
+    [Fact]
     public async Task A_write_still_running_says_so_and_never_reads_as_failed()
     {
         var (sheet, writes) = await Opened();
