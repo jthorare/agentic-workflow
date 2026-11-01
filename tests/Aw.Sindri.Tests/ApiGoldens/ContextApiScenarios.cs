@@ -155,6 +155,9 @@ internal static class ContextApiScenarios
         ("context-pages-preview", "matched", async (s, ct) => await s.PreviewPages("Schedule week\nSubmit -> Self-scheduling\n\nBilling\nSend invoice -> aproval", ct)),
         ("context-pages-preview", "same-page", async (s, ct) => await s.PreviewPages("Schedule week\nSubmit\n\nSchedule weeks\nCancel", ct)),
         ("context-pages-preview", "invalid-259", async (s, ct) => await s.PreviewPages("  \n", ct)),
+        ("context-pages", "search-q", async (s, ct) => await s.Fetch("/sindri/context/pages?q=SCHEDUL", ct)),
+        ("context-pages", "search-none", async (s, ct) => await s.Fetch("/sindri/context/pages?q=nothing%20like%20it", ct)),
+        ("context-concepts", "suggested-pages", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
         ("context-concepts-id-members", "scheduling", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members", ct)),
         ("context-concepts-id-members", "other", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Aother/members", ct)),
         ("context-concepts-id-members", "first-page", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members?limit=1", ct)),
@@ -316,7 +319,7 @@ internal static class ContextApiScenarios
             return HopsMap(host.Home);
         }
 
-        if (string.Equals(slug, "context-pages-preview", StringComparison.Ordinal))
+        if (slug.StartsWith("context-pages", StringComparison.Ordinal) || (slug, scenario) is ("context-concepts", "suggested-pages"))
         {
             return PagesMapFile.Write(host.Home);
         }

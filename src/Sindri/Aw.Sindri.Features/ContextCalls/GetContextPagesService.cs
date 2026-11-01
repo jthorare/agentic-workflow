@@ -42,7 +42,7 @@ internal sealed class GetContextPagesService(ContextScopes scopes, IContextEngin
             return scope.Error;
         }
 
-        var query = new PagesQuery(concept.Value, request.Page, repo.Value, request.Marks, request.Limit, request.Offset, request.Draft, request.MapVersion);
+        var query = new PagesQuery(concept.Value, request.Page, repo.Value, request.Marks, request.Limit, request.Offset, request.Draft, request.MapVersion) { Q = request.Q };
         return await engine.Pages(query, scope.Value, cancellationToken).ConfigureAwait(false);
     }
 
