@@ -51,6 +51,48 @@ internal sealed class AddSeveralPagesRowViewModel : ObservableObject
         return new AddSeveralPagesRowViewModel(block, known);
     }
 
+    /// <summary>Gets or sets a value indicating whether the row is open into its fields; a row with no fields (a pasted block) stays shut.</summary>
+    public bool IsOpen
+    {
+        get;
+        set => Set(ref field, value && HasFields);
+    }
+
+    /// <summary>Gets the row's actions with their concept boxes; empty for a pasted block.</summary>
+    public IReadOnlyList<AddSeveralPagesActionViewModel> Actions { get; private set; } = [];
+
+    /// <summary>Gets a value indicating whether the row can open into fields.</summary>
+    public bool HasFields => Actions.Count > 0;
+
+    /// <summary>Gets the name and every action's ticks as one string, so a change shows up as a change.</summary>
+    internal string Signature => Name + "|" + string.Join(';', Actions.Select(static a => string.Join(',', a.TickedIds)));
+
+    /// <summary>Gets the ticked concept ids by action key, as a refreshed list's row gets them back.</summary>
+    internal IReadOnlyDictionary<string, IReadOnlyList<string>> ActionTicks
+    {
+        get
+        {
+            var ticks = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+            foreach (var action in Actions)
+            {
+                _ = ticks.TryAdd(action.Key, action.TickedIds);
+            }
+
+            return ticks;
+        }
+    }
+
+    /// <summary>Ticks each action's concepts as they were, matched by action key.</summary>
+    /// <param name="ticks">The ticked ids by action key.</param>
+    internal void RestoreTicks(IReadOnlyDictionary<string, IReadOnlyList<string>> ticks)
+    {
+        ArgumentNullException.ThrowIfNull(ticks);
+        foreach (var action in Actions.Where(a => ticks.ContainsKey(a.Key)))
+        {
+            action.Retick(ticks[action.Key]);
+        }
+    }
+
     /// <summary>Gets the page's surface key (its name when it has none): what a re-read matches the row by, as block numbers are not stable.</summary>
     internal string Key => _block.Page?.Surface ?? _block.Name;
 
