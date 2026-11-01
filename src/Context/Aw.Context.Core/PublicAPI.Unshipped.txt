@@ -8218,24 +8218,6 @@ Aw.Context.Core.Engine.CliModels.Cheap.get -> string?
 Aw.Context.Core.Engine.CliModels.Cheap.init -> void
 Aw.Context.Core.Engine.CliModels.Strong.get -> string?
 Aw.Context.Core.Engine.CliModels.Strong.init -> void
-Aw.Context.Core.Engine.ConceptScanModels
-Aw.Context.Core.Engine.ConceptScanModels.<Clone>$() -> Aw.Context.Core.Engine.ConceptScanModels!
-Aw.Context.Core.Engine.ConceptScanModels.Equals(Aw.Context.Core.Engine.ConceptScanModels? other) -> bool
-override Aw.Context.Core.Engine.ConceptScanModels.Equals(object? obj) -> bool
-override Aw.Context.Core.Engine.ConceptScanModels.GetHashCode() -> int
-override Aw.Context.Core.Engine.ConceptScanModels.ToString() -> string!
-static Aw.Context.Core.Engine.ConceptScanModels.operator !=(Aw.Context.Core.Engine.ConceptScanModels? left, Aw.Context.Core.Engine.ConceptScanModels? right) -> bool
-static Aw.Context.Core.Engine.ConceptScanModels.operator ==(Aw.Context.Core.Engine.ConceptScanModels? left, Aw.Context.Core.Engine.ConceptScanModels? right) -> bool
-Aw.Context.Core.Engine.ConceptScanModels.Deconstruct(out Aw.Context.Core.Engine.CliModels! Claude, out Aw.Context.Core.Engine.CliModels! Codex, out Aw.Context.Core.Engine.CliModels! Cursor) -> void
-Aw.Context.Core.Engine.ConceptScanModels.ConceptScanModels(Aw.Context.Core.Engine.CliModels! Claude, Aw.Context.Core.Engine.CliModels! Codex, Aw.Context.Core.Engine.CliModels! Cursor) -> void
-Aw.Context.Core.Engine.ConceptScanModels.Claude.get -> Aw.Context.Core.Engine.CliModels!
-Aw.Context.Core.Engine.ConceptScanModels.Claude.init -> void
-Aw.Context.Core.Engine.ConceptScanModels.Codex.get -> Aw.Context.Core.Engine.CliModels!
-Aw.Context.Core.Engine.ConceptScanModels.Codex.init -> void
-Aw.Context.Core.Engine.ConceptScanModels.Cursor.get -> Aw.Context.Core.Engine.CliModels!
-Aw.Context.Core.Engine.ConceptScanModels.Cursor.init -> void
-Aw.Context.Core.Engine.ConceptScanModels.For(Aw.Context.Core.Models.ModelTier tier) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
-static Aw.Context.Core.Engine.ConceptScanModels.Default.get -> Aw.Context.Core.Engine.ConceptScanModels!
 Aw.Context.Core.Engine.ConceptScanSettings
 Aw.Context.Core.Engine.ConceptScanSettings.<Clone>$() -> Aw.Context.Core.Engine.ConceptScanSettings!
 Aw.Context.Core.Engine.ConceptScanSettings.ConceptScanSettings() -> void
@@ -8247,8 +8229,6 @@ static Aw.Context.Core.Engine.ConceptScanSettings.operator !=(Aw.Context.Core.En
 static Aw.Context.Core.Engine.ConceptScanSettings.operator ==(Aw.Context.Core.Engine.ConceptScanSettings? left, Aw.Context.Core.Engine.ConceptScanSettings? right) -> bool
 Aw.Context.Core.Engine.ConceptScanSettings.Tiers.get -> Aw.Context.Core.Engine.ConceptScanTiers!
 Aw.Context.Core.Engine.ConceptScanSettings.Tiers.init -> void
-Aw.Context.Core.Engine.ConceptScanSettings.Models.get -> Aw.Context.Core.Engine.ConceptScanModels!
-Aw.Context.Core.Engine.ConceptScanSettings.Models.init -> void
 Aw.Context.Core.Models.ModelRequest.Deconstruct(out Aw.Context.Core.Models.ModelPurpose Purpose, out string! Prompt, out int MaxTokens, out System.TimeSpan Budget, out Aw.Context.Core.Models.ModelTier? Tier, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Models, out string? Model) -> void
 Aw.Context.Core.Models.ModelRequest.Model.get -> string?
 Aw.Context.Core.Models.ModelRequest.Model.init -> void
@@ -10089,9 +10069,7 @@ Aw.Context.Core.Engine.ModelsSettings.Kinds.init -> void
 Aw.Context.Core.Engine.ModelsSettings.LabelCandidates.get -> int
 Aw.Context.Core.Engine.ModelsSettings.LabelPick.init -> void
 Aw.Context.Core.Engine.ModelsSettings.LabelPick.get -> Aw.Context.Core.Engine.LabelPick
-Aw.Context.Core.Engine.ModelsSettings.Warnings.init -> void
 Aw.Context.Core.Engine.ModelsSettings.LabelCandidates.init -> void
-Aw.Context.Core.Engine.ModelsSettings.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Engine.ModelsSettings.Entry(Aw.Context.Core.Engine.ModelKind kind) -> Aw.Context.Core.Engine.ModelEntry!
 static Aw.Context.Core.Engine.ModelsSettings.Read(System.Text.Json.JsonElement? section) -> Aw.Kernel.Result<Aw.Context.Core.Engine.ModelsSettings!>!
 Aw.Context.Core.Engine.RoutedModel.Harness.get -> Aw.Context.Core.Engine.ModelHarness

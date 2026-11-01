@@ -104,7 +104,6 @@ internal sealed class ApproveProfileService(IProfileSource live, IApprovals appr
             Unreadable = latest.IsError ? latest.Error.Message : null,
             UnlistedChange = IsUnlistedChange(previous, changes, loaded),
             Notice = NoticeOf(loaded),
-            Warnings = checks.ContextWarnings(loaded.Profile),
             RoleCounts = await RoleCounts(previous, loaded, changes, cancellationToken).ConfigureAwait(false),
         };
     }

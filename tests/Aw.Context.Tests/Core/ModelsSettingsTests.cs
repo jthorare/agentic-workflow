@@ -23,7 +23,6 @@ public sealed class ModelsSettingsTests
         Assert.Empty(models.Kinds);
         Assert.Equal(ModelNames.None, models.Names);
         Assert.Equal((LabelPick.Off, 3), (models.LabelPick, models.LabelCandidates));
-        Assert.Empty(models.Warnings);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -136,7 +135,6 @@ public sealed class ModelsSettingsTests
         Assert.Empty(models.Kinds);
         Assert.Equal(defaults.LabelPick, models.LabelPick);
         Assert.Equal(defaults.LabelCandidates, models.LabelCandidates);
-        Assert.Empty(models.Warnings);
     }
 
     // The kind map
