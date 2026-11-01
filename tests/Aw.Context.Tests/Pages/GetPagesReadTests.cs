@@ -69,6 +69,27 @@ public sealed class GetPagesReadTests : IDisposable
         Assert.Equal(["settings"], suggested.Pages.Select(p => p.Id.Value), StringComparer.Ordinal);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("SCHEDUL", PagesWorld.Week)]
+    [InlineData("get /schedule", PagesWorld.Week)]
+    [InlineData("settingsscreen", PagesWorld.Settings)]
+    public async Task Q_keeps_the_pages_whose_name_or_map_label_contains_it_ignoring_case(string q, string key)
+    {
+        var view = await Read(PagesWorld.Query() with { Q = q }, PagesWorld.Human());
+
+        Assert.Equal((key, 1), (Assert.Single(view.Pages).Key.Value, view.Total));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("nothing like it", 0)]
+    [InlineData("   ", 2)]
+    public async Task Q_that_matches_none_answers_no_pages_and_a_blank_one_keeps_all(string q, int total)
+    {
+        var view = await Read(PagesWorld.Query() with { Q = q }, PagesWorld.Human());
+
+        Assert.Equal((total, total), (view.Pages.Count, view.Total));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_concept_filter_keeps_the_pages_that_express_it_or_have_an_action_that_does()
     {

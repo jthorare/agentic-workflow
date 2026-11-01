@@ -12,4 +12,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="Offset">Pages to skip (0 when null).</param>
 /// <param name="Draft">True to read the draft map.</param>
 /// <param name="MapVersion">A retained map version ('v3'), or null for the current one; not valid with <paramref name="Draft"/>.</param>
-public sealed record GetContextPagesRequest(string? Repo = null, string? Concept = null, string? Page = null, PageMarks Marks = PageMarks.All, int? Limit = null, int? Offset = null, bool Draft = false, string? MapVersion = null) : IQuery<PagesView>;
+public sealed record GetContextPagesRequest(string? Repo = null, string? Concept = null, string? Page = null, PageMarks Marks = PageMarks.All, int? Limit = null, int? Offset = null, bool Draft = false, string? MapVersion = null) : IQuery<PagesView>
+{
+    /// <summary>Keeps the pages whose name or map label contains this text, ignoring case; null or blank keeps all.</summary>
+    public string? Q { get; init; }
+}
