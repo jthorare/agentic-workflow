@@ -1,6 +1,6 @@
 # Sindri context: concept pins scope and steer queries (#1372, query side)
 
-**Status:** draft for the owner's read (owner q141, 2026-10-28). Not ready until the owner has read it. Review rounds and their findings are in the PR body. Revised 2026-10-29 for meta's five points, and folds in #1701's owner-authored concepts half (meta, 2026-10-29); #1701's pages-with-actions half is its own spec.
+**Status:** approved by the owner on 2026-10-29 (Open question 7 and the mockup picks record the answers). Review rounds and their findings are in the PR body. Revised 2026-10-29 for meta's five points, and folds in #1701's owner-authored concepts half (meta, 2026-10-29); #1701's pages-with-actions half is its own spec.
 **Lane:** ideas. **Coordinated with:** context (2026-10-29: no ranking work in flight; the boost goes into fusion, not a post-sort; ties stay ordinal).
 
 ## The owner's steps: install -> works
