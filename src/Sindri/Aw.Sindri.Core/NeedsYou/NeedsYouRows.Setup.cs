@@ -43,7 +43,7 @@ public static partial class NeedsYouRows
             _addRepo,
             [_addRepo],
             cli.Value.Text,
-            new NeedsYouOpen("setup", "Open setup"));
+            new NeedsYouOpen(NeedsYouRoutes.Setup, "Open setup"));
     }
 
     private static readonly ActionId _registerMcp = ActionId.From(SetupActions.RegisterMcp);
@@ -88,6 +88,6 @@ public static partial class NeedsYouRows
             _registerMcp,
             [_registerMcp],
             cli.Value.Text,
-            new NeedsYouOpen("setup", "Open setup"));
+            new NeedsYouOpen(NeedsYouRoutes.Setup, "Open setup"));
     }
 }
