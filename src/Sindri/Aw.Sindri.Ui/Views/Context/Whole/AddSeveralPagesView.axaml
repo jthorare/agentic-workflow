@@ -31,6 +31,21 @@
                     <DataTemplate x:DataType="x:String"><TextBlock Classes="caption subtle" Text="{Binding}" TextWrapping="Wrap" /></DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <ItemsControl ItemsSource="{Binding Unknowns}">
+                  <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="vm:UnknownConceptViewModel">
+                      <WrapPanel Margin="0,2,0,0">
+                        <TextBlock Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Text}" TextWrapping="Wrap" VerticalAlignment="Center" Margin="0,0,8,0" />
+                        <ComboBox x:Name="AddSeveralPick" ItemsSource="{Binding Choices}" SelectedItem="{Binding Selected, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" MinWidth="220"
+                                  AutomationProperties.Name="{Binding PickName}" AutomationProperties.HelpText="{Binding Text}">
+                          <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="vm:ConceptChoice"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                          </ComboBox.ItemTemplate>
+                        </ComboBox>
+                      </WrapPanel>
+                    </DataTemplate>
+                  </ItemsControl.ItemTemplate>
+                </ItemsControl>
                 <TextBlock x:Name="AddSeveralReason" Classes="caption" Focusable="True" Foreground="{DynamicResource Brush.Error}" Text="{Binding Reason}" IsVisible="{Binding HasReason}" TextWrapping="Wrap"
                            AutomationProperties.Name="{Binding Reason}" />
               </StackPanel>
