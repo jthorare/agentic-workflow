@@ -132,7 +132,18 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
     public ChildPointerViewModel? Child { get; }
 
     /// <summary>True when the answer is a pointer to a child that decides it: the state shows "Answer in the child" and no answer form.</summary>
-    public bool AnswersInChild => AnswerChild is not null;
+    public bool AnswersInChild => AnswerChild is not null && !OpenServed;
+
+    /// <summary>True while the frame shows the served open button, which then carries the same words (api q65); set by the frame on each read.</summary>
+    internal bool OpenServed
+    {
+        get;
+        set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(AnswersInChild));
+        }
+    }
 
     private StatusAnswer? AnswerChild { get; }
 
@@ -249,7 +260,7 @@ internal sealed partial class ExpandedStateViewModel : ObservableObject
     /// What the state draws as controls and structure, so a re-read of the same keeps them (and the focus, the open confirm and a Copied label).
     /// The words that move with time (the status text, the timeout, the budget, the next sentence, the child pointer's state) are not: <see cref="Update"/> changes them in place.
     /// </summary>
-    internal string Signature => string.Join('|', State, StepLine, string.Join(',', Gates), string.Join(',', Commands.Select(c => c.Signature)), string.Join(',', Outputs.Select(o => o.Key)), _current.Status.Child?.Id, AnswerChild?.Child, AnswersInChild, HasNext, HasBudget, HasTimeout, IsPaused, HasDrift, HasAttach, _current.Status.Run?.Launch, _current.Status.ReasonCode, string.Join(',', (_current.Desk?.Reviews ?? []).Select(r => r.Fact + r.Path + r.Url)));
+    internal string Signature => string.Join('|', State, StepLine, string.Join(',', Gates), string.Join(',', Commands.Select(c => c.Signature)), string.Join(',', Outputs.Select(o => o.Key)), _current.Status.Child?.Id, AnswerChild?.Child, AnswerChild is not null, HasNext, HasBudget, HasTimeout, IsPaused, HasDrift, HasAttach, _current.Status.Run?.Launch, _current.Status.ReasonCode, string.Join(',', (_current.Desk?.Reviews ?? []).Select(r => r.Fact + r.Path + r.Url)));
 
     /// <summary>Takes a re-read of the same state: the moving words change, the controls stay.</summary>
     /// <param name="current">The state as served now; its <see cref="Signature"/> equals this one's.</param>

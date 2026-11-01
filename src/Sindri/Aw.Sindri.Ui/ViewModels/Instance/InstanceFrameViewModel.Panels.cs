@@ -28,6 +28,7 @@ internal sealed partial class InstanceFrameViewModel
         var context = new FactViewerContext(api, clipboard, clock, () => _url, detail.Id, id => ItemRequested?.Invoke(this, new ItemOpenEventArgs(id))) { Launcher = _launcher };
         ShowFacts(detail, context);
         ShowTabs(detail);
+        ShowOpen(detail);
         var children = new ChildrenPanelViewModel(detail, clipboard, clock, catalog);
         if (Children is null || !string.Equals(Children.Signature, children.Signature, StringComparison.Ordinal))
         {
@@ -202,5 +203,9 @@ internal sealed partial class InstanceFrameViewModel
         }
     }
 
-    private void ClearPanels() => (Facts, Children, Tabs) = (null, null, null);
+    private void ClearPanels()
+    {
+        (Facts, Children, Tabs) = (null, null, null);
+        ShowOpenCleared();
+    }
 }
