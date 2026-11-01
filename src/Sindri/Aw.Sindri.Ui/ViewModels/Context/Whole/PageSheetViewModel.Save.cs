@@ -202,10 +202,6 @@ internal sealed partial class PageSheetViewModel
         {
             saved = await _writes.Save(save, _hash, _approve, cancellationToken).ConfigureAwait(true);
         }
-        catch (OperationCanceledException)
-        {
-            return true;   // the sheet closed while the job ran: the write was sent and may still land, so nothing reads as failed
-        }
         finally
         {
             IsSaving = false;
