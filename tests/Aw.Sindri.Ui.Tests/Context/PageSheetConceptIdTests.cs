@@ -1,7 +1,9 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels.Context;
+using Aw.Sindri.Ui.ViewModels.Context.Whole;
 using Aw.Sindri.Ui.ViewModels.Controls;
 using Microsoft.Extensions.Time.Testing;
 
@@ -70,5 +72,24 @@ public sealed class PageSheetConceptIdTests
 
         var saved = Assert.Single(Assert.Single(writes.Saves).Save.Set);
         Expect.True(saved.Actions.All(static a => a.Concepts.Contains("billing", StringComparer.Ordinal) && !a.Concepts.Contains("concept:billing", StringComparer.Ordinal)), "billing is written as its bare id");
+    }
+
+    [Fact]
+    public async Task A_pasted_unknown_concept_picked_as_billing_saves_the_bare_id()
+    {
+        var (page, writes) = await Shown();
+        var block = new PagesPreviewBlock(1, 1, "Pay", Match: null, Replaces: null, SameAs: null, Ticked: false, Reason: "No concept called payments", [], ["payments"],
+            new PagesPreviewPage(Id: null, "Pay", "web", Surface: null, [new PagesPreviewPageAction(Id: null, "Pay", Action: null, ["payments"])]));
+        writes.PreviewAnswer = new PagesPreviewRead(new PagesPreview("v1", "hash", [block]));
+        page.OpenAddSeveralPages(noConcept: false);
+        var sheet = page.AddSeveralPages!;
+        sheet.Text = "Pay\nPay -> payments";
+        await sheet.ReadList(Token);
+
+        sheet.Rows[0].Unknowns[0].Selected = sheet.Rows[0].Unknowns[0].Choices.Single(static c => c.Name == "Billing");
+        await sheet.SaveAll(Token);
+
+        var saved = Assert.Single(Assert.Single(writes.Saves).Save.Set);
+        Expect.Sequence(["billing"], Assert.Single(saved.Actions).Concepts);
     }
 }
