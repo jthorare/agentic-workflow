@@ -13,7 +13,7 @@ public sealed class AcceptAllNoConceptTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static readonly ConceptChoice[] _known = [new("concept:scheduling", "Scheduling", Pages: 3), new("concept:billing", "Billing", Pages: 5)];
+    private static readonly ConceptChoice[] _known = [new("concept:scheduling", "Schedules", Pages: 3), new("concept:billing", "Billing", Pages: 5)];
 
     private static PageDraft Page(string name, int actions = 2) =>
         new(Id: null, name, "web", "surface:" + name.Replace(' ', '-'), Owner: false,
@@ -35,11 +35,21 @@ public sealed class AcceptAllNoConceptTests
     [Fact]
     public async Task A_name_word_prefills_the_concept_and_ticks_the_row()
     {
-        var (sheet, _) = await Opened(_known, Page("Weekly schedule"));
+        var (sheet, _) = await Opened(_known, Page("Schedule week"));
 
         var row = sheet.Rows[0];
         Expect.Equal("concept:scheduling", row.Picker?.Selected?.Id);
         Expect.True(row.Ticked, "a picked row is ticked");
+    }
+
+    [Fact]
+    public async Task A_related_word_is_not_a_match_there_is_no_stemming()
+    {
+        ConceptChoice[] scheduling = [new("concept:scheduling", "Scheduling", Pages: 3)];
+
+        var (sheet, _) = await Opened(scheduling, Page("Weekly schedule"));
+
+        Expect.True(sheet.Rows[0].Picker is { Selected: null } && !sheet.Rows[0].Ticked, "schedule and scheduling are different words, as in a paste");
     }
 
     [Fact]

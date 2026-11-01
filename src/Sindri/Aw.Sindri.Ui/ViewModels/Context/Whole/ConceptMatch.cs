@@ -1,9 +1,17 @@
+using System.Text;
+
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
-/// <summary>Picks the concept a page's name points at: the one that shares the most words with it, case and plural ignored; a tie goes to the concept with more pages, then to the first.</summary>
+/// <summary>Picks the concept a page's name points at: the one that shares the most words with it (the server's words: case and plural ignored, no stemming); a tie goes to the concept with more pages, then to the first.</summary>
 internal static class ConceptMatch
 {
-    private static readonly string[] _suffixes = ["ing", "ies", "es", "ed", "ly", "s"];
+    private const int MaxWordLength = 64;
+
+    private static readonly HashSet<string> _small = new(StringComparer.Ordinal)
+    {
+        "a", "an", "and", "are", "as", "at", "be", "by", "can", "do", "does", "done", "for", "from", "how", "i", "if", "in", "is", "it", "its", "of", "on",
+        "or", "s", "the", "this", "that", "to", "was", "what", "when", "where", "which", "who", "why", "with",
+    };
 
     /// <summary>Finds the concept a page name points at.</summary>
     /// <param name="pageName">The page's name.</param>
@@ -21,15 +29,29 @@ internal static class ConceptMatch
             .FirstOrDefault();
     }
 
-    private static HashSet<string> Words(string name) =>
-        [.. name.Split([' ', '-', '_', '/', ':', '.', ','], StringSplitOptions.RemoveEmptyEntries).Select(Stem)];
-
-    // A word's stem: lower case, one common ending dropped (when four letters stay) and a trailing e, so "Schedule", "Scheduling" and "schedules" are one word.
-    private static string Stem(string word)
+    // A client copy of the server's word rule, so a name picks the same concept here as in a paste: keep in step with AnchorMatch.Words (src/Context/Aw.Context.Core/Graph/AnchorMatch.cs)
+    // and the QueryRules.Words and _small list it uses (the UI cannot reference Aw.Context.Core). Letter and digit runs, lower-cased, 64 characters at most; small words dropped before and
+    // after a plural 's' is dropped.
+    private static HashSet<string> Words(string text)
     {
-        var stem = word.ToLowerInvariant();
-        var suffix = _suffixes.FirstOrDefault(s => stem.EndsWith(s, StringComparison.Ordinal) && stem.Length - s.Length >= 4);
-        stem = suffix is null ? stem : stem[..^suffix.Length];
-        return stem.Length > 4 && stem.EndsWith('e') ? stem[..^1] : stem;
+        var words = new List<string>();
+        var word = new StringBuilder();
+        foreach (var c in text.Append(' '))
+        {
+            if (char.IsLetterOrDigit(c) && word.Length < MaxWordLength)
+            {
+                _ = word.Append(char.ToLowerInvariant(c));
+            }
+            else if (!char.IsLetterOrDigit(c) && word.Length > 0)
+            {
+                words.Add(word.ToString());
+                _ = word.Clear();
+            }
+        }
+
+        return [.. words.Where(static w => !_small.Contains(w)).Select(Singular).Where(static w => !_small.Contains(w))];
     }
+
+    private static string Singular(string word) =>
+        word.Length > 3 && word.EndsWith('s') && !word.EndsWith("ss", StringComparison.Ordinal) ? word[..^1] : word;
 }
