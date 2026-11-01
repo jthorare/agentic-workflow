@@ -25,7 +25,7 @@ internal static class PageRows
             .DistinctBy(n => n.Key, StringComparer.Ordinal).OrderByDescending(n => n.Owner).ThenBy(n => n.Label, StringComparer.CurrentCultureIgnoreCase).ThenBy(n => n.Key, StringComparer.Ordinal).ToList();
         var code = actions.Select(a => a.Key).Prepend(page.Key).Any(k => into[k].Any(e => e.Type == "implements"));
         string[] marks = [page.Owner ? Labels.ContextConceptSetByPerson : Labels.ContextPagesSuggested, code ? Labels.ContextPagesCode : Labels.ContextPagesNoCode];
-        return new PageRowViewModel(page.Key, page.Label, marks, FromMap(page.Key), [.. actions.Select(a => Action(a, page, graph, concept))]) { Owner = page.Owner };
+        return new PageRowViewModel(page.Key, page.Label, marks, FromMap(page.Key), [.. actions.Select(a => Action(a, page, graph, concept))]) { Owner = page.Owner, PageId = page.PageId };
     }
 
     private static PageActionRowViewModel Action(WholeNode action, WholeNode page, Graph graph, string? concept)
