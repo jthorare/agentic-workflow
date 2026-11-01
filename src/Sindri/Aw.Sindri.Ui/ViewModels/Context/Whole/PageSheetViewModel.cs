@@ -190,6 +190,10 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     {
         var waiting = await _writes.Waiting(cancellationToken).ConfigureAwait(true);
         (_hash, _approve, _before) = (waiting?.FileHash ?? waiting?.LiveHash, waiting?.OnlyPages(pageIds) == true, waiting?.ChangedPaths ?? []);
+        if (_hash is null)
+        {
+            Say(Labels.PageSheetNoHash);
+        }
     }
 
     private void Fill(PageDraft draft)
