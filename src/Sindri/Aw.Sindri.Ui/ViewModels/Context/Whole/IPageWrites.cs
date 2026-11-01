@@ -32,6 +32,14 @@ internal interface IPageWrites
     /// <returns>The count, or null when the read failed or no API address is known.</returns>
     public Task<int?> OwnerCount(CancellationToken cancellationToken);
 
+    /// <summary>Searches the map's pages by name (GET /sindri/context/pages with q and marks=all): the "Pick another" search (pages spec §3.6).</summary>
+    /// <param name="repo">The repo to read, or null.</param>
+    /// <param name="query">The text a page's name or map label contains; blank keeps every page.</param>
+    /// <param name="limit">The most rows to read.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The pages found, or null when the read failed or no API address is known.</returns>
+    public Task<IReadOnlyList<PageMatch>?> Search(string? repo, string query, int limit, CancellationToken cancellationToken);
+
     /// <summary>Writes the pages in one profile write, waits for the job, then approves its hash when <paramref name="approve"/> is set and nothing else waits.</summary>
     /// <param name="save">The pages to set and the page ids to remove.</param>
     /// <param name="ifHash">The live hash the sheet read when it opened.</param>

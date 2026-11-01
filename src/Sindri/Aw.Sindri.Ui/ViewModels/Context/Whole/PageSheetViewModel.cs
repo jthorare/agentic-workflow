@@ -16,18 +16,20 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     private bool _approve;
     private IReadOnlyList<string> _before = [];
     private string _initial = string.Empty;
+    private readonly TimeProvider _clock;
 
     /// <summary>Builds a sheet that has read nothing yet.</summary>
     /// <param name="writes">Where the page is read and written.</param>
     /// <param name="known">The concepts the Context page read, in its order, for the names and the "Relate to another concept" picker.</param>
     /// <param name="otherNames">The names of the section's other pages, for the same-name warning.</param>
     /// <param name="openConcept">The concept id the section is open on, or null.</param>
-    internal PageSheetViewModel(IPageWrites writes, IReadOnlyList<ConceptChoice> known, IReadOnlyList<string> otherNames, string? openConcept)
+    /// <param name="clock">Times the search's rest after typing; null for the system clock.</param>
+    internal PageSheetViewModel(IPageWrites writes, IReadOnlyList<ConceptChoice> known, IReadOnlyList<string> otherNames, string? openConcept, TimeProvider? clock = null)
     {
         ArgumentNullException.ThrowIfNull(writes);
         ArgumentNullException.ThrowIfNull(known);
         ArgumentNullException.ThrowIfNull(otherNames);
-        (_writes, _known, _otherNames, _openConcept) = (writes, known, otherNames, openConcept);
+        (_writes, _known, _otherNames, _openConcept, _clock) = (writes, known, otherNames, openConcept, clock ?? TimeProvider.System);
         IsLoading = true;
     }
 
