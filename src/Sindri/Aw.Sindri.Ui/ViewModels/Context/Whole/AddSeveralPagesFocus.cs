@@ -9,6 +9,9 @@ internal enum AddSeveralPagesFocus
     /// <summary>The first row that has a reason (<see cref="AddSeveralPagesViewModel.ProblemRow"/>).</summary>
     ProblemRow,
 
+    /// <summary>The first row's tick, else the Save all button (Accept all suggested, once its rows are drawn).</summary>
+    FirstRow,
+
     /// <summary>The Save all button.</summary>
     SaveAll,
 

@@ -8,12 +8,16 @@
           Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}" BorderThickness="1" CornerRadius="{StaticResource Radius.LG}"
           AutomationProperties.Name="{Binding Head}">
     <Grid RowDefinitions="Auto,Auto,*" RowSpacing="8">
-      <Grid ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="6">
-        <TextBlock x:Name="PagesHead" Classes="body-strong" Text="{Binding Head}" Focusable="True" VerticalAlignment="Center" AutomationProperties.Name="{Binding Head}" />
-        <Button x:Name="PagesAddSeveral" Grid.Column="1" IsVisible="{Binding CanWrite}" Click="OnAddSeveral" Padding="8,2" />
-        <Button x:Name="PagesNewPage" Grid.Column="2" Content="{Binding NewPageText}" IsVisible="{Binding CanWrite}" Click="OnNewPage" Padding="8,2" AutomationProperties.Name="{Binding NewPageText}" />
-        <Button x:Name="PagesClose" Grid.Column="3" Content="×" IsVisible="{Binding CanClose}" Click="OnClose" Padding="6,0" Background="Transparent" BorderThickness="0"
+      <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="6">
+        <TextBlock x:Name="PagesHead" Classes="body-strong" Text="{Binding Head}" Focusable="True" VerticalAlignment="Center" TextWrapping="Wrap" AutomationProperties.Name="{Binding Head}" />
+        <Button x:Name="PagesClose" Grid.Column="1" Content="×" IsVisible="{Binding CanClose}" Click="OnClose" Padding="6,0" Background="Transparent" BorderThickness="0"
                 AutomationProperties.Name="{Binding CloseText}" ToolTip.Tip="{Binding CloseText}" />
+        <!-- The buttons wrap on their own row, so the title always shows in full. -->
+        <WrapPanel Grid.Row="1" Grid.ColumnSpan="2" ItemSpacing="6" LineSpacing="6">
+          <Button x:Name="PagesAcceptAll" Content="{Binding AcceptAllText}" IsVisible="{Binding CanAcceptAll}" Click="OnAcceptAll" Padding="8,2" AutomationProperties.Name="{Binding AcceptAllText}" />
+          <Button x:Name="PagesAddSeveral" IsVisible="{Binding CanWrite}" Click="OnAddSeveral" Padding="8,2" />
+          <Button x:Name="PagesNewPage" Content="{Binding NewPageText}" IsVisible="{Binding CanWrite}" Click="OnNewPage" Padding="8,2" AutomationProperties.Name="{Binding NewPageText}" />
+        </WrapPanel>
       </Grid>
       <StackPanel Grid.Row="1" Spacing="4">
         <TextBlock x:Name="PagesStatus" Classes="caption subtle" Text="{Binding StatusText}" TextWrapping="Wrap" AutomationProperties.Name="{Binding StatusText}" AutomationProperties.LiveSetting="Polite" />

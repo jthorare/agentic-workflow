@@ -8,6 +8,42 @@ internal static partial class Labels
     /// <summary>The Pages and actions section's button, and the sheet's title.</summary>
     internal const string AddSeveralPages = "Add several pages";
 
+    /// <summary>The section's button that opens Accept all suggested.</summary>
+    /// <param name="count">How many suggested pages the section lists.</param>
+    /// <returns>"Accept all suggested (14)".</returns>
+    internal static string AcceptAllButton(int count) => string.Create(CultureInfo.InvariantCulture, $"Accept all suggested ({count})");
+
+    /// <summary>The first choice of a page's concept picker: add the page under no concept.</summary>
+    internal const string AcceptAllNone = "None";
+
+    /// <summary>The reason of a row whose picker says None.</summary>
+    internal const string AcceptAllNoPick = "Not added: no concept picked";
+
+    /// <summary>The reason of a page with no actions to link a concept to.</summary>
+    internal const string AcceptAllNoActions = "Not added: this page has no actions to link a concept to";
+
+    /// <summary>The Accept all suggested sheet's title.</summary>
+    internal const string AcceptAllSuggested = "Accept all suggested";
+
+    /// <summary>The line under the rows when more suggested pages wait than the sheet lists.</summary>
+    /// <param name="more">How many suggested pages are not listed.</param>
+    /// <returns>"186 more: accept these first".</returns>
+    internal static string AcceptAllMore(int more) => string.Create(CultureInfo.InvariantCulture, $"{more} more: accept these first");
+
+    /// <summary>The button that opens a row into its fields.</summary>
+    internal const string AcceptAllEdit = "Edit";
+
+    /// <summary>The open button's name for a screen reader.</summary>
+    /// <param name="name">The page's name.</param>
+    /// <returns>"Edit Schedule week".</returns>
+    internal static string AcceptAllEditName(string name) => "Edit " + name;
+
+    /// <summary>The open row's name box label.</summary>
+    internal const string AcceptAllNameLabel = "Page name";
+
+    /// <summary>The reason of a row past the profile's page cap.</summary>
+    internal const string AcceptAllProfileFull = "The profile holds at most 200 pages";
+
     /// <summary>The paste box's label.</summary>
     internal const string AddSeveralPagesBoxLabel = "Pages to add";
 

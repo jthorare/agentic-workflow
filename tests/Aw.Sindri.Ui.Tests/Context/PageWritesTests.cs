@@ -141,6 +141,72 @@ public sealed class PageWritesTests
         Assert.Null(await Writes(api).Page("surface:route/GET:/nope", concept: null, Token));
     }
 
+    private static string Row(string key, string mark, string? concept) =>
+        $"{{'id':'p-{key}','key':'{key}','name':'{key}','repo':null,'mark':'{mark}','code':false,'actions':[{{'id':'a-{key}','key':'action:{key}','name':'Go','mark':'{mark}','code':false,'concepts':[{(concept is null ? "" : $"'{concept}'")}]}}]}}";
+
+    private static RouteAnswer Rows(bool truncated, params string[] rows) =>
+        new(HttpStatusCode.OK, ("{'pages':[" + string.Join(',', rows) + "],'total':" + rows.Length.ToString(System.Globalization.CultureInfo.InvariantCulture) + ",'truncated':" + (truncated ? "true" : "false") + ",'mapVersion':'v41'}").Replace('\'', '"'));
+
+    [Fact]
+    public async Task Suggested_lists_only_the_sections_pages_in_its_order()
+    {
+        var api = new FakeSindriApi
+        {
+            ContextPagesAnswer = _ => Rows(truncated: false, Row("k1", "suggested", concept: null), Row("k2", "suggested", concept: "approval"), Row("k3", "suggested", concept: null), Row("k4", "owner", concept: null)),
+        };
+
+        var drafts = await Writes(api).Suggested(concept: null, ["k3", "k1"], Token);
+
+        Assert.NotNull(drafts);
+        Assert.Equal(["k3", "k1"], [.. drafts.Select(d => d.Name)], StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Suggested_stops_reading_once_every_key_is_found()
+    {
+        var api = new FakeSindriApi
+        {
+            ContextPagesAnswer = q => q.Offset == 0 ? Rows(truncated: true, Row("k1", "suggested", concept: null), Row("k2", "suggested", concept: null)) : Rows(truncated: false, Row("k3", "suggested", concept: null)),
+        };
+
+        var drafts = await Writes(api).Suggested(concept: null, ["k1", "k2"], Token);
+
+        Assert.Equal(2, drafts?.Count);
+        _ = Assert.Single(api.ContextPagesAsked);
+    }
+
+    [Fact]
+    public async Task Suggested_asks_for_suggested_pages_only()
+    {
+        var api = new FakeSindriApi { ContextPagesAnswer = _ => Rows(truncated: false, Row("k1", "suggested", concept: null)) };
+
+        _ = await Writes(api).Suggested("approval", ["k1"], Token);
+
+        var asked = Assert.Single(api.ContextPagesAsked);
+        Assert.Equal("suggested", asked.Marks);
+        Assert.Equal("approval", asked.Concept);
+    }
+
+    [Fact]
+    public async Task Suggested_is_null_when_the_read_fails()
+    {
+        var api = new FakeSindriApi();
+
+        Assert.Null(await Writes(api).Suggested(concept: null, ["k1"], Token));
+    }
+
+    [Fact]
+    public async Task OwnerCount_reads_one_owner_row_and_reports_the_total()
+    {
+        var api = new FakeSindriApi { ContextPagesAnswer = _ => new RouteAnswer(HttpStatusCode.OK, ("{'pages':[" + Row("k1", "owner", concept: null) + "],'total':190,'truncated':true,'mapVersion':'v41'}").Replace('\'', '"')) };
+
+        var count = await Writes(api).OwnerCount(Token);
+
+        Assert.Equal(190, count);
+        var asked = Assert.Single(api.ContextPagesAsked);
+        Assert.Equal(("owner", 1, null), (asked.Marks, asked.Limit, asked.Concept));
+    }
+
     [Theory]
     [InlineData("index.pages.schedule-week", true)]
     [InlineData("repos.web.index.pages.schedule-week", true)]

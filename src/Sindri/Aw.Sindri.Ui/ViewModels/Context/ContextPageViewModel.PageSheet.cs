@@ -23,6 +23,8 @@ internal sealed partial class ContextPageViewModel
         Whole.Pages.Writes = Ports.Pages;
         NoConceptPages.Writes = Ports.Pages;
         Whole.Pages.SheetRequested += (_, e) => OpenPageSheet(Whole.Pages, e.Value, concept: OpenedConceptId, () => ReadWhole(CancellationToken.None));
+        Whole.Pages.AcceptAllRequested += (_, e) => OpenAcceptAllSuggested(OpenedConceptId, e.Value);
+        NoConceptPages.AcceptAllRequested += (_, e) => OpenAcceptAllNoConcept(e.Value);
         NoConceptPages.SheetRequested += (_, e) => OpenPageSheet(NoConceptPages, e.Value, concept: null, () => OpenNoConcept());
     }
 
@@ -34,7 +36,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        var sheet = new PageSheetViewModel(writes, known: [.. Concepts.Tiles.Select(static t => new ConceptChoice(Id: t.Id, Name: t.Name))], otherNames: section.NamesExcept(key), openConcept: concept);
+        var sheet = new PageSheetViewModel(writes, known: Known(), otherNames: section.NamesExcept(key), openConcept: concept is null ? null : ConceptChoice.BareId(concept));
         sheet.Saved += (_, _) =>
         {
             if (key is not null && sheet.SavedId is { } id)

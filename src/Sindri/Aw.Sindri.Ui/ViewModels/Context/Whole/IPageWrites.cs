@@ -20,6 +20,18 @@ internal interface IPageWrites
     /// <returns>The page, or null when the map has no page with that key or the read failed.</returns>
     public Task<PageDraft?> Page(string key, string? concept, CancellationToken cancellationToken);
 
+    /// <summary>Reads the suggested pages (the map offers them, the profile does not name them) whose node keys are in <paramref name="keys"/>.</summary>
+    /// <param name="concept">The concept the section is open on, or null. A null concept matches every page on the server, so <paramref name="keys"/> is what keeps the list to the section's pages.</param>
+    /// <param name="keys">The section's page keys; the answer follows their order.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The suggested pages found, or null when the read failed or no API address is known.</returns>
+    public Task<IReadOnlyList<PageDraft>?> Suggested(string? concept, IReadOnlyList<string> keys, CancellationToken cancellationToken);
+
+    /// <summary>Counts the pages the profile already names (one read of GET /sindri/context/pages with marks=owner and a slice of one).</summary>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The count, or null when the read failed or no API address is known.</returns>
+    public Task<int?> OwnerCount(CancellationToken cancellationToken);
+
     /// <summary>Writes the pages in one profile write, waits for the job, then approves its hash when <paramref name="approve"/> is set and nothing else waits.</summary>
     /// <param name="save">The pages to set and the page ids to remove.</param>
     /// <param name="ifHash">The live hash the sheet read when it opened.</param>

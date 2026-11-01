@@ -21,6 +21,9 @@ internal sealed class PagesSectionViewModel : ObservableObject
     /// <summary>Raised when a row's button or New page is pressed: the value is the page's node key, or null for a new page.</summary>
     internal event EventHandler<ValueEventArgs<string?>>? SheetRequested;
 
+    /// <summary>Raised when Accept all suggested is pressed: the value is the suggested rows' node keys, in the section's order.</summary>
+    internal event EventHandler<ValueEventArgs<IReadOnlyList<string>>>? AcceptAllRequested;
+
     /// <summary>Gets or sets where the pages are written; null until the host wires it. Without it the section has no Name this page, Edit page or New page.</summary>
     internal IPageWrites? Writes
     {
@@ -29,11 +32,18 @@ internal sealed class PagesSectionViewModel : ObservableObject
         {
             field = value;
             OnChanged(nameof(CanWrite));
+            OnChanged(nameof(CanAcceptAll));
         }
     }
 
     /// <summary>Gets a value indicating whether the section's buttons show.</summary>
     public bool CanWrite => Writes is not null;
+
+    /// <summary>Gets a value indicating whether Accept all suggested shows: writes wired, at least one suggested row.</summary>
+    public bool CanAcceptAll => CanWrite && _all.Exists(static r => !r.Owner);
+
+    /// <summary>Gets the Accept all suggested button's words, "Accept all suggested (3)".</summary>
+    public string AcceptAllText => Labels.AcceptAllButton(_all.Count(static r => !r.Owner));
 
     /// <summary>Gets the New page button's words.</summary>
     public string NewPageText { get; } = Labels.ContextPagesNewPage;
@@ -120,6 +130,9 @@ internal sealed class PagesSectionViewModel : ObservableObject
         SheetRequested?.Invoke(this, new ValueEventArgs<string?>(row.Key));
     }
 
+    /// <summary>Asks for the Accept all suggested sheet over the suggested rows listed.</summary>
+    internal void AcceptAll() => AcceptAllRequested?.Invoke(this, new ValueEventArgs<IReadOnlyList<string>>([.. _all.Where(static r => !r.Owner).Select(static r => r.Key)]));
+
     /// <summary>Asks for the New page sheet.</summary>
     internal void NewPage() => SheetRequested?.Invoke(this, new ValueEventArgs<string?>(value: null));
 
@@ -174,7 +187,7 @@ internal sealed class PagesSectionViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(Head), nameof(CanClose), nameof(CanWrite), nameof(Rows), nameof(IsLoading), nameof(IsFailed), nameof(FailedText), nameof(IsEmpty), nameof(EmptyText), nameof(HasMore), nameof(ShowAllText), nameof(StatusText)])
+        foreach (var name in (string[])[nameof(Head), nameof(CanClose), nameof(CanWrite), nameof(CanAcceptAll), nameof(AcceptAllText), nameof(Rows), nameof(IsLoading), nameof(IsFailed), nameof(FailedText), nameof(IsEmpty), nameof(EmptyText), nameof(HasMore), nameof(ShowAllText), nameof(StatusText)])
         {
             OnChanged(name);
         }

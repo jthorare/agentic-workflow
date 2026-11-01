@@ -6,7 +6,7 @@
   <!-- The Add several pages sheet (pages spec §3.6): one column inside the shell sheet, which supplies the title and the close button. The paste box and Read the list, then one row per block with its tick,
        and the buttons. A discard asks inline; Esc answers the question that shows, else asks or closes. -->
   <StackPanel Spacing="8">
-    <StackPanel Spacing="2">
+    <StackPanel Spacing="2" IsVisible="{Binding HasPasteBox}">
       <TextBlock Classes="caption subtle" Text="{Binding BoxLabel}" AutomationProperties.AccessibilityView="Raw" />
       <TextBox x:Name="AddSeveralText" Text="{Binding Text, Mode=TwoWay}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="120" MaxHeight="260"
                AutomationProperties.Name="{Binding BoxLabel}" AutomationProperties.HelpText="{Binding BoxHelp}" />
@@ -14,7 +14,7 @@
       <TextBlock x:Name="AddSeveralTextNote" Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding TextNote}" IsVisible="{Binding HasTextNote}" TextWrapping="Wrap"
                  AutomationProperties.Name="{Binding TextNote}" AutomationProperties.LiveSetting="Polite" />
     </StackPanel>
-    <Button x:Name="AddSeveralRead" Content="{Binding ReadText}" IsEnabled="{Binding !IsReading}" Click="OnRead" HorizontalAlignment="Left" AutomationProperties.Name="{Binding ReadText}" />
+    <Button x:Name="AddSeveralRead" Content="{Binding ReadText}" IsEnabled="{Binding !IsReading}" Click="OnRead" HorizontalAlignment="Left" IsVisible="{Binding HasPasteBox}" AutomationProperties.Name="{Binding ReadText}" />
     <ItemsControl x:Name="AddSeveralRows" ItemsSource="{Binding Rows}">
       <ItemsControl.ItemTemplate>
         <DataTemplate x:DataType="vm:AddSeveralPagesRowViewModel">
@@ -46,6 +46,36 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
+                <StackPanel IsVisible="{Binding HasPicker}"><ComboBox x:Name="AddSeveralConceptPick" DataContext="{Binding Picker}" x:DataType="vm:UnknownConceptViewModel" ItemsSource="{Binding Choices}"
+                          SelectedItem="{Binding Selected, Mode=TwoWay}" PlaceholderText="{Binding Placeholder}" MinWidth="220" HorizontalAlignment="Left"
+                          AutomationProperties.Name="{Binding PickName}">
+                  <ComboBox.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ConceptChoice"><TextBlock Text="{Binding Name}" /></DataTemplate>
+                  </ComboBox.ItemTemplate>
+                </ComboBox></StackPanel>
+                <ToggleButton x:Name="AddSeveralOpen" Content="{Binding OpenText}" IsChecked="{Binding IsOpen, Mode=TwoWay}" IsVisible="{Binding HasFields}" HorizontalAlignment="Left"
+                              AutomationProperties.Name="{Binding OpenName}" />
+                <StackPanel x:Name="AddSeveralFields" Spacing="6" IsVisible="{Binding IsOpen}">
+                  <TextBlock Classes="caption subtle" Text="{Binding NameLabel}" AutomationProperties.AccessibilityView="Raw" />
+                  <TextBox x:Name="AddSeveralName" Text="{Binding Name, Mode=TwoWay}" AutomationProperties.Name="{Binding NameLabel}" />
+                  <ItemsControl ItemsSource="{Binding Actions}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:AddSeveralPagesActionViewModel">
+                        <StackPanel Spacing="2" Margin="0,2,0,2">
+                          <TextBlock Classes="body-strong" Text="{Binding Name}" TextWrapping="Wrap" />
+                          <ItemsControl ItemsSource="{Binding Ticks}">
+                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                              <DataTemplate x:DataType="vm:ConceptTickViewModel">
+                                <CheckBox Content="{Binding Name}" IsChecked="{Binding IsTicked, Mode=TwoWay}" Margin="0,0,12,0" AutomationProperties.Name="{Binding AccessibleName}" />
+                              </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                          </ItemsControl>
+                        </StackPanel>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                </StackPanel>
                 <TextBlock x:Name="AddSeveralReason" Classes="caption" Focusable="True" Foreground="{DynamicResource Brush.Error}" Text="{Binding Reason}" IsVisible="{Binding HasReason}" TextWrapping="Wrap"
                            AutomationProperties.Name="{Binding Reason}" />
               </StackPanel>
@@ -54,6 +84,7 @@
         </DataTemplate>
       </ItemsControl.ItemTemplate>
     </ItemsControl>
+    <TextBlock x:Name="AddSeveralMore" Classes="caption subtle" Text="{Binding MoreText}" IsVisible="{Binding HasMore}" TextWrapping="Wrap" AutomationProperties.Name="{Binding MoreText}" />
     <TextBlock x:Name="AddSeveralNote" Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Note}" />
     <Border x:Name="AddSeveralDiscardAsk" Classes="card" IsVisible="{Binding IsConfirmingDiscard}">
       <StackPanel Spacing="8">

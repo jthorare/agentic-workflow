@@ -46,6 +46,51 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<PageDraft>?> Suggested(string? concept, IReadOnlyList<string> keys, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(keys);
+        if (apiUrl() is not { } url)
+        {
+            return null;
+        }
+
+        var wanted = new HashSet<string>(keys, StringComparer.Ordinal);
+        var found = new Dictionary<string, PageDraft>(StringComparer.Ordinal);
+        for (var read = 0; read < MaxReads && found.Count < wanted.Count; read++)
+        {
+            var answer = await api.ContextPages(url, new PagesQuery(Concept: concept, Limit: PageSize, Offset: read * PageSize, Marks: "suggested"), cancellationToken).ConfigureAwait(true);
+            if (!answer.IsSuccess)
+            {
+                return null;
+            }
+
+            foreach (var row in answer.Value.Pages.Where(p => wanted.Contains(p.Key)))
+            {
+                _ = found.TryAdd(row.Key, Draft(row));
+            }
+
+            if (!answer.Value.Truncated)
+            {
+                break;
+            }
+        }
+
+        return [.. keys.Distinct(StringComparer.Ordinal).Where(found.ContainsKey).Select(k => found[k])];
+    }
+
+    /// <inheritdoc />
+    public async Task<int?> OwnerCount(CancellationToken cancellationToken)
+    {
+        if (apiUrl() is not { } url)
+        {
+            return null;
+        }
+
+        var answer = await api.ContextPages(url, new PagesQuery(Limit: 1, Marks: "owner"), cancellationToken).ConfigureAwait(true);
+        return answer.IsSuccess ? answer.Value.Total : null;
+    }
+
+    /// <inheritdoc />
     public async Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(save);
