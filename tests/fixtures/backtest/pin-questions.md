@@ -1,7 +1,9 @@
 # Pin hand check (concept pins Q6, Part of #1372)
 
 The hand check for turning `context.ranker.pinLeg` on (spec `docs/superpowers/specs/2026-10-29-sindri-concept-pins-query-design.md`,
-Q6 and "Bar for turning the pin leg on"). Run on this repo's own map, with the six pins below.
+Q6 and "Bar for turning the pin leg on"). This is the worked example, on this repo's own map with the six pins below. For
+Q6 on a work repo, the owner swaps in that repo's pins and rows on their own box (work names never go in this repo); the
+table, the columns and the bar stay the same.
 
 Every question is one this repo's sessions really ask about an area, where the area's word is shared with other areas, so an
 unpinned query has a reason to rank the wrong doc first. Question 4 uses an alias word from ANOTHER pin on purpose ("repro" is
