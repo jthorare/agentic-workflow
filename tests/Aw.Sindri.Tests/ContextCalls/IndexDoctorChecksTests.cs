@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
@@ -30,7 +31,7 @@ public sealed class IndexDoctorChecksTests
     {
         var rows = await Checks(_noSecrets, new FakeProbe(Answer: Unit.Value)).Run(Token);
 
-        Assert.Equal(["context:index-store", "context:index-github", "context:index-linear", "context:index-slack", "context:index-ollama", "context:index-sync"], rows.Select(r => r.Name), StringComparer.Ordinal);
+        Assert.Equal(["context:index-store", "context:index-github", "context:index-linear", "context:index-linear-projects", "context:index-slack", "context:index-ollama", "context:index-sync"], rows.Select(r => r.Name), StringComparer.Ordinal);
         Assert.All(rows, r => Assert.Equal((CheckState.Ok, "not configured (no profile is approved)", null), (r.State, r.Detail, r.Fix)));
     }
 
@@ -189,6 +190,57 @@ public sealed class IndexDoctorChecksTests
 
         Assert.Equal((CheckState.Warn, "record index: linear re-reading for project links, 1,200 issues stored; linear-projects synced 2026-10-28 09:05Z"), (row.State, row.Detail));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_projects_row_is_ok_not_configured_when_the_profile_names_no_linear_source()
+    {
+        await Approve("""{"sources":{"github":{"repos":["owner/name"],"token":"env:GH_KEY"}}}""");
+
+        var row = (await Checks(_githubOnly, new FakeProbe(Answer: Unit.Value)).Run(Token)).Single(r => r.Name == "context:index-linear-projects");
+
+        Assert.Equal((CheckState.Ok, "not configured (the approved profile names no context.sources.linear)"), (row.State, row.Detail));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_projects_row_counts_the_stored_projects_and_names_whose_Linear_key_it_is()
+    {
+        var owner = new UserRef(ExternalId.From("u-1"), "Ada Lovelace");
+
+        var row = LinearProjectsRules.Judge(new ProjectFactsAnswer(owner, [], [Project("a", led: true), Project("b", led: true), Project("c", led: false)], ["ENG"], FirstReadDone: true));
+
+        Assert.Equal(new DoctorCheck("context:index-linear-projects", CheckState.Ok, "3 projects stored, 2 led by Ada Lovelace (the Linear key's owner)", Fix: null), row);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_projects_row_warns_while_whose_Linear_key_it_is_is_not_read_yet()
+    {
+        var row = LinearProjectsRules.Judge(new ProjectFactsAnswer(Owner: null, [], [Project("a", led: false)], ["ENG"], FirstReadDone: true));
+
+        Assert.Equal((CheckState.Warn, "1 project stored, but whose Linear key this is isn't read yet, so the Projects page can't pick out the ones you lead"), (row.State, row.Detail));
+        Assert.Equal("sindri index sync linear-projects", row.Fix);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_projects_row_is_ok_before_the_feed_s_first_read_ends()
+    {
+        var row = LinearProjectsRules.Judge(new ProjectFactsAnswer(Owner: null, [], [], ["ENG"], FirstReadDone: false));
+
+        Assert.Equal(new DoctorCheck("context:index-linear-projects", CheckState.Ok, "the first read of Linear's projects isn't done yet (see context:index-sync)", Fix: null), row);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_projects_row_warns_with_the_code_when_the_stored_projects_can_t_be_read()
+    {
+        var row = LinearProjectsRules.Judge(Context.Core.ContextErrors.AllSourcesUnavailable.With("the store is busy"));
+
+        Assert.Equal(CheckState.Warn, row.State);
+        Assert.StartsWith("the stored projects can't be read: SND-CONTEXT-", row.Detail, StringComparison.Ordinal);
+        Assert.Equal("sindri index status", row.Fix);
+    }
+
+    private static ProjectFact Project(string id, bool led) =>
+        new(RecordKey.From($"linear:project/{id}"), id, Description: null, Url: null, "started", Health: null, DueAt: null, Lead: null, LeadIsOwner: led,
+            DateTimeOffset.UnixEpoch, ClosedAt: null, OpenIssues: 0, OpenPrs: null, LastActivity: null, Repos: null, Counting: false);
 
     private IndexDoctorChecks Checks(PointerSecrets secrets, FakeProbe probe, TimeSpan? limit = null) =>
         new(_h.Profiles, new ContextScopes(_h.Profiles, _h.Callers), FakeContextEngine.Instance, secrets, probe, limit ?? TimeSpan.FromSeconds(3));

@@ -969,7 +969,7 @@ status` shows each intent source's last sync, links, decisions and queued record
 
 ### Doctor rows for the index
 
-`sindri doctor` has the index rows `context:index-store`, `context:index-github`, `context:index-linear`, `context:index-slack`, `context:index-ollama` and `context:index-sync`. On a box that
+`sindri doctor` has the index rows `context:index-store`, `context:index-github`, `context:index-linear`, `context:index-linear-projects`, `context:index-slack`, `context:index-ollama` and `context:index-sync`. On a box that
 once ran the old `onyx up`, `index:onyx-leftover` fails while its containers and volumes exist (fix: `sindri onyx down --purge`; it warns
 once `context.index.acknowledgeOnyxLeftover: true`) and is gone when nothing is left (`docs/csharp/sindri.md`).
 
@@ -1138,7 +1138,7 @@ A cancel or the 24 hours ending makes the stalled call fail with `SND-CONTEXT-24
 
 **Where calls show.** Every call writes one `context.model.called` event (the kind, each harness tried with its outcome `answered`, `limit`, `failed` or `skipped`, the tokens). A call under a job adds to that job's row on the Jobs page (`Models: codex gpt-6-luna 3 calls · 4.1k tokens (1 fell back)`) and lists in its sheet under "Model calls", one row per attempt, the last 200. `sindri jobs show <jobId>` prints the same rows and, for a paused job, a first line `waiting on model-limit: … Resume with: sindri jobs resume <jobId>`. A call with no job is in the ledger only (`sindri ledger --type context.model.called`).
 
-**Doctor.** `context:models` prints one line per distinct route, which is also the answer to "what will run", for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model`. It warns, each with its fix, for a listed harness that isn't installed, a list of one harness (no fallback), a Codex model missing from `codex debug models`, and no agent CLI on PATH at all; it is `ok` "not configured" until a profile is approved. A paused job is not a doctor problem.
+**Doctor.** `context:models` prints one line per distinct route, which is also the answer to "what will run", for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model`. It warns, each with its fix, for a listed harness that isn't installed, a list of one harness (no fallback), a Codex model missing from `codex debug models`, a harness on a route whose only login is a variable the minimal environment drops (Claude Code: `ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_AUTH_TOKEN` with no `.credentials.json` under `CLAUDE_CONFIG_DIR` or `~/.claude`, not checked on macOS where the login is in the keychain; Codex: `OPENAI_API_KEY` or `CODEX_API_KEY` with no `auth.json` under `CODEX_HOME` or `~/.codex`; Cursor's `CURSOR_API_KEY` passes), and no agent CLI on PATH at all; it is `ok` "not configured" until a profile is approved. A paused job is not a doctor problem.
 
 ### The Jev label pick (`labeling.pick: jev`)
 

@@ -60,7 +60,7 @@ internal static class Composition
                 sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IJobContextAccessor>(), sp.GetRequiredService<IModelCallLog>(), sp.GetRequiredService<Kernel.Ids.IIdGenerator>(), sp.GetRequiredService<TimeProvider>()))
             .AddChoicePort(environment)   // the Jev label pick: IChoicePort over the judge's batch classifier, and the route's prompt budget (model routing spec §6.7)
             .AddScoped<IDoctorChecks>(sp => new ModelPickDoctorChecks(sp.GetRequiredService<IModelPickSettings>(), environment))   // the 'model:pick' row (model-pick spec 8)
-            .AddScoped<IDoctorChecks>(sp => new ModelRoutingDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IModelCatalog>(), () => RoutedModelPort.InstalledHarnesses(sp.GetRequiredService<JudgeCatalog>().Get())))   // the 'context:models' row (model routing spec 8.4)
+            .AddScoped<IDoctorChecks>(sp => new ModelRoutingDoctorChecks(sp.GetRequiredService<IApprovedModels>(), sp.GetRequiredService<IModelCatalog>(), () => RoutedModelPort.InstalledHarnesses(sp.GetRequiredService<JudgeCatalog>().Get()), HarnessLogins.Of(environment)))   // the 'context:models' row (model routing spec 8.4)
             .AddPullRequests(environment)   // IPullRequests over the forge the approved profile names (workflow.forge; compose edge to Aw.Forge.Infrastructure in Forge/ForgeAdapters)
             .AddProveBlocks(environment)   // input.prove.echo, only under AW_SINDRI_PROVE_BLOCKS=1 in a prover home
             .AddSindriHost();
