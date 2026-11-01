@@ -15,6 +15,9 @@ public static class PageReader
     /// <summary>The most pages one answer holds.</summary>
     public const int MaxLimit = 200;
 
+    /// <summary>The most suggested page keys a concept row carries.</summary>
+    public const int SuggestedCap = 200;
+
     private const string Scheme = "page:";
     private const string ConceptPrefix = "concept:";
     private const string OwnerMark = "owner";
@@ -55,14 +58,15 @@ public static class PageReader
         return new PagesView(shown, matching.Count, offset + shown.Count < matching.Count, mapVersion);
     }
 
-    /// <summary>How many pages (owner or suggested) express each concept, directly or through an action on them.</summary>
+    /// <summary>The pages (owner or suggested) that express each concept, directly or through an action on them: how many, and the map keys of the suggested ones in the Pages section's order.</summary>
     /// <param name="graph">The graph the caller may see.</param>
-    /// <returns>Concept key ('concept:scheduling') to its page count; concepts no page reaches are left out.</returns>
-    public static IReadOnlyDictionary<string, int> PagesPerConcept(GraphSnapshot graph)
+    /// <returns>Concept key ('concept:scheduling') to its pages; concepts no page reaches are left out.</returns>
+    public static IReadOnlyDictionary<string, ConceptPageSet> ByConcept(GraphSnapshot graph)
     {
         ArgumentNullException.ThrowIfNull(graph);
         var entries = new PageIndex(graph, []).Entries();
-        return entries.SelectMany(e => e.ConceptKeys.Distinct(StringComparer.Ordinal)).GroupBy(k => k, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
+        return entries.SelectMany(e => e.ConceptKeys.Distinct(StringComparer.Ordinal).Select(k => (Concept: k, Entry: e))).GroupBy(x => x.Concept, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => new ConceptPageSet(g.Count(), [.. g.Where(x => !x.Entry.Owner).Take(SuggestedCap).Select(x => x.Entry.Node.Key.Value)]), StringComparer.Ordinal);
     }
 
     private static Result<(int Offset, int Size)> Slice(PagesQuery query)
@@ -105,7 +109,11 @@ public static class PageReader
         (query.Marks == PageMarks.All || query.Marks == PageMarks.Owner == entry.Owner)
         && (query.Page is null || entry.Id == query.Page)
         && (query.Repo is not { } repo || entry.Repos.Contains(repo.Value, StringComparer.Ordinal))
-        && (concept is null || entry.ConceptKeys.Contains(concept, StringComparer.Ordinal));
+        && (concept is null || entry.ConceptKeys.Contains(concept, StringComparer.Ordinal))
+        && Named(query.Q, entry);
+
+    private static bool Named(string? q, PageEntry entry) =>
+        string.IsNullOrWhiteSpace(q) || entry.Name.Contains(q.Trim(), StringComparison.OrdinalIgnoreCase) || entry.Node.Label.Contains(q.Trim(), StringComparison.OrdinalIgnoreCase);
 
     private static PageRow Row(PageEntry entry, MapText text) => new(
         PageId.From(entry.Id), entry.Node.Key, Label(entry.Name, text), entry.Repos.Count == 1 ? entry.Repos[0] : null, entry.Owner ? OwnerMark : SuggestedMark, entry.Code,
