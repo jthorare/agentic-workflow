@@ -115,6 +115,7 @@ public sealed class YamlProfileSandboxWriterTests : IDisposable
     [InlineData(DenialKind.Path, "/var/lib/other")]
     [InlineData(DenialKind.Path, "/home/o")]
     [InlineData(DenialKind.Network, "https://github.com")]
+    [InlineData(DenialKind.Network, "169.254.169.254")]
     [InlineData(DenialKind.Policy, "git push")]
     public async Task A_target_the_profile_cannot_hold_is_refused_and_the_file_is_untouched(DenialKind kind, string target)
     {
