@@ -52,6 +52,7 @@
             </ComboBox.ItemTemplate>
           </ComboBox>
         </WrapPanel>
+        <TextBlock x:Name="PageSheetUnderNoConcept" Classes="caption subtle" Text="{Binding UnderNoConceptText}" IsVisible="{Binding IsUnderNoConcept}" TextWrapping="Wrap" AutomationProperties.Name="{Binding UnderNoConceptText}" />
       </StackPanel>
     <StackPanel Spacing="8" IsVisible="{Binding IsReady}">
       <TextBlock x:Name="PageSheetNote" Classes="body" Foreground="{DynamicResource Brush.Error}" Text="{Binding Note}" IsVisible="{Binding HasNote}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Note}" />
