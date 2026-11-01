@@ -10707,7 +10707,6 @@ Aw.Context.Core.Pages.PageReader
 const Aw.Context.Core.Pages.PageReader.DefaultLimit = 50 -> int
 const Aw.Context.Core.Pages.PageReader.MaxLimit = 200 -> int
 static Aw.Context.Core.Pages.PageReader.Build(Aw.Context.Core.Pages.PagesQuery! query, string! mapVersion, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Pages.PagesView!>!
-static Aw.Context.Core.Pages.PageReader.PagesPerConcept(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
 Aw.Context.Core.Concepts.PinScope.Counting(Aw.Context.Core.Concepts.PinTally? skipped) -> Aw.Context.Core.Sources.ISourcePin!
 Aw.Context.Core.Sources.ISourcePin
 Aw.Context.Core.Sources.ISourcePin.HoldsDoc(string! repo, string! repoRelativePath) -> bool
@@ -11047,3 +11046,18 @@ Aw.Context.Core.Concepts.ConceptRow.SuggestedPages.init -> void
 Aw.Context.Core.Pages.PagesQuery.Q.get -> string?
 Aw.Context.Core.Pages.PagesQuery.Q.init -> void
 const Aw.Context.Core.Pages.PageReader.SuggestedCap = 200 -> int
+static Aw.Context.Core.Pages.PageReader.ByConcept(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Pages.ConceptPageSet!>!
+Aw.Context.Core.Pages.ConceptPageSet
+Aw.Context.Core.Pages.ConceptPageSet.<Clone>$() -> Aw.Context.Core.Pages.ConceptPageSet!
+Aw.Context.Core.Pages.ConceptPageSet.ConceptPageSet(int Count, System.Collections.Generic.IReadOnlyList<string!>! Suggested) -> void
+Aw.Context.Core.Pages.ConceptPageSet.Count.get -> int
+Aw.Context.Core.Pages.ConceptPageSet.Count.init -> void
+Aw.Context.Core.Pages.ConceptPageSet.Deconstruct(out int Count, out System.Collections.Generic.IReadOnlyList<string!>! Suggested) -> void
+Aw.Context.Core.Pages.ConceptPageSet.Equals(Aw.Context.Core.Pages.ConceptPageSet? other) -> bool
+Aw.Context.Core.Pages.ConceptPageSet.Suggested.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Pages.ConceptPageSet.Suggested.init -> void
+override Aw.Context.Core.Pages.ConceptPageSet.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.ConceptPageSet.GetHashCode() -> int
+override Aw.Context.Core.Pages.ConceptPageSet.ToString() -> string!
+static Aw.Context.Core.Pages.ConceptPageSet.operator !=(Aw.Context.Core.Pages.ConceptPageSet? left, Aw.Context.Core.Pages.ConceptPageSet? right) -> bool
+static Aw.Context.Core.Pages.ConceptPageSet.operator ==(Aw.Context.Core.Pages.ConceptPageSet? left, Aw.Context.Core.Pages.ConceptPageSet? right) -> bool

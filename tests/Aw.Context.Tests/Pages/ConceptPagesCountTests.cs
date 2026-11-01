@@ -1,5 +1,4 @@
 using Aw.Context.Core.Concepts;
-using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Tests.Map;
 
@@ -40,7 +39,7 @@ public sealed class ConceptPagesCountTests : IDisposable
     public async Task A_page_the_owner_named_is_counted_but_not_listed_as_suggested()
     {
         _ = await _world.ImportYaml(PagesWorld.Yaml());
-        var named = PagesWorld.Named("schedule-week", "Schedule week", PagesWorld.Week, new PageActionPin(PageActionId.From("submit"), "Submit", "action:WeekPage.submit", ["self-scheduling"]));
+        var named = PagesWorld.Named("schedule-week", "Schedule week", PagesWorld.Week);
 
         var view = (await _world.Engine.Concepts(new ConceptsQuery(MapRead.Current, new ConceptPage()), PagesWorld.Human(named), MapWorld.None)).Value;
 
