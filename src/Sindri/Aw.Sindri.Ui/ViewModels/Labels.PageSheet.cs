@@ -55,6 +55,20 @@ internal static partial class Labels
     /// <summary>Pick another's status line when a blank search finds no other page on the map.</summary>
     internal const string PageSheetPickNoPages = "No other pages on the map yet.";
 
+    /// <summary>An action row's search box name for a screen reader.</summary>
+    internal const string PageSheetActionPickBoxName = "Search this page's actions";
+
+    /// <summary>The line when an action row's search can't read the page's actions.</summary>
+    internal const string PageSheetActionPickFailed = "Couldn't read the page's actions. Try again.";
+
+    /// <summary>The line when no action matches an action row's search.</summary>
+    /// <param name="query">The text searched.</param>
+    /// <returns>The line.</returns>
+    internal static string PageSheetActionPickNone(string query) => "No action matches \"" + query + "\"";
+
+    /// <summary>An action row's status line when a blank search finds no other action on the page.</summary>
+    internal const string PageSheetActionPickNoActions = "No other actions on this page yet.";
+
     /// <summary>The Name field's label.</summary>
     internal const string PageSheetNameLabel = "Name";
 

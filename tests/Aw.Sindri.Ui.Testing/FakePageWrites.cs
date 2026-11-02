@@ -121,6 +121,29 @@ internal sealed class FakePageWrites : IPageWrites
         return SearchFails ? null : Matches;
     }
 
+    /// <summary>Gets or sets the map actions the page's action search reads.</summary>
+    public List<PageMatch> ActionMatches { get; set; } = [];
+
+    /// <summary>Gets or sets a value indicating whether action reads fail (answer null).</summary>
+    public bool ActionsFail { get; set; }
+
+    /// <summary>Gets or sets a gate every action read waits on before it answers; null answers at once.</summary>
+    public TaskCompletionSource? ActionsGate { get; set; }
+
+    /// <summary>Gets the surface of every action read asked for, in order.</summary>
+    public List<string> ActionReads { get; } = [];
+
+    public async Task<IReadOnlyList<PageMatch>?> Actions(string surface, CancellationToken cancellationToken)
+    {
+        ActionReads.Add(surface);
+        if (ActionsGate is { } gate)
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        return ActionsFail ? null : ActionMatches;
+    }
+
     public Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
     {
         Saves.Add(new SavedCall(save, ifHash, approve));
