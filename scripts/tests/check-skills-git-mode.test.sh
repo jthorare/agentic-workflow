@@ -42,6 +42,13 @@ printf 'gh pr comment 3 --body x\n' > "$SK/helper/extra.md"
 out="$(bash "$CHECK" "$SK" 2>&1)"; rc=$?
 printf '%s' "$out" | grep -q "helper/extra.md:1" && ok "a write command in a skill's side file counts" || bad "side file: rc=$rc out=$out"
 
+for cmd in "git rebase origin/main" "git revert HEAD" "git merge x" "git cherry-pick abc" "git am p.patch" "git tag v1" "git branch topic"; do
+  printf '# t\n\nRun `%s`.\n' "$cmd" > "$SK/helper/SKILL.md"; rm -f "$SK/helper/extra.md"
+  out="$(bash "$CHECK" "$SK" 2>&1)"; printf '%s' "$out" | grep -q "helper/SKILL.md:3" && ok "$cmd is a write" || bad "$cmd not flagged"
+done
+printf '# t\n\n`git tag -l`, `git tag`, `git branch --list`, `git merge-base a b`, `git branch --show-current`.\n' > "$SK/helper/SKILL.md"
+out="$(bash "$CHECK" "$SK" 2>&1)"; printf '%s' "$out" | grep -q helper && bad "a read form was flagged" || ok "tag/branch read forms and merge-base are not flagged"
+
 bash "$CHECK" "$TMP/missing" >/dev/null 2>&1; rc=$?
 [ "$rc" = 2 ] && ok "a missing dir exits 2" || bad "missing dir rc=$rc"
 bash "$CHECK" a b >/dev/null 2>&1; rc=$?

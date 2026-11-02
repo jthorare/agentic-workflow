@@ -11,9 +11,10 @@ SKILLS_DIR="${1:-$ROOT/skills}"
 [ "$#" -le 1 ] || { echo "usage: check-skills-git-mode.sh [SKILLS_DIR]" >&2; exit 2; }
 [ -d "$SKILLS_DIR" ] || { echo "check-skills-git-mode: not a directory: $SKILLS_DIR" >&2; exit 2; }
 
-# git: commit, push, tag, worktree add, checkout -b, switch -c, branch <name>, add (also after `git -C <dir>`).
+# git: commit, push, tag <name>, add, merge|rebase|cherry-pick|revert|am, worktree add, checkout -b, switch -c, branch <name>, add (also after `git -C <dir>`).
 # gh: pr create|merge|comment|review|edit|close, issue create|comment, api with an explicit write method.
-WRITE_RE='git( +-C +[^ ]+)? +(commit|push|tag|add|worktree +add|checkout +-b|switch +-c|branch +[^- ])|gh +pr +(create|merge|comment|review|edit|close)|gh +issue +(create|comment)|gh +api .*(--method|-X) +(POST|PUT|PATCH|DELETE)|(--method|-X) +(POST|PUT|PATCH|DELETE)'
+# The bare `--method|-X POST` alternative is deliberately over-inclusive: it also matches `curl -X POST`. A false hit costs one Git mode section; a miss lets a write through.
+WRITE_RE='git( +-C +[^ ]+)? +(commit|push|tag +[^- ]|add|(merge|rebase|cherry-pick|revert|am)( |$)|worktree +add|checkout +-b|switch +-c|branch +[^- ])|gh +pr +(create|merge|comment|review|edit|close)|gh +issue +(create|comment)|gh +api .*(--method|-X) +(POST|PUT|PATCH|DELETE)|(--method|-X) +(POST|PUT|PATCH|DELETE)'
 
 rc=0
 for dir in "$SKILLS_DIR"/*/; do

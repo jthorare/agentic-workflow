@@ -27,7 +27,11 @@ if [ "${AW_GIT_MODE:-full}" = "readonly" ]; then
   sub="${args[$i]:-}"; next="${args[$((i + 1))]:-}"
   refused=""
   case "$sub" in
-    commit|push) refused="$sub" ;;
+    commit|push|merge|rebase|cherry-pick|revert|am) refused="$sub" ;;
+    tag) # a name makes a tag; no args, -l/--list and other flags only read
+      for a in "${args[@]:$((i + 1))}"; do case "$a" in -l|--list) refused=""; break ;; -*) ;; *) refused="tag" ;; esac; done ;;
+    branch) # a bare name makes a branch; no args and flags like --show-current, --list, -a, -r, -v only read
+      for a in "${args[@]:$((i + 1))}"; do case "$a" in -l|--list|--show-current) refused=""; break ;; -*) ;; *) refused="branch" ;; esac; done ;;
     worktree) [ "$next" = "add" ] && refused="worktree add" ;;
     checkout) for a in "${args[@]:$((i + 1))}"; do { [ "$a" = "-b" ] || [ "$a" = "-B" ]; } && refused="checkout -b"; done ;;
     switch) for a in "${args[@]:$((i + 1))}"; do { [ "$a" = "-c" ] || [ "$a" = "-C" ] || [ "$a" = "--create" ]; } && refused="switch -c"; done ;;

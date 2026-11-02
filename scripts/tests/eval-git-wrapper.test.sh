@@ -42,12 +42,25 @@ expect_refused() { # <label> <expected subcommand text> <git args...>
   out="$(AW_GIT_MODE=readonly wrapped "$@" 2>&1)"; rc=$?
   if [ "$rc" = 1 ] && [ "$out" = "aw-eval: git $sub refused (AW_GIT_MODE=readonly)" ]; then ok "$label refused"; else bad "$label: rc=$rc out=$out"; fi
 }
+for form in "branch" "branch -a" "branch --list" "tag" "tag -l" "tag --list"; do
+  # shellcheck disable=SC2086
+  out="$(AW_GIT_MODE=readonly wrapped -C "$REPO" $form 2>&1)"; rc=$?
+  [ "$rc" = 0 ] && ok "git $form is allowed in readonly" || bad "git $form rc=$rc: $out"
+done
 echo b > "$REPO/b.txt"; "$REAL_GIT" -C "$REPO" add b.txt
 expect_refused "commit" "commit" -C "$REPO" commit -m x
 expect_refused "push" "push" -C "$REPO" push origin main
 expect_refused "worktree add" "worktree add" -C "$REPO" worktree add "$TMP/wt"
 expect_refused "checkout -b" "checkout -b" -C "$REPO" checkout -b feature
 expect_refused "switch -c" "switch -c" -C "$REPO" switch -c feature
+expect_refused "merge" "merge" -C "$REPO" merge main
+expect_refused "rebase" "rebase" -C "$REPO" rebase origin/main
+expect_refused "cherry-pick" "cherry-pick" -C "$REPO" cherry-pick HEAD
+expect_refused "revert" "revert" -C "$REPO" revert HEAD
+expect_refused "am" "am" -C "$REPO" am x.patch
+expect_refused "tag <name>" "tag" -C "$REPO" tag v1
+expect_refused "tag -a <name>" "tag" -C "$REPO" tag -a v1 -m x
+expect_refused "branch <name>" "branch" -C "$REPO" branch newbranch
 expect_refused "commit after -c option" "commit" -c core.editor=true -C "$REPO" commit -m x
 
 [ "$("$REAL_GIT" -C "$REPO" rev-list --count HEAD)" = 1 ] && ok "no commit was made by the refused forms" || bad "a refused commit landed"
