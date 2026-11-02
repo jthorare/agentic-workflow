@@ -1,5 +1,10 @@
+using System.Net;
+using System.Text;
+using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.Tests.Context.Whole;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Context.Concepts;
@@ -11,6 +16,7 @@ namespace Aw.Sindri.Ui.Tests.Context.Concepts;
 public sealed class ConceptNewSuggestedPagesTests
 {
     private const string Billing = "concept:billing";
+    private const string Payroll = "concept:payroll";
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     private static FakeSindriApi Serving(params string[]? keys)
@@ -104,5 +110,48 @@ public sealed class ConceptNewSuggestedPagesTests
         await page.ReadMapTop(Token);
 
         Expect.True(!Card(page).HasNewSuggested);
+    }
+
+    [Fact]
+    public async Task A_concept_new_since_the_last_read_shows_all_its_suggested_pages_as_new()
+    {
+        var api = Serving("p/a");
+        var page = await ConceptPage.Shown(api, new Preferences(new InMemoryPreferencesStore()));
+
+        api.ContextConceptsAnswer = _ => AConcepts.Served(AConcepts.Ok(
+            [AConcepts.Concept(Billing, "Billing") with { SuggestedPages = ["p/a"] }, AConcepts.Concept(Payroll, "Payroll") with { SuggestedPages = ["p/run", "p/approve"] }]));
+        await page.ReadMapTop(Token);
+
+        Expect.Equal(("2 new suggested pages", false), (page.Concepts.Find(Payroll)!.NewSuggestedText, Card(page).HasNewSuggested));
+    }
+
+    [Fact]
+    public async Task A_read_from_a_server_without_suggestedPages_sets_no_baseline()
+    {
+        var api = Serving(keys: null);   // a serve from before suggestedPages: the app learns nothing about the concept's suggestions
+        var page = await ConceptPage.Shown(api, new Preferences(new InMemoryPreferencesStore()));
+
+        Rebuild(api, "p/a", "p/b");   // the serve was upgraded: its first read is the baseline
+        await page.ReadMapTop(Token);
+
+        Expect.True(!Card(page).HasNewSuggested, Card(page).NewSuggestedText);
+    }
+
+    [Fact]
+    public async Task Opening_a_concept_marks_seen_the_suggested_pages_its_section_shows()
+    {
+        var api = Serving("surface:screen/week");
+        var scheduling = PagesSectionTests.Scheduling();   // a newer map: the section lists week and availability as suggested, the card only knew week
+        api.WholeMapAnswer = query => query.Concept is null
+            ? ContextAnswers.WholeMap(query)
+            : new RouteAnswer(HttpStatusCode.OK, Encoding.UTF8.GetString(AwJson.Serialize(scheduling, SindriApiClient.Json)));
+        var page = await ConceptPage.Shown(api, new Preferences(new InMemoryPreferencesStore()));
+
+        await page.OpenConcept(Billing, Token);
+        page.CloseConcept();
+        Rebuild(api, "surface:screen/week", "surface:screen/availability");
+        await page.ReadMapTop(Token);
+
+        Expect.True(!Card(page).HasNewSuggested, Card(page).NewSuggestedText);
     }
 }
