@@ -1,0 +1,4 @@
+{"type":"system","subtype":"init","skills":["rootCause","bugHunt","bugReport","bugFixOrchestrator"],"tools":["Skill"]}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"aw-evals:bugHunt"}}]}}
+{"type":"system","subtype":"init","skills":["rootCause","bugHunt","bugReport","bugFixOrchestrator"],"tools":["Skill"]}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"aw-evals:rootCause"}}]}}
