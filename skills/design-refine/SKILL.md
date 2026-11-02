@@ -1,6 +1,6 @@
 ---
 name: design-refine
-description: "Use when a project already has design-tokens.json and .impeccable.md and a built screen needs a bounded polish pass inside that language. Runs one audit, up to three pack dispatches and a verify gate, and logs each run. Not for a from-scratch restyle or a bolder look (impeccable, taste-skill)."
+description: "Use when a project already has its design tokens file and .impeccable.md and a built screen needs a bounded polish pass inside that language. Runs one audit, up to three pack dispatches and a verify gate, and logs each run. Not for a from-scratch restyle or a bolder look (impeccable, taste-skill)."
 argument-hint: "[refinement-intent]"
 allowed-tools: Read, Write, Edit, Skill, Glob, Grep, Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

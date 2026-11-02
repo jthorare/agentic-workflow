@@ -1,6 +1,6 @@
 ---
 name: meta
-description: Use when you run a team of parallel agent sessions (lanes), each on its own branch: a lane message needs your reply, a PR is queued to land, the owner has a question to route, or the box is short on memory or disk. Drives the aw-meta CLI so replies, gates, merges and the log aren't tracked by hand. Not for debugging one PR's CI.
+description: "Use when you run a team of parallel agent sessions (lanes), each on its own branch: a lane message needs your reply, a PR is queued to land, the owner has a question to route, or the box is short on memory or disk. Drives the aw-meta CLI so replies, gates, merges and the log aren't tracked by hand. Not for debugging one PR's CI."
 argument-hint: "[start | ready <pr> | owner | health | status]"
 allowed-tools: Bash(aw-meta *), Bash(*/aw-meta *), Bash(aw-meta-launch *), Bash(git *), Bash(gh *), Read, Grep, Glob, AskUserQuestion, SendMessage, ListAgents, Monitor
 ---

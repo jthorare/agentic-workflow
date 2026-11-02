@@ -6,4 +6,4 @@ tags: [family-verify, routing]
 expected_first_skill: design-verify-desktop
 ---
 
-The new library window in my desktop app was designed in a mockup. Run the real app on seeded data and pixel-compare each screen to its mockup, listing every mismatch.
+The new library window in my desktop app was designed in a mockup. Does what I built actually look like that mockup? List each place it drifts and how to fix it.
