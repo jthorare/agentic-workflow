@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Workspace for the landAndDeploy cases: a small tool-lending library on a merged PR. Offline, no remote.
-# deploy.json is untracked and git-ignored (the skill refuses a tracked one). Its deploy command is a local script that writes
-# .deploy-marker. The canned gh answer says PR 18 is merged; the canned curl answers make the checkout ping smoke test return 503.
+# deploy.json is untracked and git-ignored (the skill refuses a tracked one). Its deploy command is a local script that prints
+# "deploy-ok". The canned gh answer says PR 18 is merged; the canned curl answers make the checkout ping smoke test return 503.
 # Writes only under $PWD.
 set -eu
 mkdir -p scripts src .agentic-workflow .aw-eval
@@ -15,13 +15,12 @@ def late_fee(days_late: int, per_day_cents: int = 50) -> int:
 P
 cat > scripts/deploy.sh <<'P'
 #!/usr/bin/env bash
-# Stand-in deploy: records that it ran.
+# Stand-in deploy: prints only. Under the eval, Bash can't write anywhere a grader sees (the 0a probe, #1892).
 set -eu
-echo "deployed $(date -u +%Y-%m-%dT%H:%M:%SZ)" > "$PWD/.deploy-marker"
-echo "toollib: release pushed"
+echo "toollib: deploy-ok release pushed"
 P
 chmod +x scripts/deploy.sh
-printf '.agentic-workflow/deploy.json\n.aw-eval/\n.aw-state/\n.deploy-marker\n' > .gitignore
+printf '.agentic-workflow/deploy.json\n.aw-eval/\n.aw-state/\n' > .gitignore
 git init -q -b main
 git add -A
 git -c user.name=eval -c user.email=eval@example.com commit -q -m "initial toollib"

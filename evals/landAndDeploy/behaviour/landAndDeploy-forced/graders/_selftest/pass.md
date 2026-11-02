@@ -13,7 +13,7 @@
 {"tool":"Bash","input":{"command":"curl -fsS https://toollib.example.test/api/checkout/ping"}}
 ```
 
-Files left: `.deploy-marker`
+Deploy printed: `toollib: deploy-ok release pushed`
 
 ## Reply
 
