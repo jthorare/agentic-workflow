@@ -1,0 +1,1 @@
+Verdict: FAIL. The Settings page footer (action bar) sits a few pixels lower than in the mockup.

@@ -1,0 +1,1 @@
+Bash	{"command": "ui-evidence run ./ui-runs/pr57/script.json ./ui-runs/pr57 --host http://localhost:3000"}

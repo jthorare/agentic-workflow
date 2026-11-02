@@ -1,0 +1,1 @@
+Step 3, the confirmation toast after Save, failed: the page showed a 500 instead of 'Preferences saved'.

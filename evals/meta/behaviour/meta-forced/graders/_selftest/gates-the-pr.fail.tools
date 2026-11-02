@@ -1,0 +1,3 @@
+Bash	{"command": "aw-meta inbox-sync"}
+Bash	{"command": "aw-meta gate-run 14"}
+Bash	{"command": "aw-meta gate-rerun 41"}

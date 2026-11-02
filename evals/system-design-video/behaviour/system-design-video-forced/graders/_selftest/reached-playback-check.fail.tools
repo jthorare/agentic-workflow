@@ -1,0 +1,2 @@
+Bash	{"command": "bash doctor.sh"}
+Bash	{"command": "bun render.ts storyboard.json take --tokens design-tokens.json"}

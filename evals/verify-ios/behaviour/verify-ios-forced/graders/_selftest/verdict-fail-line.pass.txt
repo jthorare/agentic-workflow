@@ -1,0 +1,4 @@
+Accessibility check failed on the Today screen.
+
+verdict: FAIL
+evidence_path: /work/.agentic-workflow/fernly/verification/20261102-101500-today-a11y/
