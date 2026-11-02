@@ -16,7 +16,8 @@ evals/
 - A family set checks that near-neighbour skills do not steal each other's prompts. Each member's grader is `type: regex`,
   `target: trace`, anchored on the first Skill call. `--selftest` walks every family case; a real run adds a family's whole set
   (ablation none, own cost cap `--family-max-cost-usd`, default 12) when a selected member's description changed vs the merge base,
-  or when `--family <name>` is given.
+  or when `--family <name>` is given. When the day's spend can't fit the family's cap, the skill cases still run and the run prints
+  `FAMILY SKIPPED` and exits 2, unless a missed gate (4) or a low score (1) comes first. A `--dry-run` prints the same line but exits 0.
 - Selftest replies for a grader sit in `graders/_selftest/<grader>.pass.<ext>` and `.fail.<ext>`: `txt` (reply), `files`, `tools`,
   or `trace` (for `target: trace`: `run.trace.map(JSON.stringify).join("\n")`, one compact JSON message per line; a Skill call is an
   assistant message with `{"type":"tool_use","name":"Skill","input":{"skill":"<name>"}}`; read from the claude 2.1.312 bundle, the exact
