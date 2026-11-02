@@ -105,9 +105,9 @@ public sealed class PageSheetActionPickTests
         sheet.OpenActionPick(print);
         await sheet.ActionPicking;
 
-        await Type(sheet, print, clock, "x");
+        await Type(sheet, print, clock, "zz");   // no action name holds "zz" ("Export week" holds an x)
 
-        Expect.Equal("No action matches \"x\"", print.PickStatus);
+        Expect.Equal("No action matches \"zz\"", print.PickStatus);
         Expect.Sequence([], print.PickRows.Select(r => r.Name));
     }
 
