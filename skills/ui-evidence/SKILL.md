@@ -167,3 +167,10 @@ The files are `NAME=value` lines (`#` comments, optional `export ` and quotes); 
 - `UI_EVIDENCE_USER_AGENT` — the browser's user agent. Default: desktop Chrome at the
   bundled Chromium's version, because headless Chromium's own UA says "HeadlessChrome"
   and apps that gate on browser support (an "unsupported browser" page) block it.
+
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
