@@ -46,10 +46,7 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
     {
         if (IsClaude(target))
         {
-            var home = AgentHomes.For(_sindriHome, target);
-            return ClaudeLogin(home) is { } bytes
-                ? ProbeBytes(bytes, "Claude Code", LoginFiles.ClaudeExpiry, ClaudeRefreshToken, "open 'sindri sandbox login claude-code' to sign in again")
-                : Status(LoginState.Missing, $"no Claude Code login in {home}");
+            return ProbeClaude(AgentHomes.For(_sindriHome, target)).Status;
         }
 
         return IsCodex(target)
@@ -66,16 +63,18 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
             return Task.FromResult(Unavailable(SandboxReasons.SourceUnsupported, detail: null));
         }
 
-        var status = Probe(target);
+        var home = AgentHomes.For(_sindriHome, target);
+        var claude = IsClaude(target) ? ProbeClaude(home) : default;
+        var status = IsClaude(target) ? claude.Status : Probe(target);
         if (status.State != LoginState.Ready)
         {
             return Task.FromResult(Unavailable(status.State == LoginState.Expired ? SandboxReasons.Expired : SandboxReasons.NoLogin, status.Detail));
         }
 
-        var home = AgentHomes.For(_sindriHome, target);
-        if (IsClaude(target) && !File.Exists(home + "/.credentials.json") && ClaudeLogin(home) is { } login)
+        if (claude.FromKeychain is { } login)
         {
-            // why: inside Seatbelt the Keychain is blocked, so Claude Code falls back to this file, and a refresh inside the Step writes it there
+            // why: inside Seatbelt the Keychain is blocked, so Claude Code falls back to this file, and a refresh inside the Step writes it there;
+            // a fresh login from the Keychain replaces a file that is missing, unreadable or expired
             try
             {
                 OwnerOnly.WriteAtomically(home + "/.credentials.json", login);
@@ -117,24 +116,37 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
     private static Result<PreparedLogin> Unavailable(string reason, string? detail) =>
         SandboxRefusal.For(SindriErrors.LaunchLoginUnavailable, reason, detail, ModelLoginSource.SeparateLogin);
 
-    // The login file's bytes, else (claude-code only) the Keychain item named after the agent home; null when neither holds one. An unreadable file reads as empty bytes, which parse as unreadable.
-    private byte[]? ClaudeLogin(string home)
+    // The login file when it is Ready (the Keychain is not asked); otherwise the Keychain item named after the agent home when that is Ready, with its bytes so Prepare can write the file.
+    // When neither is Ready the file's status is the answer (Expired says to sign in again), else the Keychain's, else Missing.
+    private ClaudeProbe ProbeClaude(string home)
     {
+        const string expired = "open 'sindri sandbox login claude-code' to sign in again";
         var file = home + "/.credentials.json";
+        LoginStatus? fromFile = null;
         if (File.Exists(file))
         {
-            try
+            fromFile = ProbeBytes(ReadOrEmpty(file), "Claude Code", LoginFiles.ClaudeExpiry, ClaudeRefreshToken, expired);
+            if (fromFile.State == LoginState.Ready)
             {
-                return File.ReadAllBytes(file);
-            }
-            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-            {
-                return [];
+                return new ClaudeProbe(fromFile, FromKeychain: null);
             }
         }
 
-        return _keychain?.Read(SecurityCliKeychainLogin.ServiceFor(home)) is { Length: > 0 } json ? Encoding.UTF8.GetBytes(json) : null;
+        LoginStatus? fromItem = null;
+        if (_keychain?.Read(SecurityCliKeychainLogin.ServiceFor(home)) is { Length: > 0 } json)
+        {
+            var bytes = Encoding.UTF8.GetBytes(json);
+            fromItem = ProbeBytes(bytes, "Claude Code", LoginFiles.ClaudeExpiry, ClaudeRefreshToken, expired);
+            if (fromItem.State == LoginState.Ready)
+            {
+                return new ClaudeProbe(fromItem, bytes);
+            }
+        }
+
+        return new ClaudeProbe(fromFile ?? fromItem ?? Status(LoginState.Missing, $"no Claude Code login in {home}"), FromKeychain: null);
     }
+
+    private readonly record struct ClaudeProbe(LoginStatus Status, byte[]? FromKeychain);
 
     private LoginStatus ProbeCodex(string file) =>
         File.Exists(file)
