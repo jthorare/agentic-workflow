@@ -91,8 +91,8 @@ Prefer **Serena** for all code exploration — LSP-based symbol lookup is faster
 Before running this skill, verify the environment is set up:
 
 ```bash
-# Derive repo slug and AW_DIR (also creates the output directory)
-. "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"
+# Derive repo slug and AW_DIR (also creates the output directory); quiet when the toolkit isn't installed yet (the setup check below offers setup.sh)
+f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f"
 echo "repo-slug: $REPO_SLUG"
 
 # Check bootstrap status

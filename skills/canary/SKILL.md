@@ -20,7 +20,8 @@ Reads `.agentic-workflow/canary.json` for monitoring URLs and probes. Runs minut
 
 - Release ID (positional arg). If omitted, auto-discover latest:
   ```bash
-  ls -1d $AW_DIR/releases/*/ | sort -r | head -1
+  . "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"
+  ls -1d "$AW_DIR"/releases/*/ | sort -r | head -1
   ```
 - `--duration <sec>` (optional). Overrides `canary.duration` from config.
 - `--setup` flag: run interactive wizard to write `.agentic-workflow/canary.json`, then exit.
