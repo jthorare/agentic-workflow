@@ -96,7 +96,7 @@ source "$SHARED_DIR/repo-slug.sh"
 echo "$AW_DIR"
 ```
 
-Write the report and the handoff with the **Write tool** at absolute paths under that `$AW_DIR`; it creates the missing directories. Don't `mkdir` first, and don't skip the files because the shell can't write there: a shell that is read-only or sandboxed is not a reason to skip them.
+Write the report and the handoff with the **Write tool** at absolute paths under that `$AW_DIR`; it creates the missing directories. Don't `mkdir` first, and don't skip the files because the shell can't write there: a shell that is read-only or sandboxed is not a reason to skip them. Send the report, the handoff and (under `AW_RESULT=1`) the result file as Write calls in the same turn, so none of them waits on the others.
 
 Report format:
 
