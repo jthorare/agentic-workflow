@@ -18,6 +18,6 @@ execution:
   - Agent
 context:
   scaffold_script: fixture.sh
-# stubs on PATH (evals/stubs/bin): aw-meta
+# stubs on PATH (repo evals/stubs/bin, staged to <stage>/stubs/bin for the run): aw-meta
 # This box runs the live team on its sockets: no cross-session send, no agent listing, no background watcher.
-# Needs evals/stubs/bin first on PATH (evals/stubs/bin/aw-meta, answers in evals/stubs/aw-meta.json).
+# Needs the stubs first on PATH (repo evals/stubs/bin/aw-meta, run from <stage>/stubs/bin, answers in evals/stubs/aw-meta.json).
