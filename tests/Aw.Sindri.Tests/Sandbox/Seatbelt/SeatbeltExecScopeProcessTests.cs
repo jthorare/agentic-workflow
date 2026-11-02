@@ -71,7 +71,7 @@ public sealed class SeatbeltExecScopeProcessTests : IDisposable
         Assert.SkipUnless(File.Exists("/usr/bin/perl") && File.Exists("/bin/sh"), "needs /usr/bin/perl and /bin/sh");
         var pgroups = ProcessGroupFiles.Directory(_directory);
         var launch = LaunchId.From("LCH-" + new string('0', 31) + "2");
-        var argv = ExecScope.Mac(pgroups)(launch, Limits(), ["/bin/sh", "-c", "echo ran; read x"]);
+        var argv = ExecScope.Mac(pgroups)(launch, Limits(), ["/bin/sh", "-c", "echo ran; read x; exit 0"]);
         // why: setsid (where it exists) drops the controlling terminal, so /dev/tty cannot open for the child; elsewhere (macOS has no setsid) a test host launched from an agent or CI has none, and stdin and stdout are pipes either way
         var setsid = (Environment.GetEnvironmentVariable("PATH") ?? string.Empty).Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries).Select(d => Path.Combine(d, "setsid")).FirstOrDefault(File.Exists);
         var start = setsid is null ? argv : ["setsid", .. argv];
@@ -93,7 +93,7 @@ public sealed class SeatbeltExecScopeProcessTests : IDisposable
     {
         var home = Path.Combine(_directory, "home");
         var launcher = Path.Combine(_directory, "launcher");
-        var pgroups = ProcessGroupFiles.Directory(launcher);
+        var pgroups = ProcessGroupFiles.Directory(new LauncherOptions(launcher).LaunchDirectory);   // why: the folder the registered exec and a Step launch both use
         using var area = new TempRunArea();
         var sandbox = new SeatbeltVerbsEdgeTests.TrackingSandbox(createSeatbeltTemp: false, onDiscard: plan =>
         {

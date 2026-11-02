@@ -70,14 +70,15 @@ public sealed class SeatbeltRegistrationTests
     }
 
     [Fact]
-    public void Exec_scope_on_a_mac_is_the_process_group_one()
+    public void Exec_scope_on_a_mac_is_its_own_process_group_through_the_perl_wrapper()
     {
         var launch = LaunchId.From("LCH-" + new string('0', 31) + "1");
         IReadOnlyList<string> inner = ["sandbox-exec", "-f", "p", "claude"];
 
         var argv = ExecScope.Mac("/pg")(launch, Limits(), inner);
 
-        Assert.Equal(ProcessGroupScopeArgv.Start("/pg", launch.Value, inner), argv);
+        // why: a Step's scope script needs a session leader (tmux gives one); exec is a plain child, so the wrapper makes its own group (#1940 review)
+        Assert.Equal(["/usr/bin/perl", "-e", ExecScope.MacScript, ProcessGroupFiles.PgidPath("/pg", launch.Value)!, .. inner], argv);
         Assert.DoesNotContain("systemd-run", argv, StringComparer.Ordinal);
     }
 
