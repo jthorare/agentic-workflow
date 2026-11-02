@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 
 namespace Aw.Sindri.Infrastructure.Sandbox;
@@ -16,8 +18,14 @@ internal sealed class SecurityCliKeychainLogin(ISandboxProcesses processes, bool
     /// <returns>The service name.</returns>
     internal static string ServiceFor(string? configDirectory)
     {
-        _ = configDirectory;   // why: stub until the fix (#1928)
-        return ItemName;
+        if (string.IsNullOrEmpty(configDirectory))
+        {
+            return ItemName;
+        }
+
+        // why: Claude Code names the item after CLAUDE_CONFIG_DIR: the first 8 hex digits of the SHA-256 of the NFC-normalized path
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(configDirectory.Normalize(NormalizationForm.FormC)));
+        return ItemName + "-" + Convert.ToHexStringLower(hash)[..8];
     }
 
     /// <inheritdoc />

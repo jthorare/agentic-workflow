@@ -1,3 +1,4 @@
+using System.Text;
 using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core;
@@ -11,7 +12,8 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// <summary>
 /// The separate-login credential source (sandbox spec SB18, §3.4, SB-8): a target signs in once with its own account, and Steps use that agent home
 /// ('$AW_SINDRI_HOME/agent-homes/&lt;target&gt;', made by 'sindri sandbox login') instead of a copy of the owner's. It is bound read-write at its own path, so a refresh
-/// persists and every reader outside the sandbox finds the transcripts where the session wrote them. Nothing is copied, so there is nothing to release.
+/// persists and every reader outside the sandbox finds the transcripts where the session wrote them. Nothing is copied, so there is nothing to release. On a Mac, Claude Code keeps a login made under CLAUDE_CONFIG_DIR in the Keychain item named after the agent home, so
+/// a claude-code home with no '.credentials.json' is read from there and the file is written into the home at Prepare.
 /// </summary>
 internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
 {
@@ -20,6 +22,7 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
 
     private readonly string _sindriHome;
     private readonly TimeProvider _clock;
+    private readonly IKeychainLogin? _keychain;
 
     /// <summary>Creates the source.</summary>
     /// <param name="sindriHome">AW_SINDRI_HOME: the agent homes live under 'agent-homes/&lt;target&gt;'.</param>
@@ -29,10 +32,8 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
     {
         _sindriHome = sindriHome;
         _clock = clock;
-        Keychain = keychain;
+        _keychain = keychain;
     }
-
-    internal IKeychainLogin? Keychain { get; }
 
     /// <inheritdoc />
     public ModelLoginSource Id => ModelLoginSource.SeparateLogin;
@@ -45,11 +46,14 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
     {
         if (IsClaude(target))
         {
-            return ProbeFile(AgentHomes.For(_sindriHome, target) + "/.credentials.json", "Claude Code", LoginFiles.ClaudeExpiry, ClaudeRefreshToken, "open 'sindri sandbox login claude-code' to sign in again");
+            var home = AgentHomes.For(_sindriHome, target);
+            return ClaudeLogin(home) is { } bytes
+                ? ProbeBytes(bytes, "Claude Code", LoginFiles.ClaudeExpiry, ClaudeRefreshToken, "open 'sindri sandbox login claude-code' to sign in again")
+                : Status(LoginState.Missing, $"no Claude Code login in {home}");
         }
 
         return IsCodex(target)
-            ? ProbeFile(AgentHomes.For(_sindriHome, target) + "/auth.json", "Codex", LoginFiles.CodexExpiry, CodexRefreshToken, "open 'sindri sandbox login codex' to sign in again")
+            ? ProbeCodex(AgentHomes.For(_sindriHome, target) + "/auth.json")
             : Status(LoginState.Missing);
     }
 
@@ -69,6 +73,19 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
         }
 
         var home = AgentHomes.For(_sindriHome, target);
+        if (IsClaude(target) && !File.Exists(home + "/.credentials.json") && ClaudeLogin(home) is { } login)
+        {
+            // why: inside Seatbelt the Keychain is blocked, so Claude Code falls back to this file, and a refresh inside the Step writes it there
+            try
+            {
+                OwnerOnly.WriteAtomically(home + "/.credentials.json", login);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                return Task.FromResult(Unavailable(SandboxReasons.NoLogin, "the login could not be written"));
+            }
+        }
+
         var variable = IsClaude(target) ? "CLAUDE_CONFIG_DIR" : "CODEX_HOME";
         Result<PreparedLogin> prepared = new PreparedLogin(
             ModelLoginSource.SeparateLogin,
@@ -100,17 +117,48 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
     private static Result<PreparedLogin> Unavailable(string reason, string? detail) =>
         SandboxRefusal.For(SindriErrors.LaunchLoginUnavailable, reason, detail, ModelLoginSource.SeparateLogin);
 
-    // Ready with its expiry when it is still valid, Expired when it has run out; a missing or unreadable file is no login.
-    private LoginStatus ProbeFile(string file, string what, Func<JsonElement, DateTimeOffset?> expiry, Func<JsonElement, bool> hasRefreshToken, string expired)
+    // The login file's bytes, else (claude-code only) the Keychain item named after the agent home; null when neither holds one. An unreadable file reads as empty bytes, which parse as unreadable.
+    private byte[]? ClaudeLogin(string home)
     {
-        if (!File.Exists(file))
+        var file = home + "/.credentials.json";
+        if (File.Exists(file))
         {
-            return Status(LoginState.Missing, $"no {what} login in {Path.GetDirectoryName(file)}");
+            try
+            {
+                return File.ReadAllBytes(file);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                return [];
+            }
         }
 
+        return _keychain?.Read(SecurityCliKeychainLogin.ServiceFor(home)) is { Length: > 0 } json ? Encoding.UTF8.GetBytes(json) : null;
+    }
+
+    private LoginStatus ProbeCodex(string file) =>
+        File.Exists(file)
+            ? ProbeBytes(ReadOrEmpty(file), "Codex", LoginFiles.CodexExpiry, CodexRefreshToken, "open 'sindri sandbox login codex' to sign in again")
+            : Status(LoginState.Missing, $"no Codex login in {Path.GetDirectoryName(file)}");
+
+    private static byte[] ReadOrEmpty(string file)
+    {
         try
         {
-            using var document = JsonDocument.Parse(File.ReadAllBytes(file));
+            return File.ReadAllBytes(file);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return [];
+        }
+    }
+
+    // Ready with its expiry when it is still valid, Expired when it has run out; bytes that do not parse are no login.
+    private LoginStatus ProbeBytes(byte[] bytes, string what, Func<JsonElement, DateTimeOffset?> expiry, Func<JsonElement, bool> hasRefreshToken, string expired)
+    {
+        try
+        {
+            using var document = JsonDocument.Parse(bytes);
             var at = expiry(document.RootElement);
 
             // why: a Step uses this login in place and may refresh it, so only a login with no refresh token left has really run out (spec §3.4, §15)
@@ -118,7 +166,7 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
                 ? Status(LoginState.Expired, $"the {what} login has expired; {expired}")
                 : new LoginStatus(LoginState.Ready, ModelLoginSource.SeparateLogin, ExpiresAt: at);
         }
-        catch (Exception e) when (e is JsonException or IOException or UnauthorizedAccessException)
+        catch (JsonException)
         {
             return Status(LoginState.Missing, $"the {what} login could not be read");
         }
