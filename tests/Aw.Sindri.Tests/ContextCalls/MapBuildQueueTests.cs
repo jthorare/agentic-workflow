@@ -62,7 +62,7 @@ public sealed class MapBuildQueueTests : IDisposable
             await JobHost.Settle(host, Token);
             Assert.Equal((1, 1), (active, asked));   // while the refresh held graphify, the build had not entered it
             Assert.Equal((1, 1), (clusters.MostActive, clusters.Asked.Count));   // and after the release it reused the refresh's draft instead of running graphify again (#1696)
-            Assert.True(await Finished(host, build, "was built from these heads while this build waited, so it was not built again"), $"the build job {build} does not report the reused draft");
+            Assert.True(await Finished(host, build, "was built from these heads while this build waited, so it was not built again"), $"the build job {build} does not report the reused draft; its events and the map's (#1882): {await Events(host, build)}");
         }
         finally
         {
@@ -154,6 +154,15 @@ public sealed class MapBuildQueueTests : IDisposable
     {
         var events = (await host.App.Services.GetRequiredService<ILedgerReader>().ReadAfter(0, 5000, Token)).Value;
         return events.Any(e => e.Envelope.Type == EventTypes.JobFinished && e.Envelope.Payload.Contains(job, StringComparison.Ordinal) && e.Envelope.Payload.Contains(text, StringComparison.Ordinal));
+    }
+
+    // Every event of that job and every context.map event, in ledger order: a failure names how the job ended (#1882 never reproduced locally).
+    private static async Task<string> Events(GoldenHost host, string job)
+    {
+        var events = (await host.App.Services.GetRequiredService<ILedgerReader>().ReadAfter(0, 5000, Token)).Value;
+        return string.Join(" || ", events
+            .Where(e => e.Envelope.Payload.Contains(job, StringComparison.Ordinal) || e.Envelope.Type.StartsWith("context.map.", StringComparison.Ordinal))
+            .Select(e => $"{e.Envelope.Type} {e.Envelope.Payload}"));
     }
 
     private static async Task Until(string what, Func<Task<bool>> holds)
