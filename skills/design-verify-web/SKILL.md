@@ -1,6 +1,6 @@
 ---
 name: design-verify-web
-description: Playwright screenshots at mobile/tablet/desktop viewports, diff against mockup baseline using design-comparison MCP, and report discrepancies with fix suggestions.
+description: "Use when a web page or route you built should be compared with its approved mockup at the mobile, tablet and desktop breakpoints. Takes Playwright screenshots, diffs them against the baseline and lists fixes. Not for iOS or desktop screens, and not for functional or console-error checks (verify-web)."
 argument-hint: "[screen-name] [--route <path>]"
 allowed-tools: Read, Write, Glob, AskUserQuestion, Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(cat *), mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_resize, mcp__plugin_playwright_playwright__browser_wait_for, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_console_messages, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_evaluate, mcp__plugin_playwright_playwright__browser_close, mcp__design-comparison__compare_design, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -143,6 +143,12 @@ LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 - Region-level findings only, unless computed-style verified (Step 7)
 - Do not modify any code — this skill is read-only verification
 - If the dev server is not running, release the lock, advise the user to start it, and stop
+
+## Result block
+
+Under `AW_RESULT=1` only: write `$AW_DIR/results/design-verify-web-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
+
+Keys: `skill` (`design-verify-web`), `artifacts` (absolute paths: `comparison-report.json` and the diff images), `summary` (one line: verdict, max diff %), `pack` (absolute path of the run directory `$AW_DIR/design/verify/<run-id>/`), `verdict` (`overall.verdict`: `PASS|WARN|FAIL`).
 
 ## Next steps
 
