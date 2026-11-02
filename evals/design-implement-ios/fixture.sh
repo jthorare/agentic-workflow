@@ -11,17 +11,18 @@ case "$kind" in
     mkdir -p Sources/PlantWater && printf 'import SwiftUI\nstruct RootView: View { var body: some View { Text("hi") } }\n' > Sources/PlantWater/RootView.swift ;;
   *) echo "unknown kind: $kind" >&2; exit 1 ;;
 esac
-# Design state the skills look for (AW_DIR is pointed here by case.yaml env).
-mkdir -p .aw-fixture/design
+# Design state the skills look for: the preamble sets AW_DIR=$AW_STATE_DIR/<repo slug>, the slug is the workspace dir name (no remote), AW_STATE_DIR=<workspace>/.aw-state under the runner.
+AWD="$PWD/.aw-state/$(basename "$PWD")/design"
+mkdir -p "$AWD"
 printf '{"color":{"primary":{"$value":"#2f6f4f","$type":"color"}},"spacing":{"md":{"$value":"16px","$type":"dimension"}}}\n' > design-tokens.json
 # Approved mockup baseline for every screen the cases name, so the mockup-first gate passes.
 for s in saved-recipes login pricing settings onboarding streak; do
-  : > ".aw-fixture/design/mockup-web-$s.png"; : > ".aw-fixture/design/mockup-ios-$s.png"; : > ".aw-fixture/design/mockup-$s.html"
+  : > "$AWD/mockup-web-$s.png"; : > "$AWD/mockup-ios-$s.png"; : > "$AWD/mockup-$s.html"
 done
-printf '{"screens":{' > .aw-fixture/design/screens.json
+printf '{"screens":{' > "$AWD/screens.json"
 first=1
 for s in saved-recipes login pricing settings onboarding streak; do
-  [ $first = 1 ] || printf ',' >> .aw-fixture/design/screens.json; first=0
-  printf '"%s":{"approved_at":"2026-10-30T10:00:00Z","baselines":{"web":"mockup-web-%s.png","ios":"mockup-ios-%s.png"}}' "$s" "$s" "$s" >> .aw-fixture/design/screens.json
+  [ $first = 1 ] || printf ',' >> "$AWD/screens.json"; first=0
+  printf '"%s":{"approved_at":"2026-10-30T10:00:00Z","baselines":{"web":"mockup-web-%s.png","ios":"mockup-ios-%s.png"}}' "$s" "$s" "$s" >> "$AWD/screens.json"
 done
-printf '}}\n' >> .aw-fixture/design/screens.json
+printf '}}\n' >> "$AWD/screens.json"
