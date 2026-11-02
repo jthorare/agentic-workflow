@@ -56,6 +56,20 @@ public sealed class ContextConceptFollowTests
     }
 
     [Fact]
+    public async Task An_open_concept_draws_the_newer_version_in_its_header()
+    {
+        var (page, api, follows, url) = await OpenBilling();
+        Expect.Equal("Context · the whole map · v1", page.Whole.Head);
+        api.WholeMapAnswer = query => query.Concept is null ? ContextAnswers.WholeMap(query)
+            : new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("context-whole", "concept-open").Replace("\"mapVersion\": \"v1\"", "\"mapVersion\": \"v2\"", StringComparison.Ordinal));
+
+        api.MapStatusAnswer = StatusAt(2);
+        await Event(follows, url);
+
+        Expect.Equal("Context · the whole map · v2", page.Whole.Head);
+    }
+
+    [Fact]
     public async Task An_open_concept_is_not_read_again_for_the_same_map_version()
     {
         var (_, api, follows, url) = await OpenBilling();
