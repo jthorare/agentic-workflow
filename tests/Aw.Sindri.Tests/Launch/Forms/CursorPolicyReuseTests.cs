@@ -99,13 +99,13 @@ public sealed class CursorPolicyReuseTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public void A_tool_with_no_Cursor_rule_type_is_refused_not_passed_through()
     {
-        var policy = new StepPolicy(["Read", "NotebookEdit"], StepPermissionMode.Plan, WritablePath: null);
+        var policy = new StepPolicy(["Read", "Task"], StepPermissionMode.Plan, WritablePath: null);
 
         var written = CursorPolicyFile.Write(Policy, _a, Worktree, policy, static _ => false);
 
         _ = Assert.Throws<ArgumentException>(() => CursorPolicyFile.Render(policy));
         Assert.True(written.IsError);
-        Assert.Contains("NotebookEdit", written.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("Task", written.Error.Message, StringComparison.Ordinal);
         Assert.False(File.Exists(Config));
     }
 }
