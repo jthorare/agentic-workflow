@@ -3,8 +3,9 @@ using Aw.Sindri.Ui.Api.Context;
 namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
 /// <summary>
-/// Which suggested pages of each concept the owner has seen (pages spec §3.5), kept by concept key ("&lt;repo&gt;/&lt;concept id&gt;") as the page keys seen. A concept read for the first time sets its
-/// baseline (nothing is new); a later read counts the keys not seen and forgets the seen keys the concept no longer lists; opening the concept's Pages section marks its current keys seen.
+/// Which suggested pages of each concept the owner has seen (pages spec §3.5), kept by concept key ("&lt;repo&gt;/&lt;concept id&gt;") as the page keys seen. The first read of a repo sets its
+/// baseline (nothing is new); a later read counts the keys not seen (all of a concept new since then) and forgets the seen keys the concept no longer lists; opening the concept's Pages section marks
+/// the keys it shows seen. A read in which no concept carries suggested pages (a server from before them, or none yet) leaves the store as it is.
 /// </summary>
 internal static class SuggestedPagesSeen
 {
@@ -28,16 +29,28 @@ internal static class SuggestedPagesSeen
     {
         ArgumentNullException.ThrowIfNull(seen);
         ArgumentNullException.ThrowIfNull(concepts);
-        var next = new Dictionary<string, IReadOnlyList<string>>(seen, StringComparer.Ordinal);
         var counts = new Dictionary<string, int>(StringComparer.Ordinal);
+        if (!concepts.Any(static c => c.SuggestedPages is not null))
+        {
+            return new Reading(seen, counts);   // the server left suggestedPages out everywhere: an empty baseline here would flag every card once the server sends them
+        }
+
+        var next = new Dictionary<string, IReadOnlyList<string>>(seen, StringComparer.Ordinal);
+        var prefix = KeyOf(repo, string.Empty);
+        var baseline = !seen.Keys.Any(k => k.StartsWith(prefix, StringComparison.Ordinal));
         foreach (var concept in concepts)
         {
             var key = KeyOf(repo, concept.Id);
             var current = concept.SuggestedPages ?? [];
             if (!seen.TryGetValue(key, out var stored))
             {
-                next[key] = current;   // the baseline: nothing is new the first time a concept is read
-                continue;
+                if (baseline)
+                {
+                    next[key] = current;   // the repo's first read: nothing is new
+                    continue;
+                }
+
+                stored = [];   // a concept new since the repo's first read: all its suggested pages are new
             }
 
             var known = stored.ToHashSet(StringComparer.Ordinal);

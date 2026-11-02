@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Context.Concepts;
 
 namespace Aw.Sindri.Ui.ViewModels.Context;
@@ -24,7 +25,8 @@ internal sealed partial class ContextPageViewModel
         return reading?.New;
     }
 
-    // The owner opened the concept's Pages section (its scoped map was read): the concept's current suggested pages count as seen and its card loses the line.
+    // The owner opened the concept's Pages section (its scoped map was read): the suggested pages the section shows count as seen, and the card's own keys with them, so a map read
+    // newer than the cards marks what the owner saw, not only the cards' older keys (the store's next read forgets any the map dropped). The card loses the line.
     private async Task MarkSuggestedSeen(string conceptId)
     {
         if (Ports.Prefs is not { } prefs || Concepts.Find(conceptId) is not { } tile)
@@ -33,7 +35,12 @@ internal sealed partial class ContextPageViewModel
         }
 
         var key = SuggestedPagesSeen.KeyOf(_repo ?? string.Empty, conceptId);
-        await prefs.Update(p => p with { SeenPages = SuggestedPagesSeen.Opened(p.SeenPages, key, tile.SuggestedPages) }).ConfigureAwait(true);
+        var shown = ShownSuggested(tile);   // read here: the preferences queue runs the change later, off the UI thread
+        await prefs.Update(p => p with { SeenPages = SuggestedPagesSeen.Opened(p.SeenPages, key, shown) }).ConfigureAwait(true);
         Concepts.ClearNewSuggested(conceptId);
     }
+
+    // The section's suggested keys first, as the server's list stops at the first 200, then the card's.
+    private IReadOnlyList<string> ShownSuggested(ConceptTileViewModel tile) =>
+        [.. Whole.Pages.SuggestedKeys.Concat(tile.SuggestedPages).Distinct(StringComparer.Ordinal).Take(UiPreferences.MaxSeenPagesPerConcept)];
 }
