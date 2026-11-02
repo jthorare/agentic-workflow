@@ -105,7 +105,7 @@ public sealed class ProjectCardTests
     }
 
     [Fact]
-    public async Task The_served_PR_counts_read_as_a_count_and_a_repos_line_without_the_owner()
+    public async Task The_served_PR_counts_read_as_a_count_and_a_repos_line_and_a_project_with_no_repos_shows_no_PR_count()
     {
         _f.Serve("with-prs");
 
@@ -116,7 +116,8 @@ public sealed class ProjectCardTests
         Assert.Equal("3", checkout.PrsValue);
         Assert.Contains("repos: api, web", checkout.Footer, StringComparer.Ordinal);
         Assert.EndsWith("3 open PRs", checkout.AccessibleName, StringComparison.Ordinal);
-        Assert.Equal("0", mobile.PrsValue);
+        Assert.Null(mobile.PrsValue);
+        Assert.DoesNotContain("open PRs", mobile.AccessibleName, StringComparison.Ordinal);
         Assert.DoesNotContain(mobile.Footer, part => part.StartsWith("repos:", StringComparison.Ordinal));
     }
 
@@ -178,12 +179,13 @@ public sealed class ProjectCardTests
     }
 
     [Fact]
-    public async Task A_card_has_counts_when_it_has_an_issue_count_or_a_PR_count_and_none_otherwise()
+    public async Task A_card_has_counts_when_it_has_an_issue_count_or_a_PR_count_with_repos_and_none_otherwise()
     {
         var page = await _f.Shown(Token);
 
         Assert.Equal([true, false, true], page.Groups.Select(g => g.Cards[0].HasCounts));
         Assert.False((await _f.FirstCard(c => c["openIssues"] = null, Token)).HasCounts);
-        Assert.True((await _f.FirstCard(c => { c["openIssues"] = null; c["openPrs"] = 2; }, Token)).HasCounts);
+        Assert.True((await _f.FirstCard(c => { c["openIssues"] = null; c["openPrs"] = 2; c["repos"] = new System.Text.Json.Nodes.JsonArray("acme/web"); }, Token)).HasCounts);
+        Assert.False((await _f.FirstCard(c => { c["openIssues"] = null; c["openPrs"] = 0; }, Token)).HasCounts);
     }
 }

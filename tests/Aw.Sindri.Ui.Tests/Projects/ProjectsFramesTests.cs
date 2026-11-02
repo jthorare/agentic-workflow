@@ -47,6 +47,7 @@ public sealed class ProjectsFramesTests : FrameHost
 
         Shown(window, shell);
         Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && (t.Text ?? "").Contains("repos: api, web", StringComparison.Ordinal));
+        Assert.Null(shell.Projects.Groups.SelectMany(g => g.Cards).Single(c => c.Name == "Mobile app").PrsValue);
         Frame(window, "projects-with-prs-1440", prefix: string.Empty);
     });
 

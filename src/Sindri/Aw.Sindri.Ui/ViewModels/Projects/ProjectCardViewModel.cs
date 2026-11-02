@@ -110,7 +110,8 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
         (IssuesValue, IssuesLabel) = Card.Counting
             ? ("…", "counting")
             : Card.OpenIssues is { } issues ? (issues.ToString(CultureInfo.InvariantCulture), "open issues") : (null, null);
-        PrsValue = Card.OpenPrs?.ToString(CultureInfo.InvariantCulture);
+        // why: a project none of whose issues reach a PR has no repos, and mockup B shows no PR count for it rather than a 0
+        PrsValue = Card.Repos.Count > 0 ? Card.OpenPrs?.ToString(CultureInfo.InvariantCulture) : null;
         OnChanged(nameof(HasCounts));
         NotesFace = Face(Card.Notes);
         DeriveNotes();
@@ -176,7 +177,7 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
             parts.Add(Labels.ProjectOpenIssues(issues));
         }
 
-        if (Card.OpenPrs is { } prs)
+        if (Card.OpenPrs is { } prs && Card.Repos.Count > 0)
         {
             parts.Add(Labels.ProjectOpenPrs(prs));
         }
