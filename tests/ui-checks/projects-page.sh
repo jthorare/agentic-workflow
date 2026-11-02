@@ -2,7 +2,8 @@
 # tests/ui-checks/projects-page.sh — the Projects page's screenshot run on the UI fixture (projects page spec §12 Ph5 proof, §13.1; #1566).
 # The fixture (sindri-ui-fixture.sh up, context up, projects) seeds six Linear projects, their issues, the viewer (Sam Rivera) and the owner's own
 # state (Billing migration attached, Hiring loop made by hand, Search relevance v2 hidden). The check opens the REAL sindri-ui on the Projects tab and:
-#   1. waits for the Checkout rewrite card; asserts "Linear says you're Sam Rivera", Checkout rewrite shows 5 open issues, Billing migration and
+#   1. waits for the Checkout rewrite card; asserts "Linear says you're Sam Rivera", Checkout rewrite shows 5 open issues and 3 open PRs with
+#      "repos: api, web" (Billing migration, with no PRs, shows no PR count), Billing migration and
 #      Hiring loop are on the page, Search relevance v2 is not (it is hidden); screenshot projects-page.png
 #   2. opens the Checkout rewrite card's sheet; screenshot projects-sheet.png; closes it
 #   3. "+ Add project": the From Linear list names Platform API v3 and Mobile offline sync; screenshot projects-add-linear.png; By hand; screenshot projects-add-hand.png; closes it
@@ -76,6 +77,9 @@ wait_text "Hiring loop" "step 1"
 sleep 2
 has "Linear says you're Sam Rivera" || fail "step 1: the freshness line does not say \"Linear says you're Sam Rivera\""
 find_nodes "Checkout rewrite" | jq -r '.name // empty' | grep -q "5 open issues" || fail "step 1: the Checkout rewrite card does not show 5 open issues"
+find_nodes "Checkout rewrite" | jq -r '.name // empty' | grep -q "3 open PRs" || fail "step 1: the Checkout rewrite card does not show 3 open PRs"
+has "repos: api, web" || fail "step 1: the Checkout rewrite card's footer does not say \"repos: api, web\""
+! find_nodes "Billing migration" | jq -r '.name // empty' | grep -q "open PRs" || fail "step 1: Billing migration, a project with no PRs, shows a PR count"
 has "Billing migration" || fail "step 1: the attached project, Billing migration, is not on the page"
 has "Hiring loop" || fail "step 1: the hand-made project, Hiring loop, is not on the page"
 ! has "Search relevance v2" || fail "step 1: Search relevance v2 is on the page before Hidden is opened"
