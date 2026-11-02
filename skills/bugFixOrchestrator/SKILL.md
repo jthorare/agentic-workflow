@@ -279,3 +279,16 @@ Report: {STATE}/resolution.md
 - `/shipRelease` — open the PR for the resolved fix branch
 - `/review` — review the fix before shipping
 - `/rootCause` — if unresolved, re-investigate with what the failed attempts ruled out
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/bugFixOrchestrator-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`bugFixOrchestrator`), `artifacts` (absolute paths: `<state>/resolution.md` and the fix branch's changed files), `summary` (one line),
+plus `status` (`resolved | unresolved`); `branch` (fix branch); `commit` (fix commit sha); `judge_decision` (the judge's decision id).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

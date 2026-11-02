@@ -1,0 +1,3 @@
+bins: [curl, docker, gh, git, heavy, judge, lsof, node, ui-evidence]
+agents: [qa-runner]
+mcp: [github]

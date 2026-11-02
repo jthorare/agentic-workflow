@@ -1,0 +1,2 @@
+bins: [git, node, python3]
+mcp: [sindri]

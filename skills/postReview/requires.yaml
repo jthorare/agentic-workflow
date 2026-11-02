@@ -1,0 +1,2 @@
+bins: [gh, git, jq]
+mcp: [prism-mcp]

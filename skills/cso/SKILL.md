@@ -111,3 +111,16 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 - `/review` — if pre-ship and findings exist, run general code review
 - `/shipRelease` — if all findings are LOW or none
 - `/rootCause` — if a CRITICAL finding maps to a known incident
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/cso-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`cso`), `artifacts` (absolute paths: the security review (`$AW_DIR/plans/<feature>/security-review.md` or `$AW_DIR/security/<target-slug>-threat-model.md`)), `summary` (one line),
+plus `mode` (`plan | pr`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -248,3 +248,16 @@ Do not invoke bugReport on success — bugHunt's own Step 8 report is sufficient
 - `/review` — verify fixes pass code review
 - `/shipRelease` — if all bugs are fixed and tests pass
 - `/weeklyRetro` — if this was part of a larger debugging push
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/bugHunt-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`bugHunt`), `artifacts` (absolute paths: the QA report `$AW_DIR/qa/<timestamp>-<slug>.md` and the files the fixes changed), `summary` (one line),
+plus `tier` (`quick | standard | exhaustive`); `fixed` (count of bugs fixed); `remaining` (count of bugs left open).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

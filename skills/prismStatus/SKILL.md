@@ -71,3 +71,16 @@ stdout only. No file written.
 
 - `/officeHours` — if KB is empty, start populating it with a brainstorm
 - `/bootstrap` — if you've never run it on this repo, do so to seed planning docs
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/prismStatus-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`prismStatus`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
+plus `healthy` (true when dashboard, MCP server and knowledge base all answer).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

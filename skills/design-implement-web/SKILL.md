@@ -148,3 +148,16 @@ Generated components:
 - `/design-refine "align color usage with the token palette"` / `"polish hover, focus, and transition states"` / `"tighten the type hierarchy"` — refinement intents, dispatched through impeccable
 - `/shipRelease` — ship once the verify verdict is PASS
 - Commit generated token files: `git add <token file paths>`
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-implement-web-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-implement-web`), `artifacts` (absolute paths: the generated token files, components and `$AW_DIR/design/implement-report.json`), `summary` (one line),
+plus `overall_verdict` (`PASS | WARN | FAIL`, the verify gate's overall verdict); `verify_run_id` (the verify run id).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
