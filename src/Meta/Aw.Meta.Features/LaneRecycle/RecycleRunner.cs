@@ -37,6 +37,12 @@ internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, 
     internal async ValueTask<Result<LaneRecycleResponse>> Run(RecyclePlan plan, CancellationToken cancellationToken)
     {
         var cleared = await pane.Submit(plan.Session, ClearLine, cancellationToken).ConfigureAwait(false);
+        if (cleared.IsError && !IsInputBoxMisread(cleared.Error))
+        {
+            // A tmux failure or a vanished pane: nothing was typed, so there is no new id to wait for.
+            return cleared.Error;
+        }
+
         var fresh = await NewSession(plan, cancellationToken).ConfigureAwait(false);
         if (fresh.IsError)
         {
@@ -50,16 +56,29 @@ internal sealed class RecycleRunner(PaneSubmitter pane, ILaneSessions sessions, 
         }
 
         var recorded = await files.RecordSession(plan.Lane, SessionId.From(newSession), clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
-        var continued = recorded.IsError ? recorded : await pane.Submit(plan.Session, plan.ContinueLine, cancellationToken).ConfigureAwait(false);
-        if (continued.IsError)
+        if (recorded.IsError)
         {
-            return continued.Error;
+            return recorded.Error;
         }
 
+        // The id is recorded, so the recycle worked; a continue line the pane check misreads is a warning, not a failure.
+        var continued = await pane.Submit(plan.Session, plan.ContinueLine, cancellationToken).ConfigureAwait(false);
+        var warning = continued.IsError ? ContinueWarning(newSession) : null;
+        return await LogRecycle(plan, newSession, warning, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static string ContinueWarning(string newSession) =>
+        $"new session {newSession} recorded; the continue line was typed but the pane check misread it: look at the pane before resending";
+
+    private static bool IsInputBoxMisread(Error error) => error.Message.Contains("still in the input box", StringComparison.Ordinal);
+
+    private async ValueTask<Result<LaneRecycleResponse>> LogRecycle(RecyclePlan plan, string newSession, string? warning, CancellationToken cancellationToken)
+    {
         var size = plan.OldTokens is { } tokens ? (tokens / 1000).ToString(CultureInfo.InvariantCulture) + "k" : "unknown";
-        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"recycled lane {plan.Lane}: session {plan.OldSession.Value} -> {newSession} (recorded in lane-sessions), context {size} tokens, digest {plan.Digest}");
+        var misread = warning is null ? string.Empty : " (the continue line's pane check misread it; check the pane)";
+        var note = LogLine.Event(LogKind.Note, clock.GetUtcNow(), $"recycled lane {plan.Lane}: session {plan.OldSession.Value} -> {newSession} (recorded in lane-sessions), context {size} tokens, digest {plan.Digest}{misread}");
         var logged = await log.Append(note, cancellationToken).ConfigureAwait(false);
-        return logged.IsError ? logged.Error : new LaneRecycleResponse(plan.Lane, DryRun: false, plan.OldSession.Value, newSession, plan.OldTokens, plan.Digest, Steps(plan));
+        return logged.IsError ? logged.Error : new LaneRecycleResponse(plan.Lane, DryRun: false, plan.OldSession.Value, newSession, plan.OldTokens, plan.Digest, Steps(plan), warning);
     }
 
     private static Error TimedOut(RecyclePlan plan) =>

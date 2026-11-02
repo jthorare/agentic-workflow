@@ -39,5 +39,6 @@ internal static class LaneRecycleCommand
             [
                 (response.DryRun ? "dry run: would recycle lane " : "recycled lane ") + response.Lane + " (session " + response.OldSession + (response.NewSession is { } fresh ? " -> " + fresh : string.Empty) + ")",
                 .. response.Steps.Select(static (s, i) => "  " + (i + 1).ToString(System.Globalization.CultureInfo.InvariantCulture) + ". " + s),
+                .. response.Warning is { } warning ? (string[])["warning: " + warning] : [],
             ]);
 }

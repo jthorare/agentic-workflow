@@ -132,6 +132,20 @@ public sealed class LaneRecycleTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_clear_that_fails_for_another_reason_than_the_input_box_ends_the_recycle_without_polling()
+    {
+        await Ready();
+        _world.Panes.WakeFailure = "no such session: t1-api";
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.Equal(MetaErrors.CommandFailed.Code, result.Error.Code);
+        Assert.Equal(2, _world.LaneSessions.Calls);
+        Assert.Empty(_world.Panes.Woken);
+        Assert.Empty(_world.Log.Lines);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_new_session_that_never_appears_is_AW_META_022_and_the_continue_line_is_not_sent()
     {
         await Ready();
