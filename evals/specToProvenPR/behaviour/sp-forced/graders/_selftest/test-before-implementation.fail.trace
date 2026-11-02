@@ -1,0 +1,3 @@
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t1","name":"Write","input":{"file_path":"/ws/cwd/greeter/core.py","content":"x"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t2","name":"Edit","input":{"replace_all":false,"file_path":"/ws/cwd/greeter/__main__.py","content":"x"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","id":"t3","name":"Write","input":{"file_path":"/ws/cwd/tests/test_shout.py","content":"x"}}]}}
