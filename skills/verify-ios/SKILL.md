@@ -1,6 +1,6 @@
 ---
 name: verify-ios
-description: "XcodeBuildMCP-based iOS simulator verification. Executes journeys through verification lenses (functional, visual, accessibility, error-state, appearance) and writes an evidence pack (pack.json + report.md) on every run. Auto mode infers screens from Swift file changes in git diff."
+description: "Use when an iOS or SwiftUI change needs checking on a simulator before it ships: someone wants the app launched, its screens exercised and each one called pass or fail, with accessibility labels checked. Writes an evidence pack. Not for web pages, desktop apps, or comparing screens to mockups (design-verify-ios)."
 argument-hint: "[--journey <plan.md>] [--lenses <csv>] [--visual] [--baseline] [--yes] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Read, Write, Glob, Grep, AskUserQuestion, mcp__xcodebuildmcp__session_show_defaults, mcp__xcodebuildmcp__list_sims, mcp__xcodebuildmcp__boot_sim, mcp__xcodebuildmcp__open_sim, mcp__xcodebuildmcp__build_sim, mcp__xcodebuildmcp__build_run_sim, mcp__xcodebuildmcp__get_app_bundle_id, mcp__xcodebuildmcp__install_app_sim, mcp__xcodebuildmcp__launch_app_sim, mcp__xcodebuildmcp__screenshot, mcp__xcodebuildmcp__snapshot_ui, mcp__xcodebuildmcp__list_schemes, mcp__xcodebuildmcp__discover_projs, mcp__design-comparison__compare_design, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -151,6 +151,16 @@ evidence_path: <absolute path to verification/<run-id>/>
 - **Confirm the plan in auto mode** unless `--yes` or parent-invoked.
 - **Never call unprobed gesture tools** — the Step 2.5 probe gates every interaction.
 - **Always release the simulator lock**, even on partial failure.
+
+## Result block
+
+Under `AW_RESULT=1` (the eval runner sets it), after Step 7 write `$AW_DIR/results/verify-ios-<timestamp>.json` and print the same JSON as a
+fenced `aw-result` block, before `## Next steps`. Without `AW_RESULT=1` write no file and print no block. The report still ends with the
+`verdict:` and `evidence_path:` lines.
+
+```aw-result
+{"skill": "verify-ios", "artifacts": ["<absolute path of pack.json>", "<absolute path of report.md>"], "summary": "<one line: what was verified and the verdict>", "pack": "<absolute path of pack.json>", "verdict": "<PASS|WARN|FAIL>"}
+```
 
 ## Next steps
 

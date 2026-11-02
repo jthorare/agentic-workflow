@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: verify-ios-forced
+context:
+  scaffold_script: fixture.sh
+env:
+  AW_RESULT: "1"
+mocks: ../../../mocks/xcodebuildmcp   # canned XcodeBuildMCP answers; plugin .mcp.json wiring is the lead's (phase 0)

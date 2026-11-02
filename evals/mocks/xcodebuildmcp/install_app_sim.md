@@ -1,0 +1,5 @@
+---
+tool: mcp__xcodebuildmcp__install_app_sim
+response: |
+  Installed Fernly.app on iPhone 16 (8F2C41B7-5D0A-4E3B-9C6A-2E7D1B0A9F10).
+---
