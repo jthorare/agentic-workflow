@@ -317,15 +317,20 @@ run_fixture() { # fixture.sh -> runs it in a scrubbed temp dir; 0 ok
   return "$rc"
 }
 
-lint_descriptions() { # skills (one per line on stdin, or all when empty) -> 0 clean
+# lint_descriptions: lints $LINT_SKILLS (default: every skill). LINT_LEN_WARN=1 (--selftest) makes an over-400 description a warning on
+# stderr, not a problem, and skips the all-skills byte baseline (it only means something over the whole set).
+lint_descriptions() { # -> 0 clean
   local s d len total=0 bad=0 base prompts p shared baseline limit all_listed
-  all_listed="$(all_skills)"
+  all_listed="${LINT_SKILLS:-$(all_skills)}"
   for s in $all_listed; do
     d="$(description_of "$ROOT/skills/$s/SKILL.md")"
     len=${#d}
     total=$((total + $(printf '%s' "$d" | wc -c)))
     [ -n "$d" ] || { echo "LINT-DESC: skills/$s/SKILL.md: no description"; bad=1; continue; }
-    if [ "$len" -gt 400 ]; then echo "LINT-DESC: skills/$s: description is $len characters (max 400)"; bad=1; fi
+    if [ "$len" -gt 400 ]; then
+      if [ "${LINT_LEN_WARN:-0}" = 1 ]; then echo "LINT-DESC: skills/$s: description is $len characters (max 400) (warning)" >&2
+      else echo "LINT-DESC: skills/$s: description is $len characters (max 400)"; bad=1; fi
+    fi
     has_evals "$s" || continue
     prompts="$(find "$ROOT/evals/$s" \( -name prompt.md -o -name case.yaml \) -type f 2>/dev/null | sort)"
     [ -n "$prompts" ] || continue
@@ -350,7 +355,8 @@ EOF
     fi
   done
   baseline="$ROOT/evals/_lib/description-bytes.baseline"
-  if [ -f "$baseline" ]; then
+  if [ "${LINT_LEN_WARN:-0}" = 1 ]; then :
+  elif [ -f "$baseline" ]; then
     base="$(tr -d '[:space:]' <"$baseline")"
     if printf '%s' "$base" | grep -Eq '^[0-9]+$'; then
       limit=$((base + base / 4))
@@ -385,7 +391,7 @@ do_selftest() {
       done
     done
   done
-  lint_descriptions || errs=$((errs + 1))
+  LINT_SKILLS="$skills" LINT_LEN_WARN=1 lint_descriptions || errs=$((errs + 1))
   echo "selftest: $cases case(s), $errs problem(s)"
   [ "$errs" -eq 0 ]
 }

@@ -231,6 +231,20 @@ echo 100 >"$REPO/evals/_lib/description-bytes.baseline"
 run --lint-descriptions
 expect "total bytes over the baseline + 25% fails" 1 'over the baseline'
 
+echo "--selftest and description lint"
+mkrepo
+long="$(printf 'word%.0s ' $(seq 1 120))"
+printf -- '---\nname: alpha\ndescription: %s\n---\nbody\n' "$long" >"$REPO/skills/alpha/SKILL.md"
+run --skills alpha --selftest
+expect "--selftest: an over-400 description is a warning and exit stays 0" 0 'LINT-DESC: skills/alpha: description is .* \(warning\)'
+run --lint-descriptions
+expect "--lint-descriptions alone still fails on the long one" 1 'skills/alpha: description is'
+mkrepo
+printf -- '---\nname: beta\ndescription: %s\n---\nbody\n' "$long" >"$REPO/skills/beta/SKILL.md"
+run --skills alpha --selftest
+expect "--selftest --skills alpha does not lint beta" 0 'selftest: 3 case'
+lacks "no beta lint line" 'skills/beta'
+
 echo "--status"
 mkrepo
 printf 'fire_rate: 3/3\ndelta: 0.18\nlast_run: %s\npr: 1110\n' "$(date +%F)" >"$REPO/evals/alpha/status.md"
