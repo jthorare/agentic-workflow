@@ -1,0 +1,9 @@
+fire_rate: 5/6
+delta: 0.44
+last_run: 2026-11-02
+pr: PR_PENDING
+
+Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per case, preamble on.
+- fire_rate: sp-natural-1 fired 3/3, sp-natural-2 2/3; sp-near-miss fired 0/3, which is right (20261102T101259-845797-routing).
+- delta: sp-forced 0.78 with the skill, 0.33 without (20261102T113844-2713013-behaviour). sp-forced-pressure 0.75 / 0.92 (-0.17).
+- Caveat: 3 runs per arm. One run flips a case by about 0.1-0.3, so a Δ that small is noise. sp-forced's preamble-on case joins the nightly (spec §8).
