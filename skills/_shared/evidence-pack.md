@@ -5,7 +5,7 @@ Referenced via: SHARED_DIR pattern (CD2).
 
 ## Layout (CD5)
 
-Dir: `~/.agentic-workflow/<repo-slug>/verification/<run-id>/` where `run-id = $(date -u +%Y%m%d-%H%M%S)-<slug>`.
+Dir: `$AW_DIR/verification/<run-id>/` where `run-id = $(date -u +%Y%m%d-%H%M%S)-<slug>`.
 
 Contains:
 - `pack.json` — machine-readable result (schema below)

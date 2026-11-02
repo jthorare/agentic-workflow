@@ -8,7 +8,7 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(pytest *)
 # Test Audit
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 Three modes, one value bar. **Authoring mode** gates every new or changed test at
 write time. **Audit mode** runs focused sweeps of tests that re-assert source,
@@ -36,9 +36,16 @@ Parse the argument:
   scope — options: "Audit a path", "Campaign on one subsystem", "Gate the tests
   in my current diff".
 
+Resolve `$AW_DIR` first. It comes from the shared slug script; source it in the bash block that uses it (shell state does not persist):
+
+```bash
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
+source "$SHARED_DIR/repo-slug.sh"
+```
+
 Detect the test runner per `$SHARED_DIR/test-runner-detection.md` (sets
 `TEST_CMD`). Audit and campaign modes record their evidence in
-`~/.agentic-workflow/$REPO_SLUG/qa/test-audit/<YYYY-MM-DD>-<scope-slug>.md`
+`$AW_DIR/qa/test-audit/<YYYY-MM-DD>-<scope-slug>.md`
 (create the directory if missing). Never write the ledger into the project
 directory.
 

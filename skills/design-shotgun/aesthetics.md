@@ -2,7 +2,7 @@
 
 This file provides fallback prompt templates used by `/design-shotgun` when the external `frontend-design` skill is not available. Each template is injected into a single subagent's brief to bias the generated mockup toward one distinct aesthetic.
 
-Each subagent receives: the feature brief, the project's `design-tokens.json`, the project's `.impeccable.md`, and ONE of the templates below. The subagent must produce a single self-contained HTML file at `~/.agentic-workflow/$REPO_SLUG/design/shotgun/variant-{i}.html`.
+Each subagent receives: the feature brief, the project's `design-tokens.json`, the project's `.impeccable.md`, and ONE of the templates below. The subagent must produce a single self-contained HTML file at `$AW_DIR/design/shotgun/variant-{i}.html`.
 
 All templates respect the project's design tokens (colors, spacing scale, font families) as the source of truth. The aesthetic direction shapes *how* tokens are composed — not which values to use.
 

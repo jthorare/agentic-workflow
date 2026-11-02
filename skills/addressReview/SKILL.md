@@ -1,12 +1,12 @@
 ---
 name: addressReview
-description: Address PR review comments by spawning domain-specific implementation agents in parallel. Reads from ~/.agentic-workflow/<repo-slug>/reviews/<pr>.json as source of truth, merges any new human GitHub comments, implements fixes, and updates the state file. Can be re-run to continue the review loop.
+description: Address PR review comments by spawning domain-specific implementation agents in parallel. Reads from $AW_DIR/reviews/<pr>.json as source of truth, merges any new human GitHub comments, implements fixes, and updates the state file. Can be re-run to continue the review loop.
 argument-hint: [pr-number-or-url] [--all]
 allowed-tools: Bash(gh *), Bash(git *), Bash(npm *), Bash(npx *), Bash(SHARED_DIR=*), Agent, Read, Write, Edit, Skill, AskUserQuestion, mcp__prism-mcp__session_search_memory, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 # Address PR Review
 
@@ -30,7 +30,7 @@ If no PRs are found: "No open PR found for the current branch. Use `/addressRevi
 
 ## Step 2: Load State File
 
-Read `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`.
+Read `$AW_DIR/reviews/{number}.json`.
 
 If the file does not exist:
 > "No local review state found for PR #{number}. Run `/review` first."
@@ -111,7 +111,7 @@ Then **Dispatch in parallel** all implementation agents at once (per `_shared/pa
 Self-reported fixes are not proof. After all implementers complete:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ```
 
@@ -121,7 +121,7 @@ source "$SHARED_DIR/repo-slug.sh"
 
 ## Step 7: Update State File
 
-After Step 6.5, update `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`:
+After Step 6.5, update `$AW_DIR/reviews/{number}.json`:
 
 For each result with status `fixed` or `answered` (the only statuses — there is no defer status), when covered by passing verification:
 - Set `"addressed": true`

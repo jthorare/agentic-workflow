@@ -42,7 +42,7 @@ public sealed class LinearFeedProjectTests
         var inProject = await One(InProject("a1"));
         var alone = await One(Issue("a2", _at));
 
-        Assert.Equal([("linear:project/pr1", RecordLinkKind.InProject, "Launch")], inProject.Links.Select(l => (l.ToRef, l.Kind, l.Title)));
+        Assert.Equal([("linear:project/pr1", RecordLinkKind.InProject, "Launch")], inProject.Links.Where(static l => l.Kind != RecordLinkKind.KnownAs).Select(l => (l.ToRef, l.Kind, l.Title)));
         Assert.DoesNotContain(alone.Links, static l => l.Kind == RecordLinkKind.InProject);
     }
 

@@ -150,6 +150,8 @@ node scripts/check-rules.mjs [--json]   # Every §4b rule has a record; every ac
 
 # Environment and dev container
 scripts/check-env-example.sh            # Every env var the code reads is in .env.example (ENV-EXAMPLE-001..004); exit 1 on drift
+scripts/check-skills-toolkit.sh           # skills/, bootstrap/ and config/voice/ name the toolkit as ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit} and the per-repo output dir as $AW_DIR (SKILLS-TOOLKIT-001, -002); exit 1 on drift, file:line per hit
+scripts/skills-toolkit-rewrite.sh [--dry-run]   # The scripted fix for that drift; idempotent, so a skill PR in flight rebases by re-running it
 # .devcontainer/ is for humans only, never the agent sandbox (no Docker-in-Docker); see docs/devcontainer.md
 # Label scheme: .github/labels.yml (type:, area:, size:, ring:). Applying it to the repo is an owner settings change; until then
 # the issue forms' labels don't exist and GitHub drops them silently
@@ -171,6 +173,7 @@ bash scripts/tests/check-line-schemas.test.sh    # schemas/line/ and schemas/pr/
 bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md names every SindriProfile key (node scripts/check-profile-doc.mjs)
 bash scripts/tests/scaffold.test.sh
 bash scripts/tests/check-env-example.test.sh
+bash scripts/tests/check-skills-toolkit.test.sh   # scripts/check-skills-toolkit.sh and scripts/skills-toolkit-rewrite.sh on fixture trees: a bare toolkit path or a hand-spelled per-repo path fails with file:line, the rewrite is idempotent
 bash scripts/tests/binaries-lock.test.sh
 bash scripts/tests/images-lock.test.sh
 bash scripts/tests/code-index-lock.test.sh
