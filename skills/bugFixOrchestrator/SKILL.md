@@ -89,7 +89,7 @@ contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
 ## Phase 2 — Investigate
 
 1. **Invoke skill `rootCause`** with args `--investigate-only --depth 1 "<symptom from the brief>"`.
-2. Take `handoff_path` from rootCause's final JSON block, then
+2. Take `handoff_path` from rootCause's `aw-result` block, then
    `bugfix-state advance investigate --state "$STATE" --evidence <handoff_path>`.
 3. Refused because the handoff status is not `diagnosed` (rootCause returned `unfixed`), because no
    hypothesis is confirmed and fewer than two are open, or because it has no Root Cause → re-run
