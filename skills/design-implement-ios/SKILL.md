@@ -175,21 +175,6 @@ Generated:
 - If the project has existing color definitions (Asset catalog, extension), note any conflicts rather than silently overwriting
 - No completion claim without a PASS/WARN verify run from Step 4
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
-
-1. Write `$AW_DIR/results/design-implement-ios-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-implement-ios"`), `artifacts` (absolute paths of Theme.swift, the view files and the implement report), `summary` (one line), plus `verify_verdict`, `verify_run_id`.
-2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
-
 ## Git mode
 
 `AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.

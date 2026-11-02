@@ -1,3 +1,4 @@
 ```aw-result
-{"skill":"verify-desktop","verdict":"PASS","summary":"all screens match","pack":"/repo/.aw-state/r1/verification/v1/pack.json","artifacts":["/repo/.aw-state/r1/verification/v1/report.md"]}
+{"skill":"verify-desktop","verdict":"PASS","summary":"all match","pack":"/repo/r1/pack.json","artifacts":["/repo/r1/report.md"]}
 ```
+Worst screen: "verdict":"FAIL"

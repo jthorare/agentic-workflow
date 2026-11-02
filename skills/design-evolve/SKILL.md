@@ -49,20 +49,6 @@ Read `$SHARED_DIR/platform-detection.md` and apply it exactly — the recursive 
    - iOS: **Invoke skill `design-evolve-ios`** with args `"<original args verbatim>"`
 3. `design-evolve-web` requires a URL — if web was chosen and no URL is present, **stop** and ask. `design-evolve-ios` prompts for a path itself when the argument is absent.
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Follow `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-evolve-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
-
-Keys: `skill` (`"design-evolve"`), `artifacts` (absolute paths: the member skill's `design-tokens.json` and `.impeccable.md`), `summary` (one line), plus `dispatched_to` (`design-evolve-web` or `design-evolve-ios`).
-
 ## Next steps
 
 - `/design-mockup` — build a mockup with the updated tokens

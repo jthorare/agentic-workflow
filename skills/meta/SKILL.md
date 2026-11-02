@@ -234,25 +234,6 @@ A Claude usage limit stops every lane and your own subagents at once ("You've hi
 Merges, owner decisions, lane maps and kills are logged by the CLI. For anything else worth keeping:
 `aw-meta log-append --kind incident|note --text "…"`.
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Under `AW_RESULT=1` (the eval runner sets it), after the run write `$AW_DIR/results/meta-<timestamp>.json` and print the same JSON as a
-fenced `aw-result` block, before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
-
-```aw-result
-{"skill": "meta", "artifacts": ["<absolute path of the team log or gate record you touched, if any>"], "summary": "<one line: what merged, what is held and why>", "merged": [<PR numbers merged this run>], "open_obligations": <count `aw-meta status` still shows>}
-```
-
-`merged` is `[]` when nothing landed. Never list a PR there that `aw-meta merge-run` did not report as merged.
-
 ## Next steps
 
 - `/review`: when a lane asks for a review run on its PR
@@ -267,6 +248,6 @@ fenced `aw-result` block, before `## Next steps`. Without `AW_RESULT=1` write no
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/meta-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`meta`), `artifacts` (absolute paths: the files under the team's running log it appended to), `summary` (one line),
-plus `team` (team name); `actions` (count of aw-meta actions taken this turn).
+plus `team` (team name); `actions` (count of aw-meta actions taken this turn); `merged` (array of PR numbers `aw-meta merge-run` reported merged, `[]` when none); `open_obligations` (count `aw-meta status` still shows).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

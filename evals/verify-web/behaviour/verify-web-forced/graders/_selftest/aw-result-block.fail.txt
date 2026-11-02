@@ -1,3 +1,4 @@
 ```aw-result
-{"skill": "verify-web", "artifacts": ["/work/.aw-state/pantry-notes/verification/r1/pack.json"], "summary": "save threw TypeError", "pack": "/work/.aw-state/pantry-notes/verification/r1/pack.json", "verdict": "PASS"}
+{"skill": "verify-web", "artifacts": ["/work/r1/pack.json"], "summary": "looked fine", "pack": "/work/r1/pack.json"}
 ```
+Verdict line: {"verdict": "FAIL"}

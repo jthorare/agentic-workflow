@@ -81,20 +81,6 @@ For each FAIL, describe the mismatching regions (region-level only, `desktop-evi
 - Do not modify any code, config, manifest or mockup — this skill is read-only verification
 - A requested screen the manifest lacks is a stop, not a skip
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Under `AW_RESULT=1` only: write `$AW_DIR/results/design-verify-desktop-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
-
-Keys: `skill` (`design-verify-desktop`), `artifacts` (absolute paths: `comparison-report.json` and the per-screen `app.png` and `diff.png`), `summary` (one line: verdict, max diff %), `pack` (absolute path of the run directory `$AW_DIR/design/verify/<run-id>/`), `verdict` (`overall.verdict`: `PASS|FAIL`).
-
 ## Next steps
 
 Gate on `overall.verdict` — a FAIL run **blocks** the `/shipRelease` suggestion:

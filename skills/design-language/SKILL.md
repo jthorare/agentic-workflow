@@ -235,20 +235,6 @@ Downstream skills gate on this line. If 5 rounds pass without Approve, stop, lis
 - If `design-tokens.json` exists (and user confirmed overwrite), the new file replaces it entirely — don't partially merge
 - Do not write placeholder values — if a token wasn't determined, omit the key
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Under `AW_RESULT=1` only: write `$AW_DIR/results/design-language-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
-
-Keys: `skill` (`design-language`), `artifacts` (absolute paths: `design-tokens.json` and `.impeccable.md`, whichever were written), `summary` (one line: the aesthetic direction chosen).
-
 ## Next steps
 
 - `/design-mockup` — build the first mockup from the new language

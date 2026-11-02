@@ -117,30 +117,6 @@ Sound and voiceover are not built in. The captions carry the narration. Offer th
 
 Posting to chat or a tracker is a separate step: **Ask the user** first, and use the project's own tool for it.
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Under `AW_RESULT=1` (the eval runner and callers set it; a person's normal run prints and writes nothing here), finish by writing `$AW_DIR/results/system-design-video-<timestamp>.json` with the Write tool (`<timestamp>` from `date -u +%Y%m%dT%H%M%SZ`) and printing the same JSON as a fenced `aw-result` block, before `## Next steps`:
-
-```aw-result
-{
-  "skill": "system-design-video",
-  "artifacts": ["/abs/path/brief.md", "/abs/path/storyboard.json", "/abs/path/1080p.mp4", "/abs/path/720p.mp4"],
-  "summary": "one line: what was rendered and whether playback-check passed",
-  "playback": "pass",
-  "deliverables": ["/abs/path/1080p.mp4", "/abs/path/720p.mp4"]
-}
-```
-
-`artifacts` lists every file this run wrote (absolute paths). `playback` is `pass` only when `playback-check.sh` exited 0 on every MP4, else `fail` (or `unchecked` when no MP4 was encoded). `deliverables` lists only the MP4s that passed it, so it is `[]` when `playback` is not `pass`. A failed playback check is reported as a failure in the summary and the reply; it is never shipped.
-
 ## Next steps
 
 - `/design-language`: when the project has no tokens, define them first.
@@ -155,6 +131,6 @@ Under `AW_RESULT=1` (the eval runner and callers set it; a person's normal run p
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/system-design-video-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`system-design-video`), `artifacts` (absolute paths: the film under `$AW_DIR/videos/<design>/<persona>/`), `summary` (one line),
-plus `design` (design slug); `persona` (persona rendered).
+plus `design` (design slug); `persona` (persona rendered); `playback` (`pass` only when `playback-check.sh` exited 0 on every MP4, else `fail`, or `unchecked` when no MP4 was encoded); `deliverables` (absolute paths of only the MP4s that passed it, `[]` when `playback` is not `pass`).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

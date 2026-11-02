@@ -54,20 +54,6 @@ Read `$SHARED_DIR/token-merge.md` and follow it exactly:
 - **Step C** — write merged `design-tokens.json` (tokens not present in the reference are always preserved); **unconditionally** append the consultation to `.impeccable.md ## Sources`; set `baseline_stale` in `screens.json` when anything was adopted or adapted
 - **Step D** — report counts and exact before→after values
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Follow `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-evolve-ios-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
-
-Keys: `skill` (`"design-evolve-ios"`), `artifacts` (absolute paths: `design-tokens.json`), `summary` (one line), plus `source` (the path read) and `counts` (`adopted`, `adapted`, `ignored`, as the merge summary reports them).
-
 ## Next steps
 
 - `/design-mockup-ios` — rebuild the SwiftUI mockup with the updated tokens (existing baselines are now marked stale)

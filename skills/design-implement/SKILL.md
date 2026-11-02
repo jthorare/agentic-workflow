@@ -56,21 +56,6 @@ When the sub-skill completes without printing `[BLOCKED]`:
 - If its report already includes a `verify_run_id` (the sub-skill ran its own verify gate), do not re-run — surface that verdict.
 - Otherwise run **Invoke skill `design-verify`** with args `"<screen-name>"` now. Verification is not a suggestion — this dispatcher is done only when a verify run reports PASS or WARN (CD11 thresholds in `$SHARED_DIR/design-artifact-paths.md`). For a desktop UI change `design-verify` dispatches to `design-verify-desktop`, which runs the real app on seeded data against the mockups; the implementation is done only when it reports PASS (any unexpected mismatch fails).
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
-
-1. Write `$AW_DIR/results/design-implement-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-implement"`), `artifacts` (absolute paths of the generated code and the implement report), `summary` (one line), plus `dispatched_to` (`design-implement-web` or `design-implement-ios`), `verify_verdict`.
-2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
-
 ## Next steps
 
 - `/design-refine` — polish the implementation (verification re-runs after refinement)

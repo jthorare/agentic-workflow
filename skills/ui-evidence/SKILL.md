@@ -168,30 +168,6 @@ The files are `NAME=value` lines (`#` comments, optional `export ` and quotes); 
   bundled Chromium's version, because headless Chromium's own UA says "HeadlessChrome"
   and apps that gate on browser support (an "unsupported browser" page) block it.
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Only under `AW_RESULT=1`. Without it, write no file and print no block.
-
-When `AW_RESULT=1` is set, after the run and the publish decision, resolve `$AW_DIR` the way `_shared/repo-slug.sh` does (`source "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"`), then write `$AW_DIR/results/ui-evidence-<UTC timestamp, e.g. 20261101T101500Z>.json` (the Write tool creates the folder) holding one JSON object:
-
-- `skill`: `"ui-evidence"`
-- `artifacts`: absolute paths of the files the run left (`summary.json` or `parity.json` or the desktop `summary.json`, `report.md` if any, the screenshots, `pr-comment.md` if one was written); `[]` when the run produced none
-- `summary`: one line (what was run, how it ended, whether anything was published)
-- `run_dir`: absolute path of the run directory
-- `outcome`: `passed` | `failed` | `refused` | `errored` | `blocked` (exit 0, 2, 1, 4, 3)
-- `provenance`: `seeded` | `unknown` | `n/a` (what `ui-evidence provenance` printed; `n/a` for a desktop run)
-- `published`: `true` only if something was actually posted or uploaded (after the user approved it), else `false`
-
-Then print the same object in the reply as a fenced block tagged `aw-result` (three backticks, `aw-result`, the JSON, three backticks).
-
 ## Git mode
 
 `AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
@@ -208,6 +184,6 @@ Then print the same object in the reply as a fenced block tagged `aw-result` (th
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/ui-evidence-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`ui-evidence`), `artifacts` (absolute paths: the run's evidence directory (screenshots, `summary.json`) and the PR comment or Linear update when published), `summary` (one line),
-plus `run_dir` (absolute path of the run directory); `passed` (true when every check passed); `published` (true when it published to the PR).
+plus `run_dir` (absolute path of the run directory); `outcome` (`passed` | `failed` | `refused` | `errored` | `blocked`, for exit 0, 2, 1, 4, 3); `provenance` (`seeded` | `unknown` | `n/a`, what `ui-evidence provenance` printed); `passed` (true when every check passed); `published` (`true` only if something was actually posted or uploaded after the user approved it, else `false`).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

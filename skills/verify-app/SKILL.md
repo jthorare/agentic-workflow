@@ -79,18 +79,6 @@ ls "$AW_DIR/design/screens.json" 2>/dev/null || echo "no screens.json — skip d
 
 If `screens.json` exists and has `baselines` entries for one or more of the verified screens, invoke **Invoke skill `design-verify`** with args `"<verified screens>"` automatically and report its diff verdict alongside the verification verdict. If no baselines cover the verified screens, skip the chain silently.
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Per `_shared/output-contract.md`. Only when `AW_RESULT=1` is set: write `$AW_DIR/results/verify-app-<timestamp>.json` and print the same object as a fenced `aw-result` block after the report, before `## Next steps`. Keys: `skill` (`"verify-app"`), `artifacts` (absolute paths, the sub-skill's `pack.json` and `report.md`), `summary` (one line), `pack` (absolute path of the sub-skill's `pack.json`), `verdict` (the sub-skill's, relayed verbatim), `dispatched` (the sub-skill's name). Without `AW_RESULT=1`, write no file and print no block.
-
 ## Next steps
 
 - `/design-verify` — re-run design diffing on demand (auto-chained above when baselines cover verified screens)
@@ -105,6 +93,6 @@ Per `_shared/output-contract.md`. Only when `AW_RESULT=1` is set: write `$AW_DIR
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/verify-app-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`verify-app`), `artifacts` (absolute paths: the evidence pack directory `$AW_DIR/verification/<run-id>/` (`pack.json`, `report.md`)), `summary` (one line),
-plus `evidence_path` (absolute path of the pack directory); `verdict` (`PASS | WARN | FAIL`, relayed from the sub-skill's pack); `platform` (`web | ios | desktop`, the sub-skill it delegated to).
+plus `evidence_path` (absolute path of the pack directory); `pack` (absolute path of the sub-skill's `pack.json`); `verdict` (`PASS | WARN | FAIL`, relayed verbatim from the sub-skill's pack); `platform` (`web | ios | desktop`, the sub-skill it delegated to); `dispatched` (the sub-skill's name).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

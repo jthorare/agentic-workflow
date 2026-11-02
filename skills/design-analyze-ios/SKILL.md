@@ -111,20 +111,6 @@ Next steps:
 - Do not modify existing Swift files — read-only extraction
 - Convert all CGFloat dimensions to `"Npx"` string format for DTCG compatibility
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Follow `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-analyze-ios-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
-
-Keys: `skill` (`"design-analyze-ios"`), `artifacts` (absolute paths: `design-tokens.json`), `summary` (one line), plus `sources` (the asset catalogs and Swift files read) and `counts` (tokens per category).
-
 ## Next steps
 
 - `/design-language` — define brand from extracted iOS tokens

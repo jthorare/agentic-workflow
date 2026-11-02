@@ -90,20 +90,6 @@ All under `$AW_DIR/design/shotgun/`:
 - `contact-sheet.html` — captioned side-by-side comparison page
 - `picked.json` — `{variant, direction, html_path, feature}` handoff consumed by `/design-mockup-web` Step 0
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Under `AW_RESULT=1` only: write `$AW_DIR/results/design-shotgun-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
-
-Keys: `skill` (`design-shotgun`), `artifacts` (absolute paths: `contact-sheet.html`, `picked.json` once a variant is picked, and the `variant-*.html` files), `summary` (one line: variants built and the pick, or `none picked`).
-
 ## Next steps
 
 - `/design-mockup <screen>` — reads `design/shotgun/picked.json` and takes the picked variant's HTML/styling as the seed for a fully-built mockup

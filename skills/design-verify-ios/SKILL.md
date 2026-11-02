@@ -153,20 +153,6 @@ LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; release_lock
 - Do not modify any code — this skill is read-only verification
 - If the simulator shows an unexpected state (system dialog, wrong screen after nav), record it as evidence and mark the affected screen FAIL rather than guessing
 
-## Result block
-
-First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
-
-```bash
-[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
-```
-
-On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
-
-Under `AW_RESULT=1` only: write `$AW_DIR/results/design-verify-ios-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
-
-Keys: `skill` (`design-verify-ios`), `artifacts` (absolute paths: `comparison-report.json` and the diff images), `summary` (one line: verdict, max diff %), `pack` (absolute path of the run directory `$AW_DIR/design/verify/<run-id>/`), `verdict` (`overall.verdict`: `PASS|WARN|FAIL`).
-
 ## Next steps
 
 Gate on `overall.verdict` — a FAIL run **blocks** the `/shipRelease` suggestion:

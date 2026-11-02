@@ -1,5 +1,5 @@
 ---
 type: regex
-pattern: '```aw-result\s*\{(?=.*"skill"\s*:\s*"meta")(?=.*"artifacts"\s*:)(?=.*"summary"\s*:)(?=.*"merged"\s*:\s*\[\s*\])(?=.*"open_obligations"\s*:\s*\d+)'
+pattern: '```aw-result\s*\{(?=(?:(?!```)[\s\S])*"skill"\s*:\s*"meta")(?=(?:(?!```)[\s\S])*"artifacts"\s*:)(?=(?:(?!```)[\s\S])*"summary"\s*:)(?=(?:(?!```)[\s\S])*"merged"\s*:\s*\[\s*\])(?=(?:(?!```)[\s\S])*"open_obligations"\s*:\s*\d+)'
 flags: s
 ---

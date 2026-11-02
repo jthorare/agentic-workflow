@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# Workspace for the verify-desktop cases: a made-up budget-planner desktop app (Avalonia-style views), its
+# Workspace for the verify-desktop cases: a made-up budget-planner desktop app (generic window-layout files), its
 # evidence config, a screens manifest with two screens and their mockups. Offline, no remote, four commits;
-# the last one reworks SettingsPage.axaml, so the diff maps to the "settings" screen only.
+# the last one reworks SettingsPage.window.json, so the diff maps to the "settings" screen only.
 # The stub `ui-evidence` reads .ui-evidence-stub-scenario: "desktop-mismatch" plants one failing screen
 # (settings: the footer action bar with Save and Cancel is missing in the app frame, 6.8% over a 2% limit).
 # Writes only under $PWD.
@@ -60,18 +60,16 @@ cat > src/BudgetPlanner/BudgetPlanner.csproj <<'P'
   <PropertyGroup><OutputType>WinExe</OutputType><TargetFramework>net10.0</TargetFramework></PropertyGroup>
 </Project>
 P
-cat > src/BudgetPlanner/Views/HomePage.axaml <<'P'
-<UserControl xmlns="https://github.com/avaloniaui">
-  <StackPanel><TextBlock Text="This month" FontSize="24"/><TextBlock Text="{Binding SpentSummary}"/></StackPanel>
-</UserControl>
+cat > src/BudgetPlanner/Views/HomePage.window.json <<'P'
+{ "window": "Home", "children": [
+  { "type": "label", "text": "This month", "fontSize": 24 },
+  { "type": "label", "bind": "SpentSummary" } ] }
 P
-cat > src/BudgetPlanner/Views/SettingsPage.axaml <<'P'
-<UserControl xmlns="https://github.com/avaloniaui">
-  <DockPanel>
-    <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal"><Button Content="Save"/><Button Content="Cancel"/></StackPanel>
-    <StackPanel><TextBlock Text="Settings" FontSize="24"/><ComboBox SelectedItem="{Binding Currency}"/></StackPanel>
-  </DockPanel>
-</UserControl>
+cat > src/BudgetPlanner/Views/SettingsPage.window.json <<'P'
+{ "window": "Settings", "children": [
+  { "type": "label", "text": "Settings", "fontSize": 24 },
+  { "type": "select", "bind": "Currency" },
+  { "type": "footer", "children": [ { "type": "button", "text": "Save" }, { "type": "button", "text": "Cancel" } ] } ] }
 P
 cat > src/BudgetPlanner/ViewModels/SettingsViewModel.cs <<'P'
 namespace BudgetPlanner.ViewModels;
@@ -90,11 +88,11 @@ git -c user.name=eval -c user.email=eval@example.com commit -q -m "docs: note th
 printf 'namespace BudgetPlanner.ViewModels;\npublic sealed class SettingsViewModel { public string Currency { get; set; } = "EUR"; public bool Dirty { get; set; } }\n' > src/BudgetPlanner/ViewModels/SettingsViewModel.cs
 git add -A
 git -c user.name=eval -c user.email=eval@example.com commit -q -m "settings: track unsaved changes"
-cat > src/BudgetPlanner/Views/SettingsPage.axaml <<'P'
-<UserControl xmlns="https://github.com/avaloniaui">
-  <StackPanel><TextBlock Text="Settings" FontSize="24"/><ComboBox SelectedItem="{Binding Currency}"/>
-    <Button Content="Save" IsEnabled="{Binding Dirty}"/></StackPanel>
-</UserControl>
+cat > src/BudgetPlanner/Views/SettingsPage.window.json <<'P'
+{ "window": "Settings", "children": [
+  { "type": "label", "text": "Settings", "fontSize": 24 },
+  { "type": "select", "bind": "Currency" },
+  { "type": "button", "text": "Save", "enabledWhen": "Dirty" } ] }
 P
 git add -A
 git -c user.name=eval -c user.email=eval@example.com commit -q -m "settings: move Save next to the currency picker"

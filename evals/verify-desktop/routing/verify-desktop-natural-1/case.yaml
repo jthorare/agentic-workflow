@@ -14,4 +14,4 @@ execution:
   - Agent
   - TodoWrite
   - AskUserQuestion
-# source: issue #1752 (a desktop app whose pages are *Page.axaml views), reworded; the skill's own premise that the UI is expected to match the mockups; app made up
+# source: issue #1752 (a desktop app whose pages are *Page.window.json views), reworded; the skill's own premise that the UI is expected to match the mockups; app made up
