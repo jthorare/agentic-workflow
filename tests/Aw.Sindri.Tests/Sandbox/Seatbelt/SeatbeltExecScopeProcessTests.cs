@@ -66,6 +66,29 @@ public sealed class SeatbeltExecScopeProcessTests : IDisposable
     }
 
     [Fact]
+    public async Task Mac_exec_scope_without_a_tty_still_writes_a_live_group()
+    {
+        Assert.SkipUnless(File.Exists("/usr/bin/perl") && File.Exists("/bin/sh"), "needs /usr/bin/perl and /bin/sh");
+        var pgroups = ProcessGroupFiles.Directory(_directory);
+        var launch = LaunchId.From("LCH-" + new string('0', 31) + "2");
+        var argv = ExecScope.Mac(pgroups)(launch, Limits(), ["/bin/sh", "-c", "echo ran; read x"]);
+        // why: setsid (where it exists) drops the controlling terminal, so /dev/tty cannot open for the child; elsewhere (macOS has no setsid) a test host launched from an agent or CI has none, and stdin and stdout are pipes either way
+        var setsid = (Environment.GetEnvironmentVariable("PATH") ?? string.Empty).Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries).Select(d => Path.Combine(d, "setsid")).FirstOrDefault(File.Exists);
+        var start = setsid is null ? argv : ["setsid", .. argv];
+
+        var process = Process.Start(new ProcessStartInfo(start[0], start.Skip(1)) { UseShellExecute = false, RedirectStandardInput = true, RedirectStandardOutput = true, RedirectStandardError = true }) ?? throw new InvalidOperationException("did not start");
+        _started.Add(process);
+
+        Assert.Equal("ran", await process.StandardOutput.ReadLineAsync(Token).AsTask().WaitAsync(_wait, Token));
+        var pgid = ProcessGroupFiles.ReadPgid(pgroups, launch.Value);
+        _ = Assert.NotNull(pgid);
+        Assert.True(ProcessGroupFiles.Alive(pgid.Value), "the group file names a group that is not alive");
+        process.StandardInput.Close();
+        await process.WaitForExitAsync(Token).WaitAsync(_wait, Token);
+        Assert.Equal(0, process.ExitCode);
+    }
+
+    [Fact]
     public async Task Exec_removes_the_group_file_of_its_launch_when_it_ends()
     {
         var home = Path.Combine(_directory, "home");
