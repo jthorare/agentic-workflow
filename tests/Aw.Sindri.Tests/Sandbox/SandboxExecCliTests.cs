@@ -83,6 +83,18 @@ public sealed class SandboxExecCliTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Off_any_sandbox_the_refusal_does_not_blame_the_platform()
+    {
+        HumanToken();
+
+        var exit = await CommandTable.Run(["sandbox", "exec", PlanDirectory()], Environment(), TimeProvider.System);
+
+        Assert.Equal(2, exit);
+        Assert.Contains("sandbox exec needs the sandbox, and this build has none for this machine", _error.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("Linux", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Without_the_per_start_token_it_is_refused()
     {
         var exit = await Run(Environment(), PlanDirectory());

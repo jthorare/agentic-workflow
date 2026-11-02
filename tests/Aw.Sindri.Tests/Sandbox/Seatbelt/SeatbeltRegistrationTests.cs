@@ -1,7 +1,10 @@
+using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sandbox;
@@ -37,12 +40,71 @@ public sealed class SeatbeltRegistrationTests
     }
 
     [Fact]
-    public void Mac_leaves_the_fixture_check_and_the_exec_and_login_verbs_to_Cores_refusing_defaults()
+    public void Mac_leaves_the_fixture_check_to_Cores_refusing_default()
     {
         var services = Core().AddSindriPlatformSandbox(Env, linux: false, uid: 501, mac: true);
 
-        Type[] verbs = [typeof(ISandboxFixture), typeof(ISandboxExec), typeof(ISandboxLogin)];
-        Assert.DoesNotContain(services, d => verbs.Contains(d.ServiceType));
+        Assert.DoesNotContain(services, d => d.ServiceType == typeof(ISandboxFixture));
+    }
+
+    [Fact]
+    public void On_a_mac_sandbox_login_is_registered()
+    {
+        using var provider = Core().AddSindriPlatformSandbox(Env, linux: false, uid: 501, mac: true).BuildServiceProvider();
+
+        Assert.NotNull(provider.GetService<ISandboxLogin>());
+    }
+
+    [Fact]
+    public void On_a_mac_sandbox_exec_is_registered()
+    {
+        using var provider = Core()
+            .AddSingleton<ISandboxProcesses, SandboxProcesses>()
+            .AddSingleton<ISandboxMachine>(new Machine())
+            .AddSingleton<IApprovedProfile, NoApprovedProfile>()
+            .AddSingleton<ILaunchSecrets>(_ => throw new NotSupportedException("not needed to resolve the exec"))
+            .AddSindriPlatformSandbox(Env, linux: false, uid: 501, mac: true)
+            .BuildServiceProvider();
+
+        Assert.NotNull(provider.GetService<ISandboxExec>());
+    }
+
+    [Fact]
+    public void Exec_scope_on_a_mac_is_the_process_group_one()
+    {
+        var launch = LaunchId.From("LCH-" + new string('0', 31) + "1");
+        IReadOnlyList<string> inner = ["sandbox-exec", "-f", "p", "claude"];
+
+        var argv = ExecScope.Mac("/pg")(launch, Limits(), inner);
+
+        Assert.Equal(ProcessGroupScopeArgv.Start("/pg", launch.Value, inner), argv);
+        Assert.DoesNotContain("systemd-run", argv, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void Exec_scope_on_linux_is_the_systemd_one()
+    {
+        var launch = LaunchId.From("LCH-" + new string('0', 31) + "1");
+        IReadOnlyList<string> inner = ["bwrap", "--", "claude"];
+
+        var argv = ExecScope.Linux("systemd-run")(launch, Limits(), inner);
+
+        Assert.Equal(SystemdScopeArgv.Start("systemd-run", launch, Limits(), inner), argv);
+    }
+
+    private static ScopeLimits Limits() =>
+        ScopeLimits.From(new SandboxLimits(Memory: "8GiB", Total: "20GiB"), new BoxFacts(32L << 30, 4), TimeSpan.FromMinutes(10), TimeSpan.FromHours(24), attended: false);
+
+    private sealed class Machine : ISandboxMachine
+    {
+        public long RamBytes => 16L << 30;
+
+        public int Cores => 8;
+    }
+
+    private sealed class NoApprovedProfile : IApprovedProfile
+    {
+        public ValueTask<Result<LoadedProfile?>> Latest(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success<LoadedProfile?>(value: null));
     }
 
     [Fact]
