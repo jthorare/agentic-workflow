@@ -39,6 +39,6 @@ Referenced via: SHARED_DIR pattern (CD2).
 
 | Variable | Value | Purpose |
 |----------|-------|---------|
-| `TOOLKIT` | `$HOME/.agentic-workflow/toolkit` | Symlink to the toolkit repo root, created by `setup.sh` |
-| `SHARED_DIR` | `$HOME/.agentic-workflow/toolkit/skills/_shared` | Shared skill fragments — never resolve through a provider's skills dir |
+| `TOOLKIT` | `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}` | Symlink to the toolkit repo root, created by `setup.sh` |
+| `SHARED_DIR` | `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared` | Shared skill fragments — never resolve through a provider's skills dir |
 | Provider registry | `$HOME/.agentic-workflow/providers` | One line per installed provider: `<name> <skills-dir>` |
