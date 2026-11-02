@@ -4,7 +4,7 @@ Every skill starts by reading this file and following it. Run **Session Close** 
 
 > **Agentic Workflow** — 55 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill family). Works in Claude Code, Codex, and Cursor. Run any as `/<name>` (Claude Code, Cursor) or `$<name>` (Codex).
 >
-> **Provider tools:** skills name capabilities (**Ask the user**, **Spawn a subagent**, **Dispatch in parallel**, **Invoke skill**, `mcp: <server>/<tool>`). Map each to your host's tool via `$HOME/.agentic-workflow/toolkit/skills/_shared/capabilities.md`.
+> **Provider tools:** skills name capabilities (**Ask the user**, **Spawn a subagent**, **Dispatch in parallel**, **Invoke skill**, `mcp: <server>/<tool>`). Map each to your host's tool via `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/capabilities.md`.
 >
 > | Skill | Purpose |
 > |-------|---------|
@@ -64,7 +64,7 @@ Every skill starts by reading this file and following it. Run **Session Close** 
 > | `/system-design` | System design for a project: persona pages (TDD, product + design), status doc, mockups, tldraw diagrams in the project's tokens |
 > | `/system-design-video` | Whiteboard explainer video of a system design, drawn live, one cut per audience |
 >
-> **Output directory:** `~/.agentic-workflow/<repo-slug>/`
+> **Output directory:** `$AW_DIR/`
 >
 > ### Meta-Orchestration Convention
 >
@@ -72,7 +72,7 @@ Every skill starts by reading this file and following it. Run **Session Close** 
 
 ## Reply Voice
 
-Every reply to the user follows `$HOME/.agentic-workflow/toolkit/config/voice/joi.md` (concrete, answer first, in Joi's voice). Read it now, and read `config/voice/joi-examples.md` next to it before a long or complex reply. It covers replies only, not PR bodies, issues, commits or code comments.
+Every reply to the user follows `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/voice/joi.md` (concrete, answer first, in Joi's voice). Read it now, and read `config/voice/joi-examples.md` next to it before a long or complex reply. It covers replies only, not PR bodies, issues, commits or code comments.
 
 ## Codebase Navigation
 
@@ -91,17 +91,12 @@ Prefer **Serena** for all code exploration — LSP-based symbol lookup is faster
 Before running this skill, verify the environment is set up:
 
 ```bash
-# Derive repo slug
-REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
-if [ -n "$REMOTE_URL" ]; then
-  REPO_SLUG=$(echo "$REMOTE_URL" | sed 's|.*[:/]\([^/]*/[^/]*\)\.git$|\1|;s|.*[:/]\([^/]*/[^/]*\)$|\1|' | tr '/' '-')
-else
-  REPO_SLUG=$(basename "$(pwd)")
-fi
+# Derive repo slug and AW_DIR (also creates the output directory); quiet when the toolkit isn't installed yet (the setup check below offers setup.sh)
+f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f"
 echo "repo-slug: $REPO_SLUG"
 
 # Check bootstrap status
-TOOLKIT="$HOME/.agentic-workflow/toolkit"
+TOOLKIT="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}"
 SHARED_DIR="$TOOLKIT/skills/_shared"
 SKILLS_OK=true
 [ -d "$TOOLKIT/skills" ] && [ -s "$HOME/.agentic-workflow/providers" ] || SKILLS_OK=false
@@ -124,15 +119,16 @@ Domain rules live in `.agents/rules/` (canonical) and are emitted per provider (
 If `SKILLS_OK=false`, **Ask the user:**
 > "Agentic Workflow is not fully set up. Run setup.sh now? (yes/no)"
 
-If **yes**: run `bash <path-to-agentic-workflow>/setup.sh` (`$HOME/.agentic-workflow/toolkit/setup.sh`).
+If **yes**: run `bash <path-to-agentic-workflow>/setup.sh` (`${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/setup.sh`).
 If **no**: warn that some features may not work, then continue.
 
 If `RULES_OK=false` (and `SKILLS_OK` is true), do not offer setup.sh. Instead, show:
 > "Domain rules not found — run `/bootstrap` to generate `AGENTS.md` and `.agents/rules/` for this repo."
 
-Create the output directory for this repo:
+The output directory for this repo is `$AW_DIR` (set and created by `skills/_shared/repo-slug.sh`, sourced above; re-source it in any later bash block that uses `$AW_DIR`):
 ```bash
-mkdir -p "$HOME/.agentic-workflow/$REPO_SLUG"
+. "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"
+echo "$AW_DIR"
 ```
 
 ## Session Context

@@ -5,7 +5,7 @@ Referenced via: SHARED_DIR pattern (CD2).
 
 ## Manifest (officeHours names win)
 
-`~/.agentic-workflow/<repo-slug>/plans/<date>-<slug>/` contains:
+`$AW_DIR/plans/<date>-<slug>/` contains:
 
 | File | Purpose |
 |---|---|

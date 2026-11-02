@@ -7,7 +7,7 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(
 <!-- MEMORY: SKIP -->
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 ---
 
@@ -22,7 +22,7 @@ Detects whether this is a web, iOS or desktop project and delegates to the appro
 Follow `_shared/platform-detection.md` — canonical detection globs (with vendored-path excludes), the resolution table, and the dispatch contract. Resolve it from the stable toolkit path:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/platform-detection.md"
 ```
 
@@ -55,7 +55,7 @@ The sub-skill must produce an evidence pack (`_shared/evidence-pack.md`) and rep
 After the sub-skill returns, confirm the pack exists:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls -1dt "$AW_DIR/verification/"*/ | head -1
 ls "$(ls -1dt "$AW_DIR/verification/"*/ | head -1)pack.json"
@@ -72,7 +72,7 @@ Relay the sub-skill's `verdict` and `evidence_path` verbatim in your final repor
 After a completed run, check whether `screens.json` baselines cover the screens the sub-skill verified:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls "$AW_DIR/design/screens.json" 2>/dev/null || echo "no screens.json — skip design-verify chain"
 ```

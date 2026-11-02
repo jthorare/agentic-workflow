@@ -6,7 +6,7 @@ allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 ---
 
@@ -17,7 +17,7 @@ Verifies a desktop UI change by running the real app on seeded data and comparin
 Shared references resolve from the stable toolkit path (never through a provider's skills dir):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/desktop-evidence.md" "$SHARED_DIR/evidence-pack.md" "$SHARED_DIR/verification-lenses.md"
 ```
 
@@ -46,7 +46,7 @@ View (`*.axaml` and its code-behind), view-model, style and resource changes →
 ## Step 3: Create the Run Directory and Run
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-<slug>"   # <slug> = 2–4 word kebab summary of what is being verified
 mkdir -p "$AW_DIR/verification/$RUN_ID"
@@ -84,7 +84,7 @@ Report `{verdict, evidence_path}` where `evidence_path` is the absolute path of 
 | screen | size | diff % | verdict | mismatches |
 |--------|------|--------|---------|------------|
 
-Artifacts: ~/.agentic-workflow/<repo-slug>/verification/<run-id>/
+Artifacts: $AW_DIR/verification/<run-id>/
 ```
 
 ## Result block

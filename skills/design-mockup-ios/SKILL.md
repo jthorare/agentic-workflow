@@ -6,10 +6,10 @@ allowed-tools: Bash(mkdir *), Bash(ls *), Bash(cp *), Bash(git *), Bash(SHARED_D
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
 
 ---
 
@@ -39,14 +39,14 @@ Read `design-tokens.json` and (if present) `.impeccable.md` — palette, typogra
 Acquire the lock **before writing any files** (so a lock failure orphans nothing), in a single bash invocation per `_shared/sim-bootstrap.md` — shell state does not persist between Bash calls:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; acquire_lock
 ```
 
 Every failure branch in later steps must re-source and release in that same invocation:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; release_lock
 ```
 
@@ -90,7 +90,7 @@ The mockup should use ALL color, spacing, and typography tokens to demonstrate t
 Persist a durable copy for `/design-implement-ios` — this copy is **kept, not deleted**:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/design"
 cp "<path-to>/Mockup.swift" "$AW_DIR/design/Mockup-<screen-name>.swift"
@@ -119,7 +119,7 @@ If the build fails: report the error, then go **directly to Step 7 (revert) and 
 Baseline path (overwrite requires an **Ask the user** "Baseline exists for `<screen-name>`. Overwrite? (yes/no)" first):
 
 ```
-~/.agentic-workflow/<repo-slug>/design/mockup-ios-<screen-name>.png
+$AW_DIR/design/mockup-ios-<screen-name>.png
 ```
 
 Optionally capture a dark-mode variant as `mockup-ios-<screen-name>-dark.png`.
@@ -138,7 +138,7 @@ Read the captured baseline PNG and present it. **Ask the user**: **Approve** / *
 
 Determine the **nav recipe** — how `/design-verify-ios` reaches this screen in the real app: infer from the app's navigation or **Ask the user** (e.g., "Settings tab → Profile row"). Express as `[{"action":"tap","target":"<label or x,y from mcp: xcodebuildmcp/snapshot_ui>"}]`, or `null` for the launch screen.
 
-Read → mutate → Write `~/.agentic-workflow/<repo-slug>/design/screens.json` (never clobber other screens), per the CD4 schema in `_shared/design-artifact-paths.md`:
+Read → mutate → Write `$AW_DIR/design/screens.json` (never clobber other screens), per the CD4 schema in `_shared/design-artifact-paths.md`:
 
 ```json
 { "schema": "screens/v1",
@@ -169,7 +169,7 @@ If below 100%, list the unused tokens so the next revision can incorporate them.
 Final step, success or failure — single invocation:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; release_lock
 ```
 
@@ -180,8 +180,8 @@ iOS Mockup Baseline Created
 ============================
 
 Screen:         <screen-name>
-Mockup source:  ~/.agentic-workflow/<repo-slug>/design/Mockup-<screen-name>.swift (persisted)
-Baseline:       ~/.agentic-workflow/<repo-slug>/design/mockup-ios-<screen-name>.png
+Mockup source:  $AW_DIR/design/Mockup-<screen-name>.swift (persisted)
+Baseline:       $AW_DIR/design/mockup-ios-<screen-name>.png
 screens.json:   entry written (nav: <recipe|null>, approved_at: <ISO>)
 Token coverage: <used>/<total> (<pct>%)
 Entry point:    swap reverted, git diff clean

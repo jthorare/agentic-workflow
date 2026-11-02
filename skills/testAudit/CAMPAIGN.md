@@ -10,7 +10,7 @@ Examples below come from the upstream OpenClaw campaign that pruned its
 Telegram integration's tests.
 
 Keep the campaign ledger in
-`~/.agentic-workflow/$REPO_SLUG/qa/test-audit/<YYYY-MM-DD>-campaign-<subsystem>.md`
+`$AW_DIR/qa/test-audit/<YYYY-MM-DD>-campaign-<subsystem>.md`
 and track the steps below as todos.
 
 ## 1. Baseline

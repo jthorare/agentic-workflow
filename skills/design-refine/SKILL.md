@@ -7,10 +7,10 @@ allowed-tools: Read, Write, Edit, Skill, Glob, Grep, Bash(git *), Bash(ls *), Ba
 <!-- MEMORY: SKIP -->
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
 
 # Design Refine — Orchestrate Refinement Through Impeccable + Packs
 
@@ -30,7 +30,7 @@ Pre-loads the design language context, then runs a **bounded** refinement sequen
 ## Step 0: Resume Context
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/design"
 ls "$AW_DIR/design/refine-log.md" 2>/dev/null || echo "refine-log: none yet"
@@ -126,7 +126,7 @@ Verify:      <run-id> — <verdict> (max diff <pct>% vs pre-refine <pct>%)
 
 | Path | Description |
 |------|-------------|
-| `~/.agentic-workflow/<repo-slug>/design/refine-log.md` | Append-only log of every dispatch (pack, skill, intent, files touched, outcome). Read at Step 0 so runs never repeat failed experiments. |
+| `$AW_DIR/design/refine-log.md` | Append-only log of every dispatch (pack, skill, intent, files touched, outcome). Read at Step 0 so runs never repeat failed experiments. |
 | `design-tokens.json` | Updated in place when a refinement introduces new token values (see Step 4). |
 
 ## Rules

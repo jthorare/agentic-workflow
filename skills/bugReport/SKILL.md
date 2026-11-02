@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 Read-only audit that produces a structured bug report with health scores. This skill **never modifies source code** — it is purely diagnostic.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 **IMPORTANT: This skill is read-only. Do NOT modify any source code, test files, or configuration. Only write the output report.**
 
@@ -103,7 +103,14 @@ If no dimension is detectable, overall is `—` with the note "no toolchain dete
 
 ## Step 5: Write Report
 
-Write the report to `$HOME/.agentic-workflow/$REPO_SLUG/qa/{timestamp}-audit-{slug}.md` where:
+`$AW_DIR` comes from the shared slug script; source it in the bash block that uses it (shell state does not persist):
+
+```bash
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
+source "$SHARED_DIR/repo-slug.sh"
+```
+
+Write the report to `$AW_DIR/qa/{timestamp}-audit-{slug}.md` where:
 - `{timestamp}` is `YYYYMMDD-HHmmss` format
 - `{slug}` is the scoped module name in kebab-case, or `full-project` if no scope
 
@@ -188,7 +195,7 @@ Overall health: {score}/100 (— dimensions excluded from scoring)
   Lint:  {score}/100 or —
 
 Found: {n} bugs, {n} tech debt items, {n} test gaps, {n} false positives (itemized in report)
-Report: ~/.agentic-workflow/<repo-slug>/qa/{filename}
+Report: $AW_DIR/qa/{filename}
 
 Fix a specific bug with full context: /bugHunt --from-report <report-path> --item N
 ```
