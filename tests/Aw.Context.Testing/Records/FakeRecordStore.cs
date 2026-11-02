@@ -271,8 +271,21 @@ public sealed class FakeRecordStore : IRecordStore
         var issues = _records.Values
             .Where(i => i.Kind == RecordKind.Issue && i.RemovedAt is null && audience.Allows(i.Audience, i.Key) && i.Links.Any(l => l.Kind == RecordLinkKind.InProject && l.ToRef == project.Key.Value))
             .ToList();
+        var prs = PrsOf(issues, audience);
         return new ProjectRow(project.Key, project.Title, project.Url, project.StateRaw, project.Health, project.DueAt, project.UpdatedAt ?? project.SyncedAt, project.ClosedAt,
-            lead?.ToRef, lead?.Title, issues.Count(i => i.State == RecordState.Open), issues.Max(i => i.UpdatedAt), project.Description);
+            lead?.ToRef, lead?.Title, issues.Count(i => i.State == RecordState.Open), issues.Max(i => i.UpdatedAt), project.Description,
+            prs.Count(static p => p.State is RecordState.Open or RecordState.Draft),
+            [.. prs.Select(static p => p.Key.Value["github:pr/".Length..p.Key.Value.LastIndexOf('/')]).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)],
+            prs.Count == 0 ? null : prs.Max(static p => p.UpdatedAt ?? p.SyncedAt));
+    }
+
+    // A PR an issue links to, or one that names an issue's 'known-as' key; live, not withheld, visible, each once.
+    private List<StoredRecord> PrsOf(List<StoredRecord> issues, RecordAudience audience)
+    {
+        var attached = issues.SelectMany(static i => i.Links.Where(static l => l.Kind == RecordLinkKind.Relates).Select(static l => l.ToRef)).ToHashSet(StringComparer.Ordinal);
+        var names = issues.SelectMany(static i => i.Links.Where(static l => l.Kind == RecordLinkKind.KnownAs).Select(static l => l.ToRef)).ToHashSet(StringComparer.Ordinal);
+        return [.. _records.Values.Where(p => p.Kind == RecordKind.Pr && p.RemovedAt is null && !p.Blocked && audience.Allows(p.Audience, p.Key)
+            && (attached.Contains(p.Key.Value) || p.Links.Any(l => l.Kind == RecordLinkKind.Relates && names.Contains(l.ToRef))))];
     }
 
     /// <inheritdoc />

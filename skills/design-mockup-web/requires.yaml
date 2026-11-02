@@ -1,0 +1,2 @@
+bins: [python3]
+mcp: [playwright, prism-mcp]

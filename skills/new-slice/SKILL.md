@@ -6,7 +6,7 @@ allowed-tools: Bash(node *), Bash(git *), Bash(dotnet *), Read, Grep, Glob, AskU
 ---
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # /new-slice
 
@@ -63,3 +63,16 @@ write the assertion → add the ports to the constructor → implement the servi
 
 - `/specToProvenPR` — take the slice to a proven, review-clean PR
 - `/new-slice` — the next use case
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/new-slice-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`new-slice`), `artifacts` (absolute paths: the slice's test, request and response records, stub service and registration edits), `summary` (one line),
+plus `package` (package name); `slice` (slice name); `red_test` (the failing test that names the behavior).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

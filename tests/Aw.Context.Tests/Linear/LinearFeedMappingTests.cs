@@ -79,7 +79,7 @@ public sealed class LinearFeedMappingTests
                 ("linear:issue/r1", RecordLinkKind.Relates, "Rel"),
                 ("linear:issue/r2", RecordLinkKind.Relates, "Rel2"),
             ],
-            item.Links.Select(l => (l.ToRef, l.Kind, l.Title)));
+            item.Links.Where(static l => l.Kind != RecordLinkKind.KnownAs).Select(l => (l.ToRef, l.Kind, l.Title)));
     }
 
     [Fact, Trait("Lane", "unit")]

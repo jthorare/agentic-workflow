@@ -1,0 +1,2 @@
+bins: [git, judge]
+mcp: [design-comparison, prism-mcp, xcodebuildmcp]

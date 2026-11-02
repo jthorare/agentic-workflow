@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Context.Core.Linear;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Records;
@@ -13,6 +14,7 @@ namespace Aw.Context.Tests.Projects;
 public sealed class ProjectFactsTests
 {
     private const string Teams = """{"sources":{"linear":{"teams":["SPL"]}}}""";
+    private const string WithGitHub = """{"index":{"windowDays":21},"sources":{"linear":{"teams":["SPL"]},"github":{"repos":["acme/aw-split-panes"]}}}""";
 
     private static readonly DateTimeOffset _projectAt = RecordSamples.Now;
     private static readonly RecordKey _alpha = RecordKey.From("linear:project/alpha");
@@ -48,6 +50,35 @@ public sealed class ProjectFactsTests
 
         Assert.Equal(later, answer.Projects[0].LastActivity);
         Assert.Equal(_projectAt, answer.Projects[1].LastActivity);
+    }
+
+    [Fact]
+    public async Task With_github_listed_the_open_prs_and_repos_of_the_linked_prs_come_with_the_window_and_count_toward_activity()
+    {
+        var later = _projectAt.AddHours(3);
+        await Seed(Project(_alpha, "Alpha"), Issue("linear:issue/1", _alpha) with { Links = [new RecordLink(_alpha.Value, RecordLinkKind.InProject, Title: null), new RecordLink("linear:issue-key/SPL-1", RecordLinkKind.KnownAs, Title: null), new RecordLink("github:pr/acme/aw-split-panes/4", RecordLinkKind.Relates, Title: null)] });
+        await SeedPrs(Pr(4, RecordState.Open, later), Pr(5, RecordState.Merged, _projectAt));
+
+        var answer = await Read([_alpha], WithGitHub);
+
+        var fact = Assert.Single(answer.Projects);
+        Assert.Equal(1, fact.OpenPrs);
+        Assert.Equal(["acme/aw-split-panes"], fact.Repos);
+        Assert.Equal(later, fact.LastActivity);
+        Assert.Equal(21, answer.PrWindowDays);
+    }
+
+    [Fact]
+    public async Task Without_github_the_pr_fields_are_null_not_zero()
+    {
+        await Seed(Project(_alpha, "Alpha"));
+
+        var answer = await Read([_alpha]);
+
+        var fact = Assert.Single(answer.Projects);
+        Assert.Null(fact.OpenPrs);
+        Assert.Null(fact.Repos);
+        Assert.Null(answer.PrWindowDays);
     }
 
     [Fact]
@@ -248,11 +279,25 @@ public sealed class ProjectFactsTests
         _ = await _store.Commit(RecordSamples.Batch(LinearSourceIds.Issues, 1, issues), TestContext.Current.CancellationToken);
     }
 
+    // PR 4 is attached to issue 1; PR 5 names its key instead
+    private static StoredRecord Pr(int number, RecordState state, DateTimeOffset updatedAt) =>
+        RecordSamples.Record("github:pr/acme/aw-split-panes/" + number.ToString(CultureInfo.InvariantCulture), source: RecordSamples.Github) with
+        {
+            Kind = RecordKind.Pr,
+            State = state,
+            Audience = AudienceKey.From("repo:acme/aw-split-panes"),
+            UpdatedAt = updatedAt,
+            Links = number == 5 ? [new RecordLink("linear:issue-key/SPL-1", RecordLinkKind.Relates, Title: null)] : [],
+        };
+
+    private async Task SeedPrs(params StoredRecord[] prs) =>
+        _ = await _store.Commit(RecordSamples.Batch(RecordSamples.Github, 1, [.. prs.Select(p => RecordSamples.Write(p, p.Title))]), TestContext.Current.CancellationToken);
+
     private GetProjectFactsService Service() => new(_store, _identities, _sync);
 
-    private async Task<ProjectFactsAnswer> Read(IReadOnlyList<RecordKey> attached)
+    private async Task<ProjectFactsAnswer> Read(IReadOnlyList<RecordKey> attached, string settings = Teams)
     {
-        var answer = await Service().Handle(new GetProjectFactsRequest(new ProjectFactsRequest(attached), MapWorld.HumanWith(Teams)), TestContext.Current.CancellationToken);
+        var answer = await Service().Handle(new GetProjectFactsRequest(new ProjectFactsRequest(attached), MapWorld.HumanWith(settings)), TestContext.Current.CancellationToken);
         Assert.False(answer.IsError);
         return answer.Value;
     }

@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 Analyzes git history to produce per-person breakdowns, shipping streaks, test health trends, and actionable insights.
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Step 1: Parse Arguments
 
@@ -235,3 +235,16 @@ Weekly retro complete ({start_date} to {end_date}).
 - `/officeHours` — start the next cycle with a feature spec
 - `/bugReport` — triage the risk areas surfaced above into a scored health report
 - `/syncDocs` — refresh docs if the period shipped releases without a docs pass
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/weeklyRetro-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`weeklyRetro`), `artifacts` (absolute paths: `$AW_DIR/retros/<date>-weekly.md` and `<date>-weekly.json`), `summary` (one line),
+plus `period` (the date range covered).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -11,7 +11,7 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(pytest *)
 Syncs your branch, runs tests, audits coverage, pushes, opens a PR, and optionally invokes `/syncDocs`.
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Step 1: Pre-flight Checks
 
@@ -208,8 +208,28 @@ Release shipped!
   Report:  {handed to /landAndDeploy via .pending-ship.json | $AW_DIR/releases/{ISO-date}-{tip-short-sha}/ship.md}
 ```
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - (auto) `/landAndDeploy` — chained after PR creation, polls for merge then deploys (skip with `--no-deploy`)
 - (auto) `/canary` — chained by `/landAndDeploy` on successful deploy
 - (auto) `/syncDocs` — chained by `/canary` on `HEALTHY` verdict (or directly by `shipRelease` if `--no-deploy`)
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/shipRelease-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`shipRelease`), `artifacts` (absolute paths: `$AW_DIR/releases/<id>/ship.md` and `.pending-ship.json` when the deploy chain follows), `summary` (one line),
+plus `pr` (PR number); `pr_url` (PR URL); `draft` (true when the PR was opened as a draft); `tip_sha` (branch tip sha).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

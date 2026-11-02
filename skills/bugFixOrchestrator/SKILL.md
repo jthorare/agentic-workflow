@@ -6,7 +6,7 @@ allowed-tools: Bash(git *), Bash(bugfix-state:*), Bash(ui-evidence:*), Bash(bash
 ---
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # Bug Fix Orchestrator
 
@@ -89,7 +89,7 @@ contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
 ## Phase 2 — Investigate
 
 1. **Invoke skill `rootCause`** with args `--investigate-only --depth 1 "<symptom from the brief>"`.
-2. Take `handoff_path` from rootCause's final JSON block, then
+2. Take `handoff_path` from rootCause's `aw-result` block, then
    `bugfix-state advance investigate --state "$STATE" --evidence <handoff_path>`.
 3. Refused because the handoff status is not `diagnosed` (rootCause returned `unfixed`), because no
    hypothesis is confirmed and fewer than two are open, or because it has no Root Cause → re-run
@@ -274,8 +274,28 @@ Deferred: {follow-ups with links | none}
 Report: {STATE}/resolution.md
 ```
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/shipRelease` — open the PR for the resolved fix branch
 - `/review` — review the fix before shipping
 - `/rootCause` — if unresolved, re-investigate with what the failed attempts ruled out
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/bugFixOrchestrator-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`bugFixOrchestrator`), `artifacts` (absolute paths: `<state>/resolution.md` and the fix branch's changed files), `summary` (one line),
+plus `status` (`resolved | partial | unresolved`, the judge's recorded decision); `branch` (fix branch); `commit` (fix commit sha); `judge_decision` (the judge's decision id).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

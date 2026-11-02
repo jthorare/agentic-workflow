@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+# Tests for scripts/check-skill-requires.sh using temp-dir fixture trees.
+set -euo pipefail
+. "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/test-grep.sh"
+
+SCRIPTS="$(cd "$(dirname "$0")/.." && pwd)"
+CHECK="$SCRIPTS/check-skill-requires.sh"
+REPO="$(cd "$SCRIPTS/.." && pwd)"
+PASS=0
+FAIL=0
+TMPROOT="$(mktemp -d "${TMPDIR:-/tmp}/check-skill-requires-test.XXXXXX")"
+trap 'rm -rf "$TMPROOT"' EXIT
+
+ok()   { PASS=$((PASS + 1)); echo "  ok   $1"; }
+fail() { FAIL=$((FAIL + 1)); echo "  FAIL $1"; }
+
+run() { local root="$1"; shift; set +e; OUT="$(bash "$CHECK" --root "$root" "$@" 2>&1)"; RC=$?; set -e; }
+expect_rc() { if [ "$RC" -eq "$2" ]; then ok "$1 (exit $RC)"; else fail "$1: exit $RC, want $2"; printf '%s\n' "$OUT" | sed 's/^/      | /'; fi; }
+expect_out() { if printf '%s\n' "$OUT" | has -E -- "$2"; then ok "$1"; else fail "$1: output lacks /$2/"; printf '%s\n' "$OUT" | sed 's/^/      | /'; fi; }
+
+GATE='[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"'
+
+# skill DIR NAME REQUIRES_TEXT|- : a skill with a Result block; "-" writes no requires.yaml
+skill() {
+  local d="$1/skills/$2"
+  mkdir -p "$d"
+  printf -- '---\nname: %s\n---\nBody.\n\n## Result block\n\n```bash\n%s\n```\n\nKeys: `skill`.\n\n## Next steps\n\n- none\n' "$2" "$GATE" > "$d/SKILL.md"
+  if [ "$3" != "-" ]; then printf '%s\n' "$3" > "$d/requires.yaml"; fi
+}
+
+# A compliant tree: one agent, an MCP table with two servers, one skill that uses all of it.
+fixture() {
+  local d="$TMPROOT/$1"
+  mkdir -p "$d/skills/_shared" "$d/config/agents" "$d/.agents/rules" "$d/bootstrap"
+  : > "$d/config/agents/qa-runner.md"
+  cat > "$d/.agents/rules/mcp-servers.md" <<'MD'
+| Server | Purpose | Use instead of |
+|--------|---------|----------------|
+| `serena` | LSP | search |
+| `playwright` | Browser | manual |
+MD
+  skill "$d" good $'bins: [sh, cat]\nagents: [qa-runner]\nmcp: [serena, playwright]\nskills: [superpowers:writing-plans]'
+  printf '%s' "$d"
+}
+
+echo "check-skill-requires.sh"
+
+T="$(fixture good)"
+run "$T"; expect_rc "compliant tree passes" 0
+if [ -z "$OUT" ]; then ok "compliant tree prints nothing"; else fail "compliant tree printed: $OUT"; fi
+
+T="$(fixture empty-braces)"; skill "$T" none '{}'
+run "$T"; expect_rc "a skill with no dependencies is {}" 0
+
+T="$(fixture no-sidecar)"; skill "$T" nosidecar -
+run "$T"; expect_rc "missing sidecar fails" 1
+expect_out "missing sidecar names the file" 'skills/nosidecar/requires.yaml: missing'
+
+T="$(fixture empty-file)"; skill "$T" blank '{}'
+: > "$T/skills/blank/requires.yaml"
+run "$T"; expect_rc "empty requires.yaml fails" 1
+expect_out "empty file reason" 'blank/requires.yaml: empty file'
+
+T="$(fixture unknown-key)"; skill "$T" odd $'bins: [sh]\nneeds: [x]'
+run "$T"; expect_rc "unknown key fails" 1
+expect_out "unknown key reason" 'odd/requires.yaml: unknown key needs'
+
+T="$(fixture unparseable)"; skill "$T" junk 'bins sh'
+run "$T"; expect_rc "unparseable line fails" 1
+expect_out "unparseable reason" 'junk/requires.yaml: unparseable line 1'
+
+T="$(fixture unknown-agent)"; skill "$T" spawn 'agents: [ghost-agent]'
+run "$T"; expect_rc "unknown agent fails" 1
+expect_out "unknown agent reason" 'spawn/requires.yaml: unknown agent ghost-agent'
+
+T="$(fixture unknown-mcp)"; skill "$T" calls 'mcp: [nope]'
+run "$T"; expect_rc "unknown mcp fails" 1
+expect_out "unknown mcp reason" 'calls/requires.yaml: unknown mcp server nope'
+
+T="$(fixture mock-mcp)"; skill "$T" calls 'mcp: [linear]'; mkdir -p "$T/evals/mocks/linear"
+run "$T"; expect_rc "an mcp server with a mock passes" 0
+
+T="$(fixture unknown-bin)"; skill "$T" runs 'bins: [no-such-binary-xyz]'
+run "$T"; expect_rc "unknown bin fails" 1
+expect_out "unknown bin reason" 'runs/requires.yaml: bin no-such-binary-xyz is not on PATH'
+run "$T" --skip-bins; expect_rc "--skip-bins ignores bins" 0
+
+T="$(fixture stub-bin)"; skill "$T" runs 'bins: [no-such-binary-xyz]'
+mkdir -p "$T/evals/stubs/bin"; printf '#!/bin/sh\n' > "$T/evals/stubs/bin/no-such-binary-xyz"; chmod +x "$T/evals/stubs/bin/no-such-binary-xyz"
+run "$T"; expect_rc "a bin found in evals/stubs/bin passes" 0
+
+T="$(fixture no-gate)"; skill "$T" nogate '{}'
+printf -- '---\nname: nogate\n---\nBody.\n\n## Result block\n\nKeys: `skill`.\n' > "$T/skills/nogate/SKILL.md"
+run "$T"; expect_rc "Result block without the gate line fails" 1
+expect_out "gate line reason" "nogate/SKILL.md: no '## Result block' section with the gate line"
+
+T="$(fixture gate-elsewhere)"; skill "$T" misplaced '{}'
+printf -- '---\nname: misplaced\n---\n%s\n\n## Result block\n\nKeys: `skill`.\n' "$GATE" > "$T/skills/misplaced/SKILL.md"
+run "$T"; expect_rc "gate line outside the Result block fails" 1
+
+T="$(fixture no-block)"; skill "$T" noblock '{}'
+printf -- '---\nname: noblock\n---\nBody.\n' > "$T/skills/noblock/SKILL.md"
+run "$T"; expect_rc "no Result block at all fails" 1
+
+T="$(fixture bootstrap)"
+printf -- '---\nname: bootstrap\n---\n\n## Result block\n\nKeys: `skill`.\n' > "$T/bootstrap/SKILL.md"
+run "$T"; expect_rc "bootstrap/SKILL.md is checked too" 1
+expect_out "bootstrap findings name the sidecar" 'bootstrap/requires.yaml: missing'
+
+T="$(fixture non-skill-dir)"; mkdir -p "$T/skills/helpers"; echo x > "$T/skills/helpers/notes.md"
+run "$T"; expect_rc "a skills/ directory without SKILL.md is not a skill" 0
+
+echo "usage and setup errors"
+run "$TMPROOT" --bogus; expect_rc "unknown flag exits 2" 2
+run "$TMPROOT/does-not-exist"; expect_rc "bad --root exits 2" 2
+mkdir -p "$TMPROOT/bare"; run "$TMPROOT/bare"; expect_rc "no skills/ exits 2" 2
+
+echo "the real tree"
+run "$REPO" --skip-bins; expect_rc "every real skill has a sidecar and a Result block" 0
+
+echo "$PASS passed, $FAIL failed"
+[ "$FAIL" -eq 0 ]

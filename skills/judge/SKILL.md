@@ -100,18 +100,13 @@ confirmations.
 
 ## Result block
 
-Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
-
-Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/judge-$(date +%Y%m%d-%H%M%S).json` with:
-
-- `skill`: `"judge"`
-- `artifacts`: `[]` (this skill reports; it writes no files)
-- `summary`: one line saying what happened
-- `command`: the judge command run first, e.g. `"judge health"`
-- `outcome`: `"ok"`, `"unavailable"` (binary missing or down) or `"error"`
-
-Then print the same JSON as a fenced `aw-result` block in the reply:
-
-```aw-result
-{"skill": "judge", "artifacts": [], "summary": "<one line>", "command": "judge health", "outcome": "unavailable"}
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 ```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/judge-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`judge`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
+plus `command` (the `judge` subcommand it ran, e.g. `judge health`); `outcome` (`ok | unavailable | error`: `unavailable` when the binary is missing or down).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

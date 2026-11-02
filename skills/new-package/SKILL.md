@@ -6,7 +6,7 @@ allowed-tools: Bash(node *), Bash(git *), Bash(dotnet *), Read, Grep, Glob, AskU
 ---
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # /new-package
 
@@ -66,3 +66,16 @@ and the next step it printed: make the slice test pass (`/new-slice` describes t
 
 - `/new-slice` — add the next use case to the package, red first
 - `/specToProvenPR` — when the package is a port packet, take it to a proven, review-clean PR
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/new-package-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`new-package`), `artifacts` (absolute paths: the scaffolded package's files (project, test project, `deps.yaml` edge)), `summary` (one line),
+plus `package` (package name); `red_test` (the one red test it leaves).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

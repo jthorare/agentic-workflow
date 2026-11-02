@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 Read-only audit that produces a structured bug report with health scores. This skill **never modifies source code** — it is purely diagnostic.
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 **IMPORTANT: This skill is read-only. Do NOT modify any source code, test files, or configuration. Only write the output report.**
 
@@ -204,3 +204,16 @@ Fix a specific bug with full context: /bugHunt --from-report <report-path> --ite
 
 - `/bugHunt --from-report <report-path> --item N` — auto-fix a numbered bug from this report with verification
 - `/rootCause` — deep-dive a specific bug from the report
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/bugReport-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`bugReport`), `artifacts` (absolute paths: the audit report `$AW_DIR/qa/<timestamp>-audit-<slug>.md`), `summary` (one line),
+plus `health_score` (the report's health score); `bugs` (count of bugs listed).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

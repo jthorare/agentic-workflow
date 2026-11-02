@@ -10,7 +10,7 @@ allowed-tools: Bash, Read, Write, Skill, AskUserQuestion, mcp__prism-mcp__sessio
 Bridges `/shipRelease` and `/canary`. Waits for PR merge, runs the user-defined deploy command, polls health, runs smoke tests, then auto-chains `/canary`.
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Overview
 
@@ -145,8 +145,28 @@ source "$SHARED_DIR/repo-slug.sh"
 - Consumes + deletes `releases/.pending-ship.json`; `deploy.md` is read by `/canary` (baseline window) and globbed by `/weeklyRetro`
 - `.agentic-workflow/deploy.json` (only on `--setup`)
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/canary` — auto-chained on SUCCESS
 - `/rootCause` — if deploy or smoke fails
 - `/shipRelease --no-deploy` — for next time if you want to skip the auto-chain (e.g., release-branch workflow)
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/landAndDeploy-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`landAndDeploy`), `artifacts` (absolute paths: `$AW_DIR/releases/<release-id>/deploy.md` and `baseline.json`), `summary` (one line),
+plus `release_id` (the release id); `verdict` (`SUCCESS | DEGRADED | FAILED`, the deploy verdict).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
