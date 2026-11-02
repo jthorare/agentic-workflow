@@ -193,6 +193,7 @@ sindri doctor --json
 |---|---|
 | `context:index-store` | `ok the record store answers (N source feed(s))` |
 | `context:index-github`, `-linear`, `-slack` | `ok <pointer> resolves (not probed: ...)` (warn `<key> is not set`: set the variable or run `connect`; fail `SND-SECRET-...`: the pointer is wrong) |
+| `context:index-linear-projects` | `ok <N> projects stored, <M> led by <name> (the Linear key's owner)`; `<name>` must be you, not a shared or bot key (before the first read ends: `ok the first read of Linear's projects isn't done yet`; warn `... whose Linear key this is isn't read yet`: run `sindri index sync linear-projects`) |
 | `context:index-ollama` | `ok Ollama answers at 127.0.0.1:11434 with nomic-embed-text:latest` (warn: start Ollama, pull the model; a wrong digest also warns) |
 | `context:index-sync` | `ok record index: <source> synced <time>` for each source (before the first sync: `warn ... not synced yet`, expected) |
 
