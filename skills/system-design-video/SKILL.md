@@ -119,6 +119,14 @@ Posting to chat or a tracker is a separate step: **Ask the user** first, and use
 
 ## Result block
 
+First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
+
 Under `AW_RESULT=1` (the eval runner and callers set it; a person's normal run prints and writes nothing here), finish by writing `$AW_DIR/results/system-design-video-<timestamp>.json` with the Write tool (`<timestamp>` from `date -u +%Y%m%dT%H%M%SZ`) and printing the same JSON as a fenced `aw-result` block, before `## Next steps`:
 
 ```aw-result

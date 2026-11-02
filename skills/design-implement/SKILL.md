@@ -58,9 +58,17 @@ When the sub-skill completes without printing `[BLOCKED]`:
 
 ## Result block
 
+First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
+
 Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
 
-1. `mkdir -p "$AW_DIR/results"` and write `$AW_DIR/results/design-implement-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-implement"`), `artifacts` (absolute paths of the generated code and the implement report), `summary` (one line), plus `dispatched_to` (`design-implement-web` or `design-implement-ios`), `verify_verdict`.
+1. Write `$AW_DIR/results/design-implement-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-implement"`), `artifacts` (absolute paths of the generated code and the implement report), `summary` (one line), plus `dispatched_to` (`design-implement-web` or `design-implement-ios`), `verify_verdict`.
 2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
 
 ## Next steps

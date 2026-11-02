@@ -81,6 +81,14 @@ If `screens.json` exists and has `baselines` entries for one or more of the veri
 
 ## Result block
 
+First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
+
 Per `_shared/output-contract.md`. Only when `AW_RESULT=1` is set: write `$AW_DIR/results/verify-app-<timestamp>.json` and print the same object as a fenced `aw-result` block after the report, before `## Next steps`. Keys: `skill` (`"verify-app"`), `artifacts` (absolute paths, the sub-skill's `pack.json` and `report.md`), `summary` (one line), `pack` (absolute path of the sub-skill's `pack.json`), `verdict` (the sub-skill's, relayed verbatim), `dispatched` (the sub-skill's name). Without `AW_RESULT=1`, write no file and print no block.
 
 ## Next steps

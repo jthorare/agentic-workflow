@@ -170,6 +170,14 @@ The files are `NAME=value` lines (`#` comments, optional `export ` and quotes); 
 
 ## Result block
 
+First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
+
 Only under `AW_RESULT=1`. Without it, write no file and print no block.
 
 When `AW_RESULT=1` is set, after the run and the publish decision, resolve `$AW_DIR` the way `_shared/repo-slug.sh` does (`source "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"`), then write `$AW_DIR/results/ui-evidence-<UTC timestamp, e.g. 20261101T101500Z>.json` (the Write tool creates the folder) holding one JSON object:

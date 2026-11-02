@@ -236,6 +236,14 @@ Merges, owner decisions, lane maps and kills are logged by the CLI. For anything
 
 ## Result block
 
+First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
+
 Under `AW_RESULT=1` (the eval runner sets it), after the run write `$AW_DIR/results/meta-<timestamp>.json` and print the same JSON as a
 fenced `aw-result` block, before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
 

@@ -1,3 +1,4 @@
+# Graded on behaviour only: Bash writes are sandboxed away (#1892), so deliver.sh / review.sh output is never checked with file_exists.
 schema_version: '1.1'
 name: system-design-video-forced
 tags:

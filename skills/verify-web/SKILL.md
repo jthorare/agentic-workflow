@@ -162,6 +162,14 @@ evidence_path: <absolute path to verification/<run-id>/>
 
 ## Result block
 
+First run this Bash line and go by what it prints (the eval stage turns it on in its staged copy; a person's run prints 0):
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
+
 Per `_shared/output-contract.md`. Only when `AW_RESULT=1` is set: write `$AW_DIR/results/verify-web-<timestamp>.json` and print the same object as a fenced `aw-result` block after the report, before `## Next steps`. Keys: `skill` (`"verify-web"`), `artifacts` (absolute paths: `pack.json`, `report.md`, the screenshots), `summary` (one line), `pack` (absolute path of `pack.json`), `verdict` (`PASS|WARN|FAIL`, same as the report's last lines). Without `AW_RESULT=1`, write no file and print no block.
 
 ## Next steps
