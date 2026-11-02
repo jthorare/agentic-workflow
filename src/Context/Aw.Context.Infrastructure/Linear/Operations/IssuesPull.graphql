@@ -7,6 +7,7 @@ query IssuesPull($filter: IssueFilter, $first: Int, $after: String) {
       creator { id name }
       project { id name }
       parent { id identifier title }
+      attachments(first: 10) { nodes { id title url sourceType } pageInfo { hasNextPage } }
       comments(first: 20, orderBy: updatedAt) { nodes { id body createdAt user { id name } } pageInfo { hasNextPage } }
       relations(first: 25) { nodes { type relatedIssue { id identifier title } } }
       inverseRelations(first: 25) { nodes { type issue { id identifier title } } }

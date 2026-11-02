@@ -48,4 +48,8 @@ public enum RecordLinkKind
     /// <summary>The other record (a person) leads this one (a project).</summary>
     [JsonStringEnumMemberName("led-by")]
     LedBy,
+
+    /// <summary>The record's own key in the form other sources cite it ('linear:issue-key/ENG-12'): a PR that names the key reaches the record through it.</summary>
+    [JsonStringEnumMemberName("known-as")]
+    KnownAs,
 }

@@ -41,8 +41,8 @@ internal sealed class ContextProjectFacts(IApprovedProfile approvals, ICallerCon
 
         var a = answer.Value;
         // why: Context returns only the requested keys in Projects; the ones the owner leads are only in Catalog, and the snapshot's Projects is "led, then attached"
-        LinearProjectFact[] projects = [.. a.Catalog.Where(static f => f.LeadIsOwner).Concat(a.Projects).Select(Fact).DistinctBy(static f => f.Key, StringComparer.Ordinal)];
-        return new ProjectFactsSnapshot(Person(a.Owner), projects, [.. a.Catalog.Select(Fact)], a.Teams, a.FirstReadDone);
+        LinearProjectFact[] projects = [.. a.Catalog.Where(static f => f.LeadIsOwner).Concat(a.Projects).Select(f => Fact(f, a.PrWindowDays)).DistinctBy(static f => f.Key, StringComparer.Ordinal)];
+        return new ProjectFactsSnapshot(Person(a.Owner), projects, [.. a.Catalog.Select(f => Fact(f, a.PrWindowDays))], a.Teams, a.FirstReadDone);
     }
 
     public async ValueTask<Result<IReadOnlyList<ProjectSourceFreshness>>> Freshness(CancellationToken cancellationToken)
@@ -89,8 +89,9 @@ internal sealed class ContextProjectFacts(IApprovedProfile approvals, ICallerCon
         string.Equals(source.Value, "linear-projects", StringComparison.Ordinal) || string.Equals(source.Value, "linear", StringComparison.Ordinal)
         || source.Value.StartsWith("github", StringComparison.Ordinal);
 
-    private static LinearProjectFact Fact(ProjectFact f) =>
-        new(f.Key.Value, f.Title, f.Description, f.Url, f.StateRaw, f.Health, f.DueAt, Person(f.Lead), f.LeadIsOwner, f.UpdatedAt, f.ClosedAt, f.OpenIssues, f.Counting, f.LastActivity);
+    private static LinearProjectFact Fact(ProjectFact f, int? prWindowDays) =>
+        new(f.Key.Value, f.Title, f.Description, f.Url, f.StateRaw, f.Health, f.DueAt, Person(f.Lead), f.LeadIsOwner, f.UpdatedAt, f.ClosedAt, f.OpenIssues, f.Counting, f.LastActivity,
+            f.OpenPrs, f.Repos, f.OpenPrs is null ? null : prWindowDays);
 
     // why: Context's ExternalId is Linear's bare user id; Sindri's ProjectPerson.Ref is the 'linear:user/<id>' form its other records use
     private static ProjectPerson? Person(UserRef? user) => user is { } u ? new ProjectPerson(UserPrefix + u.Id.Value, u.Name) : null;

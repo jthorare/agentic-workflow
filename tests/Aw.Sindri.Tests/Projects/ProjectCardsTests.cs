@@ -47,6 +47,25 @@ public sealed class ProjectCardsTests
             all);
 
     [Fact]
+    public void A_card_carries_its_open_prs_with_the_window_words_and_the_repos_and_none_without_pr_data()
+    {
+        var withPrs = Page([Fact() with { OpenPrs = 3, Repos = ["acme/api", "acme/web"], PrWindowDays = 30 }]).Projects.Single();
+        var without = Page([Fact()]).Projects.Single();
+
+        Expect.Equal((3, "(updated in the last 30 days)"), (withPrs.OpenPrs, withPrs.PrScope));
+        Expect.True(withPrs.Repos.SequenceEqual(["acme/api", "acme/web"], StringComparer.Ordinal));
+        Expect.Equal((null, null, 0), (without.OpenPrs, without.PrScope, without.Repos.Count));
+    }
+
+    [Fact]
+    public void An_attached_card_carries_the_pr_fields_of_its_linear_project()
+    {
+        var card = Page([Fact(led: false) with { OpenPrs = 0, Repos = [], PrWindowDays = 14 }], attached: [Row()]).Projects.Single();
+
+        Expect.Equal((0, "(updated in the last 14 days)"), (card.OpenPrs, card.PrScope));
+    }
+
+    [Fact]
     public void A_led_card_serves_the_notes_and_the_version_of_its_row_and_none_without_one()
     {
         var bare = Page([Fact()]).Projects.Single();
