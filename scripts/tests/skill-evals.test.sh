@@ -170,6 +170,10 @@ H="$TMPROOT/h$N"; mkdir -p "$H"
 has -F -- 'evals/stubs/bin' <<<"$OUT" && ok "the stubs are first on PATH" || fail "stubs not on PATH"
 [ -x "$STAGE_R/evals/stubs/bin/gh" ] && ok "the stub gh is executable in the stage" || fail "stub gh mode"
 [ -d "$H/.aw-eval" ] || [ -d "$TMPROOT/.aw-eval" ] && ok "the scaffold creates .aw-eval/ in the workspace" || fail "no .aw-eval/"
+[ -f "$H/.bashrc" ] && [ ! -s "$H/.bashrc" ] && ok "eval child: the scaffold leaves an empty .bashrc in the run's HOME" || fail "eval child: no empty .bashrc in the run's HOME"
+H2="$TMPROOT/h2$N"; mkdir -p "$H2"; echo 'own rc' >"$H2/.bashrc"
+(cd "$TMPROOT" && env -i PATH="$PATH" HOME="$H2" bash "$STAGE_B/evals/alpha/behaviour/alpha-forced/_aw-scaffold.sh")
+[ "$(cat "$H2/.bashrc")" = 'own rc' ] && ok "eval child: the scaffold keeps an existing .bashrc" || fail "eval child: the scaffold replaced an existing .bashrc"
 grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/evals/stubs/bin/gh" && ok "the staged gh stub defaults to readonly" || fail "staged gh default"
 # repo-slug.sh sourced from the workspace root and from a subdirectory gives one state root (the slug below it is repo-slug.sh's own business)
 WS="$TMPROOT/ws$N"; mkdir -p "$WS/.aw-eval" "$WS/src/deep"

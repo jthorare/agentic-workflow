@@ -699,6 +699,8 @@ inject_scaffold() {
     echo "stage=\"\$(cd \"\$here/$ups\" && pwd)\""
     echo 'dest="$HOME/.agentic-workflow/toolkit"'
     echo 'mkdir -p "$dest" "$HOME/.agentic-workflow" .aw-eval'
+    echo '# an empty .bashrc: the sandbox hides a missing one behind an unreadable stand-in, and every shell then prints "Permission denied" (#1924)'
+    echo '[ -e "$HOME/.bashrc" ] || : >"$HOME/.bashrc"'
     echo 'cp -R "$stage/skills" "$dest/"'
     echo '[ ! -d "$stage/config" ] || cp -R "$stage/config" "$dest/"'
     echo 'echo "claude $HOME/.claude/skills" > "$HOME/.agentic-workflow/providers"'
