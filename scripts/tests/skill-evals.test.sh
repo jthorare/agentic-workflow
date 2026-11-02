@@ -145,7 +145,7 @@ case "$STAGE_R" in "$STATE"/skill-evals/cache/*) ok "the stage is under EVAL_HOM
 (git -C "$STAGE_R" rev-parse --git-dir >/dev/null 2>&1) && fail "the stage is inside a git repo" || ok "the stage is outside any git repo"
 if has -F -- '${AW_PREAMBLE:-off}' "$STAGE_R/skills/_preamble.md" && has -F -- '${AW_RESULT:-1}' "$STAGE_R/skills/_preamble.md" &&
    has -F -- '${AW_GIT_MODE:-readonly}' "$STAGE_R/skills/_preamble.md" && has -F -- '${AW_GIT_MODE:-readonly}' "$STAGE_R/skills/alpha/SKILL.md" &&
-   has -F -- '${AW_STATE_DIR:-$PWD/.aw-state}' "$STAGE_R/skills/_shared/repo-slug.sh"; then ok "the four defaults are rewritten in the stage"; else fail "stage rewrite"; cat "$STAGE_R/skills/_preamble.md"; fi
+   grep -q "aw-eval" "$STAGE_R/skills/_shared/repo-slug.sh"; then ok "the four defaults are rewritten in the stage"; else fail "stage rewrite"; cat "$STAGE_R/skills/_preamble.md"; fi
 has -F -- '${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}' "$STAGE_R/skills/_preamble.md" && ok "AW_TOOLKIT's default stays" || fail "AW_TOOLKIT default was touched"
 after="$(cksum <"$REPO/skills/_preamble.md") $(cksum <"$REPO/skills/alpha/SKILL.md") $(cksum <"$REPO/skills/_shared/repo-slug.sh")"
 [ "$before" = "$after" ] && has -F -- '${AW_PREAMBLE:-on}' "$REPO/skills/_preamble.md" && ok "the source tree is untouched" || fail "the source tree changed"
@@ -159,6 +159,13 @@ H="$TMPROOT/h$N"; mkdir -p "$H"
   [ "$(cat "$H/own-marker")" = own-scaffold-ran ] && ok "the scaffold puts the toolkit at the default path, then chains the case's own" || fail "scaffold run"
 has -F -- 'evals/stubs/bin' <<<"$OUT" && ok "the stubs are first on PATH" || fail "stubs not on PATH"
 [ -x "$STAGE_R/evals/stubs/bin/gh" ] && ok "the stub gh is executable in the stage" || fail "stub gh mode"
+[ -d "$H/.aw-eval" ] || [ -d "$TMPROOT/.aw-eval" ] && ok "the scaffold creates .aw-eval/ in the workspace" || fail "no .aw-eval/"
+grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/evals/stubs/bin/gh" && ok "the staged gh stub defaults to readonly" || fail "staged gh default"
+# repo-slug.sh sourced from the workspace root and from a subdirectory gives one state root (the slug below it is repo-slug.sh's own business)
+WS="$TMPROOT/ws$N"; mkdir -p "$WS/.aw-eval" "$WS/src/deep"
+slug() { (cd "$1" && env -i PATH="$PATH" HOME="$H" bash -c '. "$0"; printf %s "$AW_DIR"' "$STAGE_R/skills/_shared/repo-slug.sh"); }
+r1="$(dirname "$(slug "$WS")")"; r2="$(dirname "$(slug "$WS/src/deep")")"
+[ -n "$r1" ] && [ "$r1" = "$r2" ] && [ "$r1" = "$WS/.aw-state" ] && ok "the staged state root is the same from a subdirectory ($r1)" || fail "AW_DIR differs: '$r1' vs '$r2'"
 [ ! -s "$STATE/skill-evals/spend.jsonl" ] && ok "a dry run writes no tally row" || fail "dry run wrote the tally"
 
 echo "a staged path outside the repo"
@@ -174,27 +181,6 @@ mkrepo
 echo '{}' >"$REPO/skills/alpha/.mcp.json"
 run --skills alpha --dry-run
 expect "an .mcp.json other than the mocks' is refused" 3 '\.mcp\.json other than'
-
-echo "the stubs"
-mkrepo
-G="$REPO/evals/stubs/bin/gh"
-OUT="$("$G" pr create 2>&1)" && RC=0 || RC=$?
-expect "gh pr create is refused with the exact line" 1 '^aw-eval: gh pr create refused \(AW_GIT_MODE=readonly\)$'
-OUT="$("$G" pr merge 7 2>&1)" && RC=0 || RC=$?
-expect "gh pr merge is refused" 1 'gh pr merge refused'
-OUT="$("$G" pr comment 7 -b hi 2>&1)" && RC=0 || RC=$?
-expect "gh pr comment is refused" 1 'gh pr comment refused'
-OUT="$("$G" pr view --json number --jq .number 2>&1)" && RC=0 || RC=$?
-expect "a gh read prints the canned answer" 0 '^7$'
-OUT="$("$G" nonsense 2>&1)" && RC=0 || RC=$?
-expect "an unknown gh call exits 1 with a line" 1 'has no canned answer'
-printf '{"pr view":{"number":99}}' >"$TMPROOT/gh-override.json"
-OUT="$(EVAL_GH_JSON="$TMPROOT/gh-override.json" "$G" pr view --json number --jq .number 2>&1)" && RC=0 || RC=$?
-expect "a case's EVAL_GH_JSON overrides the canned file" 0 '^99$'
-OUT="$("$REPO/evals/stubs/bin/curl" -s -o /dev/null -w '%{http_code}' https://app.example.invalid/health 2>&1)" && RC=0 || RC=$?
-expect "curl answers a canned URL" 0 '^200$'
-OUT="$("$REPO/evals/stubs/bin/curl" https://elsewhere.invalid/ 2>&1)" && RC=0 || RC=$?
-expect "curl refuses anything else (no network)" 7 'no canned answer'
 
 echo "--selftest"
 mkrepo

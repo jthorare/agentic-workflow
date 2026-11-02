@@ -19,7 +19,7 @@
 #     every skill's SKILL.md, the chosen skills' full directories, skills/_shared/, both preambles, config/voice/, the
 #     config/agents/ files a chosen skill names, the chosen skills' evals/<skill>/<kind>/ and fixture.sh, _lib, mocks, stubs.
 #     The STAGED copy is rewritten, never the source: the shell default of AW_PREAMBLE goes from on to off, of AW_GIT_MODE
-#     from full to readonly, of AW_RESULT from 0 to 1, and the staged repo-slug.sh state default becomes $PWD/.aw-state.
+#     from full to readonly, of AW_RESULT from 0 to 1, and the staged repo-slug.sh state default walks up from $PWD to the dir holding .aw-eval/ (the workspace root) and adds /.aw-state. The stubs get the same default rewrite.
 #     The toolkit copy reaches $HOME/.agentic-workflow/toolkit (the default of AW_TOOLKIT) inside each run's temp HOME
 #     through a scaffold script written into every staged case, which then runs the case's own scaffold.
 #   3 check and reserve the day's spend (spec §6.4): $60 per day, shared by lanes (a lane's share is 60 / lanes registered
@@ -553,7 +553,7 @@ rewrite_default() { # STAGE NAME FROM TO: the shell default of NAME (the text af
     FROM="$a" TO="$b" perl -i -pe 'BEGIN { $f = quotemeta($ENV{FROM}); $t = $ENV{TO} } s/$f/$t/g' "$f"
     n=$((n + 1))
   done <<EOF
-$(grep -rlF -- "$a" "$S/skills" "$S/config" 2>/dev/null)
+$(grep -rlF -- "$a" "$S/skills" "$S/config" "$S/evals/stubs" 2>/dev/null)
 EOF
   echo "$name default $from -> $to: $n file(s)" >>"$S/.stage-rewrites"
 }
@@ -564,12 +564,13 @@ rewrite_stage() { # STAGE: the staged copy only, never the source tree
   rewrite_default "$S" AW_PREAMBLE on off
   rewrite_default "$S" AW_GIT_MODE full readonly
   rewrite_default "$S" AW_RESULT 0 1
-  a="\${AW_STATE_DIR:-\$HOME/.agentic-workflow}"; b="\${AW_STATE_DIR:-\$PWD/.aw-state}"
+  a="\${AW_STATE_DIR:-\$HOME/.agentic-workflow}"
+  b='${AW_STATE_DIR:-$(d=$PWD; while [ ! -d "$d/.aw-eval" ] && [ "$d" != / ]; do d=${d%/*}; [ -n "$d" ] || d=/; done; [ -d "$d/.aw-eval" ] || d=$PWD; printf %s "$d")/.aw-state}'
   if [ -f "$S/skills/_shared/repo-slug.sh" ] && grep -qF -- "$a" "$S/skills/_shared/repo-slug.sh"; then
     FROM="$a" TO="$b" perl -i -pe 'BEGIN { $f = quotemeta($ENV{FROM}); $t = $ENV{TO} } s/$f/$t/g' "$S/skills/_shared/repo-slug.sh"
     n=1
   fi
-  echo "repo-slug.sh state default -> \$PWD/.aw-state: $n file(s)" >>"$S/.stage-rewrites"
+  echo "repo-slug.sh state default -> workspace root .aw-state: $n file(s)" >>"$S/.stage-rewrites"
 }
 
 # inject_scaffold CASE_DIR UPS: write _aw-scaffold.sh and point the staged case.yaml at it
@@ -585,7 +586,7 @@ inject_scaffold() {
     echo 'here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"'
     echo "stage=\"\$(cd \"\$here/$ups\" && pwd)\""
     echo 'dest="$HOME/.agentic-workflow/toolkit"'
-    echo 'mkdir -p "$dest" "$HOME/.agentic-workflow"'
+    echo 'mkdir -p "$dest" "$HOME/.agentic-workflow" .aw-eval'
     echo 'cp -R "$stage/skills" "$dest/"'
     echo '[ ! -d "$stage/config" ] || cp -R "$stage/config" "$dest/"'
     echo 'echo "claude $HOME/.claude/skills" > "$HOME/.agentic-workflow/providers"'
