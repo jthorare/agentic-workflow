@@ -10,7 +10,7 @@ allowed-tools: Bash(curl *), Bash(claude mcp *), Bash(codex mcp *), Bash(PORT=*)
 Quick health check for the prism-mcp Mind Palace.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 > **Preamble exemption:** If the preamble's prism-mcp calls failed, continue anyway — diagnosing that failure is this skill's purpose; Session Close ledger/handoff are exempt for this skill.
 
@@ -39,7 +39,7 @@ Assign `PORT` explicitly at the top of **every** bash block (shell state does no
 3. **Knowledge base population for current repo:**
    Resolve the repo slug via the shared helper:
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    echo "repo-slug: $REPO_SLUG"
    ```

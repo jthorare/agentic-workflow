@@ -6,10 +6,10 @@ allowed-tools: Bash(git *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), B
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
 
 # System Design
 
@@ -18,9 +18,9 @@ One run turns a project into a status doc (the source of truth), one page per pe
 **Prerequisites (checked in Diagrams and Style and build, not before):** `python3` (stdlib only); Node 20+; the tldraw offline app running (diagrams); Playwright installed in some directory's `node_modules` (page verification, passed as `--playwright-root`). If one is missing, say which step it blocks and **Ask the user**; do not skip the step.
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
-S="$HOME/.agentic-workflow/toolkit/skills/system-design"
+S="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/system-design"
 SD="$AW_DIR/system-design/<slug>"          # one folder per design = the packet (layout below)
 mkdir -p "$SD"/{prs,diagrams,mockups,shots}
 ```

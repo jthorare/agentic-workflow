@@ -6,10 +6,10 @@ allowed-tools: Bash(SHARED_DIR=*), Read, Write, Edit, Glob, AskUserQuestion, mcp
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
 
 ---
 
@@ -35,7 +35,7 @@ Verify the path exists (read the file or glob for it). If not found:
 Resolve the shared dir from the stable toolkit path:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "extraction: $SHARED_DIR/ios-token-extraction.md"
 ```
 

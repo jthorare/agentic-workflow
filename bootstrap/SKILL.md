@@ -6,7 +6,7 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(find *), Bash(curl *), Bash(docker 
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 > **MCP Servers** — available in every session. Prefer these over built-in tools.
 >
@@ -111,8 +111,8 @@ Orchestrates documentation generation for any repository. Detects existing cover
 Paths used throughout:
 
 ```bash
-TOOLKIT="$HOME/.agentic-workflow/toolkit"
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+TOOLKIT="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 SYNC_RULES="$TOOLKIT/scripts/sync-rules.sh"
 ```
 
@@ -412,7 +412,7 @@ Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so `CLAUDE.md` becomes a symlink
 ### Step 6d: Link per-provider rules
 
 ```bash
-SYNC_RULES="$HOME/.agentic-workflow/toolkit/scripts/sync-rules.sh"
+SYNC_RULES="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/scripts/sync-rules.sh"
 if [ -f "$SYNC_RULES" ]; then
   bash "$SYNC_RULES" "$(pwd)"            # add --force only if the user approved replacing legacy files
   bash "$SYNC_RULES" --check "$(pwd)" && echo "rules: in sync"

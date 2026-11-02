@@ -6,10 +6,10 @@ allowed-tools: Bash(ls *), Bash(mkdir *), Bash(bun *), Bash(ffmpeg *), Bash(ffpr
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing (the ink colors come from the project's `design-tokens.json`).
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing (the ink colors come from the project's `design-tokens.json`).
 
 ---
 
@@ -31,9 +31,9 @@ A concept or product cut (the idea, the worked example, what changes for the peo
 Read before starting: `references/style.md` (look, motion, legibility), `references/storyboard-format.md` (the storyboard file), `references/personas.md`. Read on trouble: `references/gotchas.md`. A runnable worked example, with generic content, is in `examples/base-limit/`.
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
-SKILL="$HOME/.agentic-workflow/toolkit/skills/system-design-video"
+SKILL="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/system-design-video"
 D="$AW_DIR/videos/<design>/<persona>"      # brief.md, storyboard.json, narration.md, take/, deliverables/
 mkdir -p "$D"
 ```

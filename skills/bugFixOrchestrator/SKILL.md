@@ -6,7 +6,7 @@ allowed-tools: Bash(git *), Bash(bugfix-state:*), Bash(ui-evidence:*), Bash(bash
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 # Bug Fix Orchestrator
 
@@ -23,7 +23,7 @@ never work around the helper, edit `state.json`, or write or edit evidence files
 test results) yourself. Evidence comes only from `bugfix-state run-ui` and `run-test`, and the judge
 is asked only through `bugfix-state judge` — never run `judge resolution-check` yourself.
 
-Design: `$HOME/.agentic-workflow/toolkit/docs/superpowers/specs/2026-09-29-bug-fix-orchestrator-design.md`.
+Design: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/docs/superpowers/specs/2026-09-29-bug-fix-orchestrator-design.md`.
 
 ## Setup
 
@@ -31,7 +31,7 @@ Re-run this block at the top of every shell call (shell state does not persist):
 
 ```bash
 command -v bugfix-state >/dev/null || { echo "run ./setup.sh from the agentic-workflow checkout"; exit 1; }
-TK="$HOME/.agentic-workflow/toolkit"
+TK="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}"
 SHARED_DIR="$TK/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"   # sets REPO_SLUG
 # locks.sh is bash-only (it breaks when sourced from zsh, the macOS default), so run it via bash. `locked` holds the

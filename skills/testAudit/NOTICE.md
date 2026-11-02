@@ -5,7 +5,7 @@
 at commit `80930af448ebabc84174146b56bc106d37fab3b4`.
 
 Changes from upstream: renamed to `testAudit`; added mode selection, the shared
-preamble, and a ledger in `~/.agentic-workflow/<repo-slug>/qa/test-audit/`;
+preamble, and a ledger in `$AW_DIR/qa/test-audit/`;
 replaced OpenClaw-specific scripts, skills, and directory layout with
 repo-neutral equivalents and provider-neutral capability phrases.
 
