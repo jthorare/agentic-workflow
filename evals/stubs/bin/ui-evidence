@@ -7,7 +7,7 @@
 # It refuses what the real tool refuses: a non-local --host, --allow-preview-host without a configured preview
 # host, a missing or invalid script or manifest, a desktop repo without evidence config, an unknown screen, a run
 # dir outside the workspace, gh-publish without seeded provenance or reviewed images. An unknown verb exits 1.
-# Files it writes (summary.json, report.md, placeholder PNGs) go under the run dir only, best effort.
+# It writes no files: a run's Bash can't write where a grader (or a later call) sees, so the canned document goes to stdout only.
 set -u
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 answers="$here/../ui-evidence.json"
@@ -65,18 +65,6 @@ inside_workspace() {
   return 1
 }
 
-# best effort: the run dir and its summary; failures here never change the answer
-write_run_files() {
-  local dir="$1" doc="$2"
-  mkdir -p "$dir" 2>/dev/null || return 0
-  printf '%s\n' "$doc" > "$dir/summary.json" 2>/dev/null || true
-}
-
-png() { # a 1x1 PNG, so a Read of an image path finds a file
-  printf 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGP4z8DwHwAFAAH/q842iQAAAABJRU5ErkJggg==' \
-    | base64 -d > "$1" 2>/dev/null || true
-}
-
 case "$verb" in
   run)
     [ "${#pos[@]}" -ge 2 ] || die "usage: ui-evidence run <script.json> <run-dir>"
@@ -130,18 +118,6 @@ if [ "$verb" = "desktop-run" ] && [ -n "$screens" ]; then
   jq -e '.outcome == "passed"' <<< "$doc" >/dev/null && code=0 || code=2
   if [ "$code" -eq 0 ]; then msg=""; else msg="$(jq -r '"\([.screens[] | select(.passed | not)] | length) of \(.screens | length) screens over its limit"' <<< "$doc")"; fi
 fi
-
-case "$verb" in
-  run|api-run|db-run|parity) write_run_files "${pos[1]}" "$doc" ;;
-  desktop-run)
-    write_run_files "${pos[1]}" "$doc"
-    for row in $(jq -r '.screens[] | "\(.name)-\(.size)"' <<< "$doc"); do
-      mkdir -p "${pos[1]}/$row" 2>/dev/null || continue
-      for img in app design diff side-by-side; do png "${pos[1]}/$row/$img.png"; done
-    done
-    printf '# Desktop evidence\n\n%s\n' "$(jq -r '.headline' <<< "$doc")" > "${pos[1]}/report.md" 2>/dev/null || true
-    ;;
-esac
 
 [ -z "$msg" ] || echo "ui-evidence: ${msg#ui-evidence: }" >&2
 printf '%s\n' "$doc"

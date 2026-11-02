@@ -1,13 +1,8 @@
----
-tool: mcp__xcodebuildmcp__session_show_defaults
-response: |
-  Session defaults:
-    projectPath: ./Fernly.xcodeproj
-    workspacePath: (not set)
-    scheme: Fernly
-    configuration: Debug
-    simulatorName: iPhone 16
-    simulatorId: 8F2C41B7-5D0A-4E3B-9C6A-2E7D1B0A9F10
-    useLatestOS: true
----
-Defaults are already set for the Fernly plant-watering app, so the skill needs no discover_projs step.
+Session defaults:
+  projectPath: ./Fernly.xcodeproj
+  workspacePath: (not set)
+  scheme: Fernly
+  configuration: Debug
+  simulatorName: iPhone 16
+  simulatorId: 8F2C41B7-5D0A-4E3B-9C6A-2E7D1B0A9F10
+  useLatestOS: true

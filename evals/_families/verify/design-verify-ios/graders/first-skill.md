@@ -1,5 +1,5 @@
 ---
 type: regex
-source: first_skill_call
-pattern: '"skill"\s*:\s*"(?:[\w-]+:)?design-verify-ios"'
+target: trace
+pattern: '^(?:(?!"skill"\s*:)[\s\S])*"skill"\s*:\s*"(?:[\w-]+:)?design-verify-ios"'
 ---

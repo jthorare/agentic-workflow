@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Canned stand-in for ffprobe (system-design-video evals). Answers from a JSON file, first found of:
 # $AW_STUB_FFPROBE_JSON, the nearest ./ffprobe.json upward from the cwd (a case's fixture plants its failure here), evals/stubs/ffprobe.json.
-# Refuses a file that does not exist, like the real tool. Exits 1 on a call shape the skill's scripts don't make.
+# Does not check that the file exists: the ffmpeg and bun stubs write no files, so an encode never lands on disk. Exits 1 on a call shape the skill's scripts don't make.
 here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cfg="${AW_STUB_FFPROBE_JSON:-}"
 [ -n "$cfg" ] && [ -f "$cfg" ] || { cfg=""; d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/ffprobe.json" ] && { cfg="$d/ffprobe.json"; break; }; d="$(dirname "$d")"; done; }
@@ -10,7 +10,6 @@ cfg="${AW_STUB_FFPROBE_JSON:-}"
 val() { sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^\",}]*\)\"\{0,1\}.*/\1/p" "$cfg" | head -1; }
 args="$*"
 file="${!#}"
-[ -f "$file" ] || { echo "$file: No such file or directory" >&2; exit 1; }
 case "$args" in
   *"format=duration"*"csv=p=0"*) val duration ;;
   *"stream=codec_name,width,height"*"compact=p=0"*)

@@ -1,7 +1,18 @@
-schema_version: "1.1"
+schema_version: '1.1'
 name: verify-web-forced
+execution:
+  max_turns: 40
+  timeout_seconds: 600
+  allowed_tools:
+  - Read
+  - Write
+  - Edit
+  - Glob
+  - Grep
+  - Bash
+  - Skill
+  - AskUserQuestion
+  - mcp__plugin_playwright_playwright__*
 context:
   scaffold_script: fixture.sh
-env:
-  AW_RESULT: "1"
-mocks: ../../../mocks/playwright   # canned Playwright MCP answers; plugin .mcp.json wiring is the lead's (phase 0)
+# MCP mocks: ../../../mocks/playwright

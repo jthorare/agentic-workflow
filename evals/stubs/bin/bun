@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # Canned stand-in for bun (system-design-video evals). Two shapes only:
 #   bun <dir>/render.ts <storyboard.json> <out-dir> --tokens <tokens.json> [--still t1,t2]   -> footage.mp4 (placeholder),
-#       layout.json (one beat per "id" in the storyboard), resolved-inks.json (board = first #rrggbb in the tokens file)
-#   bun -e '<script>'   (review.sh's beat index)   -> one "NN id seconds" line per beat of ./layout.json
-# Anything else (bun add, bunx, bun run) exits 1. Writes only under $PWD.
-inside() { case "$(realpath -m "$1")" in "$PWD"/*|"$PWD") return 0 ;; *) return 1 ;; esac; }
+#       prints a one-line summary and the board color (first #rrggbb in the tokens file); writes nothing
+#   bun -e '<script>'   (review.sh's beat index)   -> one "NN id seconds" line per beat of the nearest storyboard.json upward
+# Anything else (bun add, bunx, bun run) exits 1. Writes no files: a run's Bash can't write where a later call or grader sees.
+sbfile() { local d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/storyboard.json" ] && { echo "$d/storyboard.json"; return; }; d="$(dirname "$d")"; done; }
 if [ "${1:-}" = "-e" ]; then
-  [ -f layout.json ] || { echo "bun stub: no layout.json in $PWD" >&2; exit 1; }
+  sb="$(sbfile)"; [ -n "$sb" ] || { echo "bun stub: no storyboard.json at or above $PWD" >&2; exit 1; }
   i=0
-  for id in $(grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' layout.json | sed 's/.*"\([^"]*\)"$/\1/'); do
+  for id in $(grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$sb" | sed 's/.*"\([^"]*\)"$/\1/'); do
     printf '%02d %s %s.50\n' "$i" "$id" "$((i * 4 + 2))"; i=$((i + 1))
   done
   exit 0
@@ -21,21 +21,9 @@ case "${1:-}" in
     [ -f "$sb" ] || { echo "storyboard not found: $sb" >&2; exit 1; }
     [ -n "$tokens" ] || { echo "usage: bun render.ts <storyboard.json> <out-dir> --tokens <design-tokens.json>" >&2; exit 1; }
     [ -f "$tokens" ] || { echo "tokens file not found: $tokens" >&2; exit 1; }
-    inside "$out" || { echo "bun stub: refusing to write outside $PWD: $out" >&2; exit 1; }
-    mkdir -p "$out"
     board="$(grep -o '#[0-9a-fA-F]\{6\}' "$tokens" | head -1)"; board="${board:-#0d1117}"
-    printf '{\n  "board": "%s"\n}\n' "$board" > "$out/resolved-inks.json"
     ids="$(grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$sb" | sed 's/.*"\([^"]*\)"$/\1/')"
-    { echo '{"beats": ['; i=0; sep=""
-      for id in $ids; do printf '%s{"id":"%s","start":%d,"land":%d,"end":%d}' "$sep" "$id" "$((i * 4))" "$((i * 4 + 2))" "$((i * 4 + 4))"; sep=","; i=$((i + 1)); done
-      echo ']}'; } > "$out/layout.json"
-    if [ -n "$still" ]; then
-      mkdir -p "$out/stills"
-      for t in ${still//,/ }; do printf 'stub still\n' > "$out/stills/t$t.png"; done
-      echo "stills: $still"
-    else
-      printf 'stub media\n' > "$out/footage.mp4"
-      echo "footage.mp4: stub frames; beats: $(printf '%s\n' "$ids" | grep -c .)"
-    fi ;;
+    if [ -n "$still" ]; then echo "stills: $still (board $board)"
+    else echo "footage.mp4: stub frames; beats: $(printf '%s\n' "$ids" | grep -c .); board $board"; fi ;;
   *) echo "bun stub: unknown call: $*" >&2; exit 1 ;;
 esac
