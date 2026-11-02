@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: verify-desktop-natural-1
+source: "issue #1752 (a desktop app whose pages are *Page.axaml views), reworded; the skill's own premise that the UI is expected to match the mockups; app made up"
+tier: C
+kind: routing

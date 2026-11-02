@@ -121,6 +121,16 @@ code="$(jq -r '.exit // 0' <<< "$entry")"
 msg="$(jq -r '.stderr // empty' <<< "$entry")"
 doc="$(jq -c '.stdout // {}' <<< "$entry")"
 
+if [ "$verb" = "desktop-run" ] && [ -n "$screens" ]; then
+  # only the screens asked for; the outcome follows what is left
+  doc="$(jq -c --arg want "$screens" '($want | split(",")) as $w
+    | .screens |= map(select(.name as $n | $w | index($n)))
+    | if all(.screens[]; .passed) then .outcome = "passed" | .headline = "\(.screens | length) screens passed"
+      else .outcome = "failed" | .headline = "\([.screens[] | select(.passed | not) | .name] | join(", ")) over its limit" end' <<< "$doc")"
+  jq -e '.outcome == "passed"' <<< "$doc" >/dev/null && code=0 || code=2
+  if [ "$code" -eq 0 ]; then msg=""; else msg="$(jq -r '"\([.screens[] | select(.passed | not)] | length) of \(.screens | length) screens over its limit"' <<< "$doc")"; fi
+fi
+
 case "$verb" in
   run|api-run|db-run|parity) write_run_files "${pos[1]}" "$doc" ;;
   desktop-run)

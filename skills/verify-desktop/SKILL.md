@@ -1,6 +1,6 @@
 ---
 name: verify-desktop
-description: "Desktop-app verification through the desktop evidence recipe: the real app on seeded data, each screen driven into view and pixel-compared with its mockup. Writes an evidence pack (pack.json + report.md) on every run. Auto mode infers screens from view and style changes in git diff."
+description: "Use when a desktop app's views, styles or resources changed and you need a verdict on whether the real screens still match their design mockups before shipping. Runs the app on seeded data, pixel-compares each affected screen, and writes a PASS, WARN or FAIL evidence pack. Not for web or iOS apps (verify-app routes those) or for fix suggestions while designing (design-verify)."
 argument-hint: "[--journey <plan.md>] [--lenses <csv>] [--visual] [--baseline] [--yes] [--screens <csv>] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(cat *), Bash(cp *), Bash(ui-evidence *), Bash(command *), Read, Write, Glob, Grep, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -86,6 +86,20 @@ Report `{verdict, evidence_path}` where `evidence_path` is the absolute path of 
 
 Artifacts: ~/.agentic-workflow/<repo-slug>/verification/<run-id>/
 ```
+
+## Result block
+
+Only under `AW_RESULT=1`. Without it, write no file and print no block.
+
+When `AW_RESULT=1` is set, after the pack is written, write `$AW_DIR/results/verify-desktop-<UTC timestamp, e.g. 20261101T101500Z>.json` (`mkdir -p "$AW_DIR/results"`) holding one JSON object:
+
+- `skill`: `"verify-desktop"`
+- `artifacts`: absolute paths of `pack.json`, `report.md`, the run's `summary.json` and each screen's `side-by-side.png`
+- `summary`: one line (the verdict and the worst screen with its `diffPercent`)
+- `pack`: absolute path of `pack.json`
+- `verdict`: `PASS` | `WARN` | `FAIL`, the pack's verdict
+
+Then print the same object in the reply as a fenced block tagged `aw-result` (three backticks, `aw-result`, the JSON, three backticks), after the report table and before `## Next steps`.
 
 ## Next steps
 

@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: verify-desktop-forced
+tier: C
+kind: behaviour
+context:
+  scaffold_script: fixture.sh
+# Canned world: a budget-planner repo with a desktop evidence config and a two-screen manifest (fixture.sh), the stub
+# `ui-evidence` (evals/stubs/bin, answers in evals/stubs/ui-evidence.json, scenario "desktop-mismatch").
+# Planted failure: `desktop-run` exits 2; screen "settings" differs by 6.8% (limit 2%) because the footer action bar
+# with Save and Cancel is missing in the app frame; "home" passes at 0.4%. A good run maps the diff to the settings
+# screen, runs desktop-run once, writes a FAIL pack that names the settings screen and the missing footer, edits
+# nothing in the repo, and does not send the user to ship.
