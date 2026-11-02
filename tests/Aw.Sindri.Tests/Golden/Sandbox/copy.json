@@ -51,6 +51,12 @@
     },
     {
       "code": "SND-LAUNCH-014",
+      "reason": "no-seatbelt",
+      "text": "This Mac's sandbox tool (`sandbox-exec`) doesn't work, so this Step can't run by itself. Check that `/usr/bin/sandbox-exec` runs, then press Check again.",
+      "attendedText": "This Mac's sandbox tool (`sandbox-exec`) doesn't work, so this session can't be opened. Check that `/usr/bin/sandbox-exec` runs, then press Check again."
+    },
+    {
+      "code": "SND-LAUNCH-014",
       "reason": "unsupported-platform",
       "text": "Steps can't run by themselves on macOS yet.",
       "attendedText": "Sessions can't be opened on macOS until its sandbox is proven (SB-9): Sindri doesn't run agents without one.",

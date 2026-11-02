@@ -22,15 +22,18 @@ with_timeout() {
   local secs=$1; shift
   if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; return; fi
   if command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; return; fi
+  # why: the watcher marks that it fired before it kills; asking whether it is still alive raced with its exit and returned the command's 143 (#1888)
+  local fired; fired="$(mktemp -u)"
   exec 3<&0
   "$@" <&3 &
   local pid=$!
-  ( sleep "$secs"; kill -TERM "$pid" 2>/dev/null ) &
+  ( sleep "$secs"; : > "$fired"; kill -TERM "$pid" 2>/dev/null ) &
   local watcher=$!
   wait "$pid"; local rc=$?
   exec 3<&-
-  if kill -0 "$watcher" 2>/dev/null; then kill "$watcher" 2>/dev/null; wait "$watcher" 2>/dev/null; return "$rc"; fi
-  return 124
+  kill "$watcher" 2>/dev/null; wait "$watcher" 2>/dev/null
+  if [ -e "$fired" ]; then rm -f "$fired"; return 124; fi
+  return "$rc"
 }
 
 WORK="$(mktemp -d)"

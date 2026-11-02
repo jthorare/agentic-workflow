@@ -3,6 +3,7 @@ using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
+using System.Text.RegularExpressions;
 using Aw.Kernel;
 using ContextCursor = Aw.Context.Core.Sources.SourceCursor;
 
@@ -17,7 +18,8 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="connector">The connector it pulls.</param>
 /// <param name="place">The source's own mapping from a record to its repo and audience; null skips the record (default deny).</param>
 /// <param name="scrubbers">Cleans every title and text before the record leaves the feed; null for none.</param>
-internal sealed class ConnectorFeed(SourceId source, IConnector connector, Func<ConnectorItem, Placement?> place, Scrubbers? scrubbers = null) : RecordFeed(source)
+/// <param name="linearTeams">The Linear team keys ('context.sources.linear.teams') whose issue keys a pull request's title and text link to; null or empty links none.</param>
+internal sealed partial class ConnectorFeed(SourceId source, IConnector connector, Func<ConnectorItem, Placement?> place, Scrubbers? scrubbers = null, IReadOnlyCollection<string>? linearTeams = null) : RecordFeed(source)
 {
     private int _skipped;
 
@@ -62,16 +64,35 @@ internal sealed class ConnectorFeed(SourceId source, IConnector connector, Func<
         return items;
     }
 
-    private static RecordItem? Map(ConnectorItem item, Placement placement)
+    private RecordItem? Map(ConnectorItem item, Placement placement)
     {
         if (!RecordKey.TryFrom(item.Key, out var key) || !SourceVersion.TryFrom(item.Version, out var version) || Kind(item.Kind) is not { } kind)
         {
             return null;
         }
 
-        var links = item.Links.Select(link => Link(link, placement)).OfType<RecordLink>().ToList();
+        var links = item.Links.Select(link => Link(link, placement)).OfType<RecordLink>().Concat(IssueKeys(item)).ToList();
         return new RecordItem(key, kind, item.Title, item.Text, item.Author, item.Url, State(item.State), item.StateRaw, item.CreatedAt, item.UpdatedAt, item.ClosedAt, version, links, placement.Repo, placement.Audience);
     }
+
+    // A pull request's Linear issue keys ("ENG-12") in its title and text, of the listed teams only, each once (projects page spec §4.5, source 2): the read side resolves the key through the
+    // stored issue's identifier, as Linear's own GitHub integration matches.
+    private IEnumerable<RecordLink> IssueKeys(ConnectorItem item)
+    {
+        if (linearTeams is not { Count: > 0 } || !string.Equals(item.Kind, "pr", StringComparison.Ordinal))
+        {
+            return [];
+        }
+
+        return IssueKey.Matches(item.Title + "\n" + item.Text)
+            .Select(static m => m.Value)
+            .Where(k => linearTeams.Contains(k[..k.IndexOf('-', StringComparison.Ordinal)], StringComparer.OrdinalIgnoreCase))
+            .Distinct(StringComparer.Ordinal)
+            .Select(static k => new RecordLink("linear:issue-key/" + k, RecordLinkKind.Relates, Title: null));
+    }
+
+    [GeneratedRegex(@"\b[A-Z][A-Z0-9]+-\d+\b", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex IssueKey { get; }
 
     // A blocked field keeps its raw text on purpose: the sync driver cleans again and must see the block.
     private ConnectorItem Scrubbed(ConnectorItem item)

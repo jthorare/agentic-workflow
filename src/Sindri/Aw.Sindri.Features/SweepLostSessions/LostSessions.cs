@@ -67,7 +67,7 @@ internal sealed class LostSessions(LaunchLiveness liveness, LaunchSessionEvents 
         }
 
         var live = new HashSet<LaunchId>();
-        foreach (var launch in files.Launches())
+        foreach (var launch in files.Launches().Concat(files.SessionHomeLaunches()).Distinct())
         {
             var row = await views.Get(launch, cancellationToken).ConfigureAwait(false);
             if (row.IsSuccess && row.Value is { Live: true })
