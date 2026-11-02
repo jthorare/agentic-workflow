@@ -1,6 +1,6 @@
 ---
 name: verify-app
-description: "Detect web vs iOS vs desktop automatically and delegate to /verify-web (Playwright), /verify-ios (XcodeBuildMCP) or /verify-desktop (the real desktop app on seeded data, checked against its mockups). Pass any arguments through unchanged."
+description: "Use when someone asks to verify, smoke-test or prove a UI change works and has not said whether it is web, iOS or desktop: it inspects the repo and hands off to the matching verify skill, arguments unchanged. Not for when the platform is already named, or for mockup comparison."
 argument-hint: "[--journey <path>] [--lenses <csv>] [--baseline] [--yes] [--base-url <url>] [--screens <csv>] [--visual] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -78,6 +78,10 @@ ls "$AW_DIR/design/screens.json" 2>/dev/null || echo "no screens.json — skip d
 ```
 
 If `screens.json` exists and has `baselines` entries for one or more of the verified screens, invoke **Invoke skill `design-verify`** with args `"<verified screens>"` automatically and report its diff verdict alongside the verification verdict. If no baselines cover the verified screens, skip the chain silently.
+
+## Result block
+
+Per `_shared/output-contract.md`. Only when `AW_RESULT=1` is set: write `$AW_DIR/results/verify-app-<timestamp>.json` and print the same object as a fenced `aw-result` block after the report, before `## Next steps`. Keys: `skill` (`"verify-app"`), `artifacts` (absolute paths, the sub-skill's `pack.json` and `report.md`), `summary` (one line), `pack` (absolute path of the sub-skill's `pack.json`), `verdict` (the sub-skill's, relayed verbatim), `dispatched` (the sub-skill's name). Without `AW_RESULT=1`, write no file and print no block.
 
 ## Next steps
 

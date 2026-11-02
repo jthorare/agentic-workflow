@@ -1,6 +1,6 @@
 ---
 name: verify-web
-description: "Playwright-based self-verification of running web apps. Executes journeys through verification lenses (functional, visual, accessibility, error-state, responsive) and writes an evidence pack (pack.json + report.md) on every run."
+description: "Use when a web UI change must be proven in a live browser session: walk the affected pages, try bad input, resize to phone and desktop widths, and get pass, warn or fail with a saved evidence pack. Not for diffing a page against a design mockup (design-verify-web) or for iOS and desktop apps."
 argument-hint: "[--journey <plan.md>] [--lenses <csv>] [--visual] [--baseline] [--yes] [--base-url <url>] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Read, Write, Glob, Grep, AskUserQuestion, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_click, mcp__plugin_playwright_playwright__browser_fill_form, mcp__plugin_playwright_playwright__browser_press_key, mcp__plugin_playwright_playwright__browser_resize, mcp__plugin_playwright_playwright__browser_console_messages, mcp__plugin_playwright_playwright__browser_network_requests, mcp__plugin_playwright_playwright__browser_wait_for, mcp__plugin_playwright_playwright__browser_evaluate, mcp__plugin_playwright_playwright__browser_select_option, mcp__plugin_playwright_playwright__browser_close, mcp__design-comparison__compare_design, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -159,6 +159,10 @@ evidence_path: <absolute path to verification/<run-id>/>
 - **Every run writes a pack** — a run without `pack.json` + `report.md` is not a verification run.
 - **Confirm the plan in auto mode** unless `--yes` or parent-invoked.
 - **Always release the browser lock**, even on partial failure.
+
+## Result block
+
+Per `_shared/output-contract.md`. Only when `AW_RESULT=1` is set: write `$AW_DIR/results/verify-web-<timestamp>.json` and print the same object as a fenced `aw-result` block after the report, before `## Next steps`. Keys: `skill` (`"verify-web"`), `artifacts` (absolute paths: `pack.json`, `report.md`, the screenshots), `summary` (one line), `pack` (absolute path of `pack.json`), `verdict` (`PASS|WARN|FAIL`, same as the report's last lines). Without `AW_RESULT=1`, write no file and print no block.
 
 ## Next steps
 

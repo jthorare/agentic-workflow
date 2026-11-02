@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: verify-web-forced
+context:
+  scaffold_script: fixture.sh
+env:
+  AW_RESULT: "1"
+mocks: ../../../mocks/playwright   # canned Playwright MCP answers; plugin .mcp.json wiring is the lead's (phase 0)
