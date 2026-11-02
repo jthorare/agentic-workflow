@@ -1,3 +1,4 @@
 schema_version: "1.1"
 name: meta-natural-1
 source: "owner phrase, 2026-10-24 (project_merge_readies_directly: lanes send `ready #N`, the meta gates and merges them directly)"
+disallowed_tools: [SendMessage, ListAgents, Monitor]
