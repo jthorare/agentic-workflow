@@ -1,0 +1,26 @@
+schema_version: '1.1'
+name: addressReview-forced
+source: "written for the eval"
+tags:
+- tier-b
+- behaviour
+execution:
+  max_turns: 30
+  timeout_seconds: 480
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+  - Write
+  - Edit
+context:
+  scaffold_script: fixture.sh
+# Needs AW_STATE_DIR=<workspace>/.aw-state and AW_GIT_MODE=readonly, with stub gh (and the git wrapper) first on PATH.
+# The fixture writes .aw-eval/gh.json: PR 77 view/diff/checkout, and "[]" for the two exact comment-list api paths (no new human comments).
+# Planted: the saved review (.aw-state/<workspace>/reviews/77.json) has a blocking finding on src/export.js (CSV cells with a
+# comma or quote are not escaped), an issue on src/parse.js (parseInt drops the fraction of "1.5"), and one nit on src/export.js
+# (rename toCsv to buildCsv) that must stay untouched because --all is not passed.
