@@ -1,9 +1,9 @@
+using System.Text.RegularExpressions;
 using Aw.Connectors.Core;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
-using System.Text.RegularExpressions;
 using Aw.Kernel;
 using ContextCursor = Aw.Context.Core.Sources.SourceCursor;
 

@@ -9266,7 +9266,7 @@ Aw.Sindri.Core.Launch.StepEnvironment
 const Aw.Sindri.Core.Launch.StepEnvironment.Instance = "AW_SINDRI_INSTANCE" -> string!
 Aw.Sindri.Core.Launch.Argv.ArgvInputs.ArgvInputs(Aw.Sindri.Core.Ids.ItemId Item, string! RepoPath, string! SessionName, string! Seed, Aw.Sindri.Core.Ids.SessionId? SessionId = null, string? McpConfigPath = null, Aw.Sindri.Core.Launch.StepArgs? Step = null, string? PolicyFilePath = null) -> void
 Aw.Sindri.Core.Launch.Argv.ArgvInputs.Deconstruct(out Aw.Sindri.Core.Ids.ItemId Item, out string! RepoPath, out string! SessionName, out string! Seed, out Aw.Sindri.Core.Ids.SessionId? SessionId, out string? McpConfigPath, out Aw.Sindri.Core.Launch.StepArgs? Step, out string? PolicyFilePath) -> void
-static Aw.Sindri.Core.Launch.Argv.StepForms.Arguments(Aw.Sindri.Core.Launch.AgentEntry! entry, Aw.Sindri.Core.Launch.StepArgs! step, string? policyFilePath) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+static Aw.Sindri.Core.Launch.Argv.StepForms.Arguments(Aw.Sindri.Core.Launch.AgentEntry! entry, Aw.Sindri.Core.Launch.StepArgs! step, string? policyFilePath, string? workDir = null) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
 Aw.Sindri.Core.Jobs.IJobKinds
 Aw.Sindri.Core.Jobs.IJobKinds.Known.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ids.JobKind>!
 Aw.Sindri.Core.Events.JobFinished.JobFinished(Aw.Sindri.Core.Ids.CommandId CommandId, Aw.Sindri.Core.Ids.JobId Job, Aw.Sindri.Core.Jobs.JobOutcome Outcome, string! Summary, string? Code, System.Text.Json.JsonElement? Result, Aw.Sindri.Core.Ids.ItemId? Item = null, Aw.Sindri.Core.Ids.RepoName? Repo = null) -> void
@@ -21222,7 +21222,7 @@ Aw.Sindri.Core.Projects.Facts.LinearProjectFact.ClosedAt.get -> System.DateTimeO
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.ClosedAt.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Counting.get -> bool
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Counting.init -> void
-Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Deconstruct(out string! Key, out string! Title, out string? Description, out string? Url, out string? StateRaw, out string? Health, out System.DateTimeOffset? DueAt, out Aw.Sindri.Core.Projects.Facts.ProjectPerson? Lead, out bool LeadIsOwner, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out int OpenIssues, out bool Counting, out System.DateTimeOffset? LastActivity) -> void
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Deconstruct(out string! Key, out string! Title, out string? Description, out string? Url, out string? StateRaw, out string? Health, out System.DateTimeOffset? DueAt, out Aw.Sindri.Core.Projects.Facts.ProjectPerson? Lead, out bool LeadIsOwner, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out int OpenIssues, out bool Counting, out System.DateTimeOffset? LastActivity, out int? OpenPrs, out System.Collections.Generic.IReadOnlyList<string!>? Repos, out int? PrWindowDays) -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Description.get -> string?
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Description.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.DueAt.get -> System.DateTimeOffset?
@@ -21238,7 +21238,7 @@ Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Lead.get -> Aw.Sindri.Core.Proje
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Lead.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.LeadIsOwner.get -> bool
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.LeadIsOwner.init -> void
-Aw.Sindri.Core.Projects.Facts.LinearProjectFact.LinearProjectFact(string! Key, string! Title, string? Description, string? Url, string? StateRaw, string? Health, System.DateTimeOffset? DueAt, Aw.Sindri.Core.Projects.Facts.ProjectPerson? Lead, bool LeadIsOwner, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, int OpenIssues, bool Counting, System.DateTimeOffset? LastActivity) -> void
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.LinearProjectFact(string! Key, string! Title, string? Description, string? Url, string? StateRaw, string? Health, System.DateTimeOffset? DueAt, Aw.Sindri.Core.Projects.Facts.ProjectPerson? Lead, bool LeadIsOwner, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, int OpenIssues, bool Counting, System.DateTimeOffset? LastActivity, int? OpenPrs = null, System.Collections.Generic.IReadOnlyList<string!>? Repos = null, int? PrWindowDays = null) -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.OpenIssues.get -> int
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.OpenIssues.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.StateRaw.get -> string?
@@ -21878,3 +21878,9 @@ Aw.Sindri.Core.NeedsYou.OwnerStopInput.Reason.init -> void
 Aw.Sindri.Core.NeedsYou.OwnerStopInput.Pr.get -> Aw.Sindri.Core.OpenTargets.NeedsYouOpenPr?
 Aw.Sindri.Core.NeedsYou.OwnerStopInput.Pr.init -> void
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForOwnerStop(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, Aw.Sindri.Core.NeedsYou.OwnerStopInput! wait, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.OpenPrs.get -> int?
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.OpenPrs.init -> void
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Repos.init -> void
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.get -> int?
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.init -> void

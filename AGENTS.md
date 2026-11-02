@@ -188,6 +188,8 @@ bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the che
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/canary-baseline-keys.test.sh   # #1896: every `baseline.<key>` /canary reads is a key /landAndDeploy writes to baseline.json
 bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
+bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh: every skill with a git/gh write command has a "## Git mode" section with ${AW_GIT_MODE:-full}; a planted skill without it fails naming file:line
+bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line
 bash scripts/tests/system-design-tokens.test.sh   # skills/system-design/scripts/tokens_to_css.py: known tokens and aliases map, unmapped ones are printed and keep the neutral fallback, a missing tokens file exits 1 without output
 bash scripts/tests/system-design-packet.test.sh   # build_prs.py (cards, numeric order, idempotent, refusals), write_packet.py (packet.json, *.src.html skipped), packet-to-storyboard.ts parser/layout imported under node 22+ (skips without it; no bun)
 bash scripts/tests/system-design-video.test.sh   # skills/system-design-video/scripts with stub ffmpeg/ffprobe/bun: doctor.sh reports what is missing and honors PLAYWRIGHT_CORE / AW_STATE_DIR, playback-check.sh passes level 4.1 without B-frames and fails level 5.0, B-frames, non-h264 and decode errors, bad arguments exit 1

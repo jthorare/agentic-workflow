@@ -18,8 +18,9 @@ internal sealed class LinearSources(LinearSourceParts parts)
 
     /// <summary>A linear record feed (spec 2026-10-27 sindri-owned index §5.2).</summary>
     /// <param name="settings">The checked 'context.sources.linear' settings.</param>
+    /// <param name="githubRepos">'context.sources.github.repos' ('owner/name'): an issue's pull request attachment links to its PR record only for these.</param>
     /// <returns>The feed.</returns>
-    public RecordFeed CreateFeed(LinearSettings settings) => new LinearFeed(new LinearClient(settings, parts), parts.CallDeadline);
+    public RecordFeed CreateFeed(LinearSettings settings, IReadOnlyList<string>? githubRepos = null) => new LinearFeed(new LinearClient(settings, parts), parts.CallDeadline, githubRepos ?? []);
 
     /// <summary>A linear project record feed (projects page spec §4.1).</summary>
     /// <param name="settings">The checked 'context.sources.linear' settings.</param>

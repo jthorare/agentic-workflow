@@ -45,12 +45,12 @@ public static class ArgvBuilder
 
         var values = new PlaceholderValues(entry.Bin, inputs.RepoPath, inputs.SessionName, inputs.SessionName, inputs.Seed, inputs.SessionId, inputs.McpConfigPath);
         var argv = Placeholders.Expand(resume ? entry.Resume! : entry.Open, values); // why: a null Resume returned above
-        return argv.IsError || mode != LaunchMode.Open || inputs.Step is not { } step ? argv : WithForms(argv.Value, entry, step, inputs.PolicyFilePath);
+        return argv.IsError || mode != LaunchMode.Open || inputs.Step is not { } step ? argv : WithForms(argv.Value, entry, step, inputs.PolicyFilePath, inputs.RepoPath);
     }
 
-    private static Result<IReadOnlyList<string>> WithForms(IReadOnlyList<string> argv, AgentEntry entry, StepArgs step, string? policyFilePath)
+    private static Result<IReadOnlyList<string>> WithForms(IReadOnlyList<string> argv, AgentEntry entry, StepArgs step, string? policyFilePath, string workDir)
     {
-        var forms = StepForms.Arguments(entry, step, policyFilePath);
+        var forms = StepForms.Arguments(entry, step, policyFilePath, workDir);
         return forms.IsError ? forms.Error : Results.Success<IReadOnlyList<string>>([.. argv, .. forms.Value]);
     }
 
