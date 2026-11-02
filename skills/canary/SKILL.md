@@ -1,6 +1,6 @@
 ---
 name: canary
-description: "Post-deploy monitoring. Watches error rate, latency, logs, and custom probes for a configurable window. Verdict: HEALTHY (chain syncDocs), DEGRADED (warn), UNHEALTHY (alert + rootCause)."
+description: "Use when a deploy just went out and someone wants to know whether prod is okay: error rate climbing, latency creeping up, odd log lines, or a smoke probe failing after release. Watches those for a window against the pre-deploy numbers and returns HEALTHY, DEGRADED or UNHEALTHY. Not for shipping or deploying itself (shipRelease, landAndDeploy)."
 argument-hint: "[release-id] [--duration <sec>] [--setup]"
 allowed-tools: Bash, Read, Write, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
