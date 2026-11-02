@@ -125,7 +125,7 @@ If the target was "none — execute directly", begin the work yourself using the
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 ```
 
-`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/withInterview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/withInterview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`withInterview`), `artifacts` (absolute paths: `$PLAN_DIR/interview.md` and `$PLAN_DIR/plan.md`, `[]` when the user never confirmed), `summary` (one line),
 plus `confirmed` (true when the user confirmed the plan); `plan_dir` (absolute path of the `$PLAN_DIR` directory holding `interview.md` and `plan.md`); `target_skill` (the skill handed off to, or `none`); `rounds` (number of interview rounds held).

@@ -643,7 +643,7 @@ All under `$AW_DIR/plans/{timestamp}-{slug}/` (manifest per `_shared/plan-layout
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 ```
 
-`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/officeHours-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/officeHours-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`officeHours`), `artifacts` (absolute paths: `plan.md` and the domain docs in `$AW_DIR/plans/<timestamp>-<slug>/`), `summary` (one line),
 plus `plan_dir` (absolute path of the plan directory); `ears_types` (the EARS types the session selected, from `ubiquitous`, `event-driven`, `state-driven`, `optional`, `unwanted`); `requirements` (number of `REQ-*` ids in product.md); `tasks` (number of tasks in TASKS.md).

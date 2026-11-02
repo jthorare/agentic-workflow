@@ -84,7 +84,7 @@ public sealed class OwnerCopyKeychainTests
     {
         var processes = new FakeProcesses().When(static (p, _) => p == "security", FakeProcesses.Ok("{\"a\":1}\n"));
 
-        var json = new SecurityCliKeychainLogin(processes, isMac: true).Read();
+        var json = new SecurityCliKeychainLogin(processes, isMac: true).Read(SecurityCliKeychainLogin.ItemName);
 
         Assert.Equal("{\"a\":1}", json);
         Assert.Equal(["find-generic-password", "-s", "Claude Code-credentials", "-w"], processes.Calls.Single().Arguments);
@@ -95,7 +95,7 @@ public sealed class OwnerCopyKeychainTests
     {
         var processes = new FakeProcesses().When(static (_, _) => true, FakeProcesses.Ok("{\"a\":1}"));
 
-        var json = new SecurityCliKeychainLogin(processes, isMac: false).Read();
+        var json = new SecurityCliKeychainLogin(processes, isMac: false).Read(SecurityCliKeychainLogin.ItemName);
 
         Assert.Null(json);
         Assert.Empty(processes.Calls);
@@ -105,7 +105,7 @@ public sealed class OwnerCopyKeychainTests
     {
         internal int Reads { get; private set; }
 
-        public string? Read()
+        public string? Read(string service)
         {
             Reads++;
             return json;

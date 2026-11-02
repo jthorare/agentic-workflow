@@ -1,6 +1,6 @@
 ---
 name: rootCause
-description: Use BEFORE fixing any bug — a failing or flaky test, a bug report or customer complaint, an error, crash or stack trace, a regression, or anything described as broken, wrong or not working, even when the fix looks small. Finds and proves the root cause first (investigate, analyze, hypothesize, then implement) with scope frozen to the module boundary. Not for new features, refactors, or explaining how code works.
+description: Use BEFORE fixing any bug — a failing or flaky test, a bug report or customer complaint, an error, crash or stack trace, a regression, or anything described as broken, wrong or not working, even when the fix looks small. Finds and proves the root cause first with scope frozen to the module boundary. Not for new features, refactors, or explaining how code works.
 argument-hint: "[--depth N] [--investigate-only] [error-message-or-issue-description | canary incident JSON]"
 allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(SHARED_DIR=*), Bash(source *), Bash(mkdir *), Bash(cat *), Agent, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -8,6 +8,8 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 # Root Cause Analysis
 
 4-phase systematic debugging with automatic scope freeze at the module boundary.
+
+A passing test does not end the run. Every run, fixed or not, ends with the **Done checklist** at the end of Phase 6: the report, the handoff, the result file (under `AW_RESULT=1`) and the `aw-result` block.
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
@@ -79,6 +81,8 @@ Fix the confirmed cause.
 
 Then **Ask the user** whether to expand the scope or stop.
 
+5. **Green is not done.** Once the fix verifies, go straight on to Phase 5 and Phase 6 before you reply.
+
 ## Phase 5: Write Investigation Report + Handoff
 
 Write the report to `$AW_DIR/investigations/{timestamp}-{slug}.md` where:
@@ -89,8 +93,10 @@ Write the report to `$AW_DIR/investigations/{timestamp}-{slug}.md` where:
 ```bash
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
-mkdir -p "$AW_DIR/investigations/<slug>"
+echo "$AW_DIR"
 ```
+
+Write the report and the handoff with the **Write tool** at absolute paths under that `$AW_DIR`; it creates the missing directories. Don't `mkdir` first, and don't skip the files because the shell can't write there: a shell that is read-only or sandboxed is not a reason to skip them. Send the report, the handoff and (under `AW_RESULT=1`) the result file as Write calls in the same turn, so none of them waits on the others.
 
 Report format:
 
@@ -214,6 +220,15 @@ Handoff: $AW_DIR/investigations/{slug}/handoff.md
 { "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
 ```
 
+**Done checklist.** Do every item before you send the reply; a run that skips one is not finished, even when the fix passed:
+
+1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5, Write tool).
+2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5, Write tool).
+3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/rootCause-<timestamp>.json` (Result block, Write tool). Print the gate (`echo "AW_RESULT=${AW_RESULT:-0}"`) to know.
+4. Your final reply, sent after the last tool call (every Write above done first), contains the `aw-result` block above, before `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply. It is never optional: callers parse it, and it goes in even when the rest of the reply is short.
+
+If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
+
 ### Sub-skill Dispatch
 
 Never with `--investigate-only` (status `diagnosed` is the intended end — the caller fixes). Otherwise, if Phase 4 ends with status `unfixed` or `scope-breach`, **and** the depth guard allows (`--depth` < 2):
@@ -232,7 +247,7 @@ Do not invoke bugHunt if the fix was verified — rootCause's own report is suff
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 ```
 
-The fenced JSON tail in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON; the block comes before `## Next steps`.
+The fenced JSON tail in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON, before you print the block; the block goes in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`rootCause`), `artifacts` (absolute paths: the report `$AW_DIR/investigations/<timestamp>-<slug>.md` and the handoff), `summary` (one line),
 plus `status` (`fixed | unfixed | scope-breach | diagnosed`, as today); `report_path` (as today); `handoff_path` (as today); `boundary` (as today).

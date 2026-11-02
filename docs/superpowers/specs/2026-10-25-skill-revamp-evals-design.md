@@ -93,7 +93,7 @@ Every SKILL.md frontmatter gains `requires:` listing binaries, agents and MCP se
 | `<s>-near-miss` | routing | a request that belongs to the skill's closest sibling (§3.1a), so it must not fire this one; a skill with no sibling uses a request that only looks close |
 | `<s>-forced` | behaviour | "use the `<s>` skill on ..." and grade what it does |
 
-Tier D skills have no forced case (§3.3). Counting it all: 33 skills × 4 + 19 × 3 = 189 cases, plus one held-out natural prompt per skill (§7.2, 52) and the family case sets (§3.1a, about 40 prompts): about 280 cases, of which 33 are behaviour cases and the rest are routing.
+Tier D skills have no forced case (§3.3). Counting it all: 35 skills × 4 + 19 × 3 = 197 cases, plus one held-out natural prompt per skill (§7.2, 54) and the family case sets (§3.1a, about 40 prompts): about 290 cases, of which 35 are behaviour cases and the rest are routing.
 
 **Decision:** routing and behaviour cases are kept apart, in two directories per skill (`routing/` and `behaviour/`) and tagged `routing` or `behaviour`. Reason: with the skill unfired a behaviour score means nothing, and under `with-without` the `tool_used: Skill` grader is excluded from the score, so a skill that never fires can still show Δ near 0 and look harmless (`rc-failing-test` showed Δ -0.04). Routing cases run with `--ablation none` and the fire rate is read from `--json`; behaviour cases run with the default `with-without` so Δ is real.
 
@@ -131,18 +131,18 @@ Tiers group skills by what a case needs. Every directory under `skills/` with a 
 `archReview`, `autoplan`, `cso`, `officeHours`, `planDesignReview`, `planDevexReview`, `productReview`, `withInterview`, `enhancePrompt`, `judge`, `prismStatus`.
 (`judge` and `prismStatus` check their binary or server is missing and say so: grade the report, not the tool.)
 
-**Tier B, small fixture repo (16).** A made-up repo built by a `fixture.sh`, plus stubbed `gh` and `git` remotes where needed, `AW_GIT_MODE=readonly`.
-`rootCause`, `bugHunt`, `bugReport`, `bugFixOrchestrator`, `testAudit`, `review`, `addressReview`, `postReview`, `syncDocs`, `shipRelease`, `specToProvenPR`, `new-package`, `new-slice`, `weeklyRetro`, `landAndDeploy`, `canary`.
+**Tier B, small fixture repo (17).** A made-up repo built by a `fixture.sh`, plus stubbed `gh` and `git` remotes where needed, `AW_GIT_MODE=readonly`.
+`rootCause`, `bugHunt`, `bugReport`, `bugFixOrchestrator`, `testAudit`, `review`, `addressReview`, `postReview`, `syncDocs`, `shipRelease`, `specToProvenPR`, `new-package`, `new-slice`, `weeklyRetro`, `landAndDeploy`, `canary`, `system-design`.
 `review`, `addressReview` and `postReview` read a saved review JSON from `$AW_DIR/reviews/`; the fixture writes one. `landAndDeploy` and `canary` use a stub `curl` and a stub deploy command from `.agentic-workflow/deploy.json`.
 
-**Tier C, stubbed binaries or servers (6).** Behaviour is checked against canned tool output: the process, the order of calls, the refusals. Not the tool.
-`ui-evidence` (stub `ui-evidence`, as in the pilot), `verify-web` (mock Playwright server), `verify-ios` (mock XcodeBuildMCP), `verify-desktop` (stub `ui-evidence` desktop recipe), `verify-app` (dispatcher: which of the three it picks), `meta` (stub `aw-meta` with canned JSON).
+**Tier C, stubbed binaries or servers (7).** Behaviour is checked against canned tool output: the process, the order of calls, the refusals. Not the tool.
+`ui-evidence` (stub `ui-evidence`, as in the pilot), `verify-web` (mock Playwright server), `verify-ios` (mock XcodeBuildMCP), `verify-desktop` (stub `ui-evidence` desktop recipe), `verify-app` (dispatcher: which of the three it picks), `meta` (stub `aw-meta` with canned JSON), `system-design-video` (stub `ffmpeg`, `ffprobe` and `bun`).
 MCP mocks live in `evals/mocks/<server>/<tool>.md`; a plugin `.mcp.json` declares the servers so they get mocked.
 
 **Tier D, routing and dispatch only (19).** The design family needs a browser, a simulator or a reference site. Cases check that the right skill fires, that dispatchers (`design-analyze`, `-evolve`, `-implement`, `-mockup`, `-verify`) pick web, iOS or desktop from the prompt, and that the plan before the first tool call is right. No end-to-end runs.
 `design-analyze`, `design-analyze-web`, `design-analyze-ios`, `design-evolve`, `design-evolve-web`, `design-evolve-ios`, `design-implement`, `design-implement-web`, `design-implement-ios`, `design-mockup`, `design-mockup-web`, `design-mockup-ios`, `design-verify`, `design-verify-web`, `design-verify-ios`, `design-verify-desktop`, `design-language`, `design-refine`, `design-shotgun`.
 
-Tier counts: 11 + 16 + 6 + 19 = 52. Tier D gets the two routing cases and the near-miss only (3 cases), no forced case: a plan-text check without a real browser run says little. The fetched packs (`impeccable`, `emil-design-eng`, the `taste-skill` family, `brandkit`) are still **staged** for routing cases when they are installed, because they compete with the design skills for the same prompts in a real session. The same goes for other plugins' skills that compete with ours (`superpowers:systematic-debugging` and `compound-engineering:ce-debug` against `rootCause`, `superpowers:brainstorming` against `officeHours`): the stage adds a description-only stand-in for each installed one (its SKILL.md frontmatter and a one-line body), so routing numbers include them. A skill installed on a person's machine but not on the eval box is a known gap; the phase 0 PR lists which stand-ins were staged. **Not evaluated:** the fetched external packs (`impeccable`, `emil-design-eng`, `taste-skill` family, `brandkit`), which are not ours.
+Tier counts: 11 + 17 + 7 + 19 = 54 (`system-design` and `system-design-video` landed after this spec was first written; the first draft counted 52). Tier D gets the two routing cases and the near-miss only (3 cases), no forced case: a plan-text check without a real browser run says little. The fetched packs (`impeccable`, `emil-design-eng`, the `taste-skill` family, `brandkit`) are still **staged** for routing cases when they are installed, because they compete with the design skills for the same prompts in a real session. The same goes for other plugins' skills that compete with ours (`superpowers:systematic-debugging` and `compound-engineering:ce-debug` against `rootCause`, `superpowers:brainstorming` against `officeHours`): the stage adds a description-only stand-in for each installed one (its SKILL.md frontmatter and a one-line body), so routing numbers include them. A skill installed on a person's machine but not on the eval box is a known gap; the phase 0 PR lists which stand-ins were staged. **Not evaluated:** the fetched external packs (`impeccable`, `emil-design-eng`, `taste-skill` family, `brandkit`), which are not ours.
 
 ## 4. Where the evals live
 
@@ -286,8 +286,8 @@ After phase 0 merges, these four groups run at once, each in its own lane and PR
 |---|---|---|
 | 1 | Tier A (11) | none; first, it is the cheapest, and it proves the case format |
 | 2 | Tier B part 1: `rootCause`, `bugHunt`, `bugReport`, `bugFixOrchestrator`, `testAudit`, `new-package`, `new-slice`, `syncDocs` | fixture repo, `AW_GIT_MODE` |
-| 3 | Tier B part 2: `review`, `addressReview`, `postReview`, `shipRelease`, `specToProvenPR`, `weeklyRetro`, `landAndDeploy`, `canary`, plus `bootstrap` | fixtures, stub `gh` and `curl` |
-| 4 | Tier C (6) and Tier D (19) | MCP mocks, stub binaries, routing-only cases |
+| 3 | Tier B part 2: `review`, `addressReview`, `postReview`, `shipRelease`, `specToProvenPR`, `weeklyRetro`, `landAndDeploy`, `canary`, `system-design`, plus `bootstrap` | fixtures, stub `gh` and `curl` |
+| 4 | Tier C (7) and Tier D (19) | MCP mocks, stub binaries, routing-only cases |
 
 Inside a group, builders take one skill each (up to 8 at once), each writing: 4 cases and graders (plus self-tests), the description rewrite under §7, the Result block section (§2.5), and the fixture. The lane lead then runs the group's evals (`--runs 3`, with-without for behaviour, none for routing), pastes the table, and merges.
 

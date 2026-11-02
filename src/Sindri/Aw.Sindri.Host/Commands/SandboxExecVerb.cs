@@ -39,7 +39,7 @@ internal sealed class SandboxExecVerb(Output output, IServiceProvider services, 
 
         if (services.GetService<ISandboxExec>() is not { } exec)
         {
-            return await output.Error(SindriErrors.LaunchSandboxUnavailable.With("sandbox exec needs the Linux sandbox, and this build has none for this machine")).ConfigureAwait(false);
+            return await output.Error(SindriErrors.LaunchSandboxUnavailable.With("sandbox exec needs the sandbox, and this build has none for this machine")).ConfigureAwait(false);
         }
 
         var read = await ReadPlan(FileFor(target, exec), ct).ConfigureAwait(false);

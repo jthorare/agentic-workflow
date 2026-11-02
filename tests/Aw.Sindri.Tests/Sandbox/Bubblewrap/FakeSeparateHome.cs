@@ -36,7 +36,7 @@ internal sealed class FakeSeparateHome : IDisposable
 
     internal FakeTimeProvider Clock { get; } = new(Now);
 
-    internal SeparateLoginCredentialSource Source() => new(SindriHome, Clock);
+    internal SeparateLoginCredentialSource Source(IKeychainLogin? keychain = null) => new(SindriHome, Clock, keychain);
 
     public void Dispose() => Directory.Delete(SindriHome, recursive: true);
 }

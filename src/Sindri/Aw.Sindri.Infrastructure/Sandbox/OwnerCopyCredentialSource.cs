@@ -216,7 +216,7 @@ internal sealed class OwnerCopyCredentialSource : IModelCredentialSource
             }
         }
 
-        return _options.Keychain?.Read() is { Length: > 0 } json ? System.Text.Encoding.UTF8.GetBytes(json) : null;
+        return _options.Keychain?.Read(SecurityCliKeychainLogin.ItemName) is { Length: > 0 } json ? System.Text.Encoding.UTF8.GetBytes(json) : null;
     }
 
     private LoginStatus ProbeClaude()

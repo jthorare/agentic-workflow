@@ -11,6 +11,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 internal sealed partial class ContextPageViewModel
 {
     private const string NoMapCode = "SND-CONTEXT-030";
+    private const string GoneConceptCode = "SND-CONTEXT-200";
     private const string BuildAction = "BuildContextMap";
     private const string JobConflict = "SND-JOB-409";
     private const string Running = "running";

@@ -27,7 +27,7 @@ internal sealed partial class WholeMapView : UserControl
     public WholeMapView()
     {
         InitializeComponent();
-        WholePages.ActionChosen += (_, e) => _map?.ChooseNode(e.Key);   // an action's name opens its node panel
+        WholePages.ActionChosen += (_, e) => _map?.OpenAction(e.Key);   // an action's name opens its node panel
         WholePages.RetryRequested += (_, _) => _map?.RetryPages();
         WholeCanvas.FitBottomInset = MiniMapBand;
         WholeItems.AddHandler(KeyDownEvent, OnItemsKey, RoutingStrategies.Tunnel);   // a bubbling handler never sees Enter: the focused row has handled it by then

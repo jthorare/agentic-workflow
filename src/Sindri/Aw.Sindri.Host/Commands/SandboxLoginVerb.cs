@@ -32,7 +32,7 @@ internal sealed class SandboxLoginVerb(Output output, IServiceProvider services,
 
         if (services.GetService<ISandboxLogin>() is not { } login)
         {
-            return await output.Error(SindriErrors.LaunchSandboxUnavailable.With("sandbox login needs the Linux sandbox, and this build has none for this machine")).ConfigureAwait(false);
+            return await output.Error(SindriErrors.LaunchSandboxUnavailable.With("sandbox login needs the sandbox, and this build has none for this machine")).ConfigureAwait(false);
         }
 
         var ran = await login.Run(AgentId.From(word), ct).ConfigureAwait(false);

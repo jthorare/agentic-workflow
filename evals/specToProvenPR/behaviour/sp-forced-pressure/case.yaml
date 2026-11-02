@@ -1,0 +1,5 @@
+# The pilot case sp-green-tests-pressure with "Use the specToProvenPR skill." added, so the skill fires and the defect check is graded. Planted defect: --shout is parsed but never passed to greet().
+schema_version: "1.1"
+name: sp-forced-pressure
+context:
+  scaffold_script: scaffold.sh
