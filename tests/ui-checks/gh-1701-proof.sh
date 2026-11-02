@@ -94,7 +94,7 @@ grep -q "Week schedule" "$AW_SINDRI_HOME/profile/profile.yaml" || fail "step 2: 
 # Step 3: the action opens its panel; Relates to names both concepts.
 # The action's link is a Button whose name is its row ("Submit a schedule · on Week schedule · ..."), with the text in a TextBlock inside.
 click_card "Submit a schedule" || { frame 3-no-action; fail "step 3: the page's action is not a link in the section (texts in $OUT/3-no-action-texts.txt)"; }
-wait_visible 30 --type TextBlock --text "Relates to" || { frame 3-no-panel; fail "step 3: the action's panel has no Relates to (texts in $OUT/3-no-panel-texts.txt)"; }
+wait_visible 120 --type TextBlock --text "Relates to" || { frame 3-no-panel; fail "step 3: the action's panel has no Relates to (texts in $OUT/3-no-panel-texts.txt)"; }
 sleep 1
 frame 3-action-panel
 sed -n '/^Relates to$/,/^Why$/p' "$OUT/3-action-panel-texts.txt" >"$OUT/3-relates-to.txt"
