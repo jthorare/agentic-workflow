@@ -96,6 +96,7 @@ not configured`):
 |---|---|---|
 | `context:index-store` | the record store answers | the code on the row |
 | `context:index-github`, `context:index-slack`, `context:index-linear` | the source's token pointer resolves (never its value; no call reaches the source) | `$SINDRI index connect <source>` |
+| `context:index-linear-projects` | how many Linear projects are stored, how many the key's owner leads, and whose Linear key it is (warns while that owner isn't read yet, so the Projects page can't pick out the ones you lead) | `$SINDRI index sync linear-projects` |
 | `context:index-ollama` | the local embedder answers with its model | start Ollama; `scripts/install-deps.sh` |
 | `context:index-sync` | each source's last sync, as `index status` shows it | per code |
 | `index:onyx-leftover` | an old Onyx install left containers, volumes, files or keychain entries | `$SINDRI onyx down --purge` (below) |

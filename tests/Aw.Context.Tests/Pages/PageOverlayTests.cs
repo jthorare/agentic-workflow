@@ -60,6 +60,33 @@ public sealed class PageOverlayTests
         Assert.All(expresses, e => Assert.Contains(e.EvidenceOrEmpty, r => r.Key.Value == "page:web/schedule-week"));
     }
 
+    // Issue 1870: the map already suggests action -> billing; ticking billing (as Accept all does) must keep the link as the owner's.
+    [Fact]
+    public void Ticking_a_concept_the_map_already_suggested_keeps_the_link_as_the_owners()
+    {
+        var applied = PageOverlay.Apply(MapOf(), Repos(Page(concepts: ["billing", "self-scheduling"])));
+
+        var expresses = applied.Edges.Where(e => e.Type == EdgeType.Expresses && e.From.Value == Action).ToList();
+        Assert.Equal("concept:billing,concept:self-scheduling", string.Join(',', expresses.Select(e => e.To.Value).Order(StringComparer.Ordinal)));
+        Assert.All(expresses, e => Assert.Equal(Provenance.Human, e.Provenance));
+    }
+
+    [Fact]
+    public void A_pin_naming_its_action_with_capitals_relabels_the_map_action()
+    {
+        var stored = "action:weekpage.submit";
+        var graph = MapOf();
+        var map = new GraphSnapshot(
+            [.. graph.Nodes.Select(n => n.Key.Value == Action ? n with { Key = NodeKey.From(stored) } : n)],
+            [.. graph.Edges.Select(e => e.From.Value == Action ? e with { From = NodeKey.From(stored) } : e)], [], []);
+
+        var applied = PageOverlay.Apply(map, Repos(Page()));
+
+        var action = Assert.Single(applied.Nodes, n => n.Key.Kind == NodeKind.Action);
+        Assert.Equal((stored, "Submit a schedule"), (action.Key.Value, action.Label));
+        Assert.Contains(action.EvidenceOrEmpty, r => r.Key.Value == "page:web/schedule-week");
+    }
+
     [Fact]
     public void A_page_without_a_surface_key_adds_an_owner_screen_and_an_owner_edge_replaces_the_suggested_one()
     {

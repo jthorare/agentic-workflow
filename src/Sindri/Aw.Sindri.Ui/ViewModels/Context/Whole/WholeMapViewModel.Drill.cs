@@ -146,7 +146,7 @@ internal sealed partial class WholeMapViewModel
     {
         Refocus();
         Changed();
-        foreach (var name in (string[])[nameof(Shown), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(OwnText), nameof(ShowCross), nameof(ShowOwn), nameof(ShowDrillEmpty), nameof(DrillEmptyText)])
+        foreach (var name in (string[])[nameof(Shown), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(OwnText), nameof(ShowCross), nameof(ShowOwn), nameof(ShowDrillEmpty), nameof(DrillEmptyText), nameof(ShowPages)])
         {
             OnChanged(name);
         }

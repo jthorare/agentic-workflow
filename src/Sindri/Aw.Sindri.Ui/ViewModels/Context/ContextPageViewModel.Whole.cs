@@ -37,7 +37,9 @@ internal sealed partial class ContextPageViewModel
         Whole.HomeRequested += (_, _) => MapHome();
         Whole.Panel.Launcher = Ports.Launcher ?? NullLauncher.Instance;
         Whole.Panel.Loader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Node(api, key, cancellationToken).ConfigureAwait(true) : null;
+        Whole.Panel.WhyLoader = async (key, cancellationToken) => Ports.ApiUrl() is { } api ? await Ports.Api.Lenses(api, new LensesQuery([key], Depth: null, Draft: false, MapVersion: null), cancellationToken).ConfigureAwait(true) : null;
         Whole.NodeChosen += (_, e) => _ = ChooseWholeNode(e.Value, CancellationToken.None);
+        Whole.PagesRetryRequested += (_, _) => _ = ReadWhole(CancellationToken.None);
         Ports.Follow((_, cancellationToken) => FollowWhole(cancellationToken));
     }
 
@@ -126,6 +128,11 @@ internal sealed partial class ContextPageViewModel
         {
             Whole.Show(read.Value);
             NoteRepos(read.Value);
+            if (OpenedConceptId is { } opened)
+            {
+                await MarkSuggestedSeen(opened).ConfigureAwait(true);
+            }
+
             if (_servedBuilding)
             {
                 (IsBuilding, _buildJob, _servedBuilding, _notReady, NoMap) = (false, null, false, MapNotReadyView.None, false);   // the build the answer named is done: the map is here

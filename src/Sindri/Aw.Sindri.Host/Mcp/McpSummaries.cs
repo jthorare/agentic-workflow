@@ -3,6 +3,7 @@ using System.Text;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Results;
 using Aw.Sindri.Core.Decisions;
 using Aw.Sindri.Core.Items.Vocabulary;
@@ -103,6 +104,21 @@ internal static class McpSummaries
         _ = text.AppendLine(string.Create(CultureInfo.InvariantCulture, $"{view.Other.Id}: {view.Other.Size.Features} features, {view.Other.Size.Records} records, {view.Other.Size.Decisions} decisions, {view.Other.Size.Code} code"));
         _ = text.AppendLine(view.Next is null ? "last page" : "next: " + view.Next);
         return text.Append("The concepts, their names and summaries fenced as untrusted, are in structuredContent.").ToString();
+    }
+
+    /// <summary>context_pages' summary: the slice's page ids with their marks and counts, and whether more follow; never a name.</summary>
+    /// <param name="view">The slice.</param>
+    /// <returns>The text.</returns>
+    internal static string Pages(PagesView view)
+    {
+        var text = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"{view.Pages.Count} of {view.Total} pages · map {view.MapVersion}\n"));
+        foreach (var page in view.Pages)
+        {
+            _ = text.AppendLine(string.Create(CultureInfo.InvariantCulture, $"{page.Id.Value}: {page.Mark}, {page.Actions.Count} actions, {(page.Code ? "code found" : "no code found")}"));
+        }
+
+        _ = text.AppendLine(view.Truncated ? "more pages follow (pass offset)" : "last slice");
+        return text.Append("The pages and their actions, their names fenced as untrusted, are in structuredContent.").ToString();
     }
 
     /// <summary>context_node's summary: the key, the map version and the edge counts; never a label.</summary>

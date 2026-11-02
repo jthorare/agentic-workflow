@@ -136,14 +136,21 @@ behind the API guard (a foreign `Host` gets 400), and it refuses **any** `Origin
 MCP clients send none, browsers always do. Every MCP call is an agent session, whatever headers it sends: only
 `X-Sindri-Repo` is kept, and it scopes the call to that repo.
 
-Phase 1 tools (both read-only):
+The context tools (all read-only; the `sindri_*` tools are in `docs/csharp/sindri.md`):
 
 | Tool | Arguments | Answer |
 |---|---|---|
-| `context_query` | `q`, or one anchor `node` / `item` / `symbol`; `depth?`, `hops?`, `limit?`, `offset?` (`budget?` is accepted and ignored) | `structuredContent`: the same result JSON as `context query --json`; text: counts, anchors, conflicts, degraded sources and the citation keys, never the records' text a second time |
-| `context_sources` | none | `structuredContent`: the sources view plus `instance` (the Sindri build and port that answered); text: the same, then the `context sources status` table |
+| `context_query` | `q`, or one anchor `node` / `item` / `symbol`, or `diff` (two shas, `base..head`); `concept?` (a pin id from `context_concepts`: only results inside that pin), `depth?`, `hops?`, `mapVersion?`, `limit?`, `offset?`, `outside?` with `reason` (`budget?` is accepted and ignored) | `structuredContent`: the same result JSON as `context query --json`; text: counts, anchors, conflicts, degraded sources and the citation keys, never the records' text a second time |
+| `context_sources` | `limit?`, `offset?` | `structuredContent`: the sources view plus `instance` (the Sindri build and port that answered); text: the same, then the `context sources status` table |
+| `context_lenses` | `anchor`, or `anchors` (up to 20; several distinct ones answer the union, schema 2); `mapVersion?`, `hops?`, `limit?`, `offset?` | `structuredContent`: the lenses JSON of `GET /sindri/context/lenses`; text: band sizes, conflicts, coverage and degraded sources |
+| `context_concepts` | `q?`, `cursor?`, `limit?`, `mapVersion?` | `structuredContent`: one page of concepts with their sizes and links, plus `concept:other`; text: one line per concept with its feature, record, decision and code counts, then `next: <cursor>` or `last page` |
+| `context_pages` | `concept?`, `page?`, `repo?`, `limit?` (default 50, at most 200), `offset?`, `mapVersion?` | `structuredContent`: the pages with their actions and concepts, owner-named first (mark `owner`), then the map's suggestions (mark `suggested`), as `GET /sindri/context/pages`, plus `total` and `truncated`; text: one line per page id with its mark, action count and whether code implements it, then `more pages follow (pass offset)` or `last slice` |
+| `context_node` | `key` (a node key, name or alias); `limit?`, `offset?`, `outside?` with `reason` | `structuredContent`: the node with its out and in edges, as `GET /sindri/context/node`; text: the key, map version and edge counts |
+| `context_neighbors` | `key`; `depth?` (default 1), `limit?`, `offset?`, `outside?` with `reason` | `structuredContent`: the nodes and edges around `key`, as `GET /sindri/context/neighbors`; text: the centre, depth and node and edge counts |
 
-**Paging (every MCP tool).** `limit` and `offset` are both optional: `offset` defaults to 0 and `limit` to 100 items. A `limit` under 1 or an `offset` under 0 is `SND-CONTEXT-006`. Only the answer's top-level lists page (a section's or group's own list included); each list keeps its own window by index, and an item is never cut inside (its evidence and sources stay whole). The answer gains `page: {offset, limit, more, lists}`: `more` is true while some list has items past this page, and `lists` gives each list's `total` and its own `more`. `degraded` is a warning, not a list: it is never windowed, so a failed source is always shown. `cites` keeps only the citations the page's items name. `context_lenses` pages the same way (default limit 100 over HTTP, the CLI and MCP); its `page` carries `totals` by list path (`bands.product.own`, `edges`) in place of `lists`. `sindri_item_timeline` has no `after` cursor: it pages by `limit` and `offset` only. A query answer holds every ranked item (there is no token budget and no `truncated`, `budget` or `more` field), so paging with a growing `offset` until `more` is false reaches every item.
+`outside` and `reason` matter only to a session launched by a scoping run: a read of a node outside the run's graph is `SND-CONTEXT-154` unless it passes `outside: true` and a `reason` (`docs/csharp/sindri-context.md`, "Scoping graph and scoped reads"). Any other session's call ignores them.
+
+**Paging (every MCP tool but `context_concepts`, which pages by `cursor`, and `context_pages`, whose `limit` and `offset` count pages and whose `truncated` says more follow).** `limit` and `offset` are both optional: `offset` defaults to 0 and `limit` to 100 items. A `limit` under 1 or an `offset` under 0 is `SND-CONTEXT-006`. Only the answer's top-level lists page (a section's or group's own list included); each list keeps its own window by index, and an item is never cut inside (its evidence and sources stay whole). The answer gains `page: {offset, limit, more, lists}`: `more` is true while some list has items past this page, and `lists` gives each list's `total` and its own `more`. `degraded` is a warning, not a list: it is never windowed, so a failed source is always shown. `cites` keeps only the citations the page's items name. `context_lenses` pages the same way (default limit 100 over HTTP, the CLI and MCP); its `page` carries `totals` by list path (`bands.product.own`, `edges`) in place of `lists`. `sindri_item_timeline` has no `after` cursor: it pages by `limit` and `offset` only. A query answer holds every ranked item (there is no token budget and no `truncated`, `budget` or `more` field), so paging with a growing `offset` until `more` is false reaches every item.
 
 Claude Code hands the model `structuredContent` rather than the text block when a result has both, so everything a
 session needs is in `structuredContent`; the text block is for clients that show text only. The draft map is never
@@ -422,7 +429,7 @@ $SINDRI context map export [<name-or-path>] [--json]
 
 ### Doctor and the purge
 
-`$SINDRI doctor` adds `context:map` (warns with no map, with orphaned overrides or when the current map was built under older map rules, or none recorded, with the fix `sindri context map build`; how far the map is behind HEAD is
+`$SINDRI doctor` adds `context:pages` (right after `context:map`: the profile's named pages against the map; ok with "no pages named" or "no map yet", a warning per page, action or concept the map lacks, fix `sindri context page list --suggested`) and `context:map` (warns with no map, with orphaned overrides or when the current map was built under older map rules, or none recorded, with the fix `sindri context map build`; how far the map is behind HEAD is
 unknown until a build records its commit, S-4) `context:roles` (issue 1105: warns when indexed files look like a role but match no glob, naming the repo, the count and up to 5 example paths, with the fix "add a glob to index.demote or index.ignore in the profile"; ok otherwise, with the per-role counts, an ignored role as `<role> 312 dropped`), and `context:retention` (warns while exports older than 14 days or
 retained versions past the newest 100 are still there, except those replaced within the last 90 days, which a backtest can still read). The `context-purge` service removes both: name it under
 `services:` in the profile.
@@ -652,7 +659,7 @@ the scan itself never touches the graph, the overrides or the pins, and a featur
 The scan picks its model from the size of the map (owner, q121; issue 1172). Before the first call it counts the map's features and estimates the first prompt's tokens
 (characters / 4, rounded up). Above `context.conceptScan.strongAboveFeatures` (default 150) features or `context.conceptScan.strongAbovePromptTokens` (default 10,000;
 the input cap allows about 15,000) tokens it asks for the `strong` tier, otherwise the `cheap` one, and both calls of the scan ask for the same tier. The scan sends the tier only, never a model name. Which harness and which model a tier means comes from `context.models` (see "Model routing: `context.models`" below);
-the old `context.conceptScan.models.<claude|codex|cursor>.<cheap|strong>` is still read and supplies `context.models.names` when that key is absent. Without either, the tier means
+without `context.models.names`, the tier means
 the built-in names: Claude Code `haiku` and `sonnet`, Codex `gpt-6-luna` and `gpt-5.5`, Cursor `gpt-5.6-luna-none-fast` and `gpt-5`. The scan's report, and so the job result, records the tier and the model the
 answering CLI was asked for; the scan is the only caller that picks its own tier, and `context.models.conceptNaming.tier` does not change it.
 
@@ -792,8 +799,8 @@ $ sindri context filemap accept edge:0123456789abcdef      # or reject: one over
   takes the worst of its children). A repo that is not in the profile, or outside a session's repo, is `SND-CONTEXT-045` with
   the same answer for both, so a scope never reveals what is outside it.
 - `context query --symbol <path>` resolves a file to the features it implements, with an `affects` section; an unknown file is `003`.
-- MCP: `context_lenses {anchor, hops?}` (or optional `anchors` for a set, schema 2, and optional `mapVersion`; `context_query` takes `mapVersion` too) returns the lenses as `structuredContent` and a short summary (band sizes, conflicts, Over MCP the JSON is capped at 48,000 characters: a larger answer has its band lists (and then its conflicts) halved until it fits, and the summary says `truncated to fit`; the counts stay those of the whole answer. HTTP and the CLI return every item.
-  coverage). It never reads the draft. Off while `context.sessions.enabled` is false (`SND-CONTEXT-020`).
+- MCP: `context_lenses {anchor, hops?}` (or optional `anchors` for a set, schema 2, and optional `mapVersion`; `context_query` takes `mapVersion` too) returns the lenses as `structuredContent` and a short summary (band sizes, conflicts,
+  coverage). The answer is paged by `limit` and `offset` like the other tools, never cut to fit. It never reads the draft. Off while `context.sessions.enabled` is false (`SND-CONTEXT-020`).
 - MCP: `context_node {key}` and `context_neighbors {key, depth?}` (S-3M) call the services behind `GET /sindri/context/node` and
   `/neighbors` under the session caller, so `structuredContent` equals the session's HTTP answer (labels fenced). The text gives
   counts only: for a node its key, map version and out and in edge counts; for neighbors the centre, depth and node and edge counts.
@@ -823,6 +830,51 @@ the store, a usage error · `75` the heavy-job lock stayed busy (`040`).
 | `SND-CONTEXT-058` | `sources sync <source>` names a source that isn't configured or has nothing to sync (404) | `context sources status` for the names |
 | `SND-CONTEXT-133` | A `context.extract.graphify` limit (`timeoutMinutes`, `maxSnapshotMB`, `maxFileMB`, `maxGraphMB`) is negative, fractional, over 10,000,000 or, for `timeoutMinutes`, over 70,000 (`profile validate`, exit 2; the message names the key path) | Write a whole number, or `0` for no limit |
 | `SND-CONTEXT-059` | A sync stopped at its time cap: partial, it resumes from its cursor (`sources status` shows `059`, the source stays `ok` or `degraded`, exit 0; the sync job's summary leads with `partial:`). Every run completes at least one record, so a slow source still finishes across runs. A model or store failure in the same run shows instead of `059` | None; the next run continues. Raise the cadence if persistent |
+
+## Pages: `context page list`, `context_pages`
+
+A page is a screen or route of the product. Each has actions (submit the schedule, open the menu) and each action expresses concepts. A page comes in two marks:
+
+- **Set by a person** (`owner`): the profile's `index.pages` names it.
+- **Suggested**: the map has a page-like surface (a route or a view) that no profile page names. Its id is the slug of its name. A suggested page is an offer, nothing more; it never changes the map.
+
+Owner pages come first, in the profile's order, then suggested ones with the most actions first. Each page says whether code was found (a file implements the surface) and each action lists its concepts.
+
+```
+$ sindri context page list
+Schedule week
+  surface:route/GET:/schedule/week  ·  Set by a person  ·  Code found
+    Submit schedule  (Set by a person, No code found yet)  ->  scheduling
+
+$ sindri context page list --suggested --concept scheduling
+Week overview
+  surface:route/GET:/schedule/overview  ·  Suggested  ·  Code found
+    Export week  (Suggested, Code found)  ->  scheduling
+```
+
+With no flag it lists the pages a person named (`No pages named yet. Name one in the app, or see sindri context page list --suggested.` when there are none); `--suggested` lists only the suggested ones. `--concept C` keeps pages that express concept C or have an action that does, `--repo R` one repo, `--json` the raw answer. Exit 0 with an answer (an empty list is one), 1 for attention (serve not running, no map yet, an unknown concept or repo `SND-CONTEXT-258`), 2 for a tool error. Agent sessions get both marks, marked, from the MCP tool `context_pages` (arguments `concept`, `page`, `repo`, `limit`, `offset`, `mapVersion`; an unknown page id is `SND-CONTEXT-257`).
+
+### Naming a page from the terminal
+
+`sindri context page set` writes one page into the profile's `index.pages` (replacing the page with that id), `page remove <id>` takes one out, and `--dry-run` checks a set exactly as a write does and shows what would change. Neither approves: the last line names the profile hash to approve.
+
+```
+$ sindri context page set "Schedule week" \
+    --surface surface:route/GET:/schedule/week \
+    --action "Submit a schedule=action:SchedulePage.submit-schedule->self-scheduling,approval-workflow"
+created schedule-week (Schedule week)
+waiting for your approval: sindri profile approve 3f9c...e1
+
+$ sindri profile approve 3f9c...e1
+$ sindri context page list
+Schedule week
+  surface:route/GET:/schedule/week  ·  Set by a person  ·  Code found
+    Submit a schedule  (Set by a person, Code found)  ->  self-scheduling, approval-workflow
+```
+
+`--action "Name=KEY->concept,concept"`: the name, then `=` and the map's action key if the action is one the map knows (leave it out for an action only you name), then `->` and the concepts it expresses. A concept is a pin's or a map concept's id, or its exact name (any case): `->Self-scheduling` works. The keys have to be in the current map (`sindri context page list --suggested` shows them), capital letters in a key are fine. Several repos and no surface to tell which one: say `--repo`. A whole file works too: `sindri context page set --from-file pages.yaml`, the file being the `index: pages:` section of a profile. A mistake is named before anything is written (`SND-CONTEXT-250` unknown concept, `251` unknown surface or action key, `252` which repo, `254` an id twice, `255` a bad name, `256` a bad `--action`, `257` no such page to remove); exit 1 means "an unknown name or key, or Sindri isn't running", exit 2 "this input can't be written".
+
+**Why a page may be missing.** (1) Its route or concept is gone from the current map. (2) A deny rule (`index.denyPaths`) hides the file it lives in. (3) The map only counts a surface as page-like when `PageKinds.IsPage` says so, and that does not yet cover `.ts` or `.cs` routes or `.axaml` views, so a page of those kinds shows up only once a profile page names it. `sindri doctor` has a `context:pages` row that checks the named pages against the map and says which of the first two applies.
 
 ## S-5A: the index sources, secret pointers
 
@@ -917,7 +969,7 @@ status` shows each intent source's last sync, links, decisions and queued record
 
 ### Doctor rows for the index
 
-`sindri doctor` has the index rows `context:index-store`, `context:index-github`, `context:index-linear`, `context:index-slack`, `context:index-ollama` and `context:index-sync`. On a box that
+`sindri doctor` has the index rows `context:index-store`, `context:index-github`, `context:index-linear`, `context:index-linear-projects`, `context:index-slack`, `context:index-ollama` and `context:index-sync`. On a box that
 once ran the old `onyx up`, `index:onyx-leftover` fails while its containers and volumes exist (fix: `sindri onyx down --purge`; it warns
 once `context.index.acknowledgeOnyxLeftover: true`) and is gone when nothing is left (`docs/csharp/sindri.md`).
 
@@ -1056,8 +1108,8 @@ one the request itself names, else the kind's `models`, else `default.models`, e
 | `codex` | `gpt-6-luna` | `gpt-5.5` |
 | `cursor` | `gpt-5.6-luna-none-fast` | `gpt-5` |
 
-The old `context.conceptScan.models` supplies `names` for the matching harness (`claude` is `claude-code`) when `names` doesn't say. If both are written, `names` wins name by name and `profile validate` prints
-"context.conceptScan.models is replaced by context.models.names; the new key is used". Nothing in the profile is rewritten.
+The old `context.conceptScan.models` key is no longer read (issue 1867): `profile validate` and `profile approve` refuse it with SND-CONTEXT-001,
+"context.conceptScan.models: was replaced by context.models.names (claude is claude-code there); move the model names there".
 
 Two errors belong to routing: `SND-CONTEXT-240` (every harness for the call is at its usage limit or failing) and `SND-CONTEXT-241` (no harness for the call is installed).
 
@@ -1086,7 +1138,7 @@ A cancel or the 24 hours ending makes the stalled call fail with `SND-CONTEXT-24
 
 **Where calls show.** Every call writes one `context.model.called` event (the kind, each harness tried with its outcome `answered`, `limit`, `failed` or `skipped`, the tokens). A call under a job adds to that job's row on the Jobs page (`Models: codex gpt-6-luna 3 calls · 4.1k tokens (1 fell back)`) and lists in its sheet under "Model calls", one row per attempt, the last 200. `sindri jobs show <jobId>` prints the same rows and, for a paused job, a first line `waiting on model-limit: … Resume with: sindri jobs resume <jobId>`. A call with no job is in the ledger only (`sindri ledger --type context.model.called`).
 
-**Doctor.** `context:models` prints one line per distinct route, which is also the answer to "what will run", for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model`. It warns, each with its fix, for a listed harness that isn't installed, a list of one harness (no fallback), a Codex model missing from `codex debug models`, and no agent CLI on PATH at all; it is `ok` "not configured" until a profile is approved. A paused job is not a doctor problem.
+**Doctor.** `context:models` prints one line per distinct route, which is also the answer to "what will run", for example `labeling, mapCleanup, rerank: claude-code haiku, then codex gpt-6-luna; conceptNaming: claude-code sonnet, then codex gpt-5.5; productSurfaces: no model`. It warns, each with its fix, for a listed harness that isn't installed, a list of one harness (no fallback), a Codex model missing from `codex debug models`, a harness on a route whose only login is a variable the minimal environment drops (Claude Code: `ANTHROPIC_API_KEY`, `CLAUDE_CODE_OAUTH_TOKEN` or `ANTHROPIC_AUTH_TOKEN` with no `.credentials.json` under `CLAUDE_CONFIG_DIR` or `~/.claude`, not checked on macOS where the login is in the keychain; Codex: `OPENAI_API_KEY` or `CODEX_API_KEY` with no `auth.json` under `CODEX_HOME` or `~/.codex`; Cursor's `CURSOR_API_KEY` passes), and no agent CLI on PATH at all; it is `ok` "not configured" until a profile is approved. A paused job is not a doctor problem.
 
 ### The Jev label pick (`labeling.pick: jev`)
 

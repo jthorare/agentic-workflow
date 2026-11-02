@@ -22,7 +22,10 @@ internal static partial class ContextTools
         }
 
         return new QueryContextRequest(Get(texts, "q"), Get(texts, "node"), Get(texts, "item"), Get(texts, "symbol"),
-            numbers.TryGetValue("depth", out var depth) ? depth.ToString(System.Globalization.CultureInfo.InvariantCulture) : null, numbers.TryGetValue("budget", out var budget) ? budget.ToString(System.Globalization.CultureInfo.InvariantCulture) : null, Diff: Get(texts, "diff"), Hops: Get(texts, "hops"), MapVersion: Get(texts, "mapVersion"));
+            numbers.TryGetValue("depth", out var depth) ? depth.ToString(System.Globalization.CultureInfo.InvariantCulture) : null, numbers.TryGetValue("budget", out var budget) ? budget.ToString(System.Globalization.CultureInfo.InvariantCulture) : null, Diff: Get(texts, "diff"), Hops: Get(texts, "hops"), MapVersion: Get(texts, "mapVersion"))
+        {
+            Concept = Get(texts, "concept"),
+        };
     }
 
     /// <summary>One argument into its map; false for an unknown name or a wrong type. An optional argument sent as null is absent.</summary>
@@ -55,5 +58,5 @@ internal static partial class ContextTools
     private static string Invalid(string name, JsonElement value) =>
         _texts.Contains(name, StringComparer.Ordinal) || _numbers.Contains(name, StringComparer.Ordinal)
             ? $"'{name}' must be {(_texts.Contains(name, StringComparer.Ordinal) ? "a string" : "an integer")}, got {value.ValueKind.ToString().ToLowerInvariant()} (fix: see the tool's input schema)"
-            : $"context_query has no argument '{name}' (fix: q, node, item, symbol, diff, depth, hops, mapVersion, budget, limit, offset)";
+            : $"context_query has no argument '{name}' (fix: q, node, item, symbol, diff, concept, depth, hops, mapVersion, budget, limit, offset)";
 }

@@ -38,12 +38,20 @@ public sealed class ProjectDecisionsTests
     }
 
     [Fact]
-    public void A_linear_project_attaches_without_a_name_and_drops_one_typed()
+    public void A_linear_project_keeps_its_name_so_the_card_has_one_when_context_is_down()
     {
-        var attached = Attach(new ProjectDraft(ProjectRows.LinearKey, Name: "ignored")).Value;
+        var attached = Attach(new ProjectDraft(ProjectRows.LinearKey, Name: "  Mobile app  ")).Value;
+
+        Expect.Equal((ProjectRows.LinearKey, "Mobile app"), (attached.Linear, attached.Name));
+        Expect.Equal(0, attached.Links.Count);
+    }
+
+    [Fact]
+    public void A_linear_project_with_no_name_attaches_without_one()
+    {
+        var attached = Attach(new ProjectDraft(ProjectRows.LinearKey)).Value;
 
         Expect.Equal((ProjectRows.LinearKey, null), (attached.Linear, attached.Name));
-        Expect.Equal(0, attached.Links.Count);
     }
 
     [Theory]

@@ -9,7 +9,7 @@ public sealed record ModelsSettings
     /// <summary>The first 'candidates' value when the profile writes none.</summary>
     public const int DefaultCandidates = 3;
 
-    /// <summary>'names': what cheap and strong mean per harness, including the old 'context.conceptScan.models' folded in when 'names' has no such key.</summary>
+    /// <summary>'names': what cheap and strong mean per harness.</summary>
     public ModelNames Names { get; init; } = ModelNames.None;
 
     /// <summary>'default': what every kind inherits, key by key.</summary>
@@ -27,9 +27,6 @@ public sealed record ModelsSettings
     /// <summary>'productSurfaces.pick': whether Jev decides the product-surface candidates (the same two values as the label pick).</summary>
     public LabelPick SurfacePick { get; init; } = LabelPick.Off;
 
-    /// <summary>What the profile check should print as warnings; today only the old 'context.conceptScan.models' written beside 'context.models.names'.</summary>
-    public IReadOnlyList<string> Warnings { get; init; } = [];
-
     /// <summary>The entry the profile wrote for a kind, or an empty one.</summary>
     /// <param name="kind">The kind.</param>
     /// <returns>The entry.</returns>
@@ -38,7 +35,5 @@ public sealed record ModelsSettings
     /// <summary>Reads and checks a 'context.models' value; a missing or null one is the defaults.</summary>
     /// <param name="section">The value as written.</param>
     /// <returns>The settings, or SND-CONTEXT-001 naming the key path.</returns>
-    public static Result<ModelsSettings> Read(JsonElement? section) => Read(section, legacy: null);
-
-    internal static Result<ModelsSettings> Read(JsonElement? section, ConceptScanModelsSection? legacy) => ModelsRules.Read(section, legacy);
+    public static Result<ModelsSettings> Read(JsonElement? section) => ModelsRules.Read(section);
 }

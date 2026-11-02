@@ -1,5 +1,6 @@
 using System.Text;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Features.ContextCalls;
 
 namespace Aw.Sindri.Host.Commands.Pins;
 
@@ -11,12 +12,7 @@ internal sealed record PinList(string Hash, IReadOnlyList<PinListEntry> Pins)
     internal static PinList From(LoadedProfile loaded)
     {
         ArgumentNullException.ThrowIfNull(loaded);
-        var profile = loaded.Profile;
-        return new PinList(loaded.Hash.Value,
-        [
-            .. (profile.Index?.Concepts ?? []).Select(static c => PinListEntry.From(c, "profile")),
-            .. (profile.Repos ?? []).SelectMany(static r => (r.Index?.Concepts ?? []).Select(c => PinListEntry.From(c, $"repo {r.Name}"))),
-        ]);
+        return new PinList(loaded.Hash.Value, [.. ProfilePins.Of(loaded.Profile).Select(static p => PinListEntry.From(p.Settings, p.SetIn))]);
     }
 
     internal static string Render(PinList view)

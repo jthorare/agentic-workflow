@@ -1,10 +1,12 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Eval.Backtest;
+using Aw.Context.Core.Facade;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.ContextCalls;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +24,8 @@ internal static class ContextJobServiceCollectionExtensions
         return services
             .AddScoped<MapEventSource>()
             .AddScoped<MapJobStarts>()
+            .AddScoped(static sp => new MapRebuildState(sp.GetRequiredService<ContextScopes>(), () => sp.GetRequiredService<IContextEngine>(), sp.GetRequiredService<IJobViews>(), sp.GetRequiredService<TimeProvider>()))   // the pins read takes the concrete state: a Sindri type takes no Context port
+            .AddScoped<Context.Core.Map.IMapRebuildState>(static sp => sp.GetRequiredService<MapRebuildState>())   // replaces Context's NoMapRebuild (the last registration wins); the engine resolved on use, since its query path asks this state
             .AddJob<SyncContextSourcesRequest, SyncContextSourcesResult, SyncContextSourcesService>(
                 static _ => JobKey.From("sync"), static r => SyncSummary(r), PrecheckSync)
             .AddJob<SyncIndexSourceRequest, SyncIndexSourceResult, SyncIndexSourceService>(

@@ -15,11 +15,11 @@ internal static class ModelsRules
     private static readonly string[] _labelingKeys = ["harnesses", "tier", "models", "pick", "candidates"];
     private static readonly string[] _surfaceKeys = ["pick"];
 
-    internal static Result<ModelsSettings> Read(JsonElement? section, ConceptScanModelsSection? legacy)
+    internal static Result<ModelsSettings> Read(JsonElement? section)
     {
         if (section is not { ValueKind: not JsonValueKind.Null and not JsonValueKind.Undefined } element)
         {
-            return new ModelsSettings { Names = Fold(ModelNames.None, legacy) };
+            return new ModelsSettings();
         }
 
         if (element.ValueKind != JsonValueKind.Object)
@@ -36,19 +36,8 @@ internal static class ModelsRules
             }
         }
 
-        var warnings = HasAny(read.Names) && HasAny(Fold(ModelNames.None, legacy)) ? (IReadOnlyList<string>)["context.conceptScan.models is replaced by context.models.names; the new key is used"] : [];
-        return new ModelsSettings { Names = Fold(read.Names, legacy), Default = read.Default, Kinds = read.Kinds, LabelPick = read.Pick, LabelCandidates = read.Candidates, SurfacePick = read.SurfacePick, Warnings = warnings };
+        return new ModelsSettings { Names = read.Names, Default = read.Default, Kinds = read.Kinds, LabelPick = read.Pick, LabelCandidates = read.Candidates, SurfacePick = read.SurfacePick };
     }
-
-    private static bool HasAny(ModelNames names) => ModelHarnesses.DefaultOrder.Any(h => names.Of(h) is { Cheap: not null } or { Strong: not null });
-
-    /// <summary>The old 'context.conceptScan.models' under the names the profile wrote: the new key wins per name, the old one fills what is left.</summary>
-    private static ModelNames Fold(ModelNames written, ConceptScanModelsSection? legacy) =>
-        legacy is null
-            ? written
-            : new ModelNames(Fill(written.ClaudeCode, legacy.Claude), Fill(written.Codex, legacy.Codex), Fill(written.Cursor, legacy.Cursor));
-
-    private static CliModels Fill(CliModels written, ConceptScanCliSection? old) => new(written.Cheap ?? old?.Cheap, written.Strong ?? old?.Strong);
 
     private sealed class Collected
     {

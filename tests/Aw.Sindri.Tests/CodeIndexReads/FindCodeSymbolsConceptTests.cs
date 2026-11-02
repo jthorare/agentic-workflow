@@ -1,5 +1,4 @@
 using Aw.CodeIndex.Core.Facade;
-using CodeSymbolKind = Aw.CodeIndex.Core.Model.SymbolKind;
 using Aw.CodeIndex.Core.Values;
 using Aw.CodeIndex.Testing;
 using Aw.Context.Core.Graph;
@@ -14,6 +13,7 @@ using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Features.CodeIndexReads;
 using Aw.Sindri.Features.ContextCalls;
 using CodeRepoName = Aw.CodeIndex.Core.Values.RepoName;
+using CodeSymbolKind = Aw.CodeIndex.Core.Model.SymbolKind;
 using ContextRepoName = Aw.Context.Core.Engine.ContextRepoName;
 using MapRecordKey = Aw.Context.Core.Sources.RecordKey;
 

@@ -15,8 +15,10 @@ public sealed class ModelRoutingDoctorChecksTests
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
+    private static readonly HarnessLogins _signedIn = new(_ => null, _ => true, keychain: false);
+
     private static ModelRoutingDoctorChecks Checks(ModelsSettings settings, ModelHarness[] installed, params string[] codexModels) =>
-        new(new FixedModels(settings), new FixedCatalog(codexModels), () => installed);
+        new(new FixedModels(settings), new FixedCatalog(codexModels), () => installed, _signedIn);
 
     private static ModelsSettings Settings(ModelEntry? @default = null, Dictionary<ModelKind, ModelEntry>? kinds = null) =>
         new() { Default = @default ?? new ModelEntry(Models: new Dictionary<ModelHarness, string> { [ModelHarness.ClaudeCode] = "haiku", [ModelHarness.Codex] = "gpt-6-luna" }), Kinds = kinds ?? [] };
@@ -110,7 +112,7 @@ public sealed class ModelRoutingDoctorChecksTests
     [Fact]
     public async Task With_no_approved_profile_the_row_is_ok_and_says_not_configured_without_reading_PATH()
     {
-        var checks = new ModelRoutingDoctorChecks(new FixedModels(new ModelsSettings(), approved: false), new FixedCatalog([]), () => throw new InvalidOperationException("PATH was read"));
+        var checks = new ModelRoutingDoctorChecks(new FixedModels(new ModelsSettings(), approved: false), new FixedCatalog([]), () => throw new InvalidOperationException("PATH was read"), _signedIn);
 
         var row = await Row(checks);
 
@@ -125,6 +127,19 @@ public sealed class ModelRoutingDoctorChecksTests
 
         Expect.Equal(CheckState.Warn, row.State);
         Assert.Contains("no agent CLI", row.Detail, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_harness_on_a_route_whose_only_login_the_minimal_environment_drops_warns_with_its_fix()
+    {
+        var logins = new HarnessLogins(name => name switch { "HOME" => "/home/a", "OPENAI_API_KEY" => "sk-secret", _ => null }, _ => false, keychain: false);
+        var checks = new ModelRoutingDoctorChecks(new FixedModels(Settings()), new FixedCatalog(["gpt-6-luna"]), () => _both, logins);
+
+        var row = await Row(checks);
+
+        Expect.Equal(CheckState.Warn, row.State);
+        Expect.Equal("codex signs in through OPENAI_API_KEY, which context model calls don't pass (they run with a minimal environment), and it has no stored login", row.Detail);
+        Assert.Contains("codex login", row.Fix, StringComparison.Ordinal);
     }
 
     private sealed class FixedCatalog(string[] codex) : IModelCatalog

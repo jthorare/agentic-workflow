@@ -47,5 +47,8 @@ internal sealed class RunContextBacktestService(ContextScopes scopes, IContextEn
     }
 
     private static BacktestArmLine Line(ArmReport arm) => new(arm.Arm, arm.NotAvailable, arm.PassLine?.Overall, arm.Leaky,
-        arm.Score is { } s ? new BacktestArmScore(s.Samples, s.NodeRecall, s.NodePrecision, s.FileRecallAt20, s.LeakyShare, s.Tokens) : null);
+        arm.Score is { } s ? new BacktestArmScore(s.Samples, s.NodeRecall, s.NodePrecision, s.FileRecallAt20, s.LeakyShare, s.Tokens) : null)
+    {
+        PinAnchored = string.Equals(arm.Dimension, "ranker", StringComparison.Ordinal) && arm.Score is not null ? arm.PinAnchored ?? new PinAnchoredScore(0, 0, 0) : null,
+    };
 }

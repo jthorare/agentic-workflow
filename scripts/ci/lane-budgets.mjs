@@ -35,8 +35,10 @@ const BUDGETS = { unit: 10, integration: 60 };
 // 48.4 s, SindriUi integration 224.7 s then 303.3 s, Context unit 9.66 s then 14.9 s). Still blocking; #1546 brings them back down.
 // Sindri unit brought back down by the owner on 2026-10-30 (#1546) to the slowest of the last six main CI runs + 25%: 29.4 s
 // (job 123538665909; the others 12.8-23.8 s) -> 37 s.
+// SindriUi unit brought down on 2026-10-31 (#1546) by the same rule, after 8 test threads (#1801): the slowest of the 9 main CI
+// runs since, 12.9 s (run 41224242504; the others 9.2-12.5 s), + 25% -> 17 s.
 const PACKAGE_BUDGETS = {
-  SindriUi: { unit: 28, integration: 600 },
+  SindriUi: { unit: 17, integration: 600 },
   Sindri: { unit: 37, integration: 340 },
   Context: { unit: 30 },
 };

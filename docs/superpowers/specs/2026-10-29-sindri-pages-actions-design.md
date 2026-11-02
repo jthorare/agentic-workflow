@@ -1,6 +1,6 @@
 # Sindri context: named pages and their actions, linked to concepts (#1701, pages half)
 
-**Status:** draft for the owner's read. Not ready until the owner has read it. Review rounds and their findings are in the PR body.
+**Status:** approved by the owner on 2026-10-29 (§8 records the answers). Review rounds and their findings are in the PR body.
 **Lane:** ideas. **Builds on:** `2026-10-29-sindri-concept-pins-query-design.md` (#1667: pins, `index.concepts`, the pin sheet, the profile writer; P1b-2 waits for its Q7a), `2026-10-27-sindri-context-map-structure-design.md` (homes, roll-up, §11 records). **Coordinates with:** #1702 / #1716 (source links on the node panel). #1565 part B (surfaces and actions missing from `map/whole`) is closed on main (#1573, #1584, #1596), so nothing here waits on it.
 
 ## The owner's steps: install -> works

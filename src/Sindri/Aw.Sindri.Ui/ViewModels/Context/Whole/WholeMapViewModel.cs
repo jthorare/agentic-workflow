@@ -134,6 +134,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     internal void Loading()
     {
         (IsLoading, IsFailed) = (true, false);
+        PagesFollow(answer: null);
         Changed();
     }
 
@@ -148,6 +149,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
     internal void Failed()
     {
         (IsLoading, IsFailed) = (false, true);
+        PagesFollow(answer: null, failed: true);
         Changed();
     }
 
@@ -166,6 +168,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
         SizeText = Labels.ContextWholeSize(answer.Counts.Nodes, answer.Counts.Edges, TimeZoneInfo.ConvertTime(answer.AsOf, _zone()));
         Areas = HomedAreas.Tiles(answer.Areas, answer.Nodes ?? [], Geometry.Order, OpenArea);
         (IsReady, IsLoading, IsFailed) = (true, false, false);
+        PagesFollow(answer);
         Changed();
     }
 
@@ -233,7 +236,7 @@ internal sealed partial class WholeMapViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled)])
+        foreach (var name in (string[])[nameof(IsReady), nameof(IsLoading), nameof(IsFailed), nameof(Head), nameof(ByAreaNote), nameof(HasNote), nameof(SizeText), nameof(ByArea), nameof(Areas), nameof(IsAreaOpen), nameof(AreaTitle), nameof(IsZoomed), nameof(Crumbs), nameof(ShowCrumbs), nameof(MoreTouchedText), nameof(HasMoreTouched), nameof(Items), nameof(SelectedItem), nameof(CanvasName), nameof(BandButtons), nameof(ShowBandButtons), nameof(IsDrilled), nameof(ShowPages)])
         {
             OnChanged(name);
         }

@@ -60,13 +60,16 @@
 #                                  context.db through down, so the next draft's number depends on earlier runs); up and down
 #                                  approve whenever the profile is not approved
 #
-#   sindri-ui-fixture.sh context whole over|under|concepts
+#   sindri-ui-fixture.sh context whole over|under|concepts|pages
 #                                  the whole-map fixture (whole-map spec 8; run after 'context up'): over imports a generated map of 12
 #                                  features with 50 code nodes each (612 nodes, over the 500-node budget: the Context page opens by feature),
 #                                  under imports the tabs map again (10 nodes: the page draws every node). Each switch is a new map version
 #                                  and a repeat with the same map imports nothing; concepts imports a small authored map with two concepts
 #                                  (Self scheduling, Billing) over four features and a decision on Swaps, so the Context page opens on
-#                                  its concept band and a concept draws its Why, product and code
+#                                  its concept band and a concept draws its Why, product and code; pages is the concepts map plus the pages
+#                                  Accept all suggested (#1724) needs: under Self scheduling two suggested pages (Roster, Leave requests, each
+#                                  with one action that expresses the concept), and in no concept three more (Billing overview with an action,
+#                                  whose name matches the Billing concept; Settings with no action; and the Shifts screen the concepts map has)
 #
 #   sindri-ui-fixture.sh context sources
 #                                  the node panel's source links (#1702; run after 'context up'): gives the tabs repo a GitHub remote
@@ -657,7 +660,7 @@ context_whole() {
   [ -d "$dir/$CONTEXT_REPO/.git" ] || die "context whole: run 'context up' first"
   case "$1" in
     under) map="$dir/tabs-map.json"; cp "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" "$map" || die "context whole: can't copy the tabs map" ;;
-    concepts)
+    concepts | pages)
       map="$dir/concepts-map.json"
       # A decision's node is implied by its row: its key is 'decision:' and the sha256 of the record, a newline and the quote (DecisionRow.KeyFor).
       # A concept opens only its own members, so the decision belongs to Self scheduling as well as deciding Swaps (ConceptScope).
@@ -678,7 +681,20 @@ context_whole() {
           {from: "code:src/invoices.ts", to: "feature:invoices", type: "implements", provenance: "deterministic"},
           {from: "feature:invoices", to: "feature:shifts", type: "depends-on"}, {from: "feature:swaps", to: "feature:invoices", type: "depends-on"},
           {from: "surface:screen/shifts", to: "feature:shifts", type: "part-of"}, {from: "action:pick", to: "surface:screen/shifts", type: "on"},
-          {from: $dkey, to: "concept:scheduling", type: "belongs-to"}, {from: $dkey, to: "feature:swaps", type: "decides"}]}' > "$map" || die "context whole: can't write the concepts map" ;;
+          {from: $dkey, to: "concept:scheduling", type: "belongs-to"}, {from: $dkey, to: "feature:swaps", type: "decides"}]}' > "$map" || die "context whole: can't write the concepts map"
+      if [ "$1" = pages ]; then
+        # Pages for Accept all suggested: an action that expresses a concept puts its page under it; a page no action expresses a concept for sits in no concept.
+        jq '.nodes += [
+              {key: "surface:screen/roster", label: "Roster"}, {key: "action:view-roster", label: "View roster"},
+              {key: "surface:screen/leave", label: "Leave requests"}, {key: "action:request-leave", label: "Request leave"},
+              {key: "surface:screen/billing-overview", label: "Billing overview"}, {key: "action:pay-invoice", label: "Pay invoice"},
+              {key: "surface:screen/settings", label: "Settings"}]
+            | .edges += [
+              {from: "action:view-roster", to: "surface:screen/roster", type: "on"}, {from: "action:view-roster", to: "concept:scheduling", type: "expresses"},
+              {from: "action:request-leave", to: "surface:screen/leave", type: "on"}, {from: "action:request-leave", to: "concept:scheduling", type: "expresses"},
+              {from: "action:pay-invoice", to: "surface:screen/billing-overview", type: "on"}]' "$map" > "$map.pages" \
+          && mv "$map.pages" "$map" || die "context whole: can't add the pages to the concepts map"
+      fi ;;
     over)
       map="$dir/over-map.json"
       jq -n --arg repo "$CONTEXT_REPO" '{schemaVersion: 1, kind: "authored", repo: $repo,
@@ -1483,8 +1499,8 @@ case "$verb" in
       publish)
         [ "$#" -eq 3 ] || die "usage: context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume"
         case "$3" in held | overdue | published | without-waiting | stale | by-hand | pause | resume) ;; *) die "context publish: '$3' is not a state (held, overdue, published, without-waiting, stale, by-hand, pause, resume)" ;; esac ;;
-      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ] || [ "$3" = concepts ]; }; } || die "usage: context whole over|under|concepts" ;;
-      *) die "usage: context up|draft|down|sources|publish <state>|whole over|under|concepts" ;;
+      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ] || [ "$3" = concepts ] || [ "$3" = pages ]; }; } || die "usage: context whole over|under|concepts|pages" ;;
+      *) die "usage: context up|draft|down|sources|publish <state>|whole over|under|concepts|pages" ;;
     esac ;;
   sessions)
     case "${2:-}" in

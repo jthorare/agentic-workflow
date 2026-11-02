@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Sync;
 using Aw.Kernel;
 using Aw.Sindri.Core.Doctor;
@@ -11,7 +12,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <summary>
 /// Doctor's rows for the Sindri-owned record index (owned index spec, Part of #1394), so one 'sindri doctor' says what is missing before the index runs:
 /// 'context:index-store' (the record store answers), 'context:index-github', 'context:index-linear' and 'context:index-slack' (the source's token pointer
-/// resolves; never its value), 'context:index-ollama' (the records embedder's server answers with its model) and 'context:index-sync' (each source's last sync,
+/// resolves; never its value), 'context:index-linear-projects' (the stored projects and whose Linear key it is), 'context:index-ollama' (the records embedder's server answers with its model) and 'context:index-sync' (each source's last sync,
 /// as 'sindri index status' shows it). With no approved profile, or a source the profile doesn't name, a row is 'ok ... not configured'. No call reaches GitHub, Linear or Slack.
 /// </summary>
 /// <param name="approvals">The approved profile.</param>
@@ -25,6 +26,7 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
     internal const string StoreName = "context:index-store";
     internal const string GitHubName = "context:index-github";
     internal const string LinearName = "context:index-linear";
+    internal const string LinearProjectsName = "context:index-linear-projects";
     internal const string SlackName = "context:index-slack";
     internal const string OllamaName = "context:index-ollama";
     internal const string SyncName = "context:index-sync";
@@ -54,6 +56,7 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
             Store(configured, progress),
             Token(GitHubName, "github", "context.sources.github.token", configured.GitHub?.Token, configured.GitHub is not null),
             Token(LinearName, "linear", "context.sources.linear.token", configured.Linear?.Token, configured.Linear is not null || configured.LinearTeams.Count > 0),
+            await Projects(configured, scope, cancellationToken).ConfigureAwait(false),
             Token(SlackName, "slack", "context.sources.slack.token", configured.Slack?.Token, configured.Slack is not null),
             await Ollama(configured, cancellationToken).ConfigureAwait(false),
             Sync(configured, progress),
@@ -70,6 +73,7 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
         new(StoreName, CheckState.Ok, detail, Fix: null),
         new(GitHubName, CheckState.Ok, detail, Fix: null),
         new(LinearName, CheckState.Ok, detail, Fix: null),
+        new(LinearProjectsName, CheckState.Ok, detail, Fix: null),
         new(SlackName, CheckState.Ok, detail, Fix: null),
         new(OllamaName, CheckState.Ok, detail, Fix: null),
         new(SyncName, CheckState.Ok, detail, Fix: null),
@@ -102,6 +106,17 @@ internal sealed class IndexDoctorChecks(IApprovedProfile approvals, ContextScope
         return resolved.IsError
             ? new DoctorCheck(name, CheckState.Fail, $"{resolved.Error.Code}: {resolved.Error.Message}", $"fix {key}'s target as the message says")
             : new DoctorCheck(name, CheckState.Ok, $"{pointer} resolves (not probed: the source is read by sindri index sync)", Fix: null);
+    }
+
+    // why: the projects feed is built only when the Linear source is (projects page spec §4.1); a scope that doesn't resolve is the store row's to report
+    private async ValueTask<DoctorCheck> Projects(ContextSettings settings, Result<ContextScope> scope, CancellationToken cancellationToken)
+    {
+        if (settings.Linear is null)
+        {
+            return new DoctorCheck(LinearProjectsName, CheckState.Ok, "not configured (the approved profile names no context.sources.linear)", Fix: null);
+        }
+
+        return LinearProjectsRules.Judge(scope.IsError ? scope.Error : await engine.Projects(new ProjectFactsRequest([]), scope.Value, cancellationToken).ConfigureAwait(false));
     }
 
     private async ValueTask<DoctorCheck> Ollama(ContextSettings settings, CancellationToken cancellationToken)

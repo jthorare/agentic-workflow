@@ -13,6 +13,7 @@ namespace Aw.Sindri.Ui.Platform;
 /// <param name="PaletteHistory">Command-palette entries run, newest last, at most <see cref="MaxPaletteHistory"/>.</param>
 /// <param name="TextScale">The type ramp's scale (<see cref="MinTextScale"/>–<see cref="MaxTextScale"/>).</param>
 /// <param name="ReduceMotion">The in-app Reduce motion switch: forces the reduced path whatever the OS says.</param>
+/// <param name="SeenPages">Per concept ("&lt;repo&gt;/&lt;concept id&gt;"), the suggested page keys already seen (pages spec §3.5), at most <see cref="MaxSeenConcepts"/> concepts of <see cref="MaxSeenPagesPerConcept"/> keys.</param>
 internal sealed record UiPreferences(
     int Version,
     WindowBounds? Window,
@@ -21,7 +22,8 @@ internal sealed record UiPreferences(
     IReadOnlyList<string> SeenIds,
     IReadOnlyList<string> PaletteHistory,
     double TextScale,
-    bool ReduceMotion)
+    bool ReduceMotion,
+    IReadOnlyDictionary<string, IReadOnlyList<string>> SeenPages)
 {
     /// <summary>The format this build writes and reads.</summary>
     internal const int CurrentVersion = 1;
@@ -50,6 +52,12 @@ internal sealed record UiPreferences(
     /// <summary>The most seen ids kept (the oldest go first).</summary>
     internal const int MaxSeenIds = 5000;
 
+    /// <summary>The most concepts whose seen suggested pages are kept (the oldest go first).</summary>
+    internal const int MaxSeenConcepts = 2000;
+
+    /// <summary>The most seen suggested page keys kept per concept (the oldest go first).</summary>
+    internal const int MaxSeenPagesPerConcept = 200;
+
     /// <summary>The most palette entries kept (the oldest go first).</summary>
     internal const int MaxPaletteHistory = 20;
 
@@ -60,7 +68,7 @@ internal sealed record UiPreferences(
     internal static IReadOnlyList<string> Pages { get; } = ["Home", "Workflows", "Work", "Recipes", "Context", "Agents", "System", "Settings"];
 
     /// <summary>The preferences of a first run.</summary>
-    internal static UiPreferences Defaults { get; } = new(CurrentVersion, Window: null, DefaultSheetWidth, DefaultPage, [], [], TextScale: 1.0, ReduceMotion: false);
+    internal static UiPreferences Defaults { get; } = new(CurrentVersion, Window: null, DefaultSheetWidth, DefaultPage, [], [], TextScale: 1.0, ReduceMotion: false, new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal));
 
     /// <summary>
     /// These preferences within their limits: bounds below the window minimum grow to it (bounds that aren't finite are
@@ -78,7 +86,20 @@ internal sealed record UiPreferences(
         Newest(SeenIds, MaxSeenIds),
         Newest(PaletteHistory, MaxPaletteHistory),
         double.IsFinite(TextScale) ? Math.Clamp(TextScale, MinTextScale, MaxTextScale) : Defaults.TextScale,
-        ReduceMotion);
+        ReduceMotion,
+        ClampSeenPages(SeenPages));
+
+    // The non-blank concept keys with their non-blank page keys (each once, the newest 200); the newest 2000 concepts.
+    private static Dictionary<string, IReadOnlyList<string>> ClampSeenPages(IReadOnlyDictionary<string, IReadOnlyList<string>>? seen)
+    {
+        var kept = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
+        foreach (var (concept, keys) in (seen ?? new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)).Reverse().Where(e => !string.IsNullOrWhiteSpace(e.Key)).Take(MaxSeenConcepts).Reverse())
+        {
+            kept[concept] = Newest(keys, MaxSeenPagesPerConcept);
+        }
+
+        return kept;
+    }
 
     // The non-blank entries, each once (at its newest place), keeping the newest 'max'.
     private static string[] Newest(IReadOnlyList<string>? entries, int max)
@@ -108,8 +129,12 @@ internal sealed record UiPreferences(
         && SeenIds.SequenceEqual(other.SeenIds, StringComparer.Ordinal)
         && PaletteHistory.SequenceEqual(other.PaletteHistory, StringComparer.Ordinal)
         && TextScale.Equals(other.TextScale)
-        && ReduceMotion == other.ReduceMotion;
+        && ReduceMotion == other.ReduceMotion
+        && SameSeenPages(SeenPages, other.SeenPages);
+
+    private static bool SameSeenPages(IReadOnlyDictionary<string, IReadOnlyList<string>> a, IReadOnlyDictionary<string, IReadOnlyList<string>> b) =>
+        a.Count == b.Count && a.All(e => b.TryGetValue(e.Key, out var keys) && e.Value.SequenceEqual(keys, StringComparer.Ordinal));
 
     /// <inheritdoc />
-    public override int GetHashCode() => HashCode.Combine(Version, Window, SheetWidth, LastPage, SeenIds.Count, PaletteHistory.Count, TextScale, ReduceMotion);
+    public override int GetHashCode() => HashCode.Combine(Window, SheetWidth, LastPage, SeenIds.Count, PaletteHistory.Count, TextScale, ReduceMotion, SeenPages.Count);
 }

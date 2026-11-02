@@ -45,15 +45,12 @@ internal sealed class ValidateProfileService(IProfileSource live, IApprovals app
 
         var approved = ProfileRules.IsApproved(saved.Value?.Hash, recorded.Value?.Hash, loaded.Value.Hash);
         var matches = models is null ? [] : await models.PinMatches(loaded.Value.Profile, cancellationToken).ConfigureAwait(false);
-        return new ValidateProfileResponse(loaded.Value.Hash, loaded.Value.Source, approved) { Matches = matches.Count == 0 ? null : matches, Warnings = Warnings(loaded.Value.Profile, checkedContext.Value) };
+        return new ValidateProfileResponse(loaded.Value.Hash, loaded.Value.Source, approved) { Matches = matches.Count == 0 ? null : matches, Warnings = Warnings(loaded.Value.Profile) };
     }
 
-    // The agent target's line, then the context section's (the old 'context.conceptScan.models' key beside 'context.models.names').
-    private List<string>? Warnings(SindriProfile profile, ContextSettings settings)
-    {
-        List<string> lines = [.. agents is not null && AgentTargetWarning.For(profile.Workflow?.Agent?.Target, agents) is { } line ? [line] : Array.Empty<string>(), .. settings.Models.Warnings];
-        return lines.Count == 0 ? null : lines;
-    }
+    // The agent target's line, when it has one.
+    private List<string>? Warnings(SindriProfile profile) =>
+        agents is not null && AgentTargetWarning.For(profile.Workflow?.Agent?.Target, agents) is { } line ? [line] : null;
 
     private async ValueTask<Error?> ModelProblem(SindriProfile profile, CancellationToken cancellationToken) =>
         models is null ? null : await models.Models(profile, cancellationToken).ConfigureAwait(false);

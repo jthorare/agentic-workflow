@@ -49,8 +49,7 @@ internal sealed class AttachProjectService(AttachProjectLookup lookup, ILedgerSt
 
         var (caller, grant) = begun.Value;
         var id = ProjectId.New(ids);
-        var (key, led, attached, ledNotes) = found.Value;
-        var draft = new ProjectDraft(key, request.Name, request.State, request.Links, request.Notes ?? ledNotes, request.Target);
+        var (draft, led, attached) = Draft(request, found.Value);
         var decided = ProjectDecisions.Attach(caller.CommandId, id, draft, attached, led);
         if (decided.IsError)
         {
@@ -62,6 +61,10 @@ internal sealed class AttachProjectService(AttachProjectLookup lookup, ILedgerSt
         var appended = await ProjectWrite.Append(ledger, grant, entry, caller.CommandId, cancellationToken).ConfigureAwait(false);
         return appended.IsError ? appended.Error : new ProjectAccepted(appended.Value, id.Value, Version: 1, payload.Name ?? payload.Linear ?? id.Value);
     }
+
+    /// <summary>What the owner typed, with the Linear title as the name and the led notes as the notes when none were typed.</summary>
+    private static (ProjectDraft Draft, bool Led, IReadOnlyList<ProjectAttachedRow> Attached) Draft(AttachProjectRequest request, AttachContext found) =>
+        (new ProjectDraft(found.Key, request.Name ?? found.Title, request.State, request.Links, request.Notes ?? found.LedNotes, request.Target), found.Led, found.Attached);
 
     /// <summary>What a typed Linear project names; null when none was typed.</summary>
     private static Result<LinearProjectRef?> Linear(string? typed)

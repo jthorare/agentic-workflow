@@ -58,7 +58,11 @@ public static class BacktestScoring
         return new SampleScore(sample.IssueKey, arm, unmapped, unmapped ? null : Round((double)truthNodes.Count(predicted.Contains) / truthNodes.Count),
             unmapped ? null : Round(predicted.Count == 0 ? 0 : (double)hit / predicted.Count),
             Round(sample.TruthFiles.Count == 0 ? 0 : (double)sample.TruthFiles.Count(files.Contains) / sample.TruthFiles.Count),
-            predicted, truthNodes, files, sample.Leaky || armLeaky);
+            predicted, truthNodes, files, sample.Leaky || armLeaky)
+        {
+            FileRecallAt10 = Round(sample.TruthFiles.Count == 0 ? 0 : (double)sample.TruthFiles.Count(files.Take(PinCutoff).ToList().Contains) / sample.TruthFiles.Count),
+            ReciprocalRank = files.FindIndex(sample.TruthFiles.Contains) is var rank and >= 0 ? Round(1.0 / (rank + 1)) : 0,
+        };
     }
 
     /// <summary>One arm's means.</summary>
@@ -75,6 +79,21 @@ public static class BacktestScoring
         {
             AdjudicatedPrecision = judged,
         };
+    }
+
+    /// <summary>Fewer pin-anchored questions than this and the hand check decides, not the numbers.</summary>
+    public const int MinPinAnchored = 20;
+
+    private const int PinCutoff = 10;
+
+    /// <summary>One ranker arm's scores over its pin-anchored samples.</summary>
+    /// <param name="scores">The arm's sample scores.</param>
+    /// <returns>The count and the means; null when no sample was pin-anchored.</returns>
+    public static PinAnchoredScore? PinAnchored(IReadOnlyList<SampleScore> scores)
+    {
+        ArgumentNullException.ThrowIfNull(scores);
+        var anchored = scores.Where(s => s.Pin is not null).ToList();
+        return anchored.Count == 0 ? null : new PinAnchoredScore(anchored.Count, Mean(anchored.Select(s => (double?)s.FileRecallAt10)) ?? 0, Mean(anchored.Select(s => (double?)s.ReciprocalRank)) ?? 0);
     }
 
     private static double? Mean(IEnumerable<double?> values)

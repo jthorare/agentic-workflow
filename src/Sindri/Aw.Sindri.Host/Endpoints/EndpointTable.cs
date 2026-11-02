@@ -109,8 +109,11 @@ internal static class EndpointTable
     {
         _ = queries.MapExportContextMap().MapGetIndexStatus();
         _ = queries.MapGetContextConcepts();
+        _ = queries.MapGetContextPages();
         _ = queries.MapGetContextConceptMembers();
         _ = queries.MapGetContextConceptGlossary();
+        _ = queries.MapGetContextPinSuggest();
+        _ = queries.MapGetContextPins();
         _ = queries.MapExportContextReview();
         _ = queries.MapFindContextPath();
         _ = queries.MapGetContextFileMap();
@@ -119,6 +122,7 @@ internal static class EndpointTable
         _ = queries.MapGetContextSubgraph();
         _ = queries.MapSearchContextMap();
         _ = queries.MapGetContextCode();
+        _ = queries.MapPreviewContextPages();
         _ = queries.MapGetContextEvalMap();
         _ = queries.MapGetContextMap();
         _ = queries.MapGetContextWholeMap();

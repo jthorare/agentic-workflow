@@ -4,7 +4,7 @@ namespace Aw.Context.Infrastructure.Graph;
 internal static class GraphSql
 {
     public const string InsertVersion =
-        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks) VALUES ($repo, $commit, $keyVersion, $created, 'building', $ruleset, $dropped, $checks) RETURNING id";
+        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks, pin_hashes) VALUES ($repo, $commit, $keyVersion, $created, 'building', $ruleset, $dropped, $checks, $pinHashes) RETURNING id";
 
     public const string InsertNode =
         "INSERT INTO node (map_version, key, label, attributes, provenance, confidence, trust, written_at) VALUES ($v, $key, $label, $attributes, $provenance, $confidence, $trust, $at)";
@@ -59,6 +59,10 @@ internal static class GraphSql
 
     public const string HasDroppedColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'dropped'";
 
+    public const string HasPinHashesColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'pin_hashes'";
+
+    public const string SelectPinHashes = "SELECT id, pin_hashes FROM map_version WHERE status <> 'building' AND pin_hashes IS NOT NULL";
+
     public const string HasRulesetColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'ruleset'";
 
     public const string SelectNodes =
@@ -111,7 +115,7 @@ internal static class GraphSql
         "SELECT id, repo, commit_sha, key_version, created, status, ruleset, dropped, checks FROM map_version WHERE id = $v";
 
     public const string CopyVersion =
-        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks) SELECT repo, commit_sha, key_version, $created, 'draft', ruleset, dropped, checks FROM map_version WHERE id = $from RETURNING id";
+        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks, pin_hashes) SELECT repo, commit_sha, key_version, $created, 'draft', ruleset, dropped, checks, pin_hashes FROM map_version WHERE id = $from RETURNING id";
 
     public const string InsertHead =
         "INSERT INTO map_version_head (version, repo, commit_sha, on_default, index_commit) VALUES ($v, $repo, $commit, $onDefault, $indexCommit)";

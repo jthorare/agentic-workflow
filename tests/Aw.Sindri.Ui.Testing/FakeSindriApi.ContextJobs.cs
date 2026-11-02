@@ -11,6 +11,7 @@ internal sealed partial class FakeSindriApi
     private int _refreshMapCalls;
     private int _buildMapCalls;
     private readonly List<PinConceptsBody> _pinned = [];
+    private readonly List<PagesSetBody> _pagesSet = [];
 
     /// <summary>POST /sindri/context/map/refresh's answer: the started job by default.</summary>
     public RouteAnswer RefreshContextMapAnswer { get; set; } = RouteAnswer.SpecShaped("context-map-refresh", "started");
@@ -61,5 +62,22 @@ internal sealed partial class FakeSindriApi
 
         Keep(_pinned, request);
         return Task.FromResult(Answer<JobStarted>(api, JobRoutes.PinConcepts, PinConceptsAnswer));
+    }
+
+    /// <summary>POST /sindri/context/pages' answer: the started job by default.</summary>
+    public RouteAnswer SetContextPagesAnswer { get; set; } = RouteAnswer.SpecShaped("context-map-refresh", "started");
+
+    /// <summary>Every SetPages body received, in order.</summary>
+    public IReadOnlyList<PagesSetBody> PagesSet { get { lock (_gate) { return [.. _pagesSet]; } } }
+
+    public Task<Result<JobStarted>> SetContextPages(Uri api, PagesSetBody request, CancellationToken cancellationToken)
+    {
+        if (NotReceived<JobStarted>(api) is { } unanswered)
+        {
+            return Task.FromResult(unanswered);
+        }
+
+        Keep(_pagesSet, request);
+        return Task.FromResult(Answer<JobStarted>(api, JobRoutes.SetContextPages, SetContextPagesAnswer));
     }
 }

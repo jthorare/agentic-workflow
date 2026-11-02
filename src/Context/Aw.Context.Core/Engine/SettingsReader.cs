@@ -68,7 +68,7 @@ public static partial class SettingsReader
         var codeDeadline = CodeDeadline(section.Code, settings);
         var sources = SourcesReader.Check(section.Sources);
         var index = IndexRules.Index(section.Index);
-        var models = ModelsSettings.Read(section.Models, section.ConceptScan?.Models);
+        var models = ModelsSettings.Read(section.Models);
         return (Refused(section, globs), deadline, codeDeadline, sources) switch
         {
             ({ } problem, _, _, _) => problem,

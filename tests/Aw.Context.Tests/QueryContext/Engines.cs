@@ -81,7 +81,7 @@ internal static class Engines
         var recordStore = records ?? new FakeRecordStore();
         var graphs = new MapReader(store, intents);
         var repos = new FakeRepoReader(Repos[0], "0a1b2c3d4e5f60718293a4b5c6d7e8f901234567", new Dictionary<string, string>(StringComparer.Ordinal));
-        return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos), intents, new FakeModelPort(),
+        return new ContextEngine(new QueryContextService(scrubbers, new SequentialIdGenerator(), clock, new LiveInputs(graphs, catalog, repos, new NoMapRebuild()), intents, new FakeModelPort(),
                 new RecordSearch(lexical ?? new FakeLexicalLeg(), recordStore, embedder ?? new FakeQueryEmbedder(), new FakeVectorMatrixCache(recordStore), new FakeVectorScan())),
             new ContextSources(new SourcesStatusService(docs, catalog, scrubbers, intents, recordStore, clock), new RefreshDocsService(docs, scrubbers), new SyncSourcesService(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), scrubbers, graphs, intents, new FakeModelPort(), clock), new EmbedRecordsService(new FakeRecordStore(), new FakeChunkEmbedder()),
                 (IIndexSync?)indexSync ?? new IndexSync(new RecordFeedSync(new FakeRecordFeedCatalog(), new FakeRecordStore(), clock), new FakeRecordStore(), scrubbers)), scrubbers, Map(clock, store, scrubbers),
@@ -93,7 +93,7 @@ internal static class Engines
                     new GetWholeMapService(graphs, scrubbers, new WholeMapCache(), WholeMapRules.Default),
                     new Features.SearchMap.SearchMapService(graphs, scrubbers, new SqliteMapSearchIndexFactory(), new Features.SearchMap.MapSearchCache(), WholeMapRules.Default),
                     new ContextConceptReads(new Features.GetConcepts.GetConceptsService(new ConceptReader(graphs, scrubbers)), new Features.GetConceptMembers.GetConceptMembersService(new ConceptReader(graphs, scrubbers)),
-                        new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers))),
+                        new Features.GetConceptGlossary.GetConceptGlossaryService(new ConceptReader(graphs, scrubbers)), new Features.GetPages.GetPagesService(new ConceptReader(graphs, scrubbers)), new Features.CheckPages.CheckPagesService(store), new Features.GetPinSuggest.GetPinSuggestService(new ConceptReader(graphs, scrubbers), intents, recordStore), new Features.GetPageFacts.GetPageFactsService(store)),
                     new ContextScopeGraph(new GetScopeGraphService(graphs, new LensBasisReader(repos, clock), scrubbers), new FakeScopeRunStore(), clock))),
             new ContextEval(Probes(clock), new NoBacktest(), new NoMapQuality(), new NoPurge()),
             new ContextReads(new Features.MapHeads.MapHeadsService(repos, new FakeDefaultBranch()),

@@ -1,5 +1,6 @@
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
@@ -37,8 +38,9 @@ public static class ConceptBuilder
         var page = matching.Skip(offset).Take(size).ToList();
         var end = offset + page.Count;
         var other = new ConceptOther(NodeKey.From(ConceptKeys.Other), OtherName, Size(index, index.MembersOf(ConceptKeys.Other)));
-        var rows = page.Select(n => Row(index, n, text, pins)).ToList();
-        return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count));
+        var pages = PageReader.ByConcept(graph);
+        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value))).ToList();
+        return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
     }
 
     /// <summary>One page of one concept's members.</summary>
@@ -92,7 +94,9 @@ public static class ConceptBuilder
 
     private static bool Has(string? haystack, string needle) => haystack?.Contains(needle, StringComparison.OrdinalIgnoreCase) == true;
 
-    private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text, PinSet? pins)
+    private static IReadOnlyList<string>? Suggested(ConceptPageSet? pages) => pages is { Suggested.Count: > 0 } ? pages.Suggested : null;
+
+    private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text, PinSet? pins, ConceptPageSet? pages)
     {
         var trust = TrustPolicy.ForNode(node, node.Provenance == Provenance.Human);
         var pinned = pins?.IsPinned(node.Key) == true;
@@ -102,7 +106,7 @@ public static class ConceptBuilder
         var citations = node.EvidenceOrEmpty.Select(e => new ConceptCitation(text.Line(e.Key.Value), e.Span)).ToList();
         var terms = ConceptTermsAttribute.Of(node).Select(t => text.Label(t, trust)).ToList();
         var aliases = own?.AliasesOf(node.Key).Select(a => text.Label(a, trust)).ToList() ?? [];
-        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms, Pinned = pinned, Aliases = aliases.Count == 0 ? null : aliases };
+        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms, Pinned = pinned, Aliases = aliases.Count == 0 ? null : aliases, Pages = pages?.Count ?? 0, SuggestedPages = Suggested(pages) };
     }
 
     // A pin's definition is the approved profile's, over the node's from the last build.

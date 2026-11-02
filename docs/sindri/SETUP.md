@@ -279,7 +279,7 @@ A source's line reads `not started`, `syncing recent window`, `usable, filling o
 resumable job (Ollama, local only): `sindri index embed pause|resume`. `sindri index purge <source>` (**Human-only**)
 deletes one source's records after you type yes.
 
-You should see, in `doctor`, `context:index-store`, `context:index-ollama`, `context:index-github`, `context:index-slack`, `context:index-linear` and `context:index-sync` rows
+You should see, in `doctor`, `context:index-store`, `context:index-ollama`, `context:index-github`, `context:index-slack`, `context:index-linear`, `context:index-linear-projects` and `context:index-sync` rows
 all `ok`.
 
 **An old box that once ran `onyx up`.** Run `sindri onyx down --purge` once (**Human-only**). It lists the leftover

@@ -7,13 +7,20 @@ public static partial class ProfileDiff
     /// <param name="approved">The latest approved profile, if any.</param>
     /// <param name="live">The live profile.</param>
     /// <returns>The changed key paths, sorted.</returns>
-    public static IReadOnlyList<string> Between(SindriProfile? approved, SindriProfile live)
+    public static IReadOnlyList<string> Between(SindriProfile? approved, SindriProfile live) => [.. Changes(approved, live).Select(static c => c.Key)];
+
+    /// <summary>The key paths whose values differ, with the value each had before and has now.</summary>
+    /// <param name="approved">The latest approved profile, if any.</param>
+    /// <param name="live">The live profile.</param>
+    /// <returns>One change per differing key path, sorted by key; a null side is a key the profile doesn't set.</returns>
+    public static IReadOnlyList<ProfileChange> Changes(SindriProfile? approved, SindriProfile live)
     {
         var before = approved is null ? new Dictionary<string, string>(StringComparer.Ordinal) : Flatten(approved);
         var after = Flatten(live);
         return [.. before.Keys.Union(after.Keys, StringComparer.Ordinal)
             .Where(k => !before.TryGetValue(k, out var b) || !after.TryGetValue(k, out var a) || !string.Equals(a, b, StringComparison.Ordinal))
-            .Order(StringComparer.Ordinal)];
+            .Order(StringComparer.Ordinal)
+            .Select(k => new ProfileChange(k, before.GetValueOrDefault(k), after.GetValueOrDefault(k)))];
     }
 
     private static Dictionary<string, string> Flatten(SindriProfile p)

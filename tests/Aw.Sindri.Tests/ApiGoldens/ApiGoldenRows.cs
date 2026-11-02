@@ -1,3 +1,5 @@
+using Aw.Kernel.Testing;
+
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
@@ -7,6 +9,9 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 internal static class ApiGoldenRows
 {
+    private static readonly NormalizationRule _profileHash = new("profileHash", "\"profileHash\": \"[0-9a-f]{64}\"", "\"profileHash\": \"<hash>\"");   // the profile names the temp home, so its hash differs every run
+    private static readonly NormalizationRule _fileHash = new("fileHash", "\"fileHash\": \"[0-9a-f]{64}\"", "\"fileHash\": \"<file-hash>\"");   // the pins read's file hash, over the same temp-home profile
+
     public static TheoryData<string, string> Of(string group)
     {
         var rows = new TheoryData<string, string>();
@@ -36,6 +41,18 @@ internal static class ApiGoldenRows
         await using var host = await ApiScenarios.Start(slug, scenario, ct);
 
         var body = await ApiScenarios.Body(host, slug, scenario, ct);
+
+        if (string.Equals(slug, "context-pages-preview", StringComparison.Ordinal))
+        {
+            ApiGolden.Match(body, host.Home, slug, scenario, [_profileHash]);
+            return;
+        }
+
+        if (string.Equals(slug, "context-pins", StringComparison.Ordinal))
+        {
+            ApiGolden.Match(body, host.Home, slug, scenario, [_fileHash]);
+            return;
+        }
 
         ApiGolden.Match(body, host.Home, slug, scenario);
     }

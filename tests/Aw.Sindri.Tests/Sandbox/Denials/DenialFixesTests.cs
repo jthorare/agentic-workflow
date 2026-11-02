@@ -50,4 +50,15 @@ public sealed class DenialFixesTests
         Assert.Equal(DenialFix.Never, decided.Fix);
         Assert.NotNull(decided.Reason);
     }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("169.254.169.254", DenialRules.NoGroup)]
+    [InlineData("169.254.0.1", DenialRules.PrivateAddress)]
+    public void A_link_local_address_is_never_allowed_because_it_is_the_metadata_endpoint(string host, string rule)
+    {
+        var decided = DenialFixes.Decide(Entry(DenialKind.Network, host, rule));
+
+        Assert.Equal(DenialFix.Never, decided.Fix);
+        Assert.Contains("metadata", decided.Reason, StringComparison.Ordinal);
+    }
 }

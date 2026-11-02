@@ -48,6 +48,42 @@ public sealed class MapRulesetTests
         Assert.NotEqual(MapRuleset.Of([depends]), MapRuleset.Of([owns]), StringComparer.Ordinal);
     }
 
+    private static ContextRepo Pinned(string name, string? summary = null, string[]? aliases = null, string[]? features = null) =>
+        Repo("a") with { Concepts = [ConceptPin.Of(ConceptId.From("billing"), name, summary, features ?? ["feature:invoices"], paths: ["src/**"]).WithAliases(aliases)] };
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_pin_edit_that_changes_its_hash_changes_the_whole_ruleset_too()
+    {
+        var before = Pinned("Billing");
+
+        foreach (var edited in new[] { Pinned("Payments"), Pinned("Billing", features: ["feature:invoices", "feature:refunds"]) })
+        {
+            Assert.NotEqual(MapRuleset.PinHashes([before])["billing"], MapRuleset.PinHashes([edited])["billing"], StringComparer.Ordinal);
+            Assert.NotEqual(MapRuleset.Of([before]), MapRuleset.Of([edited]), StringComparer.Ordinal);
+        }
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_summary_or_alias_edit_changes_neither_the_pins_hash_nor_the_ruleset()
+    {
+        var before = Pinned("Billing");
+        var after = Pinned("Billing", summary: "How we take money", aliases: ["payments"]);
+
+        Assert.Equal(MapRuleset.PinHashes([before]), MapRuleset.PinHashes([after]));
+        Assert.Equal(MapRuleset.Of([before]), MapRuleset.Of([after]), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_pin_set_in_two_repos_has_one_hash_and_each_pin_its_own_id()
+    {
+        var shared = ConceptPin.Of(ConceptId.From("billing"), "Billing", summary: null, features: null, paths: ["src/**"]);
+        var other = ConceptPin.Of(id: null, "Self scheduling", summary: null, features: null, paths: null);
+        var hashes = MapRuleset.PinHashes([Repo("a") with { Concepts = [shared] }, Repo("b") with { Concepts = [shared, other] }]);
+
+        Assert.Equal(["billing", "self-scheduling"], hashes.Keys.Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(64, hashes["billing"].Length);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void A_summary_or_alias_edit_leaves_the_hash_unchanged()
     {

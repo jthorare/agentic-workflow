@@ -88,7 +88,7 @@ internal static partial class SandboxRules
             : null;
 
     private static Error? HostsProblem(IReadOnlyList<string> hosts, string at) =>
-        hosts.Select((host, i) => Host.IsMatch(host) ? null : Problem(string.Create(CultureInfo.InvariantCulture, $"{at}[{i}]"), "must be a host name such as registry.npmjs.org or *.nuget.org (no scheme, port or path)"))
+        hosts.Select((host, i) => HostProblem(host) is { } problem ? Problem(string.Create(CultureInfo.InvariantCulture, $"{at}[{i}]"), problem) : null)
             .FirstOrDefault(e => e is not null);
 
     private static Error? PathProblems(IEnumerable<string?>? paths, string at, Func<string?, string?> problemOf) =>
@@ -96,8 +96,22 @@ internal static partial class SandboxRules
             .FirstOrDefault(e => e is not null);
 
     /// <summary>What is wrong with <paramref name="host"/> as a 'hosts' entry, or null.</summary>
-    internal static string? HostProblem(string host) =>
-        Host.IsMatch(host) ? null : "must be a host name such as registry.npmjs.org or *.nuget.org (no scheme, port or path)";
+    internal static string? HostProblem(string host) => host switch
+    {
+        _ when !Host.IsMatch(host) => "must be a host name such as registry.npmjs.org or *.nuget.org (no scheme, port or path)",
+        _ when IsLinkLocal(host) => "must not be a link-local address such as 169.254.169.254 (cloud metadata)",
+        _ => null,
+    };
+
+    /// <summary>Whether <paramref name="host"/> is a dotted IPv4 literal in 169.254.0.0/16, the range that holds the cloud metadata endpoint.</summary>
+    internal static bool IsLinkLocal(string host)
+    {
+        var parts = host.Split('.');
+        return parts.Length == 4
+            && parts.All(p => p.Length is >= 1 and <= 3 && p.All(char.IsAsciiDigit) && int.Parse(p, CultureInfo.InvariantCulture) <= 255)
+            && int.Parse(parts[0], CultureInfo.InvariantCulture) == 169
+            && int.Parse(parts[1], CultureInfo.InvariantCulture) == 254;
+    }
 
     /// <summary>What is wrong with <paramref name="path"/> as a 'homeAllow' path, or null.</summary>
     internal static string? HomePathProblem(string? path) => RelativePathProblem(path);

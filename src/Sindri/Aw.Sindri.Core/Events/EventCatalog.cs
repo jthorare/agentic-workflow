@@ -80,6 +80,7 @@ public static class EventCatalog
         new(EventTypes.RepoAdded, Public: true, typeof(RepoAddedPublic), "repo.added:<repo>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.RepoOnboarded, Public: true, typeof(RepoOnboarded), "repo.onboarded:<repo>:<hash>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.ContextPinWritten, Public: true, typeof(ContextPinWritten), "context.pin.written:<hash>") { Invalidates = [ApiViews.Profile, ApiViews.NeedsYou] },
+        new(EventTypes.ContextPageWritten, Public: true, typeof(ContextPageWritten), "context.page.written:<hash>") { Invalidates = [ApiViews.Profile, ApiViews.NeedsYou] },
         new(EventTypes.RecipeRegistrationCompleted, Public: true, typeof(RecipeRegistrationCompleted), "recipe.registration.completed:<epoch>") { Invalidates = [ApiViews.Setup, ApiViews.Recipes] },
         new(EventTypes.McpRegistered, Public: true, typeof(McpRegistered), "mcp.registered:<commandId>") { Invalidates = [ApiViews.Setup] },
         new(EventTypes.SetupConsentGiven, Public: true, typeof(SetupConsentGiven), "setup.consent.given:<profileHash>") { Invalidates = [ApiViews.Setup] },

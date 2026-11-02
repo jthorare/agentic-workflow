@@ -44,7 +44,7 @@ internal sealed class ImportMapService(IMapFileReader reader, IGraphStore store,
                 $"{request.Path} now hashes to {file.Value.Hash[..12]}…, not the confirmed {request.ConfirmedHash[..Math.Min(12, request.ConfirmedHash.Length)]}…; nothing was written (fix: run 'context map import' again and confirm the new hash)");
         }
 
-        var saved = await store.SaveCurrent(map.Value with { Ruleset = MapRuleset.Running(request.Scope) }, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        var saved = await store.SaveCurrent(map.Value with { Ruleset = MapRuleset.Running(request.Scope), PinHashes = MapRuleset.RunningPins(request.Scope) }, clock.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         return saved.IsError ? saved.Error : new MapImported(saved.Value, map.Value.Counts, file.Value.Hash);
     }
 }

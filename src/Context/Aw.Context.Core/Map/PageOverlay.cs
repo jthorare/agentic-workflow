@@ -102,7 +102,7 @@ public static class PageOverlay
 
         public void Lay(PagePin page)
         {
-            var repo = page.Repo ?? (page.SurfaceKey is { } k ? OnlyRepoOf(k) : null) ?? _onlyRepo;
+            var repo = page.Repo ?? (Found(page.SurfaceKey) is { } k ? OnlyRepoOf(k) : null) ?? _onlyRepo;
             if (repo is not { } home)
             {
                 return;
@@ -125,7 +125,13 @@ public static class PageOverlay
             }
             else
             {
-                _ = _edges.RemoveAll(e => e is { Type: EdgeType.Expresses, Provenance: Provenance.Deterministic } && e.From.Value == key);
+                var dropped = _edges.FindAll(e => e is { Type: EdgeType.Expresses, Provenance: Provenance.Deterministic } && e.From.Value == key);
+                foreach (var e in dropped)
+                {
+                    _ = _facts.Remove((e.From.Value, e.To.Value, e.Type));
+                }
+
+                _ = _edges.RemoveAll(dropped.Contains);
             }
 
             foreach (var concept in action.Concepts.Take(PageRules.MaxConcepts))
@@ -138,6 +144,10 @@ public static class PageOverlay
             }
         }
 
+        // The key as the map stores it: the pin's own spelling when the map holds it, else the stored form (keys are lower-cased on entry, issue 1790).
+        private string? Found(string? written) =>
+            written is null ? null : _index.ContainsKey(written) ? written : EntryKey.Normalized(written);
+
         // The repo of a surface key, when its code is in one repo only.
         private ContextRepoName? OnlyRepoOf(string key)
         {
@@ -148,10 +158,11 @@ public static class PageOverlay
         private List<string> ReposOf(string key) =>
             [.. _graph.Edges.Where(e => e.Type == EdgeType.Implements && e.To.Value == key).SelectMany(e => e.EvidenceOrEmpty).Select(RepoOf).OfType<string>().Distinct(StringComparer.Ordinal)];
 
-        // Relabels the map node the owner named when this repo alone holds it; else makes (or finds) the owner node.
+        // Relabels the map node the owner named when this repo alone holds it (the first page to name it keeps the label); else makes (or finds) the owner node.
         private (string Key, bool Owner) Name(Target target, ContextRepoName home, EvidenceRef mark)
         {
-            var (named, kind, ownerKey, label) = target;
+            var (written, kind, ownerKey, label) = target;
+            var named = Found(written);
             if (named is not null && _index.TryGetValue(named, out var at) && _nodes[at].Key.Kind == kind)
             {
                 var repos = ReposOf(named);
@@ -159,7 +170,8 @@ public static class PageOverlay
                 {
                     var node = _nodes[at];
                     var evidence = node.EvidenceOrEmpty.Any(r => r.Key.Value == mark.Key.Value) ? node.EvidenceOrEmpty : [.. node.EvidenceOrEmpty, mark];
-                    _nodes[at] = node with { Label = label, Evidence = evidence };
+                    var namedByPage = node.EvidenceOrEmpty.Any(r => r.Key.Value.StartsWith(Scheme, StringComparison.Ordinal));
+                    _nodes[at] = node with { Label = namedByPage ? node.Label : label, Evidence = evidence };
                     return (named, false);
                 }
 

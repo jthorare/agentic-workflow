@@ -16,6 +16,7 @@ using Aw.Context.Core.Linking;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
@@ -32,6 +33,7 @@ using Aw.Context.Features.Adjudicate;
 using Aw.Context.Features.ApplyReviewFile;
 using Aw.Context.Features.BuildMap;
 using Aw.Context.Features.CheckMap;
+using Aw.Context.Features.CheckPages;
 using Aw.Context.Features.CheckRetention;
 using Aw.Context.Features.CleanMap;
 using Aw.Context.Features.EmbedRecords;
@@ -48,6 +50,9 @@ using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
+using Aw.Context.Features.GetPageFacts;
+using Aw.Context.Features.GetPages;
+using Aw.Context.Features.GetPinSuggest;
 using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.GetProposals;
 using Aw.Context.Features.GetScopeGraph;
@@ -105,6 +110,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         services.TryAddSingleton<ISymbolVectors, DisabledSymbolVectors>();   // the host that wires the code index (Sindri's Host adapter) replaces it
         services.TryAddSingleton<ISurfacePicker, DisabledSurfacePicker>();   // a host that sets up labeling (AddContextLabeling) replaces it
         services.TryAddSingleton<ISurfacePickStore, NoSurfacePickStore>();   // a host that sets up labeling (AddContextLabeling) replaces it
+        services.TryAddScoped<IMapRebuildState, NoMapRebuild>();   // Sindri's host replaces it with the answer read from its jobs and the refresh service
         services.TryAddScoped(sp => new SurfacePickPass(sp.GetRequiredService<ISurfacePicker>(), sp.GetRequiredService<ISurfacePickStore>(), sp.GetService<IChoicePort>(), sp.GetRequiredService<TimeProvider>()));
         services.TryAddScoped<ConceptPass>();
         services.TryAddScoped<MapRecordSources>();   // scoped: it reads the code index, which is read in the call's scope
@@ -206,8 +212,12 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<ContextScopeGraph>()
         .AddScoped<IService<GetWholeMapRequest, WholeMapView>, GetWholeMapService>()
         .AddScoped<IService<GetConceptsRequest, ConceptsView>, GetConceptsService>()
+        .AddScoped<IService<GetPagesRequest, PagesView>, GetPagesService>()
+        .AddScoped<IService<CheckPagesRequest, MapHealth>, CheckPagesService>()
+        .AddScoped<IService<GetPageFactsRequest, PageMapFacts>, GetPageFactsService>()
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
         .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
+        .AddScoped<IService<GetPinSuggestRequest, PinSuggestView>, GetPinSuggestService>()
         .AddScoped<ConceptReader>()
         .AddSingleton<WholeMapCache>()
         .AddScoped<IService<SearchMapRequest, MapSearchView>, SearchMapService>()

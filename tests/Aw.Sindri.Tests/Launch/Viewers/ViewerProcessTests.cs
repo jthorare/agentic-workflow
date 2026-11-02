@@ -21,7 +21,8 @@ public sealed class ViewerProcessTests : IDisposable
         Assert.SkipUnless(OperatingSystem.IsLinux(), "reads /proc");
         var pidFile = Path.Combine(_dir, "pid");
 
-        var output = await ViewerProcess.Output("sh", ["-c", $"echo $$ > '{pidFile}'; sleep 30"], TimeSpan.FromMilliseconds(400), Token);
+        // why: the budget must outlast the shell writing its pid; at 400 ms a loaded box killed it first and the pid read failed (#1546)
+        var output = await ViewerProcess.Output("sh", ["-c", $"echo $$ > '{pidFile}'; sleep 30"], TimeSpan.FromSeconds(2), Token);
 
         Assert.Null(output);
         var proc = "/proc/" + (await File.ReadAllTextAsync(pidFile, Token)).Trim();

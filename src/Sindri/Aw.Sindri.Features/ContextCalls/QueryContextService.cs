@@ -24,7 +24,7 @@ internal sealed class QueryContextService(ContextScopes scopes, IContextEngine e
             : repo.IsError ? repo.Error
             : depth.IsError ? depth.Error
             : scope.IsError ? scope.Error
-            : await engine.Query(new ContextQuery(request.Q, request.Node, item.Value, request.Symbol, depth.Value, Budget: null, request.Draft, diff.Value, repo.Value) { MapVersion = request.MapVersion, Hops = request.Hops },
+            : await engine.Query(new ContextQuery(request.Q, request.Node, item.Value, request.Symbol, depth.Value, Budget: null, request.Draft, diff.Value, repo.Value) { MapVersion = request.MapVersion, Hops = request.Hops, Concept = request.Concept },
                 scope.Value, cancellationToken).ConfigureAwait(false);
     }
 

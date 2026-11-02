@@ -80,7 +80,7 @@ internal sealed class ScanConceptsService(IGraphStore store, IScrubberFactory sc
     // True when either reply broke off mid-JSON: the scan kept what was whole.
     private static bool CutOff(ModelAnswer? first, ModelAnswer second) => (first is not null && ConceptScanReplies.IsCutOff(first.Text)) || ConceptScanReplies.IsCutOff(second.Text);
 
-    // The model's answer, or null when no agent answered. The scan sends its tier only: the router finds the model from context.models (the old context.conceptScan.models key reaches it as names; spec 3.2 point 5).
+    // The model's answer, or null when no agent answered. The scan sends its tier only: the router finds the model from context.models (spec 3.2 point 5).
     private async ValueTask<ModelAnswer?> Ask(string prompt, ModelTier tier, CancellationToken cancellationToken)
     {
         var answer = await model.Ask(new ModelRequest(ModelPurpose.ConceptScan, prompt, ConceptScanLimits.MaxOutputTokens, ConceptScanLimits.CallTimeout, tier), cancellationToken).ConfigureAwait(false);

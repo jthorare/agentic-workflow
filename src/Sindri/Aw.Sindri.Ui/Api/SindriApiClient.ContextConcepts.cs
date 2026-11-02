@@ -9,4 +9,8 @@ internal sealed partial class SindriApiClient
     /// <inheritdoc />
     public Task<Result<ContextConceptsView>> ContextConcepts(Uri api, ConceptsQuery query, CancellationToken cancellationToken) =>
         Get<ContextConceptsView>(api, ContextRoutes.Concepts(query), cancellationToken);
+
+    /// <inheritdoc />
+    public Task<Result<PagesView>> ContextPages(Uri api, PagesQuery query, CancellationToken cancellationToken) =>
+        Get<PagesView>(api, ContextRoutes.Pages(query), cancellationToken);
 }

@@ -60,6 +60,9 @@ internal sealed partial class ShellViewModel
         OnAgentSheetOpened(link);
         OnJobSheetOpened(link);
         OnProjectSheetOpened(link);
+        OnPageSheetOpened();
+        OnAddSeveralPagesOpened();
+        OnPinSheetOpened();
         if (link.Kind != DeepLinkKind.Item || link.Subject is null)
         {
             return;

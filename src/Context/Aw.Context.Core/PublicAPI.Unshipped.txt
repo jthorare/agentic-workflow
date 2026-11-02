@@ -7308,6 +7308,10 @@ Aw.Context.Core.Graph.NodeFact.Repo.get -> string?
 Aw.Context.Core.Graph.NodeFact.Repo.init -> void
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.get -> string?
 Aw.Context.Core.WholeMap.WholeMapNode.Repo.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.Owner.get -> bool
+Aw.Context.Core.WholeMap.WholeMapNode.Owner.init -> void
+Aw.Context.Core.WholeMap.WholeMapNode.PageId.get -> Aw.Context.Core.Engine.PageId?
+Aw.Context.Core.WholeMap.WholeMapNode.PageId.init -> void
 Aw.Context.Core.Lenses.LensBasis.Repos.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>!
 Aw.Context.Core.Lenses.LensBasis.Repos.init -> void
 Aw.Context.Core.Lenses.LensBasis.MapRepo.get -> string?
@@ -8128,6 +8132,15 @@ Aw.Context.Core.ConceptScan.IConceptScanSearch.Search(Aw.Context.Core.Search.Map
 Aw.Context.Core.Facade.IContextMap.ScanConcepts(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken, int? expectedVersion = null) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.ConceptScan.ConceptScanReport!>!>
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.get -> string?
 Aw.Context.Core.Map.MapPublishState.CurrentRuleset.init -> void
+Aw.Context.Core.Map.MapVersion.PinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapVersion.PinHashes.init -> void
+Aw.Context.Core.Map.MapImport.PinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapImport.PinHashes.init -> void
+Aw.Context.Core.Map.MapPublishState.CurrentPinHashes.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Aw.Context.Core.Map.MapPublishState.CurrentPinHashes.init -> void
+static Aw.Context.Core.Extract.PinSlug.IdsIn(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! build, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptPin!>! wanted) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Context.Core.Map.MapRuleset.PinHashes(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+static Aw.Context.Core.Map.MapRuleset.RunningPins(Aw.Context.Core.Engine.ContextScope? scope) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Aw.Context.Core.Map.MapVersion.Ruleset.get -> string?
 Aw.Context.Core.Map.MapVersion.Ruleset.init -> void
 const Aw.Context.Core.Map.MapRuleset.RulesVersion = "3" -> string!
@@ -8205,24 +8218,6 @@ Aw.Context.Core.Engine.CliModels.Cheap.get -> string?
 Aw.Context.Core.Engine.CliModels.Cheap.init -> void
 Aw.Context.Core.Engine.CliModels.Strong.get -> string?
 Aw.Context.Core.Engine.CliModels.Strong.init -> void
-Aw.Context.Core.Engine.ConceptScanModels
-Aw.Context.Core.Engine.ConceptScanModels.<Clone>$() -> Aw.Context.Core.Engine.ConceptScanModels!
-Aw.Context.Core.Engine.ConceptScanModels.Equals(Aw.Context.Core.Engine.ConceptScanModels? other) -> bool
-override Aw.Context.Core.Engine.ConceptScanModels.Equals(object? obj) -> bool
-override Aw.Context.Core.Engine.ConceptScanModels.GetHashCode() -> int
-override Aw.Context.Core.Engine.ConceptScanModels.ToString() -> string!
-static Aw.Context.Core.Engine.ConceptScanModels.operator !=(Aw.Context.Core.Engine.ConceptScanModels? left, Aw.Context.Core.Engine.ConceptScanModels? right) -> bool
-static Aw.Context.Core.Engine.ConceptScanModels.operator ==(Aw.Context.Core.Engine.ConceptScanModels? left, Aw.Context.Core.Engine.ConceptScanModels? right) -> bool
-Aw.Context.Core.Engine.ConceptScanModels.Deconstruct(out Aw.Context.Core.Engine.CliModels! Claude, out Aw.Context.Core.Engine.CliModels! Codex, out Aw.Context.Core.Engine.CliModels! Cursor) -> void
-Aw.Context.Core.Engine.ConceptScanModels.ConceptScanModels(Aw.Context.Core.Engine.CliModels! Claude, Aw.Context.Core.Engine.CliModels! Codex, Aw.Context.Core.Engine.CliModels! Cursor) -> void
-Aw.Context.Core.Engine.ConceptScanModels.Claude.get -> Aw.Context.Core.Engine.CliModels!
-Aw.Context.Core.Engine.ConceptScanModels.Claude.init -> void
-Aw.Context.Core.Engine.ConceptScanModels.Codex.get -> Aw.Context.Core.Engine.CliModels!
-Aw.Context.Core.Engine.ConceptScanModels.Codex.init -> void
-Aw.Context.Core.Engine.ConceptScanModels.Cursor.get -> Aw.Context.Core.Engine.CliModels!
-Aw.Context.Core.Engine.ConceptScanModels.Cursor.init -> void
-Aw.Context.Core.Engine.ConceptScanModels.For(Aw.Context.Core.Models.ModelTier tier) -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
-static Aw.Context.Core.Engine.ConceptScanModels.Default.get -> Aw.Context.Core.Engine.ConceptScanModels!
 Aw.Context.Core.Engine.ConceptScanSettings
 Aw.Context.Core.Engine.ConceptScanSettings.<Clone>$() -> Aw.Context.Core.Engine.ConceptScanSettings!
 Aw.Context.Core.Engine.ConceptScanSettings.ConceptScanSettings() -> void
@@ -8234,8 +8229,6 @@ static Aw.Context.Core.Engine.ConceptScanSettings.operator !=(Aw.Context.Core.En
 static Aw.Context.Core.Engine.ConceptScanSettings.operator ==(Aw.Context.Core.Engine.ConceptScanSettings? left, Aw.Context.Core.Engine.ConceptScanSettings? right) -> bool
 Aw.Context.Core.Engine.ConceptScanSettings.Tiers.get -> Aw.Context.Core.Engine.ConceptScanTiers!
 Aw.Context.Core.Engine.ConceptScanSettings.Tiers.init -> void
-Aw.Context.Core.Engine.ConceptScanSettings.Models.get -> Aw.Context.Core.Engine.ConceptScanModels!
-Aw.Context.Core.Engine.ConceptScanSettings.Models.init -> void
 Aw.Context.Core.Models.ModelRequest.Deconstruct(out Aw.Context.Core.Models.ModelPurpose Purpose, out string! Prompt, out int MaxTokens, out System.TimeSpan Budget, out Aw.Context.Core.Models.ModelTier? Tier, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>? Models, out string? Model) -> void
 Aw.Context.Core.Models.ModelRequest.Model.get -> string?
 Aw.Context.Core.Models.ModelRequest.Model.init -> void
@@ -10076,9 +10069,7 @@ Aw.Context.Core.Engine.ModelsSettings.Kinds.init -> void
 Aw.Context.Core.Engine.ModelsSettings.LabelCandidates.get -> int
 Aw.Context.Core.Engine.ModelsSettings.LabelPick.init -> void
 Aw.Context.Core.Engine.ModelsSettings.LabelPick.get -> Aw.Context.Core.Engine.LabelPick
-Aw.Context.Core.Engine.ModelsSettings.Warnings.init -> void
 Aw.Context.Core.Engine.ModelsSettings.LabelCandidates.init -> void
-Aw.Context.Core.Engine.ModelsSettings.Warnings.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Context.Core.Engine.ModelsSettings.Entry(Aw.Context.Core.Engine.ModelKind kind) -> Aw.Context.Core.Engine.ModelEntry!
 static Aw.Context.Core.Engine.ModelsSettings.Read(System.Text.Json.JsonElement? section) -> Aw.Kernel.Result<Aw.Context.Core.Engine.ModelsSettings!>!
 Aw.Context.Core.Engine.RoutedModel.Harness.get -> Aw.Context.Core.Engine.ModelHarness
@@ -10480,6 +10471,37 @@ static Aw.Context.Core.Surfaces.SurfaceDecision.operator !=(Aw.Context.Core.Surf
 static Aw.Context.Core.Surfaces.SurfaceDecision.operator ==(Aw.Context.Core.Surfaces.SurfaceDecision? left, Aw.Context.Core.Surfaces.SurfaceDecision? right) -> bool
 Aw.Context.Core.Extract.LabelPass.Spent.get -> int
 Aw.Context.Core.Extract.LabelPass.Spent.init -> void
+Aw.Context.Core.Engine.ContextQuery.Concept.get -> string?
+Aw.Context.Core.Engine.ContextQuery.Concept.init -> void
+const Aw.Context.Core.Engine.QueryRules.ConceptMessage = "concept names a pin: its id or 'concept:<id>' (see context_concepts, rows with pinned: true)" -> string!
+Aw.Context.Core.Map.IMapRebuildState
+Aw.Context.Core.Map.IMapRebuildState.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Context.Core.Map.MapRebuildStatus!>
+Aw.Context.Core.Map.MapRebuildStatus
+Aw.Context.Core.Map.MapRebuildStatus.Building.get -> bool
+Aw.Context.Core.Map.MapRebuildStatus.MapRebuildStatus(Aw.Context.Core.Map.MapRebuildPhase Phase) -> void
+Aw.Context.Core.Map.MapRebuildStatus.Phase.get -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildStatus.Phase.init -> void
+Aw.Context.Core.Map.MapRebuildStatus.Progress.get -> string?
+Aw.Context.Core.Map.MapRebuildStatus.Progress.init -> void
+Aw.Context.Core.Map.MapRebuildStatus.RetryAt.get -> System.DateTimeOffset?
+Aw.Context.Core.Map.MapRebuildStatus.RetryAt.init -> void
+Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.Backoff = 4 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.Building = 1 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.Idle = 0 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.MapHeld = 2 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Map.MapRebuildPhase.NoMainBranch = 3 -> Aw.Context.Core.Map.MapRebuildPhase
+Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Results.ContextResult.Notes.init -> void
+static Aw.Context.Core.Map.MapRebuildStatus.Idle.get -> Aw.Context.Core.Map.MapRebuildStatus!
+override Aw.Context.Core.Map.MapRebuildStatus.ToString() -> string!
+static Aw.Context.Core.Map.MapRebuildStatus.operator !=(Aw.Context.Core.Map.MapRebuildStatus? left, Aw.Context.Core.Map.MapRebuildStatus? right) -> bool
+static Aw.Context.Core.Map.MapRebuildStatus.operator ==(Aw.Context.Core.Map.MapRebuildStatus? left, Aw.Context.Core.Map.MapRebuildStatus? right) -> bool
+override Aw.Context.Core.Map.MapRebuildStatus.GetHashCode() -> int
+override Aw.Context.Core.Map.MapRebuildStatus.Equals(object? obj) -> bool
+Aw.Context.Core.Map.MapRebuildStatus.Equals(Aw.Context.Core.Map.MapRebuildStatus? other) -> bool
+Aw.Context.Core.Map.MapRebuildStatus.<Clone>$() -> Aw.Context.Core.Map.MapRebuildStatus!
+Aw.Context.Core.Map.MapRebuildStatus.Deconstruct(out Aw.Context.Core.Map.MapRebuildPhase Phase) -> void
 Aw.Context.Core.Concepts.PinTally
 Aw.Context.Core.Concepts.PinTally.Count(Aw.Context.Core.Engine.ConceptId? pin) -> void
 Aw.Context.Core.Concepts.PinTally.EmptyNote(Aw.Context.Core.Engine.ConceptId scope, bool matchesNothing) -> string!
@@ -10487,8 +10509,6 @@ Aw.Context.Core.Concepts.PinTally.PinTally() -> void
 Aw.Context.Core.Concepts.PinScope.HoldsAnyFile() -> bool
 Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.get -> bool
 Aw.Context.Core.Sources.SourceDescriptor.HonorsPin.init -> void
-Aw.Context.Core.Results.ContextResult.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>?
-Aw.Context.Core.Results.ContextResult.Notes.init -> void
 Aw.Context.Core.Ranking.RankedLeg
 Aw.Context.Core.Ranking.RankedLeg.Keys.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Sources.RecordKey>!
 Aw.Context.Core.Ranking.RankedLeg.Keys.init -> void
@@ -10558,6 +10578,113 @@ static Aw.Context.Core.Map.PageOverlay.Apply(Aw.Context.Core.Graph.GraphSnapshot
 static Aw.Context.Core.Map.PageOverlay.Without(Aw.Context.Core.Graph.GraphSnapshot! graph) -> Aw.Context.Core.Graph.GraphSnapshot!
 Aw.Context.Core.Engine.ContextScope.OmitPages.get -> bool
 Aw.Context.Core.Engine.ContextScope.OmitPages.init -> void
+Aw.Context.Core.Concepts.ConceptRow.Pages.get -> int?
+Aw.Context.Core.Concepts.ConceptRow.Pages.init -> void
+Aw.Context.Core.Facade.IContextConcepts.CheckPages(Aw.Context.Core.Engine.ContextScope? scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Map.MapHealth!>!>
+Aw.Context.Core.Facade.IContextConcepts.Pages(Aw.Context.Core.Pages.PagesQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Pages.PagesView!>!>
+Aw.Context.Core.Pages.PageActionRow
+Aw.Context.Core.Pages.PageActionRow.<Clone>$() -> Aw.Context.Core.Pages.PageActionRow!
+Aw.Context.Core.Pages.PageActionRow.Code.get -> bool
+Aw.Context.Core.Pages.PageActionRow.Code.init -> void
+Aw.Context.Core.Pages.PageActionRow.Concepts.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Pages.PageActionRow.Concepts.init -> void
+Aw.Context.Core.Pages.PageActionRow.Deconstruct(out Aw.Context.Core.Engine.PageActionId Id, out Aw.Context.Core.Graph.NodeKey Key, out string! Name, out string! Mark, out bool Code, out System.Collections.Generic.IReadOnlyList<string!>! Concepts) -> void
+Aw.Context.Core.Pages.PageActionRow.Equals(Aw.Context.Core.Pages.PageActionRow? other) -> bool
+Aw.Context.Core.Pages.PageActionRow.Id.get -> Aw.Context.Core.Engine.PageActionId
+Aw.Context.Core.Pages.PageActionRow.Id.init -> void
+Aw.Context.Core.Pages.PageActionRow.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Pages.PageActionRow.Key.init -> void
+Aw.Context.Core.Pages.PageActionRow.Mark.get -> string!
+Aw.Context.Core.Pages.PageActionRow.Mark.init -> void
+Aw.Context.Core.Pages.PageActionRow.Name.get -> string!
+Aw.Context.Core.Pages.PageActionRow.Name.init -> void
+Aw.Context.Core.Pages.PageActionRow.PageActionRow(Aw.Context.Core.Engine.PageActionId Id, Aw.Context.Core.Graph.NodeKey Key, string! Name, string! Mark, bool Code, System.Collections.Generic.IReadOnlyList<string!>! Concepts) -> void
+Aw.Context.Core.Pages.PageMarks
+Aw.Context.Core.Pages.PageMarks.All = 0 -> Aw.Context.Core.Pages.PageMarks
+Aw.Context.Core.Pages.PageMarks.Owner = 1 -> Aw.Context.Core.Pages.PageMarks
+Aw.Context.Core.Pages.PageMarks.Suggested = 2 -> Aw.Context.Core.Pages.PageMarks
+Aw.Context.Core.Pages.PageRow
+Aw.Context.Core.Pages.PageRow.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageActionRow!>!
+Aw.Context.Core.Pages.PageRow.Actions.init -> void
+Aw.Context.Core.Pages.PageRow.<Clone>$() -> Aw.Context.Core.Pages.PageRow!
+Aw.Context.Core.Pages.PageRow.Code.get -> bool
+Aw.Context.Core.Pages.PageRow.Code.init -> void
+Aw.Context.Core.Pages.PageRow.Deconstruct(out Aw.Context.Core.Engine.PageId Id, out Aw.Context.Core.Graph.NodeKey Key, out string! Name, out string? Repo, out string! Mark, out bool Code, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageActionRow!>! Actions) -> void
+Aw.Context.Core.Pages.PageRow.Equals(Aw.Context.Core.Pages.PageRow? other) -> bool
+Aw.Context.Core.Pages.PageRow.Id.get -> Aw.Context.Core.Engine.PageId
+Aw.Context.Core.Pages.PageRow.Id.init -> void
+Aw.Context.Core.Pages.PageRow.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Pages.PageRow.Key.init -> void
+Aw.Context.Core.Pages.PageRow.Mark.get -> string!
+Aw.Context.Core.Pages.PageRow.Mark.init -> void
+Aw.Context.Core.Pages.PageRow.Name.get -> string!
+Aw.Context.Core.Pages.PageRow.Name.init -> void
+Aw.Context.Core.Pages.PageRow.PageRow(Aw.Context.Core.Engine.PageId Id, Aw.Context.Core.Graph.NodeKey Key, string! Name, string? Repo, string! Mark, bool Code, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageActionRow!>! Actions) -> void
+Aw.Context.Core.Pages.PageRow.Repo.get -> string?
+Aw.Context.Core.Pages.PageRow.Repo.init -> void
+Aw.Context.Core.Pages.PagesQuery
+Aw.Context.Core.Pages.PagesQuery.<Clone>$() -> Aw.Context.Core.Pages.PagesQuery!
+Aw.Context.Core.Pages.PagesQuery.Concept.get -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Pages.PagesQuery.Concept.init -> void
+Aw.Context.Core.Pages.PagesQuery.Deconstruct(out Aw.Context.Core.Engine.ConceptId? Concept, out string? Page, out Aw.Context.Core.Engine.ContextRepoName? Repo, out Aw.Context.Core.Pages.PageMarks Marks, out int? Limit, out int? Offset, out bool Draft, out string? MapVersion) -> void
+Aw.Context.Core.Pages.PagesQuery.Draft.get -> bool
+Aw.Context.Core.Pages.PagesQuery.Draft.init -> void
+Aw.Context.Core.Pages.PagesQuery.Equals(Aw.Context.Core.Pages.PagesQuery? other) -> bool
+Aw.Context.Core.Pages.PagesQuery.Limit.get -> int?
+Aw.Context.Core.Pages.PagesQuery.Limit.init -> void
+Aw.Context.Core.Pages.PagesQuery.MapVersion.get -> string?
+Aw.Context.Core.Pages.PagesQuery.MapVersion.init -> void
+Aw.Context.Core.Pages.PagesQuery.Marks.get -> Aw.Context.Core.Pages.PageMarks
+Aw.Context.Core.Pages.PagesQuery.Marks.init -> void
+Aw.Context.Core.Pages.PagesQuery.Offset.get -> int?
+Aw.Context.Core.Pages.PagesQuery.Offset.init -> void
+Aw.Context.Core.Pages.PagesQuery.Page.get -> string?
+Aw.Context.Core.Pages.PagesQuery.Page.init -> void
+Aw.Context.Core.Pages.PagesQuery.PagesQuery(Aw.Context.Core.Engine.ConceptId? Concept, string? Page, Aw.Context.Core.Engine.ContextRepoName? Repo, Aw.Context.Core.Pages.PageMarks Marks, int? Limit, int? Offset, bool Draft, string? MapVersion) -> void
+Aw.Context.Core.Pages.PagesQuery.Repo.get -> Aw.Context.Core.Engine.ContextRepoName?
+Aw.Context.Core.Pages.PagesQuery.Repo.init -> void
+Aw.Context.Core.Pages.PagesView
+Aw.Context.Core.Pages.PagesView.<Clone>$() -> Aw.Context.Core.Pages.PagesView!
+Aw.Context.Core.Pages.PagesView.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageRow!>! Pages, out int Total, out bool Truncated, out string! MapVersion) -> void
+Aw.Context.Core.Pages.PagesView.Equals(Aw.Context.Core.Pages.PagesView? other) -> bool
+Aw.Context.Core.Pages.PagesView.MapVersion.get -> string!
+Aw.Context.Core.Pages.PagesView.MapVersion.init -> void
+Aw.Context.Core.Pages.PagesView.Pages.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageRow!>!
+Aw.Context.Core.Pages.PagesView.Pages.init -> void
+Aw.Context.Core.Pages.PagesView.PagesView(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageRow!>! Pages, int Total, bool Truncated, string! MapVersion) -> void
+Aw.Context.Core.Pages.PagesView.Total.get -> int
+Aw.Context.Core.Pages.PagesView.Total.init -> void
+Aw.Context.Core.Pages.PagesView.Truncated.get -> bool
+Aw.Context.Core.Pages.PagesView.Truncated.init -> void
+override Aw.Context.Core.Pages.PageActionRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageActionRow.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageActionRow.ToString() -> string!
+override Aw.Context.Core.Pages.PageRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageRow.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageRow.ToString() -> string!
+override Aw.Context.Core.Pages.PagesQuery.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PagesQuery.GetHashCode() -> int
+override Aw.Context.Core.Pages.PagesQuery.ToString() -> string!
+override Aw.Context.Core.Pages.PagesView.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PagesView.GetHashCode() -> int
+override Aw.Context.Core.Pages.PagesView.ToString() -> string!
+static Aw.Context.Core.Pages.PageActionRow.operator !=(Aw.Context.Core.Pages.PageActionRow? left, Aw.Context.Core.Pages.PageActionRow? right) -> bool
+static Aw.Context.Core.Pages.PageActionRow.operator ==(Aw.Context.Core.Pages.PageActionRow? left, Aw.Context.Core.Pages.PageActionRow? right) -> bool
+static Aw.Context.Core.Pages.PageRow.operator !=(Aw.Context.Core.Pages.PageRow? left, Aw.Context.Core.Pages.PageRow? right) -> bool
+static Aw.Context.Core.Pages.PageRow.operator ==(Aw.Context.Core.Pages.PageRow? left, Aw.Context.Core.Pages.PageRow? right) -> bool
+static Aw.Context.Core.Pages.PagesQuery.operator !=(Aw.Context.Core.Pages.PagesQuery? left, Aw.Context.Core.Pages.PagesQuery? right) -> bool
+static Aw.Context.Core.Pages.PagesQuery.operator ==(Aw.Context.Core.Pages.PagesQuery? left, Aw.Context.Core.Pages.PagesQuery? right) -> bool
+static Aw.Context.Core.Pages.PagesView.operator !=(Aw.Context.Core.Pages.PagesView? left, Aw.Context.Core.Pages.PagesView? right) -> bool
+static Aw.Context.Core.Pages.PagesView.operator ==(Aw.Context.Core.Pages.PagesView? left, Aw.Context.Core.Pages.PagesView? right) -> bool
+Aw.Context.Core.Pages.PageHealth
+const Aw.Context.Core.Pages.PageHealth.Name = "context:pages" -> string!
+static Aw.Context.Core.Pages.PageHealth.NoPages.get -> Aw.Context.Core.Map.MapHealth!
+static Aw.Context.Core.Pages.PageHealth.NoMap.get -> Aw.Context.Core.Map.MapHealth!
+static Aw.Context.Core.Pages.PageHealth.Check(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Graph.GraphSnapshot! stored, Aw.Context.Core.Graph.GraphSnapshot! visible) -> Aw.Context.Core.Map.MapHealth!
+Aw.Context.Core.Pages.PageReader
+const Aw.Context.Core.Pages.PageReader.DefaultLimit = 50 -> int
+const Aw.Context.Core.Pages.PageReader.MaxLimit = 200 -> int
+static Aw.Context.Core.Pages.PageReader.Build(Aw.Context.Core.Pages.PagesQuery! query, string! mapVersion, Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Map.MapText! text) -> Aw.Kernel.Result<Aw.Context.Core.Pages.PagesView!>!
 Aw.Context.Core.Concepts.PinScope.Counting(Aw.Context.Core.Concepts.PinTally? skipped) -> Aw.Context.Core.Sources.ISourcePin!
 Aw.Context.Core.Sources.ISourcePin
 Aw.Context.Core.Sources.ISourcePin.HoldsDoc(string! repo, string! repoRelativePath) -> bool
@@ -10569,10 +10696,346 @@ Aw.Context.Core.Graph.IAliasPins
 Aw.Context.Core.Graph.IAliasPins.AliasesIn(System.Collections.Generic.IReadOnlySet<string!>! words) -> System.Collections.Generic.IReadOnlyList<(string! Pin, string! Alias, int Words)>!
 Aw.Context.Core.Graph.IAliasPins.PinByAlias(string! name) -> string?
 Aw.Context.Core.WholeMap.PagesInNoConcept
-static Aw.Context.Core.WholeMap.PagesInNoConcept.Of(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyList<string!>!
+static Aw.Context.Core.WholeMap.PagesInNoConcept.Of(Aw.Context.Core.Graph.GraphSnapshot! graph, System.Collections.Generic.IReadOnlyDictionary<string!, int>? rank = null) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.WholeMap.WholeMapAsk.PageRank.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Aw.Context.Core.WholeMap.WholeMapAsk.PageRank.init -> void
 Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.get -> bool
 Aw.Context.Core.WholeMap.WholeMapAsk.PagesInNoConcept.init -> void
 Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.get -> bool
 Aw.Context.Core.WholeMap.WholeMapQuery.PagesInNoConcept.init -> void
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.get -> int
 Aw.Context.Core.WholeMap.WholeMapView.PagesInNoConcept.init -> void
+Aw.Context.Core.Concepts.PinSuggestLine
+Aw.Context.Core.Concepts.PinSuggestLine.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestLine!
+Aw.Context.Core.Concepts.PinSuggestLine.PinSuggestLine(string! Name, string? Definition) -> void
+Aw.Context.Core.Concepts.PinSuggestLine.Deconstruct(out string! Name, out string? Definition) -> void
+Aw.Context.Core.Concepts.PinSuggestLine.Equals(Aw.Context.Core.Concepts.PinSuggestLine? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestLine.Name.get -> string!
+Aw.Context.Core.Concepts.PinSuggestLine.Name.init -> void
+Aw.Context.Core.Concepts.PinSuggestLine.Definition.get -> string?
+Aw.Context.Core.Concepts.PinSuggestLine.Definition.init -> void
+override Aw.Context.Core.Concepts.PinSuggestLine.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestLine.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestLine.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestLine.operator !=(Aw.Context.Core.Concepts.PinSuggestLine? left, Aw.Context.Core.Concepts.PinSuggestLine? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestLine.operator ==(Aw.Context.Core.Concepts.PinSuggestLine? left, Aw.Context.Core.Concepts.PinSuggestLine? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestQuery
+Aw.Context.Core.Concepts.PinSuggestQuery.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestQuery!
+Aw.Context.Core.Concepts.PinSuggestQuery.PinSuggestQuery(Aw.Context.Core.Map.MapRead Read, string? Repo, Aw.Context.Core.Graph.NodeKey? Concept, string? Search, int Limit, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>? Lines) -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Deconstruct(out Aw.Context.Core.Map.MapRead Read, out string? Repo, out Aw.Context.Core.Graph.NodeKey? Concept, out string? Search, out int Limit, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>? Lines) -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Equals(Aw.Context.Core.Concepts.PinSuggestQuery? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestQuery.Read.get -> Aw.Context.Core.Map.MapRead
+Aw.Context.Core.Concepts.PinSuggestQuery.Read.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Repo.get -> string?
+Aw.Context.Core.Concepts.PinSuggestQuery.Repo.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Concept.get -> Aw.Context.Core.Graph.NodeKey?
+Aw.Context.Core.Concepts.PinSuggestQuery.Concept.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Search.get -> string?
+Aw.Context.Core.Concepts.PinSuggestQuery.Search.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Limit.get -> int
+Aw.Context.Core.Concepts.PinSuggestQuery.Limit.init -> void
+Aw.Context.Core.Concepts.PinSuggestQuery.Lines.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>?
+Aw.Context.Core.Concepts.PinSuggestQuery.Lines.init -> void
+override Aw.Context.Core.Concepts.PinSuggestQuery.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestQuery.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestQuery.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestQuery.operator !=(Aw.Context.Core.Concepts.PinSuggestQuery? left, Aw.Context.Core.Concepts.PinSuggestQuery? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestQuery.operator ==(Aw.Context.Core.Concepts.PinSuggestQuery? left, Aw.Context.Core.Concepts.PinSuggestQuery? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestTerm
+Aw.Context.Core.Concepts.PinSuggestTerm.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestTerm!
+Aw.Context.Core.Concepts.PinSuggestTerm.PinSuggestTerm(string! Word, int NewRecords) -> void
+Aw.Context.Core.Concepts.PinSuggestTerm.Deconstruct(out string! Word, out int NewRecords) -> void
+Aw.Context.Core.Concepts.PinSuggestTerm.Equals(Aw.Context.Core.Concepts.PinSuggestTerm? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestTerm.Word.get -> string!
+Aw.Context.Core.Concepts.PinSuggestTerm.Word.init -> void
+Aw.Context.Core.Concepts.PinSuggestTerm.NewRecords.get -> int
+Aw.Context.Core.Concepts.PinSuggestTerm.NewRecords.init -> void
+override Aw.Context.Core.Concepts.PinSuggestTerm.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestTerm.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestTerm.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestTerm.operator !=(Aw.Context.Core.Concepts.PinSuggestTerm? left, Aw.Context.Core.Concepts.PinSuggestTerm? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestTerm.operator ==(Aw.Context.Core.Concepts.PinSuggestTerm? left, Aw.Context.Core.Concepts.PinSuggestTerm? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestFeature
+Aw.Context.Core.Concepts.PinSuggestFeature.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestFeature!
+Aw.Context.Core.Concepts.PinSuggestFeature.PinSuggestFeature(Aw.Context.Core.Graph.NodeKey Key, string! Label) -> void
+Aw.Context.Core.Concepts.PinSuggestFeature.Deconstruct(out Aw.Context.Core.Graph.NodeKey Key, out string! Label) -> void
+Aw.Context.Core.Concepts.PinSuggestFeature.Equals(Aw.Context.Core.Concepts.PinSuggestFeature? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestFeature.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Concepts.PinSuggestFeature.Key.init -> void
+Aw.Context.Core.Concepts.PinSuggestFeature.Label.get -> string!
+Aw.Context.Core.Concepts.PinSuggestFeature.Label.init -> void
+override Aw.Context.Core.Concepts.PinSuggestFeature.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestFeature.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestFeature.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestFeature.operator !=(Aw.Context.Core.Concepts.PinSuggestFeature? left, Aw.Context.Core.Concepts.PinSuggestFeature? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestFeature.operator ==(Aw.Context.Core.Concepts.PinSuggestFeature? left, Aw.Context.Core.Concepts.PinSuggestFeature? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestMatch
+Aw.Context.Core.Concepts.PinSuggestMatch.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestMatch!
+Aw.Context.Core.Concepts.PinSuggestMatch.PinSuggestMatch(int Line, Aw.Context.Core.Graph.NodeKey? Concept, string? Name) -> void
+Aw.Context.Core.Concepts.PinSuggestMatch.Deconstruct(out int Line, out Aw.Context.Core.Graph.NodeKey? Concept, out string? Name) -> void
+Aw.Context.Core.Concepts.PinSuggestMatch.Equals(Aw.Context.Core.Concepts.PinSuggestMatch? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestMatch.Line.get -> int
+Aw.Context.Core.Concepts.PinSuggestMatch.Line.init -> void
+Aw.Context.Core.Concepts.PinSuggestMatch.Concept.get -> Aw.Context.Core.Graph.NodeKey?
+Aw.Context.Core.Concepts.PinSuggestMatch.Concept.init -> void
+Aw.Context.Core.Concepts.PinSuggestMatch.Name.get -> string?
+Aw.Context.Core.Concepts.PinSuggestMatch.Name.init -> void
+override Aw.Context.Core.Concepts.PinSuggestMatch.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestMatch.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestMatch.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestMatch.operator !=(Aw.Context.Core.Concepts.PinSuggestMatch? left, Aw.Context.Core.Concepts.PinSuggestMatch? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestMatch.operator ==(Aw.Context.Core.Concepts.PinSuggestMatch? left, Aw.Context.Core.Concepts.PinSuggestMatch? right) -> bool
+Aw.Context.Core.Concepts.PinSuggestView
+Aw.Context.Core.Concepts.PinSuggestView.<Clone>$() -> Aw.Context.Core.Concepts.PinSuggestView!
+Aw.Context.Core.Concepts.PinSuggestView.PinSuggestView(int ApiVersion, string? Repo, string! MapVersion, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>? Terms, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>? Features, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>? Matches) -> void
+Aw.Context.Core.Concepts.PinSuggestView.Deconstruct(out int ApiVersion, out string? Repo, out string! MapVersion, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>? Terms, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>? Features, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>? Matches) -> void
+Aw.Context.Core.Concepts.PinSuggestView.Equals(Aw.Context.Core.Concepts.PinSuggestView? other) -> bool
+Aw.Context.Core.Concepts.PinSuggestView.ApiVersion.get -> int
+Aw.Context.Core.Concepts.PinSuggestView.ApiVersion.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.Repo.get -> string?
+Aw.Context.Core.Concepts.PinSuggestView.Repo.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.MapVersion.get -> string!
+Aw.Context.Core.Concepts.PinSuggestView.MapVersion.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.Terms.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>?
+Aw.Context.Core.Concepts.PinSuggestView.Terms.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.Features.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>?
+Aw.Context.Core.Concepts.PinSuggestView.Features.init -> void
+Aw.Context.Core.Concepts.PinSuggestView.Matches.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>?
+Aw.Context.Core.Concepts.PinSuggestView.Matches.init -> void
+override Aw.Context.Core.Concepts.PinSuggestView.Equals(object? obj) -> bool
+override Aw.Context.Core.Concepts.PinSuggestView.GetHashCode() -> int
+override Aw.Context.Core.Concepts.PinSuggestView.ToString() -> string!
+static Aw.Context.Core.Concepts.PinSuggestView.operator !=(Aw.Context.Core.Concepts.PinSuggestView? left, Aw.Context.Core.Concepts.PinSuggestView? right) -> bool
+static Aw.Context.Core.Concepts.PinSuggestView.operator ==(Aw.Context.Core.Concepts.PinSuggestView? left, Aw.Context.Core.Concepts.PinSuggestView? right) -> bool
+Aw.Context.Core.Facade.IContextConcepts.PinSuggest(Aw.Context.Core.Concepts.PinSuggestQuery! query, Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Concepts.PinSuggestView!>!>
+static readonly Aw.Context.Core.ContextErrors.PinSuggestInvalid -> Aw.Kernel.ErrorDefinition!
+static Aw.Context.Core.Linking.RulesLinker.Matching(string! text, System.Collections.Generic.IReadOnlyList<string!>! words) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Concepts.PinSuggestBuilder
+const Aw.Context.Core.Concepts.PinSuggestBuilder.DefaultLimit = 50 -> int
+const Aw.Context.Core.Concepts.PinSuggestBuilder.MaxLimit = 200 -> int
+const Aw.Context.Core.Concepts.PinSuggestBuilder.MaxTerms = 20 -> int
+static Aw.Context.Core.Concepts.PinSuggestBuilder.TermsOf(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<string!>!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.TermRows(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept, Aw.Context.Core.Map.MapText! text, System.Collections.Generic.IReadOnlyList<string!>! words, System.Collections.Generic.IReadOnlyDictionary<string!, int>! counts) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestTerm!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.MembersOf(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Graph.NodeKey concept, Aw.Context.Core.Map.MapText! text) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.Search(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, string! search, int limit) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestFeature!>!
+static Aw.Context.Core.Concepts.PinSuggestBuilder.Match(Aw.Context.Core.Graph.GraphSnapshot! graph, Aw.Context.Core.Map.MapText! text, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestLine!>! lines) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Concepts.PinSuggestMatch!>!
+Aw.Context.Core.WholeMap.WholeMapView.Pages.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.WholeMap.WholeMapView.Pages.init -> void
+static Aw.Context.Core.Graph.EntryKey.Normalized(string! key) -> string!
+Aw.Context.Core.Engine.PageFacts.Stored.get -> System.Func<string!, string!>?
+Aw.Context.Core.Engine.PageFacts.Stored.init -> void
+Aw.Context.Core.Facade.IContextConcepts.PageFacts(Aw.Context.Core.Engine.ContextScope! scope, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Pages.PageMapFacts!>!>
+Aw.Context.Core.Pages.PageMapFacts
+Aw.Context.Core.Pages.PageMapFacts.<Clone>$() -> Aw.Context.Core.Pages.PageMapFacts!
+Aw.Context.Core.Pages.PageMapFacts.MapVersion.get -> string?
+Aw.Context.Core.Pages.PageMapFacts.MapVersion.init -> void
+Aw.Context.Core.Pages.PageMapFacts.Facts.get -> Aw.Context.Core.Engine.PageFacts!
+Aw.Context.Core.Pages.PageMapFacts.Facts.init -> void
+Aw.Context.Core.Pages.PageMapFacts.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageMapConcept!>!
+Aw.Context.Core.Pages.PageMapFacts.Concepts.init -> void
+Aw.Context.Core.Pages.PageMapFacts.Deconstruct(out string? MapVersion, out Aw.Context.Core.Engine.PageFacts! Facts, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageMapConcept!>! Concepts) -> void
+Aw.Context.Core.Pages.PageMapFacts.Equals(Aw.Context.Core.Pages.PageMapFacts? other) -> bool
+Aw.Context.Core.Pages.PageMapFacts.PageMapFacts(string? MapVersion, Aw.Context.Core.Engine.PageFacts! Facts, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageMapConcept!>! Concepts) -> void
+override Aw.Context.Core.Pages.PageMapFacts.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageMapFacts.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageMapFacts.ToString() -> string!
+static Aw.Context.Core.Pages.PageMapFacts.operator !=(Aw.Context.Core.Pages.PageMapFacts? left, Aw.Context.Core.Pages.PageMapFacts? right) -> bool
+static Aw.Context.Core.Pages.PageMapFacts.operator ==(Aw.Context.Core.Pages.PageMapFacts? left, Aw.Context.Core.Pages.PageMapFacts? right) -> bool
+Aw.Context.Core.Pages.PageMapConcept
+Aw.Context.Core.Pages.PageMapConcept.<Clone>$() -> Aw.Context.Core.Pages.PageMapConcept!
+Aw.Context.Core.Pages.PageMapConcept.Id.get -> Aw.Context.Core.Engine.ConceptId
+Aw.Context.Core.Pages.PageMapConcept.Id.init -> void
+Aw.Context.Core.Pages.PageMapConcept.Name.get -> string!
+Aw.Context.Core.Pages.PageMapConcept.Name.init -> void
+Aw.Context.Core.Pages.PageMapConcept.Deconstruct(out Aw.Context.Core.Engine.ConceptId Id, out string! Name) -> void
+Aw.Context.Core.Pages.PageMapConcept.Equals(Aw.Context.Core.Pages.PageMapConcept? other) -> bool
+Aw.Context.Core.Pages.PageMapConcept.PageMapConcept(Aw.Context.Core.Engine.ConceptId Id, string! Name) -> void
+override Aw.Context.Core.Pages.PageMapConcept.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageMapConcept.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageMapConcept.ToString() -> string!
+static Aw.Context.Core.Pages.PageMapConcept.operator !=(Aw.Context.Core.Pages.PageMapConcept? left, Aw.Context.Core.Pages.PageMapConcept? right) -> bool
+static Aw.Context.Core.Pages.PageMapConcept.operator ==(Aw.Context.Core.Pages.PageMapConcept? left, Aw.Context.Core.Pages.PageMapConcept? right) -> bool
+Aw.Context.Core.Eval.Backtest.ArmReport.PinAnchored.get -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
+Aw.Context.Core.Eval.Backtest.ArmReport.PinAnchored.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.<Clone>$() -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore!
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Count.get -> int
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Count.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Deconstruct(out int Count, out double RecallAt10, out double Mrr) -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Equals(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? other) -> bool
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Mrr.get -> double
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Mrr.init -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.PinAnchoredScore(int Count, double RecallAt10, double Mrr) -> void
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.RecallAt10.get -> double
+Aw.Context.Core.Eval.Backtest.PinAnchoredScore.RecallAt10.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.FileRecallAt10.get -> double
+Aw.Context.Core.Eval.Backtest.SampleScore.FileRecallAt10.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.Pin.get -> string?
+Aw.Context.Core.Eval.Backtest.SampleScore.Pin.init -> void
+Aw.Context.Core.Eval.Backtest.SampleScore.ReciprocalRank.get -> double
+Aw.Context.Core.Eval.Backtest.SampleScore.ReciprocalRank.init -> void
+const Aw.Context.Core.Eval.Backtest.BacktestScoring.MinPinAnchored = 20 -> int
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.Equals(object? obj) -> bool
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.GetHashCode() -> int
+override Aw.Context.Core.Eval.Backtest.PinAnchoredScore.ToString() -> string!
+static Aw.Context.Core.Eval.Backtest.BacktestScoring.PinAnchored(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Eval.Backtest.SampleScore!>! scores) -> Aw.Context.Core.Eval.Backtest.PinAnchoredScore?
+static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator !=(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
+static Aw.Context.Core.Eval.Backtest.PinAnchoredScore.operator ==(Aw.Context.Core.Eval.Backtest.PinAnchoredScore? left, Aw.Context.Core.Eval.Backtest.PinAnchoredScore? right) -> bool
+Aw.Context.Core.Concepts.PinSet.PinsOf(System.Collections.Generic.IReadOnlyList<string!>! anchors) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>!
+static Aw.Context.Core.Concepts.PinSet.Sole(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ConceptId>! anchorPins) -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Pages.PageListAction
+Aw.Context.Core.Pages.PageListAction.<Clone>$() -> Aw.Context.Core.Pages.PageListAction!
+Aw.Context.Core.Pages.PageListAction.Equals(Aw.Context.Core.Pages.PageListAction? other) -> bool
+Aw.Context.Core.Pages.PageListActionMatch
+Aw.Context.Core.Pages.PageListActionMatch.<Clone>$() -> Aw.Context.Core.Pages.PageListActionMatch!
+Aw.Context.Core.Pages.PageListActionMatch.Deconstruct(out Aw.Context.Core.Graph.NodeKey Key, out string! Name) -> void
+Aw.Context.Core.Pages.PageListActionMatch.Equals(Aw.Context.Core.Pages.PageListActionMatch? other) -> bool
+Aw.Context.Core.Pages.PageListActionMatch.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Pages.PageListActionMatch.Key.init -> void
+Aw.Context.Core.Pages.PageListActionMatch.Name.get -> string!
+Aw.Context.Core.Pages.PageListActionMatch.Name.init -> void
+Aw.Context.Core.Pages.PageListActionMatch.PageListActionMatch(Aw.Context.Core.Graph.NodeKey Key, string! Name) -> void
+Aw.Context.Core.Pages.PageListAction.Name.get -> string!
+Aw.Context.Core.Pages.PageListAction.Name.init -> void
+Aw.Context.Core.Pages.PageListActionRow
+Aw.Context.Core.Pages.PageListActionRow.<Clone>$() -> Aw.Context.Core.Pages.PageListActionRow!
+Aw.Context.Core.Pages.PageListActionRow.Concepts.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListConcept!>!
+Aw.Context.Core.Pages.PageListActionRow.Concepts.init -> void
+Aw.Context.Core.Pages.PageListActionRow.Deconstruct(out string! Name, out Aw.Context.Core.Pages.PageListActionMatch? Match, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListConcept!>! Concepts) -> void
+Aw.Context.Core.Pages.PageListActionRow.Equals(Aw.Context.Core.Pages.PageListActionRow? other) -> bool
+Aw.Context.Core.Pages.PageListActionRow.Match.get -> Aw.Context.Core.Pages.PageListActionMatch?
+Aw.Context.Core.Pages.PageListActionRow.Match.init -> void
+Aw.Context.Core.Pages.PageListActionRow.Name.get -> string!
+Aw.Context.Core.Pages.PageListActionRow.Name.init -> void
+Aw.Context.Core.Pages.PageListActionRow.PageListActionRow(string! Name, Aw.Context.Core.Pages.PageListActionMatch? Match, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListConcept!>! Concepts) -> void
+Aw.Context.Core.Pages.PageListBlock
+Aw.Context.Core.Pages.PageListBlock.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListAction!>!
+Aw.Context.Core.Pages.PageListBlock.Actions.init -> void
+Aw.Context.Core.Pages.PageListBlock.Block.get -> int
+Aw.Context.Core.Pages.PageListBlock.Block.init -> void
+Aw.Context.Core.Pages.PageListBlock.<Clone>$() -> Aw.Context.Core.Pages.PageListBlock!
+Aw.Context.Core.Pages.PageListBlock.Deconstruct(out int Block, out int Line, out string! Name, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListAction!>! Actions) -> void
+Aw.Context.Core.Pages.PageListBlock.Equals(Aw.Context.Core.Pages.PageListBlock? other) -> bool
+Aw.Context.Core.Pages.PageListBlock.Line.get -> int
+Aw.Context.Core.Pages.PageListBlock.Line.init -> void
+Aw.Context.Core.Pages.PageListBlock.Name.get -> string!
+Aw.Context.Core.Pages.PageListBlock.Name.init -> void
+Aw.Context.Core.Pages.PageListBlock.PageListBlock(int Block, int Line, string! Name, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListAction!>! Actions) -> void
+Aw.Context.Core.Pages.PageListConcept
+Aw.Context.Core.Pages.PageListConcept.<Clone>$() -> Aw.Context.Core.Pages.PageListConcept!
+Aw.Context.Core.Pages.PageListConcept.Deconstruct(out string! Written, out Aw.Context.Core.Engine.ConceptId? Id) -> void
+Aw.Context.Core.Pages.PageListConcept.Equals(Aw.Context.Core.Pages.PageListConcept? other) -> bool
+Aw.Context.Core.Pages.PageListConcept.Id.get -> Aw.Context.Core.Engine.ConceptId?
+Aw.Context.Core.Pages.PageListConcept.Id.init -> void
+Aw.Context.Core.Pages.PageListConcept.PageListConcept(string! Written, Aw.Context.Core.Engine.ConceptId? Id) -> void
+Aw.Context.Core.Pages.PageListConcept.Written.get -> string!
+Aw.Context.Core.Pages.PageListConcept.Written.init -> void
+Aw.Context.Core.Pages.PageListMatch
+Aw.Context.Core.Pages.PageListMatch.Actions.get -> int
+Aw.Context.Core.Pages.PageListMatch.Actions.init -> void
+Aw.Context.Core.Pages.PageListMatch.<Clone>$() -> Aw.Context.Core.Pages.PageListMatch!
+Aw.Context.Core.Pages.PageListMatch.Deconstruct(out Aw.Context.Core.Graph.NodeKey Key, out Aw.Context.Core.Engine.PageId Id, out string! Name, out int Actions) -> void
+Aw.Context.Core.Pages.PageListMatch.Equals(Aw.Context.Core.Pages.PageListMatch? other) -> bool
+Aw.Context.Core.Pages.PageListMatch.Id.get -> Aw.Context.Core.Engine.PageId
+Aw.Context.Core.Pages.PageListMatch.Id.init -> void
+Aw.Context.Core.Pages.PageListMatch.Key.get -> Aw.Context.Core.Graph.NodeKey
+Aw.Context.Core.Pages.PageListMatch.Key.init -> void
+Aw.Context.Core.Pages.PageListMatch.Name.get -> string!
+Aw.Context.Core.Pages.PageListMatch.Name.init -> void
+Aw.Context.Core.Pages.PageListMatch.PageListMatch(Aw.Context.Core.Graph.NodeKey Key, Aw.Context.Core.Engine.PageId Id, string! Name, int Actions) -> void
+Aw.Context.Core.Pages.PageListPreview
+Aw.Context.Core.Pages.PageListRow
+Aw.Context.Core.Pages.PageListRow.Actions.get -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListActionRow!>!
+Aw.Context.Core.Pages.PageListRow.Actions.init -> void
+Aw.Context.Core.Pages.PageListRow.Block.get -> int
+Aw.Context.Core.Pages.PageListRow.Block.init -> void
+Aw.Context.Core.Pages.PageListRow.<Clone>$() -> Aw.Context.Core.Pages.PageListRow!
+Aw.Context.Core.Pages.PageListRow.Deconstruct(out int Block, out int Line, out string! Name, out Aw.Context.Core.Pages.PageListMatch? Match, out Aw.Context.Core.Engine.PageId? Replaces, out int? SameAs, out bool Ticked, out string? Reason, out System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListActionRow!>! Actions, out System.Collections.Generic.IReadOnlyList<string!>! UnknownConcepts, out Aw.Context.Core.Engine.PagePin? Page) -> void
+Aw.Context.Core.Pages.PageListRow.Equals(Aw.Context.Core.Pages.PageListRow? other) -> bool
+Aw.Context.Core.Pages.PageListRow.Line.get -> int
+Aw.Context.Core.Pages.PageListRow.Line.init -> void
+Aw.Context.Core.Pages.PageListRow.Match.get -> Aw.Context.Core.Pages.PageListMatch?
+Aw.Context.Core.Pages.PageListRow.Match.init -> void
+Aw.Context.Core.Pages.PageListRow.Name.get -> string!
+Aw.Context.Core.Pages.PageListRow.Name.init -> void
+Aw.Context.Core.Pages.PageListRow.Page.get -> Aw.Context.Core.Engine.PagePin?
+Aw.Context.Core.Pages.PageListRow.Page.init -> void
+Aw.Context.Core.Pages.PageListRow.PageListRow(int Block, int Line, string! Name, Aw.Context.Core.Pages.PageListMatch? Match, Aw.Context.Core.Engine.PageId? Replaces, int? SameAs, bool Ticked, string? Reason, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListActionRow!>! Actions, System.Collections.Generic.IReadOnlyList<string!>! UnknownConcepts, Aw.Context.Core.Engine.PagePin? Page) -> void
+Aw.Context.Core.Pages.PageListRow.Reason.get -> string?
+Aw.Context.Core.Pages.PageListRow.Reason.init -> void
+Aw.Context.Core.Pages.PageListRow.Replaces.get -> Aw.Context.Core.Engine.PageId?
+Aw.Context.Core.Pages.PageListRow.Replaces.init -> void
+Aw.Context.Core.Pages.PageListRow.SameAs.get -> int?
+Aw.Context.Core.Pages.PageListRow.SameAs.init -> void
+Aw.Context.Core.Pages.PageListRow.Ticked.get -> bool
+Aw.Context.Core.Pages.PageListRow.Ticked.init -> void
+Aw.Context.Core.Pages.PageListRow.UnknownConcepts.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Pages.PageListRow.UnknownConcepts.init -> void
+Aw.Context.Core.Pages.PageListText
+override Aw.Context.Core.Pages.PageListAction.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListAction.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListActionMatch.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListActionMatch.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListActionMatch.ToString() -> string!
+override Aw.Context.Core.Pages.PageListActionRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListActionRow.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListActionRow.ToString() -> string!
+override Aw.Context.Core.Pages.PageListAction.ToString() -> string!
+override Aw.Context.Core.Pages.PageListBlock.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListBlock.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListBlock.ToString() -> string!
+override Aw.Context.Core.Pages.PageListConcept.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListConcept.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListConcept.ToString() -> string!
+override Aw.Context.Core.Pages.PageListMatch.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListMatch.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListMatch.ToString() -> string!
+override Aw.Context.Core.Pages.PageListRow.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.PageListRow.GetHashCode() -> int
+override Aw.Context.Core.Pages.PageListRow.ToString() -> string!
+static Aw.Context.Core.Pages.PageListActionMatch.operator !=(Aw.Context.Core.Pages.PageListActionMatch? left, Aw.Context.Core.Pages.PageListActionMatch? right) -> bool
+static Aw.Context.Core.Pages.PageListActionMatch.operator ==(Aw.Context.Core.Pages.PageListActionMatch? left, Aw.Context.Core.Pages.PageListActionMatch? right) -> bool
+static Aw.Context.Core.Pages.PageListAction.operator !=(Aw.Context.Core.Pages.PageListAction? left, Aw.Context.Core.Pages.PageListAction? right) -> bool
+static Aw.Context.Core.Pages.PageListAction.operator ==(Aw.Context.Core.Pages.PageListAction? left, Aw.Context.Core.Pages.PageListAction? right) -> bool
+static Aw.Context.Core.Pages.PageListActionRow.operator !=(Aw.Context.Core.Pages.PageListActionRow? left, Aw.Context.Core.Pages.PageListActionRow? right) -> bool
+static Aw.Context.Core.Pages.PageListActionRow.operator ==(Aw.Context.Core.Pages.PageListActionRow? left, Aw.Context.Core.Pages.PageListActionRow? right) -> bool
+static Aw.Context.Core.Pages.PageListBlock.operator !=(Aw.Context.Core.Pages.PageListBlock? left, Aw.Context.Core.Pages.PageListBlock? right) -> bool
+static Aw.Context.Core.Pages.PageListBlock.operator ==(Aw.Context.Core.Pages.PageListBlock? left, Aw.Context.Core.Pages.PageListBlock? right) -> bool
+static Aw.Context.Core.Pages.PageListConcept.operator !=(Aw.Context.Core.Pages.PageListConcept? left, Aw.Context.Core.Pages.PageListConcept? right) -> bool
+static Aw.Context.Core.Pages.PageListConcept.operator ==(Aw.Context.Core.Pages.PageListConcept? left, Aw.Context.Core.Pages.PageListConcept? right) -> bool
+static Aw.Context.Core.Pages.PageListMatch.operator !=(Aw.Context.Core.Pages.PageListMatch? left, Aw.Context.Core.Pages.PageListMatch? right) -> bool
+static Aw.Context.Core.Pages.PageListMatch.operator ==(Aw.Context.Core.Pages.PageListMatch? left, Aw.Context.Core.Pages.PageListMatch? right) -> bool
+static Aw.Context.Core.Pages.PageListRow.operator !=(Aw.Context.Core.Pages.PageListRow? left, Aw.Context.Core.Pages.PageListRow? right) -> bool
+static Aw.Context.Core.Pages.PageListRow.operator ==(Aw.Context.Core.Pages.PageListRow? left, Aw.Context.Core.Pages.PageListRow? right) -> bool
+static Aw.Context.Core.Pages.PageListText.Parse(string! text) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListBlock!>!
+static readonly Aw.Context.Core.ContextErrors.PagePreviewInvalid -> Aw.Kernel.ErrorDefinition!
+Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.get -> int?
+Aw.Context.Core.Concepts.ConceptsView.PagesInNoConcept.init -> void
+Aw.Context.Core.Audience.RecordMask
+static Aw.Context.Core.Audience.RecordMask.Allowed(Aw.Context.Core.Engine.ContextSettings! settings, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Engine.ContextRepo!>! repos, Aw.Context.Core.Engine.ContextCallerKind caller, System.Threading.CancellationToken ct) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.HashSet<Aw.Context.Core.Records.AudienceKey>!>!>
+static Aw.Context.Core.Audience.RecordMask.Linked(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlySet<Aw.Context.Core.Sources.RecordKey>!
+Aw.Context.Core.Pages.PageListAction.Concepts.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Pages.PageListAction.Concepts.init -> void
+Aw.Context.Core.Pages.PageListAction.Deconstruct(out string! Name, out System.Collections.Generic.IReadOnlyList<string!>? Concepts) -> void
+Aw.Context.Core.Pages.PageListAction.PageListAction(string! Name, System.Collections.Generic.IReadOnlyList<string!>? Concepts) -> void
+static Aw.Context.Core.Pages.PageListPreview.Of(System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListBlock!>! blocks, System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageRow!>! pages, System.Collections.Generic.IReadOnlyList<(Aw.Context.Core.Engine.ConceptId Id, string! Name)>! concepts, int? ownerPages = null) -> System.Collections.Generic.IReadOnlyList<Aw.Context.Core.Pages.PageListRow!>!
+Aw.Context.Core.Concepts.ConceptRow.SuggestedPages.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Context.Core.Concepts.ConceptRow.SuggestedPages.init -> void
+Aw.Context.Core.Pages.PagesQuery.Q.get -> string?
+Aw.Context.Core.Pages.PagesQuery.Q.init -> void
+const Aw.Context.Core.Pages.PageReader.SuggestedCap = 200 -> int
+static Aw.Context.Core.Pages.PageReader.ByConcept(Aw.Context.Core.Graph.GraphSnapshot! graph) -> System.Collections.Generic.IReadOnlyDictionary<string!, Aw.Context.Core.Pages.ConceptPageSet!>!
+Aw.Context.Core.Pages.ConceptPageSet
+Aw.Context.Core.Pages.ConceptPageSet.<Clone>$() -> Aw.Context.Core.Pages.ConceptPageSet!
+Aw.Context.Core.Pages.ConceptPageSet.ConceptPageSet(int Count, System.Collections.Generic.IReadOnlyList<string!>! Suggested) -> void
+Aw.Context.Core.Pages.ConceptPageSet.Count.get -> int
+Aw.Context.Core.Pages.ConceptPageSet.Count.init -> void
+Aw.Context.Core.Pages.ConceptPageSet.Deconstruct(out int Count, out System.Collections.Generic.IReadOnlyList<string!>! Suggested) -> void
+Aw.Context.Core.Pages.ConceptPageSet.Equals(Aw.Context.Core.Pages.ConceptPageSet? other) -> bool
+Aw.Context.Core.Pages.ConceptPageSet.Suggested.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Context.Core.Pages.ConceptPageSet.Suggested.init -> void
+override Aw.Context.Core.Pages.ConceptPageSet.Equals(object? obj) -> bool
+override Aw.Context.Core.Pages.ConceptPageSet.GetHashCode() -> int
+override Aw.Context.Core.Pages.ConceptPageSet.ToString() -> string!
+static Aw.Context.Core.Pages.ConceptPageSet.operator !=(Aw.Context.Core.Pages.ConceptPageSet? left, Aw.Context.Core.Pages.ConceptPageSet? right) -> bool
+static Aw.Context.Core.Pages.ConceptPageSet.operator ==(Aw.Context.Core.Pages.ConceptPageSet? left, Aw.Context.Core.Pages.ConceptPageSet? right) -> bool

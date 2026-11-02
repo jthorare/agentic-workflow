@@ -21,7 +21,7 @@ internal sealed partial class ShellViewModel
     public bool IsProjectAddSheet => SheetLink?.Kind == DeepLinkKind.ProjectAdd;
 
     /// <summary>True when the sheet's title is a name, not an id (a project's, or "Add project"): it is not set in mono.</summary>
-    public bool SheetTitleIsMono => !IsProjectSheet && !IsProjectAddSheet;
+    public bool SheetTitleIsMono => !IsProjectSheet && !IsProjectAddSheet && !IsPinSheet;
 
     /// <summary>True when the sheet's subject is a project.</summary>
     public bool IsProjectSheet => SheetLink?.Kind == DeepLinkKind.Project;

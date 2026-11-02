@@ -12,6 +12,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 internal sealed partial class ContextPageViewModel
 {
     private bool _conceptsRead;
+    private string? _conceptsVersion;
 
     /// <summary>The first layer of the map: the product's concepts.</summary>
     public ConceptLayerViewModel Concepts { get; }
@@ -25,9 +26,16 @@ internal sealed partial class ContextPageViewModel
     /// <summary>The back button's words.</summary>
     public string BackText { get; } = Labels.ContextConceptsBack;
 
-    // Registered once: the whole map's crumbs and back button ask the page to go up.
+    /// <summary>A pinned card's Review and approve was pressed: the shell opens the needs-you review the setup step uses.</summary>
+    internal event EventHandler? ReviewAndApproveRequested;
+
+    // Registered once: the whole map's crumbs and back button ask the page to go up; the layer's pin side opens the sheet and answers its footer buttons.
     private void InitConcepts()
     {
+        Concepts.WirePins(Ports.OpenPin, () => _repo ?? string.Empty);
+        Concepts.ReviewAndApprove = () => ReviewAndApproveRequested?.Invoke(this, EventArgs.Empty);
+        Concepts.TryAgain = () => _ = TryRefreshAgain();
+        Ports.Follow(RefreshPins);
         Whole.ConceptsRequested += (_, _) => CloseConcept();
         Whole.UpRequested += (_, _) => _ = Up();
     }
@@ -44,13 +52,17 @@ internal sealed partial class ContextPageViewModel
         ChangedConcepts();
         var read = await ReadConcepts(api, cancellationToken).ConfigureAwait(true);
         _conceptsRead = read.IsSuccess || !string.Equals(read.Error.Code, SindriUiErrors.Unreachable.Code, StringComparison.Ordinal);
-        NoteConcepts(read);
+        var fresh = read.IsSuccess && string.Equals(read.Value.State, "ok", StringComparison.Ordinal) ? await ReadSuggestedSeen(read.Value, cancellationToken).ConfigureAwait(true) : null;
+        NoteConcepts(read, fresh);
+        CountNoConcept(read.IsSuccess ? read.Value : null);
         if (Concepts.HasConcepts)
         {
             Head = Labels.ContextConceptsHead;
             ChangedConcepts();
             ChangedWhole();
+            _conceptsVersion = read.Value.MapVersion;
             await ReadGlossary(api, read.Value.MapVersion, cancellationToken).ConfigureAwait(true);
+            await ReadPins(api, cancellationToken).ConfigureAwait(true);
             return;
         }
 
@@ -118,7 +130,7 @@ internal sealed partial class ContextPageViewModel
     /// <returns>When the answer is drawn.</returns>
     internal Task ReadMapTop(CancellationToken cancellationToken) => OpenedConceptId is null ? OpenFirst(cancellationToken) : ReadWhole(cancellationToken);
 
-    private void NoteConcepts(Result<ContextConceptsView> read)
+    private void NoteConcepts(Result<ContextConceptsView> read, IReadOnlyDictionary<string, int>? newSuggested = null)
     {
         if (read.IsError)
         {
@@ -137,7 +149,7 @@ internal sealed partial class ContextPageViewModel
         switch (read.Value.State)
         {
             case "ok":
-                Concepts.Show(read.Value);
+                Concepts.Show(read.Value, newSuggested);
                 break;
             case "building":
                 Concepts.Building();
@@ -168,10 +180,13 @@ internal sealed partial class ContextPageViewModel
         AnchorText = string.Empty;
         _ = Concepts.EndSearch();
         OpenedConceptId = id;
-        Whole.EnterConcept(name);
+        Whole.EnterConcept(name, ConceptKey(id));
         ChangedConcepts();
         return ReadWhole(cancellationToken);
     }
+
+    // The concept's node key on the map: its id, except "other", which is no concept.
+    private static string? ConceptKey(string id) => string.Equals(id, "other", StringComparison.Ordinal) ? null : id;
 
     /// <summary>Goes back to the concepts: the scoped map goes and the layer shows again.</summary>
     internal void CloseConcept()
@@ -262,5 +277,6 @@ internal sealed partial class ContextPageViewModel
         OnChanged(nameof(HasHead));
         OnChanged(nameof(SearchNote));
         OnChanged(nameof(HasSearchNote));
+        ChangedNoConcept();
     }
 }

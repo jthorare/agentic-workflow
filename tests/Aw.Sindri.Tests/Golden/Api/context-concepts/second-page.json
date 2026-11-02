@@ -19,7 +19,8 @@
         {
           "key": "repo:aw-split-panes/docs/scheduling.md"
         }
-      ]
+      ],
+      "pages": 0
     }
   ],
   "other": {
@@ -48,5 +49,6 @@
       "to": "concept:billing",
       "weight": 1
     }
-  ]
+  ],
+  "pagesInNoConcept": 1
 }

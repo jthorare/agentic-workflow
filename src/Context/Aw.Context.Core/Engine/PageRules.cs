@@ -53,17 +53,7 @@ public static class PageRules
     private static void CheckPage(PagePin page, string at, PageFacts facts, List<Error> errors)
     {
         CheckName(page.Name, $"{at}.name", errors);
-        if (page.SurfaceKey is { } surface)
-        {
-            if (!facts.SurfaceRepos.TryGetValue(surface, out var repos))
-            {
-                errors.Add(ContextErrors.PageKeyUnknown.With($"{at}.surface: '{surface}' is not in the current map (fix: sindri context page list --suggested, or pick it in the app)"));
-            }
-            else if (page.Repo is null && repos.Count > 1)
-            {
-                errors.Add(ContextErrors.PageRepoAmbiguous.With($"{at}: this page is in {string.Join(" and ", repos)}: say which (fix: --repo)"));
-            }
-        }
+        CheckSurface(page, at, facts, errors);
 
         if (page.Actions.Count > MaxActions)
         {
@@ -82,12 +72,29 @@ public static class PageRules
                 errors.Add(ContextErrors.PageIdDuplicate.With($"{actionAt}.id: '{action.Id.Value}' is already actions[{Count(first)}]'s"));
             }
 
-            if (action.ActionKey is { } key && !facts.ActionRepos.ContainsKey(key))
+            if (action.ActionKey is { } key && !facts.ActionRepos.ContainsKey(key) && (facts.Stored is not { } stored || !facts.ActionRepos.ContainsKey(stored(key))))
             {
                 errors.Add(ContextErrors.PageKeyUnknown.With($"{actionAt}.action: '{key}' is not in the current map (fix: sindri context page list --suggested, or pick it in the app)"));
             }
 
             CheckConcepts(action, actionAt, facts, errors);
+        }
+    }
+
+    private static void CheckSurface(PagePin page, string at, PageFacts facts, List<Error> errors)
+    {
+        if (page.SurfaceKey is not { } surface)
+        {
+            return;
+        }
+
+        if (!facts.SurfaceRepos.TryGetValue(surface, out var repos) && (facts.Stored is not { } stored || !facts.SurfaceRepos.TryGetValue(stored(surface), out repos)))
+        {
+            errors.Add(ContextErrors.PageKeyUnknown.With($"{at}.surface: '{surface}' is not in the current map (fix: sindri context page list --suggested, or pick it in the app)"));
+        }
+        else if (page.Repo is null && repos.Count > 1)
+        {
+            errors.Add(ContextErrors.PageRepoAmbiguous.With($"{at}: this page is in {string.Join(" and ", repos)}: say which (fix: --repo)"));
         }
     }
 
@@ -130,11 +137,17 @@ public static class PageRules
         }
     }
 
-    private static string? Nearest(string written, IReadOnlySet<ConceptId> ids)
+    private static string? Nearest(string written, IReadOnlySet<ConceptId> ids) => NearestId(written, ids.Select(static i => i.Value));
+
+    /// <summary>The candidate closest to a written id, for a "fix: try" hint.</summary>
+    /// <param name="written">What the caller wrote.</param>
+    /// <param name="candidates">The ids that exist.</param>
+    /// <returns>The nearest id within three edits (ties go to the first in ordinal order), or null.</returns>
+    internal static string? NearestId(string written, IEnumerable<string> candidates)
     {
         string? best = null;
         var bestDistance = FixDistance + 1;
-        foreach (var id in ids.Select(static i => i.Value).Order(StringComparer.Ordinal))
+        foreach (var id in candidates.Order(StringComparer.Ordinal))
         {
             var distance = Distance(written, id);
             if (distance < bestDistance)

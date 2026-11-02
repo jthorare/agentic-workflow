@@ -215,6 +215,9 @@ public static class EventTypes
     /// <summary>Pins were written into the live profile's 'index.concepts' (concept pins spec §3.6).</summary>
     public const string ContextPinWritten = "context.pin.written";
 
+    /// <summary>Pages were written into the live profile's 'index.pages' (pages spec §3.1).</summary>
+    public const string ContextPageWritten = "context.page.written";
+
     /// <summary>The shipped recipes were registered at start (setup-once spec §7.5).</summary>
     public const string RecipeRegistrationCompleted = "recipe.registration.completed";
 

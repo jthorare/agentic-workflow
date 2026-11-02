@@ -50,7 +50,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
             return valid.Error;
         }
 
-        var anchored = await Pinned(await AnchorFor(request, valid.Value, (settings.Value, scrubbers.Value), inputs, cancellationToken).ConfigureAwait(false), (request, repos.Value, settings.Value), (inputs, valid.Value.Read), cancellationToken).ConfigureAwait(false);
+        var anchored = await Pinned(await AnchorFor(request, valid.Value, (settings.Value, scrubbers.Value), inputs, cancellationToken).ConfigureAwait(false), (request, repos.Value, settings.Value), (inputs, valid.Value.Read, new MapText(scrubbers.Value)), cancellationToken).ConfigureAwait(false);
         if (anchored.IsError)
         {
             return anchored.Error;

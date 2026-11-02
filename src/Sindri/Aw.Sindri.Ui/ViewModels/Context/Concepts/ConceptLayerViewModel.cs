@@ -7,11 +7,12 @@ namespace Aw.Sindri.Ui.ViewModels.Context.Concepts;
 /// A search filters it the way the map's own search does: the matches and the concepts they link to stay, the rest is gone. It is loading while the read is in flight,
 /// and when the map has no concepts it says why in one line and the page opens the bands unscoped.
 /// </summary>
-internal sealed class ConceptLayerViewModel : ObservableObject
+internal sealed partial class ConceptLayerViewModel : ObservableObject
 {
     private readonly Action<string> _open;
     private IReadOnlyList<ConceptTileViewModel> _all = [];
     private HashSet<string>? _kept;
+    private IReadOnlyList<ConceptTileViewModel> Composed { get; set; } = [];
 
     internal ConceptLayerViewModel(Action<string> open)
     {
@@ -19,7 +20,7 @@ internal sealed class ConceptLayerViewModel : ObservableObject
     }
 
     /// <summary>The concepts drawn, the concept of the unassigned nodes last; while a search is on, only the ones it kept.</summary>
-    public IReadOnlyList<ConceptTileViewModel> Tiles => _kept is null ? _all : [.. _all.Where(t => _kept.Contains(t.Id))];
+    public IReadOnlyList<ConceptTileViewModel> Tiles => _kept is null ? Composed : [.. Composed.Where(t => _kept.Contains(t.Id))];
 
     /// <summary>The line over the cards when the glossary has no terms yet; empty otherwise.</summary>
     public string TermsNote { get; private set; } = string.Empty;
@@ -68,10 +69,16 @@ internal sealed class ConceptLayerViewModel : ObservableObject
 
     /// <summary>The concepts were read.</summary>
     /// <param name="view">The ok answer.</param>
-    internal void Show(ContextConceptsView view)
+    /// <param name="newSuggested">Per concept id, how many suggested pages are new; null or a missing id means none.</param>
+    internal void Show(ContextConceptsView view, IReadOnlyDictionary<string, int>? newSuggested = null)
     {
         ArgumentNullException.ThrowIfNull(view);
-        var tiles = (view.Concepts ?? []).Select(c => new ConceptTileViewModel(c.Id, c.Name, c.Summary, c.Size, string.Equals(c.Source, "override", StringComparison.Ordinal), terms: null, _open)).ToList();
+        var tiles = (view.Concepts ?? []).Select(c => new ConceptTileViewModel(c.Id, c.Name, c.Summary, c.Size, string.Equals(c.Source, "override", StringComparison.Ordinal), terms: null, _open)
+        {
+            Pages = c.Pages ?? 0,
+            SuggestedPages = c.SuggestedPages ?? [],
+            NewSuggested = newSuggested is not null && newSuggested.TryGetValue(c.Id, out var count) ? count : 0,
+        }).ToList();
         if (view.Other is { } other && other.Size.Total > 0)
         {
             tiles.Add(new ConceptTileViewModel(other.Id, other.Name.Length > 0 ? other.Name : Labels.ContextWholeBandOther, string.Empty, other.Size, setByPerson: false, terms: null, _open));
@@ -85,6 +92,15 @@ internal sealed class ConceptLayerViewModel : ObservableObject
 
         (_all, IsLoading, Note) = (tiles, false, string.Empty);
         ResetSearch();
+        Changed();
+    }
+
+    /// <summary>The owner opened a concept's Pages section: its card loses the new suggested pages line.</summary>
+    /// <param name="id">The concept's id.</param>
+    internal void ClearNewSuggested(string id)
+    {
+        ArgumentNullException.ThrowIfNull(id);
+        _all = [.. _all.Select(t => string.Equals(t.Id, id, StringComparison.Ordinal) && t.HasNewSuggested ? t.WithoutNewSuggested() : t)];
         Changed();
     }
 
@@ -162,6 +178,7 @@ internal sealed class ConceptLayerViewModel : ObservableObject
     {
         TermsNote = string.Empty;
         _all = [];
+        (_pins, _wasBuilding, RebuildText) = (null, false, string.Empty);
         (IsLoading, Note) = (false, note);
         ResetSearch();
         Changed();
@@ -171,7 +188,8 @@ internal sealed class ConceptLayerViewModel : ObservableObject
 
     private void Changed()
     {
-        foreach (var name in (string[])[nameof(Tiles), nameof(IsLoading), nameof(Note), nameof(HasNote), nameof(SearchActive), nameof(NoMatches), nameof(TermsNote), nameof(HasTermsNote)])
+        Compose();
+        foreach (var name in (string[])[nameof(ShowNewPin), nameof(ShowAddSeveral), nameof(PinHeadText), nameof(HasPinHead), nameof(RebuildText), nameof(HasRebuildText), nameof(Tiles), nameof(IsLoading), nameof(Note), nameof(HasNote), nameof(SearchActive), nameof(NoMatches), nameof(TermsNote), nameof(HasTermsNote)])
         {
             OnChanged(name);
         }
