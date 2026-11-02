@@ -24,7 +24,7 @@ internal sealed class ContextRecordFeedCatalog(IRecordStore store, GitCli git, L
         var feeds = new List<RecordFeed>(2) { new RepoDocsFeed(repos, settings.IndexedDocGlobs, settings.GitHub?.Repos ?? [], store, git, scrubbers) };
         if (settings.Linear is { } linearSettings)
         {
-            feeds.Add(linear.CreateFeed(linearSettings));
+            feeds.Add(linear.CreateFeed(linearSettings, settings.GitHub?.Repos));
             feeds.Add(linear.CreateProjectFeed(linearSettings));
         }
 

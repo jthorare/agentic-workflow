@@ -33,7 +33,7 @@ internal static class ProjectScenarios
     /// <summary>The (slug, scenario) pairs of this class.</summary>
     public static IReadOnlyList<(string Slug, string Scenario)> All { get; } =
     [
-        ("projects", "empty-no-linear"), ("projects", "empty-leads-nothing"), ("projects", "syncing"), ("projects", "counting"), ("projects", "mixed"),
+        ("projects", "empty-no-linear"), ("projects", "empty-leads-nothing"), ("projects", "syncing"), ("projects", "counting"), ("projects", "mixed"), ("projects", "with-prs"),
         ("projects", "linear-failing"), ("projects", "context-down"), ("projects", "untrusted-name"),
         ("projects-id", "attached"), ("projects-id", "led"),
         ("projects-linear", "some"), ("projects-linear", "empty"), ("projects-linear", "context-down"), ("projects-linear", "untrusted-name"),
@@ -120,6 +120,11 @@ internal static class ProjectScenarios
             "empty-no-linear" => facts,
             "empty-leads-nothing" => facts.With(Snapshot(_owner)).WithFreshness(Ok("linear-projects"), Ok("linear"), Ok("github")),
             "syncing" => facts.With(Snapshot(_owner, firstRead: false)).WithFreshness(new ProjectSourceFreshness("linear-projects", Usable: false, LastSync: null, LastCode: null)),
+            "with-prs" => facts.With(Snapshot(_owner,
+            [
+                Fact(Led, "Checkout rewrite", "started", _owner, leadIsOwner: true, Epoch(-0.1), issues: 12) with { OpenPrs = 3, Repos = ["acme/api", "acme/web"], PrWindowDays = 30 },
+                Fact(Mobile, "Mobile app", "planned", _owner, leadIsOwner: true, Epoch(-2), issues: 2) with { OpenPrs = 0, Repos = [], PrWindowDays = 30 },
+            ])).WithFreshness(Ok("linear-projects"), Ok("linear"), Ok("github")),
             "counting" => facts.With(Snapshot(_owner, [Fact(Led, "Checkout rewrite", "started", _owner, leadIsOwner: true, Epoch(-1), issues: 4, counting: true)])).WithFreshness(Ok("linear-projects")),
             "linear-failing" => facts.With(Snapshot(_owner, [all])).WithFreshness(Ok("linear-projects"), new ProjectSourceFreshness("linear", Usable: true, Epoch(-1), "SND-INDEX-401")),
             "untrusted-name" => facts.With(Snapshot(_owner, [Fact(Led, Injected, "started", _owner, leadIsOwner: true, Epoch(-1), issues: 1) with { Description = Injected }])).WithFreshness(Ok("linear-projects")),

@@ -44,6 +44,9 @@ internal static class RecordMappers
         Text(r, 5) is { } due ? DateOnly.ParseExact(due, DueFormat, CultureInfo.InvariantCulture) : null,
         SqliteRead.GetTimestamp(r, 6), At(r, 7), Text(r, 8), Text(r, 9), r.GetInt32(10), At(r, 11), Text(r, 12)));
 
+    internal static IRowMapper<ProjectPr> ProjectPr { get; } = new Mapper<ProjectPr>(r =>
+        new ProjectPr(RecordKey.From(r.GetString(0)), RecordKey.From(r.GetString(1)), Text(r, 2) is { } state ? RecordWire.State(state) : null, SqliteRead.GetTimestamp(r, 3)));
+
     internal static IRowMapper<SourceIdentity> Identity { get; } = new Mapper<SourceIdentity>(r =>
         new SourceIdentity(SourceId.From(r.GetString(0)), r.GetString(1), r.GetString(2), SqliteRead.GetTimestamp(r, 3)));
 
