@@ -105,6 +105,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
         AddNamed(found, options.SecretsDirectory, "*.hash");
         AddNamed(found, options.SecretsDirectory, "*.secret");
         AddNamed(found, options.PolicyDirectory, "LCH-*.settings.json");
+        AddNamed(found, options.PolicyDirectory, "LCH-*.cursor-path");
         return [.. found];
     }
 
@@ -185,13 +186,20 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
             : 0;
 
     /// <summary>Deletes secret files that no wrap read (it never ran): older than the limit and not of a live launch.</summary>
-    private int SweepSecrets(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live) =>
-        SweepOwned(options.SecretsDirectory, "*.secret", now, olderThan, live)
-        + SweepOwned(options.SecretsDirectory, "*.hash", now, olderThan, live)
-        + SweepOwned(options.PolicyDirectory, "LCH-*.settings.json", now, olderThan, live);
-
-    private static int SweepOwned(string directory, string pattern, DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
+    private int SweepSecrets(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
+        var stale = new Staleness(now, olderThan, live);
+        return SweepOwned(options.SecretsDirectory, "*.secret", stale)
+            + SweepOwned(options.SecretsDirectory, "*.hash", stale)
+            + SweepOwned(options.PolicyDirectory, "LCH-*.settings.json", stale)
+            + SweepOwned(options.PolicyDirectory, "LCH-*.cursor-path", stale, CursorPolicyFile.DeleteSidecar);   // a cursor-config launch whose host died: its cli.json goes with its sidecar, or the reused worktree refuses every later cursor Step
+    }
+
+    private readonly record struct Staleness(DateTimeOffset Now, TimeSpan OlderThan, Func<LaunchId, bool> Live);
+
+    private static int SweepOwned(string directory, string pattern, Staleness stale, Func<string, bool>? remove = null)
+    {
+        remove ??= OwnerOnly.TryDelete;
         if (!Directory.Exists(directory))
         {
             return 0;
@@ -202,7 +210,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
         {
             var name = Path.GetFileName(file);
             if (LaunchId.TryParse(name[..name.IndexOf('.', StringComparison.Ordinal)], provider: null, out var launch)
-                && now - new DateTimeOffset(File.GetLastWriteTimeUtc(file)) > olderThan && !live(launch) && OwnerOnly.TryDelete(file))
+                && stale.Now - new DateTimeOffset(File.GetLastWriteTimeUtc(file)) > stale.OlderThan && !stale.Live(launch) && remove(file))
             {
                 removed++;
             }

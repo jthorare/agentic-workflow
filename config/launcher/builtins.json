@@ -51,8 +51,8 @@
       "transcripts": null,
       "usage": "cursor",
       "mcp": "none",
-      "model": "none",
-      "policy": "none"
+      "model": "cursor-flag",
+      "policy": "cursor-config"
     }
   }
 }

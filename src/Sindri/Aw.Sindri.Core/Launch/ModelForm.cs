@@ -18,7 +18,7 @@ public enum ModelForm
     [JsonStringEnumMemberName("codex-flag")]
     CodexFlag,
 
-    /// <summary>'--model &lt;id&gt;' (unverified: no cursor agent binary on the build box).</summary>
+    /// <summary>'--model &lt;id&gt;' (documented by Cursor's CLI parameters page; not run against a CLI yet, issue #1428).</summary>
     [JsonStringEnumMemberName("cursor-flag")]
     CursorFlag,
 }
