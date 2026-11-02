@@ -9,6 +9,7 @@
 #   - every mcp name is a server in the table of .agents/rules/mcp-servers.md or a directory evals/mocks/<name>/
 #   - every bins name is on PATH or in evals/stubs/bin/ (--skip-bins skips this one: a box without ffmpeg or bun)
 #   - the SKILL.md has exactly one `## Result block` section, holding the exact gate line from skills/_shared/output-contract.md
+#   - a Result block line that puts the `aw-result` block before `## Next steps` also says "final reply" (the block goes in the reply after the last tool call; #1941)
 # A skills/ directory without a SKILL.md (_shared, the preamble files) is not a skill.
 # Usage: scripts/check-skill-requires.sh [--root DIR] [--skip-bins]
 set -uo pipefail
@@ -81,6 +82,9 @@ for skill_md in skills/*/SKILL.md bootstrap/SKILL.md; do
   [ "$n_blocks" -le 1 ] || finding "$skill_md" "$n_blocks '## Result block' sections (keep one)"
   if ! awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md" | grep -qxF -- "$GATE"; then
     finding "$skill_md" "no '## Result block' section with the gate line: $GATE"
+  fi
+  if awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md" | grep -F -- '`aw-result` block' | grep -F -- 'before `## Next steps`' | grep -qvF -- 'final reply'; then
+    finding "$skill_md" "the Result block puts the aw-result block before ## Next steps without saying final reply (write every file first, then print it in the final reply, after the last tool call)"
   fi
 done
 
