@@ -14,7 +14,8 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// <param name="sindriHome">Sindri's own home.</param>
 /// <param name="environment">Reads an environment variable.</param>
 /// <param name="binDirectory">Where the agent CLI is looked for instead of PATH; null (the product) uses PATH.</param>
-internal sealed class SandboxLoginRunner(string sindriHome, Func<string, string?> environment, string? binDirectory = null) : ISandboxLogin
+/// <param name="isMac">Whether this is macOS, where Claude Code saves the new login in the Keychain; null (the product) asks the OS.</param>
+internal sealed class SandboxLoginRunner(string sindriHome, Func<string, string?> environment, string? binDirectory = null, bool? isMac = null) : ISandboxLogin
 {
     public async Task<Result<int>> Run(AgentId target, CancellationToken cancellationToken)
     {
@@ -46,13 +47,41 @@ internal sealed class SandboxLoginRunner(string sindriHome, Func<string, string?
             return hooks.IsError ? hooks.Error : SindriErrors.LaunchLoginUnavailable.With($"{installer} exited {hooks.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)}, so {home} has no hooks");
         }
 
+        if (RemoveStaleLogin(provider, home) is { } failed)
+        {
+            return failed;
+        }
+
         var signed = await RunOnTerminal(binDirectory is null ? signIn[0] : Path.Combine(binDirectory, signIn[0]), signIn[1..], new Dictionary<string, string?>(StringComparer.Ordinal) { [variable] = home }, cancellationToken).ConfigureAwait(false);
+        await PrintNextStep(provider, home, signed).ConfigureAwait(false);
+        return signed;
+    }
+
+    private static async Task PrintNextStep(string provider, string home, Result<int> signed)
+    {
         if (signed.IsSuccess && signed.Value == 0 && string.Equals(provider, "codex", StringComparison.Ordinal))
         {
             await Console.Error.WriteLineAsync($"next: open codex with CODEX_HOME={home} and run /hooks to trust the aw:* entries (once)").ConfigureAwait(false);
         }
+    }
 
-        return signed;
+    // why: on a Mac the new login goes to the Keychain, and a stale file here would keep winning over it; the next Prepare writes the file again from the Keychain
+    private Error? RemoveStaleLogin(string provider, string home)
+    {
+        if (provider != "claude" || !(isMac ?? OperatingSystem.IsMacOS()))
+        {
+            return null;
+        }
+
+        try
+        {
+            File.Delete(home + "/.credentials.json");
+            return null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SindriErrors.LaunchLoginUnavailable.With($"the old login {home}/.credentials.json could not be removed: {e.Message}");
+        }
     }
 
     private string ToolkitDirectory()

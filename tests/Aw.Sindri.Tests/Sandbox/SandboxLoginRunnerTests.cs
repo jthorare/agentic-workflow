@@ -90,6 +90,24 @@ public sealed class SandboxLoginRunnerTests : IDisposable
         Assert.Equal(SecurityCliKeychainLogin.ServiceFor(AgentHomes.For(slashed, id)), SecurityCliKeychainLogin.ServiceFor(handed));
     }
 
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    public async Task On_a_mac_the_stale_claude_login_file_is_removed_before_the_sign_in_and_elsewhere_it_stays(bool mac, bool fileStays)
+    {
+        RecordingInstaller("claude");
+        Agent("claude", "CLAUDE_CONFIG_DIR");
+        var id = AgentId.From("claude-code");
+        var file = AgentHomes.For(SindriHome, id) + "/.credentials.json";
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        await File.WriteAllTextAsync(file, "{\"old\":true}", TestContext.Current.CancellationToken);
+
+        var ran = await new SandboxLoginRunner(SindriHome, name => name == "TOOLKIT_DIR" ? _toolkit : null, _bin, mac).Run(id, CancellationToken.None);
+
+        Assert.True(ran.IsSuccess);
+        Assert.Equal(fileStays, File.Exists(file));
+    }
+
     [Fact]
     public async Task Codex_prints_the_hooks_trust_line_and_claude_does_not()
     {
