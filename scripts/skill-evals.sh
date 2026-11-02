@@ -59,7 +59,8 @@
 # Exit: 0 pass (also "no skills changed"), 1 below threshold (or a failed --selftest/--lint-descriptions), 2 budget refused
 # or the run hit its cost ceiling, 3 environment (claude, jq, perl or rsync missing, not logged in, dirty or detached tree, a
 # staged path outside the repo, an unreadable result), 4 routing gate missed (--gate block), 64 usage.
-# When several apply the order is 3, 2, 4, 1.
+# When several apply the order is 3, 4, 1, 2, so a missed gate or a low score is never hidden behind a refused family set or
+# a partial run. A --dry-run prints FAMILY SKIPPED when the family would be refused but exits 0.
 # Bash 3.2 compatible.
 set -uo pipefail
 
@@ -1018,11 +1019,11 @@ do_run() {
     CMD_DESC="skill-evals family $(echo $fams | tr ' ' ',')"
     tally_run settle "$fam_cost" "$fid" || note "could not settle the family spend (the reserve stays until its process is gone)"
   fi
+  [ "$partial" = 0 ] || echo "PARTIAL: the run hit its cost ceiling; the table above is not a full measurement"
   [ "$envfail" = 0 ] || exit 3
-  [ "$fam_skipped" = 0 ] || exit 2
-  [ "$partial" = 0 ] || { echo "PARTIAL: the run hit its cost ceiling; the table above is not a full measurement"; exit 2; }
   if [ "$gate_missed" = 1 ] && [ "$GATE" = block ]; then exit 4; fi
   [ "$below" = 0 ] || exit 1
+  [ "$fam_skipped" = 0 ] && [ "$partial" = 0 ] || exit 2
   exit 0
 }
 

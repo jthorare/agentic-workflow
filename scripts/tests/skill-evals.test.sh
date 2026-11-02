@@ -547,6 +547,15 @@ expect "a real run: the skill run goes on, the family set is skipped, exit 2" 2 
 has -E '### routing' <<<"$OUT" && ok "the skill table is printed" || { fail "no skill table"; show; }
 lacks "no family block when the family set was refused" '### family'
 [ "$(grep -c -- '-family' "$STATE/skill-evals/spend.jsonl" || true)" = 0 ] && ok "a refused family set leaves no reserve row" || fail "family row written"
+mkresult 1 false 1
+run --skills alpha --family grp --kind routing --gate block
+expect "a missed gate under block still exits 4 when the family set was refused" 4 'ROUTING GATE MISSED: alpha'
+has -E 'FAMILY SKIPPED' <<<"$OUT" && ok "the refused family set is still reported" || { fail "family skip line lost"; show; }
+mkresult 0.5 true 1
+run --skills alpha --family grp --kind routing
+expect "a score below the threshold still exits 1 when the family set was refused" 1 'FAMILY SKIPPED'
+mkresult 1 true 1
+printf '{"t":"settle","id":"x","date":"%s","lane":"l","usd":50}\n' "$(date +%F)" >"$STATE/skill-evals/spend.jsonl"
 run --skills alpha --family grp --kind routing --family-max-cost-usd 1
 expect "a smaller family ceiling fits" 0 '### family grp'
 [ "$(grep -c -- '-family' "$STATE/skill-evals/spend.jsonl" || true)" = 2 ] && ok "the family set has its own reserve and settle rows" || { fail "family tally rows"; cat "$STATE/skill-evals/spend.jsonl"; }
