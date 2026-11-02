@@ -36,6 +36,14 @@ No match while the file exists: stderr `aw-eval: gh <args> has no canned answer`
 `--request`, or POST when `-d`/`--data*`/`-F`/`--form` is given, else GET (`-I` is HEAD). The entry's stdout is printed whatever
 `-o` or `-w` say. No match, or no file: stderr `aw-eval: curl <METHOD> <url> has no canned answer`, exit 7. curl never touches the network.
 
+## `ui-evidence`
+
+A canned stand-in for the Sindri binary, which an isolated run does not have, so the skill's `command -v ui-evidence` preflight passes.
+`doctor` answers a healthy local stack on `http://localhost:3000`, `provenance` answers `seeded`, `install-browser`, `run`, `parity`,
+`api-run` and `db-run` answer a passed run with one screenshot, `publish-plan` a text-only plan and anything else `{}`. A `--host` that
+does not start with `http://localhost:` is refused like the real guard: exit 1 and, on stderr, `ui-evidence: host refused: <host> is not a
+configured local host`. It writes no file and posts nothing, so a case grades the order of calls and the refusals, not the tool.
+
 ## Files
 
 `aw-eval-lib.sh` (the walk-up and the real-binary lookup) and `aw-eval-match.pl` (the matcher) are sourced or called by the stubs.

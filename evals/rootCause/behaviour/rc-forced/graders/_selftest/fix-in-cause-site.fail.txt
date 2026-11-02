@@ -1,0 +1,4 @@
+def line_discount(quantity: int, unit_cents: int) -> int:
+    if quantity > BULK_THRESHOLD:
+        return int(quantity * unit_cents * BULK_RATE)
+    return 0

@@ -1,0 +1,2 @@
+Bash	{"command":"python3 -m greeter ada"}
+Bash	{"command":"python3 -m unittest"}
