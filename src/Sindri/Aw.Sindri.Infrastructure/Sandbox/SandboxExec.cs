@@ -19,9 +19,9 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// <param name="egress">Starts the exec's own listeners.</param>
 /// <param name="profile">The approved profile: the cap and the limits.</param>
 /// <param name="box">The box's RAM and cores.</param>
-/// <param name="scope">Wraps the command in the platform's scope (<see cref="ExecScope"/>).</param>
+/// <param name="platform">The platform's scope for the command and its cleanup.</param>
 /// <param name="launchDirectory">The launcher's directory, read when a launch's plan is looked up.</param>
-internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressService egress, IApprovedProfile profile, BoxFacts box, Func<LaunchId, ScopeLimits, IReadOnlyList<string>, IReadOnlyList<string>> scope, Func<string> launchDirectory) : ISandboxExec
+internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressService egress, IApprovedProfile profile, BoxFacts box, ExecPlatform platform, Func<string> launchDirectory) : ISandboxExec
 {
     private static readonly TimeSpan _unusedLongMax = TimeSpan.FromHours(2);   // the exec is attended: it has no wall, so no longMax applies
 
@@ -116,7 +116,7 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
             return wrapped.Error;
         }
 
-        var argv = scope(plan.Launch, limits, wrapped.Value);
+        var argv = platform.Scope(plan.Launch, limits, wrapped.Value);
         var info = ChildEnvironment.Start(argv[0], argv.Skip(1));   // no redirection: the command has this terminal
 
         try
@@ -135,6 +135,7 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
     private void Cleanup(SandboxPlan plan)
     {
         sandbox.Discard(plan);
+        platform.Ended?.Invoke(plan.Launch);
         var shortTemp = SandboxPaths.SeatbeltTemp(plan.Launch);   // Seatbelt's per-launch temp directory sits outside the run area
         if (plan.Mounts.Any(m => string.Equals(m.Path, shortTemp, StringComparison.Ordinal)) && Directory.Exists(shortTemp))
         {

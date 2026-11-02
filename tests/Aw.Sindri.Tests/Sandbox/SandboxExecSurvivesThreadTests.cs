@@ -28,7 +28,7 @@ public sealed class SandboxExecSurvivesThreadTests
         var network = new SystemEgressNetwork();
         var exec = new SandboxExec(
             BubblewrapBox.Create(), new InlineCap(), new EgressService(network, network, Environment.GetEnvironmentVariable, Path.Combine(area.Root, "egress")),
-            new NoApprovedProfile(), new BoxFacts(8L << 30, 4), ExecScope.Linux("systemd-run"), () => Path.Combine(area.Root, "launches"));
+            new NoApprovedProfile(), new BoxFacts(8L << 30, 4), new ExecPlatform(ExecScope.Linux("systemd-run")), () => Path.Combine(area.Root, "launches"));
 
         // Everything before Process.Start completes synchronously (InlineCap, NoApprovedProfile), so Run forks on this thread and returns the pending wait.
         Task<Result<int>>? running = null;

@@ -6,7 +6,6 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Text;
-using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sessions;
 using Microsoft.Extensions.DependencyInjection;
@@ -106,7 +105,7 @@ public static class PlatformSandboxServiceCollectionExtensions
             .AddSingleton<ISandboxLaunchStages>(StagesFor)
             .AddSingleton<ISandboxLaunchInputs>(sp => InputsFor(sp, environment))
             .AddSingleton<ISandboxLogin>(sp => new SandboxLoginRunner(sp.GetRequiredService<SindriSettings>().Home, environment))
-            .AddSingleton<ISandboxExec>(sp => ExecWith(sp, ExecScope.Mac(ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory))))   // why: the same group files the launch counts, so exec counts against the session cap
+            .AddSingleton<ISandboxExec>(ExecMac)   // why: the same group files the launch counts, so exec counts against the session cap
             .AddSingleton<ISandboxLaunch>(sp =>
             {
                 var pgroups = ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory);
@@ -123,15 +122,21 @@ public static class PlatformSandboxServiceCollectionExtensions
         .AddSingleton<ISandboxExec>(sp => ExecFor(sp, environment))
         .AddSingleton<ISandboxLogin>(sp => new SandboxLoginRunner(sp.GetRequiredService<SindriSettings>().Home, environment));
 
-    private static SandboxExec ExecFor(IServiceProvider sp, Func<string, string?> environment) => ExecWith(sp, ExecScope.Linux(environment("AW_SANDBOX_SYSTEMD_RUN") is { Length: > 0 } run ? run : "systemd-run"));
+    private static SandboxExec ExecFor(IServiceProvider sp, Func<string, string?> environment) => ExecWith(sp, new ExecPlatform(ExecScope.Linux(environment("AW_SANDBOX_SYSTEMD_RUN") is { Length: > 0 } run ? run : "systemd-run")));
 
-    private static SandboxExec ExecWith(IServiceProvider sp, Func<LaunchId, ScopeLimits, IReadOnlyList<string>, IReadOnlyList<string>> scope)
+    private static SandboxExec ExecWith(IServiceProvider sp, ExecPlatform platform)
     {
         var machine = sp.GetRequiredService<ISandboxMachine>();
         return new SandboxExec(
             sp.GetRequiredService<ISandbox>(), sp.GetRequiredService<ISessionCap>(), sp.GetRequiredService<EgressService>(), sp.GetRequiredService<IApprovedProfile>(),
-            new BoxFacts(machine.RamBytes, machine.Cores), scope,
+            new BoxFacts(machine.RamBytes, machine.Cores), platform,
             () => sp.GetRequiredService<LauncherOptions>().LaunchDirectory);   // why: lazily, so a container without the launcher can still resolve the exec
+    }
+
+    private static SandboxExec ExecMac(IServiceProvider sp)
+    {
+        var pgroups = ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory);
+        return ExecWith(sp, new ExecPlatform(ExecScope.Mac(pgroups), ExecScope.MacEnded(pgroups)));
     }
 
     private static SandboxLaunchOptions LaunchOptions(IServiceProvider sp, Func<string, string?> environment)

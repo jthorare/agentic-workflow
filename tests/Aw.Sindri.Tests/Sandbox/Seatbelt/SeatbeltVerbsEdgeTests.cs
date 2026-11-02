@@ -143,7 +143,7 @@ public sealed class SeatbeltVerbsEdgeTests : IDisposable
         var network = new SystemEgressNetwork();
         return new SandboxExec(
             sandbox, new InlineCap(), new EgressService(network, network, Environment.GetEnvironmentVariable, Path.Combine(area.Root, "egress")),
-            new NoApprovedProfile(), new BoxFacts(8L << 30, 4), static (_, _, inner) => inner, () => Path.Combine(area.Root, "launches"));
+            new NoApprovedProfile(), new BoxFacts(8L << 30, 4), new ExecPlatform(static (_, _, inner) => inner), () => Path.Combine(area.Root, "launches"));
     }
 
     // why: stands for what Wrap leaves on disk (the exec's run area, and on a Mac Seatbelt's temp directory); the fake makes it when the exec discards, so it exists even if the egress or the process refused to start

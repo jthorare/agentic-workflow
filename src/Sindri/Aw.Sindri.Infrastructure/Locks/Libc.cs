@@ -20,6 +20,10 @@ internal static partial class Libc
 
     private const string Library = "libc";
 
+    private const int SigTtou = 22;   // the same number on macOS and Linux
+
+    private static readonly nint _sigIgnore = 1;
+
     static Libc()
     {
         NativeLibrary.SetDllImportResolver(typeof(Libc).Assembly, Resolve);
@@ -42,11 +46,43 @@ internal static partial class Libc
     /// <returns>The group id.</returns>
     internal static int OwnGroup() => GetPgrp();
 
+    /// <summary>Makes this process's group the terminal's foreground group again, when <paramref name="fromGroup"/> (a group that has ended) still holds it. Best effort: no terminal, or another foreground group, changes nothing.</summary>
+    /// <param name="fromGroup">The process group that was given the terminal.</param>
+    internal static void TakeForeground(int fromGroup)
+    {
+        try
+        {
+            using var tty = File.OpenHandle("/dev/tty", FileMode.Open, FileAccess.ReadWrite);
+            var fd = (int)tty.DangerousGetHandle();
+            if (TcGetPgrp(fd) != fromGroup)
+            {
+                return;
+            }
+
+            var previous = SetSignal(SigTtou, _sigIgnore);   // why: a background process that calls tcsetpgrp gets SIGTTOU, which stops it
+            _ = TcSetPgrp(fd, GetPgrp());
+            _ = SetSignal(SigTtou, previous);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // no controlling terminal (piped, --json, a service): nothing was handed over
+        }
+    }
+
     [LibraryImport(Library, EntryPoint = "getpgrp")]
     private static partial int GetPgrp();
 
     [LibraryImport(Library, EntryPoint = "kill", SetLastError = true)]
     private static partial int Kill(int pid, int signal);
+
+    [LibraryImport(Library, EntryPoint = "tcgetpgrp")]
+    private static partial int TcGetPgrp(int fd);
+
+    [LibraryImport(Library, EntryPoint = "tcsetpgrp")]
+    private static partial int TcSetPgrp(int fd, int pgrp);
+
+    [LibraryImport(Library, EntryPoint = "signal")]
+    private static partial nint SetSignal(int signal, nint handler);
 
     [LibraryImport(Library, EntryPoint = "mkdir", SetLastError = true, StringMarshalling = StringMarshalling.Utf8)]
     private static partial int Mkdir(string path, uint mode);
