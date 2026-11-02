@@ -825,7 +825,17 @@ print_failures() { # results.json threshold
 }
 
 gate_lines() { # results.json -> lines "ROUTING GATE MISSED: ..."; nothing when the gate holds; non-zero when it cannot be judged
-  local out filter
+  local out filter names name sd slash="" sj
+  # why: a slash-only skill (front matter disable-model-invocation: true) is never picked by the model, so the natural-case rule skips it
+  names="$(jq -r '[.cases[] | .dir | split("/")[1]] | unique[]' "$1" 2>/dev/null)" || names=""
+  while IFS= read -r name; do
+    [ -n "$name" ] || continue
+    sd="$(skill_dir "$name")" || continue
+    if awk '/^---[ \t]*$/ { n++; next } n == 1 && /^disable-model-invocation:[ \t]*["\x27]?true["\x27]?[ \t]*$/ { f = 1 } n >= 2 { exit } END { exit !f }' "$sd/SKILL.md"; then
+      slash="$slash$(printf '%s' "$name" | jq -R .),"
+    fi
+  done <<<"$names"
+  sj="[${slash%,}]"
   filter="$JQ_FIRED"'
     [ .cases[] | (.dir | split("/")) as $p | ($p | last) as $b
       | {skill: ($p[1] // ""), case: $b, nat: ($b | test("natural-[0-9]+$")), near: ($b | test("near-miss$")),
@@ -835,13 +845,14 @@ gate_lines() { # results.json -> lines "ROUTING GATE MISSED: ..."; nothing when 
       (($rows | map(.skill) | unique[]) as $s
         | ([$rows[] | select(.skill == $s and .nat) | .f[]]) as $nat
         | ([$rows[] | select(.skill == $s and .near) | .f[]]) as $near
-        | (if ($nat | length) > 0 and (($nat | map(select(. == true)) | length) * 2 < ($nat | length))
+        | (if ($slash | index($s)) then empty
+           elif ($nat | length) > 0 and (($nat | map(select(. == true)) | length) * 2 < ($nat | length))
              then "ROUTING GATE MISSED: \($s) fired \($nat | map(select(. == true)) | length)/\($nat | length) on its natural cases (needs 50%)" else empty end),
           (if ($near | map(select(. == true)) | length) > 0
              then "ROUTING GATE MISSED: \($s) fired \($near | map(select(. == true)) | length)/\($near | length) on its near-miss case (needs 0)" else empty end))'
   # stdout only: a jq warning on stderr must never read as a gate line; on failure, run it again for the message
-  out="$(jq -r "$filter" "$1" 2>/dev/null)" || {
-    echo "ROUTING GATE MISSED: the gate could not be evaluated (jq failed on $1: $(jq -r "$filter" "$1" 2>&1 >/dev/null | head -c 200))"
+  out="$(jq -r --argjson slash "$sj" "$filter" "$1" 2>/dev/null)" || {
+    echo "ROUTING GATE MISSED: the gate could not be evaluated (jq failed on $1: $(jq -r --argjson slash "$sj" "$filter" "$1" 2>&1 >/dev/null | head -c 200))"
     return 1
   }
   [ -z "$out" ] || printf '%s\n' "$out"

@@ -414,6 +414,26 @@ mkresult 1 true 1
 run --skills alpha --kind routing --gate block
 expect "a result with fired runs still passes the gate" 0
 lacks "no gate line on a good result" 'ROUTING GATE MISSED'
+
+echo "the routing gate and slash-only skills (#1947)"
+slashonly() { # make alpha slash-only and commit (the script refuses uncommitted changes under skills/)
+  sed -i 's/^name: alpha$/name: alpha\ndisable-model-invocation: true/' "$REPO/skills/alpha/SKILL.md"
+  git -C "$REPO" commit -qam "alpha is slash-only"
+}
+notfired() { # the natural case did not fire, and its grader passed (skill-not-fired passed=true is fired=false)
+  jq '.cases[0].arms.with |= map(.graders |= map(.name = "skill-not-fired" | .passed = true))' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+}
+mkrepo; mkclaude; slashonly; mkresult 1 false 1; notfired
+run --skills alpha --kind routing --gate block
+expect "a slash-only skill that did not fire on its natural cases passes the gate" 0
+lacks "no natural-case miss for a slash-only skill" 'ROUTING GATE MISSED'
+mkrepo; mkclaude; mkresult 1 false 1; notfired
+run --skills alpha --kind routing --gate block
+expect "a normal skill that did not fire on its natural cases still misses, exit 4" 4 'ROUTING GATE MISSED: alpha fired 0/2 on its natural cases'
+mkrepo; mkclaude; slashonly; mkresult 1 true 1
+jq '.cases[0].arms.with |= map(.graders |= map(select(.name != "skill-fired")))' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+run --skills alpha --kind routing --gate block
+expect "a slash-only skill whose case has no judged runs is still a MISS, exit 4" 4 'no judged runs'
 mkrepo
 G="$REPO/evals/alpha/routing/alpha-natural-1/graders"
 mv "$G/skill-fired.md" "$TMPROOT/sf.md"
