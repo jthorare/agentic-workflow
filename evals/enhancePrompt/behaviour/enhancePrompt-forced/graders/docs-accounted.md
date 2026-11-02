@@ -1,4 +1,5 @@
 ---
 type: regex
-pattern: '(?i)(no (project )?(docs|documentation)|nothing (found|exists)|none found)'
+pattern: '(no (project )?(docs|documentation)|nothing (found|exists)|none found)'
+flags: i
 ---

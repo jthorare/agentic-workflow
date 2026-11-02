@@ -1,4 +1,5 @@
 ---
 type: regex
-pattern: '(?i)(not found|not installed|isn.t installed|missing|not on (the )?PATH)'
+pattern: '(not found|not installed|isn.t installed|missing|not on (the )?PATH)'
+flags: i
 ---

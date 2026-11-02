@@ -1,6 +1,6 @@
 ---
 type: regex
-source: first_tool_call
-tool: Skill
-pattern: '"skill"\s*:\s*"(?:[\w-]+:)?enhancePrompt"'
+target: trace
+pattern: '^(?:(?!"skill"\s*:).)*"skill"\s*:\s*"(?:[\w-]+:)?enhancePrompt"'
+flags: s
 ---

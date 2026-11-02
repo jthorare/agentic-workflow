@@ -1,4 +1,5 @@
 ---
 type: regex
-pattern: '(?i)proceed with this'
+pattern: 'proceed with this'
+flags: i
 ---

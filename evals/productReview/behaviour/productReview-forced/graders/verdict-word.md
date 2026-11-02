@@ -1,6 +1,7 @@
 ---
 type: regex
-pattern: '(?i)verdict:?\**\s*(ITERATE|RETHINK)'
+pattern: 'verdict:?\**\s*(ITERATE|RETHINK)'
+flags: i
 ---
 
 Planted: the verdict is ITERATE or RETHINK, not SHIP.

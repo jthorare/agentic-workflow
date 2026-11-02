@@ -1,6 +1,7 @@
 ---
 type: regex
-pattern: '(?i)\bcut\b'
+pattern: '\bcut\b'
+flags: i
 ---
 
 Planted: the review says what to cut from a 14-week, two-engineer scope.

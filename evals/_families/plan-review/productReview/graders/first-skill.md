@@ -1,6 +1,8 @@
 ---
 type: regex
-pattern: '(?s)\A(?:(?!"skill"\s*:).)*"skill"\s*:\s*"(?:[\w-]+:)?productReview"'
+target: trace
+pattern: '^(?:(?!"skill"\s*:).)*"skill"\s*:\s*"(?:[\w-]+:)?productReview"'
+flags: s
 ---
 
 The first Skill call in the transcript names productReview. Later Skill calls do not count (autoplan calls the other five on purpose).

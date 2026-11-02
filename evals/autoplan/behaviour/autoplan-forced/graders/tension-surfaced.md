@@ -1,6 +1,7 @@
 ---
 type: regex
-pattern: '(?i)tension'
+pattern: 'tension'
+flags: i
 ---
 
 Planted: the consolidated report has its cross-lens tensions section.

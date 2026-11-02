@@ -1,4 +1,5 @@
 ---
 type: regex
-pattern: '(?i)\|\s*scope\s*\|[^\n]*(export|csv)'
+pattern: '\|\s*scope\s*\|[^\n]*(export|csv)'
+flags: i
 ---
