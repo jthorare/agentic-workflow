@@ -1,6 +1,6 @@
 ---
 name: design-refine
-description: "Dispatch design refinement from impeccable (umbrella refinement skill), emil-design-eng (design engineering principles reference), and taste-skill (modular style packs) with design language context pre-loaded."
+description: "Use when a project already has design-tokens.json and .impeccable.md and a built screen needs a bounded polish pass inside that language. Runs one audit, up to three pack dispatches and a verify gate, and logs each run. Not for a from-scratch restyle or a bolder look (impeccable, taste-skill)."
 argument-hint: "[refinement-intent]"
 allowed-tools: Read, Write, Edit, Skill, Glob, Grep, Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -138,6 +138,12 @@ Verify:      <run-id> — <verdict> (max diff <pct>% vs pre-refine <pct>%)
 - If `design-tokens.json` is updated, note that `/design-implement` should be re-run to regenerate platform token files
 - Do not modify `.impeccable.md` during refinement — only `design-tokens.json` may be updated
 - Always append the run to `refine-log.md`, and never skip the Step 5 verify gate
+
+## Result block
+
+Under `AW_RESULT=1` only: write `$AW_DIR/results/design-refine-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
+
+Keys: `skill` (`design-refine`), `artifacts` (absolute paths: the files touched, `refine-log.md`, and `design-tokens.json` when updated), `summary` (one line: dispatches run and the verify outcome).
 
 ## Next steps
 
