@@ -1,12 +1,12 @@
 ---
 name: addressReview
-description: Address PR review comments by spawning domain-specific implementation agents in parallel. Reads from ~/.agentic-workflow/<repo-slug>/reviews/<pr>.json as source of truth, merges any new human GitHub comments, implements fixes, and updates the state file. Can be re-run to continue the review loop.
+description: Address PR review comments by spawning domain-specific implementation agents in parallel. Reads from $AW_DIR/reviews/<pr>.json as source of truth, merges any new human GitHub comments, implements fixes, and updates the state file. Can be re-run to continue the review loop.
 argument-hint: [pr-number-or-url] [--all]
 allowed-tools: Bash(gh *), Bash(git *), Bash(npm *), Bash(npx *), Bash(SHARED_DIR=*), Agent, Read, Write, Edit, Skill, AskUserQuestion, mcp__prism-mcp__session_search_memory, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # Address PR Review
 
@@ -30,7 +30,7 @@ If no PRs are found: "No open PR found for the current branch. Use `/addressRevi
 
 ## Step 2: Load State File
 
-Read `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`.
+Read `$AW_DIR/reviews/{number}.json`.
 
 If the file does not exist:
 > "No local review state found for PR #{number}. Run `/review` first."
@@ -111,7 +111,7 @@ Then **Dispatch in parallel** all implementation agents at once (per `_shared/pa
 Self-reported fixes are not proof. After all implementers complete:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ```
 
@@ -121,7 +121,7 @@ source "$SHARED_DIR/repo-slug.sh"
 
 ## Step 7: Update State File
 
-After Step 6.5, update `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`:
+After Step 6.5, update `$AW_DIR/reviews/{number}.json`:
 
 For each result with status `fixed` or `answered` (the only statuses — there is no defer status), when covered by passing verification:
 - Set `"addressed": true`
@@ -153,7 +153,27 @@ These are NOT deferred to a follow-up. Re-run /addressReview or fix manually bef
 Run /addressReview again to continue, or /postReview to publish.
 ```
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/review` — verify fixes don't introduce new issues
 - `/shipRelease` — if all blockers resolved, ship the changes
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/addressReview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`addressReview`), `artifacts` (absolute paths: the review state file `$AW_DIR/reviews/<pr>.json` and any files the fixes changed), `summary` (one line),
+plus `pr` (PR number); `fixed` (count of comments fixed); `remaining` (count of comments still open).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

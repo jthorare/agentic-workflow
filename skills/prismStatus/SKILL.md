@@ -10,7 +10,7 @@ allowed-tools: Bash(curl *), Bash(claude mcp *), Bash(codex mcp *), Bash(PORT=*)
 Quick health check for the prism-mcp Mind Palace.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 > **Preamble exemption:** If the preamble's prism-mcp calls failed, continue anyway — diagnosing that failure is this skill's purpose; Session Close ledger/handoff are exempt for this skill.
 
@@ -39,7 +39,7 @@ Assign `PORT` explicitly at the top of **every** bash block (shell state does no
 3. **Knowledge base population for current repo:**
    Resolve the repo slug via the shared helper:
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    echo "repo-slug: $REPO_SLUG"
    ```
@@ -71,3 +71,16 @@ stdout only. No file written.
 
 - `/officeHours` — if KB is empty, start populating it with a brainstorm
 - `/bootstrap` — if you've never run it on this repo, do so to seed planning docs
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/prismStatus-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`prismStatus`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
+plus `healthy` (true when dashboard, MCP server and knowledge base all answer).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

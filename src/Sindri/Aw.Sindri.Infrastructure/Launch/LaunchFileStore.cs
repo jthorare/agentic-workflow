@@ -4,13 +4,16 @@ using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launches;
+using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Infrastructure.Sandbox;
 
 namespace Aw.Sindri.Infrastructure.Launch;
 
 /// <summary>The disk side of <see cref="ILaunchFiles"/> (API spec §8.1, launcher L-9): the secret hashes under <c lang="text">launch/secrets/</c> and the flat files under <c lang="text">launches/</c>.</summary>
 /// <param name="options">Where the files live.</param>
-internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunchFiles
+/// <param name="seams">What the sweep of a dead launch's sandbox files asks of the box (SB-9c); null is this box.</param>
+internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSweepSeams? seams = null) : ILaunchFiles
 {
     public Result<Unit> Verify(LaunchId launch, LaunchSecret secret)
     {
@@ -102,6 +105,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         AddNamed(found, options.SecretsDirectory, "*.hash");
         AddNamed(found, options.SecretsDirectory, "*.secret");
         AddNamed(found, options.PolicyDirectory, "LCH-*.settings.json");
+        AddNamed(found, options.PolicyDirectory, "LCH-*.cursor-path");
         return [.. found];
     }
 
@@ -125,7 +129,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
     public int SweepStale(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
         ArgumentNullException.ThrowIfNull(live);
-        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live) + SweepSessionHomes(live);
+        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live) + SweepSessionHomes(now, olderThan, live) + SweepSandboxFiles(now, olderThan, live);
         if (!Directory.Exists(options.LaunchesDirectory))
         {
             return removed;
@@ -144,20 +148,58 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         return removed;
     }
 
-    /// <summary>Removes the session homes (sandbox spec §3.1) of launches that are not live.</summary>
-    private int SweepSessionHomes(Func<LaunchId, bool> live) =>
+    /// <summary>
+    /// SB-9c: the '.pgid' files of dead groups (any OS) and, on macOS, the 'aw-&lt;8 hex&gt;' temp folders of launches that are not live. A launch counts as live when
+    /// it has a live session; the folder name carries only 8 hex digits of the id, so live launches are matched by it, from the launches that have files here.
+    /// </summary>
+    private int SweepSandboxFiles(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
+    {
+        var groups = ProcessGroupFiles.Directory(options.LaunchDirectory);
+        var sweep = seams ?? new StaleSweepSeams();
+        var removed = Directory.Exists(groups) ? StaleSandboxFiles.SweepGroupFiles(groups, live, sweep.Alive ?? ProcessGroupFiles.Alive) : 0;
+        if (!sweep.Mac)
+        {
+            return removed;
+        }
+
+        // why: SweepSessionHomes ran first, so a session home that is still here is a live or just-prepared launch's, whether or not it has a launch file or a Live view row yet
+        var liveFolders = Launches().Where(live).Concat(SessionHomeLaunches()).Select(l => Path.GetFileName(SandboxPaths.SeatbeltTemp(l))).ToHashSet(StringComparer.Ordinal);
+        return removed + StaleSandboxFiles.SweepSeatbeltTemp(sweep.TempRoot, liveFolders, sweep.Owned ?? MacTempOwner.Owns, now, olderThan);
+    }
+
+    /// <summary>The launches that have a session home: a live Seatbelt launch has one until its release, before any capture or session-id file exists.</summary>
+    public IReadOnlyList<LaunchId> SessionHomeLaunches()
+    {
+        if (options.SindriHome is not { } home || !Directory.Exists(SessionHomePaths.Sessions(home)))
+        {
+            return [];
+        }
+
+        return [.. Directory.EnumerateDirectories(SessionHomePaths.Sessions(home)).Select(d => LaunchId.TryParse(Path.GetFileName(d), provider: null, out var launch) ? (LaunchId?)launch : null).OfType<LaunchId>()];
+    }
+
+    /// <summary>Removes the session homes (sandbox spec §3.1) of launches that are not live and older than the limit: a launch just prepared has no live view row yet.</summary>
+    private int SweepSessionHomes(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live) =>
         options.SindriHome is { } home
-            ? SessionHome.Sweep(home, id => LaunchId.TryParse(id, provider: null, out var launch) && live(launch)).Count
+            ? SessionHome.Sweep(home, id => (LaunchId.TryParse(id, provider: null, out var launch) && live(launch))
+                || now - new DateTimeOffset(Directory.GetLastWriteTimeUtc(Path.Combine(SessionHomePaths.Sessions(home), id))) <= olderThan).Count
             : 0;
 
     /// <summary>Deletes secret files that no wrap read (it never ran): older than the limit and not of a live launch.</summary>
-    private int SweepSecrets(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live) =>
-        SweepOwned(options.SecretsDirectory, "*.secret", now, olderThan, live)
-        + SweepOwned(options.SecretsDirectory, "*.hash", now, olderThan, live)
-        + SweepOwned(options.PolicyDirectory, "LCH-*.settings.json", now, olderThan, live);
-
-    private static int SweepOwned(string directory, string pattern, DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
+    private int SweepSecrets(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
+        var stale = new Staleness(now, olderThan, live);
+        return SweepOwned(options.SecretsDirectory, "*.secret", stale)
+            + SweepOwned(options.SecretsDirectory, "*.hash", stale)
+            + SweepOwned(options.PolicyDirectory, "LCH-*.settings.json", stale)
+            + SweepOwned(options.PolicyDirectory, "LCH-*.cursor-path", stale, CursorPolicyFile.DeleteSidecar);   // a cursor-config launch whose host died: its cli.json goes with its sidecar, or the reused worktree refuses every later cursor Step
+    }
+
+    private readonly record struct Staleness(DateTimeOffset Now, TimeSpan OlderThan, Func<LaunchId, bool> Live);
+
+    private static int SweepOwned(string directory, string pattern, Staleness stale, Func<string, bool>? remove = null)
+    {
+        remove ??= OwnerOnly.TryDelete;
         if (!Directory.Exists(directory))
         {
             return 0;
@@ -168,7 +210,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         {
             var name = Path.GetFileName(file);
             if (LaunchId.TryParse(name[..name.IndexOf('.', StringComparison.Ordinal)], provider: null, out var launch)
-                && now - new DateTimeOffset(File.GetLastWriteTimeUtc(file)) > olderThan && !live(launch) && OwnerOnly.TryDelete(file))
+                && stale.Now - new DateTimeOffset(File.GetLastWriteTimeUtc(file)) > stale.OlderThan && !stale.Live(launch) && remove(file))
             {
                 removed++;
             }

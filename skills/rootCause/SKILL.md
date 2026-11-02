@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 4-phase systematic debugging with automatic scope freeze at the module boundary.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Phase 0: Parse Input
 
@@ -81,13 +81,13 @@ Then **Ask the user** whether to expand the scope or stop.
 
 ## Phase 5: Write Investigation Report + Handoff
 
-Write the report to `$HOME/.agentic-workflow/$REPO_SLUG/investigations/{timestamp}-{slug}.md` where:
+Write the report to `$AW_DIR/investigations/{timestamp}-{slug}.md` where:
 - `{timestamp}` is `YYYYMMDD-HHmmss` format
 - `{slug}` is a short kebab-case summary of the error (max 40 chars)
 
 (Re-derive the paths in bash via the shared helper — shell state does not persist between blocks:)
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/investigations/<slug>"
 ```
@@ -147,7 +147,7 @@ Report format:
 - Prevention: {the mechanism's own proof, or "deferred"}
 ```
 
-**Also write the handoff file** to `$HOME/.agentic-workflow/$REPO_SLUG/investigations/<slug>/handoff.md` — this is the structured input `/bugHunt --from-investigation <path>` consumes, so the full investigation is never discarded:
+**Also write the handoff file** to `$AW_DIR/investigations/<slug>/handoff.md` — this is the structured input `/bugHunt --from-investigation <path>` consumes, so the full investigation is never discarded:
 
 ```markdown
 # Handoff: {slug}
@@ -204,14 +204,14 @@ Root cause: {one-line summary}
 Original bug: {the check's before and after}
 Class prevention: {what was built and its proof | existing guard <which> | none built}
 Deferred: {follow-ups with links | none}
-Report: ~/.agentic-workflow/<repo-slug>/investigations/{filename}
-Handoff: ~/.agentic-workflow/<repo-slug>/investigations/{slug}/handoff.md
+Report: $AW_DIR/investigations/{filename}
+Handoff: $AW_DIR/investigations/{slug}/handoff.md
 ```
 
-**End the response with exactly one fenced JSON block** (machine-readable tail — `/review` and other callers parse this):
+**Close the report with exactly one fenced `aw-result` block**, before `## Next steps` (machine-readable tail — `/review` and other callers parse this; see the Result block below):
 
-```json
-{ "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
+```aw-result
+{ "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
 ```
 
 ### Sub-skill Dispatch
@@ -225,3 +225,16 @@ Do not invoke bugHunt if the fix was verified — rootCause's own report is suff
 
 - `/bugHunt --from-investigation <handoff path>` — auto-fix the bug using the full diagnosis
 - `/review` — re-review the codebase after applying fixes
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+The fenced JSON tail in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON; the block comes before `## Next steps`.
+
+Keys: `skill` (`rootCause`), `artifacts` (absolute paths: the report `$AW_DIR/investigations/<timestamp>-<slug>.md` and the handoff), `summary` (one line),
+plus `status` (`fixed | unfixed | scope-breach | diagnosed`, as today); `report_path` (as today); `handoff_path` (as today); `boundary` (as today).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

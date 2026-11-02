@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Age
 Runs a structured brainstorming session and produces four domain-owned outputs — one per team — so every participant leaves with a clear assignment rather than a monolithic doc no one owns.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Step 1: Get the Topic
 
@@ -511,7 +511,7 @@ If no: proceed to Step 7 and note the open issues in the Step 8 report.
 Generate a URL-safe slug from the title (lowercase, hyphens, no special chars). Create the output directory and write all four files:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 mkdir -p "$AW_DIR/plans/${TIMESTAMP}-{slug}"
@@ -584,7 +584,7 @@ Show a summary to the user:
 ```
 Office Hours complete!
 
-Plan written to: ~/.agentic-workflow/<repo-slug>/plans/{timestamp}-{slug}/
+Plan written to: $AW_DIR/plans/{timestamp}-{slug}/
 (filenames are canonical per _shared/plan-layout.md)
 
   plan.md          → Canonical handoff — 1-page consolidated summary for downstream skills
@@ -623,7 +623,7 @@ Based on response:
 
 ## Outputs
 
-All under `~/.agentic-workflow/<repo-slug>/plans/{timestamp}-{slug}/` (manifest per `_shared/plan-layout.md`):
+All under `$AW_DIR/plans/{timestamp}-{slug}/` (manifest per `_shared/plan-layout.md`):
 
 - `plan.md` — canonical 1-page handoff (auto-discovered by `/autoplan`, `/planDesignReview`, `/planDevexReview`, `/cso --plan`, `/design-shotgun`)
 - `product.md` — Product Team domain doc
@@ -636,3 +636,16 @@ All under `~/.agentic-workflow/<repo-slug>/plans/{timestamp}-{slug}/` (manifest 
 - `/autoplan` — fan out parallel reviews across product, architecture, design, devex, security lenses
 - `/design-shotgun` — generate mockup variants if the feature has a visual surface
 - `/archReview` — standalone deep architecture review (if autoplan feels heavy)
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/officeHours-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`officeHours`), `artifacts` (absolute paths: `plan.md` and the domain docs in `$AW_DIR/plans/<timestamp>-<slug>/`), `summary` (one line),
+plus `plan_dir` (absolute path of the plan directory).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

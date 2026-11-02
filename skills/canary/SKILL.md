@@ -10,7 +10,7 @@ allowed-tools: Bash, Read, Write, Skill, AskUserQuestion, mcp__prism-mcp__sessio
 Watches prod error rate, latency, logs, and custom probes for a configurable window after deploy. Returns a verdict that drives the next-step chain.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Overview
 
@@ -20,7 +20,8 @@ Reads `.agentic-workflow/canary.json` for monitoring URLs and probes. Runs minut
 
 - Release ID (positional arg). If omitted, auto-discover latest:
   ```bash
-  ls -1d ~/.agentic-workflow/$REPO_SLUG/releases/*/ | sort -r | head -1
+  . "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"
+  ls -1d "$AW_DIR"/releases/*/ | sort -r | head -1
   ```
 - `--duration <sec>` (optional). Overrides `canary.duration` from config.
 - `--setup` flag: run interactive wizard to write `.agentic-workflow/canary.json`, then exit.
@@ -74,7 +75,7 @@ Write `.agentic-workflow/canary.json`. Exit without monitoring.
 
 2. Resolve `$REPO_SLUG` via the shared toolkit path (shell state does not persist between shell calls — re-source in every bash block that uses it):
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    ```
 
@@ -109,7 +110,7 @@ Write `.agentic-workflow/canary.json`. Exit without monitoring.
      - Exactly one isolated log anomaly match occurred
    - **HEALTHY** otherwise.
 
-9. Write `~/.agentic-workflow/$REPO_SLUG/releases/<release-id>/canary.md`:
+9. Write `$AW_DIR/releases/<release-id>/canary.md`:
    ```markdown
    # Canary — <release-id>
 
@@ -149,11 +150,31 @@ Write `.agentic-workflow/canary.json`. Exit without monitoring.
 
 ## Outputs
 
-- `~/.agentic-workflow/$REPO_SLUG/releases/<release-id>/canary.md` — globbed by `/weeklyRetro` for release-health trends
+- `$AW_DIR/releases/<release-id>/canary.md` — globbed by `/weeklyRetro` for release-health trends
 - `.agentic-workflow/canary.json` (only on `--setup`)
+
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
 
 ## Next steps
 
 - `/syncDocs` — auto-chained on HEALTHY
 - `/rootCause` — recommended on UNHEALTHY
 - Manual rollback (`gh pr revert` or repo-specific path) — recommended on DEGRADED if rolling forward isn't viable
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/canary-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`canary`), `artifacts` (absolute paths: `$AW_DIR/releases/<release-id>/canary.md`), `summary` (one line),
+plus `verdict` (`HEALTHY | DEGRADED | UNHEALTHY`, the canary verdict); `release_id` (the release id).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

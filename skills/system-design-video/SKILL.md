@@ -6,10 +6,10 @@ allowed-tools: Bash(ls *), Bash(mkdir *), Bash(bun *), Bash(ffmpeg *), Bash(ffpr
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing (the ink colors come from the project's `design-tokens.json`).
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing (the ink colors come from the project's `design-tokens.json`).
 
 ---
 
@@ -31,9 +31,9 @@ A concept or product cut (the idea, the worked example, what changes for the peo
 Read before starting: `references/style.md` (look, motion, legibility), `references/storyboard-format.md` (the storyboard file), `references/personas.md`. Read on trouble: `references/gotchas.md`. A runnable worked example, with generic content, is in `examples/base-limit/`.
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
-SKILL="$HOME/.agentic-workflow/toolkit/skills/system-design-video"
+SKILL="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/system-design-video"
 D="$AW_DIR/videos/<design>/<persona>"      # brief.md, storyboard.json, narration.md, take/, deliverables/
 mkdir -p "$D"
 ```
@@ -121,3 +121,16 @@ Posting to chat or a tracker is a separate step: **Ask the user** first, and use
 
 - `/design-language`: when the project has no tokens, define them first.
 - `/officeHours` or `/archReview`: when drawing the design exposed a gap in the design itself.
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/system-design-video-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`system-design-video`), `artifacts` (absolute paths: the film under `$AW_DIR/videos/<design>/<persona>/`), `summary` (one line),
+plus `design` (design slug); `persona` (persona rendered).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

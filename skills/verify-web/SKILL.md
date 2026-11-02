@@ -6,7 +6,7 @@ allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ---
 
@@ -17,7 +17,7 @@ Launches Playwright against a running web app and executes **journeys** through 
 Shared references resolve from the stable toolkit path (never through a provider's skills dir):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/verification-lenses.md" "$SHARED_DIR/evidence-pack.md"
 ```
 
@@ -59,7 +59,7 @@ Verify reachability with `mcp: playwright/browser_navigate`. If navigation fails
 Acquire in a **single bash invocation** (shell state does not persist between Bash calls):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; acquire_lock
 ```
 
@@ -73,7 +73,7 @@ Every per-step failure branch must re-source and release **in that same invocati
 Create the run directory first (CD5):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-<slug>"   # <slug> = 2–4 word kebab summary of what is being verified
 mkdir -p "$AW_DIR/verification/$RUN_ID"
@@ -139,7 +139,7 @@ Write both files into `$AW_DIR/verification/$RUN_ID/` following the schema in `_
 Always release, regardless of success or failure — a leaked lock blocks all future verification sessions:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 ```
 
@@ -164,3 +164,16 @@ evidence_path: <absolute path to verification/<run-id>/>
 
 - `/design-verify-web` — if visual gaps surfaced, run web design verification
 - `/bugReport` — if functional gaps surfaced, capture them as a bug report
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/verify-web-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`verify-web`), `artifacts` (absolute paths: the evidence pack directory `$AW_DIR/verification/<run-id>/` (`pack.json`, `report.md`)), `summary` (one line),
+plus `evidence_path` (absolute path of the pack directory); `verdict` (`PASS | WARN | FAIL`, the pack's verdict).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

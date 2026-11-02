@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 Analyzes git history to produce per-person breakdowns, shipping streaks, test health trends, and actionable insights.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Step 1: Parse Arguments
 
@@ -87,11 +87,11 @@ Run the project's test suite to capture current health:
    git log --since="$SINCE_DATE" --no-merges --diff-filter=A --name-only --format="" -- "*.test.*" "*.spec.*" "test_*" "*_test.*"
    ```
 
-4. If a previous retro JSON exists, read the **most recent** `~/.agentic-workflow/<repo-slug>/retros/*-weekly.json` (excluding today's) and compare:
+4. If a previous retro JSON exists, read the **most recent** `$AW_DIR/retros/*-weekly.json` (excluding today's) and compare:
    - Tests that started failing since last retro
    - Change in total test count
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    ls -1t "$AW_DIR/retros/"*-weekly.json 2>/dev/null | head -2
    ```
@@ -101,7 +101,7 @@ Run the project's test suite to capture current health:
 Pull this period's skill-pipeline outputs into the retro (skip any dir that doesn't exist):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls -1dt "$AW_DIR/releases/"*/ 2>/dev/null | head -10          # release records: ship/deploy/canary/docs-sync
 ls -1t "$AW_DIR/qa/"*.md 2>/dev/null | head -10               # bugHunt / bugReport outputs
@@ -145,7 +145,7 @@ Based on the data, suggest 2-3 concrete actions for the next week. **Every sugge
 
 ## Step 7: Write Report
 
-Write the retrospective report to `~/.agentic-workflow/$REPO_SLUG/retros/{date}-weekly.md` where `{date}` is `YYYY-MM-DD` format:
+Write the retrospective report to `$AW_DIR/retros/{date}-weekly.md` where `{date}` is `YYYY-MM-DD` format:
 
 ```markdown
 # Weekly Retrospective: {start_date} to {end_date}
@@ -204,7 +204,7 @@ Write the retrospective report to `~/.agentic-workflow/$REPO_SLUG/retros/{date}-
 {2-3 actionable suggestions}
 ```
 
-**Also write the machine-readable sibling** `~/.agentic-workflow/<repo-slug>/retros/{date}-weekly.json` — this is what the next retro's trend comparison reads:
+**Also write the machine-readable sibling** `$AW_DIR/retros/{date}-weekly.json` — this is what the next retro's trend comparison reads:
 
 ```json
 {
@@ -227,7 +227,7 @@ Weekly retro complete ({start_date} to {end_date}).
   Total commits: {N}
   Test health:   {pass}/{total} passed (or n/a)
   Verification:  {N} packs ({N} FAIL)
-  Report:        ~/.agentic-workflow/<repo-slug>/retros/{filename} (+ .json sibling)
+  Report:        $AW_DIR/retros/{filename} (+ .json sibling)
 ```
 
 ## Next steps
@@ -235,3 +235,16 @@ Weekly retro complete ({start_date} to {end_date}).
 - `/officeHours` — start the next cycle with a feature spec
 - `/bugReport` — triage the risk areas surfaced above into a scored health report
 - `/syncDocs` — refresh docs if the period shipped releases without a docs pass
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/weeklyRetro-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`weeklyRetro`), `artifacts` (absolute paths: `$AW_DIR/retros/<date>-weekly.md` and `<date>-weekly.json`), `summary` (one line),
+plus `period` (the date range covered).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

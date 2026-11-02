@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 Fix-and-verify loop with atomic commits, regression test generation, and tiered verification.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Step 1: Parse Arguments
 
@@ -61,7 +61,7 @@ Follow steps 1-4 of that file (name the class and invariant, search for the othe
 Follow `skills/_shared/dark-factory.md` — the gate (CD12), the route/infer/verify flow, and the **bugHunt fix objective template** are all preserved there. Fill the template with the root cause from Step 3 and the failing command from Step 2:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 cat "$SHARED_DIR/dark-factory.md"
 ```
 
@@ -120,7 +120,7 @@ If the fix touches user-facing code (routes, components, views, templates, style
 - For a desktop UI fix this is the desktop evidence pack (`verify-desktop`: the real app on seeded data, screens judged against their mockups).
 - Record the resulting evidence pack (`skills/_shared/evidence-pack.md`) for the report:
   ```bash
-  SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+  SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
   source "$SHARED_DIR/repo-slug.sh"
   ls -1dt "$AW_DIR/verification/"*/ 2>/dev/null | head -1
   ```
@@ -132,7 +132,7 @@ If verification fails:
 
 1. **Persist and check the iteration counter** (survives context loss — never track it only in your head):
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    mkdir -p "$AW_DIR/qa"
    COUNTER_FILE="$AW_DIR/qa/.bughunt-attempts-<slug>"
@@ -146,7 +146,7 @@ If verification fails:
 
 ## Step 8: Write QA Report
 
-Write the report to `$HOME/.agentic-workflow/$REPO_SLUG/qa/{timestamp}-{slug}.md` where:
+Write the report to `$AW_DIR/qa/{timestamp}-{slug}.md` where:
 - `{timestamp}` is `YYYYMMDD-HHmmss` format
 - `{slug}` is a short kebab-case summary of the bug (max 40 chars)
 
@@ -214,7 +214,7 @@ Report format:
 
 - **Runner:** {TEST_CMD or "n/a — no runner detected"}
 - **Verification output:** {key lines from the tier run}
-- **Evidence pack:** {`~/.agentic-workflow/<repo-slug>/verification/<run-id>/pack.json` from Step 6.5, or "n/a — not a user-facing fix"}
+- **Evidence pack:** {`$AW_DIR/verification/<run-id>/pack.json` from Step 6.5, or "n/a — not a user-facing fix"}
 - **Pack verdict:** {PASS | WARN | FAIL | n/a}
 ```
 
@@ -232,7 +232,7 @@ Test: {commit sha} — test: regression test for {description}
 Original bug: {the check's before and after}
 Class prevention: {what was built and its proof | existing guard <which> | none built}
 Deferred: {follow-ups with links | none}
-Report: ~/.agentic-workflow/<repo-slug>/qa/{filename}
+Report: $AW_DIR/qa/{filename}
 Evidence: {pack path or "n/a"}
 ```
 
@@ -243,8 +243,28 @@ If the fix-and-verify loop ends with status `unfixed` (all hypotheses exhausted)
 
 Do not invoke bugReport on success — bugHunt's own Step 8 report is sufficient. At depth ≥ 2, report only.
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/review` — verify fixes pass code review
 - `/shipRelease` — if all bugs are fixed and tests pass
 - `/weeklyRetro` — if this was part of a larger debugging push
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/bugHunt-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`bugHunt`), `artifacts` (absolute paths: the QA report `$AW_DIR/qa/<timestamp>-<slug>.md` and the files the fixes changed), `summary` (one line),
+plus `tier` (`quick | standard | exhaustive`); `fixed` (count of bugs fixed); `remaining` (count of bugs left open).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

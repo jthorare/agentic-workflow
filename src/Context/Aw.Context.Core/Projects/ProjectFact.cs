@@ -1,4 +1,3 @@
-using Aw.Context.Core.Engine;
 using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Core.Projects;
@@ -16,9 +15,9 @@ namespace Aw.Context.Core.Projects;
 /// <param name="UpdatedAt">When the project last changed (the sync time when Linear gave none).</param>
 /// <param name="ClosedAt">When it completed or was canceled.</param>
 /// <param name="OpenIssues">Open issues linked to it that the caller may see.</param>
-/// <param name="OpenPrs">Open pull requests of its issues; null until ship 2.</param>
-/// <param name="LastActivity">The newest change of the project or any of its issues.</param>
-/// <param name="Repos">The repos its pull requests are in; null until ship 2.</param>
+/// <param name="OpenPrs">Open or draft pull requests its issues reach; null when the profile reads no GitHub repos.</param>
+/// <param name="LastActivity">The newest change of the project, any of its issues or (with GitHub) their pull requests.</param>
+/// <param name="Repos">The GitHub 'owner/name' of every repo its pull requests are in, sorted; null when the profile reads no GitHub repos.</param>
 /// <param name="Counting">The issues are still being re-read for project links, so <paramref name="OpenIssues"/> may be low.</param>
 public sealed record ProjectFact(
     RecordKey Key,
@@ -35,5 +34,5 @@ public sealed record ProjectFact(
     int OpenIssues,
     int? OpenPrs,
     DateTimeOffset? LastActivity,
-    IReadOnlyList<ContextRepoName>? Repos,
+    IReadOnlyList<string>? Repos,
     bool Counting);

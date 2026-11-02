@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash(git *), Bash(ls *)
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # enhancePrompt
 
@@ -77,7 +77,7 @@ If step 3 found no dialogue value, do not include this section.
 Write the full `## Enhanced Prompt` block (plus the peer-agent section, if any) to the prompts directory:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/prompts"
 echo "prompt-file: $AW_DIR/prompts/$(date +%Y%m%d-%H%M%S).md"
@@ -107,7 +107,20 @@ Do NOT begin executing the task during this skill.
 
 Name the successor skill explicitly — pick the one that matches the enhanced task and pass the persisted prompt file:
 
-- **Invoke skill `withInterview`** with args `<successor-skill> <enhanced prompt path: ~/.agentic-workflow/<repo-slug>/prompts/<ts>.md>` — if requirements still need clarification before executing
+- **Invoke skill `withInterview`** with args `<successor-skill> <enhanced prompt path: $AW_DIR/prompts/<ts>.md>` — if requirements still need clarification before executing
 - `/officeHours` — if the enhanced prompt describes a feature that needs a spec before implementation
 - `/specToProvenPR` — if the enhanced prompt is an approved spec ready to be built and proven
 - Otherwise, execute the enhanced prompt from `prompts/<ts>.md` directly in this session after the user confirms
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/enhancePrompt-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`enhancePrompt`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
+plus `prompt_path` (absolute path of the saved enhanced prompt (`$AW_DIR/prompts/<ts>.md`)).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

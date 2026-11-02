@@ -109,4 +109,7 @@ internal static partial class Labels
 
     /// <summary>"2 open PRs".</summary>
     internal static string ProjectOpenPrs(int count) => string.Create(CultureInfo.InvariantCulture, $"{count} open {(count == 1 ? "PR" : "PRs")}");
+
+    /// <summary>"repos: web-app, api": each repo by its name, without the GitHub owner.</summary>
+    internal static string ProjectRepos(IEnumerable<string> repos) => "repos: " + string.Join(", ", repos.Select(r => r[(r.LastIndexOf('/') + 1)..]));
 }

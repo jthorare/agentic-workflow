@@ -40,12 +40,14 @@ After the frontmatter closing `---`, add the two-line preamble reference (see Pr
 
 ## Shared Fragments (SHARED_DIR)
 
-Shared skill fragments live in `skills/_shared/`. Reference them through the stable toolkit symlink, never through a provider's skills dir:
+Shared skill fragments live in `skills/_shared/`. Reference them through the toolkit root `AW_TOOLKIT`, never through a provider's skills dir. Its default is the stable toolkit symlink, so an installed toolkit behaves as before; a plugin copy of `skills/` (and the skill evals) set `AW_TOOLKIT` to their own root:
 
 ```bash
-TOOLKIT="$HOME/.agentic-workflow/toolkit"          # symlink to this repo, created by setup.sh
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+TOOLKIT="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}"          # default: symlink to this repo, created by setup.sh
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ```
+
+Never write a bare `$HOME/.agentic-workflow/toolkit` or `~/.agentic-workflow/toolkit` in `skills/`, `bootstrap/` or `config/voice/`. Never hand-spell a per-repo output path (`~/.agentic-workflow/<repo-slug>/...`, `$HOME/.agentic-workflow/$REPO_SLUG/...`) in `skills/`: write `$AW_DIR/...`, which `skills/_shared/repo-slug.sh` sets (source it in every bash block that uses `$AW_DIR`; shell state does not persist). `scripts/check-skills-toolkit.sh` fails on both (SKILLS-TOOLKIT-001, -002); `scripts/skills-toolkit-rewrite.sh` fixes them and is idempotent.
 
 ## Preamble
 
@@ -53,16 +55,16 @@ The shared preamble lives in one file, `skills/_preamble.md`. Every SKILL.md ref
 
 ```markdown
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 ```
 
 Design skills add a second reference to `skills/_design-preamble.md` (`<!-- design-preamble -->`). Edit the shared file directly — there is nothing to propagate.
 
-The preamble points the agent at `$HOME/.agentic-workflow/toolkit/skills/_shared/capabilities.md` for the capability → tool map, then verifies:
-1. `$HOME/.agentic-workflow/toolkit` exists and the provider registry `$HOME/.agentic-workflow/providers` is non-empty
+The preamble points the agent at `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/capabilities.md` for the capability → tool map, then verifies:
+1. `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}` exists and the provider registry `$HOME/.agentic-workflow/providers` is non-empty
 2. All 55 native skills are present in every registered provider's skills dir (plus 14 skills from the 3 fetched external packs)
 3. Domain rules exist: `AGENTS.md` + `.agents/rules/` (or legacy `.claude/rules/`)
-4. The repo-slug output directory `~/.agentic-workflow/$REPO_SLUG/` is created
+4. The repo-slug output directory `$AW_DIR/` (set and created by `skills/_shared/repo-slug.sh`) is created
 
 If the skill checks fail, **Ask the user** whether to run `setup.sh`. If only rules are missing, suggest `/bootstrap`.
 
@@ -79,7 +81,7 @@ else
 fi
 ```
 
-Result: `org-repo` (e.g., `myorg-myrepo`). All output paths use `~/.agentic-workflow/$REPO_SLUG/<domain>/`.
+Result: `org-repo` (e.g., `myorg-myrepo`). All output paths use `$AW_DIR/<domain>/`.
 
 ## Output Directories
 
@@ -98,7 +100,7 @@ Result: `org-repo` (e.g., `myorg-myrepo`). All output paths use `~/.agentic-work
 | Security | `/cso` | `security/` |
 | Videos | `/system-design-video` | `videos/<design>/<persona>/` |
 
-Skills that output files always write to `~/.agentic-workflow/$REPO_SLUG/<domain>/` — never to the project directory.
+Skills that output files always write to `$AW_DIR/<domain>/` — never to the project directory.
 
 ## Skill Pipeline
 
@@ -133,7 +135,7 @@ Every native pipeline skill ends its response with a `## Next steps` block listi
 - `planning/*.md` — up to 17 Pivot-pattern docs
 - A trimmed `AGENTS.md` (under 80 lines) with Required Context, Tech Stack, Commands, Merge Gate, Commits, and a pointer to `.agents/rules/`
 - A `.agents/rules/` directory with glob-scoped rule files (frontmatter `description`, `globs`, `paths` (same list), `alwaysApply`) inferred from the repo's actual structure
-- Links and index created by `$HOME/.agentic-workflow/toolkit/scripts/sync-rules.sh`: `.claude/rules` → `.agents/rules` (dir symlink), `.cursor/rules/<name>.mdc` → `.agents/rules/<name>.md` (per-file symlinks), `CLAUDE.md` → `AGENTS.md`, and the Rules Index table inside `AGENTS.md` (for Codex)
+- Links and index created by `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/scripts/sync-rules.sh`: `.claude/rules` → `.agents/rules` (dir symlink), `.cursor/rules/<name>.mdc` → `.agents/rules/<name>.md` (per-file symlinks), `CLAUDE.md` → `AGENTS.md`, and the Rules Index table inside `AGENTS.md` (for Codex)
 
 When writing the bootstrap AGENTS.md template, do not include Skills tables or Key Patterns — those belong in rule files. AGENTS.md should be a navigation document, not a reference manual. `.claude/rules` and `.cursor/rules/*.mdc` are symlinks into `.agents/rules/` — edit the canonical file; re-run `sync-rules.sh` only after adding or removing a rule.
 

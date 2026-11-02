@@ -8,7 +8,7 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(pytest *)
 # Test Audit
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 Three modes, one value bar. **Authoring mode** gates every new or changed test at
 write time. **Audit mode** runs focused sweeps of tests that re-assert source,
@@ -36,9 +36,16 @@ Parse the argument:
   scope — options: "Audit a path", "Campaign on one subsystem", "Gate the tests
   in my current diff".
 
+Resolve `$AW_DIR` first. It comes from the shared slug script; source it in the bash block that uses it (shell state does not persist):
+
+```bash
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
+source "$SHARED_DIR/repo-slug.sh"
+```
+
 Detect the test runner per `$SHARED_DIR/test-runner-detection.md` (sets
 `TEST_CMD`). Audit and campaign modes record their evidence in
-`~/.agentic-workflow/$REPO_SLUG/qa/test-audit/<YYYY-MM-DD>-<scope-slug>.md`
+`$AW_DIR/qa/test-audit/<YYYY-MM-DD>-<scope-slug>.md`
 (create the directory if missing). Never write the ledger into the project
 directory.
 
@@ -217,3 +224,16 @@ End the response with a `## Next steps` block listing 1–3 of:
 - `/review <pr>` — independent review of the pruning PR before merge
 - `/rootCause` — a retained test failed on the baseline and the owner bug is not yet understood
 - `/testAudit --audit <next-scope>` — the next high-confidence batch after this one lands
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/testAudit-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`testAudit`), `artifacts` (absolute paths: `$AW_DIR/qa/test-audit/<YYYY-MM-DD>-<scope-slug>.md` and the tests it changed), `summary` (one line),
+plus `scope` (audit scope); `mode` (`gate | audit | sweep`, the mode it ran in).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

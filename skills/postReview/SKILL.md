@@ -1,13 +1,13 @@
 ---
 name: postReview
-description: Publish a completed /review to GitHub as batched PR comments. Reads from ~/.agentic-workflow/<repo-slug>/reviews/<pr>.json and posts one review per agent (minimizing API calls). Use after /review has written a local state file and you are ready to publish.
+description: Publish a completed /review to GitHub as batched PR comments. Reads from $AW_DIR/reviews/<pr>.json and posts one review per agent (minimizing API calls). Use after /review has written a local state file and you are ready to publish.
 argument-hint: [pr-number]
 allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Read, Write, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 <!-- MEMORY: SKIP -->
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # Post Review to GitHub
 
@@ -26,7 +26,7 @@ If multiple PRs found, **Ask the user** to pick one.
 
 ## Step 2: Load State File
 
-Read `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`.
+Read `$AW_DIR/reviews/{number}.json`.
 
 If the file does not exist:
 > "No local review found for PR #{number}. Run `/review` first."
@@ -87,7 +87,7 @@ EOF
 `{evidence}` — the newest `proof/<stage-slug>/evidence.md` (CD6) when present; **omit the `### Evidence` section entirely when absent**. Locate it with:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls -1t "$AW_DIR"/proof/*/evidence.md 2>/dev/null | head -1
 ```
@@ -116,7 +116,7 @@ Backfill each issue's `posted_comment_id` by matching on `path` + `position` (th
 
 ## Step 4: Update State File
 
-After all reviews are posted, update `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`:
+After all reviews are posted, update `$AW_DIR/reviews/{number}.json`:
 - Set `"posted": true`
 - Set `"posted_at"` to current ISO timestamp
 - Fill in `posted_comment_id` for each issue
@@ -138,7 +138,27 @@ Unmatched posted_comment_id: none
 View: {pr_url}
 ```
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/addressReview` — start implementing the fixes from the published review
 - `/shipRelease` — if the review found nothing blocking, ship the release
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/postReview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`postReview`), `artifacts` (absolute paths: the state file `$AW_DIR/reviews/<pr>.json` it published from), `summary` (one line),
+plus `pr` (PR number); `comments_posted` (count of comments posted).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent
 Friction mapping for plan documents. Identifies severity-rated DX gaps that will hurt implementers or downstream contributors.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Overview
 
@@ -20,7 +20,7 @@ Reads a plan directory's engineering-facing docs (auto-discovers latest if no ar
 
 - Plan — path arg, OR auto-discover per `_shared/plan-discovery.md`:
   ```bash
-  SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+  SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
   source "$SHARED_DIR/repo-slug.sh"
   PLAN_DIR=$(ls -1dt "$AW_DIR/plans/"*/ 2>/dev/null | head -1)
   ```
@@ -84,10 +84,23 @@ Reads a plan directory's engineering-facing docs (auto-discovers latest if no ar
 
 ## Outputs
 
-- Default: `~/.agentic-workflow/<repo-slug>/plans/<feature>/devex-review.md`
+- Default: `$AW_DIR/plans/<feature>/devex-review.md`
 - When `--output <path>` is supplied: that exact path (used by `/autoplan` for canonical placement inside the feature dir)
 
 ## Next steps
 
 - `/autoplan` — if running standalone, fan out other lenses
 - `/review` — if the plan is already implemented and you want a code-level DX check
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/planDevexReview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`planDevexReview`), `artifacts` (absolute paths: `$AW_DIR/plans/<feature>/devex-review.md`), `summary` (one line),
+plus `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

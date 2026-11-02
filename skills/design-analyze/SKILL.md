@@ -7,7 +7,7 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Glob, Read, AskUserQ
 <!-- MEMORY: SKIP -->
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 > **Note:** This skill creates design context — missing `design-tokens.json` is expected on first run.
 
@@ -26,7 +26,7 @@ Detects whether this is a web or iOS project and delegates to the appropriate to
 Resolve the shared dir from the stable toolkit path, then follow the shared detection contract:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "contract: $SHARED_DIR/platform-detection.md"
 ```
 
@@ -43,3 +43,16 @@ Read `$SHARED_DIR/platform-detection.md` and apply it exactly — the recursive 
 ## Next steps
 
 - `/design-language` — define brand personality from the extracted tokens
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-analyze-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-analyze`), `artifacts` (absolute paths: `design-tokens.json` and the raw captures under `$AW_DIR/design/raw/`), `summary` (one line),
+plus `platform` (`web | ios`, the sub-skill it delegated to).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

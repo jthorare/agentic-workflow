@@ -1,12 +1,12 @@
 ---
 name: review
-description: Orchestrate a multi-agent PR code review. Spawns domain-specific reviewer subagents in parallel based on changed files. Findings are saved to ~/.agentic-workflow/<repo-slug>/reviews/<pr>.json — run /postReview to publish to GitHub.
+description: Orchestrate a multi-agent PR code review. Spawns domain-specific reviewer subagents in parallel based on changed files. Findings are saved to $AW_DIR/reviews/<pr>.json — run /postReview to publish to GitHub.
 argument-hint: [pr-number-or-url] [--lens <persona,...>]
 allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # PR Review Orchestrator
 
@@ -41,7 +41,7 @@ gh pr view {number} --json commits --jq '.commits[-1].oid'
 ## Step 3: Ensure output directory exists and gather evidence
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/reviews"
 ls -1dt "$AW_DIR/verification/"*/ 2>/dev/null | head -1   # newest pack.json dir
@@ -82,7 +82,7 @@ After collecting all reviewer JSON outputs:
 
 ## Step 6: Write State File
 
-Combine all reviewer outputs into `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`:
+Combine all reviewer outputs into `$AW_DIR/reviews/{number}.json`:
 
 ```json
 {
@@ -130,7 +130,7 @@ Save this file (write it in full). `lenses` lists the agent names actually spawn
 
 ```
 Review complete for PR #{number}: "{title}"
-Findings saved to ~/.agentic-workflow/<repo-slug>/reviews/{number}.json
+Findings saved to $AW_DIR/reviews/{number}.json
 Run #{review_run} (previous run findings: {previous_run_finding_count})
 Lenses: {lenses, comma-joined}
 
@@ -147,3 +147,16 @@ Run /addressReview to start implementing fixes.
 - `/postReview` — publish the findings to GitHub as batched comments
 - `/addressReview` — start fixing the issues in parallel
 - `/rootCause` — investigate a specific blocking bug from the review
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/review-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`review`), `artifacts` (absolute paths: the review state file `$AW_DIR/reviews/<pr>.json`), `summary` (one line),
+plus `pr` (PR number); `findings` (count of findings kept after triage); `blocking` (count of blocking findings).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

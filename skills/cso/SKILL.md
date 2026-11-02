@@ -10,7 +10,7 @@ allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_D
 OWASP Top 10 + STRIDE threat model. Pre-impl (plan) or post-impl (diff) mode. Auto-detects mode from invocation context.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Overview
 
@@ -24,7 +24,7 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 - Mode flag: `--plan <path>` or `--diff <pr-or-branch>`
 - Auto-detect: if no flag, try `gh pr view --json number,state` on current branch — if it succeeds, use `--diff <pr#>`; else `--plan` against the newest plan per `_shared/plan-discovery.md`:
   ```bash
-  SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+  SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
   source "$SHARED_DIR/repo-slug.sh"
   PLAN_DIR=$(ls -1dt "$AW_DIR/plans/"*/ 2>/dev/null | head -1)
   ```
@@ -102,8 +102,8 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 
 ## Outputs
 
-- Plan mode default: `~/.agentic-workflow/<repo-slug>/plans/<feature>/security-review.md` (canonical — matches `/autoplan` placement; optional copy to `security/` on request)
-- Diff mode default: `~/.agentic-workflow/<repo-slug>/security/<target-slug>-threat-model.md`
+- Plan mode default: `$AW_DIR/plans/<feature>/security-review.md` (canonical — matches `/autoplan` placement; optional copy to `security/` on request)
+- Diff mode default: `$AW_DIR/security/<target-slug>-threat-model.md`
 - When `--output <path>` is supplied: that exact path
 
 ## Next steps
@@ -111,3 +111,16 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 - `/review` — if pre-ship and findings exist, run general code review
 - `/shipRelease` — if all findings are LOW or none
 - `/rootCause` — if a CRITICAL finding maps to a known incident
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/cso-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`cso`), `artifacts` (absolute paths: the security review (`$AW_DIR/plans/<feature>/security-review.md` or `$AW_DIR/security/<target-slug>-threat-model.md`)), `summary` (one line),
+plus `mode` (`plan | pr`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -12,7 +12,8 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// registry releases every launch still in it, from <see cref="DisposeAsync"/> or from a container disposed synchronously.
 /// </summary>
 /// <param name="service">Starts one launch's listeners.</param>
-internal sealed class LaunchSandboxRegistry(EgressService service) : IAsyncDisposable, IDisposable
+/// <param name="loopback">True on macOS: the proxy listens on a free loopback TCP port (no socat, no socket directory), and <see cref="RunningEgress.ProxyPort"/> says which.</param>
+internal sealed class LaunchSandboxRegistry(EgressService service, bool loopback = false) : IAsyncDisposable, IDisposable
 {
     private readonly Lock _lock = new();
     private readonly Dictionary<LaunchId, RunningEgress> _running = [];
@@ -25,8 +26,10 @@ internal sealed class LaunchSandboxRegistry(EgressService service) : IAsyncDispo
     /// <param name="time">The clock the proxy checks the learn expiry against; null is the system clock.</param>
     /// <returns>The running egress, or the refusal of <see cref="EgressService.Start"/> (-014 no-forwarder, -016 net-forward); nothing is kept for a refusal.</returns>
     public async ValueTask<Result<RunningEgress>> Start(LaunchId launch, PlanNetwork network, DenialCounter? denials, TimeProvider? time = null)
+        => await Keep(launch, loopback ? service.StartLoopback(network, EgressCaps.Default, denials, time) : service.Start(network, EgressCaps.Default, denials, time)).ConfigureAwait(false);
+
+    private async ValueTask<Result<RunningEgress>> Keep(LaunchId launch, Result<RunningEgress> started)
     {
-        var started = service.Start(network, EgressCaps.Default, denials, time);
         if (started.IsError)
         {
             return started;

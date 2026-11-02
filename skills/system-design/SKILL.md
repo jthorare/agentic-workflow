@@ -6,10 +6,10 @@ allowed-tools: Bash(git *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), B
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing. Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble-extended.md` (component inventory, pipeline overview).
 
 # System Design
 
@@ -18,9 +18,9 @@ One run turns a project into a status doc (the source of truth), one page per pe
 **Prerequisites (checked in Diagrams and Style and build, not before):** `python3` (stdlib only); Node 20+; the tldraw offline app running (diagrams); Playwright installed in some directory's `node_modules` (page verification, passed as `--playwright-root`). If one is missing, say which step it blocks and **Ask the user**; do not skip the step.
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
-S="$HOME/.agentic-workflow/toolkit/skills/system-design"
+S="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/system-design"
 SD="$AW_DIR/system-design/<slug>"          # one folder per design = the packet (layout below)
 mkdir -p "$SD"/{prs,diagrams,mockups,shots}
 ```
@@ -124,3 +124,16 @@ node "$S/scripts/verify_page.mjs" "$SD/product-design.html" "$SD/shots" --playwr
 - `/system-design-video <packet dir>` for the whiteboard film of this packet: its boards are laid out from `diagrams/*.mmd`, its beats cite `packet.json` sections.
 - `/specToProvenPR` to turn the approved TDD's PR order into proven PRs.
 - `/design-verify` once a mockup has become a real screen.
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/system-design-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`system-design`), `artifacts` (absolute paths: the packet under `$AW_DIR/system-design/<slug>/` (TDD, persona pages, `packet.json`)), `summary` (one line),
+plus `slug` (design slug); `packet_dir` (absolute path of the packet directory).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

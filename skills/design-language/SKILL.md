@@ -6,10 +6,10 @@ allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Read, Write, Glob, AskUserQuesti
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
 
 # Design Language — Define Brand Personality
 
@@ -28,7 +28,7 @@ If no URLs were provided as arguments, skip to Phase 2.
 Only one skill drives the shared Playwright browser at a time. Acquire the lock in a **single Bash invocation** (shell state does not persist between calls) before any navigation:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/design"
 LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; acquire_lock
@@ -39,7 +39,7 @@ If acquisition times out, stop and report the holding pid. Note the printed `AW_
 When Phase 1 is complete (all URLs analyzed), release in a single invocation:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 ```
 
@@ -145,8 +145,8 @@ Example shape:
 
 ## Sources
 
-- <url1> (screenshot: ~/.agentic-workflow/<repo-slug>/design/reference-<host1>.png) — <one-line note on what was extracted from it>
-- <url2> (screenshot: ~/.agentic-workflow/<repo-slug>/design/reference-<host2>.png) — <one-line note on what was extracted from it>
+- <url1> (screenshot: $AW_DIR/design/reference-<host1>.png) — <one-line note on what was extracted from it>
+- <url2> (screenshot: $AW_DIR/design/reference-<host2>.png) — <one-line note on what was extracted from it>
 
 ## Brand Personality
 
@@ -239,3 +239,16 @@ Downstream skills gate on this line. If 5 rounds pass without Approve, stop, lis
 
 - `/design-mockup` — build the first mockup from the new language
 - `/design-shotgun` — explore variants before committing to a direction
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-language-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-language`), `artifacts` (absolute paths: `design-tokens.json`, `.impeccable.md` and `planning/DESIGN_SYSTEM.md`), `summary` (one line),
+plus `references` (reference URLs analyzed).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(SHARED_DI
 Take an approved spec to production-ready PRs that are **definitively proven to work in the running app**, one shippable stage at a time.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Core principle
 
@@ -35,7 +35,7 @@ Then mark the PR ready and **STOP for human merge**. "Practically done" and "tri
 **Track todos** — one item per stage from stages.md. `superpowers:*` references below name skills from the superpowers pack: **Invoke skill** them when installed on the host; otherwise follow the named practice directly. Shared files and output dirs resolve via this block — re-source it at the top of every bash block (shell state does not persist between shell calls):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 STAGE_DIR="$AW_DIR/proof/<stage-slug>" && mkdir -p "$STAGE_DIR"
 ```
@@ -79,8 +79,8 @@ Zero blocking findings is a hard gate, not a target. The only way to *know* you 
 
 - The loop starts only after steps 4–6 are done. `/review` is not a way to find out whether the feature works, and a clean review never substitutes for a hand test or an evidence pack.
 - After fixing a blocking finding you **must** re-run `/review`. No exceptions for "trivial" deltas.
-- Every blocking finding is **fixed** on this PR, not deferred. A blocking finding you believe is wrong is still resolved explicitly: reply on the thread with the technical reason, mark it resolved in `~/.agentic-workflow/<repo-slug>/reviews/<pr>.json`, then re-run `/review`.
-- A blocking finding that is a bug is fixed prevention-first: ask the question in `$HOME/.agentic-workflow/toolkit/skills/_shared/prevent-the-class.md` (class, invariant, other instances, smallest mechanism) before choosing the fix, and carry its handoff block into the fix's reply.
+- Every blocking finding is **fixed** on this PR, not deferred. A blocking finding you believe is wrong is still resolved explicitly: reply on the thread with the technical reason, mark it resolved in `$AW_DIR/reviews/<pr>.json`, then re-run `/review`.
+- A blocking finding that is a bug is fixed prevention-first: ask the question in `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/prevent-the-class.md` (class, invariant, other instances, smallest mechanism) before choosing the fix, and carry its handoff block into the fix's reply.
 - Every non-blocking finding is resolved too, but in writing: reply on the thread (accepted as a follow-up, or why not), mark it resolved in the state file. Fold in a fix only when it is a trivial edit (a one-line doc or name fix). Non-blocking findings alone never trigger another review run.
 - The loop ends ONLY when a `/review` run returns zero blocking findings — or the cap of 5 triggers report-and-ask.
 
@@ -125,8 +125,28 @@ Classify each finding by what it does, not by its label; reviewers mislabel in b
 - **Leaving the proof stale.** A review-loop fix that changes source after the evidence was captured needs the step 9 re-check.
 - **Self-merging.** The harness stops at the human merge gate.
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/landAndDeploy` — after a human approves and merges the stage PR, poll for merge then deploy and smoke it (never self-merge; this skill stops at the human gate)
 - `/shipRelease` — the single-command gate+PR path for a stage that is already proven and review-clean
 - `/weeklyRetro` — once all stages of the epic have shipped, capture what shipped and what slipped
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/specToProvenPR-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`specToProvenPR`), `artifacts` (absolute paths: `$AW_DIR/plans/<epic>/stages.md` and each stage's evidence files; PR links go in `prs`, not here), `summary` (one line),
+plus `epic` (epic slug); `stages_done` (count of stages with a PR); `prs` (list of PR URLs).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -6,10 +6,10 @@ allowed-tools: Bash(npx dembrandt *), Bash(git *), Bash(SHARED_DIR=*), Bash(mkdi
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
 
 ---
 
@@ -36,13 +36,13 @@ If validation fails:
 Pin the extractor output to a known path so the diff reads an exact file — never a guessed filename. `<host>` is the URL's hostname (e.g. `https://linear.app/features` → `linear.app`). One Bash invocation (shell state does not persist between calls):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/design/raw"
 npx dembrandt <url> --dtcg --out "$AW_DIR/design/raw/<host>.json"
 ```
 
-Verify the pinned file exists and is non-empty; if not, report the dembrandt error and stop. Then Read `~/.agentic-workflow/<repo-slug>/design/raw/<host>.json` — this exact file is the merge input.
+Verify the pinned file exists and is non-empty; if not, report the dembrandt error and stop. Then Read `$AW_DIR/design/raw/<host>.json` — this exact file is the merge input.
 
 ## Step 4: Merge (shared algorithm)
 
@@ -59,3 +59,16 @@ The pinned `design/raw/<host>.json` is kept — do not delete it.
 
 - `/design-mockup-web` — rebuild mockups with the updated tokens (existing baselines are now marked stale)
 - `/design-refine` — apply the evolved language to existing screens
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-evolve-web-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-evolve-web`), `artifacts` (absolute paths: the updated `design-tokens.json` and `.impeccable.md`), `summary` (one line),
+plus `adopted` (count of tokens adopted).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

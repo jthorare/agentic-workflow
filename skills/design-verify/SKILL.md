@@ -7,10 +7,10 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), Glob
 <!-- MEMORY: SKIP -->
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
 
 ---
 
@@ -25,7 +25,7 @@ Detects whether this is a web, iOS or desktop project and delegates to the appro
 Resolve the shared dir from the stable toolkit path, then follow the shared detection contract:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "$SHARED_DIR"
 ```
 
@@ -45,7 +45,7 @@ All user-supplied arguments (e.g., `[screen-name]`) are passed through unchanged
 After the sub-skill returns, locate its run report and normalize the outcome — never assume the diff was clean:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 RUN_DIR=$(ls -1dt "$AW_DIR/design/verify/"*/ 2>/dev/null | head -1)
 echo "run-dir: ${RUN_DIR:-none}"
@@ -66,3 +66,16 @@ Gate the suggestions on `overall.verdict` — suggest `/shipRelease` **only on P
 - **PASS** — `/shipRelease` — diff is clean, ship the release
 - **WARN** — `/design-refine` — address the minor discrepancies, then `/design-verify` again
 - **FAIL** — `/design-refine` or `/design-implement-*` — significant deviation; do **not** ship until re-verified
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-verify-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-verify`), `artifacts` (absolute paths: `$AW_DIR/design/verify/<run-id>/comparison-report.json` and its diff images), `summary` (one line),
+plus `run_id` (verify run id); `max_diff_pct` (`overall.max_diff_pct`); `verdict` (`PASS | WARN | FAIL`, `overall.verdict` of the comparison report).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

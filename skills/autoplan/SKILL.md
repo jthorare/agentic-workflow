@@ -10,7 +10,7 @@ allowed-tools: Bash(ls *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, S
 Fans out five review lenses in parallel against a plan document, then consolidates findings into a single decision-ready report.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Overview
 
@@ -20,7 +20,7 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 
 - Plan doc path (arg), OR auto-discover per `_shared/plan-discovery.md`:
   ```bash
-  SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+  SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
   source "$SHARED_DIR/repo-slug.sh"
   PLAN_DIR=$(ls -1dt "$AW_DIR/plans/"*/ 2>/dev/null | head -1)
   ```
@@ -43,7 +43,7 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 3. **Existence-check before consolidation** (per `_shared/parallel-dispatch.md`). After all 5 agents return, verify each expected output exists and is non-empty:
 
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    FEATURE_DIR="$AW_DIR/plans/<feature>"
    for f in product-review arch-review design-review devex-review security-review; do
@@ -113,10 +113,23 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 
 ## Outputs
 
-All under `~/.agentic-workflow/<repo-slug>/plans/<feature>/`: `product-review.md` · `arch-review.md` · `design-review.md` · `devex-review.md` · `security-review.md` · `consolidated-review.md`
+All under `$AW_DIR/plans/<feature>/`: `product-review.md` · `arch-review.md` · `design-review.md` · `devex-review.md` · `security-review.md` · `consolidated-review.md`
 
 ## Next steps
 
 - If the overall verdict is **not BLOCKED** — `/specToProvenPR <feature-dir>/plan.md` — hand the vetted plan to staged implementation; the consolidated review and lens files ride along in the feature dir
 - If **BLOCKED** — address the CRITICAL findings (edit the plan or re-run `/officeHours`), then re-run `/autoplan`
 - `/design-shotgun` — if visual exploration is recommended by the design lens
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/autoplan-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`autoplan`), `artifacts` (absolute paths: `consolidated-review.md` and each lens's review file in the feature dir), `summary` (one line),
+plus `feature_dir` (absolute path of `$AW_DIR/plans/<feature>`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

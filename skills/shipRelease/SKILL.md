@@ -11,7 +11,7 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(pytest *)
 Syncs your branch, runs tests, audits coverage, pushes, opens a PR, and optionally invokes `/syncDocs`.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Step 1: Pre-flight Checks
 
@@ -52,7 +52,7 @@ Do **not** attempt to auto-resolve conflicts.
 Resolve the shared dir from this skill's own symlink, then detect the runner:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ```
 
 Read `$SHARED_DIR/test-runner-detection.md` and set `TEST_CMD` from its runner table. If no runner is detected, report "tests: n/a — excluded from scoring" and continue (never score an undetected runner as a failure).
@@ -87,7 +87,7 @@ If any changed file is a UI component, page, route, template, or stylesheet:
 
 1. **Invoke skill `verify-app`** with args `--yes auto` — auto mode infers screens from the diff; `--yes` skips the confirmation re-prompt. A `FAIL` verdict **blocks the push**: stop and report the evidence-pack path.
    For a desktop UI change (`_shared/platform-detection.md`) this runs `verify-desktop`: the real app on seeded data against its mockups. A desktop UI diff with no desktop evidence pack blocks the push.
-2. **Baseline check:** if `~/.agentic-workflow/$REPO_SLUG/design/screens.json` exists and any of its screens match the changed files/routes, also **Invoke skill `design-verify`**. A FAIL diff (>10%) blocks the push. A desktop UI change always gets `design-verify` (its mockups come from the repo's screens manifest, not `screens.json`); any FAIL blocks the push.
+2. **Baseline check:** if `$AW_DIR/design/screens.json` exists and any of its screens match the changed files/routes, also **Invoke skill `design-verify`**. A FAIL diff (>10%) blocks the push. A desktop UI change always gets `design-verify` (its mockups come from the repo's screens manifest, not `screens.json`); any FAIL blocks the push.
 
 If the diff is not user-facing, note "verification: n/a (no UI/route changes)" and continue.
 
@@ -177,7 +177,7 @@ Record whether docs were updated, deferred to the canary chain, or skipped.
 
 - **Default chain (`/landAndDeploy` is invoked in Step 7):** do **NOT** write a separate `ship.md` here. The ship-phase metadata travels via `releases/.pending-ship.json` (Step 7); `/landAndDeploy` folds it into a `## Ship Phase` subsection at the top of its `deploy.md`. This guarantees `deploy.md` and `canary.md` always live in the same `releases/<ISO-date>-<short-sha>/` subdir — no split across two dirs when tip-SHA ≠ merge-SHA.
 
-- **`--no-deploy` invocation (Step 7 skipped):** since no `/landAndDeploy` will run, shipRelease writes a standalone ship summary to `~/.agentic-workflow/$REPO_SLUG/releases/<ISO-date>-<tip-short-sha>/ship.md` — same CD7 id form, using the **tip SHA** since no merge SHA exists yet (e.g. `2026-05-15-a1b2c3d`). Deploy information will not be available.
+- **`--no-deploy` invocation (Step 7 skipped):** since no `/landAndDeploy` will run, shipRelease writes a standalone ship summary to `$AW_DIR/releases/<ISO-date>-<tip-short-sha>/ship.md` — same CD7 id form, using the **tip SHA** since no merge SHA exists yet (e.g. `2026-05-15-a1b2c3d`). Deploy information will not be available.
 
   ```markdown
   # Release: {branch}
@@ -205,11 +205,31 @@ Release shipped!
   PR:      {url}
   Deploy:  {chained via /landAndDeploy --wait --chained-from-ship | skipped (--no-deploy)}
   Docs:    {updated | deferred to canary chain | skipped}
-  Report:  {handed to /landAndDeploy via .pending-ship.json | ~/.agentic-workflow/<repo-slug>/releases/{ISO-date}-{tip-short-sha}/ship.md}
+  Report:  {handed to /landAndDeploy via .pending-ship.json | $AW_DIR/releases/{ISO-date}-{tip-short-sha}/ship.md}
 ```
+
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
 
 ## Next steps
 
 - (auto) `/landAndDeploy` — chained after PR creation, polls for merge then deploys (skip with `--no-deploy`)
 - (auto) `/canary` — chained by `/landAndDeploy` on successful deploy
 - (auto) `/syncDocs` — chained by `/canary` on `HEALTHY` verdict (or directly by `shipRelease` if `--no-deploy`)
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/shipRelease-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`shipRelease`), `artifacts` (absolute paths: `$AW_DIR/releases/<id>/ship.md` and `.pending-ship.json` when the deploy chain follows), `summary` (one line),
+plus `pr` (PR number); `pr_url` (PR URL); `draft` (true when the PR was opened as a draft); `tip_sha` (branch tip sha).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

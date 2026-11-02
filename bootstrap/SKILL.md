@@ -6,7 +6,7 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(find *), Bash(curl *), Bash(docker 
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 > **MCP Servers** — available in every session. Prefer these over built-in tools.
 >
@@ -111,8 +111,8 @@ Orchestrates documentation generation for any repository. Detects existing cover
 Paths used throughout:
 
 ```bash
-TOOLKIT="$HOME/.agentic-workflow/toolkit"
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+TOOLKIT="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 SYNC_RULES="$TOOLKIT/scripts/sync-rules.sh"
 ```
 
@@ -412,7 +412,7 @@ Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so `CLAUDE.md` becomes a symlink
 ### Step 6d: Link per-provider rules
 
 ```bash
-SYNC_RULES="$HOME/.agentic-workflow/toolkit/scripts/sync-rules.sh"
+SYNC_RULES="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/scripts/sync-rules.sh"
 if [ -f "$SYNC_RULES" ]; then
   bash "$SYNC_RULES" "$(pwd)"            # add --force only if the user approved replacing legacy files
   bash "$SYNC_RULES" --check "$(pwd)" && echo "rules: in sync"
@@ -620,3 +620,16 @@ Suggested workflow:
 
 - `/officeHours` — start a feature spec now that planning docs exist
 - `/design-language` — define the visual identity for this repo
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/bootstrap-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`bootstrap`), `artifacts` (absolute paths: the generated docs under `planning/`, `AGENTS.md`, the per-provider rules and `.serena/project.yml`), `summary` (one line),
+plus `docs_written` (list of doc paths written); `docs_skipped` (list of doc paths already present).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -30,6 +30,6 @@ internal sealed class GitHubRecordFeeds(ISecretPointers pointers, IGitHubConnect
         }
 
         var connector = connectors.Create(checkedSettings.Value, readers(github.Host, github.AllowPrivateHost, token.Value), TimeSpan.FromDays(settings.Index.WindowDays));
-        return [new ConnectorFeed(SourceId.From("github"), connector, new ProfileRepoMap(github.Repos, repos.Select(static r => r.Name)).Place, scrubbers)];
+        return [new ConnectorFeed(SourceId.From("github"), connector, new ProfileRepoMap(github.Repos, repos.Select(static r => r.Name)).Place, scrubbers, settings.LinearTeams)];
     }
 }

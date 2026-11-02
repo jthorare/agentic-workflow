@@ -6,7 +6,7 @@ allowed-tools: Bash(aw-meta *), Bash(*/aw-meta *), Bash(aw-meta-launch *), Bash(
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 # Meta orchestrator
 
@@ -17,7 +17,7 @@ Every step below is an `aw-meta` call. Don't improvise a step the CLI has a comm
 
 `aw-meta` is on PATH after `./setup.sh --with-meta` (Linux and macOS; `aw-meta version` shows which commit it was built from) (else `$HOME/.agentic-workflow/bin/aw-meta`). Every command takes
 `--json`. Exit 0 ok, 1 attention (read the output and act on it), 2 usage or tool error. Reference:
-`$HOME/.agentic-workflow/toolkit/docs/csharp/meta.md`.
+`${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/docs/csharp/meta.md`.
 
 Needs Claude Code: lanes talk to you through **Message a running agent** across sessions, and the hooks that keep you honest are
 Claude Code hooks.
@@ -48,7 +48,7 @@ it prints what you owe and the command that settles it. Settle it, don't argue w
    writes `$AW_STATE_DIR/meta/teams/<name>/team.json` (the team's own state directory: `meta.db`, `gates/`, `lane-sessions/`,
    `log.md`; another team is never touched). Then edit its `gate.scopes` (the merge gate, step by step), `mergeOrder`,
    `knownFlakes` and `prompts` (a directory of `<lane>.md` kickoff prompts). Example:
-   `$HOME/.agentic-workflow/toolkit/skills/meta/examples/agentic-workflow.team.json` (to use it, copy it to
+   `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/meta/examples/agentic-workflow.team.json` (to use it, copy it to
    `$AW_STATE_DIR/meta/teams/<team>/team.json`; the directory name must equal the file's `team`, since selection uses the
    directory and the session and tmux names use the file).
 2. `aw-meta-launch` opens one Warp window with a pane per lane, each attached to tmux session `<team>-<lane>` running
@@ -238,3 +238,16 @@ Merges, owner decisions, lane maps and kills are logged by the CLI. For anything
 
 - `/review`: when a lane asks for a review run on its PR
 - `/specToProvenPR`: the lanes' own workflow; point a lane at it when it skips proof
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/meta-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`meta`), `artifacts` (absolute paths: the files under the team's running log it appended to), `summary` (one line),
+plus `team` (team name); `actions` (count of aw-meta actions taken this turn).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
