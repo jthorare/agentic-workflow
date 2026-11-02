@@ -28,6 +28,7 @@
 #   AW_HEADROOM_BIN        headroom executable (default: headroom on PATH, then ~/.local/bin/headroom)
 #   AW_HEADROOM_KEEP=1     leave the proxy running after the last wrapped session exits
 #   AW_HEADROOM_START_WAIT seconds to wait for the proxy's /health (default 120)
+#   AW_HEADROOM_STOP_WAIT  seconds to wait for the proxy to exit after SIGTERM before SIGKILL (default 5)
 #   AW_HEADROOM_ARGS       extra arguments for `headroom proxy`, word-split
 #   CLAUDE_SETTINGS_FILE   Claude settings (default ~/.claude/settings.json)
 #   CODEX_HOME             Codex home (default ~/.codex); its config.toml is read
@@ -146,9 +147,17 @@ lock_release() { if [ -n "$LOCK_DIR" ]; then rm -r "$LOCK_DIR" 2>/dev/null; fi; 
 
 # Kill the recorded proxy when its pid really is a headroom proxy on this provider's port. Caller holds the lock.
 kill_proxy() {
-  local d pid; d="$(pdir "$1")"
+  local d pid i; d="$(pdir "$1")"
   pid="$(cat "$d/proxy.pid" 2>/dev/null || true)"
-  if is_proxy_pid "$pid" "$(port_of "$1")"; then kill "$pid" 2>/dev/null || true; fi
+  if is_proxy_pid "$pid" "$(port_of "$1")"; then
+    kill "$pid" 2>/dev/null || true
+    # Wait for it to exit, so its port is free when we return; SIGKILL if it ignores SIGTERM.
+    for ((i = 0; i < ${AW_HEADROOM_STOP_WAIT:-5} * 10; i++)); do alive "$pid" || break; sleep 0.1; done
+    if alive "$pid"; then
+      kill -9 "$pid" 2>/dev/null || true
+      for ((i = 0; i < 10; i++)); do alive "$pid" || break; sleep 0.1; done
+    fi
+  fi
   rm -f "$d/proxy.pid" "$d/upstream"
 }
 
