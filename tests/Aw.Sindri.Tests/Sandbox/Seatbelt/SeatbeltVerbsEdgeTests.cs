@@ -54,7 +54,7 @@ public sealed class SeatbeltVerbsEdgeTests : IDisposable
         var setsid = (Environment.GetEnvironmentVariable("PATH") ?? string.Empty).Split(Path.PathSeparator, StringSplitOptions.RemoveEmptyEntries).Select(d => Path.Combine(d, "setsid")).FirstOrDefault(File.Exists);
         Assert.SkipWhen(setsid is null, "setsid is not installed");
         await using var provider = MacServices();
-        var pgroups = ProcessGroupFiles.Directory(_launchDirectory);
+        var pgroups = ProcessGroupFiles.Directory(provider.GetRequiredService<LauncherOptions>().LaunchDirectory);   // the folder the registration hands both the cap and exec's scope
         var launch = LaunchId.From("LCH-" + new string('0', 31) + "1");
 
         // the file exec's scope tells the shell to write, and a live group for it to name
