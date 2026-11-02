@@ -21,7 +21,7 @@ Boots the simulator per `_shared/sim-bootstrap.md`, navigates with snapshot_ui-v
 ## Step 1: Load screens.json and Baselines
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 cat "$AW_DIR/design/screens.json" 2>/dev/null || echo "NO_SCREENS_JSON"
 ls "$AW_DIR/design/"mockup-ios-*.png 2>/dev/null
@@ -44,7 +44,7 @@ If a requested screen has no entry and no baseline, or none exist at all, stop:
 Single bash invocation per the lock recipe in `$SHARED_DIR/sim-bootstrap.md` (`skill-lock.sh` enables `set -euo pipefail`):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; acquire_lock
 ```
 
@@ -75,7 +75,7 @@ If any of these fails, release the lock (Step 2 recipe) and stop with the tool e
 ## Step 5: Create the Run Directory
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-<screen-or-all>"
 mkdir -p "$AW_DIR/design/verify/$RUN_ID"
@@ -132,7 +132,7 @@ Overall:  <verdict>  (max diff <N>% · thresholds: ≤2% PASS / ≤10% WARN / >1
 |--------|------|--------|---------|-------------------|
 
 Skipped cells: <list with reasons, or "none">
-Artifacts: ~/.agentic-workflow/<repo-slug>/design/verify/<run-id>/
+Artifacts: $AW_DIR/design/verify/<run-id>/
 ```
 
 For WARN/FAIL cells, describe the deviating regions and point at the diff image; suggest `/design-refine` or `/design-implement-ios`, then `/design-verify-ios` again.
@@ -142,7 +142,7 @@ For WARN/FAIL cells, describe the deviating regions and point at the diff image;
 Always — success or failure (single invocation, re-sourced):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; release_lock
 ```
 

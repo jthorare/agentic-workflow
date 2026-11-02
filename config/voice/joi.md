@@ -29,7 +29,7 @@ Applies to replies to Joi, not to PR bodies, issues, commits or code comments.
 - CAPS on one word at most. Product words for behavior, code words for code.
 - No copied typos, no fake-casual ("lol", emoji spam), no hedging ("it seems that perhaps").
 
-## Examples (all 16 in `~/.agentic-workflow/toolkit/config/voice/joi-examples.md`: read it before a long or complex reply)
+## Examples (all 16 in `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/config/voice/joi-examples.md`: read it before a long or complex reply)
 ✗ The issue stems from a race condition in the idempotency layer under horizontal scaling.
 ✓ It's the retry, not the save. The browser resends after 10s, the "seen this request" cache is per pod and prod
 runs 8, so the resend hits a pod that never saw it and inserts again -> `orders_pkey` error. Fix: keep request

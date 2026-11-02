@@ -20,7 +20,7 @@ Reads a plan directory's engineering-facing docs (auto-discovers latest if no ar
 
 - Plan — path arg, OR auto-discover per `_shared/plan-discovery.md`:
   ```bash
-  SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+  SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
   source "$SHARED_DIR/repo-slug.sh"
   PLAN_DIR=$(ls -1dt "$AW_DIR/plans/"*/ 2>/dev/null | head -1)
   ```
@@ -84,7 +84,7 @@ Reads a plan directory's engineering-facing docs (auto-discovers latest if no ar
 
 ## Outputs
 
-- Default: `~/.agentic-workflow/<repo-slug>/plans/<feature>/devex-review.md`
+- Default: `$AW_DIR/plans/<feature>/devex-review.md`
 - When `--output <path>` is supplied: that exact path (used by `/autoplan` for canonical placement inside the feature dir)
 
 ## Next steps

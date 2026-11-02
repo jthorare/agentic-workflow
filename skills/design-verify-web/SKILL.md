@@ -21,7 +21,7 @@ Captures screenshots of the live implementation at each screen's route, compares
 ## Step 1: Load screens.json and Baselines
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 cat "$AW_DIR/design/screens.json" 2>/dev/null || echo "NO_SCREENS_JSON"
 ls "$AW_DIR/design/"mockup-web-*.png 2>/dev/null
@@ -59,7 +59,7 @@ Base URL: detect the dev server from `package.json` scripts (typically `http://l
 ## Step 3: Create the Run Directory
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-<screen-or-all>"
 mkdir -p "$AW_DIR/design/verify/$RUN_ID"
@@ -73,7 +73,7 @@ All captures, diff images, and the report for this run live under `design/verify
 Single bash invocation (shell state does not persist between Bash calls); note `skill-lock.sh` enables `set -euo pipefail`:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; acquire_lock
 ```
 
@@ -122,7 +122,7 @@ Overall:  <verdict>  (max diff <N>% · thresholds: ≤2% PASS / ≤10% WARN / >1
 
 Console errors: <count or none>
 Token attributions (computed-style verified only): <list or "none">
-Artifacts: ~/.agentic-workflow/<repo-slug>/design/verify/<run-id>/
+Artifacts: $AW_DIR/design/verify/<run-id>/
 ```
 
 For WARN/FAIL cells, describe the deviating regions and point at the diff image; suggest `/design-refine` then `/design-verify-web` again.
@@ -132,7 +132,7 @@ For WARN/FAIL cells, describe the deviating regions and point at the diff image;
 Always — success or failure:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 ```
 

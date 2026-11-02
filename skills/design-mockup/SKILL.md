@@ -25,7 +25,7 @@ Detects whether this is a web or iOS project and delegates to the appropriate mo
 Resolve the shared dir from the stable toolkit path and follow the canonical detection + resolution rules:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "$SHARED_DIR/platform-detection.md"
 ```
 

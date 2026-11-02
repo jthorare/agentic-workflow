@@ -35,7 +35,7 @@ The argument shape usually decides the platform — validate it before any proje
 Resolve the shared dir from the stable toolkit path, then follow the shared detection contract:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "contract: $SHARED_DIR/platform-detection.md"
 ```
 

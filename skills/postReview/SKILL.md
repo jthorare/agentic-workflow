@@ -1,6 +1,6 @@
 ---
 name: postReview
-description: Publish a completed /review to GitHub as batched PR comments. Reads from ~/.agentic-workflow/<repo-slug>/reviews/<pr>.json and posts one review per agent (minimizing API calls). Use after /review has written a local state file and you are ready to publish.
+description: Publish a completed /review to GitHub as batched PR comments. Reads from $AW_DIR/reviews/<pr>.json and posts one review per agent (minimizing API calls). Use after /review has written a local state file and you are ready to publish.
 argument-hint: [pr-number]
 allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Read, Write, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -26,7 +26,7 @@ If multiple PRs found, **Ask the user** to pick one.
 
 ## Step 2: Load State File
 
-Read `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`.
+Read `$AW_DIR/reviews/{number}.json`.
 
 If the file does not exist:
 > "No local review found for PR #{number}. Run `/review` first."
@@ -87,7 +87,7 @@ EOF
 `{evidence}` — the newest `proof/<stage-slug>/evidence.md` (CD6) when present; **omit the `### Evidence` section entirely when absent**. Locate it with:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls -1t "$AW_DIR"/proof/*/evidence.md 2>/dev/null | head -1
 ```
@@ -116,7 +116,7 @@ Backfill each issue's `posted_comment_id` by matching on `path` + `position` (th
 
 ## Step 4: Update State File
 
-After all reviews are posted, update `~/.agentic-workflow/<repo-slug>/reviews/{number}.json`:
+After all reviews are posted, update `$AW_DIR/reviews/{number}.json`:
 - Set `"posted": true`
 - Set `"posted_at"` to current ISO timestamp
 - Fill in `posted_comment_id` for each issue

@@ -26,7 +26,7 @@ The first token of the arguments is the **target skill** to run after the interv
 Create the plan directory (layout per `_shared/plan-layout.md`) before Round 1. Derive `<slug>` as 2–4 kebab-case words from the task:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 PLAN_DIR="$AW_DIR/plans/$(date +%Y-%m-%d)-<slug>"
 mkdir -p "$PLAN_DIR"

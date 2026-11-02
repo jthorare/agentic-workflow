@@ -17,7 +17,7 @@ Every step below is an `aw-meta` call. Don't improvise a step the CLI has a comm
 
 `aw-meta` is on PATH after `./setup.sh --with-meta` (Linux and macOS; `aw-meta version` shows which commit it was built from) (else `$HOME/.agentic-workflow/bin/aw-meta`). Every command takes
 `--json`. Exit 0 ok, 1 attention (read the output and act on it), 2 usage or tool error. Reference:
-`$HOME/.agentic-workflow/toolkit/docs/csharp/meta.md`.
+`${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/docs/csharp/meta.md`.
 
 Needs Claude Code: lanes talk to you through **Message a running agent** across sessions, and the hooks that keep you honest are
 Claude Code hooks.
@@ -48,7 +48,7 @@ it prints what you owe and the command that settles it. Settle it, don't argue w
    writes `$AW_STATE_DIR/meta/teams/<name>/team.json` (the team's own state directory: `meta.db`, `gates/`, `lane-sessions/`,
    `log.md`; another team is never touched). Then edit its `gate.scopes` (the merge gate, step by step), `mergeOrder`,
    `knownFlakes` and `prompts` (a directory of `<lane>.md` kickoff prompts). Example:
-   `$HOME/.agentic-workflow/toolkit/skills/meta/examples/agentic-workflow.team.json` (to use it, copy it to
+   `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/meta/examples/agentic-workflow.team.json` (to use it, copy it to
    `$AW_STATE_DIR/meta/teams/<team>/team.json`; the directory name must equal the file's `team`, since selection uses the
    directory and the session and tmux names use the file).
 2. `aw-meta-launch` opens one Warp window with a pane per lane, each attached to tmux session `<team>-<lane>` running

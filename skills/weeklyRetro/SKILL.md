@@ -87,11 +87,11 @@ Run the project's test suite to capture current health:
    git log --since="$SINCE_DATE" --no-merges --diff-filter=A --name-only --format="" -- "*.test.*" "*.spec.*" "test_*" "*_test.*"
    ```
 
-4. If a previous retro JSON exists, read the **most recent** `~/.agentic-workflow/<repo-slug>/retros/*-weekly.json` (excluding today's) and compare:
+4. If a previous retro JSON exists, read the **most recent** `$AW_DIR/retros/*-weekly.json` (excluding today's) and compare:
    - Tests that started failing since last retro
    - Change in total test count
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    ls -1t "$AW_DIR/retros/"*-weekly.json 2>/dev/null | head -2
    ```
@@ -101,7 +101,7 @@ Run the project's test suite to capture current health:
 Pull this period's skill-pipeline outputs into the retro (skip any dir that doesn't exist):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls -1dt "$AW_DIR/releases/"*/ 2>/dev/null | head -10          # release records: ship/deploy/canary/docs-sync
 ls -1t "$AW_DIR/qa/"*.md 2>/dev/null | head -10               # bugHunt / bugReport outputs
@@ -145,7 +145,7 @@ Based on the data, suggest 2-3 concrete actions for the next week. **Every sugge
 
 ## Step 7: Write Report
 
-Write the retrospective report to `~/.agentic-workflow/$REPO_SLUG/retros/{date}-weekly.md` where `{date}` is `YYYY-MM-DD` format:
+Write the retrospective report to `$AW_DIR/retros/{date}-weekly.md` where `{date}` is `YYYY-MM-DD` format:
 
 ```markdown
 # Weekly Retrospective: {start_date} to {end_date}
@@ -204,7 +204,7 @@ Write the retrospective report to `~/.agentic-workflow/$REPO_SLUG/retros/{date}-
 {2-3 actionable suggestions}
 ```
 
-**Also write the machine-readable sibling** `~/.agentic-workflow/<repo-slug>/retros/{date}-weekly.json` — this is what the next retro's trend comparison reads:
+**Also write the machine-readable sibling** `$AW_DIR/retros/{date}-weekly.json` — this is what the next retro's trend comparison reads:
 
 ```json
 {
@@ -227,7 +227,7 @@ Weekly retro complete ({start_date} to {end_date}).
   Total commits: {N}
   Test health:   {pass}/{total} passed (or n/a)
   Verification:  {N} packs ({N} FAIL)
-  Report:        ~/.agentic-workflow/<repo-slug>/retros/{filename} (+ .json sibling)
+  Report:        $AW_DIR/retros/{filename} (+ .json sibling)
 ```
 
 ## Next steps

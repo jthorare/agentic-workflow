@@ -25,7 +25,7 @@ Enforces the mockup-first gate, detects whether this is a web or iOS project, de
 Implementing without an approved mockup baseline makes `/design-verify` impossible — never skip this step.
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 echo "screens.json: $AW_DIR/design/screens.json"
 ls "$AW_DIR/design/screens.json" 2>/dev/null || echo "screens.json: MISSING"

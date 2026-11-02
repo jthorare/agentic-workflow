@@ -36,13 +36,13 @@ If validation fails:
 Pin the extractor output to a known path so the diff reads an exact file — never a guessed filename. `<host>` is the URL's hostname (e.g. `https://linear.app/features` → `linear.app`). One Bash invocation (shell state does not persist between calls):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/design/raw"
 npx dembrandt <url> --dtcg --out "$AW_DIR/design/raw/<host>.json"
 ```
 
-Verify the pinned file exists and is non-empty; if not, report the dembrandt error and stop. Then Read `~/.agentic-workflow/<repo-slug>/design/raw/<host>.json` — this exact file is the merge input.
+Verify the pinned file exists and is non-empty; if not, report the dembrandt error and stop. Then Read `$AW_DIR/design/raw/<host>.json` — this exact file is the merge input.
 
 ## Step 4: Merge (shared algorithm)
 

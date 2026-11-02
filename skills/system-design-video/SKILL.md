@@ -31,9 +31,9 @@ A concept or product cut (the idea, the worked example, what changes for the peo
 Read before starting: `references/style.md` (look, motion, legibility), `references/storyboard-format.md` (the storyboard file), `references/personas.md`. Read on trouble: `references/gotchas.md`. A runnable worked example, with generic content, is in `examples/base-limit/`.
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
-SKILL="$HOME/.agentic-workflow/toolkit/skills/system-design-video"
+SKILL="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/system-design-video"
 D="$AW_DIR/videos/<design>/<persona>"      # brief.md, storyboard.json, narration.md, take/, deliverables/
 mkdir -p "$D"
 ```

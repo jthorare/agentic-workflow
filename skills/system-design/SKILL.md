@@ -18,9 +18,9 @@ One run turns a project into a status doc (the source of truth), one page per pe
 **Prerequisites (checked in Diagrams and Style and build, not before):** `python3` (stdlib only); Node 20+; the tldraw offline app running (diagrams); Playwright installed in some directory's `node_modules` (page verification, passed as `--playwright-root`). If one is missing, say which step it blocks and **Ask the user**; do not skip the step.
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
-S="$HOME/.agentic-workflow/toolkit/skills/system-design"
+S="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/system-design"
 SD="$AW_DIR/system-design/<slug>"          # one folder per design = the packet (layout below)
 mkdir -p "$SD"/{prs,diagrams,mockups,shots}
 ```

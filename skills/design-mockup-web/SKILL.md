@@ -24,7 +24,7 @@ Artifact names and the `screens.json` schema come from `_shared/design-artifact-
 Check for a picked shotgun variant:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls "$AW_DIR/design/shotgun/picked.json" 2>/dev/null || echo "no shotgun pick"
 ```
@@ -50,7 +50,7 @@ The mockup must be a **single HTML file** with inline CSS (no external deps exce
 Save to the canonical path and **echo it** so the user and `/design-implement-web` can find it:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/design"
 echo "mockup file: $AW_DIR/design/mockup-<screen-name>.html"
@@ -63,7 +63,7 @@ Write the HTML to `$AW_DIR/design/mockup-<screen-name>.html`.
 Serve the file with a real local server and **record the URL** (`MOCKUP_URL`) — it is reused for every capture in Step 6:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 python3 -m http.server 8721 --directory "$AW_DIR/design" &
 echo "MOCKUP_URL=http://localhost:8721/mockup-<screen-name>.html"
@@ -87,7 +87,7 @@ Iterate via **Ask the user** with exactly two options: **Approve** / **Revise**.
 Only after approval. First, the overwrite check — if any existing baseline matches, confirm before capturing:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls "$AW_DIR"/design/mockup-web-<screen-name>-*.png 2>/dev/null || echo "no existing baselines"
 ```
@@ -97,7 +97,7 @@ If baselines exist, **Ask the user**: "Baselines already exist for `<screen-name
 Acquire the browser lock in a **single bash invocation** (shell state does not persist between Bash calls):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; acquire_lock
 ```
 
@@ -105,12 +105,12 @@ Then capture **all three** viewports inline (no subagent), holding the lock thro
 
 1. `mcp: playwright/browser_navigate` → `MOCKUP_URL`
 2. `mcp: playwright/browser_resize` → the viewport's width × height
-3. `mcp: playwright/browser_take_screenshot` → save to `~/.agentic-workflow/<repo-slug>/design/mockup-web-<screen-name>-<viewport>.png` — producing exactly the three `mockup-web-<screen-name>-{mobile,tablet,desktop}.png` baselines.
+3. `mcp: playwright/browser_take_screenshot` → save to `$AW_DIR/design/mockup-web-<screen-name>-<viewport>.png` — producing exactly the three `mockup-web-<screen-name>-{mobile,tablet,desktop}.png` baselines.
 
 Finally — success or failure — close the browser (`mcp: playwright/browser_close`) and release the lock in a single invocation:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 ```
 
@@ -118,7 +118,7 @@ LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 
 Determine the **route** where this screen will live in the real app: infer it from the repo's routing (e.g., `app/` / `pages/` directories); if not inferable, **Ask the user** for it (a route of `null` is allowed for screens with no URL yet).
 
-Read `~/.agentic-workflow/<repo-slug>/design/screens.json` if it exists, merge this screen's entry (Read → mutate → Write; never clobber other screens), following the CD4 schema in `_shared/design-artifact-paths.md`:
+Read `$AW_DIR/design/screens.json` if it exists, merge this screen's entry (Read → mutate → Write; never clobber other screens), following the CD4 schema in `_shared/design-artifact-paths.md`:
 
 ```json
 { "schema": "screens/v1",
@@ -143,7 +143,7 @@ Mockup Approved
 
 Screen:       <screen-name>
 Seed:         shotgun variant-<N> | none
-File:         ~/.agentic-workflow/<repo-slug>/design/mockup-<screen-name>.html
+File:         $AW_DIR/design/mockup-<screen-name>.html
 Served at:    <MOCKUP_URL>
 Baselines:    mockup-web-<screen-name>-{mobile,tablet,desktop}.png
 screens.json: entry written (route: <route>, approved_at: <ISO>)

@@ -25,7 +25,7 @@ Detects whether this is a web, iOS or desktop project and delegates to the appro
 Resolve the shared dir from the stable toolkit path, then follow the shared detection contract:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "$SHARED_DIR"
 ```
 
@@ -45,7 +45,7 @@ All user-supplied arguments (e.g., `[screen-name]`) are passed through unchanged
 After the sub-skill returns, locate its run report and normalize the outcome — never assume the diff was clean:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 RUN_DIR=$(ls -1dt "$AW_DIR/design/verify/"*/ 2>/dev/null | head -1)
 echo "run-dir: ${RUN_DIR:-none}"

@@ -4,6 +4,8 @@
 # Set by the OS or the shell.
 HOME # the user's home directory (OS)
 PATH # executable search path (OS)
+LANG # the locale, set by the OS or shell
+TERM # set by the terminal
 USER # login name (OS)
 EUID # the effective user id (bash sets it)
 TMPDIR # temp directory (OS)

@@ -17,7 +17,7 @@ Verifies iOS app behavior on simulator using XcodeBuildMCP. Executes **journeys*
 Shared references resolve from the stable toolkit path (never through a provider's skills dir):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/verification-lenses.md" "$SHARED_DIR/evidence-pack.md" "$SHARED_DIR/sim-bootstrap.md"
 ```
 
@@ -69,7 +69,7 @@ Then skip interaction steps, record each as SKIPPED with that reason, and cap th
 Acquire in a **single bash invocation** per `_shared/sim-bootstrap.md` (shell state does not persist between Bash calls):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; acquire_lock
 ```
 
@@ -83,7 +83,7 @@ Every per-step failure branch must re-source and release **in that same invocati
 Create the run directory first (CD5):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-<slug>"   # <slug> = 2–4 word kebab summary of what is being verified
 mkdir -p "$AW_DIR/verification/$RUN_ID"
@@ -130,7 +130,7 @@ Write both files into `$AW_DIR/verification/$RUN_ID/` following the schema in `_
 Always release, regardless of success or failure — a leaked lock blocks all future simulator sessions:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; release_lock
 ```
 

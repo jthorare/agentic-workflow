@@ -511,7 +511,7 @@ If no: proceed to Step 7 and note the open issues in the Step 8 report.
 Generate a URL-safe slug from the title (lowercase, hyphens, no special chars). Create the output directory and write all four files:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 mkdir -p "$AW_DIR/plans/${TIMESTAMP}-{slug}"
@@ -584,7 +584,7 @@ Show a summary to the user:
 ```
 Office Hours complete!
 
-Plan written to: ~/.agentic-workflow/<repo-slug>/plans/{timestamp}-{slug}/
+Plan written to: $AW_DIR/plans/{timestamp}-{slug}/
 (filenames are canonical per _shared/plan-layout.md)
 
   plan.md          → Canonical handoff — 1-page consolidated summary for downstream skills
@@ -623,7 +623,7 @@ Based on response:
 
 ## Outputs
 
-All under `~/.agentic-workflow/<repo-slug>/plans/{timestamp}-{slug}/` (manifest per `_shared/plan-layout.md`):
+All under `$AW_DIR/plans/{timestamp}-{slug}/` (manifest per `_shared/plan-layout.md`):
 
 - `plan.md` — canonical 1-page handoff (auto-discovered by `/autoplan`, `/planDesignReview`, `/planDevexReview`, `/cso --plan`, `/design-shotgun`)
 - `product.md` — Product Team domain doc

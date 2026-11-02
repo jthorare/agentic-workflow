@@ -21,7 +21,7 @@ Runs the real desktop app on seeded data, drives each screen into view and diffs
 ## Step 1: Load the Config and Pick Screens
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/desktop-evidence.md" "$SHARED_DIR/design-artifact-paths.md"
 ```
 
@@ -34,7 +34,7 @@ If `ls` fails, stop and report. Read both. Follow "Config (read first)" in `desk
 ## Step 2: Create the Run Directory
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-<screen-or-all>"
 mkdir -p "$AW_DIR/design/verify/$RUN_ID"
@@ -70,7 +70,7 @@ Overall:  <verdict>  (max diff <N>%)
 | screen | size | diff % | verdict | mismatches |
 |--------|------|--------|---------|------------|
 
-Artifacts: ~/.agentic-workflow/<repo-slug>/design/verify/<run-id>/
+Artifacts: $AW_DIR/design/verify/<run-id>/
 ```
 
 For each FAIL, describe the mismatching regions (region-level only, `desktop-evidence.md`), point at the `side-by-side.png`, and suggest `/design-refine` or `/design-implement`, then `/design-verify-desktop` again.

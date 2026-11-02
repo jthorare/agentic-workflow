@@ -23,7 +23,7 @@ Reviews plans or implementations for technical soundness. Produces mandatory mer
 **If nothing is given**, try two fallbacks in order:
 1. Auto-discover the most recent plan per `_shared/plan-discovery.md`:
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    PLAN_DIR=$(ls -1dt "$AW_DIR/plans/"*/ 2>/dev/null | head -1)
    ```
@@ -165,7 +165,7 @@ verdict: <PASS|NEEDS_WORK|BLOCKED>
 If `--output <path>` was provided, write to that exact path (ensure the parent dir exists with `mkdir -p`). Otherwise generate a URL-safe slug from the target title (lowercase, hyphens, no special chars) and write to the default path:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 ```

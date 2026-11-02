@@ -36,9 +36,16 @@ Parse the argument:
   scope — options: "Audit a path", "Campaign on one subsystem", "Gate the tests
   in my current diff".
 
+Resolve `$AW_DIR` first. It comes from the shared slug script; source it in the bash block that uses it (shell state does not persist):
+
+```bash
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
+source "$SHARED_DIR/repo-slug.sh"
+```
+
 Detect the test runner per `$SHARED_DIR/test-runner-detection.md` (sets
 `TEST_CMD`). Audit and campaign modes record their evidence in
-`~/.agentic-workflow/$REPO_SLUG/qa/test-audit/<YYYY-MM-DD>-<scope-slug>.md`
+`$AW_DIR/qa/test-audit/<YYYY-MM-DD>-<scope-slug>.md`
 (create the directory if missing). Never write the ledger into the project
 directory.
 

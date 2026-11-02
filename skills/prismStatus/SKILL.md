@@ -39,7 +39,7 @@ Assign `PORT` explicitly at the top of **every** bash block (shell state does no
 3. **Knowledge base population for current repo:**
    Resolve the repo slug via the shared helper:
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    echo "repo-slug: $REPO_SLUG"
    ```

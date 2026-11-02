@@ -20,7 +20,7 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 
 - Plan doc path (arg), OR auto-discover per `_shared/plan-discovery.md`:
   ```bash
-  SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+  SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
   source "$SHARED_DIR/repo-slug.sh"
   PLAN_DIR=$(ls -1dt "$AW_DIR/plans/"*/ 2>/dev/null | head -1)
   ```
@@ -43,7 +43,7 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 3. **Existence-check before consolidation** (per `_shared/parallel-dispatch.md`). After all 5 agents return, verify each expected output exists and is non-empty:
 
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    FEATURE_DIR="$AW_DIR/plans/<feature>"
    for f in product-review arch-review design-review devex-review security-review; do
@@ -113,7 +113,7 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 
 ## Outputs
 
-All under `~/.agentic-workflow/<repo-slug>/plans/<feature>/`: `product-review.md` · `arch-review.md` · `design-review.md` · `devex-review.md` · `security-review.md` · `consolidated-review.md`
+All under `$AW_DIR/plans/<feature>/`: `product-review.md` · `arch-review.md` · `design-review.md` · `devex-review.md` · `security-review.md` · `consolidated-review.md`
 
 ## Next steps
 

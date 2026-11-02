@@ -22,7 +22,7 @@ Generate production-ready code from an approved mockup, generating token files d
 Locate mockup sources in priority order — HTML source files are far more useful for code generation than PNG screenshots.
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 ls "$AW_DIR/design/mockup-"*.html 2>/dev/null          # HTML sources (preferred)
 ls "$AW_DIR/design/mockup-web-"*.png 2>/dev/null       # CD3 PNG baselines (fallback)

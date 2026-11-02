@@ -30,7 +30,7 @@ Pre-loads the design language context, then runs a **bounded** refinement sequen
 ## Step 0: Resume Context
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/design"
 ls "$AW_DIR/design/refine-log.md" 2>/dev/null || echo "refine-log: none yet"
@@ -126,7 +126,7 @@ Verify:      <run-id> — <verdict> (max diff <pct>% vs pre-refine <pct>%)
 
 | Path | Description |
 |------|-------------|
-| `~/.agentic-workflow/<repo-slug>/design/refine-log.md` | Append-only log of every dispatch (pack, skill, intent, files touched, outcome). Read at Step 0 so runs never repeat failed experiments. |
+| `$AW_DIR/design/refine-log.md` | Append-only log of every dispatch (pack, skill, intent, files touched, outcome). Read at Step 0 so runs never repeat failed experiments. |
 | `design-tokens.json` | Updated in place when a refinement introduces new token values (see Step 4). |
 
 ## Rules

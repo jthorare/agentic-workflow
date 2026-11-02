@@ -5,7 +5,7 @@ Referenced via: SHARED_DIR pattern (CD2).
 
 ## Gate (CD12)
 
-Enabled iff `~/.agentic-workflow/<repo-slug>/dark-factory.json` exists **and** contains `"enabled": true`:
+Enabled iff `$AW_DIR/dark-factory.json` exists **and** contains `"enabled": true`:
 
 ```bash
 source "$SHARED_DIR/repo-slug.sh"

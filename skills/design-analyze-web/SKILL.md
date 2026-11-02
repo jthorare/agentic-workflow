@@ -43,7 +43,7 @@ Pin every extractor output to a known path so the merge step reads exact files �
 For each URL, in one Bash invocation (shell state does not persist between calls):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/design/raw"
 npx dembrandt <url> --dtcg --out "$AW_DIR/design/raw/<host>.json"
@@ -52,7 +52,7 @@ npx dembrandt <url> --dtcg --out "$AW_DIR/design/raw/<host>.json"
 If `--dark` was passed, also run for each URL (same invocation shape):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 npx dembrandt <url> --dtcg --dark-mode --out "$AW_DIR/design/raw/<host>-dark.json"
 ```
@@ -63,7 +63,7 @@ After each run, verify the pinned file exists and is non-empty; if not, report t
 
 If multiple URLs were provided:
 
-1. Read exactly the pinned files written in Step 3 — `~/.agentic-workflow/<repo-slug>/design/raw/<host>.json` (and `<host>-dark.json` when `--dark`), one per URL
+1. Read exactly the pinned files written in Step 3 — `$AW_DIR/design/raw/<host>.json` (and `<host>-dark.json` when `--dark`), one per URL
 2. Identify shared patterns across sites (common colors, similar typography scales, consistent spacing)
 3. Resolve conflicts by frequency and prominence:
    - Token present in most sites wins
@@ -124,7 +124,7 @@ Next steps:
 
 - Always use `--dtcg` flag for W3C DTCG format output
 - Do not modify existing `design-tokens.json` without warning — if it exists, ask before overwriting
-- The pinned raw outputs under `~/.agentic-workflow/<repo-slug>/design/raw/` are **kept** — `/design-evolve-web` reuses them. Remove only stray dembrandt output files written outside `design/raw/` (e.g. in the project directory), explicitly per file:
+- The pinned raw outputs under `$AW_DIR/design/raw/` are **kept** — `/design-evolve-web` reuses them. Remove only stray dembrandt output files written outside `design/raw/` (e.g. in the project directory), explicitly per file:
   ```bash
   rm <stray-output-file>
   ```

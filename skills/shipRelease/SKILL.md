@@ -52,7 +52,7 @@ Do **not** attempt to auto-resolve conflicts.
 Resolve the shared dir from this skill's own symlink, then detect the runner:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ```
 
 Read `$SHARED_DIR/test-runner-detection.md` and set `TEST_CMD` from its runner table. If no runner is detected, report "tests: n/a — excluded from scoring" and continue (never score an undetected runner as a failure).
@@ -87,7 +87,7 @@ If any changed file is a UI component, page, route, template, or stylesheet:
 
 1. **Invoke skill `verify-app`** with args `--yes auto` — auto mode infers screens from the diff; `--yes` skips the confirmation re-prompt. A `FAIL` verdict **blocks the push**: stop and report the evidence-pack path.
    For a desktop UI change (`_shared/platform-detection.md`) this runs `verify-desktop`: the real app on seeded data against its mockups. A desktop UI diff with no desktop evidence pack blocks the push.
-2. **Baseline check:** if `~/.agentic-workflow/$REPO_SLUG/design/screens.json` exists and any of its screens match the changed files/routes, also **Invoke skill `design-verify`**. A FAIL diff (>10%) blocks the push. A desktop UI change always gets `design-verify` (its mockups come from the repo's screens manifest, not `screens.json`); any FAIL blocks the push.
+2. **Baseline check:** if `$AW_DIR/design/screens.json` exists and any of its screens match the changed files/routes, also **Invoke skill `design-verify`**. A FAIL diff (>10%) blocks the push. A desktop UI change always gets `design-verify` (its mockups come from the repo's screens manifest, not `screens.json`); any FAIL blocks the push.
 
 If the diff is not user-facing, note "verification: n/a (no UI/route changes)" and continue.
 
@@ -177,7 +177,7 @@ Record whether docs were updated, deferred to the canary chain, or skipped.
 
 - **Default chain (`/landAndDeploy` is invoked in Step 7):** do **NOT** write a separate `ship.md` here. The ship-phase metadata travels via `releases/.pending-ship.json` (Step 7); `/landAndDeploy` folds it into a `## Ship Phase` subsection at the top of its `deploy.md`. This guarantees `deploy.md` and `canary.md` always live in the same `releases/<ISO-date>-<short-sha>/` subdir — no split across two dirs when tip-SHA ≠ merge-SHA.
 
-- **`--no-deploy` invocation (Step 7 skipped):** since no `/landAndDeploy` will run, shipRelease writes a standalone ship summary to `~/.agentic-workflow/$REPO_SLUG/releases/<ISO-date>-<tip-short-sha>/ship.md` — same CD7 id form, using the **tip SHA** since no merge SHA exists yet (e.g. `2026-05-15-a1b2c3d`). Deploy information will not be available.
+- **`--no-deploy` invocation (Step 7 skipped):** since no `/landAndDeploy` will run, shipRelease writes a standalone ship summary to `$AW_DIR/releases/<ISO-date>-<tip-short-sha>/ship.md` — same CD7 id form, using the **tip SHA** since no merge SHA exists yet (e.g. `2026-05-15-a1b2c3d`). Deploy information will not be available.
 
   ```markdown
   # Release: {branch}
@@ -205,7 +205,7 @@ Release shipped!
   PR:      {url}
   Deploy:  {chained via /landAndDeploy --wait --chained-from-ship | skipped (--no-deploy)}
   Docs:    {updated | deferred to canary chain | skipped}
-  Report:  {handed to /landAndDeploy via .pending-ship.json | ~/.agentic-workflow/<repo-slug>/releases/{ISO-date}-{tip-short-sha}/ship.md}
+  Report:  {handed to /landAndDeploy via .pending-ship.json | $AW_DIR/releases/{ISO-date}-{tip-short-sha}/ship.md}
 ```
 
 ## Git mode

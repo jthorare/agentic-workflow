@@ -35,7 +35,7 @@ Verify the path exists (read the file or glob for it). If not found:
 Resolve the shared dir from the stable toolkit path:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "extraction: $SHARED_DIR/ios-token-extraction.md"
 ```
 
