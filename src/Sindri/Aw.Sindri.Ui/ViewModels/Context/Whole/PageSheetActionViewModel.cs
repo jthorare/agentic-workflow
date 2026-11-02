@@ -1,7 +1,7 @@
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>One action row of the page sheet: its name box, its concept check boxes and what the map says about it.</summary>
-internal sealed class PageSheetActionViewModel : ObservableObject
+internal sealed partial class PageSheetActionViewModel : ObservableObject
 {
     private int _number = 1;
     private int _total = 1;
@@ -26,8 +26,16 @@ internal sealed class PageSheetActionViewModel : ObservableObject
     /// <summary>Gets the action id, or null for a new action (the server makes it from the name).</summary>
     internal string? Id { get; }
 
-    /// <summary>Gets the map action's node key, or null.</summary>
-    internal string? Action { get; }
+    /// <summary>Gets or sets the map action's node key, or null; "Pick another" repoints it.</summary>
+    internal string? Action
+    {
+        get;
+        set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(FromMap));
+        }
+    }
 
     /// <summary>Gets or sets the name.</summary>
     public string Name

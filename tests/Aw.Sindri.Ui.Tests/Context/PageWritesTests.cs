@@ -126,6 +126,35 @@ public sealed class PageWritesTests
     }
 
     [Fact]
+    public async Task Actions_offers_only_the_suggested_actions_of_the_page_never_an_owner_action()
+    {
+        var answer = new RouteAnswer(HttpStatusCode.OK, string.Concat(
+            "{'pages':[{'id':'schedule-week','key':'surface:route/GET:/schedule/week','name':'Schedule week','repo':'web','mark':'suggested','code':true,'actions':[",
+            "{'id':'submit','key':'action:button/Submit week','name':'Submit week','mark':'owner','code':true,'concepts':[]},",
+            "{'id':'copy','key':'action:button/Copy week','name':'Copy week','mark':'suggested','code':true,'concepts':[]},",
+            "{'id':'export','key':'action:button/Export week','name':'Export week','mark':'suggested','code':true,'concepts':[]}]},",
+            "{'id':'schedule-day','key':'surface:route/GET:/schedule/day','name':'Schedule day','repo':'web','mark':'suggested','code':true,'actions':[",
+            "{'id':'other','key':'action:button/Other','name':'Other','mark':'suggested','code':true,'concepts':[]}]}],",
+            "'total':2,'truncated':false,'mapVersion':'v41'}").Replace('\'', '"'));
+        var api = new FakeSindriApi { ContextPagesAnswer = _ => answer };
+
+        var found = await Writes(api).Actions("surface:route/GET:/schedule/week", Token);
+
+        Assert.Equal(["action:button/Copy week", "action:button/Export week"], found!.Select(m => m.Key), StringComparer.Ordinal);
+        Assert.Equal(["Copy week", "Export week"], found!.Select(m => m.Name), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task Actions_is_null_when_the_map_has_no_such_page()
+    {
+        var api = new FakeSindriApi { ContextPagesAnswer = _ => Pages(truncated: false) };
+
+        var found = await Writes(api).Actions("surface:route/GET:/nowhere", Token);
+
+        Assert.Null(found);
+    }
+
+    [Fact]
     public async Task Page_drops_the_owner_surface_key()
     {
         var api = new FakeSindriApi { ContextPagesAnswer = _ => Pages(truncated: false) };

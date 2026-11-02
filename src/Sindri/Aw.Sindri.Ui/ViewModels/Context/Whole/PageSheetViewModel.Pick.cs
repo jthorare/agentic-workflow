@@ -71,6 +71,7 @@ internal sealed partial class PageSheetViewModel
             return;
         }
 
+        EndActionPick();   // one search is open at a time
         IsPicking = true;
         OnChanged(nameof(IsPicking));
         Picking = ReadPick(PickQuery.Trim());
@@ -101,8 +102,14 @@ internal sealed partial class PageSheetViewModel
             return;
         }
 
+        var changed = !string.Equals(_draft.Surface, match.Key, StringComparison.Ordinal);
         _draft = _draft with { Surface = match.Key };
         EndPick();
+        if (changed)
+        {
+            ClearRowActions();
+        }
+
         OnChanged(nameof(FromMap));
         OnChanged(nameof(HasFromMap));
         OnChanged(nameof(HasChanges));

@@ -40,6 +40,12 @@ internal interface IPageWrites
     /// <returns>The pages found, or null when the read failed or no API address is known.</returns>
     public Task<IReadOnlyList<PageMatch>?> Search(string? repo, string query, int limit, CancellationToken cancellationToken);
 
+    /// <summary>Reads the map actions of one page (GET /sindri/context/pages, the page whose key is <paramref name="surface"/>), the suggested ones only: the row-level "Pick another" search (pages spec §3.6).</summary>
+    /// <param name="surface">The page's map surface key.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The page's suggested actions (an owner action already holds its map action, and a second one on it folds into the first on the map), or null when the read failed, the map has no such page or no API address is known.</returns>
+    public Task<IReadOnlyList<PageMatch>?> Actions(string surface, CancellationToken cancellationToken);
+
     /// <summary>Writes the pages in one profile write, waits for the job, then approves its hash when <paramref name="approve"/> is set and nothing else waits.</summary>
     /// <param name="save">The pages to set and the page ids to remove.</param>
     /// <param name="ifHash">The live hash the sheet read when it opened.</param>

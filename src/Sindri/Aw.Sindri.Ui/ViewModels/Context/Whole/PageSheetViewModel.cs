@@ -185,6 +185,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     /// <param name="row">The row.</param>
     internal void RemoveAction(PageSheetActionViewModel row)
     {
+        ReleaseActionPick(row);
         Actions = [.. Actions.Where(a => !ReferenceEquals(a, row))];
         Renumber();
     }
@@ -229,6 +230,8 @@ internal sealed partial class PageSheetViewModel : ObservableObject
     {
         var row = new PageSheetActionViewModel(action.Id, action.Name, action.Action, [.. _columns.Select(c => new ConceptTickViewModel(c, action.Concepts.Contains(c.Id, StringComparer.Ordinal)))]);
         row.PropertyChanged += (_, _) => OnChanged(nameof(IsUnderNoConcept));   // a name or a tick moves the page in or out of every concept
+        row.PickQueryChanged += (_, _) => OnActionQuery(row);
+        row.CanPick = _draft?.Surface is not null;   // a row can pick another map action only on a page with a map surface
         return row;
     }
 
@@ -261,7 +264,7 @@ internal sealed partial class PageSheetViewModel : ObservableObject
         OnChanged(nameof(IsUnderNoConcept));
     }
 
-    private string Snapshot() => Name + '\n' + _draft?.Surface + '\n' + string.Join('\n', Actions.Select(static a => a.Name + "|" + string.Join(',', a.TickedIds)));
+    private string Snapshot() => Name + '\n' + _draft?.Surface + '\n' + string.Join('\n', Actions.Select(static a => a.Name + "|" + a.Action + "|" + string.Join(',', a.TickedIds)));
 
     private void ChangedState()
     {

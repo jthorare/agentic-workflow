@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Views.Context.Whole;
@@ -52,6 +53,8 @@ internal sealed partial class PageSheetView : UserControl
             old.NameFocusRequested -= OnNameFocus;
             old.PickBoxFocusRequested -= OnPickBoxFocus;
             old.PickButtonFocusRequested -= OnPickButtonFocus;
+            old.ActionPickBoxFocusRequested -= OnActionPickBoxFocus;
+            old.ActionPickButtonFocusRequested -= OnActionPickButtonFocus;
             old.PropertyChanged -= OnSheetChanged;
         }
 
@@ -64,6 +67,8 @@ internal sealed partial class PageSheetView : UserControl
             now.NameFocusRequested += OnNameFocus;
             now.PickBoxFocusRequested += OnPickBoxFocus;
             now.PickButtonFocusRequested += OnPickButtonFocus;
+            now.ActionPickBoxFocusRequested += OnActionPickBoxFocus;
+            now.ActionPickButtonFocusRequested += OnActionPickButtonFocus;
             now.PropertyChanged += OnSheetChanged;
             FocusLater("PageSheetName");
         }
@@ -90,6 +95,28 @@ internal sealed partial class PageSheetView : UserControl
 
     private void OnPickButtonFocus(object? sender, EventArgs e) => FocusLater("PageSheetPickAnother");
 
+    private void OnActionPickBoxFocus(object? sender, ActionPickEventArgs e) => FocusInRow(e.Row, "PageSheetActionPickBox");
+
+    private void OnActionPickButtonFocus(object? sender, ActionPickEventArgs e) => FocusInRow(e.Row, "PageSheetActionPickAnother");
+
+    private void OnActionPickAnother(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: PageSheetActionViewModel row })
+        {
+            Sheet?.OpenActionPick(row);
+        }
+    }
+
+    private void OnActionPickBack(object? sender, RoutedEventArgs e) => Sheet?.CloseActionPick();
+
+    private void OnActionPickRow(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: PageMatch match })
+        {
+            Sheet?.ChooseAction(match);
+        }
+    }
+
     private void OnPickAnother(object? sender, RoutedEventArgs e) => Sheet?.OpenPick();
 
     private void OnPickBack(object? sender, RoutedEventArgs e) => Sheet?.ClosePick();
@@ -101,6 +128,13 @@ internal sealed partial class PageSheetView : UserControl
             Sheet?.Choose(match);
         }
     }
+
+    // An action row's controls repeat in the list: the one inside this row's template.
+    private void FocusInRow(PageSheetActionViewModel row, string name) =>
+        Dispatcher.UIThread.Post(
+            () => _ = this.FindControl<ItemsControl>("PageSheetActions")?.GetVisualDescendants().OfType<Control>()
+                .FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.Ordinal) && ReferenceEquals(c.DataContext, row))?.Focus(NavigationMethod.Tab),
+            DispatcherPriority.Loaded);
 
     private void FocusLater(string name) =>
         Dispatcher.UIThread.Post(() => _ = this.FindControl<Control>(name)?.Focus(NavigationMethod.Tab), DispatcherPriority.Loaded);
