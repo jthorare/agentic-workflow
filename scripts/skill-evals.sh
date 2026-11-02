@@ -893,12 +893,18 @@ do_run() {
   fi
 
   mkdir -p "$EVAL_HOME/cache" || die 3 "cannot create $EVAL_HOME"
-  EVAL_TMP="$EVAL_HOME/tmp"
-  [ "$dry" = 1 ] || { mkdir -p "$EVAL_TMP" && chmod 700 "$EVAL_TMP"; } || die 3 "cannot create $EVAL_TMP"
+  EVAL_TMP="$EVAL_HOME/tmp/$RUN_ID"   # one per run: lanes don't share it, and cleanup empties it
+  [ "$dry" = 1 ] || { mkdir -p "$EVAL_HOME/tmp" && mkdir -m 700 "$EVAL_TMP"; } || die 3 "cannot create $EVAL_TMP"
   case "$EVAL_TMP" in
     /tmp/* | /var/tmp/* | /dev/shm/*) note "the eval temp dir $EVAL_TMP is under a system temp dir; claude's sandbox denies writes there, so Bash writes in eval runs will fail (set AW_STATE_DIR elsewhere)" ;;
   esac
-  cleanup() { local kv; if [ "$KEEP" = 0 ]; then for kv in $STAGE_LIST; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done; fi; }
+  cleanup() {
+    local kv
+    [ "$KEEP" = 0 ] || return 0
+    for kv in $STAGE_LIST; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done
+    # what the agent's tools left in TMPDIR; claude leaves its sealed dirs read-only, so open them first
+    [ ! -d "$EVAL_TMP" ] || { chmod -R u+rwx "$EVAL_TMP" 2>/dev/null; find "$EVAL_TMP" -delete 2>/dev/null; }
+  }
   trap cleanup EXIT
   trap 'exit 130' INT TERM
   if [ -n "$skills" ]; then

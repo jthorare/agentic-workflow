@@ -74,6 +74,7 @@ echo "$*" >"$d/args.$$.txt"
 env >"$d/env.$$.txt"
 echo "$PWD" >"$d/cwd.$$.txt"
 if [ -n "${TMPDIR:-}" ] && [ -d "$TMPDIR" ] && [ -w "$TMPDIR" ]; then echo writable >"$d/tmpdir-ok.$$.txt"; fi
+if [ -n "${TMPDIR:-}" ] && [ -w "$TMPDIR" ]; then mkdir -p "$TMPDIR/sealed" && echo left >"$TMPDIR/sealed/leftover" && chmod 500 "$TMPDIR/sealed"; fi
 out=""; prev=""
 for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; prev="$a"; done
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
@@ -287,7 +288,9 @@ if grep -qE "hunter22xyz|$FAKE_GH|tok-forge" "$ENVF"; then fail "a secret value 
 has -E '^AW_PREAMBLE=off$' "$ENVF" && has -E '^AW_GIT_MODE=readonly$' "$ENVF" && has -E '^AW_RESULT=1$' "$ENVF" && ok "AW_* values are in the allowlist" || fail "AW_* values"
 has -E "^PATH=.*/evals/stubs/bin:" "$ENVF" && ok "PATH starts with the stub dir" || fail "PATH order"
 [ "$(wc -l <"$ENVF")" -le 12 ] && ok "only the allowlist is forwarded ($(wc -l <"$ENVF") variables)" || { fail "env has too many variables"; cat "$ENVF"; }
-has -E "^TMPDIR=$STATE/skill-evals/tmp\$" "$ENVF" && ok "eval child: TMPDIR is the eval home's tmp" || { fail "eval child: TMPDIR is the eval home's tmp"; grep '^TMPDIR=' "$ENVF" || echo "      | (no TMPDIR in the child's env)"; }
+has -E "^TMPDIR=$STATE/skill-evals/tmp/[0-9]{8}T[0-9]{6}-[0-9]+\$" "$ENVF" && ok "eval child: TMPDIR is a per-run dir under the eval home's tmp" || { fail "eval child: TMPDIR is a per-run dir under the eval home's tmp"; grep '^TMPDIR=' "$ENVF" || echo "      | (no TMPDIR in the child's env)"; }
+RUN_TMP="$(sed -n 's/^TMPDIR=//p' "$ENVF")"
+[ -n "$RUN_TMP" ] && [ ! -e "$RUN_TMP" ] && ok "eval child: a normal run removes its TMPDIR, read-only leftovers included" || fail "eval child: TMPDIR '$RUN_TMP' is still there after a normal run"
 [ -n "$(ls "$BIN"/tmpdir-ok.*.txt 2>/dev/null)" ] && ok "eval child: TMPDIR exists and is writable when claude runs" || fail "eval child: TMPDIR exists and is writable when claude runs"
 ARGS="$(cat "$BIN"/args.*.txt | head -1)"
 for f in '--trust-plugin' '--scaffold' '--no-publish' '--ablation none' '--runs 2' '--max-cost-usd 8' '--allow-tools Bash Write Edit'; do
@@ -614,6 +617,8 @@ TD="$(find "$STATE/skill-evals" -type d -name traces | head -1)"
 [ "$(ls "$TD" 2>/dev/null | wc -l)" = 3 ] && ok "three traced runs of two cases leave three files" || { fail "trace files: $(ls "$TD" 2>/dev/null | tr '\n' ' ')"; show; }
 [ -f "$TD/alpha-natural-1-with-1.jsonl" ] && [ -f "$TD/alpha-natural-1-with-2.jsonl" ] && [ -f "$TD/alpha-natural-2-with-1.jsonl" ] && ok "traces are named <case>-<arm>-<run>.jsonl" || { fail "trace names"; ls "$TD"; }
 grep -q assistant "$TD/alpha-natural-1-with-2.jsonl" && ok "each file holds its own run's trace" || fail "trace content"
+KEPT_TMP="$(sed -n 's/^TMPDIR=//p' "$BIN"/env.*.txt | head -1)"
+[ -n "$KEPT_TMP" ] && [ -d "$KEPT_TMP" ] && ok "eval child: --keep-temp keeps the run's TMPDIR" || fail "eval child: --keep-temp lost TMPDIR '$KEPT_TMP'"
 
 echo "fixture lint ignores comment lines"
 mkrepo
