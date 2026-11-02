@@ -51,6 +51,9 @@ internal sealed class PagesSectionViewModel : ObservableObject
     /// <summary>Gets the section's head.</summary>
     public string Head => CanClose ? Labels.ContextPagesNoConceptHead : Labels.ContextPagesHead;
 
+    /// <summary>Gets the suggested rows' page keys, in the section's order.</summary>
+    internal IReadOnlyList<string> SuggestedKeys => [.. _all.Where(static r => !r.Owner).Select(static r => r.Key)];
+
     /// <summary>Gets the pages shown, in the section's order.</summary>
     public IReadOnlyList<PageRowViewModel> Rows => _showingAll ? _all : [.. _all.Take(Cap)];
 
@@ -131,7 +134,7 @@ internal sealed class PagesSectionViewModel : ObservableObject
     }
 
     /// <summary>Asks for the Accept all suggested sheet over the suggested rows listed.</summary>
-    internal void AcceptAll() => AcceptAllRequested?.Invoke(this, new ValueEventArgs<IReadOnlyList<string>>([.. _all.Where(static r => !r.Owner).Select(static r => r.Key)]));
+    internal void AcceptAll() => AcceptAllRequested?.Invoke(this, new ValueEventArgs<IReadOnlyList<string>>(SuggestedKeys));
 
     /// <summary>Asks for the New page sheet.</summary>
     internal void NewPage() => SheetRequested?.Invoke(this, new ValueEventArgs<string?>(value: null));
