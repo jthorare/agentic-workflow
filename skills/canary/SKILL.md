@@ -158,3 +158,16 @@ Write `.agentic-workflow/canary.json`. Exit without monitoring.
 - `/syncDocs` — auto-chained on HEALTHY
 - `/rootCause` — recommended on UNHEALTHY
 - Manual rollback (`gh pr revert` or repo-specific path) — recommended on DEGRADED if rolling forward isn't viable
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/canary-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`canary`), `artifacts` (absolute paths: `$AW_DIR/releases/<release-id>/canary.md`), `summary` (one line),
+plus `verdict` (`HEALTHY | DEGRADED | UNHEALTHY`, the canary verdict); `release_id` (the release id).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

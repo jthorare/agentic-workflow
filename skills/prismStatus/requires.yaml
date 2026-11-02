@@ -1,0 +1,2 @@
+bins: [curl, jq]
+mcp: [prism-mcp]

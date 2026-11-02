@@ -1,0 +1,4 @@
+bins: [gh, git]
+agents: [qa-runner]
+mcp: [prism-mcp]
+skills: [superpowers:executing-plans, superpowers:subagent-driven-development, superpowers:test-driven-development, superpowers:using-git-worktrees, superpowers:verification-before-completion, superpowers:writing-plans]

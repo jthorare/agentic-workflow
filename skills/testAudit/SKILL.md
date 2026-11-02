@@ -224,3 +224,16 @@ End the response with a `## Next steps` block listing 1–3 of:
 - `/review <pr>` — independent review of the pruning PR before merge
 - `/rootCause` — a retained test failed on the baseline and the owner bug is not yet understood
 - `/testAudit --audit <next-scope>` — the next high-confidence batch after this one lands
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/testAudit-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`testAudit`), `artifacts` (absolute paths: `$AW_DIR/qa/test-audit/<YYYY-MM-DD>-<scope-slug>.md` and the tests it changed), `summary` (one line),
+plus `scope` (audit scope); `mode` (`gate | audit | sweep`, the mode it ran in).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
