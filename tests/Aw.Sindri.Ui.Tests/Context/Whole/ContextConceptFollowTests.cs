@@ -92,4 +92,28 @@ public sealed class ContextConceptFollowTests
 
         Expect.Equal((before + 1, true), (api.WholeMapAsked.Count, page.Whole.IsDrilled));
     }
+
+    [Fact]
+    public async Task An_open_concept_gone_from_the_newer_version_goes_back_to_the_concepts_with_a_note()
+    {
+        var (page, api, follows, url) = await OpenBilling();
+        api.WholeMapAnswer = query => query.Concept is null ? ContextAnswers.WholeMap(query) : new RouteAnswer(HttpStatusCode.NotFound, GoldenFiles.Api("context-whole", "concept-unknown-200"));
+
+        api.MapStatusAnswer = StatusAt(2);
+        await Event(follows, url);
+
+        Expect.Equal((null, true, "Billing isn't in map v2 any more", false), (page.OpenedConceptId, page.ShowConcepts, page.Concepts.Note, page.Whole.IsFailed));
+    }
+
+    [Fact]
+    public async Task An_open_concept_whose_newer_read_fails_otherwise_shows_the_failure_row()
+    {
+        var (page, api, follows, url) = await OpenBilling();
+        api.WholeMapAnswer = query => query.Concept is null ? ContextAnswers.WholeMap(query) : new RouteAnswer(HttpStatusCode.InternalServerError, "{}");
+
+        api.MapStatusAnswer = StatusAt(2);
+        await Event(follows, url);
+
+        Expect.Equal(("concept:billing", true, true, false), (page.OpenedConceptId, page.Whole.IsFailed, page.ShowWholeStatus, page.Concepts.HasNote));
+    }
 }

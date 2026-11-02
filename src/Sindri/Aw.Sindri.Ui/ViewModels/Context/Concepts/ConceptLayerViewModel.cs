@@ -43,7 +43,7 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
     /// <summary>Whether the layer takes the stage: it is reading, or has concepts.</summary>
     internal bool IsOnStage => IsLoading || HasConcepts;
 
-    /// <summary>The line that says why the map is shown without concepts; empty when there is none to say.</summary>
+    /// <summary>The line that says why the map is shown without concepts, or that an open concept went away; empty when there is none to say.</summary>
     public string Note { get; private set; } = string.Empty;
 
     /// <summary>Whether the note has words.</summary>
@@ -59,6 +59,14 @@ internal sealed partial class ConceptLayerViewModel : ObservableObject
     /// <param name="id">The concept's id.</param>
     /// <returns>Its tile.</returns>
     internal ConceptTileViewModel? Find(string id) => _all.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.Ordinal));
+
+    /// <summary>A line over the concepts that keeps them on the stage (an open concept a newer map lacks).</summary>
+    /// <param name="note">The line.</param>
+    internal void Tell(string note)
+    {
+        Note = note;
+        Changed();
+    }
 
     /// <summary>A read starts.</summary>
     internal void Loading()
