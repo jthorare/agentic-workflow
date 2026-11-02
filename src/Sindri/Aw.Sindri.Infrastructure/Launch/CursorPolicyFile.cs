@@ -16,7 +16,7 @@ internal static class CursorPolicyFile
 
     /// <summary>
     /// The file's text for <paramref name="policy"/>: ReadOnly and Default allow writes to the one writable path, Plan allows none; the allowed tools map to Cursor's rule types
-    /// (a bare Read, Grep or Glob to 'Read(**)', 'Bash(x)' to 'Shell(x)', Edit and Write to 'Write'); denied paths deny Read and Write, a read-only path denies Write.
+    /// (a bare Read, Grep or Glob to 'Read(**)', a bare Bash to 'Shell(*)', 'Bash(x)' to 'Shell(x)', Edit, MultiEdit, NotebookEdit and Write to 'Write', a bare WebFetch to 'WebFetch(*)'; any other name is refused); denied paths deny Read and Write, a read-only path denies Write.
     /// <para>
     /// DRAFT (issue #1428). Shape from Cursor's public CLI docs (permissions: allow and deny lists, rule types Shell, Read, Write, WebFetch and Mcp, deny wins; parameters: -p, --trust,
     /// --sandbox enabled|disabled, --workspace, --mode plan), not from a run. What each open question decides:
@@ -60,9 +60,11 @@ internal static class CursorPolicyFile
     {
         "Read" or "Grep" or "Glob" => "Read(**)",
         "Bash" => "Shell(*)",
-        "Edit" or "Write" => "Write(**)",
+        "Edit" or "Write" or "MultiEdit" or "NotebookEdit" => "Write(**)",
+        "WebFetch" => "WebFetch(*)",
         _ when tool.StartsWith("Bash(", StringComparison.Ordinal) => "Shell(" + tool["Bash(".Length..],
         _ when tool.StartsWith("Edit(", StringComparison.Ordinal) => "Write(" + tool["Edit(".Length..],
+        _ when tool.StartsWith("MultiEdit(", StringComparison.Ordinal) => "Write(" + tool["MultiEdit(".Length..],
         _ when _cursorRules.Any(prefix => tool.StartsWith(prefix, StringComparison.Ordinal)) => tool,
         _ => throw new ArgumentException($"the allowed tool '{tool}' has no Cursor rule type", nameof(tool)),
     };

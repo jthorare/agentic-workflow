@@ -51,7 +51,8 @@ public sealed class CursorPolicyReuseTests : IDisposable
 
         Assert.True(second.IsError);
         Assert.Contains("another launch", second.Error.Message, StringComparison.Ordinal);
-        Assert.Equal((before, true), (File.ReadAllBytes(Config), File.Exists(CursorPolicyFile.SidecarFor(Policy, _a))));
+        Assert.Equal(before, File.ReadAllBytes(Config));   // a byte[] inside a tuple compares by reference, so the two are checked apart
+        Assert.True(File.Exists(CursorPolicyFile.SidecarFor(Policy, _a)));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -88,6 +89,12 @@ public sealed class CursorPolicyReuseTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public void A_bare_Bash_maps_to_Shell_and_a_bare_Edit_or_Write_to_Write()
         => Assert.Equal(["Shell(*)", "Write(**)", "Write(**)"], Allow(new StepPolicy(["Bash", "Edit", "Write"], StepPermissionMode.Default, WritablePath: null)));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_bare_MultiEdit_or_NotebookEdit_maps_to_Write_and_a_bare_WebFetch_to_WebFetch_and_the_argument_forms_keep_their_argument()
+        => Assert.Equal(
+            ["Write(**)", "Write(**)", "WebFetch(*)", "Write(src/**)", "WebFetch(domain:example.com)"],
+            Allow(new StepPolicy(["MultiEdit", "NotebookEdit", "WebFetch", "MultiEdit(src/**)", "WebFetch(domain:example.com)"], StepPermissionMode.Default, WritablePath: null)));
 
     [Fact, Trait("Lane", "unit")]
     public void A_tool_with_no_Cursor_rule_type_is_refused_not_passed_through()
