@@ -57,7 +57,27 @@
                     </DataTemplate>
                   </ItemsControl.ItemTemplate>
                 </ItemsControl>
-                <TextBlock Classes="caption subtle" Text="{Binding FromMap}" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
+                  <TextBlock Classes="caption subtle" VerticalAlignment="Center" Text="{Binding FromMap}" />
+                  <Button x:Name="PageSheetActionPickAnother" Grid.Column="1" Padding="8,2" Content="{Binding PickAnotherText}" IsVisible="{Binding CanPick}" Click="OnActionPickAnother" AutomationProperties.Name="{Binding PickAnotherText}" />
+                </Grid>
+                <StackPanel Spacing="4" IsVisible="{Binding IsPicking}">
+                  <TextBox x:Name="PageSheetActionPickBox" Text="{Binding PickQuery, Mode=TwoWay}" AutomationProperties.Name="{Binding PickBoxName}" />
+                  <TextBlock Classes="caption subtle" Text="{Binding PickStatus}" IsVisible="{Binding HasPickStatus}" TextWrapping="Wrap" AutomationProperties.Name="{Binding PickStatus}" AutomationProperties.LiveSetting="Polite" />
+                  <ItemsControl ItemsSource="{Binding PickRows}">
+                    <ItemsControl.ItemTemplate>
+                      <DataTemplate x:DataType="vm:PageMatch">
+                        <Button HorizontalAlignment="Stretch" HorizontalContentAlignment="Left" Click="OnActionPickRow" AutomationProperties.Name="{Binding Name}">
+                          <StackPanel>
+                            <TextBlock Classes="body" Text="{Binding Name}" />
+                            <TextBlock Classes="caption subtle" Text="{Binding FromMap}" />
+                          </StackPanel>
+                        </Button>
+                      </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                  </ItemsControl>
+                  <Button x:Name="PageSheetActionPickBack" Content="{Binding PickBackText}" Click="OnActionPickBack" HorizontalAlignment="Left" AutomationProperties.Name="{Binding PickBackText}" />
+                </StackPanel>
                 <TextBlock Classes="caption" Foreground="{DynamicResource Brush.Error}" Text="{Binding Error}" IsVisible="{Binding HasError}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Error}" />
               </StackPanel>
             </DataTemplate>

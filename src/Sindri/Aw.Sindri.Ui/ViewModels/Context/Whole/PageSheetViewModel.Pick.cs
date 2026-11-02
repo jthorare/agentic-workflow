@@ -71,6 +71,7 @@ internal sealed partial class PageSheetViewModel
             return;
         }
 
+        EndActionPick();   // one search is open at a time
         IsPicking = true;
         OnChanged(nameof(IsPicking));
         Picking = ReadPick(PickQuery.Trim());

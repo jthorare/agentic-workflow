@@ -104,7 +104,36 @@ internal sealed class PageWrites(ProfileWriteFlow flow, ISindriApi api, Func<Uri
     }
 
     /// <inheritdoc />
-    public Task<IReadOnlyList<PageMatch>?> Actions(string surface, CancellationToken cancellationToken) => throw new NotSupportedException();
+    public async Task<IReadOnlyList<PageMatch>?> Actions(string surface, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(surface);
+        if (apiUrl() is not { } url)
+        {
+            return null;
+        }
+
+        for (var read = 0; read < MaxReads; read++)
+        {
+            var answer = await api.ContextPages(url, new PagesQuery(Limit: PageSize, Offset: read * PageSize), cancellationToken).ConfigureAwait(true);
+            if (!answer.IsSuccess)
+            {
+                return null;
+            }
+
+            if (answer.Value.Pages.FirstOrDefault(p => string.Equals(p.Key, surface, StringComparison.Ordinal)) is { } page)
+            {
+                // Only the map's suggestions: an owner action already holds its map action, and a second owner action on it would fold into the first on the map with no refusal.
+                return [.. page.Actions.Where(static a => string.Equals(a.Mark, "suggested", StringComparison.Ordinal)).Select(static a => new PageMatch(a.Key, a.Name))];
+            }
+
+            if (!answer.Value.Truncated)
+            {
+                return null;
+            }
+        }
+
+        return null;
+    }
 
     /// <inheritdoc />
     public async Task<PageSaved> Save(PageSave save, string? ifHash, bool approve, CancellationToken cancellationToken)
