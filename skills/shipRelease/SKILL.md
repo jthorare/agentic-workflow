@@ -1,6 +1,6 @@
 ---
 name: shipRelease
-description: "Ship a release — sync branch, run tests, audit coverage, push, open PR, then auto-chain → /landAndDeploy → /canary → /syncDocs (skip the deploy chain with --no-deploy)."
+description: "Use when a branch is finished and the person wants it out the door: bring it up to date with the base branch, run the tests, check coverage, then publish the branch and create the pull request, and hand off to landAndDeploy (skip with --no-deploy). Not for waiting on a merge or deploying a PR that is already open (landAndDeploy), or watching a live release (canary)."
 argument-hint: "[--base main] [--skip-docs] [--no-deploy] [--min-coverage <pct>]"
 allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(coverage *), Bash(ls *), Bash(cat *), Bash(mkdir *), Bash(test *), Bash(SHARED_DIR=*), Bash(source *), Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
