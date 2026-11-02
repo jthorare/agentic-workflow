@@ -52,4 +52,4 @@ Under `AW_RESULT=1`, the reply carries the same JSON as one fenced block tagged 
 
 - A skill that already prints a JSON tail in every reply (today `rootCause`) keeps printing it always, as an `aw-result` block with `skill`, `artifacts` and `summary` added to its existing keys.
 - Every other skill prints the block only when the gate printed `AW_RESULT=1`.
-- Order in the reply: the `aw-result` block, then `## Next steps`. A lens's `verdict:` stays the last line of its report file.
+- Order: write the result file, and every other file the run writes, first. The `aw-result` block goes in the final reply, the message after the last tool call, then `## Next steps`. Callers and graders read only that final reply, so a block printed before a later tool call (a Write, a chained skill) is lost. A lens's `verdict:` stays the last line of its report file.

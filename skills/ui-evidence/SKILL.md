@@ -181,7 +181,7 @@ The files are `NAME=value` lines (`#` comments, optional `export ` and quotes); 
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 ```
 
-`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/ui-evidence-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/ui-evidence-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`ui-evidence`), `artifacts` (absolute paths: the run's evidence directory (screenshots, `summary.json`) and the PR comment or Linear update when published), `summary` (one line),
 plus `run_dir` (absolute path of the run directory); `outcome` (`passed` | `failed` | `refused` | `errored` | `blocked`, for exit 0, 2, 1, 4, 3); `provenance` (`seeded` | `unknown` | `n/a`, what `ui-evidence provenance` printed); `passed` (true when every check passed); `published` (`true` only if something was actually posted or uploaded after the user approved it, else `false`).
