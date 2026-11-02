@@ -1,6 +1,6 @@
 ---
 name: system-design-video
-description: Turn a system design (data model, how a value flows through functions, rollout states, PR order) into a short whiteboard explainer video drawn live, stroke by stroke, on a dark board. One cut per audience (engineering, product), captions, a narration script, and 1080p + 720p MP4s. Use when asked for a system design video, a design walkthrough film, or a whiteboard explainer of a design doc or TDD.
+description: "Use when a design doc, TDD or spec is too long for people to read and they need to see it instead: a silent explainer film that draws the data model, read and write paths, rollout gates and PR order stroke by stroke on a dark board, with captions and 1080p and 720p MP4s. Not for writing the design itself (system-design) or recording a running app."
 argument-hint: "[design doc, packet dir, or topic] [--persona engineering|product]"
 allowed-tools: Bash(ls *), Bash(mkdir *), Bash(bun *), Bash(ffmpeg *), Bash(ffprobe *), Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion
 ---
@@ -116,6 +116,22 @@ Sound and voiceover are not built in. The captions carry the narration. Offer th
 - Deliverable paths and sizes are listed.
 
 Posting to chat or a tracker is a separate step: **Ask the user** first, and use the project's own tool for it.
+
+## Result block
+
+Under `AW_RESULT=1` (the eval runner and callers set it; a person's normal run prints and writes nothing here), finish by writing `$AW_DIR/results/system-design-video-<timestamp>.json` with the Write tool (`<timestamp>` from `date -u +%Y%m%dT%H%M%SZ`) and printing the same JSON as a fenced `aw-result` block, before `## Next steps`:
+
+```aw-result
+{
+  "skill": "system-design-video",
+  "artifacts": ["/abs/path/brief.md", "/abs/path/storyboard.json", "/abs/path/1080p.mp4", "/abs/path/720p.mp4"],
+  "summary": "one line: what was rendered and whether playback-check passed",
+  "playback": "pass",
+  "deliverables": ["/abs/path/1080p.mp4", "/abs/path/720p.mp4"]
+}
+```
+
+`artifacts` lists every file this run wrote (absolute paths). `playback` is `pass` only when `playback-check.sh` exited 0 on every MP4, else `fail` (or `unchecked` when no MP4 was encoded). `deliverables` lists only the MP4s that passed it, so it is `[]` when `playback` is not `pass`. A failed playback check is reported as a failure in the summary and the reply; it is never shipped.
 
 ## Next steps
 

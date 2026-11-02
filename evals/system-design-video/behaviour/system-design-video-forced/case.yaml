@@ -1,0 +1,12 @@
+schema_version: "1.1"
+name: system-design-video-forced
+tags: [behaviour, system-design-video]
+context:
+  scaffold_script: fixture.sh
+# Drafts for the runner (lead adapts to the real schema): the stubs this case needs and the environment it runs in.
+stubs: [ffmpeg, ffprobe, bun]
+env:
+  AW_RESULT: "1"
+  AW_GIT_MODE: readonly
+# Planted failure: fixture.sh writes ffprobe.json with has_b_frames=2 (level 41, h264: only the B-frames are wrong).
+planted: "ffprobe reports has_b_frames=2, so playback-check.sh (run by review.sh and deliver.sh) exits 1"

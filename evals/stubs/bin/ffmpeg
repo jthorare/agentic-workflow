@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# Canned stand-in for ffmpeg (system-design-video evals). Decode check (`-f null -`) is clean unless the answer file
+# (see the ffprobe stub) sets "decode_error"; a raw pixel read prints the board color; any other output is a small
+# placeholder file. Needs every -i input to exist and writes only under $PWD. Exits 1 on a call with no input.
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cfg="${AW_STUB_FFPROBE_JSON:-}"
+[ -n "$cfg" ] && [ -f "$cfg" ] || { cfg=""; d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/ffprobe.json" ] && { cfg="$d/ffprobe.json"; break; }; d="$(dirname "$d")"; done; }
+[ -n "$cfg" ] && [ -f "$cfg" ] || cfg="$here/../ffprobe.json"
+val() { [ -f "$cfg" ] && sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^\",}]*\)\"\{0,1\}.*/\1/p" "$cfg" | head -1; }
+args=("$@"); n=${#args[@]}
+[ "$n" -ge 1 ] || { echo "ffmpeg stub: no arguments" >&2; exit 1; }
+[ "${args[0]}" = "-version" ] && { echo "ffmpeg version stub"; exit 0; }
+inputs=0
+for ((i = 0; i < n; i++)); do
+  if [ "${args[i]}" = "-i" ]; then
+    inputs=$((inputs + 1))
+    [ -f "${args[i+1]:-}" ] || { echo "${args[i+1]:-}: No such file or directory" >&2; exit 1; }
+  fi
+done
+[ "$inputs" -ge 1 ] || { echo "ffmpeg stub: unknown call (no -i): $*" >&2; exit 1; }
+last="${args[n-1]}"
+all="$*"
+if [ "$last" = "-" ]; then
+  case "$all" in
+    *"-f rawvideo"*)
+      hex="$(val corner_hex)"; hex="${hex:-0d1117}"
+      printf "\\x${hex:0:2}\\x${hex:2:2}\\x${hex:4:2}" ;;
+    *"-f null"*)
+      err="$(val decode_error)"; [ -z "$err" ] || echo "$err" >&2 ;;
+    *) echo "ffmpeg stub: unknown call: $all" >&2; exit 1 ;;
+  esac
+  exit 0
+fi
+out="$(realpath -m "$last")"
+case "$out" in "$PWD"/*) ;; *) echo "ffmpeg stub: refusing to write outside $PWD: $last" >&2; exit 1 ;; esac
+mkdir -p "$(dirname "$out")" 2>/dev/null || { echo "ffmpeg stub: cannot create $(dirname "$out")" >&2; exit 1; }
+printf 'stub media\n' > "$out"
