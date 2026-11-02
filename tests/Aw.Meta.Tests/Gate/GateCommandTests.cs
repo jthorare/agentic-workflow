@@ -40,6 +40,7 @@ public sealed class GateCommandTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("scripts/tests/{test}.test.sh", "sindri-pod", "scripts/tests/sindri-pod.test.sh")]
     [InlineData("scripts/tests/{test}.test.sh", "scripts/tests/sindri-pod.test.sh", "scripts/tests/sindri-pod.test.sh")]
+    [InlineData("scripts/tests/{test}.test.sh", "config/lib/tests/merge-hook.test.sh", "config/lib/tests/merge-hook.test.sh")]
     [InlineData("T={test}", "Spike", "T=Spike")]
     public void A_template_around_the_test_takes_a_bare_name_or_the_full_path(string word, string test, string expected)
     {
