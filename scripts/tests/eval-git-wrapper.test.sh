@@ -82,4 +82,13 @@ out="$(cd "$FIX" && export AW_GIT_MODE=readonly PATH="$STUB_DIR:$PATH" && . "$RO
 { [ "$rc" = 0 ] && [ "$("$REAL_GIT" -C "$FIX" rev-list --count HEAD 2>/dev/null)" = 1 ] && printf '%s' "$out" | grep -q 'mode=readonly$'; } \
   && ok "aw_fixture_repo commits under the eval's readonly stub and leaves the mode readonly" || bad "aw_fixture_repo under readonly: rc=$rc out=$out"
 
+# Every fixture in the tree scaffolds the same way, so each one must finish under the stub too (ui-evidence and
+# verify-desktop called git directly and every case in them errored before the agent started).
+while IFS= read -r f; do
+  rel="${f#"$ROOT"/}"
+  ws="$(mktemp -d "$TMP/ws.XXXXXX")"
+  out="$(cd "$ws" && AW_GIT_MODE=readonly PATH="$STUB_DIR:$PATH" bash "$f" 2>&1)"; rc=$?
+  [ "$rc" = 0 ] && ok "$rel scaffolds under the readonly stub" || bad "$rel under the readonly stub: rc=$rc $(printf '%s' "$out" | tail -1)"
+done < <(find "$ROOT/evals" -name fixture.sh -type f | sort)
+
 [ "$fails" = 0 ] && echo "all passed" || { echo "$fails failed"; exit 1; }
