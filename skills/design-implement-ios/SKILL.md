@@ -187,3 +187,16 @@ Generated:
 - `/design-refine "polish spacing and hierarchy to match the mockup"` — refinement intents, dispatched through impeccable
 - `/shipRelease` — ship once the verify verdict is PASS
 - Commit generated files: `git add Theme.swift <components>`
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-implement-ios-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-implement-ios`), `artifacts` (absolute paths: `Theme.swift` and the generated view components), `summary` (one line),
+plus `overall_verdict` (`PASS | WARN | FAIL`, the verify gate's overall verdict); `verify_run_id` (the verify run id).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

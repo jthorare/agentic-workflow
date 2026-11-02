@@ -58,3 +58,16 @@ Read `$SHARED_DIR/token-merge.md` and follow it exactly:
 
 - `/design-mockup-ios` — rebuild the SwiftUI mockup with the updated tokens (existing baselines are now marked stale)
 - `/design-refine` — apply the evolved language to existing views
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-evolve-ios-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-evolve-ios`), `artifacts` (absolute paths: the updated `design-tokens.json`), `summary` (one line),
+plus `adopted` (count of tokens adopted).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

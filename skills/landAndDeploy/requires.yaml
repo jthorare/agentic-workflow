@@ -1,0 +1,2 @@
+bins: [curl, gh, git]
+mcp: [prism-mcp]
