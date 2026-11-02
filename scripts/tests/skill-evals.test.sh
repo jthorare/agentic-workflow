@@ -59,7 +59,7 @@ mkrepo() {
   git -C "$REPO" add -A
   git -C "$REPO" commit -q -m base
   git -C "$REPO" update-ref refs/remotes/origin/main HEAD
-  git -C "$REPO" checkout -q -b lane/test
+  git -C "$REPO" checkout -q -b feat/test
 }
 
 # stub claude: control files next to it (logged-out, exit, sleep, result.json); logs args and env per call
@@ -80,14 +80,21 @@ exit "$(cat "$d/exit" 2>/dev/null || echo 0)"
 EOF
   chmod +x "$BIN/claude"
 }
-# mkresult SCORE FIRED(true|false) COST [partial]
+# The result files below are cut from the pilot's real claude results (jthorare/feat/skill-evals-pilot): pilot-graded.json is
+# evals-pilot/pilot-results.json (case rc-explicit-invoke, its real graders incl. skill-fired), pilot-errored.json is
+# evals-pilot/evals/results/2026-10-25T14-12-24-101Z/aggregate-result.json (case smoke-skill-visible, a run that errored: graders []).
+FIX="$REAL/scripts/tests/fixtures/skill-evals"
+# mkresult SCORE FIRED(true|false) COST [partial]: the real graded case, renamed to alpha's natural routing case, 2 runs
 mkresult() {
-  local run
-  run="{\"score\":$1,\"passed\":true,\"costUsd\":0.2,\"judgeCostUsd\":0,\"graders\":[{\"name\":\"skill-fired\",\"passed\":$2,\"scored\":false,\"explanation\":\"saw $3\"}]}"
-  cat >"$BIN/result.json" <<EOF
-{"schemaVersion":1,"costUsd":$3,"partial":${4:-false},"cases":[{"name":"alpha-natural-1","dir":"evals/alpha/routing/alpha-natural-1","aggregates":{"score":$1,"passRate":1},
-"arms":{"with":[$run,$run]}}],"aggregates":{"casesTotal":1}}
-EOF
+  jq --argjson sc "$1" --argjson fired "$2" --argjson cost "$3" --argjson part "${4:-false}" '
+    .costUsd = $cost | .partial = $part
+    | .cases = [.cases[0] | .name = "alpha-natural-1" | .dir = "evals/alpha/routing/alpha-natural-1" | .aggregates.score = $sc
+      | .arms = {with: [.arms.with[0], .arms.with[0]] | map(.costUsd = 0.2 | .judgeCostUsd = 0
+          | .graders = [.graders[] | select(.name == "skill-fired") | .passed = $fired])}]' "$FIX/pilot-graded.json" >"$BIN/result.json"
+}
+# mkresult_errored: the real errored run, renamed the same way
+mkresult_errored() {
+  jq '.cases[0] |= (.name = "alpha-natural-1" | .dir = "evals/alpha/routing/alpha-natural-1")' "$FIX/pilot-errored.json" >"$BIN/result.json"
 }
 
 run() { # args... : run the script in $REPO with a clean env and the stub claude first on PATH
@@ -224,6 +231,20 @@ echo 100 >"$REPO/evals/_lib/description-bytes.baseline"
 run --lint-descriptions
 expect "total bytes over the baseline + 25% fails" 1 'over the baseline'
 
+echo "--selftest and description lint"
+mkrepo
+long="$(printf 'word%.0s ' $(seq 1 120))"
+printf -- '---\nname: alpha\ndescription: %s\n---\nbody\n' "$long" >"$REPO/skills/alpha/SKILL.md"
+run --skills alpha --selftest
+expect "--selftest: an over-400 description is a warning and exit stays 0" 0 'LINT-DESC: skills/alpha: description is .* \(warning\)'
+run --lint-descriptions
+expect "--lint-descriptions alone still fails on the long one" 1 'skills/alpha: description is'
+mkrepo
+printf -- '---\nname: beta\ndescription: %s\n---\nbody\n' "$long" >"$REPO/skills/beta/SKILL.md"
+run --skills alpha --selftest
+expect "--selftest --skills alpha does not lint beta" 0 'selftest: 3 case'
+lacks "no beta lint line" 'skills/beta'
+
 echo "--status"
 mkrepo
 printf 'fire_rate: 3/3\ndelta: 0.18\nlast_run: %s\npr: 1110\n' "$(date +%F)" >"$REPO/evals/alpha/status.md"
@@ -263,7 +284,7 @@ SAVED="$(find "$STATE/skill-evals" -name results.json | head -1)"
 
 echo "the token scrub"
 mkrepo; mkclaude; mkresult 1 true 0.5
-sed -i "s/saw 0.5/leaked hunter22xyz and $FAKE_GH and Authorization: Bearer $FAKE_BEARER/" "$BIN/result.json"
+jq --arg t "leaked hunter22xyz and $FAKE_GH and Authorization: Bearer $FAKE_BEARER" '.cases[0].arms.with[0].graders[0].explanation = $t' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
 EXTRA_ENV="EVAL_SECRET=hunter22xyz"
 run --skills alpha --kind routing
 expect "a run whose output leaks a token still passes" 0
@@ -287,6 +308,7 @@ expect "a missed routing gate under block exits 4" 4 'ROUTING GATE MISSED: alpha
 touch "$BIN/no-result"
 run --skills alpha --kind routing
 expect "no readable result exits 3" 3 'left no readable'
+[ "$(jq -s '[.[] | select(.t == "settle")] | last | .usd * 1' "$STATE/skill-evals/spend.jsonl")" = 8 ] && ok "an unreadable result settles at the reserve (\$8), not \$0" || { fail "unreadable result settle"; cat "$STATE/skill-evals/spend.jsonl"; }
 rm -f "$BIN/no-result"
 touch "$BIN/logged-out"
 run --skills alpha --kind routing
@@ -323,11 +345,6 @@ printf '{"t":"reserve","id":"live","date":"%s","lane":"operator","pid":%s,"ts":%
 run --skills alpha --kind routing
 expect "a live reserve counts in full" 2 'refused'
 kill "$LIVE_PID" 2>/dev/null || true; LIVE_PID=""
-printf '{"t":"lane","date":"%s","lane":"a"}\n{"t":"lane","date":"%s","lane":"b"}\n' "$(date +%F)" "$(date +%F)" >"$STATE/skill-evals/spend.jsonl"
-run --skills alpha --kind routing --lane a --max-cost-usd 31
-expect "with two lanes registered a lane's share is 30" 2 "lane a's share"
-run --skills alpha --kind routing --lane a --max-cost-usd 29
-expect "a run inside the lane's share passes" 0
 mkrepo; mkclaude; mkresult 1 true 1
 echo 2 >"$BIN/sleep"
 EXTRA_ENV=""
@@ -339,6 +356,87 @@ wait "$P1" "$P2"
 codes="$(sort "$TMPROOT/c1.rc" "$TMPROOT/c2.rc" | tr '\n' ' ')"
 [ "$codes" = "0 2 " ] && ok "two concurrent runs of \$40 cannot both fit under \$60 (exit codes: $codes)" || { fail "concurrent runs exited: $codes"; grep -h "^spend:" "$TMPROOT/c1.out" "$TMPROOT/c2.out"; cat "$STATE/skill-evals/spend.jsonl"; }
 [ "$(jq -s '[.[] | select(.t == "reserve")] | length' "$STATE/skill-evals/spend.jsonl")" = 1 ] && ok "only one reserve row was written" || fail "reserve rows"
+
+echo "the routing gate has something to judge"
+mkrepo; mkclaude; mkresult_errored
+run --skills alpha --kind routing --gate block
+expect "an all-errored run (real errored result) is a MISS, exit 4" 4 'ROUTING GATE MISSED: alpha/alpha-natural-1: no judged runs'
+mkresult 1 true 1
+jq '.cases[0].arms.with |= map(.graders |= map(select(.name != "skill-fired")))' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+run --skills alpha --kind routing --gate block
+expect "a case whose runs lack the fired grader is a MISS, exit 4" 4 'no judged runs'
+mkresult 1 true 1
+jq '.cases[0].arms.with = []' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+run --skills alpha --kind routing --gate block
+expect "a case with no runs at all is a MISS, exit 4" 4 'no judged runs'
+mkresult 1 true 1
+jq '.cases[0].dir = null' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+run --skills alpha --kind routing --gate block
+expect "a jq error in the gate is a MISS with a clear line, never a pass" 4 'gate could not be evaluated'
+mkresult 1 true 1
+run --skills alpha --kind routing --gate block
+expect "a result with fired runs still passes the gate" 0
+lacks "no gate line on a good result" 'ROUTING GATE MISSED'
+mkrepo
+G="$REPO/evals/alpha/routing/alpha-natural-1/graders"
+mv "$G/skill-fired.md" "$TMPROOT/sf.md"
+run --skills alpha --selftest
+expect "--selftest: a routing case without a fired grader is caught" 1 'needs exactly one of graders/skill-fired.md'
+mv "$TMPROOT/sf.md" "$G/skill-fired.md"
+cp "$G/skill-fired.md" "$G/skill-not-fired.md"
+run --skills alpha --selftest
+expect "--selftest: a routing case with both fired graders is caught" 1 'found 2'
+
+echo "the --scaffold branch guard"
+mkrepo; mkclaude; mkresult 1 true 1
+for b in main fix/x bugfix/x docs/x test/x chore/x refactor/x; do
+  git -C "$REPO" checkout -q -B "$b"
+  run --skills alpha --kind routing
+  expect "branch $b is allowed" 0
+done
+for b in champion/pr-5 lane/test wip release/1; do
+  git -C "$REPO" checkout -q -B "$b"
+  run --skills alpha --kind routing
+  expect "branch $b is refused" 3 'is not one of main, feat'
+done
+
+echo "model pins, tally and stage cleanup"
+mkrepo
+run --skills alpha --kind routing --dry-run
+has -E -- '--model claude-sonnet-5-5( |$)' <<<"$OUT" && has -E -- '--judge-model sonnet( |$)' <<<"$OUT" && ok "the default agent model and judge are pinned in the dry run" || { fail "model pins"; show; }
+run --skills alpha --kind routing --dry-run --model claude-opus-5-5 --judge-model haiku
+has -E -- '--model claude-opus-5-5( |$)' <<<"$OUT" && has -E -- '--judge-model haiku( |$)' <<<"$OUT" && ok "--model and --judge-model override the pins" || { fail "model override"; show; }
+mkclaude; mkresult 1 true 1
+find "$STATE/skill-evals/spend.jsonl" -delete 2>/dev/null; mkdir -p "$STATE/skill-evals/spend.jsonl"
+run --skills alpha --kind routing
+expect "an unwritable tally exits 2, not 3" 2 'fail closed'
+find "$STATE/skill-evals/spend.jsonl" -delete
+mkdir -p "$REPO/skills/alpha/hooks"; : >"$REPO/skills/alpha/hooks/h.sh"
+git -C "$REPO" add -A; git -C "$REPO" commit -q -m hooks
+run --skills alpha --kind routing
+expect "a refusal mid-stage exits 3" 3 'hooks/ directory'
+[ -z "$(find "$STATE/skill-evals/cache" -name 'stage-*' 2>/dev/null)" ] && ok "a refusal mid-stage leaves nothing in cache/" || fail "stage left in cache/"
+mkrepo
+printf 'x\n' >"$REPO/skills/_preamble-extended.md"
+run --changed --dry-run
+expect "--changed: an edit to skills/_preamble-extended.md picks every skill with evals" 0 'skills: alpha '
+run --skills alpha --kind routing --dry-run --keep-temp
+SR="$(printf '%s\n' "$OUT" | sed -n 's/^skill-evals: staged routing: //p')"
+[ -f "$SR/skills/_preamble-extended.md" ] && ok "the staged copy includes skills/_preamble-extended.md" || fail "extended preamble not staged"
+
+echo "the real skills/ stage"
+mkrepo
+cp -a "$REAL/skills/." "$REPO/skills/"
+printf -- '---\nname: alpha\ndescription: Use when the cart total looks wrong after a bulk order. Not for new features.\n---\nState: ${AW_STATE_DIR:-$HOME/.agentic-workflow}\nMode: ${AW_GIT_MODE:-full}\n' >"$REPO/skills/alpha/SKILL.md"
+run --skills alpha --kind routing --dry-run
+n_of() { printf '%s\n' "$OUT" | sed -n "s/^skill-evals:   rewrite $1 default [a-z0-9]* -> [a-z0-9]*: \([0-9]*\) file.*/\1/p" | head -1; }
+for v in AW_PREAMBLE AW_GIT_MODE; do
+  n="$(n_of $v)"; [ -n "$n" ] && [ "$n" -gt 0 ] && ok "$v's default is rewritten in $n real staged file(s)" || { fail "$v rewrote '$n' files"; show; }
+done
+# TODO(#1897): AW_RESULT has no skill text on main until 0d lands; then assert its count is > 0 like the two above.
+n="$(n_of AW_RESULT)"
+if [ "$n" = 0 ]; then has -E 'warning: no staged file holds .*AW_RESULT' <<<"$OUT" && ok "AW_RESULT rewriting 0 files prints a warning" || { fail "no AW_RESULT warning"; show; }
+else ok "AW_RESULT is rewritten in $n file(s)"; fi
 
 echo
 echo "skill-evals: $PASS passed, $FAIL failed"
