@@ -41,7 +41,12 @@ echo "headroom $*" >> "$FAKE_CALLS"
 port=""; prev=""
 for a in "$@"; do [ "$prev" = "--port" ] && port="$a"; prev="$a"; done
 exec python3 -c '
-import http.server, sys
+import http.server, os, signal, sys, time
+# FAKE_SLOW_TERM=N: after SIGTERM the proxy takes N seconds to exit (a real proxy drains connections first).
+if os.environ.get("FAKE_SLOW_TERM"):
+    def _slow(*a):
+        time.sleep(float(os.environ["FAKE_SLOW_TERM"])); os._exit(0)
+    signal.signal(signal.SIGTERM, _slow)
 class H(http.server.BaseHTTPRequestHandler):
     def do_GET(self):
         self.send_response(200); self.end_headers(); self.wfile.write(b"{}")
@@ -217,6 +222,20 @@ AW_HEADROOM_KEEP=1 bash "$WRAP" claude one >/dev/null 2>&1
 bash "$WRAP" claude two >/dev/null 2>&1
 check "stale user file (recycled pid, not a wrapper): does not keep the proxy alive" "$(bash "$WRAP" status | head -1)" "claude: not running"
 kill "$BYS" 2>/dev/null; wait "$BYS" 2>/dev/null
+
+# --- a proxy that exits slowly: stop returns only once it is gone, so the next run can take the port (#1917) ---
+export FAKE_SLOW_TERM=2
+AW_HEADROOM_KEEP=1 bash "$WRAP" claude one >/dev/null 2>&1
+SLOWPID="$(cat "$AW_STATE_DIR/headroom/claude/proxy.pid" 2>/dev/null || true)"
+bash "$WRAP" stop >/dev/null 2>&1
+check "slow exit: stop waits for the proxy to exit" "$(kill -0 "$SLOWPID" 2>/dev/null && echo live || echo dead)" "dead"
+: > "$CALLS"
+bash "$WRAP" claude again >/dev/null 2>&1
+contains "slow exit: a run right after stop starts a new proxy" "$(cat "$CALLS")" "headroom proxy"
+contains "slow exit: a run right after stop gets the proxy" "$(cat "$CALLS")" "claude env ANTHROPIC_BASE_URL=http://127.0.0.1:$PC"
+bash "$WRAP" stop >/dev/null 2>&1
+for _ in $(seq 1 100); do kill -0 "$SLOWPID" 2>/dev/null || break; sleep 0.1; done
+unset FAKE_SLOW_TERM
 
 # --- fail-open ---
 : > "$CALLS"
