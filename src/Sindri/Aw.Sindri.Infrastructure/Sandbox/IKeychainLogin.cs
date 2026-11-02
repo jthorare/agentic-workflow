@@ -4,6 +4,7 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 internal interface IKeychainLogin
 {
     /// <summary>Reads the login.</summary>
+    /// <param name="service">The Keychain service name to ask for.</param>
     /// <returns>The login's JSON, or null off macOS, when there is no item, or when what came back is not a JSON object. Never throws.</returns>
-    public string? Read();
+    public string? Read(string service);
 }

@@ -43,10 +43,10 @@ internal sealed partial class ContextPageViewModel
         Ports.Follow((_, cancellationToken) => FollowWhole(cancellationToken));
     }
 
-    // After every event: a map not read yet is read; one that is drawn is read again when the stored map moved to another version (an import, a promote).
+    // After every event: a map not read yet is read; one that is drawn is read again when the stored map moved to another version (an import, a promote); an open concept's map follows the stored map too.
     private Task FollowWhole(CancellationToken cancellationToken)
     {
-        if (!_wholeWanted || Whole.IsLoading || Whole.IsFailed || Concepts.IsOnStage)
+        if (!_wholeWanted || Whole.IsLoading || Whole.IsFailed || (Concepts.IsOnStage && OpenedConceptId is null))
         {
             return Task.CompletedTask;
         }
@@ -75,7 +75,7 @@ internal sealed partial class ContextPageViewModel
         }
 
         _rereadNumber = number;   // a repo whose numbers differ from the answer's is read once per version, never in a loop
-        await ReadWhole(cancellationToken).ConfigureAwait(true);
+        await ReadWhole(followed: number, cancellationToken).ConfigureAwait(true);
     }
 
     /// <summary>The page was shown: the whole map is read once, with no starting point.</summary>
@@ -96,7 +96,10 @@ internal sealed partial class ContextPageViewModel
     /// <summary>Reads the whole map again (Retry, and when a build has ended).</summary>
     /// <param name="cancellationToken">Cancels the read.</param>
     /// <returns>When the answer is drawn.</returns>
-    internal async Task ReadWhole(CancellationToken cancellationToken = default)
+    internal Task ReadWhole(CancellationToken cancellationToken = default) => ReadWhole(followed: null, cancellationToken);
+
+    // followed: the stored map's version number when the read follows it, so an open concept that version lacks goes back to the list.
+    private async Task ReadWhole(int? followed, CancellationToken cancellationToken)
     {
         if (Ports.ApiUrl() is not { } api)
         {
@@ -108,6 +111,12 @@ internal sealed partial class ContextPageViewModel
         try
         {
             var read = await Ports.Api.WholeMap(api, new WholeMapQuery("auto", Area: null, [], MapVersion: null, Draft: false, Repo: _repo, Concept: OpenedConceptId), cancellationToken).ConfigureAwait(true);
+            if (followed is { } version && OpenedConceptId is { } gone && !read.IsSuccess && string.Equals(read.Error.Code, GoneConceptCode, StringComparison.Ordinal))
+            {
+                await LeaveGoneConcept(gone, version, cancellationToken).ConfigureAwait(true);
+                return;
+            }
+
             await DrawWhole(api, read, cancellationToken).ConfigureAwait(true);
         }
         finally
@@ -119,6 +128,16 @@ internal sealed partial class ContextPageViewModel
 
             ChangedWhole();
         }
+    }
+
+    // A Retry would ask for the same missing concept forever: the page goes back to the concepts, read again, with a line that says why.
+    private async Task LeaveGoneConcept(string gone, int version, CancellationToken cancellationToken)
+    {
+        var name = Concepts.Find(gone)?.Name ?? gone;
+        Whole.Quiet();
+        CloseConcept();
+        await OpenFirst(cancellationToken).ConfigureAwait(true);
+        Concepts.Tell(Labels.ContextConceptGone(name, version));
     }
 
     // The read's answer onto the page: the map, the No map state, or the failure row.
