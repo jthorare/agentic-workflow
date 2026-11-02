@@ -11,7 +11,7 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(ls *), Bash(grep *), Bash(mkdir *),
 Refreshes project documentation to reflect recent changes. Updates only the sections that are stale — does **not** rewrite entire files.
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Step 1: Parse Arguments
 
@@ -169,6 +169,13 @@ Docs synced.
   Commit:  {SHA | PR URL | "no changes"}
   Report:  {RELEASE_DIR}/docs-sync.md
 ```
+
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
 
 ## Next steps
 
