@@ -37,9 +37,12 @@ const BUDGETS = { unit: 10, integration: 60 };
 // (job 123538665909; the others 12.8-23.8 s) -> 37 s.
 // SindriUi unit brought down on 2026-10-31 (#1546) by the same rule, after 8 test threads (#1801): the slowest of the 9 main CI
 // runs since, 12.9 s (run 41224242504; the others 9.2-12.5 s), + 25% -> 17 s.
+// Both integration lanes brought down on 2026-11-02 (#1546, owner q163) by the same rule, over the 10 green main CI runs
+// 41215726914-41389389340: Sindri 130.2 s (run 41218010358; the others 104.2-129.2 s) -> 165 s, SindriUi 82.5 s
+// (run 41224242504; the others 62-82.2 s) -> 105 s. Each limit is rounded up to a multiple of 5 s.
 const PACKAGE_BUDGETS = {
-  SindriUi: { unit: 17, integration: 600 },
-  Sindri: { unit: 37, integration: 340 },
+  SindriUi: { unit: 17, integration: 105 },
+  Sindri: { unit: 37, integration: 165 },
   Context: { unit: 30 },
 };
 // Per-test-project rows: a test project named here is measured as a row of its own (the row is the project's name) and kept out
@@ -50,10 +53,14 @@ const PACKAGE_BUDGETS = {
 // Aw.Sindri.Ui.Frames.Tests hold the view tests split out of Aw.Sindri.Ui.Tests (#1546, owner 2026-10-29: each its own row), so
 // each runs on a headless UI thread of its own: 55 s and 69 s alone on a 4-core box, budgeted at about 3x that (CI runs these
 // lanes 1.2-1.7x slower than a local run, and q148 allows twice the slowest CI run).
+// Brought down on 2026-11-02 (#1546, owner q163) to the slowest of the same 10 green main CI runs as above + 25%, rounded up to
+// 5 s: Aw.Sindri.Engine.Tests 85.3 s (run 41217292972) -> 110 s, Aw.Sindri.Ui.Frames.Tests 69.6 s (run 41218010358) -> 90 s,
+// Aw.Sindri.Ui.Controls.Tests 43.4 s (run 41218010358) -> 55 s, under the 60 s default, so it gets the default. It stays listed so it
+// stays a row of its own: unlisted, it would count toward SindriUi's sum.
 const PROJECT_BUDGETS = {
-  "Aw.Sindri.Engine.Tests": { integration: 250 },
-  "Aw.Sindri.Ui.Controls.Tests": { integration: 180 },
-  "Aw.Sindri.Ui.Frames.Tests": { integration: 220 },
+  "Aw.Sindri.Engine.Tests": { integration: 110 },
+  "Aw.Sindri.Ui.Controls.Tests": { integration: 60 },
+  "Aw.Sindri.Ui.Frames.Tests": { integration: 90 },
 };
 const SOLUTION = "AgenticWorkflow.slnx";
 
