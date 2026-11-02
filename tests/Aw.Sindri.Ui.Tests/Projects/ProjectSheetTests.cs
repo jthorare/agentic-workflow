@@ -130,6 +130,25 @@ public sealed class ProjectSheetTests
     }
 
     [Fact]
+    public async Task The_served_PR_count_reads_with_its_scope_and_each_repo_links_its_pulls()
+    {
+        var served = ProjectsFixture.Golden("with-prs")["projects"]![0]!;
+        _f.Serve(ProjectSheetFixture.Attached, c =>
+        {
+            c["openPrs"] = served["openPrs"]!.DeepClone();
+            c["prScope"] = served["prScope"]!.DeepClone();
+            c["repos"] = served["repos"]!.DeepClone();
+        });
+
+        var sheet = await _f.Opened(ProjectSheetFixture.Attached, Token);
+        await sheet.Repos[1].Open(Token);
+
+        Assert.Equal("3 open PRs (updated in the last 30 days)", sheet.PrsText);
+        Assert.Equal([("acme/api PRs ↗", true), ("acme/web PRs ↗", true)], sheet.Repos.Select(r => (r.Text, r.CanOpen)));
+        Assert.Equal(["https://github.com/acme/web/pulls"], _f.Launcher.Opened);
+    }
+
+    [Fact]
     public async Task A_repo_with_a_GitHub_name_links_its_pulls_and_one_without_says_it_is_not_synced()
     {
         _f.Serve(ProjectSheetFixture.Attached, c => c["repos"] = new System.Text.Json.Nodes.JsonArray("acme/web-app", "api"));
