@@ -208,10 +208,10 @@ Report: $AW_DIR/investigations/{filename}
 Handoff: $AW_DIR/investigations/{slug}/handoff.md
 ```
 
-**End the response with exactly one fenced JSON block** (machine-readable tail — `/review` and other callers parse this):
+**Close the report with exactly one fenced `aw-result` block**, before `## Next steps` (machine-readable tail — `/review` and other callers parse this; see the Result block below):
 
-```json
-{ "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
+```aw-result
+{ "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
 ```
 
 ### Sub-skill Dispatch
