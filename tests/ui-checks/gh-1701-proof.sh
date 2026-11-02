@@ -121,10 +121,10 @@ before="$(map_version)"
 [ -n "$before" ] || { frame 5-no-version; fail "step 5: the header shows no map version before the import (texts in $OUT/5-no-version-texts.txt)"; }
 bash "$FIXTURE" context whole concepts >"$OUT/concepts-switch.log" 2>&1 || setup_fail "context whole concepts (see $OUT/concepts-switch.log)"
 bash "$FIXTURE" context whole pages >"$OUT/pages-switch.log" 2>&1 || setup_fail "context whole pages again (see $OUT/pages-switch.log)"
-# An open drill keeps the map it read (ReadWhole runs when a drill opens), so each try opens Billing's drill again.
+# The open Billing drill follows the stored map (#1930): it is not opened again while waiting.
 want=$((before + 2)) now="" end=$((SECONDS + 120))
 while [ "$SECONDS" -lt "$end" ]; do
-  open_why "Billing" >/dev/null 2>&1 && now="$(map_version)"
+  now="$(map_version)"
   [ -n "$now" ] && [ "$now" -ge "$want" ] && break
   sleep 3
 done
