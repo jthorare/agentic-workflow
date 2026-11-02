@@ -67,6 +67,8 @@ while [ $# -gt 0 ]; do
 done
 key="$(echo "${proj}_${lane}" | tr '.' '_')"
 s="STUB_${key}"; e="STUB_EXIT_${key}"
+o="STUB_OUT_${key}"
+[ -z "${!o:-}" ] || cat "${!o}"
 sleep "${!s:-0}"
 exit "${!e:-0}"
 STUB
@@ -140,6 +142,28 @@ $OUT"
     || fail "LANE-PKG-002 must name the project and the exit code:
 $OUT"
   echo "PASS: test_a_failing_test_run_fails_the_check"
+}
+
+test_a_failing_run_names_its_failed_test_past_the_log_lines() {
+  local d="$WORK/red-named"; make_fixture "$d"; : > "$WORK/log"
+  {
+    printf 'failed Aw.Foo.Data.Tests.Widgets.It_breaks (1s 204ms)\n  Assert.True() Failure\n  Expected: True\n'
+    for i in $(seq 1 30); do printf '    |   {"timestamp":"2000-01-01T00:00:00.0000000Z","level":"information","message":"line %s"}\n' "$i"; done
+    printf 'Test run summary: Failed!\n  total: 2\n  failed: 1\n'
+  } > "$WORK/red-named.out"
+  export STUB_EXIT_Aw_Foo_Data_Tests_integration=2 STUB_OUT_Aw_Foo_Data_Tests_integration="$WORK/red-named.out"
+  run_check "$d" --budget unit=5,integration=5
+  unset STUB_EXIT_Aw_Foo_Data_Tests_integration STUB_OUT_Aw_Foo_Data_Tests_integration
+  [ "$RC" -eq 1 ] || fail "a failing dotnet test must exit 1, got $RC:
+$OUT"
+  printf '%s\n' "$OUT" | has -F '    | failed Aw.Foo.Data.Tests.Widgets.It_breaks (1s 204ms)' \
+    || fail "LANE-PKG-002 must name the failed test even when log lines fill the run's tail:
+$OUT"
+  printf '%s\n' "$OUT" | has -F '    |   Assert.True() Failure' || fail "LANE-PKG-002 must show the failed test's message:
+$OUT"
+  printf '%s\n' "$OUT" | has -F '"timestamp"' && fail "LANE-PKG-002 must leave the host's JSON log lines out:
+$OUT"
+  echo "PASS: test_a_failing_run_names_its_failed_test_past_the_log_lines"
 }
 
 test_tool_errors_exit_2() {
@@ -250,6 +274,7 @@ test_sindri_budgets_are_340_s_and_37_s
 test_a_listed_test_project_is_its_own_row_outside_the_package_sum
 test_a_package_over_budget_fails_with_the_rule_id
 test_a_failing_test_run_fails_the_check
+test_a_failing_run_names_its_failed_test_past_the_log_lines
 test_tool_errors_exit_2
 test_no_test_project_is_a_tool_error
 test_path_need_not_be_the_first_attribute
