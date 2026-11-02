@@ -1,6 +1,6 @@
 ---
 name: productReview
-description: "Founder/product lens review of plans with 4 scope modes -- mvp, growth, scale, pivot. Challenges assumptions and tightens scope."
+description: "Use when a plan or idea needs a founder's challenge: is it worth building, is the first version too big, who is it for. Applies an mvp, growth, scale or pivot lens, says what to cut and returns SHIP / ITERATE / RETHINK. Not for technical design, security or UI review."
 argument-hint: "[--mode mvp|growth|scale|pivot] [--plan <path> | plan-file-or-description] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(date *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -199,6 +199,18 @@ Suggested next steps:
   /archReview — Review the engineering architecture
   /officeHours — Brainstorm refinements to address concerns
 ```
+
+## Result block
+
+Only when `AW_RESULT=1`: write `$AW_DIR/results/productReview-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
+
+- `skill`: `"productReview"`
+- `artifacts`: absolute paths of the files this run wrote (the review file)
+- `summary`: one line, the verdict and the top concern
+- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the same value as the report's final `verdict:` line
+- `mode`: `mvp`, `growth`, `scale` or `pivot`
+
+Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
 
 ## Next steps
 
