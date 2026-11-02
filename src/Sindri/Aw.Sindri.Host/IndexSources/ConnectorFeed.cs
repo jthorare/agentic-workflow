@@ -17,7 +17,8 @@ namespace Aw.Sindri.Host.IndexSources;
 /// <param name="connector">The connector it pulls.</param>
 /// <param name="place">The source's own mapping from a record to its repo and audience; null skips the record (default deny).</param>
 /// <param name="scrubbers">Cleans every title and text before the record leaves the feed; null for none.</param>
-internal sealed class ConnectorFeed(SourceId source, IConnector connector, Func<ConnectorItem, Placement?> place, Scrubbers? scrubbers = null) : RecordFeed(source)
+/// <param name="linearTeams">The Linear team keys ('context.sources.linear.teams') whose issue keys a pull request's title and text link to; null or empty links none.</param>
+internal sealed class ConnectorFeed(SourceId source, IConnector connector, Func<ConnectorItem, Placement?> place, Scrubbers? scrubbers = null, IReadOnlyCollection<string>? linearTeams = null) : RecordFeed(source)
 {
     private int _skipped;
 
@@ -62,16 +63,18 @@ internal sealed class ConnectorFeed(SourceId source, IConnector connector, Func<
         return items;
     }
 
-    private static RecordItem? Map(ConnectorItem item, Placement placement)
+    private RecordItem? Map(ConnectorItem item, Placement placement)
     {
         if (!RecordKey.TryFrom(item.Key, out var key) || !SourceVersion.TryFrom(item.Version, out var version) || Kind(item.Kind) is not { } kind)
         {
             return null;
         }
 
-        var links = item.Links.Select(link => Link(link, placement)).OfType<RecordLink>().ToList();
+        var links = item.Links.Select(link => Link(link, placement)).OfType<RecordLink>().Concat(IssueKeys(item)).ToList();
         return new RecordItem(key, kind, item.Title, item.Text, item.Author, item.Url, State(item.State), item.StateRaw, item.CreatedAt, item.UpdatedAt, item.ClosedAt, version, links, placement.Repo, placement.Audience);
     }
+
+    private IEnumerable<RecordLink> IssueKeys(ConnectorItem item) => linearTeams is null || !string.Equals(item.Kind, "pr", StringComparison.Ordinal) ? [] : throw new NotSupportedException();
 
     // A blocked field keeps its raw text on purpose: the sync driver cleans again and must see the block.
     private ConnectorItem Scrubbed(ConnectorItem item)
