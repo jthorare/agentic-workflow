@@ -12,7 +12,7 @@ stage="${AW_STATE_DIR:-$HOME/.agentic-workflow}/skill-evals/cache/probe-$mode"
 mkdir -p "$stage" "$out"
 rsync -a --delete "$here/plugin/" "$stage/"
 cd "$stage"
-args=(claude plugin eval . --trust-plugin --no-publish --ablation none --runs 1 --model sonnet
+args=(claude plugin eval . --trust-plugin --scaffold --no-publish --ablation none --runs 1 --model sonnet
       --allow-tools Bash Write --max-cost-usd 2 --keep-temp --json "$out/result.json" --report "$out/report.html")
 aw=(AW_TOOLKIT="$stage" AW_STATE_DIR=.aw-state AW_PREAMBLE=off AW_GIT_MODE=readonly AW_RESULT=1 AW_PROBE_RUN="$mode")
 case "$mode" in
