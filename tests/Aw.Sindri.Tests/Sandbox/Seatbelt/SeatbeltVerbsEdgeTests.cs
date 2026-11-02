@@ -147,7 +147,7 @@ public sealed class SeatbeltVerbsEdgeTests : IDisposable
     }
 
     // why: stands for what Wrap leaves on disk (the exec's run area, and on a Mac Seatbelt's temp directory); the fake makes it when the exec discards, so it exists even if the egress or the process refused to start
-    private sealed class TrackingSandbox(bool createSeatbeltTemp) : ISandbox
+    internal sealed class TrackingSandbox(bool createSeatbeltTemp, Action<SandboxPlan>? onDiscard = null) : ISandbox
     {
         public SandboxPlan? Discarded { get; private set; }
 
@@ -162,6 +162,7 @@ public sealed class SeatbeltVerbsEdgeTests : IDisposable
         public void Discard(SandboxPlan plan)
         {
             Discarded = plan;
+            onDiscard?.Invoke(plan);
             if (RunAreaPreparer.RunAreaOf(plan) is { } execArea)
             {
                 _ = Directory.CreateDirectory(execArea);
