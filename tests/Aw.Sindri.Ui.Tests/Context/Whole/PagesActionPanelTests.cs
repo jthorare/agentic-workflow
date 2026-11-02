@@ -46,7 +46,7 @@ public sealed class PagesActionPanelTests
     public async Task A_suggested_actions_name_opens_its_node_panel_too()
     {
         var page = await Open();
-        var key = page.Whole.Geometry!.Nodes[0].Key;
+        var key = page.Whole.Geometry!.Nodes.First(n => n.Kind == "action").Key;
 
         page.Whole.OpenAction(key);
         await page.Whole.Panel.Reading;
