@@ -125,6 +125,13 @@ Classify each finding by what it does, not by its label; reviewers mislabel in b
 - **Leaving the proof stale.** A review-loop fix that changes source after the evidence was captured needs the step 9 re-check.
 - **Self-merging.** The harness stops at the human merge gate.
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/landAndDeploy` — after a human approves and merges the stage PR, poll for merge then deploy and smoke it (never self-merge; this skill stops at the human gate)

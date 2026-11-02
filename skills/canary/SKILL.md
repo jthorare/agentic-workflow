@@ -152,6 +152,13 @@ Write `.agentic-workflow/canary.json`. Exit without monitoring.
 - `~/.agentic-workflow/$REPO_SLUG/releases/<release-id>/canary.md` — globbed by `/weeklyRetro` for release-health trends
 - `.agentic-workflow/canary.json` (only on `--setup`)
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/syncDocs` — auto-chained on HEALTHY

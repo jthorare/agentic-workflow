@@ -243,6 +243,13 @@ If the fix-and-verify loop ends with status `unfixed` (all hypotheses exhausted)
 
 Do not invoke bugReport on success — bugHunt's own Step 8 report is sufficient. At depth ≥ 2, report only.
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/review` — verify fixes pass code review

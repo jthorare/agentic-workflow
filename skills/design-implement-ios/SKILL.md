@@ -175,6 +175,13 @@ Generated:
 - If the project has existing color definitions (Asset catalog, extension), note any conflicts rather than silently overwriting
 - No completion claim without a PASS/WARN verify run from Step 4
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/design-refine "polish spacing and hierarchy to match the mockup"` — refinement intents, dispatched through impeccable

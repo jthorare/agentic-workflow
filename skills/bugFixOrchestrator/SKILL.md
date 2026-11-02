@@ -274,6 +274,13 @@ Deferred: {follow-ups with links | none}
 Report: {STATE}/resolution.md
 ```
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/shipRelease` — open the PR for the resolved fix branch

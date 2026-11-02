@@ -143,6 +143,13 @@ Generated components:
 - If the mockup HTML is available, use it as the primary reference for layout and structure — and report it as the source
 - No completion claim without a PASS/WARN verify run recorded in `implement-report.json`
 
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
 ## Next steps
 
 - `/design-refine "align color usage with the token palette"` / `"polish hover, focus, and transition states"` / `"tighten the type hierarchy"` — refinement intents, dispatched through impeccable
