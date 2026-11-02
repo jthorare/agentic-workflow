@@ -1,0 +1,6 @@
+source: "owner phrase: scrubbed paraphrase of how the owner asks for this in design sessions (no GitHub issue in jthorare/agentic-workflow covers it; searched mockup, implement design, design tokens, SwiftUI)"
+kind: routing
+max_turns: 5
+fixture: fixture.sh
+env:
+  AW_DIR: ./.aw-fixture   # where the fixture put screens.json and the baselines; the lead adapts to the runner's env syntax

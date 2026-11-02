@@ -1,6 +1,6 @@
 ---
 name: design-mockup-ios
-description: Generate a per-screen SwiftUI mockup from design tokens, temporarily host it as the app entry point, build and screenshot on simulator via XcodeBuildMCP, then revert and register the baseline in screens.json for /design-verify-ios.
+description: "Use when a screen should be drafted as SwiftUI and shown on the iOS simulator: built from the design tokens, screenshotted as the reference image, with the app's entry point restored afterwards. Not for HTML or browser drafts (design-mockup-web)."
 argument-hint: <screen-name>
 allowed-tools: Bash(mkdir *), Bash(ls *), Bash(cp *), Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(LOCK_NAME=*), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__xcodebuildmcp__session_show_defaults, mcp__xcodebuildmcp__discover_projs, mcp__xcodebuildmcp__list_schemes, mcp__xcodebuildmcp__list_sims, mcp__xcodebuildmcp__boot_sim, mcp__xcodebuildmcp__build_run_sim, mcp__xcodebuildmcp__build_sim, mcp__xcodebuildmcp__get_app_bundle_id, mcp__xcodebuildmcp__install_app_sim, mcp__xcodebuildmcp__launch_app_sim, mcp__xcodebuildmcp__stop_app_sim, mcp__xcodebuildmcp__screenshot, mcp__xcodebuildmcp__snapshot_ui, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -195,6 +195,13 @@ Entry point:    swap reverted, git diff clean
 - The entry-point revert (Step 7) is mandatory on every path and must be verified with `git diff` before reporting
 - Keep `design/Mockup-<screen-name>.swift` — `/design-implement-ios` reads it as the primary reference; only the temporary in-target `Mockup.swift` is deleted
 - Lock ordering: acquire before any file is written; release as the final step, success or failure
+
+## Result block
+
+Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
+
+1. `mkdir -p "$AW_DIR/results"` and write `$AW_DIR/results/design-mockup-ios-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-mockup-ios"`), `artifacts` (absolute paths of the persisted Mockup-<screen>.swift, the baseline PNG and screens.json), `summary` (one line), plus `screen`, `approved` (true or false).
+2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
 
 ## Next steps
 

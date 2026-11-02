@@ -1,6 +1,6 @@
 ---
 name: design-verify
-description: Detect web vs iOS vs desktop automatically and delegate to /design-verify-web (Playwright screenshots), /design-verify-ios (XcodeBuildMCP screenshots) or /design-verify-desktop (the real desktop app against its mockups). Diffs against mockup baseline.
+description: "Use when a built screen should be checked against its approved mockup and the platform is unspecified or mixed (web, iPhone or desktop project). Detects the platform from project files and hands off to the matching design-verify member. Not for testing journeys, console errors or accessibility of a running app (verify-app)."
 argument-hint: [screen-name]
 allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -58,6 +58,12 @@ design-verify: <PASS|WARN|FAIL> (max diff <N>%)
 ```
 
 If no run dir or report exists, report that the sub-skill produced no comparison report and treat the run as FAIL for gating purposes.
+
+## Result block
+
+Under `AW_RESULT=1` only: write `$AW_DIR/results/design-verify-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
+
+Keys: `skill` (`design-verify`), `artifacts` (absolute paths: the run's `comparison-report.json`), `summary` (the one-line `design-verify: <verdict>` print), `pack` (absolute path of the run directory under `$AW_DIR/design/verify/`, or `null` when none exists), `verdict` (`PASS|WARN|FAIL`, FAIL when no report exists), `platform` (`web|ios|desktop`, the member dispatched).
 
 ## Next steps
 
