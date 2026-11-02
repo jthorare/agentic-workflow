@@ -5,10 +5,27 @@ namespace Aw.Meta.Core.Obligations;
 /// <summary>Decides whether a send was addressed to a given peer: by session name, session id or socket.</summary>
 internal static class Recipient
 {
-    internal static bool Matches(string to, string name, string? other = null) =>
-        to.Length > 0
-        && (string.Equals(to, name, StringComparison.OrdinalIgnoreCase)
-            || (!string.IsNullOrEmpty(other) && string.Equals(to, other, StringComparison.OrdinalIgnoreCase)));
+    internal static bool Matches(string to, string name, string? other = null)
+    {
+        to = StripRef(to);
+        return to.Length > 0
+            && (string.Equals(to, name, StringComparison.OrdinalIgnoreCase)
+                || (!string.IsNullOrEmpty(other) && string.Equals(to, other, StringComparison.OrdinalIgnoreCase)));
+    }
+
+    // A send to "name [ref]" (SendMessage's form when a bare name matches two sessions) is addressed to "name".
+    private static string StripRef(string to)
+    {
+        if (to.Length < 4 || to[^1] != ']')
+        {
+            return to;
+        }
+
+        var open = to.LastIndexOf(" [", StringComparison.Ordinal);
+        return open > 0 && open < to.Length - 3 && to.IndexOf(']', open) == to.Length - 1
+            ? to[..open]
+            : to;
+    }
 
     internal static bool Matches(string to, LaneAssignment lane) =>
         Matches(to, lane.SessionName, lane.Session?.Value);
