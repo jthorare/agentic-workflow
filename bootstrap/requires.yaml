@@ -1,0 +1,2 @@
+bins: [curl, docker, git]
+mcp: [prism-mcp, serena]

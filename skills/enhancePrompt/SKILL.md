@@ -111,3 +111,16 @@ Name the successor skill explicitly — pick the one that matches the enhanced t
 - `/officeHours` — if the enhanced prompt describes a feature that needs a spec before implementation
 - `/specToProvenPR` — if the enhanced prompt is an approved spec ready to be built and proven
 - Otherwise, execute the enhanced prompt from `prompts/<ts>.md` directly in this session after the user confirms
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/enhancePrompt-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`enhancePrompt`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
+plus `prompt_path` (absolute path of the saved enhanced prompt (`$AW_DIR/prompts/<ts>.md`)).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

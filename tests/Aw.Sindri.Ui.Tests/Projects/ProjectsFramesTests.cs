@@ -1,4 +1,5 @@
 using Avalonia.Controls;
+using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Testing;
@@ -37,6 +38,17 @@ public sealed class ProjectsFramesTests : FrameHost
 
         Shown(window, shell);
         Frame(window, string.Create(System.Globalization.CultureInfo.InvariantCulture, $"projects-mixed-{width}"), prefix: string.Empty);
+    });
+
+    [Fact]
+    public Task The_served_PR_counts_and_repos() => OnUi(async () =>
+    {
+        var (window, shell) = await OnProjects("with-prs", 1440, 900);
+
+        Shown(window, shell);
+        Assert.Contains(window.GetVisualDescendants().OfType<TextBlock>(), t => t.IsEffectivelyVisible && (t.Text ?? "").Contains("repos: api, web", StringComparison.Ordinal));
+        Assert.Null(shell.Projects.Groups.SelectMany(g => g.Cards).Single(c => c.Name == "Mobile app").PrsValue);
+        Frame(window, "projects-with-prs-1440", prefix: string.Empty);
     });
 
     [Fact]

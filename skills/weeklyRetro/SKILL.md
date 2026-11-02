@@ -235,3 +235,16 @@ Weekly retro complete ({start_date} to {end_date}).
 - `/officeHours` — start the next cycle with a feature spec
 - `/bugReport` — triage the risk areas surfaced above into a scored health report
 - `/syncDocs` — refresh docs if the period shipped releases without a docs pass
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/weeklyRetro-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`weeklyRetro`), `artifacts` (absolute paths: `$AW_DIR/retros/<date>-weekly.md` and `<date>-weekly.json`), `summary` (one line),
+plus `period` (the date range covered).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

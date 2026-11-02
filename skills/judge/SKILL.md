@@ -97,3 +97,16 @@ confirmations.
   the `QuestionModule` interface in `judge/src/question.ts`.
 - Wiring `judge wake-gate` into a live hook — that's Plan 4 (rollout step 4), gated on the
   hook-input probe.
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/judge-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`judge`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
+plus `command` (the `judge` subcommand it ran).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

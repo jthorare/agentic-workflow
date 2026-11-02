@@ -120,3 +120,16 @@ All under `$AW_DIR/plans/<feature>/`: `product-review.md` · `arch-review.md` ·
 - If the overall verdict is **not BLOCKED** — `/specToProvenPR <feature-dir>/plan.md` — hand the vetted plan to staged implementation; the consolidated review and lens files ride along in the feature dir
 - If **BLOCKED** — address the CRITICAL findings (edit the plan or re-run `/officeHours`), then re-run `/autoplan`
 - `/design-shotgun` — if visual exploration is recommended by the design lens
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/autoplan-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`autoplan`), `artifacts` (absolute paths: `consolidated-review.md` and each lens's review file in the feature dir), `summary` (one line),
+plus `feature_dir` (absolute path of `$AW_DIR/plans/<feature>`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
