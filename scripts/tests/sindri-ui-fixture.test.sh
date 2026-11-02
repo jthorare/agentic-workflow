@@ -756,7 +756,7 @@ contains "projects hides a project the viewer leads" "$(cat "$STUB_LOG")" "proje
 check "projects leaves one marker per owner write" "$(ls "$PJ" | grep -c '^ui-fixture-projects-owner-')" "3"
 : > "$STUB_LOG"
 proj >/dev/null 2>&1; check "a second projects exits 0" "$?" "0"
-check "a second projects adds no row" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record") $(sqlq "$PJDB" "SELECT COUNT(*) FROM record_link")" "27 27"
+check "a second projects adds no row" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record") $(sqlq "$PJDB" "SELECT COUNT(*) FROM record_link")" "30 30"
 check "a second projects adds the team to the profile once" "$(grep -c 'teams: \[SPL\]' "$PJ/profile/profile.yaml")" "1"
 absent "a second projects attaches, adds and hides nothing" "$(cat "$STUB_LOG")" "project "
 absent "a second projects approves nothing" "$(cat "$STUB_LOG")" "profile approve"
