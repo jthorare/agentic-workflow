@@ -3,13 +3,8 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
-using Aw.Sindri.Infrastructure;
-using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sandbox;
-using Aw.Sindri.Infrastructure.Sandbox.Launch;
 using Aw.Sindri.Tests.Sandbox.Bubblewrap;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.Sandbox.Seatbelt;
 
@@ -37,15 +32,21 @@ public sealed class SeatbeltExecCancelTests : IDisposable
     public async Task A_cancelled_exec_leaves_no_live_group_without_its_file()
     {
         Assert.SkipUnless(File.Exists("/usr/bin/perl") && File.Exists("/bin/sh"), "needs /usr/bin/perl and /bin/sh");
-        var pgroups = ProcessGroupFiles.Directory(new LauncherOptions(Path.Combine(_directory, "launcher")).LaunchDirectory);
+        Assert.SkipUnless(new SandboxProcesses().Run("socat", ["-V"], TimeSpan.FromSeconds(10)).Succeeded, "socat is not installed (the exec's egress needs it)");
         using var area = new TempRunArea();
-        await using var provider = Provider();
+        var launches = Path.Combine(area.Root, "launches");
+        var pgroups = ProcessGroupFiles.Directory(launches);
+        var exec = Exec(area, launches, pgroups);
         using var cts = CancellationTokenSource.CreateLinkedTokenSource(Token);
 
-        var run = provider.GetRequiredService<ISandboxExec>().Run(area.Plan, ["/bin/sh", "-c", "sleep 60"], cts.Token);
+        var run = exec.Run(area.Plan, ["/bin/sh", "-c", "sleep 60"], cts.Token);
         var file = await WaitFor(() => Directory.Exists(pgroups) ? Directory.GetFiles(pgroups, "*.pgid").SingleOrDefault() : null, _wait);
 
-        Assert.NotNull(file);
+        if (file is null)
+        {
+            Assert.Fail(run.IsCompleted ? "the exec ended before it wrote a .pgid: " + (await run).Error : "no .pgid file appeared");
+        }
+
         _pgid = ProcessGroupFiles.ReadPgid(pgroups, Path.GetFileNameWithoutExtension(file));
         var pgid = Assert.NotNull(_pgid);
         Assert.True(ProcessGroupFiles.Alive(pgid), "the group is not alive before the cancel");
@@ -65,21 +66,12 @@ public sealed class SeatbeltExecCancelTests : IDisposable
         Assert.True(!ProcessGroupFiles.Alive(pgid) || File.Exists(file), "a live exec group lost its .pgid file: uncounted and unsignalable");
     }
 
-    private ServiceProvider Provider()
+    private static SandboxExec Exec(TempRunArea area, string launches, string pgroups)
     {
-        var home = Path.Combine(_directory, "home");
-        return new ServiceCollection()
-            .AddSingleton<ISandbox, UnavailableSandbox>()
-            .AddSingleton(new SindriSettings(home, Path.Combine(home, "profile.yaml")))
-            .AddSingleton(new LauncherOptions(Path.Combine(_directory, "launcher")))
-            .AddSingleton<TimeProvider>(new FakeTimeProvider())
-            .AddSingleton<ISandboxProcesses, SandboxProcesses>()
-            .AddSingleton<ISandboxMachine>(new Machine())
-            .AddSingleton<IApprovedProfile, NoApprovedProfile>()
-            .AddSingleton<ILaunchSecrets>(_ => throw new NotSupportedException("not needed to resolve the exec"))
-            .AddSindriPlatformSandbox(static _ => null, linux: false, uid: 501, mac: true)
-            .AddSingleton<ISandbox>(new PassThroughSandbox())
-            .BuildServiceProvider();
+        var network = new SystemEgressNetwork();
+        return new SandboxExec(
+            new PassThroughSandbox(), new InlineCap(), new EgressService(network, network, Environment.GetEnvironmentVariable, Path.Combine(area.Root, "egress")),
+            new NoApprovedProfile(), new BoxFacts(8L << 30, 4), new ExecPlatform(ExecScope.Mac(pgroups), ExecScope.MacEnded(pgroups)), () => launches);
     }
 
     private static async Task<string?> WaitFor(Func<string?> probe, TimeSpan limit)
@@ -101,11 +93,9 @@ public sealed class SeatbeltExecCancelTests : IDisposable
         }
     }
 
-    private sealed class Machine : ISandboxMachine
+    private sealed class InlineCap : ISessionCap
     {
-        public long RamBytes => 16L << 30;
-
-        public int Cores => 8;
+        public Task<Result<T>> Start<T>(int cap, Func<CancellationToken, Task<Result<T>>> start, CancellationToken cancellationToken) => start(cancellationToken);
     }
 
     private sealed class NoApprovedProfile : IApprovedProfile
