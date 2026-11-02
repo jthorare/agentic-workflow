@@ -178,3 +178,16 @@ Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
 - `/design-implement <screen-name>` — generate production code from the approved mockup
 - `/design-mockup <another-screen>` — mockup additional screens
 - `/design-refine` — iterate the HTML mockup before implementation
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-mockup-web-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-mockup-web`), `artifacts` (absolute paths: `$AW_DIR/design/mockup-<screen>.html`, the baseline screenshots and the updated `screens.json`), `summary` (one line),
+plus `screen` (screen name); `viewports` (viewports captured).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -253,3 +253,16 @@ Keys: `skill` (`design-language`), `artifacts` (absolute paths: `design-tokens.j
 
 - `/design-mockup` — build the first mockup from the new language
 - `/design-shotgun` — explore variants before committing to a direction
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-language-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-language`), `artifacts` (absolute paths: `design-tokens.json`, `.impeccable.md` and `planning/DESIGN_SYSTEM.md`), `summary` (one line),
+plus `references` (reference URLs analyzed).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -1,0 +1,2 @@
+bins: [git]
+mcp: [playwright, prism-mcp]

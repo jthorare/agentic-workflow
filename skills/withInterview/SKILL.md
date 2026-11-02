@@ -118,3 +118,16 @@ If the target was "none — execute directly", begin the work yourself using the
 
 - **Invoke skill `<target>`** with args `<original prompt> — interview: $PLAN_DIR/interview.md` — run the wrapped target skill with the interview artifact attached
 - `/autoplan` — if the confirmed plan warrants multi-lens review before implementation (it will auto-discover `$PLAN_DIR/plan.md`)
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/withInterview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`withInterview`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
+plus `confirmed` (true when the user confirmed the plan).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

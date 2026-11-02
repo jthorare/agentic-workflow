@@ -216,3 +216,16 @@ Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
 - `/design-implement-ios` — generate production Theme.swift and SwiftUI components from the persisted mockup
 - `/design-verify-ios <screen-name>` — compare the implementation against this baseline
 - `/design-refine` — iterate the SwiftUI mockup before implementation
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-mockup-ios-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-mockup-ios`), `artifacts` (absolute paths: `$AW_DIR/design/Mockup-<screen>.swift`, `mockup-ios-<screen>.png` and the updated `screens.json`), `summary` (one line),
+plus `screen` (screen name).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

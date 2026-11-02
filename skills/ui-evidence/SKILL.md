@@ -198,3 +198,16 @@ Then print the same object in the reply as a fenced block tagged `aw-result` (th
 
 - `full`: do everything this skill describes.
 - `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/ui-evidence-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`ui-evidence`), `artifacts` (absolute paths: the run's evidence directory (screenshots, `summary.json`) and the PR comment or Linear update when published), `summary` (one line),
+plus `run_dir` (absolute path of the run directory); `passed` (true when every check passed); `published` (true when it published to the PR).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

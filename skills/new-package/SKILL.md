@@ -66,3 +66,16 @@ and the next step it printed: make the slice test pass (`/new-slice` describes t
 
 - `/new-slice` — add the next use case to the package, red first
 - `/specToProvenPR` — when the package is a port packet, take it to a proven, review-clean PR
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/new-package-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`new-package`), `artifacts` (absolute paths: the scaffolded package's files (project, test project, `deps.yaml` edge)), `summary` (one line),
+plus `package` (package name); `red_test` (the one red test it leaves).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -108,3 +108,16 @@ Keys: `skill` (`design-shotgun`), `artifacts` (absolute paths: `contact-sheet.ht
 
 - `/design-mockup <screen>` — reads `design/shotgun/picked.json` and takes the picked variant's HTML/styling as the seed for a fully-built mockup
 - `/design-refine` — if you want to iterate within the chosen direction without rebuilding from scratch
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-shotgun-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-shotgun`), `artifacts` (absolute paths: the variant files, the contact sheet under `$AW_DIR/design/shotgun/` and `picked.json` when a variant was picked), `summary` (one line),
+plus `variants` (count of variants generated); `picked` (the picked variant, or null).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

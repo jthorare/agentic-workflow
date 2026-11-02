@@ -1,0 +1,2 @@
+bins: [git]
+mcp: [prism-mcp, xcodebuildmcp]

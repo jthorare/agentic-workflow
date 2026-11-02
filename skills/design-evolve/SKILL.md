@@ -67,3 +67,16 @@ Keys: `skill` (`"design-evolve"`), `artifacts` (absolute paths: the member skill
 
 - `/design-mockup` — build a mockup with the updated tokens
 - `/design-refine` — apply the evolved language to existing screens
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-evolve-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-evolve`), `artifacts` (absolute paths: the updated `design-tokens.json`), `summary` (one line),
+plus `platform` (`web | ios`, the sub-skill it delegated to).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -620,3 +620,16 @@ Suggested workflow:
 
 - `/officeHours` — start a feature spec now that planning docs exist
 - `/design-language` — define the visual identity for this repo
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/bootstrap-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`bootstrap`), `artifacts` (absolute paths: the generated docs under `planning/`, `AGENTS.md`, the per-provider rules and `.serena/project.yml`), `summary` (one line),
+plus `docs_written` (list of doc paths written); `docs_skipped` (list of doc paths already present).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

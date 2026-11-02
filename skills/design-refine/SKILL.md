@@ -158,3 +158,16 @@ Keys: `skill` (`design-refine`), `artifacts` (absolute paths: the files touched,
 - `/design-verify` — re-run anytime for a fresh diff against the mockup baseline
 - `/design-implement` — if refinements require regenerating platform token files
 - `/shipRelease` — ship once the verify verdict is PASS
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-refine-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`design-refine`), `artifacts` (absolute paths: the changed source files and `$AW_DIR/design/refine-log.md`), `summary` (one line),
+plus `verify_run_id` (the verify run id); `verdict` (`PASS | WARN | FAIL`, the post-refine verify verdict).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

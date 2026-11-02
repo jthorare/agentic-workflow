@@ -176,3 +176,16 @@ Per `_shared/output-contract.md`. Only when `AW_RESULT=1` is set: write `$AW_DIR
 
 - `/design-verify-web` — if visual gaps surfaced, run web design verification
 - `/bugReport` — if functional gaps surfaced, capture them as a bug report
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/verify-web-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+
+Keys: `skill` (`verify-web`), `artifacts` (absolute paths: the evidence pack directory `$AW_DIR/verification/<run-id>/` (`pack.json`, `report.md`)), `summary` (one line),
+plus `evidence_path` (absolute path of the pack directory); `verdict` (`PASS | WARN | FAIL`, the pack's verdict).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
