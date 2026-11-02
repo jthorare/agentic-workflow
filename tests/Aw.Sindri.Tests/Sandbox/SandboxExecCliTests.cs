@@ -7,6 +7,7 @@ using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Sandbox.Plan;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox;
@@ -80,6 +81,18 @@ public sealed class SandboxExecCliTests : IDisposable
         Assert.Equal(2, exit);
         Assert.StartsWith("SND-AUTH-002 ", _error.ToString(), StringComparison.Ordinal);
         Assert.Null(_exec.Command);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task Off_any_sandbox_the_refusal_does_not_blame_the_platform()
+    {
+        HumanToken();
+
+        var exit = await CommandTable.Run(["sandbox", "exec", PlanDirectory()], Environment(), TimeProvider.System, services => services.RemoveAll<ISandboxExec>());
+
+        Assert.Equal(2, exit);
+        Assert.Contains("sandbox exec needs the sandbox, and this build has none for this machine", _error.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain("Linux", _error.ToString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
