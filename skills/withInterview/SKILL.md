@@ -11,7 +11,7 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED
 Runs a structured, multi-round interview to gather requirements and context before executing a task. Surfaces ambiguities, challenges assumptions, and confirms subagent strategy — then proceeds only after explicit user confirmation.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 ## The Task
 
@@ -26,7 +26,7 @@ The first token of the arguments is the **target skill** to run after the interv
 Create the plan directory (layout per `_shared/plan-layout.md`) before Round 1. Derive `<slug>` as 2–4 kebab-case words from the task:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 PLAN_DIR="$AW_DIR/plans/$(date +%Y-%m-%d)-<slug>"
 mkdir -p "$PLAN_DIR"

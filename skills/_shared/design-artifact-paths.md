@@ -1,6 +1,6 @@
 # Design Artifact Paths (shared)
 
-Single source of truth for every file under `~/.agentic-workflow/<repo-slug>/design/`: owner skill, consumer skills, and the comparison-report schema. Referenced by all design-* skills, verify-web, shipRelease, specToProvenPR, and `.agents/rules/design.md`.
+Single source of truth for every file under `$AW_DIR/design/`: owner skill, consumer skills, and the comparison-report schema. Referenced by all design-* skills, verify-web, shipRelease, specToProvenPR, and `.agents/rules/design.md`.
 Referenced via: SHARED_DIR pattern (CD2).
 
 ## Artifact table

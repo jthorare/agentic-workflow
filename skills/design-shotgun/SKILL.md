@@ -10,7 +10,7 @@ allowed-tools: Bash(ls *), Bash(mkdir *), Bash(cat *), Bash(SHARED_DIR=*), Agent
 Generates 4–6 mockup variants in parallel with distinct aesthetic directions. Contact sheet for side-by-side comparison; user picks winner → `/design-mockup` takes it as seed.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 ## Overview
 
@@ -24,13 +24,13 @@ Sits BEFORE `/design-mockup` in the design pipeline. Spawns N parallel subagents
 - `--variants N` (optional, default 4, max 6).
 - `design-tokens.json` from project root (required for token-aware generation).
 - `.impeccable.md` from project root (required for brand alignment).
-- Feature brief from `~/.agentic-workflow/<repo-slug>/plans/<feature>/plan.md`.
+- Feature brief from `$AW_DIR/plans/<feature>/plan.md`.
 
 ## Steps
 
 1. **Resolve the output dir** — this skill has no design preamble, so derive the slug explicitly. Single Bash invocation:
    ```bash
-   SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+   SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
    source "$SHARED_DIR/repo-slug.sh"
    mkdir -p "$AW_DIR/design/shotgun"
    echo "shotgun-dir: $AW_DIR/design/shotgun"
@@ -65,7 +65,7 @@ Sits BEFORE `/design-mockup` in the design pipeline. Spawns N parallel subagents
 10. **Screenshot each variant** using Playwright MCP at 1280×800 viewport, holding the browser lock:
     - Acquire before the first navigation (single Bash invocation):
       ```bash
-      SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+      SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
       LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; acquire_lock
       ```
     - For each variant: navigate to `file://<shotgun-dir>/variant-{i}.html` (absolute path), then `mcp: playwright/browser_take_screenshot` with `{ filename: "<shotgun-dir>/variant-{i}.png" }` (absolute path)
@@ -84,7 +84,7 @@ Sits BEFORE `/design-mockup` in the design pipeline. Spawns N parallel subagents
 
 ## Outputs
 
-All under `~/.agentic-workflow/<repo-slug>/design/shotgun/`:
+All under `$AW_DIR/design/shotgun/`:
 - `variant-{1..N}.html` — full-page HTML mockups
 - `variant-{1..N}.png` — Playwright screenshots
 - `contact-sheet.html` — captioned side-by-side comparison page

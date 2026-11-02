@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(date *), Bash(mkdir *), Bash(SHARED
 Reviews plans through a product/founder lens with four distinct modes. Challenges assumptions, tightens scope, and delivers a verdict.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 ## Step 1: Parse Arguments and Resolve Plan
 
@@ -26,7 +26,7 @@ Reviews plans through a product/founder lens with four distinct modes. Challenge
 3. If neither is provided, auto-discover per `_shared/plan-discovery.md`:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 PLAN_DIR=$(ls -1dt "$AW_DIR/plans/"*/ 2>/dev/null | head -1)
 ```
@@ -170,7 +170,7 @@ verdict: <PASS|NEEDS_WORK|BLOCKED>
 If `--output <path>` was provided, write to that exact path (ensure the parent dir exists with `mkdir -p`). Otherwise generate a URL-safe slug from the plan title (lowercase, hyphens, no special chars) and write to the default path:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 ```

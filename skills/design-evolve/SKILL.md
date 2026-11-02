@@ -7,10 +7,10 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Glob, Read, AskUserQ
 <!-- MEMORY: SKIP -->
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `$HOME/.agentic-workflow/toolkit/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
 
 ---
 
@@ -35,7 +35,7 @@ The argument shape usually decides the platform — validate it before any proje
 Resolve the shared dir from the stable toolkit path, then follow the shared detection contract:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "contract: $SHARED_DIR/platform-detection.md"
 ```
 
