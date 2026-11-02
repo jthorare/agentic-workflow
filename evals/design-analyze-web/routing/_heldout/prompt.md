@@ -1,0 +1,1 @@
+Grab the palette, type scale and spacing from these two public sites and merge them into one design-tokens.json: https://example.com/recipes and https://example.net/cook. They're both web pages, nothing native involved.
