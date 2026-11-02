@@ -119,6 +119,24 @@ public sealed class GetPagesReadTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Page_takes_the_pages_map_key_too_and_keeps_only_that_page()
+    {
+        var view = await Read(PagesWorld.Query(page: PagesWorld.Week), PagesWorld.Human());
+
+        var page = Assert.Single(view.Pages);
+        Assert.Equal(("schedule-week", PagesWorld.Week), (page.Id.Value, page.Key.Value));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_map_key_no_page_has_is_257()
+    {
+        var error = await Refused(PagesWorld.Query(page: "surface:route/GET:/nowhere"));
+
+        Assert.Equal(ContextErrors.PageNotFound.Code, error.Code);
+        Assert.Contains("no page is named 'surface:route/GET:/nowhere'", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task An_unknown_repo_is_258()
     {
         var error = await Refused(PagesWorld.Query(repo: "wbe"));
