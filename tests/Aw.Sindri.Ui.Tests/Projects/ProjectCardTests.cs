@@ -101,7 +101,7 @@ public sealed class ProjectCardTests
 
         Assert.Equal("2", card.PrsValue);
         Assert.Equal("Checkout rewrite, In progress, at risk, 12 open issues, 2 open PRs", card.AccessibleName);
-        Assert.Equal(["Lead: you", "Target Jan 31", "acme/web, acme/api", "1d ago"], card.Footer);
+        Assert.Equal(["Lead: you", "Target Jan 31", "repos: web, api", "1d ago"], card.Footer);
     }
 
     [Fact]

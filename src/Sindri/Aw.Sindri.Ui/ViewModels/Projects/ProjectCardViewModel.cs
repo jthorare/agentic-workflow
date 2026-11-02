@@ -152,7 +152,7 @@ internal sealed partial class ProjectCardViewModel : ObservableObject
 
         if (Card.Repos.Count > 0)
         {
-            parts.Add(string.Join(", ", Card.Repos));
+            parts.Add(Labels.ProjectRepos(Card.Repos));
         }
 
         if (Card.LastActivity is { } activity)
