@@ -141,6 +141,12 @@ internal static class ProcessGroupFiles
         }
     }
 
+    /// <summary>Gets the path of a unit's group id file.</summary>
+    /// <param name="directory">The folder of the group files.</param>
+    /// <param name="unit">The unit.</param>
+    /// <returns>The path; null when the unit is not a file name.</returns>
+    internal static string? PgidPath(string directory, string unit) => PgidFile(directory, unit);
+
     private static string? PgidFile(string directory, string unit) =>
         unit.Length == 0 || unit.AsSpan().ContainsAny('/', '\\') || unit.Contains("..", StringComparison.Ordinal) ? null : Path.Combine(directory, unit + ".pgid");
 

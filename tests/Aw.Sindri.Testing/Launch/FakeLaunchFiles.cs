@@ -18,6 +18,7 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     private readonly HashSet<LaunchId> _tools = [];
     private readonly List<LaunchId> _forgotten = [];
     private readonly List<LaunchId> _swept = [];
+    private readonly HashSet<LaunchId> _homes = [];
 
     /// <summary>The launches whose files were deleted, in order.</summary>
     public IReadOnlyList<LaunchId> Forgotten => _forgotten;
@@ -29,6 +30,10 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     /// <param name="launch">The launch.</param>
     /// <param name="proof">The proof it accepts.</param>
     public void Open(LaunchId launch, string proof = DefaultProof) => _open[launch] = proof;
+
+    /// <summary>Gives the launch a session home and nothing else (no capture rule or id file), as a live Seatbelt launch has before its first report.</summary>
+    /// <param name="launch">The launch.</param>
+    public void OpenSessionHome(LaunchId launch) => _homes.Add(launch);
 
     /// <summary>Says <paramref name="launch"/>'s turn ended at <paramref name="at"/> (the Stop hook touched its file).</summary>
     /// <param name="launch">The launch.</param>
@@ -89,6 +94,9 @@ public sealed class FakeLaunchFiles : ILaunchFiles
     public IReadOnlyList<LaunchId> Launches() => [.. _open.Keys];
 
     /// <inheritdoc/>
+    public IReadOnlyList<LaunchId> SessionHomeLaunches() => [.. _homes];
+
+    /// <inheritdoc/>
     public int SweepStale(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
         ArgumentNullException.ThrowIfNull(live);
@@ -99,6 +107,13 @@ public sealed class FakeLaunchFiles : ILaunchFiles
             _swept.Add(launch);
         }
 
-        return stale.Count;
+        var staleHomes = _homes.Where(launch => !live(launch)).ToList();
+        foreach (var launch in staleHomes)
+        {
+            _ = _homes.Remove(launch);
+            _swept.Add(launch);
+        }
+
+        return stale.Count + staleHomes.Count;
     }
 }

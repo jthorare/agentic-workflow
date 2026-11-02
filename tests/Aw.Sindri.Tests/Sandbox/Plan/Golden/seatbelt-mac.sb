@@ -103,6 +103,8 @@
 (deny file-read* file-write* (subpath "/Users/owner/.agentic-workflow/sindri-app-sessions"))
 ; the session home's launches link resolves here; session-id-report and the turn-ended marker write to it
 (allow file-read* file-write* (subpath "/Users/owner/.agentic-workflow/sindri-app/launches"))
+; the watchdog's process-group files: session wrap writes the memory-kill record here and removes its own group id file (no cgroups on macOS)
+(allow file-read* file-write* (subpath "/Users/owner/.agentic-workflow/sindri-app/launch/pgroups"))
 ; the session home's approved link resolves here: the CLI finds its repo in the approved profile snapshot
 (allow file-read* (subpath "/Users/owner/.agentic-workflow/sindri-app/approved"))
 ; this launch's session home: the Step's policy file and MCP config; the agent can't rewrite its own policy
