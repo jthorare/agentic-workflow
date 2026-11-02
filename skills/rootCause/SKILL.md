@@ -208,10 +208,10 @@ Report: $AW_DIR/investigations/{filename}
 Handoff: $AW_DIR/investigations/{slug}/handoff.md
 ```
 
-**End the response with exactly one fenced JSON block** (machine-readable tail — `/review` and other callers parse this):
+**Close the report with exactly one fenced `aw-result` block**, before `## Next steps` (machine-readable tail — `/review` and other callers parse this; see the Result block below):
 
-```json
-{ "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
+```aw-result
+{ "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
 ```
 
 ### Sub-skill Dispatch
@@ -225,3 +225,16 @@ Do not invoke bugHunt if the fix was verified — rootCause's own report is suff
 
 - `/bugHunt --from-investigation <handoff path>` — auto-fix the bug using the full diagnosis
 - `/review` — re-review the codebase after applying fixes
+
+## Result block
+
+```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+```
+
+The fenced JSON tail in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON; the block comes before `## Next steps`.
+
+Keys: `skill` (`rootCause`), `artifacts` (absolute paths: the report `$AW_DIR/investigations/<timestamp>-<slug>.md` and the handoff), `summary` (one line),
+plus `status` (`fixed | unfixed | scope-breach | diagnosed`, as today); `report_path` (as today); `handoff_path` (as today); `boundary` (as today).
+
+Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
