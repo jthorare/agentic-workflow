@@ -1,6 +1,6 @@
 ---
 name: planDevexReview
-description: "Developer-experience review of a plan document. Maps friction in API ergonomics, setup, error messages, observability, docs, migration paths, and ramp-up cost."
+description: "Use when a plan adds or changes an API, CLI, SDK, config or setup flow and you need to know how painful it is for the developers who adopt or join it: install steps, error output, docs, migration path, ramp-up. Rates friction by severity. Not for end-user screens or security review."
 argument-hint: "[plan-path] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -86,6 +86,17 @@ Reads a plan directory's engineering-facing docs (auto-discovers latest if no ar
 
 - Default: `~/.agentic-workflow/<repo-slug>/plans/<feature>/devex-review.md`
 - When `--output <path>` is supplied: that exact path (used by `/autoplan` for canonical placement inside the feature dir)
+
+## Result block
+
+Only when `AW_RESULT=1`: write `$AW_DIR/results/planDevexReview-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
+
+- `skill`: `"planDevexReview"`
+- `artifacts`: absolute paths of the files this run wrote (the review file)
+- `summary`: one line, the verdict and the worst finding
+- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the same value as the report's final `verdict:` line
+
+Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
 
 ## Next steps
 
