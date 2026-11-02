@@ -40,8 +40,7 @@ click_card() {
 }
 # Back to the concept list (the crumb), then into concept $1's Why drill.
 open_why() {
-  if ! visible --type TextBlock --contains "$1"; then return 1; fi
-  visible --type Button --name "Concepts" && d click --type Button --name "Concepts" >/dev/null 2>&1
+  { visible --type Button --name "Concepts" && d click --type Button --name "Concepts" >/dev/null 2>&1; } || click_card "Concepts" || true   # the crumb
   wait_visible 30 --type TextBlock --contains "$1" || return 1
   click_card "$1" || return 1
   wait_visible 30 --type Button --name "Open the Why band" || return 1
