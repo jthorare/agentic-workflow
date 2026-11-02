@@ -699,6 +699,8 @@ inject_scaffold() {
     echo "stage=\"\$(cd \"\$here/$ups\" && pwd)\""
     echo 'dest="$HOME/.agentic-workflow/toolkit"'
     echo 'mkdir -p "$dest" "$HOME/.agentic-workflow" .aw-eval'
+    echo '# an empty .bashrc: the sandbox hides a missing one behind an unreadable stand-in, and every shell then prints "Permission denied" (#1924)'
+    echo '[ -e "$HOME/.bashrc" ] || : >"$HOME/.bashrc"'
     echo 'cp -R "$stage/skills" "$dest/"'
     echo '[ ! -d "$stage/config" ] || cp -R "$stage/config" "$dest/"'
     echo 'echo "claude $HOME/.claude/skills" > "$HOME/.agentic-workflow/providers"'
@@ -891,7 +893,18 @@ do_run() {
   fi
 
   mkdir -p "$EVAL_HOME/cache" || die 3 "cannot create $EVAL_HOME"
-  cleanup() { local kv; if [ "$KEEP" = 0 ]; then for kv in $STAGE_LIST; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done; fi; }
+  EVAL_TMP="$EVAL_HOME/tmp/$RUN_ID"   # one per run: lanes don't share it, and cleanup empties it
+  [ "$dry" = 1 ] || { mkdir -p "$EVAL_HOME/tmp" && mkdir -m 700 "$EVAL_TMP"; } || die 3 "cannot create $EVAL_TMP"
+  case "$EVAL_TMP" in
+    /tmp/* | /var/tmp/* | /dev/shm/*) note "the eval temp dir $EVAL_TMP is under a system temp dir; claude's sandbox denies writes there, so Bash writes in eval runs will fail (set AW_STATE_DIR elsewhere)" ;;
+  esac
+  cleanup() {
+    local kv
+    [ "$KEEP" = 0 ] || return 0
+    for kv in $STAGE_LIST; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done
+    # what the agent's tools left in TMPDIR; claude leaves its sealed dirs read-only, so open them first
+    [ ! -d "$EVAL_TMP" ] || { chmod -R u+rwx "$EVAL_TMP" 2>/dev/null; find "$EVAL_TMP" -delete 2>/dev/null; }
+  }
   trap cleanup EXIT
   trap 'exit 130' INT TERM
   if [ -n "$skills" ]; then
@@ -942,6 +955,7 @@ do_run() {
     args+=(--max-cost-usd "$bl" --allow-tools Bash Write Edit)
     pass_env=(PATH="$STAGE/evals/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
               AW_STATE_DIR=.aw-state AW_PREAMBLE=off AW_GIT_MODE=readonly AW_RESULT=1)
+    pass_env+=(TMPDIR="$EVAL_TMP")
     if [ "$dry" = 1 ]; then
       echo "dry run, not calling claude:"
       echo "  cd $STAGE && env -i $(shq "${pass_env[@]}") $(shq "$CLAUDE_BIN" "${args[@]}")"
