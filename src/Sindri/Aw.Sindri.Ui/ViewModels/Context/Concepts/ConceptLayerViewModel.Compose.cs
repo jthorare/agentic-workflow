@@ -7,7 +7,7 @@ internal sealed partial class ConceptLayerViewModel
 {
     private const string OtherKey = "other";
 
-    // Pinned cards in profile order (a pin the map has no node for is a waiting card in its own slot), then the cards of removed pins, then the suggestions. Without the pins route the cards are as they were.
+    // Pinned cards in profile order (a pin the map has no node for is a waiting card in its own slot), then the concepts a person set that no pin names (Pin this is offered), then the suggestions. Without the pins route the cards are as they were.
     private void Compose()
     {
         if (_pins is not { } pins || _openPin is null)
@@ -30,29 +30,28 @@ internal sealed partial class ConceptLayerViewModel
         var claimed = live.Select(p => p.Id).ToHashSet(StringComparer.Ordinal);
         var waitingNames = pinned.Where(t => t.Card.Waiting).Select(t => t.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var others = _all.Where(t => !claimed.Contains(KeyOf(t.Id))).ToList();
-        var removed = others.Where(t => t.IsSetByPerson && !IsOther(t)).Select(t => t.WithCard(RemovedCard(t, pins.Rebuild))).ToList();
+        var unpinned = others.Where(t => t.IsSetByPerson && !IsOther(t)).Select(t => t.WithCard(new PinCardState(Labels.ContextConceptSetByPerson, Pin: null, [], PinCardAction.None, ShowPinThis: true, ShowEditPin: false, Waiting: false))).ToList();
         var suggested = others.Where(t => !t.IsSetByPerson && !waitingNames.Contains(t.Name)).Select(Suggested);
-        Composed = [.. pinned, .. removed, .. suggested];
-        PinHeadText = pinned.Count + removed.Count == 0 ? Labels.PinNoPinsYet : Coverage([.. pinned.Where(t => !t.Card.Waiting)]);
+        Composed = [.. pinned, .. unpinned, .. suggested];
+        PinHeadText = HeadText(pinned);
+    }
+
+    // A removed pin's card stays in place but is no longer pinned: it adds nothing to the count or the coverage.
+    private string HeadText(List<ConceptTileViewModel> pinned)
+    {
+        var counted = pinned.Where(t => t.Card.Pin?.Change != "removed").ToList();
+        return counted.Count == 0 ? Labels.PinNoPinsYet : Coverage([.. counted.Where(t => !t.Card.Waiting)]);
     }
 
     private PinCardState PinnedCard(PinView pin, ConceptTileViewModel? found, IReadOnlyList<PinView> earlier, MapRebuildView rebuild)
     {
         var footer = PinLineRules.Of(pin, rebuild, PinCoverageRules.Problem(pin, found, earlier, MapFeatures), moved: null, _zone);
-        return new PinCardState(Labels.ContextConceptSetByPerson, pin, footer.Lines, Offered(footer.Action), ShowPinThis: false, ShowEditPin: true, Waiting: found is null);
+        return new PinCardState(Labels.ContextConceptSetByPerson, pin, footer.Lines, Offered(footer.Action), ShowPinThis: false, ShowEditPin: !string.Equals(pin.Change, "removed", StringComparison.Ordinal), Waiting: found is null);
     }
 
     // A pin the map has no node for yet: a card from the pin itself, which the rebuild replaces with the real one under the same automation id.
     private static ConceptTileViewModel WaitingCard(PinView pin, PinCardState card) =>
         new ConceptTileViewModel("concept:" + pin.Id, pin.Name, pin.Summary ?? string.Empty, new ConceptSize(Features: 0, Records: 0, Decisions: 0, Code: 0), setByPerson: true, pin.Aliases, static _ => { }).WithCard(card);
-
-    // A concept a person set whose pin is gone: it stays as "Unpinned" until the rebuild turns it into a suggestion.
-    private PinCardState RemovedCard(ConceptTileViewModel tile, MapRebuildView rebuild)
-    {
-        var gone = new PinView(KeyOf(tile.Id), tile.Name, tile.Summary, tile.Terms, [], FolderRules: 0, "profile", PinStates.Approved, "removed");
-        var footer = PinLineRules.Of(gone, rebuild, problem: null, moved: null, _zone);
-        return new PinCardState(Labels.ContextConceptSetByPerson, Pin: null, footer.Lines, Offered(footer.Action), ShowPinThis: false, ShowEditPin: false, Waiting: false);
-    }
 
     // The unassigned concept is no suggestion and takes no pin.
     private static ConceptTileViewModel Suggested(ConceptTileViewModel tile) => IsOther(tile)
