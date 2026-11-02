@@ -36,8 +36,8 @@ internal sealed class RerunExecutor(ICommandRunner runner, MetaPaths paths)
         if (RanNothing(result, output, argv) is { } nothing)
         {
             // On the gate tree the test exists, so a filter that matches nothing is a bad filter. On main it is a test the PR adds.
-            var reason = nothing == CommandNotFound ? $"the rerun command found nothing to run for '{test}' (exit {CommandNotFound})" : $"no test matched '{test}'";
-            return filterMustMatch ? MetaErrors.Invalid.With(reason) : new RerunOutcome(Passed: false, nothing == CommandNotFound ? "found nothing to run" : "no test matched", Absent: true);
+            var reason = nothing == CommandNotFound ? $"the rerun command, or something it ran, was not found for '{test}' (exit {CommandNotFound})" : $"no test matched '{test}'";
+            return filterMustMatch ? MetaErrors.Invalid.With(reason) : new RerunOutcome(Passed: false, nothing == CommandNotFound ? "command not found" : "no test matched", Absent: true);
         }
 
         // Exit 8 with tests run is some project having none to run, as in a solution-wide filter: the tests that ran passed.
