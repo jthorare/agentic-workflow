@@ -130,6 +130,19 @@ function time(opts, project, lane) {
   return { secs, status: r.status ?? -1, output: `${r.stdout ?? ""}${r.stderr ?? ""}`, command: shown(args) };
 }
 
+// What a failed timed run shows: each failed test's own lines (the runner prints `failed <test> (<time>)`, then the message and
+// the stack), then the run's last 15 lines without the JSON log lines a host writes. Those log lines alone filled the tail and
+// hid which test failed (run 41368768064).
+export function failedLines(output) {
+  const lines = output.replace(/\x1b\[[0-9;]*m/g, "").trim().split("\n").filter((l) => !/^\s*\|?\s*\{"timestamp"/.test(l));
+  const failed = [];
+  for (let i = 0; i < lines.length && failed.length < 60; i++) {
+    if (/^\s*failed \S/.test(lines[i])) failed.push(...lines.slice(i, i + 15));
+  }
+  const tail = lines.slice(-15);
+  return [...failed, ...tail];
+}
+
 // A package's limit for a lane: --budget, else the package's own exception, else the lane's budget.
 const limitFor = (opts, pkg, lane) => (opts.explicit.has(lane) ? undefined : (PROJECT_BUDGETS[pkg] ?? PACKAGE_BUDGETS[pkg])?.[lane]) ?? opts.budgets[lane];
 
@@ -171,7 +184,7 @@ export function main(argv, out = (l) => console.log(l)) {
       row.projects.push({ project, secs: run.secs, command: run.command });
       if (run.status !== 0) {
         failures.push(`LANE-PKG-002 ${name} ${lane}: the timed run failed (exit ${run.status}); rerun: ${run.command}`);
-        for (const l of run.output.trim().split("\n").slice(-15)) failures.push(`    | ${l}`);
+        for (const l of failedLines(run.output)) failures.push(`    | ${l}`);
       }
     }
   }
