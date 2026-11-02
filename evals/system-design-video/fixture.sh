@@ -1,12 +1,10 @@
 #!/usr/bin/env bash
 # Workspace for the system-design-video cases: a short made-up design doc (a pet-sitter booking redesign), an approved
 # two-beat storyboard, a tokens file, the browser-stack marker doctor.sh looks for, and ffprobe.json that plants the
-# failure (B-frames in the encode). Writes only under $PWD (and the run's temp HOME via the shared shim).
+# failure (B-frames in the encode). Writes only under $PWD, plus the skill's own scripts into the run's temp HOME.
 set -eu
 EVALS="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-if [ -f "$EVALS/_lib/shim.sh" ]; then
-  AW_LIB="$EVALS/_lib"; . "$AW_LIB/shim.sh"; shim_toolkit
-fi
+. "$EVALS/_lib/fixture-lib.sh"
 mkdir -p docs
 cat > docs/pet-sitter-booking-design.md <<'D'
 # Pet-sitter booking: split sitters from availability
@@ -78,6 +76,4 @@ if [ -d "$SK" ] && [ -n "${HOME:-}" ]; then
   mkdir -p "$HOME/.agentic-workflow/toolkit/skills"
   cp -r "$SK" "$HOME/.agentic-workflow/toolkit/skills/system-design-video"
 fi
-git init -q -b main
-git add -A
-git -c user.email=eval@example.com -c user.name=eval commit -q -m "initial design doc"
+aw_fixture_repo "initial design doc"

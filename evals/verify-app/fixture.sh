@@ -4,8 +4,7 @@
 # Usage: fixture.sh web|web-trap|ios|desktop|none   (default web). web-trap adds vendored iOS files that platform-detection must ignore.
 set -eu
 AW_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../_lib" && pwd)"
-. "$AW_LIB/shim.sh"
-shim_toolkit
+. "$AW_LIB/fixture-lib.sh"
 case "${1:-web}" in
   web|web-trap)
     cat > package.json <<'P'
@@ -35,4 +34,4 @@ P
   none) : ;;
   *) echo "fixture.sh: unknown platform $1" >&2; exit 1;;
 esac
-git init -q . 2>/dev/null || true
+aw_fixture_repo

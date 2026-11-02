@@ -2,8 +2,7 @@
 # Workspace for the verify-ios cases: a small plant-watering SwiftUI app (Fernly). Offline, nothing to build.
 set -eu
 AW_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../_lib" && pwd)"
-. "$AW_LIB/shim.sh"
-shim_toolkit
+. "$AW_LIB/fixture-lib.sh"
 mkdir -p Fernly.xcodeproj Fernly
 echo '// !$*UTF8*$!' > Fernly.xcodeproj/project.pbxproj
 cat > AGENTS.md <<'P'
@@ -27,5 +26,4 @@ struct TodayView: View {
     }
 }
 P
-git init -q . 2>/dev/null || true
-git add -A >/dev/null 2>&1 && git -c user.name=eval -c user.email=eval@example.com commit -qm "Today list" >/dev/null 2>&1 || true
+aw_fixture_repo "Today list"

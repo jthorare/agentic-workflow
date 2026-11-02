@@ -2,8 +2,7 @@
 # Workspace for the verify-web cases: a small recipe site (Next.js) with a documented dev URL. Offline, nothing to install.
 set -eu
 AW_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../_lib" && pwd)"
-. "$AW_LIB/shim.sh"
-shim_toolkit
+. "$AW_LIB/fixture-lib.sh"
 mkdir -p app/recipes
 cat > package.json <<'P'
 {
@@ -22,4 +21,4 @@ export default function Recipes() {
   return <main><h1>Recipes</h1><button>Add recipe</button></main>;
 }
 P
-git init -q . 2>/dev/null || true
+aw_fixture_repo
