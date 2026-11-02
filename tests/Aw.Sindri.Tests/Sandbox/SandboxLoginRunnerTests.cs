@@ -75,6 +75,22 @@ public sealed class SandboxLoginRunnerTests : IDisposable
     }
 
     [Fact]
+    public async Task The_config_dir_claude_gets_is_the_path_the_keychain_item_is_named_after_even_with_a_trailing_slash()
+    {
+        RecordingInstaller("claude");
+        Agent("claude", "CLAUDE_CONFIG_DIR");
+        var id = AgentId.From("claude-code");
+        var slashed = SindriHome + "/";
+
+        _ = await new SandboxLoginRunner(slashed, name => name == "TOOLKIT_DIR" ? _toolkit : null, _bin).Run(id, CancellationToken.None);
+
+        var handed = Calls()[1].Split("CLAUDE_CONFIG_DIR=")[1];
+        Assert.Equal(AgentHomes.For(slashed, id), handed);
+        Assert.Equal(AgentHomes.For(SindriHome, id), handed);
+        Assert.Equal(SecurityCliKeychainLogin.ServiceFor(AgentHomes.For(slashed, id)), SecurityCliKeychainLogin.ServiceFor(handed));
+    }
+
+    [Fact]
     public async Task Codex_prints_the_hooks_trust_line_and_claude_does_not()
     {
         RecordingInstaller("claude");

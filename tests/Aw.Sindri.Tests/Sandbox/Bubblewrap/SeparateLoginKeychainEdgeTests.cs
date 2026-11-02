@@ -48,4 +48,55 @@ public sealed class SeparateLoginKeychainEdgeTests
         Assert.True(refused.IsError);
         Assert.False(File.Exists(home.ClaudeHome + "/.credentials.json"));
     }
+
+    [Fact]
+    public async Task An_expired_file_and_a_fresh_keychain_item_is_ready_and_prepare_rewrites_the_file()
+    {
+        using var home = new FakeSeparateHome(LoginState.Expired);
+        var json = Login(FakeSeparateHome.Now + TimeSpan.FromHours(5));
+        var source = home.Source(new FakeKeychain(SecurityCliKeychainLogin.ServiceFor(home.ClaudeHome), json));
+
+        var status = source.Probe(_claude);
+        var prepared = await source.Prepare(_claude, _launch, TestContext.Current.CancellationToken);
+
+        Assert.Equal(LoginState.Ready, status.State);
+        Assert.True(prepared.IsSuccess);
+        var file = home.ClaudeHome + "/.credentials.json";
+        Assert.Equal(json, await File.ReadAllTextAsync(file, TestContext.Current.CancellationToken));
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(file));
+        }
+    }
+
+    [Fact]
+    public void A_ready_file_wins_without_asking_the_keychain()
+    {
+        using var home = new FakeSeparateHome(LoginState.Ready);
+        var processes = new FakeProcesses().When(static (p, _) => p == "security", FakeProcesses.Ok(Login(FakeSeparateHome.Now + TimeSpan.FromHours(5))));
+        var source = home.Source(new SecurityCliKeychainLogin(processes, isMac: true));
+
+        Assert.Equal(LoginState.Ready, source.Probe(_claude).State);
+        Assert.Empty(processes.Calls);
+    }
+
+    [Fact]
+    public async Task An_expired_file_and_an_expired_keychain_item_stays_expired()
+    {
+        using var home = new FakeSeparateHome(LoginState.Expired);
+        var item = JsonSerializer.Serialize(new { claudeAiOauth = new { accessToken = "kc", expiresAt = (FakeSeparateHome.Now - TimeSpan.FromMinutes(1)).ToUnixTimeMilliseconds() } });
+        var source = home.Source(new FakeKeychain(SecurityCliKeychainLogin.ServiceFor(home.ClaudeHome), item));
+        var before = await File.ReadAllTextAsync(home.ClaudeHome + "/.credentials.json", TestContext.Current.CancellationToken);
+
+        var prepared = await source.Prepare(_claude, _launch, TestContext.Current.CancellationToken);
+
+        Assert.Equal(LoginState.Expired, source.Probe(_claude).State);
+        Assert.True(prepared.IsError);
+        Assert.Equal(before, await File.ReadAllTextAsync(home.ClaudeHome + "/.credentials.json", TestContext.Current.CancellationToken));
+    }
+
+    private sealed class FakeKeychain(string service, string json) : IKeychainLogin
+    {
+        public string? Read(string requested) => requested == service ? json : null;
+    }
 }
