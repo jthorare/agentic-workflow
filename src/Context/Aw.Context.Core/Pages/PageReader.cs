@@ -98,16 +98,19 @@ public static class PageReader
             return ContextErrors.PageQueryUnknown.With($"context_pages: no repo '{repo.Value}'{Fix(PageRules.NearestId(repo.Value, repos.Select(r => r.Name.Value)))}");
         }
 
-        return query.Page is { } page && !all.Exists(e => e.Id == page)
+        return query.Page is { } page && !all.Exists(e => IsPage(e, page))
             ? ContextErrors.PageNotFound.With($"no page is named '{page}'{Fix(PageRules.NearestId(page, all.Select(e => e.Id)))}")
             : null;
     }
+
+    // A page by its id ('schedule-week') or its map key ('surface:route/GET:/schedule/week'): an id never holds ':' and a key always does.
+    private static bool IsPage(PageEntry entry, string page) => entry.Id == page || entry.Node.Key.Value == page;
 
     private static string Fix(string? near) => near is null ? string.Empty : $" (fix: try {near})";
 
     private static bool Matches(PagesQuery query, string? concept, PageEntry entry) =>
         (query.Marks == PageMarks.All || query.Marks == PageMarks.Owner == entry.Owner)
-        && (query.Page is null || entry.Id == query.Page)
+        && (query.Page is null || IsPage(entry, query.Page))
         && (query.Repo is not { } repo || entry.Repos.Contains(repo.Value, StringComparer.Ordinal))
         && (concept is null || entry.ConceptKeys.Contains(concept, StringComparer.Ordinal))
         && Named(query.Q, entry);

@@ -6,7 +6,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <summary>One slice of the product's pages with their actions and concepts (GET /sindri/context/pages).</summary>
 /// <param name="Repo">Keeps the pages of this repo, or null for every repo the caller may read.</param>
 /// <param name="Concept">Keeps the pages that express this concept (an id or 'concept:id') or have an action that does, or null for all.</param>
-/// <param name="Page">Keeps the one page with this id, or null for all.</param>
+/// <param name="Page">Keeps the one page with this id or map key, or null for all.</param>
 /// <param name="Marks">Which pages: the owner's named ones, the suggested ones or both (the default; the CLI asks for one).</param>
 /// <param name="Limit">Pages per answer (50 when null; 1 to 200).</param>
 /// <param name="Offset">Pages to skip (0 when null).</param>

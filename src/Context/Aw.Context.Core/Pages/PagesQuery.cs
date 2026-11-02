@@ -4,7 +4,7 @@ namespace Aw.Context.Core.Pages;
 
 /// <summary>The pages read: a filter, the page and which map.</summary>
 /// <param name="Concept">Keeps the pages that express this concept or have an action that does, or null for all.</param>
-/// <param name="Page">Keeps the one page with this id (owner or suggested), or null for all.</param>
+/// <param name="Page">Keeps the one page with this id or map key (owner or suggested), or null for all.</param>
 /// <param name="Repo">Keeps the pages of this repo, or null for every repo the caller may read.</param>
 /// <param name="Marks">Which pages: owner, suggested or both.</param>
 /// <param name="Limit">Pages per answer (50 when null; 1 to 200).</param>
