@@ -1,6 +1,6 @@
 ---
 name: design-evolve-ios
-description: Extract design tokens from a local Swift file or Xcode project directory and merge updates into the existing design-tokens.json, preserving tokens not present in the reference.
+description: Use when design-tokens.json exists and a local Swift file or Xcode project, such as a new theme, has changes to fold in without losing tokens the source lacks. Not for reference websites (design-evolve-web) or a first extraction (design-analyze-ios).
 argument-hint: <path/to/Theme.swift or project dir>
 allowed-tools: Bash(SHARED_DIR=*), Read, Write, Edit, Glob, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -53,6 +53,12 @@ Read `$SHARED_DIR/token-merge.md` and follow it exactly:
 - **Step B** — **Ask the user** Adopt / Adapt / Ignore per group; **Adapt requires the follow-up **Ask the user** capturing the literal replacement value**
 - **Step C** — write merged `design-tokens.json` (tokens not present in the reference are always preserved); **unconditionally** append the consultation to `.impeccable.md ## Sources`; set `baseline_stale` in `screens.json` when anything was adopted or adapted
 - **Step D** — report counts and exact before→after values
+
+## Result block
+
+Follow `$HOME/.agentic-workflow/toolkit/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-evolve-ios-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
+
+Keys: `skill` (`"design-evolve-ios"`), `artifacts` (absolute paths: `design-tokens.json`), `summary` (one line), plus `source` (the path read) and `counts` (`adopted`, `adapted`, `ignored`, as the merge summary reports them).
 
 ## Next steps
 

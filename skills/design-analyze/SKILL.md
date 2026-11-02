@@ -1,6 +1,6 @@
 ---
 name: design-analyze
-description: Detect web vs iOS automatically and delegate to /design-analyze-web (Dembrandt CLI on URLs) or /design-analyze-ios (Swift/Xcode asset extraction). Writes design-tokens.json.
+description: Use when someone wants a first design-tokens.json built from reference sites or from an existing app's code, in a web or an iOS project. Picks the platform and hands off to design-analyze-web or design-analyze-ios. Not for merging into tokens that already exist (design-evolve).
 argument-hint: "[<url> [url2...] (web) | <path> (ios)]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -39,6 +39,12 @@ Read `$SHARED_DIR/platform-detection.md` and apply it exactly — the recursive 
    - Web: **Invoke skill `design-analyze-web`** with args `"<original args verbatim>"`
    - iOS: **Invoke skill `design-analyze-ios`** with args `"<original args verbatim>"`
 3. If a required argument is empty (web requires at least one URL), **stop** and ask — never dispatch with a blank required arg.
+
+## Result block
+
+Follow `$HOME/.agentic-workflow/toolkit/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-analyze-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
+
+Keys: `skill` (`"design-analyze"`), `artifacts` (absolute paths: the member skill's `design-tokens.json`), `summary` (one line), plus `dispatched_to` (`design-analyze-web` or `design-analyze-ios`).
 
 ## Next steps
 

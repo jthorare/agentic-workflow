@@ -1,6 +1,6 @@
 ---
 name: design-analyze-ios
-description: Scan Assets.xcassets and Swift theme files to extract design tokens (colors, typography, spacing) into design-tokens.json in W3C DTCG format. Pass a specific path or let the skill auto-discover.
+description: Use when the source is an iOS project's own code or assets (Assets.xcassets, SwiftUI theme files) and the user wants its colours, text styles and spacing as design tokens. Writes design-tokens.json in W3C format; finds the files itself when no path is given. Not for reference websites (design-analyze-web).
 argument-hint: [path/to/Assets.xcassets or Theme.swift]
 allowed-tools: Bash(SHARED_DIR=*), Read, Write, Glob, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -110,6 +110,12 @@ Next steps:
 - If Swift files use system colors (`Color(.systemBlue)`) without a custom equivalent, note them in the output but do not add a token for them
 - Do not modify existing Swift files — read-only extraction
 - Convert all CGFloat dimensions to `"Npx"` string format for DTCG compatibility
+
+## Result block
+
+Follow `$HOME/.agentic-workflow/toolkit/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-analyze-ios-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
+
+Keys: `skill` (`"design-analyze-ios"`), `artifacts` (absolute paths: `design-tokens.json`), `summary` (one line), plus `sources` (the asset catalogs and Swift files read) and `counts` (tokens per category).
 
 ## Next steps
 

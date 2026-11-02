@@ -1,6 +1,6 @@
 ---
 name: design-evolve-web
-description: Analyze a new reference URL mid-project and selectively merge design tokens into the existing design language. Diffs new tokens against current, asks what to adopt/adapt/ignore, updates design-tokens.json and .impeccable.md.
+description: Use when a design language already exists and the user points at a new reference URL for inspiration, wanting to decide what to keep, rework or drop. Diffs the site against the current tokens and updates design-tokens.json and .impeccable.md. Not for local Swift sources (design-evolve-ios) or a first extraction (design-analyze-web).
 argument-hint: <url>
 allowed-tools: Bash(npx dembrandt *), Bash(git *), Bash(SHARED_DIR=*), Bash(mkdir *), Read, Write, Edit, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -54,6 +54,12 @@ Read `$SHARED_DIR/token-merge.md` and follow it exactly:
 - **Step D** — report counts and exact before→after values
 
 The pinned `design/raw/<host>.json` is kept — do not delete it.
+
+## Result block
+
+Follow `$HOME/.agentic-workflow/toolkit/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-evolve-web-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
+
+Keys: `skill` (`"design-evolve-web"`), `artifacts` (absolute paths: `design-tokens.json` and `.impeccable.md`), `summary` (one line), plus `source` (the URL) and `counts` (`adopted`, `adapted`, `ignored`).
 
 ## Next steps
 
