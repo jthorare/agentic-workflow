@@ -1,4 +1,5 @@
 ---
+timeout_seconds: 300
 max_turns: 8
 allowed_tools: [Read, Glob, Grep, Skill, Agent, TodoWrite, AskUserQuestion]
 tags: [canary, routing, near-miss, landAndDeploy]

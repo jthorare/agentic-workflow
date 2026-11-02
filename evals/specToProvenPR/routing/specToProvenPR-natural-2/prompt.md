@@ -1,4 +1,5 @@
 ---
+timeout_seconds: 300
 max_turns: 6
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [specToProvenPR, routing, natural]

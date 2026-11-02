@@ -2,13 +2,10 @@
 # Workspace for the shipRelease cases: a small recipe-scaling library on a feature branch, tests green.
 # Planted facts a correct run must report: the suite has 7 tests and all pass (`npm test`, node:test), there is
 # no coverage tooling, and the diff touches only src/ and test/ (no UI, so app verification is n/a).
-# origin is a bare repo inside $PWD, so `git fetch origin` and `git rebase origin/main` work offline; nothing
-# leaves the workspace. `gh pr list` has one canned answer (no PR yet); gh writes are refused under readonly.
+# No remote (evals/_lib/fixture-lib.sh: a stray push has nowhere to go), so the sync step has no origin to
+# fetch and says so. `gh pr list` has one canned answer (no PR yet); gh writes are refused under readonly.
 # Writes only under $PWD.
 set -eu
-AW_LIB="$(cd "$(dirname "${BASH_SOURCE[0]}")/../_lib" && pwd)"
-. "$AW_LIB/shim.sh"
-shim_toolkit
 mkdir -p src test .aw-eval
 cat > package.json <<'P'
 { "name": "pantry-scale", "version": "0.3.0", "private": true, "scripts": { "test": "node --test" } }
@@ -40,9 +37,6 @@ P
 git init -q -b main
 git add -A
 git -c user.name=eval -c user.email=eval@example.com commit -q -m "initial: scaleQuantity"
-git init -q --bare .aw-origin.git
-git remote add origin "$PWD/.aw-origin.git"
-git -c user.name=eval -c user.email=eval@example.com push -q origin main
 git checkout -q -b feat/halve-servings
 cat > src/scale.js <<'P'
 'use strict';

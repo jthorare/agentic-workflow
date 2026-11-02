@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Workspace for the addressReview cases: a small recipe-app repo on a made-up PR branch (PR 77, shopping list export),
-# plus the saved review for it under .aw-state/<workspace dir name>/reviews/77.json (no remote, so the repo slug is the
+# plus the saved review for it under .aw-state/WORKSPACE-DIR-NAME/reviews/77.json (no remote, so the repo slug is the
 # directory name, as skills/_shared/repo-slug.sh derives it). Offline; the stub gh reads .aw-eval/gh.json.
 # Planted: src/export.js does not escape commas or quotes in CSV cells (blocking), src/parse.js uses parseInt so
 # "1.5" becomes 1 (issue), and a nit (rename toCsv) that a default run must leave alone. Writes only under $PWD.
