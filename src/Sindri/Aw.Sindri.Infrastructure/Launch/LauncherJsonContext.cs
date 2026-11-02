@@ -10,6 +10,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 [JsonSerializable(typeof(ClaudeHooks))]
 [JsonSerializable(typeof(ClaudeSandbox))]
 [JsonSerializable(typeof(McpConfigDocument))]
+[JsonSerializable(typeof(CursorCliDocument))]
 [JsonSerializable(typeof(TerminalTemplatesFile))]
 [JsonSerializable(typeof(CodexModelsDocument))]
 internal sealed partial class LauncherJsonContext : JsonSerializerContext;
