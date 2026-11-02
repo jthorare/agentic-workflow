@@ -191,7 +191,7 @@ bash scripts/tests/probe-linear-projects.test.sh   # scripts/probe-linear-projec
 bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh: every skill with a git/gh write command has a "## Git mode" section with ${AW_GIT_MODE:-full}; a planted skill without it fails naming file:line
-bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line
+bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, merge, rebase, cherry-pick, revert, am, tag <name>, branch <name>, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line
 bash scripts/tests/system-design-tokens.test.sh   # skills/system-design/scripts/tokens_to_css.py: known tokens and aliases map, unmapped ones are printed and keep the neutral fallback, a missing tokens file exits 1 without output
 bash scripts/tests/system-design-packet.test.sh   # build_prs.py (cards, numeric order, idempotent, refusals), write_packet.py (packet.json, *.src.html skipped), packet-to-storyboard.ts parser/layout imported under node 22+ (skips without it; no bun)
 bash scripts/tests/system-design-video.test.sh   # skills/system-design-video/scripts with stub ffmpeg/ffprobe/bun: doctor.sh reports what is missing and honors PLAYWRIGHT_CORE / AW_STATE_DIR, playback-check.sh passes level 4.1 without B-frames and fails level 5.0, B-frames, non-h264 and decode errors, bad arguments exit 1
@@ -222,8 +222,6 @@ bash scripts/tests/scoping-fixture.test.sh
 bash scripts/tests/line-fixture.test.sh
 bash scripts/tests/skill-evals.test.sh      # scripts/skill-evals.sh with a stub claude: flags, exit codes 0-4, the staged rewrite (source untouched), the env allowlist and token scrub, the flock'd spend tally under two concurrent runs, budget refusal, --changed, --selftest, --lint-descriptions, --status; the stubs gh and curl
 bash scripts/tests/eval-gh-wrapper.test.sh   # evals/stubs/bin/gh and curl: the readonly refusals (every form), canned answers from .aw-eval/*.json (match rules, first match, no match, no file, subdirectory), pass-through to a fake real gh
-bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh on fixture trees: a skill with a write and no AW_GIT_MODE reading fails with file:line
-bash scripts/tests/eval-git-wrapper.test.sh   # evals/stubs/bin/git: every write refused under AW_GIT_MODE=readonly (exit 1, `aw-eval:` line on stderr), reads and full mode pass through to a fake real git
 bash scripts/tests/code-index-fixture.test.sh  # the code-index fixtures (tests/fixtures/code-index): verify.mjs, the sample check, the hostile generator
 bash scripts/tests/meta-launch.test.sh      # Linux and macOS (golden transcript; needs cc on macOS)
 bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version and the launcher's staleness warning (Linux and macOS)

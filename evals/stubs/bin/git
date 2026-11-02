@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Eval git wrapper (spec 2026-10-25-skill-revamp-evals-design.md §2.4): a pass-through to the real git, found on PATH after this
-# directory. Under AW_GIT_MODE=readonly it refuses only commit, push, worktree add, checkout -b and switch -c (exit 1, one line a
-# grader can match). Put this directory on PATH for the agent's run only; fixture.sh and --selftest use the real git.
+# directory. Under AW_GIT_MODE=readonly it refuses commit, push, merge, rebase, cherry-pick, revert, am, tag <name>, branch <name>,
+# worktree add, checkout -b and switch -c (exit 1, one line a grader can match). Put this directory on PATH for the agent's run only; fixture.sh and --selftest use the real git.
 set -u
 
 self_dir="$(cd "${BASH_SOURCE[0]%/*}" && pwd)"
