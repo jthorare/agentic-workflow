@@ -9,6 +9,8 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 
 4-phase systematic debugging with automatic scope freeze at the module boundary.
 
+A passing test does not end the run. Every run, fixed or not, ends with the **Done checklist** at the end of Phase 6: the report, the handoff, the result file (under `AW_RESULT=1`) and the `aw-result` block.
+
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
@@ -79,6 +81,8 @@ Fix the confirmed cause.
 
 Then **Ask the user** whether to expand the scope or stop.
 
+5. **Green is not done.** Once the fix verifies, go straight on to Phase 5 and Phase 6 before you reply.
+
 ## Phase 5: Write Investigation Report + Handoff
 
 Write the report to `$AW_DIR/investigations/{timestamp}-{slug}.md` where:
@@ -89,8 +93,10 @@ Write the report to `$AW_DIR/investigations/{timestamp}-{slug}.md` where:
 ```bash
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
-mkdir -p "$AW_DIR/investigations/<slug>"
+echo "$AW_DIR"
 ```
+
+Write the report and the handoff with the **Write tool** at absolute paths under that `$AW_DIR`; it creates the missing directories. Don't `mkdir` first, and don't skip the files because the shell can't write there: a shell that is read-only or sandboxed is not a reason to skip them. Send the report, the handoff and (under `AW_RESULT=1`) the result file as Write calls in the same turn, so none of them waits on the others.
 
 Report format:
 
@@ -213,6 +219,15 @@ Handoff: $AW_DIR/investigations/{slug}/handoff.md
 ```aw-result
 { "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
 ```
+
+**Done checklist.** Do every item before you send the reply; a run that skips one is not finished, even when the fix passed:
+
+1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5, Write tool).
+2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5, Write tool).
+3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/rootCause-<timestamp>.json` (Result block, Write tool). Print the gate (`echo "AW_RESULT=${AW_RESULT:-0}"`) to know.
+4. The reply contains the `aw-result` block above, before `## Next steps`. It is never optional: callers parse it, and it goes in even when the rest of the reply is short.
+
+If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
 
 ### Sub-skill Dispatch
 
