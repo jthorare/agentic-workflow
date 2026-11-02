@@ -1,6 +1,6 @@
 ---
 name: review
-description: Orchestrate a multi-agent PR code review. Spawns domain-specific reviewer subagents in parallel based on changed files. Findings are saved to $AW_DIR/reviews/<pr>.json — run /postReview to publish to GitHub.
+description: "Use when someone wants a pull request looked over before it merges: \"review my PR\", check this diff for bugs, security holes, weak tests or unhandled edge cases. Runs specialist reviewers in parallel and saves the findings locally without posting. Not for fixing saved comments (addressReview) or publishing them (postReview)."
 argument-hint: [pr-number-or-url] [--lens <persona,...>]
 allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

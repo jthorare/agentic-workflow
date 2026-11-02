@@ -1,0 +1,14 @@
+schema_version: '1.1'
+name: review-natural-1
+source: "issue #1862 (the owner's stop list has a 'Review PR' row, i.e. people ask for a PR review before merge), reworded into a request on a made-up seed-swap app"
+execution:
+  max_turns: 8
+  timeout_seconds: 300
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
