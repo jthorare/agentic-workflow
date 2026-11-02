@@ -103,24 +103,6 @@ Do NOT begin executing the task during this skill.
 - If the prompt is already detailed, say so and ask if enhancement is still wanted.
 - If no docs exist, enhance from what's known in the conversation.
 
-## Result block
-
-Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
-
-Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/enhancePrompt-$(date +%Y%m%d-%H%M%S).json` with:
-
-- `skill`: `"enhancePrompt"`
-- `artifacts`: `[]` (this skill talks; the saved prompt is named by `prompt_file`)
-- `summary`: one line saying what happened
-- `prompt_file`: absolute path of the persisted `prompts/{timestamp}.md`
-- `docs_read`: number of docs listed as read
-
-Then print the same JSON as a fenced `aw-result` block in the reply, before `## Next steps`:
-
-```aw-result
-{"skill": "enhancePrompt", "artifacts": [], "summary": "<one line>", "prompt_file": "/abs/prompts/<ts>.md", "docs_read": 3}
-```
-
 ## Next steps
 
 Name the successor skill explicitly — pick the one that matches the enhanced task and pass the persisted prompt file:
@@ -139,6 +121,6 @@ Name the successor skill explicitly — pick the one that matches the enhanced t
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/enhancePrompt-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`enhancePrompt`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
-plus `prompt_path` (absolute path of the saved enhanced prompt (`$AW_DIR/prompts/<ts>.md`)).
+plus `prompt_path` (absolute path of the saved enhanced prompt (`$AW_DIR/prompts/<ts>.md`)); `docs_read` (number of docs listed as read).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

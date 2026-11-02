@@ -114,25 +114,6 @@ If the target was "none — execute directly", begin the work yourself using the
 - The subagent question always gets its own dedicated round.
 - Minimum 3 rounds; only the user saying "skip" collapses the interview — and even then, still ask the subagent question, get confirmation, and write both artifacts before proceeding.
 
-## Result block
-
-Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
-
-Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/withInterview-$(date +%Y%m%d-%H%M%S).json` with:
-
-- `skill`: `"withInterview"`
-- `artifacts`: `[]` (this skill talks; its files are named by `plan_dir`)
-- `summary`: one line saying what happened
-- `plan_dir`: absolute path of the `$PLAN_DIR` directory holding `interview.md` and `plan.md`
-- `target_skill`: the skill handed off to, or `"none"`
-- `rounds`: number of interview rounds held
-
-Then print the same JSON as a fenced `aw-result` block in the reply, before `## Next steps`:
-
-```aw-result
-{"skill": "withInterview", "artifacts": [], "summary": "<one line>", "plan_dir": "/abs/plans/<date>-<slug>", "target_skill": "officeHours", "rounds": 3}
-```
-
 ## Next steps
 
 - **Invoke skill `<target>`** with args `<original prompt> — interview: $PLAN_DIR/interview.md` — run the wrapped target skill with the interview artifact attached
@@ -147,6 +128,6 @@ Then print the same JSON as a fenced `aw-result` block in the reply, before `## 
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/withInterview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`withInterview`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
-plus `confirmed` (true when the user confirmed the plan).
+plus `confirmed` (true when the user confirmed the plan); `plan_dir` (absolute path of the `$PLAN_DIR` directory holding `interview.md` and `plan.md`); `target_skill` (the skill handed off to, or `none`); `rounds` (number of interview rounds held).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

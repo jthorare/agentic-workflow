@@ -200,18 +200,6 @@ Suggested next steps:
   /officeHours — Brainstorm refinements to address concerns
 ```
 
-## Result block
-
-Only when `AW_RESULT=1`: write `$AW_DIR/results/productReview-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
-
-- `skill`: `"productReview"`
-- `artifacts`: absolute paths of the files this run wrote (the review file)
-- `summary`: one line, the verdict and the top concern
-- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the same value as the report's final `verdict:` line
-- `mode`: `mvp`, `growth`, `scale` or `pivot`
-
-Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
-
 ## Next steps
 
 - `/autoplan` — run with other plan-review lenses in parallel

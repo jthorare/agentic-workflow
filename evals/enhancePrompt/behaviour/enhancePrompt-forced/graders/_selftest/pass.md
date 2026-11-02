@@ -16,5 +16,5 @@ No project docs here (no AGENTS.md, README, rules or planning files), so I'm enh
 Should I proceed with this, or adjust anything?
 
 ```aw-result
-{"skill": "enhancePrompt", "artifacts": [], "summary": "Enhanced the rate limiting request, no docs found", "prompt_file": "/ws/.aw-state/x/prompts/20261101-120000.md"}
+{"skill": "enhancePrompt", "artifacts": [], "summary": "Enhanced the rate limiting request, no docs found", "prompt_path": "/ws/.aw-state/x/prompts/20261101-120000.md"}
 ```

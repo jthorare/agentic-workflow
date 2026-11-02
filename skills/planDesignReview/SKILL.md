@@ -100,17 +100,6 @@ Reads a plan directory's design-relevant docs (auto-discovers latest if no arg) 
 - Default: `$AW_DIR/plans/<feature>/design-review.md`
 - When `--output <path>` is supplied: that exact path (used by `/autoplan` for canonical placement inside the feature dir)
 
-## Result block
-
-Only when `AW_RESULT=1`: write `$AW_DIR/results/planDesignReview-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
-
-- `skill`: `"planDesignReview"`
-- `artifacts`: absolute paths of the files this run wrote (the review file)
-- `summary`: one line, the verdict and the lowest-rated dimension
-- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the same value as the report's final `verdict:` line
-
-Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
-
 ## Next steps
 
 - `/autoplan` — if running standalone, fan out to other plan lenses (product, arch, devex, security)

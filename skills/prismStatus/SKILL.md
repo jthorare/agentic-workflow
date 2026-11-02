@@ -67,24 +67,6 @@ Assign `PORT` explicitly at the top of **every** bash block (shell state does no
 
 stdout only. No file written.
 
-## Result block
-
-Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
-
-Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/prismStatus-$(date +%Y%m%d-%H%M%S).json` with:
-
-- `skill`: `"prismStatus"`
-- `artifacts`: `[]` (this skill reports; it writes no files)
-- `summary`: one line saying what happened
-- `dashboard`, `mcp`, `kb`: each `"ok"` or `"fail"`, one per check above
-- `version`: the version string, or `"unknown"`
-
-Then print the same JSON as a fenced `aw-result` block in the reply, before `## Next steps`:
-
-```aw-result
-{"skill": "prismStatus", "artifacts": [], "summary": "<one line>", "dashboard": "ok", "mcp": "ok", "kb": "ok", "version": "5.1.0"}
-```
-
 ## Next steps
 
 - `/officeHours` — if KB is empty, start populating it with a brainstorm
@@ -99,6 +81,6 @@ Then print the same JSON as a fenced `aw-result` block in the reply, before `## 
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/prismStatus-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`prismStatus`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
-plus `healthy` (true when dashboard, MCP server and knowledge base all answer).
+plus `healthy` (true when dashboard, MCP server and knowledge base all answer); `dashboard`, `mcp`, `kb` (each `ok` or `fail`, one per check); `version` (the version string, or `unknown`).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -106,18 +106,6 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 - Diff mode default: `$AW_DIR/security/<target-slug>-threat-model.md`
 - When `--output <path>` is supplied: that exact path
 
-## Result block
-
-Only when `AW_RESULT=1`: write `$AW_DIR/results/cso-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
-
-- `skill`: `"cso"`
-- `artifacts`: absolute paths of the files this run wrote (the threat-model file)
-- `summary`: one line, the recommendation and the worst finding
-- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the same value as the report's final `verdict:` line
-- `mode`: `plan` or `diff`
-
-Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
-
 ## Next steps
 
 - `/review` — if pre-ship and findings exist, run general code review
