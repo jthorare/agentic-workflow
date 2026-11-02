@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Tests for scripts/skill-evals.sh (#1107): the flags and exit codes 0-4, the staged rewrite (source untouched), the env allowlist
 # and token scrub, the spend tally under two concurrent runs, budget refusal, --changed, a staged path outside the repo, --selftest,
-# --lint-descriptions and --status. A stub `claude` stands in for the real one: no model, no network, no login.
+# --lint-descriptions and --status, bootstrap/ as a skill dir, family sets (evals/_families) and their separate spend cap, and the
+# fixture lint's comment lines. A stub `claude` stands in for the real one: no model, no network, no login.
 set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/test-grep.sh"
 
@@ -437,6 +438,122 @@ done
 n="$(n_of AW_RESULT)"
 if [ "$n" = 0 ]; then has -E 'warning: no staged file holds .*AW_RESULT' <<<"$OUT" && ok "AW_RESULT rewriting 0 files prints a warning" || { fail "no AW_RESULT warning"; show; }
 else ok "AW_RESULT is rewritten in $n file(s)"; fi
+
+# mkfamily: evals/_families/grp/{alpha,beta}: a first-Skill-call regex grader on the trace, committed
+mkfamily() {
+  local F="$REPO/evals/_families/grp" m
+  for m in alpha beta; do
+    mkdir -p "$F/$m/graders/_selftest"
+    printf -- '---\nmax_turns: 5\ntimeout_seconds: 60\nallowed_tools: [Skill]\n---\nA request that only %s should handle.\n' "$m" >"$F/$m/prompt.md"
+    cat >"$F/$m/graders/first-skill.md" <<'EOF'
+---
+type: regex
+target: trace
+pattern: '(?s)\A(?:(?!"skill"\s*:).)*"skill"\s*:\s*"(?:[\w-]+:)?MEMBER"'
+---
+
+The first Skill call names MEMBER.
+EOF
+    sed -i "s/MEMBER/$m/g" "$F/$m/graders/first-skill.md"
+    printf '{"name":"Skill","input":{"skill":"%s"}}\n' "$m" >"$F/$m/graders/_selftest/first-skill.pass.trace"
+    printf '{"name":"Skill","input":{"skill":"zzz"}}\n{"name":"Skill","input":{"skill":"%s"}}\n' "$m" >"$F/$m/graders/_selftest/first-skill.fail.trace"
+  done
+  printf 'family grp\n' >"$F/README.md"
+  git -C "$REPO" add -A; git -C "$REPO" commit -q -m families
+}
+
+echo "bootstrap/ is a skill dir"
+mkrepo; mkclaude
+mkdir -p "$REPO/bootstrap" "$REPO/evals/bootstrap/routing/bootstrap-natural-1/graders/_selftest"
+printf -- '---\nname: bootstrap\ndescription: Use when a repo lacks its planning docs and needs them generated.\n---\nbootstrap body\n' >"$REPO/bootstrap/SKILL.md"
+BC="$REPO/evals/bootstrap/routing/bootstrap-natural-1"
+printf -- '---\nmax_turns: 5\ntimeout_seconds: 60\nallowed_tools: [Skill]\n---\nSet this repo up with the docs it is missing.\n' >"$BC/prompt.md"
+printf -- '---\ntype: tool_used\ntool: Skill\ninput_match: bootstrap\narm: with-only\n---\n' >"$BC/graders/skill-fired.md"
+printf 'Skill\t{"skill":"bootstrap"}\n' >"$BC/graders/_selftest/skill-fired.pass.tools"
+printf 'Bash\tls\n' >"$BC/graders/_selftest/skill-fired.fail.tools"
+git -C "$REPO" add -A; git -C "$REPO" commit -q -m bootstrap
+run --skills bootstrap --selftest
+expect "--skills bootstrap resolves bootstrap/SKILL.md and --selftest passes" 0 'selftest: 1 case\(s\), 0 problem'
+run --changed --dry-run
+expect "--changed picks bootstrap from a bootstrap/ diff" 0 'skills: bootstrap'
+git -C "$REPO" update-ref refs/remotes/origin/main HEAD
+run --changed --dry-run
+expect "nothing differs from the merge base: no skills changed" 0 '^no skills changed'
+printf 'more\n' >>"$REPO/bootstrap/SKILL.md"
+run --changed --dry-run
+expect "--changed counts a bootstrap/ body change" 0 'skills: bootstrap'
+run --skills bootstrap --kind routing --dry-run --keep-temp
+SR="$(printf '%s\n' "$OUT" | sed -n 's/^skill-evals: staged routing: //p')"
+[ -f "$SR/skills/bootstrap/SKILL.md" ] && ok "the stage copies bootstrap/ to skills/bootstrap/" || { fail "bootstrap not staged"; show; }
+run --skills bootstrap --lint-descriptions
+expect "--lint-descriptions reads bootstrap's description" 0 'lint-descriptions: ok'
+
+echo "family sets"
+mkrepo; mkclaude; mkfamily
+run --skills alpha --selftest
+expect "--selftest walks the family cases and counts them" 0 'selftest: 5 case\(s\), 0 problem'
+rm "$REPO/evals/_families/grp/beta/graders/_selftest/first-skill.fail.trace"
+run --skills alpha --selftest
+expect "a family grader without a fail reply is caught" 1 'beta/graders/first-skill.md: no graders/_selftest/first-skill.fail'
+printf '{"name":"Skill","input":{"skill":"beta"}}\n' >"$REPO/evals/_families/grp/beta/graders/_selftest/first-skill.fail.trace"
+run --skills alpha --selftest
+expect "a trace grader that passes its fail reply is caught" 1 'does not fail its fail reply'
+printf '{"name":"Skill","input":{"skill":"zzz"}}\n' >"$REPO/evals/_families/grp/beta/graders/_selftest/first-skill.fail.trace"
+run --skills alpha --selftest
+expect "a trace grader that fails its fail reply passes" 0 'selftest: 5 case'
+
+mkrepo; mkclaude; mkfamily
+run --changed --dry-run
+expect "no change: no skills and no family" 0 '^no skills changed'
+printf 'body edit\n' >>"$REPO/skills/alpha/SKILL.md"
+run --changed --dry-run
+expect "a body-only change picks the skill" 0 'skills: alpha'
+lacks "a body-only change does not pull in its family" 'family plan'
+git -C "$REPO" checkout -q -- skills/alpha/SKILL.md
+sed -i 's/^description: Use when the cart total looks wrong/description: Use when the cart total looks off/' "$REPO/skills/alpha/SKILL.md"
+run --changed --dry-run
+expect "a description change pulls in the member's family" 0 'family plan: grp \(2 case\(s\), ablation none, cap \$12\): description of alpha changed'
+has -E 'staged family-grp' <<<"$OUT" && has -E -- '--ablation none .*--max-cost-usd 12' <<<"$OUT" && ok "the dry run shows the family stage, ablation none and the \$12 ceiling" || { fail "family dry-run command"; show; }
+git -C "$REPO" checkout -q -- skills/alpha/SKILL.md
+run --skills alpha --dry-run
+lacks "--skills without a changed description runs no family" 'family plan'
+run --family grp --dry-run
+expect "--family alone needs no skill selector" 0 'family plan: grp .*--family'
+run --family nope --dry-run
+expect "an unknown family is a usage error" 64 'unknown family: nope'
+run --skills alpha --family grp --kind routing --dry-run --family-max-cost-usd 5
+expect "--family-max-cost-usd sets the family ceiling" 0 'cap \$5'
+has -E -- '--max-cost-usd 5 ' <<<"$OUT" && ok "the family stage gets the \$5 ceiling" || { fail "family ceiling"; show; }
+run --skills alpha --family grp --kind routing --dry-run --family-max-cost-usd many
+expect "a bad --family-max-cost-usd is a usage error" 64 'must be a number'
+
+echo "the family cap refuses separately"
+mkrepo; mkclaude; mkfamily; mkresult 1 true 1
+mkdir -p "$STATE/skill-evals"
+printf '{"t":"settle","id":"x","date":"%s","lane":"l","usd":50}\n' "$(date +%F)" >"$STATE/skill-evals/spend.jsonl"
+run --skills alpha --family grp --kind routing --dry-run
+expect "dry run: the skill run fits (50 + 8) and the family set (+ 12) does not" 0 'FAMILY SKIPPED'
+has -E 'dry run ok' <<<"$OUT" && has -E 'plugin eval' <<<"$OUT" && ok "the skill run is still planned" || { fail "skill plan lost"; show; }
+run --skills alpha --family grp --kind routing
+expect "a real run: the skill run goes on, the family set is skipped, exit 2" 2 'FAMILY SKIPPED'
+has -E '### routing' <<<"$OUT" && ok "the skill table is printed" || { fail "no skill table"; show; }
+lacks "no family block when the family set was refused" '### family'
+[ "$(grep -c -- '-family' "$STATE/skill-evals/spend.jsonl" || true)" = 0 ] && ok "a refused family set leaves no reserve row" || fail "family row written"
+run --skills alpha --family grp --kind routing --family-max-cost-usd 1
+expect "a smaller family ceiling fits" 0 '### family grp'
+[ "$(grep -c -- '-family' "$STATE/skill-evals/spend.jsonl" || true)" = 2 ] && ok "the family set has its own reserve and settle rows" || { fail "family tally rows"; cat "$STATE/skill-evals/spend.jsonl"; }
+
+echo "fixture lint ignores comment lines"
+mkrepo
+printf '#!/usr/bin/env bash\n# echo x > /home/foo (a comment)\n  # git push origin main (so is this)\nprintf "cart\\n" > cart.txt\n' >"$REPO/evals/alpha/fixture.sh"
+run --skills alpha --selftest
+expect "commented-out redirects and pushes are not flagged" 0 'selftest: 3 case\(s\), 0 problem'
+printf 'git push origin main\n' >>"$REPO/evals/alpha/fixture.sh"
+run --skills alpha --selftest
+expect "a real push is still flagged" 1 'SELFTEST-FIXTURE: .*deletes or writes outside'
+printf '#!/usr/bin/env bash\necho x > /home/foo\n' >"$REPO/evals/alpha/fixture.sh"
+run --skills alpha --selftest
+expect "a real redirect outside is still flagged" 1 'SELFTEST-FIXTURE'
 
 echo
 echo "skill-evals: $PASS passed, $FAIL failed"
