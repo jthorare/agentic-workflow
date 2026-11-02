@@ -116,7 +116,7 @@ internal sealed partial class WholeMapViewModel
 
     /// <summary>An action's name in Pages and actions: its node panel opens, the starting point stays (pages spec §3.4).</summary>
     /// <param name="key">The action's node key.</param>
-    internal void OpenAction(string key) => throw new NotSupportedException();
+    internal void OpenAction(string key) => Jump(key);
 
     // A link in the panel was clicked: that node is pinned and centred when it is drawn, and the panel is about it.
     private void Jump(string key)
