@@ -1,6 +1,6 @@
 ---
 name: design-language
-description: Interactive session defining brand personality, aesthetic direction, and design principles. Accepts reference URLs (Figma, Storybook, HTML mockups, any public page), analyzes them via Playwright, then runs a gap-filling Q&A to produce both design-tokens.json and .impeccable.md in one step.
+description: "Use when a project has no visual identity yet, or its brand feel still has to be decided: tone, aesthetic direction, principles. Optionally reads reference pages, asks only about the gaps, then writes design-tokens.json and .impeccable.md. Not for polishing an existing UI (impeccable) or extracting tokens from a site (design-analyze)."
 argument-hint: [url1 url2 ...]
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Read, Write, Glob, AskUserQuestion, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_evaluate, mcp__plugin_playwright_playwright__browser_close, mcp__plugin_playwright_playwright__browser_wait_for, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -234,6 +234,12 @@ Downstream skills gate on this line. If 5 rounds pass without Approve, stop, lis
 - Be specific in descriptions — "clean and minimal" is too vague; "generous whitespace, muted colors, SF Pro typography with tight leading" is useful
 - If `design-tokens.json` exists (and user confirmed overwrite), the new file replaces it entirely — don't partially merge
 - Do not write placeholder values — if a token wasn't determined, omit the key
+
+## Result block
+
+Under `AW_RESULT=1` only: write `$AW_DIR/results/design-language-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
+
+Keys: `skill` (`design-language`), `artifacts` (absolute paths: `design-tokens.json` and `.impeccable.md`, whichever were written), `summary` (one line: the aesthetic direction chosen).
 
 ## Next steps
 
