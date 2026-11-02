@@ -35,7 +35,7 @@ Run the following git commands to collect raw data:
 
 ```bash
 # Commits by author (summary)
-git shortlog -sne --since="$SINCE_DATE" --no-merges
+git shortlog -sne HEAD --since="$SINCE_DATE" --no-merges
 
 # Commit details: hash, author name, author email, subject, ISO date
 git log --since="$SINCE_DATE" --no-merges --format="%H|%an|%ae|%s|%aI"
