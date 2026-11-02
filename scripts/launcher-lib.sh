@@ -13,6 +13,10 @@
 #   launcher_load <state_dir>       resolve and validate the file, build the merged catalog; 1 on a refusal
 #   launcher_validate <file>        print the first refusal, return 1; return 0 when the reader accepts the file
 #   launcher_viewer_kind            warp | exec-template | print (warp with no file)
+#   launcher_apply_team_agent <team.json> <meta-lane>
+#                                   team.json "agent" sets every lane, including the meta lane, and replaces this
+#                                   launch's meta.lanesAgent and meta.lanes. Absent or null changes nothing. Returns 2
+#                                   when the value is not an agent id.
 #   launcher_lane_agent <lane> <meta-lane>   the lane's agent id (the meta lane's is meta.lanes.<meta-lane>, else claude-code: lanesAgent never reaches it)
 #   launcher_agent_ok <id>          0 when the catalog has a usable entry, else prints SND-LAUNCH-003/-011 and returns 1
 #   launcher_agent_field <id> <f>   one catalog field as text (empty for null/absent); arrays and objects as JSON
@@ -146,6 +150,26 @@ launcher_load() {
 }
 
 launcher_viewer_kind() { jq -r '.viewer.kind // "warp"' <<< "$LAUNCHER_DOC"; }
+
+# team.json "agent" is the team's choice of catalog agent. launcher.json is machine-wide (the viewer, and overrides of
+# a built-in binary), so a team that wants Cursor or Codex names it here instead of shipping its own launcher file.
+# The field wins over meta.lanesAgent and meta.lanes, including the meta lane: lanesAgent alone never reaches that pane.
+launcher_apply_team_agent() { # <team.json> <meta-lane>
+  [ -f "$1" ] || return 0
+  local verdict id
+  verdict="$(jq -r '
+    if (.agent == null) then "unset"
+    elif (.agent | type) != "string" or (.agent | test("^[a-z][a-z0-9-]{1,31}$") | not) then "bad"
+    else "ok" end
+  ' "$1")" || { echo "launcher: $1: could not read agent" >&2; return 2; }
+  case "$verdict" in
+    unset) return 0 ;;
+    ok) ;;
+    *) echo "launcher: $1: agent must be an agent id (^[a-z][a-z0-9-]{1,31}$), not $(jq -c .agent "$1")" >&2; return 2 ;;
+  esac
+  id="$(jq -r .agent "$1")"
+  LAUNCHER_DOC="$(jq -c --arg a "$id" --arg m "$2" '.meta = ((.meta // {}) | .lanesAgent = $a | .lanes = {($m): $a})' <<< "$LAUNCHER_DOC")"
+}
 
 launcher_lane_agent() { # lane meta-lane
   # The meta's own pane stays Claude Code unless meta.lanes names it (spec section 9): lanesAgent is the lanes' default, never the

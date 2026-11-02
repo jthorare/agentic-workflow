@@ -12,6 +12,7 @@ namespace Aw.Context.Core.Graph;
 /// <param name="Evidence">The records it rests on (an 'implements' edge's file evidence decides a session's repo scope), or null.</param>
 /// <param name="Order">The position in its flow, for 'step-of'; otherwise null.</param>
 /// <param name="At">When it was written; an import keeps the file's value.</param>
+/// <param name="Count">Only on a roll-up edge (a feature's 'depends-on', 'reads' or 'writes' summed from its files): the distinct file pairs (depends-on) or files behind it; otherwise null, and then omitted from JSON.</param>
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record GraphEdge(
     NodeKey From,
@@ -21,7 +22,8 @@ public sealed record GraphEdge(
     double Confidence = 1.0,
     IReadOnlyList<EvidenceRef>? Evidence = null,
     int? Order = null,
-    DateTimeOffset? At = null)
+    DateTimeOffset? At = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? Count = null)
 {
     /// <summary>The evidence, never null.</summary>
     [JsonIgnore]

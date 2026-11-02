@@ -20,7 +20,7 @@ internal sealed class FakeIndexReader(FakeIndexData data) : IIndexReader
         }
 
         var hits = data.Symbols
-            .Where(x => Matches(query, x.File, x.Symbol))
+            .Where(x => Matches(query, x.File, x.Symbol) && (query.Within is not { } within || within.Any(f => string.Equals(f.Path, x.File.Path, StringComparison.Ordinal))))
             .OrderBy(x => x.File.Path, StringComparer.Ordinal)
             .ThenBy(x => x.Symbol.StartLine)
             .Select(x => FakeIndexData.ToHit(x.File, x.Symbol))
@@ -90,6 +90,14 @@ internal sealed class FakeIndexReader(FakeIndexData data) : IIndexReader
             .Take(k)
             .Where(x => data.Hit(x.e.Symbol) is not null)
             .Select(x => new Neighbor(data.Hit(x.e.Symbol)!, x.Score))]);
+
+    public ValueTask<Result<IReadOnlyList<SymbolVector>>> SymbolVectors(IReadOnlyList<string> paths, string model, CancellationToken cancellationToken)
+        => Ok<IReadOnlyList<SymbolVector>>([.. paths
+            .Distinct(StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .SelectMany(p => data.Files.TryGetValue(p, out var file) ? file.Symbols.OrderBy(s => s.StartLine).Select(s => (file, s)) : [])
+            .Where(x => data.Embeddings.TryGetValue(x.s.Ref, out var e) && string.Equals(e.Model, model, StringComparison.Ordinal))
+            .Select(x => new SymbolVector(x.s.Ref, x.file.Path, x.s.Name, x.s.Kind, data.Embeddings[x.s.Ref].Vector))]);
 
     public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 

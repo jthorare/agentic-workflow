@@ -4,6 +4,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launch.Argv;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Infrastructure.Launch;
@@ -13,16 +14,16 @@ internal sealed partial class Launcher
 {
     private async ValueTask<Result<Prepared>> Prepare(LaunchRequest request, AgentEntry entry, CancellationToken cancellationToken)
     {
+        var created = request.Worktree is { } expected && !Directory.Exists(expected);
         var located = await WorkDirectory(request, cancellationToken).ConfigureAwait(false);
         if (located.IsError)
         {
             return located.Error;
         }
-
         var workDir = located.Value;
-        if (await Guard(request, entry, workDir, cancellationToken).ConfigureAwait(false) is { } refusedStart)
+        if (await GuardAndPrepare(request, entry, (workDir, created), cancellationToken).ConfigureAwait(false) is { } refusedStart)
         {
-            return refusedStart;
+            return refusedStart;   // the guard's refusal, or SND-LAUNCH-021 (a step failure; nothing started)
         }
 
         try
@@ -39,11 +40,14 @@ internal sealed partial class Launcher
             }
 
             WriteCaptureRule(request.Launch, entry);
-            var secret = LaunchSecrets.Mint();
-            var hashFile = LaunchSecrets.PathFor(parts.Options.SecretsDirectory, request.Launch);
-            var prior = File.Exists(hashFile) ? await File.ReadAllBytesAsync(hashFile, cancellationToken).ConfigureAwait(false) : null;   // a live session of this launch may own it
-            LaunchSecrets.Write(parts.Options.SecretsDirectory, request.Launch, secret);
-            return new Prepared(workDir, composed.Value.Argv, Environment(request, workDir), composed.Value.Session?.Value) { PriorHash = prior, Seed = composed.Value.Seed };
+            var prior = await MintSecret(request.Launch, cancellationToken).ConfigureAwait(false);
+            var confined = await Confine(request, composed.Value.Argv, Environment(request, workDir), composed.Value.Session, cancellationToken).ConfigureAwait(false);
+            if (confined.IsError)
+            {
+                return confined.Error;   // a refusal carries its SND-LAUNCH-014..017 or -020 code; Start cleans up (and releases) after it
+            }
+
+            return new Prepared(workDir, confined.Value.Argv, confined.Value.Env, composed.Value.Session?.Value) { PriorHash = prior, Seed = composed.Value.Seed, Sandbox = confined.Value.Summary, SandboxRunArea = confined.Value.RunArea };
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
@@ -51,37 +55,51 @@ internal sealed partial class Launcher
         }
     }
 
-    /// <summary>A Step's worktree gets the pre-push guard and, for claude-code, its trust mark before anything else is written; an error when either is refused.</summary>
-    private async ValueTask<Error?> Guard(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
+    /// <summary>Mints the launch's secret and writes its hash; returns the hash file as it was before (a live session of this launch may own it), or null when there was none.</summary>
+    private async ValueTask<byte[]?> MintSecret(LaunchId launch, CancellationToken cancellationToken)
     {
-        if (!request.Attended && request.Step is not null && await PrePushGuard.Install(workDir, cancellationToken).ConfigureAwait(false) is { } foreign)
-        {
-            return foreign;
-        }
-
-        return await Trust(request, entry, workDir, cancellationToken).ConfigureAwait(false);
+        var secret = LaunchSecrets.Mint();
+        var hashFile = LaunchSecrets.PathFor(parts.Options.SecretsDirectory, launch);
+        var prior = File.Exists(hashFile) ? await File.ReadAllBytesAsync(hashFile, cancellationToken).ConfigureAwait(false) : null;
+        LaunchSecrets.Write(parts.Options.SecretsDirectory, launch, secret);
+        return prior;
     }
 
     /// <summary>LN-WF5: the Step's pack, in its directory before the session starts (an attended launch has none); an error when the pack is refused.</summary>
-    private static Error? WriteBundle(LaunchRequest request, string workDir) =>
+    private Error? WriteBundle(LaunchRequest request, string workDir) =>
         request is { Attended: false, Step.Bundle: { } bundle }
-            ? PackBundleFiles.Write(StepEnvironment.For(request).GetValueOrDefault(StepEnvironment.RunDirectory, workDir), bundle)
+            ? PackBundleFiles.Write(StepEnvironment.For(request, parts.Options.SindriHome).GetValueOrDefault(StepEnvironment.RunDirectory, workDir), bundle)
             : null;
 
     /// <summary>The Step's pack and its declared read facts, in its run directory before the session starts; the first refusal, else null.</summary>
-    private static async ValueTask<Error?> WriteStepFiles(LaunchRequest request, string workDir, CancellationToken cancellationToken) =>
-        WriteBundle(request, workDir) ?? await WriteFacts(request, workDir, cancellationToken).ConfigureAwait(false) ?? await WriteOutputFolder(request, workDir, cancellationToken).ConfigureAwait(false);
+    private async ValueTask<Error?> WriteStepFiles(LaunchRequest request, string workDir, CancellationToken cancellationToken)
+    {
+        MakeRunDirectory(request);
+        return WriteBundle(request, workDir) ?? await WriteFacts(request, workDir, cancellationToken).ConfigureAwait(false) ?? await WriteOutputFolder(request, workDir, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>SB17: the Step's own run directory under Sindri's home (0700), made before its files and before the sandbox checks that it exists; nothing without a home (the run directory is then the worktree).</summary>
+    private void MakeRunDirectory(LaunchRequest request)
+    {
+        var directory = request.Attended
+            ? parts.Sandbox is null ? null : AttendedOpen.RunDirectory(parts.Options.SindriHome, request.Launch)   // why: the sandbox plan keeps its files here (sandbox spec 3.9)
+            : parts.Options.SindriHome is null ? null : StepEnvironment.RunDirectoryOf(request, parts.Options.SindriHome);
+        if (directory is not null)
+        {
+            OwnerOnly.EnsureDirectory(directory);
+        }
+    }
 
     /// <summary>The folder the Step's outputs go to, made and excluded from git before the session starts (an attended launch has no Step and no outputs).</summary>
-    private static async ValueTask<Error?> WriteOutputFolder(LaunchRequest request, string workDir, CancellationToken cancellationToken) =>
+    private async ValueTask<Error?> WriteOutputFolder(LaunchRequest request, string workDir, CancellationToken cancellationToken) =>
         request is { Attended: false, Step: not null }
-            ? await StepFactWriter.Outputs(StepEnvironment.For(request).GetValueOrDefault(StepEnvironment.RunDirectory, workDir), cancellationToken).ConfigureAwait(false)
+            ? await StepFactWriter.Outputs(StepEnvironment.For(request, parts.Options.SindriHome).GetValueOrDefault(StepEnvironment.RunDirectory, workDir), cancellationToken).ConfigureAwait(false)
             : null;
 
     /// <summary>The Step's declared read facts, as files in its run directory before the session starts (an attended launch has none, as it has no bundle: a human open has no Step directory and no brief to name the files); an error when a name is refused.</summary>
-    private static async ValueTask<Error?> WriteFacts(LaunchRequest request, string workDir, CancellationToken cancellationToken) =>
+    private async ValueTask<Error?> WriteFacts(LaunchRequest request, string workDir, CancellationToken cancellationToken) =>
         request is { Attended: false, Step.Facts: { Count: > 0 } facts }
-            ? await StepFactWriter.Write(StepEnvironment.For(request).GetValueOrDefault(StepEnvironment.RunDirectory, workDir), facts, cancellationToken).ConfigureAwait(false)
+            ? await StepFactWriter.Write(StepEnvironment.For(request, parts.Options.SindriHome).GetValueOrDefault(StepEnvironment.RunDirectory, workDir), facts, cancellationToken).ConfigureAwait(false)
             : null;
 
     /// <summary>Where the session runs: the holdout evaluator's own scratch checkout at the head sha (removed with the launch, LN-LCH2), else the launch's worktree or the repo.</summary>
@@ -100,18 +118,6 @@ internal sealed partial class Launcher
         return await parts.Scratch.Create(request.RepoPath, ScratchPath(request.Launch), evaluator.HeadSha, cancellationToken).ConfigureAwait(false);
     }
 
-    /// <summary>A claude-code Step's worktree is marked trusted before the CLI starts: it would stop at "do you trust this project?" with no one to answer. Other entries and human opens need nothing.</summary>
-    private async ValueTask<Error?> Trust(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
-    {
-        if (request.Attended || !string.Equals(entry.Id.Value, "claude-code", StringComparison.Ordinal))
-        {
-            return null;
-        }
-
-        var trusted = await parts.Trust.Trust(workDir, cancellationToken).ConfigureAwait(false);
-        return trusted.IsError ? trusted.Error : null;
-    }
-
     private async ValueTask<Result<(IReadOnlyList<string> Argv, SessionId? Session, string Seed)>> Compose(LaunchRequest request, AgentEntry entry, string workDir, CancellationToken cancellationToken)
     {
         var step = Denying(request.Attended ? null : request.Step, request, entry, workDir);
@@ -120,7 +126,7 @@ internal sealed partial class Launcher
             : null;
         var session = request.Mode == LaunchMode.Resume && request.Resume is { } resumed ? resumed : PreChosen(entry);
         var seed = ArgvBuilder.Seed(request.Item) + StepSeed(step);
-        var (mcpPath, mcpArguments) = McpLaunchConfig.Prepare(entry.McpForm, entry.McpForm == McpForm.None ? null : await parts.McpFor(request.RepoPath, cancellationToken).ConfigureAwait(false), parts.Options.LaunchDirectory, request.Launch);
+        var (mcpPath, mcpArguments) = McpLaunchConfig.Prepare(entry.McpForm, entry.McpForm == McpForm.None ? null : ForStep(await parts.McpFor(request.RepoPath, cancellationToken).ConfigureAwait(false), request), parts.Options.LaunchDirectory, request.Launch);
         var built = ArgvBuilder.Build(entry, request.Mode, new ArgvInputs(request.Item, workDir, SessionName(request.Launch), seed, session, mcpPath, step, policyPath));
         if (built.IsError)
         {
@@ -174,6 +180,10 @@ internal sealed partial class Launcher
         step is null ? string.Empty : $" This is the {step.Ref.State} step, block {step.Ref.Block}." + (step.Brief is { Length: > 0 } brief ? " " + brief : string.Empty);
 
     /// <summary>The session id an entry in 'pre-chosen-uuid' mode is told to use, else none (an id reported later is recorded then, launcher L-9).</summary>
+    // An agent Step's launch (the request has Step arguments, an instance and a run) tells the endpoint which instance and run it is; a plain session keeps the repo alone.
+    private static McpTarget? ForStep(McpTarget? target, LaunchRequest request) =>
+        target is not null && request.Step is not null && request.Instance is { } instance && request.Run is { } run ? target with { Instance = instance.Value, Run = run.Value } : target;
+
     private static SessionId? PreChosen(AgentEntry entry) => entry.SessionIdMode == SessionIdMode.PreChosenUuid ? SessionId.From(Guid.NewGuid().ToString("D")) : null;
 
     /// <summary>The capture rule 'session wrap' reads for an entry whose CLI reports its own id (launcher L-9): 0600, no secret in it.</summary>
@@ -191,7 +201,7 @@ internal sealed partial class Launcher
 
     private Dictionary<string, string> Environment(LaunchRequest request, string workDir)
     {
-        var env = new Dictionary<string, string>(StepEnvironment.For(request), StringComparer.Ordinal)
+        var env = new Dictionary<string, string>(StepEnvironment.For(request, parts.Options.SindriHome), StringComparer.Ordinal)
         {
             ["AW_SINDRI_CHILD"] = "1",
             ["AW_SINDRI_ITEM"] = request.Item.Value,
@@ -231,6 +241,7 @@ internal sealed partial class Launcher
         LaunchFileStore.DeleteIn(parts.Options.PolicyDirectory, StepPolicyFile.PathFor(parts.Options.PolicyDirectory, launch));
         LaunchFileStore.DeleteIn(parts.Options.LaunchDirectory, McpLaunchConfig.PathFor(parts.Options.LaunchDirectory, launch));
         _ = await parts.Scratch.Remove(ScratchPath(launch), CancellationToken.None).ConfigureAwait(false);   // the evaluator's checkout; none for any other launch
+        await ReleaseSandbox(launch).ConfigureAwait(false);
     }
 
     private string ScratchPath(LaunchId launch) => Path.Combine(parts.Options.ScratchDirectory, "eval-" + launch.Value);
@@ -242,6 +253,12 @@ internal sealed partial class Launcher
 
         /// <summary>The first message, for a host that runs the agent itself (T3) rather than the argv.</summary>
         public string? Seed { get; init; }
+
+        /// <summary>The sandbox summary of a confined Step launch (<c lang="text">launch.started</c>'s sandbox field), or null when it ran unconfined.</summary>
+        public SandboxSummary? Sandbox { get; init; }
+
+        /// <summary>The confined launch's run directory, where <c lang="text">wrap-limits.json</c> sits, or null when it ran unconfined.</summary>
+        public string? SandboxRunArea { get; init; }
     }
 
     /// <summary>The start clashed with a session of this launch's name: it is the launch's own and stays untouched. The hash the live wrap checks is put back (and the session answered as started), or, with no hash to put back, the minted pair is removed and the launch fails.</summary>

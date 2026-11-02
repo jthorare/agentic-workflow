@@ -33,6 +33,17 @@ public sealed class AgentRunStatusTests
     }
 
     [Fact]
+    public void An_escalated_agent_run_still_launching_names_its_own_launch()
+    {
+        var instance = Agent(launch: null);
+        var open = instance.Frame.Run! with { Escalation = 1 };   // why: Agent() gives the run
+        instance = instance with { Frame = instance.Frame with { Run = open } };
+        var expected = AgentLaunches.LaunchIdFor(WorkflowInstanceId.Of(instance.Address), open.Token, escalation: 1).Value;
+
+        Assert.Equal(new StatusRun("agent", expected), StatusOf(instance).Run);
+    }
+
+    [Fact]
     public void A_desk_run_has_no_run_line()
     {
         var status = StatusOf(StatusCases.Instance("desk-task"));

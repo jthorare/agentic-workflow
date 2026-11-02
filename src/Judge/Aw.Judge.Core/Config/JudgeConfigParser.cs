@@ -63,7 +63,11 @@ public static class JudgeConfigParser
     }
 
     private static string? ProvidersProblem(ProvidersConfig? providers) =>
-        providers is null ? null : Unknown("providers.agentClis", providers.AgentClis, ProviderNames.AgentClis);
+        providers is null ? null
+        : Unknown("providers.agentClis", providers.AgentClis, ProviderNames.AgentClis)
+            ?? (providers.InputCapChars is { } cap and not (>= ProvidersConfig.MinInputCapChars and <= ProvidersConfig.MaxInputCapChars)
+                ? string.Create(CultureInfo.InvariantCulture, $"providers.inputCapChars must be between {ProvidersConfig.MinInputCapChars} and {ProvidersConfig.MaxInputCapChars}, not {cap}")
+                : null);
 
     private static string? PromptSortProblem(PromptSortConfig? sort)
     {

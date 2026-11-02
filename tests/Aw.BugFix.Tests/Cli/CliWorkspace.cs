@@ -15,7 +15,7 @@ internal sealed class CliWorkspace : IDisposable
         Repo = _root.Repo("repo", new Dictionary<string, string>(StringComparer.Ordinal)
         {
             ["src/app.txt"] = "drop cookie\n",
-            ["tests/bug.test.sh"] = "grep -q keep src/app.txt\n",
+            ["tests/bug.test.sh"] = "echo checking\ngrep -q keep src/app.txt\n",
         });
         State = Path.Combine(_root.Path, "state", "eng-1");
         Ticket = Write("ticket.json", """{"source":"text","id":null,"title":"Login","brief":"Login shows a blank page","expected":"The dashboard opens","actual":"Blank page"}""");

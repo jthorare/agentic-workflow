@@ -17,7 +17,6 @@ internal sealed partial class SetupViewModel : ObservableObject
 {
     private const string MapStep = "map";
     private const string McpStep = "mcp";
-    private const string OnyxStep = "onyx";
     private const string ProfileStep = "profile";
     private const string RecipesStep = "recipes";
     private const string ProfileAction = "ApproveProfile";
@@ -53,7 +52,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         (_api, _catalog, _clock, _opensInApp, _folders) = (api, catalog, clock, opensInApp, folders);
         _profileHash = profileHash ?? (static () => null);
         Launcher = new ControlViewModel(new CommandRowView("StartSindri", "desk", [], Terminal: false, Method: null, Route: null, Labels.SetupLauncher, "cli-only:launcher", Destructive: false, ReadsViews: false, Shortcut: null), send: null, catalog.Clipboard, clock);
-        Footnote = new ControlViewModel(new CommandRowView("SetupOnyx", "desk", [], Terminal: false, Method: null, Route: null, Labels.SetupOnyxFootCommand, "cli-only:footnote", Destructive: false, ReadsViews: false, Shortcut: null), send: null, catalog.Clipboard, clock);
     }
 
     /// <summary>Raised when a step's button asks the shell to open an action in the app.</summary>
@@ -73,17 +71,6 @@ internal sealed partial class SetupViewModel : ObservableObject
 
     /// <summary>The launcher command with Copy, for when Sindri isn't running.</summary>
     public ControlViewModel Launcher { get; }
-
-    /// <summary>The terminal alternative for Onyx, one line under the checklist (Q5), with Copy.</summary>
-    public ControlViewModel Footnote { get; }
-
-    /// <summary>True while the footnote shows: Onyx is not set up and not set aside.</summary>
-    public bool IsFootnoteShown => _rows.TryGetValue(OnyxStep, out var onyx) && !onyx.IsFinished;
-
-    /// <summary>The words before the footnote's command.</summary>
-#pragma warning disable CA1822, MA0041 // why: the view binds it as an instance property of the view model
-    public string FootnoteText => Labels.SetupOnyxFoot;
-#pragma warning restore CA1822, MA0041
 
     /// <summary>The lead over the checklist: "Set up Sindri", or "Sindri is set up"; empty until the first list.</summary>
     public string Lead { get; private set => Set(ref field, value); } = string.Empty;
@@ -106,7 +93,10 @@ internal sealed partial class SetupViewModel : ObservableObject
     /// <summary>True when every step is done or skipped.</summary>
     public bool IsFinished { get; private set => Set(ref field, value); }
 
-    /// <summary>True when Home shows its one line: there are steps, and one is still open. Home then hides the setup rows of Needs you, which the line stands for.</summary>
+    /// <summary>The id of the step Home's line names (the first one still open); empty with none.</summary>
+    public string HomeStepId { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>True when Home shows its one line: there are steps, and one is still open. Home then hides the setup row of the step the line names, and no other.</summary>
     public bool IsHomeLineShown { get; private set => Set(ref field, value); }
 
     /// <summary>True until the first answer.</summary>
@@ -211,7 +201,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         {
             row.Rederive();
             row.Repo?.Refresh();
-            row.Onyx?.Refresh();
             Confirm(row);
         }
     }
@@ -273,14 +262,14 @@ internal sealed partial class SetupViewModel : ObservableObject
         Segments = [.. Steps.Select(s => new SetupSegment(s.SegmentKind))];
         (MeterDone, MeterMax) = (Steps.Count(s => s.IsFinished), Steps.Count);
         FoldHomeLine();
-        OnChanged(nameof(IsFootnoteShown));
     }
 
     // Home's line: shown while a step is open, naming the first step still to do, with Continue.
     private void FoldHomeLine()
     {
-        IsHomeLineShown = !IsReading && !IsNotServed && !IsUnreadable && HasSteps && !IsFinished;
         var next = Steps.FirstOrDefault(s => !s.IsFinished);
+        HomeStepId = next?.Id ?? string.Empty;   // before the flag: whoever hears the flag reads the step it names
+        IsHomeLineShown = !IsReading && !IsNotServed && !IsUnreadable && HasSteps && !IsFinished;
         HomeStepText = next?.Title ?? string.Empty;
         ContinueText = next is null ? string.Empty : Labels.SetupContinue;
         OnChanged(nameof(HomeLineName));

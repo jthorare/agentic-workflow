@@ -44,8 +44,11 @@ internal sealed partial class PrWatchService(IWatchedPulls watched, IPullRequest
     /// <summary>The service's name in the schedule.</summary>
     public static readonly ServiceName ServiceId = ServiceName.From("pr-watch");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Watches the pull requests that wait on the forge.";
+
     /// <summary>The service's place in the schedule without a profile entry: the shortest cadence, with the poll interval kept by the service itself.</summary>
-    public static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(Cadence.Min));
+    public static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(Cadence.Min), Description);
 
     public ServiceName Identity() => ServiceId;
 

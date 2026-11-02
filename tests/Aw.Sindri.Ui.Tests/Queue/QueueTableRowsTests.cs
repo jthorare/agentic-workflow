@@ -51,6 +51,14 @@ public sealed class QueueTableRowsTests
     }
 
     [Fact]
+    public void An_item_with_no_repo_shows_a_dash_in_the_repo_cell()
+    {
+        var row = new ItemRowViewModel(new ItemSummaryView("ITM-01JN2", "Try the queue", Repo: null, "running", Step: null, A.Noon.AddMinutes(-12), PrimaryAction: null, Actions: []), "running", primaryAction: null, A.Noon);
+
+        Assert.Equal(("—", string.Empty), (row.RepoCell, row.Repo));
+    }
+
+    [Fact]
     public void The_column_headings_are_sentence_case() =>
         Assert.Equal(["Title", "Repo", "Status", "Stage", "Age"], [Labels.ColumnTitle, Labels.ColumnRepo, Labels.ColumnState, Labels.ColumnStep, Labels.ColumnSince], StringComparer.Ordinal);
 }

@@ -69,4 +69,20 @@ public sealed class EventCatalogTests
     public void An_effect_refusal_is_not_mirrored_before_the_effect_phase() =>
         // why: spec 5.7 names the dispatch refusal outbox.refused (P6); P4 has no effects, so no made-up kind is emitted
         Assert.Throws<NotSupportedException>(() => RecipeWorkflow.TypeOf(WorkflowEventType.EffectRefused));
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_four_project_events_are_public_and_invalidate_only_the_projects_view()
+    {
+        string[] types = [EventTypes.ProjectAttached, EventTypes.ProjectChanged, EventTypes.ProjectDetached, EventTypes.ProjectHidden];
+
+        foreach (var type in types)
+        {
+            var entry = Assert.Single(EventCatalog.All, e => e.Type == type);
+            Assert.True(entry.Public);
+            Assert.NotNull(entry.PublicPayload);
+            Expect.Sequence([ApiViews.Projects], entry.Invalidates);
+        }
+
+        Assert.Contains(ApiViews.Projects, ApiViews.All, StringComparer.Ordinal);
+    }
 }

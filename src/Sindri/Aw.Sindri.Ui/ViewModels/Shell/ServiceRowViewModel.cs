@@ -19,9 +19,23 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
     public string Every { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>One plain sentence for what it does, or empty for a service the app does not know.</summary>
-    public string What { get; } = Labels.ServiceWhat(name);
+    public string What { get; private set => Set(ref field, value); } = Labels.ServiceWhat(name);
 
-    /// <summary>Scheduled, Running now, Paused or Last run failed.</summary>
+    /// <summary>Why the service is paused or failed, in plain words ("Paused by you, 14:02"), or empty.</summary>
+    public string Why
+    {
+        get;
+        private set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(HasWhy));
+        }
+    } = string.Empty;
+
+    /// <summary>True when <see cref="Why"/> has words.</summary>
+    public bool HasWhy => Why.Length > 0;
+
+    /// <summary>Scheduled, Running now, Paused, Overdue or Last run failed.</summary>
     public string Status { get; private set => Set(ref field, value); } = Labels.ServiceScheduled;
 
     /// <summary>"last run 12:01:30" or "not run yet".</summary>
@@ -32,6 +46,12 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
 
     /// <summary>True while a manual run's job is in flight.</summary>
     public bool IsRunning { get; private set => Set(ref field, value); }
+
+    /// <summary>True when the scheduler missed the service's slot.</summary>
+    public bool IsOverdue { get; private set => Set(ref field, value); }
+
+    /// <summary>"missed its 12:01 run" while overdue, else empty.</summary>
+    public string OverdueDetail { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True when its latest run failed.</summary>
     public bool HasFailed { get; private set => Set(ref field, value); }
@@ -133,13 +153,29 @@ internal sealed class ServiceRowViewModel(string name) : ObservableObject
         IsRunning = !string.IsNullOrEmpty(view.Job);
         HasFailed = view.LastRun is { } run && string.Equals(run.Outcome, "failed", StringComparison.Ordinal);
         JobId = view.Job ?? string.Empty;
+        var missed = IsPaused ? null : view.OverdueSince;
+        IsOverdue = missed is not null;
+        OverdueDetail = missed is { } slot ? Labels.ServiceMissed(StatusText.Clock(slot)) : string.Empty;
         LastRun = view.LastRun is { } last ? "last run " + StatusText.Time(last.RanAt) : Labels.ServiceNotRun;
+        What = string.IsNullOrWhiteSpace(view.Description) ? Labels.ServiceWhat(Name) : view.Description;
+        Why = WhyOf(view);
         Status = (IsRunning, IsPaused, HasFailed) switch
         {
             (true, _, _) => Labels.ServiceRunning,
             (false, true, _) => Labels.ServicePaused,
+            (false, false, _) when IsOverdue => Labels.ServiceOverdue,
             (false, false, true) => Labels.ServiceLastRunFailed,
             (false, false, false) => Labels.ServiceScheduled,
         };
+    }
+
+    private static string WhyOf(ServiceRowView view)
+    {
+        if (view.Paused)
+        {
+            return Labels.ServicePausedBy(view.PausedBy, view.PausedAt is { } at ? StatusText.Clock(at) : string.Empty);
+        }
+
+        return view.LastRun is { } run && string.Equals(run.Outcome, "failed", StringComparison.Ordinal) ? Labels.ServiceFailedWhy(run.Detail) : string.Empty;
     }
 }

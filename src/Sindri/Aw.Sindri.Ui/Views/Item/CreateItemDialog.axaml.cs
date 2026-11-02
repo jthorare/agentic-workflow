@@ -1,8 +1,10 @@
 using System.ComponentModel;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Aw.Sindri.Ui.ViewModels.Item;
+using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Views.Item;
 
@@ -31,6 +33,17 @@ internal sealed partial class CreateItemDialog : UserControl
         }
 
         base.OnDataContextChanged(e);
+    }
+
+    /// <inheritdoc />
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e)
+    {
+        base.OnAttachedToVisualTree(e);
+        // The Repo field offers the repos the Work page already knows: the window's shell holds that page.
+        if (_form is { } form && TopLevel.GetTopLevel(this)?.DataContext is ShellViewModel shell)
+        {
+            form.KnownRepos = () => shell.Queue.RepoChoices;
+        }
     }
 
     /// <summary>Moves focus into the title field (the form just opened).</summary>

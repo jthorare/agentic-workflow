@@ -58,13 +58,13 @@ public sealed class HealthCardsTests
     }
 
     [Fact]
-    public async Task The_agents_card_counts_running_asking_and_failed_sources()
+    public async Task The_agents_card_counts_working_not_live_sessions_asking_and_failed_sources()
     {
         var system = new SystemTestHarness();
 
-        await system.Show(A.Status() with { Sessions = new SessionCountsView(Live: 3, Asking: 1, Problems: 0) });
+        await system.Show(A.Status() with { Sessions = new SessionCountsView(Live: 3, Asking: 1, Problems: 0, Running: 2) });
 
-        Assert.Equal([Labels.AgentsRunning, "3", Labels.AgentsAsking, "1", Labels.AgentsProblems, "0"], Flat(system.Vm.AgentsRows), StringComparer.Ordinal);
+        Assert.Equal([Labels.AgentsWorking, "2", Labels.AgentsAsking, "1", Labels.AgentsProblems, "0"], Flat(system.Vm.AgentsRows), StringComparer.Ordinal);
     }
 
     [Fact]

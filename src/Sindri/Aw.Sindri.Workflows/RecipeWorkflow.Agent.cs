@@ -25,10 +25,11 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 /// </summary>
 internal sealed partial class RecipeWorkflow
 {
-    private static readonly AgentCall _launchCall = new("agent-launch", TimeSpan.FromMinutes(2), Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
+    private static readonly AgentCall _launchCall = new("agent-launch", ActivityBounds.Long, Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
     private static readonly AgentCall _watchCall = new("agent-watch", TimeSpan.FromDays(7), TimeSpan.FromSeconds(10), new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumInterval = TimeSpan.FromSeconds(10) });   // a heartbeat timeout or a restarted worker retries the watch, which attaches to the same session
-    private static readonly AgentCall _closeCall = new("agent-close", TimeSpan.FromMinutes(2), Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
+    private static readonly AgentCall _closeCall = new("agent-close", ActivityBounds.Long, Heartbeat: null, new RetryPolicy { InitialInterval = TimeSpan.FromSeconds(1), MaximumAttempts = 3 });
     private AgentRunning? _held;   // the launched run whose session is still live, so the interpreter loop can stop it when the instance ends or the run is replaced while it is parked or taken over (D11)
+    private string? _suspendedRun;   // the token of the run whose watch a park or a takeover cancelled: its session was kept, so the resumed watch finds out whether it ended meanwhile (sandbox spec §7)
     private (string Token, AgentLaunched Launched)? _agent;   // the open run's launch, kept across a park or a takeover so the watch resumes without a second launch
 
     private static readonly BlockId _ciFix = BlockId.From("step.pr.ci-fix");   // launches in 'fact:workspace' on its own marker; every other agent Step does on the phase-workspace marker (LN-WF2)
@@ -84,67 +85,19 @@ internal sealed partial class RecipeWorkflow
         return await WatchPhase(instance, open, context).ConfigureAwait(true);
     }
 
-    // Launches the session. Done is true when the run ended first or the launch failed; the instance is then the decided one, else it has its launch filled in.
-    private async Task<(WorkflowInstance Instance, bool Done)> LaunchPhase(WorkflowInstance instance, OpenRun open, Interpreting context)
-    {
-        var (state, step) = StateOf(instance, context);
-        using var cancel = new CancellationTokenSource();
-        var run = AgentRunOf(instance, open, step);
-        var item = instance.Facts.TryGetValue(FactKey.From("fact:item"), out var fact) ? fact : null;
-        var workspace = (step.Use == _ciFix ? AgentWorkspace : PhaseWorkspaceLaunch) && instance.Facts.TryGetValue(_workspaceKey, out var held) ? held : null;   // LN-WF2: an instance that holds a workspace (the phase's worktree, or docs sync's own) runs its agent Steps there
-        var launching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.LaunchAsync(Launch(run, item, step, instance, workspace)), AgentOptions(_launchCall, open, state, cancel.Token));
-        var (applied, end) = await AwaitAgent(instance, open, new Awaited(launching, cancel, Reports: false), context).ConfigureAwait(true);
-        if (end == AgentEnd.Over)
-        {
-            return (await StopIfClosed(applied, new AgentRunning(open, state, run, Launched: null)).ConfigureAwait(true), true);
-        }
-
-        var launched = await Launching(launching).ConfigureAwait(true);
-        if (launched.Failure is { } failure)
-        {
-            return (await Decided(applied, open, AgentFailed(open, step, StepFailed.LaunchReason, tokens: 0, $"{failure.Code}: {failure.Message}") with { Dependency = "the agent launcher", Code = failure.Code }, reportId: null, context).ConfigureAwait(true), true);
-        }
-
-        _agent = (open.Token.Value, launched);
-        _held = new AgentRunning(open, state, run, launched);
-        var filled = applied with { Frame = applied.Frame with { Run = open with { Launch = AgentLaunches.LaunchIdFor(run).Value } } };
-        _instance = filled;   // why: the run's launch is part of the instance the Query and the validator read; no timer or state changed
-        return (filled, false);
-    }
-
-    // What the launch activity is given: the run, the item, the workspace the Step launches in, and what the Step's 'bundle' needs of the pack (LN-WF5): its 'subject' and the stored lens queue.
-    private AgentLaunchRun Launch(AgentStepRun run, FactValue? item, StepUse step, WorkflowInstance instance, FactValue? workspace) =>
-        new(run, item, workspace, Literal(step, "bundle"), Literal(step, "subject"), instance.Facts.TryGetValue(FactKey.From("fact:lensQueue"), out var queue) ? queue : null, instance.Facts, Payloads(step));
-
-    // The payload facts this Step writes (the recipe types them), so its brief states their shape.
-    private IReadOnlyList<FactKey> Payloads(StepUse step) =>
-        _recipe!.Catalog.Find(step.Use) is { } descriptor ? PayloadFacts.OutputsOf(_recipe.Recipe, descriptor) : [];   // why: the loop runs only after RunAsync set _recipe
-
-    private static string? Literal(StepUse step, string name) =>
-        step.With.TryGetValue(name, out var value) && value.Literal is { ValueKind: System.Text.Json.JsonValueKind.String } text ? text.GetString() : null;
-
-    private static async Task<AgentLaunched> Launching(Task<AgentLaunched> launching)
-    {
-        try
-        {
-            return await launching.ConfigureAwait(true);
-        }
-        catch (ActivityFailureException e)
-        {
-            return new AgentLaunched(Worktree: null, StartHead: null, new AgentLaunchFailure(AgentLaunchFailureKind.StepFailed, "SND-LAUNCH-007", $"the launch activity failed: {e.InnerException?.Message ?? e.Message}"));
-        }
-    }
-
     private async Task<WorkflowInstance> WatchPhase(WorkflowInstance instance, OpenRun open, Interpreting context)
     {
         var (state, step) = StateOf(instance, context);
         var running = new AgentRunning(open, state, AgentRunOf(instance, open, step), _agent!.Value.Launched);   // why: LaunchPhase set it for this run's token before the watch
         var launch = AgentLaunches.LaunchIdFor(running.Run).Value;
+        var resumed = string.Equals(_suspendedRun, open.Token.Value, StringComparison.Ordinal);
+        _suspendedRun = null;
         using var cancel = new CancellationTokenSource();
         var watching = Workflow.ExecuteActivityAsync((AgentStepActivities a) => a.WatchAsync(launch), AgentOptions(_watchCall, open, state, cancel.Token));
         var (applied, end) = await AwaitAgent(instance, open, new Awaited(watching, cancel, Reports: true), context).ConfigureAwait(true);
         if (end == AgentEnd.Over)
         {
+            _suspendedRun = SuspendedRun(applied, open);
             return await StopIfClosed(applied, running).ConfigureAwait(true);
         }
 
@@ -155,10 +108,12 @@ internal sealed partial class RecipeWorkflow
         }
 
         var ended = await watching.ConfigureAwait(true);
-        var closed = await Close(running, measure: true).ConfigureAwait(true);
-        var reason = AgentEndReasons.Of(ended.EndedAs);
-        return await Decided(applied, open, AgentFailed(open, step, reason, closed.Tokens, ended.Detail), reportId: null, context).ConfigureAwait(true);
+        return await Ended(applied, running, step, resumed ? ended : ended with { FoundEnded = false }, context).ConfigureAwait(true);   // a session found ended means 'ended during the suspension' only for a watch that resumed one
     }
+
+    // The token of the run a park or a takeover left open: its session is kept, and the resumed watch finds out whether it ended meanwhile.
+    private static string? SuspendedRun(WorkflowInstance instance, OpenRun open) =>
+        instance.Suspension is not null && instance.Frame.Run?.Token == open.Token ? open.Token.Value : null;
 
     // The session's own report: closes the run (usage, diff signal, stop), then decides it like a desk report and answers the Update that carried it.
     private async Task<WorkflowInstance> Reported(WorkflowInstance instance, AgentRunning running, Interpreting context)
@@ -168,12 +123,13 @@ internal sealed partial class RecipeWorkflow
         _report = null;
         _reportId = null;
         var closed = await Close(running, measure: true).ConfigureAwait(true);
-        return await Decided(instance, running.Open, report with { Tokens = closed.Tokens, EmptyDiff = closed.EmptyDiff }, reportId, context).ConfigureAwait(true);
+        return await Decided(instance, running.Open, report with { Tokens = closed.Tokens, EmptyDiff = closed.EmptyDiff, Agent = running.Launched?.Agent, Model = running.Launched?.Model }, reportId, context).ConfigureAwait(true);
     }
 
     // Decides the trigger like RunDeskStep and RunBlockStep: mirror the change, emit its effects, and hand the result to the 'complete' Update that carried a report.
     private async Task<WorkflowInstance> Decided(WorkflowInstance instance, OpenRun open, Trigger trigger, string? reportId, Interpreting context)
     {
+        trigger = Carrying(open, trigger);
         var before = instance;
         var decision = TransitionDecision.Decide(new DecisionInput(instance, context.Recipe, trigger, GateAnswers.None, context.Decisions));
         if (decision is Rejected rejected)
@@ -223,7 +179,7 @@ internal sealed partial class RecipeWorkflow
     {
         var address = _start!.WorkflowId(); // why: the loop runs only after RunAsync set _start
         var writes = _recipe!.Catalog.Find(step.Use) is { } descriptor && descriptor.Capabilities.HasFlag(Capability.WriteScope); // why: as above
-        return new AgentStepRun(WorkflowInstanceId.Of(address), address, open.Token, new StepRef(instance.Frame.State, step.Use.Value), writes);
+        return new AgentStepRun(WorkflowInstanceId.Of(address), address, open.Token, new StepRef(instance.Frame.State, step.Use.Value), writes, open.Escalation);
     }
 
     private StepFailed AgentFailed(OpenRun open, StepUse step, string reason, int tokens, string? detail = null)

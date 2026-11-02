@@ -19,18 +19,18 @@ public sealed class IssueChallengeTests
         _ = await r.H.HoldLease();
         var step = await r.Shipped("sindri/workflow.step.yaml");
 
-        var issued = (await r.Issue("approve workflow.step 4")).Value;
+        var issued = (await r.Issue("approve workflow.step 5")).Value;
         var byHash = (await r.Issue($"approve workflow.step@{step.Hash.Display}")).Value;
 
-        Assert.Equal(("approve workflow.step 4", r.H.Clock.GetUtcNow().AddMinutes(5)), (issued.Action, issued.ExpiresAt));
+        Assert.Equal(("approve workflow.step 5", r.H.Clock.GetUtcNow().AddMinutes(5)), (issued.Action, issued.ExpiresAt));
         Assert.Equal((step.Id, step.Hash), (issued.Approve!.Id, issued.Approve.Hash));   // why: an approval's challenge carries its preview
         Assert.Null(issued.Revoke);
-        Assert.Equal("approve workflow.step 4", byHash.Action);
+        Assert.Equal("approve workflow.step 5", byHash.Action);
         Assert.NotEqual(issued.Challenge, byHash.Challenge);
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("approve workflow.step 5", "SND-RECIPE-002")]
+    [InlineData("approve workflow.step 6", "SND-RECIPE-002")]
     [InlineData("approve workflow.nothing 1", "SND-RECIPE-002")]
     [InlineData("approve workflow.step", "SND-CLI-003")]
     [InlineData("grant 1 T-1/step/1", "SND-WF-001")]
@@ -54,14 +54,14 @@ public sealed class IssueChallengeTests
         _ = await r.Shipped("sindri/workflow.step.yaml");
         var caller = who == "session" ? A.Caller().Session().Build() : A.Caller().Human().Client(ClientLabel.Ui).Build();
 
-        var issued = await r.Issue("approve workflow.step 4", caller);
+        var issued = await r.Issue("approve workflow.step 5", caller);
 
         Assert.True(issued.IsSuccess, issued.IsError ? issued.Error.ToString() : null);
     }
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("revoke workflow.step@9ab2d40c1e77", "sindri recipe revoke <recipe>", "sindri recipe approve")]
-    [InlineData("approve workflow.step 4", "sindri recipe approve <recipe>", "sindri recipe revoke")]
+    [InlineData("approve workflow.step 5", "sindri recipe approve <recipe>", "sindri recipe revoke")]
     public async Task A_service_is_refused_with_the_one_command_for_its_action(string action, string named, string other)
     {
         await using var r = new RegistryHarness();

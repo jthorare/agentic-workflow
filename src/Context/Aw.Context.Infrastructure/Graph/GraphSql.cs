@@ -4,7 +4,7 @@ namespace Aw.Context.Infrastructure.Graph;
 internal static class GraphSql
 {
     public const string InsertVersion =
-        "INSERT INTO map_version (repo, commit_sha, key_version, created, status) VALUES ($repo, $commit, $keyVersion, $created, 'building') RETURNING id";
+        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks, pin_hashes) VALUES ($repo, $commit, $keyVersion, $created, 'building', $ruleset, $dropped, $checks, $pinHashes) RETURNING id";
 
     public const string InsertNode =
         "INSERT INTO node (map_version, key, label, attributes, provenance, confidence, trust, written_at) VALUES ($v, $key, $label, $attributes, $provenance, $confidence, $trust, $at)";
@@ -15,7 +15,7 @@ internal static class GraphSql
     public const string InsertAlias = "INSERT INTO node_alias (map_version, alias, target) VALUES ($v, $alias, $target)";
 
     public const string InsertEdge =
-        "INSERT INTO edge (map_version, from_key, to_key, type, provenance, confidence, trust, step_order, written_at) VALUES ($v, $from, $to, $type, $provenance, $confidence, $trust, $order, $at)";
+        "INSERT INTO edge (map_version, from_key, to_key, type, provenance, confidence, trust, step_order, written_at, rollup_count) VALUES ($v, $from, $to, $type, $provenance, $confidence, $trust, $order, $at, $count)";
 
     public const string InsertEdgeEvidence =
         "INSERT INTO edge_evidence (edge_id, position, record, span) SELECT id, $position, $record, $span FROM edge WHERE map_version = $v AND from_key = $from AND to_key = $to AND type = $type";
@@ -41,7 +41,29 @@ internal static class GraphSql
     public const string DeleteBuildingVersion = "DELETE FROM map_version WHERE id = $v AND status = 'building'";
 
     public const string SelectVersions =
-        "SELECT id, repo, commit_sha, key_version, created, status FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+        "SELECT id, repo, commit_sha, key_version, created, status, ruleset, dropped, checks FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+
+    // A store not yet upgraded to 0017 (a graph-store read doesn't migrate): the same columns, the structure reason as NULL.
+    public const string SelectVersionsBefore0017 =
+        "SELECT id, repo, commit_sha, key_version, created, status, ruleset, dropped, NULL FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+
+    // A store not yet upgraded to 0013 (a graph-store read doesn't migrate): the same columns, the dropped counts as NULL.
+    public const string SelectVersionsBefore0013 =
+        "SELECT id, repo, commit_sha, key_version, created, status, ruleset, NULL, NULL FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+
+    // A store not yet upgraded to 0012: the ruleset and the dropped counts as NULL.
+    public const string SelectVersionsBefore0012 =
+        "SELECT id, repo, commit_sha, key_version, created, status, NULL, NULL, NULL FROM map_version WHERE status <> 'building' ORDER BY id DESC";
+
+    public const string HasChecksColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'checks'";
+
+    public const string HasDroppedColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'dropped'";
+
+    public const string HasPinHashesColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'pin_hashes'";
+
+    public const string SelectPinHashes = "SELECT id, pin_hashes FROM map_version WHERE status <> 'building' AND pin_hashes IS NOT NULL";
+
+    public const string HasRulesetColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'ruleset'";
 
     public const string SelectNodes =
         "SELECT key, label, attributes, provenance, confidence, written_at FROM node WHERE map_version = $v ORDER BY key";
@@ -50,7 +72,7 @@ internal static class GraphSql
         "SELECT node_key, record, span FROM node_evidence WHERE map_version = $v ORDER BY node_key, position";
 
     public const string SelectEdges =
-        "SELECT id, from_key, to_key, type, provenance, confidence, step_order, written_at FROM edge WHERE map_version = $v ORDER BY id";
+        "SELECT id, from_key, to_key, type, provenance, confidence, step_order, written_at, rollup_count FROM edge WHERE map_version = $v ORDER BY id";
 
     public const string SelectEdgeEvidence =
         "SELECT ee.edge_id, ee.record, ee.span FROM edge_evidence ee JOIN edge e ON e.id = ee.edge_id WHERE e.map_version = $v ORDER BY ee.edge_id, ee.position";
@@ -90,18 +112,23 @@ internal static class GraphSql
     public const string MakeCurrentDraft = "UPDATE map_version SET status = 'current' WHERE id = $v AND status = 'draft'";
 
     public const string SelectVersion =
-        "SELECT id, repo, commit_sha, key_version, created, status FROM map_version WHERE id = $v";
+        "SELECT id, repo, commit_sha, key_version, created, status, ruleset, dropped, checks FROM map_version WHERE id = $v";
 
     public const string CopyVersion =
-        "INSERT INTO map_version (repo, commit_sha, key_version, created, status) SELECT repo, commit_sha, key_version, $created, 'draft' FROM map_version WHERE id = $from RETURNING id";
+        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks, pin_hashes) SELECT repo, commit_sha, key_version, $created, 'draft', ruleset, dropped, checks, pin_hashes FROM map_version WHERE id = $from RETURNING id";
 
     public const string InsertHead =
-        "INSERT INTO map_version_head (version, repo, commit_sha, on_default) VALUES ($v, $repo, $commit, $onDefault)";
+        "INSERT INTO map_version_head (version, repo, commit_sha, on_default, index_commit) VALUES ($v, $repo, $commit, $onDefault, $indexCommit)";
 
     public const string CopyHeads =
-        "INSERT INTO map_version_head (version, repo, commit_sha, on_default) SELECT $to, repo, commit_sha, on_default FROM map_version_head WHERE version = $from ORDER BY rowid";
+        "INSERT INTO map_version_head (version, repo, commit_sha, on_default, index_commit) SELECT $to, repo, commit_sha, on_default, index_commit FROM map_version_head WHERE version = $from ORDER BY rowid";
 
-    public const string SelectHeads = "SELECT repo, commit_sha, on_default FROM map_version_head WHERE version = $v ORDER BY rowid";
+    // A store not yet at migration 0025 (reads never migrate) has the table but no index_commit column.
+    public const string HasIndexCommitColumn = "SELECT count(*) FROM pragma_table_info('map_version_head') WHERE name = 'index_commit'";
+
+    public const string SelectHeadsBeforeIndexCommit = "SELECT repo, commit_sha, on_default, NULL FROM map_version_head WHERE version = $v ORDER BY rowid";
+
+    public const string SelectHeads = "SELECT repo, commit_sha, on_default, index_commit FROM map_version_head WHERE version = $v ORDER BY rowid";
 
     public const string SelectHold = "SELECT h.version, c.since FROM map_hold h JOIN map_publish_chain c ON c.id = 1";
 
@@ -127,10 +154,10 @@ internal static class GraphSql
         "INSERT INTO node (map_version, key, label, attributes, provenance, confidence, trust, written_at) SELECT $to, key, label, attributes, provenance, confidence, trust, written_at FROM node WHERE map_version = $from",
         "INSERT INTO node_evidence (map_version, node_key, position, record, span) SELECT $to, node_key, position, record, span FROM node_evidence WHERE map_version = $from",
         "INSERT INTO node_alias (map_version, alias, target) SELECT $to, alias, target FROM node_alias WHERE map_version = $from",
-        "INSERT INTO edge (map_version, from_key, to_key, type, provenance, confidence, trust, step_order, written_at) SELECT $to, from_key, to_key, type, provenance, confidence, trust, step_order, written_at FROM edge WHERE map_version = $from ORDER BY id",
+        "INSERT INTO edge (map_version, from_key, to_key, type, provenance, confidence, trust, step_order, written_at, rollup_count) SELECT $to, from_key, to_key, type, provenance, confidence, trust, step_order, written_at, rollup_count FROM edge WHERE map_version = $from ORDER BY id",
         "INSERT INTO edge_evidence (edge_id, position, record, span) SELECT n.id, ee.position, ee.record, ee.span FROM edge_evidence ee JOIN edge o ON o.id = ee.edge_id " +
         "JOIN edge n ON n.map_version = $to AND n.from_key = o.from_key AND n.to_key = o.to_key AND n.type = o.type WHERE o.map_version = $from",
         "INSERT INTO decision (map_version, key, quote, wording, provenance, trust, written_at) SELECT $to, key, quote, wording, provenance, trust, written_at FROM decision WHERE map_version = $from",
-        "INSERT INTO map_version_head (version, repo, commit_sha, on_default) SELECT $to, repo, commit_sha, on_default FROM map_version_head WHERE version = $from ORDER BY rowid",
+        "INSERT INTO map_version_head (version, repo, commit_sha, on_default, index_commit) SELECT $to, repo, commit_sha, on_default, index_commit FROM map_version_head WHERE version = $from ORDER BY rowid",
     ];
 }

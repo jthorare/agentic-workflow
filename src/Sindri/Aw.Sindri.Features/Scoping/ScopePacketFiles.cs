@@ -6,8 +6,8 @@ internal static class ScopePacketFiles
     /// <summary>The names, in the packet's order.</summary>
     internal static IReadOnlyList<string> Names { get; } =
     [
-        "scope-map.json", "acceptance.json", "coverage.json", "lenses.json", "size.json", "questions.json",
-        "answers.jsonl", "challenge.json", "rounds.jsonl", "runs.json", "sources.json", "brief.md",
+        "scope-map.json", "acceptance.json", "coverage.json", "lenses.json", "relevance.json", "size.json", "questions.json",
+        "answers.jsonl", "challenge.json", "gap-search.json", "graph.json", "rounds.jsonl", "runs.json", "sources.json", "brief.md",
     ];
 
     /// <summary>'json', 'jsonl' or 'md' by the extension.</summary>

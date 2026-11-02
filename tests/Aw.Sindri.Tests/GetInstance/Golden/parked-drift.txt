@@ -1,5 +1,5 @@
-T-3/step/1  workflow.step@f511ce1fc529  v4  parked: spec-conflict (drift)  since 11:56 (4m)
-  next      step.produce changed since workflow.step@f511ce1fc529 was approved.
-            Re-approve it (`sindri recipe approve workflow.step@f511ce1fc529`); the approval resumes this instance.
-  answer    none (drift): sindri recipe approve workflow.step@f511ce1fc529     (at a terminal; the approval resumes it)
+T-3/step/1  workflow.step@4ca37bf46333  v4  parked: spec-conflict (drift)  since 11:56 (4m)
+  next      step.produce changed since workflow.step@4ca37bf46333 was approved.
+            Re-approve it (`sindri recipe approve workflow.step@4ca37bf46333`); the approval resumes this instance.
+  answer    none (drift): sindri recipe approve workflow.step@4ca37bf46333     (at a terminal; the approval resumes it)
   commands  takeover, cancel

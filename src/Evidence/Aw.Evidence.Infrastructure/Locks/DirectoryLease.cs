@@ -3,7 +3,7 @@ using Aw.Evidence.Core.Locks;
 namespace Aw.Evidence.Infrastructure.Locks;
 
 /// <summary>
-/// A held lock directory. Release deletes the owner file this process wrote, then the directory; twice is harmless. A
+/// A held lock directory. Release deletes the pid and owner files this process wrote, then the directory; twice is harmless. A
 /// directory whose owner line names another process is left alone: someone removed ours by hand and another holder
 /// took the slot.
 /// </summary>
@@ -36,6 +36,7 @@ internal sealed class DirectoryLease(LockKind kind, string? directory) : ILockLe
             }
 
             File.Delete(owner);
+            File.Delete(Path.Combine(directory, DirectoryLocks.PidFile));
             Directory.Delete(directory, recursive: false);
         }
         catch (IOException)

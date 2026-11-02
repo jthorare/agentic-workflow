@@ -43,7 +43,7 @@ public static partial class SettingsReader
 
         if (UnknownKey(element) is { } unknown)
         {
-            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker)");
+            return Invalid("context." + unknown, "is not a context setting this build knows (repos, docs, cascadeDepth, cascadeComponentFanOut, deadline, minHits, labeling, scrub, sessions, sources, eval, code, extract, publish, ranker, history, conceptScan, conceptSynthesis, checks, index, models)");
         }
 
         if (CodeUnknownKey(element) is { } codeKey)
@@ -67,13 +67,16 @@ public static partial class SettingsReader
         var deadline = section.Deadline is null ? settings.Deadline : Duration(section.Deadline);
         var codeDeadline = CodeDeadline(section.Code, settings);
         var sources = SourcesReader.Check(section.Sources);
+        var index = IndexRules.Index(section.Index);
+        var models = ModelsSettings.Read(section.Models);
         return (Refused(section, globs), deadline, codeDeadline, sources) switch
         {
             ({ } problem, _, _, _) => problem,
             (_, null, _, _) => Invalid("context.deadline", "is a duration from 100ms to 300s, such as 10s or 500ms"),
             (_, _, null, _) => Invalid("context.code.deadline", "is a duration from 100ms to 86400s, such as 180s or 90s"),
             (_, _, _, { IsError: true }) => sources.Error,
-            _ => WithCode(
+            _ when FirstFailure(index, models) is { } failure => failure,
+            _ => WithOwnedIndex(WithCode(
                 WithFanOut(settings, section) with
                 {
                     Repos = section.Repos?.Select(ContextRepoName.From).ToList(),
@@ -82,7 +85,6 @@ public static partial class SettingsReader
                     MinHits = section.MinHits ?? settings.MinHits,
                     CascadeDepth = section.CascadeDepth ?? settings.CascadeDepth,
                     SessionsEnabled = section.Sessions?.Enabled ?? true,
-                    Onyx = sources.Value.Onyx,
                     Linear = sources.Value.Linear,
                     LinearTeams = sources.Value.Teams,
                     ExtraPatterns = Patterns(section.Scrub),
@@ -91,11 +93,21 @@ public static partial class SettingsReader
                     Recognizers = Recognizers(section.Extract),
                     Publish = Publish(section.Publish),
                     Ranker = RankerRules.Read(section.Ranker),
+                    ConceptScan = ConceptScanRules.Read(section.ConceptScan),
+                    HistoryDeadline = HistoryDeadline(section.History),
+                    Checks = ChecksRules.ModeOf(section.Checks),
+                    CheckLimits = ChecksRules.Limits(section.Checks),
                 },
                 section.Code,
-                codeDeadline.Value),
+                codeDeadline.Value), sources.Value.GitHub, sources.Value.Slack, index.Value, models.Value),
         };
     }
+
+    private static Error? FirstFailure(Result<ContextIndexSettings> index, Result<ModelsSettings> models) =>
+        index.IsError ? index.Error : models.IsError ? models.Error : null;
+
+    private static ContextSettings WithOwnedIndex(ContextSettings settings, GitHubSource? github, SlackSource? slack, ContextIndexSettings index, ModelsSettings models) =>
+        settings with { GitHub = github, Slack = slack, Index = index, Models = models };
 
     private const int MaxCodeGlobs = 500;
     private const int MaxCodeGlobLength = 2_000;
@@ -117,6 +129,11 @@ public static partial class SettingsReader
         written is null ? defaults : [.. written.OfType<string>()];   // why: CodeProblem refused a null entry
 
     /// <summary>The first refused 'context.code' glob list: more than 50 entries (151) or an entry that isn't a repo-relative glob (150).</summary>
+    private static TimeSpan? HistoryDeadline(HistorySection? history) => history?.Deadline is { } written ? Duration(written, _maxCodeDeadline) : null;
+
+    private static Error? HistoryProblem(HistorySection? history) =>
+        history?.Deadline is { } written && Duration(written, _maxCodeDeadline) is null ? Invalid("context.history.deadline", "is a duration from 100ms to 86400s, such as 600s or 90s (leave it out for no deadline)") : null;
+
     private static Error? CodeProblem(CodeSection? code) =>
         code is null ? null : CodeListProblem("schemaGlobs", code.SchemaGlobs) ?? CodeListProblem("testGlobs", code.TestGlobs);
 
@@ -169,7 +186,7 @@ public static partial class SettingsReader
     private static IReadOnlyList<ProfileRecognizer> Recognizers(ExtractSection? extract) =>
         [.. (extract?.Recognizers ?? []).OfType<RecognizerEntry>().Select(e => new ProfileRecognizer(e.Kind!, e.Glob!, e.Pattern!, e.KeyFrom!))];   // why: RecognizerRules refused a missing field
 
-    private static Error? Refused(ContextSection section, IReadOnlyList<string> globs) => Problem(section, globs) ?? RecognizerRules.Problem(section.Extract?.Recognizers) ?? GraphifyRules.Problem(section.Extract?.Graphify);
+    private static Error? Refused(ContextSection section, IReadOnlyList<string> globs) => Problem(section, globs) ?? DocNamesRules.Problem(section.Docs?.DirectoryNames) ?? ChecksRules.Problem(section.Checks) ?? RecognizerRules.Problem(section.Extract?.Recognizers) ?? GraphifyRules.Problem(section.Extract?.Graphify);
 
     private static PublishSettings Publish(PublishSection? section) => new() { WaitForIndexMinutes = section?.WaitForIndexMinutes ?? PublishSettings.DefaultWaitMinutes };
 
@@ -223,13 +240,13 @@ public static partial class SettingsReader
     }
 
     private static ContextSettings WithFanOut(ContextSettings settings, ContextSection section) =>
-        settings with { CascadeComponentFanOut = section.CascadeComponentFanOut ?? settings.CascadeComponentFanOut, Graphify = GraphifyRules.Limits(section.Extract?.Graphify) };
+        settings with { ConceptSynthesis = ConceptSynthesisRules.Read(section.ConceptSynthesis), DocDirectoryNames = DocNamesRules.Names(section.Docs), CascadeComponentFanOut = section.CascadeComponentFanOut ?? settings.CascadeComponentFanOut, Graphify = GraphifyRules.Limits(section.Extract?.Graphify) };
 
     private static Error? CascadeProblem(ContextSection section) => section switch
     {
         { CascadeDepth: < 0 or > QueryRules.MaxDepth } => Invalid("context.cascadeDepth", "is 0 to 8 steps"),
         { CascadeComponentFanOut: < 1 or > 500 } => Invalid("context.cascadeComponentFanOut", "is 1 to 500 features"),
-        _ => RankerRules.Problem(section.Ranker) ?? CodeProblem(section.Code),   // why: the last keys checked
+        _ => RankerRules.Problem(section.Ranker) ?? ConceptScanRules.Problem(section.ConceptScan) ?? ConceptSynthesisRules.Problem(section.ConceptSynthesis) ?? CodeProblem(section.Code) ?? HistoryProblem(section.History),   // why: the last keys checked
     };
 
     private static Error? RepoProblem(IReadOnlyList<string>? repos)
@@ -242,7 +259,7 @@ public static partial class SettingsReader
 
     private static string? UnknownKey(JsonElement element)
     {
-        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker"];
+        string[] known = ["repos", "docs", "cascadeDepth", "cascadeComponentFanOut", "deadline", "maxBudget", "minHits", "labeling", "scrub", "sessions", "sources", "eval", "code", "extract", "publish", "ranker", "history", "conceptScan", "conceptSynthesis", "checks", "index", "models"];
         return element.EnumerateObject().Select(p => p.Name).FirstOrDefault(n => !known.Contains(n, StringComparer.Ordinal)) is { } name ? Printable(name) : null;
     }
 

@@ -36,4 +36,12 @@ public sealed record ContextResult(
     /// <summary>The code units the component hop skipped for the fan-out cap; left out when none.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<SkippedComponent>? SkippedComponents { get; init; }
+
+    /// <summary>Plain sentences about how the answer was made (the pin it is scoped to, a source left out under it, why it is empty, the stale-map note of concept pins spec §3.1); left out when none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<string>? Notes { get; init; }
+
+    /// <summary>How many demoted files the answer carries, per role ('index.demote'); left out when none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public FilteredCounts? Filtered { get; init; }
 }

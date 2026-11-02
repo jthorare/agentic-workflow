@@ -10,6 +10,7 @@ internal static class PlanRules
     internal const string Size1 = "PLN-SIZE-001";
     internal const string Sig1 = "PLN-SIG-001";
     internal const string Stack1 = "PLN-STACK-001";
+    internal const string Test1 = "PLN-TEST-001";
     internal const string Exec1 = "PLN-EXEC-001";
     internal const string Hold3 = "PLN-HOLD-003";
 
@@ -21,6 +22,7 @@ internal static class PlanRules
         new(Size1, LineStage.Draft, PlanChecks.PhasesWithinSize),
         new(Sig1, LineStage.Draft, PlanChecks.PhasesHaveSignals),
         new(Stack1, LineStage.Draft, PlanChecks.StacksStayShallow),
+        new(Test1, LineStage.Draft, PlanChecks.TestsNamed),
         new(Exec1, LineStage.Evidence, PlanChecks.PhasesExecutable),
         new(Hold3, LineStage.Evidence, PlanChecks.HoldoutSetsPlanned),
     ];

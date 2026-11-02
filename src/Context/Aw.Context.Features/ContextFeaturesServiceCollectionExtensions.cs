@@ -1,29 +1,42 @@
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Eval.MapQuality;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Models;
+using Aw.Context.Core.Pages;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.Surfaces;
 using Aw.Context.Core.Symbols;
+using Aw.Context.Core.Sync;
+using Aw.Context.Core.Walks;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features.Adjudicate;
 using Aw.Context.Features.ApplyReviewFile;
 using Aw.Context.Features.BuildMap;
 using Aw.Context.Features.CheckMap;
+using Aw.Context.Features.CheckPages;
 using Aw.Context.Features.CheckRetention;
 using Aw.Context.Features.CleanMap;
+using Aw.Context.Features.EmbedRecords;
 using Aw.Context.Features.EvalMap;
 using Aw.Context.Features.EvalProbes;
 using Aw.Context.Features.EvalPurge;
@@ -31,12 +44,18 @@ using Aw.Context.Features.ExportMap;
 using Aw.Context.Features.ExportReview;
 using Aw.Context.Features.FindPath;
 using Aw.Context.Features.GetCode;
+using Aw.Context.Features.GetConceptGlossary;
 using Aw.Context.Features.GetConceptMembers;
 using Aw.Context.Features.GetConcepts;
 using Aw.Context.Features.GetFileMap;
 using Aw.Context.Features.GetHistory;
 using Aw.Context.Features.GetLenses;
+using Aw.Context.Features.GetPageFacts;
+using Aw.Context.Features.GetPages;
+using Aw.Context.Features.GetPinSuggest;
+using Aw.Context.Features.GetProjects;
 using Aw.Context.Features.GetProposals;
+using Aw.Context.Features.GetScopeGraph;
 using Aw.Context.Features.GetSubgraph;
 using Aw.Context.Features.GetWholeMap;
 using Aw.Context.Features.HeldMap;
@@ -52,10 +71,12 @@ using Aw.Context.Features.PurgeMap;
 using Aw.Context.Features.QueryContext;
 using Aw.Context.Features.RefreshDocs;
 using Aw.Context.Features.ReleaseMap;
+using Aw.Context.Features.RelinkPinAliases;
 using Aw.Context.Features.ReviewHistory;
 using Aw.Context.Features.ReviewMap;
 using Aw.Context.Features.ReviewQueue;
 using Aw.Context.Features.RunBacktest;
+using Aw.Context.Features.ScanConcepts;
 using Aw.Context.Features.SearchMap;
 using Aw.Context.Features.ShowMapStatus;
 using Aw.Context.Features.ShowNode;
@@ -79,19 +100,34 @@ public static class ContextFeaturesServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddSingleton<IMapSearchIndexFactory, UnconfiguredMapSearchIndexFactory>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite FTS5 adapter
+        services.TryAddSingleton<IConceptHintStore, UnconfiguredConceptHintStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
+        services.TryAddSingleton<IConceptSynthesisStore, UnconfiguredConceptSynthesisStore>();   // the host that wires Aw.Context.Infrastructure replaces it with the SQLite store
+        services.TryAddSingleton(WalkOptions.Of(Math.Max(1, Environment.ProcessorCount - 1)));   // every core but one, so the box keeps a core; a host or a test may register another degree
         services.TryAddSingleton(WholeMapRules.Default);   // a host or a test may register other limits
         services.TryAddSingleton<ICodeSymbolSource, NoCodeSymbolSource>();   // the host that wires the code index (Sindri's Host adapter) replaces it
         services.TryAddSingleton<ILabeler, DisabledLabeler>();   // a host that sets up labeling (AddContextLabeling) replaces it
         services.TryAddSingleton<IConceptNamer, DisabledConceptNamer>();   // a host that sets up labeling (AddContextLabeling) replaces it
-        services.TryAddSingleton<MapNamers>();
+        services.TryAddSingleton<ISymbolVectors, DisabledSymbolVectors>();   // the host that wires the code index (Sindri's Host adapter) replaces it
+        services.TryAddSingleton<ISurfacePicker, DisabledSurfacePicker>();   // a host that sets up labeling (AddContextLabeling) replaces it
+        services.TryAddSingleton<ISurfacePickStore, NoSurfacePickStore>();   // a host that sets up labeling (AddContextLabeling) replaces it
+        services.TryAddScoped<IMapRebuildState, NoMapRebuild>();   // Sindri's host replaces it with the answer read from its jobs and the refresh service
+        services.TryAddScoped(sp => new SurfacePickPass(sp.GetRequiredService<ISurfacePicker>(), sp.GetRequiredService<ISurfacePickStore>(), sp.GetService<IChoicePort>(), sp.GetRequiredService<TimeProvider>()));
+        services.TryAddScoped<ConceptPass>();
+        services.TryAddScoped<MapRecordSources>();   // scoped: it reads the code index, which is read in the call's scope
+        services.TryAddScoped<MapInputs>();
+        services.TryAddScoped<MapNamers>();   // scoped: the concept step reads the code index, which is read in the call's scope
         services.TryAddSingleton<IHeavyJobLock, UnconfiguredHeavyJobLock>();   // a host that wires the box-wide lock replaces it
         services.TryAddSingleton<UnconfiguredBacktest>();   // hosts that wire the backtest ports (Infrastructure) replace these
         services.TryAddSingleton<IBriefSource>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IMergeHistory>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IAsOfDocs>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
         services.TryAddSingleton<IEvalStore>(sp => sp.GetRequiredService<UnconfiguredBacktest>());
-        return services.AddMapHeads().AddContextSlices();
+        return services.AddMapHeads().AddRelinkPinAliases().AddProjectFacts().AddIndexSync().AddRecordSearch().AddEmbedRecords().AddContextSlices();
     }
+
+    private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();
+
+    private static IServiceCollection AddIndexSync(this IServiceCollection services) => services.AddScoped<FeedDecisions>().AddScoped<TickSteps>().AddScoped<ConceptSynthesisRun>().AddScoped<IIndexSync, IndexSync>();
 
     private static IServiceCollection AddContextSlices(this IServiceCollection services) => services
         .AddBacktest()
@@ -102,7 +138,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<RefreshDocsRequest, RefreshReport>, RefreshDocsService>()
         .AddScoped<IService<SyncSourcesRequest, SyncReport>, SyncSourcesService>()
         .AddScoped<ContextSources>()
-        .AddSingleton<SyncLocks>()
+        .AddSingleton<RecordFeedSync>()
         .AddSingleton<RepoTreeCache>()
         .AddScoped<IService<PreviewMapRequest, MapFilePreview>, PreviewMapService>()
         .AddScoped<IService<ImportMapRequest, MapImported>, ImportMapService>()
@@ -115,7 +151,7 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<ListNeighborsRequest, NeighborsView>, ListNeighborsService>()
         .AddScoped<IService<FindPathRequest, PathView>, FindPathService>()
         .AddSingleton<MapBuildGate>()
-        .AddScoped<IService<BuildMapRequest, MapBuildReport>, BuildMapService>()
+        .AddBuildSlices()
         .AddReviewSlices()
         .AddPromoteSlices()
         .AddScoped<IService<ProposeFromScopeRequest, ProposeResult>, ProposeFromScopeService>()
@@ -135,6 +171,12 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IContextEngine, ContextEngine>()
         .AddLensSlices();
 
+    // The build, and the structure checks that share its reading.
+    private static IServiceCollection AddBuildSlices(this IServiceCollection services) => services
+        .AddScoped<BuildMapService>()
+        .AddScoped<IService<BuildMapRequest, MapBuildReport>>(static sp => sp.GetRequiredService<BuildMapService>())
+        .AddScoped<IService<CheckStructureRequest, MapChecksView>, CheckStructureService>();
+
     private static IServiceCollection AddReviewSlices(this IServiceCollection services) => services
         .AddScoped<IService<ReviewQueueRequest, ReviewQueueView>, ReviewQueueService>()
         .AddScoped<IService<ReviewHistoryRequest, ReviewHistoryView>, ReviewHistoryService>()
@@ -151,22 +193,37 @@ public static class ContextFeaturesServiceCollectionExtensions
         .AddScoped<IService<ShowPublishStatusRequest, MapPublishView>, ShowPublishStatusService>();
 
     // The repo heads the map watcher reads (F1).
+    private static IServiceCollection AddRelinkPinAliases(this IServiceCollection services) =>
+        services.AddScoped<IService<RelinkPinAliasesRequest, RelinkPinAliasesResult>, RelinkPinAliasesService>();
+
     private static IServiceCollection AddMapHeads(this IServiceCollection services) =>
         services.AddScoped<IService<MapHeadsRequest, IReadOnlyList<RepoHead>>, MapHeadsService>();
+
+    // The Projects page's reads (projects page spec §6.1).
+    private static IServiceCollection AddProjectFacts(this IServiceCollection services) =>
+        services.AddScoped<IService<GetProjectFactsRequest, ProjectFactsAnswer>, GetProjectFactsService>().AddScoped<ContextReads>();
 
     // The lenses and the code lens share the basis reader and the map reader's views.
     private static IServiceCollection AddLensSlices(this IServiceCollection services) => services
         .AddScoped<IService<GetLensesRequest, LensesView>, GetLensesService>()
         .AddScoped<IService<GetLensesSetRequest, LensesSetView>, GetLensesSetService>()
         .AddScoped<IService<GetSubgraphRequest, SubgraphView>, GetSubgraphService>()
+        .AddScoped<IService<GetScopeGraphRequest, ScopeGraphView>, GetScopeGraphService>()
+        .AddScoped<ContextScopeGraph>()
         .AddScoped<IService<GetWholeMapRequest, WholeMapView>, GetWholeMapService>()
         .AddScoped<IService<GetConceptsRequest, ConceptsView>, GetConceptsService>()
+        .AddScoped<IService<GetPagesRequest, PagesView>, GetPagesService>()
+        .AddScoped<IService<CheckPagesRequest, MapHealth>, CheckPagesService>()
+        .AddScoped<IService<GetPageFactsRequest, PageMapFacts>, GetPageFactsService>()
         .AddScoped<IService<GetConceptMembersRequest, ConceptMembersView>, GetConceptMembersService>()
+        .AddScoped<IService<GetConceptGlossaryRequest, ConceptGlossaryView>, GetConceptGlossaryService>()
+        .AddScoped<IService<GetPinSuggestRequest, PinSuggestView>, GetPinSuggestService>()
         .AddScoped<ConceptReader>()
         .AddSingleton<WholeMapCache>()
         .AddScoped<IService<SearchMapRequest, MapSearchView>, SearchMapService>()
         .AddSingleton<MapSearchCache>()
         .AddScoped<LensBasisReader>()
+        .AddScoped<ContextConceptReads>()
         .AddScoped<ContextCodeHistory>()
         .AddScoped<IService<GetCodeRequest, CodeView>, GetCodeService>()
         .AddScoped<CodeLexicalSearch>()
@@ -178,7 +235,9 @@ public static class ContextFeaturesServiceCollectionExtensions
 
     private static IServiceCollection AddPromoteSlices(this IServiceCollection services) => services
         .AddScoped<IService<PromoteMapRequest, MapPromoted>, PromoteMapService>()
-        .AddScoped<IService<CleanMapRequest, CleanupReport>, CleanMapService>();
+        .AddScoped<IService<CleanMapRequest, CleanupReport>, CleanMapService>()
+        .AddScoped<IService<ScanConceptsRequest, ConceptScanReport>, ScanConceptsService>()
+        .AddScoped<IConceptScanSearch, ConceptScanSearch>();
 
     private static IServiceCollection AddHistory(this IServiceCollection services) => services
         .AddScoped<IService<GetHistoryRequest, HistoryView>, GetHistoryService>()

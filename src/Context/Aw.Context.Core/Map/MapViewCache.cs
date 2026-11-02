@@ -25,32 +25,66 @@ public sealed class MapViewCache
     internal Result<MapView> View(MapSnapshot map, IntentLayer layer, ContextScope scope, string mode, Func<Result<MapView>> build)
     {
         var key = string.Concat(mode, "\n", Caller(scope), "\n", Overrides(map.Overrides));
-        lock (_gate)
+        var entry = Join(map, layer, key, build);
+        try
         {
-            if (_byGraph.TryGetValue(map.Graph, out var kept) && kept.Find(e => e.Key == key && ReferenceEquals(e.Layer, layer)) is { } hit)
-            {
-                return hit.View;
-            }
+            return entry.View.Value;
         }
+        catch
+        {
+            // a build that threw is not kept: the next caller builds again
+            Drop(map, entry);
+            throw;
+        }
+    }
 
-        var built = build();
-        Built?.Invoke();
+    // The entry for these inputs: the one kept or being built (concurrent callers share one build), or a new one.
+    private Entry Join(MapSnapshot map, IntentLayer layer, string key, Func<Result<MapView>> build)
+    {
         lock (_gate)
         {
             var entries = _byGraph.GetOrCreateValue(map.Graph);
-            _ = entries.RemoveAll(e => e.Key == key);   // a newer layer for the same caller replaces the older one
-            entries.Add(new Entry(key, layer, built));
-        }
+            if (entries.Find(e => e.Key == key && ReferenceEquals(e.Layer, layer)) is { } hit)
+            {
+                return hit;
+            }
 
+            _ = entries.RemoveAll(e => e.Key == key);   // a newer layer for the same caller replaces the older one
+            var entry = new Entry(key, layer, new Lazy<Result<MapView>>(() => Run(build), LazyThreadSafetyMode.ExecutionAndPublication));
+            entries.Add(entry);
+            return entry;
+        }
+    }
+
+    private Result<MapView> Run(Func<Result<MapView>> build)
+    {
+        var built = build();
+        Built?.Invoke();
         return built;
+    }
+
+    private void Drop(MapSnapshot map, Entry entry)
+    {
+        lock (_gate)
+        {
+            if (_byGraph.TryGetValue(map.Graph, out var entries))
+            {
+                _ = entries.Remove(entry);
+            }
+        }
     }
 
     // Who reads and under which profile: the context section, the repos and their deny globs, the caller's kind and repo.
     private static string Caller(ContextScope scope) =>
-        string.Join('\n', scope.Settings?.GetRawText() ?? string.Empty, string.Join(';', scope.Repos.Select(r => r.Name.Value + "=" + r.Path + ":" + string.Join(',', r.DenyPaths))), scope.Caller.Kind, scope.Caller.Repo?.Value ?? string.Empty);
+        string.Join('\n', scope.Settings?.GetRawText() ?? string.Empty, string.Join(';', scope.Repos.Select(r => r.Name.Value + "=" + r.Path + ":" + string.Join(',', r.DenyPaths) + ":" + Pages(r))), scope.OmitPages, scope.Caller.Kind, scope.Caller.Repo?.Value ?? string.Empty);
+
+    // A digest of a repo's pages, so an approved page edit misses the cache and shows on the next read.
+    private static string Pages(ContextRepo repo) =>
+        repo.Pages.Count == 0 ? "0" : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(string.Join('\n', repo.Pages.Select(p =>
+            string.Join('|', p.Id.Value, p.Name, p.Repo?.Value, p.SurfaceKey, string.Join(';', p.Actions.Select(a => string.Join('|', a.Id.Value, a.Name, a.ActionKey, string.Join(',', a.Concepts))))))))));
 
     private static string Overrides(IReadOnlyList<MapOverride> overrides) =>
         overrides.Count == 0 ? "0" : overrides.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + overrides[^1].ToId().Value;
 
-    private sealed record Entry(string Key, IntentLayer Layer, Result<MapView> View);
+    private sealed record Entry(string Key, IntentLayer Layer, Lazy<Result<MapView>> View);
 }

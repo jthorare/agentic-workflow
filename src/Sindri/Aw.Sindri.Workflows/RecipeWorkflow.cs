@@ -108,6 +108,7 @@ internal sealed partial class RecipeWorkflow
         var keepsRoundOnLaunchFailure = Workflow.Patched("launch-failure-keeps-round-v1");   // a launch that never started a session counts no loop round, and the third in a row parks; a history without the marker counts the round as it did.
         var perRound = Workflow.Patched("token-budget-per-round-v1"); _heavy = Workflow.Patched("ln-wf3-heavy-slot");   // LN-WF3: the heavy allocator; a history without it never takes or grants a slot
         var storesLiterals = Workflow.Patched("child-literal-facts-v1");   // a child's literal inputs go into the fact store at its start; a history without it never stored them
+        var retriesBeforePark = Workflow.Patched("timeout-retries-before-park-v1");   // owner q93: a state timeout retries once before it parks; a history without the marker parks at the first expiry as it did
         var loaded = await LoadRecipe(start, storesLiterals).ConfigureAwait(true);
         var pins = await LoadChildPins(loaded).ConfigureAwait(true);   // engine P7: the children the approval pinned
         var catalog = new BlockCatalog(loaded.Blocks, []);
@@ -115,7 +116,7 @@ internal sealed partial class RecipeWorkflow
         _deskTimeout = loaded.DeskTimeout;
         _eventHold = loaded.EventHold;
         _dispatchDelay = loaded.DispatchDelay;
-        var decisions = new DecisionContext(ApprovalCheck.Holds, catalog, Runtimes(loaded, blockRuntime, agentRuntime), pins.Resolver()) { DeskTimeout = loaded.DeskTimeout, LegacyBudgetPark = !keepsReport, PooledBudget = !perRound, LegacyLaunchRound = !keepsRoundOnLaunchFailure, LegacyUnavailable = !_unavailable };
+        var decisions = new DecisionContext(ApprovalCheck.Holds, catalog, Runtimes(loaded, blockRuntime, agentRuntime), pins.Resolver()) { DeskTimeout = loaded.DeskTimeout, LegacyBudgetPark = !keepsReport, PooledBudget = !perRound, LegacyLaunchRound = !keepsRoundOnLaunchFailure, LegacyUnavailable = !_unavailable, LegacyTimeoutPark = !retriesBeforePark };
         _context = new Interpreting(loaded.Recipe, decisions);
         (_repo, _repoUnreadable) = start.Inputs.TryGetValue(_itemFact, out var item) ? await RepoOf(item.Value).ConfigureAwait(true) : (null, false);
         (_subject, _contents) = await NamedSubject(_recipe, start).ConfigureAwait(true);
@@ -185,29 +186,6 @@ internal sealed partial class RecipeWorkflow
     /// <summary>Whether a wait state of the recipe waits for <paramref name="kind"/>; true while the recipe isn't loaded yet.</summary>
     private bool WaitsFor(EventKind kind) =>
         _context is not { } context || context.Recipe.States.Values.Any(s => s.WaitFor?.Event == kind);
-
-    /// <summary>
-    /// Mirrors one event into the ledger ('RecordEvent', a local activity keyed by its own activity id; rev 8.1 §5.6),
-    /// then sets the search attributes the instance is found by (§5.1) as they stand after it.
-    /// </summary>
-    private async Task Mirror(WorkflowEventRecord record, bool needsYou)
-    {
-        var stamped = record with { Tenant = _start!.Tenant, Ring = _start.Ring };   // why: Mirror runs only after RunAsync set _start; the row is the instance's, not the worker's
-        _ = await Workflow.ExecuteLocalActivityAsync((RecordEventActivities a) => a.RecordAsync(stamped), RecordEventActivities.LocalOptions).ConfigureAwait(true);
-        _mirrored++;   // the instance's version, 'v<n>' in status: Temporal keeps no row version (unit (e))
-        Upsert(record.To, needsYou);
-    }
-
-    /// <summary>
-    /// The instance waits on a human (spec §5.1 'NeedsYou'): it is parked or escalated, or it holds an open desk task. A
-    /// takeover doesn't: the human already has it. A park for a dependency that is down doesn't either: nobody can answer it, and health shows it.
-    /// </summary>
-    private static bool NeedsYou(WorkflowInstance instance) => !instance.Ended && instance.Suspension switch
-    {
-        { Kind: SuspensionKind.Takeover } or { Kind: SuspensionKind.Park, Reason: ParkReason.Unavailable } => false,
-        not null => true,
-        _ => instance.Frame.Run is { Runtime: StepRuntime.Desk },
-    };
 
     /// <summary>
     /// Takes <paramref name="instance"/> as the instance after a decided change, and does what the change asks of the

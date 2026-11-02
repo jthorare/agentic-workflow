@@ -4,7 +4,8 @@
 # Why: a shell that runs inside a tmux client has $TMUX set, and tmux follows $TMUX before $TMUX_TMPDIR, so a test that only
 # exported TMUX_TMPDIR still sent `new-session` and `kill-server` to the box's own server (the live /meta team's). This helper
 # makes that impossible:
-#   * it unsets TMUX;
+#   * it unsets TMUX, and the lane environment a lane or meta pane exports (the list scripts/ci/bash-tests.sh strips), which the
+#     private server would otherwise inherit into its global environment (#1420);
 #   * it makes a temp dir (mktemp -d, so its path matches */tmp.*/*) and exports TMUX_TMPDIR under it;
 #   * it picks a socket name AW_TEST_TMUX (unique per run: t1-<pid>-<random>; a caller may preset a name for the team under test,
 #     since the private TMUX_TMPDIR already makes it unique to this run) and defines
@@ -22,7 +23,7 @@ if ! command -v tmux > /dev/null 2>&1; then
   echo "test-tmux: tmux is not installed" >&2
   return 2 2> /dev/null || exit 2
 fi
-unset TMUX
+unset TMUX AW_META_TEAM AW_META_DIR AW_META_LANE AW_META_LANE_PID AW_META_LANE_AGENT AW_META_LANE_PROC AW_SINDRI_CHILD AW_SINDRI_LAUNCH AW_LAUNCHER_CONFIG
 _tt_real="$(type -P tmux)"
 AW_TEST_TMUX_DIR="$(cd "$(mktemp -d)" && pwd -P)"   # physical path: tmux resolves its socket dir through symlinks
 export TMUX_TMPDIR="$AW_TEST_TMUX_DIR/tmux"

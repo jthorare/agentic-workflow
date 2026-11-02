@@ -30,6 +30,7 @@ public static class IntentOverlay
     {
         private readonly List<GraphNode> _nodes = [.. graph.Nodes];
         private readonly List<GraphEdge> _edges = [.. graph.Edges];
+        private readonly HashSet<(string From, string To)> _mentionKeys = [.. graph.Edges.Where(e => e.Type == EdgeType.Mentions).Select(e => (e.From.Value, e.To.Value))];
         private readonly List<IntentLink> _orphaned = [];
         private readonly List<NodeAlias> _newAliases = [];
         private readonly HashSet<string> _present = graph.Nodes.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
@@ -80,8 +81,10 @@ public static class IntentOverlay
                     : (link.Confidence, [evidence], suggested);
             }
 
-            _edges.AddRange(mentions.OrderBy(m => m.Key.From, StringComparer.Ordinal).ThenBy(m => m.Key.To, StringComparer.Ordinal)
-                .Select(m => new GraphEdge(NodeKey.From(m.Key.From), NodeKey.From(m.Key.To), EdgeType.Mentions, m.Value.Suggested ? Provenance.Model : Provenance.Deterministic, m.Value.Confidence, m.Value.Evidence)));
+            foreach (var m in mentions.OrderBy(m => m.Key.From, StringComparer.Ordinal).ThenBy(m => m.Key.To, StringComparer.Ordinal))
+            {
+                AddMention(new GraphEdge(NodeKey.From(m.Key.From), NodeKey.From(m.Key.To), EdgeType.Mentions, m.Value.Suggested ? Provenance.Model : Provenance.Deterministic, m.Value.Confidence, m.Value.Evidence));
+            }
         }
 
         public void AddDecisionEdges()
@@ -106,6 +109,15 @@ public static class IntentOverlay
             var decisions = graph.Decisions.Concat(layer.Decisions.Where(d => known.Add(d.ToKey().Value))).ToList();
             var taken = graph.Aliases.Select(a => a.Alias.Value).ToHashSet(StringComparer.Ordinal);
             return new IntentOverlayResult(new GraphSnapshot(_nodes, _edges, [.. graph.Aliases, .. _newAliases.Where(a => taken.Add(a.Alias.Value))], decisions), _orphaned);
+        }
+
+        // A 'mentions' edge the graph already stores (a record's cited-path mentions, #1373) is not added twice: a lens would count it twice. Decision edges are not deduped: a second 'quotes' edge may carry its own evidence or time.
+        private void AddMention(GraphEdge edge)
+        {
+            if (_mentionKeys.Add((edge.From.Value, edge.To.Value)))
+            {
+                _edges.Add(edge);
+            }
         }
 
         private void AddNode(GraphNode node)

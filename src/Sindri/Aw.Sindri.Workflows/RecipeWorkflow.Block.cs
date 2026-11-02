@@ -121,10 +121,15 @@ internal sealed partial class RecipeWorkflow
         return (instance, false);
     }
 
-    /// <summary>The activity's bound (BlockLimits.Bound): the descriptor's 'maxDuration' (two minutes when it sets none), or less than the time left on the state timer, which a handback after a takeover resumes with only what was left.</summary>
+    /// <summary>The activity's bound (BlockLimits.Bound): the descriptor's 'maxDuration' (none when it sets none: the state timer ends the run), or less than the time left on the state timer, which a handback after a takeover resumes with only what was left.</summary>
     private TimeSpan Limit(InterpretedRecipe recipe, StepUse step)
     {
-        var max = recipe.Catalog.Find(step.Use) is { } descriptor ? BlockLimits.MaxDuration(descriptor) : BlockLimits.Fallback;
+        if (recipe.Catalog.Find(step.Use) is not { MaxDuration: not null } descriptor)
+        {
+            return BlockLimits.Fallback;   // no maxDuration: the state timer retries once, then parks, so no fixed limit ends the Step first (owner q93, 2026-10-23)
+        }
+
+        var max = BlockLimits.MaxDuration(descriptor);
         return BlockLimits.Bound(max, _timers.FiresAt() is { } at ? at - Now : null);
     }
 

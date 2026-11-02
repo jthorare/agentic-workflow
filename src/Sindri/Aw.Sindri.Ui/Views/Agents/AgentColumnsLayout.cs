@@ -4,7 +4,7 @@ namespace Aw.Sindri.Ui.Views.Agents;
 internal static class AgentColumnsLayout
 {
     /// <summary>Status, Agent, Repository, Where it runs, What it is doing, For.</summary>
-    internal const string Wide = "150,2*,1.2*,100,1.4*,56";
+    internal const string Wide = "150,2*,1.2*,120,1.4*,56";
 
     /// <summary>Under 640 px: Status, Agent and For; the hidden columns are at zero width.</summary>
     internal const string Compact = "112,*,0,0,0,56";

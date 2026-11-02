@@ -93,4 +93,12 @@ public interface ICodeIndex
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The neighbors; unavailable with the embeddings layer's code when that layer is (006, 009, 005).</returns>
     public ValueTask<Result<NeighborsAnswer>> Neighbors(CodeIndexScope scope, RepoName repo, string text, int k, CancellationToken cancellationToken);
+
+    /// <summary>The stored vectors of every embedded symbol in up to 2,000 files; read-only, it never embeds and never calls the model.</summary>
+    /// <param name="scope">The caller's repos.</param>
+    /// <param name="repo">The repo.</param>
+    /// <param name="query">The repo-relative paths.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The vectors of the index's current embedding model and the paths with none; SND-CODEIDX-012 for no path or over 2,000, 013 when no index or the layer is off, the layer's own code when it is unavailable (006, 009, 005).</returns>
+    public ValueTask<Result<SymbolVectorsView>> SymbolVectors(CodeIndexScope scope, RepoName repo, SymbolVectorsQuery query, CancellationToken cancellationToken);
 }

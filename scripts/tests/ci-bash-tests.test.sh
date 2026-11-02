@@ -166,7 +166,8 @@ test_a_suites_temp_files_and_nuget_cache_stay_in_its_sandbox() {
   local d m out rc=0 t
   d="$(mktemp -d)"; m="$(mktemp -d)"
   git -C "$d" init -q; mkdir -p "$d/t"
-  printf '%s\n' 'mkdir "$(mktemp -d | tee -a "$MARK/tmpdirs")/leak"; echo "$TMPDIR" >> "$MARK/tmpdir"' > "$d/t/a.test.sh"
+  # An explicit template under $TMPDIR: macOS's bare `mktemp -d` ignores TMPDIR (it uses the per-user /var/folders dir), so it would escape the sandbox on any runner.
+  printf '%s\n' 'mkdir "$(mktemp -d "${TMPDIR:-/tmp}/tmp.XXXXXXXX" | tee -a "$MARK/tmpdirs")/leak"; echo "$TMPDIR" >> "$MARK/tmpdir"' > "$d/t/a.test.sh"
   printf '%s\n' 'echo "${NUGET_PACKAGES:-unset}" >> "$MARK/nuget"' > "$d/t/b.test.sh"
   git -C "$d" add t
   out="$(MARK="$m" TMPDIR="$m" NUGET_PACKAGES=/shared/nuget BASH_TESTS_ROOT="$d" BASH_TESTS_JOBS=1 BASH_TESTS_SERIAL="" BASH_TESTS_EXCLUDED="" bash "$RUNNER" 2>&1)" || rc=$?

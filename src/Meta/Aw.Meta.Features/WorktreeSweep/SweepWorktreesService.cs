@@ -19,7 +19,7 @@ internal sealed class SweepWorktreesService(IMetaConfig config, WorktreeSweeper 
             return team.Error;
         }
 
-        var scope = request.Pr is { } pr ? WorktreeScope.ForPrs([pr]) : WorktreeScope.All;
+        var scope = request.Pr is { } pr ? WorktreeScope.ForPrs([pr]) : request.IncludeNoPr ? WorktreeScope.AllIncludingNoPr : WorktreeScope.All;
         var swept = await sweeper.Sweep(team.Value, scope, request.DryRun ? SweepMode.DryRun : SweepMode.Remove, "sweep", cancellationToken).ConfigureAwait(false);
         return swept.IsError ? swept.Error : new SweepWorktreesResponse(swept.Value.DryRun, swept.Value.Removed, swept.Value.Kept, swept.Value.Failed);
     }

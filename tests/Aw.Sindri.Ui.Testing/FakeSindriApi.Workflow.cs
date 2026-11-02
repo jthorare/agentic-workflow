@@ -15,6 +15,13 @@ internal sealed partial class FakeSindriApi
     /// <summary>When set, the answer of an instance read, or null for the golden's own (the list route keeps the goldens).</summary>
     public Func<string, RouteAnswer?>? InstanceBody { get; set; }
 
+    /// <summary>Serves <see cref="GoldenFiles.DeskWithoutRequiredOutput"/> for every instance read: a desk step that asks for no file, so its Complete is sent.</summary>
+    public void ServeDeskWithoutRequiredOutput()
+    {
+        var body = GoldenFiles.DeskWithoutRequiredOutput().ToJsonString();
+        InstanceBody = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, body);
+    }
+
     private int _instancesCalls;
     private readonly List<InstanceQuery> _instanceQueries = [];
 
@@ -48,10 +55,19 @@ internal sealed partial class FakeSindriApi
         return answer;
     }
 
-    public Task<Result<InstanceDetail>> Instance(Uri api, string id, CancellationToken cancellationToken)
+    /// <summary>Held open until set, per instance id: the instance read's answer arrives when the gate is set (as <see cref="InstancesGates"/>).</summary>
+    public Dictionary<string, TaskCompletionSource> InstanceGates { get; } = new(StringComparer.Ordinal);
+
+    public async Task<Result<InstanceDetail>> Instance(Uri api, string id, CancellationToken cancellationToken)
     {
         LastInstanceId = id;
-        return Task.FromResult(Answer<InstanceDetail>(api, WorkflowRoutes.Instance(id), InstanceAnswer(id)));
+        var answer = Answer<InstanceDetail>(api, WorkflowRoutes.Instance(id), InstanceAnswer(id));
+        if (InstanceGates.TryGetValue(id, out var gate))
+        {
+            await gate.Task.WaitAsync(cancellationToken).ConfigureAwait(true);
+        }
+
+        return answer;
     }
 
     public Task<Result<FactView>> InstanceFact(Uri api, string id, string key, CancellationToken cancellationToken) =>

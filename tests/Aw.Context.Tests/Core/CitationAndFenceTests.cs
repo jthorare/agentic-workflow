@@ -40,4 +40,24 @@ public sealed class CitationAndFenceTests
     [InlineData("javascript:alert(1)", false)]
     public void Only_https_linear_permalinks_are_kept(string link, bool kept) =>
         Assert.Equal(kept, Permalinks.Allowed(new Uri(link)) is not null);
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("https://github.com/acme/api/issues/12", true)]
+    [InlineData("https://github.com/acme/api/pull/7", true)]
+    [InlineData("https://GitHub.com/acme/api/pull/7", true)]
+    [InlineData("https://acme.slack.com/archives/C024BE91L/p1700000000123456", true)]
+    [InlineData("https://github.com.evil.io/acme/api/issues/12", false)]
+    [InlineData("https://evilgithub.com/acme/api/issues/12", false)]
+    [InlineData("https://acme.slack.com.evil.io/archives/C024BE91L/p1700000000123456", false)]
+    [InlineData("https://evilslack.com/archives/C024BE91L/p1700000000123456", false)]
+    [InlineData("http://github.com/acme/api/issues/12", false)]
+    [InlineData("https://github.com:8443/acme/api/issues/12", false)]
+    [InlineData("https://github.com/acme/api", false)]
+    [InlineData("https://github.com/acme/api/issues/abc", false)]
+    [InlineData("https://github.com/acme/api/commit/12", false)]
+    [InlineData("https://acme.slack.com/messages/C024BE91L", false)]
+    [InlineData("https://acme.slack.com/archives/C024BE91L/1700000000123456", false)]
+    [InlineData("https://slack.com/archives/C024BE91L/p1700000000123456", false)]
+    public void Github_and_slack_permalinks_are_kept_only_for_their_record_paths(string link, bool kept) =>
+        Assert.Equal(kept, Permalinks.Allowed(new Uri(link)) is not null);
 }

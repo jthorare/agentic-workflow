@@ -1,7 +1,7 @@
 namespace Aw.Context.Testing.Fakes;
 
-/// <summary>A synthetic Linear issue for <see cref="FakeServerOptions.OnyxDocuments"/>; everything in it is made up.</summary>
-/// <param name="Id">The Onyx document id (a UUID).</param>
+/// <summary>A synthetic Linear issue (the backtest world seeds them as stored records); everything in it is made up.</summary>
+/// <param name="Id">The Linear issue id (a UUID).</param>
 /// <param name="Key">The tracker key, 'SPL-201'.</param>
 /// <param name="Title">The title.</param>
 /// <param name="CreatedAt">When the issue was created.</param>

@@ -12,19 +12,43 @@
 # /hooks, and trust the aw:* entries (re-trust after each reinstall that
 # changes a command).
 #
-# Usage: providers/codex/install-hooks.sh [--uninstall]
+# Usage: providers/codex/install-hooks.sh [--uninstall] [--target-dir DIR]
+#        --target-dir DIR  install into DIR as if it were the agent's config home (a separate-login
+#                          CODEX_HOME): DIR/hooks.json, scripts and adapter under DIR/hooks, and
+#                          commands that name DIR/hooks; the owner's ~/.codex and state dir are untouched
 # Env:   CODEX_HOOKS_FILE (default ${CODEX_HOME:-~/.codex}/hooks.json)
 #        AW_HOOKS_DIR     (default ${AW_STATE_DIR:-~/.agentic-workflow}/hooks)
 set -euo pipefail
+USAGE="Usage: providers/codex/install-hooks.sh [--uninstall] [--target-dir DIR]"
+UNINSTALL=0
+TARGET_DIR=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --uninstall) UNINSTALL=1; shift ;;
+    --target-dir)
+      [ $# -ge 2 ] && [ -n "$2" ] || { echo "$USAGE" >&2; exit 2; }
+      TARGET_DIR="$2"; shift 2 ;;
+    --target-dir=*)
+      TARGET_DIR="${1#--target-dir=}"
+      [ -n "$TARGET_DIR" ] || { echo "$USAGE" >&2; exit 2; }
+      shift ;;
+    *) shift ;;
+  esac
+done
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 # shellcheck source=../../config/hooks/adapters/install-lib.sh
 source "$ROOT/config/hooks/adapters/install-lib.sh"
+if [ -n "$TARGET_DIR" ]; then
+  case "$TARGET_DIR" in /*) ;; *) TARGET_DIR="$PWD/$TARGET_DIR" ;; esac
+  TARGET_DIR="${TARGET_DIR%/}"
+  export CODEX_HOOKS_FILE="$TARGET_DIR/hooks.json" AW_HOOKS_DIR="$TARGET_DIR/hooks"
+fi
 aw_hooks_init codex
 
 SAFETY_IDS="aw:block-destructive aw:block-push-main aw:detect-secrets aw:rtk-rewrite"
 CONTEXT_IDS="aw:git-context aw:prism-context"
 
-if [ "${1:-}" = "--uninstall" ]; then
+if [ "$UNINSTALL" = 1 ]; then
   for id in $SAFETY_IDS; do aw_hook_unset PreToolUse "$id"; done
   for id in $CONTEXT_IDS; do aw_hook_unset SessionStart "$id"; done
   echo "  codex hooks: safety + SessionStart entries removed from $AW_HOOKS_CONFIG"

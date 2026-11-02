@@ -22,6 +22,12 @@ public static class RealTime
 #pragma warning restore RS0030
 
 
+    /// <summary>Gets the system clock as a 'TimeProvider', for an adapter under test that times a real process.</summary>
+    public static TimeProvider Clock =>
+#pragma warning disable RS0030 // this class is the one place tests take the system time provider
+        TimeProvider.System;
+#pragma warning restore RS0030
+
     /// <summary>A fresh GUID, for a name that must not clash (a temp folder, a secret); never an id under test.</summary>
     /// <returns>The GUID.</returns>
     public static Guid NewGuid() =>

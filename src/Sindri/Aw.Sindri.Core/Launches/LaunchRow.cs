@@ -68,4 +68,20 @@ public sealed record LaunchRow(
 
     /// <summary>True while the session exists: started and not ended.</summary>
     public bool Live => State == LaunchState.Started && Ended is null && Mode != LaunchMode.Attach;
+
+    /// <summary>The failure's reason, read from the 'launch.failed' detail (SND-LAUNCH-012, or a sandbox code -014 to -021), otherwise null.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Reason { get; init; }
+
+    /// <summary>The failure's credential source (SND-LAUNCH-017), read from the 'launch.failed' detail, otherwise null.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Source { get; init; }
+
+    /// <summary>The model the launch asked for, read from 'launch.started' (#1008: the challenger's pick reads the drafter's); null when none was named and for launches recorded before the field.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public string? Model { get; init; }
+
+    /// <summary>The sandbox summary from 'launch.started' (sandbox spec §8); null when the launch was not sandboxed and for launches recorded before the field.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Sandbox.SandboxSummary? Sandbox { get; init; }
 }

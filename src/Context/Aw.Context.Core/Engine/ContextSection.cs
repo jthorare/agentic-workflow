@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Aw.Context.Core.Engine;
@@ -18,6 +19,12 @@ internal sealed record ContextSection(
     LabelingSection? Labeling = null,
     EvalSection? Eval = null,
     CodeSection? Code = null,
+    HistorySection? History = null,
     ExtractSection? Extract = null,
     PublishSection? Publish = null,
-    RankerSection? Ranker = null);
+    RankerSection? Ranker = null,
+    ConceptScanSection? ConceptScan = null,
+    ConceptSynthesisSection? ConceptSynthesis = null,
+    ChecksSection? Checks = null,
+    IndexSection? Index = null,
+    JsonElement? Models = null);   // read by ModelsSettings: its keys are a tree of optional entries checked by hand

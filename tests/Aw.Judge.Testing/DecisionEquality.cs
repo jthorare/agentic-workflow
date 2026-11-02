@@ -22,7 +22,8 @@ public static class DecisionEquality
         expected is null || actual is null
             ? expected is null && actual is null
             : SameProbabilities(expected.Probabilities, actual.Probabilities)
-                && expected with { Probabilities = null } == actual with { Probabilities = null };
+                && (expected.Reasons is null ? actual.Reasons is null : actual.Reasons is not null && expected.Reasons.SequenceEqual(actual.Reasons, StringComparer.Ordinal))
+                && expected with { Probabilities = null, Reasons = null } == actual with { Probabilities = null, Reasons = null };
 
     private static bool SameProbabilities(IReadOnlyDictionary<string, double>? expected, IReadOnlyDictionary<string, double>? actual) =>
         expected is null || actual is null

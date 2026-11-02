@@ -41,6 +41,8 @@ public sealed class ConceptReader(MapReader reader, IScrubberFactory scrubbers)
         }
 
         var graph = addressed.Value.Cut is { } cut ? visible.Value.Graph.ScopedTo(cut) : visible.Value.Graph;
-        return new ConceptRead(new ConceptsBasis(visible.Value.Snapshot.Tag, addressed.Value.Name), graph, new MapText(built.Value, FencePolicies.For(scope.Caller)));
+        var mapped = ScopeRules.Mapped(settings.Value, scope.Repos);
+        var pins = mapped.Any(r => r.Concepts.Count > 0) ? PinSet.Of(mapped, scope.Repos, visible.Value.Graph) : null;
+        return new ConceptRead(new ConceptsBasis(visible.Value.Snapshot.Tag, addressed.Value.Name), graph, new MapText(built.Value, FencePolicies.For(scope.Caller))) { Pins = pins };
     }
 }

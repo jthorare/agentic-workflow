@@ -6,6 +6,7 @@ namespace Aw.Sindri.Ui.ViewModels.Context;
 internal sealed class FileRowViewModel
 {
     private const int FeaturesShown = 2;
+    private const int TagsShown = 5;
 
     /// <summary>The row for one entry of the file map.</summary>
     /// <param name="entry">The entry as served.</param>
@@ -86,10 +87,16 @@ internal sealed class FileRowViewModel
             return Labels.ContextFilesNoFeature;
         }
 
-        var shown = features.Take(FeaturesShown).Select(Feature);
-        var more = features.Count > FeaturesShown ? "+" + (features.Count - FeaturesShown).ToString(System.Globalization.CultureInfo.InvariantCulture) : null;
-        return Dots(string.Join(", ", shown), more);
+        var homes = features.Where(f => !IsTag(f)).ToList();
+        var tags = features.Where(IsTag).Take(TagsShown).Select(t => t.Key[(t.Key.LastIndexOf(':') + 1)..]).ToList();
+        var shown = homes.Take(FeaturesShown).Select(Feature);
+        var more = homes.Count > FeaturesShown ? "+" + (homes.Count - FeaturesShown).ToString(System.Globalization.CultureInfo.InvariantCulture) : null;
+        var home = homes.Count == 0 ? Labels.ContextFilesNoHome : Dots(string.Join(", ", shown), more);
+        return Dots(home, tags.Count == 0 ? null : Labels.ContextFilesAlsoTagged(string.Join(", ", tags)));
     }
+
+    // The model's cross-cutting names for a file come after its home and are marked as tags (spec 2026-10-27 §2.3).
+    private static bool IsTag(FileFeature feature) => string.Equals(feature.Edge, "tags", StringComparison.Ordinal);
 
     private static string Feature(FileFeature feature)
     {

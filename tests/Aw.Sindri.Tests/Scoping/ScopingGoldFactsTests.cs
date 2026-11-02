@@ -70,6 +70,8 @@ public sealed class ScopingGoldFactsTests
     [InlineData("coverage", "coverage.json")]
     [InlineData("challenge", "challenge.json")]
     [InlineData("lenses", "lenses.json")]
+    [InlineData("relevance", "relevance.json")]
+    [InlineData("gapSearch", "gap-search.json")]
     public async Task The_facts_equal_the_line_gold_packet_without_its_stamped_fields(string fact, string file)
     {
         var gold = Strip(JsonNode.Parse(await File.ReadAllTextAsync(Path.Combine(_gold, file), TestContext.Current.CancellationToken)), top: true)!;

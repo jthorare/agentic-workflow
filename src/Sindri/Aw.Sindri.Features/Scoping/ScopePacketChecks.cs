@@ -11,10 +11,11 @@ internal static partial class ScopePacketChecks
     /// <param name="facts">The facts.</param>
     /// <param name="stage">Draft runs the draft rules; evidence runs all.</param>
     /// <param name="challengeCap">The running recipe's loops.challenge.cap; <see cref="ScopeRules.DefaultChallengeRounds"/> where no recipe runs the check.</param>
-    internal static ScopingCheckResponse Run(ScopeFacts facts, ScopeStage stage, int challengeCap = ScopeRules.DefaultChallengeRounds)
+    /// <param name="gapCap">The running recipe's loops.gapsearch.cap; <see cref="ScopeRules.DefaultGapRounds"/> where no recipe runs the check.</param>
+    internal static ScopingCheckResponse Run(ScopeFacts facts, ScopeStage stage, int challengeCap = ScopeRules.DefaultChallengeRounds, int gapCap = ScopeRules.DefaultGapRounds)
     {
         ArgumentNullException.ThrowIfNull(facts);
-        var context = new ScopeContext(facts, challengeCap);
+        var context = new ScopeContext(facts, challengeCap, gapCap);
         var rules = new List<ScopeRuleResult>(ScopeRules.All.Count);
         var fails = new List<ScopeFinding>();
         var warns = new List<ScopeFinding>();
@@ -62,7 +63,8 @@ internal static partial class ScopePacketChecks
             return ScopeOutcome.Pass;
         }
 
-        return rules.Exists(static r => r.Status == ScopeRuleStatus.NotRun) ? ScopeOutcome.Incomplete : ScopeOutcome.Complete;
+        // why: SCP-GRAPH-001 is absent only for facts gathered before the graph fact existed; every gather writes one (a lenses projection when context has none)
+        return rules.Exists(static r => r.Status == ScopeRuleStatus.NotRun && !string.Equals(r.Rule, ScopeRules.Graph1, StringComparison.Ordinal)) ? ScopeOutcome.Incomplete : ScopeOutcome.Complete;
     }
 
     private static Action<ScopeContext, RuleSink> Body(string id) => id switch
@@ -86,6 +88,12 @@ internal static partial class ScopePacketChecks
         ScopeRules.Chal1 => ChallengerDone,
         ScopeRules.Chal2 => ChallengerDiffers,
         ScopeRules.Map1 => Workstreams,
+        ScopeRules.Rel1 => RelevanceKept,
+        ScopeRules.Rel2 => RelevanceJudgeDiffers,
+        ScopeRules.Gap1 => GapSearched,
+        ScopeRules.Gap2 => GapSearcherDiffers,
+        ScopeRules.Graph1 => GraphCited,
+        ScopeRules.Qst1 => QuestionsRecommended,
         _ => throw new InvalidOperationException($"No body for rule {id}."),
     };
 }

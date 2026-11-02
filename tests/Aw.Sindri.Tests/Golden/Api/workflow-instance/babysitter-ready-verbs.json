@@ -7,7 +7,7 @@
   "recipe": {
     "id": "workflow.pr-babysitter",
     "hash": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
-    "version": 5,
+    "version": 6,
     "urgency": "work"
   },
   "state": "ready",

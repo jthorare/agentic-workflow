@@ -7,10 +7,12 @@ namespace Aw.Context.Core.Concepts;
 internal sealed class ConceptView
 {
     private readonly Dictionary<string, GraphNode> _nodes;
+    private readonly HashSet<string> _tags;
     private readonly Dictionary<string, List<string>> _featuresOf = new(StringComparer.Ordinal);
 
     internal ConceptView(GraphSnapshot graph)
     {
+        _tags = TagFeatures.Of(graph);
         _nodes = graph.Nodes.GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         foreach (var edge in graph.Edges.Where(e => e.Type is EdgeType.Mentions or EdgeType.Decides && e.To.Kind == NodeKind.Feature && e.From.Kind is NodeKind.Record or NodeKind.Decision))
         {
@@ -23,7 +25,7 @@ internal sealed class ConceptView
         }
     }
 
-    internal IReadOnlyList<string> FeatureKeys => [.. _nodes.Values.Where(n => n.Key.Kind == NodeKind.Feature).Select(n => n.Key.Value).Order(StringComparer.Ordinal)];
+    internal IReadOnlyList<string> FeatureKeys => [.. _nodes.Values.Where(n => n.Key.Kind == NodeKind.Feature && !_tags.Contains(n.Key.Value)).Select(n => n.Key.Value).Order(StringComparer.Ordinal)];
 
     internal IEnumerable<GraphNode> Intent => _nodes.Values.Where(n => n.Key.Kind is NodeKind.Record or NodeKind.Decision).OrderBy(n => n.Key.Value, StringComparer.Ordinal);
 

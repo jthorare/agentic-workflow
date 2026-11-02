@@ -37,7 +37,7 @@ internal static partial class McpEndpoint
 
     /// <summary>
     /// Before the caller middleware: an MCP request is always a session (API §6), so every X-Sindri-* header is
-    /// dropped but X-Sindri-Repo and X-Sindri-Launch (a Sindri child carries its launch, q100), and 'X-Sindri-Client: mcp' is set. MCP clients send no Origin,
+    /// dropped but X-Sindri-Repo, X-Sindri-Launch (a Sindri child carries its launch, q100), X-Sindri-Instance and X-Sindri-Run, and 'X-Sindri-Client: mcp' is set. MCP clients send no Origin,
     /// so any Origin is refused here (403, SND-API-008), loopback ones included.
     /// </summary>
     /// <param name="app">The app.</param>
@@ -61,7 +61,7 @@ internal static partial class McpEndpoint
                 return;
             }
 
-            foreach (var name in headers.Keys.Where(IsStripped).ToList())   // why: nothing but the repo and the launch may ride an MCP call (a launch secret, a read-your-writes sequence, a token)
+            foreach (var name in headers.Keys.Where(IsStripped).ToList())   // why: nothing but the repo, the launch and a scoping run may ride an MCP call (a launch secret, a read-your-writes sequence, a token)
             {
                 _ = headers.Remove(name);
             }
@@ -73,8 +73,10 @@ internal static partial class McpEndpoint
     }
 
     private static bool IsStripped(string name) =>
-        name.StartsWith("X-Sindri-", StringComparison.OrdinalIgnoreCase)
-        && !string.Equals(name, SindriHeaders.Repo, StringComparison.OrdinalIgnoreCase) && !string.Equals(name, SindriHeaders.Launch, StringComparison.OrdinalIgnoreCase);
+        name.StartsWith("X-Sindri-", StringComparison.OrdinalIgnoreCase) && !_kept.Contains(name, StringComparer.OrdinalIgnoreCase);
+
+    // The repo, the launch (q100), and the run a scoping Step's session names (issue 1005).
+    private static readonly string[] _kept = [SindriHeaders.Repo, SindriHeaders.Launch, SindriHeaders.Instance, SindriHeaders.Run];
 
     /// <summary>Maps the endpoint.</summary>
     /// <param name="app">The app.</param>

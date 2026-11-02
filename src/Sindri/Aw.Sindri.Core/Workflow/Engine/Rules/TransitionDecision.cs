@@ -141,7 +141,7 @@ public static partial class TransitionDecision
         }
 
         var step = d.Recipe.States[instance.State].Step?.Use.Value ?? instance.State;
-        if (!d.Context.LegacyUnavailable)
+        if (!d.Context.LegacyUnavailable && !Unavailables.IsLimitKill(failed))   // a limit kill is the owner's to retry or take to the desk, never the engine's (sandbox spec E1-I1)
         {
             return Unavailable(d, instance, failed, step);
         }
@@ -162,7 +162,11 @@ public static partial class TransitionDecision
         var error = failed.Detail is { } detail ? $"{failed.Reason}: {detail}" : failed.Reason;
         if (instance.Frame.Run is not { } run || d.Recipe.States[instance.State].Step is not { } use || run.Retries >= Unavailables.MaxRetries)
         {
-            var park = Unavailables.Park(Unavailables.Question(dependency, instance.Frame.Run?.Retries ?? 0, error), failed.Actor, failed.Code);
+            var retries = instance.Frame.Run?.Retries ?? 0;
+            var question = Unavailables.IsGoneSession(failed) ? Unavailables.Gone(dependency, failed.Reason, retries, error)
+                : Unavailables.IsIdleSession(failed) ? Unavailables.Idle(dependency, Unavailables.CauseOf(failed), retries, error)
+                : Unavailables.Question(dependency, retries, error);
+            var park = Unavailables.Park(question, failed.Actor, failed.Code);
             return d.Changed(d.Rules.Suspend(instance, park));
         }
 

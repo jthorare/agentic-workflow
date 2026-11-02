@@ -2,13 +2,13 @@
   "address": "T-3/step/1",
   "recipe": {
     "id": "workflow.step",
-    "version": 4,
-    "hash": "sha256:f511ce1fc529b5b471731b4023a1f07774af2f9a8836344fd5818f5aef644784"
+    "version": 5,
+    "hash": "sha256:4ca37bf46333dc66a14c042bb4561aad96eed677f35f5fc221f0497c8b3e31f7"
   },
   "state": "parked",
   "detail": "spec-conflict (drift)",
   "since": "2026-10-11T11:56:00.0000000Z",
-  "next": "step.produce changed since workflow.step@f511ce1fc529 was approved.\nRe-approve it (\u0060sindri recipe approve workflow.step@f511ce1fc529\u0060); the approval resumes this instance.",
+  "next": "step.produce changed since workflow.step@4ca37bf46333 was approved.\nRe-approve it (\u0060sindri recipe approve workflow.step@4ca37bf46333\u0060); the approval resumes this instance.",
   "allowedCommands": [
     {
       "actionId": "ApplyCommand:takeover",
@@ -30,7 +30,7 @@
   "outcome": null,
   "id": "WFI-95a5c2820bd88ec39379892be8909567",
   "version": 4,
-  "answer": "none (drift): sindri recipe approve workflow.step@f511ce1fc529     (at a terminal; the approval resumes it)",
+  "answer": "none (drift): sindri recipe approve workflow.step@4ca37bf46333     (at a terminal; the approval resumes it)",
   "drift": null,
   "budget": {
     "state": 0,
@@ -166,7 +166,7 @@
     "verb": "approve",
     "actionId": "ApproveRecipe",
     "class": "protected",
-    "cli": "sindri recipe approve workflow.step@f511ce1fc529",
+    "cli": "sindri recipe approve workflow.step@4ca37bf46333",
     "confirm": null
   },
   "activity": "produce the Step output for T-3 (round 1/5)",

@@ -16,6 +16,21 @@ internal static class MapBuildJobText
             _ = text.Append("degraded: ").AppendLine(note);
         }
 
+        foreach (var note in result.Notes)
+        {
+            _ = text.Append("note: ").AppendLine(note);
+        }
+
+        if (result.Replaced is { } replaced && (replaced.Features | replaced.Links | replaced.Undone | replaced.Carried) != 0)
+        {
+            _ = text.AppendLine(string.Create(CultureInfo.InvariantCulture, $"migration: {replaced.Features:N0} model features and {replaced.Links:N0} model links replaced; {replaced.Undone:N0} decisions had no target and were undone; {replaced.Carried:N0} carried over"));
+        }
+
+        if (result.Checks is { } checks)
+        {
+            _ = text.AppendLine(checks);
+        }
+
         return text.ToString();
     }
 }

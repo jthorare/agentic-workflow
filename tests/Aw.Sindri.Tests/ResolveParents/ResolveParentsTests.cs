@@ -9,8 +9,8 @@ namespace Aw.Sindri.Tests.ResolveParents;
 /// <summary>LN-PKT6: before a reader reads a packet, each hash in its parents resolves to a frozen packet, or the read is a mismatch (SND-LINE-001).</summary>
 public sealed class ResolveParentsTests
 {
-    private const string Design = "sha256:3deb049307bf38e0981ed4ed374f7d84a63f305f0067a247c10f839dfd4f87e4";
-    private const string Scope = "sha256:48b9dc81f8935c81f465f785a6e7dba0abd9697480786ad7994d1475da00c973";
+    private const string Design = "sha256:7c3c4f08ad1cdc1c4123b599717fb6189330d2364b3a85e42a662d7dc0ddc676";
+    private const string Scope = "sha256:1ddf66bd3318bc230e52c293c51a859fbd9096ab2e99077d203b9d324cb4f444";
 
     private static ResolveParentsService Service(params FrozenPacket[] held) => new(new InMemoryFrozenPackets(held));
 

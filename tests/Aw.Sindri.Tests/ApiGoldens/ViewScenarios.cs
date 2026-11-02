@@ -10,7 +10,9 @@ using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.CheckProfile;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Server;
+using Aw.Sindri.Infrastructure.Ledger;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Ledger;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
@@ -187,6 +189,18 @@ internal static class ViewScenarios
         var events = scope.ServiceProvider.GetRequiredService<EventFactory>();
         var appended = await scope.ServiceProvider.GetRequiredService<ILedgerStore>().Append(events.Entry(type, payload, key), grant, ct);
         _ = appended.Value;
+    }
+
+    /// <summary>
+    /// Appends <paramref name="items"/> as events of <paramref name="type"/> in one ledger transaction: the lease check of the single append, then every insert and one commit (#1252).
+    /// A seed of hundreds of events takes one write session instead of one per event.
+    /// </summary>
+    internal static async Task AppendMany<TPayload>(GoldenHost host, string type, IReadOnlyList<(TPayload Payload, string Key)> items, CancellationToken ct)
+    {
+        await using var scope = Service(host, out var grant);
+        var events = scope.ServiceProvider.GetRequiredService<EventFactory>();
+        var last = await BulkLedger.Append(scope.ServiceProvider.GetRequiredService<LedgerDatabase>(), grant, items.Select(i => events.Entry(type, i.Payload, i.Key)), ct);
+        scope.ServiceProvider.GetRequiredService<ILedgerSignal>().Pulse(last);
     }
 
     /// <summary>A scope entered as the caller 'service:host', with the lease grant the host holds.</summary>

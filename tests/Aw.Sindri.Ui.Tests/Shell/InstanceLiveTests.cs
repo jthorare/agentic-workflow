@@ -69,13 +69,22 @@ public sealed class InstanceLiveTests : IDisposable
         await Eventually(() => _vm.IsRunning && Marked("requery-all").Count > 0, "running with the instance stream open");
     }
 
-    // Time only moves when the test moves it: advance in small steps until the condition holds.
+    // Time only moves when the test moves it: advance in small steps until the condition holds. After each step the follower's continuations
+    // get a run of yields (they usually finish within them), and a 1 ms real wait covers work that hopped to another thread.
     private async Task Eventually(Func<bool> condition, string what)
     {
         for (var i = 0; i < 300 && !condition(); i++)
         {
             _clock.Advance(TimeSpan.FromMilliseconds(50));
-            await Task.Delay(5, TestContext.Current.CancellationToken);
+            for (var y = 0; y < 50 && !condition(); y++)
+            {
+                await Task.Yield();
+            }
+
+            if (!condition())
+            {
+                await Task.Delay(1, TestContext.Current.CancellationToken);
+            }
         }
 
         Assert.True(condition(), what);

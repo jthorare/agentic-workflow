@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Aw.Judge.Core.Errors;
 using Aw.Judge.Core.Ids;
 using Aw.Judge.Features.ApproveDecision;
 using Aw.Kernel;
@@ -24,7 +25,9 @@ internal static class ApproveDecisionCommand
         var result = await service.Handle(new ApproveDecisionRequest(id), CancellationToken.None).ConfigureAwait(false);
         if (result.IsError)
         {
-            return CommandOutput.Emit(1, "", result.Error.Kind == ErrorKind.NotFound ? unknown : result.Error.Message);
+            return result.Error.Code == JudgeErrors.UnreadableDecision.Code
+                ? CommandOutput.Emit(2, "", result.Error.Message)
+                : CommandOutput.Emit(1, "", result.Error.Kind == ErrorKind.NotFound ? unknown : result.Error.Message);
         }
 
         return CommandOutput.Emit(0, CommandOutput.Json(DecisionOutput.From(result.Value.Decision), json));

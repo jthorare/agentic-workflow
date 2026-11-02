@@ -36,8 +36,7 @@ public sealed class BlockRuntimeInterpreterTests(BlockRuntimeDevServer server) :
         await Run(fake, maxDuration: null, async (handle, sindri) =>
         {
             var view = await WorkflowsHarness.Until(handle, static v => v.State == "evidence-ui");
-            var row = (await sindri.GetRequiredService<ILedgerStore>().ReadAfter(0, 100, ct)).Value
-                .Last(static e => e.Envelope.Type == "workflow.transition");
+            var row = await TransitionRow(sindri, ct);   // the Query answers from the workflow's memory; the ledger row is mirrored by an activity after it
             using var payload = JsonDocument.Parse(row.Envelope.Payload);
 
             Assert.Equal(("evidence-ui", 1), (view.State, fake.Runs));
@@ -61,6 +60,22 @@ public sealed class BlockRuntimeInterpreterTests(BlockRuntimeDevServer server) :
             Assert.Equal(1, fake.Runs);
             Assert.Equal(("timeout", "block"), await FailedRow(sindri, ct));   // a failed block run says via block too
             await WaitFor(() => fake.Cancelled == 1, ct, seconds: 15);   // the run past its bound is cancelled, not left running (the answer to the Step's next throttled heartbeat, about 8 s)
+        });
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task A_block_step_without_a_maxDuration_is_given_no_short_bound()
+    {
+        var fake = FakeBlockStep.Hanging();
+        var ct = TestContext.Current.CancellationToken;
+        await Run(fake, maxDuration: null, async (handle, _) =>
+        {
+            await WaitFor(() => fake.Runs > 0, ct);
+
+            var scheduled = (await handle.FetchHistoryAsync()).Events
+                .Select(static e => e.ActivityTaskScheduledEventAttributes).Single(static a => a is not null && a.ActivityId.StartsWith("block:", StringComparison.Ordinal));
+            Assert.True(scheduled.StartToCloseTimeout.ToTimeSpan() > TimeSpan.FromDays(1), "the old two-minute default must be gone");   // owner q93: the state timer bounds it
+            Assert.Equal(0, fake.Cancelled);
         });
     }
 
@@ -190,6 +205,18 @@ public sealed class BlockRuntimeInterpreterTests(BlockRuntimeDevServer server) :
     }
 
     // The state is visible a moment before its event is mirrored into the ledger, so the row is waited for.
+    private static async Task<LedgerEvent> TransitionRow(IServiceProvider sindri, CancellationToken ct)
+    {
+        LedgerEvent? row = null;
+        await WaitFor(() =>
+        {
+            row = sindri.GetRequiredService<ILedgerStore>().ReadAfter(0, 100, ct).AsTask().GetAwaiter().GetResult().Value
+                .LastOrDefault(static e => string.Equals(e.Envelope.Type, "workflow.transition", StringComparison.Ordinal));
+            return row is not null;
+        }, ct);
+        return row!;   // why: WaitFor asserted the condition, which sets it
+    }
+
     private static async Task<(string Reason, string? Via)> FailedRow(IServiceProvider sindri, CancellationToken ct)
     {
         (string?, string?)? row = null;

@@ -2,6 +2,7 @@ using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Effects;
@@ -18,7 +19,8 @@ namespace Aw.Sindri.Features.Blocks.Effect;
 /// </summary>
 /// <param name="notices">The notifications file and the OS notification centre.</param>
 /// <param name="clock">When the notice is sent.</param>
-internal sealed class NotifyDeskEffect(IDeskNotices notices, TimeProvider clock) : IEffectKind, IDescribedBlock
+/// <param name="views">Reads the item's title for the banner; none (the default) leaves the banner untitled.</param>
+internal sealed class NotifyDeskEffect(IDeskNotices notices, TimeProvider clock, IViewReader? views = null) : IEffectKind, IDescribedBlock
 {
     /// <inheritdoc/>
     public static BlockDescriptor Descriptor { get; } = new(
@@ -36,7 +38,8 @@ internal sealed class NotifyDeskEffect(IDeskNotices notices, TimeProvider clock)
         var row = RowOf(context, address);
         var notice = new DeskNotice(context.Identity, address, ItemKey.From(context.Item),
             ClassOf(context), context.Text ?? Argument(context, "text") ?? context.Instance, clock.GetUtcNow(),
-            row, row is { } id ? "needs-you/" + id.Value : null);   // switch to NeedsYouRoutes once it exists (API A2)
+            row, row is { } id ? "needs-you/" + id.Value : null,   // switch to NeedsYouRoutes once it exists (API A2)
+            context.FromEngine ? await TitleOf(context.Item, cancellationToken).ConfigureAwait(false) : null);
         var sent = await notices.Send(notice, cancellationToken).ConfigureAwait(false);
         if (sent.IsError)
         {
@@ -44,6 +47,20 @@ internal sealed class NotifyDeskEffect(IDeskNotices notices, TimeProvider clock)
         }
 
         return new EffectDone(context.FromEngine ? null : _delivered, Existed: !sent.Value);
+    }
+
+    /// <summary>The item's title, which an engine banner shows instead of an internal id; null when it can't be read (the banner then says just 'Sindri'; a notice is never failed for want of a title).</summary>
+    private async ValueTask<string?> TitleOf(string item, CancellationToken cancellationToken)
+    {
+        if (views is null)
+        {
+            return null;
+        }
+
+        var alias = await views.Get<AliasRow>(ViewNames.ItemAliases, item, cancellationToken).ConfigureAwait(false);
+        var id = alias is { IsError: false, Value: { } found } ? found.Item.Value : item;
+        var row = await views.Get<ItemRow>(ViewNames.Items, id, cancellationToken).ConfigureAwait(false);
+        return row is { IsError: false, Value.Title: { Length: > 0 } title } ? title : null;
     }
 
     /// <summary>An engine notice carries its class (§6.3); a recipe's notice is info (lane decision, P6 unit (c)).</summary>

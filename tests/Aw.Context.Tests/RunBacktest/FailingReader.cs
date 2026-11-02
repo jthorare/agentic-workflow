@@ -20,5 +20,7 @@ internal sealed class FailingReader(IRepoReader inner) : IRepoReader
 
     public ValueTask<Result<string>> Read(ContextRepo repo, string commit, string path, CancellationToken cancellationToken) => inner.Read(repo, commit, path, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyDictionary<string, string>>> BlobIds(ContextRepo repo, string commit, IReadOnlyList<string> paths, CancellationToken cancellationToken) => inner.BlobIds(repo, commit, paths, cancellationToken);
+
     public ValueTask<Result<RepoChanges>> Changes(ContextRepo repo, DiffRange range, CancellationToken cancellationToken) => inner.Changes(repo, range, cancellationToken);
 }

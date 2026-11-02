@@ -20,4 +20,7 @@ public static class ScopingRules
 
     /// <summary>lenses.json's lens item ids are unique and each names the lens it sits in.</summary>
     public const string LensIds = "PKT-SCP-005";
+
+    /// <summary>graph.json (the prefiltered graph the scoping Steps worked from) has schemaVersion 1, unique non-empty node ids and edges with both ends.</summary>
+    public const string GraphShape = "PKT-SCP-006";
 }

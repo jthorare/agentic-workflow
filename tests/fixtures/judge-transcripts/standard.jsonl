@@ -1,0 +1,10 @@
+{"type":"user","sessionId":"sess-1","timestamp":"2026-10-01T10:00:00Z","message":{"role":"user","content":"fix the login bug"}}
+{"type":"assistant","sessionId":"sess-1","timestamp":"2026-10-01T10:00:10Z","message":{"role":"assistant","content":[{"type":"text","text":"On it."},{"type":"tool_use","id":"t1","name":"Edit","input":{"file_path":"src/a.cs","old_string":"x = 1;","new_string":"x = 2;"}}]}}
+not json {
+{"type":"assistant","sessionId":"sess-1","timestamp":"2026-10-01T10:00:20Z","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Write","input":{"file_path":"src/b.cs","content":"line1\nline2"}},{"type":"tool_use","id":"t3","name":"MultiEdit","input":{"file_path":"src/c.cs","edits":[{"old_string":"a","new_string":"b"},{"old_string":"c","new_string":"d"}]}},{"type":"tool_use","id":"t4","name":"Read","input":{"file_path":"src/a.cs"}}]}}
+{"type":"user","sessionId":"sess-1","timestamp":"2026-10-01T10:00:30Z","message":{"role":"user","content":[{"type":"tool_result","tool_use_id":"t1","content":"ok"}]}}
+{"type":"user","sessionId":"sess-1","timestamp":"2026-10-01T10:01:00Z","message":{"role":"user","content":"<system-reminder>machine text, not a prompt</system-reminder>"}}
+{"type":"user","sessionId":"sess-1","timestamp":"2026-10-01T10:02:00Z","message":{"role":"user","content":"This session is being continued from a previous conversation that ran out of context."}}
+{"type":"user","sessionId":"sess-1","timestamp":"2026-10-01T10:05:00Z","message":{"role":"user","content":[{"type":"text","text":"now fix"},{"type":"text","text":"the tests"}]}}
+{"type":"user","sessionId":"sess-2","timestamp":"2026-10-01T10:06:00Z","message":{"role":"user","content":"hello"}}
+{"type":"assistant","sessionId":"sess-1","timestamp":"2026-10-01T10:07:00Z","message":{"role":"assistant","content":[{"type":"text","text":"Done."}]}}

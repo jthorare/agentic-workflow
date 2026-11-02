@@ -18,18 +18,10 @@ public sealed class NeedsYouChildAnswerTests
         where T : class =>
         AwJson.Deserialize<T>(Encoding.UTF8.GetBytes(GoldenFiles.Api(slug, scenario)), SindriApiClient.Json).Value;
 
-    internal static NeedsYouRowViewModel Row(string? via)
-    {
-        var list = Golden<NeedsYouList>("needs-you", "park");
-        var served = list with { Rows = [list.Rows[0] with { Via = via }] };
-        var entry = NeedsYouMapper.Map(served, Golden<CommandList>("commands", "catalog"), decisions: null, new HomeCounts(Running: 0, WithYou: 0, Queued: 0)).Rows[0];
-        return new NeedsYouRowViewModel(entry, seen: false, reducedMotion: false, arrived: false, new FakeTimeProvider(A.Noon));
-    }
-
     [Fact]
     public void A_child_pointer_row_says_Answer_in_the_child_and_does_not_carry_the_placeholder()
     {
-        var row = Row("child");
+        var row = ChildAnswerRows.Row("child");
 
         Assert.Equal(Labels.AnswerInChild, row.ChildAnswer!.Text);
         Assert.Equal(Labels.AnswerInChildOpensName(row.ShownId), row.ChildAnswer.Name);   // it opens the instance the row stands for, never a named child
@@ -43,7 +35,7 @@ public sealed class NeedsYouChildAnswerTests
         var served = Golden<NeedsYouList>("needs-you", "park").Rows[0];
         Assert.NotEmpty(served.Actions);   // the engine does serve a placeholder action on it: the row must drop it
 
-        var row = Row("child");
+        var row = ChildAnswerRows.Row("child");
 
         Assert.Empty(row.Controls);
         Assert.Empty(row.Entry.Actions);
@@ -76,7 +68,7 @@ public sealed class NeedsYouChildAnswerTests
     [Fact]
     public void A_child_row_served_no_child_keeps_the_fallback_name()
     {
-        var row = Row("child");   // the older park golden serves via and no child
+        var row = ChildAnswerRows.Row("child");   // the older park golden serves via and no child
 
         Assert.False(row.ChildAnswer!.OpensChild);
         Assert.Equal(Labels.AnswerInChildOpensName(row.ShownId), row.ChildAnswer.Name);
@@ -98,7 +90,7 @@ public sealed class NeedsYouChildAnswerTests
     {
         var served = Golden<NeedsYouList>("needs-you", "park").Rows[0];
 
-        var row = Row(via: null);
+        var row = ChildAnswerRows.Row(via: null);
 
         Assert.Null(row.ChildAnswer);
         Assert.Equal(served.Cli, row.Cli);

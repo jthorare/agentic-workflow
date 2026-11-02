@@ -25,6 +25,11 @@ namespace Aw.Sindri.Features.GetJob;
 /// <param name="Actions">'CancelJob' while running, none otherwise.</param>
 /// <param name="Cli">'sindri jobs cancel JOB-…' while running (through CliForm.Fill), else null.</param>
 /// <param name="AsOf">How fresh the answer is.</param>
+/// <param name="Models">The job's model calls added up, or null when it made none.</param>
+/// <param name="WaitingOn">The signal a waiting job is parked on ('model-limit', ...), or null.</param>
+/// <param name="ModelCalls">The job's last 200 model calls, oldest first (empty when it made none).</param>
+/// <param name="ModelCallCount">How many model calls the job made in all, so a client can say 'showing the last 200 of N'.</param>
 public sealed record JobView(JobId Id, JobKind Kind, JobKey Key, ItemId? Item, RepoName? Repo, ServiceName? Service, JobState State, string StartedBy,
     DateTimeOffset StartedAt, DateTimeOffset? EndedAt, IReadOnlyList<JobLine> Progress, int Rounds, string? Summary, string? Code, JsonElement? Result,
-    string? CancelledBy, IReadOnlyList<ActionId> Actions, string? Cli, AsOf AsOf);
+    string? CancelledBy, IReadOnlyList<ActionId> Actions, string? Cli, AsOf AsOf,
+    ModelTotals? Models = null, string? WaitingOn = null, IReadOnlyList<JobModelCall>? ModelCalls = null, int ModelCallCount = 0);

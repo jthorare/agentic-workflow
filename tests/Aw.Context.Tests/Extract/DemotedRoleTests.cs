@@ -4,7 +4,7 @@ using Aw.Context.Core.Graph;
 
 namespace Aw.Context.Tests.Extract;
 
-/// <summary>A file whose role the repo demotes keeps its code node in the map, but never implements a feature and never names or keys one.</summary>
+/// <summary>A file whose role the repo demotes keeps its code node in the map, but never tags a feature and never names or keys one.</summary>
 public sealed class DemotedRoleTests
 {
     private static readonly ContextRepoName _name = ContextRepoName.From("web-app");
@@ -16,10 +16,10 @@ public sealed class DemotedRoleTests
     private static ClusterSet Set(params string[] files) => new([new FileCluster(ClusterId.From("c1"), files, 0.55)], Available: true);
 
     private static IEnumerable<string> Implementers(ExtractedMap map) =>
-        map.Edges.Where(e => e.Type == EdgeType.Implements).Select(e => e.From.Value);
+        map.Edges.Where(e => e.Type == EdgeType.Tags).Select(e => e.From.Value);
 
     [Fact, Trait("Lane", "unit")]
-    public void A_demoted_file_of_a_cluster_keeps_its_code_node_but_implements_nothing()
+    public void A_demoted_file_of_a_cluster_keeps_its_code_node_but_tags_nothing()
     {
         var set = Set("src/orders/place.ts", "src/orders/__tests__/place.test.ts", "src/demo/ids.ts");
 

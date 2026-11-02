@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
@@ -28,6 +29,20 @@ internal sealed class CleanMapService(IGraphStore store, IScrubberFactory scrubb
     private static readonly TimeSpan _budget = TimeSpan.FromMinutes(10);
 
     public async ValueTask<Result<CleanupReport>> Handle(CleanMapRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await Clean(request, cancellationToken).ConfigureAwait(false);
+        }
+        catch (RegexMatchTimeoutException timeout)
+        {
+            // A 'regex:' role entry NonBacktracking can't run, met while the draft's paths were checked against the profile's globs.
+            return ContextErrors.PatternTimedOut.With(string.Create(CultureInfo.InvariantCulture,
+                $"the pattern '{timeout.Pattern}' ran out of time on a path of {timeout.Input.Length} characters (fix: simplify that profile pattern)"));
+        }
+    }
+
+    private async ValueTask<Result<CleanupReport>> Clean(CleanMapRequest request, CancellationToken cancellationToken)
     {
         if (MapAccess.Gate(request.Scope) is { } refused)
         {

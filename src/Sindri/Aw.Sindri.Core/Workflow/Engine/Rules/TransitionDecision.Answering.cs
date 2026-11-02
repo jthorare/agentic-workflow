@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Workflow.Engine.Events;
 using Aw.Sindri.Core.Workflow.Engine.Instances;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Ids;
+using Aw.Sindri.Core.Workflow.Recipes;
 
 namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 
@@ -42,7 +43,7 @@ public static partial class TransitionDecision
         }
 
         var ended = ending.Value;
-        var resumed = ended.PendingTookEffect ? d.Changed(ended.Instance) : Resume(d, ended.Instance, fit.Value);
+        var resumed = ended.PendingTookEffect ? d.Changed(ended.Instance) : Resume(d, ended.Instance, fit.Value, neverRan: instance.Suspension?.Sandbox is not null);
         // The grant was applied before the suspension ended, so both branches record it; an override exists only when the resume ran (§5.8).
         return Recorded(WithReleased(resumed, ended.Released), answer, ended.PendingTookEffect ? fit.Value with { Gate = null } : fit.Value);
     }
@@ -100,7 +101,7 @@ public static partial class TransitionDecision
     }
 
     /// <summary>The ended suspension's resume action (§5.8 table).</summary>
-    private static Decision Resume(Deciding d, WorkflowInstance instance, ResumeAction resume)
+    private static Decision Resume(Deciding d, WorkflowInstance instance, ResumeAction resume, bool neverRan = false)
     {
         var withheld = resume.Withheld;
         return resume.Kind switch
@@ -108,7 +109,7 @@ public static partial class TransitionDecision
             ResumeKind.Transition when withheld?.Transition is { } index => Apply(d.Withholding(withheld.Trigger), instance, index, Records.None),
             ResumeKind.Reevaluate or ResumeKind.Override or ResumeKind.Refuse when withheld?.Transition is { } index =>
                 Reevaluate(d.Withholding(withheld.Trigger), instance, index, resume),
-            ResumeKind.Rerun => RerunAfterAnswer(d, instance, resume),
+            ResumeKind.Rerun => RerunAfterAnswer(d, instance, resume, counts: !neverRan),   // a refused launch ran no round of the Step
             ResumeKind.Restart when instance.Frame.Run is not null => RerunAfterAnswer(d, instance, resume),
             ResumeKind.Restart => Restart(d, instance),
             ResumeKind.None => new Rejected(d.Key, WorkflowErrors.TriggerNotAllowed.With(
@@ -137,7 +138,7 @@ public static partial class TransitionDecision
     /// the loop's allowed rounds it parks with rounds (kind refusal, the withheld trigger kept) instead of running:
     /// '--grant n' is the only way past the cap (§3.7, §3.8, W7).
     /// </summary>
-    private static Applied RerunAfterAnswer(Deciding d, WorkflowInstance instance, ResumeAction resume)
+    private static Applied RerunAfterAnswer(Deciding d, WorkflowInstance instance, ResumeAction resume, bool counts = true)
     {
         var state = d.Recipe.States[instance.State];
         if (instance.Frame.Run is not { } run || state.Step is not { } step)
@@ -150,20 +151,21 @@ public static partial class TransitionDecision
             return d.Changed(d.Rules.Suspend(instance, blocked));
         }
 
-        var countsRound = resume.Kind == ResumeKind.Rerun;
+        var countsRound = counts && resume.Kind == ResumeKind.Rerun;
         if (countsRound && state.Loop is { } capped && d.Rules.AtCap(instance, d.Recipe, instance.State))
         {
             return d.Changed(d.Rules.Suspend(instance, AtCapPark(capped, step.Use, resume, d.Trigger.Actor)));
         }
 
         var next = run with { Token = RunToken.For(run.Token.Entry, run.Token.Number + 1), Launch = null, Retries = 0 };   // an answer starts the engine's retries again
-        var loops = countsRound && state.Loop is { } name && instance.Loops.TryGetValue(name, out var loop)
-            ? With(instance.Loops, name, loop with { Round = loop.Round + 1 })
-            : instance.Loops;
-        var after = instance with { Frame = instance.Frame with { Run = next }, Loops = loops };
+        var after = instance with { Frame = instance.Frame with { Run = next }, Loops = countsRound ? NextRound(instance, state) : instance.Loops };
         var applied = d.Changed(after);
         return applied with { FollowUps = [new FollowUp(FollowUpKind.StartRun, instance.Id, next.Token, step.Use, Answer: null)] };
     }
+
+    /// <summary>The loops with the state's loop one round on; unchanged when the state has none.</summary>
+    private static IReadOnlyDictionary<string, LoopState> NextRound(WorkflowInstance instance, RecipeState state) =>
+        state.Loop is { } name && instance.Loops.TryGetValue(name, out var loop) ? With(instance.Loops, name, loop with { Round = loop.Round + 1 }) : instance.Loops;
 
     private static Suspension AtCapPark(string loop, BlockId step, ResumeAction resume, string actor) => new(
         SuspensionKind.Park, ParkReason.Rounds, ParkKind.Refusal, Escalation: null,

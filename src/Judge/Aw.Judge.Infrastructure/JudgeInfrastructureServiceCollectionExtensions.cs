@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Infrastructure.Config;
+using Aw.Judge.Infrastructure.Eval;
 using Aw.Judge.Infrastructure.Ids;
 using Aw.Judge.Infrastructure.Processes;
 using Aw.Judge.Infrastructure.PromptSort;
@@ -8,6 +9,7 @@ using Aw.Judge.Infrastructure.Providers;
 using Aw.Judge.Infrastructure.Redaction;
 using Aw.Judge.Infrastructure.Secrets;
 using Aw.Judge.Infrastructure.Sqlite;
+using Aw.Judge.Infrastructure.Transcripts;
 using Aw.Kernel.Ids;
 using Aw.Redaction;
 using Microsoft.Extensions.DependencyInjection;
@@ -21,7 +23,7 @@ public static class JudgeInfrastructureServiceCollectionExtensions
     /// Adds the Judge adapters and their settings: the SQLite stores over $AW_STATE_DIR/judge/decisions.sqlite, the config
     /// file $AW_STATE_DIR/judge/config.json (which needs the host's JsonSerializerOptions registered), the input redactor
     /// over Aw.Redaction, the PATH executable locator, the process runner, the secret source (environment, then keychain),
-    /// random decision ids and the model providers (AddModelProviders), with the batched Jev call (IBatchClassifier) beside them.
+    /// the eval store and the transcript reader, random decision ids and the model providers (AddModelProviders), with the batched Jev call (IBatchClassifier) beside them.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <param name="environment">Reads an environment variable (Environment.GetEnvironmentVariable in Program.cs, a lambda in tests).</param>
@@ -35,6 +37,9 @@ public static class JudgeInfrastructureServiceCollectionExtensions
             .AddScoped<IDecisionLog, SqliteDecisionLog>()
             .AddScoped<IBriefStore, SqliteBriefStore>()
             .AddScoped<IPromptSortStore, SqlitePromptSortStore>()
+            .AddScoped<IEvalStore, SqliteEvalStore>()
+            .AddSingleton<ITranscriptReader>(new ClaudeTranscriptReader(settings.ProjectsDirectory))
+            .AddSingleton<IEvalFiles>(new FileEvalFiles(Path.Combine(settings.StateDirectory, "evals")))
             .AddScoped<ISortSessionStore>(_ => new FileSortSessionStore(Path.Combine(settings.StateDirectory, "sessions")))
             .AddScoped<IJudgeConfigStore>(sp => new FileJudgeConfigStore(settings.StateDirectory, sp.GetRequiredService<JsonSerializerOptions>()))
             .AddSingleton<IInputRedactor>(new AwInputRedactor(Redactor.Default))
@@ -62,5 +67,6 @@ public static class JudgeInfrastructureServiceCollectionExtensions
                 new ClaudeCliProvider(sp.GetRequiredService<IProcessRunner>()),
                 new CodexCliProvider(sp.GetRequiredService<IProcessRunner>()),
                 new CursorCliProvider(sp.GetRequiredService<IProcessRunner>(), sp.GetRequiredService<IInputRedactor>()),
-            ]));
+            ],
+            new ClaudeCliProvider(sp.GetRequiredService<IProcessRunner>()) { Options = ClaudeCliOptions.Adjudicator }));
 }

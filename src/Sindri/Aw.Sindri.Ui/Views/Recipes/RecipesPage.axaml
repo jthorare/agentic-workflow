@@ -82,12 +82,12 @@
         <Border x:Name="RecipesNoMatchName" Margin="16,8" IsVisible="{Binding IsNoMatch}" AutomationProperties.Name="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
           <TextBlock x:Name="RecipesNoMatch" Classes="caption quiet" Text="{Binding NoMatchText}" AutomationProperties.AccessibilityView="Raw" />
         </Border>
-        <Grid x:Name="RecipesHeader" ColumnDefinitions="2*,70,170,80,90,100,60,90,90" Margin="16,6" IsVisible="{Binding IsTableShown}">
+        <Grid x:Name="RecipesHeader" ColumnDefinitions="2*,70,170,80,140,100,60,90,90" Margin="16,6" IsVisible="{Binding IsTableShown}">
           <TextBlock Classes="eyebrow" Text="{Binding ColWorkflow}" />
           <TextBlock Grid.Column="1" Classes="eyebrow" Text="{Binding ColVersion}" />
           <TextBlock Grid.Column="2" Classes="eyebrow" Text="{Binding ColStanding}" />
           <TextBlock Grid.Column="3" Classes="eyebrow" Text="{Binding ColSize}" />
-          <TextBlock Grid.Column="4" Classes="eyebrow" Text="{Binding ColFlow}" TextTrimming="CharacterEllipsis" />
+          <TextBlock Grid.Column="4" Classes="eyebrow" Text="{Binding ColFlow}" />
           <TextBlock Grid.Column="5" Classes="eyebrow" Text="{Binding ColFingerprint}" />
           <TextBlock Grid.Column="6" Classes="eyebrow" Text="{Binding ColRuns}" />
           <TextBlock Grid.Column="7" Classes="eyebrow" Text="{Binding ColFinished}" />

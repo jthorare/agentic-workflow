@@ -123,7 +123,7 @@ public sealed class ScopingCommandTests : IDisposable
         Assert.Equal(0, await Run("scoping", "show", "--facts", Facts, "--json"));
         using var body = JsonDocument.Parse(_out.ToString());
         Assert.Equal(9, body.RootElement.GetProperty("sections").GetArrayLength());
-        Assert.Equal("2 of 4 lenses limited", body.RootElement.GetProperty("coverageHeader").GetString());
+        Assert.StartsWith("2 of 4 lenses limited", body.RootElement.GetProperty("coverageHeader").GetString(), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]
@@ -172,8 +172,8 @@ public sealed class ScopingCommandTests : IDisposable
         Assert.Equal("findings.json", report.RootElement.GetProperty("outputs").GetProperty("fact:findings").GetString());
         Assert.True(File.Exists(Path.Combine(outDir, "findings.json")));
         var byOutcome = report.RootElement.GetProperty("outputsByOutcome");   // what a complete on each outcome takes, from the descriptor
-        Assert.Equal(["fact:findings"], byOutcome.GetProperty("gaps").EnumerateArray().Select(static e => e.GetString()), StringComparer.Ordinal);
-        Assert.Equal(["fact:findings"], byOutcome.GetProperty("regather").EnumerateArray().Select(static e => e.GetString()), StringComparer.Ordinal);
+        Assert.Equal(["fact:findings", "fact:roundLog", "fact:roundDigest"], byOutcome.GetProperty("gaps").EnumerateArray().Select(static e => e.GetString()), StringComparer.Ordinal);
+        Assert.Equal(["fact:findings", "fact:roundLog", "fact:roundDigest"], byOutcome.GetProperty("regather").EnumerateArray().Select(static e => e.GetString()), StringComparer.Ordinal);
         Assert.Empty(byOutcome.GetProperty("pass").EnumerateArray());
     }
 

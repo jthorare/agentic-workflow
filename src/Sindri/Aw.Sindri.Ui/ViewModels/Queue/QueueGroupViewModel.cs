@@ -51,7 +51,18 @@ internal sealed class QueueGroupViewModel : ObservableObject
     public bool ShowsEmpty => IsVisible && Rows.Count == 0;
 
     /// <summary>True when the section is open (collapsible, §4.5); rows show only then.</summary>
-    public bool IsExpanded { get; set => Set(ref field, value); }
+    public bool IsExpanded
+    {
+        get;
+        set
+        {
+            Set(ref field, value);
+            OnChanged(nameof(FoldGlyph));
+        }
+    }
+
+    /// <summary>The fold arrow the header shows: down while open, right while folded.</summary>
+    public string FoldGlyph => IsExpanded ? Labels.FoldOpen : Labels.FoldFolded;
 
     /// <summary>The filter allows this group.</summary>
     internal bool IsShown { get; private set; }

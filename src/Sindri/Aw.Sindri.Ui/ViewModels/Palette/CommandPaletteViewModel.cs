@@ -20,7 +20,7 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     // §8's G-chords (and ⌘, for Settings), by page.
     private static readonly (PageId Page, string Key)[] _pages =
     [
-        (PageId.Home, "G H"), (PageId.Workflows, "G W"), (PageId.Work, "G Q"), (PageId.Recipes, "G R"), (PageId.Context, "G C"), (PageId.Agents, "G A"),
+        (PageId.Home, "G H"), (PageId.Projects, "G P"), (PageId.Workflows, "G W"), (PageId.Work, "G Q"), (PageId.Recipes, "G R"), (PageId.Context, "G C"), (PageId.Agents, "G A"),
         (PageId.System, "G ."), (PageId.Jobs, "G J"), (PageId.Settings, "⌘,"),
     ];
 
@@ -243,13 +243,21 @@ internal sealed partial class CommandPaletteViewModel : ObservableObject
     {
         _all ??= Build();
         var query = new string([.. Query.Where(c => !char.IsWhiteSpace(c)).Select(char.ToLowerInvariant)]);
-        Sections = [.. _all.Select(s => s with { Entries = [.. s.Entries.Where(e => e.Matches(query))] }).Where(s => s.Entries.Count > 0)];
+        var matching = _all.Select(s => s with { Entries = [.. s.Entries.Where(e => e.Matches(query))] }).Where(s => s.Entries.Count > 0);
+        Sections = query.Length == 0 ? [.. matching] : Ranked(matching, query);
         Entries = [.. Sections.SelectMany(s => s.Entries)];
         OnChanged(nameof(IsEmpty));
         FollowsSelection = false;
         Selected = Entries.FirstOrDefault(e => e.IsEnabled);
         Announce();
     }
+
+    // A typed query puts the best match first: entries by their rank within a section, sections by their best entry (both stable), so
+    // the top row, the one Enter runs, is the closest match and a page for "work" is ahead of an action with "work" inside a word.
+    private static List<PaletteSection> Ranked(IEnumerable<PaletteSection> sections, string query) =>
+    [
+        .. sections.Select(s => s with { Entries = [.. s.Entries.OrderBy(e => e.Rank(query))] }).OrderBy(s => s.Entries.Min(e => e.Rank(query))),
+    ];
 
     // The live region says the selected entry (its name carries the status) and where it is among the entries that run;
     // "Nothing matches" when empty; never "" (Avalonia #22312 crashes VoiceOver on an empty live region).

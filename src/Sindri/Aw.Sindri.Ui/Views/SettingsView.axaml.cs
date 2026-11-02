@@ -42,6 +42,14 @@ internal sealed partial class SettingsView : UserControl
     }
 
     // Opened by a link, G U, ⌘, or Home's line: the checklist is the first section, so it is brought to the top of the page.
+    private void OnCopyModelChoice(object? sender, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        if (DataContext is SettingsViewModel { ModelChoice: { } line })
+        {
+            _ = line.Copy(CancellationToken.None);
+        }
+    }
+
     private void OnRevealRequested(object? sender, SetupRevealEventArgs e) =>
         Dispatcher.UIThread.Post(() => ((Control?)StepRow(e.StepId) ?? _checklist)?.BringIntoView(), DispatcherPriority.Loaded);
 

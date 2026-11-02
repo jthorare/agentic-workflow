@@ -12,17 +12,17 @@
   <!-- Analyzers in every project. Severities and the one owner per overlapping rule: .editorconfig. -->
   <ItemGroup Label="Analyzers">
     <GlobalPackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="[10.0.401]" />
-    <GlobalPackageReference Include="Meziantou.Analyzer" Version="[3.0.290]" />
-    <GlobalPackageReference Include="Roslynator.Analyzers" Version="[5.0.0]" />
+    <GlobalPackageReference Include="Meziantou.Analyzer" Version="[3.0.299]" />
+    <GlobalPackageReference Include="Roslynator.Analyzers" Version="[5.0.1]" />
     <GlobalPackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="[5.6.0]" />
     <GlobalPackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" Version="[5.6.0]" />
   </ItemGroup>
 
   <ItemGroup Label="Packages">
-    <!-- Tests. xunit.v3 4.0.1 published 2026-09-12. -->
-    <PackageVersion Include="xunit.v3" Version="[4.0.1]" />
-    <!-- Aw.Kernel.Testing's one external dependency; the same exact version xunit.v3 4.0.1 pins. Published 2026-09-12. -->
-    <PackageVersion Include="xunit.v3.extensibility.core" Version="[4.0.1]" />
+    <!-- Tests. xunit.v3 4.0.2 published 2026-10-09. -->
+    <PackageVersion Include="xunit.v3" Version="[4.0.2]" />
+    <!-- Aw.Kernel.Testing's one external dependency; the same exact version xunit.v3 4.0.2 pins. Published 2026-10-09. -->
+    <PackageVersion Include="xunit.v3.extensibility.core" Version="[4.0.2]" />
     <!-- FakeTimeProvider for test projects (spec §4b.4, §4b.5). 10.10.0 published 2026-09-09. -->
     <PackageVersion Include="Microsoft.Extensions.TimeProvider.Testing" Version="[10.10.0]" />
     <!-- Dependency injection for the package scaffolds (spec §4b.4, docs/csharp/scaffolds/new-package.md "package pins"):
@@ -68,24 +68,24 @@
          role). Npgsql 10.0.3 published 2026-05-27 (nuget.org); only Aw.Evidence.Infrastructure references it, behind the
          IDatabaseReader port (PostgresDatabaseReader), so the driver stays replaceable. -->
     <PackageVersion Include="Npgsql" Version="[10.0.3]" />
-    <!-- The Sindri UI (readiness spec §4a "UI"): MIT-licensed Avalonia packages only, all at 12.1.3 (published
-         2026-09-22; 12.1.4 is too new for the 14-day rule). Aw.Sindri.Ui and the Aw.Sindri.Ui.Desktop head use them;
+    <!-- The Sindri UI (readiness spec §4a "UI"): MIT-licensed Avalonia packages only, all at 12.1.4 (published
+         2026-10-09). Aw.Sindri.Ui and the Aw.Sindri.Ui.Desktop head use them;
          the headless ones are test-only (tests/Aw.Sindri.Ui.Tests). Avalonia brings in Avalonia.BuildServices
          transitively, which posts build telemetry to avaloniaui.net from an AvaloniaStats target on every build; an
          empty AvaloniaStats in Directory.Build.targets replaces it, and CI, the devcontainer and .env.example set
          AVALONIA_TELEMETRY_OPTOUT=1. -->
-    <PackageVersion Include="Avalonia" Version="[12.1.3]" />
-    <PackageVersion Include="Avalonia.Themes.Fluent" Version="[12.1.3]" />
-    <PackageVersion Include="Avalonia.Fonts.Inter" Version="[12.1.3]" />
-    <PackageVersion Include="Avalonia.Desktop" Version="[12.1.3]" />
-    <PackageVersion Include="Avalonia.Headless" Version="[12.1.3]" />
-    <PackageVersion Include="Avalonia.Skia" Version="[12.1.3]" />
+    <PackageVersion Include="Avalonia" Version="[12.1.4]" />
+    <PackageVersion Include="Avalonia.Themes.Fluent" Version="[12.1.4]" />
+    <PackageVersion Include="Avalonia.Fonts.Inter" Version="[12.1.4]" />
+    <PackageVersion Include="Avalonia.Desktop" Version="[12.1.4]" />
+    <PackageVersion Include="Avalonia.Headless" Version="[12.1.4]" />
+    <PackageVersion Include="Avalonia.Skia" Version="[12.1.4]" />
     <!-- Durable execution for the Sindri workflow engine (engine spec rev 8 §0, README X53/X54): the Temporal .NET SDK,
          referenced by Aw.Sindri.Workflows only. It has no trimming or NativeAOT support (temporalio/sdk-dotnet#286), so
          that project opts out of IsAotCompatible and the Sindri host publishes framework-dependent. Its Rust core ships
-         as a native library inside the package (osx-arm64, osx-x64, linux-x64, linux-arm64). 1.19.0 published
-         2026-09-14, MIT. -->
-    <PackageVersion Include="Temporalio" Version="[1.19.0]" />
+         as a native library inside the package (osx-arm64, osx-x64, linux-x64, linux-arm64). 1.20.0 published
+         2026-09-28, MIT. -->
+    <PackageVersion Include="Temporalio" Version="[1.20.0]" />
     <!-- MCP server (context spec §8.5, API spec §8, README X8): the official MCP C# SDK, Streamable HTTP in stateless mode
          at /sindri/mcp. Referenced by Aw.Sindri.Host only (Host/Mcp); the context packages stay free of it. 2.2.0 is the
          version the readiness AOT spike approved (docs/readiness/aot-spike.md: MapMcp on CreateSlimBuilder, 0 trim/AOT

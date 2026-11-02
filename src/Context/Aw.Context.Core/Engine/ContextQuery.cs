@@ -33,4 +33,8 @@ public sealed record ContextQuery(
     /// <summary>The cascade hops as a comma list ('state,flow,dependency,component'); null for the default three. Left out of JSON when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Hops { get; init; }
+
+    /// <summary>A pin id (or 'concept:&lt;id&gt;') to answer inside: only results the pin holds. Combines with every shape and with Repo; left out of JSON when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Concept { get; init; }
 }

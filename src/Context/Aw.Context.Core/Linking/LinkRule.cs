@@ -29,4 +29,8 @@ public enum LinkRule
     /// <summary>A feature's name (its label, or an alias of it) appears in the text as whole words and names that one feature. A suggestion: the edge it makes has model provenance until a person confirms it.</summary>
     [JsonStringEnumMemberName("name")]
     Name,
+
+    /// <summary>An owner's alias of a pinned concept ('payments' for concept:billing) appears in the text as whole words, and the pin's concept node is in the map (concept pins spec §3.4). Appended last: stored values are positional.</summary>
+    [JsonStringEnumMemberName("alias")]
+    Alias,
 }

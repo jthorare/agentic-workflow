@@ -1,0 +1,13 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:inst="using:Aw.Sindri.Ui.ViewModels.Instance"
+             x:Class="Aw.Sindri.Ui.Views.Instance.WhyPanel"
+             x:DataType="inst:WhyPanelViewModel">
+  <!-- The "Why this model" flyout (model-pick spec section 6.1): what Jev was shown and left out, and the command that explains the pick. No file text. -->
+  <StackPanel Spacing="4" MaxWidth="420">
+    <TextBlock Classes="caption" Text="{Binding Command}" TextWrapping="Wrap" IsVisible="{Binding Command.Length}" AutomationProperties.Name="{Binding Command}" />
+    <ItemsControl ItemsSource="{Binding Candidates}" />
+    <ItemsControl ItemsSource="{Binding Files}" />
+    <ItemsControl ItemsSource="{Binding Omitted}" />
+  </StackPanel>
+</UserControl>

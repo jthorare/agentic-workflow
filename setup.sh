@@ -4,8 +4,8 @@
 # Usage:
 #   ./setup.sh [--providers claude,codex,cursor] [--dry-run]
 #   ./setup.sh --install-agents [--providers ...] [--dry-run]
-#   ./setup.sh [--providers ...] --with-sindri   # also stand the pinned Onyx up (the C# Sindri itself is always installed)
-#   ./setup.sh [--providers ...] --with-sindri --no-onyx   # ... without the Onyx step (run `sindri onyx up` later)
+#   ./setup.sh [--providers ...] --with-sindri   # accepted, does nothing (the C# Sindri itself is always installed)
+#   ./setup.sh [--providers ...] --no-onyx       # accepted, does nothing (setup no longer runs Onyx)
 #   ./setup.sh [--providers ...] --with-meta     # also install the /meta harness: aw-meta CLI, hooks, launcher (opt-in)
 #   ./setup.sh [--providers ...] --with-fleet    # also install the aw:fleet session-state hook for Sindri's session collector (opt-in)
 #   ./setup.sh [--providers ...] --no-tldraw     # skip the tldraw offline app (the canvas agents draw diagrams on)
@@ -139,7 +139,6 @@ PROVIDERS_ARG=""
 AW_DRY_RUN=0
 WITH_SINDRI=0
 WITH_META=0
-WITH_ONYX=1
 WITH_FLEET=0
 WITH_TLDRAW=1
 while [ $# -gt 0 ]; do
@@ -148,9 +147,9 @@ while [ $# -gt 0 ]; do
     --providers=*) PROVIDERS_ARG="${1#--providers=}"; shift ;;
     --install-agents) MODE="agents"; shift ;;
     --dry-run) AW_DRY_RUN=1; shift ;;
-    --with-sindri) WITH_SINDRI=1; echo "--with-sindri: the C# Sindri is always installed (this flag now only stands the pinned Onyx up)"; shift ;;
+    --with-sindri) WITH_SINDRI=1; echo "--with-sindri: accepted, does nothing (the C# Sindri is always installed)"; shift ;;
     --with-meta) WITH_META=1; shift ;;
-    --no-onyx) WITH_ONYX=0; shift ;;
+    --no-onyx) shift ;;
     --with-fleet) WITH_FLEET=1; shift ;;
     --no-tldraw) WITH_TLDRAW=0; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -210,7 +209,7 @@ fi
 # Note: skills/_shared/ is intentionally excluded from MANAGED_SKILLS. It is not
 # linked into any provider's skills dir — skills read it through the stable path
 # $HOME/.agentic-workflow/toolkit/skills/_shared (toolkit symlink created below).
-MANAGED_SKILLS=(review postReview addressReview enhancePrompt rootCause bugHunt bugReport shipRelease syncDocs weeklyRetro officeHours productReview archReview withInterview design-analyze design-analyze-web design-analyze-ios design-language design-evolve design-evolve-web design-evolve-ios design-mockup design-mockup-web design-mockup-ios design-implement design-implement-web design-implement-ios design-refine design-verify design-verify-web design-verify-ios design-verify-desktop verify-app verify-web verify-ios verify-desktop autoplan planDesignReview planDevexReview cso design-shotgun landAndDeploy canary prismStatus specToProvenPR testAudit judge ui-evidence bugFixOrchestrator new-package new-slice meta)
+MANAGED_SKILLS=(review postReview addressReview enhancePrompt rootCause bugHunt bugReport shipRelease syncDocs weeklyRetro officeHours productReview archReview withInterview design-analyze design-analyze-web design-analyze-ios design-language design-evolve design-evolve-web design-evolve-ios design-mockup design-mockup-web design-mockup-ios design-implement design-implement-web design-implement-ios design-refine design-verify design-verify-web design-verify-ios design-verify-desktop verify-app verify-web verify-ios verify-desktop autoplan planDesignReview planDevexReview cso design-shotgun landAndDeploy canary prismStatus specToProvenPR testAudit judge ui-evidence bugFixOrchestrator new-package new-slice meta system-design system-design-video)
 
 # Stale standalone copies of impeccable skills from an older setup.sh that
 # copied (cp -r) individual skills. Canonical pbakaus/impeccable v3.1.1+ is a
@@ -592,20 +591,6 @@ if [ "$WITH_META" = "1" ]; then
   fi
 fi
 
-# --- Onyx (with --with-sindri unless --no-onyx; owner decision 2026-10-18): the pinned Onyx, stood up by the C# Sindri's
-# `onyx up` (scripts/install-onyx.sh). It needs Docker, which the Serena step above installs and starts, and the human at
-# a terminal; without them it warns with the command to run later and setup goes on (exit 3). A failed `onyx up` is
-# reported at the very end, after everything else has been installed (set -e must not end setup here) ---
-ONYX_RC=0
-if [ "$WITH_SINDRI" = "1" ] && [ "$WITH_ONYX" = "1" ]; then
-  echo ""
-  if aw_dry; then
-    bash "$SCRIPT_DIR/scripts/install-onyx.sh"
-  else
-    bash "$SCRIPT_DIR/scripts/install-onyx.sh" || ONYX_RC=$?
-  fi
-fi
-
 # --- Session state hook (opt-in: ./setup.sh --with-fleet): the aw:fleet hook writes one small state file per session
 # (running, asking, idle, ended; never a prompt or tool input) for Sindri's session collector. Per provider, after the provider
 # install, since its entries merge into the settings that install copies from the template. ---
@@ -659,7 +644,7 @@ echo "  QA:               bugHunt, bugReport, testAudit"
 echo "  Release:          shipRelease, landAndDeploy, canary, syncDocs"
 echo "  Retrospective:    weeklyRetro"
 echo "  Planning:         officeHours, productReview, archReview, withInterview,"
-echo "                    autoplan, planDesignReview, planDevexReview, specToProvenPR"
+echo "                    autoplan, planDesignReview, planDevexReview, specToProvenPR, system-design, system-design-video"
 echo "  Security:         cso"
 echo "  Design:           design-analyze [web|ios], design-language, design-evolve [web|ios],"
 echo "                    design-mockup [web|ios], design-shotgun, design-implement [web|ios],"
@@ -683,9 +668,3 @@ esac
 echo "Custom agents:      run ./setup.sh --install-agents to install lean agent types"
 # The meta step's failure (if any) comes last, after everything else has been installed.
 if [ "$WITH_META" = "1" ]; then aw_setup_meta_finish "$META_RC" || exit "$?"; fi
-# The Onyx step's failure (if any) comes last too. 3 is a skip with its warning already printed, not a failure.
-if [ "$WITH_SINDRI" = "1" ] && [ "$WITH_ONYX" = "1" ]; then
-  # shellcheck source=config/lib/setup-onyx-step.sh
-  source "$SCRIPT_DIR/config/lib/setup-onyx-step.sh"
-  aw_setup_onyx_finish "$ONYX_RC" "sindri onyx up" || exit "$?"
-fi

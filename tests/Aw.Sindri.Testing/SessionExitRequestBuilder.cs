@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -13,6 +14,7 @@ public sealed class SessionExitRequestBuilder
     private LaunchSecret _proof = new(FakeLaunchFiles.DefaultProof);
     private int _exitCode;
     private SessionId? _sessionId;
+    private LimitEnd? _limit;
 
     /// <summary>Sets LaunchId.</summary>
     /// <param name="value">The id.</param>
@@ -50,7 +52,16 @@ public sealed class SessionExitRequestBuilder
         return this;
     }
 
+    /// <summary>Sets the sandbox limit that ended the agent.</summary>
+    /// <param name="value">The limit.</param>
+    /// <returns>This builder.</returns>
+    public SessionExitRequestBuilder WithLimit(LimitEnd value)
+    {
+        _limit = value;
+        return this;
+    }
+
     /// <summary>Builds the request.</summary>
     /// <returns>The request.</returns>
-    public SessionExitRequest Build() => new(_launchId, _proof, _exitCode, _sessionId);
+    public SessionExitRequest Build() => new(_launchId, _proof, _exitCode, _sessionId, _limit);
 }

@@ -1,0 +1,8 @@
+network  github.com  x3  (no-group)
+         allow github.com for this repo: add it to sandbox.repos.<repo>.hosts
+path     /home/owner/.cache/tool  x2  (not-bound)
+         allow /home/owner/.cache/tool for this repo: sandbox.repos.<repo>.homeAllow
+path     /home/owner/.ssh/id_ed25519  x1  (deny-list)
+         never allowed: the sandbox always blocks this path (Sindri's own state, the Docker socket and keys)
+policy   git push  x1  (inner-policy)
+         blocked git push; push from your own terminal, or let Sindri send it

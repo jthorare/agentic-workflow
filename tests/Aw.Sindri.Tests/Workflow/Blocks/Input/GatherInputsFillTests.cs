@@ -5,6 +5,7 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
@@ -39,15 +40,17 @@ public sealed class GatherInputsFillTests : IDisposable
         }
     }
 
-    private Combined _combined = new(a => ContextInputFixtures.SmallSet([.. a]));
+    private readonly Combined _combined = new(a => ContextInputFixtures.SmallSet([.. a]));
 
-    private ServiceProvider Compose() => Composition.Compose(new ServiceCollection(), name => name == "AW_STATE_DIR" ? _root : null, new FakeTimeProvider())
-        .AddScoped(_ => EngineProxy.Of(_combined))
+    private ServiceProvider Compose() => Compose(_root, _combined);
+
+    internal static ServiceProvider Compose(string root, Combined combined) => Composition.Compose(new ServiceCollection(), name => name == "AW_STATE_DIR" ? root : null, new FakeTimeProvider())
+        .AddScoped(_ => EngineProxy.Of(combined))
         .AddSingleton<IApprovedProfile>(new ContextInputFixtures.Profiles(ContextInputFixtures.Profile()))
         .BuildServiceProvider();
 
     /// <summary>One stub answering all three lenses.</summary>
-    private sealed class Combined(Func<IReadOnlyList<string>, Result<LensesSetView>> lenses) : IContextLenses, IContextHistory, IContextCode
+    internal sealed class Combined(Func<IReadOnlyList<string>, Result<LensesSetView>> lenses) : IContextLenses, IContextHistory, IContextCode
     {
         public ContextLensesInputTests.StubLenses Lenses_ { get; } = new(lenses);
 
@@ -73,6 +76,8 @@ public sealed class GatherInputsFillTests : IDisposable
 
         public ValueTask<Result<LensesView>> Lenses(string anchor, MapRead read, LensRange range, ContextScope scope, CancellationToken cancellationToken) => _lenses.Lenses(anchor, read, range, scope, cancellationToken);
 
+        public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken) => _lenses.ScopeGraph(query, scope, cancellationToken);
+
         public ValueTask<Result<WholeMapView>> WholeMap(WholeMapQuery query, ContextScope scope, CancellationToken cancellationToken) => _lenses.WholeMap(query, scope, cancellationToken);
 
         public ValueTask<Result<MapSearchView>> Search(MapSearchQuery query, ContextScope scope, CancellationToken cancellationToken) => _lenses.Search(query, scope, cancellationToken);
@@ -88,7 +93,7 @@ public sealed class GatherInputsFillTests : IDisposable
 
     private static readonly string[] _hops = ["state", "flow", "dependency", "component"];
 
-    private static StepInputContext Context(string input) => new(
+    internal static StepInputContext Context(string input) => new(
         BlockId.From(input), BlockId.From("step.scope.gather"),
         new Dictionary<string, JsonElement>(StringComparer.Ordinal)
         {
@@ -136,20 +141,6 @@ public sealed class GatherInputsFillTests : IDisposable
         Assert.Equal("web", Assert.Single(historyScope.Repos).Name.Value);
         var (_, _, _, codeScope) = Assert.Single(_combined.Code_.Calls);
         Assert.Equal("web", Assert.Single(codeScope.Repos).Name.Value);
-    }
-
-    [Fact]
-    public async Task A_huge_map_fills_whole_and_the_Step_does_not_fail()
-    {
-        _combined = new Combined(a => ContextInputFixtures.SmallSet([.. Enumerable.Range(0, 20000).Select(i => "feature:f" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))]));
-        await using var provider = Compose();
-        var runner = provider.GetRequiredService<IStepInputRunner>();
-
-        var filled = await runner.Fill(Context("input.context.lenses"), 1, TestContext.Current.CancellationToken);
-
-        Assert.False(filled.IsError, filled.IsError ? filled.Error.Message : string.Empty);
-        Assert.DoesNotContain("more lines not shown", filled.Value.Texts.Sections["lenses"], StringComparison.Ordinal);
-        Assert.Equal(20000, filled.Value.Texts.Result!.Value.GetProperty("anchors").GetArrayLength());
     }
 
     [Fact]

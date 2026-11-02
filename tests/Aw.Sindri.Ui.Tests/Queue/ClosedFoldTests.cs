@@ -68,4 +68,28 @@ public sealed class ClosedFoldTests
 
         Assert.All(queue.ClosedRows, r => Assert.False(r.HasPrimaryAction));
     }
+
+    [Fact]
+    public async Task A_closed_item_with_no_step_shows_how_it_ended_as_its_stage()
+    {
+        var queue = Queue();
+
+        await queue.ToggleClosed(_api, Token);
+
+        Assert.Equal(["Done", "Cancelled", "Done"], queue.ClosedRows.Select(r => r.Stage), StringComparer.Ordinal);
+        Assert.All(queue.ClosedRows, r => Assert.False(r.StageIsRaw));
+    }
+
+    [Fact]
+    public async Task The_arrow_points_right_while_collapsed_and_down_while_open()
+    {
+        var queue = Queue();
+        Assert.Equal("▸", queue.ClosedArrow);
+
+        await queue.ToggleClosed(_api, Token);
+        Assert.Equal("▾", queue.ClosedArrow);
+
+        await queue.ToggleClosed(_api, Token);
+        Assert.Equal("▸", queue.ClosedArrow);
+    }
 }

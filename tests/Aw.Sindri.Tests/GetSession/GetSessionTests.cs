@@ -16,7 +16,7 @@ public sealed class GetSessionTests
 
     private readonly SessionsRig _r = new();
 
-    private GetSessionService Service() => new(_r.Snapshot, _r.Catalog, _r.Base.Profiles, _r.Base.Callers, _r.LaunchViews);
+    private GetSessionService Service() => new(_r.Snapshot, _r.Catalog, _r.Base.Profiles, _r.Base.Callers, _r.LaunchViews, _r.Sandboxes);
 
     private static SessionStateEntry Entry(SessionState state, int minute, AskingReason? reason = null) => new(state, reason, SessionData.T0.AddMinutes(minute), StateSource.Hook);
 
@@ -34,6 +34,33 @@ public sealed class GetSessionTests
             (view.Cwd, view.Session.Host.Socket, view.Session.Host.Session, view.Session.Host.Pane, view.Session.Title, view.Session.Pid));
         Assert.Equal([SessionState.Idle, SessionState.Running], view.StateHistory!.Select(h => h.State));
         Assert.Equal(SessionData.T0.AddMinutes(5), view.AsOf);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task GetSession_row_carries_the_sandbox_of_a_sandboxed_launch()
+    {
+        var launch = LaunchId.From(SessionsRig.Launch);
+        await _r.Launches.Item(repo: null);
+        await _r.Launches.Start(launch, sandbox: SandboxData.Summary(attended: true));
+        _r.Sandboxes.Answer(launch, SandboxData.Reading(attended: true));
+        _ = _r.Publish(SessionsRig.Three);
+        using var human = _r.Human();
+
+        var view = (await Service().Handle(new GetSessionRequest(new SessionRef(AgentId.From("cursor"), SessionId.From("pid-333-100"))), SessionsRig.Token)).Value;
+
+        Assert.Equal(SandboxData.Reading(attended: true), view.Session.Sandbox);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task GetSession_row_has_no_sandbox_for_a_session_Sindri_did_not_launch()
+    {
+        _ = _r.Publish(SessionsRig.Three);
+        using var human = _r.Human();
+
+        var view = (await Service().Handle(new GetSessionRequest(_claude), SessionsRig.Token)).Value;
+
+        Assert.Null(view.Session.Sandbox);
+        Assert.Empty(_r.Sandboxes.Asked);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -1,4 +1,5 @@
 using System.Text;
+using Aw.Judge.Core.Config;
 using Aw.Judge.Core.Questions;
 using Aw.Kernel.Json;
 
@@ -15,8 +16,9 @@ public sealed partial class QuestionEvaluator
     public ValueTask<EvaluationOutcome> EvaluateChoose(string rawInput, EvaluationContext context, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(rawInput);
+        ArgumentNullException.ThrowIfNull(context);
         var parsed = AwJson.Deserialize<ChooseInput>(Encoding.UTF8.GetBytes(rawInput), json);
-        var question = parsed.IsError ? ChooseQuestion.Unreadable : ChooseQuestion.For(parsed.Value);
+        var question = parsed.IsError ? ChooseQuestion.Unreadable : ChooseQuestion.For(parsed.Value, context.InputCapChars ?? ProvidersConfig.DefaultInputCapChars);
         return Evaluate(question, rawInput, context, cancellationToken);
     }
 }

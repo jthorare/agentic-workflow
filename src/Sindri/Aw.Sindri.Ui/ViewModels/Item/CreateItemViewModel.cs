@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
@@ -8,7 +9,8 @@ namespace Aw.Sindri.Ui.ViewModels.Item;
 /// <summary>
 /// Create item (UI spec §4.5, §7): `C` opens a small form (title, repo, body) whose button is the catalog's CreateItem
 /// control, so it is drawn pending until P3 ships and keeps the §4.1 lifecycle. The new row appears from the stream's
-/// re-query, never from the answer. The form closes once the accepted outcome has shown.
+/// re-query, never from the answer. The form closes as soon as the item is created and announces its id, so the Work list can
+/// select the row once the stream has brought it.
 /// </summary>
 internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> url, ISindriApi api) : ObservableObject
 {
@@ -42,6 +44,12 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
     /// <summary>The repo, or empty for the API's default.</summary>
     public string Repo { get; set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>The repos the Work page knows (without "All repos"), offered by the Repo field; refreshed each time the form opens.</summary>
+    public ObservableCollection<string> RepoChoices { get; } = [];
+
+    /// <summary>Where the known repos come from (the Work page's repo choices); none offers nothing.</summary>
+    internal Func<IReadOnlyList<string>>? KnownRepos { get; set; }
+
     /// <summary>The body, or empty.</summary>
     public string Body { get; set => Set(ref field, value); } = string.Empty;
 
@@ -61,6 +69,12 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
     /// <summary>True while <see cref="TitleError"/> shows.</summary>
     public bool HasTitleError { get; private set => Set(ref field, value); }
 
+    /// <summary>
+    /// What the error line under the title shows: the error, or a no-break space that keeps the line's height, so a blank
+    /// submit doesn't move the fields below it.
+    /// </summary>
+    public string TitleErrorLine => HasTitleError ? TitleError : "\u00A0";
+
     /// <summary>True while the title's live region is live (its gate, set before its text changes).</summary>
     public bool IsAnnouncing { get; private set => Set(ref field, value); }
 
@@ -69,6 +83,9 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
 
     /// <summary>Counts the blank submits that ask the view to put focus on the title.</summary>
     public int TitleFocusRequests { get; private set => Set(ref field, value); }
+
+    /// <summary>Raised with the new item's id when the form has created it and closed.</summary>
+    internal event EventHandler<ItemCreatedEventArgs>? Created;
 
     /// <summary>The new item's id once accepted, else empty.</summary>
     public string CreatedId
@@ -81,7 +98,7 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
         }
     } = string.Empty;
 
-    /// <summary>`C`: opens the form, empty, with the catalog's control as it is now.</summary>
+    /// <summary>`C`: opens the form, with the draft left by an Esc (empty after a create) and with the catalog's control as it is now.</summary>
     internal void Open()
     {
         if (Control is { } old)
@@ -97,7 +114,8 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
             control.Precondition = Ready;
         }
 
-        (Title, Repo, Body, CreatedId) = (string.Empty, string.Empty, string.Empty, string.Empty);
+        CreatedId = string.Empty;   // the draft (title, repo, body) is kept across Esc and cleared once the item is created
+        Patch.To(RepoChoices, [.. (KnownRepos?.Invoke() ?? []).Where(r => r.Length > 0 && !string.Equals(r, Labels.AllRepos, StringComparison.Ordinal))]);
         ClearTitleError();
         IsOpen = true;
         OnChanged(nameof(CanSubmit));
@@ -133,6 +151,7 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
     private void RequireTitle()
     {
         (TitleError, HasTitleError) = (Labels.TitleIsRequired, true);
+        OnChanged(nameof(TitleErrorLine));
         Say(Labels.TitleIsRequired);
         TitleFocusRequests++;
     }
@@ -142,6 +161,7 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
         if (HasTitleError)
         {
             (HasTitleError, TitleError) = (false, string.Empty);
+            OnChanged(nameof(TitleErrorLine));
         }
 
         IsAnnouncing = false;   // the region goes dark first; its text stays (never empty) and is not spoken
@@ -181,7 +201,11 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
 
         if (form == _form)
         {
-            CreatedId = created.Value.ItemId;   // only the form that sent it: Esc and C made another since
+            // Only the form that sent it: Esc and C made another since.
+            (Title, Repo, Body) = (string.Empty, string.Empty, string.Empty);
+            CreatedId = created.Value.ItemId;
+            IsOpen = false;
+            Created?.Invoke(this, new ItemCreatedEventArgs(CreatedId));
         }
 
         return created.Value.Accepted;
@@ -189,18 +213,12 @@ internal sealed class CreateItemViewModel(CatalogViewModel catalog, Func<Uri?> u
 
     private static string? Blank(string text) => string.IsNullOrWhiteSpace(text) ? null : text.Trim();
 
-    // The accepted outcome shows for its 2 s; then the form closes and empties (§4.1 lifecycle).
+    // The button's CanRun changes what a submit would do.
     private void OnControl(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(ControlViewModel.CanRun))
         {
             OnChanged(nameof(CanSubmit));
-        }
-
-        if (e.PropertyName == nameof(ControlViewModel.Phase) && sender is ControlViewModel { Phase: CommandPhase.Idle } && CreatedId.Length > 0 && IsOpen)
-        {
-            (Title, Repo, Body) = (string.Empty, string.Empty, string.Empty);
-            IsOpen = false;
         }
     }
 }

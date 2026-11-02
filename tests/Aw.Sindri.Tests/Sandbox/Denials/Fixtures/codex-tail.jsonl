@@ -1,0 +1,5 @@
+{"timestamp":"2026-10-27T10:00:00.000Z","type":"session_meta","payload":{"id":"fixture"}}
+{"timestamp":"2026-10-27T10:00:01.000Z","type":"response_item","payload":{"type":"function_call_output","call_id":"call_1","output":"Process exited with code 1\nOutput:\nsh: 1: cannot create /home/dev/.aws/credentials: Read-only file system\n"}}
+{"timestamp":"2026-10-27T10:00:02.000Z","type":"event_msg","payload":{"type":"exec_command_end","call_id":"call_2","command":["sh","-c","cat /home/dev/notes/todo.md"],"exit_code":1,"stderr":"cat: /home/dev/notes/todo.md: No such file or directory","aggregated_output":"cat: /home/dev/notes/todo.md: No such file or directory"}}
+{"timestamp":"2026-10-27T10:00:03.000Z","type":"event_msg","payload":{"type":"exec_command_end","call_id":"call_3","exit_code":0,"stderr":"","aggregated_output":"ok /home/dev/ok: Permission denied is just text"}}
+{"timestamp":"2026-10-27T10:00:04.000Z","type":"event_msg","payload":{"type":"patch_apply_end","call_id":"call_4","success":false,"stdout":"","stderr":"cannot write '/home/dev/.bashrc': Permission denied"}}

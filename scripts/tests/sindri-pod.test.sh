@@ -6,7 +6,7 @@
 # pod, a pod that is not Ready, a local port that is taken, no rights; --check reports each and exits 0 or 2); the mirror
 # home lives in $TMPDIR and goes on exit (a TERM too), stale ones are removed; the retry loop prints its attempts and is
 # bounded; profile edit (a fake EDITOR): unchanged stops, a valid edit is validated, put back and approved in that order,
-# an invalid one is never approved and its copy kept, a refused approval's exit code propagates; --onyx forwards the pod's Onyx port and runs `sindri onyx attach` in the pod with -it; a failed attach is the exit code.
+# an invalid one is never approved and its copy kept, a refused approval's exit code propagates.
 # Run: bash scripts/tests/sindri-pod.test.sh
 set -uo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -32,7 +32,7 @@ cleanup() {
 trap cleanup EXIT
 unset AW_SINDRI_HOME AW_SINDRI_UI
 export HOME="$WORK/home" AW_STATE_DIR="$WORK/state" AW_SINDRI_POD_POLL=0.2 AW_SINDRI_POD_RETRIES=5 AW_SINDRI_POD_RETRY_WAIT=0.3
-export AW_SINDRI_POD_ONYX_PORT=43000 TMPDIR="$WORK/tmp"
+export TMPDIR="$WORK/tmp"
 mkdir -p "$HOME" "$WORK/bin" "$WORK/pod" "$WORK/runs" "$TMPDIR"
 export CALLS="$WORK/calls" POD="$WORK/pod" STOP="$WORK/ui-stop"
 : > "$CALLS"
@@ -43,7 +43,6 @@ pod_state() {   # pid epoch token port
   printf '%s\n' "$3" > "$POD/token"
 }
 pod_state 41 7 tok-one 47480
-echo http://127.0.0.1:43000 > "$POD/onyx-url"
 
 cat > "$WORK/bin/kubectl" <<'EOS'
 #!/usr/bin/env bash
@@ -63,7 +62,6 @@ case " $* " in
     exec sleep 300 ;;
   *" exec "*" -- test -f "*) [ -e "$POD/profile.yaml" ]; exit $? ;;
   *"sindri profile init"*) printf 'schemaVersion: 1\nuser: default\n' > "$POD/profile.yaml"; exit 0 ;;
-  *'AW_SINDRI_ONYX_URL:-'*) cat "$POD/onyx-url" 2>/dev/null; exit 0 ;;
   *" exec "*" -- cat "*) cat "$POD/profile.yaml"; exit 0 ;;
   *" rm -f "*) echo "removed" >> "$POD/rm-calls"; exit 0 ;;
   *"sindri doctor"*|*"sindri repo add"*) exit "$(cat "$POD/wrap-rc" 2>/dev/null || echo 0)" ;;
@@ -74,7 +72,7 @@ case " $* " in
     cp "$POD/uploaded" "$POD/profile.yaml"; exit 0 ;;
   *'echo "${AW_SINDRI_PROFILE'*) echo /data/profile/profile.yaml; exit 0 ;;
   *"profile approve"*) exit "$(cat "$POD/approve-rc" 2>/dev/null || echo 0)" ;;
-  *" exec -it "*) [ -e "$POD/attach-fail" ] && exit "$(cat "$POD/attach-fail")"; exit 0 ;;
+  *" exec -it "*) exit 0 ;;
   *" exec "*) [ -e "$POD/down" ] && exit 1
     cat "$POD/control.json"; echo "@@aw-token@@"; cat "$POD/token"; exit 0 ;;
 esac
@@ -119,10 +117,10 @@ finish() {   # <tag>: close the fake app, wait for the script to end, echo its e
 said() { cat "$WORK/runs/$1.out" "$WORK/runs/$1.err" | grep -c -- "$2" || true; }
 
 # --- the dry run: prints the plan, calls nothing, writes nothing
-OUT="$(PATH="/usr/bin:/bin" bash "$DIR/sindri-pod.sh" connect --dry-run --context c1 --namespace n1 --onyx 2>&1)"; RC=$?
+OUT="$(PATH="/usr/bin:/bin" bash "$DIR/sindri-pod.sh" connect --dry-run --context c1 --namespace n1 2>&1)"; RC=$?
 check "dry run: exit 0, nothing written, no kubectl needed" "$RC:$([ -e "$AW_STATE_DIR/sindri-pod" ] && echo wrote || echo clean)" "0:clean"
-check "dry run: names the exec, the forward, the app and Onyx's attach" \
-  "$(printf '%s' "$OUT" | grep -c -e 'exec sindri-0 -c sindri' -e 'port-forward pod/sindri-0' -e 'sindri-ui' -e 'onyx attach')" "6"
+check "dry run: names the exec, the forward and the app" \
+  "$(printf '%s' "$OUT" | grep -c -e 'exec sindri-0 -c sindri' -e 'port-forward pod/sindri-0' -e 'sindri-ui')" "3"
 OUT="$(env -u AW_SINDRI_POD_RETRIES -u AW_SINDRI_POD_RETRY_WAIT PATH="/usr/bin:/bin" bash "$DIR/sindri-pod.sh" connect --dry-run 2>&1)"
 check "dry run: the default is 30 attempts 10 s apart (5 minutes)" "$(printf '%s' "$OUT" | grep -c '30 attempts 10s apart')" "1"
 
@@ -178,41 +176,6 @@ check "--port: the forward maps the chosen local port to the pod's, for the chos
 check "--port: control.json carries the local port" "$(jq -r .url "$(mirror_dir)/control.json")" "http://127.0.0.1:18480"
 finish c >/dev/null
 
-# --- --onyx: forward the pod's Onyx port, run onyx attach in the pod
-reset
-run_connect d --onyx
-waitfor 10 has_line 'exec -it'; waitfor 10 has_ui
-check "--onyx: attach runs in the sindri container with -it, with the forwarded address" \
-  "$(count 'exec -it sindri-0 -c sindri -- env AW_SINDRI_ONYX_FORWARD_URL=http://127.0.0.1:43000 sindri onyx attach$')" "1"
-check "--onyx: onyx up is never run" "$(count 'onyx up')" "0"
-SEQ="$(awk '
-  /exec sindri-0 -c sindri -- sh/ && !a {print "read"; a=1} /port-forward pod\/sindri-0 47480/ && !b {print "forward"; b=1}
-  /exec -it/ {print "attach"}' "$CALLS" | paste -sd, -)"
-check "--onyx: pod read, owner forward, then attach" "$SEQ" "read,forward,attach"
-waitfor 10 has_line 'port-forward pod/sindri-0 43000:43000'; check "--onyx: the Onyx port is forwarded from the pod" "$?" "0"
-check "--onyx: no Service forward" "$(count 'port-forward svc/')" "0"
-check "--onyx: the forwarded address is printed" "$(said d "Onyx's page: http://127.0.0.1:43000")" "1"
-check "--onyx: the app is still connected after attach" "$(jq -r .epoch "$(mirror_dir)/control.json")" "7"
-check "--onyx: success ends with exit 0" "$(finish d)" "0"
-
-# --- --onyx: attach fails; its exit code propagates with a clear text, the app stays up meanwhile
-reset; echo 3 > "$POD/attach-fail"
-run_connect e --onyx
-waitfor 10 has_ui; waitfor 10 has_line 'exec -it'
-sleep 0.5
-check "--onyx failure: the app was still started" "$(count '^ui home=')" "1"
-check "--onyx failure: prints attach exited 3 and says the app stays connected" "$(said e 'attach exited 3; the app stays connected')" "1"
-check "--onyx failure: the script's own exit stays 0 (3 is only for gave up reconnecting)" "$(finish e)" "0"
-rm -f "$POD/attach-fail"
-
-# --- --onyx: Ctrl-C in attach (130) stops attach only
-reset; echo 130 > "$POD/attach-fail"
-run_connect f --onyx
-waitfor 10 has_ui; sleep 0.5
-check "--onyx Ctrl-C: attach stopped, app stays" "$(said f 'the app stays connected')" "1"
-check "--onyx Ctrl-C: exit 0" "$(finish f)" "0"
-rm -f "$POD/attach-fail"
-
 # --- refusals: one line each, exit 2
 conn() { PATH="$WORK/bin:$PATH" bash "$DIR/sindri-pod.sh" connect "$@" 2>&1; }
 lines() { printf '%s\n' "$1" | grep -c .; }
@@ -229,10 +192,10 @@ rm -f "$POD/deny-pods_exec"; touch "$POD/deny-pods_portforward"
 OUT="$(conn)"; RC=$?
 check "no port-forward right: exit 2 naming pods/portforward" "$RC:$(printf '%s' "$OUT" | grep -c "create pods/portforward")" "2:1"
 rm -f "$POD/deny-pods_portforward"
-echo false > "$POD/sindri-ready"; echo "onyx-api=false " > "$POD/others"; echo '{"waiting":{"reason":"ContainerCreating"}}' > "$POD/state"
+echo false > "$POD/sindri-ready"; echo "extra=false " > "$POD/others"; echo '{"waiting":{"reason":"ContainerCreating"}}' > "$POD/state"
 OUT="$(AW_SINDRI_POD_RETRIES=2 conn)"; RC=$?
 check "sindri container not ready: waits, prints its state each time, then exit 2 naming the state and the logs command" \
-  "$RC:$(printf '%s' "$OUT" | grep -c 'waiting for the sindri container of pod sindri-0: waiting: ContainerCreating (attempt 2 of 2)'):$(printf '%s' "$OUT" | grep -c 'is not running (state: waiting: ContainerCreating); see: kubectl logs sindri-0 -c sindri (other containers, for information: onyx-api=false)')" "2:1:1"
+  "$RC:$(printf '%s' "$OUT" | grep -c 'waiting for the sindri container of pod sindri-0: waiting: ContainerCreating (attempt 2 of 2)'):$(printf '%s' "$OUT" | grep -c 'is not running (state: waiting: ContainerCreating); see: kubectl logs sindri-0 -c sindri (other containers, for information: extra=false)')" "2:1:1"
 echo '{"running":{"startedAt":"x"}}' > "$POD/state"
 OUT="$(AW_SINDRI_POD_RETRIES=1 conn)"
 check "sindri container running but not ready: the state says so" "$(printf '%s' "$OUT" | grep -c 'state: running, not ready')" "1"
@@ -240,11 +203,11 @@ echo '{"terminated":{"reason":"Error"}}' > "$POD/state"
 OUT="$(AW_SINDRI_POD_RETRIES=1 conn)"
 check "sindri container terminated: the state names the reason" "$(printf '%s' "$OUT" | grep -c 'state: terminated: Error')" "1"
 rm -f "$POD/sindri-ready" "$POD/state"
-reset; echo "onyx-api=false " > "$POD/others"
+reset; echo "extra=false " > "$POD/others"
 run_connect h
 waitfor 10 has_ui
-check "pod not Ready but the sindri container is: connects, Onyx not answering is a note" \
-  "$(said h 'Onyx: not answering, see sindri doctor'):$(count '^ui home=')" "1:1"
+check "pod not Ready but the sindri container is: connects, the other containers are a note" \
+  "$(said h 'other containers not ready (extra=false); see kubectl describe pod sindri-0'):$(count '^ui home=')" "1:1"
 finish h >/dev/null
 reset
 rm -f "$POD/others"
@@ -261,21 +224,7 @@ s=socket.socket(); s.bind(("127.0.0.1",48999)); s.listen(1); open(sys.argv[1],"w
   check "local port taken: exit 2, one line naming the port and --port" \
     "$RC:$(lines "$OUT"):$(printf '%s' "$OUT" | grep -c 'local port 48999 is taken; pick another with --port'):$(count port-forward)" "2:1:1:0"
   kill "$(cat "$WORK/runs/listener.pid")" 2>/dev/null
-  python3 -I -c 'import socket,sys,time
-s=socket.socket(); s.bind(("127.0.0.1",48998)); s.listen(1); open(sys.argv[1],"w").write("up"); time.sleep(120)' "$WORK/listening2" &
-  echo $! > "$WORK/runs/listener2.pid"
-  waitfor 10 test -e "$WORK/listening2"
-  reset
-  OUT="$(AW_SINDRI_POD_ONYX_PORT=48998 conn --onyx)"; RC=$?
-  check "Onyx port taken: exit 2, one line, attach never runs" \
-    "$RC:$(printf '%s' "$OUT" | grep -c 'local port 48998 is in use: stop what uses it, then run this again'):$(count 'exec -it'):$(count '^ui home=')" "2:1:0:0"
-  kill "$(cat "$WORK/runs/listener2.pid")" 2>/dev/null
 fi
-
-# --- the default Onyx port is 8081
-OUT="$(env -u AW_SINDRI_POD_ONYX_PORT PATH="/usr/bin:/bin" bash "$DIR/sindri-pod.sh" connect --dry-run --onyx --adopt 2>&1)"
-check "--onyx dry run: the Onyx port comes from the pod, --adopt is passed on" \
-  "$(printf '%s' "$OUT" | grep -c -e 'AW_SINDRI_ONYX_URL' -e 'pod/sindri-0 <onyx port>:<onyx port>' -e 'onyx attach --adopt')" "3"
 
 # --- --check: every prerequisite, exit 0 or 2, nothing started
 reset
@@ -288,9 +237,6 @@ OUT="$(AW_SINDRI_UI="$WORK/nope" conn --check)"; RC=$?
 check "--check: reports every failure, not just the first, exit 2" \
   "$RC:$(printf '%s' "$OUT" | grep -c -e 'install-cs.sh' -e 'create pods/exec' -e 'sindri container of pod sindri-0 is not running')" "2:3"
 rm -f "$POD/deny-pods_exec" "$POD/sindri-ready"
-reset
-OUT="$(conn --check --onyx)"; RC=$?
-check "--check --onyx: also checks the Onyx port, runs no attach" "$RC:$(printf '%s' "$OUT" | grep -c 'Onyx) is free'):$(count 'exec -it')" "0:1:0"
 
 # --- cleanup: TERM (what Ctrl-C does) removes the mirror home and the port-forward
 reset
@@ -427,7 +373,7 @@ check "profile edit with a profile: init never runs" \
 pedit_reset; touch "$POD/no-pod"
 pedit >/dev/null; check "profile edit: the pod unreachable is exit 2" "$?" "2"
 rm -f "$POD/no-pod"
-pedit --onyx >/dev/null; check "profile edit: --onyx is a usage error" "$?" "2"
+pedit --check >/dev/null; check "profile edit: --check is a usage error" "$?" "2"
 pedit_reset; OUT="$(pedit --pod p-1 --namespace ns1 --context c9)"
 check "profile edit takes --pod, --namespace and --context" "$(count 'kubectl --context c9 --namespace ns1 exec p-1 -c sindri -- cat')" "1"
 pedit_reset; pedit --release rel >/dev/null
@@ -476,54 +422,10 @@ waitfor 10 has_ui
 check "connect --release rel: the forward goes to pod rel-0" "$(count 'port-forward pod/rel-0 47480:47480')" "1"
 finish r >/dev/null
 
-# --- connect --onyx: the port comes from the pod's AW_SINDRI_ONYX_URL, the override warns, 8081 is last
-reset; echo http://127.0.0.1:8123 > "$POD/onyx-url"
-run_connect o1 --onyx
-waitfor 10 has_line 'exec -it'; sleep 0.3
-check "--onyx: the pod's onyx.port is forwarded to the same local port (no override, here the env one is 43000)" \
-  "$(count 'port-forward pod/sindri-0 43000:8123'):$(said o1 'warning: AW_SINDRI_POD_ONYX_PORT=43000: sign-up redirects and connector OAuth may land on port 8123, not 43000')" "1:1"
-finish o1 >/dev/null
-reset
-( export -n AW_SINDRI_POD_ONYX_PORT; unset AW_SINDRI_POD_ONYX_PORT
-  rm -f "$WORK/enter" "$STOP"
-  PATH="$WORK/bin:$PATH" bash "$DIR/sindri-pod.sh" connect --onyx > "$WORK/runs/o2.out" 2> "$WORK/runs/o2.err" < /dev/null & echo $! > "$WORK/runs/o2.pid"
-  waitfor 10 has_line 'exec -it'; sleep 0.3
-  echo "$(count 'port-forward pod/sindri-0 8123:8123'):$(grep -c 'warning:' "$WORK/runs/o2.err" || true):$(grep -c "Onyx's page: http://127.0.0.1:8123" "$WORK/runs/o2.err")" > "$WORK/o2.res"
-  touch "$STOP"; wait )
-check "--onyx without the override: the pod's port on both sides, no warning, the page printed before attach" "$(cat "$WORK/o2.res")" "1:0:1"
-reset; echo http://onyx.local > "$POD/onyx-url"
-( unset AW_SINDRI_POD_ONYX_PORT; rm -f "$STOP"
-  PATH="$WORK/bin:$PATH" bash "$DIR/sindri-pod.sh" connect --onyx --dry-run >/dev/null 2>&1
-  PATH="$WORK/bin:$PATH" bash "$DIR/sindri-pod.sh" connect --onyx > "$WORK/runs/o3.out" 2> "$WORK/runs/o3.err" < /dev/null & echo $! > "$WORK/runs/o3.pid"
-  waitfor 10 has_line 'exec -it'; sleep 0.3
-  echo "$(count 'port-forward pod/sindri-0 8081:8081')" > "$WORK/o3.res"; touch "$STOP"; wait )
-check "--onyx: a URL with no port falls back to 8081" "$(cat "$WORK/o3.res")" "1"
-reset; echo http://127.0.0.1:43000 > "$POD/onyx-url"
-
-# --- connect --onyx --adopt passes --adopt to attach
-reset
-run_connect ad --onyx --adopt
-waitfor 10 has_line 'exec -it'; sleep 0.3
-check "--onyx --adopt: attach gets --adopt" "$(count 'sindri onyx attach --adopt$')" "1"
-finish ad >/dev/null
-reset
-OUT="$(conn --adopt)"; RC=$?; check "--adopt without --onyx: usage, exit 2" "$RC" "2"
-
-# --- connect --onyx with Onyx off (AW_SINDRI_ONYX_URL unset in the pod): refused, exit 2, nothing started
-reset; rm -f "$POD/onyx-url"
-OUT="$(conn --onyx)"; RC=$?
-check "--onyx with Onyx off: exit 2, the spec's text, no app, no forward, no attach" \
-  "$RC:$(printf '%s' "$OUT" | grep -c 'Onyx is off in this install (onyx.enabled=false); use connect.'):$(count '^ui home='):$(count port-forward):$(count 'exec -it')" "2:1:0:0:0"
-OUT="$(conn --onyx --check)"; RC=$?
-check "--onyx --check with Onyx off: reports it, exit 2" "$RC:$(printf '%s' "$OUT" | grep -c 'use connect.')" "2:1"
-echo http://127.0.0.1:43000 > "$POD/onyx-url"
-
-# --- the Onyx-not-answering line, and the plain-output rule
-reset; echo "onyx-api=false " > "$POD/others"
-run_connect na --onyx
-waitfor 10 has_line 'exec -it'; sleep 0.3
-check "connect --onyx with Onyx's containers not ready: it carries on and says Onyx is not answering" \
-  "$(said na 'Onyx: not answering, see sindri doctor'):$(count '^ui home=')" "1:1"
+# --- the plain-output rule
+reset; echo "extra=false " > "$POD/others"
+run_connect na
+waitfor 10 has_ui; sleep 0.3
 check "output is plain: no escape characters when stdout is not a terminal" \
   "$(cat "$WORK/runs/na.out" "$WORK/runs/na.err" | grep -c "$(printf '\033')" || true)" "0"
 finish na >/dev/null

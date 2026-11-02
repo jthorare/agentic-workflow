@@ -35,6 +35,12 @@ internal sealed class SqliteLedgerReader(LedgerDatabase database) : ILedgerReade
         return events.IsError ? events.Error : Results.Success(events.Value.Count == 0 ? null : events.Value[0]);
     }
 
+    public async ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken)
+    {
+        var events = await Read(new SqlStatement(LedgerSql.SelectEventByKey, c => c.Bind("$key", idempotencyKey)), LedgerEventMapper.Instance, cancellationToken).ConfigureAwait(false);
+        return events.IsError ? events.Error : Results.Success(events.Value.Count == 0 ? null : events.Value[0]);
+    }
+
     public async ValueTask<Result<long>> Head(CancellationToken cancellationToken)
     {
         var head = await Read(new SqlStatement(LedgerSql.SelectHead), (IRowMapper<long>)CountMapper.Instance, cancellationToken).ConfigureAwait(false);

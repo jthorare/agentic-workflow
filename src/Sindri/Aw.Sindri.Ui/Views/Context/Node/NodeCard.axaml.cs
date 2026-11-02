@@ -16,5 +16,7 @@ internal sealed partial class NodeCard : UserControl
 
     private void OnReject(object? sender, RoutedEventArgs e) => _ = (DataContext as NodeCardViewModel)?.Reject();
 
+    private void OnOpenRecord(object? sender, RoutedEventArgs e) => _ = (DataContext as NodeCardViewModel)?.OpenRecord();
+
     private void OnCopyPath(object? sender, RoutedEventArgs e) => _ = (DataContext as NodeCardViewModel)?.CopyPath();
 }

@@ -14,7 +14,7 @@ public sealed class BuildMapConceptPinTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task A_concept_pinned_on_the_repo_is_in_the_built_draft_as_an_override_with_its_id_and_name()
     {
-        var pin = new ConceptPin(ConceptId.From("scheduling"), "Self scheduling", "People pick their shifts.", ["feature:nothing-matches"], []);
+        var pin = new ConceptPin(ConceptId.From("scheduling"), "Self scheduling", "People pick their shifts.", ["feature:nothing-matches"], [], [], []);
         var repos = new[] { new ContextRepo(ContextRepoName.From(FixtureMap.Repo), "/work/aw-split-panes") { Concepts = [pin] } };
 
         _ = await _world.Map.BuildMap(progress: null, MapWorld.HumanWith(MapWorld.OnlyFixtureRepo, repos), MapWorld.None);

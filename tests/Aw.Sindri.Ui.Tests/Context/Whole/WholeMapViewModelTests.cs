@@ -1,4 +1,5 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 namespace Aw.Sindri.Ui.Tests.Context.Whole;
@@ -29,6 +30,24 @@ public sealed class WholeMapViewModelTests
         Assert.Equal("14 items · 15 links · built 1 Jan 2026 00:00", map.SizeText);
         Assert.Equal((true, false, false), (map.IsReady, map.IsLoading, map.IsFailed));
     }
+
+    [Fact]
+    public void The_canvas_name_reads_the_bands_top_to_bottom_with_what_each_holds()
+    {
+        var map = new WholeMapViewModel(() => _utc);
+
+        map.Show(WholeMapLayoutTests.Draft("nodes-small"));
+
+        var name = map.CanvasName;
+        var (why, product, code) = (name.IndexOf("Why (", StringComparison.Ordinal), name.IndexOf("Product (", StringComparison.Ordinal), name.IndexOf("Code (", StringComparison.Ordinal));
+        Assert.StartsWith(Labels.ContextWholeCanvasName + ": ", name, StringComparison.Ordinal);
+        Assert.True(why >= 0 && why < product && product < code, name);
+        Assert.Contains(Labels.ContextWholeKindCount("decision", 2), name, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Before_an_answer_the_canvas_name_is_the_map_alone() =>
+        Assert.Equal(Labels.ContextWholeCanvasName, new WholeMapViewModel(() => _utc).CanvasName);
 
     [Fact]
     public void An_answer_by_area_has_no_grouping_note()
@@ -139,7 +158,7 @@ public sealed class WholeMapViewModelTests
     [Theory]
     [InlineData(0.2, 0.25)]
     [InlineData(0.4, 0.4)]
-    [InlineData(3.0, 1.0)]
+    [InlineData(3.0, 2.0)]
     public void The_first_open_fits_the_map_but_never_below_the_floor(double fit, double expected) =>
         Assert.Equal(expected, WholeMapViewModel.FirstOpenScale(fit));
 

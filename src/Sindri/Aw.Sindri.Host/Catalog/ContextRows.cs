@@ -2,6 +2,8 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Features.CodeIndexJobs;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Features.PinConcepts;
+using Aw.Sindri.Features.SetPages;
 
 namespace Aw.Sindri.Host.Catalog;
 
@@ -30,6 +32,13 @@ internal static class ContextRows
         .. Review("merge", "sindri context map review merge <node> --into <node>"),
         .. Review("add", "sindri context map review add <node> <name> [--under <node>]"),
         .. Review("delete", "sindri context map review delete <node>"),
+        new(ActionId.From("CheckContextMapStructure"), typeof(CheckContextMapStructureRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            "POST", "/sindri/context/map/checks", ShellRows.Form("sindri context map checks [--draft] [--build]"), "ready"),
+        // PurgeIndexSource is the human's alone (owned-index spec §10): the row needs a terminal, so a session (launched or not) and the app are refused with SND-AUTH-002; the CLI also asks a typed yes.
+        new(ActionId.From("PurgeIndexSource"), typeof(PurgeIndexSourceRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
+            NeedsTerminal: true, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            "POST", "/sindri/index/purge", ShellRows.Form("sindri index purge <source>"), "cli-only:typed-yes"),
         new(ActionId.From("PromoteContextMap"), typeof(PromoteContextMapRequest), Variant: null, ActionClass.Desk, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/promote", ShellRows.Form("sindri context map promote"), "ready", SessionOk: true),
@@ -42,6 +51,14 @@ internal static class ContextRows
         new(ActionId.From("PublishContextMap"), typeof(PublishContextMapRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             Method: null, Route: null, ShellRows.Form("sindri services run context-map-refresh"), "ready"),
+        // RelinkPinAliases has no route and no verb of its own (concept pins spec 3.7): the context-map-refresh service starts it as itself, so the row names the verb that runs that service.
+        new(ActionId.From("RelinkPinAliases"), typeof(RelinkPinAliasesRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            Method: null, Route: null, ShellRows.Form("sindri services run context-map-refresh"), "ready"),
+        // ScanContextConcepts has no route and no verb of its own (q110 C): the context-concept-scan service starts it as itself, so the row names the verb that runs that service.
+        new(ActionId.From("ScanContextConcepts"), typeof(ScanContextConceptsRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
+            NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
+            Method: null, Route: null, ShellRows.Form("sindri services run context-concept-scan"), "ready"),
         // BuildCodeIndex has no route and no verb of its own (code index spec 8): the code-index-main-move service starts it as itself, so the row names the verb that runs that service.
         new(ActionId.From("BuildCodeIndex"), typeof(BuildCodeIndexRequest), Variant: null, ActionClass.Job, ServiceGrants: [],
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
@@ -54,6 +71,9 @@ internal static class ContextRows
             NeedsTerminal: false, SelfAudited: false, Destructive: false, ReadsViews: false, Shortcut: null,
             "POST", "/sindri/context/map/import", ShellRows.Form("sindri context map import <file>"), "ready"),
         JobRows.Job("SyncSources", typeof(SyncContextSourcesRequest), "/sindri/context/sources/sync", "sindri context sources sync"),
+        JobRows.Job("SyncIndexSource", typeof(SyncIndexSourceRequest), "/sindri/index/sync", "sindri index sync <source>"),
+        JobRows.Job("PinConcepts", typeof(PinConceptsRequest), "/sindri/context/pins", "sindri context pin set <name>") with { SessionOk = true },
+        JobRows.Job("SetPages", typeof(SetPagesRequest), "/sindri/context/pages", "sindri context page set <name>") with { SessionOk = true },
         JobRows.Job(BacktestAction, typeof(RunContextBacktestRequest), "/sindri/context/eval/backtest", "sindri context eval backtest") with { SessionOk = true },
     ];
 

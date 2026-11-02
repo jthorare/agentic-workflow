@@ -183,6 +183,26 @@ public abstract class LedgerReaderContract
         Expect.Equal(4L, second.ScannedTo);
     }
 
+    /// <summary>ByKey reads the row recorded under that idempotency key, and null for a key nothing used, also on a ledger never written.</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task ByKey_reads_the_row_with_that_key_and_null_for_none()
+    {
+        var (lease, ledger) = await Create(Clock, Probe);
+        Expect.True((await Reader().ByKey("k2", Token)).Value is null);
+        var grant = (await lease.Acquire(Probe.Self(), Token)).Value;
+        _ = await ledger.Append(Entry("process.started", "k1"), grant, Token);
+        var second = (await ledger.Append(Entry("service.heartbeat", "k2"), grant, Token)).Value;
+        var reader = Reader();
+
+        var found = (await reader.ByKey("k2", Token)).Value;
+        var none = (await reader.ByKey("k3", Token)).Value;
+
+        Expect.Equal(second.Sequence, found?.Sequence);
+        Expect.Equal("service.heartbeat", found?.Envelope.Type);
+        Expect.True(none is null);
+    }
+
     /// <summary>On a ledger nothing was written to, a scan is empty at sequence 0 and creates no file.</summary>
     /// <returns>The test.</returns>
     [Fact]

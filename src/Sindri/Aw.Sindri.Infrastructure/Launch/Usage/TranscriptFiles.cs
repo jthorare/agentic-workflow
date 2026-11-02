@@ -7,27 +7,31 @@ internal static class TranscriptFiles
     /// <param name="root">The transcripts' root.</param>
     /// <param name="since">The earliest write time, or null for every file.</param>
     /// <returns>The paths.</returns>
-    public static IReadOnlyList<string> Jsonl(string root, DateTimeOffset? since)
-    {
-        if (!Directory.Exists(root))
-        {
-            return [];
-        }
+    public static IReadOnlyList<string> Jsonl(string root, DateTimeOffset? since) => Jsonl([root], since);
 
+    /// <summary>The same over several roots (the owner's and each separate agent home's), one sorted list.</summary>
+    /// <param name="roots">The transcripts' roots; one that is missing has none.</param>
+    /// <param name="since">The earliest write time, or null for every file.</param>
+    /// <returns>The paths.</returns>
+    public static IReadOnlyList<string> Jsonl(IReadOnlyList<string> roots, DateTimeOffset? since)
+    {
         var found = new List<string>();
-        try
+        foreach (var root in roots.Distinct(StringComparer.Ordinal).Where(Directory.Exists))
         {
-            foreach (var path in Directory.EnumerateFiles(root, "*.jsonl", SearchOption.AllDirectories))
+            try
             {
-                if (since is not { } earliest || File.GetLastWriteTimeUtc(path) >= earliest.UtcDateTime)
+                foreach (var path in Directory.EnumerateFiles(root, "*.jsonl", SearchOption.AllDirectories))
                 {
-                    found.Add(path);
+                    if (since is not { } earliest || File.GetLastWriteTimeUtc(path) >= earliest.UtcDateTime)
+                    {
+                        found.Add(path);
+                    }
                 }
             }
-        }
-        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
-        {
-            // a directory that vanished or can't be read mid-walk: what was found stands
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                // a directory that vanished or can't be read mid-walk: what was found stands
+            }
         }
 
         found.Sort(StringComparer.Ordinal);

@@ -37,4 +37,8 @@ public enum ParkReason
     /// <summary>A Step's dependency (a launch, a block's service, an input's source) stayed down through the bounded retry (kind step); never a question for a human. Not in the needs-you list; answered by '--resume', which runs the Step again.</summary>
     [JsonStringEnumMemberName("unavailable")]
     Unavailable = 8,
+
+    /// <summary>A Step can't be confined to its policy (SND-LAUNCH-015) or its sandbox self-check failed (-016); answered by '--resume', which starts a new run (sandbox spec SB16).</summary>
+    [JsonStringEnumMemberName("launch")]
+    Launch = 9,
 }

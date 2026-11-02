@@ -1,0 +1,107 @@
+{
+  "note": "The dotnet/npm/npx routing of sandbox spec \u00a73.3 rule 2. `heavy` classifies by the literal command text, so a shim calls `heavy --expensive|--light /abs/tool` explicitly. SB-3b checks this table against the case list in bin-r1b/heavy (Shim_table_matches_heavy_cases).",
+  "shims": [
+    {
+      "shim": "dotnet",
+      "subcommands": [
+        "build",
+        "publish",
+        "format",
+        "pack",
+        "restore",
+        "run"
+      ],
+      "route": "expensive"
+    },
+    {
+      "shim": "dotnet",
+      "subcommands": [
+        "test"
+      ],
+      "unlessFlag": "--no-build",
+      "route": "expensive",
+      "note": "test without --no-build"
+    },
+    {
+      "shim": "dotnet",
+      "subcommands": [
+        "test"
+      ],
+      "withFlag": "--no-build",
+      "route": "light"
+    },
+    {
+      "shim": "dotnet",
+      "subcommands": [
+        "new",
+        "sln"
+      ],
+      "otherwise": true,
+      "route": "light",
+      "note": "new, sln and every other subcommand"
+    },
+    {
+      "shim": "dotnet",
+      "subcommands": [
+        "--version",
+        "--info",
+        "--list-sdks",
+        "--list-runtimes"
+      ],
+      "route": "direct"
+    },
+    {
+      "shim": "npm",
+      "subcommands": [
+        "ci",
+        "install",
+        "test"
+      ],
+      "route": "expensive"
+    },
+    {
+      "shim": "npm",
+      "subcommands": [
+        "run",
+        "ls",
+        "view"
+      ],
+      "otherwise": true,
+      "route": "light",
+      "note": "run, ls, view and every other subcommand"
+    },
+    {
+      "shim": "npm",
+      "subcommands": [
+        "--version"
+      ],
+      "route": "direct"
+    },
+    {
+      "shim": "npx",
+      "subcommands": [
+        "vitest",
+        "tsc"
+      ],
+      "route": "expensive",
+      "note": "and any command heavy lists as expensive"
+    },
+    {
+      "shim": "npx",
+      "subcommands": [],
+      "otherwise": true,
+      "route": "light",
+      "note": "every other command"
+    }
+  ],
+  "heldSlot": {
+    "variable": "AW_SANDBOX_SLOT_HELD",
+    "effect": "the shims exec the real tool directly",
+    "neverInEnvironment": "AW_HEAVY_LOCK_HELD"
+  },
+  "resourceEnvironment": [
+    "DOTNET_PROCESSOR_COUNT",
+    "MSBUILDDISABLENODEREUSE",
+    "DOTNET_CLI_USE_MSBUILD_SERVER"
+  ]
+}

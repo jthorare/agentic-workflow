@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Connectors.Testing (scaffolded by /new-package): builders, in-memory fakes and contract bases for Connectors's
+       ports (spec §4b.5). Test support: only *.Tests and *.Testing projects reference it. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.Connectors.Testing</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Connectors/Aw.Connectors.Core/Aw.Connectors.Core.csproj" />
+    <ProjectReference Include="../../src/Connectors/Aw.Connectors.Features/Aw.Connectors.Features.csproj" />
+    <ProjectReference Include="../Aw.Kernel.Testing/Aw.Kernel.Testing.csproj" />
+  </ItemGroup>
+</Project>

@@ -8,6 +8,7 @@ using Aw.Sindri.Ui.ViewModels.Agents;
 
 namespace Aw.Sindri.Ui.Views.Agents;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Agents page: a title click opens the sheet, focus arriving selects the row, the filters narrow the list, and a key or a re-read can ask for focus.</summary>
 internal sealed partial class AgentsPage : UserControl
 {
@@ -50,17 +51,45 @@ internal sealed partial class AgentsPage : UserControl
     {
         base.OnAttachedToVisualTree(e);
         TopLevel.GetTopLevel(this)?.AddHandler(GotFocusEvent, OnFocusMoved, RoutingStrategies.Bubble, handledEventsToo: true);
+        (TopLevel.GetTopLevel(this)?.DataContext as ViewModels.Shell.ShellViewModel)?.PropertyChanged += OnShellChanged;
     }
 
     /// <inheritdoc />
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e)
     {
         TopLevel.GetTopLevel(this)?.RemoveHandler(GotFocusEvent, OnFocusMoved);
+        (TopLevel.GetTopLevel(this)?.DataContext as ViewModels.Shell.ShellViewModel)?.PropertyChanged -= OnShellChanged;
         base.OnDetachedFromVisualTree(e);
     }
 
     // Where focus last went: a re-read only claims lost focus for the page when the human was last on it.
-    private void OnFocusMoved(object? sender, RoutedEventArgs e) => _focusWasHere = e.Source is Visual source && this.IsVisualAncestorOf(source);
+    // Focus going somewhere else with the sheet closed also drops the row's highlight, so a closed sheet leaves no row marked.
+    private void OnFocusMoved(object? sender, RoutedEventArgs e)
+    {
+        _focusWasHere = e.Source is Visual source && this.IsVisualAncestorOf(source);
+        if (!_focusWasHere && TopLevel.GetTopLevel(this)?.DataContext is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
+        {
+            Page?.ClearSelection();
+        }
+    }
+
+    // The sheet closing may leave focus nowhere (no GotFocus follows): once the close has settled, a focus outside the page drops the row's highlight.
+    private void OnShellChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ViewModels.Shell.ShellViewModel.IsSheetOpen), StringComparison.Ordinal) && sender is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
+        {
+            Dispatcher.UIThread.Post(DropHighlightIfFocusLeft, DispatcherPriority.Loaded);
+        }
+    }
+
+    private void DropHighlightIfFocusLeft()
+    {
+        var focused = TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() as Visual;
+        if ((focused is null || !this.IsVisualAncestorOf(focused)) && TopLevel.GetTopLevel(this)?.DataContext is ViewModels.Shell.ShellViewModel { IsSheetOpen: false })
+        {
+            Page?.ClearSelection();
+        }
+    }
 
     /// <inheritdoc />
     protected override void OnDataContextChanged(EventArgs e)
@@ -132,3 +161,4 @@ internal sealed partial class AgentsPage : UserControl
 
     private void OnRepoChosen(object? sender, SelectionChangedEventArgs e) => Page?.FilterRepo((sender as ComboBox)?.SelectedItem as string);
 }
+#pragma warning restore MA0182

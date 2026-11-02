@@ -64,7 +64,7 @@ public sealed class ContextGraphMcpTests : IDisposable
 
         var tools = await mcp.Client.ListToolsAsync(cancellationToken: ct);
 
-        Assert.Equal(["context_query", "context_sources", "context_lenses", "context_concepts", "context_node", "context_neighbors"], tools.Select(t => t.Name).Take(6), StringComparer.Ordinal);
+        Assert.Equal(["context_query", "context_sources", "context_lenses", "context_concepts", "context_pages", "context_node", "context_neighbors"], tools.Select(t => t.Name).Take(7), StringComparer.Ordinal);
         var node = tools.Single(t => t.Name == "context_node");
         var neighbors = tools.Single(t => t.Name == "context_neighbors");
         Assert.All([node, neighbors], t =>
@@ -73,11 +73,11 @@ public sealed class ContextGraphMcpTests : IDisposable
             Assert.False(t.JsonSchema.GetProperty("additionalProperties").GetBoolean());
         });
         Assert.Equal(["key"], node.JsonSchema.GetProperty("required").EnumerateArray().Select(e => e.GetString()), StringComparer.Ordinal);
-        Assert.Equal(["key", "limit", "offset"], node.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal(["key", "limit", "offset", "outside", "reason"], node.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
         Assert.Equal(["key"], neighbors.JsonSchema.GetProperty("required").EnumerateArray().Select(e => e.GetString()), StringComparer.Ordinal);
         var depth = neighbors.JsonSchema.GetProperty("properties").GetProperty("depth");
         Assert.Equal(("integer", 0), (depth.GetProperty("type").GetString(), depth.GetProperty("minimum").GetInt32()));
-        Assert.Equal(["key", "depth", "limit", "offset"], neighbors.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
+        Assert.Equal(["key", "depth", "limit", "offset", "outside", "reason"], neighbors.JsonSchema.GetProperty("properties").EnumerateObject().Select(p => p.Name), StringComparer.Ordinal);
     }
 
     [Fact(Timeout = 120_000), Trait("Lane", "integration")]

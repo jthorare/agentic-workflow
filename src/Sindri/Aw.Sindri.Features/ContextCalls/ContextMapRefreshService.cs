@@ -18,7 +18,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// index's outlooks and asks <see cref="MapPublishDecision"/>; a publish or drop starts 'PublishContextMap' as 'service:context-map-refresh' when none runs and its backoff (5, 10, 20, 40, then 60 minutes over the newest
 /// publish failures) isn't holding; (3) the move check: when a mapped repo's checkout moved along its default branch past the heads in <see cref="MappedHeads"/> (the held draft's, else the current version's) it starts a
 /// 'RefreshContextMap', never while either kind runs, with the refresh backoff over refresh jobs only; (4) the alarm, the one step that merges the kinds: the newest 8 ended jobs of both give the failure count, and three
-/// in a row fail the run (needs-you 'failure:service:context-map-refresh'). A repo on a feature branch is left out and named in the quiet run's summary. No step ends the tick for the later ones.
+/// in a row fail the run (needs-you 'failure:service:context-map-refresh'). A repo on a feature branch is left out and named in the quiet run's summary. No step ends the tick for the later ones. (5) Only when steps 2 to 4 left nothing to do, <see cref="PinRelinkDecision"/> may start 'RelinkPinAliases' (concept pins spec 3.7): the approved pins' aliases or the current map version differ from the last succeeded relink.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
 /// <param name="engine">The context engine: the mapped repos' heads and the stored publish state.</param>
@@ -33,14 +33,23 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
     private const int RecentRuns = 8;
     private const int FailuresToAlarm = 3;
 
+    /// <summary>The hash of the map rules the running build uses; when null the rules are compared only if <see cref="RulesFromScope"/> asks for the scope's own.</summary>
+    internal string? RunningRuleset { get; init; }
+
+    /// <summary>Whether the rules the build runs under are computed from the scope's repos each tick (the registered service: a profile edit changes them); off, only an explicit <see cref="RunningRuleset"/> is compared.</summary>
+    internal bool RulesFromScope { get; init; }
+
     internal static JobKind RefreshKind { get; } = JobKind.From("RefreshContextMap");
 
     internal static JobKind PublishKind { get; } = JobKind.From("PublishContextMap");
 
     internal static ServiceName ServiceId { get; } = ServiceName.From("context-map-refresh");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Builds the context map again so it stays current.";
+
     /// <summary>Runs without a profile entry, every minute: a tick is one heads read, one state read and two jobs reads.</summary>
-    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)));
+    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)), Description);
 
     public ServiceName Identity() => ServiceId;
 
@@ -74,7 +83,7 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return refreshes.IsError ? refreshes.Error : publishes.Error;
         }
 
-        return new Tick(heads.Value, state.Value, refreshes.Value, publishes.Value, [.. heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).Order(StringComparer.Ordinal)]);
+        return new Tick(heads.Value, state.Value, refreshes.Value, publishes.Value, [.. heads.Value.Where(static h => !h.OnDefault).Select(static h => h.Repo.Value).Order(StringComparer.Ordinal)]) { Ruleset = RunningRuleset ?? (RulesFromScope ? RulesOf(scope) : null) };
     }
 
     private async ValueTask<Result<ScheduledResult>> RunTick(ContextScope scope, Tick tick, CancellationToken cancellationToken)
@@ -91,8 +100,15 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return tail;
         }
 
-        var notes = new[] { publish.Note, tail.Value.Summary }.Where(static n => n is not null);
-        return new ScheduledResult(tail.Value.Idle && !publish.Started, notes.Any() ? string.Join("; ", notes) : null);
+        var idle = tail.Value.Idle && !publish.Started;
+        var relink = idle ? await RelinkStep(scope, tick, cancellationToken).ConfigureAwait(false) : default;   // step 5: only when steps 2 to 4 left nothing to do
+        if (relink.Error is { } relinkError)
+        {
+            return relinkError;
+        }
+
+        var notes = new[] { publish.Note, tail.Value.Summary, relink.Note }.Where(static n => n is not null);
+        return new ScheduledResult(idle && !relink.Started, notes.Any() ? string.Join("; ", notes) : null);
     }
 
     // Step 2: with a hold, ask the gate and start the publish when it says go (or drop) and nothing stops it.
@@ -116,7 +132,32 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return new PublishOutcome(Started: false, string.Create(CultureInfo.InvariantCulture, $"map v{hold.Version} held for the code index"), Error: null);
         }
 
+        if (action is MapRebuild rebuild)
+        {
+            return await Rebuild(rebuild, hold, tick, cancellationToken).ConfigureAwait(false);
+        }
+
         return Stands(action, tick) ? default : await StartPublish(cancellationToken).ConfigureAwait(false);
+    }
+
+    // #1704: the held draft was built before the code index of its commit, which is in now. It never publishes: the refresh builds again (the same start the move check uses; the refresh that is running, or its backoff, means it waits).
+    private async ValueTask<PublishOutcome> Rebuild(MapRebuild rebuild, MapHoldState hold, Tick tick, CancellationToken cancellationToken)
+    {
+        var note = string.Create(CultureInfo.InvariantCulture, $"map v{hold.Version} was built before the code index of {string.Join(", ", rebuild.Repos)}, building it again");
+        if (tick.Refreshes.Concat(tick.Publishes).Any(static j => j.State == JobState.Running) || RefreshBackoffHolds(tick))
+        {
+            return default;
+        }
+
+        var started = await Start(tick.Elsewhere, cancellationToken).ConfigureAwait(false);
+        return started.IsError ? new PublishOutcome(Started: false, Note: null, started.Error) : new PublishOutcome(Started: !started.Value.Idle, note, Error: null);
+    }
+
+    private bool RefreshBackoffHolds(Tick tick)
+    {
+        var finished = Finished(tick.Refreshes);
+        var failures = MainMoveDecision.FailedInARow(Attempts(finished));
+        return failures > 0 && clock.GetUtcNow() < finished[0].EndedAt + SyncGapDecision.Wait(failures);
     }
 
     // The refresh that is running replaces a gone draft, and a running publish or its backoff means the start waits.
@@ -155,7 +196,7 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
         var onDefault = tick.Heads.Where(static h => h.OnDefault).ToDictionary(static h => h.Repo.Value, static h => h.Head, StringComparer.Ordinal);
         var refreshed = Finished(tick.Refreshes).ToArray();
         var running = publishStarted || tick.Refreshes.Concat(tick.Publishes).Any(static j => j.State == JobState.Running);
-        var action = MainMoveDecision.Decide(onDefault, MapGate.Mapped(tick.State), running, Attempts(refreshed), clock.GetUtcNow());
+        var action = MainMoveDecision.Decide(new MainMoveInput(onDefault, MapGate.Mapped(tick.State), RulesChanged(tick)), running, Attempts(refreshed), clock.GetUtcNow());
         var both = Finished([.. tick.Refreshes, .. tick.Publishes]).ToArray();
         var failures = MainMoveDecision.FailedInARow(Attempts(both));
         var pending = action != MainMoveAction.Nothing || tick.State.Hold is not null;   // a failing publish keeps the alarm up while its draft is still held
@@ -168,6 +209,14 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
 
         return await Alarm(action, failures, Why(both[0]), tick.Elsewhere, cancellationToken).ConfigureAwait(false);
     }
+
+    // The rules the build would run under now; null when the settings can't be read (the move check then goes by the heads alone).
+    private static string? RulesOf(ContextScope scope) =>
+        MapRuleset.Running(scope);
+
+    // A map stored under other rules (or none recorded) is rebuilt; a held draft is on its way to replace it, so it waits for that publish instead of starting another build every tick.
+    private static bool RulesChanged(Tick tick) =>
+        tick.Ruleset is not null && tick.State.Hold is null && !string.Equals(tick.State.CurrentRuleset, tick.Ruleset, StringComparison.Ordinal);
 
     private static JobRow[] Finished(IEnumerable<JobRow> jobs) =>
         [.. jobs.Where(static j => j.State != JobState.Running && j.EndedAt is not null).OrderByDescending(static j => j.EndedAt).Take(RecentRuns)];
@@ -221,7 +270,10 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
     [LoggerMessage(Level = LogLevel.Warning, Message = "context-map-refresh: the refresh was refused with {Code} and is not retried this tick: {Detail}")]
     private static partial void LogConflict(ILogger logger, string code, string? detail);
 
-    private sealed record Tick(IReadOnlyList<RepoHead> Heads, MapPublishState State, IReadOnlyList<JobRow> Refreshes, IReadOnlyList<JobRow> Publishes, string[] Elsewhere);
+    private sealed record Tick(IReadOnlyList<RepoHead> Heads, MapPublishState State, IReadOnlyList<JobRow> Refreshes, IReadOnlyList<JobRow> Publishes, string[] Elsewhere)
+    {
+        public string? Ruleset { get; init; }
+    }
 
     private readonly record struct PublishOutcome(bool Started, string? Note, Error? Error);
 }

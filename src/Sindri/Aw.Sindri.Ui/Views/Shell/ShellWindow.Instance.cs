@@ -62,7 +62,7 @@ internal sealed partial class ShellWindow
     private void OnBack(object? sender, RoutedEventArgs e) => Shell?.Back();
 
     // Where focus goes when the sheet closes: the strip row, the Workflows row or the queue row that opened it, the edge tab, else the row the selection moved to.
-    private Control? SheetOpenerFrame() => OpenerStripFrame() ?? OpenerWorkflowFrame() ?? OpenerRecipeFrame() ?? OpenerSessionFrame() ?? OpenerRowFrame() ?? Usable(_sheetOpener) ?? SelectedRowFrame();
+    private Control? SheetOpenerFrame() => OpenerStripFrame() ?? OpenerWorkflowFrame() ?? OpenerRecipeFrame() ?? OpenerSessionFrame() ?? OpenerProjectFrame() ?? OpenerRowFrame() ?? Usable(_sheetOpener) ?? SelectedRowFrame();
 
     // The Workflows group head whose Recipe button opened the sheet.
     private Control? OpenerRecipeFrame() => Shell?.OpenerRecipeGroup is { } recipe
@@ -70,9 +70,20 @@ internal sealed partial class ShellWindow
             .FirstOrDefault(b => b.IsEffectivelyVisible && string.Equals(b.Name, "WorkflowGroupRecipe", StringComparison.Ordinal) && b.DataContext is RecipeGroupViewModel group && string.Equals(group.Recipe, recipe, StringComparison.Ordinal)))
         : null;
 
-    private Control? OpenerWorkflowFrame() => Shell?.OpenerWorkflow is { } address
-        ? Usable(this.Get<Border>("Page").GetVisualDescendants().OfType<InstanceRow>()
-            .FirstOrDefault(r => r.IsEffectivelyVisible && string.Equals(r.Address, address, StringComparison.Ordinal))
-            ?.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => string.Equals(b.Name, "WorkflowRowOpen", StringComparison.Ordinal)))
-        : null;
+    // The list row's Open button, or in the board (the default view) the run card's frame.
+    private Control? OpenerWorkflowFrame()
+    {
+        if (Shell?.OpenerWorkflow is not { } address)
+        {
+            return null;
+        }
+
+        var page = this.Get<Border>("Page");
+        return Usable(page.GetVisualDescendants().OfType<InstanceRow>()
+                .FirstOrDefault(r => r.IsEffectivelyVisible && string.Equals(r.Address, address, StringComparison.Ordinal))
+                ?.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => string.Equals(b.Name, "WorkflowRowOpen", StringComparison.Ordinal)))
+            ?? Usable(page.GetVisualDescendants().OfType<RunCard>()
+                .FirstOrDefault(c => c.IsEffectivelyVisible && string.Equals(c.Address, address, StringComparison.Ordinal))
+                ?.GetVisualDescendants().OfType<Border>().FirstOrDefault(b => string.Equals(b.Name, "WorkflowCardFrame", StringComparison.Ordinal)));
+    }
 }

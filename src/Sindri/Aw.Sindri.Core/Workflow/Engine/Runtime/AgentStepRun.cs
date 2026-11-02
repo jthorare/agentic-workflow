@@ -8,4 +8,5 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 /// <param name="Run">The run's token.</param>
 /// <param name="Step">The recipe state and block whose seed prompt the session gets.</param>
 /// <param name="WriteScope">Whether the Step's descriptor has <see cref="Blocks.Capability.WriteScope"/>.</param>
-public sealed record AgentStepRun(WorkflowInstanceId Workflow, InstanceAddress Address, RunToken Run, StepRef Step, bool WriteScope);
+/// <param name="Escalation">0 for the first run of the entry, 1 for its one retry on a stronger model (model-pick spec 5, 7.1); the retry has its own launch id.</param>
+public sealed record AgentStepRun(WorkflowInstanceId Workflow, InstanceAddress Address, RunToken Run, StepRef Step, bool WriteScope, int Escalation = 0);

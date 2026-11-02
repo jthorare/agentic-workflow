@@ -24,6 +24,7 @@ public static partial class TransitionDecision
             CancelRequested when !instance.Ended => d.Changed(d.Rules.Cancel(instance)),
             TakeoverRequested => d.Rules.TakeOver(instance, d.Trigger.Actor).Match<Decision>(d.Changed, e => new Rejected(d.Key, e)),
             HandbackRequested => Handback(d, instance),
+            RewindRequested rewind => Rewind(d, instance, rewind),
             ChildChanged change => Child(d, instance, change),
             AnswerGiven answer when WaitingForAnswer(instance, d.Recipe) is { } wait => AnswerTheWait(d, instance, answer, wait),
             AnswerGiven answer => Answer(d, instance, answer),
@@ -33,6 +34,9 @@ public static partial class TransitionDecision
             OpenRequested open => OpenRequest(d, instance, open),
             OutboxRefused refused => OutboxRefusal(d, instance, refused),
             RecipeWake wake => Woken(d, instance, wake),
+            RuntimeUnavailable unavailable => NoRuntimeForLaunch(d, instance, unavailable),
+            LaunchRefused refused => LaunchParked(d, instance, refused),
+            SessionLost lost => SessionGone(d, instance, lost),
             _ => throw new NotSupportedException($"{d.Trigger.Name} is decided by the engine-owned rules its phase adds."),
         };
     }

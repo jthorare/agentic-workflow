@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Embeddings.Testing: fakes (a fake Ollama server) and contract bases for Embeddings's ports (spec §4b.5). Test
+       support: only *.Tests and *.Testing projects reference it. Empty until U1 and U2 add them. -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.Embeddings.Testing</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/Embeddings/Aw.Embeddings/Aw.Embeddings.csproj" />
+    <ProjectReference Include="../Aw.Kernel.Testing/Aw.Kernel.Testing.csproj" />
+  </ItemGroup>
+</Project>

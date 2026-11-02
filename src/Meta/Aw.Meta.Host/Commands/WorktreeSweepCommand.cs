@@ -8,7 +8,7 @@ internal static class WorktreeSweepCommand
 {
     internal static CommandEntry Entry { get; } = new(
         "worktree-sweep",
-        new CommandSpec("worktree-sweep [--dry-run] [--pr <n>] [--json]", [], ["pr"], ["dry-run"]),
+        new CommandSpec("worktree-sweep [--dry-run] [--include-no-pr] [--pr <n>] [--json]", [], ["pr"], ["dry-run", "include-no-pr"]),
         NeedsConfig: true,
         Run);
 
@@ -25,7 +25,7 @@ internal static class WorktreeSweepCommand
             pr = number;
         }
 
-        return CommandOutput.Call<SweepWorktreesRequest, SweepWorktreesResponse>(context, new SweepWorktreesRequest(context.Line.Has("dry-run"), pr), Text, static r => r.Failed > 0);
+        return CommandOutput.Call<SweepWorktreesRequest, SweepWorktreesResponse>(context, new SweepWorktreesRequest(context.Line.Has("dry-run"), pr, context.Line.Has("include-no-pr")), Text, static r => r.Failed > 0);
     }
 
     private static string Text(SweepWorktreesResponse response)

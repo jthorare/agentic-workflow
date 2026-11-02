@@ -1,6 +1,7 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.WholeMap;
@@ -76,4 +77,11 @@ public interface IContextLenses
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The file map, or SND-CONTEXT-001/003/004/020/030/044/045 (045 for a repo outside the profile or a session's scope, answered the same way).</returns>
     public ValueTask<Result<FileMapView>> FileMap(FileMapQuery query, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>The prefiltered graph the scoping agent Steps work from (issue 1005): nodes within the depth and hops, the role globs and edge limits applied, ranked, capped by nodes and bytes.</summary>
+    /// <param name="query">The anchors, the map, the range, the brief for ranking and the caps.</param>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The graph, or SND-CONTEXT-153 while the engine can't build it, else as <see cref="LensesOf(IReadOnlyList{string}, MapRead, LensRange, ContextScope, CancellationToken)"/>.</returns>
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken);
 }

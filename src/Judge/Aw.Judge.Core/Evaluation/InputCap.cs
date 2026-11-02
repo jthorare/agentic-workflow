@@ -1,22 +1,21 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using Aw.Judge.Core.Questions;
 
 namespace Aw.Judge.Core.Evaluation;
 
 /// <summary>
-/// Caps the stored input and keeps it valid JSON. Input that fits is stored whole. Over the cap, every string value
-/// longer than <see cref="StringLimit"/> is cut to that length with a "[truncated N chars]" marker; if that still
-/// doesn't fit (a huge array of numbers, thousands of strings), the stored value is {"truncated": "&lt;prefix&gt;"}.
+/// Caps the stored input and keeps it valid JSON. Input that fits is stored whole. Over the cap, the longest string
+/// values are cut (each to the same length L, with a "[truncated N chars]" marker) and L is the largest length at which
+/// the whole value fits, so a short field is never touched while a long one is; if even L = 0 doesn't fit (a huge array
+/// of numbers, thousands of strings), the stored value is {"truncated": "&lt;prefix&gt;"}.
 /// Redact first: a secret cut in half would no longer match its pattern.
 /// </summary>
 public static class InputCap
 {
     /// <summary>The stored input's cap, in UTF-16 characters.</summary>
     public const int MaxChars = 16_000;
-
-    /// <summary>How long a string value may stay once the input is over the cap.</summary>
-    public const int StringLimit = 1_000;
 
     /// <summary>Writes the value as JSON of at most <paramref name="maxChars"/> characters.</summary>
     /// <param name="value">The (redacted) value; not changed.</param>
@@ -32,7 +31,9 @@ public static class InputCap
             return text;
         }
 
-        var cut = InputJson.Write(CutStrings(value), options);
+        // The longest strings are cut first (FairCut); no length fits (even every string reduced to its marker is too big) -> the stub.
+        var limit = FairCut.Limit(LongestString(value), l => InputJson.Write(CutStrings(value, l), options).Length <= maxChars);
+        var cut = InputJson.Write(CutStrings(value, limit), options);
         return cut.Length <= maxChars ? cut : Stub(text, maxChars, options);
     }
 
@@ -52,13 +53,21 @@ public static class InputCap
         return string.Create(CultureInfo.InvariantCulture, $"{text[..keep]}[truncated {text.Length - keep} chars]");
     }
 
-    private static JsonNode? CutStrings(JsonNode? node) => node switch
+    private static JsonNode? CutStrings(JsonNode? node, int limit) => node switch
     {
-        JsonObject obj => new JsonObject(obj.Select(pair => KeyValuePair.Create(pair.Key, CutStrings(pair.Value)))),
-        JsonArray array => new JsonArray([.. array.Select(CutStrings)]),
-        JsonValue value when value.TryGetValue<string>(out var text) => JsonValue.Create(Truncate(text, StringLimit)),
+        JsonObject obj => new JsonObject(obj.Select(pair => KeyValuePair.Create(pair.Key, CutStrings(pair.Value, limit)))),
+        JsonArray array => new JsonArray([.. array.Select(item => CutStrings(item, limit))]),
+        JsonValue value when value.TryGetValue<string>(out var text) => JsonValue.Create(Truncate(text, limit)),
         null => null,
         _ => node.DeepClone(),
+    };
+
+    private static int LongestString(JsonNode? node) => node switch
+    {
+        JsonObject obj => obj.Select(pair => LongestString(pair.Value)).DefaultIfEmpty().Max(),
+        JsonArray array => array.Select(LongestString).DefaultIfEmpty().Max(),
+        JsonValue value when value.TryGetValue<string>(out var text) => text.Length,
+        _ => 0,
     };
 
     // A prefix of the full text as one string; halved until its escaped form fits.

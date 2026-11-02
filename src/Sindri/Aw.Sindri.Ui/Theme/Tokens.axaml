@@ -177,7 +177,7 @@
   <x:Double x:Key="Size.SheetMin">420</x:Double>
   <x:Double x:Key="Size.SheetMax">760</x:Double>
   <x:Double x:Key="Size.SheetCoversBelow">1100</x:Double>
-  <x:Double x:Key="Size.WindowMinWidth">900</x:Double>
+  <x:Double x:Key="Size.WindowMinWidth">1000</x:Double>
   <x:Double x:Key="Size.WindowMinHeight">600</x:Double>
   <x:Double x:Key="Size.PanelGap">16</x:Double>
   <x:Double x:Key="Size.Control">30</x:Double>

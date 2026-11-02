@@ -44,12 +44,13 @@ internal sealed class FileDeskNotices(SindriSettings settings, IOsNotifier os, J
             }
 
             OwnerOnly.EnsureDirectory(settings.Home);
-            var scrubbed = notice with { Text = (redactor ?? Redactor.Default).Scrub(notice.Text).Text };   // a blocked scrub yields its placeholder, never the input
+            var scrubber = redactor ?? Redactor.Default;
+            var scrubbed = notice with { Text = scrubber.Scrub(notice.Text).Text, ItemTitle = notice.ItemTitle is { Length: > 0 } title ? scrubber.Scrub(title).Text : null };   // a blocked scrub yields its placeholder, never the input
             var line = Line(scrubbed);
             if (scrubbed.Class == NoticeClass.Interrupt)
             {
                 await OwnerOnly.Append(settings.NotificationsPath, line, cancellationToken).ConfigureAwait(false);
-                await os.Show("Sindri: " + scrubbed.Instance.Value, scrubbed.Text, scrubbed.DeepLink ?? ("workflow/" + scrubbed.Instance.Value), cancellationToken).ConfigureAwait(false);
+                await os.Show(scrubbed.ItemTitle ?? "Sindri", scrubbed.Text, scrubbed.DeepLink ?? ("workflow/" + scrubbed.Instance.Value), cancellationToken).ConfigureAwait(false);
             }
             else
             {

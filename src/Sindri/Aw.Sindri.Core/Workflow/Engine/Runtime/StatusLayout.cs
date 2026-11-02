@@ -26,6 +26,7 @@ public static class StatusLayout
         Labelled(text, "child", [.. view.Children.Select(static c => $"{c.Address.Value}  {c.State}")]);
         Labelled(text, "inputs", InputLines(view));
         Labelled(text, "injection", InjectionLines(view));
+        Labelled(text, "timings", TimingLines(view));
         Labelled(text, "drift", view.Drift is { } drift ? [drift] : []);
         Labelled(text, "timeout", view.Task?.TimeoutAt is { } at ? [$"parks in {StatusText.Duration(at - now)} (desk)"] : []);
         Labelled(text, "paused", view.Paused is { } left ? [$"timeout {StatusText.Duration(left)} left"] : []);
@@ -63,6 +64,9 @@ public static class StatusLayout
 
     private static List<string> InjectionLines(InstanceView view) =>
         view.Task is { } task ? [.. task.Injection.Select(static i => $"{i.Section}  {i.Input.Value}  sha256:{i.Sha256[..Math.Min(12, i.Sha256.Length)]}  {i.Bytes.ToString(System.Globalization.CultureInfo.InvariantCulture)} B{(i.Replaced is { } replaced ? $" (replaced {replaced.Value})" : string.Empty)}")] : [];
+
+    private static List<string> TimingLines(InstanceView view) =>
+        view.Task?.Timings is { } timings ? [.. timings.Select(static t => $"{t.Input.Value}  {t.DurationMs.ToString(System.Globalization.CultureInfo.InvariantCulture)} ms")] : [];
 
     private static void Labelled(StringBuilder text, string label, List<string> lines)
     {

@@ -9,6 +9,7 @@ using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Launch;
+using Aw.Sindri.Tests.SessionExit;
 using Aw.Sindri.Tests.SessionReports;
 
 namespace Aw.Sindri.Tests.Launch;
@@ -55,7 +56,7 @@ public sealed class SessionIdTimeoutTests
         Expect.Equal(SindriErrors.LaunchSessionIdTimedOut.Code, argv.Error.Code);
     }
 
-    // A mismatch is judged under a roomy limit: with the 1 ms one, a cold or loaded run can time out "[0-9]+" and answer SND-LAUNCH-015.
+    // A mismatch is judged under a roomy limit: with the 1 ms one, a cold or loaded run can time out "[0-9]+" and answer SND-LAUNCH-030.
     [Fact]
     public void A_mismatch_is_still_a_plain_invalid_request()
     {
@@ -92,7 +93,7 @@ public sealed class SessionIdTimeoutTests
     public async Task An_exit_whose_id_pattern_times_out_still_ends_the_session_and_says_why()
     {
         await _s.Started();
-        var exit = new SessionExitService(_s.Events(Claude));
+        var exit = new SessionExitService(_s.Events(Claude), new RecordingUsageSampler(_s));
 
         var result = await exit.Handle(A.SessionExitRequest().WithSessionId(_id).Build(), Token);
 

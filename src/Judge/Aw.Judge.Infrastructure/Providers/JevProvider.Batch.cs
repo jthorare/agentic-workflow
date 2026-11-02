@@ -1,5 +1,6 @@
 using System.Net.Http.Headers;
 using Aw.Judge.Core.Batching;
+using Aw.Judge.Core.Config;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Core.Secrets;
 using Aw.Kernel.Json;
@@ -23,7 +24,15 @@ internal sealed partial class JevProvider
     /// <see cref="ProviderUnavailable"/> without a key, past the budget or when the API can't be reached;
     /// <see cref="ProviderErrored"/> for an error status, a body that isn't an answer, or a question the API can't take.
     /// </returns>
-    public async ValueTask<ProviderResult> Batch(BatchRequest batch, CancellationToken cancellationToken)
+    public ValueTask<ProviderResult> Batch(BatchRequest batch, CancellationToken cancellationToken) =>
+        Batch(batch, ProvidersConfig.DefaultInputCapChars, cancellationToken);
+
+    /// <summary>Asks every question of the batch in one call, the state and the question texts capped at <paramref name="inputCapChars"/>.</summary>
+    /// <param name="batch">The state and the questions.</param>
+    /// <param name="inputCapChars">The cap on the state, and on each question text, in characters.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>As the overload without a cap.</returns>
+    public async ValueTask<ProviderResult> Batch(BatchRequest batch, int inputCapChars, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(batch);
         cancellationToken.ThrowIfCancellationRequested();
@@ -46,7 +55,7 @@ internal sealed partial class JevProvider
                 return new ProviderUnavailable(ProviderReasons.NoApiKey);
             }
 
-            using var request = BatchMessage(batch, key);
+            using var request = BatchMessage(batch, inputCapChars, key);
             using var response = await http.SendAsync(request, deadline.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
@@ -78,10 +87,10 @@ internal sealed partial class JevProvider
             : batch.Questions.Any(q => q is ScoreBatchQuestion { Levels.Count: > MaxLevels }) ? ProviderReasons.TooManyLevels : null;
     }
 
-    private HttpRequestMessage BatchMessage(BatchRequest batch, string key)
+    private HttpRequestMessage BatchMessage(BatchRequest batch, int cap, string key)
     {
-        var questions = batch.Questions.ToDictionary(q => q.Key, WireQuestion, StringComparer.Ordinal);
-        var body = new JevBatchRequest(State(batch.State), Model, questions);
+        var questions = batch.Questions.ToDictionary(q => q.Key, q => WireQuestion(q, cap), StringComparer.Ordinal);
+        var body = new JevBatchRequest(CappedState(batch.State, cap), Model, questions);
         var content = new ByteArrayContent(AwJson.Serialize(body, WireJson.Options));
         content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
         var request = new HttpRequestMessage(HttpMethod.Post, _endpoint) { Content = content };
@@ -90,13 +99,13 @@ internal sealed partial class JevProvider
     }
 
     // The question texts leave the machine too: redacted and capped like the state.
-    private JevBatchQuestion WireQuestion(BatchQuestion question) => question switch
+    private JevBatchQuestion WireQuestion(BatchQuestion question, int cap) => question switch
     {
         ChoiceBatchQuestion choice => new JevBatchChoice(
-            Instructions(choice.Prompt),
-            choice.Criteria.ToDictionary(pair => pair.Key, pair => Instructions(pair.Value), StringComparer.Ordinal)),
-        ScoreBatchQuestion score => new JevBatchScore(Instructions(score.Prompt), [.. score.Levels.Select(Instructions)]),
-        _ => new JevBatchNoul(Instructions(question.Prompt)),
+            CappedInstructions(choice.Prompt, cap),
+            choice.Criteria.ToDictionary(pair => pair.Key, pair => CappedInstructions(pair.Value, cap), StringComparer.Ordinal)),
+        ScoreBatchQuestion score => new JevBatchScore(CappedInstructions(score.Prompt, cap), [.. score.Levels.Select(level => CappedInstructions(level, cap))]),
+        _ => new JevBatchNoul(CappedInstructions(question.Prompt, cap)),
     };
 
     private static ProviderResult ReadBatch(byte[] body, BatchRequest batch)

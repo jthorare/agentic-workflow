@@ -1,6 +1,6 @@
-using System.Text.Json;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
@@ -11,15 +11,15 @@ namespace Aw.Context.Core.Concepts;
 public static class ConceptBuilder
 {
     private const string OtherName = "Other";
-    private const int SummaryMax = 300;
 
     /// <summary>One page of the concepts of a graph.</summary>
     /// <param name="basis">The map version and repo the answer is for.</param>
     /// <param name="query">The filter and the page.</param>
     /// <param name="graph">The graph the caller may see.</param>
     /// <param name="text">The caller's text policy.</param>
+    /// <param name="pins">The pins the caller sees; a pin's definition and aliases are read from them over the map's. Null reads none.</param>
     /// <returns>The view, or SND-CONTEXT-006 for a bad page.</returns>
-    public static Result<ConceptsView> Build(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph, MapText text)
+    public static Result<ConceptsView> Build(ConceptsBasis basis, ConceptsQuery query, GraphSnapshot graph, MapText text, PinSet? pins = null)
     {
         ArgumentNullException.ThrowIfNull(basis);
         ArgumentNullException.ThrowIfNull(query);
@@ -38,8 +38,9 @@ public static class ConceptBuilder
         var page = matching.Skip(offset).Take(size).ToList();
         var end = offset + page.Count;
         var other = new ConceptOther(NodeKey.From(ConceptKeys.Other), OtherName, Size(index, index.MembersOf(ConceptKeys.Other)));
-        var rows = page.Select(n => Row(index, n, text)).ToList();
-        return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count));
+        var pages = PageReader.ByConcept(graph);
+        var rows = page.Select(n => Row(index, n, text, pins, pages.GetValueOrDefault(n.Key.Value))).ToList();
+        return new ConceptsView(1, basis.Repo, basis.MapVersion, index.Concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, Code: null, rows, other, Links(index, edges, page), ConceptPages.Next(basis.MapVersion, end, matching.Count)) { PagesInNoConcept = PagesInNoConcept.Of(graph).Count };
     }
 
     /// <summary>One page of one concept's members.</summary>
@@ -87,23 +88,30 @@ public static class ConceptBuilder
         }
 
         var needle = q.Trim();
-        return Has(concept.Label, needle) || Has(Attribute(concept, "summary"), needle)
+        return Has(concept.Label, needle) || Has(NodeAttributes.String(concept, "summary"), needle)
             || index.MembersOf(concept.Key.Value).Any(m => Has(index.Known[m].Label, needle));
     }
 
     private static bool Has(string? haystack, string needle) => haystack?.Contains(needle, StringComparison.OrdinalIgnoreCase) == true;
 
-    private static string? Attribute(GraphNode node, string name) =>
-        node.Attributes is { ValueKind: JsonValueKind.Object } attributes && attributes.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.String ? value.GetString() : null;
+    private static IReadOnlyList<string>? Suggested(ConceptPageSet? pages) => pages is { Suggested.Count: > 0 } ? pages.Suggested : null;
 
-    private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text)
+    private static ConceptRow Row(ConceptIndex index, GraphNode node, MapText text, PinSet? pins, ConceptPageSet? pages)
     {
         var trust = TrustPolicy.ForNode(node, node.Provenance == Provenance.Human);
-        var summary = Attribute(node, "summary") is { Length: > 0 } written ? text.Excerpt(written, trust, SummaryMax) : string.Empty;
-        var source = string.Equals(Attribute(node, "source"), "override", StringComparison.Ordinal) ? "override" : "derived";
+        var pinned = pins?.IsPinned(node.Key) == true;
+        var own = pinned ? pins : null;
+        var summary = Summary(node, own, text, trust);
+        var source = string.Equals(NodeAttributes.String(node, "source"), "override", StringComparison.Ordinal) ? "override" : "derived";
         var citations = node.EvidenceOrEmpty.Select(e => new ConceptCitation(text.Line(e.Key.Value), e.Span)).ToList();
-        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations);
+        var terms = ConceptTermsAttribute.Of(node).Select(t => text.Label(t, trust)).ToList();
+        var aliases = own?.AliasesOf(node.Key).Select(a => text.Label(a, trust)).ToList() ?? [];
+        return new ConceptRow(node.Key, text.Label(node.Label, trust), summary, source, Size(index, index.MembersOf(node.Key.Value)), citations) { Terms = terms.Count == 0 ? null : terms, Pinned = pinned, Aliases = aliases.Count == 0 ? null : aliases, Pages = pages?.Count ?? 0, SuggestedPages = Suggested(pages) };
     }
+
+    // A pin's definition is the approved profile's, over the node's from the last build.
+    private static string Summary(GraphNode node, PinSet? own, MapText text, Results.Trust trust) =>
+        (own?.SummaryOf(node.Key) ?? NodeAttributes.String(node, "summary")) is { Length: > 0 } written ? text.Excerpt(written, trust, NodeAttributes.SummaryMax) : string.Empty;
 
     private static ConceptSize Size(ConceptIndex index, IReadOnlyList<string> members) =>
         new(Count(index, members, NodeKind.Feature), Count(index, members, NodeKind.Record), Count(index, members, NodeKind.Decision), index.CodeOf(members));

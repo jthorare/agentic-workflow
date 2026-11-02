@@ -12,7 +12,7 @@ public sealed class ScopeChallengeStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => ScopingSteps.Challenge;
 
-    protected override string ExpectedHash => "sha256:d6929a35f012fe93402194238296b82c8ac6d6846ca5175c0e54db19110268d9";
+    protected override string ExpectedHash => "sha256:17e22e8d331fef7a34b81d3d8215b3fa1052cc79b1f9a53081585ab65cc1d8a1";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

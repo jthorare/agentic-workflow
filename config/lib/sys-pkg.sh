@@ -109,15 +109,15 @@ aw_sys_install() {
     pacman)  cmd="${s}pacman -S --needed --noconfirm $pkgs" ;;
     zypper)  cmd="${s}zypper --non-interactive install $pkgs" ;;
   esac
-  if [ "${AW_NO_SYSTEM_INSTALL:-0}" = "1" ]; then
-    echo "  AW_NO_SYSTEM_INSTALL=1, so nothing is installed. Run:"
-    echo "    $cmd"
-    return 1
-  fi
   if [ "${AW_DRY_RUN:-0}" = "1" ]; then
     [ "$mgr" = "brew" ] && aw_ensure_brew
     echo "  [dry-run] would run: $cmd"
     return 0
+  fi
+  if [ "${AW_NO_SYSTEM_INSTALL:-0}" = "1" ]; then
+    echo "  AW_NO_SYSTEM_INSTALL=1, so nothing is installed. Run:"
+    echo "    $cmd"
+    return 1
   fi
   if [ "$mgr" = "brew" ]; then aw_ensure_brew || return 1; fi
   if [ "$mgr" = "apt-get" ] && [ -z "${_AW_SYS_APT_UPDATED:-}" ]; then

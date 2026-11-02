@@ -3,6 +3,7 @@ using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Auth;
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Control;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Lease;
 using Aw.Sindri.Core.Profile;
@@ -37,8 +38,10 @@ public sealed class GoldenHost : IAsyncDisposable
 
     private readonly TempHome? _ownHome;
     private readonly List<IDisposable> _owned = [];
+    private readonly List<IAsyncDisposable> _running = [];
     private readonly TempHome? _elsewhere;
     private WebApplication? _app;
+    private bool _stopped;
 
     private readonly string _profileYaml;
     private readonly IReadOnlyDictionary<string, string>? _environment;
@@ -104,6 +107,10 @@ public sealed class GoldenHost : IAsyncDisposable
     /// <param name="resource">The resource.</param>
     public void Own(IDisposable resource) => _owned.Add(resource);
 
+    /// <summary>Hands the host a background task that calls into it and writes under the home (a views pump): it is stopped after the host, and waited for before the home is deleted.</summary>
+    /// <param name="resource">The resource.</param>
+    public void Own(IAsyncDisposable resource) => _running.Add(resource);
+
     /// <summary>The live profile's hash.</summary>
     /// <param name="ct">Cancellation.</param>
     /// <returns>The hash.</returns>
@@ -113,15 +120,26 @@ public sealed class GoldenHost : IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         Http.Dispose();
-        if (_app is not null)
+        if (_app is not null && !_stopped)
         {
+            _stopped = true;   // a second dispose (a test's finally) must not reach the disposed container
+
+            // why: an open event stream ends only on the shutdown signal (serve's stop path trips it); without it StopAsync waits out the 30 s host shutdown timeout (#1546)
+            _app.Services.GetService<IShutdown>()?.Request();
             await _app.StopAsync(CancellationToken.None);
             await _app.DisposeAsync();
         }
 
+        // why: a background task (the views pump) writes under the home, so it is stopped and waited for before the recursive delete, which a late file fails (#1414)
+        foreach (var running in _running)
+        {
+            await running.DisposeAsync();
+        }
+
+        _running.Clear();   // a second dispose (a test's finally) must not stop them again
+        _owned.ForEach(o => o.Dispose());
         _ownHome?.Dispose();
         _elsewhere?.Dispose();
-        _owned.ForEach(o => o.Dispose());
     }
 
     private async Task Run(CancellationToken ct)
@@ -132,6 +150,8 @@ public sealed class GoldenHost : IAsyncDisposable
         {
             // why: an ordinary build embeds the checkout's recipes/sindri (#878), and unapproved shipped recipes would add a setup row to every golden; a test that needs a shipped set replaces this in 'extra'
             _ = services.Replace(ServiceDescriptor.Singleton<IEmbeddedRecipes>(FakeEmbeddedRecipes.Empty));
+            // why: the dense leg of a context query embeds the query through Ollama on 127.0.0.1:11434; a box without it reports 'records-dense' degraded (CI), a box with it does not, so every golden would depend on the machine; a test that needs the model down sets Failure on a fake of its own in 'extra'
+            _ = services.Replace(ServiceDescriptor.Singleton<Context.Core.Vectors.IQueryEmbedder>(new Context.Testing.Vectors.FakeQueryEmbedder()));
             _extra?.Invoke(services);
             _ = services.Replace(ServiceDescriptor.Singleton<IIdGenerator>(_ids));
             _ = services.Replace(ServiceDescriptor.Singleton<IProcessProbe>(new FakeProcessProbe(Pid)));

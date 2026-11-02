@@ -11,6 +11,7 @@ using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Views.Item;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The item detail inside the shell's sheet; Load more asks for the timeline's next page.</summary>
 internal sealed partial class ItemSheet : UserControl
 {
@@ -24,10 +25,12 @@ internal sealed partial class ItemSheet : UserControl
     protected override void OnDataContextChanged(EventArgs e)
     {
         base.OnDataContextChanged(e);
+        _sheet?.Blocked.ApprovalRequested -= OnApprovalRequested;
         _sheet?.ControlsLeaving -= OnControlsLeaving;
         _sheet?.PropertyChanged -= OnSheetChanged;
         _sheet = DataContext as ItemSheetViewModel;
         _sheet?.ControlsLeaving += OnControlsLeaving;
+        _sheet?.Blocked.ApprovalRequested += OnApprovalRequested;
         _sheet?.PropertyChanged += OnSheetChanged;
     }
 
@@ -66,6 +69,21 @@ internal sealed partial class ItemSheet : UserControl
 
     // The decision is answered in Needs you (F3 spec work §1 Q8): the link goes to that page.
     private void OnOpenNeedsYou(object? sender, RoutedEventArgs e) =>
+        (TopLevel.GetTopLevel(this)?.DataContext as ViewModels.Shell.ShellViewModel)?.Navigate(Navigation.DeepLink.HomeNeedsYou);
+
+    // Allow is sent once per press; the button keeps the focus through Sending and "Needs your approval" (the row object survives every re-read).
+    private void OnAllow(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: BlockedRowViewModel row })
+        {
+            _ = row.Allow(CancellationToken.None);
+        }
+    }
+
+    private void OnSeeAllBlocked(object? sender, RoutedEventArgs e) => _sheet?.Blocked.ShowAll();
+
+    // The approval of an Allow is the profile approval in Needs you.
+    private void OnApprovalRequested(object? sender, ApprovalRequestedEventArgs e) =>
         (TopLevel.GetTopLevel(this)?.DataContext as ViewModels.Shell.ShellViewModel)?.Navigate(Navigation.DeepLink.HomeNeedsYou);
 
     private void OnCopyId(object? sender, RoutedEventArgs e)
@@ -139,3 +157,4 @@ internal sealed partial class ItemSheet : UserControl
         }
     }
 }
+#pragma warning restore MA0182

@@ -99,11 +99,7 @@ public sealed class SindriRequestToolTests(SharedMcpWorld shared) : IClassFixtur
         var ct = TestContext.Current.CancellationToken;
         await using var world = await McpWorld.Start(ct);
         await using var mcp = await McpSession.Open(world.Host, "alpha", ct);
-        for (var n = 1; n <= RequestRules.MaxOpenPerRepo; n++)
-        {
-            var filed = await mcp.Call("sindri_request", Request("note", string.Create(CultureInfo.InvariantCulture, $"Note {n}")), ct);
-            Assert.NotEqual(true, filed.IsError);
-        }
+        await RequestScenarios.SeedOpen(world.Host, RequestRules.MaxOpenPerRepo, "alpha", ct);   // why: 200 MCP round trips took 49 s (#1546); the cap reads the requests view
 
         var result = await mcp.Call("sindri_request", Request("note", "One too many."), ct);
 

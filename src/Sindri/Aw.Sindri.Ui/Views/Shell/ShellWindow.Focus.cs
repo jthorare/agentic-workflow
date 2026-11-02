@@ -67,6 +67,7 @@ internal sealed partial class ShellWindow
         ListenStrip(shell, on);
         ListenWorkflows(shell, on);
         ListenAgents(shell, on);
+        ListenSandbox(shell, on);
         if (on)
         {
             shell.Queue.FocusRequested += OnFocusRow;
@@ -148,6 +149,12 @@ internal sealed partial class ShellWindow
     // (run 4, a11y-2). Over a covering sheet the page is disabled and cannot take focus: the usual keep-focus rule applies.
     private void KeepFocusOrReannounce()
     {
+        // A pointer click on a top-bar tab stays on the tab (ux-C-10b): the region is for keyboard, chord and palette navigation, which have nowhere else to put focus.
+        if (_lastMethod == NavigationMethod.Pointer && FocusManager?.GetFocusedElement() is Visual clicked && TopBar.Get<ListBox>("Navigation").IsVisualAncestorOf(clicked))
+        {
+            return;
+        }
+
         var page = this.Get<Border>("Page");
         if (!page.IsEffectivelyEnabled)
         {
@@ -164,8 +171,13 @@ internal sealed partial class ShellWindow
         }
 
         _sheetOpener = null;
-        _ = page.Focus(Method());
+
+        _ = FocusTarget(page).Focus(Method());
     }
+
+    // Arriving on Settings lands on its title, not on a control of the setup checklist or the bare region.
+    private InputElement FocusTarget(Border page) =>
+        Shell is { IsSettings: true } && this.Get<Control>("SettingsSlot").GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => string.Equals(t.Name, "TitleText", StringComparison.Ordinal) && t.IsEffectivelyVisible) is { } title ? title : page;
 
     // After a state change, a closed sheet or a change in its covering: if the focused control is gone (hidden, disabled,
     // or nothing has focus after something had it), focus its region's neighbour.
@@ -180,6 +192,20 @@ internal sealed partial class ShellWindow
         var target = Neighbour(last) ?? Usable(FirstFocusable(TopBar) as Control);
         _sheetOpener = null;
         _ = target?.Focus(Method());
+    }
+
+    // A closed sheet whose opener left focus on the page region itself (a jump that hid the row the sheet opened from: focus fell to the
+    // region, not into the sheet): focus returns to the opener's frame. Focus on a control of the page or in the sheet follows KeepFocus.
+    private void KeepFocusAfterClose()
+    {
+        if (_rowRequests == 0 && Shell is { IsSheetShown: false } && ReferenceEquals(FocusManager?.GetFocusedElement(), PagePanel) && SheetOpenerFrame() is { } opener)
+        {
+            _sheetOpener = null;
+            _ = opener.Focus(Method());
+            return;
+        }
+
+        KeepFocus();
     }
 
     // The sheet's opener (the row it was opened from, by id, or the edge tab), else the row the selection moved to when the opener cleared, else the page region for the sheet; the health pill for the top bar; the page
@@ -212,6 +238,11 @@ internal sealed partial class ShellWindow
             return;   // the Start form is modal: an instance it opened (an existing attempt) stays behind it, and focus stays in the form
         }
 
+        if (Shell is { IsSheetShown: true, IsPageSheet: true } or { IsSheetShown: true, IsAddSeveralPages: true })
+        {
+            return;   // the page sheet puts focus on its Name box itself, once its page is read
+        }
+
         if (Shell is { IsSheetShown: true } shell && (Covering || !HasRealFocus))
         {
             _ = this.Get<Border>("SheetTitle").Focus(Method());
@@ -224,6 +255,18 @@ internal sealed partial class ShellWindow
         {
             EnterOpenedFrame(opened);   // a link with no row behind it (a deep link, a pointer): nothing on the page to stay on
         }
+    }
+
+    // A tab was selected without the keyboard's arrows: focus rests on the selected tab (a pointer press already put it there; a screen reader's or the driver's activation did not).
+    private void FocusSelectedTab()
+    {
+        var nav = TopBar.Get<ListBox>("Navigation");
+        if (FocusManager?.GetFocusedElement() is Visual focused && nav.IsVisualAncestorOf(focused))
+        {
+            return;
+        }
+
+        _ = Usable(nav.ContainerFromIndex(nav.SelectedIndex))?.Focus(Method());
     }
 
     // The page region takes focus (named, so the page is spoken); the Context page then sends it on to its anchor box. One path for a page change and the window opening.

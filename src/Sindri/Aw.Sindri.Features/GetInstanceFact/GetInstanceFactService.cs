@@ -14,10 +14,11 @@ using Aw.Sindri.Core.Workflow.Views;
 namespace Aw.Sindri.Features.GetInstanceFact;
 
 /// <summary>
-/// The scrubbed body behind one fact row (API spec §3.8): the instance's view names the declared facts and their stored digests, the
+/// The scrubbed body behind one fact row (API spec §3.8): the instance's view names the declared facts and the stored digest of every produced one, the
 /// fact store reads the content, the scrubber removes secrets, and the body is capped at <see cref="CapBytes"/>. A text fact is a
-/// string; any other type is its stored JSON, which stays an object when cut (it loses its tail entries). A key the recipe doesn't
-/// declare, or one not produced yet, answers SND-ITEM-404, as does an unknown instance.
+/// string; any other type is its stored JSON, which stays an object when cut (it loses its tail entries). Every produced fact
+/// is served, one the recipe doesn't declare (a desk's input such as 'fact:questions') too; a declared key not produced yet, or a key nothing
+/// produced, answers SND-ITEM-404, as does an unknown instance.
 /// </summary>
 /// <param name="directory">Resolves the instance id to its address.</param>
 /// <param name="runtime">The instances on Temporal.</param>
@@ -51,25 +52,28 @@ internal sealed class GetInstanceFactService(IInstanceDirectory directory, IInst
         }
 
         var row = view.Value.Facts.FirstOrDefault(f => string.Equals(f.Key, request.Key, StringComparison.Ordinal));
-        if (row is null || view.Value.FactShas?.GetValueOrDefault(request.Key) is not { } sha)
+        if (view.Value.FactShas?.GetValueOrDefault(request.Key) is not { } sha)
         {
             return SindriErrors.ItemNotFound.With(row is null ? $"no fact '{request.Key}' on the instance" : $"the fact '{request.Key}' is not produced yet");
         }
 
         var bytes = await contents.Read(new FactValue("fact:sha256:" + sha, sha, HeadSha: null), cancellationToken).ConfigureAwait(false);
-        return bytes.IsError ? bytes.Error : Body(row, scrubber.Scrub(Encoding.UTF8.GetString(bytes.Value.Span)));
+        return bytes.IsError ? bytes.Error : Body(request.Key, row?.Type, scrubber.Scrub(Encoding.UTF8.GetString(bytes.Value.Span)));
     }
 
-    private static FactView Body(FactRow row, string text)
+    /// <summary>A fact the recipe doesn't declare (a desk's input such as 'fact:questions') has no row, so no type: it is a payload when its content is JSON, else text.</summary>
+    private static FactView Body(string key, FactType? declared, string text)
     {
-        if (row.Type != FactType.Text && Parse(text) is { } node)
+        var node = Parse(text);
+        var type = declared ?? (node is null ? FactType.Text : FactType.Payload);
+        if (type != FactType.Text && node is not null)
         {
             var (cut, truncated) = Cap(node);
-            return new FactView(row.Key, row.Type, Element(cut), truncated);
+            return new FactView(key, type, Element(cut), truncated);
         }
 
         var (kept, clipped) = CutText(text);
-        return new FactView(row.Key, row.Type, Element(JsonValue.Create(kept)), clipped);
+        return new FactView(key, type, Element(JsonValue.Create(kept)), clipped);
     }
 
     private static JsonElement Element(JsonNode node)

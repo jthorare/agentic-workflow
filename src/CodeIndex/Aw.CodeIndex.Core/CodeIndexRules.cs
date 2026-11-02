@@ -12,6 +12,9 @@ public static class CodeIndexRules
     /// <summary>Most exact clones, and most near clones, one similar-code answer lists.</summary>
     public const int MaxClones = 1_000;
 
+    /// <summary>Most file paths one SymbolVectors read takes.</summary>
+    public const int MaxSymbolVectorPaths = 2_000;
+
     /// <summary>Most candidates an ambiguous call keeps as edges; 'candidates' keeps the true count.</summary>
     public const int MaxAmbiguousEdges = 64;
 

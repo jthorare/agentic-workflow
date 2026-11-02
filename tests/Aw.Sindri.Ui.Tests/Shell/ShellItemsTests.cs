@@ -30,7 +30,7 @@ public sealed class ShellItemsTests
         var shell = new ShellViewModel(_records, _server, _clock, new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
         await shell.Restore(Token);
         _ = shell.Run(Token);
-        await Until(() => shell.State == ShellState.Normal && shell.Queue.Total > 0 && shell.Navigation[2].Count.Length > 0 && shell.Queue.Groups.Count > 0);
+        await Until(() => shell.State == ShellState.Normal && shell.Queue.Total > 0 && shell.Navigation[3].Count.Length > 0 && shell.Queue.Groups.Count > 0);
         return shell;
     }
 
@@ -50,13 +50,13 @@ public sealed class ShellItemsTests
     {
         var shell = await Connected();
         Assert.Equal(5, shell.Queue.Total);
-        Assert.Equal("5", shell.Navigation[2].Count);
+        Assert.Equal("5", shell.Navigation[3].Count);
 
         _server.QueueView = RouteAnswer.SpecShaped("queue", "extra-p11-running");
         _server.Push(A.Event(58, "item.created"));
 
-        await Until(() => shell.Queue.Total == 12 && shell.Navigation[2].Count == "12");
-        Assert.Equal("12", shell.Navigation[2].Count);
+        await Until(() => shell.Queue.Total == 12 && shell.Navigation[3].Count == "12");
+        Assert.Equal("12", shell.Navigation[3].Count);
     }
 
     // corr-11: an empty first answer still ends the tab's blank: the Queue tab says 0, not nothing.
@@ -70,8 +70,8 @@ public sealed class ShellItemsTests
 
         _ = shell.Run(Token);
 
-        await Until(() => shell.State == ShellState.Normal && !shell.Queue.IsLoading && shell.Navigation[2].Count == "0");
-        Assert.Equal(("0", 0), (shell.Navigation[2].Count, shell.Queue.Total));
+        await Until(() => shell.State == ShellState.Normal && !shell.Queue.IsLoading && shell.Navigation[3].Count == "0");
+        Assert.Equal(("0", 0), (shell.Navigation[3].Count, shell.Queue.Total));
     }
 
     // §3.3 deep link item/<ItemId>: the sheet shows the item; every event re-reads it too.

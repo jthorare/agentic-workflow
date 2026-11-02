@@ -66,7 +66,9 @@ internal sealed partial class ShellWindow
         return true;
     }
 
-    // The item sheet's first control, or the decision sheet's first option button; the instance frame's first read action (Open in, else Copy status).
+    // The item sheet's first control, or the decision form's first usable tab stop in tree order (its note while enabled, else the first
+    // option: the note sits above the options, so entering at an option would leave it behind forward Tab); the instance frame's first read
+    // action (Open in, else Copy status).
     private bool FocusFirstSheetAction()
     {
         if (Shell is { IsInstanceSheet: true } shell)
@@ -77,8 +79,12 @@ internal sealed partial class ShellWindow
 
         var descendants = SheetPanel.GetVisualDescendants().ToList();
         return descendants.OfType<Controls.CommandControl>().FirstOrDefault(c => c.IsEffectivelyVisible)?.FocusRun() == true
-            || descendants.OfType<Button>().FirstOrDefault(b => b.Classes.Contains("decision-option") && b.IsEffectivelyVisible && b.IsEnabled)?.Focus(NavigationMethod.Tab) == true;
+            || descendants.OfType<InputElement>().FirstOrDefault(IsDecisionFormStop)?.Focus(NavigationMethod.Tab) == true;
     }
+
+    private static bool IsDecisionFormStop(InputElement c) =>
+        c.IsEffectivelyVisible && c.IsEffectivelyEnabled && c.Focusable && c.IsTabStop
+        && (c is Button b ? b.Classes.Contains("decision-option") : c is TextBox note && string.Equals(note.Name, "DecisionNote", StringComparison.Ordinal));
 
     // §11.2 "Enter again (or Tab)": Tab from the last control of the selected row whose item the sheet shows (beside the page)
     // goes into the sheet. Tab within the row is unchanged. This handler runs before the focus manager's, which ignores a handled key.
@@ -121,7 +127,7 @@ internal sealed partial class ShellWindow
     {
         if (shell.Create.IsOpen)
         {
-            Dispatcher.UIThread.Post(() => this.Get<CreateItemDialog>("CreateItemDialog").FocusTitle(), DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(() => Built<CreateItemDialog>("CreateItemDialog")?.FocusTitle(), DispatcherPriority.Loaded);
         }
         else if (key == "/" && shell.Queue.IsFiltering)
         {

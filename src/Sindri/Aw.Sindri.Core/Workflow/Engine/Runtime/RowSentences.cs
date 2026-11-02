@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Workflow.Engine.Rules;
 using Aw.Sindri.Core.Workflow.Views;
 
 namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -10,15 +11,15 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 internal static class RowSentences
 {
     /// <summary>The sentence of <paramref name="view"/> under <paramref name="chip"/>, before the row cuts it to its limit.</summary>
-    public static string Now(InstanceView view, StateChip chip) => chip.Word switch
+    public static string Now(InstanceView view, StateChip chip, bool agentIdle = false) => chip.Word switch
     {
         StateChip.Queued => "queued",
         StateChip.Done or StateChip.Failed or StateChip.DidntWorkOut or StateChip.Cancelled => view.Outcome?.Value ?? "done",
         StateChip.WithYou => $"with you: {view.Activity ?? view.State}",
         StateChip.Decision => $"needs your {Answer(view)} (desk answer)",
-        StateChip.Parked when IsUnavailable(view) => "waiting on a dependency that is down",
+        StateChip.Parked when IsUnavailable(view) => view.Question is { } question && Unavailables.IsIdleQuestion(question.Question) ? "agent stalled: idle, no report" : "waiting on a dependency that is down",
         StateChip.Parked or StateChip.Escalated => view.AnswerLine is not null ? "needs your answer" : $"{chip.Word.ToLowerInvariant()}{(view.Detail is { } detail ? $" ({detail})" : string.Empty)}",
-        _ => Running(view),
+        _ => Running(view, agentIdle),
     };
 
     /// <summary>Whether the park is a Step whose dependency stayed down: nobody is asked, the engine runs it again on a resume.</summary>
@@ -29,11 +30,12 @@ internal static class RowSentences
     private static string Answer(InstanceView view) =>
         view.Task is { } task && task.Outputs.FirstOrDefault(o => DeskChecks.Applies(task, o)) is { } output ? SubjectRefs.Bare(output.Fact.Value) : view.Task?.State ?? view.State;
 
-    private static string Running(InstanceView view)
+    private static string Running(InstanceView view, bool agentIdle)
     {
         var where = view.ItemId?.Value ?? view.Address.Value;
         return view.Step switch
         {
+            { Kind: "active" } when agentIdle => $"agent stalled in {where}: idle, no report",
             { Kind: "active" } step => $"agent {Gerund(step.Ref)} in {where}",
             { Kind: "wait" } => $"engine waiting in {where}",
             _ => $"engine running in {where}",

@@ -87,7 +87,7 @@ public sealed class HealthHeadlineTests
         Assert.StartsWith("Sindri is degraded: ", system.Vm.Sentence, StringComparison.Ordinal);
         Assert.Contains(served.Clause!, system.Vm.Sentence, StringComparison.Ordinal);
         var line = Assert.Single(system.Vm.ProblemLines);
-        Assert.Equal((served.Code, served.Text), (line.Code, line.Text));
+        Assert.Equal((served.Code, served.Text, StateGlyph.Warning), (line.Code, line.Text, line.Glyph));
         Assert.Equal((true, false), (system.Vm.ToneWarn, system.Vm.ToneError));
     }
 }

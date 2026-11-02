@@ -28,6 +28,14 @@ internal sealed partial class ShortcutsSheet : UserControl
     // by keyboard (U1 run 1, a11y-7).
     private void OnKey(object? sender, KeyEventArgs e)
     {
+        // The card is the sheet's only tab stop (the rows are text), so Cycle has nothing to wrap to and Tab would walk on to the
+        // page behind the scrim: Tab and Shift+Tab stay on the card (#1081, C-15).
+        if (e.Key == Key.Tab && (e.KeyModifiers & ~KeyModifiers.Shift) == KeyModifiers.None)
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (!_scrolls.TryGetValue(e.Key, out var scroll))
         {
             return;

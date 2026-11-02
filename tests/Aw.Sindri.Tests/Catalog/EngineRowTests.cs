@@ -49,6 +49,7 @@ public sealed class EngineRowTests
         ("ApplyCommand:answer-accept", ActionClass.Protected, "ready"),
         ("ApplyCommand:takeover", ActionClass.Pause, "ready"),
         ("ApplyCommand:handback", ActionClass.Desk, "ready"),
+        ("ApplyCommand:rewind", ActionClass.Desk, "ready"),
         ("ApplyCommand:cancel", ActionClass.Desk, "ready"),
         ("ApplyCommand:command", ActionClass.Desk, "ready"),
         ("CompleteStep", ActionClass.Desk, "ready"),

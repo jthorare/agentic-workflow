@@ -26,4 +26,8 @@ public sealed record InstanceViewContext(
     string? StartedBy = null,
     IReadOnlyDictionary<string, StateVisit>? StateVisits = null,
     string? Recommendation = null,
-    InstanceAddress? Again = null);
+    InstanceAddress? Again = null)
+{
+    /// <summary>How long each of the open run's Step inputs took to fill, in declared order (what the run's 'workflow.injection' row carries); null when none was kept.</summary>
+    public IReadOnlyList<InputTiming>? Timings { get; init; }
+}

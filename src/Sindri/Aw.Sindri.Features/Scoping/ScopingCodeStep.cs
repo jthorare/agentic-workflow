@@ -29,7 +29,7 @@ internal abstract class ScopingCodeStep(BlockId step) : IBlockStep
             return Failed(extra.Error);
         }
 
-        var ran = DeskBlocks.Run(step.Value, new ScopeFacts(Texts(context, extra.Value)), context.LoopCaps.GetValueOrDefault(ScopeRules.ChallengeLoop, ScopeRules.DefaultChallengeRounds));
+        var ran = DeskBlocks.Run(step.Value, new ScopeFacts(Texts(context, extra.Value)), context.LoopCaps.GetValueOrDefault(ScopeRules.ChallengeLoop, ScopeRules.DefaultChallengeRounds), context.LoopCaps.GetValueOrDefault(ScopeRules.GapLoop, ScopeRules.DefaultGapRounds));
         if (ran.IsError)
         {
             return Failed(ran.Error);

@@ -32,8 +32,11 @@ internal sealed partial class ContextSyncGapsService(ContextScopes scopes, ICont
 
     internal static ServiceName ServiceId { get; } = ServiceName.From("context-sync-gaps");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Starts a sync for a context source that has never synced.";
+
     /// <summary>Runs without a profile entry, every minute: a tick is one stored-state read when nothing is missing.</summary>
-    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)));
+    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)), Description);
 
     public ServiceName Identity() => ServiceId;
 

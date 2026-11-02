@@ -88,4 +88,16 @@ public sealed class PathDenylistTests
         Assert.True(custom.Denies("private/a.ts"));
         Assert.True(custom.Denies("config/secrets/x.json"));
     }
+
+    // Six stacked '**/' groups over a path of 300 directories named like the glob's literals: a backtracking matcher tries every way
+    // to place the six 'a/' pieces (hundreds of billions) before it can say no; a linear matcher reads the path once.
+    [Fact, Trait("Lane", "unit")]
+    public void A_glob_with_several_double_stars_says_no_to_a_long_path_without_running_out_of_time()
+    {
+        const string glob = "**/a/**/a/**/a/**/a/**/a/**/a/**/b";
+        var path = string.Concat(Enumerable.Repeat("a/", 300)) + "x.ts";
+
+        Assert.False(PathDenylist.Matches(path, [glob]));
+        Assert.False(PathDenylist.MatchesExactCase(path, [glob]));
+    }
 }

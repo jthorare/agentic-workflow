@@ -1,17 +1,21 @@
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Core.Workflow.Engine.Triggers;
+using Aw.Sindri.Infrastructure.Workflows;
+using Temporalio.Client;
 
 namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>
 /// A run the state timeout parks (engine P8 U3): the park keeps the session, and a cancel stops it. The state timeout is at least a minute and time skipping
-/// doesn't advance while the watch runs, so these take about a minute of real time each: the heavy lane, out of the integration lane's 120 s budget.
+/// doesn't advance while the watch runs, so these take about two minutes of real time each (the timeout retries once before it parks, owner q93): the heavy lane, out of the integration lane's 120 s budget.
 /// </summary>
 [Lane(TestLane.Heavy)]
 [Collection(nameof(WallClockAlone))]
 public sealed class AgentParkedRunTests(SindriTimeSkippingServer skipping) : AgentRuntimeTestBase, IClassFixture<SindriTimeSkippingServer>
 {
-    [Fact(Timeout = 120_000)]
+    [Fact(Timeout = 300_000)]
     public async Task The_state_timeout_parks_and_the_session_stays()
     {
         var ct = TestContext.Current.CancellationToken;
@@ -21,7 +25,7 @@ public sealed class AgentParkedRunTests(SindriTimeSkippingServer skipping) : Age
             _ = await WorkflowsHarness.Until(handle, static v => v.Run is not null && v.State == "write");
             await Launched(ct);
 
-            await WorkflowsHarness.Skip(skipping.Environment, TimeSpan.FromMinutes(2), ct);
+            await SkipToPark(handle, ct);
             var parked = await WorkflowsHarness.Until(handle, static v => v.Question is not null);
 
             Assert.Equal(ParkReason.Timeout, parked.Question?.Reason);
@@ -29,7 +33,7 @@ public sealed class AgentParkedRunTests(SindriTimeSkippingServer skipping) : Age
         });
     }
 
-    [Fact(Timeout = 120_000)]
+    [Fact(Timeout = 300_000)]
     public async Task A_cancel_of_a_parked_run_stops_the_session_the_park_kept()
     {
         var ct = TestContext.Current.CancellationToken;
@@ -38,7 +42,7 @@ public sealed class AgentParkedRunTests(SindriTimeSkippingServer skipping) : Age
         {
             _ = await WorkflowsHarness.Until(handle, static v => v.Run is not null && v.State == "write");
             await Launched(ct);
-            await WorkflowsHarness.Skip(skipping.Environment, TimeSpan.FromMinutes(2), ct);
+            await SkipToPark(handle, ct);
             _ = await WorkflowsHarness.Until(handle, static v => v.Question is not null);
             Assert.Empty(_launcher.Stops);
 
@@ -47,5 +51,43 @@ public sealed class AgentParkedRunTests(SindriTimeSkippingServer skipping) : Age
             await WaitFor(() => _launcher.Stops.Contains(rig.Launch), ct);
             Assert.Equal(0, _launcher.SessionCount);
         });
+    }
+
+    [Fact(Timeout = 300_000)]
+    public async Task A_session_lost_during_the_park_makes_the_answer_a_new_run_not_a_failure()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var rig = await Rig(ct, skipping.Environment);
+        await rig.Run(async handle =>
+        {
+            _ = await WorkflowsHarness.Until(handle, static v => v.Run is not null && v.State == "write");
+            await Launched(ct);
+            await SkipToPark(handle, ct);
+            _ = await WorkflowsHarness.Until(handle, static v => v.Question is not null);
+            var first = rig.Launch;
+            _sessions.End(first, SessionEndReason.Lost, exitCode: null);   // the session is gone while the park keeps it
+            var resume = new AnswerGiven("human:cli", new CommandStamp(CommandNonce.From(new string('4', 32)), new string('0', 64)), AnswerVariant.Resume, Text: null, Amount: null, Forwarded: null);
+
+            _ = await handle.ExecuteUpdateAsync(wf => wf.AnswerAsync(resume), new WorkflowUpdateOptions(new string('4', 32)));
+
+            var view = await WorkflowsHarness.Until(handle, static v => v.Run is { Number: 2 } && v.Question is null);
+            Assert.Equal("write", view.State);
+            await WaitFor(() => _launcher.Requests.Select(static r => r.Launch).Distinct().Take(3).Count() == 2, ct);   // a new session, not the lost one
+            _ = Assert.Single(await rig.Payloads("workflow.transition", ct), static p => p.Contains("\"trigger\":\"session.lost\"", StringComparison.Ordinal));
+            Assert.DoesNotContain(await rig.Payloads("workflow.transition", ct), static p => p.Contains("\"trigger\":\"step.failed\"", StringComparison.Ordinal));
+        });
+    }
+
+    /// <summary>The first 1m timeout retries the state (owner q93) and the re-armed one parks: skips a minute and a bit at a time until the park shows, at most four times.</summary>
+    private async Task SkipToPark(WorkflowHandle<RecipeWorkflow, RecipeResult> handle, CancellationToken ct)
+    {
+        for (var i = 0; i < 4; i++)
+        {
+            await WorkflowsHarness.Skip(skipping.Environment, TimeSpan.FromSeconds(70), ct);
+            if ((await handle.QueryAsync(wf => wf.GetInstance())).Question is not null)
+            {
+                return;
+            }
+        }
     }
 }

@@ -59,6 +59,22 @@ public sealed record WorkflowEventDetail(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Tokens { get; init; }
 
+    /// <summary>The launcher agent an agent run ran on (#1269); null for any other event. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Agent { get; init; }
+
+    /// <summary>The model an agent run asked for; null for any other event and when none was named. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Model { get; init; }
+
+    /// <summary>On a step.failed row of an agent run: <see cref="AgentFailureKinds"/> (refused, check_failed, crashed); null otherwise. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? FailureKind { get; init; }
+
+    /// <summary>On a 'workflow.injection' row: how long each Step input took to fill, in declared order; null for any other event or when no duration was kept. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<InputTiming>? Inputs { get; init; }
+
     /// <summary>
     /// The detail with its opened run described (actor, attempt, max attempts), for a row whose frame opens a Step run; any other detail comes back unchanged.
     /// </summary>
@@ -82,7 +98,7 @@ public sealed record WorkflowEventDetail(
     // The agent's launch id (the session is not started yet when the row is written; the id is a pure function of the instance and the run), 'block', or the human desk.
     private string OpenerOf(WorkflowInstance after, OpenRun open) => open.Runtime switch
     {
-        StepRuntime.Agent => AgentLaunches.LaunchIdFor(after.Id, open.Token).Value,
+        StepRuntime.Agent => AgentLaunches.LaunchIdFor(after.Id, open.Token, open.Escalation).Value,
         StepRuntime.Block => "block",
         StepRuntime.Desk => TriggerActor.StartsWith("human:", StringComparison.Ordinal) ? TriggerActor : "human",
         _ => throw new ArgumentOutOfRangeException(nameof(open), open.Runtime, "an unknown runtime"),
@@ -159,6 +175,10 @@ public sealed record WorkflowEventDetail(
             answer?.Forwarded?.Parent.Value)
         {
             Tokens = recorded.Trigger.Tokens,
-        };
+            FailureKind = (trigger as StepFailed)?.FailureKind,
+        }.Ran(recorded.Trigger);
     }
+
+    // The agent and model an agent run ran on, from the trigger record (#1269).
+    private WorkflowEventDetail Ran(TriggerRecord trigger) => this with { Agent = trigger.Agent, Model = trigger.Model };
 }

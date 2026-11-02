@@ -2,9 +2,11 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Setup;
 using Aw.Sindri.Features.OnboardRepo;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Testing.Worktrees;
 
 namespace Aw.Sindri.Tests.OnboardRepo;
 
@@ -114,6 +116,82 @@ public sealed class RepoOnboardingTests : IDisposable
         Assert.True(done.IsSuccess, done.IsError ? done.Error.Message : null);
         Assert.Equal(("demo", "hooked"), (done.Value.Repo.Value, done.Value.Hooks));
         Assert.Equal("No secret-check hook yet: add it when the installer ships", NoSecretCheckHook.Detail);
+    }
+
+    private RepoOnboarding Onboarding(FakeTrackedFiles files, params SandboxBlocker[] blockers) =>
+        new(_slice.Profiles, _hooks, new RepoEvents(_slice.Held, _slice.Store, _slice.Events, _slice.Callers), _known, new RepoGitCache(new FakeRepoInspector(), _slice.Clock), new FixedChecks(blockers), files);
+
+    private async Task<OnboardedRepo> OnboardWith(FakeTrackedFiles files, params SandboxBlocker[] blockers)
+    {
+        _ = await _slice.HoldLease();
+        _caller = _slice.Callers.EnterService("test");
+        var done = await Onboarding(files, blockers).Onboard(ProfileHash.From(new string('a', 64)), new RepoEntry("demo", "/work/demo"), RepoName.From("demo"), Token);
+        Assert.True(done.IsSuccess, done.IsError ? done.Error.Message : null);
+        return done.Value;
+    }
+
+    [Fact]
+    public async Task A_python_repo_is_offered_its_entries_and_the_snippet_to_paste()
+    {
+        var done = await OnboardWith(new FakeTrackedFiles().With("/work/demo", "pyproject.toml", "app/main.py"));
+
+        Assert.Equal(["Python (pyproject.toml): hosts pypi.org, files.pythonhosted.org; cache paths .cache/pip"], done.Offered);
+        Assert.Contains("    demo:\n      hosts: [pypi.org, files.pythonhosted.org]\n", done.Snippet?.ReplaceLineEndings("\n"), StringComparison.Ordinal);
+        Assert.Empty(done.Blockers ?? []);
+    }
+
+    [Fact]
+    public async Task A_go_repo_is_offered_its_entries()
+    {
+        var done = await OnboardWith(new FakeTrackedFiles().With("/work/demo", "go.mod", "main.go"));
+
+        Assert.Equal(["Go (go.mod): hosts proxy.golang.org, sum.golang.org; cache paths go/pkg/mod, .cache/go-build"], done.Offered);
+    }
+
+    [Fact]
+    public async Task A_repo_with_no_known_toolchain_is_offered_nothing()
+    {
+        var done = await OnboardWith(new FakeTrackedFiles().With("/work/demo", "README.md"));
+
+        Assert.Empty(done.Offered ?? []);
+        Assert.Null(done.Snippet);
+    }
+
+    [Fact]
+    public async Task The_sandbox_checks_blockers_come_back_in_the_owners_words()
+    {
+        var blocker = new SandboxBlocker(SandboxCodes.All[0], SandboxReasons.UnsupportedPlatform);
+
+        var done = await OnboardWith(new FakeTrackedFiles().With("/work/demo", "go.mod"), blocker);
+
+        Assert.Equal([SandboxBlockerLine.From(blocker)], done.Blockers);
+    }
+
+    [Fact]
+    public async Task Files_git_cannot_list_do_not_fail_the_onboarding_and_offer_nothing()
+    {
+        var done = await OnboardWith(new FakeTrackedFiles());
+
+        Assert.Equal("demo", done.Repo.Value);
+        Assert.Empty(done.Offered ?? []);
+    }
+
+    [Fact]
+    public async Task Onboarding_never_writes_the_profile()
+    {
+        await Approve('a', "demo");
+        var before = (await _slice.Profiles.Latest(Token)).Value;
+
+        _ = await OnboardWith(new FakeTrackedFiles().With("/work/demo", "go.mod"));
+
+        var after = (await _slice.Profiles.Latest(Token)).Value;
+        Assert.Equal(before?.Hash, after?.Hash);
+        Assert.Null(after?.Profile.Sandbox);
+    }
+
+    private sealed class FixedChecks(SandboxBlocker[] blockers) : ISandboxChecks
+    {
+        public ValueTask<SandboxCheckReport> Run(CancellationToken cancellationToken) => ValueTask.FromResult(new SandboxCheckReport(blockers, []));
     }
 
     private sealed class CountingHooks : IRepoHooks

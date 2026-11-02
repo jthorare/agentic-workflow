@@ -62,9 +62,9 @@ internal sealed class EndedSessionViewModel : ObservableObject
     {
         Ref = ended.Session.Ref;
         Key = "ended/" + ended.Session.Ref;
-        var id8 = ended.Session.Id.Length > 8 ? ended.Session.Id[..8] : ended.Session.Id;
+        var id8 = ShortId.Of(ended.Session.Id);
         TitleText = ended.Session.ProviderLabel + " · " + (ended.Session.Title is { Length: > 0 } title ? title : ended.Session.Repo is { Length: > 0 } repo ? repo + "/" + id8 : id8);
-        RepoText = ended.Session.Repo ?? string.Empty;
+        RepoText = ended.Session.Repo is { Length: > 0 } name ? name : Labels.EmptyCell;
         EndedText = Labels.EndedAgo(_clock.GetUtcNow() - ended.EndedAt);
         ResumeCommand = ended.Resume is { Count: > 0 } argv && !argv.Any(a => a.Any(char.IsControl)) ? string.Join(' ', argv.Select(Quote)) : string.Empty;
         ResumeText = ResumeCommand.Length > 0 ? ResumeCommand : Labels.NoResumeCommand;

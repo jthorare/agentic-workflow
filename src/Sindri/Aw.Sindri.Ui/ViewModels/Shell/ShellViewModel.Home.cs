@@ -1,6 +1,5 @@
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
-using Aw.Sindri.Ui.ViewModels.Approvals;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Queue;
 
@@ -50,8 +49,16 @@ internal sealed partial class ShellViewModel
     {
         Health.Follow(ReadNeedsYou);
         NeedsYou.SheetRequested += (_, e) => OpenNeedsYouRow(e.RowId);
+        NeedsYou.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(NeedsYouViewModel.SheetRow), StringComparison.Ordinal))
+            {
+                _ = LoadSheetOutputs(NeedsYou.SheetRow);
+            }
+        };
         NeedsYou.ActionRequested += (_, e) => Decide(e);
         Decision.Refused += (_, _) => Navigate(new DeepLink(DeepLinkKind.Decision, Decision.DecisionId));
+        Decision.PropertyChanged += OnDecisionChanged;
         NeedsYou.CopyRequested += (_, e) => _ = clipboard.SetText(e.Text, CancellationToken.None);
     }
 
@@ -66,19 +73,6 @@ internal sealed partial class ShellViewModel
         else
         {
             _ = Decision.Clear();
-        }
-    }
-
-    // A key or a button asks to run an action: approve-all opens its dialog; a decision option is Decide, sent once with the option, and the sheet shows what came back.
-    private void Decide(NeedsYouActionEventArgs request)
-    {
-        if (string.Equals(request.Action.CatalogId, ApproveAllViewModel.Action, StringComparison.Ordinal))
-        {
-            OpenApproveAll();
-        }
-        else if (request.Action.OptionId.Length > 0)
-        {
-            _ = AnswerDecision(request.RowId, request.Action.OptionId, note: null);
         }
     }
 
@@ -168,6 +162,10 @@ internal sealed partial class ShellViewModel
             Navigate(LinkOf(rowId));
         }
     }
+
+    /// <summary>Opens the row's own sheet over the page, never the inbox or a nested park's child: where a row goes when the sheet is the only place that can finish it (a step that needs a file, #1170).</summary>
+    /// <param name="rowId">The row's id.</param>
+    internal void OpenNeedsYouRowSheet(string rowId) => NavigateToRowSheet(LinkOf(rowId));
 
     // The served open.route of a row (api q65) is where its click goes. A route that is the row's own sheet changes nothing here, and a row with none keeps the older rule.
     private bool OpenTargetOf(string? rowId) => OpenChildOf(rowId) || OpenRouteOf(rowId);

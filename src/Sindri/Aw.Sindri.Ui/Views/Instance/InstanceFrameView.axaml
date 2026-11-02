@@ -44,9 +44,13 @@
         <Button x:Name="InstanceOpenIn" Content="{Binding Subject.OpenInText}" IsVisible="{Binding Subject.HasHref}" Click="OnOpenIn"
                 AutomationProperties.Name="{Binding Subject.OpenInName}" />
       </WrapPanel>
+      <SelectableTextBlock x:Name="InstanceOpenInFailed" Classes="caption" Text="{Binding Subject.LaunchFailedText}" IsVisible="{Binding Subject.LaunchFailed, FallbackValue=False}" TextWrapping="Wrap"
+                           AutomationProperties.Name="{Binding Subject.LaunchFailedText}" />
       <Panel IsVisible="{Binding Band, Converter={x:Static ObjectConverters.IsNotNull}}">
         <iv:StatesBand x:Name="Band" DataContext="{Binding Band}" />
       </Panel>
+      <Button x:Name="InstanceOpen" Content="{Binding OpenText}" IsVisible="{Binding HasOpen}" Click="OnOpenServed" HorizontalAlignment="Left"
+              AutomationProperties.Name="{Binding OpenText}" />
       <Panel IsVisible="{Binding Expanded, Converter={x:Static ObjectConverters.IsNotNull}}">
         <iv:ExpandedStateView x:Name="Expanded" DataContext="{Binding Expanded}" />
       </Panel>
@@ -63,6 +67,48 @@
               </DataTemplate>
             </ItemsControl.ItemTemplate>
           </ItemsControl>
+        </Expander>
+      </StackPanel>
+      <StackPanel x:Name="InstanceModelPicks" Spacing="4" IsVisible="{Binding ModelPicks.HasRows, FallbackValue=False}">
+        <TextBlock x:Name="InstanceModelPicksAnnouncement" Classes="caption" Text="{Binding ModelPicks.Announcement}" IsVisible="{Binding ModelPicks.Announcement.Length, FallbackValue=False}"
+                   AutomationProperties.Name="{Binding ModelPicks.Announcement}" AutomationProperties.LiveSetting="Polite" />
+        <Expander x:Name="InstanceModelPicksExpander" Header="{Binding ModelPicks.Heading}" IsExpanded="False">
+          <StackPanel Spacing="4">
+            <Grid ColumnDefinitions="*,90,56,90,2*" AutomationProperties.AccessibilityView="Raw">
+              <TextBlock Grid.Column="0" Classes="caption subtle" Text="Step" />
+              <TextBlock Grid.Column="1" Classes="caption subtle" Text="Model" />
+              <TextBlock Grid.Column="2" Classes="caption subtle" Text="Tokens" />
+              <TextBlock Grid.Column="3" Classes="caption subtle" Text="Cost" />
+              <TextBlock Grid.Column="4" Classes="caption subtle" Text="Why" />
+            </Grid>
+            <ItemsControl x:Name="InstanceModelPickRows" ItemsSource="{Binding ModelPicks.Rows}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="inst:ModelPickRowViewModel">
+                  <Border AutomationProperties.Name="{Binding Name}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" Margin="0,2">
+                    <Grid ColumnDefinitions="*,90,56,90,2*">
+                      <TextBlock Grid.Column="0" Classes="caption" Text="{Binding Step}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Grid.Column="1" Classes="caption" Text="{Binding Model}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ModelName}" />
+                      <TextBlock Grid.Column="2" Classes="caption" Text="{Binding Tokens}" AutomationProperties.AccessibilityView="Raw" />
+                      <TextBlock Grid.Column="3" Classes="caption" Text="{Binding Cost}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+                      <StackPanel Grid.Column="4" Spacing="2">
+                        <Button Padding="0" Background="Transparent" HorizontalContentAlignment="Left" AutomationProperties.Name="{Binding Why}" IsEnabled="{Binding Panel, Converter={x:Static ObjectConverters.IsNotNull}}">
+                          <TextBlock Classes="caption" Text="{Binding Why}" TextWrapping="Wrap" />
+                          <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedLeft">
+                              <iv:WhyPanel DataContext="{Binding Panel}" />
+                            </Flyout>
+                          </Button.Flyout>
+                        </Button>
+                        <TextBlock Classes="caption subtle" Text="{Binding Outcome}" IsVisible="{Binding Outcome.Length}" />
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+            <TextBlock x:Name="InstanceModelPicksTotal" Classes="caption" Text="{Binding ModelPicks.TotalLine}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ModelPicks.TotalLine}" />
+            <ItemsControl ItemsSource="{Binding ModelPicks.EscalationLines}" />
+          </StackPanel>
         </Expander>
       </StackPanel>
       <Panel IsVisible="{Binding Facts, Converter={x:Static ObjectConverters.IsNotNull}}">

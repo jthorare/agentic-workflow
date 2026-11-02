@@ -39,16 +39,34 @@ internal sealed partial record InstanceWords
         var where = park.Mirrors is null ? string.Empty : $" in {ChildName}";
         return park.Reason switch
         {
-            ParkReason.Rounds or ParkReason.NoProgress => $"Parked ({Name(park.Reason.Value)}){where}: {question}.\nGrant more rounds at a terminal, or cancel.",
+            ParkReason.Rounds or ParkReason.NoProgress => $"Parked ({Name(park.Reason.Value)}){where}: {question}.\n{RoundsAnswer(park)}",
             ParkReason.Budget => $"Parked (budget){where}: {question}.\nGrant tokens at a terminal, or cancel.",
             ParkReason.NeedsAnswer when (park.ParkKind ?? park.MirroredParkKind) == ParkKind.Wait => $"Parked{where}: {question}.\nFix the cause, then resume to check again, or cancel.",
             ParkReason.NeedsAnswer => $"Parked (needs-answer){where}: {question}.\nAnswer with --text; the Step runs again with your answer.",
             ParkReason.Timeout => $"Parked (timeout): {question}.\nResume to give it the full time again, or cancel.",
             ParkReason.Unavailable => $"Parked (unavailable){where}: {question}.\nFix the dependency, then resume to run the Step again, or cancel.",
+            ParkReason.Launch => $"Parked (launch){where}: {question}.\nFix the cause it names, then resume to start the Step again, or cancel.",
+            ParkReason.NoRuntime when park.Sandbox is not null => $"Parked (no runtime){where}: {question}.\nFix the cause it names, then resume to start the Step again, or cancel.",
             ParkReason.SpecConflict when park.Mirrors is not null => $"Parked (spec-conflict){where}: {question}.",
             ParkReason.SpecConflict => SpecConflict(park),
             ParkReason.NoRuntime or null or _ => $"No runtime for {Block(question)} in this build.\nCancel, or resume in a build that has it.",
         };
+    }
+
+    /// <summary>The way out of a rounds or no-progress park: a grant, and when the run can go back to a step, the rewind that re-runs it on the facts the run holds (#1270).</summary>
+    private string RoundsAnswer(Suspension park)
+    {
+        var targets = TransitionDecision.RewindTargets(Recipe.Recipe, Recipe.Catalog, Instance);
+        if (targets.Count == 0)
+        {
+            return "Grant more rounds at a terminal, or cancel.";
+        }
+
+        var withheld = park.Resume.Withheld?.Transition is { } index && index >= 0 && index < Recipe.Recipe.Transitions.Count && Recipe.Recipe.Transitions[index].From.Contains(targets[0], StringComparer.Ordinal);
+        var rewind = withheld
+            ? $"rewind to re-run {targets[0]} on the same facts (`sindri workflow rewind {Address} --to {targets[0]}`)"
+            : $"rewind to re-run an earlier step on the same facts (`sindri workflow rewind {Address} --to <state>`, one of: {string.Join(", ", targets)})";
+        return $"Grant more rounds at a terminal, {rewind}, or cancel.";
     }
 
     private string SpecConflict(Suspension park)
@@ -59,7 +77,7 @@ internal sealed partial record InstanceWords
             ParkKind.Revoked => $"{id} was revoked.\nCancel, then start a new attempt from an approved version.",
             ParkKind.ChildRevoked => $"{ChildRecipe(park.Question)} (pinned by {id}) was revoked.\nRe-approve {id} so it pins an approved child; the approval resumes this instance.",
             ParkKind.Drift => $"{Block(park.Question)} changed since {Pinned} was approved.\nRe-approve it (`sindri recipe approve {Pinned}`); the approval resumes this instance.",
-            ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => park.Question,   // why: the engine wrote the reason with its own fix (SND-WF-010/015 or the allowlist sentence of SND-WF-011), so it is said once
+            ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or ParkKind.Unconfinable or ParkKind.SelfCheck or null or _ => park.Question,   // why: the engine wrote the reason with its own fix (SND-WF-010/015 or the allowlist sentence of SND-WF-011), so it is said once
         };
     }
 

@@ -1,10 +1,10 @@
-judge label status
-  command judge adjudicate wake-gate --limit 5
-"$JUDGE_BIN" eval import-turns t.jsonl
-${JUDGE_BIN} label outcomes
-$AW_JUDGE_BIN eval ask-check
+judge prompt-sort why d1
+  command judge prompt-sort adjudicate --limit 5
+"$JUDGE_BIN" prompt-sort eval
+${JUDGE_BIN} prompt-sort outcomes
+$AW_JUDGE_BIN prompt-sort import --since 14d
 "${AW_JUDGE_BIN:-judge}" prompt-sort why d1
 ${AW_JUDGE_BIN:-judge} prompt-sort promote --apply
 out="$(judge prompt-sort import --since 14d)"
-if judge adjudicate ask-check; then :; fi
-printf '%s' "$in" | judge label set item skip
+if judge prompt-sort adjudicate; then :; fi
+printf '%s' "$in" | judge prompt-sort eval

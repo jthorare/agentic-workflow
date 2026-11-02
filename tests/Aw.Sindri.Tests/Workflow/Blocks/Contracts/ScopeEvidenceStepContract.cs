@@ -18,12 +18,12 @@ public sealed class ScopeEvidenceStepContract : BlockContract
 
     protected override BlockDescriptor Descriptor => ScopingSteps.Evidence;
 
-    protected override string ExpectedHash => "sha256:a51b9285ad47d95dfe1c81816b424cf2a44ee02a3550f9dbb9f0daefcd153b7c";
+    protected override string ExpectedHash => "sha256:0642b99faa2246448802631c14466a0da270a858a3d82a335210df76fafa1df1";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 
     protected override IServiceProvider Compose() => ShippedComposition.Compose();
 
     protected override async Task InvokeAsync(CancellationToken cancellationToken) =>
-        _ = await new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts(), new FakeRunDiff()).Run(ScopingStepContexts.Of("step.scope.evidence", []), cancellationToken);
+        _ = await new ScopeEvidenceStep(new InMemoryRunArea(), new InMemoryPackets(), new InMemoryRepoCheckouts(), new FakeRunDiff(), new FakeScopeRunRecords()).Run(ScopingStepContexts.Of("step.scope.evidence", []), cancellationToken);
 }

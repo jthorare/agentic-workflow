@@ -41,8 +41,11 @@ internal sealed partial class CodeIndexMainMoveService(CodeIndexJobScopes scopes
 
     internal static ServiceName ServiceId { get; } = ServiceName.From("code-index-main-move");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Starts a code-index update for each repo whose main branch moved.";
+
     /// <summary>Runs without a profile entry, every minute: a tick is one heads read, one stored-heads read and one jobs read.</summary>
-    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)));
+    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromMinutes(1)), Description);
 
     public ServiceName Identity() => ServiceId;
 

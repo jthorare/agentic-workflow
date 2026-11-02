@@ -63,6 +63,10 @@
     <ProjectReference Include="../../src/CodeIndex/Aw.CodeIndex.Core/Aw.CodeIndex.Core.csproj" />
     <ProjectReference Include="../../src/CodeIndex/Aw.CodeIndex.Features/Aw.CodeIndex.Features.csproj" />
     <ProjectReference Include="../../src/CodeIndex/Aw.CodeIndex.Infrastructure/Aw.CodeIndex.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Connectors/Aw.Connectors.Core/Aw.Connectors.Core.csproj" />
+    <ProjectReference Include="../../src/Connectors/Aw.Connectors.Features/Aw.Connectors.Features.csproj" />
+    <ProjectReference Include="../../src/Connectors/Aw.Connectors.Infrastructure/Aw.Connectors.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/Embeddings/Aw.Embeddings/Aw.Embeddings.csproj" />
   </ItemGroup>
 
   <ItemGroup>

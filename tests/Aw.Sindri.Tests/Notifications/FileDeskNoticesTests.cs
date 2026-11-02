@@ -52,7 +52,7 @@ public sealed class FileDeskNoticesTests : IDisposable
         _ = await notices.Send(DeskNoticesContract.Notice("WFI-a:2:n2", NoticeClass.Info), Token);
 
         var (title, text) = Assert.Single(_os.Shown);
-        Assert.Equal(("Sindri: T-4/dev-notify/1", "Waiting for the desk notification to be delivered."), (title, text));
+        Assert.Equal(("Sindri", "Waiting for the desk notification to be delivered."), (title, text));
         var digest = Assert.Single(await File.ReadAllLinesAsync(Path.Combine(_home.Path, "digest", "2026-10-13.jsonl"), Token));
         Assert.Equal("WFI-a:2:n2", JsonDocument.Parse(digest).RootElement.GetProperty("identity").GetString());
     }
@@ -120,6 +120,17 @@ public sealed class FileDeskNoticesTests : IDisposable
         var added = JsonDocument.Parse((await File.ReadAllLinesAsync(Path.Combine(_home.Path, "notifications.jsonl"), Token))[1]).RootElement;
         Assert.False(added.TryGetProperty("rowId", out _) || added.TryGetProperty("deepLink", out _));
         Assert.Equal("workflow/T-4/dev-notify/1", Assert.Single(_os.Links));   // no row: the instance link
+    }
+
+    [Fact]
+    public async Task A_banner_is_titled_with_the_item_title_not_the_instance_address()
+    {
+        var notices = Notices();
+
+        _ = await notices.Send(DeskNoticesContract.Notice("WFI-a:1:n1") with { ItemTitle = "P-FRN-920 Singular Backend Model for Targets" }, Token);
+
+        var (title, _) = Assert.Single(_os.Shown);
+        Assert.Equal("P-FRN-920 Singular Backend Model for Targets", title);
     }
 
     private FileDeskNotices Notices() =>

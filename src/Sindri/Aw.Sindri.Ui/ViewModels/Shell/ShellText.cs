@@ -81,6 +81,9 @@ internal sealed class ShellText
     /// <summary><see cref="Labels.Home"/>.</summary>
     public string Home { get; } = Labels.Home;
 
+    /// <summary><see cref="Labels.Projects"/>.</summary>
+    public string Projects { get; } = Labels.Projects;
+
     /// <summary><see cref="Labels.LastEventCard"/>.</summary>
     public string LastEventCard { get; } = Labels.LastEventCard;
 

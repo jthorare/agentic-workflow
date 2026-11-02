@@ -92,7 +92,7 @@ internal sealed partial class BlockRules : IRecipeRules
         }
 
         return catalog.Find(reference.Id) is { } descriptor
-            ? Parameters(reference, descriptor, source).Concat(ProviderLists(reference, descriptor, source)).Concat(Bundles(reference, descriptor, source))
+            ? Parameters(reference, descriptor, source).Concat(ProviderLists(reference, descriptor, source)).Concat(CallWidths(reference, descriptor, source)).Concat(Bundles(reference, descriptor, source))
             : [source.Finding("RCP-BLOCK-001", $"{reference.Path}.use", $"block '{id}' isn't registered", $"name a registered {Word(kind)} block, or fix the id")];
     }
 

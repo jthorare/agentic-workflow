@@ -15,6 +15,29 @@
       ]
     },
     {
+      "type": "context.model.called",
+      "keyShape": "context.model.called:<callId>",
+      "invalidates": [
+        "jobs"
+      ]
+    },
+    {
+      "type": "context.page.written",
+      "keyShape": "context.page.written:<hash>",
+      "invalidates": [
+        "profile",
+        "needs-you"
+      ]
+    },
+    {
+      "type": "context.pin.written",
+      "keyShape": "context.pin.written:<hash>",
+      "invalidates": [
+        "profile",
+        "needs-you"
+      ]
+    },
+    {
       "type": "decision.recorded",
       "keyShape": "decision.recorded:<decisionId>",
       "invalidates": [
@@ -140,6 +163,7 @@
       "keyShape": "launch.outcome:<launchId>",
       "invalidates": [
         "launch",
+        "launch-picks",
         "item",
         "items",
         "timeline",
@@ -168,6 +192,7 @@
       "keyShape": "launch.outcome:<launchId>",
       "invalidates": [
         "launch",
+        "launch-picks",
         "item",
         "items",
         "timeline",
@@ -191,6 +216,14 @@
       ]
     },
     {
+      "type": "launch.waiting",
+      "keyShape": "launch.waiting:<launchId>",
+      "invalidates": [
+        "launch",
+        "item"
+      ]
+    },
+    {
       "type": "mcp.registered",
       "keyShape": "mcp.registered:<commandId>",
       "invalidates": [
@@ -198,10 +231,21 @@
       ]
     },
     {
-      "type": "onyx.deferred",
-      "keyShape": "onyx.deferred:<commandId>",
+      "type": "model.picked",
+      "keyShape": "model.pick:<launchId>",
       "invalidates": [
-        "setup"
+        "launch",
+        "launch-picks",
+        "timeline"
+      ]
+    },
+    {
+      "type": "model.picking",
+      "keyShape": "model.picking:<launchId>",
+      "invalidates": [
+        "launch",
+        "launch-picks",
+        "timeline"
       ]
     },
     {
@@ -238,6 +282,41 @@
       ]
     },
     {
+      "type": "project.attached",
+      "keyShape": "project.attached:<projectId>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.changed",
+      "keyShape": "project.changed:<projectId>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.detached",
+      "keyShape": "project.detached:<projectId>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.hidden",
+      "keyShape": "project.hidden:<linear>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
+      "type": "project.led.noted",
+      "keyShape": "project.led.noted:<linear>:v<version>",
+      "invalidates": [
+        "projects"
+      ]
+    },
+    {
       "type": "recipe.registration.completed",
       "keyShape": "recipe.registration.completed:<epoch>",
       "invalidates": [
@@ -270,6 +349,22 @@
         "items",
         "item",
         "timeline"
+      ]
+    },
+    {
+      "type": "sandbox.denied",
+      "keyShape": "sandbox.denied:<launch>:<kind>:<targetHash>:<count>",
+      "invalidates": [
+        "launch",
+        "item"
+      ]
+    },
+    {
+      "type": "sandbox.limit-hit",
+      "keyShape": "sandbox.limit-hit:<launch>:<kind>:<n>",
+      "invalidates": [
+        "launch",
+        "item"
       ]
     },
     {
@@ -309,6 +404,7 @@
       "keyShape": "session.ended:<launch>",
       "invalidates": [
         "launch",
+        "launch-picks",
         "item",
         "items",
         "timeline"

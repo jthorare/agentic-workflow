@@ -391,7 +391,12 @@ public sealed class ScopingCheckTests
     [Fact, Trait("Lane", "unit")]
     public async Task The_challenger_on_the_drafters_model_warns_once_the_second_opinion_is_spent_and_before_it_fails()
     {
-        static void SameModel(JsonNode n) => n["runs"]![1]!["model"] = n["runs"]![0]!["model"]!.DeepClone();
+        static void SameModel(JsonNode n)
+        {
+            n["runs"]![1]!["model"] = n["runs"]![0]!["model"]!.DeepClone();
+            n["runs"]![0]!["requested"] = "m-1";   // a fail needs both runs to have asked for a model
+            n["runs"]![1]!["requested"] = "m-1";
+        }
         static void Spend(JsonNode n)
         {
             var rounds = n["rounds"]!.AsArray();

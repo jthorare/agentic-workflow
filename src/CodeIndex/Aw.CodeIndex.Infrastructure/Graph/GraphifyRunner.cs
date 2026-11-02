@@ -130,7 +130,7 @@ internal sealed partial class GraphifyRunner(GraphifyOptions options, IBodyScrub
 
         if (ran.TimedOut || ran.Exit != 0)
         {
-            return CodeIndexErrors.GraphUnavailable.With(ran.TimedOut ? "timeout" : "failed");
+            return CodeIndexErrors.GraphUnavailable.With(ran.TimedOut ? "timeout" : "failed: " + GraphifyFailure.Message(ran.Exit, ran.Stderr, text => scrubber.Scrub(text, GraphifyFailure.MaxCharacters)));
         }
 
         var json = await ReadGraph(snapshot, request.Settings, cancellationToken).ConfigureAwait(false);

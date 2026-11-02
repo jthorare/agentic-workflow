@@ -74,11 +74,11 @@ public sealed class ShellSheetKindTests
     {
         var shell = await Shell();
 
-        foreach (var kind in Enum.GetValues<DeepLinkKind>())
+        foreach (var kind in Enum.GetValues<DeepLinkKind>().Where(k => k is not (DeepLinkKind.ProjectAdd or DeepLinkKind.PageSheet or DeepLinkKind.PinSheet or DeepLinkKind.AddSeveralPages)))   // ProjectAdd and PinSheet have no subject: ProjectAddShellTests, ShellPinSheetTests; PageSheet is the Context page's: PageSheetShellFocusTests; AddSeveralPages is the same sheet slot, AddSeveralPagesTests
         {
             shell.OpenSheet(new DeepLink(kind, kind == DeepLinkKind.HomeNeedsYou ? null : "X"));
 
-            Assert.Equal(kind is not (DeepLinkKind.Item or DeepLinkKind.NeedsYou or DeepLinkKind.Decision or DeepLinkKind.Workflow or DeepLinkKind.Recipe or DeepLinkKind.Session or DeepLinkKind.Job), shell.IsSheetPlaceholderShown);   // Job is the Jobs lane's, Session is U11a's, Recipe is U10's, Workflow is U8's, Item is U2's, NeedsYou and Decision are U3''s
+            Assert.Equal(kind is not (DeepLinkKind.Item or DeepLinkKind.NeedsYou or DeepLinkKind.Decision or DeepLinkKind.Workflow or DeepLinkKind.Recipe or DeepLinkKind.Session or DeepLinkKind.Job or DeepLinkKind.Project), shell.IsSheetPlaceholderShown);   // Project is the Projects page's, Job is the Jobs lane's, Session is U11a's, Recipe is U10's, Workflow is U8's, Item is U2's, NeedsYou and Decision are U3''s
             var noun = Labels.KindNoun(kind);
             var subject = kind == DeepLinkKind.HomeNeedsYou ? string.Empty : "X";
             Assert.Equal(noun.Length > 0 ? noun + " " + subject : subject, shell.SheetName);
@@ -121,13 +121,13 @@ public sealed class ShellSheetKindTests
 
     // a11y-1: the kind is part of the name, so "workflow/X" and "recipe/X" are not both "X". Ids that name themselves (ITM-, REQ-, JOB-) stay bare.
     [Theory]
-    [InlineData("workflow/WFI-1", "Workflow WFI-1", "Reopen workflow WFI-1")]
-    [InlineData("recipe/workflow.project", "Recipe workflow.project", "Reopen recipe workflow.project")]
+    [InlineData("workflow/WFI-1", "Workflow WFI-1", "Reopen workflow")]
+    [InlineData("recipe/workflow.project", "Recipe Project", "Reopen recipe Project")]
     [InlineData("node/src.Api", "Node src.Api", "Reopen node src.Api")]
     [InlineData("session/codex/S1", "Session codex/S1", "Reopen session codex/S1")]
     [InlineData("system/docker", "System docker", "Reopen system docker")]
     [InlineData("service/serena", "Service serena", "Reopen service serena")]
-    [InlineData("item/ITM-1", "ITM-1", "Reopen ITM-1")]
+    [InlineData("item/ITM-1", "ITM-1", "Reopen item")]
     [InlineData("decision/REQ-1", "REQ-1", "Reopen REQ-1")]
     [InlineData("job/JOB-1", "Job JOB-1", "Reopen job JOB-1")]
     public async Task The_sheet_and_its_edge_tab_are_named_with_the_kind(string link, string sheet, string edge)

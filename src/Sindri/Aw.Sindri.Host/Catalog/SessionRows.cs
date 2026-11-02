@@ -1,5 +1,6 @@
 using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Features.RecordLimitHit;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 
@@ -15,6 +16,7 @@ internal static class SessionRows
     [
         Issue("SessionHeartbeat", typeof(SessionHeartbeatRequest), "/sindri/sessions/{launchId}/heartbeat"),
         Issue("SessionExit", typeof(SessionExitRequest), "/sindri/sessions/{launchId}/exit"),
+        Issue("RecordLimitHit", typeof(RecordLimitHitRequest), "/sindri/launches/{launchId}/limit-hit"),
     ];
 
     private static CommandRow Issue(string action, Type type, string route) =>

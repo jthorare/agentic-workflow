@@ -7,7 +7,7 @@ namespace Aw.Context.Core.WholeMap;
 /// one would hold more than half the nodes or more than the area cap, or when there are fewer than 3 (at most two passes, each replacing a feature by its child features; the replaced feature
 /// and what reaches only it are unassigned). A feature's area is the area-feature at or above it; every other node
 /// takes the area most of the nodes it points at (or that point at it) are in, one vote per edge, ties to the smallest key, the other areas it reaches in 'also in' (at most five).
-/// An area no vote reaches is the unassigned group, and unassigned votes count for nothing. Concept nodes (and the edges to them) are left out: they are a band of their own, never an area.
+/// An area no vote reaches is the unassigned group, and unassigned votes count for nothing. Concept nodes (and the edges to them) are left out: they are a band of their own, never an area. So are tag features (<see cref="TagFeatures"/>): they take the area most of the files they tag are in, after the areas are settled.
 /// </summary>
 internal sealed class AreaAssigner
 {
@@ -20,16 +20,28 @@ internal sealed class AreaAssigner
     private readonly Dictionary<string, List<string>> _chains = new(StringComparer.Ordinal);
     private readonly Dictionary<string, string> _roots = new(StringComparer.Ordinal);
     private readonly int _areaCap;
+    private readonly Dictionary<string, List<string>> _tagged = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<string>> _conceptMembers = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, List<string>> _expresses = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _pages = new(StringComparer.Ordinal);
 
     internal AreaAssigner(GraphSnapshot graph, int areaCap)
     {
         _areaCap = areaCap;
-        _kinds = graph.Nodes.Where(n => n.Key.Kind != NodeKind.Concept).GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Key.Kind, StringComparer.Ordinal);
+        var tags = TagFeatures.Of(graph);
+        _kinds = graph.Nodes.Where(n => n.Key.Kind != NodeKind.Concept && !tags.Contains(n.Key.Value)).GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().Key.Kind, StringComparer.Ordinal);
         foreach (var edge in graph.Edges.Where(e => _kinds.ContainsKey(e.From.Value) && _kinds.ContainsKey(e.To.Value)))
         {
             Add(_out, edge.From.Value, edge);
             Add(_in, edge.To.Value, edge);
         }
+
+        foreach (var edge in graph.Edges.Where(e => e.Type == EdgeType.Tags && tags.Contains(e.To.Value) && _kinds.ContainsKey(e.From.Value)))
+        {
+            Add(_tagged, edge.To.Value, edge.From.Value);
+        }
+
+        IndexConcepts(graph);
 
         foreach (var feature in Keys(NodeKind.Feature))
         {
@@ -39,6 +51,27 @@ internal sealed class AreaAssigner
         foreach (var feature in _parents.Keys)
         {
             (_chains[feature], _roots[feature]) = Chain(feature);
+        }
+    }
+
+    // What the page rule reads: each source's 'expresses' concepts, each concept's members, and which surfaces are pages.
+    private void IndexConcepts(GraphSnapshot graph)
+    {
+        foreach (var edge in graph.Edges.Where(e => e.To.Kind == NodeKind.Concept && _kinds.ContainsKey(e.From.Value)))
+        {
+            if (edge.Type == EdgeType.Expresses)
+            {
+                Add(_expresses, edge.From.Value, edge.To.Value);
+            }
+            else if (edge.Type == EdgeType.BelongsTo)
+            {
+                Add(_conceptMembers, edge.To.Value, edge.From.Value);
+            }
+        }
+
+        foreach (var node in graph.Nodes.Where(n => _kinds.ContainsKey(n.Key.Value) && PageKinds.IsPage(n, graph.Edges)))
+        {
+            _ = _pages.Add(node.Key.Value);
         }
     }
 
@@ -62,6 +95,11 @@ internal sealed class AreaAssigner
             _areas[key] = new NodeArea(AreaIndex.UnassignedKey, []);
         }
 
+        foreach (var (tag, files) in _tagged.OrderBy(p => p.Key, StringComparer.Ordinal))
+        {
+            _areas[tag] = Tally(files) ?? new NodeArea(AreaIndex.UnassignedKey, []);
+        }
+
         return new AreaIndex(_areas);
     }
 
@@ -70,6 +108,7 @@ internal sealed class AreaAssigner
         _areas.Clear();
         AssignFeatures(areaFeatures);
         Vote(NodeKind.Surface, key => Targets(key, EdgeType.PartOf));
+        AssignPages();
         Vote(NodeKind.Action, key => Targets(key, EdgeType.On));
         Vote(NodeKind.Flow, key => Sources(key, EdgeType.StepOf));
         Vote(NodeKind.Thing, key => Sources(key, EdgeType.Reads, EdgeType.Writes));
@@ -93,6 +132,16 @@ internal sealed class AreaAssigner
         }
 
         return replaced.Count == 0 ? null : [.. set.Except(replaced, StringComparer.Ordinal), .. replaced.SelectMany(a => children[a])];
+    }
+
+    private static void Add(Dictionary<string, List<string>> index, string key, string value)
+    {
+        if (!index.TryGetValue(key, out var list))
+        {
+            index[key] = list = [];
+        }
+
+        list.Add(value);
     }
 
     private static void Add(Dictionary<string, List<GraphEdge>> index, string key, GraphEdge edge)
@@ -159,6 +208,26 @@ internal sealed class AreaAssigner
             }
         }
     }
+
+    // A page with no 'part-of' takes the area of its first concept: its own 'expresses', else its first linked action's. With neither it stays unassigned (pages spec §3.4).
+    private void AssignPages()
+    {
+        foreach (var page in _pages.Where(p => !_areas.ContainsKey(p)).Order(StringComparer.Ordinal))
+        {
+            var concepts = ConceptsExpressedBy(page);
+            if (concepts.Count == 0)
+            {
+                concepts = [.. Sources(page, EdgeType.On).Order(StringComparer.Ordinal).Select(ConceptsExpressedBy).FirstOrDefault(c => c.Count > 0) ?? []];
+            }
+
+            if (concepts.Count > 0 && Tally(_conceptMembers.GetValueOrDefault(concepts[0]) ?? []) is { } area)
+            {
+                _areas[page] = area;
+            }
+        }
+    }
+
+    private List<string> ConceptsExpressedBy(string key) => [.. (_expresses.GetValueOrDefault(key) ?? []).Order(StringComparer.Ordinal)];
 
     // Decisions and records lean on each other and on code, so they settle in passes: each pass reads only what earlier passes settled.
     private void AssignIntent()

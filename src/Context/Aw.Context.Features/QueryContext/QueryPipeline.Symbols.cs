@@ -24,7 +24,7 @@ internal sealed partial class QueryPipeline
         var file = NodeKey.TryFrom("code:" + path, out var key) ? graph.Resolve(key) : null;
         IReadOnlyList<GraphNode> features = file is null
             ? []
-            : [.. graph.Edges.Where(e => e.Type == EdgeType.Implements && e.From.Value == file.Key.Value).Select(e => graph.Resolve(e.To)).OfType<GraphNode>()
+            : [.. graph.Edges.Where(e => e.Type is EdgeType.Implements or EdgeType.Tags && e.From.Value == file.Key.Value).Select(e => graph.Resolve(e.To)).OfType<GraphNode>()
                 .DistinctBy(n => n.Key.Value, StringComparer.Ordinal).OrderBy(n => n.Key.Value, StringComparer.Ordinal)];
         return features.Count > 0
             ? Results.Success(features)

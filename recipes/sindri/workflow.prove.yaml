@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.prove
-version: 5
+version: 6
 description: "Block recipe: prove every acceptance item of one phase on its head commit: a hand test and the verify journey in the running app, the evidence route, before and after for fixes, and the hidden scenarios; ends with a frozen proof pack."
 displayName: "Prove a phase works in the running app"
 inputs:
@@ -13,9 +13,9 @@ outputs:
   - { key: fact:findings,  label: "Why not proven", type: payload, from: fail-log }
 initial: intake
 states:
-  intake:        { kind: active, step: step.prove.intake, timeout: { after: 4h, then: park },
+  intake:        { kind: active, step: step.prove.intake, timeout: { after: 1d, then: park },
                    next: "Load {item}'s proof signals for its head commit." }
-  hand-test:     { kind: wait, timeout: { after: 2d, then: park },
+  hand-test:     { kind: wait, timeout: { after: 14d, then: park },
                    waitFor: { child: { recipe: workflow.hand-test, onParked: propagate,
                                        inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:workspace": { fact: fact:workspace } } } },
                    next: "Waiting for {child}: {item}'s signals walked by hand in the running app." }
@@ -27,19 +27,19 @@ states:
                    waitFor: { child: { recipe: workflow.evidence, onParked: propagate,
                                        inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:built": { fact: fact:built } } } },
                    next: "Waiting for {child}: the evidence that proves {item}." }
-  collect:       { kind: active, step: step.prove.collect, timeout: { after: 4h, then: park },
+  collect:       { kind: active, step: step.prove.collect, timeout: { after: 1d, then: park },
                    next: "Hash the files {item}'s hand test, verify and evidence name, and add them to its proof." }
   slot:          { kind: wait, waitFor: { resource: heavy }, timeout: { after: 1d, then: park },
                    next: "Waiting for a heavy-job slot for {item}'s before/after and hidden-scenario runs." }
-  before-after:  { kind: active, step: step.prove.before-after, timeout: { after: 4h, then: park },
+  before-after:  { kind: active, step: step.prove.before-after, timeout: { after: 1d, then: park },
                    next: "Run {item}'s fix checks at its base (must fail) and its head (must pass)." }
-  holdout:       { kind: active, step: step.prove.holdout, budget: { tokens: 5M }, timeout: { after: 3h, then: park },
+  holdout:       { kind: active, step: step.prove.holdout, budget: { tokens: 5M }, timeout: { after: 1d, then: park },
                    next: "Run {item}'s hidden scenarios against its head." }
-  holdout-log:   { kind: active, step: step.prove.holdout-log, timeout: { after: 4h, then: park },
+  holdout-log:   { kind: active, step: step.prove.holdout-log, timeout: { after: 1d, then: park },
                    next: "Record {item}'s hidden-scenario verdicts and check the canary." }
-  evidence-pack: { kind: active, step: step.prove.evidence, timeout: { after: 4h, then: park },
+  evidence-pack: { kind: active, step: step.prove.evidence, timeout: { after: 1d, then: park },
                    next: "Check {item}'s proof and freeze its proof pack." }
-  fail-log:      { kind: active, step: step.prove.fail-log, timeout: { after: 4h, then: park },
+  fail-log:      { kind: active, step: step.prove.fail-log, timeout: { after: 1d, then: park },
                    next: "Write what failed in {item}'s proof as findings for its builder." }
   proven:        { kind: terminal, outcome: resolved }
   failed:        { kind: terminal, outcome: unresolved }

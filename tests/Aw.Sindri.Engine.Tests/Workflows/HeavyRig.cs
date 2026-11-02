@@ -19,21 +19,28 @@ internal sealed class HeavyRig : IDisposable
 {
     private static readonly BlockId _judge = BlockId.From("step.judge.choose");
     private static int _items = 100;
+    private readonly DirectoryInfo _state;
 
     public HeavyRig()
     {
-        Lock = Path.Combine(Directory.CreateTempSubdirectory("aw-heavy-wf-").FullName, "heavy-job.lock");
+        _state = Directory.CreateTempSubdirectory("aw-heavy-wf-");
+        Lock = Path.Combine(_state.FullName, "heavy-job.lock");
+        StateRoot = Directory.CreateTempSubdirectory("aw-heavy-state-").FullName;
     }
 
     /// <summary>The lock's slot 1: with one slot, it exists while a slot is held.</summary>
     public string Lock { get; }
+
+    /// <summary>The Sindri's own state root (AW_STATE_DIR), so the box's heavy-slots-cap file never decides the slot count (#1173).</summary>
+    public string StateRoot { get; }
 
     public WorkflowsHarness Harness { get; } = new();
 
     public void Dispose()
     {
         Harness.Dispose();
-        Directory.Delete(Path.GetDirectoryName(Lock)!, recursive: true);
+        _state.Delete(recursive: true);
+        Directory.Delete(StateRoot, recursive: true);
     }
 
     /// <summary>The host with <paramref name="fake"/> as the judge block, the heavy recipe approved and the lease held.</summary>
@@ -45,7 +52,7 @@ internal sealed class HeavyRig : IDisposable
             _ = services.AddKeyedSingleton<IBlockStep>(_judge.Value, fake);
         };
         Harness.Recipe(HeavyRecipes.Id, HeavyRecipes.Heavy());
-        var sindri = Harness.Sindri(Harness.Replacing, name => name switch { "AW_HEAVY_JOB_LOCK" => Lock, "AW_HEAVY_SLOTS" => "1", _ => null });
+        var sindri = Harness.Sindri(Harness.Replacing, name => name switch { "AW_HEAVY_JOB_LOCK" => Lock, "AW_HEAVY_SLOTS" => "1", "AW_STATE_DIR" => StateRoot, _ => null });
         await WorkflowsHarness.HoldLease(sindri, TestContext.Current.CancellationToken);
         return sindri;
     }

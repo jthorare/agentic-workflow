@@ -1,0 +1,250 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/scoping/gap-search.json",
+  "title": "The gap search record (fact:gapSearch and gap-search.json)",
+  "description": "Issue 966 spec 4.6: the cumulative record step.scope.gap-log appends a round to and never rewrites. Each round keeps what was searched, every candidate with its ruling and the models that ran (the searcher's own word; the ledger's record is runs.json). The file adds the optional envelope schemaVersion.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "Packet-file envelope: present in the file written to the scope packet, absent in the fact."
+    },
+    "rounds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "round": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "agent": {
+            "type": "object",
+            "properties": {
+              "reportedModel": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "reportedModel"
+            ],
+            "additionalProperties": false
+          },
+          "judge": {
+            "type": "object",
+            "properties": {
+              "providers": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "providers"
+            ],
+            "additionalProperties": false
+          },
+          "searches": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tool": {
+                  "enum": [
+                    "context_query",
+                    "context_neighbors",
+                    "context_node",
+                    "code-search",
+                    "history"
+                  ]
+                },
+                "query": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "depth": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              },
+              "required": [
+                "tool",
+                "query"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "candidates": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^G[1-9][0-9]*\\.[1-9][0-9]*$",
+                  "description": "G<round>.<n>: global across the rounds."
+                },
+                "title": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "kind": {
+                  "enum": [
+                    "surface",
+                    "writer",
+                    "reader",
+                    "job",
+                    "migration",
+                    "screen",
+                    "record",
+                    "other"
+                  ]
+                },
+                "citation": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "A node key, code:<path> or a record id."
+                },
+                "excerpt": {
+                  "type": "string",
+                  "maxLength": 400,
+                  "description": "What the retrieval returned, at most 400 characters."
+                },
+                "query": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The search that found the candidate; it is one of the queries in searches[] (the log does not check that, the owner reads it)."
+                },
+                "anchor": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "A node key or code:<path> that regather can start from."
+                },
+                "why": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "The searcher's argument. The judge never sees it."
+                },
+                "ruling": {
+                  "enum": [
+                    "real-gap",
+                    "already-covered",
+                    "not-in-scope",
+                    "uncertain"
+                  ]
+                },
+                "confidence": {
+                  "type": [
+                    "number",
+                    "null"
+                  ],
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "provider": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "decisionId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "kind",
+                "citation",
+                "excerpt",
+                "query",
+                "anchor",
+                "why",
+                "ruling",
+                "confidence",
+                "provider",
+                "decisionId"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "counts": {
+            "type": "object",
+            "properties": {
+              "found": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "confirmed": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "alreadyCovered": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "notInScope": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "uncertain": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "found",
+              "confirmed",
+              "alreadyCovered",
+              "notInScope",
+              "uncertain"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "round",
+          "agent",
+          "judge",
+          "searches",
+          "candidates",
+          "counts"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "rounds": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "found": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "confirmed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "rounds",
+        "found",
+        "confirmed"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "rounds"
+  ],
+  "additionalProperties": false
+}

@@ -99,6 +99,8 @@ internal sealed partial class RecordEventActivities(ILedgerStore ledger, HeldLea
             Via = record.Detail?.Via,
             Decision = record.Detail?.Decision,
             Tokens = record.Detail?.Tokens,
+            Agent = record.Detail?.Agent,
+            Model = record.Detail?.Model,
         };
 
     /// <summary>

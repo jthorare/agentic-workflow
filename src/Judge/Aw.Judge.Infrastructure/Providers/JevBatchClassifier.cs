@@ -24,7 +24,7 @@ internal sealed class JevBatchClassifier(JevProvider jev) : IBatchClassifier
 
         try
         {
-            return await jev.Batch(request, cancellationToken).ConfigureAwait(false);
+            return await jev.Batch(request, providers?.InputCapChars ?? ProvidersConfig.DefaultInputCapChars, cancellationToken).ConfigureAwait(false);
         }
         // The boundary backstop, as FailOpenModelProvider: an adapter bug is an errored result; cancellation propagates.
         catch (Exception) when (!cancellationToken.IsCancellationRequested)

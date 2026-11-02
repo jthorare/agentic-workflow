@@ -25,4 +25,28 @@ public static class LaunchFiles
     /// <param name="launch">The launch.</param>
     /// <returns>'&lt;id&gt;.turn-ended'.</returns>
     public static string TurnEndedName(LaunchId launch) => launch.Value + TurnEndedSuffix;
+
+    /// <summary>The end of the name of the file the StopFailure hook touches when an API error ends the turn (a new prompt deletes it).</summary>
+    public const string TurnFailedSuffix = ".turn-failed";
+
+    /// <summary>The file the StopFailure hook touches for <paramref name="launch"/>.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>'&lt;id&gt;.turn-failed'.</returns>
+    public static string TurnFailedName(LaunchId launch) => launch.Value + TurnFailedSuffix;
+
+    /// <summary>The end of the name of the file the PreToolUse hook touches while a tool call runs (PostToolUse, PostToolUseFailure, Stop and StopFailure delete it).</summary>
+    public const string ToolRunningSuffix = ".tool-running";
+
+    /// <summary>The file the PreToolUse hook touches for <paramref name="launch"/>.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>'&lt;id&gt;.tool-running'.</returns>
+    public static string ToolRunningName(LaunchId launch) => launch.Value + ToolRunningSuffix;
+
+    /// <summary>The end of the name of the file the idle sweep touches when it sent a stalled session its one re-prompt.</summary>
+    public const string NudgedSuffix = ".nudged";
+
+    /// <summary>The file the idle sweep touches for <paramref name="launch"/> after its re-prompt.</summary>
+    /// <param name="launch">The launch.</param>
+    /// <returns>'&lt;id&gt;.nudged'.</returns>
+    public static string NudgedName(LaunchId launch) => launch.Value + NudgedSuffix;
 }

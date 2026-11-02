@@ -3,7 +3,7 @@ using Aw.Sindri.Ui.ViewModels.Approvals;
 
 namespace Aw.Sindri.Ui.ViewModels.Setup;
 
-/// <summary>The setup list (<see cref="SetupViewModel"/>, continued): which action a step offers, and the forms of the repo and Onyx steps.</summary>
+/// <summary>The setup list (<see cref="SetupViewModel"/>, continued): which action a step offers, and the forms of the repo step.</summary>
 internal sealed partial class SetupViewModel
 {
     // A step's action: an app button when the app can do it, else the command to copy; none for an action nothing here knows. A kept action stays while nothing about it changed, so a
@@ -24,8 +24,8 @@ internal sealed partial class SetupViewModel
         return Knows(action, inApp) ? new SetupActionViewModel(action, step, inApp, _catalog, _clock, Open) : null;
     }
 
-    // The map has no button until it failed; then Retry is the catalog's refresh (a retry of the build, never a service run). The repo and Onyx steps have a form instead of a button
-    // while the catalog lets the app send what they send. Every other step offers what the API serves.
+    // The map has no button until it failed; then Retry is the catalog's refresh (a retry of the build, never a service run). The repo step has a form instead of a button
+    // while the catalog lets the app send what it sends. Every other step offers what the API serves.
     private string? Offered(SetupStepView step) =>
         string.Equals(step.Id, MapStep, StringComparison.Ordinal)
             ? string.Equals(step.State, "failed", StringComparison.Ordinal) ? MapRefresh : null
@@ -33,7 +33,7 @@ internal sealed partial class SetupViewModel
 
     // The profile and workflows rows confirm in the row (typed, or held) when the catalog lets the app; otherwise they keep the terminal copy of the action.
     private bool HasForm(SetupStepView step, string action) =>
-        Ready(action) && (string.Equals(step.Id, "repo", StringComparison.Ordinal) || string.Equals(step.Id, OnyxStep, StringComparison.Ordinal)
+        Ready(action) && (string.Equals(step.Id, "repo", StringComparison.Ordinal)
             || (string.Equals(step.Id, ProfileStep, StringComparison.Ordinal) && string.Equals(action, ProfileAction, StringComparison.Ordinal))
             || (string.Equals(step.Id, RecipesStep, StringComparison.Ordinal) && string.Equals(action, ApproveAllViewModel.Action, StringComparison.Ordinal)));
 
@@ -58,7 +58,7 @@ internal sealed partial class SetupViewModel
         }
     }
 
-    // The forms of the repo and Onyx steps: each gets the row's own words for what it started or said.
+    // The forms of the repo step: each gets the row's own words for what it started or said.
     private void Attach(SetupStepViewModel row)
     {
         if (string.Equals(row.Id, "repo", StringComparison.Ordinal))
@@ -73,11 +73,6 @@ internal sealed partial class SetupViewModel
         else if (string.Equals(row.Id, RecipesStep, StringComparison.Ordinal))
         {
             row.Workflows = new ApproveAllViewModel(_catalog, () => _url, _api, _clock);
-        }
-        else if (string.Equals(row.Id, OnyxStep, StringComparison.Ordinal))
-        {
-            row.Onyx = new SetupOnyxViewModel(() => _url, _api, Ready, note => Started(row, note), row.Say);
-            row.Onyx.Update(row.Step, row.IsWorking);
         }
     }
 

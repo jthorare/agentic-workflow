@@ -10,7 +10,7 @@ public static class TierZero
     public const string Kernel = "Aw.Kernel";
 
     /// <summary>The tier-0 project prefixes; a project or assembly with one of them (or a further segment) is tier 0.</summary>
-    public static IReadOnlyList<string> Prefixes { get; } = ["Aw.Kernel", "Aw.Redaction", "Aw.Analyzers"];
+    public static IReadOnlyList<string> Prefixes { get; } = ["Aw.Kernel", "Aw.Redaction", "Aw.Analyzers", "Aw.Embeddings"];
 
     /// <summary>Whether a project or assembly name belongs to a tier-0 package.</summary>
     /// <param name="name">A project or assembly name.</param>

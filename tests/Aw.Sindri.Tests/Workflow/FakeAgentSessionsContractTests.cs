@@ -17,6 +17,12 @@ public sealed class FakeAgentSessionsContractTests : AgentSessionsContract
         return ValueTask.CompletedTask;
     }
 
+    protected override ValueTask EndByLimit(IAgentSessions sessions, LaunchId launch, LimitKind kind, long limit, long peak)
+    {
+        ((FakeAgentSessions)sessions).EndByLimit(launch, kind, limit, peak);
+        return ValueTask.CompletedTask;
+    }
+
     protected override ValueTask Spend(IAgentSessions sessions, LaunchId launch, int sample, long tokens)
     {
         ((FakeAgentSessions)sessions).Spend(launch, sample, tokens);

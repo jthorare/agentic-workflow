@@ -41,4 +41,21 @@ internal enum DeepLinkKind
 
     /// <summary>'setup': Settings, scrolled to the setup checklist (setup spec §5).</summary>
     Setup,
+
+    /// <summary>'projects': the Projects page.</summary>
+    Projects,
+
+    /// <summary>'project/&lt;escaped id&gt;': a project card's sheet (projects page spec §3.2); the id is url-escaped as one segment, since a led project's key holds a slash.</summary>
+    Project,
+
+    /// <summary>'projects/add': the Add project sheet over the Projects page (projects page spec §3.2); it has no subject.</summary>
+    ProjectAdd,
+
+    /// <summary>'context/page': the page sheet (Name this page, Edit page, New page) opened from the Context page's Pages and actions.</summary>
+    PageSheet,
+
+    /// <summary>'context/pages/add': the Add several pages sheet opened from the Context page's Pages and actions.</summary>
+    AddSeveralPages,
+    /// <summary>'context/pin': the Pin sheet (Pin this, Edit pin, New pin) opened from the Context page's concept layer; it has no subject.</summary>
+    PinSheet,
 }

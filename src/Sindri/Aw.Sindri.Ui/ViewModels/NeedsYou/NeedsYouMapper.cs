@@ -34,17 +34,18 @@ internal static class NeedsYouMapper
     {
         var subject = row.Subject is { } s ? new NeedsYouSubject(s.Kind, s.Id) : null;
         row = Unanswerable(row);
+        var pending = PendingDecision(subject?.DecisionId, decisions);
         return new NeedsYouEntry(row.Id, UrgencyOf(row.Urgency))
         {
             Kind = row.Kind,
             Chip = row.Chip ?? Derived(row.Kind),
             ShownId = ShownOf(row, subject),
             Title = row.Title,
-            Repo = row.Repo ?? string.Empty,
+            Repo = Text(row.Repo),
             Label = row.Label,
             Reason = row.Reason,
             Since = row.Since,
-            PrimaryAction = row.PrimaryAction ?? string.Empty,
+            PrimaryAction = Text(row.PrimaryAction),
             Actions = [.. row.Actions.SelectMany(id => Actions(row, subject, id, readiness, decisions).Select(a => a with { CatalogRead = read }))],
             Subject = subject,
             ItemId = row.Item,
@@ -52,13 +53,18 @@ internal static class NeedsYouMapper
             Via = row.Via,
             Child = ChildOf(row),
             RecordedOnly = row.RecordedOnly,
-            Notice = row.Notice ?? string.Empty,
+            Notice = Text(row.Notice),
             Timeout = TimeoutOf(row, readAt),
             Stop = row.Stop,
             Open = row.Open,
-            Question = PendingDecision(subject?.DecisionId, decisions)?.Question ?? string.Empty,
+            Sandbox = row.Sandbox,
+            Question = Text(pending?.Question),
+            FiledBy = Text(pending?.FiledBy),
         };
     }
+
+    // A served text that may be absent, as the empty string.
+    private static string Text(string? served) => served ?? string.Empty;
 
     // The served time left, counted from when the list was read; none without the read time.
     private static RowTimeout? TimeoutOf(NeedsYouRowView row, DateTimeOffset readAt) =>

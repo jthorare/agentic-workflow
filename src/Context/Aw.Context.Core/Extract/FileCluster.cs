@@ -4,4 +4,8 @@ namespace Aw.Context.Core.Extract;
 /// <param name="Id">A stable name for the cluster ('c3').</param>
 /// <param name="Files">Its files (paths from the repo root).</param>
 /// <param name="Confidence">0 to 1.</param>
-public sealed record FileCluster(ClusterId Id, IReadOnlyList<string> Files, double Confidence);
+public sealed record FileCluster(ClusterId Id, IReadOnlyList<string> Files, double Confidence)
+{
+    /// <summary>The name the build gives the cluster when no model names it (derived from its path), or null when the source has none. The Jev pick offers it as the safe last candidate (spec §6.1 step 2).</summary>
+    public string? FileName { get; init; }
+}

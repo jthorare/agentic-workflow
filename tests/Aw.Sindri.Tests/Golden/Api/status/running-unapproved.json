@@ -9,7 +9,10 @@
     "changedSinceApproval": false,
     "problem": null,
     "source": "<home>/profile/profile.yaml",
-    "needsApproval": true
+    "needsApproval": true,
+    "modelPick": "off",
+    "labelPick": "off",
+    "surfacePick": "off"
   },
   "services": [],
   "apiVersion": 1,
@@ -37,6 +40,7 @@
   "sessions": {
     "live": 0,
     "asking": 0,
-    "problems": 0
+    "problems": 0,
+    "running": 0
   }
 }

@@ -3,8 +3,9 @@ using System.Text.RegularExpressions;
 namespace Aw.Sindri.Infrastructure.Notifications;
 
 /// <summary>
-/// The process that shows a banner (see <see cref="OsascriptNotifier"/>): 'terminal-notifier' when it is installed and the notice has a deep link
-/// (a click runs 'sindri-ui &lt;link&gt;', which hands the link to the running app), else 'osascript', whose banner has no click action.
+/// The process that shows a banner (see <see cref="OsascriptNotifier"/>): 'terminal-notifier', whose click runs 'sindri-ui &lt;link&gt;', which hands the
+/// link to the running app. There is no osascript fallback: macOS attributes an osascript banner to Script Editor, so a click on it opens Script Editor,
+/// not the app. Without terminal-notifier (or a link) no banner is shown and notifications.jsonl is the record (see <see cref="Shows"/>).
 /// A link is used only when it is made of the characters a deep link has, so it can sit inside the shell command a click runs.
 /// </summary>
 internal static partial class NotifierCommand
@@ -17,22 +18,22 @@ internal static partial class NotifierCommand
     /// <param name="Arguments">Its arguments.</param>
     internal sealed record BannerProcess(string File, IReadOnlyList<string> Arguments);
 
-    /// <summary>The command for a banner.</summary>
-    /// <param name="title">The title.</param>
-    /// <param name="text">The body.</param>
+    /// <summary>Whether a banner for this notice can be clicked through to the app: terminal-notifier is installed and the link is a safe deep link. Without both, no banner is shown (an osascript banner's click opens Script Editor).</summary>
     /// <param name="deepLink">The deep link text a click should open; null or unsafe for none.</param>
     /// <param name="terminalNotifier">The full path of terminal-notifier when it is installed; null otherwise.</param>
+    /// <returns>True when the banner's click opens the app.</returns>
+    internal static bool Shows(string? deepLink, string? terminalNotifier) =>
+        terminalNotifier is { Length: > 0 } && deepLink is { Length: > 0 } && Safe.IsMatch(deepLink);
+
+    /// <summary>The command for a banner; call it only when <see cref="Shows"/> holds.</summary>
+    /// <param name="title">The title.</param>
+    /// <param name="text">The body.</param>
+    /// <param name="deepLink">The deep link text a click opens.</param>
+    /// <param name="terminalNotifier">The full path of terminal-notifier.</param>
     /// <param name="uiBinary">The full path of the app's binary.</param>
     /// <returns>The command.</returns>
-    internal static BannerProcess For(string title, string text, string? deepLink, string? terminalNotifier, string uiBinary)
-    {
-        if (terminalNotifier is { Length: > 0 } && deepLink is { Length: > 0 } && Safe.IsMatch(deepLink))
-        {
-            return new BannerProcess(terminalNotifier, ["-title", title, "-message", text, "-execute", Quote(uiBinary) + " " + deepLink]);
-        }
-
-        return new BannerProcess("osascript", ["-e", "on run argv", "-e", "display notification (item 2 of argv) with title (item 1 of argv)", "-e", "end run", title, text]);
-    }
+    internal static BannerProcess For(string title, string text, string deepLink, string terminalNotifier, string uiBinary) =>
+        new(terminalNotifier, ["-title", title, "-message", text, "-execute", Quote(uiBinary) + " " + deepLink]);
 
     /// <summary>Where the app's binary is: the one AW_SINDRI_UI names, else 'sindri-ui' next to this program.</summary>
     /// <param name="environment">Reads an environment variable.</param>

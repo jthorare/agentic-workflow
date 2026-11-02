@@ -9,7 +9,7 @@ namespace Aw.Context.Tests.Linking;
 public sealed class IntentOverlayTests
 {
     private static readonly RecordKey _r103 = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000103");
-    private static readonly IntentRecord _record = new(_r103, SourceId.From("onyx"), "2026-07-23T09:00:00+00:00", "Toggle split orientation", ["SPL-103"]);
+    private static readonly IntentRecord _record = new(_r103, SourceId.From("linear"), "2026-07-23T09:00:00+00:00", "Toggle split orientation", ["SPL-103"]);
 
     private static GraphSnapshot Map() => new GraphBuilder()
         .Node("feature:layout.split-pane.orientation", "Split orientation")
@@ -70,8 +70,21 @@ public sealed class IntentOverlayTests
         Assert.Equal(Provenance.Deterministic, Assert.Single(confirmed.Graph.Edges).Provenance);
     }
 
+    [Fact, Trait("Lane", "unit")]
+    public void An_alias_link_to_a_concept_is_a_deterministic_mention()
+    {
+        var graph = new GraphBuilder().Node("concept:invoicing", "Invoicing").Build();
+        var alias = new IntentLink(_r103, NodeKey.From("concept:invoicing"), LinkRule.Alias, 0.8, "ef56");
+
+        var result = IntentOverlay.Apply(graph, new IntentLayer([_record], [alias], [], []));
+
+        var edge = Assert.Single(result.Graph.Edges);
+        Assert.Equal((EdgeType.Mentions, Provenance.Deterministic, 0.8), (edge.Type, edge.Provenance, edge.Confidence));
+        Assert.Equal("concept:invoicing", edge.To.Value);
+    }
+
     private static readonly RecordKey _r104 = RecordKey.From("linear:issue/0e5a1b00-0000-4000-8000-000000000104");
-    private static readonly IntentRecord _target = new(_r104, SourceId.From("onyx"), "2026-07-22T10:20:00+00:00", "Restore pane layout", ["SPL-104"]);
+    private static readonly IntentRecord _target = new(_r104, SourceId.From("linear"), "2026-07-22T10:20:00+00:00", "Restore pane layout", ["SPL-104"]);
 
     [Fact, Trait("Lane", "unit")]
     public void A_record_that_is_only_the_target_of_a_link_becomes_a_node_and_the_link_is_not_orphaned()
@@ -124,5 +137,32 @@ public sealed class IntentOverlayTests
 
         Assert.Same(map, result.Graph);
         Assert.Empty(result.Orphaned);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_rule_link_that_repeats_a_stored_mentions_edge_adds_no_second_edge()
+    {
+        const string target = "feature:layout.split-pane.orientation";
+        var stored = new GraphBuilder()
+            .Node(target, "Split orientation")
+            .Node("record:" + _r103.Value, "Toggle split orientation", Provenance.Deterministic)
+            .Edge("record:" + _r103.Value, EdgeType.Mentions, target, provenance: Provenance.Deterministic)
+            .Build();
+
+        var result = IntentOverlay.Apply(stored, new IntentLayer([_record], [Link(target)], [], []));
+
+        Assert.Equal(1, result.Graph.Edges.Count(e => e.Type == EdgeType.Mentions && e.From.Value == "record:" + _r103.Value && e.To.Value == target));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Two_decision_edges_between_the_same_ends_are_both_kept()
+    {
+        var decision = new DecisionRow(_r103, "keeps the focused pane first", "Toggling keeps focus first.", Provenance.Model, DateTimeOffset.Parse("2026-07-23T09:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
+        var first = new GraphEdge(decision.ToKey(), NodeKey.From("feature:layout.split-pane.orientation"), EdgeType.Decides, Provenance.Model, 0.9, [new EvidenceRef(_r103, "aa")]);
+        var second = first with { Evidence = [new EvidenceRef(_r103, "bb")] };
+
+        var result = IntentOverlay.Apply(Map(), new IntentLayer([_record], [], [decision], [first, second]));
+
+        Assert.Equal(2, result.Graph.Edges.Count(e => e.Type == EdgeType.Decides));
     }
 }

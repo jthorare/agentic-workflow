@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "mapVersion": "v1",
+  "anchors": [
+    "surface:route/links-create",
+    "surface:route/link-resolve",
+    "surface:screen/share-dialog",
+    "surface:api/weekly-digest-email"
+  ],
+  "depth": 0,
+  "hops": [],
+  "nodes": [
+    {
+      "id": "feature:sharing.link-revocation",
+      "kind": "feature",
+      "summary": "Link revocation",
+      "rank": 1,
+      "lens": "product",
+      "lensItem": "L-product-1",
+      "band": "product",
+      "citations": []
+    },
+    {
+      "id": "surface:route/links-revoke",
+      "kind": "surface",
+      "summary": "Revoke share link (DELETE /api/links/:id)",
+      "rank": 2,
+      "lens": "product",
+      "lensItem": "L-product-2",
+      "band": "product",
+      "citations": []
+    },
+    {
+      "id": "surface:setting/linkRevocation",
+      "kind": "surface",
+      "summary": "linkRevocation flag",
+      "rank": 3,
+      "lens": "product",
+      "lensItem": "L-product-3",
+      "band": "product",
+      "citations": []
+    },
+    {
+      "id": "action:sharing.revoke-link",
+      "kind": "action",
+      "summary": "Revoke a share link",
+      "rank": 4,
+      "lens": "product",
+      "lensItem": "L-product-4",
+      "band": "product",
+      "citations": []
+    },
+    {
+      "id": "feature:digest",
+      "kind": "feature",
+      "summary": "Email digest",
+      "rank": 5,
+      "lens": "product",
+      "lensItem": "L-product-5",
+      "band": "product",
+      "citations": []
+    },
+    {
+      "id": "surface:api/weekly-digest-email",
+      "kind": "surface",
+      "summary": "Weekly digest email",
+      "rank": 6,
+      "lens": "product",
+      "lensItem": "L-product-6",
+      "band": "product",
+      "citations": []
+    },
+    {
+      "id": "action:digest.send",
+      "kind": "action",
+      "summary": "Send the weekly digest",
+      "rank": 7,
+      "lens": "product",
+      "lensItem": "L-product-7",
+      "band": "product",
+      "citations": []
+    },
+    {
+      "id": "surface:job/nightly",
+      "kind": "surface",
+      "summary": "Nightly job",
+      "rank": 8,
+      "lens": "product",
+      "lensItem": "L-product-8",
+      "band": "product",
+      "citations": []
+    }
+  ],
+  "edges": [
+    {
+      "from": "surface:route/links-revoke",
+      "to": "feature:sharing.link-revocation",
+      "type": "part-of"
+    },
+    {
+      "from": "surface:setting/linkRevocation",
+      "to": "feature:sharing.link-revocation",
+      "type": "part-of"
+    },
+    {
+      "from": "surface:api/weekly-digest-email",
+      "to": "feature:digest",
+      "type": "part-of"
+    },
+    {
+      "from": "surface:job/nightly",
+      "to": "feature:digest",
+      "type": "part-of"
+    },
+    {
+      "from": "action:sharing.revoke-link",
+      "to": "surface:route/links-revoke",
+      "type": "on"
+    },
+    {
+      "from": "action:digest.send",
+      "to": "surface:job/nightly",
+      "type": "on"
+    }
+  ],
+  "limits": [],
+  "size": {
+    "nodes": 8,
+    "edges": 6,
+    "bytes": 2106
+  }
+}

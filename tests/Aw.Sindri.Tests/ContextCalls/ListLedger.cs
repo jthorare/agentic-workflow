@@ -14,6 +14,8 @@ internal sealed class ListLedger(LedgerEvent[] events) : ILedgerStore, ILedgerRe
 
     public ValueTask<Result<LedgerEvent?>> Latest(string type, CancellationToken cancellationToken) => throw new NotSupportedException();
 
+    public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken) => throw new NotSupportedException();
+
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken) => ValueTask.FromResult(Results.Success(events.Length == 0 ? 0 : events.Max(static e => e.Sequence)));
 
     public ValueTask<Result<SchemaStatus>> Schema(CancellationToken cancellationToken) => throw new NotSupportedException();

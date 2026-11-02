@@ -1,0 +1,11 @@
+{
+  "model": "claude-sonnet-5-5",
+  "verdicts": [
+    {
+      "id": "L-code-3",
+      "class": "noise",
+      "reason": "A shared admin shell that every feature imports.",
+      "citation": "L-code-3"
+    }
+  ]
+}

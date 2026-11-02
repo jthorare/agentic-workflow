@@ -14,6 +14,9 @@ internal sealed record LauncherInitParts(ReloadingAgentCatalog Catalog, Detectio
     /// <summary>The approved profile's <c lang="text">agents:</c> block.</summary>
     public Func<CancellationToken, ValueTask<AgentSettings?>> Approved { get; init; } = static _ => ValueTask.FromResult<AgentSettings?>(null);
 
+    /// <summary>The models an agent offers, or null when none are read: <c lang="text">launch show</c> then lists none.</summary>
+    public IModelCatalog? Models { get; init; }
+
     /// <summary>Finds an agent CLI the way the login shell does.</summary>
     public Func<string, CancellationToken, ValueTask<string?>> ResolveBin { get; init; } = BinResolver.Resolve;
 }

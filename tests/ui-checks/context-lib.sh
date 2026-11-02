@@ -4,7 +4,7 @@
 # the helpers the checks read the screen with. Exit contract of every check: 0 pass, 1 FAIL (one line on stderr), 2 setup broke;
 # every setup failure and every FAIL takes a screenshot into $OUT first.
 #
-#   ctx_init <check-name>          home, driver dir, $OUT (CTXUX_OUT, default a new temp dir), the cleanup trap
+#   ctx_init <check-name>          home, driver dir, $OUT (CTXUX_OUT, default a new temp dir), the cleanup trap (the app's own process group is TERMed then KILLed, `fixture down` runs, then ctx_reap stops what serve left with this run's AW_SINDRI_HOME; #1331)
 #   ctx_start [<w> <h>]            fixture up + context up, the app, the window at w x h (default 1280x900), the Context page open
 #   ctx_window <w> <h>             resize the window and let the layout settle
 #   ctx_text <driver search args>  the text of the first visible match (empty when none)
@@ -47,7 +47,44 @@ ctx_cleanup() {
   fi
   if [ -n "$app_pid" ]; then kill "$app_pid" 2>/dev/null || true; fi
   if [ -n "$APP_WRAPPER_PID" ]; then kill "$APP_WRAPPER_PID" 2>/dev/null || true; fi
+  # The app, xvfb-run and its Xvfb are one process group of their own (ctx_start: setsid), its id is APP_WRAPPER_PID: TERM it, give it ~3 s, then KILL what is left.
+  if [ -n "$APP_WRAPPER_PID" ]; then
+    kill -TERM -- "-$APP_WRAPPER_PID" 2>/dev/null || true
+    local i
+    for i in $(seq 1 30); do kill -0 -- "-$APP_WRAPPER_PID" 2>/dev/null || break; sleep 0.1; done
+    kill -KILL -- "-$APP_WRAPPER_PID" 2>/dev/null || true
+  fi
   bash "$FIXTURE" down >/dev/null 2>&1 || true
+  ctx_reap
+}
+
+# Stops what this run's serve left behind (`fixture down` kills serve, orphaning its children such as a hung `docker version` probe): our own processes
+# whose environment holds this run's AW_SINDRI_HOME, a mktemp path unique to the run. Never the check itself or its ancestors, never anything by name.
+ctx_reap() {
+  [ -n "${AW_SINDRI_HOME:-}" ] || return 0
+  local skip=" $$ $BASHPID " p="$$" d pid found i
+  while [ -n "$p" ] && [ "$p" -gt 1 ] 2>/dev/null; do
+    skip="$skip$p "
+    p="$(awk '{ print $4 }' "/proc/$p/stat" 2>/dev/null)"
+  done
+  for i in 1 2; do
+    found=""
+    for d in /proc/[0-9]*; do
+      pid="${d#/proc/}"
+      case "$skip" in *" $pid "*) continue ;; esac
+      [ -O "$d" ] || continue
+      if tr '\0' '\n' 2>/dev/null <"$d/environ" | grep -qxF "AW_SINDRI_HOME=$AW_SINDRI_HOME"; then found="$found $pid"; fi
+    done
+    [ -n "$found" ] || return 0
+    if [ "$i" = 1 ]; then
+      # shellcheck disable=SC2086  # a list of pids
+      kill -TERM $found 2>/dev/null || true
+      sleep 1
+    else
+      # shellcheck disable=SC2086
+      kill -KILL $found 2>/dev/null || true
+    fi
+  done
 }
 
 shot() { "$DRIVER" screenshot --out "$OUT/$1.png" >/dev/null 2>&1 || true; }
@@ -65,7 +102,7 @@ ctx_start() {
   fi
   [ -x "$AW_SINDRI_UI" ] || setup_fail "no sindri-ui at $AW_SINDRI_UI"
   # A screen larger than any window the checks ask for, whatever DISPLAY the caller has: sizes must be the same everywhere.
-  env -u DISPLAY xvfb-run -a -s "-screen 0 2200x1400x24" bash "$CTX_ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
+  setsid env -u DISPLAY xvfb-run -a -s "-screen 0 2200x1400x24" bash "$CTX_ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
   APP_WRAPPER_PID=$!
   "$DRIVER" ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
   "$DRIVER" window --width "$w" --height "$h" >/dev/null 2>&1 || setup_fail "could not size the window"

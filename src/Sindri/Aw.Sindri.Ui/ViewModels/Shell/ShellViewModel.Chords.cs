@@ -103,12 +103,14 @@ internal sealed partial class ShellViewModel
         HomeFilter = filter;
         OnChanged(nameof(HomeFilter));
         UpdateNeedsYou();
+        Reattend();   // Home's summary counts the rows the filter lets through
     }
 
     private static (PageId Page, HomeFilter Filter)? SecondKey(string key) => key.ToUpperInvariant() switch
     {
         "H" or "N" => (PageId.Home, HomeFilter.All),
         "D" => (PageId.Home, HomeFilter.Decisions),
+        "P" => (PageId.Projects, HomeFilter.All),
         "W" => (PageId.Workflows, HomeFilter.All),
         "Q" => (PageId.Work, HomeFilter.All),
         "R" => (PageId.Recipes, HomeFilter.All),

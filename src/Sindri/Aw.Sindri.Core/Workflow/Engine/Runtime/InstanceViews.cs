@@ -54,7 +54,7 @@ public static partial class InstanceViews
         ArgumentNullException.ThrowIfNull(context);
         var children = context.Children ?? [];
         var task = instance is { Ended: false, Suspension: null, Frame.Run: { Runtime: StepRuntime.Desk } open }
-            ? Task(instance.Frame.State, open.Token, recipe, timeoutAt, context.Injection)
+            ? Task(instance.Frame.State, open.Token, recipe, timeoutAt, context)
             : null;
         var words = new InstanceWords(instance, recipe, since, MirroredChild(instance, children));
         var view = new InstanceView(
@@ -65,7 +65,7 @@ public static partial class InstanceViews
             since,
             words.Next(task),
             Allowed(instance, recipe, task, words.GrantTokens()),
-            instance.Suspension is { } s ? new OpenQuestion(s.Kind, s.Reason, s.Question, ParkCodes.Of(s)) : null,
+            instance.Suspension is { } s ? new OpenQuestion(s.Kind, s.Reason, s.Question, ParkCodes.Of(s)) { Sandbox = s.Sandbox } : null,
             task,
             instance.Frame.Run?.Token,
             children,
@@ -92,7 +92,7 @@ public static partial class InstanceViews
     /// <summary>The open agent run; one still launching names the launch id it will have (the id is pure), so status never shows a run without one.</summary>
     private static OpenRun? AgentRunOf(WorkflowInstance instance) =>
         instance is { Ended: false, Frame.Run: { Runtime: StepRuntime.Agent } agent }
-            ? agent with { Launch = agent.Launch ?? AgentLaunches.LaunchIdFor(WorkflowInstanceId.Of(instance.Address), agent.Token).Value }
+            ? agent with { Launch = agent.Launch ?? AgentLaunches.LaunchIdFor(WorkflowInstanceId.Of(instance.Address), agent.Token, agent.Escalation).Value }
             : null;
 
     /// <summary>The stored digest of each fact by key; null when the instance holds none.</summary>
@@ -107,7 +107,7 @@ public static partial class InstanceViews
     {
         ArgumentNullException.ThrowIfNull(view);
         ArgumentNullException.ThrowIfNull(context);
-        var status = DetailParts.WithSession(Status(view, context.AsOf), context.Session);
+        var status = DetailParts.WithWaiting(DetailParts.WithSession(Status(view, context.AsOf), context.Session), context.Waiting);
         return new InstanceDetail(
             view.Address,
             view.Id,
@@ -132,7 +132,7 @@ public static partial class InstanceViews
             view.StartedBy)
         {
             Again = view.Again,
-            AllowedCommands = [.. view.AllowedCommands.Where(static c => c.Verb is not null)],
+            AllowedCommands = [.. view.AllowedCommands.Where(static c => c.Verb is not null || string.Equals(c.Action, "ApplyCommand:rewind", StringComparison.Ordinal))],
         };
     }
 
@@ -218,7 +218,7 @@ public static partial class InstanceViews
 
         if (instance.Suspension is not { Kind: SuspensionKind.Takeover })
         {
-            commands.AddRange(VerbCommands(instance, recipe));
+            commands.AddRange([.. VerbCommands(instance, recipe), .. RewindCommands.Of(instance, recipe)]);
         }
 
         if (instance.Suspension is { Kind: SuspensionKind.Takeover })
@@ -264,14 +264,14 @@ public static partial class InstanceViews
     private static bool Answerable(Suspension suspension) =>
         suspension.ParkKind is not (ParkKind.Revoked or ParkKind.ChildRevoked or ParkKind.Drift);
 
-    private static DeskTask Task(string state, RunToken run, InterpretedRecipe recipe, DateTimeOffset? timeoutAt, InjectionPlan? injection)
+    private static DeskTask Task(string state, RunToken run, InterpretedRecipe recipe, DateTimeOffset? timeoutAt, InstanceViewContext context)
     {
         var use = recipe.Recipe.States[state].Step
             ?? throw new InvalidOperationException($"state {state} has an open run but no Step");
         var step = use.Use;
         var descriptor = recipe.Catalog.Find(step);
         var outcomes = OutcomesOf(descriptor, use, recipe);
-        return new DeskTask(run, state, step, outcomes, descriptor?.Outputs ?? [], recipe.Inputs, timeoutAt, injection?.Entries);
+        return new DeskTask(run, state, step, outcomes, descriptor?.Outputs ?? [], recipe.Inputs, timeoutAt, context.Injection?.Entries) { Timings = context.Timings };
     }
 
     /// <summary>The outcomes the Step reports, through the one resolver; the descriptor's own for a recipe the validator refuses.</summary>

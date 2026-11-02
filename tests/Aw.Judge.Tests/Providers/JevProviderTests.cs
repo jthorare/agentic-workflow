@@ -29,6 +29,23 @@ public sealed class JevProviderTests
     }
 
     [Fact]
+    public async Task A_question_that_needs_reasons_is_not_sent_to_jev_which_only_classifies()
+    {
+        var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
+        using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
+        var question = Questions.Text with
+        {
+            Name = "resolution-check",
+            ExtraProperties = new Dictionary<string, JsonObject>(StringComparer.Ordinal) { [ResolutionCheckQuestion.Reasons] = ResolutionCheckQuestion.StringList() },
+        };
+
+        var result = await provider.Decide(question, Questions.Input, Questions.Budget, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new ProviderUnavailable("cannot-explain"), result);
+        Assert.Empty(handler.Requests);
+    }
+
+    [Fact]
     public async Task It_posts_to_the_api_with_the_bearer_key()
     {
         var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
@@ -62,13 +79,13 @@ public sealed class JevProviderTests
     {
         var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
         using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
-        var input = new JsonObject { ["text"] = "deploy with " + SampleSecrets.GitHubToken, ["diff"] = new string('d', 100_000) };
+        var input = new JsonObject { ["text"] = "deploy with " + SampleSecrets.GitHubToken, ["diff"] = new string('d', 300_000) };
 
         _ = await provider.Decide(Questions.Text, input, Questions.Budget, TestContext.Current.CancellationToken);
 
         var state = JsonNode.Parse(Assert.Single(handler.Requests).Body)!["state"]!;   // why: the body always carries the state
         Assert.Equal("deploy with " + FakeInputRedactor.Placeholder, state["text"]?.GetValue<string>());
-        Assert.True(state.ToJsonString().Length <= 16_000, $"the state is capped like the stored input, got {state.ToJsonString().Length} chars");
+        Assert.True(state.ToJsonString().Length <= 160_000, $"the state is capped at jev's window, got {state.ToJsonString().Length} chars");
     }
 
     [Fact]
@@ -90,16 +107,31 @@ public sealed class JevProviderTests
     }
 
     [Fact]
+    public async Task A_question_with_its_own_input_cap_sends_that_much_state_and_instructions()
+    {
+        var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
+        using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
+        var question = Questions.Text with { Prompt = new string('p', 60_000), InputCapChars = 150_000 };
+        var input = new JsonObject { ["text"] = new string('t', 80_000) };   // 80k + the 60k prompt fit the 150k cap together
+
+        _ = await provider.Decide(question, input, Questions.Budget, TestContext.Current.CancellationToken);
+
+        var json = JsonNode.Parse(Assert.Single(handler.Requests).Body)!;   // why: the provider always sends a JSON body
+        Assert.Equal(80_000, json["state"]!["text"]!.GetValue<string>().Length);
+        Assert.Equal(60_000, json["questions"]!["decision"]!["instructions"]!.GetValue<string>().Length);
+    }
+
+    [Fact]
     public async Task The_instructions_are_capped_like_the_state()
     {
         var handler = FakeHttpHandler.Answering(HttpStatusCode.OK, Answer);
         using var provider = new JevProvider(new HttpClient(handler), Secrets(), new FakeInputRedactor());
-        var question = Questions.Text with { Prompt = new string('p', 100_000) };
+        var question = Questions.Text with { Prompt = new string('p', 300_000) };
 
         _ = await provider.Decide(question, Questions.Input, Questions.Budget, TestContext.Current.CancellationToken);
 
         var instructions = JsonNode.Parse(Assert.Single(handler.Requests).Body)!["questions"]?["decision"]?["instructions"]?.GetValue<string>();
-        Assert.InRange(instructions?.Length ?? int.MaxValue, 1, 16_100);   // the stored input's cap plus the truncation marker
+        Assert.InRange(instructions?.Length ?? int.MaxValue, 1, 160_100);   // jev's cap plus the truncation marker
     }
 
     [Fact]

@@ -48,4 +48,8 @@ public sealed record RecipeSummary(RecipeId Id, int Version, RecipeHash Hash, Re
     /// <summary>True for a shipped version that waits for its own typed approval because it gains a capability (approve-all leaves it out); null, and left out of the JSON, otherwise.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public bool? GainsCapability { get; init; }
+
+    /// <summary>How a waiting shipped version is approved: 'approveAll' or 'own' (#1042); null, and left out of the JSON, for a line that is not a waiting shipped version.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public ShippedApproval? ApproveVia { get; init; }
 }

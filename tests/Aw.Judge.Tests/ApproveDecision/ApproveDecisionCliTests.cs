@@ -44,5 +44,13 @@ public sealed class ApproveDecisionCliTests : IDisposable
         Assert.Equal(new CliRun(1, "", "unknown decision: nope\n"), await cli.Run("approve", "nope"));
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task Approve_of_an_unreadable_row_exits_2_with_one_line_naming_the_decision()
+    {
+        await UnreadableRow.WithTs(_state, "d-bad", "yesterday");
+
+        UnreadableRow.AssertNamed(await new JudgeCli(_state).Run("approve", "d-bad"), "d-bad", "approved");
+    }
+
     public void Dispose() => _state.Dispose();
 }

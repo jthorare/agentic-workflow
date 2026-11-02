@@ -52,11 +52,16 @@ internal sealed class RoutedApi : HttpMessageHandler
         return this;
     }
 
+    /// <summary>Every header that goes out on the wire: the request's and its content's.</summary>
+    private static Dictionary<string, string> Sent(HttpRequestMessage request) =>
+        request.Headers.Concat(request.Content?.Headers ?? Enumerable.Empty<KeyValuePair<string, IEnumerable<string>>>())
+            .ToDictionary(h => h.Key, h => string.Join(',', h.Value), StringComparer.OrdinalIgnoreCase);
+
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
     {
         var uri = request.RequestUri!;   // why: HttpClient always sets the URI
         var body = request.Content is null ? null : await request.Content.ReadAsStringAsync(cancellationToken);
-        Calls.Add(new Call(request.Method.Method, uri.AbsolutePath, uri.Query, body, request.Headers.ToDictionary(h => h.Key, h => string.Join(',', h.Value), StringComparer.OrdinalIgnoreCase)));
+        Calls.Add(new Call(request.Method.Method, uri.AbsolutePath, uri.Query, body, Sent(request)));
         if (_cursor is { } cursor && request.Headers.TryGetValues(SindriHeaders.After, out var after) && long.Parse(after.Single(), System.Globalization.CultureInfo.InvariantCulture) > cursor)
         {
             return new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)

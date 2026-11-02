@@ -18,7 +18,7 @@ namespace Aw.Sindri.Infrastructure.Workflow;
 internal sealed class LedgerAgentSessions(ILaunchViews views, ILedgerReader ledger, EventFactory events) : IAgentSessions
 {
     private const int Page = 500;
-    private const string IdleDetail = "the agent's turn ended without a report and nothing happened for 120 s (fix: take the Step over, or send it again)";
+    private const string IdleDetail = "agent-stalled: the agent sat idle at its prompt with no report (its turn ended, or an API error stopped it and its one re-prompt got no answer; fix: take the Step over, or send it again)";
 
     public async ValueTask<Result<AgentSessionState>> Watch(LaunchId launch, CancellationToken cancellationToken)
     {
@@ -40,9 +40,15 @@ internal sealed class LedgerAgentSessions(ILaunchViews views, ILedgerReader ledg
             SessionEndReason.Exit => new AgentSessionState(AgentSessionEnd.Exit, payload.Value.ExitCode),
             SessionEndReason.Lost => new AgentSessionState(AgentSessionEnd.Lost, payload.Value.ExitCode),
             SessionEndReason.Idle => new AgentSessionState(AgentSessionEnd.Idle, ExitCode: null, IdleDetail),
+            SessionEndReason.Limit when payload.Value is { Kind: { } kind, Limit: { } limit, Peak: { } peak } =>
+                new AgentSessionState(AgentSessionEnd.Limit, ExitCode: null, Of(kind, limit, peak).Detail, Refused: false, Of(kind, limit, peak)),
+            SessionEndReason.Limit => throw new InvalidOperationException("the ledger holds session.ended reason Limit without its kind, limit and peak"),
             _ => throw new InvalidOperationException($"the ledger holds session.ended reason {payload.Value.Reason}, which this build does not know"),
         };
     }
+
+    private static AgentSessionLimit Of(LimitKind kind, long limit, long peak) =>
+        new(kind switch { LimitKind.Memory => AgentLimitKind.Memory, LimitKind.Wall => AgentLimitKind.Wall, _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, "not a limit this build knows") }, limit, peak);
 
     public async ValueTask<Result<long>> Usage(LaunchId launch, CancellationToken cancellationToken)
     {

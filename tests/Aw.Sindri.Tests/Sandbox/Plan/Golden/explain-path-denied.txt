@@ -1,0 +1,2 @@
+/home/owner/.agentic-workflow/ledger.db is blocked: the ledger, profile, tokens and other runs' areas live here.
+No setting changes this. If you need it, ask the owner to do it in their own terminal.

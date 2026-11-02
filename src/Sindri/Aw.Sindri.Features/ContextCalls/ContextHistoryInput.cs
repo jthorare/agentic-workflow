@@ -93,8 +93,6 @@ internal sealed class ContextHistoryInput(IContextEngine history, ContextInputSc
     {
         if (!context.Arguments.TryGetValue("window", out var value) || value.ValueKind is JsonValueKind.Null or JsonValueKind.Undefined)
         {
-            // why: the engine leaves a '{ profile: … }' argument out, so an absent window may be a profile window that never arrived; say so
-            notes.Add("no history window reached this input (a window from the profile is not passed to inputs); reading all history");
             return HistoryWindow.Open;
         }
 
@@ -113,12 +111,6 @@ internal sealed class ContextHistoryInput(IContextEngine history, ContextInputSc
         string? since = null, before = null;
         foreach (var property in window.EnumerateObject())
         {
-            if (property.Name == "profile" && property.Value.ValueKind == JsonValueKind.String)
-            {
-                notes.Add($"window from profile {property.Value.GetString()} is not available to this input; reading all history");
-                continue;
-            }
-
             if (property.Name is not ("since" or "before"))
             {
                 notes.Add($"window key '{property.Name}' is not since or before and was ignored");

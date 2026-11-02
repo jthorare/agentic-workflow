@@ -97,6 +97,7 @@ internal sealed partial class SchedulerHost(
             _loaded = true;   // the first read loads the built-ins even with no approved profile (S1-D8)
             _approved = profile;
             _schedules = ServiceSchedule.From(profile?.Profile, inputs.BuiltIns, clock.GetUtcNow(), await LastRuns(ct).ConfigureAwait(false));
+            inputs.Live.Publish(_schedules);
             LogSchedule(log, _approved?.Hash.Abbreviated ?? "none", _schedules.Count);
         }
     }
@@ -141,7 +142,7 @@ internal sealed partial class SchedulerHost(
             advanced.Add(schedule.Advance(now));
         }
 
-        _schedules = advanced;
+        inputs.Live.Publish(_schedules = advanced);   // the services listing reads these: without the lease nothing advances, so a slot left in the past was missed
     }
 
     /// <summary>A built-in service can't be paused (only the profile's can), so it needs no read of the pauses to start.</summary>

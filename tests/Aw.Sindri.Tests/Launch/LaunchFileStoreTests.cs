@@ -61,6 +61,28 @@ public sealed class LaunchFileStoreTests : LaunchFilesContract, IDisposable
     }
 
     [Fact]
+    public void TurnFailedAt_and_ToolRunning_read_the_StopFailure_and_PreToolUse_files()
+    {
+        var files = Create();
+        Expect.Equal((true, false), (files.TurnFailedAt(A.FirstLaunchId) is null, files.ToolRunning(A.FirstLaunchId)));
+        _ = Seed(LaunchFiles.TurnFailedName(A.FirstLaunchId), KnownInstants.Epoch);
+        _ = Seed(LaunchFiles.ToolRunningName(A.FirstLaunchId), KnownInstants.Epoch);
+
+        Expect.Equal((KnownInstants.Epoch, true, true), (files.TurnFailedAt(A.FirstLaunchId)!.Value, files.ToolRunning(A.FirstLaunchId), files.TurnFailedAt(Second) is null));
+    }
+
+    [Fact]
+    public void Forget_deletes_the_turn_failed_tool_running_and_nudged_files()
+    {
+        var files = Create();
+        var paths = new[] { LaunchFiles.TurnFailedName(A.FirstLaunchId), LaunchFiles.ToolRunningName(A.FirstLaunchId), LaunchFiles.NudgedName(A.FirstLaunchId) }.Select(name => Seed(name, KnownInstants.Epoch)).ToList();
+
+        files.Forget(A.FirstLaunchId);
+
+        Expect.True(paths.TrueForAll(static path => !File.Exists(path)));
+    }
+
+    [Fact]
     public void Forget_deletes_the_turn_file_and_the_startup_sweep_removes_a_stale_one()
     {
         var now = KnownInstants.Epoch.AddHours(1);

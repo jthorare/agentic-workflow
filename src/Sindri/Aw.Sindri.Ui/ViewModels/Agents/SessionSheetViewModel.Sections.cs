@@ -34,6 +34,9 @@ internal sealed partial class SessionSheetViewModel
     /// <summary>"In this status for 4m"; empty before the clock is wired.</summary>
     public string InStatusText { get; private set => Set(ref field, value); } = string.Empty;
 
+    /// <summary>"Started 2025-10-09 08:55:00"; empty when the start is not known.</summary>
+    public string StartedText { get; private set => Set(ref field, value); } = string.Empty;
+
     /// <summary>The copy chip of the session's ref; null before a session is drawn.</summary>
     public CopyAction? RefCopy { get; private set => Set(ref field, value); }
 
@@ -56,6 +59,7 @@ internal sealed partial class SessionSheetViewModel
         Sections = Group((Labels.SheetWhereWorking, _whereLabels), (Labels.SheetTiming, _timingLabels));
         IsAsking = string.Equals(session.State, "asking", StringComparison.Ordinal);
         InStatusText = _catalog is null ? string.Empty : Labels.SheetInStatusFor(Labels.Duration((long)Math.Max(0, (_clock.GetUtcNow() - session.Since).TotalSeconds)));
+        StartedText = session.StartedAt is { } started ? Labels.SheetStarted + " " + Labels.SheetTime(started) : string.Empty;
         RefCopy = _catalog is { } catalog ? new CopyAction(catalog.Clipboard, _clock, Labels.SheetCopyRef + " " + session.Ref, Labels.SheetCopyRef) : null;
     }
 

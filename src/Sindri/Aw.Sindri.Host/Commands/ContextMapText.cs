@@ -23,7 +23,48 @@ internal static class ContextMapText
     internal static string Status(MapStatusView s) => string.Create(CultureInfo.InvariantCulture,
         $"map v{s.Version.Number} {Word(s.Version.Status)} · {s.Version.Repo.Value} · created {s.Version.Created:O}{(s.ScopedTo is { } repo ? $" · scoped to {repo.Value}" : string.Empty)}\n"
         + $"{Counts(s.Counts)}{Scope(s.ScopedTo)}; {s.Orphaned} orphaned overrides; {s.Retained} retained versions\n")
+        + (s.Checks is { } checks ? $"structure: {checks}\n" : string.Empty)
+        + (s.RulesOlder ? "built under older map rules; a refresh will rebuild it (sindri context map refresh)\n" : string.Empty)
         + (s.Coverage is { } coverage ? ContextLensText.Coverage(coverage) : string.Empty);
+
+    /// <summary>'context map checks': per measure the value, both limits and the verdict, then the largest offenders (feature keys, so only here).</summary>
+    internal static string Checks(MapChecksView view)
+    {
+        var report = view.Report;
+        var title = view.Source switch
+        {
+            MapChecksSource.Draft => string.Create(CultureInfo.InvariantCulture, $"draft map v{view.Version}"),
+            MapChecksSource.Build => "the map a build would save",
+            MapChecksSource.Current => string.Create(CultureInfo.InvariantCulture, $"current map v{view.Version}"),
+            _ => throw new ArgumentOutOfRangeException(nameof(view), view.Source, "an unknown map source"),
+        };
+        var text = new System.Text.StringBuilder().Append(title).Append(" (context.checks.mode: ").Append(view.Mode == ChecksMode.Warn ? "warn" : "refuse").Append(")\n");
+        _ = text.Append(Measure(report.Isolated, "features with no link to another feature or a table")).Append(Measure(report.OverCap, string.Create(CultureInfo.InvariantCulture, $"features over {MapChecks.SizeCap} files")));
+        if (report.NoFileEdges)
+        {
+            _ = text.Append("structure: no file edges (imports and data stores not extracted)\n");
+        }
+
+        foreach (var offender in report.Offenders)
+        {
+            _ = text.Append(string.Create(CultureInfo.InvariantCulture, $"  {offender.Measure}: {offender.Feature} ({offender.Files} files)\n"));
+        }
+
+        return text.ToString();
+    }
+
+    private static string Measure(CheckMeasure m, string what) => m.Skipped is { } why
+        ? $"{m.Name}: not measured ({why})\n"
+        : string.Create(CultureInfo.InvariantCulture, $"{m.Name}: {m.Count} of {m.Total} {what} = {MapChecksReport.Percent(m.Permille)}; degraded above {MapChecksReport.Percent(m.DegradedPermille)}, refused above {MapChecksReport.Percent(m.RefusePermille)}: {m.Verdict.ToString().ToLowerInvariant()}\n");
+
+    /// <summary>0 all pass, 1 degraded (or a would-be refusal under 'warn'), 3 would be refused.</summary>
+    internal static int ChecksExit(MapChecksView view) => view.Report.Verdict switch
+    {
+        CheckVerdict.Refuse => view.Mode == ChecksMode.Refuse ? 3 : 1,
+        CheckVerdict.Degraded => 1,
+        CheckVerdict.Pass => view.Report.NoFileEdges ? 1 : 0,
+        _ => throw new ArgumentOutOfRangeException(nameof(view), view.Report.Verdict, "an unknown verdict"),
+    };
 
     /// <summary>The publish state as lines under the map's own status: the state in the spec's short form, then the sentences (code index spec 6.4).</summary>
     internal static string Publish(MapPublishStatusView p) => $"publish: {PublishShort(p)}\n" + string.Concat(p.Lines.Select(static l => "  " + l + "\n"));

@@ -9,6 +9,7 @@ using Aw.Sindri.Ui.ViewModels.Shell;
 
 namespace Aw.Sindri.Ui.Views.Instance;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The instance frame inside the sheet: Back closes the sheet like Esc, and Open in hands the subject's link to the platform.</summary>
 internal sealed partial class InstanceFrameView : UserControl
 {
@@ -21,6 +22,27 @@ internal sealed partial class InstanceFrameView : UserControl
     public InstanceFrameView()
     {
         InitializeComponent();
+        AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
+    }
+
+    // Esc with a Why flyout open closes the flyout only and puts focus back on the sentence that opened it; the sheet stays, and the next Esc closes it
+    // (model-pick spec section 6.1, Layering). The window's own Esc is spent on the sheet, so this runs first, on the way down.
+    private void OnPreviewKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (e.Key != Key.Escape || e.KeyModifiers != KeyModifiers.None)
+        {
+            return;
+        }
+
+        var open = this.GetVisualDescendants().OfType<Button>().FirstOrDefault(b => b.Flyout?.IsOpen == true);
+        if (open?.Flyout is not { } flyout)
+        {
+            return;
+        }
+
+        flyout.Hide();
+        _ = open.Focus(NavigationMethod.Tab);
+        e.Handled = true;
     }
 
     /// <inheritdoc />
@@ -121,7 +143,10 @@ internal sealed partial class InstanceFrameView : UserControl
 
     private void OnRecipe(object? sender, RoutedEventArgs e) => _frame?.OpenRecipe();
 
+    private void OnOpenServed(object? sender, RoutedEventArgs e) => _frame?.OpenServed();
+
     private void OnCopyAddress(object? sender, RoutedEventArgs e) => _ = _frame?.CopyAddress(CancellationToken.None);
 
     private void OnOpenIn(object? sender, RoutedEventArgs e) => _ = (DataContext as InstanceFrameViewModel)?.Subject?.OpenIn(CancellationToken.None);
 }
+#pragma warning restore MA0182

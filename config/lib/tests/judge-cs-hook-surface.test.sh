@@ -287,7 +287,7 @@ rc=0; (cd "$WORK/repo-trait" && judge_on cs "$s" trait-check --edit --file src/a
 [ "$rc" = 3 ] && has 'jev unavailable' < "$WORK/tc-cli.err" || fail "tc-cli: trait-check with Jev excluded must exit 3 'jev unavailable', got $rc: $(cat "$WORK/tc-cli.err")"
 
 # ---- the not-yet-built stub (cutover spec §5.2, Q9): empty stdout, one stderr line, exit 1 ----
-for c in 'label|label' 'label status|label' 'adjudicate ask-check|adjudicate' 'eval wake-gate|eval' 'eval import-turns x.jsonl|eval import-turns' \
+for c in \
   'prompt-sort why abc|prompt-sort why' 'prompt-sort import|prompt-sort import' 'prompt-sort outcomes|prompt-sort outcomes' 'prompt-sort adjudicate|prompt-sort adjudicate' \
   'prompt-sort eval|prompt-sort eval' 'prompt-sort promote --apply|prompt-sort promote'; do
   args="${c%%|*}"; verb="${c#*|}"; rc=0

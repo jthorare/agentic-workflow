@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json.Nodes;
+using Aw.Sindri.Core.Scoping;
 
 namespace Aw.Sindri.Features.Scoping;
 
@@ -13,7 +14,7 @@ internal static class ScopeSchemas
     /// <param name="schema">The schema's file name without '.json' ('scope-map', 'acceptance').</param>
     /// <param name="fact">The fact's tree.</param>
     /// <param name="packetFile">True to check the packet-file form ('$defs/file') instead of the fact form.</param>
-    internal static IReadOnlyList<SchemaError> Errors(string schema, JsonNode? fact, bool packetFile = false)
+    internal static IReadOnlyList<(string Path, string Message)> Errors(string schema, JsonNode? fact, bool packetFile = false)
     {
         var document = Document(schema);
         var form = (document["$defs"] as JsonObject)?[packetFile ? "file" : "fact"];

@@ -1,0 +1,2 @@
+{"start":{"inputs":{"fact:item":"T-1"}}}
+{"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:resolution":"Written up."}},"expect":{"state":"done","outcome":"resolved"}}

@@ -11,6 +11,27 @@ public sealed class ClaudeSessionRecordsTests
         new ClaudeSessionRecords(directory).Read(TestContext.Current.CancellationToken).Value;
 
     [Fact, Trait("Lane", "integration")]
+    public void A_separate_agent_homes_session_records_are_read_beside_the_owners()
+    {
+        var owner = Directory.CreateTempSubdirectory("aw-owner-").FullName;
+        var agentHome = Directory.CreateTempSubdirectory("aw-home-").FullName;
+        try
+        {
+            File.WriteAllText(Path.Combine(owner, "1.json"), """{ "pid": 1, "sessionId": "s1", "procStart": "10", "kind": "interactive" }""");
+            File.WriteAllText(Path.Combine(agentHome, "2.json"), """{ "pid": 2, "sessionId": "s2", "procStart": "20", "kind": "interactive" }""");
+
+            var records = new ClaudeSessionRecords(owner, [agentHome]).Read(TestContext.Current.CancellationToken).Value;
+
+            Assert.Equal([1, 2], records.Select(static r => r.Pid).Order());
+        }
+        finally
+        {
+            Directory.Delete(owner, recursive: true);
+            Directory.Delete(agentHome, recursive: true);
+        }
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public void Records_read_the_fields_the_collector_uses_and_procStart_as_a_string()
     {
         var records = Read(SessionFixtures.ClaudeSessions);

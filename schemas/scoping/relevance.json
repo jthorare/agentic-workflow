@@ -1,0 +1,223 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/scoping/relevance.json",
+  "title": "The relevance review's record (fact:relevance and relevance.json)",
+  "description": "Issue 966 spec 4.3: the latest relevance pass. counts.in includes the disputed entries kept in; disputed counts the entries with disputed true; truncated lists the lenses whose band was cut at 100. Each entry carries both verdicts (null when the agent gave none or the judge ruled none) and the result: in, out or noise.",
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "const": 1,
+      "description": "Packet-file envelope: present in relevance.json, absent in the fact."
+    },
+    "agent": {
+      "type": "object",
+      "properties": {
+        "reportedModel": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "reportedModel"
+      ],
+      "additionalProperties": false
+    },
+    "judge": {
+      "type": "object",
+      "properties": {
+        "providers": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "required": [
+        "providers"
+      ],
+      "additionalProperties": false
+    },
+    "counts": {
+      "type": "object",
+      "properties": {
+        "reviewed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "in": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "out": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "noise": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "disputed": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "reviewed",
+        "in",
+        "out",
+        "noise",
+        "disputed"
+      ],
+      "additionalProperties": false
+    },
+    "truncated": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "code",
+          "product",
+          "related",
+          "history"
+        ]
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^L-(code|product|related|history)-[1-9][0-9]*$"
+          },
+          "lens": {
+            "enum": [
+              "code",
+              "product",
+              "related",
+              "history"
+            ]
+          },
+          "key": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The node key; absent for an item (a record, decision or commit)."
+          },
+          "kind": {
+            "type": "string",
+            "minLength": 1
+          },
+          "label": {
+            "type": "string"
+          },
+          "agent": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "class": {
+                "enum": [
+                  "in",
+                  "out",
+                  "noise"
+                ]
+              },
+              "reason": {
+                "type": "string"
+              },
+              "citation": {
+                "type": "string"
+              },
+              "fix": {
+                "enum": [
+                  "relabel",
+                  "demote",
+                  "ignore"
+                ]
+              },
+              "relabelTo": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "class"
+            ],
+            "additionalProperties": false
+          },
+          "judge": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "class": {
+                "enum": [
+                  "in",
+                  "out",
+                  "noise",
+                  "uncertain"
+                ]
+              },
+              "confidence": {
+                "type": [
+                  "number",
+                  "null"
+                ]
+              },
+              "provider": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "decisionId": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "reasonCode": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "class"
+            ],
+            "additionalProperties": false
+          },
+          "result": {
+            "enum": [
+              "in",
+              "out",
+              "noise"
+            ]
+          },
+          "disputed": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "lens",
+          "kind",
+          "label",
+          "agent",
+          "judge",
+          "result",
+          "disputed"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "agent",
+    "judge",
+    "counts",
+    "truncated",
+    "entries"
+  ],
+  "additionalProperties": false
+}

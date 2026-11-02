@@ -9,7 +9,7 @@ namespace Aw.Context.Tests.QueryContext;
 
 public sealed class QueryContextTests
 {
-    private static readonly SourceDescriptor _onyx = new(SourceId.From("onyx"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false);
+    private static readonly SourceDescriptor _tracker = new(SourceId.From("tracker"), SourceKind.Intent, SourceFreshness.Live, SupportsAsOf: false);
 
     [Fact, Trait("Lane", "unit")]
     public async Task QueryContext_returns_cited_versioned_repo_doc_records()
@@ -32,12 +32,12 @@ public sealed class QueryContextTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_failing_source_is_degraded_and_the_others_still_answer()
     {
-        var onyx = new FakeContextSource(_onyx, []) { Failure = ContextErrors.SourceUnavailable.With("Onyx did not answer") };
+        var tracker = new FakeContextSource(_tracker, []) { Failure = ContextErrors.SourceUnavailable.With("The tracker did not answer") };
 
-        var result = await Engines.Over(FakeContextSource.FixtureDocs(), onyx).Query(new ContextQuery("orientation"), Engines.Human(), CancellationToken.None);
+        var result = await Engines.Over(FakeContextSource.FixtureDocs(), tracker).Query(new ContextQuery("orientation"), Engines.Human(), CancellationToken.None);
 
         var degraded = result.Value.Degraded.Single();
-        Assert.Equal(("onyx", "SND-CONTEXT-010", "Onyx did not answer"), (degraded.Source.Value, degraded.Code, degraded.Message));
+        Assert.Equal(("tracker", "SND-CONTEXT-010", "The tracker did not answer"), (degraded.Source.Value, degraded.Code, degraded.Message));
         Assert.NotEmpty(result.Value.Sections.Single().Items);
     }
 
@@ -55,14 +55,14 @@ public sealed class QueryContextTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_source_past_the_deadline_is_degraded()
     {
-        var slow = new FakeContextSource(_onyx, []) { Hangs = true };
+        var slow = new FakeContextSource(_tracker, []) { Hangs = true };
         var clock = new FakeTimeProvider(new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero));
         var engine = Engines.Over(new FixedSourceCatalog(FakeContextSource.FixtureDocs(), slow), time: clock);
 
         var result = await Engines.Advancing(clock, () => engine.Query(new ContextQuery("orientation"), Engines.Human("""{"deadline":"2s"}"""), TestContext.Current.CancellationToken).AsTask());
 
-        var onyx = Assert.Single(result.Value.Degraded, d => d.Source.Value == "onyx");   // why: the other source's records may also be reported as not read in time
-        Assert.Contains("deadline", onyx.Message, StringComparison.Ordinal);
+        var tracker = Assert.Single(result.Value.Degraded, d => d.Source.Value == "tracker");   // why: the other source's records may also be reported as not read in time
+        Assert.Contains("deadline", tracker.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -159,15 +159,15 @@ public sealed class QueryContextTests
     [Fact, Trait("Lane", "unit")]
     public async Task Each_source_checks_only_its_own_references_when_two_share_a_record()
     {
-        var other = new FakeContextSource(_onyx, [FakeContextSource.Doc("docs/decisions/0001-orientation-toggle.md", "Mirror", "orientation toggle", "o9") with
+        var other = new FakeContextSource(_tracker, [FakeContextSource.Doc("docs/decisions/0001-orientation-toggle.md", "Mirror", "orientation toggle", "o9") with
         {
-            Ref = FakeContextSource.Doc("docs/decisions/0001-orientation-toggle.md", "Mirror", "orientation toggle", "o9").Ref with { Source = _onyx.Id },
+            Ref = FakeContextSource.Doc("docs/decisions/0001-orientation-toggle.md", "Mirror", "orientation toggle", "o9").Ref with { Source = _tracker.Id },
         }]);
 
         var result = await Engines.Over(FakeContextSource.FixtureDocs(), other).Query(new ContextQuery("orientation toggle"), Engines.Human(), CancellationToken.None);
 
         var cite = result.Value.Cites["C1"];
-        Assert.Equal(["onyx", "repo-docs"], cite.Refs.Select(r => r.Source.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
+        Assert.Equal(["repo-docs", "tracker"], cite.Refs.Select(r => r.Source.Value).Order(StringComparer.Ordinal), StringComparer.Ordinal);
         Assert.Equal(CitationState.Current, cite.State);   // a ref sent to the wrong source would read as gone, so stale
     }
 
@@ -175,9 +175,9 @@ public sealed class QueryContextTests
     public async Task Aliases_reach_the_citation_scrubbed_field_by_field_like_titles()
     {
         var record = FakeContextSource.Doc("docs/decisions/0001-orientation-toggle.md", "Mirror", "orientation toggle", "o9");
-        var other = new FakeContextSource(_onyx, [record with
+        var other = new FakeContextSource(_tracker, [record with
         {
-            Ref = record.Ref with { Source = _onyx.Id },
+            Ref = record.Ref with { Source = _tracker.Id },
             Aliases = ["SPL-103", "SPL-" + FakeScrubber.Secret, "SPL-" + FakeScrubber.BlockMe, "SPL-103"],
         }]);
 
@@ -195,7 +195,7 @@ public sealed class QueryContextTests
     public async Task A_permalink_is_scrubbed_like_every_field_and_dropped_when_the_scrub_changes_it(string link, string? shown)
     {
         var record = FakeContextSource.Doc("docs/decisions/0001-orientation-toggle.md", "Mirror", "orientation toggle", "o9");
-        var other = new FakeContextSource(_onyx, [record with { Ref = record.Ref with { Source = _onyx.Id, Permalink = new Uri(link) } }]);
+        var other = new FakeContextSource(_tracker, [record with { Ref = record.Ref with { Source = _tracker.Id, Permalink = new Uri(link) } }]);
 
         var result = await Engines.Over(other).Query(new ContextQuery("orientation toggle"), Engines.Human(), CancellationToken.None);
 
@@ -205,33 +205,33 @@ public sealed class QueryContextTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_session_searches_onyx_like_a_human_and_gets_the_hit_fenced()
+    public async Task A_session_searches_a_tracker_like_a_human_and_gets_the_hit_fenced()
     {
         var record = FakeContextSource.Doc("linear/SPL-104", "Orientation toggle", "orientation for the toggle", "o9");
-        var onyx = new FakeContextSource(_onyx, [record with { Ref = record.Ref with { Source = _onyx.Id } }]);
+        var tracker = new FakeContextSource(_tracker, [record with { Ref = record.Ref with { Source = _tracker.Id } }]);
 
-        var result = await Engines.Over(onyx).Query(new ContextQuery("orientation"), Engines.Session("split-panes", """{"sessions":{"enabled":true}}"""), CancellationToken.None);
+        var result = await Engines.Over(tracker).Query(new ContextQuery("orientation"), Engines.Session("split-panes", """{"sessions":{"enabled":true}}"""), CancellationToken.None);
 
         var item = result.Value.Sections.Single().Items.Single();
-        Assert.Equal("<untrusted source=\"onyx\">Orientation toggle</untrusted>", item.Title);
+        Assert.Equal("<untrusted source=\"tracker\">Orientation toggle</untrusted>", item.Title);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_onyx_record_is_scrubbed_with_the_profiles_extra_patterns_in_title_text_alias_and_permalink()
+    public async Task A_tracker_record_is_scrubbed_with_the_profiles_extra_patterns_in_title_text_alias_and_permalink()
     {
         const string acme = """{"scrub":{"extraPatterns":[{"id":"acme-customer-id","pattern":"ACME-[0-9]{6}"}]}}""";
         var record = FakeContextSource.Doc("linear/SPL-103", "Customer ACME-123456 escalation", "orientation for customer ACME-123456", "o9");
-        var onyx = new FakeContextSource(_onyx, [record with
+        var tracker = new FakeContextSource(_tracker, [record with
         {
-            Ref = record.Ref with { Source = _onyx.Id, Permalink = new Uri("https://linear.app/fixture-labs/issue/ACME-123456") },
+            Ref = record.Ref with { Source = _tracker.Id, Permalink = new Uri("https://linear.app/fixture-labs/issue/ACME-123456") },
             Aliases = ["SPL-103", "ACME-123456"],
         }]);
 
-        var result = await Engines.Over(onyx).Query(new ContextQuery("orientation"), Engines.Human(acme), CancellationToken.None);
+        var result = await Engines.Over(tracker).Query(new ContextQuery("orientation"), Engines.Human(acme), CancellationToken.None);
 
         var item = result.Value.Sections.Single().Items.Single();
         var cite = result.Value.Cites[item.Cites.Single()];
-        Assert.Equal("<untrusted source=\"onyx\">Customer [REDACTED:acme-customer-id] escalation</untrusted>", item.Title);
+        Assert.Equal("<untrusted source=\"tracker\">Customer [REDACTED:acme-customer-id] escalation</untrusted>", item.Title);
         Assert.Equal((false, true), (item.Text!.Contains("ACME-123456", StringComparison.Ordinal), item.Text.Contains("[REDACTED:acme-customer-id]", StringComparison.Ordinal)));
         Assert.Equal(["SPL-103", "[REDACTED:acme-customer-id]"], cite.Aliases, StringComparer.Ordinal);
         Assert.Null(cite.Permalink);   // a link the extra pattern changed is left out
@@ -241,12 +241,12 @@ public sealed class QueryContextTests
     [Fact, Trait("Lane", "unit")]
     public async Task A_degraded_source_names_the_cause_code_when_it_is_not_010_itself()
     {
-        var onyx = new FakeContextSource(_onyx, []) { Failure = ContextErrors.OnyxUnexpectedReply.With("Onyx answered with a body v4.9.0 doesn't send") };
+        var tracker = new FakeContextSource(_tracker, []) { Failure = ContextErrors.LinearUnexpectedReply.With("Linear answered with a body its API doesn't send") };
 
-        var result = await Engines.Over(FakeContextSource.FixtureDocs(), onyx).Query(new ContextQuery("orientation"), Engines.Human(), CancellationToken.None);
+        var result = await Engines.Over(FakeContextSource.FixtureDocs(), tracker).Query(new ContextQuery("orientation"), Engines.Human(), CancellationToken.None);
 
         var degraded = result.Value.Degraded.Single();
-        Assert.Equal(("SND-CONTEXT-010", "SND-CONTEXT-051: Onyx answered with a body v4.9.0 doesn't send"), (degraded.Code, degraded.Message));
+        Assert.Equal(("SND-CONTEXT-010", "SND-CONTEXT-072: Linear answered with a body its API doesn't send"), (degraded.Code, degraded.Message));
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -279,7 +279,7 @@ public sealed class QueryContextTests
     public async Task Records_found_but_gone_when_read_are_degraded_not_an_empty_answer()
     {
         var docs = FakeContextSource.FixtureDocs();
-        docs.FetchFailure = ContextErrors.OnyxDocumentNotFound.With("no such document");
+        docs.FetchFailure = ContextErrors.LinearRecordNotFound.With("no such document");
 
         var result = await Engines.Over(docs).Query(new ContextQuery("orientation"), Engines.Human(), CancellationToken.None);
 

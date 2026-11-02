@@ -22,6 +22,18 @@
     <SolidColorBrush x:Key="AccentButtonForeground" Color="#ffffff" />
     <SolidColorBrush x:Key="AccentButtonForegroundPointerOver" Color="#ffffff" />
     <SolidColorBrush x:Key="AccentButtonForegroundPressed" Color="#ffffff" />
+    <!-- Combo boxes: Fluent fills a focused one from the palette accent (solid purple); it keeps the Surface1 face and Ink text, and the
+         focus ring is the cue. -->
+    <SolidColorBrush x:Key="ComboBoxBackground" Color="#0f1011" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundPointerOver" Color="#141516" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundPressed" Color="#18191a" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundUnfocused" Color="#0f1011" />
+    <SolidColorBrush x:Key="ComboBoxBackgroundBorderBrushFocused" Color="#34343a" />
+    <SolidColorBrush x:Key="ComboBoxForegroundFocused" Color="#f7f8f8" />
+    <SolidColorBrush x:Key="ComboBoxForegroundFocusedPressed" Color="#f7f8f8" />
+    <SolidColorBrush x:Key="ComboBoxPlaceHolderForegroundFocusedPressed" Color="#d0d6e0" />
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundFocused" Color="#f7f8f8" />
+    <SolidColorBrush x:Key="ComboBoxDropDownGlyphForegroundFocusedPressed" Color="#f7f8f8" />
     <!-- Buttons and inputs: Radius.MD. -->
     <CornerRadius x:Key="ControlCornerRadius">8</CornerRadius>
     <!-- Tooltips on Surface3. -->
@@ -66,6 +78,16 @@
     <Setter Property="FocusAdorner">
       <FocusAdornerTemplate>
         <Border BorderBrush="{DynamicResource Brush.PrimaryHover}" BorderThickness="2" Margin="2" />
+      </FocusAdornerTemplate>
+    </Setter>
+  </Style>
+
+  <!-- The sheet's title is a line of text that takes focus as the sheet opens: a box ring round it reads as a focused text field
+       (#1100), so its focus is an underline, 2 px PrimaryHover, 4 px below the text. -->
+  <Style Selector="Border.sheet-title">
+    <Setter Property="FocusAdorner">
+      <FocusAdornerTemplate>
+        <Border BorderBrush="{DynamicResource Brush.PrimaryHover}" BorderThickness="0,0,0,2" Margin="0,0,0,-4" AdornerLayer.IsClipEnabled="False" />
       </FocusAdornerTemplate>
     </Setter>
   </Style>

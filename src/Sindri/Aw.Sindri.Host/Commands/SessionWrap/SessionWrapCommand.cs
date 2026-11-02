@@ -1,4 +1,5 @@
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -16,8 +17,8 @@ namespace Aw.Sindri.Host.Commands.SessionWrap;
 /// <param name="clock">The time the heartbeat and the id wait run on.</param>
 /// <param name="errors">Where wrap writes its own messages (never the agent's output).</param>
 /// <param name="ids">Where the session id is looked for.</param>
-/// <param name="hangup">Completes when wrap is told to hang up or terminate (its terminal closed); null when nothing can tell it.</param>
-internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher children, Func<string, string?> environment, TimeProvider clock, TextWriter errors, ISessionIdSource ids, Task? hangup = null)
+/// <param name="extras">The hang-up signal and the limit watchdog's ports, when there are any.</param>
+internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher children, Func<string, string?> environment, TimeProvider clock, TextWriter errors, ISessionIdSource ids, WrapExtras? extras = null)
 {
     private static readonly TimeSpan _idWait = TimeSpan.FromSeconds(30);
     private static readonly TimeSpan _idPoll = TimeSpan.FromMilliseconds(500);
@@ -30,7 +31,7 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
     internal async Task<int> Run(string[] args, CancellationToken cancellationToken)
     {
         _resolved = WithSecretFromFile(environment);
-        var (failed, begunLaunch, started) = await Begin(args).ConfigureAwait(false);
+        var (failed, begunLaunch, started, limits) = await Begin(args).ConfigureAwait(false);
         if (failed is { } failure)
         {
             return failure;
@@ -51,15 +52,57 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
             watchers.Add(Beats(launch, secret, stop.Token));
         }
 
+        var watch = limits is { } held && extras?.Watchdog is { } ports
+            ? new LimitWatchdog(ports.Scope, ports.Stats, calls, clock, held, ports.MemoryKills).Run(launch, proof, child.Exited, cancellationToken)
+            : Task.FromResult<LimitEnd?>(null);
         var code = await ExitCode(child, cancellationToken).ConfigureAwait(false);
         await stop.CancelAsync().ConfigureAwait(false);
         await Task.WhenAll(watchers).ConfigureAwait(false);
+        var limit = await watch.ConfigureAwait(false);
+        Release(limits, extras?.Watchdog);
         if (proof is { } last)
         {
-            await Exit(launch, last, code, cancellationToken).ConfigureAwait(false);
+            await Exit(launch, last, new WrapExit(code, _found, limit), cancellationToken).ConfigureAwait(false);
         }
 
+        SweepHeavySlots();
         return code;
+    }
+
+    /// <summary>Process-group mode, the child reaped and the verdict taken: the unit's group id file would name an unrelated group once the system reuses the id. Never blocks or fails the exit.</summary>
+    private static void Release(WrapLimits? limits, WatchdogPorts? ports)
+    {
+        if (limits is not { } held || ports is not { MemoryKills: not null, Release: { } release })
+        {
+            return;
+        }
+
+        try
+        {
+            release(held.Unit);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // best effort: a stale file is ignored once its group is gone
+        }
+    }
+
+    /// <summary>The scope has ended: slots a killed scope left in the heavy wrapper's folder are litter now. Never blocks or fails the exit.</summary>
+    private void SweepHeavySlots()
+    {
+        if (extras is not { Sweep: { } sweep, LocksDir: { Length: > 0 } locks })
+        {
+            return;
+        }
+
+        try
+        {
+            _ = sweep.Sweep(locks);
+        }
+        catch (Exception e) when (e is not OperationCanceledException)
+        {
+            // best effort: heavy reclaims a dead slot itself when it next tries that key
+        }
     }
 
     private string? Env(string name) => (_resolved ?? environment)(name);
@@ -92,7 +135,7 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
     /// <summary>Waits for the agent. A hang-up (the terminal closed) is also sent to the agent by the kernel, but an agent that doesn't read its terminal can outlive it; after the grace it is killed, so the session ends and its exit is reported.</summary>
     private async Task<int> ExitCode(IWrapChild child, CancellationToken cancellationToken)
     {
-        if (hangup is not null && await Task.WhenAny(child.Exited, hangup).ConfigureAwait(false) == hangup && !child.Exited.IsCompleted)
+        if (extras?.Hangup is { } hangup && await Task.WhenAny(child.Exited, hangup).ConfigureAwait(false) == hangup && !child.Exited.IsCompleted)
         {
             var grace = Task.Delay(_hangupGrace, clock, cancellationToken);
             if (await Task.WhenAny(child.Exited, grace).ConfigureAwait(false) == grace)
@@ -104,30 +147,44 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         return await child.Exited.ConfigureAwait(false);
     }
 
-    private async Task<(int? Failed, LaunchId? Launch, IWrapChild? Child)> Begin(string[] args)
+    private async Task<(int? Failed, LaunchId? Launch, IWrapChild? Child, WrapLimits? Limits)> Begin(string[] args)
     {
         var parsed = SessionWrapArguments.Parse(args);
         if (parsed.IsError)
         {
             await errors.WriteLineAsync($"{parsed.Error.Code}: {parsed.Error.Message}").ConfigureAwait(false);
-            return (2, null, null);
+            return (2, null, null, null);
         }
 
         var (launch, argv) = (parsed.Value.Launch, parsed.Value.Argv);
+        WrapLimits? limits = null;
+        if (parsed.Value.Limits is { } limitsFile)
+        {
+            // why: a sandboxed agent must never run unwatched, so nothing is started until the watch is certain
+            var read = extras?.Watchdog is null ? SindriErrors.RequestInvalid.With("this build cannot watch a scope, so --limits cannot be honoured") : WrapLimits.Read(limitsFile);
+            if (read.IsError)
+            {
+                await errors.WriteLineAsync($"{read.Error.Code}: {read.Error.Message}").ConfigureAwait(false);
+                return (2, launch, null, null);
+            }
+
+            limits = read.Value;
+        }
+
         if (!BinOnPath.Resolves(argv[0], Env("PATH")))
         {
             await errors.WriteLineAsync($"{argv[0]} not found ({SindriErrors.LaunchAgentMissing.Code}): install it, or run `sindri launch show` to see the catalog").ConfigureAwait(false);
-            return (127, launch, null);
+            return (127, launch, null, null);
         }
 
         var started = children.Start(argv, WrapEnvironment.For(launch, Env, Environment.ProcessPath ?? string.Empty));
         if (started.IsError)
         {
             await errors.WriteLineAsync($"{started.Error.Code}: {started.Error.Message}").ConfigureAwait(false);
-            return (127, launch, null);
+            return (127, launch, null, null);
         }
 
-        return (null, launch, started.Value);
+        return (null, launch, started.Value, limits);
     }
 
     private async Task Beats(LaunchId launch, LaunchSecret proof, CancellationToken token)
@@ -195,11 +252,11 @@ internal sealed class SessionWrapCommand(IWrapCalls calls, IChildLauncher childr
         }
     }
 
-    private async Task Exit(LaunchId launch, LaunchSecret proof, int code, CancellationToken cancellationToken)
+    private async Task Exit(LaunchId launch, LaunchSecret proof, WrapExit ended, CancellationToken cancellationToken)
     {
         for (var attempt = 1; attempt <= ExitAttempts; attempt++)
         {
-            if ((await calls.Exit(launch, proof, code, _found, cancellationToken).ConfigureAwait(false)).IsSuccess || attempt == ExitAttempts)
+            if ((await calls.Exit(launch, proof, ended, cancellationToken).ConfigureAwait(false)).IsSuccess || attempt == ExitAttempts)
             {
                 return;   // after the last try the 120 s silence timer ends the session
             }

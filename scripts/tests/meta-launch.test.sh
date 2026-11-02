@@ -278,6 +278,45 @@ rm -f "$LCFG"
 OUT="$(bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
 check "an all-Claude team (no launcher.json) is accepted" "$RC:$(grep -c 'a team runs one agent' <<< "$OUT")" "0:0"
 
+# team.json "agent" names the catalog agent for every lane, including the meta lane, and wins over launcher.json.
+# The machine-wide launcher file stays the viewer and the catalog; a team does not need its own launcher.json.
+cp "$cfg" "$WORK/cfg.bak"
+jq '.agent = "cursor"' "$cfg" > "$WORK/cfg.agent" && mv "$WORK/cfg.agent" "$cfg"
+reset
+OUT="$(bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "team.json agent cursor, no launcher.json: accepted, both lanes on cursor, meta included so it is not named odd" "$RC:$(grep -c -x 'lane api: cursor, takes part in the obligations through its hooks (scripts/install-meta.sh installs them)' <<< "$OUT"):$(grep -c -x 'lane ui: cursor, takes part in the obligations through its hooks (scripts/install-meta.sh installs them)' <<< "$OUT"):$(grep -c 'a team runs one agent' <<< "$OUT"):$(tmux list-sessions -F '#S' | grep -c '^t1-')" "0:1:1:0:0"
+jq -n --arg c "$WORK/codex-not-yet" '{schema:1, viewer:{kind:"warp"}, agents:{codex:{override:true, bin:$c}}, meta:{lanesAgent:"codex", lanes:{meta:"codex"}}}' > "$LCFG"
+OUT="$(AW_LAUNCHER_CONFIG="$LCFG" bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "team.json agent wins over a launcher.json that puts every lane on codex" "$RC:$(grep -c 'lane api: cursor' <<< "$OUT"):$(grep -c 'lane api: codex' <<< "$OUT"):$(grep -c 'a team runs one agent' <<< "$OUT")" "0:1:0:0"
+jq '.agent = "Cursor"' "$WORK/cfg.bak" > "$cfg"
+OUT="$(bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "team.json agent that is not an agent id: exit 2, the value named, no session" "$RC:$(grep -c 'agent must be an agent id' <<< "$OUT"):$(tmux list-sessions -F '#S' | grep -c '^t1-')" "2:1:0"
+jq '.agent = 1' "$WORK/cfg.bak" > "$cfg"
+OUT="$(bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "team.json agent that is not a string: exit 2" "$RC:$(grep -c 'agent must be an agent id' <<< "$OUT")" "2:1"
+jq '.agent = "nonesuch"' "$WORK/cfg.bak" > "$cfg"
+OUT="$(bash "$DIR/meta-launch.sh" --dry-run 2>&1)"; RC=$?
+check "team.json agent the catalog lacks: exit 1 with SND-LAUNCH-003, no session" "$RC:$(grep -c 'SND-LAUNCH-003' <<< "$OUT"):$(tmux list-sessions -F '#S' | grep -c '^t1-')" "1:1:0"
+# The lane script reads the same field. A cursor stub stands in for the real CLI; the id wait is shortened because the stub writes no session file.
+jq '.agent = "cursor"' "$WORK/cfg.bak" > "$cfg"
+cat > "$WORK/cursor" <<'EOF'
+#!/usr/bin/env bash
+echo "start $AW_META_LANE agent=$AW_META_LANE_AGENT" >> "$CALLS.events"
+sleep 600
+EOF
+chmod +x "$WORK/cursor"
+jq -n --arg c "$WORK/cursor" '{schema:1, viewer:{kind:"warp"}, agents:{cursor:{override:true, bin:$c}}}' > "$AW_STATE_DIR/launcher.json"
+: > "$CALLS.events"
+AW_META_ID_WAIT=1 AW_META_ID_GRACE=0 AW_META_NO_SHELL=1 bash "$DIR/meta-lane.sh" t1 api > "$WORK/lane.out" 2>&1 &
+rp=$!
+waitfor '[ -s "$CALLS.events" ]'
+kill "$rp" 2> /dev/null; pkill -f "$WORK/cursor" 2> /dev/null; wait "$rp" 2> /dev/null
+check "meta-lane.sh runs the cursor stub from team.json agent, with no AW_LAUNCHER_CONFIG" "$(cat "$CALLS.events")" "start api agent=cursor"
+check "the lane's .agent record names cursor" "$(jq -r .agent "$AW_STATE_DIR/meta/lane-sessions/api.agent")" "cursor"
+mv "$WORK/cfg.bak" "$cfg"
+unlink "$AW_STATE_DIR/launcher.json"
+rm -f "$LCFG"
+
 # viewer: warp written explicitly equals the no-file layout.
 reset
 OUT0="$(bash "$DIR/meta-launch.sh" --no-open --dry-run | sed "s#$WORK#W#g")"

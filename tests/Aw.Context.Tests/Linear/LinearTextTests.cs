@@ -3,6 +3,7 @@ using Aw.Context.Infrastructure.Linear;
 namespace Aw.Context.Tests.Linear;
 
 /// <summary>The stored text of a Linear issue: every attachment and every image link survives (owner q105, 2026-10-24).</summary>
+[Trait("Lane", "unit")]
 public sealed class LinearTextTests
 {
     private const string Pic = "https://uploads.linear.app/ws/abc/shot.png";

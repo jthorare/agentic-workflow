@@ -11,14 +11,19 @@ namespace Aw.Evidence.Infrastructure.Locks;
 /// directory exists, taken with an atomic mkdir and polled every second. The QA-stack lock has one slot. The heavy-job
 /// lock has AW_HEAVY_SLOTS slots (default 2): slot 1 is its path, slot k is '&lt;path&gt;.k', and each poll tries them in
 /// order, as the heavy wrapper does, so a holder that knows only the path (a plain locks.sh caller) occupies slot 1 and
-/// the total never exceeds the slot count. The holder writes '&lt;pid&gt; &lt;utc&gt; ui-evidence' to &lt;slot&gt;/owner.
-/// With AW_HEAVY_LOCK_HELD=1 a parent already holds a heavy-job slot, so taking it is a no-op. There is no stale-lock
-/// takeover: a crashed holder's directory is removed by a person.
+/// the total never exceeds the slot count. The holder writes its pid to &lt;slot&gt;/pid (the file locks.sh reads) and
+/// '&lt;pid&gt; &lt;utc&gt; ui-evidence' to &lt;slot&gt;/owner.
+/// With AW_HEAVY_LOCK_HELD=1 a parent already holds a heavy-job slot, so taking it is a no-op. A waiter that finds a slot
+/// whose recorded pid (pid, else the first word of owner) names a dead process frees it (<see cref="StaleLock"/>), as
+/// locks.sh does; a slot with no holder file yet is left alone.
 /// </summary>
 internal sealed class DirectoryLocks(LockSettings settings, TimeProvider clock, TextWriter notices) : IMachineLocks
 {
     /// <summary>The file a holder writes inside the lock directory.</summary>
     internal const string OwnerFile = "owner";
+
+    /// <summary>The file holding the holder's pid alone, the one config/lib/locks.sh reads.</summary>
+    internal const string PidFile = "pid";
 
     private static readonly TimeSpan _poll = TimeSpan.FromSeconds(1);
 
@@ -118,6 +123,11 @@ internal sealed class DirectoryLocks(LockSettings settings, TimeProvider clock, 
         }
 
         var errno = Libc.MakeDirectory(directory);
+        if (errno == Libc.AlreadyExists && StaleLock.TryReclaim(directory))
+        {
+            errno = Libc.MakeDirectory(directory);
+        }
+
         return errno switch
         {
             0 => true,
@@ -131,11 +141,12 @@ internal sealed class DirectoryLocks(LockSettings settings, TimeProvider clock, 
         var owner = string.Create(CultureInfo.InvariantCulture, $"{Environment.ProcessId} {clock.GetUtcNow().UtcDateTime:yyyy-MM-ddTHH:mm:ssZ} ui-evidence\n");
         try
         {
+            File.WriteAllText(Path.Combine(directory, PidFile), string.Create(CultureInfo.InvariantCulture, $"{Environment.ProcessId}\n"));
             File.WriteAllText(Path.Combine(directory, OwnerFile), owner);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            // The owner line is for people reading a stuck lock; the lock itself is the directory, already held.
+            // The pid and owner lines say who holds the lock; the lock itself is the directory, already held.
         }
 
         return new DirectoryLease(kind, directory);

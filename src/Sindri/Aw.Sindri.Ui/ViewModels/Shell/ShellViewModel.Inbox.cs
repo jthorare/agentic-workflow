@@ -70,10 +70,17 @@ internal sealed partial class ShellViewModel
         return true;
     }
 
-    private NeedsYouPageViewModel InitInbox(ISindriApi api, IClipboard clipboard, ILauncher launcher)
+    private NeedsYouDispatcher? _dispatcher;
+    private DeskReporter? _desk;
+    private IFilePicker _files = NullFilePicker.Instance;
+
+    private NeedsYouPageViewModel InitInbox(ISindriApi api, IClipboard clipboard, ILauncher launcher, IFilePicker files)
     {
+        _files = files;
         var commands = new InstanceCommander(api, Health.ApiUrl);
-        var inbox = new NeedsYouPageViewModel(NeedsYou, _clock, clipboard, new DeskReporter(api, Health.ApiUrl, launcher), new NeedsYouConfirm(Health.Catalog, Health.ApiUrl, api, _clock),
+        _desk = new DeskReporter(api, Health.ApiUrl, launcher);   // the one reporter: Home's Complete, the dispatcher and the inbox bar share its in-flight guard
+        _dispatcher = new NeedsYouDispatcher(api, Health.ApiUrl, commands, _desk);
+        var inbox = new NeedsYouPageViewModel(NeedsYou, _clock, clipboard, _desk, new NeedsYouConfirm(Health.Catalog, Health.ApiUrl, api, _clock),
             new PausedAnswerViewModel(commands), new TakeoverViewModel(api, Health.ApiUrl, commands, _clock));
         inbox.LeaveRequested += (_, _) => LeaveNeedsYouInbox();
         inbox.Bar.DecisionRequested += (_, e) => e.Settled = AnswerDecision(e.RowId, e.OptionId, e.Note);
@@ -81,9 +88,10 @@ internal sealed partial class ShellViewModel
         {
             if (NeedsYou.Row(e.RowId)?.PrUri is { } uri)
             {
-                _ = launcher.OpenUri(uri, CancellationToken.None);
+                _ = inbox.OpenPrLink(uri);
             }
         };
+        inbox.Bar.SheetRequested += (_, e) => OpenNeedsYouRowSheet(e.RowId);
         inbox.Bar.SessionRequested += (_, e) => Navigate(new DeepLink(DeepLinkKind.Session, e.SessionRef));
         inbox.Bar.FactRequested += (_, e) =>
         {

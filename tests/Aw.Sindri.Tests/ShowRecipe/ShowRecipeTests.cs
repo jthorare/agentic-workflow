@@ -26,7 +26,7 @@ public sealed class ShowRecipeTests
         var shown = await r.Show(step.Id, step.Hash.Display);
 
         Assert.True(shown.IsSuccess, shown.IsError ? shown.Error.ToString() : null);
-        Assert.Equal((step.Id, 4, step.Hash), (shown.Value.Id, shown.Value.Version, shown.Value.Hash));
+        Assert.Equal((step.Id, 5, step.Hash), (shown.Value.Id, shown.Value.Version, shown.Value.Hash));
         Assert.Equal("fact:spec", Assert.Single(shown.Value.Inputs).Key);
     }
 

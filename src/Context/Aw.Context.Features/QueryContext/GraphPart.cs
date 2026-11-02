@@ -1,6 +1,7 @@
 using Aw.Context.Core.Packing;
 using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Features.QueryContext;
 
@@ -25,11 +26,23 @@ internal sealed record GraphPart(IReadOnlyList<PackCandidate> Candidates, IReadO
     /// <summary>What the map says about each record the answer's nodes are linked to, by the record's canonical key, for the ranker's features.</summary>
     internal IReadOnlyDictionary<string, RecordSignals> RecordSignals { get; init; } = new Dictionary<string, RecordSignals>(StringComparer.Ordinal);
 
+    /// <summary>The item shape's anchor record, read from the record store ahead of the search results (its text never holds its own key, so a search only finds it by luck).</summary>
+    internal RecordKey? AnchorRecord { get; init; }
+
     /// <summary>The code units the component hop skipped for the fan-out cap (scrubbed); empty without the hop.</summary>
     internal IReadOnlyList<SkippedComponent> SkippedComponents { get; init; } = [];
 
     /// <summary>The diff shape's facts, or null for every other shape.</summary>
     internal DiffPart? Diff { get; init; }
+
+    /// <summary>What the answer says about the pin it was read under; empty when none.</summary>
+    internal IReadOnlyList<string> Notes { get; init; } = [];
+
+    /// <summary>For an anchor reached through a pin's alias: the concept's key to the alias that matched, for the anchor line (AnchorMatch.AliasLine writes it).</summary>
+    internal IReadOnlyDictionary<string, string> AnchorAliases { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+
+    /// <summary>The pins of this query, resolved once; none when no repo has a pin.</summary>
+    internal PinContext Pins { get; init; } = PinContext.None;
 
     internal static GraphPart None { get; } = new([], new Dictionary<string, Citation>(StringComparer.Ordinal), [], MapVersion: null, []);
 }

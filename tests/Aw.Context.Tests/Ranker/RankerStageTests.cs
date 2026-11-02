@@ -23,7 +23,7 @@ public sealed class RankerStageTests
     private ValueTask<RankedItems> Run(RankerPlan plan, IReadOnlyList<FusedItem> items, IReadOnlyDictionary<string, RecordSignals>? signals = null) =>
         Stage().Apply(items, plan, signals ?? _none, _scrubbers.For([]).Value.Egress, TestContext.Current.CancellationToken);
 
-    private static RankerPlan Plan(bool features = false, bool rerank = false, int top = 30) => new(features, new FeatureWeights(), rerank, top);
+    private static RankerPlan Plan(bool features = false, bool rerank = false, int top = 30) => new(features, new FeatureWeights(), PinLeg: false, rerank, top);
 
     private static string[] Keys(RankedItems ranked) => [.. ranked.Items.Select(i => i.Key.Value)];
 

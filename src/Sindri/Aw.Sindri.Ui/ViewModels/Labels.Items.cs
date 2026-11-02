@@ -53,6 +53,9 @@ internal static partial class Labels
     /// <summary>The since column.</summary>
     internal const string ColumnSince = "Age";
 
+    /// <summary>What an empty cell reads (the same dash a blocked stage shows).</summary>
+    internal const string EmptyCell = BlockedMark;
+
     /// <summary>The stage of an item that has no step yet.</summary>
     internal const string NotStarted = "Not started";
 
@@ -156,6 +159,12 @@ internal static partial class Labels
     /// <param name="id">The row's id.</param>
     /// <returns>The words.</returns>
     internal static string Cleared(string id) => id + " cleared";
+
+    /// <summary>The decision sheet's title when the request has neither a title nor a question.</summary>
+    internal const string DecisionHeadingFallback = "Decision";
+
+    /// <summary>The decision sheet's line when its row left the list and the decided list serves no words for it.</summary>
+    internal const string DecisionClearedFallback = "This decision was cleared";
 
     /// <summary>The two together, when "N new" and "cleared" come in one refresh: one sentence, spoken once.</summary>
     /// <param name="newRows">The pill's words.</param>

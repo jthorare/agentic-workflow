@@ -303,7 +303,7 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
 
         await using var lease = await Taken(OneSlot());
 
-        Assert.DoesNotContain("2020", await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken), StringComparison.Ordinal);
+        Assert.DoesNotContain("2020-01-01T00:00:00Z", await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

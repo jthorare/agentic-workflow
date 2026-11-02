@@ -170,7 +170,7 @@ internal sealed partial class IssueChallengeService(ShippedApprovalPlans approva
         var hash = live.Value.Hash;
         return string.Equals(hash.Abbreviated, hash6, StringComparison.Ordinal)
             ? Issued(Mint(ChallengeAction.ApproveProfile(hash), ChallengeSubject.ForProfile(hash), channel), approve: null, revoke: null)
-            : SindriErrors.ProfileHashMismatch.With($"{hash6} isn't the live profile's hash ({hash.Value}); run 'sindri profile approve' to see it and what changed");
+            : SindriErrors.ProfileHashMismatch.With($"{hash6} isn't the live profile's hash; the live hash is {hash.Value} (fix: sindri profile approve {hash.Value})");
     }
 
     /// <summary>Issues the challenge: at the terminal it is typed; in the app approve-all is held (typing its text also redeems it) and everything else is typed.</summary>

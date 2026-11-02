@@ -12,7 +12,7 @@ namespace Aw.Sindri.Ui.Tests.NeedsYou;
 [Lane(TestLane.Unit)]
 public sealed class NeedsYouConfirmBarTests
 {
-    private const string StepHash = "sha256:f511ce1fc529b5b471731b4023a1f07774af2f9a8836344fd5818f5aef644784";   // workflow.step v4 in the served recipe list (the workflow-recipes list golden)
+    private const string StepHash = "sha256:4ca37bf46333dc66a14c042bb4561aad96eed677f35f5fc221f0497c8b3e31f7";   // workflow.step v5 in the served recipe list (the workflow-recipes list golden)
     private const string WaitingHash = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";   // the shipped version that gained a capability
     private static readonly Uri _api = new("http://127.0.0.1:7410/");
     private readonly FakeTimeProvider _clock = new(new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero));

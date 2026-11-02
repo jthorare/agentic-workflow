@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.line
-version: 6
+version: 7
 description: "Spec-to-proven-PR, end to end. Scoping, design and plan, then a dispatcher (LN-WF1) that starts every ready phase as its own workflow.phase run, up to the profile's parallel limit (default 2), stacking a phase on the open pull request it depends on, until every phase is merged or skipped."
 displayName: "Idea to merged pull request"
 why: "Takes a spec all the way to merged pull requests, stopping for your approval after scoping and after planning."
@@ -27,11 +27,11 @@ states:
   plan: { displayName: "Plan", why: "Splits the design into buildable pull-request-sized phases.", kind: wait, timeout: { after: 30d, then: park },
              waitFor: { child: { recipe: workflow.plan, onParked: propagate, inputs: { "fact:scopePacket": { fact: fact:scopePacket }, "fact:designPacket": { fact: fact:designPacket } } } },
              next: "Waiting for {child}: {item}'s plan graph, ending at your after-design stop." }
-  seed: { kind: active, step: step.line.seed, timeout: { after: 4h, then: park },
+  seed: { kind: active, step: step.line.seed, timeout: { after: 1d, then: park },
              next: "List {item}'s phases on the line's board." }
-  dispatch: { kind: active, step: step.line.dispatch, loop: ticks, timeout: { after: 4h, then: park },
+  dispatch: { kind: active, step: step.line.dispatch, loop: ticks, timeout: { after: 1d, then: park },
              next: "Pick {item}'s next ready phase, or wait for one to move." }
-  starting: { displayName: "Starting a phase", why: "Starts the next phase as its own run, on the branch it builds on.", kind: wait, waitFor: { event: line.phaseChanged }, timeout: { after: 4h, then: park },
+  starting: { displayName: "Starting a phase", why: "Starts the next phase as its own run, on the branch it builds on.", kind: wait, waitFor: { event: line.phaseChanged }, timeout: { after: 1d, then: park },
              next: "Waiting for {item}'s next phase to start." }
   building: { displayName: "Phases running", why: "Phases build, prove and ship on their own; the line starts the next ready one when one ships, parks or merges.", kind: wait, waitFor: { event: line.phaseChanged }, timeout: { after: 14d, then: escalate },
              next: "Waiting for {item}'s running phases to ship, park or merge." }

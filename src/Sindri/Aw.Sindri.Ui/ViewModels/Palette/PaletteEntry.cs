@@ -113,6 +113,24 @@ internal sealed class PaletteEntry : ObservableObject
     /// <returns>True when it matches.</returns>
     internal bool Matches(string query) => query.Length == 0 || Subsequence(query, Label) || Subsequence(query, Id);
 
+    /// <summary>
+    /// How well <paramref name="query"/> matches its label, best first: the whole label (0), its start (1), the start of a word in it (2),
+    /// inside a word (3), then the scattered subsequence (4); a page ranks before an action at the same grade.
+    /// </summary>
+    /// <param name="query">The query, lower case, without spaces; not empty.</param>
+    /// <returns>The rank.</returns>
+    internal int Rank(string query)
+    {
+        var label = Label.ToLowerInvariant();
+        var squeezed = label.Replace(" ", string.Empty, StringComparison.Ordinal);
+        var grade = squeezed == query ? 0
+            : squeezed.StartsWith(query, StringComparison.Ordinal) ? 1
+            : label.StartsWith(query, StringComparison.Ordinal) || label.Contains(" " + query, StringComparison.Ordinal) ? 2
+            : squeezed.Contains(query, StringComparison.Ordinal) ? 3
+            : 4;
+        return (grade * 2) + (Page is null ? 1 : 0);
+    }
+
     private static bool Subsequence(string query, string text)
     {
         var at = 0;

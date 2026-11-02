@@ -14,7 +14,7 @@ namespace Aw.Context.Infrastructure.Intent;
 /// The intent layer in context.db (migration 0006_s5b_intent_links): what syncs wrote, outside the map versions. A page's records, links and cursor commit in one transaction, so a cursor never
 /// moves past links that didn't commit and a replay writes nothing new.
 /// </summary>
-internal sealed class SqliteIntentStore(ContextDatabase database) : IIntentStore
+internal sealed partial class SqliteIntentStore(ContextDatabase database) : IIntentStore
 {
     private readonly StampedCache<IntentLayer> _layers = new();
 
@@ -37,19 +37,8 @@ internal sealed class SqliteIntentStore(ContextDatabase database) : IIntentStore
         await using (read.Value.ConfigureAwait(false))
         {
             var stamp = await StampedCache<IntentLayer>.Stamp(read.Value, StampedCache<IntentLayer>.IntentStamp, cancellationToken).ConfigureAwait(false);
-            if (_layers.Get("layer", stamp) is { } held)
-            {
-                return held;
-            }
-
-            var layer = await Rows(read.Value, cancellationToken).ConfigureAwait(false);
-            if (layer.IsError)
-            {
-                return ContextDatabase.Translate(layer.Error);
-            }
-
-            _layers.Put("layer", stamp, layer.Value);
-            return layer;
+            var layer = await _layers.GetOrLoad("layer", stamp, async () => (await Rows(read.Value, cancellationToken).ConfigureAwait(false)).Map<IntentLayer?>(l => l), cancellationToken).ConfigureAwait(false);
+            return layer.IsError ? ContextDatabase.Translate(layer.Error) : layer.Value ?? IntentLayer.Empty;
         }
     }
 
@@ -214,6 +203,17 @@ internal sealed class SqliteIntentStore(ContextDatabase database) : IIntentStore
         return Write(async (session, token) =>
         {
             var done = await SqliteQueries.Execute(session, new SqlStatement(IntentSql.Touch, c => c.Bind("@record", record.Value).Bind("@version", version)), token).ConfigureAwait(false);
+            return done.IsError ? done.Error : Unit.Value;
+        }, cancellationToken);
+    }
+
+    public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(version);
+        ArgumentNullException.ThrowIfNull(aliases);
+        return Write(async (session, token) =>
+        {
+            var done = await SqliteQueries.Execute(session, new SqlStatement(IntentSql.SetAliases, c => c.Bind("@record", record.Value).Bind("@version", version).Bind("@aliases", IntentMappers.Joined(aliases))), token).ConfigureAwait(false);
             return done.IsError ? done.Error : Unit.Value;
         }, cancellationToken);
     }

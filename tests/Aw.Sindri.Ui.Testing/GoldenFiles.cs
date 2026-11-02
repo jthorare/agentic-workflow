@@ -16,11 +16,32 @@ internal static class GoldenFiles
     /// <returns>The body as served.</returns>
     internal static string Api(string slug, string scenario) => File.ReadAllText(Path.Combine(Root, "Api", slug, scenario + ".json"));
 
+    /// <summary>A sandbox golden (sandbox spec §8): the copy, states, accessibility rows and status lines recorded by Sindri's tests.</summary>
+    /// <param name="name">The file name under Golden/Sandbox ('copy.json', 'states.json').</param>
+    /// <returns>The file's text.</returns>
+    internal static string Sandbox(string name) => File.ReadAllText(Path.Combine(Root, "Sandbox", name));
+
     /// <summary>An API golden parsed, so a test reads its expected values from the file instead of repeating them.</summary>
     /// <param name="slug">The route slug.</param>
     /// <param name="scenario">The scenario.</param>
     /// <returns>The parsed body.</returns>
     internal static System.Text.Json.Nodes.JsonNode Node(string slug, string scenario) => System.Text.Json.Nodes.JsonNode.Parse(Api(slug, scenario))!;
+
+    /// <summary>
+    /// The dev-desk-round-trip instance with its desk's outputs optional. The golden's desk requires a file (fact:output), which the action bar and Home's
+    /// Complete cannot give (they open the row's sheet instead, #1170); a test of what they send uses this one.
+    /// </summary>
+    /// <returns>The instance, parsed.</returns>
+    internal static System.Text.Json.Nodes.JsonNode DeskWithoutRequiredOutput()
+    {
+        var instance = Node("workflow-instance", "dev-desk-round-trip");
+        foreach (var output in instance["current"]!["desk"]!["outputs"]!.AsArray())
+        {
+            output!["required"] = false;
+        }
+
+        return instance;
+    }
 
     /// <summary>A body written from the API spec's documented shape, standing in until its phase writes the golden.</summary>
     /// <param name="slug">The route slug.</param>

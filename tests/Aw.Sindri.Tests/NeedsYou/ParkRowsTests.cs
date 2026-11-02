@@ -120,6 +120,16 @@ public sealed class ParkRowsTests
     }
 
     [Fact]
+    public void A_stalled_agent_row_takes_the_park_row_id_so_the_run_s_own_park_replaces_it()
+    {
+        var row = NeedsYouRows.ForStalledAgent(Item(), _address, _since, _plain);
+
+        Assert.Equal(("park:" + WorkflowInstanceId.Of(_address).Value, NeedsYouKind.Park, "agent · no progress", Urgency.Pulse), (row.Id.Value, row.Kind, row.Label, row.Urgency));
+        Assert.Equal(("sindri workflow status " + _address.Value, ActionId.From("ApplyCommand:cancel"), _since), (row.Cli, row.PrimaryAction, row.Since));
+        Assert.Contains("the agent ended its turn without reporting", row.Reason, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Drift_park_row_has_no_answer_kind()
     {
         var row = NeedsYouRows.ForPark(Item(), new ParkRowInput(_address, Park(ParkReason.SpecConflict, ParkKind.Drift)), _since, _plain);

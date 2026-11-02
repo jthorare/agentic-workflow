@@ -39,6 +39,7 @@ internal sealed class MiniMapControl : Control
     public MiniMapControl()
     {
         Cursor = new Cursor(StandardCursorType.Hand);
+        ClipToBounds = true;   // nothing the control draws lies outside its card
     }
 
     /// <summary>Raised when the pointer asks to centre the stage on a point of the world.</summary>
@@ -78,6 +79,16 @@ internal sealed class MiniMapControl : Control
         return (scale, ((Bounds.Width - (world.Width * scale)) / 2) - (world.X * scale), ((Bounds.Height - (world.Height * scale)) / 2) - (world.Y * scale));
     }
 
+    /// <summary>The part of the world a stage shows: the stage's rectangle cut to the world, so a window larger than the map draws the whole map and never a rectangle past it.</summary>
+    /// <param name="viewport">The stage, in world coordinates.</param>
+    /// <param name="world">The world's rectangle.</param>
+    /// <returns>The rectangle both share; empty when the stage shows none of the world.</returns>
+    internal static Rect VisiblePart(Rect viewport, Rect world)
+    {
+        var shared = viewport.Intersect(world);
+        return shared.Width > 0 && shared.Height > 0 ? shared : default;
+    }
+
     private static Rect Map(Rect r, (double Scale, double X, double Y) f) => new((r.X * f.Scale) + f.X, (r.Y * f.Scale) + f.Y, r.Width * f.Scale, r.Height * f.Scale);
 
     /// <summary>The point of the world under a point of the control.</summary>
@@ -104,7 +115,7 @@ internal sealed class MiniMapControl : Control
         {
             var ink = Brush("Brush.Ink");
             var tint = ink is ISolidColorBrush solid ? new SolidColorBrush(solid.Color, 0.06) : null;
-            context.DrawRectangle(tint, new Pen(ink, 1.5), Map(Viewport, f));
+            context.DrawRectangle(tint, new Pen(ink, 1.5), Map(Viewport, f));   // the host cuts Viewport to the world, so this lies inside the card
         }
     }
 

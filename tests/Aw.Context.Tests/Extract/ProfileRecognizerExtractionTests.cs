@@ -50,7 +50,8 @@ public sealed class ProfileRecognizerExtractionTests
     [Fact, Trait("Lane", "unit")]
     public void A_pattern_that_runs_out_of_time_marks_the_extraction_timed_out_and_keeps_the_rest()
     {
-        var catastrophic = new ProfileRecognizer("flag", "config/*.yaml", "^(?<name>(a+)+)$", "name");
+        // A lookahead keeps this pattern on the backtracking engine (LinearRegex's fallback), the only path that can still time out.
+        var catastrophic = new ProfileRecognizer("flag", "config/*.yaml", "^(?=a)(?<name>(a+)+)$", "name");
         var files = new[] { new RepoFile("config/flags.yaml", new string('a', 60) + "!"), _files[1] };
 
         var found = MapExtractor.Extract(_repo, files, RecognizerSet.From([catastrophic]));

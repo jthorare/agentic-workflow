@@ -1,3 +1,4 @@
+using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Core.Workflow.Validation;
 using Aw.Sindri.Testing.Workflow;
@@ -26,11 +27,11 @@ internal static class RouteRecipes
     }
 
     /// <summary>The reader's findings and the validator's errors against the shipped catalog, as lines.</summary>
-    public static IReadOnlyList<string> Lines(string yaml, string file = "route.yaml")
+    public static IReadOnlyList<string> Lines(string yaml, string file = "route.yaml", BlockCatalog? catalog = null)
     {
         var reading = RecipeComposition.Read(yaml, file);
         var document = Assert.IsType<RecipeDocument>(reading.Document);
-        var errors = RecipeValidator.Validate(document, new ValidationContext(FixtureCatalog.Shipped(), RecipeProfileFacts.None, InMemoryChildRecipes.None, BaseRecipe: null))
+        var errors = RecipeValidator.Validate(document, new ValidationContext(catalog ?? FixtureCatalog.Shipped(), RecipeProfileFacts.None, InMemoryChildRecipes.None, BaseRecipe: null))
             .Where(f => f.Severity == FindingSeverity.Error);
         return [.. reading.Findings.Concat(errors).Select(f => f.ToLine())];
     }

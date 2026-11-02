@@ -32,6 +32,7 @@ internal static class LineStages
         LaneId.Plan => Labels.WorkflowsLanePlan,
         LaneId.Build => Labels.WorkflowsLaneBuild,
         LaneId.Merge => Labels.WorkflowsLaneMerge,
+        LaneId.Other => Labels.WorkflowsLaneOther,
         LaneId.Done => Labels.WorkflowsLaneDone,
         _ => string.Empty,
     };
@@ -43,7 +44,7 @@ internal static class LineStages
     {
         LaneId.Merge => Labels.WorkflowsLaneMergeEmpty,
         LaneId.Done => Labels.WorkflowsLaneDoneEmpty,
-        LaneId.Scoping or LaneId.Design or LaneId.Plan or LaneId.Build => Labels.WorkflowsLaneEmptyBody,
+        LaneId.Scoping or LaneId.Design or LaneId.Plan or LaneId.Build or LaneId.Other => Labels.WorkflowsLaneEmptyBody,
         _ => string.Empty,
     };
 }

@@ -43,7 +43,7 @@ public sealed class MapKeysTests
     [InlineData(EdgeType.PartOf, NodeKind.Surface, NodeKind.Feature, true)]
     [InlineData(EdgeType.PartOf, NodeKind.Feature, NodeKind.Surface, false)]
     [InlineData(EdgeType.Reads, NodeKind.Action, NodeKind.Thing, true)]
-    [InlineData(EdgeType.Reads, NodeKind.Feature, NodeKind.Thing, false)]
+    [InlineData(EdgeType.Reads, NodeKind.Feature, NodeKind.Thing, true)]
     [InlineData(EdgeType.Implements, NodeKind.Code, NodeKind.Action, true)]
     [InlineData(EdgeType.Implements, NodeKind.Code, NodeKind.Thing, false)]
     [InlineData(EdgeType.Decides, NodeKind.Decision, NodeKind.Thing, true)]

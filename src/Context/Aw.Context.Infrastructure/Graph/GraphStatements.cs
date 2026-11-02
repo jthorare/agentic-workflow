@@ -61,7 +61,7 @@ internal static class GraphStatements
             .Bind("$v", version).Bind("$from", edge.From.Value).Bind("$to", edge.To.Value).Bind("$type", type)
             .Bind("$provenance", GraphText.Of(edge.Provenance)).Bind("$confidence", edge.Confidence)
             .Bind("$trust", GraphText.Of(TrustPolicy.For(edge.Provenance, accepted: false))).Bind("$order", edge.Order)
-            .Bind("$at", GraphText.Time(edge.At)));
+            .Bind("$at", GraphText.Time(edge.At)).Bind("$count", edge.Count));
         foreach (var (evidence, i) in edge.EvidenceOrEmpty.Select((e, i) => (e, i)))
         {
             yield return new SqlStatement(GraphSql.InsertEdgeEvidence, c => c.Bind("$v", version).Bind("$from", edge.From.Value)

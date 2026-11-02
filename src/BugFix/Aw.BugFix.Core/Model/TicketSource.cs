@@ -13,4 +13,8 @@ public enum TicketSource
     /// <summary>text.</summary>
     [JsonStringEnumMemberName("text")]
     Text = 2,
+
+    /// <summary>github: a GitHub issue; the ticket's id is its number ("#1189", "1189", "owner/repo#1189" or the issue's URL).</summary>
+    [JsonStringEnumMemberName("github")]
+    Github = 3,
 }

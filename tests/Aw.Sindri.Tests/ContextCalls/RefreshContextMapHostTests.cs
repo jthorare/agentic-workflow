@@ -32,7 +32,7 @@ public sealed class RefreshContextMapHostTests : IDisposable
     {
         var ct = TestContext.Current.CancellationToken;
         var model = new FakeModelPort { Fail = static _ => ContextErrors.SourceUnavailable.With("no agent CLI in the test") };
-        await using var host = await ContextHosts.Approved(_repo, sessions: false, ct, extra: services =>
+        await using var host = await ContextHosts.Approved(_repo, sessions: false, ct, labeling: true, extra: services =>
         {
             // why: the job's build and cleanup would otherwise run the box's graphify, agent CLIs and heavy-job lock, which stall it under load
             _ = services.RemoveAll<IClusterSource>();

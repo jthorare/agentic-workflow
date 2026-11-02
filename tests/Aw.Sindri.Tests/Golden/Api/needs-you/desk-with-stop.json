@@ -21,7 +21,7 @@
       "actions": [
         "CompleteStep"
       ],
-      "cli": "sindri workflow status T-3/step/1",
+      "cli": "sindri workflow complete T-3/step/1 --run <run> --outcome <outcome>",
       "open": {
         "route": "workflow/T-3/step/1",
         "label": "Answer the question"

@@ -1,4 +1,5 @@
 using Aw.Sindri.Ui.Api.Workflow;
+using Aw.Sindri.Ui.ViewModels.Takeover;
 
 namespace Aw.Sindri.Ui.ViewModels.Run;
 
@@ -44,7 +45,7 @@ internal sealed partial class RunPageViewModel
         var step = card.Steps.FirstOrDefault(s => string.Equals(s.Key, key, StringComparison.Ordinal));
         var owner = card.Node.ChildId is { } id && source.Children.TryGetValue(id, out var child) ? child : null;
         var state = source.Recipe?.States.FirstOrDefault(s => string.Equals(s.State, card.Id, StringComparison.Ordinal));   // a step reads its stage's recipe state: the line's recipe is the one read
-        ShowInspector(new RunCanvasInspectorViewModel(card, step, source.Line, owner, new RunInspectorPorts(Go, () => ClearSelection(), Walk), clipboard, clock) { Why = state?.Why, RecipeState = state });
+        ShowInspector(new RunCanvasInspectorViewModel(card, step, source.Line, owner, new RunInspectorPorts(Go, () => ClearSelection(), Walk), clipboard, clock) { Why = state?.Why, RecipeState = state, Sender = _takeover ??= new TakeoverSender(api, () => _url) });
     }
 
     private void ShowInspector(RunCanvasInspectorViewModel? inspector)

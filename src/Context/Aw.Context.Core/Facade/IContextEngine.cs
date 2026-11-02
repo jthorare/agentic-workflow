@@ -3,7 +3,10 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Eval.MapQuality;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.ScopeGraph;
+using Aw.Context.Core.Sync;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Facade;
@@ -13,7 +16,7 @@ namespace Aw.Context.Core.Facade;
 /// Core records only. Sindri passes the approved profile's 'context:' section, its repos and the caller on every call;
 /// the engine keeps no profile of its own.
 /// </summary>
-public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IContextCode, IContextHistory, IContextConcepts
+public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IContextCode, IContextHistory, IContextConcepts, IContextEmbed, IContextProjects, IIndexSync
 {
     /// <summary>Validates a profile's 'context:' section against the profile's repos and applies its defaults.</summary>
     /// <param name="section">The section, or null when the profile has none.</param>
@@ -47,6 +50,15 @@ public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IC
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>One head per mapped repo ('context.repos' within the profile's repos), or SND-CONTEXT-001/048.</returns>
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Makes every pin-alias link of the stored records (concept pins spec §3.4): reads the current map and the approved pins, runs only the alias rule over each stored record's text and replaces a record's alias links where they differ.
+    /// No other rule runs, no model is asked, nothing is embedded or fetched, and no record's map version moves.
+    /// </summary>
+    /// <param name="scope">The profile's settings and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the run.</param>
+    /// <returns>The hash of the pins it linked for, the map version, the counts and each pin's linked records before and after, or SND-CONTEXT-001/004/030.</returns>
+    public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>
     /// Runs a probe file (spec §9.2 item 3): reads and checks it, asks each question through <paramref name="ask"/> (Sindri's
@@ -92,4 +104,26 @@ public interface IContextEngine : IContextMap, IContextGraph, IContextLenses, IC
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>What was removed.</returns>
     public ValueTask<Result<EvalPurgeReport>> EvalPurge(EvalPurgeRequest request, CancellationToken cancellationToken);
+
+    /// <summary>The graph calls a scoping Step's session made (issue 1005), in order: which node, which tool, and whether it stepped outside the graph and why.</summary>
+    /// <param name="instanceAddress">The workflow instance's address.</param>
+    /// <param name="runToken">The Step run's token.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The reads (none for a run that made none), or SND-CONTEXT-153 while the engine keeps no log.</returns>
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken);
+
+    /// <summary>Keeps the graph a scoping instance's agent Steps work from, so their context_* reads can be checked against it (issue 1005). A second call for the same instance replaces the first.</summary>
+    /// <param name="instanceAddress">The workflow instance's address.</param>
+    /// <param name="view">The graph the instance's agent Steps were given.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True when stored, or an error.</returns>
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken);
+
+    /// <summary>Checks one context_node, context_neighbors or context_query call of a scoping Step run against its graph and logs it (issue 1005).</summary>
+    /// <param name="instanceAddress">The workflow instance's address.</param>
+    /// <param name="runToken">The Step run's token.</param>
+    /// <param name="read">The call: node, tool, whether it steps outside the graph and why, and when.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The logged read; SND-CONTEXT-154 (not logged) for a node outside the graph when the call does not step outside it with a reason; SND-CONTEXT-153 when the instance has no remembered graph (the caller reads unscoped).</returns>
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken);
 }

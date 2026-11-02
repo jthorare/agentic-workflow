@@ -1,8 +1,10 @@
 // scripts/scaffold/lib/checks.mjs — the dotnet and repo checks the scaffolds run after writing, in the order the
 // scaffold specs list them. A failed check throws a ScaffoldError naming the rule, what was measured and the fix.
 
+import fs from "node:fs";
 import path from "node:path";
 import { ScaffoldError, run } from "./common.mjs";
+import { ARCH_CSPROJ } from "./repo.mjs";
 
 const tail = (out, n = 40) => out.trimEnd().split("\n").slice(-n).join("\n");
 
@@ -44,16 +46,38 @@ export async function declarePublicApi(journal, project, log) {
   return symbols;
 }
 
-export async function build(root, log) {
-  return mustPass(root, "SCAFFOLD-BUILD", "dotnet", ["build", "AgenticWorkflow.slnx", "-warnaserror"], "fix the template or the root settings it disagrees with; the generator reverted its files", log);
+/**
+ * What the post-write checks cover: the package's test project (it references the generated src projects) and the
+ * architecture tests (the generators edit them and deps.yaml), and for format the projects holding a .cs file the
+ * generator wrote or edited, limited to those files. The whole solution is not built, tested or format-checked per
+ * generator call: scripts/scaffold/e2e.sh builds it once at the end.
+ */
+export function checkScope(journal, pkg) {
+  const files = journal.touched().filter((f) => f.endsWith(".cs"));
+  const owner = (file) => {
+    for (let dir = path.posix.dirname(file); dir !== "."; dir = path.posix.dirname(dir)) {
+      const csproj = fs.readdirSync(journal.abs(dir)).find((n) => n.endsWith(".csproj"));
+      if (csproj) return `${dir}/${csproj}`;
+    }
+    return null;
+  };
+  const formatProjects = [...new Set(files.map(owner).filter(Boolean))].sort();
+  return { testProjects: [`tests/Aw.${pkg}.Tests/Aw.${pkg}.Tests.csproj`, ARCH_CSPROJ], formatProjects, files };
+}
+
+export async function build(root, scope, log) {
+  for (const project of scope.testProjects) await mustPass(root, "SCAFFOLD-BUILD", "dotnet", ["build", project, "-warnaserror"], "fix the template or the root settings it disagrees with; the generator reverted its files", log);
 }
 
 /**
  * Runs the unit lane and returns the names of the failing tests. dotnet test (Microsoft.Testing.Platform) prints
  * one "failed <name> (<time>)" line per failing test.
  */
-export async function unitLaneFailures(root, log) {
-  const r = await run(root, "dotnet", ["test", "--solution", "AgenticWorkflow.slnx", "--filter-trait", "Lane=unit", "--ignore-exit-code", "8"], { log });
+export async function unitLaneFailures(root, scope, log) {
+  // One run per test project; the output is joined and the worst exit code kept.
+  const runs = [];
+  for (const project of scope.testProjects) runs.push(await run(root, "dotnet", ["test", "--project", project, "--filter-trait", "Lane=unit", "--ignore-exit-code", "8"], { log }));
+  const r = { code: Math.max(...runs.map((x) => x.code)), out: runs.map((x) => x.out).join("\n") };
   const failed = [...r.out.matchAll(/^\s*failed (\S+)/gm)].map((m) => m[1]);
   // The run summary's "failed: N" line (one per run; per-project summaries print "failed with N error(s)").
   const failedCount = [...r.out.matchAll(/^\s*failed: (\d+)$/gm)].reduce((sum, m) => sum + Number(m[1]), 0);
@@ -61,8 +85,8 @@ export async function unitLaneFailures(root, log) {
 }
 
 /** The lane run must fail on exactly the one red test the scaffold wrote, and nothing else. */
-export async function expectOnlyRed(root, redTest, log) {
-  const lane = await unitLaneFailures(root, log);
+export async function expectOnlyRed(root, scope, redTest, log) {
+  const lane = await unitLaneFailures(root, scope, log);
   const others = lane.failed.filter((name) => !name.endsWith(redTest));
   // The red test fails for the right reason: the parameterless stub's NotSupportedException, not a build or DI problem.
   const slice = redTest.split(".")[0].replace(/Tests$/, "");
@@ -78,8 +102,11 @@ export async function expectOnlyRed(root, redTest, log) {
   return lane;
 }
 
-export async function formatClean(root, log) {
-  return mustPass(root, "SCAFFOLD-FORMAT", "dotnet", ["format", "AgenticWorkflow.slnx", "--verify-no-changes"], "the templates must already be formatted; run `dotnet format` and copy the result into the template", log);
+/** `dotnet format <project> --verify-no-changes --include <the .cs files written or edited>`, per project holding one. */
+export async function formatClean(root, scope, log) {
+  for (const project of scope.formatProjects) {
+    await mustPass(root, "SCAFFOLD-FORMAT", "dotnet", ["format", project, "--verify-no-changes", "--include", ...scope.files], "the templates must already be formatted; run `dotnet format` and copy the result into the template", log);
+  }
 }
 
 export async function depsClean(root, log) {

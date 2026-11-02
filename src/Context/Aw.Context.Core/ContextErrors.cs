@@ -4,11 +4,11 @@ namespace Aw.Context.Core;
 
 /// <summary>
 /// The context engine's error catalogue (spec §8.6), codes SND-CONTEXT-NNN. Stage S-1A owns 001–019 and defines 020
-/// (the session gate, spec §3); S-3a adds 030–034 (the map file and its store); S-3b adds 035–038 (the probe runner and anchors; 039 is reserved); S-4 adds 040 and 042–048 (041 stays retired, 049 is reserved); S-7A adds 080–083 (backtest; 084–086 reserved for review findings); S-5A adds 050–055 (Onyx, in the
-/// S-5A/B range 050–069); later stages
-/// add theirs in their ranges. HTTP status follows the kind; the CLI exit code is 1 for attention (<see cref="Attention"/>) and 2 for a tool error.
+/// (the session gate, spec §3); S-3a adds 030–034 (the map file and its store); S-3b adds 035–038 (the probe runner and anchors; 039 is reserved); S-4 adds 040 and 042–048 (041 stays retired, 049 is reserved); S-7A adds 080–083 (backtest; 084–086 reserved for review findings); S-5A/B own 050–069 (050–055 are
+/// retired with the old intent source); later stages
+/// add theirs in their ranges; the pages spec books 250–259 (all used: unknown concept, unknown key, repo, caps, duplicate ids, names, action spec, no such page, no such concept or repo for context_pages, a pasted page list that is empty or too long). HTTP status follows the kind; the CLI exit code is 1 for attention (<see cref="Attention"/>) and 2 for a tool error.
 /// </summary>
-public static class ContextErrors
+public static partial class ContextErrors
 {
     /// <summary>SND-CONTEXT-001: the profile's 'context:' section is invalid; the message names the key path.</summary>
     public static readonly ErrorDefinition SettingsInvalid = new("SND-CONTEXT-001", ErrorKind.Invalid, "The profile's context section is invalid");
@@ -106,35 +106,6 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-048: extraction couldn't read the repo from git at the commit (a missing repo or sha).</summary>
     public static readonly ErrorDefinition ExtractionUnreadable = new("SND-CONTEXT-048", ErrorKind.Unavailable, "Extraction can't read the repo from git");
 
-    /// <summary>
-    /// SND-CONTEXT-050: Onyx refused the key (HTTP 403): it is missing, wrong, or lacks the admin role that
-    /// 'POST /api/admin/search' needs (spec §8.8). Fix: use a personal access token of a dedicated admin user (or a service-account key),
-    /// store it behind 'context.sources.onyx.token', and approve the profile again.
-    /// </summary>
-    public static readonly ErrorDefinition OnyxKeyRefused = new("SND-CONTEXT-050", ErrorKind.Forbidden, "Onyx refused the key: it is missing, wrong, or lacks the admin role the search route needs");
-
-    /// <summary>
-    /// SND-CONTEXT-051: Onyx answered with an unexpected status or shape (a route or field the pinned v4.9.0 doesn't have).
-    /// The query goes on without Onyx (Unavailable). Fix: check the running release against 'context.sources.onyx.version'.
-    /// </summary>
-    public static readonly ErrorDefinition OnyxUnexpectedReply = new("SND-CONTEXT-051", ErrorKind.Unavailable, "Onyx answered with an unexpected shape; check the pinned version");
-
-    /// <summary>SND-CONTEXT-052: Onyx has no document with that id (it was deleted or its connector no longer indexes it).</summary>
-    public static readonly ErrorDefinition OnyxDocumentNotFound = new("SND-CONTEXT-052", ErrorKind.NotFound, "Onyx has no such document");
-
-    /// <summary>
-    /// SND-CONTEXT-053: the Onyx token is an admin token of a person's account, not of Sindri's dedicated user
-    /// (OnyxSettings.DedicatedAccountEmail, the user `sindri onyx up` makes, a STANDARD account) or a service account (spec
-    /// §8.8). Doctor shows it as degraded. Fix: use a token of a dedicated admin user for Sindri alone.
-    /// </summary>
-    public static readonly ErrorDefinition OnyxKeyNotServiceAccount = new("SND-CONTEXT-053", ErrorKind.Forbidden, "The Onyx key doesn't belong to Sindri's dedicated account");
-
-    /// <summary>
-    /// SND-CONTEXT-055: Onyx isn't on a loopback address, or its version differs from the pinned one (spec §8.8). The
-    /// message names the key path ('context.sources.onyx.url' or '.version') and the fix, never the token.
-    /// </summary>
-    public static readonly ErrorDefinition OnyxNotPinnedOrLoopback = new("SND-CONTEXT-055", ErrorKind.Invalid, "Onyx isn't on a loopback address, or its version differs from the pinned one");
-
     /// <summary>SND-CONTEXT-056: a sync of that source is already running (one at a time per source; CLI exit 1, HTTP 409).</summary>
     public static readonly ErrorDefinition SyncRunning = new("SND-CONTEXT-056", ErrorKind.Conflict, "A sync of that source is already running");
 
@@ -147,10 +118,16 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-059: a sync stopped at its time cap: the run is partial and resumes from its cursor next time (degraded, exit 0).</summary>
     public static readonly ErrorDefinition SyncCapped = new("SND-CONTEXT-059", ErrorKind.Unavailable, "A sync stopped at its time cap");
 
+    /// <summary>SND-CONTEXT-060: a map build whose features are mostly unconnected (more than the refuse limit have no link to another feature or a table) is refused before any write; the last draft and the current map stay (map structure spec §4.3). 'context.checks.mode: warn' turns it into a degraded note.</summary>
+    public static readonly ErrorDefinition MapUnconnected = new("SND-CONTEXT-060", ErrorKind.Invalid, "Map structure is mostly unconnected");
+
+    /// <summary>SND-CONTEXT-061: a map build with too many features over the size cap is refused before any write (map structure spec §4.3). 'context.checks.mode: warn' turns it into a degraded note.</summary>
+    public static readonly ErrorDefinition MapOversized = new("SND-CONTEXT-061", ErrorKind.Invalid, "Features are over the size cap");
+
     /// <summary>SND-CONTEXT-080: no eligible backtest sample (no merge carries an issue key of a profile team in the window, or every candidate was left out; the message gives the counts).</summary>
     public static readonly ErrorDefinition NoEligibleSample = new("SND-CONTEXT-080", ErrorKind.NotFound, "No eligible backtest sample");
 
-    /// <summary>SND-CONTEXT-081: no configured intent source can fetch issue records for a brief ('onyx' today; 'linear' after S-6).</summary>
+    /// <summary>SND-CONTEXT-081: no configured intent source can fetch issue records for a brief (today 'linear').</summary>
     public static readonly ErrorDefinition NoBriefSource = new("SND-CONTEXT-081", ErrorKind.Unavailable, "No source can supply backtest briefs");
 
     /// <summary>SND-CONTEXT-082: '--arms' names an unknown arm; the message lists the arms and which are not available yet.</summary>
@@ -169,6 +146,9 @@ public static class ContextErrors
 
     /// <summary>SND-CONTEXT-120: the map version asked for ('mapVersion=' / '--map-version') isn't held: never written, purged, a draft, still building, or its commit part differs. Scoping stage S-LB1 owns 120–129.</summary>
     public static readonly ErrorDefinition MapVersionNotRetained = new("SND-CONTEXT-120", ErrorKind.NotFound, "That map version is not retained");
+
+    /// <summary>SND-CONTEXT-134: a profile pattern ('regex:' role entry or recognizer) that NonBacktracking can't run ran out of its one-second limit while a path was checked. The message names the pattern and the length of the input, never the input.</summary>
+    public static readonly ErrorDefinition PatternTimedOut = new("SND-CONTEXT-134", ErrorKind.Timeout, "A profile pattern ran out of time");
 
     /// <summary>SND-CONTEXT-160: the history lens ran out of 'context.deadline' reading git and returned the changes it had. Never a route failure: it is the code of a 'git-history' row in 'searched' (state degraded). S-H owns 160–169.</summary>
     public static readonly ErrorDefinition HistoryDeadline = new("SND-CONTEXT-160", ErrorKind.Timeout, "The history read ran out of time");
@@ -191,6 +171,12 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-152: the code lens's lexical search ran out of 'context.code.deadline' and returned what it had (the code of a searched row, never a route failure).</summary>
     public static readonly ErrorDefinition CodeSearchTimedOut = new("SND-CONTEXT-152", ErrorKind.Timeout, "The lexical code search ran out of time");
 
+    /// <summary>SND-CONTEXT-153: the context engine can't build the scoping graph or read its call log yet (issue 1005). The scoping gather falls back to a projection of the lenses and records the limit.</summary>
+    public static readonly ErrorDefinition ScopeGraphUnavailable = new("SND-CONTEXT-153", ErrorKind.Unavailable, "The scoping graph is not available from this engine");
+
+    /// <summary>SND-CONTEXT-154: a scoping Step's session asked about a node outside its run's graph without saying why (issue 1005). The message names the node and the fix: pass outside: true and a reason.</summary>
+    public static readonly ErrorDefinition NodeNotInScopeGraph = new("SND-CONTEXT-154", ErrorKind.NotFound, "That node is not in this run's scoping graph");
+
     /// <summary>SND-CONTEXT-133: a 'context.extract.graphify' limit (timeoutMinutes, maxSnapshotMB, maxFileMB, maxGraphMB) isn't a whole number from 0 (no limit) up. The message names the key path.</summary>
     public static readonly ErrorDefinition GraphifyLimitInvalid = new("SND-CONTEXT-133", ErrorKind.Invalid, "A graphify limit is invalid");
 
@@ -212,23 +198,88 @@ public static class ContextErrors
     /// <summary>SND-CONTEXT-090: the query's rerank (Phase 8, 'context.ranker.rerank') could not order the items: the model was unavailable, over budget, or answered no order. The query went on in its feature or fusion order; the answer lists 'rerank' as degraded (never a route failure).</summary>
     public static readonly ErrorDefinition RerankUnavailable = new("SND-CONTEXT-090", ErrorKind.Unavailable, "The rerank could not order the items");
 
+    /// <summary>SND-CONTEXT-240: every harness a call may try is at its usage limit or failed (the message names them and their 'until' times). The job pauses when it can; the work waits for a harness to come back.</summary>
+    public static readonly ErrorDefinition ModelHarnessesUnavailable = new("SND-CONTEXT-240", ErrorKind.Unavailable, "Every model harness for this call is at its usage limit or failing");
+
+    /// <summary>SND-CONTEXT-241: none of the harnesses a call may try is installed. Fix: install one or name another in 'context.models'.</summary>
+    public static readonly ErrorDefinition NoModelHarness = new("SND-CONTEXT-241", ErrorKind.Unavailable, "No model harness is installed for this call");
+
     /// <summary>SND-CONTEXT-190: a promote, a cleanup, an override append or a hold named a draft ('expectedVersion') and the latest draft is another number or there is none: a rebuild replaced it, or it was promoted. The map's publish rules own 190-194 (retrieval spec §8.7a).</summary>
     public static readonly ErrorDefinition DraftChanged = new("SND-CONTEXT-190", ErrorKind.Conflict, "The draft is not the one that was expected");
 
     /// <summary>SND-CONTEXT-191: a map head names a commit that is not 7 to 40 lowercase hex characters, or a repo twice (a build report, a hold or an import).</summary>
     public static readonly ErrorDefinition MapHeadInvalid = new("SND-CONTEXT-191", ErrorKind.Invalid, "A map head is invalid");
 
+    /// <summary>SND-CONTEXT-102: <c xml:lang="en">concept=</c> names no pin the caller can see. The message lists at most 5 visible pins to try.</summary>
+    public static readonly ErrorDefinition PinUnknown = new("SND-CONTEXT-102", ErrorKind.NotFound, "No such pin");
+
+    /// <summary>SND-CONTEXT-103: <c xml:lang="en">concept=</c> was given and the caller sees no pin at all.</summary>
+    public static readonly ErrorDefinition NoPins = new("SND-CONTEXT-103", ErrorKind.NotFound, "No pins are set up");
+
+    /// <summary>SND-CONTEXT-104: the approved profile has the pin but the map version has no concept node for it yet.</summary>
+    public static readonly ErrorDefinition PinNewerThanMap = new("SND-CONTEXT-104", ErrorKind.NotFound, "The pin is newer than the map");
+
+    /// <summary>SND-CONTEXT-105: <c xml:lang="en">concept=</c> needs a built map and there is none the caller may read.</summary>
+    public static readonly ErrorDefinition PinNeedsMap = new("SND-CONTEXT-105", ErrorKind.NotFound, "concept= needs a built map");
+
     /// <summary>SND-CONTEXT-200: the whole-map read was asked to open an area the map doesn't have (Part D; 201 to 209 are reserved for this stage).</summary>
     public static readonly ErrorDefinition AreaUnknown = new("SND-CONTEXT-200", ErrorKind.NotFound, "No such area in this map");
 
-    /// <summary>Every Context error, for ErrorCatalogue.Validate.</summary>
-    public static IReadOnlyList<ErrorDefinition> All { get; } =
-        [SettingsInvalid, SourceNotConfigured, UnknownAnchor, StoreUnavailable, PathInWorktree, QueryInvalid, SourceUnavailable, AllSourcesUnavailable, SessionsDisabled,
+    /// <summary>SND-CONTEXT-230: a record batch can't be committed (a record of another source, a blocked record with chunks, gaps in a record's chunk numbers); nothing was written.</summary>
+    public static readonly ErrorDefinition RecordBatchInvalid = new("SND-CONTEXT-230", ErrorKind.Invalid, "The record batch is invalid");
+
+    /// <summary>SND-CONTEXT-231: the query embedder could not answer (the model is down or not pulled); the dense leg drops out of the answer.</summary>
+    public static readonly ErrorDefinition EmbedderUnavailable = new("SND-CONTEXT-231", ErrorKind.Unavailable, "The embedding model is unavailable");
+
+    /// <summary>SND-CONTEXT-232: a vector scan was asked with a query or mask that doesn't fit the matrix, or a count out of range.</summary>
+    public static readonly ErrorDefinition VectorScanInvalid = new("SND-CONTEXT-232", ErrorKind.Invalid, "The vector scan request is invalid");
+
+    /// <summary>SND-CONTEXT-242: Jev refused a pack of choice questions (input too big, an answer that wasn't one, a timeout). The labeler splits the pack and asks again, down to two levels; what still fails takes its fallback. The message is a reason code.</summary>
+    public static readonly ErrorDefinition ChoiceRejected = new("SND-CONTEXT-242", ErrorKind.Unavailable, "Jev refused a pack of choice questions");
+
+    /// <summary>SND-CONTEXT-243: Jev can't be asked for the rest of this pass (no key, offline, excluded, a refused key, rate limited, a server error, or the pick is off in the approved profile). Every undecided choice takes its fallback. The message is a reason code.</summary>
+    public static readonly ErrorDefinition ChoiceUnavailable = new("SND-CONTEXT-243", ErrorKind.Unavailable, "Jev can't be asked for choices");
+
+    /// <summary>SND-CONTEXT-250: index.pages names a concept that isn't pinned or derived in the current map.</summary>
+    public static readonly ErrorDefinition PageConceptUnknown = new("SND-CONTEXT-250", ErrorKind.Invalid, "A page action names a concept the map doesn't have");
+
+    /// <summary>SND-CONTEXT-251: a surface or action key not in the current map.</summary>
+    public static readonly ErrorDefinition PageKeyUnknown = new("SND-CONTEXT-251", ErrorKind.Invalid, "A page names a map key the map doesn't have");
+
+    /// <summary>SND-CONTEXT-252: several repos and none named, or a surface in more than one repo.</summary>
+    public static readonly ErrorDefinition PageRepoAmbiguous = new("SND-CONTEXT-252", ErrorKind.Invalid, "A page's repo is ambiguous or unknown");
+
+    /// <summary>SND-CONTEXT-253: more than 200 pages, 40 actions on a page or 20 concepts on an action.</summary>
+    public static readonly ErrorDefinition PageOverCap = new("SND-CONTEXT-253", ErrorKind.Invalid, "A page list is over a cap");
+
+    /// <summary>SND-CONTEXT-254: page ids unique, action ids unique within a page.</summary>
+    public static readonly ErrorDefinition PageIdDuplicate = new("SND-CONTEXT-254", ErrorKind.Invalid, "A page or action id repeats");
+
+    /// <summary>SND-CONTEXT-255: a name empty, over 80 characters, or with a leading or trailing space after control characters are stripped.</summary>
+    public static readonly ErrorDefinition PageNameInvalid = new("SND-CONTEXT-255", ErrorKind.Invalid, "A page or action name is invalid");
+
+    /// <summary>SND-CONTEXT-256: a '--action' with no concept after '->'.</summary>
+    public static readonly ErrorDefinition PageActionSpecInvalid = new("SND-CONTEXT-256", ErrorKind.Invalid, "A page action spec is invalid");
+
+    /// <summary>SND-CONTEXT-257: an unknown page id (remove, context_pages).</summary>
+    public static readonly ErrorDefinition PageNotFound = new("SND-CONTEXT-257", ErrorKind.NotFound, "No such page");
+
+    /// <summary>SND-CONTEXT-258: an unknown concept or repo in context_pages.</summary>
+    public static readonly ErrorDefinition PageQueryUnknown = new("SND-CONTEXT-258", ErrorKind.NotFound, "context_pages names no such concept or repo");
+
+    /// <summary>SND-CONTEXT-259: a pasted page list that is empty, or over 65,536 UTF-8 bytes.</summary>
+    public static readonly ErrorDefinition PagePreviewInvalid = new("SND-CONTEXT-259", ErrorKind.Invalid, "A pasted page list is empty or too long");
+
+    /// <summary>Every Context error, for ErrorCatalogue.Validate. Built on first use: the pin write's codes live in another part of this class, and fields of different parts initialize in no fixed order.</summary>
+    public static IReadOnlyList<ErrorDefinition> All => field ??=
+        [SettingsInvalid, RecordBatchInvalid, EmbedderUnavailable, VectorScanInvalid, SourceNotConfigured, UnknownAnchor, StoreUnavailable, PathInWorktree, QueryInvalid, SourceUnavailable, AllSourcesUnavailable, SessionsDisabled,
          McpRepoMissing, McpArgumentsInvalid, McpToolUnknown, McpRegisterRepoUnknown, McpRegisterFailed, McpUserWide,
          NoMap, MapFileInvalid, MapNodeUndefined, ExportOutsideHome, MapFileChanged, ProbeFileInvalid, NoProbeFile, AmbiguousAnchor, ProbesRegressed,
          HeavyLockBusy, LabelingUnavailable, ReviewFileNoMatch, NoDraftMap, RepoOutsideScope, PromoteRefused, ReviewTargetStale, ExtractionUnreadable,
-         OnyxKeyRefused, OnyxUnexpectedReply, OnyxDocumentNotFound, OnyxKeyNotServiceAccount, OnyxNotPinnedOrLoopback, LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, SyncCapped,
-         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, AreaUnknown];
+         LinearUrlRefused, LinearKeyRefused, LinearUnexpectedReply, LinearRecordNotFound, SyncRunning, ModelAnswerRefused, SyncSourceUnknown, MapUnconnected, MapOversized, SyncCapped,
+         NoEligibleSample, NoBriefSource, UnknownArm, AdjudicationCapped, CommitUnknown, NoMergeBase, MapVersionNotRetained, HistoryDeadline, IntentNotSynced, CodeGlobInvalid, CodeGlobsTooMany, CodeSearchTimedOut, RecognizerInvalid, RecognizerOverCap, PatternTimedOut, DraftChanged, MapHeadInvalid, GraphifyLimitInvalid, RerankUnavailable, ModelHarnessesUnavailable, NoModelHarness, ChoiceRejected, ChoiceUnavailable, AreaUnknown, NodeNotInScopeGraph, PinUnknown, NoPins, PinNewerThanMap, PinNeedsMap,
+         PageConceptUnknown, PageKeyUnknown, PageRepoAmbiguous, PageOverCap, PageIdDuplicate, PageNameInvalid, PageActionSpecInvalid, PageNotFound, PageQueryUnknown, PagePreviewInvalid,
+         PinInvalid, PinFeatureUnknown, PinIdClash, PinNotInProfile, PinHasFolderRules, PinInRepoProfile, PinLineUnreadable, PinSuggestInvalid];
 
     /// <summary>
     /// The codes the CLI answers with exit 1 (attention, spec §8.6): an unknown or ambiguous anchor, a refused input or
@@ -242,5 +293,7 @@ public static class ContextErrors
         LabelingUnavailable.Code, ReviewFileNoMatch.Code, NoDraftMap.Code, RepoOutsideScope.Code, PromoteRefused.Code, ReviewTargetStale.Code, SyncRunning.Code, SyncSourceUnknown.Code,
         NoEligibleSample.Code, NoBriefSource.Code, UnknownArm.Code,
         CommitUnknown.Code, NoMergeBase.Code, MapVersionNotRetained.Code, CodeGlobInvalid.Code, CodeGlobsTooMany.Code, DraftChanged.Code, MapHeadInvalid.Code, AreaUnknown.Code,
+        PinUnknown.Code, NoPins.Code, PinNewerThanMap.Code, PinNeedsMap.Code, PageNotFound.Code, PageQueryUnknown.Code,
+        PageConceptUnknown.Code, PageKeyUnknown.Code,
     };
 }

@@ -9,9 +9,15 @@ namespace Aw.Sindri.Infrastructure.Sessions;
 /// catalog's 'transcripts' glob finds for the session id. A transcript's content is never opened.
 /// </summary>
 /// <param name="home">What '~' means in a catalog glob.</param>
-internal sealed class TranscriptFiles(string home) : ITranscripts
+/// <param name="agentHomes">'~/.claude' or '~/.codex' to the separate agent home that stands in for it: a launch that used its own login wrote there, so a glob under that prefix is tried under the home too.</param>
+internal sealed class TranscriptFiles(string home, IReadOnlyDictionary<string, string> agentHomes) : ITranscripts
 {
     private const int MaxMatches = 32;
+
+    public TranscriptFiles(string home) : this(home, new Dictionary<string, string>(StringComparer.Ordinal))
+    {
+    }
+
 
     public DateTimeOffset? LastWrite(AgentEntry agent, SessionId? session, string? hinted)
     {
@@ -27,11 +33,12 @@ internal sealed class TranscriptFiles(string home) : ITranscripts
         }
 
         var pattern = glob.Replace("{sessionId}", id.Value, StringComparison.Ordinal);
-        pattern = pattern.StartsWith('~') ? home + pattern[1..] : pattern;
-        return Expand(pattern).Take(MaxMatches).Select(Stat).OfType<DateTimeOffset>().OrderDescending().Cast<DateTimeOffset?>().FirstOrDefault();
+        var patterns = new List<string> { pattern.StartsWith('~') ? home + pattern[1..] : pattern };
+        patterns.AddRange(agentHomes.Where(h => pattern.StartsWith(h.Key, StringComparison.Ordinal)).Select(h => h.Value + pattern[h.Key.Length..]));
+        return patterns.SelectMany(static p => Expand(p).Take(MaxMatches)).Select(Stat).OfType<DateTimeOffset>().OrderDescending().Cast<DateTimeOffset?>().FirstOrDefault();
     }
 
-    private static IEnumerable<string> Expand(string pattern)
+    internal static IEnumerable<string> Expand(string pattern)
     {
         IEnumerable<string> level = ["/"];
         foreach (var segment in pattern.Split('/', StringSplitOptions.RemoveEmptyEntries))

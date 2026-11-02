@@ -1,0 +1,18 @@
+cluster feature:billing.invoice feature:billing.refund => refund invoice rate tax flow
+cluster feature:scheduling.roster feature:scheduling.shift => roster shift swap board publish
+cluster feature:search.index => index search writer
+term index 0.4394 feature:search.index
+term search 0.4394 feature:search.index
+term roster 0.2747 feature:scheduling.roster feature:scheduling.shift
+term shift 0.2747 feature:scheduling.roster feature:scheduling.shift
+term refund 0.2354 feature:billing.invoice feature:billing.refund
+term writer 0.2197 feature:search.index
+term swap 0.1831 feature:scheduling.roster feature:scheduling.shift
+term invoice 0.1569 feature:billing.invoice feature:billing.refund
+term rate 0.1569 feature:billing.invoice feature:billing.refund
+term tax 0.1569 feature:billing.invoice feature:billing.refund
+term board 0.0916 feature:scheduling.roster feature:scheduling.shift
+term publish 0.0916 feature:scheduling.roster feature:scheduling.shift
+term flow 0.0785 feature:billing.invoice feature:billing.refund
+unvectored feature:search.empty
+truncated False

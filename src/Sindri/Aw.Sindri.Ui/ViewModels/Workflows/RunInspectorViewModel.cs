@@ -2,13 +2,14 @@ using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
+using Aw.Sindri.Ui.ViewModels.Takeover;
 
 namespace Aw.Sindri.Ui.ViewModels.Workflows;
 
 /// <summary>
 /// The run drawer (F3 workflows spec §2 "Inspector drawer", §4, §5): one run's header, its callout, its stages and its actions. The header and the
-/// callout come from the row the page already holds; the stages come from the instance read. It sends nothing: Open run, Take over, Hand back and
-/// Cancel run only ask the shell to open the run (the frame holds the commands), and nothing is approved here.
+/// callout come from the row the page already holds; the stages come from the instance read. Take over sends the takeover and says what came of it; Open run,
+/// Hand back and Cancel run only ask the shell to open the run (the frame holds the commands), and nothing is approved here.
 /// </summary>
 internal sealed partial class RunInspectorViewModel(ISindriApi api, IClipboard clipboard, TimeProvider clock) : ObservableObject
 {
@@ -147,6 +148,7 @@ internal sealed partial class RunInspectorViewModel(ISindriApi api, IClipboard c
         if (!string.Equals(Row?.Address, row.Address, StringComparison.Ordinal))
         {
             _detail = null;   // the last run's stages are not this one's
+            Say(new TakeoverView(string.Empty, string.Empty));   // nor its take-over line
         }
 
         Row = row;
@@ -187,9 +189,6 @@ internal sealed partial class RunInspectorViewModel(ISindriApi api, IClipboard c
 
     /// <summary>Open run: the run's frame.</summary>
     internal void OpenRun() => Ask(FrameIntent.None);
-
-    /// <summary>Take over: the run's frame, where the take-over command is. Nothing is sent.</summary>
-    internal void TakeOver() => Ask(FrameIntent.TakeOver);
 
     /// <summary>Hand back: the run's frame, where the hand-back command is. Nothing is sent.</summary>
     internal void HandBack() => Ask(FrameIntent.HandBack);

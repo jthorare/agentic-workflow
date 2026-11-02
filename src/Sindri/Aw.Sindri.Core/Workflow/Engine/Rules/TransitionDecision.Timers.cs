@@ -15,7 +15,7 @@ namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 public static partial class TransitionDecision
 {
     /// <summary>
-    /// A state or retry timer fired in the entry it was armed in (spec §3.4, §5.5): 'then: park' parks with 'timeout',
+    /// A state or retry timer fired in the entry it was armed in (spec §3.4, §5.5): 'then: park' retries once like 'then: retry' and then parks with 'timeout' (owner q93; the 'timeout-retries-before-park-v1' patch),
     /// 'then: escalate' escalates (kind timeout), 'then: retry' re-arms once in the same entry and re-emits the entering
     /// transition's effects (new command ids, the same effect identity), and a retry timer that fires parks with
     /// 'timeout'. In desk mode every 'then' parks (W20). A timer of an entry that has ended, or of a suspended instance,
@@ -33,7 +33,7 @@ public static partial class TransitionDecision
         var after = StateTimers.Timeout(state, instance.Frame.Run, d.Context.DeskTimeout) ?? timeout.After.Span;
         var desk = instance.Frame.Run is { Runtime: StepRuntime.Desk };
         var retried = fired.Kind == DeadlineKind.Retry || instance.Frame.Retried;
-        var then = desk || (retried && timeout.Then == TimeoutAction.Retry) ? TimeoutAction.Park : timeout.Then;
+        var then = Action(d, state, timeout, desk, retried);
         return then switch
         {
             TimeoutAction.Escalate => d.Changed(d.Rules.Suspend(instance, new Suspension(
@@ -42,6 +42,22 @@ public static partial class TransitionDecision
             TimeoutAction.Retry => Retry(d, instance),
             TimeoutAction.Park or _ => d.Changed(d.Rules.Suspend(instance, DeskTimeouts.TimeoutPark(instance.Frame.State, after, fired.Actor))),
         };
+    }
+
+    /// <summary>
+    /// What an expiry does: a desk run always parks (W20); a second expiry of a 'then: retry' state parks; and (owner q93, 2026-10-23) a 'then: park' state that has not
+    /// retried yet retries once first, unless it waits for a child (a child can't be retried, RCP-TIME-002) or the history predates the patch.
+    /// </summary>
+    private static TimeoutAction Action(Deciding d, RecipeState state, TimeoutSpec timeout, bool desk, bool retried)
+    {
+        if (desk || (retried && timeout.Then == TimeoutAction.Retry))
+        {
+            return TimeoutAction.Park;
+        }
+
+        return timeout.Then == TimeoutAction.Park && !retried && !d.Context.LegacyTimeoutPark && state.WaitFor?.Child is null
+            ? TimeoutAction.Retry
+            : timeout.Then;
     }
 
     /// <summary>

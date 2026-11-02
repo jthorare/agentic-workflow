@@ -1,0 +1,12 @@
+{
+  "model": "claude-sonnet-5-5",
+  "verdicts": [
+    {
+      "id": "L-code-1",
+      "class": "in",
+      "reason": "Writes the invitation expiry date.",
+      "citation": "L-code-1",
+      "fix": "ignore"
+    }
+  ]
+}

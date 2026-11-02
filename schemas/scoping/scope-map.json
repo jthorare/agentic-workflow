@@ -62,6 +62,21 @@
                 "type": "string",
                 "minLength": 1,
                 "description": "SCP-ACC-002: the reason this in-scope surface needs no acceptance item of its own (\"marked no-behaviour-change with a reason\"). SC-K chose this field name; the spec names the marker but no field."
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Graph node ids (fact:graph nodes[].id) this surface cites (SCP-GRAPH-001)."
+              },
+              "origin": {
+                "enum": [
+                  "graph",
+                  "search"
+                ],
+                "description": "graph: found in fact:graph; search: found only by the agent's own search, with no graph node."
               }
             },
             "required": [
@@ -183,14 +198,22 @@
                 "minLength": 1,
                 "description": "A lens item id or a surface id."
               },
+              "glob": {
+                "type": "string",
+                "minLength": 1,
+                "description": "A path glob ('**' crosses directories, '*' and '?' stay in one segment) that excludes every near code node whose path matches, for example src/gen/**."
+              },
               "reason": {
                 "type": "string",
                 "minLength": 1
               }
             },
             "required": [
-              "item",
               "reason"
+            ],
+            "oneOf": [
+              { "required": ["item"] },
+              { "required": ["glob"] }
             ],
             "additionalProperties": false
           }
@@ -319,6 +342,21 @@
                 "type": "string",
                 "minLength": 1,
                 "description": "SCP-ACC-002: the reason this in-scope surface needs no acceptance item of its own (\"marked no-behaviour-change with a reason\"). SC-K chose this field name; the spec names the marker but no field."
+              },
+              "nodes": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "description": "Graph node ids (fact:graph nodes[].id) this surface cites (SCP-GRAPH-001)."
+              },
+              "origin": {
+                "enum": [
+                  "graph",
+                  "search"
+                ],
+                "description": "graph: found in fact:graph; search: found only by the agent's own search, with no graph node."
               }
             },
             "required": [

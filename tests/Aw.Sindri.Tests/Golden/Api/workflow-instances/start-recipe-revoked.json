@@ -2,6 +2,6 @@
   "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
   "title": "SND-RECIPE-005",
   "status": 409,
-  "detail": "workflow.step@f511ce1fc529 was revoked; nothing was started (fix: start the approved version: sindri recipe list)",
+  "detail": "workflow.step@4ca37bf46333 was revoked; nothing was started (fix: start the approved version: sindri recipe list)",
   "traceId": "<trace>"
 }

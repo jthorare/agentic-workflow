@@ -1,7 +1,10 @@
 using Aw.Kernel;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine;
+using Aw.Sindri.Features.GetRunSuspension;
+using Aw.Sindri.Features.RecordLimitHit;
 using Aw.Sindri.Features.SessionExit;
 using Aw.Sindri.Features.SessionHeartbeat;
 using Aw.Sindri.Host.Commands.SessionWrap;
@@ -19,9 +22,21 @@ internal sealed class ControlPlaneWrapCalls(ControlPlaneClient client) : IWrapCa
         return sent.IsError ? sent.Error : Unit.Value;
     }
 
-    public async ValueTask<Result<Unit>> Exit(LaunchId launch, LaunchSecret proof, int exitCode, SessionId? session, CancellationToken cancellationToken)
+    public async ValueTask<Result<Unit>> Exit(LaunchId launch, LaunchSecret proof, WrapExit ended, CancellationToken cancellationToken)
     {
-        var sent = await client.PostProven<SessionExitBody, SessionExitResponse>($"/sindri/sessions/{launch.Value}/exit", new SessionExitBody(exitCode, session), proof.Value, cancellationToken).ConfigureAwait(false);
+        var sent = await client.PostProven<SessionExitBody, SessionExitResponse>($"/sindri/sessions/{launch.Value}/exit", new SessionExitBody(ended.ExitCode, ended.Session, ended.Limit), proof.Value, cancellationToken).ConfigureAwait(false);
+        return sent.IsError ? sent.Error : Unit.Value;
+    }
+
+    public async ValueTask<Result<bool>> Suspended(LaunchId launch, LaunchSecret proof, CancellationToken cancellationToken)
+    {
+        var asked = await client.GetProven<RunSuspensionView>($"/sindri/launches/{launch.Value}/suspended", proof.Value, cancellationToken).ConfigureAwait(false);
+        return asked.IsError ? asked.Error : asked.Value.Value.Suspended;
+    }
+
+    public async ValueTask<Result<Unit>> LimitHit(LaunchId launch, LaunchSecret proof, LimitHitKind kind, long peak, CancellationToken cancellationToken)
+    {
+        var sent = await client.PostProven<LimitHitBody, RecordLimitHitResponse>($"/sindri/launches/{launch.Value}/limit-hit", new LimitHitBody(kind, peak), proof.Value, cancellationToken).ConfigureAwait(false);
         return sent.IsError ? sent.Error : Unit.Value;
     }
 }

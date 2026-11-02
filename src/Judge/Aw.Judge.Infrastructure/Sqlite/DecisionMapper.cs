@@ -5,7 +5,7 @@ using Microsoft.Data.Sqlite;
 
 namespace Aw.Judge.Infrastructure.Sqlite;
 
-/// <summary>Maps DecisionSql.Find's columns: the decision (0-14), then its detail row (15-20, null when absent).</summary>
+/// <summary>Maps DecisionSql.Find's columns: the decision (0-14), then its detail row (15-21, null when absent).</summary>
 /// <param name="json">Reads the JSON text columns.</param>
 internal sealed class DecisionMapper(DecisionJson json) : IRowMapper<DecisionRecord>
 {
@@ -17,17 +17,42 @@ internal sealed class DecisionMapper(DecisionJson json) : IRowMapper<DecisionRec
         ContentClass = reader.GetString(3),
         Provider = reader.GetString(4),
         Decision = reader.IsDBNull(5) ? null : reader.GetString(5),
-        Confidence = reader.GetDouble(6),
+        Confidence = Double(reader, 6),
         ReasonCode = reader.GetString(7),
-        LatencyMs = reader.GetInt64(8),
+        LatencyMs = Long(reader, 8),
         InputDigest = reader.GetString(9),
         UndoneAt = reader.IsDBNull(10) ? null : SqliteRead.GetTimestamp(reader, 10),
-        ChainPosition = reader.GetInt32(11),
+        ChainPosition = Int(reader, 11),
         Skipped = json.Skipped(reader.GetString(12)),
         Outcome = DecisionText.Outcome(reader.GetString(13)),
         ApprovedAt = reader.IsDBNull(14) ? null : SqliteRead.GetTimestamp(reader, 14),
         Details = reader.IsDBNull(15) ? null : Details(reader),
     };
+
+    // A column that holds text (or a blob) where the judge writes a number is the row's problem: say which column.
+    private static double Double(SqliteDataReader reader, int ordinal) => Read(reader, ordinal, static (r, i) => r.GetDouble(i));
+
+    private static long Long(SqliteDataReader reader, int ordinal) => Read(reader, ordinal, static (r, i) => r.GetInt64(i));
+
+    private static int Int(SqliteDataReader reader, int ordinal) => Read(reader, ordinal, static (r, i) => r.GetInt32(i));
+
+    private static T Read<T>(SqliteDataReader reader, int ordinal, Func<SqliteDataReader, int, T> get)
+    {
+        // SQLite coerces text to a number (0 for 'high') instead of failing, so look at what is stored first.
+        if (reader.GetFieldType(ordinal) != typeof(long) && reader.GetFieldType(ordinal) != typeof(double))
+        {
+            throw new InvalidDataException($"Column {reader.GetName(ordinal)} holds {reader.GetValue(ordinal).GetType().Name} '{reader.GetValue(ordinal)}', not a number.");
+        }
+
+        try
+        {
+            return get(reader, ordinal);
+        }
+        catch (Exception exception) when (exception is FormatException or InvalidCastException or OverflowException or InvalidOperationException)
+        {
+            throw new InvalidDataException($"Column {reader.GetName(ordinal)} holds {reader.GetValue(ordinal).GetType().Name} '{reader.GetValue(ordinal)}', not a {typeof(T).Name} number.", exception);
+        }
+    }
 
     private DecisionDetails Details(SqliteDataReader reader) => new()
     {
@@ -36,5 +61,6 @@ internal sealed class DecisionMapper(DecisionJson json) : IRowMapper<DecisionRec
         RulesOpinion = reader.IsDBNull(18) ? null : reader.GetString(18),
         Agreement = reader.IsDBNull(19) ? null : DecisionText.AgreementOf(reader.GetString(19)),
         SessionId = reader.IsDBNull(20) ? null : SessionId.From(reader.GetString(20)),
+        Reasons = json.Reasons(reader.IsDBNull(21) ? null : reader.GetString(21)),
     };
 }

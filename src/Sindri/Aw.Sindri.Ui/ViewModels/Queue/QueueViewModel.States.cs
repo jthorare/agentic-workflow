@@ -36,9 +36,12 @@ internal sealed partial class QueueViewModel
         FooterText = view.AsOf.Cursor >= view.AsOf.LedgerHead ? Labels.QueueUpToDate(view.AsOf.LedgerHead) : Labels.QueueBehind(view.AsOf.Cursor, view.AsOf.LedgerHead);
     }
 
-    // While the views rebuild every group but the queued one says so instead of its own sentence.
-    private string? EmptyLine(QueueGroupView group) =>
-        _view?.AsOf is { Rebuilding: true } asOf && !string.Equals(group.Group, Labels.QueuedGroup, StringComparison.Ordinal)
-            ? Labels.RebuildingViews(asOf.Cursor, asOf.LedgerHead)
-            : group.Empty;
+    // While the views rebuild every group but the queued one says so instead of its own sentence. Stalled wins over Rebuilding (a rebuild that
+    // stalls again carries both): the banner says it once, and the panels keep their stale cue instead of repeating the sentence.
+    private string? EmptyLine(QueueGroupView group) => _view?.AsOf switch
+    {
+        { Stalled: true } => string.Empty,
+        { Rebuilding: true } asOf when !string.Equals(group.Group, Labels.QueuedGroup, StringComparison.Ordinal) => Labels.RebuildingViews(asOf.Cursor, asOf.LedgerHead),
+        _ => group.Empty,
+    };
 }

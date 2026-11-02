@@ -1,0 +1,18 @@
+{
+  "judge": {
+    "providers": [
+      "jev"
+    ],
+    "threshold": 0.6
+  },
+  "rulings": [
+    {
+      "id": "L-code-3",
+      "class": "maybe",
+      "confidence": 0.5,
+      "provider": "jev",
+      "decisionId": "JD-0001",
+      "reasonCode": "model"
+    }
+  ]
+}

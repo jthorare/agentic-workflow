@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.ViewModels;
 internal static partial class Labels
 {
     /// <summary>The Recipes page's title (the nav entry's own name is <see cref="Recipes"/>).</summary>
-    internal const string RecipesPageTitle = "Workflows";
+    internal const string RecipesPageTitle = "Workflow types";
 
     /// <summary>The page's caption under the title.</summary>
     /// <param name="total">How many workflows are listed.</param>

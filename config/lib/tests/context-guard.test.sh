@@ -235,6 +235,22 @@ test_over_1mb_trailing_content_still_reads_tokens() {
   echo "PASS: test_over_1mb_trailing_content_still_reads_tokens"
 }
 
+test_digest_dir_override_and_default() {
+  local cfg state transcript out st; cfg="$(mktemp -d)"; state="$(mktemp -d)"; st="$(mktemp -d)"
+  echo '{"thresholdTokens": 200000}' > "$cfg/config.json"
+  transcript="$(mktemp -d)/t.jsonl"
+  usage_line 5000 250000 > "$transcript"
+  local in="{\"session_id\":\"s1\",\"agent_id\":\"a1\",\"transcript_path\":\"$transcript\"}"
+  out="$(AW_DIGEST_DIR=/spool/digests AW_STATE_DIR="$st" run_hook "$in" "$cfg" "$state" 100)"
+  echo "$out" | jq -e '.hookSpecificOutput.additionalContext | contains("/spool/digests/<task-slug>.md")' > /dev/null \
+    || { echo "FAIL: AW_DIGEST_DIR not honored, got: $out"; exit 1; }
+  out="$(env -u AW_DIGEST_DIR AW_STATE_DIR="$st" bash -c 'AW_CONTEXT_GUARD_DIR="$1" AW_CONTEXT_GUARD_STATE_DIR="$2" AW_CONTEXT_GUARD_GROWTH_GATE_BYTES=100 bash "$3" <<< "$4"' _ "$cfg" "$(mktemp -d)" "$HOOK" "$in")"
+  echo "$out" | jq -e --arg d "$st/digests/<task-slug>.md" '.hookSpecificOutput.additionalContext | contains($d)' > /dev/null \
+    || { echo "FAIL: default digests dir changed, got: $out"; exit 1; }
+  echo "PASS: test_digest_dir_override_and_default"
+}
+
 test_large_tool_result_after_last_assistant_line_still_reads_tokens
 test_over_1mb_trailing_content_still_reads_tokens
+test_digest_dir_override_and_default
 echo "All context-guard tests passed."

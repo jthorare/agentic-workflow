@@ -37,8 +37,34 @@ public sealed class CreateItemViewModelTests
         Assert.True(form.CanSubmit);
     }
 
+    // C-14 (#1083): Esc closes the form, `C` again brings the typed text back, the way the Decide note keeps its draft.
     [Fact]
-    public async Task Submit_sends_the_form_once_and_closes_when_the_outcome_settles()
+    public async Task A_draft_typed_before_Esc_is_there_when_Create_item_reopens()
+    {
+        var form = await Form();
+        (form.Title, form.Repo, form.Body) = ("Half a title", "agentic-workflow", "and a body");
+
+        form.Close();
+        form.Open();
+
+        Assert.Equal((true, "Half a title", "agentic-workflow", "and a body"), (form.IsOpen, form.Title, form.Repo, form.Body));
+    }
+
+    // C-14 (#1083): the draft lasts until the item exists; the next `C` starts empty.
+    [Fact]
+    public async Task A_created_item_clears_the_draft_so_Create_item_reopens_empty()
+    {
+        var form = await Form();
+        (form.Title, form.Repo, form.Body) = ("Proof: appears live", "agentic-workflow", "details");
+
+        await form.Submit(Token);
+        form.Open();
+
+        Assert.Equal((string.Empty, string.Empty, string.Empty), (form.Title, form.Repo, form.Body));
+    }
+
+    [Fact]
+    public async Task Submit_sends_the_form_once_and_closes_as_soon_as_the_item_is_created()
     {
         var form = await Form();
         (form.Title, form.Repo, form.Body) = ("Proof: appears live", "agentic-workflow", " ");
@@ -46,11 +72,11 @@ public sealed class CreateItemViewModelTests
         await form.Submit(Token);
 
         Assert.Equal([new CreateItemRequest("Proof: appears live", "agentic-workflow", Body: null, Link: null)], _server.Created);
-        Assert.Equal(("Create item: done", "ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a306", true), (form.Control!.Outcome, form.CreatedId, form.IsOpen));
+        Assert.Equal(("Create item: done", "ITM-0192a1b2c3d4e5f6a7b8c9d0e1f2a306", false), (form.Control!.Outcome, form.CreatedId, form.IsOpen));   // #1129: closed at once, the outcome line still counts down
 
         _clock.Advance(ControlViewModel.AcceptedFor);
 
-        Assert.Equal((false, string.Empty, string.Empty), (form.IsOpen, form.Title, form.Repo));
+        Assert.False(form.IsOpen);
     }
 
     // §4.1 Error: a refusal is the API's code and detail inline; the form keeps its text.
@@ -91,7 +117,7 @@ public sealed class CreateItemViewModelTests
         await form.Submit(Token).WaitAsync(TimeSpan.FromSeconds(5), TimeProvider.System, Token);
 
         _ = Assert.Single(_server.Created);
-        Assert.Equal((false, true), (form.CanSubmit, form.IsOpen));
+        Assert.Equal((false, false), (form.CanSubmit, form.IsOpen));   // #1129: closed once created
     }
 
     // L10 (a11y-5): Create stays enabled; a blank submit says what is missing under the field, speaks it once (the flag

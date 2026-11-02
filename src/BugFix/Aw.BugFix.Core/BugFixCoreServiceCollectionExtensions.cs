@@ -10,5 +10,5 @@ public static class BugFixCoreServiceCollectionExtensions
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddBugFixCore(this IServiceCollection services) =>
-        services.AddScoped<CheckLocator>().AddScoped<WorkTree>();
+        services.AddScoped<CheckLocator>().AddScoped<WorkTree>().AddScoped<CheckPin>();
 }

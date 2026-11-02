@@ -56,7 +56,7 @@ internal sealed partial record InstanceWords
         {
             ParkKind.Drift => new StatusCommand(StatusVerb.Approve, ActionId.From("ApproveRecipe"), ActionClass.Protected, $"sindri recipe approve {Pinned}", Confirm: null),
             ParkKind.ChildRevoked => new StatusCommand(StatusVerb.Approve, ActionId.From("ApproveRecipe"), ActionClass.Protected, $"sindri recipe approve {Recipe.Version.Id.Value}", Confirm: null),
-            ParkKind.Revoked or ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or _ => null,
+            ParkKind.Revoked or ParkKind.Dispatch or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or ParkKind.Unconfinable or ParkKind.SelfCheck or _ => null,
         }
         : null;
 

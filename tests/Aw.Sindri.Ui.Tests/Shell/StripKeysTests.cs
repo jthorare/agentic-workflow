@@ -166,7 +166,9 @@ public sealed class StripKeysTests
 
         Assert.True(shell.Press("A"));
 
-        Assert.Equal(new DeepLink(DeepLinkKind.NeedsYou, park.Id), shell.SheetLink);
+        // #1057: a desk step's answer form is the Needs you inbox's, so Answer opens the inbox on the park row, not a read-only sheet.
+        Assert.True(shell.IsNeedsYouInbox);
+        Assert.Null(shell.SheetLink);
         Assert.Equal(park.Id, shell.NeedsYou.SelectedId);
         Assert.Null(shell.Strip.SelectedAddress);
     }, Token);
@@ -185,6 +187,7 @@ public sealed class StripKeysTests
 
         Assert.True(shell.Press("A"));
 
-        Assert.Equal(new DeepLink(DeepLinkKind.NeedsYou, park.Id), shell.SheetLink);
+        Assert.True(shell.IsNeedsYouInbox);
+        Assert.Equal(park.Id, shell.NeedsYou.SelectedId);
     }, Token);
 }

@@ -40,7 +40,7 @@ public sealed class StepInputWorkflowTests(SindriTimeSkippingServer server) : IC
                 .Select(static e => e.ActivityTaskScheduledEventAttributes.ActivityId).Where(static id => id.StartsWith("inputs:", StringComparison.Ordinal) || id.StartsWith("run:", StringComparison.Ordinal)).ToList();
 
             Assert.Equal([$"inputs:{task.Run!.Value.Value}:1", $"inputs:{task.Run.Value.Value}:2", $"run:{task.Run.Value.Value}:1"], ids, StringComparer.Ordinal);
-            Assert.Equal([$"{ProbeInput.Id} step.checks", $"{SecondProbeInput.Id} step.checks"], _probe.Calls, StringComparer.Ordinal);
+            Assert.Equal([$"{ProbeInput.Id} step.checks", $"{SecondProbeInput.Id} step.checks"], _probe.Calls.Order(StringComparer.Ordinal), StringComparer.Ordinal);   // the fills run together: each once, in no fixed order
         });
     }
 

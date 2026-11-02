@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jthorare/agentic-workflow/schemas/scoping/gap-candidates.json",
+  "title": "The gap searcher's candidates (fact:gapCandidates)",
+  "description": "Issue 966 spec 4.4: the searcher states its own model, lists every search it ran (the audit trail), and reports each candidate with a citation, the excerpt, the query that found it, an anchor and why it matters. step.scope.gap-log pairs the candidates with the judge's rulings.",
+  "type": "object",
+  "properties": {
+    "model": {
+      "type": "string",
+      "minLength": 1,
+      "description": "The searcher's own statement of its model; \"unknown\" is allowed. The record of what ran is the ledger's, not this."
+    },
+    "searches": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "tool": {
+            "enum": [
+              "context_query",
+              "context_neighbors",
+              "context_node",
+              "code-search",
+              "history"
+            ]
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1
+          },
+          "depth": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "tool",
+          "query"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^C[1-9][0-9]*$",
+            "description": "The searcher's own number for the candidate: C1, C2 and so on, once each in the file."
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "kind": {
+            "enum": [
+              "surface",
+              "writer",
+              "reader",
+              "job",
+              "migration",
+              "screen",
+              "record",
+              "other"
+            ]
+          },
+          "citation": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A node key, code:<path> or a record id."
+          },
+          "excerpt": {
+            "type": "string",
+            "maxLength": 400,
+            "description": "What the retrieval returned, at most 400 characters."
+          },
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The search that found the candidate; it is one of the queries in searches[] (the log does not check that, the owner reads it)."
+          },
+          "anchor": {
+            "type": "string",
+            "minLength": 1,
+            "description": "A node key or code:<path> that regather can start from."
+          },
+          "why": {
+            "type": "string",
+            "minLength": 1,
+            "description": "The searcher's argument. The judge never sees it."
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "kind",
+          "citation",
+          "excerpt",
+          "query",
+          "anchor",
+          "why"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "model",
+    "searches",
+    "candidates"
+  ],
+  "additionalProperties": false
+}

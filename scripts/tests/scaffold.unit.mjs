@@ -614,6 +614,17 @@ t("withApiLines: appends after the #nullable header, keeps what's there, adds no
   assert.equal(checks.withApiLines("#nullable enable\nA\n\n", ["C", "A"]), "#nullable enable\nA\nC\n");
 });
 
+t("checkScope: format gets only the generated .cs files, per project; build and test cover the package's tests and the architecture tests", () => {
+  const d = tree();
+  assert.equal(pkg(d).code, 0);
+  const j = new commonLib.Journal(d);
+  const touched = ["src/Readiness/Aw.Readiness.Core/Marker.cs", "tests/Aw.Readiness.Tests/MarkerTests.cs"];
+  for (const f of touched) j.create(f, "// x\n");
+  const scope = checks.checkScope(j, "Readiness");
+  assert.deepEqual(scope.files, touched.slice().sort());
+  assert.ok(scope.formatProjects.every((x) => x.endsWith(".csproj")) && scope.formatProjects.length === 2);
+  assert.deepEqual(scope.testProjects, ["tests/Aw.Readiness.Tests/Aw.Readiness.Tests.csproj", "tests/Aw.Architecture.Tests/Aw.Architecture.Tests.csproj"]);
+});
 t("NP-DEPENDS: a package listed twice", () => untouched((d) => refused(pkg(d, { depends: "Kernel,Kernel" }), "NP-DEPENDS")));
 t("SIGINT while waiting on the heavy lock reverts everything and exits 1 (SCAFFOLD-INTERRUPTED)", () => {
   const d = tree();

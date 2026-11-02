@@ -85,6 +85,7 @@ public sealed class RecipesPageStatesTests
         var page = _f.Page();
 
         Assert.Equal(ViewModels.Labels.RecipesPageTitle, page.Title);
+        Assert.Equal("Workflow types", page.Title);
         Assert.Equal(ViewModels.Labels.Recipes, ViewModels.Labels.Page(Ui.Navigation.PageId.Recipes));
     }
 }

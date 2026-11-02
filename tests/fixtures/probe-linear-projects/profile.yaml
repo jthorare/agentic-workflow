@@ -1,0 +1,12 @@
+version: 1
+context:
+  index:
+    windowDays: 90
+  sources:
+    github:
+      repos:
+        - acme/web   # first listed
+        - acme/api
+    linear:
+      token: env:PROBE_TEST_LINEAR_KEY
+      teams: [ENG, APP]

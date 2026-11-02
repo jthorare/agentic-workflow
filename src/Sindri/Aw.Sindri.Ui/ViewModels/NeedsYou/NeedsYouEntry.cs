@@ -58,6 +58,9 @@ internal sealed record NeedsYouEntry(string Id, NeedsYouUrgency Urgency)
     /// <summary>The decision this row stands for (its subject's id when the subject is a decision), null when it is not a decision row; every "is this a decision row" test reads this.</summary>
     internal string? DecisionId => Subject?.DecisionId;
 
+    /// <summary>On a park row whose Step can't start because of the sandbox, the blocker in the owner's words; null for any other row.</summary>
+    internal Api.Sandbox.SandboxBlockerLineView? Sandbox { get; init; }
+
     /// <summary>The item the row names, when it names one.</summary>
     internal string? ItemId { get; init; }
 
@@ -69,6 +72,9 @@ internal sealed record NeedsYouEntry(string Id, NeedsYouUrgency Urgency)
 
     /// <summary>The address of the child instance that decides the answer, served on a via child row; null when none is served.</summary>
     internal string? Child { get; init; }
+
+    /// <summary>Who filed the request a decision row stands for, as served ("session:cli"); empty for any other row.</summary>
+    internal string FiledBy { get; init; } = "";
 
     /// <summary>What a decision row's decision asks, as the pending list serves it; empty for any other row.</summary>
     internal string Question { get; init; } = "";

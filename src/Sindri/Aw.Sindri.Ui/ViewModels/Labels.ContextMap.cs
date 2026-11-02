@@ -76,6 +76,7 @@ internal static partial class Labels
         "mentions" or "quotes" => "mentioned in",
         "conflicts" => "conflicts",
         "implements" => "implemented in",
+        "tags" => "also tagged",
         "tests" => "tested by",
         "part-of" => "part of",
         "on" => "happens on",
@@ -86,6 +87,18 @@ internal static partial class Labels
         "moves-to" => "moves to",
         _ => type,
     };
+
+    /// <summary>What a feature roll-up edge sums.</summary>
+    /// <param name="type">The served edge type ('depends-on', 'reads' or 'writes').</param>
+    /// <param name="count">The file pairs (imports) or files behind it.</param>
+    /// <param name="example">The first cited pair or file, or null.</param>
+    /// <returns>"3 imports, e.g. b1 -> o1", or "1 file, e.g. b1".</returns>
+    internal static string ContextMapRollUp(string type, int count, string? example)
+    {
+        var unit = type == "depends-on" ? (count == 1 ? "import" : "imports") : (count == 1 ? "file" : "files");
+        var sum = string.Create(CultureInfo.InvariantCulture, $"{count} {unit}");
+        return example is null ? sum : sum + ", e.g. " + example;
+    }
 
     /// <summary>The word for a node's kind.</summary>
     /// <param name="kind">The served kind, or "ticket", "decision" or "file".</param>

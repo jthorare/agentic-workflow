@@ -50,8 +50,11 @@ internal sealed partial class EventBridge(
     /// <summary>The service's name in the schedule ('workflow-events'; a service name is kebab-case).</summary>
     public static readonly ServiceName ServiceId = ServiceName.From("workflow-events");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Passes ledger events to the running workflows.";
+
     /// <summary>The bridge's place in the schedule without a profile entry: every 5 s, the shortest cadence.</summary>
-    public static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(Cadence.Min));
+    public static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(Cadence.Min), Description);
 
     public ServiceName Identity() => ServiceId;
 

@@ -20,8 +20,11 @@ internal sealed class SetupService(IProfileSource live, RepoAddedBackfill backfi
     /// <summary>The service's name in the schedule ('setup'); its actor is 'service:setup'.</summary>
     internal static ServiceName ServiceId { get; } = ServiceName.From("setup");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Keeps the setup checklist in step with the profile.";
+
     /// <summary>The backstop tick without a profile entry: every 60 seconds.</summary>
-    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromSeconds(60)));
+    internal static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(TimeSpan.FromSeconds(60)), Description);
 
     /// <inheritdoc/>
     public ServiceName Identity() => ServiceId;

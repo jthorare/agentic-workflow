@@ -113,6 +113,23 @@ internal sealed class ContextDatabase : IDisposable
         }
     }
 
+    /// <summary>Truncates the write-ahead log, so old page images of deleted rows don't stay in it (spec §4.5). Best effort: a reader holding the log makes the checkpoint partial, never an error.</summary>
+    public void TruncateWal()
+    {
+        try
+        {
+            using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = _settings.DatabasePath, Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadWrite, Pooling = false }.ToString());
+            connection.Open();
+            using var command = connection.CreateCommand();
+            command.CommandText = "PRAGMA wal_checkpoint(TRUNCATE)";
+            _ = command.ExecuteScalar();
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException)
+        {
+            // the rows are already deleted and committed; a checkpoint that can't run now runs with the next one
+        }
+    }
+
     /// <summary>Maps a store failure to SND-CONTEXT-004, keeping the original code in the message.</summary>
     /// <param name="error">The Kernel.Data error.</param>
     /// <returns>The context error.</returns>

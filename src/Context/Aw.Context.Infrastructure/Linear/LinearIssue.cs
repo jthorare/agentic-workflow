@@ -15,4 +15,8 @@ namespace Aw.Context.Infrastructure.Linear;
 /// <param name="Project">The Project Linear serves.</param>
 /// <param name="Relations">The Relations Linear serves.</param>
 /// <param name="InverseRelations">The InverseRelations Linear serves.</param>
-internal sealed record LinearIssue(string Id, string Identifier, string Title, DateTimeOffset UpdatedAt, string? Description = null, string? Url = null, DateTimeOffset? CreatedAt = null, LinearTeam? Team = null, LinearNamed? Creator = null, LinearConnection<LinearComment>? Comments = null, LinearConnection<LinearAttachment>? Attachments = null, LinearNamed? Project = null, LinearConnection<LinearRelation>? Relations = null, LinearConnection<LinearRelation>? InverseRelations = null);
+/// <param name="State">The State Linear serves.</param>
+/// <param name="Parent">The Parent Linear serves.</param>
+/// <param name="CompletedAt">The CompletedAt Linear serves.</param>
+/// <param name="CanceledAt">The CanceledAt Linear serves.</param>
+internal sealed record LinearIssue(string Id, string Identifier, string Title, DateTimeOffset UpdatedAt, string? Description = null, string? Url = null, DateTimeOffset? CreatedAt = null, LinearTeam? Team = null, LinearNamed? Creator = null, LinearConnection<LinearComment>? Comments = null, LinearConnection<LinearAttachment>? Attachments = null, LinearNamed? Project = null, LinearConnection<LinearRelation>? Relations = null, LinearConnection<LinearRelation>? InverseRelations = null, LinearState? State = null, LinearIssueRef? Parent = null, DateTimeOffset? CompletedAt = null, DateTimeOffset? CanceledAt = null);

@@ -16,12 +16,16 @@ namespace Aw.Sindri.Core.Workflow.Engine.Triggers;
 [JsonDerivedType(typeof(AnswerGiven), "answer")]
 [JsonDerivedType(typeof(TakeoverRequested), "takeover")]
 [JsonDerivedType(typeof(HandbackRequested), "handback")]
+[JsonDerivedType(typeof(RewindRequested), "rewind")]
 [JsonDerivedType(typeof(CancelRequested), "cancel")]
 [JsonDerivedType(typeof(DeadlineFired), "deadline")]
 [JsonDerivedType(typeof(RecipeWake), "recipe-wake")]
 [JsonDerivedType(typeof(OutboxRefused), "outbox-refused")]
 [JsonDerivedType(typeof(ChildChanged), "child")]
 [JsonDerivedType(typeof(OpenRequested), "open-request")]
+[JsonDerivedType(typeof(RuntimeUnavailable), "runtime-unavailable")]
+[JsonDerivedType(typeof(LaunchRefused), "launch-refused")]
+[JsonDerivedType(typeof(SessionLost), "session-lost")]
 public abstract record Trigger(string Actor)
 {
     /// <summary>The trigger's name (<see cref="TriggerNames"/>): what the event records as its kind and an eval line names.</summary>

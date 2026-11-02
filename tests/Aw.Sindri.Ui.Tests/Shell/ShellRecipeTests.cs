@@ -1,6 +1,5 @@
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
-using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Instance;
@@ -33,7 +32,7 @@ public sealed class ShellRecipeTests
 
         Assert.Equal((true, false, Id, FramePhase.Loading), (shell.IsRecipeSheet, shell.IsSheetPlaceholderShown, shell.Recipe.Id, shell.Recipe.Phase));
         Assert.False(shell.IsInstanceSheet);
-        Assert.Equal("Recipe " + Id, shell.SheetName);
+        Assert.Equal("Recipe " + shell.Recipe.Title, shell.SheetName);
     }
 
     [Fact]
@@ -47,16 +46,28 @@ public sealed class ShellRecipeTests
     }
 
     [Fact]
-    public async Task Recipe_sheet_opens_at_760()
+    public async Task A_recipe_sheet_covers_the_page_and_is_not_forced_to_the_widest_width()
     {
         var shell = await Shell();
         shell.Navigate(Link("recipe/" + Id));
 
-        Assert.Equal(UiPreferences.MaxSheetWidth, shell.ShownSheetWidth);
-        shell.ResizeSheet(500);
-        Assert.Equal(UiPreferences.MaxSheetWidth, shell.ShownSheetWidth);
+        Assert.True(shell.SheetCoversPage);
+        Assert.Equal(shell.SheetWidth, shell.ShownSheetWidth);
         shell.Navigate(Link("item/ITM-1"));
-        Assert.NotEqual(UiPreferences.MaxSheetWidth, shell.ShownSheetWidth);
+        Assert.False(shell.SheetCoversPage);
+    }
+
+    [Fact]
+    public async Task A_recipe_sheet_is_titled_with_the_workflow_name_not_its_slug()
+    {
+        var shell = await Shell();
+        shell.Navigate(Link("recipe/" + Id));
+
+        Assert.NotEqual(Id, shell.Recipe.Title, StringComparer.Ordinal);
+        Assert.Equal(shell.Recipe.Title, shell.SheetTitle);
+        Assert.Equal("Reopen recipe " + shell.Recipe.Title, shell.EdgeTabName);
+        shell.Navigate(Link("item/ITM-1"));
+        Assert.Equal("ITM-1", shell.SheetTitle);
     }
 
     private readonly InMemoryEndpointRecords _records = new();

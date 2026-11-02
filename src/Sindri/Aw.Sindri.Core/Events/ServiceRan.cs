@@ -13,5 +13,7 @@ namespace Aw.Sindri.Core.Events;
 /// <param name="Outcome">How it ended.</param>
 /// <param name="Code">The error code when it failed, otherwise null.</param>
 /// <param name="Job">The job of a manual run, or null for a scheduled one (then the member is left out, so earlier rows keep their shape).</param>
+/// <param name="Detail">The failure's message, scrubbed and cut short, or null for an ok run (then the member is left out).</param>
 public sealed record ServiceRan(CommandId CommandId, ServiceName Service, DateTimeOffset Slot, ServiceOutcome Outcome, string? Code,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] JobId? Job = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] JobId? Job = null,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Detail = null);

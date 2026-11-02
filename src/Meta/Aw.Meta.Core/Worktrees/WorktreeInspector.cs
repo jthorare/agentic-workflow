@@ -43,7 +43,10 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
         }
 
         var (entries, pulls, scan) = world.Value;
-        var inspection = new Inspection(team, paths, pulls, scan, DateTimeOffset.TryParse(since.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var start) ? start : null, cancellationToken);
+        var inspection = new Inspection(team, paths, pulls, scan, DateTimeOffset.TryParse(since.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var start) ? start : null, cancellationToken)
+        {
+            IncludeNoPr = scope.IncludeNoPr,
+        };
         var reports = new List<WorktreeReport>();
         foreach (var entry in entries)
         {
@@ -199,8 +202,10 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             DirtyEntries = StatusPorcelain.Significant(git.Status, inspection.Team.Worktrees.EffectiveBuildOutputs),
             Occupants = [.. inspection.Scan.Where(p => places.Exists(place => p.Paths.Any(path => Inside(place, path))))],
             ChangedSinceSweep = git.Changed,
+            NoPreviousSweep = inspection.Since is null,
             PrNumber = gatePr is null ? pull?.Number : null,
             PrState = pull?.State,
+            KeepNoPr = !inspection.IncludeNoPr,
             GatePr = gatePr,
             HeadIsGateMerge = gatePr is not null && git.Committer == GateCommitter,
             GateRunning = gatePr is { } running && inspection.Scan.Any(p => !p.IsInvoker && Runs(p.Command, running)),
@@ -231,6 +236,8 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
     private sealed class Inspection(TeamConfig team, MetaPaths paths, List<PrBranch> pulls, IReadOnlyList<ProcessLocation> scan, DateTimeOffset? since, CancellationToken cancellation)
     {
         internal DateTimeOffset? Since { get; } = since;
+
+        internal bool IncludeNoPr { get; init; }
 
         internal CancellationToken Cancellation { get; } = cancellation;
 

@@ -45,8 +45,8 @@ edit or new shared file it would need is refused (`NS-SLICE-ONLY`), including a 
 the phase's contract unit adds those.
 
 It takes a slot of the heavy-job lock itself, writes the files, records the public API lines (every `RS0016` symbol the
-build reports for `Core` and `Features`, Vogen's generated id members included), then runs `dotnet build -warnaserror`, the unit lane (exactly one
-failure: the new test) and `dotnet format --verify-no-changes`. Any other failure reverts every file it wrote.
+build reports for `Core` and `Features`, Vogen's generated id members included), then runs `dotnet build -warnaserror` and the unit lane (exactly one
+failure: the new test) on the package's test project and the architecture tests, and `dotnet format --verify-no-changes` limited to the files it wrote. Any other failure reverts every file it wrote.
 
 Refusals (exit 1, nothing written): `NS-PACKAGE`, `NS-NAME`, `NS-EXISTS`, `NS-BEHAVIOR`, `NS-SURFACE`, `NS-COMMAND`,
 `NS-ROUTE`, `NS-IDS`, `NS-PORTS`, `NS-DEPS`, `NS-SLICE-ONLY`. Shared logic is never copied from another slice: if the new slice needs

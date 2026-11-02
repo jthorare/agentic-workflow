@@ -50,14 +50,14 @@ public sealed class ConceptDeriverTests
     }
 
     [Fact]
-    public void The_smallest_groups_merge_until_there_are_at_most_fifteen()
+    public void Unconnected_groups_of_three_stay_their_own_concepts_whatever_their_number()
     {
         var roots = Enumerable.Range(0, 20).Select(i => "area" + i.ToString("D2", CultureInfo.InvariantCulture)).ToArray();
 
         var map = ConceptDeriver.Derive(Areas(roots), _noPins, names: null);
 
         var concepts = map.Nodes.Where(n => n.Key.Value != ConceptKeys.Other).ToList();
-        Assert.True(concepts.Count <= 15);
+        Assert.Equal(20, concepts.Count);
         var features = map.Edges.Where(e => e.From.Kind == NodeKind.Feature).GroupBy(e => e.From.Value, StringComparer.Ordinal).ToList();
         Assert.Equal(60, features.Count);
         Assert.All(features, f => Assert.Single(f));
@@ -131,9 +131,9 @@ public sealed class ConceptDeriverTests
         };
         ConceptPin[] pins =
         [
-            new(ConceptId.From("scheduling"), "Self scheduling", "People pick their shifts.", ["feature:sched", "feature:sched.*"], []),
-            new(Id: null, "Payments", Summary: null, [], ["src/pay/**"]),
-            new(ConceptId.From("empty-one"), "Nothing yet", Summary: null, ["feature:missing"], []),
+            new(ConceptId.From("scheduling"), "Self scheduling", "People pick their shifts.", ["feature:sched", "feature:sched.*"], [], [], []),
+            new(Id: null, "Payments", Summary: null, [], ["src/pay/**"], [], []),
+            new(ConceptId.From("empty-one"), "Nothing yet", Summary: null, ["feature:missing"], [], [], []),
         ];
 
         var map = ConceptDeriver.Derive(graph, pins, names: null);

@@ -10,7 +10,7 @@ namespace Aw.Sindri.Tests.Cqrs;
 /// <summary>
 /// ARCH-CQRS-001 (API spec §2.5) over the endpoint data source, since minimal-API lambdas are invisible to ArchUnitNET:
 /// every GET and every QUERY (the HTTP method for a read with a body) resolves an IService whose request is an IQuery; every POST one whose request is an ICommand, or an IIssue
-/// on one of the four carve-out routes with catalog rows of class 'issue'. Pure: each violation is one line.
+/// on one of the carve-out routes with catalog rows of class 'issue'. Pure: each violation is one line.
 /// The MCP endpoint (/sindri/mcp, API spec §8) is a transport, not a route: the SDK maps it, and each of its tools calls
 /// one query service (Host/Mcp/McpToolTable), so it's skipped here.
 /// </summary>
@@ -25,6 +25,7 @@ internal static partial class EndpointCqrsRules
         "POST /sindri/workflow/challenges",
         "POST /sindri/sessions/{}/heartbeat",
         "POST /sindri/sessions/{}/exit",
+        "POST /sindri/launches/{}/limit-hit",   // the wrap's pids limit hit (sandbox spec §3.3), proven by the launch secret like exit
     ];
 
     public static IReadOnlyList<string> Check(EndpointDataSource endpoints, ICommandCatalog catalog)
@@ -96,7 +97,7 @@ internal static partial class EndpointCqrsRules
         }
 
         var rows = catalog.For(request);
-        return !CarveOuts.Contains(route, StringComparer.Ordinal) ? $"serves the issue {request.Name} outside the four carve-out routes"
+        return !CarveOuts.Contains(route, StringComparer.Ordinal) ? $"serves the issue {request.Name} outside the carve-out routes"
             : rows.Count == 0 || rows.Any(row => row.Class != ActionClass.Issue) ? $"serves {request.Name}, whose catalog rows aren't all of class 'issue'"
             : null;
     }

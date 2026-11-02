@@ -83,7 +83,7 @@ steps="$(printf '%s\n' "$OUT" | grep '^== ' | sed -E 's/^== ([0-9]+)\. .*/\1/' |
 if [ "$steps" = "0 1 2 3 4 5 6 7 8 9 " ]; then ok "the steps run 0 to 9 in order"; else fail "the steps run 0 to 9 in order (got: $steps)"; fi
 if [ ! -e "$STATE/sindri-app-firstrun" ]; then ok "a dry run creates no home"; else fail "a dry run creates no home"; fi
 cmds="$(printf '%s\n' "$OUT" | grep -E '^\+ AW_SINDRI_HOME=[^ ]+ AW_SINDRI_PORT=[0-9]+ AW_SINDRI_APP_NO_MCP=1 sindri ' | sed -E 's#^.*NO_MCP=1 sindri ##' | awk '{print $1" "$2}' | tr '\n' '|')"
-want="onyx status|profile init|profile validate|--headless |status --json|code-index status|services run|context map|context map|context map|recipe list|item add|workflow start|"
+want="profile init|profile validate|--headless |status --json|code-index status|services run|context map|context map|context map|recipe list|item add|workflow start|"
 if [ "$cmds" = "$want" ]; then ok "the commands come in the documented order"; else fail "the commands come in the documented order (got: $cmds)"; fi
 OUT="$(AW_STATE_DIR="$STATE" FIRST_RUN_REPO_PATH="$REPO" "$SCRIPT" up --dry-run 2>&1)"; CODE=$?
 expect "the dry run prints the approval commands for the owner and keeps going" 0 "profile approve <hash>" "recipe approve-all" "workflow start workflow.scoping"

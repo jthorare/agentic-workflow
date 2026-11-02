@@ -1,4 +1,4 @@
-T-3/step/1  workflow.step@f511ce1fc529  v4  parked: budget  since 11:57 (3m)
+T-3/step/1  workflow.step@4ca37bf46333  v4  parked: budget  since 11:57 (3m)
   next      Parked (budget): produce used 5M of 5M tokens.
             Grant tokens at a terminal, or cancel.
   answer    sindri workflow answer T-3/step/1 --grant-tokens 5M     (at a terminal; once per park)

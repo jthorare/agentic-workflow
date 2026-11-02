@@ -4,10 +4,10 @@
              x:Class="Aw.Sindri.Ui.Views.Facts.TextFactView"
              x:DataType="facts:TextFactViewer">
   <!-- A text fact: its one line and a Copy. "Copied" is a polite live region that is live only while it speaks, never "" (Avalonia #22312). -->
-  <StackPanel Orientation="Horizontal" Spacing="12">
+  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
     <TextBlock x:Name="FactTextLine" Classes="body" Text="{Binding Line}" TextWrapping="Wrap" VerticalAlignment="Center" AutomationProperties.Name="{Binding Line}" />
-    <Button x:Name="FactTextCopy" Classes="copy" Content="{Binding Copying.Label}" Click="OnCopy" AutomationProperties.Name="{Binding CopyName}" />
+    <Button x:Name="FactTextCopy" Grid.Column="1" VerticalAlignment="Center" Classes="copy" Content="{Binding Copying.Label}" Click="OnCopy" AutomationProperties.Name="{Binding CopyName}" />
     <TextBlock x:Name="FactTextAnnouncement" Classes="caption live-region" Classes.live="{Binding Copying.IsAnnouncing}" Width="0" Opacity="0"
                IsHitTestVisible="False" Text="{Binding Copying.Announcement}" />
-  </StackPanel>
+  </Grid>
 </UserControl>

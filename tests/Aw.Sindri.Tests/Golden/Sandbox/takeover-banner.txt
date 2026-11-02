@@ -1,0 +1,1 @@
+Sandboxed session. Pushes and secrets are blocked. The clock is paused while you're here. To push or read a secret, open a new window: it is outside the sandbox. `sindri sandbox exec` shows what the agent saw.

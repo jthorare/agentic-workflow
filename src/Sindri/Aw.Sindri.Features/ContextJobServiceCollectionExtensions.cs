@@ -1,16 +1,18 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Eval.Backtest;
+using Aw.Context.Core.Facade;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
+using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.ContextCalls;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Features;
 
-/// <summary>Registers the context engine's jobs on the P6 job runtime: 'SyncSources', 'BuildContextMap' and 'RunContextBacktest'.</summary>
+/// <summary>Registers the context engine's jobs on the P6 job runtime: 'SyncSources', 'SyncIndexSource', 'BuildContextMap', 'RelinkPinAliases', 'ScanContextConcepts' and 'RunContextBacktest'.</summary>
 internal static class ContextJobServiceCollectionExtensions
 {
     /// <summary>Adds the jobs, each keyed by a constant: one sync at a time, whatever it names, one build at a time (the profile's one map) and one backtest at a time.</summary>
@@ -22,14 +24,22 @@ internal static class ContextJobServiceCollectionExtensions
         return services
             .AddScoped<MapEventSource>()
             .AddScoped<MapJobStarts>()
+            .AddScoped(static sp => new MapRebuildState(sp.GetRequiredService<ContextScopes>(), () => sp.GetRequiredService<IContextEngine>(), sp.GetRequiredService<IJobViews>(), sp.GetRequiredService<TimeProvider>()))   // the pins read takes the concrete state: a Sindri type takes no Context port
+            .AddScoped<Context.Core.Map.IMapRebuildState>(static sp => sp.GetRequiredService<MapRebuildState>())   // replaces Context's NoMapRebuild (the last registration wins); the engine resolved on use, since its query path asks this state
             .AddJob<SyncContextSourcesRequest, SyncContextSourcesResult, SyncContextSourcesService>(
                 static _ => JobKey.From("sync"), static r => SyncSummary(r), PrecheckSync)
+            .AddJob<SyncIndexSourceRequest, SyncIndexSourceResult, SyncIndexSourceService>(
+                static r => JobKey.From($"index-sync-{r.Source}"), static r => IndexSyncSummary(r), PrecheckIndexSync)
             .AddJob<BuildContextMapRequest, BuildContextMapResult, BuildContextMapService>(
                 static _ => JobKey.From("build"), static r => string.Create(CultureInfo.InvariantCulture, $"draft v{r.Draft}: {r.Proposed} proposed"))
             .AddJob<RefreshContextMapRequest, RefreshContextMapResult, RefreshContextMapService>(
                 static _ => JobKey.From("refresh"), static r => RefreshSummary(r))
+            .AddJob<RelinkPinAliasesRequest, RelinkPinAliasesJobResult, RelinkPinAliasesService>(
+                static _ => JobKey.From("relink"), static r => string.Create(CultureInfo.InvariantCulture, $"{r.Changed} of {r.Records} records relinked to pin aliases"))
             .AddJob<PublishContextMapRequest, PublishContextMapResult, PublishContextMapService>(
                 static _ => JobKey.From("map-publish"), static r => PublishSummary(r))
+            .AddJob<ScanContextConceptsRequest, ScanContextConceptsResult, ScanContextConceptsService>(
+                static _ => JobKey.From("concept-scan"), static r => ScanContextConceptsService.Summary(r))
             .AddJob<RunContextBacktestRequest, RunContextBacktestResult, RunContextBacktestService>(
                 static _ => JobKey.From("backtest"), static r => BacktestSummary(r), PrecheckBacktest);
     }
@@ -41,6 +51,9 @@ internal static class ContextJobServiceCollectionExtensions
         return string.Create(CultureInfo.InvariantCulture, $"{result.Sources.Count} source(s) synced, {linked} linked{(failed > 0 ? $", {failed} with a code" : string.Empty)}");
     }
 
+    internal static string IndexSyncSummary(SyncIndexSourceResult result) =>
+        (SourceStops.Is(result.Code) ? "partial: " : string.Empty) + SourceStops.Part(result.Source, result.Fetched, result.Code);
+
     private static string RefreshSummary(RefreshContextMapResult result) => result.Held
         ? MapJobSummaries.Held(result.Version)
         : string.Create(CultureInfo.InvariantCulture, $"map v{result.Version}: {result.Accepted} kept, {result.Removed} removed{(result.Cleanup == "unavailable" ? ", cleanup unavailable" : string.Empty)}");
@@ -49,6 +62,7 @@ internal static class ContextJobServiceCollectionExtensions
     {
         { Code: not null } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} was replaced before it could be published ({result.Code})"),
         { Reason: "NotHeld" } => "no map is held",
+        { Reason: "Rebuild" } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} was built before its code index and is built again, not published"),
         { Reason: "Waiting" } => string.Create(CultureInfo.InvariantCulture, $"map v{result.Version} still waits for the code index"),
         { Reason: "Gone" or "AlreadyCurrent" } => string.Create(CultureInfo.InvariantCulture, $"hold on map v{result.Version} dropped ({result.Reason})"),
         _ => MapJobSummaries.Promoted(result.Version, result.Reason ?? string.Empty),
@@ -69,6 +83,15 @@ internal static class ContextJobServiceCollectionExtensions
             : request.Since > request.Until ? SindriErrors.InvalidInput.With("since is after until: the window is empty (fix: swap them)")
             : Unit.Value;
         return ValueTask.FromResult(verdict);
+    }
+
+    /// <summary>A source that can't be a source id is unknown (SND-CONTEXT-058) before any job exists, and the job key never carries a name that isn't one.</summary>
+    private static ValueTask<Result<Unit>> PrecheckIndexSync(SyncIndexSourceRequest request, CancellationToken cancellationToken)
+    {
+        Result<Unit> checkedRequest = SourceId.TryFrom(request.Source, out _)
+            ? Unit.Value
+            : ContextErrors.SyncSourceUnknown.With($"'{request.Source}' isn't a source id (kebab-case); fix: sindri index status");
+        return ValueTask.FromResult(checkedRequest);
     }
 
     /// <summary>A named source that can't be a source id is unknown (SND-CONTEXT-058) before any job exists.</summary>

@@ -1,6 +1,7 @@
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Instance;
+using Aw.Sindri.Ui.ViewModels.Item;
 using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
@@ -18,8 +19,8 @@ internal sealed partial class ShellViewModel
     /// <summary>True when the sheet's subject is a workflow instance (its own view in the sheet's content).</summary>
     public bool IsInstanceSheet => SheetLink?.Kind == DeepLinkKind.Workflow;
 
-    /// <summary>The sheet's width as it is shown: an instance's is the widest, every other sheet keeps the human's.</summary>
-    public double ShownSheetWidth => IsInstanceSheet || IsRecipeSheet ? UiPreferences.MaxSheetWidth : SheetWidth;
+    /// <summary>The sheet's width as it is shown: an instance's is the widest, every other sheet keeps the human's (a recipe's covers the page instead).</summary>
+    public double ShownSheetWidth => IsInstanceSheet ? UiPreferences.MaxSheetWidth : SheetWidth;
 
     /// <summary>True when the sheet was stacked from a frame: its Back has a frame to return to, at every width.</summary>
     public bool HasTrail => _trail.Count > 0;
@@ -123,6 +124,27 @@ internal sealed partial class ShellViewModel
     // Everything the frame needs once it exists (ShellViewModel's constructor calls this one line).
     private void InitInstance()
     {
+        PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(CurrentPage), StringComparison.Ordinal))
+            {
+                Changed(nameof(IsEdgeTabShown));
+            }
+        };
+        Instance.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(InstanceFrameViewModel.Title), StringComparison.Ordinal))
+            {
+                Changed(nameof(EdgeTabText), nameof(SheetName), nameof(EdgeTabName));
+            }
+        };
+        Item.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(ItemSheetViewModel.Title), StringComparison.Ordinal))
+            {
+                Changed(nameof(EdgeTabText), nameof(SheetName), nameof(EdgeTabName));
+            }
+        };
         Health.Follow((url, token) => IsInstanceSheet ? Instance.Refresh(url, token) : Task.CompletedTask);
         Health.FollowInstances((url, change, token) => IsInstanceSheet ? Instance.Catch(url, change, token) : Task.FromResult(true));
         Instance.OpenRequested += (_, e) =>
@@ -136,6 +158,7 @@ internal sealed partial class ShellViewModel
             SheetStacked?.Invoke(this, EventArgs.Empty);
         };
         Instance.WorkRequested += (_, _) => OpenWork();
+        Instance.LinkRequested += (_, e) => Stacked(() => Navigate(e.Link), push: true);
     }
 
     // The instance part of opening the sheet (OnSheetOpened): the frame names its instance at once and reads it; the id is the one a row or

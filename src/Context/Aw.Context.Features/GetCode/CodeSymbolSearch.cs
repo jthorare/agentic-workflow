@@ -3,6 +3,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Symbols;
+using Aw.Kernel;
 
 namespace Aw.Context.Features.GetCode;
 
@@ -15,6 +16,7 @@ internal sealed class CodeSymbolSearch(ICodeSymbolSource source, IRepoReader rep
 {
     internal async ValueTask<CodeSymbolFindings> Find(CodeView view, VisibleMap map, ContextSettings settings, ContextScope scope, CancellationToken cancellationToken)
     {
+        using var band = FillBands.Start(FillBands.CodeSymbols);
         var inScope = ScopeRules.Resolve(settings, scope.Repos, scope.Caller);
         var allowed = inScope.IsError ? [] : inScope.Value;
         var version = map.Snapshot.Version;
@@ -67,25 +69,30 @@ internal sealed class CodeSymbolSearch(ICodeSymbolSource source, IRepoReader rep
         await Edges(read, ask, symbols, cancellationToken).ConfigureAwait(false);
     }
 
-    // The callers and callees of each symbol, one level; the first failed read ends the repo's edges.
+    // The callers and callees of each symbol, one level (the symbols read in parallel, taken in order); the first failed read ends the repo's edges.
     private static async ValueTask Edges(SymbolRead read, RepoAsk ask, List<SymbolSite> symbols, CancellationToken cancellationToken)
     {
         var (source, repo, asOf, _) = ask;
-        foreach (var symbol in symbols)
+        bool Take(SymbolSite _, (Result<CallAnswer> Callers, Result<CallAnswer> Callees) answer)
         {
-            var callers = await source.Callers(repo, symbol.Ref, 1, asOf, cancellationToken).ConfigureAwait(false);
-            var callees = await source.Callees(repo, symbol.Ref, 1, asOf, cancellationToken).ConfigureAwait(false);
+            var (callers, callees) = answer;
             if (callers.IsError || callees.IsError)
             {
                 read.Failed(callers.IsError ? callers.Error.Code : callees.Error.Code);
-                return;
+                return false;
             }
 
             read.Callers.AddRange(callers.Value.Rows);
             read.Callees.AddRange(callees.Value.Rows);
             read.UnresolvedCallers += callers.Value.Unresolved;
             read.UnresolvedCallees += callees.Value.Unresolved;
+            return true;
         }
+
+        async ValueTask<(Result<CallAnswer>, Result<CallAnswer>)> Ask(SymbolSite symbol, CancellationToken token) =>
+            (await source.Callers(repo, symbol.Ref, 1, asOf, token).ConfigureAwait(false), await source.Callees(repo, symbol.Ref, 1, asOf, token).ConfigureAwait(false));
+
+        await Fanout.ForEach(symbols, Ask, Take, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>What one repo is asked: its source (the pipeline's catching-up wrapper), name, the map's commit and the files to read symbols of.</summary>

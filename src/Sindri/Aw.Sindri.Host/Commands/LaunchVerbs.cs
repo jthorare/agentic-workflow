@@ -14,7 +14,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="output">Where the verb writes.</param>
 internal sealed class LaunchVerbs(ILaunchSetup setup, Output output)
 {
-    internal const string Usage = "launch init [--viewer <name>] [--force] [--stdout] | launch show [<id>] [--json]";
+    internal const string Usage = "launch init [--viewer <name>] [--force] [--stdout] | launch show [<id>] [--json] | launch picks [--item X] [--json]";
 
     internal Task<int> Run(string[] args, CancellationToken ct) => args switch
     {
@@ -82,6 +82,11 @@ internal sealed class LaunchVerbs(ILaunchSetup setup, Output output)
         foreach (var e in report.Entries)
         {
             _ = text.Append($"{e.Id.Value}  {e.Source.ToString().ToLowerInvariant()}  {e.ResolvedBin ?? (e.Bin + " (not found)")}  {e.ArgvHash}  Steps: {(e.StepOk ? "ok" : "parked")}\n");
+            foreach (var ranked in e.Models ?? [])
+            {
+                _ = text.Append($"  {ranked.Model.Slug}  {Tiers(ranked.Tiers)}{(ranked.Unordered ? "  (unordered: add it to workflow.agent.models)" : string.Empty)}\n");
+            }
+
             if (e.ParkLine is { } line)
             {
                 _ = text.Append("  ").Append(line).Append('\n');
@@ -95,6 +100,10 @@ internal sealed class LaunchVerbs(ILaunchSetup setup, Output output)
 
         return text.ToString();
     }
+
+    /// <summary>The bands a model sits in, cheapest first ('cheap', or 'cheap/standard/strong' for an agent's only model).</summary>
+    private static string Tiers(ModelTier tiers) =>
+        string.Join('/', new[] { (ModelTier.Cheap, "cheap"), (ModelTier.Standard, "standard"), (ModelTier.Strong, "strong") }.Where(t => tiers.HasFlag(t.Item1)).Select(static t => t.Item2));
 
     private async Task<int> Usage2() => await output.Error(SindriErrors.UnknownVerb.With(Usage)).ConfigureAwait(false);
 }

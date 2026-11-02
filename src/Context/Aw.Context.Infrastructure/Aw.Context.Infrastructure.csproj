@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
-    <!-- ILogger and [LoggerMessage] for the onyx adapter; the host's Aw.Kernel.Telemetry brings the implementation. -->
+    <!-- ILogger and [LoggerMessage] for the Linear adapter; the host's Aw.Kernel.Telemetry brings the implementation. -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <!-- Map files (stage S-3a): the parser and representation model only, no reflection serializer (AOT-safe). -->
     <PackageReference Include="YamlDotNet" />

@@ -1,0 +1,56 @@
+{
+  "picks": [
+    {
+      "launchId": "LCH-00000000000000000000000000000001",
+      "item": "ITM-0000000000000000000000000000000f",
+      "instance": "ITM-0000000000000000000000000000000f/step/1",
+      "state": "build",
+      "attempt": 2,
+      "escalation": 0,
+      "picking": false,
+      "pick": {
+        "launchId": "LCH-00000000000000000000000000000001",
+        "item": "ITM-0000000000000000000000000000000f",
+        "instance": "ITM-0000000000000000000000000000000f/step/1",
+        "state": "build",
+        "attempt": 2,
+        "target": "claude-code",
+        "model": "claude-haiku-4-5",
+        "by": "jev",
+        "reason": null,
+        "decision": "JD-1",
+        "candidates": [
+          "m1",
+          "m2"
+        ],
+        "briefHash": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+        "files": [
+          {
+            "path": "src/App.cs",
+            "chars": 1200
+          }
+        ],
+        "omitted": [
+          {
+            "path": "big.log",
+            "chars": 500000,
+            "why": "cap"
+          }
+        ],
+        "jevMs": 2100,
+        "jevCalls": 1,
+        "contentSent": true,
+        "unusual": false,
+        "escalatedFrom": null,
+        "escalatedFromKind": null
+      },
+      "inputTokens": 3000,
+      "outputTokens": 500,
+      "costUsd": 0.0055,
+      "outcome": "running",
+      "why": "Picked by Jev: the cheapest model it expects to pass.",
+      "at": "2026-01-01T00:00:00.0000000Z"
+    }
+  ],
+  "escalation": []
+}

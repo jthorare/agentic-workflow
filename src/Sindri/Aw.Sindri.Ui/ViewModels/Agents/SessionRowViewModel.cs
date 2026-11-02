@@ -64,7 +64,7 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>Where it runs, in one line: host, lane or launch.</summary>
     public string WhereText { get; private set => Set(ref field, value); } = string.Empty;
 
-    /// <summary>The Repository column: the repo, then the last folder of its worktree.</summary>
+    /// <summary>The Repository column: the repo, then the last folder of its worktree; the empty-cell dash when it has neither.</summary>
     public string RepoText { get; private set => Set(ref field, value); } = string.Empty;
 
     /// <summary>True under the page width where only Status, Agent and For stay.</summary>
@@ -120,6 +120,12 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
     /// <summary>True when the row names the Step it works on.</summary>
     public bool HasStep => StepText.Length > 0;
 
+    /// <summary>True when the doing cell would be empty (the session neither asks nor runs a Step): it says so in words.</summary>
+    public bool HasNoStep => !HasAsking && !HasStep;
+
+    /// <summary>What the doing cell says then.</summary>
+    public string NoStepText { get; } = Labels.SessionNoStep;
+
     /// <summary>Opens the frame of the Step the session works on; nothing without one.</summary>
     internal void OpenFrame()
     {
@@ -155,11 +161,11 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
         StepText = Row.Launch is { } launch && launch.Instance is { Length: > 0 } ? Labels.SessionStep(launch.State, launch.Attempt) : string.Empty;
         StepName = Row.Launch is { } named && named.Instance is { Length: > 0 } ? Labels.SessionStepName(StepText, named.State) : string.Empty;
         WhereText = string.Join(" · ", new[] { HostText, LaneText }.Where(p => p.Length > 0));
-        RepoText = string.Join(" · ", new[] { Row.Repo ?? string.Empty, LastFolder(WorktreeText) }.Where(p => p.Length > 0));
+        RepoText = string.Join(" · ", new[] { Row.Repo ?? string.Empty, LastFolder(WorktreeText) }.Where(p => p.Length > 0)) is { Length: > 0 } repoText ? repoText : Labels.EmptyCell;
         Name = Labels.SessionName(Row.ProviderLabel, title, chip.Word.ToLowerInvariant() + (EstimatedText.Length > 0 ? " (" + EstimatedText + ")" : string.Empty), string.Join(", ", new[] { AskingText, StepText }.Where(p => p.Length > 0)), HostText);
         Signature = string.Join('|', Row.State, AskingText, EstimatedText, title, WorktreeText, HostText, LaneText, StepText, Row.Focus.Method, Row.Repo);
         Focus.Show(Row.Ref);
-        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep)])
+        foreach (var name in (string[])[nameof(IsAsking), nameof(HasAsking), nameof(IsEstimated), nameof(HasWorktree), nameof(HasLane), nameof(IsLaunched), nameof(HasStep), nameof(HasNoStep)])
         {
             OnChanged(name);
         }
@@ -184,7 +190,7 @@ internal sealed class SessionRowViewModel : ObservableObject, ISessionRef
             return title;
         }
 
-        var id8 = row.Id.Length > 8 ? row.Id[..8] : row.Id;
+        var id8 = ShortId.Of(row.Id);
         return row.Repo is { Length: > 0 } repo ? repo + "/" + id8 : id8;
     }
 }

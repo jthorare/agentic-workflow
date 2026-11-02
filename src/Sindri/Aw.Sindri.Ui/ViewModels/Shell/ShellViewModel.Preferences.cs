@@ -29,7 +29,7 @@ internal sealed partial class ShellViewModel
         OnChanged(nameof(SheetWidth));
     }
 
-    /// <summary>Remembers the window's bounds (grown to 900 × 600 when they're next read); bounds already remembered aren't written again.</summary>
+    /// <summary>Remembers the window's bounds (grown to 1000 × 600 when they're next read); bounds already remembered aren't written again.</summary>
     /// <param name="bounds">Where the window is.</param>
     internal void RememberWindow(WindowBounds bounds)
     {

@@ -19,9 +19,12 @@ public sealed class LauncherProbeTests : IDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private Launcher Make(IReadOnlyDictionary<string, IUsageReader> readers, params AgentEntry[] entries) =>
+    private Launcher Make(IReadOnlyDictionary<string, IUsageReader> readers, params AgentEntry[] entries) => Make(readers, models: null, entries);
+
+    private Launcher Make(IReadOnlyDictionary<string, IUsageReader> readers, IModelCatalog? models, params AgentEntry[] entries) =>
         new(new LauncherParts(new AgentCatalog(entries), _ => new FakeSessionHost(), new FakeTerminalViewer(), new LauncherOptions(_home), new FakeTimeProvider(KnownInstants.Epoch))
         {
+            Models = models,
             ResolveBin = static (bin, _) => ValueTask.FromResult(string.Equals(bin, "agent", StringComparison.Ordinal) ? null : "/usr/bin/" + bin),
             Usage = name => readers.GetValueOrDefault(name),
         });
@@ -53,5 +56,61 @@ public sealed class LauncherProbeTests : IDisposable
 
         var target = Assert.Single(probed.Targets);
         Expect.Equal((true, CatalogSource.Override, "no-usage-reader"), (target.Overridden, target.Source, target.Limited));
+    }
+
+    private static readonly Dictionary<string, IUsageReader> _verified = new(StringComparer.Ordinal) { ["claude-code"] = new FakeUsageReader("claude-code") };
+
+    [Fact]
+    public async Task A_target_carries_the_models_its_agent_offers()
+    {
+        var models = new FakeModelCatalog().With(AgentId.From("claude-code"), [new ModelFacts("haiku", "Haiku", ModelSource.Catalog, 0), new ModelFacts("opus", "Opus", ModelSource.Catalog, 1)]);
+
+        var probed = await Make(_verified, models, AgentEntries.ClaudeCode).Probe(Token);
+
+        var target = Assert.Single(probed.Targets);
+        Expect.Equal("haiku,opus", string.Join(',', target.Models!.Select(static m => m.Slug)));
+        Expect.True(target.Limited is null);
+    }
+
+    [Fact]
+    public async Task An_installed_agent_with_no_readable_list_says_no_model_list()
+    {
+        var probed = await Make(_verified, new FakeModelCatalog(), AgentEntries.ClaudeCode).Probe(Token);
+
+        var target = Assert.Single(probed.Targets);
+        Expect.Equal("no-model-list", target.Limited);
+        Expect.Equal(0, target.Models!.Count);
+    }
+
+    [Fact]
+    public async Task No_model_list_joins_the_other_limits()
+    {
+        var probed = await Make(new Dictionary<string, IUsageReader>(StringComparer.Ordinal), new FakeModelCatalog(), AgentEntries.ClaudeCode).Probe(Token);
+
+        Expect.Equal("no-usage-reader; no-model-list", Assert.Single(probed.Targets).Limited);
+    }
+
+    [Fact]
+    public async Task A_model_with_no_place_is_named_as_unordered()
+    {
+        var models = new FakeModelCatalog().With(AgentId.From("claude-code"), [new ModelFacts("haiku", "Haiku", ModelSource.Catalog, 0), new ModelFacts("mystery", "Mystery", ModelSource.Discovered)]);
+
+        var probed = await Make(_verified, models, AgentEntries.ClaudeCode).Probe(Token);
+
+        Expect.Equal("unordered: mystery", Assert.Single(probed.Targets).Limited);
+    }
+
+    [Fact]
+    public async Task An_agent_that_is_not_installed_is_not_asked_for_models()
+    {
+        var entry = new AgentEntry(AgentId.From("agent"), "Agent", "agent", ProcessName: null, Transcripts: null, Resume: null) { Usage = "none" };
+        var models = new FakeModelCatalog().With(entry.Id, [new ModelFacts("a", "A", ModelSource.Catalog, 0)]);
+
+        var probed = await Make(new Dictionary<string, IUsageReader>(StringComparer.Ordinal), models, entry).Probe(Token);
+
+        var target = Assert.Single(probed.Targets);
+        Expect.Equal("not-installed", target.Problem);
+        Expect.Equal(0, target.Models!.Count);
+        Expect.Equal("no-usage-reader", target.Limited);
     }
 }

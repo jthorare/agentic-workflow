@@ -52,6 +52,22 @@ public sealed class SessionRoutesTests
     }
 
     [Fact]
+    public async Task An_exit_with_a_memory_limit_appends_session_ended_reason_limit()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, Token, ItemScenarios.ProfileYaml);
+        var launch = await WrapSessionScenarios.StartLaunch(host, Token);
+
+        var exited = await host.Http.Ask(Post(WrapSessionScenarios.Route(launch, "exit"),
+            """{"exitCode":137,"limit":{"kind":"memory","limit":2000000000,"peak":2200000000,"peaks":{"memoryBytes":2200000000,"cpuPercent":80,"tasks":12,"wallSeconds":300}}}""",
+            WrapSessionScenarios.Wrap(WrapSessionScenarios.Proof)));
+
+        Expect.Equal(HttpStatusCode.OK, exited.Status);
+        var payload = Assert.Single(await Ledger(host), static e => e.Envelope.Type == EventTypes.SessionEnded).Envelope.Payload.Replace(" ", string.Empty, StringComparison.Ordinal);
+        Expect.True(payload.Contains("\"reason\":\"limit\"", StringComparison.Ordinal) && payload.Contains("\"kind\":\"memory\"", StringComparison.Ordinal)
+            && payload.Contains("\"limit\":2000000000", StringComparison.Ordinal) && payload.Contains("\"peak\":2200000000", StringComparison.Ordinal) && payload.Contains("\"peaks\":{", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task Wrong_secret_is_SND_AUTH_003()
     {
         await using var host = await GoldenHost.Start(temporary: true, Token, ItemScenarios.ProfileYaml);
@@ -63,6 +79,30 @@ public sealed class SessionRoutesTests
         Expect.Equal((HttpStatusCode.Forbidden, HttpStatusCode.Forbidden), (wrong.Status, missing.Status));
         Expect.True(wrong.Body.Contains("SND-AUTH-003", StringComparison.Ordinal) && missing.Body.Contains("SND-AUTH-003", StringComparison.Ordinal));
         Expect.True(!(await Ledger(host)).Any(static e => e.Envelope.Type == EventTypes.SessionEnded));
+    }
+
+    [Fact]
+    public async Task Suspended_answers_false_for_a_running_launch_with_its_secret_and_no_bearer_token()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, Token, ItemScenarios.ProfileYaml);
+        var launch = await WrapSessionScenarios.StartLaunch(host, Token);
+
+        var answer = await host.Http.Ask(Get($"/sindri/launches/{launch.Value}/suspended", WrapSessionScenarios.Wrap(WrapSessionScenarios.Proof)));
+
+        Expect.Equal(HttpStatusCode.OK, answer.Status);
+        Expect.True(answer.Body.Contains("\"suspended\":false", StringComparison.Ordinal) || answer.Body.Contains("\"suspended\": false", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task Suspended_with_a_wrong_secret_is_SND_AUTH_003()
+    {
+        await using var host = await GoldenHost.Start(temporary: true, Token, ItemScenarios.ProfileYaml);
+        var launch = await WrapSessionScenarios.StartLaunch(host, Token);
+
+        var answer = await host.Http.Ask(Get($"/sindri/launches/{launch.Value}/suspended", WrapSessionScenarios.Wrap("not-the-proof")));
+
+        Expect.Equal(HttpStatusCode.Forbidden, answer.Status);
+        Expect.True(answer.Body.Contains("SND-AUTH-003", StringComparison.Ordinal));
     }
 
     [Fact]

@@ -4,7 +4,7 @@ namespace Aw.Sindri.Features.Scoping;
 
 /// <summary>
 /// The evidence step's code (scoping spec §8.3): moves an uncited item out of the map into 'flagged', stamps trust, and assembles the
-/// twelve packet files from the facts. Pure: the files come back as text for the caller to write.
+/// fourteen packet files from the facts. Pure: the files come back as text for the caller to write.
 /// </summary>
 internal static class ScopeEvidence
 {

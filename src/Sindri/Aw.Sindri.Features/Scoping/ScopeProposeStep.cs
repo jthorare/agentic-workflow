@@ -11,7 +11,8 @@ namespace Aw.Sindri.Features.Scoping;
 /// <summary>
 /// 'step.scope.propose', on the block runtime (scoping spec §6.1, C9): submits the map's surfaces that have no node key as draft proposals, the run being the
 /// instance's address (a resubmission replaces the run's proposals; the surfaces a first pass proposed are sent again, and an empty set sends nothing, since an empty list would withdraw them), and records each surface's graph status through
-/// the desk code. With no repo for the item, or the context engine unable to answer, nothing is submitted and the Step reports
+/// the desk code. It carries the relevance review's map fixes (fact:mapFixes) through with a status, 'recorded' after a proposal pass and 'skipped' otherwise; none are submitted, since the context engine takes new surfaces only.
+/// With no repo for the item, or the context engine unable to answer, nothing is submitted and the Step reports
 /// 'skipped' (statuses 'unknown'), which the stop shows. An item whose repo could not be read never gets here: the runner fails the Step first.
 /// </summary>
 /// <param name="proposals">The run's proposals on the context map.</param>

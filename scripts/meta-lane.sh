@@ -5,7 +5,8 @@
 # otherwise it starts a fresh session with a new id, records the id, and sends the lane's kickoff prompt
 # (<prompts>/<lane>.md) when there is one. For the meta lane it also registers the session with aw-meta (role-set), which
 # arms the meta hooks for it. Drops to a shell when the agent exits, so the pane survives.
-# The lane's agent comes from launcher.json (scripts/launcher-lib.sh; docs/csharp/sindri-launcher.md): the catalog entry
+# The lane's agent comes from team.json "agent" when it is set (every lane, including the meta lane), else from
+# launcher.json (scripts/launcher-lib.sh; docs/csharp/sindri-launcher.md): the catalog entry
 # for meta.lanes.<lane>, else meta.lanesAgent, else claude-code. Its open and resume argv templates, process name and
 # transcripts glob replace the Claude-only commands. An agent that reports its own session id (sessionId: reported) is
 # started fresh, and a background watcher records the id it reports (the lane-sessions/<lane> file its hook writes, else
@@ -50,6 +51,7 @@ meta_bin="${AW_META_BIN:-$state_dir/bin/aw-meta}"
 # shellcheck source=launcher-lib.sh
 . "$here/launcher-lib.sh"
 launcher_load "$state_dir" || exit 1
+launcher_apply_team_agent "$config" "$meta_lane" || exit $?
 agent="$(launcher_lane_agent "$lane" "$meta_lane")"
 launcher_agent_ok "$agent" || exit 1
 field() { launcher_agent_field "$agent" "$1"; }

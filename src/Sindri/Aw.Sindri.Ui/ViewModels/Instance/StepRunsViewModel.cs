@@ -47,8 +47,15 @@ internal sealed class StepRunsViewModel
         }
 
         var open = runs.LastOrDefault(r => IsOpen(r) && string.Equals(r.Step, currentState, StringComparison.Ordinal));
-        var line = open is null ? string.Empty : Join(", ", Labels.AttemptWords(open.Attempt, open.MaxAttempts), engineOwned ? string.Empty : Who(open));
+        var line = open is null ? string.Empty : Join(", ", Labels.AttemptWords(open.Attempt, open.MaxAttempts), engineOwned ? string.Empty : Waits(open));
         return new StepRunsViewModel(line, [.. runs.Select(Row)]);
+    }
+
+    // The current line says what an open desk run waits for; a run with an agent keeps who is on it.
+    private static string Waits(StepRun run)
+    {
+        var who = Who(run);
+        return string.Equals(who, Labels.RunWithYou, StringComparison.Ordinal) ? Labels.RunWaitingForYou : who;
     }
 
     private static bool IsOpen(StepRun run) => string.Equals(run.State, "running", StringComparison.Ordinal);

@@ -20,6 +20,9 @@ public static partial class SindriErrors
     /// <summary>SND-PROFILE-002: the profile doesn't parse or doesn't match the schema.</summary>
     public static readonly ErrorDefinition ProfileInvalid = new("SND-PROFILE-002", ErrorKind.Invalid, "The profile is invalid");
 
+    /// <summary>SND-MODEL-001: a 'workflow.agent' model key names an agent or a state that isn't there, or a default that isn't in its list (model-pick spec §8); the message names the nearest id.</summary>
+    public static readonly ErrorDefinition ModelKeyInvalid = new("SND-MODEL-001", ErrorKind.Invalid, "A model key doesn't match anything");
+
     /// <summary>SND-PROFILE-003: the hash to approve isn't the live profile's hash.</summary>
     public static readonly ErrorDefinition ProfileHashMismatch = new("SND-PROFILE-003", ErrorKind.Conflict, "The hash doesn't match the profile");
 
@@ -86,6 +89,9 @@ public static partial class SindriErrors
     /// <summary>SND-SECRET-003: a file: pointer names a file others may read or write, or something that isn't a regular file.</summary>
     public static readonly ErrorDefinition SecretFileUnsafe = new("SND-SECRET-003", ErrorKind.Forbidden, "The secret file is unsafe");
 
+    /// <summary>SND-SECRET-004: a secret couldn't be stored (neither the OS secret store nor the owner-only file took it).</summary>
+    public static readonly ErrorDefinition SecretNotStored = new("SND-SECRET-004", ErrorKind.Unavailable, "Writing the secret to a secret store failed");
+
     /// <summary>SND-VIEW-001: the projector stalled on an event or can't run (views.db or the ledger can't be used); 'sindri views rebuild' clears an event stall or a views.db cause, 'sindri doctor' diagnoses a ledger cause.</summary>
     public static readonly ErrorDefinition ViewsStalled = new("SND-VIEW-001", ErrorKind.Unavailable, "The projector stalled on an event");
 
@@ -118,6 +124,9 @@ public static partial class SindriErrors
 
     /// <summary>SND-JOB-002: the most jobs are running (8); start again when one ends.</summary>
     public static readonly ErrorDefinition JobsRateLimited = new("SND-JOB-002", ErrorKind.RateLimited, "Too many jobs are running");
+
+    /// <summary>SND-JOB-003: ResumeJob named a job that isn't parked on 'model-limit' (it never was, it already resumed, or it ended).</summary>
+    public static readonly ErrorDefinition JobNotWaiting = new("SND-JOB-003", ErrorKind.Conflict, "The job is not waiting for a model harness");
 
     /// <summary>SND-SVC-404: no service of the approved profile, and no built-in, has that name (API spec §9).</summary>
     public static readonly ErrorDefinition ServiceNotFound = new("SND-SVC-404", ErrorKind.NotFound, "No such service in the approved profile");
@@ -155,8 +164,17 @@ public static partial class SindriErrors
     /// <summary>SND-LAUNCH-012: the agent entry isn't approved for unattended Steps (detail 'not-approved' or 'hash-changed'; launcher SL8).</summary>
     public static readonly ErrorDefinition LaunchNotApproved = new("SND-LAUNCH-012", ErrorKind.Forbidden, "This agent entry isn't approved for unattended Steps");
 
-    /// <summary>SND-LAUNCH-015: the agent entry's session id pattern timed out on an id, so the id was refused unjudged (not as a mismatch). -014 is reserved by the sandbox spec.</summary>
-    public static readonly ErrorDefinition LaunchSessionIdTimedOut = new("SND-LAUNCH-015", ErrorKind.Unavailable, "The session id pattern timed out");
+    /// <summary>SND-MODEL-003: no model is left for a step after its floor, the profile's cap or pin and the challenger rule (model-pick spec §12); the step parks with the fix.</summary>
+    public static readonly ErrorDefinition ModelNoneAllowed = new("SND-MODEL-003", ErrorKind.Conflict, "No model is allowed for this step");
+
+    /// <summary>SND-MODEL-004: the launch probe couldn't read an agent's model list (the command failed, took over 5 s, or isn't there). Informational: shown as 'no-model-list' in the target's limits, never fails a launch (model-pick spec §3).</summary>
+    public static readonly ErrorDefinition ModelListUnavailable = new("SND-MODEL-004", ErrorKind.Unavailable, "The agent's model list couldn't be read");
+
+    /// <summary>SND-LAUNCH-030: the agent entry's session id pattern timed out on an id, so the id was refused unjudged (not as a mismatch). -014 to -021 are the sandbox spec's.</summary>
+    public static readonly ErrorDefinition LaunchSessionIdTimedOut = new("SND-LAUNCH-030", ErrorKind.Unavailable, "The session id pattern timed out");
+
+    /// <summary>SND-LAUNCH-028: no agent in the catalog may run an unattended Step (none is approved for Steps), so the challenger has nowhere to run; the Step parks with the fix (#1008).</summary>
+    public static readonly ErrorDefinition LaunchNoUsableAgent = new("SND-LAUNCH-028", ErrorKind.Conflict, "No agent may run this Step");
 
     /// <summary>SND-LAUNCH-022: a Step's worktree already has a pre-push hook that isn't Sindri's; the launch is refused rather than overwrite it (line spec LN-LCH1).</summary>
     public static readonly ErrorDefinition LaunchPrePushForeign = new("SND-LAUNCH-022", ErrorKind.Conflict, "The Step's worktree has a pre-push hook of its own");
@@ -164,8 +182,8 @@ public static partial class SindriErrors
     /// <summary>SND-LAUNCH-023: printed by the pre-push hook Sindri installs when an agent Step tries to push; the push is refused (line spec LN-LCH1).</summary>
     public static readonly ErrorDefinition LaunchPushRefused = new("SND-LAUNCH-023", ErrorKind.Forbidden, "Agent Steps can't push; Sindri pushes");
 
-    /// <summary>SND-LAUNCH-025: a fact a Step reads would be written over a file git tracks in the Step's worktree; the launch is refused and the file is left as it is.</summary>
-    public static readonly ErrorDefinition LaunchFactFileTracked = new("SND-LAUNCH-025", ErrorKind.Conflict, "A Step's fact file would overwrite a tracked file");
+    /// <summary>SND-LAUNCH-029: a fact a Step reads would be written over a file git tracks in the Step's worktree; the launch is refused and the file is left as it is.</summary>
+    public static readonly ErrorDefinition LaunchFactFileTracked = new("SND-LAUNCH-029", ErrorKind.Conflict, "A Step's fact file would overwrite a tracked file");
 
     /// <summary>SND-LAUNCH-024: the agent CLI's trust file can't be updated for the Step's worktree (unparseable, locked or not writable); the file is left untouched and the launch is refused.</summary>
     public static readonly ErrorDefinition LaunchTrustUnavailable = new("SND-LAUNCH-024", ErrorKind.Unavailable, "The agent CLI's trust file couldn't be updated");
@@ -227,12 +245,6 @@ public static partial class SindriErrors
     /// <summary>SND-SETUP-004: RegisterMcp for a repo the approved profile does not name.</summary>
     public static readonly ErrorDefinition SetupRepoNotInProfile = new("SND-SETUP-004", ErrorKind.Conflict, "The approved profile does not name that repo (fix: add the repo, approve the profile, then try again)");
 
-    /// <summary>SND-SETUP-005: ConnectOnyx without the Onyx admin email and password.</summary>
-    public static readonly ErrorDefinition SetupOnyxCredentialsMissing = new("SND-SETUP-005", ErrorKind.Invalid, "The Onyx admin email and password are both needed (fix: enter both; sign up in Onyx first if you have no account)");
-
-    /// <summary>SND-SETUP-006: ConnectOnyx while no Onyx setup is waiting for the login, or the 30-minute wait ran out.</summary>
-    public static readonly ErrorDefinition SetupOnyxNotWaiting = new("SND-SETUP-006", ErrorKind.Conflict, "No Onyx setup is waiting for the login (fix: press Set up Onyx first)");
-
     /// <summary>SND-SETUP-007: the approve-all plan, or its challenge, was asked for before a profile is approved (setup-once spec §7.6).</summary>
     public static readonly ErrorDefinition SetupProfileNotApproved = new("SND-SETUP-007", ErrorKind.Conflict, "No profile is approved yet (fix: approve the profile first)");
 
@@ -260,14 +272,16 @@ public static partial class SindriErrors
     // A method, not a static initializer: the codes live in several partial files, whose static initializers run in file order.
     private static ErrorDefinition[] Every() =>
     [
-        LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ProfileHashMismatch,
+        LeaseHeld, LeaseLost, LeaseStale, ProfileMissing, ProfileInvalid, ModelKeyInvalid, ProfileHashMismatch,
         ProfileNotApproved, ApprovalsUnavailable, LedgerSchema, LedgerUnavailable, NotRunning, ApiTimeout, PortInUse, ApiNoCode, ApiInternal,
         CallerUnknown, OriginRefused, CommandBusy, AuthTokenRequired, AuthRefused, UnknownVerb, StartFailed,
-        InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, ServiceNotFound, OnyxDockerUnavailable, OnyxComposeMissing, OnyxNotEnoughResources, OnyxPinsMalformed, OnyxPortTaken, OnyxNotAdmin, OnyxKeyFailed, OnyxSecretNotStored, OnyxNotReady, OnyxRemoteDocker, OnyxComposeFailed, OnyxWorkspaceUnusable, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe,
+        InvalidInput, ServiceFailed, ViewsRebuilding, ViewsBehind, StreamsFull, ViewsStalled, ItemNotFound, ItemConflict, RequestInvalid, RequestsRateLimited, DecisionNotFound, DecisionInvalid, JobNotFound, JobConflict, JobInterrupted, JobsRateLimited, JobNotWaiting, ServiceNotFound, SecretNotStored, SecretPointerInvalid, SecretUnresolved, SecretFileUnsafe, IndexTokenUnresolved, IndexRepoUnreadable, IndexNotInProfile, IndexOnyxLeftover, IndexOnyxInProfile,
         LaunchNotFound, LaunchViewerFailed, LaunchNoViewer, LaunchAgentMissing, LaunchRepoMissing, LaunchNoSession, LaunchInterrupted, LaunchInProgress, LaunchTimedOut, LaunchBudgetReached,
-        LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchSessionIdTimedOut, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
-        WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupOnyxCredentialsMissing, SetupOnyxNotWaiting, SetupProfileNotApproved,
-        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound,
+        LauncherInvalid, LaunchNotApproved, LaunchFormUnsupported, LaunchPrePushForeign, LaunchPushRefused, LaunchTrustUnavailable, LaunchFactFileTracked, LaunchT3Unavailable, LaunchT3NoProject, LaunchT3NoProvider,
+        LaunchSandboxUnavailable, LaunchUnconfinable, LaunchSelfCheckFailed, LaunchLoginUnavailable, LaunchGitHubTokenFailed, LaunchLimitHit, LaunchSessionWait, LaunchPrepareFailed, SandboxAllowRefused, LaunchSessionIdTimedOut, LaunchNoUsableAgent, ModelNoneAllowed, ModelListUnavailable, AuthLaunchSecret, SessionSourceFailed, SessionsUnavailable, SessionsTestOverride, SessionNotFound, SessionConflict,
+        WorktreeInvalid, WorktreeConflict, WorktreeGitFailed, WorktreeDirty, SetupFolderInvalid, SetupRepoExists, SetupConfirmationRefused, SetupRepoNotInProfile, SetupProfileNotApproved,
+        NoForge, ForgeRefused, ForgeNotFound, ForgeUnavailable, EngineUnavailable, EngineNotFound, InvalidQuery,
         ScrubStagedSecrets, ScrubForeignHook, ScrubNotARepo, ScrubGitFailed,
+        ProjectAlreadyOnPage, ProjectFactsUnavailable, ProjectNotSynced, ProjectInvalid, ProjectNotFound, ProjectConflict,
     ];
 }

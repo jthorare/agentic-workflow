@@ -1,5 +1,7 @@
 # Sindri as a deployable unit: one Docker image, with Onyx's containers beside it in the same pod
 
+> **Superseded by 2026-10-27** for everything about Onyx (`2026-10-27-sindri-owned-index-design.md`): Onyx is removed, so no Onyx containers run beside Sindri. Kept as history.
+
 **Status:** design, revision 6 (the owner's answer q83 of 2026-10-23 applied: agents are not part of the pod, so everything that existed only for them is cut; §13 lists what changed). The owner said "Good to go" on 2026-10-23 (q83); no open question remains · **Date:** 2026-10-23 · **Asked by:** the owner, 2026-10-23 (relayed by
 sindri-meta): "make Sindri + Onyx a deployable unit for an EKS pod that stands up both. The owner port-forwards to it to set it up
 (profile approval, Onyx admin, connectors)", refined the same night: "the deliverable is a Dockerfile that wraps Sindri", then (q73) "Sindri and Onyx are one

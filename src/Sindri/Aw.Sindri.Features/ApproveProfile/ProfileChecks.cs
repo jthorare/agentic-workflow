@@ -9,8 +9,16 @@ namespace Aw.Sindri.Features.ApproveProfile;
 /// <summary>What an approval checks and shows beyond the diff: the context section, and the argv behind each step hash (launcher L-16).</summary>
 /// <param name="context">Checks the context section.</param>
 /// <param name="catalog">The entries on this box.</param>
-internal sealed class ProfileChecks(IContextEngine context, IAgentCatalog catalog)
+/// <param name="models">Checks the model keys against the catalog and the recipes.</param>
+internal sealed class ProfileChecks(IContextEngine context, IAgentCatalog catalog, ModelKeyChecks? models = null)
 {
+    /// <summary>The model keys' verdict against this box (SND-MODEL-001); null when the checks aren't wired (a test without a catalog of recipes).</summary>
+    /// <param name="profile">The live profile.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The error, or null.</returns>
+    public ValueTask<Error?> Models(SindriProfile profile, CancellationToken cancellationToken) =>
+        models is null ? ValueTask.FromResult<Error?>(null) : models.Models(profile, cancellationToken);
+
     /// <summary>The context section's verdict: an invalid section is never approved (SND-CONTEXT-001).</summary>
     /// <param name="profile">The live profile.</param>
     /// <returns>The error, or null.</returns>

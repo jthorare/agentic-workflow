@@ -24,6 +24,7 @@ public sealed record TeamConfig
     /// <param name="heavy">The heavy-slot reservation; the defaults when absent.</param>
     /// <param name="context">The lane context-window threshold for recycling; the defaults when absent.</param>
     /// <param name="usage">The usage-limit monitor's margin, probe interval and auto-resume; the defaults when absent.</param>
+    /// <param name="agent">The catalog agent every lane runs, including the meta lane. Null leaves the choice to launcher.json.</param>
     [JsonConstructor]
     public TeamConfig(
         string team,
@@ -40,7 +41,8 @@ public sealed record TeamConfig
         BuildersConfig? builders = null,
         HeavyConfig? heavy = null,
         ContextConfig? context = null,
-        UsageConfig? usage = null)
+        UsageConfig? usage = null,
+        string? agent = null)
     {
         Team = team;
         Repo = repo;
@@ -57,6 +59,7 @@ public sealed record TeamConfig
         Heavy = heavy ?? new HeavyConfig();
         Context = context ?? new ContextConfig();
         Usage = usage ?? new UsageConfig();
+        Agent = agent;
     }
 
     /// <summary>The team name; session names are "team-lane".</summary>
@@ -103,4 +106,7 @@ public sealed record TeamConfig
 
     /// <summary>When the usage-limit monitor calls a limit over and whether it resumes idle lanes.</summary>
     public UsageConfig Usage { get; init; }
+
+    /// <summary>The catalog agent every lane runs, including the meta lane. Null leaves the choice to launcher.json.</summary>
+    public string? Agent { get; init; }
 }

@@ -11,7 +11,7 @@ internal sealed partial class SessionSheetViewModel
     {
         var session = view.Session;
         Ref = session.Ref;
-        Heading = session.ProviderLabel + " " + (session.Title ?? (session.Repo is { } repo ? repo + "/" + Id8(session.Id) : Id8(session.Id)));
+        Heading = session.ProviderLabel + " " + (session.Title ?? (session.Repo is { } repo ? repo + "/" + ShortId.Of(session.Id) : ShortId.Of(session.Id)));
         StateLine = StateWords(session);
         Fields = Listed([
             (Labels.ItemRepo, session.Repo),
@@ -26,7 +26,7 @@ internal sealed partial class SessionSheetViewModel
             (Labels.SheetWorkingDirectory, view.Cwd)]);
         var host = session.Host;
         HostFields = Listed(
-            (Labels.SheetHost, host.Label),
+            (Labels.SheetShownIn, host.Label),
             (Labels.SheetTerminal, host.Terminal),
             (Labels.SheetSocketKind, host.SocketKind),
             (Labels.SheetTmuxSession, host.Session),
@@ -38,6 +38,7 @@ internal sealed partial class SessionSheetViewModel
         (IsEnded, EndedText, EndedDetail, ProblemText, Note) = (false, string.Empty, string.Empty, string.Empty, string.Empty);
         Phase = FramePhase.Shown;
         DrawSections(session);
+        DrawSandbox(session);
         DrawFocus();
     }
 

@@ -20,6 +20,9 @@ internal sealed record DeskTarget(string InstanceId, string Run, StatusCommand? 
     /// <summary>True when the step's complete command is protected: a terminal completes it, so a send back is the step's "rework".</summary>
     internal bool IsTerminalOnly => Complete is { } command && string.Equals(command.Class, "protected", StringComparison.Ordinal);
 
+    /// <summary>The keys of the outputs the report must carry (the served desk form's required outputs); empty when none.</summary>
+    internal IReadOnlyList<string> RequiredOutputs { get; init; } = [];
+
     /// <summary>The instance's address, for taking the person to its frame; empty when not read.</summary>
     internal string Address { get; init; } = string.Empty;
 
@@ -34,4 +37,42 @@ internal sealed record DeskTarget(string InstanceId, string Run, StatusCommand? 
 
     /// <summary>The recipe verbs the instance accepts now, in the order it serves them; empty when it serves none.</summary>
     internal IReadOnlyList<DeskVerb> Verbs { get; init; } = [];
+
+    /// <summary>
+    /// The outcome the app may report without asking the person anything: the one the step before the stop recommends, else the step's only outcome (from its served
+    /// complete command). None when the outcome needs a reason or a confirm (revise, rework, drop), when the step asks questions, shows a pull request or is terminal-only,
+    /// or when it has several outcomes and none is recommended.
+    /// </summary>
+    /// <returns>The outcome, or null when the person has to choose.</returns>
+    internal string? InputFreeOutcome()
+    {
+        if (IsTerminalOnly || MergeCard is not null || Questions is { Count: > 0 } || Scoping is { Count: > 0 })
+        {
+            return null;
+        }
+
+        var outcome = Recommended is { Outcome.Length: > 0 } recommended ? recommended.Outcome : SoleOutcome(Complete?.Cli ?? "");
+        return outcome is not null && !NeedsInput(outcome) ? outcome : null;
+    }
+
+    // Revising or reworking asks for a reason and dropping asks to be confirmed: the action bar does both.
+    private static bool NeedsInput(string outcome) =>
+        outcome.StartsWith("revise", StringComparison.OrdinalIgnoreCase) || outcome.StartsWith("rework", StringComparison.OrdinalIgnoreCase) || outcome.StartsWith("drop", StringComparison.OrdinalIgnoreCase);
+
+    // The served line names one outcome ("--outcome done"), several ("--outcome <a|b>") or none ("--outcome <outcome>").
+    private static string? SoleOutcome(string cli)
+    {
+        const string flag = "--outcome ";
+        var at = cli.IndexOf(flag, StringComparison.Ordinal);
+        if (at < 0)
+        {
+            return null;
+        }
+
+        var rest = cli.AsSpan(at + flag.Length);
+        var end = rest.IndexOf(' ');
+        var word = (end < 0 ? rest : rest[..end]).ToString();
+        return word.Length > 0 && word[0] != '<' ? word : null;
+    }
 }
+

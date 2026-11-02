@@ -19,4 +19,8 @@ public sealed record InstanceDetailContext(
     IReadOnlyList<StepRun>? StepRuns = null,
     string? RecipeDisplayName = null,
     SessionHandle? Session = null,
-    IReadOnlyDictionary<string, DeskReviewTarget>? ReviewTargets = null);
+    IReadOnlyDictionary<string, DeskReviewTarget>? ReviewTargets = null)
+{
+    /// <summary>The open run's wait for a free session slot, from the ledger; null when it does not wait.</summary>
+    public StatusWaiting? Waiting { get; init; }
+}

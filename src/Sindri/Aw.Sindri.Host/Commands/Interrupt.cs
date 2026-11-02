@@ -3,8 +3,7 @@ using System.Runtime.InteropServices;
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// Ctrl-C and SIGTERM as a cancelled token, for a verb that runs until it is told to stop ('workflow events --follow') or that holds
-/// resources a kill would leave behind ('onyx up' and 'onyx down' run docker children and hold the workspace lock), so it ends with
+/// Ctrl-C and SIGTERM as a cancelled token, for a verb that runs until it is told to stop ('workflow events --follow'), so it ends with
 /// its own exit code instead of the runtime killing the process. Every other verb keeps the default
 /// behaviour (Ctrl-C ends it, also at a prompt that is waiting for typed text), so only a verb that
 /// <see cref="Streams"/> listens.
@@ -36,20 +35,19 @@ internal sealed class Interrupt : IDisposable
     /// <summary>Cancelled by the second Ctrl-C of a verb that follows a job (<see cref="FollowsJob"/>): it leaves at once. Never cancelled otherwise.</summary>
     public CancellationToken Again => _again.Token;
 
-    /// <summary>Whether <paramref name="args"/> is a verb that runs until interrupted: 'workflow events … --follow', 'status --follow', 'onyx up' or 'onyx down'.</summary>
+    /// <summary>Whether <paramref name="args"/> is a verb that runs until interrupted: 'workflow events … --follow', or 'status --follow'.</summary>
     /// <param name="args">The command line.</param>
     /// <returns>True for a following verb.</returns>
     public static bool Streams(string[] args) =>
         FollowsJob(args) || (args is ["workflow", "events", .. var rest] && rest.Contains("--follow", StringComparer.Ordinal))
-        || (args is ["status", .. var follow] && follow.Contains("--follow", StringComparer.Ordinal))
-        || args is ["onyx", "up" or "down", ..];
+        || (args is ["status", .. var follow] && follow.Contains("--follow", StringComparer.Ordinal));
 
-    /// <summary>Whether <paramref name="args"/> is 'services run', 'context sources sync', 'context map build', 'context map refresh', 'context eval backtest', 'launch probe', 'repo add' or 'repo onboard' without --detach: it follows its job, so the first Ctrl-C cancels the job and the second leaves.</summary>
+    /// <summary>Whether <paramref name="args"/> is 'services run', 'index sync', 'index embed', 'context sources sync', 'context map build', 'context map refresh', 'context eval backtest', 'context pin set', 'context pin remove', 'context page set', 'context page remove', 'launch probe', 'repo add' or 'repo onboard' without --detach: it follows its job, so the first Ctrl-C cancels the job and the second leaves.</summary>
     /// <param name="args">The command line.</param>
     /// <returns>True for a job-following verb.</returns>
     public static bool FollowsJob(string[] args) =>
         !args.Contains("--detach", StringComparer.Ordinal)
-        && (args is ["services", "run", ..] or ["context", "sources", "sync", ..] or ["context", "map", "build", ..] or ["context", "map", "refresh", ..] or ["context", "eval", "backtest", ..] or ["launch", "probe", ..] or ["repo", "add", ..] or ["repo", "onboard", ..]);
+        && (args is ["services", "run", ..] or ["index", "sync", ..] or ["context", "sources", "sync", ..] or ["context", "map", "build", ..] or ["context", "map", "refresh", ..] or ["context", "eval", "backtest", ..] or ["context", "pin", "set" or "remove", ..] or ["context", "page", "set" or "remove", ..] or ["launch", "probe", ..] or ["repo", "add", ..] or ["repo", "onboard", ..] || IndexEmbedArguments.Runs(args));
 
     /// <summary>Starts listening when <paramref name="args"/> <see cref="Streams"/> or <see cref="FollowsJob"/>.</summary>
     /// <param name="args">The command line.</param>

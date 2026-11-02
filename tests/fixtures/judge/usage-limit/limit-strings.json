@@ -1,0 +1,11 @@
+{
+  "claude": [
+    "You've hit your session limit · resets 2:50am (America/Los_Angeles)",
+    "You've hit your weekly limit · resets Oct 19, 10pm (America/Los_Angeles)",
+    "Claude usage limit reached. Your limit will reset at 5pm (UTC)"
+  ],
+  "codex": {
+    "message": "You've hit your usage limit. Upgrade to Pro (https://chatgpt.com/explore/pro), visit https://chatgpt.com/codex/settings/usage to purchase more credits or try again at 9:52 PM.",
+    "codexErrorInfo": "usage_limit_exceeded"
+  }
+}

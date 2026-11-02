@@ -29,4 +29,8 @@ public enum RecordKind
     /// <summary>A code file or symbol.</summary>
     [JsonStringEnumMemberName("code")]
     Code,
+
+    /// <summary>A pull request.</summary>
+    [JsonStringEnumMemberName("pr")]
+    Pr,
 }

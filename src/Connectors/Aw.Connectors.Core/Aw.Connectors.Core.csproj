@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Connectors.Core (scaffolded by /new-package): domain types, typed ids, value objects, pure logic, port
+       interfaces and errors. No I/O, clock or random ids (BannedSymbols.txt, spec §4b.1). source readers (GitHub, Slack; later Notion, Jira): the IConnector contract, text cleaner, HTTP clients with a host allowlist; a port of ConnectAI's connector mechanics; no storage, no Context types (Sindri-owned index spec §9.2) -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.Connectors.Core</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Vogen" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aw.Connectors.Tests" />
+    <InternalsVisibleTo Include="Aw.Connectors.Testing" />
+  </ItemGroup>
+</Project>

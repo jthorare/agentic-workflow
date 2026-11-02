@@ -5,14 +5,17 @@ internal static class ConceptMapFile
 {
     /// <summary>Writes the map as YAML under <paramref name="directory"/> and answers its path; the repo is the tabs fixture's.</summary>
     /// <param name="directory">The host's home.</param>
+    /// <param name="terms">Whether the concepts carry the glossary terms a build with embeddings stores (the glossary goldens).</param>
     /// <returns>The file's path.</returns>
-    internal static string Write(string directory)
+    internal static string Write(string directory, bool terms = false)
     {
         var file = Path.Combine(directory, "concept-map.yaml");
+        var scheduling = terms ? ", terms: [shift, swap, roster]" : string.Empty;   // "shift" is on both concepts: the by-term rows join them
+        var billing = terms ? ", terms: [invoice, shift]" : string.Empty;
         File.WriteAllText(file, string.Join('\n',
             "schemaVersion: 1", "kind: authored", "repo: aw-split-panes", "nodes:",
-            "  - {key: \"concept:scheduling\", label: \"Self scheduling\", attributes: {summary: \"People pick and swap shifts.\", source: derived, seed: \"feature:shifts\"}, evidence: [{key: \"repo:aw-split-panes/docs/scheduling.md\"}]}",
-            "  - {key: \"concept:billing\", label: \"Billing\", attributes: {summary: \"Invoices and payment.\", source: override}}",
+            "  - {key: \"concept:scheduling\", label: \"Self scheduling\", attributes: {summary: \"People pick and swap shifts.\", source: derived, seed: \"feature:shifts\"" + scheduling + "}, evidence: [{key: \"repo:aw-split-panes/docs/scheduling.md\"}]}",
+            "  - {key: \"concept:billing\", label: \"Billing\", attributes: {summary: \"Invoices and payment.\", source: override" + billing + "}}",
             "  - {key: \"feature:shifts\", label: \"Shifts\"}",
             "  - {key: \"feature:swaps\", label: \"Swaps\"}",
             "  - {key: \"feature:invoices\", label: \"Invoices\"}",

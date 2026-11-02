@@ -37,16 +37,40 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         }
     }
 
-    public DateTimeOffset? TurnEndedAt(LaunchId launch)
+    public DateTimeOffset? TurnEndedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.TurnEndedName(launch));
+
+    public DateTimeOffset? TurnFailedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.TurnFailedName(launch));
+
+    public bool ToolRunning(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.ToolRunningName(launch)) is not null;
+
+    public DateTimeOffset? NudgedAt(LaunchId launch) => MarkAt(Core.Launch.LaunchFiles.NudgedName(launch));
+
+    public void MarkNudged(LaunchId launch, DateTimeOffset at)
     {
-        var path = Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.TurnEndedName(launch));
+        var path = Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.NudgedName(launch));
+        try
+        {
+            OwnerOnly.EnsureDirectory(options.LaunchesDirectory);
+            OwnerOnly.WriteAtomically(path, []);
+            File.SetLastWriteTimeUtc(path, at.UtcDateTime);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            // boundary: a marker that can't be written leaves the session as it was; the sweep tries again
+        }
+    }
+
+    // When the hook-touched file was last written; null when it is gone or can't be read (a file that can't be read says nothing about the turn).
+    private DateTimeOffset? MarkAt(string name)
+    {
+        var path = Path.Combine(options.LaunchesDirectory, name);
         try
         {
             return File.Exists(path) ? new DateTimeOffset(File.GetLastWriteTimeUtc(path)) : null;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return null;   // a file that can't be read says nothing about the turn
+            return null;
         }
     }
 
@@ -101,7 +125,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
     public int SweepStale(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live)
     {
         ArgumentNullException.ThrowIfNull(live);
-        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live);
+        var removed = McpLaunchConfig.Sweep(options.LaunchDirectory, now, olderThan, live) + SweepSecrets(now, olderThan, live) + SweepSessionHomes(live);
         if (!Directory.Exists(options.LaunchesDirectory))
         {
             return removed;
@@ -119,6 +143,12 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
 
         return removed;
     }
+
+    /// <summary>Removes the session homes (sandbox spec §3.1) of launches that are not live.</summary>
+    private int SweepSessionHomes(Func<LaunchId, bool> live) =>
+        options.SindriHome is { } home
+            ? SessionHome.Sweep(home, id => LaunchId.TryParse(id, provider: null, out var launch) && live(launch)).Count
+            : 0;
 
     /// <summary>Deletes secret files that no wrap read (it never ran): older than the limit and not of a live launch.</summary>
     private int SweepSecrets(DateTimeOffset now, TimeSpan olderThan, Func<LaunchId, bool> live) =>
@@ -152,6 +182,9 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.CaptureName(launch)));
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.SessionIdName(launch)));
         _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.TurnEndedName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.TurnFailedName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.ToolRunningName(launch)));
+        _ = OwnerOnly.TryDelete(Path.Combine(options.LaunchesDirectory, Core.Launch.LaunchFiles.NudgedName(launch)));
     }
 
     /// <summary>Deletes <paramref name="file"/> when its <paramref name="directory"/> exists; whatever is gone is fine.</summary>
@@ -165,6 +198,6 @@ internal sealed partial class LaunchFileStore(LauncherOptions options) : ILaunch
         }
     }
 
-    [GeneratedRegex("^(?<launch>LCH-[0-9a-f]{32})\\.(?:capture\\.json|session-id|turn-ended)\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    [GeneratedRegex("^(?<launch>LCH-[0-9a-f]{32})\\.(?:capture\\.json|session-id|turn-ended|turn-failed|tool-running|nudged)\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex PerLaunch { get; }
 }

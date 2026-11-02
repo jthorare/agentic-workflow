@@ -1,0 +1,19 @@
+{
+  "step": "step.interview.questions",
+  "kind": "questions",
+  "brief": "Write the interview questions for the scoping item. Ask only what the pack does not already answer.",
+  "files": [
+    { "path": "src/Billing/Invoice.cs", "text": "public sealed record Invoice(string Id, decimal Total);\n" },
+    { "path": "docs/billing.md", "text": "# Billing\n\nAn invoice is created when an order ships.\n" }
+  ],
+  "candidates": [
+    { "key": "m1", "model": "haiku", "tier": "cheap", "price": 0.25 },
+    { "key": "m2", "model": "sonnet", "tier": "standard", "price": 3 },
+    { "key": "m3", "model": "opus", "tier": "strong", "price": 15 }
+  ],
+  "denyPaths": ["internal/**"],
+  "history": [
+    { "key": "m1", "runs": 4, "refused": 0, "checkFailed": 1, "redraft": 0 },
+    { "key": "m2", "runs": 9, "refused": 0, "checkFailed": 0, "redraft": 0 }
+  ]
+}

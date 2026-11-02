@@ -100,4 +100,15 @@ public sealed class BacktestScoringTests
 
         Assert.Equal(["action:x.y", "feature:a.one", "feature:b.two"], BacktestScoring.PredictedNodes(result));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Score_ranks_the_first_truth_file_and_counts_truth_files_in_the_first_ten()
+    {
+        var sample = Builders.Sample("SPL-101", "src/a.ts", "src/b.ts");
+        string[] files = ["src/x.ts", "src/a.ts", .. Enumerable.Range(0, 9).Select(i => string.Create(System.Globalization.CultureInfo.InvariantCulture, $"src/f{i}.ts")), "src/b.ts"];   // a at rank 2, b at rank 12
+
+        var score = BacktestScoring.Score(sample, "ranker-pin", [], Answer([], files), armLeaky: false);
+
+        Assert.Equal((0.5, 0.5), (score.FileRecallAt10, score.ReciprocalRank));
+    }
 }

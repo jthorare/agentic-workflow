@@ -347,6 +347,25 @@
           "depth": null,
           "path": null,
           "tokens": 128
+        },
+        {
+          "kind": "record",
+          "node": null,
+          "title": "<untrusted source=\"repo-docs\">split-panes</untrusted>",
+          "text": "<untrusted source=\"repo-docs\"># split-panes\n\nA small terminal-style app: one window, tabs, and panes inside each tab. It exists only as a test fixture.\n\n- `src/commands/` holds the command registry (every user action is a named command).\n- `src/keybindings/` maps keys to commands.\n- `settings/default-settings.json` is the settings file; `src/settings/schema.ts` describes it.\n- `src/layout/PaneLayout.ts` is the pane layout state that the layout features share.\n\nSee `docs/architecture.md`.\n</untrusted>",
+          "score": 0.019048,
+          "why": [
+            "rrf:repo-docs#3"
+          ],
+          "provenance": "deterministic",
+          "confirmed": false,
+          "trust": "untrusted",
+          "cites": [
+            "C4"
+          ],
+          "depth": null,
+          "path": null,
+          "tokens": 141
         }
       ]
     }
@@ -394,6 +413,22 @@
           "source": "repo-docs",
           "id": "aw-split-panes/docs/decisions/0001-orientation-toggle.md#L1-L8",
           "version": "acbf628a860e46a5b943dc340e48a1fe301d4af0",
+          "current": null,
+          "fetchedAt": "2026-01-01T00:00:00.0000000Z"
+        }
+      ],
+      "permalink": null,
+      "trust": "untrusted",
+      "state": "current",
+      "aliases": []
+    },
+    "C4": {
+      "key": "repo:aw-split-panes/README.md",
+      "refs": [
+        {
+          "source": "repo-docs",
+          "id": "aw-split-panes/README.md#L1-L11",
+          "version": "dee8400a92f42f057db47b9260e6dbf4b6de6449",
           "current": null,
           "fetchedAt": "2026-01-01T00:00:00.0000000Z"
         }

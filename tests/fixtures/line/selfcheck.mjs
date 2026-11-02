@@ -124,7 +124,7 @@ const REAL_APP = ["ui-browser", "api-transcript", "cli-transcript", "ios-sim"];
 const UNMEASURABLE = ["fast", "quick", "clean", "intuitive", "easy", "seamless", "robust", "user-friendly", "smooth"];
 const HOPS = ["state", "dependency", "flow", "component"];
 const SIZE_LIMITS = { XS: { files: 3, items: 2 }, S: { files: 8, items: 4 }, M: { files: 20, items: 8 } };
-const SCOPE_FILES = ["scope-map.json", "acceptance.json", "coverage.json", "lenses.json", "size.json", "questions.json", "answers.jsonl", "challenge.json", "rounds.jsonl", "runs.json", "sources.json", "brief.md"];
+const SCOPE_FILES = ["scope-map.json", "acceptance.json", "coverage.json", "lenses.json", "size.json", "questions.json", "answers.jsonl", "challenge.json", "relevance.json", "gap-search.json", "graph.json", "rounds.jsonl", "runs.json", "sources.json", "brief.md"];
 const DESIGN_FILES = ["packet.json", "spec.md", "sections.json", "coverage.json", "decisions.json", "acceptance.json", "signals.json", "contracts.json", "lens-rounds.jsonl", "style.json", "escapes.json", "runs.json", "index.json"];
 const PLAN_FILES = ["packet.json", "tasks.json", "graph.json", "exec-review.json", "holdout.json", "answers.jsonl", "index.json"];
 
@@ -237,7 +237,7 @@ function run() {
     ok(`${dir}/answers.jsonl: one batch per scripted batch of the scoping answers`, answersLog.length === readJson(path.join(SCOPING, "answers", `${c}.json`)).batches.length);
     const challenge = j("challenge.json");
     ok(`${dir}/challenge.json: the last round is empty`, challenge.rounds.length >= 2 && challenge.rounds.at(-1).verdict === "nothingNew" && !challenge.rounds.at(-1).surfaces && !challenge.rounds.at(-1).behaviours);
-    ok(`${dir}: has no index.json (the scoping kind lists twelve files; its hash is the frozen record)`, !fs.existsSync(at("gold", dir, "index.json")));
+    ok(`${dir}: has no index.json (the scoping kind lists fourteen files; its hash is the frozen record)`, !fs.existsSync(at("gold", dir, "index.json")));
     ok(`${dir}/questions.json: every question answered, one recommended option each`, (() => { const asked = new Set(readJsonl(at("gold", dir, "answers.jsonl")).flatMap((b) => b.questionIds)); return j("questions.json").questions.every((q) => asked.has(q.id) && q.options.filter((o) => o.recommended).length === 1); })());
   }
 

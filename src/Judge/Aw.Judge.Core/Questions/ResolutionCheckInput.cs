@@ -11,6 +11,8 @@ namespace Aw.Judge.Core.Questions;
 /// <param name="AfterPassed">Whether the check passes with the fix.</param>
 /// <param name="DiffStat">The fix's diff stat.</param>
 /// <param name="Diff">The fix's full diff, when the caller sends it.</param>
+/// <param name="CheckSource">The check's own file as the fix has it, when the caller sends it.</param>
+/// <param name="BaselineFailure">What the check printed when it failed on the unfixed code (its failure lines), when the caller sends it.</param>
 public sealed record ResolutionCheckInput(
     string Brief,
     string Expected,
@@ -21,4 +23,6 @@ public sealed record ResolutionCheckInput(
     bool BeforePassed,
     bool AfterPassed,
     string DiffStat,
-    string? Diff = null);
+    string? Diff = null,
+    string? CheckSource = null,
+    string? BaselineFailure = null);

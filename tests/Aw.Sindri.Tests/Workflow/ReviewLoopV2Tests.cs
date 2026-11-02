@@ -13,11 +13,11 @@ public sealed class ReviewLoopV2Tests
     private static Recipe Load() => RecipeComposition.ReadClean(ShippedRecipes.Read(Path), "workflow.review-loop.yaml").Recipe;
 
     [Fact, Trait("Lane", "unit")]
-    public void The_recipe_is_version_5_and_validates_against_the_shipped_catalog()
+    public void The_recipe_is_version_6_and_validates_against_the_shipped_catalog()
     {
         var document = RecipeComposition.ReadClean(ShippedRecipes.Read(Path), "workflow.review-loop.yaml");
 
-        Assert.Equal(5, document.Recipe.Version);   // 5: the phase worktree is an input (LN-WF2); 4: the round log is an input, so round 1 holds fact:lensRounds (LN-PK lite); the typed escalation (BS-12) and the display fields (SO-E1) came with it
+        Assert.Equal(6, document.Recipe.Version);   // 6: the park timeouts are a day (owner q93); 5: the phase worktree is an input (LN-WF2); 4: the round log is an input, so round 1 holds fact:lensRounds (LN-PK lite); the typed escalation (BS-12) and the display fields (SO-E1) came with it
         Assert.Empty(RecipeComposition.Errors(document, FixtureCatalog.Shipped(), new InMemoryChildRecipes()));
     }
 
@@ -42,7 +42,7 @@ public sealed class ReviewLoopV2Tests
 
         var inputs = phase.States["review"].WaitFor!.Child!.Inputs;   // why: 'review' is the phase's child wait
 
-        Assert.Equal(4, phase.Version);   // 4: the owner's stop reports the phase failed to its line (LN-WF1); 3: passes the phase worktree (LN-WF2); 2: passes the empty round log (LN-PK lite)
+        Assert.Equal(5, phase.Version);   // 5: the park timeouts are a day or more (owner q93); 4: the owner's stop reports the phase failed to its line (LN-WF1); 3: passes the phase worktree (LN-WF2); 2: passes the empty round log (LN-PK lite)
         var log = inputs[FactKey.From("fact:lensRounds")];
         Assert.Equal("[]", log.Literal!.Value.GetRawText());
         Assert.Null(log.Fact);

@@ -7,7 +7,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Workflows;
 
-/// <summary>The board's time words move with the clock, and the board says so when open runs have no lane.</summary>
+/// <summary>The board's time words move with the clock, and the board draws open runs that have no lane in a lane of their own.</summary>
 [Lane(TestLane.Unit)]
 public sealed class WorkflowsBoardTimeTests
 {
@@ -49,39 +49,64 @@ public sealed class WorkflowsBoardTimeTests
     }
 
     [Fact]
-    public async Task Open_runs_with_no_lane_are_counted_under_the_board()
+    public async Task Open_runs_outside_the_line_are_cards_in_a_lane_of_their_own_before_Done()
     {
         var (list, _) = await Shown(LineGolden.AsLine);
         var open = list.Groups.Sum(g => g.Rows.Count);
-        var onBoard = list.Lanes.Where(l => l.Id != LaneId.Done).Sum(l => l.Cards.Count);
-        var off = open - onBoard;
+        var inLine = list.Lanes.Where(l => l.Id is not (LaneId.Done or LaneId.Other)).Sum(l => l.Cards.Count);
+        var other = list.Lanes.Single(l => l.Id == LaneId.Other);
 
-        Assert.True(off > 1);
-        Assert.Equal(string.Create(CultureInfo.InvariantCulture, $"{off} runs not on the board — switch to list"), list.OffBoardText);
-        Assert.True(list.HasOffBoard);
+        Assert.Equal("Not on a line", other.Name);
+        Assert.True(other.Cards.Count > 1);
+        Assert.Equal(open, inLine + other.Cards.Count);
+        Assert.Equal(LaneId.Done, list.Lanes[^1].Id);
+        Assert.Equal(LaneId.Other, list.Lanes[^2].Id);
         Assert.False(list.IsBoardEmpty);
     }
 
     [Fact]
-    public async Task No_run_on_any_lane_is_an_empty_board_that_points_at_the_list()
+    public async Task A_board_with_no_run_on_the_line_still_draws_every_open_run()
     {
         var (list, _) = await Shown(StripLineStage);
 
-        Assert.True(list.IsBoardEmpty);
-        Assert.False(list.ShowBoard);
-        Assert.Equal("Nothing here.", list.BoardEmptyText);
-        Assert.Equal("8 runs not on the board — switch to list", list.OffBoardText);
+        Assert.False(list.IsBoardEmpty);
+        Assert.True(list.ShowBoard);
+        Assert.Equal(8, list.Lanes.Single(l => l.Id == LaneId.Other).Cards.Count);
+        Assert.Equal("All 8", list.FilterAllText);
         Assert.False(list.IsEmpty);
     }
 
+    [Theory]
+    [InlineData(0)]
+    [InlineData(1)]
+    [InlineData(2)]
+    public async Task The_chips_count_the_cards_the_board_draws_for_each_filter(int segment)
+    {
+        var (list, _) = await Shown(StripLineStage);
+        var filter = (WorkflowFilter)segment;
+
+        list.SetFilter(filter);
+
+        var chip = filter switch
+        {
+            WorkflowFilter.All => list.FilterAllText,
+            WorkflowFilter.NeedsYou => list.FilterNeedsYouText,
+            WorkflowFilter.Mine => list.FilterMineText,
+            _ => string.Empty,
+        };
+        var drawn = list.Lanes.Where(l => l.Id != LaneId.Done).Sum(l => l.Cards.Count);
+        Assert.EndsWith(" " + drawn.ToString(CultureInfo.InvariantCulture), chip, StringComparison.Ordinal);
+    }
+
     [Fact]
-    public async Task The_list_does_not_show_the_off_board_line()
+    public async Task The_list_does_not_draw_the_lane_for_runs_outside_the_line()
     {
         var (list, _) = await Shown(StripLineStage);
 
         list.SetViewMode(WorkflowViewMode.List);
 
-        Assert.False(list.HasOffBoard);
+        Assert.False(list.IsBoardEmpty);
+        Assert.False(list.ShowBoard);
     }
 
     private static string StripLineStage(string body)

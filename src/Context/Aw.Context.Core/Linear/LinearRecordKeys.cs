@@ -2,9 +2,12 @@ using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Core.Linear;
 
-/// <summary>The canonical keys of the records the native Linear adapter reads (spec §5.1, D16); an issue's key is the one Onyx's Linear connector writes, so the two adapters' hits merge.</summary>
+/// <summary>The canonical keys of the records the native Linear adapter reads (spec §5.1, D16); an issue's key is 'linear:issue/&lt;uuid&gt;'.</summary>
 public static class LinearRecordKeys
 {
+    /// <summary>A Linear team key as the identifier alias reads it: a capital letter, then one or more capitals or digits ('ENG').</summary>
+    internal const string TeamKeyPattern = "[A-Z][A-Z0-9]+";
+
     private const string IssuePrefix = "linear:issue/";
     private const string DocPrefix = "linear:doc/";
     private const string ProjectPrefix = "linear:project/";
@@ -29,6 +32,23 @@ public static class LinearRecordKeys
     /// <param name="id">Its UUID.</param>
     /// <returns>'linear:update/&lt;uuid&gt;', or null when the id isn't a UUID.</returns>
     public static RecordKey? Update(ExternalId id) => Keyed(UpdatePrefix, id);
+
+    /// <summary>Whether a canonical key names a record of the native Linear adapter's kinds.</summary>
+    /// <param name="canonical">The key.</param>
+    /// <returns>True for an issue, document, project or project-update key.</returns>
+    public static bool IsLinear(RecordKey canonical) =>
+        canonical.Value.StartsWith(IssuePrefix, StringComparison.Ordinal) || canonical.Value.StartsWith(DocPrefix, StringComparison.Ordinal)
+        || canonical.Value.StartsWith(ProjectPrefix, StringComparison.Ordinal) || canonical.Value.StartsWith(UpdatePrefix, StringComparison.Ordinal);
+
+    /// <summary>The Linear id inside a Linear record key.</summary>
+    /// <param name="canonical">The key.</param>
+    /// <returns>The part after the kind prefix (the UUID), or null when the key isn't a Linear one.</returns>
+    public static ExternalId? BareId(RecordKey canonical)
+    {
+        var key = canonical.Value;
+        var prefix = new[] { IssuePrefix, DocPrefix, ProjectPrefix, UpdatePrefix }.FirstOrDefault(p => key.StartsWith(p, StringComparison.Ordinal));
+        return prefix is not null && ExternalId.TryFrom(key[prefix.Length..], out var id) ? id : null;
+    }
 
     /// <summary>The kind of the record a key from this class names.</summary>
     /// <param name="canonical">The key.</param>

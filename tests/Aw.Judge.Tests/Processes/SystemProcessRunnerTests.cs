@@ -45,6 +45,36 @@ public sealed class SystemProcessRunnerTests : IDisposable
     }
 
     [Fact]
+    public async Task Inherit_only_keeps_the_named_variables_and_the_requests_own()
+    {
+        Assert.SkipWhen(OperatingSystem.IsWindows(), "the program is an sh script");
+        const string Kept = "AW_JUDGE_KEPT_PROBE";
+        const string Dropped = "AW_JUDGE_DROPPED_PROBE";
+        _ = _bin.InstallScript("printer", $"printf '[%s][%s][%s]' \"${Kept}\" \"${Dropped}\" \"$AW_JUDGE_OWN_PROBE\"\n");
+        Environment.SetEnvironmentVariable(Kept, "kept");
+        Environment.SetEnvironmentVariable(Dropped, "leaked");
+        try
+        {
+            var result = await new SystemProcessRunner(_bin.Environment).Run(
+                new ProcessRequest
+                {
+                    FileName = "printer",
+                    InheritOnly = [Kept, "AW_JUDGE_ABSENT_PROBE"],
+                    Environment = new Dictionary<string, string>(StringComparer.Ordinal) { ["AW_JUDGE_OWN_PROBE"] = "own" },
+                    Timeout = TimeSpan.FromSeconds(10),
+                },
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(ProcessResult.Exited(0, "[kept][][own]", ""), result);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(Kept, value: null);
+            Environment.SetEnvironmentVariable(Dropped, value: null);
+        }
+    }
+
+    [Fact]
     public async Task An_unset_variable_is_not_inherited()
     {
         Assert.SkipWhen(OperatingSystem.IsWindows(), "the program is an sh script");

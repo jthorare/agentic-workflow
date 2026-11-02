@@ -31,6 +31,12 @@ public sealed record StepCompleted(
     /// <inheritdoc/>
     public override string Name => TriggerNames.StepCompleted;
 
+    /// <summary>The launcher agent an agent run ran on, for the event's 'agent' (#1269); null for any other Step.</summary>
+    public string? Agent { get; init; }
+
+    /// <summary>The model an agent run asked for, for the event's 'model'; null when none was named and for any other Step.</summary>
+    public string? Model { get; init; }
+
     /// <inheritdoc/>
     public override string KeyPart => "run:" + Run.Value + ":" + ReportSha256;
 }

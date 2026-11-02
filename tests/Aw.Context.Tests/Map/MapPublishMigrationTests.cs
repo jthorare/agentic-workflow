@@ -71,6 +71,26 @@ public sealed class MapPublishMigrationTests : IDisposable
         Assert.Equal(1L, await Count("SELECT count(*) FROM map_publish_chain"));   // the chain is not tied to a draft
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_head_keeps_the_code_index_commit_it_was_built_with_and_a_head_from_before_the_column_reads_as_none()
+    {
+        var connections = new SqliteConnectionFactory(new SqliteOptions(_settings.DatabasePath));
+        _ = Directory.CreateDirectory(_settings.Home);
+        Assert.True((await new MigrationRunner(connections, new FakeTimeProvider()).Migrate(ContextDatabase.Migrations, Ct, targetVersion: 24)).IsSuccess);
+        await Execute("INSERT INTO map_version (repo, commit_sha, key_version, created, status) VALUES ('aw-split-panes', 'a41b07d', 1, '2026-07-15T10:00:00Z', 'draft')", migrate: false);
+        await Execute("INSERT INTO map_version_head (version, repo, commit_sha, on_default) VALUES (1, 'aw-split-panes', 'a41b07d', 1)", migrate: false);
+        var store = new SqliteGraphStore(_database, _settings);
+
+        var old = await store.Heads(1, Ct);   // a read on a store before 0025 never migrates it: the head has no index commit
+
+        Assert.Null(Assert.Single(old.Value).IndexCommit);
+        var repo = ContextRepoName.From("aw-split-panes");
+        var saved = (await store.SaveDraft(SampleMap.Build() with { Heads = [new MapHead(repo, "a41b07d", OnDefault: true) { IndexCommit = "a41b07d" }, new MapHead(ContextRepoName.From("aw-other"), "b52c18e", OnDefault: true)] }, SampleMap.At, Ct)).Value;   // the first write migrates
+
+        var heads = (await store.Heads(saved.Number, Ct)).Value;
+        Assert.Equal(("a41b07d", null), (heads[0].IndexCommit, heads[1].IndexCommit));
+    }
+
     private async Task<long> Count(string sql)
     {
         var sessions = (await _database.Writable(Ct)).Value;

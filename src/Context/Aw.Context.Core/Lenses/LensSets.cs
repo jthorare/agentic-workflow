@@ -2,6 +2,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Results;
+using Aw.Context.Core.Walks;
 using Aw.Kernel;
 
 namespace Aw.Context.Core.Lenses;
@@ -18,28 +19,29 @@ internal static class LensSets
 
     internal static Result<LensesSetView> Build(LensBasis basis, GraphSnapshot graph, IReadOnlyList<string> given, int depth, IReadOnlyList<DecisionConflict> pairs)
     {
+        var walk = basis.Walk;
         var distinct = given.Distinct(StringComparer.Ordinal).ToList();
         if (QueryRules.CheckAnchors(distinct, "lenses") is { } tooMany)
         {
             return tooMany;
         }
 
-        var resolved = AnchorSet.Resolve(graph, distinct, depth, basis.Cascade);
+        var resolved = AnchorSet.Resolve(graph, distinct, depth, basis.Cascade, walk);
         if (resolved.IsError)
         {
             return resolved.Error;
         }
 
         var (scopes, missing) = resolved.Value;
-        var intent = Intent(scopes);
-        var (product, productKeys, ownUnion) = Product(scopes, depth);
+        var intent = Intent(scopes, walk);
+        var (product, productKeys, ownUnion) = Product(scopes, depth, walk);
         var (code, codeKeys) = Code(graph, scopes, ownUnion);
         var items = productKeys.Concat(codeKeys).Concat(scopes.SelectMany(s => s.IntoScope(EdgeType.Mentions, EdgeType.Decides).Select(e => e.From.Value))).ToHashSet(StringComparer.Ordinal);
         var bands = LensRepos.Stamp(new LensBands(intent, product, code), graph, basis.MapRepo);
         var keys = scopes.Select(s => s.Anchor.Key.Value).ToList();
-        var coverage = AnchorSet.Coverage(basis, graph, scopes, ownUnion);
+        var coverage = AnchorSet.Coverage(basis, graph, scopes, ownUnion, walk);
         return new LensesSetView(2, [.. scopes.Select(Anchor)], missing, basis.Map, basis.Draft, depth, basis.AsOf, bands, LensEdges.Across(graph, items),
-            Conflicts(scopes, pairs), coverage, LensSearchedBuilder.For(basis, keys, depth, bands), [], new Dictionary<string, Citation>(StringComparer.Ordinal))
+            Conflicts(scopes, pairs, walk), coverage, LensSearchedBuilder.For(basis, keys, depth, bands), [], new Dictionary<string, Citation>(StringComparer.Ordinal))
         {
             MapCommit = basis.MapCommit,
             SkippedComponents = Skipped(scopes),
@@ -57,23 +59,44 @@ internal static class LensSets
     private static LensAnchor Anchor(LensScope scope) =>
         new(scope.Anchor.Key, scope.Anchor.Label, scope.Anchor.Key.Kind, TrustPolicy.ForNode(scope.Anchor, LensScope.Confirmed(scope.Anchor.Provenance)));
 
-    private static List<LensConflict> Conflicts(List<LensScope> scopes, IReadOnlyList<DecisionConflict> pairs) =>
-        [.. scopes.SelectMany(s => LensConflicts.Of(s, pairs)).DistinctBy(c => (c.Kind, c.Node.Value, c.Decision.Value, c.Other))];
-
-    private static IntentBand Intent(List<LensScope> scopes)
+    // Each scope's conflicts are found over the cores; they are joined in scope order, so "first one wins" in the de-duplication is the first anchor's, as in a serial run.
+    private static List<LensConflict> Conflicts(List<LensScope> scopes, IReadOnlyList<DecisionConflict> pairs, WalkOptions walk)
     {
-        var (recordList, decisionList) = IntentUnion(scopes);
+        Warm(scopes, walk);
+        var found = BoundedParallel.MapSync(scopes, s => LensConflicts.Of(s, pairs), walk.Degree);
+        return [.. found.SelectMany(c => c).DistinctBy(c => (c.Kind, c.Node.Value, c.Decision.Value, c.Other))];
+    }
+
+    // The graph's lookups are built once before the workers start: a lookup built by two workers at once is built twice.
+    private static void Warm(List<LensScope> scopes, WalkOptions walk)
+    {
+        if (walk.Degree > 1 && scopes.Count > 1)
+        {
+            _ = EdgeLookup.For(scopes[0].Graph);
+        }
+    }
+
+    private static IntentBand Intent(List<LensScope> scopes, WalkOptions walk)
+    {
+        var (recordList, decisionList) = IntentUnion(scopes, walk);
         return new IntentBand([.. recordList], [.. decisionList], new IntentCounts(recordList.Count, decisionList.Count, Orphaned: null));
     }
 
     /// <summary>The records and decisions of every scope, each once with the anchors that reached it, in key order and uncapped (the history lens cuts them by time).</summary>
-    internal static (List<LensRecord> Records, List<LensDecision> Decisions) IntentUnion(List<LensScope> scopes)
+    internal static (List<LensRecord> Records, List<LensDecision> Decisions) IntentUnion(List<LensScope> scopes, WalkOptions walk)
+    {
+        Warm(scopes, walk);
+        return Merge(scopes, BoundedParallel.MapSync(scopes, s => (Records: LensIntent.Records(s), Decisions: LensIntent.Decisions(s)), walk.Degree));
+    }
+
+    // The per-scope reads arrive in scope order, so an entry's first-seen record and the anchors it lists are the serial run's.
+    private static (List<LensRecord> Records, List<LensDecision> Decisions) Merge(List<LensScope> scopes, (List<LensRecord> Records, List<LensDecision> Decisions)[] found)
     {
         var records = new Dictionary<string, (LensRecord Record, List<NodeKey> Mentions, SortedSet<int> By)>(StringComparer.Ordinal);
         var decisions = new Dictionary<string, (LensDecision Decision, List<NodeKey> Decides, List<NodeKey> Supersedes, SortedSet<int> By)>(StringComparer.Ordinal);
         for (var i = 0; i < scopes.Count; i++)
         {
-            foreach (var r in LensIntent.Records(scopes[i]))
+            foreach (var r in found[i].Records)
             {
                 var entry = records.GetValueOrDefault(r.Key.Value, (r, [], []));
                 entry.Mentions.AddRange(r.Mentions);
@@ -81,7 +104,7 @@ internal static class LensSets
                 records[r.Key.Value] = entry;
             }
 
-            foreach (var d in LensIntent.Decisions(scopes[i]))
+            foreach (var d in found[i].Decisions)
             {
                 var entry = decisions.GetValueOrDefault(d.Node.Value, (d, [], [], []));
                 entry.Decides.AddRange(d.Decides);
@@ -125,14 +148,15 @@ internal static class LensSets
         internal SortedSet<int> By { get; } = [];
     }
 
-    private static (ProductBand Band, HashSet<string> Keys, HashSet<string> Own) Product(List<LensScope> scopes, int depth)
+    private static (ProductBand Band, HashSet<string> Keys, HashSet<string> Own) Product(List<LensScope> scopes, int depth, WalkOptions walk)
     {
+        var listed = ListsOf(scopes, depth, walk);
         var reached = new Dictionary<string, Reached>(StringComparer.Ordinal);
         var all = new HashSet<string>(StringComparer.Ordinal);
         var own = new HashSet<string>(StringComparer.Ordinal);
         for (var i = 0; i < scopes.Count; i++)
         {
-            var lists = LensProduct.Lists(scopes[i], depth);
+            var lists = listed[i];
             all.UnionWith(lists.Seen);
             own.UnionWith(scopes[i].Own);
             foreach (var item in lists.Own)
@@ -160,6 +184,17 @@ internal static class LensSets
         return (band, all, own);
     }
 
+    // Each scope's lists are built over the cores and read back in scope order.
+    private static ProductLists[] ListsOf(List<LensScope> scopes, int depth, WalkOptions walk)
+    {
+        if (walk.Degree > 1 && scopes.Count > 1)
+        {
+            LensProduct.Warm(scopes[0].Graph);
+        }
+
+        return BoundedParallel.MapSync(scopes, s => LensProduct.Lists(s, depth), walk.Degree);
+    }
+
     private static LensItem Plain(LensReach r) => new(r.Node, r.Label, r.Kind, r.Provenance, r.Confidence, r.Confirmed, r.Trust);
 
     private static void Note(Dictionary<string, Reached> reached, int anchor, (LensItem Item, int List, int Depth, IReadOnlyList<string> Path) hit)
@@ -183,12 +218,13 @@ internal static class LensSets
     private static (CodeBand Band, HashSet<string> Keys) Code(GraphSnapshot graph, List<LensScope> scopes, HashSet<string> ownUnion)
     {
         var edges = scopes.SelectMany(s => s.IntoScope(EdgeType.Implements, EdgeType.Tests).Where(e => s.Nodes.ContainsKey(e.From.Value))).DistinctBy(e => (e.From.Value, e.To.Value, e.Type)).ToList();
-        var files = LensCode.Files(edges).Select(f => f with { Anchors = ReachedFile(scopes, f), Depth = 0 }).ToList();
+        var names = scopes.Select(s => s.IntoScope(EdgeType.Implements, EdgeType.Tests).Select(e => e.From.Name).ToHashSet(StringComparer.Ordinal)).ToList();
+        var files = LensCode.Files(edges).Select(f => f with { Anchors = ReachedFile(scopes, names, f), Depth = 0 }).ToList();
         var noCode = LensCode.NoCode(graph, ownUnion.Select(NodeKey.From));
         var keys = scopes.SelectMany(s => s.IntoScope(EdgeType.Implements, EdgeType.Tests).Select(e => e.From.Value)).ToHashSet(StringComparer.Ordinal);
         return (LensCode.Band(files, noCode), keys);
     }
 
-    private static List<string> ReachedFile(List<LensScope> scopes, LensFile file) =>
-        [.. scopes.Where(s => s.IntoScope(EdgeType.Implements, EdgeType.Tests).Any(e => e.From.Name == file.Path)).Select(s => s.Anchor.Key.Value)];
+    private static List<string> ReachedFile(List<LensScope> scopes, List<HashSet<string>> names, LensFile file) =>
+        [.. scopes.Where((_, i) => names[i].Contains(file.Path)).Select(s => s.Anchor.Key.Value)];
 }

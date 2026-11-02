@@ -57,4 +57,10 @@ internal static partial class Labels
     /// <param name="count">How many closed items were read; null before the first read.</param>
     /// <returns>"Closed" or "Closed (3)".</returns>
     internal static string ClosedHeader(int? count) => count is { } n ? string.Create(CultureInfo.InvariantCulture, $"Closed ({n})") : "Closed";
+
+    /// <summary>The fold arrow of an open group: down.</summary>
+    internal const string FoldOpen = "▾";
+
+    /// <summary>The fold arrow of a folded group: right.</summary>
+    internal const string FoldFolded = "▸";
 }

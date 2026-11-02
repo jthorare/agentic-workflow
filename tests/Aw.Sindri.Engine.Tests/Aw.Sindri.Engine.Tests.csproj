@@ -29,6 +29,7 @@
     <!-- 8 parallel test classes: most of the lane is spent waiting on Temporal servers, not on CPU (the TemporalServerFixture start retries a lost port). -->
     <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Workflows/Fixtures/*.json" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Workflows/Fixtures/*.yaml" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

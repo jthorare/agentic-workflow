@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow.Engine;
 using HostKind = Aw.Sindri.Core.Launch.HostKind;
 
@@ -94,7 +95,8 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
         foreach (var entry in parts.Catalog.All)
         {
             var found = await parts.ResolveBin(entry.Bin, cancellationToken).ConfigureAwait(false) is not null;
-            targets.Add(new TargetFacts(entry.Id, found, Version: null, Limited(entry), found ? null : "not-installed", entry.Source, entry.Source == CatalogSource.Override));
+            var models = parts.Models is { } catalog && found ? await catalog.ModelsOf(entry.Id, cancellationToken).ConfigureAwait(false) : null;
+            targets.Add(new TargetFacts(entry.Id, found, Version: null, WithModels(Limited(entry), models, found), found ? null : "not-installed", entry.Source, entry.Source == CatalogSource.Override) { Models = parts.Models is null ? null : models ?? [] });
         }
 
         return new LaunchProbed(terminal, host, targets, []);
@@ -115,6 +117,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
 
     private async ValueTask<LaunchResult> Start(LaunchRequest request, CancellationToken cancellationToken)
     {
+        request = InWorktree(request);
         if (Refusal(request) is { } refused)
         {
             return Fail(refused);
@@ -152,6 +155,10 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
         }
     }
 
+    // why: a sandboxed session the owner opens never writes in the main checkout (sandbox spec 3.9).
+    private LaunchRequest InWorktree(LaunchRequest request) =>
+        request.Attended && parts.Sandbox is not null && request.Worktree is null ? request with { Worktree = AttendedOpen.Worktree(request.RepoPath, request.Launch) } : request;
+
     /// <summary>The launch's session when it is already running and this launch's files exist (a relaunch after a restart): answered as started, with nothing rewritten and nothing stopped.</summary>
     private async ValueTask<StartedLaunch?> Running(LaunchRequest request, AgentEntry entry, ISessionHost host, CancellationToken cancellationToken)
     {
@@ -175,7 +182,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             return null;   // the host didn't answer in time: the start that follows has its own bound
         }
 
-        return new StartedLaunch(session, ViewerOutcome.Skipped, host.AttachArgv(session), entry.Source, entry.ArgvHash ?? string.Empty);
+        return new StartedLaunch(session, ViewerOutcome.Skipped, host.AttachArgv(session), entry.Source, entry.ArgvHash ?? string.Empty) { RunDirectory = RunDirectoryOf(request) };
     }
 
     private Error? Refusal(LaunchRequest request)
@@ -216,15 +223,15 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
     private async ValueTask<LaunchResult> Run(LaunchRequest request, AgentEntry entry, ISessionHost host, Prepared prepared, CancellationToken cancellationToken)
     {
         var name = SessionName(request.Launch);
-        var wrapped = new List<string> { parts.Options.SindriExecutable, "session", "wrap", "--launch", request.Launch.Value, "--" };
+        var wrapped = WrapCommand(request.Launch, prepared.SandboxRunArea);
         wrapped.AddRange(prepared.Argv);
         var source = (entry.Source, entry.ArgvHash ?? string.Empty);
         if (host.Kind == HostKind.None)
         {
-            return await RunOnViewer(request, host, (name, prepared.WorkDir, wrapped), (source, prepared.Session), cancellationToken).ConfigureAwait(false);
+            return await RunOnViewer(request, host, (name, prepared.WorkDir, wrapped), (source, prepared.Session, prepared.Sandbox), cancellationToken).ConfigureAwait(false);
         }
 
-        var session = new HostSession(name, prepared.WorkDir, wrapped, prepared.Env) { RepoPath = request.RepoPath, Seed = prepared.Seed, Title = $"sindri {request.Item.Value}", Agent = request.Agent };
+        var session = new HostSession(name, prepared.WorkDir, wrapped, prepared.Env) { RepoPath = request.RepoPath, Seed = prepared.Seed, Title = $"sindri {request.Item.Value}", Agent = request.Agent, StatusRight = prepared.Sandbox is { } sandbox ? SandboxStatusLine.Template(sandbox.Attended) : null };
         var started = await host.Start(session, parts.Options.HostDeadline, cancellationToken).ConfigureAwait(false);
         if (started.IsError)
         {
@@ -253,10 +260,10 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             throw;
         }
 
-        return new StartedLaunch(started.Value, viewer, host.AttachArgv(started.Value), source.Source, source.Item2) { ChosenSession = prepared.Session };
+        return new StartedLaunch(started.Value, viewer, host.AttachArgv(started.Value), source.Source, source.Item2) { ChosenSession = prepared.Session, Sandbox = prepared.Sandbox, RunDirectory = RunDirectoryOf(request) };
     }
 
-    private async ValueTask<LaunchResult> RunOnViewer(LaunchRequest request, ISessionHost host, (string Name, string WorkDir, List<string> Argv) session, ((CatalogSource Source, string Hash) Entry, string? Chosen) started, CancellationToken cancellationToken)
+    private async ValueTask<LaunchResult> RunOnViewer(LaunchRequest request, ISessionHost host, (string Name, string WorkDir, List<string> Argv) session, ((CatalogSource Source, string Hash) Entry, string? Chosen, SandboxSummary? Sandbox) started, CancellationToken cancellationToken)
     {
         var none = new HostRef(host.Kind, session.Name);
         var outcome = request.Attended
@@ -264,7 +271,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             : await Background(cancellationToken).ConfigureAwait(false);
         if (outcome.Kind != ViewerOutcomeKind.Failed)
         {
-            return new StartedLaunch(none, outcome, session.Argv, started.Entry.Source, started.Entry.Hash) { ChosenSession = started.Chosen };
+            return new StartedLaunch(none, outcome, session.Argv, started.Entry.Source, started.Entry.Hash) { ChosenSession = started.Chosen, Sandbox = started.Sandbox, RunDirectory = RunDirectoryOf(request) };
         }
 
         _ = await host.Stop(none, CancellationToken.None).ConfigureAwait(false);   // a viewer that started a thread before failing
@@ -285,4 +292,7 @@ internal sealed partial class Launcher(LauncherParts parts) : ILauncher, ILaunch
             return ViewerOutcome.Failed(SindriErrors.LaunchTimedOut.Code, "the viewer did not return within its window");
         }
     }
+
+    // The run directory the Step got (AW_SINDRI_RUN_DIR): the same pure rule Prepare used, so a relaunch that stays on a live session names it too.
+    private string? RunDirectoryOf(LaunchRequest request) => request.Attended ? null : StepEnvironment.RunDirectoryOf(request, parts.Options.SindriHome);
 }

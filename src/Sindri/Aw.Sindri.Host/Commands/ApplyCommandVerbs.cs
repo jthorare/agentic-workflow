@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Features.ApplyCommand;
+using Aw.Sindri.Features.GetLaunch;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -23,7 +24,9 @@ namespace Aw.Sindri.Host.Commands;
 internal sealed class ApplyCommandVerbs(RecipeDesk desk, IServiceProvider services, Output output)
 {
     private const string AnswerUsage =
-        "usage: sindri workflow answer <address> [--text <t> | --file <f>] [--grant <n> | --grant-tokens <n> | --accept | --reject | --resume] [--nonce <n>] [--json]";
+        "usage: sindri workflow answer <address> [--text <t> | --file <f>] [--grant <n> | --grant-tokens <n> | --accept | --reject | --resume | --record <batch.json>] [--nonce <n>] [--json]";
+
+    private const string RewindUsage = "usage: sindri workflow rewind <address> --to <state> [--nonce <n>] [--json]";
 
     private const string CommandUsage = "usage: sindri workflow command <address> <verb> [--nonce <n>] [--json]";
 
@@ -54,6 +57,11 @@ internal sealed class ApplyCommandVerbs(RecipeDesk desk, IServiceProvider servic
             return await output.Error(SindriErrors.InvalidInput.With(AnswerUsage)).ConfigureAwait(false);
         }
 
+        if (options.Contains("--record", StringComparer.Ordinal))
+        {
+            return await RecordAnswerCommand.Run(address, options, json, new RecordAnswerCommand.Host(desk, services, output), ct).ConfigureAwait(false);
+        }
+
         var parsed = await AnswerOptions(options, ct).ConfigureAwait(false);
         if (parsed.IsError)
         {
@@ -77,6 +85,21 @@ internal sealed class ApplyCommandVerbs(RecipeDesk desk, IServiceProvider servic
         return nonce.IsError
             ? await output.Error(nonce.Error).ConfigureAwait(false)
             : await Apply(new ApplyCommandRequest(address, ApplyCommandKind.Command, Answer: null, Text: null, Amount: null, parsed, nonce.Value, Challenge: null), json, ct).ConfigureAwait(false);
+    }
+
+    /// <summary>'workflow rewind &lt;address&gt; --to &lt;state&gt;' (#1270): re-enters an earlier state and keeps the facts.</summary>
+    internal async Task<int> Rewind(string[] args, CancellationToken ct)
+    {
+        var (json, rest) = Json(args);
+        if (rest is not [var address, .. var options] || options.ToList().IndexOf("--to") is not (>= 0 and var at) || at + 1 >= options.Length)
+        {
+            return await output.Error(SindriErrors.InvalidInput.With(RewindUsage)).ConfigureAwait(false);
+        }
+
+        var nonce = Nonce([.. options.Take(at), .. options.Skip(at + 2)], RewindUsage);
+        return nonce.IsError
+            ? await output.Error(nonce.Error).ConfigureAwait(false)
+            : await Apply(new ApplyCommandRequest(address, ApplyCommandKind.Rewind, Answer: null, Text: null, Amount: null, Verb: null, nonce.Value, Challenge: null, To: options[at + 1]), json, ct).ConfigureAwait(false);
     }
 
     internal Task<int> Cancel(string[] args, CancellationToken ct) => Bare(args, ApplyCommandKind.Cancel, CancelUsage, ct);
@@ -128,7 +151,19 @@ internal sealed class ApplyCommandVerbs(RecipeDesk desk, IServiceProvider servic
         var answer = done.Value.Value;
         var happened = answer.AlreadyApplied ? $"already applied ({answer.Result.Happened})" : answer.Result.Happened;
         var header = InstanceHeader.Line(answer.Result.Instance, services.GetRequiredService<TimeProvider>().GetUtcNow());
-        return await output.Text($"{header}\n  {happened}\n", 0).ConfigureAwait(false);
+        return await output.Text($"{header}\n  {happened}\n{await SandboxBanner(request, answer, ct).ConfigureAwait(false)}", 0).ConfigureAwait(false);
+    }
+
+    /// <summary>The takeover's first screen for a Step whose launch is sandboxed (sandbox spec §7): the banner line, else nothing.</summary>
+    private async Task<string> SandboxBanner(ApplyCommandRequest request, ApplyCommandResponse answer, CancellationToken ct)
+    {
+        if (request.Kind != ApplyCommandKind.Takeover || answer.AlreadyApplied || answer.Result.Instance.AgentRun?.Launch is not { Length: > 0 } launch)
+        {
+            return "";
+        }
+
+        var read = await desk.Client.GetView<LaunchView>("/sindri/launches/" + Uri.EscapeDataString(launch), ct).ConfigureAwait(false);   // a banner the API can't back up is not printed
+        return !read.IsError && SandboxFirstScreen.For(read.Value.Body, tmuxPrefix: "C-b") is { } banner ? $"  {banner}\n" : "";
     }
 
     /// <summary>The answer's variant and its text or amount, and the optional nonce; exactly one variant, '--resume' may carry '--text'.</summary>

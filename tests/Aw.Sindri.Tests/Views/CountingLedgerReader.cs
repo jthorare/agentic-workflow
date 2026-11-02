@@ -21,5 +21,7 @@ internal sealed class CountingLedgerReader(ILedgerReader inner) : ILedgerReader
 
     public ValueTask<Result<LedgerEvent?>> Latest(string type, CancellationToken cancellationToken) => inner.Latest(type, cancellationToken);
 
+    public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken) => inner.ByKey(idempotencyKey, cancellationToken);
+
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken) => inner.Head(cancellationToken);
 }

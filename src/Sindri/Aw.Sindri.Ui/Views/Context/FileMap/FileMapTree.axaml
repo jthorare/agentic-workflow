@@ -36,7 +36,7 @@
     <Grid ColumnDefinitions="*,Auto">
       <!-- The path as a breadcrumb: "~" is the top of the repo; every level but the last is a link, the last is where you are. -->
       <ctl:CrumbTrail x:Name="FilesCrumbs" Crumbs="{Binding Crumbs}" Navigated="OnCrumb" VerticalAlignment="Center" AutomationProperties.Name="{Binding CrumbsName}" />
-      <TextBlock x:Name="FilesTotals" Grid.Column="1" Classes="caption subtle" Text="{Binding TotalsText}" VerticalAlignment="Center" />
+      <TextBlock x:Name="FilesTotals" Grid.Column="1" Classes="caption subtle" Text="{Binding ShownTotalsText}" VerticalAlignment="Center" />
     </Grid>
 
     <TextBox x:Name="FilesFilter" Grid.Row="1" Text="{Binding FilterText, Mode=TwoWay}" PlaceholderText="{Binding FilterHint}" AutomationProperties.Name="{Binding FilterHint}" />
@@ -80,6 +80,7 @@
       </ScrollViewer>
       <TextBlock x:Name="FilesLoading" Classes="body subtle" Text="{Binding LoadingWord}" IsVisible="{Binding IsLoading}" Margin="8,0" />
       <TextBlock x:Name="FilesEmpty" Classes="body subtle" Text="{Binding EmptyWord}" IsVisible="{Binding IsEmptyFolder}" Margin="8,0" />
+      <TextBlock x:Name="FilesNoMatch" Classes="body subtle" Text="{Binding NoMatchWord}" IsVisible="{Binding IsNoMatch}" Margin="8,0" />
       <Border x:Name="FilesProblem" IsVisible="{Binding HasProblem}" BorderBrush="{DynamicResource Brush.Attention}" BorderThickness="1" CornerRadius="{StaticResource Radius.MD}" Padding="12,8" VerticalAlignment="Top"
               AutomationProperties.Name="{Binding Problem}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="body" Text="{Binding Problem}" TextWrapping="Wrap" />

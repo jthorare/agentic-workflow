@@ -17,7 +17,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 Extract the starting point for the investigation from the argument:
 
 - **`--depth N`** — dispatch-chain depth guard (default 0). If N ≥ 2, this run must NOT dispatch any sub-skill (Sub-skill Dispatch is disabled) — report findings only. When dispatching, always pass `--depth N+1`.
-- **`--investigate-only`** — diagnose without fixing (used by `/bugFixOrchestrator`, whose implementers write the fix). Run Phases 0–3.5, skip Phase 4, write the Phase 5 report + handoff — status `diagnosed` when a hypothesis is confirmed, `unfixed` when all were ruled out — and never dispatch a sub-skill. The working tree must end exactly as it started.
+- **`--investigate-only`** — diagnose without fixing (used by `/bugFixOrchestrator`, whose implementers write the fix). Run Phases 0–3.6, skip Phase 4, write the Phase 5 report + handoff — status `diagnosed` when a hypothesis is confirmed, `unfixed` when all were ruled out — and never dispatch a sub-skill. The working tree must end exactly as it started.
 - **Error message or issue description** — the normal entry.
 - **Production-incident entry** — if the argument is a JSON object of the shape `{merge_sha, release_id, symptom, logs_excerpt}` (as passed by `/canary` on an UNHEALTHY verdict), treat this as a production incident:
   - `logs_excerpt` is the primary evidence; `symptom` is the failure description.
@@ -50,19 +50,27 @@ Generate 2-3 hypotheses ranked by likelihood. Document each as: **Hypothesis** (
 
 **Run the "Confirms if" check for hypothesis #1 BEFORE editing any code** — add the log line, run the narrowed test, inspect the state, whatever the check specifies.
 
-- **Confirmed** → proceed to Phase 4 with hypothesis #1.
+- **Confirmed** → proceed to Phase 3.6 with hypothesis #1.
 - **Ruled out** → record the result in the hypotheses table, promote hypothesis #2, and run its check.
 - Never implement a fix whose hypothesis has not been confirmed by its own check. "Confirms if / Rules out if" is an executable contract, not documentation.
 
-**With `--investigate-only`:** run the confirm check for each hypothesis in order until one is confirmed or all are ruled out, recording every result. Revert any temporary instrumentation (log lines, narrowed test edits) — `git status --porcelain` must show nothing you added. Then skip Phase 4 and go to Phase 5 with status `diagnosed` if a hypothesis was confirmed, or `unfixed` if every one was ruled out (the caller must not fix an unconfirmed cause). In the report, write `n/a — investigate-only` under **Fix Applied** and **Verification**.
+**With `--investigate-only`:** run the confirm check for each hypothesis in order until one is confirmed or all are ruled out, recording every result. Revert any temporary instrumentation (log lines, narrowed test edits) — `git status --porcelain` must show nothing you added. Then run Phase 3.6 for the confirmed cause (skip it when every hypothesis was ruled out), skip Phase 4 and go to Phase 5 with status `diagnosed` if a hypothesis was confirmed, or `unfixed` if every one was ruled out (the caller must not fix an unconfirmed cause). In the report, write `n/a — investigate-only` under **Fix Applied** and **Verification**.
+
+## Phase 3.6: Prevent the Class
+
+After the cause is confirmed and before a fix is chosen, read `$SHARED_DIR/prevent-the-class.md` and ask its question:
+
+> How can we prevent this class of bugs from happening again—not just fix this instance? Consider enforceable constraints such as lint rules, analyzers, type/API design, shared primitives, state-machine or architecture changes, and checks that catch other instances of the same failure.
+
+Follow steps 1-4 of that file: name the failure class and the invariant, search for the other instances (file:line each, or how you searched and found none), pick the smallest mechanism that holds the invariant, and keep mitigation apart from prevention. Output the handoff block (Failure class, Invariant, Affected scope, Prevention decision, Mitigation, Proof) before Phase 4. The answer shapes the fix; it is not a follow-up note written after a local patch. The scope freeze still holds: a mechanism that needs files outside the boundary becomes a recorded follow-up (an issue with the class, the instances and the proposed mechanism), not an edit.
 
 ## Phase 4: Implement
 
 Fix the confirmed cause.
 
-1. **Implement the fix** for the confirmed hypothesis. All changes MUST stay within the declared module boundary.
+1. **Implement the fix** for the confirmed hypothesis, shaped by the Phase 3.6 decision: the chosen mechanism, or the instance fix plus the recorded follow-up. Label any stopgap as mitigation. All changes MUST stay within the declared module boundary.
 2. **Verify:**
-   - If a local failing command exists, re-run it.
+   - If a local failing command exists, re-run it, and run the mechanism's own proof from the handoff block (it must reject a second representative bad instance, or be shown working across more than one case).
    - If the symptom is production/UI-only (no local failing command), run the app-path check instead: **Invoke skill `verify-app`** with args `--yes --journey <repro steps from Phase 1>`. The fix is verified only on a PASS verdict in the resulting evidence pack. For a desktop app that pack comes from `verify-desktop` (the real app on seeded data, screens judged against their mockups).
 3. **If verification still fails**, revert the change, return to Phase 3.5 for the next hypothesis. Repeat up to hypothesis #3.
 4. **If a fix requires changes outside the module boundary**, do NOT make the change. Instead, flag it:
@@ -118,6 +126,25 @@ Report format:
 
 ## Verification
 {Command run and its output — pass/fail; or the verify-app journey + evidence pack path and verdict}
+
+## Failure class
+{one sentence: the mistake that can recur}
+
+## Invariant
+{one sentence: what should always hold}
+
+## Affected scope
+{other instances, file:line each, or "searched <how>, none found"}
+
+## Prevention decision
+{existing guard <which> | new mechanism <which> | deferred: <follow-up link>}, and why it covers the class
+
+## Mitigation
+{the instance fix and any stopgap, or "none"}
+
+## Proof
+- Original failure: {the check, red before, green after; or n/a — investigate-only}
+- Prevention: {the mechanism's own proof, or "deferred"}
 ```
 
 **Also write the handoff file** to `$HOME/.agentic-workflow/$REPO_SLUG/investigations/<slug>/handoff.md` — this is the structured input `/bugHunt --from-investigation <path>` consumes, so the full investigation is never discarded:
@@ -145,6 +172,25 @@ repro: {failing command, or the verify-app journey steps}
 
 ## Suggested Fix
 {concrete fix direction, file paths, constraints}
+
+## Failure class
+{one sentence: the mistake that can recur}
+
+## Invariant
+{one sentence: what should always hold}
+
+## Affected scope
+{other instances, file:line each, or "searched <how>, none found"}
+
+## Prevention decision
+{existing guard <which> | new mechanism <which> | deferred: <follow-up link>}, and why it covers the class
+
+## Mitigation
+{the instance fix and any stopgap, or "none"}
+
+## Proof
+- Original failure: {the check, red before, green after; or "not run"}
+- Prevention: {the mechanism's own proof, or "deferred"}
 ```
 
 ## Phase 6: Report to User
@@ -155,6 +201,9 @@ Root cause analysis complete.
 Status: {fixed | unfixed | scope-breach | diagnosed}
 Module boundary: {path}
 Root cause: {one-line summary}
+Original bug: {the check's before and after}
+Class prevention: {what was built and its proof | existing guard <which> | none built}
+Deferred: {follow-ups with links | none}
 Report: ~/.agentic-workflow/<repo-slug>/investigations/{filename}
 Handoff: ~/.agentic-workflow/<repo-slug>/investigations/{slug}/handoff.md
 ```

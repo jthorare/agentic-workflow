@@ -656,7 +656,7 @@ Registered events (`EventDescriptor`, §2) reach instances as Temporal **Signals
 
 - Every `active` and `wait` state arms `Workflow.DelayAsync(timeout)` inside a cancellation scope. `then: retry`
   re-arms once in the same entry and re-emits the entering transition's effects (new activity ids, same effect
-  identity, §5.7); a second expiry parks with `timeout`. `then: park` and `then: escalate` do what they say.
+  identity, §5.7); a second expiry parks with `timeout`. `then: escalate` does what it says; *owner q93, 2026-10-23:* `then: park` on an active or wait state (not a child wait, not a desk run) also retries once before it parks, so a park is never the first sign of slowness.
 - **Takeover** cancels the scope, records `remaining` from `Workflow.UtcNow`, and arms the `takeoverIdle` timer (2 h),
   which emits `notify.desk` ("hand back {item}?") once and clears; it never hands back. **Handback** re-arms the state's
   timer with `remaining`. **An answer** to a park re-arms it with the full timeout. Rev 7's `arm` counter is gone: each

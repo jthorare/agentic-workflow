@@ -71,7 +71,7 @@ jobs:
         if: env.CHANGED == 'true'
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: env.CHANGED == 'true'
         with:
           # Node stays for the Ajv-based schema checks (scripts/package.json) and the .mjs gates.
@@ -107,7 +107,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
       - name: Rules links and index are current
@@ -131,7 +131,9 @@ jobs:
     name: .NET build and test
     needs: changes
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    # Run 40687528917 (0976cbfbe), the first to reach the last step: format 8.5 min, build 6.5, test 13, AOT smokes 7.5,
+    # hook contracts 2, so 39 min before "Install end to end", which the old 45 cut off after 6 (#1485).
+    timeout-minutes: 70
     env:
       CHANGED: ${{ needs.changes.outputs.dotnet }}
       DOTNET_CLI_TELEMETRY_OPTOUT: "1"
@@ -218,11 +220,14 @@ jobs:
         # tests (exit 5). A lane step that may select no tests adds --ignore-exit-code 8.
         # --report-xunit-ctrf writes one CTRF report per test project for the lane cap below; no
         # --report-xunit-ctrf-filename, or every project would write the same file.
-        run: dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf
+        # Lane=heavy (real Docker, browsers, index builds) is left out: it runs only by hand, by a lane or the owner, never on
+        # CI (owner, 2026-10-29; #1581). A test with no Lane trait still runs, so the lane cap below still finds it. Exit 8 is a project
+        # whose every test is heavy.
+        run: dotnet test --solution "$SLN" --no-build --configuration Release --results-directory TestResults --report-xunit-ctrf --filter-not-trait "Lane=heavy" --ignore-exit-code 8
       - name: Per-test lane cap (LANE-TEST-001/002)
         if: steps.sln.outputs.run == 'true'
         # Each test's own time against its lane's budget (unit 10 s, integration 60 s), and exactly one
-        # known Lane trait per test: the run above is unfiltered, so a test with none shows up (spec §4b.5).
+        # known Lane trait per test: the run above leaves out only Lane=heavy, so a test with none shows up (spec §4b.5).
         run: dotnet run --project tests/Aw.LaneCap.Testing --configuration Release --no-build -- TestResults
       - name: Recipe versions (a content change bumps the version)
         if: steps.sln.outputs.run == 'true'
@@ -254,7 +259,7 @@ jobs:
             echo "== $smoke"
             bash "$smoke"
           done
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: steps.sln.outputs.run == 'true'
         with:
           node-version-file: .nvmrc
@@ -285,7 +290,7 @@ jobs:
         run: node scripts/ci/lane-budgets.mjs --configuration Release
       - name: Upload test and AOT smoke output on failure
         if: failure() && steps.sln.outputs.run == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: dotnet-results
           path: |
@@ -303,7 +308,7 @@ jobs:
     name: C# scaffold generators
     needs: changes
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 60
     env:
       # The generators live under scripts/ (bash area) and their templates must build against the root C# settings
       # (dotnet area): either change runs them.
@@ -320,7 +325,7 @@ jobs:
         if: env.CHANGED == 'true'
         with:
           persist-credentials: false
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         if: env.CHANGED == 'true'
         with:
           node-version-file: .nvmrc

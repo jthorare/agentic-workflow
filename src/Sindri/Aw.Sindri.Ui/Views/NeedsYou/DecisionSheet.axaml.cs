@@ -7,6 +7,7 @@ using Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 namespace Aw.Sindri.Ui.Views.NeedsYou;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>
 /// The decision sheet: a press on an option asks the view model to send Decide with it. The option buttons are rebuilt when
 /// the options change (sending, a refusal), so focus goes back to the button of the option that was pressed: it is never lost.
@@ -66,3 +67,4 @@ internal sealed partial class DecisionSheet : UserControl
         _ = (button ?? (top as Control)?.FindControl<Control>("SheetTitle"))?.Focus(_keyboard ? NavigationMethod.Tab : NavigationMethod.Pointer);
     }
 }
+#pragma warning restore MA0182

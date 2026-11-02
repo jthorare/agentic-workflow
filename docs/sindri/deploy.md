@@ -63,8 +63,7 @@ the lease at once). It needs Docker access and is not part of any PR gate's unit
 ## Pins
 
 `deploy/images.lock` holds every third-party image by index digest and per-platform digests; `scripts/images-lock.sh check`
-checks its shape and that the `Dockerfile` names only pinned images (`bash scripts/tests/images-lock.test.sh`). Onyx's containers
-are pinned in `context/onyx.lock`, not here. To bump a base image: look the new digests up with
+checks its shape and that the `Dockerfile` names only pinned images (`bash scripts/tests/images-lock.test.sh`). To bump a base image: look the new digests up with
 `docker buildx imagetools inspect <repository>:<tag>`, change the lock rows and the `Dockerfile` `FROM`, run the check.
 
 ## sindri-pod.sh
@@ -79,15 +78,14 @@ and 4 are per verb, below. Output is plain: no colour or spinner.
 1. Terminal 1: create the namespace (label `pod-security.kubernetes.io/enforce=baseline`), then
    `helm install <release> deploy/helm/sindri --namespace <ns> --timeout 30m -f values.yaml` (no `--wait`).
 2. Terminal 1: `scripts/sindri-pod.sh connect --release <release> --namespace <ns>`. It waits for Sindri's container, opens the app and holds the terminal.
-3. Terminal 2: `scripts/sindri-pod.sh doctor --release <release> --namespace <ns>` every few minutes until the Onyx rows are ok (skip this and the next step when Onyx is off).
-4. Terminal 1: Ctrl-C, then `scripts/sindri-pod.sh connect --onyx --release <release> --namespace <ns>`; sign up in the browser and press Enter. Do it soon after install: Onyx's first account is unclaimed until it runs.
-5. Terminal 2: `scripts/sindri-pod.sh profile edit --no-approve ...` (creates the default profile when there is none); set `repo-pull.allowedHosts`.
-6. Terminal 2, per repo: `scripts/sindri-pod.sh repo add <name> <url> [--credential env:NAME] ...`. It records the repo and clones nothing.
-7. Terminal 2: `scripts/sindri-pod.sh approve ...`, once, and type the word. The first clone and index follow.
+3. Terminal 2: `scripts/sindri-pod.sh profile edit --no-approve ...` (creates the default profile when there is none); set `repo-pull.allowedHosts`.
+4. Terminal 2, per repo: `scripts/sindri-pod.sh repo add <name> <url> [--credential env:NAME] ...`. It records the repo and clones nothing.
+5. Terminal 2: `scripts/sindri-pod.sh approve ...`, once, and type the word. The first clone and index follow.
+6. Connect your sources: `kubectl exec -it <pod> -c sindri -- sindri index connect github|slack`, then approve again ([sources.md](sources.md)).
 
 ## Connect to a pod
 
-`scripts/sindri-pod.sh connect [--onyx [--adopt]] [--port PORT] [--check] [--dry-run]` opens the desktop
+`scripts/sindri-pod.sh connect [--port PORT] [--check] [--dry-run]` opens the desktop
 app on a Sindri that runs in a cluster (spec `2026-10-23-sindri-deployable-context-design.md` K8, §C.3). You need `kubectl`
 with exec and port-forward rights on the namespace, `jq`, and `sindri-ui` (`scripts/install-cs.sh --publish`, or
 `AW_SINDRI_UI`).
@@ -100,7 +98,7 @@ The app only follows a `control.json` in a home on your machine, so `connect` bu
 - `auth/human.token` holds the pod's current human token, read over `kubectl exec`.
 
 Before anything else `connect` checks its prerequisites; each failure is one line and exit 2: `kubectl` missing or refused a
-verb (`create pods/exec` or `create pods/portforward`, named in the line), the `sindri` container of the pod not ready (named; `connect` waits for it up to `AW_SINDRI_POD_RETRIES` attempts first, `--check` only reports; other containers, such as a crash-looping Onyx one, are mentioned only as information and never fail `connect`), the local port
+verb (`create pods/exec` or `create pods/portforward`, named in the line), the `sindri` container of the pod not ready (named; `connect` waits for it up to `AW_SINDRI_POD_RETRIES` attempts first, `--check` only reports; other containers, such as a crash-looping sidecar, are mentioned only as information and never fail `connect`), the local port
 taken (named, with `--port`), or `sindri-ui` not found (the line names `sindri`). `connect --check` reports every
 prerequisite and exits 0 or 2 without starting anything.
 
@@ -115,21 +113,7 @@ seconds it re-reads the pod. When the forward drops, or the pod restarts (a new 
 shows "control plane not running" meanwhile. It ends when you close the app, on Ctrl-C, or when the attempts are spent; it
 stops only the port-forwards it started.
 
-`--onyx [--adopt]` also forwards Onyx's page. Onyx runs as sibling containers in the pod, started by the kubelet at install; its
-port is read from the pod's `AW_SINDRI_ONYX_URL` (8081 when that has none) and forwarded to the same local port, because Onyx's
-`WEB_DOMAIN` is that address. `AW_SINDRI_POD_ONYX_PORT` overrides the local port and prints a warning (sign-up redirects and
-connector OAuth may land on the pod's port). A taken local port is exit 2: "local port N is in use: stop what uses it, then run
-this again". With `AW_SINDRI_ONYX_URL` unset in the pod, Onyx is off: "Onyx is off in this install (onyx.enabled=false); use
-connect." and exit 2. It prints "Onyx's page: <address>", then runs `kubectl exec -it <pod> -c sindri -- env
-AW_SINDRI_ONYX_FORWARD_URL=<address> sindri onyx attach [--adopt]` at the same terminal; `--adopt` is for an Onyx whose admin
-account an earlier Sindri volume made (attach asks for that admin's login). `attach` waits for Onyx's health route for up to 20
-minutes (`SND-ONYX-016` after that: run `sindri-pod.sh doctor`, then `connect --onyx` again), checks the pinned release, then
-runs the account steps; sign up in the browser at the forwarded address and press Enter. Ctrl-C during `attach` stops that command
-only. A failure is printed with its own code, followed by `attach exited <n>` on stderr; the app stays connected and the script's
-own exit codes stay 0, 2 and 3. Re-running is safe. With Onyx's containers not ready, `connect` carries on and prints
-"Onyx: not answering, see sindri doctor".
-
-Exit codes: 0 a normal end (Ctrl-C), 2 a prerequisite or start failure (or Onyx off with `--onyx`), 3 gave up reconnecting.
+Exit codes: 0 a normal end (Ctrl-C), 2 a prerequisite or start failure, 3 gave up reconnecting.
 The wait for the sindri container takes up to 10 minutes, printing its state every 15 s (`AW_SINDRI_POD_RETRIES` and
 `AW_SINDRI_POD_RETRY_WAIT` override its attempts and spacing, as they do for reconnecting); the not-running line names the state and
 `kubectl logs <pod> -c sindri`.
@@ -149,7 +133,7 @@ in `$EDITOR` (`vi` if unset).
   path is passed in `AW_SINDRI_PROFILE` until `sindri profile validate --file` exists). Exit 2 is invalid: the errors are put at
   the top of the file as `# sindri-pod:` comments and the editor reopens. Leaving the file as it was aborts with exit 3 and keeps
   your file.
-- Valid: the live file is replaced only if the pod's copy still has the hash it had. If a `repo add`, an `onyx attach` or another
+- Valid: the live file is replaced only if the pod's copy still has the hash it had. If a `repo add` or another
   edit changed it meanwhile, nothing is replaced and it prints "The profile on the pod changed while you were editing (<the
   top-level keys that differ>). Nothing was replaced; your edit is kept at <path>. Run profile edit again and make the change on
   top of the new copy." (exit 4). Otherwise it runs `kubectl exec -it <pod> -c sindri -- sindri profile approve` at your terminal,
@@ -171,5 +155,5 @@ this script's own failures: usage, the pod unreachable):
 - `scripts/sindri-pod.sh repo add <name> <url> [--credential env:NAME]` runs `sindri repo add --url <url> --name <name> [--credential ...]`.
   It records the repo in the profile and clones nothing; it refuses an unlisted host (`SND-REPO-005`), so run `profile edit
   --no-approve` first. The clone runs after you approve.
-- `scripts/sindri-pod.sh approve` runs `sindri profile approve`. Once, after `connect --onyx` and `repo add`.
-- `scripts/sindri-pod.sh doctor` runs `sindri doctor`. The Onyx rows read "not set up" or warn until Onyx's containers answer.
+- `scripts/sindri-pod.sh approve` runs `sindri profile approve`. Once, after `repo add`.
+- `scripts/sindri-pod.sh doctor` runs `sindri doctor`.

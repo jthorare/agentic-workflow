@@ -1,0 +1,30 @@
+{
+  "model": "claude-opus-5-5",
+  "searches": [
+    {
+      "tool": "context_query",
+      "query": "invitation expiry reminder email"
+    },
+    {
+      "tool": "context_neighbors",
+      "query": "feature:invitations",
+      "depth": 3
+    },
+    {
+      "tool": "code-search",
+      "query": "expiresAt"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "C1",
+      "title": "Nightly job that purges expired invitations",
+      "kind": "job",
+      "citation": "code:src/jobs/purgeInvitations.ts",
+      "excerpt": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "query": "expiresAt",
+      "anchor": "code:src/jobs/purgeInvitations.ts",
+      "why": "A changed expiry window changes which rows this job deletes."
+    }
+  ]
+}

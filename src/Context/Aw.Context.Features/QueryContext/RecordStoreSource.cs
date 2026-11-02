@@ -1,0 +1,103 @@
+using Aw.Context.Core;
+using Aw.Context.Core.Audience;
+using Aw.Context.Core.Records;
+using Aw.Context.Core.Search;
+using Aw.Context.Core.Sources;
+using Aw.Kernel;
+
+namespace Aw.Context.Features.QueryContext;
+
+/// <summary>
+/// The record store's lexical leg as one more source of the query (spec §6.1): the leg's best chunk per record, ranked as the leg ordered them, scores dropped.
+/// A hit's reference carries the stored record's version and link and its key as the canonical key, so it fuses with the other sources' hits of the same record.
+/// A store that can't be read, or a leg that says it is degraded, is an unavailable source. The text it fetches is the stored, already scrubbed chunks.
+/// </summary>
+internal sealed class RecordStoreSource(ILexicalLeg leg, IRecordStore store, AudienceScope scope, TimeProvider clock, IReadOnlySet<string> teams) : IContextSource
+{
+    private const int MaxChunks = 1000;
+
+    public static SourceId Id { get; } = SourceId.From("records");
+
+    private static readonly SourceDescriptor _descriptor = new(Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false) { HonorsPin = true };
+
+    public SourceDescriptor Describe() => _descriptor;
+
+    public async ValueTask<Result<IReadOnlyList<SourceHit>>> Search(SourceQuery query, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        var pin = query.Pin;
+        var found = await leg.Search(query.Terms, scope, pin is null ? ILexicalLeg.DefaultLimit : MaxChunks, cancellationToken).ConfigureAwait(false);
+        if (found.IsError)
+        {
+            return found.Error;
+        }
+
+        if (found.Value.Degraded is { } degraded)
+        {
+            return ContextErrors.SourceUnavailable.With(degraded.Message);
+        }
+
+        // Under a pin the leg is asked for its most chunks and the limit is applied here, to the in-pin records, so an in-pin record is not lost behind fifty out-of-pin ones.
+        var records = found.Value.Hits.Select(h => h.Chunk.Record);
+        if (pin is not null)
+        {
+            records = records.Where(pin.HoldsRecord).ToList().Take(ILexicalLeg.DefaultLimit);
+        }
+
+        return await RecordHits.Read(store, (scope, teams), clock, records, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>One record of the store as a hit, the way the lexical leg's hits are read (live and allowed only); none when it is gone or not the caller's.</summary>
+    public ValueTask<Result<IReadOnlyList<SourceHit>>> Anchor(RecordKey key, CancellationToken cancellationToken) => RecordHits.Read(store, (scope, teams), clock, [key], cancellationToken);
+
+    public async ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(reference);
+        var record = await store.Get(reference.Canonical, cancellationToken).ConfigureAwait(false);
+        if (record.IsError)
+        {
+            return record.Error;
+        }
+
+        if (record.Value is not { RemovedAt: null } stored || !scope.Allows(stored.Audience, stored.Key))
+        {
+            return ContextErrors.UnknownAnchor.With("not a record of this store");   // gone, or never the caller's to read
+        }
+
+        if (stored.Blocked)
+        {
+            return new SourceRecord(reference, stored.Kind, stored.Title, string.Empty, stored.Author, stored.CreatedAt, stored.UpdatedAt) { Blocked = true };
+        }
+
+        var chunks = await store.Chunks(stored.Key, cancellationToken).ConfigureAwait(false);
+        return chunks.IsError
+            ? chunks.Error
+            : new SourceRecord(reference, stored.Kind, stored.Title, string.Join('\n', chunks.Value.Select(c => c.Text)), stored.Author, stored.CreatedAt, stored.UpdatedAt);
+    }
+
+    public async ValueTask<Result<IReadOnlyList<SourceVersion?>>> Versions(IReadOnlyList<SourceRef> refs, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(refs);
+        var versions = new List<SourceVersion?>();
+        foreach (var reference in refs)
+        {
+            var record = await store.Get(reference.Canonical, cancellationToken).ConfigureAwait(false);
+            if (record.IsError)
+            {
+                return record.Error;
+            }
+
+            versions.Add(record.Value is { RemovedAt: null } stored && scope.Allows(stored.Audience, stored.Key) ? stored.Version : null);
+        }
+
+        return versions;
+    }
+
+    public async ValueTask<SourceHealth> Probe(CancellationToken cancellationToken)
+    {
+        var stamps = await store.Stamps(cancellationToken).ConfigureAwait(false);
+        return stamps.IsError
+            ? new SourceHealth(SourceState.Unavailable, "the record store can't be read", stamps.Error.Code)
+            : new SourceHealth(SourceState.Ok, "the record store is readable", Code: null);
+    }
+}

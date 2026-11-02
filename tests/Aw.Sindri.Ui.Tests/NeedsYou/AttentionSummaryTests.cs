@@ -25,6 +25,19 @@ public sealed class AttentionSummaryTests
     }
 
     [Fact]
+    public void The_summary_line_counts_the_rows_the_card_lists_while_the_title_and_badge_count_every_row()
+    {
+        var feed = Feed(NeedsYouRows.Park(), NeedsYouRows.Park(), NeedsYouRows.Park(), NeedsYouRows.Profile());   // the 4th stands for a setup row Home's setup line covers
+
+        var listed = AttentionSummary.For(feed, ShellState.Normal, A.Noon, sessions: null, listed: 3);
+        var all = AttentionSummary.For(feed, ShellState.Normal, A.Noon, sessions: null, listed: null);
+
+        Assert.StartsWith("3 need you", listed.SummaryLine, StringComparison.Ordinal);
+        Assert.StartsWith("4 need you", all.SummaryLine, StringComparison.Ordinal);
+        Assert.Equal((4, "(4) Needs you · Sindri"), (listed.Badge, listed.Title));
+    }
+
+    [Fact]
     public void Badge_counts_every_row_including_calm()
     {
         Assert.Equal(3, For(Feed(NeedsYouRows.Park(), NeedsYouRows.Failure(), NeedsYouRows.Profile())).Badge);

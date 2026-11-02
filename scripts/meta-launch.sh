@@ -9,7 +9,8 @@
 # `tmux -L <team> attach -t =<team>-<lane>`. A team started before this change stays on tmux's default socket until it is relaunched.
 # launcher.json (scripts/launcher-lib.sh; docs/csharp/sindri-launcher.md) changes two things, and with no file nothing
 # changes: the viewer (warp, the layout above; exec-template, one window per lane running the file's argv; print, one
-# `tmux attach` line per lane) and each lane's agent (meta.lanesAgent, meta.lanes.<lane>; Claude Code by default).
+# `tmux attach` line per lane) and, when team.json has no "agent", each lane's agent (meta.lanesAgent, meta.lanes.<lane>;
+# Claude Code by default). team.json "agent" sets every lane, including the meta lane, and wins over those two fields.
 # Before it creates anything it looks (read-only: has-session) for `<team>-<lane>` sessions of the lanes it would start on tmux's
 # DEFAULT socket, where a team started before the switch still runs, and refuses (exit 1) if any exist: starting them again
 # would run a second claude on the same transcripts. The owner stops the old team, then relaunches; --allow-legacy skips the check (the meta session never passes it).
@@ -134,6 +135,7 @@ case "$repo" in /*) [ -d "$repo" ] || { echo "meta-launch: repo $repo not found"
   *) echo "meta-launch: repo must be an absolute path (Warp requires it): '$repo'" >&2; exit 1 ;; esac
 meta_lane="$(jq -r '.metaLane // "meta"' "$config")"
 launcher_load "$state_dir" || exit 1
+launcher_apply_team_agent "$config" "$meta_lane" || exit $?
 if [ -n "${AW_LAUNCHER_CONFIG:-}" ]; then   # lanes read the same file: pass it on, as an absolute path (their cwd is the repo)
   AW_LAUNCHER_CONFIG="$(cd "$(dirname "$launcher_file")" && pwd)/$(basename "$launcher_file")"; export AW_LAUNCHER_CONFIG
 fi
@@ -154,7 +156,7 @@ for l in "${A[@]}"; do
   [ "$l" != "$meta_lane" ] && [ "$(agent_of "$l")" != "$meta_agent" ] && odd="${odd:+$odd, }$l ($(agent_of "$l"))"
 done
 if [ -n "$odd" ]; then
-  echo "meta-launch: a team runs one agent: the meta lane '$meta_lane' runs $meta_agent, but $odd do not. Fix launcher.json: set meta.lanes.$meta_lane to the lanes' agent, or put the lanes back on $meta_agent (meta.lanesAgent and meta.lanes.<lane>)" >&2
+  echo "meta-launch: a team runs one agent: the meta lane '$meta_lane' runs $meta_agent, but $odd do not. Fix launcher.json: set meta.lanes.$meta_lane to the lanes' agent, or put the lanes back on $meta_agent (meta.lanesAgent and meta.lanes.<lane>). Or set agent in team.json to one catalog id: it sets every lane, including the meta lane, and wins over launcher.json." >&2
   exit 1
 fi
 if [ "$viewer" = exec-template ] && [ "$(jq -r '.viewer.argv | type' <<< "$LAUNCHER_DOC")" != array ]; then

@@ -5,12 +5,10 @@ using Aw.Sindri.Infrastructure.Processes;
 namespace Aw.Sindri.Infrastructure.Notifications;
 
 /// <summary>
-/// macOS notifications through 'osascript' (engine spec §6.3: "shown as a macOS notification when one is available").
-/// The title and text travel as script arguments ('on run argv'), never inside the script, so no text needs escaping.
-/// An osascript banner has no click action, so when 'terminal-notifier' is on PATH and the notice has a deep link, the banner
-/// goes through it and a click runs 'sindri-ui &lt;link&gt;' (see <see cref="NotifierCommand"/>); without it the banner is the same as before.
-/// Elsewhere, without osascript, or when it doesn't finish within 5 s, nothing is shown: the notifications file is the
-/// record, and a notice is never failed for want of a banner.
+/// macOS notifications (engine spec §6.3: "shown as a macOS notification when one is available") through 'terminal-notifier',
+/// whose click runs 'sindri-ui &lt;link&gt;' (see <see cref="NotifierCommand"/>). An osascript banner does have a click action, but it
+/// opens Script Editor, not the app, so none is posted: without terminal-notifier or a deep link, elsewhere, or when it doesn't
+/// finish within 5 s, nothing is shown. The notifications file is the record, and a notice is never failed for want of a banner.
 /// </summary>
 internal sealed class OsascriptNotifier : IOsNotifier
 {
@@ -23,39 +21,45 @@ internal sealed class OsascriptNotifier : IOsNotifier
             return;
         }
 
-        var command = NotifierCommand.For(title, text, deepLink, NotifierCommand.OnPath("terminal-notifier"), NotifierCommand.UiBinary(Environment.GetEnvironmentVariable, AppContext.BaseDirectory));
+        var notifier = NotifierCommand.OnPath("terminal-notifier");
+        if (notifier is null || deepLink is null || !NotifierCommand.Shows(deepLink, notifier))
+        {
+            return;
+        }
+
+        var command = NotifierCommand.For(title, text, deepLink, notifier, NotifierCommand.UiBinary(Environment.GetEnvironmentVariable, AppContext.BaseDirectory));
         var start = ChildEnvironment.Start(command.File, command.Arguments);
         start.RedirectStandardOutput = true;
         start.RedirectStandardError = true;
         try
         {
-            using var osascript = Process.Start(start);
-            if (osascript is not null)
+            using var banner = Process.Start(start);
+            if (banner is not null)
             {
-                await Wait(osascript, cancellationToken).ConfigureAwait(false);
+                await Wait(banner, cancellationToken).ConfigureAwait(false);
             }
         }
         catch (Win32Exception)
         {
-            // no osascript on PATH: no banner
+            // terminal-notifier vanished since the PATH lookup: no banner
         }
     }
 
-    private static async Task Wait(Process osascript, CancellationToken cancellationToken)
+    private static async Task Wait(Process banner, CancellationToken cancellationToken)
     {
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(_budget);
         try
         {
-            var output = osascript.StandardOutput.ReadToEndAsync(deadline.Token);
-            var error = osascript.StandardError.ReadToEndAsync(deadline.Token);
-            await osascript.WaitForExitAsync(deadline.Token).ConfigureAwait(false);
+            var output = banner.StandardOutput.ReadToEndAsync(deadline.Token);
+            var error = banner.StandardError.ReadToEndAsync(deadline.Token);
+            await banner.WaitForExitAsync(deadline.Token).ConfigureAwait(false);
             _ = await output.ConfigureAwait(false);
             _ = await error.ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            osascript.Kill();   // never leave osascript running
+            banner.Kill();   // never leave the banner process running
             if (cancellationToken.IsCancellationRequested)
             {
                 throw;

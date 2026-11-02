@@ -72,6 +72,6 @@ public sealed class SheetTabWalkTests : FrameHost
         }
 
         Assert.Empty(wrong);
-        Assert.Equal(["NeedsYouActionControl:Decline REQ-01JD4", "DecisionOption:Accept DEC-1", "DecisionOption:Decline DEC-1", "DecisionSheetViewModel:" + Labels.DecisionNoteLabel], walk);
+        Assert.Equal(["NeedsYouActionControl:Decline REQ-01JD4", "DecisionSheetViewModel:" + Labels.DecisionNoteLabel, "DecisionOption:Accept DEC-1", "DecisionOption:Decline DEC-1"], walk);
     });
 }

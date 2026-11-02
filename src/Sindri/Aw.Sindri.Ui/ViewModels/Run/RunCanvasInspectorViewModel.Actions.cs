@@ -1,8 +1,9 @@
 using Aw.Sindri.Ui.Navigation;
+using Aw.Sindri.Ui.ViewModels.Takeover;
 
 namespace Aw.Sindri.Ui.ViewModels.Run;
 
-/// <summary>The inspector's actions (<see cref="RunCanvasInspectorViewModel"/>, continued): all of them navigate; none sends a command.</summary>
+/// <summary>The inspector's actions (<see cref="RunCanvasInspectorViewModel"/>, continued): Take over on a running step sends the takeover; the others navigate.</summary>
 internal sealed partial class RunCanvasInspectorViewModel
 {
 #pragma warning disable CA1822, MA0041 // fixed words are properties because the view binds them
@@ -77,14 +78,38 @@ internal sealed partial class RunCanvasInspectorViewModel
     /// <summary>True when any action is drawn.</summary>
     public bool HasActions => HasTakeOver || HasContext || Protected is not null;
 
-    /// <summary>Opens the owning instance's view in Needs you (Take over, Hand back, Decide). Sends nothing: the takeover itself is made there.</summary>
+    /// <summary>Take over on a running step sends "ApplyCommand:takeover" for its instance, once per press, and says what came of it; Hand back and Decide open the instance in Needs you, where they are made.</summary>
     public void TakeOver()
     {
-        if (_owner is { } owner)
+        if (_owner is not { } owner)
+        {
+            return;
+        }
+
+        if (State != RunNodeState.Running)
         {
             _ports.Go(new DeepLink(DeepLinkKind.NeedsYou, owner.Id));
         }
+        else if (Sender is { } sender)
+        {
+            _ = sender.Press(owner.Id, owner.Current.Status.Run?.Launch, Say);
+        }
+        else
+        {
+            Say(new TakeoverView(Labels.TakeoverNotSent, string.Empty));
+        }
     }
+
+    private void Say(TakeoverView view) => (TakeOverLine, TakeOverCommand) = (view.Line, view.Command);
+
+    /// <summary>What the last Take over came to, in words ("Sending…", the viewer's outcome, or the refusal with its code); empty before one.</summary>
+    public string TakeOverLine { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>The attach command to copy when no terminal opened; empty otherwise.</summary>
+    public string TakeOverCommand { get; private set => Set(ref field, value); } = string.Empty;
+
+    /// <summary>Sends the takeover; set by the page, null when nothing can be sent.</summary>
+    internal TakeoverSender? Sender { get; init; }
 
     /// <summary>Opens the item's map in Context.</summary>
     public void SeeContext()

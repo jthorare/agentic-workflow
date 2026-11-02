@@ -89,6 +89,8 @@ Each provider's `install-hooks.sh` installs them by copying, not symlinking, so 
 
 **Lever hooks** (context-guard, done-gate, scope-gate, external-write-guard, wake gating, judge-health, prompt-sort, sindri-nudge, trait-check) are installed by `scripts/install-*.sh --provider claude|codex|cursor`, with `claude` as the default. `setup.sh` runs them for each selected provider. A lever with no equivalent event on a provider prints `skipped for <provider>` and writes nothing. For example, context-guard is skipped on Cursor.
 
+`providers/{claude,codex}/install-hooks.sh --target-dir DIR` installs into DIR as an agent config home (a separate-login home, SB-8): `DIR/settings.json` or `DIR/hooks.json`, scripts under `DIR/hooks/`, and command strings that name `DIR/hooks`. The owner's `~/.claude`, `~/.codex` and state dir are not touched; a missing DIR exits 2 with usage. Test: `providers/tests/install-hooks-target.test.sh`.
+
 Tests (all run under a temp `HOME`): `config/hooks/tests/{codex-adapter,cursor-adapter,failopen,provider-install-hooks,probe-log,judge-health,sindri-nudge,meta-hooks,fleet-state}.test.sh`, plus `config/lib/tests/{prompt-sort,install-prompt-sort,trait-check,install-trait-check}.test.sh` (run through the `config/lib/tests/*.test.sh` glob).
 
 ## Trait check (opt-in)

@@ -41,16 +41,46 @@ public sealed class RunInspectorViewModelTests
         return page;
     }
 
-    [Fact]
-    public async Task Take_over_navigates_and_sends_nothing()
+    private static async Task Until(Func<bool> done)
     {
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        limit.CancelAfter(TimeSpan.FromSeconds(10));
+        while (!done())
+        {
+            await Task.Delay(10, limit.Token);
+        }
+    }
+
+    [Fact]
+    public async Task Take_over_on_a_running_step_sends_one_takeover_and_shows_the_outcome()
+    {
+        _server.CommandAnswer = new RouteAnswer(HttpStatusCode.OK, """{"alreadyApplied":false,"viewer":{"kind":"warp","label":"Warp","outcome":"opened"}}""");
         var page = await Opened();
         page.Select("plan/produce");
+        var inspector = page.Inspector!;
 
-        page.Inspector!.TakeOver();
+        inspector.TakeOver();
+        await Until(() => inspector.TakeOverLine.Length > 0 && inspector.TakeOverLine != Labels.AttachSending);
 
-        Assert.Equal(DeepLinkKind.NeedsYou, Assert.Single(_links).Kind);
-        Assert.Empty(_server.CompleteCalls);
+        var sent = Assert.Single(_server.CommandCalls);
+        Assert.Equal(("WFI-plan", CommandKind.Takeover), (sent.Instance, sent.Body.Kind));
+        Assert.Equal(Labels.LaunchOpenedIn("Warp"), inspector.TakeOverLine);
+        Assert.Empty(_links);
+    }
+
+    [Fact]
+    public async Task A_refused_takeover_shows_its_code_in_the_run_inspector()
+    {
+        _server.CommandAnswer = RouteAnswer.Problem(HttpStatusCode.Conflict, "SND-WF-041", "That run has moved on. Read the instance again.");
+        var page = await Opened();
+        page.Select("plan/produce");
+        var inspector = page.Inspector!;
+
+        inspector.TakeOver();
+        await Until(() => inspector.TakeOverLine.Length > 0 && inspector.TakeOverLine != Labels.AttachSending);
+
+        Assert.Contains("SND-WF-041", inspector.TakeOverLine, StringComparison.Ordinal);
+        _ = Assert.Single(_server.CommandCalls);
     }
 
     [Fact]

@@ -78,7 +78,7 @@ public sealed class ContextGoldenTests
         Assert.True(ContextWords.Known(ContextWords.SymbolStates, lenses.Bands.Code.Symbols.State));
         Assert.All(lenses.Bands.Product.Own.Select(n => n.Trust).Concat(lenses.Bands.Intent.Records.Select(r => r.Trust)), t => Assert.True(ContextWords.Known(ContextWords.Trusts, t), t));
         Assert.All(lenses.Searched.Sources, s => Assert.True(ContextWords.Known(ContextWords.SearchedStates, s.State), s.State));
-        Assert.Contains(lenses.Searched.Sources, s => s.State == "not-configured");
+        Assert.Contains(lenses.Searched.Sources, s => s.State == "unavailable");
         Assert.False(ContextWords.Known(ContextWords.Groups, "future-group"));
         Assert.False(ContextWords.Known(ContextWords.Groups, word: null));
     }

@@ -1,16 +1,16 @@
 schema: 1
 id: workflow.step
-version: 4
+version: 5
 displayName: "Do one step, check it and review it"
 inputs:
   - { key: fact:spec, label: "Spec", type: text, kind: text }
 initial: produce
 states:
-  produce: { kind: active, step: step.produce, loop: revisions, timeout: { after: 4h, then: park },
+  produce: { kind: active, step: step.produce, loop: revisions, timeout: { after: 1d, then: park },
              budget: { tokens: 5M }, next: "Produce the Step output for {item} (round {loop.revisions}/{loop.revisions.cap})." }
   checks:  { kind: active, step: step.checks, timeout: { after: 30m, then: retry },
              next: "Run the Step's deterministic checks." }
-  verify:  { kind: active, step: step.verify, timeout: { after: 4h, then: park },
+  verify:  { kind: active, step: step.verify, timeout: { after: 1d, then: park },
              next: "Review the output as the verifier." }
   done:    { kind: terminal, outcome: resolved }
 transitions:

@@ -5,9 +5,11 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Context;
+using Aw.Sindri.Ui.Views.Controls;
 
 namespace Aw.Sindri.Ui.Views.Context;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Context page (U9a owns this class): the head, the control row and the stage.</summary>
 internal sealed partial class ContextPage : UserControl
 {
@@ -15,11 +17,19 @@ internal sealed partial class ContextPage : UserControl
     private const double PageEdge = 24;   // the room the page keeps under the stage
     private ContextPageViewModel? _page;
     private ScrollViewer? _scroller;
+    private Control? _opener;   // the button that opened the page sheet, for the focus to return to
 
     public ContextPage()
     {
         InitializeComponent();
         ContextStack.Canvas.EmptyClicked += (_, _) => _page?.CloseInspector();   // a click on the empty canvas closes the inspector
+        AddHandler(Whole.PagesSectionView.AddSeveralRequestedEvent, (_, e) => _page?.OpenAddSeveralPages(noConcept: ReferenceEquals(e.Source, NoConceptPages)));
+        NoConceptPages.RetryRequested += (_, _) => _ = _page?.OpenNoConcept();
+        NoConceptPages.CloseRequested += (_, _) =>
+        {
+            _ = _page?.CloseNoConcept();
+            _ = ContextNoConceptLink.Focus(NavigationMethod.Tab);
+        };
     }
 
     /// <inheritdoc/>
@@ -41,6 +51,7 @@ internal sealed partial class ContextPage : UserControl
         base.OnAttachedToVisualTree(e);
         _scroller = this.FindAncestorOfType<ScrollViewer>();
         _scroller?.PropertyChanged += OnScrollerChanged;
+        LayoutUpdated += OnLayoutUpdated;   // a banner that shows above the stage moves it: the height follows
         ContextStack.DataContext = _page?.Map;
         FitStage();
     }
@@ -50,6 +61,7 @@ internal sealed partial class ContextPage : UserControl
     {
         _scroller?.PropertyChanged -= OnScrollerChanged;
         _scroller = null;
+        LayoutUpdated -= OnLayoutUpdated;
 
         base.OnDetachedFromVisualTree(e);
     }
@@ -58,9 +70,16 @@ internal sealed partial class ContextPage : UserControl
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
-        if (!e.Handled && e.Source is not TextBox && e.KeyModifiers == KeyModifiers.None && _page is { } page)
+        if (!e.Handled && e.Source is not TextBox && _page is { } page)
         {
-            e.Handled = Handle(page, e.Key);
+            if (e.KeyModifiers == KeyModifiers.None)
+            {
+                e.Handled = Handle(page, e.Key);
+            }
+            else if (e.KeyModifiers == KeyModifiers.Alt && e.Key == Key.Left)
+            {
+                e.Handled = page.Up();   // Alt+Left goes up a layer, as Backspace does
+            }
         }
     }
 
@@ -70,6 +89,11 @@ internal sealed partial class ContextPage : UserControl
         if (key == Key.Escape)
         {
             return page.Back();   // the inspector closes first, then the camera goes back to the whole map
+        }
+
+        if (key == Key.Back)
+        {
+            return page.Up();   // one layer up: the node, the query, the feature, the concept
         }
 
         if (key is Key.F or Key.M)
@@ -111,6 +135,17 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // The clear button goes when the box is empty; a person who pressed it keeps focus, in the box they cleared.
+    private void ShowClear(bool shown)
+    {
+        if (!shown)
+        {
+            FocusHandOff.Before(AnchorClear, AnchorBox);
+        }
+
+        AnchorClear.IsVisible = shown;
+    }
+
     // The clear button: the box empties and the map is whole again.
     private void OnClearSearch(object? sender, RoutedEventArgs e)
     {
@@ -120,12 +155,31 @@ internal sealed partial class ContextPage : UserControl
         }
     }
 
+    // The head's "Pages in no concept (N)": the panel opens and reads them; focus goes to its head.
+    private void OnNoConcept(object? sender, RoutedEventArgs e)
+    {
+        _ = _page?.OpenNoConcept();
+        NoConceptPages.FocusHead();
+    }
+
+    // The back button on the failure row of a concept's map: up to the concepts.
+    private void OnUp(object? sender, RoutedEventArgs e) => _page?.Up();
+
     // Retry on the failure row: the whole map is read again.
     private void OnRetryWhole(object? sender, RoutedEventArgs e)
     {
         if (DataContext is ContextPageViewModel page)
         {
-            _ = page.ReadWhole(CancellationToken.None);
+            _ = page.ReadMapTop(CancellationToken.None);
+        }
+    }
+
+    // Retry on the item note: See its context is made again.
+    private void OnRetryItem(object? sender, RoutedEventArgs e)
+    {
+        if (DataContext is ContextPageViewModel page)
+        {
+            _ = page.RetryItem(CancellationToken.None);
         }
     }
 
@@ -152,17 +206,43 @@ internal sealed partial class ContextPage : UserControl
         {
             Sync(_page);
         }
+        else if (_page is not null && IsSheetProperty(e.PropertyName))
+        {
+            SheetFocus(_page.ShowPageSheet || _page.ShowAddSeveralPages);
+        }
         else if (_page is not null && string.Equals(e.PropertyName, nameof(ContextPageViewModel.AnchorText), StringComparison.Ordinal))
         {
-            AnchorClear.IsVisible = _page.AnchorText.Length > 0;   // the clear button shows while the box holds something
+            ShowClear(_page.AnchorText.Length > 0);   // the clear button shows while the box holds something
         }
+    }
+
+    // Closing the page sheet puts focus back on the button that opened it; that button was drawn again when the section read its pages, so the section's head takes it then.
+    private void ReturnFocus()
+    {
+        var opener = _opener;
+        _opener = null;
+        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+        {
+            if (opener is { IsEffectivelyVisible: true } && TopLevel.GetTopLevel(opener) is not null)
+            {
+                _ = opener.Focus(NavigationMethod.Tab);
+            }
+            else if (NoConceptPages.IsEffectivelyVisible)
+            {
+                NoConceptPages.FocusHead();
+            }
+            else
+            {
+                WholeMap.FindControl<Whole.PagesSectionView>("WholePages")?.FocusHead();
+            }
+        }, Avalonia.Threading.DispatcherPriority.Loaded);
     }
 
     // The parts of the control row that take lists or controls the view model does not bind: the coverage strip.
     private void Sync(ContextPageViewModel page)
     {
         ContextStack.DataContext = page.Map;
-        AnchorClear.IsVisible = page.AnchorText.Length > 0;
+        ShowClear(page.AnchorText.Length > 0);
         if (page.Map is { } map)
         {
             ContextCoverageStrip.Areas = map.CoverageAreas;
@@ -174,6 +254,8 @@ internal sealed partial class ContextPage : UserControl
     }
 
     private static void Dispatch(Action action) => Avalonia.Threading.Dispatcher.UIThread.Post(action);
+
+    private void OnLayoutUpdated(object? sender, EventArgs e) => FitStage();
 
     private void OnScrollerChanged(object? sender, AvaloniaPropertyChangedEventArgs e)
     {
@@ -191,7 +273,14 @@ internal sealed partial class ContextPage : UserControl
             return;
         }
 
+        // The stage fills what the window leaves: the viewport less where the page starts in it, where the stage starts in the page, and the edge. It starts at the top of its row, so a row taller than it never centres it.
         var top = ContextStageHost.TranslatePoint(default, this)?.Y ?? 0;
-        ContextStageHost.Height = Math.Max(StageMinimum, scroller.Viewport.Height - top - PageEdge);
+        var start = scroller.Content is Visual content ? this.TranslatePoint(default, content)?.Y ?? 0 : 0;
+        var height = Math.Max(StageMinimum, scroller.Viewport.Height - start - top - PageEdge);
+        if (Math.Abs(ContextStageHost.Height - height) > 0.5 || double.IsNaN(ContextStageHost.Height))
+        {
+            ContextStageHost.Height = height;
+        }
     }
 }
+#pragma warning restore MA0182

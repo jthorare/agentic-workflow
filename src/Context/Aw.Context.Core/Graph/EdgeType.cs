@@ -18,11 +18,11 @@ public enum EdgeType
     [JsonStringEnumMemberName("moves-to")]
     MovesTo,
 
-    /// <summary>Surface or Action → Thing.</summary>
+    /// <summary>Surface, Action or Code → Thing (a code file that reads a data store).</summary>
     [JsonStringEnumMemberName("reads")]
     Reads,
 
-    /// <summary>Surface or Action → Thing.</summary>
+    /// <summary>Surface, Action or Code → Thing (a code file that writes a data store).</summary>
     [JsonStringEnumMemberName("writes")]
     Writes,
 
@@ -61,4 +61,12 @@ public enum EdgeType
     /// <summary>Feature, Record or Decision → Concept.</summary>
     [JsonStringEnumMemberName("belongs-to")]
     BelongsTo,
+
+    /// <summary>CodeUnit → Feature: a cross-cutting name the model gave a file. Never walked by a lens; it comes last because the store and map files key by the enum's names (spec 2026-10-27 §2.3).</summary>
+    [JsonStringEnumMemberName("tags")]
+    Tags,
+
+    /// <summary>Action or Surface → Concept: how a person meets the concept. Many per source; a feature's single home stays 'belongs-to'. Last because the store and map files key by the enum's names (pages spec §3.2).</summary>
+    [JsonStringEnumMemberName("expresses")]
+    Expresses,
 }

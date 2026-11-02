@@ -6,6 +6,7 @@ using Aw.Sindri.Ui.Views.Layout;
 
 namespace Aw.Sindri.Ui.Views.Queue;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Queue page; a row's title click opens its sheet, and Create item opens the form.</summary>
 internal sealed partial class QueuePage : UserControl
 {
@@ -60,7 +61,11 @@ internal sealed partial class QueuePage : UserControl
 
     private void OnClearFilter(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.ClearFilter();
 
-    private void OnCreate(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Create.Open();
+    private void OnCreate(object? sender, RoutedEventArgs e)
+    {
+        OpenerNote.Raise(this, sender);
+        (DataContext as ShellViewModel)?.Create.Open();
+    }
 
     private void OnShowHeld(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Queue.ShowHeld(ViewModels.Queue.QueueScope.Page);
 
@@ -68,3 +73,4 @@ internal sealed partial class QueuePage : UserControl
 
     private void OnPanelExited(object? sender, Avalonia.Input.PointerEventArgs e) => (DataContext as ShellViewModel)?.Queue.Hold(holding: false);
 }
+#pragma warning restore MA0182

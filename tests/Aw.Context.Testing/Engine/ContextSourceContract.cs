@@ -21,7 +21,7 @@ public abstract class ContextSourceContract<TSource>
     protected abstract Task<TSource> Create();
 
     /// <summary>
-    /// False for a live source with no route to a record's version by id (spec §5.2: onyx). Its Versions answers
+    /// False for a live source with no route to a record's version by id (spec §5.2). Its Versions answers
     /// Unavailable, so its citations stay 'version unchecked', and its Fetch reads the record as it is now.
     /// </summary>
     protected virtual bool ChecksVersions => true;

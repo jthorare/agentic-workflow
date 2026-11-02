@@ -139,26 +139,87 @@ public sealed class ShellDecideTests
         Assert.All(shell.Decision.Options, o => Assert.False(o.IsEnabled));
     }, Token);
 
-    [Theory]
-    [InlineData("decided")]
-    [InlineData("voided")]
-    public Task A_cleared_decision_shows_the_cleared_line_the_decided_list_serves(string scenario) => UiThread.Run(async () =>
+    // The golden's decided list, as if the decision was answered three minutes before the clock reads.
+    private static RouteAnswer DecidedThreeMinutesAgo(string scenario)
+    {
+        var served = GoldenFiles.Node("decisions", scenario)["decisions"]![0]!;
+        var body = GoldenFiles.Api("decisions", scenario)
+            .Replace((string)served["id"]!, "DEC-1", StringComparison.Ordinal)
+            .Replace("2026-01-01T00:00:00.0000000Z", "2026-10-11T11:57:00.0000000Z", StringComparison.Ordinal);
+        return new RouteAnswer(System.Net.HttpStatusCode.OK, body);
+    }
+
+    [Fact]
+    public Task A_voided_decision_shows_the_cleared_line_the_decided_list_serves() => UiThread.Run(async () =>
     {
         var shell = await WithDecision();
-        var served = GoldenFiles.Node("decisions", scenario)["decisions"]![0]!;
-        var body = GoldenFiles.Api("decisions", scenario).Replace((string)served["id"]!, "DEC-1", StringComparison.Ordinal);
-        _server.DecidedDecisions = new RouteAnswer(System.Net.HttpStatusCode.OK, body);
+        _server.DecidedDecisions = DecidedThreeMinutesAgo("voided");
         shell.Navigate(new DeepLink(DeepLinkKind.Decision, "DEC-1"));
 
         shell.ShowNeedsYou(new NeedsYouFeed([], ""));
         await shell.Decision.Settled;
 
-        Assert.Equal(((string)served["cleared"]!).Replace((string)served["id"]!, "DEC-1", StringComparison.Ordinal), shell.Decision.ClearedLine);
+        Assert.Equal("voided: the item was closed", shell.Decision.ClearedLine);
         Assert.Contains(_server.DecisionQueries, q => q.Pending == false);
     }, Token);
 
     [Fact]
-    public Task A_cleared_decision_the_decided_list_does_not_hold_falls_back_to_the_id_and_cleared() => UiThread.Run(async () =>
+    public Task A_decision_answered_elsewhere_clears_to_one_calm_line_in_words() => UiThread.Run(async () =>
+    {
+        var shell = await WithDecision();
+        _server.DecidedDecisions = DecidedThreeMinutesAgo("decided");
+        shell.Navigate(new DeepLink(DeepLinkKind.Decision, "DEC-1"));
+
+        shell.ShowNeedsYou(new NeedsYouFeed([], ""));
+        await shell.Decision.Settled;
+
+        Assert.Equal("Decided: accepted by you at the terminal, 3m ago", shell.Decision.ClearedLine);
+    }, Token);
+
+    [Fact]
+    public Task A_stale_Decide_is_refused_with_one_line_that_has_no_id_and_no_actor() => UiThread.Run(async () =>
+    {
+        var shell = await WithDecision();
+        _server.DecideAnswers["DEC-1"] = RouteAnswer.Problem("decisions-id", "decided-elsewhere");
+        _server.DecidedDecisions = DecidedThreeMinutesAgo("decided");
+        shell.Navigate(new DeepLink(DeepLinkKind.Decision, "DEC-1"));
+
+        await shell.Decision.Choose("decline");
+        shell.ShowNeedsYou(new NeedsYouFeed([], ""));
+        await shell.Decision.Settled;
+
+        Assert.Equal("Already decided: accepted by you at the terminal, 3m ago", shell.Decision.Refusal);
+        Assert.Equal(string.Empty, shell.Decision.ClearedLine);   // the refusal already says it
+    }, Token);
+
+    [Fact]
+    public Task The_sheet_is_titled_with_the_request_and_says_who_filed_it_when_and_for_which_item() => UiThread.Run(async () =>
+    {
+        var shell = await WithDecision();
+
+        shell.Navigate(new DeepLink(DeepLinkKind.Decision, "DEC-1"));
+
+        Assert.Equal("Re-scope: drop the iOS head from this item", shell.Decision.Heading);
+        Assert.Equal(shell.Decision.Heading, shell.SheetTitle);
+        Assert.Equal("Filed by an agent session \u00b7 26m ago \u00b7 on ITM-01JD2", shell.Decision.FiledLine);
+    }, Token);
+
+    [Fact]
+    public Task Once_decided_the_sheet_stops_asking_and_keeps_what_was_decided() => UiThread.Run(async () =>
+    {
+        var shell = await WithDecision();
+        shell.Navigate(new DeepLink(DeepLinkKind.Decision, "DEC-1"));
+        Assert.True(shell.Decision.IsAsking);
+
+        await shell.Decision.Choose("accept");
+        _clock.Advance(TimeSpan.FromSeconds(3));
+        await shell.Decision.Expiry;
+
+        Assert.Equal((false, "Decided: Accept"), (shell.Decision.IsAsking, shell.Decision.DecidedLine));
+    }, Token);
+
+    [Fact]
+    public Task A_cleared_decision_the_decided_list_does_not_hold_falls_back_to_a_plain_cleared_line() => UiThread.Run(async () =>
     {
         var shell = await WithDecision();
         shell.Navigate(new DeepLink(DeepLinkKind.Decision, "DEC-1"));
@@ -166,6 +227,6 @@ public sealed class ShellDecideTests
         shell.ShowNeedsYou(new NeedsYouFeed([], ""));
         await shell.Decision.Settled;
 
-        Assert.Equal(Labels.Cleared("DEC-1"), shell.Decision.ClearedLine);
+        Assert.Equal(Labels.DecisionClearedFallback, shell.Decision.ClearedLine);
     }, Token);
 }

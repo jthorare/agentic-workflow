@@ -12,9 +12,30 @@ internal sealed partial class QueueViewModel
     /// <param name="scope">The page the row is on: a refresh that clears it looks for its successor there.</param>
     internal void Select(string itemId, QueueScope scope)
     {
-        (_scope, _onPage) = (scope, true);
+        (_scope, _onPage, _reveal) = (scope, true, null);
         SelectedId = itemId;
         Mark();
+    }
+
+    /// <summary>
+    /// Selects a row that was just created and asks the view to focus (and so scroll to) it. The row arrives through the event
+    /// stream, so when it isn't drawn yet it is held and taken by the refresh that brings it; any selection made meanwhile drops it.
+    /// </summary>
+    /// <param name="itemId">The new item's id.</param>
+    internal void Reveal(string itemId)
+    {
+        _reveal = itemId;
+        Revealed();
+    }
+
+    // The held row is drawn on the page shown: select it and focus it, once.
+    private void Revealed()
+    {
+        if (_reveal is { } id && Drawn(id))
+        {
+            Select(id, _scope);
+            FocusRequested?.Invoke(this, new FocusRequestedEventArgs(id, onlyIfLost: false));
+        }
     }
 
     /// <summary>True when the selected row is the first one Home draws (K goes up to Needs you from it).</summary>

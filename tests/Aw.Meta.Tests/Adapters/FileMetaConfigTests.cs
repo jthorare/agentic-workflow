@@ -113,6 +113,32 @@ public sealed class FileMetaConfigTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Agent_absent_is_null_and_a_catalog_id_reads()
+    {
+        var (plain, _) = Make(Base + "}");
+        var absent = (await plain.Load(CancellationToken.None)).Value.Agent;
+        var (named, _) = Make(Base + ",\"agent\":\"cursor\"}");
+
+        Assert.Null(absent);
+        Assert.Equal("cursor", (await named.Load(CancellationToken.None)).Value.Agent);
+    }
+
+    [Theory, Trait("Lane", "integration")]
+    [InlineData("\"agent\":\"\"")]
+    [InlineData("\"agent\":\"Cursor\"")]
+    [InlineData("\"agent\":\"a\"")]
+    [InlineData("\"agent\":1")]
+    public async Task An_agent_that_is_not_a_catalog_id_is_AW_META_003(string agent)
+    {
+        var (config, _) = Make(Base + "," + agent + "}");
+
+        var loaded = await config.Load(CancellationToken.None);
+
+        Assert.Equal(MetaErrors.ConfigInvalid.Code, loaded.Error.Code);
+        Assert.Contains("agent", loaded.Error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task The_reserve_setting_survives_a_save_and_a_load()
     {
         var (config, _) = Make(Base + "}");

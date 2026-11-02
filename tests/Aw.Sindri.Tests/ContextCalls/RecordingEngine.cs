@@ -2,18 +2,28 @@ using System.Diagnostics;
 using System.Text.Json;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
+using Aw.Context.Core.Sources;
 using Aw.Context.Core.Subgraph;
+using Aw.Context.Core.Sync;
+using Aw.Context.Core.Vectors;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 using Microsoft.Extensions.DependencyInjection;
@@ -24,7 +34,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// Wraps the host's real context engine and records, for each query, the engine caller Sindri built and the span the call
 /// ran inside, so a test can show an MCP call took the same query chain as the HTTP route.
 /// </summary>
-internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller Caller, string? Span)> calls, Func<Context.Core.Eval.Backtest.BacktestRequest, CancellationToken, ValueTask<Result<Context.Core.Eval.Backtest.BacktestRun>>>? backtest = null, Action? beforeQueue = null, Func<ContextScope, ValueTask>? beforePromote = null) : IContextEngine
+internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller Caller, string? Span)> calls, Func<Context.Core.Eval.Backtest.BacktestRequest, CancellationToken, ValueTask<Result<Context.Core.Eval.Backtest.BacktestRun>>>? backtest = null, Action? beforeQueue = null, Func<ContextScope, ValueTask>? beforePromote = null, Func<PagesQuery, ContextScope, Result<PagesView>>? pages = null) : IContextEngine
 {
     /// <summary>Replaces the registered engine with one that records into <paramref name="calls"/>.</summary>
     /// <param name="services">The host's services.</param>
@@ -32,11 +42,12 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     /// <param name="backtest">Answers EvalBacktest instead of the real engine (a backtest needs a git history and a brief source), or null.</param>
     /// <param name="beforeQueue">Runs before each review-queue read (a test moves the clock there to stand for a slow queue build), or null.</param>
     /// <param name="beforePromote">Runs before each promote, with its scope (a test replaces the draft there, as a refresh would between the publish check and the promote), or null.</param>
-    public static void Install(IServiceCollection services, List<(ContextCaller Caller, string? Span)> calls, Func<Context.Core.Eval.Backtest.BacktestRequest, CancellationToken, ValueTask<Result<Context.Core.Eval.Backtest.BacktestRun>>>? backtest = null, Action? beforeQueue = null, Func<ContextScope, ValueTask>? beforePromote = null)
+    /// <param name="pages">Answers the pages read instead of the real engine (the page tests give the answer they need), or null.</param>
+    public static void Install(IServiceCollection services, List<(ContextCaller Caller, string? Span)> calls, Func<Context.Core.Eval.Backtest.BacktestRequest, CancellationToken, ValueTask<Result<Context.Core.Eval.Backtest.BacktestRun>>>? backtest = null, Action? beforeQueue = null, Func<ContextScope, ValueTask>? beforePromote = null, Func<PagesQuery, ContextScope, Result<PagesView>>? pages = null)
     {
         var original = services.Last(d => d.ServiceType == typeof(IContextEngine));
         _ = services.Remove(original);
-        services.Add(new ServiceDescriptor(typeof(IContextEngine), sp => new RecordingEngine(Resolve(original, sp), calls, backtest, beforeQueue, beforePromote), original.Lifetime));
+        services.Add(new ServiceDescriptor(typeof(IContextEngine), sp => new RecordingEngine(Resolve(original, sp), calls, backtest, beforeQueue, beforePromote, pages), original.Lifetime));
     }
 
     public Result<ContextSettings> CheckSettings(JsonElement? section, IReadOnlyList<ProfileRepoEntry> repos) => inner.CheckSettings(section, repos);
@@ -51,6 +62,14 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
         return inner.Query(query, scope, cancellationToken);
     }
 
+    public ValueTask<Result<ScopeGraphView>> ScopeGraph(ScopeGraphQuery query, ContextScope scope, CancellationToken cancellationToken) => inner.ScopeGraph(query, scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<GraphRead>>> GraphReads(string instanceAddress, string runToken, CancellationToken cancellationToken) => inner.GraphReads(instanceAddress, runToken, cancellationToken);
+
+    public ValueTask<Result<bool>> RememberScopeGraph(string instanceAddress, ScopeGraphView view, CancellationToken cancellationToken) => inner.RememberScopeGraph(instanceAddress, view, cancellationToken);
+
+    public ValueTask<Result<GraphRead>> ReadInScopeGraph(string instanceAddress, string runToken, GraphRead read, CancellationToken cancellationToken) => inner.ReadInScopeGraph(instanceAddress, runToken, read, cancellationToken);
+
     public ValueTask<Result<SourcesView>> Sources(ContextScope scope, CancellationToken cancellationToken) => inner.Sources(scope, cancellationToken);
 
     public ValueTask<Result<bool>> HasSyncGap(ContextScope scope, CancellationToken cancellationToken) => inner.HasSyncGap(scope, cancellationToken);
@@ -58,6 +77,24 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     public ValueTask<Result<RefreshReport>> Refresh(ContextScope scope, CancellationToken cancellationToken) => inner.Refresh(scope, cancellationToken);
 
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) => inner.Sync(source, scope, cancellationToken);
+
+    public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) => inner.Projects(request, scope, cancellationToken);
+
+    public ValueTask<Result<EmbedRecordsReport>> Embed(EmbedRecordsRequest request, ContextScope scope, CancellationToken cancellationToken) => inner.Embed(request, scope, cancellationToken);
+
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) => inner.Tick(scope, cancellationToken);
+
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) => inner.Tick(scope, source, cancellationToken);
+
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken) => inner.Decide(scope, cancellationToken);
+
+    public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) => inner.Progress(scope, cancellationToken);
+
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) => inner.ConceptStatus(scope, cancellationToken);
+
+    public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => inner.Counts(source, cancellationToken);
+
+    public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken) => inner.Purge(source, cancellationToken);
 
     public ValueTask<Result<MapFilePreview>> PreviewMap(string path, ContextScope scope, CancellationToken cancellationToken) => inner.PreviewMap(path, scope, cancellationToken);
 
@@ -121,6 +158,8 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
 
     public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) => inner.CleanDraft(scope, cancellationToken, expectedVersion);
 
+    public ValueTask<Result<ConceptScanReport>> ScanConcepts(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null) => inner.ScanConcepts(scope, cancellationToken, expectedVersion);
+
     public ValueTask<Result<MapPublishState>> Held(ContextScope scope, CancellationToken cancellationToken) => inner.Held(scope, cancellationToken);
 
     public ValueTask<Result<MapHold>> Hold(MapHold hold, ContextScope scope, CancellationToken cancellationToken) => inner.Hold(hold, scope, cancellationToken);
@@ -130,6 +169,8 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     public ValueTask<Result<MapPublishView>> PublishStatus(ContextScope scope, CancellationToken cancellationToken) => inner.PublishStatus(scope, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) => inner.MapHeads(scope, cancellationToken);
+
+    public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken) => inner.RelinkPinAliases(scope, cancellationToken);
 
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         inner.Propose(proposal, scope, cancellationToken);
@@ -172,7 +213,22 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
     public ValueTask<Result<ConceptMembersView>> ConceptMembers(ConceptMembersQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         inner.ConceptMembers(query, scope, cancellationToken);
 
+    public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        inner.ConceptGlossary(query, scope, cancellationToken);
+
+    public ValueTask<Result<PagesView>> Pages(PagesQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        pages is null ? inner.Pages(query, scope, cancellationToken) : ValueTask.FromResult(pages(query, scope));
+
+    public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) => inner.CheckPages(scope, cancellationToken);
+
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        inner.PinSuggest(query, scope, cancellationToken);
+
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) => inner.PageFacts(scope, cancellationToken);
+
     public ValueTask<Result<MapHealth>> CheckMap(ContextScope? scope, CancellationToken cancellationToken) => inner.CheckMap(scope, cancellationToken);
+
+    public ValueTask<Result<MapChecksView>> MapStructure(MapChecksSource source, IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken) => inner.MapStructure(source, progress, scope, cancellationToken);
 
     public ValueTask<Result<MapHealth>> CheckRetention(CancellationToken cancellationToken) => inner.CheckRetention(cancellationToken);
 

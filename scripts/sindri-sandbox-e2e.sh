@@ -246,7 +246,8 @@ write_profile() {
     # step.build.red-check needs one to fail on the red commit; checks and ship.green need all to pass
     echo "  build:"
     echo "    commands:"
-    local c; for c in "${BUILD_COMMANDS[@]}"; do printf "      - '%s'\n" "${c//\'/\'\'}"; done
+    # the quote comes from a variable: bash 3.2 (macOS) keeps the backslashes of a \' replacement inside double quotes
+    local c q="'"; for c in "${BUILD_COMMANDS[@]}"; do printf "      - '%s'\n" "${c//$q/$q$q}"; done
     if [ -n "$AGENT" ]; then echo "  agent: { target: $AGENT }"; fi
   } > "$file"
   chmod 600 "$file"

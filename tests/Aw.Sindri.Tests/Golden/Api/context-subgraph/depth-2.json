@@ -35,6 +35,7 @@
           "state": "unchecked",
           "cites": [],
           "kind": "record",
+          "at": "2026-07-10T10:00:00.0000000Z",
           "depth": 2
         },
         {
@@ -46,6 +47,7 @@
           "state": "unchecked",
           "cites": [],
           "kind": "record",
+          "at": "2026-07-20T10:00:00.0000000Z",
           "depth": 2
         }
       ],
@@ -439,10 +441,10 @@
         "asOf": "2026-01-01T00:00:00.0000000Z"
       },
       {
-        "id": "onyx",
-        "state": "not-configured",
-        "reason": "not-configured",
-        "code": null,
+        "id": "repo-docs",
+        "state": "unavailable",
+        "reason": "not-synced",
+        "code": "SND-CONTEXT-161",
         "asOf": null
       },
       {

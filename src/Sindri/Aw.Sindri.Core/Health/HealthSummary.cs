@@ -1,4 +1,5 @@
 using System.Globalization;
+using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Views;
@@ -15,9 +16,9 @@ public static class HealthSummary
     /// <param name="views">The projector's status.</param>
     /// <param name="services">The services view's rows, or null when the views can't be read.</param>
     /// <param name="profile">Where the profile stands against its approval.</param>
-    /// <param name="codeIndex">The code index's problems, one per repo at most; they follow the services' and come before the profile's.</param>
+    /// <param name="context">The code index's problems and the clock's reading; none by default.</param>
     /// <returns>The health.</returns>
-    public static HealthReport For(bool running, ViewsStatus views, IReadOnlyList<ServiceRow>? services, ProfileApproval profile, IReadOnlyList<HealthProblem>? codeIndex = null)
+    public static HealthReport For(bool running, ViewsStatus views, IReadOnlyList<ServiceRow>? services, ProfileApproval profile, HealthContext? context = null)
     {
         ArgumentNullException.ThrowIfNull(views);
         List<HealthProblem> problems = [];
@@ -32,8 +33,7 @@ public static class HealthSummary
             problems.Add(new("SND-VIEW-001", EmptyText.Unreadable(), "the views can't be read"));
         }
 
-        problems.AddRange((services ?? []).Where(s => s.LastRun is { Outcome: ServiceOutcome.Failed }).Select(s => Failed(s.Name, s.LastRun)));
-        problems.AddRange(codeIndex ?? []);
+        problems.AddRange(FailedServices(services, context));
         problems.AddRange(Profile(profile));
         var word = views.Stalled ? HealthWord.Stalled : views.Rebuilding ? HealthWord.Rebuilding : (problems.Count > 0 ? HealthWord.Degraded : HealthWord.Healthy);
         return new HealthReport(word, [.. problems], Sentence(word, problems));
@@ -75,6 +75,60 @@ public static class HealthSummary
         return new HealthReport(word, problems, Sentence(word, problems));
     }
 
+    /// <summary>A report that also names a stale build (#1032): the running control plane is not the build 'bin/cs/current' names.</summary>
+    /// <param name="report">The report <see cref="For"/> folded.</param>
+    /// <param name="running">The stamp this process runs from, or null.</param>
+    /// <param name="installed">The stamp 'bin/cs/current' names, or null.</param>
+    /// <returns>The report; the same one when the build is not known to be stale.</returns>
+    public static HealthReport WithStaleBuild(HealthReport report, string? running, string? installed)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (!StaleBuild.Is(running, installed))
+        {
+            return report;
+        }
+
+        var problems = report.Problems.Append(new HealthProblem("SND-BUILD-001", StaleBuild.Sentence(running!, installed!), "the running build is not the installed one")).ToList();   // why: Is is true only when both are known
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
+    /// <summary>A report that also counts the agent runs whose session ended its turn without a report and is still not ended (issue #1000): any make a healthy report degraded, and join its problems and sentence.</summary>
+    /// <param name="report">The report so far.</param>
+    /// <param name="stalled">The agent runs idle for <see cref="Launches.LaunchRules.IdleAfter"/> or longer whose session is still live.</param>
+    /// <returns>The report; the same one when none are stalled.</returns>
+    public static HealthReport WithStalledAgents(HealthReport report, int stalled)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (stalled <= 0)
+        {
+            return report;
+        }
+
+        var clause = stalled == 1 ? "1 agent run ended its turn and has not reported" : string.Create(CultureInfo.InvariantCulture, $"{stalled} agent runs ended their turn and have not reported");
+        var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-004", $"{clause}: open Needs you", clause)).ToList();
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
+    /// <summary>A report that also counts the agent sessions that sat idle and were ended with no report, and no newer launch took the Step over (issue #1265): any make a healthy report degraded.</summary>
+    /// <param name="report">The report so far.</param>
+    /// <param name="idle">The stalled launches, read from the launches view; they are ended, so none is also counted by <see cref="WithStalledAgents"/>.</param>
+    /// <returns>The report; the same one when none are stalled.</returns>
+    public static HealthReport WithIdleAgents(HealthReport report, int idle)
+    {
+        ArgumentNullException.ThrowIfNull(report);
+        if (idle <= 0)
+        {
+            return report;
+        }
+
+        var clause = idle == 1 ? "1 agent idle, no report" : string.Create(CultureInfo.InvariantCulture, $"{idle} agents idle, no report");
+        var problems = report.Problems.Append(new HealthProblem("SND-ENGINE-005", $"{clause}: its session was ended and the Step has not run again (sindri doctor names it)", clause)).ToList();
+        var word = report.Word == HealthWord.Healthy ? HealthWord.Degraded : report.Word;
+        return new HealthReport(word, problems, Sentence(word, problems));
+    }
+
     private static IEnumerable<HealthProblem> Profile(ProfileApproval profile)
     {
         if (profile == ProfileApproval.Changed)
@@ -102,10 +156,14 @@ public static class HealthSummary
         }
     }
 
-    private static HealthProblem Failed(ServiceName name, LastRun? run)
+    // The services whose last run failed, then the code index's problems (they come before the profile's).
+    private static IEnumerable<HealthProblem> FailedServices(IReadOnlyList<ServiceRow>? services, HealthContext? context) =>
+        (services ?? []).Where(s => s.LastRun is { Outcome: ServiceOutcome.Failed }).Select(s => Failed(s.Name, s.LastRun, context?.Now)).Concat(context?.CodeIndex ?? []);
+
+    private static HealthProblem Failed(ServiceName name, LastRun? run, DateTimeOffset? now)
     {
-        var slot = run?.Slot.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
-        return new(run?.Code ?? SchedulerCode, $"Service {name.Value} failed at {slot}", $"service {name.Value} failed");
+        var when = run is null || now is not { } at ? string.Empty : " " + AgeWords.Ago(at - run.Slot);
+        return new(run?.Code ?? SchedulerCode, $"Service {name.Value} failed{when}", $"service {name.Value} failed");
     }
 
     private static string? Sentence(HealthWord word, List<HealthProblem> problems)

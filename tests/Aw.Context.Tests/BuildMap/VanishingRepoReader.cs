@@ -17,5 +17,7 @@ internal sealed class VanishingRepoReader(IRepoReader inner, string vanished) : 
             ? ValueTask.FromResult<Result<string>>(ContextErrors.ExtractionUnreadable.With("the file vanished"))
             : inner.Read(repo, commit, path, cancellationToken);
 
+    public ValueTask<Result<IReadOnlyDictionary<string, string>>> BlobIds(ContextRepo repo, string commit, IReadOnlyList<string> paths, CancellationToken cancellationToken) => inner.BlobIds(repo, commit, paths, cancellationToken);
+
     public ValueTask<Result<RepoChanges>> Changes(ContextRepo repo, DiffRange range, CancellationToken cancellationToken) => inner.Changes(repo, range, cancellationToken);
 }

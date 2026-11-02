@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.prove-recheck
-version: 1
+version: 2
 description: "Block recipe: when a PR's source no longer matches its proof, re-run the phase's verify journey and recorded evidence scripts on the current head. No route, no hand test, no holdout."
 displayName: "Prove the pull request again after a change"
 inputs:
@@ -13,15 +13,15 @@ outputs:
 initial: plan
 states:
   plan:    { kind: active, step: { use: step.recheck.plan, with: { handoff: { fact: fact:handoff }, at: { fact: fact:prState }, workspace: { fact: fact:workspace } } },
-             timeout: { after: 4h, then: park }, next: "List the journeys and evidence scripts to re-run on {item}'s head." }
+             timeout: { after: 1d, then: park }, next: "List the journeys and evidence scripts to re-run on {item}'s head." }
   slot:    { kind: wait, waitFor: { resource: heavy }, timeout: { after: 1d, then: park },
              next: "Waiting for a heavy-job slot to re-prove {item}." }
   verify:  { kind: wait, timeout: { after: 1d, then: park },
              waitFor: { child: { recipe: workflow.verify, onParked: propagate, inputs: { "fact:phasePacket": { fact: fact:phasePacket }, "fact:workspace": { fact: fact:workspace } } } },
              next: "Waiting for {child}: the verify journey on {item}'s head." }
-  scripts: { kind: active, step: step.prove.rerun-scripts, timeout: { after: 4h, then: park },
+  scripts: { kind: active, step: step.prove.rerun-scripts, timeout: { after: 1d, then: park },
              next: "Re-run {item}'s recorded evidence scripts on the head." }
-  log:     { kind: active, step: step.recheck.log, timeout: { after: 4h, then: park },
+  log:     { kind: active, step: step.recheck.log, timeout: { after: 1d, then: park },
              next: "Record the recheck verdict for {item}." }
   held:    { displayName: "Proof still holds", kind: terminal, outcome: resolved }
   nothing: { displayName: "Nothing to prove again", kind: terminal, outcome: alreadySatisfied }

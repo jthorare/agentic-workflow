@@ -68,7 +68,7 @@ public sealed class NeedsYouRowsTests
         Expect.Equal(
             (NeedsYouRowId.From("failure:service:heartbeat"), NeedsYouKind.Failure, "failure · heartbeat", new NeedsYouSubject(SubjectKind.Service, SubjectId.From("heartbeat"))),
             (row.Id, row.Kind, row.Label, row.Subject));
-        Expect.Equal(("heartbeat failed", "SND-SCHED-001: A background service failed", Urgency.Colour, _t), (row.Title, row.Reason, row.Urgency, row.Since));
+        Expect.Equal(("Service heartbeat failed", "SND-SCHED-001: A background service failed", Urgency.Colour, _t), (row.Title, row.Reason, row.Urgency, row.Since));
         Expect.Equal((ActionId.From("RunService"), "sindri services run heartbeat", false, null), (row.PrimaryAction, row.Cli, row.RecordedOnly, row.Notice));
         Expect.Sequence([ActionId.From("RunService"), ActionId.From("PauseService")], row.Actions);
         Expect.True(row.Item is null && row.Repo is null);
@@ -96,6 +96,7 @@ public sealed class NeedsYouRowsTests
         Expect.Sequence([ActionId.From("PauseService")], row.Actions);
         Assert.Contains("remove or rename", row.Reason, StringComparison.Ordinal);
         Assert.StartsWith("SND-SVC-404", row.Reason, StringComparison.Ordinal);
+        Expect.Equal("Service heartbeat isn't in this build", row.Title);
     }
 
     [Fact]

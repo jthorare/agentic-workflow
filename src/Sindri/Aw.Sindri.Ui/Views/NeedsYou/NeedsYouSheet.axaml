@@ -27,6 +27,25 @@
       </ItemsControl.ItemTemplate>
     </ItemsControl>
     <TextBlock x:Name="SheetRowCli" Classes="mono" Text="{Binding Cli}" IsVisible="{Binding ShowsCliUpFront}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Cli}" />
+    <!-- A desk task's required outputs (#1170): a path box and Browse each, and what Complete waits for. -->
+    <ItemsControl x:Name="SheetRowOutputs" ItemsSource="{Binding Outputs}" IsVisible="{Binding HasOutputs}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="ny:DeskOutputViewModel">
+          <StackPanel Margin="0,0,0,6" Spacing="4">
+            <TextBlock Name="DeskOutputCaption" Classes="caption" Text="{Binding Caption}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            <Grid ColumnDefinitions="*,Auto">
+              <TextBox Name="DeskOutputPath" Text="{Binding Path, Mode=TwoWay}" AutomationProperties.Name="{Binding BoxName}" />
+              <Button Name="DeskOutputBrowse" Grid.Column="1" Margin="8,0,0,0" Content="{Binding BrowseText}" Click="OnBrowseOutput" AutomationProperties.Name="{Binding BrowseName}" />
+            </Grid>
+            <TextBlock Name="DeskOutputError" Classes="caption" Text="{Binding Error}" IsVisible="{Binding HasError}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Error}" />
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+    <TextBlock x:Name="SheetRowOutputHint" Classes="caption subtle" Text="{Binding OutputHint}" TextWrapping="Wrap"
+               IsVisible="{Binding OutputHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+    <!-- A desk task's Complete (the UX pass's A-1): the same send as the row's own Complete, named with the instance's address. -->
+    <Button x:Name="SheetRowComplete" Classes="command-control primary" IsVisible="{Binding ShowsComplete}" IsEnabled="{Binding CanComplete}" Content="{Binding CompleteLabel}" Click="OnComplete" HorizontalAlignment="Left" AutomationProperties.Name="{Binding CompleteName}" />
     <!-- Review 456-4: a hash and the approve command are bookkeeping; they wait behind Details, closed until asked for. -->
     <Expander x:Name="SheetRowMoreDetails" Header="{Binding MoreHeading}" IsExpanded="{Binding DetailsOpen, Mode=TwoWay}" IsVisible="{Binding HasMoreDetails}" AutomationProperties.Name="{Binding MoreHeading}">
       <ItemsControl ItemsSource="{Binding MoreDetails}">

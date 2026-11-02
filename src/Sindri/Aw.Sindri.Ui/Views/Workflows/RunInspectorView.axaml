@@ -55,6 +55,10 @@
                   <TextBlock Classes="button" Text="{Binding CancelText}" AutomationProperties.AccessibilityView="Raw" />
                 </Button>
               </WrapPanel>
+              <TextBlock x:Name="InspectorTakeOverLine" Classes="caption muted" Text="{Binding TakeOverLine}" TextWrapping="Wrap" IsVisible="{Binding HasTakeOverLine}"
+                         AutomationProperties.Name="{Binding TakeOverLine}" />
+              <TextBlock x:Name="InspectorTakeOverCommand" Classes="caption mono" Text="{Binding TakeOverCommand}" TextWrapping="Wrap" IsVisible="{Binding HasTakeOverCommand}"
+                         AutomationProperties.Name="{Binding TakeOverCommand}" />
             </StackPanel>
           </Border>
 

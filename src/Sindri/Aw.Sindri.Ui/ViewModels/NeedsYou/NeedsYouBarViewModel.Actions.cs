@@ -176,6 +176,12 @@ internal sealed partial class NeedsYouBarViewModel
             return;
         }
 
+        if (outcome == NeedsYouBarOutcome.Approve && target.RequiredOutputs.Count > 0)
+        {
+            RequestSheet(_row.Id);   // the engine refuses a 'done' without its files, and the bar has none to send
+            return;
+        }
+
         var shown = _row.Id;
         (IsSending, Refusal) = (true, "");
         Refresh();

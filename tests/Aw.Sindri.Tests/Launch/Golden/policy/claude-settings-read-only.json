@@ -17,7 +17,17 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then mkdir -p \"$AW_SINDRI_HOME/launches\"; touch \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-ended\"; fi; exit 0"
+            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then mkdir -p \"$AW_SINDRI_HOME/launches\"; touch \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-ended\"; rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.tool-running\"; fi; exit 0"
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then mkdir -p \"$AW_SINDRI_HOME/launches\"; touch \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-failed\"; rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.tool-running\"; fi; exit 0"
           }
         ]
       }
@@ -27,7 +37,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-ended\"; fi; exit 0"
+            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-ended\"; rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-failed\"; fi; exit 0"
           }
         ]
       }
@@ -37,7 +47,27 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-ended\"; fi; exit 0"
+            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then mkdir -p \"$AW_SINDRI_HOME/launches\"; rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-ended\"; rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-failed\"; touch \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.tool-running\"; fi; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.tool-running\"; fi; exit 0"
+          }
+        ]
+      }
+    ],
+    "PostToolUseFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if [ -n \"$AW_SINDRI_LAUNCH\" -a -n \"$AW_SINDRI_HOME\" ]; then rm -f \"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.tool-running\"; fi; exit 0"
           }
         ]
       }

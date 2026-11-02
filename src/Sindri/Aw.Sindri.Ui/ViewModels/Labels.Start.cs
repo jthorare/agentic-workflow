@@ -14,6 +14,9 @@ internal static partial class Labels
     /// <summary>The item field's label.</summary>
     internal const string StartItem = "Item";
 
+    /// <summary>The caption of the list of items, above it.</summary>
+    internal const string StartPickCaption = "Or pick one from the queue";
+
     /// <summary>The list of items to fill the item field from.</summary>
     internal const string StartPickItem = "Pick an item";
 

@@ -16,4 +16,12 @@ public sealed record TriggerRecord(string Kind, TriggerKey Key, string Actor, Ou
     /// <summary>The tokens an agent run spent, for an agent report; null for any other trigger. Not written when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Tokens { get; init; }
+
+    /// <summary>The launcher agent an agent report ran on (#1269); null for any other trigger. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Agent { get; init; }
+
+    /// <summary>The model an agent report asked for; null for any other trigger and when none was named. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Model { get; init; }
 }

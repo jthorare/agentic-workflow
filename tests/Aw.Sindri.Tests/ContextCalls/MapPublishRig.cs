@@ -62,7 +62,7 @@ internal sealed class MapPublishRig : IAsyncDisposable
         var scripted = outlooks ?? new ScriptedOutlooks();
         var yaml = "schemaVersion: 1\nuser: golden\nrepos:\n" + string.Concat(repos.Select(static r => "  - { name: " + r.Name + ", path: \"" + r.Path + "\" }\n"))
             + "context:\n  docs: { globs: [\"docs/**/*.md\"] }\n  sessions: { enabled: true }\n  publish: { waitForIndexMinutes: "
-            + waitMinutes.ToString(CultureInfo.InvariantCulture) + " }\n";
+            + waitMinutes.ToString(CultureInfo.InvariantCulture) + " }\n" + ContextHosts.NoLabeling;
         var host = await GoldenHost.Start(temporary: true, Ct, yaml, extra: services =>
         {
             // why: graphify and the box's heavy-job lock would stall the build under load; the outlooks stand for the code index
@@ -70,6 +70,7 @@ internal sealed class MapPublishRig : IAsyncDisposable
             _ = services.AddSingleton<IClusterSource>(new FakeClusterSource());
             _ = services.RemoveAll<HeavyLockSettings>();
             _ = services.AddSingleton(new HeavyLockSettings(Path.Combine(locks, "heavy-job.lock"), 2, Held: false));
+            ContextHosts.NoCodeIndex(services);
             _ = services.RemoveAll<IIndexOutlooks>();
             _ = services.AddSingleton<IIndexOutlooks>(scripted);
             extra?.Invoke(services);

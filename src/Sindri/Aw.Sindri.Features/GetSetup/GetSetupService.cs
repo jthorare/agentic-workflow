@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 namespace Aw.Sindri.Features.GetSetup;
 
 /// <summary>
-/// Where "set up Sindri once" stands: the six steps in their fixed order (repo, profile, recipes, mcp, map, onyx), each decided by <see cref="SetupSteps"/> from the fact its own
+/// Where "set up Sindri once" stands: the six steps in their fixed order (repo, profile, recipes, mcp, map, sources), each decided by <see cref="SetupSteps"/> from the fact its own
 /// source gave. A pure read that starts nothing. A source that can't be read makes only its own step "failed" with a plain sentence, so the answer is never an error.
 /// </summary>
 /// <param name="facts">The sources.</param>

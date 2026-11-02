@@ -75,7 +75,7 @@ public sealed class DeskNotificationsTests(SindriTimeSkippingServer server) : IC
             Assert.Equal(("info", handle.Id, "T-4"), (line.GetProperty("class").GetString(), line.GetProperty("instance").GetString(), line.GetProperty("item").GetString()));
             Assert.Equal("Waiting for the desk notification to be delivered.", line.GetProperty("text").GetString());
             Assert.Equal("interrupt", Assert.Single(Lines(firstTask.Identity)).GetProperty("class").GetString());
-            Assert.Equal($"Sindri: {handle.Id}", Assert.Single(_harness.Notifier.Shown).Title);   // only the first desk task interrupts
+            Assert.DoesNotContain(handle.Id, Assert.Single(_harness.Notifier.Shown).Title, StringComparison.Ordinal);   // only the first desk task interrupts; its title is the item's, never the instance id
             Assert.Equal(("done", "resolved"), (result.State, result.Outcome));
         }, Token);
     }
@@ -100,7 +100,9 @@ public sealed class DeskNotificationsTests(SindriTimeSkippingServer server) : IC
 
             Assert.Equal(task.Identity, notices[0].GetProperty("identity").GetString());
             Assert.All(notices, static n => Assert.Equal("interrupt", n.GetProperty("class").GetString()));
-            Assert.Contains("parked (timeout)", notices[1].GetProperty("text").GetString(), StringComparison.Ordinal);
+            var park = notices[1].GetProperty("text").GetString();
+            Assert.Contains("stopped, it timed out", park, StringComparison.Ordinal);
+            Assert.DoesNotContain("parked (timeout)", park, StringComparison.Ordinal);
             Assert.Equal(2, _harness.Notifier.Shown.Count);
             await handle.TerminateAsync("test over");
         }, Token);

@@ -60,7 +60,7 @@ public sealed class InstanceFrameViewModelTests
     {
         var frame = await Opened("item-produce");
 
-        Assert.Equal("Attempt 2 of 3, with you", frame.StepRuns!.CurrentLine);
+        Assert.Equal("Attempt 2 of 3, waiting for your answer", frame.StepRuns!.CurrentLine);
         Assert.Equal(2, frame.StepRuns.Rows.Count);
     }
 

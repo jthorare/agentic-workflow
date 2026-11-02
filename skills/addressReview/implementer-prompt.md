@@ -70,6 +70,8 @@ For each issue, check its `type` first:
 - Match the existing code style
 - Keep changes minimal and focused — only fix what was flagged
 
+**When the comment reports a bug** (wrong behavior, a crash, a missed case: not style, naming or wording), read `$HOME/.agentic-workflow/toolkit/skills/_shared/prevent-the-class.md` and ask its question before choosing the fix: how can we prevent this class of bugs from happening again, not just fix this instance? Name the failure class and the invariant, grep for the other instances, and pick the smallest mechanism. Fix the instance the comment flagged, then either build the mechanism inside the files this PR already touches, or name the follow-up (the class, the instances found, the proposed mechanism) in your reply and in the `note`. The follow-up never replaces the flagged fix, and the mechanism's own proof (a second bad instance rejected) goes in the reply. Style and wording comments skip this.
+
 **`type: "question"`** — do not change code. Instead, write a reply explaining:
 - Why the code is written this way
 - What tradeoffs were made

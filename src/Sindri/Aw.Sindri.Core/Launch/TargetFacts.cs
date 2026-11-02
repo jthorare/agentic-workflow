@@ -1,4 +1,6 @@
 
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Core.Launch;
 
 /// <summary>One catalog target in 'launch.probed' (UI spec E-3, launcher L-4).</summary>
@@ -9,4 +11,9 @@ namespace Aw.Sindri.Core.Launch;
 /// <param name="Problem">Why it can't launch, or null.</param>
 /// <param name="Source">Where the entry came from.</param>
 /// <param name="Overridden">True when launcher.json replaced a built-in.</param>
-public sealed record TargetFacts(AgentId Id, bool Present, string? Version, string? Limited, string? Problem, CatalogSource Source, bool Overridden);
+public sealed record TargetFacts(AgentId Id, bool Present, string? Version, string? Limited, string? Problem, CatalogSource Source, bool Overridden)
+{
+    /// <summary>The models the agent offers, in the order its source gave them (model-pick spec §3); empty when its list couldn't be read ('no-model-list' in <see cref="Limited"/>), null when the probe didn't ask (the field is then left out of the event).</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IReadOnlyList<ModelFacts>? Models { get; init; }
+}

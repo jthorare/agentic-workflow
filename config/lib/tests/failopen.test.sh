@@ -134,4 +134,13 @@ ro="$(mktemp -d)"; chmod 500 "$ro"
 check "unwritable state dir: silent, returns 0" "$(run_lib "$ro/nested" h c)" "rc=0|0"
 chmod 700 "$ro"
 
+# AW_LOG_DIR wins over AW_STATE_DIR; unset, the default folder is unchanged.
+stateA="$(mktemp -d)"; logdir="$(mktemp -d)"
+AW_LOG_DIR="$logdir" run_lib "$stateA" h c > /dev/null
+check "AW_LOG_DIR: log lands in the override" "$(jq -r .cause "$logdir/failopen.log")" "c"
+check "AW_LOG_DIR: AW_STATE_DIR/logs untouched" "$([ -e "$stateA/logs" ] && echo made || echo none)" "none"
+stateB="$(mktemp -d)"
+env -u AW_LOG_DIR bash -c 'AW_STATE_DIR="$1"; . "$2"; aw_failopen h c' _ "$stateB" "$LIB"
+check "AW_LOG_DIR unset: default AW_STATE_DIR/logs" "$(jq -r .cause "$stateB/logs/failopen.log")" "c"
+
 exit $fail

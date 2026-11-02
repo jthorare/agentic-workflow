@@ -9,11 +9,11 @@ using Aw.Kernel.Services;
 namespace Aw.Context.Features.QueryContext;
 
 /// <summary>The query (spec §8.2) over the live map and the profile's sources: <see cref="QueryPipeline"/> with the store's map.</summary>
-internal sealed class QueryContextService(IScrubberFactory scrubberFactory, IIdGenerator ids, TimeProvider clock, LiveInputs live, IIntentStore intents, IModelPort model)
+internal sealed class QueryContextService(IScrubberFactory scrubberFactory, IIdGenerator ids, TimeProvider clock, LiveInputs live, IIntentStore intents, IModelPort model, RecordSearch records)
     : IService<QueryContextRequest, ContextResult>
 {
     /// <summary>The most fused items fetched (and so cited) per query.</summary>
 
     public ValueTask<Result<ContextResult>> Handle(QueryContextRequest request, CancellationToken cancellationToken) =>
-        new QueryPipeline(scrubberFactory, ids, clock, intents, model).Run(request, live.ToInputs(), cancellationToken);
+        new QueryPipeline(scrubberFactory, ids, clock, intents, model, records).Run(request, live.ToInputs(), cancellationToken);
 }

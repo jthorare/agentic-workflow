@@ -3,3 +3,6 @@ Run("judge", "prompt-sort")
 Run("judge", "prompt-sort", "scaffold", "brief", "on")
 var label = "judge";
 Run("judge", "health")
+Run("judge", "label", "status")
+Run("judge", "eval", "import-turns", path)
+Run("judge", "adjudicate", question)

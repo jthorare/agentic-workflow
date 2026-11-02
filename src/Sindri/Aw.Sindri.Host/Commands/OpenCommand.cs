@@ -82,7 +82,7 @@ internal sealed class OpenCommand(ControlPlaneClient client, Output output, Func
             var view = read.Value.Value;
             if (view.State != LaunchState.Requested)
             {
-                return open.Json ? await output.Raw(read.Value.Body, view.State == LaunchState.Failed ? 2 : 0).ConfigureAwait(false) : await Report(open, requested, view).ConfigureAwait(false);
+                return open.Json ? await output.Raw(read.Value.Body, view.State == LaunchState.Failed ? 2 : 0).ConfigureAwait(false) : await Report(open, requested, view, read.Value.Body, ct).ConfigureAwait(false);
             }
 
             if (clock.GetElapsedTime(started) >= _patience)
@@ -96,7 +96,7 @@ internal sealed class OpenCommand(ControlPlaneClient client, Output output, Func
         }
     }
 
-    private async Task<int> Report(OpenArguments open, LaunchRequested requested, LaunchView view)
+    private async Task<int> Report(OpenArguments open, LaunchRequested requested, LaunchView view, ReadOnlyMemory<byte> body, CancellationToken ct)
     {
         if (view.State == LaunchState.Failed)
         {
@@ -114,6 +114,10 @@ internal sealed class OpenCommand(ControlPlaneClient client, Output output, Func
 
         _ = text.AppendLine();
         AttachLine(text, view);
+        if (SandboxFirstScreen.For(body, await SandboxFirstScreen.PrefixOf(view.Attach, ct).ConfigureAwait(false)) is { } sandboxed)
+        {
+            _ = text.Append("  ").AppendLine(sandboxed);   // sandbox spec §7: the escape is on the first screen, not a footnote
+        }
         foreach (var warning in requested.Warnings)
         {
             _ = text.Append("  warning: ").AppendLine(warning);

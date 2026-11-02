@@ -53,4 +53,19 @@ public abstract class LaunchFilesContract
 
         Expect.True(files.Verify(A.FirstLaunchId, new LaunchSecret("p-1")).IsError);
     }
+
+    /// <summary>A re-prompt that was recorded reads back with its time, and Forget clears it.</summary>
+    [Fact]
+    public void MarkNudged_is_read_back_by_NudgedAt_until_the_launch_is_forgotten()
+    {
+        var files = Create();
+        var at = new DateTimeOffset(2026, 1, 2, 3, 4, 5, TimeSpan.Zero);
+        Expect.True(files.NudgedAt(A.FirstLaunchId) is null);
+
+        files.MarkNudged(A.FirstLaunchId, at);
+        var recorded = files.NudgedAt(A.FirstLaunchId);
+        files.Forget(A.FirstLaunchId);
+
+        Expect.Equal((at, true), (recorded!.Value, files.NudgedAt(A.FirstLaunchId) is null));
+    }
 }

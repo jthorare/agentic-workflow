@@ -67,7 +67,6 @@ export function addDepsNode(journal, { name, tier, note }) {
       "    kind: package",
       `    tier: ${tier}`,
       `    projectPrefix: Aw.${name}`,
-      "    ts: null",
       `    src: src/${name}`,
       `    note: ${quote(note)}`,
       "",

@@ -33,6 +33,28 @@ public sealed class ClaudeCodeUsageTests : IDisposable
     }
 
     [Fact]
+    public async Task A_separate_login_launchs_transcript_under_its_agent_home_is_found_by_session()
+    {
+        using var home = new UsageFixture();
+        home.Write("-repo/sess-9.jsonl", UsageFixture.Claude("m9", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 7, 0, 0, 3));
+
+        var used = await new ClaudeCodeUsage(_files.Root, [home.Root]).OfSession(SessionId.From("sess-9"), Token);
+
+        Expect.Equal(new ModelTokens("claude-sonnet-4-5", 7, 0, 0, 3), Assert.Single(used));
+    }
+
+    [Fact]
+    public async Task An_owner_copy_launch_still_reads_the_owner_projects_and_an_empty_agent_home_adds_nothing()
+    {
+        using var home = new UsageFixture();
+        _files.Write("-repo/sess-1.jsonl", UsageFixture.Claude("m1", "2026-10-17T08:00:00.000Z", "claude-sonnet-4-5", 10, 0, 0, 5));
+
+        var used = await new ClaudeCodeUsage(_files.Root, [home.Root]).Between(_from, _to, Token);
+
+        Expect.Equal(new ModelTokens("claude-sonnet-4-5", 10, 0, 0, 5), Assert.Single(used));
+    }
+
+    [Fact]
     public async Task A_message_written_twice_counts_once_and_models_stay_apart()
     {
         _files.Write("-repo/a.jsonl",

@@ -31,4 +31,11 @@ public sealed record LaunchRequest(
     StepArgs? Step,
     RunToken? Run,
     SessionId? Resume = null,
-    EvaluatorLaunch? Evaluator = null);
+    EvaluatorLaunch? Evaluator = null)
+{
+    /// <summary>
+    /// The commit the run's worktree started from (sandbox spec §3.8): the host-side prepare reads the lockfiles at it, never from the worktree. The engine sets it for a phase workspace (the phase seed);
+    /// for any other Step the launcher records the repo's HEAD at the run's first launch and passes the same commit on every re-launch. Null when none is known, and the prepare is then skipped.
+    /// </summary>
+    public string? BaseCommit { get; init; }
+}

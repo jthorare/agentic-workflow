@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using Aw.Sindri.Core.Launch;
@@ -18,20 +19,22 @@ public static class AgentLaunches
     public static LaunchId LaunchIdFor(AgentStepRun run)
     {
         ArgumentNullException.ThrowIfNull(run);
-        return LaunchIdFor(run.Workflow, run.Run);
+        return LaunchIdFor(run.Workflow, run.Run, run.Escalation);
     }
 
     /// <summary>The launch id of a run, from the instance and the run token alone: what a status read names before the launch activity has run.</summary>
     /// <param name="workflow">The instance.</param>
     /// <param name="run">The run token.</param>
     /// <returns>The id.</returns>
-    public static LaunchId LaunchIdFor(WorkflowInstanceId workflow, RunToken run)
+    /// <param name="escalation">0 for the first launch of the run, n for its n-th retry on a stronger model; 0 keeps every id that exists today.</param>
+    public static LaunchId LaunchIdFor(WorkflowInstanceId workflow, RunToken run, int escalation = 0)
     {
-        var digest = SHA256.HashData(Encoding.UTF8.GetBytes(workflow.Value + ":" + run.Value));
+        var escalated = escalation > 0 ? string.Create(CultureInfo.InvariantCulture, $":escalation:{escalation}") : string.Empty;   // why: n = 0 keeps every id that exists today
+        var digest = SHA256.HashData(Encoding.UTF8.GetBytes(workflow.Value + ":" + run.Value + escalated));
         return LaunchId.From("LCH-" + Convert.ToHexStringLower(digest)[..32]);
     }
 
-    /// <summary>The worktree the run works in: the workspace the Step reads when it names one ('fact:workspace', an existing worktree the launcher then uses as it is), else the one the launcher creates, '&lt;repo&gt;/.claude/worktrees/sindri-&lt;instance&gt;-&lt;run&gt;'.</summary>
+    /// <summary>The worktree the run works in: the workspace the Step reads when it names one ('fact:workspace', an existing worktree the launcher then uses as it is), else the one the launcher creates, '&lt;repo&gt;/.claude/worktrees/sindri-&lt;instance&gt;-&lt;run&gt;' ('-e1' after it for the retry on a stronger model).</summary>
     /// <param name="run">The run.</param>
     /// <param name="target">Where it runs.</param>
     /// <param name="workspace">The workspace the Step reads; null when it reads none.</param>
@@ -40,7 +43,7 @@ public static class AgentLaunches
     {
         ArgumentNullException.ThrowIfNull(run);
         ArgumentNullException.ThrowIfNull(target);
-        return !string.IsNullOrWhiteSpace(workspace) ? workspace : target.RepoPath.TrimEnd('/') + "/.claude/worktrees/sindri-" + run.Workflow.Value + "-" + run.Run.Value;
+        return !string.IsNullOrWhiteSpace(workspace) ? workspace : target.RepoPath.TrimEnd('/') + "/.claude/worktrees/sindri-" + run.Workflow.Value + "-" + run.Run.Value + (run.Escalation > 0 ? string.Create(CultureInfo.InvariantCulture, $"-e{run.Escalation}") : string.Empty);   // why: the retry works in a fresh worktree, not the failed run's
     }
 
     /// <summary>The launcher's request: unattended, Open, the worktree, the Step's reference and the policy its capability gives.</summary>
@@ -58,23 +61,30 @@ public static class AgentLaunches
         var policy = new StepPolicy(tools, StepPermissionMode.Default, run.WriteScope ? worktree : null);
         return new LaunchRequest(
             LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, worktree,
-            new StepArgs(Model: null, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null), run.Run);   // Model null: per-Step models are SC-R
+            StepArgsFor(run, descriptor, extras, policy), run.Run)
+        {
+            BaseCommit = extras?.BaseCommit,
+        };
     }
+
+    // The Step's 'model' parameter (null runs the agent's default), its brief and the pack and facts it is given.
+    private static StepArgs StepArgsFor(AgentStepRun run, BlockDescriptor? descriptor, AgentLaunchExtras? extras, StepPolicy policy) =>
+        new(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions, extras?.Facts?.Keys), extras?.Bundle, extras?.Facts is { Count: > 0 } facts ? facts : null);
 
     /// <summary>The holdout evaluator's request (LN-LCH2): it runs in a scratch checkout at the head sha, reads the holdout set and never writes it, can't touch the phase worktree, and may run the evidence CLIs.</summary>
     /// <param name="run">The run.</param>
     /// <param name="target">Where it runs.</param>
     /// <param name="evaluator">The head sha, the holdout set and the phase worktree to keep out of reach.</param>
     /// <param name="descriptor">The Step's descriptor, for the brief; null when the catalog doesn't know it.</param>
-    /// <param name="instructions">What the Step is told to do, for the brief; none when it has none.</param>
+    /// <param name="extras">What the Step is told to do (its instructions, for the brief) and the model it runs on (the pick); null for none and the agent's default.</param>
     /// <returns>The request.</returns>
-    public static LaunchRequest EvaluatorRequestFor(AgentStepRun run, AgentStepTarget target, EvaluatorLaunch evaluator, BlockDescriptor? descriptor = null, IReadOnlyList<string>? instructions = null)
+    public static LaunchRequest EvaluatorRequestFor(AgentStepRun run, AgentStepTarget target, EvaluatorLaunch evaluator, BlockDescriptor? descriptor = null, AgentLaunchExtras? extras = null)
     {
         ArgumentNullException.ThrowIfNull(evaluator);
         // The launcher fills in the writable path: the scratch checkout it makes. No commit rights: the evaluator reports, it doesn't change the repo.
         var policy = new StepPolicy([.. _report, .. _evidence], StepPermissionMode.Default, WritablePath: null, ReadOnlyPaths: [evaluator.HoldoutPath], DeniedPaths: [evaluator.PhaseWorktree]);
         return new LaunchRequest(
             LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, Worktree: null,
-            new StepArgs(Model: null, policy, run.Step, AgentStepBrief.Render(run, descriptor, instructions)), run.Run, Evaluator: evaluator);
+            new StepArgs(Model: extras?.Model, policy, run.Step, AgentStepBrief.Render(run, descriptor, extras?.Instructions)), run.Run, Evaluator: evaluator);
     }
 }

@@ -106,6 +106,17 @@ Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.Reasons.get -> System.C
 Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.Reasons.init -> void
 Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.Status.get -> Aw.BugFix.Core.Model.BugFixStatus
 Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.Status.init -> void
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.<Clone>$() -> Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest!
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.Candidate.get -> Aw.BugFix.Core.Ids.CandidateId
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.Candidate.init -> void
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.Deconstruct(out string! StateDirectory, out Aw.BugFix.Core.Ids.CandidateId Candidate, out string! Log) -> void
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.Equals(Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest? other) -> bool
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.Log.get -> string!
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.Log.init -> void
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.RecordBuildFailedRequest(string! StateDirectory, Aw.BugFix.Core.Ids.CandidateId Candidate, string! Log) -> void
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.StateDirectory.get -> string!
+Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.StateDirectory.init -> void
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.<Clone>$() -> Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest!
 Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.AllowTestChanges.get -> bool
@@ -230,11 +241,13 @@ Aw.BugFix.Features.StartAttempt.StartAttemptRequest
 Aw.BugFix.Features.StartAttempt.StartAttemptRequest.<Clone>$() -> Aw.BugFix.Features.StartAttempt.StartAttemptRequest!
 Aw.BugFix.Features.StartAttempt.StartAttemptRequest.AbandonJudge.get -> bool
 Aw.BugFix.Features.StartAttempt.StartAttemptRequest.AbandonJudge.init -> void
-Aw.BugFix.Features.StartAttempt.StartAttemptRequest.Deconstruct(out string! StateDirectory, out Aw.BugFix.Core.Model.FixMode Mode, out bool AbandonJudge) -> void
+Aw.BugFix.Features.StartAttempt.StartAttemptRequest.AbandonUnrun.get -> bool
+Aw.BugFix.Features.StartAttempt.StartAttemptRequest.AbandonUnrun.init -> void
+Aw.BugFix.Features.StartAttempt.StartAttemptRequest.Deconstruct(out string! StateDirectory, out Aw.BugFix.Core.Model.FixMode Mode, out bool AbandonJudge, out bool AbandonUnrun) -> void
 Aw.BugFix.Features.StartAttempt.StartAttemptRequest.Equals(Aw.BugFix.Features.StartAttempt.StartAttemptRequest? other) -> bool
 Aw.BugFix.Features.StartAttempt.StartAttemptRequest.Mode.get -> Aw.BugFix.Core.Model.FixMode
 Aw.BugFix.Features.StartAttempt.StartAttemptRequest.Mode.init -> void
-Aw.BugFix.Features.StartAttempt.StartAttemptRequest.StartAttemptRequest(string! StateDirectory, Aw.BugFix.Core.Model.FixMode Mode, bool AbandonJudge = false) -> void
+Aw.BugFix.Features.StartAttempt.StartAttemptRequest.StartAttemptRequest(string! StateDirectory, Aw.BugFix.Core.Model.FixMode Mode, bool AbandonJudge = false, bool AbandonUnrun = false) -> void
 Aw.BugFix.Features.StartAttempt.StartAttemptRequest.StateDirectory.get -> string!
 Aw.BugFix.Features.StartAttempt.StartAttemptRequest.StateDirectory.init -> void
 Aw.BugFix.Features.StartAttempt.StartAttemptResponse
@@ -285,6 +298,9 @@ override Aw.BugFix.Features.JudgeCandidate.JudgeCandidateRequest.ToString() -> s
 override Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.Equals(object? obj) -> bool
 override Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.GetHashCode() -> int
 override Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.ToString() -> string!
+override Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.Equals(object? obj) -> bool
+override Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.GetHashCode() -> int
+override Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.ToString() -> string!
 override Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.Equals(object? obj) -> bool
 override Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.GetHashCode() -> int
 override Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.ToString() -> string!
@@ -345,6 +361,8 @@ static Aw.BugFix.Features.JudgeCandidate.JudgeCandidateRequest.operator !=(Aw.Bu
 static Aw.BugFix.Features.JudgeCandidate.JudgeCandidateRequest.operator ==(Aw.BugFix.Features.JudgeCandidate.JudgeCandidateRequest? left, Aw.BugFix.Features.JudgeCandidate.JudgeCandidateRequest? right) -> bool
 static Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.operator !=(Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse? left, Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse? right) -> bool
 static Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse.operator ==(Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse? left, Aw.BugFix.Features.JudgeCandidate.JudgeCandidateResponse? right) -> bool
+static Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.operator !=(Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest? left, Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest? right) -> bool
+static Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest.operator ==(Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest? left, Aw.BugFix.Features.RecordRun.RecordBuildFailedRequest? right) -> bool
 static Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.operator !=(Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest? left, Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest? right) -> bool
 static Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest.operator ==(Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest? left, Aw.BugFix.Features.RecordCandidate.RecordCandidateRequest? right) -> bool
 static Aw.BugFix.Features.RecordCandidate.RecordCandidateResponse.operator !=(Aw.BugFix.Features.RecordCandidate.RecordCandidateResponse? left, Aw.BugFix.Features.RecordCandidate.RecordCandidateResponse? right) -> bool

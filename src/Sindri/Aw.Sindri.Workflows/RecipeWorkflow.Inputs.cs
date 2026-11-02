@@ -32,6 +32,7 @@ internal sealed partial class RecipeWorkflow
         _capsPlan = Workflow.Patched("step-inputs-plan-cap-v1");   // a plan over the cap fails the Step: a history that filled past it before must replay as it ran
         _uncapsPlan = Workflow.Patched("step-inputs-no-plan-cap-v1");   // new runs keep no cap (a big map's view is a long text, not a failure); a history without this marker keeps the cap it ran under
         _unavailable = Workflow.Patched("step-unavailable-v1");   // a Step failure no transition takes is retried, then parks as unavailable; a history without the marker parks needs-answer at once as it did
+        _fillsTogether = Workflow.Patched("step-inputs-concurrent-v1");   // a Step's inputs start together, not one after another; a history without the marker ran them one by one
     }
 
     private bool _fillsInputs;
@@ -40,6 +41,8 @@ internal sealed partial class RecipeWorkflow
     private bool _capsPlan;
     private bool _uncapsPlan;
     private bool _unavailable;
+    private bool _fillsTogether;
+    private IReadOnlyList<InputTiming> _timings = [];
     private string? _filled;
     private InjectionPlan _injection = InjectionPlan.Empty;
     private List<InjectionFill> _fills = [];
@@ -69,9 +72,28 @@ internal sealed partial class RecipeWorkflow
 
         List<InjectionFill> fills = [];
         _textsKept = true;   // from the first activity on, the process may hold text for this instance
+        var stopped = _fillsTogether ? await FillTogether(instance, open, state, step, fills).ConfigureAwait(true) : await FillOneByOne(instance, open, state, step, fills).ConfigureAwait(true);
+        if (stopped is { } filling)
+        {
+            return filling;
+        }
+
+        _fills = fills;
+        _injection = InjectionPlans.Merge([.. fills.Select(static f => f.Recorded)]);
+        _timings = [.. fills.Select(static f => f.Recorded.DurationMs is { } ms ? new InputTiming(f.Recorded.Input, ms) : null).OfType<InputTiming>()];
+        await MirrorInjection(instance, open).ConfigureAwait(true);
+        return default;
+    }
+
+    private FillInputRequest RequestFor(WorkflowInstance instance, OpenRun open, StepUse step, int n) =>
+        new(instance.Address.Value, instance.Frame.State, open.Token.Value, n, step.Inputs[n - 1].Use, step.Use, step.Inputs[n - 1].With, instance.Facts, _repo);
+
+    // The inputs one after another, each waiting for the one before: what a history recorded without 'step-inputs-concurrent-v1' ran.
+    private async Task<Filling?> FillOneByOne(WorkflowInstance instance, OpenRun open, RecipeState state, StepUse step, List<InjectionFill> fills)
+    {
         for (var n = 1; n <= step.Inputs.Count; n++)
         {
-            var request = new FillInputRequest(instance.Address.Value, instance.Frame.State, open.Token.Value, n, step.Inputs[n - 1].Use, step.Use, step.Inputs[n - 1].With, instance.Facts, _repo);
+            var request = RequestFor(instance, open, step, n);
             try
             {
                 fills.Add(new InjectionFill(await Workflow.ExecuteActivityAsync((StepInputActivities a) => a.FillInputAsync(request), FillOptions(open, n, state)).ConfigureAwait(true), request));
@@ -86,18 +108,74 @@ internal sealed partial class RecipeWorkflow
                 return await InputFailed(instance, open, request.Input, e).ConfigureAwait(true);
             }
 
-            if (_capsPlan && !_uncapsPlan && InjectionPlans.Bytes([.. fills.Select(static f => f.Recorded)]) > InjectionPlans.PlanCap)
+            if (OverPlanCap(fills))
             {
-                // the plan is one budget for the run: past it the Step fails (SND-WF-019) and the texts held so far go
-                return await InputsFailed(instance, open, $"inputs failed: {WorkflowErrors.InjectionInvalid.Code} the plan is over {InjectionPlans.PlanCap} bytes").ConfigureAwait(true);
+                return await PlanOverCap(instance, open).ConfigureAwait(true);
             }
         }
 
-        _fills = fills;
-        _injection = InjectionPlans.Merge([.. fills.Select(static f => f.Recorded)]);
-        await MirrorInjection(instance, open).ConfigureAwait(true);
-        return default;
+        return null;
     }
+
+    // Every input started in declared order (the same activity ids), then every one awaited, so the texts of a failed run are all in the process
+    // before they are dropped; the first failure in declared order decides, as it did one after another.
+    private async Task<Filling?> FillTogether(WorkflowInstance instance, OpenRun open, RecipeState state, StepUse step, List<InjectionFill> fills)
+    {
+        var requests = new List<FillInputRequest>(step.Inputs.Count);
+        var running = new List<Task<FilledInput>>(step.Inputs.Count);
+        for (var n = 1; n <= step.Inputs.Count; n++)
+        {
+            var request = RequestFor(instance, open, step, n);
+            requests.Add(request);
+            running.Add(Workflow.ExecuteActivityAsync((StepInputActivities a) => a.FillInputAsync(request), FillOptions(open, n, state)));
+        }
+
+        var failures = new ActivityFailureException?[running.Count];
+        for (var i = 0; i < running.Count; i++)
+        {
+            try
+            {
+                fills.Add(new InjectionFill(await running[i].ConfigureAwait(true), requests[i]));
+            }
+            catch (ActivityFailureException e)
+            {
+                failures[i] = e;
+            }
+        }
+
+        for (var i = 0; i < failures.Length; i++)
+        {
+            if (failures[i] is { } failure)
+            {
+                return await FillFailed(instance, open, step, requests[i].Input, failure).ConfigureAwait(true);
+            }
+        }
+
+        return OverPlanCap(fills) ? await PlanOverCap(instance, open).ConfigureAwait(true) : null;
+    }
+
+    // One fill's failure, as the one-after-another path decides it: no runtime parks, a cancelled fill rethrows, anything else fails the Step.
+    private async Task<Filling> FillFailed(WorkflowInstance instance, OpenRun open, StepUse step, BlockId input, ActivityFailureException failure)
+    {
+        if (failure.InnerException is ApplicationFailureException { ErrorType: var type } && string.Equals(type, WorkflowErrors.StepInputNoRuntime.Code, StringComparison.Ordinal))
+        {
+            await DropTexts(instance.Address.Value).ConfigureAwait(true);
+            return new Filling(Failed: null, await ParkNoRuntime(instance, open, step, input).ConfigureAwait(true));
+        }
+
+        if (failure.InnerException is CanceledFailureException)
+        {
+            throw failure;   // a cancelled fill: the workflow is being cancelled
+        }
+
+        return await InputFailed(instance, open, input, failure).ConfigureAwait(true);
+    }
+
+    private bool OverPlanCap(List<InjectionFill> fills) => _capsPlan && !_uncapsPlan && InjectionPlans.Bytes([.. fills.Select(static f => f.Recorded)]) > InjectionPlans.PlanCap;
+
+    // the plan is one budget for the run: past it the Step fails (SND-WF-019) and the texts held so far go
+    private async Task<Filling?> PlanOverCap(WorkflowInstance instance, OpenRun open) =>
+        await InputsFailed(instance, open, $"inputs failed: {WorkflowErrors.InjectionInvalid.Code} the plan is over {InjectionPlans.PlanCap} bytes").ConfigureAwait(true);
 
     // The reason is a code, never the message (it could carry text); a typed SND- code also becomes the park's.
     private Task<Filling> InputFailed(WorkflowInstance instance, OpenRun open, BlockId input, ActivityFailureException failure)
@@ -128,7 +206,7 @@ internal sealed partial class RecipeWorkflow
         }
 
         var filled = new StepCompleted("engine:inputs", open.Token, OutcomeName.From("filled"), new Dictionary<FactKey, FactValue>(), Tokens: 0, StepRuntime.Desk, string.Empty);
-        var detail = WorkflowEventDetail.Of(filled, instance.Id, suspension: null) with { Injection = _injection.Entries };
+        var detail = WorkflowEventDetail.Of(filled, instance.Id, suspension: null) with { Injection = _injection.Entries, Inputs = _timings.Count == 0 ? null : _timings };
         // why: a Step runs only after RunAsync set _start
         var start = _start!;
         var record = new WorkflowEventRecord(start.WorkflowId().Value, EventTypes.WorkflowInjection, start.Item.Value, instance.Frame.State, instance.Frame.State, "inputs", Outcome: null, open.Token.Value, "engine:inputs", start.Tenant, start.Ring, detail);
@@ -172,6 +250,7 @@ internal sealed partial class RecipeWorkflow
         {
             _injection = InjectionPlan.Empty;
             _fills = [];
+            _timings = [];
         }
 
         return fresh;

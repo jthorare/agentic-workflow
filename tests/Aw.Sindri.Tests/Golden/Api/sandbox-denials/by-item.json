@@ -1,0 +1,41 @@
+{
+  "launches": [
+    {
+      "launchId": "LCH-00000000000000000000000000000001",
+      "updatedAt": "2026-01-01T00:00:00.0000000Z",
+      "entries": [
+        {
+          "kind": "network",
+          "target": "github.com",
+          "rule": "no-group",
+          "count": 3,
+          "first": "2026-01-01T00:00:00.0000000Z",
+          "last": "2026-01-01T00:00:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "path",
+          "target": "/var/run/docker.sock",
+          "rule": "deny-list",
+          "count": 1,
+          "first": "2026-01-01T00:00:00.0000000Z",
+          "last": "2026-01-01T00:00:00.0000000Z",
+          "fix": "never",
+          "reason": "it would give the agent full control of this machine"
+        },
+        {
+          "kind": "policy",
+          "target": "git push",
+          "rule": "inner-policy",
+          "count": 1,
+          "first": "2026-01-01T00:00:00.0000000Z",
+          "last": "2026-01-01T00:00:00.0000000Z",
+          "fix": "own-terminal"
+        }
+      ],
+      "overflow": [],
+      "repo": "demo",
+      "item": "ITM-0000000000000000000000000000000f"
+    }
+  ]
+}

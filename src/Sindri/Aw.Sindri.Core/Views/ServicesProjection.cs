@@ -51,8 +51,8 @@ internal sealed class ServicesProjection(EventFactory events) : IProjection
     {
         ArgumentNullException.ThrowIfNull(ran);
         ArgumentNullException.ThrowIfNull(recorded);
-        var last = new LastRun(ran.Slot, ran.Outcome, ran.Code, recorded.Envelope.OccurredAt);
-        return new ServiceRow(ran.Service, last, row?.Paused ?? false, recorded.Sequence, ran.Job is null ? ran.Slot : row?.ScheduledSlot);
+        var last = new LastRun(ran.Slot, ran.Outcome, ran.Code, recorded.Envelope.OccurredAt, ran.Detail);
+        return new ServiceRow(ran.Service, last, row?.Paused ?? false, recorded.Sequence, ran.Job is null ? ran.Slot : row?.ScheduledSlot, row?.PausedBy, row?.PausedAt);
     }
 
     /// <summary>The row after a 'service.paused': paused, the last run and scheduled slot kept (a row is made when there is none).</summary>
@@ -64,7 +64,7 @@ internal sealed class ServicesProjection(EventFactory events) : IProjection
     {
         ArgumentNullException.ThrowIfNull(paused);
         ArgumentNullException.ThrowIfNull(recorded);
-        return new ServiceRow(paused.Service, row?.LastRun, Paused: true, recorded.Sequence, row?.ScheduledSlot);
+        return new ServiceRow(paused.Service, row?.LastRun, Paused: true, recorded.Sequence, row?.ScheduledSlot, recorded.Envelope.Actor, recorded.Envelope.OccurredAt);
     }
 
     /// <summary>The row after a 'service.resumed': not paused, the rest kept.</summary>

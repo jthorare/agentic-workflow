@@ -36,6 +36,9 @@ internal sealed record Settlement
     /// <summary>The probabilities to keep in the details (the deciding answer's, else an earlier below-threshold answer's: the row may keep the merged value).</summary>
     public IReadOnlyDictionary<string, double>? Probabilities { get; init; }
 
+    /// <summary>The deciding answer's "reasons" (a JSON array), as the provider sent them; stored redacted and capped.</summary>
+    public System.Text.Json.Nodes.JsonNode? Reasons { get; init; }
+
     /// <summary>What the fallback rules would have said.</summary>
     public string? RulesOpinion { get; init; }
 

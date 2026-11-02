@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Features.Launching;
@@ -411,6 +412,34 @@ public sealed class LauncherServiceTests
         _ = await _rig.Tick();
 
         Expect.Equal(2, _rig.Recorded(EventTypes.LaunchProbed).Count);   // the start-up probe, then the one a failed launch asks for
+    }
+
+    [Fact]
+    public async Task A_sandbox_refusal_records_its_reason_and_source_in_the_detail_only()
+    {
+        await Boot();
+        using var caller = _rig.Caller();
+        _rig.Launcher.FailNextWith(SandboxRefusal.For(SindriErrors.LaunchLoginUnavailable, SandboxReasons.Expired, source: ModelLoginSource.SeparateLogin));
+
+        _ = await _rig.Launch(await Filed(_a));
+
+        var failed = Assert.Single(_rig.Failures);
+        Expect.Equal(("SND-LAUNCH-017", "expired", "separate-login"), (failed.Code, failed.Detail?.Reason, failed.Detail?.Source));
+        using var wire = System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(failed, SliceHarness.Json));
+        Expect.True(!wire.RootElement.TryGetProperty("reason", out _) && !wire.RootElement.TryGetProperty("source", out _));   // one place for "why": detail
+    }
+
+    [Fact]
+    public async Task A_refusal_that_is_not_a_sandbox_one_records_no_reason()
+    {
+        await Boot();
+        using var caller = _rig.Caller();
+        _rig.Launcher.FailNextWith(SindriErrors.LaunchViewerFailed.With("no window"));
+
+        _ = await _rig.Launch(await Filed(_a));
+
+        var failed = Assert.Single(_rig.Failures);
+        Expect.Equal((null, null), (failed.Detail?.Reason, failed.Detail?.Source));
     }
 
     [Fact]

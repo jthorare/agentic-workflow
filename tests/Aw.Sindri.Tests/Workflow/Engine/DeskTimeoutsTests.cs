@@ -17,8 +17,8 @@ public sealed class DeskTimeoutsTests
         var floor = DeskTimeouts.DefaultFloor;
 
         Assert.Equal(TimeSpan.FromDays(2), floor);
-        Assert.Equal(floor, DeskTimeouts.Wait(Step.States["produce"].Timeout, floor));   // 4h
-        Assert.Equal(TimeSpan.FromHours(4), DeskTimeouts.Wait(Step.States["produce"].Timeout, TimeSpan.FromMinutes(1)));
+        Assert.Equal(floor, DeskTimeouts.Wait(Step.States["produce"].Timeout, floor));   // 1d
+        Assert.Equal(TimeSpan.FromDays(1), DeskTimeouts.Wait(Step.States["produce"].Timeout, TimeSpan.FromMinutes(1)));
     }
 
     [Fact, Trait("Lane", "unit")]

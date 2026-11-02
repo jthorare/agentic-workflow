@@ -20,7 +20,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Aw.Judge.Features;
 
 /// <summary>Registers Aw.Judge.Features's slices: each service, its validator and its decorators (outermost first).</summary>
-public static class JudgeFeaturesServiceCollectionExtensions
+public static partial class JudgeFeaturesServiceCollectionExtensions
 {
     /// <summary>Adds every Judge use case as an IService.</summary>
     /// <param name="services">The service collection.</param>
@@ -136,9 +136,10 @@ public static class JudgeFeaturesServiceCollectionExtensions
                     sp.GetRequiredService<IValidator<SetBriefAgentIdRequest>>()));
     }
 
-    // The verbs the cutover builds on: SortPrompt and SetPromptSort (unit 6.1), CheckTraits (unit 6.2).
+    // The verbs the cutover builds on: SortPrompt and SetPromptSort (unit 6.1), CheckTraits (unit 6.2), and the by-hand verbs (AddByHandVerbs).
     private static void AddCutoverVerbs(IServiceCollection services)
     {
+        AddByHandVerbs(services);
         _ = services
             .AddScoped<SortRecorder>()
             .AddScoped<SortPromptService>()

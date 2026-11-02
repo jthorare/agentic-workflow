@@ -44,9 +44,12 @@ case "$FAKE_NAME" in
         else
           echo "eval-call" >> "$FAKE_CALLS"
           if [ "${EVAL_FAIL:-}" = 1 ]; then echo "workflow.a@1: happy fail"; exit 1; fi
-          echo "{\"recipes\":[$(seq -s, 1 $((FAKE_RECIPES + ${EVAL_COUNT_DELTA:-0})))]}"
+          list="" i=0   # no seq: BSD seq differs from GNU (-s, count-down on an empty range)
+          while [ "$i" -lt $((FAKE_RECIPES + ${EVAL_COUNT_DELTA:-0})) ]; do i=$((i + 1)); list="${list:+$list,}$i"; done
+          echo "{\"recipes\":[$list]}"
         fi ;;
       agents) if [ -n "${FAKE_OPEN_RUNS:-}" ]; then echo '{"sessions":[{"ref":"claude/abc","state":"running","launch":{"instance":"ITM-1/line/3/scoping.1","state":"challenge","attempt":1}}]}'; else echo '{"sessions":[]}'; fi ;;
+      profile) echo "${FAKE_PROFILE_OUT:-}"; exit "${FAKE_PROFILE_RC:-0}" ;;
       env) echo "judge=$AW_SINDRI_JUDGE packets=$AW_PACKETS_BIN evidence=$AW_UI_EVIDENCE_BIN dir=$(cd "$(dirname "$FAKE_SELF")" && pwd -P) droot=$DOTNET_ROOT" ;;
     esac ;;
   judge) echo "judge health ok" ;;
@@ -283,6 +286,16 @@ out="$(EVAL_COUNT_DELTA=1 bash "$INSTALL" --publish 2>&1)"; rc=$?
 check "eval: an embedded count that differs from the staged yaml count fails" "$rc" "1"
 has "eval: names both counts" "$out" "embeds 4 recipes but recipes/sindri has 3"
 check "eval: a count failure records no digest" "$([ "$(cat "$DG")" = "$D_BEFORE" ] && echo same)" "same"
+
+# A profile approval this build can't read (#1143) or that isn't there: --link says the one command and still exits 0.
+bash "$INSTALL" --publish > /dev/null 2>&1   # the count failure above left this source unbuilt; --link needs a build to link
+out="$(FAKE_PROFILE_RC=2 FAKE_PROFILE_OUT="SND-PROFILE-005 x/profile.json doesn't match its approval hash" bash "$INSTALL" --link 2>&1)"; rc=$?
+check "an unreadable approval: --link still exits 0" "$rc" "0"
+has "an unreadable approval: the hint names the command" "$out" "run \`sindri profile approve\` to see the live hash"
+out="$(FAKE_PROFILE_RC=1 FAKE_PROFILE_OUT="valid, not approved" bash "$INSTALL" --link 2>&1)"; rc=$?
+has "an unapproved profile: the hint" "$out" "the profile isn't approved by this build; run \`sindri profile approve\`"
+out="$(bash "$INSTALL" --link 2>&1)"
+check "an approved profile: no hint" "$(printf '%s' "$out" | grep -c 'profile approve')" "0"
 
 # A failed `git archive` fails the publish: nothing is published and no empty recipes set is embedded.
 mkdir -p "$WORK/gitfail"

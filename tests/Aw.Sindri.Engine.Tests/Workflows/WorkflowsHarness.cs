@@ -33,7 +33,7 @@ namespace Aw.Sindri.Tests.Workflows;
 /// </summary>
 internal sealed class WorkflowsHarness : IDisposable
 {
-    private static readonly TimeSpan _patience = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan _patience = TimeSpan.FromSeconds(string.Equals(Environment.GetEnvironmentVariable("CI"), "true", StringComparison.Ordinal) ? 60 : 20);   // a loaded CI runner needs longer to answer its first Query
     private readonly TempHome _home = new();
     private readonly TempHome _work = new();
 
@@ -106,6 +106,9 @@ internal sealed class WorkflowsHarness : IDisposable
     public static async Task<WorkflowEnvironment> StartDevServer(string @namespace = TemporalSettings.DefaultNamespace, CancellationToken ct = default)
     {
         const int Attempts = 3;
+
+        // why: a workflow task that runs past 2 s without yielding is flagged as a deadlock (TMPRL1101), and on a CI runner with thousands of tests in parallel a normal task can; TemporalWorkerOptions.DebugMode defaults to true when TEMPORAL_DEBUG is "true" or "1" and turns that detection off. Tests only: the product's worker never sees this variable set.
+        Environment.SetEnvironmentVariable("TEMPORAL_DEBUG", "1");
         for (var attempt = 1; ; attempt++)
         {
             try
@@ -261,6 +264,7 @@ internal sealed class WorkflowsHarness : IDisposable
     {
         var deadline = RealTime.NowDateTime + _patience;
         InstanceView? last = null;
+        Exception? lastError = null;
         while (RealTime.NowDateTime < deadline)
         {
             // why: an unbounded Query can sit on a time-skipping server (a replay waiting for a worker) until the test's own timeout; 25 s is past the 10 s sticky-queue wait a restarted worker leaves behind
@@ -272,6 +276,7 @@ internal sealed class WorkflowsHarness : IDisposable
             }
             catch (Exception e) when (!ct.IsCancellationRequested && e is Temporalio.Exceptions.RpcException { Code: Temporalio.Exceptions.RpcException.StatusCode.DeadlineExceeded or Temporalio.Exceptions.RpcException.StatusCode.Cancelled or Temporalio.Exceptions.RpcException.StatusCode.Unknown or Temporalio.Exceptions.RpcException.StatusCode.NotFound } or Temporalio.Exceptions.RpcTimeoutOrCanceledException)
             {
+                lastError = e;
                 continue;   // boundary: one slow Query, or one sent before a start the CLI accepted is visible (NotFound); the loop's deadline decides when to give up
             }
 
@@ -283,7 +288,7 @@ internal sealed class WorkflowsHarness : IDisposable
             await Task.Delay(100, TestContext.Current.CancellationToken);
         }
 
-        Assert.Fail($"the instance never got there; last seen {last}");
+        Assert.Fail($"the instance never got there; last seen {last}; last Query error {(lastError is null ? "none" : lastError.GetType().Name + ": " + lastError.Message)}");
         return last;
     }
 
@@ -301,7 +306,7 @@ internal sealed class WorkflowsHarness : IDisposable
         var stderr = new StringWriter();
         var json = services.GetRequiredService<JsonSerializerOptions>();
         var output = new Output(stdout, stderr, json);
-        using var client = new ControlPlaneClient(services.GetRequiredService<IControlPlaneProbe>(), json,
+        using var client = new ControlPlaneClient(new RetryOncePlaneProbe(services.GetRequiredService<IControlPlaneProbe>()), json,
             CallerHeaders.For(session, human ? services.GetRequiredService<IHumanTokenStore>() : new InMemoryHumanTokenStore(), _ => ValueTask.FromResult(repo)), TimeSpan.FromSeconds(30));
         var desk = new RecipeDesk(client, new StringReader(typed is null ? string.Empty : typed + "\n"), static _ => Task.FromResult<Kernel.Error?>(null));
         var exit = await WorkflowCommandTable.Run(args, services, output, desk, TestContext.Current.CancellationToken);

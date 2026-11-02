@@ -167,6 +167,21 @@ internal sealed class ControlPlaneClient(IControlPlaneProbe probe, JsonSerialize
         return Send<T>(HttpMethod.Post, route, content, after: null, ct);
     }
 
+    /// <summary>GET a route a launch's own proof authorizes (API spec §8.1): sent as the X-Sindri-Launch-Secret header, with the caller headers.</summary>
+    /// <param name="route">The route.</param>
+    /// <param name="proof">The launch secret.</param>
+    /// <param name="ct">Cancels the call.</param>
+    /// <typeparam name="T">The response type.</typeparam>
+    /// <returns>The answer, or the API's error.</returns>
+    public Task<Result<ApiAnswer<T>>> GetProven<T>(string route, string proof, CancellationToken ct)
+    {
+#pragma warning disable CA2000 // Send disposes the content, on its failure paths and with the request
+        var content = new ByteArrayContent([]);
+#pragma warning restore CA2000
+        content.Headers.Add(SindriHeaders.LaunchSecret, proof);   // an empty body only carries the proof, as PostProven's does
+        return Send<T>(HttpMethod.Get, route, content, after: null, ct);
+    }
+
     private async Task<Result<ApiAnswer<T>>> Send<T>(HttpMethod method, string route, HttpContent? content, long? after, CancellationToken ct)
     {
         if (SettingRefusal is { } refused)

@@ -11,7 +11,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 
 /// <summary>
 /// Wraps the host's real context engine and adds a second intent source, 'zeta', whose sync is always running already (SND-CONTEXT-056). A sync of
-/// every source in one engine call then fails as a whole, as the real engine's does when one source is busy, while a sync of 'onyx' alone is the real one.
+/// every source in one engine call then fails as a whole, as the real engine's does when one source is busy, while a sync of one source alone is the real one.
 /// </summary>
 public class SyncRunningOnZeta : DispatchProxy
 {

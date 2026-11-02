@@ -41,4 +41,8 @@ public sealed record SubgraphView(
     /// <summary>The commit the map was built at (first seven characters), or null for an imported map; 'mapVersion' itself stays 'v&lt;N&gt;'.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? MapCommit { get; init; }
+
+    /// <summary>How many demoted files' code nodes depth expansion left out (<see cref="DemotedCode"/>); null when none was, so the field is absent.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? Demoted { get; init; }
 }

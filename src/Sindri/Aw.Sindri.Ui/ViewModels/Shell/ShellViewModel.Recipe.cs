@@ -19,11 +19,14 @@ internal sealed partial class ShellViewModel
     /// <summary>True when the sheet's subject is a recipe.</summary>
     public bool IsRecipeSheet => SheetLink?.Kind == DeepLinkKind.Recipe;
 
+    /// <summary>True while the open sheet covers the page at every width: a recipe's sheet is prose and needs the room, and the page behind it keeps its columns.</summary>
+    public bool SheetCoversPage => IsRecipeSheet && IsSheetOpen;
+
     // The recipe part of opening the sheet (OnSheetOpened): the sheet names its recipe at once and reads it.
     private void OnRecipeSheetOpened(DeepLink link)
     {
         OpenerRecipeGroup = null;   // set again by the group head that opened this one, after the sheet opens
-        Changed(nameof(IsRecipeSheet), nameof(ShownSheetWidth));
+        Changed(nameof(IsRecipeSheet), nameof(ShownSheetWidth), nameof(SheetCoversPage));
         if (link.Kind != DeepLinkKind.Recipe || link.Subject is not { } subject)
         {
             return;
@@ -46,6 +49,13 @@ internal sealed partial class ShellViewModel
             if (string.Equals(e.PropertyName, nameof(IsRecipes), StringComparison.Ordinal))
             {
                 RecipesPage.SetShown(IsRecipes);
+            }
+        };
+        Recipe.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(RecipeSheetViewModel.Title), StringComparison.Ordinal))
+            {
+                Changed(nameof(SheetTitle), nameof(SheetName), nameof(EdgeTabName), nameof(EdgeTabText));
             }
         };
         RecipesPage.OpenRequested += (_, e) => OpenSheet(e.Link);

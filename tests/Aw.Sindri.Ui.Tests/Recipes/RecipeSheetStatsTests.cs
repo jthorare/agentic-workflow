@@ -75,6 +75,28 @@ public sealed class RecipeSheetStatsTests
     }
 
     [Fact]
+    public async Task Runs_that_are_all_still_open_have_no_finished_share_and_say_how_many_are_open()
+    {
+        _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":false,"runs":2,"done":0,"failed":0,"cancelled":0,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"humanTime":null,"byState":[],"buckets":[],"asOf":null}""");
+
+        var sheet = await Opened();
+
+        Assert.Equal(
+            [("Runs", "2"), ("Finished", "None yet"), ("Still open", "2"), ("Needed a person", "\u2013"), ("Typical time", "\u2013")],
+            sheet.StatLines.Select(l => (l.Label, l.Value)));
+    }
+
+    [Fact]
+    public async Task The_finished_share_counts_finished_runs_only_and_open_runs_are_listed_apart()
+    {
+        _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":false,"runs":5,"done":2,"failed":1,"cancelled":0,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"humanTime":null,"byState":[],"buckets":[],"asOf":null}""");
+
+        var sheet = await Opened();
+
+        Assert.Equal([("Finished", "67%"), ("Still open", "2")], sheet.StatLines.Where(l => string.Equals(l.Label, "Finished", StringComparison.Ordinal) || string.Equals(l.Label, "Still open", StringComparison.Ordinal)).Select(l => (l.Label, l.Value)));
+    }
+
+    [Fact]
     public async Task A_workflow_that_only_runs_inside_others_says_so()
     {
         _server.RecipeStatsAnswer = Served("""{"recipe":"workflow.x","hash":null,"window":"30d","childOnly":true,"runs":null,"done":null,"failed":null,"cancelled":null,"outcomes":null,"humanRate":null,"medianSeconds":null,"tokens":null,"budgetHits":null,"humanTime":null,"byState":[],"buckets":[],"asOf":null}""");

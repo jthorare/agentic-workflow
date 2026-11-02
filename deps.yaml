@@ -56,7 +56,9 @@
 #           Aw.LaneCap.Testing CI tool) may reference every package. Analyzer packages (analyzer: true, Aw.Analyzers) are referenced from
 #           production code only with OutputItemType="Analyzer" (in a .csproj or a Directory.Build file);
 #           they need no edge and don't count as fan-out. Any other ProjectReference in a Directory.Build
-#           file fails.
+#           file fails. A ReferenceOutputAssembly="false" reference (not an analyzer) from test code is build
+#           order only: it needs its owner's cli edge to the target's package, makes no project edge current
+#           and is not fan-out (DEPS-PROJ-009).
 # scan      A heuristic, not a proof. It reads *.ts/*.js and *.sh under `scan` (not tests, node_modules or
 #           dist) and finds: spawn/exec*(…"bin…" calls, also wrapped over lines; `?? "bin"` and `|| "bin"`
 #           fallbacks; *Bin = "bin" and *Bin("bin"); BIN_BIN env names; shell commands after VAR=, env,
@@ -120,7 +122,7 @@ packages:
     sublevel: 1
     projectPrefix: Aw.Kernel.Data
     src: src/Aw.Kernel.Data
-    note: "SQLite access and the migrations runner (Microsoft.Data.Sqlite)"
+    note: "SQLite access and the migrations runner (Microsoft.Data.Sqlite); PinnedProcess, a child-process start whose forking thread outlives pool retirement (bwrap --die-with-parent, #1680)"
   - id: KernelTelemetry
     kind: package
     tier: 0
@@ -237,6 +239,12 @@ packages:
     src: null
     scan: [config/statusline.sh]
     note: "the statusline reads a cache and refreshes it from the judge CLI in the background"
+  - id: SandboxTools
+    kind: package
+    tier: 1
+    projectPrefix: Aw.SandboxTools
+    src: null
+    note: "the host binaries the Sindri sandbox runs around a Step's agent session (sandbox spec 2026-10-18-sindri-sandbox-design.md, §4, §9): bubblewrap (bwrap), systemd-run for the cgroup scope (and systemctl --user to read, signal and move the ceiling of that scope, SB-3a) and socat for the unix-socket forwarders. Not repo code: the node exists so the Sindri -> SandboxTools cli edge is declared. The adapters that start them are SB-2, SB-3a and SB-4a; a test redirects each with AW_SANDBOX_BWRAP, AW_SANDBOX_SYSTEMD_RUN and AW_SANDBOX_SOCAT"
   - id: Meta
     kind: package
     tier: 2
@@ -265,6 +273,19 @@ packages:
     projectPrefix: Aw.CodeIndex
     src: src/CodeIndex
     note: "code index: symbols, callers and callees per repo, built in the background when trunk moves (code-index spec)"
+  - id: Embeddings
+    kind: package
+    tier: 0
+    sublevel: 1
+    projectPrefix: Aw.Embeddings
+    src: src/Embeddings
+    note: "the loopback Ollama embed client (digest pin, no proxy, no redirect), the float32 vector codec, L2 normalisation and the top-k scan; domain-free; BCL only (HttpClient, System.Numerics); a tier-0 library, so only project edges point at it (Sindri-owned index spec §9.2)"
+  - id: Connectors
+    kind: package
+    tier: 1
+    projectPrefix: Aw.Connectors
+    src: src/Connectors
+    note: "source readers (GitHub, Slack; later Notion, Jira): the IConnector contract, text cleaner, HTTP clients with a host allowlist; a port of ConnectAI's connector mechanics; no storage, no Context types (Sindri-owned index spec §9.2)"
 
 edges:
   # ---- current: found in the source today ----
@@ -288,6 +309,16 @@ edges:
     kind: cli
     status: current
     note: "the meta Stop gate runs aw-meta stop-check and the SendMessage outbox hook runs aw-meta outbox-record (docs/csharp/meta.md)"
+  - from: Sindri
+    to: SandboxTools
+    kind: cli
+    status: planned
+    note: "the sandbox runs bwrap, systemd-run, systemctl and socat around a Step's agent session (SB-2, SB-3a, SB-4a); check-deps does not scan C# for cli edges"
+  - from: Sindri
+    to: Judge
+    kind: file
+    status: current
+    note: "the sandbox's hook canary (SandboxCanaries.cs, SB-2) writes and removes a probe file in judge/sessions inside the session, and runs `judge brief get task:selfcheck` (the hooks' own round trip); the sandbox binds the judge directory read-write into a session so the installed hooks run"
   - from: Sindri
     to: Evidence
     kind: file
@@ -469,17 +500,17 @@ edges:
     to: Packets
     kind: cli
     status: planned
-    note: "every port and factory run is a packet; sindri runs aw-packets, since the use cases live in App and a project edge reaches only Core (spec §4c)"
+    note: "every port and factory run is a packet; sindri runs aw-packets, since the use cases live in App and a project edge reaches only Core (spec §4c); Aw.Sindri.Tests holds a build-order ProjectReference to the binary's project so a scoped test build builds it (#1128)"
   - from: Sindri
     to: BugFix
     kind: cli
     status: planned
-    note: "the bugfix block Steps (step.bugfix.start-attempt, record-candidate, recheck, judge; DT spec 5.5, 6.1) run bugfix-state, which owns the attempt count, the candidate rules, the frozen check and the once-per-candidate verdict; Sindri reaches it through the IBugFixState port and its CLI adapter (AW_BUGFIX_BIN, else bugfix-state on the PATH), since the use cases live in Host and a project edge reaches only Core (spec 4c)"
+    note: "the bugfix block Steps (step.bugfix.start-attempt, record-candidate, recheck, judge; DT spec 5.5, 6.1) run bugfix-state, which owns the attempt count, the candidate rules, the frozen check and the once-per-candidate verdict; Sindri reaches it through the IBugFixState port and its CLI adapter (AW_BUGFIX_BIN, else bugfix-state on the PATH), since the use cases live in Host and a project edge reaches only Core (spec 4c); Aw.Sindri.Tests holds a build-order ProjectReference to the binary's project so a scoped test build builds it (#1128)"
   - from: Sindri
     to: Judge
     kind: cli
     status: planned
-    note: "step.judge.choose (DT spec 3.1, 8.3) runs `judge choose --providers a,b` with the question on stdin, through the IJudgeChoice port and its CLI adapter (AW_SINDRI_JUDGE, set by sindri-app and the sandbox e2e to the C# judge published next to sindri, else judge on the PATH; AW_JUDGE_STATE_DIR is Sindri's own judge directory under its home), since the use cases live in Host and a project edge reaches only Core (spec 4c); Judge's stores never join Sindri's"
+    note: "step.judge.choose (DT spec 3.1, 8.3) runs `judge choose --providers a,b` with the question on stdin, through the IJudgeChoice port and its CLI adapter (AW_SINDRI_JUDGE, set by sindri-app and the sandbox e2e to the C# judge published next to sindri, else judge on the PATH; AW_JUDGE_STATE_DIR is Sindri's own judge directory under its home), and the sandbox's hook canary (SandboxCanaries.cs, SB-2) runs `judge brief get task:selfcheck` inside a session, the hooks' own round trip, since the use cases live in Host and a project edge reaches only Core (spec 4c); Judge's stores never join Sindri's"
   - from: Sindri
     to: Readiness
     kind: cli
@@ -501,7 +532,7 @@ edges:
     to: Judge
     kind: project
     status: current
-    note: "Sindri's Host adapts Judge's provider catalog (IProviderCatalog, IModelProvider in Aw.Judge.Core) as the context engine's IModelPort, so the labeling pass runs through the owner's own agent CLIs (Claude Code, Codex, Cursor) and never the remote jev API"
+    note: "Sindri's Host adapts Judge's provider catalog (IProviderCatalog, IModelProvider in Aw.Judge.Core) as the context engine's IModelPort, so the labeling pass runs through the owner's own agent CLIs (Claude Code, Codex, Cursor) and never the remote jev API, except the label pick and the product-surface pick: Jev receives their data when their setting is `jev` (Host/Models/JevChoicePort over IBatchClassifier)"
   - from: Sindri
     to: Judge
     kind: compose
@@ -618,6 +649,47 @@ edges:
     kind: compose
     status: current
     note: "Sindri's Host calls AddCodeIndexFeatures and AddCodeIndexInfrastructure (and nothing else from those projects) in Composition (CI-9)"
+  # ---- the Sindri-owned index (spec 2026-10-27-sindri-owned-index-design.md §9.2) ----
+  - from: Embeddings
+    to: Kernel
+    kind: project
+    status: current
+    note: "Result, IService, ids (scaffolded by hand: the scaffolder refuses tier 0)"
+  - from: Connectors
+    to: Kernel
+    kind: project
+    status: current
+    note: "Result, ids, IService"
+  - from: Connectors
+    to: Redaction
+    kind: project
+    status: planned
+    note: "response bodies and urls go through it before any error row (§10); with Kernel, KernelTelemetry and Redaction, Connectors.Infrastructure is at the fan-out limit of 4"
+  - from: Connectors
+    to: KernelTelemetry
+    kind: project
+    status: planned
+    note: "logs and spans (codes and counts only, never record text)"
+  - from: CodeIndex
+    to: Embeddings
+    kind: project
+    status: planned
+    note: "phase I6, blocked: Aw.CodeIndex.Infrastructure already has 4 project references, so this needs a time-boxed fan-out exception or a dropped reference; until then CodeIndex keeps its own copy and the two diverge by design"
+  - from: Sindri
+    to: Embeddings
+    kind: project
+    status: current
+    note: "Host only: binds Context's vector ports (IQueryEmbedder, IVectorScan) to Aw.Embeddings with its own registrations (a compose edge into tier 0 is illegal, DEPS-COMPOSE-001), as it binds ISymbolVectors"
+  - from: Sindri
+    to: Connectors
+    kind: project
+    status: current
+    note: "Host only (Aw.Sindri.Features already has 4 project references, the limit): the Host adapter maps IConnector onto Context's RecordFeed"
+  - from: Sindri
+    to: Connectors
+    kind: compose
+    status: current
+    note: "Host calls AddConnectorsFeatures and AddConnectorsInfrastructure and nothing else from them"
 
 exceptions:
   - rule: DEPS-CYCLE-001

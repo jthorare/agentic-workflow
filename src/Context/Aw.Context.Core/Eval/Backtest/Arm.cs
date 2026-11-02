@@ -18,8 +18,6 @@ public enum Arm
     /// <summary>The native Linear source (S-6).</summary>
     Linear,
 
-    /// <summary>The Onyx source (S-7B).</summary>
-    Onyx,
 
     /// <summary>The code source (S-9).</summary>
     Code,
@@ -35,4 +33,7 @@ public enum Arm
 
     /// <summary>The ranker comparison's third row (S-8): every input, fusion plus features plus the model rerank of the top items.</summary>
     RankerRerank,
+
+    /// <summary>The pin leg's row (concept pins spec §3.3): every input, fusion plus the anchor's pin leg plus the feature scores.</summary>
+    RankerPin,
 }

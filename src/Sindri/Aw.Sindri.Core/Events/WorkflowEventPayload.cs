@@ -34,4 +34,12 @@ public sealed record WorkflowEventPayload(string Instance, string From, string T
     /// <summary>The tokens an agent run spent ('workflow events' prints them after 'via agent'). Not written when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Tokens { get; init; }
+
+    /// <summary>The launcher agent an agent run ran on, lifted from the detail for the events line (#1269). Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Agent { get; init; }
+
+    /// <summary>The model an agent run asked for, lifted from the detail (#1269). Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Model { get; init; }
 }

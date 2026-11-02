@@ -34,9 +34,10 @@ internal sealed partial class ShellViewModel
         Setup.ActionRequested += (_, e) => OpenSetupAction(e.Action);
         Setup.PropertyChanged += (_, e) =>
         {
-            if (string.Equals(e.PropertyName, nameof(SetupViewModel.IsHomeLineShown), StringComparison.Ordinal))
+            if (string.Equals(e.PropertyName, nameof(SetupViewModel.IsHomeLineShown), StringComparison.Ordinal) || string.Equals(e.PropertyName, nameof(SetupViewModel.HomeStepId), StringComparison.Ordinal))
             {
                 UpdateNeedsYou();
+                Reattend();   // the line's step decides which setup row the card drops, and the summary counts the same rows (ShownOnHome)
             }
         };
         Health.Catalog.PropertyChanged += (_, e) =>
@@ -67,9 +68,26 @@ internal sealed partial class ShellViewModel
         }
     }
 
-    // Home's list: the decisions filter, and no setup row while Home's line stands for them. The inbox lists every row, whatever Home's filter says and whatever the line stands for.
+    // Home's list: the decisions filter, and no setup row for the step Home's line names (setup-once spec 5.7: a row is hidden only for a step the line draws; every other setup row, like Approve all workflows, stays).
+    // The inbox lists every row, whatever Home's filter says and whatever the line names.
     private bool ShownOnHome(NeedsYouEntry row) =>
         IsNeedsYouInbox
         || ((HomeFilter != HomeFilter.Decisions || row.DecisionId is not null)
-            && !(Setup.IsHomeLineShown && string.Equals(row.Kind, SetupRowKind, StringComparison.Ordinal)));
+            && !(Setup.IsHomeLineShown && string.Equals(row.Kind, SetupRowKind, StringComparison.Ordinal) && string.Equals(row.Id, SetupRowKind + ":" + Setup.HomeStepId, StringComparison.Ordinal)));
+
+    /// <summary>
+    /// Esc on Settings over the Not running card: back to the page it was opened from, so the card shows again. While
+    /// connected Settings is a page like any other, and Esc leaves it where it is.
+    /// </summary>
+    /// <returns>True when it left Settings.</returns>
+    internal bool LeaveSettings()
+    {
+        if (!IsSettings || !IsNotRunning)
+        {
+            return false;
+        }
+
+        GoTo(_beforeSettings);
+        return true;
+    }
 }

@@ -119,7 +119,7 @@ internal sealed class ClaimRefEffect(IWorkflowClaims claims, IInstanceLiveness l
 
         return Repo(content.Value) is { Length: > 0 } repo
             ? repo
-            : WorkflowErrors.NoRuntime.With($"fact:item of {context.Instance} names no repo (fix: give '{{ \"id\": …, \"repo\": <a repos key>, \"spec\": … }}')");
+            : WorkflowErrors.NoRuntime.With($"fact:item of {context.Instance} names no repo (fix: give '{{ \"id\": …, \"repo\": <a repos key> }}'; \"spec\" is optional)");
     }
 
     /// <summary>The stored fact a fact element holds ('ref' and 'sha256', as the engine stores it).</summary>

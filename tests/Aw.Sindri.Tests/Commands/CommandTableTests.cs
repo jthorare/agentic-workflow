@@ -53,6 +53,15 @@ public sealed class CommandTableTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task Index_embed_reaches_the_embed_verbs_not_the_index_read_verbs()
+    {
+        var code = await Run("index", "embed", "bogus");
+
+        Assert.Equal(2, code);
+        Assert.Contains("'index embed bogus' isn't an index embed command", _error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Approving_a_malformed_hash_exits_2_with_SND_CLI_003()
     {
         var code = await Run("profile", "approve", "abc123");

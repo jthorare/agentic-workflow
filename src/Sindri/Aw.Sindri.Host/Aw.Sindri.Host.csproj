@@ -38,6 +38,11 @@
     <ProjectReference Include="../../Forge/Aw.Forge.Core/Aw.Forge.Core.csproj" />
     <ProjectReference Include="../../Forge/Aw.Forge.Infrastructure/Aw.Forge.Infrastructure.csproj" />
     <ProjectReference Include="../Aw.Sindri.Workflows/Aw.Sindri.Workflows.csproj" />
+    <ProjectReference Include="../../Embeddings/Aw.Embeddings/Aw.Embeddings.csproj" />
+    <!-- the source readers (owned-index spec §9.2): Core for IConnector and the GitHub reader port, the compose edge in deps.yaml covers AddConnectorsFeatures and AddConnectorsInfrastructure -->
+    <ProjectReference Include="../../Connectors/Aw.Connectors.Core/Aw.Connectors.Core.csproj" />
+    <ProjectReference Include="../../Connectors/Aw.Connectors.Features/Aw.Connectors.Features.csproj" />
+    <ProjectReference Include="../../Connectors/Aw.Connectors.Infrastructure/Aw.Connectors.Infrastructure.csproj" />
     <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
     <ProjectReference Include="../../Aw.Kernel.Telemetry/Aw.Kernel.Telemetry.csproj" />
   </ItemGroup>

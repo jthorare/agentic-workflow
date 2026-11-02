@@ -1,0 +1,16 @@
+query IssuesPull($filter: IssueFilter, $first: Int, $after: String) {
+  issues(filter: $filter, first: $first, after: $after, orderBy: updatedAt) {
+    nodes {
+      id identifier title description url createdAt updatedAt completedAt canceledAt
+      state { name type }
+      team { id key name }
+      creator { id name }
+      project { id name }
+      parent { id identifier title }
+      comments(first: 20, orderBy: updatedAt) { nodes { id body createdAt user { id name } } pageInfo { hasNextPage } }
+      relations(first: 25) { nodes { type relatedIssue { id identifier title } } }
+      inverseRelations(first: 25) { nodes { type issue { id identifier title } } }
+    }
+    pageInfo { hasNextPage endCursor }
+  }
+}

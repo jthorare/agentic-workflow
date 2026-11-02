@@ -34,8 +34,11 @@ internal sealed partial class RouterStub(ILedgerStore ledger, EventFactory event
     /// <summary>The service's name in the schedule ('router-stub').</summary>
     public static readonly ServiceName ServiceId = ServiceName.From("router-stub");
 
+    /// <summary>What the service does, as GET /sindri/services says it.</summary>
+    public const string Description = "Routes each started item to its workflow.";
+
     /// <summary>The stub's place in the schedule without a profile entry: every 5 s.</summary>
-    public static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(Cadence.Min));
+    public static BuiltInService BuiltIn { get; } = new(ServiceId, new Cadence(Cadence.Min), Description);
 
     /// <inheritdoc/>
     public ServiceName Identity() => ServiceId;

@@ -373,6 +373,47 @@
               "type": "string"
             },
             "default": null
+          },
+          "model": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "floor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              }
+            },
+            "additionalProperties": false,
+            "default": null
+          },
+          "agent": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "properties": {
+              "use": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              },
+              "differentFrom": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "default": null
+              }
+            },
+            "additionalProperties": false,
+            "default": null
           }
         },
         "required": [

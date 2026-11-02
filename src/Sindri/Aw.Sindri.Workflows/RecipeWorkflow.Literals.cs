@@ -15,7 +15,7 @@ internal sealed partial class RecipeWorkflow
     {
         var loaded = await Workflow.ExecuteLocalActivityAsync(
             (RunStepActivities a) => a.LoadRecipeAsync(start.Recipe),
-            new LocalActivityOptions { StartToCloseTimeout = TimeSpan.FromSeconds(30) }).ConfigureAwait(true);
+            new LocalActivityOptions { StartToCloseTimeout = ActivityBounds.Long }).ConfigureAwait(true);
         await StoreLiterals(start, storesLiterals).ConfigureAwait(true);
         return loaded;
     }
@@ -30,7 +30,7 @@ internal sealed partial class RecipeWorkflow
         {
             await Workflow.ExecuteLocalActivityAsync(
                 (LiteralFactActivities a) => a.StoreAsync(literals),
-                new LocalActivityOptions { StartToCloseTimeout = TimeSpan.FromSeconds(30), RetryPolicy = new RetryPolicy { MaximumAttempts = 3 } }).ConfigureAwait(true);
+                new LocalActivityOptions { StartToCloseTimeout = ActivityBounds.Long, RetryPolicy = new RetryPolicy { MaximumAttempts = 3 } }).ConfigureAwait(true);
         }
     }
 }

@@ -12,8 +12,8 @@
   "title": "Add needs-you ack route",
   "recipe": {
     "id": "workflow.step",
-    "hash": "sha256:f511ce1fc529b5b471731b4023a1f07774af2f9a8836344fd5818f5aef644784",
-    "version": 4,
+    "hash": "sha256:4ca37bf46333dc66a14c042bb4561aad96eed677f35f5fc221f0497c8b3e31f7",
+    "version": 5,
     "urgency": "work",
     "displayName": "Step"
   },
@@ -137,8 +137,8 @@
       "header": {
         "address": "ITM-01JE7/item/1/step.4",
         "recipe": "workflow.step",
-        "hash12": "f511ce1fc529",
-        "version": 4,
+        "hash12": "4ca37bf46333",
+        "version": 5,
         "state": "produce",
         "detail": "desk task",
         "since": "2026-10-12T12:20:00.0000000Z",
@@ -193,7 +193,7 @@
           "confirm": "Cancel ITM-01JE7/item/1/step.4? 0 running steps stop; 0 children are cancelled."
         }
       ],
-      "text": "ITM-01JE7/item/1/step.4  workflow.step@f511ce1fc529  v4  produce: desk task  since 12:20 (6m)\n  next      Produce the Step output for ITM-01JE7 (round 2/5), then run: sindri workflow complete\n            ITM-01JE7/item/1/step.4 --run 3.1 --outcome done --output fact:output=<file>\n  inputs    fact:spec  spec.md  sha256:1c0e...\n  timeout   parks in 1d 23h 54m (desk)\n  budget    tokens 0 / 5M (state), 0 used (instance)\n  commands  complete, takeover, cancel\n",
+      "text": "ITM-01JE7/item/1/step.4  workflow.step@4ca37bf46333  v5  produce: desk task  since 12:20 (6m)\n  next      Produce the Step output for ITM-01JE7 (round 2/5), then run: sindri workflow complete\n            ITM-01JE7/item/1/step.4 --run 3.1 --outcome done --output fact:output=<file>\n  inputs    fact:spec  spec.md  sha256:1c0e...\n  timeout   parks in 1d 23h 54m (desk)\n  budget    tokens 0 / 5M (state), 0 used (instance)\n  commands  complete, takeover, cancel\n",
       "injection": []
     }
   },

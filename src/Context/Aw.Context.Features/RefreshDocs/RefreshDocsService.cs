@@ -26,7 +26,7 @@ internal sealed class RefreshDocsService(IDocIndex index, IScrubberFactory scrub
         var rows = new List<RepoRefresh>();
         foreach (var repo in repos.Value)
         {
-            var refreshed = await index.Refresh(repo, settings.Value.DocGlobs, scrubbers.Value, cancellationToken).ConfigureAwait(false);
+            var refreshed = await index.Refresh(repo, settings.Value.IndexedDocGlobs, scrubbers.Value, cancellationToken).ConfigureAwait(false);
             if (refreshed.IsError)
             {
                 return refreshed.Error;   // the store itself failed (SND-CONTEXT-004): no later repo can do better

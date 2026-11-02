@@ -8,8 +8,18 @@ internal sealed partial class NeedsYouBarViewModel
     /// <summary>Raised when a review has nothing to open: the shell takes the person to the instance's frame, where its facts are.</summary>
     internal event EventHandler<NeedsYouFactEventArgs>? FactRequested;
 
+    /// <summary>Raised when Approve is pressed on a step that needs an output file: the bar has none to give, so the shell opens the row's sheet, which has the file inputs (#1170).</summary>
+    internal event EventHandler<NeedsYouSheetEventArgs>? SheetRequested;
+
     /// <summary>Raised when the session link is followed; the shell opens the session's sheet.</summary>
     internal event EventHandler<NeedsYouSessionEventArgs>? SessionRequested;
+
+    private void RequestSheet(string rowId)
+    {
+        (Mode, Refusal) = (NeedsYouBarMode.Pending, Labels.CompleteNeedsOutputInSheet);
+        Refresh();
+        SheetRequested?.Invoke(this, new NeedsYouSheetEventArgs(rowId));
+    }
 
     /// <summary>A button for each thing the desk step asks the person to read (the design, the plan, the PR); empty when it asks none.</summary>
     public IReadOnlyList<DeskReviewViewModel> Reviews { get; private set; } = [];

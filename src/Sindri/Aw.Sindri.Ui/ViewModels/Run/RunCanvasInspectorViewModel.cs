@@ -8,9 +8,9 @@ namespace Aw.Sindri.Ui.ViewModels.Run;
 /// The run canvas's inspector (F3 spec 3 §2 and §5, slice 4) for the selected step or card: its state, the step timeline from the served
 /// Step runs, why it matters, what it needs and made (the stage's facts until the engine serves them per step), how it ended, what you
 /// can do next and the technical details. Read-only: it navigates (Take over, See its context) and shows the protected approve as the
-/// terminal copy; it sends nothing.
+/// terminal copy; Take over on a running step is the one thing it sends.
 /// </summary>
-internal sealed partial class RunCanvasInspectorViewModel
+internal sealed partial class RunCanvasInspectorViewModel : ObservableObject
 {
     private readonly RunInspectorPorts _ports;
     private readonly InstanceDetail _line;

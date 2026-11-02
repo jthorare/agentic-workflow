@@ -98,6 +98,37 @@ public sealed class GetInstanceFactServiceTests
         Assert.Equal(SindriErrors.ItemNotFound.Code, result.Error.Code);
     }
 
+    private static InstanceView Produced(string key, params string[] declared)
+    {
+        var view = StatusCases.View("desk-task");
+        return view with { Facts = [.. declared.Select(k => view.Facts[0] with { Key = k })], FactShas = new Dictionary<string, string>(StringComparer.Ordinal) { [key] = Sha } };
+    }
+
+    [Fact]
+    public async Task A_produced_fact_the_recipe_does_not_declare_is_served()
+    {
+        var result = await Read(Produced("fact:questions", "fact:spec"), "fact:questions", """[{"id":"Q1","question":"Which?","options":[{"id":"Q1.a","answer":"A"}]}]""");
+
+        Assert.Equal(("fact:questions", FactType.Payload, JsonValueKind.Array, "Q1.a", false),
+            (result.Value.Key, result.Value.Type, result.Value.Body.ValueKind, result.Value.Body[0].GetProperty("options")[0].GetProperty("id").GetString(), result.Value.Truncated));
+    }
+
+    [Fact]
+    public async Task An_undeclared_produced_fact_that_is_not_json_is_served_as_text()
+    {
+        var result = await Read(Produced("fact:note", "fact:spec"), "fact:note", "plain words");
+
+        Assert.Equal((FactType.Text, "plain words"), (result.Value.Type, result.Value.Body.GetString()));
+    }
+
+    [Fact]
+    public async Task A_key_nothing_produced_is_still_SND_ITEM_404_when_other_undeclared_facts_are()
+    {
+        var result = await Read(Produced("fact:questions", "fact:spec"), "fact:answers", "x");
+
+        Assert.Equal((SindriErrors.ItemNotFound.Code, "no fact 'fact:answers' on the instance"), (result.Error.Code, result.Error.Message));
+    }
+
     [Fact]
     public async Task Secrets_in_a_fact_are_scrubbed()
     {

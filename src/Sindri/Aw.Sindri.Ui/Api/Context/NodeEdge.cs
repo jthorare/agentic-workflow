@@ -10,6 +10,8 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Order">Order, as served.</param>
 /// <param name="OtherKind">The kind of the node at the other end, when served.</param>
 /// <param name="OtherLabel">The label of the node at the other end, when served.</param>
+/// <param name="Count">A feature roll-up edge's count of file pairs (or files), when served.</param>
+/// <param name="Example">A roll-up edge's first cited pair or file, when served.</param>
 internal sealed record NodeEdge(
     string From,
     string Type,
@@ -19,4 +21,6 @@ internal sealed record NodeEdge(
     string? Trust = null,
     int? Order = null,
     string? OtherKind = null,
-    string? OtherLabel = null);
+    string? OtherLabel = null,
+    int? Count = null,
+    string? Example = null);

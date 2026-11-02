@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Core.Workflow.Engine;
 
@@ -14,7 +15,7 @@ namespace Aw.Sindri.Features.ListSessions;
 /// The live sessions (collector spec CA-1): the collector's snapshot, trimmed to the caller. A session caller sees only its repo's rows and none of the human-only fields;
 /// the head counts cover what the caller may see, before the request's filters. SND-SESSION-002 replaces the list.
 /// </summary>
-internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, TimeProvider clock, ILaunchViews launches)
+internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatalog catalog, IApprovedProfile approvals, ICallerContextAccessor callers, TimeProvider clock, ILaunchViews launches, ISessionSandboxes sandboxes)
     : IService<ListSessionsRequest, SessionList>
 {
     internal const string EmptyText = "No agent sessions are running.";
@@ -42,8 +43,9 @@ internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatal
         var matching = visible.Where(s => Matches(request, s)).ToList();
         var endedVisible = current.RecentlyEnded;
         var steps = await LaunchSteps.Of(launches, matching.Concat(endedVisible.Select(static e => e.Session)).Select(static s => s.LaunchId).OfType<LaunchId>(), cancellationToken).ConfigureAwait(false);
-        var shown = matching.Select(s => Row(s, paths, steps)).ToList();
-        var ended = endedVisible.Select(e => Ended(e, paths, steps)).ToList();
+        var sandboxed = await LaunchSandboxes.Of(launches, sandboxes, matching.Concat(endedVisible.Select(static e => e.Session)).Select(static s => s.LaunchId).OfType<LaunchId>(), cancellationToken).ConfigureAwait(false);
+        var shown = matching.Select(s => Row(s, paths, steps, sandboxed)).ToList();
+        var ended = endedVisible.Select(e => Ended(e, paths, steps, sandboxed)).ToList();
         var counts = new SessionCounts(visible.Count, visible.Count(static s => s.State == SessionState.Asking), visible.Count(static s => s.LaunchId is null));
         return new SessionList(shown, ended, current.Problems, counts, shown.Count == 0 ? EmptyText : null, current.ObservedAt);
     }
@@ -54,11 +56,12 @@ internal sealed class ListSessionsService(ISessionSnapshot snapshot, IAgentCatal
         && (request.Repo is not { } repo || Equals(s.Repo, repo))
         && (request.InWorkflow is not { } inWorkflow || (s.LaunchId is not null) == inWorkflow);
 
-    private SessionRow Row(ObservedSession s, IReadOnlyDictionary<string, string> paths, IReadOnlyDictionary<LaunchId, LaunchStep> steps) =>
-        SessionRows.Of(s, catalog.Resolve(s.Ref.Provider), s.Repo is { } repo ? paths.GetValueOrDefault(repo.Value) : null, s.LaunchId is { } launch ? steps.GetValueOrDefault(launch) : null);
+    private SessionRow Row(ObservedSession s, IReadOnlyDictionary<string, string> paths, IReadOnlyDictionary<LaunchId, LaunchStep> steps, IReadOnlyDictionary<LaunchId, SessionSandbox> sandboxed) =>
+        SessionRows.Of(s, catalog.Resolve(s.Ref.Provider), s.Repo is { } repo ? paths.GetValueOrDefault(repo.Value) : null, s.LaunchId is { } launch ? steps.GetValueOrDefault(launch) : null,
+            s.LaunchId is { } sandboxLaunch ? sandboxed.GetValueOrDefault(sandboxLaunch) : null);
 
-    private EndedSessionRow Ended(EndedSession e, IReadOnlyDictionary<string, string> paths, IReadOnlyDictionary<LaunchId, LaunchStep> steps) =>
-        new(Row(e.Session, paths, steps), e.EndedAt, SessionRows.Resume(e.Session, catalog.Resolve(e.Session.Ref.Provider)));
+    private EndedSessionRow Ended(EndedSession e, IReadOnlyDictionary<string, string> paths, IReadOnlyDictionary<LaunchId, LaunchStep> steps, IReadOnlyDictionary<LaunchId, SessionSandbox> sandboxed) =>
+        new(Row(e.Session, paths, steps, sandboxed), e.EndedAt, SessionRows.Resume(e.Session, catalog.Resolve(e.Session.Ref.Provider)));
 
     private async ValueTask<IReadOnlyDictionary<string, string>> RepoPaths(CancellationToken cancellationToken)
     {

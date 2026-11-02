@@ -11,7 +11,10 @@
       "changedSinceApproval": false,
       "problem": null,
       "source": "<home>/profile/profile.yaml",
-      "needsApproval": false
+      "needsApproval": false,
+      "modelPick": "off",
+      "labelPick": "off",
+      "surfacePick": "off"
     },
     "services": [
       {
@@ -39,7 +42,8 @@
     "sessions": {
       "live": 0,
       "asking": 0,
-      "problems": 0
+      "problems": 0,
+      "running": 0
     },
     "page": {
       "offset": 0,

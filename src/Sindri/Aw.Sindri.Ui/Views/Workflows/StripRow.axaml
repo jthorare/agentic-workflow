@@ -13,7 +13,7 @@
        its own focus border (item-row), not the adorner. -->
   <Border x:Name="StripRowFrame" Classes="item-row strip-row" Classes.selected="{Binding IsSelected}" Classes.stale="{Binding IsStale}" Focusable="True"
           AutomationProperties.Name="{Binding AccessibleName}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="ListItem">
-    <Grid x:Name="StripGrid" ColumnDefinitions="Auto,Auto,2*,3*,Auto,Auto" VerticalAlignment="Center">
+    <Grid x:Name="StripGrid" ColumnDefinitions="Auto,Auto,3*,2*,Auto,Auto" VerticalAlignment="Center">
       <TextBlock Classes="body-strong" Text="{Binding Glyph}" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.AccessibilityView="Raw" />
       <!-- The shared status badge (F3 home spec Q3): a glyph and a sentence-case word, never colour alone. -->
       <StackPanel x:Name="StripStatus" Grid.Column="1" Orientation="Horizontal" Spacing="4" VerticalAlignment="Center" Margin="0,0,8,0"
@@ -21,7 +21,8 @@
         <icons:StateIcon Icon="{Binding Status.Icon}" Foreground="{DynamicResource Brush.InkMuted}" VerticalAlignment="Center" />
         <TextBlock Classes="caption" Text="{Binding StatusName}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
       </StackPanel>
-      <Button x:Name="StripTitle" Grid.Column="2" Classes="row-title" Click="OnOpen" AutomationProperties.Name="{Binding OpenName}">
+      <Button x:Name="StripTitle" Grid.Column="2" Classes="row-title" MinWidth="240" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+              Click="OnOpen" ToolTip.Tip="{Binding Subject}" AutomationProperties.Name="{Binding OpenName}">
         <TextBlock Classes="body-strong" Text="{Binding Subject}" TextTrimming="CharacterEllipsis" AutomationProperties.AccessibilityView="Raw" />
       </Button>
       <!-- Wide: the recipe, the stage tag, the badge and the served "now" sentence sit on the row's line. Narrow page (UI spec §3.2): they drop to a second line. -->

@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json.Nodes;
+using Aw.Sindri.Core.Checks;
 using Aw.Sindri.Core.Line;
 
 namespace Aw.Sindri.Features.Plan;
@@ -161,6 +162,38 @@ internal static partial class PlanChecks
                 sink.Fail(id, $"{id} sits {depth.ToString(CultureInfo.InvariantCulture)} deep in its stack, over {MaxStack(facts).ToString(CultureInfo.InvariantCulture)}", "cut the stack or merge earlier phases first");
             }
         }
+    }
+
+    /// <summary>PLN-TEST-001: BLD-TEST-001 fails a build that changes an existing test its phase doesn't name, so a phase names every existing test file its write scope, or allowed files when it has none, allows (the rule is TestPaths.UnnamedExisting, shared with the line's plan checks).</summary>
+    internal static void TestsNamed(LineFacts facts, LineSink sink)
+    {
+        if (!sink.Need(Tasks))
+        {
+            return;
+        }
+
+        foreach (var phase in Phases(facts))
+        {
+            var named = NamedTests(phase);
+            foreach (var path in TestPaths.UnnamedExisting(TestPaths.AllowedEntries([.. LineJson.Strings(phase, "writeScope")], [.. LineJson.Strings(phase, "allowedFiles")]), named))
+            {
+                sink.Fail(PhaseId(phase), $"{PhaseId(phase)} allows the existing test {path} but its test-change doesn't name it", $"add 'test-change:{path}:<reason>' to the phase's rules, or write 'new: {path}' if the phase creates it");
+            }
+        }
+    }
+
+    // The paths a phase names: its 'test-change:<path>:<reason>' rules, or a 'testChange' array of {path, reason}.
+    private static List<string> NamedTests(JsonNode phase)
+    {
+        var named = LineJson.Items(phase, "testChange").Select(static t => LineJson.Str(t, "path")).OfType<string>().ToList();
+        foreach (var rule in LineJson.Strings(phase, "rules").Where(static r => r.StartsWith("test-change:", StringComparison.Ordinal)))
+        {
+            var rest = rule["test-change:".Length..];
+            var split = rest.IndexOf(':', StringComparison.Ordinal);
+            named.Add(split < 0 ? rest : rest[..split]);
+        }
+
+        return named;
     }
 
     // The longest chain of dependencies ending at the phase; a loop or an unknown dependency stops the walk.

@@ -107,7 +107,7 @@ internal sealed partial class HealthViewModel
     public string NeedsALookHeading { get; } = Labels.SystemNeedsALook;
 
     /// <summary>What is wrong, one line each (code and words as Sindri served them).</summary>
-    public IReadOnlyList<HealthProblemView> ProblemLines { get; private set => Set(ref field, value); } = [];
+    public IReadOnlyList<HealthProblemLine> ProblemLines { get; private set => Set(ref field, value); } = [];
 
     /// <summary>True when any problem is listed.</summary>
     public bool HasProblemLines => ProblemLines.Count > 0;
@@ -139,36 +139,14 @@ internal sealed partial class HealthViewModel
     // The headline's tone, the problem lines and the Views and Agents cards, from what the last status and services read said.
     private void ShowSystemState()
     {
-        (ToneWarn, ToneError) = ToneFor(State, _health?.Word, HasProfileFix);
-        ProblemLines = _health?.Problems ?? [];
+        var look = NeedsLook();
+        Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, HasProfileFix, _health?.Sentence, look));
+        (ToneWarn, ToneError) = ToneFor(State, _health?.Word, HasProfileFix || look.Length > 0);
+        ProblemLines = [.. (_health?.Problems ?? []).Select(p => HealthProblemLine.From(p, _health?.Word))];
         OnChanged(nameof(HasProblemLines));
-        AgentsRows = Sessions is { } s
-            ? [new(Labels.AgentsRunning, Count(s.Live)), new(Labels.AgentsAsking, Count(s.Asking)), new(Labels.AgentsProblems, Count(s.Problems))]
-            : [];
-        var views = _serviceList?.AsOf;
-        ViewsWord = views switch
-        {
-            null => Labels.ViewsUnknown,
-            { Stalled: true } => Labels.ViewsStalled,
-            { Rebuilding: true } => Labels.ViewsCardRebuilding,
-            _ => Labels.ViewsUpToDate,
-        };
-        ViewsRows = views is null ? [] : ViewsCells(views);
-        ViewsFix = views is { } v && (v.Stalled || v.Rebuilding) ? Catalog.Rebuild : null;
+        ShowAgentsCard();
+        ShowViewsCard();
         ShowStateBox();
-    }
-
-    private static string Count(int n) => n.ToString(System.Globalization.CultureInfo.InvariantCulture);
-
-    private static List<HealthCell> ViewsCells(AsOfView views)
-    {
-        List<HealthCell> cells = [new(Labels.ViewsReadUpTo, Labels.ViewsProgress(views.Cursor, views.LedgerHead))];
-        if (views.ProjectedAt is { } at)
-        {
-            cells.Add(new(Labels.ViewsUpdated, StatusText.Time(at)));
-        }
-
-        return cells;
     }
 
     // (warn, error): red when the control plane cannot be read or is stalled; amber when it needs a look; else none.

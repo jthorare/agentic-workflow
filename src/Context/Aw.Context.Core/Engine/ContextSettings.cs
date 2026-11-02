@@ -1,5 +1,4 @@
 using Aw.Context.Core.Linear;
-using Aw.Context.Core.Onyx;
 using Aw.Context.Core.Trust;
 
 namespace Aw.Context.Core.Engine;
@@ -13,9 +12,12 @@ public sealed record ContextSettings
     /// <summary>The default doc globs.</summary>
     public static IReadOnlyList<string> DefaultDocGlobs { get; } = ["docs/**/*.md", "**/PRD*.md", "**/TDD*.md"];
 
+    /// <summary>The default 'context.docs.directoryNames': file names that count as docs in any directory.</summary>
+    public static IReadOnlyList<string> DefaultDocDirectoryNames { get; } = ["AGENTS.md", "README.md", "CONTEXT.md"];
+
     /// <summary>The default 'context.code.schemaGlobs': the migration and schema files the code lens's data files may name.</summary>
     public static IReadOnlyList<string> DefaultSchemaGlobs { get; } =
-        ["**/migrations/**", "**/migrate/**", "**/schema/**", "**/schemas/**", "**/*.sql", "**/*.prisma", "**/*.graphql", "**/*.gql", "**/*.proto", "**/*.avsc", "**/*.xsd", "**/*.schema.json"];
+        ["**/migrations/**", "**/migrate/**", "**/schema/**", "**/schemas/**", "**/schema.ts", "**/*.sql", "**/*.prisma", "**/*.graphql", "**/*.gql", "**/*.proto", "**/*.avsc", "**/*.xsd", "**/*.schema.json"];
 
     /// <summary>The profile repos the engine maps, or null for all of them.</summary>
     public IReadOnlyList<ContextRepoName>? Repos { get; init; }
@@ -23,11 +25,20 @@ public sealed record ContextSettings
     /// <summary>The repo-relative globs whose files the repo-docs source indexes.</summary>
     public IReadOnlyList<string> DocGlobs { get; init; } = DefaultDocGlobs;
 
+    /// <summary>'context.docs.directoryNames': file names that count as docs in any directory, on top of <see cref="DocGlobs"/>.</summary>
+    public IReadOnlyList<string> DocDirectoryNames { get; init; } = DefaultDocDirectoryNames;
+
+    /// <summary>What the doc index and the repo-docs feed index: <see cref="DocGlobs"/> plus a '**/name' glob for each of <see cref="DocDirectoryNames"/>.</summary>
+    public IReadOnlyList<string> IndexedDocGlobs => [.. DocGlobs, .. DocDirectoryNames.Select(static n => "**/" + n)];
+
     /// <summary>The per-query deadline.</summary>
     public TimeSpan Deadline { get; init; } = TimeSpan.FromSeconds(10);
 
     /// <summary>The code lens's lexical search deadline: one git grep per implementing file and data thing, run in turn, so it gets longer than a query.</summary>
     public TimeSpan CodeDeadline { get; init; } = TimeSpan.FromSeconds(180);
+
+    /// <summary>The git-history read's own deadline ('context.history.deadline', #1221); null (the default) means none: only the caller's cancellation bounds it, and a repo with a long history is read to the end.</summary>
+    public TimeSpan? HistoryDeadline { get; init; }
 
     /// <summary>Below this many fused items a query reformulates once (Phase 8).</summary>
     public int MinHits { get; init; } = 3;
@@ -41,13 +52,19 @@ public sealed record ContextSettings
     /// <summary>Whether session callers may read context at all, on any transport (spec §3). Off until approved.</summary>
     public bool SessionsEnabled { get; init; } = true;
 
-    /// <summary>The checked 'context.sources.onyx' entry, or null when the profile names no onyx source.</summary>
-    public OnyxSettings? Onyx { get; init; }
-
     /// <summary>The checked 'context.sources.linear' entry for the native Linear adapter (S-6), or null when the profile names no Linear token.</summary>
     public LinearSettings? Linear { get; init; }
 
-    /// <summary>The Linear team keys ('context.sources.linear.teams') an Onyx identifier alias may name; empty for none.</summary>
+    /// <summary>'context.index' (owned index spec §5.5, §5.6, §6, §8): the window, the chunk ceiling, retention, the dense floors and the Onyx leftover acknowledgement.</summary>
+    public ContextIndexSettings Index { get; init; } = new();
+
+    /// <summary>The checked 'context.sources.github' entry, or null when the profile names none.</summary>
+    public GitHubSource? GitHub { get; init; }
+
+    /// <summary>The checked 'context.sources.slack' entry, or null when the profile names none.</summary>
+    public SlackSource? Slack { get; init; }
+
+    /// <summary>The Linear team keys ('context.sources.linear.teams') an issue identifier alias may name; empty for none.</summary>
     public IReadOnlyList<string> LinearTeams { get; init; } = [];
 
     /// <summary>
@@ -77,6 +94,21 @@ public sealed record ContextSettings
     /// <summary>'context.publish': when a refreshed map becomes the current one (retrieval spec §8.7a).</summary>
     public PublishSettings Publish { get; init; } = new();
 
+    /// <summary>'context.conceptScan': the concept scan's tier thresholds and the model each agent CLI runs for each tier.</summary>
+    public ConceptScanSettings ConceptScan { get; init; } = new();
+
+    /// <summary>'context.models': which harnesses and models each kind of model call uses (model routing spec §3).</summary>
+    public ModelsSettings Models { get; init; } = new();
+
+    /// <summary>'context.conceptSynthesis': the pass that groups the whole record store by meaning and names each group (#1597).</summary>
+    public ConceptSynthesisSettings ConceptSynthesis { get; init; } = new();
+
     /// <summary>'context.ranker': the feature stage and the rerank arm of the query (Phase 8). Both off by default.</summary>
     public RankerSettings Ranker { get; init; } = new();
+
+    /// <summary>Whether a build whose structure checks would refuse the map stops ('refuse', the default) or saves a degraded note ('warn'); 'context.checks'.</summary>
+    public ChecksMode Checks { get; init; } = ChecksMode.Refuse;
+
+    /// <summary>The limits of the structure checks ('context.checks.isolated' and '.overCap'): the shares that make a map degraded or refused.</summary>
+    public MapCheckLimits CheckLimits { get; init; } = new();
 }

@@ -20,7 +20,7 @@ sindri context sources sync      # Human-only: a job; prints 'job JOB-… starte
 sindri context sources status    # Agent OK: each source's last sync, links, decisions and queued records
 ```
 
-The sync links Onyx's records (issues, threads) to the map and extracts decisions from them. With `context-sync`
+The sync links the indexed records (issues, threads) to the map and extracts decisions from them. With `context-sync`
 named under `services:` it runs on that cadence instead.
 
 ### Build the map
@@ -187,6 +187,10 @@ ship, then the PR babysitter). It stops for you after scoping, after design and 
    ```bash
    sindri workflow complete <address> --run <token> --outcome <outcome> --output fact:<key>=<file>
    ```
+
+## Model choice and what Jev reads
+
+With `workflow.agent.pick: on` in the approved profile, each agent step's brief and input files (up to 100,000 characters, secrets and denied paths removed), and for the concept scan its map summary, are sent to Jev to pick a model. `sindri profile approve` shows this as a line in its preview when the profile turns the pick on. With it off, nothing is sent and every step runs on the agent's default. Retention is the provider's. Settings in the app shows whether model choice is on and how to change it (the profile; it takes effect once you approve).
 
 ## Codes you may meet here
 

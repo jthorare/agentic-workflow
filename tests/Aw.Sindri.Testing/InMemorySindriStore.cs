@@ -156,6 +156,15 @@ public sealed class InMemorySindriStore(TimeProvider clock, IProcessProbe probe)
         }
     }
 
+    /// <inheritdoc cref="ILedgerReader.ByKey"/>
+    public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
+            return ValueTask.FromResult<Result<LedgerEvent?>>(_events.FirstOrDefault(e => string.Equals(e.IdempotencyKey, idempotencyKey, StringComparison.Ordinal)));
+        }
+    }
+
     /// <inheritdoc cref="ILedgerStore.Head"/>
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken)
     {

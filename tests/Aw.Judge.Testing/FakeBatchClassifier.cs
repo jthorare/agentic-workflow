@@ -12,10 +12,20 @@ namespace Aw.Judge.Testing;
 /// <param name="script">What the (pretend) Jev answers to a batch.</param>
 public sealed class FakeBatchClassifier(Func<BatchRequest, ProviderResult> script) : IBatchClassifier
 {
+    private readonly Lock _gate = new();
     private readonly List<BatchRequest> _asked = [];
 
-    /// <summary>The batches that reached the script, in order.</summary>
-    public IReadOnlyList<BatchRequest> Asked => _asked;
+    /// <summary>The batches that reached the script, in the order they arrived (a snapshot: a scan sends its batches in parallel).</summary>
+    public IReadOnlyList<BatchRequest> Asked
+    {
+        get
+        {
+            lock (_gate)
+            {
+                return [.. _asked];
+            }
+        }
+    }
 
     /// <summary>A classifier that answers every batch with these answers.</summary>
     /// <param name="answers">The answers by question key.</param>
@@ -35,7 +45,11 @@ public sealed class FakeBatchClassifier(Func<BatchRequest, ProviderResult> scrip
             return ValueTask.FromResult<ProviderResult>(new ProviderUnavailable("excluded"));
         }
 
-        _asked.Add(request);
+        lock (_gate)
+        {
+            _asked.Add(request);
+        }
+
         return ValueTask.FromResult(script(request));
     }
 }

@@ -48,6 +48,7 @@ internal static class EngineRows
         Protected("ApplyCommand:answer-accept", Commands, "sindri workflow answer <address> --accept", "WF-P4") with { CommandType = typeof(ApplyCommandRequest), Ui = "ready" },
         Ready("ApplyCommand:takeover", typeof(ApplyCommandRequest), ActionClass.Pause, Commands, "sindri workflow takeover <address>"),
         Ready("ApplyCommand:handback", typeof(ApplyCommandRequest), ActionClass.Desk, Commands, "sindri workflow handback <address>"),
+        Ready("ApplyCommand:rewind", typeof(ApplyCommandRequest), ActionClass.Desk, Commands, "sindri workflow rewind <address> --to <state>"),
         Ready("ApplyCommand:cancel", typeof(ApplyCommandRequest), ActionClass.Desk, Commands, "sindri workflow cancel <address>") with { Destructive = true },
 
         // One row serves every recipe verb ('on: command.<verb>'): the verb is a field of the request's payload, so the

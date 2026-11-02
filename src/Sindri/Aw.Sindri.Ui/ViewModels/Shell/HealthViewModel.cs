@@ -2,6 +2,7 @@ using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Controls;
+using Aw.Sindri.Ui.ViewModels.Settings;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
@@ -64,8 +65,23 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     /// <summary>The command catalog as controls (read on connect and after a reconnect).</summary>
     public CatalogViewModel Catalog { get; } = new(clipboard, clock);
 
+    /// <summary>Settings' model-choice line, kept up to date by each status.</summary>
+    public ModelChoiceViewModel ModelChoice { get; } = new(clipboard, clock);
+
+    /// <summary>Settings' label-choice line, kept up to date by each status.</summary>
+    public LabelChoiceViewModel LabelChoice { get; } = new();
+
+    /// <summary>Settings' product-surface-choice line, kept up to date by each status.</summary>
+    public SurfaceChoiceViewModel SurfaceChoice { get; } = new();
+
     /// <summary>The Code index card (code-index spec §7.3, CI-10b); the shell has it followed with the other views.</summary>
-    public CodeIndexCardViewModel CodeIndex { get; } = new(api, clock);
+    public CodeIndexCardViewModel CodeIndex => field ??= WatchCodeIndex(new CodeIndexCardViewModel(api, clock));
+
+    /// <summary>The Sandbox row and Check again (sandbox spec §8); the shell has it followed with the other views, and Settings and the park card share it.</summary>
+    public Sandbox.SandboxCardViewModel Sandbox => field ??= new Sandbox.SandboxCardViewModel(api, clock, ApiUrl, new NeedsYou.InstanceCommander(api, ApiUrl).Send, clipboard);
+
+    /// <summary>The Context index card (#1597): one line per context source.</summary>
+    public ContextIndexCardViewModel ContextIndex => field ??= WatchContextIndex(new ContextIndexCardViewModel(api, clock));
 
     /// <summary>The stalled and rebuilding banners (§4.1), from the services view's asOf.</summary>
     public ViewsBanner Banner { get; } = new();
@@ -164,6 +180,9 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
         ProfileDetail = StatusText.ProfileDetail(status.Profile);
         ProfileFix = StatusText.ProfileFix(status.Profile);
         LiveProfile = status.Profile.Live;
+        ModelChoice.Show(status.Profile);
+        LabelChoice.Show(status.Profile);
+        SurfaceChoice.Show(status.Profile);
         Services = [.. status.Services.Select(StatusText.Service)];
         if (status.Running)
         {
@@ -272,7 +291,6 @@ internal sealed partial class HealthViewModel(IEndpointRecordSource records, ISi
     {
         Pill.Show(State, clock.GetUtcNow() - (_projectedAt ?? _heard), _failedRefreshes >= NotRespondingAfter, _health);
         StripName = Pill.IsDataStale ? HealthLine + " · " + Labels.Stale : HealthLine;
-        Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, HasProfileFix, _health?.Sentence));
         ShowSystemState();
     }
 

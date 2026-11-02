@@ -14,7 +14,7 @@ public sealed class SharedFileClusterTests
     private static FileCluster Cluster(string id, double confidence, params string[] files) => new(ClusterId.From(id), files, confidence);
 
     [Fact, Trait("Lane", "unit")]
-    public void A_repo_with_no_roles_excludes_nothing_every_file_of_a_cluster_implements_its_feature()
+    public void A_repo_with_no_roles_excludes_nothing_every_file_of_a_cluster_is_tagged_with_its_feature()
     {
         string[] files =
         [
@@ -28,12 +28,12 @@ public sealed class SharedFileClusterTests
 
         var map = ClusterFeatures.Propose(_repo, Set(Cluster("c1", 0.55, files)), [], ExtractedMap.Empty);
 
-        var implementers = map.Edges.Where(e => e.Type == EdgeType.Implements).Select(e => e.From.Value);
+        var implementers = map.Edges.Where(e => e.Type == EdgeType.Tags).Select(e => e.From.Value);
         Assert.Equal(files.Select(f => "code:" + f).Order(StringComparer.Ordinal), implementers.Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_file_a_role_excludes_is_filtered_before_clustering_so_it_implements_nothing()
+    public void A_file_a_role_excludes_is_filtered_before_clustering_so_it_tags_nothing()
     {
         var repo = new ContextRepo(_repo, "/work/web-app") { DenyPaths = [.. PathDenylist.Defaults, "**/crons/**"] };
         var cluster = Cluster("c1", 0.55, "src/orders/place.ts", "src/crons/nightly.ts");
@@ -41,6 +41,6 @@ public sealed class SharedFileClusterTests
 
         var map = ClusterFeatures.Propose(_repo, Set(kept), [], ExtractedMap.Empty);
 
-        Assert.Equal(["code:src/orders/place.ts"], map.Edges.Where(e => e.Type == EdgeType.Implements).Select(e => e.From.Value), StringComparer.Ordinal);
+        Assert.Equal(["code:src/orders/place.ts"], map.Edges.Where(e => e.Type == EdgeType.Tags).Select(e => e.From.Value), StringComparer.Ordinal);
     }
 }

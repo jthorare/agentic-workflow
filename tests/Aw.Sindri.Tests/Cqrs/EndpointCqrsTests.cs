@@ -101,7 +101,7 @@ public sealed class EndpointCqrsTests : IDisposable
             [
                 "ARCH-CQRS-001: GET /sindri/fixture/get-command serves FixtureApply, which isn't an IQuery<>; a GET is a query",
                 "ARCH-CQRS-001: POST /sindri/fixture/post-query serves FixtureQuery, which isn't an ICommand<> or IIssue<>; a POST is a command",
-                "ARCH-CQRS-001: POST /sindri/fixture/issue serves the issue FixtureIssue outside the four carve-out routes",
+                "ARCH-CQRS-001: POST /sindri/fixture/issue serves the issue FixtureIssue outside the carve-out routes",
                 "ARCH-CQRS-001: POST /sindri/fixture/nothing resolves no IService<TRequest, _>; bind one service and call it",
             ],
             violations);

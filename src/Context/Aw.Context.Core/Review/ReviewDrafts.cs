@@ -1,5 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Overrides;
 using Aw.Context.Core.Trust;
 using Aw.Kernel;
 
@@ -16,7 +17,7 @@ public static class ReviewDrafts
     {
         ArgumentNullException.ThrowIfNull(caller);
         ArgumentNullException.ThrowIfNull(user);
-        return caller.Kind == ContextCallerKind.Human ? user.Name : "service:engine";
+        return caller.Kind == ContextCallerKind.Human ? user.Name : MapOverride.EngineWho;
     }
 
     /// <summary>The newest draft with its overrides, or SND-CONTEXT-044 when there is none.</summary>

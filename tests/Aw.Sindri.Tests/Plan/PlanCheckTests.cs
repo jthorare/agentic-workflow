@@ -46,7 +46,7 @@ public sealed class PlanCheckTests
         Assert.Empty(response.Findings);
         Assert.Equal(LineOutcome.Complete, response.Outcome);
         Assert.DoesNotContain(response.Rules, r => r.Status is LineRuleStatus.NotRun or LineRuleStatus.Fail);
-        Assert.Equal(7, response.Rules.Count);
+        Assert.Equal(8, response.Rules.Count);
     }
 
     [Fact, Trait("Lane", "unit")]

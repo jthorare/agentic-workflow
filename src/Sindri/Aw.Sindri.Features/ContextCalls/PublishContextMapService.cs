@@ -56,6 +56,7 @@ internal sealed class PublishContextMapService(ContextScopes scopes, IContextEng
         {
             MapPublish publish => await Publish(new Run(opened.Value, scope.Value), hold, publish, now, cancellationToken).ConfigureAwait(false),
             MapDrop drop => await Drop(new Run(opened.Value, scope.Value), hold.Version, (drop.Reason.ToString(), Code: null), cancellationToken).ConfigureAwait(false),
+            MapRebuild => new PublishContextMapResult(hold.Version, "Rebuild", Code: null),   // #1704: built before its code index; the service's tick starts the rebuild, this job publishes nothing
             _ => new PublishContextMapResult(hold.Version, "Waiting", Code: null),
         };
     }

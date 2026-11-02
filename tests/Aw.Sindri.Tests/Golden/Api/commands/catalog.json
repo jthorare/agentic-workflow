@@ -20,6 +20,24 @@
       "confirm": null
     },
     {
+      "action": "AllowDenial",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/sandbox/allow",
+      "cli": "sindri sandbox allow <launch> <target>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ApplyCommand:answer-accept",
       "class": "protected",
       "allowedCallers": [
@@ -182,6 +200,24 @@
       "confirm": null
     },
     {
+      "action": "ApplyCommand:rewind",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/workflow/instances/{instanceId}/commands",
+      "cli": "sindri workflow rewind <address> --to <state>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ApplyCommand:takeover",
       "class": "pause",
       "allowedCallers": [
@@ -256,6 +292,24 @@
       "confirm": null
     },
     {
+      "action": "AttachProject",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/projects",
+      "cli": "sindri project add [--linear <key>] [--name <text>] [--link <url>] [--state <state>] [--notes <text>] [--target <date>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "BuildCodeIndex",
       "class": "job",
       "allowedCallers": [
@@ -309,6 +363,42 @@
       "ui": "ready",
       "destructive": false,
       "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ChangeProject",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/projects/{projectId}/change",
+      "cli": "sindri project edit <project> --version <n> [--name <text>] [--link <url>] [--state <state>] [--clear-state] [--notes <text>] [--target <date>]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "CheckContextMapStructure",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/context/map/checks",
+      "cli": "sindri context map checks [--draft] [--build]",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
       "shortcut": null,
       "confirm": null
     },
@@ -383,18 +473,14 @@
       "confirm": null
     },
     {
-      "action": "ConnectOnyx",
-      "class": "desk",
-      "allowedCallers": [
-        "human+terminal",
-        "human",
-        "session"
-      ],
-      "terminal": false,
-      "method": "POST",
-      "route": "/sindri/onyx/account",
-      "cli": "sindri onyx connect",
-      "ui": "ready",
+      "action": "ConnectIndexSource",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": true,
+      "method": null,
+      "route": null,
+      "cli": "sindri index connect <source>",
+      "ui": "cli-only:local",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -437,7 +523,7 @@
       "confirm": null
     },
     {
-      "action": "DeferOnyx",
+      "action": "DetachProject",
       "class": "desk",
       "allowedCallers": [
         "human+terminal",
@@ -446,11 +532,11 @@
       ],
       "terminal": false,
       "method": "POST",
-      "route": "/sindri/onyx/defer",
-      "cli": "sindri onyx defer",
+      "route": "/sindri/projects/{projectId}/detach",
+      "cli": "sindri project remove <project> --version <n>",
       "ui": "ready",
-      "destructive": false,
-      "readsViews": false,
+      "destructive": true,
+      "readsViews": true,
       "shortcut": null,
       "confirm": null
     },
@@ -467,6 +553,24 @@
       "method": null,
       "route": null,
       "cli": "sindri services run code-index-embed",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "EndLearnMode",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/sandbox/learn-off",
+      "cli": "sindri sandbox learn off [--repo <repo>] [--json]",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -507,6 +611,24 @@
       "ui": "pending:CO-4a",
       "destructive": false,
       "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "HideProject",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/projects/hide",
+      "cli": "sindri project hide <project> --version <n>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": true,
       "shortcut": null,
       "confirm": null
     },
@@ -716,6 +838,25 @@
       "confirm": null
     },
     {
+      "action": "PinConcepts",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/context/pins",
+      "cli": "sindri context pin set <name>",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "ProbeLaunchTargets",
       "class": "job",
       "allowedCallers": [
@@ -791,6 +932,22 @@
       "confirm": null
     },
     {
+      "action": "PurgeIndexSource",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal"
+      ],
+      "terminal": true,
+      "method": "POST",
+      "route": "/sindri/index/purge",
+      "cli": "sindri index purge <source>",
+      "ui": "cli-only:typed-yes",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RebuildViews",
       "class": "desk",
       "allowedCallers": [
@@ -802,6 +959,24 @@
       "method": "POST",
       "route": "/sindri/views/rebuild",
       "cli": "sindri views rebuild",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "RecordLimitHit",
+      "class": "issue",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/launches/{launchId}/limit-hit",
+      "cli": "sindri session wrap --launch <launchId>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -865,6 +1040,25 @@
       "confirm": null
     },
     {
+      "action": "RelinkPinAliases",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri services run context-map-refresh",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "RerunInstance",
       "class": "desk",
       "allowedCallers": [
@@ -876,6 +1070,24 @@
       "method": "POST",
       "route": "/sindri/workflow/instances/{instanceId}/rerun",
       "cli": "sindri workflow start <recipe> --item <itemId> --attempt next",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "ResumeJob",
+      "class": "desk",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/jobs/{jobId}/resume",
+      "cli": "sindri jobs resume <jobId>",
       "ui": "ready",
       "destructive": false,
       "readsViews": false,
@@ -1187,6 +1399,25 @@
       "confirm": null
     },
     {
+      "action": "ScanContextConcepts",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri services run context-concept-scan",
+      "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
       "action": "SessionExit",
       "class": "issue",
       "allowedCallers": [
@@ -1223,7 +1454,7 @@
       "confirm": null
     },
     {
-      "action": "SetupOnyx",
+      "action": "SetPages",
       "class": "job",
       "allowedCallers": [
         "human+terminal",
@@ -1233,9 +1464,23 @@
       ],
       "terminal": false,
       "method": "POST",
-      "route": "/sindri/onyx/setup",
-      "cli": "sindri onyx up",
+      "route": "/sindri/context/pages",
+      "cli": "sindri context page set <name>",
       "ui": "ready",
+      "destructive": false,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "SetProfileKey",
+      "class": "local",
+      "allowedCallers": [],
+      "terminal": false,
+      "method": null,
+      "route": null,
+      "cli": "sindri profile set <key> <value> [--json]",
+      "ui": "cli-only:local",
       "destructive": false,
       "readsViews": false,
       "shortcut": null,
@@ -1290,6 +1535,25 @@
       "cli": "sindri stop",
       "ui": "ready",
       "destructive": true,
+      "readsViews": false,
+      "shortcut": null,
+      "confirm": null
+    },
+    {
+      "action": "SyncIndexSource",
+      "class": "job",
+      "allowedCallers": [
+        "human+terminal",
+        "human",
+        "session",
+        "service"
+      ],
+      "terminal": false,
+      "method": "POST",
+      "route": "/sindri/index/sync",
+      "cli": "sindri index sync <source>",
+      "ui": "ready",
+      "destructive": false,
       "readsViews": false,
       "shortcut": null,
       "confirm": null

@@ -14,11 +14,19 @@ public sealed class StepRunsViewModelTests
         new(attempt.ToString(System.Globalization.CultureInfo.InvariantCulture) + ".1", step, attempt, max, state, runtime, _start, durationMs is null ? null : _start.AddMilliseconds(durationMs.Value), durationMs, Outcome: null, Tokens: null, Actor: actor);
 
     [Fact]
-    public void A_running_attempt_with_a_cap_reads_Attempt_N_of_M_and_who_is_on_it()
+    public void A_running_desk_attempt_with_a_cap_reads_Attempt_N_of_M_and_what_it_waits_for()
     {
         var view = StepRunsViewModel.Of([Run("produce", 2, 3, "running")], "produce");
 
-        Assert.Equal((true, "Attempt 2 of 3, with you"), (view.HasCurrentLine, view.CurrentLine));
+        Assert.Equal((true, "Attempt 2 of 3, waiting for your answer"), (view.HasCurrentLine, view.CurrentLine));
+    }
+
+    [Fact]
+    public void The_run_row_of_a_waiting_desk_attempt_still_says_with_you()
+    {
+        var view = StepRunsViewModel.Of([Run("produce", 2, 3, "running")], "produce");
+
+        Assert.Equal("Produce · Attempt 2 of 3 · Running · with you", view.Rows[0].Text);
     }
 
     [Fact]

@@ -26,10 +26,10 @@ public sealed class IssueAppRecipeChallengeTests
         _ = await registry.H.HoldLease();
         _ = await registry.Shipped("sindri/workflow.step.yaml");
 
-        var issued = await registry.Run<IssueAppChallengeRequest, IssueChallengeResponse>(new IssueAppChallengeRequest("approve workflow.step 4"), _app);
+        var issued = await registry.Run<IssueAppChallengeRequest, IssueChallengeResponse>(new IssueAppChallengeRequest("approve workflow.step 5"), _app);
 
         Assert.True(issued.IsSuccess, issued.IsError ? issued.Error.ToString() : null);
-        Assert.Equal(("approve workflow.step 4", "typed", null), (issued.Value.Action, issued.Value.Confirm, issued.Value.TypedAlternative));
+        Assert.Equal(("approve workflow.step 5", "typed", null), (issued.Value.Action, issued.Value.Confirm, issued.Value.TypedAlternative));
         Assert.NotNull(issued.Value.Approve);
     }
 
@@ -40,7 +40,7 @@ public sealed class IssueAppRecipeChallengeTests
         _ = await registry.H.HoldLease();
         _ = await registry.Shipped("sindri/workflow.step.yaml");
 
-        var issued = await registry.Run<IssueAppChallengeRequest, IssueChallengeResponse>(new IssueAppChallengeRequest("approve workflow.step 4"), A.Caller().Session().Build());
+        var issued = await registry.Run<IssueAppChallengeRequest, IssueChallengeResponse>(new IssueAppChallengeRequest("approve workflow.step 5"), A.Caller().Session().Build());
 
         Assert.True(issued.IsSuccess, issued.IsError ? issued.Error.ToString() : null);
     }
@@ -51,7 +51,7 @@ public sealed class IssueAppRecipeChallengeTests
         await using var registry = Harness();
         _ = await registry.H.HoldLease();   // why: the refusal's audit row needs the lease
 
-        var issued = await registry.Run<IssueAppChallengeRequest, IssueChallengeResponse>(new IssueAppChallengeRequest("approve workflow.step 4"), A.Caller().Service("jobs").Build());
+        var issued = await registry.Run<IssueAppChallengeRequest, IssueChallengeResponse>(new IssueAppChallengeRequest("approve workflow.step 5"), A.Caller().Service("jobs").Build());
 
         Assert.Equal("SND-AUTH-002", issued.Error.Code);
     }

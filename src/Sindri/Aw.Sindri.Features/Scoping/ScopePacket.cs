@@ -5,7 +5,7 @@ using Aw.Sindri.Core.Packets;
 namespace Aw.Sindri.Features.Scoping;
 
 /// <summary>
-/// The scope packet assembler (scoping spec §8.3): the twelve files aw-packets' scoping kind lists, built from the facts the evidence step
+/// The scope packet assembler (scoping spec §8.3): the fifteen files aw-packets' scoping kind lists, built from the facts the evidence step
 /// holds, with trust stamped by code. Every JSON file carries schemaVersion 1; the lens file is built from fact:lenses with every node, edge
 /// and item 'untrusted' (C14's answer provenance has no field to ride on yet).
 /// </summary>
@@ -24,10 +24,13 @@ internal static class ScopePacket
             Json("acceptance.json", Versioned(StampedAcceptance(facts))),
             Json("coverage.json", Versioned(Plain(facts.ObjectCopy("coverage")))),
             Json("lenses.json", Lenses(facts["lenses"])),
+            Json("relevance.json", Versioned(Plain(facts.ObjectCopy("relevance")))),
             Json("size.json", Versioned(Plain(facts.ObjectCopy("decision")))),
             Json("questions.json", new JsonObject { ["schemaVersion"] = SchemaVersion, ["questions"] = Plain(facts["questions"]?.DeepClone() ?? new JsonArray()) }),
             Lines("answers.jsonl", ScopeJson.Items(facts["answerLog"]).Select(static e => Plain(e.DeepClone()))),
             Json("challenge.json", Versioned(Plain(facts.ObjectCopy("challenge")))),
+            Json("gap-search.json", Versioned(Plain(facts.ObjectCopy("gapSearch")))),
+            Json("graph.json", Versioned(Plain(facts.ObjectCopy("graph")))),
             Lines("rounds.jsonl", ScopeJson.Items(facts["rounds"]).Select(static e => Plain(e.DeepClone()))),
             Json("runs.json", new JsonObject { ["schemaVersion"] = SchemaVersion, ["runs"] = Plain(Runs(facts).DeepClone()) }),
             Json("sources.json", new JsonObject { ["schemaVersion"] = SchemaVersion, ["sources"] = Sources(facts["brief"]) }),
@@ -138,7 +141,7 @@ internal static class ScopePacket
                 ["hops"] = ScopeJson.ToArray(ScopeJson.Strings(entry, "hops")),
                 ["mapVersion"] = ScopeJson.Str(entry, "mapVersion") ?? string.Empty,
                 ["foundCount"] = ScopeJson.Int(entry, "foundCount") ?? 0,
-                ["nodes"] = Untrusted(ScopeJson.Items(entry, "nodes")),
+                ["nodes"] = Untrusted(ScopeJson.Items(entry, "nodes"), "demoted", "role"),
                 ["edges"] = Untrusted(ScopeJson.Items(entry, "edges")),
                 ["items"] = Untrusted(ScopeJson.Items(entry, "items")),
                 ["truncated"] = ScopeJson.ToArray(ScopeJson.Strings(entry, "truncated")),
@@ -148,12 +151,18 @@ internal static class ScopePacket
         return file;
     }
 
-    private static JsonArray Untrusted(IEnumerable<JsonNode> entries)
+    // The marks named in dropped are facts-only (the coverage check reads them); the packet's closed node schema has no place for them.
+    private static JsonArray Untrusted(IEnumerable<JsonNode> entries, params string[] dropped)
     {
         var stamped = new JsonArray();
         foreach (var entry in entries)
         {
             var copy = Plain((JsonObject)entry.DeepClone());
+            foreach (var name in dropped)
+            {
+                _ = copy.Remove(name);
+            }
+
             copy["trust"] = ScopeTrust.Untrusted;
             ScopeJson.Append(stamped, copy);
         }

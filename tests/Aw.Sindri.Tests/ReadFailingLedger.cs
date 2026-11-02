@@ -23,6 +23,9 @@ internal sealed class ReadFailingLedger(ILedgerStore inner) : ILedgerStore, ILed
     public ValueTask<Result<LedgerEvent?>> Latest(string type, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<LedgerEvent?>>(Failure);
 
+    public ValueTask<Result<LedgerEvent?>> ByKey(string idempotencyKey, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<LedgerEvent?>>(Failure);
+
     public ValueTask<Result<long>> Head(CancellationToken cancellationToken) => ValueTask.FromResult<Result<long>>(Failure);
 
     public ValueTask<Result<SchemaStatus>> Schema(CancellationToken cancellationToken) => inner.Schema(cancellationToken);

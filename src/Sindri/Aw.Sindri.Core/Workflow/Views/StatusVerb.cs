@@ -29,4 +29,8 @@ public enum StatusVerb
     /// <summary>Re-approve a drifted recipe.</summary>
     [JsonStringEnumMemberName("approve")]
     Approve = 6,
+
+    /// <summary>Go back to an earlier state of a parked instance (#1270).</summary>
+    [JsonStringEnumMemberName("rewind")]
+    Rewind = 7,
 }

@@ -102,9 +102,10 @@ internal static class GraphAnswer
     {
         var fact = text.Fact(node);
         var key = node.Key.Value;
-        var facts = graph.Edges.Where(e => e.From.Value == key && e.Type is not EdgeType.Implements and not EdgeType.Tests)
+        var facts = graph.Edges.Where(e => e.From.Value == key && e.Type is not EdgeType.Implements and not EdgeType.Tests and not EdgeType.Tags)
             .Select(e => $"{EdgeRules.Name(e.Type)} {e.To.Value}")
             .Concat(graph.Edges.Where(e => e.To.Value == key && e.Type == EdgeType.Implements).Select(e => $"implemented-by {e.From.Value}"))
+            .Concat(graph.Edges.Where(e => e.To.Value == key && e.Type == EdgeType.Tags).Select(e => $"tagged-by {e.From.Value}"))
             .Order(StringComparer.Ordinal).ToList();
         var line = facts.Count == 0 ? null : text.Line(string.Join("; ", facts));
         return new PackCandidate("graph", Item(fact, line, (fact.Provenance, fact.Confirmed, fact.Trust), why), MapMarker);
@@ -142,7 +143,7 @@ internal static class GraphAnswer
             });
 
     private static IEnumerable<PackCandidate> Code(GraphSnapshot graph, HashSet<string> reached, MapText text) =>
-        graph.Edges.Where(e => e.Type == EdgeType.Implements && reached.Contains(e.To.Value))
+        graph.Edges.Where(e => e.Type is EdgeType.Implements or EdgeType.Tags && reached.Contains(e.To.Value))
             .GroupBy(e => e.From.Value, StringComparer.Ordinal).OrderBy(g => g.Key, StringComparer.Ordinal)
             .Select(g =>
             {

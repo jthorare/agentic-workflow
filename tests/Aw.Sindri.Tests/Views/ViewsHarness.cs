@@ -2,7 +2,9 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Items;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Ledger;
+using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Testing;
@@ -33,6 +35,8 @@ internal sealed class ViewsHarness
             new JobsProjection(Slice.Events),
             new LaunchesProjection(Slice.Events),
             new CodeIndexProjection(Slice.Events),
+            new ModelHistoryProjection(Slice.Events),
+            new ProjectsProjection(Slice.Events),
         ];
     }
 
@@ -58,6 +62,17 @@ internal sealed class ViewsHarness
         var ct = TestContext.Current.CancellationToken;
         _ = (await Views.Open(ViewSchema.Version, ct)).Value;
         var applied = (await Views.Apply([Recorded.Of(Slice.Events, type, payload, ++_sequence, item)], _projections, Slice.Clock.GetUtcNow(), ct)).Value;
+        Assert.Null(applied.Stall);
+        Publish(stalledAt: null);
+    }
+
+    /// <summary>Folds one recorded <paramref name="type"/> event whose payload text <paramref name="edit"/> changes after it is written (a field the payload record doesn't have yet).</summary>
+    public async Task Fold<TPayload>(string type, TPayload payload, ItemId item, Func<string, string> edit)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        _ = (await Views.Open(ViewSchema.Version, ct)).Value;
+        var recorded = Recorded.Of(Slice.Events, type, payload, ++_sequence, item);
+        var applied = (await Views.Apply([recorded with { Envelope = recorded.Envelope with { Payload = edit(recorded.Envelope.Payload) } }], _projections, Slice.Clock.GetUtcNow(), ct)).Value;
         Assert.Null(applied.Stall);
         Publish(stalledAt: null);
     }

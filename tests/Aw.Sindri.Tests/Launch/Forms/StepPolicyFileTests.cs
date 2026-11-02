@@ -44,6 +44,27 @@ public sealed class StepPolicyFileTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void An_API_error_stop_touches_the_turn_failed_file_and_a_new_prompt_deletes_it()
+    {
+        var text = Encoding.UTF8.GetString(StepPolicyFile.Render(new StepPolicy(["Read"], StepPermissionMode.Default, "/work/wt")));
+
+        Assert.Contains("\"StopFailure\"", text, StringComparison.Ordinal);
+        Assert.Contains("touch \\\"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-failed\\\"", text, StringComparison.Ordinal);
+        Assert.Contains("rm -f \\\"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.turn-failed\\\"", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_tool_call_in_flight_is_marked_until_it_returns_or_fails()
+    {
+        var text = Encoding.UTF8.GetString(StepPolicyFile.Render(new StepPolicy(["Read"], StepPermissionMode.Default, "/work/wt")));
+
+        Assert.Contains("touch \\\"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.tool-running\\\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"PostToolUse\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"PostToolUseFailure\"", text, StringComparison.Ordinal);
+        Assert.Contains("rm -f \\\"$AW_SINDRI_HOME/launches/$AW_SINDRI_LAUNCH.tool-running\\\"", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void Without_a_writable_path_no_write_rule_is_added()
     {
         var text = Encoding.UTF8.GetString(StepPolicyFile.Render(new StepPolicy(["Read"], StepPermissionMode.ReadOnly, WritablePath: null)));

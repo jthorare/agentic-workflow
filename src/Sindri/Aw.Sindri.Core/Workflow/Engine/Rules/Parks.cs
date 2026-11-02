@@ -23,6 +23,7 @@ internal static class Parks
         ParkReason.Timeout => "timeout",
         ParkReason.SpecConflict => "spec-conflict",
         ParkReason.Unavailable => "unavailable",
+        ParkReason.Launch => "launch",
         ParkReason.NoRuntime or _ => "SND-WF-010",
     };
 }

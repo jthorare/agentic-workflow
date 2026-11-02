@@ -36,9 +36,10 @@ public static class ReviewBacklog
         return new ReviewQueueView(label, ReviewVersion.None, ordered, decided, decided + counts.Deterministic + counts.Model, counts, ByKind(ordered), ReviewTruncated.None);
     }
 
-    private static bool IsProposal(GraphNode n) => n.Provenance != Provenance.Human && _proposable.Contains(n.Key.Kind);
+    // A home or group feature is deterministic structure the build derives from the directories, not something to review (spec 2026-10-27 §2.2).
+    private static bool IsProposal(GraphNode n) => n.Provenance != Provenance.Human && _proposable.Contains(n.Key.Kind) && n is not { Provenance: Provenance.Deterministic, Key.Kind: NodeKind.Feature };
 
-    private static bool IsSuggestion(GraphEdge e) => e.Provenance == Provenance.Model && e.Type is EdgeType.Implements or EdgeType.Tests;
+    private static bool IsSuggestion(GraphEdge e) => e.Provenance == Provenance.Model && e.Type is EdgeType.Implements or EdgeType.Tests or EdgeType.Tags;
 
     // The proposals of this draft with a standing decision: the draft's own proposals and its scoping run's, not every target someone ever decided about.
     // One that is still in the queue is undecided whatever a row says: a reject whose cited span changed no longer applies, and the node is back.
@@ -81,7 +82,7 @@ public static class ReviewBacklog
                 graph.Aliases.DistinctBy(a => a.Alias.Value, StringComparer.Ordinal).ToDictionary(a => a.Alias.Value, a => a.Target.Value, StringComparer.Ordinal));
             foreach (var e in graph.Edges)
             {
-                if (e.Type == EdgeType.Implements)
+                if (e.Type is EdgeType.Implements or EdgeType.Tags)
                 {
                     _ = ends.Implementers.TryAdd(e.To.Value, []);
                     ends.Implementers[e.To.Value].Add(e.From);

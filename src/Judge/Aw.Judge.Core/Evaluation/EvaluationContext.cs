@@ -16,6 +16,9 @@ public sealed record EvaluationContext
     /// <summary>The question's config entry, or null when config.json has none (enabled, the question's threshold).</summary>
     public QuestionOverride? Override { get; init; }
 
+    /// <summary>The cap on choose's prompt facts, in characters (config.json's providers.inputCapChars); null for the default.</summary>
+    public int? InputCapChars { get; init; }
+
     /// <summary>The calling session, stored with the decision's details.</summary>
     public SessionId? SessionId { get; init; }
 }

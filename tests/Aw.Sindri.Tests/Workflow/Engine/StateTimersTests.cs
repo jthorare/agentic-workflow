@@ -21,12 +21,12 @@ public sealed class StateTimersTests
     [Fact, Trait("Lane", "unit")]
     public void A_desk_run_waits_at_least_the_desk_timeout_and_every_other_state_its_own_timeout()
     {
-        var produce = At(Step, "produce");   // 4h
+        var produce = At(Step, "produce");   // 1d
         var agent = produce.Frame.Run! with { Runtime = StepRuntime.Agent };
 
         Assert.Equal(_floor, StateTimers.Timeout(Step.States["produce"], produce.Frame.Run, _floor));
-        Assert.Equal(TimeSpan.FromHours(4), StateTimers.Timeout(Step.States["produce"], produce.Frame.Run, TimeSpan.FromMinutes(1)));
-        Assert.Equal(TimeSpan.FromHours(4), StateTimers.Timeout(Step.States["produce"], agent, _floor));
+        Assert.Equal(TimeSpan.FromDays(1), StateTimers.Timeout(Step.States["produce"], produce.Frame.Run, TimeSpan.FromMinutes(1)));
+        Assert.Equal(TimeSpan.FromDays(1), StateTimers.Timeout(Step.States["produce"], agent, _floor));
         Assert.Equal(TimeSpan.FromDays(7), StateTimers.Timeout(Item.States["triaged"], run: null, _floor));
         Assert.Null(StateTimers.Timeout(Step.States["done"], run: null, _floor));
     }

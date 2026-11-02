@@ -40,18 +40,20 @@ public static class SubgraphBuilder
         }
 
         var (given, missing) = resolved.Value;
-        var reached = Widen(graph, nodes, given, depth);
+        var leftOut = new HashSet<string>(StringComparer.Ordinal);
+        var reached = Widen(graph, nodes, given, depth, k => DemotedCode.IsDemoted(nodes[k].Key, basis.Repos) && Note(leftOut, k));
         var order = reached.OrderBy(r => r.Value.Depth).ThenBy(r => r.Value.Origin).ThenBy(r => r.Key, StringComparer.Ordinal).Select(r => r.Key).ToList();
         var all = reached.Keys.ToHashSet(StringComparer.Ordinal);
         var bands = LensRepos.Stamp(new LensBands(Intent(graph, nodes, order, reached, all), Product(graph, nodes, order, reached), Code(graph, nodes, order, reached, all)), graph, basis.MapRepo);
         var givenProduct = given.Where(k => IsProduct(k.Kind)).ToList();
         var ownSet = givenProduct.Select(k => k.Value).ToHashSet(StringComparer.Ordinal);
-        var coverage = LensCoverageBuilder.Of(graph, nodes, givenProduct) with { Map = MapCoverageBuilder.Of(graph, ownSet, basis, all.Where(k => nodes[k].Key.Kind == NodeKind.Code)) };
+        var coverage = LensCoverageBuilder.Of(graph, nodes, givenProduct) with { Map = MapCoverageBuilder.Of(graph, ownSet, basis, all.Where(k => nodes[k].Key.Kind == NodeKind.Code && !UnreadFileNodes.Is(nodes[k]))) };
         var searched = LensSearchedBuilder.For(basis, [.. given.Select(k => k.Value)], depth, bands) with { Hops = [] };
         return new SubgraphView(1, given, missing, basis.Map, depth, basis.AsOf, bands, LensEdges.Across(graph, all), LensConflicts.Of(graph, all, conflicts), coverage, searched, [],
             new Dictionary<string, Citation>(StringComparer.Ordinal))
         {
             MapCommit = basis.MapCommit,
+            Demoted = leftOut.Count > 0 ? leftOut.Count : null,
         };
     }
 
@@ -86,12 +88,19 @@ public static class SubgraphBuilder
         return (given, missing);
     }
 
+    // A node depth expansion would reach, left out: the set counts each once, however many edges lead to it.
+    private static bool Note(HashSet<string> leftOut, string key)
+    {
+        _ = leftOut.Add(key);
+        return true;
+    }
+
     private sealed record Hit(int Depth, int Origin, string[] Path);
 
     private static bool IsProduct(NodeKind kind) => kind is not (NodeKind.Record or NodeKind.Decision or NodeKind.Code);
 
     // Breadth first over every edge in either direction, from the given keys in request order; the first to reach a node owns it.
-    private static Dictionary<string, Hit> Widen(GraphSnapshot graph, Dictionary<string, GraphNode> nodes, List<NodeKey> given, int depth)
+    private static Dictionary<string, Hit> Widen(GraphSnapshot graph, Dictionary<string, GraphNode> nodes, List<NodeKey> given, int depth, Func<string, bool> leaveOut)
     {
         var reached = new Dictionary<string, Hit>(StringComparer.Ordinal);
         for (var i = 0; i < given.Count; i++)
@@ -108,13 +117,13 @@ public static class SubgraphBuilder
         var frontier = given.Select(k => k.Value).ToList();
         for (var level = 1; level <= depth && frontier.Count > 0; level++)
         {
-            frontier = Expand(frontier, adjacent, reached, level);
+            frontier = Expand(frontier, adjacent, reached, level, leaveOut);
         }
 
         return reached;
     }
 
-    private static List<string> Expand(List<string> frontier, Dictionary<string, List<(string Node, string Hop)>> adjacent, Dictionary<string, Hit> reached, int level)
+    private static List<string> Expand(List<string> frontier, Dictionary<string, List<(string Node, string Hop)>> adjacent, Dictionary<string, Hit> reached, int level, Func<string, bool> leaveOut)
     {
         var next = new List<string>();
         foreach (var from in frontier)
@@ -122,8 +131,9 @@ public static class SubgraphBuilder
             var parent = reached[from];
             foreach (var (node, hop) in adjacent.GetValueOrDefault(from) ?? [])
             {
-                if (reached.TryAdd(node, new Hit(level, parent.Origin, [.. parent.Path, hop])))
+                if (!reached.ContainsKey(node) && !leaveOut(node))
                 {
+                    reached[node] = new Hit(level, parent.Origin, [.. parent.Path, hop]);
                     next.Add(node);
                 }
             }
@@ -167,7 +177,7 @@ public static class SubgraphBuilder
             .DistinctBy(k => k.Value, StringComparer.Ordinal).OrderBy(k => k.Value, StringComparer.Ordinal)];
 
     private static LensRecord Record(GraphSnapshot graph, GraphNode n, int depth, HashSet<string> all) =>
-        new(n.Key, n.Label, LensIntent.Source(n.Key), Targets(graph, n.Key, EdgeType.Mentions, all), Results.Trust.Untrusted, CitationState.Unchecked, [], NodeKind.Record) { Depth = depth };
+        new(n.Key, n.Label, LensIntent.Source(n.Key), Targets(graph, n.Key, EdgeType.Mentions, all), Results.Trust.Untrusted, CitationState.Unchecked, [], NodeKind.Record) { Depth = depth, At = n.At };
 
     private static LensDecision Decision(GraphSnapshot graph, GraphNode n, int depth, HashSet<string> all) =>
         LensIntent.Decision(graph, n, Targets(graph, n.Key, EdgeType.Decides, all)) with { Depth = depth };
@@ -188,7 +198,7 @@ public static class SubgraphBuilder
 
     private static CodeBand Code(GraphSnapshot graph, Dictionary<string, GraphNode> nodes, List<string> order, Dictionary<string, Hit> reached, HashSet<string> all)
     {
-        var codes = order.Where(k => nodes[k].Key.Kind == NodeKind.Code).ToList();
+        var codes = order.Where(k => nodes[k].Key.Kind == NodeKind.Code && !UnreadFileNodes.Is(nodes[k])).ToList();
         var linked = LensCode.Files(graph.Edges.Where(e => e.Type is EdgeType.Implements or EdgeType.Tests && all.Contains(e.To.Value) && nodes.ContainsKey(e.From.Value) && nodes[e.From.Value].Key.Kind == NodeKind.Code && reached.ContainsKey(e.From.Value)))
             .ToDictionary(f => "code:" + f.Path, StringComparer.Ordinal);
         var files = codes.Select(k => (linked.TryGetValue(k, out var f) ? f : Bare(nodes[k])) with { Depth = reached[k].Depth }).ToList();

@@ -33,7 +33,7 @@ machine-wide, needs no profile approval, and never holds secrets. One JSON Schem
 | `host` | Who owns the process: `tmux` (default), `none` (a GUI app that owns its own agent; attended opens only) or `t3` (a T3 Code thread; attended opens only, see "The t3 host"). Unattended Steps always use tmux |
 | `agents.<id>` | An added catalog entry (`label`, `bin`, `open`, `sessionId` required; `sessionIdPattern` required unless `sessionId` is `none`, and matched against the whole id, as if written `^(…)$`; `reportedId` required for `reported`), or, with `"override": true`, the named fields of a built-in one. Ids match `^[a-z][a-z0-9-]{1,31}$` |
 | `agents.<id>.model`, `.policy` | Decided (owner, 2026-10-16). Per-entry form names, like `mcp`, for an unattended Step's per-run model and policy file; see "Model and policy forms" below. Absent means `none` |
-| `meta` | `lanesAgent` and per-lane `lanes.<lane>` name catalog agents for `aw-meta-launch` |
+| `meta` | `lanesAgent` and per-lane `lanes.<lane>` name catalog agents for `aw-meta-launch`, when the team's `team.json` has no `agent`. That field sets every lane, including the meta lane, and wins over both of these |
 | `sessions` | The session collector's settings (`enabled`, `pollSeconds` 1 to 30, `providers`, `tmuxSockets`, `claudeSessionsDir`); optional, and the bash reader accepts and ignores it. See `docs/csharp/sindri-sessions.md` |
 
 Built-in entries (`claude-code`, `codex`, `cursor`) live once in `config/launcher/builtins.json`. The terminal templates
@@ -71,7 +71,7 @@ never hashed, so one approval holds across runs; changing a form name changes th
 Scoping-station spec section 12.5, row L-17. An entry names, like `mcp`, which built-in form passes a per-run model id
 (`model`) and a Step's policy (`policy`: a settings file for `claude-settings-file`, typed `-c` overrides with no file for
 `codex-overrides`) to its CLI. The Step's policy is target-neutral (owner, 2026-10-17, amending L-17(a)):
-`StepPolicy(AllowedTools, Mode {ReadOnly, Plan, Default}, WritablePath)`. The engine writes no policy file; the launcher renders
+`StepPolicy(AllowedTools, Mode {ReadOnly, Plan, Default}, WritablePath, LoginSource?)`; `LoginSource` (`owner-copy` < `separate-login`, sandbox spec SB18) is the stricter model login a Step asks for, null for no ask and left out of the JSON. The engine writes no policy file; the launcher renders
 it per form, writes any file 0600 and deletes it with the launch. A Step only tightens the profile: bypass or full access is never a
 Step mode, and a mode the entry can't express is `SND-LAUNCH-013`. Both are enums, default `none`, and an added entry defaults to
 `none`; an override keeps the built-in's forms unless it names them. A form adds its arguments only on an **unattended Step
@@ -92,9 +92,24 @@ id and `<path>` the 0600 settings file the launcher renders from the Step's poli
 | `policy` | `cursor-config` | **reserved**: nothing until the Cursor CLI's config argument is verified; a Step that requests it parks with `SND-LAUNCH-013` | none |
 | `policy` | `none` | nothing | cursor |
 
+**Cursor can't run agent Steps yet** (issue #1428): its built-in entry keeps `model`, `policy` and `mcp` at `none`, so every unattended Step on it parks with `SND-LAUNCH-013`; `profile validate` and `sindri doctor` (`agent:target`) say so when `workflow.agent.target` names it. Not verified, and nothing here guesses it: the Cursor CLI's `--model` flag, the config file and keys `agent -p` reads for permissions (user-level or project-level), any sandbox flag, and a per-launch MCP argument (the installer only knows `~/.cursor/mcp.json` and `--approve-mcps`). A form is added only after someone runs the CLI on a box that has it.
+
+What Cursor's public docs pin (not yet confirmed against a CLI on a box): [permissions](https://cursor.com/docs/cli/reference/permissions) are `permissions.allow` / `permissions.deny` in `~/.cursor/cli-config.json` or `<project>/.cursor/cli.json`, with rule types `Shell`, `Read`, `Write`, `WebFetch` and `Mcp`, and deny wins; the [parameters](https://cursor.com/docs/cli/reference/parameters) include `--model`, `-p`, `--force`, `--sandbox enabled|disabled`, `--mode plan`, `--trust` and `--workspace`. Three questions still block a policy form: how the project file and the global file merge, whether headless `-p` without `--force` refuses a command the rules don't allow, and whether `--sandbox` confines writes.
+
 A Step that requests a model or a policy on an entry whose matching form is `none`, or a reserved form (`cursor-flag`,
 `cursor-config`), parks with `SND-LAUNCH-013` and never
 launches unrestricted (the API implements the check).
+
+### The sandboxed launch flow (sandbox spec §6; SB-0 contract, built in SB-1 to SB-5b)
+
+For a Step run `ILauncher.Launch` becomes, with the new steps in bold: resolve the agent, SL8 (`-012`), L-17's form check (`-013`),
+**build the sandbox plan from the `StepPolicy` (pure; `-025`)**, **probe the mechanism (cached per box, refreshed by Check again; `-014`)**,
+**the session cap (`-020`: an atomic count; a wait, not a failure)**, **prepare credentials from the Step's credential source (`-017`, `-018`)**,
+**the host-side prepare of the repo's packages (`-021`)**, budget (E-28), **write the plan file, start the outside half of the network, run the
+self-check (`-016`)**, start in the host, return. The launcher appends nothing: the engine's launch activity writes `launch.outcome`, and the
+sandbox summary rides on `StartedLaunch.Sandbox`. A launch whose confinement can't be built or proven never falls back to unconfined. Until
+SB-5a the product Host registers `UnavailableSandbox`, so every Step launch is `-014`; a `sindri open` session opens as today until SB-5b.
+The codes, kinds and reasons are in `docs/csharp/sindri-sandbox.md`.
 
 ## Worked examples for `exec-template`
 
@@ -146,6 +161,22 @@ verdict (`valid` or `invalid`) and the `bash` tag (`accept` or `refuse`) the SL-
 class and `strict: false` (the schema's `x-aw-keys` block, which the bash reader reads for its key lists and placeholder
 set, is an unknown keyword to 2020-12), and `bash scripts/tests/check-launcher.test.sh` proves each kind of drift
 fails. Ajv is a dev dependency of `scripts/` (`npm ci --prefix scripts`; the test installs it when missing).
+
+## Models in `launch show`
+
+Usage: `sindri launch show [<id>] [--json]`. Under each installed agent it lists the models the agent offers, cheapest
+first, each with the bands it sits in: `haiku  cheap`, `sonnet  standard`, `opus  strong` (an agent's only model is
+`cheap/standard/strong`). Claude Code's list is the catalog entry's aliases (it has no list command); Codex's is
+`codex debug models`, keeping `visibility: list` rows (5 s limit). An agent whose list can't be read prints no models
+and its probed target says `no-model-list` (`SND-MODEL-004`, informational); a model with no place prints
+`(unordered: ...)` and is ranked last. `launch.probed` carries the same lists as each target's `models`.
+
+## Picks in `launch picks`
+
+Usage: `sindri launch picks [--item X] [--json]`. Read-only: it reads `GET /sindri/launch/picks` and never starts the control plane (exit 1
+with `SND-API-001` when serve is down). One line per run that has a model pick, oldest first: item, step (a retry on a stronger model
+ends in `.e1`), agent, model, who picked it (`jev`, `constraint`, `rules`, `default`), the plain reason, tokens, cost and what Jev's pick
+cost (`jev 1 call 2.1 s`, or `jev not asked`). `--json` prints the route's answer. The sentences are `PickWhy` (model-pick spec §6.1).
 
 ## The t3 host
 
@@ -227,7 +258,7 @@ The scrub is the pure `LaunchEnvironment.Scrub` in Core. The **pre-push hook** i
 and exits 1 where `AW_SINDRI_WORKTREE` is set, and exits 0 otherwise, so the owner's pushes from the same repo pass. It is installed only when missing or ours (marker line
 `# aw-sindri pre-push guard (LN-LCH1)`); a `pre-push` hook that isn't ours refuses the launch with `SND-LAUNCH-022` and is never changed. An attended open gets none of this.
 
-Fact files (engine run-dir facts): before an unattended Step starts, the launcher writes each fact the Step declares as an input and has set into its run directory (`$AW_SINDRI_RUN_DIR`) as `<key without "fact:">.json`, scrubbed and shaped as an API fact read (an object or array as itself, anything else one JSON string); an attended open gets none. When the directory is a git worktree the names are added to that worktree's local `info/exclude` (never the repo's `.gitignore`), and a name git tracks refuses the launch with `SND-LAUNCH-025` (the file is never overwritten; our own untracked file from an earlier attempt is rewritten). The launcher also makes `$AW_SINDRI_RUN_DIR/.sindri-out/` and adds `/.sindri-out/` to the same exclude file: the agent writes each output it reports (`--output fact:x=$AW_SINDRI_RUN_DIR/.sindri-out/x`) there, so outputs never show up as untracked work in `git status`, the clean-tree checks or the worktree removal check.
+Fact files (engine run-dir facts): before an unattended Step starts, the launcher writes each fact the Step declares as an input and has set into its run directory (`$AW_SINDRI_RUN_DIR`) as `<key without "fact:">.json`, scrubbed and shaped as an API fact read (an object or array as itself, anything else one JSON string); an attended open gets none. When the directory is a git worktree the names are added to that worktree's local `info/exclude` (never the repo's `.gitignore`), and a name git tracks refuses the launch with `SND-LAUNCH-029` (the file is never overwritten; our own untracked file from an earlier attempt is rewritten). The launcher also makes `$AW_SINDRI_RUN_DIR/.sindri-out/` and adds `/.sindri-out/` to the same exclude file: the agent writes each output it reports (`--output fact:x=$AW_SINDRI_RUN_DIR/.sindri-out/x`) there, so outputs never show up as untracked work in `git status`, the clean-tree checks or the worktree removal check.
 
 **Writable and denied paths.** The `claude-settings-file` policy allows `Edit`/`Write` under the policy's writable path (the Step's worktree), and renders
 `StepPolicy.DeniedPaths` as `Read(//path/**)` and `Edit(//path/**)` deny rules. An entry that can't express a denied read (`codex-overrides`, `cursor-config`, `none`)

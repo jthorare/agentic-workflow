@@ -21,13 +21,14 @@ public sealed class ClusterFeaturesTests
     ]);
 
     [Fact, Trait("Lane", "unit")]
-    public void A_cluster_becomes_a_model_feature_with_a_model_implements_edge_per_file()
+    public void A_cluster_becomes_a_model_tag_feature_with_a_model_tags_edge_per_file()
     {
         var map = ClusterFeatures.Propose(_repo, Set(Cluster("c1", 0.8, "src/tabs/a.ts", "src/tabs/b.ts")), [], ExtractedMap.Empty);
 
         var feature = Assert.Single(map.Nodes, n => n.Key.Kind == NodeKind.Feature);
         Assert.Equal((Provenance.Model, 0.8), (feature.Provenance, feature.Confidence));
-        var edges = map.Edges.Where(e => e.Type == EdgeType.Implements).ToList();
+        Assert.DoesNotContain(map.Edges, e => e.Type == EdgeType.Implements);
+        var edges = map.Edges.Where(e => e.Type == EdgeType.Tags).ToList();
         Assert.Equal(["code:src/tabs/a.ts", "code:src/tabs/b.ts"], edges.Select(e => e.From.Value), StringComparer.Ordinal);
         Assert.All(edges, e => Assert.Equal((feature.Key, Provenance.Model, 0.8), (e.To, e.Provenance, e.Confidence)));
         Assert.Equal(["repo:aw-split-panes/src/tabs/a.ts"], edges[0].EvidenceOrEmpty.Select(r => r.Key.Value), StringComparer.Ordinal);
@@ -62,13 +63,14 @@ public sealed class ClusterFeaturesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_cluster_claims_the_surfaces_defined_in_its_files()
+    public void A_cluster_claims_no_surface_the_home_feature_of_the_defining_file_does()
     {
         var map = ClusterFeatures.Propose(_repo, Set(Cluster("c1", 0.8, "src/tabs/ids.ts")), [], Extracted());
 
-        var feature = map.Nodes.Single(n => n.Key.Kind == NodeKind.Feature).Key;
-        var claim = Assert.Single(map.Edges, e => e.Type == EdgeType.PartOf);
-        Assert.Equal(("surface:command/close-tab", feature.Value, Provenance.Model), (claim.From.Value, claim.To.Value, claim.Provenance));
+        Assert.DoesNotContain(map.Edges, e => e.Type == EdgeType.PartOf);
+        var home = HomeFeatures.Assign(new ContextRepo(_repo, "/work/aw-split-panes"), ["src/tabs/ids.ts", "src/layout/ids.ts"], Extracted());
+        var claim = Assert.Single(home.Map.Edges, e => e.Type == EdgeType.PartOf && e.From.Value == "surface:command/close-tab");
+        Assert.Equal(("feature:aw-split-panes", Provenance.Deterministic), (claim.To.Value, claim.Provenance));
     }
 
     [Fact, Trait("Lane", "unit")]

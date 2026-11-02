@@ -10,9 +10,11 @@ public static class A
     /// <summary>A ticket.json document.</summary>
     /// <param name="brief">The brief.</param>
     /// <param name="expected">The expected behaviour.</param>
+    /// <param name="source">The ticket's source (linear, text or github).</param>
+    /// <param name="id">The tracker's key.</param>
     /// <returns>The JSON text.</returns>
-    public static string TicketJson(string brief = "Login fails\\n\\nClicking Log in shows a blank page.", string expected = "The dashboard opens") =>
-        $$"""{"source":"linear","id":"ENG-1","title":"Login fails","brief":"{{brief}}","expected":"{{expected}}","actual":"A blank page"}""";
+    public static string TicketJson(string brief = "Login fails\\n\\nClicking Log in shows a blank page.", string expected = "The dashboard opens", string source = "linear", string id = "ENG-1") =>
+        $$"""{"source":"{{source}}","id":"{{id}}","title":"Login fails","brief":"{{brief}}","expected":"{{expected}}","actual":"A blank page"}""";
 
     /// <summary>A /rootCause handoff.</summary>
     /// <param name="status">The status line's value.</param>

@@ -21,12 +21,16 @@ internal sealed partial class WholeMapView : UserControl
     internal const double MiniMapBand = 140;
 
     private bool _fitted;
+    private ZoomView _fitView;   // the view the last fit set: a view still equal to it is one the person has not moved
 
     /// <summary>Initializes a new instance of the <see cref="WholeMapView"/> class.</summary>
     public WholeMapView()
     {
         InitializeComponent();
+        WholePages.ActionChosen += (_, e) => _map?.ChooseNode(e.Key);   // an action's name opens its node panel
+        WholePages.RetryRequested += (_, _) => _map?.RetryPages();
         WholeCanvas.FitBottomInset = MiniMapBand;
+        WholeItems.AddHandler(KeyDownEvent, OnItemsKey, RoutingStrategies.Tunnel);   // a bubbling handler never sees Enter: the focused row has handled it by then
         AutomationProperties.SetName(WholeZoomOut, Labels.ContextMapZoomOut);
         AutomationProperties.SetName(WholeZoomIn, Labels.ContextMapZoomIn);
         AutomationProperties.SetName(WholeZoomFit, Labels.ContextMapZoomFit);
@@ -116,6 +120,9 @@ internal sealed partial class WholeMapView : UserControl
         if (sender is Control { DataContext: NodeEdgeRowViewModel row })
         {
             row.Jump();
+
+            // The card swaps its edge rows for the next node's, so the focused one leaves the tree; the close button stays, and Esc and Tab keep working from it.
+            _ = WholeNodeClose.Focus(NavigationMethod.Tab);
         }
     }
 
@@ -144,13 +151,19 @@ internal sealed partial class WholeMapView : UserControl
             return;
         }
 
+        ApplyFit(stage, world);
+    }
+
+    // The zoom range for the stage the map has, and the fit: the first open, and a resize while the person has not zoomed or panned, fit the map again.
+    private void ApplyFit(Size stage, Rect world)
+    {
         var fit = Math.Min(stage.Width / world.Width, stage.Height / world.Height);
-        WholeCanvas.MinZoom = Math.Clamp(fit, 0.02, WholeMapViewModel.MaxScale);
-        WholeCanvas.MaxZoom = WholeMapViewModel.MaxScale;
-        if (!_fitted)
+        (WholeCanvas.MinZoom, WholeCanvas.MaxZoom) = WholeMapViewModel.ZoomLimits(fit);
+        if (!_fitted || WholeCanvas.View == _fitView)
         {
             _fitted = true;
             WholeCanvas.SetView(ZoomView.Fit(stage, world, new ZoomRange(WholeMapViewModel.FirstOpenFloor, WholeMapViewModel.MaxScale)));
+            _fitView = WholeCanvas.View;
         }
 
         ViewChanged();
@@ -169,8 +182,11 @@ internal sealed partial class WholeMapView : UserControl
         var viewport = view.Scale > 0 ? new Rect(-view.X / view.Scale, -view.Y / view.Scale, size.Width / view.Scale, size.Height / view.Scale) : default;
         WholeWorld.Scale = view.Scale;
         WholeWorld.Viewport = viewport;
-        WholeMiniMap.Viewport = viewport;
+        WholeMiniMap.Viewport = MiniMapControl.VisiblePart(viewport, WholeCanvas.WorldBounds);   // the part of the world on the stage, never the empty stage past it
         WholeZoomValue.Text = Labels.ContextMapZoomPct(view.Scale);
+        WholeZoomIn.IsEnabled = WholeMapViewModel.CanZoomIn(view.Scale, WholeCanvas.MaxZoom);
+        WholeZoomOut.IsEnabled = WholeMapViewModel.CanZoomOut(view.Scale, WholeCanvas.MinZoom);
+        WholeZoomFit.IsEnabled = view != _fitView;   // already fitted: nothing for Fit to do
     }
 
     // The mini-map asks for a point of the world in the middle of the stage.
@@ -210,7 +226,45 @@ internal sealed partial class WholeMapView : UserControl
         }
     }
 
-    private void OnCrumb(object? sender, ValueEventArgs<Crumb> e) => _map?.GoHome();
+    // The list's items carry their name for a screen reader and the driver.
+    private void OnItemPrepared(object? sender, ContainerPreparedEventArgs e)
+    {
+        if (e.Container is ListBoxItem container && container.DataContext is MapItemViewModel item)
+        {
+            AutomationProperties.SetName(container, item.Name);
+        }
+    }
+
+    // Enter on an item is a click on the map's node or feature.
+    private void OnItemsKey(object? sender, KeyEventArgs e)
+    {
+        var item = (e.Source as Control)?.DataContext as MapItemViewModel ?? WholeItems.SelectedItem as MapItemViewModel;   // the focused row first: the selection can lag it
+        if (e.Key == Key.Enter && item is not null)
+        {
+            _map?.ChooseItem(item);
+            e.Handled = true;
+        }
+    }
+
+    private void OnItemsTapped(object? sender, TappedEventArgs e)
+    {
+        if (WholeItems.SelectedItem is MapItemViewModel item)
+        {
+            _map?.ChooseItem(item);
+        }
+    }
+
+    private void OnCrumb(object? sender, ValueEventArgs<Crumb> e) => _map?.Navigate(e.Value);
+
+    private void OnBandButton(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: BandButton button })
+        {
+            _map?.DrillInto(button.Band);
+        }
+    }
+
+    private void OnBack(object? sender, RoutedEventArgs e) => _map?.GoUp();
 
     private void OnZoomIn(object? sender, RoutedEventArgs e) => WholeCanvas.ZoomIn();
 

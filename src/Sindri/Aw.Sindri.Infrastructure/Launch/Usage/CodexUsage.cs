@@ -9,11 +9,17 @@ namespace Aw.Sindri.Infrastructure.Launch.Usage;
 /// when the running total rose (the same turn is reported again), priced at the model the latest 'turn_context' named. Codex counts cached tokens inside
 /// 'input_tokens', so they are split out here.
 /// </summary>
-/// <param name="root">The sessions directory.</param>
-internal sealed class CodexUsage(string root) : IUsageReader
+/// <param name="root">The owner's sessions directory.</param>
+/// <param name="alsoUnder">The sessions directories of the separate agent homes (a separate-login launch writes there); empty for an owner-copy box.</param>
+internal sealed class CodexUsage(string root, IReadOnlyList<string> alsoUnder) : IUsageReader
 {
     private const string Counts = "\"token_count\"";
     private const string Unknown = "unknown";
+
+
+    public CodexUsage(string root) : this(root, [])
+    {
+    }
 
     /// <inheritdoc/>
     public string Name => "codex";
@@ -23,11 +29,11 @@ internal sealed class CodexUsage(string root) : IUsageReader
 
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<ModelTokens>> Between(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken) =>
-        await Read(TranscriptFiles.Jsonl(root, from), (from, to), cancellationToken).ConfigureAwait(false);
+        await Read(TranscriptFiles.Jsonl([root, .. alsoUnder], from), (from, to), cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<ModelTokens>> OfSession(SessionId session, CancellationToken cancellationToken) =>
-        await Read([.. TranscriptFiles.Jsonl(root, since: null).Where(path => Path.GetFileNameWithoutExtension(path).EndsWith("-" + session.Value, StringComparison.Ordinal))], window: null, cancellationToken).ConfigureAwait(false);
+        await Read([.. TranscriptFiles.Jsonl([root, .. alsoUnder], since: null).Where(path => Path.GetFileNameWithoutExtension(path).EndsWith("-" + session.Value, StringComparison.Ordinal))], window: null, cancellationToken).ConfigureAwait(false);
 
     private static async ValueTask<IReadOnlyList<ModelTokens>> Read(IReadOnlyList<string> files, (DateTimeOffset From, DateTimeOffset To)? window, CancellationToken cancellationToken)
     {

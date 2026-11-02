@@ -25,13 +25,13 @@ public sealed class ScopingBlockRuntimesTests
 {
     private static readonly string[] _registered =
     [
-        "step.brief.seed", "step.bugfix.judge", "step.bugfix.recheck", "step.bugfix.record-candidate", "step.bugfix.start-attempt", "step.build.amend", "step.build.checks", "step.build.prepare", "step.build.red-check", "step.docs.check", "step.docs.scope", "step.evidence.combine", "step.evidence.none", "step.interview.record", "step.judge.choose", "step.line.dispatch", "step.line.seed", "step.phase.drift", "step.phase.seed", "step.pr.ci-log", "step.pr.held-comment", "step.pr.intake", "step.pr.next-comment", "step.pr.ready-check", "step.pr.snapshot", "step.prove.before-after", "step.prove.collect", "step.prove.evidence", "step.prove.fail-log", "step.prove.holdout-log", "step.prove.intake", "step.prove.rerun-scripts", "step.recheck.log", "step.recheck.plan", "step.scope.anchor", "step.scope.challenge-log", "step.scope.check", "step.scope.evidence", "step.scope.freeze", "step.scope.gather", "step.scope.intake", "step.scope.propose", "step.scope.read-brief", "step.scope.read-change", "step.scope.read-tracker", "step.scope.reanchor", "step.scope.withdraw", "step.ship.freeze", "step.ship.green", "step.ship.pack", "step.ship.return",
+        "step.brief.seed", "step.bugfix.judge", "step.bugfix.recheck", "step.bugfix.record-candidate", "step.bugfix.start-attempt", "step.build.amend", "step.build.checks", "step.build.prepare", "step.build.red-check", "step.docs.check", "step.docs.scope", "step.evidence.combine", "step.evidence.none", "step.interview.record", "step.judge.choose", "step.line.dispatch", "step.line.seed", "step.phase.drift", "step.phase.seed", "step.pr.ci-log", "step.pr.held-comment", "step.pr.intake", "step.pr.next-comment", "step.pr.ready-check", "step.pr.snapshot", "step.prove.before-after", "step.prove.collect", "step.prove.evidence", "step.prove.fail-log", "step.prove.holdout-log", "step.prove.intake", "step.prove.rerun-scripts", "step.recheck.log", "step.recheck.plan", "step.scope.anchor", "step.scope.challenge-log", "step.scope.check", "step.scope.evidence", "step.scope.freeze", "step.scope.gap-judge", "step.scope.gap-log", "step.scope.gather", "step.scope.intake", "step.scope.propose", "step.scope.read-brief", "step.scope.read-change", "step.scope.read-tracker", "step.scope.reanchor", "step.scope.relevance-apply", "step.scope.relevance-judge", "step.scope.withdraw", "step.ship.freeze", "step.ship.green", "step.ship.pack", "step.ship.return",
     ];
 
     [Fact]
     public void Every_registered_scoping_Step_opens_a_block_run_and_the_rest_stay_off_it()
     {
-        using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Scoping(provider);
 
         var runtimes = recipe.States.Where(static s => s.Value.Step is not null).ToDictionary(static s => s.Key, s =>
@@ -45,7 +45,7 @@ public sealed class ScopingBlockRuntimesTests
     [Fact]
     public void The_registered_Steps_are_the_ones_this_build_runs_and_the_recipe_uses_each()
     {
-        using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Scoping(provider);
 
         var scoping = context.Runtimes.Keys.Select(static k => k.Value).Where(static k => !k.StartsWith("step.design.", StringComparison.Ordinal) && !k.StartsWith("step.plan.", StringComparison.Ordinal) && !k.StartsWith("step.review.", StringComparison.Ordinal) && !k.StartsWith("step.lens.", StringComparison.Ordinal));   // the design and plan stations' runtimes are BS2's, the lens loop's block Step is the design recipe's
@@ -86,9 +86,9 @@ public sealed class ScopingBlockRuntimesTests
     }
 
     [Fact]
-    public async Task A_frozen_report_leaves_fact_scopePacket_as_hash_and_dir_on_the_instance()
+    public void A_frozen_report_leaves_fact_scopePacket_as_hash_and_dir_on_the_instance()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Scoping(provider);
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "freeze"), recipe, "freeze", context);
         var packet = EngineFixture.Fact("""{"hash":"sha256:aaaa","dir":"/runs/T-1/scoping/1/scope-packet"}""");

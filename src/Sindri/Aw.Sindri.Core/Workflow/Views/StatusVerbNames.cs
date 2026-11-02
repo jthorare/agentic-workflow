@@ -14,6 +14,7 @@ public static class StatusVerbNames
         StatusVerb.Takeover => "takeover",
         StatusVerb.Cancel => "cancel",
         StatusVerb.Approve => "approve",
+        StatusVerb.Rewind => "rewind",
         _ => throw new ArgumentOutOfRangeException(nameof(verb), verb, "no such status verb"),
     };
 }

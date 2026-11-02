@@ -64,6 +64,17 @@ public sealed class FluentOverrideTests
     [InlineData("ToolTipBackground", "Surface3")]
     [InlineData("ToolTipBorderBrush", "Hairline")]
     [InlineData("ToolTipForeground", "Ink")]
+    // A focused combo box keeps its dark face and readable text: Fluent fills it from the palette accent unless these say otherwise (#1080).
+    [InlineData("ComboBoxBackground", "Surface1")]
+    [InlineData("ComboBoxBackgroundPointerOver", "Surface2")]
+    [InlineData("ComboBoxBackgroundPressed", "Surface3")]
+    [InlineData("ComboBoxBackgroundUnfocused", "Surface1")]
+    [InlineData("ComboBoxBackgroundBorderBrushFocused", "HairlineStrong")]
+    [InlineData("ComboBoxForegroundFocused", "Ink")]
+    [InlineData("ComboBoxForegroundFocusedPressed", "Ink")]
+    [InlineData("ComboBoxPlaceHolderForegroundFocusedPressed", "InkMuted")]
+    [InlineData("ComboBoxDropDownGlyphForegroundFocused", "Ink")]
+    [InlineData("ComboBoxDropDownGlyphForegroundFocusedPressed", "Ink")]
     public void Each_brush_override_is_its_token(string key, string token) => Assert.Equal(_tokens.Color(token), Override(key)?.ToLowerInvariant());
 
     [Fact]

@@ -1,3 +1,5 @@
+using Aw.Sindri.Ui.ViewModels.Context.Concepts;
+
 namespace Aw.Sindri.Ui.ViewModels.Context;
 
 /// <summary>
@@ -18,6 +20,10 @@ internal sealed partial class ContextPageViewModel : ObservableObject
         InitSide();
         InitStates();
         InitWhole();
+        InitRules();
+        Concepts = new ConceptLayerViewModel(id => _ = OpenConcept(id));
+        InitConcepts();
+        InitPageSheet();
     }
 
     /// <summary>What the page and its stages read through.</summary>

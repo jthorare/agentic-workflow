@@ -17,4 +17,7 @@ internal enum CommandKind
 
     [JsonStringEnumMemberName("command")]
     Command = 4,
+
+    [JsonStringEnumMemberName("takeover")]
+    Takeover = 5,
 }

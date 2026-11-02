@@ -62,7 +62,7 @@ internal static class HolderRecords
         }
     }
 
-    private static bool Alive(int pid)
+    internal static bool Alive(int pid)
     {
         try
         {

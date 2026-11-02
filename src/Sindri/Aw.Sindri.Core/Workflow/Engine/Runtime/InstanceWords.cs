@@ -108,7 +108,7 @@ internal sealed partial record InstanceWords(WorkflowInstance Instance, Interpre
             ParkReason.Budget => $"{Answering} --grant-tokens {GrantTokens()}{Gap}(at a terminal; once per park)",
             ParkReason.NeedsAnswer when park.ParkKind == ParkKind.Wait => $"{Answering} --resume [--text <answer>]",
             ParkReason.NeedsAnswer => $"{Answering} --text <answer>",
-            ParkReason.Timeout or ParkReason.SpecConflict or ParkReason.NoRuntime or ParkReason.Unavailable or null or _ => $"{Answering} --resume",
+            ParkReason.Timeout or ParkReason.SpecConflict or ParkReason.NoRuntime or ParkReason.Unavailable or ParkReason.Launch or null or _ => $"{Answering} --resume",
         };
     }
 
@@ -118,7 +118,7 @@ internal sealed partial record InstanceWords(WorkflowInstance Instance, Interpre
         ParkKind.ChildRevoked => $"none (child revoked): sindri recipe approve {Recipe.Version.Id.Value}{Gap}(at a terminal; the approval resumes it)",
         ParkKind.Drift => $"none (drift): sindri recipe approve {Pinned}{Gap}(at a terminal; the approval resumes it)",
         ParkKind.Dispatch => $"{Answering} --resume{Gap}(dispatch: once {(park.Question.Contains(DispatchWords.CantRun, StringComparison.Ordinal) ? "the cause is fixed" : "the profile allows the effect")})",
-        ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => $"{Answering} --resume",
+        ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or ParkKind.Unconfinable or ParkKind.SelfCheck or null or _ => $"{Answering} --resume",
     };
 
     /// <summary>The grant a budget park suggests: a whole round's budget (the active state's, else the recipe's), so the next round has room for a typical one.</summary>
@@ -150,6 +150,7 @@ internal sealed partial record InstanceWords(WorkflowInstance Instance, Interpre
         ParkReason.Timeout => "timeout",
         ParkReason.SpecConflict => "spec-conflict",
         ParkReason.Unavailable => "unavailable",
+        ParkReason.Launch => "launch",
         ParkReason.NoRuntime or _ => "SND-WF-010",
     };
 
@@ -159,6 +160,8 @@ internal sealed partial record InstanceWords(WorkflowInstance Instance, Interpre
         ParkKind.ChildRevoked => "child revoked",
         ParkKind.Drift => "drift",
         ParkKind.Dispatch => "dispatch",
+        ParkKind.Unconfinable => "unconfinable",
+        ParkKind.SelfCheck => "self-check",
         ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => "unknown",
     };
 }

@@ -15,7 +15,7 @@ internal static class SessionExitEndpoint
             var launch = LaunchRoute.Launch(launchId);
             return launch.IsError
                 ? launch.ToHttpResult()
-                : (await service.Handle(new SessionExitRequest(launch.Value, new LaunchSecret(http.Headers[SindriHeaders.LaunchSecret].ToString()), body.ExitCode, body.SessionId), ct).ConfigureAwait(false)).ToHttpResult();
+                : (await service.Handle(new SessionExitRequest(launch.Value, new LaunchSecret(http.Headers[SindriHeaders.LaunchSecret].ToString()), body.ExitCode, body.SessionId, body.Limit), ct).ConfigureAwait(false)).ToHttpResult();
         });
         return group;
     }

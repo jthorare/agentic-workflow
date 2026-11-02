@@ -1,3 +1,4 @@
+using Aw.Context.Core.ConceptScan;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Review;
@@ -39,6 +40,17 @@ public interface IContextMap : IScopeProposals
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The status, or SND-CONTEXT-001/003/020/030.</returns>
     public ValueTask<Result<MapStatusView>> MapStatus(string? anchor, ContextScope scope, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// The structure measures of a map (map structure spec §4.3): the current map, the draft or the map a build would save, read for a human ('context map checks'). A session is refused (SND-CONTEXT-020): the output lists feature keys.
+    /// <see cref="MapChecksSource.Build"/> extracts in memory with no model call, writes nothing and takes the heavy-job slot a backtest takes.
+    /// </summary>
+    /// <param name="source">Which map.</param>
+    /// <param name="progress">Told the step lines of a build's extraction and who holds the heavy-job slot, or null.</param>
+    /// <param name="scope">The caller and the profile's repos and settings.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The measures, or SND-CONTEXT-030 with no map, 044 with no draft, 040 when the heavy-job slots stayed busy.</returns>
+    public ValueTask<Result<MapChecksView>> MapStructure(MapChecksSource source, IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken);
 
     /// <summary>Doctor 'context:map': whether there is a current map and whether overrides are orphaned, counted over the map as the profile's deny globs leave it (as status counts it).</summary>
     /// <param name="scope">The approved profile's context section and repos with a service caller, or null when no profile is approved (the stored map is counted).</param>
@@ -118,6 +130,16 @@ public interface IContextMap : IScopeProposals
     /// <param name="expectedVersion">The draft the caller means (the automatic publish passes the one it decided about), or null for whichever is latest (the human path). The pass checks it on every read, and its rows are appended only while that draft is still the latest.</param>
     /// <returns>What it decided, or SND-CONTEXT-001/004/020/044/047/190 (190: <paramref name="expectedVersion"/> is given and the latest draft is another number, or there is none).</returns>
     public ValueTask<Result<CleanupReport>> CleanDraft(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null);
+
+    /// <summary>
+    /// The concept scan (owner, q110): a model reads a compact summary of the latest draft, proposes product concepts and the searches that test them, the engine runs the searches over the draft, and a second model call turns the hits
+    /// into concept hints that are stored on that draft. The graph, the overrides and the pins are not touched. A model that does not answer is an outcome of the report, not an error.
+    /// </summary>
+    /// <param name="scope">The profile's context section and repos, and the caller.</param>
+    /// <param name="cancellationToken">Cancels the scan.</param>
+    /// <param name="expectedVersion">The draft the caller means, or null for whichever is latest.</param>
+    /// <returns>What the scan did, or SND-CONTEXT-001/004/044/190.</returns>
+    public ValueTask<Result<ConceptScanReport>> ScanConcepts(ContextScope scope, CancellationToken cancellationToken, int? expectedVersion = null);
 
     /// <summary>Makes the latest draft current (a protected command with the typed challenge: Sindri checks the caller first).</summary>
     /// <param name="scope">The profile's context section and repos, and the caller.</param>

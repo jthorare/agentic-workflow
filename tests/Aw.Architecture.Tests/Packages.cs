@@ -55,6 +55,10 @@ internal static class Packages
         "Aw.CodeIndex.Core",
         "Aw.CodeIndex.Features",
         "Aw.CodeIndex.Infrastructure",
+        "Aw.Connectors.Core",
+        "Aw.Connectors.Features",
+        "Aw.Connectors.Infrastructure",
+        "Aw.Embeddings",
     ];
 
     /// <summary>

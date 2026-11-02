@@ -1,0 +1,5 @@
+{"data":{"projects":{"nodes":[
+{"id":"p1","updatedAt":"2026-10-01T00:00:00Z","startedAt":"2026-09-01T00:00:00Z","targetDate":null,"state":"started","lead":{"id":"u1"},"lastUpdate":{"health":"onTrack","createdAt":"2026-10-02T00:00:00Z"}},
+{"id":"p2","updatedAt":"2026-10-01T00:00:00Z","startedAt":null,"targetDate":"2026-12-01","state":"planned","lead":null,"lastUpdate":null},
+{"id":"p3","updatedAt":"2026-10-01T00:00:00Z","startedAt":null,"targetDate":null,"state":"backlog","lead":{"id":"u2"},"lastUpdate":null}
+],"pageInfo":{"hasNextPage":false,"endCursor":null}}}}

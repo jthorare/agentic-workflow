@@ -10,6 +10,8 @@ namespace Aw.Sindri.Core.Workflow.Validation;
 internal sealed partial class BlockRules
 {
     private const string JudgeProvidersParameter = "providers";
+    private const string JudgeParallelParameter = "parallel";
+    private const string JudgeParallelKey = "workflow.judge.parallel";
 
     private static IEnumerable<RecipeFinding> Parameters(BlockReference reference, BlockDescriptor descriptor, RecipeSource source)
     {
@@ -62,6 +64,26 @@ internal sealed partial class BlockRules
             {
                 yield return source.Finding("RCP-BLOCK-003", path, $"provider '{name}' isn't one of {known}", $"use one of {known}");
             }
+        }
+    }
+
+    /// <summary>
+    /// A judge Step's 'parallel' is a number or { profile: workflow.judge.parallel } (issue 1440): the runtime resolves only that key for it, so another profile key or a fact
+    /// would be dropped without a word, and is refused at validate time (RCP-BLOCK-003).
+    /// </summary>
+    private static IEnumerable<RecipeFinding> CallWidths(BlockReference reference, BlockDescriptor descriptor, RecipeSource source)
+    {
+        if (!reference.With.TryGetValue(JudgeParallelParameter, out var value) || !descriptor.Parameters.Any(static p => p.Name == JudgeParallelParameter))
+        {
+            yield break;
+        }
+
+        var given = value.Fact is not null ? "a fact" : value.Profile is { } key && !string.Equals(key, JudgeParallelKey, StringComparison.Ordinal) ? key : null;
+        if (given is not null)
+        {
+            yield return source.Finding(
+                "RCP-BLOCK-003", $"{reference.Path}.with.{JudgeParallelParameter}",
+                $"parameter 'parallel' of '{descriptor.Id.Value}' takes a number or {{ profile: {JudgeParallelKey} }}, not {given}", $"give it a number, or {{ profile: {JudgeParallelKey} }}");
         }
     }
 

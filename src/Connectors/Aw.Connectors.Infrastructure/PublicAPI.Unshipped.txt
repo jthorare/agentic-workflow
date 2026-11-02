@@ -1,0 +1,5 @@
+#nullable enable
+Aw.Connectors.Infrastructure.ConnectorsInfrastructureServiceCollectionExtensions
+static Aw.Connectors.Infrastructure.ConnectorsInfrastructureServiceCollectionExtensions.AddConnectorsInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Aw.Connectors.Infrastructure.ConnectorsInfrastructureServiceCollectionExtensions.AddGitHubReader(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string? host, bool allowPrivateHost, string? token) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Aw.Connectors.Infrastructure.ConnectorsInfrastructureServiceCollectionExtensions.AddSlackReader(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string? token, System.Collections.Generic.IReadOnlyCollection<string!>! channelIds) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

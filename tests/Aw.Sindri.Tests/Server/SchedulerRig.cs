@@ -3,6 +3,7 @@ using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
+using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features;
 using Aw.Sindri.Host.Server;
@@ -33,6 +34,7 @@ internal sealed class SchedulerRig : IAsyncDisposable
             .AddSingleton<TimeProvider>(H.Clock)
             .AddSingleton(H.Callers)
             .AddSingleton<IIdGenerator>(H.Ids)
+            .AddSingleton<ITextScrubber>(new PassThroughScrubber())
             .AddRecordServiceRun();
         foreach (var service in services)
         {
@@ -56,6 +58,9 @@ internal sealed class SchedulerRig : IAsyncDisposable
 
     /// <summary>The projector status the pause view reads.</summary>
     internal ProjectorProgress Progress { get; }
+
+    /// <summary>The next slots the scheduler publishes for the services listing.</summary>
+    public LiveSchedule Live { get; } = new();
 
     public ServiceRunGuard Guard { get; private set; } = new();
 
@@ -154,7 +159,7 @@ internal sealed class SchedulerRig : IAsyncDisposable
         await _provider.DisposeAsync();
     }
 
-    private SchedulerHost NewScheduler() => new(_provider.GetRequiredService<IServiceScopeFactory>(), new ScheduleInputs(H.Profiles, _builtIns, new ViewServicePauses(_views, Progress)), Guard, H.Held, H.Callers, _clock, Log);
+    private SchedulerHost NewScheduler() => new(_provider.GetRequiredService<IServiceScopeFactory>(), new ScheduleInputs(H.Profiles, _builtIns, new ViewServicePauses(_views, Progress), Live), Guard, H.Held, H.Callers, _clock, Log);
 
     private async Task Fold<TPayload>(string type, TPayload payload)
     {

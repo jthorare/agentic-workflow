@@ -32,6 +32,22 @@ public sealed class EvaluatorLaunchTests : IDisposable
     private Launcher Make(AgentEntry entry) =>
         new(new LauncherParts(new AgentCatalog([entry]), _ => _host, new FakeTerminalViewer(), Options, _clock) { ResolveBin = static (_, _) => ValueTask.FromResult<string?>(null), Scratch = _scratch });
 
+    [Fact]
+    public void The_evaluator_request_carries_the_picked_model()
+    {
+        var request = AgentLaunches.EvaluatorRequestFor(Run(), new AgentStepTarget(A.FirstItemId, AgentId.From("claude-code"), "/work/repo"), _evaluator, extras: new AgentLaunchExtras(Model: "haiku"));
+
+        Expect.Equal("haiku", request.Step?.Model);
+    }
+
+    [Fact]
+    public void The_evaluator_request_without_a_pick_runs_the_agents_default()
+    {
+        var request = AgentLaunches.EvaluatorRequestFor(Run(), new AgentStepTarget(A.FirstItemId, AgentId.From("claude-code"), "/work/repo"), _evaluator);
+
+        Assert.Null(request.Step?.Model);
+    }
+
     private static LaunchRequest Request(AgentEntry entry)
     {
         var step = AgentLaunches.EvaluatorRequestFor(Run(), new AgentStepTarget(A.FirstItemId, entry.Id, "/work/repo"), _evaluator);

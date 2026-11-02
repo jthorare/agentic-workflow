@@ -122,19 +122,34 @@ internal sealed partial class RecipeSheetViewModel
         var lines = new List<RecipeStatLine>
         {
             new(Labels.StatRuns, Labels.StatCount(runs)),
-            new(Labels.StatFinished, Labels.StatShare(stats.Done ?? 0, runs)),
+            new(Labels.StatFinished, Labels.StatFinishedShare(stats.Done ?? 0, stats.Failed ?? 0, stats.Cancelled ?? 0)),
             new(Labels.StatHuman, stats.HumanRate is { } rate ? Labels.Percent(rate) : Labels.StatNone),
             new(Labels.StatTypical, stats.MedianSeconds is { } seconds ? Labels.Duration(seconds) : Labels.StatNone),
         };
+        AddOpen(lines, runs, stats);
         AddWhenCounted(lines, Labels.StatFailed, stats.Failed);
         AddWhenCounted(lines, Labels.StatCancelled, stats.Cancelled);
         AddWhenCounted(lines, Labels.StatBudget, stats.BudgetHits);
+        AddTokens(lines, stats);
+        return lines;
+    }
+
+    // Runs that have neither finished, failed nor been cancelled are still open; the line sits under Finished.
+    private static void AddOpen(List<RecipeStatLine> lines, int runs, RecipeStatsView stats)
+    {
+        var open = runs - (stats.Done ?? 0) - (stats.Failed ?? 0) - (stats.Cancelled ?? 0);
+        if (open > 0)
+        {
+            lines.Insert(2, new RecipeStatLine(Labels.StatOpen, Labels.StatCount(open)));
+        }
+    }
+
+    private static void AddTokens(List<RecipeStatLine> lines, RecipeStatsView stats)
+    {
         if (stats.Tokens?.P50 is { } tokens)
         {
             lines.Add(new RecipeStatLine(Labels.StatTokens, Labels.StatCount(tokens)));
         }
-
-        return lines;
     }
 
     private static void AddWhenCounted(List<RecipeStatLine> lines, string label, int? count)

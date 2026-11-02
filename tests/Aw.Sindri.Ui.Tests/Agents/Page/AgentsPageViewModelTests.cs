@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json.Nodes;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
@@ -26,16 +27,38 @@ public sealed class AgentsPageViewModelTests
     private static IEnumerable<string> Providers(IEnumerable<SessionRowViewModel> rows) => rows.Select(r => r.Ref[..(r.Ref.IndexOf('/', StringComparison.Ordinal) + 1)]);
 
     [Fact]
-    public async Task Head_counts_are_the_served_counts_and_ignore_filters()
+    public async Task Head_is_the_served_counts_until_a_filter_narrows_the_list()
     {
         var counts = Golden("sessions", "fixture-three-providers")["counts"]!;
+        var live = (int)counts["live"]!;
         var page = await _f.Shown(Token);
-        var expected = Labels.AgentsHead((int)counts["live"]!, (int)counts["asking"]!);
+        var expected = Labels.AgentsHead(live, (int)counts["asking"]!);
 
         Assert.Equal(expected, page.Head);
         page.FilterProvider("Codex");
-        page.FilterState("idle");
+        var shown = page.Groups.SelectMany(g => g.Rows).Count();
+        Assert.StartsWith(string.Create(CultureInfo.InvariantCulture, $"{shown} of {live} "), page.Head, StringComparison.Ordinal);
+        Assert.Contains(page.Head, page.HeadName, StringComparison.Ordinal);
+        page.FilterProvider(Labels.AllProviders);
         Assert.Equal(expected, page.Head);
+    }
+
+    [Fact]
+    public void The_filtered_head_names_shown_of_live_and_the_shown_asking()
+    {
+        Assert.Equal("2 of 7 agents · 1 asking you", Labels.AgentsFilteredHead(2, 7, 1));
+        Assert.Equal("0 of 1 agent · 0 asking you", Labels.AgentsFilteredHead(0, 1, 0));
+    }
+
+    [Fact]
+    public async Task The_state_choices_use_the_chip_words_in_the_rows_order_and_filter_on_the_served_state()
+    {
+        var page = await _f.Shown(Token);
+
+        Assert.Equal([Labels.AllStates, "Working", "Asking you", "Idle", "Unknown"], page.StateChoices.Take(5), StringComparer.Ordinal);
+        page.FilterState("Working");
+        Assert.Equal("running", page.StateFilter);
+        Assert.Equal([Claude], Providers(page.Groups.SelectMany(g => g.Rows)), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -124,17 +147,17 @@ public sealed class AgentsPageViewModelTests
     {
         var page = await _f.Shown(Token);
 
-        Assert.Equal("pid-333-", RowOf(page, Cursor).TitleText);
+        Assert.Equal("pid-333", RowOf(page, Cursor).TitleText);
     }
 
     [Fact]
-    public async Task Problems_render_code_and_text_above_the_list()
+    public async Task Problems_render_the_text_without_the_raw_code_above_the_list()
     {
         _f.Serve("problems-source-failed");
         var served = Golden("sessions", "problems-source-failed")["problems"]![0]!;
         var page = await _f.Shown(Token);
 
-        Assert.Equal([(string)served["code"]! + " " + (string)served["text"]!], page.ProblemLines);
+        Assert.Equal([(string)served["text"]!], page.ProblemLines);
         Assert.Equal(3, page.Groups.Sum(g => g.Rows.Count));
     }
 
@@ -275,6 +298,31 @@ public sealed class AgentsPageViewModelTests
         Assert.Equal(codex.Ref, page.SelectedKey);
         Assert.True(codex.IsSelected);
         Assert.Equal("renamed", RowOf(page, Claude).TitleText);
+    }
+
+    [Fact]
+    public async Task ClearSelection_drops_the_highlight_and_a_second_call_changes_nothing()
+    {
+        var page = await _f.Shown(Token);
+        var codex = RowOf(page, Codex);
+        _ = page.Select(codex.Ref);
+
+        page.ClearSelection();
+        page.ClearSelection();
+
+        Assert.Null(page.SelectedKey);
+        Assert.False(codex.IsSelected);
+    }
+
+    [Fact]
+    public async Task A_row_with_neither_an_ask_nor_a_step_says_so_in_its_doing_cell()
+    {
+        var page = await _f.Shown(Token);
+
+        foreach (var row in page.Groups.SelectMany(g => g.Rows))
+        {
+            Assert.Equal(!row.HasAsking && !row.HasStep, row.HasNoStep);
+        }
     }
 
     [Fact]

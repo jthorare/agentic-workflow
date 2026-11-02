@@ -2,10 +2,10 @@ using Aw.Context.Core.Graph;
 
 namespace Aw.Context.Core.Lenses;
 
-/// <summary>The product band (spec §8.9): the own scope, the neighbors at the depth and the nodes the cascade reaches, each node in the first list that holds it.</summary>
+/// <summary>The product band (spec §8.9): the own scope, the neighbors at the depth and the nodes the cascade reaches, each node in the first list that holds it. Neighbors are reached over structure edges only (part-of, on, reads, writes, step-of, depends-on, moves-to), so features that only share a concept, a record or a code unit with the anchor are not neighbors.</summary>
 internal static class LensProduct
 {
-    private static readonly NodeKind[] _kinds = [NodeKind.Feature, NodeKind.Surface, NodeKind.Action, NodeKind.Thing, NodeKind.Flow];
+    private static readonly NodeKind[] _kinds = [NodeKind.Feature, NodeKind.Surface, NodeKind.Action, NodeKind.Thing, NodeKind.Flow, NodeKind.Concept];
     private static readonly EdgeType[] _structure = [EdgeType.PartOf, EdgeType.On, EdgeType.Reads, EdgeType.Writes, EdgeType.StepOf, EdgeType.DependsOn, EdgeType.MovesTo];
 
     /// <summary>The band and the keys of every item it lists (the other bands' edges are drawn among them).</summary>
@@ -27,6 +27,14 @@ internal static class LensProduct
             new ProductCounts(own.Count, affects.Count) { Neighbors = neighbors.Count, Edges = edges.Count }, [.. edges]);
     }
 
+    /// <summary>Builds the graph indexes the lists read, so workers that build the lists at once only read them.</summary>
+    internal static void Warm(GraphSnapshot graph)
+    {
+        _ = GraphIndex.For(graph);
+        _ = GraphIndex.Of(graph, _structure);
+        _ = EdgeLookup.For(graph);
+    }
+
     /// <summary>The whole lists of one anchor's scope (nothing cut) and the keys of every item.</summary>
     internal static ProductLists Lists(LensScope scope, int depth)
     {
@@ -41,20 +49,22 @@ internal static class LensProduct
 
     private static List<LensReach> Neighbors(LensScope scope, int depth, HashSet<string> taken)
     {
-        var near = GraphWalk.Neighbors(scope.Graph, scope.Anchor.Key, depth).Nodes.Where(n => n.Depth > 0 && _kinds.Contains(n.Node.Key.Kind) && !taken.Contains(n.Node.Key.Value)).ToList();
+        var near = GraphWalk.Neighbors(GraphIndex.Of(scope.Graph, _structure), scope.Anchor.Key, depth).Nodes.Where(n => n.Depth > 0 && _kinds.Contains(n.Node.Key.Kind) && !taken.Contains(n.Node.Key.Value)).ToList();
         if (near.Count == 0)
         {
             return [];
         }
 
-        var structure = scope.Graph with { Edges = [.. scope.Graph.Edges.Where(e => _structure.Contains(e.Type))] };
-        return [.. near.Select(n => Reach(n.Node, n.Depth, Path(scope, structure, n.Node.Key)))];
+        var from = scope.Anchor.Key;
+        var structure = GraphWalk.Parents(GraphIndex.Of(scope.Graph, _structure), from, stopAt: null);
+        var any = new Lazy<Dictionary<string, PathStep?>>(() => GraphWalk.Parents(GraphIndex.For(scope.Graph), from, stopAt: null));
+        return [.. near.Select(n => Reach(n.Node, n.Depth, Path(structure, any, from, n.Node.Key)))];
     }
 
     // The hops from the anchor, over structure edges where they reach and over any edge where they don't ("part-of-by" is an edge walked from its target).
-    private static string[] Path(LensScope scope, GraphSnapshot structure, NodeKey to)
+    private static string[] Path(Dictionary<string, PathStep?> structure, Lazy<Dictionary<string, PathStep?>> any, NodeKey from, NodeKey to)
     {
-        var path = GraphWalk.ShortestPath(structure, scope.Anchor.Key, to) ?? GraphWalk.ShortestPath(scope.Graph, scope.Anchor.Key, to);
+        var path = GraphWalk.PathTo(structure, from, to) ?? GraphWalk.PathTo(any.Value, from, to);
         return path is null ? [] : [.. path.Steps.Select(s => $"{EdgeRules.Name(s.Edge.Type)}{(s.Forward ? string.Empty : "-by")} {s.Node.Value}")];
     }
 

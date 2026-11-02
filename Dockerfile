@@ -63,7 +63,6 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble@sha256:8af87eba5e7cdafb1514d7388
 # git (repos), bubblewrap (the code graph's sandbox), tini (PID 1: it reaps the detached Temporal process), procps (/bin/ps
 # and /bin/kill: the Temporal dev server's lifecycle finds and signals its process through them, DevServerProcesses), curl (the chart's exec probes, spec §A.1). The base
 # image's `ubuntu` user holds uid 1000, so it is removed and `sindri` takes the uid (no Docker in the image).
-# Onyx's sibling containers in the pod are pinned in context/onyx.lock, not deploy/images.lock.
 RUN apt-get update \
  && apt-get install -y --no-install-recommends git bubblewrap tini procps curl ca-certificates \
  && rm -rf /var/lib/apt/lists/* \

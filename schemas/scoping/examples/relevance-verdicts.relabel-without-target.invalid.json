@@ -1,0 +1,12 @@
+{
+  "model": "unknown",
+  "verdicts": [
+    {
+      "id": "L-product-2",
+      "class": "out",
+      "reason": "Billing export, not invitations.",
+      "citation": "R1",
+      "fix": "relabel"
+    }
+  ]
+}

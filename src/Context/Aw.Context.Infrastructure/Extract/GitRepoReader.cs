@@ -24,6 +24,23 @@ internal sealed class GitRepoReader(GitCli git) : IRepoReader
         return tree.IsError ? Unreadable(repo, commit) : Results.Success<IReadOnlyList<string>>([.. tree.Value.Keys.Where(p => !repo.Denies(p)).Order(StringComparer.Ordinal)]);
     }
 
+    public async ValueTask<Result<IReadOnlyList<string>>> ListTracked(ContextRepo repo, string commit, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        var tree = await git.Tree(repo.Path, commit, cancellationToken).ConfigureAwait(false);
+        return tree.IsError ? Unreadable(repo, commit) : Results.Success<IReadOnlyList<string>>([.. tree.Value.Keys.Order(StringComparer.Ordinal)]);
+    }
+
+    public async ValueTask<Result<IReadOnlyList<string>>> RemovedPaths(ContextRepo repo, string commit, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        var tree = await git.Tree(repo.Path, commit, cancellationToken).ConfigureAwait(false);
+        var deleted = tree.IsError ? tree.Error : await git.Deleted(repo.Path, commit, cancellationToken).ConfigureAwait(false);
+        return deleted.IsError
+            ? Unreadable(repo, commit)
+            : Results.Success<IReadOnlyList<string>>([.. deleted.Value.Where(p => !tree.Value.ContainsKey(p) && !repo.Denies(p)).Order(StringComparer.Ordinal)]);
+    }
+
     public async ValueTask<Result<string>> Read(ContextRepo repo, string commit, string path, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(repo);
@@ -36,6 +53,19 @@ internal sealed class GitRepoReader(GitCli git) : IRepoReader
         var text = await git.Show(repo.Path, commit, path, cancellationToken).ConfigureAwait(false);
         return text.IsError ? Unreadable(repo, commit, path) : text;
     }
+
+    public async ValueTask<Result<IReadOnlyDictionary<string, string>>> BlobIds(ContextRepo repo, string commit, IReadOnlyList<string> paths, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        ArgumentNullException.ThrowIfNull(paths);
+        var asked = paths.Where(p => IsReadable(repo, p)).ToList();
+        var ids = await git.BlobIds(repo.Path, commit, asked, cancellationToken).ConfigureAwait(false);
+        return ids.IsError ? Unreadable(repo, commit) : ids;
+    }
+
+    // The paths Read would refuse (and ls-tree would take for pathspec magic) are no file of the commit.
+    private static bool IsReadable(ContextRepo repo, string path) =>
+        path.Length > 0 && !Path.IsPathRooted(path) && path[0] != ':' && !path.Any(char.IsControl) && !path.Split('/').Contains("..") && !repo.Denies(path);
 
     public async ValueTask<Result<RepoChanges>> Changes(ContextRepo repo, DiffRange range, CancellationToken cancellationToken)
     {

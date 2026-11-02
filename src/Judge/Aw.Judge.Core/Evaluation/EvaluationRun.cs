@@ -28,6 +28,9 @@ internal sealed class EvaluationRun(DecisionId id, DateTimeOffset ts, JsonNode? 
     /// <summary>The validated input as JSON (what providers see and decided rows digest).</summary>
     public JsonNode? Input { get; set; }
 
+    /// <summary>What the row stores in place of the input, for a question that keeps no input text (<see cref="Questions.QuestionDefinition{TInput}.StoredForm"/>).</summary>
+    public JsonNode? StoredInput { get; set; }
+
     /// <summary>The effective threshold.</summary>
     public double Threshold { get; set; }
 

@@ -21,8 +21,8 @@ public sealed class NodeBandsTests
     public void A_kind_sits_in_the_band_the_table_gives_it(string kind, string band) => Assert.Equal(Enum.Parse<WholeBand>(band), NodeBands.Of(kind));
 
     [Fact]
-    public void The_bands_run_why_then_product_then_code_then_other() =>
-        Assert.Equal([WholeBand.Intent, WholeBand.Product, WholeBand.Code, WholeBand.Other], Enum.GetValues<WholeBand>());
+    public void The_bands_run_concepts_then_why_then_product_then_code_then_other() =>
+        Assert.Equal([WholeBand.Concept, WholeBand.Intent, WholeBand.Product, WholeBand.Code, WholeBand.Other], Enum.GetValues<WholeBand>());
 
     [Fact]
     public void Every_kind_of_the_table_has_a_style_drawn_from_theme_tokens_and_no_two_kinds_of_a_band_look_alike()
@@ -45,6 +45,21 @@ public sealed class NodeBandsTests
         Assert.Equal(ChipShape.Pill, NodeBands.StyleOf("decision").Shape);
         Assert.Equal(ChipShape.Card, NodeBands.StyleOf("surface").Shape);
         Assert.Equal(ChipShape.Plate, NodeBands.StyleOf("code").Shape);
+    }
+
+    [Fact]
+    public void A_concept_node_sits_in_the_concept_row_with_its_own_mark()
+    {
+        Assert.Equal(WholeBand.Concept, NodeBands.Of("concept"));
+        Assert.Equal("Concepts", NodeBands.Title(WholeBand.Concept));
+
+        var concept = NodeBands.StyleOf("concept");
+        Assert.NotEqual(KindMark.None, concept.Mark);
+        Assert.NotEqual(NodeBands.StyleOf("something-new"), concept);
+        foreach (var other in NodeBands.Kinds.Where(k => k != "concept" && NodeBands.Of(k) == WholeBand.Product))
+        {
+            Assert.NotEqual(NodeBands.StyleOf(other), concept);
+        }
     }
 
     [Fact]

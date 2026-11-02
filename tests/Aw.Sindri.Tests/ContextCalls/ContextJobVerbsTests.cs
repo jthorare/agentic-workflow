@@ -63,9 +63,9 @@ public sealed class ContextJobVerbsTests : IDisposable
     {
         var api = new ScriptedApi((HttpStatusCode.OK, Started));
 
-        _ = await Run(api, "sources", "sync", "onyx", "--detach");
+        _ = await Run(api, "sources", "sync", "slack", "--detach");
 
-        Assert.Contains("\"source\":\"onyx\"", Assert.Single(api.Calls).Body, StringComparison.Ordinal);
+        Assert.Contains("\"source\":\"slack\"", Assert.Single(api.Calls).Body, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -178,7 +178,7 @@ public sealed class ContextJobVerbsTests : IDisposable
 
     [Theory, Trait("Lane", "unit")]
     [InlineData(true, "context", "sources", "sync")]
-    [InlineData(true, "context", "sources", "sync", "onyx", "--json")]
+    [InlineData(true, "context", "sources", "sync", "slack", "--json")]
     [InlineData(true, "context", "map", "build")]
     [InlineData(false, "context", "map", "build", "--detach")]
     [InlineData(false, "context", "sources", "sync", "--detach")]

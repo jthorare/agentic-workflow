@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Workflow.Engine;
@@ -10,4 +11,5 @@ namespace Aw.Sindri.Features.SessionExit;
 /// <param name="Secret">The launch secret (header X-Sindri-Launch-Secret).</param>
 /// <param name="ExitCode">The agent's exit code.</param>
 /// <param name="SessionId">The agent's own session id, if wrap read one the last heartbeat didn't carry, otherwise null.</param>
-public sealed record SessionExitRequest(LaunchId LaunchId, LaunchSecret Secret, int ExitCode, SessionId? SessionId = null) : IIssue<SessionExitResponse>;
+/// <param name="Limit">The sandbox limit that ended the agent, or null for an ordinary exit.</param>
+public sealed record SessionExitRequest(LaunchId LaunchId, LaunchSecret Secret, int ExitCode, SessionId? SessionId = null, LimitEnd? Limit = null) : IIssue<SessionExitResponse>;

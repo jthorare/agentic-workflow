@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Aw.Embeddings: tier 0, sublevel 1 (deps.yaml), Aw.Kernel plus the BCL (HttpClient, System.Numerics), no other
+       dependency (Sindri-owned index spec §9.2, D5). The loopback Ollama embed client, the float32 vector codec, L2
+       normalisation and the top-k scan; domain-free. Scaffold only: the code lands in U1 (codec, scan) and U2 (client). -->
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Aw.Embeddings</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../Aw.Kernel/Aw.Kernel.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aw.Embeddings.Tests" />
+    <InternalsVisibleTo Include="Aw.Embeddings.Testing" />
+  </ItemGroup>
+</Project>

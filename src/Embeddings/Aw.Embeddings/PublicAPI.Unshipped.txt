@@ -1,0 +1,60 @@
+#nullable enable
+Aw.Embeddings.EmbeddingsErrors
+Aw.Embeddings.IEmbedder
+Aw.Embeddings.IEmbedder.Embed(System.Collections.Generic.IReadOnlyList<string!>! texts, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>!>!>
+Aw.Embeddings.IEmbedder.Probe(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Embeddings.IMatrixScan
+Aw.Embeddings.IMatrixScan.Top(System.ReadOnlyMemory<float> matrix, System.ReadOnlyMemory<float> query, System.ReadOnlyMemory<bool> mask, int count) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Embeddings.ScanHit!>!>!
+Aw.Embeddings.OllamaEmbedder
+Aw.Embeddings.OllamaEmbedder.Dispose() -> void
+Aw.Embeddings.OllamaEmbedder.Embed(System.Collections.Generic.IReadOnlyList<string!>! texts, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<float>>!>!>
+Aw.Embeddings.OllamaEmbedder.OllamaEmbedder(Aw.Embeddings.OllamaOptions! options) -> void
+Aw.Embeddings.OllamaEmbedder.Probe(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Embeddings.OllamaOptions
+Aw.Embeddings.OllamaOptions.<Clone>$() -> Aw.Embeddings.OllamaOptions!
+Aw.Embeddings.OllamaOptions.Deconstruct(out string! Url, out string! Model, out string! Digest) -> void
+Aw.Embeddings.OllamaOptions.Digest.get -> string!
+Aw.Embeddings.OllamaOptions.Digest.init -> void
+Aw.Embeddings.OllamaOptions.Equals(Aw.Embeddings.OllamaOptions? other) -> bool
+Aw.Embeddings.OllamaOptions.Model.get -> string!
+Aw.Embeddings.OllamaOptions.Model.init -> void
+Aw.Embeddings.OllamaOptions.OllamaOptions(string! Url, string! Model, string! Digest) -> void
+Aw.Embeddings.OllamaOptions.Url.get -> string!
+Aw.Embeddings.OllamaOptions.Url.init -> void
+Aw.Embeddings.ScanHit
+Aw.Embeddings.ScanHit.<Clone>$() -> Aw.Embeddings.ScanHit!
+Aw.Embeddings.ScanHit.Deconstruct(out int Row, out float Score) -> void
+Aw.Embeddings.ScanHit.Equals(Aw.Embeddings.ScanHit? other) -> bool
+Aw.Embeddings.ScanHit.Row.get -> int
+Aw.Embeddings.ScanHit.Row.init -> void
+Aw.Embeddings.ScanHit.ScanHit(int Row, float Score) -> void
+Aw.Embeddings.ScanHit.Score.get -> float
+Aw.Embeddings.ScanHit.Score.init -> void
+Aw.Embeddings.ScanInProcess
+Aw.Embeddings.ScanInProcess.ScanInProcess() -> void
+Aw.Embeddings.ScanInProcess.Top(System.ReadOnlyMemory<float> matrix, System.ReadOnlyMemory<float> query, System.ReadOnlyMemory<bool> mask, int count) -> Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Embeddings.ScanHit!>!>!
+Aw.Embeddings.VectorCodec
+Aw.Embeddings.VectorMath
+const Aw.Embeddings.IMatrixScan.MaxCount = 1000 -> int
+const Aw.Embeddings.OllamaEmbedder.BatchSize = 32 -> int
+override Aw.Embeddings.OllamaOptions.Equals(object? obj) -> bool
+override Aw.Embeddings.OllamaOptions.GetHashCode() -> int
+override Aw.Embeddings.OllamaOptions.ToString() -> string!
+override Aw.Embeddings.ScanHit.Equals(object? obj) -> bool
+override Aw.Embeddings.ScanHit.GetHashCode() -> int
+override Aw.Embeddings.ScanHit.ToString() -> string!
+static Aw.Embeddings.EmbeddingsErrors.All.get -> System.Collections.Generic.IReadOnlyList<Aw.Kernel.ErrorDefinition!>!
+static Aw.Embeddings.OllamaEmbedder.IsLoopbackUrl(string! url) -> bool
+static Aw.Embeddings.OllamaOptions.operator !=(Aw.Embeddings.OllamaOptions? left, Aw.Embeddings.OllamaOptions? right) -> bool
+static Aw.Embeddings.OllamaOptions.operator ==(Aw.Embeddings.OllamaOptions? left, Aw.Embeddings.OllamaOptions? right) -> bool
+static Aw.Embeddings.ScanHit.operator !=(Aw.Embeddings.ScanHit? left, Aw.Embeddings.ScanHit? right) -> bool
+static Aw.Embeddings.ScanHit.operator ==(Aw.Embeddings.ScanHit? left, Aw.Embeddings.ScanHit? right) -> bool
+static Aw.Embeddings.VectorCodec.Decode(System.ReadOnlySpan<byte> blob, int dimension) -> Aw.Kernel.Result<float[]!>!
+static Aw.Embeddings.VectorCodec.Encode(System.ReadOnlySpan<float> vector) -> byte[]!
+static Aw.Embeddings.VectorCodec.HasDimension(System.ReadOnlySpan<byte> blob, int dimension) -> bool
+static Aw.Embeddings.VectorMath.Normalize(System.Span<float> vector) -> bool
+static readonly Aw.Embeddings.EmbeddingsErrors.Invalid -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Embeddings.EmbeddingsErrors.PinMismatch -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Embeddings.EmbeddingsErrors.ServerFailed -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Embeddings.EmbeddingsErrors.TargetRefused -> Aw.Kernel.ErrorDefinition!
+static readonly Aw.Embeddings.EmbeddingsErrors.VectorInvalid -> Aw.Kernel.ErrorDefinition!

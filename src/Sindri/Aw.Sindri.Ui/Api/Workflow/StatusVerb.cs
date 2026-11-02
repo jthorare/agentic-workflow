@@ -23,4 +23,7 @@ internal enum StatusVerb
 
     [JsonStringEnumMemberName("approve")]
     Approve = 6,
+
+    [JsonStringEnumMemberName("rewind")]
+    Rewind = 7,
 }

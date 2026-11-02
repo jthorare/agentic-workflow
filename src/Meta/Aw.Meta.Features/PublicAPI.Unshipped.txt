@@ -557,13 +557,15 @@ Aw.Meta.Features.WorktreeList.ListWorktreesResponse.Worktrees.get -> System.Coll
 Aw.Meta.Features.WorktreeList.ListWorktreesResponse.Worktrees.init -> void
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.<Clone>$() -> Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest!
-Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.Deconstruct(out bool DryRun, out int? Pr) -> void
+Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.Deconstruct(out bool DryRun, out int? Pr, out bool IncludeNoPr) -> void
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.DryRun.get -> bool
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.DryRun.init -> void
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.Equals(Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest? other) -> bool
+Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.IncludeNoPr.get -> bool
+Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.IncludeNoPr.init -> void
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.Pr.get -> int?
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.Pr.init -> void
-Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.SweepWorktreesRequest(bool DryRun = false, int? Pr = null) -> void
+Aw.Meta.Features.WorktreeSweep.SweepWorktreesRequest.SweepWorktreesRequest(bool DryRun = false, int? Pr = null, bool IncludeNoPr = false) -> void
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse.<Clone>$() -> Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse!
 Aw.Meta.Features.WorktreeSweep.SweepWorktreesResponse.Deconstruct(out bool DryRun, out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Worktrees.WorktreeReport!>! Removed, out System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Worktrees.WorktreeReport!>! Kept, out int Failed) -> void

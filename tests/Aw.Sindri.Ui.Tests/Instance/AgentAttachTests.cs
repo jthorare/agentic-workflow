@@ -166,7 +166,7 @@ public sealed class AgentAttachTests
     }
 
     [Fact]
-    public async Task Take_over_copies_the_served_command_and_Cancel_keeps_the_served_confirm()
+    public async Task With_no_way_to_send_Take_over_copies_the_served_command_and_Cancel_keeps_the_served_confirm()
     {
         var expanded = Ready();
         var takeover = AgentRunFixtures.Status().Commands.First(c => c.Verb == StatusVerb.Takeover);

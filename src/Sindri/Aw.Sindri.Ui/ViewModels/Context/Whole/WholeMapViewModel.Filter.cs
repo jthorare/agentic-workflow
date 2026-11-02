@@ -8,7 +8,10 @@ internal sealed partial class WholeMapViewModel
     private HashSet<string>? Kept => _searchSet ?? _zoomSet;
 
     /// <summary>What is drawn and hit: the whole geometry, or while a search is on or the camera is on a query's answer, the matches and their direct links; null before the first answer.</summary>
-    internal WholeMapGeometry? Shown
+    internal WholeMapGeometry? Shown => Drilled(Searched);
+
+    // The geometry before a drill cuts it: the whole one, or the search's or the camera's set.
+    private WholeMapGeometry? Searched
     {
         get
         {
@@ -27,5 +30,5 @@ internal sealed partial class WholeMapViewModel
     }
 
     /// <summary>The box the camera fits and the minimap shows: the filtered set while a search is on, else the whole world.</summary>
-    internal WholeRect? FitBox => Geometry is { } geometry && Shown is { } shown ? (Kept is null ? geometry.World : WholeMapFilter.FitBox(shown, geometry.World)) : null;
+    internal WholeRect? FitBox => Geometry is { } geometry && Shown is { } shown ? (Kept is null && !IsDrilled ? geometry.World : WholeMapFilter.FitBox(shown, geometry.World)) : null;
 }

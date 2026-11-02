@@ -11,7 +11,7 @@ public sealed class RecipeColumnsTests
     [Theory]
     [InlineData(PageTier.Wide, new[] { 1, 2, 3, 4, 5, 6, 7, 8 })]
     [InlineData(PageTier.Mid, new[] { 1, 2, 3, 4, 5, 6, 7, 8 })]
-    [InlineData(PageTier.Narrow, new[] { 2, 5, 6, 7, 8 })]
+    [InlineData(PageTier.Narrow, new[] { 1, 2, 3, 4, 5 })]
     [InlineData(PageTier.Tight, new[] { 2, 5 })]
     internal void Each_tier_keeps_its_columns(PageTier tier, int[] kept)
     {
@@ -28,6 +28,15 @@ public sealed class RecipeColumnsTests
             var widths = RecipeColumns.Widths(tier);
 
             Assert.Equal((9, 0d), (widths.Count, widths[0]));
+        }
+    }
+
+    [Fact]
+    public void The_flow_column_is_wide_enough_for_its_header_at_every_tier_that_shows_it()
+    {
+        foreach (var tier in new[] { PageTier.Wide, PageTier.Mid, PageTier.Narrow })
+        {
+            Assert.True(RecipeColumns.Widths(tier)[4] >= 130);
         }
     }
 

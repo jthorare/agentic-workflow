@@ -37,4 +37,12 @@ public enum ParkKind
     /// <summary>Spec-conflict: dispatch refused an effect with SND-WF-011 (not allowlisted); '--resume' re-emits it.</summary>
     [JsonStringEnumMemberName("dispatch")]
     Dispatch = 8,
+
+    /// <summary>Launch: the Step or its agent can't be confined to the policy (SND-LAUNCH-015).</summary>
+    [JsonStringEnumMemberName("unconfinable")]
+    Unconfinable = 9,
+
+    /// <summary>Launch: the sandbox self-check failed (SND-LAUNCH-016).</summary>
+    [JsonStringEnumMemberName("self-check")]
+    SelfCheck = 10,
 }

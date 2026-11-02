@@ -4,7 +4,7 @@ using Aw.Sindri.Ui.ViewModels.Workflows;
 
 namespace Aw.Sindri.Ui.Views.Workflows;
 
-/// <summary>The run drawer: each button asks the view model, which only ever asks the shell to open the run or copies text.</summary>
+/// <summary>The run drawer: each button asks the view model, which asks the shell to open the run, copies text, or (Take over) sends the takeover.</summary>
 internal sealed partial class RunInspectorView : UserControl
 {
     public RunInspectorView()

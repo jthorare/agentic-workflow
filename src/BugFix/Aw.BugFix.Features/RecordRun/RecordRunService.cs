@@ -7,7 +7,7 @@ using Aw.Kernel.Services;
 
 namespace Aw.BugFix.Features.RecordRun;
 
-internal sealed class RecordRunService(IStateStore store, IRunLedger ledger, IFiles files, WorkTree tree, TimeProvider clock)
+internal sealed class RecordRunService(IStateStore store, IRunLedger ledger, CheckPin pin, WorkTree tree, TimeProvider clock)
     : IService<RecordRunRequest, RecordRunResponse>
 {
     public ValueTask<Result<RecordRunResponse>> Handle(RecordRunRequest request, CancellationToken cancellationToken) =>
@@ -24,17 +24,17 @@ internal sealed class RecordRunService(IStateStore store, IRunLedger ledger, IFi
         var check = state.Frozen.Check;
         var run = ledger.Read(request.Evidence)
             .Bind(stored => EvidenceRule.Accept(state, stored))
-            .Bind(check.Accepts)
             .Bind(record => Against(state, candidate.Value, record))
-            .Bind(record => Frozen(check, candidate.Value, record));
+            .Bind(record => pin.Verify(check, state.Frozen.Baseline.Commit, candidate.Value, record).Map(note => (Record: record, Note: note)))
+            .Bind(pinned => check.Accepts(pinned.Record).Map(record => (Record: record, pinned.Note)));   // last: a rewritten check or a moved branch is a stronger finding than a run with no verdict
         if (run.IsError)
         {
             return run.Error;
         }
 
-        var passed = run.Value.Outcome == RunOutcome.Passed;
+        var passed = run.Value.Record.Outcome == RunOutcome.Passed;
         var recorded = candidate.Value with { Run = new CandidateRun(request.Evidence, passed, clock.GetUtcNow()) };
-        store.Save(request.StateDirectory, state.With(recorded).Step(Phase.Evaluate, $"record-run {recorded.Id.Value}", clock.GetUtcNow(), request.Evidence));
+        store.Save(request.StateDirectory, state.With(recorded).Step(Phase.Evaluate, $"record-run {recorded.Id.Value}{run.Value.Note}", clock.GetUtcNow(), request.Evidence));
         return new RecordRunResponse(recorded.Id, passed, passed ? $"judge {recorded.Id.Value}" : NextStep.For(state.With(recorded) with { Phase = Phase.Evaluate }));
     }
 
@@ -55,19 +55,5 @@ internal sealed class RecordRunService(IStateStore store, IRunLedger ledger, IFi
         }
 
         return worktree.Map(_ => record);
-    }
-
-    // The frozen-check rule: a fix must not weaken the check, neither the file nor what the run executed.
-    private Result<RunRecord> Frozen(FrozenCheck check, Candidate candidate, RunRecord record)
-    {
-        var current = tree.Snapshot(candidate.Worktree).Bind(worktree => files.Sha256(files.FullPath(worktree.Root, check.Path)));
-        if (current.IsError && current.Error.Code != BugFixErrors.FileUnreadable.Code)
-        {
-            return current.Error;
-        }
-
-        return current.IsSuccess && current.Value == check.Sha256 && record.CheckSha256 == check.Sha256
-            ? record
-            : BugFixErrors.CheckNotFrozen.With($"the check file {check.Path} changed since the baseline");
     }
 }

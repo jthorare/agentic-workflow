@@ -1,0 +1,26 @@
+{
+  "model": "claude-sonnet-5-5",
+  "verdicts": [
+    {
+      "id": "L-code-3",
+      "class": "noise",
+      "reason": "A shared admin shell that every feature imports.",
+      "citation": "L-code-3",
+      "fix": "ignore"
+    },
+    {
+      "id": "L-product-2",
+      "class": "out",
+      "reason": "Billing export, not invitations.",
+      "citation": "R1",
+      "fix": "relabel",
+      "relabelTo": "feature:billing-export"
+    },
+    {
+      "id": "L-code-1",
+      "class": "in",
+      "reason": "Writes the invitation expiry date.",
+      "citation": "L-code-1"
+    }
+  ]
+}

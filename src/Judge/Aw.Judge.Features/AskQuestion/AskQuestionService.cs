@@ -25,6 +25,7 @@ internal sealed class AskQuestionService(QuestionEvaluator evaluator, IJudgeConf
             Providers = lineup.Providers,
             Chain = lineup.Chain,
             Override = QuestionOverride.For(config, request.Question),
+            InputCapChars = config.Providers?.InputCapChars,
             SessionId = request.SessionId,
         };
         var outcome = await evaluator.Ask(request.Question, request.Input, context, cancellationToken).ConfigureAwait(false);

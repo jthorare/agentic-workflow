@@ -3,6 +3,7 @@ using Aw.Kernel;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Api;
 using Aw.Sindri.Ui.Api.Context;
+using Aw.Sindri.Ui.Api.Projects;
 using Aw.Sindri.Ui.Api.Workflow;
 using Aw.Sindri.Ui.Testing;
 
@@ -99,6 +100,105 @@ public sealed class SindriApiClientHeaderTests
         Assert.Equal(
             [("POST", "/sindri/items", null), ("GET", "/sindri/queue", "58"), ("POST", "/sindri/items/" + A.NewItem + "/close", null), ("GET", "/sindri/items/" + A.NewItem, "59")],
             handler.Requests.Select(r => (r.Method, r.Path, r.After)));
+    }
+
+    // API §2.4 for a job start: the 202 is answered when job.started is in the ledger, the jobs view is projected later, so the first job read waits for the start's sequence.
+    [Fact]
+    public async Task The_job_read_after_a_job_start_waits_for_its_sequence()
+    {
+        const string JobId = "JOB-00000000000000000000000000000007";
+        var fake = new FakeSindriApi
+        {
+            SetContextPagesAnswer = new RouteAnswer(HttpStatusCode.Accepted, $$"""{"accepted":{"commandId":"00000000-0000-0000-0000-000000000009","sequence":12},"jobId":"{{JobId}}"}"""),
+        };
+        var handler = new FakeSindriHandler(fake);
+        var client = new SindriApiClient(new HttpClient(handler), new InMemoryHumanToken("tok-1"), TimeProvider.System);
+
+        var started = await client.SetContextPages(_api, new PagesSetBody(IfHash: "h0"), Token);
+        _ = await client.Job(_api, started.Value.JobId, Token);
+
+        Assert.Equal(
+            [("POST", "/sindri/context/pages", null), ("GET", "/sindri/jobs/" + JobId, "12")],
+            handler.Requests.Select(r => (r.Method, r.Path, r.After)));
+    }
+
+    // The same read-your-writes rule for every other answer that nests an accepted command: the next view query waits for its sequence.
+    [Fact]
+    public async Task The_job_read_after_an_approve_all_start_waits_for_its_sequence()
+    {
+        const string JobId = "JOB-0000000000000000000000000000000e";
+        var fake = new FakeSindriApi
+        {
+            ApproveAllStartAnswer = new RouteAnswer(HttpStatusCode.Accepted, $$"""{"accepted":{"commandId":"00000000-0000-0000-0000-000000000009","sequence":21},"jobId":"{{JobId}}"}"""),
+        };
+        var handler = new FakeSindriHandler(fake);
+        var client = new SindriApiClient(new HttpClient(handler), new InMemoryHumanToken("tok-1"), TimeProvider.System);
+
+        var started = await client.ApproveAll(_api, new ApproveAllRequest(), Token);
+        _ = await client.ApproveAllJob(_api, started.Value.JobId, Token);
+
+        Assert.Equal("21", handler.Requests[^1].After);
+        Assert.Equal("GET", handler.Requests[^1].Method);
+    }
+
+    [Fact]
+    public async Task The_query_after_a_job_resume_waits_for_its_sequence() =>
+        Assert.Equal("31", await AfterOfQueryFollowing(
+            """{"accepted":{"commandId":"00000000-0000-0000-0000-000000000009","sequence":31}}""",
+            c => c.ResumeJob(_api, "JOB-00000000000000000000000000000001", Token)));
+
+    [Fact]
+    public async Task The_query_after_a_project_change_waits_for_its_sequence() =>
+        Assert.Equal("41", await AfterOfQueryFollowing(ProjectAccepted(41), c => c.ChangeProject(_api, "prj_1", new ProjectChange(Version: 1, Name: "New"), Token)));
+
+    [Fact]
+    public async Task The_query_after_a_project_detach_waits_for_its_sequence() =>
+        Assert.Equal("42", await AfterOfQueryFollowing(ProjectAccepted(42), c => c.DetachProject(_api, "prj_1", new ProjectDetach(Version: 1), Token)));
+
+    [Fact]
+    public async Task The_query_after_a_project_hide_waits_for_its_sequence() =>
+        Assert.Equal("43", await AfterOfQueryFollowing(ProjectAccepted(43), c => c.HideProject(_api, new ProjectHide("linear:project/abc", Hidden: true, Version: 0), Token)));
+
+    [Fact]
+    public async Task The_query_after_a_project_attach_waits_for_its_sequence() =>
+        Assert.Equal("44", await AfterOfQueryFollowing(ProjectAccepted(44), c => c.AttachProject(_api, new ProjectAttach(Name: "Docs"), Token)));
+
+    [Fact]
+    public async Task The_query_after_an_item_open_waits_for_its_sequence() =>
+        Assert.Equal("51", await AfterOfQueryFollowing(
+            """{"accepted":{"commandId":"00000000-0000-0000-0000-000000000009","sequence":51},"launch":"LCH-1","target":"tmux"}""",
+            c => c.OpenItem(_api, A.NewItem, new OpenItemRequest("session", 1), Token)));
+
+    private static string ProjectAccepted(long sequence) =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $$"""{"accepted":{"commandId":"cmd_x","sequence":{{sequence}}},"project":"prj_1","version":2,"name":"New"}""");
+
+    // Sends one command that is answered with the given body, then a status query; returns the After header that query carried.
+    private static async Task<string?> AfterOfQueryFollowing(string commandAnswer, Func<SindriApiClient, Task> command)
+    {
+        var handler = new AnswerOnceHandler(commandAnswer);
+        var client = new SindriApiClient(new HttpClient(handler), new InMemoryHumanToken("tok-1"), TimeProvider.System);
+
+        await command(client);
+        _ = await client.Queue(_api, Token);
+
+        return handler.QueryAfter;
+    }
+
+    /// <summary>Answers the first (POST) call with the given JSON and every other call with an empty object, keeping the X-Sindri-After of the last GET.</summary>
+    private sealed class AnswerOnceHandler(string commandAnswer) : HttpMessageHandler
+    {
+        public string? QueryAfter { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.Method == HttpMethod.Get)
+            {
+                QueryAfter = request.Headers.TryGetValues("X-Sindri-After", out var values) ? values.Single() : null;
+            }
+
+            var body = request.Method == HttpMethod.Post ? commandAnswer : "{}";
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(body, System.Text.Encoding.UTF8, "application/json") });
+        }
     }
 
     // A command is a human's from the UI like every call: never X-Sindri-Terminal (protected stays at the CLI), never Origin.

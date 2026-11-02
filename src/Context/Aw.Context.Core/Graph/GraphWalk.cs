@@ -14,9 +14,15 @@ public static class GraphWalk
     public static Neighborhood Neighbors(GraphSnapshot graph, NodeKey center, int depth)
     {
         ArgumentNullException.ThrowIfNull(graph);
+        return Neighbors(GraphIndex.For(graph), center, depth);
+    }
+
+    /// <summary>The nodes within <paramref name="depth"/> edges of <paramref name="center"/> over the edges <paramref name="index"/> holds.</summary>
+    internal static Neighborhood Neighbors(GraphIndex index, NodeKey center, int depth)
+    {
+        ArgumentNullException.ThrowIfNull(index);
         ArgumentOutOfRangeException.ThrowIfNegative(depth);
         depth = Math.Min(depth, MaxDepth);
-        var index = new GraphIndex(graph);
         var depths = new Dictionary<string, int>(StringComparer.Ordinal) { [center.Value] = 0 };
         var frontier = new List<NodeKey> { center };
         for (var level = 1; level <= depth && frontier.Count > 0; level++)
@@ -27,7 +33,7 @@ public static class GraphWalk
         var nodes = depths.Where(d => index.Nodes.ContainsKey(d.Key))
             .Select(d => new NeighborNode(index.Nodes[d.Key], d.Value))
             .OrderBy(n => n.Depth).ThenBy(n => n.Node.Key.Value, StringComparer.Ordinal).ToList();
-        var edges = graph.Edges.Where(e => depths.ContainsKey(e.From.Value) && depths.ContainsKey(e.To.Value))
+        var edges = index.Graph.Edges.Where(e => depths.ContainsKey(e.From.Value) && depths.ContainsKey(e.To.Value))
             .OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.To.Value, StringComparer.Ordinal).ThenBy(e => e.Type).ToList();
         return new Neighborhood(center, nodes, edges);
     }
@@ -40,10 +46,15 @@ public static class GraphWalk
     public static GraphPath? ShortestPath(GraphSnapshot graph, NodeKey from, NodeKey to)
     {
         ArgumentNullException.ThrowIfNull(graph);
-        var index = new GraphIndex(graph);
+        return PathTo(Parents(GraphIndex.For(graph), from, to), from, to);
+    }
+
+    /// <summary>The breadth-first parent of every node reached from <paramref name="from"/>, stopping after the level that reaches <paramref name="stopAt"/> (every level when null); a node's parent is the same whether or not the walk stops early.</summary>
+    internal static Dictionary<string, PathStep?> Parents(GraphIndex index, NodeKey from, NodeKey? stopAt)
+    {
         var parents = new Dictionary<string, PathStep?>(StringComparer.Ordinal) { [from.Value] = null };
         var frontier = new List<NodeKey> { from };
-        for (var level = 1; !parents.ContainsKey(to.Value) && frontier.Count > 0; level++)
+        while (frontier.Count > 0 && (stopAt is not { } to || !parents.ContainsKey(to.Value)))
         {
             var next = new List<NodeKey>();
             foreach (var node in frontier)
@@ -57,6 +68,12 @@ public static class GraphWalk
             frontier = next;
         }
 
+        return parents;
+    }
+
+    /// <summary>The path <paramref name="parents"/> holds from <paramref name="from"/> to <paramref name="to"/>, or null when it holds none.</summary>
+    internal static GraphPath? PathTo(Dictionary<string, PathStep?> parents, NodeKey from, NodeKey to)
+    {
         if (!parents.ContainsKey(to.Value))
         {
             return null;

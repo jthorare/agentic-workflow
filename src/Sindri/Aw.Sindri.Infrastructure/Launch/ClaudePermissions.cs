@@ -17,4 +17,8 @@ internal sealed record ClaudePermissions(IReadOnlyList<string> Allow)
     /// <summary>The directories the Step may use: the one it writes and the read-only ones, or absent.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IReadOnlyList<string>? AdditionalDirectories { get; init; }
+
+    /// <summary>'disable' keeps the CLI from entering bypass mode (a sandboxed Step, sandbox spec §5), or absent.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? DisableBypassPermissionsMode { get; init; }
 }

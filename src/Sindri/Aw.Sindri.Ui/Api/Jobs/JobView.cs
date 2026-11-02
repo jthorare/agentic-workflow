@@ -21,6 +21,10 @@ namespace Aw.Sindri.Ui.Api.Jobs;
 /// <param name="CancelledBy">Who cancelled it, or null.</param>
 /// <param name="Actions">The actions allowed now: "CancelJob" while it runs, none after.</param>
 /// <param name="Cli">The CLI form of the cancel, or null.</param>
+/// <param name="Models">The job's model calls added up, or null when it made none.</param>
+/// <param name="WaitingOn">The signal a waiting job is parked on ('model-limit', ...), or null.</param>
+/// <param name="ModelCalls">The job's last 200 model calls, oldest first; null from a server before the field.</param>
+/// <param name="ModelCallCount">How many model calls the job made in all.</param>
 internal sealed record JobView(
     string Id,
     string Kind,
@@ -39,4 +43,8 @@ internal sealed record JobView(
     JsonElement? Result,
     string? CancelledBy,
     IReadOnlyList<string> Actions,
-    string? Cli);
+    string? Cli,
+    JobModelTotalsView? Models = null,
+    string? WaitingOn = null,
+    IReadOnlyList<JobModelCallView>? ModelCalls = null,
+    int ModelCallCount = 0);

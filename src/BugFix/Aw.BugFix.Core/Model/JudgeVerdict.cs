@@ -7,4 +7,5 @@ namespace Aw.BugFix.Core.Model;
 /// <param name="DecisionId">judge's stored decision id; null when judge escalated without one.</param>
 /// <param name="ReasonCode">judge's reason code.</param>
 /// <param name="InputSha256">SHA-256 of the input file the helper wrote and asked about (judge-&lt;candidate&gt;.json).</param>
-public sealed record JudgeVerdict(JudgeDecision Decision, JudgeDecisionId? DecisionId, string ReasonCode, string InputSha256);
+/// <param name="Reasons">judge's reasons, so a later session sees why; null in a state file written before they were kept (not recorded, different from none).</param>
+public sealed record JudgeVerdict(JudgeDecision Decision, JudgeDecisionId? DecisionId, string ReasonCode, string InputSha256, IReadOnlyList<string>? Reasons = null);

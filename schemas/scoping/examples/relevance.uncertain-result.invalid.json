@@ -1,0 +1,44 @@
+{
+  "agent": {
+    "reportedModel": "claude-sonnet-5-5"
+  },
+  "judge": {
+    "providers": [
+      "jev"
+    ]
+  },
+  "counts": {
+    "reviewed": 87,
+    "in": 64,
+    "out": 14,
+    "noise": 9,
+    "disputed": 3
+  },
+  "truncated": [
+    "code"
+  ],
+  "entries": [
+    {
+      "id": "L-code-3",
+      "lens": "code",
+      "key": "code:src/admin/Shell.ts",
+      "kind": "code",
+      "label": "Shell.ts",
+      "agent": {
+        "class": "noise",
+        "reason": "A shared admin shell.",
+        "citation": "L-code-3",
+        "fix": "ignore"
+      },
+      "judge": {
+        "class": "noise",
+        "confidence": 0.91,
+        "provider": "jev",
+        "decisionId": "JD-0001",
+        "reasonCode": "model"
+      },
+      "result": "uncertain",
+      "disputed": false
+    }
+  ]
+}

@@ -35,30 +35,36 @@ internal sealed class LexicalSchemaRule(LexicalCandidates candidates)
         await Name(run, forms, found.Paths, cancellationToken).ConfigureAwait(false);
     }
 
-    // Ties each candidate file to the things whose terms its text names, at most one more than the listed files per thing (so the merge sees the cut).
+    // Ties each candidate file (read in parallel, taken in path order) to the things whose terms its text names, at most one more than the listed files per thing (so the merge sees the cut).
     private async ValueTask Name(LexicalRun run, List<(CodeThing Thing, IReadOnlyList<string> Terms)> forms, List<string> paths, CancellationToken cancellationToken)
     {
         var tied = new Dictionary<string, int>(StringComparer.Ordinal);
-        foreach (var path in paths)
+        bool Take(string path, string? text)
         {
-            var text = await candidates.Text(run, path, cancellationToken).ConfigureAwait(false);
-            if (text is null)
+            if (text is not null)
+            {
+                Tie(run, forms, tied, (path, text));
+            }
+
+            return true;
+        }
+
+        await Fanout.ForEach(paths, (path, token) => candidates.Text(run, path, token), Take, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void Tie(LexicalRun run, List<(CodeThing Thing, IReadOnlyList<string> Terms)> forms, Dictionary<string, int> tied, (string Path, string Text) file)
+    {
+        foreach (var (thing, terms) in forms)
+        {
+            var count = tied.GetValueOrDefault(thing.Key.Value);
+            if (count > CodeRules.MaxFilesPerThing || NameMatcher.FindTerm(file.Text, terms) is not { } matched)
             {
                 continue;
             }
 
-            foreach (var (thing, terms) in forms)
-            {
-                var count = tied.GetValueOrDefault(thing.Key.Value);
-                if (count > CodeRules.MaxFilesPerThing || NameMatcher.FindTerm(text, terms) is not { } matched)
-                {
-                    continue;
-                }
-
-                tied[thing.Key.Value] = count + 1;
-                run.Pass.SchemaCapped |= count == CodeRules.MaxFilesPerThing;
-                run.Pass.Schema.Add(new LexicalSchemaFile(thing.Key, path, matched));
-            }
+            tied[thing.Key.Value] = count + 1;
+            run.Pass.SchemaCapped |= count == CodeRules.MaxFilesPerThing;
+            run.Pass.Schema.Add(new LexicalSchemaFile(thing.Key, file.Path, matched));
         }
     }
 }

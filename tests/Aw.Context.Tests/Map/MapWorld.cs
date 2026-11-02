@@ -1,4 +1,6 @@
 using Aw.Context.Core.Code;
+using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
@@ -10,14 +12,19 @@ using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
 using Aw.Context.Core.Proposals;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Review;
+using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Symbols;
+using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
+using Aw.Context.Core.Walks;
 using Aw.Context.Core.WholeMap;
 using Aw.Context.Features;
 using Aw.Context.Testing.Code;
+using Aw.Context.Testing.ConceptSynthesis;
 using Aw.Context.Testing.Engine;
 using Aw.Context.Testing.Extract;
 using Aw.Context.Testing.Fixtures;
@@ -25,8 +32,11 @@ using Aw.Context.Testing.History;
 using Aw.Context.Testing.Linking;
 using Aw.Context.Testing.Locks;
 using Aw.Context.Testing.Map;
+using Aw.Context.Testing.Records;
 using Aw.Context.Testing.Review;
+using Aw.Context.Testing.ScopeGraph;
 using Aw.Context.Tests.EvalProbes;
+using Aw.Context.Tests.Sync;
 using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
 using Microsoft.Extensions.DependencyInjection;
@@ -65,15 +75,17 @@ internal sealed class MapWorld : IDisposable
         ["README.md"] = "# Split panes",
     };
 
-    public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null)
+    public MapWorld(IRepoReader? repoReader = null, IContextSource? intent = null, ICodeSearch? codeSearch = null, IFileHistory? history = null, ICodeSymbolSource? symbols = null, WholeMapRules? wholeMapRules = null, WalkOptions? walk = null, IRecordStore? records = null, ILexicalLeg? lexical = null, IIndexSync? indexSync = null, IRecordFeedCatalog? feeds = null, Action<IServiceCollection>? configure = null)
     {
         Sources = new FixedSourceCatalog(intent is null ? [Docs] : [Docs, intent]);
         Exports = new FakeExportStore(Clock);
         Reader.Put(MapPath, Maps.Fixture(), FixtureMap.Yaml);
-        _provider = new ServiceCollection()
+        var services = new ServiceCollection()
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
+            .AddSingleton<IConceptHintStore>(Hints)
+            .AddSingleton<IConceptSynthesisStore>(ConceptSynthesis)
             .AddSingleton<IExportStore>(Exports)
             .AddSingleton<IMapFileReader>(Reader)
             .AddSingleton<IScrubberFactory>(new FakeScrubberFactory())
@@ -84,9 +96,11 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IProbeReportStore>(new NoProbes())
             .AddSingleton(repoReader ?? new FakeRepoReader(Repos[0], Head, BuildFiles))
             .AddSingleton<IDefaultBranch>(DefaultBranch)
+            .AddSingleton<IRepoRemote>(Remotes)
             .AddSingleton(codeSearch ?? new FakeCodeSearch(Repos[0], Head, BuildFiles))
             .AddSingleton(symbols ?? new NoCodeSymbolSource())
-            .AddSingleton<IIntentStore>(Intents)
+            .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton(records ?? Records).AddSingleton(lexical ?? new FakeLexicalLeg())
+            .AddSingleton<ISourceIdentityStore>(Identities).AddSingleton<ISourceViewers>(Viewers)
             .AddSingleton(history ?? new FakeFileHistory(Repos[0], new HistoryWorld(Head, [])))
             .AddSingleton<IModelPort>(Model)
             .AddSingleton<IClusterSource>(Clusters)
@@ -95,17 +109,58 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton<IReviewFileStore>(ReviewFiles)
             .AddSingleton<ICurrentUser>(new FakeCurrentUser())
             .AddSingleton(wholeMapRules ?? WholeMapRules.Default)
+            .AddSingleton<IScopeRunStore>(new FakeScopeRunStore())
             .AddSingleton<IMapSearchIndexFactory>(new Context.Infrastructure.Search.SqliteMapSearchIndexFactory())
-            .AddContextFeatures()
-            .BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
+            .AddContextFeatures();
+        AddOverrides(services, (walk, indexSync, feeds), configure);
+
+        _provider = services.BuildServiceProvider(new ServiceProviderOptions { ValidateOnBuild = false, ValidateScopes = true });
         _scope = _provider.CreateScope();
+    }
+
+    /// <summary>What a test replaces after AddContextFeatures: the walk options and the owned index's sync port and its record feeds.</summary>
+    private static void AddOverrides(IServiceCollection services, (WalkOptions? Walk, IIndexSync? IndexSync, IRecordFeedCatalog? Feeds) overrides, Action<IServiceCollection>? configure)
+    {
+        var (walk, indexSync, feeds) = overrides;
+        configure?.Invoke(services);
+        if (feeds is not null)
+        {
+            _ = services.AddSingleton(feeds);
+        }
+
+        if (walk is not null)
+        {
+            _ = services.AddSingleton(walk);
+        }
+
+        if (indexSync is not null)
+        {
+            _ = services.AddSingleton(indexSync);
+        }
     }
 
     public FakeTimeProvider Clock { get; } = new(DateTimeOffset.Parse("2026-08-01T12:00:00Z", System.Globalization.CultureInfo.InvariantCulture));
 
     public FakeGraphStore Store { get; } = new();
 
+    public FakeConceptHintStore Hints { get; } = new();
+
+    /// <summary>The synthesized concepts the index-decisions run writes.</summary>
+    public FakeConceptSynthesisStore ConceptSynthesis { get; } = new();
+
     public FakeDefaultBranch DefaultBranch { get; } = new();
+
+    /// <summary>The origin remote of each repo's checkout.</summary>
+    public FakeRepoRemote Remotes { get; } = new();
+
+    /// <summary>The record store the build reads, unless the world was given another.</summary>
+    public FakeRecordStore Records { get; } = new();
+
+    /// <summary>Who the owner is in each source: what the viewer step of a Linear projects tick writes.</summary>
+    public FakeSourceIdentityStore Identities { get; } = new();
+
+    /// <summary>The Linear viewer the tick asks (answers only for settings that configure Linear).</summary>
+    public FakeSourceViewers Viewers { get; } = new();
 
     public FakeIntentStore Intents { get; } = new();
 
@@ -128,6 +183,9 @@ internal sealed class MapWorld : IDisposable
 
     /// <summary>How many search indexes were built rather than served from the cache.</summary>
     internal int SearchBuilds => _scope.ServiceProvider.GetRequiredService<Features.SearchMap.MapSearchCache>().Builds;
+
+    /// <summary>A scoped service of the world, for internals a test drives directly.</summary>
+    internal T Service<T>() where T : notnull => _scope.ServiceProvider.GetRequiredService<T>();
 
     public IContextMap Map => _scope.ServiceProvider.GetRequiredService<IContextMap>();
 

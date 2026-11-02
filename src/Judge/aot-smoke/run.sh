@@ -78,8 +78,9 @@ brief='{"toolUseId":"toolu_1","sessionId":"s1","promptId":"p1","dispatchName":"b
   judge health || echo "exit $?"
   echo "## prompt-sort (offline: heuristics, every scaffold off, nothing printed)"
   printf '%s' '{"prompt":"add a dark mode toggle to the settings page","sessionId":"s1"}' | judge prompt-sort || echo "exit $?"
-  echo "## not yet built (cutover spec 5.2)"
+  echo "## label status (offline: the empty eval store)"
   judge label status || echo "exit $?"
+  echo "## not yet built (cutover spec 5.2: the prompt-sort subcommands of unit 6.4)"
   judge prompt-sort why abc || echo "exit $?"
   echo "## state files"
   (cd "$state" && find . -type f ! -name '*-wal' ! -name '*-shm' | sort)

@@ -44,6 +44,12 @@ internal static partial class Labels
     /// <summary>The label of the sheet's finished line.</summary>
     internal const string StatFinished = "Finished";
 
+    /// <summary>The label of the sheet's still-open line.</summary>
+    internal const string StatOpen = "Still open";
+
+    /// <summary>What the finished line says while no run has finished.</summary>
+    internal const string StatNoneYet = "None yet";
+
     /// <summary>The label of the sheet's failed line.</summary>
     internal const string StatFailed = "Failed";
 
@@ -83,6 +89,14 @@ internal static partial class Labels
     /// <param name="of">The whole; zero reads as no figure.</param>
     /// <returns>"80%", or the none word.</returns>
     internal static string StatShare(int done, int of) => of <= 0 ? StatNone : Percent(done / (double)of);
+
+    /// <summary>The share of finished runs that finished well; runs still open are not in it.</summary>
+    /// <param name="done">Runs that finished.</param>
+    /// <param name="failed">Runs that failed.</param>
+    /// <param name="cancelled">Runs that were cancelled.</param>
+    /// <returns>"67%", or "None yet" while no run has ended.</returns>
+    internal static string StatFinishedShare(int done, int failed, int cancelled) =>
+        done + failed + cancelled <= 0 ? StatNoneYet : Percent(done / (double)(done + failed + cancelled));
 
     /// <summary>A count with thousands separators.</summary>
     /// <param name="n">The count.</param>

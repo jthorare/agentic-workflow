@@ -36,6 +36,9 @@ internal sealed class SessionsRig
     /// <summary>The read port over <see cref="Launches"/>.</summary>
     public ILaunchViews LaunchViews { get; set; } = null!;
 
+    /// <summary>What the plan-file and cgroup reader answers for a sandboxed launch.</summary>
+    public FakeSessionSandboxes Sandboxes { get; } = new();
+
     /// <summary>A launches view whose every read fails, as a locked or half-rebuilt views.db does.</summary>
     public sealed class UnreadableLaunches : ILaunchViews
     {

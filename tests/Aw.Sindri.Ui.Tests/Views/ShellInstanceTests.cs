@@ -34,11 +34,13 @@ public sealed class ShellInstanceTests : FrameHost
         shell.Navigate(new DeepLink(DeepLinkKind.Workflow, Address()));
         await Until(window, () => shell.Instance.Phase == FramePhase.Shown);
 
-        Assert.Equal((true, false, "Workflow " + Address()), (shell.IsInstanceSheet, shell.IsSheetPlaceholderShown, shell.SheetName));
+        var runTitle = (string)GoldenFiles.Node("workflow-instance", "project-build")["title"]!;
+        Assert.Equal((true, false, "Workflow " + runTitle), (shell.IsInstanceSheet, shell.IsSheetPlaceholderShown, shell.SheetName));   // the run's title names the sheet, never its raw address
+        Assert.DoesNotContain(Address(), shell.SheetName, StringComparison.Ordinal);
         Assert.Equal((true, false), (Visible(window, "InstanceFrame"), Visible(window, "SheetBody")));
         var title = Named<TextBlock>(window, "SheetSubjectText");   // a long address in the 760 px sheet is trimmed, never cut off unseen: the whole address is the tooltip
         Assert.Equal((Avalonia.Media.TextTrimming.CharacterEllipsis, Address()), (title.TextTrimming, ToolTip.GetTip(title)));
-        Assert.Equal((string)GoldenFiles.Node("workflow-instance", "project-build")["title"]!, Named<TextBlock>(window, "InstanceTitle").Text);
+        Assert.Equal(runTitle, Named<TextBlock>(window, "InstanceTitle").Text);
     });
 
     [Fact]

@@ -23,4 +23,9 @@
   <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- The resolution-check input the helper writes (tests/fixtures/judge-input), shared with Aw.Judge.Tests so both digest it alike. -->
+    <None Include="../fixtures/judge-input/*.json" Link="JudgeInput/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

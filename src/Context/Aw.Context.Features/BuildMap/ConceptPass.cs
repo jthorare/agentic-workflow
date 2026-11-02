@@ -1,0 +1,163 @@
+using System.Globalization;
+using Aw.Context.Core.Concepts;
+using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
+using Aw.Context.Core.Engine;
+using Aw.Context.Core.Glossary;
+using Aw.Context.Core.Graph;
+using Aw.Context.Core.Map;
+
+namespace Aw.Context.Features.BuildMap;
+
+/// <summary>
+/// The concept step of a map build: reads the stored symbol vectors of the features' files, builds the glossary, derives the concepts with it (as one more grouping signal and as the terms
+/// the namer and the answers carry) and names them. No vectors, or a code index that can't answer, leaves the concepts exactly as they were without a glossary; a read that fails says so as a note.
+/// </summary>
+/// <param name="namer">Names the derived concepts.</param>
+/// <param name="vectors">The stored symbol embeddings.</param>
+/// <param name="hintStore">The concept hints of the last scan.</param>
+/// <param name="store">The map versions.</param>
+/// <param name="synthesis">The synthesized concepts, whose labeled ones join the map as concept nodes.</param>
+/// <remarks>As-of builds (AsOfMapBuilder) never run this pass, so a backtest map has no synthesized concepts.</remarks>
+internal sealed class ConceptPass(IConceptNamer namer, ISymbolVectors vectors, IConceptHintStore hintStore, IGraphStore store, IConceptSynthesisStore synthesis)
+{
+    // The code index answers at most this many files in one read.
+    private const int MaxPaths = 2000;
+
+    internal async ValueTask<ConceptOutcome> Run(ContextSettings settings, GraphSnapshot joined, IReadOnlyList<ConceptPin> pins, IReadOnlyList<ContextRepo> repos, CancellationToken cancellationToken)
+    {
+        var notes = new List<string>();
+        var glossary = await Glossary(joined, repos, notes, cancellationToken).ConfigureAwait(false);
+        ConceptNames? names = null;
+        var hints = await Hints(cancellationToken).ConfigureAwait(false);
+        var groups = ConceptDeriver.Groups(joined, pins, glossary, hints);
+        if (settings.Labeling.Enabled && groups.Count > 0)
+        {
+            var named = await namer.Name(groups, settings.ExtraPatterns, settings.Labeling.MaxTokens, cancellationToken).ConfigureAwait(false);
+            names = named.IsError ? null : named.Value;
+            if (named.IsError)
+            {
+                notes.Add("concepts");
+            }
+            else if (named.Value.Unavailable is { } why)
+            {
+                notes.Add($"concepts: {why}");
+            }
+        }
+
+        var concepts = ConceptDeriver.Derive(joined, pins, names, glossary, hints);
+        var withConcepts = joined with
+        {
+            Nodes = [.. joined.Nodes.Concat(concepts.Nodes).DistinctBy(n => n.Key.Value, StringComparer.Ordinal)],
+            Edges = [.. joined.Edges.Concat(concepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))],
+        };
+        (withConcepts, var covered) = await Synthesized(withConcepts, settings.ConceptSynthesis.CoverShare, notes, cancellationToken).ConfigureAwait(false);
+        // The pins' concept edges (spec 2026-10-27 §10.2 and §10.3): the roll-up and what the owner declared, one edge per key, made fresh on every build. What the declared edges and the code disagree on, and the entries
+        // with no endpoint in the map, are report lines and never degraded states (Open question 13).
+        var declared = PinEdges.Declared(withConcepts, pins);
+        var rolled = PinRollup.Apply(withConcepts, pins, declared);
+        var final = withConcepts with { Edges = [.. rolled.Edges.Concat(withConcepts.Edges).DistinctBy(e => (e.From.Value, e.To.Value, e.Type))] };
+        // The suggested 'expresses' edges come last, over the final concept membership (pages spec §3.2).
+        return new ConceptOutcome(PageExpresses.Apply(final), notes, ReportNotes(rolled.Notes, covered, declared.Skipped));
+    }
+
+    // The build report's lines: the roll-up's, then how many derived concepts folded away and how many declared pin edges were skipped, each only when there were any.
+    private static List<string> ReportNotes(IReadOnlyList<string> rolled, int covered, int skipped)
+    {
+        var lines = new List<string>(rolled);
+        if (covered > 0)
+        {
+            lines.Add(string.Create(CultureInfo.InvariantCulture, $"concepts covered: {covered}"));
+        }
+
+        if (skipped > 0)
+        {
+            lines.Add(string.Create(CultureInfo.InvariantCulture, $"pin edges skipped: {skipped}"));
+        }
+
+        return lines;
+    }
+
+    // why: the synthesized concepts join before the pins' edges, so a pin and the roll-up see their nodes, and the derived concepts they cover fold away (#1281); a store that can't answer leaves the graph as it was.
+    private async ValueTask<(GraphSnapshot Graph, int Covered)> Synthesized(GraphSnapshot graph, double coverShare, List<string> notes, CancellationToken cancellationToken)
+    {
+        var synthesized = await synthesis.All(cancellationToken).ConfigureAwait(false);
+        if (synthesized.IsError)
+        {
+            notes.Add("synthesized concepts");
+            return (graph, 0);
+        }
+
+        var fold = CoveredConcepts.Fold(SynthesizedConceptNodes.Apply(graph, synthesized.Value), synthesized.Value, coverShare);
+        return (fold.Graph, fold.Covered);
+    }
+
+    // The concept hints of the newest map version the scan has looked at; a store that can't answer, or a version with none, shapes nothing.
+    private async ValueTask<IReadOnlyList<ConceptHint>> Hints(CancellationToken cancellationToken)
+    {
+        var versions = await store.Versions(cancellationToken).ConfigureAwait(false);
+        if (versions.IsError || versions.Value.Count == 0)
+        {
+            return [];
+        }
+
+        var hints = await hintStore.Read(versions.Value[0].Number, cancellationToken).ConfigureAwait(false);
+        return hints.IsError ? [] : hints.Value;
+    }
+
+    // The glossary of the features whose files have vectors, or null when none has; a repo whose vectors can't be read adds the note.
+    private async ValueTask<MapGlossary?> Glossary(GraphSnapshot joined, IReadOnlyList<ContextRepo> repos, List<string> notes, CancellationToken cancellationToken)
+    {
+        var features = FeatureFiles.Of(joined);
+        var paths = features.SelectMany(f => f.Paths).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).ToList();
+        if (paths.Count == 0)
+        {
+            return null;
+        }
+
+        var (byPath, failed) = await Vectors(repos, paths, cancellationToken).ConfigureAwait(false);
+        if (failed)
+        {
+            notes.Add("glossary");
+        }
+
+        if (byPath.Count == 0)
+        {
+            return null;
+        }
+
+        var built = GlossaryBuilder.Build([.. features.Select(f => new FeatureVectors(f.Feature, f.Label, [.. f.Paths.SelectMany(p => byPath.GetValueOrDefault(p) ?? [])]))], new GlossaryRules());
+        return built.Clusters.Count == 0 ? null : built;
+    }
+
+    // Each repo is asked for the paths no earlier repo had vectors for, in reads of at most 2,000 files.
+    private async ValueTask<(Dictionary<string, List<SymbolVector>> ByPath, bool Failed)> Vectors(IReadOnlyList<ContextRepo> repos, List<string> paths, CancellationToken cancellationToken)
+    {
+        var byPath = new Dictionary<string, List<SymbolVector>>(StringComparer.Ordinal);
+        var failed = false;
+        foreach (var repo in repos)
+        {
+            foreach (var chunk in paths.Where(p => !byPath.ContainsKey(p)).Chunk(MaxPaths))
+            {
+                var read = await vectors.Read(repo.Name, chunk, cancellationToken).ConfigureAwait(false);
+                if (read.IsError)
+                {
+                    failed = true;
+                    continue;
+                }
+
+                foreach (var found in read.Value.Vectors)
+                {
+                    if (!byPath.TryGetValue(found.Path, out var symbols))
+                    {
+                        byPath[found.Path] = symbols = [];
+                    }
+
+                    symbols.Add(found.Symbol);
+                }
+            }
+        }
+
+        return (byPath, failed);
+    }
+}

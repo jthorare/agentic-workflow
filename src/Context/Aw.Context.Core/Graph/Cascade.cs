@@ -29,7 +29,7 @@ public static class Cascade
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(graph);
-        var index = new GraphIndex(graph);
+        var index = GraphIndex.For(graph);
         var own = OwnScope(index, anchor);
         var ownKeys = own.Select(d => d.Key.Value).ToHashSet(StringComparer.Ordinal);
         var visited = new HashSet<string>(ownKeys, StringComparer.Ordinal);

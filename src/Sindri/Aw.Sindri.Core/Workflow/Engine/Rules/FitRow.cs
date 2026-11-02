@@ -23,6 +23,8 @@ internal sealed record FitRow(string Shown, string Fix)
         ParkReason.NeedsAnswer => NeedsAnswer(suspension, address),
         ParkReason.Timeout => new("parked (timeout)", FitRefusals.Answer(address, "--resume")),
         ParkReason.Unavailable => new("parked (unavailable)", FitRefusals.Answer(address, "--resume") + " once the dependency is back"),
+        ParkReason.Launch => new("parked (launch)", FitRefusals.Answer(address, "--resume") + " once the cause is fixed"),
+        ParkReason.NoRuntime when suspension.Sandbox is not null => new("parked (no runtime)", FitRefusals.Answer(address, "--resume") + " once the cause is fixed"),
         ParkReason.NoRuntime => new("parked (SND-WF-010)", FitRefusals.Answer(address, "--resume") + " in a build that has the runtime"),
         ParkReason.SpecConflict or _ => SpecConflict(suspension, address, recipe),
     };
@@ -41,7 +43,7 @@ internal sealed record FitRow(string Shown, string Fix)
                 "add the effect to the profile's allowlist and approve the profile, then " + FitRefusals.Answer(address, "--resume")),
             ParkKind.Drift => new("parked (spec-conflict: drift)", approve + "; the approval resumes it"),
             ParkKind.ChildRevoked => new("parked (spec-conflict: child revoked)", approve + " so it pins an approved child; the approval resumes it"),
-            ParkKind.Revoked or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or null or _ => new("parked (spec-conflict: revoked)", $"sindri workflow cancel {address}, then start a new attempt from an approved version"),
+            ParkKind.Revoked or ParkKind.Loop or ParkKind.Refusal or ParkKind.Step or ParkKind.Wait or ParkKind.Unconfinable or ParkKind.SelfCheck or null or _ => new("parked (spec-conflict: revoked)", $"sindri workflow cancel {address}, then start a new attempt from an approved version"),
         };
     }
 

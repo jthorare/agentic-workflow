@@ -8,16 +8,23 @@ namespace Aw.Sindri.Infrastructure.Sessions;
 
 /// <summary>Claude Code's session records over a directory (collector spec §4.1 step 3): '*.json' only (a '.key' file is never opened), at most 256 files (the most recently written) of 64 KB.</summary>
 /// <param name="directory">The sessions directory (~/.claude/sessions, or AW_SESSIONS_CLAUDE_DIR).</param>
-internal sealed class ClaudeSessionRecords(string directory) : IClaudeSessionRecords
+/// <param name="alsoIn">The sessions directories of the separate agent homes (a separate-login launch writes there); empty for an owner-copy box.</param>
+internal sealed class ClaudeSessionRecords(string directory, IReadOnlyList<string> alsoIn) : IClaudeSessionRecords
 {
     internal const int MaxFiles = 256;
+
     internal const long MaxBytes = 64 * 1024;
+
+    public ClaudeSessionRecords(string directory) : this(directory, [])
+    {
+    }
 
     private static readonly System.Text.Json.JsonSerializerOptions _json = AwJson.CreateOptions(SessionsJsonContext.Default);
 
     public Result<IReadOnlyList<ClaudeRecord>> Read(CancellationToken cancellationToken)
     {
-        if (!Directory.Exists(directory))
+        string[] directories = [.. new[] { directory }.Concat(alsoIn).Distinct(StringComparer.Ordinal).Where(Directory.Exists)];
+        if (directories.Length == 0)
         {
             return Results.Success<IReadOnlyList<ClaudeRecord>>([]);   // Claude Code isn't installed, or has run no session
         }
@@ -25,7 +32,7 @@ internal sealed class ClaudeSessionRecords(string directory) : IClaudeSessionRec
         string[] files;
         try
         {
-            files = [.. Directory.EnumerateFiles(directory, "*.json").OrderByDescending(static f => LastWrite(f)).ThenBy(static f => f, StringComparer.Ordinal).Take(MaxFiles)];
+            files = [.. directories.SelectMany(static d => Directory.EnumerateFiles(d, "*.json")).OrderByDescending(static f => LastWrite(f)).ThenBy(static f => f, StringComparer.Ordinal).Take(MaxFiles)];
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {

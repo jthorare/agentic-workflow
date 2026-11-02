@@ -1,0 +1,49 @@
+{
+  "launches": [
+    {
+      "launchId": "LCH-00000000000000000000000000000001",
+      "updatedAt": "2026-10-28T09:00:00.0000000Z",
+      "entries": [
+        {
+          "kind": "network",
+          "target": "registry.example.org",
+          "rule": "net.not-allowed",
+          "count": 3,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "path",
+          "target": "/home/thor/.config/tool",
+          "rule": "fs.not-bound",
+          "count": 1,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "allow"
+        },
+        {
+          "kind": "path",
+          "target": "/home/thor/.ssh",
+          "rule": "fs.never",
+          "count": 2,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "never",
+          "reason": "Keys and tokens are never shared with a session."
+        },
+        {
+          "kind": "policy",
+          "target": "git push",
+          "rule": "policy.no-push",
+          "count": 4,
+          "first": "2026-10-28T08:00:00.0000000Z",
+          "last": "2026-10-28T08:20:00.0000000Z",
+          "fix": "own-terminal"
+        }
+      ],
+      "overflow": [],
+      "repo": "api"
+    }
+  ]
+}

@@ -52,10 +52,13 @@ it prints what you owe and the command that settles it. Settle it, don't argue w
    `$AW_STATE_DIR/meta/teams/<team>/team.json`; the directory name must equal the file's `team`, since selection uses the
    directory and the session and tmux names use the file).
 2. `aw-meta-launch` opens one Warp window with a pane per lane, each attached to tmux session `<team>-<lane>` running
-   that lane's Claude session, named `<team>-<lane>` so its name never changes. Rerun it after a crash: it recreates
+   that lane's session, named `<team>-<lane>` so its name never changes. The agent is Claude Code unless `team.json`
+   has `agent` set to a catalog id (`cursor`, `codex`, or `claude-code`). That one field is every lane, including the
+   meta lane, and it wins over `launcher.json`'s `meta.lanesAgent` and `meta.lanes`. Without it, `launcher.json` still
+   decides, and a file that sets only `lanesAgent` still leaves the meta lane on Claude Code. Rerun it after a crash: it recreates
    the dead tmux sessions, restarts a lane whose Claude exited, and resumes each lane by its session id. From the
    meta session, recreate lanes with `aw-meta-launch --no-open`: the open Warp window reattaches by itself. When
-   `launcher.json` puts a lane on another agent, the launcher prints `lane <l>: <agent>, takes part in the obligations
+   `team.json` `agent` or `launcher.json` puts a lane on another agent, the launcher prints `lane <l>: <agent>, takes part in the obligations
    through its hooks` (the hooks come from `scripts/install-meta.sh --provider codex|cursor`) or, for a CLI with no
    hook system, `lane <l>: <agent>, launch-only: no obligations`: don't message a lane marked launch-only.
    `aw-meta-launch` refuses while the team's lanes still run on tmux's default socket (the pre-switch team). The meta

@@ -23,6 +23,18 @@ internal sealed partial class AgentsPageViewModel
 
     private EndedSessionViewModel? SelectedEnded => Walk().Where(w => string.Equals(w.Key, SelectedKey, StringComparison.Ordinal)).Select(w => w.Ended).FirstOrDefault();
 
+    /// <summary>Drops the selection (focus left the list and the sheet is closed): no row keeps its left bar.</summary>
+    internal void ClearSelection()
+    {
+        if (SelectedKey is null)
+        {
+            return;
+        }
+
+        SelectedKey = null;
+        Mark();
+    }
+
     /// <summary>Selects a row by its key (focus arrived on it).</summary>
     /// <param name="key">The row's key.</param>
     /// <returns>True when such a row is drawn.</returns>

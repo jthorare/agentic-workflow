@@ -26,10 +26,10 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal sealed class TemporalInstanceRuntime(TemporalFrontend frontend, TemporalDeskReports deskReports, TemporalCommands commands, TemporalSettings settings, KnownInstances known) : IInstanceRuntime
 {
     /// <summary>How long a Query waits for a worker to answer; past it, status says no worker answered.</summary>
-    internal static readonly TimeSpan QueryPatience = TimeSpan.FromSeconds(10);
+    internal static readonly TimeSpan QueryPatience = TimeSpan.FromSeconds(60);
 
-    /// <summary>How often, 50 ms apart, a start asks whether the new instance has left 'starting' (its recipe loaded, its first state entered): 10 s.</summary>
-    private const int StartPolls = 200;
+    /// <summary>How often, 50 ms apart, a start asks whether the new instance has left 'starting' (its recipe loaded, its first state entered): 120 s.</summary>
+    private const int StartPolls = 2400;
 
     /// <summary>
     /// Starts 'RecipeWorkflow' with the address as its workflow id (spec §5.1): an execution already running under that id
@@ -151,7 +151,7 @@ internal sealed class TemporalInstanceRuntime(TemporalFrontend frontend, Tempora
     {
         StepCompleted report => deskReports.Complete(address, nonce, report, cancellationToken),   // unit (c)
         AnswerGiven or CommandFired or CancelRequested => commands.Send(address, nonce, command, cancellationToken),   // unit (b)
-        TakeoverRequested or HandbackRequested => commands.Send(address, nonce, command, cancellationToken),   // engine P5
+        TakeoverRequested or HandbackRequested or RewindRequested => commands.Send(address, nonce, command, cancellationToken),   // engine P5
         _ => throw new NotSupportedException($"the '{command.Name}' trigger is no command Update"),
     };
 

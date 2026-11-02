@@ -29,6 +29,7 @@ internal sealed partial class HomePage : UserControl
         AddHandler(StripRow.SelectEvent, OnStripSelect);
         AddHandler(StripRow.AnswerEvent, OnStripAnswer);
         AddHandler(ChildAnswerButton.FollowEvent, OnChildAnswer);
+        DataContextChanged += (_, _) => FollowNeedsYouRows();
     }
 
     /// <inheritdoc />
@@ -106,7 +107,11 @@ internal sealed partial class HomePage : UserControl
 
     private void OnSetupContinue(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Setup.Continue();
 
-    private void OnStart(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.OpenStart();
+    private void OnStart(object? sender, RoutedEventArgs e)
+    {
+        OpenerNote.Raise(this, sender);
+        (DataContext as ShellViewModel)?.OpenStart();
+    }
 
     private void OnWorkflowsMore(object? sender, RoutedEventArgs e) => (DataContext as ShellViewModel)?.Strip.OpenWorkflows();
 

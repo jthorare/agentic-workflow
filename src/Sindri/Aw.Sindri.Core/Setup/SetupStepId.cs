@@ -26,7 +26,7 @@ public enum SetupStepId
     [JsonStringEnumMemberName("map")]
     Map,
 
-    /// <summary>The managed Onyx is up.</summary>
-    [JsonStringEnumMemberName("onyx")]
-    Onyx,
+    /// <summary>The index sources the profile names have their tokens.</summary>
+    [JsonStringEnumMemberName("sources")]
+    Sources,
 }

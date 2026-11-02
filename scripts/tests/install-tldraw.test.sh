@@ -36,7 +36,7 @@ case "$*" in
 esac
 SH
 chmod +x "$WORK/bin/brew"
-export PATH="$WORK/bin:$PATH"
+export PATH="$WORK/bin:/usr/bin:/bin"   # not the inherited PATH: a real tldraw-offline in ~/.local/bin makes the installer skip (#1214)
 
 # A stand-in AppImage for each arch, and its sha256.
 printf '#!/bin/sh\necho tldraw-offline-fake\n' > "$WORK/release/tldraw-offline-linux-x86_64.AppImage"

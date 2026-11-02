@@ -66,6 +66,7 @@ internal sealed partial class NeedsYouPage : UserControl
             _page.Bar.ReasonRequested -= OnReasonRequested;
             _page.Bar.PropertyChanged -= OnBarChanged;
             _page.CardFocusRequested -= OnCardFocusRequested;
+            _page.ParkFocusRequested -= OnParkFocusRequested;
         }
 
         _page = DataContext as NeedsYouPageViewModel;
@@ -76,6 +77,7 @@ internal sealed partial class NeedsYouPage : UserControl
             _page.Bar.PropertyChanged += OnBarChanged;
             _mode = _page.Bar.Mode;
             _page.CardFocusRequested += OnCardFocusRequested;
+            _page.ParkFocusRequested += OnParkFocusRequested;
             NeedsYouDropItem.Header = _page.Bar.DropWord;   // a flyout's items do not take the page's data context
         }
     }
@@ -134,6 +136,9 @@ internal sealed partial class NeedsYouPage : UserControl
     }
 
     // Enter on the list: focus goes to the card, where the arrow keys scroll it.
+    // A picked sandbox park row: the card has just been bound, so focus goes to its heading once it is laid out.
+    private void OnParkFocusRequested(object? sender, EventArgs e) => Dispatcher.UIThread.Post(NeedsYouSandboxPark.FocusHeading, DispatcherPriority.Loaded);
+
     private void OnCardFocusRequested(object? sender, EventArgs e) => _ = NeedsYouCardScroll.Focus(NavigationMethod.Tab);
 
     // Ctrl+Enter sends the reason and Esc closes the box; any other key is the box's own. The shell's single keys never see a key typed in a field.

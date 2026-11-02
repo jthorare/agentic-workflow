@@ -3,6 +3,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
@@ -21,7 +22,6 @@ namespace Aw.Sindri.Tests.Workflows;
 /// real adapters; the polls are 100 ms.
 /// </summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class AgentRuntimeInterpreterTests : AgentRuntimeTestBase
 {
     [Fact(Timeout = 120_000)]
@@ -78,7 +78,7 @@ public sealed class AgentRuntimeInterpreterTests : AgentRuntimeTestBase
             var parked = await WorkflowsHarness.Until(handle, static v => v.Question is not null);
 
             Assert.Equal(ParkReason.Unavailable, parked.Question?.Reason);
-            Assert.Contains("unavailable after 2 retries", parked.Question?.Question, StringComparison.Ordinal);
+            Assert.Contains("agent session is gone (exit), relaunched 2 times", parked.Question?.Question, StringComparison.Ordinal);
             Assert.Equal(3, _launcher.Requests.Count);
         });
     }
@@ -115,6 +115,83 @@ public sealed class AgentRuntimeInterpreterTests : AgentRuntimeTestBase
             _ = await WorkflowsHarness.Until(handle, static v => v.Question is not null);
 
             Assert.Equal("lost", await rig.FailureReason(ct));
+        });
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task A_missing_sandbox_closes_the_run_and_opens_the_desk_twin_without_a_failure()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        _launcher.FailNextWith(SandboxRefusal.For(SindriErrors.LaunchSandboxUnavailable, SandboxReasons.NoBwrap, "no sandbox tool"));
+        await using var rig = await Rig(ct);
+        await rig.Run(async handle =>
+        {
+            var view = await WorkflowsHarness.Until(handle, static v => v.Run is { Number: 2 });
+
+            Assert.Equal("write", view.State);
+            Assert.Null(view.Question);
+            await WaitFor(() => _launcher.Stops.Contains(rig.Launch), ct);   // the agent run is closed
+            Assert.Contains("\"reason\":\"no-bwrap\"", Assert.Single(await rig.PayloadsUntil("launch.failed", ct)), StringComparison.Ordinal);
+            Assert.DoesNotContain(await rig.Payloads("workflow.transition", ct), static p => p.Contains("\"trigger\":\"step.failed\"", StringComparison.Ordinal));   // not presented as a Step failure
+        });
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task An_unconfinable_step_parks_launch_and_resume_starts_a_new_run()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        _launcher.FailNextWith(SandboxRefusal.For(SindriErrors.LaunchUnconfinable, SandboxReasons.FormNone));
+        await using var rig = await Rig(ct);
+        await rig.Run(async handle =>
+        {
+            var parked = await WorkflowsHarness.Until(handle, static v => v.Question is not null);
+            Assert.Equal(ParkReason.Launch, parked.Question?.Reason);
+            var resume = new AnswerGiven("human:cli", new CommandStamp(CommandNonce.From(new string('3', 32)), new string('0', 64)), AnswerVariant.Resume, Text: null, Amount: null, Forwarded: null);
+
+            _ = await handle.ExecuteUpdateAsync(wf => wf.AnswerAsync(resume), new WorkflowUpdateOptions(new string('3', 32)));
+
+            await WaitFor(() => _launcher.SessionCount == 1, ct);
+            Assert.Equal(2, _launcher.Requests.Select(static r => r.Launch).Distinct().Count());   // a new run has a new launch id
+        });
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task A_limit_kill_is_step_failed_limit_with_the_kind_and_the_peak_and_the_engine_does_not_retry_it()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var rig = await Rig(ct);
+        await rig.Run(async handle =>
+        {
+            _ = await WorkflowsHarness.Until(handle, static v => v.Run is not null && v.State == "write");
+            await Launched(ct);
+            _sessions.EndByLimit(rig.Launch, LimitKind.Memory, 2_147_483_648, 2_300_000_000);
+
+            var parked = await WorkflowsHarness.Until(handle, static v => v.Question is not null);
+
+            Assert.Equal("limit", await rig.FailureReason(ct));
+            Assert.Equal(ParkReason.NeedsAnswer, parked.Question?.Reason);
+            Assert.Contains("2147483648", parked.Question?.Question, StringComparison.Ordinal);
+            Assert.Contains("2300000000", parked.Question?.Question, StringComparison.Ordinal);
+            _ = Assert.Single(_launcher.Requests);   // never auto-retried
+        });
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task A_full_session_cap_waits_and_records_no_outcome_until_a_slot_frees()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        _launcher.FailNextWith(SandboxRefusal.For(SindriErrors.LaunchSessionWait, SandboxReasons.Sessions), times: 6);
+        await using var rig = await Rig(ct);
+        await rig.Run(async handle =>
+        {
+            await WaitFor(() => _launcher.Requests.Count >= 4, ct);
+            Assert.Empty(await rig.Payloads("launch.failed", ct));   // a wait is not a failure
+            Assert.Empty(await rig.Payloads("launch.started", ct));
+
+            await WaitFor(() => _launcher.SessionCount == 1, ct);
+            var view = await WorkflowsHarness.Until(handle, static v => v.Run is not null && v.State == "write");
+            Assert.Null(view.Question);
+            _ = Assert.Single(await rig.PayloadsUntil("launch.started", ct));
         });
     }
 

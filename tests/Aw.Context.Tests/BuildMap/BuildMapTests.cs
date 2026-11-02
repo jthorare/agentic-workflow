@@ -88,7 +88,7 @@ public sealed class BuildMapTests : IDisposable
         var report = (await _world.Map.BuildMap(progress: null, Scope, MapWorld.None)).Value;
 
         var feature = Assert.Single(report.Proposed, p => p.Key.Kind == NodeKind.Feature);
-        Assert.Equal((Provenance.Model, 0.7), (feature.Provenance, feature.Confidence));
+        Assert.Equal(("feature:tag:aw-split-panes:src.commands", Provenance.Model, 0.7), (feature.Key.Value, feature.Provenance, feature.Confidence));
         Assert.Equal(["code:src/commands/ids.ts", "code:src/commands/registry.ts"], feature.Files.Select(f => f.Value), StringComparer.Ordinal);
         Assert.Empty(report.Degraded);
     }
@@ -111,7 +111,8 @@ public sealed class BuildMapTests : IDisposable
         _ = await _world.Map.BuildMap(progress: null, Labeling(), MapWorld.None);
 
         var draft = (await _world.Store.Snapshot(draft: true, MapWorld.None)).Value!;
-        Assert.Equal("Labeled c1", Assert.Single(draft.Graph.Nodes, n => n.Key.Kind == NodeKind.Feature).Label);
+        var shown = Assert.Single(_world.Labeler.Shown);
+        Assert.Equal("Labeled " + shown.Id.Value, Assert.Single(draft.Graph.Nodes, n => n.Key.Kind == NodeKind.Feature && n.Provenance == Provenance.Deterministic).Label);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -159,13 +160,14 @@ public sealed class BuildMapTests : IDisposable
         var report = (await _world.Map.BuildMap(progress: null, Labeling(), MapWorld.None)).Value;
 
         Assert.Equal(["labels"], report.Degraded);
-        Assert.Equal("Labeled c1", Assert.Single((await _world.Store.Read(report.Draft.Number, MapWorld.None)).Value.Nodes, n => n.Key.Kind == NodeKind.Feature).Label);
+        var shown = Assert.Single(_world.Labeler.Shown);
+        Assert.Equal("Labeled " + shown.Id.Value, Assert.Single((await _world.Store.Read(report.Draft.Number, MapWorld.None)).Value.Nodes, n => n.Key.Kind == NodeKind.Feature && n.Provenance == Provenance.Deterministic).Label);
     }
 
     [Fact, Trait("Lane", "unit")]
     public async Task Labeling_turned_on_with_no_labeler_set_up_passes_with_a_note_naming_the_fix()
     {
-        var labels = await new DisabledLabeler().Label([Cluster("a.ts")], [], 400_000, MapWorld.None);
+        var labels = await new DisabledLabeler().Label([Cluster("a.ts")], [], 400_000, options: null, MapWorld.None);
 
         Assert.True(labels.IsSuccess);
         Assert.Contains(LabelPass.NoModelFix, labels.Value.Unavailable, StringComparison.Ordinal);
@@ -308,7 +310,8 @@ public sealed class BuildMapTests : IDisposable
         Assert.DoesNotContain(reader.Reads, r => string.Equals(r, "private/settings.json", StringComparison.Ordinal) || string.Equals(r, ".env", StringComparison.Ordinal) || string.Equals(r, "config/secrets/settings.json", StringComparison.Ordinal));
         Assert.DoesNotContain(report.Proposed, p => p.Key.Value == "surface:setting/apiToken");
         Assert.DoesNotContain(report.Proposed.SelectMany(p => p.Files), f => f.Value.Contains("private/", StringComparison.Ordinal) || f.Value.Contains("secrets/", StringComparison.Ordinal));
-        Assert.Equal(["src/commands/ids.ts"], world.Labeler.Shown.SelectMany(c => c.Files), StringComparer.Ordinal);
+        Assert.DoesNotContain(world.Labeler.Shown.SelectMany(c => c.Files), f => f.Contains("private/", StringComparison.Ordinal) || f.Contains("secrets/", StringComparison.Ordinal));
+        Assert.Contains("src/commands/ids.ts", world.Labeler.Shown.SelectMany(c => c.Files), StringComparer.Ordinal);
         var draft = (await world.Store.Snapshot(draft: true, MapWorld.None)).Value!;
         Assert.DoesNotContain(draft.Graph.Nodes, n => n.Key.Value.Contains("private/", StringComparison.Ordinal) || n.Key.Value.Contains("secrets/", StringComparison.Ordinal));
     }

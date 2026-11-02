@@ -87,6 +87,8 @@ public static class WorkflowErrors
     public static readonly ErrorDefinition InjectionInvalid = new("SND-WF-019", ErrorKind.Invalid, "A Step input filled an invalid plan");
     /// <summary>SND-WF-020: a Step input's fill timed out: it ran past its time limit, or stopped reporting progress; the Step fails and names which.</summary>
     public static readonly ErrorDefinition StepInputTimedOut = new("SND-WF-020", ErrorKind.Unavailable, "A Step input timed out");
+    /// <summary>SND-WF-021: a Step input's '{ profile: key }' argument names a key no input can read; the fill fails. A key the profile leaves unset is the open window.</summary>
+    public static readonly ErrorDefinition ProfileKeyMissing = new("SND-WF-021", ErrorKind.NotFound, "A profile key a Step input names is missing");
 
     /// <summary>SND-BLOCK-001: a fact a block Step reads can't be read; the run ends as step.failed with the message as its reason.</summary>
     public static readonly ErrorDefinition BlockFactUnreadable = new("SND-BLOCK-001", ErrorKind.Unavailable, "A fact a block Step reads can't be read");

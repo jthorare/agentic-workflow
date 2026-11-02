@@ -80,7 +80,7 @@ internal static class JobHost
     /// <summary>A hang guard on the real clock for what a job or the views should do at once: the host's own clock is fake and would never fire it.</summary>
     public static readonly TimeSpan Hang = TimeSpan.FromSeconds(10);
 
-    /// <summary>The hang guard for a job that does real work (a sources sync against a fake Onyx, a map build) to end: a loaded gate box ran one past <see cref="Hang"/>, so this one is longer but stays under the shortest test timeout (30 s) that waits on it, and its named failure still comes first.</summary>
+    /// <summary>The hang guard for a job that does real work (a sources sync against a fake source, a map build) to end: a loaded gate box ran one past <see cref="Hang"/>, so this one is longer but stays under the shortest test timeout (30 s) that waits on it, and its named failure still comes first.</summary>
     public static readonly TimeSpan SettleHang = TimeSpan.FromSeconds(20);
 
     /// <summary>Waits until every job this host started has ended and its last event is appended, then lets the views catch up. A job that does not end fails the wait by name after <see cref="SettleHang"/>.</summary>
@@ -174,16 +174,23 @@ internal static class JobHost
     /// Keeps the views at the ledger's head while a test runs. A running job appends events by itself, and the golden host hosts no projector: a command
     /// that waits for the views (every command that reads them) would wait on the fake clock for ever.
     /// </summary>
-    private sealed class ViewsPump : IDisposable
+    private sealed class ViewsPump : IAsyncDisposable
     {
         private readonly CancellationTokenSource _stop = new();
+        private readonly Task _pump;
 
         public ViewsPump(GoldenHost host)
         {
-            _ = Task.Run(() => Pump(host, _stop.Token), CancellationToken.None);
+            _pump = Task.Run(() => Pump(host, _stop.Token), CancellationToken.None);
         }
 
-        public void Dispose() => _stop.Cancel();
+        /// <summary>Stops the pump and waits for its last pass to finish, so nothing it touches is still in use afterwards.</summary>
+        public async ValueTask DisposeAsync()
+        {
+            await _stop.CancelAsync();
+            await _pump;
+            _stop.Dispose();
+        }
 
         private static async Task Pump(GoldenHost host, CancellationToken stop)
         {

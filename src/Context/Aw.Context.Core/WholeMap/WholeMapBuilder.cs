@@ -11,6 +11,9 @@ namespace Aw.Context.Core.WholeMap;
 /// </summary>
 public static class WholeMapBuilder
 {
+    // The most pages the pages-in-no-concept read lists (the same cap as a concept's drill).
+    private const int PageCap = 200;
+
     private const string OverBudget = "over-budget";
 
     /// <summary>The answer for one graph.</summary>
@@ -27,23 +30,30 @@ public static class WholeMapBuilder
         ArgumentNullException.ThrowIfNull(areas);
         ArgumentNullException.ThrowIfNull(rules);
         ArgumentNullException.ThrowIfNull(text);
-        if (ask.Area is not null && ask.Concept is not null)
-        {
-            return ContextErrors.QueryInvalid.With("'area' and 'concept' each open one part of the map (fix: ask for one of them)");
-        }
-
         var known = graph.Nodes.GroupBy(n => n.Key.Value, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         var edges = graph.Edges.Where(e => known.ContainsKey(e.From.Value) && known.ContainsKey(e.To.Value)).ToList();
         var concepts = ConceptIndex.Of(known, edges);
-        var overview = Overview(ask, (known, edges), (areas, concepts), (rules, text));
+        var pagesOut = PagesInNoConcept.Of(graph, ask.PageRank);
+        var overview = Overview(ask, (known, edges), (areas, concepts), (rules, text)) with { PagesInNoConcept = pagesOut.Count };
+        if (ask.PagesInNoConcept)
+        {
+            return OpenedPages(pagesOut, overview, (known, edges), (areas, text, ask.RepoOf));
+        }
+
         if (ask.Area is not null)
         {
-            return Opened(ask.Area, overview, (known, edges), (areas, rules, text, ask.RepoOf));
+            if (ask.Concept is not null && !concepts.Has(ask.Concept))
+            {
+                return UnknownConcept();
+            }
+
+            var scope = ask.Concept is null ? null : ConceptScope.Nodes(concepts, edges, ask.Concept, ask.PageRank);
+            return Opened(ask.Area, scope, overview, (known, edges), (areas, rules, text, ask.RepoOf));
         }
 
         if (ask.Concept is not null)
         {
-            return OpenedConcept(ask.Concept, overview, (concepts, edges), (areas, rules, text, ask.RepoOf));
+            return OpenedConcept((ask.Concept, ask.PageRank), overview, (concepts, edges), (areas, rules, text, ask.RepoOf));
         }
 
         if (ask.Detail == WholeMapDetail.Areas)
@@ -69,13 +79,15 @@ public static class WholeMapBuilder
         };
     }
 
-    // One area on its own: all its nodes in kind and key order, and the edges among them. Nothing is cut.
-    private static Result<WholeMapView> Opened(string key, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
+    // One area on its own: all its nodes in kind and key order, and the edges among them. Nothing is cut. With a concept's scope, only the area's nodes that scope holds.
+    private static Result<WholeMapView> Opened(string key, HashSet<string>? scope, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
     {
-        var members = graph.Known.Values.Where(n => n.Key.Kind != NodeKind.Concept && how.Areas.ByNode[n.Key.Value].Area == key).ToList();
+        var members = graph.Known.Values.Where(n => n.Key.Kind != NodeKind.Concept && how.Areas.ByNode[n.Key.Value].Area == key && (scope is null || scope.Contains(n.Key.Value))).ToList();
         if (members.Count == 0)
         {
-            return ContextErrors.AreaUnknown.With("that area isn't in this map (fix: read the areas from 'context map whole' first, and name one of their keys)");
+            return ContextErrors.AreaUnknown.With(scope is null
+                ? "that area isn't in this map (fix: read the areas from 'context map whole' first, and name one of their keys)"
+                : "that area holds nothing of this concept (fix: open the concept, and name one of the areas its nodes are in)");
         }
 
         var shown = members.OrderBy(n => n.Key.Kind).ThenBy(n => n.Key.Value, StringComparer.Ordinal).ToList();
@@ -91,14 +103,15 @@ public static class WholeMapBuilder
     }
 
     // One concept on its own: its members and what lies two levels below them (see ConceptScope), in band, kind and key order, and the edges among them. Nothing is cut.
-    private static Result<WholeMapView> OpenedConcept(string key, WholeMapView overview, (ConceptIndex Concepts, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
+    private static Result<WholeMapView> OpenedConcept((string Key, IReadOnlyDictionary<string, int> Rank) concept, WholeMapView overview, (ConceptIndex Concepts, List<GraphEdge> Edges) graph, (AreaIndex Areas, WholeMapRules Rules, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
     {
+        var key = concept.Key;
         if (!graph.Concepts.Has(key))
         {
-            return ContextErrors.AreaUnknown.With("that concept isn't in this map (fix: read the concepts first, and name one of their ids)");
+            return UnknownConcept();
         }
 
-        var scoped = ConceptScope.Nodes(graph.Concepts, graph.Edges, key);
+        var scoped = ConceptScope.Nodes(graph.Concepts, graph.Edges, key, concept.Rank);
         var shown = scoped.Select(k => graph.Concepts.Known[k]).OrderBy(n => n.Key.Kind == NodeKind.Concept ? 0 : 1).ThenBy(n => n.Key.Kind).ThenBy(n => n.Key.Value, StringComparer.Ordinal).ToList();
         var shownKeys = shown.Select(n => n.Key.Value).ToHashSet(StringComparer.Ordinal);
         return overview with
@@ -106,8 +119,28 @@ public static class WholeMapBuilder
             Detail = WholeMapDetail.Nodes,
             Nodes = Nodes(shown, how.Areas, how.Text, how.RepoOf),
             Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
+            Pages = ConceptScope.Pages(graph.Concepts, graph.Edges, key, concept.Rank),
         };
     }
+
+    // The pages that relate to no concept (the first 200 in the section's order) with their actions, and the edges among them.
+    private static WholeMapView OpenedPages(IReadOnlyList<string> pages, WholeMapView overview, (Dictionary<string, GraphNode> Known, List<GraphEdge> Edges) graph, (AreaIndex Areas, MapText Text, IReadOnlyDictionary<string, string?>? RepoOf) how)
+    {
+        List<string> listed = [.. pages.Take(PageCap)];
+        var kept = listed.ToHashSet(StringComparer.Ordinal);
+        var actions = graph.Edges.Where(e => e is { Type: EdgeType.On, From.Kind: NodeKind.Action } && kept.Contains(e.To.Value)).Select(e => e.From.Value);
+        var shownKeys = kept.Concat(actions).ToHashSet(StringComparer.Ordinal);
+        return overview with
+        {
+            Detail = WholeMapDetail.Nodes,
+            Nodes = Nodes(shownKeys.Select(k => graph.Known[k]), how.Areas, how.Text, how.RepoOf),
+            Edges = Edges([.. graph.Edges.Where(e => shownKeys.Contains(e.From.Value) && shownKeys.Contains(e.To.Value))]),
+            Truncated = pages.Count > PageCap,
+            Pages = listed,
+        };
+    }
+
+    private static Result<WholeMapView> UnknownConcept() => ContextErrors.AreaUnknown.With("that concept isn't in this map (fix: read the concepts first, and name one of their ids)");
 
     private static string KindName(NodeKind kind) => kind.ToString().ToLowerInvariant();
 
@@ -165,7 +198,7 @@ public static class WholeMapBuilder
     {
         var confirmed = node.Provenance == Provenance.Human;
         var trust = TrustPolicy.ForNode(node, confirmed);
-        return new WholeMapNode(node.Key, text.Label(node.Label, trust), node.Key.Kind, area.Area, area.AlsoIn, trust, node.Provenance, node.Confidence, confirmed) { Repo = repo };
+        return new WholeMapNode(node.Key, text.Label(node.Label, trust), node.Key.Kind, area.Area, area.AlsoIn, trust, node.Provenance, node.Confidence, confirmed) { Repo = repo, Owner = PageOrder.IsOwner(node), PageId = PageOrder.PageIdOf(node) };
     }
 
     private static List<WholeMapEdge> Edges(List<GraphEdge> edges) =>

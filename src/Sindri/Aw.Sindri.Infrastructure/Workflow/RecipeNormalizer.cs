@@ -7,7 +7,7 @@ namespace Aw.Sindri.Infrastructure.Workflow;
 
 /// <summary>
 /// Turns a recipe's short forms into the long form (spec §3.1, W3) before typed binding: 'inputs: [fact:item]' is
-/// '[{ key: fact:item }]'; 'step: step.produce' is '{ use: step.produce }' and so is each bare Step input; a
+/// '[{ key: fact:item }]'; 'step: step.produce' is '{ use: step.produce }' and so is each bare Step input and a state's bare 'agent:' id; a
 /// transition's scalar 'from' is a one-item list; bare gates and effects are '{ use }'; a bare 'with:' value or child
 /// input is '{ literal }'; '200k' tokens are 200000; a loop without 'noProgress' gets the default signals; an absent 'urgency' is 'work'. Anything of
 /// an unexpected shape is left as written, for the shape check to report.
@@ -55,6 +55,11 @@ internal static class RecipeNormalizer
         if (state["step"] is JsonValue use)
         {
             state["step"] = new JsonObject { ["use"] = use.DeepClone() };
+        }
+
+        if (state["agent"] is JsonValue agent)
+        {
+            state["agent"] = new JsonObject { ["use"] = agent.DeepClone() };   // 'agent: codex' is '{ use: codex }' (#1269)
         }
 
         if (state["step"] is JsonObject step)

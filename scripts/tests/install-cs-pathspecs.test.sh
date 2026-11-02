@@ -20,15 +20,31 @@ covered() { # covered <repo-relative path>
   return 1
 }
 
-mapfile -t published < <(grep -oE '^ *pub [a-z-]+ [^ ]+\.csproj' "$ROOT/scripts/install-cs.sh" | awk '{print $3}')
+published=()
+while IFS= read -r p; do published+=("$p"); done < <(grep -oE '^ *pub [a-z-]+ [^ ]+\.csproj' "$ROOT/scripts/install-cs.sh" | awk '{print $3}')
 [ "${#published[@]}" -gt 0 ] || { echo "not ok - found no 'pub <name> <csproj>' lines in install-cs.sh"; exit 1; }
 
-declare -A seen=()
+# normalize <repo-relative path>: resolves . and .. segments in text (bash 3.2 has no associative arrays, and realpath -m is GNU-only)
+normalize() {
+  local out="" rest="$1" seg
+  while [ -n "$rest" ]; do
+    seg="${rest%%/*}"
+    if [ "$rest" = "$seg" ]; then rest=""; else rest="${rest#*/}"; fi
+    case "$seg" in
+      ''|.) ;;
+      ..) case "$out" in ''|..|*/..) out="${out:+$out/}.." ;; */*) out="${out%/*}" ;; *) out="" ;; esac ;;
+      *) out="${out:+$out/}$seg" ;;
+    esac
+  done
+  printf '%s\n' "$out"
+}
+
+seen=""
 queue=("${published[@]}")
 while [ "${#queue[@]}" -gt 0 ]; do
   proj="${queue[0]}"; queue=("${queue[@]:1}")
-  [ -n "${seen[$proj]:-}" ] && continue
-  seen[$proj]=1
+  grep -Fxq -- "$proj" <<< "$seen" && continue
+  seen="$seen$proj"$'\n'
   if [ ! -f "$ROOT/$proj" ]; then echo "not ok - $proj does not exist"; fail=1; continue; fi
   if covered "$proj"; then echo "ok - $proj is inside the build pathspecs"; else
     echo "not ok - $proj is outside the build pathspecs (add its src/ directory to SINDRI_BUILD_PATHSPECS)"; fail=1
@@ -37,7 +53,7 @@ while [ "${#queue[@]}" -gt 0 ]; do
   while IFS= read -r ref; do
     [ -n "$ref" ] || continue
     ref="${ref//\\//}"
-    queue+=("$(realpath -m --relative-to="$ROOT" "$ROOT/$base/$ref")")
+    queue+=("$(normalize "$base/$ref")")
   done < <(grep -oE '<ProjectReference[^>]*Include="[^"]+"' "$ROOT/$proj" | sed -E 's/.*Include="([^"]+)"/\1/')
 done
 exit "$fail"

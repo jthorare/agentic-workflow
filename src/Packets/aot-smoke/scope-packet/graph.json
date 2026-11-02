@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "version": 1,
+  "mapVersion": "v13",
+  "anchors": ["code:src/a.cs"],
+  "depth": 2,
+  "hops": [],
+  "nodes": [
+    { "id": "code:src/a.cs", "kind": "file", "summary": "a.cs" },
+    { "id": "code:src/b.cs", "kind": "file", "summary": "b.cs" }
+  ],
+  "edges": [
+    { "from": "code:src/a.cs", "to": "code:src/b.cs", "type": "imports" }
+  ]
+}

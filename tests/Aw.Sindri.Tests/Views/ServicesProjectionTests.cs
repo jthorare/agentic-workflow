@@ -65,7 +65,7 @@ public sealed class ServicesProjectionTests
 
         var row = ServicesProjection.Fold(row: null, _h.Events.Payload<ServicePaused>(paused).Value, paused);
 
-        Assert.Equal(new ServiceRow(_heartbeat, LastRun: null, Paused: true, 4), row);
+        Assert.Equal(new ServiceRow(_heartbeat, LastRun: null, Paused: true, 4, PausedBy: paused.Envelope.Actor, PausedAt: paused.Envelope.OccurredAt), row);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -78,7 +78,7 @@ internal static class ContextLensText
         return text.ToString();
     }
 
-    /// <summary>What was looked at, one word per source state ('onyx degraded (SND-CONTEXT-010)'), never colour.</summary>
+    /// <summary>What was looked at, one word per source state ('linear degraded (SND-CONTEXT-010)'), never colour.</summary>
     internal static string Searched(LensSearched searched)
     {
         var text = new StringBuilder(Invariant($"searched: map {searched.MapVersion} · depth {searched.Depth} · hops {string.Join(", ", searched.Hops)}\n"));

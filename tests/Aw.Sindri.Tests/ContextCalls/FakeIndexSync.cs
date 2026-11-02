@@ -1,0 +1,67 @@
+using Aw.Context.Core.ConceptSynthesis;
+using Aw.Context.Core.Engine;
+using Aw.Context.Core.Records;
+using Aw.Context.Core.Results;
+using Aw.Context.Core.Sources;
+using Aw.Context.Core.Sync;
+using Aw.Kernel;
+
+namespace Aw.Sindri.Tests.ContextCalls;
+
+/// <summary>An <see cref="IIndexSync"/> that answers what a test sets: the tick's rows, each source's progress, and what a source holds; it records the ticks and the purges.</summary>
+internal sealed class FakeIndexSync : IIndexSync
+{
+    public IReadOnlyList<SourceSync> Rows { get; set; } = [];
+
+    public IReadOnlyList<SourceProgress> Standing { get; set; } = [];
+
+    public SourceCounts Held { get; set; } = new(0, 0, 0);
+
+    public IReadOnlyList<SourceDecisions> Decided { get; set; } = [];
+
+    public ConceptSynthesisReport? Synthesized { get; set; }
+
+    public int Ticks { get; private set; }
+
+    public int Decides { get; private set; }
+
+    public List<SourceId> Purged { get; } = [];
+
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken)
+    {
+        Ticks++;
+        return ValueTask.FromResult<Result<SyncReport>>(new SyncReport(Rows));
+    }
+
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken)
+    {
+        Ticks++;
+        return ValueTask.FromResult<Result<SyncReport>>(new SyncReport([.. Rows.Where(r => r.Source == source)]));
+    }
+
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken)
+    {
+        Decides++;
+        return ValueTask.FromResult<Result<DecisionReport>>(new DecisionReport(Decided, Synthesized));
+    }
+
+    public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(Standing));
+
+    /// <summary>What <see cref="ConceptStatus"/> answers, unless <see cref="ConceptsFailure"/> is set.</summary>
+    public ConceptStatus Concepts { get; set; } = new(Enabled: false, Concepts: 0, MultiSource: 0, Queued: 0, Covered: 0, Watermark: 0, Embedded: 0, Pending: 0);
+
+    /// <summary>When set, <see cref="ConceptStatus"/> fails with it.</summary>
+    public Error? ConceptsFailure { get; set; }
+
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(ConceptsFailure is { } failure ? (Result<ConceptStatus>)failure : Concepts);
+
+    public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => ValueTask.FromResult<Result<SourceCounts>>(Held);
+
+    public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken)
+    {
+        Purged.Add(source);
+        return ValueTask.FromResult<Result<int>>(Held.Records);
+    }
+}

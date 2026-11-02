@@ -10,6 +10,8 @@ namespace Aw.Context.Core.Graph;
 /// <param name="Order">Its position in a flow ('step-of'), or null.</param>
 /// <param name="OtherKind">The kind of the node at the other end from the one shown ('to' for an out edge, 'from' for an in edge).</param>
 /// <param name="OtherLabel">That node's label, written like <see cref="NodeFact.Label"/> (fenced when untrusted); null when the node is not in the caller's map.</param>
+/// <param name="Count">A roll-up edge's count of file pairs (or files), otherwise null.</param>
+/// <param name="Example">A roll-up edge's first cited pair or file, otherwise null.</param>
 public sealed record EdgeDetail(
     NodeKey From,
     EdgeType Type,
@@ -19,7 +21,9 @@ public sealed record EdgeDetail(
     Results.Trust Trust,
     int? Order,
     NodeKind OtherKind,
-    string? OtherLabel)
+    string? OtherLabel,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] int? Count = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Example = null)
 {
     /// <summary>The detail for <paramref name="edge"/>.</summary>
     /// <param name="edge">The edge fact.</param>
@@ -29,7 +33,7 @@ public sealed record EdgeDetail(
     public static EdgeDetail Of(EdgeFact edge, NodeKind otherKind, string? otherLabel)
     {
         ArgumentNullException.ThrowIfNull(edge);
-        return new EdgeDetail(edge.From, edge.Type, edge.To, edge.Provenance, edge.Confirmed, edge.Trust, edge.Order, otherKind, otherLabel);
+        return new EdgeDetail(edge.From, edge.Type, edge.To, edge.Provenance, edge.Confirmed, edge.Trust, edge.Order, otherKind, otherLabel, edge.Count, edge.Example);
     }
 
     /// <summary>The plain fact (what the text form prints).</summary>

@@ -19,6 +19,28 @@ public interface IRepoReader
     /// <returns>The paths from the repo root, ordinal order.</returns>
     public ValueTask<Result<IReadOnlyList<string>>> ListFiles(ContextRepo repo, string commit, CancellationToken cancellationToken);
 
+    /// <summary>Lists the tracked files at a commit, the repo's deny globs not applied: the map build counts what its ignored roles drop with it (issue 1161), and never reads these paths. A reader that can't see the dropped paths answers like <see cref="ListFiles"/>.</summary>
+    /// <param name="repo">The repo: its name and checkout.</param>
+    /// <param name="commit">The commit.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The paths from the repo root, ordinal order.</returns>
+    public ValueTask<Result<IReadOnlyList<string>>> ListTracked(ContextRepo repo, string commit, CancellationToken cancellationToken) => ListFiles(repo, commit, cancellationToken);
+
+    /// <summary>Lists the paths deleted somewhere in the commit's history and not at the commit (a path deleted and later added back is not one), the repo's deny globs applied. A reader that can't see history answers none.</summary>
+    /// <param name="repo">The repo: its name and checkout.</param>
+    /// <param name="commit">The commit.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The paths from the repo root, ordinal order.</returns>
+    public ValueTask<Result<IReadOnlyList<string>>> RemovedPaths(ContextRepo repo, string commit, CancellationToken cancellationToken) => ValueTask.FromResult(Kernel.Results.Success<IReadOnlyList<string>>([]));
+
+    /// <summary>Gives the git blob id of each path at a commit, in one read. A path that is not a file there (missing, a directory, denied by the repo) is left out of the answer; an empty list asks git nothing.</summary>
+    /// <param name="repo">The repo: its name and checkout.</param>
+    /// <param name="commit">The commit.</param>
+    /// <param name="paths">The paths from the repo root, '/'-separated.</param>
+    /// <param name="cancellationToken">Cancels the read.</param>
+    /// <returns>The blob id of every path that is a file at the commit, by path.</returns>
+    public ValueTask<Result<IReadOnlyDictionary<string, string>>> BlobIds(ContextRepo repo, string commit, IReadOnlyList<string> paths, CancellationToken cancellationToken);
+
     /// <summary>Reads one file at a commit.</summary>
     /// <param name="repo">The repo: its name and checkout.</param>
     /// <param name="commit">The commit.</param>

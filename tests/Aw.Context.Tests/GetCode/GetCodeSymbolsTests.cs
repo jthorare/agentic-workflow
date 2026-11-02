@@ -151,8 +151,8 @@ public sealed class GetCodeSymbolsTests
         Assert.All(recording.Calls, c => Assert.Equal((_repo.Value, MapCommit), (c.Repo, c.AsOf)));
         Assert.Equal(CodeRules.MaxCallSymbols, recording.Calls.Count(c => c.Call == "callers"));
         Assert.Equal(CodeRules.MaxCallSymbols, recording.Calls.Count(c => c.Call == "callees"));
-        // exported symbols come first, then by position
-        Assert.Equal(many.OrderByDescending(s => s.Exported).ThenBy(s => s.StartLine).Select(s => s.Ref).Take(CodeRules.MaxCallSymbols), recording.Calls.Where(c => c.Call == "callers").Select(c => c.Subject), StringComparer.Ordinal);
+        // the cap keeps exported symbols first, then by position; they are asked in parallel, so the order of asking is not compared
+        Assert.Equal(many.OrderByDescending(s => s.Exported).ThenBy(s => s.StartLine).Select(s => s.Ref).Take(CodeRules.MaxCallSymbols).Order(StringComparer.Ordinal), recording.Calls.Where(c => c.Call == "callers").Select(c => c.Subject).Order(StringComparer.Ordinal), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

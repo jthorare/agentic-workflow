@@ -11,6 +11,9 @@ internal static partial class Labels
     /// <summary>Who is on a run that is still open, when it is you.</summary>
     internal const string RunWithYou = "with you";
 
+    /// <summary>What the current line says of an open run that waits at the desk.</summary>
+    internal const string RunWaitingForYou = "waiting for your answer";
+
     /// <summary>Who is on a run that is still open, when it is an agent.</summary>
     internal const string RunWithAgent = "with an agent";
 

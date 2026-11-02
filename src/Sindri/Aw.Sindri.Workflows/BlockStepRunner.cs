@@ -25,6 +25,8 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog catalog, BlockStepDispatch dispatch, IFactContents contents, IFactStore facts, IApprovedProfile approved, StepContexts contexts)
 {
     private const string ProvidersArgument = "providers";
+    private const string ParallelArgument = "parallel";
+    private const string ParallelKey = "workflow.judge.parallel";
 
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
@@ -62,9 +64,9 @@ internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog c
             : await StoreOutputs(done, cancellationToken).ConfigureAwait(false);
     }
 
-    // The ledger is asked for a repo the instance does not name only when something reads it: a Step marked IRepoStep, one with Step inputs, or one that takes 'providers'.
+    // The ledger is asked for a repo the instance does not name only when something reads it: a Step marked IRepoStep, one with Step inputs, or one that takes 'providers' or 'parallel'.
     private bool NeedsRepo(BlockStepRun run, BlockDescriptor? descriptor) =>
-        runtimes.NeedsRepo(run.Step) || run.Fills is { Count: > 0 } || descriptor?.Parameters.Any(static p => p.Name == ProvidersArgument) == true;
+        runtimes.NeedsRepo(run.Step) || run.Fills is { Count: > 0 } || Takes(descriptor, ProvidersArgument) || Takes(descriptor, ParallelArgument);
 
     // What the Step starts with, before its inputs: its arguments, the facts it reads and the repo. The repo is resolved first: a Step never learns "no repo" from a repo it could not read.
     private async Task<Result<StepContext>> Seed(BlockStepRun run, BlockDescriptor? descriptor, CancellationToken cancellationToken)
@@ -125,18 +127,43 @@ internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog c
             }
         }
 
-        if (descriptor?.Parameters.Any(static p => p.Name == ProvidersArgument) == true)
-        {
-            var providers = await Providers(run, repo, arguments, cancellationToken).ConfigureAwait(false);
-            if (providers.IsError)
-            {
-                return providers.Error;
-            }
+        var profiled = await ProfileArguments(descriptor, run, repo, arguments, cancellationToken).ConfigureAwait(false);
+        return profiled.IsError ? profiled.Error : arguments;
+    }
 
-            arguments[ProvidersArgument] = providers.Value;
+    private static bool Takes(BlockDescriptor? descriptor, string parameter) =>
+        descriptor?.Parameters.Any(p => string.Equals(p.Name, parameter, StringComparison.Ordinal)) == true;
+
+    private static bool TakesProfileWidth(BlockDescriptor? descriptor, BlockStepRun run) =>
+        Takes(descriptor, ParallelArgument) && run.Arguments.TryGetValue(ParallelArgument, out var width) && string.Equals(width.Profile, ParallelKey, StringComparison.Ordinal);
+
+    // 'providers' and a '{ profile: workflow.judge.parallel }' width come from the one approved-profile read, which happens only for a Step that takes either.
+    private async Task<Result<bool>> ProfileArguments(BlockDescriptor? descriptor, BlockStepRun run, RepoName? repo, Dictionary<string, JsonElement> arguments, CancellationToken cancellationToken)
+    {
+        var takesProviders = Takes(descriptor, ProvidersArgument);
+        var takesWidth = TakesProfileWidth(descriptor, run);
+        if (!takesProviders && !takesWidth)
+        {
+            return false;
         }
 
-        return arguments;
+        var profile = await ApprovedProfile(run, cancellationToken).ConfigureAwait(false);
+        if (profile.IsError)
+        {
+            return profile.Error;
+        }
+
+        if (takesProviders)
+        {
+            arguments[ProvidersArgument] = JsonSerializer.SerializeToElement(JudgeProviders.Effective(profile.Value, repo?.Value, Literal(arguments)), _json);
+        }
+
+        if (takesWidth && JudgeParallel.Effective(profile.Value, repo?.Value) is { } parallel)
+        {
+            arguments[ParallelArgument] = JsonSerializer.SerializeToElement(parallel, _json);
+        }
+
+        return true;
     }
 
     private async Task<Result<JsonElement>> ReadText(FactKey key, FactValue fact, CancellationToken cancellationToken)
@@ -147,9 +174,9 @@ internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog c
             : JsonSerializer.SerializeToElement(Encoding.UTF8.GetString(read.Value.Span), _json);
     }
 
-    // The effective provider list (JudgeProviders): the APPROVED profile's, narrowed by the recipe's own literal list; { profile: workflow.judge.providers } narrows nothing.
-    // Nothing approved means the defaults (no jev); an approved profile that can't be read fails the run, and the list is never widened.
-    private async Task<Result<JsonElement>> Providers(BlockStepRun run, RepoName? repo, Dictionary<string, JsonElement> arguments, CancellationToken cancellationToken)
+    // The APPROVED profile (never the live one): 'providers' (JudgeProviders) and a '{ profile: workflow.judge.parallel }' width resolve from it. Nothing approved means the defaults
+    // (no jev, the Step's own width); an approved profile that can't be read fails the run, and the list is never widened.
+    private async Task<Result<SindriProfile>> ApprovedProfile(BlockStepRun run, CancellationToken cancellationToken)
     {
         if (run.RepoUnreadable)
         {
@@ -157,17 +184,16 @@ internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog c
         }
 
         var latest = await approved.Latest(cancellationToken).ConfigureAwait(false);
-        if (latest.IsError)
-        {
-            return WorkflowErrors.BlockProfileUnreadable.With($"profile-unreadable: {latest.Error.Code}");
-        }
+        return latest.IsError
+            ? WorkflowErrors.BlockProfileUnreadable.With($"profile-unreadable: {latest.Error.Code}")
+            : latest.Value?.Profile ?? new SindriProfile(1, string.Empty);
+    }
 
-        var profile = latest.Value?.Profile ?? new SindriProfile(1, string.Empty);
-        IReadOnlyList<string>? literal = arguments.TryGetValue(ProvidersArgument, out var named) && named.ValueKind == JsonValueKind.Array
+    // The recipe's own provider list, which only narrows the profile's; { profile: workflow.judge.providers } carries none.
+    private static IReadOnlyList<string>? Literal(Dictionary<string, JsonElement> arguments) =>
+        arguments.TryGetValue(ProvidersArgument, out var named) && named.ValueKind == JsonValueKind.Array
             ? [.. named.EnumerateArray().Where(static n => n.ValueKind == JsonValueKind.String).Select(static n => n.GetString() ?? string.Empty)]
             : null;
-        return JsonSerializer.SerializeToElement(JudgeProviders.Effective(profile, repo?.Value, literal), _json);
-    }
 
     private async Task<Result<Dictionary<FactKey, JsonElement>>> ReadFacts(
         BlockDescriptor? descriptor, Dictionary<string, JsonElement> arguments, BlockStepRun run, CancellationToken cancellationToken)

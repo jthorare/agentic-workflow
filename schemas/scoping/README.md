@@ -15,6 +15,10 @@ JSON Schemas for the scoping station's facts (scoping spec `docs/superpowers/spe
 
 `questions.json`, `open-questions.json`, `brief.json`, `scope-input.json` and `challenge-round.json` are facts only (the packet's `questions.json` is `{ schemaVersion, questions: <questions.json items> }`, every question asked over the rounds; open questions are not carried in it yet, as no spec text names a key for them).
 
+## Graph references (issue 1005)
+
+A scope-map surface may carry `nodes` (ids of `fact:graph` nodes it cites) and `origin` (`graph` or `search`). `fact:graph` itself has no schema file yet: its shape is `docs/csharp/sindri-scoping.md` "The graph fact", checked by SCP-GRAPH-001 in Sindri and PKT-SCP-006 in aw-packets.
+
 ## Field names, and where the spec is silent
 
 - **Question** (`questions.json`): spec 7.3, field for field: `id`, `surfaces`, `dimension`, `impact`, `blocks`, `trust`, `question`, `options[]` (`id`, `answer`, `rationale`, `cites`, `recommended`, `yields`), `other`, `skip`. The 7.3 example is `examples/questions.spec-7-3.valid.json`. Ids: `Q<n>` (or the reserved `Q-revise`), option ids `Q3.a`.
@@ -30,6 +34,6 @@ JSON Schemas for the scoping station's facts (scoping spec `docs/superpowers/spe
 ## Notes
 
 - `scope-map`'s `change` and `baseSha` envelope fields come from the line gold fixture and the `docs/csharp/packets.md` conventions, not from spec 8.3.
-- "`recommended` is set on at most one option" (spec 7.3) is in the schema (`contains` with `maxContains: 1`), so `check-scoping-schemas.mjs` needs no extra code for it; `questions.two-recommended.invalid.json` pins it.
+- "`recommended` is set on at most one option" (spec 7.3) is in the schema (`contains` with `maxContains: 1`); `questions.two-recommended.invalid.json` pins it. "Exactly one" (#1204) is SCP-QST-001, not the schema, so a question with none is named by its id and `workflow.idea-to-brief` questions, which carry no `recommended`, still pass the schema.
 - Citation, `L-<lens>-<n>` and `S<n>` / `AC-<n>` ids start at 1 (`[1-9][0-9]*`), as in aw-packets' `lenses.json`.
 - `coverage.json` requires four rows, one per lens (a `contains` for each lens name); `coverage.four-code-rows.invalid.json` pins it. A source is a name or `{ id, state, reason?, code? }` (the shape #309 gives the recorded limits; `not-synced`'s code is assigned by the context lane's S-H, so the eval omits it).

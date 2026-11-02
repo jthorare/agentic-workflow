@@ -157,7 +157,8 @@ public sealed class WorktreeCommandTests : IDisposable
         var again = await _lab.Cli.Run("worktree-sweep", "--json");
 
         using var document = JsonDocument.Parse(again.Out);
-        Assert.Empty(document.RootElement.GetProperty("removed").EnumerateArray());
+        // The first sweep keeps a no-PR branch (no previous sweep to compare with); the second keeps it too (no PR, without --include-no-pr), so nothing but a no-PR branch could show up here.
+        Assert.All(document.RootElement.GetProperty("removed").EnumerateArray(), removed => Assert.Contains("unmerged-nopr", removed.ToString(), StringComparison.Ordinal));
     }
 
     [Fact, Trait("Lane", "integration")]

@@ -1,4 +1,5 @@
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Overrides;
@@ -18,7 +19,7 @@ public static class MapAccess
     /// deny globs hide is decided from the stored nodes and the nodes the overrides add (<see cref="DenyCut"/>: the code nodes of denied paths, the record nodes of denied documents
     /// and the decisions quoting them, the nodes only a denied file evidences, the features only those files implement, their edges and denied evidence), whatever a person's
     /// reject, delete, merge or accept made of them; (2) the stored graph is cut by that decision; (3) the overrides are cut by it (the ones about a hidden node, a proposal without
-    /// its allowed evidence, and a reject that names its proposal by either evidence); (4) the cut overrides are applied to the cut graph (a pending proposal only when
+    /// its allowed evidence, and a reject that names its proposal by either evidence); (3b) the owner's named pages are laid over the cut graph (<see cref="PageOverlay"/>, unless the scope leaves them out, as an export does); (4) the cut overrides are applied to the cut graph (a pending proposal only when
     /// <paramref name="pending"/>), which is <see cref="MapView.Applied"/>; then, for a session, only its repo's scope. Lenses, status, export, the review queue, promote
     /// and the history can't disagree.
     /// </summary>
@@ -79,6 +80,11 @@ public static class MapAccess
         // The resolved repos are for the gate and the session's scope step only.
         var cut = DenyCut.Of(merged, overrides, scope.Repos, ScopeRules.Mapped(settings.Value, scope.Repos));   // every override, pending or not: what is hidden doesn't depend on which reader asks
         var (cutGraph, cutOverrides) = (cut.Apply(merged), cut.Apply(overrides));
+        if (!scope.OmitPages)
+        {
+            cutGraph = PageOverlay.Apply(cutGraph, scope.Repos);   // after the deny cut (it never judges an owner node) and before the overrides, which may still act on owner nodes; never removes a map node
+        }
+
         var applied = OverrideApplier.Apply(cutGraph, pending ? cutOverrides : [.. cutOverrides.Where(o => o.Action != OverrideAction.Propose)]).Graph;
         var view = new MapView(cutGraph, applied, cutOverrides, cut);
         return !callerScope || scope.Caller.Kind != ContextCallerKind.Session ? view : ForSession(view, scope.Caller, emptyIsError);
@@ -157,6 +163,34 @@ public static class MapAccess
         return (cut.Apply(current), cut.UndoRows(overrides, at));
     }
 
+    /// <summary>What a build keeps of a graph under the mapped repos' demote globs (#1043): the 'implements' edges of demoted files are dropped, and the accepts standing on them are undone (the build writes the undo rows with the draft).</summary>
+    /// <param name="graph">The graph a build keeps.</param>
+    /// <param name="overrides">Every override of that graph's map.</param>
+    /// <param name="mapped">The repos the map is built from: only their demote globs judge a <c xml:lang="en">code:</c> key.</param>
+    /// <param name="at">When the build runs.</param>
+    /// <returns>The graph itself and no rows when nothing is demoted.</returns>
+    public static (GraphSnapshot Graph, IReadOnlyList<MapOverride> Undo) WithoutDemoted(GraphSnapshot graph, IReadOnlyList<MapOverride> overrides, IReadOnlyList<ContextRepo> mapped, DateTimeOffset at) =>
+        DemoteCut.Apply(graph, overrides, mapped, at);
+
+    /// <summary>What a build keeps of a graph when the map rules changed (#1043): an edge only the engine's accept holds up, which the new build no longer finds, is dropped and its accepts are undone (the build writes the undo rows with the draft).</summary>
+    /// <param name="graph">The graph a build keeps.</param>
+    /// <param name="overrides">Every override of that graph's map.</param>
+    /// <param name="found">What this build found.</param>
+    /// <param name="rulesChanged">Whether the build's rules differ from the ones the map was built under.</param>
+    /// <param name="at">When the build runs.</param>
+    /// <returns>The graph itself and no rows when the rules did not change or nothing is lost.</returns>
+    public static (GraphSnapshot Graph, IReadOnlyList<MapOverride> Undo) WithoutLostEngineAccepts(GraphSnapshot graph, IReadOnlyList<MapOverride> overrides, ExtractedMap found, bool rulesChanged, DateTimeOffset at) =>
+        RulesRedecide.Apply(graph, overrides, found, rulesChanged, at);
+
+    /// <summary>What a build keeps of a graph once the structure it generates itself is dropped (spec 2026-10-27 §2.3 and §5): the home and group features and their links, and every cluster-made feature and link. The build writes them again; a decision on a file link is carried to its new 'tags' link or undone.</summary>
+    /// <param name="graph">The graph a build keeps, as stored (no overrides applied).</param>
+    /// <param name="overrides">Every override of that graph's map.</param>
+    /// <param name="found">What this build found.</param>
+    /// <param name="at">When the build runs.</param>
+    /// <returns>The cut graph, the rows to write with the draft (undo rows, and the carried decisions) and what was replaced.</returns>
+    public static (GraphSnapshot Graph, IReadOnlyList<MapOverride> Rows, StructureCounts Counts) WithoutBuiltStructure(GraphSnapshot graph, IReadOnlyList<MapOverride> overrides, ExtractedMap found, DateTimeOffset at) =>
+        StructureCut.Apply(graph, overrides, found, at);
+
     /// <summary>The export document for a version's visible graph: decision nodes and 'quotes' edges are left to the decisions, which imply them.</summary>
     /// <param name="version">The version.</param>
     /// <param name="graph">The visible graph.</param>
@@ -170,7 +204,7 @@ public static class MapAccess
         var orphaned = OverrideApplier.Apply(graph, overrides).Orphaned;
         var o = StringComparer.Ordinal;
         return new MapDocument(
-            MapDocumentValidator.SchemaVersions[^1], MapDocumentKind.Export, version.Repo,
+            SchemaVersionFor(graph), MapDocumentKind.Export, version.Repo,
             [.. graph.Nodes.Where(n => n.Key.Kind != NodeKind.Decision).OrderBy(n => n.Key.Value, o)],
             [.. graph.Edges.Where(e => e.Type != EdgeType.Quotes).OrderBy(e => e.From.Value, o).ThenBy(e => e.To.Value, o).ThenBy(e => e.Type).ThenBy(e => e.Order)],
             [.. graph.Aliases.OrderBy(a => a.Alias.Value, o)],
@@ -179,4 +213,8 @@ public static class MapAccess
             version.KeyVersion, version.Commit, version.Number, exportedAt,
             [.. orphaned.Select(x => x.Target).DistinctBy(k => k.Value, o).OrderBy(k => k.Value, o)]);
     }
+
+    // Version 3 when the map holds an 'expresses' edge (no rollback past it, pages spec §3.2), else 2 for a 'tags' edge or a roll-up count, else 1, so a plain map still reads in a build that knows only version 1 (spec 2026-10-27 §3).
+    private static int SchemaVersionFor(GraphSnapshot graph) =>
+        graph.Edges.Any(e => e.Type == EdgeType.Expresses) ? 3 : graph.Edges.Any(e => e.Type == EdgeType.Tags || e.Count is not null) ? 2 : 1;
 }

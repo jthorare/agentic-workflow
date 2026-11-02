@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/sindri-pod.sh — the owner's door to a Sindri that runs in a Kubernetes pod (deployable-context spec K8, §C.3).
 #
-#   sindri-pod.sh connect [--onyx [--adopt]] [--port PORT] [--check] [--dry-run] [FLAGS]
+#   sindri-pod.sh connect [--port PORT] [--check] [--dry-run] [FLAGS]
 #   sindri-pod.sh profile edit [--no-approve] [FLAGS]
 #   sindri-pod.sh repo add <name> <url> [--credential env:NAME] [FLAGS]
 #   sindri-pod.sh approve [FLAGS]
@@ -12,8 +12,7 @@
 #
 # Exit codes are per verb (spec §C.3): only 0 and 2 mean the same everywhere (0 done; 2 cannot start: usage, a prerequisite
 # or the pod unreachable).
-#   connect, connect --onyx   0 a normal end (Ctrl-C); 2 a prerequisite or start failure, or Onyx off with --onyx; 3 gave up
-#                             reconnecting. An `attach` failure is printed as `attach exited <n>` and the app stays connected.
+#   connect                   0 a normal end (Ctrl-C); 2 a prerequisite or start failure; 3 gave up reconnecting
 #   profile edit              0 changed and approved, or unchanged, or --no-approve done; 1 approve refused or declined;
 #                             2 usage or the pod unreachable; 3 an invalid edit aborted (your file is kept); 4 conflict: the
 #                             pod's copy changed meanwhile (your edit is kept)
@@ -50,22 +49,12 @@
 # port-forwards it started; the app window is left alone).
 #
 #   --port PORT     the local port the owner port is forwarded to (default: the pod's own port)
-#   --onyx          also forward the pod's Onyx web port (Onyx runs as sibling containers in the pod, started by the kubelet;
-#                   its port is read from the pod's AW_SINDRI_ONYX_URL, 8081 when that has none; it is forwarded to the same
-#                   local port, because Onyx's WEB_DOMAIN is that address; AW_SINDRI_POD_ONYX_PORT overrides the local port
-#                   and warns). It prints the forwarded address, then runs
-#                   `kubectl exec -it <pod> -c sindri -- env AW_SINDRI_ONYX_FORWARD_URL=<address> sindri onyx attach` at this
-#                   terminal: attach waits for Onyx (up to 20 minutes), checks the pinned release, then the account steps; at
-#                   the sign-up step you sign up in the browser at the forwarded address and press Enter. Nothing is pulled
-#                   or started; re-running is safe. Ctrl-C during attach stops that command only. With
-#                   AW_SINDRI_ONYX_URL unset in the pod (Onyx off) it refuses, exit 2
-#   --adopt         with --onyx: pass --adopt to attach (an Onyx whose admin account an earlier Sindri volume made)
 #   --check         report each prerequisite (kubectl, jq, the app binary, exec and port-forward rights, the sindri container ready, the
 #                   local port free) and exit 0 if all hold, 2 if any does not; changes nothing
 #   --dry-run       print the kubectl and sindri-ui commands and the mirror home's path; run and write nothing
 #
 # Environment (all optional; .env.example): AW_STATE_DIR, TMPDIR, EDITOR, AW_SINDRI_UI, AW_SINDRI_POD_RETRIES,
-# AW_SINDRI_POD_RETRY_WAIT, AW_SINDRI_POD_POLL, AW_SINDRI_POD_ONYX_PORT. The retry settings also bound the wait for the
+# AW_SINDRI_POD_RETRY_WAIT, AW_SINDRI_POD_POLL. The retry settings also bound the wait for the
 # sindri container (default 40 attempts 15 s apart, 10 minutes); for reconnecting they default to 30 attempts 10 s apart.
 # Needs kubectl (exec and port-forward rights on the namespace), jq and sindri-ui (`scripts/install-cs.sh`) for connect.
 # Each prerequisite failure is one line and exit 2. No colour, no spinner.
@@ -76,7 +65,7 @@ say() { echo "sindri-pod: $*" >&2; }
 die() { say "$*"; exit 2; }
 give_up() { say "$*"; exit 3; }
 usage() {
-  say "usage: sindri-pod.sh connect [--onyx [--adopt]] [--port PORT] [--check] [--dry-run] | profile edit [--no-approve] | repo add <name> <url> [--credential env:NAME] | approve | doctor"
+  say "usage: sindri-pod.sh connect [--port PORT] [--check] [--dry-run] | profile edit [--no-approve] | repo add <name> <url> [--credential env:NAME] | approve | doctor"
   say "       every verb takes [--context C] [--namespace N] [--pod P | --release R]"
   exit 2
 }
@@ -90,7 +79,7 @@ case "${1:-}" in
   doctor) verb=doctor; shift ;;
   *) usage ;;
 esac
-ctx="" ns="" pod="" release="" lport="" onyx=0 adopt=0 dry=0 check=0 noapprove=0 cred=""
+ctx="" ns="" pod="" release="" lport="" dry=0 check=0 noapprove=0 cred=""
 pos=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -100,8 +89,6 @@ while [ $# -gt 0 ]; do
     --release) [ $# -ge 2 ] || usage; release="$2"; shift 2 ;;
     --port) [ $# -ge 2 ] || usage; lport="$2"; shift 2 ;;
     --credential) [ $# -ge 2 ] || usage; cred="$2"; shift 2 ;;
-    --onyx) onyx=1; shift ;;
-    --adopt) adopt=1; shift ;;
     --check) check=1; shift ;;
     --no-approve) noapprove=1; shift ;;
     --dry-run) dry=1; shift ;;
@@ -111,10 +98,9 @@ while [ $# -gt 0 ]; do
 done
 [ -z "$pod" ] || [ -z "$release" ] || { say "--pod and --release name the same thing: pass one"; usage; }
 [ -n "$pod" ] || pod="${release:-sindri}-0"
-[ "$verb" = connect ] || [ "$onyx$adopt$dry$check$lport" = 0000 ] || usage
+[ "$verb" = connect ] || [ "$dry$check$lport" = 00 ] || usage
 [ "$verb" = edit ] || [ "$noapprove" = 0 ] || usage
 [ "$verb" = repo-add ] || [ -z "$cred" ] || usage
-[ "$onyx" = 1 ] || [ "$adopt" = 0 ] || { say "--adopt goes with --onyx"; usage; }
 if [ "$verb" = repo-add ]; then [ "${#pos[@]}" = 2 ] || usage; else [ "${#pos[@]}" = 0 ] || usage; fi
 case "$lport" in ''|*[!0-9]*) [ -z "$lport" ] || die "--port must be a number" ;; esac
 
@@ -264,14 +250,6 @@ container_state() {
     *) echo "$s" ;;
   esac
 }
-# Onyx's port in the pod: from AW_SINDRI_ONYX_URL (empty output when it is unset: Onyx is off); 8081 when the URL has no port.
-pod_onyx_port() {
-  local u
-  u="$(kc exec "$pod" -c sindri -- sh -c 'printf %s "${AW_SINDRI_ONYX_URL:-}"' 2>/dev/null)"
-  [ -n "$u" ] || return 0
-  printf '%s\n' "$u" | sed -n 's#^[a-z]*://[^/:]*:\([0-9][0-9]*\).*#\1#p' | grep . || echo 8081
-}
-
 alive() { [ -n "$1" ] && kill -0 "$1" 2>/dev/null; }
 
 find_ui() {
@@ -286,11 +264,6 @@ if [ "$dry" = 1 ]; then
   echo "+ kubectl port-forward pod/$pod ${lport:-<pod port>}:<pod port from control.json>"
   echo "+ AW_SINDRI_APP_NO_MCP=1 AW_SINDRI_HOME=<mirror home> <sindri-ui: \$AW_SINDRI_UI, else $state/bin/cs/current/sindri-ui>"
   echo "  (every ${poll}s: re-read pid, epoch and token; on a change or a dropped forward, retry up to $retries attempts ${retry_wait}s apart and rewrite the mirror home)"
-  if [ "$onyx" = 1 ]; then
-    echo "+ kubectl exec $pod -c sindri -- sh -c 'printf %s \$AW_SINDRI_ONYX_URL'   (Onyx's port; unset means Onyx is off: refused)"
-    echo "+ kubectl port-forward pod/$pod ${AW_SINDRI_POD_ONYX_PORT:-<onyx port>}:<onyx port>; print Onyx's page http://127.0.0.1:${AW_SINDRI_POD_ONYX_PORT:-<onyx port>}"
-    echo "+ kubectl exec -it $pod -c sindri -- env AW_SINDRI_ONYX_FORWARD_URL=<address> sindri onyx attach${adopt:+ --adopt}   (Ctrl-C stops attach only; a failure is printed as 'attach exited <n>')"
-  fi
   exit 0
 fi
 
@@ -299,7 +272,6 @@ step_ok() { [ "$check" = 1 ] && say "ok: $*"; return 0; }
 step_fail() { say "$*"; fails=1; [ "$check" = 1 ] || exit 2; }
 port_taken() { (exec 3<>"/dev/tcp/127.0.0.1/$1") 2>/dev/null; }
 
-onyx_remote="" onyx_local=""
 have_k=1
 if command -v kubectl >/dev/null 2>&1; then step_ok "kubectl is on the PATH"
 else step_fail "kubectl is not on the PATH (it needs exec and port-forward rights on the namespace)"; have_k=0; fi
@@ -321,7 +293,7 @@ if [ "$have_k" = 1 ]; then
     if [ "$ans" = yes ]; then step_ok "kubectl may create $rverb in $ns"
     else step_fail "kubectl is not allowed to 'create $rverb' in $ns on $ctx (answer: ${ans:-none})"; fi
   done
-  # Ready means the sindri container, not the pod: an Onyx container that crash-loops keeps the pod not Ready and Sindri works.
+  # Ready means the sindri container, not the pod: another container that crash-loops keeps the pod not Ready and Sindri works.
   # connect waits for it (10 minutes, its state every 15 s); --check only reports.
   n=0
   while :; do
@@ -334,7 +306,7 @@ if [ "$have_k" = 1 ]; then
   others="$(other_containers)"
   if [ "$sready" = true ]; then
     step_ok "the sindri container of pod $pod is ready"
-    [ -z "$others" ] || say "Onyx: not answering, see sindri doctor"
+    [ -z "$others" ] || say "other containers not ready ($others); see kubectl describe pod $pod"
   else
     step_fail "the sindri container of pod $pod is not running (state: $(container_state)); see: kubectl logs $pod -c sindri${others:+ (other containers, for information: $others)}"
   fi
@@ -346,19 +318,6 @@ if [ "$have_k" = 1 ]; then
   if [ -z "$want" ]; then step_ok "local port: skipped (the pod's control.json is not readable yet)"
   elif port_taken "$want"; then step_fail "local port $want is taken; pick another with --port"
   else step_ok "local port $want is free"; fi
-  if [ "$onyx" = 1 ] && [ "$sready" = true ]; then
-    onyx_remote="$(pod_onyx_port)"
-    if [ -z "$onyx_remote" ]; then
-      step_fail "Onyx is off in this install (onyx.enabled=false); use connect."
-    else
-      onyx_local="${AW_SINDRI_POD_ONYX_PORT:-$onyx_remote}"
-      if [ "$onyx_local" != "$onyx_remote" ]; then
-        say "warning: AW_SINDRI_POD_ONYX_PORT=$onyx_local: sign-up redirects and connector OAuth may land on port $onyx_remote, not $onyx_local"
-      fi
-      if port_taken "$onyx_local"; then step_fail "local port $onyx_local is in use: stop what uses it, then run this again"
-      else step_ok "local port $onyx_local (Onyx) is free"; fi
-    fi
-  fi
 fi
 if [ "$check" = 1 ]; then
   [ "$fails" = 0 ] && exit 0
@@ -379,13 +338,12 @@ safe="$(printf '%s-%s' "$ctx" "$ns" | tr -c 'A-Za-z0-9._-' '_')"
 logs="$state/sindri-pod/$safe/logs"   # logs hold no secrets and outlive the mirror home
 mkdir -p "$home/auth" "$logs" || die "can't create $home"
 
-pf_pid="" onyx_pf_pid="" ui_pid=""
+pf_pid="" ui_pid=""
 cur_pid="" cur_epoch="" cur_token="" remote_port=""
 
 stop_own() {   # only the port-forwards and the app this run recorded
   [ -z "$pf_pid" ] || kill "$pf_pid" 2>/dev/null
-  [ -z "$onyx_pf_pid" ] || kill "$onyx_pf_pid" 2>/dev/null
-  pf_pid="" onyx_pf_pid=""
+  pf_pid=""
   if [ -n "$ui_pid" ]; then   # the app is useless once the mirror home is gone
     kill "$ui_pid" 2>/dev/null
     local n=0; while alive "$ui_pid" && [ "$n" -lt 50 ]; do sleep 0.1; n=$((n + 1)); done
@@ -455,22 +413,6 @@ ui_pid=$!
 say "app started (pid $ui_pid) on $home"
 say "connected: $pod at http://127.0.0.1:$lport; Ctrl-C to stop"
 
-if [ "$onyx" = 1 ]; then
-  kubectl "${kargs[@]}" port-forward "pod/$pod" "$onyx_local:$onyx_remote" >> "$logs/onyx-port-forward.log" 2>&1 &
-  onyx_pf_pid=$!
-  say "Onyx's page: http://127.0.0.1:$onyx_local"
-  attach=(env "AW_SINDRI_ONYX_FORWARD_URL=http://127.0.0.1:$onyx_local" sindri onyx attach)
-  [ "$adopt" = 0 ] || attach+=(--adopt)
-  trap ':' INT   # Ctrl-C reaches attach (and this shell) but ends only attach
-  kc exec -it "$pod" -c sindri -- "${attach[@]}"
-  rc=$?
-  trap 'exit 0' INT
-  case "$rc" in
-    0) ;;
-    130) say "attach stopped; the app stays connected; rerun connect --onyx to continue" ;;
-    *) say "attach exited $rc; the app stays connected; rerun connect --onyx" ;;
-  esac
-fi
 
 while alive "$ui_pid"; do
   sleep_for 1

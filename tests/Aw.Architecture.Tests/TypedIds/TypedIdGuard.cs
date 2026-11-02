@@ -86,6 +86,12 @@ internal static class TypedIdGuard
 
     private static IEnumerable<string> PropertyViolations(Type type)
     {
+        // why: System.Text.Json never deserializes an abstract type or an interface, and an abstract type's constructor is emitted protected, so there is no read to require the id on
+        if (type.IsAbstract)
+        {
+            return [];
+        }
+
         var constructor = SerializerConstructor(type);
         return type.GetProperties(BindingFlags.Instance | BindingFlags.Public | BindingFlags.DeclaredOnly)
             .Where(p => IsTypedId(p.PropertyType) && !IsRequiredOnRead(p, constructor))

@@ -30,15 +30,16 @@
         <TextBlock Classes="detail-title" Text="{Binding Text.CreateItem}" />
         <TextBlock Classes="caption subtle" Text="{Binding Text.TitleRequired}" AutomationProperties.AccessibilityView="Raw" />
         <TextBox x:Name="TitleField" Text="{Binding Title}" AutomationProperties.Name="{Binding Text.TitleRequired}" AutomationProperties.HelpText="{Binding TitleError}" />
-        <!-- A blank submit: said under the field, and spoken once through the gated region (live only while it speaks; never empty). -->
-        <TextBlock x:Name="TitleError" Classes="caption error" Text="{Binding TitleError}" IsVisible="{Binding HasTitleError}"
+        <!-- A blank submit: said under the field (the line is always there, a no-break space when empty, so nothing below it moves), and spoken once through the gated region (live only while it speaks; never empty). -->
+        <TextBlock x:Name="TitleError" Classes="caption error" Text="{Binding TitleErrorLine}"
                    AutomationProperties.AccessibilityView="Raw" />
         <!-- In the tree whenever the title is blank (before any submit), so the one announcement lands in a region that exists. -->
         <TextBlock x:Name="TitleLive" Classes="caption live-region" Classes.live="{Binding IsAnnouncing}" Text="{Binding Announcement}"
                    Width="0" Opacity="0" IsHitTestVisible="False" HorizontalAlignment="Left"
                    IsVisible="{Binding IsTitleBlank}" />
         <TextBlock Classes="caption subtle" Text="{Binding Text.Repo}" />
-        <TextBox x:Name="RepoField" Text="{Binding Repo}" AutomationProperties.Name="{Binding Text.Repo}" />
+        <ComboBox x:Name="RepoField" IsEditable="True" ItemsSource="{Binding RepoChoices}" Text="{Binding Repo}" HorizontalAlignment="Stretch"
+                  AutomationProperties.Name="{Binding Text.Repo}" />
         <TextBlock Classes="caption subtle" Text="{Binding Text.Body}" />
         <TextBox x:Name="BodyField" Text="{Binding Body}" AcceptsReturn="True" TextWrapping="Wrap" MinHeight="72"
                  AutomationProperties.Name="{Binding Text.Body}" />

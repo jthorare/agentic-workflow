@@ -14,10 +14,16 @@ public sealed class SessionExitTests
 {
     private const string Uuid = "0a1b2c3d-0000-4000-8000-000000000001";
     private readonly SessionHarness _s = new();
+    private readonly RecordingUsageSampler _sampler;
+
+    public SessionExitTests()
+    {
+        _sampler = new(_s);
+    }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private SessionExitService Service() => new(_s.Events());
+    private SessionExitService Service() => new(_s.Events(), _sampler);
 
     [Fact]
     public async Task SessionExit_records_session_ended_with_the_exit_code()
@@ -78,5 +84,43 @@ public sealed class SessionExitTests
         _ = await Service().Handle(A.SessionExitRequest().Build(), Token);
 
         Expect.Equal(0, _s.Liveness.Silent(_s.Now.AddDays(1), LaunchRules.LostAfter).Count);
+    }
+
+    [Fact]
+    public async Task A_limit_exit_appends_session_ended_limit_with_kind_limit_and_peaks_never_lost()
+    {
+        await _s.Started();
+        var peaks = new LimitPeaks(MemoryBytes: 2_200_000_000, CpuPercent: 80, Tasks: 12, WallSeconds: 300);
+        var limit = new LimitEnd(LimitKind.Memory, Limit: 2_000_000_000, Peak: 2_200_000_000, peaks);
+
+        var result = await Service().Handle(A.SessionExitRequest().WithExitCode(137).WithLimit(limit).Build(), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        var payload = _s.Views.Slice.Events.Payload<SessionEnded>(Assert.Single(_s.Views.Slice.Store.Events)).Value;
+        Assert.Equal([(A.FirstLaunchId, 0)], _sampler.Flushed);
+        Expect.Equal((SessionEndReason.Limit, LimitKind.Memory, 2_000_000_000L, 2_200_000_000L, peaks, null), (payload.Reason, payload.Kind, payload.Limit, payload.Peak, payload.Peaks, payload.ExitCode));
+    }
+
+    [Fact]
+    public async Task Every_exit_takes_a_final_usage_sample_before_session_ended()
+    {
+        await _s.Started();
+
+        _ = await Service().Handle(A.SessionExitRequest().Build(), Token);
+
+        Assert.Equal([(A.FirstLaunchId, 0)], _sampler.Flushed);   // the flush ran while the ledger held no session.ended yet
+    }
+
+    [Fact]
+    public async Task A_failed_final_sample_still_ends_the_session()
+    {
+        await _s.Started();
+        _sampler.Fail = true;
+
+        var result = await Service().Handle(A.SessionExitRequest().WithExitCode(3).Build(), Token);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.ToString() : null);
+        var payload = _s.Views.Slice.Events.Payload<SessionEnded>(Assert.Single(_s.Views.Slice.Store.Events)).Value;
+        Expect.Equal((SessionEndReason.Exit, 3), (payload.Reason, payload.ExitCode));
     }
 }

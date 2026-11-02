@@ -39,6 +39,14 @@ internal static partial class Labels
     /// <summary>What a file with no feature says.</summary>
     internal const string ContextFilesNoFeature = "Not linked to a feature yet";
 
+    /// <summary>A file the model only tagged: it has no home feature of its own.</summary>
+    internal const string ContextFilesNoHome = "No home feature";
+
+    /// <summary>The words for a file's tags, after its home feature.</summary>
+    /// <param name="names">The tag names, comma separated.</param>
+    /// <returns>"also tagged: auth, audit".</returns>
+    internal static string ContextFilesAlsoTagged(string names) => "also tagged: " + names;
+
     /// <summary>What a file with no ticket or decision says.</summary>
     internal const string ContextFilesIntentNone = "None";
 
@@ -143,4 +151,15 @@ internal static partial class Labels
         < 1440 => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalHours} h ago"),
         _ => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalDays} d ago"),
     };
+
+    /// <summary>The word for a filter that matches no file of the folder.</summary>
+    /// <param name="filter">What was typed.</param>
+    /// <returns>"No files match 'zzzz'."</returns>
+    internal static string ContextFilesNoMatch(string filter) => $"No files match '{filter}'.";
+
+    /// <summary>The totals line while a filter is on: how many of the folder's entries it shows.</summary>
+    /// <param name="shown">The entries shown.</param>
+    /// <param name="all">The entries in the folder.</param>
+    /// <returns>"2 of 5 in this folder".</returns>
+    internal static string ContextFilesFilteredCount(int shown, int all) => string.Create(CultureInfo.InvariantCulture, $"{shown} of {all} in this folder");
 }

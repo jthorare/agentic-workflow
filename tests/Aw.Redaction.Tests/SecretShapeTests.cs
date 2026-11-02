@@ -4,8 +4,8 @@ namespace Aw.Redaction.Tests;
 public sealed class SecretShapeTests
 {
     [Theory]
-    [MemberData(nameof(Corpus.Plain), MemberType = typeof(Corpus))]
-    [MemberData(nameof(Corpus.LongAndShellShapes), MemberType = typeof(Corpus))]
+    [MemberData(nameof(Corpus.Plain), MemberType = typeof(Corpus), DisableDiscoveryEnumeration = true)]
+    [MemberData(nameof(Corpus.LongAndShellShapes), MemberType = typeof(Corpus), DisableDiscoveryEnumeration = true)]
     public void Each_secret_shape_is_replaced_by_its_rule_placeholder(SecretCase secret)
     {
         var result = Redactor.Default.Scrub(secret.Input);
@@ -18,7 +18,7 @@ public sealed class SecretShapeTests
     }
 
     [Theory]
-    [MemberData(nameof(Corpus.Evasions), MemberType = typeof(Corpus))]
+    [MemberData(nameof(Corpus.Evasions), MemberType = typeof(Corpus), DisableDiscoveryEnumeration = true)]
     public void Evasion_forms_are_still_caught(SecretCase secret)
     {
         var result = Redactor.Default.Scrub(secret.Input);

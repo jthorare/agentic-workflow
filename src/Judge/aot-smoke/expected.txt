@@ -28,9 +28,9 @@ exit 64
 ## health after
 {"status":"ok","failures24h":0}
 ## prompt-sort (offline: heuristics, every scaffold off, nothing printed)
-## not yet built (cutover spec 5.2)
-judge: label is not in this build yet
-exit 1
+## label status (offline: the empty eval store)
+{"questions":[]}
+## not yet built (cutover spec 5.2: the prompt-sort subcommands of unit 6.4)
 judge: prompt-sort why is not in this build yet
 exit 1
 ## state files

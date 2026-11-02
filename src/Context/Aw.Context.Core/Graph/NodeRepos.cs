@@ -16,7 +16,7 @@ public static class NodeRepos
     public static IReadOnlyDictionary<string, string?> Index(GraphSnapshot graph, string? mapRepo)
     {
         ArgumentNullException.ThrowIfNull(graph);
-        var links = graph.Edges.Where(e => e.Type is EdgeType.Implements or EdgeType.Tests).ToList();
+        var links = graph.Edges.Where(e => e.Type is EdgeType.Implements or EdgeType.Tests or EdgeType.Tags).ToList();
         var direct = DirectRepos(graph, links);
         var derived = DerivedRepos(direct, links);
         var index = new Dictionary<string, string?>(StringComparer.Ordinal);

@@ -40,5 +40,7 @@ internal static class ServiceText
     };
 
     private static string Next(ServiceView s) =>
-        s.Paused ? "paused" : s.NextSlot is { } slot ? slot.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss'Z'", CultureInfo.InvariantCulture) : "-";
+        s.Paused ? "paused" : s.OverdueSince is { } missed ? "overdue since " + Stamp(missed) : s.NextSlot is { } slot ? Stamp(slot) : "-";
+
+    private static string Stamp(DateTimeOffset at) => at.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss'Z'", CultureInfo.InvariantCulture);
 }

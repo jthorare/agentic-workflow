@@ -24,7 +24,7 @@ internal sealed class JudgeCliChoice(IToolRunner runner, Func<string, string?> e
         var program = environment("AW_SINDRI_JUDGE") is { Length: > 0 } given ? given : "judge";
         var options = new ToolRunOptions(Environment: new Dictionary<string, string?>(StringComparer.Ordinal) { ["AW_JUDGE_STATE_DIR"] = stateDirectory }, StandardInput: Input(request));
         var run = runner.Run(program, ["choose", "--providers", string.Join(',', request.Providers)], _timeout, options, cancellationToken);
-        return ValueTask.FromResult(Answer(run, program));
+        return ValueTask.FromResult(Answer(run, program, "choose"));
     }
 
     private static string Input(ChooseRequest request)
@@ -44,22 +44,27 @@ internal sealed class JudgeCliChoice(IToolRunner runner, Func<string, string?> e
         }.ToJsonString();
     }
 
-    private static ChooseAnswer Answer(ToolRun run, string program)
+    /// <summary>Reads the judge's envelope from a finished run: exit 0 is a decided envelope, exit 2 an escalated one, anything else a failed answer.</summary>
+    /// <param name="run">The finished run.</param>
+    /// <param name="program">The program that ran, for the failure text.</param>
+    /// <param name="verb">The judge question, for the failure text.</param>
+    /// <returns>The answer.</returns>
+    internal static ChooseAnswer Answer(ToolRun run, string program, string verb)
     {
         if (run.Outcome != ToolOutcome.Exited)
         {
-            return Failed($"judge choose did not finish ({program}: {run.Outcome}); fix: build judge and put it on the PATH, or set AW_SINDRI_JUDGE");
+            return Failed($"judge {verb} did not finish ({program}: {run.Outcome}); fix: build judge and put it on the PATH, or set AW_SINDRI_JUDGE");
         }
 
         if (run.ExitCode is not (0 or 2))
         {
-            return Failed($"judge choose exited {run.ExitCode.ToString(CultureInfo.InvariantCulture)}: {Tail(run.Error.Length > 0 ? run.Error : run.Output)}");
+            return Failed($"judge {verb} exited {run.ExitCode.ToString(CultureInfo.InvariantCulture)}: {Tail(run.Error.Length > 0 ? run.Error : run.Output)}");
         }
 
         var envelope = Parse(run.Output);
         if (envelope is null)
         {
-            return Failed($"judge choose printed no JSON envelope: {Tail(run.Output)}");
+            return Failed($"judge {verb} printed no JSON envelope: {Tail(run.Output)}");
         }
 
         var reason = Text(envelope, "reasonCode");

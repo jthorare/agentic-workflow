@@ -78,7 +78,7 @@ internal static class MapGraphChecks
             var from = Resolve(edge.From, nodes, aliases, $"{path}.from", problems);
             var to = Resolve(edge.To, nodes, aliases, $"{path}.to", problems);
             Confidence(edge.Confidence, $"{path}.confidence", problems);
-            if (from is null || to is null || Refused(edge, from, to, path, problems))
+            if (from is null || to is null || Refused(edge, from, to, path, problems) || CountRefused(edge, from, path, problems))
             {
                 continue;
             }
@@ -101,6 +101,24 @@ internal static class MapGraphChecks
         if (problem is not null)
         {
             problems.Invalid($"{path}.type", problem);
+        }
+
+        return problem is not null;
+    }
+
+    // A count belongs to a roll-up edge only: a feature's deterministic 'depends-on', 'reads' or 'writes' that the build made from its files (spec 2026-10-27 §3), at least 1.
+    private static bool CountRefused(GraphEdge edge, GraphNode from, string path, MapProblems problems)
+    {
+        if (edge.Count is not { } count)
+        {
+            return false;
+        }
+
+        var rollUp = from.Key.Kind == NodeKind.Feature && edge.Type is EdgeType.DependsOn or EdgeType.Reads or EdgeType.Writes && edge.Provenance == Results.Provenance.Deterministic;
+        var problem = !rollUp ? "a count belongs to a roll-up edge only (a feature's deterministic 'depends-on', 'reads' or 'writes')" : count < 1 ? Fmt($"{count} isn't a count (1 or more)") : null;
+        if (problem is not null)
+        {
+            problems.Invalid($"{path}.count", problem);
         }
 
         return problem is not null;

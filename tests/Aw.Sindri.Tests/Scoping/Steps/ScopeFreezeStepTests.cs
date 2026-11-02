@@ -134,6 +134,45 @@ public sealed class ScopeFreezeStepTests
         Assert.Contains(other, Out(result, "findings").ToJsonString(), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task Freeze_re_checks_with_the_run_records_in_fact_runs_so_two_runs_on_one_requested_model_are_a_mismatch_naming_SCP_CHAL_002()
+    {
+        var facts = Facts().Edit("runs", n =>
+        {
+            foreach (var run in n["runs"]!.AsArray().Take(2))
+            {
+                run!["model"] = "m-1";
+                run["requested"] = "m-1";
+            }
+        });
+
+        var result = await Run(facts);
+
+        Assert.Equal("mismatch", result.Result!.Outcome.Value);
+        Assert.Contains("SCP-CHAL-002", Out(result, "findings").ToJsonString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(_packets.Calls, static c => c.Verb == "freeze");
+    }
+
+    [Fact]
+    public async Task Freeze_re_checks_a_packet_whose_gap_search_has_not_run_as_a_mismatch_naming_SCP_GAP_001()
+    {
+        var result = await Run(Facts().Edit("gapSearch", n => n["rounds"]!.AsArray().Clear()));
+
+        Assert.Equal("mismatch", result.Result!.Outcome.Value);
+        Assert.Contains("SCP-GAP-001", Out(result, "findings").ToJsonString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Freeze_reads_the_recipes_gap_search_cap_so_a_confirmed_last_round_of_a_spent_loop_still_freezes()
+    {
+        var facts = Facts().Edit("gapSearch", n => n["rounds"]![0]!["candidates"] = JsonNode.Parse("""[{"id":"G1.1","title":"Nightly purge","kind":"job","citation":"code:src/jobs/purge.ts","excerpt":"x","query":"q","anchor":"code:src/jobs/purge.ts","why":"w","ruling":"real-gap"}]"""));
+        var context = ScopingStepContexts.Of("step.scope.freeze", facts, loopCaps: new Dictionary<string, int>(StringComparer.Ordinal) { ["gapsearch"] = 1 }) with { Repo = RepoName.From("demo") };
+
+        var result = await new ScopeFreezeStep(_area, _packets).Run(context, Token);
+
+        Assert.Equal("frozen", result.Result!.Outcome.Value);
+    }
+
     /// <summary>Hashes as the inner fake does and freezes under another hash, as a packet edited between the two calls would.</summary>
     private sealed class FreezesAs(InMemoryPackets inner, string hash) : IPackets
     {

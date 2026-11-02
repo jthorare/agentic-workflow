@@ -25,6 +25,8 @@ internal static class GraphRows
     public static readonly IRowMapper<string> Since = new TextMapper();
     public static readonly IRowMapper<(int Version, string Since)> Hold = new HoldMapper();
 
+    public static readonly IRowMapper<(int Version, string Hashes)> PinHashes = new HoldMapper();   // the same shape: a version and a text
+
     private static string? Text(SqliteDataReader r, int i) => r.IsDBNull(i) ? null : r.GetString(i);
 
     private sealed class IdMapper : IRowMapper<long>
@@ -34,7 +36,7 @@ internal static class GraphRows
 
     private sealed class HeadMapper : IRowMapper<MapHead>
     {
-        public MapHead Map(SqliteDataReader r) => new(Core.Engine.ContextRepoName.From(r.GetString(0)), r.GetString(1), r.GetInt64(2) == 1);
+        public MapHead Map(SqliteDataReader r) => new(Core.Engine.ContextRepoName.From(r.GetString(0)), r.GetString(1), r.GetInt64(2) == 1) { IndexCommit = r.IsDBNull(3) ? null : r.GetString(3) };
     }
 
     private sealed class TextMapper : IRowMapper<string>
@@ -54,8 +56,16 @@ internal static class GraphRows
 
     private sealed class VersionMapper : IRowMapper<MapVersion>
     {
-        public MapVersion Map(SqliteDataReader r) => new(r.GetInt32(0) is > 0 and var number ? number : throw new InvalidOperationException("map_version.id is not positive"), Core.Engine.ContextRepoName.From(r.GetString(1)), Text(r, 2), r.GetInt32(3),
-            GraphText.Time(r.GetString(4)) ?? default, GraphText.Status(r.GetString(5)));
+        public MapVersion Map(SqliteDataReader r)
+        {
+            var number = r.GetInt32(0) is > 0 and var id ? id : throw new InvalidOperationException("map_version.id is not positive");
+            return new MapVersion(number, Core.Engine.ContextRepoName.From(r.GetString(1)), Text(r, 2), r.GetInt32(3), GraphText.Time(r.GetString(4)) ?? default, GraphText.Status(r.GetString(5)))
+            {
+                Ruleset = Text(r, 6),
+                Dropped = DroppedText.Read(Text(r, 7)),
+                Checks = Text(r, 8),
+            };
+        }
     }
 
     private sealed class NodeMapper : IRowMapper<GraphNode>
@@ -85,7 +95,7 @@ internal static class GraphRows
     {
         public (long, GraphEdge) Map(SqliteDataReader r) => (r.GetInt64(0), new GraphEdge(
             NodeKey.From(r.GetString(1)), NodeKey.From(r.GetString(2)), GraphText.EdgeType(r.GetString(3)), GraphText.Provenance(r.GetString(4)),
-            r.GetDouble(5), Evidence: null, Order: r.IsDBNull(6) ? null : r.GetInt32(6), At: GraphText.Time(Text(r, 7))));
+            r.GetDouble(5), Evidence: null, Order: r.IsDBNull(6) ? null : r.GetInt32(6), At: GraphText.Time(Text(r, 7)), Count: r.IsDBNull(8) ? null : r.GetInt32(8)));
     }
 
     private sealed class AliasMapper : IRowMapper<NodeAlias>

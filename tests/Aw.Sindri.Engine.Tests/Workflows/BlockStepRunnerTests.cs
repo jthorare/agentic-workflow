@@ -297,6 +297,64 @@ public sealed class BlockStepRunnerTests
 
     private static SindriProfile Profile(WorkflowSettings? workflow) => new(SindriProfile.CurrentSchemaVersion, "tester", Workflow: workflow);
 
+    [Fact]
+    public async Task The_approved_boxes_parallel_reaches_a_Step_that_takes_it()
+    {
+        await Approve(Profile(new WorkflowSettings(Judge: new JudgeSettings(Parallel: 6))));
+
+        var outcome = await Runner(_profiles).Run(await ParallelRunOf(repo: null, ProfileParallel), TestContext.Current.CancellationToken);
+
+        Assert.Null(outcome.Failure);
+        Assert.Equal(6, _seen!.Arguments["parallel"].GetInt32());
+    }
+
+    [Fact]
+    public async Task A_repos_parallel_wins_over_the_boxs()
+    {
+        await Approve(Profile(new WorkflowSettings(Judge: new JudgeSettings(Parallel: 6))) with { Repos = [new RepoEntry("app", "/a", Workflow: new RepoWorkflowSettings(Judge: new JudgeSettings(Parallel: 12)))] });
+
+        _ = await Runner(_profiles).Run(await ParallelRunOf("app", ProfileParallel), TestContext.Current.CancellationToken);
+
+        Assert.Equal(12, _seen!.Arguments["parallel"].GetInt32());
+    }
+
+    [Fact]
+    public async Task An_unset_parallel_leaves_the_argument_out_so_the_Steps_default_applies()
+    {
+        await Approve(Profile(workflow: null));
+
+        var outcome = await Runner(_profiles).Run(await ParallelRunOf(repo: null, ProfileParallel), TestContext.Current.CancellationToken);
+
+        Assert.Null(outcome.Failure);
+        Assert.False(_seen!.Arguments.ContainsKey("parallel"));
+    }
+
+    [Fact]
+    public async Task A_literal_parallel_in_the_recipe_is_kept_over_the_profile()
+    {
+        await Approve(Profile(new WorkflowSettings(Judge: new JudgeSettings(Parallel: 6))));
+
+        _ = await Runner(_profiles).Run(await ParallelRunOf(repo: null, new WithValue(JsonSerializer.SerializeToElement(3), Fact: null, Profile: null)), TestContext.Current.CancellationToken);
+
+        Assert.Equal(3, _seen!.Arguments["parallel"].GetInt32());
+    }
+
+    private static WithValue ProfileParallel => new(Literal: null, Fact: null, Profile: "workflow.judge.parallel");
+
+    private async Task<BlockStepRun> ParallelRunOf(string? repo, WithValue parallel)
+    {
+        var step = BlockId.From("step.scope.relevance-judge");
+        var put = await _store.Put(Encoding.UTF8.GetBytes("{}"), TestContext.Current.CancellationToken);
+        var held = new Dictionary<FactKey, FactValue>
+        {
+            [FactKey.From("fact:brief")] = put.Value,
+            [FactKey.From("fact:lenses")] = put.Value,
+            [FactKey.From("fact:relevanceVerdicts")] = put.Value,
+        };
+        var with = new Dictionary<string, WithValue>(StringComparer.Ordinal) { ["parallel"] = parallel };
+        return new BlockStepRun("T-1/x/1", "relevance-judge", "1.1", step, with, held, repo);
+    }
+
     private static ProfileHash Hash(char c) => ProfileHash.From(new string(c, 64));
 
     private string[] Providers() => [.. _seen!.Arguments["providers"].EnumerateArray().Select(static p => p.GetString()!)];
@@ -305,7 +363,7 @@ public sealed class BlockStepRunnerTests
         Assert.False((await _profiles.Save(new LoadedProfile(profile, Hash('2'), "/approved.yaml"), TestContext.Current.CancellationToken)).IsError);
 
     private BlockStepRunner Runner(IApprovedProfile approved, IFactStore? store = null, BlockStepResult? step = null) => new(
-        new BlockStepRuntimes([new BlockStepRegistration(_judge)]),
+        new BlockStepRuntimes([new BlockStepRegistration(_judge), new BlockStepRegistration(BlockId.From("step.scope.relevance-judge"))]),
         EngineFixture.Catalog,
         (_, context, _) =>
         {

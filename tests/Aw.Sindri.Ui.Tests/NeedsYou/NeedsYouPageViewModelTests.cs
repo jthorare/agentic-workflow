@@ -214,6 +214,7 @@ public sealed class NeedsYouPageViewModelTests
     [Fact]
     public async Task Approving_replaces_the_card_with_the_done_card_until_the_user_moves_on()
     {
+        _server.ServeDeskWithoutRequiredOutput();
         var (list, page) = await Page(NeedsYouRows.Desk(), NeedsYouRows.Decision());
         list.Select(NeedsYouRows.Desk().Id);
         await page.Bar.Loaded;

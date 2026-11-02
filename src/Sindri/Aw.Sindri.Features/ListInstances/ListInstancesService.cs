@@ -199,7 +199,8 @@ internal sealed partial class ListInstancesService(IInstanceDirectory directory,
         var ordered = shape.NewestFirst
             ? views.OrderByDescending(static v => v.Since).ThenBy(static v => v.Address.Value, StringComparer.Ordinal)
             : views.Order(new InstanceOrder(shape.Titles));
-        var list = ordered.Select(v => rowBuilder.Row(v, shape.Titles, now, lines.GetValueOrDefault(InstanceSummaries.RootOf(v.Address)))).ToList();
+        var idle = await IdleAgents(views, cancellationToken).ConfigureAwait(false);
+        var list = ordered.Select(v => rowBuilder.Row(v, shape.Titles, now, lines.GetValueOrDefault(InstanceSummaries.RootOf(v.Address)), idle.Contains(v.Address.Value))).ToList();
         return new InstanceList(list, shape.Counts, list.Count == 0 ? shape.Empty : null, now);
     }
 

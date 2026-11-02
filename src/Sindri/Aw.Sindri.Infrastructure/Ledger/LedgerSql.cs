@@ -98,5 +98,8 @@ internal static class LedgerSql
         "SELECT json_extract(payload_json, '$.instance') FROM events " +
         "WHERE id = $id AND json_valid(payload_json) AND json_type(payload_json, '$.instance') = 'text'";
 
+    /// <summary>The row recorded under one idempotency key: the unique index finds it.</summary>
+    internal const string SelectEventByKey = "SELECT " + EventColumns + " FROM events WHERE idempotency_key = $key";
+
     internal const string SelectLatest = "SELECT " + EventColumns + " FROM events WHERE type = $type ORDER BY seq DESC LIMIT 1";
 }

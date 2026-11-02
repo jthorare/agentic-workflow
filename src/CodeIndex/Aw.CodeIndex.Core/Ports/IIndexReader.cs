@@ -47,4 +47,11 @@ public interface IIndexReader : IAsyncDisposable
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>Nearest first.</returns>
     public ValueTask<Result<IReadOnlyList<Neighbor>>> Nearest(ReadOnlyMemory<float> vector, int k, CancellationToken cancellationToken);
+
+    /// <summary>The stored vectors of every symbol in the files, for one embedding model.</summary>
+    /// <param name="paths">Repo-relative paths, distinct.</param>
+    /// <param name="model">Only rows embedded with this model count.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The embedded symbols by path then line; a path with none contributes nothing.</returns>
+    public ValueTask<Result<IReadOnlyList<SymbolVector>>> SymbolVectors(IReadOnlyList<string> paths, string model, CancellationToken cancellationToken);
 }

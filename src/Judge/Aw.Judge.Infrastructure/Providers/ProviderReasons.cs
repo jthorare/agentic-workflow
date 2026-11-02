@@ -17,6 +17,9 @@ internal static class ProviderReasons
     /// <summary>Errored: the agent CLI is installed but the system refused to start it (argument limit, not a program, permissions).</summary>
     public const string SpawnFailed = "spawn-failed";
 
+    /// <summary>Unavailable: the question needs reasons and Jev only classifies; nothing is sent.</summary>
+    public const string CannotExplain = "cannot-explain";
+
     /// <summary>Unavailable: no TypeSafe API key in the environment or the keychain (not a failure).</summary>
     public const string NoApiKey = "no-api-key";
 

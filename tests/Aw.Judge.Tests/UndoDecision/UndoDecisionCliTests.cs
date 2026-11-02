@@ -30,5 +30,13 @@ public sealed class UndoDecisionCliTests : IDisposable
         Assert.Equal(new CliRun(1, "", "unknown decision: nope\n"), await cli.Run("undo", "nope"));
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task Undo_of_an_unreadable_row_exits_2_with_one_line_naming_the_decision()
+    {
+        await UnreadableRow.WithTs(_state, "d-bad", "yesterday");
+
+        UnreadableRow.AssertNamed(await new JudgeCli(_state).Run("undo", "d-bad"), "d-bad", "undone");
+    }
+
     public void Dispose() => _state.Dispose();
 }

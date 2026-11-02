@@ -3,10 +3,10 @@ using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
 using Aw.Context.Core.Models;
-using Aw.Context.Core.Ranking;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
 using Aw.Context.Core.Trust;
@@ -23,10 +23,13 @@ namespace Aw.Context.Features.QueryContext;
 /// items fetched and cleaned once at the ingest boundary, one batched version check per source, then packing,
 /// citations and per-field egress scrubbing (<see cref="ResultAssembly"/>). Ingest and egress both use this call's
 /// scrubbers, built from the approved profile's extra patterns, and so does the map's text. A text question asked with no
-/// map (or by a session whose repo implements none of it) is answered from the sources alone. No model is called unless 'context.ranker.rerank' is on (Phase 8: <see cref="RankerStage"/>).
+/// map (or by a session whose repo implements none of it) is answered from the sources alone. A live query also searches the record store's lexical leg as one more source (<see cref="RecordStoreSource"/>). No model is called unless 'context.ranker.rerank' is on (Phase 8: <see cref="RankerStage"/>).
 /// </summary>
-internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, IIdGenerator ids, TimeProvider clock, IIntentStore intents, IModelPort model)
+internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, IIdGenerator ids, TimeProvider clock, IIntentStore intents, IModelPort model,
+    RecordSearch lexical)
 {
+    private static readonly SourceId _linearLive = SourceId.From("linear");
+
     private readonly RankerStage _ranker = new(model, clock);
 
 
@@ -47,7 +50,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
             return valid.Error;
         }
 
-        var anchored = await AnchorFor(request, valid.Value, (settings.Value, scrubbers.Value), inputs, cancellationToken).ConfigureAwait(false);
+        var anchored = await Pinned(await AnchorFor(request, valid.Value, (settings.Value, scrubbers.Value), inputs, cancellationToken).ConfigureAwait(false), (request, repos.Value, settings.Value), (inputs, valid.Value.Read, new MapText(scrubbers.Value)), cancellationToken).ConfigureAwait(false);
         if (anchored.IsError)
         {
             return anchored.Error;
@@ -55,15 +58,15 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
 
         var (graph, terms, miss) = anchored.Value;
         var deadline = clock.GetUtcNow() + settings.Value.Deadline;
-        var sources = terms.Count == 0 ? [] : catalog.For(settings.Value, repos.Value, scrubbers.Value).ToList();
-        var searched = await Search(sources, terms, (deadline, inputs.AsOf), cancellationToken).ConfigureAwait(false);
-        if (sources.Count > 0 && searched.Answers.Count == 0 && graph.Anchors.Count == 0)
+        var catalogSources = terms.Count == 0 ? [] : catalog.For(settings.Value, repos.Value, scrubbers.Value).ToList();
+        var (sources, degraded) = await WithRecordStore(catalogSources, (settings.Value, repos.Value), (inputs.AsOf, terms), (request, inputs.Map, valid.Value.Read), cancellationToken).ConfigureAwait(false);
+        var searched = await WithAnchorRecord(await Search(sources, terms, (deadline, inputs.AsOf), (graph.Pins.Scope, graph.Pins.Skipped), cancellationToken).ConfigureAwait(false), (graph, sources), cancellationToken).ConfigureAwait(false);
+        if (catalogSources.Count > 0 && NothingAnswered(searched, graph) && graph.Anchors.Count == 0)
         {
-            return ContextErrors.AllSourcesUnavailable.With(
-                $"no source answered ({string.Join(", ", searched.Degraded.Select(d => d.Source.Value))}); fix: sindri context sources status");
+            return NoSourceAnswered(degraded.Concat(searched.Degraded));
         }
 
-        var degraded = searched.Degraded.ToList();
+        degraded.AddRange(searched.Degraded);
         var fused = await Ranked(searched, (graph, RankerPlan.For(settings.Value.Ranker, inputs.Ranker)), scrubbers.Value.Egress, degraded, cancellationToken).ConfigureAwait(false);
         var fetched = await Fetch(fused, (sources, scrubbers.Value.Ingest), deadline, degraded, cancellationToken).ConfigureAwait(false);
         if (miss is not null && !Answers(fetched, miss.Item.Trim()))
@@ -71,15 +74,19 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
             return Unknown(miss, request.Scope);   // not linked by any sync, and no live record carries that tracker key
         }
 
-        await NoteQueuedDecisions(graph, sources, degraded, cancellationToken).ConfigureAwait(false);
-        var versions = await Versions(fetched, sources, deadline, cancellationToken).ConfigureAwait(false);
+        var notes = await AnswerNotes(graph, (fetched.Count, degraded, searched.Notes), cancellationToken).ConfigureAwait(false);
+        var versions = await Versions(fetched, sources, deadline, degraded, cancellationToken).ConfigureAwait(false);
         var assembly = new ResultAssembly(scrubbers.Value.Egress, QueryId.From("q_" + ids.NewId().ToString("N", CultureInfo.InvariantCulture)), clock.GetUtcNow());
-        return assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
+        var built = assembly.Build(request.Query, new RecordPart(fetched, versions, degraded), DemotedLast(graph, request.Scope.Repos));
+        return built with { Filtered = DemotedFiles.Counts(CodeKeys(graph), request.Scope.Repos), Notes = notes };
     }
+
+    private static IEnumerable<NodeKey> CodeKeys(GraphPart graph) =>
+        graph.Candidates.Select(c => c.Item.Node).OfType<string>().Select(n => NodeKey.TryFrom(n, out var key) ? key : (NodeKey?)null).OfType<NodeKey>();
 
     // A demoted file's code item ranks after every other item of the answer (it is still there: a direct read of its node finds it).
     private static GraphPart DemotedLast(GraphPart graph, IReadOnlyList<ContextRepo> repos) =>
-        graph with { Candidates = DemotedFiles.Last(graph.Candidates, c => c.Item.Node is { } node && NodeKey.TryFrom(node, out var key) && DemotedFiles.IsDemoted(key, repos)) };
+        graph with { Candidates = DemotedFiles.Last(graph.Candidates, c => c.Item.Node is { } node && NodeKey.TryFrom(node, out var key) && DemotedCode.IsDemoted(key, repos)) };
 
     /// <summary>
     /// The anchors and their graph sections, and the terms the sources are searched with. The node shape needs the map
@@ -96,7 +103,7 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var map = await graphs.Read(request.Scope, read, cancellationToken).ConfigureAwait(false);
         if (query.Node is { } node)
         {
-            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node, request.Scope.Repos));
+            var anchor = map.Bind(m => AnchorMatch.Resolve(m.Graph, node, request.Scope.Repos, PinContext.AliasPins(settings, request.Scope.Repos, m.Graph)));
             if (anchor.IsError)
             {
                 return anchor.Error;
@@ -117,11 +124,11 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
             return unanchored ? (GraphPart.None, valid.Terms) : map.Error;
         }
 
-        var found = AnchorMatch.FromText(map.Value.Graph, query.Text ?? string.Empty);
+        var found = AnchorMatch.FromText(map.Value.Graph, query.Text ?? string.Empty, PinContext.AliasPins(settings, request.Scope.Repos, map.Value.Graph));
         var repos = request.Scope.Repos;
-        var anchors = found.Anchors.Where(k => !DemotedFiles.IsDemoted(k, repos)).Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
-        var suggested = found.Suggested.Where(k => !DemotedFiles.IsDemoted(k, repos)).ToList();
-        return (GraphAnswer.Build(map.Value, anchors, suggested, reach, new MapText(scrubbers)), valid.Terms);
+        var anchors = found.Anchors.Where(k => !DemotedCode.IsDemoted(k, repos)).Select(map.Value.Graph.Resolve).OfType<GraphNode>().ToList();
+        var suggested = found.Suggested.Where(k => !DemotedCode.IsDemoted(k, repos)).ToList();
+        return (GraphAnswer.Build(map.Value, anchors, suggested, reach, new MapText(scrubbers)) with { AnchorAliases = found.Aliases }, valid.Terms);
     }
 
     private static async ValueTask<Result<(GraphPart Graph, IReadOnlyList<string> Terms, ItemMiss? Miss)>> AnchorFor(QueryContextRequest request, CheckedQuery checkedQuery,
@@ -177,83 +184,64 @@ internal sealed partial class QueryPipeline(IScrubberFactory scrubberFactory, II
         var text = new MapText(context.Scrubbers);
         var touched = ItemAnchors.Touched(found.Map.Graph, found.Record);
         var terms = QueryRules.Terms(found.Record.Key.Name).Concat(QueryRules.Terms(item)).Concat(touched.Skip(1).SelectMany(n => text.SearchTerms(n.Label))).Distinct(StringComparer.Ordinal).Take(QueryRules.MaxTerms).ToList();
-        return (GraphAnswer.Build(found.Map, touched, [], CascadeReach.Of(request.Query, context.Settings), text), terms, null);
+        var anchor = RecordKey.TryFrom(found.Record.Key.Name, out var recordKey) ? recordKey : (RecordKey?)null;
+        return (GraphAnswer.Build(found.Map, touched, [], CascadeReach.Of(request.Query, context.Settings), text) with { AnchorRecord = anchor }, terms, null);
     }
 
     private static Error Unknown(ItemMiss miss, ContextScope scope) => QueryRules.UnknownItem(miss.Item, miss.Suggested, scope.SyncConfigured);
 
-    private async Task<Searched> Search(IReadOnlyList<IContextSource> sources, IReadOnlyList<string> terms, (DateTimeOffset Deadline, DateTimeOffset? AsOf) when, CancellationToken ct)
-    {
-        var deadline = when.Deadline;
-        var calls = sources.Select(async source =>
-        {
-            var query = new SourceQuery(terms, when.AsOf, Limit: SourceQuery.DefaultLimit, deadline - clock.GetUtcNow());
-            var hits = await SourceCalls.Within(source, (query.Deadline, clock), t => source.Search(query, t), ct).ConfigureAwait(false);
-            var notes = source is ISourceNotes noted ? noted.TakeNotes() : [];
-            return (source.Describe().Id, hits, notes);
-        });
-        var answers = new List<SourceAnswer>();
-        var degraded = new List<DegradedSource>();
-        foreach (var (id, hits, notes) in await Task.WhenAll(calls).ConfigureAwait(false))
-        {
-            degraded.AddRange(notes.Select(note => new DegradedSource(id, ContextErrors.SourceUnavailable.Code, note, clock.GetUtcNow())));
-            if (hits.IsSuccess)
-            {
-                answers.Add(new SourceAnswer(id, hits.Value));
-            }
-            else
-            {
-                degraded.Add(SourceCalls.Degraded(id, hits.Error, clock.GetUtcNow()));
-            }
-        }
-
-        return new Searched(answers, degraded);
-    }
-
-    /// <summary>
-    /// A record linked to the answer's nodes whose decisions are still queued (labeling off or over its cap) is told as degraded 042 for 'decisions',
-    /// so a missing decision is not read as no decision (verification plan J2.3). Nothing is asked of the model.
-    /// </summary>
-    private async Task NoteQueuedDecisions(GraphPart graph, IReadOnlyList<IContextSource> sources, List<DegradedSource> degraded, CancellationToken ct)
-    {
-        if (graph.LinkedRecords.Count == 0)
-        {
-            return;
-        }
-
-        var waiting = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var source in sources.Select(s => s.Describe()).Where(d => d.Kind == SourceKind.Intent))
-        {
-            var queued = await intents.Queued(source.Id, ct).ConfigureAwait(false);
-            waiting.UnionWith(queued.IsError ? [] : queued.Value.Select(k => k.Value));
-        }
-
-        if (graph.LinkedRecords.Any(waiting.Contains))
-        {
-            degraded.Add(new DegradedSource(SourceId.From("decisions"), ContextErrors.LabelingUnavailable.Code,
-                "decisions of a linked record are not extracted yet: labeling is off or over its token cap (fix: turn on 'context.labeling.enabled' or raise 'maxTokensPerSync', then run sindri context sources sync, or wait for the next context-sync slot)", clock.GetUtcNow()));
-        }
-    }
-
     /// <summary>One batched version check per source, under what is left of the deadline (spec §8.2 step 8).</summary>
     private async Task<IReadOnlyDictionary<SourceRef, (bool Ran, SourceVersion? Current)>> Versions(IReadOnlyList<FetchedRecord> fetched,
-        IReadOnlyList<IContextSource> sources, DateTimeOffset deadline, CancellationToken ct)
+        IReadOnlyList<IContextSource> sources, DateTimeOffset deadline, List<DegradedSource> degraded, CancellationToken ct)
     {
         var checkedRefs = new Dictionary<SourceRef, (bool, SourceVersion?)>();
-        foreach (var group in fetched.SelectMany(f => f.Item.Hits).Select(h => h.Ref).Distinct().GroupBy(r => r.Source))
+        var refsOfHits = fetched.SelectMany(f => f.Item.Hits).Select(h => h.Ref).Distinct().ToList();
+        var linear = sources.FirstOrDefault(s => s.Describe().Id == _linearLive);
+        var linearRefs = linear is null ? [] : refsOfHits.Where(r => r.Source == RecordStoreSource.Id && LinearRecordKeys.IsLinear(r.Canonical)).ToList();
+        if (linear is not null && linearRefs.Count > 0 && await CheckLinear(linear, linearRefs, (deadline, checkedRefs), ct).ConfigureAwait(false) is { } failed)   // one batched freshness call for every cited owned Linear record
+        {
+            degraded.Add(SourceCalls.Degraded(_linearLive, failed, clock.GetUtcNow()));   // a failed check is told, not left as unchecked in silence
+        }
+
+        foreach (var group in refsOfHits.Except(linearRefs).GroupBy(r => r.Source))
         {
             var source = sources.First(s => s.Describe().Id == group.Key);   // each ref is checked by its own source
-            var refs = group.ToList();
-            var left = deadline - clock.GetUtcNow();
-            var versions = left <= TimeSpan.Zero
-                ? ContextErrors.SourceUnavailable.With("no time left for the version check")
-                : await SourceCalls.Within(source, (left, clock), t => source.Versions(refs, t), ct).ConfigureAwait(false);
-            for (var i = 0; i < refs.Count; i++)
-            {
-                checkedRefs[refs[i]] = versions.IsSuccess && versions.Value.Count == refs.Count ? (true, versions.Value[i]) : (false, null);
-            }
+            _ = await CheckBatch(source, [.. group], (deadline, checkedRefs), ct).ConfigureAwait(false);
         }
 
         return checkedRefs;
+    }
+
+    /// <summary>The owned refs name the whole key as their id; the Linear source wants the bare UUID, so it is asked with Linear-shaped refs and the answers are kept under the owned ones.</summary>
+    private async Task<Error?> CheckLinear(IContextSource linear, List<SourceRef> owned, (DateTimeOffset Deadline, Dictionary<SourceRef, (bool, SourceVersion?)> Checked) into, CancellationToken ct)
+    {
+        var asked = new Dictionary<SourceRef, SourceRef>();
+        foreach (var reference in owned)
+        {
+            asked[reference] = LinearRecordKeys.BareId(reference.Canonical) is { } bare ? reference with { Id = bare } : reference;
+        }
+
+        var answers = new Dictionary<SourceRef, (bool, SourceVersion?)>();
+        var failure = await CheckBatch(linear, [.. asked.Values.Distinct()], (into.Deadline, answers), ct).ConfigureAwait(false);
+        foreach (var (reference, shaped) in asked)
+        {
+            into.Checked[reference] = answers[shaped];
+        }
+
+        return failure;
+    }
+
+    private async Task<Error?> CheckBatch(IContextSource source, List<SourceRef> refs, (DateTimeOffset Deadline, Dictionary<SourceRef, (bool, SourceVersion?)> Checked) into, CancellationToken ct)
+    {
+        var left = into.Deadline - clock.GetUtcNow();
+        var versions = left <= TimeSpan.Zero
+            ? ContextErrors.SourceUnavailable.With("no time left for the version check")
+            : await SourceCalls.Within(source, (left, clock), t => source.Versions(refs, t), ct).ConfigureAwait(false);
+        for (var i = 0; i < refs.Count; i++)
+        {
+            into.Checked[refs[i]] = versions.IsSuccess && versions.Value.Count == refs.Count ? (true, versions.Value[i]) : (false, null);
+        }
+
+        return versions.IsError ? versions.Error : null;
     }
 }

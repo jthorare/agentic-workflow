@@ -1,0 +1,5 @@
+[{"number":101,"merged_at":"2026-10-01T00:00:00Z","title":"Fix the thing","body":null},
+ {"number":102,"merged_at":"2026-10-02T00:00:00Z","title":"ENG-12 tidy","body":"nothing"},
+ {"number":103,"merged_at":"2026-10-03T00:00:00Z","title":"More","body":"Closes ENG-7"},
+ {"number":104,"merged_at":"2026-10-04T00:00:00Z","title":"Nothing links this","body":"WEB-9 is another team"},
+ {"number":105,"merged_at":null,"title":"ENG-1 closed unmerged","body":""}]

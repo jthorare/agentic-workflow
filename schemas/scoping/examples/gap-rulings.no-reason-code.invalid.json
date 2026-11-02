@@ -1,0 +1,25 @@
+{
+  "judge": {
+    "providers": [
+      "jev"
+    ],
+    "threshold": 0.6
+  },
+  "rulings": [
+    {
+      "id": "C1",
+      "ruling": "real-gap",
+      "confidence": 0.84,
+      "provider": "jev",
+      "decisionId": "JD-0012"
+    },
+    {
+      "id": "C2",
+      "ruling": "uncertain",
+      "confidence": null,
+      "provider": null,
+      "decisionId": "JD-0013",
+      "reasonCode": "below-threshold"
+    }
+  ]
+}

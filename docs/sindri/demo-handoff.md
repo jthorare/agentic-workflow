@@ -153,13 +153,13 @@ sindri context query "<project description>"          # expect anchors and cited
 sindri context lenses <anchor-key> --json            # the anchor key comes from the query's anchors; it takes positional anchors, not --anchor
 ```
 
-### Optional for the demo: Onyx
+### Optional for the demo: record sources
 
-Onyx is the intent-source engine (trackers, notes). The demo does not need it: repo docs and the map are enough. `./setup.sh` builds the sindri CLI and, by default, stands the pinned Onyx up. Opt out with `./setup.sh --no-onyx`; start it later with `sindri onyx up`. Do not add it the morning of the demo.
+The record index (GitHub issues and PRs, Slack threads, Linear) is optional. The demo does not need it: repo docs and the map are enough. `./setup.sh` builds the sindri CLI and does not connect any source; connect them later with `sindri index connect github|slack` (see [sources.md](sources.md)). Do not add them the morning of the demo.
 
 ## 6. Recipes
 
-**Merged (on main bb26d9a):** #367 (register fix), #371 P7 (child workflows start), #356, #364, #354 (the optional `aw:fleet` hook, `scripts/install-fleet.sh --provider claude`), #372, #377, #381, #369 (Agents page), #379 (children view), #351 (Start form), #376 (ship and docs-sync stations), #387, #384, #380, #388, #362 (`sindri scoping check` and `show`), #348, #357, #360, #361 (the Onyx P2 to P5 stack), #295 (the launcher: open and attach), #370 (PR-B), #394 (S-LB2: the shipped `workflow.scoping` approves), #396 (SC-K2: `sindri scoping desk <block>` with read-brief, anchor, gather, reanchor and propose, plus the ScopingView and packet-file routes), #378 (history lens), #365 (code lens), #391 (`workflow.line`), #386 (sindri connects MCP for Claude Code, Codex and Cursor, including the Codex trust row), #392 (row titles) and #390.
+**Merged (on main bb26d9a):** #367 (register fix), #371 P7 (child workflows start), #356, #364, #354 (the optional `aw:fleet` hook, `scripts/install-fleet.sh --provider claude`), #372, #377, #381, #369 (Agents page), #379 (children view), #351 (Start form), #376 (ship and docs-sync stations), #387, #384, #380, #388, #362 (`sindri scoping check` and `show`), #348, #357, #360, #361 (the old intent-source stack, since replaced by the owned index), #295 (the launcher: open and attach), #370 (PR-B), #394 (S-LB2: the shipped `workflow.scoping` approves), #396 (SC-K2: `sindri scoping desk <block>` with read-brief, anchor, gather, reanchor and propose, plus the ScopingView and packet-file routes), #378 (history lens), #365 (code lens), #391 (`workflow.line`), #386 (sindri connects MCP for Claude Code, Codex and Cursor, including the Codex trust row), #392 (row titles) and #390.
 
 **Merged since:** #405 (P8: agents run the line's agent Steps) and #403 (the map extractor reads C# API routes). Main was `ea2bc59`.
 
@@ -174,7 +174,7 @@ Onyx is the intent-source engine (trackers, notes). The demo does not need it: r
 
 1. Profile: `workflow.agent.target: claude-code` (section 3). The owner re-approves the profile (`sindri profile approve`, typed line) after adding it.
 2. Re-approve the recipes `sindri recipe list --stale` lists. Four Step descriptors moved (`step.produce` is now `Runtime: agent`; `step.build.red`, `step.build.green` and `step.prove.holdout` gained `WriteScope`), so expect `workflow.step`, `workflow.build`, `workflow.prove`, `workflow.implement`, plus recipes that use `step.produce`, then their parents (`workflow.phase`, `workflow.line`). Children first. **Owner types** each: `sindri recipe approve <file|id@hash>` and the typed line. Until then, reports on instances of those recipes are refused with `SND-RECIPE-006`. Before that, approve `workflow.idea-to-brief` first, then `workflow.scoping` (else `RCP-CHILD-001`).
-3. Start `workflow.line` (**owner types**) with a `fact:item` that carries `{id, repo, spec}` (without a repo: `SND-CONTEXT-045`). `sindri recipe show workflow.line` lists the inputs (`fact:scopeInput`, `fact:lineContext`); `SND-CLI-003` names any missing one.
+3. Start `workflow.line` (**owner types**) with a `fact:item` that carries `{id, repo, spec}` (`spec` is optional; without a repo: `SND-CONTEXT-045`). `sindri recipe show workflow.line` lists the inputs (`fact:scopeInput`, `fact:lineContext`); `SND-CLI-003` names any missing one.
 4. Watch the scoping child's agent Steps (`draft`, then `questions`) run: the Workflows instance frame (the states band advances, events read `via agent · tokens N`, `sindri workflow status <address>` shows `run agent LCH-...`) and the Agents page (`G A`), where the launched session appears.
 5. **Expect the budget park after `questions`** (above). The desk-only Steps before it (intake, read-brief, gather, check) are answered by the owner as they open.
 6. **Desk-only Steps remain.** P8 puts agents on the agent Steps only. Block Steps and human-only Steps still open a desk task, and the owner completes them: `sindri workflow status <address>` prints the command; run `sindri workflow complete <address> --run <token> --outcome <o> [--output fact:<name>=<file>]...`. On scoping that is most of the early and late states (intake, read-brief, anchor, gather, check, reanchor, propose, evidence, freeze, and more). The scoping desk verb is below. If agents are not available, every Step is at the desk: that is Plan B.
@@ -303,7 +303,7 @@ An interactive agent asks to approve the five `mcp__sindri__context_*` tools onc
 | `SND-CONTEXT-025` / `missing required argument 'name'` | The argv bug on Claude Code 2.1.302 | Path A in section 4 on a current main, or Path B |
 | `SND-CONTEXT-040` | The heavy-job lock stayed busy (often during `map build`) | Wait for the other job, then retry on a quiet box; or author the map |
 | `SND-WF-016` "uses input.context.lenses, which this build has no runtime for" | An older build (before #394) | `git pull` to a main with #394 |
-| `SND-CONTEXT-045` on start | `fact:item` has no repo, or one the session's scope does not cover | Pass `{id, repo, spec}` with the profile repo name |
+| `SND-CONTEXT-045` on start | `fact:item` has no repo, or one the session's scope does not cover | Pass `{id, repo}` (`spec` is optional) with the profile repo name |
 | `SND-AUTH-002` | The CLI couldn't read the per-start token (Sindri isn't running, or another home) | Start Sindri (`sindri`), then rerun with the same `AW_SINDRI_HOME` |
 | `SND-RECIPE-003` "isn't approved" | A recipe or one of its children is unapproved | Owner approves children first, then the parent |
 | `SND-CLI-003` on `workflow start` | A declared input fact is missing | `sindri recipe show <id>`; pass each as `--fact fact:<name>=<file.json>` |
@@ -334,7 +334,7 @@ Tick each. Report any miss to the owner at once.
 - [ ] The profile has `workflow.agent.target: claude-code` and is approved. `sindri recipe list --stale` is empty after the owner re-approves, children first (`workflow.step`, `workflow.build`, `workflow.prove`, `workflow.implement`, then `workflow.phase`, `workflow.line`).
 - [ ] Recipes are approved in order: `workflow.idea-to-brief` first, then `workflow.scoping`, then the line recipes (`workflow.design`, `workflow.plan`, `workflow.phase`, `workflow.ship`, `workflow.docs-sync`, then `workflow.line`). `sindri recipe list` shows each approved, and `sindri recipe validate recipes/sindri/workflow.line.yaml` exits 0.
 - [ ] Claude's folder-trust prompt for the agent worktree was accepted by hand once (or the folder is pre-trusted), and a budget park was answered with `--grant-tokens`.
-- [ ] One dry-run line start reaches scoping's gather with real sections, with the agent Steps run by agents (`via agent` in the events): the owner starts `workflow.line` (or `workflow.scoping`) with `fact:item` `{id, repo, spec}`, completes the early Steps at the desk, and the gather state shows the lens, code and history sections with content, not "none". Then the owner cancels it (`sindri workflow cancel <address>`) so Workflows starts clean, or leaves it by choice.
+- [ ] One dry-run line start reaches scoping's gather with real sections, with the agent Steps run by agents (`via agent` in the events): the owner starts `workflow.line` (or `workflow.scoping`) with `fact:item` `{id, repo, spec}` (`spec` is optional), completes the early Steps at the desk, and the gather state shows the lens, code and history sections with content, not "none". Then the owner cancels it (`sindri workflow cancel <address>`) so Workflows starts clean, or leaves it by choice.
 - [ ] A fresh agent session runs the section 7 prompt and calls `context_sources`, `context_query`, `context_lenses` and `context_node` without `SND-CONTEXT-*` errors.
 - [ ] The app is open on Home and `G W` opens Workflows. `sindri doctor` has no `fail` rows. The box is quiet: no other builds or heavy jobs running.
 
@@ -382,7 +382,7 @@ To finish, in order: bring #352 up to main and restack #355, #363, #366 (merge 3
 
 ### 9c. Setup and the context map: less human-driven
 
-Today three setup steps are `protected` (a typed confirmation at a terminal, refused to sessions and to the app with `SND-AUTH-002`): profile approval (API surface spec §4.1–4.2), map import and promote (API §3.7; context spec §3 "decisions stay human"), and recipe approve/revoke and token grants (engine spec W9). Onyx `up`/`down` and connecting its sources are the owner's by the Onyx spec (O3).
+Today three setup steps are `protected` (a typed confirmation at a terminal, refused to sessions and to the app with `SND-AUTH-002`): profile approval (API surface spec §4.1–4.2), map import and promote (API §3.7; context spec §3 "decisions stay human"), and recipe approve/revoke and token grants (engine spec W9). Connecting the record sources (`sindri index connect`) is the owner's too.
 
 **Owner decision, 2026-10-19: map import and promote, and recipe approval, must run from CI/CD with no manual step.** This changes the specs above for those verbs and needs a spec amendment (API surface §3.7 and §4, engine W9, context §3) before any code. The amendment has to say what stands in for the typed confirmation, for example: the map or recipe change is reviewed and merged as a PR in the repo, and a CI job holding a scoped Sindri credential applies exactly what was merged (content hash bound to the merge commit), recorded in the ledger as approved by that CI identity, with revoke kept available to the owner. Profile approval and token grants stay human unless the owner says otherwise.
 
@@ -398,7 +398,7 @@ Everything else below is manual only because the automation is not built:
 | MCP registration | context spec §3 | a bare `sindri` or `serve` registers every provider once the port is known | a worktree guesses the repo name from the folder (`AW_SINDRI_MCP_REPO` overrides); tracked `.cursor/mcp.json` / `.codex/config.toml` are reported `failed`, not edited; a port change needs a new agent session |
 | Install | — | `scripts/install-deps.sh`, `scripts/install-cs.sh` (SDK, temporal, publish, link) | Claude's folder-trust prompt in launched sessions (accepted by hand; launcher follow-up); the opt-in session hook (`./setup.sh --with-fleet`) |
 | Launcher setup | — | `sindri launch init`, `workflow.agent.target` | part of profile init above |
-| Onyx | Onyx spec O1/O6, P5 | `sindri onyx up/status/open/down`, the first-run offer, the "Set up Onyx" row, `install-onyx.sh` | built. Docker install and the owner's steps remain by design |
+| Record sources | owned index spec §5.4 | `sindri index connect github\|slack`, `sindri index sync`, the "connect your sources" setup step | built. The read-only tokens are the owner's to make, by design |
 
 ### 9d. The app: CLI-only functionality
 
@@ -422,7 +422,7 @@ The app is a client of Sindri's HTTP API with no logic of its own. Today it read
 | `agents focus`, Attach, Take over, Budgets | disabled ("arrives in CO-4a") / missing | screens §4.5, U11 | — |
 | `doctor` | copy | System's dependency graph (screens §4.6) | **no endpoint** |
 | `stop` | palette confirm only | confirmed button on Health (UI §4.8) | exists |
-| `mcp register`, `onyx` verbs, `profile validate`, `launch init` | none | not in the UI spec (Onyx only as a health node) | **no endpoint** (`cli-only:local`) |
+| `mcp register`, `profile validate`, `launch init` | none | not in the UI spec | **no endpoint** (`cli-only:local`) |
 
 Spec'd screens or parts not built: the Recipes page (U10b); System beyond Health (dependency graph, impact panel, engine execution, services/jobs panel; U12); Context beyond the lens stack (node card, sources, map review, file map, U9b–d; "pinned to a scope" mode, U9e); the instance frame's Timeline, Decisions and Requests tabs (U8b); item-sheet re-base and the scope-map and packet viewers (U13); Agents recipe groups, Attach, Take over, Budgets (U11) and live preview (CO-7c).
 

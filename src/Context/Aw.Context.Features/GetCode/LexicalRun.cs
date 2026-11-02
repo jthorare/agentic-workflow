@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Aw.Context.Core.Engine;
 
 namespace Aw.Context.Features.GetCode;
@@ -17,5 +18,5 @@ internal sealed class LexicalRun(LexicalPass pass, ContextRepo repo, string comm
 
     internal IReadOnlyList<string> Tracked { get; } = tracked;
 
-    internal Dictionary<string, string?> Texts { get; } = new(StringComparer.Ordinal);
+    internal ConcurrentDictionary<string, string?> Texts { get; } = new(StringComparer.Ordinal);
 }

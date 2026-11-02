@@ -1,0 +1,81 @@
+{
+  "rows": [
+    {
+      "id": "setup:repo",
+      "kind": "setup",
+      "label": "setup \u00b7 repo",
+      "subject": {
+        "kind": "setup",
+        "id": "repo"
+      },
+      "item": null,
+      "title": "Add your repo",
+      "reason": "Waits for your answer.",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "AddRepo",
+      "actions": [
+        "AddRepo"
+      ],
+      "cli": "sindri repo add"
+    },
+    {
+      "id": "setup:mcp",
+      "kind": "setup",
+      "label": "setup \u00b7 mcp",
+      "subject": {
+        "kind": "setup",
+        "id": "mcp"
+      },
+      "item": null,
+      "title": "Connect your agents",
+      "reason": "Waits for your answer.",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "RegisterMcp",
+      "actions": [
+        "RegisterMcp"
+      ],
+      "cli": "sindri mcp register --apply"
+    },
+    {
+      "id": "setup:recipes",
+      "kind": "setup",
+      "label": "setup \u00b7 recipes",
+      "subject": {
+        "kind": "setup",
+        "id": "recipes"
+      },
+      "item": null,
+      "title": "Approve the recipes",
+      "reason": "Waits for your answer.",
+      "repo": null,
+      "urgency": "colour",
+      "since": "2026-01-01T00:00:00.0000000Z",
+      "recordedOnly": false,
+      "notice": null,
+      "answerKind": null,
+      "primaryAction": "ApproveAllRecipes",
+      "actions": [
+        "ApproveAllRecipes"
+      ],
+      "cli": "sindri recipe approve-all"
+    }
+  ],
+  "empty": null,
+  "asOf": {
+    "cursor": 41,
+    "ledgerHead": 41,
+    "projectedAt": "2026-01-01T00:00:58.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  }
+}
