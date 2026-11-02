@@ -93,8 +93,10 @@ Write the report to `$AW_DIR/investigations/{timestamp}-{slug}.md` where:
 ```bash
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
-mkdir -p "$AW_DIR/investigations/<slug>"
+echo "$AW_DIR"
 ```
+
+Write the report and the handoff with the **Write tool** at absolute paths under that `$AW_DIR`; it creates the missing directories. Don't `mkdir` first, and don't skip the files because the shell can't write there: a shell that is read-only or sandboxed is not a reason to skip them.
 
 Report format:
 
@@ -220,10 +222,12 @@ Handoff: $AW_DIR/investigations/{slug}/handoff.md
 
 **Done checklist.** Do every item before you send the reply; a run that skips one is not finished, even when the fix passed:
 
-1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5).
-2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5).
-3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/rootCause-<timestamp>.json` (Result block).
-4. The reply ends its report with the `aw-result` block above, before `## Next steps`.
+1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5, Write tool).
+2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5, Write tool).
+3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/rootCause-<timestamp>.json` (Result block, Write tool). Print the gate (`echo "AW_RESULT=${AW_RESULT:-0}"`) to know.
+4. The reply contains the `aw-result` block above, before `## Next steps`. It is never optional: callers parse it, and it goes in even when the rest of the reply is short.
+
+If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
 
 ### Sub-skill Dispatch
 
