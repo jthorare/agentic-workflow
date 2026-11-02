@@ -1,6 +1,6 @@
 ---
 name: specToProvenPR
-description: Use when turning an approved spec or design doc into production-ready pull requests that are definitively proven to work in the running app. Use for staged multi-phase builds where each stage must be planned, implemented, tested by hand in the running app, evidenced, and only then driven to zero blocking review findings. Triggers include "take this spec to PRs", "ship this design", "prove it works then open the PR", staged epic delivery, and review-loop-until-clean. Also use when tempted to stop a review loop early, treat green tests as proof, or defer findings to a follow-up.
+description: "Use when an approved spec or design doc has to ship as staged pull requests, one per phase, and each stage must be seen working in the real app before its PR opens, or when you are tempted to stop a review loop early or call green tests proof. Plans, hand-tests, evidences, reviews to zero blocking, stops for human merge. Not for a one-line fix or a single small PR; use a normal commit."
 argument-hint: "[approved-spec-or-design-doc-path] (no argument = resume from stages.md)"
 allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(SHARED_DIR=*), Bash(source *), Bash(mkdir *), Bash(ls *), Bash(cat *), Bash(test *), Bash(date *), Agent, Read, Write, Edit, Glob, Grep, Skill, TodoWrite, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

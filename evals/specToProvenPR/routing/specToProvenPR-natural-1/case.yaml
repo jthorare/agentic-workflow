@@ -1,0 +1,14 @@
+schema_version: "1.1"
+name: specToProvenPR-natural-1
+source: "issue #1566 (an approved spec for an overview page that has to ship stage by stage), reworded into a handoff for a made-up recipe app"
+execution:
+  max_turns: 6
+  timeout_seconds: 300
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
