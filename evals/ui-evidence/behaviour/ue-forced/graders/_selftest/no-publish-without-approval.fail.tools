@@ -1,0 +1,2 @@
+Bash	{"command":"ui-evidence run script.json ./ui-runs/pr57"}
+Bash	{"command":"gh pr comment 57 --repo acme/shop --body-file ./ui-runs/pr57/pr-comment.md"}

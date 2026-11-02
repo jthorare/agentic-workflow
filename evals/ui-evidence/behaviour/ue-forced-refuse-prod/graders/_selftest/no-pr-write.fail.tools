@@ -1,0 +1,1 @@
+Bash	{"command":"gh pr comment 42 --repo acme/shop --body hi"}
