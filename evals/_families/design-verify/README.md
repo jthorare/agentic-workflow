@@ -1,0 +1,1 @@
+Family set for the design-verify dispatcher (spec 3.1a): one prompt per member, graded on which skill the FIRST Skill call names. Run with --ablation none when design-verify or a member's description changes. Prompts here are platform-neutral for the dispatcher and platform-named for the members; the dispatcher prompt must not be answered by a member directly.

@@ -1,0 +1,1 @@
+Provenance is `unknown`, so the screenshots stay on this machine and any PR comment would be text-only.

@@ -1,0 +1,6 @@
+Gate result for lane api.
+
+```aw-result
+{"skill": "meta", "artifacts": [], "summary": "gate run on #41", "merged": [41]}
+```
+Open obligations: {"merged": [], "open_obligations": 2}

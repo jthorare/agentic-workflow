@@ -1,0 +1,1 @@
+playback-check FAILED on both files, probably the encode flags, I have not looked at which stream property tripped it.

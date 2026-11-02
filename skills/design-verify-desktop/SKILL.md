@@ -1,6 +1,6 @@
 ---
 name: design-verify-desktop
-description: Run the real desktop app on seeded data through the desktop evidence recipe and diff each screen against its mockup. Reports every mismatch with fix suggestions.
+description: "Use when a desktop app screen (Avalonia) should match its approved mockup. Runs the real app on seeded data through the evidence recipe, diffs each screen against the mockup and lists every mismatch with a fix. Not for web or iOS screens, and not for checking that user journeys work (verify-desktop)."
 argument-hint: [screen-name]
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(cat *), Bash(cp *), Bash(ui-evidence *), Bash(command *), Read, Write, Glob, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

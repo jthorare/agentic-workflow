@@ -1,6 +1,6 @@
 ---
 name: design-implement-ios
-description: Generate SwiftUI Theme.swift and view components from an approved iOS mockup using design-tokens.json. Supports light/dark color schemes following iOS HIG, with a mandatory design-verify-ios gate.
+description: "Use when an approved iOS mockup should become real SwiftUI: a Theme.swift built from the design tokens plus typed view components, covering light and dark mode. Ends with a simulator check against the mockup baseline. Not for web pages or CSS (design-implement-web)."
 argument-hint: "<screen-name>"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff, mcp__prism-mcp__session_task_route, mcp__prism-mcp__prism_infer
 ---

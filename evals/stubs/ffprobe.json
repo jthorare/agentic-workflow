@@ -1,0 +1,17 @@
+{
+  "codec_name": "h264",
+  "profile": "High",
+  "pix_fmt": "yuv420p",
+  "level": 41,
+  "has_b_frames": 0,
+  "width": 1920,
+  "height": 1080,
+  "r_frame_rate": "30/1",
+  "duration": "62.4",
+  "color_space": "bt709",
+  "color_primaries": "bt709",
+  "color_transfer": "bt709",
+  "color_range": "tv",
+  "corner_hex": "0d1117",
+  "decode_error": ""
+}

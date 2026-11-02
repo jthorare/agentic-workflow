@@ -1,6 +1,6 @@
 ---
 name: design-mockup
-description: Detect web vs iOS automatically and delegate to /design-mockup-web (HTML mockup + Playwright baseline) or /design-mockup-ios (SwiftUI preview + simulator baseline).
+description: "Use when someone wants to see a screen before it's built: a visual draft to react to and approve, for a web or an iOS app. Picks the platform and delegates; the approved result becomes the baseline later checks compare against. Not for turning an approved design into code (design-implement)."
 argument-hint: <screen-name>
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

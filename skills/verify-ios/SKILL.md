@@ -1,6 +1,6 @@
 ---
 name: verify-ios
-description: "XcodeBuildMCP-based iOS simulator verification. Executes journeys through verification lenses (functional, visual, accessibility, error-state, appearance) and writes an evidence pack (pack.json + report.md) on every run. Auto mode infers screens from Swift file changes in git diff."
+description: "Use when an iOS or SwiftUI change needs checking on a simulator before it ships: someone wants the app launched, its screens exercised and each one called pass or fail, with accessibility labels checked. Writes an evidence pack. Not for web pages, desktop apps, or comparing screens to mockups (design-verify-ios)."
 argument-hint: "[--journey <plan.md>] [--lenses <csv>] [--visual] [--baseline] [--yes] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Read, Write, Glob, Grep, AskUserQuestion, mcp__xcodebuildmcp__session_show_defaults, mcp__xcodebuildmcp__list_sims, mcp__xcodebuildmcp__boot_sim, mcp__xcodebuildmcp__open_sim, mcp__xcodebuildmcp__build_sim, mcp__xcodebuildmcp__build_run_sim, mcp__xcodebuildmcp__get_app_bundle_id, mcp__xcodebuildmcp__install_app_sim, mcp__xcodebuildmcp__launch_app_sim, mcp__xcodebuildmcp__screenshot, mcp__xcodebuildmcp__snapshot_ui, mcp__xcodebuildmcp__list_schemes, mcp__xcodebuildmcp__discover_projs, mcp__design-comparison__compare_design, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -166,6 +166,6 @@ evidence_path: <absolute path to verification/<run-id>/>
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/verify-ios-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`verify-ios`), `artifacts` (absolute paths: the evidence pack directory `$AW_DIR/verification/<run-id>/` (`pack.json`, `report.md`)), `summary` (one line),
-plus `evidence_path` (absolute path of the pack directory); `verdict` (`PASS | WARN | FAIL`, the pack's verdict).
+plus `evidence_path` (absolute path of the pack directory); `pack` (absolute path of `pack.json`); `verdict` (`PASS | WARN | FAIL`, the pack's verdict).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

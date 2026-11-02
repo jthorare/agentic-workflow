@@ -1,6 +1,6 @@
 ---
 name: verify-app
-description: "Detect web vs iOS vs desktop automatically and delegate to /verify-web (Playwright), /verify-ios (XcodeBuildMCP) or /verify-desktop (the real desktop app on seeded data, checked against its mockups). Pass any arguments through unchanged."
+description: "Use when someone asks to verify, smoke-test or prove a UI change works and has not said whether it is web, iOS or desktop: it inspects the repo and hands off to the matching verify skill, arguments unchanged. Not for when the platform is already named, or for mockup comparison."
 argument-hint: "[--journey <path>] [--lenses <csv>] [--baseline] [--yes] [--base-url <url>] [--screens <csv>] [--visual] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -93,6 +93,6 @@ If `screens.json` exists and has `baselines` entries for one or more of the veri
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/verify-app-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`verify-app`), `artifacts` (absolute paths: the evidence pack directory `$AW_DIR/verification/<run-id>/` (`pack.json`, `report.md`)), `summary` (one line),
-plus `evidence_path` (absolute path of the pack directory); `verdict` (`PASS | WARN | FAIL`, relayed from the sub-skill's pack); `platform` (`web | ios | desktop`, the sub-skill it delegated to).
+plus `evidence_path` (absolute path of the pack directory); `pack` (absolute path of the sub-skill's `pack.json`); `verdict` (`PASS | WARN | FAIL`, relayed verbatim from the sub-skill's pack); `platform` (`web | ios | desktop`, the sub-skill it delegated to); `dispatched` (the sub-skill's name).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

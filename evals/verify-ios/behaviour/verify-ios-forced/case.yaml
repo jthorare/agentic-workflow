@@ -1,0 +1,17 @@
+schema_version: '1.1'
+name: verify-ios-forced
+execution:
+  max_turns: 40
+  timeout_seconds: 600
+  allowed_tools:
+  - Read
+  - Write
+  - Glob
+  - Grep
+  - Bash
+  - Skill
+  - AskUserQuestion
+  - mcp__xcodebuildmcp__*
+context:
+  scaffold_script: fixture.sh
+# MCP mocks: ../../../mocks/xcodebuildmcp

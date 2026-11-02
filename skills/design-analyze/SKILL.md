@@ -1,6 +1,6 @@
 ---
 name: design-analyze
-description: Detect web vs iOS automatically and delegate to /design-analyze-web (Dembrandt CLI on URLs) or /design-analyze-ios (Swift/Xcode asset extraction). Writes design-tokens.json.
+description: Use when someone wants a first design-tokens.json built from reference sites or from an existing app's code, in a web or an iOS project. Picks the platform and hands off to design-analyze-web or design-analyze-ios. Not for merging into tokens that already exist (design-evolve).
 argument-hint: "[<url> [url2...] (web) | <path> (ios)]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

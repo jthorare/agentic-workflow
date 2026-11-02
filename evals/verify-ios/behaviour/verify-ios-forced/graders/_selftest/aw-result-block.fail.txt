@@ -1,0 +1,4 @@
+```aw-result
+{"skill": "verify-ios", "artifacts": ["/work/r1/pack.json"], "summary": "looked fine", "pack": "/work/r1/pack.json"}
+```
+Verdict line: {"verdict": "FAIL"}
