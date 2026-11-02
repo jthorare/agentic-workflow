@@ -1,0 +1,5 @@
+# Written for the routing gate; the prompt is the pilot's rc-customer-complaint without its RESULT.txt tail.
+schema_version: "1.1"
+name: rc-natural-2
+context:
+  scaffold_script: scaffold.sh

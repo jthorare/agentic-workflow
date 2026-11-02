@@ -5,7 +5,7 @@
 #   scripts/skill-evals.sh [--skills a,b | --changed | --all] [--kind routing|behaviour|both]
 #                          [--runs N] [--ablation none|with-without] [--model M] [--judge-model M]
 #                          [--threshold T] [--max-cost-usd N] [--jobs N] [--gate warn|block]
-#                          [--family a,b] [--family-max-cost-usd N] [--lane NAME] [--keep-temp] [--root DIR]
+#                          [--family a,b] [--family-max-cost-usd N] [--preamble on|off] [--lane NAME] [--keep-temp] [--root DIR]
 #                          [--dry-run | --selftest | --lint-descriptions | --status]
 #
 # Lane leads and the owner run the real thing; builders run --selftest, --dry-run and --lint-descriptions only (they call no
@@ -17,8 +17,9 @@
 #   2 stage, per kind, into a fresh directory under $EVAL_HOME/cache/ outside any git repo (rsync -L; a link that resolves
 #     outside this repo, a hooks/ dir or an .mcp.json other than evals/plugin/.mcp.json refuses the stage, exit 3): evals/plugin,
 #     every skill's SKILL.md, the chosen skills' full directories, skills/_shared/, both preambles, config/voice/, the
-#     config/agents/ files a chosen skill names, the chosen skills' evals/<skill>/<kind>/ and fixture.sh, _lib, mocks, stubs.
-#     The STAGED copy is rewritten, never the source: the shell default of AW_PREAMBLE goes from on to off, of AW_GIT_MODE
+#     config/agents/ files a chosen skill names, the chosen skills' evals/<skill>/<kind>/ and fixture.sh, _lib and mocks, and the stubs at the stage root (stubs/, outside the evals/ tree the agent is denied).
+#     The STAGED copy is rewritten, never the source: the shell default of AW_PREAMBLE goes from on to off (kept on, and the
+#     run passes AW_PREAMBLE=on, under --preamble on: the spec §8 5a baseline of the forced cases with the preamble), of AW_GIT_MODE
 #     from full to readonly, of AW_RESULT from 0 to 1, and the staged repo-slug.sh state default walks up from $PWD to the dir holding .aw-eval/ (the workspace root) and adds /.aw-state. The stubs get the same default rewrite.
 #     The toolkit copy reaches $HOME/.agentic-workflow/toolkit (the default of AW_TOOLKIT) inside each run's temp HOME
 #     through a scaffold script written into every staged case, which then runs the case's own scaffold.
@@ -69,7 +70,7 @@ CAP_USD=60
 RESERVE_TTL=10800
 
 SKILLS_ARG="" SELECT="" KIND=both RUNS="" ABLATION="" MODEL=claude-sonnet-5-5 JUDGE=sonnet THRESHOLD=0.8 MAX_COST=8 JOBS="" GATE=warn
-FAMILY_ARG="" FAMILY_MAX=12
+FAMILY_ARG="" FAMILY_MAX=12 PREAMBLE=off
 ACTION=run KEEP=0 LANE="" STAGE_LIST=""
 
 usage() {
@@ -95,6 +96,7 @@ while [ $# -gt 0 ]; do
     --gate) GATE="${2:?--gate needs warn|block}"; shift 2 ;;
     --family) FAMILY_ARG="${2:?--family needs a name}"; shift 2 ;;
     --family-max-cost-usd) FAMILY_MAX="${2:?--family-max-cost-usd needs a number}"; shift 2 ;;
+    --preamble) PREAMBLE="${2:?--preamble needs on|off}"; shift 2 ;;
     --lane) LANE="${2:?--lane needs a name}"; shift 2 ;;
     --keep-temp) KEEP=1; shift ;;
     --root) ROOT="$(cd "${2:?--root needs a directory}" && pwd)" || exit 64; shift 2 ;;
@@ -108,6 +110,7 @@ while [ $# -gt 0 ]; do
 done
 case "$KIND" in routing|behaviour|both) ;; *) die 64 "--kind must be routing, behaviour or both" ;; esac
 case "$GATE" in warn|block) ;; *) die 64 "--gate must be warn or block" ;; esac
+case "$PREAMBLE" in on|off) ;; *) die 64 "--preamble must be on or off" ;; esac
 case "$ABLATION" in ""|none|with-without) ;; *) die 64 "--ablation must be none or with-without" ;; esac
 num() { printf '%s' "$1" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; }
 num "$THRESHOLD" || die 64 "--threshold must be a number"
@@ -664,7 +667,7 @@ rewrite_default() { # STAGE NAME FROM TO: the shell default of NAME (the text af
     FROM="$a" TO="$b" perl -i -pe 'BEGIN { $f = quotemeta($ENV{FROM}); $t = $ENV{TO} } s/$f/$t/g' "$f"
     n=$((n + 1))
   done <<EOF
-$(grep -rlF -- "$a" "$S/skills" "$S/config" "$S/evals/stubs" 2>/dev/null)
+$(grep -rlF -- "$a" "$S/skills" "$S/config" "$S/stubs" 2>/dev/null)
 EOF
   echo "$name default $from -> $to: $n file(s)" >>"$S/.stage-rewrites"
   [ "$n" -gt 0 ] || note "warning: no staged file holds $a, so the $name default was not rewritten (a skill that reads it will run with the default $from)"
@@ -673,7 +676,7 @@ EOF
 rewrite_stage() { # STAGE: the staged copy only, never the source tree
   local S="$1" n=0 a b
   : >"$S/.stage-rewrites"
-  rewrite_default "$S" AW_PREAMBLE on off
+  [ "$PREAMBLE" = on ] || rewrite_default "$S" AW_PREAMBLE on off
   rewrite_default "$S" AW_GIT_MODE full readonly
   rewrite_default "$S" AW_RESULT 0 1
   a="\${AW_STATE_DIR:-\$HOME/.agentic-workflow}"
@@ -752,7 +755,10 @@ stage_build() {
       done
     done
   fi
-  for d in _lib mocks stubs; do [ ! -d "$ROOT/evals/$d" ] || rsync -aL "$ROOT/evals/$d/" "$S/evals/$d/"; done
+  for d in _lib mocks; do [ ! -d "$ROOT/evals/$d" ] || rsync -aL "$ROOT/evals/$d/" "$S/evals/$d/"; done
+  # the stubs go to the stage root: claude plugin eval denies the agent every read under evals/, which hides a stub there
+  # from its shell, so the real tool would answer instead
+  [ ! -d "$ROOT/evals/stubs" ] || rsync -aL "$ROOT/evals/stubs/" "$S/stubs/"
   for s in $skills; do
     mkdir -p "$S/evals/$s"
     [ ! -f "$ROOT/evals/$s/fixture.sh" ] || rsync -aL "$ROOT/evals/$s/fixture.sh" "$S/evals/$s/"
@@ -958,8 +964,8 @@ do_run() {
     [ -z "$JOBS" ] || args+=(-j "$JOBS")
     [ "$KEEP" = 0 ] || args+=(--keep-temp)
     args+=(--max-cost-usd "$bl" --allow-tools Bash Write Edit)
-    pass_env=(PATH="$STAGE/evals/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
-              AW_STATE_DIR=.aw-state AW_PREAMBLE=off AW_GIT_MODE=readonly AW_RESULT=1)
+    pass_env=(PATH="$STAGE/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
+              AW_STATE_DIR=.aw-state AW_PREAMBLE="$PREAMBLE" AW_GIT_MODE=readonly AW_RESULT=1)
     pass_env+=(TMPDIR="$EVAL_TMP")
     if [ "$dry" = 1 ]; then
       echo "dry run, not calling claude:"

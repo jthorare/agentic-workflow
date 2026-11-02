@@ -131,6 +131,17 @@ run --skills nope --dry-run
 expect "an unknown skill is a usage error" 64 'unknown skill: nope'
 run --skills alpha --kind sideways --dry-run
 expect "a bad --kind is a usage error" 64 '--kind must be'
+run --skills alpha --preamble sometimes --dry-run
+expect "a bad --preamble is a usage error" 64 '--preamble must be'
+
+echo "--preamble on (spec §8 5a: the forced cases once with the preamble on)"
+mkrepo
+run --skills alpha --kind behaviour --preamble on --dry-run --keep-temp
+expect "--preamble on dry run passes" 0 'AW_PREAMBLE=on'
+lacks "--preamble on passes no AW_PREAMBLE=off" 'AW_PREAMBLE=off'
+STAGE_P="$(printf '%s\n' "$OUT" | sed -n 's/^skill-evals: staged behaviour: //p')"
+has -F -- '${AW_PREAMBLE:-on}' "$STAGE_P/skills/_preamble.md" && has -F -- '${AW_GIT_MODE:-readonly}' "$STAGE_P/skills/_preamble.md" \
+  && ok "--preamble on keeps the preamble default and still rewrites the git mode" || { fail "--preamble on stage"; cat "$STAGE_P/skills/_preamble.md"; }
 
 echo "--changed"
 mkrepo; mkclaude
@@ -170,14 +181,16 @@ H="$TMPROOT/h$N"; mkdir -p "$H"
 (cd "$TMPROOT" && env -i PATH="$PATH" HOME="$H" bash "$STAGE_B/evals/alpha/behaviour/alpha-forced/_aw-scaffold.sh")
 [ -f "$H/.agentic-workflow/toolkit/skills/_preamble.md" ] && [ -f "$H/.agentic-workflow/toolkit/skills/_shared/repo-slug.sh" ] && [ -f "$H/.agentic-workflow/toolkit/config/voice/joi.md" ] &&
   [ "$(cat "$H/own-marker")" = own-scaffold-ran ] && ok "the scaffold puts the toolkit at the default path, then chains the case's own" || fail "scaffold run"
-has -F -- 'evals/stubs/bin' <<<"$OUT" && ok "the stubs are first on PATH" || fail "stubs not on PATH"
-[ -x "$STAGE_R/evals/stubs/bin/gh" ] && ok "the stub gh is executable in the stage" || fail "stub gh mode"
+# claude plugin eval denies the agent every read under the stage's evals/ (so it can't see the graders), and a stub there is
+# invisible to its shell: the stubs are staged at the stage root instead.
+has -E -- "PATH=[^ ]*/stage-[^/ ]*/stubs/bin:" <<<"$OUT" && ! has -F -- 'evals/stubs/bin' <<<"$OUT" && ok "the stubs are first on PATH, outside the stage's evals/" || { fail "stubs not first on PATH, or under evals/"; show; }
+[ -x "$STAGE_R/stubs/bin/gh" ] && [ ! -e "$STAGE_R/evals/stubs" ] && ok "the stub gh is executable in the stage" || fail "stub gh mode"
 [ -d "$H/.aw-eval" ] || [ -d "$TMPROOT/.aw-eval" ] && ok "the scaffold creates .aw-eval/ in the workspace" || fail "no .aw-eval/"
 [ -f "$H/.bashrc" ] && [ ! -s "$H/.bashrc" ] && ok "eval child: the scaffold leaves an empty .bashrc in the run's HOME" || fail "eval child: no empty .bashrc in the run's HOME"
 H2="$TMPROOT/h2$N"; mkdir -p "$H2"; echo 'own rc' >"$H2/.bashrc"
 (cd "$TMPROOT" && env -i PATH="$PATH" HOME="$H2" bash "$STAGE_B/evals/alpha/behaviour/alpha-forced/_aw-scaffold.sh")
 [ "$(cat "$H2/.bashrc")" = 'own rc' ] && ok "eval child: the scaffold keeps an existing .bashrc" || fail "eval child: the scaffold replaced an existing .bashrc"
-grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/evals/stubs/bin/gh" && ok "the staged gh stub defaults to readonly" || fail "staged gh default"
+grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/stubs/bin/gh" && ok "the staged gh stub defaults to readonly" || fail "staged gh default"
 # repo-slug.sh sourced from the workspace root and from a subdirectory gives one state root (the slug below it is repo-slug.sh's own business)
 WS="$TMPROOT/ws$N"; mkdir -p "$WS/.aw-eval" "$WS/src/deep"
 slug() { (cd "$1" && env -i PATH="$PATH" HOME="$H" bash -c '. "$0"; printf %s "$AW_DIR"' "$STAGE_R/skills/_shared/repo-slug.sh"); }
@@ -288,7 +301,7 @@ ENVF="$(ls "$BIN"/env.*.txt | head -1)"
 if grep -qE '^(EVAL_SECRET|GH_TOKEN|AW_FORGE_TOKEN)=' "$ENVF"; then fail "a secret reached the stub's env"; else ok "EVAL_SECRET, GH_TOKEN and AW_FORGE_TOKEN never reach claude"; fi
 if grep -qE "hunter22xyz|$FAKE_GH|tok-forge" "$ENVF"; then fail "a secret value is in the env dump"; else ok "no secret value anywhere in claude's env"; fi
 has -E '^AW_PREAMBLE=off$' "$ENVF" && has -E '^AW_GIT_MODE=readonly$' "$ENVF" && has -E '^AW_RESULT=1$' "$ENVF" && ok "AW_* values are in the allowlist" || fail "AW_* values"
-has -E "^PATH=.*/evals/stubs/bin:" "$ENVF" && ok "PATH starts with the stub dir" || fail "PATH order"
+has -E "^PATH=[^:]*/stage-[^/:]*/stubs/bin:" "$ENVF" && ok "PATH starts with the stub dir" || fail "PATH order"
 [ "$(wc -l <"$ENVF")" -le 12 ] && ok "only the allowlist is forwarded ($(wc -l <"$ENVF") variables)" || { fail "env has too many variables"; cat "$ENVF"; }
 has -E "^TMPDIR=$STATE/skill-evals/tmp/[A-Za-z0-9]{4}\$" "$ENVF" && ok "eval child: TMPDIR is a short per-run dir (4 characters) under the eval home's tmp" || { fail "eval child: TMPDIR is a short per-run dir (4 characters) under the eval home's tmp"; grep '^TMPDIR=' "$ENVF" || echo "      | (no TMPDIR in the child's env)"; }
 RUN_TMP="$(sed -n 's/^TMPDIR=//p' "$ENVF")"
