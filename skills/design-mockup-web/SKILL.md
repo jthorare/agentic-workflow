@@ -1,6 +1,6 @@
 ---
 name: design-mockup-web
-description: Generate an HTML mockup informed by the design language, serve it locally, iterate with feedback until approved, then capture mobile/tablet/desktop baselines and register the screen in screens.json for /design-verify-web.
+description: "Use when a screen should be drafted as an HTML page: served locally, revised on feedback until approved, then screenshotted at small, medium and large viewports as the reference images. Not for SwiftUI or simulator drafts (design-mockup-ios)."
 argument-hint: <screen-name>
 allowed-tools: Bash(mkdir *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), Bash(python3 *), Bash(LOCK_NAME=*), Write, Read, Edit, Glob, AskUserQuestion, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_resize, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_close, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -157,6 +157,13 @@ screens.json: entry written (route: <route>, approved_at: <ISO>)
 - If `.impeccable.md` doesn't exist, warn but still allow creation with manual style guidance
 - One baseline set per screen name — overwriting requires the Step 6 confirmation
 - Never write baselines or a `screens.json` entry for an unapproved mockup
+
+## Result block
+
+Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
+
+1. `mkdir -p "$AW_DIR/results"` and write `$AW_DIR/results/design-mockup-web-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-mockup-web"`), `artifacts` (absolute paths of the mockup HTML, the viewport baselines and screens.json), `summary` (one line), plus `screen`, `approved` (true or false).
+2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
 
 ## Next steps
 
