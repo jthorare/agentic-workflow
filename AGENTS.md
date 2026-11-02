@@ -44,13 +44,14 @@ Domain-specific rules live in `.agents/rules/` — one file per rule, the only c
 
 ```
 agentic-workflow/
-├── skills/        # 52 provider-neutral skills (linked into each provider's skills dir)
+├── skills/        # 54 provider-neutral skills (linked into each provider's skills dir)
 ├── bootstrap/     # /bootstrap skill — repo documentation generator
 ├── config/        # Settings, MCP config, statusline, safety hooks, sindri-nudge SessionStart hook, meta Stop/outbox hooks, non-Claude lane hooks (meta-lane-gate, session-id-report), the opt-in aw:fleet session-state hook (fleet-state, `--with-fleet`), the reply voice (`voice/`, inlined into each provider's global instructions) (+ hooks/adapters/ per provider)
 ├── providers/     # Per-provider installers (claude, codex, cursor)
 ├── context/       # Pinned external deployments: code-index.lock (graphify, Ollama model), graphify.pin
 ├── planning/      # Project documentation
 ├── src/           # C# build: Aw.Kernel (+ .Data, .Telemetry), Redaction, Aw.Analyzers, the tool ports (Packets, Readiness, BugFix; Judge, Evidence), UiDriver (the generic Avalonia UI driver and `aw-ui-driver`), Meta (aw-meta, the /meta harness), Forge (the forge port with GitHub and file adapters), CodeIndex (the Sindri code index block: symbols, callers and callees per repo; library only) and later the new Sindri app — each Core · Features · Infrastructure · Host
+├── evals/         # Skill evals (#1107): evals/<skill>/{routing,behaviour}/<case>, fixture.sh, graders/_selftest, status.md; _lib, mocks, plugin, stubs (gh, curl, git); run by scripts/skill-evals.sh, rule in .agents/rules/skills.md
 ├── tests/         # C# tests: Aw.<Pkg>.Tests (by feature), Aw.<Pkg>.Testing (fakes, builders, contract bases), Aw.Architecture.Tests
 ├── global.json · AgenticWorkflow.slnx · Directory.Build.props · Directory.Build.targets · Directory.Packages.props · nuget.config · .editorconfig · CodeMetricsConfig.txt · BannedSymbols.txt
 ├── .agents/rules/ # Glob-scoped domain rules (.claude/rules and .cursor/rules link here)
@@ -151,6 +152,7 @@ node scripts/check-rules.mjs [--json]   # Every §4b rule has a record; every ac
 # Environment and dev container
 scripts/check-env-example.sh            # Every env var the code reads is in .env.example (ENV-EXAMPLE-001..004); exit 1 on drift
 scripts/check-skills-toolkit.sh           # skills/, bootstrap/ and config/voice/ name the toolkit as ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit} and the per-repo output dir as $AW_DIR (SKILLS-TOOLKIT-001, -002); exit 1 on drift, file:line per hit
+scripts/check-skills-git-mode.sh        # every skill that makes a worktree, branch, commit, PR or PR comment reads AW_GIT_MODE and refuses the write under `readonly` (skill-revamp spec §2.3); exit 1 on drift, file:line per hit
 scripts/check-skill-requires.sh [--skip-bins]   # every skill has a requires.yaml sidecar (bins, agents, mcp, skills; {} for none) naming things that exist, and a Result block with the AW_RESULT gate line (output contract: skills/_shared/output-contract.md); exit 1 with file: reason per finding, 2 usage; --skip-bins on a box without every binary
 scripts/skills-toolkit-rewrite.sh [--dry-run]   # The scripted fix for that drift; idempotent, so a skill PR in flight rebases by re-running it
 # .devcontainer/ is for humans only, never the agent sandbox (no Docker-in-Docker); see docs/devcontainer.md
@@ -218,6 +220,8 @@ bash scripts/tests/scoping-fixture.test.sh
 bash scripts/tests/line-fixture.test.sh
 bash scripts/tests/skill-evals.test.sh      # scripts/skill-evals.sh with a stub claude: flags, exit codes 0-4, the staged rewrite (source untouched), the env allowlist and token scrub, the flock'd spend tally under two concurrent runs, budget refusal, --changed, --selftest, --lint-descriptions, --status; the stubs gh and curl
 bash scripts/tests/eval-gh-wrapper.test.sh   # evals/stubs/bin/gh and curl: the readonly refusals (every form), canned answers from .aw-eval/*.json (match rules, first match, no match, no file, subdirectory), pass-through to a fake real gh
+bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh on fixture trees: a skill with a write and no AW_GIT_MODE reading fails with file:line
+bash scripts/tests/eval-git-wrapper.test.sh   # evals/stubs/bin/git: every write refused under AW_GIT_MODE=readonly (exit 1, `aw-eval:` line on stderr), reads and full mode pass through to a fake real git
 bash scripts/tests/code-index-fixture.test.sh  # the code-index fixtures (tests/fixtures/code-index): verify.mjs, the sample check, the hostile generator
 bash scripts/tests/meta-launch.test.sh      # Linux and macOS (golden transcript; needs cc on macOS)
 bash scripts/tests/meta-version.test.sh     # the installed aw-meta's version and the launcher's staleness warning (Linux and macOS)
@@ -273,6 +277,7 @@ Before merging any PR:
 4. `node scripts/check-deps.mjs` passes (`deps.yaml` declares every edge the code has; a new edge is a reviewed change to it); `scripts/check-env-example.sh` passes (`.env.example` lists every environment variable the code reads)
 5. `./setup.sh --providers claude,codex,cursor --dry-run` runs cleanly
 6. `node scripts/check-rules.mjs` passes (every §4b rule has a rule record, and every check a record calls active exists in the tree)
+7. When `skills/`, `evals/`, `bootstrap/` or `scripts/skill-evals.sh` changed: `scripts/check-skills-toolkit.sh` and `scripts/check-skills-git-mode.sh` pass, and `scripts/skill-evals.sh --selftest --all` passes (no model, no cost)
 
 ## C# slice recipe
 

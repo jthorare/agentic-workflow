@@ -18,6 +18,14 @@ bash scripts/ci/bash-tests.sh                                                   
 
 The full list is under Commands in `AGENTS.md`.
 
+## Skill evals
+
+Skills have their own tests, apart from the C# and bash suites. `scripts/skill-evals.sh` runs `claude plugin eval` on each skill's cases in `evals/` (spec `docs/superpowers/specs/2026-10-25-skill-revamp-evals-design.md`).
+
+- **What they measure.** Routing: how often the skill fires on a natural prompt (fire rate), and that it stays quiet on a near miss. Behaviour: the score of a forced run with the skill minus the same run without it (the delta).
+- **Where they run.** By hand, by the lane lead or the owner. They spend shared model usage, so no CI job runs them and builders never do. A run is capped at $60 a day.
+- **What CI covers.** `bash scripts/tests/skill-evals.test.sh` tests the runner against a stub `claude`: flags, exit codes, the staged rewrite, the spend tally and the token scrub. `scripts/skill-evals.sh --selftest --all` checks every case file and grader without a model.
+
 ## Coverage Policy
 
 Coverage is earned through real tests; nothing is hidden with an ignore annotation. The C# build's coverage and mutation targets are the ones in the `csharp-testing` rule and the spec it cites.

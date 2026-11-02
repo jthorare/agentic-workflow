@@ -49,6 +49,40 @@ SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 
 Never write a bare `$HOME/.agentic-workflow/toolkit` or `~/.agentic-workflow/toolkit` in `skills/`, `bootstrap/` or `config/voice/`. Never hand-spell a per-repo output path (`~/.agentic-workflow/<repo-slug>/...`, `$HOME/.agentic-workflow/$REPO_SLUG/...`) in `skills/`: write `$AW_DIR/...`, which `skills/_shared/repo-slug.sh` sets (source it in every bash block that uses `$AW_DIR`; shell state does not persist). `scripts/check-skills-toolkit.sh` fails on both (SKILLS-TOOLKIT-001, -002); `scripts/skills-toolkit-rewrite.sh` fixes them and is idempotent.
 
+## Skill evals
+
+Spec: `docs/superpowers/specs/2026-10-25-skill-revamp-evals-design.md` (issue #1107). It has the tiers, the graders and the spend rules; this section is only what you need while editing.
+
+Layout, one directory per skill:
+
+```
+evals/<skill>/routing/<case>/{prompt.md|case.yaml, graders/*.md}
+evals/<skill>/behaviour/<case>/{prompt.md|case.yaml, graders/*.md}
+evals/<skill>/fixture.sh                  # builds the made-up repo; runs in a temp dir
+evals/<skill>/graders/_selftest/<grader>.{pass,fail}.{txt,files,tools}
+evals/<skill>/status.md                   # "key: value" lines: fire_rate, delta, last_run (YYYY-MM-DD), pr
+evals/{_lib,mocks,plugin,stubs}/          # shared helpers, MCP mocks, the plugin shell, stub gh / curl / git
+```
+
+Every skill gets 4 cases (tier D skills 3):
+
+| Case | Kind | Checks |
+|------|------|--------|
+| `<skill>-natural-1`, `<skill>-natural-2` | routing | two different phrasings that should fire the skill (`skill-fired` grader) |
+| `<skill>-near-miss` | routing | a request for the closest sibling; the skill must NOT fire (`skill-not-fired`) |
+| `<skill>-forced` | behaviour | "use the `<skill>` skill on ..." and grade what it does |
+
+The routing gate reads the `*-natural-N` and `*-near-miss` names: natural cases must fire at least 50% of the time, the near miss 0%. Rename one and the gate stops seeing it.
+
+Rules:
+
+- Builders run only `scripts/skill-evals.sh --selftest`, `--dry-run`, `--lint-descriptions` and `--status`. They call no model. The lane lead runs real runs, and only through the script (a hand-typed `claude plugin eval` skips the spend tally and the scrubbed environment).
+- The cap is $60 a day, shared by lanes. A run over it exits 2 and nothing is spent.
+- Before a real run, read `git diff origin/main -- 'evals/**/*.sh'`. The scripts there run on the box with the lead's login.
+- A new stub is a new file under `evals/stubs/`. Never edit an existing stub to make a case pass.
+- Fixtures are made up: no real company, customer, work app, repo or person.
+- A new grader gets a pass and a fail reply in `graders/_selftest/` in the same commit.
+
 ## Preamble
 
 The shared preamble lives in one file, `skills/_preamble.md`. Every SKILL.md references it instead of embedding a copy:
