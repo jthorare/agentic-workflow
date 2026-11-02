@@ -101,7 +101,24 @@ public sealed class ProjectCardTests
 
         Assert.Equal("2", card.PrsValue);
         Assert.Equal("Checkout rewrite, In progress, at risk, 12 open issues, 2 open PRs", card.AccessibleName);
-        Assert.Equal(["Lead: you", "Target Jan 31", "acme/web, acme/api", "1d ago"], card.Footer);
+        Assert.Equal(["Lead: you", "Target Jan 31", "repos: web, api", "1d ago"], card.Footer);
+    }
+
+    [Fact]
+    public async Task The_served_PR_counts_read_as_a_count_and_a_repos_line_and_a_project_with_no_repos_shows_no_PR_count()
+    {
+        _f.Serve("with-prs");
+
+        var cards = (await _f.Shown(Token)).Groups.SelectMany(g => g.Cards).ToList();
+        var checkout = cards.Single(c => c.Name == "Checkout rewrite");
+        var mobile = cards.Single(c => c.Name == "Mobile app");
+
+        Assert.Equal("3", checkout.PrsValue);
+        Assert.Contains("repos: api, web", checkout.Footer, StringComparer.Ordinal);
+        Assert.EndsWith("3 open PRs", checkout.AccessibleName, StringComparison.Ordinal);
+        Assert.Null(mobile.PrsValue);
+        Assert.DoesNotContain("open PRs", mobile.AccessibleName, StringComparison.Ordinal);
+        Assert.DoesNotContain(mobile.Footer, part => part.StartsWith("repos:", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -162,12 +179,13 @@ public sealed class ProjectCardTests
     }
 
     [Fact]
-    public async Task A_card_has_counts_when_it_has_an_issue_count_or_a_PR_count_and_none_otherwise()
+    public async Task A_card_has_counts_when_it_has_an_issue_count_or_a_PR_count_with_repos_and_none_otherwise()
     {
         var page = await _f.Shown(Token);
 
         Assert.Equal([true, false, true], page.Groups.Select(g => g.Cards[0].HasCounts));
         Assert.False((await _f.FirstCard(c => c["openIssues"] = null, Token)).HasCounts);
-        Assert.True((await _f.FirstCard(c => { c["openIssues"] = null; c["openPrs"] = 2; }, Token)).HasCounts);
+        Assert.True((await _f.FirstCard(c => { c["openIssues"] = null; c["openPrs"] = 2; c["repos"] = new System.Text.Json.Nodes.JsonArray("acme/web"); }, Token)).HasCounts);
+        Assert.False((await _f.FirstCard(c => { c["openIssues"] = null; c["openPrs"] = 0; }, Token)).HasCounts);
     }
 }
