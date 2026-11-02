@@ -35,7 +35,7 @@ public sealed class PageSheetRepointActionsTests
 
         Expect.True(sheet.Actions.All(a => a.FromMap == Labels.ContextPagesNoCode), "every row reads No code found yet");
         Expect.Sequence(["Submit", "Print"], sheet.Actions.Select(a => a.Name));
-        Expect.Sequence([["approval"], ["approval"]], sheet.Actions.Select(a => (IReadOnlyList<string>)[.. a.TickedIds]));
+        Expect.Sequence(["approval", "approval"], sheet.Actions.Select(a => string.Join(',', a.TickedIds)));
     }
 
     [Fact]
