@@ -1,6 +1,6 @@
 ---
 name: weeklyRetro
-description: Weekly retrospective — analyzes git history for per-person breakdowns, shipping streaks, test health trends, and generates actionable insights.
+description: "Use when someone wants to look back on the last week or few weeks of work: who did what, how steady the shipping was, streaks, test health, where the churn and reverts are. Reads git history and writes a retro report with a JSON sibling. Not for refreshing README or CHANGELOG after a ship (syncDocs) or the status of one PR."
 argument-hint: "[--weeks N] [--team user1,user2,...]"
 allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(coverage *), Bash(date *), Bash(WEEKS=*), Bash(ls *), Bash(cat *), Bash(SHARED_DIR=*), Bash(source *), Read, Write, Glob, Grep, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
