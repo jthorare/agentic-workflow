@@ -42,13 +42,16 @@
 # has its own per-run cap --family-max-cost-usd (default 12), reserved and settled as separate rows in the same tally (§6.4): when
 # the day's $60 has no room for it, the family set is skipped ("FAMILY SKIPPED"), the skill run goes on, and the exit is 2.
 #
+# Regex graders are JavaScript (the tool runs new RegExp(pattern, flags).test(text); flags are dgimsuvy; count:N counts with g): --selftest
+# runs them in node exactly as written and reports SELFTEST-REGEX when one does not compile ((?i), (?s) and \A are not JavaScript).
+#
 # Case files: <eval dir>/<skill>/{routing,behaviour}/<case>/{prompt.md|case.yaml, graders/*.md}. Conventions the script
 # reads on top of the tool's format: a routing case's `skill-fired` grader (tool_used Skill) passing means the skill fired; a
 # near-miss case uses `skill-not-fired` instead (passing means it did NOT fire). Cases named *-natural-N and *-near-miss feed
 # the routing gate (spec §6.1). --selftest reads graders/_selftest/<grader>.pass.<ext> and .fail.<ext>, where <ext> is
 # txt (the reply, or a file's contents), files (newline-separated created paths; file_exists and regex target files) or
-# tools (one "ToolName<TAB>input" per call; tool_used), or trace (the eval tool's trace text: the run's stream-json events, one JSON object per line, a Skill call being an assistant event with a
-# tool_use block {"name":"Skill","input":{"skill":"<name>"}}; regex with target: trace, as the
+# tools (one "ToolName<TAB>input" per call; tool_used), or trace (the eval tool's trace text: run.trace.map(JSON.stringify).join("\n"): one compact JSON message per line, a Skill call being an assistant
+# message with a tool_use block {"name":"Skill","input":{"skill":"<name>"}} (the exact envelope is checked on the first real family run); regex with target: trace, as the
 # family graders use to anchor on the first Skill call). --status reads evals/<skill>/status.md ("key: value" lines:
 # fire_rate, delta, last_run YYYY-MM-DD, pr). --lint-descriptions reads the total-bytes baseline from
 # evals/_lib/description-bytes.baseline (one number) when that file exists.
@@ -273,14 +276,28 @@ pick_families() {
 
 GRADER_TYPES="regex file_exists llm tool_used tool_order baseline"
 
-# regex_count PATTERN FLAGS < text -> number of matches (JS-style flags: only i, m, s, x apply)
+# The tool's regex graders are JavaScript: new RegExp(pattern, flags).test(text), flags in dgimsuvy, `count:N` counted with g. So the
+# selftest runs node with the pattern and flags exactly as written (a Perl-only construct such as (?i), (?s) or \A is an error).
+# regex_error PATTERN FLAGS -> prints the problem (nothing when the regex is fine)
+regex_error() {
+  node -e '
+    const [p, f] = process.argv.slice(1);
+    if (!/^[dgimsuvy]*$/.test(f)) { console.log("flags \"" + f + "\" are not JavaScript RegExp flags (dgimsuvy)"); process.exit(0) }
+    try { new RegExp(p, f) } catch (e) { console.log("pattern does not compile in JavaScript: " + e.message) }' "$1" "$2"
+}
+# regex_count PATTERN FLAGS < text -> number of matches (with the g flag added); exit 2 when it does not compile
 regex_count() {
-  perl -0777 -e '
-    my ($pat, $flags) = @ARGV; $flags =~ s/[^imsx]//g;
-    local $/; my $t = <STDIN>; $t = "" unless defined $t;
-    my $re = eval { $flags ne "" ? qr/(?$flags)$pat/ : qr/$pat/ };
-    if (!$re) { print "bad\n"; exit 2 }
-    my $n = () = $t =~ /$re/g; print "$n\n";' "$1" "$2"
+  node -e '
+    const [p, f] = process.argv.slice(1);
+    const t = require("fs").readFileSync(0, "utf8");
+    let re; try { re = new RegExp(p, f.includes("g") ? f : f + "g") } catch (e) { console.log("bad"); process.exit(2) }
+    console.log((t.match(re) || []).length)' "$1" "$2"
+}
+# grader_pattern GRADER_MD: the regex grader's pattern (its pattern: line, else the body without trailing blank lines)
+grader_pattern() {
+  local pat
+  pat="$(fm_get "$1" pattern)"; [ -n "$pat" ] || pat="$(fm_body "$1" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
+  printf '%s' "$pat"
 }
 regex_verdict() { # match count -> 0 when the grader passes
   local match="$1" n="$2"
@@ -297,7 +314,7 @@ grader_passes() {
   type="$(fm_get "$g" type)"; name="$(basename "$g" .md)"; dir="$(dirname "$g")/_selftest"; base="$dir/$name.$which"
   case "$type" in
     regex)
-      pat="$(fm_get "$g" pattern)"; [ -n "$pat" ] || pat="$(fm_body "$g" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
+      pat="$(grader_pattern "$g")"
       flags="$(fm_get "$g" flags)"; match="$(fm_get "$g" match)"; target="$(fm_get "$g" target)"
       case "$target" in files) f="$base.files" ;; trace) f="$base.trace" ;; *) f="$base.txt" ;; esac
       [ -f "$f" ] || return 3
@@ -324,7 +341,7 @@ grader_passes() {
 }
 
 lint_case() { # case dir -> prints problems, returns the count via the exit status (0 = clean)
-  local c="$1" rel g type name seen="" bad=0 free=0 gcount=0 tools to nf
+  local c="$1" rel g type name seen="" bad=0 free=0 gcount=0 tools to nf rerr
   rel="${c#"$ROOT"/}"
   if [ ! -f "$c/prompt.md" ] && ! grep -Eq '^[[:space:]]*prompt:' "$c/case.yaml" 2>/dev/null; then
     echo "SELFTEST-CASE: $rel: no prompt.md and no execution.prompt"; bad=1
@@ -348,6 +365,10 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
     seen="$seen $name"
     type="$(fm_get "$g" type)"
     case " $GRADER_TYPES " in *" $type "*) ;; *) echo "SELFTEST-GRADER: $rel/graders/$name.md: type '$type' is not one of $GRADER_TYPES"; bad=1; continue ;; esac
+    if [ "$type" = regex ]; then
+      rerr="$(regex_error "$(grader_pattern "$g")" "$(fm_get "$g" flags)")"
+      if [ -n "$rerr" ]; then echo "SELFTEST-REGEX: $rel/graders/$name.md: $rerr"; bad=1; free=1; continue; fi
+    fi
     case "$type" in
       regex|file_exists|tool_used)
         free=1
@@ -453,7 +474,7 @@ do_selftest() {
   local skills s k c f errs=0 cases=0 out
   skills="$(resolve_skills)" || exit $?
   if [ -z "$skills" ] && [ "$SELECT" = changed ] && [ -z "$(family_dirs)" ]; then echo "no skills changed"; exit 0; fi
-  need perl; need jq
+  need perl; need jq; need node
   LINT_TMP="$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-lint.XXXXXX")" || die 3 "no temp dir"
   trap 'find "$LINT_TMP" -delete 2>/dev/null' EXIT
   for s in $skills; do

@@ -439,12 +439,11 @@ n="$(n_of AW_RESULT)"
 if [ "$n" = 0 ]; then has -E 'warning: no staged file holds .*AW_RESULT' <<<"$OUT" && ok "AW_RESULT rewriting 0 files prints a warning" || { fail "no AW_RESULT warning"; show; }
 else ok "AW_RESULT is rewritten in $n file(s)"; fi
 
-# trace_reply SKILL: what the eval tool hands a `target: trace` grader for a run whose Skill call names SKILL. Read from the claude 2.1.312
-# bundle (the grader module near byte 283.43M of ~/.local/share/claude/versions/2.1.312): the trace is the run's stream-json events,
-# one JSON.stringify per event, joined by newlines; a Skill call is an assistant event with a tool_use block {name, input}.
+# trace_reply SKILL: what the eval tool hands a `target: trace` grader for a run whose Skill call names SKILL: run.trace.map(JSON.stringify)
+# joined by newlines (claude 2.1.312 bundle, grader module near byte 283.43M). The exact message envelope is checked on the first real family run.
 trace_reply() {
   printf '{"type":"system","subtype":"init","skills":["alpha","beta"],"tools":["Skill"]}\n'
-  printf '{"type":"assistant","message":{"id":"msg_01","role":"assistant","content":[{"type":"tool_use","id":"toolu_01","name":"Skill","input":{"skill":"%s"}}]},"parent_tool_use_id":null}\n' "$1"
+  printf '{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"%s"}}]}}\n' "$1"
 }
 
 # mkfamily: evals/_families/grp/{alpha,beta}: a first-Skill-call regex grader on the trace, committed
@@ -457,7 +456,8 @@ mkfamily() {
 ---
 type: regex
 target: trace
-pattern: '(?s)\A(?:(?!"skill"\s*:).)*"skill"\s*:\s*"(?:[\w-]+:)?MEMBER"'
+flags: s
+pattern: '^(?:(?!"skill"\s*:)[\s\S])*"skill"\s*:\s*"(?:[\w-]+:)?MEMBER"'
 ---
 
 The first Skill call names MEMBER.
@@ -550,6 +550,29 @@ lacks "no family block when the family set was refused" '### family'
 run --skills alpha --family grp --kind routing --family-max-cost-usd 1
 expect "a smaller family ceiling fits" 0 '### family grp'
 [ "$(grep -c -- '-family' "$STATE/skill-evals/spend.jsonl" || true)" = 2 ] && ok "the family set has its own reserve and settle rows" || { fail "family tally rows"; cat "$STATE/skill-evals/spend.jsonl"; }
+
+echo "regex graders are JavaScript"
+mkrepo
+G="$REPO/evals/alpha/behaviour/alpha-forced/graders"
+printf -- '---\ntype: regex\n---\n(?i)alpha-done\n' >"$G/has-done.md"
+run --skills alpha --selftest
+expect "a Perl-only (?i) is reported as invalid in JavaScript" 1 'SELFTEST-REGEX: .*has-done.md: pattern does not compile in JavaScript'
+printf -- '---\ntype: regex\nflags: i\n---\nalpha-done\n' >"$G/has-done.md"
+run --skills alpha --selftest
+expect "flags: i matches case-insensitively" 0 'selftest: 3 case\(s\), 0 problem'
+printf -- '---\ntype: regex\n---\nalpha-done\n' >"$G/has-done.md"
+run --skills alpha --selftest
+expect "without flags the same pattern is case-sensitive and fails its pass reply" 1 'does not pass its pass reply'
+printf -- '---\ntype: regex\nflags: x\n---\nALPHA-DONE\n' >"$G/has-done.md"
+run --skills alpha --selftest
+expect "flags outside dgimsuvy are a selftest problem" 1 'SELFTEST-REGEX: .*are not JavaScript RegExp flags'
+printf 'ALPHA ALPHA\n' >"$G/_selftest/has-done.pass.txt"
+printf -- '---\ntype: regex\nmatch: count:2\n---\nALPHA\n' >"$G/has-done.md"
+run --skills alpha --selftest
+expect "count:N counts every match (g)" 0 'selftest: 3 case\(s\), 0 problem'
+printf -- '---\ntype: regex\nmatch: count:3\n---\nALPHA\n' >"$G/has-done.md"
+run --skills alpha --selftest
+expect "a wrong count:N fails the pass reply" 1 'does not pass its pass reply'
 
 echo "fixture lint ignores comment lines"
 mkrepo
