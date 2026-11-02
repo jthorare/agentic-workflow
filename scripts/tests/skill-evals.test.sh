@@ -176,10 +176,12 @@ H="$TMPROOT/h$N"; mkdir -p "$H"
 (cd "$TMPROOT" && env -i PATH="$PATH" HOME="$H" bash "$STAGE_B/evals/alpha/behaviour/alpha-forced/_aw-scaffold.sh")
 [ -f "$H/.agentic-workflow/toolkit/skills/_preamble.md" ] && [ -f "$H/.agentic-workflow/toolkit/skills/_shared/repo-slug.sh" ] && [ -f "$H/.agentic-workflow/toolkit/config/voice/joi.md" ] &&
   [ "$(cat "$H/own-marker")" = own-scaffold-ran ] && ok "the scaffold puts the toolkit at the default path, then chains the case's own" || fail "scaffold run"
-has -F -- 'evals/stubs/bin' <<<"$OUT" && ok "the stubs are first on PATH" || fail "stubs not on PATH"
-[ -x "$STAGE_R/evals/stubs/bin/gh" ] && ok "the stub gh is executable in the stage" || fail "stub gh mode"
+# claude plugin eval denies the agent every read under the stage's evals/ (so it can't see the graders), and a stub there is
+# invisible to its shell: the stubs are staged at the stage root instead.
+has -E -- "PATH=[^ ]*/stage-[^/ ]*/stubs/bin:" <<<"$OUT" && ! has -F -- 'evals/stubs/bin' <<<"$OUT" && ok "the stubs are first on PATH, outside the stage's evals/" || { fail "stubs not first on PATH, or under evals/"; show; }
+[ -x "$STAGE_R/stubs/bin/gh" ] && [ ! -e "$STAGE_R/evals/stubs" ] && ok "the stub gh is executable in the stage" || fail "stub gh mode"
 [ -d "$H/.aw-eval" ] || [ -d "$TMPROOT/.aw-eval" ] && ok "the scaffold creates .aw-eval/ in the workspace" || fail "no .aw-eval/"
-grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/evals/stubs/bin/gh" && ok "the staged gh stub defaults to readonly" || fail "staged gh default"
+grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/stubs/bin/gh" && ok "the staged gh stub defaults to readonly" || fail "staged gh default"
 # repo-slug.sh sourced from the workspace root and from a subdirectory gives one state root (the slug below it is repo-slug.sh's own business)
 WS="$TMPROOT/ws$N"; mkdir -p "$WS/.aw-eval" "$WS/src/deep"
 slug() { (cd "$1" && env -i PATH="$PATH" HOME="$H" bash -c '. "$0"; printf %s "$AW_DIR"' "$STAGE_R/skills/_shared/repo-slug.sh"); }
@@ -290,7 +292,7 @@ ENVF="$(ls "$BIN"/env.*.txt | head -1)"
 if grep -qE '^(EVAL_SECRET|GH_TOKEN|AW_FORGE_TOKEN)=' "$ENVF"; then fail "a secret reached the stub's env"; else ok "EVAL_SECRET, GH_TOKEN and AW_FORGE_TOKEN never reach claude"; fi
 if grep -qE "hunter22xyz|$FAKE_GH|tok-forge" "$ENVF"; then fail "a secret value is in the env dump"; else ok "no secret value anywhere in claude's env"; fi
 has -E '^AW_PREAMBLE=off$' "$ENVF" && has -E '^AW_GIT_MODE=readonly$' "$ENVF" && has -E '^AW_RESULT=1$' "$ENVF" && ok "AW_* values are in the allowlist" || fail "AW_* values"
-has -E "^PATH=.*/evals/stubs/bin:" "$ENVF" && ok "PATH starts with the stub dir" || fail "PATH order"
+has -E "^PATH=[^:]*/stage-[^/:]*/stubs/bin:" "$ENVF" && ok "PATH starts with the stub dir" || fail "PATH order"
 [ "$(wc -l <"$ENVF")" -le 12 ] && ok "only the allowlist is forwarded ($(wc -l <"$ENVF") variables)" || { fail "env has too many variables"; cat "$ENVF"; }
 ARGS="$(cat "$BIN"/args.*.txt | head -1)"
 for f in '--trust-plugin' '--scaffold' '--no-publish' '--ablation none' '--runs 2' '--max-cost-usd 8' '--allow-tools Bash Write Edit'; do
