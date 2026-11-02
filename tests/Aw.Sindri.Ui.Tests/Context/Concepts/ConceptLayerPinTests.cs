@@ -142,10 +142,20 @@ public sealed class ConceptLayerPinTests
     public void A_concept_a_person_set_whose_pin_is_gone_reads_Unpinned_until_the_rebuild()
     {
         var stale = new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: true, Failed: null);
-        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(stale));
+        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(stale, Pin("billing", "Billing", PinStates.Approved, "removed")));
 
         Assert.Equal(["Unpinned · the map rebuild starts within a minute"], layer.Tiles[0].Lines);
         Assert.False(layer.Tiles[0].ShowEditPin);
+    }
+
+    [Fact]
+    public void A_concept_a_person_set_that_no_pin_row_names_offers_Pin_this_and_no_Unpinned_line()
+    {
+        var stale = new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: true, Failed: null);
+        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(stale));
+
+        Assert.Equal(("Set by a person", true, false), (layer.Tiles[0].MarkText, layer.Tiles[0].ShowPinThis, layer.Tiles[0].ShowEditPin));
+        Assert.Empty(layer.Tiles[0].Lines);
     }
 
     [Fact]
@@ -154,6 +164,26 @@ public sealed class ConceptLayerPinTests
         var layer = Layer(
             [AConcepts.Concept("concept:billing", "Billing", features: 120, records: 410, source: "override"), AConcepts.Concept("concept:auth", "Auth", features: 180, records: 1890)],
             pins: Pins(rebuild: null, Pin("billing", "Billing")));
+
+        Assert.Equal("You've pinned 120 of 300 features and 410 of 2,300 records. The rest are in suggestions or in no concept.", layer.PinHeadText);
+    }
+
+    [Fact]
+    public void With_only_a_removed_pin_the_head_line_says_how_to_make_one()
+    {
+        var layer = Layer(
+            [AConcepts.Concept("concept:billing", "Billing", features: 120, records: 410, source: "override")],
+            pins: Pins(rebuild: null, Pin("billing", "Billing", PinStates.Approved, "removed")));
+
+        Assert.Equal("No pins yet. Press Pin this on a concept to make it yours.", layer.PinHeadText);
+    }
+
+    [Fact]
+    public void A_removed_pin_adds_nothing_to_the_coverage_in_the_head_line()
+    {
+        var layer = Layer(
+            [AConcepts.Concept("concept:billing", "Billing", features: 120, records: 410, source: "override"), AConcepts.Concept("concept:auth", "Auth", features: 180, records: 1890, source: "override")],
+            pins: Pins(rebuild: null, Pin("billing", "Billing"), Pin("auth", "Auth", PinStates.Approved, "removed")));
 
         Assert.Equal("You've pinned 120 of 300 features and 410 of 2,300 records. The rest are in suggestions or in no concept.", layer.PinHeadText);
     }
