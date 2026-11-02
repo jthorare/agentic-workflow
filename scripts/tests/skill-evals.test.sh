@@ -73,6 +73,8 @@ if [ "${1:-}" = auth ]; then [ ! -f "$d/logged-out" ]; exit $?; fi
 echo "$*" >"$d/args.$$.txt"
 env >"$d/env.$$.txt"
 echo "$PWD" >"$d/cwd.$$.txt"
+if [ -n "${TMPDIR:-}" ] && [ -d "$TMPDIR" ] && [ -w "$TMPDIR" ]; then echo writable >"$d/tmpdir-ok.$$.txt"; fi
+if [ -n "${TMPDIR:-}" ] && [ -w "$TMPDIR" ]; then mkdir -p "$TMPDIR/sealed" && echo left >"$TMPDIR/sealed/leftover" && chmod 500 "$TMPDIR/sealed"; fi
 out=""; prev=""
 for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; prev="$a"; done
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
@@ -157,6 +159,7 @@ before="$(cksum <"$REPO/skills/_preamble.md") $(cksum <"$REPO/skills/alpha/SKILL
 run --skills alpha --dry-run --keep-temp
 expect "dry run passes with no claude on PATH" 0 'dry run ok'
 has -F -- 'not calling claude' <<<"$OUT" && ok "dry run prints the command it would run" || { fail "dry run prints the command"; show; }
+has -E 'env -i .*TMPDIR=' <<<"$OUT" && ok "eval child: the dry-run line shows TMPDIR=" || { fail "eval child: the dry-run line shows TMPDIR="; show; }
 STAGE_R="$(printf '%s\n' "$OUT" | sed -n 's/^skill-evals: staged routing: //p')"
 STAGE_B="$(printf '%s\n' "$OUT" | sed -n 's/^skill-evals: staged behaviour: //p')"
 [ -d "$STAGE_R" ] && [ -d "$STAGE_B" ] && ok "both kinds staged" || fail "stage dirs: '$STAGE_R' '$STAGE_B'"
@@ -181,6 +184,10 @@ H="$TMPROOT/h$N"; mkdir -p "$H"
 has -E -- "PATH=[^ ]*/stage-[^/ ]*/stubs/bin:" <<<"$OUT" && ! has -F -- 'evals/stubs/bin' <<<"$OUT" && ok "the stubs are first on PATH, outside the stage's evals/" || { fail "stubs not first on PATH, or under evals/"; show; }
 [ -x "$STAGE_R/stubs/bin/gh" ] && [ ! -e "$STAGE_R/evals/stubs" ] && ok "the stub gh is executable in the stage" || fail "stub gh mode"
 [ -d "$H/.aw-eval" ] || [ -d "$TMPROOT/.aw-eval" ] && ok "the scaffold creates .aw-eval/ in the workspace" || fail "no .aw-eval/"
+[ -f "$H/.bashrc" ] && [ ! -s "$H/.bashrc" ] && ok "eval child: the scaffold leaves an empty .bashrc in the run's HOME" || fail "eval child: no empty .bashrc in the run's HOME"
+H2="$TMPROOT/h2$N"; mkdir -p "$H2"; echo 'own rc' >"$H2/.bashrc"
+(cd "$TMPROOT" && env -i PATH="$PATH" HOME="$H2" bash "$STAGE_B/evals/alpha/behaviour/alpha-forced/_aw-scaffold.sh")
+[ "$(cat "$H2/.bashrc")" = 'own rc' ] && ok "eval child: the scaffold keeps an existing .bashrc" || fail "eval child: the scaffold replaced an existing .bashrc"
 grep -q 'AW_GIT_MODE:-readonly' "$STAGE_R/stubs/bin/gh" && ok "the staged gh stub defaults to readonly" || fail "staged gh default"
 # repo-slug.sh sourced from the workspace root and from a subdirectory gives one state root (the slug below it is repo-slug.sh's own business)
 WS="$TMPROOT/ws$N"; mkdir -p "$WS/.aw-eval" "$WS/src/deep"
@@ -294,6 +301,10 @@ if grep -qE "hunter22xyz|$FAKE_GH|tok-forge" "$ENVF"; then fail "a secret value 
 has -E '^AW_PREAMBLE=off$' "$ENVF" && has -E '^AW_GIT_MODE=readonly$' "$ENVF" && has -E '^AW_RESULT=1$' "$ENVF" && ok "AW_* values are in the allowlist" || fail "AW_* values"
 has -E "^PATH=[^:]*/stage-[^/:]*/stubs/bin:" "$ENVF" && ok "PATH starts with the stub dir" || fail "PATH order"
 [ "$(wc -l <"$ENVF")" -le 12 ] && ok "only the allowlist is forwarded ($(wc -l <"$ENVF") variables)" || { fail "env has too many variables"; cat "$ENVF"; }
+has -E "^TMPDIR=$STATE/skill-evals/tmp/[0-9]{8}T[0-9]{6}-[0-9]+\$" "$ENVF" && ok "eval child: TMPDIR is a per-run dir under the eval home's tmp" || { fail "eval child: TMPDIR is a per-run dir under the eval home's tmp"; grep '^TMPDIR=' "$ENVF" || echo "      | (no TMPDIR in the child's env)"; }
+RUN_TMP="$(sed -n 's/^TMPDIR=//p' "$ENVF")"
+[ -n "$RUN_TMP" ] && [ ! -e "$RUN_TMP" ] && ok "eval child: a normal run removes its TMPDIR, read-only leftovers included" || fail "eval child: TMPDIR '$RUN_TMP' is still there after a normal run"
+[ -n "$(ls "$BIN"/tmpdir-ok.*.txt 2>/dev/null)" ] && ok "eval child: TMPDIR exists and is writable when claude runs" || fail "eval child: TMPDIR exists and is writable when claude runs"
 ARGS="$(cat "$BIN"/args.*.txt | head -1)"
 for f in '--trust-plugin' '--scaffold' '--no-publish' '--ablation none' '--runs 2' '--max-cost-usd 8' '--allow-tools Bash Write Edit'; do
   case "$ARGS" in *"$f"*) ok "claude got $f" ;; *) fail "claude args lack $f: $ARGS" ;; esac
@@ -619,6 +630,8 @@ TD="$(find "$STATE/skill-evals" -type d -name traces | head -1)"
 [ "$(ls "$TD" 2>/dev/null | wc -l)" = 3 ] && ok "three traced runs of two cases leave three files" || { fail "trace files: $(ls "$TD" 2>/dev/null | tr '\n' ' ')"; show; }
 [ -f "$TD/alpha-natural-1-with-1.jsonl" ] && [ -f "$TD/alpha-natural-1-with-2.jsonl" ] && [ -f "$TD/alpha-natural-2-with-1.jsonl" ] && ok "traces are named <case>-<arm>-<run>.jsonl" || { fail "trace names"; ls "$TD"; }
 grep -q assistant "$TD/alpha-natural-1-with-2.jsonl" && ok "each file holds its own run's trace" || fail "trace content"
+KEPT_TMP="$(sed -n 's/^TMPDIR=//p' "$BIN"/env.*.txt | head -1)"
+[ -n "$KEPT_TMP" ] && [ -d "$KEPT_TMP" ] && ok "eval child: --keep-temp keeps the run's TMPDIR" || fail "eval child: --keep-temp lost TMPDIR '$KEPT_TMP'"
 
 echo "fixture lint ignores comment lines"
 mkrepo
