@@ -54,12 +54,17 @@ internal static class CursorPolicyFile
         return [.. AwJson.Serialize(document, _json), .. "\n"u8];
     }
 
+    private static readonly string[] _cursorRules = ["Shell(", "Read(", "Write(", "WebFetch(", "Mcp("];
+
     private static string Rule(string tool) => tool switch
     {
         "Read" or "Grep" or "Glob" => "Read(**)",
+        "Bash" => "Shell(*)",
+        "Edit" or "Write" => "Write(**)",
         _ when tool.StartsWith("Bash(", StringComparison.Ordinal) => "Shell(" + tool["Bash(".Length..],
         _ when tool.StartsWith("Edit(", StringComparison.Ordinal) => "Write(" + tool["Edit(".Length..],
-        _ => tool,
+        _ when _cursorRules.Any(prefix => tool.StartsWith(prefix, StringComparison.Ordinal)) => tool,
+        _ => throw new ArgumentException($"the allowed tool '{tool}' has no Cursor rule type", nameof(tool)),
     };
 
     /// <summary>Where the config lives in <paramref name="workDir"/>.</summary>
@@ -99,7 +104,17 @@ internal static class CursorPolicyFile
         var path = PathIn(workDir);
         if (File.Exists(path))
         {
-            return SindriErrors.RequestInvalid.With($"the Step's worktree already has a {path}, which a launch never overwrites (fix: remove it or move its rules to the user config)");
+            if (Holder(directory, path) is not { } holder)
+            {
+                return SindriErrors.RequestInvalid.With($"the Step's worktree already has a {path}, which a launch never overwrites (fix: remove it or move its rules to the user config)");
+            }
+
+            if (holder != launch && live(holder))
+            {
+                return SindriErrors.RequestInvalid.With($"the Step's worktree is in use by another launch ({holder.Value}), whose {path} is still live (fix: wait for it to end or stop it)");
+            }
+
+            Delete(directory, holder);   // a dead launch's file and sidecar
         }
 
         OwnerOnly.EnsureDirectory(directory);

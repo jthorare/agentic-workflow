@@ -192,7 +192,7 @@ internal sealed partial class LaunchFileStore(LauncherOptions options, StaleSwee
         return SweepOwned(options.SecretsDirectory, "*.secret", stale)
             + SweepOwned(options.SecretsDirectory, "*.hash", stale)
             + SweepOwned(options.PolicyDirectory, "LCH-*.settings.json", stale)
-            + SweepOwned(options.PolicyDirectory, "LCH-*.cursor-path", stale);   // a cursor-config launch whose host died: its cli.json goes with its sidecar, or the reused worktree refuses every later cursor Step
+            + SweepOwned(options.PolicyDirectory, "LCH-*.cursor-path", stale, CursorPolicyFile.DeleteSidecar);   // a cursor-config launch whose host died: its cli.json goes with its sidecar, or the reused worktree refuses every later cursor Step
     }
 
     private readonly record struct Staleness(DateTimeOffset Now, TimeSpan OlderThan, Func<LaunchId, bool> Live);
