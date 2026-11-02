@@ -1,1 +1,1 @@
-judge health is ok and the binary is on the PATH.
+judge shows down on the status line, and `judge health` printed nothing.

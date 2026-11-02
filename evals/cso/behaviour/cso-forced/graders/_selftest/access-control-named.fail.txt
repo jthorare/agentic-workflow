@@ -1,1 +1,1 @@
-Passwords are hashed with unsalted SHA-1 and uploads sit in a public bucket.
+The permit lookup endpoint requires sign-in and returns the holder's name and address.

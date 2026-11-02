@@ -1,2 +1,2 @@
 ## Cross-lens notes
-The lenses agree on everything.
+Product wants a no-sign-in link; security blocks it.

@@ -1,1 +1,1 @@
-Reordering works well with the mouse and is easy to discover.
+Reordering is drag-and-drop only; there is no screen reader announcement.

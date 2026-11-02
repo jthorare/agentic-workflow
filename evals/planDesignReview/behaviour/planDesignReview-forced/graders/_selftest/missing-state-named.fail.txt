@@ -1,1 +1,1 @@
-The list view shows books in a tidy grid.
+Reordering saves automatically after each drop; a loading spinner shows while it saves.

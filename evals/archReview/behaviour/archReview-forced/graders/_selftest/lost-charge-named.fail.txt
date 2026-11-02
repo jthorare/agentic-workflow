@@ -1,1 +1,1 @@
-The plan reads fine. The billing flow is clear and the rollout is staged.
+The charge call has a 30 s timeout and logs the gateway's error code; a failed charge is logged and the permit is marked pending.

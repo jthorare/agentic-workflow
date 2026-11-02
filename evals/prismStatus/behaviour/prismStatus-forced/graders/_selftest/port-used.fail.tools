@@ -1,1 +1,1 @@
-Bash	{"command":"curl -s localhost:3000/health"}
+Bash	{"command":"curl -s localhost:7392/health"}
