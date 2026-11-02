@@ -142,7 +142,7 @@ public sealed class ConceptLayerPinTests
     public void A_concept_a_person_set_whose_pin_is_gone_reads_Unpinned_until_the_rebuild()
     {
         var stale = new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: true, Failed: null);
-        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(stale));
+        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(stale, Pin("billing", "Billing", PinStates.Approved, "removed")));
 
         Assert.Equal(["Unpinned · the map rebuild starts within a minute"], layer.Tiles[0].Lines);
         Assert.False(layer.Tiles[0].ShowEditPin);
