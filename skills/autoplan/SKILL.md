@@ -1,6 +1,6 @@
 ---
 name: autoplan
-description: "Plan meta-orchestrator. Runs productReview + archReview + planDesignReview + planDevexReview + cso(plan) in parallel via subagents and consolidates findings with cross-lens tension surfacing."
+description: "Use when a plan should be vetted from every angle before anyone builds it: product, architecture, design, developer experience and security in one pass. Runs the five review lenses in parallel and merges them into one verdict with the places they disagree. Not for a request about a single lens; that goes to the lens skill."
 argument-hint: "[plan-path] [--mode mvp|growth|scale|pivot] [--slim]"
 allowed-tools: Bash(ls *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -114,6 +114,18 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 ## Outputs
 
 All under `~/.agentic-workflow/<repo-slug>/plans/<feature>/`: `product-review.md` · `arch-review.md` · `design-review.md` · `devex-review.md` · `security-review.md` · `consolidated-review.md`
+
+## Result block
+
+Only when `AW_RESULT=1`: write `$AW_DIR/results/autoplan-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
+
+- `skill`: `"autoplan"`
+- `artifacts`: absolute paths of the files this run wrote (`consolidated-review.md` and every lens file that exists)
+- `summary`: one line, the overall verdict and the driving finding ids
+- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the overall verdict, the same value as `consolidated-review.md`'s final `verdict:` line
+- `lenses`: object: lens name to that lens's verdict, or `"MISSING"`
+
+Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
 
 ## Next steps
 

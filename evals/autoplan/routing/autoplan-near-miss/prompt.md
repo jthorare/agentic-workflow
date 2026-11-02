@@ -1,0 +1,7 @@
+---
+max_turns: 6
+allowed_tools: [Read, Glob, Grep, Skill]
+tags: [autoplan, routing, near-miss, cso]
+---
+
+Here is the plan for our new password-reset flow. Forget everything else, I only want to know whether it is safe: who could abuse it, what could leak, and what an attacker would try first.
