@@ -36,7 +36,7 @@ Required keys:
 | `artifacts` | absolute paths of every file the run produced or changed on purpose (reports, plans, mockups, state files); `[]` when nothing was written |
 | `summary` | one line, what happened |
 
-Everything else is the skill's own. The skill's Result block names its extra keys; the keys a skill already has keep their meaning and spelling (`rootCause`'s `status` enum, a lens's `verdict`). No shared `status` enum is forced on skills that already have one. Skills that only talk (`enhancePrompt`, `withInterview`, `judge`, `prismStatus`) use `artifacts: []`.
+Everything else is the skill's own. The skill's Result block names its extra keys; the keys a skill already has keep their meaning and spelling (`rootCause`'s `status` enum, a lens's `verdict`). No shared `status` enum is forced on skills that already have one. Skills that only talk (`judge`, `prismStatus`) use `artifacts: []`.
 
 A lens or review skill adds `verdict`, copied from the last `verdict:` line of its report (or the verdict word the report prints, when the report has no such line).
 

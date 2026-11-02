@@ -127,7 +127,7 @@ If the target was "none — execute directly", begin the work yourself using the
 
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/withInterview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
-Keys: `skill` (`withInterview`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
+Keys: `skill` (`withInterview`), `artifacts` (absolute paths: `$PLAN_DIR/interview.md` and `$PLAN_DIR/plan.md`, `[]` when the user never confirmed), `summary` (one line),
 plus `confirmed` (true when the user confirmed the plan); `plan_dir` (absolute path of the `$PLAN_DIR` directory holding `interview.md` and `plan.md`); `target_skill` (the skill handed off to, or `none`); `rounds` (number of interview rounds held).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
