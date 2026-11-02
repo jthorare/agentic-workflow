@@ -1,0 +1,1 @@
+"ears_types": ["event", "state", "unwanted"]

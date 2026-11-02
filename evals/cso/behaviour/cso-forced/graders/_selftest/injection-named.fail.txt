@@ -1,0 +1,1 @@
+The plate search is fast and the paging is sensible.

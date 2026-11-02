@@ -1,0 +1,1 @@
+Passwords are hashed with unsalted SHA-1 and uploads sit in a public bucket.

@@ -1,0 +1,1 @@
+The processor client uses library defaults and the worker is a single process.

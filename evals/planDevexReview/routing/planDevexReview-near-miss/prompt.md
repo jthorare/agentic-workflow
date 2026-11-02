@@ -1,5 +1,6 @@
 ---
 max_turns: 6
+timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [planDevexReview, routing, near-miss, planDesignReview]
 ---

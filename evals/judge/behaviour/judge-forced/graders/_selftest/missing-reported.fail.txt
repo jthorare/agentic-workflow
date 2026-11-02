@@ -1,0 +1,1 @@
+judge health is ok and the binary is on the PATH.
