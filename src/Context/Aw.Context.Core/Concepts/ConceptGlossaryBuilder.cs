@@ -12,8 +12,9 @@ public static class ConceptGlossaryBuilder
     /// <param name="basis">The map version and repo the answer is for.</param>
     /// <param name="graph">The graph the caller may see.</param>
     /// <param name="text">The caller's text policy.</param>
+    /// <param name="pins">The pins the caller sees; a pin's aliases come first, marked as the owner's. Null reads none.</param>
     /// <returns>The view.</returns>
-    public static ConceptGlossaryView Build(ConceptsBasis basis, GraphSnapshot graph, MapText text)
+    public static ConceptGlossaryView Build(ConceptsBasis basis, GraphSnapshot graph, MapText text, PinSet? pins = null)
     {
         ArgumentNullException.ThrowIfNull(basis);
         ArgumentNullException.ThrowIfNull(graph);
@@ -23,7 +24,7 @@ public static class ConceptGlossaryBuilder
             .GroupBy(n => n.Key.Value, StringComparer.Ordinal)
             .Select(g => g.First())
             .OrderBy(n => n.Key.Value, StringComparer.Ordinal)
-            .Select(n => new ConceptTermsRow(n.Key, text.Label(n.Label, TrustPolicy.ForNode(n, n.Provenance == Provenance.Human)), Terms(n, text)))
+            .Select(n => Row(n, text, pins))
             .Where(c => c.Terms.Count > 0)
             .ToList();
         var terms = concepts
@@ -33,6 +34,14 @@ public static class ConceptGlossaryBuilder
             .Select(g => new TermConceptsRow(g.Key, [.. g.Select(p => p.Id)]))
             .ToList();
         return new ConceptGlossaryView(1, basis.Repo, basis.MapVersion, concepts.Count == 0 ? ConceptStates.Empty : ConceptStates.Ok, concepts, terms);
+    }
+
+    private static ConceptTermsRow Row(GraphNode concept, MapText text, PinSet? pins)
+    {
+        var trust = TrustPolicy.ForNode(concept, concept.Provenance == Provenance.Human);
+        var owner = pins?.AliasesOf(concept.Key).Select(a => text.Label(a, trust)).Distinct(StringComparer.Ordinal).ToList() ?? [];
+        var terms = owner.Concat(Terms(concept, text).Where(t => !owner.Contains(t, StringComparer.Ordinal))).ToList();
+        return new ConceptTermsRow(concept.Key, text.Label(concept.Label, trust), terms) { OwnerTerms = owner.Count == 0 ? null : owner };
     }
 
     private static List<string> Terms(GraphNode concept, MapText text)

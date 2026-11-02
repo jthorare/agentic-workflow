@@ -79,7 +79,7 @@ internal static class RunWords
         {
             if (string.Equals(fields.Trigger, "step.failed", StringComparison.Ordinal) && (fields.Via is null || string.Equals(fields.Via, "agent", StringComparison.Ordinal)) && fields.Reason is not null)
             {
-                lines.Add(Labels.AgentFailed(fields.Reason, fields.To));
+                lines.Add(fields.Limit is { } limit ? Labels.LimitEnding(limit.Kind, limit.Limit, limit.Elapsed, limit.Branch) : Labels.AgentFailed(fields.Reason, fields.To));
             }
             else if (string.Equals(fields.Via, "agent", StringComparison.Ordinal) && string.Equals(fields.Trigger, "step.completed", StringComparison.Ordinal))
             {

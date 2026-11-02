@@ -45,18 +45,49 @@ internal sealed partial class SlackClient : ISlackReader
             return refused;
         }
 
-        if (oldest is not null && !SlackTs.TryParse(oldest, out _))
+        var window = Window(oldest, latest);
+        if (window.IsError)
         {
-            return ConnectorsErrors.Invalid.With("oldest must be a Slack ts.");
+            return window.Error;
         }
 
-        if (latest is not null && !SlackTs.TryParse(latest, out _))
+        return await ReadPages(cursor => Url($"conversations.history?channel={channel}&limit={PageSize.ToString(CultureInfo.InvariantCulture)}{window.Value}", cursor), MaxHistoryPages, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async ValueTask<Result<SlackMessagePage>> HistoryPage(string channel, string? oldest, string? latest, int limit, CancellationToken cancellationToken)
+    {
+        if (Prepare(channel) is { } refused)
         {
-            return ConnectorsErrors.Invalid.With("latest must be a Slack ts.");
+            return refused;
         }
 
-        var window = (oldest is null ? string.Empty : $"&inclusive=true&oldest={oldest}") + (latest is null ? string.Empty : $"&latest={latest}");
-        return await ReadPages(cursor => Url($"conversations.history?channel={channel}&limit={PageSize.ToString(CultureInfo.InvariantCulture)}{window}", cursor), MaxHistoryPages, cancellationToken).ConfigureAwait(false);
+        var window = Window(oldest, latest);
+        if (window.IsError)
+        {
+            return window.Error;
+        }
+
+        var size = Math.Clamp(limit, 1, PageSize).ToString(CultureInfo.InvariantCulture);
+        var step = await Fetch(Url($"conversations.history?channel={channel}&limit={size}{window.Value}", cursor: null), cancellationToken).ConfigureAwait(false);
+        if (step.IsError)
+        {
+            return step.Error;
+        }
+
+        if (step.Value.RateLimitedUntil is { } until)
+        {
+            return new SlackMessagePage([], until);
+        }
+
+        var read = step.Value.Body is { } body ? SlackWire.ReadPage(body) : null;
+        if (read is null)
+        {
+            return ConnectorsErrors.BadReply.With("A message of Slack's reply lacked a field the connector reads.");
+        }
+
+        var hasMore = read.Value.Next is not null || (step.Value.Body is { } root && root.TryGetProperty("has_more", out var flag) && flag.ValueKind == System.Text.Json.JsonValueKind.True);
+        return new SlackMessagePage(read.Value.Messages, RateLimitedUntil: null, hasMore);
     }
 
     /// <inheritdoc />
@@ -85,6 +116,21 @@ internal sealed partial class SlackClient : ISlackReader
 
         var step = await Fetch(Url($"conversations.history?channel={channel}&limit=1", cursor: null), cancellationToken).ConfigureAwait(false);
         return step.IsError ? step.Error : Results.Success(step.Value.RateLimitedUntil);
+    }
+
+    private static Result<string> Window(string? oldest, string? latest)
+    {
+        if (oldest is not null && !SlackTs.TryParse(oldest, out _))
+        {
+            return ConnectorsErrors.Invalid.With("oldest must be a Slack ts.");
+        }
+
+        if (latest is not null && !SlackTs.TryParse(latest, out _))
+        {
+            return ConnectorsErrors.Invalid.With("latest must be a Slack ts.");
+        }
+
+        return (oldest is null ? string.Empty : $"&inclusive=true&oldest={oldest}") + (latest is null ? string.Empty : $"&latest={latest}");
     }
 
     private static Uri Url(string path, string? cursor)

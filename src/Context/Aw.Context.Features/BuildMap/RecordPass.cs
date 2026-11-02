@@ -1,6 +1,5 @@
 using System.Globalization;
 using Aw.Context.Core.Docs;
-using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Records;
@@ -12,11 +11,11 @@ using Aw.Kernel;
 namespace Aw.Context.Features.BuildMap;
 
 /// <summary>One read of the store for one build: the nodes and edges it finds and the counts the report prints. Not thread-safe; a build makes one per read.</summary>
-internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols, MapRecordInput input, IReadOnlyList<StoredRecord> stored)
+internal sealed partial class RecordPass(IRecordStore records, ICodeSymbolSource symbols, MapRecordInput input, IReadOnlyList<StoredRecord> stored)
 {
     private const int SymbolHitsAsked = 200;
 
-    private static readonly RecordLinkKind[] _linkKinds = [RecordLinkKind.Parent, RecordLinkKind.Blocks, RecordLinkKind.Duplicates, RecordLinkKind.Relates, RecordLinkKind.Closes, RecordLinkKind.Attachment];
+    private static readonly RecordLinkKind[] _linkKinds = [RecordLinkKind.Parent, RecordLinkKind.Blocks, RecordLinkKind.Duplicates, RecordLinkKind.Relates, RecordLinkKind.Closes, RecordLinkKind.Attachment, RecordLinkKind.InProject];
 
     private readonly RepoPaths _paths = new(input.Repos);
     private readonly Dictionary<string, StoredRecord> _live = stored.ToDictionary(r => r.Key.Value, StringComparer.Ordinal);
@@ -24,9 +23,10 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
     private readonly Dictionary<(string From, string To), GraphEdge> _edges = [];
     private readonly Dictionary<CitationOutcome, int> _cited = [];
     private readonly Dictionary<(string Repo, string Name), IReadOnlyList<(string Repo, string Path)>> _symbolFiles = [];
+    private readonly Dictionary<string, CodeIndexHead> _indexHeads = new(StringComparer.Ordinal);
     private int _notSynced;
     private int _older;
-    private int _removedTouches, _overCap, _overCapPaths;
+    private int _removedTouches, _removedCited, _overCap, _overCapPaths;
     private readonly List<RolledRecord> _overflow = [];
     private readonly List<RolledRecord> _underCap = [];
 
@@ -51,6 +51,16 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
             }
         }
 
+        // why: a repo no citation asked about still has a code index head; it is read now, with the rest of the pass, never at save time (#1704).
+        foreach (var repo in input.Repos.Where(r => !_indexHeads.ContainsKey(r.Name.Value)))
+        {
+            var head = await symbols.Heads(repo.Name, asOf: null, cancellationToken).ConfigureAwait(false);
+            if (!head.IsError)
+            {
+                _indexHeads[repo.Name.Value] = head.Value;
+            }
+        }
+
         return null;
     }
 
@@ -63,7 +73,7 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
             [.. _nodes.Values.OrderBy(n => n.Key.Value, StringComparer.Ordinal)],
             [.. _edges.Values.OrderBy(e => e.From.Value, StringComparer.Ordinal).ThenBy(e => e.To.Value, StringComparer.Ordinal)]);
         var (notes, degraded) = Notes(stamp);
-        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)], UnderCap = [.. _underCap.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
+        return new MapRecordReading(map, stamp, notes) { Degraded = degraded, IndexHeads = _indexHeads, Overflow = [.. _overflow.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)], UnderCap = [.. _underCap.OrderBy(r => r.Node.Key.Value, StringComparer.Ordinal)] };
     }
 
     private async ValueTask<Error?> Docs(MapRepoFiles repo, CancellationToken cancellationToken)
@@ -109,76 +119,12 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
         }
 
         var node = Node(record, from);
-        if (Links(record, from) + Emit(record.Key, node, targets) > 0)
+        if (Links(record, from) + Emit(record.Key, node, targets, Project(record)) > 0)
         {
             _ = _nodes.TryAdd(from.Value, node);
         }
 
         return null;
-    }
-
-    // The paths and symbols a record's text cites, resolved against the path lists: an exact match joins the record's file targets, anything else is a count.
-    private async ValueTask<Error?> Cite(StoredRecord record, HashSet<(string Repo, string Path)> targets, CancellationToken cancellationToken)
-    {
-        var chunks = await records.Chunks(record.Key, cancellationToken).ConfigureAwait(false);
-        if (chunks.IsError)
-        {
-            return chunks.Error;
-        }
-
-        var text = string.Join('\n', chunks.Value.Select(c => c.Text));
-        foreach (var path in CitedPaths.Find(text))
-        {
-            var (outcome, holder) = _paths.Resolve(record.Repo, path);
-            _cited[outcome] = _cited.GetValueOrDefault(outcome) + 1;
-            if (holder is not null)
-            {
-                _ = targets.Add((holder, path));
-            }
-        }
-
-        foreach (var name in CitedPaths.FindSymbols(text))
-        {
-            var files = await SymbolFiles(record.Repo, name, cancellationToken).ConfigureAwait(false);
-            var outcome = files.Count switch { 0 => CitationOutcome.Missing, 1 => CitationOutcome.Resolved, _ => CitationOutcome.Ambiguous };
-            _cited[outcome] = _cited.GetValueOrDefault(outcome) + 1;
-            if (outcome == CitationOutcome.Resolved)
-            {
-                _ = targets.Add(files[0]);
-            }
-        }
-
-        return null;
-    }
-
-    // The mapped files that define a symbol of this exact name, in the record's repo or (a record naming none) in every mapped repo, as (repo, path); two are enough to call it ambiguous. A code index that is off, doesn't know the name or can't be read answers none: the citation is counted, never guessed.
-    private async ValueTask<IReadOnlyList<(string Repo, string Path)>> SymbolFiles(ContextRepoName? repo, string name, CancellationToken cancellationToken)
-    {
-        var key = (repo?.Value ?? string.Empty, name);
-        if (_symbolFiles.TryGetValue(key, out var known))
-        {
-            return known;
-        }
-
-        var found = new List<(string Repo, string Path)>();
-        foreach (var scope in input.Repos.Where(r => repo is not { } own || r.Name == own))
-        {
-            var hits = await symbols.FindSymbols(scope.Name, new SymbolQuery(name, Prefix: false, Max: SymbolHitsAsked), asOf: null, cancellationToken).ConfigureAwait(false);
-            if (hits.IsError)
-            {
-                continue;
-            }
-
-            foreach (var path in hits.Value.Rows.Select(h => h.Site.Path).Where(p => _paths.Has(scope.Name.Value, p)).Distinct(StringComparer.Ordinal))
-            {
-                if (found.Count < 2 && !found.Contains((scope.Name.Value, path)))
-                {
-                    found.Add((scope.Name.Value, path));
-                }
-            }
-        }
-
-        return _symbolFiles[key] = found;
     }
 
     // Source-stated links between two stored records; a target the store doesn't hold, or a doc outside the path list, makes no edge.
@@ -195,6 +141,12 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
 
         return made;
     }
+
+    // The project an issue is in, when the store holds it: the node its features roll up to.
+    private NodeKey? Project(StoredRecord record) =>
+        record.Links.Where(l => l.Kind == RecordLinkKind.InProject).Select(l => l.ToKey).OfType<RecordKey>()
+            .Select(k => _live.TryGetValue(k.Value, out var project) && NodeKey.TryFrom("record:" + project.Key.Value, out var key) ? (NodeKey?)key : null)
+            .FirstOrDefault(k => k is not null);
 
     private NodeKey? Target(StoredRecord target)
     {
@@ -229,9 +181,9 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
     }
 
     // A record's file edges, from everything it touched, cited or defined: past TouchCap (counted by (repo, path), so one relative path in two repos is two) it gets none, is counted, and is handed on to roll up to features once the homes are known. A record under the cap keeps its file edges and is handed on too, to roll up beside them.
-    private int Emit(RecordKey evidence, GraphNode node, HashSet<(string Repo, string Path)> targets)
+    private int Emit(RecordKey evidence, GraphNode node, HashSet<(string Repo, string Path)> targets, NodeKey? project = null)
     {
-        var rolled = new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]);
+        var rolled = new RolledRecord(node, evidence, [.. targets.Select(t => t.Path).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]) { Project = project };
         if (targets.Count > MapRecordSources.TouchCap)
         {
             _overCap++;
@@ -280,6 +232,7 @@ internal sealed class RecordPass(IRecordStore records, ICodeSymbolSource symbols
         var ambiguous = _cited.GetValueOrDefault(CitationOutcome.Ambiguous);
         AddIf(all, degraded, resolved + missing + ambiguous, _ => Line($"citations: {resolved} resolved, {missing + ambiguous} unresolved ({missing} missing, {ambiguous} ambiguous)"), stale: missing + ambiguous > 0);
         AddIf(all, degraded, _removedTouches, n => Line($"touched files since removed: {n}"), stale: false);
+        AddIf(all, degraded, _removedCited, n => Line($"cited files since removed: {n}"), stale: false);
         AddIf(all, degraded, _overCap, n => Line($"records over the file cap: {n} ({_overCapPaths} paths)"), stale: true);
         return (all, degraded);
     }

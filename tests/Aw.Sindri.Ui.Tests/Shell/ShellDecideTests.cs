@@ -219,7 +219,7 @@ public sealed class ShellDecideTests
     }, Token);
 
     [Fact]
-    public Task A_cleared_decision_the_decided_list_does_not_hold_falls_back_to_the_id_and_cleared() => UiThread.Run(async () =>
+    public Task A_cleared_decision_the_decided_list_does_not_hold_falls_back_to_a_plain_cleared_line() => UiThread.Run(async () =>
     {
         var shell = await WithDecision();
         shell.Navigate(new DeepLink(DeepLinkKind.Decision, "DEC-1"));
@@ -227,6 +227,6 @@ public sealed class ShellDecideTests
         shell.ShowNeedsYou(new NeedsYouFeed([], ""));
         await shell.Decision.Settled;
 
-        Assert.Equal(Labels.Cleared("DEC-1"), shell.Decision.ClearedLine);
+        Assert.Equal(Labels.DecisionClearedFallback, shell.Decision.ClearedLine);
     }, Token);
 }

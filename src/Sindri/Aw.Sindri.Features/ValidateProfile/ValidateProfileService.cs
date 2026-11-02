@@ -20,9 +20,10 @@ internal sealed class ValidateProfileService(IProfileSource live, IApprovals app
             return loaded.Error;
         }
 
-        if (Checked(loaded.Value.Profile) is { IsError: true } invalid)
+        var checkedContext = Checked(loaded.Value.Profile);
+        if (checkedContext.IsError)
         {
-            return invalid.Error;   // SND-CONTEXT-001 with its key path (context spec §4)
+            return checkedContext.Error;   // SND-CONTEXT-001 with its key path (context spec §4)
         }
 
         if (await ModelProblem(loaded.Value.Profile, cancellationToken).ConfigureAwait(false) is { } badModel)
@@ -47,7 +48,8 @@ internal sealed class ValidateProfileService(IProfileSource live, IApprovals app
         return new ValidateProfileResponse(loaded.Value.Hash, loaded.Value.Source, approved) { Matches = matches.Count == 0 ? null : matches, Warnings = Warnings(loaded.Value.Profile) };
     }
 
-    private IReadOnlyList<string>? Warnings(SindriProfile profile) =>
+    // The agent target's line, when it has one.
+    private List<string>? Warnings(SindriProfile profile) =>
         agents is not null && AgentTargetWarning.For(profile.Workflow?.Agent?.Target, agents) is { } line ? [line] : null;
 
     private async ValueTask<Error?> ModelProblem(SindriProfile profile, CancellationToken cancellationToken) =>

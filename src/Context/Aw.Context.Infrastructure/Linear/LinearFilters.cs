@@ -50,6 +50,15 @@ internal static class LinearFilters
         return filter;
     }
 
+    /// <summary>The filter for a first read with no watermark: issues updated since the window's start, or open in a project that is not done or canceled however old they are (projects page spec §4.4).</summary>
+    public static JsonObject UpdatedOrOpenInOpenProject(JsonObject filter, string windowStart)
+    {
+        filter["or"] = new JsonArray(
+            new JsonObject { ["updatedAt"] = new JsonObject { ["gte"] = windowStart } },
+            new JsonObject { ["state"] = ClosedTypes(), ["project"] = new JsonObject { ["status"] = ClosedTypes() } });
+        return filter;
+    }
+
     /// <summary>A filter for records with these ids.</summary>
     public static JsonObject WithIds(IEnumerable<string> ids) => new() { ["id"] = new JsonObject { ["in"] = Strings(ids) } };
 
@@ -72,6 +81,8 @@ internal static class LinearFilters
 
     /// <summary>The variables of a read by id.</summary>
     public static JsonObject ById(string id) => new() { ["id"] = id };
+
+    private static JsonObject ClosedTypes() => new() { ["type"] = new JsonObject { ["nin"] = Strings(["completed", "canceled"]) } };
 
     private static JsonObject TeamsSome(IEnumerable<string> teams) => new() { ["some"] = new JsonObject { ["key"] = new JsonObject { ["in"] = Strings(teams) } } };
 

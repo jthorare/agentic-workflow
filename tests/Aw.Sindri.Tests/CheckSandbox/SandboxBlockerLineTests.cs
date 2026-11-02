@@ -41,6 +41,10 @@ public sealed class SandboxBlockerLineTests
     }
 
     [Fact]
+    public void The_not_checked_sentence_says_exactly_what_the_golden_says() =>
+        Assert.Equal(SandboxCopy.HooksNotChecked, (string)SandboxGoldens.Object("copy.json")["notChecked"]!["hooks-run"]!);
+
+    [Fact]
     public void The_session_cap_sentence_fills_its_count_and_cap_from_the_refusal()
     {
         var refusal = SandboxRefusal.For(SindriErrors.LaunchSessionWait, SandboxReasons.Sessions, details: new Dictionary<string, string>(StringComparer.Ordinal) { ["running"] = "3", ["cap"] = "3" });

@@ -60,4 +60,17 @@ public sealed class IndexProfileDiffTests
         Lists(ProfileDiff.Between(approved: null, approved), "context.docs.directoryNames[0]");
         Assert.Equal(["context.docs.directoryNames[1]"], ProfileDiff.Between(approved, changed));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Changes_carry_the_value_before_and_after_and_null_for_a_key_not_set()
+    {
+        var approved = With("""{"docs":{"directoryNames":["AGENTS.md"]}}""");
+        var changed = With("""{"docs":{"directoryNames":["AGENTS.md","NOTES.md"]}}""");
+
+        var added = Assert.Single(ProfileDiff.Changes(approved, changed));
+        Assert.Equal(new ProfileChange("context.docs.directoryNames[1]", Before: null, After: "NOTES.md"), added);
+        var gone = Assert.Single(ProfileDiff.Changes(changed, approved));
+        Assert.Equal(new ProfileChange("context.docs.directoryNames[1]", Before: "NOTES.md", After: null), gone);
+        Assert.Empty(ProfileDiff.Changes(approved, approved));
+    }
 }

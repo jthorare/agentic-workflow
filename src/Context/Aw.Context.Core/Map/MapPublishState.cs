@@ -9,4 +9,7 @@ public sealed record MapPublishState(MapHold? Hold, int? LatestDraft, int? Curre
 {
     /// <summary>The hash of the map rules the current version was built under, or null when none was recorded (a map built before issue 1041).</summary>
     public string? CurrentRuleset { get; init; }
+
+    /// <summary>The hash of each concept pin's rule line by pin id the current version was built with, or null when none was recorded (a map built before migration 0028).</summary>
+    public IReadOnlyDictionary<string, string>? CurrentPinHashes { get; init; }
 }

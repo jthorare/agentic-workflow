@@ -67,6 +67,7 @@ internal sealed partial class ShellWindow
         ListenStrip(shell, on);
         ListenWorkflows(shell, on);
         ListenAgents(shell, on);
+        ListenSandbox(shell, on);
         if (on)
         {
             shell.Queue.FocusRequested += OnFocusRow;
@@ -170,8 +171,13 @@ internal sealed partial class ShellWindow
         }
 
         _sheetOpener = null;
-        _ = page.Focus(Method());
+
+        _ = FocusTarget(page).Focus(Method());
     }
+
+    // Arriving on Settings lands on its title, not on a control of the setup checklist or the bare region.
+    private InputElement FocusTarget(Border page) =>
+        Shell is { IsSettings: true } && this.Get<Control>("SettingsSlot").GetVisualDescendants().OfType<TextBlock>().FirstOrDefault(t => string.Equals(t.Name, "TitleText", StringComparison.Ordinal) && t.IsEffectivelyVisible) is { } title ? title : page;
 
     // After a state change, a closed sheet or a change in its covering: if the focused control is gone (hidden, disabled,
     // or nothing has focus after something had it), focus its region's neighbour.
@@ -230,6 +236,11 @@ internal sealed partial class ShellWindow
         if (Shell is { Start.IsOpen: true } or { ApproveAll.IsOpen: true })
         {
             return;   // the Start form is modal: an instance it opened (an existing attempt) stays behind it, and focus stays in the form
+        }
+
+        if (Shell is { IsSheetShown: true, IsPageSheet: true } or { IsSheetShown: true, IsAddSeveralPages: true })
+        {
+            return;   // the page sheet puts focus on its Name box itself, once its page is read
         }
 
         if (Shell is { IsSheetShown: true } shell && (Covering || !HasRealFocus))

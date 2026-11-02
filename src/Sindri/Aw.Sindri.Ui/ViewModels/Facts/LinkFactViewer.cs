@@ -6,12 +6,13 @@ namespace Aw.Sindri.Ui.ViewModels.Facts;
 /// <summary>A link fact: its host and title as served, and Open, which hands an http or https link to the platform (no other scheme is opened).</summary>
 internal sealed class LinkFactViewer : ObservableObject, IFactViewer
 {
-    private readonly ILauncher _launcher;
+    private readonly LinkLaunch _launch;
 
     internal LinkFactViewer(FactRow row, ILauncher launcher)
     {
         Row = row;
-        _launcher = launcher;
+        _launch = new LinkLaunch(launcher);
+        _launch.Forward(OnChanged);
         var link = row.Ref;
         Url = link?.Url ?? string.Empty;
         CanOpen = Uri.TryCreate(Url, UriKind.Absolute, out var uri) && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
@@ -42,6 +43,12 @@ internal sealed class LinkFactViewer : ObservableObject, IFactViewer
     /// <summary>Open's accessible name.</summary>
     public string OpenName { get; }
 
+    /// <summary>True when the system refused the link; cleared by the next press that works.</summary>
+    public bool LaunchFailed => _launch.Failed;
+
+    /// <summary>"Couldn't open the link" and the link to copy; empty until a launch fails.</summary>
+    public string LaunchFailedText => _launch.FailedText;
+
     /// <summary>Hands the link to the system. Only an http or https link is opened.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that completes once the system answered.</returns>
@@ -49,7 +56,7 @@ internal sealed class LinkFactViewer : ObservableObject, IFactViewer
     {
         if (CanOpen && Uri.TryCreate(Url, UriKind.Absolute, out var uri))
         {
-            _ = await _launcher.OpenUri(uri, cancellationToken).ConfigureAwait(true);
+            _ = await _launch.Open(uri, cancellationToken).ConfigureAwait(true);
         }
     }
 

@@ -31,6 +31,16 @@ internal sealed class GitRepoReader(GitCli git) : IRepoReader
         return tree.IsError ? Unreadable(repo, commit) : Results.Success<IReadOnlyList<string>>([.. tree.Value.Keys.Order(StringComparer.Ordinal)]);
     }
 
+    public async ValueTask<Result<IReadOnlyList<string>>> RemovedPaths(ContextRepo repo, string commit, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(repo);
+        var tree = await git.Tree(repo.Path, commit, cancellationToken).ConfigureAwait(false);
+        var deleted = tree.IsError ? tree.Error : await git.Deleted(repo.Path, commit, cancellationToken).ConfigureAwait(false);
+        return deleted.IsError
+            ? Unreadable(repo, commit)
+            : Results.Success<IReadOnlyList<string>>([.. deleted.Value.Where(p => !tree.Value.ContainsKey(p) && !repo.Denies(p)).Order(StringComparer.Ordinal)]);
+    }
+
     public async ValueTask<Result<string>> Read(ContextRepo repo, string commit, string path, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(repo);

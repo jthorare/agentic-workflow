@@ -54,7 +54,7 @@ internal sealed class CursorCliProvider(IProcessRunner runner, IInputRedactor re
         }
 
         return envelope.Result is { } text
-            ? AgentAnswer.Read(AgentAnswer.LastObject(text), question)
+            ? ProviderUsageReader.Attach(AgentAnswer.Read(AgentAnswer.LastObject(text), question), ProviderUsageReader.FromEnvelope(envelope))
             : new ProviderErrored(ProviderReasons.UnparseableAnswer);
     }
 

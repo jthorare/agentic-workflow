@@ -23,7 +23,7 @@ namespace Aw.Sindri.Tests.ContextCalls;
 /// </summary>
 public sealed class ContextJobsApiTests : IDisposable
 {
-    private const string KeyVariable = "SINDRI_TEST_ONYX_KEY";
+    private const string KeyVariable = "SINDRI_TEST_LINEAR_KEY";
     private readonly FixtureRepo _repo = FixtureRepo.Build();
     private readonly string _locks = Directory.CreateTempSubdirectory("aw-ctx-p6-locks-").FullName;
 
@@ -42,13 +42,13 @@ public sealed class ContextJobsApiTests : IDisposable
 
     private static IEnumerable<LedgerEvent> Of(IEnumerable<LedgerEvent> events, string type) => events.Where(e => string.Equals(e.Envelope.Type, type, StringComparison.Ordinal));
 
-    /// <summary>A host that maps the fixture map's repo and names Onyx, with the fixture map imported (the sync's input).</summary>
-    private async Task<GoldenHost> SyncHost(FakeOnyxServer onyx, Action<IServiceCollection>? extra = null)
+    /// <summary>A host that maps the fixture map's repo and names Linear, with the fixture map imported (the sync's input).</summary>
+    private async Task<GoldenHost> SyncHost(FakeLinearServer linear, Action<IServiceCollection>? extra = null)
     {
         var yaml = $"schemaVersion: 1\nuser: golden\nrepos:\n  - {{ name: {FixtureMap.Repo}, path: \"{_repo.Path}\" }}\n"
             + "context:\n  docs: { globs: [\"docs/**/*.md\"] }\n  sources:\n"
-            + $"    onyx: {{ url: \"{onyx.Url}\", token: \"env:{KeyVariable}\", version: \"{FakeOnyxServer.PinnedVersion}\" }}\n";
-        var host = await GoldenHost.Start(temporary: true, Token, yaml, new Dictionary<string, string>(StringComparer.Ordinal) { [KeyVariable] = onyx.Token }, extra);
+            + $"    linear: {{ url: \"{linear.Url}\", token: \"env:{KeyVariable}\", teams: [SPL] }}\n";
+        var host = await GoldenHost.Start(temporary: true, Token, yaml, new Dictionary<string, string>(StringComparer.Ordinal) { [KeyVariable] = linear.Token }, extra);
         var hash = (await host.LiveHash(Token)).Value;
         Assert.Equal(HttpStatusCode.OK, (await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)))).Status);
         await ContextMapApiTests.Import(host);
@@ -76,8 +76,8 @@ public sealed class ContextJobsApiTests : IDisposable
     public async Task Sources_sync_answers_JobStarted_and_the_job_leaves_counts_and_the_synced_event()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var onyx = await FakeOnyxServer.Start();
-        await using var host = await SyncHost(onyx);
+        await using var linear = await FakeLinearServer.Start();
+        await using var host = await SyncHost(linear);
 
         var (job, body) = await Start(host, "/sindri/context/sources/sync", "{}");
         await JobHost.Settle(host, Token);
@@ -87,12 +87,12 @@ public sealed class ContextJobsApiTests : IDisposable
         Assert.Equal($"/sindri/jobs/{job}", body.GetProperty("links").GetProperty("job").GetString());
         var finished = Json(Assert.Single(Of(events, EventTypes.JobFinished)).Envelope.Payload);
         Assert.Equal("succeeded", finished.GetProperty("outcome").GetString());
-        var row = finished.GetProperty("result").GetProperty("sources").EnumerateArray().Single(r => r.GetProperty("source").GetString() == "onyx");
+        var row = finished.GetProperty("result").GetProperty("sources").EnumerateArray().First(r => r.GetProperty("source").GetString() == "linear");   // the intent walk's row comes before the record feed's, which has the same source id
         Assert.True(row.GetProperty("links").GetProperty("linked").GetInt32() > 0);
         Assert.DoesNotContain("Toggle split orientation", finished.GetRawText(), StringComparison.Ordinal);   // counts and codes only, never record text
         var synced = Of(events, EventTypes.ContextSourcesSynced).Select(e => Json(e.Envelope.Payload).GetProperty("source").GetString()).ToList();
-        Assert.Equal(finished.GetProperty("result").GetProperty("sources").GetArrayLength(), synced.Count);   // one event per source the job synced
-        Assert.Contains(synced, s => s == "onyx");
+        Assert.Equal(finished.GetProperty("result").GetProperty("sources").EnumerateArray().Select(r => r.GetProperty("source").GetString()).Distinct(StringComparer.Ordinal).Count(), synced.Count);   // one event per source the job synced (linear's intent row and feed row share an event key)
+        Assert.Contains(synced, s => s == "linear");
         var jobView = Json((await host.Http.Ask(Get($"/sindri/jobs/{job}", Human(host.Token.Value)))).Body);
         Assert.Equal(("succeeded", "SyncSources"), (jobView.GetProperty("state").GetString(), jobView.GetProperty("kind").GetString()));
     }
@@ -101,10 +101,10 @@ public sealed class ContextJobsApiTests : IDisposable
     public async Task Sources_sync_names_one_source_and_an_unknown_one_fails_the_job_with_058()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var onyx = await FakeOnyxServer.Start();
-        await using var host = await SyncHost(onyx);
+        await using var linear = await FakeLinearServer.Start();
+        await using var host = await SyncHost(linear);
 
-        _ = await Start(host, "/sindri/context/sources/sync", """{"source":"onyx"}""");
+        _ = await Start(host, "/sindri/context/sources/sync", """{"source":"linear"}""");
         await JobHost.Settle(host, Token);
         _ = await Start(host, "/sindri/context/sources/sync", """{"source":"nothing"}""");
         await JobHost.Settle(host, Token);
@@ -118,8 +118,8 @@ public sealed class ContextJobsApiTests : IDisposable
     public async Task A_source_that_is_not_kebab_case_is_refused_at_the_start_as_058()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var onyx = await FakeOnyxServer.Start();
-        await using var host = await SyncHost(onyx);
+        await using var linear = await FakeLinearServer.Start();
+        await using var host = await SyncHost(linear);
 
         var refused = await host.Http.Ask(Post("/sindri/context/sources/sync", """{"source":"Not A Source"}""", Human(host.Token.Value)));
 
@@ -131,8 +131,8 @@ public sealed class ContextJobsApiTests : IDisposable
     public async Task A_second_sync_start_while_one_runs_is_SND_JOB_409_naming_the_running_job_and_056_maps_onto_it()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var onyx = await FakeOnyxServer.Start(new FakeServerOptions { Delay = TimeSpan.FromMilliseconds(40) });
-        await using var host = await SyncHost(onyx);
+        await using var linear = await FakeLinearServer.Start(new FakeServerOptions { Delay = TimeSpan.FromMilliseconds(40) });
+        await using var host = await SyncHost(linear);
         var (first, _) = await Start(host, "/sindri/context/sources/sync", "{}");
 
         var second = await host.Http.Ask(Post("/sindri/context/sources/sync", "{}", Human(host.Token.Value)));
@@ -149,11 +149,11 @@ public sealed class ContextJobsApiTests : IDisposable
     public async Task A_one_source_sync_start_while_an_all_sources_sync_runs_is_SND_JOB_409()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var onyx = await FakeOnyxServer.Start(new FakeServerOptions { Delay = TimeSpan.FromMilliseconds(40) });
-        await using var host = await SyncHost(onyx);
+        await using var linear = await FakeLinearServer.Start(new FakeServerOptions { Delay = TimeSpan.FromMilliseconds(40) });
+        await using var host = await SyncHost(linear);
         var (first, _) = await Start(host, "/sindri/context/sources/sync", "{}");
 
-        var second = await host.Http.Ask(Post("/sindri/context/sources/sync", """{"source":"onyx"}""", Human(host.Token.Value)));
+        var second = await host.Http.Ask(Post("/sindri/context/sources/sync", """{"source":"linear"}""", Human(host.Token.Value)));
 
         Assert.Equal((HttpStatusCode.Conflict, "SND-JOB-409"), (second.Status, second.Code));
         Assert.Equal(first, Json(second.Body).GetProperty("runningJob").GetString());   // one key for every sync: the docs promise one sync job at a time
@@ -163,8 +163,8 @@ public sealed class ContextJobsApiTests : IDisposable
     public async Task Sources_sync_accepts_an_empty_body_like_map_build()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var onyx = await FakeOnyxServer.Start();
-        await using var host = await SyncHost(onyx);
+        await using var linear = await FakeLinearServer.Start();
+        await using var host = await SyncHost(linear);
 
         var started = await host.Http.Ask(Post("/sindri/context/sources/sync", string.Empty, Human(host.Token.Value)));
         await JobHost.Settle(host, Token);
@@ -176,8 +176,8 @@ public sealed class ContextJobsApiTests : IDisposable
     public async Task An_all_sources_sync_that_meets_056_on_one_source_still_records_the_others_and_reports_it_as_that_sources_row()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var onyx = await FakeOnyxServer.Start();
-        await using var host = await SyncHost(onyx, services => SyncRunningOnZeta.Install(services));
+        await using var linear = await FakeLinearServer.Start();
+        await using var host = await SyncHost(linear, services => SyncRunningOnZeta.Install(services));
 
         _ = await Start(host, "/sindri/context/sources/sync", "{}");
         await JobHost.Settle(host, Token);
@@ -185,19 +185,19 @@ public sealed class ContextJobsApiTests : IDisposable
 
         var finished = Json(Assert.Single(Of(events, EventTypes.JobFinished)).Envelope.Payload);
         Assert.Equal("succeeded", finished.GetProperty("outcome").GetString());
-        var rows = finished.GetProperty("result").GetProperty("sources").EnumerateArray().ToDictionary(r => r.GetProperty("source").GetString()!, r => r.GetProperty("links"), StringComparer.Ordinal);
-        Assert.True(rows["onyx"].GetProperty("linked").GetInt32() > 0);
+        var rows = finished.GetProperty("result").GetProperty("sources").EnumerateArray().GroupBy(r => r.GetProperty("source").GetString()!, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First().GetProperty("links"), StringComparer.Ordinal);
+        Assert.True(rows["linear"].GetProperty("linked").GetInt32() > 0);
         Assert.Equal("SND-CONTEXT-056", rows["zeta"].GetProperty("code").GetString());
         var synced = Of(events, EventTypes.ContextSourcesSynced).Select(e => Json(e.Envelope.Payload).GetProperty("source").GetString()).ToList();
-        Assert.Equal(["onyx"], synced);   // the source that finished has its event; the one that was running has the run that owns it
+        Assert.Equal(["linear"], synced);   // the source that finished has its event; the one that was running has the run that owns it
     }
 
     [Fact(Timeout = 90_000), Trait("Lane", "integration")]
     public async Task A_session_may_start_the_build_and_the_source_sync()
     {
         TestContext.Current.CancellationToken.ThrowIfCancellationRequested();
-        await using var onyx = await FakeOnyxServer.Start();
-        await using var host = await SyncHost(onyx);
+        await using var linear = await FakeLinearServer.Start();
+        await using var host = await SyncHost(linear);
         (string Name, string Value)[] session = [(SindriHeaders.Caller, "session"), (SindriHeaders.Repo, FixtureMap.Repo)];
 
         var sync = await host.Http.Ask(Post("/sindri/context/sources/sync", "{}", session));

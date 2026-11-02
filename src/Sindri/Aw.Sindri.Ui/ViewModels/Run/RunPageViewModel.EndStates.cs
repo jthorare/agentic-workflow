@@ -121,6 +121,14 @@ internal sealed partial class RunPageViewModel
     private static IReadOnlyList<RunNextOption> OptionsOf(InstanceDetail line) =>
         line.ItemId is { } item ? [new RunNextOption(Labels.RunSeeContext, new DeepLink(DeepLinkKind.ContextItem, item))] : [];
 
+    // A limit ending says which limit, after how long and where the work is kept; any other reason gets its fixed sentence.
+    private static string? FailureWords(InstanceEventFields? transition) => transition switch
+    {
+        { Limit: { } limit } => Labels.LimitEnding(limit.Kind, limit.Limit, limit.Elapsed, limit.Branch),
+        { Reason: { Length: > 0 } reason } => Labels.RunReason(reason),
+        _ => null,
+    };
+
     // Reads the events of the failed instance and puts the reason of its last failed step in the block.
     private async Task ReadWhatWentWrong(Uri url, long at, CancellationToken cancellationToken)
     {
@@ -136,9 +144,9 @@ internal sealed partial class RunPageViewModel
         }
 
         var last = events.Value.Events.LastOrDefault(e => string.Equals(e.Transition?.Trigger, "step.failed", StringComparison.Ordinal));
-        if (last?.Transition?.Reason is { Length: > 0 } reason)
+        if (FailureWords(last?.Transition) is { } words)
         {
-            FailureText = Labels.RunReason(reason);
+            FailureText = words;
         }
 
         _failureHeard = true;

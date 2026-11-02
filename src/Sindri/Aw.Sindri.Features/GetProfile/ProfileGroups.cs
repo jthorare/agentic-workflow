@@ -1,5 +1,4 @@
 using System.Globalization;
-using System.Text.Json;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Workflow.Blocks;
 
@@ -39,8 +38,7 @@ internal static class ProfileGroups
     /// <param name="live">The live profile.</param>
     /// <returns>One sentence per connection, in a fixed order.</returns>
     public static IEnumerable<string> Connections(SindriProfile? approved, SindriProfile live) =>
-        OnyxSentences(approved, live)
-            .Concat(Compact(ForgeSentence(approved?.Workflow?.Forge, live.Workflow?.Forge)))
+        Compact(ForgeSentence(approved?.Workflow?.Forge, live.Workflow?.Forge))
             .Concat(Providers(approved, live))
             .Concat(Compact(
                 Changed(TargetOf(live), TargetOf(approved), static t => $"Workflow steps will launch the {t} agent"),
@@ -125,25 +123,6 @@ internal static class ProfileGroups
 
     private static string? SizePart(string unit, long? was, long? now, bool fresh) =>
         now is { } value && (fresh || was is null || value > was) ? Number($"{value} {unit}") : null;
-
-    private static IEnumerable<string> OnyxSentences(SindriProfile? approved, SindriProfile live)
-    {
-        var now = Onyx(live);
-        var was = Onyx(approved);
-        return Compact(
-            Changed(Url(now), Url(was), static url => $"Sindri will send what it reads to your Onyx at {url}"),
-            Newly(Managed(now), Managed(was), "Sindri will start and look after Onyx on this machine"));
-    }
-
-    // 'context.sources.onyx' is the context engine's section: only its url and managed keys are read, and never the token.
-    private static JsonElement? Onyx(SindriProfile? profile) => Child(Child(profile?.Context, "sources"), "onyx");
-
-    private static JsonElement? Child(JsonElement? parent, string name) =>
-        parent is { ValueKind: JsonValueKind.Object } element && element.TryGetProperty(name, out var child) ? child : null;
-
-    private static string? Url(JsonElement? onyx) => Child(onyx, "url") is { ValueKind: JsonValueKind.String } url ? url.GetString() : null;
-
-    private static bool Managed(JsonElement? onyx) => Child(onyx, "managed") is { ValueKind: JsonValueKind.True };
 
     private static string? ForgeSentence(ForgeSettings? approved, ForgeSettings? live)
     {

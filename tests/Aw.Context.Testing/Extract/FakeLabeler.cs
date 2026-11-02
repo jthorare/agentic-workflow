@@ -16,14 +16,20 @@ public sealed class FakeLabeler : ILabeler
     /// <summary>When set, every pass succeeds with no labels and this as its <see cref="LabelPass.Unavailable"/> note.</summary>
     public string? Unavailable { get; set; }
 
+    /// <summary>The tokens every pass reports it used.</summary>
+    public int Spent { get; set; }
+
     /// <summary>The clusters shown to the model, across passes.</summary>
     public IList<FileCluster> Shown { get; } = [];
 
     /// <summary>The extra scrub patterns each pass was given.</summary>
     public IList<IReadOnlyList<ScrubPattern>> Patterns { get; } = [];
 
+    /// <summary>The options each pass was given (null when the caller gave none).</summary>
+    public IList<LabelOptions?> Options { get; } = [];
+
     /// <inheritdoc/>
-    public ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, CancellationToken cancellationToken)
+    public ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(clusters);
         if (Failure is { } failure)
@@ -37,11 +43,12 @@ public sealed class FakeLabeler : ILabeler
         }
 
         Patterns.Add(extraPatterns);
+        Options.Add(options);
         foreach (var cluster in clusters)
         {
             Shown.Add(cluster);
         }
 
-        return ValueTask.FromResult(Results.Success(new LabelPass([.. clusters.Select(c => new ClusterLabel(c.Id, "Labeled " + c.Id.Value))], Complete: !Incomplete)));
+        return ValueTask.FromResult(Results.Success(new LabelPass([.. clusters.Select(c => new ClusterLabel(c.Id, "Labeled " + c.Id.Value))], Complete: !Incomplete) { Spent = Spent }));
     }
 }

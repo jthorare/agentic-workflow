@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using Aw.Kernel;
+using Aw.Kernel.Json;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
@@ -91,8 +92,34 @@ internal sealed class SandboxLaunch(ISandbox sandbox, ISessionCap cap, ISandboxL
         }
 
         var limits = ScopeLimits.From(request.Settings?.Limits, options.Box, request.StepTimeout, request.LongMax ?? _fallbackLongMax, request.Attended);
+        var written = WriteWrapLimits(plan, limits);
+        if (written.IsError)
+        {
+            return written.Error;
+        }
+
         var scoped = SystemdScopeArgv.Start(options.SystemdRun, plan.Launch, limits, wrapped.Value);
         return new PreparedSandbox(plan.ToSummary(), scoped, staged.Value.Home, plan.RunDirectory);
+    }
+
+    /// <summary>Writes the scope's limits where 'session wrap --limits' reads them; a sandboxed agent must never run unwatched, so a failed write refuses the start (#1553).</summary>
+    private static Result<Unit> WriteWrapLimits(SandboxPlan plan, ScopeLimits limits)
+    {
+        var file = new WrapLimitsFile(
+            SystemdScopeArgv.UnitFor(plan.Launch),
+            (long)limits.WallGrace.TotalSeconds,
+            (long)limits.ParkMax.TotalSeconds,
+            limits.MemoryMaxBytes,
+            limits.Wall is { } wall ? (long)wall.TotalSeconds : null);
+        try
+        {
+            OwnerOnly.WriteAtomically(Path.Combine(plan.RunDirectory, LaunchPaths.WrapLimitsName), AwJson.Serialize(file, SandboxFilesJson.Options));
+            return Unit.Value;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.FsWrite, $"the scope's limits file could not be written: {e.Message}");
+        }
     }
 
     /// <summary>The host side before the self-check: the session home, the Step's policy files, and the egress.</summary>

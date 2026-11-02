@@ -14,6 +14,9 @@ namespace Aw.Sindri.Ui.Api.Jobs;
 /// <param name="Rounds">The highest progress round.</param>
 /// <param name="Summary">How it ended, in a line, or null while it runs.</param>
 /// <param name="Code">The error code when it failed, otherwise null.</param>
+/// <param name="Models">The job's model calls added up, or null when it made none.</param>
+/// <param name="WaitingOn">The signal a waiting job is parked on ('model-limit', ...), or null.</param>
+/// <param name="WaitingLine">The job's last progress line while it waits, or null.</param>
 internal sealed record JobRowView(
     string Id,
     string Kind,
@@ -27,4 +30,7 @@ internal sealed record JobRowView(
     DateTimeOffset? EndedAt,
     int Rounds,
     string? Summary,
-    string? Code);
+    string? Code,
+    JobModelTotalsView? Models = null,
+    string? WaitingOn = null,
+    string? WaitingLine = null);

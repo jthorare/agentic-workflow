@@ -17,6 +17,12 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
     {
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(secretPointer);
+        return Apply(source, "token:", $"token: {YamlProfileLines.Quote(secretPointer)}", yaml => Holds(yaml, source, secretPointer));
+    }
+
+    // Reads the live profile, sets one `key: value` line under the source's block, checks the result parses back to the intended value and writes it.
+    private Result<bool> Apply(string source, string key, string line, Func<string, bool> holds)
+    {
         var path = settings.ProfilePath;
         string before;
         try
@@ -28,8 +34,7 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
             return SindriErrors.ProfileMissing.With($"{path} can't be read: {e.Message}");
         }
 
-        var line = $"token: {YamlOnyxProfileWriter.Quote(secretPointer)}";
-        var edited = Edit(before, source, line);
+        var edited = Edit(before, source, key, line);
         if (edited.IsError)
         {
             return edited.Error;
@@ -40,19 +45,25 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
             return false;
         }
 
-        if (!Holds(edited.Value, source, secretPointer))
-        {
-            return SindriErrors.ProfileInvalid.With($"{path} has a layout Sindri won't edit (fix: add `{line}` under context.sources.{source} by hand)");
-        }
+        return holds(edited.Value)
+            ? Save(path, edited.Value)
+            : SindriErrors.ProfileInvalid.With($"{path} has a layout Sindri won't edit (fix: add `{line}` under context.sources.{source} by hand)");
+    }
 
-        return Save(path, edited.Value);
+    /// <inheritdoc />
+    public Result<bool> SetTeams(string source, IReadOnlyList<string> teams)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(teams);
+        var line = $"teams: [{string.Join(", ", teams.Select(YamlProfileLines.Quote))}]";
+        return Apply(source, "teams:", line, yaml => HoldsTeams(yaml, source, teams));
     }
 
     private static Result<bool> Save(string path, string text)
     {
         try
         {
-            YamlOnyxProfileWriter.Write(path, text);
+            YamlProfileLines.Write(path, text);
             return true;
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
@@ -61,7 +72,7 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         }
     }
 
-    private static Result<string> Edit(string text, string source, string line)
+    private static Result<string> Edit(string text, string source, string key, string line)
     {
         var lines = new List<string>(text.ReplaceLineEndings("\n").Split('\n'));
         if (lines.Count > 0 && lines[^1].Length == 0)
@@ -70,8 +81,8 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         }
 
         var context = lines.FindIndex(static l => l.TrimEnd() == "context:");
-        var sources = context < 0 ? -1 : YamlOnyxProfileWriter.Child(lines, context, "sources:");
-        var block = sources < 0 ? -1 : YamlOnyxProfileWriter.Child(lines, sources, source + ":");
+        var sources = context < 0 ? -1 : YamlProfileLines.Child(lines, context, "sources:");
+        var block = sources < 0 ? -1 : YamlProfileLines.Child(lines, sources, source + ":");
         if (block < 0)
         {
             return SindriErrors.IndexNotInProfile.With($"the profile has no context.sources.{source} entry (fix: list its repos under context.sources.{source}, then connect)");
@@ -82,11 +93,11 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
             return SindriErrors.ProfileInvalid.With($"context.sources.{source} is written in flow style, which Sindri won't edit (fix: write it as a block, or add `{line}` to it by hand)");
         }
 
-        var indent = YamlOnyxProfileWriter.Indent(lines[block]) + 2;
-        var existing = YamlOnyxProfileWriter.Child(lines, block, "token:");
+        var indent = YamlProfileLines.Indent(lines[block]) + 2;
+        var existing = YamlProfileLines.Child(lines, block, key);
         if (existing >= 0)
         {
-            lines[existing] = new string(' ', YamlOnyxProfileWriter.Indent(lines[existing])) + line;
+            lines[existing] = new string(' ', YamlProfileLines.Indent(lines[existing])) + line;
         }
         else
         {
@@ -94,6 +105,18 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         }
 
         return string.Join('\n', lines) + "\n";
+    }
+
+    private static bool HoldsTeams(string yaml, string source, IReadOnlyList<string> teams)
+    {
+        if (YamlToJson.TryConvert(yaml, out var json) is not null)
+        {
+            return false;
+        }
+
+        using var document = JsonDocument.Parse(json);
+        return YamlProfileLines.Descend(document.RootElement, "context", "sources", source, "teams") is { ValueKind: JsonValueKind.Array } entry
+            && entry.EnumerateArray().Select(static e => e.GetString()).SequenceEqual(teams, StringComparer.Ordinal);
     }
 
     private static bool Holds(string yaml, string source, string pointer)
@@ -104,7 +127,7 @@ internal sealed class YamlSourceTokenProfileWriter(SindriSettings settings) : IS
         }
 
         using var document = JsonDocument.Parse(json);
-        return YamlOnyxProfileWriter.Descend(document.RootElement, "context", "sources", source, "token") is { ValueKind: JsonValueKind.String } entry
+        return YamlProfileLines.Descend(document.RootElement, "context", "sources", source, "token") is { ValueKind: JsonValueKind.String } entry
             && string.Equals(entry.GetString(), pointer, StringComparison.Ordinal);
     }
 }

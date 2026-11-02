@@ -58,7 +58,7 @@ public sealed class MapDocumentTests
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("schemaVersion: 3\nkind: authored\nrepo: r\nnodes: []\n", "schemaVersion: 3 isn't supported")]
+    [InlineData("schemaVersion: 4\nkind: authored\nrepo: r\nnodes: []\n", "schemaVersion: 4 isn't supported")]
     [InlineData("schemaVersion: 1\nkind: authored\nrepo: r\nkeyVersion: 9\nnodes: []\n", "keyVersion: 9 isn't supported")]
     [InlineData("schemaVersion: 1\nkind: export\nrepo: r\nmapVersion: 0\nnodes: []\n", "mapVersion: 0 isn't a map version")]
     [InlineData(Header + "nodes:\n  - {key: \"surface:widget/x\", label: X}\n", "nodes[0].key: 'surface:widget/x' needs a surface kind")]

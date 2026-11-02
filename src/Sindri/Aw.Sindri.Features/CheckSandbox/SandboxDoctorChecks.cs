@@ -73,6 +73,6 @@ internal sealed class SandboxDoctorChecks(ISandboxChecks checks, ISandbox sandbo
     private static DoctorCheck Row(SandboxBlockerLine line) => new(
         string.Equals(line.Code, LoginCode, StringComparison.Ordinal) ? "sandbox:login" : "sandbox",
         line.Quiet ? CheckState.Ok : CheckState.Fail,
-        line.Text,
+        line.Detail is null ? line.Text : $"{line.Text} ({line.Detail})",
         line.Quiet ? null : line.Command);
 }

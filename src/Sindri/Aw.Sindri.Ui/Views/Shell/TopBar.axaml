@@ -24,7 +24,7 @@
        spacer and stops at 300 px plus its margins: with room it is 300 px wide at the right, and as the window narrows it
        gives way down to 160 px. Below that the bar steps down (TopBar.axaml.cs): first the ⌘K field folds to its
        magnifier, then the pill's age drops (its accessible name keeps it), then the brand keeps its mark alone, so the
-       navigation and the pill's word fit at the 900 px minimum in every state and at text scale 1.3. -->
+       navigation and the pill's word fit at the 1,000 px minimum in every state and at text scale 1.3. -->
   <Border Classes="topbar focus-region" Focusable="True" AutomationProperties.Name="{Binding Text.Sindri}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
     <Grid x:Name="BarGrid" VerticalAlignment="Center">
       <Grid.ColumnDefinitions>
@@ -144,7 +144,7 @@
       </StackPanel>
       <!-- The G-chord's wait (rev 7 §8): "G …" in a keycap while G waits for its second key. It sits inside the bar, vertically
            centred over the ⌘K field's right end, where its keycap is (re-check R1: laid out below the bar, the page region painted over
-           it; the bar has no spare room for a column of its own at 900 px). Last in the grid so nothing in the bar draws over it; transient and exposed as text, not live: the key press is the
+           it; the bar has no spare room for a column of its own at 1,000 px). Last in the grid so nothing in the bar draws over it; transient and exposed as text, not live: the key press is the
            user's own. -->
       <Border x:Name="ChordHint" Grid.Column="4" Classes="kbd" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,20,0"
               IsHitTestVisible="False" IsVisible="{Binding IsChordPending}"

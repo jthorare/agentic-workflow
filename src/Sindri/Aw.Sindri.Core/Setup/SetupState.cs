@@ -26,7 +26,7 @@ public enum SetupState
     [JsonStringEnumMemberName("needs-you")]
     NeedsYou,
 
-    /// <summary>Only Onyx has it: it can't be set up on this machine (Docker is missing or fails its checks), which counts as finished.</summary>
+    /// <summary>No step is skipped today; a step that can't run on this machine would be, and it counts as finished.</summary>
     [JsonStringEnumMemberName("skipped")]
     Skipped,
 }

@@ -24,7 +24,6 @@ using Temporalio.Worker;
 namespace Aw.Sindri.Tests.Workflows;
 
 /// <summary>The rig the agent runtime tests share (engine P8 U3): the composed host with FakeLauncher, FakeAgentSessions and FakeRunDiff, and the recipes they run.</summary>
-[Collection(nameof(WallClockAlone))]
 public abstract class AgentRuntimeTestBase : IDisposable
 {
     internal const string RecipeName = "workflow.dev-agent";

@@ -1,5 +1,6 @@
 using Aw.Context.Core.Code;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
@@ -17,6 +18,7 @@ using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
 using Aw.Context.Core.Vectors;
 using Aw.Context.Infrastructure.ConceptScan;
+using Aw.Context.Infrastructure.ConceptSynthesis;
 using Aw.Context.Infrastructure.Docs;
 using Aw.Context.Infrastructure.Eval;
 using Aw.Context.Infrastructure.Extract;
@@ -26,7 +28,6 @@ using Aw.Context.Infrastructure.Intent;
 using Aw.Context.Infrastructure.Labeling;
 using Aw.Context.Infrastructure.Linear;
 using Aw.Context.Infrastructure.Map;
-using Aw.Context.Infrastructure.Onyx;
 using Aw.Context.Infrastructure.Records;
 using Aw.Context.Infrastructure.Review;
 using Aw.Context.Infrastructure.ScopeRuns;
@@ -46,8 +47,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
     /// <summary>
     /// Adds the context store (context.db under $AW_SINDRI_HOME/context), git, the repo-docs index and source catalog,
     /// the scrubber factory over Aw.Redaction (each call's scrubbers carry the profile's extra patterns), the graph store,
-    /// the map file reader, the exports folder, the probe file reader and the probe reports folder, and the factory that builds the onyx source from the
-    /// profile's onyx settings and Linear teams (doctor's 'context:onyx' check runs that source's probe), and the factory of the native linear source from its settings. The onyx source reads its key by calling
+    /// the map file reader, the exports folder, the probe file reader and the probe reports folder, and the factory of the native linear source from its settings. The linear source reads its key by calling
     /// <paramref name="environment"/> with the settings' pointer text (Sindri's Composition wraps the environment so
     /// pointers resolve there). Needs a TimeProvider, ILogger and the host's AwJson options (a JsonSerializerOptions
     /// singleton whose context holds the map types), all registered by the host.
@@ -67,8 +67,11 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IGraphStore>(sp => sp.GetRequiredService<SqliteGraphStore>())
             .AddSingleton<IProposalRuns>(sp => sp.GetRequiredService<SqliteGraphStore>())
             .AddSingleton<IConceptHintStore, SqliteConceptHintStore>()
+            .AddSingleton<IConceptSynthesisStore, SqliteConceptSynthesisStore>()
             .AddSingleton<IIntentStore, SqliteIntentStore>()
             .AddSingleton<IRecordStore, SqliteRecordStore>()
+            .AddSingleton<ISourceIdentityStore, SqliteSourceIdentityStore>()
+            .AddSingleton<ISourceViewers, LinearViewers>()
             .AddSingleton<ILexicalLeg, SqliteLexicalLeg>()
             .AddSingleton<IRecordFeedCatalog, ContextRecordFeedCatalog>()
             .AddSingleton<IVectorMatrixCache, VectorMatrixCache>()
@@ -80,6 +83,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<ICurrentUser, OsCurrentUser>()
             .AddSingleton<IRepoReader, GitRepoReader>()
             .AddSingleton<IDefaultBranch, GitDefaultBranch>()
+            .AddSingleton<IRepoRemote, GitRepoRemote>()
             .AddSingleton<ICodeSearch, GitCodeSearch>()
             .AddSingleton(GraphifyOptions.Default)
             .AddSingleton<IClusterSource, GraphifyClusterSource>()
@@ -87,22 +91,26 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IProbeReportStore, FileProbeReportStore>()
             .AddSingleton<IMergeHistory, GitMergeHistory>()
             .AddSingleton<IFileHistory, GitFileHistory>()
-            .AddSingleton<IBriefSource, OnyxBriefSource>()
+            .AddSingleton<IBriefSource, StoreBriefSource>()
             .AddSingleton<IAsOfDocs, AsOfDocsFactory>()
             .AddSingleton<IEvalStore, FileEvalStore>()
-            .AddSingleton(sp => new OnyxSources(new OnyxSourceParts(
-                OnyxHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<OnyxClient>>())))
             .AddSingleton(sp => new LinearSources(new LinearSourceParts(
                 LinearHttp.Client, environment, sp.GetRequiredService<TimeProvider>(), sp.GetRequiredService<ILogger<LinearClient>>())));
 
     /// <summary>
     /// Adds the labeling pass ('context.labeling'): <see cref="ILabeler"/> over the host's <see cref="Core.Models.IModelPort"/>. The token cap
-    /// ('context.labeling.maxTokens') arrives with each pass; a build asks the labeler only when the approved profile turns labeling on.
+    /// ('context.labeling.maxTokens') arrives with each pass; a build asks the labeler only when the approved profile turns labeling on. The Jev pick and the route's prompt budget
+    /// (<see cref="Core.Models.IChoicePort"/>, <see cref="Core.Models.IModelPromptBudget"/>) are used when the host registers them. The product-surface picker (<see cref="Core.Surfaces.ISurfacePicker"/>) sits beside the labeler.
     /// </summary>
     /// <param name="services">The service collection.</param>
     /// <returns>The same collection.</returns>
     public static IServiceCollection AddContextLabeling(this IServiceCollection services)
         => services
-            .AddSingleton<ILabeler>(sp => new ModelLabeler(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()))
+            .AddSingleton<ILabelCache>(sp => new SqliteLabelCache(sp.GetRequiredService<ContextDatabase>(), sp.GetRequiredService<TimeProvider>()))
+            .AddSingleton<Core.Surfaces.ISurfacePickStore>(sp => new Surfaces.SqliteSurfacePickStore(sp.GetRequiredService<ContextDatabase>()))
+            .AddSingleton<ILabeler>(sp => new CachingLabeler(
+                new ModelLabeler(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>(), sp.GetService<Core.Models.IChoicePort>(), sp.GetService<Core.Models.IModelPromptBudget>()),
+                sp.GetRequiredService<ILabelCache>(), sp.GetRequiredService<IScrubberFactory>(), sp.GetService<Core.Models.IChoicePort>()))
+            .AddSingleton<Core.Surfaces.ISurfacePicker>(sp => new Surfaces.SurfacePicker(sp.GetService<Core.Models.IChoicePort>(), sp.GetRequiredService<IScrubberFactory>()))
             .AddSingleton<Core.Concepts.IConceptNamer>(sp => new ModelConceptNamer(sp.GetRequiredService<Core.Models.IModelPort>(), sp.GetRequiredService<IScrubberFactory>()));
 }

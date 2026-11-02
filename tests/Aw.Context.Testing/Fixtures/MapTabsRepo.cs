@@ -52,28 +52,34 @@ public sealed class MapTabsRepo : IDisposable
         var root = Directory.CreateTempSubdirectory("aw-map-tabs-").FullName;
         try
         {
-            var path = Directory.CreateDirectory(System.IO.Path.Combine(root, "tabs")).FullName;
-            var emptyConfig = System.IO.Path.Combine(root, "gitconfig");
-            File.WriteAllText(emptyConfig, string.Empty);
-            foreach (var (relative, text) in _files)
-            {
-                var target = System.IO.Path.Combine(path, relative);
-                _ = Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);   // why: a file under the repo has a directory
-                File.WriteAllText(target, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
-            }
-
-            var git = new GitRunner(path, emptyConfig, _author);
-            _ = git.Run(_at, "init", "-q", "-b", "main");
-            _ = git.Run(_at, "config", "core.hooksPath", System.IO.Path.Combine(root, "no-hooks"));
-            _ = git.Run(_at, "add", "-A");
-            _ = git.Run(_at, "commit", "-q", "--no-gpg-sign", "-m", "Tabs fixture");
-            return new MapTabsRepo(root, path, git.Run(_at, "rev-parse", "main"));
+            var template = RepoTemplate.Copy("map-tabs", "map-tabs-", root, BuildTemplate);   // one git build per process; the history is fixed, so a copy has the same sha
+            return new MapTabsRepo(root, System.IO.Path.Combine(root, "tabs"), template.Head);
         }
         catch
         {
             Directory.Delete(root, recursive: true);
             throw;
         }
+    }
+
+    private static MapTabsRepo BuildTemplate(string root)
+    {
+        var path = Directory.CreateDirectory(System.IO.Path.Combine(root, "tabs")).FullName;
+        var emptyConfig = System.IO.Path.Combine(root, "gitconfig");
+        File.WriteAllText(emptyConfig, string.Empty);
+        foreach (var (relative, text) in _files)
+        {
+            var target = System.IO.Path.Combine(path, relative);
+            _ = Directory.CreateDirectory(System.IO.Path.GetDirectoryName(target)!);   // why: a file under the repo has a directory
+            File.WriteAllText(target, text, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
+        }
+
+        var git = new GitRunner(path, emptyConfig, _author);
+        _ = git.Run(_at, "init", "-q", "-b", "main");
+        _ = git.Run(_at, "config", "core.hooksPath", System.IO.Path.Combine(root, "no-hooks"));
+        _ = git.Run(_at, "add", "-A");
+        _ = git.Run(_at, "commit", "-q", "--no-gpg-sign", "-m", "Tabs fixture");
+        return new MapTabsRepo(root, path, git.Run(_at, "rev-parse", "main"));
     }
 
     /// <summary>Writes the tabs map to <paramref name="directory"/>/tabs-map.json.</summary>

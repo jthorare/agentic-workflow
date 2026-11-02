@@ -1,11 +1,10 @@
 #!/usr/bin/env bash
 # tests/ui-checks/gh-1539-settings-leftovers.sh — regression check for #1539 (Settings leftovers).
-# At 1280x800, with Docker unusable (a stub `docker` first on PATH that fails every call), in the real sindri-ui:
-#   1. the skipped Onyx step shows the Docker URL as a clickable link (a HyperlinkButton whose NavigateUri is on docs.docker.com),
-#      not as plain text;
+# At 1280x800, in the real sindri-ui:
+#   1. (gone with Onyx, #1598: the skipped Onyx step's Docker link. No setup step names a web address any more.)
 #   2. the Text size slider has tick marks (TickPlacement is not None) and 90% / 100% / 130% labels under it;
 #   3. the "Approve the workflows" step can be approved through the driver (button "Approve all workflows", then the step says done).
-# All three run, every FAIL is printed, and the exit is 1 when any failed. Part 3 changes state, so it runs last.
+# Both run, every FAIL is printed, and the exit is 1 when any failed. Part 3 changes state, so it runs last.
 # It drives the REAL sindri-ui (UI driver, docs/csharp/ui-driver.md) against a guarded fixture home (scripts/sindri-ui-fixture.sh
 # through scripts/sindri-prove.sh).
 #   bash tests/ui-checks/gh-1539-settings-leftovers.sh        exit 0 pass; 1 FAIL (stderr lines); 2 the setup broke
@@ -51,14 +50,6 @@ trap cleanup EXIT
 
 command -v jq >/dev/null 2>&1 || setup_fail "jq is needed"
 
-# Docker is unusable for the whole run: DockerCliRuntime runs plain `docker` (version, compose version, info, image inspect) resolved from
-# PATH, so a stub first on PATH that fails every call makes the Onyx preflight say Docker is not usable. Nothing else here needs docker.
-STUB_DIR="$AW_SINDRI_HOME/stub-bin"
-mkdir -p "$STUB_DIR" || setup_fail "cannot make $STUB_DIR"
-printf '#!/bin/sh\necho "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?" >&2\nexit 1\n' >"$STUB_DIR/docker"
-chmod +x "$STUB_DIR/docker" || setup_fail "cannot make the docker stub executable"
-export PATH="$STUB_DIR:$PATH"
-
 # 1. The control plane with an approved profile, then the profile changes so Settings asks for the approval.
 bash "$FIXTURE" up >"$OUT/fixture-up.log" 2>&1 || setup_fail "sindri-ui-fixture up (see $OUT/fixture-up.log)"
 
@@ -102,7 +93,7 @@ bash "$ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
 APP_WRAPPER_PID=$!
 "$DRIVER" ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 
-onyx_title="Connect Linear and Slack (Onyx)"
+sources_title="Connect your sources"
 wf_title="Approve the workflows"
 
 # Settings at 1280x800, by the Ctrl+, chord.
@@ -123,37 +114,8 @@ wait_step() { # <name prefix> <tries of 0.5 s>
   done
   printf '%s' "$id"
 }
-onyx_id="$(wait_step "$onyx_title, " 240)"
-[ -n "$onyx_id" ] || setup_fail "no '$onyx_title' step in Settings"
-
-# The Onyx step must say skipped because Docker is unusable (its "Install Docker" line carries the link). "Not now" would skip it
-# too, but with no link, so it is never pressed: a stub that didn't take is a setup failure.
-onyx_skipped="$(wait_step "$onyx_title, skipped" 120)"
-[ -n "$onyx_skipped" ] || setup_fail "the Onyx step never said skipped (with a docker stub first on PATH: $STUB_DIR/docker)"
-
-# ---- Part 1: the Docker URL is a clickable link -------------------------------------------------------------------------------
-"$DRIVER" action --node-id "$onyx_skipped" --do expand >/dev/null 2>&1 || true
-sleep 1
-"$DRIVER" screenshot --out "$OUT/part1.png" >/dev/null 2>&1
-"$DRIVER" tree --depth 64 >"$OUT/tree1.json" 2>/dev/null || setup_fail "the driver gave no tree"
-under_onyx='[.. | objects | select(.type == "Expander" and .visible and ((.name // "") | startswith($t)))][0]'
-plain_url="$(jq -r --arg t "$onyx_title, skipped" "$under_onyx"'
-  | [.. | objects | select(.type == "TextBlock" and .visible and ((.text // "") | contains("https://")))][0].text // empty' "$OUT/tree1.json")"
-link_id="$(jq -r --arg t "$onyx_title, skipped" "$under_onyx"'
-  | [.. | objects | select(.type == "HyperlinkButton" and .visible)][0].id // empty' "$OUT/tree1.json")"
-if [ -n "$plain_url" ]; then
-  fail "the skipped Onyx step shows a URL as plain text: '$plain_url' (screenshot in $OUT)"
-fi
-if [ -z "$link_id" ]; then
-  fail "the skipped Onyx step has no visible HyperlinkButton, so the Docker URL is not a link (screenshot in $OUT)"
-else
-  "$DRIVER" props --node-id "$link_id" >"$OUT/link-props.json" 2>/dev/null
-  uri="$(jq -r '.properties.NavigateUri // empty' "$OUT/link-props.json")"
-  case "$uri" in
-    *docs.docker.com*) ;;
-    *) fail "the Onyx step's link goes to '${uri:-nothing}', not docs.docker.com (screenshot in $OUT)";;
-  esac
-fi
+sources_id="$(wait_step "$sources_title, " 240)"
+[ -n "$sources_id" ] || setup_fail "no '$sources_title' step in Settings"
 
 # ---- Part 2: the Text size slider shows ticks and 90% / 100% / 130% labels under it ---------------------------------------------
 # The slider's accessible name is the "Text size" label; --type Slider is the one slider in Settings. Scroll it into view first.
@@ -204,7 +166,7 @@ fi
 "$DRIVER" screenshot --out "$OUT/part3.png" >/dev/null 2>&1
 
 if [ "$FAILED" = 0 ]; then
-  echo "PASS: the Docker URL is a link, the Text size slider has ticks and labels, and the workflows approve through the driver (screenshots in $OUT)"
+  echo "PASS: the Text size slider has ticks and labels, and the workflows approve through the driver (screenshots in $OUT)"
   exit 0
 fi
 exit 1

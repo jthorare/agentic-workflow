@@ -15,4 +15,7 @@ public sealed record CheckSandboxResponse(IReadOnlyList<SandboxBlockerLine> Bloc
 
     /// <summary>The Steps a resume would start, as <see cref="ReadyToResume"/> orders and caps them, each with its item and title.</summary>
     public IReadOnlyList<SandboxResumeLine> Resume { get; init; } = [];
+
+    /// <summary>The checks that were skipped, each as a sentence; always present, empty when every check ran. Informational: it changes neither <see cref="Ready"/> nor <see cref="Blockers"/>.</summary>
+    public IReadOnlyList<string> NotChecked { get; init; } = [];
 }

@@ -64,4 +64,17 @@ public static class SlackTs
     /// <returns>The later.</returns>
     public static string Later(string a, string b)
         => TryParse(a, out var x) && TryParse(b, out var y) && y > x ? b : a;
+
+    /// <summary>The ts one microsecond after <paramref name="ts"/> (the exclusive bound that includes it).</summary>
+    /// <param name="ts">A ts.</param>
+    /// <returns>The next ts, or <paramref name="ts"/> itself when it does not parse.</returns>
+    public static string Next(string ts)
+        => TryParse(ts, out var at) ? Format(at.AddTicks(TicksPerMicrosecond)) : ts;
+
+    /// <summary>Whether <paramref name="a"/> is strictly earlier than <paramref name="b"/> (false when either does not parse).</summary>
+    /// <param name="a">A ts.</param>
+    /// <param name="b">A ts.</param>
+    /// <returns>True when a is before b.</returns>
+    public static bool IsBefore(string a, string b)
+        => TryParse(a, out var x) && TryParse(b, out var y) && x < y;
 }

@@ -280,6 +280,8 @@ internal sealed partial class InstanceFrameViewModel(ISindriApi api, IClipboard 
         {
             Expanded.Update(detail.Current);
         }
+
+        Expanded.OpenServed = HasOpen;
     }
 
     private void Clear()

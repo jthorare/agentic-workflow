@@ -15,10 +15,7 @@ internal static partial class Labels
         ["ApproveProfile"] = ("Review and approve", "Review and approve"),
         ["ApproveAllRecipes"] = ("Approve all workflows", "Approve again"),
         ["RegisterMcp"] = ("Connect your agents", "Connect again"),
-        ["SetupOnyx"] = ("Set up Onyx", "Set up again"),
         ["RefreshContextMap"] = ("Retry", "Retry"),
-        ["ConnectOnyx"] = ("Connect", "Connect"),
-        ["DeferOnyx"] = ("Not now", "Not now"),
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     // The app's titles, keyed by step id: the API's own are its plain default, the app owns the words people read.
@@ -29,7 +26,6 @@ internal static partial class Labels
         ["recipes"] = "Approve the workflows",
         ["mcp"] = "Connect your coding agents",
         ["map"] = "Build the product map",
-        ["onyx"] = "Connect Linear and Slack (Onyx)",
     }.ToFrozenDictionary(StringComparer.Ordinal);
 
     /// <summary>The checklist's lead while a step is open.</summary>
@@ -153,9 +149,6 @@ internal static partial class Labels
         ("map", "running") => "Sindri reads your code and builds a map of it. It builds itself and keeps up to date.",
         ("map", "done") => "The map is up to date with your code.",
         ("map", "failed") => "The map could not be built.",
-        ("onyx", "todo") => "Onyx lets Sindri read your tickets and chats. Sign in once.",
-        ("onyx", "needs-you") => "Sign in to Onyx once. Your password is used for this step only.",
-        ("onyx", "done") => "Sindri can read your Linear and Slack context.",
         _ => served,
     };
 
@@ -185,7 +178,6 @@ internal static partial class Labels
         "ApproveProfile" => "sindri profile approve <hash>",
         "ApproveAllRecipes" => "sindri recipe approve-all",
         "RegisterMcp" => "sindri mcp register --apply",
-        "SetupOnyx" => "sindri onyx up",
         "RefreshContextMap" => "sindri context map refresh",
         _ => string.Empty,
     };

@@ -1,5 +1,6 @@
 using Aw.Kernel;
 using Aw.Sindri.Ui.Api;
+using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Api.Jobs;
 
 namespace Aw.Sindri.Ui.Testing;
@@ -9,6 +10,8 @@ internal sealed partial class FakeSindriApi
 {
     private int _refreshMapCalls;
     private int _buildMapCalls;
+    private readonly List<PinConceptsBody> _pinned = [];
+    private readonly List<PagesSetBody> _pagesSet = [];
 
     /// <summary>POST /sindri/context/map/refresh's answer: the started job by default.</summary>
     public RouteAnswer RefreshContextMapAnswer { get; set; } = RouteAnswer.SpecShaped("context-map-refresh", "started");
@@ -42,5 +45,39 @@ internal sealed partial class FakeSindriApi
 
         _ = Interlocked.Increment(ref _buildMapCalls);
         return Task.FromResult(Answer<JobStarted>(api, JobRoutes.BuildContextMap, BuildContextMapAnswer));
+    }
+
+    /// <summary>POST /sindri/context/pins' answer: the started job by default (the refresh's spec-shaped golden; the API's start answer has the same shape).</summary>
+    public RouteAnswer PinConceptsAnswer { get; set; } = RouteAnswer.SpecShaped("context-map-refresh", "started");
+
+    /// <summary>Every PinConcepts body received, in order.</summary>
+    public IReadOnlyList<PinConceptsBody> PinnedConcepts { get { lock (_gate) { return [.. _pinned]; } } }
+
+    public Task<Result<JobStarted>> PinConcepts(Uri api, PinConceptsBody request, CancellationToken cancellationToken)
+    {
+        if (NotReceived<JobStarted>(api) is { } unanswered)
+        {
+            return Task.FromResult(unanswered);
+        }
+
+        Keep(_pinned, request);
+        return Task.FromResult(Answer<JobStarted>(api, JobRoutes.PinConcepts, PinConceptsAnswer));
+    }
+
+    /// <summary>POST /sindri/context/pages' answer: the started job by default.</summary>
+    public RouteAnswer SetContextPagesAnswer { get; set; } = RouteAnswer.SpecShaped("context-map-refresh", "started");
+
+    /// <summary>Every SetPages body received, in order.</summary>
+    public IReadOnlyList<PagesSetBody> PagesSet { get { lock (_gate) { return [.. _pagesSet]; } } }
+
+    public Task<Result<JobStarted>> SetContextPages(Uri api, PagesSetBody request, CancellationToken cancellationToken)
+    {
+        if (NotReceived<JobStarted>(api) is { } unanswered)
+        {
+            return Task.FromResult(unanswered);
+        }
+
+        Keep(_pagesSet, request);
+        return Task.FromResult(Answer<JobStarted>(api, JobRoutes.SetContextPages, SetContextPagesAnswer));
     }
 }

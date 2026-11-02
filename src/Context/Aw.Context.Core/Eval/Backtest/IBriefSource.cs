@@ -2,7 +2,7 @@ using Aw.Kernel;
 
 namespace Aw.Context.Core.Eval.Backtest;
 
-/// <summary>Supplies the issues a backtest could sample and their briefs (S-7A: through the Onyx adapter's allowlist; the native Linear source after S-6).</summary>
+/// <summary>Supplies the issues a backtest could sample and their briefs (from the stored Linear records).</summary>
 public interface IBriefSource
 {
     /// <summary>The issues of the profile's Linear teams the source can list: refs, versions and dates only.</summary>

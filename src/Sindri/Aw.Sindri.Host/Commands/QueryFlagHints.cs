@@ -20,6 +20,7 @@ internal static class QueryFlagHints
             var m when m.StartsWith(QueryRules.DepthMessage, StringComparison.Ordinal) => error with { Message = m + " (fix: --depth 2)" },
             var m when m == QueryRules.ShapeMessage => error with { Message = m + " (CLI: text, --node, --item or --symbol)" },
             var m when m == QueryRules.NodeMessage => error with { Message = m + " (CLI: --node)" },
+            var m when m == QueryRules.ConceptMessage => error with { Message = m + " (CLI: --concept billing)" },
             _ => error,
         };
     }

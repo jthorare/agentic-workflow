@@ -12,14 +12,15 @@ namespace Aw.Sindri.Infrastructure.Launch;
 /// <summary>
 /// The tmux <see cref="ISessionHost"/> (API P10a, unit U5): sessions on the Sindri-owned server ('tmux -L sindri-launch'), named
 /// 'snd-&lt;launchId&gt;'. Every call is one bounded tmux process with TMUX removed from its environment, so a Sindri that was
-/// itself started from a tmux pane never reaches that pane's server. The session's environment goes in through
-/// 'new-session -e' (tmux 3.2); the server's global environment is never written ('set-environment -g' is never run), so
-/// one launch's secret can't leak into the next.
+/// itself started from a tmux pane never reaches that pane's server. The session's environment and argv go in through a
+/// 0600 launch script in a 0700 per-launch directory that the script deletes as its first step, so the tmux command stays
+/// short (tmux caps one command near 16 KB); the server's global environment is never written ('set-environment -g' is
+/// never run), so one launch's secret can't leak into the next.
 /// </summary>
 internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessionHost
 {
     private static readonly TimeSpan _callBudget = TimeSpan.FromSeconds(5);
-    private static readonly (int Major, int Minor) _minimum = (3, 2);   // 'new-session -e' arrived in 3.2
+    private static readonly (int Major, int Minor) _minimum = (3, 2);
 
     /// <inheritdoc/>
     public HostKind Kind => HostKind.Tmux;
@@ -31,6 +32,11 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
         if (session.Argv.Count == 0)
         {
             return KernelErrors.Invalid.With("A session needs a command to run");
+        }
+
+        if (session.Env.Keys.FirstOrDefault(key => !ShellName.IsMatch(key)) is { } badName)
+        {
+            return KernelErrors.Invalid.With($"A session environment name is not a shell name: {badName}");
         }
 
         var name = new HostRef(HostKind.Tmux, session.Name);
@@ -60,8 +66,23 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
     private async ValueTask<Result<HostRef>> Launch(HostSession session, HostRef name, CancellationToken deadline)
     {
-        var created = await Run(Create(session), deadline).ConfigureAwait(false);
-        if (created.ExitCode == 0)
+        var launchDir = TmuxLaunchScript.Write(options.TmuxTmpDir ?? Path.GetTempPath(), session);
+        var started = false;
+        TmuxRun created;
+        try
+        {
+            created = await Run(Create(session, TmuxLaunchScript.PathOf(launchDir)), deadline).ConfigureAwait(false);
+            started = created.ExitCode == 0;
+        }
+        finally
+        {
+            if (!started)
+            {
+                TmuxLaunchScript.DeleteQuietly(launchDir);   // the script holds the session's env: it never stays on disk after a failed start
+            }
+        }
+
+        if (started)
         {
             await ShowStatusLine(session, name, deadline).ConfigureAwait(false);
             return name;
@@ -201,6 +222,9 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
     [GeneratedRegex(@"(?<major>\d+)\.(?<minor>\d+)", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
     private static partial Regex VersionPattern { get; }
 
+    [GeneratedRegex("^[A-Za-z_][A-Za-z0-9_]*\\z", RegexOptions.CultureInvariant, matchTimeoutMilliseconds: 1000)]
+    private static partial Regex ShellName { get; }
+
     private static string Target(HostRef host) => "=" + host.Name;   // '=' : this exact name, never a prefix
 
     private static bool IsGone(string error) =>
@@ -211,18 +235,8 @@ internal sealed partial class TmuxSessionHost(TmuxHostOptions options) : ISessio
 
     private static string Short(string text) => text.Trim() is { Length: > 200 } t ? t[..200] : text.Trim();
 
-    private static List<string> Create(HostSession session)
-    {
-        var args = new List<string> { "new-session", "-d", "-s", session.Name, "-c", session.WorkDir };
-        foreach (var (key, value) in session.Env)
-        {
-            args.Add("-e");
-            args.Add($"{key}={value}");
-        }
-
-        args.AddRange(session.Argv);
-        return args;
-    }
+    private static List<string> Create(HostSession session, string script) =>
+        ["new-session", "-d", "-s", session.Name, "-c", session.WorkDir, "sh", script];
 
     private Task<TmuxRun> Run(IReadOnlyList<string> args, CancellationToken cancellationToken, TimeSpan? budget = null) =>
         Exec(args, socket: true, budget, cancellationToken);

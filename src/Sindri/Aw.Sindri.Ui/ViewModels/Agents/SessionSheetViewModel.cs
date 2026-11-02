@@ -274,6 +274,7 @@ internal sealed partial class SessionSheetViewModel(ISindriApi api) : Observable
         else if (IsShown)
         {
             Note = Labels.SessionStale(error);
+            SandboxServeDown();
         }
         else
         {
@@ -288,6 +289,7 @@ internal sealed partial class SessionSheetViewModel(ISindriApi api) : Observable
         (Fields, HostFields, History, IsEnded, _step) = ([], [], [], false, null);
         (Sections, IsAsking, InStatusText, RefCopy, StartedText) = ([], false, string.Empty, null, string.Empty);
         EndedResumeText = string.Empty;
+        ClearSandbox();
         OnChanged(nameof(HasStep));
     }
 

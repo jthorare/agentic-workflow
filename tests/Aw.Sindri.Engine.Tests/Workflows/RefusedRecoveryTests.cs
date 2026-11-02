@@ -18,7 +18,6 @@ namespace Aw.Sindri.Tests.Workflows;
 /// output that was refused. It ends as refused, and the model pick's one retry on a stronger model follows.
 /// </summary>
 [Lane(TestLane.Integration)]
-[Collection(nameof(WallClockAlone))]
 public sealed class RefusedRecoveryTests : AgentRuntimeTestBase
 {
     private static readonly ModelFacts[] _three =

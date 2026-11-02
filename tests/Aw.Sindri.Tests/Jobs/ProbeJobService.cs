@@ -28,7 +28,7 @@ internal sealed class ProbeJobService(IJobContextAccessor jobs, Commands.Chain.F
                 await latch.Release.Task.ConfigureAwait(false);
                 _ = latch.Returned.TrySetResult();
                 throw new OperationCanceledException("a timeout of its own");
-            case "fail" or "throw" or "big" or "secret" or "repo" or "esc" or "keyed":
+            case "fail" or "throw" or "big" or "secret" or "repo" or "esc" or "keyed" or "sql":
                 return Immediate(request.Mode);
             default:
                 await Task.Delay(Timeout.Infinite, cancellationToken).ConfigureAwait(false);
@@ -42,6 +42,8 @@ internal sealed class ProbeJobService(IJobContextAccessor jobs, Commands.Chain.F
         {
             case "fail":
                 return SindriErrors.ServiceFailed.With("it broke");
+            case "sql":   // a SQLite error as SqliteErrors builds it: the statement first, the reason last
+                return SindriErrors.ServiceFailed.With("INSERT INTO items (" + new string('c', 400) + ") VALUES (@p): SQLite Error 19: 'FOREIGN KEY constraint failed'.");
             case "throw":
                 throw new InvalidOperationException("kaboom");
             case "esc":

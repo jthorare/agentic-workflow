@@ -1,0 +1,7 @@
+{
+  "type": "about:blank",
+  "title": "SND-AUTH-002",
+  "status": 403,
+  "detail": "This caller may not run the command.",
+  "traceId": "<trace>"
+}

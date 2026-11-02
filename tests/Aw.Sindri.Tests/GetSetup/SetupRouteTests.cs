@@ -8,7 +8,7 @@ namespace Aw.Sindri.Tests.GetSetup;
 /// <summary>GET /sindri/setup served by the real host with the real sources: six steps in their fixed order, a read a session may make, and the profile step moving once the human approves.</summary>
 public sealed class SetupRouteTests
 {
-    private static readonly string[] _order = ["repo", "profile", "recipes", "mcp", "map", "onyx"];
+    private static readonly string[] _order = ["repo", "profile", "recipes", "mcp", "map", "sources"];
 
     [Fact(Timeout = 60_000), Trait("Lane", "integration")]
     public async Task The_route_answers_the_six_steps_in_order_and_the_profile_waits_for_a_first_repo()

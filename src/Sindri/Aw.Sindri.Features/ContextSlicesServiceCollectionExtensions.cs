@@ -6,6 +6,7 @@ using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.Locks;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Proposals;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.Search;
@@ -39,7 +40,9 @@ internal static class ContextSlicesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<PurgeIndexSourceRequest>, AcceptAllValidator<PurgeIndexSourceRequest>>().AddCommand<PurgeIndexSourceRequest, IndexPurgeView, PurgeIndexSourceService>();
         return services
             .AddScoped<IScheduledService, IndexSyncService>()
-            .AddSingleton(IndexSyncService.BuiltIn);
+            .AddSingleton(IndexSyncService.BuiltIn)
+            .AddScoped<IScheduledService, IndexDecisionsService>()
+            .AddSingleton(IndexDecisionsService.BuiltIn);
     }
 
     /// <summary>The context engine's slices (stages S-3 and S-4): the review, promote and proposals commands and the reads of the map, lenses, subgraph and filemap.</summary>
@@ -89,6 +92,7 @@ internal static class ContextSlicesServiceCollectionExtensions
     // The reads that follow the lenses: the eval, proposals and review queries.
     private static IServiceCollection AddContextReads(this IServiceCollection services)
     {
+        _ = services.AddScoped<IValidator<PreviewPagesRequest>, AcceptAllValidator<PreviewPagesRequest>>().AddQuery<PreviewPagesRequest, PagesPreview, PreviewPagesService>();
         _ = services.AddScoped<IValidator<GetContextEvalMapRequest>, AcceptAllValidator<GetContextEvalMapRequest>>().AddQuery<GetContextEvalMapRequest, MapQualityRun, GetContextEvalMapService>();
         _ = services.AddScoped<IValidator<GetContextProposalsRequest>, AcceptAllValidator<GetContextProposalsRequest>>().AddQuery<GetContextProposalsRequest, ProposalsView, GetContextProposalsService>();
         _ = services.AddScoped<IValidator<GetContextReviewRequest>, AcceptAllValidator<GetContextReviewRequest>>().AddQuery<GetContextReviewRequest, ReviewQueueView, GetContextReviewService>();
@@ -101,6 +105,9 @@ internal static class ContextSlicesServiceCollectionExtensions
         _ = services.AddScoped<ConceptsNotReady>().AddScoped<IValidator<GetContextConceptsRequest>, AcceptAllValidator<GetContextConceptsRequest>>().AddQuery<GetContextConceptsRequest, ConceptsView, GetContextConceptsService>();
         _ = services.AddScoped<IValidator<GetContextConceptMembersRequest>, AcceptAllValidator<GetContextConceptMembersRequest>>().AddQuery<GetContextConceptMembersRequest, ConceptMembersView, GetContextConceptMembersService>();
         _ = services.AddScoped<IValidator<GetContextConceptGlossaryRequest>, AcceptAllValidator<GetContextConceptGlossaryRequest>>().AddQuery<GetContextConceptGlossaryRequest, ConceptGlossaryView, GetContextConceptGlossaryService>();
+        _ = services.AddScoped<IValidator<GetContextPagesRequest>, AcceptAllValidator<GetContextPagesRequest>>().AddQuery<GetContextPagesRequest, PagesView, GetContextPagesService>();
+        _ = services.AddScoped<IValidator<GetContextPinSuggestRequest>, AcceptAllValidator<GetContextPinSuggestRequest>>().AddQuery<GetContextPinSuggestRequest, PinSuggestView, GetContextPinSuggestService>();
+        _ = services.AddScoped<IValidator<GetContextPinsRequest>, AcceptAllValidator<GetContextPinsRequest>>().AddQuery<GetContextPinsRequest, ContextPinsView, GetContextPinsService>();
         return services;
     }
 

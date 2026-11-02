@@ -5,7 +5,7 @@ using Aw.Kernel;
 namespace Aw.Connectors.Testing.Slack;
 
 /// <summary>
-/// An in-memory <see cref="ISlackReader"/>: serves what was added per channel the way Slack does (history newest first from an inclusive oldest, a thread root first) and, like the real
+/// An in-memory <see cref="ISlackReader"/>: serves what was added per channel the way Slack does (history newest first from an inclusive oldest, one page at a time for <see cref="HistoryPage"/>, a thread root first) and, like the real
 /// client, refuses a channel that is not allowed before it reads anything (SND-INDEX-013). Contract-tested against the real client.
 /// </summary>
 public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackReader
@@ -16,6 +16,12 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
     private readonly Dictionary<string, DateTimeOffset> _historyLimits = new(StringComparer.Ordinal);
     private readonly Dictionary<string, DateTimeOffset> _repliesLimits = new(StringComparer.Ordinal);
     private Error? _failure;
+    private int? _repliesBudget;
+    private DateTimeOffset? _repliesBudgetUntil;
+    private int _repliesCalls;
+
+    /// <summary>Gets or sets a callback run with the thread ts just before a thread read is served, so a test can add a message between a history scan and the thread read (a race); null runs nothing.</summary>
+    public Action<string>? BeforeReplies { get; set; }
 
     /// <summary>The reads made, in order: 'history {channel} {oldest}', 'replies {channel} {ts}', 'probe {channel}'.</summary>
     public IReadOnlyList<string> Reads => _reads;
@@ -42,6 +48,18 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
     /// <returns>This fake.</returns>
     public FakeSlackReader RateLimitReplies(DateTimeOffset? until, string? channel = null) => Limit(_repliesLimits, until, channel);
 
+    /// <summary>Lets <paramref name="calls"/> thread reads succeed (counted from this call), then makes the next ones stop on a rate limit until <paramref name="until"/>, with nothing read; null lifts the limit.</summary>
+    /// <param name="calls">How many thread reads still succeed.</param>
+    /// <param name="until">When the quota comes back, or null to lift the limit.</param>
+    /// <returns>This fake.</returns>
+    public FakeSlackReader RateLimitRepliesAfter(int calls, DateTimeOffset? until)
+    {
+        _repliesBudget = until is null ? null : calls;
+        _repliesBudgetUntil = until;
+        _repliesCalls = 0;
+        return this;
+    }
+
     /// <summary>Makes every read fail with <paramref name="error"/>.</summary>
     /// <param name="error">The error.</param>
     /// <returns>This fake.</returns>
@@ -64,6 +82,23 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<SlackMessagePage>> HistoryPage(string channel, string? oldest, string? latest, int limit, CancellationToken cancellationToken)
+    {
+        if (Refused(channel) is { } refused)
+        {
+            return ValueTask.FromResult<Result<SlackMessagePage>>(refused);
+        }
+
+        _reads.Add($"history {channel} {oldest}");
+        var size = Math.Max(1, limit);
+        return ValueTask.FromResult(_failure is not null
+            ? (Result<SlackMessagePage>)_failure
+            : LimitOf(_historyLimits, channel) is { } until
+                ? new SlackMessagePage([], until)
+                : PageOf(_store.Top(channel, oldest, latest), size));
+    }
+
+    /// <inheritdoc />
     public ValueTask<Result<SlackMessagePage>> Replies(string channel, string threadTs, CancellationToken cancellationToken)
     {
         if (Refused(channel) is { } refused)
@@ -71,7 +106,13 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
             return ValueTask.FromResult<Result<SlackMessagePage>>(refused);
         }
 
+        if (_repliesBudget is { } budget && _repliesBudgetUntil is { } budgetUntil && _repliesCalls++ >= budget)
+        {
+            return ValueTask.FromResult<Result<SlackMessagePage>>(new SlackMessagePage([], budgetUntil));
+        }
+
         _reads.Add($"replies {channel} {threadTs}");
+        BeforeReplies?.Invoke(threadTs);
         return ValueTask.FromResult(Page(LimitOf(_repliesLimits, channel), () => _store.Thread(channel, threadTs)));
     }
 
@@ -109,6 +150,9 @@ public sealed class FakeSlackReader(params string[] allowedChannels) : ISlackRea
         => !SlackChannelIds.IsReadable(channel) || !_allowed.Contains(channel)
             ? ConnectorsErrors.ChannelNotAllowed.With("The channel is not in the profile.")
             : null;
+
+    private static Result<SlackMessagePage> PageOf(List<SlackMessage> all, int size)
+        => new SlackMessagePage([.. all.Take(size)], RateLimitedUntil: null, HasMore: all.Count > size);
 
     private Result<SlackMessagePage> Page(DateTimeOffset? limit, Func<List<SlackMessage>> read)
         => _failure is not null

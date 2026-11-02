@@ -8,6 +8,7 @@ namespace Aw.Sindri.Ui.Testing;
 internal sealed partial class FakeSindriApi
 {
     private readonly List<string> _cancelled = [];
+    private readonly List<string> _resumedJobs = [];
     private int _jobsCalls;
     private int _jobCalls;
 
@@ -19,6 +20,9 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>POST /sindri/jobs/{id}/cancel's answer.</summary>
     public RouteAnswer CancelJobAnswer { get; set; } = RouteAnswer.Api("jobs-id-cancel", "accepted");
+
+    /// <summary>POST /sindri/jobs/{id}/resume's answer: accepted by default.</summary>
+    public RouteAnswer ResumeJobAnswer { get; set; } = new(System.Net.HttpStatusCode.OK, """{"accepted":{"commandId":"00000000-0000-0000-0000-000000000009","sequence":12},"jobId":"JOB-00000000000000000000000000000001","links":{"self":"/sindri/jobs/JOB-00000000000000000000000000000001","cancel":"/sindri/jobs/JOB-00000000000000000000000000000001/cancel","events":"/sindri/events?after=12&types=job.*"}}""");
 
     /// <summary>How many times the job list was read.</summary>
     public int JobsCalls => Volatile.Read(ref _jobsCalls);
@@ -34,6 +38,9 @@ internal sealed partial class FakeSindriApi
 
     /// <summary>Every job a cancel was sent for, in order.</summary>
     public IReadOnlyList<string> CancelledJobs { get { lock (_gate) { return [.. _cancelled]; } } }
+
+    /// <summary>Every job a resume was sent for, in order.</summary>
+    public IReadOnlyList<string> ResumedJobs { get { lock (_gate) { return [.. _resumedJobs]; } } }
 
     /// <summary>What GET /sindri/jobs/{id} answers.</summary>
     /// <param name="id">The job.</param>
@@ -74,5 +81,21 @@ internal sealed partial class FakeSindriApi
         }
 
         return answer;
+    }
+
+    public async Task<Result<JobResumedView>> ResumeJob(Uri api, string id, CancellationToken cancellationToken)
+    {
+        if (NotReceived<JobResumedView>(api) is { } unanswered)
+        {
+            return unanswered;
+        }
+
+        lock (_gate)
+        {
+            _resumedJobs.Add(id);
+        }
+
+        await WaitFor(CommandGate, cancellationToken).ConfigureAwait(false);
+        return Answer<JobResumedView>(api, JobRoutes.Resume(id), ResumeJobAnswer);
     }
 }

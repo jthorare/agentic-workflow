@@ -30,9 +30,11 @@ internal static class IndexSyncRules
 
     private static string? Failure(SourceProgress p) => p.LastCode is { } code && !string.Equals(code, ContextErrors.SyncCapped.Code, StringComparison.Ordinal) ? code : null;
 
-    private static string Line(SourceProgress p) => p.LastSync is not { } at
-        ? $"{p.Source.Value} not synced yet"
-        : Failure(p) is { } code
-            ? $"{p.Source.Value} last sync failed: {code}"
-            : $"{p.Source.Value} synced {at.UtcDateTime.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)}Z";
+    private static string Line(SourceProgress p) => Failure(p) is { } code
+        ? $"{p.Source.Value} last sync failed: {code}"
+        : p.ReReading is { } stored
+            ? string.Create(CultureInfo.InvariantCulture, $"{p.Source.Value} re-reading for project links, {stored:N0} issues stored")
+            : p.LastSync is not { } at
+                ? $"{p.Source.Value} not synced yet"
+                : $"{p.Source.Value} synced {at.UtcDateTime.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture)}Z";
 }

@@ -67,4 +67,11 @@ public sealed class IdTests
         Assert.False(SourceVersion.TryFrom(new string('a', 129), out _));
         Assert.True(SourceId.TryParse("onyx", provider: null, out _));
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_record_key_an_old_onyx_sync_wrote_still_reads()
+    {
+        Assert.True(RecordKey.TryFrom("onyx:confluence/page-42", out var key));
+        Assert.Equal("onyx:confluence/page-42", key.Value);
+    }
 }

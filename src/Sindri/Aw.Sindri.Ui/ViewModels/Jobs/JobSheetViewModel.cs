@@ -166,6 +166,7 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
             if (string.Equals(e.PropertyName, nameof(CatalogViewModel.Controls), StringComparison.Ordinal) && _last is { } job)
             {
                 Cancel = CancelFor(job);   // a catalog read after the sheet drew gives a running job its Cancel
+                Resume = IsPaused ? ResumeFor() : null;
             }
         };
     }
@@ -233,7 +234,7 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
 
     private void Draw(JobView job)
     {
-        var running = string.Equals(job.State, "running", StringComparison.Ordinal);
+        var running = string.Equals(job.State, "running", StringComparison.Ordinal) || string.Equals(job.State, "waiting", StringComparison.Ordinal);
         var (glyph, word) = Labels.JobChip(job.State);
         var age = _clock.GetUtcNow() - (running ? job.StartedAt : job.EndedAt ?? job.StartedAt);
         Heading = Labels.JobKind(job.Kind);
@@ -249,6 +250,7 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
         ResultText = JobFields.Result(job.Result);
         Cli = job.Cli ?? string.Empty;
         Fields = JobFields.Technical(job);
+        DrawModels(job);
         (ProblemText, Note) = (string.Empty, string.Empty);
         Phase = FramePhase.Shown;
         OnChanged(nameof(HasNoProgress));
@@ -277,7 +279,8 @@ internal sealed partial class JobSheetViewModel(ISindriApi api) : ObservableObje
     private void Clear()
     {
         (Heading, StateLine, SummaryText, CodeText, ProblemText, Note, ResultText, Cli) = (string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty);
-        (Progress, Fields, Cancel, _last) = ([], [], null, null);
+        (Progress, Fields, Cancel, Resume, _last) = ([], [], null, null, null);
+        (ModelCalls, ModelMoreText, PausedText, IsPaused) = ([], string.Empty, string.Empty, false);
         (ProblemCode, CopyLabel, CopyIdLabel) = (string.Empty, Labels.Copy, Labels.Copy);
         _idCopies++;
         _copies++;   // a pending "Copied" reset belongs to the job that was copied

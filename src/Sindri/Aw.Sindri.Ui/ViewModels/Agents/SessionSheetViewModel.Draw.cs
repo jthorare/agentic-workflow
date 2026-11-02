@@ -38,6 +38,7 @@ internal sealed partial class SessionSheetViewModel
         (IsEnded, EndedText, EndedDetail, ProblemText, Note) = (false, string.Empty, string.Empty, string.Empty, string.Empty);
         Phase = FramePhase.Shown;
         DrawSections(session);
+        DrawSandbox(session);
         DrawFocus();
     }
 

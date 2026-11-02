@@ -190,7 +190,7 @@ public sealed class ShellStateTests : IDisposable
         var shell = new ShellViewModel(_records, _server, _clock, new Preferences(_preferences), new FakeClipboard());
         await shell.Restore(Token);
 
-        shell.SelectedNav = shell.Navigation[4];
+        shell.SelectedNav = shell.Navigation[5];
         Assert.Equal((PageId.Context, true), (shell.CurrentPage, shell.IsContext));
 
         shell.GoTo(PageId.Settings);

@@ -16,7 +16,7 @@ internal static class LensIntent
         return new IntentBand(records, decisions, new IntentCounts(records.Count, decisions.Count, Orphaned: null));
     }
 
-    /// <summary>Where a record lives, from its key: 'linear', 'linear:doc', 'slack', 'onyx' or 'repo-doc'.</summary>
+    /// <summary>Where a record lives, from its key: 'linear', 'linear:doc', 'slack' or 'repo-doc'.</summary>
     internal static string Source(NodeKey record)
     {
         var key = record.Name;

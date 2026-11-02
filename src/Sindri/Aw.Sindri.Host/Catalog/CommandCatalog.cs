@@ -8,7 +8,7 @@ namespace Aw.Sindri.Host.Catalog;
 /// </summary>
 internal sealed class CommandCatalog : ICommandCatalog
 {
-    public IReadOnlyList<CommandRow> Rows { get; } = [.. ShellRows.All, .. ItemRows.All, .. RequestRows.All, .. ServiceRows.All, .. PendingRows.All, .. SessionRows.All, .. EngineRows.All, .. ContextRows.All, .. LineRows.All, .. SetupRows.All, .. SandboxRows.All];
+    public IReadOnlyList<CommandRow> Rows { get; } = [.. ShellRows.All, .. ItemRows.All, .. ProjectRows.All, .. RequestRows.All, .. ServiceRows.All, .. PendingRows.All, .. SessionRows.All, .. EngineRows.All, .. ContextRows.All, .. LineRows.All, .. SetupRows.All, .. SandboxRows.All];
 
     public IReadOnlyList<CommandRow> For(Type commandType) => [.. Rows.Where(row => row.CommandType == commandType)];
 }

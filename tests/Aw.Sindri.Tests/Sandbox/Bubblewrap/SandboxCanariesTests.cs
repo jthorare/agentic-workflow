@@ -73,6 +73,44 @@ public sealed class SandboxCanariesTests
     }
 
     [Fact]
+    public void A_separate_login_plans_hooks_run_canary_uses_the_agent_homes_hooks()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope);
+        var claude = plan with { Login = ModelLoginSource.SeparateLogin };
+        var codex = claude with { Environment = [.. plan.Environment.Where(static e => e.Name != "CLAUDE_CONFIG_DIR"), new PlanEnvVar("CODEX_HOME", "/agent-home", "login")] };
+
+        Assert.StartsWith("fail() { echo \"$1\"; exit 1; }\nH=\"$CLAUDE_CONFIG_DIR/hooks\"\n", SandboxCanaries.For(claude).Single(c => c.Reason == "hooks-run").Script, StringComparison.Ordinal);
+        Assert.StartsWith("fail() { echo \"$1\"; exit 1; }\nH=\"$CODEX_HOME/hooks\"\n", SandboxCanaries.For(codex).Single(c => c.Reason == "hooks-run").Script, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void An_owner_copy_plans_hooks_run_canary_keeps_the_home_claude_hooks()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope) with { Login = ModelLoginSource.OwnerCopy };
+
+        Assert.Contains("H=\"$HOME/.claude/hooks\"", SandboxCanaries.For(plan).Single(c => c.Reason == "hooks-run").Script, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_plan_with_an_agent_home_bound_has_the_hooks_run_canary() =>
+        Assert.Contains(SandboxReasons.HooksRun, Reasons(SandboxPlannerTests.Build(Req.WriteScope)), StringComparer.Ordinal);
+
+    [Fact]
+    public void A_plan_with_no_agent_home_bound_has_no_hooks_run_canary_and_keeps_the_others()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope);
+        var bare = plan with { Environment = [.. plan.Environment.Where(static e => e.Name is not ("CLAUDE_CONFIG_DIR" or "CODEX_HOME"))] };
+
+        var reasons = Reasons(bare);
+
+        Assert.DoesNotContain(SandboxReasons.HooksRun, reasons, StringComparer.Ordinal);
+        foreach (var kept in new[] { "fs-deny", "fs-write", "env", "login", "net-deny" })
+        {
+            Assert.Contains(kept, reasons, StringComparer.Ordinal);
+        }
+    }
+
+    [Fact]
     public void The_hook_canary_never_exercises_a_dropped_or_rewriting_hook()
     {
         var script = SandboxCanaries.For(SandboxPlannerTests.Build(Req.WriteScope)).Single(c => c.Reason == "hooks-run").Script;

@@ -4,7 +4,7 @@ namespace Aw.Context.Infrastructure.Graph;
 internal static class GraphSql
 {
     public const string InsertVersion =
-        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks) VALUES ($repo, $commit, $keyVersion, $created, 'building', $ruleset, $dropped, $checks) RETURNING id";
+        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks, pin_hashes) VALUES ($repo, $commit, $keyVersion, $created, 'building', $ruleset, $dropped, $checks, $pinHashes) RETURNING id";
 
     public const string InsertNode =
         "INSERT INTO node (map_version, key, label, attributes, provenance, confidence, trust, written_at) VALUES ($v, $key, $label, $attributes, $provenance, $confidence, $trust, $at)";
@@ -59,6 +59,10 @@ internal static class GraphSql
 
     public const string HasDroppedColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'dropped'";
 
+    public const string HasPinHashesColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'pin_hashes'";
+
+    public const string SelectPinHashes = "SELECT id, pin_hashes FROM map_version WHERE status <> 'building' AND pin_hashes IS NOT NULL";
+
     public const string HasRulesetColumn = "SELECT count(*) FROM pragma_table_info('map_version') WHERE name = 'ruleset'";
 
     public const string SelectNodes =
@@ -111,15 +115,20 @@ internal static class GraphSql
         "SELECT id, repo, commit_sha, key_version, created, status, ruleset, dropped, checks FROM map_version WHERE id = $v";
 
     public const string CopyVersion =
-        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks) SELECT repo, commit_sha, key_version, $created, 'draft', ruleset, dropped, checks FROM map_version WHERE id = $from RETURNING id";
+        "INSERT INTO map_version (repo, commit_sha, key_version, created, status, ruleset, dropped, checks, pin_hashes) SELECT repo, commit_sha, key_version, $created, 'draft', ruleset, dropped, checks, pin_hashes FROM map_version WHERE id = $from RETURNING id";
 
     public const string InsertHead =
-        "INSERT INTO map_version_head (version, repo, commit_sha, on_default) VALUES ($v, $repo, $commit, $onDefault)";
+        "INSERT INTO map_version_head (version, repo, commit_sha, on_default, index_commit) VALUES ($v, $repo, $commit, $onDefault, $indexCommit)";
 
     public const string CopyHeads =
-        "INSERT INTO map_version_head (version, repo, commit_sha, on_default) SELECT $to, repo, commit_sha, on_default FROM map_version_head WHERE version = $from ORDER BY rowid";
+        "INSERT INTO map_version_head (version, repo, commit_sha, on_default, index_commit) SELECT $to, repo, commit_sha, on_default, index_commit FROM map_version_head WHERE version = $from ORDER BY rowid";
 
-    public const string SelectHeads = "SELECT repo, commit_sha, on_default FROM map_version_head WHERE version = $v ORDER BY rowid";
+    // A store not yet at migration 0025 (reads never migrate) has the table but no index_commit column.
+    public const string HasIndexCommitColumn = "SELECT count(*) FROM pragma_table_info('map_version_head') WHERE name = 'index_commit'";
+
+    public const string SelectHeadsBeforeIndexCommit = "SELECT repo, commit_sha, on_default, NULL FROM map_version_head WHERE version = $v ORDER BY rowid";
+
+    public const string SelectHeads = "SELECT repo, commit_sha, on_default, index_commit FROM map_version_head WHERE version = $v ORDER BY rowid";
 
     public const string SelectHold = "SELECT h.version, c.since FROM map_hold h JOIN map_publish_chain c ON c.id = 1";
 
@@ -149,6 +158,6 @@ internal static class GraphSql
         "INSERT INTO edge_evidence (edge_id, position, record, span) SELECT n.id, ee.position, ee.record, ee.span FROM edge_evidence ee JOIN edge o ON o.id = ee.edge_id " +
         "JOIN edge n ON n.map_version = $to AND n.from_key = o.from_key AND n.to_key = o.to_key AND n.type = o.type WHERE o.map_version = $from",
         "INSERT INTO decision (map_version, key, quote, wording, provenance, trust, written_at) SELECT $to, key, quote, wording, provenance, trust, written_at FROM decision WHERE map_version = $from",
-        "INSERT INTO map_version_head (version, repo, commit_sha, on_default) SELECT $to, repo, commit_sha, on_default FROM map_version_head WHERE version = $from ORDER BY rowid",
+        "INSERT INTO map_version_head (version, repo, commit_sha, on_default, index_commit) SELECT $to, repo, commit_sha, on_default, index_commit FROM map_version_head WHERE version = $from ORDER BY rowid",
     ];
 }

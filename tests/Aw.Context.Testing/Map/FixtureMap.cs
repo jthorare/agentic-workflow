@@ -22,16 +22,21 @@ public static class FixtureMap
     /// <summary>The YAML text.</summary>
     public static string Yaml => SplitPanesFixture.ReadText(Path);
 
-    /// <summary>The nodes the 'implements' edges with aw-split-panes evidence point at, and the code files they start from ("that repo's files and code", spec §3): a session's scope.</summary>
+    /// <summary>
+    /// A session's scope (spec §3): the nodes the 'implements' edges with aw-split-panes evidence point at and the code files they start from ("that repo's files and code"), their
+    /// part-of ancestors and descendants, and one cascade hop (§6.1): the actions 'on' the in-scope surfaces and the things the in-scope nodes read or write ("and their cascade").
+    /// </summary>
     public static IReadOnlyList<string> ScopedNodes { get; } =
     [
-        "action:tab-manager.restore-layout", "code:src/layout/PaneResize.ts", "code:src/layout/SplitPane.ts", "code:src/tabs/TabManager.ts",
+        "action:pane-resize.resize-focused", "action:split-pane.split-vertical", "action:split-pane.toggle-orientation", "action:tab-manager.restore-layout",
+        "code:src/layout/PaneResize.ts", "code:src/layout/SplitPane.ts", "code:src/tabs/TabManager.ts",
         "feature:layout.pane-resize", "feature:layout.split-pane", "feature:layout.split-pane.orientation", "feature:tabs.tab-manager",
         "surface:command/split-vertical", "surface:command/switch-tab", "surface:command/toggle-orientation", "surface:keybinding/ctrl+shift+d", "surface:setting/paneResizeStep",
+        "thing:pane-layout",
     ];
 
-    /// <summary>The 'implements' edges among a session's scope: file to feature.</summary>
-    public const int ScopedEdges = 14;
+    /// <summary>The edges among a session's scoped nodes.</summary>
+    public const int ScopedEdges = 20;
 
     /// <summary>Writes the YAML to <paramref name="directory"/>/product-map.yaml.</summary>
     /// <param name="directory">An existing directory outside every repo.</param>

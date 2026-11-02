@@ -92,21 +92,40 @@ internal sealed partial class ContextPageViewModel
     }
 
     /// <summary>
-    /// A click on a node of the whole map: a node of the answer the camera is on opens in the inspector; any other node (dimmed behind the answer, or any node when nothing is zoomed to)
-    /// becomes the new starting point, read like a picked suggestion, and the camera eases to its answer.
+    /// A click on a node of the whole map: a concept (other than the one open) opens its three bands, as its tile does (#1281); a node of the answer the camera is on opens in the inspector;
+    /// any other node (dimmed behind the answer, or any node when nothing is zoomed to) becomes the new starting point, read like a picked suggestion, and the camera eases to its answer.
     /// </summary>
     /// <param name="key">The node's key.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>When the inspector is filled or the new answer is drawn.</returns>
+    /// <returns>When the concept's map, the inspector or the new answer is drawn.</returns>
     internal Task ChooseWholeNode(string key, CancellationToken cancellationToken = default) =>
-        Whole.IsZoomed && Whole.HitKeys.Contains(key) && Map is { } map && map.Nodes.Any(n => string.Equals(n.Key, key, StringComparison.Ordinal))
+        IsConceptNode(key) && !string.Equals(key, OpenedConceptId, StringComparison.Ordinal) ? OpenConcept(key, cancellationToken)
+        : Whole.IsZoomed && Whole.HitKeys.Contains(key) && Map is { } map && map.Nodes.Any(n => string.Equals(n.Key, key, StringComparison.Ordinal))
             ? Select(key, cancellationToken)
             : Pick(key, cancellationToken);
 
-    /// <summary>Esc: the inspector closes first, then the camera goes back to the whole map.</summary>
+    private bool IsConceptNode(string key) =>
+        Whole.Geometry?.Nodes.Any(n => string.Equals(n.Key, key, StringComparison.Ordinal) && string.Equals(n.Kind, "concept", StringComparison.Ordinal)) == true;
+
+    /// <summary>Esc: the page sheet answers first, then the pages in no concept close, then the inspector, then the camera goes back to the whole map.</summary>
     /// <returns>True when it did something.</returns>
     internal bool Back()
     {
+        if (PageSheet is { } sheet)
+        {
+            return sheet.Escape();   // the page sheet lies over everything: Esc answers its question or closes it first
+        }
+
+        if (AddSeveralPages is { } several)
+        {
+            return several.Escape();   // the Add several pages sheet lies over everything too
+        }
+
+        if (ShowNoConcept && CloseNoConcept())
+        {
+            return true;   // the pages in no concept lie over the concept cards: Esc closes them first
+        }
+
         if (Whole.Panel.Close())
         {
             return true;   // Esc closes the node panel first and the pin stays

@@ -82,7 +82,7 @@ left_of() { nodes "$@" | jq -r '.matches[0].x // empty'; }
 # 2. Home's row for the decision is a Button named "Open <title> <DEC>"; open its sheet.
 open=""
 for _ in $(seq 1 60); do
-  open="$(nodes --type Button | jq -r --arg d "$DEC" '[.matches[].name // empty | select(startswith("Open ") and contains($d))][0] // empty')"
+  open="$(nodes --type Button | jq -r --arg d "$DEC" '[.matches[] | select(.visible) | .name // empty | select(startswith("Open ") and contains($d))][0] // empty')"
   [ -n "$open" ] && break
   sleep 1
 done

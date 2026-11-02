@@ -120,7 +120,7 @@ internal sealed class NeedsYouDispatcher
 
         if (target.RequiredOutputs.Count > 0 && files is null)
         {
-            return new NeedsYouDispatch(DispatchOutcome.Refused, Labels.CompleteNeedsOutput);   // a row's own button has no file to give: the sheet has the inputs, and the row says so
+            return new NeedsYouDispatch(DispatchOutcome.OpenSheet, Labels.CompleteNeedsOutputInSheet);   // a row's own button has no file to give: the sheet has the inputs, and the row says so
         }
 
         return Reply(await _desk.Complete(target, outcome, answers: null, files).ConfigureAwait(true), Labels.CompleteSent);

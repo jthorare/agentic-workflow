@@ -103,4 +103,37 @@ public sealed class ListJobsTests
         Expect.True(refused.IsError && string.Equals(refused.Error.Code, "SND-CLI-003", StringComparison.Ordinal));
         Assert.Contains("'NoSuchJob' isn't a job kind (fix: RunService, SyncSources)", refused.Error.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task A_listed_job_carries_its_model_totals_and_the_line_that_says_why_it_waits()
+    {
+        var totals = new ModelTotals(Calls: 3, FailedCalls: 0, InputTokens: 3000, OutputTokens: 1100, [new ModelAnsweredCount("codex", "gpt-6-luna", 3)], FellBack: 1);
+        var id = Put(_run, JobState.Running);
+        var row = (await _jobs.Get(id, Token)).Value!;
+        _jobs.Put(row with
+        {
+            State = JobState.Waiting,
+            WaitingOn = "model-limit",
+            Models = totals,
+            Progress = [new JobLine(1, "Paused: claude-code at its usage limit. Resume when one is back.", row.StartedAt)],
+        });
+        using var entered = As(A.Caller().Human().Build());
+
+        var job = Assert.Single((await Service().Handle(A.ListJobsRequest().Build(), Token)).Value.Jobs);
+
+        Expect.Equal((totals, "model-limit", "Paused: claude-code at its usage limit. Resume when one is back."), (job.Models, job.WaitingOn, job.WaitingLine));
+    }
+
+    [Fact]
+    public async Task A_job_that_is_not_waiting_has_no_waiting_line()
+    {
+        var id = Put(_run, JobState.Running);
+        var row = (await _jobs.Get(id, Token)).Value!;
+        _jobs.Put(row with { Progress = [new JobLine(1, "working", row.StartedAt)] });
+        using var entered = As(A.Caller().Human().Build());
+
+        var job = Assert.Single((await Service().Handle(A.ListJobsRequest().Build(), Token)).Value.Jobs);
+
+        Assert.Null(job.WaitingLine);
+    }
 }

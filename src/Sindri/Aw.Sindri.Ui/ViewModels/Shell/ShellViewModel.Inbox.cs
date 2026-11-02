@@ -88,7 +88,7 @@ internal sealed partial class ShellViewModel
         {
             if (NeedsYou.Row(e.RowId)?.PrUri is { } uri)
             {
-                _ = launcher.OpenUri(uri, CancellationToken.None);
+                _ = inbox.OpenPrLink(uri);
             }
         };
         inbox.Bar.SheetRequested += (_, e) => OpenNeedsYouRowSheet(e.RowId);

@@ -82,7 +82,7 @@ drv click --type ListBoxItem --name List >"$OUT/list.log" 2>&1 || setup_fail "no
 open_name=""
 for _ in $(seq 1 60); do
   drv search --type Button --limit 500 >"$OUT/workflows-tree.json" 2>/dev/null
-  open_name="$(jq -r '[.. | objects | select((.type // "") == "Button") | .name // empty | select(startswith("Open "))] | first // empty' "$OUT/workflows-tree.json")"
+  open_name="$(jq -r '[.. | objects | select((.type // "") == "Button" and (.visible // false)) | .name // empty | select(startswith("Open ") and contains(", "))] | first // empty' "$OUT/workflows-tree.json")"
   [ -n "$open_name" ] && break
   sleep 1
 done

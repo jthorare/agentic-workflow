@@ -8,7 +8,7 @@ namespace Aw.Context.Core.Lenses;
 public static class SearchedSources
 {
     /// <summary>The row of an intent source: not-configured when the profile doesn't name it, degraded with the last run's code when it failed, unavailable ('not-synced') before the first sync, else ok at its last sync.</summary>
-    /// <param name="id">The source ('onyx').</param>
+    /// <param name="id">The source ('linear').</param>
     /// <param name="configured">Whether the profile names it.</param>
     /// <param name="state">What its sync stored, or null when it has no state yet.</param>
     /// <returns>The row.</returns>

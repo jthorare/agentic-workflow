@@ -53,6 +53,19 @@ public sealed class WholeMapBandsLayoutTests
     }
 
     [Fact]
+    public void A_concept_node_renders_in_the_concept_row_not_product()
+    {
+        var geometry = WholeMapLayout.Place(Nodes(("area:concepts", "concept"), ("a", "feature"), ("a", "decision")));
+
+        Assert.Equal([WholeBand.Concept, WholeBand.Intent, WholeBand.Product, WholeBand.Code], geometry.Bands.Select(b => b.Band));
+        var concept = geometry.Nodes.Single(n => n.Kind == "concept");
+        var row = geometry.Bands.Single(b => b.Band == WholeBand.Concept);
+        Assert.InRange(concept.Rect.Y, row.Top, row.Top + row.Height);
+        var product = geometry.Bands.Single(b => b.Band == WholeBand.Product);
+        Assert.False(concept.Rect.Y >= product.Top && concept.Rect.Y <= product.Top + product.Height);
+    }
+
+    [Fact]
     public void Each_area_keeps_its_own_column_and_the_bands_line_up_across_columns()
     {
         var geometry = WholeMapLayout.Place(Nodes(("a", "decision"), ("b", "decision"), ("a", "code"), ("b", "surface")));

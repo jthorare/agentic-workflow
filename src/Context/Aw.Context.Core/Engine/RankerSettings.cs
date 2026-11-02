@@ -15,6 +15,9 @@ public sealed record RankerSettings
     /// <summary>'context.ranker.weights': the weight of each feature; equal by default.</summary>
     public FeatureWeights Weights { get; init; } = new();
 
+    /// <summary>'context.ranker.pinLeg': whether fusion adds a leg of the anchor's pin, lifting the records inside it (concept pins spec §3.3). Off until the owner decides from the Q6 backtest.</summary>
+    public bool PinLeg { get; init; }
+
     /// <summary>'context.ranker.rerank': whether a model orders the top items (the only model call on the query path). Off by default.</summary>
     public bool Rerank { get; init; }
 

@@ -10,6 +10,9 @@ namespace Aw.Context.Core.Engine;
 /// <param name="Owns">Names of the data stores it declares it owns, as the data-store extractor names them (a Human 'writes' edge).</param>
 public sealed record ConceptPin(ConceptId? Id, string Name, string? Summary, IReadOnlyList<string> Features, IReadOnlyList<string> Paths, IReadOnlyList<string> DependsOn, IReadOnlyList<string> Owns)
 {
+    /// <summary>Other words the owner uses for it; a question using one anchors on the concept. Not part of the map hash (an alias edit rebuilds nothing).</summary>
+    public IReadOnlyList<string> Aliases { get; init; } = [];
+
     /// <summary>A pin from the profile's plain values.</summary>
     /// <param name="id">The slug, or null.</param>
     /// <param name="name">The name; none becomes empty (the profile's rules refuse it before this).</param>
@@ -25,4 +28,9 @@ public sealed record ConceptPin(ConceptId? Id, string Name, string? Summary, IRe
     /// <param name="owns">Names of the data stores it owns, or null for none.</param>
     /// <returns>The pin.</returns>
     public ConceptPin Declaring(IEnumerable<string>? dependsOn, IEnumerable<string>? owns) => this with { DependsOn = [.. dependsOn ?? []], Owns = [.. owns ?? []] };
+
+    /// <summary>The same pin with the owner's other words for it.</summary>
+    /// <param name="aliases">The aliases, or null for none.</param>
+    /// <returns>The pin.</returns>
+    public ConceptPin WithAliases(IEnumerable<string>? aliases) => this with { Aliases = [.. aliases ?? []] };
 }

@@ -152,4 +152,17 @@ public sealed class SlackConnectorTests
 
         Assert.Equal(ConnectorsErrors.Unauthorized.Code, (await Connector(reader).Probe(Ct)).Error.Code);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_pull_that_finds_nothing_hands_back_a_cursor_that_is_not_empty_and_reads_as_a_first_run()
+    {
+        var reader = Reader().Add(General.Channel, A.SlackMessage(At(0)));
+        var before = new DateTimeOffset(2026, 10, 1, 0, 0, 0, TimeSpan.Zero);
+
+        var page = (await Connector(reader).Pull(after: null, 100, before, Ct)).Value;
+
+        Assert.Empty(page.Items);
+        Assert.Equal("-", page.Next.Value);
+        Assert.Same(SlackCursor.Empty, SlackCursor.Parse(page.Next.Value));
+    }
 }

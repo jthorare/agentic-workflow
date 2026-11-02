@@ -6,7 +6,7 @@ using Vogen;
 
 namespace Aw.Context.Core.Sources;
 
-/// <summary>A source adapter's id, such as 'repo-docs', 'linear' or 'onyx': kebab-case, at most 40 characters.</summary>
+/// <summary>A source adapter's id, such as 'repo-docs', 'linear' or 'slack': kebab-case, at most 40 characters.</summary>
 [ValueObject<string>(comparison: ComparisonGeneration.Omit)]
 [JsonConverter(typeof(StringIdJsonConverter<SourceId>))]
 public readonly partial struct SourceId : ITypedId<SourceId, string>

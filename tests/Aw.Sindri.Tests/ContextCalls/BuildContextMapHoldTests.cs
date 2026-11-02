@@ -1,3 +1,5 @@
+using Aw.Context.Core.Engine;
+using Aw.Context.Core.Map;
 using Aw.Context.Core.Review;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
@@ -46,5 +48,17 @@ public sealed class BuildContextMapHoldTests
 
         Assert.True(result.IsSuccess, result.IsError ? result.Error.Code : null);
         Assert.Empty(_engine.Holds);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_build_that_returned_an_already_current_version_holds_nothing()
+    {
+        _engine.Built = new MapBuildReport(new MapVersion(2, ContextRepoName.From("app"), "abc123", KeyVersion: 1, DateTimeOffset.UnixEpoch, MapVersionStatus.Current), [], [], [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true)]);
+
+        var result = await Run(undecided: 0);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Code : null);
+        Assert.Empty(_engine.Holds);
+        Assert.DoesNotContain("ReviewQueue", _engine.Log, StringComparer.Ordinal);
     }
 }

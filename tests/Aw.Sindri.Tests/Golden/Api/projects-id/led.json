@@ -1,0 +1,61 @@
+{
+  "asOf": {
+    "cursor": 11,
+    "ledgerHead": 11,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "viewer": "Jo Smith",
+  "freshness": [
+    {
+      "source": "linear-projects",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "linear",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "project": {
+    "id": "linear:project/00000000-0000-4000-8000-000000000001",
+    "origin": "led",
+    "name": "Checkout rewrite",
+    "description": "Rebuild checkout on the new payments API.",
+    "state": "inProgress",
+    "stateSetByOwner": false,
+    "health": "atRisk",
+    "lead": {
+      "you": true,
+      "name": null
+    },
+    "target": "2026-01-31",
+    "openIssues": 12,
+    "counting": false,
+    "openPrs": null,
+    "prScope": null,
+    "lastActivity": "2025-12-31T00:00:00.0000000Z",
+    "finishedAt": null,
+    "repos": [],
+    "links": [
+      {
+        "label": "Linear",
+        "url": "https://linear.app/acme/project/1"
+      }
+    ],
+    "notes": null,
+    "synced": true,
+    "version": 0
+  },
+  "hidden": false
+}

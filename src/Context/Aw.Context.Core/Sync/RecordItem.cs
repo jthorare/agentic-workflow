@@ -20,6 +20,9 @@ namespace Aw.Context.Core.Sync;
 /// <param name="Links">What the source says connects it to other records.</param>
 /// <param name="Repo">The profile repo it belongs to, or null.</param>
 /// <param name="Audience">Who may see it; the feed knows the team or channel it read.</param>
+/// <param name="Health">A project's latest health word as the source gave it, or null.</param>
+/// <param name="DueAt">The day a project is due, or null.</param>
+/// <param name="Description">A project's description as the source gave it (free text), or null; the driver scrubs and caps it.</param>
 public sealed record RecordItem(
     RecordKey Key,
     RecordKind Kind,
@@ -35,4 +38,7 @@ public sealed record RecordItem(
     SourceVersion Version,
     IReadOnlyList<RecordLink> Links,
     ContextRepoName? Repo,
-    AudienceKey? Audience);
+    AudienceKey? Audience,
+    string? Health = null,
+    DateOnly? DueAt = null,
+    string? Description = null);

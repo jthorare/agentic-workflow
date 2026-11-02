@@ -15,6 +15,7 @@ namespace Aw.Sindri.Tests.Ids;
 [JsonSerializable(typeof(JobKeyHolder))]
 [JsonSerializable(typeof(JobKindHolder))]
 [JsonSerializable(typeof(ItemIdHolder))]
+[JsonSerializable(typeof(ProjectIdHolder))]
 [JsonSerializable(typeof(ItemRefHolder))]
 [JsonSerializable(typeof(NeedsYouRowIdHolder))]
 [JsonSerializable(typeof(RecordKeyHolder))]

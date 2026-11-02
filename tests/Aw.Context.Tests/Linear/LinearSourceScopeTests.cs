@@ -139,7 +139,7 @@ public sealed class LinearSourceScopeTests : IAsyncDisposable
         using var http = new HttpClient(new SocketsHttpHandler { AllowAutoRedirect = false, UseProxy = false });
         var asked = 0;
         var settings = LinearSettings.Create(linear.Url.ToString(), LinearSourceHarness.Pointer, ["SPL"]).Value;
-        var source = new LinearSources(new LinearSourceParts(http, _ => ++asked == 1 ? null : linear.Token, new FakeTimeProvider(LinearSourceHarness.Now), new Onyx.CapturingLogger<LinearClient>())).Create(settings);
+        var source = new LinearSources(new LinearSourceParts(http, _ => ++asked == 1 ? null : linear.Token, new FakeTimeProvider(LinearSourceHarness.Now), new CapturingLogger<LinearClient>())).Create(settings);
 
         var first = await source.Search(LinearSourceHarness.Query("pane"), TestContext.Current.CancellationToken);
         var second = await source.Search(LinearSourceHarness.Query("pane"), TestContext.Current.CancellationToken);

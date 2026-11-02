@@ -16,6 +16,7 @@ internal sealed class CheckSandboxService(ISandboxChecks checks, LastSandboxChec
         {
             CheckedAt = last.Latest?.At,
             Resume = [.. report.Resume.Select(static p => new SandboxResumeLine(p.Instance, p.Item, p.Title, p.Since))],
+            NotChecked = report.NotChecked,
         };
     }
 }

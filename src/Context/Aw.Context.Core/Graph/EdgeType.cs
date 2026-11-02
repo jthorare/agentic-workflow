@@ -65,4 +65,8 @@ public enum EdgeType
     /// <summary>CodeUnit → Feature: a cross-cutting name the model gave a file. Never walked by a lens; it comes last because the store and map files key by the enum's names (spec 2026-10-27 §2.3).</summary>
     [JsonStringEnumMemberName("tags")]
     Tags,
+
+    /// <summary>Action or Surface → Concept: how a person meets the concept. Many per source; a feature's single home stays 'belongs-to'. Last because the store and map files key by the enum's names (pages spec §3.2).</summary>
+    [JsonStringEnumMemberName("expresses")]
+    Expresses,
 }

@@ -21,6 +21,25 @@ public sealed class UiPreferencesTests
     }
 
     [Fact]
+    public void Seen_suggested_pages_round_trip_through_the_file()
+    {
+        var seen = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal) { ["aw/concept:billing"] = ["surface:route/GET:/a", "surface:route/GET:/b"] };
+
+        var read = PreferencesJson.Read(PreferencesJson.Write(UiPreferences.Defaults with { SeenPages = seen }));
+
+        Assert.Equal(["surface:route/GET:/a", "surface:route/GET:/b"], read.SeenPages["aw/concept:billing"]);
+    }
+
+    [Fact]
+    public void A_file_without_seen_pages_reads_them_as_empty()
+    {
+        var read = PreferencesJson.Read("""{"version":1,"lastPage":"Context"}"""u8);
+
+        Assert.Equal("Context", read.LastPage);
+        Assert.Empty(read.SeenPages);
+    }
+
+    [Fact]
     public void The_file_is_camel_case_json_with_a_version()
     {
         var json = Encoding.UTF8.GetString(PreferencesJson.Write(UiPreferences.Defaults with { Window = new WindowBounds(1, 2, 1000, 700), SeenIds = ["a"] }));
@@ -63,8 +82,8 @@ public sealed class UiPreferencesTests
             PreferencesJson.Read("""{"version":1,"sheetWidth":520,"lastPage":"Work","textScale":1,"reduceMotion":false}"""u8));
 
     [Theory]
-    [InlineData(300, 200, 900, 600)]
-    [InlineData(899, 599, 900, 600)]
+    [InlineData(300, 200, 1000, 600)]
+    [InlineData(999, 599, 1000, 600)]
     [InlineData(1280, 800, 1280, 800)]
     public void The_window_grows_to_the_minimum(double width, double height, double clampedWidth, double clampedHeight) =>
         Assert.Equal(new WindowBounds(5, 6, clampedWidth, clampedHeight), (UiPreferences.Defaults with { Window = new WindowBounds(5, 6, width, height) }).Clamp().Window);

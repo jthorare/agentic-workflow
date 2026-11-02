@@ -60,13 +60,27 @@
 #                                  context.db through down, so the next draft's number depends on earlier runs); up and down
 #                                  approve whenever the profile is not approved
 #
-#   sindri-ui-fixture.sh context whole over|under|concepts
+#   sindri-ui-fixture.sh context whole over|under|concepts|pages
 #                                  the whole-map fixture (whole-map spec 8; run after 'context up'): over imports a generated map of 12
 #                                  features with 50 code nodes each (612 nodes, over the 500-node budget: the Context page opens by feature),
 #                                  under imports the tabs map again (10 nodes: the page draws every node). Each switch is a new map version
 #                                  and a repeat with the same map imports nothing; concepts imports a small authored map with two concepts
 #                                  (Self scheduling, Billing) over four features and a decision on Swaps, so the Context page opens on
-#                                  its concept band and a concept draws its Why, product and code
+#                                  its concept band and a concept draws its Why, product and code; pages is the concepts map plus the pages
+#                                  Accept all suggested (#1724) needs: under Self scheduling two suggested pages (Roster, Leave requests, each
+#                                  with one action that expresses the concept), and in no concept three more (Billing overview with an action,
+#                                  whose name matches the Billing concept; Settings with no action; and the Shifts screen the concepts map has)
+#
+#   sindri-ui-fixture.sh context sources
+#                                  the node panel's source links (#1702; run after 'context up'): gives the tabs repo a GitHub remote
+#                                  (origin https://github.com/acme/tabs.git, set again on a repeat), imports a small authored map
+#                                  (map-sources.json, with "commit" set to the tabs repo's HEAD) whose doc node, feature:staffing.schema,
+#                                  rests on repo:aw-split-panes/migrations/0001_staffing/migration.sql, and whose Linear ticket node,
+#                                  record:linear:issue/0e5a1b00-0000-4000-8000-000000000702 (team SPL), has a stored record (source_record,
+#                                  url https://linear.app/acme/issue/SPL-142/roll-out-staffing). It adds context.sources.linear.teams [SPL]
+#                                  to the live profile like 'projects' does. Prints three lines: the repo name, the doc node key and the
+#                                  ticket node key. The migration file is not added to the repo: the link is built from the path and the
+#                                  map's commit, never read from the tree
 #
 #   sindri-ui-fixture.sh context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume
 #                                  the Health page's Context map card (F1P-c, code index spec 6.4; run after 'context up'): puts the
@@ -79,6 +93,22 @@
 #                                  abcdef0 under <home>/code-index so the real outlook reads it, and a TimedOut published event)
 #                                  drop the hold and resume the service first; every other state removes the index file again;
 #                                  pause and resume only toggle the service
+#
+#   sindri-ui-fixture.sh projects  (run after 'context up')
+#                                  the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1): seeds six Linear projects into
+#                                  <home>/context/context.db (source_record, record_link; source 'linear-projects', audience linear:SPL, a
+#                                  'led-by' link each): Checkout rewrite (in progress, at risk) and Search relevance v2 (planned), both led
+#                                  by the viewer, Onboarding revamp (completed 3 days ago, led by the viewer: the Finished fold), Billing
+#                                  migration (paused, Dana Okafor), Mobile offline sync and Platform API v3 (in progress, Lee Tran and Mira
+#                                  Costa); open and closed Linear issues with 'in-project' links (the cards' open counts); the viewer's
+#                                  'source_identity' row (Sam Rivera: "Linear says you're Sam Rivera"); and both Linear sources' cursor rows
+#                                  (phase incremental), so the page is past its first read and not counting. It adds
+#                                  context.sources.linear.teams [SPL] to the live profile (a human reads only the profile's teams) and
+#                                  approves that. Then, as the owner: attaches Billing migration, adds a hand-made project (Hiring loop) and
+#                                  hides Search relevance v2 (a project the viewer leads: Hide acts only on a project on the page), each once (the markers <home>/ui-fixture-projects-owner-attach|add|hide; the store rows are rewritten
+#                                  every run, so a repeat adds no row and no project). The store is read when the page asks, so no rebuild is
+#                                  needed; the owner's writes are ledger events and refresh the view. Exit 2 without a context store (run
+#                                  'context up' first) or when the profile already has a context: section without the SPL team.
 #
 #   sindri-ui-fixture.sh sessions up|ask <pid>|end <pid>|back <pid>|disable|enable|down
 #                                  the Agents page's data (U11a; run after 'up', and run 'sessions up' right after every 'up': a
@@ -119,6 +149,15 @@
 #                                  writes the same rows (INSERT OR IGNORE). The item and the instance must exist (see 'workflows'): the
 #                                  frame opens the instance and reads its picks by address. Needs jq and sqlite3 or python3.
 #
+#   sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none
+#                                  a job with model calls for the Jobs page and the job sheet (context model routing spec 8.2, #1567),
+#                                  written as ledger rows the jobs view folds (job.started, job.progress, context.model.called and,
+#                                  for paused, job.waiting with signal model-limit): fell-back is a running job with six calls (a
+#                                  limited harness, a skipped one, a failed one, a Jev label pick, a product-surface pick and a pick
+#                                  that was not asked: one call fell back to Codex); no-answer is three calls no harness answered;
+#                                  paused is a job parked on model-limit with its progress line, so its row shows Resume; none is a
+#                                  running job that made no call. Each state is its own job (fixed ids, INSERT OR IGNORE, a rerun adds
+#                                  nothing); prints the job id. Needs jq and sqlite3 or python3.
 #   sindri-ui-fixture.sh model-picks-run picked|escalated|unpriced|picking
 #                                  one workflow instance whose Model picks table (the instance frame; model-pick spec section 6.1,
 #                                  issue #1452) shows that state, made by a real agent run with the pick on (run after 'sessions up'; each
@@ -138,6 +177,28 @@
 #                                  stdout; waits (FIXTURE_AGENT_WAIT s, default 120) for the rows the state needs in the ledger
 #                                  (model.picking for picking; model.picked and session.usage, twice for the retry, for the others).
 #                                  Exit 1 when they do not come in time; needs jq and git.
+#
+#   sindri-ui-fixture.sh sandbox blocked|clear
+#   sindri-ui-fixture.sh sandbox denials|denials-many|waiting|limit-memory|limit-wall|learning|takeover|attended <ITM-id> <instance-address>
+#                                  the sandbox surfaces' states (sandbox spec section 8, States; goldens tests/Aw.Sindri.Tests/Golden/Sandbox/).
+#                                  blocked and clear need a live answer from the control plane (/sindri/sandbox/status and /check), which
+#                                  ledger rows can't fake, so they restart serve (as 'sessions up' does) with AW_SANDBOX_BWRAP=/nonexistent
+#                                  (blocked: no bubblewrap, the Health row, the Settings section and the park card show the first blocker) or
+#                                  with it unset (clear: needs a working bwrap, nothing blocks). The setting is remembered in
+#                                  <home>/ui-fixture-sandbox/bwrap, so every later restart keeps it. blocked then starts the agent-run
+#                                  recipe and waits (FIXTURE_AGENT_WAIT s) for its launch.failed: that Step is parked on SND-LAUNCH-014 no-bwrap;
+#                                  run blocked twice for two parked Steps, then clear for the resume list (one Step may be closed first, so the
+#                                  list shows "has moved on"). Run after 'sessions up'; needs jq and git.
+#                                  The other states are ledger rows on a launch of an existing item (see 'workflows'), the same way
+#                                  model-picks writes them (fixed ids, INSERT OR IGNORE, a rerun adds nothing): every one starts with the
+#                                  launch.started row of events/launch-started-sandbox.json (all but waiting). denials: sandbox.denied x10 for github.com
+#                                  (some) and one blocked path; denials-many: the overflow row too (top 5 of n, with a fix of every kind);
+#                                  waiting: launch.waiting for a full session cap (3 of 3, SND-LAUNCH-020) and no launch.started, which
+#                                  would end the wait; limit-memory and limit-wall: sandbox.limit-hit and
+#                                  session.ended with reason limit (12GiB, 40m); learning: launch.started with networkMode learn;
+#                                  takeover: launch.takeover-opened on the sandboxed run; attended: a launch.started in open mode with
+#                                  no instance. The Agents sheet line needs the session row to carry the sandbox summary, which the
+#                                  control plane serves from the launch's plan file, not from these rows.
 #
 # FIXTURE_REPO names the items' repo (default: none, so the API's default applies).
 # FIXTURE_DESK_TIMEOUT (up only): writes workflow.deskTimeout into the fixture profile, the floor of every desk Step timeout (park-timeout).
@@ -599,7 +660,7 @@ context_whole() {
   [ -d "$dir/$CONTEXT_REPO/.git" ] || die "context whole: run 'context up' first"
   case "$1" in
     under) map="$dir/tabs-map.json"; cp "$ROOT/tests/Aw.Context.Testing/Fixtures/map-tabs.json" "$map" || die "context whole: can't copy the tabs map" ;;
-    concepts)
+    concepts | pages)
       map="$dir/concepts-map.json"
       # A decision's node is implied by its row: its key is 'decision:' and the sha256 of the record, a newline and the quote (DecisionRow.KeyFor).
       # A concept opens only its own members, so the decision belongs to Self scheduling as well as deciding Swaps (ConceptScope).
@@ -620,7 +681,20 @@ context_whole() {
           {from: "code:src/invoices.ts", to: "feature:invoices", type: "implements", provenance: "deterministic"},
           {from: "feature:invoices", to: "feature:shifts", type: "depends-on"}, {from: "feature:swaps", to: "feature:invoices", type: "depends-on"},
           {from: "surface:screen/shifts", to: "feature:shifts", type: "part-of"}, {from: "action:pick", to: "surface:screen/shifts", type: "on"},
-          {from: $dkey, to: "concept:scheduling", type: "belongs-to"}, {from: $dkey, to: "feature:swaps", type: "decides"}]}' > "$map" || die "context whole: can't write the concepts map" ;;
+          {from: $dkey, to: "concept:scheduling", type: "belongs-to"}, {from: $dkey, to: "feature:swaps", type: "decides"}]}' > "$map" || die "context whole: can't write the concepts map"
+      if [ "$1" = pages ]; then
+        # Pages for Accept all suggested: an action that expresses a concept puts its page under it; a page no action expresses a concept for sits in no concept.
+        jq '.nodes += [
+              {key: "surface:screen/roster", label: "Roster"}, {key: "action:view-roster", label: "View roster"},
+              {key: "surface:screen/leave", label: "Leave requests"}, {key: "action:request-leave", label: "Request leave"},
+              {key: "surface:screen/billing-overview", label: "Billing overview"}, {key: "action:pay-invoice", label: "Pay invoice"},
+              {key: "surface:screen/settings", label: "Settings"}]
+            | .edges += [
+              {from: "action:view-roster", to: "surface:screen/roster", type: "on"}, {from: "action:view-roster", to: "concept:scheduling", type: "expresses"},
+              {from: "action:request-leave", to: "surface:screen/leave", type: "on"}, {from: "action:request-leave", to: "concept:scheduling", type: "expresses"},
+              {from: "action:pay-invoice", to: "surface:screen/billing-overview", type: "on"}]' "$map" > "$map.pages" \
+          && mv "$map.pages" "$map" || die "context whole: can't add the pages to the concepts map"
+      fi ;;
     over)
       map="$dir/over-map.json"
       jq -n --arg repo "$CONTEXT_REPO" '{schemaVersion: 1, kind: "authored", repo: $repo,
@@ -766,7 +840,155 @@ context_publish() {
 }
 
 context() {
-  case "$1" in up) context_up ;; draft) context_draft ;; down) context_down ;; publish) context_publish "$2" ;; whole) context_whole "$2" ;; esac
+  case "$1" in up) context_up ;; draft) context_draft ;; down) context_down ;; publish) context_publish "$2" ;; whole) context_whole "$2" ;; sources) context_sources ;; esac
+}
+
+# --- projects: the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1) ---
+PROJECTS_TEAM="SPL"
+PROJECTS_AUDIENCE="linear:$PROJECTS_TEAM"
+PROJECTS_VIEWER="fx-viewer"
+PROJECTS_VIEWER_NAME="Sam Rivera"
+projects_marker() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-projects-owner"; }
+
+# A SQL expression for a store timestamp ('2026-10-29T12:00:00.0000000Z', seven fractional digits) at now plus the modifier ($1: '-2 hours').
+projects_ts() { printf "(strftime('%%Y-%%m-%%dT%%H:%%M:%%S', 'now', '%s') || '.0000000Z')" "$1"; }
+
+# A date $1 days from now (YYYY-MM-DD), GNU or BSD date.
+projects_day() { date -u -d "+$1 days" +%F 2>/dev/null || date -u -v+"$1"d +%F; }
+
+# A human reads only the profile's Linear teams (ProfileAudiencePolicy), so the team goes into the live profile (a context: block after user:).
+projects_profile() {
+  local profile
+  profile="$(profile_path)"
+  [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
+  if ! grep -q "teams: \[$PROJECTS_TEAM\]" "$profile"; then
+    ! grep -q '^context:' "$profile" || die "projects: the profile already has a context: section; add 'sources: { linear: { teams: [$PROJECTS_TEAM] } }' to it by hand"
+    awk -v e="context:\n  sources:\n    linear: { teams: [$PROJECTS_TEAM] }" '{print} /^user:/ {print e}' "$profile" > "$profile.new" && mv "$profile.new" "$profile" \
+      || die "projects: can't add the Linear team to $profile"
+  fi
+  # Approve whenever the profile isn't approved (a failed approve is retried here).
+  if needs_approval; then approve >&2 || return; fi
+}
+
+# One stored project and its 'led-by' link, appended to $projects_sql. $1 id, $2 name, $3 state, $4 state_raw, $5 health or '', $6 due in days or '',
+# $7 lead id, $8 lead name, $9 updated ago ('-2 hours'), $10 closed ago or '', $11 description.
+projects_row() {
+  local key="linear:project/fx-$1" health="NULL" due="NULL" closed="NULL"
+  [ -z "$5" ] || health="'$5'"
+  [ -z "$6" ] || due="'$(projects_day "$6")'"
+  [ -z "${10}" ] || closed="$(projects_ts "${10}")"
+  projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description)
+      VALUES ('$key', 'linear-projects', 'project', NULL, '$PROJECTS_AUDIENCE', '$2', 'https://linear.app/fixture/project/fx-$1', '$8', '$3', '$4', $(projects_ts '-60 days'), $(projects_ts "$9"), $closed, 'fixture', 'fixture-$1', 'fixture', 0, NULL, $(projects_ts '+0 seconds'), $health, $due, '${11}');
+    INSERT INTO record_link (from_key, to_ref, to_key, kind, title) VALUES ('$key', 'linear:user/$7', NULL, 'led-by', '$8');
+"
+}
+
+# $1 project id, $2 project name, $3 open issues, $4 closed issues: stored issues with an 'in-project' link (the cards' open counts).
+projects_issues() {
+  local n key project="linear:project/fx-$1"
+  for ((n = 1; n <= $3 + $4; n++)); do
+    key="linear:issue/fx-$1-$n"
+    if [ "$n" -le "$3" ]; then
+      projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+          VALUES ('$key', 'linear', 'issue', NULL, '$PROJECTS_AUDIENCE', '$2 task $n', 'https://linear.app/fixture/issue/$PROJECTS_TEAM-$1-$n', '$PROJECTS_VIEWER_NAME', 'open', 'In Progress', $(projects_ts '-40 days'), $(projects_ts "-$((n * 7)) hours"), NULL, 'fixture', 'fixture-$1-$n', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+"
+    else
+      projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+          VALUES ('$key', 'linear', 'issue', NULL, '$PROJECTS_AUDIENCE', '$2 task $n', 'https://linear.app/fixture/issue/$PROJECTS_TEAM-$1-$n', '$PROJECTS_VIEWER_NAME', 'done', 'Done', $(projects_ts '-40 days'), $(projects_ts "-$((n * 2)) days"), $(projects_ts "-$((n * 2)) days"), 'fixture', 'fixture-$1-$n', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+"
+    fi
+    projects_sql+="INSERT INTO record_link (from_key, to_ref, to_key, kind, title) VALUES ('$key', '$project', '$project', 'in-project', '$2');
+"
+  done
+}
+
+projects() {
+  need_sql
+  local db marker target
+  db="$(context_db)"
+  [ -f "$db" ] || die "no context store at $db: run 'context up' first"
+  sql_on "$db" "SELECT 1 FROM source_identity LIMIT 1" >/dev/null 2>&1 || die "the context store at $db has no source_identity table (migration 0020): rebuild sindri and run 'context up' first"
+  projects_profile || return
+
+  local projects_sql="DELETE FROM record_link WHERE from_key LIKE 'linear:project/fx-%' OR from_key LIKE 'linear:issue/fx-%';
+DELETE FROM source_record WHERE key LIKE 'linear:project/fx-%' OR key LIKE 'linear:issue/fx-%';
+"
+  projects_row checkout    'Checkout rewrite'      open started   atRisk  16  "$PROJECTS_VIEWER" "$PROJECTS_VIEWER_NAME" '-2 hours'  ''        'Rebuild the checkout flow on the new payments API.'
+  projects_row search      'Search relevance v2'   open planned   ''      45  "$PROJECTS_VIEWER" "$PROJECTS_VIEWER_NAME" '-1 days'   ''        'Rank results by what people open, not by title match.'
+  projects_row onboarding  'Onboarding revamp'     done completed onTrack ''  "$PROJECTS_VIEWER" "$PROJECTS_VIEWER_NAME" '-3 days'   '-3 days' 'A shorter first-run flow for new workspaces.'
+  projects_row billing     'Billing migration'     open paused    ''      30  fx-dana Dana\ Okafor                       '-5 days'   ''        'Move invoices to the new billing provider.'
+  projects_row mobile      'Mobile offline sync'   open started   onTrack 21  fx-lee   Lee\ Tran                          '-6 hours'  ''        'Let the mobile app queue edits while offline.'
+  projects_row platform    'Platform API v3'       open started   atRisk  38  fx-mira  Mira\ Costa                        '-2 days'   ''        'The v3 public API and its SDKs.'
+  projects_issues checkout   'Checkout rewrite'    5 1
+  projects_issues search     'Search relevance v2' 3 0
+  projects_issues onboarding 'Onboarding revamp'   0 2
+  projects_issues billing    'Billing migration'   2 1
+  projects_issues mobile     'Mobile offline sync' 3 0
+  projects_issues platform   'Platform API v3'     2 2
+  projects_sql+="INSERT OR REPLACE INTO source_identity (source, user_ref, name, read_at) VALUES ('linear', 'linear:user/$PROJECTS_VIEWER', '$PROJECTS_VIEWER_NAME', $(projects_ts '+0 seconds'));
+INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase) VALUES
+  ('linear-projects', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental'),
+  ('linear', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental');
+UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;
+"
+  sql_on "$db" "$projects_sql" >/dev/null || die "projects: can't write the Linear rows to $db"
+
+  # The owner's writes, each once (one marker each, so a run that stopped half way resumes): attach a Linear project, add a hand-made one,
+  # hide one the viewer leads (Hide acts only on a project that is on the page: led, or attached).
+  marker="$(projects_marker)"
+  if [ ! -f "$marker-attach" ]; then
+    "$PROVE" human project add --linear "linear:project/fx-billing" >&2 || return
+    : > "$marker-attach"
+  fi
+  if [ ! -f "$marker-add" ]; then
+    target="$(projects_day 14)"
+    "$PROVE" human project add --name "Hiring loop" --state in-progress --notes "Two onsite slots left this month" --target "$target" >&2 || return
+    : > "$marker-add"
+  fi
+  if [ ! -f "$marker-hide" ]; then
+    if ! "$PROVE" human project hide "linear:project/fx-search" >&2; then
+      echo "projects: hide was refused; this is what the page sees (sindri projects --json):" >&2
+      "$PROVE" human projects --json >&2 || true
+      die "projects: can't hide linear:project/fx-search"
+    fi
+    : > "$marker-hide"
+  fi
+}
+
+# --- context sources: the node panel's source links (#1702) ---
+SOURCES_ORIGIN="https://github.com/acme/tabs.git"
+SOURCES_DOC_NODE="feature:staffing.schema"
+SOURCES_TICKET_UUID="0e5a1b00-0000-4000-8000-000000000702"
+SOURCES_TICKET_NODE="record:linear:issue/$SOURCES_TICKET_UUID"
+SOURCES_TICKET_URL="https://linear.app/acme/issue/SPL-142/roll-out-staffing"
+
+context_sources() {
+  need jq
+  need_sql
+  local dir repo db commit map
+  dir="$(context_dir)"
+  repo="$dir/$CONTEXT_REPO"
+  [ -d "$repo/.git" ] || die "context sources: run 'context up' first"
+  db="$(context_db)"
+  [ -f "$db" ] || die "no context store at $db: run 'context up' first"
+  projects_profile || return
+  local g=(env -u GIT_DIR -u GIT_WORK_TREE -u GIT_INDEX_FILE -u GIT_COMMON_DIR GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1 git -C "$repo")
+  if "${g[@]}" remote get-url origin >/dev/null 2>&1; then
+    "${g[@]}" remote set-url origin "$SOURCES_ORIGIN" || die "context sources: can't set the origin of $repo"
+  else
+    "${g[@]}" remote add origin "$SOURCES_ORIGIN" || die "context sources: can't add the origin to $repo"
+  fi
+  commit="$("${g[@]}" rev-parse HEAD)" || die "context sources: can't read the HEAD of $repo"
+  map="$dir/sources-map.json"
+  jq --arg commit "$commit" '. + {commit: $commit}' "$ROOT/tests/Aw.Context.Testing/Fixtures/map-sources.json" > "$map" || die "context sources: can't write the sources map"
+  context_import "$map" || return
+  sql_on "$db" "INSERT OR REPLACE INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+      VALUES ('linear:issue/$SOURCES_TICKET_UUID', 'linear', 'issue', NULL, 'linear:$PROJECTS_TEAM', 'Roll out staffing', '$SOURCES_TICKET_URL', '$PROJECTS_VIEWER_NAME', 'open', 'In Progress', $(projects_ts '-10 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-sources-1', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+    UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1;" >/dev/null || die "context sources: can't write the ticket record to $db"
+  # A map built over the import (a refresh under the approved profile) has no $SOURCES_DOC_NODE: fail here, not later as a panel error.
+  local shown
+  shown="$("$PROVE" human context show "$SOURCES_DOC_NODE" 2>&1)" || die "context sources: the imported map was replaced, $SOURCES_DOC_NODE is gone: $shown"
+  printf '%s\n%s\n%s\n' "$CONTEXT_REPO" "$SOURCES_DOC_NODE" "$SOURCES_TICKET_NODE"
 }
 
 SESSIONS_DIRNAME="ui-fixture-sessions"
@@ -779,6 +1001,8 @@ sessions_export() {
   export AW_SESSIONS_PROC_ROOT="$d/proc" AW_SESSIONS_CLAUDE_DIR="$d/claude-sessions" AW_FLEET_DIR="$d/fleet" AW_LAUNCHER_CONFIG="$d/launcher.json"
   # agent-run's launches mark their worktree trusted in Claude Code's config: keep that file inside the home.
   if [ -d "$(agent_dir)/claude-config" ]; then export CLAUDE_CONFIG_DIR="$(agent_dir)/claude-config"; fi
+  # 'sandbox blocked|clear' keeps AW_SANDBOX_BWRAP across restarts.
+  if [ -s "$(sandbox_dir)/bwrap" ]; then export AW_SANDBOX_BWRAP="$(cat "$(sandbox_dir)/bwrap")"; else unset AW_SANDBOX_BWRAP; fi
   # model-picks-run's judge stub stays the judge of every later restart (the real judge would call a model provider).
   if [ -x "$(agent_dir)/stub-judge/judge" ]; then export AW_SINDRI_JUDGE="$(agent_dir)/stub-judge/judge"; fi
 }
@@ -947,13 +1171,13 @@ agent_run() {
   [[ "$wait" =~ ^[0-9]+$ ]] || die "agent-run: FIXTURE_AGENT_WAIT '$wait' is not a number of seconds"
   local deadline=$((SECONDS + wait))
   while [ "$SECONDS" -lt "$deadline" ]; do
-    if "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | grep -q 'launch.started'; then
+    if "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | grep -q "${FIXTURE_AGENT_WANT:-launch.started}"; then
       printf '%s\n' "$item"
       return 0
     fi
     sleep 1
   done
-  echo "sindri-ui-fixture: agent-run: no launch.started for $item in $wait s; the ledger says:" >&2
+  echo "sindri-ui-fixture: agent-run: no ${FIXTURE_AGENT_WANT:-launch.started} for $item in $wait s; the ledger says:" >&2
   "$PROVE" human ledger --item "$item" --max 1000 2>&1 | tr -d '\r' | tail -15 >&2
   return 1
 }
@@ -1011,6 +1235,61 @@ model_picks() { # $1 state, $2 item, $3 instance
       pick_event "escalated-usage:$l2" session.usage "$(pick_usage "$l2" claude-sonnet-4-5 24000 7000)" ;;
   esac
   printf '%s\n' "$instance"
+}
+
+# --- model-calls: a job's model calls on the Jobs page and the job sheet (context model routing spec 8.2, #1567 R-4) ---
+
+# $1 key, $2 type, $3 payload JSON. A fixed id and idempotency key, so a rerun adds nothing (see pick_event).
+calls_event() {
+  local key="sindri-ui-fixture:model-calls:$1" id corr
+  id="$(printf '%s' "$key" | cksum | awk '{printf "5c0f1e02-%04x-4d1e-9a55-3c2f6d8e1b05", $1 % 65536}')"
+  corr="${id%?}6"
+  ledger "INSERT OR IGNORE INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, correlation_id, epoch, idempotency_key, payload_json)
+          VALUES ('$id', '$2', 1, strftime('%Y-%m-%dT%H:%M:%S', 'now') || '.0000000Z', 'sindri-ui-fixture', 'local', 0, '$corr',
+                  COALESCE((SELECT MAX(epoch) FROM events), 0), '$key', '$3');" >/dev/null
+}
+
+# $1 job, $2 call number, $3 seconds ago, $4 purpose, $5 kind, $6 tries JSON, $7 answeredBy JSON (or null), $8 input tokens, $9 output tokens, $10 items (or null), $11 how JSON (or null)
+calls_call() {
+  local at
+  at="$(ledger "SELECT strftime('%Y-%m-%dT%H:%M:%S', 'now', '-$3 seconds') || '.0000000Z';")"
+  calls_event "call:$1:$2" context.model.called "$(jq -cn --arg j "$1" --arg c "fixture-call-$2" --arg at "$at" --arg p "$4" --arg k "$5" --argjson tries "$6" --argjson by "$7" \
+    --argjson i "$8" --argjson o "$9" --argjson items "${10}" --argjson how "${11}" \
+    '{callId: $c, job: $j, purpose: $p, kind: $k, tries: $tries, answeredBy: $by, inputTokens: $i, outputTokens: $o, tokenBasis: "reported", items: $items, how: $how, startedAt: $at, ms: 2000}')"
+}
+
+# $1 harness, $2 model, $3 outcome, $4 reason (or null), $5 ms
+calls_try() { jq -cn --arg h "$1" --arg m "$2" --arg o "$3" --arg r "$4" --argjson ms "$5" '{harness: $h, model: $m, outcome: $o, reason: (if $r == "null" then null else $r end), ms: $ms, source: "builtin"}'; }
+
+model_calls() { # $1 state
+  need jq
+  need_sql
+  local state="$1" n job cmd haiku luna sonnet gpt jev
+  case "$state" in fell-back) n=1 ;; no-answer) n=2 ;; paused) n=3 ;; none) n=4 ;; esac
+  job="$(printf 'JOB-%032x' "$((0x5c0f1e20 + n))")"
+  cmd="5c0f1e02-0000-4d1e-9a55-3c2f6d8e1b0$n"
+  calls_event "started:$job" job.started "$(jq -cn --arg c "$cmd" --arg j "$job" --arg k "map-$state" '{commandId: $c, job: $j, kind: "BuildContextMap", key: $k, item: null, repo: null, service: null}')"
+  calls_event "progress:$job" job.progress "$(jq -cn --arg c "$cmd" --arg j "$job" '{commandId: $c, job: $j, round: 1, line: "labeling the map"}')"
+  haiku="$(calls_try claude-code haiku failed exit-1 400)"
+  luna="$(calls_try codex gpt-6-luna answered null 1200)"
+  case "$state" in
+    fell-back)
+      calls_call "$job" 1 300 labeling labeling "[$(calls_try claude-code haiku limit limit 300), $luna]" '{"harness":"codex","model":"gpt-6-luna"}' 3000 1100 null null
+      calls_call "$job" 2 240 labeling labeling "[$(calls_try claude-code haiku skipped limited 0), $luna]" '{"harness":"codex","model":"gpt-6-luna"}' 2800 1000 null null
+      calls_call "$job" 3 180 concept-scan conceptNaming "[$haiku, $luna]" '{"harness":"codex","model":"gpt-6-luna"}' 2100 700 null null
+      jev="$(calls_try jev jev-1.13.0 answered null 800)"
+      calls_call "$job" 4 120 labeling labeling "[$jev]" '{"harness":"jev","model":"jev-1.13.0"}' 0 0 100 '{"jev":94,"firstCandidate":5,"fileName":1}'
+      calls_call "$job" 5 60 product-surfaces productSurfaces "[$jev]" '{"harness":"jev","model":"jev-1.13.0"}' 0 0 80 '{"merged":12,"kept":58,"rejected":6,"undecided":4}'
+      calls_call "$job" 6 30 labeling labeling "[$(calls_try jev jev-1.13.0 not-asked no-key 0)]" null 0 0 null null ;;
+    no-answer)
+      for i in 1 2 3; do calls_call "$job" "$i" "$((200 - i * 50))" labeling labeling "[$haiku]" null 0 0 null null; done ;;
+    paused)
+      calls_call "$job" 1 120 labeling labeling "[$luna]" '{"harness":"codex","model":"gpt-6-luna"}' 1900 600 null null
+      calls_event "progress-paused:$job" job.progress "$(jq -cn --arg c "$cmd" --arg j "$job" '{commandId: $c, job: $j, round: 2, line: "Paused: claude-code at its usage limit; codex at its usage limit. Resume when one is back."}')"
+      calls_event "waiting:$job" job.waiting "$(jq -cn --arg c "$cmd" --arg j "$job" '{commandId: $c, job: $j, signal: "model-limit"}')" ;;
+    none) : ;;
+  esac
+  printf '%s\n' "$job"
 }
 
 # --- model-picks-run: the Model picks table's states from a real agent run with the pick on (issue #1452) ---
@@ -1123,6 +1402,83 @@ model_picks_run() { # $1 state
   return 1
 }
 
+# --- sandbox: the sandbox surfaces' states (sandbox spec section 8; issue #1113 SB-6) ---
+
+sandbox_dir() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-sandbox"; }
+
+# $1 key, $2 type, $3 payload JSON. A fixed id and idempotency key, so a rerun adds nothing (see pick_event).
+sandbox_event() {
+  local key="sindri-ui-fixture:sandbox:$1" id corr
+  id="$(printf '%s' "$key" | cksum | awk '{printf "5b0f1e01-%04x-4d1e-9a55-3c2f6d8e1b05", $1 % 65536}')"
+  corr="${id%?}6"
+  ledger "INSERT OR IGNORE INTO events (id, type, schema_version, occurred_at, actor, tenant, ring, correlation_id, epoch, idempotency_key, payload_json)
+          VALUES ('$id', '$2', 1, strftime('%Y-%m-%dT%H:%M:%S', 'now') || '.0000000Z', 'sindri-ui-fixture', 'local', 0, '$corr',
+                  COALESCE((SELECT MAX(epoch) FROM events), 0), '$key', '$3');" >/dev/null
+}
+
+# $1 state, $2 item, $3 instance: launch.started with the golden's sandbox summary, on a fixed launch id per state.
+sandbox_started() {
+  local golden="$ROOT/tests/Aw.Sindri.Tests/Golden/Sandbox/events/launch-started-sandbox.json" mode=enforce attended=false
+  case "$1" in learning) mode=learn ;; attended) attended=true ;; esac
+  sandbox_event "started:$1" launch.started "$(jq -c --arg l "$(sandbox_launch "$1")" --arg i "$2" --arg a "$3" --arg m "$mode" --argjson at "$attended" '
+    .launchId = $l | .item = $i | .sandbox.networkMode = $m
+    | if $at then .mode = "open" | .instance = null | .state = null | .attempt = null
+      else .mode = "step" | .instance = $a | .state = "build" | .attempt = 1 end' "$golden")"
+}
+
+# $1 state; prints the launch id (LCH- and 32 hex digits), one per state so reruns and states never collide.
+sandbox_launch() { printf 'LCH-%032x\n' "$((0x5b0f1e00 + $(printf '%s' "$1" | cksum | awk '{print $1 % 4096}')))"; }
+
+# $1 state, $2 file of events/, $3 key: a golden event payload with the launch id of the state.
+sandbox_golden() { jq -c --arg l "$(sandbox_launch "$1")" '.launchId = $l' "$ROOT/tests/Aw.Sindri.Tests/Golden/Sandbox/events/$2"; }
+
+sandbox_bwrap() { # $1 the AW_SANDBOX_BWRAP value, or empty for unset
+  mkdir -p "$(sandbox_dir)" && printf '%s' "$1" > "$(sandbox_dir)/bwrap" || die "sandbox: can't write $(sandbox_dir)/bwrap"
+  sessions_need_copy
+  unset TMUX
+  sessions_restart >&2
+}
+
+sandbox() { # $1 state, $2 item, $3 instance
+  need jq
+  local state="$1" item="${2:-}" instance="${3:-}" l
+  case "$state" in
+    blocked)
+      sandbox_bwrap /nonexistent || return
+      FIXTURE_AGENT_WANT=launch.failed agent_run; return ;;
+    clear)
+      sandbox_bwrap ""; return ;;
+    *)
+      need_sql
+      l="$(sandbox_launch "$state")"
+      [ "$state" = waiting ] || sandbox_started "$state" "$item" "$instance"
+      case "$state" in
+        denials)
+          sandbox_event "denied:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json)"
+          sandbox_event "denied-path:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.config/gh" | .rule = "not-bound" | .count = 3')" ;;
+        denials-many)
+          sandbox_event "denied:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json)"
+          sandbox_event "denied-path:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.config/gh" | .rule = "not-bound" | .count = 3')"
+          sandbox_event "denied-never:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "path" | .target = "/home/thor/.ssh" | .rule = "deny-list" | .count = 2')"
+          sandbox_event "denied-tool:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied.json | jq -c '.kind = "policy" | .target = "git push" | .rule = "inner-policy" | .count = 4')"
+          sandbox_event "denied-overflow:$state" sandbox.denied "$(sandbox_golden "$state" sandbox-denied-overflow.json)" ;;
+        waiting)
+          # the engine launch found the session cap full (SND-LAUNCH-020): no launch.started, since it ends the wait.
+          sandbox_event "waiting:$state" launch.waiting "$(jq -cn --arg l "$l" --arg i "$item" --arg a "$instance" '{launchId: $l, item: $i, running: 3, cap: 3, instance: $a, state: "build", attempt: 1}')" ;;
+        limit-memory)
+          sandbox_event "limit-hit:$state" sandbox.limit-hit "$(sandbox_golden "$state" sandbox-limit-hit.json | jq -c '.kind = "memory"')"
+          sandbox_event "ended:$state" session.ended "$(sandbox_golden "$state" session-ended-limit.json)" ;;
+        limit-wall)
+          sandbox_event "limit-hit:$state" sandbox.limit-hit "$(sandbox_golden "$state" sandbox-limit-hit.json | jq -c '.kind = "wall"')"
+          sandbox_event "ended:$state" session.ended "$(sandbox_golden "$state" session-ended-limit.json | jq -c '.kind = "wall" | .limit = 2400 | .peaks.wallSeconds = 2400')" ;;
+        takeover)
+          sandbox_event "takeover:$state" launch.takeover-opened "$(jq -cn --arg l "$l" --arg i "$item" --arg a "$instance" '{launchId: $l, item: $i, instance: $a, viewer: {kind: "warp", label: "Warp", outcome: "opened", code: null, detail: null}}')" ;;
+        learning | attended) : ;;
+      esac ;;
+  esac
+  printf '%s\n' "$instance"
+}
+
 verb="${1:-}"
 case "$verb" in
   -h | --help) usage; exit 0 ;;
@@ -1133,17 +1489,18 @@ case "$verb" in
   close) [ "$#" -eq 2 ] || { [ "$#" -eq 3 ] && [ "$3" = "--cancelled" ]; } || die "usage: close <item> [--cancelled]" ;;
   workflows) [ "$#" -eq 1 ] || { [ "$#" -eq 2 ] && [ "$2" = "--large" ]; } || die "usage: workflows [--large]" ;;
   line-run) [ "$#" -eq 1 ] || die "'line-run' takes no arguments" ;;
+  projects) [ "$#" -eq 1 ] || die "'projects' takes no arguments" ;;
   park-timeout | changed-recipe) [ "$#" -eq 1 ] || die "'$verb' takes no arguments" ;;
   incident) { [ "$#" -eq 2 ] && { [ "$2" = start ] || [ "$2" = stop ]; }; } || die "usage: incident start|stop" ;;
   request) [ "$#" -ge 2 ] || die "usage: request [--item ID] [--repo R] <text>" ;;
   context)
     case "${2:-}" in
-      up | draft | down) [ "$#" -eq 2 ] || die "usage: context up|draft|down|publish <state>" ;;
+      up | draft | down | sources) [ "$#" -eq 2 ] || die "usage: context up|draft|down|sources|publish <state>" ;;
       publish)
         [ "$#" -eq 3 ] || die "usage: context publish held|overdue|published|without-waiting|stale|by-hand|pause|resume"
         case "$3" in held | overdue | published | without-waiting | stale | by-hand | pause | resume) ;; *) die "context publish: '$3' is not a state (held, overdue, published, without-waiting, stale, by-hand, pause, resume)" ;; esac ;;
-      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ] || [ "$3" = concepts ]; }; } || die "usage: context whole over|under|concepts" ;;
-      *) die "usage: context up|draft|down|publish <state>|whole over|under|concepts" ;;
+      whole) { [ "$#" -eq 3 ] && { [ "$3" = over ] || [ "$3" = under ] || [ "$3" = concepts ] || [ "$3" = pages ]; }; } || die "usage: context whole over|under|concepts|pages" ;;
+      *) die "usage: context up|draft|down|sources|publish <state>|whole over|under|concepts|pages" ;;
     esac ;;
   sessions)
     case "${2:-}" in
@@ -1153,6 +1510,9 @@ case "$verb" in
     esac ;;
   hide-item) { [ "$#" -eq 2 ] && case "$2" in ITM-*[!0-9a-f]* | ITM-) false ;; ITM-*) true ;; *) false ;; esac; } || die "usage: hide-item <ITM-id>" ;;
   agent-run) [ "$#" -eq 1 ] || die "'agent-run' takes no arguments" ;;
+  model-calls)
+    [ "$#" -eq 2 ] || die "usage: model-calls fell-back|no-answer|paused|none"
+    case "$2" in fell-back | no-answer | paused | none) ;; *) die "model-calls: '$2' is not a state (fell-back, no-answer, paused, none)" ;; esac ;;
   model-picks-run)
     [ "$#" -eq 2 ] || die "usage: model-picks-run picked|escalated|unpriced|picking"
     case "$2" in picked | escalated | unpriced | picking) ;; *) die "model-picks-run: '$2' is not a state (picked, escalated, unpriced, picking)" ;; esac ;;
@@ -1161,6 +1521,15 @@ case "$verb" in
     case "$2" in picked | escalated | unpriced | picking) ;; *) die "model-picks: '$2' is not a state (picked, escalated, unpriced, picking)" ;; esac
     case "$3" in ITM-*[!0-9a-f]* | ITM-) die "model-picks: '$3' is not an item id" ;; ITM-*) ;; *) die "model-picks: '$3' is not an item id" ;; esac
     [ -n "$4" ] || die "model-picks: the instance address is empty" ;;
+  sandbox)
+    case "${2:-}" in
+      blocked | clear) [ "$#" -eq 2 ] || die "usage: sandbox blocked|clear" ;;
+      denials | denials-many | waiting | limit-memory | limit-wall | learning | takeover | attended)
+        [ "$#" -eq 4 ] || die "usage: sandbox $2 <ITM-id> <instance-address>"
+        case "$3" in ITM-*[!0-9a-f]* | ITM-) die "sandbox: '$3' is not an item id" ;; ITM-*) ;; *) die "sandbox: '$3' is not an item id" ;; esac
+        [ -n "$4" ] || die "sandbox: the instance address is empty" ;;
+      *) die "usage: sandbox blocked|clear | sandbox denials|denials-many|waiting|limit-memory|limit-wall|learning|takeover|attended <ITM-id> <instance-address>" ;;
+    esac ;;
   decide) [ "$#" -eq 3 ] || die "usage: decide <DEC-id> <choice>" ;;
   *) usage >&2; die "unknown verb: $verb" ;;
 esac

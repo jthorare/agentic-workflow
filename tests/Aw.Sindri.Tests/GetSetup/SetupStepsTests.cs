@@ -1,5 +1,5 @@
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Testing;
 
 namespace Aw.Sindri.Tests.GetSetup;
 
@@ -120,23 +120,56 @@ public sealed class SetupStepsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Onyx_is_done_when_up_todo_when_not_started_skipped_when_this_machine_cannot_run_it_and_failed_when_it_does_not_answer()
+    public void Sources_with_none_named_is_the_humans_and_says_no_source_is_connected_yet()
     {
-        var done = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: false, BlockedByCode: null));
-        var notSetUp = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null));
-        var stopped = SetupSteps.Onyx(new OnyxFact(OnyxState.Stopped, Unreachable: false, BlockedByCode: null));
-        var noDocker = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: "SND-ONYX-001"));
-        var unknown = SetupSteps.Onyx(new OnyxFact(OnyxState.Unknown, Unreachable: false, BlockedByCode: null));
-        var memory = SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: "SND-ONYX-003"));
-        var silent = SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: true, BlockedByCode: null));
+        var step = SetupSteps.Sources(new SourcesFact(0));
 
-        Assert.Equal(SetupState.Done, done.State);
-        Assert.Equal((SetupState.Todo, SetupActions.SetupOnyx), (notSetUp.State, notSetUp.Action));
-        Assert.Equal((SetupState.Todo, "Onyx is set up but stopped."), (stopped.State, stopped.Detail));
-        Assert.Equal((SetupState.Skipped, null, null, "Docker isn't installed.", "Install Docker to set up Onyx: https://docs.docker.com/get-docker/"), (noDocker.State, noDocker.Error, noDocker.Action, noDocker.Why, noDocker.Detail));
-        Assert.Equal((SetupState.Failed, null, "Sindri couldn't ask Docker about Onyx."), (unknown.State, unknown.Action, unknown.Why));
-        Assert.Equal((SetupState.Skipped, null, null), (memory.State, memory.Error, memory.Action));
-        Assert.Equal((SetupState.Failed, "SND-ONYX-005"), (silent.State, silent.Error?.Code));
+        Assert.Equal((SetupStepId.Sources, "Connect your sources", SetupState.Todo, "No source is connected yet.", SetupActions.ConnectIndexSource), (step.Id, step.Title, step.State, step.Why, step.Action));
+        Assert.Empty(step.Items);
+        Assert.Null(step.Error);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("github", "GitHub needs a token.")]
+    [InlineData("slack", "Slack needs a token.")]
+    [InlineData("linear", "Linear needs a token.")]
+    public void Sources_names_the_source_that_needs_a_token_and_lists_it(string source, string why)
+    {
+        var step = SetupSteps.Sources(InMemorySetupFacts.NamedSources((source, false)));
+
+        Assert.Equal((SetupState.Todo, SetupActions.ConnectIndexSource, why), (step.State, step.Action, step.Why));
+        Assert.Equal([(source, SetupState.Todo, "needs token")], step.Items.Select(static i => (i.Repo, i.State, i.Detail)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Sources_names_only_the_sources_still_missing_a_token_and_keeps_a_line_for_each_named_one()
+    {
+        var both = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", false), ("slack", false)));
+        var one = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", true), ("slack", false)));
+
+        Assert.Equal(("GitHub and Slack need a token.", SetupState.Todo), (both.Why, both.State));
+        Assert.Equal(("Slack needs a token.", SetupState.Todo, SetupActions.ConnectIndexSource), (one.Why, one.State, one.Action));
+        Assert.Equal([("github", SetupState.Done, "connected"), ("slack", SetupState.Todo, "needs token")], one.Items.Select(static i => (i.Repo, i.State, i.Detail)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Sources_is_done_with_no_action_when_every_named_source_is_connected()
+    {
+        var one = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("slack", true)));
+        var both = SetupSteps.Sources(InMemorySetupFacts.NamedSources(("github", true), ("slack", true)));
+
+        Assert.Equal((SetupState.Done, null, "Every source your profile names is connected.", "Slack."), (one.State, one.Action, one.Why, one.Detail));
+        Assert.Equal((SetupState.Done, null, "GitHub, Slack."), (both.State, both.Action, both.Detail));
+        Assert.Equal(2, both.Items.Count);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_unreadable_sources_step_is_failed_with_a_plain_sentence_and_the_code_only_in_the_error()
+    {
+        var step = SetupSteps.Unreadable(SetupStepId.Sources, "SND-PROFILE-004");
+
+        Assert.Equal((SetupState.Failed, "Connect your sources", "SND-PROFILE-004"), (step.State, step.Title, step.Error?.Code));
+        Assert.DoesNotContain("SND-", step.Why, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -144,7 +177,7 @@ public sealed class SetupStepsTests
     {
         List<SetupStep> steps =
         [
-            SetupSteps.Onyx(new OnyxFact(OnyxState.Running, Unreachable: true, BlockedByCode: null)),
+            SetupSteps.Unreadable(SetupStepId.Sources, "SND-LEDGER-002"),
             SetupSteps.Map(new MapFact(MapPhase.Failed, FailureCode: "SND-CONTEXT-040")),
             .. Enum.GetValues<SetupStepId>().Select(static id => SetupSteps.Unreadable(id, "SND-LEDGER-002")),
         ];
@@ -162,7 +195,7 @@ public sealed class SetupStepsTests
         var all = new[]
         {
             SetupSteps.Repo(new RepoFact(0)), SetupSteps.Profile(new ProfileFact(ProfilePresence.Missing), new RepoFact(0)), SetupSteps.Recipes(new RecipesFact(0, 0), profileApproved: false),
-            SetupSteps.Mcp(new McpFact(0, 0, "Claude Code")), SetupSteps.Map(new MapFact(MapPhase.Waiting)), SetupSteps.Onyx(new OnyxFact(OnyxState.NotSetUp, Unreachable: false, BlockedByCode: null)),
+            SetupSteps.Mcp(new McpFact(0, 0, "Claude Code")), SetupSteps.Map(new MapFact(MapPhase.Waiting)), SetupSteps.Sources(new SourcesFact(0)),
         };
 
         Assert.Equal(Enum.GetValues<SetupStepId>(), all.Select(static s => s.Id));

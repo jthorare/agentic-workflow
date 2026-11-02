@@ -62,7 +62,7 @@ internal sealed partial class ShellWindow
     private void OnBack(object? sender, RoutedEventArgs e) => Shell?.Back();
 
     // Where focus goes when the sheet closes: the strip row, the Workflows row or the queue row that opened it, the edge tab, else the row the selection moved to.
-    private Control? SheetOpenerFrame() => OpenerStripFrame() ?? OpenerWorkflowFrame() ?? OpenerRecipeFrame() ?? OpenerSessionFrame() ?? OpenerRowFrame() ?? Usable(_sheetOpener) ?? SelectedRowFrame();
+    private Control? SheetOpenerFrame() => OpenerStripFrame() ?? OpenerWorkflowFrame() ?? OpenerRecipeFrame() ?? OpenerSessionFrame() ?? OpenerProjectFrame() ?? OpenerRowFrame() ?? Usable(_sheetOpener) ?? SelectedRowFrame();
 
     // The Workflows group head whose Recipe button opened the sheet.
     private Control? OpenerRecipeFrame() => Shell?.OpenerRecipeGroup is { } recipe

@@ -11,6 +11,7 @@ namespace Aw.Sindri.Host.Commands;
 internal static class AgentsText
 {
     private const double Gib = 1024d * 1024 * 1024;
+    private const double Mib = 1024d * 1024;
 
     /// <summary>The list: a head, one line per session, the recently ended ones, then one line per problem.</summary>
     /// <param name="list">The answer.</param>
@@ -85,7 +86,7 @@ internal static class AgentsText
     private static string Line(SessionRow row) =>
         $"{row.Ref}  {State(row)}  {row.Repo?.Value ?? "-"}  {row.Host.Label}{(row.Estimated ? "  (estimated)" : string.Empty)}{(row.Title is { } title ? "  " + title : string.Empty)}{(Sandbox(row.Sandbox) is { } sandbox ? "  " + sandbox : string.Empty)}";
 
-    // Spec §8 Surfaces: "sandboxed · mem 2.1/12 GiB", "sandboxed · attended · mem 2.1/12 GiB"; a plan that doesn't read says so, a scope that is gone has no memory to show.
+    // Spec §8 Surfaces: "sandboxed · mem 2.1/12 GiB", "sandboxed · attended · mem 2.1/12 GiB"; a plan that doesn't read says so, a scope that is gone has no memory to show; below 0.1 GiB used memory reads in MiB ("mem 2.4 MiB/6.3 GiB").
     private static string? Sandbox(SessionSandbox? sandbox)
     {
         if (sandbox is null)
@@ -105,7 +106,9 @@ internal static class AgentsText
         }
         else if (sandbox.Memory is { UsedBytes: { } used, MaxBytes: { } max })
         {
-            parts.Add(string.Create(CultureInfo.InvariantCulture, $"mem {used / Gib:0.0}/{max / Gib:0.#} GiB"));
+            parts.Add(used < Gib / 10
+                ? string.Create(CultureInfo.InvariantCulture, $"mem {used / Mib:0.0} MiB/{max / Gib:0.#} GiB")
+                : string.Create(CultureInfo.InvariantCulture, $"mem {used / Gib:0.0}/{max / Gib:0.#} GiB"));
         }
 
         return string.Join(" · ", parts);

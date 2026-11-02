@@ -171,14 +171,29 @@
             "on-by action:tab-manager.restore-layout"
           ],
           "repo": "aw-split-panes"
+        },
+        {
+          "node": "action:tab-groups.group-selected",
+          "label": "Group the selected tabs",
+          "kind": "action",
+          "provenance": "human",
+          "confidence": 1,
+          "confirmed": true,
+          "trust": "trusted",
+          "depth": 2,
+          "path": [
+            "part-of-by surface:command/group-tabs",
+            "on-by action:tab-groups.group-selected"
+          ],
+          "repo": "aw-split-panes"
         }
       ],
       "affects": [],
       "counts": {
         "own": 2,
         "affects": 0,
-        "neighbors": 3,
-        "edges": 4
+        "neighbors": 4,
+        "edges": 5
       },
       "edges": [
         {
@@ -205,6 +220,15 @@
           "type": "part-of",
           "provenance": "human",
           "link": "edge:e77c6359aafbc814",
+          "confirmed": true,
+          "confidence": 1
+        },
+        {
+          "from": "action:tab-groups.group-selected",
+          "to": "surface:command/group-tabs",
+          "type": "on",
+          "provenance": "human",
+          "link": "edge:f507f71370a5f7c3",
           "confirmed": true,
           "confidence": 1
         },

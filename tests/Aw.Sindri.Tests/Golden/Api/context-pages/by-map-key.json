@@ -1,0 +1,35 @@
+{
+  "pages": [
+    {
+      "id": "schedule-week",
+      "key": "surface:route/GET:/schedule/week",
+      "name": "Schedule week",
+      "repo": "aw-split-panes",
+      "mark": "suggested",
+      "code": true,
+      "actions": [
+        {
+          "id": "cancel",
+          "key": "action:weekpage.cancel",
+          "name": "cancel",
+          "mark": "suggested",
+          "code": false,
+          "concepts": []
+        },
+        {
+          "id": "submit",
+          "key": "action:weekpage.submit",
+          "name": "submit",
+          "mark": "suggested",
+          "code": true,
+          "concepts": [
+            "self-scheduling"
+          ]
+        }
+      ]
+    }
+  ],
+  "total": 1,
+  "truncated": false,
+  "mapVersion": "v1"
+}

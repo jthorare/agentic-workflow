@@ -80,7 +80,7 @@ internal static class SandboxServiceCollectionExtensions
             .AddQuery<GetSandboxStatusRequest, SandboxStatusResponse, GetSandboxStatusService>().AddSingleton<ISandboxPlatformName, OperatingSystemPlatformName>()
             .AddSingleton<LastSandboxCheck>().AddScoped<SandboxChecks>().AddScoped<SandboxResumeList>()
             .AddScoped<ISandboxChecks>(static sp => new RecordingSandboxChecks(sp.GetRequiredService<SandboxChecks>(), sp.GetRequiredService<LastSandboxCheck>(), sp.GetRequiredService<TimeProvider>()))
-            .AddScoped<ISandboxFormCheck, SandboxFormCheck>().AddScoped<ISandboxLoginCheck, SandboxLoginCheck>()
+            .AddScoped<ISandboxFormCheck, SandboxFormCheck>().AddScoped<ISandboxLoginCheck, SandboxLoginCheck>().AddScoped<ISandboxFixtureLogin, SandboxFixtureLogin>()
             .AddScoped<ISandboxParks, SandboxParkedInstances>().AddScoped<ISandboxSlots, SandboxSlots>()
             .AddSingleton<ISandboxFixture, NoSandboxFixture>().AddSingleton<ISandboxMachine, ProcessSandboxMachine>()
             .AddScoped<IDoctorChecks, SandboxDoctorChecks>();

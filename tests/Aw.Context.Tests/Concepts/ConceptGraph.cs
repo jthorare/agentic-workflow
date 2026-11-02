@@ -38,9 +38,23 @@ internal sealed class ConceptGraph
         return this;
     }
 
+    /// <summary>A node the owner named in the profile: it carries the overlay's 'page:&lt;repo&gt;/&lt;page-id&gt;' evidence ref.</summary>
+    public ConceptGraph OwnerNode(string key, string label, string page)
+    {
+        _nodes.Add(new GraphNode(NodeKey.From(key), label, Provenance.Deterministic, 1.0, [new EvidenceRef(RecordKey.From("page:" + page))]));
+        return this;
+    }
+
     public ConceptGraph Member(string member, string concept)
     {
         _edges.Add(new GraphEdge(NodeKey.From(member), NodeKey.From(concept), EdgeType.BelongsTo));
+        return this;
+    }
+
+    /// <summary>A code node that implements a feature, evidenced in a repo ('repo:web/src/a.cs'): the edge a repo scope keeps the feature and its concepts by.</summary>
+    public ConceptGraph Implements(string code, string feature, string evidence)
+    {
+        _edges.Add(new GraphEdge(NodeKey.From(code), NodeKey.From(feature), EdgeType.Implements, Provenance.Human, 1.0, Order: null, Evidence: [new EvidenceRef(RecordKey.From(evidence))]));
         return this;
     }
 

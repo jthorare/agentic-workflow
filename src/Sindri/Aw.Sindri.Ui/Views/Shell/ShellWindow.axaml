@@ -12,6 +12,10 @@
         xmlns:rv="using:Aw.Sindri.Ui.Views.Recipes"
         xmlns:agv="using:Aw.Sindri.Ui.Views.Agents"
         xmlns:jv="using:Aw.Sindri.Ui.Views.Jobs"
+        xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
+        xmlns:cwv="using:Aw.Sindri.Ui.Views.Context.Whole"
+        xmlns:cnv="using:Aw.Sindri.Ui.Views.Context.Concepts"
+        xmlns:cnvm="using:Aw.Sindri.Ui.ViewModels.Context.Concepts"
         xmlns:ctxv="using:Aw.Sindri.Ui.Views.Context"
         xmlns:item="using:Aw.Sindri.Ui.Views.Item"
         xmlns:startv="using:Aw.Sindri.Ui.Views.Start"
@@ -68,10 +72,10 @@
       <views:TopBar x:Name="TopBar" DockPanel.Dock="Top" ZIndex="1" />
 
       <!-- Stale after three failed refreshes (§4.1): "Sindri not responding: run sindri doctor" in full under the top bar,
-           since the pill keeps ⌛ stale and its Refresh at the 900 px minimum. -->
+           since the pill keeps ⌛ stale and its Refresh at the 1,000 px minimum. -->
       <Border x:Name="NotRespondingBanner" DockPanel.Dock="Top" Classes="banner" IsVisible="{Binding IsNotRespondingBanner}"
               AutomationProperties.Name="{Binding Text.NotResponding}">
-        <!-- A WrapPanel, like Unreadable's below: at the 900 px minimum or a large text scale the command moves to its
+        <!-- A WrapPanel, like Unreadable's below: at the 1,000 px minimum or a large text scale the command moves to its
              own line instead of running past the window's edge. -->
         <WrapPanel ItemSpacing="10" LineSpacing="6">
           <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
@@ -89,7 +93,7 @@
       <!-- Unreadable (§4.1): a banner with the code and sindri doctor; the page below keeps its last data. Three units
            in a WrapPanel: the icon with the heading, the reason, and "Check it:" with the command. They share a line
            while they fit; a longer reason takes the full width and wraps, and the command moves to the next line whole,
-           so nothing runs past the window's edge at the 900 px minimum. -->
+           so nothing runs past the window's edge at the 1,000 px minimum. -->
       <Border x:Name="UnreadableBanner" DockPanel.Dock="Top" Classes="banner" IsVisible="{Binding IsUnreadable}">
         <WrapPanel ItemSpacing="12" LineSpacing="6">
           <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
@@ -199,6 +203,8 @@
             <ScrollViewer x:Name="Pages" IsVisible="{Binding IsPagesShown}">
               <Panel x:Name="PageContent" Classes="page-content" Classes.edge="{Binding IsEdgeTabShown}">
                 <views:HomePage x:Name="HomePage" IsVisible="{Binding IsHomeShown}" />
+                <!-- Projects (Projects page spec §7): the owner's projects in state groups. -->
+                <Panel IsVisible="{Binding IsProjects}"><pv:ProjectsPage x:Name="ProjectsPage" DataContext="{Binding Projects}" /></Panel>
                 <Panel IsVisible="{Binding IsWorkflows}">
                   <controls:Deferred DataContext="{Binding Workflows}">
                     <controls:Deferred.Template>
@@ -301,11 +307,11 @@
               <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,12">
                 <Button x:Name="SheetBack" Classes="back" Classes.trail="{Binding HasTrail}" Content="{Binding Text.Back}" Click="OnBack"
                         AutomationProperties.Name="{Binding Text.Back}" Margin="0,0,12,0" />
-                <!-- The focus target is a Text-typed wrapper named for the kind and subject ("Workflow WFI-1"); the visible subject inside it is Raw, as ChordHint's key is (a TextBlock's peer reads its Text and ignores a Name). -->
+                <!-- The focus target is a Text-typed wrapper named for the kind and subject ("Workflow WFI-1"); the subject is mono (an id) except a project's, which is its name; the visible subject inside it is Raw, as ChordHint's key is (a TextBlock's peer reads its Text and ignores a Name). -->
                 <Border x:Name="SheetTitle" Classes="sheet-title" Grid.Column="1" Focusable="True" VerticalAlignment="Center"
                         AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text"
                         AutomationProperties.Name="{Binding SheetName}">
-                  <TextBlock x:Name="SheetSubjectText" Classes="detail-title mono" Text="{Binding SheetTitle}" TextTrimming="CharacterEllipsis"
+                  <TextBlock x:Name="SheetSubjectText" Classes="detail-title" Classes.mono="{Binding SheetTitleIsMono}" Text="{Binding SheetTitle}" TextTrimming="CharacterEllipsis"
                              ToolTip.Tip="{Binding SheetSubject}" AutomationProperties.AccessibilityView="Raw" />
                 </Border>
                 <Button x:Name="SheetClose" Grid.Column="2" Click="OnCloseSheet" Margin="12,0,0,0"
@@ -369,6 +375,42 @@
                       <DataTemplate><jv:JobSheetView x:Name="JobSheetContent" /></DataTemplate>
                     </controls:Deferred.Template>
                   </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="ProjectSheetScroll" IsVisible="{Binding IsProjectSheet}">
+                  <controls:Deferred DataContext="{Binding ProjectSheet}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><pv:ProjectSheetView x:Name="ProjectSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="ProjectAddScroll" IsVisible="{Binding IsProjectAddSheet}">
+                  <controls:Deferred DataContext="{Binding ProjectAdd}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><pv:ProjectAddView x:Name="ProjectAddContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="PageSheetScroll" IsVisible="{Binding IsPageSheet}">
+                  <controls:Deferred DataContext="{Binding ActivePageSheet}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><cwv:PageSheetView x:Name="PageSheetContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="AddSeveralPagesScroll" IsVisible="{Binding IsAddSeveralPages}">
+                  <controls:Deferred DataContext="{Binding ActiveAddSeveralPages}">
+                    <controls:Deferred.Template>
+                      <DataTemplate><cwv:AddSeveralPagesView x:Name="AddSeveralPagesContent" /></DataTemplate>
+                    </controls:Deferred.Template>
+                  </controls:Deferred>
+                </ScrollViewer>
+                <ScrollViewer x:Name="PinSheetScroll" IsVisible="{Binding IsPinSheet}">
+                  <ContentControl x:Name="PinSheetSlot" Content="{Binding PinSheetContent}">
+                    <ContentControl.DataTemplates>
+                      <DataTemplate DataType="cnvm:PinSheetViewModel"><cnv:PinSheetView x:Name="PinSheetContent" /></DataTemplate>
+                      <DataTemplate DataType="cnvm:PinSeveralViewModel"><cnv:PinSeveralView x:Name="PinSeveralContent" /></DataTemplate>
+                    </ContentControl.DataTemplates>
+                  </ContentControl>
                 </ScrollViewer>
                 <ScrollViewer x:Name="SessionSheetScroll" IsVisible="{Binding IsSessionSheet}">
                   <controls:Deferred DataContext="{Binding AgentSheet}">

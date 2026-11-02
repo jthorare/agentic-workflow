@@ -5,6 +5,8 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>Aw.Sindri.Tests</RootNamespace>
     <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
+    <!-- why: 12,500 short tests never reach the tier PGO's instrumentation pays for; off, the unit lane spends ~9% less CPU (#1546). -->
+    <TieredPGO>false</TieredPGO>
   </PropertyGroup>
 
   <ItemGroup>
@@ -94,8 +96,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- The v4.9.0 deployment files, small text fixtures fetched from raw.githubusercontent.com at the pinned commit (checked against context/onyx.lock by OnyxFixturesTests). -->
-    <None Include="Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Sandbox/Denials/Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 

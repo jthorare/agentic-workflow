@@ -24,12 +24,11 @@ public sealed class GetNeedsYouTests
 {
     private readonly RequestQueryHarness _q = new();
 
-    private readonly FakeOnyxNotices _onyx = new();
 
     private readonly InMemoryJobViews _jobs = new();
     private IShippedRecipes _shipped = new FakeShippedRecipes([]);
 
-    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(_onyx, new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs), _q.Views.Slice.Profiles), new PassThroughScrubber(), TimeProvider.System), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
+    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs), _q.Views.Slice.Profiles), new PassThroughScrubber()), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
 
     private sealed class NoSwitch : Core.Setup.IMcpAutoSwitch
     {
@@ -37,24 +36,6 @@ public sealed class GetNeedsYouTests
     }
 
     private async Task<GetNeedsYouResponse> Get() => (await Service().Handle(A.GetNeedsYouRequest().Build(), RequestQueryHarness.Token)).Value;
-
-    [Fact]
-    public async Task GetNeedsYou_shows_the_managed_onyx_row_to_a_human_and_to_a_session()
-    {
-        _onyx.Notice = new Core.Onyx.OnyxNotice("Set up Onyx", "Onyx isn't set up on this box", "sindri onyx up");
-
-        using (_q.Human())
-        {
-            var row = Assert.Single((await Get()).Rows);
-            Expect.Equal("failure:service:onyx", row.Id.Value);
-            Expect.Equal("sindri onyx up", row.Cli);
-        }
-
-        using (_q.Session(repo: null))
-        {
-            Assert.Equal("failure:service:onyx", Assert.Single((await Get()).Rows).Id.Value);
-        }
-    }
 
     private void AddRepoJob(JobState state, string? summary = null, int n = 1, string kind = "AddRepo") =>
         _jobs.Put(new JobRow(JobId.From("JOB-" + n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture)), JobKind.From(kind), JobKey.From("a" + n.ToString(System.Globalization.CultureInfo.InvariantCulture)), Item: null, Repo: null, Service: null, state, "human:app",

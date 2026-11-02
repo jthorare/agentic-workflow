@@ -85,7 +85,7 @@ public sealed record SandboxPlan(
         var session = EnvValue("AW_SINDRI_HOME");
         var refs = "/refs/heads/" + RunNamespace;
         var gitDir = RunNamespace.Length == 0 ? null : Mounts.FirstOrDefault(m => m.Path.EndsWith(refs, StringComparison.Ordinal))?.Path[..^refs.Length];
-        string Rebase(string path) => Under(path, area) ? execArea + path[area.Length..] : Under(path, Network.NetDir) ? execNetDir + path[Network.NetDir.Length..] : path;   // the stored launch's socket directory went with its egress
+        string Rebase(string path) => RebaseForExec(path, area, execArea, execLaunch, execNetDir);
         PlanMount Mount(PlanMount m) => m with { Path = Rebase(m.Path), Source = m.Source is { } source ? Rebase(source) : null, Kind = ReadOnlyWhenShared(m, area, gitDir) };
 
         return this with
@@ -97,6 +97,16 @@ public sealed record SandboxPlan(
             Github = GithubCredentials.None,
             Attended = true,   // the human drives it: no wall limit, and a full cap refuses at once
         };
+    }
+
+    // The stored launch's socket directory went with its egress; Seatbelt's short temp directory is per launch, so the exec gets its own, not the live agent's.
+    private string RebaseForExec(string path, string area, string execArea, LaunchId execLaunch, string execNetDir)
+    {
+        var tempFrom = SandboxPaths.SeatbeltTemp(Launch);
+        return Under(path, area) ? execArea + path[area.Length..]
+            : Under(path, Network.NetDir) ? execNetDir + path[Network.NetDir.Length..]
+            : Under(path, tempFrom) ? SandboxPaths.SeatbeltTemp(execLaunch) + path[tempFrom.Length..]
+            : path;
     }
 
     private string? EnvValue(string name) => Environment.FirstOrDefault(e => string.Equals(e.Name, name, StringComparison.Ordinal))?.Value;

@@ -15,7 +15,7 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Ui.Tests.Views;
 
-/// <summary>Clicking a tab of the top bar's navigation (UI spec §3.2): each of the seven shows exactly its page, and an unbuilt page its arrives note.</summary>
+/// <summary>Clicking a tab of the top bar's navigation (UI spec §3.2): each of the eight shows exactly its page, and an unbuilt page its arrives note.</summary>
 [Lane(TestLane.Integration)]
 public sealed class NavTabClickTests : IDisposable
 {
@@ -69,6 +69,7 @@ public sealed class NavTabClickTests : IDisposable
 
     [Theory]
     [InlineData(PageId.Home)]
+    [InlineData(PageId.Projects)]
     [InlineData(PageId.Workflows)]
     [InlineData(PageId.Work)]
     [InlineData(PageId.Recipes)]
@@ -100,7 +101,7 @@ public sealed class NavTabClickTests : IDisposable
             Assert.Equal("AnchorBox", (window.FocusManager?.GetFocusedElement() as Control)?.Name);
         }
 
-        if (target is not (PageId.Work or PageId.Workflows or PageId.Context or PageId.Agents) && Labels.ArrivesWith(target) is { } arrives)   // Work is the queue (U2), Workflows the list (U8) and Context the page (U9), Agents the sessions (U11a), not placeholders
+        if (target is not (PageId.Work or PageId.Workflows or PageId.Context or PageId.Agents or PageId.Projects) && Labels.ArrivesWith(target) is { } arrives)   // Work is the queue (U2), Workflows the list (U8) and Context the page (U9), Agents the sessions (U11a), not placeholders
         {
             var page = window.GetVisualDescendants().OfType<PlaceholderPage>().Single(p => p.Name == Own(target));
             Assert.Equal(arrives, page.Note);
@@ -128,7 +129,7 @@ public sealed class NavTabClickTests : IDisposable
         Assert.NotSame(window.Get<Border>("Page"), window.FocusManager?.GetFocusedElement());
     });
 
-    private static readonly string[] _pages = ["HomePage", "WorkflowsPage", "QueuePage", "RecipesPage", "ContextPage", "AgentsPage", "HealthPage"];
+    private static readonly string[] _pages = ["HomePage", "ProjectsPage", "WorkflowsPage", "QueuePage", "RecipesPage", "ContextPage", "AgentsPage", "HealthPage"];
 
     // Re-check N1: the System page's region is named "System", so its heading says the same word.
     [Fact]
@@ -147,6 +148,7 @@ public sealed class NavTabClickTests : IDisposable
     private static string Own(PageId page) => page switch
     {
         PageId.Home => "HomePage",
+        PageId.Projects => "ProjectsPage",
         PageId.Workflows => "WorkflowsPage",
         PageId.Work => "QueuePage",
         PageId.Recipes => "RecipesPage",

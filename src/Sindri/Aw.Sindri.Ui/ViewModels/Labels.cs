@@ -282,6 +282,11 @@ internal static partial class Labels
     /// <returns>The line.</returns>
     internal static string Versions(int sindri, int app) => string.Create(CultureInfo.InvariantCulture, $"Sindri speaks API v{sindri}; this app speaks v{app}");
 
+    /// <summary>The line under a link the system could not open: what happened, and the link to copy (#1712).</summary>
+    /// <param name="url">The link.</param>
+    /// <returns>"Couldn't open the link: https://...".</returns>
+    internal static string LaunchFailed(string url) => $"Couldn't open the link: {url}";
+
     /// <summary>"updated Ns ago" (seconds under a minute, then minutes, then hours).</summary>
     /// <param name="age">How long ago the view was last read.</param>
     /// <returns>The words.</returns>

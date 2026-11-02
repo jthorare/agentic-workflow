@@ -26,23 +26,4 @@ internal partial interface ISindriApi
     /// <returns>The started job, SND-SETUP-004, SND-AUTH-002 for an agent session, or SND-UI-002/003.</returns>
     public Task<Result<JobStarted>> RegisterMcp(Uri api, RegisterMcpRequest request, CancellationToken cancellationToken);
 
-    /// <summary>POST /sindri/onyx/setup: starts the Onyx stack; the job then waits for the login (SetupOnyx).</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The started job, SND-ONYX-001 when Docker is missing, SND-AUTH-002 for an agent session, or SND-UI-002/003.</returns>
-    public Task<Result<JobStarted>> SetupOnyx(Uri api, CancellationToken cancellationToken);
-
-    /// <summary>POST /sindri/onyx/account: gives the waiting Onyx setup its login (ConnectOnyx). The password is sent once and kept nowhere.</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="login">The login.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>The job that was waiting, SND-SETUP-005/006, SND-ONYX-007 for a wrong password, SND-AUTH-002 for an agent session, or SND-UI-002/003.</returns>
-    public Task<Result<JobStarted>> ConnectOnyx(Uri api, OnyxLogin login, CancellationToken cancellationToken);
-
-    /// <summary>POST /sindri/onyx/defer: "Not now" for Onyx, or the reverse (DeferOnyx).</summary>
-    /// <param name="api">The base URL.</param>
-    /// <param name="request">Which way.</param>
-    /// <param name="cancellationToken">Cancels the call.</param>
-    /// <returns>Where Onyx stands now, SND-AUTH-002 for an agent session, or SND-UI-002/003.</returns>
-    public Task<Result<OnyxDeferView>> DeferOnyx(Uri api, OnyxDeferRequest request, CancellationToken cancellationToken);
 }

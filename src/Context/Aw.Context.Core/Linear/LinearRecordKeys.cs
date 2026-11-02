@@ -2,9 +2,12 @@ using Aw.Context.Core.Sources;
 
 namespace Aw.Context.Core.Linear;
 
-/// <summary>The canonical keys of the records the native Linear adapter reads (spec §5.1, D16); an issue's key is the one Onyx's Linear connector writes, so the two adapters' hits merge.</summary>
+/// <summary>The canonical keys of the records the native Linear adapter reads (spec §5.1, D16); an issue's key is 'linear:issue/&lt;uuid&gt;'.</summary>
 public static class LinearRecordKeys
 {
+    /// <summary>A Linear team key as the identifier alias reads it: a capital letter, then one or more capitals or digits ('ENG').</summary>
+    internal const string TeamKeyPattern = "[A-Z][A-Z0-9]+";
+
     private const string IssuePrefix = "linear:issue/";
     private const string DocPrefix = "linear:doc/";
     private const string ProjectPrefix = "linear:project/";

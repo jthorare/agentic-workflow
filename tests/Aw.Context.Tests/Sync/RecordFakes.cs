@@ -17,5 +17,5 @@ internal static class RecordFakes
     public static IServiceCollection AddRecordFakes(this IServiceCollection services) =>
         services.AddSingleton<IRecordStore>(new FakeRecordStore()).AddSingleton<IRecordFeedCatalog>(new FakeRecordFeedCatalog()).AddSingleton<IChunkEmbedder>(new FakeChunkEmbedder())
             .AddSingleton<ILexicalLeg>(new FakeLexicalLeg()).AddSingleton<IQueryEmbedder>(new FakeQueryEmbedder()).AddSingleton<IVectorScan>(new FakeVectorScan())
-            .AddSingleton<IVectorMatrixCache>(sp => new FakeVectorMatrixCache(sp.GetRequiredService<IRecordStore>()));
+            .AddSingleton<IVectorMatrixCache>(sp => new FakeVectorMatrixCache(sp.GetRequiredService<IRecordStore>())).AddSingleton<ISourceIdentityStore>(new FakeSourceIdentityStore());
 }

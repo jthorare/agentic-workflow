@@ -14,14 +14,25 @@ namespace Aw.Context.Core.Sync;
 /// <param name="LastCode">The code the last tick ended with (a down source's SND-CONTEXT-010, the time cap's SND-CONTEXT-059), or null when it completed or none has run.</param>
 /// <param name="Usable">The recent window is synced.</param>
 /// <param name="Complete">The backfill is done (the embeddings are not counted yet).</param>
-public sealed record SourceProgress(SourceId Source, SyncPhase? Phase, DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete)
+/// <param name="ReReading">How many records the source already holds while it re-reads them (Recent, no completed read behind it, rows stored: the Linear issue feed after migration 0020's reset, projects page spec §4.3), or null when it is not re-reading.</param>
+/// <param name="Pull">'running' while the source's sync lock is held, 'backoff' while failing before its next try, 'failed' after five failures in a row once past it, else 'idle'; null where the caller did not read it.</param>
+/// <param name="Records">How many records the store holds for the source; null where the caller did not count.</param>
+/// <param name="LastCommit">The end of the last tick that did not fail, or null when none did.</param>
+/// <param name="LastError">The code of the last failure (the stored last error), or null after a success.</param>
+/// <param name="LastErrorText">One scrubbed line saying what the last failure was.</param>
+/// <param name="Failures">Failed ticks in a row.</param>
+/// <param name="NextTry">When a source in backoff is pulled again by a scheduled tick.</param>
+public sealed record SourceProgress(SourceId Source, SyncPhase? Phase, DateTimeOffset? LastSync, string? LastCode, bool Usable, bool Complete, int? ReReading = null,
+    string? Pull = null, int? Records = null, DateTimeOffset? LastCommit = null, string? LastError = null, string? LastErrorText = null, int? Failures = null, DateTimeOffset? NextTry = null)
 {
     /// <summary>The progress of a source from its stored phase: usable once Recent is through, complete once Backfill is through.</summary>
     /// <param name="source">The source.</param>
     /// <param name="phase">Its stored phase (the one the next pull belongs to), or null before the first page.</param>
     /// <param name="lastSync">When its last tick ended, or null.</param>
     /// <param name="lastCode">The code that tick ended with, or null.</param>
-    /// <returns>The progress row.</returns>
-    public static SourceProgress From(SourceId source, SyncPhase? phase, DateTimeOffset? lastSync, string? lastCode) =>
-        new(source, phase, lastSync, lastCode, Usable: phase is SyncPhase.Backfill or SyncPhase.Incremental or SyncPhase.Reconcile, Complete: phase is SyncPhase.Incremental or SyncPhase.Reconcile);
+    /// <param name="stored">How many records the source holds, when the caller checks for a re-read; null: not checked.</param>
+    /// <returns>The progress row. A source in Recent that already holds records is re-reading (a first read starts with none).</returns>
+    public static SourceProgress From(SourceId source, SyncPhase? phase, DateTimeOffset? lastSync, string? lastCode, int? stored = null) =>
+        new(source, phase, lastSync, lastCode, Usable: phase is SyncPhase.Backfill or SyncPhase.Incremental or SyncPhase.Reconcile, Complete: phase is SyncPhase.Incremental or SyncPhase.Reconcile,
+            ReReading: phase is SyncPhase.Recent && stored is > 0 ? stored : null);
 }

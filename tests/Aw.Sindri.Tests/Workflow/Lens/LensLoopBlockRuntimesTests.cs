@@ -23,9 +23,9 @@ namespace Aw.Sindri.Tests.Workflow.Lens;
 public sealed class LensLoopBlockRuntimesTests
 {
     [Fact]
-    public async Task Review_lens_log_runs_as_a_block_now_that_its_descriptor_reads_the_queue()
+    public void Review_lens_log_runs_as_a_block_now_that_its_descriptor_reads_the_queue()
     {
-        await using var provider = ShippedComposition.Compose();
+        var provider = ShippedComposition.Shared;
         var (recipe, context) = Recipe(provider, "sindri/workflow.review-loop.yaml");
 
         var entered = StateEntry.Enter(EngineFixture.At(recipe, "lens-log"), recipe, "lens-log", context);

@@ -1,11 +1,12 @@
 schema: 1
 id: workflow.dev-agent-hold
-version: 1
+version: 2
 description: "One Step an agent session runs and keeps running: the live agent Step the app's Watch the agent and Take over are proven on (issue #1004; scripts/sindri-ui-fixture.sh agent-run)."
 displayName: "Hold an agent run for watching"
 inputs:
   - { key: fact:item, label: "Item", type: item, kind: item }
   - { key: fact:issue, label: "Issue", type: text, kind: text, generate: "dev-agent-hold {start:date} {start:time}" }
+  - { key: fact:rootCause, label: "Root cause", type: text, kind: text, generate: "dev-agent-hold has no real root cause" }
 initial: write
 states:
   write:

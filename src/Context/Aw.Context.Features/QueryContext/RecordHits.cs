@@ -1,4 +1,5 @@
 using Aw.Context.Core.Audience;
+using Aw.Context.Core.Linear;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
 using Aw.Kernel;
@@ -11,7 +12,7 @@ namespace Aw.Context.Features.QueryContext;
 /// </summary>
 internal static class RecordHits
 {
-    public static async ValueTask<Result<IReadOnlyList<SourceHit>>> Read(IRecordStore store, AudienceScope scope, TimeProvider clock, IEnumerable<RecordKey> keys, CancellationToken cancellationToken)
+    public static async ValueTask<Result<IReadOnlyList<SourceHit>>> Read(IRecordStore store, (AudienceScope Scope, IReadOnlySet<string> Teams) reader, TimeProvider clock, IEnumerable<RecordKey> keys, CancellationToken cancellationToken)
     {
         var hits = new List<SourceHit>();
         foreach (var key in keys)
@@ -22,9 +23,9 @@ internal static class RecordHits
                 return record.Error;
             }
 
-            if (record.Value is { RemovedAt: null } stored && scope.Allows(stored.Audience, stored.Key) && Ref(stored) is { } reference)
+            if (record.Value is { RemovedAt: null } stored && reader.Scope.Allows(stored.Audience, stored.Key) && Ref(stored) is { } reference)
             {
-                hits.Add(new SourceHit(reference, stored.Title, hits.Count + 1, clock.GetUtcNow(), Leaky: false));
+                hits.Add(new SourceHit(reference, stored.Title, hits.Count + 1, clock.GetUtcNow(), Leaky: false) { Aliases = LinearIdentifiers.AliasesOf(stored.Key, stored.Url, reader.Teams) });
             }
         }
 

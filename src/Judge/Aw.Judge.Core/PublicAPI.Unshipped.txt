@@ -1,4 +1,5 @@
 #nullable enable
+Aw.Judge.Core.Batching.JevModel
 Aw.Judge.Core.Briefs.Brief
 Aw.Judge.Core.Briefs.Brief.<Clone>$() -> Aw.Judge.Core.Briefs.Brief!
 Aw.Judge.Core.Briefs.Brief.AcceptanceCriteria.get -> string!
@@ -981,6 +982,7 @@ Aw.Judge.Core.Questions.ChooseInput.State.init -> void
 Aw.Judge.Core.Questions.ChooseInput.Threshold.get -> double?
 Aw.Judge.Core.Questions.ChooseInput.Threshold.init -> void
 Aw.Judge.Core.Questions.ChooseQuestion
+const Aw.Judge.Core.Batching.JevModel.Id = "jev-1.13.0" -> string!
 const Aw.Judge.Core.Questions.ChooseQuestion.Name = "choose" -> string!
 override Aw.Judge.Core.Questions.ChoiceInput.Equals(object? obj) -> bool
 override Aw.Judge.Core.Questions.ChoiceInput.GetHashCode() -> int
@@ -2006,3 +2008,27 @@ static readonly Aw.Judge.Core.Errors.JudgeErrors.ModelPickInput -> Aw.Kernel.Err
 Aw.Judge.Core.Ports.IProviderCatalog.Provider(Aw.Judge.Core.Providers.ProviderName name, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, Aw.Judge.Core.Config.ProvidersConfig? config) -> Aw.Kernel.Result<Aw.Judge.Core.Ports.IModelProvider!>!
 Aw.Judge.Core.Questions.FairCut
 static Aw.Judge.Core.Questions.FairCut.Limit(int longest, System.Func<int, bool>! fits) -> int
+Aw.Judge.Core.Providers.ProviderDecided.Usage.get -> Aw.Judge.Core.Providers.ProviderUsage?
+Aw.Judge.Core.Providers.ProviderDecided.Usage.init -> void
+Aw.Judge.Core.Providers.ProviderErrored.LimitPattern.get -> string?
+Aw.Judge.Core.Providers.ProviderErrored.LimitPattern.init -> void
+Aw.Judge.Core.Providers.ProviderErrored.UsageLimit.get -> bool
+Aw.Judge.Core.Providers.ProviderErrored.UsageLimit.init -> void
+Aw.Judge.Core.Providers.ProviderUsage
+Aw.Judge.Core.Providers.ProviderUsage.<Clone>$() -> Aw.Judge.Core.Providers.ProviderUsage!
+Aw.Judge.Core.Providers.ProviderUsage.Deconstruct(out long InputTokens, out long OutputTokens) -> void
+Aw.Judge.Core.Providers.ProviderUsage.Equals(Aw.Judge.Core.Providers.ProviderUsage? other) -> bool
+Aw.Judge.Core.Providers.ProviderUsage.InputTokens.get -> long
+Aw.Judge.Core.Providers.ProviderUsage.InputTokens.init -> void
+Aw.Judge.Core.Providers.ProviderUsage.Model.get -> string?
+Aw.Judge.Core.Providers.ProviderUsage.Model.init -> void
+Aw.Judge.Core.Providers.ProviderUsage.OutputTokens.get -> long
+Aw.Judge.Core.Providers.ProviderUsage.OutputTokens.init -> void
+Aw.Judge.Core.Providers.ProviderUsage.ProviderUsage(long InputTokens, long OutputTokens) -> void
+Aw.Judge.Core.Providers.QuestionRef.MinimalEnvironment.get -> bool
+Aw.Judge.Core.Providers.QuestionRef.MinimalEnvironment.init -> void
+override Aw.Judge.Core.Providers.ProviderUsage.Equals(object? obj) -> bool
+override Aw.Judge.Core.Providers.ProviderUsage.GetHashCode() -> int
+override Aw.Judge.Core.Providers.ProviderUsage.ToString() -> string!
+static Aw.Judge.Core.Providers.ProviderUsage.operator !=(Aw.Judge.Core.Providers.ProviderUsage? left, Aw.Judge.Core.Providers.ProviderUsage? right) -> bool
+static Aw.Judge.Core.Providers.ProviderUsage.operator ==(Aw.Judge.Core.Providers.ProviderUsage? left, Aw.Judge.Core.Providers.ProviderUsage? right) -> bool

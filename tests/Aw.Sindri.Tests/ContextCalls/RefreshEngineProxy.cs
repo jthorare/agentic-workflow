@@ -17,7 +17,7 @@ public class RefreshEngineProxy : DispatchProxy
     public Result<IReadOnlyList<RepoHead>> Heads { get; set; } = new List<RepoHead> { new(ContextRepoName.From("app"), "abc123", OnDefault: true) };
 
     /// <summary>What <see cref="IContextMap.BuildMap"/> answers.</summary>
-    public Result<MapBuildReport> Built { get; set; } = new MapBuildReport(Version(2, MapVersionStatus.Draft), [], [], [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true)]);
+    public Result<MapBuildReport> Built { get; set; } = new MapBuildReport(Version(2, MapVersionStatus.Draft), [], [], [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true) { IndexCommit = "abc123" }]);
 
     /// <summary>What <see cref="IContextMap.BuildMap"/> answers first, one per call, before it falls back to <see cref="Built"/>.</summary>
     public Queue<Result<MapBuildReport>> BuiltFirst { get; } = new();

@@ -14,10 +14,18 @@ public sealed class LinuxSandboxFixtureTests : IDisposable
 {
     private readonly string _dir = Directory.CreateTempSubdirectory("aw-fixture-").FullName;
 
+    // why: the fixture lists the directories beside HOME as "other homes"; with HOME straight under /tmp that is every leftover directory on the box, so HOME sits alone in a folder of its own.
+    private readonly string _home;
+
+    public LinuxSandboxFixtureTests()
+    {
+        _home = Directory.CreateDirectory(Path.Combine(_dir, "homes", "owner")).FullName;
+    }
+
     public void Dispose() => Directory.Delete(_dir, recursive: true);
 
     private LinuxSandboxFixture Fixture(FakeProcesses processes) =>
-        new(_dir + "/sindri", name => name switch { "HOME" => _dir, "AW_STATE_DIR" => _dir + "/state", "XDG_RUNTIME_DIR" => _dir + "/run", _ => null }, processes, new Machine());
+        new(_dir + "/sindri", name => name switch { "HOME" => _home, "AW_STATE_DIR" => _dir + "/state", "XDG_RUNTIME_DIR" => _dir + "/run", _ => null }, processes, new Machine());
 
     private static string[] Canaries(SandboxRequest request)
     {
@@ -33,6 +41,22 @@ public sealed class LinuxSandboxFixtureTests : IDisposable
 
         Assert.NotNull(request);
         Assert.Contains("git-ref", Canaries(request), StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void The_fixture_requests_leave_the_folders_and_session_home_the_plan_binds_in_place()
+    {
+        var fixture = Fixture(new FakeProcesses().When(static (_, _) => true, FakeProcesses.Ok()));
+
+        foreach (var request in new[] { fixture.Request(), fixture.WriteScopeRequest() })
+        {
+            Assert.NotNull(request);
+            var session = SessionHomePaths.For(_dir + "/sindri", request.Launch);
+            Assert.True(File.Exists(session + "/control.json"));
+            Assert.True(Directory.Exists(session + "/gh-config"));
+            Assert.True(Directory.Exists(_dir + "/sindri/launches"));
+            Assert.True(Directory.Exists(_dir + "/sindri/approved"));
+        }
     }
 
     [Fact]

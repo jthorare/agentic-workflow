@@ -1,0 +1,98 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:pvm="using:Aw.Sindri.Ui.ViewModels.Projects"
+             xmlns:pv="using:Aw.Sindri.Ui.Views.Projects"
+             x:Class="Aw.Sindri.Ui.Views.Projects.ProjectsPage"
+             x:DataType="pvm:ProjectsPageViewModel">
+  <!-- The Projects page (Projects page spec §3, mockup B): the title with the freshness line and Add project, the served sentence as an empty block or a
+       banner, a group per state with its cards in a grid of Columns, and the Finished and Hidden folds. Add opens the Add project sheet. Every named line is a
+       Border wrapper (a TextBlock's peer ignores AutomationProperties.Name). -->
+  <UserControl.Styles>
+    <Style Selector="ItemsControl.cards">
+      <Setter Property="ItemTemplate">
+        <DataTemplate x:DataType="pvm:ProjectCardViewModel">
+          <pv:ProjectCard Margin="0,0,12,12" />
+        </DataTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="TextBlock.failing"><Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" /></Style>
+  </UserControl.Styles>
+  <StackPanel x:Name="ProjectsRoot" Spacing="{StaticResource Size.PanelGap}">
+    <Grid ColumnDefinitions="*,Auto">
+      <StackPanel>
+        <TextBlock x:Name="ProjectsTitle" Classes="page-title" Focusable="True" Text="{Binding Title}" AutomationProperties.Name="{Binding Title}" />
+        <TextBlock x:Name="ProjectsFreshness" Classes="caption subtle" Classes.failing="{Binding FreshnessFailing}" Text="{Binding Freshness}" TextWrapping="Wrap" />
+      </StackPanel>
+      <Button x:Name="ProjectsAdd" Grid.Column="1" Content="{Binding AddText}" Click="OnAdd" VerticalAlignment="Top" AutomationProperties.Name="{Binding AddText}" />
+    </Grid>
+
+    <TextBlock x:Name="ProjectsError" Classes="caption subtle" Text="{Binding Error}" TextWrapping="Wrap" IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
+
+    <UniformGrid x:Name="ProjectsLoading" Columns="{Binding Columns}" IsVisible="{Binding IsLoading}" AutomationProperties.AccessibilityView="Raw">
+      <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
+      <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
+      <Border Classes="card" Height="132" Margin="0,0,12,12" Opacity="0.6" />
+    </UniformGrid>
+
+    <Border x:Name="ProjectsBanner" Classes="card" Background="{DynamicResource Brush.ErrorSoft}" BorderBrush="{DynamicResource Brush.Error}" IsVisible="{Binding IsBanner}">
+      <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.SM}">
+        <Ellipse Width="8" Height="8" Fill="{DynamicResource Brush.Error}" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        <Border x:Name="ProjectsBannerName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body" Foreground="{DynamicResource Brush.Ink}" Text="{Binding Sentence}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <Panel x:Name="ProjectsEmptyBlock" IsVisible="{Binding IsEmptyBlock}">
+      <Rectangle Stroke="{DynamicResource Brush.HairlineStrong}" StrokeDashArray="4,3" StrokeThickness="1" RadiusX="8" RadiusY="8" IsHitTestVisible="False" AutomationProperties.AccessibilityView="Raw" />
+      <StackPanel Margin="32" Spacing="{StaticResource Space.MD}" HorizontalAlignment="Center">
+        <Border x:Name="ProjectsEmptyName" AutomationProperties.Name="{Binding Sentence}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+          <TextBlock Classes="body muted" Text="{Binding Sentence}" TextWrapping="Wrap" TextAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+        </Border>
+        <Button x:Name="ProjectsAddEmpty" Content="{Binding AddText}" Click="OnAdd" IsVisible="{Binding ShowsAddInEmpty}" HorizontalAlignment="Center" AutomationProperties.Name="{Binding AddText}" />
+      </StackPanel>
+    </Panel>
+
+    <ItemsControl x:Name="ProjectsGroups" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Groups}">
+      <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="pvm:ProjectGroupViewModel">
+          <StackPanel Spacing="{StaticResource Space.XS}" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal" Spacing="{StaticResource Space.XS}">
+              <TextBlock x:Name="ProjectsGroupHeading" Classes="eyebrow subtle" Text="{Binding HeadingCaps}" />
+              <TextBlock Classes="eyebrow" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding Count}" />
+            </StackPanel>
+            <ItemsControl Classes="cards" ItemsSource="{Binding Cards}">
+              <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+            </ItemsControl>
+          </StackPanel>
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+
+    <Expander x:Name="ProjectsFinished" DataContext="{Binding Finished}" x:DataType="pvm:ProjectFoldViewModel" IsVisible="{Binding IsVisible}"
+              IsExpanded="{Binding IsOpen, Mode=TwoWay}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{Binding Heading}">
+      <Expander.Header>
+        <Grid ColumnDefinitions="Auto,*" x:DataType="pvm:ProjectFoldViewModel">
+          <TextBlock Classes="body muted" Text="{Binding Heading}" />
+          <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right" Text="{Binding Why}" />
+        </Grid>
+      </Expander.Header>
+      <ItemsControl Classes="cards" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      </ItemsControl>
+    </Expander>
+
+    <Expander x:Name="ProjectsHidden" DataContext="{Binding Hidden}" x:DataType="pvm:ProjectFoldViewModel" IsVisible="{Binding IsVisible}"
+              IsExpanded="{Binding IsOpen, Mode=TwoWay}" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" AutomationProperties.Name="{Binding Heading}">
+      <Expander.Header>
+        <Grid ColumnDefinitions="Auto,*" x:DataType="pvm:ProjectFoldViewModel">
+          <TextBlock Classes="body muted" Text="{Binding Heading}" />
+          <TextBlock Grid.Column="1" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right" Text="{Binding Why}" />
+        </Grid>
+      </Expander.Header>
+      <ItemsControl Classes="cards" pv:CardGrid.IsGrid="True" ItemsSource="{Binding Cards}" Margin="0,8,0,0">
+        <ItemsControl.ItemsPanel><ItemsPanelTemplate><UniformGrid Columns="{Binding Columns}" /></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+      </ItemsControl>
+    </Expander>
+  </StackPanel>
+</UserControl>

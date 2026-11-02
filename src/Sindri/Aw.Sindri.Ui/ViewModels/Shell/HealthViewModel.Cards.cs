@@ -2,7 +2,7 @@ using Aw.Sindri.Ui.Api;
 
 namespace Aw.Sindri.Ui.ViewModels.Shell;
 
-/// <summary>The System overview's Agents, Views and Code index cards and what they add to the headline (<see cref="HealthViewModel"/>, continued).</summary>
+/// <summary>The System overview's Agents, Views, Code index and Context index cards and what they add to the headline (<see cref="HealthViewModel"/>, continued).</summary>
 internal sealed partial class HealthViewModel
 {
     private void ShowAgentsCard() => AgentsRows = Sessions is { } s
@@ -23,19 +23,37 @@ internal sealed partial class HealthViewModel
         ViewsFix = views is { } v && (v.Stalled || v.Rebuilding) ? Catalog.Rebuild : null;
     }
 
+    /// <summary>Has the Code index and Context index cards read on connect and after every event, with the other views.</summary>
+    internal void FollowCards()
+    {
+        Follow(CodeIndex.Refresh);
+        Follow(ContextIndex.Refresh);
+    }
+
     private CodeIndexCardViewModel WatchCodeIndex(CodeIndexCardViewModel card)
     {
         card.PropertyChanged += CodeIndexChanged;
         return card;
     }
 
-    // What the cards say needs a look that the server's one health word does not: the Code index and the services the scheduler missed; empty when it is fine.
+    private ContextIndexCardViewModel WatchContextIndex(ContextIndexCardViewModel card)
+    {
+        card.PropertyChanged += ContextIndexChanged;
+        return card;
+    }
+
+    // What the cards say needs a look that the server's one health word does not: the Code index, the Context index and the services the scheduler missed; empty when it is fine.
     private string NeedsLook()
     {
         List<string> parts = [];
         if (string.Equals(CodeIndex.Word, Labels.CodeIndexNeedsLook, StringComparison.Ordinal))
         {
             parts.Add(Labels.CodeIndexLookName);
+        }
+
+        if (string.Equals(ContextIndex.Word, Labels.CodeIndexNeedsLook, StringComparison.Ordinal))
+        {
+            parts.Add(Labels.ContextIndexLookName);
         }
 
         var overdue = _serviceRows.Values.Where(r => r.IsOverdue).Select(r => r.Name).Order(StringComparer.Ordinal).ToList();
@@ -51,6 +69,18 @@ internal sealed partial class HealthViewModel
     private void CodeIndexChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (string.Equals(e.PropertyName, nameof(CodeIndexCardViewModel.Word), StringComparison.Ordinal))
+        {
+            lock (_gate)
+            {
+                ShowSystemState();
+            }
+        }
+    }
+
+    // The Context index card read again: the headline follows it.
+    private void ContextIndexChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (string.Equals(e.PropertyName, nameof(ContextIndexCardViewModel.Word), StringComparison.Ordinal))
         {
             lock (_gate)
             {

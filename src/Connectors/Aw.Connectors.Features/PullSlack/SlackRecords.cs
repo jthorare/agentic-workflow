@@ -7,7 +7,7 @@ namespace Aw.Connectors.Features.PullSlack;
 
 /// <summary>
 /// Maps Slack threads and day buckets onto <see cref="ConnectorItem"/>s (owned index spec §5.3). A thread (a root and its replies, root first) is one record keyed 'slack:&lt;channel&gt;/&lt;rootTs&gt;', the
-/// key Onyx's Slack connector made, so stored links and decisions stay valid. A channel's unthreaded messages are one record per UTC day keyed 'slack:&lt;channel&gt;/day/&lt;yyyy-MM-dd&gt;' (the spec fixes no
+/// key the earlier Slack feed made, so stored links and decisions stay valid. A channel's unthreaded messages are one record per UTC day keyed 'slack:&lt;channel&gt;/day/&lt;yyyy-MM-dd&gt;' (the spec fixes no
 /// key for it). The text is each message as 'author: text' in order, cleaned by <see cref="TextCleaner"/> and scrubbed of Slack tokens; the audience of every record is 'slack:&lt;channel&gt;'.
 /// </summary>
 internal static partial class SlackRecords

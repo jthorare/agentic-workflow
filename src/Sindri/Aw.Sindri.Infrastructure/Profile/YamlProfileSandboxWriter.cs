@@ -110,7 +110,7 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings) : IProfi
     }
 
     private static string[] Lines(DenialKind kind, string entry) =>
-        kind == DenialKind.Path ? [$"- path: {YamlOnyxProfileWriter.Quote(entry)}", "  mode: ro"] : [$"- {YamlOnyxProfileWriter.Quote(entry)}"];
+        kind == DenialKind.Path ? [$"- path: {YamlProfileLines.Quote(entry)}", "  mode: ro"] : [$"- {YamlProfileLines.Quote(entry)}"];
 
     private static bool Holds(string yaml, string repo, DenialKind kind, string entry) =>
         YamlToJson.TryConvert(yaml, out var json) is null && Holds(json, repo, kind, entry);
@@ -118,7 +118,7 @@ internal sealed class YamlProfileSandboxWriter(SindriSettings settings) : IProfi
     private static bool Holds(byte[] json, string repo, DenialKind kind, string entry)
     {
         using var document = JsonDocument.Parse(json);
-        var list = YamlOnyxProfileWriter.Descend(document.RootElement, "sandbox", "repos", repo, kind == DenialKind.Path ? "homeAllow" : "hosts");
+        var list = YamlProfileLines.Descend(document.RootElement, "sandbox", "repos", repo, kind == DenialKind.Path ? "homeAllow" : "hosts");
         return list is { ValueKind: JsonValueKind.Array } items && items.EnumerateArray().Any(item =>
             kind == DenialKind.Path
                 ? item.ValueKind == JsonValueKind.Object && item.TryGetProperty("path", out var p) && p.ValueKind == JsonValueKind.String && string.Equals(p.GetString(), entry, StringComparison.Ordinal)

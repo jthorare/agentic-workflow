@@ -120,6 +120,10 @@ public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, Buil
         return new FindSymbolsAnswer(found.Stamp, [.. ordered.Take(query.Limit)], found.Truncated || ordered.Count > query.Limit);
     }
 
+    // The reader holds one repo, so it gets only that repo's files: a same-named file of another repo never passes.
+    private static SymbolQuery Narrowed(SymbolQuery query, RepoName repo)
+        => query.Within is { } within ? query with { Within = [.. within.Where(f => f.Repo == repo)] } : query;
+
     private static bool IsValid(SymbolQuery query)
         => !string.IsNullOrWhiteSpace(query.Text) && query.Text.Length <= InputLimits.QueryCharacters && query.Limit >= 1;
 
@@ -134,7 +138,7 @@ public sealed partial class CodeIndexFacade(IService<BuildCodeIndexRequest, Buil
 
         await using (opened.Value.ConfigureAwait(false))
         {
-            var page = await opened.Value.FindSymbols(query, cancellationToken).ConfigureAwait(false);
+            var page = await opened.Value.FindSymbols(Narrowed(query, repo.Name), cancellationToken).ConfigureAwait(false);
             if (page.IsError)
             {
                 return page.Error;

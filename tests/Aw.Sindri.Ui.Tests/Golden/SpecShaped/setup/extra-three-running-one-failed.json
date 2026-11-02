@@ -1,0 +1,106 @@
+{
+  "steps": [
+    {
+      "id": "repo",
+      "title": "Add your repo",
+      "state": "done",
+      "why": "A repo is in your profile.",
+      "detail": "demo",
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "demo",
+          "state": "done",
+          "detail": null
+        }
+      ]
+    },
+    {
+      "id": "profile",
+      "title": "Approve the profile",
+      "state": "done",
+      "why": "Your profile is approved.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": []
+    },
+    {
+      "id": "recipes",
+      "title": "Approve the recipes",
+      "state": "running",
+      "why": "Sindri is approving the recipes.",
+      "detail": "12 of 26 done.",
+      "error": null,
+      "action": null,
+      "progress": {
+        "done": 12,
+        "total": 26,
+        "unit": "workflows"
+      },
+      "items": []
+    },
+    {
+      "id": "mcp",
+      "title": "Connect your agents",
+      "state": "running",
+      "why": "Sindri is registering itself in demo.",
+      "detail": null,
+      "error": null,
+      "action": null,
+      "progress": null,
+      "items": [
+        {
+          "repo": "demo",
+          "state": "running",
+          "detail": null
+        }
+      ]
+    },
+    {
+      "id": "map",
+      "title": "Build the map",
+      "state": "running",
+      "why": "Sindri is mapping demo.",
+      "detail": "40 of 100 done.",
+      "error": null,
+      "action": null,
+      "progress": {
+        "done": 40,
+        "total": 100,
+        "unit": "files"
+      },
+      "items": [
+        {
+          "repo": "demo",
+          "state": "running",
+          "detail": null
+        }
+      ]
+    },
+    {
+      "id": "sources",
+      "title": "Connect your sources",
+      "state": "failed",
+      "why": "Sindri couldn't reach your sources.",
+      "detail": null,
+      "error": {
+        "code": "SND-CONTEXT-042",
+        "sentence": "Sindri couldn't reach your sources."
+      },
+      "action": null,
+      "progress": null,
+      "items": []
+    }
+  ],
+  "asOf": {
+    "cursor": 0,
+    "ledgerHead": 0,
+    "projectedAt": null,
+    "rebuilding": false,
+    "stalled": false
+  }
+}

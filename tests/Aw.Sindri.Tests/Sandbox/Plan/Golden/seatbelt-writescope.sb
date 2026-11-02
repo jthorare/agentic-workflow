@@ -1,0 +1,131 @@
+(version 1)
+(allow default)
+; no network namespace on macOS: everything is denied, then only Sindri's port and the egress proxy's, on this machine
+(deny network*)
+(allow network-outbound (remote ip "localhost:7480"))
+(allow network-outbound (remote ip "localhost:41234"))
+; unix sockets under the run area and the launch's short temp directory only
+(allow network-bind (local unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-inbound (local unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-outbound (remote unix-socket (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1")))
+(allow network-bind (local unix-socket (subpath "/private/tmp/aw-aaaaaaaa")))
+(allow network-inbound (local unix-socket (subpath "/private/tmp/aw-aaaaaaaa")))
+(allow network-outbound (remote unix-socket (subpath "/private/tmp/aw-aaaaaaaa")))
+; the Keychain service: a Step never reads the owner's Keychain, its login comes from its credential source
+(deny mach-lookup (global-name "com.apple.SecurityServer") (global-name "com.apple.securityd"))
+; nothing is writable until a rule below says so
+(deny file-write* (subpath "/"))
+; the terminal and the null device
+(allow file-write* (literal "/dev/null"))
+(allow file-write* (literal "/dev/tty"))
+(allow file-write* (regex #"^/dev/ttys[0-9]+$"))
+; private scratch, removed with the run
+(allow file-write* (subpath "/private/tmp/aw-aaaaaaaa"))
+; the owner's real home: HOME is this run's own folder, and only the entries below are allowed
+(deny file-read* file-write* (subpath "/home/owner"))
+; the .NET SDK
+(allow file-read* (subpath "/home/owner/.dotnet"))
+; Rust tools
+(allow file-read* (subpath "/home/owner/.cargo"))
+; Rust toolchains
+(allow file-read* (subpath "/home/owner/.rustup"))
+; tools, and the sindri and judge wrappers
+(allow file-read* (subpath "/home/owner/.local/bin"))
+; a restore writes new packages; shared with the owner's builds
+(allow file-read* file-write* (subpath "/home/owner/.nuget/packages"))
+; the npm cache; shared with the owner's builds
+(allow file-read* file-write* (subpath "/home/owner/.npm/_cacache"))
+; the agent home, from the owner-copy login source
+(allow file-read* (subpath "/home/owner/.claude"))
+; this worktree's transcripts, in the owner's agent home
+(allow file-read* file-write* (subpath "/home/owner/.claude/projects/-work-web--claude-worktrees-sindri-x-1"))
+; the owner's memory for this project stays read-only
+(allow file-read* (subpath "/home/owner/.claude/projects/-work-web--claude-worktrees-sindri-x-1/memory"))
+(deny file-write* (subpath "/home/owner/.claude/projects/-work-web--claude-worktrees-sindri-x-1/memory"))
+; always blocked: the owner's own login file; a session gets its login from its credential source
+(deny file-read* file-write* (subpath "/home/owner/.claude/.credentials.json"))
+; always blocked: the ledger, profile, tokens and other runs' areas live here
+(deny file-read* file-write* (subpath "/home/owner/.agentic-workflow"))
+; always blocked: Sindri's own state: the ledger, tokens and other runs' areas
+(deny file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app"))
+; always blocked: other launches' session homes
+(deny file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app-sessions"))
+; always blocked: the Docker socket is root on the host
+(deny file-read* file-write* (subpath "/private/var/run/docker.sock"))
+; always blocked: the Podman socket is root on the host
+(deny file-read* file-write* (subpath "/run/podman"))
+; always blocked: the ssh, gpg and dbus agent sockets sign as the owner
+(deny file-read* file-write* (subpath "/run/user/1000"))
+; always blocked: host keys
+(deny file-read* file-write* (subpath "/private/etc/ssh"))
+; always blocked: not the session's
+(deny file-read* file-write* (subpath "/root"))
+; always blocked: other users' files
+(deny file-read* file-write* (subpath "/home/other"))
+; done-gate, external-write-guard, turn-origin, send-gate, outbox-flush, record-teammate-name, subagent-start-map, judge: decisions.sqlite with its -wal and -shm, sessions, outbox, teammate names
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/judge"))
+; judge: the configuration stays the owner's
+(allow file-read* (subpath "/home/owner/.agentic-workflow/judge/config.json"))
+(deny file-write* (subpath "/home/owner/.agentic-workflow/judge/config.json"))
+; context-guard reads its configuration
+(allow file-read* (subpath "/home/owner/.agentic-workflow/context-guard"))
+; context-guard writes per-session state
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/context-guard/state"))
+; fleet-state writes this session's state file for Sindri's session collector
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/fleet"))
+; heavy: mkdir mutexes, heavy-job.lock and heavy-session
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/locks"))
+; heavy reads the box-wide cap
+(allow file-read* (subpath "/home/owner/.agentic-workflow/heavy-slots-cap"))
+; heavy reads the meta reserve
+(allow file-read* (subpath "/home/owner/.agentic-workflow/heavy-meta-reserve"))
+; the heavy wrapper
+(allow file-read* (subpath "/home/owner/.agentic-workflow/bin-r1b"))
+; the installed C# sindri and judge
+(allow file-read* (subpath "/home/owner/.agentic-workflow/bin/cs/20261025T101500-ab12cd3"))
+; the wrappers exec into 'current': the real link exists, and its stamp is allowed above
+(allow file-read* (subpath "/home/owner/.agentic-workflow/bin/cs/current"))
+; Sindri's real home is empty here: only the entries below exist
+(deny file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app"))
+; HOME for this run: links to the home entries the session may use, thrown away with the run
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/home"))
+; the agent home, from the owner-copy login source
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/login"))
+; lib/failopen.sh appends failopen.log; the launcher reads the per-launch log into the run's denial summary
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/logs"))
+; probe-log writes the hook-input probe
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/probe"))
+; context-guard writes digests; a Step can't read other sessions' excerpts
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/spool/digests"))
+; other launches' session homes are absent
+(deny file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app-sessions"))
+; the session home's launches link resolves here; session-id-report and the turn-ended marker write to it
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/launches"))
+; the session home's approved link resolves here: the CLI finds its repo in the approved profile snapshot
+(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/approved"))
+; this launch's session home: the Step's policy file and MCP config; the agent can't rewrite its own policy
+(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app-sessions/LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"))
+; the real endpoint file the session home's control.json links to
+(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/control.json"))
+; the GitHub CLI's empty config directory, so gh finds no login
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app-sessions/LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/gh-config"))
+; the dotnet, npm and npx shims that go through heavy
+(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/shims"))
+; the refusing pre-push and the repo's own hooks
+(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/githooks"))
+; an empty global git config
+(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/gitconfig.empty"))
+; the value-free summary 'sandbox explain' reads
+(allow file-read* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/sandbox-plan.json"))
+; the Step's outputs
+(allow file-read* file-write* (subpath "/home/owner/.agentic-workflow/sindri-app/workflow/runs/x/s/1"))
+; the run's worktree
+(allow file-write* (subpath "/work/web/.claude/worktrees/sindri-x-1"))
+; a commit writes objects
+(allow file-write* (subpath "/work/web/.git/objects"))
+; the worktree's own git state
+(allow file-write* (subpath "/work/web/.git/worktrees/sindri-x-1"))
+; the run's ref directory: the branch lives one level inside it
+(allow file-write* (subpath "/work/web/.git/refs/heads/sindri/x/1"))
+; the run's reflog directory
+(allow file-write* (subpath "/work/web/.git/logs/refs/heads/sindri/x/1"))

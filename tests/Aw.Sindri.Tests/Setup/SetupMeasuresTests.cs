@@ -43,7 +43,7 @@ public sealed class SetupMeasuresTests : IDisposable
 
         _rig.Slice.Clock.Advance(TimeSpan.FromMinutes(3));
         var done = InMemorySetupFacts.AllDone();
-        (_facts.ProfileAnswer, _facts.RecipesAnswer, _facts.McpAnswer, _facts.MapAnswer, _facts.OnyxAnswer) = (done.ProfileAnswer, done.RecipesAnswer, done.McpAnswer, done.MapAnswer, done.OnyxAnswer);
+        (_facts.ProfileAnswer, _facts.RecipesAnswer, _facts.McpAnswer, _facts.MapAnswer, _facts.SourcesAnswer) = (done.ProfileAnswer, done.RecipesAnswer, done.McpAnswer, done.MapAnswer, done.SourcesAnswer);
 
         Assert.Equal(new SetupMeasured(TimeSpan.FromMinutes(15), FirstItem: null), await Tick());
         Assert.Equal(new SetupMeasured(Done: null, FirstItem: null), await Tick());
@@ -55,7 +55,7 @@ public sealed class SetupMeasuresTests : IDisposable
         _ = await _rig.Slice.HoldLease();
         _rig.Enter();
         var done = InMemorySetupFacts.AllDone();
-        (_facts.RepoAnswer, _facts.ProfileAnswer, _facts.RecipesAnswer, _facts.McpAnswer, _facts.MapAnswer, _facts.OnyxAnswer) = (done.RepoAnswer, done.ProfileAnswer, done.RecipesAnswer, done.McpAnswer, done.MapAnswer, done.OnyxAnswer);
+        (_facts.RepoAnswer, _facts.ProfileAnswer, _facts.RecipesAnswer, _facts.McpAnswer, _facts.MapAnswer, _facts.SourcesAnswer) = (done.RepoAnswer, done.ProfileAnswer, done.RecipesAnswer, done.McpAnswer, done.MapAnswer, done.SourcesAnswer);
         _ = await Tick();
         await StartWorkflow();
 
@@ -71,7 +71,7 @@ public sealed class SetupMeasuresTests : IDisposable
         _rig.Enter();
         await StartWorkflow();
         var done = InMemorySetupFacts.AllDone();
-        (_facts.RepoAnswer, _facts.ProfileAnswer, _facts.RecipesAnswer, _facts.McpAnswer, _facts.MapAnswer, _facts.OnyxAnswer) = (done.RepoAnswer, done.ProfileAnswer, done.RecipesAnswer, done.McpAnswer, done.MapAnswer, done.OnyxAnswer);
+        (_facts.RepoAnswer, _facts.ProfileAnswer, _facts.RecipesAnswer, _facts.McpAnswer, _facts.MapAnswer, _facts.SourcesAnswer) = (done.RepoAnswer, done.ProfileAnswer, done.RecipesAnswer, done.McpAnswer, done.MapAnswer, done.SourcesAnswer);
         Assert.Equal(TimeSpan.Zero, (await Tick()).Done);
         Assert.Equal(new SetupMeasured(Done: null, FirstItem: null), await Tick());
 

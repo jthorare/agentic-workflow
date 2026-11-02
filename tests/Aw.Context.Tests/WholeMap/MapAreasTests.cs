@@ -25,6 +25,19 @@ public sealed class MapAreasTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_page_with_no_part_of_takes_its_first_concepts_area()
+    {
+        var graph = new AreaGraph().Node("feature:a", "feature:b", "surface:screen/own", "surface:screen/viaaction", "action:submit", "concept:one")
+            .Edge("feature:a", EdgeType.BelongsTo, "concept:one")
+            .Edge("surface:screen/own", EdgeType.Expresses, "concept:one")
+            .Edge("action:submit", EdgeType.On, "surface:screen/viaaction").Edge("action:submit", EdgeType.Expresses, "concept:one").Build();
+
+        var index = MapAreas.Assign(graph);
+
+        Assert.Equal(("feature:a", "feature:a"), (AreaOf(index, "surface:screen/own"), AreaOf(index, "surface:screen/viaaction")));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_cycle_of_part_of_roots_at_its_smallest_key_and_ends()
     {
         var graph = new AreaGraph().Node("feature:m", "feature:b", "feature:c", "feature:leaf")

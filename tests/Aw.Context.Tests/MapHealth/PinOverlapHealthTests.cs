@@ -1,5 +1,8 @@
 using Aw.Context.Core.Engine;
+using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
+using Aw.Context.Features.CheckMap;
+using Aw.Context.Testing.Graph;
 using Aw.Context.Testing.Map;
 using Aw.Context.Tests.Map;
 
@@ -49,5 +52,16 @@ public sealed class PinOverlapHealthTests : IDisposable
         var (state, _, _) = await Check(Scope(Pin("a", "src/tabs/**"), ConceptPin.Of(ConceptId.From("b"), "b", summary: null, features: ["feature:layout.*"], paths: ["src/tabs/nothing-here/**"])));
 
         Assert.Equal(MapHealthState.Ok, state);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void Two_pins_whose_globs_both_match_only_an_unread_file_node_are_no_warning()
+    {
+        var built = new GraphBuilder().Node("code:setup.sh").Build();
+        var graph = built with { Nodes = [.. built.Nodes.Select(n => n with { Attributes = UnreadFileNodes.Attributes() })] };
+
+        var health = PinHealth.Of(graph, Scope(Pin("a", "*.sh"), Pin("b", "setup.sh")));
+
+        Assert.DoesNotContain(health.Notes, n => n.Contains("both match", StringComparison.Ordinal));
     }
 }

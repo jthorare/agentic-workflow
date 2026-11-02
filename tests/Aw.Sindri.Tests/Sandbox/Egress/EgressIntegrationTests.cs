@@ -124,6 +124,30 @@ public sealed class EgressIntegrationTests : IAsyncDisposable
         }
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task Loopback_proxy_relays_an_allowed_host_refuses_another_and_logs_both_like_the_socket_does()
+    {
+        var upstream = StubServer.Start("allowed-ok");
+        _cleanup.Add(upstream);
+        var service = new EgressService(new FakeEgressResolver([]), new RedirectingDialer(upstream.Port), _ => null, Path.Combine(_root, "run"));
+        var result = service.StartLoopback(new PlanNetwork(NetworkMode.Enforce, [new PlanGroup("repo", ["127.0.0.1"])], 7480, 0, Path.Combine(_root, "n")), EgressCaps.Default);
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        var running = result.Value;
+        _cleanup.Add(running);
+        Assert.NotEqual(0, running.ProxyPort);
+
+        var allowed = await HttpTcp(running.ProxyPort, "GET http://127.0.0.1/ HTTP/1.1\r\nHost: 127.0.0.1\r\n\r\n");
+        var denied = await HttpTcp(running.ProxyPort, "CONNECT other.example:443 HTTP/1.1\r\n\r\n");
+        await running.DisposeAsync();
+
+        Assert.EndsWith("allowed-ok", allowed, StringComparison.Ordinal);
+        Assert.StartsWith("HTTP/1.1 403", denied, StringComparison.Ordinal);
+        var lines = await File.ReadAllLinesAsync(Path.Combine(_root, "run", "egress.log"), TestContext.Current.CancellationToken);
+        Assert.Contains(lines, l => string.Equals(l, "127.0.0.1\t80\tallowed\t1", StringComparison.Ordinal));
+        Assert.Contains(lines, l => string.Equals(l, "other.example\t443\tdenied\t1", StringComparison.Ordinal));
+        Assert.False(Directory.Exists(Path.Combine(_root, "n")));   // the loopback form has no socket directory
+    }
+
     private RunningEgress Start(int sindriPort, IReadOnlyList<PlanGroup> groups, IEgressDialer dialer, string? socat = null)
     {
         var fake = socat ?? Path.Combine(_root, "socat");
@@ -147,6 +171,16 @@ public sealed class EgressIntegrationTests : IAsyncDisposable
     {
         using var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
         await socket.ConnectAsync(new UnixDomainSocketEndPoint(socketPath), TestContext.Current.CancellationToken);
+        await using var stream = new NetworkStream(socket, ownsSocket: false);
+        await stream.WriteAsync(Encoding.ASCII.GetBytes(request), TestContext.Current.CancellationToken);
+        using var reader = new StreamReader(stream, Encoding.ASCII);
+        return await reader.ReadToEndAsync(TestContext.Current.CancellationToken).WaitAsync(TimeSpan.FromSeconds(10), TestContext.Current.CancellationToken);
+    }
+
+    private static async Task<string> HttpTcp(int port, string request)
+    {
+        using var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        await socket.ConnectAsync(new IPEndPoint(IPAddress.Loopback, port), TestContext.Current.CancellationToken);
         await using var stream = new NetworkStream(socket, ownsSocket: false);
         await stream.WriteAsync(Encoding.ASCII.GetBytes(request), TestContext.Current.CancellationToken);
         using var reader = new StreamReader(stream, Encoding.ASCII);

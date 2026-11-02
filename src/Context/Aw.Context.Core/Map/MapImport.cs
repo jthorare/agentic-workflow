@@ -13,8 +13,11 @@ namespace Aw.Context.Core.Map;
 /// <param name="Heads">Where each mapped repo stood when it was built (a build names them all); null for a version that copies another's (a replaced draft keeps its heads) or an import, which keeps the one commit it names.</param>
 public sealed record MapImport(ContextRepoName Repo, string? Commit, GraphSnapshot Graph, IReadOnlyList<MapOverride> Overrides, IReadOnlyList<MapHead>? Heads = null)
 {
-    /// <summary>The hash of the map rules it was built under (<see cref="MapRuleset"/>), or null when none is recorded (an import, a promote that keeps the draft's own).</summary>
+    /// <summary>The hash of the map rules it was built under (<see cref="MapRuleset"/>), or null when none is recorded (a scope with no readable settings, a map from before migration 0012, a promote that keeps the draft's own). An import records the rules its scope runs under.</summary>
     public string? Ruleset { get; init; }
+
+    /// <summary>The hash of each concept pin's rule line by pin id (<see cref="MapRuleset.PinHashes"/>), or null when none is recorded (a promote that keeps the draft's own, a scope with no readable settings).</summary>
+    public IReadOnlyDictionary<string, string>? PinHashes { get; init; }
 
     /// <summary>The structure reason to keep with the version (<see cref="MapVersion.Checks"/>), or null.</summary>
     public string? Checks { get; init; }

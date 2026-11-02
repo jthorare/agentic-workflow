@@ -7,8 +7,8 @@ using Aw.Sindri.Core.Sandbox.Credentials;
 namespace Aw.Sindri.Features.CheckSandbox;
 
 /// <summary>
-/// The login probe (sandbox spec §3.4, §6): for every agent a Step may run and whose policy form is expressible, the credential source the profile picks (a repo's, else the
-/// agent's, else the profile's) must deliver the model login. Never tries another source. Distinct failures are listed once.
+/// The login probe (sandbox spec §3.4, §6): for the agent Steps run (the approved profile's 'workflow.agent.target', when installed, approved for Steps and its policy form is expressible), the credential source the profile picks (a repo's, else the
+/// agent's, else the profile's) must deliver the model login. Never tries another source. Distinct failures are listed once. With no target (or an unreadable profile) Steps go to the desk, so there is nothing to check; any other installed agent is no blocker.
 /// </summary>
 /// <param name="setup">The catalog and what is installed.</param>
 /// <param name="catalog">The entries' policy forms.</param>
@@ -16,30 +16,27 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// <param name="sources">The credential sources.</param>
 internal sealed class SandboxLoginCheck(ILaunchSetup setup, IAgentCatalog catalog, IApprovedProfile approved, ModelCredentialSources sources) : ISandboxLoginCheck
 {
-    /// <summary>A floor for how long the login must stay valid: a Step's own wall time is only known at launch.</summary>
-    private static readonly TimeSpan _needed = TimeSpan.FromMinutes(30);
+    private static readonly TimeSpan _needed = SandboxLoginTarget.Needed;
 
     public async ValueTask<IReadOnlyList<SandboxBlocker>> Check(CancellationToken cancellationToken)
     {
-        var shown = await setup.Show(only: null, cancellationToken).ConfigureAwait(false);
-        if (shown.IsError)
+        if (await SandboxLoginTarget.Find(setup, catalog, approved, cancellationToken).ConfigureAwait(false) is not { } target)
         {
             return [];
         }
 
-        var profile = await approved.Latest(cancellationToken).ConfigureAwait(false);
-        var settings = profile.IsSuccess ? profile.Value?.Profile.Sandbox : null;
-        var repos = RepoNames(settings);
+        var (stepAgent, settings) = target;
         var found = new Dictionary<(string Target, string Source, string Reason), SandboxBlocker>();
-        foreach (var target in shown.Value.Entries.Where(e => e.ResolvedBin is not null && e.StepOk && Expressible(e.Id)))
-        {
-            foreach (var blocker in repos.Select(repo => Probe(settings, target.Id, repo)).OfType<SandboxBlocker>())
-            {
-                _ = found.TryAdd((target.Id.Value, blocker.Source ?? string.Empty, blocker.Reason), blocker);
-            }
-        }
-
+        Collect(found, settings, stepAgent, RepoNames(settings));
         return [.. found.Values];
+    }
+
+    private void Collect(Dictionary<(string Target, string Source, string Reason), SandboxBlocker> found, SandboxSettings? settings, AgentId target, List<RepoName> repos)
+    {
+        foreach (var blocker in repos.Select(repo => Probe(settings, target, repo)).OfType<SandboxBlocker>())
+        {
+            _ = found.TryAdd((target.Value, blocker.Source ?? string.Empty, blocker.Reason), blocker);
+        }
     }
 
     /// <summary>A name for 'no repo in particular', then every repo the profile's sandbox section names (a repo may pick its own source).</summary>
@@ -63,5 +60,4 @@ internal sealed class SandboxLoginCheck(ILaunchSetup setup, IAgentCatalog catalo
         return blocker with { Values = values };
     }
 
-    private bool Expressible(AgentId id) => catalog.Resolve(id)?.PolicyForm is PolicyForm.ClaudeSettingsFile or PolicyForm.CodexOverrides;
 }

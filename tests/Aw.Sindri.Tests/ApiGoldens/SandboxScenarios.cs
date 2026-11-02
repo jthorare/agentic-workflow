@@ -31,7 +31,7 @@ internal static class SandboxScenarios
         ("sandbox-denials", "by-item"), ("sandbox-denials", "other-item"),
         ("sandbox-allow", "needs-approval"), ("sandbox-allow", "refused-never"), ("sandbox-allow", "refused-policy"), ("sandbox-allow", "refused-origin"),
         ("sandbox-status", "never-checked"), ("sandbox-status", "after-blocked-check"), ("sandbox-status", "after-ready-check"),
-        ("sandbox-check", "blocked"), ("sandbox-check", "ready"),
+        ("sandbox-check", "blocked"), ("sandbox-check", "ready"), ("sandbox-check", "hooks-not-checked"),
     ];
 
     /// <summary>Whether <paramref name="slug"/> and <paramref name="scenario"/> belong to this class.</summary>
@@ -50,7 +50,7 @@ internal static class SandboxScenarios
         {
             _ = services.Replace(ServiceDescriptor.Singleton<ISandboxMachine>(new FixedMachine()));
             _ = services.Replace(ServiceDescriptor.Singleton<ISandboxPlatformName>(new FixedPlatform()));
-            _ = services.Replace(ServiceDescriptor.Scoped<ISandboxChecks>(sp => new RecordingSandboxChecks(new FixedChecks(blocked), sp.GetRequiredService<LastSandboxCheck>(), sp.GetRequiredService<TimeProvider>())));
+            _ = services.Replace(ServiceDescriptor.Scoped<ISandboxChecks>(sp => new RecordingSandboxChecks(new FixedChecks(blocked, scenario.Contains("hooks-not-checked", StringComparison.Ordinal)), sp.GetRequiredService<LastSandboxCheck>(), sp.GetRequiredService<TimeProvider>())));
         });
     }
 
@@ -134,9 +134,12 @@ internal static class SandboxScenarios
         public string Mechanism => "bubblewrap";
     }
 
-    private sealed class FixedChecks(bool blocked) : ISandboxChecks
+    private sealed class FixedChecks(bool blocked, bool hooksNotChecked) : ISandboxChecks
     {
         public ValueTask<SandboxCheckReport> Run(CancellationToken cancellationToken) => ValueTask.FromResult(new SandboxCheckReport(
-            blocked ? [SandboxBlocker.Of(SandboxRefusal.For(SindriErrors.LaunchSandboxUnavailable, SandboxReasons.NoBwrap))] : [], []));
+            blocked ? [SandboxBlocker.Of(SandboxRefusal.For(SindriErrors.LaunchSandboxUnavailable, SandboxReasons.NoBwrap))] : [], [])
+        {
+            NotChecked = hooksNotChecked ? [SandboxCopy.HooksNotChecked] : [],
+        });
     }
 }

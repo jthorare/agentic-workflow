@@ -51,10 +51,10 @@ public sealed partial class FixtureDataTests
     }
 
     [Fact]
-    public void Onyx_documents_key_linear_issues_by_uuid_with_the_identifier_in_the_semantic_identifier()
+    public void Recorded_documents_key_linear_issues_by_uuid_with_the_identifier_in_the_semantic_identifier()
     {
         var issues = Nodes("linear/issues.json", "issues");
-        var linearDocs = OnyxDocs().Where(d => (string?)d["search_doc"]!["source_type"] == "linear").ToList();
+        var linearDocs = RecordedDocs().Where(d => (string?)d["search_doc"]!["source_type"] == "linear").ToList();
 
         Assert.Equal(issues.Count, linearDocs.Count);
         foreach (var issue in issues)
@@ -67,18 +67,18 @@ public sealed partial class FixtureDataTests
                 DateTimeOffset.Parse((string)doc["updated_at"]!, CultureInfo.InvariantCulture));
         }
 
-        var slack = Assert.Single(OnyxDocs(), d => (string?)d["search_doc"]!["source_type"] == "slack")["search_doc"]!;
+        var slack = Assert.Single(RecordedDocs(), d => (string?)d["search_doc"]!["source_type"] == "slack")["search_doc"]!;
         var ts = long.Parse(((string)slack["document_id"]!).Split("__")[1].Split('.')[0], CultureInfo.InvariantCulture);
         Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(ts), At(slack["updated_at"]));
     }
 
     [Fact]
-    public void Onyx_linear_metadata_holds_only_what_the_v4_9_0_connector_writes_as_strings_from_the_issue()
+    public void Recorded_linear_metadata_holds_only_what_the_connector_writes_as_strings_from_the_issue()
     {
         string[] connectorKeys = ["team", "creator", "assignee", "state", "priority", "estimate", "started_at", "completed_at", "created_at", "due_date"];
         var issues = Nodes("linear/issues.json", "issues").ToDictionary(i => (string)i["id"]!, StringComparer.Ordinal);
 
-        foreach (var doc in OnyxDocs().Select(d => d["search_doc"]!).Where(d => (string?)d["source_type"] == "linear"))
+        foreach (var doc in RecordedDocs().Select(d => d["search_doc"]!).Where(d => (string?)d["source_type"] == "linear"))
         {
             var metadata = doc["metadata"]!.AsObject();
             var issue = issues[(string)doc["document_id"]!];
@@ -155,8 +155,8 @@ public sealed partial class FixtureDataTests
 
     private static DateTimeOffset At(JsonNode? value) => DateTimeOffset.Parse((string)value!, CultureInfo.InvariantCulture); // why: callers pass recorded date fields
 
-    private static List<JsonNode> OnyxDocs() =>
-        [.. JsonNode.Parse(SplitPanesFixture.ReadText("onyx/documents.json"))!["documents"]!.AsArray().Select(n => n!)];
+    private static List<JsonNode> RecordedDocs() =>
+        [.. JsonNode.Parse(SplitPanesFixture.ReadText("recorded/documents.json"))!["documents"]!.AsArray().Select(n => n!)];
 
     private static string IssueText(string record) =>
         Nodes("linear/issues.json", "issues").Single(i => $"linear:issue/{i["id"]}" == record).ToJsonString();

@@ -63,6 +63,33 @@ internal sealed class EgressService(IEgressResolver resolver, IEgressDialer dial
         }
     }
 
+    /// <summary>Starts only the proxy, on a free loopback TCP port (macOS, SB-9b): there is no network namespace to bridge into and the agent reaches Sindri's own port directly, so no socat, no socket directory and no Sindri forwarder. Same proxy, log and denial counting as <see cref="Start"/>.</summary>
+    /// <param name="network">The plan's network; only its mode, groups and learn expiry are used.</param>
+    /// <param name="caps">The caps.</param>
+    /// <param name="denials">The launch's denial counter; null counts nothing.</param>
+    /// <param name="time">The clock the proxy checks the learn expiry against; null is the system clock.</param>
+    /// <returns>The running egress, whose <see cref="RunningEgress.ProxyPort"/> is the bound port, or -016 net-forward when the listener could not start.</returns>
+    public Result<RunningEgress> StartLoopback(PlanNetwork network, EgressCaps caps, DenialCounter? denials = null, TimeProvider? time = null)
+    {
+        ArgumentNullException.ThrowIfNull(network);
+        ArgumentNullException.ThrowIfNull(caps);
+        EgressListener? listener = null;
+        try
+        {
+            _ = Directory.CreateDirectory(runDirectory);
+            var (log, proxy) = Prepare(network, caps, denials, time);
+#pragma warning disable CA2000 // ownership passes to RunningEgress, which disposes it
+            listener = EgressListener.StartLoopback(proxy.Handle);
+#pragma warning restore CA2000
+            return new RunningEgress(string.Empty, string.Empty, log, listener, sindri: null, warn ?? WriteWarning) { Denials = denials };
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or SocketException)
+        {
+            listener?.Abort();
+            return SandboxRefusal.For(SindriErrors.LaunchSelfCheckFailed, SandboxReasons.NetForward, "the proxy listener could not start: " + e.Message);
+        }
+    }
+
     private static void Undo(string directory, params EgressListener?[] listeners)
     {
         foreach (var listener in listeners)

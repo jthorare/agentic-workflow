@@ -47,13 +47,13 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
             call = ForText(question, input, workspace.Path);
         }
 
-        var result = await runner.Run(Request(call, budget), cancellationToken).ConfigureAwait(false);
+        var result = await runner.Run(Request(call, question, budget), cancellationToken).ConfigureAwait(false);
         return result.End switch
         {
             ProcessEnd.NotStarted => new ProviderUnavailable(ProviderReasons.NotInstalled),
             ProcessEnd.FailedToStart => new ProviderErrored(ProviderReasons.SpawnFailed),
             ProcessEnd.TimedOut => new ProviderUnavailable(ProviderUnavailable.Timeout),
-            ProcessEnd.Exited when result.ExitCode != 0 => new ProviderErrored(ProviderReasons.Exit(result.ExitCode)),
+            ProcessEnd.Exited when result.ExitCode != 0 => Errored(ProviderReasons.Exit(result.ExitCode), UsageLimitMatcher.Match(result.StandardError) ?? LimitIn(result.StandardOutput)),
             ProcessEnd.Exited => Read(result.StandardOutput, question),
             _ => throw new InvalidOperationException($"unknown process end {result.End}"),
         };
@@ -79,6 +79,21 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
     /// <returns>Decided, or errored with why.</returns>
     protected abstract ProviderResult Read(string output, QuestionRef question);
 
+    /// <summary>
+    /// The usage-limit pattern in what the CLI printed before a non-zero exit, on the channel it marks as an error (an error envelope,
+    /// an error event); null when there is none. The default reads nothing: standard error is matched by the caller.
+    /// </summary>
+    /// <param name="output">The CLI's standard output.</param>
+    /// <returns>The pattern's id, or null.</returns>
+    protected virtual string? LimitIn(string output) => null;
+
+    /// <summary>An errored result, flagged as a usage limit when a pattern fired; the reason code is the same either way.</summary>
+    /// <param name="reasonCode">Why, as before the flag existed ('exit-1', 'cli-reported-error').</param>
+    /// <param name="limitPattern">The id of the usage-limit pattern that fired, or null.</param>
+    /// <returns>The result.</returns>
+    protected static ProviderErrored Errored(string reasonCode, string? limitPattern) =>
+        limitPattern is null ? new ProviderErrored(reasonCode) : new ProviderErrored(reasonCode) { UsageLimit = true, LimitPattern = limitPattern };
+
     // Null (invalid-image-input) when the paths are missing or the directory isn't absolute, which the question's own
     // check already refuses; resolving a relative directory would throw.
     private static ImageEvidence? Evidence(JsonNode? input) =>
@@ -86,14 +101,14 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
             ? evidence
             : null;
 
-    private ProcessRequest Request(AgentCliCall call, TimeSpan budget) => new()
+    private ProcessRequest Request(AgentCliCall call, QuestionRef question, TimeSpan budget) => new()
     {
         FileName = AgentCliNames.Binary(cli),
         Arguments = call.Arguments,
         StandardInput = call.StandardInput,
         WorkingDirectory = call.WorkingDirectory,
         Environment = new Dictionary<string, string>(call.Environment, StringComparer.Ordinal) { ["AW_JUDGE_CHILD"] = "1" },
-        InheritOnly = call.InheritOnly,
+        InheritOnly = call.InheritOnly ?? (question.MinimalEnvironment ? AgentCliEnvironment.Minimal(cli) : null),
         Unset = SecretNames.Variables,
         Timeout = budget,
     };

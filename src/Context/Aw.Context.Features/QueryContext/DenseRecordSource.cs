@@ -14,14 +14,14 @@ namespace Aw.Context.Features.QueryContext;
 /// by rank beside the lexical leg; its hits name the 'records' source, so one record found by both legs is one item and is fetched from <see cref="RecordStoreSource"/>.
 /// A model that is down is an unavailable source with the spec's wording; no vectors yet is no hits and no line; partial coverage is a note.
 /// </summary>
-internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope, TimeProvider clock) : IContextSource, ISourceNotes
+internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope, TimeProvider clock, IReadOnlySet<string> teams) : IContextSource, ISourceNotes
 {
     public const int Chunks = 50;
     private const int PageSize = 1000;
 
     public static SourceId Id { get; } = SourceId.From("records-dense");
 
-    private static readonly SourceDescriptor _descriptor = new(Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false);
+    private static readonly SourceDescriptor _descriptor = new(Id, SourceKind.Doc, SourceFreshness.Snapshot, SupportsAsOf: false) { HonorsPin = true };
 
     private List<string> _notes = [];
 
@@ -56,10 +56,10 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
             return Array.Empty<SourceHit>();   // nothing embedded yet: the lexical leg answers alone, and the empty store is not a failure
         }
 
-        var records = await Nearest(matrix.Value, embedded.Value.Vec, cancellationToken).ConfigureAwait(false);
+        var records = await Nearest(matrix.Value, embedded.Value.Vec, query.Pin, cancellationToken).ConfigureAwait(false);
         return records.IsError
             ? records.Error
-            : await RecordHits.Read(search.Store, scope, clock, records.Value, cancellationToken).ConfigureAwait(false);
+            : await RecordHits.Read(search.Store, (scope, teams), clock, records.Value, cancellationToken).ConfigureAwait(false);
     }
 
     public ValueTask<Result<SourceRecord>> Fetch(SourceRef reference, CancellationToken cancellationToken) =>
@@ -77,9 +77,9 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
     }
 
     // The scan under the mask of records the caller may read, the floor, and the best chunk per record (hits come best first, so a record's first chunk is its best).
-    private async ValueTask<Result<List<RecordKey>>> Nearest(VectorMatrix matrix, ReadOnlyMemory<float> query, CancellationToken cancellationToken)
+    private async ValueTask<Result<List<RecordKey>>> Nearest(VectorMatrix matrix, ReadOnlyMemory<float> query, ISourcePin? pin, CancellationToken cancellationToken)
     {
-        var allowed = await Allowed(cancellationToken).ConfigureAwait(false);
+        var allowed = await Allowed(pin, cancellationToken).ConfigureAwait(false);
         if (allowed.IsError)
         {
             return allowed.Error;
@@ -100,9 +100,10 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
             .ToList();
     }
 
-    // The live, unblocked records the caller may read: the scan's mask is built from them, and they are the denominator of the coverage line.
-    private async ValueTask<Result<HashSet<RecordKey>>> Allowed(CancellationToken cancellationToken)
+    // The live, unblocked records the caller may read (and, under a pin, only the pin's): the scan's mask is built from them, and they are the denominator of the coverage line.
+    private async ValueTask<Result<HashSet<RecordKey>>> Allowed(ISourcePin? pin, CancellationToken cancellationToken)
     {
+        var inPin = pin?.Records();
         var allowed = new HashSet<RecordKey>();
         RecordKey? after = null;
         while (true)
@@ -113,7 +114,7 @@ internal sealed class DenseRecordSource(RecordSearch search, AudienceScope scope
                 return page.Error;
             }
 
-            foreach (var record in page.Value.Where(r => r.RemovedAt is null && !r.Blocked && scope.Allows(r.Audience, r.Key)))
+            foreach (var record in page.Value.Where(r => r.RemovedAt is null && !r.Blocked && scope.Allows(r.Audience, r.Key) && (inPin is null || inPin.Contains(r.Key))))
             {
                 _ = allowed.Add(record.Key);
             }

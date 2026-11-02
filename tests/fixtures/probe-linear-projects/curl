@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Stub curl for probe-linear-projects.test.sh: picks a fixture by the request's operation.
+fix="$STUB_FIX"; hdr="" out="" data="" cfg=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    -D) hdr="$2"; shift 2 ;; -o) out="$2"; shift 2 ;; --data) data="${2#@}"; shift 2 ;;
+    -K) cfg="$2"; shift 2 ;; *) shift ;;
+  esac
+done
+echo "curl ran cfg=$cfg" >> "$STUB_LOG"
+q="$(jq -r .query "$data")"
+case "$q" in
+  *"query ProjectsPull"*) op=ProjectsPull
+    if [ "${STUB_MODE:-}" = legacy ] && [[ "$q" == *"status { name type }"* ]]; then f=errors; elif [ "${STUB_MODE:-}" = legacy ]; then f=ProjectsPull-legacy; else f=ProjectsPull; fi ;;
+  *"query Viewer"*) op=Viewer; f=Viewer ;;
+  *"query IssuesPull"*) op=IssuesPull; f=IssuesPull ;;
+  *"query PrAttachments"*) op=PrAttachments; f=PrAttachments ;;
+  *"query IssueCount"*)
+    v="$(jq -c .variables.filter "$data")"
+    if [[ "$v" == *'"lt"'* ]]; then op=Widened
+      if [[ "$v" == *'"status"'* && "${STUB_MODE:-}" = nostatusfilter ]]; then f=errors; else f=IssueCount-widened; fi
+    elif [[ "$v" == *'"gte"'* ]]; then op=LedWindow; f=IssueCount-ledwin
+    else op=LedAll; f=IssueCount-ledall; fi ;;
+esac
+[ "${STUB_FAIL:-}" = "$op" ] && exit 22
+cp "$fix/$f.json" "$out"
+printf 'HTTP/2 200\r\nx-ratelimit-requests-remaining: 1499\r\nx-complexity: 310\r\nx-ratelimit-complexity-remaining: 2999690\r\ncontent-type: application/json\r\n\r\n' > "$hdr"
+printf '200'

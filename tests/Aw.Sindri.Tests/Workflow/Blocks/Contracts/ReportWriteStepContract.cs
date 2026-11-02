@@ -12,7 +12,7 @@ public sealed class ReportWriteStepContract : DescriptorContract
 {
     protected override BlockDescriptor Descriptor => BugfixSteps.ReportWrite;
 
-    protected override string ExpectedHash => "sha256:d7b9f03e2b946166e8d958866b8d9543e16286bcf21d0f31e0815d29918c40c1";
+    protected override string ExpectedHash => "sha256:9b3f67219d4a19674af6367886a02da7e24621e6ed5d96133c9e7fb91a3f9aa0";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

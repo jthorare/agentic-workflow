@@ -8,7 +8,4 @@ public sealed record ControlEndpoint(Uri Url, int Pid, long Epoch)
 {
     /// <summary>The Temporal dev server this control plane started or adopted (its pid and ports), or null in a record without one.</summary>
     public TemporalEndpoint? Temporal { get; init; }
-
-    /// <summary>The managed Onyx `serve` brought up (its compose project, url and state), or null for a record without one (an unmanaged Onyx, or none).</summary>
-    public OnyxEndpoint? Onyx { get; init; }
 }

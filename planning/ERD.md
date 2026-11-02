@@ -45,11 +45,19 @@ erDiagram
         int blocked "0 or 1: text withheld, no chunks"
         text removed_at "tombstone"
         text synced_at
+        text health "project health word (migration 0020), or null"
+        text due_at "project due day, yyyy-MM-dd (migration 0020), or null"
+    }
+    source_identity {
+        text source PK "linear"
+        text user_ref "linear:user/id, what a led-by link points at"
+        text name
+        text read_at
     }
     record_link {
         text from_key PK
         text to_ref PK "a record key, path:repo/path, or a url"
-        text kind PK "parent, blocks, duplicates, relates, closes, attachment, review-of, replies-to, in-project, touches"
+        text kind PK "parent, blocks, duplicates, relates, closes, attachment, review-of, replies-to, in-project, touches, led-by"
         text to_key "set when to_ref resolves to a stored record"
         text title
     }
@@ -80,4 +88,4 @@ erDiagram
     }
 ```
 
-`chunk_fts` is an FTS5 table over `chunk.text` (external content, `unicode61`), kept by the triggers `chunk_fts_ai`, `chunk_fts_ad` and `chunk_fts_au`. `chunk_ad` and `chunk_au` delete a chunk's vector when the chunk goes or its text changes; `embedding_ad` moves `store_epoch.delete_epoch` on every vector removal. `source_cursor` gains `phase` and `backfill_cursor`; a source's one position is its row with `repo = '*'`.
+`chunk_fts` is an FTS5 table over `chunk.text` (external content, `unicode61`), kept by the triggers `chunk_fts_ai`, `chunk_fts_ad` and `chunk_fts_au`. `chunk_ad` and `chunk_au` delete a chunk's vector when the chunk goes or its text changes; `embedding_ad` moves `store_epoch.delete_epoch` on every vector removal. Migration 0020 (`project_fields`) adds `source_record.health` and `due_at`, the `source_identity` table (the owner's user per source, one row each), and resets the `linear` record feed's `source_cursor` row (`repo = 'records'`) to phase `recent` with no cursor, backfill cursor or backfill bound. `source_cursor` gains `phase` and `backfill_cursor`; a source's one position is its row with `repo = '*'`.

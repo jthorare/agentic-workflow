@@ -12,8 +12,7 @@
 # the views rebuild requested by a session and by the human, status's views and health lines, the item verbs (API P3: a human's item add, the queue and the item list, a session's item add, the human's item close, the done list and the queue again), the request verbs (API P4: a session's request, the needs-you list, a session's decide, the list again and the accepted requests), the ledger read (API P5: the human's lists command.handled, a session's doesn't, one item's events, and GET /events/catalog), QUERY /context/subgraph with a JSON body on the published host (POST is 405), the service and job verbs (API P6: the services list as JSON, a manual run of heartbeat followed to its end, a session's run, jobs show and the jobs list, pause and resume with a session's pause, and the services list after each), a session's stop, status and doctor again (doctor with HOME on an empty scratch dir, so its
 # context:mcp-scope row never reads the real provider files);
 # then recipe validate on the shipped recipes (their hashes; workflow.item reads its child beside it) and on an invalid
-# fixture (RCP-REACH-001, exit 1), then Onyx P2: onyx status --json with no docker on PATH (state not-set-up, the docker row fail
-# SND-ONYX-001). The normalized output (pids, ports, hashes, times, the host name and the temp path
+# fixture (RCP-REACH-001, exit 1). The normalized output (pids, ports, hashes, times, the host name and the temp path
 # masked) must equal expected.txt.
 # The apphost, not 'dotnet sindri.dll': start re-launches its own executable as 'serve' (Environment.ProcessPath), which
 # under 'dotnet sindri.dll' is the dotnet muxer.
@@ -257,12 +256,6 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   run recipe validate "$root/recipes/sindri/workflow.review-loop.yaml"
   run recipe validate "$root/recipes/sindri/workflow.evidence.yaml"
   run recipe validate "$root/tests/Aw.Sindri.Testing/Workflow/Recipes/invalid/RCP-REACH-001.yaml"
-  # Onyx P2: status with no docker on PATH (a scratch dir holding only perl, which the alarm wrapper needs), only its deterministic rows (up and down run Docker, so they are not driven here).
-  mkdir -p "$work/nodocker"
-  ln -s "$(command -v perl)" "$work/nodocker/perl"
-  echo "## sindri onyx status --json | jq '{state, docker}' (no docker on PATH; a check's state 2 is fail)"
-  json="$({ PATH="$work/nodocker" bounded "$bin" onyx status --json </dev/null 2>&1 || true; })"
-  jq -c '{state, docker: (.checks[] | select(.name == "docker") | {failed: (.state == 2), code: .problem.code})}' <<<"$json" 2>/dev/null || printf '%s\n' "$json"
 } >"$out/actual.raw"
 
 bash "$here/normalize.sh" "$work" "$root" <"$out/actual.raw" >"$out/actual.txt"

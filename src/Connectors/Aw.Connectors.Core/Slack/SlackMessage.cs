@@ -7,4 +7,5 @@ namespace Aw.Connectors.Core.Slack;
 /// <param name="Text">The text as written (mrkdwn).</param>
 /// <param name="ReplyCount">For a thread root, the number of replies; 0 otherwise.</param>
 /// <param name="Subtype">Slack's subtype ('channel_join', 'bot_message'), or null for an ordinary message.</param>
-public sealed record SlackMessage(string Ts, string? ThreadTs, string? Author, string Text, int ReplyCount, string? Subtype);
+/// <param name="LatestReply">For a thread root, the ts of its newest reply (Slack's 'latest_reply'); null when Slack gives none.</param>
+public sealed record SlackMessage(string Ts, string? ThreadTs, string? Author, string Text, int ReplyCount, string? Subtype, string? LatestReply = null);

@@ -1,6 +1,6 @@
 {
   "mapVersion": "v1",
-  "total": 10,
+  "total": 11,
   "hits": [
     {
       "key": "feature:tabs.tab-groups",
@@ -77,6 +77,17 @@
       "score": 0,
       "matched": "title",
       "snippet": "Switch tab (command)",
+      "trust": "trusted"
+    },
+    {
+      "key": "action:tab-groups.group-selected",
+      "kind": "action",
+      "label": "Group the selected tabs",
+      "repo": "aw-split-panes",
+      "area": "feature:tabs.tab-groups",
+      "score": 0,
+      "matched": "title",
+      "snippet": "Group the selected tabs",
       "trust": "trusted"
     },
     {

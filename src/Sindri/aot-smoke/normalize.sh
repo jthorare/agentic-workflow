@@ -2,7 +2,7 @@
 # src/Sindri/aot-smoke/normalize.sh WORK ROOT — the smoke's normalizer: stdin is the raw transcript, stdout what
 # expected.txt pins. It drops the heartbeat's optional ' (last TIME)' suffix from status (present once the first beat
 # ran, which a loaded box reaches before 'sindri status'), replaces this run's paths, host, hashes, pids, ports and times with fixed words, and drops doctor's
-# claude-code line, the launcher and launcher:agents lines (this box's viewer and CLI paths; launcher:adoption is pinned) and the code-index:ollama line (a live probe of this box's Ollama and embedding model) and the sandbox, sandbox:login, sandbox:limits, sandbox:hooks and sandbox:inner rows (whether this box can confine a Step, which agent logins it holds, its memory; they change with the box and with the mechanism the build registers) (re-probed inside Claude Code, the installed version elsewhere; the pending owner-probe lines are pinned).
+# claude-code line, the launcher and launcher:agents lines (this box's viewer and CLI paths; launcher:adoption is pinned) and the code-index:ollama line (a live probe of this box's Ollama and embedding model) and, once a profile is approved, the context:models line (the routes name the agent CLIs this box has; the not-configured line is pinned) and the sandbox, sandbox:login, sandbox:limits, sandbox:hooks and sandbox:inner rows (whether this box can confine a Step, which agent logins it holds, its memory; they change with the box and with the mechanism the build registers) (re-probed inside Claude Code, the installed version elsewhere; the pending owner-probe lines are pinned).
 # Tests: bash scripts/tests/sindri-smoke-normalize.test.sh
 set -euo pipefail
 work="$1" root="$2"
@@ -11,4 +11,4 @@ sed -E -e "s#$work#WORK#g" -e "s#$root#ROOT#g" -e "s#held by $(hostname -s)[^/ ]
   -e 's/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:]{8}Z/TIME/g' -e 's/\(last [0-9:]{8}Z\)/(last TIME)/g' \
   -e 's/^(  services  heartbeat every [0-9]+s) \(last TIME\)$/\1/' \
   -e 's/cursor [0-9]+ of( head)? [0-9]+/cursor N of\1 M/g' -e 's/\(sequence [0-9]+\)/(sequence SEQ)/' -e 's/ITM-[0-9A-Za-z]+/ITM-ID/g' -e 's/REQ-[0-9A-Za-z]+/REQ-ID/g' -e 's/DEC-[0-9A-Za-z]+/DEC-ID/g' -e 's/JOB-[0-9a-f]{32}/JOB-ID/g' \
-  -e '/^(ok|warn) +claude-code /d' -e '/^(ok|warn) +launcher(:agents)? /d' -e '/^(ok|warn|fail) +code-index:ollama /d' -e '/^(ok|warn|fail) +sandbox(:[a-z]+)? /d'
+  -e '/^(ok|warn) +claude-code /d' -e '/^(ok|warn) +launcher(:agents)? /d' -e '/^(ok|warn|fail) +code-index:ollama /d' -e '/^(ok|warn|fail) +context:models /{/not configured/!d;}' -e '/^(ok|warn|fail) +sandbox(:[a-z]+)? /d'

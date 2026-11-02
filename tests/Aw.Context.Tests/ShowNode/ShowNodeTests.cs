@@ -104,7 +104,7 @@ public sealed class ShowNodeTests : IDisposable
 
     [Theory, Trait("Lane", "unit")]
     [InlineData("aw-split-panes", true, Orientation, null)]
-    [InlineData("aw-split-panes", true, "thing:pane-layout", "SND-CONTEXT-003")]
+    [InlineData("aw-split-panes", true, "thing:pane-layout", null)]   // in scope through the reads/writes hop (spec §3 "and their cascade"), no longer dropped by the repo cut
     [InlineData("other", true, Orientation, "SND-CONTEXT-003")]
     [InlineData("aw-split-panes", false, Orientation, "SND-CONTEXT-020")]
     public async Task A_session_reaches_only_the_nodes_its_repo_implements(string repo, bool enabled, string key, string? code)

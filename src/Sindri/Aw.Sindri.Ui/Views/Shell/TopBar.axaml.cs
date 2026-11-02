@@ -10,7 +10,7 @@ namespace Aw.Sindri.Ui.Views.Shell;
 
 /// <summary>
 /// The shell's top bar: binds to the shell, and passes the health pill's click to it. It also fits itself to the window
-/// (§3.2, minimum 900 px at text scale up to 1.3): with room the ⌘K field is 160–300 px wide; when the navigation, that
+/// (§3.2, minimum 1,000 px at text scale up to 1.3): with room the ⌘K field is 160–300 px wide; when the navigation, that
 /// field and the pill don't fit, the field folds to its magnifier; if that isn't enough the pill's age drops (the pill's
 /// accessible name keeps it), and then the brand keeps its mark alone (the window and the bar's region are still named
 /// Sindri). The pill's word always shows. This is layout only; the shell decides what the words are.

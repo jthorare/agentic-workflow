@@ -1,5 +1,3 @@
-using System.Text.Json;
-
 namespace Aw.Sindri.Ui.Api.Context;
 
 /// <summary>An intent record in the intent band.</summary>
@@ -9,7 +7,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Mentions">Mentions, as served.</param>
 /// <param name="Trust">Trust, as served.</param>
 /// <param name="State">State, as served.</param>
-/// <param name="Cites">Cites, as served.</param>
+/// <param name="Cites">The markers of its citations in the answer's map; none when it is uncited.</param>
 /// <param name="Kind">Kind, as served.</param>
 /// <param name="Anchors">Anchors, as served.</param>
 /// <param name="Depth">Depth, as served.</param>
@@ -21,7 +19,7 @@ internal sealed record LensRecord(
     IReadOnlyList<string> Mentions,
     string Trust,
     string State,
-    IReadOnlyList<JsonElement> Cites,
+    IReadOnlyList<string> Cites,
     string Kind,
     IReadOnlyList<string>? Anchors = null,
     int? Depth = null,

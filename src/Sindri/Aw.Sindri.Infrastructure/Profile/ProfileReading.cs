@@ -28,7 +28,9 @@ internal static class ProfileReading
         var checkedProfile = ProfileRules.Check(typed.Value, box);
         if (checkedProfile.IsError)
         {
-            return SindriErrors.ProfileInvalid.With($"{source}: {checkedProfile.Error.Message} ({Fix})");
+            // why: a leftover Onyx section keeps its own code (owned-index spec §12.3) so the fix reads as Onyx's, not a generic shape error.
+            var definition = string.Equals(checkedProfile.Error.Code, SindriErrors.IndexOnyxInProfile.Code, StringComparison.Ordinal) ? SindriErrors.IndexOnyxInProfile : SindriErrors.ProfileInvalid;
+            return definition.With($"{source}: {checkedProfile.Error.Message} ({Fix})");
         }
 
         var canonical = Canonical(checkedProfile.Value, options);

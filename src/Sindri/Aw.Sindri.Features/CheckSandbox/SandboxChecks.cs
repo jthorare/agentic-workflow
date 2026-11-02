@@ -11,8 +11,9 @@ namespace Aw.Sindri.Features.CheckSandbox;
 /// <param name="forms">The form check.</param>
 /// <param name="logins">The login probe.</param>
 /// <param name="fixture">The fixture request.</param>
+/// <param name="fixtureLogin">The login the fixture requests carry.</param>
 /// <param name="resume">The parked instances and the free slots.</param>
-internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, ISandboxLoginCheck logins, ISandboxFixture fixture, SandboxResumeList resume) : ISandboxChecks
+internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, ISandboxLoginCheck logins, ISandboxFixture fixture, ISandboxFixtureLogin fixtureLogin, SandboxResumeList resume) : ISandboxChecks
 {
     public async ValueTask<SandboxCheckReport> Run(CancellationToken cancellationToken)
     {
@@ -25,39 +26,63 @@ internal sealed class SandboxChecks(ISandbox sandbox, ISandboxFormCheck forms, I
 
         blockers.AddRange(await forms.Check(cancellationToken).ConfigureAwait(false));
         blockers.AddRange(await logins.Check(cancellationToken).ConfigureAwait(false));
-        if (probe.IsSuccess && await SelfCheck(fixture.Request(), cancellationToken).ConfigureAwait(false) is { } failed)
+        var hooksSkipped = false;
+        if (probe.IsSuccess)
         {
-            blockers.Add(failed);
-        }
-        else if (probe.IsSuccess && await SelfCheck(fixture.WriteScopeRequest(), cancellationToken).ConfigureAwait(false) is { } writeFailed)
-        {
-            blockers.Add(writeFailed);   // the git canary only runs for a writable work tree, so the ReadOnly fixture never reaches it
+            var (failed, firstWithoutLogin) = await SelfCheck(fixture.Request(), cancellationToken).ConfigureAwait(false);
+            hooksSkipped |= firstWithoutLogin;
+            if (failed is not null)
+            {
+                blockers.Add(failed);
+            }
+            else
+            {
+                var (writeFailed, writeWithoutLogin) = await SelfCheck(fixture.WriteScopeRequest(), cancellationToken).ConfigureAwait(false);   // the git canary only runs for a writable work tree, so the ReadOnly fixture never reaches it
+                hooksSkipped |= writeWithoutLogin;
+                if (writeFailed is not null)
+                {
+                    blockers.Add(writeFailed);
+                }
+            }
         }
 
+        IReadOnlyList<string> notChecked = hooksSkipped ? [SandboxCopy.HooksNotChecked] : [];
         if (blockers.Count > 0)
         {
-            return new SandboxCheckReport(blockers, []);
+            return new SandboxCheckReport(blockers, []) { NotChecked = notChecked };
         }
 
         var next = await resume.NextParked(cancellationToken).ConfigureAwait(false);
-        return new SandboxCheckReport(blockers, [.. next.Select(static p => p.Instance)]) { Resume = next };
+        return new SandboxCheckReport(blockers, [.. next.Select(static p => p.Instance)]) { Resume = next, NotChecked = notChecked };
     }
 
-    /// <summary>Plans a fixture and proves the plan inside the sandbox; the first failure is the blocker. No fixture on this box skips it.</summary>
-    private async ValueTask<SandboxBlocker?> SelfCheck(SandboxRequest? request, CancellationToken cancellationToken)
+    /// <summary>Plans a fixture and proves the plan inside the sandbox; the first failure is the blocker. No fixture on this box skips it; a fixture planned with no login has no agent home, so the hooks canary is skipped and the outcome says so.</summary>
+    private async ValueTask<(SandboxBlocker? Blocker, bool PlannedWithoutLogin)> SelfCheck(SandboxRequest? request, CancellationToken cancellationToken)
     {
         if (request is null)
         {
-            return null;
+            return (null, false);
         }
 
-        var plan = sandbox.Plan(request);
-        if (plan.IsError)
+        var fixtureLoginPrepared = await fixtureLogin.Prepare(request.Launch, cancellationToken).ConfigureAwait(false);
+        try
         {
-            return SandboxBlocker.Of(plan.Error);
-        }
+            var planned = fixtureLoginPrepared is { } l ? request with { Target = l.Target, Settings = l.Settings, Login = l.Login } : request;
+            var plan = sandbox.Plan(planned);
+            if (plan.IsError)
+            {
+                return (SandboxBlocker.Of(plan.Error), fixtureLoginPrepared is null);
+            }
 
-        var proved = await sandbox.SelfCheck(plan.Value, cancellationToken).ConfigureAwait(false);
-        return proved.IsError ? SandboxBlocker.Of(proved.Error) : null;
+            var proved = await sandbox.SelfCheck(plan.Value, cancellationToken).ConfigureAwait(false);
+            return (proved.IsError ? SandboxBlocker.Of(proved.Error) : null, fixtureLoginPrepared is null);
+        }
+        finally
+        {
+            if (fixtureLoginPrepared is not null)
+            {
+                fixtureLogin.Release(fixtureLoginPrepared.Login);
+            }
+        }
     }
 }

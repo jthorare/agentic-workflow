@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Context.Core.Eval.Backtest;
 
 /// <summary>One sample's score on one arm.</summary>
@@ -16,4 +18,14 @@ public sealed record SampleScore(string IssueKey, string Arm, bool Unmapped, dou
 {
     /// <summary>Precision with the adjudicator's labels; null when it did not run or stopped before this sample.</summary>
     public double? AdjudicatedPrecision { get; init; }
+
+    /// <summary>Truth files in the first 10 predicted files over truth files.</summary>
+    public double FileRecallAt10 { get; init; }
+
+    /// <summary>One over the 1-based rank of the first truth file in the predicted files; 0 when none was predicted.</summary>
+    public double ReciprocalRank { get; init; }
+
+    /// <summary>The one pin the question's anchor sits in, so the pin leg ran for it; null for a question with no anchor pin or two. Set once per sample on the ranker arms.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public string? Pin { get; init; }
 }

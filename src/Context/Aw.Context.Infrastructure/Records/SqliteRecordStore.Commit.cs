@@ -273,7 +273,10 @@ internal sealed partial class SqliteRecordStore
             .Bind("@hash", record.TextHash)
             .Bind("@ruleset", record.Ruleset)
             .Bind("@blocked", blocked)
-            .Bind("@synced", record.SyncedAt);
+            .Bind("@synced", record.SyncedAt)
+            .Bind("@health", record.Health)
+            .Bind("@dueAt", record.DueAt?.ToString(RecordMappers.DueFormat, CultureInfo.InvariantCulture))
+            .Bind("@description", blocked ? null : record.Description);
     }
 
     // A statement whose row count doesn't matter: its error, or null.

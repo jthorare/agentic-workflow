@@ -28,11 +28,11 @@ internal static class DenialFileLocator
         var codex = Variable(plan, "CODEX_HOME");
         var claude = Variable(plan, "CLAUDE_CONFIG_DIR");
         var kind = codex is null ? TranscriptKind.Claude : TranscriptKind.Codex;
-        return (Transcript(glob, session, claude, codex), kind, FailOpenLog(plan));
+        return (Transcript(plan, glob, session, claude, codex), kind, FailOpenLog(plan));
     }
 
     // The agent writes under the config directory the plan gave it, not the real ~/.claude or ~/.codex the catalog's glob names.
-    private static string? Transcript(string? glob, string? session, string? claude, string? codex)
+    private static string? Transcript(SandboxPlan plan, string? glob, string? session, string? claude, string? codex)
     {
         if (glob is null || session is null)
         {
@@ -41,7 +41,25 @@ internal static class DenialFileLocator
 
         var pattern = glob.Replace("{sessionId}", session, StringComparison.Ordinal);
         pattern = Rebase(pattern, "~/.claude", claude) ?? Rebase(pattern, "~/.codex", codex) ?? string.Empty;
-        return pattern.Length == 0 ? null : Sessions.TranscriptFiles.Expand(pattern).Where(File.Exists).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault();
+        return pattern.Length == 0
+            ? null
+            : HostPatterns(plan, pattern).SelectMany(Sessions.TranscriptFiles.Expand).Where(File.Exists).OrderByDescending(File.GetLastWriteTimeUtc).FirstOrDefault();
+    }
+
+    // The pattern names in-sandbox paths; a mount's Source is where its Path really lives on the host (null: the same path). The unmapped pattern stays for a config dir that is the host's own.
+    private static IEnumerable<string> HostPatterns(SandboxPlan plan, string pattern)
+    {
+        yield return pattern;
+        var segments = pattern.Split('/');
+        foreach (var mount in plan.Mounts.Where(m => m.Kind is PlanMountKind.ReadOnly or PlanMountKind.ReadWrite or PlanMountKind.PerLaunchDir))
+        {
+            var mounted = mount.Path.TrimEnd('/').Split('/');
+            // why: a wildcard segment (the project dir) matches whichever one segment the mount names
+            if (mounted.Length < segments.Length && mounted.Zip(segments).All(p => p.Second == "*" || string.Equals(p.First, p.Second, StringComparison.Ordinal)))
+            {
+                yield return string.Join('/', [(mount.Source ?? mount.Path).TrimEnd('/'), .. segments[mounted.Length..]]);
+            }
+        }
     }
 
     private static string? Rebase(string pattern, string prefix, string? directory) =>

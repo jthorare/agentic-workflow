@@ -45,6 +45,9 @@ public sealed record MapOverride(
     /// <summary>The 'who' of every decision the engine itself writes (an accept of a draft's deterministic items, a scope proposal).</summary>
     public const string EngineWho = "service:engine";
 
+    /// <summary>The 'who' of every decision Jev makes about surfaces (the apply step of spec §6.9): reject and merge rows over a build's action candidates. A 'service:' who, so a person's own decision on the same node still wins.</summary>
+    public const string JevWho = "service:jev";
+
     /// <summary>The 'who' of an undo row a build writes for an engine accept of an edge the new map rules no longer find (see <see cref="UndoingRedecide"/>).</summary>
     public const string RedecideMarker = "service:rules-redecide";
 

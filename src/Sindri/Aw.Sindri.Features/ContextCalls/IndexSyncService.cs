@@ -1,4 +1,3 @@
-using System.Globalization;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Results;
 using Aw.Kernel;
@@ -11,7 +10,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 
 /// <summary>
 /// The 'index-sync' background service (owned-index spec §5.5, §5.8): every 5 minutes while serve runs it asks Context to run one tick of each record feed, through
-/// <see cref="IContextEngine"/> only. A source that is down is a row with its code in the run's summary, never a failed run; a missing or unapproved profile is a quiet run.
+/// <see cref="IContextEngine"/> only. A source that is down is a row with its code in the run's summary, never a failed run, and one that stopped at its time cap or a rate limit makes the summary lead with 'partial:' (<see cref="SourceStops"/>); a missing or unapproved profile is a quiet run.
 /// Where each source stands (phase, last tick, last code, the milestones usable and complete) is the facade's Progress, which the CLI and the app read.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
@@ -41,7 +40,7 @@ internal sealed class IndexSyncService(ContextScopes scopes, IContextEngine engi
         return report.IsError ? report.Error : Summarize(report.Value.Sources);
     }
 
-    /// <summary>The run's outcome from the feeds' rows: idle when no feed moved a record or failed, else a summary with each source's count or code.</summary>
+    /// <summary>The run's outcome from the feeds' rows: idle when no feed moved a record or failed, else a summary with each source's count or code; 'partial:' instead of 'ok:' when a source stopped at its time cap or a rate limit.</summary>
     internal static ScheduledResult Summarize(IReadOnlyList<SourceSync> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
@@ -50,9 +49,7 @@ internal sealed class IndexSyncService(ContextScopes scopes, IContextEngine engi
             return ScheduledResult.Quiet;
         }
 
-        var parts = rows.Select(static r => r.Code is null
-            ? string.Create(CultureInfo.InvariantCulture, $"{r.Source.Value} {r.Fetched} fetched")
-            : $"{r.Source.Value} {r.Code}");
-        return new ScheduledResult(Idle: false, $"ok: {string.Join(", ", parts)}");
+        var parts = rows.Select(static r => SourceStops.Part(r.Source.Value, r.Fetched, r.Code));
+        return new ScheduledResult(Idle: false, $"{(rows.Any(static r => SourceStops.Is(r.Code)) ? "partial" : "ok")}: {string.Join(", ", parts)}");
     }
 }

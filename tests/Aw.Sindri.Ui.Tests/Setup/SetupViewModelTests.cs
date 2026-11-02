@@ -7,7 +7,7 @@ using static Aw.Sindri.Ui.Tests.Setup.SetupFixture;
 
 namespace Aw.Sindri.Ui.Tests.Setup;
 
-/// <summary>The setup checklist as Settings reads it: six steps in the app's own titles and the five state words, the rows that open by themselves, the progress strip, Home's one line, and what is shown for a list that can't be read.</summary>
+/// <summary>The setup checklist as Settings reads it: steps in the app's own titles and the five state words, the rows that open by themselves, the progress strip, Home's one line, and what is shown for a list that can't be read.</summary>
 [Lane(TestLane.Unit)]
 public sealed class SetupViewModelTests
 {
@@ -48,22 +48,36 @@ public sealed class SetupViewModelTests
     [Fact]
     public async Task A_web_address_in_a_steps_words_becomes_a_link_and_leaves_the_shown_text()
     {
-        var onyx = Step(await ReadWith("onyx-no-docker"), "onyx");
+        _f.Serve(WithExtraStep(Golden("first-run"), "later", "Connect later", "todo", "Install Docker to set up later https://docs.docker.com/get-docker/"));
+        var sources = Step(await _f.Read(Token), "later");
         var map = Step(await ReadWith("failed"), "map");
 
-        Assert.Equal(("Install Docker to set up Onyx", true, "https://docs.docker.com/get-docker/", "Open docs.docker.com"), (onyx.Sub, onyx.HasLink, onyx.LinkUri?.AbsoluteUri, onyx.LinkText));
-        Assert.DoesNotContain("https://", onyx.Name, StringComparison.Ordinal);
+        Assert.Equal(("Install Docker to set up later", true, "https://docs.docker.com/get-docker/", "Open docs.docker.com"), (sources.Sub, sources.HasLink, sources.LinkUri?.AbsoluteUri, sources.LinkText));
+        Assert.DoesNotContain("https://", sources.Name, StringComparison.Ordinal);
         Assert.Equal((false, null), (map.HasLink, map.LinkUri));
     }
 
     [Fact]
     public async Task A_skipped_step_shows_a_dash_not_the_done_tick()
     {
-        var skipped = Step(await ReadWith("onyx-no-docker"), "onyx");
-        var done = Step(await ReadWith("all-done"), "onyx");
+        var skipped = Step(await ReadWith("first-run", "map", "skipped"), "map");
+        var done = Step(await ReadWith("all-done"), "map");
 
         Assert.Equal(("Skipped", "–"), (skipped.ChipWord, skipped.NumberText));
         Assert.Equal("✓", done.NumberText);
+    }
+
+    [Fact]
+    public async Task A_served_step_with_no_form_here_is_an_ordinary_row_with_its_command_to_copy()
+    {
+        _f.Serve(Golden("first-run"));
+
+        var sources = Step(await _f.Read(Token), "sources");
+        await sources.Action!.Cli!.Copy(Token);
+
+        Assert.Equal(("Connect your sources", "To do", "To do"), (sources.Title, sources.ChipWord, sources.Chip.Word));
+        Assert.Equal(("ConnectIndexSource", false, null, null, null), (sources.Action.Action, sources.Action.IsInApp, sources.Action.Protected, sources.Repo, sources.Profile));
+        Assert.Equal("sindri index connect <source>", _f.Clipboard.Text);
     }
 
     [Fact]
@@ -73,10 +87,10 @@ public sealed class SetupViewModelTests
 
         var setup = await _f.Read(Token);
 
-        Assert.Equal(["repo", "profile", "recipes", "mcp", "map", "onyx"], Ids(setup.Steps));
-        Assert.Equal(["Needs you", "To do", "To do", "To do", "To do", "To do"], setup.Steps.Select(s => s.ChipWord), StringComparer.Ordinal);
-        Assert.Equal([true, false, false, false, false, false], setup.Steps.Select(s => s.IsOpen));
-        Assert.Equal(("Set up Sindri", "0 of 6 done", true), (setup.Lead, setup.CountText, setup.HasSub));
+        Assert.Equal(["repo", "profile", "recipes", "mcp", "map"], Ids(setup.Steps.Take(5)));
+        Assert.Equal(["Needs you", "To do", "To do", "To do", "To do"], setup.Steps.Take(5).Select(s => s.ChipWord), StringComparer.Ordinal);
+        Assert.Equal([true, false, false, false, false], setup.Steps.Take(5).Select(s => s.IsOpen));
+        Assert.Equal(("Set up Sindri", Labels.SetupCount(0, setup.Steps.Count), true), (setup.Lead, setup.CountText, setup.HasSub));
     }
 
     [Fact]
@@ -87,28 +101,34 @@ public sealed class SetupViewModelTests
         var setup = await _f.Read(Token);
 
         Assert.Equal(
-            ["Add your repository", "Approve your settings", "Approve the workflows", "Connect your coding agents", "Build the product map", "Connect Linear and Slack (Onyx)"],
-            setup.Steps.Select(s => s.Title),
+            ["Add your repository", "Approve your settings", "Approve the workflows", "Connect your coding agents", "Build the product map"],
+            setup.Steps.Take(5).Select(s => s.Title),
             StringComparer.Ordinal);
-        Assert.Equal([1, 2, 3, 4, 5, 6], setup.Steps.Select(s => s.Number));
+        Assert.Equal([1, 2, 3, 4, 5], setup.Steps.Take(5).Select(s => s.Number));
     }
 
     [Fact]
     public async Task Each_state_reads_as_one_of_the_five_words_and_a_step_this_build_does_not_know_keeps_its_own_word()
     {
-        _f.Serve(With("failed", "onyx", "paused"));
+        _f.Serve(WithExtraStep(Golden("failed"), "later", "Connect later", "paused"));
 
         var setup = await _f.Read(Token);
 
-        Assert.Equal(["Done", "Done", "Done", "Done", "Failed", "To do"], [.. setup.Steps.Select(s => s.ChipWord).Take(5), Step(setup, "onyx").ChipWord], StringComparer.Ordinal);
-        Assert.Equal("paused", Step(setup, "onyx").Chip.Word);   // unknown: the To do chip, with the served word
+        Assert.Equal(["Done", "Done", "Done", "Done", "Failed", "To do"], [.. setup.Steps.Select(s => s.ChipWord).Take(5), Step(setup, "later").ChipWord], StringComparer.Ordinal);
+        Assert.Equal("paused", Step(setup, "later").Chip.Word);   // unknown: the To do chip, with the served word
         Assert.Equal("Working", Step(await ReadWith("running-progress"), "map").ChipWord);
-        Assert.Equal("Skipped", Step(await ReadWith("onyx-no-docker"), "onyx").ChipWord);
+        Assert.Equal("Skipped", Step(await ReadWith("first-run", "map", "skipped"), "map").ChipWord);
     }
 
     private async Task<SetupViewModel> ReadWith(string scenario)
     {
         _f.Serve(scenario);
+        return await _f.Read(Token);
+    }
+
+    private async Task<SetupViewModel> ReadWith(string scenario, string step, string state)
+    {
+        _f.Serve(With(scenario, step, state));
         return await _f.Read(Token);
     }
 
@@ -162,9 +182,9 @@ public sealed class SetupViewModelTests
         var done = await ReadWith("running-progress");
         var first = await ReadWith("first-run");
 
-        Assert.Equal(["done", "done", "done", "done", "working", "done"], done.Segments.Select(s => s.Kind), StringComparer.Ordinal);
-        Assert.Equal("5 of 6 done", done.CountText);
-        Assert.Equal(["todo", "todo", "todo", "todo", "todo", "todo"], first.Segments.Select(s => s.Kind), StringComparer.Ordinal);
+        Assert.Equal(["done", "done", "done", "done", "working"], done.Segments.Take(5).Select(s => s.Kind), StringComparer.Ordinal);
+        Assert.Equal(Labels.SetupCount(done.Steps.Count(s => s.IsFinished), done.Steps.Count), done.CountText);
+        Assert.Equal(["todo", "todo", "todo", "todo", "todo"], first.Segments.Take(5).Select(s => s.Kind), StringComparer.Ordinal);
     }
 
     [Fact]
@@ -173,19 +193,19 @@ public sealed class SetupViewModelTests
         var first = await ReadWith("first-run");
         var progress = await ReadWith("running-progress");
 
-        Assert.Equal(((0.0, 6.0), (5.0, 6.0)), ((first.MeterDone, first.MeterMax), (progress.MeterDone, progress.MeterMax)));
+        Assert.Equal(((0.0, (double)first.Steps.Count), ((double)(progress.Steps.Count - 1), (double)progress.Steps.Count)), ((first.MeterDone, first.MeterMax), (progress.MeterDone, progress.MeterMax)));
     }
 
     [Fact]
     public async Task Home_shows_one_line_while_any_step_is_open_and_none_when_setup_is_finished()
     {
         var open = await ReadWith("profile-needs-approval");
-        var skipped = await ReadWith("onyx-no-docker");
         var finished = await ReadWith("all-done");
+        var skipped = await ReadWith("all-done", "map", "skipped");
 
         Assert.Equal((true, "Finish setting up Sindri"), (open.IsHomeLineShown, open.HomeLineText));
         Assert.Equal((false, false), (skipped.IsHomeLineShown, finished.IsHomeLineShown));   // skipped counts as finished
-        Assert.Equal(("Sindri is set up", "All 6 done", false), (finished.Lead, finished.CountText, finished.HasSub));
+        Assert.Equal(("Sindri is set up", Labels.SetupCount(finished.Steps.Count, finished.Steps.Count), false), (finished.Lead, finished.CountText, finished.HasSub));
     }
 
     [Fact]

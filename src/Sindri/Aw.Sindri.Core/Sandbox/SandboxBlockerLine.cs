@@ -7,7 +7,8 @@ namespace Aw.Sindri.Core.Sandbox;
 /// <param name="Text">The sentence.</param>
 /// <param name="Command">The copyable second line, or null.</param>
 /// <param name="State">'gray' or 'wait' when the card is never red; null otherwise.</param>
-public sealed record SandboxBlockerLine(string Code, string Reason, string? Source, string Text, string? Command, string? State)
+/// <param name="Detail">What the check observed (the failing path or line), omitted from the JSON when there is none.</param>
+public sealed record SandboxBlockerLine(string Code, string Reason, string? Source, string Text, string? Command, string? State, [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Detail = null)
 {
     /// <summary>True when the card is never red: a gray 'not yet supported' or a waiting state, which doctor shows as information and prints no fix for.</summary>
     public bool Quiet => string.Equals(State, "gray", StringComparison.Ordinal) || string.Equals(State, "wait", StringComparison.Ordinal);
@@ -20,6 +21,6 @@ public sealed record SandboxBlockerLine(string Code, string Reason, string? Sour
         ArgumentNullException.ThrowIfNull(blocker);
         var code = blocker.Code.Error.Code;
         var copy = SandboxCopy.For(code, blocker.Reason, blocker.Source, blocker.Values);
-        return new SandboxBlockerLine(code, blocker.Reason, blocker.Source, copy?.Text ?? $"{code} ({blocker.Reason})", copy?.Command, copy?.State);
+        return new SandboxBlockerLine(code, blocker.Reason, blocker.Source, copy?.Text ?? $"{code} ({blocker.Reason})", copy?.Command, copy?.State, blocker.Detail);
     }
 }

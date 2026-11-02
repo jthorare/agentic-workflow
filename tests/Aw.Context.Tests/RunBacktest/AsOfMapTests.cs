@@ -116,7 +116,7 @@ public sealed class AsOfMapTests
         await using var world = await BacktestWorld.Start(BacktestWorld.BeforeAllCuts);
         var sample = await SampleOf(world, "SPL-105");
         var repo = world.Profile.Single(r => r.Name == sample.Repo);
-        var builder = new AsOfMapBuilder(world.Services.GetRequiredService<IRepoReader>(), world.Clusters, world.Store, new WriteFailingCache(world.Services.GetRequiredService<IEvalStore>()));
+        var builder = new AsOfMapBuilder(world.Services.GetRequiredService<IRepoReader>(), world.Clusters, new MapBuildGate(), world.Store, new WriteFailingCache(world.Services.GetRequiredService<IEvalStore>()));
 
         var built = await builder.Build(new AsOfRequest(repo, sample, world.Human()), TestContext.Current.CancellationToken);
 

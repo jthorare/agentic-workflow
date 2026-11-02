@@ -28,7 +28,7 @@ internal sealed partial class DecisionSheetViewModel
     internal bool IsCleared { get; private set => Set(ref field, value); }
 
     /// <summary>The cleared line, once the row is gone.</summary>
-    internal string ClearedLine => !IsCleared || DecidedLine.Length > 0 || IsRefusedAsDecided ? "" : ServedCleared.Length > 0 ? ServedCleared : Labels.Cleared(DecisionId);
+    internal string ClearedLine => !IsCleared || DecidedLine.Length > 0 || IsRefusedAsDecided ? "" : ServedCleared.Length > 0 ? ServedCleared : Labels.DecisionClearedFallback;
 
     // A stale Decide's refusal already says the decision was answered; the cleared line would say it a second time.
     private bool IsRefusedAsDecided { get; set; }

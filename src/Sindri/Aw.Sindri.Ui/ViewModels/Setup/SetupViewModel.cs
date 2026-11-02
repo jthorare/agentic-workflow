@@ -17,7 +17,6 @@ internal sealed partial class SetupViewModel : ObservableObject
 {
     private const string MapStep = "map";
     private const string McpStep = "mcp";
-    private const string OnyxStep = "onyx";
     private const string ProfileStep = "profile";
     private const string RecipesStep = "recipes";
     private const string ProfileAction = "ApproveProfile";
@@ -53,7 +52,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         (_api, _catalog, _clock, _opensInApp, _folders) = (api, catalog, clock, opensInApp, folders);
         _profileHash = profileHash ?? (static () => null);
         Launcher = new ControlViewModel(new CommandRowView("StartSindri", "desk", [], Terminal: false, Method: null, Route: null, Labels.SetupLauncher, "cli-only:launcher", Destructive: false, ReadsViews: false, Shortcut: null), send: null, catalog.Clipboard, clock);
-        Footnote = new ControlViewModel(new CommandRowView("SetupOnyx", "desk", [], Terminal: false, Method: null, Route: null, Labels.SetupOnyxFootCommand, "cli-only:footnote", Destructive: false, ReadsViews: false, Shortcut: null), send: null, catalog.Clipboard, clock);
     }
 
     /// <summary>Raised when a step's button asks the shell to open an action in the app.</summary>
@@ -73,17 +71,6 @@ internal sealed partial class SetupViewModel : ObservableObject
 
     /// <summary>The launcher command with Copy, for when Sindri isn't running.</summary>
     public ControlViewModel Launcher { get; }
-
-    /// <summary>The terminal alternative for Onyx, one line under the checklist (Q5), with Copy.</summary>
-    public ControlViewModel Footnote { get; }
-
-    /// <summary>True while the footnote shows: Onyx is not set up and not set aside.</summary>
-    public bool IsFootnoteShown => _rows.TryGetValue(OnyxStep, out var onyx) && !onyx.IsFinished;
-
-    /// <summary>The words before the footnote's command.</summary>
-#pragma warning disable CA1822, MA0041 // why: the view binds it as an instance property of the view model
-    public string FootnoteText => Labels.SetupOnyxFoot;
-#pragma warning restore CA1822, MA0041
 
     /// <summary>The lead over the checklist: "Set up Sindri", or "Sindri is set up"; empty until the first list.</summary>
     public string Lead { get; private set => Set(ref field, value); } = string.Empty;
@@ -214,7 +201,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         {
             row.Rederive();
             row.Repo?.Refresh();
-            row.Onyx?.Refresh();
             Confirm(row);
         }
     }
@@ -276,7 +262,6 @@ internal sealed partial class SetupViewModel : ObservableObject
         Segments = [.. Steps.Select(s => new SetupSegment(s.SegmentKind))];
         (MeterDone, MeterMax) = (Steps.Count(s => s.IsFinished), Steps.Count);
         FoldHomeLine();
-        OnChanged(nameof(IsFootnoteShown));
     }
 
     // Home's line: shown while a step is open, naming the first step still to do, with Continue.

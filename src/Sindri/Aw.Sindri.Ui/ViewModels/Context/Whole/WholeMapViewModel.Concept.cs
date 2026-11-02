@@ -25,11 +25,12 @@ internal sealed partial class WholeMapViewModel
 
     /// <summary>The map is scoped to a concept: what was drawn goes, and the breadcrumb starts at the concepts.</summary>
     /// <param name="name">The concept's name.</param>
-    internal void EnterConcept(string name)
+    /// <param name="key">The concept's key, left out of each page action's "also in"; null when unknown.</param>
+    internal void EnterConcept(string name, string? key = null)
     {
         ArgumentNullException.ThrowIfNull(name);
         Clear();
-        _conceptName = name;
+        (_conceptName, _conceptKey) = (name, key);
         Changed();
         OnChanged(nameof(HasConcept));
     }
@@ -38,7 +39,8 @@ internal sealed partial class WholeMapViewModel
     internal void LeaveConcept()
     {
         Clear();
-        _conceptName = null;
+        (_conceptName, _conceptKey) = (null, null);
+        Pages.Clear();
         Changed();
         OnChanged(nameof(HasConcept));
     }

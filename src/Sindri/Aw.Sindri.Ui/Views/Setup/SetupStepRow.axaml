@@ -85,9 +85,6 @@
       <Panel IsVisible="{Binding Workflows, Converter={x:Static ObjectConverters.IsNotNull}}">
         <sw:SetupWorkflowsConfirmView x:Name="SetupStepWorkflowsConfirm" DataContext="{Binding Workflows}" />
       </Panel>
-      <Panel IsVisible="{Binding Onyx, Converter={x:Static ObjectConverters.IsNotNull}}">
-        <sw:SetupOnyxForm x:Name="SetupStepOnyxForm" DataContext="{Binding Onyx}" />
-      </Panel>
       <Border x:Name="SetupStepNote" IsVisible="{Binding HasNote}" AutomationProperties.Name="{Binding Note}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock Classes="caption subtle" Text="{Binding Note}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
       </Border>

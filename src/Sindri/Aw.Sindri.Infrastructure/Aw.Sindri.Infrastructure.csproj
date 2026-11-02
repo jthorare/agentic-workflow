@@ -18,8 +18,6 @@
   <ItemGroup>
     <EmbeddedResource Include="Ledger/Migrations/*.sql" />
     <EmbeddedResource Include="Views/Migrations/*.sql" />
-    <!-- The Onyx pins (spec docs/superpowers/specs/2026-10-16-sindri-onyx-managed-design.md §6), checked by scripts/onyx-lock.sh. -->
-    <EmbeddedResource Include="../../../context/onyx.lock" LogicalName="onyx.lock" />
     <!-- the built-in agent catalog, once in config/launcher (collector spec CA-0) -->
     <EmbeddedResource Include="../../../config/launcher/builtins.json" LogicalName="builtins.json" Link="Launch/builtins.json" />
     <EmbeddedResource Include="../../../config/launcher/terminals.json" LogicalName="terminals.json" Link="Launch/terminals.json" />

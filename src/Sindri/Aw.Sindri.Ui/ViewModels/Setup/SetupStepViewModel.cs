@@ -30,7 +30,7 @@ internal sealed partial class SetupStepViewModel : ObservableObject
     /// <summary>The step as last served.</summary>
     internal SetupStepView Step { get; private set; }
 
-    /// <summary>The step's id (repo, profile, recipes, mcp, map, onyx).</summary>
+    /// <summary>The step's id (repo, profile, recipes, mcp, map; any other id is drawn as a plain row).</summary>
     public string Id => Step.Id;
 
     /// <summary>The step's place in the checklist, from 1.</summary>
@@ -99,9 +99,6 @@ internal sealed partial class SetupStepViewModel : ObservableObject
 
     /// <summary>The workflows under the workflows step; empty for every other step.</summary>
     public SetupRecipeListViewModel Recipes { get; private set; } = SetupRecipeListViewModel.Empty;
-
-    /// <summary>The Onyx controls of the Onyx step; null for every other step.</summary>
-    public SetupOnyxViewModel? Onyx { get; set; }
 
     /// <summary>One line per coding agent for the agents step; empty for every other step.</summary>
     public IReadOnlyList<SetupAgentViewModel> Agents { get; private set; } = [];
@@ -270,7 +267,6 @@ internal sealed partial class SetupStepViewModel : ObservableObject
         HintText = Hint();
         Agents = AgentLines();
         Repo?.Update(Step);
-        Onyx?.Update(Step, _overrideNote is not null);
     }
 
     private List<SetupPreviewLineViewModel> PreviewLines() =>

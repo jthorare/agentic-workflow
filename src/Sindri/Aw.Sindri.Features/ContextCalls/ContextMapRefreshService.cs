@@ -18,7 +18,7 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// index's outlooks and asks <see cref="MapPublishDecision"/>; a publish or drop starts 'PublishContextMap' as 'service:context-map-refresh' when none runs and its backoff (5, 10, 20, 40, then 60 minutes over the newest
 /// publish failures) isn't holding; (3) the move check: when a mapped repo's checkout moved along its default branch past the heads in <see cref="MappedHeads"/> (the held draft's, else the current version's) it starts a
 /// 'RefreshContextMap', never while either kind runs, with the refresh backoff over refresh jobs only; (4) the alarm, the one step that merges the kinds: the newest 8 ended jobs of both give the failure count, and three
-/// in a row fail the run (needs-you 'failure:service:context-map-refresh'). A repo on a feature branch is left out and named in the quiet run's summary. No step ends the tick for the later ones.
+/// in a row fail the run (needs-you 'failure:service:context-map-refresh'). A repo on a feature branch is left out and named in the quiet run's summary. No step ends the tick for the later ones. (5) Only when steps 2 to 4 left nothing to do, <see cref="PinRelinkDecision"/> may start 'RelinkPinAliases' (concept pins spec 3.7): the approved pins' aliases or the current map version differ from the last succeeded relink.
 /// </summary>
 /// <param name="scopes">The profile's scope and the caller.</param>
 /// <param name="engine">The context engine: the mapped repos' heads and the stored publish state.</param>
@@ -100,8 +100,15 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return tail;
         }
 
-        var notes = new[] { publish.Note, tail.Value.Summary }.Where(static n => n is not null);
-        return new ScheduledResult(tail.Value.Idle && !publish.Started, notes.Any() ? string.Join("; ", notes) : null);
+        var idle = tail.Value.Idle && !publish.Started;
+        var relink = idle ? await RelinkStep(scope, tick, cancellationToken).ConfigureAwait(false) : default;   // step 5: only when steps 2 to 4 left nothing to do
+        if (relink.Error is { } relinkError)
+        {
+            return relinkError;
+        }
+
+        var notes = new[] { publish.Note, tail.Value.Summary, relink.Note }.Where(static n => n is not null);
+        return new ScheduledResult(idle && !relink.Started, notes.Any() ? string.Join("; ", notes) : null);
     }
 
     // Step 2: with a hold, ask the gate and start the publish when it says go (or drop) and nothing stops it.
@@ -125,7 +132,32 @@ internal sealed partial class ContextMapRefreshService(ContextScopes scopes, ICo
             return new PublishOutcome(Started: false, string.Create(CultureInfo.InvariantCulture, $"map v{hold.Version} held for the code index"), Error: null);
         }
 
+        if (action is MapRebuild rebuild)
+        {
+            return await Rebuild(rebuild, hold, tick, cancellationToken).ConfigureAwait(false);
+        }
+
         return Stands(action, tick) ? default : await StartPublish(cancellationToken).ConfigureAwait(false);
+    }
+
+    // #1704: the held draft was built before the code index of its commit, which is in now. It never publishes: the refresh builds again (the same start the move check uses; the refresh that is running, or its backoff, means it waits).
+    private async ValueTask<PublishOutcome> Rebuild(MapRebuild rebuild, MapHoldState hold, Tick tick, CancellationToken cancellationToken)
+    {
+        var note = string.Create(CultureInfo.InvariantCulture, $"map v{hold.Version} was built before the code index of {string.Join(", ", rebuild.Repos)}, building it again");
+        if (tick.Refreshes.Concat(tick.Publishes).Any(static j => j.State == JobState.Running) || RefreshBackoffHolds(tick))
+        {
+            return default;
+        }
+
+        var started = await Start(tick.Elsewhere, cancellationToken).ConfigureAwait(false);
+        return started.IsError ? new PublishOutcome(Started: false, Note: null, started.Error) : new PublishOutcome(Started: !started.Value.Idle, note, Error: null);
+    }
+
+    private bool RefreshBackoffHolds(Tick tick)
+    {
+        var finished = Finished(tick.Refreshes);
+        var failures = MainMoveDecision.FailedInARow(Attempts(finished));
+        return failures > 0 && clock.GetUtcNow() < finished[0].EndedAt + SyncGapDecision.Wait(failures);
     }
 
     // The refresh that is running replaces a gone draft, and a running publish or its backoff means the start waits.

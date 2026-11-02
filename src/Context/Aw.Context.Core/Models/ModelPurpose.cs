@@ -29,4 +29,16 @@ public enum ModelPurpose
     /// <summary>Naming the derived concepts of a map, one call per build (context.labeling).</summary>
     [JsonStringEnumMemberName("concepts")]
     Concepts,
+
+    /// <summary>Naming and summarizing one group of related records across sources (context.conceptSynthesis, context.labeling.maxTokensPerSync).</summary>
+    [JsonStringEnumMemberName("concept-synthesis")]
+    ConceptSynthesis,
+
+    /// <summary>The concept scan's two calls over a built map (context.conceptScan); routed like <see cref="Concepts"/>.</summary>
+    [JsonStringEnumMemberName("concept-scan")]
+    ConceptScan,
+
+    /// <summary>Jev's decision on product-surface candidate groups (context.models.productSurfaces); no CLI harness serves it.</summary>
+    [JsonStringEnumMemberName("product-surfaces")]
+    ProductSurfaces,
 }

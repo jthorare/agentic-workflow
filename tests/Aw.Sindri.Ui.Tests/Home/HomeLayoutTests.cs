@@ -7,6 +7,7 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Testing;
 using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Shell;
+using Aw.Sindri.Ui.Views.Layout;
 using Aw.Sindri.Ui.Views.Shell;
 using Microsoft.Extensions.Time.Testing;
 
@@ -18,7 +19,7 @@ public sealed class HomeLayoutTests
 {
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    private static async Task OnHome(double width, Action<ShellWindow> check)
+    private static async Task OnHome(double width, Action<ShellWindow> check, PageTier? tier = null)
     {
         using var stop = CancellationTokenSource.CreateLinkedTokenSource(Token);
         _ = await HeadlessUnitTestSession.GetOrStartForAssembly(typeof(HomeLayoutTests).Assembly).Dispatch(async () =>
@@ -40,6 +41,12 @@ public sealed class HomeLayoutTests
 
                 window.UpdateLayout();
                 Dispatcher.UIThread.RunJobs();
+                if (tier is { } forced)
+                {
+                    // the window cannot be narrower than 1000 px, so the Narrow tier (page region under 1000 px, e.g. beside an open sheet) is set on the page region itself
+                    PageLayout.SetTier(window.GetVisualDescendants().OfType<Border>().Single(b => b.Name == "Page"), forced);
+                }
+
                 window.UpdateLayout();
                 check(window);
             }
@@ -76,15 +83,15 @@ public sealed class HomeLayoutTests
     }
 
     [Fact]
-    public async Task At_900_the_columns_stack_with_needs_you_first_each_the_full_width()
+    public async Task At_the_Narrow_tier_the_columns_stack_with_needs_you_first_each_the_full_width()
     {
-        await OnHome(900, window =>
+        await OnHome(1000, window =>
         {
             Rect needs = Box(window, "NeedsYouPanel"), running = Box(window, "WorkflowsPanel"), queued = Box(window, "QueuedPanel");
 
             Assert.True(running.Top >= needs.Bottom - 0.5, "Running sits under Needs you");
             Assert.True(queued.Top >= running.Bottom - 0.5, "Queued sits under Running");
             Assert.True(Math.Abs(needs.Width - running.Width) < 1 && Math.Abs(needs.Left - running.Left) < 1, "the panels share one full-width column");
-        });
+        }, PageTier.Narrow);
     }
 }

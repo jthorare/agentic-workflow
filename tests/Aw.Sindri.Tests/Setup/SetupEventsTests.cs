@@ -17,7 +17,6 @@ public sealed class SetupEventsTests
         { "recipe.registration.completed", "recipe.registration.completed:<epoch>" },
         { "mcp.registered", "mcp.registered:<commandId>" },
         { "setup.consent.given", "setup.consent.given:<profileHash>" },
-        { "onyx.deferred", "onyx.deferred:<commandId>" },
     };
 
     [Theory, Trait("Lane", "unit")]

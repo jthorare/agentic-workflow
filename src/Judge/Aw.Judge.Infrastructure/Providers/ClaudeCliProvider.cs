@@ -57,20 +57,25 @@ internal sealed class ClaudeCliProvider(IProcessRunner runner) : AgentCliProvide
             return new ProviderErrored(ProviderReasons.UnparseableOutput);
         }
 
+        var usage = ProviderUsageReader.FromEnvelope(envelope);
         if (envelope.StructuredOutput is { } structured)
         {
-            return AgentAnswer.Read(structured, question);
+            return ProviderUsageReader.Attach(AgentAnswer.Read(structured, question), usage);
         }
 
         if (envelope.IsError == true)
         {
-            return new ProviderErrored(ProviderReasons.CliReportedError);
+            return Errored(ProviderReasons.CliReportedError, UsageLimitMatcher.Match(envelope.Result));
         }
 
         return envelope.Result is { } text && WireJson.TryParse(text, out var answer)
-            ? AgentAnswer.Read(answer, question)
+            ? ProviderUsageReader.Attach(AgentAnswer.Read(answer, question), usage)
             : new ProviderErrored(ProviderReasons.UnparseableAnswer);
     }
+
+    /// <inheritdoc />
+    protected override string? LimitIn(string output) =>
+        WireJson.Read<CliEnvelope>(output) is { IsError: true } envelope ? UsageLimitMatcher.Match(envelope.Result) : null;
 
     // Computed on each use: Options is set after construction.
     private Dictionary<string, string> Env =>

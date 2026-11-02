@@ -30,7 +30,7 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
         }
 
         var grant = held.Current;
-        var profile = Profile(approvedProfile, recorded.Value, loaded);
+        var profile = Profile(approvedProfile, recorded.Value, loaded, await profiles.LabelPick(approvedProfile, cancellationToken).ConfigureAwait(false), await profiles.SurfacePick(approvedProfile, cancellationToken).ConfigureAwait(false));
         var views = await Views(cancellationToken).ConfigureAwait(false);
         var health = await Health(grant is not null, views, profile, approvedProfile, cancellationToken).ConfigureAwait(false);
         health = healthRows.WithStaleBuild(health);
@@ -64,14 +64,14 @@ internal sealed class GetStatusService(HeldLease held, ProfileReads profiles, IL
     // 'on' when the APPROVED profile asks for model choice: that is what is in force, and the app never reads the word itself (model-pick spec 8).
     private static string ModelPick(LoadedProfile? approved) => approved?.Profile.Workflow?.Agent is { PickIsOn: true } ? "on" : "off";
 
-    private static ProfileStatus Profile(LoadedProfile? approved, RecordedApproval? recorded, Result<LoadedProfile> loaded)
+    private static ProfileStatus Profile(LoadedProfile? approved, RecordedApproval? recorded, Result<LoadedProfile> loaded, string labelPick, string surfacePick)
     {
         var approvedHash = approved?.Hash;
         var liveHash = loaded.IsSuccess ? loaded.Value.Hash : (Core.Ids.ProfileHash?)null;
         var changed = approvedHash is not null && liveHash is not null && liveHash != approvedHash;
         return new ProfileStatus(approvedHash, liveHash, changed, loaded.IsError ? loaded.Error.Message : null, loaded.IsSuccess ? loaded.Value.Source : null,
             ProfileRules.NeedsApproval(approvedHash, recorded?.Hash, liveHash),
-            ModelPick(approved));
+            ModelPick(approved), labelPick, surfacePick);
     }
 
     private async ValueTask<IReadOnlyList<ServiceStatus>> Services(LoadedProfile? approved, CancellationToken cancellationToken)

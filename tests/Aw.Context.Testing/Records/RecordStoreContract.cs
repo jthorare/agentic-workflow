@@ -219,6 +219,29 @@ public abstract class RecordStoreContract<TStore>
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.List(new RecordFilter(Kind: RecordKind.Doc), after: null, 10, CancellationToken.None)).Count == 0, "a kind filter narrows");
     }
 
+    /// <summary>A failed attempt counts, sets the retry time and keeps the last commit; a success resets them and stamps the commit; neither touches the last outcome.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task An_attempt_sets_and_clears_the_backoff_and_leaves_the_outcome_alone()
+    {
+        var store = Create();
+        var at = new DateTimeOffset(2026, 10, 29, 12, 0, 0, TimeSpan.Zero);
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Backoff(RecordSamples.Linear, CancellationToken.None)) == SourceBackoffState.None, "a source that never ticked has no backoff");
+
+        _ = ContractCheck.Ok(_owner, await store.RecordOutcome(RecordSamples.Linear, new SyncOutcome(at, "SND-CONTEXT-010"), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.RecordAttempt(RecordSamples.Linear, new SyncAttempt(at.AddHours(-1), Failed: false, ErrorText: null), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.RecordAttempt(RecordSamples.Linear, new SyncAttempt(at, Failed: true, "down"), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.RecordAttempt(RecordSamples.Linear, new SyncAttempt(at.AddMinutes(5), Failed: true, "still down"), CancellationToken.None));
+
+        var failing = ContractCheck.Ok(_owner, await store.Backoff(RecordSamples.Linear, CancellationToken.None));
+        ContractCheck.That(_owner, failing == new SourceBackoffState(2, at.AddMinutes(15), at.AddHours(-1), "still down"), "two failures wait 10 minutes from the second and keep the last commit");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.LastOutcome(RecordSamples.Linear, CancellationToken.None)) == new SyncOutcome(at, "SND-CONTEXT-010"), "the last outcome is the caller's own");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Backoff(RecordSamples.Github, CancellationToken.None)) == SourceBackoffState.None, "another source is untouched");
+
+        _ = ContractCheck.Ok(_owner, await store.RecordAttempt(RecordSamples.Linear, new SyncAttempt(at.AddMinutes(20), Failed: false, ErrorText: null), CancellationToken.None));
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Backoff(RecordSamples.Linear, CancellationToken.None)) == new SourceBackoffState(Failures: 0, NextTry: null, LastCommit: at.AddMinutes(20), LastErrorText: null), "a success resets the backoff and stamps the commit");
+    }
+
     /// <summary>A count is one source's records, chunks and chunk vectors, and nothing of another source.</summary>
     /// <returns>A task.</returns>
     [Fact]
@@ -235,6 +258,62 @@ public abstract class RecordStoreContract<TStore>
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Count(RecordSamples.Linear, CancellationToken.None)) == new SourceCounts(2, 3, 1), "linear holds 2 records, 3 chunks and 1 vector");
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Count(RecordSamples.Github, CancellationToken.None)) == new SourceCounts(1, 1, 1), "github's rows are its own");
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.Count(SourceId.From("slack"), CancellationToken.None)) == new SourceCounts(0, 0, 0), "a source the store never saw holds nothing");
+    }
+
+    /// <summary>The live count leaves out tombstones and blocked records; the embedded count is the live records with a chunk vector.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_live_count_leaves_out_removed_and_blocked_records_and_counts_the_ones_with_a_vector()
+    {
+        var store = Create();
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.LiveCounts(CancellationToken.None)) == new LiveRecordCounts(0, 0), "an empty store holds nothing");
+        var embedded = RecordSamples.Record("linear:issue/1");
+        var twoChunks = RecordSamples.Record("linear:issue/2");
+        var pending = RecordSamples.Record("linear:issue/3");
+        var removed = RecordSamples.Record("linear:issue/4");
+        var blocked = RecordSamples.Record("linear:issue/5", blocked: true);
+        var github = RecordSamples.Record("github:pr/o/r/1", source: RecordSamples.Github);
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1, RecordSamples.Write(embedded, "one"), RecordSamples.Write(twoChunks, "a", "b"), RecordSamples.Write(pending, "three"), RecordSamples.Write(removed, "four"), RecordSamples.Write(blocked)), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Github, 1, RecordSamples.Write(github, "gh")), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.PutVectors(
+            [RecordSamples.Vector(new ChunkKey(embedded.Key, 0), "one", 1, 0), RecordSamples.Vector(new ChunkKey(twoChunks.Key, 0), "a", 1, 0), RecordSamples.Vector(new ChunkKey(twoChunks.Key, 1), "b", 0, 1), RecordSamples.Vector(new ChunkKey(github.Key, 0), "gh", 1, 1)],
+            CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 2) with { Removed = [removed.Key] }, CancellationToken.None));
+
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.LiveCounts(CancellationToken.None)) == new LiveRecordCounts(4, 3), "4 live records (one removed, one blocked), 3 with a vector: a record with two vectors counts once");
+    }
+
+    /// <summary>The project read lists a source's visible projects by title, each with its lead and the open, visible issues linked to it, and nothing the audience can't read.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_project_read_counts_open_visible_issues_and_hides_what_the_audience_cannot_read()
+    {
+        var store = Create();
+        var projects = SourceId.From("linear-projects");
+        var beta = RecordSamples.Record("linear:project/beta", source: projects) with { Kind = RecordKind.Project, Title = "Beta", Health = "atRisk", DueAt = new DateOnly(2026, 11, 14), Links = [new RecordLink("linear:user/u1", RecordLinkKind.LedBy, "Ada")] };
+        var alpha = RecordSamples.Record("linear:project/alpha", source: projects) with { Kind = RecordKind.Project, Title = "Alpha" };
+        var hidden = RecordSamples.Record("linear:project/hidden", source: projects) with { Kind = RecordKind.Project, Title = "Hidden", Audience = AudienceKey.From("linear:other") };
+        var removed = RecordSamples.Record("linear:project/gone", source: projects) with { Kind = RecordKind.Project, Title = "Gone" };
+        var inBeta = new[] { new RecordLink("linear:project/beta", RecordLinkKind.InProject, Title: null) };
+        var older = RecordSamples.Now.AddDays(-1);
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(projects, 1, RecordSamples.Write(beta, "b"), RecordSamples.Write(alpha, "a"), RecordSamples.Write(hidden, "h"), RecordSamples.Write(removed, "g")), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1,
+            RecordSamples.Write(RecordSamples.Record("linear:issue/1") with { Links = inBeta }, "one"),
+            RecordSamples.Write(RecordSamples.Record("linear:issue/2") with { Links = inBeta, UpdatedAt = older }, "two"),
+            RecordSamples.Write(RecordSamples.Record("linear:issue/3") with { Links = inBeta, State = RecordState.Done }, "three"),
+            RecordSamples.Write(RecordSamples.Record("linear:issue/4") with { Links = inBeta, Audience = AudienceKey.From("linear:other") }, "four")), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(projects, 2) with { Removed = [removed.Key] }, CancellationToken.None));
+
+        var rows = ContractCheck.Ok(_owner, await store.ProjectFacts(projects, new RecordAudience(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }, new HashSet<RecordKey>()), CancellationToken.None));
+
+        ContractCheck.That(_owner, rows.Select(r => r.Title).SequenceEqual(["Alpha", "Beta"], StringComparer.Ordinal), "the visible, live projects come by title (not the other audience's, not the removed one)");
+        var row = rows[1];
+        ContractCheck.That(_owner, row.OpenIssues == 2, "two open visible issues: not the done one, not the other audience's");
+        ContractCheck.That(_owner, row.NewestIssueAt == RecordSamples.Now, "the newest change among the issues the caller can read");
+        ContractCheck.That(_owner, row.LeadRef == "linear:user/u1" && row.LeadName == "Ada", "the lead is the led-by link's target and title");
+        ContractCheck.That(_owner, row.Health == "atRisk" && row.DueAt == new DateOnly(2026, 11, 14), "health and due day come with it");
+        ContractCheck.That(_owner, rows[0].OpenIssues == 0 && rows[0].NewestIssueAt is null && rows[0].LeadRef is null, "a project with no issues and no lead has zero, null and null");
+        ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.ProjectFacts(RecordSamples.Github, new RecordAudience(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }, new HashSet<RecordKey>()), CancellationToken.None)).Count == 0, "another source has no projects here");
     }
 
     /// <summary>A purge removes one source's records, chunks, vectors and position and no other's.</summary>

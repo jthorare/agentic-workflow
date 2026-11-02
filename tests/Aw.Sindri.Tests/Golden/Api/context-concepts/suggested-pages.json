@@ -1,0 +1,51 @@
+{
+  "apiVersion": 1,
+  "repo": "aw-split-panes",
+  "mapVersion": "v1",
+  "state": "ok",
+  "concepts": [
+    {
+      "id": "concept:approval-workflow",
+      "name": "Approval workflow",
+      "summary": "Managers approve.",
+      "source": "derived",
+      "size": {
+        "features": 0,
+        "records": 0,
+        "decisions": 0,
+        "code": 0
+      },
+      "citations": [],
+      "pages": 0
+    },
+    {
+      "id": "concept:self-scheduling",
+      "name": "Self-scheduling",
+      "summary": "People pick shifts.",
+      "source": "derived",
+      "size": {
+        "features": 0,
+        "records": 0,
+        "decisions": 0,
+        "code": 0
+      },
+      "citations": [],
+      "pages": 1,
+      "suggestedPages": [
+        "surface:route/GET:/schedule/week"
+      ]
+    }
+  ],
+  "other": {
+    "id": "concept:other",
+    "name": "Other",
+    "size": {
+      "features": 0,
+      "records": 0,
+      "decisions": 0,
+      "code": 0
+    }
+  },
+  "links": [],
+  "pagesInNoConcept": 0
+}

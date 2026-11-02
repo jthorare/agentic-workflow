@@ -159,6 +159,11 @@ public sealed class FakeSlackServer(params string[] allowedChannels) : HttpMessa
             o["reply_count"] = m.ReplyCount;
         }
 
+        if (m.LatestReply is not null)
+        {
+            o["latest_reply"] = m.LatestReply;
+        }
+
         if (m.Subtype is not null)
         {
             o["subtype"] = m.Subtype;

@@ -1,4 +1,5 @@
 using Aw.Context.Core.Extract;
+using Aw.Context.Core.Symbols;
 
 namespace Aw.Context.Features.BuildMap;
 
@@ -10,6 +11,9 @@ internal sealed record MapRecordReading(ExtractedMap Map, long Stamp, IReadOnlyL
 {
     /// <summary>The lines of <see cref="Notes"/> that say something is missing or stale: they alone are degraded; the rest are report notes.</summary>
     public IReadOnlyList<string> Degraded { get; init; } = [];
+
+    /// <summary>The code index head each repo's symbol citations were resolved against (by repo name), as the first answer of the pass gave it; a repo the index never answered for is absent (#1704).</summary>
+    public IReadOnlyDictionary<string, CodeIndexHead> IndexHeads { get; init; } = new Dictionary<string, CodeIndexHead>(StringComparer.Ordinal);
 
     /// <summary>The records over <see cref="MapRecordSources.TouchCap"/> files: no file edges in <see cref="Map"/>, they roll up to features once the build has assigned the homes.</summary>
     public IReadOnlyList<RolledRecord> Overflow { get; init; } = [];

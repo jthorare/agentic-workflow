@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# Stub gh: page 1 of the pulls fixture, then an empty list.
+case "$*" in *"page=1"*) cat "$STUB_FIX/pulls.json" ;; *) echo '[]' ;; esac

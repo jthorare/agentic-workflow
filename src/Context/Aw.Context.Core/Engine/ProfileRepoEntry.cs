@@ -10,4 +10,7 @@ public sealed record ProfileRepoEntry(string Name, string Path, IReadOnlyList<st
 {
     /// <summary>The repo's roles with their globs and treatment ('index.roles', 'index.ignore', 'index.demote'), for the role counts; or null for none.</summary>
     public IReadOnlyList<RepoRole>? Roles { get; init; }
+
+    /// <summary>The pages the profile's 'index.pages' names (its own and this repo's), or null for none.</summary>
+    public IReadOnlyList<PagePin>? Pages { get; init; }
 }

@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # tests/ui-checks/gh-1071-settings-skipped-width.sh — regression check for #1071 (Settings: a skipped setup step shows the same
 # tick as a Done step, and Settings is a narrow column).
-# At 1280x800: open Settings, press "Not now" on the Onyx step until its row says "skipped", then (1) the number circle of the
-# skipped step must not be the "✓" a done step gets, and (2) every setup step card must reach to within 64 px of the window's
-# right edge (on main the cards are x=25 w=741 in a 1280 px window).
+# At 1280x800: open Settings, wait for the "Connect your sources" step, then every setup step card must reach to within 64 px of
+# the window's right edge (on main the cards were x=25 w=741 in a 1280 px window). The skipped step's own icon (a dash, never the
+# done tick) is checked by SetupViewModelTests.A_skipped_step_shows_a_dash_not_the_done_tick: since Onyx left (#1598) no step in
+# the real app can be skipped, so there is no skipped row to drive here.
 # It drives the REAL sindri-ui (UI driver, docs/csharp/ui-driver.md) against a guarded fixture home (scripts/sindri-ui-fixture.sh
 # through scripts/sindri-prove.sh).
 #   bash tests/ui-checks/gh-1071-settings-skipped-width.sh        exit 0 pass; 1 FAIL (one line on stderr); 2 the setup broke
@@ -91,8 +92,7 @@ bash "$ROOT/scripts/sindri-ui-app.sh" >"$OUT/app.log" 2>&1 &
 APP_WRAPPER_PID=$!
 "$DRIVER" ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 
-onyx_title="Connect Linear and Slack (Onyx)"
-not_now=(--type Button --name "Not now")
+sources_title="Connect your sources"
 
 # 3. Settings at 1280x800, by the Ctrl+, chord.
 timeout 120 "$DRIVER" window --width 1280 --height 800 >/dev/null 2>&1 || setup_fail "could not size the window"
@@ -103,42 +103,18 @@ step_id() {
   "$DRIVER" search --type Expander --limit 200 2>/dev/null \
     | jq -r --arg p "$1" '[.matches[] | select(.visible and ((.name // "") | startswith($p))) | .id][0] // empty'
 }
-onyx_id=""
+sources_id=""
 for _ in $(seq 1 120); do
-  onyx_id="$(step_id "$onyx_title, ")"
-  [ -n "$onyx_id" ] && break
+  sources_id="$(step_id "$sources_title, ")"
+  [ -n "$sources_id" ] && break
   sleep 0.5
 done
-[ -n "$onyx_id" ] || setup_fail "no '$onyx_title' step in Settings"
-
-# 4. Open the step if it is closed, press "Not now", wait for the row to say "skipped" (name: "<title>, skipped. <sub>").
-if ! "$DRIVER" search "${not_now[@]}" 2>/dev/null | jq -e '[.matches[] | select(.visible)] | length > 0' >/dev/null; then
-  "$DRIVER" action --node-id "$onyx_id" --do expand >/dev/null 2>&1 || setup_fail "could not expand the Onyx step"
-fi
-"$DRIVER" wait-for "${not_now[@]}" --state visible --wait-ms 30000 >/dev/null 2>&1 || setup_fail "no 'Not now' button on the Onyx step"
-"$DRIVER" click "${not_now[@]}" >/dev/null 2>&1 || setup_fail "the Not now click was not accepted by the driver"
-skipped=0
-for _ in $(seq 1 60); do
-  if [ -n "$(step_id "$onyx_title, skipped")" ]; then skipped=1; break; fi
-  sleep 0.5
-done
-[ "$skipped" = 1 ] || setup_fail "the Onyx step never said skipped"
+[ -n "$sources_id" ] || setup_fail "no '$sources_title' step in Settings"
 sleep 1
-"$DRIVER" screenshot --out "$OUT/skipped.png" >/dev/null 2>&1
+"$DRIVER" screenshot --out "$OUT/settings.png" >/dev/null 2>&1
 "$DRIVER" tree --depth 64 >"$OUT/tree.json" 2>/dev/null || setup_fail "the driver gave no tree"
 
-# 5. The skipped step's number circle (the first visible TextBlock of its Expander: the header's) is not a done step's tick.
-circle="$(jq -r --arg t "$onyx_title, skipped" '
-  [.. | objects | select(.type == "Expander" and .visible and ((.name // "") | startswith($t)))][0]
-  | [.. | objects | select(.type == "TextBlock" and .visible)][0].text // empty' "$OUT/tree.json")"
-[ -n "$circle" ] || setup_fail "no number circle found for the skipped Onyx step (see $OUT/tree.json)"
-done_circles="$(jq -r '
-  [.. | objects | select(.type == "Expander" and .visible and ((.name // "") | test(", done\\.")))
-   | [.. | objects | select(.type == "TextBlock" and .visible)][0].text] | unique | join(" ")' "$OUT/tree.json")"
-[ "$circle" != "✓" ] || fail "the skipped Onyx step shows '$circle', the same tick as a done step (done circles: '$done_circles') (screenshot in $OUT)"
-case " $done_circles " in *" $circle "*) fail "the skipped Onyx step's circle '$circle' equals a done step's (screenshot in $OUT)";; esac
-
-# 6. Every visible setup step card reaches within 64 px of the window's right edge.
+# 4. Every visible setup step card reaches within 64 px of the window's right edge.
 win_w="$(jq -r '.root.width // .width' "$OUT/tree.json")"
 narrow="$(jq -r --argjson w "$win_w" '
   [.. | objects | select(.type == "Expander" and .visible and ((.name // "") | test(", (done|to do|needs you|working|failed|skipped|waiting|blocked)[.,]")))
@@ -146,4 +122,4 @@ narrow="$(jq -r --argjson w "$win_w" '
    | "\(.name | split(",")[0]) ends at \(.x + .width)"] | .[0] // empty' "$OUT/tree.json")"
 [ -z "$narrow" ] || fail "Settings is a narrow column: $narrow, the window is $win_w wide (screenshot in $OUT)"
 
-echo "PASS: a skipped setup step has its own icon and every step card reaches the window's right edge (screenshots in $OUT)"
+echo "PASS: every setup step card reaches the window's right edge (screenshots in $OUT)"

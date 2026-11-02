@@ -38,14 +38,7 @@ internal sealed class LinearFeed(LinearClient client, TimeSpan deadline) : Recor
     private JsonObject Filter(DateTimeOffset? since, DateTimeOffset? notBefore, DateTimeOffset? before)
     {
         var filter = client.Settings.Teams.Count > 0 ? LinearFilters.InTeams([], client.Settings.Teams) : [];
-        if (since is { } after && (notBefore is not { } window || window <= after))
-        {
-            filter["updatedAt"] = new JsonObject { ["gt"] = Iso(after) };
-        }
-        else if (notBefore is { } start)
-        {
-            filter["updatedAt"] = new JsonObject { ["gte"] = Iso(start) };
-        }
+        Window(filter, since, notBefore, before);
 
         if (before is { } end)
         {
@@ -55,6 +48,23 @@ internal sealed class LinearFeed(LinearClient client, TimeSpan deadline) : Recor
         }
 
         return filter;
+    }
+
+    private static void Window(JsonObject filter, DateTimeOffset? since, DateTimeOffset? notBefore, DateTimeOffset? before)
+    {
+        if (since is { } after && (notBefore is not { } window || window <= after))
+        {
+            filter["updatedAt"] = new JsonObject { ["gt"] = Iso(after) };
+        }
+        else if (notBefore is { } start && since is null && before is null)
+        {
+            // why: with no watermark the first Recent read also takes the old open issues of open projects (spec 2026-10-29 §4.4); it ends by setting the watermark, so no later read carries this
+            _ = LinearFilters.UpdatedOrOpenInOpenProject(filter, Iso(start));
+        }
+        else if (notBefore is { } backfillStart)
+        {
+            filter["updatedAt"] = new JsonObject { ["gte"] = Iso(backfillStart) };
+        }
     }
 
     private static string Iso(DateTimeOffset at) => at.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);

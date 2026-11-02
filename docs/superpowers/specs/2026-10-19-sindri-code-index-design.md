@@ -397,7 +397,7 @@ while C is the newest. Once the index has moved past a held map's commit that ma
 
 **The gate (the map side holds a draft, not a version).** The refresh job (F1) still builds the draft and lets the cleanup
 agent settle it, but it no longer promotes unconditionally: it asks `MapPublishDecision` (below). On `Publish` it
-promotes as today. On `Wait` it ends `Succeeded` with `held: true` and stores a **hold** next to the draft in `context.db`
+promotes as today, except that a draft whose heads say it was built before the code index of its commit (`MapHead.IndexCommit` null, or not that commit) is never the one that publishes: when every index is built for the held commits, the decision answers `Rebuild` and the refresh builds again instead of promoting it (#1704). On `Wait` it ends `Succeeded` with `held: true` and stores a **hold** next to the draft in `context.db`
 (retrieval spec §8.7a): the draft's version, each mapped repo's commit **as the build read it** (the build's own report, `MapBuildReport.Heads`, a new
 field: the pre-build `MapHeads` read can differ when trunk moves in between) with whether it was on the default
 branch, and `since` (when the hold began, kept across supersedes, below). The held version is an ordinary `draft`: no

@@ -46,6 +46,17 @@ public sealed class BubblewrapArgvTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public void A_link_entry_is_refused_because_it_belongs_to_a_seatbelt_plan()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope);
+        var withLink = plan with { Mounts = [.. plan.Mounts, new PlanMount("/run/h/.venv", PlanMountKind.Link, "/home/owner/.venv")] };
+
+        var thrown = Assert.Throws<InvalidOperationException>(() => BubblewrapArgv.Build(withLink, _host, secretsFd: false));
+
+        Assert.Contains("Seatbelt", thrown.Message, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public void A_write_scope_plan_matches_its_golden() =>
         Golden.Match(string.Join('\n', Args(Req.WriteScope)) + "\n", typeof(BubblewrapArgvTests).Assembly, "Sandbox/Bubblewrap/Golden/argv-writescope.txt", Normalization.None);
 

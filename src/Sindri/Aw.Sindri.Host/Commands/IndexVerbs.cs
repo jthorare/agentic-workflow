@@ -1,13 +1,17 @@
+using System.Text;
 using Aw.Kernel;
 using Aw.Sindri.Core;
+using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Features.ContextCalls;
+using Aw.Sindri.Features.GetJob;
 using Aw.Sindri.Host.Text;
 
 namespace Aw.Sindri.Host.Commands;
 
 /// <summary>
-/// 'sindri index sync [source] | status [--json] | purge &lt;source&gt;' (owned-index spec §5.5, §5.8, §10): clients of the control plane. <b>sync</b> runs the 'index-sync' service as a job and follows it as
-/// 'services run' does (the service ticks every feed; a named source is only checked to be one of them). <b>status</b> reads GET /sindri/index/status and never starts the control plane.
+/// 'sindri index sync [source] | status [--json] | purge &lt;source&gt;' (owned-index spec §5.5, §5.8, §10): clients of the control plane. <b>sync</b> without a source runs the 'index-sync' service as a job and follows it as
+/// 'services run' does (it ticks every feed). With a source it checks the name against the feeds, then starts that source's own job (POST /sindri/index/sync): only that feed ticks, the scheduled
+/// run being in flight does not refuse it, and a source that ended with a code (down, capped, already syncing) exits 1. <b>status</b> reads GET /sindri/index/status and never starts the control plane.
 /// <b>purge</b> is a human's verb: it asks for the counts (the preview is refused to a session, SND-AUTH-002), shows them and deletes only after a typed yes at a terminal.
 /// Exit codes are the context verbs': 0 ok, 1 attention (a source ended with a code, not running, refused, a purge not confirmed), 2 a usage or tool error.
 /// </summary>
@@ -22,6 +26,7 @@ internal sealed class IndexVerbs(ControlPlaneClient client, Output output, JobFo
     internal const string Usage = "index sync [<source>] [--detach] [--json] [--no-start] | index status [--json] | index purge <source>";
 
     private const string StatusRoute = "/sindri/index/status";
+    private const string SyncRoute = "/sindri/index/sync";
     private const string PurgeRoute = "/sindri/index/purge";
 
     private static readonly string[] _syncFlags = ["--detach", "--json", "--no-start"];
@@ -52,26 +57,49 @@ internal sealed class IndexVerbs(ControlPlaneClient client, Output output, JobFo
 
     private async Task<int> RunSync(SyncLine line, CancellationToken interrupt, CancellationToken again)
     {
-        if (line.Source is { } named)
+        if (line.Source is not { } named)
         {
-            var refused = await CheckFeed(named, line.Flags.Contains("--no-start", StringComparer.Ordinal), interrupt).ConfigureAwait(false);
-            if (refused is { } code)
-            {
-                return code;
-            }
+            return await new ServiceVerbs(client, output, follower, ensureRunning).Run(["run", "index-sync", .. line.Flags], interrupt, again).ConfigureAwait(false);
         }
 
-        var exit = await new ServiceVerbs(client, output, follower, ensureRunning).Run(["run", "index-sync", .. line.Flags], interrupt, again).ConfigureAwait(false);
-        if (!line.Flags.Contains("--json", StringComparer.Ordinal) && !line.Flags.Contains("--detach", StringComparer.Ordinal))
+        var refused = await CheckFeed(named, line.Flags.Contains("--no-start", StringComparer.Ordinal), interrupt).ConfigureAwait(false);
+        if (refused is { } code)
         {
-            // The service ticks every feed, even when one source was named; say so rather than let the name suggest otherwise.
-            await output.Notice("ran index-sync (all sources)").ConfigureAwait(false);
+            return code;
         }
 
-        return exit;
+        var started = await client.Post<SyncIndexSourceRequest, JobStartedResponse>(SyncRoute, new SyncIndexSourceRequest(named), interrupt).ConfigureAwait(false);
+        if (started.IsError)
+        {
+            return await Failed(started.Error).ConfigureAwait(false);
+        }
+
+        var json = line.Flags.Contains("--json", StringComparer.Ordinal);
+        if (line.Flags.Contains("--detach", StringComparer.Ordinal))
+        {
+            return json
+                ? await output.Raw(started.Value.Body, 0).ConfigureAwait(false)
+                : await output.Text($"job {started.Value.Value.JobId.Value} started\n", 0).ConfigureAwait(false);
+        }
+
+        var exit = await follower.Follow(started.Value.Value, json, interrupt, again).ConfigureAwait(false);
+        return exit == 0 && await EndedWithCode(started.Value.Value, interrupt).ConfigureAwait(false) ? 1 : exit;
     }
 
-    /// <summary>The service ticks every feed, so a name only has to be one of them: a typo is caught before a job starts. Null when it is; else the exit code.</summary>
+    /// <summary>A source that is down, capped or already syncing is a row with a code, not a failed job; the job ended well, so its result says whether the source did.</summary>
+    private async Task<bool> EndedWithCode(JobStartedResponse started, CancellationToken ct)
+    {
+        var job = await client.Get<JobView>(started.Links.Job, ct).ConfigureAwait(false);
+        if (job.IsError || job.Value.Value.Result is not { } result)
+        {
+            return false;
+        }
+
+        var read = output.Read<SyncIndexSourceResult>(Encoding.UTF8.GetBytes(result.GetRawText()));
+        return read.IsSuccess && read.Value.Code is not null;
+    }
+
+    /// <summary>A name has to be one of the feeds: a typo is caught before a job starts. Null when it is; else the exit code.</summary>
     private async Task<int?> CheckFeed(string named, bool noStart, CancellationToken ct)
     {
         var down = ensureRunning is null ? null : await ensureRunning(!noStart, ct).ConfigureAwait(false);

@@ -7,7 +7,7 @@ namespace Aw.Context.Core.Map;
 /// <summary>
 /// The two structure measures a map build runs on its joined graph before it writes a draft (map structure spec §4): the share of leaf home features
 /// (a feature that holds files) with at least the configured minimum of files that link to no other feature and no table, and the share over
-/// <see cref="SizeCap"/> files. Deterministic edges only. "At the limit" passes; the limits are proposals until the real map is re-measured.
+/// <see cref="SizeCap"/> files. Deterministic edges only. "At the limit" passes. The isolated degraded limit is measured (issue 1365); the other limits are the spec's proposals, which the measured maps sat well inside.
 /// </summary>
 public static class MapChecks
 {
