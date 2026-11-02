@@ -1,6 +1,6 @@
 ---
 name: rootCause
-description: Use BEFORE fixing any bug — a failing or flaky test, a bug report or customer complaint, an error, crash or stack trace, a regression, or anything described as broken, wrong or not working, even when the fix looks small. Finds and proves the root cause first (investigate, analyze, hypothesize, then implement) with scope frozen to the module boundary. Not for new features, refactors, or explaining how code works.
+description: Use BEFORE fixing any bug — a failing or flaky test, a bug report or customer complaint, an error, crash or stack trace, a regression, or anything described as broken, wrong or not working, even when the fix looks small. Finds and proves the root cause first with scope frozen to the module boundary. Not for new features, refactors, or explaining how code works.
 argument-hint: "[--depth N] [--investigate-only] [error-message-or-issue-description | canary incident JSON]"
 allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(SHARED_DIR=*), Bash(source *), Bash(mkdir *), Bash(cat *), Agent, Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -225,7 +225,7 @@ Handoff: $AW_DIR/investigations/{slug}/handoff.md
 1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5, Write tool).
 2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5, Write tool).
 3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/rootCause-<timestamp>.json` (Result block, Write tool). Print the gate (`echo "AW_RESULT=${AW_RESULT:-0}"`) to know.
-4. The reply contains the `aw-result` block above, before `## Next steps`. It is never optional: callers parse it, and it goes in even when the rest of the reply is short.
+4. Your final reply, sent after the last tool call (every Write above done first), contains the `aw-result` block above, before `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply. It is never optional: callers parse it, and it goes in even when the rest of the reply is short.
 
 If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
 
@@ -247,7 +247,7 @@ Do not invoke bugHunt if the fix was verified — rootCause's own report is suff
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 ```
 
-The fenced JSON tail in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON; the block comes before `## Next steps`.
+The fenced JSON tail in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON, before you print the block; the block goes in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`rootCause`), `artifacts` (absolute paths: the report `$AW_DIR/investigations/<timestamp>-<slug>.md` and the handoff), `summary` (one line),
 plus `status` (`fixed | unfixed | scope-breach | diagnosed`, as today); `report_path` (as today); `handoff_path` (as today); `boundary` (as today).

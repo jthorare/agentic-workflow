@@ -107,6 +107,18 @@ T="$(fixture no-block)"; skill "$T" noblock '{}'
 printf -- '---\nname: noblock\n---\nBody.\n' > "$T/skills/noblock/SKILL.md"
 run "$T"; expect_rc "no Result block at all fails" 1
 
+# in_block FILE LINE: put LINE inside FILE's Result block (skill() closes it with `## Next steps`)
+in_block() { awk -v line="$2" '/^## Next steps/ { print line; print "" } { print }' "$1" > "$1.tmp" && mv "$1.tmp" "$1"; }
+
+T="$(fixture old-order)"; skill "$T" oldorder '{}'
+in_block "$T/skills/oldorder/SKILL.md" 'Write the result file and print the same JSON as a fenced `aw-result` block before `## Next steps`.'
+run "$T"; expect_rc "aw-result block before Next steps without final reply fails" 1
+expect_out "final-reply reason" 'oldorder/SKILL.md: the Result block puts the aw-result block before ## Next steps without saying final reply'
+
+T="$(fixture new-order)"; skill "$T" neworder '{}'
+in_block "$T/skills/neworder/SKILL.md" 'Write the result file first; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.'
+run "$T"; expect_rc "aw-result block in the final reply passes" 0
+
 T="$(fixture bootstrap)"
 printf -- '---\nname: bootstrap\n---\n\n## Result block\n\nKeys: `skill`.\n' > "$T/bootstrap/SKILL.md"
 run "$T"; expect_rc "bootstrap/SKILL.md is checked too" 1

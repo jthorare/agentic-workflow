@@ -50,7 +50,7 @@ Read `$SHARED_DIR/platform-detection.md` and apply it exactly — the recursive 
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 ```
 
-`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-analyze-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/design-analyze-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`design-analyze`), `artifacts` (absolute paths: `design-tokens.json` and the raw captures under `$AW_DIR/design/raw/`), `summary` (one line),
 plus `platform` (`web | ios`, the sub-skill it delegated to).
