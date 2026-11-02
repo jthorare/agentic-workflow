@@ -1,6 +1,6 @@
 ---
 name: cso
-description: "OWASP Top 10 + STRIDE threat model. Runs on a plan (pre-impl mode) or a PR diff (post-impl mode). Outputs severity-rated findings with mitigations."
+description: "Use when a plan or pull request needs a security check: auth gaps, exposed data, injection, abuse cases, \"is this safe to ship\". Walks the OWASP Top 10 and STRIDE, then writes rated findings with fixes. Plan mode before building, diff mode on a PR. Not for scaling or component-design questions."
 argument-hint: "[--plan|--diff] [path-or-pr#] [--output <path>] [--slim]"
 allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -105,6 +105,18 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 - Plan mode default: `~/.agentic-workflow/<repo-slug>/plans/<feature>/security-review.md` (canonical — matches `/autoplan` placement; optional copy to `security/` on request)
 - Diff mode default: `~/.agentic-workflow/<repo-slug>/security/<target-slug>-threat-model.md`
 - When `--output <path>` is supplied: that exact path
+
+## Result block
+
+Only when `AW_RESULT=1`: write `$AW_DIR/results/cso-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
+
+- `skill`: `"cso"`
+- `artifacts`: absolute paths of the files this run wrote (the threat-model file)
+- `summary`: one line, the recommendation and the worst finding
+- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the same value as the report's final `verdict:` line
+- `mode`: `plan` or `diff`
+
+Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
 
 ## Next steps
 
