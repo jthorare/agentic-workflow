@@ -1,4 +1,5 @@
 ---
+timeout_seconds: 300
 max_turns: 4
 allowed_tools: [Read, Glob, Grep, Skill]
 tags: [family, plan-review, planDesignReview]
