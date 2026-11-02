@@ -1,6 +1,6 @@
 ---
 name: planDesignReview
-description: "Design-lens review of a plan document. Rates information architecture, interaction states, user flows, accessibility, and brand/voice consistency on a 1–5 scale with specific gaps."
+description: "Use when a plan or feature spec needs a UX check before any building: screens, flows, loading, empty and error states, accessibility, copy tone. Rates five design dimensions 1-5 and fills a surface-by-state coverage table from the plan text. Not for a running UI, and not for API or developer-experience review."
 argument-hint: "[plan-path] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -99,6 +99,17 @@ Reads a plan directory's design-relevant docs (auto-discovers latest if no arg) 
 
 - Default: `~/.agentic-workflow/<repo-slug>/plans/<feature>/design-review.md`
 - When `--output <path>` is supplied: that exact path (used by `/autoplan` for canonical placement inside the feature dir)
+
+## Result block
+
+Only when `AW_RESULT=1`: write `$AW_DIR/results/planDesignReview-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
+
+- `skill`: `"planDesignReview"`
+- `artifacts`: absolute paths of the files this run wrote (the review file)
+- `summary`: one line, the verdict and the lowest-rated dimension
+- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the same value as the report's final `verdict:` line
+
+Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
 
 ## Next steps
 
