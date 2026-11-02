@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 
 namespace Aw.UiDriver.Avalonia;
@@ -31,16 +32,17 @@ internal static class OpenPopups
         _ = Popup.IsOpenProperty.Changed.AddClassHandler<Popup>((popup, _) => Changed(popup));
     }
 
-    /// <summary>The content of each popup open now that is drawn in its own popup window (not the window's overlay layer), oldest first, with the number its node ids use.</summary>
+    /// <summary>The content of each popup open now that is drawn in its own popup window (not the window's overlay layer) and was opened from <paramref name="owner"/> (the popup's own top level), oldest first, with the number its node ids use.</summary>
+    /// <param name="owner">The window whose popups are wanted; a popup opened from another window is left out.</param>
     /// <returns>A snapshot.</returns>
-    internal static IReadOnlyList<(int Sequence, Visual Content)> Current()
+    internal static IReadOnlyList<(int Sequence, Visual Content)> Current(Window owner)
     {
         List<(int, Visual)> found = [];
         lock (_gate)
         {
             foreach (var (sequence, popup) in _open)
             {
-                if (popup.IsOpen && !popup.IsUsingOverlayLayer && popup.Child is { } content)
+                if (popup.IsOpen && !popup.IsUsingOverlayLayer && ReferenceEquals(TopLevel.GetTopLevel(popup), owner) && popup.Child is { } content)
                 {
                     found.Add((sequence, content));
                 }

@@ -13,8 +13,8 @@ namespace Aw.UiDriver.Avalonia;
 
 /// <summary>
 /// The window's visual tree as the driver sees it: every element with a stable id (child positions from the window, '0/2/1'), its facts for selectors and
-/// its info for answers. Built on the UI thread and used there; read through the property system, never reflection. The content of each open popup that
-/// draws in its own popup window hangs under the window as one more child, with ids 'p3', 'p3/0' (the popup's open number, then child positions), so
+/// its info for answers. Built on the UI thread and used there; read through the property system, never reflection. The content of each popup opened from
+/// this window that draws in its own popup window (not one opened from another window) hangs under the window as one more child, with ids 'p3', 'p3/0' (the popup's open number, then child positions), so
 /// a menu or flyout is reached like anything else.
 /// </summary>
 internal sealed class UiTree
@@ -22,11 +22,12 @@ internal sealed class UiTree
     internal const string RootId = "0";
 
     private readonly List<(NodeFacts Facts, Visual Visual)> _nodes = [];
-    private readonly IReadOnlyList<(string Id, Visual Visual)> _popups = [.. OpenPopups.Current().Select(static o => (PopupId(o.Sequence), o.Content))];
+    private readonly IReadOnlyList<(string Id, Visual Visual)> _popups;
 
     internal UiTree(Window root)
     {
         Root = root;
+        _popups = [.. OpenPopups.Current(root).Select(static o => (PopupId(o.Sequence), o.Content))];
         Walk(root, RootId);
     }
 
