@@ -1,6 +1,6 @@
 ---
 name: design-shotgun
-description: "Generate 4–6 mockup variants in parallel with distinct aesthetic directions. Produces a contact sheet for side-by-side comparison and a picked-variant handoff to /design-mockup."
+description: "Use when you want to compare several looks for one screen or feature before committing to one. Builds 4-6 mockup variants in parallel with distinct aesthetic directions, screenshots them onto one contact sheet and hands the pick to design-mockup. Not for building a single mockup (design-mockup)."
 argument-hint: "[feature-name] [--variants N]"
 allowed-tools: Bash(ls *), Bash(mkdir *), Bash(cat *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -89,6 +89,12 @@ All under `~/.agentic-workflow/<repo-slug>/design/shotgun/`:
 - `variant-{1..N}.png` — Playwright screenshots
 - `contact-sheet.html` — captioned side-by-side comparison page
 - `picked.json` — `{variant, direction, html_path, feature}` handoff consumed by `/design-mockup-web` Step 0
+
+## Result block
+
+Under `AW_RESULT=1` only: write `$AW_DIR/results/design-shotgun-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
+
+Keys: `skill` (`design-shotgun`), `artifacts` (absolute paths: `contact-sheet.html`, `picked.json` once a variant is picked, and the `variant-*.html` files), `summary` (one line: variants built and the pick, or `none picked`).
 
 ## Next steps
 
