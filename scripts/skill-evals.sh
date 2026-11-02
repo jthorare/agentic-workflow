@@ -701,8 +701,8 @@ print_failures() { # results.json threshold
 }
 
 gate_lines() { # results.json -> lines "ROUTING GATE MISSED: ..."; nothing when the gate holds; non-zero when it cannot be judged
-  local out
-  out="$(jq -r "$JQ_FIRED"'
+  local out filter
+  filter="$JQ_FIRED"'
     [ .cases[] | (.dir | split("/")) as $p | ($p | last) as $b
       | {skill: ($p[1] // ""), case: $b, nat: ($b | test("natural-[0-9]+$")), near: ($b | test("near-miss$")),
          f: ((.arms.with // []) | map(fired(.)) | map(select(. != null)))} ] as $rows
@@ -714,8 +714,10 @@ gate_lines() { # results.json -> lines "ROUTING GATE MISSED: ..."; nothing when 
         | (if ($nat | length) > 0 and (($nat | map(select(. == true)) | length) * 2 < ($nat | length))
              then "ROUTING GATE MISSED: \($s) fired \($nat | map(select(. == true)) | length)/\($nat | length) on its natural cases (needs 50%)" else empty end),
           (if ($near | map(select(. == true)) | length) > 0
-             then "ROUTING GATE MISSED: \($s) fired \($near | map(select(. == true)) | length)/\($near | length) on its near-miss case (needs 0)" else empty end))' "$1" 2>&1)" || {
-    echo "ROUTING GATE MISSED: the gate could not be evaluated (jq failed on $1: $(printf '%s' "$out" | head -c 200))"
+             then "ROUTING GATE MISSED: \($s) fired \($near | map(select(. == true)) | length)/\($near | length) on its near-miss case (needs 0)" else empty end))'
+  # stdout only: a jq warning on stderr must never read as a gate line; on failure, run it again for the message
+  out="$(jq -r "$filter" "$1" 2>/dev/null)" || {
+    echo "ROUTING GATE MISSED: the gate could not be evaluated (jq failed on $1: $(jq -r "$filter" "$1" 2>&1 >/dev/null | head -c 200))"
     return 1
   }
   [ -z "$out" ] || printf '%s\n' "$out"
