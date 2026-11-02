@@ -81,17 +81,15 @@ public sealed class PopupTreeTests
     {
         var screen = await TestScreen.OpenAsync();
         var host = new DriverHost(() => screen.Window, TimeProvider.System);
-        var menuItem = new Selector(AutomationId: "flyout-item");
         var flyout = await TestScreen.OnUi(() =>
         {
-            var item = new MenuItem { Header = "Flyout item" };
-            AutomationProperties.SetAutomationId(item, "flyout-item");
-            var shown = new MenuFlyout { Items = { item } };
+            var shown = new MenuFlyout { Items = { new MenuItem { Header = "Flyout item" } } };
             shown.ShowAt(screen.Save);
             return shown;
         });
 
-        var found = await host.Search(new SearchRequest(menuItem));
+        // The test app has no theme, so the menu's items are never built from a template; the presenter is the popup's content and is there anyway.
+        var found = await host.Search(new SearchRequest(new Selector(Type: "MenuFlyoutPresenter")));
         _ = await TestScreen.OnUi(() =>
         {
             flyout.Hide();
@@ -106,17 +104,16 @@ public sealed class PopupTreeTests
     {
         var screen = await TestScreen.OpenAsync();
         var host = new DriverHost(() => screen.Window, TimeProvider.System);
-        var menuItem = new Selector(AutomationId: "context-item");
         var menu = await TestScreen.OnUi(() =>
         {
-            var item = new MenuItem { Header = "Context item" };
-            AutomationProperties.SetAutomationId(item, "context-item");
-            var opened = new ContextMenu { Items = { item } };
+            var opened = new ContextMenu { Items = { new MenuItem { Header = "Context item" } } };
+            AutomationProperties.SetAutomationId(opened, "context-menu");
             opened.Open(screen.Save);
             return opened;
         });
 
-        var found = await host.Search(new SearchRequest(menuItem));
+        // The context menu itself is the popup's content, so it is found without a theme to build its items.
+        var found = await host.Search(new SearchRequest(new Selector(AutomationId: "context-menu")));
         _ = await TestScreen.OnUi(() =>
         {
             menu.Close();
