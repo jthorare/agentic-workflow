@@ -62,7 +62,7 @@ internal sealed class BuildContextMapService(ContextScopes scopes, IContextEngin
 
     // A clean draft is held for the service's publish step; a queue that can't be read leaves the draft for a person's promote, never failing the build that already succeeded.
     // A build that waited behind one whose draft was already promoted returns that current version (#1775): there is no draft to hold or publish.
-    // A draft promoted by another writer after the queue read and before the gate is the current map too, so the gate's 190 is a success when it is current (#1882); a newer draft keeps the 190.
+    // A draft promoted by another writer after the queue read and before the gate or the hold is the current map too, so the gate's or the hold's 190 is a success when it is current (#1882); a newer draft keeps the 190.
     private async ValueTask<Result<Unit>> HoldWhenClean(ContextMapEvents recorder, ContextScope scope, MapBuildReport report, CancellationToken cancellationToken)
     {
         if (report.Draft.Status == MapVersionStatus.Current)
@@ -87,8 +87,18 @@ internal sealed class BuildContextMapService(ContextScopes scopes, IContextEngin
             return gate.IsError ? gate.Error : Unit.Value;
         }
 
-        // The gate would publish at once: store the hold, so the service's next publish step sees the draft and promotes it.
-        var stored = await engine.Hold(new MapHold(report.Draft.Number, gate.Value.Now, report.Heads), scope, cancellationToken).ConfigureAwait(false);
+        return await StoreHold(scope, report, gate.Value.Now, cancellationToken).ConfigureAwait(false);
+    }
+
+    // The gate would publish at once: store the hold, so the service's next publish step sees the draft and promotes it.
+    private async ValueTask<Result<Unit>> StoreHold(ContextScope scope, MapBuildReport report, DateTimeOffset since, CancellationToken cancellationToken)
+    {
+        var stored = await engine.Hold(new MapHold(report.Draft.Number, since, report.Heads), scope, cancellationToken).ConfigureAwait(false);
+        if (stored.IsError && stored.Error.Code == ContextErrors.DraftChanged.Code)
+        {
+            return await PromotedUnderUs(scope, report, stored.Error, cancellationToken).ConfigureAwait(false);
+        }
+
         return stored.IsError ? stored.Error : Unit.Value;
     }
 
