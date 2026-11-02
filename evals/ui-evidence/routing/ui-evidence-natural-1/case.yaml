@@ -1,0 +1,5 @@
+schema_version: "1.1"
+name: ui-evidence-natural-1
+source: "issue #1056 (evidence runs blocked on a stale lock), reworded into a request; stack and PR names made up"
+tier: C
+kind: routing

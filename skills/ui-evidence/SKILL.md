@@ -1,6 +1,6 @@
 ---
 name: ui-evidence
-description: Generate Playwright-based UI evidence for a web app PR — plan with qa-runner, run headless with no model, repair broken selectors via judge, lint for sloppiness, and publish (ask-first) to Linear and to the PR as a comment with its screenshots. Local stack only, never dev/prod.
+description: "Use when a web PR needs proof reviewers can look at (screenshots, before/after, API or database checks) from the app running locally. Drives the local stack through the ui-evidence tool with no model in the loop, reports failed steps, and asks before posting anything to the PR or a ticket. Not for a quick self-check of a running app (verify-web) or for any hosted site."
 allowed-tools: Bash(ui-evidence:*), Bash(git *), Bash(gh *), Bash(curl *), Bash(command -v *), Agent, Read, Write, Glob, Grep, AskUserQuestion
 ---
 
@@ -167,3 +167,19 @@ The files are `NAME=value` lines (`#` comments, optional `export ` and quotes); 
 - `UI_EVIDENCE_USER_AGENT` — the browser's user agent. Default: desktop Chrome at the
   bundled Chromium's version, because headless Chromium's own UA says "HeadlessChrome"
   and apps that gate on browser support (an "unsupported browser" page) block it.
+
+## Result block
+
+Only under `AW_RESULT=1`. Without it, write no file and print no block.
+
+When `AW_RESULT=1` is set, after the run and the publish decision, resolve `$AW_DIR` the way `_shared/repo-slug.sh` does (`source "${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"`), then write `$AW_DIR/results/ui-evidence-<UTC timestamp, e.g. 20261101T101500Z>.json` (the Write tool creates the folder) holding one JSON object:
+
+- `skill`: `"ui-evidence"`
+- `artifacts`: absolute paths of the files the run left (`summary.json` or `parity.json` or the desktop `summary.json`, `report.md` if any, the screenshots, `pr-comment.md` if one was written); `[]` when the run produced none
+- `summary`: one line (what was run, how it ended, whether anything was published)
+- `run_dir`: absolute path of the run directory
+- `outcome`: `passed` | `failed` | `refused` | `errored` | `blocked` (exit 0, 2, 1, 4, 3)
+- `provenance`: `seeded` | `unknown` | `n/a` (what `ui-evidence provenance` printed; `n/a` for a desktop run)
+- `published`: `true` only if something was actually posted or uploaded (after the user approved it), else `false`
+
+Then print the same object in the reply as a fenced block tagged `aw-result` (three backticks, `aw-result`, the JSON, three backticks).
