@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 Fix-and-verify loop with atomic commits, regression test generation, and tiered verification.
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 ## Step 1: Parse Arguments
 
@@ -242,6 +242,13 @@ If the fix-and-verify loop ends with status `unfixed` (all hypotheses exhausted)
 > **Invoke skill `bugReport`** with args `--depth <N+1> <scope>`
 
 Do not invoke bugReport on success — bugHunt's own Step 8 report is sufficient. At depth ≥ 2, report only.
+
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
 
 ## Next steps
 

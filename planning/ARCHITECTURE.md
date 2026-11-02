@@ -187,8 +187,10 @@ agentic-workflow/
 │   ├── verify-app/                      # /verify-app — platform dispatcher (routes to verify-web or verify-ios)
 │   ├── verify-web/                      # /verify-web — standalone web app verification using Playwright
 │   ├── verify-ios/                      # /verify-ios — standalone iOS app verification using XcodeBuildMCP
-│   ├── _preamble.md                     # Shared preamble — every SKILL.md references it
-│   ├── _design-preamble.md              # Shared design preamble — design skills reference it
+│   ├── _preamble.md                     # Shared preamble core (capability map, voice; < 1 KB) — every SKILL.md reads it
+│   ├── _preamble-extended.md            # Skill index, prism context, Session Close — skipped when AW_PREAMBLE=off
+│   ├── _design-preamble.md              # Design preamble core (load the design language; < 1 KB) — design skills read it
+│   ├── _design-preamble-extended.md     # Component inventory, pipeline overview — UI-building design skills, skipped when AW_PREAMBLE=off
 │   └── _shared/                         # Shared fragments, resolved via ~/.agentic-workflow/toolkit/skills/_shared
 │       ├── capabilities.md             # Capability → per-provider tool map
 │       └── skill-lock.sh               # Shared lock script sourced by platform sub-skills to prevent concurrent runs

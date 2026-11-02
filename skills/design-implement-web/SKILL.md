@@ -6,10 +6,10 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git *), Bash(ls *), Bash(SHAR
 ---
 
 <!-- preamble -->
-**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
 <!-- design-preamble -->
-**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing.
+**Design context:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble.md` and follow it before continuing. Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_design-preamble-extended.md` (component inventory, pipeline overview).
 
 ---
 
@@ -142,6 +142,13 @@ Generated components:
 - Do not modify `design-tokens.json` — it is the source of truth
 - If the mockup HTML is available, use it as the primary reference for layout and structure — and report it as the source
 - No completion claim without a PASS/WARN verify run recorded in `implement-report.json`
+
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
 
 ## Next steps
 
