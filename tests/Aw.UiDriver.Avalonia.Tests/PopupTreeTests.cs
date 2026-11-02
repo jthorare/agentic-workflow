@@ -76,5 +76,55 @@ public sealed class PopupTreeTests
         Assert.DoesNotContain(Flatten(tree), static n => n.AutomationId == "other-window-item");
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_menu_flyout_shown_on_a_button_is_in_its_windows_tree()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var host = new DriverHost(() => screen.Window, TimeProvider.System);
+        var menuItem = new Selector(AutomationId: "flyout-item");
+        var flyout = await TestScreen.OnUi(() =>
+        {
+            var item = new MenuItem { Header = "Flyout item" };
+            AutomationProperties.SetAutomationId(item, "flyout-item");
+            var shown = new MenuFlyout { Items = { item } };
+            shown.ShowAt(screen.Save);
+            return shown;
+        });
+
+        var found = await host.Search(new SearchRequest(menuItem));
+        _ = await TestScreen.OnUi(() =>
+        {
+            flyout.Hide();
+            return 0;
+        });
+
+        Assert.Equal(1, found.Value.Total);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_context_menu_opened_on_a_button_is_in_its_windows_tree()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var host = new DriverHost(() => screen.Window, TimeProvider.System);
+        var menuItem = new Selector(AutomationId: "context-item");
+        var menu = await TestScreen.OnUi(() =>
+        {
+            var item = new MenuItem { Header = "Context item" };
+            AutomationProperties.SetAutomationId(item, "context-item");
+            var opened = new ContextMenu { Items = { item } };
+            opened.Open(screen.Save);
+            return opened;
+        });
+
+        var found = await host.Search(new SearchRequest(menuItem));
+        _ = await TestScreen.OnUi(() =>
+        {
+            menu.Close();
+            return 0;
+        });
+
+        Assert.Equal(1, found.Value.Total);
+    }
+
     private static IEnumerable<NodeInfo> Flatten(NodeInfo node) => new[] { node }.Concat(node.Children.SelectMany(Flatten));
 }
