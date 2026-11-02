@@ -94,7 +94,7 @@ public sealed class CursorPolicyTests : IDisposable
         var policyDirectory = Path.Combine(_root, "policy");
         var worktree = Path.Combine(_root, "wt");
 
-        var path = CursorPolicyFile.Write(policyDirectory, launch, worktree, new StepPolicy(["Read"], StepPermissionMode.Plan, WritablePath: null));
+        var path = CursorPolicyFile.Write(policyDirectory, launch, worktree, new StepPolicy(["Read"], StepPermissionMode.Plan, WritablePath: null), static _ => false).Value;
 
         Assert.Equal(Path.Combine(worktree, ".cursor", "cli.json"), path);
         Assert.True(File.Exists(path));
@@ -110,7 +110,7 @@ public sealed class CursorPolicyTests : IDisposable
         _ = Directory.CreateDirectory(Path.Combine(worktree, ".cursor"));
         File.WriteAllText(Path.Combine(worktree, ".cursor", "cli.json"), "{}");
 
-        Assert.Null(CursorPolicyFile.Write(Path.Combine(_root, "policy"), LaunchId.For(Guid.Empty), worktree, new StepPolicy([], StepPermissionMode.Plan, WritablePath: null)));
+        Assert.True(CursorPolicyFile.Write(Path.Combine(_root, "policy"), LaunchId.For(Guid.Empty), worktree, new StepPolicy([], StepPermissionMode.Plan, WritablePath: null), static _ => false).IsError);
         Assert.Equal("{}", File.ReadAllText(Path.Combine(worktree, ".cursor", "cli.json")));
     }
 }

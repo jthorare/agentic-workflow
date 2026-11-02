@@ -1,5 +1,6 @@
 using Aw.Redaction;
 using Aw.Sindri.Core.Control;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.Mcp;
@@ -81,6 +82,7 @@ internal static class LauncherServiceCollectionExtensions
             Trust = sp.GetRequiredService<IAgentTrust>(),
             Prepare = sp.GetService<IWorkspacePrepare>(),   // null when nothing registers the host-side prepare: a Step starts with whatever its worktree holds
             Sandbox = sp.GetService<ISandboxLaunch>(),   // null until the product registers a sandbox: Steps then run unconfined
+            IsLive = LaunchIsLive(sp),
             EndLive = async (launch, cancellationToken) =>
             {
                 var scope = sp.CreateAsyncScope();
@@ -96,6 +98,21 @@ internal static class LauncherServiceCollectionExtensions
             Usage = name => sp.GetRequiredService<IReadOnlyDictionary<string, IUsageReader>>().GetValueOrDefault(name),
         };
     }
+
+    /// <summary>Whether a launch's 'launches' view row is live (the sweep's test); a view that can't be read counts as live: nothing is replaced on a guess.</summary>
+    private static Func<LaunchId, CancellationToken, ValueTask<bool>> LaunchIsLive(IServiceProvider sp) => async (launch, cancellationToken) =>
+    {
+        var scope = sp.CreateAsyncScope();
+        try
+        {
+            var row = await scope.ServiceProvider.GetRequiredService<ILaunchViews>().Get(launch, cancellationToken).ConfigureAwait(false);
+            return row.IsError || row.Value is { Live: true };
+        }
+        finally
+        {
+            await scope.DisposeAsync().ConfigureAwait(false);
+        }
+    };
 
     /// <summary>
     /// Where the T3 host keeps its map and how it reaches T3 Code: <c lang="text">T3CODE_HOME</c> (T3's own variable, default <c lang="text">~/.t3</c>) and
