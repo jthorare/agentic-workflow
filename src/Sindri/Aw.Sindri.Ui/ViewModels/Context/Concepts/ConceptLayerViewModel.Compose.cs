@@ -33,7 +33,14 @@ internal sealed partial class ConceptLayerViewModel
         var unpinned = others.Where(t => t.IsSetByPerson && !IsOther(t)).Select(t => t.WithCard(new PinCardState(Labels.ContextConceptSetByPerson, Pin: null, [], PinCardAction.None, ShowPinThis: true, ShowEditPin: false, Waiting: false))).ToList();
         var suggested = others.Where(t => !t.IsSetByPerson && !waitingNames.Contains(t.Name)).Select(Suggested);
         Composed = [.. pinned, .. unpinned, .. suggested];
-        PinHeadText = pinned.Count == 0 ? Labels.PinNoPinsYet : Coverage([.. pinned.Where(t => !t.Card.Waiting)]);
+        PinHeadText = HeadText(pinned);
+    }
+
+    // A removed pin's card stays in place but is no longer pinned: it adds nothing to the count or the coverage.
+    private string HeadText(List<ConceptTileViewModel> pinned)
+    {
+        var counted = pinned.Where(t => t.Card.Pin?.Change != "removed").ToList();
+        return counted.Count == 0 ? Labels.PinNoPinsYet : Coverage([.. counted.Where(t => !t.Card.Waiting)]);
     }
 
     private PinCardState PinnedCard(PinView pin, ConceptTileViewModel? found, IReadOnlyList<PinView> earlier, MapRebuildView rebuild)

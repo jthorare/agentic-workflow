@@ -169,6 +169,26 @@ public sealed class ConceptLayerPinTests
     }
 
     [Fact]
+    public void With_only_a_removed_pin_the_head_line_says_how_to_make_one()
+    {
+        var layer = Layer(
+            [AConcepts.Concept("concept:billing", "Billing", features: 120, records: 410, source: "override")],
+            pins: Pins(rebuild: null, Pin("billing", "Billing", PinStates.Approved, "removed")));
+
+        Assert.Equal("No pins yet. Press Pin this on a concept to make it yours.", layer.PinHeadText);
+    }
+
+    [Fact]
+    public void A_removed_pin_adds_nothing_to_the_coverage_in_the_head_line()
+    {
+        var layer = Layer(
+            [AConcepts.Concept("concept:billing", "Billing", features: 120, records: 410, source: "override"), AConcepts.Concept("concept:auth", "Auth", features: 180, records: 1890, source: "override")],
+            pins: Pins(rebuild: null, Pin("billing", "Billing"), Pin("auth", "Auth", PinStates.Approved, "removed")));
+
+        Assert.Equal("You've pinned 120 of 300 features and 410 of 2,300 records. The rest are in suggestions or in no concept.", layer.PinHeadText);
+    }
+
+    [Fact]
     public void With_no_pins_the_head_line_says_how_to_make_one()
     {
         var layer = Layer([AConcepts.Concept("concept:auth", "Auth")], pins: Pins());
