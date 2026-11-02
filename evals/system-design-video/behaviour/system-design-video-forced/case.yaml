@@ -19,5 +19,5 @@ execution:
 context:
   scaffold_script: fixture.sh
 # planted: ffprobe reports has_b_frames=2, so playback-check.sh (run by review.sh and deliver.sh) exits 1
-# stubs on PATH (evals/stubs/bin): ffmpeg, ffprobe, bun
+# stubs on PATH (repo evals/stubs/bin, staged to <stage>/stubs/bin for the run): ffmpeg, ffprobe, bun
 # Planted failure: fixture.sh writes ffprobe.json with has_b_frames=2 (level 41, h264: only the B-frames are wrong).
