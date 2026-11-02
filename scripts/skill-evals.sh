@@ -13,7 +13,7 @@
 #
 # What a run does (spec §5.2):
 #   1 resolve the skill set (--changed = skills whose skills/<x>/ or evals/<x>/ differ from the merge base with origin/main,
-#     plus every skill with evals when skills/_shared/**, skills/_preamble.md or skills/_design-preamble.md changed);
+#     plus every skill with evals when skills/_shared/**, skills/_preamble*.md or skills/_design-preamble*.md changed);
 #   2 stage, per kind, into a fresh directory under $EVAL_HOME/cache/ outside any git repo (rsync -L; a link that resolves
 #     outside this repo, a hooks/ dir or an .mcp.json other than evals/plugin/.mcp.json refuses the stage, exit 3): evals/plugin,
 #     every skill's SKILL.md, the chosen skills' full directories, skills/_shared/, both preambles, config/voice/, the
@@ -22,12 +22,15 @@
 #     from full to readonly, of AW_RESULT from 0 to 1, and the staged repo-slug.sh state default walks up from $PWD to the dir holding .aw-eval/ (the workspace root) and adds /.aw-state. The stubs get the same default rewrite.
 #     The toolkit copy reaches $HOME/.agentic-workflow/toolkit (the default of AW_TOOLKIT) inside each run's temp HOME
 #     through a scaffold script written into every staged case, which then runs the case's own scaffold.
-#   3 check and reserve the day's spend (spec §6.4): $60 per day, shared by lanes (a lane's share is 60 / lanes registered
-#     that day, minus what it spent), under one flock on $EVAL_HOME/spend.jsonl; over -> exit 2
+#   3 check and reserve the day's spend (spec §6.4): $60 per day across all lanes, under one flock on $EVAL_HOME/spend.jsonl;
+#     a run is refused (exit 2) when the day's total plus its --max-cost-usd would pass $60, or when the tally can't be read or written
 #   4 run `claude plugin eval` per kind under `env -i` with an allowlist (PATH with the stubs first, TERM, LANG, HOME, and the
 #     AW_* values); nothing else is forwarded, so an operator-shell GH_TOKEN, EVAL_* or any other variable never reaches it
 #   5 scrub token patterns (and the values of the operator's token-named and EVAL_* variables) from what was saved, settle
 #     the reserve with the real cost, print the WITH / W-OUT / Δ Markdown table and each failure's grader.
+#
+# Models (spec §6.3): the agent model is pinned here (default claude-sonnet-5-5, the per-PR choice; the nightly passes --model for
+# the default Opus) and the judge is sonnet, not the Haiku default. The same --model runs both arms.
 #
 # Case files: <eval dir>/<skill>/{routing,behaviour}/<case>/{prompt.md|case.yaml, graders/*.md}. Conventions the script
 # reads on top of the tool's format: a routing case's `skill-fired` grader (tool_used Skill) passing means the skill fired; a
@@ -49,8 +52,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CAP_USD=60
 RESERVE_TTL=10800
 
-SKILLS_ARG="" SELECT="" KIND=both RUNS="" ABLATION="" MODEL="" JUDGE="" THRESHOLD=0.8 MAX_COST=8 JOBS="" GATE=warn
-ACTION=run KEEP=0 LANE=""
+SKILLS_ARG="" SELECT="" KIND=both RUNS="" ABLATION="" MODEL=claude-sonnet-5-5 JUDGE=sonnet THRESHOLD=0.8 MAX_COST=8 JOBS="" GATE=warn
+ACTION=run KEEP=0 LANE="" STAGE_LIST=""
 
 usage() {
   sed -n '2,/^# Bash 3.2/p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//' | sed -n '1,12p' >&2
@@ -164,7 +167,7 @@ resolve_skills() { # prints one skill per line
       files="$( { git -C "$ROOT" diff --name-only "$mb" -- skills evals config/voice; git -C "$ROOT" ls-files --others --exclude-standard -- skills evals config/voice; } | sort -u)"
       while IFS= read -r f; do
         case "$f" in
-          skills/_shared/*|skills/_preamble.md|skills/_design-preamble.md) all=1 ;;
+          skills/_shared/*|skills/_preamble*.md|skills/_design-preamble*.md) all=1 ;;
         esac
       done <<EOF
 $files
@@ -242,7 +245,7 @@ grader_passes() {
 }
 
 lint_case() { # case dir -> prints problems, returns the count via the exit status (0 = clean)
-  local c="$1" rel g type name seen="" bad=0 free=0 gcount=0 tools to
+  local c="$1" rel g type name seen="" bad=0 free=0 gcount=0 tools to nf
   rel="${c#"$ROOT"/}"
   if [ ! -f "$c/prompt.md" ] && ! grep -Eq '^[[:space:]]*prompt:' "$c/case.yaml" 2>/dev/null; then
     echo "SELFTEST-CASE: $rel: no prompt.md and no execution.prompt"; bad=1
@@ -280,6 +283,11 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
     esac
   done
   [ "$gcount" -gt 0 ] || { echo "SELFTEST-CASE: $rel: no graders/*.md"; bad=1; }
+  case "$c" in
+    */routing/*)
+      nf=0; [ ! -f "$c/graders/skill-fired.md" ] || nf=$((nf + 1)); [ ! -f "$c/graders/skill-not-fired.md" ] || nf=$((nf + 1))
+      [ "$nf" -eq 1 ] || { echo "SELFTEST-CASE: $rel: a routing case needs exactly one of graders/skill-fired.md and graders/skill-not-fired.md (found $nf)"; bad=1; } ;;
+  esac
   [ "$gcount" -eq 0 ] || [ "$free" = 1 ] || { echo "SELFTEST-CASE: $rel: needs at least one regex, file_exists or tool_used grader"; bad=1; }
   tools=""; : "$tools"
   return "$bad"
@@ -431,7 +439,7 @@ locked() {
 
 # tally_op: MODE is reserve (check and write), peek (check only) or settle (replace the reserve with the real cost)
 tally_op() {
-  local rows pending live n lanes spent total lane_spent allowance all_total
+  local rows pending live spent total all_total
   [ -f "$TALLY" ] || : >"$TALLY"
   jq -e -s 'all(.[]; type == "object" and (.t | IN("lane", "reserve", "settle")) and (.date | type == "string") and (.lane | type == "string")
       and (.t == "lane" or ((.usd | type == "number") and (.id | type == "string")))
@@ -458,21 +466,12 @@ tally_op() {
 $pending
 EOF
   rows="$(jq -s -r --arg d "$DAY" '.[] | select(.t == "settle" and .date == $d) | "\(.lane) \(.usd)"' "$TALLY")"
-  lanes="$( { jq -s -r --arg d "$DAY" '.[] | select(.date == $d) | .lane' "$TALLY"; echo "$LANE"; } | sort -u | grep -c .)"
   total="$(printf '%s\n%s\n' "$rows" "$live" | awk 'NF { s += $2 } END { printf "%.6f", s + 0 }')"
-  lane_spent="$(printf '%s\n%s\n' "$rows" "$live" | awk -v l="$LANE" 'NF && $1 == l { s += $2 } END { printf "%.6f", s + 0 }')"
-  allowance="$(awk -v c="$CAP_USD" -v n="$lanes" -v s="$lane_spent" 'BEGIN { printf "%.6f", c / n - s }')"
-  awk -v t="$total" -v c="$CAP_USD" -v l="$LANE" -v n="$lanes" -v a="$allowance" -v m="$MAXC" \
-    'BEGIN { printf "spend: today $%.2f of $%.2f; lane %s has $%.2f left of its share (%d lane(s)); this run reserves $%.2f\n", t, c, l, a, n, m }'
-  if awk -v m="$MAXC" -v a="$allowance" 'BEGIN { exit !(m > a + 1e-9) }'; then
-    echo "refused: --max-cost-usd $MAXC is over lane $LANE's share for today (\$$allowance left). Lower it or wait for tomorrow."; return 2
-  fi
+  awk -v t="$total" -v c="$CAP_USD" -v m="$MAXC" 'BEGIN { printf "spend: today $%.2f of $%.2f; this run reserves $%.2f\n", t, c, m }'
   if awk -v m="$MAXC" -v t="$total" -v c="$CAP_USD" 'BEGIN { exit !(t + m > c + 1e-9) }'; then
     echo "refused: today's \$$total plus --max-cost-usd $MAXC would pass the \$$CAP_USD daily cap."; return 2
   fi
   if [ "$TALLY_MODE" = reserve ]; then
-    jq -s -e --arg d "$DAY" --arg l "$LANE" 'any(.[]; .t == "lane" and .date == $d and .lane == $l)' "$TALLY" >/dev/null 2>&1 ||
-      jq -nc --arg d "$DAY" --arg l "$LANE" '{t: "lane", date: $d, lane: $l}' >>"$TALLY"
     jq -nc --arg id "$RUN_ID" --arg d "$DAY" --arg l "$LANE" --argjson pid "$SE_PID" --argjson ts "$NOW" --argjson u "$MAXC" --arg c "$CMD_DESC" \
       '{t: "reserve", id: $id, date: $d, lane: $l, pid: $pid, ts: $ts, usd: $u, cmd: $c}' >>"$TALLY"
   fi
@@ -556,6 +555,7 @@ rewrite_default() { # STAGE NAME FROM TO: the shell default of NAME (the text af
 $(grep -rlF -- "$a" "$S/skills" "$S/config" "$S/evals/stubs" 2>/dev/null)
 EOF
   echo "$name default $from -> $to: $n file(s)" >>"$S/.stage-rewrites"
+  [ "$n" -gt 0 ] || note "warning: no staged file holds $a, so the $name default was not rewritten (a skill that reads it will run with the default $from)"
 }
 
 rewrite_stage() { # STAGE: the staged copy only, never the source tree
@@ -608,6 +608,7 @@ inject_scaffold() {
 stage_build() {
   local kind="$1" skills="$2" S s d n a src c rel ups
   S="$EVAL_HOME/cache/stage-$RUN_ID-$kind"
+  STAGE_LIST="$STAGE_LIST $kind=$S"
   mkdir -p "$S" || die 3 "cannot create $S"
   if git -C "$S" rev-parse --git-dir >/dev/null 2>&1; then die 3 "the stage $S is inside a git repo (the eval refuses plugins in repos with many worktrees); point AW_STATE_DIR elsewhere"; fi
   STAGE="$S"
@@ -624,7 +625,7 @@ stage_build() {
   done
   for s in $skills; do rsync -aL "$ROOT/skills/$s/" "$S/skills/$s/" || die 3 "rsync of skills/$s failed"; done
   [ ! -d "$ROOT/skills/_shared" ] || rsync -aL "$ROOT/skills/_shared/" "$S/skills/_shared/"
-  for n in _preamble.md _design-preamble.md; do [ ! -f "$ROOT/skills/$n" ] || rsync -aL "$ROOT/skills/$n" "$S/skills/"; done
+  for a in "$ROOT"/skills/_preamble*.md "$ROOT"/skills/_design-preamble*.md; do [ ! -f "$a" ] || rsync -aL "$a" "$S/skills/"; done
   [ ! -d "$ROOT/config/voice" ] || rsync -aL "$ROOT/config/voice/" "$S/config/voice/"
   if [ -d "$ROOT/config/agents" ]; then
     for a in "$ROOT"/config/agents/*.md; do
@@ -689,22 +690,30 @@ print_failures() { # results.json threshold
   jq -r --argjson th "$2" '
     .cases[] | select((.aggregates.score // 0) < $th) as $c
     | [($c.arms.with // [])[] | .graders[]? | select((.scored // true) and (.passed == false))] | group_by(.name)[]
-    | "FAIL \($c.name) / \(.[0].name): failed in \(length) run(s): \((.[0].explanation // "") | tostring | .[0:200])"' "$1"
+    | "FAIL \($c.name) / \(.[0].name): failed in \(length) run(s): \((.[0].explanation // .[0].evidence // "") | tostring | .[0:200])"' "$1"
   jq -r '.cases[] | .arms.with[]? | select((.error // "") != "") | "ERROR \(.error | .[0:200])"' "$1" | sort -u
 }
 
-gate_lines() { # results.json -> lines "MISS<TAB>text"; nothing when the gate holds
-  jq -r "$JQ_FIRED"'
+gate_lines() { # results.json -> lines "ROUTING GATE MISSED: ..."; nothing when the gate holds; non-zero when it cannot be judged
+  local out
+  out="$(jq -r "$JQ_FIRED"'
     [ .cases[] | (.dir | split("/")) as $p | ($p | last) as $b
-      | {skill: ($p[1] // ""), nat: ($b | test("natural-[0-9]+$")), near: ($b | test("near-miss$")),
+      | {skill: ($p[1] // ""), case: $b, nat: ($b | test("natural-[0-9]+$")), near: ($b | test("near-miss$")),
          f: ((.arms.with // []) | map(fired(.)) | map(select(. != null)))} ] as $rows
-    | ($rows | map(.skill) | unique[]) as $s
-    | ([$rows[] | select(.skill == $s and .nat) | .f[]]) as $nat
-    | ([$rows[] | select(.skill == $s and .near) | .f[]]) as $near
-    | (if ($nat | length) > 0 and (($nat | map(select(. == true)) | length) * 2 < ($nat | length))
-         then "ROUTING GATE MISSED: \($s) fired \($nat | map(select(. == true)) | length)/\($nat | length) on its natural cases (needs 50%)" else empty end),
-      (if ($near | map(select(. == true)) | length) > 0
-         then "ROUTING GATE MISSED: \($s) fired \($near | map(select(. == true)) | length)/\($near | length) on its near-miss case (needs 0)" else empty end)' "$1"
+    | ($rows[] | select((.nat or .near) and (.f | length) == 0)
+        | "ROUTING GATE MISSED: \(.skill)/\(.case): no judged runs (no run has a skill-fired or skill-not-fired grader result)"),
+      (($rows | map(.skill) | unique[]) as $s
+        | ([$rows[] | select(.skill == $s and .nat) | .f[]]) as $nat
+        | ([$rows[] | select(.skill == $s and .near) | .f[]]) as $near
+        | (if ($nat | length) > 0 and (($nat | map(select(. == true)) | length) * 2 < ($nat | length))
+             then "ROUTING GATE MISSED: \($s) fired \($nat | map(select(. == true)) | length)/\($nat | length) on its natural cases (needs 50%)" else empty end),
+          (if ($near | map(select(. == true)) | length) > 0
+             then "ROUTING GATE MISSED: \($s) fired \($near | map(select(. == true)) | length)/\($near | length) on its near-miss case (needs 0)" else empty end))' "$1" 2>&1)" || {
+    echo "ROUTING GATE MISSED: the gate could not be evaluated (jq failed on $1: $(printf '%s' "$out" | head -c 200))"
+    return 1
+  }
+  [ -z "$out" ] || printf '%s\n' "$out"
+  return 0
 }
 
 # ---------------------------------------------------------------------------------------------------------------------
@@ -714,8 +723,8 @@ gate_lines() { # results.json -> lines "MISS<TAB>text"; nothing when the gate ho
 shq() { printf '%q ' "$@"; }
 
 do_run() {
-  local skills s k c kinds cases total_cases=0 dry=0 rc_final=0 below=0 partial=0 gate_missed=0 envfail=0
-  local stage_list="" out_dir results cmd_rc ab pass_env cost run_cost=0 clog tool rest budget_left skipped
+  local skills s k c kinds gl branch cases total_cases=0 dry=0 rc_final=0 below=0 partial=0 gate_missed=0 envfail=0
+  local out_dir results cmd_rc ab pass_env cost run_cost=0 clog tool rest budget_left skipped
   [ "$ACTION" = dry ] && dry=1
   need jq; need perl; need rsync
   ROOT_REAL="$(real_of "$ROOT")"
@@ -732,7 +741,11 @@ do_run() {
   if [ "$dry" = 0 ]; then
     CLAUDE_BIN="$(command -v claude 2>/dev/null)" || die 3 "claude is not on PATH"
     git -C "$ROOT" rev-parse --git-dir >/dev/null 2>&1 || die 3 "$ROOT is not a git checkout"
-    git -C "$ROOT" symbolic-ref -q HEAD >/dev/null 2>&1 || die 3 "detached HEAD: --scaffold runs the cases' bash, so it runs only on a branch of this repo"
+    branch="$(git -C "$ROOT" symbolic-ref -q --short HEAD 2>/dev/null)" || die 3 "detached HEAD: --scaffold runs the cases' bash, so it runs only on a branch of this repo"
+    case "$branch" in
+      main|feat/*|fix/*|bugfix/*|docs/*|test/*|chore/*|refactor/*) ;;
+      *) die 3 "branch $branch is not one of main, feat/*, fix/*, bugfix/*, docs/*, test/*, chore/*, refactor/*: --scaffold runs author-written bash, so it runs only on our own branches (not champion/pr-N)" ;;
+    esac
     if [ -n "$(git -C "$ROOT" status --porcelain -- evals skills 2>/dev/null)" ]; then
       die 3 "uncommitted changes under evals/ or skills/: commit them first (--scaffold runs author-written bash as you)"
     fi
@@ -743,29 +756,26 @@ do_run() {
   fi
 
   mkdir -p "$EVAL_HOME/cache" || die 3 "cannot create $EVAL_HOME"
+  cleanup() { local kv; if [ "$KEEP" = 0 ]; then for kv in $STAGE_LIST; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done; fi; }
+  trap cleanup EXIT
+  trap 'exit 130' INT TERM
   for k in $kinds; do
-    cases=""
-    for s in $skills; do cases="$cases$(case_dirs "$s" "$k" | grep -c .)"; done
     stage_build "$k" "$skills" || exit $?
-    stage_list="$stage_list $k=$STAGE"
     note "staged $k: $STAGE"
     sed 's/^/skill-evals:   rewrite /' "$STAGE/.stage-rewrites" >&2
   done
-  cleanup() { local kv; if [ "$KEEP" = 0 ]; then for kv in $stage_list; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done; fi; }
-  trap cleanup EXIT
-  trap 'exit 130' INT TERM
 
   CMD_DESC="skill-evals --kind $KIND $(echo $skills | tr ' ' ',')"
   if [ "$dry" = 1 ]; then
     tally_run peek; rc_final=$?
-    case $rc_final in 0) ;; 2) exit 2 ;; *) die 3 "the spend tally could not be checked" ;; esac
+    case $rc_final in 0) ;; *) die 2 "the spend tally could not be checked (fail closed)" ;; esac
   else
     tally_run reserve; rc_final=$?
-    case $rc_final in 0) ;; 2) exit 2 ;; *) die 3 "the spend tally could not be written" ;; esac
+    case $rc_final in 0) ;; *) die 2 "the spend tally could not be written (fail closed)" ;; esac
   fi
 
   budget_left="$MAX_COST"
-  for kv in $stage_list; do
+  for kv in $STAGE_LIST; do
     k="${kv%%=*}"; STAGE="${kv#*=}"; ab="$(ablation_for "$k")"
     out_dir="$EVAL_HOME/$DAY/$RUN_ID-$k"
     results="$out_dir/results.json"
@@ -792,6 +802,7 @@ do_run() {
     scrub_paths "$out_dir"
     if [ ! -s "$results" ] || ! jq -e '.cases' "$results" >/dev/null 2>&1; then
       note "claude plugin eval exited $cmd_rc and left no readable $results"
+      run_cost="$(awk -v a="$run_cost" -v b="$budget_left" 'BEGIN { printf "%.6f", a + b }')"   # unknown spend settles at the reserve
       envfail=1; continue
     fi
     cost="$(jq -r '(.costUsd // 0) as $c | if $c > 0 then $c else ([.cases[] | (.arms.with // [])[], (.arms.without // [])[] | (.costUsd // 0) + (.judgeCostUsd // 0)] | add // 0) end' "$results")"
@@ -811,7 +822,7 @@ do_run() {
     print_failures "$results" "$THRESHOLD" | while IFS= read -r l; do echo "$l"; done
     if jq -e --argjson th "$THRESHOLD" '[.cases[] | (.aggregates.score // 0) < $th] | any' "$results" >/dev/null; then below=1; fi
     if [ "$k" = routing ]; then
-      gl="$(gate_lines "$results")"
+      gl="$(gate_lines "$results")" || gate_missed=1
       if [ -n "$gl" ]; then
         gate_missed=1; echo "$gl"
       fi
