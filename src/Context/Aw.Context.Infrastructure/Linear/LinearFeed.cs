@@ -12,7 +12,8 @@ namespace Aw.Context.Infrastructure.Linear;
 /// </summary>
 /// <param name="client">The Linear client.</param>
 /// <param name="deadline">How long each call gets.</param>
-internal sealed class LinearFeed(LinearClient client, TimeSpan deadline) : RecordFeed(SourceId.From("linear"))
+/// <param name="githubRepos">The profile's GitHub repos ('owner/name'), whose pull request attachments become links.</param>
+internal sealed class LinearFeed(LinearClient client, TimeSpan deadline, IReadOnlyList<string> githubRepos) : RecordFeed(SourceId.From("linear"))
 {
     private const int MaxPage = 25;   // why: each issue brings its newest 20 comments and its relations, and Linear caps the cost of one query
 
@@ -29,7 +30,7 @@ internal sealed class LinearFeed(LinearClient client, TimeSpan deadline) : Recor
         }
 
         var connection = data.Value.Issues;
-        var items = connection.Nodes.Select(LinearIssueItem.Of).ToList();
+        var items = connection.Nodes.Select(issue => LinearIssueItem.Of(issue, githubRepos)).ToList();
         var top = items.Count == 0 ? at.Top : items.Max(static i => i.UpdatedAt) is { } newest && newest > (at.Top ?? DateTimeOffset.MinValue) ? newest : at.Top;
         var next = connection.PageInfo is { HasNextPage: true, EndCursor: { } end } ? new FeedCursor(at.Since, end, top) : new FeedCursor(top ?? at.Since, After: null, Top: null);
         return new RecordPage(items, [], next.ToCursor(), CursorReset: false);

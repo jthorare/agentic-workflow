@@ -105,6 +105,19 @@ internal static class RecordSql
         "p.description " +
         "FROM source_record p WHERE p.source = @source AND p.kind = 'project' AND p.removed_at IS NULL AND p.blocked = 0 AND " + VisibleProject + " ORDER BY p.title, p.key";
 
+    /// <summary>
+    /// The pull requests a source's projects reach (projects page spec §4.5): through each project's visible issues, a 'relates' link from the issue to a stored PR (a GitHub attachment)
+    /// or a PR's 'relates' link to the issue's 'known-as' key (the PR names it). Each pair once; the PR live, not withheld and visible. Probes 'record_link_by_to_key', the link primary key and 'record_link_by_to_ref'.
+    /// </summary>
+    internal const string ProjectPrs =
+        "WITH issue AS (SELECT l.to_key AS project, i.key AS key FROM record_link l JOIN source_record i ON i.key = l.from_key " +
+        "WHERE l.to_key IN (SELECT key FROM source_record WHERE source = @source AND kind = 'project') AND l.kind = 'in-project' AND i.kind = 'issue' AND i.removed_at IS NULL AND " + VisibleIssue + "), " +
+        "reach AS (SELECT s.project, a.to_key AS pr FROM issue s JOIN record_link a ON a.from_key = s.key AND a.kind = 'relates' WHERE a.to_key IS NOT NULL " +
+        "UNION SELECT s.project, b.from_key FROM issue s JOIN record_link k ON k.from_key = s.key AND k.kind = 'known-as' JOIN record_link b ON b.to_ref = k.to_ref AND b.kind = 'relates') " +
+        "SELECT r.project, pr.key, pr.state, COALESCE(pr.updated_at, pr.synced_at) FROM reach r JOIN source_record pr ON pr.key = r.pr " +
+        "WHERE pr.kind = 'pr' AND pr.removed_at IS NULL AND pr.blocked = 0 AND (pr.audience_key IN (SELECT value FROM json_each(@audiences)) OR pr.key IN (SELECT value FROM json_each(@records))) " +
+        "ORDER BY r.project, pr.key";
+
     private const string VisibleProject = "(p.audience_key IN (SELECT value FROM json_each(@audiences)) OR p.key IN (SELECT value FROM json_each(@records)))";
 
     private const string VisibleIssue = "(i.audience_key IN (SELECT value FROM json_each(@audiences)) OR i.key IN (SELECT value FROM json_each(@records)))";

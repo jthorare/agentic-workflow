@@ -44,6 +44,18 @@ public sealed class PullGitHubTests
         Assert.Empty(item.Links);
     }
 
+    // why: a Linear attachment links to 'github:pr/<the profile's spelling>/<n>' (projects page spec §4.5), so the key must be the profile's spelling, never GitHub's own casing from the url
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_key_spells_the_repo_as_the_profile_lists_it_not_as_github_returns_it()
+    {
+        var reader = new FakeGitHubReader().Add("Acme/Widgets", A.GitHubIssue(12).AsPullRequest().UpdatedAt(T.AddHours(1)));
+
+        var item = Assert.Single((await Service(reader).Handle(A.PullGitHubRequest().ForRepo("Acme/Widgets").Build(), Ct)).Value.Items);
+
+        Assert.Equal("https://github.com/acme/widgets/pull/12", item.Url);
+        Assert.Equal("github:pr/Acme/Widgets/12", item.Key);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_pull_request_is_keyed_as_pr_and_links_the_issues_it_closes()
     {

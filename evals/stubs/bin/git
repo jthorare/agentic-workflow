@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Eval git wrapper (spec 2026-10-25-skill-revamp-evals-design.md §2.4): a pass-through to the real git, found on PATH after this
+# directory. Under AW_GIT_MODE=readonly it refuses only commit, push, worktree add, checkout -b and switch -c (exit 1, one line a
+# grader can match). Put this directory on PATH for the agent's run only; fixture.sh and --selftest use the real git.
+set -u
+
+self_dir="$(cd "${BASH_SOURCE[0]%/*}" && pwd)"
+real=""
+IFS=: read -ra _dirs <<< "$PATH"
+for _d in "${_dirs[@]}"; do
+  [ -n "$_d" ] || continue
+  [ "$(cd "$_d" 2>/dev/null && pwd)" = "$self_dir" ] && continue
+  if [ -x "$_d/git" ] && [ ! -d "$_d/git" ]; then real="$_d/git"; break; fi
+done
+[ -n "$real" ] || { echo "aw-eval: no real git on PATH after $self_dir" >&2; exit 127; }
+
+if [ "${AW_GIT_MODE:-full}" = "readonly" ]; then
+  # Skip git's global options to find the subcommand: -C <dir>, -c <k=v>, --git-dir=..., --no-pager, etc.
+  args=("$@"); i=0; n=${#args[@]}
+  while [ "$i" -lt "$n" ]; do
+    case "${args[$i]}" in
+      -C|-c|--git-dir|--work-tree|--namespace) i=$((i + 2)) ;;
+      -*) i=$((i + 1)) ;;
+      *) break ;;
+    esac
+  done
+  sub="${args[$i]:-}"; next="${args[$((i + 1))]:-}"
+  refused=""
+  case "$sub" in
+    commit|push|merge|rebase|cherry-pick|revert|am) refused="$sub" ;;
+    tag) # a name makes a tag; no args, -l/--list and other flags only read
+      for a in "${args[@]:$((i + 1))}"; do case "$a" in -l|--list) refused=""; break ;; -*) ;; *) refused="tag" ;; esac; done ;;
+    branch) # a bare name makes a branch; no args and flags like --show-current, --list, -a, -r, -v only read
+      for a in "${args[@]:$((i + 1))}"; do case "$a" in -l|--list|--show-current) refused=""; break ;; -*) ;; *) refused="branch" ;; esac; done ;;
+    worktree) [ "$next" = "add" ] && refused="worktree add" ;;
+    checkout) for a in "${args[@]:$((i + 1))}"; do { [ "$a" = "-b" ] || [ "$a" = "-B" ]; } && refused="checkout -b"; done ;;
+    switch) for a in "${args[@]:$((i + 1))}"; do { [ "$a" = "-c" ] || [ "$a" = "-C" ] || [ "$a" = "--create" ]; } && refused="switch -c"; done ;;
+  esac
+  if [ -n "$refused" ]; then
+    echo "aw-eval: git $refused refused (AW_GIT_MODE=readonly)" >&2
+    exit 1
+  fi
+fi
+
+exec "$real" "$@"

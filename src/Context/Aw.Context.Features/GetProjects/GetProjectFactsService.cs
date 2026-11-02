@@ -42,19 +42,22 @@ internal sealed class GetProjectFactsService(IRecordStore store, ISourceIdentity
         var firstReadDone = SourceProgress.From(LinearSourceIds.Projects, position.Value.Phase, lastSync: null, lastCode: null).Usable;
         var counting = progress.Value.Any(p => p.Source == LinearSourceIds.Issues && !p.Usable);
         var owner = identity.Value is { } known ? new UserRef(Id(known.UserRef), known.Name) : (UserRef?)null;
-        var catalog = rows.Value.Select(row => Fact(row, owner, counting)).ToList();
+        // why: with no GitHub repo read there are no PR records, so no count rather than a count of 0
+        var prs = settings.Value.GitHub is { Repos.Count: > 0 };
+        var catalog = rows.Value.Select(row => Fact(row, owner, counting, prs)).ToList();
         var byKey = catalog.ToDictionary(f => f.Key);
         var attached = request.Request.Attached.Distinct().Where(byKey.ContainsKey).Select(k => byKey[k]).ToList();
-        return new ProjectFactsAnswer(owner, attached, catalog, settings.Value.LinearTeams, firstReadDone);
+        return new ProjectFactsAnswer(owner, attached, catalog, settings.Value.LinearTeams, firstReadDone, prs ? settings.Value.Index.WindowDays : null);
     }
 
-    private static ProjectFact Fact(ProjectRow row, UserRef? owner, bool counting)
+    private static ProjectFact Fact(ProjectRow row, UserRef? owner, bool counting, bool prs)
     {
         var lead = row.LeadRef is { } reference ? new UserRef(Id(reference), row.LeadName) : (UserRef?)null;
-        var activity = row.NewestIssueAt is { } issue && issue > row.UpdatedAt ? issue : row.UpdatedAt;
+        DateTimeOffset?[] changes = [row.UpdatedAt, row.NewestIssueAt, prs ? row.NewestPrAt : null];
+        var activity = changes.Max() ?? row.UpdatedAt;
         return new ProjectFact(
             row.Key, row.Title, row.Description, row.Url, row.StateRaw, row.Health, row.DueAt is { } due ? new DateTimeOffset(due.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero) : null,
-            lead, LeadIsOwner: lead is { } l && owner is { } o && l.Id.Equals(o.Id), row.UpdatedAt, row.ClosedAt, row.OpenIssues, OpenPrs: null, activity, Repos: null, counting);
+            lead, LeadIsOwner: lead is { } l && owner is { } o && l.Id.Equals(o.Id), row.UpdatedAt, row.ClosedAt, row.OpenIssues, prs ? row.OpenPrs : null, activity, prs ? row.PrRepos ?? [] : null, counting);
     }
 
     private static ExternalId Id(string userRef) => ExternalId.From(userRef.StartsWith(UserPrefix, StringComparison.Ordinal) ? userRef[UserPrefix.Length..] : userRef);
