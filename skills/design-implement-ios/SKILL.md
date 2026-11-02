@@ -1,6 +1,6 @@
 ---
 name: design-implement-ios
-description: Generate SwiftUI Theme.swift and view components from an approved iOS mockup using design-tokens.json. Supports light/dark color schemes following iOS HIG, with a mandatory design-verify-ios gate.
+description: "Use when an approved iOS mockup should become real SwiftUI: a Theme.swift built from the design tokens plus typed view components, in both light and dark appearance. Ends with a simulator check against the mockup baseline. Not for web pages or CSS (design-implement-web)."
 argument-hint: "<screen-name>"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff, mcp__prism-mcp__session_task_route, mcp__prism-mcp__prism_infer
 ---
@@ -174,6 +174,13 @@ Generated:
 - Do not modify `design-tokens.json` — it is the source of truth
 - If the project has existing color definitions (Asset catalog, extension), note any conflicts rather than silently overwriting
 - No completion claim without a PASS/WARN verify run from Step 4
+
+## Result block
+
+Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
+
+1. `mkdir -p "$AW_DIR/results"` and write `$AW_DIR/results/design-implement-ios-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-implement-ios"`), `artifacts` (absolute paths of Theme.swift, the view files and the implement report), `summary` (one line), plus `verify_verdict`, `verify_run_id`.
+2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
 
 ## Next steps
 
