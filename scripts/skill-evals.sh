@@ -5,7 +5,7 @@
 #   scripts/skill-evals.sh [--skills a,b | --changed | --all] [--kind routing|behaviour|both]
 #                          [--runs N] [--ablation none|with-without] [--model M] [--judge-model M]
 #                          [--threshold T] [--max-cost-usd N] [--jobs N] [--gate warn|block]
-#                          [--lane NAME] [--keep-temp] [--root DIR]
+#                          [--family a,b] [--family-max-cost-usd N] [--lane NAME] [--keep-temp] [--root DIR]
 #                          [--dry-run | --selftest | --lint-descriptions | --status]
 #
 # Lane leads and the owner run the real thing; builders run --selftest, --dry-run and --lint-descriptions only (they call no
@@ -32,12 +32,27 @@
 # Models (spec §6.3): the agent model is pinned here (default claude-sonnet-5-5, the per-PR choice; the nightly passes --model for
 # the default Opus) and the judge is sonnet, not the Haiku default. The same --model runs both arms.
 #
+# Skill directories: a skill x lives in skills/<x>/ (SKILL.md inside); bootstrap lives in bootstrap/ (skill_dir resolves both, the
+# stage copies it to skills/bootstrap/, --changed counts bootstrap/** as a change to the skill "bootstrap").
+#
+# Family sets (spec §3.1a): evals/_families/<family>/<member>/{prompt.md, graders/*.md} (an optional README.md per family). A
+# <member> is a skill's dir name. --selftest walks every family case with the same lint and counts them in its case total. A real
+# run also runs a family's whole set (--ablation none, own staged block "### family <name>" in the report) when a selected skill is a
+# member and its SKILL.md description differs from the merge base with origin/main, or when --family a,b names it. The family set
+# has its own per-run cap --family-max-cost-usd (default 12), reserved and settled as separate rows in the same tally (§6.4): when
+# the day's $60 has no room for it, the family set is skipped ("FAMILY SKIPPED"), the skill run goes on, and the exit is 2.
+#
+# Regex graders are JavaScript (the tool runs new RegExp(pattern, flags).test(text); flags are dgimsuvy; count:N counts with g): --selftest
+# runs them in node exactly as written and reports SELFTEST-REGEX when one does not compile ((?i), (?s) and \A are not JavaScript).
+#
 # Case files: <eval dir>/<skill>/{routing,behaviour}/<case>/{prompt.md|case.yaml, graders/*.md}. Conventions the script
 # reads on top of the tool's format: a routing case's `skill-fired` grader (tool_used Skill) passing means the skill fired; a
 # near-miss case uses `skill-not-fired` instead (passing means it did NOT fire). Cases named *-natural-N and *-near-miss feed
 # the routing gate (spec §6.1). --selftest reads graders/_selftest/<grader>.pass.<ext> and .fail.<ext>, where <ext> is
 # txt (the reply, or a file's contents), files (newline-separated created paths; file_exists and regex target files) or
-# tools (one "ToolName<TAB>input" per call; tool_used). --status reads evals/<skill>/status.md ("key: value" lines:
+# tools (one "ToolName<TAB>input" per call; tool_used), or trace (the eval tool's trace text: run.trace.map(JSON.stringify).join("\n"): one compact JSON message per line, a Skill call being an assistant
+# message with a tool_use block {"name":"Skill","input":{"skill":"<name>"}} (the exact envelope is checked on the first real family run); regex with target: trace, as the
+# family graders use to anchor on the first Skill call). --status reads evals/<skill>/status.md ("key: value" lines:
 # fire_rate, delta, last_run YYYY-MM-DD, pr). --lint-descriptions reads the total-bytes baseline from
 # evals/_lib/description-bytes.baseline (one number) when that file exists.
 #
@@ -53,6 +68,7 @@ CAP_USD=60
 RESERVE_TTL=10800
 
 SKILLS_ARG="" SELECT="" KIND=both RUNS="" ABLATION="" MODEL=claude-sonnet-5-5 JUDGE=sonnet THRESHOLD=0.8 MAX_COST=8 JOBS="" GATE=warn
+FAMILY_ARG="" FAMILY_MAX=12
 ACTION=run KEEP=0 LANE="" STAGE_LIST=""
 
 usage() {
@@ -76,6 +92,8 @@ while [ $# -gt 0 ]; do
     --max-cost-usd) MAX_COST="${2:?--max-cost-usd needs a number}"; shift 2 ;;
     --jobs|-j) JOBS="${2:?--jobs needs a number}"; shift 2 ;;
     --gate) GATE="${2:?--gate needs warn|block}"; shift 2 ;;
+    --family) FAMILY_ARG="${2:?--family needs a name}"; shift 2 ;;
+    --family-max-cost-usd) FAMILY_MAX="${2:?--family-max-cost-usd needs a number}"; shift 2 ;;
     --lane) LANE="${2:?--lane needs a name}"; shift 2 ;;
     --keep-temp) KEEP=1; shift ;;
     --root) ROOT="$(cd "${2:?--root needs a directory}" && pwd)" || exit 64; shift 2 ;;
@@ -93,6 +111,7 @@ case "$ABLATION" in ""|none|with-without) ;; *) die 64 "--ablation must be none 
 num() { printf '%s' "$1" | grep -Eq '^[0-9]+(\.[0-9]+)?$'; }
 num "$THRESHOLD" || die 64 "--threshold must be a number"
 num "$MAX_COST" || die 64 "--max-cost-usd must be a number"
+num "$FAMILY_MAX" || die 64 "--family-max-cost-usd must be a number"
 [ -z "$RUNS" ] || printf '%s' "$RUNS" | grep -Eq '^[0-9]+$' || die 64 "--runs must be a whole number"
 [ -z "$JOBS" ] || printf '%s' "$JOBS" | grep -Eq '^[1-8]$' || die 64 "--jobs must be 1 to 8"
 [ -n "$LANE" ] || LANE="${AW_META_LANE:-}"
@@ -141,7 +160,18 @@ description_of() {
 # Skill and case discovery
 # ---------------------------------------------------------------------------------------------------------------------
 
-all_skills() { local d; for d in "$ROOT"/skills/*/; do [ -f "$d/SKILL.md" ] && basename "$d"; done; }
+# skill_dir X: the directory holding skill X's SKILL.md (skills/X, or bootstrap/ for bootstrap); non-zero when there is none
+skill_dir() {
+  if [ -f "$ROOT/skills/$1/SKILL.md" ]; then echo "$ROOT/skills/$1"
+  elif [ "$1" = bootstrap ] && [ -f "$ROOT/bootstrap/SKILL.md" ]; then echo "$ROOT/bootstrap"
+  else return 1; fi
+}
+all_skills() {
+  local d
+  for d in "$ROOT"/skills/*/; do [ -f "$d/SKILL.md" ] && basename "$d"; done
+  [ ! -f "$ROOT/bootstrap/SKILL.md" ] || [ -f "$ROOT/skills/bootstrap/SKILL.md" ] || echo bootstrap
+  return 0
+}
 has_evals() { [ -d "$ROOT/evals/$1" ]; }
 case_dirs() { # skill kind -> case directories (a dir with prompt.md or case.yaml)
   local d
@@ -156,7 +186,7 @@ resolve_skills() { # prints one skill per line
   case "$SELECT" in
     skills)
       for s in $(printf '%s' "$SKILLS_ARG" | tr ',' ' '); do
-        [ -f "$ROOT/skills/$s/SKILL.md" ] || die 64 "unknown skill: $s"
+        skill_dir "$s" >/dev/null || die 64 "unknown skill: $s"
         echo "$s"
       done ;;
     all) for s in $(all_skills); do has_evals "$s" && echo "$s"; done ;;
@@ -164,7 +194,7 @@ resolve_skills() { # prints one skill per line
       base=origin/main
       git -C "$ROOT" rev-parse --verify -q "$base^{commit}" >/dev/null 2>&1 || die 3 "--changed needs $base (git fetch origin main)"
       mb="$(git -C "$ROOT" merge-base "$base" HEAD 2>/dev/null)" || die 3 "--changed: no merge base with $base"
-      files="$( { git -C "$ROOT" diff --name-only "$mb" -- skills evals config/voice; git -C "$ROOT" ls-files --others --exclude-standard -- skills evals config/voice; } | sort -u)"
+      files="$( { git -C "$ROOT" diff --name-only "$mb" -- skills evals config/voice bootstrap; git -C "$ROOT" ls-files --others --exclude-standard -- skills evals config/voice bootstrap; } | sort -u)"
       while IFS= read -r f; do
         case "$f" in
           skills/_shared/*|skills/_preamble*.md|skills/_design-preamble*.md) all=1 ;;
@@ -175,10 +205,11 @@ EOF
       if [ "$all" = 1 ]; then
         for s in $(all_skills); do has_evals "$s" && echo "$s"; done
       else
-        printf '%s\n' "$files" | awk -F/ '($1 == "skills" || $1 == "evals") && $2 !~ /^_/ && $2 != "plugin" && $2 != "mocks" && $2 != "stubs" && $2 != "results" && NF > 2 { print $2 }' | sort -u |
-          while IFS= read -r s; do [ -f "$ROOT/skills/$s/SKILL.md" ] && echo "$s"; done
+        printf '%s\n' "$files" | awk -F/ '$1 == "bootstrap" && NF > 1 { print "bootstrap"; next }
+          ($1 == "skills" || $1 == "evals") && $2 !~ /^_/ && $2 != "plugin" && $2 != "mocks" && $2 != "stubs" && $2 != "results" && NF > 2 { print $2 }' | sort -u |
+          while IFS= read -r s; do skill_dir "$s" >/dev/null && echo "$s"; done
       fi ;;
-    *) die 64 "choose the skills: --skills a,b, --changed or --all" ;;
+    *) [ -n "$FAMILY_ARG" ] || die 64 "choose the skills: --skills a,b, --changed or --all" ;;
   esac
   return 0
 }
@@ -188,20 +219,85 @@ ablation_for() { # kind -> the ablation mode (spec §3.1: routing reads the fire
   if [ -n "$ABLATION" ]; then echo "$ABLATION"; elif [ "$1" = routing ]; then echo none; else echo with-without; fi
 }
 
+# Family sets: evals/_families/<family>/<member>/ (prompt.md or case.yaml, graders/)
+family_dirs() { local d; for d in "$ROOT"/evals/_families/*/; do [ -d "$d" ] && basename "$d"; done; return 0; }
+family_case_dirs() { # family -> case directories
+  local d
+  for d in "$ROOT/evals/_families/$1"/*/; do
+    [ -f "$d/prompt.md" ] || [ -f "$d/case.yaml" ] || continue
+    printf '%s\n' "${d%/}"
+  done
+}
+family_count() { family_case_dirs "$1" | grep -c . || true; }
+is_family_kind() { case "$1" in family-*) return 0 ;; *) return 1 ;; esac; }
+
+# desc_changed SKILL MERGE_BASE: 0 when SKILL's description differs from the merge base's (a skill new since then counts as changed)
+desc_changed() {
+  local s="$1" mb="$2" dir rel old tmp new
+  dir="$(skill_dir "$s")" || return 1
+  rel="${dir#"$ROOT"/}/SKILL.md"
+  git -C "$ROOT" cat-file -e "$mb:$rel" 2>/dev/null || return 0
+  tmp="$(mktemp "${TMPDIR:-/tmp}/skill-evals-desc.XXXXXX")" || return 1
+  git -C "$ROOT" show "$mb:$rel" >"$tmp" 2>/dev/null
+  old="$(description_of "$tmp")"; rm -f "$tmp"
+  new="$(description_of "$dir/SKILL.md")"
+  [ "$old" != "$new" ]
+}
+
+# pick_families SKILLS: prints "family<TAB>reason" lines: --family names, plus the families a selected skill belongs to whose
+# description changed vs the merge base with origin/main
+pick_families() {
+  local skills="$1" f s mb="" have_mb=0 out=""
+  if git -C "$ROOT" rev-parse --verify -q "origin/main^{commit}" >/dev/null 2>&1 &&
+     mb="$(git -C "$ROOT" merge-base origin/main HEAD 2>/dev/null)" && [ -n "$mb" ]; then have_mb=1; fi
+  for f in $(printf '%s' "$FAMILY_ARG" | tr ',' ' '); do
+    [ -d "$ROOT/evals/_families/$f" ] || die 64 "unknown family: $f"
+    out="$out$f\t--family
+"
+  done
+  if [ "$have_mb" = 1 ]; then
+    for f in $(family_dirs); do
+      case " $(printf '%s' "$FAMILY_ARG" | tr ',' ' ') " in *" $f "*) continue ;; esac
+      for s in $skills; do
+        [ -d "$ROOT/evals/_families/$f/$s" ] || continue
+        if desc_changed "$s" "$mb"; then out="$out$f\tdescription of $s changed
+"; break; fi
+      done
+    done
+  elif [ -n "$skills" ] && [ -n "$(family_dirs)" ]; then
+    note "no origin/main merge base: families are chosen only by --family"
+  fi
+  printf '%b' "$out"
+}
+
 # ---------------------------------------------------------------------------------------------------------------------
 # Graders (selftest)
 # ---------------------------------------------------------------------------------------------------------------------
 
 GRADER_TYPES="regex file_exists llm tool_used tool_order baseline"
 
-# regex_count PATTERN FLAGS < text -> number of matches (JS-style flags: only i, m, s, x apply)
+# The tool's regex graders are JavaScript: new RegExp(pattern, flags).test(text), flags in dgimsuvy, `count:N` counted with g. So the
+# selftest runs node with the pattern and flags exactly as written (a Perl-only construct such as (?i), (?s) or \A is an error).
+# regex_error PATTERN FLAGS -> prints the problem (nothing when the regex is fine)
+regex_error() {
+  node -e '
+    const [p, f] = process.argv.slice(1);
+    if (!/^[dgimsuvy]*$/.test(f)) { console.log("flags \"" + f + "\" are not JavaScript RegExp flags (dgimsuvy)"); process.exit(0) }
+    try { new RegExp(p, f) } catch (e) { console.log("pattern does not compile in JavaScript: " + e.message) }' "$1" "$2"
+}
+# regex_count PATTERN FLAGS < text -> number of matches (with the g flag added); exit 2 when it does not compile
 regex_count() {
-  perl -0777 -e '
-    my ($pat, $flags) = @ARGV; $flags =~ s/[^imsx]//g;
-    local $/; my $t = <STDIN>; $t = "" unless defined $t;
-    my $re = eval { $flags ne "" ? qr/(?$flags)$pat/ : qr/$pat/ };
-    if (!$re) { print "bad\n"; exit 2 }
-    my $n = () = $t =~ /$re/g; print "$n\n";' "$1" "$2"
+  node -e '
+    const [p, f] = process.argv.slice(1);
+    const t = require("fs").readFileSync(0, "utf8");
+    let re; try { re = new RegExp(p, f.includes("g") ? f : f + "g") } catch (e) { console.log("bad"); process.exit(2) }
+    console.log((t.match(re) || []).length)' "$1" "$2"
+}
+# grader_pattern GRADER_MD: the regex grader's pattern (its pattern: line, else the body without trailing blank lines)
+grader_pattern() {
+  local pat
+  pat="$(fm_get "$1" pattern)"; [ -n "$pat" ] || pat="$(fm_body "$1" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
+  printf '%s' "$pat"
 }
 regex_verdict() { # match count -> 0 when the grader passes
   local match="$1" n="$2"
@@ -218,9 +314,9 @@ grader_passes() {
   type="$(fm_get "$g" type)"; name="$(basename "$g" .md)"; dir="$(dirname "$g")/_selftest"; base="$dir/$name.$which"
   case "$type" in
     regex)
-      pat="$(fm_get "$g" pattern)"; [ -n "$pat" ] || pat="$(fm_body "$g" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
+      pat="$(grader_pattern "$g")"
       flags="$(fm_get "$g" flags)"; match="$(fm_get "$g" match)"; target="$(fm_get "$g" target)"
-      case "$target" in files) f="$base.files" ;; *) f="$base.txt" ;; esac
+      case "$target" in files) f="$base.files" ;; trace) f="$base.trace" ;; *) f="$base.txt" ;; esac
       [ -f "$f" ] || return 3
       [ -n "$pat" ] || return 2
       n="$(regex_count "$pat" "$flags" <"$f")" || return 2
@@ -245,7 +341,7 @@ grader_passes() {
 }
 
 lint_case() { # case dir -> prints problems, returns the count via the exit status (0 = clean)
-  local c="$1" rel g type name seen="" bad=0 free=0 gcount=0 tools to nf
+  local c="$1" rel g type name seen="" bad=0 free=0 gcount=0 tools to nf rerr
   rel="${c#"$ROOT"/}"
   if [ ! -f "$c/prompt.md" ] && ! grep -Eq '^[[:space:]]*prompt:' "$c/case.yaml" 2>/dev/null; then
     echo "SELFTEST-CASE: $rel: no prompt.md and no execution.prompt"; bad=1
@@ -269,6 +365,10 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
     seen="$seen $name"
     type="$(fm_get "$g" type)"
     case " $GRADER_TYPES " in *" $type "*) ;; *) echo "SELFTEST-GRADER: $rel/graders/$name.md: type '$type' is not one of $GRADER_TYPES"; bad=1; continue ;; esac
+    if [ "$type" = regex ]; then
+      rerr="$(regex_error "$(grader_pattern "$g")" "$(fm_get "$g" flags)")"
+      if [ -n "$rerr" ]; then echo "SELFTEST-REGEX: $rel/graders/$name.md: $rerr"; bad=1; free=1; continue; fi
+    fi
     case "$type" in
       regex|file_exists|tool_used)
         free=1
@@ -296,7 +396,7 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
 lint_fixture() { # fixture.sh -> problems on stdout; 0 clean
   local f="$1" rel bad=0 hit
   rel="${f#"$ROOT"/}"
-  hit="$(grep -nE '(^|[;&|[:space:]])(rm|mv|cp|rmdir|chmod|chown)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*(/|~|\$HOME|\.\.)|\bsudo\b|(^|[[:space:]])cd[[:space:]]+(/|~|\.\.)|>>?[[:space:]]*(/[a-z]|~|\$HOME)|git[[:space:]]+(push|remote[[:space:]]+add)' "$f" | grep -vE '>>?[[:space:]]*/dev/null' || true)"
+  hit="$(grep -nE '(^|[;&|[:space:]])(rm|mv|cp|rmdir|chmod|chown)[[:space:]]+(-[A-Za-z]+[[:space:]]+)*(/|~|\$HOME|\.\.)|\bsudo\b|(^|[[:space:]])cd[[:space:]]+(/|~|\.\.)|>>?[[:space:]]*(/[a-z]|~|\$HOME)|git[[:space:]]+(push|remote[[:space:]]+add)' "$f" | grep -vE '>>?[[:space:]]*/dev/null' | grep -vE '^[0-9]+:[[:space:]]*#' || true)"
   if [ -n "$hit" ]; then
     while IFS= read -r l; do echo "SELFTEST-FIXTURE: $rel:${l%%:*}: deletes or writes outside \$PWD: ${l#*:}"; done <<EOF
 $hit
@@ -323,7 +423,7 @@ lint_descriptions() { # -> 0 clean
   local s d len total=0 bad=0 base prompts p shared baseline limit all_listed
   all_listed="${lint_skills:-$(all_skills)}"
   for s in $all_listed; do
-    d="$(description_of "$ROOT/skills/$s/SKILL.md")"
+    d="$(description_of "$(skill_dir "$s")/SKILL.md")"
     len=${#d}
     total=$((total + $(printf '%s' "$d" | wc -c)))
     [ -n "$d" ] || { echo "LINT-DESC: skills/$s/SKILL.md: no description"; bad=1; continue; }
@@ -373,8 +473,8 @@ EOF
 do_selftest() {
   local skills s k c f errs=0 cases=0 out
   skills="$(resolve_skills)" || exit $?
-  if [ -z "$skills" ] && [ "$SELECT" = changed ]; then echo "no skills changed"; exit 0; fi
-  need perl; need jq
+  if [ -z "$skills" ] && [ "$SELECT" = changed ] && [ -z "$(family_dirs)" ]; then echo "no skills changed"; exit 0; fi
+  need perl; need jq; need node
   LINT_TMP="$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-lint.XXXXXX")" || die 3 "no temp dir"
   trap 'find "$LINT_TMP" -delete 2>/dev/null' EXIT
   for s in $skills; do
@@ -389,6 +489,12 @@ do_selftest() {
         cases=$((cases + 1))
         out="$(lint_case "$c")" || { echo "$out"; errs=$((errs + 1)); }
       done
+    done
+  done
+  for s in $(family_dirs); do
+    for c in $(family_case_dirs "$s"); do
+      cases=$((cases + 1))
+      out="$(lint_case "$c")" || { echo "$out"; errs=$((errs + 1)); }
     done
   done
   lint_skills="$skills" lint_len_warn=1 lint_descriptions || errs=$((errs + 1))
@@ -452,7 +558,7 @@ tally_op() {
       and (.t != "reserve" or ((.ts | type == "number") and (.pid | type == "number"))))' "$TALLY" >/dev/null 2>&1 ||
     { echo "the spend tally is unreadable or malformed ($TALLY); refusing to start (fix or remove it)"; return 2; }
   if [ "$TALLY_MODE" = settle ]; then
-    jq -nc --arg id "$RUN_ID" --arg d "$DAY" --arg l "$LANE" --argjson u "$SETTLE_USD" --argjson ts "$NOW" --arg c "$CMD_DESC" \
+    jq -nc --arg id "$TID" --arg d "$DAY" --arg l "$LANE" --argjson u "$SETTLE_USD" --argjson ts "$NOW" --arg c "$CMD_DESC" \
       '{t: "settle", id: $id, date: $d, lane: $l, usd: $u, ts: $ts, cmd: $c}' >>"$TALLY"
     spent="$(jq -s -r --arg d "$DAY" '[.[] | select(.t == "settle" and .date == $d) | .usd] | add // 0' "$TALLY")"
     all_total="$(jq -s -r '[.[] | select(.t == "settle") | .usd] | add // 0' "$TALLY")"
@@ -478,16 +584,16 @@ EOF
     echo "refused: today's \$$total plus --max-cost-usd $MAXC would pass the \$$CAP_USD daily cap."; return 2
   fi
   if [ "$TALLY_MODE" = reserve ]; then
-    jq -nc --arg id "$RUN_ID" --arg d "$DAY" --arg l "$LANE" --argjson pid "$SE_PID" --argjson ts "$NOW" --argjson u "$MAXC" --arg c "$CMD_DESC" \
+    jq -nc --arg id "$TID" --arg d "$DAY" --arg l "$LANE" --argjson pid "$SE_PID" --argjson ts "$NOW" --argjson u "$MAXC" --arg c "$CMD_DESC" \
       '{t: "reserve", id: $id, date: $d, lane: $l, pid: $pid, ts: $ts, usd: $u, cmd: $c}' >>"$TALLY"
   fi
   return 0
 }
 export -f tally_op
 
-tally_run() { # MODE [settle usd]; prints the tally's message, returns its status
+tally_run() { # MODE [settle usd [row id [ceiling usd]]]; prints the tally's message, returns its status (the family set uses its own id and ceiling)
   mkdir -p "$EVAL_HOME" || return 3
-  export TALLY RUN_ID DAY LANE CAP_USD RESERVE_TTL MAXC="$MAX_COST" SE_PID="$$" NOW CMD_DESC TALLY_MODE="$1" SETTLE_USD="${2:-0}"
+  export TALLY RUN_ID DAY LANE CAP_USD RESERVE_TTL MAXC="${4:-$MAX_COST}" TID="${3:-$RUN_ID}" SE_PID="$$" NOW CMD_DESC TALLY_MODE="$1" SETTLE_USD="${2:-0}"
   NOW="$(date +%s)"
   locked bash -c tally_op
 }
@@ -619,7 +725,7 @@ stage_build() {
   if git -C "$S" rev-parse --git-dir >/dev/null 2>&1; then die 3 "the stage $S is inside a git repo (the eval refuses plugins in repos with many worktrees); point AW_STATE_DIR elsewhere"; fi
   STAGE="$S"
 
-  local srcs="$ROOT/skills $ROOT/evals/plugin $ROOT/evals/_lib $ROOT/evals/mocks $ROOT/evals/stubs $ROOT/config/voice $ROOT/config/agents"
+  local srcs="$ROOT/skills $ROOT/bootstrap $ROOT/evals/_families $ROOT/evals/plugin $ROOT/evals/_lib $ROOT/evals/mocks $ROOT/evals/stubs $ROOT/config/voice $ROOT/config/agents"
   for s in $skills; do srcs="$srcs $ROOT/evals/$s"; done
   # shellcheck disable=SC2086
   check_links $srcs || die 3 "a staged path resolves outside the repo"
@@ -627,9 +733,9 @@ stage_build() {
   rsync -a --exclude skills "$ROOT/evals/plugin/" "$S/" || die 3 "rsync of evals/plugin failed"
   mkdir -p "$S/skills" "$S/evals" "$S/config"
   for n in $(all_skills); do
-    mkdir -p "$S/skills/$n"; rsync -aL "$ROOT/skills/$n/SKILL.md" "$S/skills/$n/" || die 3 "rsync of skills/$n failed"
+    mkdir -p "$S/skills/$n"; rsync -aL "$(skill_dir "$n")/SKILL.md" "$S/skills/$n/" || die 3 "rsync of skill $n failed"
   done
-  for s in $skills; do rsync -aL "$ROOT/skills/$s/" "$S/skills/$s/" || die 3 "rsync of skills/$s failed"; done
+  for s in $skills; do rsync -aL "$(skill_dir "$s")/" "$S/skills/$s/" || die 3 "rsync of skill $s failed"; done
   [ ! -d "$ROOT/skills/_shared" ] || rsync -aL "$ROOT/skills/_shared/" "$S/skills/_shared/"
   for a in "$ROOT"/skills/_preamble*.md "$ROOT"/skills/_design-preamble*.md; do [ ! -f "$a" ] || rsync -aL "$a" "$S/skills/"; done
   [ ! -d "$ROOT/config/voice" ] || rsync -aL "$ROOT/config/voice/" "$S/config/voice/"
@@ -638,7 +744,7 @@ stage_build() {
       [ -f "$a" ] || continue
       n="$(basename "$a" .md)"
       for s in $skills; do
-        if grep -rqw -- "$n" "$ROOT/skills/$s" 2>/dev/null; then
+        if grep -rqw -- "$n" "$(skill_dir "$s")" 2>/dev/null; then
           mkdir -p "$S/config/agents" "$S/agents"; rsync -aL "$a" "$S/config/agents/"; rsync -aL "$a" "$S/agents/"; break
         fi
       done
@@ -650,6 +756,10 @@ stage_build() {
     [ ! -f "$ROOT/evals/$s/fixture.sh" ] || rsync -aL "$ROOT/evals/$s/fixture.sh" "$S/evals/$s/"
     if [ -d "$ROOT/evals/$s/$kind" ]; then rsync -aL --exclude _selftest "$ROOT/evals/$s/$kind/" "$S/evals/$s/$kind/"; fi
   done
+  if is_family_kind "$kind"; then
+    mkdir -p "$S/evals/_families/${kind#family-}"
+    rsync -aL --exclude _selftest --exclude README.md "$ROOT/evals/_families/${kind#family-}/" "$S/evals/_families/${kind#family-}/" || die 3 "rsync of the family ${kind#family-} failed"
+  fi
 
   # refused: a hooks/ dir, or an .mcp.json other than evals/plugin/.mcp.json at the stage root
   if [ -n "$(find "$S" -name hooks -type d -print -quit)" ]; then die 3 "the stage holds a hooks/ directory ($(find "$S" -name hooks -type d -print -quit))"; fi
@@ -668,6 +778,12 @@ EOF
       inject_scaffold "$c" "$ups"
     done
   done
+  if is_family_kind "$kind"; then
+    for c in $(find "$S/evals/_families/${kind#family-}" -type f \( -name prompt.md -o -name case.yaml \) -exec dirname {} \; | sort -u); do
+      rel="${c#"$S"/}"; ups="$(echo "$rel" | awk -F/ '{ s = ".."; for (i = 2; i <= NF; i++) s = s "/.."; print s }')"
+      inject_scaffold "$c" "$ups"
+    done
+  fi
   find "$S" -name '*.new' -delete 2>/dev/null
   return 0
 }
@@ -733,17 +849,28 @@ shq() { printf '%q ' "$@"; }
 do_run() {
   local skills s k c kinds gl branch cases total_cases=0 dry=0 rc_final=0 below=0 partial=0 gate_missed=0 envfail=0
   local out_dir results cmd_rc ab pass_env cost run_cost=0 clog tool rest budget_left skipped
+  local famlines fams f fam_cost=0 fam_left="$FAMILY_MAX" fam_skipped=0 fam_refused=0 isfam bl fid n_fam
   [ "$ACTION" = dry ] && dry=1
   need jq; need perl; need rsync
   ROOT_REAL="$(real_of "$ROOT")"
   skills="$(resolve_skills)" || exit $?
-  if [ -z "$skills" ]; then
+  famlines="$(pick_families "$skills")" || exit $?
+  fams="$(printf '%s\n' "$famlines" | cut -f1 | awk 'NF')"
+  if [ -z "$skills" ] && [ -z "$fams" ]; then
     if [ "$SELECT" = changed ]; then echo "no skills changed"; exit 0; fi
     echo "no skills with evals to run"; exit 0
   fi
   kinds="$(kinds_for)"
   for s in $skills; do for k in $kinds; do total_cases=$((total_cases + $(case_dirs "$s" "$k" | grep -c .))); done; done
-  note "skills: $(echo $skills | tr ' ' ',') ($total_cases case(s), kind $KIND)"
+  [ -z "$skills" ] || note "skills: $(echo $skills | tr ' ' ',') ($total_cases case(s), kind $KIND)"
+  n_fam=0
+  for f in $fams; do n_fam=$((n_fam + $(family_count "$f"))); done
+  total_cases=$((total_cases + n_fam))
+  if [ -n "$fams" ]; then
+    printf '%s\n' "$famlines" | while IFS="$(printf '\t')" read -r f why; do
+      [ -n "$f" ] && note "family plan: $f ($(family_count "$f") case(s), ablation none, cap \$$FAMILY_MAX): $why"
+    done
+  fi
   if [ "$total_cases" -eq 0 ]; then echo "no cases to run"; exit 0; fi
 
   if [ "$dry" = 0 ]; then
@@ -754,37 +881,55 @@ do_run() {
       main|feat/*|fix/*|bugfix/*|docs/*|test/*|chore/*|refactor/*) ;;
       *) die 3 "branch $branch is not one of main, feat/*, fix/*, bugfix/*, docs/*, test/*, chore/*, refactor/*: --scaffold runs author-written bash, so it runs only on our own branches (not champion/pr-N)" ;;
     esac
-    if [ -n "$(git -C "$ROOT" status --porcelain -- evals skills 2>/dev/null)" ]; then
+    if [ -n "$(git -C "$ROOT" status --porcelain -- evals skills bootstrap 2>/dev/null)" ]; then
       die 3 "uncommitted changes under evals/ or skills/: commit them first (--scaffold runs author-written bash as you)"
     fi
     env -i PATH="$PATH" HOME="$HOME" "$CLAUDE_BIN" auth status >/dev/null 2>&1 || die 3 "claude is not logged in (run: claude auth login)"
   else
     CLAUDE_BIN="$(command -v claude 2>/dev/null || echo claude)"
-    git -C "$ROOT" status --porcelain -- evals skills 2>/dev/null | grep -q . && note "dry run: uncommitted changes under evals/ or skills/ (a real run refuses these)"
+    git -C "$ROOT" status --porcelain -- evals skills bootstrap 2>/dev/null | grep -q . && note "dry run: uncommitted changes under evals/ or skills/ (a real run refuses these)"
   fi
 
   mkdir -p "$EVAL_HOME/cache" || die 3 "cannot create $EVAL_HOME"
   cleanup() { local kv; if [ "$KEEP" = 0 ]; then for kv in $STAGE_LIST; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done; fi; }
   trap cleanup EXIT
   trap 'exit 130' INT TERM
-  for k in $kinds; do
-    stage_build "$k" "$skills" || exit $?
-    note "staged $k: $STAGE"
-    sed 's/^/skill-evals:   rewrite /' "$STAGE/.stage-rewrites" >&2
-  done
+  if [ -n "$skills" ]; then
+    for k in $kinds; do
+      stage_build "$k" "$skills" || exit $?
+      note "staged $k: $STAGE"
+      sed 's/^/skill-evals:   rewrite /' "$STAGE/.stage-rewrites" >&2
+    done
 
-  CMD_DESC="skill-evals --kind $KIND $(echo $skills | tr ' ' ',')"
-  if [ "$dry" = 1 ]; then
-    tally_run peek; rc_final=$?
-    case $rc_final in 0) ;; *) die 2 "the spend tally could not be checked (fail closed)" ;; esac
-  else
-    tally_run reserve; rc_final=$?
-    case $rc_final in 0) ;; *) die 2 "the spend tally could not be written (fail closed)" ;; esac
+    CMD_DESC="skill-evals --kind $KIND $(echo $skills | tr ' ' ',')"
+    if [ "$dry" = 1 ]; then
+      tally_run peek; rc_final=$?
+      case $rc_final in 0) ;; *) die 2 "the spend tally could not be checked (fail closed)" ;; esac
+    else
+      tally_run reserve; rc_final=$?
+      case $rc_final in 0) ;; *) die 2 "the spend tally could not be written (fail closed)" ;; esac
+    fi
+  fi
+  if [ -n "$fams" ]; then
+    # the family set: its own ceiling, its own reserve row (id <run>-family) in the same tally
+    fid="$RUN_ID-family"
+    CMD_DESC="skill-evals family $(echo $fams | tr ' ' ',')"
+    if [ "$dry" = 1 ]; then tally_run peek 0 "$fid" "$FAMILY_MAX"; rc_final=$?; else tally_run reserve 0 "$fid" "$FAMILY_MAX"; rc_final=$?; fi
+    case $rc_final in
+      0) for f in $fams; do
+           stage_build "family-$f" "$(for c in $(family_case_dirs "$f"); do skill_dir "$(basename "$c")" >/dev/null && basename "$c"; done)" || exit $?
+           note "staged family-$f: $STAGE"
+         done ;;
+      2) fam_refused=1; fam_skipped=1; echo "FAMILY SKIPPED: the family set ($FAMILY_MAX) was refused by the daily cap; the skill run goes on" ;;
+      *) die 2 "the spend tally could not be written (fail closed)" ;;
+    esac
   fi
 
   budget_left="$MAX_COST"
   for kv in $STAGE_LIST; do
     k="${kv%%=*}"; STAGE="${kv#*=}"; ab="$(ablation_for "$k")"
+    isfam=0; bl="$budget_left"
+    if is_family_kind "$k"; then isfam=1; ab=none; bl="$fam_left"; fi
     out_dir="$EVAL_HOME/$DAY/$RUN_ID-$k"
     results="$out_dir/results.json"
     local args
@@ -794,7 +939,7 @@ do_run() {
     [ -z "$JUDGE" ] || args+=(--judge-model "$JUDGE")
     [ -z "$JOBS" ] || args+=(-j "$JOBS")
     [ "$KEEP" = 0 ] || args+=(--keep-temp)
-    args+=(--max-cost-usd "$budget_left" --allow-tools Bash Write Edit)
+    args+=(--max-cost-usd "$bl" --allow-tools Bash Write Edit)
     pass_env=(PATH="$STAGE/evals/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
               AW_STATE_DIR=.aw-state AW_PREAMBLE=off AW_GIT_MODE=readonly AW_RESULT=1)
     if [ "$dry" = 1 ]; then
@@ -803,30 +948,42 @@ do_run() {
       continue
     fi
     mkdir -p "$out_dir"
-    note "running $k cases (ablation $ab, ceiling \$$budget_left)"
+    note "running $k cases (ablation $ab, ceiling \$$bl)"
     (cd "$STAGE" && env -i "${pass_env[@]}" "$CLAUDE_BIN" "${args[@]}") >&2
     cmd_rc=$?
     # whatever the tool saved goes through the scrub before anything else reads it
     scrub_paths "$out_dir"
     if [ ! -s "$results" ] || ! jq -e '.cases' "$results" >/dev/null 2>&1; then
       note "claude plugin eval exited $cmd_rc and left no readable $results"
-      run_cost="$(awk -v a="$run_cost" -v b="$budget_left" 'BEGIN { printf "%.6f", a + b }')"   # unknown spend settles at the reserve
+      if [ "$isfam" = 1 ]; then fam_cost="$(awk -v a="$fam_cost" -v b="$bl" 'BEGIN { printf "%.6f", a + b }')"
+      else run_cost="$(awk -v a="$run_cost" -v b="$bl" 'BEGIN { printf "%.6f", a + b }')"; fi   # unknown spend settles at the reserve
       envfail=1; continue
     fi
     cost="$(jq -r '(.costUsd // 0) as $c | if $c > 0 then $c else ([.cases[] | (.arms.with // [])[], (.arms.without // [])[] | (.costUsd // 0) + (.judgeCostUsd // 0)] | add // 0) end' "$results")"
-    run_cost="$(awk -v a="$run_cost" -v b="$cost" 'BEGIN { printf "%.6f", a + b }')"
-    budget_left="$(awk -v m="$budget_left" -v c="$cost" 'BEGIN { v = m - c; printf "%.2f", (v < 0.01 ? 0.01 : v) }')"
+    if [ "$isfam" = 1 ]; then
+      fam_cost="$(awk -v a="$fam_cost" -v b="$cost" 'BEGIN { printf "%.6f", a + b }')"
+      fam_left="$(awk -v m="$fam_left" -v c="$cost" 'BEGIN { v = m - c; printf "%.2f", (v < 0.01 ? 0.01 : v) }')"
+    else
+      run_cost="$(awk -v a="$run_cost" -v b="$cost" 'BEGIN { printf "%.6f", a + b }')"
+      budget_left="$(awk -v m="$budget_left" -v c="$cost" 'BEGIN { v = m - c; printf "%.2f", (v < 0.01 ? 0.01 : v) }')"
+    fi
     case $cmd_rc in 0|1) ;; 2) partial=1 ;; *) note "claude plugin eval exited $cmd_rc"; envfail=1 ;; esac
     [ "$(jq -r '.partial // false' "$results")" != true ] || partial=1
     echo
-    echo "### $k ($(basename "$out_dir"))"
+    if [ "$isfam" = 1 ]; then echo "### family ${k#family-} ($(basename "$out_dir"), ablation none)"; else echo "### $k ($(basename "$out_dir"))"; fi
     print_table "$results"
     skipped="$(jq -r '[.cases[].name] | join(" ")' "$results")"
-    for s in $skills; do
-      for c in $(case_dirs "$s" "$k"); do
-        case " $skipped " in *" $(basename "$c") "*) ;; *) echo "skipped (no result): $s / $(basename "$c")" ;; esac
+    if [ "$isfam" = 1 ]; then
+      for c in $(family_case_dirs "${k#family-}"); do
+        case " $skipped " in *" $(basename "$c") "*) ;; *) echo "skipped (no result): family ${k#family-} / $(basename "$c")" ;; esac
       done
-    done
+    else
+      for s in $skills; do
+        for c in $(case_dirs "$s" "$k"); do
+          case " $skipped " in *" $(basename "$c") "*) ;; *) echo "skipped (no result): $s / $(basename "$c")" ;; esac
+        done
+      done
+    fi
     print_failures "$results" "$THRESHOLD" | while IFS= read -r l; do echo "$l"; done
     if jq -e --argjson th "$THRESHOLD" '[.cases[] | (.aggregates.score // 0) < $th] | any' "$results" >/dev/null; then below=1; fi
     if [ "$k" = routing ]; then
@@ -836,10 +993,14 @@ do_run() {
       fi
     fi
     if [ "$KEEP" = 1 ]; then
-      jq -r '.. | .tracePath? // empty | select(. != "")' "$results" 2>/dev/null | sort -u | while IFS= read -r tp; do
-        [ -e "$tp" ] || continue
-        mkdir -p "$out_dir/traces"; cp -R "$tp" "$out_dir/traces/" 2>/dev/null
-      done
+      # one file per run, named for what results.json says it is: traces/<case>-<arm>-<run>.jsonl (never one shared name)
+      jq -r '.cases[] | .name as $c | ["with", "without"][] as $a | (.arms[$a] // []) | to_entries[]
+          | select((.value.tracePath // "") != "") | [$c, $a, (.key + 1 | tostring), .value.tracePath] | @tsv' "$results" 2>/dev/null |
+        while IFS="$(printf '\t')" read -r tc ta tn tp; do
+          [ -e "$tp" ] || continue
+          mkdir -p "$out_dir/traces"
+          if [ -d "$tp" ]; then cp -R "$tp" "$out_dir/traces/$tc-$ta-$tn" 2>/dev/null; else cp "$tp" "$out_dir/traces/$tc-$ta-$tn.jsonl" 2>/dev/null; fi
+        done
       scrub_paths "$out_dir/traces"
       [ ! -d "$out_dir/traces" ] || echo "transcripts: $out_dir/traces"
     fi
@@ -849,8 +1010,16 @@ do_run() {
     echo "dry run ok"
     exit 0
   fi
-  tally_run settle "$run_cost" || note "could not settle the spend tally (the reserve stays until its process is gone)"
+  if [ -n "$skills" ]; then
+    CMD_DESC="skill-evals --kind $KIND $(echo $skills | tr ' ' ',')"
+    tally_run settle "$run_cost" || note "could not settle the spend tally (the reserve stays until its process is gone)"
+  fi
+  if [ -n "$fams" ] && [ "$fam_refused" = 0 ]; then
+    CMD_DESC="skill-evals family $(echo $fams | tr ' ' ',')"
+    tally_run settle "$fam_cost" "$fid" || note "could not settle the family spend (the reserve stays until its process is gone)"
+  fi
   [ "$envfail" = 0 ] || exit 3
+  [ "$fam_skipped" = 0 ] || exit 2
   [ "$partial" = 0 ] || { echo "PARTIAL: the run hit its cost ceiling; the table above is not a full measurement"; exit 2; }
   if [ "$gate_missed" = 1 ] && [ "$GATE" = block ]; then exit 4; fi
   [ "$below" = 0 ] || exit 1
