@@ -1,0 +1,3 @@
+```aw-result
+{"skill": "verify-ios", "artifacts": ["/work/.agentic-workflow/fernly/verification/r1/pack.json"], "summary": "water button unlabelled", "pack": "/work/.agentic-workflow/fernly/verification/r1/pack.json", "verdict": "FAIL"}
+```

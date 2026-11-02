@@ -1,0 +1,2 @@
+Verdict: FAIL
+[FAIL] settings: footer offset

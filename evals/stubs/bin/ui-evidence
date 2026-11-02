@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# Canned stand-in for the Sindri `ui-evidence` binary (it is not on an isolated eval run's PATH).
+# Answers come from ../ui-evidence.json: one scenario, chosen by the first line of $PWD/.ui-evidence-stub-scenario
+# (a fixture writes it), else $UI_EVIDENCE_STUB_SCENARIO, else "default". It prints the canned document on stdout,
+# the canned one-line message on stderr and exits with the canned code, so a case grades the agent's process
+# (order of calls, refusals), never the tool.
+# It refuses what the real tool refuses: a non-local --host, --allow-preview-host without a configured preview
+# host, a missing or invalid script or manifest, a desktop repo without evidence config, an unknown screen, a run
+# dir outside the workspace, gh-publish without seeded provenance or reviewed images. An unknown verb exits 1.
+# It writes no files: a run's Bash can't write where a grader (or a later call) sees, so the canned document goes to stdout only.
+set -u
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+answers="$here/../ui-evidence.json"
+
+die() { echo "ui-evidence: $1" >&2; exit "${2:-1}"; }
+
+command -v jq >/dev/null 2>&1 || die "stub needs jq on PATH"
+[ -r "$answers" ] || die "stub answers file missing: $answers"
+[ $# -ge 1 ] || die "usage: ui-evidence <verb> [args]"
+verb="$1"; shift
+
+host=""; repo=""; pr=""; provenance=""; reviewed=""; screens=""; recipe=""
+pos=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --host) host="${2:-}"; shift 2 ;;
+    --repo) repo="${2:-}"; shift 2 ;;
+    --pr) pr="${2:-}"; shift 2 ;;
+    --provenance) provenance="${2:-}"; shift 2 ;;
+    --reviewed) reviewed="${2:-}"; shift 2 ;;
+    --screens) screens="${2:-}"; shift 2 ;;
+    --recipe) recipe="${2:-}"; shift 2 ;;
+    --allow-preview-host) die "host refused: --allow-preview-host needs a hostname from UI_EVIDENCE_PREVIEW_HOSTS (none configured)" ;;
+    --baseline|--app-build|--fixtures|--cache|--lock-timeout|--config|--for|--upload|--file|--attachments|--keep|--at) shift 2 ;;
+    --*) shift ;;
+    *) pos+=("$1"); shift ;;
+  esac
+done
+
+if [ -n "$host" ]; then
+  case "$host" in
+    http://localhost:*|http://127.0.0.1:*) ;;
+    *) die "host refused: $host is not a configured local host" ;;
+  esac
+fi
+
+scenario="${UI_EVIDENCE_STUB_SCENARIO:-default}"
+[ -r "$PWD/.ui-evidence-stub-scenario" ] && scenario="$(head -n 1 "$PWD/.ui-evidence-stub-scenario")"
+
+# the answer for this verb: the scenario's entry over default's (deep merge)
+entry="$(jq -c --arg s "$scenario" --arg v "$verb" \
+  '((.scenarios.default // {}) * (.scenarios[$s] // {}))[$v] // empty' "$answers")"
+[ -n "$entry" ] || die "unknown verb or no canned answer: $verb"
+
+# the run dir must be inside the workspace or the state dir, like the real tool's writes
+inside_workspace() {
+  local d; d="$(realpath -m "$1")"
+  case "$d" in
+    "$PWD"|"$PWD"/*) return 0 ;;
+  esac
+  if [ -n "${AW_STATE_DIR:-}" ]; then
+    local s; s="$(realpath -m "$AW_STATE_DIR")"
+    case "$d" in "$s"|"$s"/*) return 0 ;; esac
+  fi
+  return 1
+}
+
+case "$verb" in
+  run)
+    [ "${#pos[@]}" -ge 2 ] || die "usage: ui-evidence run <script.json> <run-dir>"
+    [ -z "$recipe" ] || die "unknown option: --recipe (desktop apps use the desktop-run verb)"
+    [ -f "${pos[0]}" ] || die "invalid script: ${pos[0]} not found"
+    jq -e . "${pos[0]}" >/dev/null 2>&1 || die "invalid script: ${pos[0]} is not JSON"
+    inside_workspace "${pos[1]}" || die "run dir refused: ${pos[1]} is outside the workspace"
+    ;;
+  parity|api-run|db-run)
+    [ "${#pos[@]}" -ge 2 ] || die "usage: ui-evidence $verb <script.json> <run-dir>"
+    [ -f "${pos[0]}" ] || die "invalid script: ${pos[0]} not found"
+    inside_workspace "${pos[1]}" || die "run dir refused: ${pos[1]} is outside the workspace"
+    ;;
+  desktop-run)
+    [ "${#pos[@]}" -ge 2 ] || die "usage: ui-evidence desktop-run <screens.json> <run-dir> [--repo dir]"
+    [ -f "${pos[0]}" ] || die "refused: manifest ${pos[0]} not found"
+    jq -e '.screens | length > 0' "${pos[0]}" >/dev/null 2>&1 || die "refused: manifest ${pos[0]} lists no screens"
+    inside_workspace "${pos[1]}" || die "run dir refused: ${pos[1]} is outside the workspace"
+    root="${repo:-$PWD}"
+    jq -e '.desktop' "$root/.agentic-workflow/evidence.json" >/dev/null 2>&1 \
+      || die "refused: desktop evidence is not configured for this repo (no desktop section in $root/.agentic-workflow/evidence.json)"
+    if [ -n "$screens" ]; then
+      IFS=',' read -r -a want <<< "$screens"
+      for s in "${want[@]}"; do
+        jq -e --arg s "$s" '[.screens[].name] | index($s)' "${pos[0]}" >/dev/null 2>&1 \
+          || die "refused: screen $s is not in the manifest"
+      done
+    fi
+    ;;
+  gh-publish)
+    [ "${#pos[@]}" -ge 1 ] || die "usage: ui-evidence gh-publish <run-dir> --repo <owner/name> --pr <n> --provenance seeded --reviewed <file>,<file>"
+    [ -n "$repo" ] && [ -n "$pr" ] || die "usage: --repo <owner/name> and --pr <n> are required"
+    [ "$provenance" = "seeded" ] || die "provenance is '${provenance:-unset}', not seeded: nothing pushed"
+    [ -n "$reviewed" ] || { echo "ui-evidence: images not reviewed: pass --reviewed" >&2; printf '{"unreviewed":["*"]}\n'; exit 3; }
+    ;;
+  publish-plan|parity-comment)
+    [ "${#pos[@]}" -ge 1 ] || die "usage: ui-evidence $verb <run-dir>"
+    ;;
+esac
+
+code="$(jq -r '.exit // 0' <<< "$entry")"
+msg="$(jq -r '.stderr // empty' <<< "$entry")"
+doc="$(jq -c '.stdout // {}' <<< "$entry")"
+
+if [ "$verb" = "desktop-run" ] && [ -n "$screens" ]; then
+  # only the screens asked for; the outcome follows what is left
+  doc="$(jq -c --arg want "$screens" '($want | split(",")) as $w
+    | .screens |= map(select(.name as $n | $w | index($n)))
+    | if all(.screens[]; .passed) then .outcome = "passed" | .headline = "\(.screens | length) screens passed"
+      else .outcome = "failed" | .headline = "\([.screens[] | select(.passed | not) | .name] | join(", ")) over its limit" end' <<< "$doc")"
+  jq -e '.outcome == "passed"' <<< "$doc" >/dev/null && code=0 || code=2
+  if [ "$code" -eq 0 ]; then msg=""; else msg="$(jq -r '"\([.screens[] | select(.passed | not)] | length) of \(.screens | length) screens over its limit"' <<< "$doc")"; fi
+fi
+
+[ -z "$msg" ] || echo "ui-evidence: ${msg#ui-evidence: }" >&2
+printf '%s\n' "$doc"
+exit "$code"

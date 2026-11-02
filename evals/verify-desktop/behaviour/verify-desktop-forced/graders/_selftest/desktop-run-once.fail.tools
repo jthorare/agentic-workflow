@@ -1,0 +1,2 @@
+Bash	{"command":"ui-evidence desktop-run --repo . --screens settings"}
+Bash	{"command":"ui-evidence desktop-run --repo . --screens settings,home"}

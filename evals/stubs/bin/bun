@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Canned stand-in for bun (system-design-video evals). Two shapes only:
+#   bun <dir>/render.ts <storyboard.json> <out-dir> --tokens <tokens.json> [--still t1,t2]   -> footage.mp4 (placeholder),
+#       prints a one-line summary and the board color (first #rrggbb in the tokens file); writes nothing
+#   bun -e '<script>'   (review.sh's beat index)   -> one "NN id seconds" line per beat of the nearest storyboard.json upward
+# Anything else (bun add, bunx, bun run) exits 1. Writes no files: a run's Bash can't write where a later call or grader sees.
+sbfile() { local d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/storyboard.json" ] && { echo "$d/storyboard.json"; return; }; d="$(dirname "$d")"; done; }
+if [ "${1:-}" = "-e" ]; then
+  sb="$(sbfile)"; [ -n "$sb" ] || { echo "bun stub: no storyboard.json at or above $PWD" >&2; exit 1; }
+  i=0
+  for id in $(grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$sb" | sed 's/.*"\([^"]*\)"$/\1/'); do
+    printf '%02d %s %s.50\n' "$i" "$id" "$((i * 4 + 2))"; i=$((i + 1))
+  done
+  exit 0
+fi
+case "${1:-}" in
+  *render.ts)
+    sb="${2:-}"; out="${3:-}"; shift 3 2>/dev/null || { echo "usage: bun render.ts <storyboard.json> <out-dir> --tokens <design-tokens.json>" >&2; exit 1; }
+    tokens=""; still=""
+    while [ $# -gt 0 ]; do case "$1" in --tokens) tokens="${2:-}"; shift 2 ;; --still) still="${2:-}"; shift 2 ;; --fps|--range) shift 2 ;; *) shift ;; esac; done
+    [ -f "$sb" ] || { echo "storyboard not found: $sb" >&2; exit 1; }
+    [ -n "$tokens" ] || { echo "usage: bun render.ts <storyboard.json> <out-dir> --tokens <design-tokens.json>" >&2; exit 1; }
+    [ -f "$tokens" ] || { echo "tokens file not found: $tokens" >&2; exit 1; }
+    board="$(grep -o '#[0-9a-fA-F]\{6\}' "$tokens" | head -1)"; board="${board:-#0d1117}"
+    ids="$(grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$sb" | sed 's/.*"\([^"]*\)"$/\1/')"
+    if [ -n "$still" ]; then echo "stills: $still (board $board)"
+    else echo "footage.mp4: stub frames; beats: $(printf '%s\n' "$ids" | grep -c .); board $board"; fi ;;
+  *) echo "bun stub: unknown call: $*" >&2; exit 1 ;;
+esac

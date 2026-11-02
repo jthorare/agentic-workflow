@@ -1,0 +1,2 @@
+Bash	{"command": "aw-meta status"}
+Bash	{"command": "aw-meta gate-run 41"}

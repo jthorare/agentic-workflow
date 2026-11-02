@@ -232,6 +232,16 @@ echo 100 >"$REPO/evals/_lib/description-bytes.baseline"
 run --lint-descriptions
 expect "total bytes over the baseline + 25% fails" 1 'over the baseline'
 
+echo "--selftest: every case sets timeout_seconds and allowed_tools"
+mkrepo
+A="$REPO/evals/alpha/behaviour/alpha-forced"
+printf -- '---\nmax_turns: 5\nallowed_tools: [Skill, Write]\n---\nUse the alpha skill on the cart.\n' >"$A/prompt.md"
+run --skills alpha --selftest
+expect "a case.yaml with no execution: block does not hide a missing timeout_seconds" 0 'warning: evals/alpha/behaviour/alpha-forced has no timeout_seconds'
+printf '%s\n' 'execution:' '  timeout_seconds: 60' >>"$A/case.yaml"
+run --skills alpha --selftest
+lacks "timeout_seconds under case.yaml's execution: counts" 'alpha-forced has no timeout_seconds'
+
 echo "--selftest and description lint"
 mkrepo
 long="$(printf 'word%.0s ' $(seq 1 120))"

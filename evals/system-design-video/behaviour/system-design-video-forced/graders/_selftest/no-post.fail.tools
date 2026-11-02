@@ -1,0 +1,1 @@
+Bash	{"command": "curl -X POST -d @msg.json https://hooks.slack.com/services/T000/B000/XXX"}

@@ -1,0 +1,1 @@
+playback-check FAILED on both files: has_b_frames=2 (want 0), so the encode carries B-frames.

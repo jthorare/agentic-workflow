@@ -1,6 +1,6 @@
 ---
 name: meta
-description: Run a meta orchestrator over a team of lane sessions through the aw-meta CLI — replies owed, the lane map, gate and merge, owner questions, health and the running log — so nothing is dropped or typed by hand.
+description: "Use when you run a team of parallel agent sessions (lanes), each on its own branch: a lane message needs your reply, a PR is queued to land, the owner has a question to route, or the box is short on memory or disk. Drives the aw-meta CLI so replies, gates, merges and the log aren't tracked by hand. Not for debugging one PR's CI."
 argument-hint: "[start | ready <pr> | owner | health | status]"
 allowed-tools: Bash(aw-meta *), Bash(*/aw-meta *), Bash(aw-meta-launch *), Bash(git *), Bash(gh *), Read, Grep, Glob, AskUserQuestion, SendMessage, ListAgents, Monitor
 ---
@@ -248,6 +248,6 @@ Merges, owner decisions, lane maps and kills are logged by the CLI. For anything
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/meta-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`meta`), `artifacts` (absolute paths: the files under the team's running log it appended to), `summary` (one line),
-plus `team` (team name); `actions` (count of aw-meta actions taken this turn).
+plus `team` (team name); `actions` (count of aw-meta actions taken this turn); `merged` (array of PR numbers `aw-meta merge-run` reported merged, `[]` when none); `open_obligations` (count `aw-meta status` still shows).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

@@ -1,0 +1,1 @@
+I ran the film end to end and it did not clear the playback check, so nothing is ready to hand over. The encode carries B-frames.

@@ -1,6 +1,6 @@
 ---
 name: design-verify-web
-description: Playwright screenshots at mobile/tablet/desktop viewports, diff against mockup baseline using design-comparison MCP, and report discrepancies with fix suggestions.
+description: "Use when a web page or route you built should be checked against its saved mockup image at the mobile, tablet and desktop breakpoints. Takes Playwright screenshots, diffs them against the baseline and lists fixes. Not for iOS or desktop screens, and not for functional or console-error checks (verify-web)."
 argument-hint: "[screen-name] [--route <path>]"
 allowed-tools: Read, Write, Glob, AskUserQuestion, Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(cat *), mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_resize, mcp__plugin_playwright_playwright__browser_wait_for, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_console_messages, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_evaluate, mcp__plugin_playwright_playwright__browser_close, mcp__design-comparison__compare_design, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

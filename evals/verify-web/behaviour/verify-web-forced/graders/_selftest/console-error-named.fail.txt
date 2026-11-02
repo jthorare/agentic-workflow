@@ -1,0 +1,1 @@
+Console showed only a 404 for /favicon.ico on the recipes page; the list rendered with two items.

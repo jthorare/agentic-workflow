@@ -1,0 +1,3 @@
+```aw-result
+{"skill": "ui-evidence", "artifacts": ["/work/ui-runs/pr57/summary.json"], "summary": "PR 57 run", "outcome": "failed", "published": false}
+```

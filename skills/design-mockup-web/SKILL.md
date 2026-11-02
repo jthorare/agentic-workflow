@@ -1,6 +1,6 @@
 ---
 name: design-mockup-web
-description: Generate an HTML mockup informed by the design language, serve it locally, iterate with feedback until approved, then capture mobile/tablet/desktop baselines and register the screen in screens.json for /design-verify-web.
+description: "Use when a screen should be drafted as an HTML page: served locally, revised on feedback until approved, then screenshotted at small, medium and large viewports as the reference images. Not for SwiftUI or simulator drafts (design-mockup-ios)."
 argument-hint: <screen-name>
 allowed-tools: Bash(mkdir *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), Bash(python3 *), Bash(LOCK_NAME=*), Write, Read, Edit, Glob, AskUserQuestion, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_resize, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_close, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

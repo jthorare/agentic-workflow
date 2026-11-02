@@ -1,0 +1,2 @@
+{"role":"assistant","content":[{"type":"tool_use","name":"Skill","input":{"skill":"design-evolve"}}]}
+{"role":"assistant","content":[{"type":"text","text":"dispatch: design-evolve-web args=--detect"}]}

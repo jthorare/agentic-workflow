@@ -1,0 +1,5 @@
+Settings drifted from its mockup.
+
+```aw-result
+{"skill":"verify-desktop","verdict":"FAIL"}
+```

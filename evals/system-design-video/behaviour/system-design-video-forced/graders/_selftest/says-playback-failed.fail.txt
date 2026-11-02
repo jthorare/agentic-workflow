@@ -1,0 +1,1 @@
+Playback is clean on both files and the render looks fine.

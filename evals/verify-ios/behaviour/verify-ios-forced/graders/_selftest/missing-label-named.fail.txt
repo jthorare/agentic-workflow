@@ -1,0 +1,1 @@
+The snake plant row's water button is labelled "Mark Snake plant watered" and Monstera's is labelled "Mark Monstera watered"; both are reachable by name.

@@ -1,0 +1,2 @@
+verdict: FAIL
+evidence_path: /work/.aw-state/pantry-notes/verification/20261101-210000-add-recipe/
