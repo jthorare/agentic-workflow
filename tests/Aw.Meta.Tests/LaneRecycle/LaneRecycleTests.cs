@@ -109,6 +109,28 @@ public sealed class LaneRecycleTests
         Assert.Contains("s-old -> s-new", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
     }
 
+    // #1901: the continue line is longer than /clear, so on a narrow pane its wrapped input box misreads too, after the new id is recorded.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_continue_line_the_pane_misreads_still_records_logs_and_succeeds_with_a_warning()
+    {
+        await Ready();
+        var rule = new string('─', 14);
+        _world.Panes.Show("t1-api", $"{rule}\n❯ /clear\n{rule}\n");
+
+        var result = await Run(() =>
+        {
+            NewSessionAppears();
+            _world.Panes.Show("t1-api", $"{rule}\n❯ Read and continue from {Digest}\n{rule}\n");
+        });
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal("s-new", (await _world.LaneFiles.Record("api", CancellationToken.None)).Value!.Session!.Value.Value);
+        Assert.Contains("s-old -> s-new", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
+        Assert.Contains("continue line", result.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains("look at the pane before resending", result.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains(("t1-api", $"Read and continue from {Digest}"), _world.Panes.Woken);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_new_session_that_never_appears_is_AW_META_022_and_the_continue_line_is_not_sent()
     {
