@@ -993,10 +993,14 @@ do_run() {
       fi
     fi
     if [ "$KEEP" = 1 ]; then
-      jq -r '.. | .tracePath? // empty | select(. != "")' "$results" 2>/dev/null | sort -u | while IFS= read -r tp; do
-        [ -e "$tp" ] || continue
-        mkdir -p "$out_dir/traces"; cp -R "$tp" "$out_dir/traces/" 2>/dev/null
-      done
+      # one file per run, named for what results.json says it is: traces/<case>-<arm>-<run>.jsonl (never one shared name)
+      jq -r '.cases[] | .name as $c | ["with", "without"][] as $a | (.arms[$a] // []) | to_entries[]
+          | select((.value.tracePath // "") != "") | [$c, $a, (.key + 1 | tostring), .value.tracePath] | @tsv' "$results" 2>/dev/null |
+        while IFS="$(printf '\t')" read -r tc ta tn tp; do
+          [ -e "$tp" ] || continue
+          mkdir -p "$out_dir/traces"
+          if [ -d "$tp" ]; then cp -R "$tp" "$out_dir/traces/$tc-$ta-$tn" 2>/dev/null; else cp "$tp" "$out_dir/traces/$tc-$ta-$tn.jsonl" 2>/dev/null; fi
+        done
       scrub_paths "$out_dir/traces"
       [ ! -d "$out_dir/traces" ] || echo "transcripts: $out_dir/traces"
     fi

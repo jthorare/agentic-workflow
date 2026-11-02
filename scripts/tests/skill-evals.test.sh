@@ -463,7 +463,7 @@ pattern: '^(?:(?!"skill"\s*:)[\s\S])*"skill"\s*:\s*"(?:[\w-]+:)?MEMBER"'
 The first Skill call names MEMBER.
 EOF
     sed -i "s/MEMBER/$m/g" "$F/$m/graders/first-skill.md"
-    trace_reply "$m" >"$F/$m/graders/_selftest/first-skill.pass.trace"
+    trace_reply "aw-evals:$m" >"$F/$m/graders/_selftest/first-skill.pass.trace"
     { trace_reply zzz; trace_reply "$m"; } >"$F/$m/graders/_selftest/first-skill.fail.trace"
   done
   printf 'family grp\n' >"$F/README.md"
@@ -573,6 +573,20 @@ expect "count:N counts every match (g)" 0 'selftest: 3 case\(s\), 0 problem'
 printf -- '---\ntype: regex\nmatch: count:3\n---\nALPHA\n' >"$G/has-done.md"
 run --skills alpha --selftest
 expect "a wrong count:N fails the pass reply" 1 'does not pass its pass reply'
+
+echo "kept traces: one file per run"
+mkrepo; mkclaude; mkresult 1 true 1
+mkdir -p "$TMPROOT/tr/1" "$TMPROOT/tr/2" "$TMPROOT/tr/3"   # every run's trace is called trace.jsonl, as in the real tool
+echo '{"type":"system"}' >"$TMPROOT/tr/1/trace.jsonl"; echo '{"type":"assistant"}' >"$TMPROOT/tr/2/trace.jsonl"; echo '{"type":"result"}' >"$TMPROOT/tr/3/trace.jsonl"
+jq --arg a "$TMPROOT/tr/1/trace.jsonl" --arg b "$TMPROOT/tr/2/trace.jsonl" --arg c "$TMPROOT/tr/3/trace.jsonl" '
+  .cases = [.cases[0], (.cases[0] | .name = "alpha-natural-2" | .dir = "evals/alpha/routing/alpha-natural-2")]
+  | .cases[0].arms.with[0].tracePath = $a | .cases[0].arms.with[1].tracePath = $b
+  | .cases[1].arms.with[0].tracePath = $c | .cases[1].arms.with[1].tracePath = null' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+run --skills alpha --kind routing --keep-temp
+TD="$(find "$STATE/skill-evals" -type d -name traces | head -1)"
+[ "$(ls "$TD" 2>/dev/null | wc -l)" = 3 ] && ok "three traced runs of two cases leave three files" || { fail "trace files: $(ls "$TD" 2>/dev/null | tr '\n' ' ')"; show; }
+[ -f "$TD/alpha-natural-1-with-1.jsonl" ] && [ -f "$TD/alpha-natural-1-with-2.jsonl" ] && [ -f "$TD/alpha-natural-2-with-1.jsonl" ] && ok "traces are named <case>-<arm>-<run>.jsonl" || { fail "trace names"; ls "$TD"; }
+grep -q assistant "$TD/alpha-natural-1-with-2.jsonl" && ok "each file holds its own run's trace" || fail "trace content"
 
 echo "fixture lint ignores comment lines"
 mkrepo
