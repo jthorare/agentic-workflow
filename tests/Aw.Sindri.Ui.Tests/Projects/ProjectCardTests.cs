@@ -105,6 +105,22 @@ public sealed class ProjectCardTests
     }
 
     [Fact]
+    public async Task The_served_PR_counts_read_as_a_count_and_a_repos_line_without_the_owner()
+    {
+        _f.Serve("with-prs");
+
+        var cards = (await _f.Shown(Token)).Groups.SelectMany(g => g.Cards).ToList();
+        var checkout = cards.Single(c => c.Name == "Checkout rewrite");
+        var mobile = cards.Single(c => c.Name == "Mobile app");
+
+        Assert.Equal("3", checkout.PrsValue);
+        Assert.Contains("repos: api, web", checkout.Footer, StringComparer.Ordinal);
+        Assert.EndsWith("3 open PRs", checkout.AccessibleName, StringComparison.Ordinal);
+        Assert.Equal("0", mobile.PrsValue);
+        Assert.DoesNotContain(mobile.Footer, part => part.StartsWith("repos:", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task A_card_the_store_no_longer_holds_says_so()
     {
         var card = await _f.FirstCard(c => c["synced"] = false, Token);
