@@ -32,12 +32,18 @@ internal static class ExecScope
         (launch, _, inner) =>
         ["/usr/bin/perl", "-e", MacScript, ProcessGroupFiles.PgidPath(pgroupsDirectory, launch.Value) ?? throw new ArgumentException("the launch is not a file name", nameof(launch)), .. inner];
 
-    /// <summary>Gets what the macOS exec does after its command ends: removes the group file (the .oom record stays) and gives the terminal back to sindri if the command's group still holds it.</summary>
+    /// <summary>Gets what the macOS exec does after its command ends: ends the command's group if it is still alive, then removes the group file (the .oom record stays) and gives the terminal back to sindri if the command's group still holds it.</summary>
     /// <param name="pgroupsDirectory">The folder of the group files.</param>
     /// <returns>The action.</returns>
     internal static Action<LaunchId> MacEnded(string pgroupsDirectory) => launch =>
     {
         var group = ProcessGroupFiles.ReadPgid(pgroupsDirectory, launch.Value);
+        if (group is { } live && ProcessGroupFiles.Alive(live))
+        {
+            // why: on a Mac nothing ties the command to sindri (unlike bwrap on Linux), so a cancelled exec's group keeps running; without its file the cap stops counting it and the watchdog can't signal it
+            _ = ProcessGroupFiles.Signal(live, "SIGKILL");
+        }
+
         ProcessGroupFiles.Remove(pgroupsDirectory, launch.Value);
         if (group is { } pgid)
         {
