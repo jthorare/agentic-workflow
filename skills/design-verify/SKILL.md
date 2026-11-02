@@ -1,6 +1,6 @@
 ---
 name: design-verify
-description: Detect web vs iOS vs desktop automatically and delegate to /design-verify-web (Playwright screenshots), /design-verify-ios (XcodeBuildMCP screenshots) or /design-verify-desktop (the real desktop app against its mockups). Diffs against mockup baseline.
+description: "Use when a built screen should be checked against its approved mockup and the platform is unspecified or mixed (web, iPhone or desktop project). Detects the platform from project files and hands off to the matching design-verify member. Not for testing journeys, console errors or accessibility of a running app (verify-app)."
 argument-hint: [screen-name]
 allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

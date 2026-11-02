@@ -1,0 +1,6 @@
+Settings drifted from its mockup.
+
+```aw-result
+{"skill":"verify-web","verdict":"FAIL"}
+```
+I used verify-desktop to run it.

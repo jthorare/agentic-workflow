@@ -1,6 +1,6 @@
 ---
 name: verify-web
-description: "Playwright-based self-verification of running web apps. Executes journeys through verification lenses (functional, visual, accessibility, error-state, responsive) and writes an evidence pack (pack.json + report.md) on every run."
+description: "Use when a web UI change must be proven in a live browser session: walk the affected pages, try bad input, resize to phone and desktop widths, and get pass, warn or fail with a saved evidence pack. Not for diffing a page against a design mockup (design-verify-web) or for iOS and desktop apps."
 argument-hint: "[--journey <plan.md>] [--lenses <csv>] [--visual] [--baseline] [--yes] [--base-url <url>] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Read, Write, Glob, Grep, AskUserQuestion, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_click, mcp__plugin_playwright_playwright__browser_fill_form, mcp__plugin_playwright_playwright__browser_press_key, mcp__plugin_playwright_playwright__browser_resize, mcp__plugin_playwright_playwright__browser_console_messages, mcp__plugin_playwright_playwright__browser_network_requests, mcp__plugin_playwright_playwright__browser_wait_for, mcp__plugin_playwright_playwright__browser_evaluate, mcp__plugin_playwright_playwright__browser_select_option, mcp__plugin_playwright_playwright__browser_close, mcp__design-comparison__compare_design, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -174,6 +174,6 @@ evidence_path: <absolute path to verification/<run-id>/>
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/verify-web-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`verify-web`), `artifacts` (absolute paths: the evidence pack directory `$AW_DIR/verification/<run-id>/` (`pack.json`, `report.md`)), `summary` (one line),
-plus `evidence_path` (absolute path of the pack directory); `verdict` (`PASS | WARN | FAIL`, the pack's verdict).
+plus `evidence_path` (absolute path of the pack directory); `pack` (absolute path of `pack.json`); `verdict` (`PASS | WARN | FAIL`, the pack's verdict).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

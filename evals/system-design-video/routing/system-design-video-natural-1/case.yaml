@@ -1,0 +1,14 @@
+schema_version: '1.1'
+name: system-design-video-natural-1
+execution:
+  max_turns: 6
+  timeout_seconds: 300
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
+# source: PR #1353 body (the skill's own motivation paragraph), scrubbed: file name changed

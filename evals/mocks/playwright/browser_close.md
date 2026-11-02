@@ -1,0 +1,2 @@
+### Result
+Browser closed

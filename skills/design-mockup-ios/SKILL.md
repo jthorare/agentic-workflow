@@ -1,6 +1,6 @@
 ---
 name: design-mockup-ios
-description: Generate a per-screen SwiftUI mockup from design tokens, temporarily host it as the app entry point, build and screenshot on simulator via XcodeBuildMCP, then revert and register the baseline in screens.json for /design-verify-ios.
+description: "Use when a screen should be drafted as SwiftUI and shown on the iOS simulator: built from the design tokens, saved as a baseline screenshot, then the original entry point restored. Not for HTML or browser drafts (design-mockup-web)."
 argument-hint: <screen-name>
 allowed-tools: Bash(mkdir *), Bash(ls *), Bash(cp *), Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(LOCK_NAME=*), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__xcodebuildmcp__session_show_defaults, mcp__xcodebuildmcp__discover_projs, mcp__xcodebuildmcp__list_schemes, mcp__xcodebuildmcp__list_sims, mcp__xcodebuildmcp__boot_sim, mcp__xcodebuildmcp__build_run_sim, mcp__xcodebuildmcp__build_sim, mcp__xcodebuildmcp__get_app_bundle_id, mcp__xcodebuildmcp__install_app_sim, mcp__xcodebuildmcp__launch_app_sim, mcp__xcodebuildmcp__stop_app_sim, mcp__xcodebuildmcp__screenshot, mcp__xcodebuildmcp__snapshot_ui, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

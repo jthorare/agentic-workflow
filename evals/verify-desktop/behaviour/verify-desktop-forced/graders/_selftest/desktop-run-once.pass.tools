@@ -1,0 +1,2 @@
+Bash	{"command":"ui-evidence doctor"}
+Bash	{"command":"ui-evidence desktop-run --repo . --screens settings"}
