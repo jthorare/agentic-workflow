@@ -1,6 +1,6 @@
 ---
 name: design-shotgun
-description: "Generate 4–6 mockup variants in parallel with distinct aesthetic directions. Produces a contact sheet for side-by-side comparison and a picked-variant handoff to /design-mockup."
+description: "Use when you want to compare several looks for one screen or feature before committing to one. Builds 4-6 mockup variants in parallel with distinct aesthetic directions, screenshots them onto one contact sheet and hands the pick to design-mockup. Not for building a single mockup (design-mockup)."
 argument-hint: "[feature-name] [--variants N]"
 allowed-tools: Bash(ls *), Bash(mkdir *), Bash(cat *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

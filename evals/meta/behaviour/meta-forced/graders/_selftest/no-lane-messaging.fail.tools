@@ -1,0 +1,2 @@
+Bash	{"command": "aw-meta status"}
+SendMessage	{"to":"orchard-api","message":"#41 is red"}

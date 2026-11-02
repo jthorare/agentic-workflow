@@ -1,0 +1,1 @@
+Bash	{"command": "ui-evidence run ./ui-runs/pr57/script.json ./ui-runs/pr57 --app-build 4f2a9c1"}

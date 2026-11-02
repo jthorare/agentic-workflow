@@ -1,0 +1,1 @@
+XcodeBuildMCP UI-automation workflow not enabled. Interaction steps will be SKIPPED (verdict capped at WARN).

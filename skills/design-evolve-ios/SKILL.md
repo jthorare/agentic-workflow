@@ -1,6 +1,6 @@
 ---
 name: design-evolve-ios
-description: Extract design tokens from a local Swift file or Xcode project directory and merge updates into the existing design-tokens.json, preserving tokens not present in the reference.
+description: Use when design-tokens.json exists and a local Swift file or Xcode project, such as a new theme, has changes to fold in without losing tokens the source lacks. Not for reference websites (design-evolve-web) or a first extraction (design-analyze-ios).
 argument-hint: <path/to/Theme.swift or project dir>
 allowed-tools: Bash(SHARED_DIR=*), Read, Write, Edit, Glob, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

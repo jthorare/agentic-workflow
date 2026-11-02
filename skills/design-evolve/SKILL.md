@@ -1,6 +1,6 @@
 ---
 name: design-evolve
-description: Detect web vs iOS automatically and delegate to /design-evolve-web (Dembrandt on a new URL) or /design-evolve-ios (extract from local Swift reference). Merges updates into design-tokens.json.
+description: Use mid-project, when design-tokens.json already exists and the user wants to bring in changes from a new reference site or an updated Swift theme, keeping the rest. Picks web or iOS and hands off to design-evolve-web or design-evolve-ios. Not for a first extraction (design-analyze).
 argument-hint: "[<url> (web) | <path/to/Theme.swift or dir> (ios)]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

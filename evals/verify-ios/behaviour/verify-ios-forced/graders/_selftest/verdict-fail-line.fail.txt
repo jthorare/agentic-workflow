@@ -1,0 +1,3 @@
+Accessibility FAIL on the Today screen, see lens table.
+
+verdict: PASS

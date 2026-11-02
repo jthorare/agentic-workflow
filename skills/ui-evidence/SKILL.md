@@ -1,6 +1,6 @@
 ---
 name: ui-evidence
-description: Generate Playwright-based UI evidence for a web app PR — plan with qa-runner, run headless with no model, repair broken selectors via judge, lint for sloppiness, and publish (ask-first) to Linear and to the PR as a comment with its screenshots. Local stack only, never dev/prod.
+description: "Use when a web PR needs proof reviewers can look at (screenshots, before/after, API or database checks) from the app running locally. Drives the local stack through the ui-evidence binary with no model in the loop, reports failed steps, and asks before posting anything to the PR or a ticket. Not for a quick self-check of a running app (verify-web) or for any hosted site."
 allowed-tools: Bash(ui-evidence:*), Bash(git *), Bash(gh *), Bash(curl *), Bash(command -v *), Agent, Read, Write, Glob, Grep, AskUserQuestion
 ---
 
@@ -184,6 +184,6 @@ The files are `NAME=value` lines (`#` comments, optional `export ` and quotes); 
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/ui-evidence-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`ui-evidence`), `artifacts` (absolute paths: the run's evidence directory (screenshots, `summary.json`) and the PR comment or Linear update when published), `summary` (one line),
-plus `run_dir` (absolute path of the run directory); `passed` (true when every check passed); `published` (true when it published to the PR).
+plus `run_dir` (absolute path of the run directory); `outcome` (`passed` | `failed` | `refused` | `errored` | `blocked`, for exit 0, 2, 1, 4, 3); `provenance` (`seeded` | `unknown` | `n/a`, what `ui-evidence provenance` printed); `passed` (true when every check passed); `published` (`true` only if something was actually posted or uploaded after the user approved it, else `false`).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

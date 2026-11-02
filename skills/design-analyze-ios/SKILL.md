@@ -1,6 +1,6 @@
 ---
 name: design-analyze-ios
-description: Scan Assets.xcassets and Swift theme files to extract design tokens (colors, typography, spacing) into design-tokens.json in W3C DTCG format. Pass a specific path or let the skill auto-discover.
+description: Use when the source is an iOS project's own code or assets (Assets.xcassets, SwiftUI theme files) and the user wants its colours, text styles and spacing as design tokens. Writes design-tokens.json in W3C format; finds the files itself when no path is given. Not for reference websites (design-analyze-web).
 argument-hint: [path/to/Assets.xcassets or Theme.swift]
 allowed-tools: Bash(SHARED_DIR=*), Read, Write, Glob, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

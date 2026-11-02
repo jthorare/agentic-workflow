@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: design-verify-natural-2
+tags: [routing]
+execution:
+  max_turns: 6
+context:
+  scaffold_script: fixture.sh

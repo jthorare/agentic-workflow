@@ -1,0 +1,23 @@
+schema_version: '1.1'
+name: meta-forced
+execution:
+  max_turns: 30
+  timeout_seconds: 400
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - Bash
+  - TodoWrite
+  - AskUserQuestion
+  disallowed_tools:
+  - SendMessage
+  - ListAgents
+  - Monitor
+  - Agent
+context:
+  scaffold_script: fixture.sh
+# stubs on PATH (evals/stubs/bin): aw-meta
+# This box runs the live team on its sockets: no cross-session send, no agent listing, no background watcher.
+# Needs evals/stubs/bin first on PATH (evals/stubs/bin/aw-meta, answers in evals/stubs/aw-meta.json).

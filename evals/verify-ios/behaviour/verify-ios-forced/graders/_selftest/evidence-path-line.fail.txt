@@ -1,0 +1,2 @@
+verdict: FAIL
+evidence_path: ./verification/20261102-101500-today-a11y/

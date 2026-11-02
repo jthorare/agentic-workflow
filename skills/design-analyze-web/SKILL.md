@@ -1,6 +1,6 @@
 ---
 name: design-analyze-web
-description: Run Dembrandt on reference site URLs to extract design tokens (colors, typography, spacing) as W3C DTCG JSON. Merges multiple sites, resolves conflicts by frequency/prominence, and writes design-tokens.json.
+description: Use when the source is one or more reference site URLs and the user wants their colours, fonts and spacing captured as design tokens. Runs Dembrandt, merges sites by frequency, writes design-tokens.json. Not for Swift or Xcode projects (design-analyze-ios) or for updating existing tokens (design-evolve-web).
 argument-hint: <url> [url2...] [--dark]
 allowed-tools: Bash(npx dembrandt *), Bash(git *), Bash(SHARED_DIR=*), Bash(mkdir *), Bash(rm *), Read, Write, Glob, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

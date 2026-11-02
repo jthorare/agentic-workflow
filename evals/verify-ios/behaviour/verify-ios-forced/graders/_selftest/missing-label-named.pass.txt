@@ -1,0 +1,1 @@
+The water button on the Snake plant row (waterToggle-2) has no accessible label (AXLabel null); VoiceOver reads nothing.

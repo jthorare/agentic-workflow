@@ -1,6 +1,6 @@
 ---
 name: design-implement-web
-description: Generate web production code from an approved mockup — design-tokens.css + Tailwind extension generated from design-tokens.json, React/Next.js components, token-compliance scan, and a mandatory design-verify-web gate.
+description: "Use when an approved web mockup should become production code: React or Next.js components, CSS variables and a Tailwind theme generated from the design tokens. Scans for hardcoded values and checks the page against the mockup before calling it done. Not for SwiftUI or iOS (design-implement-ios)."
 argument-hint: "<screen-name>"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff, mcp__prism-mcp__session_task_route, mcp__prism-mcp__prism_infer
 ---

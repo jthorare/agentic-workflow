@@ -1,6 +1,6 @@
 ---
 name: design-language
-description: Interactive session defining brand personality, aesthetic direction, and design principles. Accepts reference URLs (Figma, Storybook, HTML mockups, any public page), analyzes them via Playwright, then runs a gap-filling Q&A to produce both design-tokens.json and .impeccable.md in one step.
+description: "Use when a project has no visual identity yet, or its brand feel still has to be decided: tone, aesthetic direction, principles. Optionally reads reference pages, asks only about the gaps, then writes design-tokens.json and .impeccable.md. Not for polishing an existing UI (impeccable) or extracting tokens from a site (design-analyze)."
 argument-hint: [url1 url2 ...]
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Read, Write, Glob, AskUserQuestion, mcp__plugin_playwright_playwright__browser_navigate, mcp__plugin_playwright_playwright__browser_take_screenshot, mcp__plugin_playwright_playwright__browser_snapshot, mcp__plugin_playwright_playwright__browser_evaluate, mcp__plugin_playwright_playwright__browser_close, mcp__plugin_playwright_playwright__browser_wait_for, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
