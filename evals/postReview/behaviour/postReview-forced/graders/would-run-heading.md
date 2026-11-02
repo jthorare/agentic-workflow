@@ -1,6 +1,7 @@
 ---
 type: regex
-pattern: '(?m)^\s*(?:[#*>\-\s]*)Would run:'
+pattern: '^\s*(?:[#*>\-\s]*)Would run:'
+flags: m
 ---
 
 The commands are printed under a `Would run:` heading.

@@ -1,0 +1,2 @@
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"review"}}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"Starting now."}]}}

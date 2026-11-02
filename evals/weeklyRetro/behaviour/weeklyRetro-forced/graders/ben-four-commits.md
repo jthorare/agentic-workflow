@@ -1,6 +1,7 @@
 ---
 type: regex
-pattern: '(?is)\bben\b[^\n]{0,60}\b4\b'
+pattern: '\bben\b[^\n]{0,60}\b4\b'
+flags: is
 ---
 
 Planted: Ben Okoye has 4 commits in the window.

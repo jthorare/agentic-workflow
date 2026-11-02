@@ -1,4 +1,5 @@
 ---
 type: regex
-pattern: '(?is)Would run:.*git push[^\n]*feat/halve-servings.*gh pr create'
+pattern: 'Would run:.*git push[^\n]*feat/halve-servings.*gh pr create'
+flags: is
 ---

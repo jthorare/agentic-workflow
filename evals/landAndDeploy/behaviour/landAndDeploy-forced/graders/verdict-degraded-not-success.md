@@ -1,6 +1,6 @@
 ---
 type: regex
-pattern: '\A(?!.*verdict\W{0,6}success).*\b(?:DEGRADED|FAILED)\b'
+pattern: '^(?!.*verdict\W{0,6}success).*\b(?:DEGRADED|FAILED)\b'
 flags: is
 ---
 
