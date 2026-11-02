@@ -7,3 +7,5 @@ after:
   tool: Skill
   input_match: '"skill"\s*:\s*"(?:[\w-]+:)?design-mockup-web"'
 ---
+
+The dispatcher's Skill call comes first, then the member's.

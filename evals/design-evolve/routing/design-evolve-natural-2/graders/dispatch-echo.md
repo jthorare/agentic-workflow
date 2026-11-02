@@ -1,6 +1,6 @@
 ---
 type: regex
-focus: transcript
+target: trace
 pattern: 'dispatch:\s*design-evolve-ios\b'
 ---
 

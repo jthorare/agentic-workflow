@@ -1,8 +1,7 @@
 ---
 type: regex
-focus: first_tool_call
-tool: Skill
-pattern: '"skill"\s*:\s*"(?:[\w-]+:)?design-analyze-web"'
+target: trace
+pattern: '^(?:(?!"skill"\s*:)[\s\S])*"skill"\s*:\s*"(?:[\w-]+:)?design-analyze-web"'
 ---
 
-Family set (spec 3.1a): the FIRST Skill call must name `design-analyze-web`. `"design-analyze-web"` with its closing quote does not match its -web / -ios members.
+Family set (spec 3.1a): the FIRST Skill call in the trace must name `design-analyze-web`. The pattern is anchored at the start of the trace and refuses to cross any earlier `"skill":`, so a later call cannot satisfy it; the closing quote keeps `design-analyze-web` from matching its members.

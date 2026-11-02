@@ -5,5 +5,7 @@ before:
   input_match: '"skill"\s*:\s*"(?:[\w-]+:)?design-implement"'
 after:
   tool: Skill
-  input_match: '"skill"\s*:\s*"(?:[\w-]+:)?design-implement-ios"'
+  input_match: '"skill"\s*:\s*"(?:[\w-]+:)?design-implement-web"'
 ---
+
+The dispatcher's Skill call comes first, then the member's.
