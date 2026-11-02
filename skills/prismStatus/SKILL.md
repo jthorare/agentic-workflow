@@ -1,6 +1,6 @@
 ---
 name: prismStatus
-description: "Health check for prism-mcp. Reports dashboard reachability, MCP server connection, knowledge base population, and version."
+description: "Use when prism-mcp, the Mind Palace memory server, seems down, slow or empty and the user wants to know whether it is up: dashboard, MCP connection, stored entries, version. A read-only check; not for saving or loading memory."
 argument-hint: "[--port <port>]"
 allowed-tools: Bash(curl *), Bash(claude mcp *), Bash(codex mcp *), Bash(PORT=*), Bash(SHARED_DIR=*), Bash(source *), Bash(jq *), mcp__prism-mcp__session_health_check, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -66,6 +66,24 @@ Assign `PORT` explicitly at the top of **every** bash block (shell state does no
 ## Outputs
 
 stdout only. No file written.
+
+## Result block
+
+Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
+
+Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/prismStatus-$(date +%Y%m%d-%H%M%S).json` with:
+
+- `skill`: `"prismStatus"`
+- `artifacts`: `[]` (this skill reports; it writes no files)
+- `summary`: one line saying what happened
+- `dashboard`, `mcp`, `kb`: each `"ok"` or `"fail"`, one per check above
+- `version`: the version string, or `"unknown"`
+
+Then print the same JSON as a fenced `aw-result` block in the reply, before `## Next steps`:
+
+```aw-result
+{"skill": "prismStatus", "artifacts": [], "summary": "<one line>", "dashboard": "ok", "mcp": "ok", "kb": "ok", "version": "5.1.0"}
+```
 
 ## Next steps
 
