@@ -19,8 +19,8 @@ public static class AgentTargetWarning
             return null;
         }
 
-        return entry.PolicyForm is PolicyForm.None or PolicyForm.CursorConfig
-            ? $"workflow.agent.target '{id.Value}' can't run agent Steps: its policy form is {(entry.PolicyForm == PolicyForm.None ? "none" : "reserved")}, so every unattended Step parks with SND-LAUNCH-013 (fix: choose claude-code or codex, or give the entry a supported policy form)"
+        return entry.PolicyForm == PolicyForm.None
+            ? $"workflow.agent.target '{id.Value}' can't run agent Steps: its policy form is none, so every unattended Step parks with SND-LAUNCH-013 (fix: choose claude-code or codex, or give the entry a supported policy form)"
             : null;
     }
 }
