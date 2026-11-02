@@ -1,6 +1,6 @@
 ---
 name: withInterview
-description: "Interview the user to clarify requirements before executing a prompt. Use when the user wants to refine a task through guided questions before implementation."
+description: "Use when the user asks to be interviewed, quizzed or asked questions in rounds before any work starts, so a vague or big task gets pinned down first, then handed to another skill. Not for turning an idea into a spec (officeHours) or for rewriting a prompt from project docs (enhancePrompt)."
 argument-hint: "<skill-name> [prompt]"
 disable-model-invocation: true
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
@@ -113,6 +113,25 @@ If the target was "none — execute directly", begin the work yourself using the
 - Always reference previous answers when asking follow-ups to show you're building understanding.
 - The subagent question always gets its own dedicated round.
 - Minimum 3 rounds; only the user saying "skip" collapses the interview — and even then, still ask the subagent question, get confirmation, and write both artifacts before proceeding.
+
+## Result block
+
+Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
+
+Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/withInterview-$(date +%Y%m%d-%H%M%S).json` with:
+
+- `skill`: `"withInterview"`
+- `artifacts`: `[]` (this skill talks; its files are named by `plan_dir`)
+- `summary`: one line saying what happened
+- `plan_dir`: absolute path of the `$PLAN_DIR` directory holding `interview.md` and `plan.md`
+- `target_skill`: the skill handed off to, or `"none"`
+- `rounds`: number of interview rounds held
+
+Then print the same JSON as a fenced `aw-result` block in the reply, before `## Next steps`:
+
+```aw-result
+{"skill": "withInterview", "artifacts": [], "summary": "<one line>", "plan_dir": "/abs/plans/<date>-<slug>", "target_skill": "officeHours", "rounds": 3}
+```
 
 ## Next steps
 
