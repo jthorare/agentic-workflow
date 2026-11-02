@@ -1,3 +1,4 @@
-{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"review"}}]}}
+{"type":"system","subtype":"init","session_id":"selftest"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"aw-evals:review"}}]}}
 {"type":"assistant","message":{"content":[{"type":"text","text":"Starting now."}]}}
-{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"postReview"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"aw-evals:postReview"}}]}}

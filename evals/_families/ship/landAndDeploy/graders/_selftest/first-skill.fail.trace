@@ -1,3 +1,4 @@
-{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"shipRelease"}}]}}
+{"type":"system","subtype":"init","session_id":"selftest"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"aw-evals:shipRelease"}}]}}
 {"type":"assistant","message":{"content":[{"type":"text","text":"Starting now."}]}}
-{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"landAndDeploy"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"aw-evals:landAndDeploy"}}]}}
