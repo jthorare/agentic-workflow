@@ -139,7 +139,7 @@ Classify each finding by what it does, not by its label; reviewers mislabel in b
 
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/specToProvenPR-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
-Keys: `skill` (`specToProvenPR`), `artifacts` (absolute paths: `plans/<epic>/stages.md`, each stage's evidence file and the PR links it opened), `summary` (one line),
+Keys: `skill` (`specToProvenPR`), `artifacts` (absolute paths: `$AW_DIR/plans/<epic>/stages.md` and each stage's evidence files; PR links go in `prs`, not here), `summary` (one line),
 plus `epic` (epic slug); `stages_done` (count of stages with a PR); `prs` (list of PR URLs).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

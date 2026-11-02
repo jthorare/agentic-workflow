@@ -214,6 +214,6 @@ Suggested next steps:
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/archReview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`archReview`), `artifacts` (absolute paths: the architecture review file (`$AW_DIR/plans/<timestamp>-arch-review-<slug>.md`, or the `--output` path)), `summary` (one line),
-plus `verdict` (`SOUND | NEEDS WORK | REDESIGN`, the report's `## Verdict` word).
+plus `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line); `review_verdict` (`SOUND | NEEDS WORK | REDESIGN`, the report's `## Verdict` word).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
