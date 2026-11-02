@@ -19,9 +19,9 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 /// <param name="egress">Starts the exec's own listeners.</param>
 /// <param name="profile">The approved profile: the cap and the limits.</param>
 /// <param name="box">The box's RAM and cores.</param>
-/// <param name="systemdRun">The systemd-run program.</param>
+/// <param name="scope">Wraps the command in the platform's scope (<see cref="ExecScope"/>).</param>
 /// <param name="launchDirectory">The launcher's directory, read when a launch's plan is looked up.</param>
-internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressService egress, IApprovedProfile profile, BoxFacts box, string systemdRun, Func<string> launchDirectory) : ISandboxExec
+internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressService egress, IApprovedProfile profile, BoxFacts box, Func<LaunchId, ScopeLimits, IReadOnlyList<string>, IReadOnlyList<string>> scope, Func<string> launchDirectory) : ISandboxExec
 {
     private static readonly TimeSpan _unusedLongMax = TimeSpan.FromHours(2);   // the exec is attended: it has no wall, so no longMax applies
 
@@ -116,7 +116,7 @@ internal sealed class SandboxExec(ISandbox sandbox, ISessionCap cap, EgressServi
             return wrapped.Error;
         }
 
-        var argv = SystemdScopeArgv.Start(systemdRun, plan.Launch, limits, wrapped.Value);
+        var argv = scope(plan.Launch, limits, wrapped.Value);
         var info = ChildEnvironment.Start(argv[0], argv.Skip(1));   // no redirection: the command has this terminal
 
         try

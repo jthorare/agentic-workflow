@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
 using Aw.Sindri.Core.Text;
+using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Infrastructure.Launch;
 using Aw.Sindri.Infrastructure.Sessions;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,7 +84,7 @@ public static class PlatformSandboxServiceCollectionExtensions
                     }),
                     sp.GetRequiredService<System.Text.Json.JsonSerializerOptions>(), sp.GetRequiredService<ITextScrubber>(), sp.GetRequiredService<TimeProvider>()));
 
-    /// <summary>Registers the macOS sandbox (SB-9c): Seatbelt, the same login sources, a session that is its own process group (the group id file is the scope), the cap over the live groups and the loopback egress. The fixture self-check and the exec and login verbs stay as Core's refusing defaults.</summary>
+    /// <summary>Registers the macOS sandbox (SB-9c): Seatbelt, the same login sources, a session that is its own process group (the group id file is the scope), the cap over the live groups and the loopback egress. Exec and login are registered too (#1936); the fixture self-check stays Core's refusing default.</summary>
     private static IServiceCollection AddSindriSeatbeltSandbox(this IServiceCollection services, Func<string, string?> environment)
     {
         _ = services.RemoveAll<ISandbox>().AddSingleton<IAgentTokenSource>(sp => new GitHubAppTokenSource(environment, GitHubAppTokenSource.CreateClient(), sp.GetRequiredService<TimeProvider>()));
@@ -104,6 +105,8 @@ public static class PlatformSandboxServiceCollectionExtensions
             .AddSingleton(sp => new LaunchSandboxRegistry(sp.GetRequiredService<EgressService>(), loopback: true))
             .AddSingleton<ISandboxLaunchStages>(StagesFor)
             .AddSingleton<ISandboxLaunchInputs>(sp => InputsFor(sp, environment))
+            .AddSingleton<ISandboxLogin>(sp => new SandboxLoginRunner(sp.GetRequiredService<SindriSettings>().Home, environment))
+            .AddSingleton<ISandboxExec>(sp => ExecWith(sp, ExecScope.Mac(ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory))))   // why: the same group files the launch counts, so exec counts against the session cap
             .AddSingleton<ISandboxLaunch>(sp =>
             {
                 var pgroups = ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory);
@@ -120,12 +123,14 @@ public static class PlatformSandboxServiceCollectionExtensions
         .AddSingleton<ISandboxExec>(sp => ExecFor(sp, environment))
         .AddSingleton<ISandboxLogin>(sp => new SandboxLoginRunner(sp.GetRequiredService<SindriSettings>().Home, environment));
 
-    private static SandboxExec ExecFor(IServiceProvider sp, Func<string, string?> environment)
+    private static SandboxExec ExecFor(IServiceProvider sp, Func<string, string?> environment) => ExecWith(sp, ExecScope.Linux(environment("AW_SANDBOX_SYSTEMD_RUN") is { Length: > 0 } run ? run : "systemd-run"));
+
+    private static SandboxExec ExecWith(IServiceProvider sp, Func<LaunchId, ScopeLimits, IReadOnlyList<string>, IReadOnlyList<string>> scope)
     {
         var machine = sp.GetRequiredService<ISandboxMachine>();
         return new SandboxExec(
             sp.GetRequiredService<ISandbox>(), sp.GetRequiredService<ISessionCap>(), sp.GetRequiredService<EgressService>(), sp.GetRequiredService<IApprovedProfile>(),
-            new BoxFacts(machine.RamBytes, machine.Cores), environment("AW_SANDBOX_SYSTEMD_RUN") is { Length: > 0 } run ? run : "systemd-run",
+            new BoxFacts(machine.RamBytes, machine.Cores), scope,
             () => sp.GetRequiredService<LauncherOptions>().LaunchDirectory);   // why: lazily, so a container without the launcher can still resolve the exec
     }
 

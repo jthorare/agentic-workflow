@@ -389,6 +389,8 @@ A Step on a Mac runs under Seatbelt (`sandbox-exec` with a profile Sindri render
 - The agents' own sandboxes off inside ours, so there is one wall, not two.
 - Claude's login copied from the Keychain. On a Mac Claude Code keeps it in the item `Claude Code-credentials`, not in `~/.claude/.credentials.json`. When the file is missing, `owner-copy` reads the item with `security find-generic-password -s "Claude Code-credentials" -w` and writes it as a 0600 `.credentials.json` in the per-launch copy. Expiry is checked on those same bytes. If the item is missing or isn't a JSON object, the Step is refused like a missing file, and the refusal never carries what `security` printed. The `separate-login` source does not read the Keychain yet: the login it runs writes there on a Mac, and a Step on that source still looks for the file in the agent home.
 
+`sindri sandbox exec` and `sindri sandbox login` work on a Mac too (#1936): exec wraps its command in the same process-group scope as a Step (`ProcessGroupScopeArgv`, group files in the launcher's `pgroups` folder), so it counts against the session cap; login is the same runner as on Linux. Unproven on a real Mac.
+
 Known gaps: a localhost test server can't run inside a Step, and `/private/tmp` and `/private/var/folders` stay readable apart from the denies above. `sindri open` stays refused on macOS.
 
 ## Environment
