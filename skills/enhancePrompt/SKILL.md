@@ -6,7 +6,7 @@ allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash(git *), Bash(ls *)
 ---
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 # enhancePrompt
 
@@ -77,7 +77,7 @@ If step 3 found no dialogue value, do not include this section.
 Write the full `## Enhanced Prompt` block (plus the peer-agent section, if any) to the prompts directory:
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 mkdir -p "$AW_DIR/prompts"
 echo "prompt-file: $AW_DIR/prompts/$(date +%Y%m%d-%H%M%S).md"
@@ -125,7 +125,7 @@ Then print the same JSON as a fenced `aw-result` block in the reply, before `## 
 
 Name the successor skill explicitly — pick the one that matches the enhanced task and pass the persisted prompt file:
 
-- **Invoke skill `withInterview`** with args `<successor-skill> <enhanced prompt path: ~/.agentic-workflow/<repo-slug>/prompts/<ts>.md>` — if requirements still need clarification before executing
+- **Invoke skill `withInterview`** with args `<successor-skill> <enhanced prompt path: $AW_DIR/prompts/<ts>.md>` — if requirements still need clarification before executing
 - `/officeHours` — if the enhanced prompt describes a feature that needs a spec before implementation
 - `/specToProvenPR` — if the enhanced prompt is an approved spec ready to be built and proven
 - Otherwise, execute the enhanced prompt from `prompts/<ts>.md` directly in this session after the user confirms

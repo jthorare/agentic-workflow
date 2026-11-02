@@ -10,7 +10,7 @@ allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(SHARED_DI
 Take an approved spec to production-ready PRs that are **definitively proven to work in the running app**, one shippable stage at a time.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 ## Core principle
 
@@ -35,7 +35,7 @@ Then mark the PR ready and **STOP for human merge**. "Practically done" and "tri
 **Track todos** — one item per stage from stages.md. `superpowers:*` references below name skills from the superpowers pack: **Invoke skill** them when installed on the host; otherwise follow the named practice directly. Shared files and output dirs resolve via this block — re-source it at the top of every bash block (shell state does not persist between shell calls):
 
 ```bash
-SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"
 STAGE_DIR="$AW_DIR/proof/<stage-slug>" && mkdir -p "$STAGE_DIR"
 ```
@@ -79,8 +79,8 @@ Zero blocking findings is a hard gate, not a target. The only way to *know* you 
 
 - The loop starts only after steps 4–6 are done. `/review` is not a way to find out whether the feature works, and a clean review never substitutes for a hand test or an evidence pack.
 - After fixing a blocking finding you **must** re-run `/review`. No exceptions for "trivial" deltas.
-- Every blocking finding is **fixed** on this PR, not deferred. A blocking finding you believe is wrong is still resolved explicitly: reply on the thread with the technical reason, mark it resolved in `~/.agentic-workflow/<repo-slug>/reviews/<pr>.json`, then re-run `/review`.
-- A blocking finding that is a bug is fixed prevention-first: ask the question in `$HOME/.agentic-workflow/toolkit/skills/_shared/prevent-the-class.md` (class, invariant, other instances, smallest mechanism) before choosing the fix, and carry its handoff block into the fix's reply.
+- Every blocking finding is **fixed** on this PR, not deferred. A blocking finding you believe is wrong is still resolved explicitly: reply on the thread with the technical reason, mark it resolved in `$AW_DIR/reviews/<pr>.json`, then re-run `/review`.
+- A blocking finding that is a bug is fixed prevention-first: ask the question in `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/prevent-the-class.md` (class, invariant, other instances, smallest mechanism) before choosing the fix, and carry its handoff block into the fix's reply.
 - Every non-blocking finding is resolved too, but in writing: reply on the thread (accepted as a follow-up, or why not), mark it resolved in the state file. Fold in a fix only when it is a trivial edit (a one-line doc or name fix). Non-blocking findings alone never trigger another review run.
 - The loop ends ONLY when a `/review` run returns zero blocking findings — or the cap of 5 triggers report-and-ask.
 

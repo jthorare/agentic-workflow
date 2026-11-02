@@ -10,7 +10,7 @@ allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_D
 OWASP Top 10 + STRIDE threat model. Pre-impl (plan) or post-impl (diff) mode. Auto-detects mode from invocation context.
 
 <!-- preamble -->
-**Before anything else:** read `$HOME/.agentic-workflow/toolkit/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
+**Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (skill index, provider capability map, bootstrap check, session context). Run its **Session Close** section when this skill finishes.
 
 ## Overview
 
@@ -24,7 +24,7 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 - Mode flag: `--plan <path>` or `--diff <pr-or-branch>`
 - Auto-detect: if no flag, try `gh pr view --json number,state` on current branch — if it succeeds, use `--diff <pr#>`; else `--plan` against the newest plan per `_shared/plan-discovery.md`:
   ```bash
-  SHARED_DIR="$HOME/.agentic-workflow/toolkit/skills/_shared"
+  SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
   source "$SHARED_DIR/repo-slug.sh"
   PLAN_DIR=$(ls -1dt "$AW_DIR/plans/"*/ 2>/dev/null | head -1)
   ```
@@ -102,8 +102,8 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 
 ## Outputs
 
-- Plan mode default: `~/.agentic-workflow/<repo-slug>/plans/<feature>/security-review.md` (canonical — matches `/autoplan` placement; optional copy to `security/` on request)
-- Diff mode default: `~/.agentic-workflow/<repo-slug>/security/<target-slug>-threat-model.md`
+- Plan mode default: `$AW_DIR/plans/<feature>/security-review.md` (canonical — matches `/autoplan` placement; optional copy to `security/` on request)
+- Diff mode default: `$AW_DIR/security/<target-slug>-threat-model.md`
 - When `--output <path>` is supplied: that exact path
 
 ## Result block
