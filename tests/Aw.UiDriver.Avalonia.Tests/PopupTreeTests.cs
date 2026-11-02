@@ -47,5 +47,34 @@ public sealed class PopupTreeTests
         Assert.Equal(0, after.Value.Total);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_popup_opened_from_another_window_is_not_in_this_windows_tree()
+    {
+        var screenA = await TestScreen.OpenAsync();
+        var screenB = await TestScreen.OpenAsync();
+        var hostB = new DriverHost(() => screenB.Window, TimeProvider.System);
+        var otherWindowItem = new Selector(AutomationId: "other-window-item");
+        var popup = await TestScreen.OnUi(() =>
+        {
+            var item = new Button { Content = "Other window item" };
+            AutomationProperties.SetAutomationId(item, "other-window-item");
+            var opened = new Popup { PlacementTarget = screenA.Save, Child = item, ShouldUseOverlayLayer = false };
+            if (screenA.Window.Content is StackPanel form)
+            {
+                form.Children.Add(opened);
+            }
+
+            opened.IsOpen = true;
+            return opened;
+        });
+
+        var found = await hostB.Search(new SearchRequest(otherWindowItem));
+        var tree = (await hostB.Tree(new TreeRequest())).Value.Root;
+        _ = await TestScreen.OnUi(() => popup.IsOpen = false);
+
+        Assert.Equal(0, found.Value.Total);
+        Assert.DoesNotContain(Flatten(tree), static n => n.AutomationId == "other-window-item");
+    }
+
     private static IEnumerable<NodeInfo> Flatten(NodeInfo node) => new[] { node }.Concat(node.Children.SelectMany(Flatten));
 }
