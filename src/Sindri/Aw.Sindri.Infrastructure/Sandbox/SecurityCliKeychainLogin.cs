@@ -11,15 +11,24 @@ internal sealed class SecurityCliKeychainLogin(ISandboxProcesses processes, bool
 
     private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(10);
 
+    /// <summary>The Keychain service Claude Code stores its login under for a config directory.</summary>
+    /// <param name="configDirectory">CLAUDE_CONFIG_DIR, or null when it is not set.</param>
+    /// <returns>The service name.</returns>
+    internal static string ServiceFor(string? configDirectory)
+    {
+        _ = configDirectory;   // why: stub until the fix (#1928)
+        return ItemName;
+    }
+
     /// <inheritdoc />
-    public string? Read()
+    public string? Read(string service)
     {
         if (!isMac)
         {
             return null;
         }
 
-        var result = processes.Run("security", ["find-generic-password", "-s", ItemName, "-w"], _timeout);
+        var result = processes.Run("security", ["find-generic-password", "-s", service, "-w"], _timeout);
         if (!result.Succeeded)
         {
             return null;

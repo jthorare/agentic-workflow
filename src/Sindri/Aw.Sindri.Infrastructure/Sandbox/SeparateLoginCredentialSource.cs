@@ -24,11 +24,15 @@ internal sealed class SeparateLoginCredentialSource : IModelCredentialSource
     /// <summary>Creates the source.</summary>
     /// <param name="sindriHome">AW_SINDRI_HOME: the agent homes live under 'agent-homes/&lt;target&gt;'.</param>
     /// <param name="clock">The clock the expiry is read against.</param>
-    internal SeparateLoginCredentialSource(string sindriHome, TimeProvider clock)
+    /// <param name="keychain">Where a Mac keeps Claude Code's login; null off macOS.</param>
+    internal SeparateLoginCredentialSource(string sindriHome, TimeProvider clock, IKeychainLogin? keychain = null)
     {
         _sindriHome = sindriHome;
         _clock = clock;
+        Keychain = keychain;
     }
+
+    internal IKeychainLogin? Keychain { get; }
 
     /// <inheritdoc />
     public ModelLoginSource Id => ModelLoginSource.SeparateLogin;
