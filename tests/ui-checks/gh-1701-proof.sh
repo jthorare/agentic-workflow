@@ -3,7 +3,9 @@
 # both ways, still there after a new map version. (The concept-list half, pin -> rebuild, needs a built map: a refresh replaces this
 # fixture's imported one.) Step 2 opens Self scheduling's
 # Why drill and names a page, "Week schedule", whose action "Submit a schedule" relates to Self scheduling and Billing (Save and
-# approve). Step 3 opens the action from the Pages and actions section: its panel's Relates to lists both concepts. Step 4 opens
+# approve; Billing is picked as the first visible item of "Relate to another concept", which assumes it is the only concept offered
+# there; step 2 fails on the "Relates to Billing" box if another concept gets picked). Step 3 opens the action from the Pages and
+# actions section: its panel's Relates to lists both concepts. Step 4 opens
 # Billing's Why drill: the same page is listed there. Step 5 imports a new map version (`context whole concepts`, then `pages` again)
 # and checks the page is still under both concepts.
 # It drives the REAL sindri-ui (UI driver, docs/csharp/ui-driver.md) against a guarded fixture home (context-lib.sh: sindri-ui-fixture.sh
@@ -30,6 +32,8 @@ wait_visible() {
   for i in $(seq 1 $((secs * 4))); do visible "$@" && return 0; sleep 0.25; done
   return 1
 }
+# The whole map's version from the page header ("Context · the whole map · v2"), empty when the header is not shown.
+map_version() { texts | sed -n 's/^Context · the whole map · v\([0-9][0-9]*\)$/\1/p' | head -n 1; }
 texts() { d search --type TextBlock --limit 600 2>/dev/null | jq -r '.matches[] | select(.visible) | .text // empty'; }
 card_id() { d search --type Button --limit 80 2>/dev/null | jq -r --arg w "$1" 'first(.matches[] | select(.visible and (((.name // "") + " " + (.text // "")) | contains($w))) | .id) // empty'; }
 click_card() {
@@ -101,7 +105,7 @@ sleep 1
 frame 3-action-panel
 sed -n '/^Relates to$/,/^Why$/p' "$OUT/3-action-panel-texts.txt" >"$OUT/3-relates-to.txt"
 for c in "Self scheduling" "Billing"; do
-  grep -q -- "$c" "$OUT/3-relates-to.txt" || [ -n "$(card_id "$c")" ] || fail "step 3: the action's panel does not relate it to $c (texts in $OUT/3-action-panel-texts.txt)"
+  grep -qx -- "$c" "$OUT/3-relates-to.txt" || fail "step 3: the action's panel does not relate it to $c (texts in $OUT/3-action-panel-texts.txt)"
 done
 d click --type Button --name "Close (Esc)" >/dev/null 2>&1 || true
 
@@ -111,10 +115,21 @@ wait_visible 30 --type Button --name "Edit page: Week schedule" || { frame 4-no-
 sleep 1
 frame 4-billing-drill
 
-# Step 5: a new map version (another map, then this one again: two new versions) keeps the page under both concepts.
+# Step 5: a new map version (another map, then this one again: two new versions) keeps the page under both concepts. The drills are
+# checked only once a drill shows the version two above the one before, so they never read the old map.
+before="$(map_version)"
+[ -n "$before" ] || { frame 5-no-version; fail "step 5: the header shows no map version before the import (texts in $OUT/5-no-version-texts.txt)"; }
 bash "$FIXTURE" context whole concepts >"$OUT/concepts-switch.log" 2>&1 || setup_fail "context whole concepts (see $OUT/concepts-switch.log)"
 bash "$FIXTURE" context whole pages >"$OUT/pages-switch.log" 2>&1 || setup_fail "context whole pages again (see $OUT/pages-switch.log)"
-sleep 5
+# An open drill keeps the map it read (ReadWhole runs when a drill opens), so each try opens Billing's drill again.
+want=$((before + 2)) now="" end=$((SECONDS + 120))
+while [ "$SECONDS" -lt "$end" ]; do
+  open_why "Billing" >/dev/null 2>&1 && now="$(map_version)"
+  [ -n "$now" ] && [ "$now" -ge "$want" ] && break
+  sleep 3
+done
+[ -n "$now" ] && [ "$now" -ge "$want" ] || { frame 5-no-new-version; fail "step 5: the app still shows map v${now:-?} 120 s after the import, wanted v$want (texts in $OUT/5-no-new-version-texts.txt)"; }
+echo "v$before -> v$now" >"$OUT/5-versions.txt"
 visible --type Button --name "Concepts" && d click --type Button --name "Concepts" >/dev/null 2>&1
 for c in "Self scheduling" "Billing"; do
   open_why "$c" || { frame "5-no-drill"; fail "step 5: $c's Why drill did not open after the new map version"; }
