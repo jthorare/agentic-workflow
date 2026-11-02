@@ -156,6 +156,7 @@ internal static class ContextApiScenarios
         ("context-pages-preview", "same-page", async (s, ct) => await s.PreviewPages("Schedule week\nSubmit\n\nSchedule weeks\nCancel", ct)),
         ("context-pages-preview", "invalid-259", async (s, ct) => await s.PreviewPages("  \n", ct)),
         ("context-pages", "search-q", async (s, ct) => await s.Fetch("/sindri/context/pages?q=SCHEDUL", ct)),
+        ("context-pages", "by-map-key", async (s, ct) => await s.Fetch("/sindri/context/pages?page=surface%3Aroute%2FGET%3A%2Fschedule%2Fweek", ct)),
         ("context-pages", "search-none", async (s, ct) => await s.Fetch("/sindri/context/pages?q=nothing%20like%20it", ct)),
         ("context-concepts", "suggested-pages", async (s, ct) => await s.Fetch("/sindri/context/concepts", ct)),
         ("context-concepts-id-members", "scheduling", async (s, ct) => await s.Fetch("/sindri/context/concepts/concept%3Ascheduling/members", ct)),
