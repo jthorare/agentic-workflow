@@ -1,6 +1,6 @@
 ---
 name: officeHours
-description: "Spec-driven brainstorming session with EARS-format requirements. Outputs plan.md (the canonical handoff) plus domain-specific docs (product.md, engineering.md, design-brief.md, TASKS.md) to plans/ directory — each assignable to its owning team."
+description: "Use when someone has a half-formed feature or product idea and needs a spec before anything gets built: who it is for, what can go wrong, EARS requirements, split into product, engineering, design and task docs. Not for rewriting a prompt with doc context or for reviewing a finished plan."
 argument-hint: "[feature-or-problem-description]"
 allowed-tools: Bash(git *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, WebFetch, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -556,6 +556,26 @@ with what it contributed. If none: `None.`>
 - [Engineering](engineering.md) — owner: engineering
 - [Design brief](design-brief.md) — owner: design
 - [Tasks](TASKS.md) — owner: tech lead
+
+## Result block
+
+Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
+
+Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/officeHours-$(date +%Y%m%d-%H%M%S).json` with:
+
+- `skill`: `"officeHours"`
+- `artifacts`: absolute paths of `plan.md`, `product.md`, `engineering.md`, `design-brief.md` and `TASKS.md`
+- `summary`: one line saying what happened
+- `plan_dir`: absolute path of the `plans/{timestamp}-{slug}/` directory
+- `ears_types`: the EARS types the session selected, from `ubiquitous`, `event-driven`, `state-driven`, `optional`, `unwanted`
+- `requirements`: number of `REQ-*` ids in product.md
+- `tasks`: number of tasks in TASKS.md
+
+Then print the same JSON as a fenced `aw-result` block in the reply, before `## Next steps`:
+
+```aw-result
+{"skill": "officeHours", "artifacts": ["/abs/plans/<ts>-<slug>/plan.md", "..."], "summary": "<one line>", "plan_dir": "/abs/plans/<ts>-<slug>", "ears_types": ["ubiquitous", "event-driven"], "requirements": 6, "tasks": 7}
+```
 
 ## Next steps
 - `/autoplan` — fan out reviews across all 5 lenses in parallel
