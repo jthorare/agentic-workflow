@@ -1,6 +1,6 @@
 ---
 name: design-mockup
-description: Detect web vs iOS automatically and delegate to /design-mockup-web (HTML mockup + Playwright baseline) or /design-mockup-ios (SwiftUI preview + simulator baseline).
+description: "Use when someone wants to see a screen before it's built: a visual draft to react to and approve, for a web or an iOS app. Picks the platform and delegates; the approved result becomes the baseline later checks compare against. Not for turning an approved design into code (design-implement)."
 argument-hint: <screen-name>
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -40,6 +40,13 @@ Both sub-skills take `<screen-name>` — design-mockup-ios now **requires** it t
 3. Dispatch literally, passing all user-supplied arguments through unchanged:
    - Web: **Invoke skill `design-mockup-web`** with args `"<original args verbatim>"`
    - iOS: **Invoke skill `design-mockup-ios`** with args `"<original args verbatim>"`
+
+## Result block
+
+Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
+
+1. `mkdir -p "$AW_DIR/results"` and write `$AW_DIR/results/design-mockup-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-mockup"`), `artifacts` (absolute paths of whatever the delegated skill wrote (mockup source, baselines, screens.json); empty if it stopped before writing), `summary` (one line), plus `dispatched_to` (`design-mockup-web` or `design-mockup-ios`), `screen`.
+2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
 
 ## Next steps
 
