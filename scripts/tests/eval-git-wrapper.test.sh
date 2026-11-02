@@ -75,4 +75,11 @@ out="$(env -u AW_GIT_MODE PATH="$STUB_DIR:$PATH" git -C "$REPO" checkout -q -b o
 out="$(PATH="$STUB_DIR" AW_GIT_MODE=full "$(command -v bash)" "$STUB_DIR/git" --version 2>&1)"; rc=$?
 { [ "$rc" = 127 ] && printf '%s' "$out" | grep -q "no real git"; } && ok "no real git on PATH fails clearly" || bad "no real git: rc=$rc out=$out"
 
+# claude plugin eval runs a case's scaffold in the run's environment: the stub first on PATH, AW_GIT_MODE=readonly.
+# The fixture's own commit must still land, and the agent that runs after it still sees readonly.
+FIX="$TMP/fixture"; mkdir -p "$FIX"; echo c > "$FIX/c.txt"
+out="$(cd "$FIX" && export AW_GIT_MODE=readonly PATH="$STUB_DIR:$PATH" && . "$ROOT/evals/_lib/fixture-lib.sh" && aw_fixture_repo init 2>&1 && printf 'mode=%s' "$AW_GIT_MODE")"; rc=$?
+{ [ "$rc" = 0 ] && [ "$("$REAL_GIT" -C "$FIX" rev-list --count HEAD 2>/dev/null)" = 1 ] && printf '%s' "$out" | grep -q 'mode=readonly$'; } \
+  && ok "aw_fixture_repo commits under the eval's readonly stub and leaves the mode readonly" || bad "aw_fixture_repo under readonly: rc=$rc out=$out"
+
 [ "$fails" = 0 ] && echo "all passed" || { echo "$fails failed"; exit 1; }
