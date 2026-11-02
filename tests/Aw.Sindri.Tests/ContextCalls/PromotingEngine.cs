@@ -1,4 +1,5 @@
 using System.Reflection;
+using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
 
 namespace Aw.Sindri.Tests.ContextCalls;
@@ -8,9 +9,9 @@ public class PromotingEngine : DispatchProxy
 {
     internal RefreshEngineProxy Inner { get; set; } = null!;
 
-    internal static Aw.Context.Core.Facade.IContextEngine Over(RefreshEngineProxy inner)
+    internal static IContextEngine Over(RefreshEngineProxy inner)
     {
-        var proxy = Create<Aw.Context.Core.Facade.IContextEngine, PromotingEngine>();
+        var proxy = Create<IContextEngine, PromotingEngine>();
         ((PromotingEngine)(object)proxy).Inner = inner;
         return proxy;
     }
@@ -18,7 +19,7 @@ public class PromotingEngine : DispatchProxy
     protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
     {
         var answer = targetMethod!.Invoke(Inner.Proxy, args);
-        if (targetMethod.Name == nameof(Aw.Context.Core.Facade.IContextEngine.ReviewQueue))
+        if (targetMethod.Name == nameof(IContextEngine.ReviewQueue))
         {
             Inner.State = new MapPublishState(Hold: null, LatestDraft: null, Current: 1, CurrentHeads: []);
         }
