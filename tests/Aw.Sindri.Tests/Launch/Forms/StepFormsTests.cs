@@ -139,12 +139,12 @@ public sealed class StepFormsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_cursor_forms_are_reserved_even_when_an_entry_names_them()
+    public void The_cursor_policy_form_needs_the_worktree_and_refuses_a_relative_one()
     {
-        var entry = AgentEntries.Cursor with { ModelForm = ModelForm.CursorFlag, PolicyForm = PolicyForm.CursorConfig };
+        var step = Policy(StepPermissionMode.Plan);
 
-        Assert.Equal("SND-LAUNCH-013", ArgvBuilder.Build(entry, LaunchMode.Open, Inputs(Model("auto"))).Error.Code);
-        Assert.Equal("SND-LAUNCH-013", ArgvBuilder.Build(entry, LaunchMode.Open, Inputs(Policy(StepPermissionMode.Plan))).Error.Code);
+        Assert.Equal("SND-REQ-001", StepForms.Arguments(AgentEntries.Cursor, step, policyFilePath: null, workDir: null).Error.Code);
+        Assert.Equal("SND-REQ-001", StepForms.Arguments(AgentEntries.Cursor, step, policyFilePath: null, workDir: "work/repo").Error.Code);
     }
 
     [Theory, Trait("Lane", "unit")]
