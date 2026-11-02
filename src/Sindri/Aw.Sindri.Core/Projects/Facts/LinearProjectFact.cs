@@ -14,7 +14,10 @@ namespace Aw.Sindri.Core.Projects.Facts;
 /// <param name="ClosedAt">Linear's completedAt or canceledAt, or null.</param>
 /// <param name="OpenIssues">Stored open issues in the project (exact, spec P8).</param>
 /// <param name="Counting">The one-time issue re-read (spec §4.3) hasn't finished, so the count isn't final.</param>
-/// <param name="LastActivity">The newest change of the project or its issues, or null.</param>
+/// <param name="LastActivity">The newest change of the project, its issues or their pull requests, or null.</param>
+/// <param name="OpenPrs">Open or draft pull requests its issues reach; null when the profile reads no GitHub repos.</param>
+/// <param name="Repos">The GitHub 'owner/name' of the repos its pull requests are in; null when the profile reads no GitHub repos.</param>
+/// <param name="PrWindowDays">The index window the PR count sees ('context.index.windowDays'); null with no PR count.</param>
 public sealed record LinearProjectFact(
     string Key,
     string Title,
@@ -29,4 +32,7 @@ public sealed record LinearProjectFact(
     DateTimeOffset? ClosedAt,
     int OpenIssues,
     bool Counting,
-    DateTimeOffset? LastActivity);
+    DateTimeOffset? LastActivity,
+    int? OpenPrs = null,
+    IReadOnlyList<string>? Repos = null,
+    int? PrWindowDays = null);

@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
@@ -316,6 +317,45 @@ public abstract class RecordStoreContract<TStore>
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, await store.ProjectFacts(RecordSamples.Github, new RecordAudience(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a") }, new HashSet<RecordKey>()), CancellationToken.None)).Count == 0, "another source has no projects here");
     }
 
+    /// <summary>
+    /// A project's PRs are the ones an issue of it links to (a GitHub attachment) or that name one of its issues' keys (projects page spec §4.5): counted once, open and draft only, live and visible ones only,
+    /// with the repos of every linked PR and the newest PR change.
+    /// </summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_project_read_counts_the_open_prs_its_issues_reach_either_way_once()
+    {
+        var store = Create();
+        var projects = SourceId.From("linear-projects");
+        var later = RecordSamples.Now.AddHours(1);
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(projects, 1,
+            RecordSamples.Write(RecordSamples.Record("linear:project/beta", source: projects) with { Kind = RecordKind.Project, Title = "Beta" }, "b"),
+            RecordSamples.Write(RecordSamples.Record("linear:project/alpha", source: projects) with { Kind = RecordKind.Project, Title = "Alpha" }, "a")), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Linear, 1,
+            RecordSamples.Write(BetaIssue("1", RecordState.Open, "linear:team-a", new RecordLink("github:pr/acme/web/1", RecordLinkKind.Relates, Title: null)), "one"),
+            RecordSamples.Write(BetaIssue("2", RecordState.Done, "linear:team-a"), "two"),
+            RecordSamples.Write(BetaIssue("3", RecordState.Open, "linear:other", new RecordLink("github:pr/acme/web/5", RecordLinkKind.Relates, Title: null)), "three")), CancellationToken.None));
+        var gone = Pr("acme/web", 7, RecordState.Open, "SPL-1");
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Github, 1,
+            RecordSamples.Write(Pr("acme/web", 1, RecordState.Open, "SPL-1"), "attached and named"),
+            RecordSamples.Write(Pr("acme/api", 2, RecordState.Draft, "SPL-2", later), "names a done issue"),
+            RecordSamples.Write(Pr("acme/web", 3, RecordState.Merged, "SPL-1"), "merged"),
+            RecordSamples.Write(Pr("acme/web", 5, RecordState.Open), "only an unseen issue links it"),
+            RecordSamples.Write(Pr("acme/other", 6, RecordState.Open, "SPL-1"), "a repo the caller can't read"),
+            RecordSamples.Write(Pr("acme/web", 8, RecordState.Open, "SPL-99"), "names no stored issue"),
+            RecordSamples.Write(gone, "removed")), CancellationToken.None));
+        _ = ContractCheck.Ok(_owner, await store.Commit(RecordSamples.Batch(RecordSamples.Github, 2) with { Removed = [gone.Key] }, CancellationToken.None));
+        var audience = new RecordAudience(new HashSet<AudienceKey> { AudienceKey.From("linear:team-a"), AudienceKey.From("repo:acme/web"), AudienceKey.From("repo:acme/api") }, new HashSet<RecordKey>());
+
+        var rows = ContractCheck.Ok(_owner, await store.ProjectFacts(projects, audience, CancellationToken.None));
+
+        var (alpha, beta) = (rows[0], rows[1]);
+        ContractCheck.That(_owner, beta.OpenPrs == 2, "the attached PR (also named, counted once) and the draft naming a done issue; not the merged, unseen, unreadable, unlinked or removed ones");
+        ContractCheck.That(_owner, beta.PrRepos is ["acme/api", "acme/web"], "the repos of every linked PR the caller can read, merged ones too, sorted");
+        ContractCheck.That(_owner, beta.NewestPrAt == later, "the newest change among the linked PRs");
+        ContractCheck.That(_owner, alpha.OpenPrs == 0 && alpha.PrRepos is [] && alpha.NewestPrAt is null, "a project with no issues has no PRs");
+    }
+
     /// <summary>A purge removes one source's records, chunks, vectors and position and no other's.</summary>
     /// <returns>A task.</returns>
     [Fact]
@@ -335,6 +375,23 @@ public abstract class RecordStoreContract<TStore>
         var rows = ContractCheck.Ok(_owner, await store.Vectors(VectorSpace.Chunk, 0, 10, CancellationToken.None));
         ContractCheck.That(_owner, rows.Select(r => r.Vector.Key).SequenceEqual([new ChunkKey(theirs.Key, 0).ToString()], StringComparer.Ordinal), "only the other source's vector stays");
     }
+
+    private static StoredRecord BetaIssue(string id, RecordState state, string audience, params RecordLink[] more) => RecordSamples.Record("linear:issue/" + id) with
+    {
+        State = state,
+        Audience = AudienceKey.From(audience),
+        Links = [new RecordLink("linear:project/beta", RecordLinkKind.InProject, Title: null), new RecordLink("linear:issue-key/SPL-" + id, RecordLinkKind.KnownAs, Title: null), .. more],
+    };
+
+    private static StoredRecord Pr(string repo, int number, RecordState state, string? names = null, DateTimeOffset? updated = null) =>
+        RecordSamples.Record(string.Create(CultureInfo.InvariantCulture, $"github:pr/{repo}/{number}"), source: RecordSamples.Github) with
+        {
+            Kind = RecordKind.Pr,
+            State = state,
+            Audience = AudienceKey.From("repo:" + repo),
+            UpdatedAt = updated ?? RecordSamples.Now,
+            Links = names is null ? [] : [new RecordLink("linear:issue-key/" + names, RecordLinkKind.Relates, Title: null)],
+        };
 
     private static void Equal(Result<int> actual, int expected, string what) =>
         ContractCheck.That(_owner, ContractCheck.Ok(_owner, actual) == expected, what);
