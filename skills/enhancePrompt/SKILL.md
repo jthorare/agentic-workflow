@@ -1,6 +1,6 @@
 ---
 name: enhancePrompt
-description: Use when the user invokes /enhancePrompt — discovers available project documentation, reads relevant files, and rewrites the user's request with richer context before execution
+description: "Use when the user wants a request rewritten with project context first: what the docs say, constraints, scope and done-criteria, so a fresh session or another agent can run it. It only rewrites; it does not do the task or interview the user (that is withInterview)."
 argument-hint: [prompt-to-enhance]
 allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -102,6 +102,24 @@ Do NOT begin executing the task during this skill.
 - Skip docs that aren't relevant — don't dump everything found.
 - If the prompt is already detailed, say so and ask if enhancement is still wanted.
 - If no docs exist, enhance from what's known in the conversation.
+
+## Result block
+
+Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
+
+Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/enhancePrompt-$(date +%Y%m%d-%H%M%S).json` with:
+
+- `skill`: `"enhancePrompt"`
+- `artifacts`: `[]` (this skill talks; the saved prompt is named by `prompt_file`)
+- `summary`: one line saying what happened
+- `prompt_file`: absolute path of the persisted `prompts/{timestamp}.md`
+- `docs_read`: number of docs listed as read
+
+Then print the same JSON as a fenced `aw-result` block in the reply, before `## Next steps`:
+
+```aw-result
+{"skill": "enhancePrompt", "artifacts": [], "summary": "<one line>", "prompt_file": "/abs/prompts/<ts>.md", "docs_read": 3}
+```
 
 ## Next steps
 
