@@ -637,12 +637,12 @@ aw_write_provider_registry "${REGISTRY_ENTRIES[@]}"
 echo ""
 echo "Checking that every managed skill is linked for each provider..."
 if aw_dry; then
-  echo "  [dry-run] would check ${#MANAGED_SKILLS[@]} skills in each provider's skills dir"
+  echo "  [dry-run] would check $((${#MANAGED_SKILLS[@]} + 1)) skills in each provider's skills dir"
 else
   _missing=0
   for _entry in "${REGISTRY_ENTRIES[@]}"; do
     _pdir="${_entry#* }"
-    for _s in "${MANAGED_SKILLS[@]}"; do
+    for _s in "${MANAGED_SKILLS[@]}" bootstrap; do
       [ -d "$_pdir/$_s" ] || { echo "  WARN: ${_entry%% *}: skill $_s is not linked in $_pdir"; _missing=1; }
     done
   done
