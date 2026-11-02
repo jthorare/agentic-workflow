@@ -1,6 +1,6 @@
 ---
 name: bootstrap
-description: Analyze a repo's documentation coverage against the Pivot doc standard (17 planning docs + AGENTS.md + per-provider rules + design language), then generate any missing docs adapted to the codebase. Optionally reference external product documentation (SharePoint, Confluence, Dropbox, shared drives) when generating product-facing documents.
+description: "Use when a repo has little or no documentation and you want the planning docs (architecture, ERD, API contract, testing, CI/CD), an AGENTS.md with per-provider rules, or a Serena config written from the code, or just an audit of which docs are missing. Existing docs are kept. Not for refreshing README or changelog after a ship (syncDocs)."
 argument-hint: "[--force] [--product-docs <url-or-path>]..."
 allowed-tools: Bash(git *), Bash(ls *), Bash(find *), Bash(curl *), Bash(docker *), Bash(cat *), Bash(mkdir *), Bash(kill *), Bash(sleep *), Bash(REPO_PATH=*), Bash(REPO_NAME=*), Bash(RULES_OK=*), Bash(bash *), Bash(*/sync-rules.sh*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__serena__check_onboarding_performed, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
