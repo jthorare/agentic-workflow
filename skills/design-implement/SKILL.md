@@ -1,6 +1,6 @@
 ---
 name: design-implement
-description: Detect web vs iOS automatically and delegate to /design-implement-web (CSS/Tailwind/Next.js) or /design-implement-ios (SwiftUI Theme.swift). Enforces the mockup-first gate, then auto-chains /design-verify.
+description: "Use when an approved screen design should become real code, web or iOS: the user says the mockup is signed off, or that it's time to build the screen. Picks the platform, checks the mockup was approved, delegates, then runs design verification. Not for drafting a new design (design-mockup)."
 argument-hint: "<screen-name> [--no-mockup]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -55,6 +55,13 @@ When the sub-skill completes without printing `[BLOCKED]`:
 
 - If its report already includes a `verify_run_id` (the sub-skill ran its own verify gate), do not re-run — surface that verdict.
 - Otherwise run **Invoke skill `design-verify`** with args `"<screen-name>"` now. Verification is not a suggestion — this dispatcher is done only when a verify run reports PASS or WARN (CD11 thresholds in `$SHARED_DIR/design-artifact-paths.md`). For a desktop UI change `design-verify` dispatches to `design-verify-desktop`, which runs the real app on seeded data against the mockups; the implementation is done only when it reports PASS (any unexpected mismatch fails).
+
+## Result block
+
+Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
+
+1. `mkdir -p "$AW_DIR/results"` and write `$AW_DIR/results/design-implement-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-implement"`), `artifacts` (absolute paths of the generated code and the implement report), `summary` (one line), plus `dispatched_to` (`design-implement-web` or `design-implement-ios`), `verify_verdict`.
+2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
 
 ## Next steps
 
