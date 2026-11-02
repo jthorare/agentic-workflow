@@ -1,6 +1,6 @@
 ---
 name: design-implement-web
-description: Generate web production code from an approved mockup — design-tokens.css + Tailwind extension generated from design-tokens.json, React/Next.js components, token-compliance scan, and a mandatory design-verify-web gate.
+description: "Use when an approved web mockup should become production code: React or Next.js components, CSS variables and a Tailwind theme generated from the design tokens. Scans for hardcoded values and checks the page against the mockup before calling it done. Not for SwiftUI or iOS (design-implement-ios)."
 argument-hint: "<screen-name>"
 allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff, mcp__prism-mcp__session_task_route, mcp__prism-mcp__prism_infer
 ---
@@ -142,6 +142,13 @@ Generated components:
 - Do not modify `design-tokens.json` — it is the source of truth
 - If the mockup HTML is available, use it as the primary reference for layout and structure — and report it as the source
 - No completion claim without a PASS/WARN verify run recorded in `implement-report.json`
+
+## Result block
+
+Only when `AW_RESULT=1` is set; otherwise write no file and print no block.
+
+1. `mkdir -p "$AW_DIR/results"` and write `$AW_DIR/results/design-implement-web-<timestamp>.json` (timestamp from `date -u +%Y%m%dT%H%M%SZ`) with `skill` (`"design-implement-web"`), `artifacts` (absolute paths of the generated token files, components and implement-report.json), `summary` (one line), plus `verify_verdict`, `verify_run_id`.
+2. Print the same JSON as a fenced block tagged `aw-result`, before `## Next steps`.
 
 ## Next steps
 
