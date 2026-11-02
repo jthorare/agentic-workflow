@@ -1,6 +1,6 @@
 ---
 name: judge
-description: Tune, inspect, and undo cheap-agent-harness `judge` decisions in-session — config get/set, why, undo, health.
+description: "Use when a judge notice, status-line warning or decision needs explaining, undoing or tuning: why a call was made, a question escalating too often, a threshold to move, judge health. Not for code review or for choosing between two options yourself."
 ---
 
 # /judge
@@ -97,3 +97,21 @@ confirmations.
   the `QuestionModule` interface in `judge/src/question.ts`.
 - Wiring `judge wake-gate` into a live hook — that's Plan 4 (rollout step 4), gated on the
   hook-input probe.
+
+## Result block
+
+Only when `AW_RESULT=1` is set. Otherwise skip this section: write no file and print no block.
+
+Resolve `$AW_DIR` the usual way (`source "$SHARED_DIR/repo-slug.sh"`), `mkdir -p "$AW_DIR/results"`, and write `$AW_DIR/results/judge-$(date +%Y%m%d-%H%M%S).json` with:
+
+- `skill`: `"judge"`
+- `artifacts`: `[]` (this skill reports; it writes no files)
+- `summary`: one line saying what happened
+- `command`: the judge command run first, e.g. `"judge health"`
+- `outcome`: `"ok"`, `"unavailable"` (binary missing or down) or `"error"`
+
+Then print the same JSON as a fenced `aw-result` block in the reply:
+
+```aw-result
+{"skill": "judge", "artifacts": [], "summary": "<one line>", "command": "judge health", "outcome": "unavailable"}
+```
