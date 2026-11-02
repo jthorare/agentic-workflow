@@ -21217,7 +21217,7 @@ Aw.Sindri.Core.Projects.Facts.LinearProjectFact.ClosedAt.get -> System.DateTimeO
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.ClosedAt.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Counting.get -> bool
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Counting.init -> void
-Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Deconstruct(out string! Key, out string! Title, out string? Description, out string? Url, out string? StateRaw, out string? Health, out System.DateTimeOffset? DueAt, out Aw.Sindri.Core.Projects.Facts.ProjectPerson? Lead, out bool LeadIsOwner, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out int OpenIssues, out bool Counting, out System.DateTimeOffset? LastActivity) -> void
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Deconstruct(out string! Key, out string! Title, out string? Description, out string? Url, out string? StateRaw, out string? Health, out System.DateTimeOffset? DueAt, out Aw.Sindri.Core.Projects.Facts.ProjectPerson? Lead, out bool LeadIsOwner, out System.DateTimeOffset UpdatedAt, out System.DateTimeOffset? ClosedAt, out int OpenIssues, out bool Counting, out System.DateTimeOffset? LastActivity, out int? OpenPrs, out System.Collections.Generic.IReadOnlyList<string!>? Repos, out int? PrWindowDays) -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Description.get -> string?
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Description.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.DueAt.get -> System.DateTimeOffset?
@@ -21233,7 +21233,7 @@ Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Lead.get -> Aw.Sindri.Core.Proje
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Lead.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.LeadIsOwner.get -> bool
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.LeadIsOwner.init -> void
-Aw.Sindri.Core.Projects.Facts.LinearProjectFact.LinearProjectFact(string! Key, string! Title, string? Description, string? Url, string? StateRaw, string? Health, System.DateTimeOffset? DueAt, Aw.Sindri.Core.Projects.Facts.ProjectPerson? Lead, bool LeadIsOwner, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, int OpenIssues, bool Counting, System.DateTimeOffset? LastActivity) -> void
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.LinearProjectFact(string! Key, string! Title, string? Description, string? Url, string? StateRaw, string? Health, System.DateTimeOffset? DueAt, Aw.Sindri.Core.Projects.Facts.ProjectPerson? Lead, bool LeadIsOwner, System.DateTimeOffset UpdatedAt, System.DateTimeOffset? ClosedAt, int OpenIssues, bool Counting, System.DateTimeOffset? LastActivity, int? OpenPrs = null, System.Collections.Generic.IReadOnlyList<string!>? Repos = null, int? PrWindowDays = null) -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.OpenIssues.get -> int
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.OpenIssues.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.StateRaw.get -> string?
@@ -21873,3 +21873,9 @@ Aw.Sindri.Core.NeedsYou.OwnerStopInput.Reason.init -> void
 Aw.Sindri.Core.NeedsYou.OwnerStopInput.Pr.get -> Aw.Sindri.Core.OpenTargets.NeedsYouOpenPr?
 Aw.Sindri.Core.NeedsYou.OwnerStopInput.Pr.init -> void
 static Aw.Sindri.Core.NeedsYou.NeedsYouRows.ForOwnerStop(Aw.Sindri.Core.Views.ItemRow! item, Aw.Sindri.Core.Workflow.Engine.InstanceAddress address, Aw.Sindri.Core.NeedsYou.OwnerStopInput! wait, System.DateTimeOffset since, Aw.Sindri.Core.Text.ITextScrubber! scrubber) -> Aw.Sindri.Core.NeedsYou.NeedsYouRow!
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.OpenPrs.get -> int?
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.OpenPrs.init -> void
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Repos.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Repos.init -> void
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.get -> int?
+Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.init -> void
