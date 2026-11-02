@@ -1,0 +1,6 @@
+{
+  "mcpServers": {
+    "playwright": { "command": "npx", "args": ["-y", "@playwright/mcp@latest"] },
+    "xcodebuildmcp": { "command": "npx", "args": ["-y", "xcodebuildmcp@latest"] }
+  }
+}

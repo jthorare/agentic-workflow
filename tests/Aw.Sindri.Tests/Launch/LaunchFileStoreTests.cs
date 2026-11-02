@@ -127,6 +127,25 @@ public sealed class LaunchFileStoreTests : LaunchFilesContract, IDisposable
     }
 
     [Fact]
+    public void Startup_sweep_removes_an_old_cursor_sidecar_but_not_a_live_launchs()
+    {
+        var now = KnownInstants.Epoch.AddHours(1);
+        var files = Create();
+        var old = CursorPolicyFile.SidecarFor(Options.PolicyDirectory, A.FirstLaunchId);
+        var live = CursorPolicyFile.SidecarFor(Options.PolicyDirectory, Second);
+        _ = Directory.CreateDirectory(Options.PolicyDirectory);
+        foreach (var path in new[] { old, live })
+        {
+            File.WriteAllText(path, "/work/wt/.cursor/cli.json");
+            File.SetLastWriteTimeUtc(path, now.AddMinutes(-5).UtcDateTime);
+        }
+
+        var removed = files.SweepStale(now, TimeSpan.FromSeconds(60), static launch => launch.Equals(Second));
+
+        Expect.Equal((1, false, true), (removed, File.Exists(old), File.Exists(live)));
+    }
+
+    [Fact]
     public void Startup_sweep_keeps_the_files_of_a_launch_with_a_live_session()
     {
         var now = KnownInstants.Epoch.AddHours(1);

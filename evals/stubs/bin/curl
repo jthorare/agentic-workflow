@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Eval curl: never the network. Answers from the case's .aw-eval/curl.json (found by walking up from $PWD); no match, or no file,
+# prints `aw-eval: curl <METHOD> <url> has no canned answer` and exits 7. Rules and shapes: evals/stubs/README.md.
+set -u
+self_dir="$(cd "${BASH_SOURCE[0]%/*}" && pwd)"
+stubs="$(cd "$self_dir/.." && pwd)"
+. "$stubs/aw-eval-lib.sh"
+if root="$(aw_eval_root)" && [ -f "$root/.aw-eval/curl.json" ]; then
+  perl "$stubs/aw-eval-match.pl" curl "$root/.aw-eval/curl.json" -- "$@"
+  exit $?
+fi
+method=GET url=""
+for a in "$@"; do case "$a" in http://*|https://*) url="$a" ;; esac; done
+echo "aw-eval: curl $method $url has no canned answer" >&2
+exit 7

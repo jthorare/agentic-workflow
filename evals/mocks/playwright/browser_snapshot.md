@@ -1,0 +1,3 @@
+- heading "Cart" [level=1]
+- list "Items": listitem "Widget x 12" ; listitem "Bulk discount: none"
+- button "Checkout"

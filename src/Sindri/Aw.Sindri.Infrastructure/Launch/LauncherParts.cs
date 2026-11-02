@@ -34,6 +34,9 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
     /// <summary>Records the end of the launch's session (exit) when the launch is live; Stop calls it after the host stopped the session.</summary>
     public Func<LaunchId, CancellationToken, ValueTask> EndLive { get; init; } = static (_, _) => ValueTask.CompletedTask;
 
+    /// <summary>Whether a launch has a live session (its 'launches' view row is live); a cursor-config Step replaces a dead launch's .cursor/cli.json and refuses a live one's. Live by default: nothing is replaced unless the product says the launch is gone.</summary>
+    public Func<LaunchId, CancellationToken, ValueTask<bool>> IsLive { get; init; } = static (_, _) => ValueTask.FromResult(true);
+
     /// <summary>Marks a Step's working directory trusted for the agent CLI that asks (claude-code), before it starts; nothing by default.</summary>
     public IAgentTrust Trust { get; init; } = new NoAgentTrust();
 
