@@ -4,6 +4,7 @@ using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Tests.Ledger;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Aw.Sindri.Tests.Sandbox;
 
@@ -91,7 +92,7 @@ public sealed class SandboxLoginCliTests : IDisposable
     {
         HumanToken();
 
-        var exit = await CommandTable.Run(["sandbox", "login", "claude-code"], Environment(), TimeProvider.System);
+        var exit = await CommandTable.Run(["sandbox", "login", "claude-code"], Environment(), TimeProvider.System, services => services.RemoveAll<ISandboxLogin>());
 
         Assert.Equal(2, exit);
         Assert.Contains("sandbox login needs the sandbox, and this build has none for this machine", _error.ToString(), StringComparison.Ordinal);

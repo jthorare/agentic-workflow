@@ -7,6 +7,7 @@ using Aw.Sindri.Host.Commands;
 using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Sandbox.Plan;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox;
@@ -87,7 +88,7 @@ public sealed class SandboxExecCliTests : IDisposable
     {
         HumanToken();
 
-        var exit = await CommandTable.Run(["sandbox", "exec", PlanDirectory()], Environment(), TimeProvider.System);
+        var exit = await CommandTable.Run(["sandbox", "exec", PlanDirectory()], Environment(), TimeProvider.System, services => services.RemoveAll<ISandboxExec>());
 
         Assert.Equal(2, exit);
         Assert.Contains("sandbox exec needs the sandbox, and this build has none for this machine", _error.ToString(), StringComparison.Ordinal);
