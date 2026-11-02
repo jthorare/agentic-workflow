@@ -73,6 +73,7 @@ if [ "${1:-}" = auth ]; then [ ! -f "$d/logged-out" ]; exit $?; fi
 echo "$*" >"$d/args.$$.txt"
 env >"$d/env.$$.txt"
 echo "$PWD" >"$d/cwd.$$.txt"
+if [ -n "${TMPDIR:-}" ] && [ -d "$TMPDIR" ] && [ -w "$TMPDIR" ]; then echo writable >"$d/tmpdir-ok.$$.txt"; fi
 out=""; prev=""
 for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; prev="$a"; done
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
@@ -146,6 +147,7 @@ before="$(cksum <"$REPO/skills/_preamble.md") $(cksum <"$REPO/skills/alpha/SKILL
 run --skills alpha --dry-run --keep-temp
 expect "dry run passes with no claude on PATH" 0 'dry run ok'
 has -F -- 'not calling claude' <<<"$OUT" && ok "dry run prints the command it would run" || { fail "dry run prints the command"; show; }
+has -E 'env -i .*TMPDIR=' <<<"$OUT" && ok "eval child: the dry-run line shows TMPDIR=" || { fail "eval child: the dry-run line shows TMPDIR="; show; }
 STAGE_R="$(printf '%s\n' "$OUT" | sed -n 's/^skill-evals: staged routing: //p')"
 STAGE_B="$(printf '%s\n' "$OUT" | sed -n 's/^skill-evals: staged behaviour: //p')"
 [ -d "$STAGE_R" ] && [ -d "$STAGE_B" ] && ok "both kinds staged" || fail "stage dirs: '$STAGE_R' '$STAGE_B'"
@@ -281,6 +283,8 @@ if grep -qE "hunter22xyz|$FAKE_GH|tok-forge" "$ENVF"; then fail "a secret value 
 has -E '^AW_PREAMBLE=off$' "$ENVF" && has -E '^AW_GIT_MODE=readonly$' "$ENVF" && has -E '^AW_RESULT=1$' "$ENVF" && ok "AW_* values are in the allowlist" || fail "AW_* values"
 has -E "^PATH=.*/evals/stubs/bin:" "$ENVF" && ok "PATH starts with the stub dir" || fail "PATH order"
 [ "$(wc -l <"$ENVF")" -le 12 ] && ok "only the allowlist is forwarded ($(wc -l <"$ENVF") variables)" || { fail "env has too many variables"; cat "$ENVF"; }
+has -E "^TMPDIR=$STATE/skill-evals/tmp\$" "$ENVF" && ok "eval child: TMPDIR is the eval home's tmp" || { fail "eval child: TMPDIR is the eval home's tmp"; grep '^TMPDIR=' "$ENVF" || echo "      | (no TMPDIR in the child's env)"; }
+[ -n "$(ls "$BIN"/tmpdir-ok.*.txt 2>/dev/null)" ] && ok "eval child: TMPDIR exists and is writable when claude runs" || fail "eval child: TMPDIR exists and is writable when claude runs"
 ARGS="$(cat "$BIN"/args.*.txt | head -1)"
 for f in '--trust-plugin' '--scaffold' '--no-publish' '--ablation none' '--runs 2' '--max-cost-usd 8' '--allow-tools Bash Write Edit'; do
   case "$ARGS" in *"$f"*) ok "claude got $f" ;; *) fail "claude args lack $f: $ARGS" ;; esac
