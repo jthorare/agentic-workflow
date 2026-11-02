@@ -439,6 +439,14 @@ n="$(n_of AW_RESULT)"
 if [ "$n" = 0 ]; then has -E 'warning: no staged file holds .*AW_RESULT' <<<"$OUT" && ok "AW_RESULT rewriting 0 files prints a warning" || { fail "no AW_RESULT warning"; show; }
 else ok "AW_RESULT is rewritten in $n file(s)"; fi
 
+# trace_reply SKILL: what the eval tool hands a `target: trace` grader for a run whose Skill call names SKILL. Read from the claude 2.1.312
+# bundle (the grader module near byte 283.43M of ~/.local/share/claude/versions/2.1.312): the trace is the run's stream-json events,
+# one JSON.stringify per event, joined by newlines; a Skill call is an assistant event with a tool_use block {name, input}.
+trace_reply() {
+  printf '{"type":"system","subtype":"init","skills":["alpha","beta"],"tools":["Skill"]}\n'
+  printf '{"type":"assistant","message":{"id":"msg_01","role":"assistant","content":[{"type":"tool_use","id":"toolu_01","name":"Skill","input":{"skill":"%s"}}]},"parent_tool_use_id":null}\n' "$1"
+}
+
 # mkfamily: evals/_families/grp/{alpha,beta}: a first-Skill-call regex grader on the trace, committed
 mkfamily() {
   local F="$REPO/evals/_families/grp" m
@@ -455,8 +463,8 @@ pattern: '(?s)\A(?:(?!"skill"\s*:).)*"skill"\s*:\s*"(?:[\w-]+:)?MEMBER"'
 The first Skill call names MEMBER.
 EOF
     sed -i "s/MEMBER/$m/g" "$F/$m/graders/first-skill.md"
-    printf '{"name":"Skill","input":{"skill":"%s"}}\n' "$m" >"$F/$m/graders/_selftest/first-skill.pass.trace"
-    printf '{"name":"Skill","input":{"skill":"zzz"}}\n{"name":"Skill","input":{"skill":"%s"}}\n' "$m" >"$F/$m/graders/_selftest/first-skill.fail.trace"
+    trace_reply "$m" >"$F/$m/graders/_selftest/first-skill.pass.trace"
+    { trace_reply zzz; trace_reply "$m"; } >"$F/$m/graders/_selftest/first-skill.fail.trace"
   done
   printf 'family grp\n' >"$F/README.md"
   git -C "$REPO" add -A; git -C "$REPO" commit -q -m families
@@ -495,10 +503,10 @@ expect "--selftest walks the family cases and counts them" 0 'selftest: 5 case\(
 rm "$REPO/evals/_families/grp/beta/graders/_selftest/first-skill.fail.trace"
 run --skills alpha --selftest
 expect "a family grader without a fail reply is caught" 1 'beta/graders/first-skill.md: no graders/_selftest/first-skill.fail'
-printf '{"name":"Skill","input":{"skill":"beta"}}\n' >"$REPO/evals/_families/grp/beta/graders/_selftest/first-skill.fail.trace"
+trace_reply beta >"$REPO/evals/_families/grp/beta/graders/_selftest/first-skill.fail.trace"
 run --skills alpha --selftest
 expect "a trace grader that passes its fail reply is caught" 1 'does not fail its fail reply'
-printf '{"name":"Skill","input":{"skill":"zzz"}}\n' >"$REPO/evals/_families/grp/beta/graders/_selftest/first-skill.fail.trace"
+trace_reply zzz >"$REPO/evals/_families/grp/beta/graders/_selftest/first-skill.fail.trace"
 run --skills alpha --selftest
 expect "a trace grader that fails its fail reply passes" 0 'selftest: 5 case'
 

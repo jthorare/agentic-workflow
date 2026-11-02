@@ -18,4 +18,5 @@ evals/
   (ablation none, own cost cap `--family-max-cost-usd`, default 12) when a selected member's description changed vs the merge base,
   or when `--family <name>` is given.
 - Selftest replies for a grader sit in `graders/_selftest/<grader>.pass.<ext>` and `.fail.<ext>`: `txt` (reply), `files`, `tools`,
-  or `trace` (the verbatim transcript, for `target: trace`).
+  or `trace` (for `target: trace`: the run's stream-json events, one JSON object per line; a Skill call is an assistant event holding
+  `{"type":"tool_use","name":"Skill","input":{"skill":"<name>"}}`; read from the claude 2.1.312 bundle, not yet seen in a real run).

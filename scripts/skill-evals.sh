@@ -47,7 +47,8 @@
 # near-miss case uses `skill-not-fired` instead (passing means it did NOT fire). Cases named *-natural-N and *-near-miss feed
 # the routing gate (spec §6.1). --selftest reads graders/_selftest/<grader>.pass.<ext> and .fail.<ext>, where <ext> is
 # txt (the reply, or a file's contents), files (newline-separated created paths; file_exists and regex target files) or
-# tools (one "ToolName<TAB>input" per call; tool_used), or trace (the verbatim transcript text; regex with target: trace, as the
+# tools (one "ToolName<TAB>input" per call; tool_used), or trace (the eval tool's trace text: the run's stream-json events, one JSON object per line, a Skill call being an assistant event with a
+# tool_use block {"name":"Skill","input":{"skill":"<name>"}}; regex with target: trace, as the
 # family graders use to anchor on the first Skill call). --status reads evals/<skill>/status.md ("key: value" lines:
 # fire_rate, delta, last_run YYYY-MM-DD, pr). --lint-descriptions reads the total-bytes baseline from
 # evals/_lib/description-bytes.baseline (one number) when that file exists.
