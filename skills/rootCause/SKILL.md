@@ -9,6 +9,8 @@ allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo
 
 4-phase systematic debugging with automatic scope freeze at the module boundary.
 
+A passing test does not end the run. Every run, fixed or not, ends with the **Done checklist** at the end of Phase 6: the report, the handoff, the result file (under `AW_RESULT=1`) and the `aw-result` block.
+
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
@@ -78,6 +80,8 @@ Fix the confirmed cause.
 > **SCOPE BREACH:** Fixing this requires changes in `<outside-path>`. Asking the user for permission before proceeding.
 
 Then **Ask the user** whether to expand the scope or stop.
+
+5. **Green is not done.** Once the fix verifies, go straight on to Phase 5 and Phase 6 before you reply.
 
 ## Phase 5: Write Investigation Report + Handoff
 
@@ -213,6 +217,13 @@ Handoff: $AW_DIR/investigations/{slug}/handoff.md
 ```aw-result
 { "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
 ```
+
+**Done checklist.** Do every item before you send the reply; a run that skips one is not finished, even when the fix passed:
+
+1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5).
+2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5).
+3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/rootCause-<timestamp>.json` (Result block).
+4. The reply ends its report with the `aw-result` block above, before `## Next steps`.
 
 ### Sub-skill Dispatch
 
