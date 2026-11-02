@@ -1,6 +1,6 @@
 ---
 name: ui-evidence
-description: "Use when a web PR needs proof reviewers can look at (screenshots, before/after, API or database checks) from the app running locally. Drives the local stack through the ui-evidence tool with no model in the loop, reports failed steps, and asks before posting anything to the PR or a ticket. Not for a quick self-check of a running app (verify-web) or for any hosted site."
+description: "Use when a web PR needs proof reviewers can look at (screenshots, before/after, API or database checks) from the app running locally. Drives the local stack through the ui-evidence binary with no model in the loop, reports failed steps, and asks before posting anything to the PR or a ticket. Not for a quick self-check of a running app (verify-web) or for any hosted site."
 allowed-tools: Bash(ui-evidence:*), Bash(git *), Bash(gh *), Bash(curl *), Bash(command -v *), Agent, Read, Write, Glob, Grep, AskUserQuestion
 ---
 
