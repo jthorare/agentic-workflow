@@ -1,0 +1,98 @@
+{
+  "asOf": {
+    "cursor": 5,
+    "ledgerHead": 5,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "empty": null,
+  "viewer": "Jo Smith",
+  "freshness": [
+    {
+      "source": "linear-projects",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "linear",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    },
+    {
+      "source": "github",
+      "state": "ok",
+      "text": "synced 14 min ago",
+      "at": "2025-12-31T23:45:36.0000000Z"
+    }
+  ],
+  "projects": [
+    {
+      "id": "linear:project/00000000-0000-4000-8000-000000000001",
+      "origin": "led",
+      "name": "Checkout rewrite",
+      "description": null,
+      "state": "inProgress",
+      "stateSetByOwner": false,
+      "health": null,
+      "lead": {
+        "you": true,
+        "name": null
+      },
+      "target": null,
+      "openIssues": 12,
+      "counting": false,
+      "openPrs": 3,
+      "prScope": "(updated in the last 30 days)",
+      "lastActivity": "2025-12-31T21:36:00.0000000Z",
+      "finishedAt": null,
+      "repos": [
+        "acme/api",
+        "acme/web"
+      ],
+      "links": [
+        {
+          "label": "Linear",
+          "url": "https://linear.app/acme/project/1"
+        }
+      ],
+      "notes": null,
+      "synced": true,
+      "version": 0
+    },
+    {
+      "id": "linear:project/00000000-0000-4000-8000-000000000005",
+      "origin": "led",
+      "name": "Mobile app",
+      "description": null,
+      "state": "planned",
+      "stateSetByOwner": false,
+      "health": null,
+      "lead": {
+        "you": true,
+        "name": null
+      },
+      "target": null,
+      "openIssues": 2,
+      "counting": false,
+      "openPrs": 0,
+      "prScope": "(updated in the last 30 days)",
+      "lastActivity": "2025-12-30T00:00:00.0000000Z",
+      "finishedAt": null,
+      "repos": [],
+      "links": [
+        {
+          "label": "Linear",
+          "url": "https://linear.app/acme/project/5"
+        }
+      ],
+      "notes": null,
+      "synced": true,
+      "version": 0
+    }
+  ],
+  "finished": [],
+  "hidden": []
+}

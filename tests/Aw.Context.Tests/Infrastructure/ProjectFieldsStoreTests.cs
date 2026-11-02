@@ -25,9 +25,10 @@ public sealed class ProjectFieldsStoreTests : IDisposable
         _world.Sql("INSERT INTO source_cursor (source, repo, cursor, last_sync, phase, backfill_cursor, backfill_before) VALUES ('linear', 'records', 'watermark-1', '2026-10-27T00:00:00Z', 'incremental', 'end-cursor', '2026-10-01T00:00:00Z')");
         _world.Sql("INSERT INTO source_cursor (source, repo, cursor, last_sync, phase, backfill_cursor, backfill_before) VALUES ('github', 'records', 'gh-1', '2026-10-27T00:00:00Z', 'incremental', NULL, NULL)");
 
-        var all = await runner.Migrate(ContextDatabase.Migrations, TestContext.Current.CancellationToken);
+        // why: 0029 re-reads the github feed on purpose; this pins what 0020 alone leaves
+        var all = await runner.Migrate([.. ContextDatabase.Migrations.Take(20)], TestContext.Current.CancellationToken);
 
-        Assert.Equal(ContextDatabase.Migrations.Count, all.Value.ToVersion);
+        Assert.Equal(20, all.Value.ToVersion);
         Assert.Equal("0020", ContextDatabase.Migrations[19].Version.ToString("D4", CultureInfo.InvariantCulture));
         Assert.Equal(1, _world.Count("SELECT count(*) FROM source_cursor WHERE source = 'linear' AND repo = 'records' AND phase = 'recent' AND cursor IS NULL AND backfill_cursor IS NULL AND backfill_before IS NULL"));
         Assert.Equal(1, _world.Count("SELECT count(*) FROM source_cursor WHERE source = 'github' AND repo = 'records' AND phase = 'incremental' AND cursor = 'gh-1'"));
