@@ -127,6 +127,17 @@ run --skills nope --dry-run
 expect "an unknown skill is a usage error" 64 'unknown skill: nope'
 run --skills alpha --kind sideways --dry-run
 expect "a bad --kind is a usage error" 64 '--kind must be'
+run --skills alpha --preamble sometimes --dry-run
+expect "a bad --preamble is a usage error" 64 '--preamble must be'
+
+echo "--preamble on (spec §8 5a: the forced cases once with the preamble on)"
+mkrepo
+run --skills alpha --kind behaviour --preamble on --dry-run --keep-temp
+expect "--preamble on dry run passes" 0 'AW_PREAMBLE=on'
+lacks "--preamble on passes no AW_PREAMBLE=off" 'AW_PREAMBLE=off'
+STAGE_P="$(printf '%s\n' "$OUT" | sed -n 's/^skill-evals: staged behaviour: //p')"
+has -F -- '${AW_PREAMBLE:-on}' "$STAGE_P/skills/_preamble.md" && has -F -- '${AW_GIT_MODE:-readonly}' "$STAGE_P/skills/_preamble.md" \
+  && ok "--preamble on keeps the preamble default and still rewrites the git mode" || { fail "--preamble on stage"; cat "$STAGE_P/skills/_preamble.md"; }
 
 echo "--changed"
 mkrepo; mkclaude
