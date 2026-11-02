@@ -1,0 +1,8 @@
+---
+type: tool_order
+before:
+  tool: Bash
+  input_match: 'python3'
+after:
+  tool: Edit
+---

@@ -1,0 +1,7 @@
+F..
+======================================================================
+FAIL: test_ten_items_get_ten_percent_off
+
+Ran 3 tests in 0.001s
+
+FAILED (failures=1)
