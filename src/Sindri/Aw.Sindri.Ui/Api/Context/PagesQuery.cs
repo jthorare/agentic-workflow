@@ -10,4 +10,7 @@ internal sealed record PagesQuery(string? Repo = null, string? Concept = null, i
 {
     /// <summary>Gets the text a page's name or map label must contain (any case); null or blank keeps every page.</summary>
     public string? Q { get; init; }
+
+    /// <summary>Gets the one page to read, by its id or its map key ("surface:route/GET:/schedule/week"); null reads every page.</summary>
+    public string? Page { get; init; }
 }

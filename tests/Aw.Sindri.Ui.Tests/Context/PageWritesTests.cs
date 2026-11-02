@@ -145,6 +145,17 @@ public sealed class PageWritesTests
     }
 
     [Fact]
+    public async Task Actions_reads_the_page_by_its_surface_in_one_request()
+    {
+        var api = new FakeSindriApi { ContextPagesAnswer = _ => Pages(truncated: true) };
+
+        _ = await Writes(api).Actions("surface:route/GET:/schedule/week", Token);
+
+        var asked = Assert.Single(api.ContextPagesAsked);
+        Assert.Equal("surface:route/GET:/schedule/week", asked.Page);
+    }
+
+    [Fact]
     public async Task Actions_is_null_when_the_map_has_no_such_page()
     {
         var api = new FakeSindriApi { ContextPagesAnswer = _ => Pages(truncated: false) };

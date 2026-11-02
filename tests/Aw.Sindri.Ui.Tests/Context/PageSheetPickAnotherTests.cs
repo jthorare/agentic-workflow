@@ -135,4 +135,12 @@ public sealed class PageSheetPickAnotherTests
 
         Expect.True(route.Contains("q=sched%20ule", StringComparison.Ordinal), route);
     }
+
+    [Fact]
+    public void The_pages_route_carries_page_escaped()
+    {
+        var route = ContextRoutes.Pages(new PagesQuery { Page = "surface:route/GET:/schedule/week" });
+
+        Expect.True(route.Contains("page=surface%3Aroute%2FGET%3A%2Fschedule%2Fweek", StringComparison.Ordinal), route);
+    }
 }
