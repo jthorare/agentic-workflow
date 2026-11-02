@@ -47,5 +47,81 @@ public sealed class PopupTreeTests
         Assert.Equal(0, after.Value.Total);
     }
 
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_popup_opened_from_another_window_is_not_in_this_windows_tree()
+    {
+        var screenA = await TestScreen.OpenAsync();
+        var screenB = await TestScreen.OpenAsync();
+        var hostB = new DriverHost(() => screenB.Window, TimeProvider.System);
+        var otherWindowItem = new Selector(AutomationId: "other-window-item");
+        var popup = await TestScreen.OnUi(() =>
+        {
+            var item = new Button { Content = "Other window item" };
+            AutomationProperties.SetAutomationId(item, "other-window-item");
+            var opened = new Popup { PlacementTarget = screenA.Save, Child = item, ShouldUseOverlayLayer = false };
+            if (screenA.Window.Content is StackPanel form)
+            {
+                form.Children.Add(opened);
+            }
+
+            opened.IsOpen = true;
+            return opened;
+        });
+
+        var found = await hostB.Search(new SearchRequest(otherWindowItem));
+        var tree = (await hostB.Tree(new TreeRequest())).Value.Root;
+        _ = await TestScreen.OnUi(() => popup.IsOpen = false);
+
+        Assert.Equal(0, found.Value.Total);
+        Assert.DoesNotContain(Flatten(tree), static n => n.AutomationId == "other-window-item");
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_menu_flyout_shown_on_a_button_is_in_its_windows_tree()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var host = new DriverHost(() => screen.Window, TimeProvider.System);
+        var flyout = await TestScreen.OnUi(() =>
+        {
+            var shown = new MenuFlyout { Items = { new MenuItem { Header = "Flyout item" } } };
+            shown.ShowAt(screen.Save);
+            return shown;
+        });
+
+        // The test app has no theme, so the menu's items are never built from a template; the presenter is the popup's content and is there anyway.
+        var found = await host.Search(new SearchRequest(new Selector(Type: "MenuFlyoutPresenter")));
+        _ = await TestScreen.OnUi(() =>
+        {
+            flyout.Hide();
+            return 0;
+        });
+
+        Assert.Equal(1, found.Value.Total);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_context_menu_opened_on_a_button_is_in_its_windows_tree()
+    {
+        var screen = await TestScreen.OpenAsync();
+        var host = new DriverHost(() => screen.Window, TimeProvider.System);
+        var menu = await TestScreen.OnUi(() =>
+        {
+            var opened = new ContextMenu { Items = { new MenuItem { Header = "Context item" } } };
+            AutomationProperties.SetAutomationId(opened, "context-menu");
+            opened.Open(screen.Save);
+            return opened;
+        });
+
+        // The context menu itself is the popup's content, so it is found without a theme to build its items.
+        var found = await host.Search(new SearchRequest(new Selector(AutomationId: "context-menu")));
+        _ = await TestScreen.OnUi(() =>
+        {
+            menu.Close();
+            return 0;
+        });
+
+        Assert.Equal(1, found.Value.Total);
+    }
+
     private static IEnumerable<NodeInfo> Flatten(NodeInfo node) => new[] { node }.Concat(node.Children.SelectMany(Flatten));
 }

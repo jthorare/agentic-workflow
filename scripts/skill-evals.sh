@@ -17,7 +17,7 @@
 #   2 stage, per kind, into a fresh directory under $EVAL_HOME/cache/ outside any git repo (rsync -L; a link that resolves
 #     outside this repo, a hooks/ dir or an .mcp.json other than evals/plugin/.mcp.json refuses the stage, exit 3): evals/plugin,
 #     every skill's SKILL.md, the chosen skills' full directories, skills/_shared/, both preambles, config/voice/, the
-#     config/agents/ files a chosen skill names, the chosen skills' evals/<skill>/<kind>/ and fixture.sh, _lib, mocks, stubs.
+#     config/agents/ files a chosen skill names, the chosen skills' evals/<skill>/<kind>/ and fixture.sh, _lib and mocks, and the stubs at the stage root (stubs/, outside the evals/ tree the agent is denied).
 #     The STAGED copy is rewritten, never the source: the shell default of AW_PREAMBLE goes from on to off (kept on, and the
 #     run passes AW_PREAMBLE=on, under --preamble on: the spec §8 5a baseline of the forced cases with the preamble), of AW_GIT_MODE
 #     from full to readonly, of AW_RESULT from 0 to 1, and the staged repo-slug.sh state default walks up from $PWD to the dir holding .aw-eval/ (the workspace root) and adds /.aw-state. The stubs get the same default rewrite.
@@ -667,7 +667,7 @@ rewrite_default() { # STAGE NAME FROM TO: the shell default of NAME (the text af
     FROM="$a" TO="$b" perl -i -pe 'BEGIN { $f = quotemeta($ENV{FROM}); $t = $ENV{TO} } s/$f/$t/g' "$f"
     n=$((n + 1))
   done <<EOF
-$(grep -rlF -- "$a" "$S/skills" "$S/config" "$S/evals/stubs" 2>/dev/null)
+$(grep -rlF -- "$a" "$S/skills" "$S/config" "$S/stubs" 2>/dev/null)
 EOF
   echo "$name default $from -> $to: $n file(s)" >>"$S/.stage-rewrites"
   [ "$n" -gt 0 ] || note "warning: no staged file holds $a, so the $name default was not rewritten (a skill that reads it will run with the default $from)"
@@ -753,7 +753,10 @@ stage_build() {
       done
     done
   fi
-  for d in _lib mocks stubs; do [ ! -d "$ROOT/evals/$d" ] || rsync -aL "$ROOT/evals/$d/" "$S/evals/$d/"; done
+  for d in _lib mocks; do [ ! -d "$ROOT/evals/$d" ] || rsync -aL "$ROOT/evals/$d/" "$S/evals/$d/"; done
+  # the stubs go to the stage root: claude plugin eval denies the agent every read under evals/, which hides a stub there
+  # from its shell, so the real tool would answer instead
+  [ ! -d "$ROOT/evals/stubs" ] || rsync -aL "$ROOT/evals/stubs/" "$S/stubs/"
   for s in $skills; do
     mkdir -p "$S/evals/$s"
     [ ! -f "$ROOT/evals/$s/fixture.sh" ] || rsync -aL "$ROOT/evals/$s/fixture.sh" "$S/evals/$s/"
@@ -943,7 +946,7 @@ do_run() {
     [ -z "$JOBS" ] || args+=(-j "$JOBS")
     [ "$KEEP" = 0 ] || args+=(--keep-temp)
     args+=(--max-cost-usd "$bl" --allow-tools Bash Write Edit)
-    pass_env=(PATH="$STAGE/evals/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
+    pass_env=(PATH="$STAGE/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
               AW_STATE_DIR=.aw-state AW_PREAMBLE="$PREAMBLE" AW_GIT_MODE=readonly AW_RESULT=1)
     if [ "$dry" = 1 ]; then
       echo "dry run, not calling claude:"

@@ -6,6 +6,9 @@
 # (settings: the footer action bar with Save and Cancel is missing in the app frame, 6.8% over a 2% limit).
 # Writes only under $PWD.
 set -eu
+# The eval runs this with its readonly git stub first on PATH; the fixture's own commits need full mode (this is its own
+# process, so the agent still sees readonly), as aw_fixture_repo does.
+export AW_GIT_MODE=full
 mkdir -p .agentic-workflow docs/ui/mockups src/BudgetPlanner/Views src/BudgetPlanner/ViewModels
 cat > .agentic-workflow/evidence.json <<'P'
 {

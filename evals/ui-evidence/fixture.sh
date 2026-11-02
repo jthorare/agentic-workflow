@@ -4,6 +4,9 @@
 # (the confirmation toast shows a 500) and makes `provenance` answer "unknown".
 # Writes only under $PWD.
 set -eu
+# The eval runs this with its readonly git stub first on PATH; the fixture's own commits need full mode (this is its own
+# process, so the agent still sees readonly), as aw_fixture_repo does.
+export AW_GIT_MODE=full
 mkdir -p src/settings ui-runs
 cat > package.json <<'P'
 { "name": "shop-web", "private": true, "scripts": { "dev": "vite --port 3000" } }
