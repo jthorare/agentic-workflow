@@ -10,4 +10,5 @@ namespace Aw.Meta.Features.LaneRecycle;
 /// <param name="OldTokens">The context size before the recycle; null when it could not be told.</param>
 /// <param name="Digest">The digest file.</param>
 /// <param name="Steps">The steps, in order.</param>
-public sealed record LaneRecycleResponse(string Lane, bool DryRun, string OldSession, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? NewSession, long? OldTokens, string Digest, IReadOnlyList<string> Steps);
+/// <param name="Warning">What the recycle did not verify but went on past (the continue line's pane check misread); null when nothing is in doubt.</param>
+public sealed record LaneRecycleResponse(string Lane, bool DryRun, string OldSession, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? NewSession, long? OldTokens, string Digest, IReadOnlyList<string> Steps, [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Warning = null);

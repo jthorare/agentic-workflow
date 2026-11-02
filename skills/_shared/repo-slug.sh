@@ -8,7 +8,7 @@ REMOTE_URL=$(git remote get-url origin 2>/dev/null || echo "")
 if [ -n "$REMOTE_URL" ]; then
   REPO_SLUG=$(echo "$REMOTE_URL" | sed 's|.*[:/]\([^/]*/[^/]*\)\.git$|\1|;s|.*[:/]\([^/]*/[^/]*\)$|\1|' | tr '/' '-')
 else
-  REPO_SLUG=$(basename "$(pwd)")
+  REPO_SLUG=$(basename "$(git rev-parse --show-toplevel 2>/dev/null || pwd)")
 fi
 AW_DIR="${AW_STATE_DIR:-$HOME/.agentic-workflow}/$REPO_SLUG"
 mkdir -p "$AW_DIR"
