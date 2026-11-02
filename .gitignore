@@ -40,3 +40,7 @@ TestResults/
 
 # impeccable critique snapshots (local)
 .impeccable/
+
+# Skill evals (scripts/skill-evals.sh): results stay on the box, never committed
+evals/results/
+evals/**/.aw-state/
