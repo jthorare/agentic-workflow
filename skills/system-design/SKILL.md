@@ -1,6 +1,6 @@
 ---
 name: system-design
-description: "Produce a system design for a project or ticket as persona pages - an engineering TDD and a shareable product + design page - backed by one living status doc, owner decisions recorded one at a time, mockups from the project's real components, and tldraw diagrams styled from the project's design tokens. Use for 'write a system design', 'TDD plus product/design pages', adding a persona page, or re-drawing/re-styling the diagrams. Not a single spec doc (/officeHours), a bug (/rootCause), or a PR plan review (/autoplan)."
+description: "Use when asked to write a system design for a project or ticket: an engineering page (schema, PR order, risks) plus a shareable product and design page, with diagrams, mockups and one running record of the owner's decisions. Writes a packet folder. Not for reviewing an existing design (archReview), one spec doc (officeHours) or a bug (rootCause)."
 argument-hint: "[ticket-or-project] [--personas engineering,product-design,...]"
 allowed-tools: Bash(git *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), Bash(python3 *), Bash(node *), Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, Agent
 ---
