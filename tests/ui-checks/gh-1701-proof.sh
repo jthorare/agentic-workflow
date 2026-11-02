@@ -73,7 +73,7 @@ d click --type Button --name "New page" >/dev/null 2>&1 || fail "step 2: could n
 d wait-for --type TextBox --name "Name" --state visible --wait-ms 30000 >/dev/null 2>&1 || fail "step 2: the page sheet has no Name field"
 d type --type TextBox --name "Name" --value "Week schedule" --replace >/dev/null 2>&1 || fail "step 2: could not type the page's name"
 d type --type TextBox --name "Action name" --value "Submit a schedule" --replace >/dev/null 2>&1 || fail "step 2: could not type the action's name"
-# The sheet starts with the drill's concept ticked; a second one comes from "Relate to another concept" and arrives ticked.
+# The sheet starts with the drill's concept ticked; a second one comes from "Relate to another concept" (it can arrive unticked).
 d click --type ComboBox --name "Relate to another concept" >/dev/null 2>&1 || fail "step 2: could not open 'Relate to another concept'"
 sleep 1
 d search --type ComboBoxItem --limit 20 >"$OUT/2-relate-items.json" 2>&1 || true
@@ -82,8 +82,11 @@ wait_visible 10 --type TextBlock --text "Billing" || { frame 2-no-billing; fail 
 item="$(jq -r 'first(.matches[] | select(.visible) | .id) // empty' "$OUT/2-relate-items.json")"
 [ -n "$item" ] && d click --node-id "$item" >"$OUT/2-pick.txt" 2>&1 || fail "step 2: could not pick Billing (see $OUT/2-pick.txt)"
 wait_visible 10 --type CheckBox --name "Relates to Billing" || { frame 2-no-billing-tick; fail "step 2: picking Billing added no 'Relates to Billing' box (texts in $OUT/2-no-billing-tick-texts.txt)"; }
-d search --type CheckBox --name "Relates to Billing" --limit 5 2>/dev/null | jq -e 'any(.matches[]; .visible and (.checked // .isChecked // true))' >/dev/null \
-  || d click --type CheckBox --name "Relates to Billing" >/dev/null 2>&1
+# The box is ticked when its IsChecked property reads True (the search result carries no checked field); tick it otherwise.
+box="$(d search --type CheckBox --name "Relates to Billing" --limit 5 2>/dev/null | jq -r 'first(.matches[] | select(.visible) | .id) // empty')"
+[ -n "$box" ] || fail "step 2: no visible 'Relates to Billing' box"
+d props --node-id "$box" 2>/dev/null | grep -Eq 'IsChecked[^A-Za-z0-9]+True' || d click --node-id "$box" >/dev/null 2>&1
+d props --node-id "$box" 2>/dev/null | grep -Eq 'IsChecked[^A-Za-z0-9]+True' || { frame 2-billing-unticked; fail "step 2: 'Relates to Billing' stays unticked (texts in $OUT/2-billing-unticked-texts.txt)"; }
 frame 2-page-sheet
 d click --type Button --name "Save and approve" >/dev/null 2>&1 || fail "step 2: could not click Save and approve"
 wait_visible 60 --type Button --name "Edit page: Week schedule" || { frame 2-not-saved; fail "step 2: no 'Edit page: Week schedule' row after Save and approve (texts in $OUT/2-not-saved-texts.txt)"; }
