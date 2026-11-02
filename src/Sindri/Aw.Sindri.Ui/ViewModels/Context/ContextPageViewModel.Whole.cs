@@ -43,10 +43,10 @@ internal sealed partial class ContextPageViewModel
         Ports.Follow((_, cancellationToken) => FollowWhole(cancellationToken));
     }
 
-    // After every event: a map not read yet is read; one that is drawn is read again when the stored map moved to another version (an import, a promote).
+    // After every event: a map not read yet is read; one that is drawn is read again when the stored map moved to another version (an import, a promote); an open concept's map follows the stored map too.
     private Task FollowWhole(CancellationToken cancellationToken)
     {
-        if (!_wholeWanted || Whole.IsLoading || Whole.IsFailed || Concepts.IsOnStage)
+        if (!_wholeWanted || Whole.IsLoading || Whole.IsFailed || (Concepts.IsOnStage && OpenedConceptId is null))
         {
             return Task.CompletedTask;
         }
