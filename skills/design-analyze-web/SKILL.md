@@ -140,7 +140,7 @@ First run this Bash line and go by what it prints (the eval stage turns it on in
 
 On `AW_RESULT=1`, write the result file with the Write tool (it creates the folder, so no `mkdir` first). On `AW_RESULT=0`, write no file and print no block.
 
-Follow `$HOME/.agentic-workflow/toolkit/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-analyze-web-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
+Follow `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`. Only when `AW_RESULT=1`: write `$AW_DIR/results/design-analyze-web-<timestamp>.json` and print the same JSON as a fenced `aw-result` block, placed before `## Next steps`. Outside `AW_RESULT=1`, write no file and print no block.
 
 Keys: `skill` (`"design-analyze-web"`), `artifacts` (absolute paths: `design-tokens.json`), `summary` (one line), plus `sources` (the URLs scanned) and `counts` (tokens per category: colors, typography, spacing, radii, elevation, motion).
 
