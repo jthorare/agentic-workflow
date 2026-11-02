@@ -893,8 +893,13 @@ do_run() {
   fi
 
   mkdir -p "$EVAL_HOME/cache" || die 3 "cannot create $EVAL_HOME"
-  EVAL_TMP="$EVAL_HOME/tmp/$RUN_ID"   # one per run: lanes don't share it, and cleanup empties it
-  [ "$dry" = 1 ] || { mkdir -p "$EVAL_HOME/tmp" && mkdir -m 700 "$EVAL_TMP"; } || die 3 "cannot create $EVAL_TMP"
+  # one per run: lanes don't share it, and cleanup empties it. Its name stays 4 characters: claude's sandbox binds
+  # <TMPDIR>/claude-eval-XXXXXX/tmp/srt-mux-<pid>-<n>.sock (46 bytes more with a 7-digit pid, claude 2.1.312), and a Unix
+  # socket path must fit in 108 bytes with its NUL, so a longer name fails every Bash call in the run (#1931)
+  EVAL_TMP="$EVAL_HOME/tmp/XXXX"
+  [ $(( ${#EVAL_TMP} + 46 )) -le 107 ] ||
+    die 3 "the eval temp dir $EVAL_TMP is ${#EVAL_TMP} bytes, so claude's sandbox socket under it would pass the 108-byte Unix socket limit and every Bash call would fail; set AW_STATE_DIR to a path at least $(( ${#EVAL_TMP} + 46 - 107 )) bytes shorter"
+  [ "$dry" = 1 ] || { mkdir -p "$EVAL_HOME/tmp" && EVAL_TMP="$(mktemp -d "$EVAL_HOME/tmp/XXXX")"; } || die 3 "cannot create $EVAL_HOME/tmp/XXXX"
   case "$EVAL_TMP" in
     /tmp/* | /var/tmp/* | /dev/shm/*) note "the eval temp dir $EVAL_TMP is under a system temp dir; claude's sandbox denies writes there, so Bash writes in eval runs will fail (set AW_STATE_DIR elsewhere)" ;;
   esac
