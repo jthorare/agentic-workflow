@@ -300,6 +300,21 @@ public sealed class GateRerunTests
         Assert.Equal(alone.LogFile, response.AloneLog);
     }
 
+    // #1900: `bash {test}` with a bare suite name exits 127 on both trees; that ran nothing, it is not a real red.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_rerun_whose_command_is_not_found_is_refused_not_called_real()
+    {
+        await SaveRedGate();
+        await UseBashStep();
+        var notFound = new CommandResult(127, string.Empty, "bash: sindri-pod: No such file or directory", TimedOut: false);
+        _ = _world.Runner.When("bash sindri-pod", _ => notFound).When("git");
+
+        var result = await Service().Handle(new GateRerunRequest(190, "unit", "sindri-pod"), CancellationToken.None);
+
+        Assert.Equal(MetaErrors.Invalid.Code, result.Error.Code);
+        Assert.Null(await Stored("sindri-pod"));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_dotnet_rerun_keeps_the_real_home_but_still_logs()
     {
