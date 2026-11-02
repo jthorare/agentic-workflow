@@ -1,4 +1,5 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 
 namespace Aw.UiDriver.Avalonia;
@@ -31,16 +32,17 @@ internal static class OpenPopups
         _ = Popup.IsOpenProperty.Changed.AddClassHandler<Popup>((popup, _) => Changed(popup));
     }
 
-    /// <summary>The content of each popup open now that is drawn in its own popup window (not the window's overlay layer), oldest first, with the number its node ids use.</summary>
+    /// <summary>The content of each popup open now that is drawn in its own popup window (not the window's overlay layer) and was opened from <paramref name="owner"/> (found from the popup's host, so a flyout or context menu with only a logical parent counts, and a submenu counts for the window its parent popup was opened from), oldest first, with the number its node ids use.</summary>
+    /// <param name="owner">The window whose popups are wanted; a popup opened from another window is left out.</param>
     /// <returns>A snapshot.</returns>
-    internal static IReadOnlyList<(int Sequence, Visual Content)> Current()
+    internal static IReadOnlyList<(int Sequence, Visual Content)> Current(Window owner)
     {
         List<(int, Visual)> found = [];
         lock (_gate)
         {
             foreach (var (sequence, popup) in _open)
             {
-                if (popup.IsOpen && !popup.IsUsingOverlayLayer && popup.Child is { } content)
+                if (popup.IsOpen && !popup.IsUsingOverlayLayer && ReferenceEquals(OwnerWindow(popup), owner) && popup.Child is { } content)
                 {
                     found.Add((sequence, content));
                 }
@@ -48,6 +50,19 @@ internal static class OpenPopups
         }
 
         return found;
+    }
+
+    // Flyouts and context menus create their Popup in code with only a logical parent, so the popup itself has no top level. Popup.Host is internal, so the public way to it is the content: once open, the content sits in the
+    // popup's host and its top level is the PopupRoot, whose ParentTopLevel is the window it was opened from; a submenu's root has the parent popup's root there, so follow the roots up.
+    private static TopLevel? OwnerWindow(Popup popup)
+    {
+        var top = popup.Child is { } child && TopLevel.GetTopLevel(child) is { } hostRoot ? hostRoot : TopLevel.GetTopLevel(popup.PlacementTarget ?? popup);
+        while (top is PopupRoot parent)
+        {
+            top = parent.ParentTopLevel;
+        }
+
+        return top;
     }
 
     private static void Changed(Popup popup)
