@@ -10,4 +10,9 @@ namespace Aw.Sindri.Core.Workflow.Views;
 public sealed record StatusRun(
     string Runtime,
     string? Launch,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SessionHandle? Session = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SessionHandle? Session = null)
+{
+    /// <summary>While the run's launch waits for a free session slot, how many sessions run and the cap; null (not written) otherwise, and once the launch has an outcome.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public StatusWaiting? WaitingForSlot { get; init; }
+}

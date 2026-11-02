@@ -129,10 +129,10 @@ public sealed class ProjectorFileTests : IDisposable
         _ = await stores.Lease.Release(grant, Token);
     }
 
-    /// <summary>Waits (2 s of real time at most) for <paramref name="done"/>; with <paramref name="tick"/> it moves the fake clock a second each try, past the loop's wait.</summary>
+    /// <summary>Waits (10 s of real time at most: the host's first pass opens the SQLite files on real time, and took over 2 s on a busy CI runner, #1485) for <paramref name="done"/>; with <paramref name="tick"/> it moves the fake clock a second each try, past the loop's wait.</summary>
     private async Task Until(Func<bool> done, bool tick = false)
     {
-        for (var i = 0; i < 200 && !done(); i++)
+        for (var i = 0; i < 1000 && !done(); i++)
         {
             if (tick)
             {

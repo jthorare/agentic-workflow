@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-SANDBOX-001",
+  "status": 409,
+  "detail": "A blocked tool can't be allowed here. Push from your own terminal, or let Sindri send it.",
+  "traceId": "<trace>"
+}

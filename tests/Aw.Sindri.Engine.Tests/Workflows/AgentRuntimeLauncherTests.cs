@@ -151,7 +151,13 @@ public sealed class AgentRuntimeLauncherTests : IDisposable
 
     private async Task<LauncherRig> Rig(string target, AgentSettings? agents, CancellationToken ct, bool restart = false)
     {
-        var sindri = _harness.Sindri(services => _ = services.Replace(ServiceDescriptor.Singleton(new TmuxSessionHost(_tmux.Options))), Variable);
+        var sindri = _harness.Sindri(
+            services =>
+            {
+                _ = services.Replace(ServiceDescriptor.Singleton(new TmuxSessionHost(_tmux.Options)));
+                _ = services.RemoveAll<ISandboxLaunch>();   // these pin the launcher and tmux, not the sandbox (SandboxStepProofTests and the heavy lane do): Steps run unconfined here
+            },
+            Variable);
         if (restart)
         {
             return new LauncherRig(sindri, item: null);   // the first process's lease, approved profile and item fact are still in the home

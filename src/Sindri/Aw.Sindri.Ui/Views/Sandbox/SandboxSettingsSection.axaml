@@ -1,0 +1,28 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sb="using:Aw.Sindri.Ui.ViewModels.Sandbox"
+             x:Class="Aw.Sindri.Ui.Views.Sandbox.SandboxSettingsSection"
+             x:DataType="sb:SandboxSettingsViewModel">
+  <!-- Settings' Sandbox section (sandbox spec 8): read-only, the profile changes it. The heading carries the state; dimmed while Sindri doesn't answer. -->
+  <UserControl.Styles>
+    <Style Selector="StackPanel.dimmed"><Setter Property="Opacity" Value="0.5" /></Style>
+  </UserControl.Styles>
+  <StackPanel x:Name="SandboxSection" Spacing="{StaticResource Space.XS}" Classes.dimmed="{Binding IsDimmed}">
+    <Border AutomationProperties.Name="{Binding Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
+      <TextBlock x:Name="SandboxTitle" Classes="detail-title" Text="{Binding Title}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+    </Border>
+    <Border x:Name="SandboxFieldsCard" IsVisible="{Binding HasFields}" Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+            BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+      <ItemsControl x:Name="SandboxFields" ItemsSource="{Binding Fields}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="sb:SandboxField">
+            <Grid ColumnDefinitions="130,*" Margin="0,2" AutomationProperties.Name="{Binding Name}">
+              <TextBlock Classes="caption subtle" Text="{Binding Label}" AutomationProperties.AccessibilityView="Raw" />
+              <TextBlock Grid.Column="1" Classes="body" Text="{Binding Value}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+            </Grid>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </Border>
+  </StackPanel>
+</UserControl>

@@ -4,6 +4,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Extract;
 using Aw.Context.Infrastructure.Git;
 using Aw.Kernel;
+using Aw.Redaction;
 
 namespace Aw.Context.Infrastructure.Extract;
 
@@ -97,7 +98,7 @@ internal sealed partial class GraphifyClusterSource(GitCli git, GraphifyOptions 
             {
                 null => "graphify did not start",
                 { TimedOut: true } => string.Create(CultureInfo.InvariantCulture, $"timed out after {limits.TimeoutMinutes} min"),
-                _ => string.Create(CultureInfo.InvariantCulture, $"graphify exited with code {ran.Exit}"),
+                _ => GraphifyFailure.Message(ran.Exit, ran.Stderr, static text => Redactor.Default.Scrub(text).Text),
             });
         }
 

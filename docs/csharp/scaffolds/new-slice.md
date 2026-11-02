@@ -336,9 +336,9 @@ dotnet build src/<Pkg>/Aw.<Pkg>.Core 2>&1 \
   | sed -n "s/.*RS0016: Symbol '\(.*\)' is not part of the declared public API.*/\1/p" | sort -u \
   >> src/<Pkg>/Aw.<Pkg>.Core/PublicAPI.Unshipped.txt                      # each id's type and Vogen members, each new port; review them
 dotnet build src/<Pkg>/Aw.<Pkg>.Features 2>&1 | sed …  >> src/<Pkg>/Aw.<Pkg>.Features/PublicAPI.Unshipped.txt   # the new records
-dotnet build -warnaserror                                         # 0 warnings
-dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=unit" --ignore-exit-code 8   # exactly one failure: <Slice>Tests.<Slice>_<behavior>; exit 8 = empty lane in some project
-dotnet format --verify-no-changes
+dotnet build tests/Aw.<Pkg>.Tests/Aw.<Pkg>.Tests.csproj -warnaserror   # 0 warnings; then the same for tests/Aw.Architecture.Tests (the whole solution is not built per call)
+dotnet test --project tests/Aw.<Pkg>.Tests --filter-trait "Lane=unit" --ignore-exit-code 8   # exactly one failure: <Slice>Tests.<Slice>_<behavior>; exit 8 = empty lane; also run for tests/Aw.Architecture.Tests
+dotnet format <each project holding a written .cs file> --verify-no-changes --include <the .cs files written or edited>   # one run per project
 ```
 
 Under a slot of the heavy-job lock. Commit: `test: red <Slice> test (<behavior>)`.

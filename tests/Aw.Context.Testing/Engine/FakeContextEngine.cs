@@ -3,6 +3,7 @@ using Aw.Context.Core;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -11,14 +12,20 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
+using Aw.Context.Core.Sources;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.Sync;
+using Aw.Context.Core.Vectors;
 using Aw.Context.Core.WholeMap;
 using Aw.Kernel;
 
@@ -36,9 +43,12 @@ public sealed class FakeContextEngine : IContextEngine
 
     private readonly ProbeSet? _probes;
 
-    private FakeContextEngine(ProbeSet? probes)
+    private readonly Func<EmbedRecordsRequest, Result<EmbedRecordsReport>>? _embed;
+
+    private FakeContextEngine(ProbeSet? probes, Func<EmbedRecordsRequest, Result<EmbedRecordsReport>>? embed = null)
     {
         _probes = probes;
+        _embed = embed;
     }
 
     /// <summary>The one instance, with no probe file.</summary>
@@ -48,6 +58,11 @@ public sealed class FakeContextEngine : IContextEngine
     /// <param name="probes">The probes of the file.</param>
     /// <returns>The engine.</returns>
     public static FakeContextEngine WithProbes(ProbeSet probes) => new(probes);
+
+    /// <summary>An engine like <see cref="Instance"/> whose embed runs answer with <paramref name="embed"/> (a report, or the error of a model that is down).</summary>
+    /// <param name="embed">Answers one embed request.</param>
+    /// <returns>The engine.</returns>
+    public static FakeContextEngine WithEmbed(Func<EmbedRecordsRequest, Result<EmbedRecordsReport>> embed) => new(probes: null, embed);
 
     /// <inheritdoc />
     public Result<ContextSettings> CheckSettings(JsonElement? section, IReadOnlyList<ProfileRepoEntry> repos) =>
@@ -73,13 +88,40 @@ public sealed class FakeContextEngine : IContextEngine
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SyncReport>>(Down());
 
+    /// <summary>The fake keeps no records: a project read answers like every query (all sources unavailable).</summary>
+    public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<ProjectFactsAnswer>>(Down());
+
+    /// <summary>An embed run answers like every query (all sources unavailable) unless the engine came from <see cref="WithEmbed"/>.</summary>
+    public ValueTask<Result<EmbedRecordsReport>> Embed(EmbedRecordsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(_embed is null ? (Result<EmbedRecordsReport>)Down() : _embed(request));
+
     /// <summary>The fake runs no feeds.</summary>
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<SyncReport>>(Down());
 
+    /// <summary>The fake runs no feeds.</summary>
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<SyncReport>>(Down());
+
+    /// <summary>The fake reads no records.</summary>
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<DecisionReport>>(Down());
+
     /// <summary>The fake keeps no record store.</summary>
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) =>
         ValueTask.FromResult<Result<IReadOnlyList<SourceProgress>>>(Down());
+
+    /// <summary>The fake keeps no record store.</summary>
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<ConceptStatus>>(Down());
+
+    public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<SourceCounts>>(Down());
+
+    /// <summary>The fake keeps no record store.</summary>
+    public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken) =>
+        ValueTask.FromResult<Result<int>>(Down());
 
     public ValueTask<Result<MapFilePreview>> PreviewMap(string path, ContextScope scope, CancellationToken cancellationToken) => NoMap<MapFilePreview>();
 
@@ -174,6 +216,10 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult<Result<IReadOnlyList<RepoHead>>>(Array.Empty<RepoHead>());
 
     /// <inheritdoc/>
+    public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken) =>
+        NoMap<RelinkPinAliasesResult>();
+
+    /// <inheritdoc/>
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         proposal.Surfaces.Count == 0 ? ValueTask.FromResult(Results.Success(new ProposeResult(Draft: null, Added: 0, Existing: 0, Rejected: 0))) : NoMap<ProposeResult>();   // like the engine: with no map a withdrawal has nothing to take back
 
@@ -216,6 +262,20 @@ public sealed class FakeContextEngine : IContextEngine
 
     /// <inheritdoc/>
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<ConceptGlossaryView>();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<PagesView>> Pages(PagesQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<PagesView>();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(new MapHealth("context:pages", MapHealthState.Ok, "no map yet", string.Empty)));
+
+    /// <inheritdoc/>
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) => NoMap<PinSuggestView>();
+
+    /// <inheritdoc/>
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(new PageMapFacts(MapVersion: null, new PageFacts(new HashSet<ConceptId>(), new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal), new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)), [])));
 
     /// <inheritdoc/>
     public ValueTask<Result<MapHealth>> CheckMap(ContextScope? scope, CancellationToken cancellationToken) =>

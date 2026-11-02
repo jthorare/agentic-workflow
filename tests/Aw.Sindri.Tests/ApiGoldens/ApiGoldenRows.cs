@@ -1,3 +1,5 @@
+using Aw.Kernel.Testing;
+
 namespace Aw.Sindri.Tests.ApiGoldens;
 
 /// <summary>
@@ -7,6 +9,9 @@ namespace Aw.Sindri.Tests.ApiGoldens;
 /// </summary>
 internal static class ApiGoldenRows
 {
+    private static readonly NormalizationRule _profileHash = new("profileHash", "\"profileHash\": \"[0-9a-f]{64}\"", "\"profileHash\": \"<hash>\"");   // the profile names the temp home, so its hash differs every run
+    private static readonly NormalizationRule _fileHash = new("fileHash", "\"fileHash\": \"[0-9a-f]{64}\"", "\"fileHash\": \"<file-hash>\"");   // the pins read's file hash, over the same temp-home profile
+
     public static TheoryData<string, string> Of(string group)
     {
         var rows = new TheoryData<string, string>();
@@ -18,11 +23,36 @@ internal static class ApiGoldenRows
         return rows;
     }
 
+    /// <summary>The rows of <paramref name="group"/> whose index in <see cref="Of(string)"/>'s order is <paramref name="shard"/> modulo <paramref name="shards"/>, so a big group splits into classes xUnit runs in parallel and every row lands in exactly one.</summary>
+    public static TheoryData<string, string> Of(string group, int shard, int shards)
+    {
+        var rows = new TheoryData<string, string>();
+        var all = ApiScenarios.Groups[group];
+        for (var i = shard; i < all.Count; i += shards)
+        {
+            rows.Add(all[i].Slug, all[i].Scenario);
+        }
+
+        return rows;
+    }
+
     public static async Task Match(string slug, string scenario, CancellationToken ct)
     {
         await using var host = await ApiScenarios.Start(slug, scenario, ct);
 
         var body = await ApiScenarios.Body(host, slug, scenario, ct);
+
+        if (string.Equals(slug, "context-pages-preview", StringComparison.Ordinal))
+        {
+            ApiGolden.Match(body, host.Home, slug, scenario, [_profileHash]);
+            return;
+        }
+
+        if (string.Equals(slug, "context-pins", StringComparison.Ordinal))
+        {
+            ApiGolden.Match(body, host.Home, slug, scenario, [_fileHash]);
+            return;
+        }
 
         ApiGolden.Match(body, host.Home, slug, scenario);
     }

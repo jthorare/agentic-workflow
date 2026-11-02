@@ -35,7 +35,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.Add(Repo, A.GitHubIssue(1).UpdatedAt(T.AddMinutes(1)));
 
-        var result = await Client().Issues(Repo, Start, 100, Ct);
+        var result = await Client().Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.True(result.IsSuccess);
         var request = Assert.Single(_server.Requests);
@@ -122,7 +122,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.Add(Repo, A.GitHubIssue(1).UpdatedAt(T));
 
-        _ = await Client(token: null).Issues(Repo, Start, 100, Ct);
+        _ = await Client(token: null).Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Null(Assert.Single(_server.Requests).Authorization);
     }
@@ -137,7 +137,7 @@ public sealed class GitHubClientTests : IDisposable
             _ = _server.Add(Repo, n == 3 ? builder.AsPullRequest() : builder);
         }
 
-        var page = (await Client().Issues(Repo, Start, 1000, Ct)).Value;
+        var page = (await Client().Issues(Repo, Start, 1000, before: null, Ct)).Value;
 
         Assert.Equal([1, 2, 3, 4, 5], page.Items.Select(i => i.Id));
         Assert.Equal([false, false, true, false, false], page.Items.Select(i => i.IsPullRequest));
@@ -151,7 +151,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.Add(Repo, A.GitHubIssue(7).UpdatedAt(T.AddHours(1)).WithBody("Crash on start.").Closed());
 
-        var issue = Assert.Single((await Client().Issues(Repo, Start, 100, Ct)).Value.Items);
+        var issue = Assert.Single((await Client().Issues(Repo, Start, 100, before: null, Ct)).Value.Items);
 
         Assert.Equal(7, issue.Number);
         Assert.Equal("Issue 7", issue.Title);
@@ -172,7 +172,7 @@ public sealed class GitHubClientTests : IDisposable
             .Add(Repo, A.GitHubIssue(2).UpdatedAt(T))
             .Add(Repo, A.GitHubIssue(3).UpdatedAt(T.AddSeconds(1)));
 
-        var page = (await Client().Issues(Repo, new GitHubCursor(T, [1]), 100, Ct)).Value;
+        var page = (await Client().Issues(Repo, new GitHubCursor(T, [1]), 100, before: null, Ct)).Value;
 
         Assert.Equal([2, 3], page.Items.Select(i => i.Id));
         Assert.Equal(T.AddSeconds(1), page.Next.UpdatedAt);
@@ -187,9 +187,9 @@ public sealed class GitHubClientTests : IDisposable
             .Add(Repo, A.GitHubIssue(2).UpdatedAt(T))
             .Add(Repo, A.GitHubIssue(3).UpdatedAt(T));
 
-        var first = (await Client().Issues(Repo, GitHubCursor.From(T), 2, Ct)).Value;
-        var second = (await Client().Issues(Repo, first.Next, 2, Ct)).Value;
-        var third = (await Client().Issues(Repo, second.Next, 2, Ct)).Value;
+        var first = (await Client().Issues(Repo, GitHubCursor.From(T), 2, before: null, Ct)).Value;
+        var second = (await Client().Issues(Repo, first.Next, 2, before: null, Ct)).Value;
+        var third = (await Client().Issues(Repo, second.Next, 2, before: null, Ct)).Value;
 
         Assert.Equal([1, 2], first.Items.Select(i => i.Id));
         Assert.Equal([3], second.Items.Select(i => i.Id));
@@ -198,12 +198,27 @@ public sealed class GitHubClientTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task A_bound_stops_paging_at_the_first_entry_at_or_after_it()
+    {
+        _server.MaxPageSize = 2;
+        _ = _server.Add(Repo, A.GitHubIssue(1).UpdatedAt(T.AddMinutes(1)))
+            .Add(Repo, A.GitHubIssue(2).UpdatedAt(T.AddMinutes(5)))
+            .Add(Repo, A.GitHubIssue(3).UpdatedAt(T.AddMinutes(9)))
+            .Add(Repo, A.GitHubIssue(4).UpdatedAt(T.AddMinutes(12)));
+
+        var page = (await Client().Issues(Repo, GitHubCursor.From(T), 1000, T.AddMinutes(5), Ct)).Value;
+
+        Assert.Equal([1], page.Items.Select(static i => i.Id));
+        _ = Assert.Single(_server.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Replaying_the_returned_cursor_returns_nothing_and_keeps_the_cursor()
     {
         _ = _server.Add(Repo, A.GitHubIssue(1).UpdatedAt(T.AddMinutes(1))).Add(Repo, A.GitHubIssue(2).UpdatedAt(T.AddMinutes(1)));
-        var first = (await Client().Issues(Repo, Start, 100, Ct)).Value;
+        var first = (await Client().Issues(Repo, Start, 100, before: null, Ct)).Value;
 
-        var replay = (await Client().Issues(Repo, first.Next, 100, Ct)).Value;
+        var replay = (await Client().Issues(Repo, first.Next, 100, before: null, Ct)).Value;
 
         Assert.Empty(replay.Items);
         Assert.Equal(first.Next.UpdatedAt, replay.Next.UpdatedAt);
@@ -222,7 +237,7 @@ public sealed class GitHubClientTests : IDisposable
         var reset = _clock.GetUtcNow().AddMinutes(37);
         _ = _server.ScriptThrough().ScriptRateLimit(reset);
 
-        var result = await Client().Issues(Repo, Start, 1000, Ct);
+        var result = await Client().Issues(Repo, Start, 1000, before: null, Ct);
 
         Assert.True(result.IsSuccess);
         Assert.Equal([1, 2], result.Value.Items.Select(i => i.Id));
@@ -239,7 +254,7 @@ public sealed class GitHubClientTests : IDisposable
         _ = _server.ScriptRateLimit(reset);
         var cursor = new GitHubCursor(T, [5]);
 
-        var page = (await Client().Issues(Repo, cursor, 100, Ct)).Value;
+        var page = (await Client().Issues(Repo, cursor, 100, before: null, Ct)).Value;
 
         Assert.Empty(page.Items);
         Assert.Equal(reset, page.RateLimitedUntil);
@@ -254,7 +269,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.ScriptRetryAfter(status, 90);
 
-        var page = (await Client().Issues(Repo, Start, 100, Ct)).Value;
+        var page = (await Client().Issues(Repo, Start, 100, before: null, Ct)).Value;
 
         Assert.Equal(_clock.GetUtcNow().AddSeconds(90), page.RateLimitedUntil);
         Assert.Empty(page.Items);
@@ -265,7 +280,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.ScriptStatus(HttpStatusCode.TooManyRequests);
 
-        var page = (await Client().Issues(Repo, Start, 100, Ct)).Value;
+        var page = (await Client().Issues(Repo, Start, 100, before: null, Ct)).Value;
 
         Assert.Equal(_clock.GetUtcNow().AddSeconds(60), page.RateLimitedUntil);
     }
@@ -275,7 +290,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.ScriptStatus(HttpStatusCode.Forbidden);
 
-        var result = await Client().Issues(Repo, Start, 100, Ct);
+        var result = await Client().Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.AccessDenied.Code, result.Error.Code);
     }
@@ -285,7 +300,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.ScriptStatus(HttpStatusCode.Unauthorized);
 
-        var result = await Client().Issues(Repo, Start, 100, Ct);
+        var result = await Client().Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.Unauthorized.Code, result.Error.Code);
     }
@@ -295,7 +310,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.ScriptStatus(HttpStatusCode.NotFound);
 
-        var result = await Client().Issues(Repo, Start, 100, Ct);
+        var result = await Client().Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.NotFound.Code, result.Error.Code);
     }
@@ -305,7 +320,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.ScriptStatus(HttpStatusCode.BadGateway);
 
-        var result = await Client().Issues(Repo, Start, 100, Ct);
+        var result = await Client().Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.BadReply.Code, result.Error.Code);
     }
@@ -315,7 +330,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.Script(_ => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{\"not\":\"a list\"}") });
 
-        var result = await Client().Issues(Repo, Start, 100, Ct);
+        var result = await Client().Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.BadReply.Code, result.Error.Code);
     }
@@ -325,7 +340,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.ScriptRedirect("https://evil.example.com/steal");
 
-        var result = await Client().Issues(Repo, Start, 100, Ct);
+        var result = await Client().Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.RedirectRefused.Code, result.Error.Code);
         _ = Assert.Single(_server.Requests);
@@ -341,7 +356,7 @@ public sealed class GitHubClientTests : IDisposable
             return response;
         });
 
-        var result = await Client().Issues(Repo, Start, 100, Ct);
+        var result = await Client().Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.BadReply.Code, result.Error.Code);
         _ = Assert.Single(_server.Requests);
@@ -352,7 +367,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _ = _server.Add(Repo, A.GitHubIssue(1).UpdatedAt(T));
 
-        var result = await Client(host: "ghe.example.com:8443").Issues(Repo, Start, 100, Ct);
+        var result = await Client(host: "ghe.example.com:8443").Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.True(result.IsSuccess);
         Assert.StartsWith("https://ghe.example.com:8443/api/v3/repos/acme/widgets/issues?", Assert.Single(_server.Requests).Uri.AbsoluteUri, StringComparison.Ordinal);
@@ -367,7 +382,7 @@ public sealed class GitHubClientTests : IDisposable
     [InlineData("ghe example.com")]
     public async Task A_host_that_is_not_a_bare_host_name_is_invalid(string host)
     {
-        var result = await Client(host: host).Issues(Repo, Start, 100, Ct);
+        var result = await Client(host: host).Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.Invalid.Code, result.Error.Code);
         Assert.Empty(_server.Requests);
@@ -381,7 +396,7 @@ public sealed class GitHubClientTests : IDisposable
     [InlineData("")]
     public async Task A_repo_that_is_not_owner_slash_name_is_invalid(string repo)
     {
-        var result = await Client().Issues(repo, Start, 100, Ct);
+        var result = await Client().Issues(repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.Invalid.Code, result.Error.Code);
         Assert.Empty(_server.Requests);
@@ -397,7 +412,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _dns = _ => [IPAddress.Parse(address)];
 
-        var result = await Client(host: "ghe.internal.example").Issues(Repo, Start, 100, Ct);
+        var result = await Client(host: "ghe.internal.example").Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.HostRefused.Code, result.Error.Code);
         Assert.Empty(_server.Requests);
@@ -408,7 +423,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _dns = _ => [PublicAddress, IPAddress.Parse("10.0.0.5")];
 
-        var result = await Client(host: "ghe.example.com").Issues(Repo, Start, 100, Ct);
+        var result = await Client(host: "ghe.example.com").Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.HostRefused.Code, result.Error.Code);
         Assert.Empty(_server.Requests);
@@ -420,7 +435,7 @@ public sealed class GitHubClientTests : IDisposable
         _dns = _ => [IPAddress.Parse("10.0.0.5")];
         _ = _server.Add(Repo, A.GitHubIssue(1).UpdatedAt(T));
 
-        var result = await Client(host: "ghe.internal.example", allowPrivate: true).Issues(Repo, Start, 100, Ct);
+        var result = await Client(host: "ghe.internal.example", allowPrivate: true).Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.True(result.IsSuccess);
         _ = Assert.Single(_server.Requests);
@@ -432,9 +447,9 @@ public sealed class GitHubClientTests : IDisposable
     [InlineData("[::1]")]
     public async Task An_ip_literal_host_is_refused_unless_the_profile_allows_it(string host)
     {
-        var refused = await Client(host: host).Issues(Repo, Start, 100, Ct);
+        var refused = await Client(host: host).Issues(Repo, Start, 100, before: null, Ct);
         _ = _server.Add(Repo, A.GitHubIssue(1).UpdatedAt(T));
-        var allowed = await Client(host: host, allowPrivate: true).Issues(Repo, Start, 100, Ct);
+        var allowed = await Client(host: host, allowPrivate: true).Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.HostRefused.Code, refused.Error.Code);
         Assert.True(allowed.IsSuccess);
@@ -446,7 +461,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         _dns = _ => throw new SocketException((int)SocketError.HostNotFound);
 
-        var result = await Client(host: "nope.example.com").Issues(Repo, Start, 100, Ct);
+        var result = await Client(host: "nope.example.com").Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.Unreachable.Code, result.Error.Code);
         Assert.Empty(_server.Requests);
@@ -457,7 +472,7 @@ public sealed class GitHubClientTests : IDisposable
     {
         const string bad = "tok_bad token\nvalue";
 
-        var result = await Client(token: bad).Issues(Repo, Start, 100, Ct);
+        var result = await Client(token: bad).Issues(Repo, Start, 100, before: null, Ct);
 
         Assert.Equal(ConnectorsErrors.Invalid.Code, result.Error.Code);
         Assert.DoesNotContain("tok_bad", result.Error.Message, StringComparison.Ordinal);
@@ -472,7 +487,7 @@ public sealed class GitHubClientTests : IDisposable
         async Task Collect(Action arrange, string? host = null)
         {
             arrange();
-            var result = await Client(host: host).Issues(Repo, Start, 100, Ct);
+            var result = await Client(host: host).Issues(Repo, Start, 100, before: null, Ct);
             if (result.IsError)
             {
                 errors.Add(result.Error.Message);

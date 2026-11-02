@@ -122,7 +122,7 @@ internal sealed partial class QueueViewModel(ISindriApi api, CatalogViewModel ca
             return;
         }
 
-        (IsStale, ProblemCode, ProblemDetail) = (false, string.Empty, string.Empty);
+        (IsStale, ProblemCode, ProblemDetail) = (answer.Value.AsOf.Stalled, string.Empty, string.Empty);   // stalled views: the rows are the last the projector made
         Rest();
         Apply(Hold(answer.Value));
         IsLoading = false;   // after the rows are there: a waiter on the end of loading finds them

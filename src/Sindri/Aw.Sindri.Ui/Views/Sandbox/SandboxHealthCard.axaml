@@ -1,0 +1,31 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:sb="using:Aw.Sindri.Ui.ViewModels.Sandbox"
+             xmlns:icons="using:Aw.Sindri.Ui.Views.Icons"
+             xmlns:sv="using:Aw.Sindri.Ui.Views.Sandbox"
+             x:Class="Aw.Sindri.Ui.Views.Sandbox.SandboxHealthCard"
+             x:DataType="sb:SandboxCardViewModel">
+  <!-- Health's Sandbox card (sandbox spec 8): one wrapped row "Sandbox: <state>" with the state as a word and a mark; a learn window is a warning and Sindri not answering is
+       dimmed. Check again shows while the row is blocked or never checked. -->
+  <UserControl.Styles>
+    <Style Selector="Border.dimmed"><Setter Property="Opacity" Value="0.5" /></Style>
+  </UserControl.Styles>
+  <Border x:Name="SandboxPanel" Classes="panel" Width="440" Margin="0,0,12,12" Classes.dimmed="{Binding IsDimmed}">
+    <Border Classes="section last">
+      <StackPanel Spacing="{StaticResource Space.XS}">
+        <Grid ColumnDefinitions="*,Auto">
+          <TextBlock x:Name="SandboxEyebrow" Classes="eyebrow head-eyebrow" Text="{Binding Heading}" AutomationProperties.Name="{Binding Heading}" />
+          <TextBlock x:Name="SandboxWord" Grid.Column="1" Classes="body-strong" Text="{Binding StateWord}" AutomationProperties.Name="{Binding StateWord}" />
+        </Grid>
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="6" AutomationProperties.Name="{Binding RowText}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Group">
+          <icons:StateIcon x:Name="SandboxGlyph" Glyph="{Binding Glyph}" VerticalAlignment="Top" Margin="0,2,0,0" />
+          <TextBlock x:Name="SandboxRow" Grid.Column="1" Classes="body" Text="{Binding RowText}" TextWrapping="Wrap"
+                     AutomationProperties.Name="{Binding RowText}" />
+        </Grid>
+        <StackPanel x:Name="SandboxCheckSlot" IsVisible="{Binding ShowsCheck}">
+          <sv:SandboxCheckPanel DataContext="{Binding Check}" />
+        </StackPanel>
+      </StackPanel>
+    </Border>
+  </Border>
+</UserControl>

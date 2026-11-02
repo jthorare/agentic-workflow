@@ -1,5 +1,6 @@
 using Aw.Sindri.Ui.Api.Context;
 using Aw.Sindri.Ui.Testing;
+using Aw.Sindri.Ui.ViewModels;
 using Aw.Sindri.Ui.ViewModels.Context;
 using Aw.Sindri.Ui.ViewModels.Controls;
 using Microsoft.Extensions.Time.Testing;
@@ -10,20 +11,20 @@ namespace Aw.Sindri.Ui.Tests.Context.Concepts;
 internal static class ConceptPage
 {
     /// <summary>The page, made but not yet shown.</summary>
-    internal static async Task<ContextPageViewModel> Made(FakeSindriApi api)
+    internal static async Task<ContextPageViewModel> Made(FakeSindriApi api, Preferences? prefs = null)
     {
         var clipboard = new FakeClipboard();
         var clock = new FakeTimeProvider(A.Noon);
         var catalog = new CatalogViewModel(clipboard, clock);
         var url = new Uri("http://127.0.0.1:1/");
         catalog.Show(url, api, (await api.Commands(url, TestContext.Current.CancellationToken)).Value);
-        return new ContextPageViewModel(new ContextPorts(api, () => url, clipboard, clock, catalog, _ => { }));
+        return new ContextPageViewModel(new ContextPorts(api, () => url, clipboard, clock, catalog, _ => { }, Prefs: prefs));
     }
 
     /// <summary>The page, shown.</summary>
-    internal static async Task<ContextPageViewModel> Shown(FakeSindriApi api)
+    internal static async Task<ContextPageViewModel> Shown(FakeSindriApi api, Preferences? prefs = null)
     {
-        var page = await Made(api);
+        var page = await Made(api, prefs);
         await page.Opened(TestContext.Current.CancellationToken);
         return page;
     }

@@ -21,4 +21,9 @@ public sealed record SuspensionSummary(
     string? Mirrors,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? MirrorsAddress = null,
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] ParkKind? MirroredParkKind = null,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] EscalationKind? MirroredEscalation = null);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] EscalationKind? MirroredEscalation = null)
+{
+    /// <summary>The sandbox refusal behind a no-runtime or launch park (sandbox spec §6); omitted for every other suspension.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public SandboxPark? Sandbox { get; init; }
+}

@@ -46,16 +46,17 @@ public sealed class RecordSyncRunTests
         var position = (await _store.Position(_source, Ct)).Value;
         Assert.Equal(SyncPhase.Incremental, position.Phase);
         var window = RecordSamples.Now.AddDays(-ContextIndexSettings.DefaultWindowDays);
-        Assert.Equal<(string?, DateTimeOffset)[]>(
+        var recent = RecordSamples.Now.AddDays(-30);
+        Assert.Equal<(string?, DateTimeOffset, DateTimeOffset?)[]>(
             [
-                (null, RecordSamples.Now.AddDays(-30)),                     // Recent: the last 30 days
-                ("1", RecordSamples.Now.AddDays(-30)),                      // its end: an empty page
-                (null, window),   // Backfill from its own cursor, to the window's start
-                ("2", window),
-                ("1", window),    // Incremental from the cursor Recent left
-                ("2", window),
+                (null, recent, null),                     // Recent: the last 30 days
+                ("1", recent, null),                      // its end: an empty page
+                (null, window, recent),   // Backfill from its own cursor, to the window's start, stopping where Recent started
+                ("1", window, recent),    // ... its end: an empty page
+                ("1", window, null),      // Incremental from the cursor Recent left
+                ("2", window, null),
             ],
-            [.. feed.Pulls.Select(p => (p.After?.Value, p.NotBefore!.Value))]);
+            [.. feed.Pulls.Select(p => (p.After?.Value, p.NotBefore!.Value, p.Before))]);
     }
 
     [Fact]

@@ -7,12 +7,15 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Glossary;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Results;
 using Aw.Context.Core.Trust;
 using Aw.Context.Features.BuildMap;
+using Aw.Context.Testing.ConceptSynthesis;
 using Aw.Context.Testing.Glossary;
 using Aw.Context.Testing.Map;
 using Aw.Context.Tests.Concepts;
 using Aw.Kernel;
+using Synth = Aw.Context.Core.ConceptSynthesis;
 
 namespace Aw.Context.Tests.BuildMap;
 
@@ -22,6 +25,7 @@ public sealed class ConceptPassTests
     private static readonly ContextRepo[] _repos = [new(ContextRepoName.From("demo"), "/work/demo")];
     private readonly FakeConceptHintStore _hints = new();
     private readonly FakeGraphStore _store = new();
+    private readonly FakeConceptSynthesisStore _synthesis = new();
 
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
@@ -52,7 +56,7 @@ public sealed class ConceptPassTests
         .With("src/lone.cs", "TabDrag", 0f, 0f, 1f);
 
     private ValueTask<ConceptOutcome> Run(ISymbolVectors vectors, IConceptNamer? namer = null, GraphSnapshot? graph = null) =>
-        new ConceptPass(namer ?? new DisabledConceptNamer(), vectors, _hints, _store).Run(new ContextSettings(), graph ?? Product(), [], _repos, Ct);
+        new ConceptPass(namer ?? new DisabledConceptNamer(), vectors, _hints, _store, _synthesis).Run(new ContextSettings(), graph ?? Product(), [], _repos, Ct);
 
     private static List<string> Terms(ConceptOutcome outcome, string concept)
     {
@@ -63,6 +67,47 @@ public sealed class ConceptPassTests
 
     private static bool Belongs(ConceptOutcome outcome, string feature, string concept) =>
         outcome.Graph.Edges.Any(e => e.Type == EdgeType.BelongsTo && e.From.Value == feature && e.To.Value == concept);
+
+    [Fact]
+    public async Task A_done_synthesized_concept_lands_in_the_graph()
+    {
+        var at = new DateTimeOffset(2026, 10, 29, 0, 0, 0, TimeSpan.Zero);
+        _ = await _synthesis.Save(new Synth.SynthesizedConcept("checkout-retry", "Checkout retry", "Retries.", [new Synth.ConceptMember("github:pr/acme/web/412", "1", "github")], "h", Synth.SynthesisState.Done, 1, at, at), Ct);
+
+        var outcome = await Run(new DisabledSymbolVectors());
+
+        var node = Assert.Single(outcome.Graph.Nodes, n => n.Key.Value == "concept:checkout-retry");
+        Assert.Equal(Provenance.Model, node.Provenance);
+    }
+
+    [Fact]
+    public async Task A_derived_concept_a_synthesized_one_covers_is_folded_and_reported()
+    {
+        const string pr = "github:pr/acme/web/412";
+        var graph = new ConceptGraph().Node($"record:{pr}")
+            .Edge($"record:{pr}", EdgeType.Mentions, "feature:sched").Edge($"record:{pr}", EdgeType.Mentions, "feature:sched.one").Edge($"record:{pr}", EdgeType.Mentions, "feature:sched.two").Build();
+        graph = Product() with { Nodes = [.. Product().Nodes, .. graph.Nodes], Edges = [.. Product().Edges, .. graph.Edges] };
+        var bucket = Assert.Single((await Run(new DisabledSymbolVectors(), graph: graph)).Graph.Edges, e => e.Type == EdgeType.BelongsTo && e.From.Value == "feature:sched.one").To.Value;
+        var at = new DateTimeOffset(2026, 10, 29, 0, 0, 0, TimeSpan.Zero);
+        _ = await _synthesis.Save(new Synth.SynthesizedConcept("checkout-retry", "Checkout retry", "Retries.", [new Synth.ConceptMember(pr, "1", "github")], "h", Synth.SynthesisState.Done, 1, at, at), Ct);
+
+        var outcome = await Run(new DisabledSymbolVectors(), graph: graph);
+
+        Assert.DoesNotContain(outcome.Graph.Nodes, n => n.Key.Value == bucket);
+        Assert.True(Belongs(outcome, "feature:sched.one", "concept:checkout-retry"));
+        Assert.Contains("concepts covered: 1", outcome.ReportNotes, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public async Task A_synthesis_store_that_fails_leaves_the_graph_alone_and_adds_a_note()
+    {
+        var baseline = await Run(new DisabledSymbolVectors());
+        var failing = new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), _hints, _store, new Features.ScanConcepts.UnconfiguredConceptSynthesisStore());
+        var outcome = await failing.Run(new ContextSettings(), Product(), [], _repos, Ct);
+
+        Assert.Contains("synthesized concepts", outcome.Notes, StringComparer.Ordinal);
+        Assert.Equal(baseline.Graph.Nodes.Select(n => n.Key.Value), outcome.Graph.Nodes.Select(n => n.Key.Value), StringComparer.Ordinal);
+    }
 
     [Fact]
     public async Task The_vectors_of_a_features_files_become_the_terms_of_its_concept_and_group_a_loose_feature()
@@ -159,7 +204,7 @@ public sealed class ConceptPassTests
     [Fact]
     public async Task A_host_whose_hint_store_cannot_answer_builds_without_hints_and_without_a_note()
     {
-        var outcome = await new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), new NoHints(), _store).Run(new ContextSettings(), Product(), [], _repos, Ct);
+        var outcome = await new ConceptPass(new DisabledConceptNamer(), new DisabledSymbolVectors(), new NoHints(), _store, _synthesis).Run(new ContextSettings(), Product(), [], _repos, Ct);
 
         Assert.Empty(outcome.Notes);
         Assert.True(Belongs(outcome, "feature:sched.one", "concept:sched"));

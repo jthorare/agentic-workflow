@@ -89,7 +89,7 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
             case StartedLaunch started:
                 await recorder.Started(request, started, cancellationToken).ConfigureAwait(false);
                 var head = await diff.Head(request.Worktree!, cancellationToken).ConfigureAwait(false);   // why: RequestFor always names the worktree
-                return new AgentLaunched(request.Worktree, head.IsError ? null : head.Value, Failure: null, request.Step?.Model, canEscalate, Agent: request.Agent.Value);   // a worktree with no HEAD leaves the diff signal unmeasured
+                return new AgentLaunched(request.Worktree, head.IsError ? null : head.Value, Failure: null, request.Step?.Model, canEscalate, Agent: request.Agent.Value, RunDirectory: started.RunDirectory);   // a worktree with no HEAD leaves the diff signal unmeasured
             case FailedLaunch failed:
                 await recorder.Failed(request, failed, cancellationToken).ConfigureAwait(false);
                 return new AgentLaunched(Worktree: null, StartHead: null, AgentLaunchFailures.Of(failed));
@@ -109,8 +109,21 @@ internal sealed class AgentLaunching(AgentLaunchWaiting launcher, AgentPlacing p
             return facts.Error;
         }
 
-        var extras = new AgentLaunchExtras(PayloadFacts.WithShapes(Told(block), run.Payloads), workspace, bundle, facts.Value, run.Model);
+        var seed = workspace is null ? null : await SeedOf(run, cancellationToken).ConfigureAwait(false);
+        var extras = new AgentLaunchExtras(PayloadFacts.WithShapes(Told(block), run.Payloads), workspace, bundle, facts.Value, run.Model, seed);
         return new PreparedLaunch(AgentLaunches.RequestFor(run.Run, target, descriptor, extras), Files(bundle, facts.Value), model => AgentLaunches.RequestFor(run.Run, target, descriptor, extras with { Model = model }));
+    }
+
+    // The commit a phase workspace was seeded at, from the stored 'fact:lineContext' (sandbox spec 3.8); null when the instance has none or it holds no valid base, and the prepare is then skipped, never read from the worktree's HEAD.
+    private async ValueTask<string?> SeedOf(AgentLaunchRun run, CancellationToken cancellationToken)
+    {
+        if (run.Facts is null || !run.Facts.TryGetValue(FactKey.From("fact:lineContext"), out var stored))
+        {
+            return null;
+        }
+
+        var read = await inputs.Contents.Read(stored, cancellationToken).ConfigureAwait(false);
+        return read.IsError ? null : PhaseSeed.BaseOf(System.Text.Encoding.UTF8.GetString(read.Value.Span));
     }
 
     // The files the model-pick question shows: the pack's files and the written facts, each as path and text.

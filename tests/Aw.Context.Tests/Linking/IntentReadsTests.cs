@@ -15,7 +15,7 @@ namespace Aw.Context.Tests.Linking;
 [Trait("Lane", "integration")]
 public sealed class IntentReadsTests
 {
-    private static readonly SourceId _onyx = SourceId.From("onyx");
+    private static readonly SourceId _linear = SourceId.From("linear");
     private static CancellationToken Ct => TestContext.Current.CancellationToken;
 
     [Fact]
@@ -66,8 +66,8 @@ public sealed class IntentReadsTests
         var secret = RecordKey.From("repo:aw-split-panes/secrets/plan.md");
         var open = RecordKey.From("repo:aw-split-panes/docs/plan.md");
         var target = NodeKey.From(Orientation);
-        _ = await world.Intents.CommitPage(new IntentPage(_onyx,
-            [new IntentRecord(secret, _onyx, "v1", "Secret plan", ["SEC-1"]), new IntentRecord(open, _onyx, "v1", "Open plan", ["OPN-1"])],
+        _ = await world.Intents.CommitPage(new IntentPage(_linear,
+            [new IntentRecord(secret, _linear, "v1", "Secret plan", ["SEC-1"]), new IntentRecord(open, _linear, "v1", "Open plan", ["OPN-1"])],
             [new IntentLink(secret, target, LinkRule.Identifier, 0.7, "aa"), new IntentLink(open, target, LinkRule.Identifier, 0.7, "bb")], Cursor: null, new DateTimeOffset(2026, 10, 12, 9, 0, 0, TimeSpan.Zero)), Ct);
 
         var view = (await world.Engine.Lenses(Orientation, read: MapRead.Current, depth: null, MapWorld.Human, Ct)).Value;

@@ -6,6 +6,7 @@ using Avalonia.Threading;
 using Avalonia.VisualTree;
 using Aw.Sindri.Ui.ViewModels.Components;
 using Aw.Sindri.Ui.ViewModels.Instance;
+using Aw.Sindri.Ui.ViewModels.NeedsYou;
 
 namespace Aw.Sindri.Ui.Views.Instance;
 
@@ -28,6 +29,11 @@ internal sealed partial class ExpandedStateView : UserControl
         _state?.PropertyChanged -= OnStateChanged;
         _state = DataContext as ExpandedStateViewModel;
         _state?.PropertyChanged += OnStateChanged;
+        if (_state is { } state)
+        {
+            // why: the wait is said once the live region is in the tree, so it is a change a screen reader hears.
+            Dispatcher.UIThread.Post(state.AnnounceWaiting, DispatcherPriority.Loaded);
+        }
     }
 
     private void OnStateChanged(object? sender, PropertyChangedEventArgs e)
@@ -72,6 +78,16 @@ internal sealed partial class ExpandedStateView : UserControl
     private void OnChild(object? sender, RoutedEventArgs e) => _state?.Child?.Open();
 
     private void OnAsk(object? sender, RoutedEventArgs e) => _state?.AskCancel();
+
+    private void OnBrowseOutput(object? sender, RoutedEventArgs e)
+    {
+        if (sender is Control { DataContext: DeskOutputViewModel output })
+        {
+            _ = output.Browse(CancellationToken.None);
+        }
+    }
+
+    private void OnComplete(object? sender, RoutedEventArgs e) => _ = _state?.CompleteAsync();
 
     private void OnHandBack(object? sender, RoutedEventArgs e) => _ = _state?.HandBackAsync();
 

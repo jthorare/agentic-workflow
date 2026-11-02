@@ -90,7 +90,7 @@ start-up), and disposes it on exit.
 `seenIds`, `paletteHistory`, `textScale`, `reduceMotion`, camelCase JSON. A head's store only moves bytes; the app's
 `ViewModels/Preferences` (`Load`, `Update`, `Flush`; one instance, built in `SindriApp.Create` and shared by the shell
 and Settings, queues every read-change-write behind the one before) parses and writes them through `Api/PreferencesJson`, so clamping is the same
-on every head: the window grows to 900 × 600 (bounds that
+on every head: the window grows to 1,000 × 600 (bounds that
 aren't finite are dropped), the sheet is 420–760, the scale 0.9–1.3, an unknown page reads as Home, and the id lists
 drop blanks and repeats and keep their newest 500 and 20. A malformed file, or one of another version, reads as the
 defaults.
@@ -129,7 +129,7 @@ only, never the message, which can name the home), with a line that names the ex
 
 | Part | What it shows |
 |---|---|
-| Top bar (48 px) | Brand; Home · Queue · Decisions · Services (counts empty until their routes); Later ▾ (Agents, Repos, Today, Automatic work, each "not served yet"); the ⌘K field, which opens the palette (U1); the health pill, which opens Health (while Sindri isn't running it is only the state: disabled like the navigation, its word undimmed, since the Not running card is the health state and Health has nothing to show). When they don't all fit (the 900 px minimum, text scale up to 1.3) the bar steps down in `TopBar.axaml.cs`: the ⌘K field folds to its magnifier, then the pill's age drops (the pill's accessible name keeps it), then the brand keeps its mark alone. The pill's word always shows |
+| Top bar (48 px) | Brand; the eight tabs Home · Projects · Workflows · Work · Recipes · Context · Agents · System (counts empty until their routes); the ⌘K field, which opens the palette (U1); the health pill, which opens Health (while Sindri isn't running it is only the state: disabled like the navigation, its word undimmed, since the Not running card is the health state and Health has nothing to show). When they don't all fit (the 1,000 px minimum, text scale up to 1.3) the bar steps down in `TopBar.axaml.cs`: the ⌘K field folds to its magnifier, then the pill's age drops (the pill's accessible name keeps it), then the brand keeps its mark alone. The pill's word always shows |
 | Home panels' bodies | "not served yet", centred in the panel |
 | Home | The page title, three frames (Needs you, Running · With you, Queued), each "not served yet", and the Sindri health strip: the health line (§4.8) over the fields the status carries today (`Running · pid · epoch · API v1 · N services · profile <state>`; "Not running" when it isn't), which opens Health on a click or Enter |
 | Queue, Decisions, Services, Settings | The title and "not served yet"; Settings is the slot `Views/Settings*` fills (⌘, opens it) |
@@ -149,10 +149,10 @@ nothing. Its answer counts only when the follow decided no state while it was in
 stale, and it came from the pid and epoch the follow checked with ping; otherwise it is dropped, so a late answer never
 shows Running over Not running or Unreadable. After three failed refreshes the pill keeps "stale" and a banner under
 the top bar reads "Sindri not responding: run `sindri doctor`" in full, since the sentence doesn't fit the pill at
-900 px. The view models carry no Avalonia types; views bind the app's copy through `ShellText` (compiled bindings
+1,000 px. The view models carry no Avalonia types; views bind the app's copy through `ShellText` (compiled bindings
 resolve public members only, and `Labels` is internal). F6 / Shift+F6 cycle top bar, page and sheet; on macOS ⌘⌥→ / ⌘⌥← do the same (owner decision, 2026-10-12;
 UI spec §8), since with the default "Use F1, F2, etc. keys as standard function keys" off F6 is the Focus key there and
-reaches the app only with fn held (fn+F6 and fn+Shift+F6). Ctrl+F6 isn't bound. The window's minimum is 900 × 600.
+reaches the app only with fn held (fn+F6 and fn+Shift+F6). Ctrl+F6 isn't bound. The window's minimum is 1,000 × 600 (eight tabs fit; `Size.WindowMinWidth` in `Theme/Tokens.axaml` and `UiPreferences.MinWidth`).
 
 **Focus never goes nowhere (§11.2).** When the focused control disappears, focus moves to a neighbour: Refresh keeps
 focus through its in-flight phase and gets it back when the refresh fails; when Sindri answers and Refresh hides, the
@@ -214,7 +214,7 @@ and the person's choice survives a read. The progress strip is one 4 px segment 
 can't open itself (`ApproveProfile`, `ApproveAllRecipes`) is the existing `ProtectedActionButton` with the catalog's command to copy; `ApproveAllRecipes` and the profile's approval row open in the app
 when the shell can; the map shows **Retry** only when it failed, which sends `RefreshContextMap` (`POST /sindri/context/map/refresh`; the client is `ISindriApi.RefreshContextMap`). Retry sends once, the
 row shows Working until the next read, and a 409 `SND-JOB-409` (the running job) shows as already building, not as an error. Fallbacks: a 404 says "Setup isn't available in this build yet."; no answer
-says "Sindri isn't running" with the launcher command and no Start button. Not built here (slices 1, 3, 4): the typed and held confirmations in their rows, the per-agent list, the Onyx form and the
+says "Sindri isn't running" with the launcher command and no Start button. Not built here (slices 1, 3, 4): the typed and held confirmations in their rows, the per-agent list and the
 repo form.
 
 ### LiveSetting on macOS (§11.4, §18.2; U0 spike)
@@ -529,11 +529,11 @@ facts in `Controls/ControlViewModelTests`, and the P3 facts in `SindriApiContrac
 The rev-8 contract unit gives the shell its screens' skeleton and the app its first workflow reads; the pages fill in with
 U3' and U8.
 
-- **Navigation.** The top bar has seven tabs, in order: Home, Workflows, Work, Recipes, Context, Agents, System. Settings is
-  not a tab (⌘, opens it). `PageId` names the eight pages; a page with no screen yet shows a placeholder that says what it
+- **Navigation.** The top bar has eight tabs, in order: Home, Projects, Workflows, Work, Recipes, Context, Agents, System. Settings is
+  not a tab (⌘, opens it). `PageId` names the ten pages (Jobs is reached by G J, the palette and System's link; Projects shows only its heading until its content lands); a page with no screen yet shows a placeholder that says what it
   waits for. The last page is remembered in the preferences.
 - **Chords.** `G`, then a page's key within `ShellViewModel.ChordWait` (1 s): `H` or `N` Home, `D` Home filtered to
-  decisions (`HomeFilter.Decisions`), `W` Workflows, `Q` Work, `R` Recipes, `C` Context, `A` Agents, `.` or `S` System.
+  decisions (`HomeFilter.Decisions`), `P` Projects (link `sindri://projects`), `W` Workflows, `Q` Work, `R` Recipes, `C` Context, `A` Agents, `.` or `S` System.
   They carry no modifier, so they are the same on every platform. The wait is a delay on the shell's clock (no timer
   thread), and a generation says which chord a finished wait belongs to. A chord is gated like the other navigation
   (`IsNavigationEnabled` and `IsChromeVisible`, in `PressKey`), never fires while a text field has focus or an overlay
@@ -623,6 +623,7 @@ message, which names the full path; the path shows shortened (`~/…`) on its ow
 | Services | `services[]` | `heartbeat · every 5s · last run 12:00:05Z` (`not run yet`) |
 | Last event | the newest stream event | `service.heartbeat · 12:00:05Z · #42` |
 | Code index (CI-10b) | `GET /sindri/code-index/status` (`repos[]`: `state`, `commit`, `builtAt`, `layers[]`) | One wrapped line per repo, read on connect and after each event: `repo @ abcdef0, 3 min old, structure ok · graph ok · embeddings pending 31%` (its accessible name starts "Code index: "), and a word at the heading, `ok` or `needs a look`. By state: `missing` "first build queued", `damaged` "damaged, rebuilding on the next check", `stale` "(behind main)", `building`, `waiting` "waiting for a free build slot"; a state the app doesn't know shows as served. A layer reads `ok`, `off`, `pending N%` (from "N of M embedded") or `unavailable (SND-CODEIDX-…)`; clones and deps show only when they need a look. A failed read says "The code index can't be read just now." |
+| Sandbox (SB-6) | `GET /sindri/sandbox/status` (`checkedAt`, `ready`, `blockers[]`, `mechanism`, `groups`, `limits`, `learn[]`) | One row, `Sandbox: ready`, `Sandbox: <the first blocker's sentence>`, `Sandbox: learning, network open for <repo>, ends in <days> days` (a warning), `Sandbox: not checked yet` (`checkedAt` null) or, with Sindri down, a dimmed `Sandbox: unknown`. Read on connect and after each event; the route never probes, Check again does. States in `Golden/Sandbox/states.json` `healthRow` |
 
 **The Context map card (F1P-c, code index spec 6.4).** Up front under the actions, above Details: the eyebrow `CONTEXT MAP`, the state as a glyph and a word at its right, and Sindri's sentences under it. It reads `GET /sindri/context/map/publish` (`ISindriApi.MapPublish`) with the other followed views, on connect and after every event, and shows nothing while the read is refused (no map yet, `SND-CONTEXT-030`).
 
@@ -838,12 +839,33 @@ A read-only sheet for `recipe/<id>[@<hash>]` (`RecipeSheetViewModel`, `Views/Rec
 
 ## Sandbox surfaces (sandbox spec §8; SB-0 goldens, SB-6 views)
 
-The park card with Check again and its resume list, the Sandbox line, the Blocked list with Allow, the waiting state, the limit ending, the
-takeover banner, and the Health and Settings rows are built in SB-6 over goldens that SB-0 pins in `tests/Aw.Sindri.Tests/Golden/Sandbox/`
-(`copy.json`, `states.json`, `accessibility.json`, `doctor.json`, the status lines, the banner). `Aw.Sindri.Ui.Tests` links that directory as
-`Golden/Sandbox`. The vocabulary is "sandbox", "limit" and "blocked"; "scope", "plan", "canary" and "confined" never appear in an owner string.
-The accessibility rows of `accessibility.json` use this page's terms (polite zero-width live `TextBlock`, `KeepFocus`, the region resting on
-its label before a repeat outcome) and each gets a test in SB-6.
+The surfaces are built in SB-6 over goldens that SB-0 pins in `tests/Aw.Sindri.Tests/Golden/Sandbox/` (`copy.json`, `states.json`,
+`accessibility.json`, `doctor.json`, the status lines, the banner). `Aw.Sindri.Ui.Tests` links that directory as `Golden/Sandbox`. The
+vocabulary is "sandbox", "limit" and "blocked"; "scope", "plan", "canary" and "confined" never appear in an owner string. The accessibility
+rows use this page's terms (polite zero-width live `TextBlock`, `KeepFocus`, the region resting on its label before a repeat outcome) and
+each gets a test.
+
+| Surface | Where it sits | States (`states.json`) | Accessibility (`accessibility.json`) |
+|---|---|---|---|
+| Park card | Needs you, a card for a Step parked on a sandbox code | `parkCard`: never checked (`Needs you: Step <x> can't start, <first clause>`), `Checked <age> ago`, `Checked just now` | A focus-region group (`ControlTypeOverride=Group`) with its fix text before its buttons; named by the sentence, never the code; focus goes to its heading when a user action shows it, and to its neighbour after "Ready. Resuming <n> Steps"; severity as a word and an icon |
+| Check again | The park card and the Health row | `checkAgain`: idle, in flight (`Sending…` after 300 ms, a second click does nothing), still failing (`Still blocked: <n> things to fix`, every blocker listed), all clear, resumed, resumed partial | Enter and Space with the 2 px ring; a zero-width polite live `TextBlock` present before its state, its text never set to `""`; focus stays on the button; the region rests on the label before a repeat outcome |
+| Resume list | Under Check again once nothing blocks | `Ready. Resume these <n> Steps?`, Resume and Not now, oldest first, no more than the free session slots; then `Resumed <n> Steps` or `Resumed <n> of <m>: <item> has moved on` | The list is read before the buttons; Resume first; Not now returns focus to Check again |
+| Sandbox line | The Agents sheet | `sandboxLine`: on, attended, details unavailable, status unavailable (dimmed); headroom `memory <used> of <max> GiB` | In the sheet's tab order; wraps; state as a word |
+| Blocked list | The item sheet | `blockedList`: none, some, many (`top 5 of <n>`, See all blocked), host, path, permanent path (no button), tool (no button) | Reads by kind; each fix button reachable |
+| Allow | A Blocked row | `allow`: idle, sending, needs approval, allowed, refused | The button keeps focus through every state; a polite live `TextBlock` says "Sending", then "Needs your approval: open the approval to allow <target>", then "Allowed" or "Refused" |
+| Waiting for a slot | The run's row | `waiting`: `Waiting for a free session slot (<n> of <cap> running)`, then `Started` | A polite zero-width live `TextBlock` present before its state, once; takes no focus; a word, never red |
+| Limit ending | The failure row of a Step | `limitEnding`: memory or time, with or without a kept branch | The whole sentence; in the failure row |
+| Takeover banner | A taken-over sandboxed run | `takeover-banner.txt` | A polite zero-width live `TextBlock`, read once on appearance; takes no focus; dismissible once, back after reattach |
+| Health row | Health page | `healthRow`: ready, blocked, learning (a warning), unknown (dimmed), not checked yet | Row name `Sandbox: <state>`; wraps; state as a word |
+| Settings section | Settings | `settingsSection`: loaded (mechanism, groups, limits, learn mode), learning, details unavailable, status unavailable (dimmed) | Learn mode reads "learning, ends in <days> days" |
+
+**Fixture and mockups.** `scripts/sindri-ui-fixture.sh sandbox <state>` seeds the states. `blocked` and `clear` restart the control plane (after
+`sessions up`) with `AW_SANDBOX_BWRAP=/nonexistent` or with it unset, because `/sindri/sandbox/status` and `/check` need a live answer that ledger rows
+can't fake (`clear` needs a working bubblewrap); `blocked` also starts the agent-run recipe so a Step parks on `SND-LAUNCH-014` (run it twice for two
+parked Steps). `denials`, `denials-many`, `waiting`, `limit-memory`, `limit-wall`, `learning`, `takeover` and `attended` write ledger rows on an
+existing item and instance, as `model-picks` does. The mockups are `sandbox-park.html`, `sandbox-sheet.html` and `sandbox-health.html` in the
+screens mockups folder, with matching entries in `docs/sindri/ui-evidence/screens.json`.
+
 ## U5': the Start form (screens spec §4.2)
 
 `N` on Workflows, the Workflows head's and Home's "Start workflow" buttons (Home's carries no key hint: `N` is Workflows'), Ctrl+N (⌘N) from any page and the palette's "Start workflow" entry open a modal form (`StartDialog`, `StartFormViewModel`). With an item sheet open it starts for that item.
@@ -877,13 +899,21 @@ U9 builds the Context page in stages that run in parallel after U9a0: the lens s
 
 **Tests.** `ContextGoldenTests`, `SindriApiClientContextTests`, the context cases of the API contract (`SindriApiContract.Context.cs`, fake and client), `ContextPageViewModelTests`, `LaneAnchorTests` (unit); `ContextPageWindowTests` (integration, one window).
 
+**Search on the Concepts layer (#1699).** Enter in the anchor box at the concept layer keeps a concept card only when it matches: its name, summary or one of its glossary terms holds the typed text (case-insensitive), or it holds a node the question resolved to (`/sindri/context/query` returned real anchors, located through the whole map's `areas` read). A concept linked to a match is not a match. When the question finds no anchors, its suggested anchors are never matches, on this layer or on the whole map: the typed text is read as one anchor (a label), and the suggestions are offered as choices under "did you mean". No match shows no cards and the no-matches line; Clear search brings every card back. A newer search wins over an older one still in flight, and a background refresh does not redraw the cards while the search is on. Tests: `ConceptSearchTests`, `ContextConceptsTests`, `ContextQuestionTests`; the UI check `tests/ui-checks/concept-search.sh`.
+
+**Pages and actions on a concept's Why drill (#1724, pages spec §3.4, §3.5).** Drilling into the Why band of an open concept shows the Pages and actions section on the right, under the node panel. It lists the concept's pages in the order the concept read's `pages` list gives (owner-named first, then suggested by number of actions), at most 20 until **Show all N** (focus goes to the first newly shown row). Each page shows its marks in words (`Set by a person` or `Suggested`; `Code found` or `No code found yet`, from an `implements` edge into the page or one of its actions), `From the map: GET /schedule/week` for a page that names a map page, and its actions: the name is a link that opens its node panel, then `· on <page> · also in <other concepts> · N decisions · code: <file>`. The section's status line (a polite live region) says `Loading pages…`, the failure line with **Try again** (focus goes to the section head), or the empty line. Accept all suggested, Add several pages and Pick another come in a later phase. Tests: `PagesSectionTests`.
+
+**The page sheet (#1724 P2b-2, pages spec §3.6).** Each suggested row has **Name this page**, each owner row **Edit page**, and the section head **New page** (both sections; hidden when the host wired no `IPageWrites`, `ContextPorts.Pages`). The button opens the shell's one sheet (deep link kind `PageSheet`, `context/page`; the Context page builds the `PageSheetViewModel` and the shell mounts it as `ActivePageSheet`; `PageSheetView`, one column like the pin sheet, with the shell's title and close button): Name (focus starts here), a read-only `From the map: ...` line, then one row per action: a name box, **Remove**, and one check box per concept `Relates to <concept>` (the open concept first, then every concept any action links, in first-seen order; **Relate to another concept** adds a column to every action, unticked), then **Add an action**. `Another page is called <name>` warns, ignoring case, and doesn't block. The button reads **Save and approve** when `IPageWrites.Waiting()` says this page is the only waiting change, else **Save** (also when the profile can't be read); pressing it shows `Saving…`, writes the page (names trimmed, empty action rows dropped) with the hash read at open, and then closes and reads the section again on `Approved`/`Waiting`. A clash (`SND-PROFILE-003`) keeps every field, says `The profile changed since you opened this. Your changes are kept: Save again to apply them on top.` and takes the new hash; a refusal's sentence goes under the field its `index.pages[0].actions[N]...` path names (Name, an action row), else under the buttons; a failed write says `Couldn't save just now. Try again.`. Esc with changes asks `Discard your changes?` (focus on Keep editing; Esc there keeps editing); without changes it closes, and focus returns to the opening button (the section head when the section drew its rows again). **Remove page** (Edit page only, bottom left) asks `Remove the page <name>? ...` with focus on Cancel and Esc cancelling. A row whose page id waits for approval carries the `Waiting for approval` mark; today only an owner page whose key is `...owner-<id>` and a page this session saved can be matched (the section knows keys, not ids). Tests: `PageSheetTests`, `PageSheetViewTests`.
+
+**Pages in no concept (#1724, pages spec §3.4).** The concepts read carries `pagesInNoConcept` (the pages no `expresses` edge reaches, directly or through an action on them), so the Context head shows **Pages in no concept (N)** next to the concept cards without reading the whole map; a count of 0, or a server that leaves it out, hides the link. Pressing it opens the same section (`PagesSectionView`) on the right over the concept cards, headed `Pages in no concept`, and reads `GET /sindri/context/map/whole?detail=nodes&pagesInNoConcept=true`; focus goes to its head. An action's name is plain text there until the action panel comes (no map is drawn under the list). The close button (focus returns to the link) and Esc close it. Tests: `PagesInNoConceptTests` (Ui), `ConceptsPagesInNoConceptTests` (Context).
+
 ## U11a: the Agents page, the session sheet and the tray line
 
 The contract (T0): `GET /sindri/sessions` and `GET /sindri/sessions/{provider}/{id}` (`ISindriApi.Sessions`, `.Session`), the `Api/Sessions` records, the fake and the handler arms, and the `session/<provider>/<id>` deep link.
 
 **Views.** `Views/Agents/AgentsPage` (the head "N live · M asking · K outside a workflow", the provider, state and repo filters, the problem lines, the groups and the "Recently ended" fold), `SessionGroup`, `SessionRow` (chip, provider and title as a button that opens the sheet, where it runs, how long, and the pending Focus with its copy line), `EndedSessionRow` (with the resume command and Copy) and `SessionSheetView` (the 520 px sheet: cwd, host, socket, state history, the pending Focus, and `LivePreviewHost`, the collapsed seam CO-7c fills). Rows are kept by ref across reads, so a refresh moves neither focus nor scroll. Every named line is a Border wrapper, and a row's name is provider, title, state, what it asks and host.
 
-**Routes and codes.** The page reads `GET /sindri/sessions` every 2 s while it is shown and the window is not minimised; the sheet reads `GET /sindri/sessions/{provider}/{id}` and again on every event while open. `SND-SESSION-002` (the collector cannot see sessions on this system) is the page's one line, with no rows and the filters disabled; `SND-SESSION-404` is the sheet's "This session has ended." (the sheet stays open, Focus disabled); `SND-SESSION-001` and `-003` are problem lines above a list that still draws. None of them is a Not responding banner.
+**Routes and codes.** The page reads `GET /sindri/sessions` every 5 s (`AgentsPageViewModel.PollEvery`) while it is shown and the window is not minimised; the sheet reads `GET /sindri/sessions/{provider}/{id}` and again on every event while open. `SND-SESSION-002` (the collector cannot see sessions on this system) is the page's one line, with no rows and the filters disabled; `SND-SESSION-404` is the sheet's "This session has ended." (the sheet stays open, Focus disabled); `SND-SESSION-001` and `-003` are problem lines above a list that still draws. None of them is a Not responding banner.
 
 **Keys.** `G A` opens the page; `J` / `K` walk the rows; Enter or the title opens the sheet and Esc returns focus to the row that opened it; `O` moves focus to the row's copy line; `Y` copies it (an ended row's resume command); `E` opens or closes the fold.
 

@@ -73,14 +73,15 @@ APP_WRAPPER_PID=$!
 drv ready --wait-ms 120000 >/dev/null 2>&1 || setup_fail "the app's driver never answered (see $OUT/app.log)"
 drv window --width 1400 --height 1000 >/dev/null 2>&1 || setup_fail "could not size the window"
 
-# 3. Workflows page, List view -> the line run's page (its row's title button is named "Open <instance>, <workflow>").
+# 3. Workflows page, List view -> the line run's page (its row's title button is named "Open <instance>, <workflow>"; a visible one: the
+#    search also returns the buttons of pages that are not shown, such as a Needs-you row's "Open <title> <item>" on Home).
 drv click --type ListBoxItem --name Workflows >"$OUT/nav.log" 2>&1 || setup_fail "no Workflows nav item (see $OUT/nav.log)"
 # The page opens on the Board, where a run is a card; the List view's row has the "Open <instance>, <workflow>" button.
 drv click --type ListBoxItem --name List >"$OUT/list.log" 2>&1 || setup_fail "no List view toggle on the Workflows page (see $OUT/list.log)"
 open_name=""
 for _ in $(seq 1 60); do
   drv search --type Button --limit 500 >"$OUT/workflows-tree.json" 2>/dev/null
-  open_name="$(jq -r '[.. | objects | select((.type // "") == "Button") | .name // empty | select(startswith("Open "))] | first // empty' "$OUT/workflows-tree.json")"
+  open_name="$(jq -r '[.. | objects | select((.type // "") == "Button" and (.visible // false)) | .name // empty | select(startswith("Open ") and contains(", "))] | first // empty' "$OUT/workflows-tree.json")"
   [ -n "$open_name" ] && break
   sleep 1
 done
@@ -125,8 +126,10 @@ if [ -z "$shown" ]; then
   loading="$(jq -r '[.. | objects | select(((.text // "") | contains("Reading the map")) or ((.name // "") | contains("Reading the map")))] | length' "$OUT/context-tree.json")"
   fail "See its context left the Context page without item $item: head \"$head_text\", $loading \"Reading the map\" rows; nothing says which item or that it has no scope"
 fi
+# The loading text stays in the tree, hidden, once the map is drawn: wait until no match is visible (notVisible), never for none
+# to exist (gone), which can't happen (#1562).
 if jq -e '[.. | objects | select(((.text // "") | contains("Reading the map")) or ((.name // "") | contains("Reading the map")))] | length > 0' "$OUT/context-tree.json" >/dev/null 2>&1; then
-  drv wait-for --type TextBlock --contains "Reading the map" --state gone --wait-ms 30000 >/dev/null 2>&1 \
+  drv wait-for --type TextBlock --contains "Reading the map" --state notVisible --wait-ms 30000 >/dev/null 2>&1 \
     || fail "the Context page for $item is stuck on \"Reading the map…\""
 fi
 

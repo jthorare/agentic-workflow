@@ -4,6 +4,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using Aw.Sindri.Ui.Platform;
 using Aw.Sindri.Ui.ViewModels.Shell;
 using Aw.Sindri.Ui.Views.Layout;
@@ -50,6 +51,22 @@ internal sealed partial class ShellWindow : Window
     private Border SheetPanel => this.Get<Border>("Sheet");
 
     private Border PagePanel => this.Get<Border>("Page");
+
+    // A page or dialog built on first show (Deferred) is named in its template's scope, not the window's, so it is found in the visual tree.
+    // One that is shown but not yet measured is built by a layout pass first; null when it is not shown.
+    private T? Built<T>(string name) where T : Control
+    {
+        if (BuiltOrNull<T>(name) is { } built)
+        {
+            return built;
+        }
+
+        UpdateLayout();
+        return BuiltOrNull<T>(name);
+    }
+
+    private T? BuiltOrNull<T>(string name) where T : Control =>
+        this.GetVisualDescendants().OfType<T>().FirstOrDefault(c => string.Equals(c.Name, name, StringComparison.Ordinal));
 
     /// <inheritdoc />
     protected override void OnOpened(EventArgs e)

@@ -296,4 +296,5 @@ internal partial interface ISindriApi
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The accepted command, SND-JOB-404/409 or SND-AUTH-002 as served, or SND-UI-002/003.</returns>
     public Task<Result<CommandAcceptedView>> CancelJob(Uri api, string id, CancellationToken cancellationToken);
+
 }

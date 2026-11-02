@@ -24,6 +24,9 @@
   <Style Selector="icons|StateIcon:down">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Error}" />
   </Style>
+  <Style Selector="icons|StateIcon:warn">
+    <Setter Property="Foreground" Value="{DynamicResource Brush.Attention}" />
+  </Style>
   <!-- The brand mark (§3.2 "◆ Sindri"): filled in the accent; decorative, the name beside it is read. -->
   <Style Selector="icons|StateIcon.brand">
     <Setter Property="Foreground" Value="{DynamicResource Brush.Primary}" />

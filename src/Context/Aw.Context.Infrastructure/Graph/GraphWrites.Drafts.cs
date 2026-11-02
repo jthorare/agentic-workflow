@@ -13,7 +13,7 @@ internal sealed partial class GraphWrites
     {
         if (map.Heads is { } heads)
         {
-            return heads.Select(h => new SqlStatement(GraphSql.InsertHead, c => c.Bind("$v", version).Bind("$repo", h.Repo.Value).Bind("$commit", h.Commit).Bind("$onDefault", h.OnDefault ? 1L : 0L)));
+            return heads.Select(h => new SqlStatement(GraphSql.InsertHead, c => c.Bind("$v", version).Bind("$repo", h.Repo.Value).Bind("$commit", h.Commit).Bind("$onDefault", h.OnDefault ? 1L : 0L).Bind("$indexCommit", h.IndexCommit)));
         }
 
         if (replacing is { } source)
@@ -22,7 +22,7 @@ internal sealed partial class GraphWrites
         }
 
         return !draft && map.Commit is { } commit && MapHead.IsCommit(commit)
-            ? [new SqlStatement(GraphSql.InsertHead, c => c.Bind("$v", version).Bind("$repo", map.Repo.Value).Bind("$commit", commit).Bind("$onDefault", 1L))]
+            ? [new SqlStatement(GraphSql.InsertHead, c => c.Bind("$v", version).Bind("$repo", map.Repo.Value).Bind("$commit", commit).Bind("$onDefault", 1L).Bind("$indexCommit", (string?)null))]
             : [];
     }
 

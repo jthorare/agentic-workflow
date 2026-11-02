@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <!-- Aw.Context.Testing (stage S-FX): the split-panes fixture app with its recorded Linear and Onyx sources, the
-       builder that makes the app a git repo with merged-PR history, the probe file, and fake Linear (GraphQL) and
-       Onyx (HTTP) servers that replay the recordings on loopback (spec 2026-10-10 §10). Test support: only *.Tests
+  <!-- Aw.Context.Testing (stage S-FX): the split-panes fixture app with its recorded Linear source, the
+       builder that makes the app a git repo with merged-PR history, the probe file, and fake Linear (GraphQL)
+       server that replays the recordings on loopback (spec 2026-10-10 §10). Test support: only *.Tests
        and *.Testing projects reference it. S-1A added Engine/: one fake and one contract base per Context
        port (FakeContextEngine, FakeContextSource, FakeDocIndex, FakeScrubber, FixedSourceCatalog, FakeChangeFeed,
        FakeModelPort; ContextEngineContract, ContextSourceContract, DocIndexContract, ScrubberContract,

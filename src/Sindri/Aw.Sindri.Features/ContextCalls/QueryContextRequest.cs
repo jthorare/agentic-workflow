@@ -16,4 +16,8 @@ namespace Aw.Sindri.Features.ContextCalls;
 /// <param name="MapVersion">A retained map version to read the graph as of, or null for the current one; not valid with <paramref name="Draft"/>.</param>
 /// <param name="Hops">A comma list of state, flow, dependency and component for the cascade, or null for the first three (anything else is SND-CONTEXT-140).</param>
 public sealed record QueryContextRequest(string? Q, string? Node = null, string? Item = null, string? Symbol = null, string? Depth = null,
-    string? Budget = null, bool Draft = false, string? Diff = null, string? Repo = null, string? MapVersion = null, string? Hops = null) : IQuery<ContextResult>;
+    string? Budget = null, bool Draft = false, string? Diff = null, string? Repo = null, string? MapVersion = null, string? Hops = null) : IQuery<ContextResult>
+{
+    /// <summary>A pin id (or 'concept:&lt;id&gt;') to answer inside, or null; any shape, and with <see cref="Repo"/>.</summary>
+    public string? Concept { get; init; }
+}

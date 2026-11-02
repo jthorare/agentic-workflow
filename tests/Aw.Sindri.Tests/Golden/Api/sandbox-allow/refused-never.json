@@ -1,0 +1,7 @@
+{
+  "type": "https://tools.ietf.org/html/rfc9110#section-15.5.10",
+  "title": "SND-SANDBOX-001",
+  "status": 409,
+  "detail": "/var/run/docker.sock is never allowed: it would give the agent full control of this machine.",
+  "traceId": "<trace>"
+}

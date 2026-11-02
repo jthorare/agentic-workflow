@@ -29,6 +29,7 @@ public sealed class ContextMapRefreshServiceTests
     private readonly HeadsEngineProxy _engine = HeadsEngineProxy.Create();
     private Core.Lease.LeaseGrant? _grant;
     private int _next;
+    private int _relinked;
 
     public ContextMapRefreshServiceTests()
     {
@@ -46,7 +47,7 @@ public sealed class ContextMapRefreshServiceTests
         var loaded = SliceHarness.Profile("5s");
         loaded = loaded with { Profile = loaded.Profile with { Context = context ? JsonDocument.Parse("""{"docs":{"globs":["docs/**/*.md"]}}""").RootElement.Clone() : null } };
         _ = await _h.Profiles.Save(loaded, Ct);
-        return new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish), _h.Clock, new CapturingLogger());
+        return new ContextMapRefreshService(new ContextScopes(_h.Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
     }
 
     private void Job(JobState state, TimeSpan endedAgo, params (string Repo, string Sha)[] heads)
@@ -74,14 +75,21 @@ public sealed class ContextMapRefreshServiceTests
             code ?? (state == JobState.Failed ? "SND-CONTEXT-046" : null), Result: null, CancelledBy: null, Sequence: _next));
     }
 
-    private void Held(int version, TimeSpan since, int? latestDraft = null, int? current = 1, params (string Repo, string Sha)[] heads)
+    private void Held(int version, TimeSpan since, int? latestDraft = null, int? current = 1, bool builtWithIndex = true, params (string Repo, string Sha)[] heads)
     {
         var mapped = heads.Length == 0 ? [("a", "1")] : heads;
-        _engine.State = new MapPublishState(new MapHold(version, _now - since, [.. mapped.Select(static h => new MapHead(ContextRepoName.From(h.Repo), h.Sha, OnDefault: true))]), latestDraft ?? version, current, CurrentHeads: []);
+        _engine.State = new MapPublishState(new MapHold(version, _now - since, [.. mapped.Select(h => new MapHead(ContextRepoName.From(h.Repo), h.Sha, OnDefault: true) { IndexCommit = builtWithIndex ? h.Sha : null })]), latestDraft ?? version, current, CurrentHeads: []);
     }
 
     private async Task<Result<ScheduledResult>> Run(ContextMapRefreshService service)
     {
+        if (_engine.State.Current is { } current && _relinked != current)
+        {
+            // the records are already linked for the map a tick reads (no pins): the relink step has nothing to say in these tests
+            RelinkRig.Put(_jobs, _h, _now, JobState.Succeeded, TimeSpan.FromHours(2), RelinkRig.NoPinsHash, current, sequence: 1000 + current);
+            _relinked = current;
+        }
+
         _grant ??= await _h.HoldLease();
         using var caller = _h.Callers.EnterService("context-map-refresh");
         return await service.Run(new ScheduledRun(_grant, _now), Ct);
@@ -244,7 +252,7 @@ public sealed class ContextMapRefreshServiceTests
         Assert.True((await Run(await Service(context: false))).Value.Idle);
         _engine.Heads = [Head("a", "1", onDefault: false)];
         Assert.True((await Run(await Service())).Value.Idle);
-        var unapproved = new ContextMapRefreshService(new ContextScopes(new SliceHarness().Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish), _h.Clock, new CapturingLogger());
+        var unapproved = new ContextMapRefreshService(new ContextScopes(new SliceHarness().Profiles, _h.Callers), _engine.Proxy, _jobs, _outlooks, new MapJobStarts(_start, _publish, new RelinkStarter(_h)), _h.Clock, new CapturingLogger());
         Assert.True((await Run(unapproved)).Value.Idle);
         Assert.Empty(_start.Requests);
     }
@@ -288,6 +296,35 @@ public sealed class ContextMapRefreshServiceTests
         Assert.False(result.Value.Idle);
         Assert.Equal(["service:context-map-refresh"], _publish.Actors);
         Assert.Empty(_start.Requests);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_hold_built_before_its_code_index_starts_a_refresh_and_no_publish_once_the_index_is_in()
+    {
+        Held(14, TimeSpan.FromMinutes(2), builtWithIndex: false);
+        _outlooks.All = IndexOutlook.Built;
+        _engine.Heads = [Head("a", "1")];
+
+        var result = await Run(await Service());
+
+        Assert.False(result.Value.Idle);
+        Assert.Contains("built before the code index of a", result.Value.Summary, StringComparison.Ordinal);
+        Assert.Equal(["service:context-map-refresh"], _start.Actors);
+        Assert.Empty(_publish.Actors);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_hold_built_before_its_code_index_waits_for_the_refresh_that_is_already_running()
+    {
+        Held(14, TimeSpan.FromMinutes(2), builtWithIndex: false);
+        _outlooks.All = IndexOutlook.Built;
+        _engine.Heads = [Head("a", "1")];
+        Job(JobState.Running, TimeSpan.Zero);
+
+        _ = await Run(await Service());
+
+        Assert.Empty(_start.Requests);
+        Assert.Empty(_publish.Actors);
     }
 
     [Fact, Trait("Lane", "unit")]

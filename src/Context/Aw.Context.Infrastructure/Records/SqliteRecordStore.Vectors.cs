@@ -1,6 +1,6 @@
 using Aw.Context.Core.Records;
-using Aw.Kernel;
 using Aw.Context.Infrastructure.Store;
+using Aw.Kernel;
 using Aw.Kernel.Data;
 
 namespace Aw.Context.Infrastructure.Records;
@@ -54,6 +54,25 @@ internal sealed partial class SqliteRecordStore
         {
             var statement = new SqlStatement(RecordSql.ReadVectors, c => c.Bind("@space", RecordWire.Of(space)).Bind("@after", afterSeq).Bind("@limit", limit));
             var rows = await SqliteQueries.List(session, statement, RecordMappers.Vector(space), cancellationToken).ConfigureAwait(false);
+            return rows.IsError ? ContextDatabase.Translate(rows.Error) : rows;
+        }
+    }
+
+    public async ValueTask<Result<IReadOnlyList<ChunkToEmbed>>> ChunksToEmbed(string model, int limit, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(model);
+        ArgumentOutOfRangeException.ThrowIfLessThan(limit, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(limit, 10_000);
+        var read = await BeginRead(cancellationToken).ConfigureAwait(false);
+        if (read.IsError || read.Value is not { } session)
+        {
+            return read.IsError ? read.Error : Results.Success<IReadOnlyList<ChunkToEmbed>>([]);
+        }
+
+        await using (session.ConfigureAwait(false))
+        {
+            var statement = new SqlStatement(RecordSql.ChunksToEmbed, c => c.Bind("@model", model).Bind("@limit", limit));
+            var rows = await SqliteQueries.List(session, statement, RecordMappers.ToEmbed, cancellationToken).ConfigureAwait(false);
             return rows.IsError ? ContextDatabase.Translate(rows.Error) : rows;
         }
     }

@@ -3,6 +3,7 @@ using System.Text;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Pages;
 using Aw.Context.Core.Results;
 using Aw.Sindri.Core.Decisions;
 using Aw.Sindri.Core.Items.Vocabulary;
@@ -12,9 +13,11 @@ using Aw.Sindri.Features.FileRequest;
 using Aw.Sindri.Features.GetItem;
 using Aw.Sindri.Features.GetItemTimeline;
 using Aw.Sindri.Features.GetJob;
+using Aw.Sindri.Features.GetProject;
 using Aw.Sindri.Features.GetQueue;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.ListDecisions;
+using Aw.Sindri.Features.ListProjects;
 using Aw.Sindri.Host.Text;
 
 namespace Aw.Sindri.Host.Mcp;
@@ -103,6 +106,21 @@ internal static class McpSummaries
         return text.Append("The concepts, their names and summaries fenced as untrusted, are in structuredContent.").ToString();
     }
 
+    /// <summary>context_pages' summary: the slice's page ids with their marks and counts, and whether more follow; never a name.</summary>
+    /// <param name="view">The slice.</param>
+    /// <returns>The text.</returns>
+    internal static string Pages(PagesView view)
+    {
+        var text = new StringBuilder(string.Create(CultureInfo.InvariantCulture, $"{view.Pages.Count} of {view.Total} pages · map {view.MapVersion}\n"));
+        foreach (var page in view.Pages)
+        {
+            _ = text.AppendLine(string.Create(CultureInfo.InvariantCulture, $"{page.Id.Value}: {page.Mark}, {page.Actions.Count} actions, {(page.Code ? "code found" : "no code found")}"));
+        }
+
+        _ = text.AppendLine(view.Truncated ? "more pages follow (pass offset)" : "last slice");
+        return text.Append("The pages and their actions, their names fenced as untrusted, are in structuredContent.").ToString();
+    }
+
     /// <summary>context_node's summary: the key, the map version and the edge counts; never a label.</summary>
     /// <param name="view">The node.</param>
     /// <returns>The text.</returns>
@@ -123,6 +141,8 @@ internal static class McpSummaries
     internal static string Sources(SourcesView view, string build, int port) =>
         string.Create(CultureInfo.InvariantCulture, $"sindri {build}, port {port}\n") + ContextText.Render(view);
 
+    private const string FencedProjects = "Names, descriptions and lead names from Linear are untrusted and fenced in structuredContent.";
+
     private const string Fenced = "Text from items, requests and agents is untrusted and fenced in structuredContent.";
 
     /// <summary>sindri_status' summary: which build and port answered, then the words for health and views.</summary>
@@ -142,6 +162,18 @@ internal static class McpSummaries
         var total = queue.Groups.Sum(g => g.Items.Count);
         return string.Create(CultureInfo.InvariantCulture, $"{total} open items{(groups.Count == 0 ? string.Empty : ": " + string.Join(", ", groups))}\n{Fenced}");
     }
+
+    /// <summary>sindri_projects' summary for the page: the open, finished and hidden counts; never a name.</summary>
+    /// <param name="page">The page.</param>
+    /// <returns>The text.</returns>
+    internal static string Projects(ListProjectsResponse page) => string.Create(CultureInfo.InvariantCulture,
+        $"{page.Projects.Count} projects, {page.Finished.Count} finished, {page.Hidden.Count} hidden\n{FencedProjects}");
+
+    /// <summary>sindri_projects' summary for one project: its origin, state and whether it is hidden; never a name.</summary>
+    /// <param name="project">The project.</param>
+    /// <returns>The text.</returns>
+    internal static string Project(GetProjectResponse project) =>
+        $"1 project: {project.Project.Origin.ToString().ToLowerInvariant()}, {project.Project.State?.ToString().ToLowerInvariant() ?? "no state"}{(project.Hidden ? ", hidden" : string.Empty)}\n{FencedProjects}";
 
     /// <summary>sindri_item's summary: id, state, repo, version, what it waits on and the actions open to a person.</summary>
     /// <param name="item">The item.</param>

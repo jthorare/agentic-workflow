@@ -5,7 +5,6 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Sandbox.Plan;
 
-#pragma warning disable MA0182 // until the sandbox launcher (SB-5a) starts it
 namespace Aw.Sindri.Infrastructure.Sandbox;
 
 /// <summary>
@@ -17,6 +16,12 @@ internal static class EgressInit
 {
     /// <summary>Where the net directory is bound inside the sandbox.</summary>
     public const string InsideDirectory = "/run/sindri/net";
+
+    /// <summary>Where both forwarders append their output inside the sandbox: its private /tmp, so connection resets never reach the pane.</summary>
+    public const string InsideLog = "/tmp/sindri-net.log";
+
+    /// <summary>The init's $0 when it runs as <c lang="sh">sh -c</c>.</summary>
+    public const string Name = "sindri-init";
 
     /// <summary>The loopback names the proxy must never see.</summary>
     public const string NoProxy = "127.0.0.1,localhost,::1";
@@ -78,4 +83,3 @@ internal static class EgressInit
 
     private static string Quote(string text) => "'" + text.Replace("'", "'\\''", StringComparison.Ordinal) + "'";
 }
-#pragma warning restore MA0182

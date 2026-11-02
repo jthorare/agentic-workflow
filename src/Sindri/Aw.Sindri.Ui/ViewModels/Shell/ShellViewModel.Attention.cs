@@ -89,7 +89,7 @@ internal sealed partial class ShellViewModel
     private string? Observe()
     {
         var before = _announcer.Announcements;
-        Attention = AttentionSummary.For(_needsYou, State, _clock.GetUtcNow(), Health.Sessions);
+        Attention = AttentionSummary.For(_needsYou, State, _clock.GetUtcNow(), Health.Sessions, _needsYou?.Rows.Count(ShownOnHome));
         _announcer.Observe(Attention.Badge, AttentionSummary.IsCounted(State));
         Changed(nameof(Attention), nameof(WindowTitle));
         return _announcer.Announcements != before ? _announcer.Line : null;

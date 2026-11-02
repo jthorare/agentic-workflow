@@ -37,7 +37,7 @@ public sealed class StripAnswerDeskServedTests
         row["id"] = instanceId;
         list["instances"] = new JsonArray(row);
         _server.InstancesBody = new RouteAnswer(HttpStatusCode.OK, list.ToJsonString());
-        _server.InstanceBody = _ => new RouteAnswer(HttpStatusCode.OK, GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"));
+        _server.ServeDeskWithoutRequiredOutput();
         _records.Write(A.Record());
         var shell = new ShellViewModel(_records, _server, _clock, new Preferences(new InMemoryPreferencesStore()), new FakeClipboard());
         await shell.Restore(Token);

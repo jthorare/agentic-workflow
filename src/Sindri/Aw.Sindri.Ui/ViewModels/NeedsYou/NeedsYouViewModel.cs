@@ -89,8 +89,8 @@ internal sealed partial class NeedsYouViewModel : ObservableObject
     /// <summary>True while a stalled or rebuilding banner shows.</summary>
     internal bool HasBanner => _feed.Stalled || _feed.Rebuilding;
 
-    /// <summary>The banner's served sentence; empty without a banner.</summary>
-    internal string Banner => HasBanner ? _feed.Sentence : "";
+    /// <summary>The banner's words: the served sentence while rebuilding; while stalled only a note that the rows are the last read (the shell's banner says why, once); empty without a banner.</summary>
+    internal string Banner => !HasBanner ? "" : _feed.Stalled ? Labels.RowsStaleNote : _feed.Sentence;
 
     /// <summary>The row whose sheet is open; null for none.</summary>
     internal NeedsYouRowViewModel? SheetRow => SheetRowId is { } id ? Seen.Rows.FirstOrDefault(r => string.Equals(r.Id, id, StringComparison.Ordinal)) : null;

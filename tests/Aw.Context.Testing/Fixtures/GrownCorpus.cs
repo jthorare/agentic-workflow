@@ -5,7 +5,7 @@ namespace Aw.Context.Testing.Fixtures;
 
 /// <summary>
 /// The split-panes history grown to enough pull requests for the backtest's 30-sample branch (S-7A): the five recorded pull requests replayed as templates
-/// under synthetic keys SPL-201 and up, with deterministic dates (so the shas are pinned like <see cref="FixtureRepo.Head"/>) and matching synthetic Onyx
+/// under synthetic keys SPL-201 and up, with deterministic dates (so the shas are pinned like <see cref="FixtureRepo.Head"/>) and matching synthetic recorded
 /// issues. Everything is made up.
 /// </summary>
 public sealed class GrownCorpus : IDisposable
@@ -22,7 +22,7 @@ public sealed class GrownCorpus : IDisposable
     /// <summary>The git repo (the initial commit and one merge per pull request).</summary>
     public FixtureRepo Repo { get; }
 
-    /// <summary>The Onyx issues, one per pull request, each edited after its merge (so each brief is leaky).</summary>
+    /// <summary>The recorded issues, one per pull request, each edited after its merge (so each brief is leaky).</summary>
     public IReadOnlyList<SyntheticIssue> Issues { get; }
 
     /// <summary>Builds the corpus.</summary>
@@ -59,7 +59,7 @@ public sealed class GrownCorpus : IDisposable
     // The template pull request's own brief wording, from the recorded issue of its key, so the grown briefs read like the recorded ones.
     private static IReadOnlyList<string> BriefFor(FixturePullRequest template)
     {
-        var node = System.Text.Json.Nodes.JsonNode.Parse(SplitPanesFixture.ReadText("onyx/documents.json"));
+        var node = System.Text.Json.Nodes.JsonNode.Parse(SplitPanesFixture.ReadText("recorded/documents.json"));
         var entry = node?["documents"]?.AsArray().OfType<System.Text.Json.Nodes.JsonObject>().First(d => ((string?)d["search_doc"]?["semantic_identifier"] ?? string.Empty).Contains(template.IssueKey, StringComparison.Ordinal));
         return [.. (entry?["chunks"]?.AsArray() ?? []).Select(c => (string?)c ?? string.Empty)];
     }

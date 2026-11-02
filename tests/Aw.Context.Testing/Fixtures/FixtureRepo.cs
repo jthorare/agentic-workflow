@@ -8,6 +8,8 @@ namespace Aw.Context.Testing.Fixtures;
 /// </summary>
 public sealed class FixtureRepo : IDisposable
 {
+    private const string RepoFolder = "split-panes";
+
     private readonly string _root;
 
     private FixtureRepo(string root, string path, string head, IReadOnlyList<MergedPullRequest> pullRequests)
@@ -33,7 +35,23 @@ public sealed class FixtureRepo : IDisposable
     /// directory when null.
     /// </param>
     /// <returns>The built repo.</returns>
-    public static FixtureRepo Build(string? parentDirectory = null) => BuildFrom(parentDirectory, SplitPanesFixture.History, varied: false);
+    public static FixtureRepo Build(string? parentDirectory = null)
+    {
+        var root = parentDirectory is null
+            ? Directory.CreateTempSubdirectory("aw-split-panes-").FullName
+            : NewFolder(System.IO.Path.Combine(parentDirectory, "aw-split-panes"));
+        try
+        {
+            // the history is fixed, so every copy has the template's shas
+            var template = RepoTemplate.Copy("split-panes", "split-panes-", root, templateRoot => Create(templateRoot, SplitPanesFixture.History, varied: false));
+            return new FixtureRepo(root, System.IO.Path.Combine(root, RepoFolder), template.Head, template.PullRequests);
+        }
+        catch
+        {
+            TryDelete(root);
+            throw;
+        }
+    }
 
     /// <summary>Builds a repo from <paramref name="history"/>. A <paramref name="varied"/> history may reuse a template folder for several pull requests: each reuse appends a marker line to its text files, so every merge changes something.</summary>
     /// <param name="parentDirectory">Where to build, or null for a temp folder.</param>
@@ -90,7 +108,7 @@ public sealed class FixtureRepo : IDisposable
 
     private static FixtureRepo Create(string root, FixtureHistory history, bool varied)
     {
-        var path = Directory.CreateDirectory(System.IO.Path.Combine(root, "split-panes")).FullName;
+        var path = Directory.CreateDirectory(System.IO.Path.Combine(root, RepoFolder)).FullName;
         var emptyConfig = System.IO.Path.Combine(root, "gitconfig");
         File.WriteAllText(emptyConfig, "");
         var git = new GitRunner(path, emptyConfig, history.Author);

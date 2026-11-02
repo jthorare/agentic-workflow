@@ -9,7 +9,7 @@ namespace Aw.Sindri.Infrastructure.Sandbox;
 
 /// <summary>
 /// The Linux sandbox (sandbox spec §3.1, §4, SB12): a plan from the pure builder, turned into a bubblewrap command line, and proven inside the real thing by the canaries.
-/// The cgroup scope (SB-3a) and the network forwarders (SB-4a) wrap and join it later; this adapter is the mount stack, the environment and the self-check.
+/// The cgroup scope (SB-3a) wraps it later; this adapter is the mount stack, the environment, the inside init that starts the network forwarders (SB-4a) and the self-check.
 /// </summary>
 /// <param name="options">The programs and the time the self-check may take.</param>
 /// <param name="processes">Runs the helper programs.</param>
@@ -71,7 +71,9 @@ internal sealed class BubblewrapSandbox(BubblewrapOptions options, ISandboxProce
     public Result<IReadOnlyList<string>> Wrap(SandboxPlan plan, IReadOnlyList<string> argv)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        return WrapWith(plan, argv, secrets.For(plan.Launch), prepare: true);
+        ArgumentNullException.ThrowIfNull(argv);
+        IReadOnlyList<string> init = ["/bin/sh", "-c", EgressInit.Render(plan.Network, options.Socat, EgressInit.InsideLog), EgressInit.Name, .. argv];   // the agent reaches Sindri and the proxy only through the inside forwarders (§3.2)
+        return WrapWith(plan, init, secrets.For(plan.Launch), prepare: true);
     }
 
     /// <inheritdoc />

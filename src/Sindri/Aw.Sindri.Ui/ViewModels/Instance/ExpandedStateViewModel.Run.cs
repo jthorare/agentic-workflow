@@ -139,6 +139,8 @@ internal sealed partial class ExpandedStateViewModel
         OnChanged(nameof(SessionLinkName));
         LaunchLine = HasRun ? (read.Launch is { } launch ? RunWords.LaunchLine(launch) : Labels.LaunchUnreadable) : string.Empty;
         OnChanged(nameof(HasLaunchLine));
+        _sandboxedRun = read.Launch?.Sandbox is not null;
+        DrawBanner();
         RunEvents = RunWords.EventLines(read.Events);
         OnChanged(nameof(HasRunEvents));
         Attach?.Update(AttachFor(_address));

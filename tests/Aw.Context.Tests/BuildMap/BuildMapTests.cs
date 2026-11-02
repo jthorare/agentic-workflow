@@ -167,7 +167,7 @@ public sealed class BuildMapTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Labeling_turned_on_with_no_labeler_set_up_passes_with_a_note_naming_the_fix()
     {
-        var labels = await new DisabledLabeler().Label([Cluster("a.ts")], [], 400_000, MapWorld.None);
+        var labels = await new DisabledLabeler().Label([Cluster("a.ts")], [], 400_000, options: null, MapWorld.None);
 
         Assert.True(labels.IsSuccess);
         Assert.Contains(LabelPass.NoModelFix, labels.Value.Unavailable, StringComparison.Ordinal);

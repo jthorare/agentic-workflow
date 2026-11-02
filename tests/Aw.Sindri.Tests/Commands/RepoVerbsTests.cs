@@ -122,6 +122,28 @@ public sealed class RepoVerbsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Onboard_prints_the_sandbox_blockers_one_line_per_offered_entry_and_the_snippet_to_paste()
+    {
+        var result = JsonDocument.Parse(
+            "{\"repo\":\"demo\",\"hooks\":\"hooked\",\"blockers\":[{\"code\":\"SND-LAUNCH-014\",\"reason\":\"no-bubblewrap\",\"source\":null,\"text\":\"bubblewrap is missing\",\"command\":\"sudo apt install bubblewrap\",\"state\":null}],"
+            + "\"offered\":[\"Python (pyproject.toml): hosts pypi.org, files.pythonhosted.org; cache paths .cache/pip\"],\"snippet\":\"sandbox:\\n  repos:\\n    demo:\\n      hosts: [pypi.org, files.pythonhosted.org]\\n\"}").RootElement.Clone();
+        var api = new JobApi().Ok("POST", "/sindri/setup/repos/onboard", Body(Started)).Ok("GET", "/sindri/jobs/" + Id, View(JobState.Succeeded, rounds: 2, summary: "onboarded demo", result: result));
+        var verbs = new RepoVerbs(Client(api), _rig.Output(), _rig.Follower(api));
+        var run = Task.Run(() => verbs.Run(["onboard", "/work/demo"], _rig.Interrupted, _rig.Again), Token);
+        await api.Until(() => api.Streams == 1);
+
+        await api.Frame(12, "job.finished", Finished("succeeded", "onboarded demo"));
+
+        Assert.Equal(0, await Finished(run));
+        var text = _rig.Out.ToString().ReplaceLineEndings("\n");
+        Assert.Contains("onboarded demo; hooked\n", text, StringComparison.Ordinal);
+        Assert.Contains("sandbox   bubblewrap is missing\n", text, StringComparison.Ordinal);
+        Assert.Contains("          sudo apt install bubblewrap\n", text, StringComparison.Ordinal);
+        Assert.Contains("offered   Python (pyproject.toml): hosts pypi.org, files.pythonhosted.org; cache paths .cache/pip\n", text, StringComparison.Ordinal);
+        Assert.Contains("Paste this into your profile and approve it (onboarding never edits the profile):\nsandbox:\n  repos:\n    demo:\n      hosts: [pypi.org, files.pythonhosted.org]\n", text, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task A_relative_path_is_made_absolute_from_the_working_directory()
     {
         var api = new ScriptedApi((HttpStatusCode.OK, StartedBody));

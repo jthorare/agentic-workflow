@@ -88,7 +88,7 @@ public sealed class FakeGitHubReader : IGitHubReader
     }
 
     /// <inheritdoc />
-    public ValueTask<Result<GitHubPullPage>> Issues(string repo, GitHubCursor after, int limit, CancellationToken cancellationToken)
+    public ValueTask<Result<GitHubPullPage>> Issues(string repo, GitHubCursor after, int limit, DateTimeOffset? before, CancellationToken cancellationToken)
     {
         _calls.Add((repo, after, limit));
         if (_failure is not null)
@@ -97,7 +97,7 @@ public sealed class FakeGitHubReader : IGitHubReader
         }
 
         var all = (_issues.TryGetValue(repo, out var list) ? list : [])
-            .Where(after.Admits)
+            .Where(i => after.Admits(i) && (before is not { } end || i.UpdatedAt < end))
             .OrderBy(static i => i.UpdatedAt)
             .ThenBy(static i => i.Id)
             .ToList();

@@ -6,6 +6,9 @@ internal enum PageId
     /// <summary>Needs you, Running and With you, Queued, and the health strip (the default).</summary>
     Home,
 
+    /// <summary>The projects Sindri's work belongs to (Projects page spec §7). A tab, second after Home; G P and 'projects' open it.</summary>
+    Projects,
+
     /// <summary>Open root instances grouped by recipe, and the instance frame (screens spec §4.2).</summary>
     Workflows,
 

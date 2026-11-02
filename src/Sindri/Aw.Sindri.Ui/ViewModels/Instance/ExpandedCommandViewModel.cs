@@ -6,8 +6,8 @@ using Aw.Sindri.Ui.ViewModels.Controls;
 namespace Aw.Sindri.Ui.ViewModels.Instance;
 
 /// <summary>
-/// One command the engine lists for the state. The app sends Cancel and Take over; each other one shows the CLI the
-/// engine served with a Copy, and a protected one is the lock button with its popover. A CLI line that holds a control
+/// One command the engine lists for the state. Cancel, Hand back and Complete are sent by the app; the others show the CLI the
+/// engine served with a Copy (their send is U8b), and a protected one is the lock button with its popover. A CLI line that holds a control
 /// or bidi character is not shown.
 /// </summary>
 internal sealed class ExpandedCommandViewModel : ObservableObject
@@ -18,7 +18,8 @@ internal sealed class ExpandedCommandViewModel : ObservableObject
         // Each answer variant is its own entry (answer-accept, answer-reject, ...), named by its own action id rather than the status line's kind.
         Label = command.Verb == StatusVerb.Answer && Labels.HasLabel(command.ActionId) ? Labels.Action(command.ActionId) : Labels.CommandLabel(command.Verb, command.Verb == StatusVerb.Answer ? answer : null);
         var isProtected = string.Equals(command.Class, "protected", StringComparison.Ordinal);
-        PendingChip = isProtected || command.Verb is StatusVerb.Takeover or StatusVerb.Cancel ? string.Empty : Labels.AvailableWithU8b;
+        // The commands the frame sends (Cancel, Hand back, Complete, Take over) have their own buttons and no chip; the others still wait for their send.
+        PendingChip = isProtected || command.Verb is StatusVerb.Cancel or StatusVerb.Handback or StatusVerb.Complete or StatusVerb.Takeover ? string.Empty : Labels.AvailableWithU8b;
         Name = Labels.CommandName(Label, address, PendingChip);
         Cli = ControlViewModel.Safe(command.Cli) ? command.Cli : string.Empty;
         Confirm = command.Confirm;
@@ -36,17 +37,27 @@ internal sealed class ExpandedCommandViewModel : ObservableObject
     /// <summary>The accessible name: the words and the instance.</summary>
     public string Name { get; }
 
+    /// <summary>False while the command waits for something the person has to give first (Complete, until its required outputs are set).</summary>
+    public bool CanSend
+    {
+        get;
+        set => Set(ref field, value);
+    } = true;
+
     /// <summary>True for Cancel, which asks first.</summary>
     public bool IsCancel => Verb == StatusVerb.Cancel;
 
     /// <summary>True for Hand back on a command the app may send (not a protected one), which has its own button.</summary>
     public bool IsHandBack => Verb == StatusVerb.Handback && Protected is null;
 
+    /// <summary>True for Complete, which reports the desk run.</summary>
+    public bool IsComplete => Verb == StatusVerb.Complete && Protected is null;
+
     /// <summary>True for Take over on a command the app may send (not a protected one), which has its own button.</summary>
     public bool IsTakeOver => Verb == StatusVerb.Takeover && Protected is null;
 
-    /// <summary>True when the words stand as text: a protected command has the lock button, Cancel and Hand back their own buttons.</summary>
-    public bool ShowsLabel => Protected is null && !IsCancel && !IsHandBack && !IsTakeOver;
+    /// <summary>True when the words stand as text: a protected command has the lock button, Cancel, Hand back, Complete and Take over their own buttons.</summary>
+    public bool ShowsLabel => Protected is null && !IsCancel && !IsHandBack && !IsComplete && !IsTakeOver;
 
     /// <summary>The served CLI line, or empty when it can't be shown.</summary>
     public string Cli { get; }

@@ -483,9 +483,9 @@ with the `NotSupportedException` thrown by the parameterless service stub. The s
 for p in src/<Name>/*/*.csproj tests/Aw.<Name>.*/*.csproj tests/Aw.Architecture.Tests/Aw.Architecture.Tests.csproj; do dotnet restore "$p" --force; done   # the new projects, plus the architecture tests that now reference them: writes their packages.lock.json (--force: a no-op cache from an earlier, reverted run would skip the lock file)
 dotnet restore --locked-mode                            # whole solution; must pass — no other lock file changes here
 dotnet build <each new library project>                # in order Core, Features, Infrastructure (not hosts or App): its RS0016 symbols go into PublicAPI.Unshipped.txt (new-slice.md)
-dotnet build -warnaserror                               # must report 0 warnings, 0 errors
-dotnet test --solution AgenticWorkflow.slnx --filter-trait "Lane=unit" --ignore-exit-code 8   # HostTests pass; the slice test fails (expected); exit 8 = empty lane in some project
-dotnet format --verify-no-changes
+for p in tests/Aw.<Name>.Tests/Aw.<Name>.Tests.csproj tests/Aw.Architecture.Tests/Aw.Architecture.Tests.csproj; do dotnet build "$p" -warnaserror; done   # 0 warnings, 0 errors; the test project references the new src projects. The whole solution is not built per call (e2e.sh builds it once per tree)
+for p in <the same two projects>; do dotnet test --project "$p" --filter-trait "Lane=unit" --ignore-exit-code 8; done   # HostTests pass; the slice test fails (expected); exit 8 = empty lane
+dotnet format <each project holding a written .cs file> --verify-no-changes --include <the .cs files written or edited>   # one run per project, only the generator's own files
 node scripts/check-deps.mjs                             # the package and edges are declared
 ```
 

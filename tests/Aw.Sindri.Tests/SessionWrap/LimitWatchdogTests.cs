@@ -5,7 +5,6 @@ using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Host;
 using Aw.Sindri.Host.Commands.SessionWrap;
 using Aw.Sindri.Testing;
-using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Sindri.Tests.SessionWrap;
 
@@ -15,7 +14,7 @@ public sealed class LimitWatchdogTests
 {
     private const long Mib = 1024 * 1024;
     private static readonly TimeSpan _deadline = TimeSpan.FromSeconds(20);
-    private readonly FakeTimeProvider _clock = new(KnownInstants.Epoch);
+    private readonly TimerSteppingClock _clock = new(KnownInstants.Epoch);
     private readonly FakeWrapCalls _calls;
     private readonly FakeScopeControl _scope;
     private readonly FakeCgroupStats _stats = new();
@@ -34,14 +33,8 @@ public sealed class LimitWatchdogTests
     private Task<LimitEnd?> Start(WrapLimits limits) =>
         new LimitWatchdog(_scope, _stats, _calls, _clock, limits).Run(A.FirstLaunchId, new LaunchSecret("proof"), _child.Task, Token);
 
-    private async Task Advance(TimeSpan span)
-    {
-        for (var elapsed = TimeSpan.Zero; elapsed < span; elapsed += TimeSpan.FromMilliseconds(500))
-        {
-            _clock.Advance(TimeSpan.FromMilliseconds(500));
-            await Task.Delay(2, Token);
-        }
-    }
+    // why: moves to each due timer in turn instead of a fixed tick with a real pause after it.
+    private Task Advance(TimeSpan span) => _clock.RunFor(span, Token);
 
     private async Task<LimitEnd?> Verdict(Task<LimitEnd?> run)
     {

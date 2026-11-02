@@ -24,7 +24,7 @@ import { Journal, ScaffoldError, UsageError, trapSignals, camel, kebab, list, pa
 import { builderRoot, byNamespace, usingsBlock } from "./lib/package-templates.mjs";
 import { nodeOf, packageShape, readDeps } from "./lib/repo.mjs";
 import * as T from "./lib/slice-templates.mjs";
-import { build, declarePublicApi, expectOnlyRed, formatClean, noStrayChanges, strayChanges } from "./lib/checks.mjs";
+import { build, checkScope, declarePublicApi, expectOnlyRed, formatClean, noStrayChanges, strayChanges } from "./lib/checks.mjs";
 
 const PRIMS = ["string", "Guid", "int"];
 const METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"];
@@ -316,9 +316,10 @@ async function main(argv) {
     if (!input.filesOnly) {
       await withHeavyLock(async () => {
         await sliceApi(journal, s, log);
-        await build(root, log);
-        await expectOnlyRed(root, `${s.slice}Tests.${s.slice}_${s.behavior}`, log);
-        await formatClean(root, log);
+        const scope = checkScope(journal, s.pkg);
+        await build(root, scope, log);
+        await expectOnlyRed(root, scope, `${s.slice}Tests.${s.slice}_${s.behavior}`, log);
+        await formatClean(root, scope, log);
       });
       await noStrayChanges(journal, before);
     }

@@ -1,5 +1,7 @@
 # Sindri setup once: the owner sets up Sindri and Onyx, and nothing else is typed (spec amendment)
 
+> **Superseded by 2026-10-27** for the Onyx step (`2026-10-27-sindri-owned-index-design.md` §5.8): setup connects GitHub and Slack with `sindri index connect` instead. Kept as history.
+
 **Status:** approved, rev 4 (owner, 2026-10-20: approved with the recommended answer to each question in §14). It is a
 docs-only amendment; the code lands in the phases of §13. Lanes: api (this spec), engine, context, ui.
 

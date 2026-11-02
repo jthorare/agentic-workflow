@@ -110,6 +110,21 @@ public static class EventTypes
     /// <summary>An existing item was linked to a tracker record.</summary>
     public const string ItemLinked = "item.linked";
 
+    /// <summary>The owner attached a Linear project to the Projects page, or added one by hand.</summary>
+    public const string ProjectAttached = "project.attached";
+
+    /// <summary>The owner edited an attached or hand-made project.</summary>
+    public const string ProjectChanged = "project.changed";
+
+    /// <summary>The owner removed an attached or hand-made project.</summary>
+    public const string ProjectDetached = "project.detached";
+
+    /// <summary>The owner hid or unhid a project they lead.</summary>
+    public const string ProjectHidden = "project.hidden";
+
+    /// <summary>The owner wrote or cleared the notes on a Linear project they lead.</summary>
+    public const string ProjectLedNoted = "project.led.noted";
+
     /// <summary>A session or a human filed a request; a decision was created with it.</summary>
     public const string RequestFiled = "request.filed";
 
@@ -149,8 +164,14 @@ public static class EventTypes
     /// <summary>A launch failed before any session started (API P10a).</summary>
     public const string LaunchFailed = "launch.failed";
 
+    /// <summary>An engine launch found the session cap full and waits for a free slot (sandbox spec §6); 'launch.outcome' ends the wait.</summary>
+    public const string LaunchWaiting = "launch.waiting";
+
     /// <summary>The model an engine launch was given, and how it was chosen (model-pick spec §6).</summary>
     public const string ModelPicked = "model.picked";
+
+    /// <summary>A model call of the context engine ended (context model routing spec §7.1); one per call, under a job or not.</summary>
+    public const string ContextModelCalled = "context.model.called";
 
     /// <summary>Just before the pick asks Jev: "choosing model…" until model.picked for the same launch ends it (model-pick spec §6).</summary>
     public const string ModelPicking = "model.picking";
@@ -191,6 +212,12 @@ public static class EventTypes
     /// <summary>The approved profile names a repo and its onboarding ran (setup-once spec §7.5).</summary>
     public const string RepoOnboarded = "repo.onboarded";
 
+    /// <summary>Pins were written into the live profile's 'index.concepts' (concept pins spec §3.6).</summary>
+    public const string ContextPinWritten = "context.pin.written";
+
+    /// <summary>Pages were written into the live profile's 'index.pages' (pages spec §3.1).</summary>
+    public const string ContextPageWritten = "context.page.written";
+
     /// <summary>The shipped recipes were registered at start (setup-once spec §7.5).</summary>
     public const string RecipeRegistrationCompleted = "recipe.registration.completed";
 
@@ -199,9 +226,6 @@ public static class EventTypes
 
     /// <summary>The owner agreed that Sindri may register itself and build the map on its own (setup-once spec §7.5).</summary>
     public const string SetupConsentGiven = "setup.consent.given";
-
-    /// <summary>The owner left Onyx for later, or took that back (setup-once spec §7.5).</summary>
-    public const string OnyxDeferred = "onyx.deferred";
 
     /// <summary>The event a background service records per run: 'service.&lt;name&gt;'.</summary>
     /// <param name="service">The service.</param>

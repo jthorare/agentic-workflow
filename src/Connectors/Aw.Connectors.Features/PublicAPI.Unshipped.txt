@@ -3,6 +3,8 @@ Aw.Connectors.Features.ConnectorsFeaturesServiceCollectionExtensions
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.<Clone>$() -> Aw.Connectors.Features.PullGitHub.PullGitHubRequest!
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.After.get -> Aw.Connectors.Core.GitHub.GitHubCursor!
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Before.get -> System.DateTimeOffset?
+Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Before.init -> void
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.After.init -> void
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Deconstruct(out string! Repo, out Aw.Connectors.Core.GitHub.GitHubCursor! After, out int Limit) -> void
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.Equals(Aw.Connectors.Features.PullGitHub.PullGitHubRequest? other) -> bool
@@ -29,9 +31,12 @@ override Aw.Connectors.Features.PullGitHub.PullGitHubResponse.Equals(object? obj
 override Aw.Connectors.Features.PullGitHub.PullGitHubResponse.GetHashCode() -> int
 override Aw.Connectors.Features.PullGitHub.PullGitHubResponse.ToString() -> string!
 static Aw.Connectors.Features.ConnectorsFeaturesServiceCollectionExtensions.AddConnectorsFeatures(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Aw.Connectors.Features.ConnectorsFeaturesServiceCollectionExtensions.AddGitHubConnectorFactory(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Aw.Connectors.Features.PullGitHub.PullGitHubRequest.operator !=(Aw.Connectors.Features.PullGitHub.PullGitHubRequest? left, Aw.Connectors.Features.PullGitHub.PullGitHubRequest? right) -> bool
 static Aw.Connectors.Features.PullGitHub.PullGitHubRequest.operator ==(Aw.Connectors.Features.PullGitHub.PullGitHubRequest? left, Aw.Connectors.Features.PullGitHub.PullGitHubRequest? right) -> bool
 static Aw.Connectors.Features.PullGitHub.PullGitHubResponse.operator !=(Aw.Connectors.Features.PullGitHub.PullGitHubResponse? left, Aw.Connectors.Features.PullGitHub.PullGitHubResponse? right) -> bool
 static Aw.Connectors.Features.PullGitHub.PullGitHubResponse.operator ==(Aw.Connectors.Features.PullGitHub.PullGitHubResponse? left, Aw.Connectors.Features.PullGitHub.PullGitHubResponse? right) -> bool
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.CommentCap.get -> int
 Aw.Connectors.Features.PullGitHub.PullGitHubRequest.CommentCap.init -> void
+static Aw.Connectors.Features.ConnectorsFeaturesServiceCollectionExtensions.AddSlackConnector(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, Aw.Connectors.Core.Slack.SlackSettings! settings) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static Aw.Connectors.Features.ConnectorsFeaturesServiceCollectionExtensions.AddSlackConnectorFactory(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

@@ -1,5 +1,7 @@
 using Aw.Connectors.Core.GitHub;
+using Aw.Connectors.Core.Slack;
 using Aw.Connectors.Infrastructure.GitHub;
+using Aw.Connectors.Infrastructure.Slack;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Connectors.Infrastructure;
@@ -28,5 +30,17 @@ public static class ConnectorsInfrastructureServiceCollectionExtensions
             settings,
             new SystemHostResolver(),
             TimeProvider.System));
+    }
+
+    /// <summary>Adds the Slack reader: the client behind <see cref="ISlackReader"/>, on a handler that follows no redirect, talking only to slack.com, and refusing any channel id not in <paramref name="channelIds"/> before a request is sent.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="token">The already resolved bot token.</param>
+    /// <param name="channelIds">The channel ids the profile lists.</param>
+    /// <returns>The same collection.</returns>
+    public static IServiceCollection AddSlackReader(this IServiceCollection services, string? token, IReadOnlyCollection<string> channelIds)
+    {
+        ArgumentNullException.ThrowIfNull(channelIds);
+        var settings = new SlackClientSettings { Token = token, Channels = [.. channelIds] };
+        return services.AddSingleton<ISlackReader>(_ => new SlackClient(new HttpClient(SlackHttp.CreateHandler(), disposeHandler: true), settings, TimeProvider.System));
     }
 }

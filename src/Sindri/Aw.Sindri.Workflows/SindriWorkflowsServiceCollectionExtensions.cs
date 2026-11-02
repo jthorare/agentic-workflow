@@ -117,6 +117,7 @@ public static class SindriWorkflowsServiceCollectionExtensions
     private static IServiceCollection AddAgentRuntime(this IServiceCollection services)
     {
         services.TryAddSingleton<ReportRefusals>();
+        services.TryAddSingleton<IReportOutputChecks>(PayloadReportChecks.Instance);   // Features replaces it with the full checks, schemas included
         services.TryAddSingleton<IModelPickSettings, NoModelPickSettings>();   // the profile adapter replaces these two
         services.TryAddSingleton<IModelPickHistory, NoModelPickHistory>();   // one instance with the CompleteStep check that records into it (Features registers it the same way)
         return services

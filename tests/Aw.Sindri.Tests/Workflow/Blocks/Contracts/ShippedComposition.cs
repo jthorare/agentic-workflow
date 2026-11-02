@@ -12,6 +12,13 @@ internal static class ShippedComposition
 {
     private static readonly string _stateRoot = Path.Combine(Path.GetTempPath(), "aw-sindri-blocks-test");
 
+    // why: tests that only read the catalog or step runtimes (stateless singletons) shared one composition per run instead of ~20 ms each (#1546);
+    // a test that creates a scope or runs a step composes its own. Lives for the test process.
+    private static readonly Lazy<ServiceProvider> _shared = new(static () => Compose());
+
+    /// <summary>One composition for tests that only read singletons from it; never dispose it, never create a scope from it.</summary>
+    public static ServiceProvider Shared => _shared.Value;
+
     public static JsonSerializerOptions Json => SliceHarness.Json;
 
     public static ServiceProvider Compose() => Compose(_stateRoot, proveBlocks: null);

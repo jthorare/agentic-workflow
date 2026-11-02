@@ -1,4 +1,5 @@
 using Aw.Connectors.Testing.GitHub;
+using Aw.Connectors.Testing.Slack;
 
 namespace Aw.Connectors.Testing;
 
@@ -18,4 +19,9 @@ public static class A
     /// <param name="id">GitHub's global id of the comment.</param>
     /// <returns>A new builder.</returns>
     public static GitHubCommentBuilder GitHubComment(long id) => new(id);
+
+    /// <summary>A Slack message builder with deterministic defaults.</summary>
+    /// <param name="ts">The message's ts ('1700000000.000100').</param>
+    /// <returns>A new builder.</returns>
+    public static SlackMessageBuilder SlackMessage(string ts) => new(ts);
 }

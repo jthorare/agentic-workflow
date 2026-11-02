@@ -2,6 +2,7 @@ using Aw.Context.Core.Engine;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.LensSupport;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Trust;
 using Aw.Context.Core.Walks;
 using Aw.Kernel;
@@ -13,7 +14,7 @@ namespace Aw.Context.Features.GetLenses;
 /// The union of the bands around several nodes (scoping spec C1, schema 2): one snapshot of the map the caller may read serves every anchor. An anchor the version doesn't hold, a session can't
 /// see or a deny glob hides is listed in 'missingAnchors' with one answer for every reason; none resolving is SND-CONTEXT-003 and an ambiguous name SND-CONTEXT-037.
 /// </summary>
-internal sealed class GetLensesSetService(MapReader reader, LensBasisReader bases, IScrubberFactory scrubbers, WalkOptions? walk = null) : IService<GetLensesSetRequest, LensesSetView>
+internal sealed class GetLensesSetService(MapReader reader, LensBasisReader bases, IScrubberFactory scrubbers, IRecordStore records, TimeProvider clock, WalkOptions? walk = null) : IService<GetLensesSetRequest, LensesSetView>
 {
     public async ValueTask<Result<LensesSetView>> Handle(GetLensesSetRequest request, CancellationToken cancellationToken)
     {
@@ -46,6 +47,13 @@ internal sealed class GetLensesSetService(MapReader reader, LensBasisReader base
         var basis = (await bases.For(read.Value, settings.Value, request.Scope, request.Read.Draft, cancellationToken).ConfigureAwait(false)) with { Cascade = QueryRules.CascadeFor(hops.Value, settings.Value), Walk = walk ?? WalkOptions.Serial };
         using var band = FillBands.Start(FillBands.Lenses);
         var view = LensesBuilder.BuildSet(basis, read.Value.Graph, anchors, depth, read.Value.Conflicts);
+        if (!view.IsError)
+        {
+            var reading = new LensCitations.Reading(records, settings.Value.LinearTeams.ToHashSet(StringComparer.Ordinal), built.Value.Egress, clock.GetUtcNow());
+            var (intent, cites) = await LensCitations.Cite(view.Value.Bands.Intent, reading, cancellationToken).ConfigureAwait(false);
+            view = view.Value with { Bands = view.Value.Bands with { Intent = intent }, Cites = cites };
+        }
+
         return view.Map(v => LensTexts.Clean(DemotedFiles.Last(v, request.Scope.Repos), new MapText(built.Value, FencePolicies.For(request.Scope.Caller))));
     }
 }

@@ -26,7 +26,7 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         var pointer = SecretPointer.Parse($"keychain:{service}/{account}");
         if (pointer.IsError)
         {
-            return SindriErrors.OnyxSecretNotStored.With("the key's store name is malformed");   // unreachable for the fixed names Sindri passes
+            return SindriErrors.SecretNotStored.With("the key's store name is malformed");   // unreachable for the fixed names Sindri passes
         }
 
         if (IsPlain(secret) && StoredInKeychain(service, account, secret) && ReadsBack(pointer.Value, secret))
@@ -37,7 +37,14 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         return ToFile(service, account, secret);
     }
 
-    // The secret goes into a command line parsed by `security -i`, so only a plain token (what Onyx's keys are) is sent that way; anything else takes the file.
+    /// <inheritdoc />
+    public Result<SecretPointer> StoreInFile(string service, string account, string secret)
+    {
+        ArgumentNullException.ThrowIfNull(secret);
+        return ToFile(service, account, secret);
+    }
+
+    // The secret goes into a command line parsed by `security -i`, so only a plain token (what a source token is) is sent that way; anything else takes the file.
     private static bool IsPlain(string secret) => secret.Length > 0 && secret.All(static c => char.IsAsciiLetterOrDigit(c) || c is '.' or '_' or '~' or '+' or '/' or '=' or '-');
 
     private bool StoredInKeychain(string service, string account, string secret)
@@ -78,8 +85,8 @@ internal sealed class KeychainSecretWriter(IToolRunner runner, ISindriHome home,
         }
         catch (Exception e) when (e is IOException or UnauthorizedAccessException)
         {
-            return SindriErrors.OnyxSecretNotStored.With(
-                $"neither the OS secret store nor {directory} could take the key ({e.GetType().Name}); make that directory writable by you, or install libsecret-tools (Linux), then run `sindri onyx up` again");
+            return SindriErrors.SecretNotStored.With(
+                $"neither the OS secret store nor {directory} could take the key ({e.GetType().Name}); make that directory writable by you, or install libsecret-tools (Linux), then run `sindri index connect <source>` again");
         }
 
         return SecretPointer.Parse($"file:{path}");

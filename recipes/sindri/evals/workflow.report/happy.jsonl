@@ -1,2 +1,2 @@
-{"start":{"inputs":{"fact:issue":"Export button does nothing on the weekly summary page."}}}
+{"start":{"inputs":{"fact:issue":"Export button does nothing on the weekly summary page.","fact:rootCause":"The click handler is never bound."}}}
 {"trigger":{"kind":"step.completed","outcome":"done","outputs":{"fact:resolution":"Fixed: the click handler was never bound."}},"expect":{"state":"written","outcome":"resolved"}}

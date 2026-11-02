@@ -14,6 +14,7 @@ namespace Aw.Sindri.Ui.Api;
 /// <param name="PaletteHistory">Palette entries run.</param>
 /// <param name="TextScale">The text scale.</param>
 /// <param name="ReduceMotion">The in-app Reduce motion switch.</param>
+/// <param name="SeenPages">Seen suggested page keys per concept.</param>
 internal sealed record PreferencesFile(
     int Version,
     WindowBounds? Window = null,
@@ -22,4 +23,5 @@ internal sealed record PreferencesFile(
     IReadOnlyList<string>? SeenIds = null,
     IReadOnlyList<string>? PaletteHistory = null,
     double? TextScale = null,
-    bool? ReduceMotion = null);
+    bool? ReduceMotion = null,
+    IReadOnlyDictionary<string, IReadOnlyList<string>>? SeenPages = null);

@@ -33,9 +33,10 @@ internal static class ContextHosts
     /// <param name="name">The repo's name in the profile.</param>
     /// <param name="contextExtra">More lines under 'context:' (two-space indented, each ending in a newline), or null.</param>
     /// <param name="labeling">True to leave 'context.labeling' on (the test fakes its own model).</param>
+    /// <param name="profileExtra">More top-level keys after 'context:' (unindented, each line ending in a newline), or null.</param>
     /// <returns>The started host.</returns>
-    internal static async Task<GoldenHost> Approved(FixtureRepo repo, bool sessions, CancellationToken ct, Action<IServiceCollection>? extra = null, string name = "split-panes", string? contextExtra = null, bool labeling = false) =>
-        await Approved(repo.Path, sessions, ct, extra, name, contextExtra, labeling);
+    internal static async Task<GoldenHost> Approved(FixtureRepo repo, bool sessions, CancellationToken ct, Action<IServiceCollection>? extra = null, string name = "split-panes", string? contextExtra = null, bool labeling = false, string? profileExtra = null) =>
+        await Approved(repo.Path, sessions, ct, extra, name, contextExtra, labeling, profileExtra);
 
     /// <summary>A host whose profile maps the repo at <paramref name="repoPath"/> as <paramref name="name"/>, approved by the human, with one context-docs-refresh run done.</summary>
     /// <param name="repoPath">The repo's working tree.</param>
@@ -45,11 +46,12 @@ internal static class ContextHosts
     /// <param name="name">The repo's name in the profile.</param>
     /// <param name="contextExtra">More lines under 'context:' (two-space indented, each ending in a newline), or null.</param>
     /// <param name="labeling">True to leave 'context.labeling' on (the test fakes its own model).</param>
+    /// <param name="profileExtra">More top-level keys after 'context:' (unindented, each line ending in a newline), or null.</param>
     /// <returns>The started host.</returns>
-    internal static async Task<GoldenHost> Approved(string repoPath, bool sessions, CancellationToken ct, Action<IServiceCollection>? extra = null, string name = "split-panes", string? contextExtra = null, bool labeling = false)
+    internal static async Task<GoldenHost> Approved(string repoPath, bool sessions, CancellationToken ct, Action<IServiceCollection>? extra = null, string name = "split-panes", string? contextExtra = null, bool labeling = false, string? profileExtra = null)
     {
         var yaml = $"schemaVersion: 1\nuser: golden\nrepos:\n  - {{ name: {name}, path: \"{repoPath}\" }}\n"
-            + $"context:\n  docs: {{ globs: [\"docs/**/*.md\"] }}\n  sessions: {{ enabled: {(sessions ? "true" : "false")} }}\n" + (labeling ? string.Empty : NoLabeling) + contextExtra;
+            + $"context:\n  docs: {{ globs: [\"docs/**/*.md\"] }}\n  sessions: {{ enabled: {(sessions ? "true" : "false")} }}\n" + (labeling ? string.Empty : NoLabeling) + contextExtra + profileExtra;
         var host = await GoldenHost.Start(temporary: true, ct, yaml, extra: services => { NoCodeIndex(services); extra?.Invoke(services); });
         var hash = (await host.LiveHash(ct)).Value;
         var approved = await host.Http.Ask(Post("/sindri/profile/approve", await ApiScenarios.Confirmed(host, hash), Human(host.Token.Value)));

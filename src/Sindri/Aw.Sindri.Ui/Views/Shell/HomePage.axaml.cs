@@ -29,6 +29,7 @@ internal sealed partial class HomePage : UserControl
         AddHandler(StripRow.SelectEvent, OnStripSelect);
         AddHandler(StripRow.AnswerEvent, OnStripAnswer);
         AddHandler(ChildAnswerButton.FollowEvent, OnChildAnswer);
+        DataContextChanged += (_, _) => FollowNeedsYouRows();
     }
 
     /// <inheritdoc />

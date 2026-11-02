@@ -3,14 +3,15 @@ using Aw.Context.Core.Linear;
 using Aw.Context.Core.Sync;
 using Aw.Context.Infrastructure.Linear;
 using Aw.Context.Testing.Records;
-using Aw.Context.Tests.Onyx;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Aw.Context.Tests.Linear;
 
 /// <summary>The Linear record feed over a fake Linear: it honours the RecordFeed contract (spec 2026-10-27 sindri-owned index §5.2, U9).</summary>
+[Trait("Lane", "unit")]
 public sealed class LinearFeedContractTests : RecordFeedContract<RecordFeed>
 {
+    // why: the contract hands the feed arbitrary items (any keys and times), which FakeLinearServer's fixed recordings can't be seeded with; the query itself is run against the fake server in LinearFeedFakeServerTests
     protected override RecordFeed Create(IReadOnlyList<RecordItem> items) =>
         FeedOf([.. items.Select(i => FakeLinearIssues.Node(i.Key.Value["linear:issue/".Length..], i.UpdatedAt!.Value))]).Feed;
 

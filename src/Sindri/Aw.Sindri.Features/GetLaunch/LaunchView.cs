@@ -40,4 +40,8 @@ public sealed record LaunchView(LaunchId Id, ItemId Item, LaunchMode Mode, Launc
     /// <summary>The failure's credential source (SND-LAUNCH-017), left out otherwise.</summary>
     [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
     public string? Source { get; init; }
+
+    /// <summary>The sandbox summary 'launch.started' recorded (sandbox spec §8), left out when the launch was not sandboxed.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Core.Sandbox.SandboxSummary? Sandbox { get; init; }
 }

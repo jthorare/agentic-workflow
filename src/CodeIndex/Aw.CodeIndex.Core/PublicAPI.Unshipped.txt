@@ -1486,3 +1486,21 @@ Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.get -> int
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Carried.init -> void
 Aw.CodeIndex.Core.Model.EmbeddingProgress.Made.init -> void
 Aw.CodeIndex.Core.Ports.IIndexBuild.FilesWithoutBodiesOrVectors(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlySet<string!>!>!>
+Aw.CodeIndex.Core.Facade.RepoFile
+Aw.CodeIndex.Core.Facade.RepoFile.Path.get -> string!
+Aw.CodeIndex.Core.Facade.RepoFile.Path.init -> void
+Aw.CodeIndex.Core.Facade.RepoFile.Repo.get -> Aw.CodeIndex.Core.Values.RepoName
+Aw.CodeIndex.Core.Facade.RepoFile.Repo.init -> void
+Aw.CodeIndex.Core.Facade.RepoFile.RepoFile() -> void
+Aw.CodeIndex.Core.Facade.RepoFile.RepoFile(Aw.CodeIndex.Core.Values.RepoName Repo, string! Path) -> void
+Aw.CodeIndex.Core.Facade.RepoFile.Deconstruct(out Aw.CodeIndex.Core.Values.RepoName Repo, out string! Path) -> void
+Aw.CodeIndex.Core.Facade.RepoFile.Equals(Aw.CodeIndex.Core.Facade.RepoFile other) -> bool
+Aw.CodeIndex.Core.Facade.SymbolQuery.Within.get -> System.Collections.Generic.IReadOnlyCollection<Aw.CodeIndex.Core.Facade.RepoFile>?
+Aw.CodeIndex.Core.Facade.SymbolQuery.Within.init -> void
+~override Aw.CodeIndex.Core.Facade.RepoFile.ToString() -> string
+static Aw.CodeIndex.Core.Facade.RepoFile.operator !=(Aw.CodeIndex.Core.Facade.RepoFile left, Aw.CodeIndex.Core.Facade.RepoFile right) -> bool
+static Aw.CodeIndex.Core.Facade.RepoFile.operator ==(Aw.CodeIndex.Core.Facade.RepoFile left, Aw.CodeIndex.Core.Facade.RepoFile right) -> bool
+override Aw.CodeIndex.Core.Facade.RepoFile.GetHashCode() -> int
+~override Aw.CodeIndex.Core.Facade.RepoFile.Equals(object obj) -> bool
+Aw.CodeIndex.Core.Facade.FindSymbolsAnswer.Notes.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.CodeIndex.Core.Facade.FindSymbolsAnswer.Notes.init -> void

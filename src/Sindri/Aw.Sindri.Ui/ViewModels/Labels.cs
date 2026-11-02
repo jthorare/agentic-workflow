@@ -226,6 +226,9 @@ internal static partial class Labels
     /// <summary>The freshness word after 30 s with no event or ping.</summary>
     internal const string Stale = "stale";
 
+    /// <summary>The Needs-you panel's note while the views are stalled: its rows are the last read (the banner says why, once).</summary>
+    internal const string RowsStaleNote = "Showing the last rows read.";
+
     /// <summary>The health pill's word for SND-UI-003, an answer this build can't read, or Sindri's 403 after the token retry (§4.1 Unreadable).</summary>
     internal const string Unreadable = "Unreadable";
 
@@ -278,6 +281,11 @@ internal static partial class Labels
     /// <param name="app">The API version this app speaks.</param>
     /// <returns>The line.</returns>
     internal static string Versions(int sindri, int app) => string.Create(CultureInfo.InvariantCulture, $"Sindri speaks API v{sindri}; this app speaks v{app}");
+
+    /// <summary>The line under a link the system could not open: what happened, and the link to copy (#1712).</summary>
+    /// <param name="url">The link.</param>
+    /// <returns>"Couldn't open the link: https://...".</returns>
+    internal static string LaunchFailed(string url) => $"Couldn't open the link: {url}";
 
     /// <summary>"updated Ns ago" (seconds under a minute, then minutes, then hours).</summary>
     /// <param name="age">How long ago the view was last read.</param>

@@ -41,6 +41,9 @@ internal sealed partial class ItemSheetViewModel(ISindriApi api, CatalogViewMode
     /// <summary>The item's decisions and requests (U3' T8).</summary>
     internal ItemNeedsViewModel Needs { get; } = ItemNeedsViewModel.Create(api, decisions ?? new DecisionSender(api), catalog);
 
+    /// <summary>What the sandbox blocked for the item's launches, with Allow (SB-6b).</summary>
+    internal BlockedListViewModel Blocked { get; } = new(api);
+
     /// <summary>The app's copy for the sheet's headings and buttons.</summary>
     public ItemText Text { get; } = ItemText.Instance;
 
@@ -233,6 +236,7 @@ internal sealed partial class ItemSheetViewModel(ISindriApi api, CatalogViewMode
     {
         _controls.Clear();
         Needs.Reset();
+        Blocked.Reset();
         EndConflict();
         _subject++;
         _generation++;

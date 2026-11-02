@@ -19,7 +19,7 @@ public static class MapAccess
     /// deny globs hide is decided from the stored nodes and the nodes the overrides add (<see cref="DenyCut"/>: the code nodes of denied paths, the record nodes of denied documents
     /// and the decisions quoting them, the nodes only a denied file evidences, the features only those files implement, their edges and denied evidence), whatever a person's
     /// reject, delete, merge or accept made of them; (2) the stored graph is cut by that decision; (3) the overrides are cut by it (the ones about a hidden node, a proposal without
-    /// its allowed evidence, and a reject that names its proposal by either evidence); (4) the cut overrides are applied to the cut graph (a pending proposal only when
+    /// its allowed evidence, and a reject that names its proposal by either evidence); (3b) the owner's named pages are laid over the cut graph (<see cref="PageOverlay"/>, unless the scope leaves them out, as an export does); (4) the cut overrides are applied to the cut graph (a pending proposal only when
     /// <paramref name="pending"/>), which is <see cref="MapView.Applied"/>; then, for a session, only its repo's scope. Lenses, status, export, the review queue, promote
     /// and the history can't disagree.
     /// </summary>
@@ -80,6 +80,11 @@ public static class MapAccess
         // The resolved repos are for the gate and the session's scope step only.
         var cut = DenyCut.Of(merged, overrides, scope.Repos, ScopeRules.Mapped(settings.Value, scope.Repos));   // every override, pending or not: what is hidden doesn't depend on which reader asks
         var (cutGraph, cutOverrides) = (cut.Apply(merged), cut.Apply(overrides));
+        if (!scope.OmitPages)
+        {
+            cutGraph = PageOverlay.Apply(cutGraph, scope.Repos);   // after the deny cut (it never judges an owner node) and before the overrides, which may still act on owner nodes; never removes a map node
+        }
+
         var applied = OverrideApplier.Apply(cutGraph, pending ? cutOverrides : [.. cutOverrides.Where(o => o.Action != OverrideAction.Propose)]).Graph;
         var view = new MapView(cutGraph, applied, cutOverrides, cut);
         return !callerScope || scope.Caller.Kind != ContextCallerKind.Session ? view : ForSession(view, scope.Caller, emptyIsError);
@@ -209,7 +214,7 @@ public static class MapAccess
             [.. orphaned.Select(x => x.Target).DistinctBy(k => k.Value, o).OrderBy(k => k.Value, o)]);
     }
 
-    // Version 2 only when the map holds a 'tags' edge or a roll-up count, so a plain map still reads in a build that knows only version 1 (spec 2026-10-27 §3).
+    // Version 3 when the map holds an 'expresses' edge (no rollback past it, pages spec §3.2), else 2 for a 'tags' edge or a roll-up count, else 1, so a plain map still reads in a build that knows only version 1 (spec 2026-10-27 §3).
     private static int SchemaVersionFor(GraphSnapshot graph) =>
-        graph.Edges.Any(e => e.Type == EdgeType.Tags || e.Count is not null) ? MapDocumentValidator.SchemaVersions[^1] : MapDocumentValidator.SchemaVersions[0];
+        graph.Edges.Any(e => e.Type == EdgeType.Expresses) ? 3 : graph.Edges.Any(e => e.Type == EdgeType.Tags || e.Count is not null) ? 2 : 1;
 }

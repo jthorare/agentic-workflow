@@ -14,7 +14,7 @@ public abstract partial class SindriApiContract
         var view = (await Reach(new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "first-run") }).Setup(_api, Token)).Value;
 
         Expect.Sequence(golden["steps"]!.AsArray().Select(s => (string)s!["id"]!), view.Steps.Select(s => s.Id));
-        Expect.Sequence(["repo", "profile", "recipes", "mcp", "map", "onyx"], view.Steps.Select(s => s.Id));
+        Expect.Sequence(["repo", "profile", "recipes", "mcp", "map"], view.Steps.Take(5).Select(s => s.Id));
         var repo = view.Steps[0];
         Expect.Equal(("Add your repo", "needs-you", "AddRepo", null), (repo.Title, repo.State, repo.Action, repo.Error));
     }
@@ -41,16 +41,6 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
-    public async Task Setup_reads_a_skipped_onyx_with_its_reason()
-    {
-        var server = new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "onyx-no-docker") };
-
-        var onyx = (await Reach(server).Setup(_api, Token)).Value.Steps.Single(s => s.Id == "onyx");
-
-        Expect.Equal(("skipped", "Docker isn't installed."), (onyx.State, onyx.Why));
-    }
-
-    [Fact]
     public async Task Setup_reads_a_running_maps_retry_note_and_its_catalog_action()
     {
         var server = new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "map-retrying") };
@@ -61,12 +51,11 @@ public abstract partial class SindriApiContract
     }
 
     [Fact]
-    public async Task Setup_reads_the_profile_waiting_for_approval_and_a_skipped_onyx()
+    public async Task Setup_reads_the_profile_waiting_for_approval()
     {
         var waiting = (await Reach(new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "profile-needs-approval") }).Setup(_api, Token)).Value.Steps.Single(s => s.Id == "profile");
-        var skipped = (await Reach(new FakeSindriApi { SetupAnswer = RouteAnswer.Api("setup", "onyx-skipped") }).Setup(_api, Token)).Value.Steps.Single(s => s.Id == "onyx");
 
-        Expect.Equal(("needs-you", "ApproveProfile", "skipped", "SetupOnyx"), (waiting.State, waiting.Action, skipped.State, skipped.Action));
+        Expect.Equal(("needs-you", "ApproveProfile"), (waiting.State, waiting.Action));
     }
 
     [Fact]

@@ -72,7 +72,7 @@ public sealed class NeedsYouProjectionTests
 
         var record = Assert.Single(await Rows());
 
-        Assert.Equal((_failure, NeedsYouKind.Failure, Urgency.Colour, "heartbeat failed", "SND-SCHED-001: A background service failed"), (record.Row.Id, record.Row.Kind, record.Row.Urgency, record.Row.Title, record.Row.Reason));
+        Assert.Equal((_failure, NeedsYouKind.Failure, Urgency.Colour, "Service heartbeat failed", "SND-SCHED-001: A background service failed"), (record.Row.Id, record.Row.Kind, record.Row.Urgency, record.Row.Title, record.Row.Reason));
         Assert.Equal(H.Clock.GetUtcNow(), record.Row.Since);
     }
 

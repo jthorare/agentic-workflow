@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using Aw.Kernel;
 using Aw.Sindri.Core.Launch;
-using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
@@ -20,6 +19,7 @@ namespace Aw.Sindri.Features.CompleteStep;
 internal sealed class ReportOutputTypes(IApprovedRecipes recipes, ILauncher launcher, ReportRefusals refusals)
 {
     private readonly ConcurrentDictionary<(string Instance, string Run), int> _refused = [];
+    private static readonly ReportOutputChecker _checks = new();
 
     /// <summary>Checks the report.</summary>
     /// <param name="view">The instance as read; its open run says which launch to end.</param>
@@ -42,12 +42,8 @@ internal sealed class ReportOutputTypes(IApprovedRecipes recipes, ILauncher laun
         }
 
         var declared = PayloadFacts.DeclaredIn(found.Value.Recipe);
-        var wrong = request.Outputs.Where(o => declared.Contains(o.Key)).OrderBy(static o => o.Key.Value, StringComparer.Ordinal)
-            .Select(o => PayloadFacts.Violation(o.Key, o.Value.Span)).OfType<string>().ToList();
-        wrong.AddRange(request.Outputs.Where(static o => ChallengeRoundShape.Covers(o.Key)).Select(static o => ChallengeRoundShape.Violation(o.Value.Span)).OfType<string>());   // #1102: one round, not the challenge log
         var scopingQuestions = found.Value.Recipe.States.TryGetValue(view.State, out var state) && string.Equals(state.Step?.Use.Value, "step.interview.questions", StringComparison.Ordinal);   // #1204: only the scoping questions Step is held to SCP-QST-001
-        wrong.AddRange(request.Outputs.Where(static o => ReportFactSchemas.Covers(o.Key)).OrderBy(static o => o.Key.Value, StringComparer.Ordinal)
-            .SelectMany(o => ReportFactSchemas.Violations(o.Key, o.Value.Span, scopingQuestions)));   // #1112: a field the schema forbids is the writer's to fix, not a new drafter's
+        var wrong = _checks.Violations(request.Outputs, declared, scopingQuestions);   // the payload type, the challenge round and the scoping fact schemas: the same checks the recovery of an ended session's outputs applies (issue 1468)
         if (wrong.Count == 0)
         {
             return null;

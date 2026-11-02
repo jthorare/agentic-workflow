@@ -1,4 +1,5 @@
 using Aw.Context.Infrastructure.Records;
+using Aw.Context.Infrastructure.Store;
 using Microsoft.Data.Sqlite;
 
 namespace Aw.Context.Tests.Infrastructure;
@@ -14,6 +15,8 @@ internal sealed class RecordStoreWorld : IDisposable
     }
 
     public SqliteRecordStore Store { get; }
+
+    public ContextDatabase Database => _home.Database;
 
     public string DatabasePath => _home.Settings.DatabasePath;
 

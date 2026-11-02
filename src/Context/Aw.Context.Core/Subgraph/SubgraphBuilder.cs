@@ -47,7 +47,7 @@ public static class SubgraphBuilder
         var bands = LensRepos.Stamp(new LensBands(Intent(graph, nodes, order, reached, all), Product(graph, nodes, order, reached), Code(graph, nodes, order, reached, all)), graph, basis.MapRepo);
         var givenProduct = given.Where(k => IsProduct(k.Kind)).ToList();
         var ownSet = givenProduct.Select(k => k.Value).ToHashSet(StringComparer.Ordinal);
-        var coverage = LensCoverageBuilder.Of(graph, nodes, givenProduct) with { Map = MapCoverageBuilder.Of(graph, ownSet, basis, all.Where(k => nodes[k].Key.Kind == NodeKind.Code)) };
+        var coverage = LensCoverageBuilder.Of(graph, nodes, givenProduct) with { Map = MapCoverageBuilder.Of(graph, ownSet, basis, all.Where(k => nodes[k].Key.Kind == NodeKind.Code && !UnreadFileNodes.Is(nodes[k]))) };
         var searched = LensSearchedBuilder.For(basis, [.. given.Select(k => k.Value)], depth, bands) with { Hops = [] };
         return new SubgraphView(1, given, missing, basis.Map, depth, basis.AsOf, bands, LensEdges.Across(graph, all), LensConflicts.Of(graph, all, conflicts), coverage, searched, [],
             new Dictionary<string, Citation>(StringComparer.Ordinal))
@@ -177,7 +177,7 @@ public static class SubgraphBuilder
             .DistinctBy(k => k.Value, StringComparer.Ordinal).OrderBy(k => k.Value, StringComparer.Ordinal)];
 
     private static LensRecord Record(GraphSnapshot graph, GraphNode n, int depth, HashSet<string> all) =>
-        new(n.Key, n.Label, LensIntent.Source(n.Key), Targets(graph, n.Key, EdgeType.Mentions, all), Results.Trust.Untrusted, CitationState.Unchecked, [], NodeKind.Record) { Depth = depth };
+        new(n.Key, n.Label, LensIntent.Source(n.Key), Targets(graph, n.Key, EdgeType.Mentions, all), Results.Trust.Untrusted, CitationState.Unchecked, [], NodeKind.Record) { Depth = depth, At = n.At };
 
     private static LensDecision Decision(GraphSnapshot graph, GraphNode n, int depth, HashSet<string> all) =>
         LensIntent.Decision(graph, n, Targets(graph, n.Key, EdgeType.Decides, all)) with { Depth = depth };
@@ -198,7 +198,7 @@ public static class SubgraphBuilder
 
     private static CodeBand Code(GraphSnapshot graph, Dictionary<string, GraphNode> nodes, List<string> order, Dictionary<string, Hit> reached, HashSet<string> all)
     {
-        var codes = order.Where(k => nodes[k].Key.Kind == NodeKind.Code).ToList();
+        var codes = order.Where(k => nodes[k].Key.Kind == NodeKind.Code && !UnreadFileNodes.Is(nodes[k])).ToList();
         var linked = LensCode.Files(graph.Edges.Where(e => e.Type is EdgeType.Implements or EdgeType.Tests && all.Contains(e.To.Value) && nodes.ContainsKey(e.From.Value) && nodes[e.From.Value].Key.Kind == NodeKind.Code && reached.ContainsKey(e.From.Value)))
             .ToDictionary(f => "code:" + f.Path, StringComparer.Ordinal);
         var files = codes.Select(k => (linked.TryGetValue(k, out var f) ? f : Bare(nodes[k])) with { Depth = reached[k].Depth }).ToList();

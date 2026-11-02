@@ -9,6 +9,6 @@ internal sealed class DisabledLabeler : ILabeler
 {
     private const string NoModel = $"labeling is on but this host has no model to ask (fix: {LabelPass.NoModelFix})";
 
-    public ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, CancellationToken cancellationToken) =>
+    public ValueTask<Result<LabelPass>> Label(IReadOnlyList<FileCluster> clusters, IReadOnlyList<ScrubPattern> extraPatterns, int maxTokens, LabelOptions? options, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(new LabelPass([], Complete: false, Unavailable: NoModel)));
 }

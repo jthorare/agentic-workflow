@@ -50,20 +50,20 @@ public sealed class ShellViewModelTests
         }
     }
 
-    // Screens spec §3: seven pages, each with its G-chord key; Settings is not a tab.
+    // Screens spec §3 and the Projects page spec §7: eight pages, each with its G-chord key; Settings is not a tab.
     [Fact]
-    public async Task Nav_is_Home_Workflows_Work_Recipes_Context_Agents_System()
+    public async Task Nav_is_Home_Projects_Workflows_Work_Recipes_Context_Agents_System()
     {
         var shell = await Shell();
 
         Assert.Equal(
-            [PageId.Home, PageId.Workflows, PageId.Work, PageId.Recipes, PageId.Context, PageId.Agents, PageId.System],
+            [PageId.Home, PageId.Projects, PageId.Workflows, PageId.Work, PageId.Recipes, PageId.Context, PageId.Agents, PageId.System],
             shell.Navigation.Select(n => n.Page));
         Assert.Equal(
-            [Labels.Home, Labels.Workflows, Labels.Work, Labels.Recipes, Labels.Context, Labels.Agents, Labels.System],
+            [Labels.Home, Labels.Projects, Labels.Workflows, Labels.Work, Labels.Recipes, Labels.Context, Labels.Agents, Labels.System],
             shell.Navigation.Select(n => n.Label),
             StringComparer.Ordinal);
-        Assert.Equal(["H", "W", "Q", "R", "C", "A", "."], shell.Navigation.Select(n => n.Key), StringComparer.Ordinal);
+        Assert.Equal(["H", "P", "W", "Q", "R", "C", "A", "."], shell.Navigation.Select(n => n.Key), StringComparer.Ordinal);
         Assert.All(shell.Navigation, n => Assert.Equal(string.Empty, n.Count));
     }
 
@@ -83,9 +83,36 @@ public sealed class ShellViewModelTests
         Assert.Null(Labels.ArrivesWith(PageId.System));
     }
 
+    // The Projects page spec §7: the page's link names it, with no subject, and a launch's 'sindri://projects' reaches it as 'projects'.
+    [Fact]
+    public async Task The_projects_link_goes_to_the_Projects_page()
+    {
+        var shell = await Shell();
+
+        Assert.True(DeepLink.TryParse("projects", out var link));
+        Assert.Equal(new DeepLink(DeepLinkKind.Projects, Subject: null), link);
+        Assert.Equal("projects", link.ToString());
+        shell.Navigate(link);
+
+        Assert.Equal(PageId.Projects, shell.CurrentPage);
+        Assert.False(shell.IsSheetOpen);
+    }
+
+    // The Projects page spec §7: Projects is the tab after Home, so Home's neighbour is the new page and the rest keep their order.
+    [Fact]
+    public async Task Projects_is_the_second_tab_after_Home()
+    {
+        var shell = await Shell();
+
+        Assert.Equal((PageId.Projects, Labels.Projects), (shell.Navigation[1].Page, shell.Navigation[1].Label));
+        Assert.Equal(8, shell.Navigation.Count);
+        Assert.Equal(PageId.Projects, Enum.GetValues<PageId>()[1]);
+    }
+
     // Screens spec §3: G then a page's key; G S is System as G . is.
     [Theory]
     [InlineData("H", PageId.Home)]
+    [InlineData("P", PageId.Projects)]
     [InlineData("W", PageId.Workflows)]
     [InlineData("Q", PageId.Work)]
     [InlineData("R", PageId.Recipes)]

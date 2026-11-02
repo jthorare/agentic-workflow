@@ -127,7 +127,7 @@ internal sealed partial class ShellWindow
     {
         if (shell.Create.IsOpen)
         {
-            Dispatcher.UIThread.Post(() => this.Get<CreateItemDialog>("CreateItemDialog").FocusTitle(), DispatcherPriority.Loaded);
+            Dispatcher.UIThread.Post(() => Built<CreateItemDialog>("CreateItemDialog")?.FocusTitle(), DispatcherPriority.Loaded);
         }
         else if (key == "/" && shell.Queue.IsFiltering)
         {

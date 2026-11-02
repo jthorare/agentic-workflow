@@ -20,7 +20,7 @@ internal sealed class FakeIndexReader(FakeIndexData data) : IIndexReader
         }
 
         var hits = data.Symbols
-            .Where(x => Matches(query, x.File, x.Symbol))
+            .Where(x => Matches(query, x.File, x.Symbol) && (query.Within is not { } within || within.Any(f => string.Equals(f.Path, x.File.Path, StringComparison.Ordinal))))
             .OrderBy(x => x.File.Path, StringComparer.Ordinal)
             .ThenBy(x => x.Symbol.StartLine)
             .Select(x => FakeIndexData.ToHit(x.File, x.Symbol))

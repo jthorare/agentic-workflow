@@ -51,6 +51,8 @@ public sealed class EgressProxyTests
         await upstream.WriteAsync("pong"u8.ToArray(), TestContext.Current.CancellationToken);
         await client.ReadExactlyAsync(got, TestContext.Current.CancellationToken);
         await client.DisposeAsync();
+        // the upstream plays the server: it closes once the proxy has half-closed it, else the relay waits out EgressCaps.HalfCloseGrace (30 s)
+        await upstream.DisposeAsync();
         await handled;
 
         Assert.Equal("pong", Encoding.ASCII.GetString(got));
@@ -69,6 +71,8 @@ public sealed class EgressProxyTests
         var upstream = await dialer.Upstream.Task;
         var head = await ReadHead(upstream);
         await client.DisposeAsync();
+        // the upstream plays the server: it closes once the proxy has half-closed it, else the relay waits out EgressCaps.HalfCloseGrace (30 s)
+        await upstream.DisposeAsync();
         await handled;
 
         Assert.StartsWith("GET /ocsp?x=1 HTTP/1.1\r\n", head, StringComparison.Ordinal);
@@ -144,6 +148,8 @@ public sealed class EgressProxyTests
         await proxy.Handle(secondServer, TestContext.Current.CancellationToken);
         var head = await ReadHead(second);
         await first.DisposeAsync();
+        // the upstream plays the server: it closes once the proxy has half-closed it, else the relay waits out EgressCaps.HalfCloseGrace (30 s)
+        await (await dialer.Upstream.Task).DisposeAsync();
         await firstHandled;
 
         Assert.StartsWith("HTTP/1.1 503", head, StringComparison.Ordinal);

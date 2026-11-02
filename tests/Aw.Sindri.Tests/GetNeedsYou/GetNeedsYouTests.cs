@@ -1,4 +1,5 @@
 using Aw.Kernel;
+using Aw.Kernel.Ids;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
@@ -23,12 +24,11 @@ public sealed class GetNeedsYouTests
 {
     private readonly RequestQueryHarness _q = new();
 
-    private readonly FakeOnyxNotices _onyx = new();
 
     private readonly InMemoryJobViews _jobs = new();
     private IShippedRecipes _shipped = new FakeShippedRecipes([]);
 
-    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(_onyx, new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs)), new PassThroughScrubber(), TimeProvider.System), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
+    private GetNeedsYouService Service() => new(_q.Views.Views, _q.Views.Progress, _q.Views.Slice.Callers, new NeedsYouLiveRows(new SetupNotices(_jobs, _q.Views.Slice.Profiles, new ApproveAllPlanReader(_q.Views.Slice.Profiles, _shipped), new PassThroughScrubber(), TimeProvider.System, new Core.Setup.McpAutoGate(_q.Views.Slice.Profiles, new Core.Setup.McpEvents(_q.Views.Slice.Held, _q.Views.Slice.Store, _q.Views.Slice.Events, _q.Views.Slice.Callers), new NoSwitch(), _jobs), _q.Views.Slice.Profiles), new PassThroughScrubber()), TimeProvider.System, new NeedsYouJoins(new SomeInstances(), new SomeInstances(), new Core.Workflow.Registry.RecipeRegistryReader(new Testing.Workflow.Registry.InMemoryRecipeStore(), new Testing.Workflow.Registry.InMemoryRecipeApprovals(), EngineFixture.Catalog, SliceHarness.Json, new NoProfileFacts()), EngineFixture.Catalog));
 
     private sealed class NoSwitch : Core.Setup.IMcpAutoSwitch
     {
@@ -36,24 +36,6 @@ public sealed class GetNeedsYouTests
     }
 
     private async Task<GetNeedsYouResponse> Get() => (await Service().Handle(A.GetNeedsYouRequest().Build(), RequestQueryHarness.Token)).Value;
-
-    [Fact]
-    public async Task GetNeedsYou_shows_the_managed_onyx_row_to_a_human_and_to_a_session()
-    {
-        _onyx.Notice = new Core.Onyx.OnyxNotice("Set up Onyx", "Onyx isn't set up on this box", "sindri onyx up");
-
-        using (_q.Human())
-        {
-            var row = Assert.Single((await Get()).Rows);
-            Expect.Equal("failure:service:onyx", row.Id.Value);
-            Expect.Equal("sindri onyx up", row.Cli);
-        }
-
-        using (_q.Session(repo: null))
-        {
-            Assert.Equal("failure:service:onyx", Assert.Single((await Get()).Rows).Id.Value);
-        }
-    }
 
     private void AddRepoJob(JobState state, string? summary = null, int n = 1, string kind = "AddRepo") =>
         _jobs.Put(new JobRow(JobId.From("JOB-" + n.ToString("x32", System.Globalization.CultureInfo.InvariantCulture)), JobKind.From(kind), JobKey.From("a" + n.ToString(System.Globalization.CultureInfo.InvariantCulture)), Item: null, Repo: null, Service: null, state, "human:app",
@@ -148,6 +130,46 @@ public sealed class GetNeedsYouTests
     }
 
     private static Result<Core.Profile.LoadedProfile> SetupFactsRigProfile() => SetupSources.SetupFactsRig.ProfileWithRepos();
+
+    [Fact]
+    public async Task A_live_profile_that_drifted_from_the_approved_one_is_the_profile_drift_row_without_waiting_for_a_check()
+    {
+        // B-21: the pill reads the live profile at once; the row must not wait for the next profile.checked.
+        _ = await _q.Views.Slice.Profiles.Save(SliceHarness.Profile(), RequestQueryHarness.Token);
+        _q.Views.Slice.Profiles.Live = SetupFactsRigProfile();
+        using var entered = _q.Human();
+
+        var row = Assert.Single((await Get()).Rows);
+
+        Expect.Equal(("profile:drift", NeedsYouKind.Profile), (row.Id.Value, row.Kind));
+    }
+
+    [Fact]
+    public async Task A_stored_profile_drift_row_beats_the_live_one_with_its_id()
+    {
+        var approved = SliceHarness.Profile();
+        var live = SetupFactsRigProfile();
+        _ = await _q.Views.Slice.Profiles.Save(approved, RequestQueryHarness.Token);
+        _q.Views.Slice.Profiles.Live = live;
+        await _q.Views.Fold(EventTypes.ProfileChecked, new ProfileChecked(_q.Views.Slice.Ids.New<CommandId>(), approved.Hash, live.Value.Hash, Drifted: true, ["stored.path"], []));
+        using var entered = _q.Human();
+
+        var row = Assert.Single((await Get()).Rows);
+
+        Expect.Equal(("profile:drift", "1 key path changed: stored.path"), (row.Id.Value, row.Reason));
+    }
+
+    [Fact]
+    public async Task A_live_profile_equal_to_the_approved_one_has_no_profile_drift_row()
+    {
+        var profile = SetupFactsRigProfile();
+        _ = await _q.Views.Slice.Profiles.Save(profile.Value, RequestQueryHarness.Token);
+        _q.Views.Slice.Profiles.Live = profile;
+        using var entered = _q.Human();
+
+        // not Assert.Empty: this approved profile names repos, so the unrelated "turn on Sindri for your repos" setup row stands
+        Assert.DoesNotContain((await Get()).Rows, r => r.Id.Value == "profile:drift");
+    }
 
     [Fact]
     public async Task GetNeedsYou_shows_the_setup_recipes_row_and_the_own_approval_rows_to_a_human_and_to_a_session()

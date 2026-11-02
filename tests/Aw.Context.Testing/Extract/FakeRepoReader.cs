@@ -26,6 +26,13 @@ public sealed class FakeRepoReader(ContextRepo known, string head, IReadOnlyDict
     public ValueTask<Result<IReadOnlyList<string>>> ListTracked(ContextRepo repo, string commit, CancellationToken cancellationToken) =>
         ValueTask.FromResult(Knows(repo) && commit == head ? Results.Success<IReadOnlyList<string>>([.. files.Keys.Order(StringComparer.Ordinal)]) : Unreadable);
 
+    /// <summary>The paths the fake says were deleted in its history; none by default.</summary>
+    public IReadOnlyList<string> Removed { get; init; } = [];
+
+    /// <inheritdoc/>
+    public ValueTask<Result<IReadOnlyList<string>>> RemovedPaths(ContextRepo repo, string commit, CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Knows(repo) && commit == head ? Results.Success<IReadOnlyList<string>>([.. Removed.Where(p => !files.ContainsKey(p) && !repo.Denies(p)).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)]) : Unreadable);
+
     /// <inheritdoc/>
     public ValueTask<Result<string>> Read(ContextRepo repo, string commit, string path, CancellationToken cancellationToken)
     {

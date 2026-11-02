@@ -67,6 +67,28 @@ public abstract class MapRulesetStoreContract
         Expect.That(Expect.Ok(await store.Versions(None), test).Single(v => v.Number == draft.Number).Ruleset == "rules-A", test, "the stored copy lost the ruleset");
     }
 
+    /// <summary>A version keeps the hash of each pin's rule line, through the version list, the publish state and a copied draft; one saved without them reads null (unknown, never empty).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task A_versions_pin_hashes_read_back_and_a_version_without_them_reads_null()
+    {
+        const string test = nameof(A_versions_pin_hashes_read_back_and_a_version_without_them_reads_null);
+        var store = CreateStore();
+        var hashes = new Dictionary<string, string>(StringComparer.Ordinal) { ["billing"] = "aa", ["auth"] = "bb" };
+        var bare = Expect.Ok(await store.SaveCurrent(SampleMap.Build(), SampleMap.At, None), test);
+
+        Expect.That(Expect.Ok(await store.Held(None), test).CurrentPinHashes is null, test, "a version saved without pin hashes reported some");
+
+        var pinned = Expect.Ok(await store.SaveCurrent(SampleMap.Build() with { PinHashes = hashes }, SampleMap.At, None), test);
+        var held = Expect.Ok(await store.Held(None), test).CurrentPinHashes;
+
+        Expect.That(held is { Count: 2 } && held["billing"] == "aa" && held["auth"] == "bb", test, "the current version lost its pin hashes");
+        Expect.That(Expect.Ok(await store.Versions(None), test).Single(v => v.Number == bare.Number).PinHashes is null, test, "the retained version without them gained some");
+        var draft = Expect.Ok(await store.OpenDraft(SampleMap.At, None), test);
+        Expect.That(Expect.Ok(await store.Versions(None), test).Single(v => v.Number == draft.Number).PinHashes is { Count: 2 }, test, "the copied draft lost the pin hashes");
+        Expect.That(pinned.PinHashes is { Count: 2 }, test, "the saved version did not answer its pin hashes");
+    }
+
     /// <summary>A new store of the kind under test.</summary>
     /// <returns>The store.</returns>
     protected abstract IGraphStore CreateStore();

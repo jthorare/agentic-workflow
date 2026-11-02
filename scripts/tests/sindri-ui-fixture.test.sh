@@ -16,6 +16,22 @@ check() {
 contains() { # $1 name, $2 haystack, $3 needle
   case "$2" in *"$3"*) echo "ok - $1" ;; *) echo "not ok - $1"; echo "  missing: $3"; echo "  in:      $2"; fail=1 ;; esac
 }
+# `timeout` is GNU coreutils: macOS has none (gtimeout only with Homebrew coreutils), so the stub checks used to exit 127 there.
+# Same contract: runs "$@" with this shell's stdin, exits 124 when it is still running after $1 seconds.
+with_timeout() {
+  local secs=$1; shift
+  if command -v timeout >/dev/null 2>&1; then timeout "$secs" "$@"; return; fi
+  if command -v gtimeout >/dev/null 2>&1; then gtimeout "$secs" "$@"; return; fi
+  exec 3<&0
+  "$@" <&3 &
+  local pid=$!
+  ( sleep "$secs"; kill -TERM "$pid" 2>/dev/null ) &
+  local watcher=$!
+  wait "$pid"; local rc=$?
+  exec 3<&-
+  if kill -0 "$watcher" 2>/dev/null; then kill "$watcher" 2>/dev/null; wait "$watcher" 2>/dev/null; return "$rc"; fi
+  return 124
+}
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -599,6 +615,30 @@ AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks nope ITM-0f ITM-0f/step/1 >/dev/
 AW_SINDRI_HOME="$S" bash "$FIXTURE" model-picks picked not-an-item ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses a bad item id (exit 2)" "$?" "2"
 AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-picks picked ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "model-picks refuses an unguarded home" "$?" "2"
 
+# model-calls (#1567 R-4): the usage, the refusals, and the ledger rows each state writes (fixed ids, so a rerun adds nothing).
+contains "the usage lists model-calls" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh model-calls fell-back|no-answer|paused|none"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-calls >/dev/null 2>&1; check "model-calls needs a state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-calls nope >/dev/null 2>&1; check "model-calls refuses an unknown state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" model-calls paused extra >/dev/null 2>&1; check "model-calls takes one argument (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" model-calls paused >/dev/null 2>&1; check "model-calls refuses an unguarded home" "$?" "2"
+calls_rows() { sqlq "$H/ledger.db" "SELECT COUNT(*) FROM events WHERE type = '$1' AND json_extract(payload_json, '$.job') = '$2'"; }
+job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls fell-back 2>/dev/null)"; check "model-calls fell-back exits 0 and prints the job id" "$?" "0"
+[[ "$job" =~ ^JOB-[0-9a-f]{32}$ ]]; check "the printed job id is a JOB- id" "$?" "0"
+check "fell-back starts the job once" "$(calls_rows job.started "$job")" "1"
+check "fell-back writes six calls" "$(calls_rows context.model.called "$job")" "6"
+check "fell-back's calls hold a limit, a skipped and a failed try" "$(sqlq "$H/ledger.db" "SELECT COUNT(DISTINCT json_extract(t.value, '$.outcome')) FROM events e, json_each(e.payload_json, '$.tries') t WHERE e.type = 'context.model.called' AND json_extract(e.payload_json, '$.job') = '$job' AND json_extract(t.value, '$.outcome') IN ('limit', 'skipped', 'failed')")" "3"
+check "fell-back's calls hold a Jev label pick, a surface pick and a pick not asked" "$(sqlq "$H/ledger.db" "SELECT COUNT(*) FROM events WHERE type = 'context.model.called' AND json_extract(payload_json, '$.job') = '$job' AND json_extract(payload_json, '$.tries[0].harness') = 'jev'")" "3"
+check "fell-back never waits" "$(calls_rows job.waiting "$job")" "0"
+AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls fell-back >/dev/null 2>&1
+check "a second fell-back adds nothing" "$(calls_rows context.model.called "$job")" "6"
+job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls no-answer 2>/dev/null)"
+check "no-answer writes three calls and none has an answerer" "$(sqlq "$H/ledger.db" "SELECT COUNT(*) FROM events WHERE type = 'context.model.called' AND json_extract(payload_json, '$.job') = '$job' AND json_extract(payload_json, '$.answeredBy') IS NULL")" "3"
+job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls paused 2>/dev/null)"
+check "paused waits on model-limit" "$(sqlq "$H/ledger.db" "SELECT json_extract(payload_json, '$.signal') FROM events WHERE type = 'job.waiting' AND json_extract(payload_json, '$.job') = '$job'")" "model-limit"
+check "paused says why in its last progress line" "$(sqlq "$H/ledger.db" "SELECT json_extract(payload_json, '$.line') FROM events WHERE type = 'job.progress' AND json_extract(payload_json, '$.job') = '$job' ORDER BY seq DESC LIMIT 1")" "Paused: claude-code at its usage limit; codex at its usage limit. Resume when one is back."
+job="$(AW_SINDRI_HOME="$H" bash "$FIXTURE" model-calls none 2>/dev/null)"
+check "none writes a job and no call" "$(calls_rows job.started "$job")$(calls_rows context.model.called "$job")" "10"
+
 # agent-run's wait is wall-clock seconds, not loop passes (issue #1123): a ledger call that takes 2 s and never shows
 # launch.started must still end the wait after FIXTURE_AGENT_WAIT=3 s. The sessions copy is faked (no uid needed): agent-run
 # only checks that its proc folder exists and edits its launcher.json.
@@ -613,6 +653,16 @@ took=$((SECONDS - start))
 check "agent-run's wait is bounded in seconds: exits 1 when launch.started never comes" "$rc" "1"
 contains "agent-run's wait is bounded in seconds: names the missing launch.started" "$out" "no launch.started"
 check "agent-run's wait is bounded in seconds: a 2 s ledger call with FIXTURE_AGENT_WAIT=3 ends in under 10 s (took ${took}s)" "$([ "$took" -lt 10 ] && echo yes || echo no)" "yes"
+
+# sandbox (SB-6): the usage and the refusals that need no control plane.
+contains "the usage lists sandbox" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh sandbox blocked|clear"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox >/dev/null 2>&1; check "sandbox needs a state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox nope >/dev/null 2>&1; check "sandbox refuses an unknown state (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox blocked extra >/dev/null 2>&1; check "sandbox blocked takes no arguments (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox denials >/dev/null 2>&1; check "sandbox denials needs an item and an instance (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox denials not-an-item ITM-0f/step/1 >/dev/null 2>&1; check "sandbox refuses a bad item id (exit 2)" "$?" "2"
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" sandbox denials ITM-0f ITM-0f/step/1 >/dev/null 2>&1; check "sandbox refuses an unguarded home" "$?" "2"
+AW_SINDRI_HOME="$S" bash "$FIXTURE" sandbox clear >/dev/null 2>&1; check "sandbox clear before sessions up exits 2" "$?" "2"
 
 # model-picks-run (issue #1452): the Model picks table's four states through a real agent run with the pick on. The control
 # plane is the stub, so this checks what the verb sets up: the usage, the refusals, the profile, the launcher stub, the judge
@@ -647,9 +697,9 @@ check "the judge stub answers m1 as Jev" "$(echo '{}' | "$PD/stub-judge/judge" m
 AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run unpriced >/dev/null 2>&1
 contains "unpriced lists a model the price table lacks after the cheap one" "$(cat "$P/profile/profile.yaml")" "list: [claude-haiku-4-5, fixture-unpriced-model]"
 AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run picking >/dev/null 2>&1
-check "picking holds the judge stub (its call outlasts the wait)" "$(echo '{}' | timeout 1 "$PD/stub-judge/judge" model-pick >/dev/null 2>&1; echo $?)" "124"
+check "picking holds the judge stub (its call outlasts the wait)" "$(echo '{}' | with_timeout 1 "$PD/stub-judge/judge" model-pick >/dev/null 2>&1; echo $?)" "124"
 AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run picked >/dev/null 2>&1
-check "the next state lets the judge stub answer again" "$(echo '{}' | timeout 1 "$PD/stub-judge/judge" model-pick >/dev/null 2>&1; echo $?)" "0"
+check "the next state lets the judge stub answer again" "$(echo '{}' | with_timeout 1 "$PD/stub-judge/judge" model-pick >/dev/null 2>&1; echo $?)" "0"
 
 # The launcher stub: what it writes and what it reports, run by hand with the environment a launch gives it. Each run has its own folders.
 AW_SINDRI_HOME="$P" SINDRI="$STUB" FIXTURE_AGENT_WAIT=2 bash "$FIXTURE" model-picks-run escalated >/dev/null 2>&1   # the stub refuses Haiku in this state only
@@ -657,8 +707,8 @@ R="$TMPDIR/picksstub"
 mkdir -p "$R/home/launches" "$R/run1" "$R/claude1" "$R/run2" "$R/claude2"
 seed='Sindri Step brief. Report with: sindri workflow complete ITM-0f/wf/1 --run RUN-abc --outcome done --output fact:resolution=$AW_SINDRI_RUN_DIR/.sindri-out/resolution'
 : > "$STUB_LOG"
-env AW_SINDRI_HOME="$R/home" AW_SINDRI_LAUNCH=LCH-1 AW_SINDRI_INSTANCE=ITM-0f/wf/1 AW_SINDRI_RUN_DIR="$R/run1" CLAUDE_CONFIG_DIR="$R/claude1" \
-  timeout 5 "$PD/stub-bin-pick/claude" --model claude-haiku-4-5 --session-id 11111111-2222-4333-8444-555555555555 "$seed" >/dev/null 2>&1
+with_timeout 5 env AW_SINDRI_HOME="$R/home" AW_SINDRI_LAUNCH=LCH-1 AW_SINDRI_INSTANCE=ITM-0f/wf/1 AW_SINDRI_RUN_DIR="$R/run1" CLAUDE_CONFIG_DIR="$R/claude1" \
+  "$PD/stub-bin-pick/claude" --model claude-haiku-4-5 --session-id 11111111-2222-4333-8444-555555555555 "$seed" >/dev/null 2>&1
 check "the stub on the model it refuses reports twice (the second bad report ends its session)" "$(grep -c '^workflow complete ITM-0f/wf/1 --run RUN-abc --outcome done --output fact:resolution=' "$STUB_LOG")" "2"
 check "the stub's refused report is not JSON" "$(jq -e . "$R/run1/bad-report" >/dev/null 2>&1 && echo json || echo not-json)" "not-json"
 check "the refused stub leaves no file in .sindri-out (recovery would prove the outcome from one)" "$(ls -A "$R/run1/.sindri-out" | wc -l | tr -d ' ')" "0"
@@ -666,10 +716,87 @@ contains "the stub logs each workflow complete call in stub.log" "$(cat "$R/run1
 check "stub.log has one entry per call" "$(grep -c '^exit ' "$R/run1/stub.log")" "2"
 check "the stub writes the session's transcript under the session id, naming the model it ran on" "$(jq -r '[.type, .message.model] | join(",")' "$R/claude1/projects/fixture/11111111-2222-4333-8444-555555555555.jsonl")" "assistant,claude-haiku-4-5"
 : > "$STUB_LOG"
-env AW_SINDRI_HOME="$R/home" AW_SINDRI_LAUNCH=LCH-2 AW_SINDRI_INSTANCE=ITM-0f/wf/1 AW_SINDRI_RUN_DIR="$R/run2" CLAUDE_CONFIG_DIR="$R/claude2" \
-  timeout 5 "$PD/stub-bin-pick/claude" --model claude-sonnet-4-5 --session-id 66666666-2222-4333-8444-555555555555 "$seed" >/dev/null 2>&1
+with_timeout 5 env AW_SINDRI_HOME="$R/home" AW_SINDRI_LAUNCH=LCH-2 AW_SINDRI_INSTANCE=ITM-0f/wf/1 AW_SINDRI_RUN_DIR="$R/run2" CLAUDE_CONFIG_DIR="$R/claude2" \
+  "$PD/stub-bin-pick/claude" --model claude-sonnet-4-5 --session-id 66666666-2222-4333-8444-555555555555 "$seed" >/dev/null 2>&1
 check "the stub on any other model reports once" "$(grep -c '^workflow complete ' "$STUB_LOG")" "1"
 check "the stub's good report is a JSON object" "$(jq -r type "$R/run2/.sindri-out/resolution")" "object"
 check "the stub's usage is read from its transcript as tokens on that model" "$(jq -r '[.message.model, .message.usage.input_tokens > 0, .message.usage.output_tokens > 0] | join(",")' "$R/claude2/projects/fixture/66666666-2222-4333-8444-555555555555.jsonl")" "claude-sonnet-4-5,true,true"
+
+# --- projects: the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1) ---
+contains "the usage lists projects" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh projects"
+PJ="$TMPDIR/proj"
+mkdir -p "$PJ/profile" "$PJ/context"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$PJ/profile/profile.yaml"
+PJDB="$PJ/context/context.db"
+proj() { AW_SINDRI_HOME="$PJ" SINDRI="$STUB" bash "$FIXTURE" projects "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" projects >/dev/null 2>&1; check "projects refuses outside a guarded home" "$?" "2"
+proj extra >/dev/null 2>&1; check "projects takes no arguments (exit 2)" "$?" "2"
+out="$(proj 2>&1)"; check "projects with no context store exits 2" "$?" "2"
+contains "projects with no context store says to run context up" "$out" "run 'context up' first"
+for m in 0001 0018 0019 0020 0022 0023; do migrate "$PJDB" "$(ls "$ROOT"/src/Context/Aw.Context.Infrastructure/Store/Migrations/${m}_*.sql)"; done
+: > "$STUB_LOG"
+out="$(proj 2>&1)"; check "projects exits 0" "$?" "0"
+check "projects stores six Linear projects" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record WHERE source = 'linear-projects' AND kind = 'project'")" "6"
+check "three are led by the viewer: in progress at risk, planned, and completed 3 days ago" "$(sqlq "$PJDB" "SELECT GROUP_CONCAT(t, ',') FROM (SELECT p.title || ':' || p.state_raw || ':' || COALESCE(p.health, '-') AS t FROM source_record p JOIN record_link l ON l.from_key = p.key AND l.kind = 'led-by' WHERE l.to_ref = (SELECT user_ref FROM source_identity WHERE source = 'linear') ORDER BY p.key)")" "Checkout rewrite:started:atRisk,Onboarding revamp:completed:onTrack,Search relevance v2:planned:-"
+check "the finished one closed about 3 days ago" "$(sqlq "$PJDB" "SELECT closed_at < strftime('%Y-%m-%dT%H:%M:%S', 'now', '-2 days') AND closed_at > strftime('%Y-%m-%dT%H:%M:%S', 'now', '-4 days') FROM source_record WHERE key = 'linear:project/fx-onboarding'")" "1"
+check "the others' projects: one paused, two in progress" "$(sqlq "$PJDB" "SELECT GROUP_CONCAT(state_raw) FROM (SELECT state_raw FROM source_record p JOIN record_link l ON l.from_key = p.key AND l.kind = 'led-by' WHERE l.to_ref <> 'linear:user/fx-viewer' ORDER BY p.key)")" "paused,started,started"
+check "every project is in the audience of the profile's team" "$(sqlq "$PJDB" "SELECT DISTINCT audience_key FROM source_record")" "linear:SPL"
+check "issues: 15 open and 6 closed, each linked to its project by key" "$(sqlq "$PJDB" "SELECT SUM(i.state = 'open'), SUM(i.state = 'done') FROM source_record i JOIN record_link l ON l.from_key = i.key AND l.kind = 'in-project' AND l.to_key IN (SELECT key FROM source_record WHERE kind = 'project') WHERE i.kind = 'issue'")" "15|6"
+check "Checkout rewrite has 5 open issues" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM record_link l JOIN source_record i ON i.key = l.from_key WHERE l.to_key = 'linear:project/fx-checkout' AND l.kind = 'in-project' AND i.state = 'open'")" "5"
+check "the viewer's identity row is stored" "$(sqlq "$PJDB" "SELECT user_ref, name FROM source_identity WHERE source = 'linear'")" "linear:user/fx-viewer|Sam Rivera"
+check "both Linear sources are past their first read" "$(sqlq "$PJDB" "SELECT GROUP_CONCAT(source || ':' || phase) FROM (SELECT source, phase FROM source_cursor WHERE repo = 'records' ORDER BY source)")" "linear:incremental,linear-projects:incremental"
+contains "projects puts the Linear team in the live profile" "$(cat "$PJ/profile/profile.yaml")" "linear: { teams: [SPL] }"
+contains "projects approves the changed profile" "$(cat "$STUB_LOG")" "profile approve"
+contains "projects attaches the paused project as the owner" "$(cat "$STUB_LOG")" "project add --linear linear:project/fx-billing"
+contains "projects adds the hand-made project" "$(cat "$STUB_LOG")" "project add --name Hiring loop --state in-progress --notes Two onsite slots left this month --target "
+contains "projects hides a project the viewer leads" "$(cat "$STUB_LOG")" "project hide linear:project/fx-search"
+check "projects leaves one marker per owner write" "$(ls "$PJ" | grep -c '^ui-fixture-projects-owner-')" "3"
+: > "$STUB_LOG"
+proj >/dev/null 2>&1; check "a second projects exits 0" "$?" "0"
+check "a second projects adds no row" "$(sqlq "$PJDB" "SELECT COUNT(*) FROM source_record") $(sqlq "$PJDB" "SELECT COUNT(*) FROM record_link")" "27 27"
+check "a second projects adds the team to the profile once" "$(grep -c 'teams: \[SPL\]' "$PJ/profile/profile.yaml")" "1"
+absent "a second projects attaches, adds and hides nothing" "$(cat "$STUB_LOG")" "project "
+absent "a second projects approves nothing" "$(cat "$STUB_LOG")" "profile approve"
+# A run that stopped half way resumes: with only the attach marker left, only the add and the hide run.
+rm -f "$PJ/ui-fixture-projects-owner-add" "$PJ/ui-fixture-projects-owner-hide"
+: > "$STUB_LOG"
+proj >/dev/null 2>&1; check "a resumed projects exits 0" "$?" "0"
+absent "a resumed projects does not attach again" "$(cat "$STUB_LOG")" "project add --linear"
+contains "a resumed projects adds the hand-made project" "$(cat "$STUB_LOG")" "project add --name Hiring loop"
+contains "a resumed projects hides" "$(cat "$STUB_LOG")" "project hide linear:project/fx-search"
+printf 'schemaVersion: 1\nuser: fixture\ncontext:\n  docs: { globs: [x] }\n' > "$PJ/profile/profile.yaml"
+rm -f "$PJ"/ui-fixture-projects-owner-*
+out="$(proj 2>&1)"; check "projects refuses a profile with its own context: section (exit 2)" "$?" "2"
+contains "that refusal names the key to add" "$out" "teams: [SPL]"
+# --- context sources: the node panel's source links (#1702) ---
+contains "the usage lists context sources" "$(bash "$FIXTURE" --help 2>&1)" "sindri-ui-fixture.sh context sources"
+SX="$TMPDIR/srcs"
+mkdir -p "$SX/profile" "$SX/context"
+printf 'schemaVersion: 1\nuser: fixture\nservices:\n  heartbeat: { every: 5s }\n' > "$SX/profile/profile.yaml"
+SXDB="$SX/context/context.db"
+srcs() { AW_SINDRI_HOME="$SX" SINDRI="$STUB" bash "$FIXTURE" context sources "$@"; }
+AW_SINDRI_HOME="$WORK/elsewhere" bash "$FIXTURE" context sources >/dev/null 2>&1; check "context sources refuses outside a guarded home" "$?" "2"
+srcs extra >/dev/null 2>&1; check "context sources takes no arguments (exit 2)" "$?" "2"
+out="$(srcs 2>&1)"; check "context sources before context up exits 2" "$?" "2"
+contains "context sources before context up says to run context up" "$out" "run 'context up' first"
+AW_SINDRI_HOME="$SX" SINDRI="$STUB" bash "$FIXTURE" context up >/dev/null 2>&1
+for m in 0001 0018 0019 0020 0022 0023; do migrate "$SXDB" "$(ls "$ROOT"/src/Context/Aw.Context.Infrastructure/Store/Migrations/${m}_*.sql)"; done
+: > "$STUB_LOG"
+out="$(srcs 2>/dev/null)"; check "context sources exits 0" "$?" "0"
+check "context sources prints the repo, the doc node and the ticket node" "$(printf '%s' "$out" | tr '\n' ' ')" "aw-split-panes feature:staffing.schema record:linear:issue/0e5a1b00-0000-4000-8000-000000000702"
+SXR="$SX/ui-fixture-context/aw-split-panes"
+check "the tabs repo's origin is the GitHub remote" "$(git -C "$SXR" remote get-url origin)" "https://github.com/acme/tabs.git"
+SXM="$SX/ui-fixture-context/sources-map.json"
+check "the imported map names the tabs repo's HEAD as its commit" "$(jq -r .commit "$SXM")" "$(git -C "$SXR" rev-parse HEAD)"
+check "the doc node rests on a migrations/0001_staffing/migration.sql path of the repo" "$(jq -r '.nodes[] | select(.key == "feature:staffing.schema") | .evidence[0].key' "$SXM")" "repo:aw-split-panes/migrations/0001_staffing/migration.sql"
+contains "context sources imports the sources map as the owner" "$(cat "$STUB_LOG")" "context map import $SXM"
+check "the ticket's record is stored with its Linear URL, in the profile team's audience" "$(sqlq "$SXDB" "SELECT url, audience_key, title FROM source_record WHERE key = 'linear:issue/0e5a1b00-0000-4000-8000-000000000702'")" "https://linear.app/acme/issue/SPL-142/roll-out-staffing|linear:SPL|Roll out staffing"
+contains "context sources puts the Linear team in the live profile" "$(cat "$SX/profile/profile.yaml")" "linear: { teams: [SPL] }"
+: > "$STUB_LOG"
+srcs >/dev/null 2>&1; check "a second context sources exits 0" "$?" "0"
+check "a second context sources keeps one record row and one origin" "$(sqlq "$SXDB" "SELECT COUNT(*) FROM source_record") $(git -C "$SXR" remote | wc -l | tr -d ' ')" "1 1"
+check "a second context sources adds the team to the profile once" "$(grep -c 'teams: \[SPL\]' "$SX/profile/profile.yaml")" "1"
+absent "a second context sources imports nothing" "$(cat "$STUB_LOG")" "context map import"
+
 
 exit "$fail"

@@ -580,6 +580,38 @@
           "Aw.Kernel.Testing": "[1.0.0, )"
         }
       },
+      "aw.connectors.core": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Kernel": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
+          "Vogen": "[8.0.7, 8.0.7]"
+        }
+      },
+      "aw.connectors.features": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Connectors.Core": "[1.0.0, )",
+          "Aw.Kernel": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
+        }
+      },
+      "aw.connectors.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Connectors.Core": "[1.0.0, )",
+          "Aw.Kernel": "[1.0.0, )",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
+        }
+      },
+      "aw.connectors.testing": {
+        "type": "Project",
+        "dependencies": {
+          "Aw.Connectors.Core": "[1.0.0, )",
+          "Aw.Connectors.Features": "[1.0.0, )",
+          "Aw.Kernel.Testing": "[1.0.0, )"
+        }
+      },
       "aw.context.core": {
         "type": "Project",
         "dependencies": {
@@ -593,7 +625,8 @@
         "dependencies": {
           "Aw.Context.Core": "[1.0.0, )",
           "Aw.Kernel": "[1.0.0, )",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "[10.0.12, 10.0.12]",
+          "Microsoft.Extensions.Logging.Abstractions": "[10.0.12, 10.0.12]"
         }
       },
       "aw.context.infrastructure": {
@@ -759,6 +792,9 @@
           "Aw.CodeIndex.Core": "[1.0.0, )",
           "Aw.CodeIndex.Features": "[1.0.0, )",
           "Aw.CodeIndex.Infrastructure": "[1.0.0, )",
+          "Aw.Connectors.Core": "[1.0.0, )",
+          "Aw.Connectors.Features": "[1.0.0, )",
+          "Aw.Connectors.Infrastructure": "[1.0.0, )",
           "Aw.Context.Core": "[1.0.0, )",
           "Aw.Context.Features": "[1.0.0, )",
           "Aw.Context.Infrastructure": "[1.0.0, )",

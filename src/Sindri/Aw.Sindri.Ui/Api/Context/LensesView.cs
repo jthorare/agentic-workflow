@@ -18,7 +18,7 @@ namespace Aw.Sindri.Ui.Api.Context;
 /// <param name="Coverage">Coverage, as served.</param>
 /// <param name="Searched">Searched, as served.</param>
 /// <param name="Degraded">Degraded, as served.</param>
-/// <param name="Cites">Cites, as served.</param>
+/// <param name="Cites">The citations by marker.</param>
 /// <param name="Anchor">The one anchor of a schema 1 answer.</param>
 /// <param name="AnchorSet">The anchors of a schema 2 answer (wire name anchors).</param>
 /// <param name="MissingAnchors">The anchors a set asked for that the map does not hold, in request order.</param>
@@ -35,7 +35,7 @@ internal sealed record LensesView(
     CoverageView Coverage,
     SearchedView Searched,
     IReadOnlyList<JsonElement> Degraded,
-    JsonElement Cites,
+    IReadOnlyDictionary<string, LensCitation>? Cites,
     LensAnchor? Anchor = null,
     [property: JsonPropertyName("anchors")] IReadOnlyList<LensAnchor>? AnchorSet = null,
     IReadOnlyList<string>? MissingAnchors = null,

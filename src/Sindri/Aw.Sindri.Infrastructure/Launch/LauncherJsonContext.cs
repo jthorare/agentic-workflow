@@ -8,6 +8,7 @@ namespace Aw.Sindri.Infrastructure.Launch;
 [JsonSerializable(typeof(Core.Launch.CaptureRule))]
 [JsonSerializable(typeof(ClaudeSettingsDocument))]
 [JsonSerializable(typeof(ClaudeHooks))]
+[JsonSerializable(typeof(ClaudeSandbox))]
 [JsonSerializable(typeof(McpConfigDocument))]
 [JsonSerializable(typeof(CursorCliDocument))]
 [JsonSerializable(typeof(TerminalTemplatesFile))]

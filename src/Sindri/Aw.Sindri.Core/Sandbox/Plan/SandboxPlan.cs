@@ -1,3 +1,4 @@
+using Aw.Kernel;
 using Aw.Sindri.Core.Workflow.Engine;
 
 namespace Aw.Sindri.Core.Sandbox.Plan;
@@ -61,4 +62,67 @@ public sealed record SandboxPlan(
         new SandboxCredentialsSummary(Github),
         Login,
         Attended);
+
+    /// <summary>
+    /// The plan 'sindri sandbox exec' runs (sandbox spec §3.6): this launch's plan with the worktree, the run's ref directories and the run directory read-only (the live agent may still be using them),
+    /// a fresh run area (so a fresh empty scratch, spool and login directory), no session home, no launcher-supplied variable (the launch secret, a model key) and no GitHub token, under its own launch id and socket directory.
+    /// Pure: the caller makes the directories and starts the egress.
+    /// </summary>
+    /// <param name="execLaunch">The exec's own launch id (its scope and its denial counter).</param>
+    /// <param name="execArea">The exec's own run area, replacing this plan's.</param>
+    /// <param name="execNetDir">The exec's own short socket directory.</param>
+    /// <returns>The plan, or SND-CLI-003 when this plan names no run area (no AW_SANDBOX_PLAN variable).</returns>
+    public Result<SandboxPlan> ForExec(LaunchId execLaunch, string execArea, string execNetDir)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(execArea);
+        ArgumentException.ThrowIfNullOrWhiteSpace(execNetDir);
+        if (EnvValue("AW_SANDBOX_PLAN") is not { } file || file.LastIndexOf('/') is not (> 0 and var slash))
+        {
+            return SindriErrors.InvalidInput.With("this plan names no run area, so there is nothing to reproduce (fix: pass a launch whose sandbox-plan.json was written by Sindri)");
+        }
+
+        var area = file[..slash];
+        var session = EnvValue("AW_SINDRI_HOME");
+        var refs = "/refs/heads/" + RunNamespace;
+        var gitDir = RunNamespace.Length == 0 ? null : Mounts.FirstOrDefault(m => m.Path.EndsWith(refs, StringComparison.Ordinal))?.Path[..^refs.Length];
+        string Rebase(string path) => RebaseForExec(path, area, execArea, execLaunch, execNetDir);
+        PlanMount Mount(PlanMount m) => m with { Path = Rebase(m.Path), Source = m.Source is { } source ? Rebase(source) : null, Kind = ReadOnlyWhenShared(m, area, gitDir) };
+
+        return this with
+        {
+            Launch = execLaunch,
+            Mounts = [.. Mounts.Where(m => session is null || !Under(m.Path, session)).Select(Mount)],
+            Network = Network with { NetDir = execNetDir },
+            Environment = [.. Environment.Where(e => e.Name is not ("AW_SINDRI_HOME" or "GH_CONFIG_DIR")).Select(e => e.Value is { } value ? e with { Value = Rebase(value) } : null).OfType<PlanEnvVar>()],   // a variable the launcher supplies (no value here) is not carried
+            Github = GithubCredentials.None,
+            Attended = true,   // the human drives it: no wall limit, and a full cap refuses at once
+        };
+    }
+
+    // The stored launch's socket directory went with its egress; Seatbelt's short temp directory is per launch, so the exec gets its own, not the live agent's.
+    private string RebaseForExec(string path, string area, string execArea, LaunchId execLaunch, string execNetDir)
+    {
+        var tempFrom = SandboxPaths.SeatbeltTemp(Launch);
+        return Under(path, area) ? execArea + path[area.Length..]
+            : Under(path, Network.NetDir) ? execNetDir + path[Network.NetDir.Length..]
+            : Under(path, tempFrom) ? SandboxPaths.SeatbeltTemp(execLaunch) + path[tempFrom.Length..]
+            : path;
+    }
+
+    private string? EnvValue(string name) => Environment.FirstOrDefault(e => string.Equals(e.Name, name, StringComparison.Ordinal))?.Value;
+
+    private PlanMountKind ReadOnlyWhenShared(PlanMount m, string area, string? gitDir)
+    {
+        if (m.Kind != PlanMountKind.ReadWrite)
+        {
+            return m.Kind;
+        }
+
+        var shared = (m.Source is { } source && !Under(source, area))   // a host folder outside the run area, such as the owner's transcripts
+            || (m.Source is null && ((gitDir is not null && Under(m.Path, gitDir)) || (Worktree is not null && Under(m.Path, Worktree)) || Under(m.Path, RunDirectory)));
+        return shared ? PlanMountKind.ReadOnly : m.Kind;
+    }
+
+    private static bool Under(string path, string directory) =>
+        string.Equals(path, directory, StringComparison.Ordinal) || path.StartsWith(directory + "/", StringComparison.Ordinal);
 }

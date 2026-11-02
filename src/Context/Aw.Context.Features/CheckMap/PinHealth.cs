@@ -42,6 +42,10 @@ internal sealed record PinHealth(IReadOnlyList<string> Notes, IReadOnlyList<stri
         return [.. ScopeRules.Mapped(settings.Value, scope.Repos).SelectMany(r => r.Concepts).DistinctBy(p => p.Id?.Value ?? p.Name, StringComparer.Ordinal)];
     }
 
+    // The code files the extractor read; a file node a record made (setup.sh) isn't a file a pin owns.
+    private static List<string> ReadFiles(GraphSnapshot graph) =>
+        [.. graph.Nodes.Where(n => n.Key.Kind == NodeKind.Code && !UnreadFileNodes.Is(n)).Select(n => n.Key.Name).Order(StringComparer.Ordinal)];
+
     // A pin pair whose path globs both match a file of the map: the first pin in the list wins that file (spec 2026-10-27 §10.1). One line per pair, with the first file they share.
     private static List<string> OverlappingPins(GraphSnapshot graph, List<ConceptPin> pins)
     {
@@ -51,7 +55,7 @@ internal sealed record PinHealth(IReadOnlyList<string> Notes, IReadOnlyList<stri
             return [];
         }
 
-        var files = graph.Nodes.Where(n => n.Key.Kind == NodeKind.Code).Select(n => n.Key.Name).Order(StringComparer.Ordinal).ToList();
+        var files = ReadFiles(graph);
         var overlaps = new List<string>();
         for (var i = 0; i < withPaths.Count; i++)
         {

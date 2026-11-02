@@ -57,6 +57,7 @@ internal static class NeedsYouMapper
             Timeout = TimeoutOf(row, readAt),
             Stop = row.Stop,
             Open = row.Open,
+            Sandbox = row.Sandbox,
             Question = Text(pending?.Question),
             FiledBy = Text(pending?.FiledBy),
         };

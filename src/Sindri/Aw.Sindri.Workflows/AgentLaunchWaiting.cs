@@ -5,11 +5,12 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 
 /// <summary>
 /// Asks the launcher for a session and waits out a full session cap (SND-LAUNCH-020, a queue condition and not a fault; sandbox spec §6): it asks again every
-/// <see cref="AgentRuntimeOptions.SlotRetry"/> until <see cref="AgentRuntimeOptions.SlotSlice"/> ends, recording nothing.
+/// <see cref="AgentRuntimeOptions.SlotRetry"/> until <see cref="AgentRuntimeOptions.SlotSlice"/> ends, recording only that it waits (no outcome).
 /// </summary>
 /// <param name="launcher">The launcher.</param>
 /// <param name="options">How long to wait for a free session slot.</param>
-internal sealed class AgentLaunchWaiting(ILauncher launcher, AgentRuntimeOptions options)
+/// <param name="recorder">Records the first wait, so the status can say the Step waits for a slot.</param>
+internal sealed class AgentLaunchWaiting(ILauncher launcher, AgentRuntimeOptions options, AgentLaunchRecorder recorder)
 {
     /// <summary>Launches, asking again while the cap is full.</summary>
     /// <param name="request">The launch.</param>
@@ -25,6 +26,7 @@ internal sealed class AgentLaunchWaiting(ILauncher launcher, AgentRuntimeOptions
                 return result;
             }
 
+            await recorder.Waiting(request, failed, cancellationToken).ConfigureAwait(false);   // idempotent: the first wait is the one recorded
             if (waited + options.SlotRetry > options.SlotSlice)
             {
                 return null;

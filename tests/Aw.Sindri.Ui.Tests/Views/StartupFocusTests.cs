@@ -56,7 +56,7 @@ public sealed class StartupFocusTests : IDisposable
 
                 Assert.Equal(Enum.Parse<PageId>(name), shell.CurrentPage);
                 Control expected = name == "Context"
-                    ? window.Get<Control>("ContextPage").FindControl<TextBox>("AnchorBox")!
+                    ? window.GetVisualDescendants().OfType<Control>().First(c => c.Name == "ContextPage").FindControl<TextBox>("AnchorBox")!
                     : window.Get<Border>("Page");
                 Assert.Same(expected, window.FocusManager?.GetFocusedElement());
             }

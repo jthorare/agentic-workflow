@@ -82,6 +82,20 @@ public sealed class ModelHistoryProjectionTests
         Assert.Null(await _v.Row("draft", Sonnet));
     }
 
+    /// <summary>#1481: a real mirrored row names the instance by its address; the fold looked the instance up by the workflow id in some places and the address in others, so a real escalated run wrote no row.</summary>
+    [Fact]
+    public async Task A_real_escalated_run_counts_the_refused_first_model_and_the_sonnet_ok_run()
+    {
+        await _v.Begin("write");
+        await _v.Launched(ModelHistoryFolds.Run(1), Sonnet, "write");
+        await _v.Picked("write", from: Sonnet, "refused");
+        await _v.Launched(ModelHistoryFolds.Run(1), Opus, "write");
+        await _v.Completed("write", "done", ModelHistoryFolds.Run(1));
+
+        Expect.Sequence([ModelOutcome.Refused], (await _v.Row("write", Sonnet))!.Recent);
+        Expect.Sequence([ModelOutcome.Ok], (await _v.Row("write", Opus))!.Recent);
+    }
+
     [Theory]
     [InlineData("refused", ModelOutcome.Refused)]
     [InlineData("check_failed", ModelOutcome.CheckFailed)]

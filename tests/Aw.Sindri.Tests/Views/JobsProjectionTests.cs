@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Jobs;
 
 namespace Aw.Sindri.Tests.Views;
 
@@ -54,5 +55,49 @@ public sealed class JobsProjectionTests
         var applied = (await _v.Views.Apply([orphan], [new JobsProjection(H.Events)], H.Clock.GetUtcNow(), ct)).Value;
 
         Assert.NotNull(applied.Stall);
+    }
+
+    [Fact]
+    public async Task A_call_event_adds_to_its_jobs_totals_through_the_projector()
+    {
+        await Start();
+        await _v.Fold(EventTypes.ContextModelCalled, ModelCallRows.Answered(A.FirstJobId, "call-1", "codex", "gpt-6-luna", input: 100, output: 50));
+        await _v.Fold(EventTypes.ContextModelCalled, ModelCallRows.Failed(A.FirstJobId, "call-2"));
+
+        var models = (await Row())!.Models!;
+
+        Expect.Equal((2, 1, 100L, 50L), (models.Calls, models.FailedCalls, models.InputTokens, models.OutputTokens));
+    }
+
+    [Fact]
+    public async Task A_call_event_with_no_job_changes_no_row_and_does_not_stall()
+    {
+        await Start();
+        var before = System.Text.Json.JsonSerializer.Serialize(await Row(), SliceHarness.Json);
+
+        await _v.Fold(EventTypes.ContextModelCalled, ModelCallRows.Answered(job: null, "call-1", "codex", "gpt-6-luna", 100, 50));
+
+        Expect.Equal(before, System.Text.Json.JsonSerializer.Serialize(await Row(), SliceHarness.Json));
+    }
+
+    [Fact]
+    public async Task A_call_event_for_a_job_with_no_row_is_skipped_and_does_not_stall()
+    {
+        await Start();
+
+        await _v.Fold(EventTypes.ContextModelCalled, ModelCallRows.Answered(JobId.From("JOB-" + 99.ToString("x32", System.Globalization.CultureInfo.InvariantCulture)), "call-1", "codex", "gpt-6-luna", 100, 50));
+
+        Assert.Null((await Row())!.Models);
+    }
+
+    [Fact]
+    public async Task A_wait_then_a_resume_sets_and_clears_the_signal_through_the_projector()
+    {
+        await Start();
+        await _v.Fold(EventTypes.JobWaiting, new JobWaiting(H.Ids.New<CommandId>(), A.FirstJobId, "model-limit"));
+        Expect.Equal("model-limit", (await Row())!.WaitingOn);
+
+        await _v.Fold(EventTypes.JobResumed, new JobResumed(H.Ids.New<CommandId>(), A.FirstJobId, "model-limit"));
+        Assert.Null((await Row())!.WaitingOn);
     }
 }

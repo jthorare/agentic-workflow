@@ -16,7 +16,7 @@ namespace Aw.Sindri.Host.Commands;
 /// <param name="output">Where the verb writes.</param>
 internal sealed class CodeIndexVerbs(ControlPlaneClient client, Output output)
 {
-    private const string Form = "code-index status [--repo R] [--json] | symbols <query> [--repo R] [--prefix] [--json] | callers|callees <ref> [--depth 1..8] [--repo R] [--json]";
+    private const string Form = "code-index status [--repo R] [--json] | symbols <query> [--repo R] [--prefix] [--concept C] [--json] | callers|callees <ref> [--depth 1..8] [--repo R] [--json]";
 
     private static readonly string[] _attention = [CodeIndexErrors.IndexNotBuilt.Code, CodeIndexErrors.SymbolNotFound.Code, "SND-API-001", "SND-AUTH-002"];
 
@@ -44,7 +44,7 @@ internal sealed class CodeIndexVerbs(ControlPlaneClient client, Output output)
 
     private async Task<int> Symbols(Options o, CancellationToken ct)
     {
-        var symbols = await client.Get<FindSymbolsAnswer>("/sindri/code-index/symbols" + Query(("query", o.Subject), ("repo", o.Repo), ("match", o.Prefix ? "prefix" : null)), ct).ConfigureAwait(false);
+        var symbols = await client.Get<FindSymbolsAnswer>("/sindri/code-index/symbols" + Query(("query", o.Subject), ("repo", o.Repo), ("match", o.Prefix ? "prefix" : null), ("concept", o.Concept)), ct).ConfigureAwait(false);
         return symbols.IsError ? await Failed(symbols.Error).ConfigureAwait(false)
             : await Answer(symbols.Value.Body, CodeIndexText.Symbols(symbols.Value.Value), o.Json, 0).ConfigureAwait(false);
     }
@@ -70,7 +70,7 @@ internal sealed class CodeIndexVerbs(ControlPlaneClient client, Output output)
         return parts.Count == 0 ? string.Empty : "?" + string.Join('&', parts);
     }
 
-    private sealed record Options(string Verb, string? Subject, string? Repo, string? Depth, bool Prefix, bool Json);
+    private sealed record Options(string Verb, string? Subject, string? Repo, string? Depth, bool Prefix, bool Json, string? Concept = null);
 
     private static readonly string[] _verbs = ["status", "symbols", "callers", "callees"];
 
@@ -78,7 +78,7 @@ internal sealed class CodeIndexVerbs(ControlPlaneClient client, Output output)
     private static (string[] Valued, string[] Switches) Flags(string verb) => verb switch
     {
         "status" => (["--repo"], ["--json"]),
-        "symbols" => (["--repo"], ["--json", "--prefix"]),
+        "symbols" => (["--repo", "--concept"], ["--json", "--prefix"]),
         _ => (["--repo", "--depth"], ["--json"]),
     };
 
@@ -97,7 +97,7 @@ internal sealed class CodeIndexVerbs(ControlPlaneClient client, Output output)
 
         return string.Equals(verb, "status", StringComparison.Ordinal) != (subject is null)
             ? null
-            : new Options(verb, subject, flags.GetValueOrDefault("--repo"), flags.GetValueOrDefault("--depth"), flags.ContainsKey("--prefix"), flags.ContainsKey("--json"));
+            : new Options(verb, subject, flags.GetValueOrDefault("--repo"), flags.GetValueOrDefault("--depth"), flags.ContainsKey("--prefix"), flags.ContainsKey("--json"), flags.GetValueOrDefault("--concept"));
     }
 
     private static (string? Subject, Dictionary<string, string> Flags)? Scan(string[] rest, (string[] Valued, string[] Switches) allowed)

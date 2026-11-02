@@ -52,15 +52,21 @@ public sealed class ContextQuestionTests
     }
 
     [Fact]
-    public async Task No_anchors_from_the_query_fall_back_to_its_suggestions()
+    public async Task No_anchors_from_the_query_reads_the_text_and_offers_its_suggestions_as_choices()
     {
-        var server = new FakeSindriApi { QueryAnswer = _ => FakeSindriApi.QueryAnchorsBody([], [Tabs]) };
+        var server = new FakeSindriApi
+        {
+            QueryAnswer = _ => FakeSindriApi.QueryAnchorsBody([], [Tabs]),
+            LensesAnswer = _ => RouteAnswer.Problem(HttpStatusCode.NotFound, "SND-CONTEXT-003", "No such anchor."),
+        };
         var page = Page(server);
         page.AnchorText = Phrase;
 
         await page.Submit(Token);
 
-        Assert.Equal([$"query:{Phrase}", $"lenses:{Tabs}"], server.ContextLog);
+        Assert.Equal([$"query:{Phrase}", $"lenses:{Phrase}"], server.ContextLog);   // why: a suggestion is not a match (#1699)
+        Expect.Equal((true, true), (page.HasProblem, page.HasChoices));
+        Assert.Equal([Tabs], page.Choices);
     }
 
     [Fact]

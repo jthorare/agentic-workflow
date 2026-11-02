@@ -29,9 +29,9 @@ public sealed class LinearDoctorTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_profile_with_no_linear_token_is_ok_not_configured()
+    public async Task A_profile_with_no_linear_entry_is_ok_not_configured()
     {
-        var check = await new LinearDoctor(FakeContextEngine.Instance, _noSecrets).Check(With("""{"sources":{"linear":{"teams":["ENG"]}}}""", _repos), Token);
+        var check = await new LinearDoctor(FakeContextEngine.Instance, _noSecrets).Check(With("{}", _repos), Token);
 
         Assert.Equal((CheckState.Ok, "not configured (the approved profile names no context.sources.linear.token)"), (check.State, check.Detail));
     }

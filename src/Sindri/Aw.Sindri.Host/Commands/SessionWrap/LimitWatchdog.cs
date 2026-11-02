@@ -14,13 +14,15 @@ namespace Aw.Sindri.Host.Commands.SessionWrap;
 /// <param name="calls">The control plane calls (the suspension read).</param>
 /// <param name="clock">The time the ticks run on.</param>
 /// <param name="limits">The limits file.</param>
-internal sealed class LimitWatchdog(IScopeControl scope, ICgroupStats stats, IWrapCalls calls, TimeProvider clock, WrapLimits limits)
+/// <param name="memoryKills">Where the watchdog writes down a memory kill. Non-null means this platform has no kernel memory limit (macOS): the watchdog itself kills the scope on the first tick that reads the memory line reached, and ends the session as a memory limit. Null leaves the kill to the kernel, which is what Linux does.</param>
+internal sealed class LimitWatchdog(IScopeControl scope, ICgroupStats stats, IWrapCalls calls, TimeProvider clock, WrapLimits limits, IMemoryKills? memoryKills = null)
 {
     private static readonly TimeSpan _every = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan _killGrace = TimeSpan.FromSeconds(10);
     private readonly DateTimeOffset _start = clock.GetUtcNow();
     private readonly WallBudget _budget = new(limits.WallSeconds is { } wall ? TimeSpan.FromSeconds(wall) : TimeSpan.MaxValue);
     private bool _wallHit;
+    private bool _memoryHit;
     private string? _cgroup;
     private CgroupSample? _last;
     private DateTimeOffset? _lastAt;
@@ -64,6 +66,7 @@ internal sealed class LimitWatchdog(IScopeControl scope, ICgroupStats stats, IWr
     {
         var now = clock.GetUtcNow();
         await Sample(now, token).ConfigureAwait(false);
+        await KillAtMemoryMax(token).ConfigureAwait(false);
         await RecordPidsHit(launch, proof, token).ConfigureAwait(false);
         var resumed = _budget.Tick(now, await IsSuspended(launch, proof, token).ConfigureAwait(false));
         if (limits.WallSeconds is null)
@@ -91,13 +94,25 @@ internal sealed class LimitWatchdog(IScopeControl scope, ICgroupStats stats, IWr
             return new LimitEnd(LimitKind.Wall, limits.WallSeconds!.Value, peaks.WallSeconds, peaks);   // why: the wall is only hit when it is set
         }
 
-        if (_oomKills > 0 || string.Equals(await UnitResult().ConfigureAwait(false), "oom-kill", StringComparison.Ordinal))
+        if (_memoryHit || _oomKills > 0 || string.Equals(await UnitResult().ConfigureAwait(false), "oom-kill", StringComparison.Ordinal))
         {
             // a poll that missed the kill leaves no peak: the kernel killed at the line, so the line is the best figure
             return new LimitEnd(LimitKind.Memory, limits.MemoryMaxBytes, _memoryPeak > 0 ? _memoryPeak : limits.MemoryMaxBytes, peaks);
         }
 
         return null;
+    }
+
+    private async Task KillAtMemoryMax(CancellationToken token)
+    {
+        if (memoryKills is null || _memoryHit || _last is not { } sample || limits.MemoryMaxBytes <= 0 || sample.MemoryCurrent < limits.MemoryMaxBytes)
+        {
+            return;
+        }
+
+        _memoryHit = true;
+        _ = await scope.Kill(limits.Unit, "SIGKILL", token).ConfigureAwait(false);
+        _ = await memoryKills.Record(limits.Unit, token).ConfigureAwait(false);
     }
 
     private async Task EndScope(Task childExited, CancellationToken token)

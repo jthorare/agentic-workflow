@@ -45,7 +45,7 @@ public sealed class MapBuildJobTextTests : IDisposable
         var result = new BuildContextMapResult("web-app", 7, 42, ["labels"])
         {
             Notes = ["concepts: 3 pins matched no feature"],
-            Replaced = new Aw.Context.Core.Map.StructureCounts(2_790, 111_044, 14, 3),
+            Replaced = new Context.Core.Map.StructureCounts(2_790, 111_044, 14, 3),
             Checks = "structure: 4% isolated (limit 30%), 0% over 150 files (limit 2%)",
         };
 
@@ -57,7 +57,7 @@ public sealed class MapBuildJobTextTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public void A_build_that_replaced_nothing_prints_no_migration_line()
     {
-        var result = new BuildContextMapResult("web-app", 7, 42, []) { Replaced = Aw.Context.Core.Map.StructureCounts.None };
+        var result = new BuildContextMapResult("web-app", 7, 42, []) { Replaced = Context.Core.Map.StructureCounts.None };
 
         Assert.Equal("draft 7 for web-app · 42 proposed\n", MapBuildJobText.Render(result).ReplaceLineEndings("\n"));
     }
@@ -65,12 +65,12 @@ public sealed class MapBuildJobTextTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public void The_result_of_a_report_carries_its_notes_and_counts_and_caps_the_notes_at_twenty()
     {
-        var report = new Aw.Context.Core.Map.MapBuildReport(null!, [], ["clusters"], []) { Notes = [.. Enumerable.Range(0, 30).Select(static i => "n" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))], Structure = new Aw.Context.Core.Map.StructureCounts(1, 2, 0, 0) };
+        var report = new Context.Core.Map.MapBuildReport(null!, [], ["clusters"], []) { Notes = [.. Enumerable.Range(0, 30).Select(static i => "n" + i.ToString(System.Globalization.CultureInfo.InvariantCulture))], Structure = new Context.Core.Map.StructureCounts(1, 2, 0, 0) };
 
         var result = BuildContextMapResult.Of("web-app", 7, 42, report);
 
         Assert.Equal((20, "n0", 1), (result.Notes.Count, result.Notes[0], result.Replaced?.Features));
         Assert.Equal(["clusters"], result.Degraded);
-        Assert.Null(BuildContextMapResult.Of("web-app", 7, 42, report with { Structure = Aw.Context.Core.Map.StructureCounts.None, Notes = [] }).Replaced);
+        Assert.Null(BuildContextMapResult.Of("web-app", 7, 42, report with { Structure = Context.Core.Map.StructureCounts.None, Notes = [] }).Replaced);
     }
 }

@@ -12,9 +12,10 @@ public interface IConnector
     /// <summary>Reads the records changed since <paramref name="after"/>.</summary>
     /// <param name="after">Where to start, or null for a first run.</param>
     /// <param name="limit">Stop after the page that brings the run to this many records.</param>
+    /// <param name="before">Read only records updated before this instant, and make no read for a record at or after it; null is no bound (a Backfill pull passes its upper bound here).</param>
     /// <param name="cancellationToken">The caller's cancellation.</param>
     /// <returns>The page, or an error from the Connectors catalogue.</returns>
-    public ValueTask<Result<ConnectorPage>> Pull(SourceCursor? after, int limit, CancellationToken cancellationToken);
+    public ValueTask<Result<ConnectorPage>> Pull(SourceCursor? after, int limit, DateTimeOffset? before, CancellationToken cancellationToken);
 
     /// <summary>Reads the current version of the records named by <paramref name="keys"/>.</summary>
     /// <param name="keys">Record keys.</param>

@@ -1,6 +1,7 @@
 using System.Text;
 using Aw.Kernel;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Launches;
@@ -47,6 +48,33 @@ public sealed class InstanceJoinsTests
         Assert.Null(await Joins(Launched(started: null, reported: null)).Session(AgentView(), cancel));
         Assert.Null(await Joins(new Launches(row: null)).Session(AgentView(), cancel));
         Assert.Null(await Joins(new Launches(row: null, KernelErrors.Unavailable.With("views.db is locked"))).Session(AgentView(), cancel));
+    }
+
+    [Fact]
+    public async Task A_launch_that_waits_for_a_slot_says_how_full_the_cap_is_until_it_has_an_outcome()
+    {
+        var slice = new SliceHarness();
+        var grant = await slice.HoldLease();
+        var cancel = TestContext.Current.CancellationToken;
+        var joins = new InstanceJoins(Launched(started: null, reported: null), new Contents([]), slice.Store, slice.Events);
+        Assert.Null(await joins.Waiting(AgentView(), cancel));   // nothing recorded yet
+
+        _ = await slice.Store.Append(slice.Events.Entry(EventTypes.LaunchWaiting, new LaunchWaiting(LaunchId.From(Launch), ItemId.From("ITM-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), Running: 3, Cap: 3), "launch.waiting:" + Launch), grant, cancel);
+        Assert.Equal(new StatusWaiting(3, 3), await joins.Waiting(AgentView(), cancel));
+
+        var started = new LaunchStarted(LaunchId.From(Launch), ItemId.From("ITM-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), LaunchMode.Open, AgentId.From("claude-code"), SessionId: null, "sindri",
+            new LaunchViewer("warp", "Warp", ViewerOutcomeKind.Opened, Code: null, Detail: null), ["tmux"], CatalogSource.Builtin, "sha256:abc");
+        _ = await slice.Store.Append(slice.Events.Entry(EventTypes.LaunchStarted, started, "launch.outcome:" + Launch), grant, cancel);
+        Assert.Null(await joins.Waiting(AgentView(), cancel));   // the session started: no longer waiting
+    }
+
+    [Fact]
+    public async Task A_desk_run_never_waits_for_a_slot()
+    {
+        var slice = new SliceHarness();
+        var deskView = InstanceViews.Of(StatusCases.Instance("desk-task"), StatusCases.Recipe, StatusCases.Now, timeoutAt: null, new InstanceViewContext());
+
+        Assert.Null(await new InstanceJoins(Launched(started: null, reported: null), new Contents([]), slice.Store, slice.Events).Waiting(deskView, TestContext.Current.CancellationToken));
     }
 
     [Fact]

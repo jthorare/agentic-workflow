@@ -1,10 +1,7 @@
-using System.Reflection;
 using Aw.Sindri.Core.Launch;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Sandbox;
-using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sandbox.Plan;
-using Aw.Sindri.Features.OpenItem;
 using Req = Aw.Sindri.Testing.Sandbox.SandboxRequests;
 
 namespace Aw.Sindri.Tests.Sandbox.Plan;
@@ -119,20 +116,6 @@ public sealed class SandboxPlanSessionKindTests
         var host = Req.Host with { Environment = new Dictionary<string, string>(Req.Host.Environment, StringComparer.Ordinal) { ["NODE_OPTIONS"] = "--require /home/owner/x.js" } };
 
         Assert.DoesNotContain("NODE_OPTIONS", SandboxPlannerTests.Build(Req.WriteScope with { Host = host }).Environment.Select(e => e.Name), StringComparer.Ordinal);
-    }
-
-    [Fact, Trait("Lane", "unit")]
-    public void Attended_open_before_the_switch_does_not_consult_the_sandbox_port()
-    {
-        // Removed by SB-5b, which switches 'sindri open' to the attended plan (sandbox spec 3.9).
-        var asked = typeof(OpenItemRequest).Assembly.GetTypes()
-            .Where(t => string.Equals(t.Namespace, typeof(OpenItemRequest).Namespace, StringComparison.Ordinal))
-            .SelectMany(t => t.GetConstructors(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance))
-            .SelectMany(c => c.GetParameters())
-            .Where(p => p.ParameterType == typeof(ISandbox) || p.ParameterType == typeof(ModelCredentialSources))
-            .ToList();
-
-        Assert.Empty(asked);
     }
 
     [Theory, Trait("Lane", "unit")]

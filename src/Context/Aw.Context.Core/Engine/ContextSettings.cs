@@ -1,5 +1,4 @@
 using Aw.Context.Core.Linear;
-using Aw.Context.Core.Onyx;
 using Aw.Context.Core.Trust;
 
 namespace Aw.Context.Core.Engine;
@@ -18,7 +17,7 @@ public sealed record ContextSettings
 
     /// <summary>The default 'context.code.schemaGlobs': the migration and schema files the code lens's data files may name.</summary>
     public static IReadOnlyList<string> DefaultSchemaGlobs { get; } =
-        ["**/migrations/**", "**/migrate/**", "**/schema/**", "**/schemas/**", "**/*.sql", "**/*.prisma", "**/*.graphql", "**/*.gql", "**/*.proto", "**/*.avsc", "**/*.xsd", "**/*.schema.json"];
+        ["**/migrations/**", "**/migrate/**", "**/schema/**", "**/schemas/**", "**/schema.ts", "**/*.sql", "**/*.prisma", "**/*.graphql", "**/*.gql", "**/*.proto", "**/*.avsc", "**/*.xsd", "**/*.schema.json"];
 
     /// <summary>The profile repos the engine maps, or null for all of them.</summary>
     public IReadOnlyList<ContextRepoName>? Repos { get; init; }
@@ -53,9 +52,6 @@ public sealed record ContextSettings
     /// <summary>Whether session callers may read context at all, on any transport (spec §3). Off until approved.</summary>
     public bool SessionsEnabled { get; init; } = true;
 
-    /// <summary>The checked 'context.sources.onyx' entry, or null when the profile names no onyx source.</summary>
-    public OnyxSettings? Onyx { get; init; }
-
     /// <summary>The checked 'context.sources.linear' entry for the native Linear adapter (S-6), or null when the profile names no Linear token.</summary>
     public LinearSettings? Linear { get; init; }
 
@@ -68,7 +64,7 @@ public sealed record ContextSettings
     /// <summary>The checked 'context.sources.slack' entry, or null when the profile names none.</summary>
     public SlackSource? Slack { get; init; }
 
-    /// <summary>The Linear team keys ('context.sources.linear.teams') an Onyx identifier alias may name; empty for none.</summary>
+    /// <summary>The Linear team keys ('context.sources.linear.teams') an issue identifier alias may name; empty for none.</summary>
     public IReadOnlyList<string> LinearTeams { get; init; } = [];
 
     /// <summary>
@@ -100,6 +96,12 @@ public sealed record ContextSettings
 
     /// <summary>'context.conceptScan': the concept scan's tier thresholds and the model each agent CLI runs for each tier.</summary>
     public ConceptScanSettings ConceptScan { get; init; } = new();
+
+    /// <summary>'context.models': which harnesses and models each kind of model call uses (model routing spec §3).</summary>
+    public ModelsSettings Models { get; init; } = new();
+
+    /// <summary>'context.conceptSynthesis': the pass that groups the whole record store by meaning and names each group (#1597).</summary>
+    public ConceptSynthesisSettings ConceptSynthesis { get; init; } = new();
 
     /// <summary>'context.ranker': the feature stage and the rerank arm of the query (Phase 8). Both off by default.</summary>
     public RankerSettings Ranker { get; init; } = new();

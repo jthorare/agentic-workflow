@@ -35,8 +35,9 @@ public sealed class PlanSandboxTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task PlanSandbox_in_the_product_host_is_refused_with_014()
+    public async Task PlanSandbox_in_the_product_host_off_Linux_is_refused_with_014()
     {
+        Assert.SkipWhen(OperatingSystem.IsLinux(), "Linux registers bubblewrap; ProductHostSandboxTests covers which sandbox each platform gets");
         var result = await Service().Handle(new PlanSandboxRequest(Req.WriteScope), TestContext.Current.CancellationToken);
 
         Assert.True(result.IsError);

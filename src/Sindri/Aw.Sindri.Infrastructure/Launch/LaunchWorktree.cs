@@ -21,7 +21,9 @@ internal static class LaunchWorktree
 
         try
         {
-            if (await ViewerProcess.Output("git", ["-C", request.RepoPath, "worktree", "add", "--detach", worktree], _gitBudget, cancellationToken).ConfigureAwait(false) is not null)
+            // why: an open's sandbox writes refs under its own namespace only, so its worktree starts on a branch there (sandbox spec §3.9); a Step's comes from the engine on its run branch
+            string[] add = request.Attended ? ["-C", request.RepoPath, "worktree", "add", "-b", AttendedOpen.Branch(request.Launch), worktree] : ["-C", request.RepoPath, "worktree", "add", "--detach", worktree];
+            if (await ViewerProcess.Output("git", add, _gitBudget, cancellationToken).ConfigureAwait(false) is not null)
             {
                 return null;
             }

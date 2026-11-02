@@ -76,7 +76,12 @@ public sealed class MapViewCache
 
     // Who reads and under which profile: the context section, the repos and their deny globs, the caller's kind and repo.
     private static string Caller(ContextScope scope) =>
-        string.Join('\n', scope.Settings?.GetRawText() ?? string.Empty, string.Join(';', scope.Repos.Select(r => r.Name.Value + "=" + r.Path + ":" + string.Join(',', r.DenyPaths))), scope.Caller.Kind, scope.Caller.Repo?.Value ?? string.Empty);
+        string.Join('\n', scope.Settings?.GetRawText() ?? string.Empty, string.Join(';', scope.Repos.Select(r => r.Name.Value + "=" + r.Path + ":" + string.Join(',', r.DenyPaths) + ":" + Pages(r))), scope.OmitPages, scope.Caller.Kind, scope.Caller.Repo?.Value ?? string.Empty);
+
+    // A digest of a repo's pages, so an approved page edit misses the cache and shows on the next read.
+    private static string Pages(ContextRepo repo) =>
+        repo.Pages.Count == 0 ? "0" : Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(string.Join('\n', repo.Pages.Select(p =>
+            string.Join('|', p.Id.Value, p.Name, p.Repo?.Value, p.SurfaceKey, string.Join(';', p.Actions.Select(a => string.Join('|', a.Id.Value, a.Name, a.ActionKey, string.Join(',', a.Concepts))))))))));
 
     private static string Overrides(IReadOnlyList<MapOverride> overrides) =>
         overrides.Count == 0 ? "0" : overrides.Count.ToString(System.Globalization.CultureInfo.InvariantCulture) + ":" + overrides[^1].ToId().Value;

@@ -10,6 +10,7 @@ internal partial interface ISindriApi
     /// <param name="api">The base URL.</param>
     /// <param name="text">The question, as typed.</param>
     /// <param name="cancellationToken">Cancels the call.</param>
+    /// <param name="concept">A pin id to answer inside (<c xml:lang="en">concept=</c>), or null for the whole map.</param>
     /// <returns>The anchors and suggested anchors, the API's refusal, or SND-UI-002/003.</returns>
-    public Task<Result<QueryAnchorsView>> QueryAnchors(Uri api, string text, CancellationToken cancellationToken);
+    public Task<Result<QueryAnchorsView>> QueryAnchors(Uri api, string text, CancellationToken cancellationToken, string? concept = null);
 }

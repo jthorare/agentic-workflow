@@ -107,7 +107,7 @@ internal sealed partial class HealthViewModel
     public string NeedsALookHeading { get; } = Labels.SystemNeedsALook;
 
     /// <summary>What is wrong, one line each (code and words as Sindri served them).</summary>
-    public IReadOnlyList<HealthProblemView> ProblemLines { get; private set => Set(ref field, value); } = [];
+    public IReadOnlyList<HealthProblemLine> ProblemLines { get; private set => Set(ref field, value); } = [];
 
     /// <summary>True when any problem is listed.</summary>
     public bool HasProblemLines => ProblemLines.Count > 0;
@@ -142,7 +142,7 @@ internal sealed partial class HealthViewModel
         var look = NeedsLook();
         Sentence = SentenceFor(new SentenceInputs(State, _health is not null, Pill.IsHealthy, Pill.Problems, HasProfileFix, _health?.Sentence, look));
         (ToneWarn, ToneError) = ToneFor(State, _health?.Word, HasProfileFix || look.Length > 0);
-        ProblemLines = _health?.Problems ?? [];
+        ProblemLines = [.. (_health?.Problems ?? []).Select(p => HealthProblemLine.From(p, _health?.Word))];
         OnChanged(nameof(HasProblemLines));
         ShowAgentsCard();
         ShowViewsCard();

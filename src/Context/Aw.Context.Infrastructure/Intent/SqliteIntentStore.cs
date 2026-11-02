@@ -14,7 +14,7 @@ namespace Aw.Context.Infrastructure.Intent;
 /// The intent layer in context.db (migration 0006_s5b_intent_links): what syncs wrote, outside the map versions. A page's records, links and cursor commit in one transaction, so a cursor never
 /// moves past links that didn't commit and a replay writes nothing new.
 /// </summary>
-internal sealed class SqliteIntentStore(ContextDatabase database) : IIntentStore
+internal sealed partial class SqliteIntentStore(ContextDatabase database) : IIntentStore
 {
     private readonly StampedCache<IntentLayer> _layers = new();
 
@@ -203,6 +203,17 @@ internal sealed class SqliteIntentStore(ContextDatabase database) : IIntentStore
         return Write(async (session, token) =>
         {
             var done = await SqliteQueries.Execute(session, new SqlStatement(IntentSql.Touch, c => c.Bind("@record", record.Value).Bind("@version", version)), token).ConfigureAwait(false);
+            return done.IsError ? done.Error : Unit.Value;
+        }, cancellationToken);
+    }
+
+    public ValueTask<Result<Unit>> SetAliases(RecordKey record, string version, IReadOnlyList<string> aliases, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(version);
+        ArgumentNullException.ThrowIfNull(aliases);
+        return Write(async (session, token) =>
+        {
+            var done = await SqliteQueries.Execute(session, new SqlStatement(IntentSql.SetAliases, c => c.Bind("@record", record.Value).Bind("@version", version).Bind("@aliases", IntentMappers.Joined(aliases))), token).ConfigureAwait(false);
             return done.IsError ? done.Error : Unit.Value;
         }, cancellationToken);
     }

@@ -33,7 +33,7 @@ internal sealed class RefreshGate(IContextEngine engine, IIndexOutlooks outlooks
         var now = clock.GetUtcNow();
         var begun = new MapHold(report.Draft.Number, now, report.Heads);
         var first = await Decide(state.Value, MapGate.StateOf(begun), wait.Value, now, cancellationToken).ConfigureAwait(false);
-        if (first.IsError || first.Value is not MapWait)
+        if (first.IsError || first.Value is not (MapWait or MapRebuild))
         {
             return first.IsError ? first.Error : Publishes(first.Value, MapGate.StateOf(begun), now);
         }
@@ -51,12 +51,14 @@ internal sealed class RefreshGate(IContextEngine engine, IIndexOutlooks outlooks
 
         var holding = MapGate.StateOf(stored.Value);
         var second = await Decide(read.State, holding, read.Wait, begun.Since, cancellationToken).ConfigureAwait(false);
-        if (second.IsError || second.Value is not MapWait waiting)
+        if (second.IsError || second.Value is not (MapWait or MapRebuild))
         {
             return second.IsError ? second.Error : Publishes(second.Value, holding, begun.Since);
         }
 
-        var held = new ContextMapHeld(report.Draft.Repo.Value, holding.Version, holding.Heads.Count, waiting.WaitingOn, (int)read.Wait.TotalMinutes, Chained: holding.Since < begun.Since);
+        // why: a draft built before its code index is kept as the held draft, and the service's next tick starts the rebuild (ContextMapRefreshService.PublishStep); the job that built it is not the one to build again.
+        var waitingOn = second.Value is MapWait waiting ? waiting.WaitingOn : ((MapRebuild)second.Value).Repos.Count;
+        var held = new ContextMapHeld(report.Draft.Repo.Value, holding.Version, holding.Heads.Count, waitingOn, (int)read.Wait.TotalMinutes, Chained: holding.Since < begun.Since);
         var recorded = await recorder.HeldFor(held, cancellationToken).ConfigureAwait(false);
         return recorded.IsError ? recorded.Error : new Outcome(Publish: null, holding, begun.Since);
     }

@@ -3,7 +3,6 @@ using System.Net.Sockets;
 
 namespace Aw.Sindri.Infrastructure.Sandbox;
 
-#pragma warning disable MA0182 // until sandbox launcher (SB-5a) wires it
 /// <summary>The real resolver and dialer: system DNS and a TCP connect to the validated address.</summary>
 internal sealed class SystemEgressNetwork : IEgressResolver, IEgressDialer
 {
@@ -39,4 +38,3 @@ internal sealed class SystemEgressNetwork : IEgressResolver, IEgressDialer
 #pragma warning restore CA2000
     }
 }
-#pragma warning restore MA0182

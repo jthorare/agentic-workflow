@@ -20,7 +20,8 @@ public sealed class ContextGraphApiTests
         var neighbors = await host.Http.Ask(Get("/sindri/context/neighbors?key=thing%3Apane-layout&depth=1", Human(host.Token.Value)));
         var path = await host.Http.Ask(Get("/sindri/context/path?from=feature%3Alayout.split-pane.orientation&to=Tabs", Human(host.Token.Value)));
         var query = await host.Http.Ask(Get("/sindri/context/query?node=feature%3Alayout.split-pane.orientation", Human(host.Token.Value)));
-        var outOfScope = await host.Http.Ask(Get("/sindri/context/node?key=thing%3Apane-layout", session));
+        var cascadedThing = await host.Http.Ask(Get("/sindri/context/node?key=thing%3Apane-layout", session));
+        var outOfScope = await host.Http.Ask(Get("/sindri/context/node?key=feature%3Alayout.drag-to-split", session));
         var inScope = await host.Http.Ask(Get("/sindri/context/node?key=feature%3Atabs.tab-manager", session));
         var deep = await host.Http.Ask(Get("/sindri/context/neighbors?key=thing%3Apane-layout&depth=-1", Human(host.Token.Value)));
         var word = await host.Http.Ask(Get("/sindri/context/neighbors?key=thing%3Apane-layout&depth=abc", Human(host.Token.Value)));
@@ -36,6 +37,7 @@ public sealed class ContextGraphApiTests
         Assert.True(JsonDocument.Parse(path.Body).RootElement.GetProperty("found").GetBoolean());
         Assert.Contains("\"node\":\"feature:tabs.tab-manager\",", query.Body, StringComparison.Ordinal);
         Assert.Contains("\"reads action:tab-manager.restore-layout\"", query.Body, StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.OK, cascadedThing.Status); // why: §6.1 — a thing the repo's actions read/write is in the session's scope (#1565)
         Assert.Equal((HttpStatusCode.NotFound, "SND-CONTEXT-003"), (outOfScope.Status, outOfScope.Code));
         Assert.Equal(HttpStatusCode.OK, inScope.Status);
         Assert.Equal((HttpStatusCode.BadRequest, "SND-CONTEXT-006"), (deep.Status, deep.Code));

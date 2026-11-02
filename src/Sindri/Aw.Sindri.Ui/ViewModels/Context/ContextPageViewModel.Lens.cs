@@ -63,7 +63,7 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        if (await Resolve(api, words, generation, cancellationToken).ConfigureAwait(true) is not var (anchors, fromQuestion))
+        if (await Resolve(api, words, generation, cancellationToken).ConfigureAwait(true) is not var (anchors, fromQuestion, suggested))
         {
             return;
         }
@@ -74,11 +74,11 @@ internal sealed partial class ContextPageViewModel
             return;
         }
 
-        await Draw(api, result, fromQuestion, cancellationToken).ConfigureAwait(true);
+        await Draw(api, result, fromQuestion, suggested, cancellationToken).ConfigureAwait(true);
     }
 
-    // The answer onto the page: the map, or the refusal with its suggestions.
-    private async Task Draw(Uri api, Result<LensesView> result, bool fromQuestion, CancellationToken cancellationToken)
+    // The answer onto the page: the map, or the refusal with its suggestions (the read's own, else the question's).
+    private async Task Draw(Uri api, Result<LensesView> result, bool fromQuestion, List<string> suggested, CancellationToken cancellationToken)
     {
         if (result.IsSuccess)
         {
@@ -95,7 +95,7 @@ internal sealed partial class ContextPageViewModel
         else
         {
             // A miss is said in plain words and the map that was on the page stays: nothing is cleared or dimmed for it.
-            Choices = Suggestions(result.Error);
+            Choices = Suggestions(result.Error) is { Count: > 0 } own ? own : suggested;
             Problem = Labels.ContextRefusal(result.Error.Code, result.Error.Message, AnchorText.Trim());
             await NoteRefusal(api, result.Error, cancellationToken).ConfigureAwait(true);
         }

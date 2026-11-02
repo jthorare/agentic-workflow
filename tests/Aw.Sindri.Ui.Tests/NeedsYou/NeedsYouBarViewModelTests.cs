@@ -17,6 +17,12 @@ public sealed class NeedsYouBarViewModelTests
     private readonly List<NeedsYouDecisionEventArgs> _decisions = [];
     private Func<NeedsYouDecisionEventArgs, Task<string>> _decisionAnswer = _ => Task.FromResult("");
 
+    // The desk instance's golden asks for a file (fact:output); the bar can't give one (#1170, NeedsYouBarRequiredOutputTests), so these tests serve it with the output optional.
+    public NeedsYouBarViewModelTests()
+    {
+        _server.ServeDeskWithoutRequiredOutput();
+    }
+
     private async Task<NeedsYouBarViewModel> Bar(NeedsYouEntry entry, bool read = false)
     {
         var bar = new NeedsYouBarViewModel(new DeskReporter(_server, () => _api), _clock);
@@ -34,7 +40,7 @@ public sealed class NeedsYouBarViewModelTests
     // The desk instance's golden with its complete command served in another class (a merge: the line's last step is protected).
     private void ServeProtectedComplete()
     {
-        var instance = JsonNode.Parse(GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"))!;
+        var instance = GoldenFiles.DeskWithoutRequiredOutput();
         foreach (var command in instance["current"]!["status"]!["commands"]!.AsArray().Where(c => c!["verb"]!.GetValue<string>() == "complete"))
         {
             command!["class"] = "protected";
@@ -46,7 +52,7 @@ public sealed class NeedsYouBarViewModelTests
     // The merge stop: the desk instance with its complete command protected, and (when listed) the fact "fact:prStatus" served.
     private void ServeMergeStop(bool listed)
     {
-        var instance = JsonNode.Parse(GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"))!;
+        var instance = GoldenFiles.DeskWithoutRequiredOutput();
         foreach (var command in instance["current"]!["status"]!["commands"]!.AsArray().Where(c => c!["verb"]!.GetValue<string>() == "complete"))
         {
             command!["class"] = "protected";
@@ -133,7 +139,7 @@ public sealed class NeedsYouBarViewModelTests
     // The desk instance of the f5-fields recipe, waiting in one of its states.
     private void ServeDeskIn(string state)
     {
-        var instance = JsonNode.Parse(GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"))!;
+        var instance = GoldenFiles.DeskWithoutRequiredOutput();
         instance["recipe"]!["id"] = "workflow.f5-fields";
         instance["current"]!["state"] = state;
         _server.InstanceBody = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, instance.ToJsonString());
@@ -369,7 +375,7 @@ public sealed class NeedsYouBarViewModelTests
     {
         var first = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var second = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        _server.InstanceBody = _ => new RouteAnswer(System.Net.HttpStatusCode.OK, GoldenFiles.Api("workflow-instance", "dev-desk-round-trip"));   // the same desk run served for both instances
+        _server.ServeDeskWithoutRequiredOutput();   // the same desk run served for both instances
         _server.CompleteGate = first;
         var bar = await Bar(NeedsYouRows.Desk(), read: true);
         var stale = bar.PressApprove();

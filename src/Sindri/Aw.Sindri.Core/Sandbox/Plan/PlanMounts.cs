@@ -32,10 +32,11 @@ internal static class PlanMounts
             new(c.Home, PlanMountKind.Tmpfs, Size: c.Limits.HomeTmpfsBytes, Reason: "an empty home: only the entries below exist"),
         ];
         AddHomeAllow(m, c);
-        AddLogin(m, c);
+        AddLogin(m, c, inSindriHome: false);
         AddMasks(m, c);
         m.AddRange(c.Denied().Select(d => new PlanMount(d.Path, PlanMountKind.Deny, Reason: d.Reason)));
         AddInventory(m, c);
+        AddLogin(m, c, inSindriHome: true);   // why: a separate-login agent home lives in Sindri's home, which AddInventory just emptied; it goes on top of the mask
         AddLaunchFiles(m, c);
         AddWritable(m, c);
         m.AddRange(c.OwnerDenied().Select(d => new PlanMount(d.Path, PlanMountKind.Deny, Reason: d.Reason)));
@@ -50,21 +51,26 @@ internal static class PlanMounts
         m.AddRange((c.Repo.CachePaths ?? []).Select(p => new PlanMount($"{c.Home}/{p}", PlanMountKind.ReadWrite, Reason: "a cache path this repo declares", Optional: true)));
     }
 
-    private static void AddLogin(List<PlanMount> m, PlanContext c)
+    private static void AddLogin(List<PlanMount> m, PlanContext c, bool inSindriHome)
     {
         if (c.Request.Login is not { } login)
         {
             return;
         }
 
-        foreach (var mount in login.Mounts)
+        foreach (var mount in login.Mounts.Where(x => InSindriHome(c, x.SandboxPath) == inSindriHome))
         {
             var kind = mount.Mode == MountMode.ReadWrite ? PlanMountKind.ReadWrite : PlanMountKind.ReadOnly;
             m.Add(new PlanMount(mount.SandboxPath, kind, string.Equals(mount.HostPath, mount.SandboxPath, StringComparison.Ordinal) ? null : mount.HostPath, Reason: $"the agent home, from the {SandboxWire.Name(c.Login)} login source"));
         }
 
-        AddTranscripts(m, c, login);
+        if (!inSindriHome && login.Source == ModelLoginSource.OwnerCopy)
+        {
+            AddTranscripts(m, c, login);   // why: a separate login keeps its transcripts in its own agent home, bound whole
+        }
     }
+
+    private static bool InSindriHome(PlanContext c, string path) => path.StartsWith(c.Request.Host.SindriHome + "/", StringComparison.Ordinal);
 
     // The CLI writes under its config directory, which is a per-launch copy; only this worktree's transcripts go back to the owner's real 'projects/<key>', so
     // Sindri's readers and a resume find them. The memory directory inside stays the owner's (spec §3.1).
@@ -138,6 +144,10 @@ internal static class PlanMounts
         m.Add(new PlanMount(session, PlanMountKind.ReadOnly, Reason: "this launch's session home: the Step's policy file and MCP config; the agent can't rewrite its own policy"));
         m.Add(new PlanMount(session + "/control.json", PlanMountKind.ReadOnly, Reason: "written by the launcher: the endpoint record with the forwarder's URL"));
         m.Add(new PlanMount(session + "/gh-config", PlanMountKind.ReadWrite, Reason: "the GitHub CLI's empty config directory, so gh finds no login"));
+        if (c.Github == GithubCredentials.AgentApp)
+        {
+            m.Add(new PlanMount(SessionHomePaths.GhTokenDirectory(session), PlanMountKind.ReadOnly, Reason: "the agent GitHub token's folder, bound as a directory so a refresh's rename is seen (R1-14)"));
+        }
     }
 
     private static PlanMount Inventory(string path, StatePathEntry entry, string spool)
@@ -167,6 +177,11 @@ internal static class PlanMounts
 
         if (c.WritablePath is not { } worktree)
         {
+            if (paths.Worktree is { } readOnly)
+            {
+                m.Add(new PlanMount(readOnly, PlanMountKind.ReadOnly, Reason: "the run's worktree, read-only for a read-only Step (the agent starts in it)"));
+            }
+
             return;
         }
 

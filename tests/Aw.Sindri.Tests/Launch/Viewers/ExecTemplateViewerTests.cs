@@ -123,8 +123,11 @@ public sealed class ExecTemplateViewerTests : TerminalViewerContract, IDisposabl
     {
         await _f.StartSession();
         var viewer = new ExecTemplateViewer(new ExecTemplateOptions("stub", [Path.Combine(_f.Dir, "no-such-terminal")]), _f.Host, _f.Clock);
+        var started = TimeProvider.System.GetTimestamp();
 
-        var outcome = await _f.Drive(viewer.Open(_f.Request(), TestContext.Current.CancellationToken));
+        // The failed exec has no stub to say it's done, so the clock stands still for up to 10 s of real time: the window
+        // can't close before sh and setsid have exited on a slow runner (it closed after ~120 ms and read Unconfirmed, #1485).
+        var outcome = await _f.Drive(viewer.Open(_f.Request(), TestContext.Current.CancellationToken), hold: () => TimeProvider.System.GetElapsedTime(started) < TimeSpan.FromSeconds(10));
 
         Expect.Equal(ViewerOutcomeKind.Failed, outcome.Kind);
         Expect.Equal(SindriErrors.LaunchViewerFailed.Code, outcome.Code);

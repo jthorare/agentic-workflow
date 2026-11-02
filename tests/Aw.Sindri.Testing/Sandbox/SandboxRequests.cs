@@ -87,4 +87,17 @@ public static class SandboxRequests
         new Dictionary<string, string>(StringComparer.Ordinal) { ["CLAUDE_CONFIG_DIR"] = Home + "/.claude-run" },
         [Home + "/.claude-run"],
         new LoginHandle(RunArea + "/login"));
+
+    /// <summary>The prepared login the separate-login source would give for Claude Code: the target's own agent home, read-write at its own path.</summary>
+    /// <returns>The login.</returns>
+    public static PreparedLogin SeparateLoginLogin()
+    {
+        var home = SindriHome + "/agent-homes/claude-code";
+        return new(
+            ModelLoginSource.SeparateLogin,
+            [new LoginMount(home, home, MountMode.ReadWrite)],
+            new Dictionary<string, string>(StringComparer.Ordinal) { ["CLAUDE_CONFIG_DIR"] = home },
+            [home],
+            new LoginHandle("separate-login:LCH-" + new string('a', 32)));
+    }
 }

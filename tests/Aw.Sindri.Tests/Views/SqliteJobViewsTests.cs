@@ -4,9 +4,11 @@ using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Infrastructure.Views;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Jobs;
 using Aw.Sindri.Tests.Ledger;
 
 namespace Aw.Sindri.Tests.Views;
@@ -68,6 +70,45 @@ public sealed class SqliteJobViewsTests : IDisposable
         Assert.Null(missing);
         Expect.Sequence([Id(2), Id(3)], running.Select(r => r.Id));
     }
+
+    [Fact]
+    public async Task A_rebuild_from_the_ledger_gives_the_same_model_totals_and_waiting_signal()
+    {
+        var job = Id(1);
+        var other = Id(2);
+        var started = new JobStarted(_h.Ids.New<CommandId>(), job, _run, JobKey.From("index"), Item: null, Repo: null, Service: null);
+        var otherStarted = new JobStarted(_h.Ids.New<CommandId>(), other, _sync, JobKey.From("all"), Item: null, Repo: null, Service: null);
+        IReadOnlyList<LedgerEvent> ledger =
+        [
+            Recorded.Of(_h.Events, EventTypes.JobStarted, started, 1),
+            Recorded.Of(_h.Events, EventTypes.JobStarted, otherStarted, 2),
+            Recorded.Of(_h.Events, EventTypes.ContextModelCalled, ModelCallRows.Answered(job, "call-1", "codex", "gpt-6-luna", 100, 50), 3),
+            Recorded.Of(_h.Events, EventTypes.ContextModelCalled, ModelCallRows.FellBack(job, "call-2", "claude-code", "codex", "gpt-6-luna", 30, 10), 4),
+            Recorded.Of(_h.Events, EventTypes.ContextModelCalled, ModelCallRows.Answered(job: null, "call-3", "codex", "gpt-6-luna", 5, 5), 5),
+            Recorded.Of(_h.Events, EventTypes.JobWaiting, new JobWaiting(_h.Ids.New<CommandId>(), job, "model-limit"), 6),
+            Recorded.Of(_h.Events, EventTypes.JobWaiting, new JobWaiting(_h.Ids.New<CommandId>(), other, "model-limit"), 7),
+            Recorded.Of(_h.Events, EventTypes.JobResumed, new JobResumed(_h.Ids.New<CommandId>(), other, "model-limit"), 8),
+        ];
+        _ = (await _views.Store.Open(ViewSchema.Version, Token)).Value;
+        IReadOnlyList<IProjection> projections = [new JobsProjection(_h.Events)];
+        foreach (var recorded in ledger)
+        {
+            Assert.Null((await _views.Store.Apply([recorded], projections, _h.Clock.GetUtcNow(), Token)).Value.Stall);
+        }
+
+        var incremental = Json((await _views.Reader.List<JobRow>(ViewNames.Jobs, Token)).Value);
+        _ = (await _views.Store.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), Token)).Value;
+        Assert.Null((await _views.Store.Apply(ledger, projections, _h.Clock.GetUtcNow(), Token)).Value.Stall);
+        _ = (await _views.Store.FinishRebuild(Token)).Value;
+        var rebuilt = Json((await _views.Reader.List<JobRow>(ViewNames.Jobs, Token)).Value);
+
+        Expect.Equal(incremental, rebuilt);
+        var row = (await _views.Reader.Get<JobRow>(ViewNames.Jobs, job.Value, Token)).Value!;
+        Expect.Equal((2, 0, 130L, 60L, "model-limit"), (row.Models!.Calls, row.Models.FailedCalls, row.Models.InputTokens, row.Models.OutputTokens, row.WaitingOn));
+        Assert.Null((await _views.Reader.Get<JobRow>(ViewNames.Jobs, other.Value, Token)).Value!.WaitingOn);
+    }
+
+    private static string Json(IEnumerable<JobRow> rows) => string.Join('\n', rows.Select(static r => System.Text.Json.JsonSerializer.Serialize(r, SliceHarness.Json)));
 
     [Fact]
     public async Task A_missing_views_db_reads_as_no_jobs()

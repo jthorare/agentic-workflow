@@ -117,7 +117,7 @@ internal sealed class YamlProfileRepoWriter(SindriSettings settings) : IProfileR
     private static bool Holds(string yaml, RepoEntry repo) =>
         YamlToJson.TryConvert(yaml, out var json) is null && ProfileRepoText.Match(json, repo.Name, repo.Path) == RepoMatch.Same;
 
-    private static (Written Result, string? Reason) Write(string path, string? expected, string text)
+    internal static (Written Result, string? Reason) Write(string path, string? expected, string text)
     {
         var temporary = $"{path}.{Guid.NewGuid():N}.tmp";
         try
@@ -157,7 +157,7 @@ internal sealed class YamlProfileRepoWriter(SindriSettings settings) : IProfileR
 
     private sealed record Planned(string? After, RepoAppended Outcome);
 
-    private enum Written
+    internal enum Written
     {
         Done,
         Conflict,

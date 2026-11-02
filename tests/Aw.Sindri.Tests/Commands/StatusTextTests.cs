@@ -60,13 +60,13 @@ public sealed class StatusTextTests
     public void Each_health_problem_prints_on_its_own_line_under_the_word()
     {
         var health = new HealthReport(HealthWord.Degraded,
-            [new("SND-SCHED-001", "Service heartbeat failed at 2026-10-14T09:30:00Z", "service heartbeat failed"),
+            [new("SND-SCHED-001", "Service heartbeat failed 1 min ago", "service heartbeat failed"),
              new("SND-PROFILE-005", "Not approved: run `sindri profile approve`", "the profile isn't approved")],
             "Sindri is degraded: service heartbeat failed and the profile isn't approved.");
 
         var text = Render(Status(Fresh(), health));
 
-        Assert.Contains("  health    degraded\n              SND-SCHED-001 Service heartbeat failed at 2026-10-14T09:30:00Z\n              SND-PROFILE-005 Not approved: run `sindri profile approve`\n", text, StringComparison.Ordinal);
+        Assert.Contains("  health    degraded\n              SND-SCHED-001 Service heartbeat failed 1 min ago\n              SND-PROFILE-005 Not approved: run `sindri profile approve`\n", text, StringComparison.Ordinal);
     }
 
     [Theory, Trait("Lane", "unit")]

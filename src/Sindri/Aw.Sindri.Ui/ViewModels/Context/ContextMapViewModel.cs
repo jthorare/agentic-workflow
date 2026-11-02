@@ -18,6 +18,8 @@ internal sealed partial class ContextMapViewModel : ObservableObject
         ArgumentNullException.ThrowIfNull(view);
         Layout = ContextMapLayout.Build(view);
         Conflicts = view.Conflicts;
+        _records = view.Bands.Intent.Records.GroupBy(r => r.Key, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+        _cites = view.Cites ?? new Dictionary<string, LensCitation>(StringComparer.Ordinal);
         _links = [.. Layout.Edges.Select(e => new MapLink(e.Key, e.From, e.To, e.Type))];
         Nodes = [.. Layout.Nodes.Select(n => new MapNodeViewModel(n))];
         Pills = [.. Layout.Edges.Select(e => new MapPillViewModel(e))];
@@ -29,7 +31,10 @@ internal sealed partial class ContextMapViewModel : ObservableObject
         (CoverageAreas, CoverageLead, CoverageRest) = CoverageWords.Words(view);
     }
 
-    /// <summary>Gets the layout this map was drawn from.</summary>
+    private readonly Dictionary<string, LensRecord> _records;
+    private readonly IReadOnlyDictionary<string, LensCitation> _cites;
+
+    /// <summary>The layout this map was drawn from.</summary>
     internal MapLayout Layout { get; }
 
     /// <summary>The conflicts between decisions, as served.</summary>
@@ -75,4 +80,10 @@ internal sealed partial class ContextMapViewModel : ObservableObject
     /// <param name="key">The node's key.</param>
     /// <returns>The node.</returns>
     internal MapNodeViewModel? Node(string key) => Nodes.FirstOrDefault(n => string.Equals(n.Key, key, StringComparison.Ordinal));
+
+    /// <summary>The lens record a node is, with its citation when it has one.</summary>
+    /// <param name="key">The node's key.</param>
+    /// <returns>The record, or null when the node is not an intent record; its citation is null when it is uncited.</returns>
+    internal (LensRecord Record, LensCitation? Citation)? RecordFor(string key) =>
+        _records.TryGetValue(key, out var record) ? (record, record.Cites.Select(m => _cites.GetValueOrDefault(m)).FirstOrDefault(c => c is not null)) : null;
 }

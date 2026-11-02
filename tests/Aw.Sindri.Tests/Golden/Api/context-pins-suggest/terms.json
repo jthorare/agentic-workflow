@@ -1,0 +1,22 @@
+{
+  "apiVersion": 1,
+  "repo": "aw-split-panes",
+  "mapVersion": "v1",
+  "terms": [
+    {
+      "word": "invoice",
+      "newRecords": 0
+    },
+    {
+      "word": "shift",
+      "newRecords": 0
+    }
+  ],
+  "features": [
+    {
+      "key": "feature:invoices",
+      "label": "Invoices"
+    }
+  ],
+  "matches": null
+}

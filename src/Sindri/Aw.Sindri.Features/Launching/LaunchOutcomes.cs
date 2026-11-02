@@ -78,7 +78,7 @@ internal sealed class LaunchOutcomes(ILedgerStore ledger, EventFactory events, I
         var shown = await ViewerOf(started.Viewer, request.Attended, cancellationToken).ConfigureAwait(false);
         return await Recorded(request.Launch, AppendStarted(grant,
             new LaunchStarted(request.Launch, request.Item, request.Mode, request.Agent, SessionIdOf(started), TabTitle(request.Item), shown, started.Attach, started.CatalogSource, started.ArgvHash,
-                request.Instance, request.Step?.Ref.State, request.Run?.Number),
+                request.Instance, request.Step?.Ref.State, request.Run?.Number, started.Sandbox),
             cancellationToken)).ConfigureAwait(false);
     }
 

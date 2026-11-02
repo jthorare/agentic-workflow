@@ -1,3 +1,4 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.Linking;
@@ -222,6 +223,9 @@ internal sealed class DecisionPass(IIntentStore store, IModelPort model, Labelin
         return true;
     }
 
+    private static bool IsHarnessDown(string code) =>
+        string.Equals(code, ContextErrors.ModelHarnessesUnavailable.Code, StringComparison.Ordinal) || string.Equals(code, ContextErrors.NoModelHarness.Code, StringComparison.Ordinal);
+
     private static int Cost(string prompt, int answerTokens) => ((prompt.Length + 3) / 4) + answerTokens;
 
     private async ValueTask<string?> Ask(ModelPurpose purpose, string prompt, int answerTokens, CancellationToken cancellationToken)
@@ -237,8 +241,16 @@ internal sealed class DecisionPass(IIntentStore store, IModelPort model, Labelin
         var answer = await model.Ask(new ModelRequest(purpose, prompt, answerTokens, _askBudget), cancellationToken).ConfigureAwait(false);
         if (answer.IsError)
         {
-            Failure = answer.Error.Code;
             _stopped = true;
+            if (IsHarnessDown(answer.Error.Code))
+            {
+                HeldBack = true;   // every model harness is at its limit or none is installed (240, 241): the record stays queued for the next sync, which is no failure (model routing spec §5.4)
+            }
+            else
+            {
+                Failure = answer.Error.Code;
+            }
+
             return null;
         }
 

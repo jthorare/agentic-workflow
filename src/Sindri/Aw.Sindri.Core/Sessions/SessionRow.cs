@@ -37,4 +37,8 @@ public sealed record SessionRow(
 
     /// <summary>The agent's process id (human callers only).</summary>
     public int? Pid { get; init; }
+
+    /// <summary>What the sandbox says about the session (sandbox spec §8); null, and left out, for a session whose launch was not sandboxed or that has no launch of Sindri's.</summary>
+    [System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)]
+    public Sandbox.SessionSandbox? Sandbox { get; init; }
 }

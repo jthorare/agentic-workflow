@@ -1,13 +1,13 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vm="using:Aw.Sindri.Ui.ViewModels.Settings"
+             xmlns:sandbox="using:Aw.Sindri.Ui.Views.Sandbox"
              x:Class="Aw.Sindri.Ui.Views.SettingsView"
              x:DataType="vm:SettingsViewModel">
   <!-- Settings (UI spec §3.3 ⌘,, §11.4, §14.2; setup spec §2.4): the setup checklist first, then this app's own preferences. The shell hosts it as its Settings page, inside
        the page region's own margin and scroll viewer, so it adds neither (its title lines up with every other page's). -->
-  <StackPanel Spacing="{StaticResource Space.LG}" MinWidth="480"
-              MaxWidth="760" HorizontalAlignment="Left">
-    <TextBlock x:Name="TitleText" Classes="page-title" Text="{Binding Title}"
+  <StackPanel Spacing="{StaticResource Space.LG}" MinWidth="480">
+    <TextBlock x:Name="TitleText" Classes="page-title" Focusable="True" Text="{Binding Title}"
                AutomationProperties.Name="{Binding Title}" AutomationProperties.HeadingLevel="1" />
 
     <!-- The setup checklist goes here, second child, put in code when the page has a setup list (a host without one draws nothing, so none of its controls exist). -->
@@ -30,6 +30,43 @@
           </Button>
         </StackPanel>
       </Border>
+    </StackPanel>
+
+    <!-- The label-choice line: read-only (the profile changes it), with its sentence (model routing spec 8.5). -->
+    <StackPanel x:Name="LabelChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasLabelChoice}">
+      <Border AutomationProperties.Name="{Binding LabelChoice.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
+        <TextBlock Classes="detail-title" Text="{Binding LabelChoice.Title}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+              BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+        <StackPanel Spacing="{StaticResource Space.XS}">
+          <TextBlock x:Name="LabelChoiceLine" Classes="body-strong" Text="{Binding LabelChoice.Line}" TextWrapping="Wrap"
+                     AutomationProperties.Name="{Binding LabelChoice.Line}" />
+          <TextBlock x:Name="LabelChoiceSentence" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding LabelChoice.Sentence}" TextWrapping="Wrap"
+                     AutomationProperties.Name="{Binding LabelChoice.Sentence}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <!-- The product-surface-choice line: read-only (the profile changes it), with its sentence (model routing spec 8.5). -->
+    <StackPanel x:Name="SurfaceChoiceSection" Spacing="{StaticResource Space.XS}" IsVisible="{Binding HasSurfaceChoice}">
+      <Border AutomationProperties.Name="{Binding SurfaceChoice.Title}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
+        <TextBlock Classes="detail-title" Text="{Binding SurfaceChoice.Title}" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
+      <Border Background="{DynamicResource Brush.Surface1}" BorderBrush="{DynamicResource Brush.Hairline}"
+              BorderThickness="1" CornerRadius="{StaticResource Radius.LG}" Padding="{StaticResource Space.MD.Thickness}">
+        <StackPanel Spacing="{StaticResource Space.XS}">
+          <TextBlock x:Name="SurfaceChoiceLine" Classes="body-strong" Text="{Binding SurfaceChoice.Line}" TextWrapping="Wrap"
+                     AutomationProperties.Name="{Binding SurfaceChoice.Line}" />
+          <TextBlock x:Name="SurfaceChoiceSentence" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" Text="{Binding SurfaceChoice.Sentence}" TextWrapping="Wrap"
+                     AutomationProperties.Name="{Binding SurfaceChoice.Sentence}" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+
+    <!-- The Sandbox section: read-only (the profile changes it), its heading carries the state (sandbox spec 8). -->
+    <StackPanel x:Name="SandboxSettingsSlot" IsVisible="{Binding HasSandbox}">
+      <sandbox:SandboxSettingsSection x:Name="SandboxSettings" DataContext="{Binding Sandbox}" />
     </StackPanel>
 
     <Border x:Name="ThisAppName" AutomationProperties.Name="{Binding ThisAppLabel}" AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text" AutomationProperties.HeadingLevel="2">
@@ -63,9 +100,18 @@
                        Text="{Binding TextScaleText}" AutomationProperties.Name="{Binding TextScaleText}" />
           </Grid>
           <Slider x:Name="TextScaleSlider" Minimum="{Binding MinTextScale}" Maximum="{Binding MaxTextScale}"
-                  Value="{Binding TextScale, Mode=TwoWay}" TickFrequency="0.1" IsSnapToTickEnabled="True"
+                  Value="{Binding TextScale, Mode=TwoWay}" TickFrequency="0.1" TickPlacement="BottomRight" IsSnapToTickEnabled="True"
                   SmallChange="0.1" LargeChange="0.1"
                   AutomationProperties.Name="{Binding TextSizeLabel}" />
+          <!-- 90%, 100% and 130% under their marks: on the 0.9–1.3 track 1.0 sits a quarter of the way along. -->
+          <Grid ColumnDefinitions="*,*,*,*" Margin="0,-4,0,0">
+            <TextBlock Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Left"
+                       Text="{Binding MinTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock Grid.ColumnSpan="2" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Center"
+                       Text="{Binding NormalTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
+            <TextBlock Grid.Column="3" Classes="caption" Foreground="{DynamicResource Brush.InkSubtle}" HorizontalAlignment="Right"
+                       Text="{Binding MaxTextScaleText}" AutomationProperties.AccessibilityView="Raw" />
+          </Grid>
         </StackPanel>
       </StackPanel>
     </Border>

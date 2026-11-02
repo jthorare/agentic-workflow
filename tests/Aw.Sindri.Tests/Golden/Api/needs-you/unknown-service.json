@@ -9,7 +9,7 @@
         "id": "phantom"
       },
       "item": null,
-      "title": "phantom failed",
+      "title": "Service phantom isn't in this build",
       "reason": "SND-SVC-404: this build has no service 'phantom'; remove or rename it in the profile",
       "repo": null,
       "urgency": "colour",

@@ -31,6 +31,10 @@ public sealed record InstanceEventFields(string? From = null, string? To = null,
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Reason { get; init; }
 
+    /// <summary>How a sandbox limit ended the run, on a 'step.failed' row whose reason is 'limit' and whose session end is on the ledger. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public InstanceLimitEnding? Limit { get; init; }
+
     /// <summary>No fields: a payload that doesn't read as a workflow transition.</summary>
     public static InstanceEventFields None { get; } = new();
 }

@@ -44,11 +44,11 @@ internal sealed partial class GitHubClient : IGitHubReader
     }
 
     /// <inheritdoc />
-    public async ValueTask<Result<GitHubPullPage>> Issues(string repo, GitHubCursor after, int limit, CancellationToken cancellationToken)
+    public async ValueTask<Result<GitHubPullPage>> Issues(string repo, GitHubCursor after, int limit, DateTimeOffset? before, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(after);
         var root = await Prepare(repo, cancellationToken).ConfigureAwait(false);
-        return root.IsError ? root.Error : await ReadIssues(root.Value, repo, after, limit, cancellationToken).ConfigureAwait(false);
+        return root.IsError ? root.Error : await ReadIssues(FirstIssues(root.Value, repo, after), after, limit, before, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
@@ -213,10 +213,18 @@ internal sealed partial class GitHubClient : IGitHubReader
             : ConnectorsErrors.HostRefused.With($"{root.DnsSafeHost} resolves to a private, loopback or link-local address; set context.sources.github.allowPrivateHost if that is intended.");
     }
 
-    private async ValueTask<Result<GitHubPullPage>> ReadIssues(Uri root, string repo, GitHubCursor after, int limit, CancellationToken cancellationToken)
+    // The list is oldest change first, so the first entry that is not before the bound ends the read.
+    private static bool Before(GitHubIssue issue, DateTimeOffset? bound) => bound is not { } end || issue.UpdatedAt < end;
+
+    private static Uri FirstIssues(Uri root, string repo, GitHubCursor after)
     {
         var since = Uri.EscapeDataString(after.UpdatedAt.UtcDateTime.ToString(TimeFormat, CultureInfo.InvariantCulture));
-        Uri? url = new($"{Base(root)}/repos/{repo}/issues?state=all&sort=updated&direction=asc&since={since}&per_page=100");
+        return new($"{Base(root)}/repos/{repo}/issues?state=all&sort=updated&direction=asc&since={since}&per_page=100");
+    }
+
+    private async ValueTask<Result<GitHubPullPage>> ReadIssues(Uri first, GitHubCursor after, int limit, DateTimeOffset? before, CancellationToken cancellationToken)
+    {
+        var url = first;
         List<GitHubIssue> items = [];
         while (url is not null)
         {
@@ -242,8 +250,9 @@ internal sealed partial class GitHubClient : IGitHubReader
                 return ConnectorsErrors.BadReply.With("An entry of GitHub's issue list lacked a field the connector reads.");
             }
 
-            items.AddRange(read.OfType<GitHubIssue>().Where(after.Admits));
-            url = items.Count >= limit ? null : step.Value.Next;
+            var listed = read.OfType<GitHubIssue>().ToList();
+            items.AddRange(listed.Where(i => after.Admits(i) && Before(i, before)));
+            url = listed.Exists(i => !Before(i, before)) || items.Count >= limit ? null : step.Value.Next;
         }
 
         return new GitHubPullPage(items, after.Advance(items), RateLimitedUntil: null);

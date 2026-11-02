@@ -1,0 +1,26 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:tk="using:Aw.Sindri.Ui.ViewModels.Takeover"
+             x:Class="Aw.Sindri.Ui.Views.Components.TakeoverBannerView"
+             x:DataType="tk:TakeoverBannerViewModel">
+  <!-- The sandbox banner on a taken-over run (sandbox spec §7): the golden text and Dismiss. It never takes focus and is not a trap; one polite zero-width live region, in the tree
+       before its state, reads it once on appearance. The words carry the state, not the colour. -->
+  <UserControl.Styles>
+    <Style Selector="TextBlock.live-region.live">
+      <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+    </Style>
+  </UserControl.Styles>
+  <StackPanel>
+    <TextBlock x:Name="TakeoverBannerAnnouncement" Classes="caption live-region" Classes.live="{Binding Voice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False"
+               Text="{Binding Voice.Announcement}" />
+    <Border x:Name="TakeoverBanner" Classes="callout" IsVisible="{Binding IsVisible}" AutomationProperties.Name="{Binding Text}" AutomationProperties.AccessibilityView="Control"
+            AutomationProperties.ControlTypeOverride="Group">
+      <StackPanel Spacing="6">
+        <TextBlock x:Name="TakeoverBannerText" Classes="body" Text="{Binding Text}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+        <Button x:Name="TakeoverBannerDismiss" Click="OnDismiss" HorizontalAlignment="Left" AutomationProperties.Name="{Binding DismissText}">
+          <TextBlock Text="{Binding DismissText}" AutomationProperties.AccessibilityView="Raw" />
+        </Button>
+      </StackPanel>
+    </Border>
+  </StackPanel>
+</UserControl>

@@ -37,7 +37,7 @@ internal sealed partial class ShellViewModel
     public bool IsSheetShown => IsSheetOpen && IsConnected;
 
     /// <summary>The sheet's accessible name: the kind's noun and the subject ("Workflow X"); an id that names itself stays bare.</summary>
-    public string SheetName => SheetLink is { } link && Labels.KindNoun(link.Kind) is { Length: > 0 } noun ? noun + " " + NamedSubject : SheetSubject;
+    public string SheetName => SheetLink is { } link && Labels.KindNoun(link.Kind) is { Length: > 0 } noun ? noun + " " + NamedSubject : SheetLink?.Kind == DeepLinkKind.ProjectAdd ? Labels.ProjectAddHeading : SheetLink?.Kind is DeepLinkKind.PinSheet or DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages ? NamedSubject : SheetSubject;
 
     /// <summary>The edge tab's accessible name: "Reopen" and the sheet's name, its kind's noun in lower case; an item or workflow reads its title, or the bare noun while it loads, never the raw address.</summary>
     public string EdgeTabName => Labels.Reopen + " " + EdgeTabSubject;
@@ -64,7 +64,9 @@ internal sealed partial class ShellViewModel
         DeepLinkKind.NeedsYou => Labels.EdgeTabNeedsYou,
         DeepLinkKind.Decision => Labels.EdgeTabDecision,
         DeepLinkKind.Job => Labels.EdgeTabJob,
+        DeepLinkKind.Project => ProjectSheet.Heading.Length > 0 ? ProjectSheet.Heading : Labels.EdgeTabProject,
         DeepLinkKind.Session => Labels.EdgeTabSession,
+        DeepLinkKind.PageSheet or DeepLinkKind.AddSeveralPages => NamedSubject,
         _ => SheetSubject,
     };
 #pragma warning restore IDE0072
@@ -90,6 +92,11 @@ internal sealed partial class ShellViewModel
         // LANE ANCHOR U11a: one `DeepLinkKind.X or … => false` arm claims the kinds (kinds: Session), U11a's session sheet (collector spec CU-3); the arm is written by the sheet's builder (T4), not by the contract. Insert immediately below this marker, never between the markers.
         DeepLinkKind.Session => false,
         DeepLinkKind.Job => false,
+        DeepLinkKind.Project => false,
+        DeepLinkKind.ProjectAdd => false,
+        DeepLinkKind.PageSheet => false,
+        DeepLinkKind.AddSeveralPages => false,
+        DeepLinkKind.PinSheet => false,
         _ => true,
     };
 #pragma warning restore IDE0072
@@ -126,6 +133,7 @@ internal sealed partial class ShellViewModel
         SheetChangeIsStacked = false;
         (IsSheetOpen, OpenerRow, OpenerStrip, OpenerRecipeGroup, OpenerSession) = (true, null, null, null, null);
         OnJobSheetReopened();
+        OnProjectSheetReopened();
         Changed(nameof(IsSheetOpen), nameof(IsSheetShown), nameof(IsEdgeTabShown));
     }
 }

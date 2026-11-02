@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox.Credentials;
 using Aw.Sindri.Core.Sessions;
 using Aw.Sindri.Infrastructure.Launch;
 using Microsoft.Extensions.DependencyInjection;
@@ -27,7 +28,7 @@ internal static class SessionsServiceCollectionExtensions
             .AddSingleton(LauncherStartup.Catalog(environment, settings))
             .AddSingleton(load.Sessions)
             .AddSingleton(mac ? MacSessionSources.Table() : new ProcProcessTable(procRoot, OwnUid.Read()) as IProcessTable)
-            .AddSingleton<IClaudeSessionRecords>(new ClaudeSessionRecords(load.ClaudeSessionsDirectory))
+            .AddSingleton<IClaudeSessionRecords>(new ClaudeSessionRecords(load.ClaudeSessionsDirectory, [$"{AgentHomes.For(settings.Home, AgentId.From("claude-code"))}/sessions"]))
             .AddSingleton<IFleetStates>(new FleetStateFiles(fleet, providers, pruning: !load.Sessions.TestOverride))
             .AddSingleton(mac ? MacSessionSources.Sockets() : new UnixSockets(procRoot) as IUnixSockets)
             .AddSingleton(provider => new TmuxCli(provider.GetRequiredService<TimeProvider>(), "tmux", TmuxCli.CallBudget))   // one instance: the pass and the preview share its caches and marks
@@ -35,7 +36,11 @@ internal static class SessionsServiceCollectionExtensions
             .AddSingleton<IPaneReader>(static provider => provider.GetRequiredService<TmuxCli>())
             .AddSingleton<ITeamNames>(new TeamNameFiles(settings.StateDirectory))
             .AddSingleton<ITerminalNames>(TerminalProcessNames.Embedded())
-            .AddSingleton<ITranscripts>(new TranscriptFiles(home))
+            .AddSingleton<ITranscripts>(new TranscriptFiles(home, new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["~/.claude"] = AgentHomes.For(settings.Home, AgentId.From("claude-code")),
+                ["~/.codex"] = AgentHomes.For(settings.Home, AgentId.From("codex")),
+            }))
             .AddSingleton<ISessionSnapshot, SessionSnapshotStore>();
     }
 }

@@ -13,7 +13,7 @@ public sealed class ScopingChallengeAgentTests
         Assert.Equal(new StateAgent(DifferentFrom: "draft"), Scoping().States["challenge"].Agent);
 
     [Fact, Trait("Lane", "unit")]
-    public void The_scoping_recipe_is_version_19() => Assert.Equal(19, Scoping().Version);
+    public void The_scoping_recipe_is_version_20() => Assert.Equal(20, Scoping().Version);
 
     [Fact, Trait("Lane", "unit")]
     public void No_other_scoping_state_names_an_agent() =>

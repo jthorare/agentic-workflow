@@ -2,7 +2,9 @@ using Aw.Kernel;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Setup;
+using Aw.Sindri.Core.Worktrees;
 
 namespace Aw.Sindri.Features.OnboardRepo;
 
@@ -15,7 +17,9 @@ namespace Aw.Sindri.Features.OnboardRepo;
 /// <param name="recorder">Records the event.</param>
 /// <param name="known">The (repo, hash) pairs known to be recorded, so a tick does not run them again.</param>
 /// <param name="git">Forgets what it knows of the repos.</param>
-internal sealed class RepoOnboarding(IApprovedProfile approvals, IRepoHooks hooks, RepoEvents recorder, KnownRepoEvents known, RepoGitCache git) : IRepoOnboardingTick
+/// <param name="sandbox">The sandbox checks Onboard reports the blockers of; none means it reports none.</param>
+/// <param name="tracked">The files a repo tracks, for the toolchain detector; none means nothing is offered.</param>
+internal sealed class RepoOnboarding(IApprovedProfile approvals, IRepoHooks hooks, RepoEvents recorder, KnownRepoEvents known, RepoGitCache git, ISandboxChecks? sandbox = null, ITrackedFiles? tracked = null) : IRepoOnboardingTick
 {
     /// <inheritdoc/>
     public async ValueTask Ensure(CancellationToken cancellationToken)
@@ -56,7 +60,16 @@ internal sealed class RepoOnboarding(IApprovedProfile approvals, IRepoHooks hook
 
         known.Add(Marker(name, hash));
         git.Invalidate();
-        return new OnboardedRepo(name, detail);
+        var blockers = sandbox is null ? null : (await sandbox.Run(cancellationToken).ConfigureAwait(false)).Blockers.Select(SandboxBlockerLine.From).ToList();
+        var offer = await Offer(entry, cancellationToken).ConfigureAwait(false);
+        return new OnboardedRepo(name, detail, blockers, offer.Toolchains.Count == 0 ? null : [.. offer.Toolchains.Select(static t => t.Line())], offer.Settings is { } settings ? SandboxOfferYaml.Render(name.Value, settings) : null);
+    }
+
+    // What the repo's files suggest for its 'sandbox.repos.<repo>' entry (sandbox spec §3.7). Only suggested: the profile is the owner's to approve. A repo git can't list offers nothing.
+    private async ValueTask<ToolchainOffer> Offer(RepoEntry entry, CancellationToken cancellationToken)
+    {
+        var listed = tracked is null ? null : await tracked.Paths(entry.Path, cancellationToken).ConfigureAwait(false);
+        return listed is { IsSuccess: true } ? SandboxToolchainDetector.Detect(listed.Value) : new ToolchainOffer([], Settings: null);
     }
 
     private static string Marker(RepoName repo, ProfileHash hash) => $"onboarded:{repo.Value}:{hash.Value}";

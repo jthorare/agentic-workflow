@@ -8,7 +8,7 @@ The original findings are below. Part of them is already on #938. This file is t
 |---|---|
 | §1-2 roles and ignore config | #938, being reworked by the context lane |
 | Budget removal and MCP paging rules | #938 |
-| §6 Onyx | #938, with an owner-steps list |
+| §6 The old intent source | #938, with an owner-steps list |
 | §3, §4, §7, §8 | A follow-up PR from branch `fix/context-quality-followups` |
 | §5 token budget | Moot once the budget is removed |
 
@@ -65,16 +65,16 @@ Answer these in the code or the docs the query command points at:
 - The default when `budget` is omitted.
 - The crowding of records by graph items is already the even share on #938. Do not re-explain it by changing `FillOrder`.
 
-### 6. Onyx — owner, not a session
+### 6. The old intent source — owner, not a session
 
-Live failure, unchanged by #938:
+Live failure, unchanged by #938 (Sindri has since replaced this source with its own record index; see `docs/sindri/sources.md`):
 
-- `SND-CONTEXT-050`: Onyx v4.9.0 on `127.0.0.1:3189` refused the key on `GET /api/me` (HTTP 403). The key is missing, wrong, or lacks the admin role `POST /api/admin/search` needs.
+- `SND-CONTEXT-050`: the old intent source (v4.9.0) on `127.0.0.1:3189` refused the key on `GET /api/me` (HTTP 403). The key is missing, wrong, or lacks the admin role `POST /api/admin/search` needs.
 - The same message says sessions do not search it until `context.repoTeams` maps its teams to a repo.
 - `lastSync: null`, `records: 0`.
-- Onyx was on a port shared with another local dev server, and another tool has also been seen there. Check what actually answers before treating the 403 as only a bad key.
+- It was on a port shared with another local dev server, and another tool has also been seen there. Check what actually answers before treating the 403 as only a bad key.
 
-The owner sets `context.sources.onyx.token` to a dedicated admin service-account key, re-approves the profile (spec §8.8), sets `context.repoTeams`, and uses a port that does not clash. A session cannot approve the profile. Print the commands and stop.
+The owner sets the source's `token` to a dedicated admin service-account key, re-approves the profile (spec §8.8), sets `context.repoTeams`, and uses a port that does not clash. A session cannot approve the profile. Print the commands and stop.
 
 ### 7. Concept nodes
 
@@ -118,7 +118,7 @@ Found while using Sindri MCP `context_*` to list one product area's surfaces.
 
 - Re-running the four repro calls, after the owner rebuilds the map, returns surfaces specific to the queried area first, without primitives, icons, routers, tests, or demo fixtures.
 - `context_lenses` with a `limit` stays in one MCP result and sets `page.more` when another page exists. A call that omits `limit` is still the whole answer.
-- Onyx shows `state: ok` with `records` greater than 0. That step is the owner's.
+- The intent source shows `state: ok` with `records` greater than 0. That step is the owner's.
 - The ignore list is configuration, applied at map build and at query time.
 - Auto-clustered `root.package-NN` labels are not stored as human-confirmed until someone confirms them.
 - Glossary concept nodes match a product-area name and a lowercase phrase without an exact key.

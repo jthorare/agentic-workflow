@@ -5,29 +5,60 @@
 # ~/.claude/settings.json. Lever hooks (context-guard, done-gate, ...) stay in
 # scripts/install-*.sh behind their own approval step.
 #
-# Usage: providers/claude/install-hooks.sh [--uninstall]
+# Usage: providers/claude/install-hooks.sh [--uninstall] [--target-dir DIR]
+#        --target-dir DIR  install into DIR as if it were the agent's config home: DIR/settings.json,
+#                          DIR/hooks/*.sh, and hook commands in settings.json that name DIR/hooks
+#                          (absolute), so ~/.claude is never read or written (a separate-login home)
 # Env:   TOOLKIT_DIR   (default: repo root)
 #        CLAUDE_DIR    (default: ~/.claude)
 #        SETTINGS_FILE (default: $CLAUDE_DIR/settings.json)
 set -euo pipefail
+USAGE="Usage: providers/claude/install-hooks.sh [--uninstall] [--target-dir DIR]"
+UNINSTALL=0
+TARGET_DIR=""
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --uninstall) UNINSTALL=1; shift ;;
+    --target-dir)
+      [ $# -ge 2 ] && [ -n "$2" ] || { echo "$USAGE" >&2; exit 2; }
+      TARGET_DIR="$2"; shift 2 ;;
+    --target-dir=*)
+      TARGET_DIR="${1#--target-dir=}"
+      [ -n "$TARGET_DIR" ] || { echo "$USAGE" >&2; exit 2; }
+      shift ;;
+    *) shift ;;
+  esac
+done
 SCRIPT_DIR="${TOOLKIT_DIR:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
 CLAUDE_DIR="${CLAUDE_DIR:-$HOME/.claude}"
 SETTINGS_FILE="${SETTINGS_FILE:-$CLAUDE_DIR/settings.json}"
 HOOKS_DIR="$CLAUDE_DIR/hooks"
+# Hook commands in settings.json: the literal ~/.claude path by default, DIR/hooks under --target-dir.
+CMD_DIR="~/.claude/hooks"
+HOOKS_PATH_RE='\.claude/hooks'
+if [ -n "$TARGET_DIR" ]; then
+  case "$TARGET_DIR" in /*) ;; *) TARGET_DIR="$PWD/$TARGET_DIR" ;; esac
+  TARGET_DIR="${TARGET_DIR%/}"
+  CLAUDE_DIR="$TARGET_DIR"
+  SETTINGS_FILE="$TARGET_DIR/settings.json"
+  HOOKS_DIR="$TARGET_DIR/hooks"
+  CMD_DIR="$HOOKS_DIR"
+  HOOKS_PATH_RE='hooks'
+fi
 
 if [ "${AW_DRY_RUN:-0}" = "1" ]; then
-  echo "  [dry-run] would ${1:+run $1 on }copy config/hooks/*.sh → $HOOKS_DIR and merge hooks into $SETTINGS_FILE"
+  echo "  [dry-run] would $([ "$UNINSTALL" = 1 ] && echo 'run --uninstall on ')copy config/hooks/*.sh → $HOOKS_DIR and merge hooks into $SETTINGS_FILE"
   exit 0
 fi
 
-if [ "${1:-}" = "--uninstall" ]; then
+if [ "$UNINSTALL" = 1 ]; then
   # Remove exactly the entries this installer writes (the canonical Bash
   # safety group and the git-context/prism-context SessionStart commands).
   # Script files in ~/.claude/hooks/ are left in place: lever installers
   # reference the same copies.
   if [ -f "$SETTINGS_FILE" ] && command -v jq &>/dev/null; then
-    jq '
-      def ours: test("/\\.claude/hooks/(block-destructive|block-push-main|detect-secrets|rtk-rewrite|git-context|prism-context)\\.sh$");
+    jq --arg re "$HOOKS_PATH_RE" '
+      def ours: test("/" + $re + "/(block-destructive|block-push-main|detect-secrets|rtk-rewrite|git-context|prism-context)\\.sh$");
       if .hooks then
         .hooks.PreToolUse = [ .hooks.PreToolUse[]? | select((.matcher == "Bash" and ([.hooks[]? | (.command // "") | ours] | all)) | not) ]
         | .hooks.SessionStart = [ .hooks.SessionStart[]? | .hooks = [ .hooks[]? | select((.command // "") | ours | not) ] | select(.hooks | length > 0) ]
@@ -44,6 +75,8 @@ echo ""
 echo "Installing safety hooks..."
 
 mkdir -p "$HOOKS_DIR"
+# A fresh agent home has no settings.json yet; the default install leaves a missing one alone.
+if [ -n "$TARGET_DIR" ] && [ ! -f "$SETTINGS_FILE" ]; then echo '{}' > "$SETTINGS_FILE"; fi
 
 for hook_file in "$SCRIPT_DIR/config/hooks/"*.sh; do
   [ -f "$hook_file" ] || continue
@@ -59,7 +92,7 @@ cp "$SCRIPT_DIR/config/lib/failopen.sh" "$HOOKS_DIR/lib/failopen.sh"
 # Merge safety hooks into existing settings.json
 if [ -f "$SETTINGS_FILE" ] && command -v jq &>/dev/null; then
   # Replace any existing Bash matcher entry with the canonical one (fully idempotent, handles version drift)
-  HOOK_BASH_ENTRY='{"matcher":"Bash","hooks":[{"type":"command","command":"~/.claude/hooks/block-destructive.sh"},{"type":"command","command":"~/.claude/hooks/block-push-main.sh"},{"type":"command","command":"~/.claude/hooks/detect-secrets.sh"},{"type":"command","command":"~/.claude/hooks/rtk-rewrite.sh"}]}'
+  HOOK_BASH_ENTRY='{"matcher":"Bash","hooks":[{"type":"command","command":"'"$CMD_DIR"'/block-destructive.sh"},{"type":"command","command":"'"$CMD_DIR"'/block-push-main.sh"},{"type":"command","command":"'"$CMD_DIR"'/detect-secrets.sh"},{"type":"command","command":"'"$CMD_DIR"'/rtk-rewrite.sh"}]}'
   jq --argjson entry "$HOOK_BASH_ENTRY" \
     '.hooks.PreToolUse = ([.hooks.PreToolUse[]? | select(.matcher != "Bash")] + [$entry])' \
     "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" \
@@ -68,9 +101,9 @@ if [ -f "$SETTINGS_FILE" ] && command -v jq &>/dev/null; then
 
   # Add git-context SessionStart hook if not already present
   if ! jq -e '.hooks.SessionStart[]? | select(.hooks[]?.command | test("git-context"))' "$SETTINGS_FILE" &>/dev/null; then
-    HOOK_ENTRY='[{"hooks":[{"type":"command","command":"~/.claude/hooks/git-context.sh"}]}]'
+    HOOK_ENTRY='[{"hooks":[{"type":"command","command":"'"$CMD_DIR"'/git-context.sh"}]}]'
     if jq -e 'has("hooks") and (.hooks | has("SessionStart"))' "$SETTINGS_FILE" &>/dev/null; then
-      jq --argjson entry '{"hooks":[{"type":"command","command":"~/.claude/hooks/git-context.sh"}]}' '.hooks.SessionStart += [$entry]' \
+      jq --argjson entry '{"hooks":[{"type":"command","command":"'"$CMD_DIR"'/git-context.sh"}]}' '.hooks.SessionStart += [$entry]' \
         "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" \
         && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
     else
@@ -83,9 +116,9 @@ if [ -f "$SETTINGS_FILE" ] && command -v jq &>/dev/null; then
 
   # Add prism-context SessionStart hook if not already present
   if ! jq -e '.hooks.SessionStart[]? | select(.hooks[]?.command | test("prism-context"))' "$SETTINGS_FILE" &>/dev/null; then
-    HOOK_ENTRY='[{"hooks":[{"type":"command","command":"~/.claude/hooks/prism-context.sh"}]}]'
+    HOOK_ENTRY='[{"hooks":[{"type":"command","command":"'"$CMD_DIR"'/prism-context.sh"}]}]'
     if jq -e 'has("hooks") and (.hooks | has("SessionStart"))' "$SETTINGS_FILE" &>/dev/null; then
-      jq --argjson entry '{"hooks":[{"type":"command","command":"~/.claude/hooks/prism-context.sh"}]}' '.hooks.SessionStart += [$entry]' \
+      jq --argjson entry '{"hooks":[{"type":"command","command":"'"$CMD_DIR"'/prism-context.sh"}]}' '.hooks.SessionStart += [$entry]' \
         "$SETTINGS_FILE" > "$SETTINGS_FILE.tmp" \
         && mv "$SETTINGS_FILE.tmp" "$SETTINGS_FILE"
     else

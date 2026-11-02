@@ -2,6 +2,7 @@ using Aw.Kernel.Ids;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Launch;
+using Aw.Sindri.Core.Sandbox;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Testing;
 
@@ -22,10 +23,10 @@ internal static class LaunchFolds
 
     /// <summary>Folds a 'launch.started' whose viewer did <paramref name="outcome"/>.</summary>
     public static Task Start(this ViewsHarness v, LaunchId? launch = null, ViewerOutcomeKind outcome = ViewerOutcomeKind.Opened, SessionId? session = null, AgentId? target = null, LaunchMode mode = LaunchMode.Open, string? viewerDetail = null,
-        InstanceAddress? instance = null, string? state = null, int? attempt = null) =>
+        InstanceAddress? instance = null, string? state = null, int? attempt = null, SandboxSummary? sandbox = null) =>
         v.Fold(EventTypes.LaunchStarted,
             new LaunchStarted(launch ?? A.FirstLaunchId, A.FirstItemId, mode, target ?? ClaudeCode, session, "sindri " + A.FirstItemId.Value,
-                new LaunchViewer("warp", "Warp", outcome, outcome == ViewerOutcomeKind.Failed ? "SND-LAUNCH-001" : null, viewerDetail), ["tmux", "attach"], CatalogSource.Builtin, "sha256:abc", instance, state, attempt), A.FirstItemId);
+                new LaunchViewer("warp", "Warp", outcome, outcome == ViewerOutcomeKind.Failed ? "SND-LAUNCH-001" : null, viewerDetail), ["tmux", "attach"], CatalogSource.Builtin, "sha256:abc", instance, state, attempt, sandbox), A.FirstItemId);
 
     /// <summary>Folds a 'launch.failed'.</summary>
     public static Task Fail(this ViewsHarness v, string code = "SND-LAUNCH-007", LaunchStage? stage = null, LaunchId? launch = null, string message = "the launch was interrupted",

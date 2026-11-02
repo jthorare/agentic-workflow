@@ -13,6 +13,9 @@ public sealed record StartedLaunch(HostRef Host, ViewerOutcome Viewer, IReadOnly
     /// <summary>The session id the launcher chose for the agent before it started (the entry's 'pre-chosen-uuid' mode), or null when the id is reported later (launcher L-9).</summary>
     public string? ChosenSession { get; init; }
 
+    /// <summary>The Step's run directory the launcher made (AW_SINDRI_RUN_DIR, sandbox spec SB17), or null for a human open; the engine reads its outputs and recovers from it.</summary>
+    public string? RunDirectory { get; init; }
+
     /// <summary>The sandbox summary the engine copies onto 'launch.started' (sandbox spec §6), or null before SB-5a and for an attended open before SB-5b.</summary>
     public SandboxSummary? Sandbox { get; init; }
 }

@@ -8,4 +8,5 @@ namespace Aw.Sindri.Core.Workflow.Engine.Runtime;
 /// <param name="Bundle">The pack the Step bundles (LN-WF5), resolved; null for none.</param>
 /// <param name="Facts">The Step's declared read facts as files for its run directory, file name to content (written by the launcher); null for none.</param>
 /// <param name="Model">The model the Step's 'model' parameter asked for; null runs the agent's default.</param>
-public sealed record AgentLaunchExtras(IReadOnlyList<string>? Instructions = null, string? Workspace = null, PackBundle? Bundle = null, IReadOnlyDictionary<string, string>? Facts = null, string? Model = null);
+/// <param name="BaseCommit">The commit the workspace started from (a phase workspace's seed), for the host-side prepare; null when the launcher should record the repo's HEAD at the run's first launch.</param>
+public sealed record AgentLaunchExtras(IReadOnlyList<string>? Instructions = null, string? Workspace = null, PackBundle? Bundle = null, IReadOnlyDictionary<string, string>? Facts = null, string? Model = null, string? BaseCommit = null);

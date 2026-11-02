@@ -1,4 +1,4 @@
-Sandbox 514f2ffd6dd6 (pass-through) for a Step
+Sandbox b71d491e077e (pass-through) for a Step
 Launch: LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 Files, bottom to top (a later line wins):
@@ -56,6 +56,7 @@ Files, bottom to top (a later line wins):
   read-only /home/owner/.agentic-workflow/sindri-app/workflow/areas/run-1/sandbox-plan.json  (the value-free summary 'sandbox explain' reads)
   writable  /home/owner/.agentic-workflow/sindri-app/workflow/runs/x/s/1  (the Step's outputs)
   read-only /work/web/.git  (the git directory: config, hooks, packed-refs, tags and other runs' refs stay read-only)
+  read-only /work/web/.claude/worktrees/sindri-x-1  (the run's worktree, read-only for a read-only Step (the agent starts in it))
 
 Network (enforce):
   model: api.anthropic.com

@@ -61,7 +61,10 @@ public static class AgentLaunches
         var policy = new StepPolicy(tools, StepPermissionMode.Default, run.WriteScope ? worktree : null);
         return new LaunchRequest(
             LaunchIdFor(run), target.Item, target.Agent, LaunchMode.Open, Attended: false, target.RepoPath, run.Address, worktree,
-            StepArgsFor(run, descriptor, extras, policy), run.Run);
+            StepArgsFor(run, descriptor, extras, policy), run.Run)
+        {
+            BaseCommit = extras?.BaseCommit,
+        };
     }
 
     // The Step's 'model' parameter (null runs the agent's default), its brief and the pack and facts it is given.

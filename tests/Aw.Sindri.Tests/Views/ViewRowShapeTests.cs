@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Launches;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.NeedsYou;
+using Aw.Sindri.Core.Projects;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Core.Workflow.Stats;
 
@@ -17,14 +18,14 @@ namespace Aw.Sindri.Tests.Views;
 /// </summary>
 public sealed class ViewRowShapeTests
 {
-    private const int PinnedVersion = 17;
-    private const string PinnedShape = "39c985f2348bed62b7adbc87917e4455b73d67d597fd208242aea016d2e629b4";
+    private const int PinnedVersion = 24;
+    private const string PinnedShape = "4832144ce3f6ce613396a07bc3d5b801ce0aa3f479f741d44006e21fda67fced";
 
     private static readonly Type[] _rows =
     [
         typeof(ServiceRow), typeof(ProfileRow), typeof(ItemRow), typeof(AliasRow), typeof(TimelineRow), typeof(RequestRow),
         typeof(HumanDecisionRow), typeof(NeedsYouRowRecord), typeof(JobRow), typeof(LaunchRow), typeof(CodeIndexRow), typeof(RecipeStatsRow),
-        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder),
+        typeof(ModelHistoryRow), typeof(RunScope), typeof(RunModel), typeof(StateOrder), typeof(ProjectAttachedRow), typeof(ProjectHiddenRow),
     ];
 
     [Fact, Trait("Lane", "unit")]

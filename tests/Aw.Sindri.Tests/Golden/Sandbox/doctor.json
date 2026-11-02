@@ -45,6 +45,11 @@
       "text": "hooks: 3 kinds verified inside a Step (plain, judge-backed, meta skipped)"
     },
     {
+      "id": "hooks-unchecked",
+      "level": "info",
+      "text": "hooks: not checked yet (the first Step's self-check verifies them)"
+    },
+    {
       "id": "inner",
       "level": "info",
       "text": "agents' own sandboxes: off (not needed; Sindri's covers it)"

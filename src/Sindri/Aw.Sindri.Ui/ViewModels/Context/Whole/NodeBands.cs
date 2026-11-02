@@ -1,8 +1,9 @@
 namespace Aw.Sindri.Ui.ViewModels.Context.Whole;
 
 /// <summary>
-/// The one table that puts a kind of node in a band and gives it a look (q86; the ui owns the mapping, owner q95): records and decisions are the why;
-/// features, screens, actions, things, flows and concepts are the product; code is code; any other kind goes in an Other row, so nothing is dropped.
+/// The one table that puts a kind of node in a band and gives it a look (q86; the ui owns the mapping, owner q95): concepts have their own row above the why
+/// (the served answer's concept band, #1281); records and decisions are the why; features, screens, actions, things and flows are the product; code is code;
+/// any other kind goes in an Other row, so nothing is dropped.
 /// </summary>
 internal static class NodeBands
 {
@@ -15,7 +16,7 @@ internal static class NodeBands
         ("action", WholeBand.Product, new(ChipShape.Card, KindMark.Triangle, "Brush.Success")),
         ("thing", WholeBand.Product, new(ChipShape.Card, KindMark.Diamond, "Brush.Success")),
         ("flow", WholeBand.Product, new(ChipShape.Card, KindMark.Chevron, "Brush.Success")),
-        ("concept", WholeBand.Product, new(ChipShape.Card, KindMark.Bar, "Brush.Success")),
+        ("concept", WholeBand.Concept, new(ChipShape.Card, KindMark.Bar, "Brush.Success")),
         ("code", WholeBand.Code, new(ChipShape.Plate, KindMark.Bar, "Brush.InkMuted")),
     ];
 
@@ -36,9 +37,10 @@ internal static class NodeBands
 
     /// <summary>A band's title.</summary>
     /// <param name="band">The band.</param>
-    /// <returns>"Why", "Product", "Code" or "Other".</returns>
+    /// <returns>"Concepts", "Why", "Product", "Code" or "Other".</returns>
     internal static string Title(WholeBand band) => band switch
     {
+        WholeBand.Concept => Labels.ContextConceptsCrumb,
         WholeBand.Intent => Labels.ContextWholeBandWhy,
         WholeBand.Product => Labels.ContextMapAreaProduct,
         WholeBand.Code => Labels.ContextMapAreaCode,

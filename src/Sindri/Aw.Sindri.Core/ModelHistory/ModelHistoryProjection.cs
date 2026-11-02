@@ -40,6 +40,15 @@ internal sealed class ModelHistoryProjection(EventFactory events) : IProjection
         };
     }
 
+    // A mirrored row names its instance by the address ('ITM-…/recipe/1'); every key of the fold uses the workflow id ('WFI-…') that a launch.started and a model.picked yield from their address, so the row is read with its instance as that id (#1481).
+    private Result<WorkflowEventPayload> Mirrored(LedgerEvent recorded)
+    {
+        var payload = events.Payload<WorkflowEventPayload>(recorded);
+        return payload.IsError || WorkflowInstanceId.TryFrom(payload.Value.Instance, out _) || !InstanceAddress.TryFrom(payload.Value.Instance, out var address)
+            ? payload
+            : payload.Value with { Instance = WorkflowInstanceId.Of(address).Value };
+    }
+
     private async ValueTask<Result<Unit>> Registered(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
         var registered = events.Payload<RecipeRegistered>(recorded);
@@ -50,7 +59,7 @@ internal sealed class ModelHistoryProjection(EventFactory events) : IProjection
 
     private async ValueTask<Result<Unit>> Started(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
-        var started = events.Payload<WorkflowEventPayload>(recorded);
+        var started = Mirrored(recorded);
         if (started.IsError)
         {
             return started.Error;
@@ -113,7 +122,7 @@ internal sealed class ModelHistoryProjection(EventFactory events) : IProjection
 
     private async ValueTask<Result<Unit>> Transitioned(LedgerEvent recorded, IViewRows rows, CancellationToken cancellationToken)
     {
-        var payload = events.Payload<WorkflowEventPayload>(recorded);
+        var payload = Mirrored(recorded);
         if (payload.IsError)
         {
             return payload.Error;

@@ -36,14 +36,34 @@ public sealed class HealthViewModelTests : IDisposable
 
     private void Start() => _run = _vm.Run(_stop.Token);
 
+    // Yields first so a condition that is already true, or about to be, costs no real time; the 1 ms sleeps after that
+    // keep the bound at about 2 s so a hang still fails.
     private static async Task Eventually(Func<bool> condition, string what)
     {
-        for (var i = 0; i < 200 && !condition(); i++)
+        for (var i = 0; i < 2000 && !condition(); i++)
         {
-            await Task.Delay(10, TestContext.Current.CancellationToken);
+            if (i < 50)
+            {
+                await Task.Yield();
+            }
+            else
+            {
+                await Task.Delay(1, TestContext.Current.CancellationToken);
+            }
         }
 
         Assert.True(condition(), what);
+    }
+
+    // Lets work already queued on the fake clock's timers and delays run, without waiting out a fixed real-time interval.
+    private static async Task Settle()
+    {
+        for (var i = 0; i < 20; i++)
+        {
+            await Task.Yield();
+        }
+
+        await Task.Delay(1, TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -456,7 +476,7 @@ public sealed class HealthViewModelTests : IDisposable
         Start();
         await Eventually(() => _server.StreamCursors.Count == 1, "first stream opened");
 
-        await Task.Delay(200, TestContext.Current.CancellationToken);
+        await Settle();
         _ = Assert.Single(_server.StreamCursors);
 
         await Eventually(() =>
@@ -568,7 +588,7 @@ public sealed class HealthViewModelTests : IDisposable
         for (var second = 1; second < 30; second++)
         {
             _clock.Advance(TimeSpan.FromSeconds(1));
-            await Task.Delay(5, TestContext.Current.CancellationToken);
+            await Settle();
             Assert.Equal(ShellState.Normal, _vm.State);
         }
 
@@ -590,7 +610,7 @@ public sealed class HealthViewModelTests : IDisposable
         for (var second = 1; second <= 30; second++)
         {
             _clock.Advance(TimeSpan.FromSeconds(1));
-            await Task.Delay(5, TestContext.Current.CancellationToken);
+            await Settle();
         }
 
         await Eventually(() => _vm.State == ShellState.Stale, "stale: the pings came from someone else");

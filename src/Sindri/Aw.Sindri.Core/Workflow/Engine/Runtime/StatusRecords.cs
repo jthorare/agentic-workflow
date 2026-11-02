@@ -31,6 +31,7 @@ internal static class StatusRecords
     {
         Run = view.AgentRun is { } agent ? new StatusRun("agent", agent.Launch) : null,
         ReasonCode = view.Question?.Code,
+        Sandbox = StatusSandboxes.OrNull(view.Question?.Sandbox),
         InputTimings = Timings(view),
         TakenOverAt = view.EngineOwned is { Kind: EngineOwnedKind.TakenOver } ? view.Since : null,   // a takeover enters the 'taken-over' state, so Since is the takeover's time
         TakenOverBy = view.EngineOwned is { Kind: EngineOwnedKind.TakenOver } ? view.TakenOverBy : null,

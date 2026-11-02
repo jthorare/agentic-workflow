@@ -1,10 +1,11 @@
 using System.Globalization;
 using Aw.Context.Core;
+using Aw.Context.Core.Concepts;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval.Backtest;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Results;
 using Aw.Context.Core.Sources;
-
 using Aw.Kernel;
 
 namespace Aw.Context.Features.RunBacktest;
@@ -76,7 +77,7 @@ internal sealed class SampleScorer(IBriefSource briefs, AsOfMapBuilder maps, IAs
             return brief.IsError ? Outcome.SourceDown : Outcome.NoBrief;
         }
 
-        var opened = await Open(world.Repos.First(r => r.Name == sample.Repo), sample, (world, request.Scope), cancellationToken).ConfigureAwait(false);
+        var opened = await Open(world.Repos.First(r => r.Name == sample.Repo), sample, (world, request.Scope, request.Progress), cancellationToken).ConfigureAwait(false);
         if (opened.IsError)
         {
             return CutDrop(opened.Error, request.Progress, how.Step);
@@ -108,17 +109,17 @@ internal sealed class SampleScorer(IBriefSource briefs, AsOfMapBuilder maps, IAs
         return Outcome.CutUnreadable;
     }
 
-    private async ValueTask<Result<Opened>> Open(ContextRepo repo, CorpusSample sample, (BriefScope World, ContextScope Scope) given, CancellationToken cancellationToken)
+    private async ValueTask<Result<Opened>> Open(ContextRepo repo, CorpusSample sample, (BriefScope World, ContextScope Scope, IProgress<string>? Progress) given, CancellationToken cancellationToken)
     {
-        var (world, scope) = given;
-        var built = await maps.Build(new AsOfRequest(repo, sample, scope), cancellationToken).ConfigureAwait(false);
+        var (world, scope, progress) = given;
+        var built = await maps.Build(new AsOfRequest(repo, sample, scope, progress), cancellationToken).ConfigureAwait(false);
         if (built.IsError)
         {
             return built.Error;
         }
 
         var source = await docs.Open(new AsOfDocsRequest(repo, sample.Cut, world.Settings.IndexedDocGlobs, world.Scrubbers), cancellationToken).ConfigureAwait(false);
-        return source.IsError ? source.Error : new Opened(built.Value, source.Value, world.Scrubbers.Egress);
+        return source.IsError ? source.Error : new Opened(built.Value, source.Value, world.Scrubbers.Egress, world);
     }
 
     private async ValueTask Ask(BacktestRequest request, (List<Arm> Running, CorpusSample Sample, Dictionary<Arm, List<SampleScore>> Scores) run, (Brief Brief, Opened Opened, Spend Spend) text,
@@ -129,14 +130,36 @@ internal sealed class SampleScorer(IBriefSource briefs, AsOfMapBuilder maps, IAs
         var truth = BacktestScoring.TruthNodes(graph, sample.TruthFiles);
         var visible = new VisibleMap(new MapSnapshot(new MapVersion(0, sample.Repo, sample.Cut, KeyVersion: 1, sample.CreatedAt, MapVersionStatus.Current), graph, []), graph);
         var inputs = new ArmInputs(request.Scope, sample, Question(text.Brief.Text), visible, text.Opened.Docs);
+        string? pin = null;   // the sample's pin, found once from the first ranker arm's anchors: the ranker arms share one question, map and sources
+        var pinFound = false;
         foreach (var arm in running)
         {
             cancellationToken.ThrowIfCancellationRequested();
             var result = await arms.Run(arm, inputs, cancellationToken).ConfigureAwait(false);
+            if (!pinFound && Arms.Ranker.Contains(arm))
+            {
+                pin = AnchorPin(text.Opened, visible, result);
+                pinFound = true;
+            }
+
             var score = BacktestScoring.Score(sample, Arms.Name(arm), truth, result, armLeaky: arm == Arm.GraphReviewed);
+            score = Arms.Ranker.Contains(arm) ? score with { Pin = pin } : score;
             scores[arm].Add(await Adjudicated(score, (arm, truth, graph), text, cancellationToken).ConfigureAwait(false));
             request.Progress?.Report($"arm {Arms.Name(arm)} {sample.IssueKey}");
         }
+    }
+
+    // The pin leg runs for a question whose anchors sit in exactly one pin: the rule the pipeline uses (PinContext.SoleAnchorPin), over the sample's as-of map.
+    private static string? AnchorPin(Opened opened, VisibleMap map, ContextResult result)
+    {
+        var mapped = ScopeRules.Mapped(opened.World.Settings, opened.World.Repos);
+        if (!mapped.Any(r => r.Concepts.Count > 0))
+        {
+            return null;
+        }
+
+        var pins = PinSet.Of(mapped, opened.World.Repos, map.Graph, map.Snapshot.Graph);
+        return PinSet.Sole(pins.PinsOf(result.Anchors))?.Value;
     }
 
     // With the adjudicator on, the surfaces no PR touched are judged within the run's token cap; the rest stay unjudged and precision is not measured (083).
@@ -172,5 +195,5 @@ internal sealed class SampleScorer(IBriefSource briefs, AsOfMapBuilder maps, IAs
         CutUnreadable,
     }
 
-    private sealed record Opened(AsOfGraph Graph, IContextSource Docs, Core.Trust.IEgressScrubber Egress);
+    private sealed record Opened(AsOfGraph Graph, IContextSource Docs, Core.Trust.IEgressScrubber Egress, BriefScope World);
 }

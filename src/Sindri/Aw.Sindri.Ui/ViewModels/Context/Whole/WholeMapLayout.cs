@@ -50,6 +50,9 @@ internal static partial class WholeMapLayout
 
     private const double ColumnWidth = (Across * (NodeWidth + NodeGap)) + ColumnGutter;
 
+    /// <summary>The distance between the left edges of two adjacent area columns.</summary>
+    internal const double ColumnPitch = ColumnWidth;
+
     /// <summary>The band a node kind sits in (<see cref="NodeBands"/>).</summary>
     /// <param name="kind">The node kind.</param>
     /// <returns>Its band.</returns>

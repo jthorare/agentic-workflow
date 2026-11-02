@@ -380,6 +380,24 @@ failure row with the code.
 | errored | `http-NNN` | Jev | a non-success status |
 | errored | `too-many-options` | Jev | more than 255 outputs |
 
+### Usage limits, token usage and the minimal environment (for a caller that routes between harnesses)
+
+The judge's own output doesn't show any of this; it rides on the provider results in process, for the Sindri router that picks a
+harness per call (`docs/superpowers/specs/2026-10-29-context-model-routing-design.md`, 5.1, 7.3 and the Environment note in 4).
+
+- **`ProviderErrored.UsageLimit`** (with `LimitPattern`, the id of the pattern that fired) is true when the harness was at its
+  usage limit. **`ReasonCode` is unchanged** (`exit-N`, `cli-reported-error`), so recorded decisions and the hook contract are the same. No CLI text and no reset time is kept.
+- **Where it matches.** Only on channels the CLI marks as an error, never on text a model wrote: claude, an envelope with `is_error: true` (the text in `result`);
+  codex, an `error` or `turn.failed` event (when the event has `codex_error_info`, it must be `usage_limit_exceeded`, whatever the message says; without it the message is matched);
+  every harness, standard error of a non-zero exit, and for claude and codex also an error envelope or error event on standard output of a non-zero exit. A successful answer, a timeout, a crash with other text and bad JSON are never limits.
+  Cursor's own envelope is not matched yet (no real string has been captured; `cursor-cli` is flagged only through standard error of a non-zero exit).
+- **Anchored.** `UsageLimitMatcher` matches only a message that starts (after blanks and marks such as `⎿`) with `You've hit your usage limit` (codex), `You've hit your <session|weekly|…> limit` or `[Claude ]usage limit reached`,
+  so an error that echoes the prompt, which carries repo paths and text, can't set the flag. The real strings are in `tests/fixtures/judge/usage-limit/limit-strings.json`, which the tests read.
+- **`ProviderDecided.Usage`** (`ProviderUsage`: input tokens, output tokens, and the model the CLI says it ran) is what the CLI reported: claude's `usage` (else the sums over `modelUsage`, whose key is the resolved model id),
+  codex's `turn.completed` `usage`, cursor's `usage` when its envelope has one. A CLI that gives none gives null; nothing is estimated in the judge.
+- **`QuestionRef.MinimalEnvironment`** makes the agent CLI's child inherit only `ClaudeCliOptions.InheritedVariables` (`PATH`, `HOME`, `USER`, `LOGNAME`, `SHELL`, the locale, `TERM`, `TMPDIR`, `TZ`, the `XDG_*` directories and `CLAUDE_CONFIG_DIR`) plus its CLI's own login variable, by exact name:
+  claude none, codex `CODEX_HOME`, cursor `CURSOR_API_KEY` (`AgentCliEnvironment`). `GH_TOKEN`, `AW_FORGE_TOKEN` and every other token stay behind. A box that logs in through another variable (an Anthropic or OpenAI API key) needs it added to that list.
+
 ### Processes and secrets
 
 `SystemProcessRunner` finds a bare program name on the `PATH` the environment gives (a path is run as is), reads both

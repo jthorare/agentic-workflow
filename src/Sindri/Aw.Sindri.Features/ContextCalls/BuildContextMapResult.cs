@@ -14,7 +14,7 @@ public sealed record BuildContextMapResult(string Repo, int Draft, int Proposed,
     public IReadOnlyList<string> Notes { get; init; } = [];
 
     /// <summary>What the build's structure cut replaced (the migration line); null when it replaced nothing.</summary>
-    public Aw.Context.Core.Map.StructureCounts? Replaced { get; init; }
+    public Context.Core.Map.StructureCounts? Replaced { get; init; }
 
     /// <summary>The result of a build.</summary>
     /// <param name="repo">The repo.</param>
@@ -22,7 +22,7 @@ public sealed record BuildContextMapResult(string Repo, int Draft, int Proposed,
     /// <param name="proposed">How many nodes were proposed.</param>
     /// <param name="report">The build report.</param>
     /// <returns>The small result the job keeps.</returns>
-    internal static BuildContextMapResult Of(string repo, int draft, int proposed, Aw.Context.Core.Map.MapBuildReport report)
+    internal static BuildContextMapResult Of(string repo, int draft, int proposed, Context.Core.Map.MapBuildReport report)
     {
         ArgumentNullException.ThrowIfNull(report);
         var replaced = report.Structure;

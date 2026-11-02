@@ -17,10 +17,12 @@ public sealed class LedgerStepRunSourceContractTests : StepRunSourceContract, ID
     private readonly TempHome _home = new();
     private readonly SliceHarness _h = new();
     private LedgerDatabase? _readerDatabase;
+    private LedgerDatabase? _writerDatabase;
 
     public void Dispose()
     {
         _readerDatabase?.Dispose();
+        _writerDatabase?.Dispose();
         _home.Dispose();
     }
 
@@ -28,12 +30,10 @@ public sealed class LedgerStepRunSourceContractTests : StepRunSourceContract, ID
     {
         var stores = SqliteStores.Create(_home.Path, _h.Clock, _h.Probe);
         var grant = (await stores.Lease.Acquire(_h.Probe.Self(), TestContext.Current.CancellationToken)).Value;
-        for (var i = 0; i < rows.Count; i++)
-        {
-            var (address, recorded) = (rows[i].Address, rows[i].Row);
-            var entry = _h.Events.Entry(recorded.Type, recorded.Payload, string.Create(CultureInfo.InvariantCulture, $"workflow:{address.Value}:run:{i}")) with { Item = address.Value[..address.Value.IndexOf('/', StringComparison.Ordinal)] };
-            Assert.False((await stores.Ledger.Append(entry, grant, TestContext.Current.CancellationToken)).IsError);
-        }
+        var entries = rows.Select((row, i) => _h.Events.Entry(row.Row.Type, row.Row.Payload, string.Create(CultureInfo.InvariantCulture, $"workflow:{row.Address.Value}:run:{i}")) with { Item = row.Address.Value[..row.Address.Value.IndexOf('/', StringComparison.Ordinal)] });
+        var writer = new LedgerDatabase(new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile.yaml")), _h.Clock);   // the rows go in one write session (BulkLedger), not one per row
+        _writerDatabase = writer;
+        _ = await BulkLedger.Append(writer, grant, entries, TestContext.Current.CancellationToken);
 
         _readerDatabase = new LedgerDatabase(new SindriSettings(_home.Path, Path.Combine(_home.Path, "profile.yaml")), _h.Clock);
         return new LedgerStepRunSource(new SqliteLedgerReader(_readerDatabase), _h.Events).EventsOf;

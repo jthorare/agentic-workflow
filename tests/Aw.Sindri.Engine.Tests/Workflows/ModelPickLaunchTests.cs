@@ -125,6 +125,27 @@ public sealed class ModelPickLaunchTests : IDisposable
     }
 
     [Fact(Timeout = 120_000)]
+    public async Task The_launched_run_carries_the_run_directory_the_launcher_named_and_none_when_it_named_none()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var rig = await Rig(new ModelPickSettings(PickOn: false), ct);
+        rig.Launcher.RunDirectory = "/home/sindri/workflow/runs/WFI-1/draft/LCH-1";
+
+        var named = await rig.Launch(Run(1), floor: null, ct);
+
+        Expect.Equal("/home/sindri/workflow/runs/WFI-1/draft/LCH-1", named.RunDirectory);
+    }
+
+    [Fact(Timeout = 120_000)]
+    public async Task A_launch_with_no_run_directory_leaves_it_null()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await using var rig = await Rig(new ModelPickSettings(PickOn: false), ct);
+
+        Assert.Null((await rig.Launch(Run(1), floor: null, ct)).RunDirectory);
+    }
+
+    [Fact(Timeout = 120_000)]
     public async Task A_strong_floor_leaves_one_candidate()
     {
         await using var rig = await Rig(new ModelPickSettings(PickOn: true), TestContext.Current.CancellationToken);

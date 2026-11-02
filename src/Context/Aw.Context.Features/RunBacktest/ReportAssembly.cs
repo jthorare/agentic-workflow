@@ -21,7 +21,10 @@ internal static class ReportAssembly
 
             var scores = collected.Scores[arm];
             var score = BacktestScoring.Aggregate(scores, collected.Tokens.GetValueOrDefault(arm));
-            rows.Add(new ArmReport(Arms.Name(arm), Arms.Ranker.Contains(arm) ? "ranker" : "source", arm == Arm.GraphReviewed, NotAvailable: null, score, PassLine.Evaluate(score, arm == Arm.Brief ? null : briefScore, kept.Count), scores));
+            rows.Add(new ArmReport(Arms.Name(arm), Arms.Ranker.Contains(arm) ? "ranker" : "source", arm == Arm.GraphReviewed, NotAvailable: null, score, PassLine.Evaluate(score, arm == Arm.Brief ? null : briefScore, kept.Count), scores)
+            {
+                PinAnchored = Arms.Ranker.Contains(arm) ? BacktestScoring.PinAnchored(scores) : null,
+            });
         }
 
         var overall = PassLine.Overall(rows);

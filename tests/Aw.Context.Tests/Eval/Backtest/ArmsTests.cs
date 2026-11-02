@@ -12,7 +12,7 @@ public sealed class ArmsTests
         Assert.Equal([Arm.Brief, Arm.Graph], Arms.Parse("graph, brief").Value);   // report order, not typed order
         Assert.Equal([Arm.Graph, Arm.Linear], Arms.Parse("linear,graph,graph").Value);   // a not-yet-available arm parses; the report prints it as not available
         Assert.Equal("graph+reviewed", Arms.Name(Arm.GraphReviewed));
-        Assert.Equal(("S-6", "S-7B", "S-9", null), (Arms.PendingStage(Arm.Linear), Arms.PendingStage(Arm.Onyx), Arms.PendingStage(Arm.Code), Arms.PendingStage(Arm.Graph)));
+        Assert.Equal(("S-6", "S-9", null), (Arms.PendingStage(Arm.Linear), Arms.PendingStage(Arm.Code), Arms.PendingStage(Arm.Graph)));
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -37,7 +37,7 @@ public sealed class ArmsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void The_extractor_version_is_pinned_so_a_recognizer_change_bumps_it() => Assert.Equal(4, Context.Core.Extract.MapExtractor.Version);
+    public void The_extractor_version_is_pinned_so_a_recognizer_change_bumps_it() => Assert.Equal(7, Context.Core.Extract.MapExtractor.Version);
 
     [Fact, Trait("Lane", "unit")]
     public void S7A_allocates_080_to_083()
@@ -46,5 +46,14 @@ public sealed class ArmsTests
             new[] { ContextErrors.NoEligibleSample, ContextErrors.NoBriefSource, ContextErrors.UnknownArm, ContextErrors.AdjudicationCapped }.Select(e => e.Code), StringComparer.Ordinal);
         Assert.All([ContextErrors.NoEligibleSample, ContextErrors.NoBriefSource, ContextErrors.UnknownArm], e => Assert.Contains(e.Code, ContextErrors.Attention));
         Assert.DoesNotContain(ContextErrors.AdjudicationCapped.Code, ContextErrors.Attention);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_retired_onyx_arm_is_a_refused_name_and_not_a_throw()
+    {
+        var parsed = Arms.Parse("onyx");
+
+        Assert.True(parsed.IsError);
+        Assert.Equal(ContextErrors.UnknownArm.Code, parsed.Error.Code);
     }
 }

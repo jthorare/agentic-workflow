@@ -2,6 +2,7 @@ using System.Text.Json;
 using Aw.Context.Core.Code;
 using Aw.Context.Core.Concepts;
 using Aw.Context.Core.ConceptScan;
+using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Eval;
 using Aw.Context.Core.Eval.Backtest;
@@ -10,17 +11,22 @@ using Aw.Context.Core.Facade;
 using Aw.Context.Core.Graph;
 using Aw.Context.Core.History;
 using Aw.Context.Core.Lenses;
+using Aw.Context.Core.Linking;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Pages;
+using Aw.Context.Core.Projects;
 using Aw.Context.Core.Proposals;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Results;
 using Aw.Context.Core.Review;
 using Aw.Context.Core.ScopeGraph;
 using Aw.Context.Core.Search;
+using Aw.Context.Core.Sources;
 using Aw.Context.Core.Subgraph;
 using Aw.Context.Core.Sync;
 using Aw.Context.Core.Trust;
+using Aw.Context.Core.Vectors;
 using Aw.Context.Core.WholeMap;
-using Aw.Context.Features.MapHeads;
 using Aw.Context.Features.QueryContext;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -38,10 +44,13 @@ internal sealed class ContextEngine(
     IContextMap map,
     ContextGraph graph,
     ContextEval eval,
-    IService<MapHeadsRequest, IReadOnlyList<RepoHead>> heads) : IContextEngine
+    ContextReads reads) : IContextEngine
 {
     public Result<ContextSettings> CheckSettings(JsonElement? section, IReadOnlyList<ProfileRepoEntry> repos) =>
         SettingsReader.Read(section).Bind(read => scrubbers.For(read.ExtraPatterns)).Bind(_ => SettingsReader.Check(section, repos));   // the keys, then the patterns, then the repos
+
+    public ValueTask<Result<ProjectFactsAnswer>> Projects(ProjectFactsRequest request, ContextScope scope, CancellationToken cancellationToken) =>
+        reads.Projects(request, scope, cancellationToken);
 
     public ValueTask<Result<ContextResult>> Query(ContextQuery query1, ContextScope scope, CancellationToken cancellationToken) =>
         query.Handle(new QueryContextRequest(query1, scope), cancellationToken);
@@ -57,9 +66,21 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<SyncReport>> Sync(string? source, ContextScope scope, CancellationToken cancellationToken) => sources.Sync(source, scope, cancellationToken);
 
+    public ValueTask<Result<EmbedRecordsReport>> Embed(EmbedRecordsRequest request, ContextScope scope, CancellationToken cancellationToken) => sources.Embed(request, cancellationToken);
+
     public ValueTask<Result<SyncReport>> Tick(ContextScope scope, CancellationToken cancellationToken) => sources.Tick(scope, cancellationToken);
 
+    public ValueTask<Result<SyncReport>> Tick(ContextScope scope, SourceId source, CancellationToken cancellationToken) => sources.Tick(scope, source, cancellationToken);
+
     public ValueTask<Result<IReadOnlyList<SourceProgress>>> Progress(ContextScope scope, CancellationToken cancellationToken) => sources.Progress(scope, cancellationToken);
+
+    public ValueTask<Result<ConceptStatus>> ConceptStatus(ContextScope scope, CancellationToken cancellationToken) => sources.ConceptStatus(scope, cancellationToken);
+
+    public ValueTask<Result<SourceCounts>> Counts(SourceId source, CancellationToken cancellationToken) => sources.Counts(source, cancellationToken);
+
+    public ValueTask<Result<DecisionReport>> Decide(ContextScope scope, CancellationToken cancellationToken) => sources.Decide(scope, cancellationToken);
+
+    public ValueTask<Result<int>> Purge(SourceId source, CancellationToken cancellationToken) => sources.Purge(source, cancellationToken);
 
     public ValueTask<Result<ProbeRun>> EvalProbes(string? file, Func<ProbeCase, CancellationToken, ValueTask<Result<ContextResult>>> ask, CancellationToken cancellationToken) =>
         eval.Probes(file, ask, cancellationToken);
@@ -133,7 +154,10 @@ internal sealed class ContextEngine(
     public ValueTask<Result<MapPublishView>> PublishStatus(ContextScope scope, CancellationToken cancellationToken) => map.PublishStatus(scope, cancellationToken);
 
     public ValueTask<Result<IReadOnlyList<RepoHead>>> MapHeads(ContextScope scope, CancellationToken cancellationToken) =>
-        heads.Handle(new MapHeadsRequest(scope), cancellationToken);
+        reads.Heads(scope, cancellationToken);
+
+    public ValueTask<Result<RelinkPinAliasesResult>> RelinkPinAliases(ContextScope scope, CancellationToken cancellationToken) =>
+        reads.RelinkPinAliases(scope, cancellationToken);
 
     public ValueTask<Result<ProposeResult>> Propose(ScopeProposal proposal, ContextScope scope, CancellationToken cancellationToken) =>
         map.Propose(proposal, scope, cancellationToken);
@@ -187,4 +211,16 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<ConceptGlossaryView>> ConceptGlossary(ConceptGlossaryQuery query, ContextScope scope, CancellationToken cancellationToken) =>
         graph.ConceptGlossary(query, scope, cancellationToken);
+
+    public ValueTask<Result<PagesView>> Pages(PagesQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        graph.Pages(query, scope, cancellationToken);
+
+    public ValueTask<Result<MapHealth>> CheckPages(ContextScope? scope, CancellationToken cancellationToken) =>
+        graph.CheckPages(scope, cancellationToken);
+
+    public ValueTask<Result<PinSuggestView>> PinSuggest(PinSuggestQuery query, ContextScope scope, CancellationToken cancellationToken) =>
+        graph.PinSuggest(query, scope, cancellationToken);
+
+    public ValueTask<Result<PageMapFacts>> PageFacts(ContextScope scope, CancellationToken cancellationToken) =>
+        graph.PageFacts(scope, cancellationToken);
 }

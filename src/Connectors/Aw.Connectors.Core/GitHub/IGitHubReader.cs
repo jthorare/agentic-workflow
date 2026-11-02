@@ -9,9 +9,10 @@ public interface IGitHubReader
     /// <param name="repo">'owner/name'.</param>
     /// <param name="after">Where to start; <see cref="GitHubCursor.From"/> for a first run.</param>
     /// <param name="limit">Stop after the page that brings the run to this many entries.</param>
+    /// <param name="before">Keep only entries changed before this instant (exclusive) and stop paging at the first entry at or after it; the cursor advances over the kept entries only. Null is no bound.</param>
     /// <param name="cancellationToken">The caller's cancellation.</param>
     /// <returns>The page (a rate limit is a value in it, not an error), or an error from the Connectors catalogue.</returns>
-    public ValueTask<Result<GitHubPullPage>> Issues(string repo, GitHubCursor after, int limit, CancellationToken cancellationToken);
+    public ValueTask<Result<GitHubPullPage>> Issues(string repo, GitHubCursor after, int limit, DateTimeOffset? before, CancellationToken cancellationToken);
 
     /// <summary>Reads the comments of every issue and pull request of <paramref name="repo"/> changed in [<paramref name="since"/>, <paramref name="until"/>], oldest change first, in whole pages.</summary>
     /// <param name="repo">'owner/name'.</param>

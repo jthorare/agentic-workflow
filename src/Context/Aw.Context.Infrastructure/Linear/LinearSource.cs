@@ -6,7 +6,7 @@ namespace Aw.Context.Infrastructure.Linear;
 
 /// <summary>
 /// The 'linear' source (spec §5.2, D18): Linear's GraphQL API read with hand-written operations, live, without as-of cuts. Search is title and key lookup over the profile's
-/// teams (<see cref="LinearSearch"/>); a hit's key is the one Onyx's Linear connector writes for the same issue, so the two adapters' hits merge, and its alias is the issue identifier.
+/// teams (<see cref="LinearSearch"/>); a hit's key is the canonical 'linear:issue/&lt;id&gt;' key, and its alias is the issue identifier.
 /// Fetch returns a record while it is at the cited updatedAt (<see cref="LinearRecords"/>); Versions asks once per kind. Probe reads a project, a document and an issue of the profile's teams.
 /// </summary>
 internal sealed class LinearSource : IContextSource

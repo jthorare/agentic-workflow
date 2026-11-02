@@ -167,6 +167,7 @@ internal sealed class LaunchesProjection(EventFactory events) : IProjection
                 ArgvHash = started.ArgvHash,
                 Step = new LaunchStep(started.Instance, started.State, started.Attempt),
                 Model = started.Model,
+                Sandbox = started.Sandbox,
                 Sequence = recorded.Sequence,
             };
     }

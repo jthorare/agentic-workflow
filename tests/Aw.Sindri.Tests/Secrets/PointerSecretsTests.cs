@@ -13,9 +13,9 @@ public sealed class PointerSecretsTests
     [Fact, Trait("Lane", "unit")]
     public void An_env_pointer_reads_its_variable()
     {
-        var secrets = Secrets(name => name == "ONYX_TOKEN" ? Fixture : null);
+        var secrets = Secrets(name => name == "EXAMPLE_TOKEN" ? Fixture : null);
 
-        Assert.Equal(Fixture, secrets.Resolve(Pointer("env:ONYX_TOKEN")).Value);
+        Assert.Equal(Fixture, secrets.Resolve(Pointer("env:EXAMPLE_TOKEN")).Value);
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -23,16 +23,16 @@ public sealed class PointerSecretsTests
     [InlineData("")]
     public void An_unset_or_empty_variable_is_SND_SECRET_002(string? value)
     {
-        var result = Secrets(_ => value).Resolve(Pointer("env:ONYX_TOKEN"));
+        var result = Secrets(_ => value).Resolve(Pointer("env:EXAMPLE_TOKEN"));
 
         Assert.Equal(SindriErrors.SecretUnresolved.Code, result.Error.Code);
-        Assert.Contains("env:ONYX_TOKEN", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("env:EXAMPLE_TOKEN", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
     public void An_env_pointer_never_falls_back_to_another_variable()
     {
-        var result = Secrets(name => name == "LINEAR_API_KEY" ? Fixture : null).Resolve(Pointer("env:ONYX_TOKEN"));
+        var result = Secrets(name => name == "LINEAR_API_KEY" ? Fixture : null).Resolve(Pointer("env:EXAMPLE_TOKEN"));
 
         Assert.Equal(SindriErrors.SecretUnresolved.Code, result.Error.Code);
     }
@@ -42,12 +42,12 @@ public sealed class PointerSecretsTests
     {
         var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 0, Fixture + "\n"));
 
-        var result = Secrets(_ => null, runner, KeychainPlatform.MacOS).Resolve(Pointer("keychain:onyx/sindri-onyx"));
+        var result = Secrets(_ => null, runner, KeychainPlatform.MacOS).Resolve(Pointer("keychain:sindri/example-api-key"));
 
         Assert.Equal(Fixture, result.Value);
         var call = Assert.Single(runner.Calls);
         Assert.Equal("security", call.FileName);
-        Assert.Equal(["find-generic-password", "-s", "onyx", "-a", "sindri-onyx", "-w"], call.Arguments);
+        Assert.Equal(["find-generic-password", "-s", "sindri", "-a", "example-api-key", "-w"], call.Arguments);
         Assert.Equal(TimeSpan.FromSeconds(5), call.Timeout);
     }
 
@@ -56,12 +56,12 @@ public sealed class PointerSecretsTests
     {
         var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 0, Fixture + "\n"));
 
-        var result = Secrets(_ => null, runner, KeychainPlatform.Linux).Resolve(Pointer("keychain:onyx/sindri-onyx"));
+        var result = Secrets(_ => null, runner, KeychainPlatform.Linux).Resolve(Pointer("keychain:sindri/example-api-key"));
 
         Assert.Equal(Fixture, result.Value);
         var call = Assert.Single(runner.Calls);
         Assert.Equal("secret-tool", call.FileName);
-        Assert.Equal(["lookup", "service", "onyx", "account", "sindri-onyx"], call.Arguments);
+        Assert.Equal(["lookup", "service", "sindri", "account", "example-api-key"], call.Arguments);
         Assert.Equal(TimeSpan.FromSeconds(5), call.Timeout);
     }
 
@@ -72,11 +72,11 @@ public sealed class PointerSecretsTests
     [InlineData("timed out")]
     public void A_secret_tool_that_fails_is_SND_SECRET_002_with_the_Linux_store_command(string run)
     {
-        var result = Secrets(_ => null, new FakeToolRunner(Run(run)), KeychainPlatform.Linux).Resolve(Pointer("keychain:onyx/sindri-onyx"));
+        var result = Secrets(_ => null, new FakeToolRunner(Run(run)), KeychainPlatform.Linux).Resolve(Pointer("keychain:sindri/example-api-key"));
 
         Assert.Equal(SindriErrors.SecretUnresolved.Code, result.Error.Code);
-        Assert.Contains("keychain:onyx/sindri-onyx", result.Error.Message, StringComparison.Ordinal);
-        Assert.Contains("secret-tool store --label 'onyx/sindri-onyx' service 'onyx' account 'sindri-onyx'", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("keychain:sindri/example-api-key", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("secret-tool store --label 'sindri/example-api-key' service 'sindri' account 'example-api-key'", result.Error.Message, StringComparison.Ordinal);
         Assert.DoesNotContain("security add-generic-password", result.Error.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(Fixture, result.Error.Message, StringComparison.Ordinal);
     }
@@ -84,7 +84,7 @@ public sealed class PointerSecretsTests
     [Fact, Trait("Lane", "unit")]
     public void A_secret_tool_exit_says_the_entry_may_be_missing_or_no_keyring_reachable_and_never_prints_its_output()
     {
-        var result = Secrets(_ => null, new FakeToolRunner(Run("exit 1")), KeychainPlatform.Linux).Resolve(Pointer("keychain:onyx/sindri-onyx"));
+        var result = Secrets(_ => null, new FakeToolRunner(Run("exit 1")), KeychainPlatform.Linux).Resolve(Pointer("keychain:sindri/example-api-key"));
 
         Assert.Contains("no such entry, or no keyring reachable (sindri serve needs the login session's D-Bus)", result.Error.Message, StringComparison.Ordinal);
         Assert.DoesNotContain(Fixture, result.Error.Message, StringComparison.Ordinal);
@@ -93,7 +93,7 @@ public sealed class PointerSecretsTests
     [Fact, Trait("Lane", "unit")]
     public void A_missing_secret_tool_says_to_install_libsecret_tools_not_to_run_it()
     {
-        var result = Secrets(_ => null, new FakeToolRunner(Run("missing")), KeychainPlatform.Linux).Resolve(Pointer("keychain:onyx/sindri-onyx"));
+        var result = Secrets(_ => null, new FakeToolRunner(Run("missing")), KeychainPlatform.Linux).Resolve(Pointer("keychain:sindri/example-api-key"));
 
         Assert.Equal(SindriErrors.SecretUnresolved.Code, result.Error.Code);
         Assert.Contains("install libsecret-tools (Debian/Ubuntu)", result.Error.Message, StringComparison.Ordinal);
@@ -105,7 +105,7 @@ public sealed class PointerSecretsTests
     [InlineData(Fixture + "\n")]
     public void A_Linux_secret_with_or_without_a_trailing_newline_resolves(string output)
     {
-        var result = Secrets(_ => null, new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 0, output)), KeychainPlatform.Linux).Resolve(Pointer("keychain:onyx/sindri-onyx"));
+        var result = Secrets(_ => null, new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 0, output)), KeychainPlatform.Linux).Resolve(Pointer("keychain:sindri/example-api-key"));
 
         Assert.Equal(Fixture, result.Value);
     }
@@ -113,9 +113,9 @@ public sealed class PointerSecretsTests
     [Fact, Trait("Lane", "unit")]
     public void A_macOS_failure_names_the_security_store_command()
     {
-        var result = Secrets(_ => null, new FakeToolRunner(Run("exit 44")), KeychainPlatform.MacOS).Resolve(Pointer("keychain:onyx/sindri-onyx"));
+        var result = Secrets(_ => null, new FakeToolRunner(Run("exit 44")), KeychainPlatform.MacOS).Resolve(Pointer("keychain:sindri/example-api-key"));
 
-        Assert.Contains("security add-generic-password -s onyx -a sindri-onyx -w", result.Error.Message, StringComparison.Ordinal);
+        Assert.Contains("security add-generic-password -s sindri -a example-api-key -w", result.Error.Message, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -123,7 +123,7 @@ public sealed class PointerSecretsTests
     {
         var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 0, Fixture));
 
-        var result = Secrets(_ => null, runner, KeychainPlatform.Unsupported).Resolve(Pointer("keychain:onyx/sindri-onyx"));
+        var result = Secrets(_ => null, runner, KeychainPlatform.Unsupported).Resolve(Pointer("keychain:sindri/example-api-key"));
 
         Assert.Equal(SindriErrors.SecretUnresolved.Code, result.Error.Code);
         Assert.Contains("keychain: isn't supported", result.Error.Message, StringComparison.Ordinal);
@@ -135,25 +135,25 @@ public sealed class PointerSecretsTests
     {
         var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 0, Fixture + "\n"));
 
-        var result = Secrets(_ => null, runner).Resolve(Pointer("op:Work/Onyx/credential"));
+        var result = Secrets(_ => null, runner).Resolve(Pointer("op:Work/Example/credential"));
 
         Assert.Equal(Fixture, result.Value);
         var call = Assert.Single(runner.Calls);
         Assert.Equal("op", call.FileName);
-        Assert.Equal(["read", "op://Work/Onyx/credential"], call.Arguments);
+        Assert.Equal(["read", "op://Work/Example/credential"], call.Arguments);
         Assert.Equal(TimeSpan.FromSeconds(30), call.Timeout);
     }
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("keychain:onyx/sindri-onyx", "exit 44")]
-    [InlineData("keychain:onyx/sindri-onyx", "empty")]
-    [InlineData("keychain:onyx/sindri-onyx", "newline only")]
-    [InlineData("keychain:onyx/sindri-onyx", "missing")]
-    [InlineData("keychain:onyx/sindri-onyx", "timed out")]
-    [InlineData("op:Work/Onyx/credential", "exit 1")]
-    [InlineData("op:Work/Onyx/credential", "empty")]
-    [InlineData("op:Work/Onyx/credential", "missing")]
-    [InlineData("op:Work/Onyx/credential", "timed out")]
+    [InlineData("keychain:sindri/example-api-key", "exit 44")]
+    [InlineData("keychain:sindri/example-api-key", "empty")]
+    [InlineData("keychain:sindri/example-api-key", "newline only")]
+    [InlineData("keychain:sindri/example-api-key", "missing")]
+    [InlineData("keychain:sindri/example-api-key", "timed out")]
+    [InlineData("op:Work/Example/credential", "exit 1")]
+    [InlineData("op:Work/Example/credential", "empty")]
+    [InlineData("op:Work/Example/credential", "missing")]
+    [InlineData("op:Work/Example/credential", "timed out")]
     public void A_tool_that_fails_is_SND_SECRET_002_and_names_the_pointer(string text, string run)
     {
         var result = Secrets(_ => null, new FakeToolRunner(Run(run)), KeychainPlatform.MacOS).Resolve(Pointer(text));

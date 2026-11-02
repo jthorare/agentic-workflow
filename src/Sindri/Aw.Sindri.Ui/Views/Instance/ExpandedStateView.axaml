@@ -1,10 +1,17 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:inst="using:Aw.Sindri.Ui.ViewModels.Instance"
+             xmlns:ny="using:Aw.Sindri.Ui.ViewModels.NeedsYou"
              xmlns:comps="using:Aw.Sindri.Ui.ViewModels.Components"
              xmlns:comp="using:Aw.Sindri.Ui.Views.Components"
              x:Class="Aw.Sindri.Ui.Views.Instance.ExpandedStateView"
              x:DataType="inst:ExpandedStateViewModel">
+  <UserControl.Styles>
+    <!-- The live regions of this view are live only while they speak, so their resting text is never read. -->
+    <Style Selector="TextBlock.live-region.live">
+      <Setter Property="AutomationProperties.LiveSetting" Value="Polite" />
+    </Style>
+  </UserControl.Styles>
   <!-- The state the instance is in, expanded (screens spec §4.2): the step, the gates, the engine's next sentence whole, the budget and
        timeout lines, the commands the engine lists (a protected one is the lock button; the rest show their CLI with a Copy and a chip
        that says the app does not send them yet), and Cancel, which asks first with Keep focused. Reading comes before acting in the tab
@@ -18,6 +25,7 @@
         <TextBlock x:Name="ExpandedCopyAnnouncement" Grid.Column="1" Classes="caption live-region" Classes.live="{Binding StatusCopy.IsAnnouncing}" Width="0" Opacity="0"
                    IsHitTestVisible="False" Text="{Binding StatusCopy.Announcement}" />
       </Grid>
+      <comp:TakeoverBannerView x:Name="ExpandedTakeoverBanner" DataContext="{Binding TakeoverBanner}" />
       <TextBlock x:Name="ExpandedNext" Classes="body" Text="{Binding Next}" IsVisible="{Binding HasNext}" TextWrapping="Wrap" />
       <TextBlock x:Name="ExpandedPaused" Classes="caption mono" Text="{Binding PausedLine}" IsVisible="{Binding IsPaused}" TextWrapping="Wrap" />
       <TextBlock x:Name="ExpandedDrift" Classes="caption mono" Text="{Binding DriftLine}" IsVisible="{Binding HasDrift}" TextWrapping="Wrap" />
@@ -29,6 +37,12 @@
               AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
         <TextBlock x:Name="ExpandedRunLine" Classes="body" Text="{Binding RunLine}" AutomationProperties.AccessibilityView="Raw" />
       </Border>
+      <TextBlock x:Name="ExpandedWaitingAnnouncement" Classes="caption live-region" Classes.live="{Binding WaitingVoice.IsAnnouncing}" Width="0" Opacity="0" IsHitTestVisible="False"
+                 Text="{Binding WaitingVoice.Announcement}" />
+      <Border x:Name="ExpandedWaiting" IsVisible="{Binding HasWaiting}" HorizontalAlignment="Left" AutomationProperties.Name="{Binding WaitingLine}"
+              AutomationProperties.AccessibilityView="Control" AutomationProperties.ControlTypeOverride="Text">
+        <TextBlock x:Name="ExpandedWaitingLine" Classes="body" Text="{Binding WaitingLine}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+      </Border>
       <TextBlock x:Name="ExpandedReason" Classes="body" Text="{Binding ReasonLine}" IsVisible="{Binding HasReasonLine}" TextWrapping="Wrap" AutomationProperties.Name="{Binding ReasonLine}" />
       <ItemsControl x:Name="ExpandedReviews" ItemsSource="{Binding Reviews}" IsVisible="{Binding HasReviews}">
         <ItemsControl.ItemsPanel>
@@ -38,7 +52,10 @@
         </ItemsControl.ItemsPanel>
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="comps:DeskReviewViewModel">
-            <Button Classes="row-title" Margin="0,0,8,4" Content="{Binding Label}" Click="OnReview" AutomationProperties.Name="{Binding Name}" />
+            <StackPanel Margin="0,0,8,4">
+              <Button Classes="row-title" Content="{Binding Label}" Click="OnReview" AutomationProperties.Name="{Binding Name}" />
+              <SelectableTextBlock Classes="caption" Text="{Binding Launch.FailedText}" IsVisible="{Binding Launch.Failed}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Launch.FailedText}" />
+            </StackPanel>
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
@@ -80,11 +97,29 @@
           <TextBlock x:Name="ExpandedRunDetail" Classes="caption mono subtle" Text="{Binding RunDetail}" IsVisible="{Binding HasRun}" TextWrapping="Wrap" />
         </StackPanel>
       </Expander>
+      <!-- A desk task's required outputs (UI spec: file picks, at most 1 MiB, contents sent): a path box and Browse each; Complete waits for them. -->
+      <ItemsControl x:Name="ExpandedOutputs" ItemsSource="{Binding Outputs}" IsVisible="{Binding HasOutputs}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate x:DataType="ny:DeskOutputViewModel">
+            <StackPanel Margin="0,0,0,6" Spacing="4">
+              <TextBlock Name="DeskOutputCaption" Classes="caption" Text="{Binding Caption}" TextWrapping="Wrap" AutomationProperties.AccessibilityView="Raw" />
+              <Grid ColumnDefinitions="*,Auto">
+                <TextBox Name="DeskOutputPath" Text="{Binding Path, Mode=TwoWay}" AutomationProperties.Name="{Binding BoxName}" />
+                <Button Name="DeskOutputBrowse" Grid.Column="1" Margin="8,0,0,0" Content="{Binding BrowseText}" Click="OnBrowseOutput" AutomationProperties.Name="{Binding BrowseName}" />
+              </Grid>
+              <TextBlock Name="DeskOutputError" Classes="caption" Text="{Binding Error}" IsVisible="{Binding HasError}" TextWrapping="Wrap" AutomationProperties.Name="{Binding Error}" />
+            </StackPanel>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+      <TextBlock x:Name="ExpandedOutputHint" Classes="caption subtle" Text="{Binding OutputHint}" TextWrapping="Wrap"
+                 IsVisible="{Binding OutputHint, Converter={x:Static StringConverters.IsNotNullOrEmpty}}" />
       <ItemsControl x:Name="ExpandedCommands" ItemsSource="{Binding Commands}" IsVisible="{Binding HasCommands}">
         <ItemsControl.ItemTemplate>
           <DataTemplate x:DataType="inst:ExpandedCommandViewModel">
             <WrapPanel Orientation="Horizontal" Margin="0,0,0,6">
               <Button Name="CommandAsk" IsVisible="{Binding IsCancel}" Content="{Binding Label}" Click="OnAsk" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
+              <Button Name="CommandComplete" IsVisible="{Binding IsComplete}" IsEnabled="{Binding CanSend}" Content="{Binding Label}" Click="OnComplete" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
               <Button Name="CommandHandBack" IsVisible="{Binding IsHandBack}" Content="{Binding Label}" Click="OnHandBack" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
               <Button Name="CommandTakeOver" IsVisible="{Binding IsTakeOver}" Content="{Binding Label}" Click="OnTakeOver" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}" />
               <Border Name="CommandLabelName" IsVisible="{Binding ShowsLabel}" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name="{Binding Name}"

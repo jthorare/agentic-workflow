@@ -79,7 +79,7 @@ internal static partial class IndexRules
 
         // why: Channels refused a null entry, an empty id or an empty name just above
         var channels = (section.Channels ?? []).Select(static c => new SlackChannel(c!.Id!, c.Name!)).ToList();
-        return Kernel.Results.Success<SlackSource?>(new SlackSource { Channels = channels, RetainDays = section.RetainDays, Token = section.Token });
+        return Kernel.Results.Success<SlackSource?>(new SlackSource { Channels = channels, RetainDays = section.RetainDays, Token = section.Token, Workspace = section.Workspace });
     }
 
     private static Result<DenseFloors> Floors(FloorsSection? floors)

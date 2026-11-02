@@ -207,7 +207,11 @@ internal sealed partial class InstanceRowViewModel : ObservableObject
     internal string Signature => string.Join('|', Address, StageName, _row.StartedBy, _row.StartedAt?.UtcTicks, _row.Since.UtcTicks, DisplayName, Who, MissingInputsText, Subject, Chip, Now, string.Join(',', Inputs.Select(i => i.Name)), string.Join(',', Stages.Select(s => s.Name)), StateWord, Chip.Word, Protected?.Cli, ChildAnswer?.Target, ChildAnswer?.Intent, CanAnswerAtDesk, CanCancel);
 
     /// <summary>Reads the time in stage anew.</summary>
-    internal void Tick() => OnChanged(nameof(TimeText));
+    internal void Tick()
+    {
+        OnChanged(nameof(TimeText));
+        OnChanged(nameof(UpdatedText));
+    }
 
     /// <summary>Sets what the list knows of the row.</summary>
     /// <param name="stale">The views are stalled or rebuilding.</param>

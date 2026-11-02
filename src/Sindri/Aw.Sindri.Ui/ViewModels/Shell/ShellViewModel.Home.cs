@@ -1,7 +1,5 @@
-using Aw.Kernel;
 using Aw.Sindri.Ui.Navigation;
 using Aw.Sindri.Ui.Platform;
-using Aw.Sindri.Ui.ViewModels.Approvals;
 using Aw.Sindri.Ui.ViewModels.NeedsYou;
 using Aw.Sindri.Ui.ViewModels.Queue;
 
@@ -51,6 +49,13 @@ internal sealed partial class ShellViewModel
     {
         Health.Follow(ReadNeedsYou);
         NeedsYou.SheetRequested += (_, e) => OpenNeedsYouRow(e.RowId);
+        NeedsYou.PropertyChanged += (_, e) =>
+        {
+            if (string.Equals(e.PropertyName, nameof(NeedsYouViewModel.SheetRow), StringComparison.Ordinal))
+            {
+                _ = LoadSheetOutputs(NeedsYou.SheetRow);
+            }
+        };
         NeedsYou.ActionRequested += (_, e) => Decide(e);
         Decision.Refused += (_, _) => Navigate(new DeepLink(DeepLinkKind.Decision, Decision.DecisionId));
         Decision.PropertyChanged += OnDecisionChanged;
@@ -68,65 +73,6 @@ internal sealed partial class ShellViewModel
         else
         {
             _ = Decision.Clear();
-        }
-    }
-
-    // A key or a button asks to run an action: approve-all opens its dialog; a decision option is Decide, sent once with the option, and the sheet shows what came back.
-    private void Decide(NeedsYouActionEventArgs request)
-    {
-        if (string.Equals(request.Action.CatalogId, ApproveAllViewModel.Action, StringComparison.Ordinal))
-        {
-            OpenApproveAll();
-        }
-        else if (request.Action.OptionId.Length > 0)
-        {
-            _ = AnswerDecision(request.RowId, request.Action.OptionId, note: null);
-        }
-        else if (NeedsYou.Row(request.RowId) is { Entry.Subject: not null } row)
-        {
-            _ = SendHomeAction(request.Action.CatalogId, row);
-        }
-    }
-
-    // Home's Pause service pauses the service the row names; its Complete reports the desk run of the row's instance as approved, the way
-    // the inbox bar's Approve does. What can't be sent, or is refused, is said on the row, with the command when a terminal does it.
-    private async Task SendHomeAction(string catalogId, NeedsYouRowViewModel row)
-    {
-        var subject = row.Entry.Subject!;   // why: Decide only calls this for a row with a subject
-        if (Health.ApiUrl() is not { } url)
-        {
-            return;
-        }
-
-        row.ActionNote = "";
-        if (string.Equals(catalogId, "PauseService", StringComparison.Ordinal) && string.Equals(subject.Kind, NeedsYouKinds.Service, StringComparison.Ordinal))
-        {
-            Say(row, await _api.PauseService(url, subject.Id, CancellationToken.None).ConfigureAwait(true));
-        }
-        else if (string.Equals(catalogId, "CompleteStep", StringComparison.Ordinal) && string.Equals(subject.Kind, "instance", StringComparison.Ordinal) && _desk is { } desk)
-        {
-            await CompleteFromHome(row, desk, subject.Id).ConfigureAwait(true);
-        }
-    }
-
-    private static async Task CompleteFromHome(NeedsYouRowViewModel row, DeskReporter desk, string instance)
-    {
-        var target = await desk.Load(instance).ConfigureAwait(true);
-        if (target is null || target.IsTerminalOnly)
-        {
-            row.ActionNote = Labels.CompleteInTerminal(target?.Complete?.Cli ?? "");
-        }
-        else if (await desk.Complete(target, "approve", answers: null).ConfigureAwait(true) is { } answer)
-        {
-            Say(row, answer);
-        }
-    }
-
-    private static void Say<T>(NeedsYouRowViewModel row, Result<T> answer)
-    {
-        if (answer.IsError)
-        {
-            row.ActionNote = Labels.ActionRefused(answer.Error.Code, answer.Error.Message);
         }
     }
 
@@ -216,6 +162,10 @@ internal sealed partial class ShellViewModel
             Navigate(LinkOf(rowId));
         }
     }
+
+    /// <summary>Opens the row's own sheet over the page, never the inbox or a nested park's child: where a row goes when the sheet is the only place that can finish it (a step that needs a file, #1170).</summary>
+    /// <param name="rowId">The row's id.</param>
+    internal void OpenNeedsYouRowSheet(string rowId) => NavigateToRowSheet(LinkOf(rowId));
 
     // The served open.route of a row (api q65) is where its click goes. A route that is the row's own sheet changes nothing here, and a row with none keeps the older rule.
     private bool OpenTargetOf(string? rowId) => OpenChildOf(rowId) || OpenRouteOf(rowId);

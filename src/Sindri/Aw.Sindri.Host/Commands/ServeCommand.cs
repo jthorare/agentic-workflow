@@ -124,7 +124,6 @@ internal static class ServeCommand
         var url = new Uri(app.Urls.First());
         var endpoint = new ControlEndpoint(url, grant.Holder.Pid, grant.Epoch) { Temporal = started.Temporal };   // the dev server's pid and ports
         _ = await endpoints.Write(endpoint, CancellationToken.None).ConfigureAwait(false);
-        var onyx = OnyxServeHooks.Start(app, endpoint, endpoints, either.Token);   // a managed Onyx comes up in the background; an unmanaged one is left alone
         try
         {
             await Task.Delay(Timeout.Infinite, either.Token).ConfigureAwait(false);
@@ -134,7 +133,7 @@ internal static class ServeCommand
             // a stop request, a signal or a lost lease
         }
 
-        await StopLaunchedAndOnyx(app, onyx).ConfigureAwait(false);   // launched sessions end (each recorded) and a managed Onyx stops, before the record and the lease go
+        await EndLaunchedSessions(app).ConfigureAwait(false);   // launched sessions end (each recorded) before the record and the lease go
         await runtime.WaitForWorker(CancellationToken.None).ConfigureAwait(false);   // bounded, and a worker fault is the worker's to log
 
         if (app.Services.GetRequiredService<HeldLease>().Current is not null)
@@ -147,12 +146,6 @@ internal static class ServeCommand
         await DropToken(app).ConfigureAwait(false);
         await app.StopAsync(CancellationToken.None).ConfigureAwait(false);
         return app.Services.GetRequiredService<IExitCode>().Code;
-    }
-
-    private static async Task StopLaunchedAndOnyx(WebApplication app, Task onyx)
-    {
-        await EndLaunchedSessions(app).ConfigureAwait(false);
-        await OnyxServeHooks.Stop(app, onyx, Console.Error).ConfigureAwait(false);
     }
 
     /// <summary>Ends the sessions this serve launched on the sindri-launch tmux socket, so none outlives it (bounded; a failure is logged, never fatal).</summary>

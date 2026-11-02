@@ -5,13 +5,12 @@ using Aw.Sindri.Core.Commands;
 using Aw.Sindri.Core.Doctor;
 using Aw.Sindri.Core.Health;
 using Aw.Sindri.Core.Ids;
-using Aw.Sindri.Core.Onyx;
 using Aw.Sindri.Features.ApproveProfile;
 using Aw.Sindri.Features.GetStatus;
 using Aw.Sindri.Features.InitProfile;
-using Aw.Sindri.Features.OnyxStatus;
 using Aw.Sindri.Features.RebuildViews;
 using Aw.Sindri.Features.RunDoctor;
+using Aw.Sindri.Features.SetProfileKey;
 using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Features.ValidateProfile;
 
@@ -100,6 +99,32 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
             : await output.Text($"Profile written: {written.Value.Path}\nnext: sindri repo add <path>, then sindri profile approve\n", 0).ConfigureAwait(false);
     }
 
+    /// <summary>
+    /// 'profile set &lt;key&gt; &lt;value&gt; [--json]': sets one scalar key of the live profile in place and says to approve it; local, like init. A CLI with no readable per-start human token, or a session Sindri launched, is refused (SND-AUTH-002, like 'sandbox login'). It never approves.
+    /// Exit 0 set or unchanged, 1 an invalid key or value or a layout it won't edit (nothing written), 2 refused or the file can't be read or written.
+    /// </summary>
+    internal async Task<int> SetProfileKey(string key, string value, bool json, CallerHeaders caller, CancellationToken ct)
+    {
+        if (await caller.Resolve(ct).ConfigureAwait(false) is { } reason)
+        {
+            return await output.Error(SindriErrors.AuthRefused.With($"profile set is for the person at the keyboard, and this is {reason} (fix: run it from your own terminal)")).ConfigureAwait(false);
+        }
+
+        var set = await scope.GetRequiredService<IService<SetProfileKeyRequest, SetProfileKeyResponse>>().Handle(new SetProfileKeyRequest(key, value), ct).ConfigureAwait(false);
+        if (set.IsError)
+        {
+            var code = await output.Error(set.Error).ConfigureAwait(false);
+            return string.Equals(set.Error.Code, SindriErrors.ProfileMissing.Code, StringComparison.Ordinal) ? code : 1;
+        }
+
+        var done = set.Value;
+        return json
+            ? await output.Json(done, 0).ConfigureAwait(false)
+            : await output.Text(done.Changed
+                ? $"set {done.Key} = {done.Value} in {done.Path}. Approve it with: sindri profile approve\n"
+                : $"{done.Key} is already {done.Value} in {done.Path}: unchanged\n", 0).ConfigureAwait(false);
+    }
+
     internal async Task<int> Doctor(bool json, CancellationToken ct, Func<CancellationToken, ValueTask<IReadOnlyList<DoctorCheck>>>? harnesses = null)
     {
         var report = (await scope.GetRequiredService<IService<RunDoctorRequest, RunDoctorResponse>>().Handle(new RunDoctorRequest(), ct).ConfigureAwait(false)).Value;
@@ -117,41 +142,6 @@ internal sealed class Verbs(ControlPlaneClient client, Core.Control.IControlPlan
         var lines = report.Checks.Select(c => $"{Word(c.State),-5} {c.Name,-17} {c.Detail}{(c.Fix is null ? string.Empty : $" (fix: {c.Fix})")}");
         return await output.Text(string.Join('\n', lines) + "\n", report.ExitCode).ConfigureAwait(false);
     }
-
-    internal async Task<int> OnyxStatus(bool json, CancellationToken ct)
-    {
-        var answer = await scope.GetRequiredService<IService<OnyxStatusRequest, OnyxStatusResponse>>().Handle(new OnyxStatusRequest(), ct).ConfigureAwait(false);
-        if (answer.IsError)
-        {
-            return await OnyxVerbs.Fail(output, answer.Error).ConfigureAwait(false);
-        }
-
-        var status = answer.Value;
-        if (json)
-        {
-            return await output.Json(status, status.ExitCode).ConfigureAwait(false);
-        }
-
-        var rows = new List<string> { $"{"onyx",-10}{OnyxStateText(status)}" };
-        if (status.Url is not null)
-        {
-            rows.Add($"{"url",-10}{status.Url}");
-            rows.Add($"{"running",-10}{status.RunningVersion}");
-        }
-
-        rows.Add($"{"pinned",-10}{status.PinnedVersion} ({status.PinnedCommit[..7]})");
-        rows.AddRange(status.Checks.Select(c => $"{c.Name,-10}{Word(c.State)} {c.Detail}{(c.Problem is null ? string.Empty : $" ({c.Problem.Code}: {c.Problem.Message})")}"));
-        return await output.Text(string.Join('\n', rows) + "\n", status.ExitCode).ConfigureAwait(false);
-    }
-
-    private static string OnyxStateText(OnyxStatusResponse status) => status.State switch
-    {
-        OnyxState.NotSetUp => "not set up (run `sindri onyx up`)",
-        OnyxState.Stopped => "stopped (run `sindri onyx up` to start it)",
-        OnyxState.Running => "running",
-        OnyxState.Unknown => $"unknown (Docker isn't usable here: {status.Checks.FirstOrDefault(static c => c.Name == "docker")?.Detail})",
-        _ => status.State.ToString(),
-    };
 
     internal async Task<int> Approve(string? hashText, CancellationToken ct)
     {

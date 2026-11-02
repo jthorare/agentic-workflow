@@ -6,11 +6,11 @@ namespace Aw.Sindri.Tests.Secrets;
 public sealed class SecretPointerParseTests
 {
     [Theory, Trait("Lane", "unit")]
-    [InlineData("env:ONYX_TOKEN", SecretScheme.Env, "ONYX_TOKEN")]
+    [InlineData("env:EXAMPLE_TOKEN", SecretScheme.Env, "EXAMPLE_TOKEN")]
     [InlineData("env:_x1", SecretScheme.Env, "_x1")]
-    [InlineData("file:/home/me/.onyx-token", SecretScheme.File, "/home/me/.onyx-token")]
-    [InlineData("keychain:onyx/sindri-onyx", SecretScheme.Keychain, "onyx/sindri-onyx")]
-    [InlineData("op:Work/Onyx/credential", SecretScheme.OnePassword, "Work/Onyx/credential")]
+    [InlineData("file:/home/me/.example-token", SecretScheme.File, "/home/me/.example-token")]
+    [InlineData("keychain:sindri/example-api-key", SecretScheme.Keychain, "sindri/example-api-key")]
+    [InlineData("op:Work/Example/credential", SecretScheme.OnePassword, "Work/Example/credential")]
     public void A_valid_pointer_parses(string text, SecretScheme scheme, string target)
     {
         var pointer = SecretPointer.Parse(text);
@@ -30,8 +30,8 @@ public sealed class SecretPointerParseTests
     [InlineData("env:BAD-NAME")]
     [InlineData("file:relative/token")]
     [InlineData("file:")]
-    [InlineData("keychain:onyx")]
-    [InlineData("keychain:onyx/a/b")]
+    [InlineData("keychain:sindri")]
+    [InlineData("keychain:sindri/a/b")]
     [InlineData("keychain:/account")]
     [InlineData("keychain:service/")]
     [InlineData("keychain:-s/account")]
@@ -71,8 +71,8 @@ public sealed class SecretPointerParseTests
         => Assert.DoesNotContain("sk-9f8e7d6c5b4a", SecretPointer.Parse("sk-9f8e7d6c5b4a:rest").Error.Message, StringComparison.Ordinal);
 
     [Theory, Trait("Lane", "unit")]
-    [InlineData("env:ONYX_TOKEN", true)]
-    [InlineData("keychain:onyx/sindri-onyx", true)]
+    [InlineData("env:EXAMPLE_TOKEN", true)]
+    [InlineData("keychain:sindri/example-api-key", true)]
     [InlineData("AW_STATE_DIR", false)]
     [InlineData("LINEAR_API_KEY", false)]
     public void A_name_with_a_colon_is_a_pointer(string name, bool isPointer)

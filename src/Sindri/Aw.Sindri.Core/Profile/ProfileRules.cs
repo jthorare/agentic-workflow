@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.Json;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Workflow.Recipes;
@@ -46,7 +47,14 @@ public static class ProfileRules
     }
 
     private static Error? Sections(SindriProfile profile) =>
-        Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox);
+        OnyxLeftover(profile.Context) ?? Services(profile.Services) ?? Workflow(profile) ?? ProfileGlobRules.Check(profile) ?? IndexRules.Check(profile) ?? LaunchKeys(profile.Launch) ?? AgentKeys(profile.Agents) ?? SetupKeys(profile.Setup) ?? SandboxRules.Check(profile.Sandbox);
+
+    /// <summary>A 'context.sources.onyx' section left from before Onyx was removed is refused for one release, never ignored (owned-index spec Q15).</summary>
+    private static Error? OnyxLeftover(JsonElement? context) =>
+        context is { ValueKind: JsonValueKind.Object } c && c.TryGetProperty("sources", out var sources)
+        && sources.ValueKind == JsonValueKind.Object && sources.TryGetProperty("onyx", out _)
+            ? SindriErrors.IndexOnyxInProfile.With("context.sources.onyx: Sindri no longer runs or reads Onyx. Remove the 'onyx' entry under context.sources in profile.yaml, then run sindri profile approve")
+            : null;
 
     /// <summary>The 'setup:' block (setup-once spec §7.1): 'setup.mcp' is auto or off.</summary>
     private static Error? SetupKeys(SetupSettings? setup) =>

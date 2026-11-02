@@ -15,7 +15,7 @@ public sealed class FakeRecordFeed(SourceId source, IReadOnlyList<RecordItem> it
     {
         ArgumentNullException.ThrowIfNull(pull);
         var start = pull.After is { } cursor ? int.Parse(cursor.Value, CultureInfo.InvariantCulture) : 0;
-        var inWindow = items.Where(i => pull.NotBefore is not { } notBefore || i.UpdatedAt is not { } updated || updated >= notBefore).ToList();
+        var inWindow = items.Where(i => (pull.NotBefore is not { } notBefore || i.UpdatedAt is not { } updated || updated >= notBefore) && (pull.Before is not { } before || i.UpdatedAt is not { } changed || changed < before)).ToList();
         var page = inWindow.Skip(start).Take(pull.Limit).ToList();
         var next = SourceCursor.From((start + page.Count).ToString(CultureInfo.InvariantCulture));
         return ValueTask.FromResult<Result<RecordPage>>(new RecordPage(page, [], next, CursorReset: false));

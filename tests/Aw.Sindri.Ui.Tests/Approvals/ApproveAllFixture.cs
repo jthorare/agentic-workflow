@@ -45,14 +45,16 @@ internal sealed class ApproveAllFixture
     internal async Task Approve(ApproveAllViewModel dialog) => await Finish(dialog.Approve());
 
     /// <summary>Lets a task that waits on the clock finish: the clock moves a beat at a time, bounded, so a job that never ends fails the test instead of hanging it.</summary>
+    /// <remarks>A beat yields instead of sleeping: a 700-poll job cost a second of real time at 1 ms a beat (#1546).</remarks>
     internal async Task Finish(Task task)
     {
         using var bound = CancellationTokenSource.CreateLinkedTokenSource(Token);
         bound.CancelAfter(TimeSpan.FromSeconds(20));
         while (!task.IsCompleted)
         {
+            bound.Token.ThrowIfCancellationRequested();
             Clock.Advance(TimeSpan.FromMilliseconds(500));
-            await Task.Delay(1, bound.Token);
+            await Task.Yield();
         }
 
         await task;

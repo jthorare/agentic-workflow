@@ -19,7 +19,7 @@ public sealed class RepoDocsFeedStoreTests
         using var fixture = FixtureRepo.Build();
         var repo = new ContextRepo(ContextRepoName.From("split-panes"), fixture.Path);
         var store = new SqliteRecordStore(home.Database);
-        var feed = new RepoDocsFeed([repo], ["docs/**/*.md"], store, home.Git, home.Scrubbers);
+        var feed = new RepoDocsFeed([repo], ["docs/**/*.md"], [], store, home.Git, home.Scrubbers);
 
         var first = await FeedRun.Once(feed, store, home.Scrubbers);
         var replay = await FeedRun.Once(feed, store, home.Scrubbers);

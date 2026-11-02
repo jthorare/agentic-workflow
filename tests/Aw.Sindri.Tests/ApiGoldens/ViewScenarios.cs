@@ -1,4 +1,3 @@
-using Aw.Kernel.Data;
 using Aw.Kernel.Services;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Commands;
@@ -13,6 +12,7 @@ using Aw.Sindri.Host;
 using Aw.Sindri.Host.Server;
 using Aw.Sindri.Infrastructure.Ledger;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Ledger;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
@@ -199,32 +199,8 @@ internal static class ViewScenarios
     {
         await using var scope = Service(host, out var grant);
         var events = scope.ServiceProvider.GetRequiredService<EventFactory>();
-        var writable = (await scope.ServiceProvider.GetRequiredService<LedgerDatabase>().Writable(ct)).Value;
-        var begun = (await writable.BeginSession(ct)).Value;
-        await using (begun.ConfigureAwait(false))
-        {
-            if (!LeaseDecision.Holds((await LeaseReads.Current(begun, ct)).Value, grant))
-            {
-                throw new InvalidOperationException("the host's lease is not current");
-            }
-
-            long last = 0;
-            foreach (var (payload, key) in items)
-            {
-                var entry = events.Entry(type, payload, key);
-                var e = entry.Envelope;
-                var statement = new SqlStatement(LedgerSql.InsertEvent, c => c
-                    .Bind("$id", e.Id).Bind("$type", e.Type).Bind("$schemaVersion", e.SchemaVersion).Bind("$occurredAt", e.OccurredAt)
-                    .Bind("$actor", e.Actor).Bind("$tenant", e.Tenant).Bind("$ring", e.Ring).Bind("$item", entry.Item)
-                    .Bind("$correlationId", e.CorrelationId).Bind("$causationId", e.CausationId?.ToString("D"))
-                    .Bind("$traceId", e.TraceId).Bind("$epoch", grant.Epoch).Bind("$key", entry.IdempotencyKey).Bind("$payload", e.Payload).Bind("$temporalEventId", entry.TemporalEvent),
-                    $"event {e.Type}");
-                last = (await SqliteQueries.One(begun, statement, (IRowMapper<long>)CountMapper.Instance, ct)).Value;
-            }
-
-            _ = (await begun.Commit(ct)).Value;
-            scope.ServiceProvider.GetRequiredService<ILedgerSignal>().Pulse(last);
-        }
+        var last = await BulkLedger.Append(scope.ServiceProvider.GetRequiredService<LedgerDatabase>(), grant, items.Select(i => events.Entry(type, i.Payload, i.Key)), ct);
+        scope.ServiceProvider.GetRequiredService<ILedgerSignal>().Pulse(last);
     }
 
     /// <summary>A scope entered as the caller 'service:host', with the lease grant the host holds.</summary>

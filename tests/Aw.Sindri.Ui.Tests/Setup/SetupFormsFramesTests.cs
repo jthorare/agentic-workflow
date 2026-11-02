@@ -1,9 +1,5 @@
 using System.Globalization;
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
-using Avalonia.Headless;
-using Avalonia.Input;
 using Avalonia.VisualTree;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Ui.Navigation;
@@ -19,7 +15,7 @@ using Aw.Sindri.Ui.Views.Shell;
 
 namespace Aw.Sindri.Ui.Tests.Setup;
 
-/// <summary>Key frames of the setup rows that take input (setup spec §2.4, §5): the repo form, the Onyx login form, the agents list and the footnote, at 1440 and 900, with the catalog letting the app do the work.</summary>
+/// <summary>Key frames of the setup rows that take input (setup spec §2.4, §5): the repo form and the agents list, at 1440 and 900, with the catalog letting the app do the work.</summary>
 [Lane(TestLane.Integration)]
 [Collection(HeadlessWindows.Name)]
 public sealed class SetupFormsFramesTests : FrameHost
@@ -91,48 +87,8 @@ public sealed class SetupFormsFramesTests : FrameHost
         Frame(window, "setup-repo-error-1440", prefix: "f3-");
     });
 
-    [Theory]
-    [InlineData(1440)]
-    [InlineData(900)]
-    public Task A_waiting_onyx_login_shows_two_labelled_fields_a_show_toggle_and_focus_in_the_first(double width) => OnUi(async () =>
-    {
-        var (window, shell) = await OnSettings(SetupFixture.With("first-run", "onyx", "needs-you", "ConnectOnyx"), width);
-
-        var row = Row(window, "onyx");
-        var email = Named<TextBox>(row, "SetupOnyxEmail");
-        var password = Named<TextBox>(row, "SetupOnyxPassword");
-        var reveal = Named<ToggleButton>(row, "SetupOnyxReveal");
-
-        Assert.Equal(("Onyx email", "Onyx password", "Show password"), (Heard.Name(email), Heard.Name(password), Heard.Name(reveal)));
-        Assert.Equal('•', password.PasswordChar);
-        Assert.True(Named<Button>(row, "SetupOnyxConnect").IsEffectivelyVisible);
-        Assert.Same(email, TopLevel.GetTopLevel(row)!.FocusManager!.GetFocusedElement());
-        AssertNoSideScroll(window, width);
-        Frame(window, string.Create(CultureInfo.InvariantCulture, $"setup-onyx-form-{width}"), prefix: "f3-");
-        reveal.IsChecked = true;
-        Settle(window);
-        Assert.Equal(('\0', "Hide password"), (password.PasswordChar, shell.Setup.Steps.Single(s => s.Id == "onyx").Onyx!.RevealText));
-    });
-
     [Fact]
-    public Task Esc_in_the_onyx_form_closes_it_and_returns_focus_to_the_Connect_button() => OnUi(async () =>
-    {
-        var (window, shell) = await OnSettings(SetupFixture.With("first-run", "onyx", "needs-you", "ConnectOnyx"), 1440);
-        var row = Row(window, "onyx");
-        var password = Named<TextBox>(row, "SetupOnyxPassword");
-        _ = password.Focus();
-        password.Text = "hunter2";
-
-        window.KeyPress(Key.Escape, RawInputModifiers.None, PhysicalKey.Escape, keySymbol: null);
-        Settle(window);
-
-        var onyx = shell.Setup.Steps.Single(s => s.Id == "onyx").Onyx!;
-        Assert.Equal((string.Empty, false, true), (onyx.Password, onyx.ShowForm, onyx.ShowConnect));
-        Assert.Same(Named<Button>(row, "SetupOnyxOpen"), TopLevel.GetTopLevel(row)!.FocusManager!.GetFocusedElement());
-    });
-
-    [Fact]
-    public Task The_agents_row_lists_the_three_coding_agents_and_the_footnote_sits_under_the_panel() => OnUi(async () =>
+    public Task The_agents_row_lists_the_three_coding_agents() => OnUi(async () =>
     {
         var (window, shell) = await OnSettings(SetupFixture.Golden("all-done"), 1440);
         shell.Setup.Steps.Single(s => s.Id == "mcp").IsOpen = true;
@@ -142,18 +98,5 @@ public sealed class SetupFormsFramesTests : FrameHost
 
         Assert.Equal(["Claude Code, connected", "Codex, not started", "Cursor, not started"], lines);
         Frame(window, "setup-agents-1440", prefix: "f3-");
-    });
-
-    [Fact]
-    public Task The_onyx_footnote_is_one_line_under_the_panel_with_a_copy_control() => OnUi(async () =>
-    {
-        var (window, _) = await OnSettings(SetupFixture.Golden("first-run"), 1440);
-
-        var panel = Named<Border>(window, "SetupStepsPanel");
-        var foot = Named<Control>(window, "SetupFootnote");
-
-        Assert.True(foot.IsEffectivelyVisible);
-        Assert.True(foot.TranslatePoint(default, window)!.Value.Y >= panel.TranslatePoint(new Point(0, panel.Bounds.Height), window)!.Value.Y);
-        Assert.DoesNotContain(Row(window, "onyx").GetVisualDescendants().OfType<Control>(), c => string.Equals(c.Name, "SetupFootnote", StringComparison.Ordinal));   // not inside the row
     });
 }

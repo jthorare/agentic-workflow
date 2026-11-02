@@ -22,6 +22,12 @@ internal static class IntentSql
 
     internal const string DeleteLinks = "DELETE FROM intent_link WHERE record = @record";
 
+    internal const string DeleteRuleLinks = "DELETE FROM intent_link WHERE record = @record AND rule = @rule";
+
+    // synced_at is the record's own fetched_at: a rule rewrite is not a sync, and a record that isn't stored takes no link.
+    internal const string InsertRuleLink =
+        "INSERT INTO intent_link (record, target, rule, confidence, span_hash, synced_at) SELECT @record, @target, @rule, @confidence, @span, fetched_at FROM intent_record WHERE key = @record ON CONFLICT DO NOTHING";
+
     internal const string InsertLink =
         "INSERT INTO intent_link (record, target, rule, confidence, span_hash, synced_at) VALUES (@record, @target, @rule, @confidence, @span, @at) ON CONFLICT DO NOTHING";
 
@@ -50,6 +56,8 @@ internal static class IntentSql
 
     // A pending save (the conflict checks are still to run) queues the record again, a done one included: a map change re-extracts it, and a stopped check is retried by the next sync.
     internal const string Touch = "UPDATE intent_record SET extracted_version = NULL, extraction_state = 'queued' WHERE key = @record AND version = @version";
+
+    internal const string SetAliases = "UPDATE intent_record SET aliases = @aliases WHERE key = @record AND version = @version";
 
     // The record's machine decisions the new batch no longer holds (@keys: a JSON array of the batch's keys). A decision that survives keeps its verdicts; a human one is never replaced.
     private const string Gone = "SELECT key FROM intent_decision WHERE record = @record AND provenance <> 'human' AND key NOT IN (SELECT value FROM json_each(@keys))";

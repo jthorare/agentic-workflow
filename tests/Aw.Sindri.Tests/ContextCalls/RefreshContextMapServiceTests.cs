@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Context.Core;
+using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
@@ -52,6 +53,20 @@ public sealed class RefreshContextMapServiceTests
         var refreshed = result.Value;
         Assert.Equal(("app", 2, 5, 2, 1, "agent"), (refreshed.Repo, refreshed.Version, refreshed.Accepted, refreshed.Removed, refreshed.Dropped, refreshed.Cleanup));
         Assert.Equal(new Dictionary<string, string>(StringComparer.Ordinal) { ["app"] = "abc123" }, refreshed.Heads);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_build_that_returned_an_already_current_version_is_not_cleaned_or_promoted_again()
+    {
+        _engine.Built = new MapBuildReport(new MapVersion(2, ContextRepoName.From("app"), "abc123", KeyVersion: 1, DateTimeOffset.UnixEpoch, MapVersionStatus.Current), [], [], [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true)]);
+
+        var result = await Run();
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Code : null);
+        Assert.Equal(["MapHeads", "BuildMap"], _engine.Log);
+        Assert.Equal(("app", 2, false), (result.Value.Repo, result.Value.Version, result.Value.Held));
+        Assert.Equal([EventTypes.ContextMapBuilt, EventTypes.ContextMapRefreshed], Types());
+        Assert.Equal(["building", "already current"], _progress);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -188,6 +203,20 @@ public sealed class RefreshContextMapServiceTests
         Assert.False(result.Value.Held);
         Assert.Equal("IndexReady", Payload(EventTypes.ContextMapPublished).GetProperty("reason").GetString());
         Assert.Empty(_engine.Holds);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_draft_built_before_its_code_index_is_held_for_the_rebuild_not_promoted_though_the_index_is_built_now()
+    {
+        _outlooks.All = IndexOutlook.Built;
+        _engine.Built = new MapBuildReport(_engine.Built.Value.Draft, [], [], [new MapHead(ContextRepoName.From("app"), "abc123", OnDefault: true)]);
+
+        var result = await Run();
+
+        Assert.True(result.Value.Held);
+        Assert.DoesNotContain(_engine.Log, call => string.Equals(call, "Promote", StringComparison.Ordinal));
+        Assert.Equal([EventTypes.ContextMapBuilt, EventTypes.ContextMapHeld, EventTypes.ContextMapRefreshed], Types());
+        _ = Assert.Single(_engine.Holds);
     }
 
     [Fact, Trait("Lane", "unit")]

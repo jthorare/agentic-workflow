@@ -53,8 +53,10 @@ public sealed class EgressLearnTests
 
         await client.WriteAsync("CONNECT new.example:443 HTTP/1.1\r\nHost: new.example:443\r\n\r\n"u8.ToArray(), TestContext.Current.CancellationToken);
         Assert.StartsWith("HTTP/1.1 200", await ReadHead(client), StringComparison.Ordinal);
-        _ = await dialer.Upstream.Task;
+        var upstream = await dialer.Upstream.Task;
         await client.DisposeAsync();
+        // the upstream plays the server: it closes once the proxy has half-closed it, else the relay waits out EgressCaps.HalfCloseGrace (30 s)
+        await upstream.DisposeAsync();
         await handled;
 
         Assert.Equal([(IPAddress.Parse("93.184.216.34"), 443)], dialer.Dialed);

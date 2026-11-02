@@ -14,6 +14,9 @@ public sealed class EvidenceParentFactsTests
 {
     private const string Start = """{"start":{"inputs":{"fact:phasePacket":{"phase":"1"},"fact:built":"https://example.test/diff/1"}}}""";
 
+    // why: the resolver is only read once built, so the sindri/ recipes are put into it once for the class.
+    private static readonly Lazy<InMemoryChildRecipes> _siblings = new(Siblings);
+
     private static InMemoryChildRecipes Siblings()
     {
         var children = InMemoryChildRecipes.None;
@@ -31,7 +34,7 @@ public sealed class EvidenceParentFactsTests
         var recipe = EvalComposition.Recipe(recipePath);
         var read = EvalCaseReader.Read("facts", string.Join('\n', [Start, .. lines]), EvalComposition.Options);
         var evalCase = Assert.IsType<EvalCase>(read.Case);
-        var children = Siblings();
+        var children = _siblings.Value;
         var simulation = EvalSimulation.Start(evalCase, recipe, EvalComposition.Catalog, children).Value;
         for (var i = 0; i < evalCase.Steps.Count; i++)
         {

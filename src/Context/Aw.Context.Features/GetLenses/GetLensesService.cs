@@ -5,6 +5,7 @@ using Aw.Context.Core.Graph;
 using Aw.Context.Core.Lenses;
 using Aw.Context.Core.LensSupport;
 using Aw.Context.Core.Map;
+using Aw.Context.Core.Records;
 using Aw.Context.Core.Symbols;
 using Aw.Context.Core.Trust;
 using Aw.Kernel;
@@ -17,7 +18,7 @@ namespace Aw.Context.Features.GetLenses;
 /// to its repo) as of the current version, the draft or a retained version, the anchor resolved like any node name, the view built by
 /// <see cref="LensesBuilder"/> to the profile's cascade depth, and every label cleaned like every answer's. Only text a model wrote and nobody confirmed is fenced; file names are not.
 /// </summary>
-internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, IScrubberFactory scrubbers, ICodeSymbolSource symbols, IRepoReader repoReader) : IService<GetLensesRequest, LensesView>
+internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, IScrubberFactory scrubbers, ICodeSymbolSource symbols, IRepoReader repoReader, IRecordStore records, TimeProvider clock) : IService<GetLensesRequest, LensesView>
 {
     public async ValueTask<Result<LensesView>> Handle(GetLensesRequest request, CancellationToken cancellationToken)
     {
@@ -49,8 +50,27 @@ internal sealed class GetLensesService(MapReader reader, LensBasisReader bases, 
 
         var basis = (await bases.For(read.Value, settings.Value, request.Scope, request.Read.Draft, cancellationToken).ConfigureAwait(false)) with { Cascade = QueryRules.CascadeFor(hops.Value, settings.Value) };
         var lenses = LensesBuilder.Build(basis, read.Value.Graph, anchor.Value.Key, depth, read.Value.Conflicts);
-        var view = lenses.IsError ? lenses : await WithSymbols(lenses.Value, settings.Value, request.Scope, read.Value.Snapshot.Version, cancellationToken).ConfigureAwait(false);
+        var view = await Enrich(lenses, settings.Value, (request.Scope, read.Value.Snapshot.Version, built.Value.Egress), cancellationToken).ConfigureAwait(false);
         return view.Map(v => LensTexts.Clean(DemotedFiles.Last(v, request.Scope.Repos), new MapText(built.Value, FencePolicies.For(request.Scope.Caller))));
+    }
+
+    private async Task<Result<LensesView>> Enrich(Result<LensesView> lenses, ContextSettings settings, (ContextScope Scope, MapVersion Version, IEgressScrubber Egress) at, CancellationToken cancellationToken)
+    {
+        if (lenses.IsError)
+        {
+            return lenses;
+        }
+
+        var view = await WithSymbols(lenses.Value, settings, at.Scope, at.Version, cancellationToken).ConfigureAwait(false);
+        return view.IsError ? view : await Cited(view.Value, settings, at.Egress, cancellationToken).ConfigureAwait(false);
+    }
+
+    // #1702: the intent records' citations, from the record store; a record it can't give stays uncited.
+    private async Task<Result<LensesView>> Cited(LensesView view, ContextSettings settings, IEgressScrubber egress, CancellationToken cancellationToken)
+    {
+        var reading = new LensCitations.Reading(records, settings.LinearTeams.ToHashSet(StringComparer.Ordinal), egress, clock.GetUtcNow());
+        var (intent, cites) = await LensCitations.Cite(view.Bands.Intent, reading, cancellationToken).ConfigureAwait(false);
+        return view with { Bands = view.Bands with { Intent = intent }, Cites = cites };
     }
 
     private const string SymbolLevel = "symbol";

@@ -50,7 +50,10 @@ internal static class PlanEnvironment
     private static IEnumerable<PlanEnvVar> StateDir(PlanContext c) =>
         string.Equals(c.StateDir, c.Home + "/.agentic-workflow", StringComparison.Ordinal) ? [] : [Var("AW_STATE_DIR", c.StateDir)];
 
-    internal static IReadOnlyList<GitSetting> Git(PlanContext c) => GitSettings.For(c.Worktree, c.RunArea + "/githooks");
+    internal static IReadOnlyList<GitSetting> Git(PlanContext c) => GitSettings.For(
+        c.Worktree,
+        c.RunArea + "/githooks",
+        c.Github == GithubCredentials.AgentApp ? $"{c.RunArea}/shims/{GitSettings.CredentialHelperName}" : null);
 
     private static PlanEnvVar Var(string name, string? value) => new(name, value, EnvironmentAllowlist.Names[name]);
 

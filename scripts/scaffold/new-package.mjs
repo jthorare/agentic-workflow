@@ -18,7 +18,7 @@ import { fileURLToPath } from "node:url";
 import { Journal, ScaffoldError, UsageError, trapSignals, list, lower, parseArgs, withHeavyLock } from "./lib/common.mjs";
 import * as P from "./lib/package-templates.mjs";
 import * as R from "./lib/repo.mjs";
-import { build, declarePublicApi, depsClean, expectOnlyRed, formatClean, mustPass, noStrayChanges, strayChanges } from "./lib/checks.mjs";
+import { build, checkScope, declarePublicApi, depsClean, expectOnlyRed, formatClean, mustPass, noStrayChanges, strayChanges } from "./lib/checks.mjs";
 import { resolveSlice, writeSlice, nextSteps } from "./new-slice.mjs";
 
 const KNOWN = ["name", "tier", "errorPrefix", "note", "shape", "host", "depends", "firstSlice", "behavior", "binary", "command", "route", "ids", "ports", "root"];
@@ -206,9 +206,10 @@ export async function checkPackage(journal, p, s, log) {
   await mustPass(root, "SCAFFOLD-RESTORE", "dotnet", ["restore", R.SLNX, "--locked-mode"], "no existing lock file may change here: a new pin belongs in its own commit (NP-PINS)", log);
   // Every library layer's public API, the first slice's included, in reference order (Core before Features).
   for (const proj of prod.filter((x) => ["Core", "Features", "Infrastructure"].includes(x.layer))) await declarePublicApi(journal, proj.path, log);
-  await build(root, log);
-  const lane = await expectOnlyRed(root, `${s.slice}Tests.${s.slice}_${s.behavior}`, log);
-  await formatClean(root, log);
+  const scope = checkScope(journal, p.name);
+  await build(root, scope, log);
+  const lane = await expectOnlyRed(root, scope, `${s.slice}Tests.${s.slice}_${s.behavior}`, log);
+  await formatClean(root, scope, log);
   await depsClean(root, log);
   return lane;
 }

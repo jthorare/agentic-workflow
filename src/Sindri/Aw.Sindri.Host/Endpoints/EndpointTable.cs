@@ -26,10 +26,11 @@ internal static class EndpointTable
         _ = queries.MapGetJob();
         _ = queries.MapGetLaunch();
         _ = queries.MapGetLaunchTargets();
-        _ = queries.MapListDenials();
+        _ = MapSandboxQueries(queries);
         _ = queries.MapListJobs();
         _ = queries.MapGetItemTimeline();
         _ = queries.MapGetItemScope();
+        _ = MapProjectQueries(queries);
         _ = queries.MapGetQueue();
         _ = queries.MapGetSession();
         _ = queries.MapGetRunSuspension();
@@ -57,6 +58,22 @@ internal static class EndpointTable
         _ = MapInstanceQueries(queries);
         _ = MapCodeIndexQueries(queries);
         return MapContextQueries(queries);
+    }
+
+    private static RouteGroupBuilder MapProjectQueries(RouteGroupBuilder queries)
+    {
+        _ = queries.MapListLinearProjects();
+        _ = queries.MapGetProject();
+        _ = queries.MapGetProjects();
+        return queries;
+    }
+
+    private static RouteGroupBuilder MapSandboxQueries(RouteGroupBuilder queries)
+    {
+        _ = queries.MapCheckSandbox();
+        _ = queries.MapGetSandboxStatus();
+        _ = queries.MapListDenials();
+        return queries;
     }
 
     private static RouteGroupBuilder MapEngineQueries(RouteGroupBuilder queries)
@@ -90,10 +107,13 @@ internal static class EndpointTable
 
     private static RouteGroupBuilder MapContextQueries(RouteGroupBuilder queries)
     {
-        _ = queries.MapExportContextMap();
+        _ = queries.MapExportContextMap().MapGetIndexStatus();
         _ = queries.MapGetContextConcepts();
+        _ = queries.MapGetContextPages();
         _ = queries.MapGetContextConceptMembers();
         _ = queries.MapGetContextConceptGlossary();
+        _ = queries.MapGetContextPinSuggest();
+        _ = queries.MapGetContextPins();
         _ = queries.MapExportContextReview();
         _ = queries.MapFindContextPath();
         _ = queries.MapGetContextFileMap();
@@ -102,6 +122,7 @@ internal static class EndpointTable
         _ = queries.MapGetContextSubgraph();
         _ = queries.MapSearchContextMap();
         _ = queries.MapGetContextCode();
+        _ = queries.MapPreviewContextPages();
         _ = queries.MapGetContextEvalMap();
         _ = queries.MapGetContextMap();
         _ = queries.MapGetContextWholeMap();
@@ -121,10 +142,9 @@ internal static class EndpointTable
         // ---- commands: one line per slice, sorted ----
         _ = commands.MapApproveProfile();
         _ = commands.MapCancelJob();
-        _ = commands.MapCloseItem();
-        _ = commands.MapDeferOnyx().MapEndLearnMode();
-        _ = commands.MapSetupOnyx();
-        _ = commands.MapConnectOnyx();
+        _ = commands.MapResumeJob();
+        _ = commands.MapCloseItem().MapProjectWrites();
+        _ = commands.MapEndLearnMode().MapAllowDenial();
         _ = commands.MapOpenItem();
         _ = commands.MapPauseService();
         _ = commands.MapResumeService();
@@ -136,7 +156,7 @@ internal static class EndpointTable
         _ = commands.MapFileRequest();
         _ = commands.MapRebuildViews();
         _ = commands.MapImportContextMap();
-        _ = commands.MapPromoteContextMap().MapCheckContextMapStructure();
+        _ = commands.MapPromoteContextMap().MapCheckContextMapStructure().MapPurgeIndexSource();
         _ = commands.MapProposeContextMap();
         _ = commands.MapReviewContextMap();
         _ = commands.MapShowLineHoldout();

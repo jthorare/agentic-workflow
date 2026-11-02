@@ -3,7 +3,6 @@ using System.Text;
 namespace Aw.Sindri.Infrastructure.Sandbox;
 
 /// <summary>The last lines of a transcript or log, best effort (sandbox spec §3.6). Session end calls it; the wiring is SB-5a's.</summary>
-#pragma warning disable MA0182 // until session end (SB-5a) reads the tail
 internal static class TranscriptTail
 {
     /// <summary>The default tail: 256 KiB.</summary>
@@ -48,4 +47,3 @@ internal static class TranscriptTail
         }
     }
 }
-#pragma warning restore MA0182

@@ -12,11 +12,11 @@ internal static class RecordSql
     internal const string Existing = "SELECT version, text_hash, ruleset, blocked, removed_at FROM source_record WHERE key = @key";
 
     internal const string UpsertRecord =
-        "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at) " +
-        "VALUES (@key, @source, @kind, @repo, @audience, @title, @url, @author, @state, @stateRaw, @created, @updated, @closed, @version, @hash, @ruleset, @blocked, NULL, @synced) " +
+        "INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description) " +
+        "VALUES (@key, @source, @kind, @repo, @audience, @title, @url, @author, @state, @stateRaw, @created, @updated, @closed, @version, @hash, @ruleset, @blocked, NULL, @synced, @health, @dueAt, @description) " +
         "ON CONFLICT (key) DO UPDATE SET source = excluded.source, kind = excluded.kind, repo = excluded.repo, audience_key = excluded.audience_key, title = excluded.title, url = excluded.url, " +
         "author = excluded.author, state = excluded.state, state_raw = excluded.state_raw, created_at = excluded.created_at, updated_at = excluded.updated_at, closed_at = excluded.closed_at, " +
-        "version = excluded.version, text_hash = excluded.text_hash, ruleset = excluded.ruleset, blocked = excluded.blocked, removed_at = NULL, synced_at = excluded.synced_at";
+        "version = excluded.version, text_hash = excluded.text_hash, ruleset = excluded.ruleset, blocked = excluded.blocked, removed_at = NULL, synced_at = excluded.synced_at, health = excluded.health, due_at = excluded.due_at, description = excluded.description";
 
     internal const string DeleteLinks = "DELETE FROM record_link WHERE from_key = @key";
 
@@ -44,15 +44,34 @@ internal static class RecordSql
 
     /// <summary>A tombstone and a blocked row keep only key, kind, state and times: the title becomes the key and the free text goes.</summary>
     internal const string Tombstone =
-        "UPDATE source_record SET removed_at = @at, title = key, url = NULL, author = NULL, state_raw = NULL, synced_at = @at WHERE key = @key AND source = @source AND removed_at IS NULL";
+        "UPDATE source_record SET removed_at = @at, title = key, url = NULL, author = NULL, state_raw = NULL, description = NULL, synced_at = @at WHERE key = @key AND source = @source AND removed_at IS NULL";
 
     internal const string ClearInboundTitles = "UPDATE record_link SET title = NULL WHERE to_key = @key";
 
     internal const string DeleteChunks = "DELETE FROM chunk WHERE record = @key";
 
     internal const string SavePosition =
-        "INSERT INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, backfill_cursor) VALUES (@source, 'records', @cursor, @at, NULL, @phase, @backfill) " +
-        "ON CONFLICT (source, repo) DO UPDATE SET cursor = excluded.cursor, last_sync = excluded.last_sync, last_error = NULL, phase = excluded.phase, backfill_cursor = excluded.backfill_cursor";
+        "INSERT INTO source_cursor (source, repo, cursor, last_sync, last_error, phase, backfill_cursor, backfill_before) VALUES (@source, 'records', @cursor, @at, NULL, @phase, @backfill, @before) " +
+        "ON CONFLICT (source, repo) DO UPDATE SET cursor = excluded.cursor, last_sync = excluded.last_sync, last_error = NULL, phase = excluded.phase, backfill_cursor = excluded.backfill_cursor, backfill_before = excluded.backfill_before";
+
+    // Only last_sync and last_error: the cursor, phase and backfill columns stay as the page commits left them.
+    internal const string SaveOutcome =
+        "INSERT INTO source_cursor (source, repo, cursor, last_sync, last_error) VALUES (@source, 'records', NULL, @at, @code) " +
+        "ON CONFLICT (source, repo) DO UPDATE SET last_sync = excluded.last_sync, last_error = excluded.last_error";
+
+    internal const string ReadOutcome = "SELECT last_sync, last_error FROM source_cursor WHERE source = @source AND repo = 'records' AND last_sync IS NOT NULL";
+
+    internal const string ReadBackoff = "SELECT failures, next_try, last_commit, last_error_text FROM source_cursor WHERE source = @source AND repo = 'records'";
+
+    internal const string SaveBackoff =
+        "INSERT INTO source_cursor (source, repo, cursor, failures, next_try, last_commit, last_error_text) VALUES (@source, 'records', NULL, @failures, @nextTry, @lastCommit, @errorText) " +
+        "ON CONFLICT (source, repo) DO UPDATE SET failures = excluded.failures, next_try = excluded.next_try, last_commit = excluded.last_commit, last_error_text = excluded.last_error_text";
+
+    internal const string ReadIdentity = "SELECT source, user_ref, name, read_at FROM source_identity WHERE source = @source";
+
+    internal const string WriteIdentity =
+        "INSERT INTO source_identity (source, user_ref, name, read_at) VALUES (@source, @userRef, @name, @readAt) " +
+        "ON CONFLICT (source) DO UPDATE SET user_ref = excluded.user_ref, name = excluded.name, read_at = excluded.read_at";
 
     internal const string BumpRecordStamp = "UPDATE store_epoch SET record_stamp = record_stamp + 1 WHERE id = 1";
 
@@ -60,7 +79,7 @@ internal static class RecordSql
     internal const string OptimizeFts = "INSERT INTO chunk_fts (chunk_fts) VALUES ('optimize')";
 
     internal const string Columns =
-        "key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at";
+        "key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at, health, due_at, description";
 
     internal const string Get = "SELECT " + Columns + " FROM source_record WHERE key = @key";
 
@@ -73,12 +92,36 @@ internal static class RecordSql
         "SELECT " + Columns + " FROM source_record WHERE (@source IS NULL OR source = @source) AND (@repo IS NULL OR repo = @repo) AND (@kind IS NULL OR kind = @kind) " +
         "AND (@removed = 1 OR removed_at IS NULL) AND (@after IS NULL OR key > @after) ORDER BY key LIMIT @limit";
 
-    internal const string ReadPosition = "SELECT cursor, phase, backfill_cursor FROM source_cursor WHERE source = @source AND repo = 'records'";
+    /// <summary>
+    /// A source's projects with their lead and issue counts (projects page spec §6.1): the projects by 'source_record_by_source', each issue count a probe of 'record_link_by_to_key' joined to the issue by its key.
+    /// The audience mask is the lexical leg's: the record's audience is allowed, or the record itself is listed.
+    /// </summary>
+    internal const string ProjectFacts =
+        "SELECT p.key, p.title, p.url, p.state_raw, p.health, p.due_at, COALESCE(p.updated_at, p.synced_at), p.closed_at, " +
+        "(SELECT l.to_ref FROM record_link l WHERE l.from_key = p.key AND l.kind = 'led-by' ORDER BY l.to_ref LIMIT 1), " +
+        "(SELECT l.title FROM record_link l WHERE l.from_key = p.key AND l.kind = 'led-by' ORDER BY l.to_ref LIMIT 1), " +
+        "(SELECT COUNT(*) FROM record_link l JOIN source_record i ON i.key = l.from_key WHERE l.to_key = p.key AND l.kind = 'in-project' AND i.kind = 'issue' AND i.state = 'open' AND i.removed_at IS NULL AND " + VisibleIssue + "), " +
+        "(SELECT MAX(i.updated_at) FROM record_link l JOIN source_record i ON i.key = l.from_key WHERE l.to_key = p.key AND l.kind = 'in-project' AND i.kind = 'issue' AND i.removed_at IS NULL AND " + VisibleIssue + "), " +
+        "p.description " +
+        "FROM source_record p WHERE p.source = @source AND p.kind = 'project' AND p.removed_at IS NULL AND p.blocked = 0 AND " + VisibleProject + " ORDER BY p.title, p.key";
+
+    private const string VisibleProject = "(p.audience_key IN (SELECT value FROM json_each(@audiences)) OR p.key IN (SELECT value FROM json_each(@records)))";
+
+    private const string VisibleIssue = "(i.audience_key IN (SELECT value FROM json_each(@audiences)) OR i.key IN (SELECT value FROM json_each(@records)))";
+
+    internal const string ReadPosition = "SELECT cursor, phase, backfill_cursor, backfill_before FROM source_cursor WHERE source = @source AND repo = 'records'";
 
     internal const string ReadStamps = "SELECT record_stamp, delete_epoch FROM store_epoch WHERE id = 1";
 
     internal const string ReadVectors =
         "SELECT seq, key, model, text_hash, dim, vec FROM embedding WHERE space = @space AND seq > @after ORDER BY seq LIMIT @limit";
+
+    /// <summary>The embed job's work list: chunks of live records with no vector of this model made from their current text, newest-updated record first.</summary>
+    internal const string ChunksToEmbed =
+        "SELECT c.key, c.text, c.text_hash FROM chunk c JOIN source_record r ON r.key = c.record " +
+        "WHERE r.blocked = 0 AND r.removed_at IS NULL " +
+        "AND NOT EXISTS (SELECT 1 FROM embedding e WHERE e.space = 'chunk' AND e.key = c.key AND e.model = @model AND e.text_hash = c.text_hash) " +
+        "ORDER BY r.updated_at IS NULL, r.updated_at DESC, c.record, c.seq LIMIT @limit";
 
     /// <summary>A re-embed replaces the row (a new seq), but only for a chunk that still has the hash.</summary>
     internal const string ReplaceChunkVector =
@@ -111,5 +154,32 @@ internal static class RecordSql
         "DELETE FROM source_cursor WHERE source = @source",
     ];
 
+    /// <summary>What a purge would delete: the source's records, their chunks and the chunk vectors of those chunks.</summary>
+    internal const string CountSource =
+        "SELECT (SELECT COUNT(*) FROM source_record WHERE source = @source), " +
+        "(SELECT COUNT(*) FROM chunk WHERE record IN (SELECT key FROM source_record WHERE source = @source)), " +
+        "(SELECT COUNT(*) FROM embedding WHERE space = 'chunk' AND key IN (SELECT key FROM chunk WHERE record IN (SELECT key FROM source_record WHERE source = @source)))";
+
+    /// <summary>The live records (not removed, not blocked), and those with at least one chunk vector.</summary>
+    internal const string CountLive =
+        "SELECT (SELECT COUNT(*) FROM source_record WHERE removed_at IS NULL AND blocked = 0), " +
+        "(SELECT COUNT(*) FROM source_record r WHERE r.removed_at IS NULL AND r.blocked = 0 AND EXISTS (SELECT 1 FROM chunk c JOIN embedding e ON e.space = 'chunk' AND e.key = c.key WHERE c.record = r.key))";
+
     internal const string DeleteRecords = "DELETE FROM source_record WHERE source = @source";
+
+    /// <summary>
+    /// The lexical leg (spec §6.1): chunks that match, of records that are stored, not blocked and in an allowed audience. The mask is part of the query, so the limit
+    /// is taken after it. A record with no audience matches only when @records lists its key (rule (c)).
+    /// </summary>
+    internal const string LexicalSearch =
+        "SELECT c.key, r.title, c.line_start, c.line_end, bm25(chunk_fts) " +
+        "FROM chunk_fts " +
+        "JOIN chunk c ON c.id = chunk_fts.rowid " +
+        "JOIN source_record r ON r.key = c.record " +
+        "WHERE chunk_fts MATCH @match AND r.removed_at IS NULL AND r.blocked = 0 AND (r.audience_key IN (SELECT value FROM json_each(@audiences)) OR r.key IN (SELECT value FROM json_each(@records))) " +
+        "ORDER BY bm25(chunk_fts), c.id " +
+        "LIMIT @limit";
+
+    /// <summary>Whether the store holds any chunk at all, whatever its audience.</summary>
+    internal const string AnyChunk = "SELECT EXISTS (SELECT 1 FROM chunk)";
 }

@@ -80,13 +80,13 @@
       "items": []
     },
     {
-      "id": "onyx",
-      "title": "Set up Onyx",
+      "id": "sources",
+      "title": "Connect your sources",
       "state": "todo",
-      "why": "Docker is ready. Set up Onyx when you want search.",
-      "detail": "Onyx isn't set up yet.",
+      "why": "No source is connected yet.",
+      "detail": "Connect GitHub, Slack or Linear so Sindri can read your issues and chat.",
       "error": null,
-      "action": "SetupOnyx",
+      "action": "ConnectIndexSource",
       "progress": null,
       "items": []
     }

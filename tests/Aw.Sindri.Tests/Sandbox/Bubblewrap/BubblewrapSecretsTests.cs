@@ -41,8 +41,19 @@ public sealed class BubblewrapSecretsTests
         Assert.Equal("sh", argv[3]);
         Assert.StartsWith(area.Root + "/area/secrets/", argv[4], StringComparison.Ordinal);
         Assert.Equal("bwrap", argv[5]);
-        Assert.Equal(["--", "claude", "--x"], argv.TakeLast(3), StringComparer.Ordinal);
+        Assert.Equal(["claude", "--x"], argv.TakeLast(2), StringComparer.Ordinal);
         Assert.Contains("--args", argv, StringComparer.Ordinal);
+    }
+
+    [Fact]
+    public void Wrap_runs_the_agent_under_the_init_that_starts_both_forwarders()
+    {
+        using var area = new TempRunArea("AW_SINDRI_LAUNCH_SECRET");
+
+        var argv = Sandbox(new FakeProcesses(), new LaunchSecretRegistry()).Wrap(area.Plan, ["claude", "--x"]).Value;
+
+        var agent = argv.ToList().IndexOf("--") + 1;
+        Assert.Equal(["/bin/sh", "-c", EgressInit.Render(area.Plan.Network, "socat", EgressInit.InsideLog), EgressInit.Name, "claude", "--x"], argv.Skip(agent), StringComparer.Ordinal);
     }
 
     [Fact]

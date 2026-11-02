@@ -1,0 +1,34 @@
+{
+  "id": "LCH-00000000000000000000000000000001",
+  "item": "ITM-0000000000000000000000000000000f",
+  "mode": "open",
+  "state": "failed",
+  "target": "claude-code",
+  "chosenBy": "click",
+  "requestedAt": "2026-01-01T00:00:00.0000000Z",
+  "outcomeAt": "2026-01-01T00:00:00.0000000Z",
+  "code": "SND-LAUNCH-014",
+  "detail": "Sandboxed sessions can't start: bubblewrap isn't installed.",
+  "stage": null,
+  "sessionId": null,
+  "tabTitle": null,
+  "viewer": null,
+  "late": false,
+  "attach": null,
+  "catalogSource": null,
+  "argvHash": null,
+  "ended": null,
+  "step": {
+    "instance": null,
+    "state": null,
+    "attempt": null
+  },
+  "asOf": {
+    "cursor": 9,
+    "ledgerHead": 9,
+    "projectedAt": "2026-01-01T00:00:00.0000000Z",
+    "rebuilding": false,
+    "stalled": false
+  },
+  "reason": "no-bwrap"
+}

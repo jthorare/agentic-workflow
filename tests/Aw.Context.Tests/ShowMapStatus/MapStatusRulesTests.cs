@@ -41,7 +41,8 @@ public sealed class MapStatusRulesTests : IDisposable
     [Fact, Trait("Lane", "unit")]
     public async Task Status_says_nothing_for_a_map_that_recorded_no_rules()
     {
-        _ = await _world.ImportFixture();
+        // an import records its scope's rules (#1742), so the store is written directly: a map from before the rules were recorded
+        _ = await _world.Store.SaveCurrent(Maps.Checked(Maps.Fixture()), _world.Clock.GetUtcNow(), MapWorld.None);
 
         var status = (await _world.Map.MapStatus(anchor: null, Scope(), MapWorld.None)).Value;
 

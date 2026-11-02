@@ -14,7 +14,7 @@ internal sealed class PullGitHubService(IGitHubReader reader) : IService<PullGit
 {
     public async ValueTask<Result<PullGitHubResponse>> Handle(PullGitHubRequest request, CancellationToken cancellationToken)
     {
-        var page = await reader.Issues(request.Repo, request.After, request.Limit, cancellationToken).ConfigureAwait(false);
+        var page = await reader.Issues(request.Repo, request.After, request.Limit, request.Before, cancellationToken).ConfigureAwait(false);
         if (page.IsError)
         {
             return page.Error;

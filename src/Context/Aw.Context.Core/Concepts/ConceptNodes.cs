@@ -12,7 +12,7 @@ internal static class ConceptNodes
 {
     private const int NameLength = 60;
     private const int SummaryFeatures = 3;
-    private const int EvidenceCap = 25;
+    internal const int EvidenceCap = 25;
 
     internal sealed record Built(GraphNode Node, PlannedConcept Plan);
 

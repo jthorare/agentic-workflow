@@ -8,6 +8,7 @@ using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Host;
 using Aw.Sindri.Infrastructure.Sandbox;
 using Aw.Sindri.Infrastructure.Text;
+using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Sandbox.Egress;
 
 namespace Aw.Sindri.Tests.Sandbox.Denials;
@@ -136,5 +137,36 @@ public sealed class DenialCounterTests
         Assert.NotEqual(stamped, File.GetLastWriteTimeUtc(path));
         Assert.Contains("evil.example", File.ReadAllText(path), StringComparison.Ordinal);
         Assert.False(File.Exists(path + ".tmp"));
+    }
+
+    [Fact, Lane(TestLane.Unit)]
+    public void Flush_creates_the_denials_folder_when_it_is_not_there_yet()
+    {
+        using var home = new TempHome();
+        var path = LaunchPaths.DenialsFile(Path.Combine(home.Path, "launch"), _launch);
+        var (counter, _) = Make(path);
+        counter.Record(Net("evil.example"));
+
+        counter.Flush();
+
+        Assert.True(File.Exists(path));
+    }
+
+    [Fact, Lane(TestLane.Unit)]
+    public void Flush_writes_the_counter_file_owner_only()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var home = new TempHome();
+        var path = LaunchPaths.DenialsFile(Path.Combine(home.Path, "launch"), _launch);
+        var (counter, _) = Make(path);
+        counter.Record(Net("evil.example"));
+
+        counter.Flush();
+
+        Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(path));
     }
 }

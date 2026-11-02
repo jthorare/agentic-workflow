@@ -124,6 +124,7 @@ internal sealed class DeskReporter(ISindriApi api, Func<Uri?> apiUrl, ILauncher?
         Reviews = detail.Current.Desk?.Reviews ?? [],
         SessionRef = detail.Current.Status.Run?.Session?.Ref(),
         ReasonCode = detail.Current.Status.ReasonCode,
+        RequiredOutputs = [.. (detail.Current.Desk?.Outputs ?? []).Where(o => o.Required).Select(o => o.Key)],
     };
 
     // The recipe state the instance is in, for its why and its outcomes; null when the recipe cannot be read.
@@ -192,8 +193,9 @@ internal sealed class DeskReporter(ISindriApi api, Func<Uri?> apiUrl, ILauncher?
     /// <param name="target">The open run.</param>
     /// <param name="outcome">The outcome (approve, revise, drop).</param>
     /// <param name="answers">The text sent as the fact "answers" (a send-back's reason); null for none.</param>
+    /// <param name="files">The contents of the required outputs by their keys (a file the person picked); null for none.</param>
     /// <returns>The answer, or null when a report for the instance was in flight or no endpoint is known.</returns>
-    internal async Task<Result<CompleteStepAccepted>?> Complete(DeskTarget target, string outcome, string? answers)
+    internal async Task<Result<CompleteStepAccepted>?> Complete(DeskTarget target, string outcome, string? answers, IReadOnlyDictionary<string, byte[]>? files = null)
     {
         ArgumentNullException.ThrowIfNull(target);
         if (apiUrl() is not { } url || !_inFlight.Add(target.InstanceId))
@@ -203,7 +205,7 @@ internal sealed class DeskReporter(ISindriApi api, Func<Uri?> apiUrl, ILauncher?
 
         try
         {
-            var outputs = new Dictionary<string, byte[]>(StringComparer.Ordinal);
+            var outputs = new Dictionary<string, byte[]>(files ?? new Dictionary<string, byte[]>(StringComparer.Ordinal), StringComparer.Ordinal);
             if (answers is { Length: > 0 })
             {
                 outputs[AnswersKey] = Encoding.UTF8.GetBytes(answers);

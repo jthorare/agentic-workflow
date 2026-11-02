@@ -21,4 +21,9 @@ public sealed record ConceptsView(
     IReadOnlyList<ConceptRow> Concepts,
     ConceptOther Other,
     IReadOnlyList<ConceptLink> Links,
-    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Next);
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] string? Next)
+{
+    /// <summary>How many pages relate to no concept (<see cref="WholeMap.PagesInNoConcept"/>), for the "Pages in no concept (N)" link; null (left out of the answer) when no map was read.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? PagesInNoConcept { get; init; }
+}

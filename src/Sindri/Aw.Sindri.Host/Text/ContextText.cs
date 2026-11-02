@@ -23,6 +23,11 @@ internal static class ContextText
             Diff(text, diff);
         }
 
+        foreach (var note in result.Notes ?? [])
+        {
+            _ = text.AppendLine(Invariant($"NOTE {note}"));
+        }
+
         foreach (var degraded in result.Degraded)
         {
             _ = text.AppendLine(Invariant($"DEGRADED {degraded.Source.Value}: {degraded.Code} {degraded.Message}"));
@@ -138,7 +143,7 @@ internal static class ContextText
 
     private static string Markers(IReadOnlyList<string> markers) => string.Join(' ', markers.Select(m => "[" + m + "]"));
 
-    /// <summary>A git object id (hex, longer than 12) cut to 12 characters; any other version, such as an Onyx 'updated_at' timestamp, in full.</summary>
+    /// <summary>A git object id (hex, longer than 12) cut to 12 characters; any other version, such as a timestamp, in full.</summary>
     private static string Short(SourceVersion version) =>
         version.Value.Length > 12 && version.Value.All(char.IsAsciiHexDigitLower) ? version.Value[..12] : version.Value;
 

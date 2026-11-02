@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Aw.Context.Core.Audience;
 using Aw.Context.Core.Docs;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Records;
@@ -20,7 +21,7 @@ namespace Aw.Context.Infrastructure.Docs;
 /// (a replay writes nothing), a new head or ruleset is diffed against the store, and a page cut short by the limit answers
 /// a cursor that is not final, so the next pull carries on with what the store doesn't hold yet.
 /// </summary>
-internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyList<string> globs, IRecordStore store, GitCli git, Scrubbers scrubbers)
+internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyList<string> globs, IReadOnlyList<string> githubRepos, IRecordStore store, GitCli git, Scrubbers scrubbers)
     : RecordFeed(RepoDocs.Id)
 {
     private const int ListPage = 1000;
@@ -147,7 +148,7 @@ internal sealed class RepoDocsFeed(IReadOnlyList<ContextRepo> repos, IReadOnlyLi
         return text.IsError
             ? null
             : new RecordItem(RepoDocs.Key(repo.Name, path), RecordKind.Doc, DocChunker.Title(text.Value, path), text.Value, Author: null, Url: null, State: null,
-                StateRaw: null, CreatedAt: null, UpdatedAt: null, ClosedAt: null, SourceVersion.From(blob), Links: [], repo.Name, Audience: null);
+                StateRaw: null, CreatedAt: null, UpdatedAt: null, ClosedAt: null, SourceVersion.From(blob), Links: [], repo.Name, ProfileAudiencePolicy.OwnRepo(repo.Name, githubRepos));
     }
 
     /// <summary>True when the path fits a chunk id and a record key (no control or format characters, not too long), and no deny glob names it.</summary>

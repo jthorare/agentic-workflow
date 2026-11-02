@@ -12,6 +12,9 @@ public sealed class SlackSource
     /// <summary>The secret pointer to the bot token, or null before 'sindri index connect slack'.</summary>
     public string? Token { get; init; }
 
+    /// <summary>The workspace name in 'https://&lt;workspace&gt;.slack.com', which the record permalinks are built from; null until the profile names it.</summary>
+    public string? Workspace { get; init; }
+
     /// <summary>The source without the token pointer.</summary>
     /// <returns>A description.</returns>
     public override string ToString() => $"SlackSource {{ Channels = {Channels.Count}, RetainDays = {RetainDays}, Token = (withheld) }}";

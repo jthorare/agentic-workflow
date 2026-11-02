@@ -21,7 +21,7 @@ public sealed class HealthSummaryTests
 
     private static HealthReport For(bool running = true, ViewsStatus? views = null, IReadOnlyList<ServiceRow>? services = null,
         bool needsApproval = false, bool changed = false, IReadOnlyList<HealthProblem>? codeIndex = null) =>
-        HealthSummary.For(running, views ?? Fresh(), services ?? [], changed ? ProfileApproval.Changed : needsApproval ? ProfileApproval.NeedsApproval : ProfileApproval.Approved, codeIndex);
+        HealthSummary.For(running, views ?? Fresh(), services ?? [], changed ? ProfileApproval.Changed : needsApproval ? ProfileApproval.NeedsApproval : ProfileApproval.Approved, new HealthContext(codeIndex, _slot.AddMinutes(1)));
 
     [Fact, Trait("Lane", "unit")]
     public void Nothing_wrong_is_healthy_with_no_problems_and_no_sentence()
@@ -77,6 +77,19 @@ public sealed class HealthSummaryTests
         Assert.Equal(["SND-API-001", "SND-VIEW-001", "SND-SCHED-001", "SND-CTX-001", "SND-PROFILE-005"], health.Problems.Select(p => p.Code), StringComparer.Ordinal);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(20, "just now")]
+    [InlineData(60, "1 min ago")]
+    [InlineData(59 * 60, "59 min ago")]
+    [InlineData(3 * 3600, "3 h ago")]
+    [InlineData(2 * 86400, "2 d ago")]
+    public void A_failed_service_says_how_long_ago_it_failed(int seconds, string words)
+    {
+        var health = HealthSummary.For(running: true, Fresh(), [Row("heartbeat", ServiceOutcome.Failed, "SND-SCHED-001")], ProfileApproval.Approved, new HealthContext(CodeIndex: null, _slot.AddSeconds(seconds)));
+
+        Assert.Equal($"Service heartbeat failed {words}", Assert.Single(health.Problems).Text);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void Each_problem_has_its_fix_text_and_its_clause()
     {
@@ -86,7 +99,7 @@ public sealed class HealthSummaryTests
             [
                 ("SND-API-001", "Sindri isn't running: run `sindri`", "Sindri isn't running"),
                 ("SND-VIEW-001", "Views are stalled at 7: run `sindri views rebuild`", "the views stopped at event 7"),
-                ("SND-SCHED-001", "Service heartbeat failed at 2026-10-14T09:30:00Z", "service heartbeat failed"),
+                ("SND-SCHED-001", "Service heartbeat failed 1 min ago", "service heartbeat failed"),
                 ("SND-PROFILE-005", "Not approved: run `sindri profile approve`", "the profile isn't approved"),
             ],
             health.Problems.Select(p => (p.Code, p.Text, p.Clause)));

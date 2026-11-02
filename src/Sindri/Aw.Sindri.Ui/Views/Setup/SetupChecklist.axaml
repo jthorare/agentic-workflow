@@ -75,12 +75,6 @@
       </ItemsControl>
     </Border>
 
-    <!-- The terminal alternative for Onyx: one line under the panel (not inside a row) while Onyx is open. -->
-    <StackPanel x:Name="SetupFootnote" Orientation="Horizontal" Spacing="6" IsVisible="{Binding IsFootnoteShown}">
-      <TextBlock Classes="caption subtle" Text="{Binding FootnoteText}" VerticalAlignment="Center" />
-      <controls:CommandControl x:Name="SetupFootnoteControl" DataContext="{Binding Footnote}" />
-    </StackPanel>
-
     <!-- The ids and codes: closed by default. -->
     <Expander x:Name="SetupDetails" Header="{Binding DetailsText}" IsExpanded="False" HorizontalAlignment="Stretch" IsVisible="{Binding HasSteps}" AutomationProperties.Name="{Binding DetailsText}">
       <ItemsControl x:Name="SetupDetailRows" ItemsSource="{Binding Steps}">

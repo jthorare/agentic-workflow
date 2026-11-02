@@ -2,7 +2,6 @@ using Aw.Sindri.Core.Sandbox;
 
 namespace Aw.Sindri.Infrastructure.Sandbox;
 
-#pragma warning disable MA0182 // until the launcher (SB-5a) uses it
 /// <summary>ISliceScopes over the cgroup v2 tree: each live scope is a '*.scope' directory under the slice's cgroup directory.</summary>
 /// <param name="sliceDirectory">The slice's directory, for example '/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/sindri.slice/sindri-steps.slice'.</param>
 internal sealed class CgroupSliceScopes(string sliceDirectory) : ISliceScopes
@@ -28,4 +27,3 @@ internal sealed class CgroupSliceScopes(string sliceDirectory) : ISliceScopes
         }
     }
 }
-#pragma warning restore MA0182

@@ -4,6 +4,7 @@ using Aw.Sindri.Ui.ViewModels.Jobs;
 
 namespace Aw.Sindri.Ui.Views.Jobs;
 
+#pragma warning disable MA0182 // why: ShellWindow.axaml places it in a Deferred template, which the analyzer cannot see
 /// <summary>The Jobs page: a title click on a row opens the job's sheet.</summary>
 internal sealed partial class JobsPage : UserControl
 {
@@ -43,3 +44,4 @@ internal sealed partial class JobsPage : UserControl
         }
     }
 }
+#pragma warning restore MA0182

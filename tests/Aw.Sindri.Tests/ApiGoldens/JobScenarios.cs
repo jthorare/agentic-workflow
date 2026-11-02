@@ -5,6 +5,7 @@ using Aw.Sindri.Core;
 using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Jobs;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scheduling;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Features.ContextCalls;
@@ -120,8 +121,47 @@ internal static class JobScenarios
     {
         _ = await Ask(host, Post(scenario == "paused" ? "/sindri/services/heartbeat/pause" : "/sindri/services/stuck/run", json: null, JobHost.Human(host)));
 
-        await ViewScenarios.CatchUp(host, ct);
+        if (scenario == "running-job")
+        {
+            await CatchUpToRunningJob(host, ct);
+        }
+        else
+        {
+            await ViewScenarios.CatchUp(host, ct);
+        }
+
         return await ViewScenarios.Read(host, "/sindri/services");
+    }
+
+    /// <summary>
+    /// The run's job events are appended by the runner after the POST has answered, so one catch-up can stop short of the last of them (cursor 7, not 8).
+    /// Catches up again, for at most <see cref="JobHost.Hang"/> of real time, until the 'stuck' row names its job and the projection has reached a ledger head that did not move meanwhile.
+    /// </summary>
+    private static async Task CatchUpToRunningJob(GoldenHost host, CancellationToken ct)
+    {
+        var ledger = host.App.Services.GetRequiredService<ILedgerStore>();
+        var started = System.Diagnostics.Stopwatch.GetTimestamp();
+        while (true)
+        {
+            var before = (await ledger.Head(ct)).Value;
+            await ViewScenarios.CatchUp(host, ct);
+            using var body = JsonDocument.Parse(await ViewScenarios.Read(host, "/sindri/services"));
+            var named = body.RootElement.GetProperty("services").EnumerateArray().Any(static s =>
+                s.GetProperty("name").GetString() == "stuck" && s.GetProperty("job").ValueKind == JsonValueKind.String);
+            var cursor = body.RootElement.GetProperty("asOf").GetProperty("cursor").GetInt64();
+            var after = (await ledger.Head(ct)).Value;
+            if (named && cursor == before && before == after)
+            {
+                return;
+            }
+
+            if (System.Diagnostics.Stopwatch.GetElapsedTime(started) > JobHost.Hang)
+            {
+                throw new TimeoutException($"the views did not reach the running job's last event in {JobHost.Hang.TotalSeconds.ToString("0", CultureInfo.InvariantCulture)} s (cursor {cursor.ToString(CultureInfo.InvariantCulture)}, ledger head {after.ToString(CultureInfo.InvariantCulture)})");
+            }
+
+            await Task.Delay(50, ct);
+        }
     }
 
     /// <summary>

@@ -18,16 +18,4 @@ internal sealed partial class SindriApiClient
     public Task<Result<JobStarted>> RegisterMcp(Uri api, RegisterMcpRequest request, CancellationToken cancellationToken) =>
         Call<JobStarted>(api, HttpMethod.Post, SetupRoutes.Mcp, cancellationToken, new CallOptions(Content: AwJson.Serialize(request, Json)));
 
-    /// <inheritdoc />
-    public Task<Result<JobStarted>> SetupOnyx(Uri api, CancellationToken cancellationToken) =>
-        Call<JobStarted>(api, HttpMethod.Post, SetupRoutes.OnyxSetup, cancellationToken);
-
-    // The body holds the password: it goes to the wire and nowhere else, never into a log or an error.
-    /// <inheritdoc />
-    public Task<Result<JobStarted>> ConnectOnyx(Uri api, OnyxLogin login, CancellationToken cancellationToken) =>
-        Call<JobStarted>(api, HttpMethod.Post, SetupRoutes.OnyxAccount, cancellationToken, new CallOptions(Content: AwJson.Serialize(login, Json)));
-
-    /// <inheritdoc />
-    public Task<Result<OnyxDeferView>> DeferOnyx(Uri api, OnyxDeferRequest request, CancellationToken cancellationToken) =>
-        Call<OnyxDeferView>(api, HttpMethod.Post, SetupRoutes.OnyxDefer, cancellationToken, new CallOptions(Content: AwJson.Serialize(request, Json)));
 }

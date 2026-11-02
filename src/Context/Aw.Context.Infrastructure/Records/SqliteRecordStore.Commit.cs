@@ -1,8 +1,8 @@
 using System.Globalization;
 using Aw.Context.Core;
 using Aw.Context.Core.Records;
-using Aw.Kernel;
 using Aw.Context.Infrastructure.Store;
+using Aw.Kernel;
 using Aw.Kernel.Data;
 using Microsoft.Data.Sqlite;
 
@@ -88,7 +88,8 @@ internal sealed partial class SqliteRecordStore
         .Bind("@cursor", batch.Position.Cursor?.Value)
         .Bind("@at", batch.At)
         .Bind("@phase", batch.Position.Phase is { } phase ? RecordWire.Of(phase) : null)
-        .Bind("@backfill", batch.Position.BackfillCursor?.Value);
+        .Bind("@backfill", batch.Position.BackfillCursor?.Value)
+        .BindAt("@before", batch.Position.BackfillBefore);
 
     private static async ValueTask<Result<(CommitReport Report, bool RemovedText)>> WritePage(SqliteUnitOfWork session, RecordBatch batch, CancellationToken cancellationToken)
     {
@@ -272,7 +273,10 @@ internal sealed partial class SqliteRecordStore
             .Bind("@hash", record.TextHash)
             .Bind("@ruleset", record.Ruleset)
             .Bind("@blocked", blocked)
-            .Bind("@synced", record.SyncedAt);
+            .Bind("@synced", record.SyncedAt)
+            .Bind("@health", record.Health)
+            .Bind("@dueAt", record.DueAt?.ToString(RecordMappers.DueFormat, CultureInfo.InvariantCulture))
+            .Bind("@description", blocked ? null : record.Description);
     }
 
     // A statement whose row count doesn't matter: its error, or null.

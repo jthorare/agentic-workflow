@@ -58,4 +58,37 @@ public sealed class SandboxPlanRuntimeDirectoryTests
     [Fact, Trait("Lane", "unit")]
     public void A_read_only_step_without_a_worktree_binds_no_transcript_directory() =>
         Assert.DoesNotContain(SandboxPlannerTests.Build(Req.ReadOnly with { Paths = Req.ReadOnly.Paths with { Worktree = null } }).Mounts, m => m.Path.Contains("/projects/", StringComparison.Ordinal));
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_separate_login_binds_no_transcript_directory_of_the_owner()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope with { Settings = SeparateLoginSettings, Login = Req.SeparateLoginLogin() });
+
+        Assert.DoesNotContain(plan.Mounts, m => m.Path.Contains("/projects/", StringComparison.Ordinal) || (m.Source ?? string.Empty).Contains("/.claude/", StringComparison.Ordinal));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_separate_login_home_is_bound_read_write_at_its_own_path_above_the_masked_sindri_home()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope with { Settings = SeparateLoginSettings, Login = Req.SeparateLoginLogin() });
+
+        var agentHome = Req.SindriHome + "/agent-homes/claude-code";
+        var mounts = plan.Mounts.ToList();
+        var home = mounts.FindLastIndex(m => m.Path == agentHome);
+        Assert.Equal(PlanMountKind.ReadWrite, mounts[home].Kind);
+        Assert.Null(mounts[home].Source);
+        Assert.True(home > mounts.FindIndex(m => m.Path == Req.SindriHome && m.Kind == PlanMountKind.Tmpfs));
+        Assert.Equal(agentHome, plan.Environment.Single(e => e.Name == "CLAUDE_CONFIG_DIR").Value);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_owner_agent_home_is_not_bound_for_a_separate_login()
+    {
+        var plan = SandboxPlannerTests.Build(Req.WriteScope with { Settings = SeparateLoginSettings, Login = Req.SeparateLoginLogin() });
+
+        Assert.DoesNotContain(plan.Mounts, m => m.Path.StartsWith(Req.Home + "/.claude", StringComparison.Ordinal) || m.Path.StartsWith(Req.Home + "/.codex", StringComparison.Ordinal));
+    }
+
+    private static Core.Profile.SandboxSettings SeparateLoginSettings { get; } =
+        new(Login: new Core.Profile.SandboxLogin(Source: Core.Sandbox.ModelLoginSource.SeparateLogin));
 }

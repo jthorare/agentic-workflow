@@ -45,6 +45,12 @@ public static class ViewNames
     /// <summary>What the model-history fold remembers to join a run to its model and recipe: registered hashes, started instances, launches and completed runs.</summary>
     public const string ModelRuns = "model-runs";
 
+    /// <summary>Attached and hand-made projects, keyed by project id (projects page spec §5.2).</summary>
+    public const string ProjectAttached = "project-attached";
+
+    /// <summary>Whether a led Linear project is hidden, keyed by its Linear key (projects page spec §5.2).</summary>
+    public const string ProjectHidden = "project-hidden";
+
     /// <summary>Every view that has a table.</summary>
-    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns];
+    public static IReadOnlyList<string> All { get; } = [CodeIndex, Services, Profile, Items, ItemAliases, ItemTimeline, Requests, Decisions, NeedsYou, Jobs, Launches, RecipeStats, ModelHistory, ModelRuns, ProjectAttached, ProjectHidden];
 }

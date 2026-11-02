@@ -22,10 +22,21 @@ public abstract class GitHubReaderContract
     {
         var reader = Reader([A.GitHubIssue(2).UpdatedAt(T.AddMinutes(5)), A.GitHubIssue(1).UpdatedAt(T.AddMinutes(1))]);
 
-        var page = (await reader.Issues(Repo, GitHubCursor.From(T), 100, Ct)).Value;
+        var page = (await reader.Issues(Repo, GitHubCursor.From(T), 100, before: null, Ct)).Value;
 
         Assert.Equal([1, 2], page.Items.Select(static i => i.Id));
         Assert.Equal(T.AddMinutes(5), page.Next.UpdatedAt);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Entries_changed_at_or_after_before_are_left_out_and_the_cursor_stops_at_the_last_one_kept()
+    {
+        var reader = Reader([A.GitHubIssue(1).UpdatedAt(T.AddMinutes(1)), A.GitHubIssue(2).UpdatedAt(T.AddMinutes(5)), A.GitHubIssue(3).UpdatedAt(T.AddMinutes(9))]);
+
+        var page = (await reader.Issues(Repo, GitHubCursor.From(T), 100, T.AddMinutes(5), Ct)).Value;
+
+        Assert.Equal([1], page.Items.Select(static i => i.Id));
+        Assert.Equal(T.AddMinutes(1), page.Next.UpdatedAt);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -33,7 +44,7 @@ public abstract class GitHubReaderContract
     {
         var reader = Reader([A.GitHubIssue(1).UpdatedAt(T), A.GitHubIssue(2).UpdatedAt(T)]);
 
-        var page = (await reader.Issues(Repo, new GitHubCursor(T, [1]), 100, Ct)).Value;
+        var page = (await reader.Issues(Repo, new GitHubCursor(T, [1]), 100, before: null, Ct)).Value;
 
         Assert.Equal([2], page.Items.Select(static i => i.Id));
     }
@@ -43,7 +54,7 @@ public abstract class GitHubReaderContract
     {
         var reader = Reader([A.GitHubIssue(1).UpdatedAt(T.AddMinutes(1)).AsPullRequest()]);
 
-        var page = (await reader.Issues(Repo, GitHubCursor.From(T), 100, Ct)).Value;
+        var page = (await reader.Issues(Repo, GitHubCursor.From(T), 100, before: null, Ct)).Value;
 
         Assert.True(Assert.Single(page.Items).IsPullRequest);
     }

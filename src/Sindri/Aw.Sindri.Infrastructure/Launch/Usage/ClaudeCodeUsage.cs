@@ -7,10 +7,16 @@ namespace Aw.Sindri.Infrastructure.Launch.Usage;
 /// The Claude Code usage reader: the assistant messages of the transcripts under <c lang="text">~/.claude/projects</c>, each message counted once by its id (a
 /// message is written again as it streams; the last copy has the final output count), subagents' transcripts included.
 /// </summary>
-/// <param name="root">The projects directory.</param>
-internal sealed class ClaudeCodeUsage(string root) : IUsageReader
+/// <param name="root">The owner's projects directory.</param>
+/// <param name="alsoUnder">The projects directories of the separate agent homes (a separate-login launch writes there); empty for an owner-copy box.</param>
+internal sealed class ClaudeCodeUsage(string root, IReadOnlyList<string> alsoUnder) : IUsageReader
 {
     private const string Marker = "\"usage\"";
+
+
+    public ClaudeCodeUsage(string root) : this(root, [])
+    {
+    }
 
     /// <inheritdoc/>
     public string Name => "claude-code";
@@ -20,11 +26,11 @@ internal sealed class ClaudeCodeUsage(string root) : IUsageReader
 
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<ModelTokens>> Between(DateTimeOffset from, DateTimeOffset to, CancellationToken cancellationToken) =>
-        await Read(TranscriptFiles.Jsonl(root, from), (from, to), cancellationToken).ConfigureAwait(false);
+        await Read(TranscriptFiles.Jsonl([root, .. alsoUnder], from), (from, to), cancellationToken).ConfigureAwait(false);
 
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<ModelTokens>> OfSession(SessionId session, CancellationToken cancellationToken) =>
-        await Read([.. TranscriptFiles.Jsonl(root, since: null).Where(path => UsageJson.OfSession(path, session.Value))], window: null, cancellationToken).ConfigureAwait(false);
+        await Read([.. TranscriptFiles.Jsonl([root, .. alsoUnder], since: null).Where(path => UsageJson.OfSession(path, session.Value))], window: null, cancellationToken).ConfigureAwait(false);
 
     private static async ValueTask<IReadOnlyList<ModelTokens>> Read(IReadOnlyList<string> files, (DateTimeOffset From, DateTimeOffset To)? window, CancellationToken cancellationToken)
     {

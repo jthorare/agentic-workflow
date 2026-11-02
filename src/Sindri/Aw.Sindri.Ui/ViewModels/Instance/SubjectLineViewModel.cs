@@ -7,14 +7,15 @@ namespace Aw.Sindri.Ui.ViewModels.Instance;
 /// The frame's subject line: the served label, and Open in when the subject has a web link. The app opens only an
 /// http or https link, with no control character in it; a link of any other kind is not offered.
 /// </summary>
-internal sealed class SubjectLineViewModel
+internal sealed class SubjectLineViewModel : ObservableObject
 {
     private readonly string _host = string.Empty;
-    private readonly ILauncher _launcher;
+    private readonly LinkLaunch _launch;
 
     internal SubjectLineViewModel(SubjectRef subject, string address, ILauncher launcher)
     {
-        _launcher = launcher;
+        _launch = new LinkLaunch(launcher);
+        _launch.Forward(OnChanged);
         Label = subject.Label.Length > 0 ? subject.Label : subject.Key;
         Kind = subject.Kind;
         if (subject.Href is { Length: > 0 } href && Controls.ControlViewModel.Safe(href)
@@ -44,6 +45,12 @@ internal sealed class SubjectLineViewModel
     /// <summary>The link's accessible name; it carries the instance.</summary>
     public string OpenInName { get; }
 
+    /// <summary>True when the system refused the link; cleared by the next press that works.</summary>
+    public bool LaunchFailed => _launch.Failed;
+
+    /// <summary>"Couldn't open the link" and the link to copy; empty until a launch fails.</summary>
+    public string LaunchFailedText => _launch.FailedText;
+
     /// <summary>Hands the subject's link to the system.</summary>
     /// <param name="cancellationToken">Cancels the request.</param>
     /// <returns>A task that completes once the system answered.</returns>
@@ -51,7 +58,7 @@ internal sealed class SubjectLineViewModel
     {
         if (HasHref && Uri.TryCreate(Href, UriKind.Absolute, out var uri))
         {
-            _ = await _launcher.OpenUri(uri, cancellationToken).ConfigureAwait(true);
+            _ = await _launch.Open(uri, cancellationToken).ConfigureAwait(true);
         }
     }
 

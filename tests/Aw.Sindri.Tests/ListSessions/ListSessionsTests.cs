@@ -14,7 +14,7 @@ public sealed class ListSessionsTests
 {
     private readonly SessionsRig _r = new();
 
-    private ListSessionsService Service() => new(_r.Snapshot, _r.Catalog, _r.Base.Profiles, _r.Base.Callers, _r.Base.Clock, _r.LaunchViews);
+    private ListSessionsService Service() => new(_r.Snapshot, _r.Catalog, _r.Base.Profiles, _r.Base.Callers, _r.Base.Clock, _r.LaunchViews, _r.Sandboxes);
 
     private async Task<SessionList> List(ListSessionsRequest? request = null) => (await Service().Handle(request ?? new ListSessionsRequest(), SessionsRig.Token)).Value;
 
@@ -50,6 +50,37 @@ public sealed class ListSessionsTests
 
         Assert.Equal(new LaunchStep(instance, "build", 2), list.Sessions[2].Launch);
         Assert.Null(list.Sessions[0].Launch);   // Claude was not launched by Sindri
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task ListSessions_row_carries_the_sandbox_of_a_sandboxed_launch_and_leaves_the_others_without()
+    {
+        var launch = LaunchId.From(SessionsRig.Launch);
+        await _r.Launches.Item(repo: null);
+        await _r.Launches.Start(launch, sandbox: SandboxData.Summary());
+        _r.Sandboxes.Answer(launch, SandboxData.Reading());
+        _ = _r.Publish(SessionsRig.Three);
+        using var human = _r.Human();
+
+        var list = await List();
+
+        Assert.Equal(SandboxData.Reading(), list.Sessions[2].Sandbox);
+        Assert.Null(list.Sessions[0].Sandbox);   // Claude was not launched by Sindri
+        Assert.Equal([launch], _r.Sandboxes.Asked);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task ListSessions_row_has_no_sandbox_for_a_launch_that_was_not_sandboxed()
+    {
+        await _r.Launches.Item(repo: null);
+        await _r.Launches.Start(LaunchId.From(SessionsRig.Launch));
+        _ = _r.Publish(SessionsRig.Three);
+        using var human = _r.Human();
+
+        var list = await List();
+
+        Assert.All(list.Sessions, s => Assert.Null(s.Sandbox));
+        Assert.Empty(_r.Sandboxes.Asked);
     }
 
     [Fact, Trait("Lane", "unit")]

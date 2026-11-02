@@ -25,10 +25,11 @@ internal static class NeedsYouRows
         Reason = "a desk task is open (ITM-01JL1/dev-desk-round-trip/1)",
         Since = A.Noon.AddMinutes(-26),
         PrimaryAction = "CompleteStep",
-        Actions = [new NeedsYouAction("CompleteStep", "Complete", ActionReadiness.Ready, "sindri workflow status ITM-01JL1/dev-desk-round-trip/1", RejectLike: false)],
+        Actions = [new NeedsYouAction("CompleteStep", "Complete", ActionReadiness.Ready, "sindri workflow complete ITM-01JL1/dev-desk-round-trip/1 --run <run> --outcome <outcome>", RejectLike: false)],
         Subject = new NeedsYouSubject("instance", instance),
         ItemId = "ITM-01JL1",
-        Cli = "sindri workflow status ITM-01JL1/dev-desk-round-trip/1",
+        Cli = "sindri workflow complete ITM-01JL1/dev-desk-round-trip/1 --run <run> --outcome <outcome>",
+        Open = new NeedsYouOpenView("workflow/ITM-01JL1/dev-desk-round-trip/1", "Answer the question"),
     };
 
     /// <summary>A paused run whose rounds are used up: "Grant rounds" is protected, so the app shows its command.</summary>

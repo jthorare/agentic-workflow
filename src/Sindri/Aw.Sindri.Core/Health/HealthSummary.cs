@@ -16,9 +16,9 @@ public static class HealthSummary
     /// <param name="views">The projector's status.</param>
     /// <param name="services">The services view's rows, or null when the views can't be read.</param>
     /// <param name="profile">Where the profile stands against its approval.</param>
-    /// <param name="codeIndex">The code index's problems, one per repo at most; they follow the services' and come before the profile's.</param>
+    /// <param name="context">The code index's problems and the clock's reading; none by default.</param>
     /// <returns>The health.</returns>
-    public static HealthReport For(bool running, ViewsStatus views, IReadOnlyList<ServiceRow>? services, ProfileApproval profile, IReadOnlyList<HealthProblem>? codeIndex = null)
+    public static HealthReport For(bool running, ViewsStatus views, IReadOnlyList<ServiceRow>? services, ProfileApproval profile, HealthContext? context = null)
     {
         ArgumentNullException.ThrowIfNull(views);
         List<HealthProblem> problems = [];
@@ -33,8 +33,7 @@ public static class HealthSummary
             problems.Add(new("SND-VIEW-001", EmptyText.Unreadable(), "the views can't be read"));
         }
 
-        problems.AddRange((services ?? []).Where(s => s.LastRun is { Outcome: ServiceOutcome.Failed }).Select(s => Failed(s.Name, s.LastRun)));
-        problems.AddRange(codeIndex ?? []);
+        problems.AddRange(FailedServices(services, context));
         problems.AddRange(Profile(profile));
         var word = views.Stalled ? HealthWord.Stalled : views.Rebuilding ? HealthWord.Rebuilding : (problems.Count > 0 ? HealthWord.Degraded : HealthWord.Healthy);
         return new HealthReport(word, [.. problems], Sentence(word, problems));
@@ -157,10 +156,14 @@ public static class HealthSummary
         }
     }
 
-    private static HealthProblem Failed(ServiceName name, LastRun? run)
+    // The services whose last run failed, then the code index's problems (they come before the profile's).
+    private static IEnumerable<HealthProblem> FailedServices(IReadOnlyList<ServiceRow>? services, HealthContext? context) =>
+        (services ?? []).Where(s => s.LastRun is { Outcome: ServiceOutcome.Failed }).Select(s => Failed(s.Name, s.LastRun, context?.Now)).Concat(context?.CodeIndex ?? []);
+
+    private static HealthProblem Failed(ServiceName name, LastRun? run, DateTimeOffset? now)
     {
-        var slot = run?.Slot.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", CultureInfo.InvariantCulture);
-        return new(run?.Code ?? SchedulerCode, $"Service {name.Value} failed at {slot}", $"service {name.Value} failed");
+        var when = run is null || now is not { } at ? string.Empty : " " + AgeWords.Ago(at - run.Slot);
+        return new(run?.Code ?? SchedulerCode, $"Service {name.Value} failed{when}", $"service {name.Value} failed");
     }
 
     private static string? Sentence(HealthWord word, List<HealthProblem> problems)

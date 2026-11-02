@@ -20,6 +20,32 @@ public sealed class CodexUsageTests : IDisposable
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
     [Fact]
+    public async Task A_separate_login_launchs_rollout_under_its_agent_home_is_found_by_session()
+    {
+        using var home = new UsageFixture();
+        home.Write($"2026/10/17/rollout-2026-10-17T08-00-00-{Id}.jsonl",
+            UsageFixture.CodexModel("2026-10-17T08:00:00.000Z", "gpt-5"),
+            UsageFixture.CodexTokens("2026-10-17T08:00:01.000Z", total: 110, input: 100, cached: 40, output: 10));
+
+        var used = await new CodexUsage(_files.Root, [home.Root]).OfSession(SessionId.From(Id), Token);
+
+        Assert.Equal("gpt-5", Assert.Single(used).Model);
+    }
+
+    [Fact]
+    public async Task An_owner_copy_launch_still_reads_the_owner_sessions_when_an_agent_home_is_empty()
+    {
+        using var home = new UsageFixture();
+        _files.Write($"2026/10/17/rollout-2026-10-17T08-00-00-{Id}.jsonl",
+            UsageFixture.CodexModel("2026-10-17T08:00:00.000Z", "gpt-5"),
+            UsageFixture.CodexTokens("2026-10-17T08:00:01.000Z", total: 110, input: 100, cached: 40, output: 10));
+
+        var used = await new CodexUsage(_files.Root, [home.Root]).OfSession(SessionId.From(Id), Token);
+
+        Assert.Equal("gpt-5", Assert.Single(used).Model);
+    }
+
+    [Fact]
     public async Task Turns_inside_the_window_count_with_cached_input_split_out()
     {
         _files.Write($"2026/10/17/rollout-2026-10-17T08-00-00-{Id}.jsonl",

@@ -106,7 +106,7 @@ public sealed class RepoDocsFeedTests : IDisposable
         _ = _git.Run("commit", "-q", "-m", "more");
         var repo = _git.Repo with { DenyPaths = ["docs/denied.md"] };
 
-        _ = await FeedRun.Once(new RepoDocsFeed([repo], _globs, _store, new GitCli(), _scrubbers), _store, _scrubbers);
+        _ = await FeedRun.Once(new RepoDocsFeed([repo], _globs, [], _store, new GitCli(), _scrubbers), _store, _scrubbers);
 
         var key = RepoDocs.Key(repo.Name, "docs/blocked.md");
         var record = (await _store.Get(key, TestContext.Current.CancellationToken)).Value!;
@@ -135,11 +135,11 @@ public sealed class RepoDocsFeedTests : IDisposable
         _ = await FeedRun.Once(Feed(), _store, _scrubbers);
         var other = new FakeScrubberFactory().For([new("acme", "ACME-[0-9]+")]).Value;
 
-        var run = await FeedRun.Once(new RepoDocsFeed([_git.Repo], _globs, _store, new GitCli(), other), _store, other);
+        var run = await FeedRun.Once(new RepoDocsFeed([_git.Repo], _globs, [], _store, new GitCli(), other), _store, other);
 
         Assert.Equal(2, run.Page.Items.Count);
         Assert.Equal(other.Ruleset.Value, (await _store.Get(RepoDocs.Key(_git.Repo.Name, "docs/a.md"), TestContext.Current.CancellationToken)).Value!.Ruleset);
     }
 
-    private RepoDocsFeed Feed() => new([_git.Repo], _globs, _store, new GitCli(), _scrubbers);
+    private RepoDocsFeed Feed() => new([_git.Repo], _globs, [], _store, new GitCli(), _scrubbers);
 }

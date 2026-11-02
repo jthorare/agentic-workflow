@@ -7,3 +7,5 @@ static Aw.Sindri.Infrastructure.Sandbox.BubblewrapServiceCollectionExtensions.Ad
 Aw.Sindri.Infrastructure.Registration.SindriProveInfrastructureServiceCollectionExtensions
 static Aw.Sindri.Infrastructure.Registration.SindriProveInfrastructureServiceCollectionExtensions.AddSindriProveInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static Aw.Sindri.Infrastructure.Registration.SindriProveInfrastructureServiceCollectionExtensions.ProveBlocksAllowed(System.Func<string!, string?>! environment) -> bool
+Aw.Sindri.Infrastructure.Sandbox.Launch.PlatformSandboxServiceCollectionExtensions
+static Aw.Sindri.Infrastructure.Sandbox.Launch.PlatformSandboxServiceCollectionExtensions.AddSindriPlatformSandbox(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

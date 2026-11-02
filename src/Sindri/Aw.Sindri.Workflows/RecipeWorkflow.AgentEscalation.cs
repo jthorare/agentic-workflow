@@ -29,7 +29,7 @@ internal sealed partial class RecipeWorkflow
             return await Decided(instance, open, new SessionLost("service:agent:" + step.Use.Value, open.Token) { Tokens = gone.Tokens }, reportId: null, context).ConfigureAwait(true);
         }
 
-        var recovery = await Recover(running).ConfigureAwait(true);
+        var recovery = await RecoveryFor(running, ended).ConfigureAwait(true);
         var closed = await Close(running, measure: true).ConfigureAwait(true);
         if (recovery?.Outcome is { } outcome)
         {
@@ -46,6 +46,14 @@ internal sealed partial class RecipeWorkflow
         var failed = AgentFailed(open, step, AgentEndReasons.Of(ended.EndedAs), closed.Tokens, recovery?.Reason ?? ended.Detail) with { FailureKind = kind };
         return await Decided(instance, open, failed, reportId: null, context).ConfigureAwait(true);
     }
+
+    // A refused run (its report was judged and refused, and the second refusal ended the session) is not recovered from the output folder: that is the output just refused (issue 1468). The
+    // skip changes the commands of a history that recovered a refused run, so it has its own patch, read only when the run was refused; a history without it recovers as it did.
+    private async Task<AgentRecovered?> RecoveryFor(AgentRunning running, AgentSessionState ended) =>
+        ended.Refused && RefusedSkipsRecovery ? null : await Recover(running).ConfigureAwait(true);
+
+    private bool? _refusedSkipsRecovery;
+    private bool RefusedSkipsRecovery => _refusedSkipsRecovery ??= Workflow.Patched("refused-skips-recovery-v1");
 
     // The failed run the one retry follows, or null when there is none: only a refused or check-failed first launch whose pick says a stronger model is allowed is retried.
     private PreviousRun? RetryAfter(AgentRunning running, string kind, int tokens) =>

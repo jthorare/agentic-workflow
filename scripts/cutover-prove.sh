@@ -91,7 +91,9 @@ CHECKS=(
   "pre-link:cutover-clean-ts.sh --pre-link exits 0"
   "link:install-cs.sh --link links the six C# wrappers over the TS ones"
   "post-link:cutover-clean-ts.sh --post-link exits 0 (the judge health gate)"
-  "removed-exactly-8:every path of the spec 8 list is gone"
+  "removed-exactly-7:every path of the spec 8 list is gone (bug-fix state is not on it: #1104 keeps it)"
+  "removed-state-backed-up:each removed state path is under \$STATE/backups/cutover-<stamp>/, not deleted (#1104)"
+  "bugfix-state-kept:the seeded bug-fix state (\$STATE/<slug>/bugfix/) is untouched"
   "kept-byte-identical:every seeded path outside the list, and the settings registrations, are byte-identical"
   "hook-v3:the v2 pre-commit hook is v3, baked with the stable wrapper path"
   "hook-refuses-secret:v3 refuses a staged secret (SND-SCRUB-002)"
@@ -182,7 +184,7 @@ seed() {
   # TS-only state (removed)
   put "$STATE/sindri/ledger.db" "ledger"; put "$STATE/sindri/index/graph.json"; put "$STATE/sindri/channels.json" '{"stable":null,"next":null}'
   put "$STATE/sindri/git-template/hooks/pre-commit"; put "$STATE/sindri/spool/a.json"; put "$STATE/sindri/logs/x.log"
-  put "$STATE/scorer/reports/r1.md"; put "$STATE/audit/a1.json"; put "$STATE/$SLUG/bugfix/ticket-1/state.json" '{"ts":true}'
+  put "$STATE/scorer/reports/r1.md"; put "$STATE/audit/a1.json"
   put "$STATE/profile/profile.yaml" "schemaVersion: 1
 repos:
   - $SLUG"
@@ -203,7 +205,8 @@ PY
   # launchd plists (macOS removes the six; any OS keeps the decoy)
   for n in scorer scorer-audit sindri-observe sindri-index-quick sindri-index sindri-evolve; do put "$LAUNCH/com.agentic-workflow.$n.plist" "<plist>$n</plist>"; done
   put "$LAUNCH/com.example.keep.plist" "<plist>keep</plist>"
-  # kept state (spec 8 "Kept, never touched")
+  # kept state (spec 8 "Kept, never touched"); bug-fix state is shared with the C# bugfix-state and stays (#1104)
+  put "$STATE/$SLUG/bugfix/ticket-1/state.json" '{"ts":true}'
   put "$STATE/judge/sessions/s1.json" '{"s":1}'; put "$STATE/judge/outbox/o1.json" '{"o":1}'; put "$STATE/judge/teammate-names.jsonl" '{"n":1}'
   put "$STATE/judge/evals/e1.json"; put "$STATE/judge/trait-check/t1.json"; put "$STATE/context-guard/g1"; put "$STATE/locks/heavy-slots-cap" "3"
   put "$STATE/fleet/f1.json"; put "$STATE/ui-evidence/runs/run1/summary.json" '{"ts":true}'
@@ -285,7 +288,7 @@ if [ "$nrc" = 0 ] && [ "$cold" -lt "$budget" ]; then pass nudge-cold-budget; els
 
 # --- the exits ---------------------------------------------------------------------------------------------------------------
 # removed exactly the spec 8 list; the plists go on macOS only (Linux prints a reminder about cron)
-roots=("$STATE/sindri" "$STATE/profile" "$STATE/scorer" "$STATE/audit" "$STATE/$SLUG/bugfix" "$STATE/judge/config.json"
+roots=("$STATE/sindri" "$STATE/profile" "$STATE/scorer" "$STATE/audit" "$STATE/judge/config.json"
   "$STATE/judge/decisions.sqlite" "$STATE/judge/decisions.sqlite-shm" "$STATE/judge/decisions.sqlite-wal"
   "$STATE/bin/sindri-app" "$LBIN/sindri-app" "$LBIN/scorer" "$LBIN/sindri-next")
 replaced=("$LBIN/judge" "$LBIN/sindri" "$REPO/.git/hooks/pre-commit")   # the hook: v2 becomes v3 (checked below)
@@ -302,7 +305,18 @@ for r in "${roots[@]}"; do
 done
 tpl="$(git config --global --get init.templateDir 2> /dev/null || true)"
 [ -z "$tpl" ] || left="$left init.templateDir=$tpl"
-if [ -z "$left" ]; then pass removed-exactly-8; else fail removed-exactly-8 "still there:$left"; fi
+if [ -z "$left" ]; then pass removed-exactly-7; else fail removed-exactly-7 "still there:$left"; fi
+
+# #1104: nothing in the state dir is deleted outright; a removed path is moved under backups/cutover-<stamp>/ (the judge database is recreated by
+# the health gate, so its backup is checked here and its path above only when it is not a C# one)
+missing_backup=""
+for rel in sindri/ledger.db scorer/reports/r1.md audit/a1.json profile/profile.yaml judge/config.json judge/decisions.sqlite bin/sindri-app/stamp1/sindri-app; do
+  compgen -G "$STATE/backups/cutover-*/$rel" > /dev/null || missing_backup="$missing_backup $rel"
+done
+if [ -z "$missing_backup" ]; then pass removed-state-backed-up; else fail removed-state-backed-up "not under $STATE/backups/cutover-*/:$missing_backup"; fi
+
+# bug-fix state is shared by the C# bugfix-state and the TS helper: the cleanup never touches it
+if [ "$(cat "$STATE/$SLUG/bugfix/ticket-1/state.json" 2> /dev/null)" = '{"ts":true}' ]; then pass bugfix-state-kept; else fail bugfix-state-kept "$STATE/$SLUG/bugfix/ticket-1/state.json changed or gone"; fi
 
 # kept: every seeded path outside the list (and outside the two replaced wrappers) is byte-identical
 under() { local p="$1" r; shift; for r in "$@"; do case "$p" in "$r" | "$r"/*) return 0 ;; esac; done; return 1; }

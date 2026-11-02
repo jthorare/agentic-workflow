@@ -5,11 +5,15 @@ namespace Aw.Sindri.Core.Sandbox.Plan;
 /// <summary>The sandbox's git settings, delivered at command-line scope so they beat the repo's own config (sandbox spec §3.4).</summary>
 public static class GitSettings
 {
+    /// <summary>The file name of the credential helper in the run area's shims folder (SB-7).</summary>
+    public const string CredentialHelperName = "git-credential-sindri";
+
     /// <summary>The settings for one launch.</summary>
     /// <param name="worktree">The worktree ('safe.directory'), or null.</param>
     /// <param name="hooksDir">The per-launch directory 'core.hooksPath' points at.</param>
+    /// <param name="credentialHelper">The path of the credential helper the agent GitHub App adds after the empty reset, or null for none.</param>
     /// <returns>The settings, in order.</returns>
-    public static IReadOnlyList<GitSetting> For(string? worktree, string hooksDir)
+    public static IReadOnlyList<GitSetting> For(string? worktree, string hooksDir, string? credentialHelper = null)
     {
         ArgumentNullException.ThrowIfNull(hooksDir);
         List<GitSetting> settings =
@@ -20,6 +24,11 @@ public static class GitSettings
             new("tag.gpgsign", "false"),
             new("credential.helper", string.Empty),
         ];
+        if (credentialHelper is not null)
+        {
+            settings.Add(new GitSetting("credential.helper", credentialHelper));   // why: git runs helpers in order; the empty value above cleared the owner's, this one is Sindri's
+        }
+
         if (worktree is not null)
         {
             settings.Add(new GitSetting("safe.directory", worktree));

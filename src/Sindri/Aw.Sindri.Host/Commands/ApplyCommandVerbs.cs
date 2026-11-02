@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
 using Aw.Sindri.Core.Workflow.Recipes;
 using Aw.Sindri.Features.ApplyCommand;
+using Aw.Sindri.Features.GetLaunch;
 
 namespace Aw.Sindri.Host.Commands;
 
@@ -150,7 +151,19 @@ internal sealed class ApplyCommandVerbs(RecipeDesk desk, IServiceProvider servic
         var answer = done.Value.Value;
         var happened = answer.AlreadyApplied ? $"already applied ({answer.Result.Happened})" : answer.Result.Happened;
         var header = InstanceHeader.Line(answer.Result.Instance, services.GetRequiredService<TimeProvider>().GetUtcNow());
-        return await output.Text($"{header}\n  {happened}\n", 0).ConfigureAwait(false);
+        return await output.Text($"{header}\n  {happened}\n{await SandboxBanner(request, answer, ct).ConfigureAwait(false)}", 0).ConfigureAwait(false);
+    }
+
+    /// <summary>The takeover's first screen for a Step whose launch is sandboxed (sandbox spec §7): the banner line, else nothing.</summary>
+    private async Task<string> SandboxBanner(ApplyCommandRequest request, ApplyCommandResponse answer, CancellationToken ct)
+    {
+        if (request.Kind != ApplyCommandKind.Takeover || answer.AlreadyApplied || answer.Result.Instance.AgentRun?.Launch is not { Length: > 0 } launch)
+        {
+            return "";
+        }
+
+        var read = await desk.Client.GetView<LaunchView>("/sindri/launches/" + Uri.EscapeDataString(launch), ct).ConfigureAwait(false);   // a banner the API can't back up is not printed
+        return !read.IsError && SandboxFirstScreen.For(read.Value.Body, tmuxPrefix: "C-b") is { } banner ? $"  {banner}\n" : "";
     }
 
     /// <summary>The answer's variant and its text or amount, and the optional nonce; exactly one variant, '--resume' may carry '--text'.</summary>

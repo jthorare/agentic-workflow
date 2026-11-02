@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Globalization;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sources;
@@ -10,6 +11,9 @@ namespace Aw.Context.Infrastructure.Records;
 /// <summary>The record store's row mappers and the binds its statements share.</summary>
 internal static class RecordMappers
 {
+    /// <summary>How a due day is stored: the date alone, no time zone.</summary>
+    internal const string DueFormat = "yyyy-MM-dd";
+
     internal static IRowMapper<StoredRecord> Record { get; } = new Mapper<StoredRecord>(r => new StoredRecord(
         RecordKey.From(r.GetString(0)),
         SourceId.From(r.GetString(1)),
@@ -30,16 +34,37 @@ internal static class RecordMappers
         r.GetInt64(16) == 1,
         At(r, 17),
         SqliteRead.GetTimestamp(r, 18),
-        []));
+        [],
+        Text(r, 19),
+        Text(r, 20) is { } due ? DateOnly.ParseExact(due, DueFormat, CultureInfo.InvariantCulture) : null,
+        Text(r, 21)));
+
+    internal static IRowMapper<ProjectRow> Project { get; } = new Mapper<ProjectRow>(r => new ProjectRow(
+        RecordKey.From(r.GetString(0)), r.GetString(1), Text(r, 2), Text(r, 3), Text(r, 4),
+        Text(r, 5) is { } due ? DateOnly.ParseExact(due, DueFormat, CultureInfo.InvariantCulture) : null,
+        SqliteRead.GetTimestamp(r, 6), At(r, 7), Text(r, 8), Text(r, 9), r.GetInt32(10), At(r, 11), Text(r, 12)));
+
+    internal static IRowMapper<SourceIdentity> Identity { get; } = new Mapper<SourceIdentity>(r =>
+        new SourceIdentity(SourceId.From(r.GetString(0)), r.GetString(1), r.GetString(2), SqliteRead.GetTimestamp(r, 3)));
 
     internal static IRowMapper<RecordLink> Link { get; } = new Mapper<RecordLink>(r =>
         new RecordLink(r.GetString(0), RecordWire.Link(r.GetString(1)), Text(r, 2), Text(r, 3) is { } to ? RecordKey.From(to) : null));
+
+    internal static IRowMapper<ChunkToEmbed> ToEmbed { get; } = new Mapper<ChunkToEmbed>(r => new ChunkToEmbed(r.GetString(0), r.GetString(1), r.GetString(2)));
 
     internal static IRowMapper<RecordChunk> Chunk { get; } = new Mapper<RecordChunk>(r =>
         new RecordChunk(r.GetInt32(0), r.GetString(1), r.GetInt32(2), r.GetString(3), r.IsDBNull(4) ? null : r.GetInt32(4), r.IsDBNull(5) ? null : r.GetInt32(5)));
 
     internal static IRowMapper<SyncPosition> Position { get; } = new Mapper<SyncPosition>(r =>
-        new SyncPosition(Text(r, 0) is { } cursor ? SourceCursor.From(cursor) : null, Text(r, 1) is { } phase ? RecordWire.Phase(phase) : null, Text(r, 2) is { } backfill ? SourceCursor.From(backfill) : null));
+        new SyncPosition(Text(r, 0) is { } cursor ? SourceCursor.From(cursor) : null, Text(r, 1) is { } phase ? RecordWire.Phase(phase) : null, Text(r, 2) is { } backfill ? SourceCursor.From(backfill) : null, At(r, 3)));
+
+    internal static IRowMapper<SyncOutcome> Outcome { get; } = new Mapper<SyncOutcome>(r => new SyncOutcome(SqliteRead.GetTimestamp(r, 0), Text(r, 1)));
+
+    internal static IRowMapper<SourceBackoffState> Backoff { get; } = new Mapper<SourceBackoffState>(r => new SourceBackoffState(r.GetInt32(0), At(r, 1), At(r, 2), Text(r, 3)));
+
+    internal static IRowMapper<SourceCounts> Counts { get; } = new Mapper<SourceCounts>(r => new SourceCounts(r.GetInt32(0), r.GetInt32(1), r.GetInt32(2)));
+
+    internal static IRowMapper<LiveRecordCounts> Live { get; } = new Mapper<LiveRecordCounts>(r => new LiveRecordCounts(r.GetInt32(0), r.GetInt32(1)));
 
     internal static IRowMapper<StoreStamps> Stamps { get; } = new Mapper<StoreStamps>(r => new StoreStamps(r.GetInt64(0), r.GetInt64(1)));
 

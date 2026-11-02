@@ -18,6 +18,11 @@ internal sealed class CodexCliProvider(IProcessRunner runner) : AgentCliProvider
     /// <summary>The model.</summary>
     public const string Model = "gpt-6-luna";
 
+    private const string UsageLimitExceeded = "usage_limit_exceeded";
+
+    // The pattern id when the event says so itself (codex_error_info), as opposed to a message the matcher read.
+    private const string UsageLimitExceededPattern = "codex-error-info";
+
     private static readonly string[] _disabledFeatures = ["hooks", "apps", "plugins", "multi_agent", "shell_tool", "unified_exec"];
 
     /// <inheritdoc />
@@ -35,22 +40,55 @@ internal sealed class CodexCliProvider(IProcessRunner runner) : AgentCliProvider
     /// <inheritdoc />
     protected override ProviderResult Read(string output, QuestionRef question)
     {
-        string? message = null;
-        var failed = false;
-        foreach (var line in output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+        var run = Scan(output);
+        if (run.Message is null)
         {
-            var codexEvent = WireJson.Read<CodexEvent>(line);
-            failed |= Is(codexEvent?.Type, "turn.failed") || Is(codexEvent?.Type, "error");
-            message = AgentMessage(codexEvent) ?? message;
+            return run.Failed ? Errored(ProviderReasons.CliReportedError, run.LimitPattern) : new ProviderErrored(ProviderReasons.UnparseableOutput);
         }
 
-        if (message is null)
-        {
-            return new ProviderErrored(failed ? ProviderReasons.CliReportedError : ProviderReasons.UnparseableOutput);
-        }
-
-        return WireJson.TryParse(message, out var answer) ? AgentAnswer.Read(answer, question) : new ProviderErrored(ProviderReasons.UnparseableAnswer);
+        return WireJson.TryParse(run.Message, out var answer)
+            ? ProviderUsageReader.Attach(AgentAnswer.Read(answer, question), run.Usage)
+            : new ProviderErrored(ProviderReasons.UnparseableAnswer);
     }
+
+    /// <inheritdoc />
+    protected override string? LimitIn(string output) => Scan(output).LimitPattern;
+
+    /// <summary>The usage-limit pattern of an error event: its codex_error_info when it has one, else its message, anchored.</summary>
+    private static string? LimitOf(CodexEvent codexEvent)
+    {
+        if (codexEvent.CodexErrorInfo is { } info)
+        {
+            return info is JsonValue value && value.TryGetValue<string>(out var kind) && Is(kind, UsageLimitExceeded) ? UsageLimitExceededPattern : null;
+        }
+
+        return UsageLimitMatcher.Match(ErrorMessage(codexEvent));
+    }
+
+    private static string? ErrorMessage(CodexEvent codexEvent) => codexEvent.Message ?? codexEvent.Error switch
+    {
+        JsonObject error when error["message"] is JsonValue text && text.TryGetValue<string>(out var message) => message,
+        JsonValue text when text.TryGetValue<string>(out var message) => message,
+        _ => null,
+    };
+
+    // One pass over the --json lines: the last agent message, whether a turn failed or an error came, the limit pattern of the
+    // first error event that is one (only error and turn.failed events are searched, never an agent message), and the usage.
+    private static CodexRun Scan(string output)
+    {
+        var events = output.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(WireJson.Read<CodexEvent>)
+            .OfType<CodexEvent>()
+            .ToList();
+        var failures = events.Where(codexEvent => Is(codexEvent.Type, "turn.failed") || Is(codexEvent.Type, "error")).ToList();
+        return new CodexRun(
+            events.Select(AgentMessage).LastOrDefault(text => text is not null),
+            failures.Count > 0,
+            failures.Select(LimitOf).FirstOrDefault(pattern => pattern is not null),
+            ProviderUsageReader.FromCodex(events.LastOrDefault(codexEvent => Is(codexEvent.Type, "turn.completed") && codexEvent.Usage is not null)?.Usage));
+    }
+
+    private sealed record CodexRun(string? Message, bool Failed, string? LimitPattern, ProviderUsage? Usage);
 
     private static bool Is(string? value, string expected) => string.Equals(value, expected, StringComparison.Ordinal);
 

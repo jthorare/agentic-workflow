@@ -84,6 +84,25 @@ public sealed class SandboxShimsTests : IDisposable
         Assert.Equal($"tool {tool} {args}", output);
     }
 
+    // #1811: a child another thread forks during SandboxShims.Write holds the shim's write descriptor until it execs, and an exec of the shim in that moment fails with ETXTBSY
+    // ('text file busy', sh exit 126). The test holds a write descriptor itself for that moment, so the race is certain instead of rare.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_shim_starts_after_a_moment_of_text_file_busy()
+    {
+        var shim = Path.Combine(_dir, "shims", "dotnet");
+        var held = new FileStream(shim, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+        var release = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(200), TestContext.Current.CancellationToken);
+            await held.DisposeAsync();
+        }, TestContext.Current.CancellationToken);
+
+        var (output, code) = Run("dotnet", "--version", slotHeld: false);
+        await release;
+        Assert.Equal(0, code);
+        Assert.Equal("tool dotnet --version", output);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void Paths_with_quotes_and_spaces_survive()
     {
@@ -144,25 +163,23 @@ public sealed class SandboxShimsTests : IDisposable
         }
     }
 
-    private void Script(string name, string body) => File.WriteAllText(Path.Combine(_dir, name), "#!/bin/sh\n" + body + "\n");
+    private void Script(string name, string body) => ExecutableScript.Write(Path.Combine(_dir, name), body + "\n");
 
     private (string Output, int Code) Run(string tool, string args, bool slotHeld)
     {
-        foreach (var name in SandboxShims.Tools.Select(t => "real-" + t).Append("heavy"))
+        var start = new ProcessStartInfo(Path.Combine(_dir, "shims", tool)) { RedirectStandardOutput = true, UseShellExecute = false };
+        foreach (var arg in args.Split(' '))
         {
-            File.SetUnixFileMode(Path.Combine(_dir, name), UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+            start.ArgumentList.Add(arg);
         }
 
-        var start = new ProcessStartInfo("/bin/sh") { RedirectStandardOutput = true, UseShellExecute = false };
-        start.ArgumentList.Add("-c");
-        start.ArgumentList.Add($"exec '{Path.Combine(_dir, "shims", tool)}' {args}");
         _ = start.Environment.Remove("AW_SANDBOX_SLOT_HELD");
         if (slotHeld)
         {
             start.Environment["AW_SANDBOX_SLOT_HELD"] = "1";
         }
 
-        using var process = Process.Start(start)!;
+        using var process = ExecutableScript.StartWhenNotBusy(start);   // SandboxShims.Write wrote the shim a moment ago: a child another test forked may still hold its write descriptor (#1811)
         var output = process.StandardOutput.ReadToEnd().TrimEnd('\n');
         process.WaitForExit();
         return (output, process.ExitCode);

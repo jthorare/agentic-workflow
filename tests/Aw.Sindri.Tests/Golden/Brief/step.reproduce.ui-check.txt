@@ -1,0 +1,14 @@
+Sindri Step brief. Instance ITM-00000000000000000000000000000001/bugfix/1, run 1.1, state s.
+Goal: one check that fails for the reported reason, so the fix can be proven against it.
+Read fact:issue and fact:rootCause from your inputs. fact:rootCause holds the handoff block (failure class, invariant, affected scope, prevention decision, mitigation, proof); keep it as you read it and don't edit it.
+Make the check reproduce the original failure, for the reported reason only, and don't broaden it to the class: the class's proof belongs to the fix, and a broader check would no longer be the one that failed before.
+The question the investigation already asked, so you can see why the check stays narrow: How can we prevent this class of bugs from happening again—not just fix this instance? Consider enforceable constraints such as lint rules, analyzers, type/API design, shared primitives, state-machine or architecture changes, and checks that catch other instances of the same failure.
+If you can't make it fail for that reason, report notReproduced with fact:findings saying what you tried. Never weaken a check to make it fail or pass.
+The full prevention rule: $HOME/.agentic-workflow/toolkit/skills/_shared/prevent-the-class.md.
+You read: fact:issue, fact:rootCause.
+The facts you read that are set are already in the run folder $AW_SINDRI_RUN_DIR, one JSON file each: fact-issue.json.
+Outcome reproduced: write fact:check, fact:baseline.
+Outcome notReproduced: write fact:findings.
+Put each output in its own file under the output folder $AW_SINDRI_RUN_DIR/.sindri-out, named after the fact.
+Report with: sindri workflow complete ITM-00000000000000000000000000000001/bugfix/1 --run 1.1 --outcome <reproduced|notReproduced> --output fact:<key>=$AW_SINDRI_RUN_DIR/.sindri-out/<key> (one --output per fact the outcome needs)
+Your Step ends only when this command succeeds; if it's refused, read the error and fix it.

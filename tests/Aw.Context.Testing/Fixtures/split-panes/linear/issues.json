@@ -13,6 +13,8 @@
           "createdAt": "2026-07-01T10:00:00.000Z",
           "updatedAt": "2026-07-06T10:05:00.000Z",
           "completedAt": "2026-07-06T10:05:00.000Z",
+          "canceledAt": null,
+          "parent": null,
           "state": {
             "name": "Done",
             "type": "completed"
@@ -24,7 +26,8 @@
           },
           "project": {
             "id": "0e5a1b00-0000-4000-8000-000000000010",
-            "name": "Split panes"
+            "name": "Split panes",
+            "status": { "type": "started" }
           },
           "creator": {
             "id": "0e5a1b00-0000-4000-8000-000000000901",
@@ -55,7 +58,7 @@
               }
             ]
           },
-          "relations": { "nodes": [] },
+          "relations": { "nodes": [ { "type": "blocks", "relatedIssue": { "id": "0e5a1b00-0000-4000-8000-000000000102", "identifier": "SPL-102", "title": "Split a pane vertically or horizontally" } } ] },
           "inverseRelations": { "nodes": [] },
           "attachments": {
             "nodes": [
@@ -80,6 +83,8 @@
           "createdAt": "2026-07-02T10:00:00.000Z",
           "updatedAt": "2026-07-10T11:05:00.000Z",
           "completedAt": "2026-07-10T11:05:00.000Z",
+          "canceledAt": null,
+          "parent": { "id": "0e5a1b00-0000-4000-8000-000000000101", "identifier": "SPL-101", "title": "Command registry for pane commands" },
           "state": {
             "name": "Done",
             "type": "completed"
@@ -91,7 +96,8 @@
           },
           "project": {
             "id": "0e5a1b00-0000-4000-8000-000000000010",
-            "name": "Split panes"
+            "name": "Split panes",
+            "status": { "type": "started" }
           },
           "creator": {
             "id": "0e5a1b00-0000-4000-8000-000000000901",
@@ -123,7 +129,7 @@
             ]
           },
           "relations": { "nodes": [] },
-          "inverseRelations": { "nodes": [] },
+          "inverseRelations": { "nodes": [ { "type": "blocks", "issue": { "id": "0e5a1b00-0000-4000-8000-000000000101", "identifier": "SPL-101", "title": "Command registry for pane commands" } } ] },
           "attachments": {
             "nodes": [
               {
@@ -147,6 +153,8 @@
           "createdAt": "2026-07-02T11:00:00.000Z",
           "updatedAt": "2026-07-23T09:00:00.000Z",
           "completedAt": "2026-07-15T09:35:00.000Z",
+          "canceledAt": null,
+          "parent": null,
           "state": {
             "name": "Done",
             "type": "completed"
@@ -158,7 +166,8 @@
           },
           "project": {
             "id": "0e5a1b00-0000-4000-8000-000000000010",
-            "name": "Split panes"
+            "name": "Split panes",
+            "status": { "type": "started" }
           },
           "creator": {
             "id": "0e5a1b00-0000-4000-8000-000000000901",
@@ -209,7 +218,7 @@
               }
             ]
           },
-          "relations": { "nodes": [] },
+          "relations": { "nodes": [ { "type": "related", "relatedIssue": { "id": "0e5a1b00-0000-4000-8000-000000000104", "identifier": "SPL-104", "title": "Restore pane layout when switching tabs" } } ] },
           "inverseRelations": { "nodes": [] },
           "attachments": {
             "nodes": [
@@ -234,6 +243,8 @@
           "createdAt": "2026-07-11T09:00:00.000Z",
           "updatedAt": "2026-07-22T10:20:00.000Z",
           "completedAt": "2026-07-22T10:20:00.000Z",
+          "canceledAt": null,
+          "parent": null,
           "state": {
             "name": "Done",
             "type": "completed"
@@ -245,7 +256,8 @@
           },
           "project": {
             "id": "0e5a1b00-0000-4000-8000-000000000010",
-            "name": "Split panes"
+            "name": "Split panes",
+            "status": { "type": "started" }
           },
           "creator": {
             "id": "0e5a1b00-0000-4000-8000-000000000901",
@@ -287,7 +299,7 @@
             ]
           },
           "relations": { "nodes": [] },
-          "inverseRelations": { "nodes": [] },
+          "inverseRelations": { "nodes": [ { "type": "related", "issue": { "id": "0e5a1b00-0000-4000-8000-000000000103", "identifier": "SPL-103", "title": "Toggle split orientation" } } ] },
           "attachments": {
             "nodes": [
               {
@@ -311,6 +323,8 @@
           "createdAt": "2026-07-16T09:00:00.000Z",
           "updatedAt": "2026-08-12T15:00:00.000Z",
           "completedAt": "2026-07-29T09:05:00.000Z",
+          "canceledAt": null,
+          "parent": null,
           "state": {
             "name": "Done",
             "type": "completed"
@@ -322,7 +336,8 @@
           },
           "project": {
             "id": "0e5a1b00-0000-4000-8000-000000000010",
-            "name": "Split panes"
+            "name": "Split panes",
+            "status": { "type": "started" }
           },
           "creator": {
             "id": "0e5a1b00-0000-4000-8000-000000000901",
@@ -398,9 +413,11 @@
           "createdAt": "2026-08-01T09:00:00.000Z",
           "updatedAt": "2026-08-20T10:00:00.000Z",
           "completedAt": null,
+          "canceledAt": "2026-08-20T10:00:00.000Z",
+          "parent": null,
           "state": {
-            "name": "In Progress",
-            "type": "started"
+            "name": "Canceled",
+            "type": "canceled"
           },
           "team": {
             "id": "0e5a1b00-0000-4000-8000-000000000001",
@@ -409,7 +426,8 @@
           },
           "project": {
             "id": "0e5a1b00-0000-4000-8000-000000000010",
-            "name": "Split panes"
+            "name": "Split panes",
+            "status": { "type": "started" }
           },
           "creator": {
             "id": "0e5a1b00-0000-4000-8000-000000000901",

@@ -116,7 +116,7 @@ internal static class ScopingSteps
     // TODO(W9/L-17): read-only capability (no descriptor field yet; the launch enforces it)
     public static BlockDescriptor Exclude { get; } = AgentStep("step.scope.exclude", Capability.Tools)
         .Takes(Text("model"))
-        .Reads("fact:brief", "fact:lenses", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:findings", "fact:roundLog", "fact:roundDigest", "fact:answerLog")
+        .Reads("fact:brief", "fact:graph", "fact:coverage", "fact:scopeMap", "fact:acceptance", "fact:findings", "fact:roundLog", "fact:roundDigest", "fact:answerLog")
         .Reports("excluded").Writes(On("fact:scopeMap", "excluded"));
 
     /// <summary>'step.scope.review': the owner's stop, human-only: approve, revise (notes become answers) or drop.</summary>

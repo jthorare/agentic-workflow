@@ -30,6 +30,15 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
     /// <summary>When set, <see cref="SaveDraft"/> fails with it and changes nothing.</summary>
     public Error? SaveDraftFailure { get; set; }
 
+    /// <summary>When set, <see cref="SaveDraft"/> waits for it before writing (a build held after it stamped its time, as while it names concepts).</summary>
+    public Task? SaveDraftHold { get; set; }
+
+    /// <summary>When set, <see cref="SaveDraft"/> promotes the draft it just wrote before it returns (a map refresh whose promote lands before a build parked behind it reads the versions).</summary>
+    public bool PromoteOnSave { get; set; }
+
+    /// <summary>How many <see cref="SaveDraft"/> calls are waiting on <see cref="SaveDraftHold"/> right now.</summary>
+    public int SaveDraftsWaiting { get; private set; }
+
     /// <summary>When set, <see cref="Promote"/> fails with it and changes nothing.</summary>
     public Error? PromoteFailure { get; set; }
 
@@ -93,7 +102,7 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
             }
         }
 
-        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Current) { Ruleset = map.Ruleset, Dropped = map.Dropped, Checks = map.Checks };
+        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Current) { Ruleset = map.Ruleset, Dropped = map.Dropped, Checks = map.Checks, PinHashes = map.PinHashes };
         _versions.Add((version, map.Graph));
         _heads[version.Number] = map.Heads ?? (MapHead.IsCommit(map.Commit) ? [new MapHead(map.Repo, map.Commit!, OnDefault: true)] : []);
         (_hold, _chain) = (null, null);
@@ -111,7 +120,26 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
         });
 
     /// <inheritdoc/>
-    public ValueTask<Result<MapVersion>> SaveDraft(MapImport map, DateTimeOffset created, CancellationToken cancellationToken) => Done(() =>
+    public async ValueTask<Result<MapVersion>> SaveDraft(MapImport map, DateTimeOffset created, CancellationToken cancellationToken)
+    {
+        if (SaveDraftHold is { } hold)
+        {
+            SaveDraftsWaiting++;
+            try
+            {
+                await hold.WaitAsync(cancellationToken).ConfigureAwait(false);
+            }
+            finally
+            {
+                SaveDraftsWaiting--;
+            }
+        }
+
+        var saved = await SaveDraftNow(map, created).ConfigureAwait(false);
+        return PromoteOnSave && saved.IsSuccess ? await Promote(saved.Value.Number, cancellationToken).ConfigureAwait(false) : saved;
+    }
+
+    private ValueTask<Result<MapVersion>> SaveDraftNow(MapImport map, DateTimeOffset created) => Done(() =>
     {
         ArgumentNullException.ThrowIfNull(map);
         if (SaveDraftFailure is { } failed)
@@ -125,7 +153,7 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
         }
 
         _ = DropDrafts(v => true);
-        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Draft) { Ruleset = map.Ruleset, Dropped = map.Dropped, Checks = map.Checks };
+        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Draft) { Ruleset = map.Ruleset, Dropped = map.Dropped, Checks = map.Checks, PinHashes = map.PinHashes };
         _versions.Add((version, map.Graph));
         _heads[version.Number] = map.Heads ?? [];
         _ = Append(map.Overrides);
@@ -152,7 +180,7 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
             return Results.Failure<MapVersion>(ContextErrors.PromoteRefused.With("the draft is no longer the open draft; nothing was replaced"));
         }
 
-        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Draft) { Ruleset = map.Ruleset, Dropped = map.Dropped, Checks = map.Checks };
+        var version = new MapVersion(++_last, map.Repo, map.Commit, EntryKey.Version, created, MapVersionStatus.Draft) { Ruleset = map.Ruleset, Dropped = map.Dropped, Checks = map.Checks, PinHashes = map.PinHashes };
         _versions.Add((version, map.Graph));
         _heads[version.Number] = map.Heads ?? copied;
         _ = Append(map.Overrides);
@@ -209,13 +237,15 @@ public sealed class FakeGraphStore : IGraphStore, IProposalRuns
     public ValueTask<Result<IReadOnlyList<MapHead>>> Heads(int version, CancellationToken cancellationToken) =>
         Done(() => Results.Success(_heads.GetValueOrDefault(version) ?? []));
 
+    private MapVersion? CurrentVersion() => _versions.Select(v => v.Version).FirstOrDefault(v => v.Status == MapVersionStatus.Current);
+
     /// <inheritdoc/>
     public ValueTask<Result<MapPublishState>> Held(CancellationToken cancellationToken) => Done(() =>
     {
         var draft = LatestDraft();
         var current = _versions.Select(v => v.Version).FirstOrDefault(v => v.Status == MapVersionStatus.Current)?.Number;
         var hold = _hold is { } held && _chain is { } since ? new MapHold(held, since, _heads.GetValueOrDefault(held) ?? []) : null;
-        return Results.Success(new MapPublishState(hold, draft, current, current is { } c ? _heads.GetValueOrDefault(c) ?? [] : []) { CurrentRuleset = _versions.Select(v => v.Version).FirstOrDefault(v => v.Status == MapVersionStatus.Current)?.Ruleset });
+        return Results.Success(new MapPublishState(hold, draft, current, current is { } c ? _heads.GetValueOrDefault(c) ?? [] : []) { CurrentRuleset = CurrentVersion()?.Ruleset, CurrentPinHashes = CurrentVersion()?.PinHashes });
     });
 
     /// <inheritdoc/>

@@ -2,7 +2,8 @@
 # scripts/scaffold/e2e.sh — the generators' end-to-end test (docs/csharp/scaffolds/new-package.md, "Done criteria"):
 # scaffolds (a) a small CLI package declared in deps.yaml and (b) a full http package that isn't, each in its own
 # temporary git worktree of HEAD, and lets the generator run its own checks against the real root files
-# (restores, RS0016, build -warnaserror, the unit lane with exactly one red test, format, check-deps). Then, by hand:
+# (restores, RS0016, build -warnaserror and the unit lane of the package's test project and the architecture tests, format
+# limited to the files it wrote, check-deps; one whole-solution build per tree at the end). Then, by hand:
 # (a) makes its first slice green and adds a second slice with /new-slice (exactly one new red test), then
 # NativeAOT-publishes its App for the runner's RID (no IL2xxx/IL3xxx warning) and runs the native binary (usage exit 2
 # and the AW-TELEMETRY-001 line for an unknown AW_LOG_LEVEL); (b) makes its first slice green, adds a second with a new
@@ -156,5 +157,13 @@ step "(b) integration lane: loopback binding and id route binding (GetShelf's Sh
 (cd "$B" && env -u CI dotnet test --project "tests/Aw.$HTTP.Tests" --filter-trait "Lane=integration") || fail "(b) integration lane"
 step "(b) check-deps with the new node"
 (cd "$B" && node scripts/check-deps.mjs) || fail "(b) check-deps"
+
+# The generators check only what they wrote (the package's test project and the architecture tests build and run,
+# format is limited to the files written); this is the one whole-solution build, so a generator change that breaks
+# some other project is still caught.
+step "(a) whole-solution build -warnaserror"
+(cd "$A" && env -u CI dotnet build AgenticWorkflow.slnx -warnaserror) || fail "(a) whole-solution build"
+step "(b) whole-solution build -warnaserror"
+(cd "$B" && env -u CI dotnet build AgenticWorkflow.slnx -warnaserror) || fail "(b) whole-solution build"
 
 step "both packages scaffolded, built and tested; the worktrees are removed on exit"

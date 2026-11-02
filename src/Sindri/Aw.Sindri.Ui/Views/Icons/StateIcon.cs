@@ -15,7 +15,7 @@ namespace Aw.Sindri.Ui.Views.Icons;
 /// geometry sits on a 16 × 16 grid and is scaled to the control's size (Size.Icon, the Body line, scaled with the text)
 /// and stroked at 1.5 px with round caps; the brand mark is filled. It never draws a font glyph, so it renders the same
 /// on every OS. A state icon is decorative: the word beside it carries the state, so it is hidden from assistive tech.
-/// The :ok, :down and :stale pseudo-classes follow <see cref="Glyph"/> for the icon's colour styles. With
+/// The :ok, :down, :warn and :stale pseudo-classes follow <see cref="Glyph"/> for the icon's colour styles. With
 /// <see cref="Spins"/> set (the in-flight spinner, §4.1) it turns once per Motion.Spin, and stands still when reduced
 /// motion has set that duration to 0 (§11.4); the turn carries no information of its own.
 /// </summary>
@@ -149,6 +149,7 @@ internal sealed class StateIcon : Control
             PseudoClasses.Set(":ok", Glyph == StateGlyph.Ok);
             PseudoClasses.Set(":down", Glyph == StateGlyph.Down);
             PseudoClasses.Set(":stale", Glyph == StateGlyph.Stale);
+            PseudoClasses.Set(":warn", Glyph == StateGlyph.Warning);
             Resolve();
         }
         else if (change.Property == SpinsProperty)

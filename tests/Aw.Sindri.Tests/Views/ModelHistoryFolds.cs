@@ -78,6 +78,6 @@ internal static class ModelHistoryFolds
         {
             FailureKind = failureKind,
         };
-        return new WorkflowEventPayload(id.Value, state, to, trigger, Outcome: null, run, detail);
+        return new WorkflowEventPayload(Address.Value, state, to, trigger, Outcome: null, run, detail);
     }
 }
