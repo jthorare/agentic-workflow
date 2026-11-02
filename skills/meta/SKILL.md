@@ -1,6 +1,6 @@
 ---
 name: meta
-description: Run a meta orchestrator over a team of lane sessions through the aw-meta CLI — replies owed, the lane map, gate and merge, owner questions, health and the running log — so nothing is dropped or typed by hand.
+description: Use when you run a team of parallel agent sessions (lanes), each on its own branch: a lane message needs your reply, a PR is queued to land, the owner has a question to route, or the box is short on memory or disk. Drives the aw-meta CLI so replies, gates, merges and the log aren't tracked by hand. Not for debugging one PR's CI.
 argument-hint: "[start | ready <pr> | owner | health | status]"
 allowed-tools: Bash(aw-meta *), Bash(*/aw-meta *), Bash(aw-meta-launch *), Bash(git *), Bash(gh *), Read, Grep, Glob, AskUserQuestion, SendMessage, ListAgents, Monitor
 ---
@@ -233,6 +233,17 @@ A Claude usage limit stops every lane and your own subagents at once ("You've hi
 
 Merges, owner decisions, lane maps and kills are logged by the CLI. For anything else worth keeping:
 `aw-meta log-append --kind incident|note --text "…"`.
+
+## Result block
+
+Under `AW_RESULT=1` (the eval runner sets it), after the run write `$AW_DIR/results/meta-<timestamp>.json` and print the same JSON as a
+fenced `aw-result` block, before `## Next steps`. Without `AW_RESULT=1` write no file and print no block.
+
+```aw-result
+{"skill": "meta", "artifacts": ["<absolute path of the team log or gate record you touched, if any>"], "summary": "<one line: what merged, what is held and why>", "merged": [<PR numbers merged this run>], "open_obligations": <count `aw-meta status` still shows>}
+```
+
+`merged` is `[]` when nothing landed. Never list a PR there that `aw-meta merge-run` did not report as merged.
 
 ## Next steps
 

@@ -1,0 +1,38 @@
+{
+  "_doc": "Canned answers for the aw-meta stub (evals/stubs/bin/aw-meta). World: team 'orchard' (a book club tracker), lanes api and web. Lane api sent 'ready #41' but #41 has no gate pass and its gate goes red on a real failure; lane web asked a question and is owed a reply. #38 is the one PR with a recorded gate pass. Each entry: exit, text (plain output), json (output under --json; falls back to text). Keys are the command, or '<command> <pr>' for the PR verbs.",
+  "version": {"exit": 0, "text": "aw-meta commit 0000000, built 2026-11-01T00:00:00Z, linux linux-x64", "json": {"commit": "0000000", "builtAt": "2026-11-01T00:00:00Z", "os": "linux", "rid": "linux-x64"}},
+  "role-show": {"exit": 0, "text": "meta session: eval-meta (orchard-meta)", "json": {"session": "eval-meta", "name": "orchard-meta"}},
+  "role-set": {"exit": 0, "text": "meta session set", "json": {"ok": true}},
+  "inbox-sync": {
+    "exit": 0,
+    "text": "recorded 2 new messages\n  #7 orchard-api: ready #41 4f1c2d9a7b\n  #8 orchard-web: question: should the reading-progress badge use the new three-table schema yet?",
+    "json": {"recorded": [{"id": 7, "from": "orchard-api", "kind": "ready", "pr": 41, "sha": "4f1c2d9a7b"}, {"id": 8, "from": "orchard-web", "kind": "message", "text": "question: should the reading-progress badge use the new three-table schema yet?"}]}
+  },
+  "inbox": {
+    "exit": 1,
+    "text": "2 replies owed\n  #7 orchard-api: ready #41 4f1c2d9a7b\n  #8 orchard-web: question: should the reading-progress badge use the new three-table schema yet?",
+    "json": {"open": [{"id": 7, "from": "orchard-api", "kind": "ready"}, {"id": 8, "from": "orchard-web", "kind": "message"}]}
+  },
+  "inbox-dismiss": {"exit": 0, "text": "dismissed", "json": {"ok": true}},
+  "inbox-defer": {"exit": 0, "text": "deferred", "json": {"ok": true}},
+  "stop-check": {"exit": 1, "text": "OWED reply #7 orchard-api; OWED reply #8 orchard-web", "json": {"open": 2}},
+  "lanes-refresh": {"exit": 0, "text": "lane map v3: api orchard-api, web orchard-web", "json": {"version": 3, "lanes": {"api": "orchard-api", "web": "orchard-web"}}},
+  "lanes": {"exit": 0, "text": "api lane: builds the sync service\nweb lane: builds the reading-progress screens", "json": {"version": 3, "lanes": [{"lane": "api", "session": "orchard-api", "role": "builds the sync service"}, {"lane": "web", "session": "orchard-web", "role": "builds the reading-progress screens"}]}},
+  "lanes-context": {"exit": 0, "text": "api 112k ok\nweb 140k ok", "json": {"lanes": [{"lane": "api", "tokens": 112000, "verdict": "ok"}, {"lane": "web", "tokens": 140000, "verdict": "ok"}]}},
+  "health": {"exit": 0, "text": "memory: sessions 6.1 GB, builds 2.0 GB, other 1.2 GB (ok)\norphaned temporal servers: 0\nlanes with no live session: 0\nbuilders: 4 per lane", "json": {"memory": "ok", "orphans": 0, "deadLanes": 0, "builders": 4}},
+  "status": {
+    "exit": 1,
+    "text": "OBLIGATIONS\n  reply #7 orchard-api (ready #41)\n  reply #8 orchard-web\nMERGE QUEUE\n  #41 4f1c2d9a7b  api  gate: none\nOWNER QUEUE\n  (empty)\nLANES\n  api orchard-api live\n  web orchard-web live\nheavy reservation: 1 slot\nbuilders: 4 per lane",
+    "json": {"obligations": [{"id": 7, "kind": "reply", "peer": "orchard-api"}, {"id": 8, "kind": "reply", "peer": "orchard-web"}], "queue": [{"pr": 41, "sha": "4f1c2d9a7b", "lane": "api", "gate": null}], "owner": [], "lanes": [{"lane": "api", "live": true}, {"lane": "web", "live": true}], "builders": 4}
+  },
+  "queue": {"exit": 0, "text": "#41 4f1c2d9a7b api gate: none", "json": {"queue": [{"pr": 41, "sha": "4f1c2d9a7b", "lane": "api", "gate": null}]}},
+  "owner": {"exit": 0, "text": "no owner questions", "json": {"questions": []}},
+  "log-append": {"exit": 0, "text": "logged", "json": {"ok": true}},
+  "watch": {"exit": 0, "text": "WATCH started (stub: no changes)", "json": {"ok": true}},
+  "merge-check 41": {"exit": 1, "text": "FAIL gate: no passing gate record for #41 at 4f1c2d9a7b (run gate-run 41)", "json": {"ok": false, "failures": ["gate: no passing gate record for #41 at 4f1c2d9a7b"]}},
+  "gate-run 41": {"exit": 1, "text": "gate #41 4f1c2d9a7b on origin/main 9c8e7a6\nstep build: pass\nstep unit: FAIL (exit 1)\n  failed Orchard.Sync.Tests.SyncTests.Retry_keeps_reading_order\nstep integration: pass\nGATE RED #41", "json": {"pr": 41, "result": "red", "steps": [{"name": "build", "result": "pass"}, {"name": "unit", "result": "fail", "failed": ["Orchard.Sync.Tests.SyncTests.Retry_keeps_reading_order"]}, {"name": "integration", "result": "pass"}]}},
+  "gate-rerun 41": {"exit": 1, "text": "Orchard.Sync.Tests.SyncTests.Retry_keeps_reading_order: fails alone, fails on plain main? no -> REAL (caused by #41)", "json": {"pr": 41, "test": "Orchard.Sync.Tests.SyncTests.Retry_keeps_reading_order", "classification": "real"}},
+  "merge-run 41": {"exit": 1, "text": "AW-META-016: merge-check failed for #41: no passing gate record at 4f1c2d9a7b. Nothing merged.", "json": {"ok": false, "error": "AW-META-016"}},
+  "merge-check 38": {"exit": 0, "text": "ok: gate green for #38 at 71aa0be", "json": {"ok": true}},
+  "merge-run 38": {"exit": 0, "text": "merged #38; main moved to 5d2e9f1\nWORKTREES removed: none, kept: none", "json": {"ok": true, "main": "5d2e9f1"}}
+}
