@@ -98,11 +98,6 @@ mkdir -p "$AW_SINDRI_HOME/profile"
 mkdir -p "$work/repo"   # the repo 'smoke' the mcp() helper names in X-Sindri-Repo (sindri_request files against an approved profile's repo)
 printf 'schemaVersion: 1\nuser: smoke\nrepos:\n  - { name: smoke, path: %s }\nservices:\n  heartbeat: { every: 5s }\n' "$work/repo" >"$AW_SINDRI_HOME/profile/profile.yaml"
 
-exit_line() { # $1 = exit code
-  local rc="$1"
-  [ "$rc" -ne 142 ] || rc=124   # killed by the alarm
-  [ "$rc" -eq 0 ] || echo "exit $rc"
-}
 run() { # the human, no terminal
   echo "## sindri $*"
   local rc=0
@@ -115,32 +110,7 @@ human() { # the human at a terminal; stdin passed through (the typed confirmatio
   with_tty "${alarm[@]}" "$bin" "$@" || rc=$?
   exit_line "$rc"
 }
-human_run_service() { # $1 = service: `human services run`, retried while a scheduled run is in flight (SND-JOB-409; heartbeat
-  # runs every 5 s, so the manual run can land on one). Bounded by wall time like settle; only the last attempt is printed
-  echo "## sindri services run $1 (human, terminal)"
-  local out rc deadline=$((SECONDS + 60))
-  while :; do
-    rc=0
-    out="$(with_tty "${alarm[@]}" "$bin" services run "$1" </dev/null)" || rc=$?
-    [[ "$out" == *SND-JOB-409* ]] && ((SECONDS < deadline)) || break
-    sleep 0.5
-  done
-  [ -z "$out" ] || printf '%s\n' "$out"
-  exit_line "$rc"
-}
-without_token() { # runs a command while the per-start token file is out of the way: the CLI can't read it, so it calls as a session
-  local file="$AW_SINDRI_HOME/auth/human.token" rc=0
-  mv "$file" "$file.aside"
-  "$@" || rc=$?
-  mv "$file.aside" "$file"
-  return "$rc"
-}
-session() { # a CLI that can't read the token (an agent's environment changes nothing now), no terminal
-  echo "## sindri $* (session)"
-  local rc=0
-  without_token bounded "$bin" "$@" </dev/null 2>&1 || rc=$?
-  exit_line "$rc"
-}
+source "$here/helpers.sh"
 doctor() { # doctor reads the providers' user-wide MCP files: point it at an empty scratch home, never the real one
   HOME="$work/fakehome" CLAUDE_CONFIG_DIR="" CODEX_HOME="" run doctor
 }
@@ -235,9 +205,7 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
   curl -s -m 30 -o /dev/null -w 'post http=%{http_code}\n' -X POST "$base/sindri/context/subgraph" -H 'X-Sindri-Repo: smoke' -H 'Content-Type: application/json' -d '{"nodes":["feature:smoke.none"]}'
   echo "## sindri services --json | jq (name, every, paused, job)"
   bounded "$bin" services --json </dev/null | jq -c '[.services[] | {name, every, paused, job}]'
-  human_run_service heartbeat
-  settle
-  session services run heartbeat
+  manual_service_runs heartbeat
   job="$(bounded "$bin" jobs --json </dev/null | jq -r '.jobs[0].id')"
   run jobs show "$job"
   run jobs --state succeeded
