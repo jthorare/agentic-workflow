@@ -6,6 +6,7 @@
 # fetch and says so. `gh pr list` has one canned answer (no PR yet); gh writes are refused under readonly.
 # Writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 mkdir -p src test .aw-eval
 cat > package.json <<'P'
 { "name": "pantry-scale", "version": "0.3.0", "private": true, "scripts": { "test": "node --test" } }

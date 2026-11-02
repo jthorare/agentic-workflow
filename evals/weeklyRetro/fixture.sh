@@ -5,6 +5,7 @@
 # Ben's "add shopping list export" is reverted; one older commit (20 days ago) falls outside the window.
 # Writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 mkdir -p .aw-eval
 # weeklyRetro reads no PR or issue state; an empty list makes any gh call fail visibly.
 printf '[]\n' > .aw-eval/gh.json

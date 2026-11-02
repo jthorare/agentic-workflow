@@ -4,6 +4,7 @@
 # "deploy-ok". The canned gh answer says PR 18 is merged; the canned curl answers make the checkout ping smoke test return 503.
 # Writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 mkdir -p scripts src .agentic-workflow .aw-eval
 cat > README.md <<'P'
 # toollib

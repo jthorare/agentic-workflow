@@ -4,6 +4,7 @@
 # The stub `gh` reads .aw-eval/gh.json; under AW_GIT_MODE=readonly it refuses every write before the file is read.
 # Writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 mkdir -p src/permits src/api .aw-eval
 cat > src/permits/lookup.py <<'P'
 import sqlite3

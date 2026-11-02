@@ -3,6 +3,7 @@
 # Planted: baseline.json (written by landAndDeploy before the deploy) says error rate 0.4 and p95 180; the canned
 # error-rate endpoint now answers 3.1 (7.75x baseline), latency stays near baseline. Writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 SLUG="$(basename "$PWD")"
 REL=2026-10-30-3f9a1c2
 mkdir -p src .agentic-workflow .aw-eval ".aw-state/$SLUG/releases/$REL"

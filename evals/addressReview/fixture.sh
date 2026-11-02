@@ -5,6 +5,7 @@
 # Planted: src/export.js does not escape commas or quotes in CSV cells (blocking), src/parse.js uses parseInt so
 # "1.5" becomes 1 (issue), and a nit (rename toCsv) that a default run must leave alone. Writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 slug=$(basename "$PWD")
 mkdir -p src test .aw-eval ".aw-state/$slug/reviews"
 cat > package.json <<'P'

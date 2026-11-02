@@ -3,6 +3,7 @@
 # an AGENTS.md that documents no read access to data (so the status doc must say sizes are unknown), and a ticket file.
 # No remote, writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 git init -q -b main
 mkdir -p src/lookup docs
 cat > AGENTS.md <<'MD'

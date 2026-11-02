@@ -5,6 +5,7 @@
 # schema/setup/ci/deploy-named file, and no README heading that matches a doc keyword.
 # Offline, no remote. Writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 mkdir -p src/routes planning
 cat > package.json <<'P'
 {

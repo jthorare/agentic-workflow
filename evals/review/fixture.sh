@@ -6,6 +6,7 @@
 #   2. src/members.py reminder_address: `member["email"].strip()` crashes for a member with no email (data/members.json has one: Odile, null).
 # Writes only under $PWD.
 set -eu
+export AW_GIT_MODE=full # the setup commits; the agent runs after this process, still readonly (as aw_fixture_repo)
 mkdir -p src tests data .aw-eval
 cat > README.md <<'P'
 # loan-desk
