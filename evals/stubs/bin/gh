@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Eval gh wrapper (spec 2026-10-25-skill-revamp-evals-design.md §2.4, §5.3). Order: (1) under AW_GIT_MODE=readonly refuse writes,
+# (2) answer from the case's .aw-eval/gh.json when one exists above $PWD, (3) pass through to the real gh (the next one on PATH).
+# Refusals exit 1 with `aw-eval: gh <sub> refused (AW_GIT_MODE=readonly)`. Rules and shapes: evals/stubs/README.md.
+set -u
+self_dir="$(cd "${BASH_SOURCE[0]%/*}" && pwd)"
+stubs="$(cd "$self_dir/.." && pwd)"
+. "$stubs/aw-eval-lib.sh"
+
+if [ "${AW_GIT_MODE:-full}" = "readonly" ]; then
+  args=("$@"); n=${#args[@]}; i=0; w1=""; w2=""
+  while [ "$i" -lt "$n" ]; do
+    a="${args[$i]}"
+    case "$a" in
+      -R|--repo) i=$((i + 2)); continue ;;
+      -*) ;;
+      *) if [ -z "$w1" ]; then w1="$a"; elif [ -z "$w2" ]; then w2="$a"; fi ;;
+    esac
+    i=$((i + 1))
+  done
+  refused=""
+  case "$w1 $w2" in
+    "pr create"|"pr merge"|"pr comment"|"pr review"|"pr edit"|"pr close"|"issue create"|"issue comment") refused="$w1 $w2" ;;
+  esac
+  if [ "$w1" = api ]; then
+    method="" fields=0; i=0
+    while [ "$i" -lt "$n" ]; do
+      a="${args[$i]}"
+      case "$a" in
+        -X|--method) method="${args[$((i + 1))]:-}"; i=$((i + 1)) ;;
+        --method=*) method="${a#--method=}" ;;
+        -X?*) method="${a#-X}" ;;
+        -f|-F|--field|--raw-field|--input|-f?*|-F?*|--field=*|--raw-field=*|--input=*) fields=1 ;;
+      esac
+      i=$((i + 1))
+    done
+    method="$(printf '%s' "$method" | tr '[:lower:]' '[:upper:]')"
+    case "$method" in
+      POST|PUT|PATCH|DELETE) refused="api" ;;
+      "") [ "$fields" = 1 ] && refused="api" ;;
+    esac
+  fi
+  if [ -n "$refused" ]; then
+    echo "aw-eval: gh $refused refused (AW_GIT_MODE=readonly)" >&2
+    exit 1
+  fi
+fi
+
+if root="$(aw_eval_root)" && [ -f "$root/.aw-eval/gh.json" ]; then
+  perl "$stubs/aw-eval-match.pl" gh "$root/.aw-eval/gh.json" -- "$@"
+  rc=$?
+  if [ "$rc" = 250 ]; then echo "aw-eval: gh $* has no canned answer" >&2; exit 1; fi
+  exit "$rc"
+fi
+
+real="$(aw_eval_real "$self_dir" gh)" || { echo "aw-eval: no real gh on PATH after $self_dir" >&2; exit 127; }
+exec "$real" "$@"

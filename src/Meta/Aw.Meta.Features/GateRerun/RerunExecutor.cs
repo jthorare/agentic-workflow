@@ -13,6 +13,9 @@ namespace Aw.Meta.Features.GateRerun;
 internal sealed class RerunExecutor(ICommandRunner runner, MetaPaths paths)
 {
     private const int NoTestsRan = 8;
+
+    // The shell's "command not found" or "No such file or directory": the rerun never reached a test, whatever the command.
+    private const int CommandNotFound = 127;
     private static readonly TimeSpan _limit = TimeSpan.FromMinutes(45);
 
     /// <summary>The command that runs one test of the step, or null when the step can't.</summary>
@@ -30,17 +33,34 @@ internal sealed class RerunExecutor(ICommandRunner runner, MetaPaths paths)
 
         var result = ran.Value;
         var output = result.Stdout + "\n" + result.Stderr;
-        var ranNothing = TestNames.RanNone(output) || (result.ExitCode == NoTestsRan && !TestNames.Ran(output));
-        if (!result.TimedOut && ranNothing && argv.Contains("dotnet", StringComparer.Ordinal))
+        if (RanNothing(result, output, argv) is { } nothing)
         {
             // On the gate tree the test exists, so a filter that matches nothing is a bad filter. On main it is a test the PR adds.
-            return filterMustMatch ? MetaErrors.Invalid.With($"no test matched '{test}'") : new RerunOutcome(Passed: false, "no test matched", Absent: true);
+            var reason = nothing == CommandNotFound ? $"the rerun command, or something it ran, was not found for '{test}' (exit {CommandNotFound})" : $"no test matched '{test}'";
+            return filterMustMatch ? MetaErrors.Invalid.With(reason) : new RerunOutcome(Passed: false, nothing == CommandNotFound ? "command not found" : "no test matched", Absent: true);
         }
 
         // Exit 8 with tests run is some project having none to run, as in a solution-wide filter: the tests that ran passed.
         return result is { ExitCode: 0 or NoTestsRan, TimedOut: false }
             ? new RerunOutcome(Passed: true)
             : new RerunOutcome(Passed: false, result.TimedOut ? "timed out" : FailureExcerpt.For(output, test));
+    }
+
+    // The exit code that says the rerun ran nothing, or null. 127 counts for every command; "no test matched" only for dotnet.
+    private static int? RanNothing(CommandResult result, string output, IReadOnlyList<string> argv)
+    {
+        if (result.TimedOut)
+        {
+            return null;
+        }
+
+        if (result.ExitCode == CommandNotFound)
+        {
+            return CommandNotFound;
+        }
+
+        var none = TestNames.RanNone(output) || (result.ExitCode == NoTestsRan && !TestNames.Ran(output));
+        return none && argv.Contains("dotnet", StringComparer.Ordinal) ? NoTestsRan : null;
     }
 
     // A dotnet rerun needs the real home (NuGet, the SDK's state); any other command is a suite, which runs as bash-tests.sh runs it.

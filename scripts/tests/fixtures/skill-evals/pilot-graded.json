@@ -1,0 +1,682 @@
+{
+  "schemaVersion": 1,
+  "claudeVersion": "2.1.310",
+  "startedAt": "2026-10-25T14:26:15.833Z",
+  "durationSeconds": 711,
+  "costUsd": 11.774927900000002,
+  "partial": false,
+  "cases": [
+    {
+      "name": "rc-explicit-invoke",
+      "dir": "evals/rootCause/rc-explicit-invoke",
+      "source": "mixed",
+      "runsPerCase": 3,
+      "timeoutSeconds": 420,
+      "maxTurns": 30,
+      "graders": [
+        {
+          "name": "boundary-not-root",
+          "type": "llm",
+          "weight": 1
+        },
+        {
+          "name": "fix-in-cause-site",
+          "type": "regex",
+          "weight": 1
+        },
+        {
+          "name": "json-tail-boundary",
+          "type": "regex",
+          "weight": 1
+        },
+        {
+          "name": "no-edit-outside-scope",
+          "type": "tool_used",
+          "weight": 1
+        },
+        {
+          "name": "no-write-outside-scope",
+          "type": "tool_used",
+          "weight": 1
+        },
+        {
+          "name": "repro-before-edit",
+          "type": "tool_order",
+          "weight": 1
+        },
+        {
+          "name": "root-cause-named",
+          "type": "llm",
+          "weight": 1
+        },
+        {
+          "name": "skill-fired",
+          "type": "tool_used",
+          "weight": 1
+        },
+        {
+          "name": "tests-pass",
+          "type": "regex",
+          "weight": 1
+        }
+      ],
+      "arms": {
+        "with": [
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 11,
+            "costUsd": 0.2876045,
+            "judgeCostUsd": 0.0006497000000000005,
+            "durationSeconds": 53,
+            "startedAt": "2026-10-25T14:27:16.262Z",
+            "error": null,
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "boundary-not-root",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I fixed the bug and all 3 cart tests now pass.\n\n**Root cause"
+              },
+              {
+                "name": "fix-in-cause-site",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched quantity\\s*>=\\s*BULK_THRESHOLD|quantity\\s*>\\s*BULK_T",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "json-tail-boundary",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched \"boundary\"\\s*:\\s*\"[^\"]*(app|pricing)[^\"]*\"",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-edit-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Edit called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-write-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Write called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "repro-before-edit",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Bash@1 precedes Edit@4",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "root-cause-named",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I fixed the bug and all 3 cart tests now pass.\n\n**Root cause"
+              },
+              {
+                "name": "skill-fired",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..∞)",
+                "withOnly": true,
+                "scored": false,
+                "evidence": null
+              },
+              {
+                "name": "tests-pass",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ^OK\\s*$",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              }
+            ]
+          },
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 10,
+            "costUsd": 0.25972480000000003,
+            "judgeCostUsd": 0.0008850000000000008,
+            "durationSeconds": 53,
+            "startedAt": "2026-10-25T14:27:26.078Z",
+            "error": null,
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "boundary-not-root",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I fixed it: the 10% bulk discount was skipping orders of exa"
+              },
+              {
+                "name": "fix-in-cause-site",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched quantity\\s*>=\\s*BULK_THRESHOLD|quantity\\s*>\\s*BULK_T",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "json-tail-boundary",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched \"boundary\"\\s*:\\s*\"[^\"]*(app|pricing)[^\"]*\"",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-edit-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Edit called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-write-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Write called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "repro-before-edit",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Bash@1 precedes Edit@4",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "root-cause-named",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I fixed it: the 10% bulk discount was skipping orders of exa"
+              },
+              {
+                "name": "skill-fired",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..∞)",
+                "withOnly": true,
+                "scored": false,
+                "evidence": null
+              },
+              {
+                "name": "tests-pass",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ^OK\\s*$",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              }
+            ]
+          },
+          {
+            "score": 1,
+            "passed": true,
+            "turns": 11,
+            "costUsd": 0.2986133,
+            "judgeCostUsd": 0.0009583,
+            "durationSeconds": 64,
+            "startedAt": "2026-10-25T14:27:27.707Z",
+            "error": null,
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "boundary-not-root",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "The bug is fixed: `test_ten_items_get_ten_percent_off` now p"
+              },
+              {
+                "name": "fix-in-cause-site",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched quantity\\s*>=\\s*BULK_THRESHOLD|quantity\\s*>\\s*BULK_T",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "json-tail-boundary",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched \"boundary\"\\s*:\\s*\"[^\"]*(app|pricing)[^\"]*\"",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-edit-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Edit called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-write-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Write called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "repro-before-edit",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Bash@1 precedes Edit@4",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "root-cause-named",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "The bug is fixed: `test_ten_items_get_ten_percent_off` now p"
+              },
+              {
+                "name": "skill-fired",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Skill called 1x (expected 1..∞)",
+                "withOnly": true,
+                "scored": false,
+                "evidence": null
+              },
+              {
+                "name": "tests-pass",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ^OK\\s*$",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              }
+            ]
+          }
+        ],
+        "without": [
+          {
+            "score": 0.75,
+            "passed": false,
+            "turns": 10,
+            "costUsd": 0.1475153,
+            "judgeCostUsd": 0.0006381000000000017,
+            "durationSeconds": 45,
+            "startedAt": "2026-10-25T14:28:09.145Z",
+            "error": null,
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "boundary-not-root",
+                "passed": false,
+                "weight": 1,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "I fixed the failing test, and all 3 tests now pass. There's "
+              },
+              {
+                "name": "fix-in-cause-site",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched quantity\\s*>=\\s*BULK_THRESHOLD|quantity\\s*>\\s*BULK_T",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "json-tail-boundary",
+                "passed": false,
+                "weight": 1,
+                "explanation": "pattern not found in last_message",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-edit-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Edit called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-write-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Write called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "repro-before-edit",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Bash@0 precedes Edit@5",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "root-cause-named",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I fixed the failing test, and all 3 tests now pass. There's "
+              },
+              {
+                "name": "tests-pass",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ^OK\\s*$",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              }
+            ]
+          },
+          {
+            "score": 0.75,
+            "passed": false,
+            "turns": 6,
+            "costUsd": 0.1319533,
+            "judgeCostUsd": 0.0008937000000000016,
+            "durationSeconds": 42,
+            "startedAt": "2026-10-25T14:28:19.450Z",
+            "error": null,
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "boundary-not-root",
+                "passed": false,
+                "weight": 1,
+                "explanation": "judge votes: FAIL FAIL FAIL",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  false,
+                  false
+                ],
+                "evidence": "I fixed the bug and all 3 tests now pass. I did the root-cau"
+              },
+              {
+                "name": "fix-in-cause-site",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched quantity\\s*>=\\s*BULK_THRESHOLD|quantity\\s*>\\s*BULK_T",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "json-tail-boundary",
+                "passed": false,
+                "weight": 1,
+                "explanation": "pattern not found in last_message",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-edit-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Edit called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-write-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Write called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "repro-before-edit",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Bash@0 precedes Edit@2",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "root-cause-named",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I fixed the bug and all 3 tests now pass. I did the root-cau"
+              },
+              {
+                "name": "tests-pass",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ^OK\\s*$",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              }
+            ]
+          },
+          {
+            "score": 0.875,
+            "passed": false,
+            "turns": 7,
+            "costUsd": 0.1411084,
+            "judgeCostUsd": 0.0006263999999999983,
+            "durationSeconds": 43,
+            "startedAt": "2026-10-25T14:28:31.280Z",
+            "error": null,
+            "skippedPaidGraders": false,
+            "graders": [
+              {
+                "name": "boundary-not-root",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: FAIL PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  false,
+                  true,
+                  true
+                ],
+                "evidence": "I fixed the failing test with a one-character change, and al"
+              },
+              {
+                "name": "fix-in-cause-site",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched quantity\\s*>=\\s*BULK_THRESHOLD|quantity\\s*>\\s*BULK_T",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "json-tail-boundary",
+                "passed": false,
+                "weight": 1,
+                "explanation": "pattern not found in last_message",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-edit-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Edit called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "no-write-outside-scope",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Write called 0x (expected 0..0)",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "repro-before-edit",
+                "passed": true,
+                "weight": 1,
+                "explanation": "Bash@0 precedes Edit@2",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              },
+              {
+                "name": "root-cause-named",
+                "passed": true,
+                "weight": 1,
+                "explanation": "judge votes: PASS PASS PASS",
+                "withOnly": false,
+                "scored": true,
+                "judgeVotes": [
+                  true,
+                  true,
+                  true
+                ],
+                "evidence": "I fixed the failing test with a one-character change, and al"
+              },
+              {
+                "name": "tests-pass",
+                "passed": true,
+                "weight": 1,
+                "explanation": "matched ^OK\\s*$",
+                "withOnly": false,
+                "scored": true,
+                "evidence": null
+              }
+            ]
+          }
+        ]
+      },
+      "aggregates": {
+        "score": 1,
+        "passRate": 1,
+        "scoreWithout": 0.7916666666666666,
+        "passRateWithout": 0,
+        "delta": 0.20833333333333337
+      }
+    }
+  ],
+  "aggregates": {
+    "casesTotal": 11,
+    "casesPassed": 8,
+    "overallScore": 0.9368686868686869,
+    "overallPassRate": 0.787878787878788,
+    "meanDelta": 0.19823232323232326
+  }
+}

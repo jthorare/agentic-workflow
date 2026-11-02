@@ -38,7 +38,7 @@
       },
       "bash-scripts": {
         "paths": ["scripts/**", "providers/**", "setup.sh"],
-        "steps": [ { "name": "bash-scripts", "run": ["bash", "scripts/ci/bash-tests.sh"], "heavy": true } ]
+        "steps": [ { "name": "bash-scripts", "run": ["bash", "scripts/ci/bash-tests.sh"], "heavy": true, "rerun": ["bash", "scripts/tests/{test}.test.sh"] } ]
       }
     }
   },
