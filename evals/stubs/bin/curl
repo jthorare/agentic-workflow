@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Canned curl for skill evals (spec §5.3): no network, ever. Answers from evals/stubs/curl.json (or $EVAL_CURL_JSON),
+# keyed by URL: {"<url>": {"status": 200, "body": "..."}}. Understands -o FILE, -w '%{http_code}', -f. An unknown URL
+# exits 7 (could not connect) with a line a grader can match.
+set -u
+here="$(cd "$(dirname "$0")" && pwd)"
+json="${EVAL_CURL_JSON:-$here/../curl.json}"
+url="" out="" fmt="" fail=0 prev=""
+for a in "$@"; do
+  case "$prev" in
+    -o|--output) out="$a" ;;
+    -w|--write-out) fmt="$a" ;;
+  esac
+  case "$a" in
+    http://*|https://*) url="$a" ;;
+    -f|--fail) fail=1 ;;
+  esac
+  prev="$a"
+done
+command -v jq >/dev/null 2>&1 || { echo "aw-eval: curl stub needs jq" >&2; exit 1; }
+if [ -z "$url" ] || [ ! -f "$json" ] || ! jq -e --arg u "$url" 'has($u)' "$json" >/dev/null 2>&1; then
+  echo "aw-eval: curl ${url:-<no url>} has no canned answer (no network in evals)" >&2
+  exit 7
+fi
+status="$(jq -r --arg u "$url" '.[$u].status // 200' "$json")"
+body="$(jq -r --arg u "$url" '.[$u].body // "" | if type == "string" then . else tostring end' "$json")"
+if [ -n "$out" ] && [ "$out" != "-" ]; then printf '%s' "$body" >"$out"; else printf '%s' "$body"; fi
+[ -z "$fmt" ] || printf '%b' "${fmt//%\{http_code\}/$status}"
+if [ "$fail" = 1 ] && [ "$status" -ge 400 ]; then exit 22; fi
+exit 0

@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+# Canned gh for skill evals (spec §2.4, §5.3). Reads answer from evals/stubs/gh.json (or $EVAL_GH_JSON, a path relative to
+# the workspace or absolute, which a case sets through execution.env), keyed by the first two words ("pr view"), then the
+# first ("auth"). --jq/-q is honored. Writes are refused with a line a grader can match; an unknown call exits 1.
+# Guards against honest mistakes, not a determined agent.
+set -u
+here="$(cd "$(dirname "$0")" && pwd)"
+sub="${1:-}${2:+ $2}"
+
+refuse() { echo "aw-eval: gh $1 refused (AW_GIT_MODE=readonly)" >&2; exit 1; }
+case "$sub" in
+  "pr create"|"pr merge"|"pr comment"|"pr review"|"pr edit"|"pr close"|"pr ready"|"pr reopen") refuse "$sub" ;;
+  "issue create"|"issue comment"|"issue edit"|"issue close"|"release create"|"repo create"|"repo fork") refuse "$sub" ;;
+esac
+if [ "${1:-}" = "api" ]; then
+  prev=""
+  for a in "$@"; do
+    case "$prev $a" in
+      "-X POST"|"-X PUT"|"-X PATCH"|"-X DELETE"|"--method POST"|"--method PUT"|"--method PATCH"|"--method DELETE") refuse "api $a" ;;
+    esac
+    case "$a" in -f|-F|--field|--raw-field|--input) refuse "api $a" ;; esac
+    prev="$a"
+  done
+fi
+
+json="${EVAL_GH_JSON:-$here/../gh.json}"
+command -v jq >/dev/null 2>&1 || { echo "aw-eval: gh stub needs jq" >&2; exit 1; }
+[ -f "$json" ] || { echo "aw-eval: gh stub has no canned file ($json)" >&2; exit 1; }
+filter=""
+prev=""
+for a in "$@"; do
+  if [ "$prev" = "--jq" ] || [ "$prev" = "-q" ]; then filter="$a"; fi
+  prev="$a"
+done
+for key in "$sub" "${1:-}"; do
+  [ -n "$key" ] || continue
+  if jq -e --arg k "$key" 'has($k)' "$json" >/dev/null 2>&1; then
+    if [ -n "$filter" ]; then jq -r --arg k "$key" '.[$k]' "$json" | jq -r "$filter"
+    else jq -r --arg k "$key" '.[$k] | if type == "string" then . else tostring end' "$json"
+    fi
+    exit $?
+  fi
+done
+echo "aw-eval: gh $* has no canned answer" >&2
+exit 1

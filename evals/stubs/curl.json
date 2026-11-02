@@ -1,0 +1,3 @@
+{
+  "https://app.example.invalid/health": { "status": 200, "body": "{\"status\":\"ok\"}" }
+}

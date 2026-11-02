@@ -1,0 +1,1 @@
+{ "name": "aw-evals", "version": "0.1.0", "description": "Skill eval plugin for #1107: every toolkit skill, loaded by scripts/skill-evals.sh from a staged copy outside any git repo" }
