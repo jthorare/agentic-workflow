@@ -1,6 +1,6 @@
 # Skill revamp: self-contained skills measured with `claude plugin eval`
 
-**Status:** draft for the owner's read · **Date:** 2026-10-25 · **Asked by:** the owner, 2026-10-25 (issue #1107) · **Builds on:** meta's pilot (`evals-pilot/PILOT.md`, `pilot-results.json`, branch `feat/skill-evals-pilot`), `.agents/rules/skills.md`, `skills/_preamble.md`, `skills/_shared/capabilities.md`, the plugin eval docs (https://code.claude.com/docs/en/plugin-evals.md) · **Lanes:** ideas (this spec); a plumbing lane and skill-group lanes (§8) · **Next:** `/specToProvenPR` takes §8's phases to PRs.
+**Status:** approved (owner 2026-11-02; §9 goes with each recommendation) · **Date:** 2026-10-25 · **Asked by:** the owner, 2026-10-25 (issue #1107) · **Builds on:** meta's pilot (`evals-pilot/PILOT.md`, `pilot-results.json`, branch `feat/skill-evals-pilot`), `.agents/rules/skills.md`, `skills/_preamble.md`, `skills/_shared/capabilities.md`, the plugin eval docs (https://code.claude.com/docs/en/plugin-evals.md) · **Lanes:** ideas (this spec); a plumbing lane and skill-group lanes (§8) · **Next:** `/specToProvenPR` takes §8's phases to PRs.
 
 **Keeping it app-agnostic.** Nothing here names a work app, company or customer. Fixtures are small made-up repos (a cart with a bulk-discount bug), and any outside tool is stubbed on `PATH`.
 
