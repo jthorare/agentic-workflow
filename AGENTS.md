@@ -44,13 +44,14 @@ Domain-specific rules live in `.agents/rules/` — one file per rule, the only c
 
 ```
 agentic-workflow/
-├── skills/        # 52 provider-neutral skills (linked into each provider's skills dir)
+├── skills/        # 54 provider-neutral skills (linked into each provider's skills dir)
 ├── bootstrap/     # /bootstrap skill — repo documentation generator
 ├── config/        # Settings, MCP config, statusline, safety hooks, sindri-nudge SessionStart hook, meta Stop/outbox hooks, non-Claude lane hooks (meta-lane-gate, session-id-report), the opt-in aw:fleet session-state hook (fleet-state, `--with-fleet`), the reply voice (`voice/`, inlined into each provider's global instructions) (+ hooks/adapters/ per provider)
 ├── providers/     # Per-provider installers (claude, codex, cursor)
 ├── context/       # Pinned external deployments: code-index.lock (graphify, Ollama model), graphify.pin
 ├── planning/      # Project documentation
 ├── src/           # C# build: Aw.Kernel (+ .Data, .Telemetry), Redaction, Aw.Analyzers, the tool ports (Packets, Readiness, BugFix; Judge, Evidence), UiDriver (the generic Avalonia UI driver and `aw-ui-driver`), Meta (aw-meta, the /meta harness), Forge (the forge port with GitHub and file adapters), CodeIndex (the Sindri code index block: symbols, callers and callees per repo; library only) and later the new Sindri app — each Core · Features · Infrastructure · Host
+├── evals/         # Skill evals (#1107): evals/<skill>/{routing,behaviour}/<case>, fixture.sh, graders/_selftest, status.md; _lib, mocks, plugin, stubs (gh, curl, git); run by scripts/skill-evals.sh, rule in .agents/rules/skills.md
 ├── tests/         # C# tests: Aw.<Pkg>.Tests (by feature), Aw.<Pkg>.Testing (fakes, builders, contract bases), Aw.Architecture.Tests
 ├── global.json · AgenticWorkflow.slnx · Directory.Build.props · Directory.Build.targets · Directory.Packages.props · nuget.config · .editorconfig · CodeMetricsConfig.txt · BannedSymbols.txt
 ├── .agents/rules/ # Glob-scoped domain rules (.claude/rules and .cursor/rules link here)
@@ -151,6 +152,7 @@ node scripts/check-rules.mjs [--json]   # Every §4b rule has a record; every ac
 # Environment and dev container
 scripts/check-env-example.sh            # Every env var the code reads is in .env.example (ENV-EXAMPLE-001..004); exit 1 on drift
 scripts/check-skills-toolkit.sh           # skills/, bootstrap/ and config/voice/ name the toolkit as ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit} and the per-repo output dir as $AW_DIR (SKILLS-TOOLKIT-001, -002); exit 1 on drift, file:line per hit
+scripts/check-skills-git-mode.sh        # every skill that makes a worktree, branch, commit, PR or PR comment reads AW_GIT_MODE and refuses the write under `readonly` (skill-revamp spec §2.3); exit 1 on drift, file:line per hit
 scripts/check-skill-requires.sh [--skip-bins]   # every skill has a requires.yaml sidecar (bins, agents, mcp, skills; {} for none) naming things that exist, and exactly one Result block, holding the AW_RESULT gate line (output contract: skills/_shared/output-contract.md); exit 1 with file: reason per finding, 2 usage; --skip-bins on a box without every binary
 scripts/skills-toolkit-rewrite.sh [--dry-run]   # The scripted fix for that drift; idempotent, so a skill PR in flight rebases by re-running it
 # .devcontainer/ is for humans only, never the agent sandbox (no Docker-in-Docker); see docs/devcontainer.md
@@ -191,7 +193,7 @@ bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/canary-baseline-keys.test.sh   # #1896: every `baseline.<key>` /canary reads is a key /landAndDeploy writes to baseline.json
 bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
 bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh: every skill with a git/gh write command has a "## Git mode" section with ${AW_GIT_MODE:-full}; a planted skill without it fails naming file:line
-bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line
+bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, merge, rebase, cherry-pick, revert, am, tag <name>, branch <name>, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line
 bash scripts/tests/system-design-tokens.test.sh   # skills/system-design/scripts/tokens_to_css.py: known tokens and aliases map, unmapped ones are printed and keep the neutral fallback, a missing tokens file exits 1 without output
 bash scripts/tests/system-design-packet.test.sh   # build_prs.py (cards, numeric order, idempotent, refusals), write_packet.py (packet.json, *.src.html skipped), packet-to-storyboard.ts parser/layout imported under node 22+ (skips without it; no bun)
 bash scripts/tests/system-design-video.test.sh   # skills/system-design-video/scripts with stub ffmpeg/ffprobe/bun: doctor.sh reports what is missing and honors PLAYWRIGHT_CORE / AW_STATE_DIR, playback-check.sh passes level 4.1 without B-frames and fails level 5.0, B-frames, non-h264 and decode errors, bad arguments exit 1
@@ -257,7 +259,7 @@ scripts/context-first-run.sh up|continue|status|down [--dry-run] [--no-ui] [--no
 scripts/install-cs.sh [--publish | --link] [--rebuild] [--dry-run]   # The one install of the C# binaries (sindri, sindri-ui, judge, aw-packets, bugfix-state, ui-evidence, aw-readiness): publishes sindri (framework-dependent), ui-evidence (framework-dependent) and the rest (NativeAOT) for this platform into $AW_STATE_DIR/bin/cs/<stamp>/ when the source changed, runs `recipe eval --shipped` with the published binary when the shipped recipes' manifest digest changed (a failing eval or an embedded-vs-staged recipe count mismatch fails the publish), `--link` points `bin/cs/current` at it and writes the ~/.local/bin wrappers. Bare `sindri` starts the control plane and opens the app
 scripts/forge-fixture.sh up --fake <comments|ciRed|ciFlaky|conflict|stacked|noDocs|sourceFix|foreignPush|secret|all> | event merge-base | status | list | down [--all]   # The PR babysitter's fixture PR set (tests/fixtures/forge/pr-set/) loaded into the file-backed fake forge in a guarded temp home; prints the PR link and the answer key (PB-X). `up --github <owner/repo> <variant>` is the owner's, on a scratch repo (FORGE_FIXTURE_GITHUB_SCRATCH confirms it)
 scripts/sindri-ui-fixture.sh up|stall|unstall|drift|down   # The Sindri UI's proof fixture in a guarded temp AW_SINDRI_HOME, through sindri-prove.sh (UI spec §18.2; --large reserved)
-scripts/skill-evals.sh [--skills a,b | --changed | --all] [--family a,b] [--kind routing|behaviour|both] [--runs N] [--max-cost-usd N] [--family-max-cost-usd N] [--gate warn|block] [--dry-run | --selftest | --lint-descriptions | --status]   # Skill evals (#1107; spec docs/superpowers/specs/2026-10-25-skill-revamp-evals-design.md): stages evals/ and skills/ outside any git repo, rewrites only the staged defaults (AW_PREAMBLE off, AW_GIT_MODE readonly, AW_RESULT 1), runs `claude plugin eval` under `env -i` with stub gh/curl first on PATH, keeps the $60/day tally in $AW_STATE_DIR/skill-evals/spend.jsonl; bootstrap/ counts as a skill dir; a skill's family set (evals/_families/<family>/<member>/, first-Skill-call trace graders) runs too when its description changed or `--family` names it, under its own $12 cap; lane leads and the owner run it for real (it spends shared usage), builders only --selftest, --dry-run, --lint-descriptions, --status; exit 0 pass, 1 below threshold, 2 budget refused, 3 environment, 4 routing gate missed (--gate block), 64 usage
+scripts/skill-evals.sh [--skills a,b | --changed | --all] [--family a,b] [--kind routing|behaviour|both] [--runs N] [--max-cost-usd N] [--family-max-cost-usd N] [--gate warn|block] [--preamble on|off] [--dry-run | --selftest | --lint-descriptions | --status]   # Skill evals (#1107; spec docs/superpowers/specs/2026-10-25-skill-revamp-evals-design.md): stages evals/ and skills/ outside any git repo, rewrites only the staged defaults (AW_PREAMBLE off unless --preamble on, AW_GIT_MODE readonly, AW_RESULT 1), runs `claude plugin eval` under `env -i` with stub gh/curl first on PATH, keeps the $60/day tally in $AW_STATE_DIR/skill-evals/spend.jsonl; bootstrap/ counts as a skill dir; a skill's family set (evals/_families/<family>/<member>/, first-Skill-call trace graders) runs too when its description changed or `--family` names it, under its own $12 cap; lane leads and the owner run it for real (it spends shared usage), builders only --selftest, --dry-run, --lint-descriptions, --status; exit 0 pass, 1 below threshold, 2 budget refused, 3 environment, 4 routing gate missed (--gate block), 64 usage
 
 # Setup (from repo root)
 ./setup.sh --providers claude,codex,cursor --dry-run   # Print every change, write nothing
@@ -278,6 +280,7 @@ Before merging any PR:
 4. `node scripts/check-deps.mjs` passes (`deps.yaml` declares every edge the code has; a new edge is a reviewed change to it); `scripts/check-env-example.sh` passes (`.env.example` lists every environment variable the code reads)
 5. `./setup.sh --providers claude,codex,cursor --dry-run` runs cleanly
 6. `node scripts/check-rules.mjs` passes (every §4b rule has a rule record, and every check a record calls active exists in the tree)
+7. When `skills/`, `evals/`, `bootstrap/` or `scripts/skill-evals.sh` changed: `scripts/check-skills-toolkit.sh` and `scripts/check-skills-git-mode.sh` pass, and `scripts/skill-evals.sh --selftest --all` passes (no model, no cost)
 
 ## C# slice recipe
 

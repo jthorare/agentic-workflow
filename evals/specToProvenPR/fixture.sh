@@ -1,76 +1,91 @@
 #!/usr/bin/env bash
-# Workspace for the specToProvenPR forced case: a tiny tool-lending CLI plus an approved two-stage spec. No remote.
-# Planted: the spec says loans last 14 days, loans.py (and its test) say 21. Stage 2 exits 3 when a loan is overdue.
-# Canned world: stub `gh` answers the base-branch read (the stub PATH comes from the eval; this file only writes data).
-# Writes only under $PWD.
+# Workspace for the specToProvenPR cases: a tiny greeter CLI plus an approved spec. No remote is set.
+#   $1 = fresh   feature not built yet (spec -> PRs from scratch)
+#   $1 = halfway --shout is implemented in core.py and unit-tested, but never wired to the CLI
 set -eu
-mkdir -p toolbox tests planning/specs/toolbox .aw-eval
-: > toolbox/__init__.py
+. "$(dirname "${BASH_SOURCE[0]}")/../_lib/fixture-lib.sh"
+variant="${1:-fresh}"
+mkdir -p greeter tests planning/specs/greeter
+: > greeter/__init__.py
 : > tests/__init__.py
-cat > planning/specs/toolbox/DESIGN.md <<'D'
-# Toolbox: lending and overdue
+cat > planning/specs/greeter/DESIGN.md <<'Q'
+# Greeter: shout and language flags
 
-Status: APPROVED (2026-10-30, owner)
+Status: APPROVED (2026-10-20, owner)
 
-`python3 -m toolbox` is the tool library's desk CLI. Today it only has `list`.
+The `greeter` CLI (`python3 -m greeter NAME`) prints `Hello, NAME!`.
 
-## Stage 1: lend
-`python3 -m toolbox lend drill ravi --on 2026-11-01` records the loan in `loans.json` and prints
-`Lent: drill -> ravi (due 2026-11-15)`. Loans last 14 days.
-Observable signal: that exact line, and `loans.json` holding one loan.
+## Phase 1: shout
+`python3 -m greeter NAME --shout` prints the greeting in upper case: `HELLO, NAME!`.
+Observable signal: running the command above in a terminal prints `HELLO, ADA!` for `ADA`.
 
-## Stage 2: overdue
-`python3 -m toolbox overdue --on 2026-11-20` prints `drill (ravi) 5 days late` for each loan past its due date and
-exits with status 3 when at least one loan is overdue, 0 when none is.
-Observable signal: the printed line, plus the exit status in both cases.
+## Phase 2: language
+`python3 -m greeter NAME --lang es` prints `Hola, NAME!`. Unknown languages exit with status 2 and print
+`unsupported language: XX` on stderr. `--lang` and `--shout` combine (`HOLA, ADA!`).
+Observable signal: the three outputs above, plus the exit status of the unknown-language case.
 
-Each stage ships as its own PR. Stage 2 reads the `loans.json` that stage 1 writes.
-D
-cat > README.md <<'D'
-# toolbox
-Run: `python3 -m toolbox list`. Tests: `python3 -m unittest`.
-D
-cat > toolbox/loans.py <<'D'
-import datetime
+Each phase ships as its own PR.
+Q
+cat > README.md <<'Q'
+# greeter
+Run: `python3 -m greeter NAME`. Tests: `python3 -m unittest`.
+Q
+cat > tests/test_core.py <<'Q'
+import unittest
 
-LOAN_DAYS = 21
+from greeter.core import greet
 
 
-def due_date(start: datetime.date) -> datetime.date:
-    return start + datetime.timedelta(days=LOAN_DAYS)
-D
-cat > toolbox/__main__.py <<'D'
+class Greet(unittest.TestCase):
+    def test_plain(self):
+        self.assertEqual(greet("Ada"), "Hello, Ada!")
+Q
+if [ "$variant" = "halfway" ]; then
+cat > greeter/core.py <<'Q'
+def greet(name, shout=False):
+    message = f"Hello, {name}!"
+    return message.upper() if shout else message
+Q
+cat >> tests/test_core.py <<'Q'
+
+    def test_shout(self):
+        self.assertEqual(greet("Ada", shout=True), "HELLO, ADA!")
+Q
+cat > greeter/__main__.py <<'Q'
 import argparse
 
-TOOLS = ["drill", "ladder", "saw"]
+from greeter.core import greet
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="toolbox")
-    parser.add_argument("command", choices=["list"])
-    parser.parse_args()
-    print("\n".join(TOOLS))
+    parser = argparse.ArgumentParser(prog="greeter")
+    parser.add_argument("name")
+    parser.add_argument("--shout", action="store_true")
+    args = parser.parse_args()
+    print(greet(args.name))
 
 
 main()
-D
-cat > tests/test_loans.py <<'D'
-import datetime
-import unittest
+Q
+else
+cat > greeter/core.py <<'Q'
+def greet(name):
+    return f"Hello, {name}!"
+Q
+cat > greeter/__main__.py <<'Q'
+import argparse
 
-from toolbox.loans import due_date
+from greeter.core import greet
 
 
-class DueDate(unittest.TestCase):
-    def test_three_weeks(self):
-        self.assertEqual(due_date(datetime.date(2026, 11, 1)), datetime.date(2026, 11, 22))
-D
-cat > .aw-eval/gh.json <<'D'
-[
-  {"match": ["repo", "view"], "stdout": "main\n", "stderr": "", "exit": 0},
-  {"match": ["pr", "list"], "stdout": "[]\n", "stderr": "", "exit": 0}
-]
-D
-git init -q -b main
-git add -A
-git -c user.name=eval -c user.email=eval@example.com commit -q -m "toolbox: list command and loan due date"
+def main():
+    parser = argparse.ArgumentParser(prog="greeter")
+    parser.add_argument("name")
+    args = parser.parse_args()
+    print(greet(args.name))
+
+
+main()
+Q
+fi
+aw_fixture_repo "greeter"
