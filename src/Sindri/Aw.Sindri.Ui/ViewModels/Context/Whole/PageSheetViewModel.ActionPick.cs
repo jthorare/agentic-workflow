@@ -70,6 +70,16 @@ internal sealed partial class PageSheetViewModel
         ActionPickButtonFocusRequested?.Invoke(this, new ActionPickEventArgs(row));
     }
 
+    // The rows' map actions belong to the old surface: a repointed page starts them all at "No code found yet", and an open row search (listed from the old surface) closes.
+    private void ClearRowActions()
+    {
+        EndActionPick();
+        foreach (var row in Actions)
+        {
+            row.Action = null;
+        }
+    }
+
     // A row that goes away takes its search with it.
     private void ReleaseActionPick(PageSheetActionViewModel row)
     {
