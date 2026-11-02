@@ -275,11 +275,15 @@ public sealed class GateRerunTests
     }
 
     // A step with a rerun template that is no dotnet command: a bash suite, as the shipped bash-scripts step.
-    private async Task UseBashStep()
+    private async Task UseBashStep() => await UseBashStep(["bash", "{test}"]);
+
+    private async Task UseBashSuiteStep() => await UseBashStep(["bash", "scripts/tests/{test}.test.sh"]);
+
+    private async Task UseBashStep(string[] rerun)
     {
         var team = (await _world.Config.Load(CancellationToken.None)).Value;
         var scopes = team.Gate.Scopes.ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
-        var unit = new StepConfig("unit", ["bash", "scripts/ci/bash-tests.sh"], Heavy: true, Rerun: ["bash", "{test}"]);
+        var unit = new StepConfig("unit", ["bash", "scripts/ci/bash-tests.sh"], Heavy: true, Rerun: rerun);
         scopes["dotnet"] = scopes["dotnet"] with { Steps = [.. scopes["dotnet"].Steps.Where(step => step.Name != "unit"), unit] };
         _ = await _world.Config.Save(team with { Gate = team.Gate with { Scopes = scopes } }, CancellationToken.None);
     }
@@ -298,6 +302,19 @@ public sealed class GateRerunTests
         Assert.Equal(GatePriority.Scrubbed, alone.UnsetEnv);
         Assert.Equal("/state/meta/gates/190/1/rerun-unit-scripts_x.test.sh-alone.log", alone.LogFile);
         Assert.Equal(alone.LogFile, response.AloneLog);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_bash_suite_named_bare_reruns_its_file_and_a_pass_alone_is_a_flake()
+    {
+        await SaveRedGate();
+        await UseBashSuiteStep();
+        _ = _world.Runner.When("bash scripts/tests/sindri-pod.test.sh", _ => Pass()).When("git");
+
+        var response = await Rerun("sindri-pod");
+
+        Assert.Equal(FlakeVerdict.Flake, response.Verdict);
+        Assert.Contains(_world.Runner.Requests, r => r.Cwd == GateTree && r.Argv.Contains("scripts/tests/sindri-pod.test.sh", StringComparer.Ordinal));
     }
 
     // #1900: `bash {test}` with a bare suite name exits 127 on both trees; that ran nothing, it is not a real red.

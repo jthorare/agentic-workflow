@@ -36,4 +36,15 @@ public sealed class GateCommandTests
     [Fact, Trait("Lane", "unit")]
     public void Any_other_step_without_a_template_cannot_run_one_test() =>
         Assert.Null(GateCommand.Rerun(new StepConfig("sync", ["scripts/sync.sh"]), "Spike", Heavy));
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("scripts/tests/{test}.test.sh", "sindri-pod", "scripts/tests/sindri-pod.test.sh")]
+    [InlineData("scripts/tests/{test}.test.sh", "scripts/tests/sindri-pod.test.sh", "scripts/tests/sindri-pod.test.sh")]
+    [InlineData("T={test}", "Spike", "T=Spike")]
+    public void A_template_around_the_test_takes_a_bare_name_or_the_full_path(string word, string test, string expected)
+    {
+        var step = new StepConfig("bash", ["make"], Heavy: false, Rerun: ["bash", word]);
+
+        Assert.Equal(["bash", expected], GateCommand.Rerun(step, test, Heavy));
+    }
 }
