@@ -1,4 +1,5 @@
 ---
 type: regex
-pattern: '(?m)^dispatch:\s*verify-web\s+args=.*--yes'
+pattern: '^dispatch:\s*verify-web\s+args=.*--yes'
+flags: m
 ---

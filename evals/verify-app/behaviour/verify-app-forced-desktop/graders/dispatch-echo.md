@@ -1,4 +1,5 @@
 ---
 type: regex
-pattern: '(?m)^dispatch:\s*verify-desktop\s+args='
+pattern: '^dispatch:\s*verify-desktop\s+args='
+flags: m
 ---

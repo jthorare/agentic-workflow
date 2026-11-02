@@ -1,4 +1,5 @@
 ---
 type: regex
-pattern: '(?m)^verdict:\s*FAIL\s*$'
+pattern: '^verdict:\s*FAIL\s*$'
+flags: m
 ---
