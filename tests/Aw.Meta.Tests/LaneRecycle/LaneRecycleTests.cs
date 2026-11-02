@@ -79,17 +79,70 @@ public sealed class LaneRecycleTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task An_enter_that_never_gets_through_fails_without_waiting_for_the_session()
+    public async Task An_enter_that_never_gets_through_and_no_new_session_is_AW_META_012_with_nothing_recorded_or_sent()
     {
         await Ready();
         _world.Panes.SwallowEnters = 99;
 
-        var result = await Run(NewSessionAppears);
+        var result = await Run();
 
         Assert.True(result.IsError);
         Assert.Equal(MetaErrors.CommandFailed.Code, result.Error.Code);
+        Assert.Empty(_world.Panes.Woken);
+        Assert.Equal("s-old", (await _world.LaneFiles.Record("api", CancellationToken.None)).Value!.Session!.Value.Value);
         Assert.Empty(_world.Log.Lines);
-        Assert.Equal(2, _world.LaneSessions.Calls);   // the guard looked twice (live id, then the size); no poll: no poll for a new session after the failed /clear
+    }
+
+    // #1901: on a 14-column pane the screen after /clear still reads as "/clear" in the input box, though Claude did clear.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_clear_the_pane_misreads_is_known_by_the_new_session_id_and_the_recycle_goes_on()
+    {
+        await Ready();
+        var rule = new string('─', 14);
+        _world.Panes.Show("t1-api", $"{rule}\n❯ /clear\n{rule}\n");
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal([("t1-api", "/clear"), ("t1-api", $"Read and continue from {Digest}")], _world.Panes.Woken);
+        Assert.Equal("s-new", (await _world.LaneFiles.Record("api", CancellationToken.None)).Value!.Session!.Value.Value);
+        Assert.Contains("s-old -> s-new", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
+    }
+
+    // #1901: the continue line is longer than /clear, so on a narrow pane its wrapped input box misreads too, after the new id is recorded.
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_continue_line_the_pane_misreads_still_records_logs_and_succeeds_with_a_warning()
+    {
+        await Ready();
+        var rule = new string('─', 14);
+        _world.Panes.Show("t1-api", $"{rule}\n❯ /clear\n{rule}\n");
+
+        var result = await Run(() =>
+        {
+            NewSessionAppears();
+            _world.Panes.Show("t1-api", $"{rule}\n❯ Read and continue from {Digest}\n{rule}\n");
+        });
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : string.Empty);
+        Assert.Equal("s-new", (await _world.LaneFiles.Record("api", CancellationToken.None)).Value!.Session!.Value.Value);
+        Assert.Contains("s-old -> s-new", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
+        Assert.Contains("continue line", result.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains("look at the pane before resending", result.Value.Warning, StringComparison.Ordinal);
+        Assert.Contains(("t1-api", $"Read and continue from {Digest}"), _world.Panes.Woken);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_clear_that_fails_for_another_reason_than_the_input_box_ends_the_recycle_without_polling()
+    {
+        await Ready();
+        _world.Panes.WakeFailure = "no such session: t1-api";
+
+        var result = await Run(NewSessionAppears);
+
+        Assert.Equal(MetaErrors.CommandFailed.Code, result.Error.Code);
+        Assert.Equal(2, _world.LaneSessions.Calls);
+        Assert.Empty(_world.Panes.Woken);
+        Assert.Empty(_world.Log.Lines);
     }
 
     [Fact, Trait("Lane", "unit")]
