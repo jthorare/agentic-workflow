@@ -1,5 +1,5 @@
 ---
-max_turns: 8
+max_turns: 6
 timeout_seconds: 300
 allowed_tools: [Read, Glob, Grep, Skill, Agent, TodoWrite, AskUserQuestion]
 tags: [verify-app, routing, heldout]
