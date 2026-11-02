@@ -897,6 +897,11 @@ do_run() {
   fi
 
   mkdir -p "$EVAL_HOME/cache" || die 3 "cannot create $EVAL_HOME"
+  EVAL_TMP="$EVAL_HOME/tmp"
+  [ "$dry" = 1 ] || { mkdir -p "$EVAL_TMP" && chmod 700 "$EVAL_TMP"; } || die 3 "cannot create $EVAL_TMP"
+  case "$EVAL_TMP" in
+    /tmp/* | /var/tmp/* | /dev/shm/*) note "the eval temp dir $EVAL_TMP is under a system temp dir; claude's sandbox denies writes there, so Bash writes in eval runs will fail (set AW_STATE_DIR elsewhere)" ;;
+  esac
   cleanup() { local kv; if [ "$KEEP" = 0 ]; then for kv in $STAGE_LIST; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done; fi; }
   trap cleanup EXIT
   trap 'exit 130' INT TERM
@@ -948,6 +953,7 @@ do_run() {
     args+=(--max-cost-usd "$bl" --allow-tools Bash Write Edit)
     pass_env=(PATH="$STAGE/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
               AW_STATE_DIR=.aw-state AW_PREAMBLE="$PREAMBLE" AW_GIT_MODE=readonly AW_RESULT=1)
+    pass_env+=(TMPDIR="$EVAL_TMP")
     if [ "$dry" = 1 ]; then
       echo "dry run, not calling claude:"
       echo "  cd $STAGE && env -i $(shq "${pass_env[@]}") $(shq "$CLAUDE_BIN" "${args[@]}")"
