@@ -1,0 +1,2 @@
+Skill	{"skill":"verify-app","args":"--yes"}
+AskUserQuestion	{"questions":[{"question":"Which platform is the app?"}]}

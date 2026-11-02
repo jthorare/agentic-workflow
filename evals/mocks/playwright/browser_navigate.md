@@ -1,1 +1,5 @@
-Navigated to the page. Page title: Cart. Status 200.
+### Ran Playwright code
+await page.goto('http://localhost:3000/recipes');
+### Page
+- Page URL: http://localhost:3000/recipes
+- Page Title: Recipes - Pantry Notes

@@ -1,6 +1,6 @@
 ---
 name: design-evolve-web
-description: Analyze a new reference URL mid-project and selectively merge design tokens into the existing design language. Diffs new tokens against current, asks what to adopt/adapt/ignore, updates design-tokens.json and .impeccable.md.
+description: Use when a design language already exists and the user points at a new reference URL for inspiration, wanting to decide what to keep, rework or drop. Diffs the site against the current tokens and updates design-tokens.json and .impeccable.md. Not for local Swift sources (design-evolve-ios) or a first extraction (design-analyze-web).
 argument-hint: <url>
 allowed-tools: Bash(npx dembrandt *), Bash(git *), Bash(SHARED_DIR=*), Bash(mkdir *), Read, Write, Edit, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

@@ -1,0 +1,2 @@
+[FAIL] settings: footer offset
+[PASS] home: matches mockup

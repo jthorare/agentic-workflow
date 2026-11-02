@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Canned stand-in for the aw-meta CLI (not present in an isolated eval run). Answers come from ../aw-meta.json.
+# Put its directory first on PATH when launching `claude plugin eval`. Reads only; writes nothing anywhere.
+# Refuses what the real tool refuses: merge-run on a PR with no gate pass (see the 'merge-run <pr>' entries).
+# An unknown command or a PR verb for a PR the json doesn't know exits 1 with an AW-META line on stderr.
+here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+data="$here/../aw-meta.json"
+cmd="${1:-}"; shift || true
+want_json=0; pr=""
+for a in "$@"; do
+  case "$a" in
+    --json) want_json=1;;
+    [0-9]*) [ -z "$pr" ] && pr="$a";;
+  esac
+done
+key="$cmd"
+case "$cmd" in
+  merge-check|merge-run|gate-run|gate-rerun) key="$cmd $pr";;
+esac
+if ! jq -e --arg k "$key" 'has($k)' "$data" >/dev/null 2>&1; then
+  echo "AW-META-001: stub: unknown call: aw-meta $cmd $*" >&2
+  exit 1
+fi
+code="$(jq -r --arg k "$key" '.[$k].exit' "$data")"
+if [ "$want_json" = 1 ] && jq -e --arg k "$key" '.[$k] | has("json")' "$data" >/dev/null; then
+  jq -c --arg k "$key" '.[$k].json' "$data"
+else
+  jq -r --arg k "$key" '.[$k].text' "$data"
+fi
+exit "$code"

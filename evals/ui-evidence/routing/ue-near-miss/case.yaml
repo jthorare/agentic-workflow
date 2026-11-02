@@ -1,5 +1,0 @@
-# The pilot case ue-write-playwright-test, prompt unchanged.
-schema_version: "1.1"
-name: ue-near-miss
-context:
-  scaffold_script: scaffold.sh

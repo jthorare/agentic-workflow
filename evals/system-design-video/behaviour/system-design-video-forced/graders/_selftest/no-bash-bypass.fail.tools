@@ -1,0 +1,2 @@
+Bash	{"command": "bash deliver.sh take/footage.mp4 out/v1 petsitter 0d1117"}
+Bash	{"command": "sed -i 's/has_b_frames=2/has_b_frames=0/' out/v1/ffprobe.json"}

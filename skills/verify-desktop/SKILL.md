@@ -1,6 +1,6 @@
 ---
 name: verify-desktop
-description: "Desktop-app verification through the desktop evidence recipe: the real app on seeded data, each screen driven into view and pixel-compared with its mockup. Writes an evidence pack (pack.json + report.md) on every run. Auto mode infers screens from view and style changes in git diff."
+description: "Use when a desktop app's views, styles or resources changed and you need a verdict on whether the real screens still match their design mockups before shipping. Runs the app on seeded data, pixel-compares each affected screen, and writes a PASS, WARN or FAIL evidence pack. Not for web or iOS apps (verify-app routes those) or for fix suggestions while designing (design-verify)."
 argument-hint: "[--journey <plan.md>] [--lenses <csv>] [--visual] [--baseline] [--yes] [--screens <csv>] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(cat *), Bash(cp *), Bash(ui-evidence *), Bash(command *), Read, Write, Glob, Grep, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -102,6 +102,6 @@ Artifacts: $AW_DIR/verification/<run-id>/
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/verify-desktop-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) and print the same JSON as a fenced `aw-result` block before `## Next steps`.
 
 Keys: `skill` (`verify-desktop`), `artifacts` (absolute paths: the evidence pack directory `$AW_DIR/verification/<run-id>/` (`pack.json`, `report.md`)), `summary` (one line),
-plus `evidence_path` (absolute path of the pack directory); `verdict` (`PASS | WARN | FAIL`, the pack's verdict).
+plus `evidence_path` (absolute path of the pack directory); `pack` (absolute path of `pack.json`); `verdict` (`PASS | WARN | FAIL`, the pack's verdict).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

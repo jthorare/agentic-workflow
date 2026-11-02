@@ -1,2 +1,0 @@
-Bash	{"command":"ui-evidence doctor"}
-Bash	{"command":"ui-evidence run script.json ./ui-runs/pr57"}

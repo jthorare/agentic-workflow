@@ -1,0 +1,2 @@
+Found an Avalonia project (*.axaml views).
+dispatch: verify-web args=--yes

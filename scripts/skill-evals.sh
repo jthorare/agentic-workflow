@@ -352,11 +352,10 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
   elif [ -f "$c/prompt.md" ] && [ -z "$(fm_body "$c/prompt.md" | tr -d '[:space:]')" ]; then
     echo "SELFTEST-CASE: $rel/prompt.md: empty prompt"; bad=1
   fi
-  if [ -f "$c/prompt.md" ]; then
-    for to in timeout_seconds allowed_tools; do
-      [ -n "$(fm_get "$c/prompt.md" "$to")" ] || [ -f "$c/case.yaml" ] || note "warning: $rel/prompt.md has no $to (set it on every case)"
-    done
-  fi
+  for to in timeout_seconds allowed_tools; do
+    { [ -f "$c/prompt.md" ] && [ -n "$(fm_get "$c/prompt.md" "$to")" ]; } || grep -Eq "^[[:space:]]+$to:" "$c/case.yaml" 2>/dev/null ||
+      note "warning: $rel has no $to in prompt.md or case.yaml's execution: (set it on every case)"
+  done
   if [ -f "$c/case.yaml" ] && [ -n "$(awk '/scaffold_script:/ { sub(/.*scaffold_script:[ \t]*/, ""); print; exit }' "$c/case.yaml")" ]; then
     to="$(awk '/scaffold_script:/ { sub(/.*scaffold_script:[ \t]*/, ""); gsub(/["\047]/, ""); print; exit }' "$c/case.yaml")"
     [ -f "$c/$to" ] || { echo "SELFTEST-CASE: $rel/case.yaml: scaffold_script $to is not in the case directory"; bad=1; }

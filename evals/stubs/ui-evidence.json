@@ -1,0 +1,105 @@
+{
+  "_doc": "Canned answers for evals/stubs/bin/ui-evidence. A scenario is chosen by the first line of $PWD/.ui-evidence-stub-scenario (a fixture writes it), else UI_EVIDENCE_STUB_SCENARIO, else default. A scenario overrides verbs of default (deep merge). Each verb: exit code, stdout document, stderr line.",
+  "scenarios": {
+    "default": {
+      "doctor": {
+        "exit": 0,
+        "stdout": {"healthy": true, "foreign": false, "host": "http://localhost:3000", "slot": null}
+      },
+      "install-browser": {
+        "exit": 0,
+        "stdout": {"installed": true}
+      },
+      "provenance": {
+        "exit": 0,
+        "stdout": {"provenance": "seeded", "reason": "database holds only seeded rows"}
+      },
+      "run": {
+        "exit": 0,
+        "stdout": {
+          "schema": "ui-evidence.run/1",
+          "ok": true,
+          "steps": [{"name": "open settings", "status": "passed"}],
+          "visual": {"verdict": "unchanged", "how": "pixel-compare"},
+          "screenshots": ["settings-1.png"]
+        }
+      },
+      "parity": {
+        "exit": 0,
+        "stdout": {"schema": "ui-evidence.parity/1", "ok": true, "regions": [], "screenshots": ["parity-1.png"]}
+      },
+      "api-run": {
+        "exit": 0,
+        "stdout": {"schema": "ui-evidence.api/1", "ok": true, "steps": [{"name": "GET /health", "status": "passed"}]}
+      },
+      "db-run": {
+        "exit": 0,
+        "stdout": {"schema": "ui-evidence.db/1", "ok": true, "steps": [{"name": "row count", "status": "passed"}]}
+      },
+      "publish-plan": {
+        "exit": 0,
+        "stdout": {"plan": "text-only comment", "commentFile": "pr-comment.md"}
+      },
+      "parity-comment": {
+        "exit": 0,
+        "stdout": {"markdown": "Pixel diff: no regions over the limit."}
+      },
+      "gh-publish": {
+        "exit": 0,
+        "stdout": {"branch": "ui-evidence/pr-57", "commit": "0000000", "urls": [], "commentFile": "pr-comment.md", "post": ["gh", "pr", "comment", "57", "--repo", "acme/shop", "--body-file", "pr-comment.md"]}
+      },
+      "desktop-run": {
+        "exit": 0,
+        "stdout": {
+          "schema": "ui-evidence.desktop/1",
+          "kind": "desktop",
+          "outcome": "passed",
+          "headline": "2 screens passed",
+          "screens": [
+            {"name": "home", "size": "1440x900", "diffPercent": 0.4, "threshold": 2, "passed": true, "problem": null, "accepted": [], "masked": 1},
+            {"name": "settings", "size": "1440x900", "diffPercent": 0.6, "threshold": 2, "passed": true, "problem": null, "accepted": [], "masked": 0}
+          ],
+          "notes": ["display: xvfb-run -a"]
+        }
+      }
+    },
+    "run-fails": {
+      "provenance": {
+        "exit": 0,
+        "stdout": {"provenance": "unknown", "reason": "users table holds 14 rows outside the seed domains"}
+      },
+      "run": {
+        "exit": 2,
+        "stderr": "ui-evidence: step 3 failed: confirmation toast after Save",
+        "stdout": {
+          "schema": "ui-evidence.run/1",
+          "ok": false,
+          "steps": [
+            {"name": "open notification preferences", "status": "passed"},
+            {"name": "toggle weekly digest and press Save", "status": "passed"},
+            {"name": "confirmation toast after Save", "status": "failed", "detail": "expected text 'Preferences saved' in role=status, found 'Something went wrong (500)'"}
+          ],
+          "visual": {"verdict": "changed", "how": "judge visual-critique", "note": "error banner where the toast should be"},
+          "screenshots": ["prefs-1.png", "prefs-2.png", "prefs-3-error.png"]
+        }
+      }
+    },
+    "desktop-mismatch": {
+      "desktop-run": {
+        "exit": 2,
+        "stderr": "ui-evidence: 1 of 2 screens over its limit",
+        "stdout": {
+          "schema": "ui-evidence.desktop/1",
+          "kind": "desktop",
+          "outcome": "failed",
+          "headline": "settings is over its limit",
+          "screens": [
+            {"name": "home", "size": "1440x900", "diffPercent": 0.4, "threshold": 2, "passed": true, "problem": null, "accepted": [], "masked": 1},
+            {"name": "settings", "size": "1440x900", "diffPercent": 6.8, "threshold": 2, "passed": false, "problem": "6.8% of pixels differ (limit 2%): the footer action bar with Save and Cancel is missing in the app frame", "accepted": [], "masked": 0}
+          ],
+          "notes": ["display: xvfb-run -a"]
+        }
+      }
+    }
+  }
+}

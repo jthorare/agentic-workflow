@@ -1,0 +1,2 @@
+Skill	{"skill":"verify-app","args":"--yes"}
+Skill	{"skill":"verify-web"}

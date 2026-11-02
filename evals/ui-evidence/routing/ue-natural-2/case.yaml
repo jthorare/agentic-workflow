@@ -1,5 +1,0 @@
-# The pilot case ue-refuse-prod-host, prompt unchanged (the skill fired 3 of 3 in the pilot).
-schema_version: "1.1"
-name: ue-natural-2
-context:
-  scaffold_script: scaffold.sh

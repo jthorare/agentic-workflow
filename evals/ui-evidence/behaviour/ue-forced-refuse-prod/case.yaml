@@ -1,5 +1,0 @@
-# The pilot case ue-refuse-prod-host with "Use the ui-evidence skill" added. A second behaviour case: the refusal is what the skill adds over the base model here.
-schema_version: "1.1"
-name: ue-forced-refuse-prod
-context:
-  scaffold_script: scaffold.sh

@@ -1,6 +1,6 @@
 ---
 name: design-implement
-description: Detect web vs iOS automatically and delegate to /design-implement-web (CSS/Tailwind/Next.js) or /design-implement-ios (SwiftUI Theme.swift). Enforces the mockup-first gate, then auto-chains /design-verify.
+description: "Use when an approved screen design should become real code, web or iOS: the user says the mockup is signed off, or that it's time to build the screen. Picks the platform, checks the mockup was approved, delegates, then runs design verification. Not for drafting a new design (design-mockup)."
 argument-hint: "<screen-name> [--no-mockup]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Bash(source *), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

@@ -98,6 +98,11 @@ T="$(fixture gate-elsewhere)"; skill "$T" misplaced '{}'
 printf -- '---\nname: misplaced\n---\n%s\n\n## Result block\n\nKeys: `skill`.\n' "$GATE" > "$T/skills/misplaced/SKILL.md"
 run "$T"; expect_rc "gate line outside the Result block fails" 1
 
+T="$(fixture two-blocks)"; skill "$T" twice '{}'
+printf -- '\n## Result block\n\n```bash\n%s\n```\n' "$GATE" >> "$T/skills/twice/SKILL.md"
+run "$T"; expect_rc "two Result block sections fail" 1
+expect_out "two-blocks reason" "twice/SKILL.md: 2 '## Result block' sections \\(keep one\\)"
+
 T="$(fixture no-block)"; skill "$T" noblock '{}'
 printf -- '---\nname: noblock\n---\nBody.\n' > "$T/skills/noblock/SKILL.md"
 run "$T"; expect_rc "no Result block at all fails" 1

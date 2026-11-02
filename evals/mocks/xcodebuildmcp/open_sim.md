@@ -1,0 +1,1 @@
+Simulator app opened.
