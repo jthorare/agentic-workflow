@@ -10,8 +10,10 @@ REAL="$(cd "$(dirname "$0")/../.." && pwd)"
 PASS=0
 FAIL=0
 TMPROOT="$(mktemp -d "${TMPDIR:-/tmp}/skill-evals-test.XXXXXX")"
+# why: the state dirs sit in /tmp, not under TMPDIR: the script refuses an eval temp dir too long for claude's sandbox socket (#1931)
+SHORT="$(mktemp -d /tmp/se.XXXXXX)"
 LIVE_PID=""
-cleanup() { [ -z "$LIVE_PID" ] || kill "$LIVE_PID" 2>/dev/null || true; find "$TMPROOT" -delete 2>/dev/null || true; }
+cleanup() { [ -z "$LIVE_PID" ] || kill "$LIVE_PID" 2>/dev/null || true; find "$TMPROOT" "$SHORT" -delete 2>/dev/null || true; }
 trap cleanup EXIT
 
 ok()   { PASS=$((PASS + 1)); echo "  ok   $1"; }
@@ -25,7 +27,7 @@ BIN="" REPO="" STATE=""
 mkrepo() {
   N=$((N + 1))
   local base="$TMPROOT/t$N"
-  REPO="$base/repo" STATE="$base/state" BIN="$base/bin"
+  REPO="$base/repo" STATE="$SHORT/$N" BIN="$base/bin"
   mkdir -p "$REPO/scripts" "$REPO/evals" "$REPO/skills/alpha" "$REPO/skills/beta" "$REPO/skills/_shared" "$REPO/config/voice" "$STATE" "$BIN"
   cp "$REAL/scripts/skill-evals.sh" "$REPO/scripts/"
   cp -a "$REAL/evals/plugin" "$REAL/evals/stubs" "$REAL/evals/_lib" "$REAL/evals/mocks" "$REPO/evals/"
@@ -301,7 +303,7 @@ if grep -qE "hunter22xyz|$FAKE_GH|tok-forge" "$ENVF"; then fail "a secret value 
 has -E '^AW_PREAMBLE=off$' "$ENVF" && has -E '^AW_GIT_MODE=readonly$' "$ENVF" && has -E '^AW_RESULT=1$' "$ENVF" && ok "AW_* values are in the allowlist" || fail "AW_* values"
 has -E "^PATH=[^:]*/stage-[^/:]*/stubs/bin:" "$ENVF" && ok "PATH starts with the stub dir" || fail "PATH order"
 [ "$(wc -l <"$ENVF")" -le 12 ] && ok "only the allowlist is forwarded ($(wc -l <"$ENVF") variables)" || { fail "env has too many variables"; cat "$ENVF"; }
-has -E "^TMPDIR=$STATE/skill-evals/tmp/[0-9]{8}T[0-9]{6}-[0-9]+\$" "$ENVF" && ok "eval child: TMPDIR is a per-run dir under the eval home's tmp" || { fail "eval child: TMPDIR is a per-run dir under the eval home's tmp"; grep '^TMPDIR=' "$ENVF" || echo "      | (no TMPDIR in the child's env)"; }
+has -E "^TMPDIR=$STATE/skill-evals/tmp/[A-Za-z0-9]{4}\$" "$ENVF" && ok "eval child: TMPDIR is a short per-run dir (4 characters) under the eval home's tmp" || { fail "eval child: TMPDIR is a short per-run dir (4 characters) under the eval home's tmp"; grep '^TMPDIR=' "$ENVF" || echo "      | (no TMPDIR in the child's env)"; }
 RUN_TMP="$(sed -n 's/^TMPDIR=//p' "$ENVF")"
 [ -n "$RUN_TMP" ] && [ ! -e "$RUN_TMP" ] && ok "eval child: a normal run removes its TMPDIR, read-only leftovers included" || fail "eval child: TMPDIR '$RUN_TMP' is still there after a normal run"
 [ -n "$(ls "$BIN"/tmpdir-ok.*.txt 2>/dev/null)" ] && ok "eval child: TMPDIR exists and is writable when claude runs" || fail "eval child: TMPDIR exists and is writable when claude runs"
@@ -632,6 +634,15 @@ TD="$(find "$STATE/skill-evals" -type d -name traces | head -1)"
 grep -q assistant "$TD/alpha-natural-1-with-2.jsonl" && ok "each file holds its own run's trace" || fail "trace content"
 KEPT_TMP="$(sed -n 's/^TMPDIR=//p' "$BIN"/env.*.txt | head -1)"
 [ -n "$KEPT_TMP" ] && [ -d "$KEPT_TMP" ] && ok "eval child: --keep-temp keeps the run's TMPDIR" || fail "eval child: --keep-temp lost TMPDIR '$KEPT_TMP'"
+
+echo "an eval temp dir too long for claude's sandbox socket (#1931)"
+mkrepo; mkclaude; mkresult 1 true 1
+STATE="$STATE/$(printf 'd%.0s' $(seq 40))"; mkdir -p "$STATE"
+run --skills alpha --kind routing
+expect "a deep state dir refuses before claude runs" 3 'socket'
+has -F -- '108' <<<"$OUT" && has -F -- 'AW_STATE_DIR' <<<"$OUT" && ok "the refusal names the 108-byte socket limit and AW_STATE_DIR" || { fail "the refusal names the 108-byte socket limit and AW_STATE_DIR"; show; }
+[ -z "$(ls "$BIN"/args.*.txt 2>/dev/null)" ] && ok "claude never ran" || fail "claude ran despite the long temp dir"
+[ -z "$(ls -A "$STATE/skill-evals/tmp" 2>/dev/null)" ] && ok "the refused run leaves no temp dir behind" || { fail "the refused run left $(ls -A "$STATE/skill-evals/tmp")"; }
 
 echo "fixture lint ignores comment lines"
 mkrepo
