@@ -4,15 +4,15 @@ using Aw.Sindri.Core.Sandbox;
 
 namespace Aw.Sindri.Infrastructure.Sandbox;
 
-#pragma warning disable MA0182 // until the macOS launcher (SB-9c) registers it
 /// <summary>
-/// ICgroupStats over a process group (macOS, SB-9b): one 'ps -A -o pid=,pgid=,rss=,time=' run, filtered to the group in code. That form means the same on macOS and
-/// on Linux procps, which 'ps -g' does not. The group's memory is the sum of its processes' resident sets, so shared pages count once per process: a high figure,
+/// ICgroupStats over a process group (macOS, SB-9b): one 'ps -A -o pid=,pgid=,rss=,time=' run (the pid list, the count and the CPU), filtered to the group in code. That form means the same on macOS and
+/// on Linux procps, which 'ps -g' does not. The group's memory is the system's phys footprint of its processes when <c lang="text">footprint</c> answers, else the sum of their resident sets, which counts shared pages once per process: a high figure,
 /// which is the safe side of a kill line.
 /// </summary>
 /// <param name="processes">Runs ps.</param>
 /// <param name="ps">The ps program.</param>
-internal sealed class ProcessGroupStats(ISandboxProcesses processes, string ps = "ps") : ICgroupStats
+/// <param name="footprint">The group's memory as the system charges it; null, or a null answer, leaves the sum of resident sets.</param>
+internal sealed class ProcessGroupStats(ISandboxProcesses processes, string ps = "ps", IPhysFootprint? footprint = null) : ICgroupStats
 {
     private static readonly TimeSpan _timeout = TimeSpan.FromSeconds(10);
     private readonly ConcurrentDictionary<string, long> _peaks = new(StringComparer.Ordinal);
@@ -39,7 +39,7 @@ internal sealed class ProcessGroupStats(ISandboxProcesses processes, string ps =
             return null;
         }
 
-        var memory = members.Sum(m => m.RssBytes);
+        var memory = footprint?.Sum([.. members.Select(m => m.Pid)]) ?? members.Sum(m => m.RssBytes);   // why: summed resident sets count a shared page once per process (8 MSBuild nodes read ~2.0 GB where the footprint is ~1.4 GB)
         var peak = _peaks.AddOrUpdate(cgroupPath, static (_, now) => now, static (_, before, now) => Math.Max(before, now), memory);
         return new CgroupSample(
             OomKills: 0,   // why: the memory-kill record is keyed by unit and read through IScopeControl.Result, which the watchdog asks at its verdict
@@ -89,12 +89,13 @@ internal sealed class ProcessGroupStats(ISandboxProcesses processes, string ps =
         var fields = line.Split([' ', '\t'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         return fields.Length == 4
             && int.TryParse(fields[1], NumberStyles.None, CultureInfo.InvariantCulture, out var group)
+            && int.TryParse(fields[0], NumberStyles.None, CultureInfo.InvariantCulture, out var pid)
             && long.TryParse(fields[2], NumberStyles.None, CultureInfo.InvariantCulture, out var rss)
             && CpuMicroseconds(fields[3]) is { } cpu
-                ? new Row(group, rss * 1024, cpu)
+                ? new Row(pid, group, rss * 1024, cpu)
                 : null;
     }
 
-    private sealed record Row(int Group, long RssBytes, long CpuMicroseconds);
+    private sealed record Row(int Pid, int Group, long RssBytes, long CpuMicroseconds);
 }
-#pragma warning restore MA0182
+

@@ -103,7 +103,8 @@ internal sealed class SandboxLaunchStages(IApprovedProfile profile, ILearnHistor
     public async ValueTask<Result<Unit>> StartEgress(SandboxPlan plan, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        var started = await egress.Start(plan.Launch, plan.Network, inputs.DenialCounterFor(plan.Launch), clock).ConfigureAwait(false);
+        var denials = inputs.DenialCounterFor(plan.Launch);
+        var started = await egress.Start(plan.Launch, plan.Network, denials, clock).ConfigureAwait(false);   // the registry starts the form the platform needs (macOS: a loopback proxy)
         return started.IsError ? started.Error : Unit.Value;
     }
 

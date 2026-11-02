@@ -17,14 +17,24 @@ public static class BubblewrapServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(environment);
+        return services
+            .AddSandboxParts(environment)
+            .AddSingleton<ISandbox>(sp => new BubblewrapSandbox(BubblewrapOptions.From(environment), sp.GetRequiredService<ISandboxProcesses>(), new HostPaths(), sp.GetRequiredService<ILaunchSecrets>(), sp.GetRequiredService<TimeProvider>()));
+    }
+
+    /// <summary>Adds what both mechanisms share: the process runner, the launch secrets and the owner-copy and separate-login sources.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="environment">Reads an environment variable.</param>
+    /// <returns>The same collection.</returns>
+    internal static IServiceCollection AddSandboxParts(this IServiceCollection services, Func<string, string?> environment)
+    {
         var home = environment("HOME") is { Length: > 0 } configured ? configured : Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
         return services
             .AddSingleton<ISandboxProcesses, SandboxProcesses>()
             .AddSingleton<LaunchSecretRegistry>()
             .AddSingleton<ILaunchSecrets>(static sp => sp.GetRequiredService<LaunchSecretRegistry>())
-            .AddSingleton<ISandbox>(sp => new BubblewrapSandbox(BubblewrapOptions.From(environment), sp.GetRequiredService<ISandboxProcesses>(), new HostPaths(), sp.GetRequiredService<ILaunchSecrets>(), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IModelCredentialSource>(sp => new OwnerCopyCredentialSource(
-                new OwnerCopyOptions(home, sp.GetRequiredService<SindriSettings>().Home), sp.GetRequiredService<TimeProvider>()))
+                new OwnerCopyOptions(home, sp.GetRequiredService<SindriSettings>().Home, new SecurityCliKeychainLogin(sp.GetRequiredService<ISandboxProcesses>(), OperatingSystem.IsMacOS())), sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IModelCredentialSource>(sp => new SeparateLoginCredentialSource(sp.GetRequiredService<SindriSettings>().Home, sp.GetRequiredService<TimeProvider>()));
     }
 }

@@ -45,7 +45,7 @@ internal sealed class FakeOwnerHome : IDisposable
         + $"\"mcpServers\":{{\"github\":{{\"command\":\"npx\",\"env\":{{\"GITHUB_TOKEN\":\"{McpToken}\"}}}},\"api\":{{\"type\":\"http\",\"url\":\"https://x.example\",\"headers\":{{\"Authorization\":\"Bearer ownerbearer\"}}}}}},"
         + "\"projects\":{\"/r\":{\"mcpServers\":{\"p\":{\"env\":{\"K\":\"proj-secret\"}}}}}}";
 
-    internal OwnerCopyCredentialSource Source() => new(new OwnerCopyOptions(Root, SindriHome), Clock);
+    internal OwnerCopyCredentialSource Source(IKeychainLogin? keychain = null) => new(new OwnerCopyOptions(Root, SindriHome, keychain), Clock);
 
     internal void CodexAuth(string json) => File.WriteAllText(Root + "/.codex/auth.json", json);
 

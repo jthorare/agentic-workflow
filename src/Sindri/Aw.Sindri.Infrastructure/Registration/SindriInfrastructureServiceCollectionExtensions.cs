@@ -88,11 +88,26 @@ public static class SindriInfrastructureServiceCollectionExtensions
     }
 
     /// <summary>SB-3a: what 'session wrap --limits' watches a session's systemd scope through (systemctl --user and the cgroup files).</summary>
-    private static IServiceCollection AddScopeWatch(this IServiceCollection services) =>
-        services.AddSingleton<IScopeControl>(static _ => new SystemctlScopeControl(new SandboxProcesses())).AddSingleton<ICgroupStats, CgroupFiles>().AddSingleton<IHeavyLockSweep>(static sp => new HeavyLockSweep(sp.GetRequiredService<TimeProvider>()))
+    private static IServiceCollection AddScopeWatch(this IServiceCollection services) => services.AddScopeWatch(OperatingSystem.IsMacOS());
+
+    /// <summary>The scope watch with its platform chosen by <paramref name="mac"/>: systemd and cgroup files, or (macOS) the process-group files.</summary>
+    /// <param name="services">The service collection.</param>
+    /// <param name="mac">Whether this is macOS.</param>
+    /// <returns>The same collection.</returns>
+    internal static IServiceCollection AddScopeWatch(this IServiceCollection services, bool mac) =>
+        services.AddScopePorts(mac).AddSingleton<IHeavyLockSweep>(static sp => new HeavyLockSweep(sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<IDenialFiles>(static sp => new DiskDenialFiles(sp.GetRequiredService<LauncherOptions>().LaunchDirectory, sp.GetRequiredService<JsonSerializerOptions>()))   // SB-4b: the launcher's denials folder
             .AddSingleton<ISessionSandboxes>(static sp => new DiskSessionSandboxes(
                 sp.GetRequiredService<LauncherOptions>().LaunchDirectory, sp.GetRequiredService<JsonSerializerOptions>(), sp.GetRequiredService<ICgroupStats>(), Sandbox.Launch.PlatformSandboxServiceCollectionExtensions.SliceRelativePath(OwnUid.Read())));   // SB-6a: a session row's sandbox
+
+    /// <summary>systemd and cgroup files on Linux; on macOS (SB-9c) the process group's files, one object for the scope control and the memory kills.</summary>
+    private static IServiceCollection AddScopePorts(this IServiceCollection services, bool mac) => mac
+        ? services.AddSingleton(static sp => new ProcessGroupScopeControl(ProcessGroupFiles.Directory(sp.GetRequiredService<LauncherOptions>().LaunchDirectory)))
+            .AddSingleton<IScopeControl>(static sp => sp.GetRequiredService<ProcessGroupScopeControl>())
+            .AddSingleton<IMemoryKills>(static sp => sp.GetRequiredService<ProcessGroupScopeControl>())
+            .AddSingleton<IScopeRelease>(static sp => sp.GetRequiredService<ProcessGroupScopeControl>())
+            .AddSingleton<ICgroupStats>(static _ => new ProcessGroupStats(new SandboxProcesses(), footprint: new LibprocPhysFootprint()))
+        : services.AddSingleton<IScopeControl>(static _ => new SystemctlScopeControl(new SandboxProcesses())).AddSingleton<ICgroupStats, CgroupFiles>();
 
     /// <summary>Engine P8: the diff signal of an agent run (git) and an agent session's end and spend (the ledger).</summary>
     private static IServiceCollection AddAgentRuntimeAdapters(this IServiceCollection services, Func<string, string?> environment) =>

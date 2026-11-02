@@ -93,17 +93,18 @@ internal static class SandboxCanaries
     /// <summary>Builds the canaries a plan can be proven with, in the order they run.</summary>
     /// <param name="plan">The plan.</param>
     /// <returns>The canaries.</returns>
-    internal static IReadOnlyList<SandboxCanary> For(SandboxPlan plan)
+    /// <param name="seatbelt">True for the macOS forms: a denied path is proven by "stat and read both fail" (it still exists), the temp directory is the launch's short one, the login check has no BSD-incompatible stat, and the net-deny canary needs no GNU timeout. The Linux-only /proc and network-namespace checks are not part of any canary, so none is skipped.</param>
+    internal static IReadOnlyList<SandboxCanary> For(SandboxPlan plan, bool seatbelt = false)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        List<SandboxCanary> canaries = [FsDeny(plan), FsWrite(plan), Env(), Login(plan)];
+        List<SandboxCanary> canaries = seatbelt ? [FsDenySeatbelt(plan), FsWrite(plan, SandboxPaths.SeatbeltTemp(plan.Launch)), Env(), LoginSeatbelt(plan)] : [FsDeny(plan), FsWrite(plan, "/tmp"), Env(), Login(plan)];
         // why: the hooks live in the agent home a login binds; a plan without one (Check again's fixture when no agent is picked for Steps) has none to run, and every launch's plan has one
         if (plan.Environment.Any(static e => e.Value is not null && (string.Equals(e.Name, "CLAUDE_CONFIG_DIR", StringComparison.Ordinal) || string.Equals(e.Name, "CODEX_HOME", StringComparison.Ordinal))))
         {
             canaries.Add(new SandboxCanary(SandboxReasons.HooksRun, HookScript(plan), Shell: "/bin/bash"));
         }
 
-        canaries.Add(NetDeny());
+        canaries.Add(seatbelt ? NetDenySeatbelt() : NetDeny());
         if (plan.Worktree is { } worktree && plan.Writable.Contains(worktree, StringComparer.Ordinal))
         {
             canaries.Insert(2, GitRef(plan, worktree));
@@ -136,11 +137,46 @@ internal static class SandboxCanaries
         return new SandboxCanary(SandboxReasons.FsDeny, script.ToString());
     }
 
-    private static SandboxCanary FsWrite(SandboxPlan plan)
+    // Seatbelt keeps a denied path in place and refuses every access to it: a stat and a read must both fail (spec §3.1).
+    private static SandboxCanary FsDenySeatbelt(SandboxPlan plan)
+    {
+        var script = new StringBuilder(Prelude);
+        script.Append("check() { [ ! -e \"$1\" ] || fail \"visible: $1\"; ls \"$1\" >/dev/null 2>&1 && fail \"listable: $1\"; cat \"$1\" >/dev/null 2>&1 && fail \"readable: $1\"; return 0; }\n");
+        foreach (var denied in plan.Mounts.Where(m => m.Kind == PlanMountKind.Deny))
+        {
+            script.Append(CultureInfo.InvariantCulture, $"check {Quote(denied.Path)}\n");
+        }
+
+        script.Append("for p in /usr /etc; do ( : > \"$p/.sindri-canary\" ) 2>/dev/null && fail \"wrote $p\"; done\nexit 0\n");
+        return new SandboxCanary(SandboxReasons.FsDeny, script.ToString());
+    }
+
+    // The owner's original login is denied with the real home (the fs-deny canary), and $HOME is the run's own folder here, so only the copy is checked; the mode via BSD stat, then GNU.
+    private static SandboxCanary LoginSeatbelt(SandboxPlan plan)
+    {
+        var script = new StringBuilder(Prelude);
+        var env = plan.Environment.ToDictionary(e => e.Name, e => e.Value, StringComparer.Ordinal);
+        foreach (var (variable, file) in new[] { ("CLAUDE_CONFIG_DIR", "/.credentials.json"), ("CODEX_HOME", "/auth.json") })
+        {
+            if (env.TryGetValue(variable, out var dir) && dir is not null)
+            {
+                script.Append(CultureInfo.InvariantCulture, $"f={Quote(dir + file)}\n[ -r \"$f\" ] || fail \"the login copy is not readable at $f\"\nm=$(stat -f %Lp \"$f\" 2>/dev/null || stat -c %a \"$f\"); [ \"$m\" = 600 ] || fail \"the login copy has mode $m\"\n");
+            }
+        }
+
+        script.Append("exit 0\n");
+        return new SandboxCanary(SandboxReasons.Login, script.ToString());
+    }
+
+    // No network at all but the two loopback ports: a direct connection fails at once, and macOS has no timeout(1).
+    private static SandboxCanary NetDenySeatbelt() =>
+        new(SandboxReasons.NetDeny, Prelude + "command -v bash >/dev/null || fail 'no bash inside the sandbox'\nbash -c '(exec 3<>/dev/tcp/1.1.1.1/443) 2>/dev/null' && fail 'a direct connection to 1.1.1.1:443 succeeded'\nexit 0\n");
+
+    private static SandboxCanary FsWrite(SandboxPlan plan, string temp)
     {
         var script = new StringBuilder(Prelude);
         script.Append("can() { f=\"$1/.sindri-canary-$$\"; ( : > \"$f\" ) 2>/dev/null && { rm -f \"$f\"; return 0; }; return 1; }\n");
-        foreach (var path in new[] { plan.RunDirectory, "/tmp" })
+        foreach (var path in new[] { plan.RunDirectory, temp })
         {
             script.Append(CultureInfo.InvariantCulture, $"can {Quote(path)} || fail {Quote("cannot write " + path)}\n");
         }
