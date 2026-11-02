@@ -149,6 +149,16 @@ public sealed class ConceptLayerPinTests
     }
 
     [Fact]
+    public void A_concept_a_person_set_that_no_pin_row_names_offers_Pin_this_and_no_Unpinned_line()
+    {
+        var stale = new MapRebuildView(MapRebuildPhases.Idle, Progress: null, RetryAt: null, Stale: true, Failed: null);
+        var layer = Layer([AConcepts.Concept("concept:billing", "Billing", source: "override")], pins: Pins(stale));
+
+        Assert.Equal(("Set by a person", true, false), (layer.Tiles[0].MarkText, layer.Tiles[0].ShowPinThis, layer.Tiles[0].ShowEditPin));
+        Assert.Empty(layer.Tiles[0].Lines);
+    }
+
+    [Fact]
     public void The_head_line_says_how_much_the_pins_cover()
     {
         var layer = Layer(
