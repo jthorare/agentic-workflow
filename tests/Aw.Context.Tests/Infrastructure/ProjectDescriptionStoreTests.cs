@@ -75,7 +75,8 @@ public sealed class ProjectDescriptionStoreTests : IDisposable
         _world.Sql("INSERT INTO source_cursor (source, repo, cursor, last_sync, phase) VALUES ('linear-projects', 'records', 'watermark', '2026-10-27T00:00:00Z', 'incremental')");
         _world.Sql("INSERT INTO source_cursor (source, repo, cursor, last_sync, phase) VALUES ('linear', 'records', 'issues-mark', '2026-10-27T00:00:00Z', 'incremental')");
 
-        _ = await runner.Migrate(ContextDatabase.Migrations, TestContext.Current.CancellationToken);
+        // why: 0029 re-reads Linear issues on purpose; this pins what 0023 alone leaves
+        _ = await runner.Migrate([.. ContextDatabase.Migrations.Take(23)], TestContext.Current.CancellationToken);
 
         Assert.Equal(1, _world.Count("SELECT count(*) FROM source_cursor WHERE source = 'linear-projects' AND repo = 'records' AND phase = 'recent' AND cursor IS NULL AND backfill_cursor IS NULL AND backfill_before IS NULL"));
         Assert.Equal(1, _world.Count("SELECT count(*) FROM source_cursor WHERE source = 'linear' AND repo = 'records' AND phase = 'incremental' AND cursor = 'issues-mark'"));

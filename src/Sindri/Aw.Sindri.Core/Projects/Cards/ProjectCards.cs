@@ -123,7 +123,7 @@ public static class ProjectCards
         var state = StateOf(fact.StateRaw);
         return new ProjectCard(
             fact.Key, ProjectOrigin.Led, fact.Title, fact.Description, state, StateSetByOwner: false, MapHealth(fact.Health), new ProjectLead(You: true, Name: null),
-            Date(fact.DueAt), fact.OpenIssues, fact.Counting, OpenPrs: null, PrScope: null, fact.LastActivity, LinearFinished(state, fact), Repos: [],
+            Date(fact.DueAt), fact.OpenIssues, fact.Counting, fact.OpenPrs, PrScope(fact), fact.LastActivity, LinearFinished(state, fact), fact.Repos ?? [],
             LinearLinks(fact, []), notes, Synced: true, version);
     }
 
@@ -147,10 +147,14 @@ public static class ProjectCards
         return new ProjectCard(
             row.Id.Value, ProjectOrigin.Attached, fact.Title, fact.Description, row.State ?? linearState, byOwner, MapHealth(fact.Health),
             fact.Lead is null ? null : new ProjectLead(fact.LeadIsOwner, fact.LeadIsOwner ? null : fact.Lead.Name),
-            Date(fact.DueAt) ?? row.Target, fact.OpenIssues, fact.Counting, OpenPrs: null, PrScope: null, fact.LastActivity,
+            Date(fact.DueAt) ?? row.Target, fact.OpenIssues, fact.Counting, fact.OpenPrs, PrScope(fact), fact.LastActivity,
             byOwner ? row.FinishedAt ?? linearFinished : linearFinished ?? row.FinishedAt,
-            Repos: [], LinearLinks(fact, OwnerLinks(row)), row.Notes, Synced: true, row.Version);
+            fact.Repos ?? [], LinearLinks(fact, OwnerLinks(row)), row.Notes, Synced: true, row.Version);
     }
+
+    // why: the store holds only PRs the GitHub feed's window saw, so the count says which ones it is (spec §3)
+    private static string? PrScope(LinearProjectFact fact) =>
+        fact is { OpenPrs: not null, PrWindowDays: { } days } ? string.Create(CultureInfo.InvariantCulture, $"(updated in the last {days} days)") : null;
 
     private static List<ProjectLink> LinearLinks(LinearProjectFact fact, List<ProjectLink> owners) =>
         fact.Url is null ? owners : [new ProjectLink("Linear", fact.Url), .. owners];

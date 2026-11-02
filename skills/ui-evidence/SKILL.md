@@ -191,3 +191,10 @@ When `AW_RESULT=1` is set, after the run and the publish decision, resolve `$AW_
 - `published`: `true` only if something was actually posted or uploaded (after the user approved it), else `false`
 
 Then print the same object in the reply as a fenced block tagged `aw-result` (three backticks, `aw-result`, the JSON, three backticks).
+
+## Git mode
+
+`AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
+
+- `full`: do everything this skill describes.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.

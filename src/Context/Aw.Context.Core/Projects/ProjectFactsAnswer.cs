@@ -8,4 +8,5 @@ namespace Aw.Context.Core.Projects;
 /// <param name="Catalog">Every stored project the caller may see, by title: the page's 'From Linear' tab.</param>
 /// <param name="Teams">The Linear team keys the profile reads ('context.sources.linear.teams').</param>
 /// <param name="FirstReadDone">The projects feed has finished its first read (its phase moved past Recent).</param>
-public sealed record ProjectFactsAnswer(UserRef? Owner, IReadOnlyList<ProjectFact> Projects, IReadOnlyList<ProjectFact> Catalog, IReadOnlyList<string> Teams, bool FirstReadDone);
+/// <param name="PrWindowDays">The index window ('context.index.windowDays') the PR counts see, or null when the profile reads no GitHub repos.</param>
+public sealed record ProjectFactsAnswer(UserRef? Owner, IReadOnlyList<ProjectFact> Projects, IReadOnlyList<ProjectFact> Catalog, IReadOnlyList<string> Teams, bool FirstReadDone, int? PrWindowDays = null);

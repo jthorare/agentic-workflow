@@ -16,6 +16,9 @@ namespace Aw.Context.Core.Records;
 /// <param name="OpenIssues">Issues linked to it ('in-project') that are open, not removed and visible to the caller.</param>
 /// <param name="NewestIssueAt">The newest 'UpdatedAt' among its visible, not removed linked issues, or null when it has none.</param>
 /// <param name="Description">Its scrubbed description, or null.</param>
+/// <param name="OpenPrs">Pull requests its visible issues reach (an attachment, or a PR naming an issue's key) that are open or draft, live and visible, each once.</param>
+/// <param name="PrRepos">The 'owner/name' of every live, visible pull request its issues reach, sorted; null reads as none.</param>
+/// <param name="NewestPrAt">The newest 'UpdatedAt' among those pull requests, or null when it has none.</param>
 public sealed record ProjectRow(
     RecordKey Key,
     string Title,
@@ -29,4 +32,7 @@ public sealed record ProjectRow(
     string? LeadName,
     int OpenIssues,
     DateTimeOffset? NewestIssueAt,
-    string? Description = null);
+    string? Description = null,
+    int OpenPrs = 0,
+    IReadOnlyList<string>? PrRepos = null,
+    DateTimeOffset? NewestPrAt = null);
