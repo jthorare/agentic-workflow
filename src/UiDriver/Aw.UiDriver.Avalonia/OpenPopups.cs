@@ -32,7 +32,7 @@ internal static class OpenPopups
         _ = Popup.IsOpenProperty.Changed.AddClassHandler<Popup>((popup, _) => Changed(popup));
     }
 
-    /// <summary>The content of each popup open now that is drawn in its own popup window (not the window's overlay layer) and was opened from <paramref name="owner"/> (the popup's own top level), oldest first, with the number its node ids use.</summary>
+    /// <summary>The content of each popup open now that is drawn in its own popup window (not the window's overlay layer) and was opened from <paramref name="owner"/> (a submenu counts for the window its parent popup was opened from), oldest first, with the number its node ids use.</summary>
     /// <param name="owner">The window whose popups are wanted; a popup opened from another window is left out.</param>
     /// <returns>A snapshot.</returns>
     internal static IReadOnlyList<(int Sequence, Visual Content)> Current(Window owner)
@@ -42,7 +42,7 @@ internal static class OpenPopups
         {
             foreach (var (sequence, popup) in _open)
             {
-                if (popup.IsOpen && !popup.IsUsingOverlayLayer && ReferenceEquals(TopLevel.GetTopLevel(popup), owner) && popup.Child is { } content)
+                if (popup.IsOpen && !popup.IsUsingOverlayLayer && ReferenceEquals(OwnerWindow(popup), owner) && popup.Child is { } content)
                 {
                     found.Add((sequence, content));
                 }
@@ -50,6 +50,18 @@ internal static class OpenPopups
         }
 
         return found;
+    }
+
+    // A popup inside another popup (a submenu) has the parent's PopupRoot as its top level; follow the roots up to the window.
+    private static TopLevel? OwnerWindow(Popup popup)
+    {
+        var top = TopLevel.GetTopLevel(popup);
+        while (top is PopupRoot root)
+        {
+            top = root.ParentTopLevel;
+        }
+
+        return top;
     }
 
     private static void Changed(Popup popup)

@@ -14,8 +14,8 @@ namespace Aw.UiDriver.Avalonia;
 /// <summary>
 /// The window's visual tree as the driver sees it: every element with a stable id (child positions from the window, '0/2/1'), its facts for selectors and
 /// its info for answers. Built on the UI thread and used there; read through the property system, never reflection. The content of each popup opened from
-/// this window that draws in its own popup window (not one opened from another window) hangs under the window as one more child, with ids 'p3', 'p3/0' (the popup's open number, then child positions), so
-/// a menu or flyout is reached like anything else.
+/// this window that draws in its own popup window (not one opened from another window) hangs under the window as one more child, with ids 'p3', 'p3/0'
+/// (the popup's open number, then child positions), so a menu or flyout is reached like anything else.
 /// </summary>
 internal sealed class UiTree
 {
