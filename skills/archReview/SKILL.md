@@ -1,6 +1,6 @@
 ---
 name: archReview
-description: Engineering architecture review with mandatory diagrams and edge case analysis. Reviews plans or implementations for technical soundness.
+description: "Use BEFORE building from a plan or design doc, or whenever someone asks if a technical design will hold up: component boundaries, data flow, failure modes, load. Draws mermaid diagrams, fills an edge-case matrix and rates SOUND / NEEDS WORK / REDESIGN. One lens only; not for product scope, threat models or UI critique."
 argument-hint: "[--plan <path> | plan-file-or-directory-to-review] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(date *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -199,6 +199,17 @@ Suggested next steps:
   /productReview — Get founder-lens feedback on the plan
   /officeHours — Brainstorm solutions to identified risks
 ```
+
+## Result block
+
+Only when `AW_RESULT=1`: write `$AW_DIR/results/archReview-<timestamp>.json` (`mkdir -p` the directory first; `$AW_DIR` is set by `repo-slug.sh`; timestamp from `date +%Y%m%d-%H%M%S`) with these keys:
+
+- `skill`: `"archReview"`
+- `artifacts`: absolute paths of the files this run wrote (the review file)
+- `summary`: one line, the verdict and the single worst risk
+- `verdict`: `PASS|NEEDS_WORK|BLOCKED`, the same value as the report's final `verdict:` line
+
+Print the same JSON in the reply as a fenced block tagged `aw-result`, before `## Next steps`. Without `AW_RESULT=1`, write no file and print no block. Format and rules: `_shared/output-contract.md`.
 
 ## Next steps
 
