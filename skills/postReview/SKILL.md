@@ -1,6 +1,6 @@
 ---
 name: postReview
-description: Publish a completed /review to GitHub as batched PR comments. Reads from $AW_DIR/reviews/<pr>.json and posts one review per agent (minimizing API calls). Use after /review has written a local state file and you are ready to publish.
+description: "Use when a finished review is saved locally and you want its findings on the pull request: put the reviewers' comments on GitHub, publish the review, push the comments up. Posts one batched GitHub review per reviewer agent. Not for running a review (use review) or fixing its findings (use addressReview)."
 argument-hint: [pr-number]
 allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(SHARED_DIR=*), Read, Write, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
