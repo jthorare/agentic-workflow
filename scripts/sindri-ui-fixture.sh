@@ -103,8 +103,10 @@
 #                                  Costa); open and closed Linear issues with 'in-project' links (the cards' open counts); the viewer's
 #                                  'source_identity' row (Sam Rivera: "Linear says you're Sam Rivera"); and both Linear sources' cursor rows
 #                                  (phase incremental), so the page is past its first read and not counting. It adds
-#                                  context.sources.linear.teams [SPL] to the live profile (a human reads only the profile's teams) and
-#                                  approves that. Then, as the owner: attaches Billing migration, adds a hand-made project (Hiring loop) and
+#                                  context.sources.linear.teams [SPL] and context.sources.github.repos [acme/api, acme/web] (no token) to the
+#                                  live profile (a human reads only the profile's teams) and approves that. Three open GitHub PRs
+#                                  (github:pr/acme/api/41, acme/api/42, acme/web/17, audience linear:SPL) are each linked 'relates' from a Checkout
+#                                  rewrite issue, so that card shows 3 open PRs and the repos acme/api, acme/web. Then, as the owner: attaches Billing migration, adds a hand-made project (Hiring loop) and
 #                                  hides Search relevance v2 (a project the viewer leads: Hide acts only on a project on the page), each once (the markers <home>/ui-fixture-projects-owner-attach|add|hide; the store rows are rewritten
 #                                  every run, so a repeat adds no row and no project). The store is read when the page asks, so no rebuild is
 #                                  needed; the owner's writes are ledger events and refresh the view. Exit 2 without a context store (run
@@ -846,6 +848,7 @@ context() {
 # --- projects: the Projects page's data (projects page spec 4.1, 5, 12 Ph5, 13.1) ---
 PROJECTS_TEAM="SPL"
 PROJECTS_AUDIENCE="linear:$PROJECTS_TEAM"
+PROJECTS_GH_REPOS="acme/api, acme/web"
 PROJECTS_VIEWER="fx-viewer"
 PROJECTS_VIEWER_NAME="Sam Rivera"
 projects_marker() { printf '%s\n' "$AW_SINDRI_HOME/ui-fixture-projects-owner"; }
@@ -863,8 +866,12 @@ projects_profile() {
   [ -f "$profile" ] || die "no live profile at $profile: run 'up' first"
   if ! grep -q "teams: \[$PROJECTS_TEAM\]" "$profile"; then
     ! grep -q '^context:' "$profile" || die "projects: the profile already has a context: section; add 'sources: { linear: { teams: [$PROJECTS_TEAM] } }' to it by hand"
-    awk -v e="context:\n  sources:\n    linear: { teams: [$PROJECTS_TEAM] }" '{print} /^user:/ {print e}' "$profile" > "$profile.new" && mv "$profile.new" "$profile" \
+    awk -v e="context:\n  sources:\n    linear: { teams: [$PROJECTS_TEAM] }\n    github: { repos: [$PROJECTS_GH_REPOS] }" '{print} /^user:/ {print e}' "$profile" > "$profile.new" && mv "$profile.new" "$profile" \
       || die "projects: can't add the Linear team to $profile"
+  elif ! grep -q 'github:' "$profile"; then
+    # An older fixture home has the team and no GitHub source: add it once, under the Linear line. The token pointer is optional, so none is written.
+    awk -v e="    github: { repos: [$PROJECTS_GH_REPOS] }" '{print} /teams: \[/ && !done {print e; done=1}' "$profile" > "$profile.new" && mv "$profile.new" "$profile" \
+      || die "projects: can't add the GitHub repos to $profile"
   fi
   # Approve whenever the profile isn't approved (a failed approve is retried here).
   if needs_approval; then approve >&2 || return; fi
@@ -902,6 +909,16 @@ projects_issues() {
   done
 }
 
+# One open GitHub PR and the 'relates' link from a Checkout rewrite issue to it, appended to $projects_sql. $1 owner/name, $2 number, $3 the
+# issue's number under fx-checkout, $4 title. The audience is linear:SPL because that is the one a human's mask always allows here.
+projects_pr() {
+  local key="github:pr/$1/$2"
+  projects_sql+="INSERT INTO source_record (key, source, kind, repo, audience_key, title, url, author, state, state_raw, created_at, updated_at, closed_at, version, text_hash, ruleset, blocked, removed_at, synced_at)
+      VALUES ('$key', 'github', 'pr', '$1', '$PROJECTS_AUDIENCE', '$4', 'https://github.com/$1/pull/$2', '$PROJECTS_VIEWER_NAME', 'open', 'open', $(projects_ts '-3 days'), $(projects_ts '-1 days'), NULL, 'fixture', 'fixture-pr-$2', 'fixture', 0, NULL, $(projects_ts '+0 seconds'));
+INSERT INTO record_link (from_key, to_ref, to_key, kind, title) VALUES ('linear:issue/fx-checkout-$3', '$key', '$key', 'relates', '$4');
+"
+}
+
 projects() {
   need_sql
   local db marker target
@@ -911,7 +928,8 @@ projects() {
   projects_profile || return
 
   local projects_sql="DELETE FROM record_link WHERE from_key LIKE 'linear:project/fx-%' OR from_key LIKE 'linear:issue/fx-%';
-DELETE FROM source_record WHERE key LIKE 'linear:project/fx-%' OR key LIKE 'linear:issue/fx-%';
+DELETE FROM record_link WHERE to_key LIKE 'github:pr/acme/%';
+DELETE FROM source_record WHERE key LIKE 'linear:project/fx-%' OR key LIKE 'linear:issue/fx-%' OR key LIKE 'github:pr/acme/%';
 "
   projects_row checkout    'Checkout rewrite'      open started   atRisk  16  "$PROJECTS_VIEWER" "$PROJECTS_VIEWER_NAME" '-2 hours'  ''        'Rebuild the checkout flow on the new payments API.'
   projects_row search      'Search relevance v2'   open planned   ''      45  "$PROJECTS_VIEWER" "$PROJECTS_VIEWER_NAME" '-1 days'   ''        'Rank results by what people open, not by title match.'
@@ -925,6 +943,9 @@ DELETE FROM source_record WHERE key LIKE 'linear:project/fx-%' OR key LIKE 'line
   projects_issues billing    'Billing migration'   2 1
   projects_issues mobile     'Mobile offline sync' 3 0
   projects_issues platform   'Platform API v3'     2 2
+  projects_pr acme/api 41 1 'Move checkout to the payments API client'
+  projects_pr acme/api 42 2 'Retry failed card captures'
+  projects_pr acme/web 17 3 'Checkout form: new payment step'
   projects_sql+="INSERT OR REPLACE INTO source_identity (source, user_ref, name, read_at) VALUES ('linear', 'linear:user/$PROJECTS_VIEWER', '$PROJECTS_VIEWER_NAME', $(projects_ts '+0 seconds'));
 INSERT OR REPLACE INTO source_cursor (source, repo, cursor, last_sync, last_error, phase) VALUES
   ('linear-projects', 'records', NULL, $(projects_ts '-3 minutes'), NULL, 'incremental'),
