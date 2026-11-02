@@ -1,3 +1,4 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Facade;
 using Aw.Context.Core.Map;
@@ -61,6 +62,7 @@ internal sealed class BuildContextMapService(ContextScopes scopes, IContextEngin
 
     // A clean draft is held for the service's publish step; a queue that can't be read leaves the draft for a person's promote, never failing the build that already succeeded.
     // A build that waited behind one whose draft was already promoted returns that current version (#1775): there is no draft to hold or publish.
+    // A draft promoted by another writer after the queue read and before the gate is the current map too, so the gate's 190 is a success when it is current (#1882); a newer draft keeps the 190.
     private async ValueTask<Result<Unit>> HoldWhenClean(ContextMapEvents recorder, ContextScope scope, MapBuildReport report, CancellationToken cancellationToken)
     {
         if (report.Draft.Status == MapVersionStatus.Current)
@@ -75,6 +77,11 @@ internal sealed class BuildContextMapService(ContextScopes scopes, IContextEngin
         }
 
         var gate = await new RefreshGate(engine, outlooks, clock).Run(recorder, scope, report, cancellationToken).ConfigureAwait(false);
+        if (gate.IsError && gate.Error.Code == ContextErrors.DraftChanged.Code)
+        {
+            return await PromotedUnderUs(scope, report, gate.Error, cancellationToken).ConfigureAwait(false);
+        }
+
         if (gate.IsError || gate.Value.Publish is null)
         {
             return gate.IsError ? gate.Error : Unit.Value;
@@ -83,5 +90,11 @@ internal sealed class BuildContextMapService(ContextScopes scopes, IContextEngin
         // The gate would publish at once: store the hold, so the service's next publish step sees the draft and promotes it.
         var stored = await engine.Hold(new MapHold(report.Draft.Number, gate.Value.Now, report.Heads), scope, cancellationToken).ConfigureAwait(false);
         return stored.IsError ? stored.Error : Unit.Value;
+    }
+
+    private async ValueTask<Result<Unit>> PromotedUnderUs(ContextScope scope, MapBuildReport report, Error changed, CancellationToken cancellationToken)
+    {
+        var state = await engine.Held(scope, cancellationToken).ConfigureAwait(false);
+        return !state.IsError && state.Value.Current == report.Draft.Number ? Unit.Value : changed;
     }
 }
