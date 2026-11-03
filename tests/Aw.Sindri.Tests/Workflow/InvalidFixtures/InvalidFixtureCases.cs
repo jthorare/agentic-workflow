@@ -346,6 +346,10 @@ internal static class InvalidFixtureCases
             FixtureSetup.Shipped,
             "RCP-CHOICE-006: transitions[0] routes 'route' on step.failed before its branch transitions[1] at RCP-CHOICE-006.yaml:30:5 (transitions[0]); list the branch transitions first and the uncertain and step.failed ones last",
             []),
+        ["RCP-CHOICE-007"] = new(
+            FixtureSetup.Shipped,
+            "RCP-CHOICE-007: images names fact fact:frames, which state 'route' can't read at RCP-CHOICE-007.yaml:13:9 (states.route.step.with.images); produce the fact on every path into the state, or add it to the recipe's inputs",
+            []),
         ["RCP-OUTCOME-001-uncertain"] = new(
             FixtureSetup.Shipped,
             "RCP-OUTCOME-001: state 'route' has no transition for outcome 'uncertain' of step 'step.judge.choose' at RCP-OUTCOME-001-uncertain.yaml:6:3 (states.route); add a transition from 'route' on step.completed with when: { outcome: uncertain }",

@@ -13,4 +13,11 @@ namespace Aw.Sindri.Core.Workflow.Views;
 /// <param name="Tokens">The tokens the row recorded for the run, if any.</param>
 /// <param name="TriggerActor">Who fired the trigger, if the row says.</param>
 /// <param name="Frame">The frame the change left the instance in; null when the frame was not touched.</param>
-public sealed record RecordedWorkflowEvent(string Type, DateTimeOffset At, string Actor, string Trigger, string? Outcome, string? Run, int? Tokens, string? TriggerActor, RecordedFrame? Frame);
+public sealed record RecordedWorkflowEvent(string Type, DateTimeOffset At, string Actor, string Trigger, string? Outcome, string? Run, int? Tokens, string? TriggerActor, RecordedFrame? Frame)
+{
+    /// <summary>How many images a judge choice looked at; null for any other event.</summary>
+    public int? ImageCount { get; init; }
+
+    /// <summary>How many images a judge choice left out; null when none were.</summary>
+    public int? ImagesDropped { get; init; }
+}
