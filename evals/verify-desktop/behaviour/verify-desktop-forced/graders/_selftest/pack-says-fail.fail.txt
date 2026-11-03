@@ -1,1 +1,0 @@
-{"skill":"verify-desktop","platform":"desktop","verdict":"PASS","screens":["settings"]}

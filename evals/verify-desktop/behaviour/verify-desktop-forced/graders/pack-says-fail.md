@@ -1,7 +1,5 @@
 ---
 type: regex
-target:
-  source: file
-  path: '.aw-state/*/verification/*/pack.json'
-pattern: '^(?=[\s\S]*"platform"\s*:\s*"desktop")(?=[\s\S]*"skill"\s*:\s*"verify-desktop")(?=[\s\S]*"verdict"\s*:\s*"FAIL")'
+target: trace
+pattern: '"file_path":"[^"]*/verification/[^"]*/pack\.json","content":"(?=(?:[^"\\]|\\.)*\\"verdict\\":\s*\\"FAIL\\")(?=(?:[^"\\]|\\.)*\\"platform\\":\s*\\"desktop\\")(?=(?:[^"\\]|\\.)*\\"skill\\":\s*\\"verify-desktop\\")'
 ---
