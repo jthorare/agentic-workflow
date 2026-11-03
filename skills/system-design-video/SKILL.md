@@ -44,6 +44,8 @@ Output goes under `$AW_DIR/videos/` (never into the code repo): `brief.md`, `sto
 
 **Exit codes:** `doctor.sh` 0 ready, 1 something missing; `deliver.sh` and `playback-check.sh` 0 ok, 1 usage error or a failed check (`playback-check.sh` and `deliver.sh` fail on a decode error, codec other than h264, level above 4.1 or B-frames; `review.sh` exits 1 on usage error only and prints a warning when its own playback check fails); `render.ts` 0 done, 1 bad arguments, any other non-zero is a thrown error (bad storyboard, unknown token, no playwright-core).
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Inputs (all from the project, nothing baked in)
 
 | Need | Source |

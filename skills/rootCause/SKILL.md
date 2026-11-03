@@ -14,6 +14,8 @@ A passing test does not end the run. Every run, fixed or not, ends with the **Do
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: fixed, unfixed, diagnosed, a scope breach or a stop. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Your final reply always opens with the `aw-result` block (callers parse it, whatever `AW_RESULT` is); the result file never stands in for it.
+
 ## Phase 0: Parse Input
 
 Extract the starting point for the investigation from the argument:
@@ -214,7 +216,7 @@ Report: $AW_DIR/investigations/{filename}
 Handoff: $AW_DIR/investigations/{slug}/handoff.md
 ```
 
-**Close the report with exactly one fenced `aw-result` block**, before `## Next steps` (machine-readable tail — `/review` and other callers parse this; see the Result block below):
+**Open your final reply with exactly one fenced `aw-result` block**, before the report text and `## Next steps` (`/review`, `bugFixOrchestrator` and other callers parse it and pick it by `skill`; see the Result block below). A run that stops before it writes a handoff (a scope breach, a stop) sets `handoff_path` to `null`, and a caller stops there instead of guessing a path:
 
 ```aw-result
 { "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
@@ -225,7 +227,7 @@ Handoff: $AW_DIR/investigations/{slug}/handoff.md
 1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5, Write tool).
 2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5, Write tool).
 3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/rootCause-<timestamp>.json` (Result block, Write tool). Print the gate (`echo "AW_RESULT=${AW_RESULT:-0}"`) to know.
-4. Your final reply, sent after the last tool call (every Write above done first), contains the `aw-result` block above, before `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply. It is never optional: callers parse it, and it goes in even when the rest of the reply is short.
+4. Your final reply, sent after the last tool call (every Write above done first), opens with the `aw-result` block above, before the report text and `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply. It is never optional: callers parse it, and it goes in even when the rest of the reply is short.
 
 If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
 
@@ -247,7 +249,7 @@ Do not invoke bugHunt if the fix was verified — rootCause's own report is suff
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 ```
 
-The fenced JSON tail in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON, before you print the block; the block goes in your final reply, after the last tool call, before `## Next steps`.
+The `aw-result` block in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON, before you print the block; the block opens your final reply, after the last tool call, before the report text and `## Next steps`.
 
 Keys: `skill` (`rootCause`), `artifacts` (absolute paths: the report `$AW_DIR/investigations/<timestamp>-<slug>.md` and the handoff), `summary` (one line),
 plus `status` (`fixed | unfixed | scope-breach | diagnosed`, as today); `report_path` (as today); `handoff_path` (as today); `boundary` (as today).

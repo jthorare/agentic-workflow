@@ -25,6 +25,8 @@ is asked only through `bugfix-state judge` — never run `judge resolution-check
 
 Design: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/docs/superpowers/specs/2026-09-29-bug-fix-orchestrator-design.md`.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Setup
 
 Re-run this block at the top of every shell call (shell state does not persist):
@@ -91,6 +93,8 @@ contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
 1. **Invoke skill `rootCause`** with args `--investigate-only --depth 1 "<symptom from the brief>"`.
 2. Take `handoff_path` from rootCause's `aw-result` block, then
    `bugfix-state advance investigate --state "$STATE" --evidence <handoff_path>`.
+   `handoff_path` is `null` (rootCause stopped before it wrote a handoff) → stop as unresolved with
+   rootCause's `summary`; never guess a path.
 3. Refused because the handoff status is not `diagnosed` (rootCause returned `unfixed`), because no
    hypothesis is confirmed and fewer than two are open, or because it has no Root Cause → re-run
    `/rootCause` with more context (once more; then stop as unresolved). A handoff with no confirmed

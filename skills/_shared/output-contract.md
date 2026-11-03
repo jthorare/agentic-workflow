@@ -1,6 +1,6 @@
 # Output contract
 
-Every skill ends with a `## Result block` section that points here. The contract is what a caller (an eval, `bugFixOrchestrator`, another skill) can rely on when it runs a skill without reading the whole reply. It extends what a skill already prints (`rootCause`'s JSON tail, a lens's `verdict:` line, `## Next steps`) and never replaces it.
+Every skill ends with a `## Result block` section that points here. The contract is what a caller (an eval, `bugFixOrchestrator`, another skill) can rely on when it runs a skill without reading the whole reply. It extends what a skill already prints (`rootCause`'s `aw-result` block, a lens's `verdict:` line, `## Next steps`) and never replaces it.
 
 ## The gate
 
