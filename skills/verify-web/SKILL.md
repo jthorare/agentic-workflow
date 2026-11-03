@@ -106,7 +106,7 @@ Execute each selected lens with fully-qualified tools:
 
 ### `functional`
 
-Execute journeys step by step: `mcp: playwright/browser_click`, `mcp: playwright/browser_fill_form`, `mcp: playwright/browser_press_key`, `mcp: playwright/browser_select_option` (navigation steps via `mcp: playwright/browser_navigate`; async UI via `mcp: playwright/browser_wait_for`). Assert after each step with `mcp: playwright/browser_snapshot`. Then check `mcp: playwright/browser_console_messages` (no uncaught errors) and `mcp: playwright/browser_network_requests` (no failed calls).
+Execute journeys step by step: `mcp: playwright/browser_click`, `mcp: playwright/browser_fill_form`, `mcp: playwright/browser_press_key`, `mcp: playwright/browser_select_option` (navigation steps via `mcp: playwright/browser_navigate`; async UI via `mcp: playwright/browser_wait_for`). Assert after each step with `mcp: playwright/browser_snapshot`. Run every step the criteria name, in order, as its own tool call: "open X" or "save" is a `browser_click` on that control, even when the snapshot already shows what it would reveal; never fold a click into a fill or an Enter key. Only after the journey's interactive steps, check `mcp: playwright/browser_console_messages` (no uncaught errors) and `mcp: playwright/browser_network_requests` (no failed calls).
 
 ### `visual`
 
@@ -114,7 +114,7 @@ Execute journeys step by step: `mcp: playwright/browser_click`, `mcp: playwright
 
 ### `accessibility`
 
-`mcp: playwright/browser_snapshot` tree: labels, roles, heading order, keyboard reachability of interactive elements.
+`mcp: playwright/browser_snapshot` tree: labels, roles, heading order, keyboard reachability of interactive elements. Walk every interactive node: a `button`, `link` or `textbox` line with no quoted name (e.g. `- link [ref=e31]`) has no accessible name, and is an accessibility FAIL naming that ref and role.
 
 ### `error-state`
 
@@ -148,7 +148,7 @@ LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 
 ## Verdict & Gate
 
-**A FAIL verdict forbids downstream PR-open / mark-ready** (gate rule in `_shared/evidence-pack.md`). Consumers (verify-app, specToProvenPR, shipRelease, review) read the pack — do not soften the verdict in prose. End the report with exactly:
+**A FAIL verdict forbids downstream PR-open / mark-ready** (gate rule in `_shared/evidence-pack.md`). Consumers (verify-app, specToProvenPR, shipRelease, review) read the pack — do not soften the verdict in prose. Your final reply (not only `report.md`) names every issue found, one line each with its evidence: the console error's message and source file, the element ref and role of an accessibility gap, the failed request. End both `report.md` and the final reply with exactly these two lines:
 
 ```
 verdict: <PASS|WARN|FAIL>
