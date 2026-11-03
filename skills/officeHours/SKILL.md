@@ -1,6 +1,6 @@
 ---
 name: officeHours
-description: "Spec-driven brainstorming session with EARS-format requirements. Outputs plan.md (the canonical handoff) plus domain-specific docs (product.md, engineering.md, design-brief.md, TASKS.md) to plans/ directory — each assignable to its owning team."
+description: "Use when someone has a half-formed feature or product idea and needs a spec before anything gets built: who it is for, what can go wrong, EARS requirements, split into product, engineering, design and task docs. Not for rewriting a prompt with doc context or for reviewing a finished plan."
 argument-hint: "[feature-or-problem-description]"
 allowed-tools: Bash(git *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, WebFetch, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -646,6 +646,6 @@ All under `$AW_DIR/plans/{timestamp}-{slug}/` (manifest per `_shared/plan-layout
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/officeHours-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`officeHours`), `artifacts` (absolute paths: `plan.md` and the domain docs in `$AW_DIR/plans/<timestamp>-<slug>/`), `summary` (one line),
-plus `plan_dir` (absolute path of the plan directory).
+plus `plan_dir` (absolute path of the plan directory); `ears_types` (the EARS types the session selected, from `ubiquitous`, `event-driven`, `state-driven`, `optional`, `unwanted`); `requirements` (number of `REQ-*` ids in product.md); `tasks` (number of tasks in TASKS.md).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

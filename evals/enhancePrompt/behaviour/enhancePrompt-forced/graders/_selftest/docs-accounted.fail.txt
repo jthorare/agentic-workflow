@@ -1,0 +1,2 @@
+**Docs discovered / read / skipped:**
+- read AGENTS.md and README.md

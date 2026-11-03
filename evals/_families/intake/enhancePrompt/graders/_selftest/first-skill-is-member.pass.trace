@@ -1,0 +1,4 @@
+{"type":"system","subtype":"init","skills":["officeHours","cso"]}
+{"type":"user","message":{"content":"review the plan"}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"enhancePrompt"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"officeHours"}}]}}

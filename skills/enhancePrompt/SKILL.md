@@ -1,6 +1,6 @@
 ---
 name: enhancePrompt
-description: Use when the user invokes /enhancePrompt — discovers available project documentation, reads relevant files, and rewrites the user's request with richer context before execution
+description: "Use when the user wants a request rewritten, or a standalone prompt written for a fresh session, with project context first: what the docs say, constraints, scope and done-criteria, so another agent can run it. It only writes the prompt; it does not do the task or interview the user (that is withInterview)."
 argument-hint: [prompt-to-enhance]
 allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -120,7 +120,7 @@ Name the successor skill explicitly — pick the one that matches the enhanced t
 
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/enhancePrompt-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
-Keys: `skill` (`enhancePrompt`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
-plus `prompt_path` (absolute path of the saved enhanced prompt (`$AW_DIR/prompts/<ts>.md`)).
+Keys: `skill` (`enhancePrompt`), `artifacts` (absolute paths: the saved enhanced prompt, the same path as `prompt_path`), `summary` (one line),
+plus `prompt_path` (absolute path of the saved enhanced prompt (`$AW_DIR/prompts/<ts>.md`)); `docs_read` (number of docs listed as read).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
