@@ -1,6 +1,6 @@
 ---
 name: addressReview
-description: Address PR review comments by spawning domain-specific implementation agents in parallel. Reads from $AW_DIR/reviews/<pr>.json as source of truth, merges any new human GitHub comments, implements fixes, and updates the state file. Can be re-run to continue the review loop.
+description: "Use when a PR already has review findings or reviewer comments and you want the code changed to resolve them, blocking ones first, and again as more comments arrive. Reads the saved review file, merges new human comments, fixes in parallel and marks items addressed. Not for running a review (review) or publishing one (postReview)."
 argument-hint: [pr-number-or-url] [--all]
 allowed-tools: Bash(gh *), Bash(git *), Bash(npm *), Bash(npx *), Bash(SHARED_DIR=*), Agent, Read, Write, Edit, Skill, AskUserQuestion, mcp__prism-mcp__session_search_memory, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

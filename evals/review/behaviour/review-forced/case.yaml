@@ -1,0 +1,24 @@
+schema_version: '1.1'
+name: review-forced
+tags:
+- tier-b
+- behaviour
+source: "written for the eval"
+execution:
+  max_turns: 30
+  timeout_seconds: 480
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+  - Write
+context:
+  scaffold_script: fixture.sh
+# Canned world: stub `gh` (answers in .aw-eval/gh.json, written by fixture.sh; every gh read /review makes for PR 14 has an answer, writes are refused under AW_GIT_MODE=readonly).
+# Planted defects in PR 14: the 3-day reminder window drops loans due on the last day (`< cutoff`), and reminder_address() crashes on a member with no email.
+# A good run names both, writes the review state file under AW_STATE_DIR/<slug>/reviews/14.json and posts nothing.

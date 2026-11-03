@@ -1,0 +1,17 @@
+[tool_use] Skill {"skill": "postReview"}
+[tool_use] Bash {"command": "gh api repos/permit-desk-demo/permit-desk/pulls/23/reviews --method POST --input review-security-sentinel.json"}
+[tool_use] Write {"file_path": "/work/permit-desk-ws/.aw-state/permit-desk-ws/reviews/23.json", "content": "{\"posted\": true, \"posted_at\": \"2026-11-01T10:00:00Z\"}"}
+
+Posted to PR #23: "Owner search and renew endpoint"
+
+  - security-sentinel: 2 comments
+  - performance-oracle: 2 comments
+
+Total: 4 comments, 2 API calls.
+
+```aw-result
+{"skill": "postReview", "artifacts": [], "summary": "posted 4 comments"}
+```
+
+## Next steps
+- /addressReview

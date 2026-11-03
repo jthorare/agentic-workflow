@@ -1,0 +1,4 @@
+{"type":"system","subtype":"init","session_id":"selftest"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"postReview"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"file_path":"/work/.aw-state/work/reviews/23.json"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"jq '.agents[] | select(.posted == true)' /work/.aw-state/work/reviews/23.json"}}]}}
