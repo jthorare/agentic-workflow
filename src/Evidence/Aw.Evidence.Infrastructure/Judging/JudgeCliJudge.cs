@@ -31,6 +31,9 @@ internal sealed class JudgeCliJudge(ICliRunner runner, IExecutableLocator locato
     public bool IsAvailable => FindJudge() is not null;
 
     /// <inheritdoc/>
+    public ValueTask<bool> JevImagesOnAsync(CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc/>
     public async ValueTask<SelectorRepair?> RepairSelectorAsync(SelectorRepairRequest request, CancellationToken cancellationToken)
     {
         var answer = await AskAsync("ui-element-repair", RepairInput(request), cancellationToken).ConfigureAwait(false);

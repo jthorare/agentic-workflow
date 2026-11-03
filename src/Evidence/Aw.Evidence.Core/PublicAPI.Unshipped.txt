@@ -398,6 +398,7 @@ Aw.Evidence.Core.Images.RgbaImage.Width.get -> int
 Aw.Evidence.Core.Judging.IJudge
 Aw.Evidence.Core.Judging.IJudge.CritiqueAsync(Aw.Evidence.Core.Judging.VisualCritiqueRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Evidence.Core.Judging.VisualVerdict?>
 Aw.Evidence.Core.Judging.IJudge.IsAvailable.get -> bool
+Aw.Evidence.Core.Judging.IJudge.JevImagesOnAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Evidence.Core.Judging.IJudge.RepairSelectorAsync(Aw.Evidence.Core.Judging.SelectorRepairRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Evidence.Core.Judging.SelectorRepair?>
 Aw.Evidence.Core.Judging.RepairDecision
 Aw.Evidence.Core.Judging.RepairDecision.NoGoodCandidate = 1 -> Aw.Evidence.Core.Judging.RepairDecision
@@ -965,17 +966,19 @@ Aw.Evidence.Core.Visual.VerdictCacheContext.AppBuild.get -> string?
 Aw.Evidence.Core.Visual.VerdictCacheContext.AppBuild.init -> void
 Aw.Evidence.Core.Visual.VerdictCacheContext.BrowserVersion.get -> string!
 Aw.Evidence.Core.Visual.VerdictCacheContext.BrowserVersion.init -> void
-Aw.Evidence.Core.Visual.VerdictCacheContext.Deconstruct(out string! PromptVersion, out string! Model, out string? AppBuild, out string! Scenario, out string? Fixtures, out string! Viewports, out string! BrowserVersion) -> void
+Aw.Evidence.Core.Visual.VerdictCacheContext.Deconstruct(out string! PromptVersion, out string! Model, out string? AppBuild, out string! Scenario, out string? Fixtures, out string! Viewports, out string! BrowserVersion, out bool JevImages) -> void
 Aw.Evidence.Core.Visual.VerdictCacheContext.Equals(Aw.Evidence.Core.Visual.VerdictCacheContext? other) -> bool
 Aw.Evidence.Core.Visual.VerdictCacheContext.Fixtures.get -> string?
 Aw.Evidence.Core.Visual.VerdictCacheContext.Fixtures.init -> void
+Aw.Evidence.Core.Visual.VerdictCacheContext.JevImages.get -> bool
+Aw.Evidence.Core.Visual.VerdictCacheContext.JevImages.init -> void
 Aw.Evidence.Core.Visual.VerdictCacheContext.Model.get -> string!
 Aw.Evidence.Core.Visual.VerdictCacheContext.Model.init -> void
 Aw.Evidence.Core.Visual.VerdictCacheContext.PromptVersion.get -> string!
 Aw.Evidence.Core.Visual.VerdictCacheContext.PromptVersion.init -> void
 Aw.Evidence.Core.Visual.VerdictCacheContext.Scenario.get -> string!
 Aw.Evidence.Core.Visual.VerdictCacheContext.Scenario.init -> void
-Aw.Evidence.Core.Visual.VerdictCacheContext.VerdictCacheContext(string! PromptVersion, string! Model, string? AppBuild, string! Scenario, string? Fixtures, string! Viewports, string! BrowserVersion) -> void
+Aw.Evidence.Core.Visual.VerdictCacheContext.VerdictCacheContext(string! PromptVersion, string! Model, string? AppBuild, string! Scenario, string? Fixtures, string! Viewports, string! BrowserVersion, bool JevImages) -> void
 Aw.Evidence.Core.Visual.VerdictCacheContext.Viewports.get -> string!
 Aw.Evidence.Core.Visual.VerdictCacheContext.Viewports.init -> void
 Aw.Evidence.Core.Visual.VerdictCacheKey

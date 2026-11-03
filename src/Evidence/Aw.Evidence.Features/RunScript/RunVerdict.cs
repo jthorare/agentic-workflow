@@ -35,7 +35,8 @@ internal sealed class RunVerdict(VisualGate gate, IVerdictCacheStore store, IEvi
             VerdictCacheContext.ScenarioOf(script, json),
             request.Fixtures,
             string.Join(',', script.Viewports.Select(ScriptViewports.NameOf)),
-            driven.BrowserVersion);
+            driven.BrowserVersion,
+            JevImages: false);
         var input = new VisualGateInput(
             lastPassed.Screenshot,
             request.Baseline,

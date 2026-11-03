@@ -11,8 +11,9 @@ namespace Aw.Evidence.Core.Visual;
 /// <param name="Fixtures">The fixture or seed identity, when known.</param>
 /// <param name="Viewports">The viewports the run used ('desktop,phone').</param>
 /// <param name="BrowserVersion">The browser build.</param>
+/// <param name="JevImages">Whether the judge sends images to Jev: a verdict formed with images on is never replayed after they are turned off, or the other way round.</param>
 public sealed record VerdictCacheContext(
-    string PromptVersion, string Model, string? AppBuild, string Scenario, string? Fixtures, string Viewports, string BrowserVersion)
+    string PromptVersion, string Model, string? AppBuild, string Scenario, string? Fixtures, string Viewports, string BrowserVersion, bool JevImages)
 {
     /// <summary>The critique prompt version this build uses.</summary>
     public const string CurrentPromptVersion = "visual-critique/v1";
