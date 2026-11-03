@@ -42,6 +42,9 @@ internal sealed class MapAdmin(
     public ValueTask<Result<MapHealth>> CheckStore(CancellationToken cancellationToken) =>
         health.CheckStore(cancellationToken);
 
+    public ValueTask<Result<StoreUpkeep?>> Upkeep(CancellationToken cancellationToken) =>
+        health.Upkeep(cancellationToken);
+
     public ValueTask<Result<PurgeReport>> PurgeExpired(CancellationToken cancellationToken) =>
         purge.Handle(new PurgeMapRequest(), cancellationToken);
 }
