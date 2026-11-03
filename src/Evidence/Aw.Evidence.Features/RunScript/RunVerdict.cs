@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Aw.Evidence.Core.Files;
+using Aw.Evidence.Core.Judging;
 using Aw.Evidence.Core.Runs;
 using Aw.Evidence.Core.Scripts;
 using Aw.Evidence.Core.Settings;
@@ -11,9 +12,9 @@ namespace Aw.Evidence.Features.RunScript;
 
 /// <summary>
 /// The run's visual verdict through the visual gate: the last passed step's screenshot against the baseline, then the
-/// verdict cache, then the judge. No passed step leaves the verdict unchecked. The cache is saved best-effort.
+/// verdict cache (keyed also on whether the judge sends images to Jev, asked once per run), then the judge. No passed step leaves the verdict unchecked. The cache is saved best-effort.
 /// </summary>
-internal sealed class RunVerdict(VisualGate gate, IVerdictCacheStore store, IEvidenceSettings settings, JsonSerializerOptions json)
+internal sealed class RunVerdict(VisualGate gate, IJudge judge, IVerdictCacheStore store, IEvidenceSettings settings, JsonSerializerOptions json)
 {
     internal const string CacheFile = "verdict-cache.json";
 
@@ -36,7 +37,7 @@ internal sealed class RunVerdict(VisualGate gate, IVerdictCacheStore store, IEvi
             request.Fixtures,
             string.Join(',', script.Viewports.Select(ScriptViewports.NameOf)),
             driven.BrowserVersion,
-            JevImages: false);
+            await judge.JevImagesOnAsync(cancellationToken).ConfigureAwait(false));
         var input = new VisualGateInput(
             lastPassed.Screenshot,
             request.Baseline,

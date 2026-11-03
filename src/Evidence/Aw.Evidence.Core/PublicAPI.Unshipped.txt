@@ -1033,7 +1033,7 @@ const Aw.Evidence.Core.Publishing.ParityAttachments.TitlePrefix = "Pixel diff: "
 const Aw.Evidence.Core.Runs.ParitySummary.SchemaName = "ui-evidence.parity/1" -> string!
 const Aw.Evidence.Core.Runs.RunSummary.SchemaName = "ui-evidence.run/1" -> string!
 const Aw.Evidence.Core.Steps.RepairRules.MaxAttempts = 2 -> int
-const Aw.Evidence.Core.Visual.VerdictCacheContext.CurrentPromptVersion = "visual-critique/v1" -> string!
+const Aw.Evidence.Core.Visual.VerdictCacheContext.CurrentPromptVersion = "visual-critique/v2" -> string!
 override Aw.Evidence.Core.Browser.BrowserSessionOptions.Equals(object? obj) -> bool
 override Aw.Evidence.Core.Browser.BrowserSessionOptions.GetHashCode() -> int
 override Aw.Evidence.Core.Browser.BrowserSessionOptions.ToString() -> string!
