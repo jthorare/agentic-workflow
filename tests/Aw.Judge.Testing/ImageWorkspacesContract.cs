@@ -1,5 +1,4 @@
-using Aw.Judge.Core.Ports;
-using Aw.Judge.Core.Questions;
+using Aw.Judge.Core.Images;
 using Xunit;
 
 namespace Aw.Judge.Testing;

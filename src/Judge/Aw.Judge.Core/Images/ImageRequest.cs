@@ -1,4 +1,4 @@
-namespace Aw.Judge.Core.Questions;
+namespace Aw.Judge.Core.Images;
 
 /// <summary>The images a question's input names: where to read them and what their real paths must stay under.</summary>
 public sealed record ImageRequest

@@ -1,7 +1,5 @@
-using Aw.Judge.Core.Ports;
-using Aw.Judge.Core.Questions;
 
-namespace Aw.Judge.Core.Providers;
+namespace Aw.Judge.Core.Images;
 
 /// <summary>
 /// One call's images as the agent CLIs reach them: the first CLI that needs the directory makes it (Jev settles most calls, so most

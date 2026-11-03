@@ -1,3 +1,4 @@
+using Aw.Judge.Core.Images;
 using System.Text.Json.Nodes;
 using Aw.Judge.Core.Providers;
 

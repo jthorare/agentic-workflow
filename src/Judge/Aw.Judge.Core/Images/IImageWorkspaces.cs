@@ -1,6 +1,5 @@
-using Aw.Judge.Core.Questions;
 
-namespace Aw.Judge.Core.Ports;
+namespace Aw.Judge.Core.Images;
 
 /// <summary>Makes the per-call directories the agent CLIs read images from (Core does no I/O).</summary>
 public interface IImageWorkspaces

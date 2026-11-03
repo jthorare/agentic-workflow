@@ -1,6 +1,5 @@
+using Aw.Judge.Core.Images;
 using System.Globalization;
-using Aw.Judge.Core.Ports;
-using Aw.Judge.Core.Questions;
 
 namespace Aw.Judge.Infrastructure.Images;
 

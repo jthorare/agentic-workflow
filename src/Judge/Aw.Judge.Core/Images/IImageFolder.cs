@@ -1,4 +1,4 @@
-namespace Aw.Judge.Core.Ports;
+namespace Aw.Judge.Core.Images;
 
 /// <summary>A directory holding the bytes that were read, for an agent CLI to open.</summary>
 public interface IImageFolder

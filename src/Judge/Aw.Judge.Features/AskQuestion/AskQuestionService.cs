@@ -1,3 +1,4 @@
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Config;
 using Aw.Judge.Core.Evaluation;
 using Aw.Judge.Core.Ports;

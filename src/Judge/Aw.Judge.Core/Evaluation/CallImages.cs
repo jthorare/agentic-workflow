@@ -1,5 +1,4 @@
-using Aw.Judge.Core.Providers;
-using Aw.Judge.Core.Questions;
+using Aw.Judge.Core.Images;
 
 namespace Aw.Judge.Core.Evaluation;
 

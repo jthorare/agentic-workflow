@@ -1,4 +1,4 @@
-using Aw.Judge.Core.Questions;
+using Aw.Judge.Core.Images;
 using Aw.Kernel.Testing;
 
 namespace Aw.Judge.Tests.Images;

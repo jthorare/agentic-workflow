@@ -1,4 +1,4 @@
-using Aw.Judge.Core.Ports;
+using Aw.Judge.Core.Images;
 using Aw.Judge.Infrastructure.Images;
 using Aw.Judge.Testing;
 using Aw.Kernel.Testing;

@@ -1,4 +1,4 @@
-using Aw.Judge.Core.Questions;
+using Aw.Judge.Core.Images;
 
 namespace Aw.Judge.Core.Ports;
 

@@ -1,4 +1,4 @@
-namespace Aw.Judge.Core.Questions;
+namespace Aw.Judge.Core.Images;
 
 /// <summary>The image formats the judge reads, by magic bytes: nothing else is sent to a model.</summary>
 public enum ImageFormat

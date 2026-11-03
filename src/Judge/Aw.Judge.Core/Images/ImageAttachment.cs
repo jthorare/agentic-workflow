@@ -1,4 +1,4 @@
-namespace Aw.Judge.Core.Questions;
+namespace Aw.Judge.Core.Images;
 
 /// <summary>
 /// One image read once from disk: the bytes every provider gets (so a file that changes mid-call can't give two providers two

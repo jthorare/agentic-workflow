@@ -1,6 +1,6 @@
 using System.Buffers.Binary;
 
-namespace Aw.Judge.Core.Questions;
+namespace Aw.Judge.Core.Images;
 
 /// <summary>
 /// Reads an image's format and size from its first bytes, with no image library: a PNG by its magic bytes (89 50 4E 47) and

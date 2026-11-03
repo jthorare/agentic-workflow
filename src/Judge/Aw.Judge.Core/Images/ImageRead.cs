@@ -1,4 +1,4 @@
-namespace Aw.Judge.Core.Questions;
+namespace Aw.Judge.Core.Images;
 
 /// <summary>What IImageReader found: the images in the order asked for, or the first problem in words.</summary>
 public sealed record ImageRead
