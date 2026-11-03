@@ -100,7 +100,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton(codeSearch ?? new FakeCodeSearch(Repos[0], Head, BuildFiles))
             .AddSingleton(symbols ?? new NoCodeSymbolSource())
             .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton(records ?? Records).AddSingleton(lexical ?? new FakeLexicalLeg())
-            .AddSingleton<ISourceIdentityStore>(Identities).AddSingleton<ISourceViewers>(Viewers).AddSingleton<IStoreFiles>(StoreFiles)
+            .AddSingleton<ISourceIdentityStore>(Identities).AddSingleton<ISourceViewers>(Viewers).AddSingleton<IStoreFiles>(StoreFiles).AddSingleton<IStoreUpkeep>(new FakeStoreUpkeep())
             .AddSingleton(history ?? new FakeFileHistory(Repos[0], new HistoryWorld(Head, [])))
             .AddSingleton<IModelPort>(Model)
             .AddSingleton<IClusterSource>(Clusters)

@@ -68,6 +68,11 @@ public interface IContextMap : IScopeProposals
     /// <returns>The check.</returns>
     public ValueTask<Result<MapHealth>> CheckStore(CancellationToken cancellationToken);
 
+    /// <summary>The 'context-upkeep' service's pass: refreshes context.db's planner statistics and checkpoints its write-ahead log without waiting on any reader or writer.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>What the pass did, or null when there is no store file yet.</returns>
+    public ValueTask<Result<StoreUpkeep?>> Upkeep(CancellationToken cancellationToken);
+
     /// <summary>The 'context-purge' service's work: deletes expired exports and retained versions beyond the newest 100.</summary>
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>What was removed.</returns>
