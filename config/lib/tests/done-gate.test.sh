@@ -654,3 +654,21 @@ test_a_png_read_outside_the_checkout_is_not_sent_and_is_counted_dropped() {
   echo "PASS: test_a_png_read_outside_the_checkout_is_not_sent_and_is_counted_dropped"
 }
 test_a_png_read_outside_the_checkout_is_not_sent_and_is_counted_dropped
+
+# A judge built before the `images` field existed: the hook still works. Lenient (ignores unknown fields) it answers as always; strict (rejects them,
+# exit 64) the hook fails open like any judge error. This is a fake that behaves the way the old one would, not an old build.
+test_images_sent_to_a_judge_that_predates_the_field_still_work() {
+  local bin_dir transcript dir rc
+  dir="$(mktemp -d)"; git -C "$dir" init -q; printf '\211PNG\r\n\032\n' > "$dir/home.png"
+  transcript="$(mktemp)"; write_transcript_with_reads "$transcript" "still working on the next step" "$dir/home.png"
+  bin_dir="$(mktemp -d)"
+  printf '#!/usr/bin/env bash\nif [ "$1" = "ask-check" ]; then jq -e .transcriptTail > /dev/null || exit 64; exit 2; fi\nif [ "$1" = "brief" ]; then exit 1; fi\n' > "$bin_dir/judge"
+  chmod +x "$bin_dir/judge"
+  rc=0; ( cd "$dir" && PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" ) > /dev/null 2>&1 || rc=$?
+  [ "$rc" = 2 ] || { echo "FAIL: a judge that ignores the new fields must still answer 'continue' (exit 2), got $rc"; exit 1; }
+  printf '#!/usr/bin/env bash\nif [ "$1" = "ask-check" ]; then [ "$(jq -r "keys | join(\",\")")" = "transcriptTail" ] || exit 64; exit 2; fi\nif [ "$1" = "brief" ]; then exit 1; fi\n' > "$bin_dir/judge"
+  rc=0; ( cd "$dir" && PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" ) > /dev/null 2>&1 || rc=$?
+  [ "$rc" = 0 ] || { echo "FAIL: a judge that rejects the new fields must fail the hook open (exit 0), got $rc"; exit 1; }
+  echo "PASS: test_images_sent_to_a_judge_that_predates_the_field_still_work"
+}
+test_images_sent_to_a_judge_that_predates_the_field_still_work

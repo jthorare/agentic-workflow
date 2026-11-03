@@ -367,6 +367,15 @@ PY
   [ -z "$(err_of done-img-small)" ] || fail "done-img-small: a dropped image is never on stderr, got '$(err_of done-img-small)'"
   no_failopen done-img-small
 
+  # A file named .png that isn't a PNG is dropped, and the answer comes as text.
+  printf 'this is not a png' > "$WORK/img-repo/fake.png"; png_turn "$WORK/t-fake.jsonl" "$WORK/img-repo/fake.png"
+  s="$(fresh cs done-img-fake)"; : > "$WORK/jev.log"
+  (cd "$WORK/img-repo" && jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-fake.jsonl")" done-img-fake)
+  [ "$(rc_of done-img-fake)" = 2 ] || fail "done-img-fake: Jev settles ask-check as text (exit 2), got $(rc_of done-img-fake): $(err_of done-img-fake)"
+  [ "$(cat "$WORK/jev.log")" = "application/json -" ] || fail "done-img-fake: expected one text request, got '$(cat "$WORK/jev.log")'"
+  [ -z "$(err_of done-img-fake)" ] || fail "done-img-fake: nothing on stderr, got '$(err_of done-img-fake)'"
+  no_failopen done-img-fake
+
   kill "$JEV_PID" 2> /dev/null || true
 else
   echo "skip: done-gate image cases need python3 and sqlite3"
