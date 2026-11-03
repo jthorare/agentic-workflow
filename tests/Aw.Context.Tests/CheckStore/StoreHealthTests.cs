@@ -38,6 +38,7 @@ public sealed class StoreHealthTests
         Assert.Contains("2.4 GB", check.Detail, StringComparison.Ordinal);
         Assert.Contains("long-running reader", check.Detail, StringComparison.Ordinal);
         Assert.Contains("restart Sindri", check.Fix, StringComparison.Ordinal);
+        Assert.Contains("retries every 15 minutes", check.Fix, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
