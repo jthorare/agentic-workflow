@@ -20,6 +20,9 @@ public sealed class FakeJudge(bool available = true) : IJudge
     /// <inheritdoc/>
     public bool IsAvailable { get; } = available;
 
+    /// <summary>What <see cref="JevImagesOnAsync"/> answers (default off).</summary>
+    public bool JevImages { get; set; }
+
     /// <summary>The repair requests received.</summary>
     public IReadOnlyList<SelectorRepairRequest> RepairRequests => _repairRequests;
 
@@ -51,6 +54,9 @@ public sealed class FakeJudge(bool available = true) : IJudge
 
         return this;
     }
+
+    /// <inheritdoc/>
+    public ValueTask<bool> JevImagesOnAsync(CancellationToken cancellationToken) => ValueTask.FromResult(JevImages);
 
     /// <inheritdoc/>
     public ValueTask<SelectorRepair?> RepairSelectorAsync(SelectorRepairRequest request, CancellationToken cancellationToken)

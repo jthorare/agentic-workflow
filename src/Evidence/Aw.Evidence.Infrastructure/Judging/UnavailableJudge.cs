@@ -24,6 +24,9 @@ internal sealed partial class UnavailableJudge(ILogger<UnavailableJudge> logger)
     }
 
     /// <inheritdoc/>
+    public ValueTask<bool> JevImagesOnAsync(CancellationToken cancellationToken) => ValueTask.FromResult(false);
+
+    /// <inheritdoc/>
     public ValueTask<SelectorRepair?> RepairSelectorAsync(SelectorRepairRequest request, CancellationToken cancellationToken)
     {
         Announce();

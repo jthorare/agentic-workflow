@@ -1,7 +1,10 @@
+using System.Globalization;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json.Nodes;
 using Aw.Judge.Core.Config;
 using Aw.Judge.Core.Evaluation;
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Core.Questions;
@@ -38,13 +41,17 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
 
     private const int EnvelopeChars = 500;
 
+    private const string ImagesHeader = "TypeSafe-Danger-Zone-Images";
+
+    private const string ImageSentence = "\n\nThe images are in `images`, in the order the input lists them.";
+
     private static readonly Uri _endpoint = new("https://api.typesafe.ai/v1/systemone");
 
     /// <inheritdoc />
     public ProviderName Name => ProviderName.Jev;
 
     /// <inheritdoc />
-    public IReadOnlySet<ContentClass> Classes { get; } = new HashSet<ContentClass>(ContentClasses.Text);
+    public IReadOnlySet<ContentClass> Classes { get; } = new HashSet<ContentClass>(ContentClasses.All);
 
     /// <inheritdoc />
     public async ValueTask<ProviderResult> Decide(QuestionRef question, JsonNode? input, TimeSpan budget, CancellationToken cancellationToken)
@@ -72,7 +79,7 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
             using var response = await http.SendAsync(request, deadline.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                return new ProviderErrored(ProviderReasons.Http((int)response.StatusCode));
+                return Rejected(question, response.StatusCode);
             }
 
             var body = await response.Content.ReadAsByteArrayAsync(deadline.Token).ConfigureAwait(false);
@@ -88,11 +95,19 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
         }
     }
 
-    // What Jev can't take, decided before anything is read or sent: too many options, or a question that needs reasons (Jev only classifies).
+    // What Jev can't take, decided before anything is read or sent: too many options, a question that needs reasons (Jev only
+    // classifies) unless the question lets Jev settle it anyway (visual-critique: a page that looks right needs none), or an image outside its limits.
     private static ProviderResult? Refused(QuestionRef question) =>
         question.Outputs.Count > MaxOptions ? new ProviderErrored(ProviderReasons.TooManyOptions)
-        : question.ExtraProperties?.ContainsKey(ResolutionCheckQuestion.Reasons) == true ? new ProviderUnavailable(ProviderReasons.CannotExplain)
+        : !question.JevMaySettle && question.ExtraProperties?.ContainsKey(ResolutionCheckQuestion.Reasons) == true ? new ProviderUnavailable(ProviderReasons.CannotExplain)
+        : question.Images.Any(image => !JevImageLimits.Fits(image)) ? new ProviderUnavailable(ProviderUnavailable.ImageOutOfLimits)
         : null;
+
+    // A non-success status is errored ('http-NNN'); a 413 on a call with images says the images were too large, for the CLIs to take.
+    private static ProviderResult Rejected(QuestionRef question, HttpStatusCode status) =>
+        question.Images.Count > 0 && status == HttpStatusCode.RequestEntityTooLarge
+            ? new ProviderUnavailable(ProviderUnavailable.ImageTooLarge)
+            : new ProviderErrored(ProviderReasons.Http((int)status));
 
     /// <inheritdoc />
     public void Dispose() => http.Dispose();
@@ -117,6 +132,14 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
 
     private static HttpRequestMessage Request(QuestionRef question, JsonNode? input, string instructions, string key)
     {
+        var images = question.Images;
+        var references = images.Select((image, i) => Reference(i + 1, image)).ToList();
+        if (images.Count > 0)
+        {
+            instructions += ImageSentence;
+            input = JevImageReferences.Replace(input, images, references);
+        }
+
         var criteria = question.Outputs.ToDictionary(
             option => option,
             option => question.Criteria?.GetValueOrDefault(option) ?? option,
@@ -124,13 +147,24 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
         var body = new JevRequest(
             input,
             Model,
-            new Dictionary<string, JevChoiceQuestion>(StringComparer.Ordinal) { [QuestionId] = new("choice", instructions, criteria) });
-        var content = new ByteArrayContent(AwJson.Serialize(body, WireJson.Options));
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        var request = new HttpRequestMessage(HttpMethod.Post, _endpoint) { Content = content };
+            new Dictionary<string, JevChoiceQuestion>(StringComparer.Ordinal) { [QuestionId] = new("choice", instructions, criteria) })
+        {
+            Assets = images.Count == 0 ? null : references.ToDictionary(reference => reference, reference => new JevAsset("image", reference), StringComparer.Ordinal),
+        };
+        var json = AwJson.Serialize(body, WireJson.Options);
+        var request = new HttpRequestMessage(HttpMethod.Post, _endpoint) { Content = images.Count == 0 ? JevMultipart.Json(json) : JevMultipart.Build(json, images, references) };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
+        if (images.Count > 0)
+        {
+            request.Headers.Add(ImagesHeader, "true");
+        }
+
         return request;
     }
+
+    // aw-image-<n>-<first 12 hex of the sha256>: unique per call, and never a string a real input holds.
+    private static string Reference(int number, ImageAttachment image) =>
+        string.Create(CultureInfo.InvariantCulture, $"aw-image-{number}-{image.Sha256[..12]}");
 
     private static ProviderResult Read(byte[] body, QuestionRef question)
     {

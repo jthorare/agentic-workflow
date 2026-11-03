@@ -39,6 +39,11 @@ public sealed record JudgeConfig(
             ? JudgeErrors.Invalid.With(problem)
             : With(question, q => q with { Threshold = threshold });
 
+    /// <summary>Sets 'providers.jevImages'; the rest of the providers block and every other key is kept.</summary>
+    /// <param name="on">Whether images are sent to Jev.</param>
+    /// <returns>The new config.</returns>
+    public JudgeConfig SetJevImages(bool on) => this with { Providers = (Providers ?? new ProvidersConfig()) with { JevImages = on } };
+
     /// <summary>Sets 'promptSort.enabled'; the rest of the promptSort block and every other key is kept.</summary>
     /// <param name="enabled">Whether the prompt sorter runs.</param>
     /// <returns>The new config.</returns>

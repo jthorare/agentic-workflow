@@ -14,6 +14,13 @@ read -r -a extras <<< "$(printf '%s' "$extras_line" | sed -E 's/^PATHSPECS=\(\"\
 dirs=()
 for p in "${SINDRI_BUILD_PATHSPECS[@]}" "${extras[@]}"; do case "$p" in src/*) dirs+=("${p%/}") ;; esac; done
 
+# embedded_covered <repo-relative path>: a file or glob a project embeds sits under one of the pathspecs (any directory, not only src/)
+embedded_covered() {
+  local p
+  for p in "${SINDRI_BUILD_PATHSPECS[@]}" "${extras[@]}"; do case "$1" in "${p%/}"/*) return 0 ;; esac; done
+  return 1
+}
+
 covered() { # covered <repo-relative path>
   local d
   for d in "${dirs[@]}"; do case "$1" in "$d"/*) return 0 ;; esac; done
@@ -55,5 +62,15 @@ while [ "${#queue[@]}" -gt 0 ]; do
     ref="${ref//\\//}"
     queue+=("$(normalize "$base/$ref")")
   done < <(grep -oE '<ProjectReference[^>]*Include="[^"]+"' "$ROOT/$proj" | sed -E 's/.*Include="([^"]+)"/\1/')
+  # An embedded file outside the project's own directory (judge's labeled screenshots) must be copied into the build tree too, or
+  # the glob matches nothing there and the published binary ships without it.
+  while IFS= read -r embed; do
+    [ -n "$embed" ] || continue
+    embed="$(normalize "$base/${embed//\\//}")"
+    case "$embed" in "$base"/*) continue ;; esac
+    if embedded_covered "$embed"; then echo "ok - $proj embeds $embed, inside the build pathspecs"; else
+      echo "not ok - $proj embeds $embed, outside the build pathspecs (add its directory to SINDRI_BUILD_PATHSPECS)"; fail=1
+    fi
+  done < <(grep -oE '<EmbeddedResource[^>]*Include="[^"]+"' "$ROOT/$proj" | sed -E 's/.*Include="([^"]+)"/\1/')
 done
 exit "$fail"

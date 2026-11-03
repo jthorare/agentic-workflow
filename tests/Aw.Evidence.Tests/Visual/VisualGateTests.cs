@@ -13,7 +13,7 @@ public sealed class VisualGateTests
     private const string After = "/runs/run-1/desktop-2-click.png";
     private const string Baseline = "/baselines/main.png";
     private static readonly FakeImageCodec _codec = new();
-    private static readonly VerdictCacheContext _context = new("visual-critique/v1", "judge-default", AppBuild: "abc", "s", Fixtures: null, "desktop", "140.0");
+    private static readonly VerdictCacheContext _context = new("visual-critique/v1", "judge-default", AppBuild: "abc", "s", Fixtures: null, "desktop", "140.0", JevImages: false);
 
     private static byte[] Png(RgbaImage image) => _codec.Encode(image);
 

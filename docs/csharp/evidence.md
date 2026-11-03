@@ -353,7 +353,10 @@ never repaired again), `broken` (the action itself failed and no repair made it 
 step runs whatever an earlier one did. The visual verdict comes from the last passed step's screenshot: no pixel
 differing from `--baseline` beyond the diff tolerance (threshold 0.1, anti-aliased pixels ignored) is `unchanged` with no model (never for a run with a failed step); otherwise the verdict cache
 (`--cache`, default `<run-dir>/verdict-cache.json`; keyed on the pixels' and baseline's hashes, the prompt version,
-`AW_VISUAL_MODEL`, the app build, the script's scenario hash, fixtures, viewports and the browser build; an entry without
+`AW_VISUAL_MODEL`, the app build, the script's scenario hash, fixtures, viewports, the browser build and whether the judge
+sends images to Jev (asked once per run: `AW_JUDGE_JEV_IMAGES=0|1` wins, else `judge config get`'s `providers.jevImages`,
+else off; the variable is passed on to the judge too); the prompt version is `visual-critique/v2` since the judge may
+answer from Jev, so no earlier verdict is reused; an entry without
 an app build is trusted only inside the run invocation that wrote it, its `runInstance`, so a rerun in the same directory
 never reuses it), then one critique of the changed region. No passed step, no
 judge wired, or no answer from the judge, is `unchecked`.

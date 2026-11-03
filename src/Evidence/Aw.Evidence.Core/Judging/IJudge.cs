@@ -11,6 +11,11 @@ public interface IJudge
     /// <summary>Whether a judge is wired: false means no model would be called, so there is nothing to record.</summary>
     public bool IsAvailable { get; }
 
+    /// <summary>Whether the judge sends images to Jev, as the judge itself would decide it; false when it can't be read.</summary>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>True when images go to Jev.</returns>
+    public ValueTask<bool> JevImagesOnAsync(CancellationToken cancellationToken);
+
     /// <summary>Proposes a visible element to replace a broken selector.</summary>
     /// <param name="request">The broken selector and candidates.</param>
     /// <param name="cancellationToken">Cancels the call.</param>

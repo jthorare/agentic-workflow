@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using Aw.Judge.Features.SetConfig;
+using Aw.Judge.Features.SetJevImages;
 using Aw.Judge.Features.SetPromptSort;
 using Aw.Kernel.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Aw.Judge.Host.Commands;
 
 /// <summary>
-/// 'judge config set &lt;question&gt; enabled true|false | threshold &lt;0-1&gt;': writes config.json and prints the new
+/// 'judge config set &lt;question&gt; enabled true|false | threshold &lt;0-1&gt;' (or 'providers jev-images true|false'): writes config.json and prints the new
 /// config. An unknown field, a value that doesn't parse or a missing argument is a usage error (64); a threshold
 /// outside 0–1 or an invalid config.json is an error (1).
 /// </summary>
@@ -17,6 +18,7 @@ internal static class SetConfigCommand
     internal const string Name = "set";
     internal const string Synopsis = "config set <question> enabled true|false | threshold <0-1>";
     private const string PromptSortSynopsis = "config set prompt-sort enabled true|false";
+    private const string JevImagesSynopsis = "config set providers jev-images true|false";
 
     internal static async Task<int> Run(IReadOnlyList<string> args, IServiceProvider services, JsonSerializerOptions json)
     {
@@ -30,6 +32,11 @@ internal static class SetConfigCommand
             return await SetPromptSort(args[1], args[2], services, json).ConfigureAwait(false);
         }
 
+        if (string.Equals(args[0], "providers", StringComparison.Ordinal))
+        {
+            return await SetJevImages(args[1], args[2], services, json).ConfigureAwait(false);
+        }
+
         var (request, problem) = Bind(args[0], args[1], args[2]);
         if (request is null)
         {
@@ -38,6 +45,21 @@ internal static class SetConfigCommand
 
         var service = services.GetRequiredService<IService<SetConfigRequest, SetConfigResponse>>();
         var result = await service.Handle(request, CancellationToken.None).ConfigureAwait(false);
+        return result.IsError
+            ? CommandOutput.Emit(1, "", result.Error.Message)
+            : CommandOutput.Emit(0, CommandOutput.Json(result.Value.Config, json));
+    }
+
+    // 'config set providers jev-images true|false': the providers block's one switch, whether screenshots go to Jev.
+    private static async Task<int> SetJevImages(string field, string value, IServiceProvider services, JsonSerializerOptions json)
+    {
+        if (!string.Equals(field, "jev-images", StringComparison.Ordinal) || value is not ("true" or "false"))
+        {
+            return CommandOutput.Usage(JevImagesSynopsis, "providers takes only jev-images true|false");
+        }
+
+        var service = services.GetRequiredService<IService<SetJevImagesRequest, SetJevImagesResponse>>();
+        var result = await service.Handle(new SetJevImagesRequest(On: string.Equals(value, "true", StringComparison.Ordinal)), CancellationToken.None).ConfigureAwait(false);
         return result.IsError
             ? CommandOutput.Emit(1, "", result.Error.Message)
             : CommandOutput.Emit(0, CommandOutput.Json(result.Value.Config, json));
