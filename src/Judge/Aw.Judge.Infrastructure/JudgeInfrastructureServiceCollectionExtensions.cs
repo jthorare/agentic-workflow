@@ -3,6 +3,7 @@ using Aw.Judge.Core.Ports;
 using Aw.Judge.Infrastructure.Config;
 using Aw.Judge.Infrastructure.Eval;
 using Aw.Judge.Infrastructure.Ids;
+using Aw.Judge.Infrastructure.Images;
 using Aw.Judge.Infrastructure.Processes;
 using Aw.Judge.Infrastructure.PromptSort;
 using Aw.Judge.Infrastructure.Providers;
@@ -44,6 +45,8 @@ public static class JudgeInfrastructureServiceCollectionExtensions
             .AddScoped<IJudgeConfigStore>(sp => new FileJudgeConfigStore(settings.StateDirectory, sp.GetRequiredService<JsonSerializerOptions>()))
             .AddSingleton<IInputRedactor>(new AwInputRedactor(Redactor.Default))
             .AddSingleton<IExecutableLocator>(new PathExecutableLocator(environment))
+            .AddSingleton<IImageReader, FileImageReader>()
+            .AddSingleton<IImageWorkspaces, ImageWorkspaces>()
             .AddSingleton<IProcessRunner>(new SystemProcessRunner(environment))
             .AddSingleton<ISecretSource>(sp => new KeychainSecretSource(environment, sp.GetRequiredService<IProcessRunner>()))
             .AddSingleton<IIdGenerator, RandomIdGenerator>()

@@ -39,6 +39,7 @@ public static class VisualCritiqueQuestion
         ExtraProperties = new Dictionary<string, JsonObject>(StringComparer.Ordinal) { [ResolutionCheckQuestion.Reasons] = ResolutionCheckQuestion.StringList() },
         Prompt = Prompt,
         InputProblem = InputProblem,
+        Images = Screenshots,
     };
 
     // The evidence directory is the CLIs' working directory and their Read scope: it must be absolute, and each
@@ -49,6 +50,13 @@ public static class VisualCritiqueQuestion
         : !StaysInside(input.AfterScreenshot) ? "afterScreenshot must be a relative path inside evidenceDir"
         : input.BaselineScreenshot is { } baseline && !StaysInside(baseline) ? "baselineScreenshot must be a relative path inside evidenceDir"
         : null;
+
+    // The screenshots by their relative names under the evidence directory, after first; the reader keeps each real path inside the directory.
+    private static ImageRequest Screenshots(VisualCritiqueInput input) => new()
+    {
+        Paths = input.BaselineScreenshot is null ? [input.AfterScreenshot] : [input.AfterScreenshot, input.BaselineScreenshot],
+        Root = input.EvidenceDir,
+    };
 
     private static bool IsAbsolute(string path) =>
         path.StartsWith('/') || (path.Length >= 3 && char.IsAsciiLetter(path[0]) && path[1] == ':' && path[2] is '/' or '\\');

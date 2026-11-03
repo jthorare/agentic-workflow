@@ -2077,3 +2077,32 @@ Aw.Judge.Core.Providers.QuestionRef.Images.get -> System.Collections.Generic.IRe
 Aw.Judge.Core.Providers.QuestionRef.Images.init -> void
 Aw.Judge.Core.Evaluation.EvaluationContext.ImageReader.get -> Aw.Judge.Core.Ports.IImageReader?
 Aw.Judge.Core.Evaluation.EvaluationContext.ImageReader.init -> void
+Aw.Judge.Core.Questions.ImageRequest
+Aw.Judge.Core.Questions.ImageRequest.<Clone>$() -> Aw.Judge.Core.Questions.ImageRequest!
+Aw.Judge.Core.Questions.ImageRequest.ImageRequest() -> void
+Aw.Judge.Core.Questions.ImageRequest.Equals(Aw.Judge.Core.Questions.ImageRequest? other) -> bool
+Aw.Judge.Core.Questions.ImageRequest.Paths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.Questions.ImageRequest.Paths.init -> void
+Aw.Judge.Core.Questions.ImageRequest.Root.get -> string?
+Aw.Judge.Core.Questions.ImageRequest.Root.init -> void
+override Aw.Judge.Core.Questions.ImageRequest.Equals(object? obj) -> bool
+override Aw.Judge.Core.Questions.ImageRequest.GetHashCode() -> int
+override Aw.Judge.Core.Questions.ImageRequest.ToString() -> string!
+static Aw.Judge.Core.Questions.ImageRequest.operator !=(Aw.Judge.Core.Questions.ImageRequest? left, Aw.Judge.Core.Questions.ImageRequest? right) -> bool
+static Aw.Judge.Core.Questions.ImageRequest.operator ==(Aw.Judge.Core.Questions.ImageRequest? left, Aw.Judge.Core.Questions.ImageRequest? right) -> bool
+Aw.Judge.Core.Ports.IImageWorkspace
+Aw.Judge.Core.Ports.IImageFolder
+Aw.Judge.Core.Ports.IImageFolder.Files.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.Ports.IImageFolder.Path.get -> string!
+Aw.Judge.Core.Ports.IImageWorkspaces
+Aw.Judge.Core.Ports.IImageWorkspaces.Create(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ImageAttachment!>! images, string? relativeTo) -> Aw.Judge.Core.Ports.IImageWorkspace!
+Aw.Judge.Core.Providers.ImageScope
+Aw.Judge.Core.Providers.ImageScope.Dispose() -> void
+Aw.Judge.Core.Providers.ImageScope.ImageScope(Aw.Judge.Core.Ports.IImageWorkspaces! workspaces, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ImageAttachment!>! images, string? relativeTo) -> void
+Aw.Judge.Core.Providers.ImageScope.Open() -> Aw.Judge.Core.Ports.IImageFolder!
+Aw.Judge.Core.Providers.QuestionRef.ImageScope.get -> Aw.Judge.Core.Providers.ImageScope?
+Aw.Judge.Core.Providers.QuestionRef.ImageScope.init -> void
+Aw.Judge.Core.Evaluation.EvaluationContext.ImageWorkspaces.get -> Aw.Judge.Core.Ports.IImageWorkspaces?
+Aw.Judge.Core.Evaluation.EvaluationContext.ImageWorkspaces.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Images.get -> System.Func<TInput!, Aw.Judge.Core.Questions.ImageRequest?>?
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Images.init -> void

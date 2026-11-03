@@ -11,7 +11,8 @@ namespace Aw.Judge.Features.AskQuestion;
 /// question's config entry (enabled, threshold, providers) narrows it, then the evaluator decides or escalates. A config
 /// that can't be read runs on the defaults (a question fails open), like an invalid one.
 /// </summary>
-internal sealed class AskQuestionService(QuestionEvaluator evaluator, IJudgeConfigStore configs, IProviderCatalog catalog, RulesProvider rules)
+internal sealed class AskQuestionService(
+    QuestionEvaluator evaluator, IJudgeConfigStore configs, IProviderCatalog catalog, RulesProvider rules, IImageReader images, IImageWorkspaces workspaces)
     : IService<AskQuestionRequest, AskQuestionResponse>
 {
     public async ValueTask<Result<AskQuestionResponse>> Handle(AskQuestionRequest request, CancellationToken cancellationToken)
@@ -27,6 +28,8 @@ internal sealed class AskQuestionService(QuestionEvaluator evaluator, IJudgeConf
             Override = QuestionOverride.For(config, request.Question),
             InputCapChars = config.Providers?.InputCapChars,
             SessionId = request.SessionId,
+            ImageReader = images,
+            ImageWorkspaces = workspaces,
         };
         var outcome = await evaluator.Ask(request.Question, request.Input, context, cancellationToken).ConfigureAwait(false);
         return new AskQuestionResponse(outcome, warning);

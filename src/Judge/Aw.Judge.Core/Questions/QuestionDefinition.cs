@@ -87,6 +87,12 @@ public sealed record QuestionDefinition<TInput>
                 && reasons.Any(static r => r is JsonValue value && value.TryGetValue<string>(out var text) && !string.IsNullOrWhiteSpace(text)));
     }
 
+    /// <summary>
+    /// The images the validated input names, read once by the evaluator before any provider runs (visual-critique: its two screenshots);
+    /// null for a question that sends none. A file that can't be read escalates the call as 'invalid-input'.
+    /// </summary>
+    public Func<TInput, ImageRequest?>? Images { get; init; }
+
     /// <summary>What a provider sees of this question for one input.</summary>
     /// <param name="input">The validated input.</param>
     /// <returns>The reference.</returns>

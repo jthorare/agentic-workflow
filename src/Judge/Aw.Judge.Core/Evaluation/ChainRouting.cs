@@ -16,11 +16,11 @@ public static class ChainRouting
     {
         ArgumentNullException.ThrowIfNull(chain);
         ArgumentNullException.ThrowIfNull(providers);
-        _ = hasImages; // Red step: the image entry of the chain is the green step's.
-        return [.. chain.For(contentClass)
+        var routed = hasImages ? ContentClass.Image : contentClass;
+        return [.. chain.For(routed)
             .Select(name => providers.FirstOrDefault(p => p.Name == name))
             .OfType<IModelProvider>()
-            .Where(p => p.Classes.Contains(contentClass))];
+            .Where(p => p.Classes.Contains(routed))];
     }
 
     /// <summary>

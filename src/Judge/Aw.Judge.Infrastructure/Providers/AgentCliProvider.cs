@@ -32,19 +32,10 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
     {
         ArgumentNullException.ThrowIfNull(question);
         using var workspace = TempWorkspace.Create();
-        AgentCliCall call;
-        if (question.ContentClass == ContentClass.Image)
+        var (call, failure) = BuildCall(question, input, workspace.Path);
+        if (call is null)
         {
-            if (Evidence(input) is not { } evidence)
-            {
-                return new ProviderErrored(ProviderReasons.InvalidImageInput);
-            }
-
-            call = ForImage(question, evidence, workspace.Path);
-        }
-        else
-        {
-            call = ForText(question, input, workspace.Path);
+            return new ProviderErrored(failure);
         }
 
         var result = await runner.Run(Request(call, question, budget), cancellationToken).ConfigureAwait(false);
@@ -57,6 +48,40 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
             ProcessEnd.Exited => Read(result.StandardOutput, question),
             _ => throw new InvalidOperationException($"unknown process end {result.End}"),
         };
+    }
+
+    // The attachments were read once before any provider; an image call reads per-call copies of those bytes. Else an image question
+    // names its screenshots in its input, and a text question has none. The call, or the reason code when there is none.
+    private (AgentCliCall? Call, string Failure) BuildCall(QuestionRef question, JsonNode? input, string workspace)
+    {
+        if (question.Images.Count > 0)
+        {
+            return Opened(question) is { } images
+                ? (ForImage(question, new ImageEvidence(images.Files[0], images.Path, images.Files.Count > 1 ? images.Files[1] : null), workspace), "")
+                : (null, ProviderReasons.ImageWorkspace);
+        }
+
+        if (question.ContentClass != ContentClass.Image)
+        {
+            return (ForText(question, input, workspace), "");
+        }
+
+        return Evidence(input) is { } evidence
+            ? (ForImage(question, evidence, workspace), "")
+            : (null, ProviderReasons.InvalidImageInput);
+    }
+
+    // The question's image directory, made on first use; null when there is no scope or the directory can't be written.
+    private static IImageFolder? Opened(QuestionRef question)
+    {
+        try
+        {
+            return question.ImageScope?.Open();
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     /// <summary>The call for a text question, run in the fresh workspace.</summary>

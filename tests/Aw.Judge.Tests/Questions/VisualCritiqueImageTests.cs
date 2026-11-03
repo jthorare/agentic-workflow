@@ -114,7 +114,7 @@ public sealed class VisualCritiqueImageTests
     {
         var input = new System.Text.Json.Nodes.JsonObject { ["afterScreenshot"] = after, ["baselineScreenshot"] = baseline, ["evidenceDir"] = evidenceDir };
         var evaluator = new QuestionEvaluator(Log, new FakeInputRedactor(), new SequentialIdGenerator(), new FakeTimeProvider(KnownInstants.Epoch), Json);
-        var context = new EvaluationContext { Providers = [new ClaudeCliProvider(_runner)], ImageReader = new FileImageReader() };
+        var context = new EvaluationContext { Providers = [new ClaudeCliProvider(_runner)], ImageReader = new FileImageReader(), ImageWorkspaces = new ImageWorkspaces() };
         return evaluator.Evaluate(VisualCritiqueQuestion.Definition, input.ToJsonString(), context, TestContext.Current.CancellationToken);
     }
 
