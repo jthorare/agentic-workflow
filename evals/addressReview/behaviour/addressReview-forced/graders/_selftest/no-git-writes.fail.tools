@@ -1,0 +1,2 @@
+Bash	{"command": "git commit -am \"fix\" && git push origin HEAD"}
+Bash	{"command": "git branch fix-77"}

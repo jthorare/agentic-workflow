@@ -1,0 +1,4 @@
+{"type":"system","subtype":"init","session_id":"selftest"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"addressReview"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"cat src/export.js src/parse.js 2>&1; gh api repos/a/b/pulls/77/comments 2>&1 | head"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Read","input":{"file_path":"/w/.aw-state/x/reviews/77.json"}}]}}
