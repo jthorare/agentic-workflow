@@ -15,6 +15,7 @@ using Aw.Context.Features.ApplyReviewFile;
 using Aw.Context.Features.BuildMap;
 using Aw.Context.Features.CheckMap;
 using Aw.Context.Features.CheckRetention;
+using Aw.Context.Features.CheckStore;
 using Aw.Context.Features.CleanMap;
 using Aw.Context.Features.EmbedRecords;
 using Aw.Context.Features.EvalProbes;
@@ -118,7 +119,7 @@ internal static class Engines
         var exports = new FakeExportStore(clock);
         var reader = new FakeMapFileReader();
         var admin = new MapAdmin(new PreviewMapService(reader), new ImportMapService(reader, store, clock), new ExportMapService(store, exports, clock),
-            new ShowMapStatusService(store), new CheckMapService(store), new CheckRetentionService(store, exports, clock, new Features.RunBacktest.UnconfiguredBacktest()), new PurgeMapService(store, exports, clock));
+            new ShowMapStatusService(store), new CheckMapService(store), new MapHealthChecks(new CheckRetentionService(store, exports, clock, new Features.RunBacktest.UnconfiguredBacktest()), new CheckStoreService(new FakeStoreFiles())), new PurgeMapService(store, exports, clock));
         var review = new MapReview(new ReviewQueueService(store, scrubbers), new ReviewMapService(store, new FakeCurrentUser(), clock), new ReviewHistoryService(store), new ExportReviewService(store, scrubbers, new FakeReviewFileStore(), clock),
             new PreviewReviewFileService(new FakeReviewFileStore()), new ApplyReviewFileService(store, new FakeReviewFileStore(), new FakeCurrentUser(), clock), new PromoteMapService(store, clock));
         return new ContextMap(admin, review, new MapProposals(Build(clock, store), new ProposeFromScopeService(store, store, clock), new GetProposalsService(store, store, scrubbers)), Publishing(store), new CleanMapService(store, scrubbers, new FakeModelPort(), new FakeCurrentUser(), clock),

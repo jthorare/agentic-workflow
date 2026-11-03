@@ -1,7 +1,6 @@
 using Aw.Context.Core.Engine;
 using Aw.Context.Core.Map;
 using Aw.Context.Features.CheckMap;
-using Aw.Context.Features.CheckRetention;
 using Aw.Context.Features.ExportMap;
 using Aw.Context.Features.ImportMap;
 using Aw.Context.Features.PreviewMap;
@@ -19,7 +18,7 @@ internal sealed class MapAdmin(
     IService<ExportMapRequest, MapExported> export,
     IService<ShowMapStatusRequest, MapStatusView> status,
     IService<CheckMapRequest, MapHealth> checkMap,
-    IService<CheckRetentionRequest, MapHealth> checkRetention,
+    MapHealthChecks health,
     IService<PurgeMapRequest, PurgeReport> purge)
 {
     public ValueTask<Result<MapFilePreview>> PreviewMap(string path, ContextScope scope, CancellationToken cancellationToken) =>
@@ -38,7 +37,10 @@ internal sealed class MapAdmin(
         checkMap.Handle(new CheckMapRequest(scope), cancellationToken);
 
     public ValueTask<Result<MapHealth>> CheckRetention(CancellationToken cancellationToken) =>
-        checkRetention.Handle(new CheckRetentionRequest(), cancellationToken);
+        health.CheckRetention(cancellationToken);
+
+    public ValueTask<Result<MapHealth>> CheckStore(CancellationToken cancellationToken) =>
+        health.CheckStore(cancellationToken);
 
     public ValueTask<Result<PurgeReport>> PurgeExpired(CancellationToken cancellationToken) =>
         purge.Handle(new PurgeMapRequest(), cancellationToken);
