@@ -1,6 +1,6 @@
 ---
 name: planDevexReview
-description: "Developer-experience review of a plan document. Maps friction in API ergonomics, setup, error messages, observability, docs, migration paths, and ramp-up cost."
+description: "Use when a plan adds or changes an API, CLI, SDK, config or setup flow and you need to know how painful it is for the developers who adopt or join it: install steps, error output, docs, migration path, ramp-up. Rates friction by severity. Not for end-user screens or security review."
 argument-hint: "[plan-path] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -11,6 +11,8 @@ Friction mapping for plan documents. Identifies severity-rated DX gaps that will
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
+
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Overview
 

@@ -1,0 +1,1 @@
+Reordering saves automatically after each drop; a loading spinner shows while it saves.

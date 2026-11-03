@@ -1,0 +1,4 @@
+✓ Dashboard reachable
+✓ MCP server connected
+✓ Knowledge base populated
+✓ Version 12.1.0

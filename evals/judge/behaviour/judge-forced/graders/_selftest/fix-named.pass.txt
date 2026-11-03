@@ -1,0 +1,1 @@
+Fix: run ./setup.sh from the toolkit checkout; it installs the judge binary.

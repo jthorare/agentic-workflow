@@ -1,6 +1,6 @@
 ---
 name: autoplan
-description: "Plan meta-orchestrator. Runs productReview + archReview + planDesignReview + planDevexReview + cso(plan) in parallel via subagents and consolidates findings with cross-lens tension surfacing."
+description: "Use when a plan should be vetted from every angle before anyone builds it: product, architecture, design, developer experience and security in one pass. Runs the five review lenses in parallel and merges them into one verdict with the places they disagree. Not for a request about a single lens; that goes to the lens skill."
 argument-hint: "[plan-path] [--mode mvp|growth|scale|pivot] [--slim]"
 allowed-tools: Bash(ls *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -11,6 +11,8 @@ Fans out five review lenses in parallel against a plan document, then consolidat
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
+
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Overview
 
@@ -130,6 +132,6 @@ All under `$AW_DIR/plans/<feature>/`: `product-review.md` · `arch-review.md` ·
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/autoplan-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`autoplan`), `artifacts` (absolute paths: `consolidated-review.md` and each lens's review file in the feature dir), `summary` (one line),
-plus `feature_dir` (absolute path of `$AW_DIR/plans/<feature>`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
+plus `feature_dir` (absolute path of `$AW_DIR/plans/<feature>`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line); `lenses` (object: lens name to that lens's verdict, or `MISSING`).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
