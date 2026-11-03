@@ -74,6 +74,7 @@ public static partial class JudgeFeaturesServiceCollectionExtensions
                     sp.GetRequiredService<AdjudicateService>(),
                     sp.GetRequiredService<IValidator<AdjudicateRequest>>()));
         _ = services
+            .AddScoped<EvalRedaction>()
             .AddScoped<EvaluateQuestionService>()
             .AddScoped<IValidator<EvaluateQuestionRequest>, EvaluateQuestionValidator>()
             .AddScoped<IService<EvaluateQuestionRequest, EvaluateQuestionResponse>>(static sp =>

@@ -18,11 +18,10 @@ namespace Aw.Judge.Features.EvaluateQuestion;
 /// writes (the record, the .json and .md reports) is redacted, values and keys, before it is written.
 /// </summary>
 internal sealed class EvaluateQuestionService(
-    IEvalStore store, IJudgeConfigStore configs, IProviderCatalog catalog, IEvalFiles files, IInputRedactor redactor, TimeProvider clock, JsonSerializerOptions json)
+    IEvalStore store, IJudgeConfigStore configs, IProviderCatalog catalog, IEvalFiles files, EvalRedaction redaction, TimeProvider clock, IImageReader images)
     : IService<EvaluateQuestionRequest, EvaluateQuestionResponse>
 {
-    // red: the constructor already has the most dependencies AW1007 allows, so the reader that re-reads stored images is a seam the green commit folds in
-    internal IImageReader? Images { get; init; }
+    private readonly JsonSerializerOptions _json = redaction.Options;
 
     public async ValueTask<Result<EvaluateQuestionResponse>> Handle(EvaluateQuestionRequest request, CancellationToken cancellationToken)
     {
@@ -129,16 +128,17 @@ internal sealed class EvaluateQuestionService(
         }
 
         var provider = found.Value;
-        // red: the stored images are re-read (a file gone or changed is skipped as 'image-changed') in the green commit
-        _ = Images;
         List<EvalResult> results = [];
         foreach (var labeled in items)
         {
             var input = InputJson.TryParse(labeled.Item.InputJson, out var node) ? variant(node) : null;
-            var asked = question.Ask(input, json);
+            // The images the item was judged with are read again: one that is gone or changed makes the case skipped, not a failure, and asks nobody.
+            var (current, changed) = await EvalImages.Reread(node, images, cancellationToken).ConfigureAwait(false);
+            input = EvalImages.ForProvider(input, current);
+            var asked = question.Ask(input, _json) is { } built ? built with { Images = current } : null;
             var start = clock.GetTimestamp();
-            var answer = asked is null
-                ? new ProviderErrored("invalid-input")
+            var answer = changed ? new ProviderUnavailable(EvalImages.Changed)
+                : asked is null ? new ProviderErrored("invalid-input")
                 : await provider.Decide(asked, input, question.TimeBudget, cancellationToken).ConfigureAwait(false);
             var row = new EvalResult(labeled.Item.Id.Value, labeled.Label, answer, (long)clock.GetElapsedTime(start).TotalMilliseconds);
             results.Add(row);
@@ -181,7 +181,7 @@ internal sealed class EvaluateQuestionService(
     }
 
     // Values and keys both go through the redactor, before anything is written.
-    private string Redacted(JsonNode node) => InputJson.Write(redactor.Redact(node), json);
+    private string Redacted(JsonNode node) => redaction.Redacted(node);
 
-    private string RedactedText(string text) => redactor.Redact(JsonValue.Create(text)) is JsonValue value && value.TryGetValue<string>(out var redacted) ? redacted : "";
+    private string RedactedText(string text) => redaction.RedactedText(text);
 }

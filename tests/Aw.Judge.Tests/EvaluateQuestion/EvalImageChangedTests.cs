@@ -33,11 +33,7 @@ public sealed class EvalImageChangedTests
             ["/shots/same.png"] = kept,
         });
         var service = new EvaluateQuestionService(
-            world.Store, new InMemoryJudgeConfigStore(), new FakeProviderCatalog(world.Jev), world.Files, new FakeInputRedactor(), world.Clock,
-            AwJson.CreateOptions(JudgeJsonContext.Default))
-        {
-            Images = reader,
-        };
+            world.Store, new InMemoryJudgeConfigStore(), new FakeProviderCatalog(world.Jev), world.Files, new EvalRedaction(new FakeInputRedactor(), AwJson.CreateOptions(JudgeJsonContext.Default)), world.Clock, reader);
         _ = world.Jev.Decides("ask", 0.9);
 
         var result = await service.Handle(A.EvaluateQuestionRequest().Record(RecordPath).Build(), TestContext.Current.CancellationToken);

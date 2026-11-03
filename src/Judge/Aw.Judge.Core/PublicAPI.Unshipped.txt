@@ -2143,3 +2143,10 @@ Aw.Judge.Core.Decisions.JevSkipNotes
 static Aw.Judge.Core.Decisions.JevSkipNotes.For(Aw.Judge.Core.Decisions.DecisionRecord! decision) -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Judge.Core.Evaluation.EvaluationOutcome.StderrLines.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Judge.Core.Evaluation.EvaluationOutcome.StderrLines.init -> void
+Aw.Judge.Core.Providers.ProviderResult.ImageNotes.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Aw.Judge.Core.Providers.ProviderResult.ImageNotes.init -> void
+Aw.Judge.Core.Providers.QuestionRef.ImagesBestEffort.get -> bool
+Aw.Judge.Core.Providers.QuestionRef.ImagesBestEffort.init -> void
+const Aw.Judge.Core.Evaluation.EvaluationReasons.InvalidImages = "invalid-images" -> string!
+Aw.Judge.Core.Decisions.ImageNotes
+static Aw.Judge.Core.Decisions.ImageNotes.For(Aw.Judge.Core.Decisions.DecisionRecord! decision) -> System.Collections.Generic.IReadOnlyList<string!>!

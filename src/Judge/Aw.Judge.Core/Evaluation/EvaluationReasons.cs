@@ -9,6 +9,9 @@ public static class EvaluationReasons
     /// <summary>The input failed the question's schema.</summary>
     public const string InvalidInput = "invalid-input";
 
+    /// <summary>The input's 'images' list failed a check (too many, relative, missing, not a PNG or JPEG, too big); no provider ran.</summary>
+    public const string InvalidImages = "invalid-images";
+
     /// <summary>A pre-rule settled it.</summary>
     public const string PreRule = "pre-rule";
 

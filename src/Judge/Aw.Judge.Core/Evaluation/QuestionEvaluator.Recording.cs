@@ -24,8 +24,8 @@ public sealed partial class QuestionEvaluator
         // (disabled, invalid) it holds what the caller sent.
         await Record(question, run, settlement, run.Input ?? run.RawInput, cancellationToken).ConfigureAwait(false);
         return question.ReportsTrace
-            ? new EscalatedOutcome(reasonCode) { Id = run.Id, Probabilities = run.UndecidedProbabilities }
-            : new EscalatedOutcome(reasonCode);
+            ? new EscalatedOutcome(reasonCode) { Id = run.Id, Probabilities = run.UndecidedProbabilities, StderrLines = run.Lines }
+            : new EscalatedOutcome(reasonCode) { StderrLines = run.Lines };
     }
 
     private async ValueTask<EvaluationOutcome> Settle<TInput>(
@@ -41,6 +41,7 @@ public sealed partial class QuestionEvaluator
         {
             Extra = Declared(extra, question.ExtraProperties),
             Probabilities = question.ReportsTrace ? settlement.DecidingProbabilities : null,
+            StderrLines = run.Lines,
         };
     }
 
@@ -63,7 +64,7 @@ public sealed partial class QuestionEvaluator
     {
         // A question that keeps no input text stores its own form, and never the caller's raw input, even for a call that
         // escalated before it validated.
-        var stored = run.StoredInput ?? (question.StoredForm is null ? input : new JsonObject { ["input"] = "not kept" });
+        var stored = run.StoredInput ?? (question.StoredForm is null ? WithImageRows(input, run, settlement.ProviderColumn) : new JsonObject { ["input"] = "not kept" });
         var decision = new DecisionRecord
         {
             Id = run.Id,

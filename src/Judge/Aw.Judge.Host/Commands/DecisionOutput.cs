@@ -26,5 +26,11 @@ internal sealed record DecisionOutput(
     internal static DecisionOutput From(DecisionRecord d) => new(
         d.Id.Value, d.Ts, d.Question, d.ContentClass, d.Provider, d.Decision, d.Confidence, d.ReasonCode, d.LatencyMs,
         d.InputDigest, d.UndoneAt, d.ChainPosition, d.Skipped,
-        Frozen.Text(d.Outcome), d.ApprovedAt, d.Details?.Reasons, JevSkipNotes.For(d) is { Count: > 0 } notes ? notes : null);
+        Frozen.Text(d.Outcome), d.ApprovedAt, d.Details?.Reasons, NotesFor(d));
+
+    private static List<string>? NotesFor(DecisionRecord d)
+    {
+        List<string> notes = [.. ImageNotes.For(d), .. JevSkipNotes.For(d)];
+        return notes.Count > 0 ? notes : null;
+    }
 }

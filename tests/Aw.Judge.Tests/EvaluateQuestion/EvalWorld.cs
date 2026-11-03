@@ -19,7 +19,7 @@ internal sealed class EvalWorld
 
     internal EvalWorld(IInputRedactor? redactor = null)
     {
-        Service = new EvaluateQuestionService(Store, new InMemoryJudgeConfigStore(), new FakeProviderCatalog(Jev), Files, redactor ?? new FakeInputRedactor(), Clock, _json);
+        Service = new EvaluateQuestionService(Store, new InMemoryJudgeConfigStore(), new FakeProviderCatalog(Jev), Files, new EvalRedaction(redactor ?? new FakeInputRedactor(), _json), Clock, new FakeImageReader());
     }
 
     internal FakeEvalStore Store { get; } = new();

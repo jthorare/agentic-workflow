@@ -42,7 +42,7 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
         ArgumentNullException.ThrowIfNull(context);
         ArgumentNullException.ThrowIfNull(rawInput);
         var (rawNode, wellFormed) = RawNode(rawInput);
-        var run = new EvaluationRun(DecisionId.From(ids.NewId().ToString()), clock.GetUtcNow(), rawNode) { SessionId = context.SessionId };
+        var run = new EvaluationRun(DecisionId.From(ids.NewId().ToString()), clock.GetUtcNow(), rawNode) { SessionId = context.SessionId, Generic = wellFormed ? GenericImages.From(rawNode) : null };
         var settings = context.Override;
         if (settings is { Enabled: false })
         {
@@ -107,6 +107,14 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
             run.Note = problem;
             return await Escalate(question, run, EvaluationReasons.InvalidInput, DecisionOutcome.Escalated, cancellationToken).ConfigureAwait(false);
         }
+
+        var (own, refused) = await ReadGeneric(question, run, context, cancellationToken).ConfigureAwait(false);
+        if (refused is not null)
+        {
+            return refused;
+        }
+
+        images = [.. images, .. own];
 
         // why: ReadImages threw unless the context has image workspaces, and images are only non-empty after it read some.
         using var scope = images.Count > 0 ? new ImageScope(context.ImageWorkspaces!, images, root) : null;
@@ -200,7 +208,7 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
 
         if (lineup.Images.Images.Count > 0)
         {
-            reference = reference with { Images = lineup.Images.Images, ImageScope = lineup.Images.Scope };
+            reference = reference with { Images = lineup.Images.Images, ImageScope = lineup.Images.Scope, ImagesBestEffort = run.Generic?.BestEffort == true };
         }
 
         var candidates = lineup.Candidates;
@@ -211,6 +219,13 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
             var result = await provider.Decide(reference, run.Input, question.TimeBudget, cancellationToken).ConfigureAwait(false);
             var latencyMs = (long)clock.GetElapsedTime(start).TotalMilliseconds;
             var answer = new ProviderAnswer(provider.Name, i, latencyMs, result);
+            if (result.ImageNotes is { Count: > 0 } dropped)
+            {
+                // The call dropped its images for this provider: the rest of the chain runs as text.
+                run.ProviderDrops.AddRange(dropped);
+                reference = reference with { Images = [], ImageScope = null, ImagesBestEffort = false };
+            }
+
             var settlement = await Step(question, input, run, answer, cancellationToken).ConfigureAwait(false);
             if (settlement is not null)
             {
