@@ -34,6 +34,36 @@ internal sealed class EvaluationRun(DecisionId id, DateTimeOffset ts, JsonNode? 
     /// <summary>Why an escalation happened, when it is more than its reason code (an image that couldn't be read); stored as the row's reason.</summary>
     public string? Note { get; set; }
 
+    /// <summary>The input's 'images' and 'imagesBestEffort', or null for a call without images.</summary>
+    public GenericImages? Generic { get; set; }
+
+    /// <summary>The input's own images, once read and kept.</summary>
+    public IReadOnlyList<Images.ImageAttachment> GenericRead { get; set; } = [];
+
+    /// <summary>The causes of the images the evaluator dropped (best effort), without the 'judge: ' prefix.</summary>
+    public List<string> DropCauses { get; } = [];
+
+    /// <summary>What providers said they dropped on the way (Jev's limits, a 413 retried as text), complete lines.</summary>
+    public List<string> ProviderDrops { get; } = [];
+
+    /// <summary>The lines for stderr: empty (the shared empty list) when there are none, so an outcome without images equals today's.</summary>
+    public IReadOnlyList<string> Lines
+    {
+        get
+        {
+            List<string> causes = [.. DropCauses];
+            if (Refusal is { } refusal)
+            {
+                causes.Add(refusal);
+            }
+
+            return causes.Count == 0 ? [] : [.. causes.Select(cause => "judge: " + cause)];
+        }
+    }
+
+    /// <summary>The cause the call was refused for, when its images failed a check and the call is strict.</summary>
+    public string? Refusal { get; set; }
+
     /// <summary>The sizes of the call's images as read; empty for a call without images.</summary>
     public IReadOnlyList<Images.ImageSize> ReadImages { get; set; } = [];
 

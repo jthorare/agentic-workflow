@@ -58,7 +58,7 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
         if (question.Images.Count > 0)
         {
             return Opened(question) is { } images
-                ? (ForImage(question, new ImageEvidence(images.Files[0], images.Path, images.Files.Count > 1 ? images.Files[1] : null), workspace), "")
+                ? (ForImage(Named(question, images), new ImageEvidence(images.Files[0], images.Path, images.Files.Count > 1 ? images.Files[1] : null, [.. images.Files.Skip(2)]), workspace), "")
                 : (null, ProviderReasons.ImageWorkspace);
         }
 
@@ -71,6 +71,12 @@ internal abstract class AgentCliProvider(IProcessRunner runner, AgentCliName cli
             ? (ForImage(question, evidence, workspace), "")
             : (null, ProviderReasons.InvalidImageInput);
     }
+
+    // Only visual-critique's own prompt names its screenshots; any other question that carries images gets one line naming the files, in order.
+    private static QuestionRef Named(QuestionRef question, IImageFolder images) =>
+        question.ContentClass == ContentClass.Image
+            ? question
+            : question with { Prompt = $"{question.Prompt}\n\nThe images are {string.Join(", ", images.Files)} in this directory, in the order the question lists them." };
 
     // The question's image directory, made on first use; null when there is no scope or the directory can't be written.
     private static IImageFolder? Opened(QuestionRef question)

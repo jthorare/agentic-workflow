@@ -49,7 +49,8 @@ internal static class QuestionCommand
             JudgeLog.UsingDefaultConfig(services.GetRequiredService<ILoggerFactory>().CreateLogger(JudgeLog.Category), warning);
         }
 
-        return CommandOutput.Emit(ExitCode(name, result.Value.Outcome), Envelope(result.Value.Outcome, json));
+        return CommandOutput.Emit(
+            ExitCode(name, result.Value.Outcome), Envelope(result.Value.Outcome, json), string.Join('\n', result.Value.Outcome.StderrLines));
     }
 
     internal static int ExitCode(string question, EvaluationOutcome outcome) => (question, outcome) switch
