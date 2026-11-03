@@ -109,8 +109,34 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
             .Where(static p => p.TryGetProperty("trigger", out var t) && string.Equals(t.GetString(), "step.failed", StringComparison.Ordinal))
             .Select(static p => p.GetProperty("detail").GetProperty("reason").GetString())
             .ToList();
-        var decisions = Directory.EnumerateFiles(Path.Combine(_harness.Home, "workflow", "facts")).Select(static f => File.ReadAllText(f)).Where(static t => t.Contains("\"choice\"", StringComparison.Ordinal));
-        return $"the instance is in '{state}', not 'prove'. Jev was asked {jev.Requests.Count} time(s): {string.Join("; ", jev.Requests)}. step.failed reasons: [{string.Join(" | ", failures)}]. decision facts: [{string.Join(" | ", decisions)}]";
+        var decisions = DecisionFacts();
+        var why = await Why(decisions, ct);
+        return $"the instance is in '{state}', not 'prove'. Jev was asked {jev.Requests.Count} time(s): {string.Join("; ", jev.Requests)}. step.failed reasons: [{string.Join(" | ", failures)}]. decision facts: [{string.Join(" | ", decisions)}]. judge why: {why}";
+    }
+
+    // Every stored fact that is a judge decision (it has a "choice").
+    private List<string> DecisionFacts() =>
+        [.. Directory.EnumerateFiles(Path.Combine(_harness.Home, "workflow", "facts")).Select(static f => File.ReadAllText(f)).Where(static t => t.Contains("\"choice\"", StringComparison.Ordinal))];
+
+    // `judge why <decisionId>` on the judge's own store (the directory JudgeCliChoice hands the child: <Sindri home>/judge), which names why Jev was skipped.
+    private async Task<string> Why(List<string> decisions, CancellationToken ct)
+    {
+        var id = decisions.Select(static t => TryParse(t)).OfType<JsonElement>()
+            .Select(static e => e.TryGetProperty("decisionId", out var d) ? d.GetString() : null).FirstOrDefault(static d => !string.IsNullOrEmpty(d));
+        if (id is null)
+        {
+            return "(no decision id in the decision facts)";
+        }
+
+        var start = new System.Diagnostics.ProcessStartInfo(Environment.GetEnvironmentVariable("AW_SINDRI_JUDGE")!, ["why", id]) { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };   // why: the test skipped without AW_SINDRI_JUDGE
+        start.Environment["AW_JUDGE_STATE_DIR"] = Path.Combine(_harness.Home, "judge");
+        using var process = System.Diagnostics.Process.Start(start)!;   // why: a file that exists starts
+        using var limit = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        limit.CancelAfter(TimeSpan.FromSeconds(20));
+        var output = await process.StandardOutput.ReadToEndAsync(limit.Token);
+        var error = await process.StandardError.ReadToEndAsync(limit.Token);
+        await process.WaitForExitAsync(limit.Token);
+        return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"exit {process.ExitCode}: {output} {error}").ReplaceLineEndings(" ");
     }
 
     // The decision the Step wrote ('fact:decision' is stored in the home's fact store): the provider that answered.
