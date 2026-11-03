@@ -130,7 +130,7 @@ Result: `org-repo` (e.g., `myorg-myrepo`). All output paths use `$AW_DIR/<domain
 | Planning | `/officeHours`, `/productReview`, `/archReview`, `/planDesignReview`, `/planDevexReview`, `/autoplan` | `plans/` (`officeHours` and `autoplan` write to `plans/<feature>/`) |
 | System design | `/system-design` | `system-design/<slug>/` (status.md, pages/, diagrams/, mockups/, shots/) |
 | Design | `/design-mockup`, `/design-verify`, `/design-shotgun` | `design/` (`design-shotgun` writes to `design/shotgun/`) |
-| Prototypes | `/clickable-prototype` | `prototypes/<slug>/` (brief.md, probe.ts, shots/) |
+| Prototypes | `/clickable-prototype` | `prototypes/<slug>/` (brief.md, probe.mjs, shots/) |
 | Verification | `/verify-app` | `verification/` |
 | Security | `/cso` | `security/` |
 | Videos | `/system-design-video` | `videos/<design>/<persona>/` |

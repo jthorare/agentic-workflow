@@ -57,8 +57,8 @@ if git -C "$main" show-ref --verify --quiet "refs/heads/$branch"; then
     fail=1
   fi
 fi
-# `branch -D` normally drops the branch's config section; make sure the push remote setting is gone too.
-# Only once the branch is gone: while the worktree remains, that setting is its push guard.
+# Cleanup for a leftover branch config section (the worktree has no upstream with --no-track; the push guard is the
+# pre-push hook): drop it only once the branch itself is gone.
 if ! git -C "$main" show-ref --verify --quiet "refs/heads/$branch" &&
   git -C "$main" config --get-regexp "^branch\.$branch\." >/dev/null 2>&1; then
   git -C "$main" config --remove-section "branch.$branch" || fail=1
