@@ -19,12 +19,13 @@ expect_rc() { if [ "$RC" -eq "$2" ]; then ok "$1 (exit $RC)"; else fail "$1: exi
 expect_out() { if printf '%s\n' "$OUT" | has -E -- "$2"; then ok "$1"; else fail "$1: output lacks /$2/"; printf '%s\n' "$OUT" | sed 's/^/      | /'; fi; }
 
 GATE='[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"'
+OPENING='Every run ends with the [Result block](#result-block), whatever the outcome. Run its gate now, before the first step. Under `AW_RESULT=1` your final reply opens with the `aw-result` block.'
 
 # skill DIR NAME REQUIRES_TEXT|- : a skill with a Result block; "-" writes no requires.yaml
 skill() {
   local d="$1/skills/$2"
   mkdir -p "$d"
-  printf -- '---\nname: %s\n---\nBody.\n\n## Result block\n\n```bash\n%s\n```\n\nKeys: `skill`.\n\n## Next steps\n\n- none\n' "$2" "$GATE" > "$d/SKILL.md"
+  printf -- '---\nname: %s\n---\n%s\n\nBody.\n\n## Result block\n\n```bash\n%s\n```\n\nKeys: `skill`.\n\n## Next steps\n\n- none\n' "$2" "$OPENING" "$GATE" > "$d/SKILL.md"
   if [ "$3" != "-" ]; then printf '%s\n' "$3" > "$d/requires.yaml"; fi
 }
 
@@ -118,6 +119,43 @@ expect_out "final-reply reason" 'oldorder/SKILL.md: the Result block puts the aw
 T="$(fixture new-order)"; skill "$T" neworder '{}'
 in_block "$T/skills/neworder/SKILL.md" 'Write the result file first; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.'
 run "$T"; expect_rc "aw-result block in the final reply passes" 0
+
+# The opening: the gate runs before the first step, so an early stop still ends with the Result block (#2002)
+T="$(fixture no-opening)"; skill "$T" noopen '{}'
+grep -vF -- '(#result-block)' "$T/skills/noopen/SKILL.md" > "$T/x" && mv "$T/x" "$T/skills/noopen/SKILL.md"
+run "$T"; expect_rc "a skill whose opening never runs the gate fails" 1
+expect_out "opening reason" 'noopen/SKILL.md: the opening \(before the first ## heading\) does not run the Result block.s gate'
+
+T="$(fixture late-opening)"; skill "$T" lateopen '{}'
+grep -vF -- '(#result-block)' "$T/skills/lateopen/SKILL.md" > "$T/x" && mv "$T/x" "$T/skills/lateopen/SKILL.md"
+in_block "$T/skills/lateopen/SKILL.md" "$OPENING"
+run "$T"; expect_rc "the gate pointer only after the first heading fails" 1
+expect_out "late opening reason" 'lateopen/SKILL.md: the opening'
+
+T="$(fixture no-order)"; skill "$T" noorder '{}'
+sed -i 's/ Under `AW_RESULT=1` your final reply opens with the `aw-result` block\.//' "$T/skills/noorder/SKILL.md"
+run "$T"; expect_rc "an opening that runs the gate but never says the reply opens with the block fails" 1
+expect_out "no-order reason" 'noorder/SKILL.md: the opening'
+
+T="$(fixture unswept-slash)"; skill "$T" later '{}'
+mkdir -p "$T/scripts"; printf 'skills/later/\n' > "$T/scripts/check-skill-requires.unswept"
+run "$T"; expect_rc "an unswept entry with a trailing slash fails" 1
+expect_out "trailing slash reason" 'scripts/check-skill-requires.unswept: skills/later/ ends in /'
+
+T="$(fixture unswept)"; skill "$T" later '{}'
+grep -vF -- '(#result-block)' "$T/skills/later/SKILL.md" > "$T/x" && mv "$T/x" "$T/skills/later/SKILL.md"
+mkdir -p "$T/scripts"; printf '# not swept yet\n\nskills/later\n' > "$T/scripts/check-skill-requires.unswept"
+run "$T"; expect_rc "a skill on the unswept list may lack the opening" 0
+
+T="$(fixture unswept-stale)"; skill "$T" done '{}'
+mkdir -p "$T/scripts"; printf 'skills/done\n' > "$T/scripts/check-skill-requires.unswept"
+run "$T"; expect_rc "a listed skill that already has the opening fails" 1
+expect_out "stale entry reason" 'scripts/check-skill-requires.unswept: skills/done already runs the gate in its opening \(drop it from the list\)'
+
+T="$(fixture unswept-unknown)"
+mkdir -p "$T/scripts"; printf 'skills/ghost\n' > "$T/scripts/check-skill-requires.unswept"
+run "$T"; expect_rc "a listed skill that does not exist fails" 1
+expect_out "unknown entry reason" 'scripts/check-skill-requires.unswept: skills/ghost has no SKILL.md'
 
 T="$(fixture bootstrap)"
 printf -- '---\nname: bootstrap\n---\n\n## Result block\n\nKeys: `skill`.\n' > "$T/bootstrap/SKILL.md"
