@@ -20,6 +20,8 @@ owns); before starting one, read [CAMPAIGN.md](CAMPAIGN.md) in this skill's dire
 
 Adapted from OpenClaw's `test-audit` skill (MIT). See [NOTICE.md](NOTICE.md).
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 0: Pick the mode
 
 Parse the argument:
