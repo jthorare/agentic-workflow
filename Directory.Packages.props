@@ -80,6 +80,10 @@
     <PackageVersion Include="Avalonia.Desktop" Version="[12.1.4]" />
     <PackageVersion Include="Avalonia.Headless" Version="[12.1.4]" />
     <PackageVersion Include="Avalonia.Skia" Version="[12.1.4]" />
+    <!-- The judge downscales an image too big for Jev (images spec 3.3a). SkiaSharp 3.119.4 is the version Avalonia.Skia 12.1.4 resolves
+         for sindri-ui, so the box has one SkiaSharp; the NoDependencies native asset keeps the NativeAOT judge off fontconfig on Linux. MIT. -->
+    <PackageVersion Include="SkiaSharp" Version="[3.119.4]" />
+    <PackageVersion Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="[3.119.4]" />
     <!-- Durable execution for the Sindri workflow engine (engine spec rev 8 §0, README X53/X54): the Temporal .NET SDK,
          referenced by Aw.Sindri.Workflows only. It has no trimming or NativeAOT support (temporalio/sdk-dotnet#286), so
          that project opts out of IsAotCompatible and the Sindri host publishes framework-dependent. Its Rust core ships

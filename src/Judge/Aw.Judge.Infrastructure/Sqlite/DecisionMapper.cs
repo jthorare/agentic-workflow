@@ -62,5 +62,6 @@ internal sealed class DecisionMapper(DecisionJson json) : IRowMapper<DecisionRec
         Agreement = reader.IsDBNull(19) ? null : DecisionText.AgreementOf(reader.GetString(19)),
         SessionId = reader.IsDBNull(20) ? null : SessionId.From(reader.GetString(20)),
         Reasons = json.Reasons(reader.IsDBNull(21) ? null : reader.GetString(21)),
+        SentImages = json.SentImages(reader.IsDBNull(22) ? null : reader.GetString(22)),
     };
 }
