@@ -105,6 +105,30 @@ public sealed class CheckImagesTests : IDisposable
     }
 
     [Fact]
+    public async Task An_erroring_jev_never_holds_the_image_bar()
+    {
+        // A bad key or Jev down: every call errors. That proves nothing about Jev's eye, so the bar is not held and nothing says to turn images on.
+        var handler = new RecordingJevHandler(_ => "{}", System.Net.HttpStatusCode.InternalServerError);
+        using var jev = JevImages.Jev(handler);
+        var cases = new[] { Case("right-1", "looks-right"), Case("right-2", "looks-right"), Case("broken-1", "looks-off"), Case("broken-2", "looks-off") };
+        var cli = new JudgeCli(_state)
+        {
+            Environment = new Dictionary<string, string>(StringComparer.Ordinal) { ["TYPESAFE_API_KEY"] = JevImages.Key },
+            Providers = [jev, new StubCli()],
+            Overrides = services => services.AddSingleton<IImageCaseSet>(new CaseSet(cases)),
+        };
+
+        var run = await cli.Run("check", "images");
+
+        Assert.Equal((1, ""), (run.ExitCode, run.Stderr));
+        var lines = run.Stdout.TrimEnd('\n').Split('\n');
+        Assert.Matches(@"^jev:        broken judged looks-right 0/0 · right pages judged looks-right 0/0 · 4 errored · \d+(\.\d+)? s per call$", lines.Single(l => l.StartsWith("jev:", StringComparison.Ordinal)));
+        Assert.Contains(lines, l => l.StartsWith("bar (0 broken judged looks-right): not proven", StringComparison.Ordinal));
+        Assert.DoesNotContain("held", run.Stdout, StringComparison.Ordinal);
+        Assert.DoesNotContain("to turn it on", run.Stdout, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task CheckImages_stops_without_a_jev_key()
     {
         var cli = new JudgeCli(_state) { Overrides = services => services.AddSingleton<IImageCaseSet>(new CaseSet([Case("right-1", "looks-right")])) };
