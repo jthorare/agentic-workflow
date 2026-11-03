@@ -11048,3 +11048,23 @@ Aw.Context.Core.Records.ProjectRow.PrRepos.get -> System.Collections.Generic.IRe
 Aw.Context.Core.Records.ProjectRow.PrRepos.init -> void
 Aw.Context.Core.Records.ProjectRow.NewestPrAt.get -> System.DateTimeOffset?
 Aw.Context.Core.Records.ProjectRow.NewestPrAt.init -> void
+Aw.Context.Core.Facade.IContextMap.CheckStore(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Map.MapHealth!>!>
+Aw.Context.Core.Map.IStoreFiles
+Aw.Context.Core.Map.IStoreFiles.Sizes() -> Aw.Kernel.Result<Aw.Context.Core.Map.StoreFileSizes?>!
+Aw.Context.Core.Map.StoreFileSizes
+Aw.Context.Core.Map.StoreFileSizes.<Clone>$() -> Aw.Context.Core.Map.StoreFileSizes!
+Aw.Context.Core.Map.StoreFileSizes.DatabaseBytes.get -> long
+Aw.Context.Core.Map.StoreFileSizes.DatabaseBytes.init -> void
+Aw.Context.Core.Map.StoreFileSizes.Deconstruct(out long DatabaseBytes, out long WalBytes) -> void
+Aw.Context.Core.Map.StoreFileSizes.Equals(Aw.Context.Core.Map.StoreFileSizes? other) -> bool
+Aw.Context.Core.Map.StoreFileSizes.StoreFileSizes(long DatabaseBytes, long WalBytes) -> void
+Aw.Context.Core.Map.StoreFileSizes.WalBytes.get -> long
+Aw.Context.Core.Map.StoreFileSizes.WalBytes.init -> void
+Aw.Context.Core.Map.StoreHealth
+override Aw.Context.Core.Map.StoreFileSizes.Equals(object? obj) -> bool
+override Aw.Context.Core.Map.StoreFileSizes.GetHashCode() -> int
+override Aw.Context.Core.Map.StoreFileSizes.ToString() -> string!
+static Aw.Context.Core.Map.StoreFileSizes.operator !=(Aw.Context.Core.Map.StoreFileSizes? left, Aw.Context.Core.Map.StoreFileSizes? right) -> bool
+static Aw.Context.Core.Map.StoreFileSizes.operator ==(Aw.Context.Core.Map.StoreFileSizes? left, Aw.Context.Core.Map.StoreFileSizes? right) -> bool
+static Aw.Context.Core.Map.StoreHealth.Check(Aw.Context.Core.Map.StoreFileSizes? sizes) -> Aw.Context.Core.Map.MapHealth!
+const Aw.Context.Core.Map.StoreHealth.Name = "context:store" -> string!
