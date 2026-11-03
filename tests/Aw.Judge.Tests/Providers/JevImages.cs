@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using Aw.Judge.Core.Images;
+using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Secrets;
 using Aw.Judge.Infrastructure.Providers;
 using Aw.Judge.Testing;
@@ -13,8 +14,8 @@ internal static class JevImages
 {
     public const string Key = "jev-test-key";
 
-    public static JevProvider Jev(HttpMessageHandler handler) =>
-        new(new HttpClient(handler), new FakeSecretSource(new Dictionary<SecretName, string> { [SecretName.TypeSafeApiKey] = Key }), new FakeInputRedactor());
+    public static JevProvider Jev(HttpMessageHandler handler, IImageScaler? scaler = null) =>
+        new(new HttpClient(handler), new FakeSecretSource(new Dictionary<SecretName, string> { [SecretName.TypeSafeApiKey] = Key }), new FakeInputRedactor(), scaler);
 
     /// <summary>Jev's answer to the 'decision' choice question: <paramref name="choice"/> at confidence 0.9.</summary>
     public static string Choice(string choice) => Choice(choice, "0.9");
@@ -26,14 +27,14 @@ internal static class JevImages
     /// <summary>A PNG attachment of the given size, as the image reader would have made it.</summary>
     public static ImageAttachment Attachment(string path, int width, int height, string tag = "") => Attachment(path, ImageBytes.Png(width, height, tag), width, height);
 
-    public static ImageAttachment Attachment(string path, byte[] bytes, int width, int height) => new()
+    public static ImageAttachment Attachment(string path, byte[] bytes, int width, int height, ImageFormat format = ImageFormat.Png) => new()
     {
         Path = path,
         Sha256 = Sha256(bytes),
         Bytes = bytes,
         Width = width,
         Height = height,
-        Format = ImageFormat.Png,
+        Format = format,
     };
 
     public static string Sha256(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
