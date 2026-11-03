@@ -81,7 +81,7 @@ expect_refused "branch --edit-description" "branch" -C "$REPO" branch --edit-des
 out="$(AW_GIT_MODE=readonly wrapped -C "$REPO" branch -vv 2>&1)"; rc=$?
 [ "$rc" = 0 ] && ok "git branch -vv is allowed in readonly" || bad "git branch -vv rc=$rc: $out"
 # git takes unambiguous prefixes (--u, --e) and bundled short flags (-vu<x>, -a -u<x>).
-expect_refused "branch --u <x>" "branch" -C "$REPO" branch --u origin/x
+expect_refused "branch --u" "branch" -C "$REPO" branch --u
 expect_refused "branch --e" "branch" -C "$REPO" branch --e
 expect_refused "branch -vu<x>" "branch" -C "$REPO" branch -vuorigin/x
 expect_refused "branch -a -u<x>" "branch" -C "$REPO" branch -a -uother
