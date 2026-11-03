@@ -40,6 +40,8 @@ internal sealed class AskQuestionHarness
             .AddSingleton<IIdGenerator>(new SequentialIdGenerator())
             .AddSingleton<IProviderCatalog>(new FakeProviderCatalog(providers))
             .AddSingleton<IEvalFiles>(new InMemoryEvalFiles())
+            .AddSingleton<IImageReader>(new FakeImageReader())
+            .AddSingleton<IImageWorkspaces>(new FakeImageWorkspaces())
             .AddTraitCheckFakes()
             .AddJudgeCore()
             .AddJudgeFeatures();
