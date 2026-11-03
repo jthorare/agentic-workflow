@@ -20,8 +20,12 @@ internal sealed class QuestionRun
 
     public InMemoryDecisionLog Log { get; } = new();
 
-    /// <summary>Reads the images a question names; by default none touches disk (the integration tests use the real reader).</summary>
-    public IImageReader ImageReader { get; init; } = new FixedImageReader();
+    /// <summary>Reads the images a question names; by default an empty in-memory one (the integration tests use the real reader).</summary>
+    public IImageReader ImageReader { get; init; } = new FakeImageReader();
+
+    /// <summary>An in-memory reader that has these files (tiny PNGs) under the directory.</summary>
+    public static FakeImageReader ReaderWith(string directory, params string[] names) =>
+        new(names.ToDictionary(name => directory + "/" + name, _ => ImageBytes.Png(1, 1), StringComparer.Ordinal));
 
     public static ScriptedProvider Cli(params ContentClass[] classes) => new(ProviderName.ClaudeCli, classes);
 
