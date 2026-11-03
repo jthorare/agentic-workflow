@@ -376,7 +376,9 @@ Aw.Meta.Core.Github.PrBranch.State.get -> Aw.Meta.Core.Watch.PrState
 Aw.Meta.Core.Github.PrBranch.State.init -> void
 Aw.Meta.Core.Github.PrDetails
 Aw.Meta.Core.Github.PrDetails.<Clone>$() -> Aw.Meta.Core.Github.PrDetails!
-Aw.Meta.Core.Github.PrDetails.Deconstruct(out string! Head, out string! HeadRef, out bool IsDraft, out string! Title, out Aw.Meta.Core.Watch.PrState State) -> void
+Aw.Meta.Core.Github.PrDetails.Deconstruct(out string! Head, out string! HeadRef, out bool IsDraft, out string! Title, out Aw.Meta.Core.Watch.PrState State, out System.DateTimeOffset? EndedAt) -> void
+Aw.Meta.Core.Github.PrDetails.EndedAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Github.PrDetails.EndedAt.init -> void
 Aw.Meta.Core.Github.PrDetails.Equals(Aw.Meta.Core.Github.PrDetails? other) -> bool
 Aw.Meta.Core.Github.PrDetails.Head.get -> string!
 Aw.Meta.Core.Github.PrDetails.Head.init -> void
@@ -384,7 +386,7 @@ Aw.Meta.Core.Github.PrDetails.HeadRef.get -> string!
 Aw.Meta.Core.Github.PrDetails.HeadRef.init -> void
 Aw.Meta.Core.Github.PrDetails.IsDraft.get -> bool
 Aw.Meta.Core.Github.PrDetails.IsDraft.init -> void
-Aw.Meta.Core.Github.PrDetails.PrDetails(string! Head, string! HeadRef, bool IsDraft, string! Title, Aw.Meta.Core.Watch.PrState State) -> void
+Aw.Meta.Core.Github.PrDetails.PrDetails(string! Head, string! HeadRef, bool IsDraft, string! Title, Aw.Meta.Core.Watch.PrState State, System.DateTimeOffset? EndedAt = null) -> void
 Aw.Meta.Core.Github.PrDetails.State.get -> Aw.Meta.Core.Watch.PrState
 Aw.Meta.Core.Github.PrDetails.State.init -> void
 Aw.Meta.Core.Github.PrDetails.Title.get -> string!
