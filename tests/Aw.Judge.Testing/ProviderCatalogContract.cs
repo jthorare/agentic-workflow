@@ -32,14 +32,14 @@ public abstract class ProviderCatalogContract
         }
     }
 
-    /// <summary>Text goes to Jev, then the installed agent CLIs, then rules; image skips Jev.</summary>
+    /// <summary>Text goes to Jev, then the installed agent CLIs, then rules; image takes the same chain (Jev takes images).</summary>
     [Fact]
     public void Only_installed_agent_clis_are_chained_after_jev()
     {
         var chain = Create([AgentCliName.CodexCli]).Lineup(config: null, allowed: null, Rules).Chain;
 
         Expect.That(chain.For(ContentClass.MessageMeta).SequenceEqual([ProviderName.Jev, ProviderName.CodexCli, ProviderName.Rules]), "text: jev, codex, rules");
-        Expect.That(chain.For(ContentClass.Image).SequenceEqual([ProviderName.CodexCli, ProviderName.Rules]), "image: codex, rules");
+        Expect.That(chain.For(ContentClass.Image).SequenceEqual([ProviderName.Jev, ProviderName.CodexCli, ProviderName.Rules]), "image: jev, codex, rules");
     }
 
     /// <summary>The allowlist keeps the allowed providers and rules, in the lineup and the chain.</summary>

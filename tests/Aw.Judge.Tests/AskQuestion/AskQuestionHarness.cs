@@ -43,6 +43,8 @@ internal sealed class AskQuestionHarness
             .AddSingleton<IEvalFiles>(new InMemoryEvalFiles())
             .AddSingleton<IImageReader>(new FakeImageReader())
             .AddSingleton<IImageWorkspaces>(new FakeImageWorkspaces())
+            .AddSingleton<IImageCaseSet>(new FakeImageCaseSet())
+            .AddSingleton<ISecretSource>(new FakeSecretSource())
             .AddTraitCheckFakes()
             .AddJudgeCore()
             .AddJudgeFeatures();

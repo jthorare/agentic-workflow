@@ -206,11 +206,11 @@ public sealed class JevProviderTests
     }
 
     [Fact]
-    public void It_covers_the_text_classes_only()
+    public void It_covers_every_class()
     {
         using var provider = new JevProvider(new HttpClient(), Secrets(), new FakeInputRedactor());
 
-        Assert.Equal(ContentClasses.Text.Order(), provider.Classes.Order());
+        Assert.Equal(ContentClasses.All.Order(), provider.Classes.Order());
     }
 
     // A key read that takes a while and stops when its token is cancelled, like the keychain's process runner.
