@@ -192,14 +192,14 @@ public sealed class JudgeChooseStepTests
     }
 
     [Fact]
-    public async Task Without_a_resolved_list_the_providers_are_the_defaults_without_jev_and_rules_is_last()
+    public async Task Without_a_resolved_list_the_providers_are_the_defaults_with_jev_first_and_rules_last()
     {
         var judge = new FakeJudgeChoice().Answers(new ChooseAnswer(ChooseStatus.Escalated, Choice: null, "no-provider-decided"));
 
         _ = await Run(judge, Context());
 
         var providers = Assert.Single(judge.Requests).Providers;
-        Assert.DoesNotContain(JudgeProviders.Jev, providers, StringComparer.Ordinal);
+        Assert.Equal(JudgeProviders.Default, providers, StringComparer.Ordinal);
         Assert.Equal(JudgeProviders.Rules, providers[^1]);
     }
 
