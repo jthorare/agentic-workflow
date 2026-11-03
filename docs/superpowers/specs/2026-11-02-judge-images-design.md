@@ -173,8 +173,12 @@ Every hook question takes `images`. What each hook attaches, at most 4, newest f
 | `done-gate.sh` | `ask-check` | PNG/JPEG files the last assistant turn opened with `Read` (from `transcript_path`, the same tail it reads now). Codex and Cursor send no `transcript_path`, so none there |
 | `scope-gate.sh` | `brief-scope` | absolute paths ending `.png`/`.jpg`/`.jpeg` named in the brief's goal or acceptance criteria that exist |
 | `trait-check.sh` | `trait-check` | edited files that are PNG/JPEG, as `--image <path>` (a new repeatable flag; today they're skipped as binary) |
-| `send-gate.sh` | `wake-gate` | none: a message has no files. The field is accepted for a later source |
-| `prompt-sort.sh` | `prompt-sort` | none: the UserPromptSubmit payload carries no image paths. Same |
+| `send-gate.sh` | `wake-gate` | absolute PNG/JPEG paths named in the message text that exist (a lead sending "see /…/home.png") |
+| `prompt-sort.sh` | `prompt-sort` | absolute PNG/JPEG paths named in the prompt that exist. An image pasted into Claude Code reaches the hook as `[Image #1]` with no path, so it can't be attached |
+
+So all five hooks that ask the judge can attach images (owner answer 4). The three text sources share one helper,
+`config/lib/image-paths.sh` (`aw_image_paths <text>`: absolute paths ending `.png`/`.jpg`/`.jpeg`, existing files only, deduped,
+first 4), so the rule is written once.
 
 The hook contract stays frozen (AGENTS.md "hook contract"): no new exit codes, stderr prefixes or stdout fields. A hook adds `images`
 to its `jq -nc` input only when it found at least one, so `ASK_INPUT` for a turn with no image reads is exactly today's string.
@@ -200,7 +204,7 @@ Red first in each; ideas reviews each; "Part of #1961" except the last, which sa
 | 1 | Jev takes images: `ImageAttachment` + limits, `JevProvider` multipart + header + references, `Classes = All`, image chain `jev, CLIs, rules`, `providers.jev.images`, visual-critique on Jev | `VisualCritique_goes_to_jev_first_with_the_screenshots_as_multipart_parts`; `Image_over_1568px_skips_jev_for_the_clis`; the no-image Jev wire golden | Judge unit + integration, `judge-cs-hook-surface`, judge aot-smoke, Arch (new type in Core), PublicAPI |
 | 2 | Any question takes `images`: the evaluator reads and strips it, routes on the image class, CLIs get the per-call directory, the decision row's image lines, `judge why`, eval's `image-changed` | `AskCheck_with_an_image_routes_to_jev_and_stores_its_hash_not_its_bytes`; `Input_without_images_stores_todays_row` | Judge unit + integration, hook surface, aot-smoke |
 | 3 | Sindri: `ChooseRequest.Images`, `step.judge.choose` `images:`, `RCP-CHOICE-007`, the `fact:decision` count | `JudgeChoose_passes_the_named_fact_as_images`; `JudgeCliChoice_without_images_sends_todays_input` | Sindri unit + integration, recipe eval, Arch |
-| 4 | Hooks: done-gate, scope-gate, trait-check sources (`--image`), docs (`docs/csharp/judge.md`, `config/hooks` README) | `done-gate` bash case: a turn that read a PNG sends `images` | every hook bash test, hook surface, sync-rules |
+| 4 | Hooks: all five sources (done-gate, scope-gate, send-gate, prompt-sort, trait-check `--image`), `config/lib/image-paths.sh`, docs (`docs/csharp/judge.md`, `config/hooks` README) | `done-gate` bash case: a turn that read a PNG sends `images` | every hook bash test, hook surface, sync-rules |
 
 **Parallel plan.** PR 1 first (everything rides on the provider and chain). Then PR 2. Then PR 3 and PR 4 at once: PR 3 is
 Sindri-only and PR 4 is hooks plus one judge flag, no shared files. Builders: one per PR (Sonnet), the lane lead runs every gate.
