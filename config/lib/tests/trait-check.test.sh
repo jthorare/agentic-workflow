@@ -81,4 +81,12 @@ OUT="$(AW_JUDGE_CHILD=1 PATH="$FAKE_BIN:$PATH" bash "$HOOK" 2>&1 <<<'{"hook_even
 check "AW_JUDGE_CHILD: recursion guard exits 0" "$RC" "0"
 check "AW_JUDGE_CHILD: judge not called" "$(args)" ""
 
+
+# --- judge images (spec 5.2): the hook adds nothing for an edited image; the judge reads the PNG --file as an image ---
+# Green today and must stay so: argv for an edited PNG or JPEG is exactly what it is today, one --file each.
+run '{"hook_event_name":"PostToolUse","tool_name":"Write","tool_input":{"file_path":"/r/src/logo.png"}}'
+check "edited PNG: argv is byte-identical to today's" "$(args)" "trait-check --edit --file /r/src/logo.png"
+run '{"hook_event_name":"PostToolUse","tool_name":"Edit","tool_input":{"file_path":"/r/src/photo.jpeg"}}'
+check "edited JPEG: argv is byte-identical to today's" "$(args)" "trait-check --edit --file /r/src/photo.jpeg"
+
 exit $fail

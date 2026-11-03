@@ -1,0 +1,6 @@
+POST https://api.typesafe.ai/v1/systemone
+Authorization: Bearer jev-test-key
+Content-Type: application/json
+TypeSafe-Danger-Zone-Images: (not sent)
+
+{"state":{"prompt":"fix the login button"},"model":"jev-1.13.0","questions":{"ambiguity":{"type":"choice","criteria":{"clear":"it is","vague":"it is not"},"instructions":"How clear is the request?"},"touchesUi":{"type":"noul","instructions":"Does the work change the UI?"},"complexity":{"type":"score","criteria":["trivial","small","large"],"instructions":"How much work is it?"}}}
