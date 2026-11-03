@@ -16,8 +16,12 @@ namespace Aw.Sindri.Features.Blocks.Step;
 /// </summary>
 /// <param name="judge">The judge's choose question.</param>
 /// <param name="scrubber">Redacts the facts' text before it leaves for the judge.</param>
-internal sealed class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber) : IBlockStep, IBlockStepId
+/// <param name="roots">The places an image may come from (the checkout and the ui-evidence output).</param>
+internal sealed class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber, IStepImageRoots? roots = null) : IBlockStep, IBlockStepId
 {
+    /// <summary>Where an image may come from; null (a caller that gives none) checks no place.</summary>
+    internal IStepImageRoots? Roots { get; } = roots;
+
     internal const double DefaultThreshold = 0.6;
 
     internal const int FactTextCap = 200_000;

@@ -21887,3 +21887,5 @@ Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.init -> void
 const Aw.Sindri.Core.Doctor.DoctorRules.ContextFix = "check $AW_SINDRI_HOME/context" -> string!
 Aw.Sindri.Core.Judge.ChooseRequest.Images.get -> System.Collections.Generic.IReadOnlyList<string!>!
 Aw.Sindri.Core.Judge.ChooseRequest.Images.init -> void
+Aw.Sindri.Core.Judge.IStepImageRoots
+Aw.Sindri.Core.Judge.IStepImageRoots.Of(Aw.Sindri.Core.Ids.RepoName? repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
