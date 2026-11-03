@@ -1,7 +1,7 @@
 fire_rate: 9/9
 delta: 0.73
 last_run: 2026-11-03
-pr: TBD
+pr: #1983
 
 Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per case, preamble on.
 - fire_rate: ui-evidence-natural-1, ui-evidence-natural-2 and the held-out case fired 3/3 each; ui-evidence-near-miss fired 0/3, which
