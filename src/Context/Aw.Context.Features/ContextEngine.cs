@@ -120,6 +120,8 @@ internal sealed class ContextEngine(
 
     public ValueTask<Result<MapHealth>> CheckStore(CancellationToken cancellationToken) => map.CheckStore(cancellationToken);
 
+    public ValueTask<Result<StoreUpkeep?>> Upkeep(CancellationToken cancellationToken) => map.Upkeep(cancellationToken);
+
     public ValueTask<Result<PurgeReport>> PurgeExpired(CancellationToken cancellationToken) => map.PurgeExpired(cancellationToken);
 
     public ValueTask<Result<MapBuildReport>> BuildMap(IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken) =>

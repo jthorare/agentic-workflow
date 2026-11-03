@@ -1,4 +1,5 @@
 using Aw.Context.Core;
+using Aw.Context.Core.Map;
 using Aw.Kernel;
 using Aw.Kernel.Data;
 
@@ -127,6 +128,86 @@ internal sealed class ContextDatabase : IDisposable
         catch (Microsoft.Data.Sqlite.SqliteException)
         {
             // the rows are already deleted and committed; a checkpoint that can't run now runs with the next one
+        }
+    }
+
+    /// <summary>Refreshes the planner statistics, then checkpoints and truncates the write-ahead log, without ever waiting: a reader or writer in the way makes the pass partial, not an error.</summary>
+    /// <returns>What the pass did, null when there is no store file yet, or SND-CONTEXT-004.</returns>
+    public Result<StoreUpkeep?> Upkeep()
+    {
+        if (!File.Exists(_settings.DatabasePath))
+        {
+            return Results.Success<StoreUpkeep?>(value: null);
+        }
+
+        try
+        {
+            using var connection = new Microsoft.Data.Sqlite.SqliteConnection(new Microsoft.Data.Sqlite.SqliteConnectionStringBuilder { DataSource = _settings.DatabasePath, Mode = Microsoft.Data.Sqlite.SqliteOpenMode.ReadWrite, Pooling = false }.ToString());
+            connection.Open();
+            Run(connection, "PRAGMA busy_timeout=0");   // SQLite never waits for a lock; Microsoft.Data.Sqlite's own retry is capped by CommandTimeout below
+            var optimized = TryRun(connection, "PRAGMA analysis_limit=400") && TryRun(connection, "PRAGMA optimize=0x10002");
+            var frames = LogFrames(connection);   // a complete TRUNCATE resets the log, and SQLite then reports 0 pages
+            using var command = connection.CreateCommand();
+            command.CommandTimeout = 1;
+            command.CommandText = "PRAGMA wal_checkpoint(TRUNCATE)";
+            try
+            {
+                using var reader = command.ExecuteReader();
+                _ = reader.Read();
+                var (busy, log, done) = (reader.GetInt64(0), reader.GetInt64(1), reader.GetInt64(2));
+                return busy == 0
+                    ? new StoreUpkeep(optimized, Truncated: true, frames, frames)
+                    : new StoreUpkeep(optimized, Truncated: false, Math.Max(log, frames), Math.Max(done, 0));
+            }
+            catch (Microsoft.Data.Sqlite.SqliteException e) when (IsContended(e))
+            {
+                return new StoreUpkeep(optimized, Truncated: false, frames, CheckpointedPages: 0);
+            }
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException e)
+        {
+            return ContextErrors.StoreUnavailable.With($"{e.Message} (never delete context.db; check $AW_SINDRI_HOME permissions)");
+        }
+    }
+
+    /// <summary>The frames in the -wal file now: its size over a frame (the page and a 24-byte header) after the 32-byte file header.</summary>
+    private long LogFrames(Microsoft.Data.Sqlite.SqliteConnection connection)
+    {
+        var wal = new FileInfo(_settings.DatabasePath + "-wal");
+        if (!wal.Exists || wal.Length <= 32)
+        {
+            return 0;
+        }
+
+        using var command = connection.CreateCommand();
+        command.CommandText = "PRAGMA page_size";
+        var pageSize = Convert.ToInt64(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
+        return (wal.Length - 32) / (pageSize + 24);
+    }
+
+    private static bool IsContended(Microsoft.Data.Sqlite.SqliteException e) => e.SqliteErrorCode is 5 or 6;   // SQLITE_BUSY, SQLITE_LOCKED
+
+    private static void Run(Microsoft.Data.Sqlite.SqliteConnection connection, string sql)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandTimeout = 1;
+#pragma warning disable CA2100 // only this class's constant PRAGMA statements reach here
+        command.CommandText = sql;
+#pragma warning restore CA2100
+        _ = command.ExecuteNonQuery();
+    }
+
+    /// <summary>Runs one statement; a busy or locked database is false (the pass goes on), any other failure throws.</summary>
+    private static bool TryRun(Microsoft.Data.Sqlite.SqliteConnection connection, string sql)
+    {
+        try
+        {
+            Run(connection, sql);
+            return true;
+        }
+        catch (Microsoft.Data.Sqlite.SqliteException e) when (IsContended(e))
+        {
+            return false;
         }
     }
 
