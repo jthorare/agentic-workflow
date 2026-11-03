@@ -6,4 +6,7 @@ public sealed record IndexStatusView(IReadOnlyList<IndexSourceRow> Sources)
 {
     /// <summary>Where concept synthesis stands (#1597); null from a server that predates it. A concepts read that failed still answers, with its code.</summary>
     public IndexConceptsView? Concepts { get; init; }
+
+    /// <summary>The context.db store row (doctor's context:store); null from a server that predates it. A failed read still answers, as a "fail" row.</summary>
+    public IndexStoreView? Store { get; init; }
 }
