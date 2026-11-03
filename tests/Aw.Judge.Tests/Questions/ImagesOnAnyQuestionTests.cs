@@ -245,7 +245,7 @@ public sealed class ImagesOnAnyQuestionTests
     {
         var handler = new TooLargeWithImagesHandler("0.1", "progressing");
         using var jev = JevImages.Jev(handler);
-        var cli = Cli(ContentClass.Diff).Decides("progressing", 0.9);
+        var cli = Cli(ContentClass.Diff, ContentClass.Image).Decides("progressing", 0.9);
         var run = new QuestionRun { ImageReader = Reader(("/shots/home.png", ImageBytes.Png(1512, 982, "home"))) };
         var input = new JsonObject { ["problem"] = "the page is blank", ["turnDiff"] = "+ render()", ["images"] = new JsonArray("/shots/home.png"), ["imagesBestEffort"] = true };
 
