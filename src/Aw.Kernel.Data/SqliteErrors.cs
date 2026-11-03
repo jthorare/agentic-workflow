@@ -7,8 +7,8 @@ internal static class SqliteErrors
 {
     internal const int SqlitePerm = 3;
     internal const int SqliteBusy = 5;
-    internal const int SqliteInterrupt = 9;
     internal const int SqliteReadOnly = 8;
+    internal const int SqliteInterrupt = 9;
     internal const int SqliteIoErr = 10;
     internal const int SqliteCorrupt = 11;
     internal const int SqliteFull = 13;

@@ -42,6 +42,32 @@ public sealed class CancelTests
         Assert.True(second.Value);
     }
 
+    [Fact]
+    public async Task A_cancel_while_One_maps_its_row_gives_the_row_or_a_cancel_and_the_connection_still_reads()
+    {
+        using var db = new TempDatabase();
+        await using var session = new ConnectionSession(await Open(db));
+        using var cancel = new CancellationTokenSource();
+
+        var read = await Record.ExceptionAsync(async () => _ = await SqliteQueries.One(session, new SqlStatement("SELECT 1"), new CancellingMapper(cancel), cancel.Token));
+
+        Assert.True(read is null or OperationCanceledException, $"got {read?.GetType().Name}");
+        Assert.True((await SqliteQueries.Exists(session, new SqlStatement("SELECT 1"), TestContext.Current.CancellationToken)).Value);
+    }
+
+    [Fact]
+    public async Task A_cancel_while_List_maps_a_row_gives_the_rows_or_a_cancel_and_the_connection_still_reads()
+    {
+        using var db = new TempDatabase();
+        await using var session = new ConnectionSession(await Open(db));
+        using var cancel = new CancellationTokenSource();
+
+        var read = await Record.ExceptionAsync(async () => _ = await SqliteQueries.List(session, new SqlStatement("SELECT 1 UNION ALL SELECT 2"), new CancellingMapper(cancel), cancel.Token));
+
+        Assert.True(read is null or OperationCanceledException, $"got {read?.GetType().Name}");
+        Assert.True((await SqliteQueries.Exists(session, new SqlStatement("SELECT 1"), TestContext.Current.CancellationToken)).Value);
+    }
+
     private static async Task AssertStops<T>(Func<ISqliteSession, CancellationToken, Task<T>> read)
     {
         using var db = new TempDatabase();
@@ -78,5 +104,15 @@ public sealed class CancelTests
         public static readonly CountMapper Instance = new();
 
         public long Map(SqliteDataReader reader) => reader.GetInt64(0);
+    }
+
+    /// <summary>Cancels the read's own token while it maps a row, so the interrupt fires with the statement still open.</summary>
+    private sealed class CancellingMapper(CancellationTokenSource cancel) : IRowMapper<long>
+    {
+        public long Map(SqliteDataReader reader)
+        {
+            cancel.Cancel();
+            return reader.GetInt64(0);
+        }
     }
 }
