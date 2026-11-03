@@ -103,6 +103,17 @@ public sealed class SingleFlightTests
         Assert.Equal(5, await next);
     }
 
+    [Fact]
+    public async Task Runs_that_finish_at_once_never_fail_their_callers()
+    {
+        // why: a run that finishes before its landing is hooked up must not take the flight away from the caller that started it
+        var flight = new SingleFlight<int>();
+
+        var values = await Task.WhenAll(Enumerable.Range(0, 20000).Select(i => Task.Run(async () => await flight.Run(_ => Task.FromResult(i), Ct), Ct)));
+
+        Assert.Equal(20000, values.Length);
+    }
+
     /// <summary>Work the test finishes by hand; it counts its runs and keeps the token it was given.</summary>
     private sealed class Work
     {
