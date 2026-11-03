@@ -19,10 +19,45 @@ if [ -n "$STOP_CMD" ]; then
   (cd "$wt" && bash -c "$STOP_CMD") || exit 1
 fi
 
+fail=0
+branch="local-prototype/$slug"
+
 if [ -d "$wt" ]; then
-  git -C "$main" worktree remove --force "$wt" && echo "removed worktree $wt"
-  git -C "$main" branch -D "local-prototype/$slug" 2>/dev/null && echo "deleted branch local-prototype/$slug"
-  git -C "$main" worktree prune
+  wt_real=$(cd "$wt" && pwd -P) || wt_real=$wt
+  if git -C "$main" worktree list --porcelain | grep -Fxq "worktree $wt" ||
+    git -C "$main" worktree list --porcelain | grep -Fxq "worktree $wt_real"; then
+    if git -C "$main" worktree remove --force "$wt"; then
+      echo "removed worktree $wt"
+    else
+      echo "FAILED: could not remove worktree $wt (still there)" >&2
+      fail=1
+    fi
+  else
+    echo "FAILED: $wt is not a worktree of $main; leaving it alone" >&2
+    fail=1
+  fi
+fi
+git -C "$main" worktree prune
+
+if git -C "$main" show-ref --verify --quiet "refs/heads/$branch"; then
+  if git -C "$main" branch -D "$branch" >/dev/null; then
+    echo "deleted branch $branch"
+  else
+    echo "FAILED: could not delete branch $branch (still there)" >&2
+    fail=1
+  fi
+fi
+# `branch -D` normally drops the branch's config section; make sure the push remote setting is gone too.
+# Only once the branch is gone: while the worktree remains, that setting is its push guard.
+if ! git -C "$main" show-ref --verify --quiet "refs/heads/$branch" &&
+  git -C "$main" config --get-regexp "^branch\.$branch\." >/dev/null 2>&1; then
+  git -C "$main" config --remove-section "branch.$branch" || fail=1
+fi
+
+# On any failure stop here, so the scratch dir (and this script) survive for a re-run.
+if [ "$fail" -ne 0 ]; then
+  echo "teardown INCOMPLETE: see FAILED lines above; the worktree, branch or config may remain. Fix the cause and re-run." >&2
+  exit 1
 fi
 
 # Delete the scratch dir only when it resolves to a non-empty child of $root.

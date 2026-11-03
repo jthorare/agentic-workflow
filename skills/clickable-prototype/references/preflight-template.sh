@@ -28,7 +28,12 @@ ok() { echo "ok: $1"; }
 # --- Free ports (list every port the stack binds; take them from its docs or compose file) -----
 PORTS=() # e.g. PORTS=(3000 5432)
 busy=0
+if [ "${#PORTS[@]}" -gt 0 ] && ! command -v lsof >/dev/null 2>&1; then
+  busy=1
+  miss "cannot check ports (lsof is not installed)" "install lsof (for example: apt install lsof), then re-run this."
+fi
 for port in ${PORTS[@]+"${PORTS[@]}"}; do
+  command -v lsof >/dev/null 2>&1 || break
   if lsof -nP -iTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
     busy=1
     miss "port :$port is already in use" \

@@ -1,6 +1,6 @@
 # Probe template
 
-A Playwright script that proves each option works on the seeded local stack. Copy it to `$AW_DIR/prototypes/<slug>/probe.ts`, edit the `CONFIG` block and each option's `steps`, and run it from the prototype worktree with a TypeScript runner the project already has (`bun`, `tsx`, or `node --experimental-strip-types`) so it resolves the project's own `playwright` package.
+A Playwright script that proves each option works on the seeded local stack. Copy it to `$AW_DIR/prototypes/<slug>/probe.ts`, edit the `CONFIG` block and each option's `steps`, and run it from the prototype worktree with `bun` or `tsx` (both handle TypeScript and top-level await), as `bun probe.ts --out <dir>`. Plain `node --experimental-strip-types` works only if the file is named `probe.mts` (or the nearest package.json has `"type": "module"`), because the script uses top-level await. It resolves the project's own `playwright` package.
 
 It uses the project's existing Playwright. If the project has none, **Ask the user** before installing anything. It signs in through the real login form (no cookie shortcuts).
 
@@ -8,8 +8,9 @@ It uses the project's existing Playwright. If the project has none, **Ask the us
 import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium, type Page } from "playwright";
 
-const OUT = process.env.OUT ?? ""; // $AW_DIR/prototypes/<slug>, set by you when running the probe
-if (OUT === "") throw new Error("set OUT to the prototype output dir");
+const outFlag = process.argv.indexOf("--out");
+const OUT = outFlag > 0 ? (process.argv[outFlag + 1] ?? "") : ""; // $AW_DIR/prototypes/<slug>, passed as --out <dir>
+if (OUT === "") throw new Error("pass --out <prototype output dir>");
 
 // ---- CONFIG ---------------------------------------------------------------
 const CONFIG = {
