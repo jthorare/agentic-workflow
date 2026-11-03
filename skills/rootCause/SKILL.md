@@ -216,7 +216,7 @@ Report: $AW_DIR/investigations/{filename}
 Handoff: $AW_DIR/investigations/{slug}/handoff.md
 ```
 
-**Open your final reply with exactly one fenced `aw-result` block**, before the report text and `## Next steps` (`/review`, `bugFixOrchestrator` and other callers parse it and pick it by `skill`; see the Result block below). A run that stops before it writes a handoff (a scope breach, a stop) sets `handoff_path` to `null`, and a caller stops there instead of guessing a path:
+**Open your final reply with exactly one fenced `aw-result` block**, before the report text and `## Next steps` (`/review`, `bugFixOrchestrator` and other callers parse it and pick it by `skill`; see the Result block below). A run that stops before Phase 5 (the person says stop, or it refuses before any report) sets `report_path` and `handoff_path` to `null` and lists only what it wrote in `artifacts`; a caller stops there instead of guessing a path. A scope breach is not that stop: it writes both, and the handoff goes on to `bugHunt`:
 
 ```aw-result
 { "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
@@ -224,8 +224,8 @@ Handoff: $AW_DIR/investigations/{slug}/handoff.md
 
 **Done checklist.** Do every item before you send the reply; a run that skips one is not finished, even when the fix passed:
 
-1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5, Write tool).
-2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5, Write tool).
+1. The report exists at `$AW_DIR/investigations/<timestamp>-<slug>.md` (Phase 5, Write tool), or the run stopped before Phase 5 and `report_path` is `null`.
+2. The handoff exists at `$AW_DIR/investigations/<slug>/handoff.md` (Phase 5, Write tool), or the run stopped before Phase 5 and `handoff_path` is `null`.
 3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/rootCause-<timestamp>.json` (Result block, Write tool). Print the gate (`echo "AW_RESULT=${AW_RESULT:-0}"`) to know.
 4. Your final reply, sent after the last tool call (every Write above done first), opens with the `aw-result` block above, before the report text and `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply. It is never optional: callers parse it, and it goes in even when the rest of the reply is short.
 
@@ -252,6 +252,6 @@ Do not invoke bugHunt if the fix was verified — rootCause's own report is suff
 The `aw-result` block in Phase 6 is always printed, as a block tagged `aw-result` (not `json`) that carries `skill`, `artifacts` and `summary` besides its four keys, whatever the gate printed. `AW_RESULT=0`: write no result file. `AW_RESULT=1`: also write `$AW_DIR/results/rootCause-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) with the same JSON, before you print the block; the block opens your final reply, after the last tool call, before the report text and `## Next steps`.
 
 Keys: `skill` (`rootCause`), `artifacts` (absolute paths: the report `$AW_DIR/investigations/<timestamp>-<slug>.md` and the handoff), `summary` (one line),
-plus `status` (`fixed | unfixed | scope-breach | diagnosed`, as today); `report_path` (as today); `handoff_path` (as today); `boundary` (as today).
+plus `status` (`fixed | unfixed | scope-breach | diagnosed`, as today); `report_path` (as today, or `null` when the run stopped before Phase 5); `handoff_path` (as today, or `null` when the run stopped before Phase 5); `boundary` (as today).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
