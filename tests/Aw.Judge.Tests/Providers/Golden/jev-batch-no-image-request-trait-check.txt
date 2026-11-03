@@ -1,0 +1,6 @@
+POST https://api.typesafe.ai/v1/systemone
+Authorization: Bearer jev-test-key
+Content-Type: application/json
+TypeSafe-Danger-Zone-Images: (not sent)
+
+{"state":{"mode":"edit","source":{"path":"src/app.ts","startLine":1,"endLine":3,"text":"const a = 1;\n// TODO: remove\nexport { a };"}},"model":"jev-1.13.0","questions":{"no-todo":{"type":"noul","instructions":"Does this code leave a TODO comment behind?"}}}

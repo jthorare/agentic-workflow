@@ -68,12 +68,36 @@ internal sealed class SortRecorder(IDecisionLog log, IPromptSortStore sorts, IIn
             Details = new DecisionDetails
             {
                 // The prompt was redacted before it was cut; redacting the object again also covers a key.
-                InputJson = InputCap.Write(redactor.Redact(new JsonObject { ["prompt"] = sorted.Sent }), InputCap.MaxChars, json),
+                InputJson = InputCap.Write(redactor.Redact(StoredInput(sorted)), InputCap.MaxChars, json),
                 Probabilities = probabilities.Count == 0 ? null : probabilities,
                 Agreement = outcome.JudgeDecided == 0 ? Agreement.Undecided : overrode ? Agreement.Overrode : Agreement.Agreed,
                 SessionId = sorted.Session,
             },
         };
+    }
+
+    // The prompt, and when images went with it the way the evaluator's rows keep them: 'images' (path, hash, size) and 'imagesDropped'.
+    private static JsonObject StoredInput(SortRecording sorted)
+    {
+        var input = new JsonObject { ["prompt"] = sorted.Sent };
+        if (sorted.Images.Count > 0)
+        {
+            input["images"] = new JsonArray([.. sorted.Images.Select(static image => (JsonNode?)new JsonObject
+            {
+                ["path"] = image.Path,
+                ["sha256"] = image.Sha256,
+                ["bytes"] = image.Bytes.Length,
+                ["width"] = image.Width,
+                ["height"] = image.Height,
+            })]);
+        }
+
+        if (sorted.ImagesDropped.Count > 0)
+        {
+            input["imagesDropped"] = new JsonArray([.. sorted.ImagesDropped.Select(static line => (JsonNode?)JsonValue.Create(line))]);
+        }
+
+        return input;
     }
 
     private static List<SkippedProvider> Skipped(SortOutcome outcome)

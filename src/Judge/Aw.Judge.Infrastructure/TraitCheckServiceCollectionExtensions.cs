@@ -23,7 +23,7 @@ public static class TraitCheckServiceCollectionExtensions
             "traits");
         return services
             .AddSingleton<ITraitStore>(new FileTraitStore(overlay))
-            .AddSingleton<ITraitFiles>(_ => new FileTraitFiles(Environment.CurrentDirectory))
+            .AddSingleton<ITraitFiles>(sp => new FileTraitFiles(Environment.CurrentDirectory, sp.GetRequiredService<IImageReader>()))
             .AddScoped<ITraitJudge, JevTraitJudge>()
             .AddSingleton<ITraitCheckLog>(sp => new FileTraitCheckLog(Path.Combine(sp.GetRequiredService<JudgeSettings>().StateDirectory, "trait-check"), sp.GetRequiredService<TimeProvider>()));
     }
