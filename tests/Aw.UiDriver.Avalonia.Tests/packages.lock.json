@@ -178,20 +178,10 @@
         "resolved": "3.119.4",
         "contentHash": "UAyVzbqNfZsZbKbzj68zXLyUyF/SbTKmzTfOO6qDu++dtIUMMTzPBe8oOuzU/DiewpfKoUUlOSsJmqWc6blxBw=="
       },
-      "SkiaSharp.NativeAssets.macOS": {
-        "type": "Transitive",
-        "resolved": "3.119.4",
-        "contentHash": "fgBOWEqbY012x7gMfJU4ezgz6dfhJb30Z6YdW35h85Zoe39+a8YNbAAwL29ihPfWoppg5AjvyKNzD1oCvlqWwA=="
-      },
       "SkiaSharp.NativeAssets.WebAssembly": {
         "type": "Transitive",
         "resolved": "3.119.4",
         "contentHash": "S1HOxtBbD4bYDtA2e9WH5TX+lxqRrTPvKjrjttRhxnHNNu7YY8VFo/LeCP7tNqoTA6PV+8vsvNbmRUEC2ip8RQ=="
-      },
-      "SkiaSharp.NativeAssets.Win32": {
-        "type": "Transitive",
-        "resolved": "3.119.4",
-        "contentHash": "XOpbx/4CReO2wYsq2s6rbvdauc6dntG4Zv499sHGTJ87bwZaFXszFkwql3+FIZMc8kUPeaj3Mx2ezIJmo8a1Kg=="
       },
       "System.Security.AccessControl": {
         "type": "Transitive",
@@ -311,6 +301,18 @@
           "SkiaSharp.NativeAssets.Win32": "3.119.4",
           "SkiaSharp.NativeAssets.macOS": "3.119.4"
         }
+      },
+      "SkiaSharp.NativeAssets.macOS": {
+        "type": "CentralTransitive",
+        "requested": "[3.119.4, 3.119.4]",
+        "resolved": "3.119.4",
+        "contentHash": "fgBOWEqbY012x7gMfJU4ezgz6dfhJb30Z6YdW35h85Zoe39+a8YNbAAwL29ihPfWoppg5AjvyKNzD1oCvlqWwA=="
+      },
+      "SkiaSharp.NativeAssets.Win32": {
+        "type": "CentralTransitive",
+        "requested": "[3.119.4, 3.119.4]",
+        "resolved": "3.119.4",
+        "contentHash": "XOpbx/4CReO2wYsq2s6rbvdauc6dntG4Zv499sHGTJ87bwZaFXszFkwql3+FIZMc8kUPeaj3Mx2ezIJmo8a1Kg=="
       },
       "xunit.v3.extensibility.core": {
         "type": "CentralTransitive",

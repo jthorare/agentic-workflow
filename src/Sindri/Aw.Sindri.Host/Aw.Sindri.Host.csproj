@@ -50,6 +50,10 @@
   <ItemGroup>
     <!-- /sindri/mcp (Host/Mcp): context spec §8.5, API spec §8 -->
     <PackageReference Include="ModelContextProtocol.AspNetCore" />
+    <!-- Sindri never scales images (the judge's scaler does): without these, judge's SkiaSharp natives would add about 440 MB to every stamp. -->
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" ExcludeAssets="native" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" ExcludeAssets="native" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" ExcludeAssets="native" />
   </ItemGroup>
 
   <!-- The shipped recipes (setup-once spec §5.3): every file of the directory AwRecipesDir names is embedded as
