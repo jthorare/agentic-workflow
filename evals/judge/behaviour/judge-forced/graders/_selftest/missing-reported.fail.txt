@@ -1,0 +1,1 @@
+judge shows down on the status line, and `judge health` printed nothing.
