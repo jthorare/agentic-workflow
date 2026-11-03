@@ -26,6 +26,8 @@ Output lives in `$AW_DIR/prototypes/<slug>/` (brief, probe, shots). Templates ar
 - `references/probe-template.md`: the Playwright probe that selects each option, screenshots it and counts page errors
 - `references/gotchas.md`: what was found on earlier runs
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Hard rules
 
 1. **Never push the prototype branch and never open a PR for it.** The branch is `local-prototype/<slug>`, local only, with no upstream. Phase 2 installs a worktree-scoped `pre-push` hook that always exits 1, so every `git push` from the prototype worktree fails, whatever the remote, URL or refspec. A deliberate bypass (`--no-verify`, another checkout, `gh pr create`) is still possible, so the rule is on you.

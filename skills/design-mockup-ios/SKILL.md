@@ -19,6 +19,8 @@ Generates a per-screen SwiftUI mockup from design tokens, temporarily makes it t
 
 Simulator sequence, capability probe, and lock recipe come from `_shared/sim-bootstrap.md`; artifact names and the `screens.json` schema from `_shared/design-artifact-paths.md`.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Validate Arguments & Prerequisites
 
 The user must provide a screen name. If missing, stop:

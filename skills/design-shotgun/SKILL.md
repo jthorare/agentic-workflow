@@ -12,6 +12,8 @@ Generates 4–6 mockup variants in parallel with distinct aesthetic directions. 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Overview
 
 Sits BEFORE `/design-mockup` in the design pipeline. Spawns N parallel subagents, each with a distinct aesthetic direction (minimalist, brutalist, editorial, glassmorphism, neo-skeuomorphic, swiss-grid). Each subagent invokes the `compound-engineering:frontend-design` plugin skill with the direction baked into the brief. Outputs all N variants as HTML, plus a captioned contact-sheet HTML embedding them side-by-side, Playwright screenshots of each, and a `picked.json` handoff for `/design-mockup`.

@@ -21,6 +21,8 @@ Detects whether this is a web or iOS project and delegates to the appropriate to
 > - Web: `/design-analyze-web <url> [url2...]`
 > - iOS: `/design-analyze-ios [path/to/Assets.xcassets]`
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Platform Detection & Dispatch
 
 Resolve the shared dir from the stable toolkit path, then follow the shared detection contract:

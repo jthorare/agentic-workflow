@@ -20,6 +20,8 @@ Detects whether this is a web or iOS project and delegates to the appropriate mo
 
 > **Tip:** If you already know the platform, invoke directly: `/design-mockup-web <screen-name>` or `/design-mockup-ios <screen-name>`
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Platform Detection
 
 Resolve the shared dir from the stable toolkit path and follow the canonical detection + resolution rules:

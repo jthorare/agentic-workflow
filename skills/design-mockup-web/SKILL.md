@@ -19,6 +19,8 @@ Generate an HTML mockup informed by the design language, serve it locally, itera
 
 Artifact names and the `screens.json` schema come from `_shared/design-artifact-paths.md` — read it via `SHARED_DIR` if unsure.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 0: Shotgun Seed (optional)
 
 Check for a picked shotgun variant:
