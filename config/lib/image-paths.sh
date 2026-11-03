@@ -5,7 +5,8 @@
 #   aw_image_paths <text> [hook]   one absolute path per line: the existing .png/.jpg/.jpeg files the text names, deduped,
 #                                  newest (last named) first, kept only under the checkout of the current directory,
 #                                  at most 4 files and 4 MiB in all. Nothing for a text that names none, or outside a checkout.
-#   aw_image_files [hook] [root]   the same limits over candidate paths on stdin (newest first); with a root, only files under it.
+#   aw_image_files [hook] [root]   the same limits over candidate paths on stdin (newest first); with a root, only files whose real path
+#                                  (symlinks resolved) is under its real path; the others are counted as left out.
 #                                  done-gate feeds it the files its turn read.
 #   aw_images_attach <json> <paths>   the hook's judge input with `images` (the paths, one per line) and `imagesBestEffort: true`
 #                                  added; the input itself, byte for byte, when there are no paths.
@@ -22,15 +23,32 @@ _aw_image_candidates() {
   printf '%s\n' "$1" | grep -oiE '/[^[:space:]"`<>()|,;]+\.(png|jpe?g)' 2> /dev/null || true
 }
 
+# The real path of a file: every symlink on the way resolved (no readlink -f or realpath: macOS lacks them). Fails for a loop or a missing directory.
+_aw_realpath() {
+  local p="$1" link dir n=0
+  while [ -L "$p" ]; do
+    n=$((n + 1)); [ "$n" -le 40 ] || return 1
+    link="$(readlink "$p")" || return 1
+    case "$link" in /*) p="$link" ;; *) p="$(dirname "$p")/$link" ;; esac
+  done
+  dir="$(cd "$(dirname "$p")" 2> /dev/null && pwd -P)" || return 1
+  printf '%s/%s\n' "$dir" "$(basename "$p")"
+}
+
 aw_image_files() {
-  local hook="${1:-hook}" root="${2:-}" p size total=0 sent=0 left=0 seen=$'\n'
+  local hook="${1:-hook}" root="${2:-}" p real size total=0 sent=0 left=0 seen=$'\n'
+  if [ -n "$root" ]; then root="$(cd "$root" 2> /dev/null && pwd -P)" || root="/nonexistent"; fi
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     case "$seen" in *$'\n'"$p"$'\n'*) continue ;; esac
     seen="$seen$p"$'\n'
     [ -f "$p" ] || continue
     case "$p" in */../*|*/..) continue ;; esac
-    if [ -n "$root" ]; then case "$p" in "$root"/*) ;; *) continue ;; esac; fi
+    if [ -n "$root" ]; then
+      # Outside the checkout once symlinks are followed: never sent, counted as left out.
+      real="$(_aw_realpath "$p")" || real=""
+      case "$real" in "$root"/*) ;; *) left=$((left + 1)); continue ;; esac
+    fi
     size="$(wc -c < "$p" 2> /dev/null | tr -d ' ')" || size=""
     case "$size" in ''|*[!0-9]*) continue ;; esac
     if [ "$sent" -ge "$AW_IMAGE_MAX_FILES" ] || [ $((total + size)) -gt "$AW_IMAGE_MAX_BYTES" ]; then

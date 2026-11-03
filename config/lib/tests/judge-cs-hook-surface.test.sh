@@ -346,18 +346,20 @@ PY
   jev_env() { TYPESAFE_API_KEY=stub-key AW_JUDGE_JEV_IMAGES=1 AW_JUDGE_PROVIDERS=rules,jev AW_JUDGE_JEV_URL="http://127.0.0.1:$(cat "$WORK/jev.port")/v1/systemone" "$@"; }
 
   # 3024x1964 is over Jev's 1568 px side: it goes downscaled, Jev answers 'continue' (exit 2), the row says jev.
-  make_png "$WORK/big.png" 3024 1964; png_turn "$WORK/t-big.jsonl" "$WORK/big.png"
+  # The hook only sends images under the checkout of its cwd, so the PNGs live in a git repo the hooks run in.
+  mkdir -p "$WORK/img-repo"; git -C "$WORK/img-repo" init -q
+  make_png "$WORK/img-repo/big.png" 3024 1964; png_turn "$WORK/t-big.jsonl" "$WORK/img-repo/big.png"
   s="$(fresh cs done-img-big)"; : > "$WORK/jev.log"
-  jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-big.jsonl")" done-img-big
+  (cd "$WORK/img-repo" && jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-big.jsonl")" done-img-big)
   [ "$(rc_of done-img-big)" = 2 ] || fail "done-img-big: Jev settles ask-check with the downscaled image (exit 2), got $(rc_of done-img-big): $(err_of done-img-big)"
   [ "$(sqlite3 "$s/judge/decisions.sqlite" "SELECT provider FROM decisions WHERE question = 'ask-check'" 2> /dev/null)" = jev ] || fail "done-img-big: expected the ask-check row to say jev"
   awk '$1 == "multipart/form-data" && $2 <= 1568 && $3 <= 1568 && $2 >= 280 && $3 >= 280 { ok = 1 } END { exit !ok }' "$WORK/jev.log" || fail "done-img-big: expected one multipart request with the PNG downscaled to within 1568 px, got '$(cat "$WORK/jev.log")'"
   no_failopen done-img-big
 
   # 200x120 is under Jev's 280 px minimum: Jev still answers, as text, and `judge why` says what was left out.
-  make_png "$WORK/icon.png" 200 120; png_turn "$WORK/t-icon.jsonl" "$WORK/icon.png"
+  make_png "$WORK/img-repo/icon.png" 200 120; png_turn "$WORK/t-icon.jsonl" "$WORK/img-repo/icon.png"
   s="$(fresh cs done-img-small)"; : > "$WORK/jev.log"
-  jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-icon.jsonl")" done-img-small
+  (cd "$WORK/img-repo" && jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-icon.jsonl")" done-img-small)
   [ "$(rc_of done-img-small)" = 2 ] || fail "done-img-small: Jev settles ask-check as text (exit 2), got $(rc_of done-img-small): $(err_of done-img-small)"
   [ "$(cat "$WORK/jev.log")" = "application/json -" ] || fail "done-img-small: expected one text request, got '$(cat "$WORK/jev.log")'"
   id="$(sqlite3 "$s/judge/decisions.sqlite" "SELECT id FROM decisions WHERE question = 'ask-check'" 2> /dev/null | head -n 1)"

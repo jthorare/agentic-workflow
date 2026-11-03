@@ -86,11 +86,14 @@ fi
 # user line that isn't a tool result). Codex and Cursor send no transcript_path, so none there. Nothing when the transcript can't be read.
 turn_images() {
   [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ] || return 0
+  # Only files under the checkout of the hook's cwd go out (a receipt the agent read in ~/Downloads does not); outside a checkout, none.
+  local root; root="$(git rev-parse --show-toplevel 2> /dev/null)" || return 0
+  [ -n "$root" ] || return 0
   tail -c 1048576 "$TRANSCRIPT" 2> /dev/null | jq -Rrn '
     [inputs | fromjson? | objects] as $l
     | ([$l | to_entries[] | select(.value.type == "user" and ((.value.message.content | type) != "array" or ([.value.message.content[] | select(.type? == "tool_result")] | length) == 0)) | .key] | last // -1) as $start
     | [$l[$start + 1:][] | select(.type == "assistant") | .message.content | arrays | .[] | select(.type? == "tool_use" and .name == "Read") | .input.file_path | strings | select(test("\\.(png|jpe?g)$"; "i"))]
-    | reverse | .[]' 2> /dev/null | aw_image_files done-gate
+    | reverse | .[]' 2> /dev/null | aw_image_files done-gate "$root"
 }
 
 # A done claim is an assertion of completion, not any occurrence of a claim word.
