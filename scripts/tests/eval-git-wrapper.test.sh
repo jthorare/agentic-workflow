@@ -72,6 +72,14 @@ expect_refused "branch <name>" "branch" -C "$REPO" branch newbranch
 expect_refused "branch <name> <start>" "branch" -C "$REPO" branch newbranch HEAD
 expect_refused "branch -f <name>" "branch" -C "$REPO" branch -f newbranch
 expect_refused "tag <name> <commit>" "tag" -C "$REPO" tag v2 HEAD
+# #2001: these are single flag words, yet each writes .git/config (the upstream, or the description; GIT_EDITOR stops a hang if one gets through).
+export GIT_EDITOR=true
+expect_refused "branch --set-upstream-to=<x>" "branch" -C "$REPO" branch --set-upstream-to=origin/x
+expect_refused "branch -u<x>" "branch" -C "$REPO" branch -uorigin/x
+expect_refused "branch --unset-upstream" "branch" -C "$REPO" branch --unset-upstream
+expect_refused "branch --edit-description" "branch" -C "$REPO" branch --edit-description
+out="$(AW_GIT_MODE=readonly wrapped -C "$REPO" branch -vv 2>&1)"; rc=$?
+[ "$rc" = 0 ] && ok "git branch -vv is allowed in readonly" || bad "git branch -vv rc=$rc: $out"
 expect_refused "commit after -c option" "commit" -c core.editor=true -C "$REPO" commit -m x
 
 [ "$("$REAL_GIT" -C "$REPO" rev-list --count HEAD)" = 1 ] && ok "no commit was made by the refused forms" || bad "a refused commit landed"
