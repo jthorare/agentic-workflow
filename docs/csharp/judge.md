@@ -121,6 +121,8 @@ stderr; the hooks discard stderr except where the hook contract says. At the def
 | `config get` | — | the effective `JudgeConfig` (an invalid `config.json` prints the defaults and logs one warning) | store error → 1 |
 | `config set <question> enabled true\|false` | — | the saved `JudgeConfig` | usage → 64; a question the judge doesn't have: `unknown question: <name> (known: …)` → 1; an invalid `config.json`: `invalid config <file>: <reason>; fix or delete it, then set again` → 1 |
 | `config set <question> threshold <number>` | — | the saved `JudgeConfig` | not a number → 64; outside 0–1 → 1; an invalid `config.json` → 1 as above |
+| `config set providers jev-images true\|false` | — | the saved `JudgeConfig` (`providers.jevImages`; every other key kept) | anything but `jev-images true\|false` → 64; an invalid `config.json` → 1 as above |
+| `check images` | — | the check's lines (below) | exit 0 the bar held; 1 it was missed, no Jev key (`no Jev key: judge check images needs one`) or no case embedded (`no image cases embedded`); wrong arguments → 64 |
 | `config set prompt-sort enabled true\|false` | — | the saved `JudgeConfig` (`promptSort.enabled`; every other key kept) | anything but `enabled true\|false` → 64; an invalid `config.json` → 1 as above |
 | `prompt-sort` (the hook path) | stdin `{prompt, sessionId}` (`sessionId` empty or absent: `AW_SESSION_ID`) | nothing, or `{"context": "…"}` when a scaffold fires (all four ship off) | always exit 0 once the input parses (the sorter fails open); input that isn't the record → 1. Machine text, slash commands and confirmations are skipped without a decision row; otherwise one `prompt-sort` decision, its axes (`prompt_sort_axes`) and its run, and `sessions/<sid>.sort.json` |
 | `prompt-sort scaffold <brief\|bugfix\|ui-evidence\|plan-first> on\|off` | — | the saved `JudgeConfig` (`promptSort.scaffolds`) | wrong arguments → 64; an unknown scaffold, an invalid `config.json` → 1 |
@@ -291,8 +293,7 @@ The providers live in `Aw.Judge.Infrastructure/Providers/`; Composition reaches 
 1. the agent CLIs: `config.json`'s `providers.agentClis` when set, else the default order (claude, codex, cursor)
    with the `AW_PROVIDER` host moved first (`AgentCliResolution`); either way only those whose binary is on `PATH`;
 2. Jev, unless `providers.jev` is false;
-3. the chain: text classes get Jev, the agent CLIs, then rules; image gets the agent CLIs, then rules
-   (`ChainSpec.Build`); then the `--providers` / `AW_JUDGE_PROVIDERS` allowlist, which always keeps rules;
+3. the chain: every class, image included, gets Jev, the agent CLIs, then rules (`ChainSpec.Build`); then the `--providers` / `AW_JUDGE_PROVIDERS` allowlist, which always keeps rules;
 4. the providers: one instance of each model provider the chain names, each wrapped in `FailOpenModelProvider`, then
    the `rules` provider the caller passes (the engine's own, which `AddJudgeCore` registers; the catalog doesn't make
    one).
@@ -335,7 +336,7 @@ undeclared fields dropped.
 
 `POST https://api.typesafe.ai/v1/systemone` with `{state: <input, redacted and capped at Jev's cap>, model: "jev-1.13.0", questions: {decision:
 {type: "choice", instructions: <prompt, redacted and capped>, criteria: {<output>: <criterion or the output>}}}}` and
-`Authorization: Bearer <key>`; text classes only. The key comes from `ISecretSource` (`TYPESAFE_API_KEY`, else the
+`Authorization: Bearer <key>`; every class (`JevProvider.Classes` is `ContentClasses.All`). The key comes from `ISecretSource` (`TYPESAFE_API_KEY`, else the
 keychain), read inside the question's budget: a keychain that sits on its unlock prompt ends as `timeout`, not as
 latency added in front of the call. Jev is the one provider that sends the input to a third party on the judge's own key, so `JevProvider`
 redacts (then caps at the question's own `InputCapChars` (`model-pick` sends a whole pack), else at `providers.inputCapChars`, else at 160,000 characters) both the state and the prompt, which embeds input fields word for word
@@ -536,10 +537,42 @@ reads a TS-written file.
 | `trait-check/log.jsonl` | One line per trait-check run (redacted) |
 | `config.json` | `JudgeConfig`, written by `config set` (a temporary file in the same directory renamed over it, so a question never reads a half-written file); absent means the defaults |
 
+### Jev and images
+
+A call with images (`QuestionRef.Images` non-empty; visual-critique's screenshots today) takes the chain's image entry, `[jev, agent CLIs, rules]`, so Jev goes first and the CLIs are the fallback.
+`JevProvider` then sends **multipart**: header `TypeSafe-Danger-Zone-Images: true`; part `request` is the JSON above plus `assets`
+(`{"aw-image-<n>-<first 12 hex of the sha256>": {"type": "image", "part": "<same name>"}}`); one file part per image, named and filed by that reference
+(`image/png` or `image/jpeg`; no path ever leaves the machine). In the state the reference replaces the path in visual-critique's
+`afterScreenshot` / `baselineScreenshot`, and `images` lists the references in order; the instructions get one more sentence ("The images are in `images`, in the order the input lists them."). A call
+without images sends exactly the JSON body it always did (golden: `Providers/Golden/jev-no-image-request.txt`).
+
+What Jev can't take is decided before anything is sent, and the next provider is asked: an image under 280 px on a side, under 78,400 pixels, over 1568 px on a side or over 2,458,624 pixels is `image-out-of-limits` (no downscaling yet); Jev's `413` is `image-too-large`; a `400` stays errored `http-400`.
+Sending images to Jev can be turned off without turning Jev off: `providers.jevImages: false` in config.json (`judge config set providers jev-images false`, the rollback, no deploy) or `AW_JUDGE_JEV_IMAGES=0` in the environment (`=1` forces it on; the variable wins over config.json). Off, an image call skips Jev as `images-off`; text calls are unchanged. Default on.
+
+**`JevMaySettle`.** Jev only classifies, so `Refused` keeps it out of every question that asks for `reasons` (resolution-check's chain is unchanged). visual-critique sets `JevMaySettle`, and its `ReasonedOutputs` are `looks-off` and `sloppy`: Jev settles a page that looks right in one call; a `looks-off` / `sloppy` from Jev has no reasons, so it is stored as a skip with code `no-reasons` (not a failure row, so health doesn't count Jev as failing) and the next provider says what is wrong.
+
+**The skip code.** `SkippedProvider.Code` (omitted when null) holds `images-off`, `image-out-of-limits`, `image-too-large` or `no-reasons`. `judge why` prints them as a `notes` array of `jev skipped: <words>; asked <provider>` lines (only when there is one).
+
+**`judge check images`.** Whether Jev should judge screenshots, answered by running it: no Jev key stops it (`no Jev key: judge check images needs one`, exit 1); one live visual-critique call through the chain with images forced on; then every embedded labeled case asked of Jev and of claude-cli. The cases are `tests/fixtures/judge/images/<name>.<looks-right|looks-off>.png` embedded in the binary (`README.md` there); none: `no image cases embedded`, exit 1. Output, with the bar held and sending off (exit 0):
+
+```
+live call:  looks-right  provider jev  (judge why dec_8f2c…)
+jev:        broken judged looks-right 0/10 · right pages judged looks-right 9/10 · 1.8 s per call
+claude-cli: broken judged looks-right 0/10 · right pages judged looks-right 10/10 · 21.4 s per call
+bar (0 broken judged looks-right): held
+images to Jev: off
+to turn it on: judge config set providers jev-images true
+```
+
+Missed: `bar (0 broken judged looks-right): missed (2/10)`, exit 1, and with sending on the last line is `to turn it off: judge config set providers jev-images false`. It writes nothing to config.json.
+
+TypeSafe data terms: TODO(lead)
+
 ## Environment
 
 | Variable | Read by | Meaning |
 |---|---|---|
+| `AW_JUDGE_JEV_IMAGES` | `ProviderCatalog`, `judge check images` | `0` keeps images away from Jev (image calls skip it as `images-off`), `1` sends them; wins over config.json's `providers.jevImages` (default on) |
 | `AW_JUDGE_STATE_DIR` | Infrastructure settings | The judge directory itself (`decisions.sqlite`, `config.json`), used as is; read first. For a caller that runs its own judge with its own store (Sindri): it moves nothing but the judge's own files, so `AW_STATE_DIR`'s locks and other tools' state stay put |
 | `AW_STATE_DIR` | Infrastructure settings | The state root; the judge's files are under `<root>/judge/` unless `AW_JUDGE_STATE_DIR` is set. Default `~/.agentic-workflow` |
 | `AW_SESSION_ID` | the question commands (`Composition`, once) | The calling session, stored with the decision's detail row; a value past the session id's cap is ignored |

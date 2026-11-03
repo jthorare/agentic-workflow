@@ -2131,3 +2131,13 @@ static Aw.Judge.Core.Images.ImageCase.operator !=(Aw.Judge.Core.Images.ImageCase
 static Aw.Judge.Core.Images.ImageCase.operator ==(Aw.Judge.Core.Images.ImageCase? left, Aw.Judge.Core.Images.ImageCase? right) -> bool
 Aw.Judge.Core.Ports.IImageCaseSet
 Aw.Judge.Core.Ports.IImageCaseSet.Cases.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageCase!>!
+const Aw.Judge.Core.Providers.ProviderUnavailable.ImagesOff = "images-off" -> string!
+const Aw.Judge.Core.Providers.ProviderUnavailable.ImageOutOfLimits = "image-out-of-limits" -> string!
+const Aw.Judge.Core.Providers.ProviderUnavailable.ImageTooLarge = "image-too-large" -> string!
+Aw.Judge.Core.Config.JudgeConfig.SetJevImages(bool on) -> Aw.Judge.Core.Config.JudgeConfig!
+Aw.Judge.Core.Config.JevImagesSetting
+const Aw.Judge.Core.Config.JevImagesSetting.Variable = "AW_JUDGE_JEV_IMAGES" -> string!
+static Aw.Judge.Core.Config.JevImagesSetting.IsOn(Aw.Judge.Core.Config.ProvidersConfig? config, string? environment) -> bool
+Aw.Judge.Core.Ports.IProviderCatalog.ProviderWithImagesOn(Aw.Judge.Core.Providers.ProviderName name, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, Aw.Judge.Core.Config.ProvidersConfig? config) -> Aw.Kernel.Result<Aw.Judge.Core.Ports.IModelProvider!>!
+Aw.Judge.Core.Decisions.JevSkipNotes
+static Aw.Judge.Core.Decisions.JevSkipNotes.For(Aw.Judge.Core.Decisions.DecisionRecord! decision) -> System.Collections.Generic.IReadOnlyList<string!>!

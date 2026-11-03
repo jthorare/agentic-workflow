@@ -11,6 +11,8 @@ using Aw.Judge.Features.MapBriefByName;
 using Aw.Judge.Features.SaveBrief;
 using Aw.Judge.Features.SetBriefAgentId;
 using Aw.Judge.Features.SetConfig;
+using Aw.Judge.Features.SetJevImages;
+using Aw.Judge.Features.CheckImages;
 using Aw.Judge.Features.SetPromptSort;
 using Aw.Judge.Features.SortPrompt;
 using Aw.Judge.Features.UndoDecision;
@@ -155,6 +157,11 @@ public static partial class JudgeFeaturesServiceCollectionExtensions
                 new ValidatingService<SetPromptSortRequest, SetPromptSortResponse>(
                     sp.GetRequiredService<SetPromptSortService>(),
                     sp.GetRequiredService<IValidator<SetPromptSortRequest>>()));
+        _ = services
+            .AddScoped<IService<SetJevImagesRequest, SetJevImagesResponse>, SetJevImagesService>()
+            .AddScoped<ImageCheckLiveCall>()
+            .AddScoped<ImageCheckScorer>()
+            .AddScoped<IService<CheckImagesRequest, CheckImagesResponse>, CheckImagesService>();
         _ = services
             .AddScoped<CheckTraitsService>()
             .AddScoped<IValidator<CheckTraitsRequest>, CheckTraitsValidator>()

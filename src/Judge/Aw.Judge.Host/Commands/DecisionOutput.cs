@@ -20,10 +20,11 @@ internal sealed record DecisionOutput(
     [property: JsonPropertyName("skipped")] IReadOnlyList<SkippedProvider> Skipped,
     [property: JsonPropertyName("outcome")] string Outcome,
     [property: JsonPropertyName("approved_at")] DateTimeOffset? ApprovedAt,
-    [property: JsonPropertyName("reasons")] IReadOnlyList<string>? Reasons)
+    [property: JsonPropertyName("reasons")] IReadOnlyList<string>? Reasons,
+    [property: JsonPropertyName("notes"), JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] IReadOnlyList<string>? Notes = null)
 {
     internal static DecisionOutput From(DecisionRecord d) => new(
         d.Id.Value, d.Ts, d.Question, d.ContentClass, d.Provider, d.Decision, d.Confidence, d.ReasonCode, d.LatencyMs,
         d.InputDigest, d.UndoneAt, d.ChainPosition, d.Skipped,
-        Frozen.Text(d.Outcome), d.ApprovedAt, d.Details?.Reasons);
+        Frozen.Text(d.Outcome), d.ApprovedAt, d.Details?.Reasons, JevSkipNotes.For(d) is { Count: > 0 } notes ? notes : null);
 }

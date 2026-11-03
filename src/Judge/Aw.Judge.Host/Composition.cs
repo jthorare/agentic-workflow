@@ -18,6 +18,7 @@ internal static class Composition
             .AddKernelTelemetry(TelemetryOptions.FromEnvironment("judge", environment, clock))   // JSON lines on stderr (AW_LOG_LEVEL); exports off
             .AddSingleton(CallingSession.From(environment("AW_SESSION_ID")))
             .AddSingleton(new ProvidersVariable(environment("AW_JUDGE_PROVIDERS")))
+            .AddSingleton(new JevImagesVariable(environment(Aw.Judge.Core.Config.JevImagesSetting.Variable)))
             .AddJudgeCore()
             .AddJudgeFeatures()
             .AddJudgeInfrastructure(environment);

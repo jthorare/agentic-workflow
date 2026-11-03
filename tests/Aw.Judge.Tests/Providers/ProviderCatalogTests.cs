@@ -27,7 +27,7 @@ public sealed class ProviderCatalogTests
     {
         var chain = Catalog(_all, hostProvider: "codex").Lineup(new ProvidersConfig(AgentClis: ["cursor-cli", "claude-cli"]), allowed: null, _rules).Chain;
 
-        Assert.Equal([ProviderName.CursorCli, ProviderName.ClaudeCli, ProviderName.Rules], chain.For(ContentClass.Image));
+        Assert.Equal([ProviderName.Jev, ProviderName.CursorCli, ProviderName.ClaudeCli, ProviderName.Rules], chain.For(ContentClass.Image));
     }
 
     [Fact]

@@ -49,7 +49,9 @@ internal sealed class EvaluationRun(DecisionId id, DateTimeOffset ts, JsonNode? 
     /// <summary>Passes over a provider.</summary>
     /// <param name="provider">The provider.</param>
     /// <param name="reason">Why.</param>
-    public void Skip(ProviderName provider, SkipReason reason) => _skipped.Add(new SkippedProvider(ProviderNames.Name(provider), reason));
+    /// <param name="code">The finer reason to store with it, or null.</param>
+    public void Skip(ProviderName provider, SkipReason reason, string? code = null) =>
+        _skipped.Add(new SkippedProvider(ProviderNames.Name(provider), reason) { Code = code });
 
     /// <summary>Records a below-threshold answer; its probabilities replace earlier ones only when it has some.</summary>
     /// <param name="provider">The provider.</param>

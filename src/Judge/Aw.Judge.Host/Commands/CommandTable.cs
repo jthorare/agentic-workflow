@@ -18,7 +18,7 @@ internal static class CommandTable
 
     // The first words the switch routes; any other is a question.
     private static readonly FrozenSet<string> _routed = FrozenSet.Create(StringComparer.Ordinal, GetHealthCommand.Name, BriefCommands.Name, ExplainDecisionCommand.Name, UndoDecisionCommand.Name, ApproveDecisionCommand.Name, ConfigCommands.Name,
-        PromptSortCommands.Name, TraitCheckCommand.Name, LabelCommand.Name, AdjudicateCommand.Name, EvalCommand.Name);
+        PromptSortCommands.Name, TraitCheckCommand.Name, LabelCommand.Name, AdjudicateCommand.Name, EvalCommand.Name, CheckCommand.Name);
 
     // The commands use the one AwJson options instance Compose registers, the same the adapters get.
     internal static async Task<int> Run(string[] argv, IServiceProvider provider)
@@ -56,6 +56,7 @@ internal static class CommandTable
         LabelCommand.Name => await LabelCommand.Run(rest, services, json).ConfigureAwait(false),
         AdjudicateCommand.Name => await Adjudicator(rest, flag, services, json).ConfigureAwait(false),
         EvalCommand.Name => await Eval(rest, flag, services, json).ConfigureAwait(false),
+        CheckCommand.Name => await Check(rest, flag, services).ConfigureAwait(false),
         PromptSortCommands.Name or TraitCheckCommand.Name => await Sorter(command, rest, flag, services, json).ConfigureAwait(false),
         _ => await DecisionCommand(command, rest, services, json).ConfigureAwait(false),
     };
@@ -99,6 +100,15 @@ internal static class CommandTable
         return allowlist.IsError
             ? CommandOutput.Usage(Synopsis, allowlist.Error.Message)
             : await EvalCommand.Run(rest, allowlist.Value, services, json).ConfigureAwait(false);
+    }
+
+    // 'check images' asks Jev and claude-cli, so it reads the allowlist like a question does.
+    private static async Task<int> Check(string[] rest, string? flag, IServiceProvider services)
+    {
+        var allowlist = Allowlist(flag ?? services.GetRequiredService<ProvidersVariable>().Value);
+        return allowlist.IsError
+            ? CommandOutput.Usage(Synopsis, allowlist.Error.Message)
+            : await CheckCommand.Run(rest, allowlist.Value, services).ConfigureAwait(false);
     }
 
     // A question reads the allowlist (the flag, else AW_JUDGE_PROVIDERS); a list it can't read is a usage error.

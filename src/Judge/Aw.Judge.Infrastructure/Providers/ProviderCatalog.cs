@@ -32,14 +32,19 @@ internal sealed class ProviderCatalog(Func<string, string?> environment, IExecut
         }
 
         var named = chain.Classes.Values.SelectMany(names => names).ToHashSet();
-        return new ProviderLineup([.. providers.Where(p => named.Contains(p.Name)).Select(p => new FailOpenModelProvider(WithConfiguredCap(p, config))), rules], chain);
+        return new ProviderLineup([.. providers.Where(p => named.Contains(p.Name)).Select(p => new FailOpenModelProvider(WithConfiguredImages(WithConfiguredCap(p, config), config))), rules], chain);
     }
 
     /// <inheritdoc />
     public Result<IModelProvider> Provider(ProviderName name, IReadOnlyCollection<ProviderName>? allowed) => Provider(name, allowed, config: null);
 
     /// <inheritdoc />
-    public Result<IModelProvider> Provider(ProviderName name, IReadOnlyCollection<ProviderName>? allowed, ProvidersConfig? config)
+    public Result<IModelProvider> Provider(ProviderName name, IReadOnlyCollection<ProviderName>? allowed, ProvidersConfig? config) => Provider(name, allowed, config, imagesOn: false);
+
+    /// <inheritdoc />
+    public Result<IModelProvider> ProviderWithImagesOn(ProviderName name, IReadOnlyCollection<ProviderName>? allowed, ProvidersConfig? config) => Provider(name, allowed, config, imagesOn: true);
+
+    private Result<IModelProvider> Provider(ProviderName name, IReadOnlyCollection<ProviderName>? allowed, ProvidersConfig? config, bool imagesOn)
     {
         if (allowed is not null && !allowed.Contains(name))
         {
@@ -50,7 +55,7 @@ internal sealed class ProviderCatalog(Func<string, string?> environment, IExecut
         var installed = AgentCliNames.FromProvider(name) is not { } cli || locator.IsOnPath(AgentCliNames.Binary(cli));
         return provider is null || !installed
             ? JudgeErrors.ProviderUnavailable.With($"{ProviderNames.Name(name)} is not available")
-            : Results.Success<IModelProvider>(new FailOpenModelProvider(WithConfiguredCap(provider, config)));
+            : Results.Success<IModelProvider>(new FailOpenModelProvider(imagesOn ? WithConfiguredCap(provider, config) : WithConfiguredImages(WithConfiguredCap(provider, config), config)));
     }
 
     /// <inheritdoc />
@@ -68,6 +73,13 @@ internal sealed class ProviderCatalog(Func<string, string?> environment, IExecut
 
     private static IModelProvider WithConfiguredCap(IModelProvider provider, ProvidersConfig? config) =>
         provider.Name == ProviderName.Jev && config?.InputCapChars is { } cap ? new JevInputCapProvider(provider, cap) : provider;
+
+    // AW_JUDGE_JEV_IMAGES=0|1 wins over config.json's providers.jevImages (default on); off keeps images away from Jev only.
+    private IModelProvider WithConfiguredImages(IModelProvider provider, ProvidersConfig? config)
+    {
+        var on = JevImagesSetting.IsOn(config, environment(JevImagesSetting.Variable));
+        return provider.Name == ProviderName.Jev && !on ? new JevImagesOffProvider(provider) : provider;
+    }
 
     // config.json's names are checked on read (JudgeConfigParser), so an unknown one can't reach here; skip it if it does.
     private static List<AgentCliName>? Configured(IReadOnlyList<string>? names) =>
