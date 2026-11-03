@@ -87,7 +87,7 @@ public sealed class WorktreeInspectorTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("aw-meta gate-run 7 repo bash-scripts")]
     [InlineData("/home/u/.agentic-workflow/bin/aw-meta gate-rerun #7")]
-    [InlineData("/work/src/Meta/Aw.Meta.Host/bin/Debug/net10.0/Aw.Meta.Host merge-run 7")]
+    [InlineData("/work/src/Meta/Aw.Meta.Host/bin/Debug/net10.0/aw-meta merge-run 7")]
     public async Task Aw_meta_running_a_gate_verb_for_the_pull_request_keeps_its_gate_tree(string command)
     {
         Script();
