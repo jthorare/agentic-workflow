@@ -46,7 +46,7 @@ internal sealed record LauncherParts(IAgentCatalog Catalog, Func<bool, ISessionH
     /// <summary>The models an agent offers (the probe's read, model-pick spec §3), or null when no model list is probed: targets then carry none and say nothing about it.</summary>
     public IModelCatalog? Models { get; init; }
 
-    /// <summary>The sandbox step for an unattended launch (sandbox spec §12 SB-5a), or null when there is none: the agent then runs its argv unconfined, as before SB-5a.</summary>
+    /// <summary>The sandbox step for an unattended launch (sandbox spec §12 SB-5a), or null in a test host with no sandbox step (the agent then runs its argv unconfined); the product always registers one (bubblewrap, Seatbelt or the refusing one).</summary>
     public ISandboxLaunch? Sandbox { get; init; }
 
     /// <summary>The host-side prepare of a Step's worktree (sandbox spec §3.8, SB-11), or null when there is none: the Step then starts with whatever its worktree holds.</summary>
