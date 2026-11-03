@@ -1,1 +1,1 @@
-Bash	{"command":"ui-evidence desktop-run --repo . --screens home,sidebar"}
+Bash	{"command":"ui-evidence desktop-run docs/ui/screens.json \"$RUN\" --repo \"$(git rev-parse --show-toplevel)\" --screens home,sidebar"}
