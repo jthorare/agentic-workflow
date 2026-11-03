@@ -1283,6 +1283,7 @@ virtual Aw.Judge.Core.Batching.BatchQuestion.PrintMembers(System.Text.StringBuil
 Aw.Judge.Core.Ports.ITraitCheckLog
 Aw.Judge.Core.Ports.ITraitCheckLog.Append(System.Text.Json.Nodes.JsonObject! entry) -> void
 Aw.Judge.Core.Ports.ITraitFiles
+Aw.Judge.Core.Ports.ITraitFiles.FileSize(string! path) -> long?
 Aw.Judge.Core.Ports.ITraitFiles.ReadImage(string! path, string! root, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Images.ImageRead!>
 Aw.Judge.Core.Ports.ITraitFiles.ReadText(string! path) -> string?
 Aw.Judge.Core.Ports.ITraitFiles.WorkingDirectory.get -> string!

@@ -1,3 +1,4 @@
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Traits;
 
@@ -47,7 +48,11 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
     private async ValueTask<TraitPlan?> WithImages(string root, List<string> edited, List<Trait> active, List<TraitTask> tasks, CancellationToken cancellationToken)
     {
         var skipped = new Dictionary<string, string>(StringComparer.Ordinal);
-        tasks.AddRange(await ImageTasks(root, edited, active, skipped, cancellationToken).ConfigureAwait(false));
+        var images = await ImageTasks(root, edited, active, skipped, cancellationToken).ConfigureAwait(false);
+
+        // A file named .png that isn't an image (a text file) is image-not-sent only; its text is not judged either.
+        _ = tasks.RemoveAll(task => skipped.ContainsKey(task.Source.Path));
+        tasks.AddRange(images);
 
         return tasks.Count == 0 && skipped.Count == 0 ? null : new TraitPlan(root, tasks) { Skipped = skipped };
     }
@@ -66,11 +71,11 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
                 continue;
             }
 
-            var read = sent >= MaxImages ? null : await files.ReadImage(Path.Combine(root, file), root, cancellationToken).ConfigureAwait(false);
-            if (read?.Images is not [var image] || total + image.Bytes.Length > MaxImageBytes)
+            var (image, why) = await Admit(root, file, (sent, total), cancellationToken).ConfigureAwait(false);
+            if (image is null)
             {
                 skipped[file] = CheckTraitsResponse.ImageNotSent;
-                log.Append(new System.Text.Json.Nodes.JsonObject { ["event"] = "image-not-sent", ["path"] = file, ["reason"] = read?.Problem ?? "past the 4 files and 4 MiB an edit sends" });
+                log.Append(new System.Text.Json.Nodes.JsonObject { ["event"] = "image-not-sent", ["path"] = file, ["reason"] = why });
                 continue;
             }
 
@@ -81,6 +86,19 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
         }
 
         return tasks;
+    }
+
+    // The size comes from file metadata: a file over what is left of the 4 files and 4 MiB is skipped without being read.
+    private async ValueTask<(ImageAttachment? Image, string Why)> Admit(string root, string file, (int Sent, long Total) so, CancellationToken cancellationToken)
+    {
+        var path = Path.Combine(root, file);
+        if (so.Sent >= MaxImages || files.FileSize(path) is not { } size || so.Total + size > MaxImageBytes)
+        {
+            return (null, "past the 4 files and 4 MiB an edit sends");
+        }
+
+        var read = await files.ReadImage(path, root, cancellationToken).ConfigureAwait(false);
+        return read.Images is [var image] && so.Total + image.Bytes.Length <= MaxImageBytes ? (image, "") : (null, read.Problem ?? "not an image Jev can be sent");
     }
 
     private static bool IsImage(string file) =>

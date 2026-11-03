@@ -13,6 +13,11 @@ public interface ITraitFiles
     /// <returns>The text, or null when the file is missing or can't be read, or is binary (holds a NUL).</returns>
     public string? ReadText(string path);
 
+    /// <summary>The size of a file from its metadata, without reading it.</summary>
+    /// <param name="path">The file's path.</param>
+    /// <returns>The size in bytes, or null when the file is missing or can't be examined.</returns>
+    public long? FileSize(string path);
+
     /// <summary>Reads one PNG or JPEG file (an edited screenshot) as an image.</summary>
     /// <param name="path">The file's path.</param>
     /// <param name="root">The checkout; the file's real path (symlinks resolved) must stay under it.</param>

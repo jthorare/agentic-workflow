@@ -27,6 +27,20 @@ internal sealed class FileTraitFiles(string workingDirectory, IImageReader? imag
     }
 
     /// <inheritdoc />
+    public long? FileSize(string path)
+    {
+        try
+        {
+            var info = new FileInfo(path);
+            return info.Exists ? info.Length : null;
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
+    }
+
+    /// <inheritdoc />
     public ValueTask<ImageRead> ReadImage(string path, string root, CancellationToken cancellationToken) =>
         (images ?? new FileImageReader()).Read([path], root, cancellationToken);
 }

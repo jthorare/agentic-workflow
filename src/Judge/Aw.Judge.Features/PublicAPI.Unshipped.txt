@@ -947,3 +947,5 @@ override Aw.Judge.Features.CheckImages.CheckImagesResponse.GetHashCode() -> int
 override Aw.Judge.Features.CheckImages.CheckImagesResponse.ToString() -> string!
 static Aw.Judge.Features.CheckImages.CheckImagesResponse.operator !=(Aw.Judge.Features.CheckImages.CheckImagesResponse? left, Aw.Judge.Features.CheckImages.CheckImagesResponse? right) -> bool
 static Aw.Judge.Features.CheckImages.CheckImagesResponse.operator ==(Aw.Judge.Features.CheckImages.CheckImagesResponse? left, Aw.Judge.Features.CheckImages.CheckImagesResponse? right) -> bool
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Images.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Features.SortPrompt.SortPromptRequest.Images.init -> void
