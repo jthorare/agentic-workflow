@@ -159,6 +159,16 @@ public sealed partial class FreshnessTests : IDisposable
         Assert.True(_vm.Banner.IsStalled);
         Assert.True(_server.StatusCalls > status && _server.ServicesCalls > services);
     }
+    // The refresh that read the services view has been handled.
+    private async Task RefreshHandled(int services) => await Until(() => _server.ServicesCalls == services);
+
+    // The throttle window ends: the pending re-read comes.
+    private async Task ReReadAfterWindow(int services)
+    {
+        _clock.Advance(HealthViewModel.RefreshEvery);
+        await Until(() => _server.ServicesCalls == services);
+    }
+
     // §9.2: a burst re-reads each view at most once per 250 ms. The first event re-reads at once; the events in the next
     // 250 ms collapse into one more re-read when the window ends.
     [Fact]
@@ -168,14 +178,13 @@ public sealed partial class FreshnessTests : IDisposable
         var (status, services) = (_server.StatusCalls, _server.ServicesCalls);
 
         _server.Push(A.Event(1, "service.ran"));
-        await Until(() => _server.ServicesCalls == services + 1);
+        await RefreshHandled(services + 1);
         _server.Push(A.Event(2, "service.ran"), A.Event(3, "service.ran"), A.Event(4, "service.ran"));
         await Settle();
 
         Assert.Equal((status + 1, services + 1), (_server.StatusCalls, _server.ServicesCalls));
 
-        _clock.Advance(HealthViewModel.RefreshEvery);
-        await Until(() => _server.ServicesCalls == services + 2);
+        await ReReadAfterWindow(services + 2);
         await Settle();
 
         Assert.Equal((status + 2, services + 2), (_server.StatusCalls, _server.ServicesCalls));
