@@ -172,10 +172,7 @@ internal static class WorktreeRules
     // Rules 2 and 4 and the change trigger: nothing uncommitted or untracked beyond build output, no process in it, and (for a worktree that is not a gate tree) nothing changed since the last sweep started.
     private static void Untouched(WorktreeFacts facts, List<string> reasons)
     {
-        if (facts.ChangedSinceSweep && facts.GatePr is null && facts.Discarded is null)
-        {
-            reasons.Add("changed since the last sweep");
-        }
+        Changed(facts, reasons);
 
         if (facts.DirtyEntries.Count > 0)
         {
@@ -191,6 +188,26 @@ internal static class WorktreeRules
         if (facts.Occupants.Count > ListedPaths)
         {
             reasons.Add(string.Create(CultureInfo.InvariantCulture, $"in use by {facts.Occupants.Count - ListedPaths} more process(es)"));
+        }
+    }
+
+    // Rule 7's reason: a tree whose pull request ended is compared with that time, any other with the last sweep's start.
+    private static void Changed(WorktreeFacts facts, List<string> reasons)
+    {
+        if (facts.GatePr is not null || facts.Discarded is not null)
+        {
+            return;
+        }
+
+        if (facts.EndedAtUnknown)
+        {
+            reasons.Add(string.Create(CultureInfo.InvariantCulture, $"PR #{facts.PrNumber} ended, but when could not be read (kept)"));
+        }
+        else if (facts.ChangedSinceSweep)
+        {
+            reasons.Add(facts.ChangedSinceEnd
+                ? string.Create(CultureInfo.InvariantCulture, $"changed since PR #{facts.PrNumber} {(facts.PrState == PrState.Merged ? "merged" : "closed")}")
+                : "changed since the last sweep");
         }
     }
 

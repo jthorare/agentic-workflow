@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.Json;
 using Aw.Meta.Core.Watch;
 
@@ -44,7 +45,7 @@ public static class GhJson
         }
     }
 
-    /// <summary>Reads `gh pr list --json number,state,headRefName,headRefOid`.</summary>
+    /// <summary>Reads `gh pr list --json number,state,headRefName,headRefOid,mergedAt,closedAt`.</summary>
     /// <param name="json">The output.</param>
     /// <returns>The pull requests, or null when the output is not a JSON array.</returns>
     public static IReadOnlyList<PrBranch>? Branches(string json)
@@ -56,7 +57,7 @@ public static class GhJson
             return document.RootElement.ValueKind == JsonValueKind.Array
                 ? [.. document.RootElement.EnumerateArray()
                     .Where(item => item.ValueKind == JsonValueKind.Object && item.TryGetProperty("number", out var number) && number.TryGetInt32(out _))
-                    .Select(item => new PrBranch(item.GetProperty("number").GetInt32(), State(Text(item, "state")), Text(item, "headRefName"), Text(item, "headRefOid")))]
+                    .Select(item => new PrBranch(item.GetProperty("number").GetInt32(), State(Text(item, "state")), Text(item, "headRefName"), Text(item, "headRefOid"), Ended(item)))]
                 : null;
         }
         catch (JsonException)
@@ -105,7 +106,19 @@ public static class GhJson
         Text(item, "headRefOid"),
         Text(item, "mergeable"));
 
-    private static PrDetails Details(JsonElement item) => new(Text(item, "headRefOid"), Text(item, "headRefName"), Flag(item, "isDraft"), Text(item, "title"), State(Text(item, "state")));
+    private static PrDetails Details(JsonElement item) => new(Text(item, "headRefOid"), Text(item, "headRefName"), Flag(item, "isDraft"), Text(item, "title"), State(Text(item, "state")), Ended(item));
+
+    // mergedAt for a merged pull request, closedAt for a closed one; null while open, when the field is missing, null or not a date. gh prints a never-set time as year 1, which is no time either.
+    private static DateTimeOffset? Ended(JsonElement item) => State(Text(item, "state")) switch
+    {
+        PrState.Merged => Time(item, "mergedAt"),
+        PrState.Closed => Time(item, "closedAt"),
+        PrState.Open => null,
+        _ => null,
+    };
+
+    private static DateTimeOffset? Time(JsonElement item, string name) =>
+        DateTimeOffset.TryParse(Text(item, name), CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var time) && time.Year > 1 ? time : null;
 
     private static PrState State(string state) => state.ToUpperInvariant() switch
     {

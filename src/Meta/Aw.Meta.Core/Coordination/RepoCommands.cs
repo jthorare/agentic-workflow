@@ -57,7 +57,7 @@ public sealed class RepoCommands(ICommandRunner runner, MetaPaths paths)
     /// <returns>The pull requests, or an error.</returns>
     public async ValueTask<Result<IReadOnlyList<PrBranch>>> Branches(string repo)
     {
-        var json = await Gh(repo, "pr", "list", "--state", "all", "--limit", "200", "--json", "number,state,headRefName,headRefOid").ConfigureAwait(false);
+        var json = await Gh(repo, "pr", "list", "--state", "all", "--limit", "200", "--json", "number,state,headRefName,headRefOid,mergedAt,closedAt").ConfigureAwait(false);
         return json.IsError ? json.Error : GhJson.Branches(json.Value) is { } list ? Results.Success(list) : Unexpected("gh pr list");
     }
 
