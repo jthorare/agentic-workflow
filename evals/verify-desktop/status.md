@@ -1,7 +1,7 @@
 fire_rate: 7/9
 delta: 0.77
 last_run: 2026-11-03
-pr: TBD
+pr: #1987
 
 Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per case, preamble on.
 - fire_rate: verify-desktop-natural-1 and verify-desktop-natural-2 fired 3/3 each; verify-desktop-near-miss fired 0/3, which is
