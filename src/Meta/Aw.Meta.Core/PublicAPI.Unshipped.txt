@@ -361,7 +361,9 @@ Aw.Meta.Core.Gate.TestVerdict.Verdict.init -> void
 Aw.Meta.Core.Github.GhJson
 Aw.Meta.Core.Github.PrBranch
 Aw.Meta.Core.Github.PrBranch.<Clone>$() -> Aw.Meta.Core.Github.PrBranch!
-Aw.Meta.Core.Github.PrBranch.Deconstruct(out int Number, out Aw.Meta.Core.Watch.PrState State, out string! HeadRef, out string! Head) -> void
+Aw.Meta.Core.Github.PrBranch.Deconstruct(out int Number, out Aw.Meta.Core.Watch.PrState State, out string! HeadRef, out string! Head, out System.DateTimeOffset? EndedAt) -> void
+Aw.Meta.Core.Github.PrBranch.EndedAt.get -> System.DateTimeOffset?
+Aw.Meta.Core.Github.PrBranch.EndedAt.init -> void
 Aw.Meta.Core.Github.PrBranch.Equals(Aw.Meta.Core.Github.PrBranch? other) -> bool
 Aw.Meta.Core.Github.PrBranch.Head.get -> string!
 Aw.Meta.Core.Github.PrBranch.Head.init -> void
@@ -369,7 +371,7 @@ Aw.Meta.Core.Github.PrBranch.HeadRef.get -> string!
 Aw.Meta.Core.Github.PrBranch.HeadRef.init -> void
 Aw.Meta.Core.Github.PrBranch.Number.get -> int
 Aw.Meta.Core.Github.PrBranch.Number.init -> void
-Aw.Meta.Core.Github.PrBranch.PrBranch(int Number, Aw.Meta.Core.Watch.PrState State, string! HeadRef, string! Head) -> void
+Aw.Meta.Core.Github.PrBranch.PrBranch(int Number, Aw.Meta.Core.Watch.PrState State, string! HeadRef, string! Head, System.DateTimeOffset? EndedAt = null) -> void
 Aw.Meta.Core.Github.PrBranch.State.get -> Aw.Meta.Core.Watch.PrState
 Aw.Meta.Core.Github.PrBranch.State.init -> void
 Aw.Meta.Core.Github.PrDetails
