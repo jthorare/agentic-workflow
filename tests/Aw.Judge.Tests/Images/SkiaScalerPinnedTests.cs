@@ -10,9 +10,9 @@ namespace Aw.Judge.Tests.Images;
 [Lane(TestLane.Integration)]
 public sealed class SkiaScalerPinnedTests
 {
-    // The sha256 of tests/fixtures/judge/scale/blocks-2000x1600.png scaled to 1568x1254 by SkiaImageScaler (Mitchell, PNG out). Recorded from the green
-    // implementation; until then it is a placeholder, so this test is red.
-    private const string PinnedSha256 = "0000000000000000000000000000000000000000000000000000000000000000";
+    // The sha256 of tests/fixtures/judge/scale/blocks-2000x1600.png scaled to 1568x1254 by SkiaImageScaler (Mitchell, PNG out) under SkiaSharp
+    // 3.119.4. A SkiaSharp bump that changes the resampler moves it: record the new value and say so in the PR.
+    private const string PinnedSha256 = "47a6100c855c542a1f6f8c9e98efb39149ff9a5f33cf7ec96ec82552bc9121b6";
 
     [Fact]
     public void Scaled_bytes_match_the_pinned_sha256()
