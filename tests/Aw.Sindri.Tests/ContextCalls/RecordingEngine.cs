@@ -232,6 +232,8 @@ internal sealed class RecordingEngine(IContextEngine inner, List<(ContextCaller 
 
     public ValueTask<Result<MapHealth>> CheckRetention(CancellationToken cancellationToken) => inner.CheckRetention(cancellationToken);
 
+    public ValueTask<Result<MapHealth>> CheckStore(CancellationToken cancellationToken) => inner.CheckStore(cancellationToken);
+
     public ValueTask<Result<PurgeReport>> PurgeExpired(CancellationToken cancellationToken) => inner.PurgeExpired(cancellationToken);
 
     private static IContextEngine Resolve(ServiceDescriptor original, IServiceProvider services) =>

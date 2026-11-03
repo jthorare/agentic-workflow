@@ -289,6 +289,10 @@ public sealed class FakeContextEngine : IContextEngine
         ValueTask.FromResult(Results.Success(new MapHealth("context:retention", MapHealthState.Ok, "nothing to purge", Fix: null)));
 
     /// <inheritdoc/>
+    public ValueTask<Result<MapHealth>> CheckStore(CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(new MapHealth("context:store", MapHealthState.Ok, "no store yet", Fix: null)));
+
+    /// <inheritdoc/>
     public ValueTask<Result<PurgeReport>> PurgeExpired(CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(new PurgeReport(Exports: 0, Versions: 0)));
 
