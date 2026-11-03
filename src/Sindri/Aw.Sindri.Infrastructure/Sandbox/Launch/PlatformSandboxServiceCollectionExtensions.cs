@@ -15,7 +15,7 @@ namespace Aw.Sindri.Infrastructure.Sandbox.Launch;
 
 /// <summary>
 /// The one switch that turns the sandbox on (sandbox spec §12 SB-5a, SB12): on Linux the bubblewrap sandbox, its owner-copy login source and the concurrent-session cap
-/// replace the 'UnavailableSandbox' Core registers; everywhere else nothing changes and every sandboxed launch is refused with SND-LAUNCH-014.
+/// replace the 'UnavailableSandbox' Core registers; on macOS Seatbelt does; everywhere else a refusing sandbox step is registered, so no Step runs unconfined and every launch is refused with SND-LAUNCH-014.
 /// </summary>
 public static class PlatformSandboxServiceCollectionExtensions
 {
@@ -40,7 +40,7 @@ public static class PlatformSandboxServiceCollectionExtensions
 
         if (!linux)
         {
-            return services;
+            return services.AddSingleton<ISandboxLaunch, UnavailableSandboxLaunch>();
         }
 
         _ = services.RemoveAll<ISandbox>().RemoveAll<ISandboxFixture>().AddSingleton<IAgentTokenSource>(sp => new GitHubAppTokenSource(environment, GitHubAppTokenSource.CreateClient(), sp.GetRequiredService<TimeProvider>()));   // the fixture-plan self-check replaces Features' NoSandboxFixture; the agent-app token mint

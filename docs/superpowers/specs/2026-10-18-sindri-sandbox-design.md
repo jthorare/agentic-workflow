@@ -668,7 +668,7 @@ goldens' text):
 | 014 · no-user-manager | "The sandbox needs your user session manager, which isn't running. Run `loginctl enable-linger $USER`, then press Check again." |
 | 014 · no-cgroup-controllers | "The system doesn't give your account memory or CPU limits. Enable the missing limit (named here) in systemd, then press Check again." |
 | 014 · no-forwarder | "The sandbox needs `socat` to reach Sindri. Install it, then press Check again." |
-| 014 · unsupported-platform | "Steps can't run by themselves on macOS yet." Shown gray, as "not yet supported", never red (R1-20). The Step goes to your desk |
+| 014 · unsupported-platform | "Steps can't run by themselves on this operating system: Sindri has a sandbox for Linux and macOS only." (#2016: any other OS; it used to name macOS.) Shown gray, as "not yet supported", never red (R1-20). The Step goes to your desk |
 | 015 · form-none / form-reserved | "`<target>` hasn't been taught how to follow a Step's rules, so it can't run by itself. Use Claude Code or Codex, or add its policy setting." |
 | 015 · tool-not-expressible | "This Step allows `<tool>`, which this agent can't restrict. Change the Step's tools, or use another agent." |
 | 015 · bin-denied | "The agent program lives somewhere the sandbox hides (`<path>`). Move or reinstall it somewhere under your home or `/usr`." |
