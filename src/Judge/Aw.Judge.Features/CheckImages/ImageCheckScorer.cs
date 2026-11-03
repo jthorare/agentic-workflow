@@ -35,6 +35,12 @@ internal sealed class ImageCheckScorer(IImageWorkspaces workspaces, TimeProvider
                 continue;
             }
 
+            if (answer is not ProviderDecided)
+            {
+                tally.Error();   // proves nothing either way: never counted as a case Jev got right
+                continue;
+            }
+
             var judgedRight = answer is ProviderDecided decided && decided.Confidence >= threshold && string.Equals(decided.Decision, LooksRight, StringComparison.Ordinal);
             tally.Add(string.Equals(item.Expected, LooksRight, StringComparison.Ordinal), judgedRight, clock.GetElapsedTime(start));
         }

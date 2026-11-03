@@ -48,27 +48,28 @@ internal sealed class CheckImagesService(
         var cli = catalog.Provider(ProviderName.ClaudeCli, request.Providers, providers);
         lines.Add(cli.IsError ? $"{"claude-cli:",-12}not available ({cli.Error.Message})" : (await scorer.Score(cli.Value, set, threshold, cancellationToken).ConfigureAwait(false)).Line("claude-cli:"));
         lines.AddRange(Verdict(jevScore, JevImagesSetting.IsOn(providers, request.JevImagesEnvironment)));
-        return new CheckImagesResponse(lines, jevScore.BrokenJudgedRight == 0);
+        return new CheckImagesResponse(lines, jevScore.BarHolds);
     }
 
     private static Result<CheckImagesResponse> Stop(string line) => new CheckImagesResponse([line], Held: false);
 
+    // Held; missed when Jev called a broken page right; else not proven (it errored, or no broken case was judged at all).
+    private static string BarText(ImageCheckTally jev) =>
+        jev.BarHolds ? "held"
+        : jev.BrokenJudgedRight > 0 ? string.Create(CultureInfo.InvariantCulture, $"missed ({jev.BrokenJudgedRight}/{jev.Broken})")
+        : jev.Errored > 0 ? string.Create(CultureInfo.InvariantCulture, $"not proven (jev errored on {jev.Errored} cases)")
+        : "not proven (no broken case was judged)";
+
     // The bar, whether images go to Jev now, and the one command that would flip it the way the result says.
     private static List<string> Verdict(ImageCheckTally jev, bool on)
     {
-        var held = jev.BrokenJudgedRight == 0;
-        List<string> lines =
-        [
-            held
-                ? "bar (0 broken judged looks-right): held"
-                : string.Create(CultureInfo.InvariantCulture, $"bar (0 broken judged looks-right): missed ({jev.BrokenJudgedRight}/{jev.Broken})"),
-            $"images to Jev: {(on ? "on" : "off")}",
-        ];
+        var held = jev.BarHolds;
+        List<string> lines = [$"bar (0 broken judged looks-right): {BarText(jev)}", $"images to Jev: {(on ? "on" : "off")}"];
         if (held && !on)
         {
             lines.Add("to turn it on: judge config set providers jev-images true");
         }
-        else if (!held && on)
+        else if (jev.BrokenJudgedRight > 0 && on)
         {
             lines.Add("to turn it off: judge config set providers jev-images false");
         }

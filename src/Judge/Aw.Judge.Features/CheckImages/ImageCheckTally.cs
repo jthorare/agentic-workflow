@@ -20,6 +20,14 @@ internal sealed class ImageCheckTally
 
     public void SkipTooBig() => TooBig++;
 
+    /// <summary>Cases the provider did not answer (an error, no key, a timeout, a 413); in neither count and not timed, and never a pass.</summary>
+    public int Errored { get; private set; }
+
+    public void Error() => Errored++;
+
+    /// <summary>Whether the bar holds: at least one broken case was really judged, none was called looks-right, and nothing errored.</summary>
+    public bool BarHolds => Broken > 0 && BrokenJudgedRight == 0 && Errored == 0;
+
     public void Add(bool pageIsRight, bool judgedRight, TimeSpan elapsed)
     {
         _elapsed += elapsed;
@@ -40,9 +48,12 @@ internal sealed class ImageCheckTally
         var seconds = (_elapsed / Math.Max(1, Broken + Right)).TotalSeconds.ToString("F1", CultureInfo.InvariantCulture);
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{label,-12}broken judged looks-right {BrokenJudgedRight}/{Broken} · right pages judged looks-right {RightJudgedRight}/{Right}{Skipped()} · {seconds} s per call");
+            $"{label,-12}broken judged looks-right {BrokenJudgedRight}/{Broken} · right pages judged looks-right {RightJudgedRight}/{Right}{Skipped()}{ErroredText()} · {seconds} s per call");
     }
 
     private string Skipped() =>
         TooBig == 0 ? "" : string.Create(CultureInfo.InvariantCulture, $" · {TooBig} over its size limits, skipped");
+
+    private string ErroredText() =>
+        Errored == 0 ? "" : string.Create(CultureInfo.InvariantCulture, $" · {Errored} errored");
 }
