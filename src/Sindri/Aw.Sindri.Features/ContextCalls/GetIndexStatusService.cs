@@ -5,6 +5,7 @@ using Aw.Context.Core.Records;
 using Aw.Context.Core.Sync;
 using Aw.Kernel;
 using Aw.Kernel.Services;
+using Aw.Sindri.Core.Doctor;
 
 namespace Aw.Sindri.Features.ContextCalls;
 
@@ -35,7 +36,7 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
 
     // why: like concepts, a failed store check still lets the status answer, as a fail row
     private static IndexStoreView Store(Result<MapHealth> store) => store.IsError
-        ? new IndexStoreView("fail", $"{store.Error.Code}: {store.Error.Message}", "check $AW_SINDRI_HOME/context permissions")
+        ? new IndexStoreView("fail", $"{store.Error.Code}: {store.Error.Message}", DoctorRules.ContextFix)
         : new IndexStoreView(store.Value.State.ToString().ToLowerInvariant(), store.Value.Detail, store.Value.Fix);
 
     private static IndexConceptsView Concepts(ConceptStatus c) =>

@@ -83,7 +83,7 @@ internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishChe
         [.. (action.Concepts ?? []).Take(PageRules.MaxConcepts)]);
 
     private static DoctorCheck Line(string name, Result<MapHealth> health) => health.IsError
-        ? new DoctorCheck(name, CheckState.Fail, $"{health.Error.Code}: {health.Error.Message}", "check $AW_SINDRI_HOME/context")
+        ? new DoctorCheck(name, CheckState.Fail, $"{health.Error.Code}: {health.Error.Message}", DoctorRules.ContextFix)
         : new DoctorCheck(health.Value.Name, health.Value.State switch
         {
             MapHealthState.Ok => CheckState.Ok,

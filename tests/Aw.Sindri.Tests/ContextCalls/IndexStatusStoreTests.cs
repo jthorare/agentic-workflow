@@ -56,7 +56,7 @@ public sealed class IndexStatusStoreTests
         var store = view.Value.Store!;
         Assert.Equal("fail", store.State);
         Assert.StartsWith(ContextErrors.StoreUnavailable.Code, store.Detail, StringComparison.Ordinal);
-        Assert.Equal("check $AW_SINDRI_HOME/context permissions", store.Fix);
+        Assert.Equal("check $AW_SINDRI_HOME/context", store.Fix);
     }
 
     [Fact, Trait("Lane", "unit")]
