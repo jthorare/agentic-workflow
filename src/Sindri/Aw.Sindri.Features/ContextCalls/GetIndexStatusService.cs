@@ -1,5 +1,6 @@
 using Aw.Context.Core.ConceptSynthesis;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Map;
 using Aw.Context.Core.Records;
 using Aw.Context.Core.Sync;
 using Aw.Kernel;
@@ -28,8 +29,11 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
 
         // why: the concepts part is extra; a failed read leaves the feed rows standing and carries its code
         var concepts = await engine.ConceptStatus(scope.Value, cancellationToken).ConfigureAwait(false);
-        return new IndexStatusView([.. progress.Value.Select(Row)]) { Concepts = concepts.IsError ? new IndexConceptsView(Enabled: true, Code: concepts.Error.Code) : Concepts(concepts.Value) };
+        var store = await engine.CheckStore(cancellationToken).ConfigureAwait(false);
+        return new IndexStatusView([.. progress.Value.Select(Row)]) { Concepts = concepts.IsError ? new IndexConceptsView(Enabled: true, Code: concepts.Error.Code) : Concepts(concepts.Value), Store = Store(store) };
     }
+
+    private static IndexStoreView Store(Result<MapHealth> store) => throw new NotSupportedException();
 
     private static IndexConceptsView Concepts(ConceptStatus c) =>
         new(c.Enabled, c.Concepts, c.MultiSource, c.Queued, c.Covered, c.Embedded, c.Pending, c.Embedded == 0 ? 0 : (double)c.Covered / c.Embedded, c.Watermark, Code: null, c.LastRun, c.LastCode);
