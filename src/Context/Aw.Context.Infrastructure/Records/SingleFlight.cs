@@ -21,14 +21,20 @@ internal sealed class SingleFlight<T>
         {
             if (_current is null)
             {
-                _current = new Flight();
-                var started = _current;
+                var started = new Flight();
+                _current = started;
                 // why: on its own thread, so the run belongs to no one caller and a caller leaving never ends it alone
                 started.Task = Task.Run(() => work(started.Stop.Token), CancellationToken.None);
                 _ = started.Task.ContinueWith(_ => Land(started), CancellationToken.None, TaskContinuationOptions.ExecuteSynchronously, TaskScheduler.Default);
+                // why: a run that has already finished lands inline right here (the gate is reentrant) and clears _current,
+                // so this caller keeps the flight it started instead of reading _current again
+                flight = started;
+            }
+            else
+            {
+                flight = _current;
             }
 
-            flight = _current;
             flight.Waiters++;
         }
 
@@ -70,14 +76,13 @@ internal sealed class SingleFlight<T>
             {
                 _current = null;
             }
-
-            // why: inside the gate, so a last caller leaving can't cancel it after it is disposed
-            flight.Stop.Dispose();
         }
     }
 
     private sealed class Flight
     {
+        // why: never disposed: it has no timer and no wait handle, and a Cancel that finishes the run inline would land
+        // (and dispose it) while that Cancel is still running
         public CancellationTokenSource Stop { get; } = new();
 
         public Task<T> Task { get; set; } = null!; // why: set right after construction, inside the gate
