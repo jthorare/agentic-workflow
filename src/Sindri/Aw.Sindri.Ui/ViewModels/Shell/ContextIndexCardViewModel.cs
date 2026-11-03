@@ -5,7 +5,7 @@ namespace Aw.Sindri.Ui.ViewModels.Shell;
 
 /// <summary>
 /// Health's Context index card (#1597): one line per context source from GET /sindri/index/status, so a source that isn't pulling and holds
-/// nothing can't hide behind another that is; then the concepts: how many, the share citing two or more sources, and what isn't labeled yet.
+/// nothing can't hide behind another that is; then the concepts: how many, the share citing two or more sources, and what isn't labeled yet; then the context.db store check (#1963).
 /// Followed like the other views: read on connect and after every event, never folded.
 /// </summary>
 /// <param name="api">The API.</param>
@@ -42,9 +42,9 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
             return;
         }
 
-        var (sources, concepts) = (read.Value.Sources, read.Value.Concepts);
-        Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts)).Select(t => new ContextIndexLine(t))];
-        var fine = sources.All(static s => !NeedsLook(s)) && concepts?.Code is null;
+        var (sources, concepts, store) = (read.Value.Sources, read.Value.Concepts, read.Value.Store);
+        Lines = sources.Count == 0 ? [] : [.. sources.Select(Line).Concat(ConceptLines(concepts)).Concat(StoreLines(store)).Select(t => new ContextIndexLine(t))];
+        var fine = sources.All(static s => !NeedsLook(s)) && concepts?.Code is null && (store is null || Is(store.State, "ok"));
         Word = sources.Count == 0 ? string.Empty : fine ? Labels.CodeIndexOk : Labels.CodeIndexNeedsLook;
         Show(sources.Count == 0 ? Labels.ContextIndexNone : string.Empty);
     }
@@ -100,6 +100,20 @@ internal sealed class ContextIndexCardViewModel(ISindriApi api, TimeProvider clo
         if (concepts.Embedded is { } embedded)
         {
             yield return Labels.ConceptsUncovered(Math.Max(0, embedded - concepts.Covered), concepts.Coverage);
+        }
+    }
+
+    private static IEnumerable<string> StoreLines(IndexStoreView? store)
+    {
+        if (store is null)
+        {
+            yield break;
+        }
+
+        yield return Labels.StoreLine(store.Detail);
+        if (!Is(store.State, "ok") && !string.IsNullOrEmpty(store.Fix))
+        {
+            yield return Labels.StoreFix(store.Fix);
         }
     }
 
