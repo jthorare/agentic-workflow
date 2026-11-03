@@ -1,0 +1,1 @@
+No empty state for a member with zero books and no error state when the save fails.

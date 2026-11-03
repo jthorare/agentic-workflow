@@ -1,0 +1,1 @@
+✗ MCP not connected. Fix: run ./setup.sh and restart.

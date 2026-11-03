@@ -2,16 +2,8 @@
 # scripts/check-skill-requires.sh skips them. A skill leaves the list in the PR that adds its opening; the list only shrinks.
 
 bootstrap
-skills/archReview
-skills/autoplan
 skills/canary
-skills/cso
-skills/judge
 skills/landAndDeploy
-skills/planDesignReview
-skills/planDevexReview
-skills/prismStatus
-skills/productReview
 skills/shipRelease
 skills/specToProvenPR
 skills/system-design
