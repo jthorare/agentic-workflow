@@ -190,6 +190,7 @@ bash scripts/tests/probe.test.sh
 bash scripts/tests/probe-linear-projects.test.sh   # scripts/probe-linear-projects.sh (the projects page Ph0 probe) with stub curl and gh: output, legacy state fallback, no key exit 2, a failed call exit 1, the key never printed
 bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/find-duplicate-skills.test.sh
+bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
 bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh: every skill with a git/gh write command has a "## Git mode" section with ${AW_GIT_MODE:-full}; a planted skill without it fails naming file:line
 bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, merge, rebase, cherry-pick, revert, am, tag <name>, branch <name>, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line
 bash scripts/tests/system-design-tokens.test.sh   # skills/system-design/scripts/tokens_to_css.py: known tokens and aliases map, unmapped ones are printed and keep the neutral fallback, a missing tokens file exits 1 without output
