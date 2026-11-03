@@ -174,7 +174,7 @@ public sealed class WorktreeInspectorTests
             .When("git fetch", string.Empty)
             .When("rev-parse --verify --quiet origin/main", "mainsha\n")
             .When("worktree list --porcelain", "worktree /work\nHEAD aaaaaaa\nbranch refs/heads/main\n\nworktree " + Lane + "\nHEAD bbbbbbb\nbranch refs/heads/feat\n")
-            .When("gh pr list", "[{\"number\":7,\"state\":\"MERGED\",\"headRefName\":\"feat\",\"headRefOid\":\"bbbbbbb\"}]")
+            .When("gh pr list", "[{\"number\":7,\"state\":\"MERGED\",\"headRefName\":\"feat\",\"headRefOid\":\"bbbbbbb\",\"mergedAt\":\"" + A.At(5).ToString("O", CultureInfo.InvariantCulture) + "\"}]")
             .When("--not origin/main", "0\n")
             .When("--not --remotes", "0\n")
             .When("status --porcelain", string.Empty)
@@ -215,6 +215,7 @@ public sealed class WorktreeInspectorTests
     public async Task Without_a_recorded_sweep_the_change_trigger_has_nothing_to_compare_with()
     {
         ScriptBranch();
+        _world.WorktreeFiles.Touch(Lane, A.At(1));
 
         Assert.Equal(WorktreeDecision.Removable, (await LaneReport()).Decision);
     }
