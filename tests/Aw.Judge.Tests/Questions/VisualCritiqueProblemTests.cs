@@ -27,7 +27,7 @@ public sealed class VisualCritiqueProblemTests
     public async Task A_screenshot_that_escapes_the_evidence_dir_is_stored_as_outside()
     {
         var reader = new FakeImageReader(
-            new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["/tmp/secret/x.png"] = Aw.Judge.Tests.Images.ImageBytes.Png(1, 1) },
+            new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["/tmp/secret/x.png"] = Images.ImageBytes.Png(1, 1) },
             new Dictionary<string, string>(StringComparer.Ordinal) { ["/tmp/ev/after.png"] = "/tmp/secret/x.png" });
         var run = new QuestionRun { ImageReader = reader };
 
