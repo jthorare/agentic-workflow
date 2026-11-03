@@ -33,7 +33,10 @@ internal sealed class GetIndexStatusService(ContextScopes scopes, IContextEngine
         return new IndexStatusView([.. progress.Value.Select(Row)]) { Concepts = concepts.IsError ? new IndexConceptsView(Enabled: true, Code: concepts.Error.Code) : Concepts(concepts.Value), Store = Store(store) };
     }
 
-    private static IndexStoreView Store(Result<MapHealth> store) => throw new NotSupportedException();
+    // why: like concepts, a failed store check still lets the status answer, as a fail row
+    private static IndexStoreView Store(Result<MapHealth> store) => store.IsError
+        ? new IndexStoreView("fail", $"{store.Error.Code}: {store.Error.Message}", "check $AW_SINDRI_HOME/context permissions")
+        : new IndexStoreView(store.Value.State.ToString().ToLowerInvariant(), store.Value.Detail, store.Value.Fix);
 
     private static IndexConceptsView Concepts(ConceptStatus c) =>
         new(c.Enabled, c.Concepts, c.MultiSource, c.Queued, c.Covered, c.Embedded, c.Pending, c.Embedded == 0 ? 0 : (double)c.Covered / c.Embedded, c.Watermark, Code: null, c.LastRun, c.LastCode);
