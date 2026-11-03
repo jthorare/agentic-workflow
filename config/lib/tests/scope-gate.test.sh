@@ -92,4 +92,47 @@ test_needs_design_denies_with_user_wording
 test_skill_internal_dispatch_is_passed_through_and_reads_ready
 test_judge_failure_fails_open_to_allow
 test_aw_judge_child_gets_explicit_allow
+# A throwaway git checkout with a screenshot in it (the hooks only attach images under the checkout they run in).
+make_checkout_with_png() {
+  local d; d="$(mktemp -d)"; git -C "$d" init -q; printf '\211PNG\r\n\032\n' > "$d/shot.png"; echo "$d"
+}
+
+# --- judge images (spec 5.2): an existing screenshot named in the brief goes to brief-scope as `images` ---
+setup_recording_scope_judge() {
+  local bin_dir; bin_dir="$(mktemp -d)"
+  cat > "$bin_dir/judge" <<EOF
+#!/usr/bin/env bash
+if [ "\$1" = "brief-scope" ]; then
+  cat > "$bin_dir/scope-input.json"
+  echo '{"decision":"ready","confidence":0.9,"model":"claude-cli","reason_code":"model","id":"fixed-id"}'
+elif [ "\$1" = "brief" ] && [ "\$2" = "save" ]; then
+  cat > /dev/null
+fi
+EOF
+  chmod +x "$bin_dir/judge"
+  echo "$bin_dir"
+}
+
+test_a_screenshot_named_in_the_goal_is_sent_to_brief_scope_as_an_image() {
+  local bin_dir repo input
+  bin_dir="$(setup_recording_scope_judge)"; repo="$(make_checkout_with_png)"
+  input="$(jq -nc --arg g "match $repo/shot.png" '{session_id:"s1",prompt_id:"p1",tool_use_id:"tu9",tool_input:{subagent_type:"lean-coder",description:$g,prompt:"Acceptance: it looks like the screenshot. Proof: npm test"}}')"
+  ( cd "$repo" && PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$input" > /dev/null )
+  jq -e --arg p "$repo/shot.png" '.images == [$p] and .imagesBestEffort == true' "$bin_dir/scope-input.json" > /dev/null \
+    || { echo "FAIL: expected brief-scope to be sent images [$repo/shot.png] with imagesBestEffort, got $(cat "$bin_dir/scope-input.json")"; exit 1; }
+  echo "PASS: test_a_screenshot_named_in_the_goal_is_sent_to_brief_scope_as_an_image"
+}
+
+# Green today and must stay so: a brief that names no image is today's input, byte for byte.
+test_a_brief_naming_no_image_keeps_the_brief_scope_input_byte_identical() {
+  local bin_dir
+  bin_dir="$(setup_recording_scope_judge)"
+  PATH="$bin_dir:$PATH" bash "$HOOK" <<< '{"session_id":"s1","prompt_id":"p1","tool_use_id":"tu8","tool_input":{"subagent_type":"lean-coder","description":"add X","prompt":"Acceptance: tests pass"}}' > /dev/null
+  [ "$(cat "$bin_dir/scope-input.json")" = '{"agentType":"lean-coder","goal":"add X","acceptanceCriteria":"Acceptance: tests pass","proofCommand":"Acceptance: tests pass","skillInternal":false}' ] \
+    || { echo "FAIL: a call without images must be today's input, got $(cat "$bin_dir/scope-input.json")"; exit 1; }
+  echo "PASS: test_a_brief_naming_no_image_keeps_the_brief_scope_input_byte_identical"
+}
+
+test_a_brief_naming_no_image_keeps_the_brief_scope_input_byte_identical
+test_a_screenshot_named_in_the_goal_is_sent_to_brief_scope_as_an_image
 echo "All scope-gate tests passed."

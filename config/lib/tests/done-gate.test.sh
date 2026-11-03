@@ -563,3 +563,66 @@ test_ui_requirement_is_satisfied_once_and_then_cleared
 test_ui_requirement_never_affects_a_non_done_claim_or_a_stop_hook_active_rerun
 test_hostile_session_id_never_reads_outside_the_sessions_dir_rf4
 test_absent_or_corrupt_sort_file_changes_nothing
+
+# --- judge images (spec 5.2): a turn that read a PNG/JPEG sends it to ask-check as `images` ---
+# A fake judge that keeps what ask-check was sent on stdin.
+setup_recording_judge() {
+  local bin_dir; bin_dir="$(mktemp -d)"
+  cat > "$bin_dir/judge" <<EOF
+#!/usr/bin/env bash
+if [ "\$1" = "ask-check" ]; then cat > "$bin_dir/ask-input.json"; exit 0; fi
+if [ "\$1" = "brief" ]; then exit 1; fi
+EOF
+  chmod +x "$bin_dir/judge"
+  echo "$bin_dir"
+}
+
+# A transcript of one turn: the prompt, a Read of each given file (an assistant line and its tool result), then the closing text.
+write_transcript_with_reads() {
+  local file="$1" text="$2"; shift 2
+  jq -nc '{type:"user", message:{role:"user", content:"check the page"}}' > "$file"
+  local f
+  for f in "$@"; do
+    jq -nc --arg f "$f" '{type:"assistant", message:{content:[{type:"tool_use", id:"tu", name:"Read", input:{file_path:$f}}]}}' >> "$file"
+    jq -nc '{type:"user", message:{role:"user", content:[{type:"tool_result", tool_use_id:"tu", content:"ok"}]}}' >> "$file"
+  done
+  jq -nc --arg t "$text" '{type:"assistant", message:{content:[{type:"text", text:$t}]}}' >> "$file"
+}
+
+test_a_turn_that_read_a_png_sends_images_to_ask_check() {
+  local bin_dir transcript dir png
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; png="$dir/home.png"
+  printf '\211PNG\r\n\032\n' > "$png"
+  write_transcript_with_reads "$transcript" "still working on the next step" "$png"
+  PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" || true
+  jq -e --arg p "$png" '.images == [$p] and .imagesBestEffort == true and .transcriptTail == "still working on the next step"' "$bin_dir/ask-input.json" > /dev/null \
+    || { echo "FAIL: expected ask-check to be sent images [$png] with imagesBestEffort, got $(cat "$bin_dir/ask-input.json")"; exit 1; }
+  echo "PASS: test_a_turn_that_read_a_png_sends_images_to_ask_check"
+}
+
+test_only_the_newest_four_images_are_sent_newest_first() {
+  local bin_dir transcript dir expected n
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"
+  for n in 1 2 3 4 5; do printf '\211PNG\r\n\032\n' > "$dir/f$n.png"; done
+  write_transcript_with_reads "$transcript" "still working on the next step" "$dir/f1.png" "$dir/f2.png" "$dir/f3.png" "$dir/f4.png" "$dir/f5.png"
+  PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" || true
+  expected="$(jq -nc --arg d "$dir" '[$d+"/f5.png", $d+"/f4.png", $d+"/f3.png", $d+"/f2.png"]')"
+  [ "$(jq -c '.images' "$bin_dir/ask-input.json")" = "$expected" ] || { echo "FAIL: expected the newest four first, $expected, got $(cat "$bin_dir/ask-input.json")"; exit 1; }
+  echo "PASS: test_only_the_newest_four_images_are_sent_newest_first"
+}
+
+# Green today and must stay so: a call without images is today's input, byte for byte.
+test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical() {
+  local bin_dir transcript dir
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"
+  printf 'export const a = 1;\n' > "$dir/a.ts"
+  write_transcript_with_reads "$transcript" "still working on the next step" "$dir/a.ts"
+  PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" || true
+  [ "$(cat "$bin_dir/ask-input.json")" = '{"transcriptTail":"still working on the next step"}' ] \
+    || { echo "FAIL: a call without images must be today's input, got $(cat "$bin_dir/ask-input.json")"; exit 1; }
+  echo "PASS: test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical"
+}
+
+test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical
+test_a_turn_that_read_a_png_sends_images_to_ask_check
+test_only_the_newest_four_images_are_sent_newest_first

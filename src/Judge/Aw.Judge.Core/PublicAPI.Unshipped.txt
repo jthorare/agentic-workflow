@@ -1049,6 +1049,10 @@ Aw.Judge.Core.Batching.BatchRequest.Questions.get -> System.Collections.Generic.
 Aw.Judge.Core.Batching.BatchRequest.Questions.init -> void
 Aw.Judge.Core.Batching.BatchRequest.State.get -> System.Text.Json.Nodes.JsonNode?
 Aw.Judge.Core.Batching.BatchRequest.State.init -> void
+Aw.Judge.Core.Batching.BatchRequest.Images.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageAttachment!>!
+Aw.Judge.Core.Batching.BatchRequest.Images.init -> void
+Aw.Judge.Core.Batching.BatchRequest.ImagesBestEffort.get -> bool
+Aw.Judge.Core.Batching.BatchRequest.ImagesBestEffort.init -> void
 Aw.Judge.Core.Batching.BatchUsage
 Aw.Judge.Core.Batching.BatchUsage.<Clone>$() -> Aw.Judge.Core.Batching.BatchUsage!
 Aw.Judge.Core.Batching.BatchUsage.BatchUsage(long InputTokens, long OutputTokens) -> void

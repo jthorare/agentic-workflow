@@ -109,4 +109,31 @@ test_garbage_output_and_missing_judge_fail_open_rf2
 test_nonzero_exit_of_judge_is_swallowed
 test_machine_text_slash_commands_and_judge_child_never_reach_judge_rf3
 test_pasted_absolute_path_is_still_sorted
+# A throwaway git checkout with a screenshot in it (the hooks only attach images under the checkout they run in).
+make_checkout_with_png() {
+  local d; d="$(mktemp -d)"; git -C "$d" init -q; printf '\211PNG\r\n\032\n' > "$d/shot.png"; echo "$d"
+}
+
+# --- judge images (spec 5.2): an existing screenshot named in the prompt goes to prompt-sort as `images` ---
+test_a_screenshot_named_in_the_prompt_is_sent_to_prompt_sort_as_an_image() {
+  local bin repo input
+  bin="$(make_fake_judge)"; repo="$(make_checkout_with_png)"
+  input="$(jq -nc --arg p "make the page look like $repo/shot.png" '{session_id:"s1",prompt:$p}')"
+  ( cd "$repo" && run_hook "$bin" context "$input" > /dev/null )
+  [ "$(grep '^STDIN:' "$bin/calls.log" | sed 's/^STDIN: //' | jq -c --arg p "$repo/shot.png" '(.images == [$p]) and (.imagesBestEffort == true)')" = "true" ] \
+    || { echo "FAIL: expected prompt-sort to be sent images [$repo/shot.png] with imagesBestEffort, got $(grep '^STDIN:' "$bin/calls.log")"; exit 1; }
+  echo "PASS: test_a_screenshot_named_in_the_prompt_is_sent_to_prompt_sort_as_an_image"
+}
+
+# Green today and must stay so: a prompt that names no image is today's payload, byte for byte.
+test_a_prompt_naming_no_image_keeps_the_prompt_sort_payload_byte_identical() {
+  local bin; bin="$(make_fake_judge)"
+  run_hook "$bin" context '{"session_id":"s1","prompt":"fix the login button"}' > /dev/null
+  [ "$(grep '^STDIN:' "$bin/calls.log")" = 'STDIN: {"prompt":"fix the login button","sessionId":"s1"}' ] \
+    || { echo "FAIL: a call without images must be today's payload, got $(grep '^STDIN:' "$bin/calls.log")"; exit 1; }
+  echo "PASS: test_a_prompt_naming_no_image_keeps_the_prompt_sort_payload_byte_identical"
+}
+
+test_a_prompt_naming_no_image_keeps_the_prompt_sort_payload_byte_identical
+test_a_screenshot_named_in_the_prompt_is_sent_to_prompt_sort_as_an_image
 echo "All prompt-sort hook tests passed."
