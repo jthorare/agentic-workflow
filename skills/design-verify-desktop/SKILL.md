@@ -18,6 +18,8 @@ allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash
 
 Runs the real desktop app on seeded data, drives each screen into view and diffs it with the owner's mockup. The mockups live in the repo's screens manifest, not in `screens.json`: the config, the run and the judging rules are in `_shared/desktop-evidence.md`. Artifact paths and the `comparison-report.json` schema come from `_shared/design-artifact-paths.md`.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Load the Config and Pick Screens
 
 ```bash

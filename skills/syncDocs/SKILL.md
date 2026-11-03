@@ -13,6 +13,8 @@ Refreshes project documentation to reflect recent changes. Updates only the sect
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Parse Arguments
 
 - **Release-id** (positional, optional) — canonical CD7 form `<ISO-date>-<short-sha>`. Passed by `/canary` on HEALTHY. The report in Step 5 is written **inside** `releases/<release-id>/` so the whole release stays in one folder.
