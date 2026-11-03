@@ -19,6 +19,8 @@ allowed-tools: Bash(git *), Bash(ls *), Bash(find *), Bash(curl *), Bash(docker 
 > | `design-comparison` | Visual diff between implementation and design |
 > | `xcodebuildmcp` | iOS simulator control — build, run, screenshot, UI snapshot |
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## External Documentation — Parse and Classify
 
 If the user provides `--product-docs` arguments, parse and classify them before proceeding to Step 1.

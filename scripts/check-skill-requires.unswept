@@ -1,7 +1,6 @@
 # Skills whose opening doesn't run the Result block's gate yet (skills/_shared/output-contract.md "The opening"; #2002).
 # scripts/check-skill-requires.sh skips them. A skill leaves the list in the PR that adds its opening; the list only shrinks.
 
-bootstrap
 skills/addressReview
 skills/archReview
 skills/autoplan
@@ -45,13 +44,10 @@ skills/productReview
 skills/review
 skills/rootCause
 skills/shipRelease
-skills/specToProvenPR
 skills/syncDocs
-skills/system-design
 skills/system-design-video
 skills/testAudit
 skills/verify-app
 skills/verify-ios
 skills/verify-web
-skills/weeklyRetro
 skills/withInterview

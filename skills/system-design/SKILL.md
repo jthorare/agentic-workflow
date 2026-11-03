@@ -27,6 +27,8 @@ mkdir -p "$SD"/{prs,diagrams,mockups,shots}
 
 If the user names another deliverables folder (a notes vault, a docs dir), use it for `$SD` instead. Never write deliverables into the code repo unless asked.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Inputs
 
 - **Subject:** a ticket or project from the project's tracker, plus any brief. Read the ticket's decisions and the owner's replies first; never re-ask what they already answered. Reach the tracker through whatever the project provides (an MCP server or CLI named in `AGENTS.md`); if there is none, ask the user to paste the ticket.

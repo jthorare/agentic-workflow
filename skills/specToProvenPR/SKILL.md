@@ -12,6 +12,8 @@ Take an approved spec to production-ready PRs that are **definitively proven to 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Core principle
 
 **Order of operations: function first, review last.** Within a stage the sequence is implement → test it by hand in the running app → prove it with an evidence pack → gather `/ui-evidence` when the spec calls for it → *then* open the draft PR and run the `/review` loop. The review loop is the last quality pass over behavior that is already known to work; it is never how you find out whether it works. A stage that goes to `/review` without hand-tested, evidenced behavior goes back to step 4.
