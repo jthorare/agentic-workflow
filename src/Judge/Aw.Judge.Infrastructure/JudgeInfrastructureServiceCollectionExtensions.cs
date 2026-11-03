@@ -63,7 +63,8 @@ public static class JudgeInfrastructureServiceCollectionExtensions
     /// config.json, AW_PROVIDER and PATH, and closes every chain with the rules provider its caller passes.
     /// </summary>
     private static IServiceCollection AddModelProviders(this IServiceCollection services, Func<string, string?> environment) => services
-        .AddSingleton(sp => new JevProvider(new HttpClient(), sp.GetRequiredService<ISecretSource>(), sp.GetRequiredService<IInputRedactor>(), sp.GetRequiredService<IImageScaler>()))
+        .AddSingleton(sp => new JevProvider(new HttpClient(), sp.GetRequiredService<ISecretSource>(), sp.GetRequiredService<IInputRedactor>(), sp.GetRequiredService<IImageScaler>(),
+            JevEndpoint.Resolve(environment(JevEndpoint.Variable), static message => Console.Error.WriteLine("judge: warning: " + message))))
         .AddSingleton<IBatchClassifier>(sp => new JevBatchClassifier(sp.GetRequiredService<JevProvider>()))
         .AddSingleton<IProviderCatalog>(sp => new ProviderCatalog(
             environment,

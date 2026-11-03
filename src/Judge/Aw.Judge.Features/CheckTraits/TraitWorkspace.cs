@@ -14,6 +14,8 @@ namespace Aw.Judge.Features.CheckTraits;
 internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFiles files, ITraitCheckLog log)
 {
     private const int MaxSourceChars = 20_000;
+    private const int MaxImages = 4;
+    private const long MaxImageBytes = 4 * 1024 * 1024;
     private const string DefaultBase = "origin/main";
     private static readonly string[] _diffFlags = ["--no-color", "--no-ext-diff", "-U3", "--src-prefix=a/", "--dst-prefix=b/"];
 
@@ -38,9 +40,51 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
         var diffs = request.Mode == TraitCheckMode.Scan
             ? await Scanned(root, request.Paths ?? [], active, cancellationToken).ConfigureAwait(false)
             : TraitDiff.Parse(await Changed(root, request, edited, cancellationToken).ConfigureAwait(false));
-        var tasks = Tasks(root, diffs, active);
-        return tasks.Count == 0 ? null : new TraitPlan(root, tasks);
+        return await WithImages(root, edited, active, Tasks(root, diffs, active), cancellationToken).ConfigureAwait(false);
     }
+
+    // An edit (the only mode with edited files) also asks about its image files; a plan is null when there is nothing to ask and nothing was skipped.
+    private async ValueTask<TraitPlan?> WithImages(string root, List<string> edited, List<Trait> active, List<TraitTask> tasks, CancellationToken cancellationToken)
+    {
+        var skipped = new Dictionary<string, string>(StringComparer.Ordinal);
+        tasks.AddRange(await ImageTasks(root, edited, active, skipped, cancellationToken).ConfigureAwait(false));
+
+        return tasks.Count == 0 && skipped.Count == 0 ? null : new TraitPlan(root, tasks) { Skipped = skipped };
+    }
+
+    // An edited PNG or JPEG is read as an image (best effort): inside the checkout, the first 4 files and 4 MiB; the rest are skipped, never judged on their names.
+    private async ValueTask<List<TraitTask>> ImageTasks(string root, List<string> edited, List<Trait> active, Dictionary<string, string> skipped, CancellationToken cancellationToken)
+    {
+        List<TraitTask> tasks = [];
+        long total = 0;
+        var sent = 0;
+        foreach (var file in edited.Where(IsImage).Distinct(StringComparer.Ordinal))
+        {
+            var applicable = active.Where(trait => TraitGlob.InScope(trait.Paths, file)).ToList();
+            if (applicable.Count == 0)
+            {
+                continue;
+            }
+
+            var read = sent >= MaxImages ? null : await files.ReadImage(Path.Combine(root, file), root, cancellationToken).ConfigureAwait(false);
+            if (read?.Images is not [var image] || total + image.Bytes.Length > MaxImageBytes)
+            {
+                skipped[file] = CheckTraitsResponse.ImageNotSent;
+                log.Append(new System.Text.Json.Nodes.JsonObject { ["event"] = "image-not-sent", ["path"] = file, ["reason"] = read?.Problem ?? "past the 4 files and 4 MiB an edit sends" });
+                continue;
+            }
+
+            total += image.Bytes.Length;
+            sent++;
+            var source = new DiffSource(file, 1, 1, "(an image file: its picture is attached)");
+            tasks.AddRange(TraitQuestions.Batches(applicable).Select(batch => new TraitTask(source, batch) { Images = [image] }));
+        }
+
+        return tasks;
+    }
+
+    private static bool IsImage(string file) =>
+        file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
 
     // The traits to check: the repo's, limited to the ones named; a file that isn't a trait is logged.
     private async ValueTask<List<Trait>> Active(CheckTraitsRequest request, string root, CancellationToken cancellationToken)

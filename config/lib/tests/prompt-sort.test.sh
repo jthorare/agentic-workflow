@@ -136,4 +136,18 @@ test_a_prompt_naming_no_image_keeps_the_prompt_sort_payload_byte_identical() {
 
 test_a_prompt_naming_no_image_keeps_the_prompt_sort_payload_byte_identical
 test_a_screenshot_named_in_the_prompt_is_sent_to_prompt_sort_as_an_image
+
+# More than 4 named images: the newest 4 go, and one probe-log line says how many were left out.
+test_images_past_four_leave_a_probe_log_line_with_the_dropped_count() {
+  local bin repo probe n prompt=""
+  bin="$(make_fake_judge)"; repo="$(make_checkout_with_png)"; probe="$(mktemp -d)"
+  for n in 1 2 3 4 5; do cp "$repo/shot.png" "$repo/s$n.png"; prompt="$prompt $repo/s$n.png"; done
+  ( cd "$repo" && run_hook "$bin" context "$(jq -nc --arg p "compare$prompt" '{session_id:"s1",prompt:$p}')" AW_PROBE_DIR="$probe" > /dev/null )
+  [ "$(grep '^STDIN:' "$bin/calls.log" | sed 's/^STDIN: //' | jq -c '.images | length')" = "4" ] || { echo "FAIL: expected 4 images sent, got $(grep '^STDIN:' "$bin/calls.log")"; exit 1; }
+  [ "$(jq -c 'select(.event == "image-paths") | .input' "$probe/image-paths.jsonl" 2> /dev/null)" = '{"hook":"prompt-sort","sent":4,"dropped":1}' ] \
+    || { echo "FAIL: expected one probe line with sent 4 and dropped 1, got $(cat "$probe/image-paths.jsonl" 2> /dev/null)"; exit 1; }
+  echo "PASS: test_images_past_four_leave_a_probe_log_line_with_the_dropped_count"
+}
+
+test_images_past_four_leave_a_probe_log_line_with_the_dropped_count
 echo "All prompt-sort hook tests passed."

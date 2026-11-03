@@ -21,6 +21,11 @@ failopen() {
     done
   ) > /dev/null 2>&1 || true
 }
+# The images a hook sends the judge (config/lib/image-paths.sh, installed beside failopen.sh). Without it the hook sends none, as before.
+for _aw_f in "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/lib/image-paths.sh" "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/../lib/image-paths.sh"; do
+  if [ -f "$_aw_f" ]; then . "$_aw_f" 2> /dev/null && break; fi
+done
+type aw_images_attach > /dev/null 2>&1 || { aw_images_attach() { printf '%s' "$1"; }; aw_image_paths() { :; }; aw_image_files() { cat > /dev/null; }; }
 [ -n "${AW_JUDGE_CHILD:-}" ] && exit 0
 
 INPUT="$(cat 2>/dev/null || true)"
@@ -46,6 +51,7 @@ BUDGET_MS="${AW_PROMPT_SORT_BUDGET_MS:-4000}"
 case "$BUDGET_MS" in ''|*[!0-9]*) BUDGET_MS=4000 ;; esac
 TICKS=$((BUDGET_MS / 100))
 
+PAYLOAD="$(aw_images_attach "$PAYLOAD" "$(aw_image_paths "$PROMPT" prompt-sort)")"
 ( printf '%s' "$PAYLOAD" | AW_SESSION_ID="$SESSION_ID" judge prompt-sort > "$OUT_FILE" 2>/dev/null ) > /dev/null 2>&1 &
 PID=$!
 i=0

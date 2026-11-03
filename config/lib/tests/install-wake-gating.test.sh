@@ -146,10 +146,10 @@ test_uninstall_removes_lib_locks_keeps_shared_failopen() {
   PATH="$bin_dir:$PATH" CLAUDE_SETTINGS_FILE="$settings" HOME="$home" bash "$ROOT/scripts/install-wake-gating.sh" > /dev/null
   PATH="$bin_dir:$PATH" CLAUDE_SETTINGS_FILE="$settings" HOME="$home" bash "$ROOT/scripts/install-wake-gating.sh" --uninstall > /dev/null
   [ -f "$home/.claude/hooks/lib/locks.sh" ] && { echo "FAIL: expected lib/locks.sh to be removed"; exit 1; }
-  # lib/failopen.sh is shared by every fail-open lever hook (scope-gate,
-  # done-gate, …), so uninstalling wake gating leaves it and the lib dir.
-  [ "$(ls -A "$home/.claude/hooks/lib")" = "failopen.sh" ] \
-    || { echo "FAIL: expected hooks/lib to hold only the shared failopen.sh, got: $(ls -A "$home/.claude/hooks/lib")"; exit 1; }
+  # lib/failopen.sh and lib/image-paths.sh are shared by every fail-open lever hook (scope-gate,
+  # done-gate, …), so uninstalling wake gating leaves them and the lib dir.
+  [ "$(ls -A "$home/.claude/hooks/lib" | tr '\n' ' ')" = "failopen.sh image-paths.sh " ] \
+    || { echo "FAIL: expected hooks/lib to hold only the shared failopen.sh and image-paths.sh, got: $(ls -A "$home/.claude/hooks/lib")"; exit 1; }
   echo "PASS: test_uninstall_removes_lib_locks_keeps_shared_failopen"
 }
 

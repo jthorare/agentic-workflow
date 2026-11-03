@@ -88,6 +88,8 @@ done
 # The safety hooks log HOOK-FAILOPEN through lib/failopen.sh next to them.
 mkdir -p "$HOOKS_DIR/lib"
 cp "$SCRIPT_DIR/config/lib/failopen.sh" "$HOOKS_DIR/lib/failopen.sh"
+# done-gate, scope-gate, send-gate and prompt-sort attach images through lib/image-paths.sh next to them.
+cp "$SCRIPT_DIR/config/lib/image-paths.sh" "$HOOKS_DIR/lib/image-paths.sh"
 
 # Merge safety hooks into existing settings.json
 if [ -f "$SETTINGS_FILE" ] && command -v jq &>/dev/null; then

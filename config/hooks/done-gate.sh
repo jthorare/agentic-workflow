@@ -16,6 +16,11 @@ failopen() {
     done
   ) > /dev/null 2>&1 || true
 }
+# The images a hook sends the judge (config/lib/image-paths.sh, installed beside failopen.sh). Without it the hook sends none, as before.
+for _aw_f in "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/lib/image-paths.sh" "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/../lib/image-paths.sh"; do
+  if [ -f "$_aw_f" ]; then . "$_aw_f" 2> /dev/null && break; fi
+done
+type aw_images_attach > /dev/null 2>&1 || { aw_images_attach() { printf '%s' "$1"; }; aw_image_paths() { :; }; aw_image_files() { cat > /dev/null; }; }
 # No EXIT trap: on bash 3.2 a trap defers SIGTERM until a running $(judge …)
 # returns, so the host's timeout kill would take longer. A crash keeps its exit
 # code and is not counted under Claude Code (see "Fail-open logging" in
@@ -76,6 +81,17 @@ if [ -z "$CLAIM_TEXT" ]; then
   exit 0
 fi
 fi
+
+# The PNG/JPEG files the last assistant turn opened with Read, newest first (the same tail of the transcript as above; the turn starts after the last
+# user line that isn't a tool result). Codex and Cursor send no transcript_path, so none there. Nothing when the transcript can't be read.
+turn_images() {
+  [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ] || return 0
+  tail -c 1048576 "$TRANSCRIPT" 2> /dev/null | jq -Rrn '
+    [inputs | fromjson? | objects] as $l
+    | ([$l | to_entries[] | select(.value.type == "user" and ((.value.message.content | type) != "array" or ([.value.message.content[] | select(.type? == "tool_result")] | length) == 0)) | .key] | last // -1) as $start
+    | [$l[$start + 1:][] | select(.type == "assistant") | .message.content | arrays | .[] | select(.type? == "tool_use" and .name == "Read") | .input.file_path | strings | select(test("\\.(png|jpe?g)$"; "i"))]
+    | reverse | .[]' 2> /dev/null | aw_image_files done-gate
+}
 
 # A done claim is an assertion of completion, not any occurrence of a claim word.
 # Ignored: fenced code and table rows. Markdown emphasis/heading/quote marks and
@@ -144,6 +160,7 @@ if ! is_done_claim "$CLAIM_TEXT"; then
   # every other subcommand here: exit 2 means "continue" (don't actually
   # stop), exit 0 means "ask" (a real stop is fine).
   ASK_INPUT="$(jq -nc --arg t "$CLAIM_TEXT" '{transcriptTail: $t}')"
+  ASK_INPUT="$(aw_images_attach "$ASK_INPUT" "$(turn_images)")"
   set +e
   printf '%s' "$ASK_INPUT" | AW_SESSION_ID="$SESSION_ID" judge ask-check > /dev/null 2>&1
   ASK_RC=$?

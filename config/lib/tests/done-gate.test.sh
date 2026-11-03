@@ -626,3 +626,16 @@ test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical() {
 test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical
 test_a_turn_that_read_a_png_sends_images_to_ask_check
 test_only_the_newest_four_images_are_sent_newest_first
+
+# More than 4 images read: the newest 4 go, and one probe-log line says how many were left out.
+test_images_past_four_leave_a_probe_log_line_with_the_dropped_count() {
+  local bin_dir transcript dir probe n
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; probe="$(mktemp -d)"
+  for n in 1 2 3 4 5; do printf '\211PNG\r\n\032\n' > "$dir/f$n.png"; done
+  write_transcript_with_reads "$transcript" "still working on the next step" "$dir/f1.png" "$dir/f2.png" "$dir/f3.png" "$dir/f4.png" "$dir/f5.png"
+  PATH="$bin_dir:$PATH" AW_PROBE_DIR="$probe" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" || true
+  [ "$(jq -c 'select(.event == "image-paths") | .input' "$probe/image-paths.jsonl" 2> /dev/null)" = '{"hook":"done-gate","sent":4,"dropped":1}' ] \
+    || { echo "FAIL: expected one probe line with sent 4 and dropped 1, got $(cat "$probe/image-paths.jsonl" 2> /dev/null)"; exit 1; }
+  echo "PASS: test_images_past_four_leave_a_probe_log_line_with_the_dropped_count"
+}
+test_images_past_four_leave_a_probe_log_line_with_the_dropped_count

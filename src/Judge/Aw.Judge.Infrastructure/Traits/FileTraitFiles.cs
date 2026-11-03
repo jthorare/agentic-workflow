@@ -1,10 +1,13 @@
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
+using Aw.Judge.Infrastructure.Images;
 
 namespace Aw.Judge.Infrastructure.Traits;
 
 /// <summary>ITraitFiles over the file system: the process's working directory and UTF-8 text files.</summary>
 /// <param name="workingDirectory">The directory the command runs in.</param>
-internal sealed class FileTraitFiles(string workingDirectory) : ITraitFiles
+/// <param name="images">Reads an edited image file; the file-system reader when null.</param>
+internal sealed class FileTraitFiles(string workingDirectory, IImageReader? images = null) : ITraitFiles
 {
     /// <inheritdoc />
     public string WorkingDirectory => workingDirectory;
@@ -22,4 +25,8 @@ internal sealed class FileTraitFiles(string workingDirectory) : ITraitFiles
             return null;
         }
     }
+
+    /// <inheritdoc />
+    public ValueTask<ImageRead> ReadImage(string path, string root, CancellationToken cancellationToken) =>
+        (images ?? new FileImageReader()).Read([path], root, cancellationToken);
 }
