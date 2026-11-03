@@ -81,7 +81,7 @@ internal static class LauncherServiceCollectionExtensions
             Models = sp.GetRequiredService<IModelCatalog>(),
             Trust = sp.GetRequiredService<IAgentTrust>(),
             Prepare = sp.GetService<IWorkspacePrepare>(),   // null when nothing registers the host-side prepare: a Step starts with whatever its worktree holds
-            Sandbox = sp.GetService<ISandboxLaunch>(),   // null until the product registers a sandbox: Steps then run unconfined
+            Sandbox = sp.GetService<ISandboxLaunch>(),   // null only in a test host; the product always registers a sandbox step (bubblewrap, Seatbelt or the refusing one)
             IsLive = LaunchIsLive(sp),
             EndLive = async (launch, cancellationToken) =>
             {

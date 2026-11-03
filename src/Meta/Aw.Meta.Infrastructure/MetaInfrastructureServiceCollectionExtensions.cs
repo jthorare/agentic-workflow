@@ -51,6 +51,7 @@ public static class MetaInfrastructureServiceCollectionExtensions
             .AddSingleton<IHeavyReserve>(new FileHeavyReserve(settings.StateDirectory))
             .AddSingleton<ILogFiles, FileLogFiles>()
             .AddSingleton<IWorktreeFiles, DirectoryWorktreeFiles>()
+            .AddSingleton<IBugfixRecords>(new FileBugfixRecords(Path.Combine(Path.GetDirectoryName(settings.Layout.MetaRoot) ?? settings.Layout.MetaRoot, "bugfix")))
             .AddSingleton<IDelay>(sp => new ClockDelay(sp.GetRequiredService<TimeProvider>()))
             .AddSingleton<ICommandRunner, SystemCommandRunner>()
             .AddScoped<IRunningLog>(sp => new AppendRunningLog(async cancellationToken =>

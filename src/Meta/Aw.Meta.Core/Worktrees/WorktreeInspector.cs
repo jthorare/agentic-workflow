@@ -14,7 +14,8 @@ namespace Aw.Meta.Core.Worktrees;
 /// <param name="paths">Where the gate trees live; the home directory.</param>
 /// <param name="values">Holds when the last sweep started.</param>
 /// <param name="files">When a worktree's files last changed.</param>
-public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations processes, MetaPaths paths, IKeyValueStore values, IWorktreeFiles files)
+/// <param name="bugfix">The bugfix runs' records, for --discarded.</param>
+public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations processes, MetaPaths paths, IKeyValueStore values, IWorktreeFiles files, IBugfixRecords bugfix)
 {
     private const string GateCommitter = "aw-meta@localhost";
     private static readonly string[] _gateCommands = ["gate-run", "gate-rerun", "merge-run"];
@@ -47,6 +48,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
         var inspection = new Inspection(team, paths, pulls, scan, DateTimeOffset.TryParse(since.Value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var start) ? start : null, cancellationToken)
         {
             IncludeNoPr = scope.IncludeNoPr,
+            Discarded = scope.Discarded,
         };
         var reports = new List<WorktreeReport>();
         foreach (var entry in entries)
@@ -75,6 +77,11 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
 
     private async ValueTask<bool> InScope(Inspection inspection, WorktreeEntry entry, WorktreeScope scope)
     {
+        if (scope.Path is { } path)
+        {
+            return Same(entry.Path, path);
+        }
+
         if (scope.Prs is not { } prs)
         {
             return true;
@@ -100,13 +107,13 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             return listed;
         }
 
-        var viewed = await repo.View(inspection.Team.Repo, number, "headRefOid,headRefName,state").ConfigureAwait(false);
+        var viewed = await repo.View(inspection.Team.Repo, number, "headRefOid,headRefName,state,mergedAt,closedAt").ConfigureAwait(false);
         if (viewed.IsError)
         {
             return null;
         }
 
-        var pull = new PrBranch(number, viewed.Value.State, viewed.Value.HeadRef, viewed.Value.Head);
+        var pull = new PrBranch(number, viewed.Value.State, viewed.Value.HeadRef, viewed.Value.Head, viewed.Value.EndedAt);
         inspection.Pulls.Add(pull);
         return pull;
     }
@@ -139,14 +146,30 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             return git.Error;
         }
 
-        var changed = await ChangedSince(inspection, entry, gatePr).ConfigureAwait(false);
-        return changed.IsError ? changed.Error : Compose(inspection, entry, gatePr, pull, git.Value with { Changed = changed.Value });
+        var changed = await ChangedSince(inspection, entry, gatePr, pull).ConfigureAwait(false);
+        if (changed.IsError)
+        {
+            return changed.Error;
+        }
+
+        var composed = Compose(inspection, entry, gatePr, pull, git.Value with { Changed = changed.Value });
+        if (!inspection.Discarded)
+        {
+            return composed;
+        }
+
+        var rows = await bugfix.Naming(entry.Path, inspection.Cancellation).ConfigureAwait(false);
+        return rows.IsError ? rows.Error : composed with { Discarded = DiscardedCandidates.Match(entry, rows.Value), NotDiscarded = DiscardedCandidates.WhyNot(entry, rows.Value) };
     }
 
-    // Whether anything in the tree changed after the last sweep started. A gate tree is aw-meta's own and is exempt; so is a missing directory (no files to read).
-    private async ValueTask<Result<bool>> ChangedSince(Inspection inspection, WorktreeEntry entry, int? gatePr)
+    // The time rule 7 compares a tree with: the later of the last sweep's start and (for a tree whose pull request merged or closed) when it ended; null when there is nothing to compare with.
+    private static DateTimeOffset? Cutoff(Inspection inspection, int? gatePr, PrBranch? pull) =>
+        gatePr is null && pull is { State: PrState.Merged or PrState.Closed } ? (pull.EndedAt is { } ended ? inspection.Since is { } since && since > ended ? since : ended : null) : inspection.Since;
+
+    // Whether anything in the tree changed after the cutoff. A gate tree is aw-meta's own and is exempt; so is a missing directory (no files to read).
+    private async ValueTask<Result<bool>> ChangedSince(Inspection inspection, WorktreeEntry entry, int? gatePr, PrBranch? pull)
     {
-        if (inspection.Since is not { } since || gatePr is not null || entry.Prunable)
+        if (Cutoff(inspection, gatePr, pull) is not { } since || gatePr is not null || entry.Prunable)
         {
             return false;
         }
@@ -203,6 +226,8 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
             DirtyEntries = StatusPorcelain.Significant(git.Status, inspection.Team.Worktrees.EffectiveBuildOutputs),
             Occupants = [.. inspection.Scan.Where(p => places.Exists(place => p.Paths.Any(path => Inside(place, path))))],
             ChangedSinceSweep = git.Changed,
+            ChangedSinceEnd = gatePr is null && pull is { State: PrState.Merged or PrState.Closed, EndedAt: { } ended } && !(inspection.Since > ended),
+            EndedAtUnknown = gatePr is null && pull is { State: PrState.Merged or PrState.Closed, EndedAt: null },
             NoPreviousSweep = inspection.Since is null,
             PrNumber = gatePr is null ? pull?.Number : null,
             PrState = pull?.State,
@@ -242,6 +267,8 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
         internal DateTimeOffset? Since { get; } = since;
 
         internal bool IncludeNoPr { get; init; }
+
+        internal bool Discarded { get; init; }
 
         internal CancellationToken Cancellation { get; } = cancellation;
 

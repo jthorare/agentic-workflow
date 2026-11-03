@@ -45,6 +45,12 @@ internal sealed record WorktreeFacts
     /// <summary>Whether the directory or one of its files (top two levels, build output left out) changed after the last sweep started.</summary>
     public bool ChangedSinceSweep { get; init; }
 
+    /// <summary>Whether <see cref="ChangedSinceSweep"/> was judged against when the tree's merged or closed pull request ended, rather than against the last sweep's start.</summary>
+    public bool ChangedSinceEnd { get; init; }
+
+    /// <summary>Whether the tree's pull request merged or closed but GitHub gave no time for it, so "changed since" can't be judged (the tree is kept).</summary>
+    public bool EndedAtUnknown { get; init; }
+
     /// <summary>Whether no removing sweep has been recorded yet, so "changed since the last sweep" has nothing to compare with.</summary>
     public bool NoPreviousSweep { get; init; }
 
@@ -53,6 +59,12 @@ internal sealed record WorktreeFacts
 
     /// <summary>That pull request's state.</summary>
     public PrState? PrState { get; init; }
+
+    /// <summary>Set by a `--discarded` sweep when a finished bugfix run names this tree as a losing candidate at its HEAD: says which (e.g. "bugfix gh-9 candidate c1, resolved by c2"). Its unpushed commits and "no pull request" don't keep it.</summary>
+    public string? Discarded { get; init; }
+
+    /// <summary>Set by a `--discarded` sweep when the tree is not a discarded candidate: why not (no run names it, HEAD moved, it won, the run isn't over).</summary>
+    public string? NotDiscarded { get; init; }
 
     /// <summary>Whether a branch with no pull request is kept whatever else holds (a sweep without --include-no-pr).</summary>
     public bool KeepNoPr { get; init; }

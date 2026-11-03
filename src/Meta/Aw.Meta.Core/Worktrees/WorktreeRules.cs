@@ -21,6 +21,11 @@ internal static class WorktreeRules
         ArgumentNullException.ThrowIfNull(facts);
         List<string> reasons = [];
         Protected(facts, reasons);
+        if (facts.NotDiscarded is { } notDiscarded)
+        {
+            reasons.Add("--discarded: " + notDiscarded);
+        }
+
         if (facts.GatePr is { } gate)
         {
             GateTree(facts, gate, reasons);
@@ -28,7 +33,7 @@ internal static class WorktreeRules
         else
         {
             Merged(facts, reasons);
-            if (facts.UnpushedCommits > 0 && !(facts.PrState is null && facts.HeadMerged))
+            if (facts.Discarded is null && facts.UnpushedCommits > 0 && !(facts.PrState is null && facts.HeadMerged))
             {
                 reasons.Add(string.Create(CultureInfo.InvariantCulture, $"{facts.UnpushedCommits} commit(s) are on no remote branch"));
             }
@@ -80,18 +85,18 @@ internal static class WorktreeRules
         else
         {
             // A fresh branch cut from main looks finished (head in origin/main, nothing inside at this instant); only an explicit --include-no-pr sweep may remove one.
-            if (facts.KeepNoPr)
+            if (facts.KeepNoPr && facts.Discarded is null)
             {
                 reasons.Add("kept: no PR (pass --include-no-pr to remove)");
             }
 
-            if (!facts.HeadMerged && facts.UnpushedCommits > 0)
+            if (facts.Discarded is null && !facts.HeadMerged && facts.UnpushedCommits > 0)
             {
                 reasons.Add("no pull request: work not finished (not all of it is pushed)");
             }
 
             // Rule 7 needs a recorded sweep; without one a live tree on a fresh branch would look unchanged.
-            if (facts.NoPreviousSweep)
+            if (facts.NoPreviousSweep && facts.Discarded is null)
             {
                 reasons.Add("no previous sweep to compare with");
                 if (!facts.HeadMerged)
@@ -167,10 +172,7 @@ internal static class WorktreeRules
     // Rules 2 and 4 and the change trigger: nothing uncommitted or untracked beyond build output, no process in it, and (for a worktree that is not a gate tree) nothing changed since the last sweep started.
     private static void Untouched(WorktreeFacts facts, List<string> reasons)
     {
-        if (facts.ChangedSinceSweep && facts.GatePr is null)
-        {
-            reasons.Add("changed since the last sweep");
-        }
+        Changed(facts, reasons);
 
         if (facts.DirtyEntries.Count > 0)
         {
@@ -186,6 +188,26 @@ internal static class WorktreeRules
         if (facts.Occupants.Count > ListedPaths)
         {
             reasons.Add(string.Create(CultureInfo.InvariantCulture, $"in use by {facts.Occupants.Count - ListedPaths} more process(es)"));
+        }
+    }
+
+    // Rule 7's reason: a tree whose pull request ended is compared with that time, any other with the last sweep's start.
+    private static void Changed(WorktreeFacts facts, List<string> reasons)
+    {
+        if (facts.GatePr is not null || facts.Discarded is not null)
+        {
+            return;
+        }
+
+        if (facts.EndedAtUnknown)
+        {
+            reasons.Add(string.Create(CultureInfo.InvariantCulture, $"PR #{facts.PrNumber} ended, but when could not be read (kept)"));
+        }
+        else if (facts.ChangedSinceSweep)
+        {
+            reasons.Add(facts.ChangedSinceEnd
+                ? string.Create(CultureInfo.InvariantCulture, $"changed since PR #{facts.PrNumber} {(facts.PrState == PrState.Merged ? "merged" : "closed")}")
+                : "changed since the last sweep");
         }
     }
 
