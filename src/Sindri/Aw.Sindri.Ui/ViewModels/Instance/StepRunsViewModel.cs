@@ -66,9 +66,24 @@ internal sealed class StepRunsViewModel
         var attempt = Labels.AttemptWords(run.Attempt, run.MaxAttempts);
         var state = Labels.RunStateWord(run.State);
         var took = run.DurationMs is { } ms ? Labels.RunDuration(ms) : string.Empty;
-        var text = Join(" · ", step, attempt, state, took, Who(run));
-        var name = Join(", ", step, attempt.ToLowerInvariant(), state.ToLowerInvariant(), took.Length > 0 ? "took " + took : string.Empty, Who(run));
+        var images = ImageWords(run);
+        var text = Join(" · ", step, attempt, state, took, Who(run), images);
+        var name = Join(", ", step, attempt.ToLowerInvariant(), state.ToLowerInvariant(), took.Length > 0 ? "took " + took : string.Empty, Who(run), images);
         return new StepRunRowViewModel(text, name);
+    }
+
+    // A judge choice that looked at images says so (images spec 5.1): "decided with 2 images", "decided with 4 images (2 left out)"; nothing at 0.
+    private static string ImageWords(StepRun run)
+    {
+        if (run.ImageCount is not { } count || count <= 0)
+        {
+            return string.Empty;
+        }
+
+        var words = string.Create(System.Globalization.CultureInfo.InvariantCulture, $"decided with {count} {(count == 1 ? "image" : "images")}");
+        return run.ImagesDropped is > 0 and var dropped
+            ? string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{words} ({dropped} left out)")
+            : words;
     }
 
     // The closing actor in words. Only an open run falls back to how it runs; a closed run whose actor is not a person or an agent says nothing.

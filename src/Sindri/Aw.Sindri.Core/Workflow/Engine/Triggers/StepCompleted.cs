@@ -31,6 +31,12 @@ public sealed record StepCompleted(
     /// <inheritdoc/>
     public override string Name => TriggerNames.StepCompleted;
 
+    /// <summary>How many images a judge choice looked at, for the event's 'imageCount' (images spec 5.1); null for any other Step and for a call without images.</summary>
+    public int? ImageCount { get; init; }
+
+    /// <summary>How many images a judge choice was given beyond the four it takes; null when none were left out.</summary>
+    public int? ImagesDropped { get; init; }
+
     /// <summary>The launcher agent an agent run ran on, for the event's 'agent' (#1269); null for any other Step.</summary>
     public string? Agent { get; init; }
 

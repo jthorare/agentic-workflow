@@ -75,6 +75,8 @@ public static class StepRuns
         {
             Outcome = failed ? null : recorded.Outcome,
             Tokens = recorded.Tokens,
+            ImageCount = recorded.ImageCount,
+            ImagesDropped = recorded.ImagesDropped,
         };
     }
 

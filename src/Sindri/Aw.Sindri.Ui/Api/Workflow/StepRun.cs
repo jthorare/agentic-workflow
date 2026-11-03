@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Aw.Sindri.Ui.Api.Workflow;
 
 /// <summary>One Step run of an instance, as GET /workflow/instances/{id} serves it ('stepRuns').</summary>
@@ -25,4 +27,13 @@ internal sealed record StepRun(
     long? DurationMs,
     string? Outcome,
     int? Tokens,
-    string? Actor);
+    string? Actor)
+{
+    /// <summary>How many images a judge choice looked at; null for a run that had none.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ImageCount { get; init; }
+
+    /// <summary>How many images a judge choice was given beyond the four it takes; null when none were left out.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ImagesDropped { get; init; }
+}

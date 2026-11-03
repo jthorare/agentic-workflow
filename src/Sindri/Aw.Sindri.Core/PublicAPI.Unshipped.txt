@@ -10034,10 +10034,10 @@ Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.Deconstruct(out string! Kind
 Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.TriggerRecord(string! Kind, Aw.Sindri.Core.Workflow.Engine.TriggerKey Key, string! Actor, Aw.Sindri.Core.Workflow.Ids.OutcomeName? Outcome, string? Reason = null, string? Via = null, string? Decision = null) -> void
 Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.Via.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.Via.init -> void
-Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.BlockCompletion(Aw.Sindri.Core.Workflow.Ids.BlockId Step, Aw.Sindri.Core.Workflow.Engine.RunToken Run, Aw.Sindri.Core.Workflow.Ids.OutcomeName Outcome, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, string? Decision = null) -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.BlockCompletion(Aw.Sindri.Core.Workflow.Ids.BlockId Step, Aw.Sindri.Core.Workflow.Engine.RunToken Run, Aw.Sindri.Core.Workflow.Ids.OutcomeName Outcome, System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, string? Decision = null, int? ImageCount = null, int? ImagesDropped = null) -> void
 Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.Decision.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.Decision.init -> void
-Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.BlockId Step, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out Aw.Sindri.Core.Workflow.Ids.OutcomeName Outcome, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, out string? Decision) -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.Deconstruct(out Aw.Sindri.Core.Workflow.Ids.BlockId Step, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out Aw.Sindri.Core.Workflow.Ids.OutcomeName Outcome, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, out string? Decision, out int? ImageCount, out int? ImagesDropped) -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.Decision.get -> string?
 Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.Decision.init -> void
 Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.Deconstruct(out string! Actor, out Aw.Sindri.Core.Workflow.Engine.RunToken Run, out Aw.Sindri.Core.Workflow.Ids.OutcomeName Outcome, out System.Collections.Generic.IReadOnlyDictionary<Aw.Sindri.Core.Workflow.Ids.FactKey, Aw.Sindri.Core.Workflow.Engine.FactValue!>! Outputs, out int Tokens, out Aw.Sindri.Core.Workflow.Engine.StepRuntime Via, out string! ReportSha256, out string? Decision, out System.Collections.Generic.IReadOnlyList<string!>? FindingKeys, out bool EmptyDiff) -> void
@@ -21885,3 +21885,34 @@ Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Repos.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.get -> int?
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.init -> void
 const Aw.Sindri.Core.Doctor.DoctorRules.ContextFix = "check $AW_SINDRI_HOME/context" -> string!
+Aw.Sindri.Core.Judge.ChooseRequest.Images.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Sindri.Core.Judge.ChooseRequest.Images.init -> void
+Aw.Sindri.Core.Judge.IStepImageRoots
+Aw.Sindri.Core.Judge.IStepImageRoots.Of(Aw.Sindri.Core.Ids.RepoName? repo, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<string!>!>
+Aw.Sindri.Core.Events.WorkflowEventDetail.ImageCount.get -> int?
+Aw.Sindri.Core.Events.WorkflowEventDetail.ImageCount.init -> void
+Aw.Sindri.Core.Events.WorkflowEventDetail.ImagesDropped.get -> int?
+Aw.Sindri.Core.Events.WorkflowEventDetail.ImagesDropped.init -> void
+Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.ImageCount.get -> int?
+Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.ImageCount.init -> void
+Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.ImagesDropped.get -> int?
+Aw.Sindri.Core.Workflow.Engine.Events.TriggerRecord.ImagesDropped.init -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.ImageCount.get -> int?
+Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.ImageCount.init -> void
+Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.ImagesDropped.get -> int?
+Aw.Sindri.Core.Workflow.Engine.Rules.BlockCompletion.ImagesDropped.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.ImageCount.get -> int?
+Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.ImageCount.init -> void
+Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.ImagesDropped.get -> int?
+Aw.Sindri.Core.Workflow.Engine.Triggers.StepCompleted.ImagesDropped.init -> void
+Aw.Sindri.Core.Workflow.Views.RecordedWorkflowEvent.ImageCount.get -> int?
+Aw.Sindri.Core.Workflow.Views.RecordedWorkflowEvent.ImageCount.init -> void
+Aw.Sindri.Core.Workflow.Views.RecordedWorkflowEvent.ImagesDropped.get -> int?
+Aw.Sindri.Core.Workflow.Views.RecordedWorkflowEvent.ImagesDropped.init -> void
+Aw.Sindri.Core.Workflow.Views.StepRun.ImageCount.get -> int?
+Aw.Sindri.Core.Workflow.Views.StepRun.ImageCount.init -> void
+Aw.Sindri.Core.Workflow.Views.StepRun.ImagesDropped.get -> int?
+Aw.Sindri.Core.Workflow.Views.StepRun.ImagesDropped.init -> void
+Aw.Sindri.Core.Judge.IStepImageFiles
+Aw.Sindri.Core.Judge.IStepImageFiles.RealDirectory(string! directory) -> string!
+Aw.Sindri.Core.Judge.IStepImageFiles.RealPath(string! path) -> string?

@@ -57,6 +57,8 @@ public static partial class TransitionDecision
                     Tokens = Trigger is StepCompleted { Via: StepRuntime.Agent } agent ? agent.Tokens : null,
                     Agent = Trigger is StepCompleted { Via: StepRuntime.Agent } ran ? ran.Agent : null,
                     Model = Trigger is StepCompleted { Via: StepRuntime.Agent } asked ? asked.Model : null,
+                    ImageCount = (Trigger as StepCompleted)?.ImageCount,
+                    ImagesDropped = (Trigger as StepCompleted)?.ImagesDropped,
                 };
             return new InstanceChange(after, new WorkflowEvent(
                 type, after.Id, trigger, Started: null, Rules.Delta(before, after),
