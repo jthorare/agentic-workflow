@@ -326,7 +326,7 @@ public sealed class ImagesOnAnyQuestionTests
             var recorded = await RecordedJevRequest.Capture(request, cancellationToken);
             Requests.Add(recorded);
             return recorded.ImagesHeader is null
-                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JevImages.Choice("continue"), Encoding.UTF8, "application/json") }
+                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JevImages.Choice("continue", confidence), Encoding.UTF8, "application/json") }
                 : new HttpResponseMessage(HttpStatusCode.RequestEntityTooLarge) { Content = new StringContent("{}", Encoding.UTF8, "application/json") };
         }
     }
