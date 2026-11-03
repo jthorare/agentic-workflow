@@ -95,6 +95,24 @@ public sealed class ImagesOnAnyQuestionTests
         Assert.Empty(run.Log.Failures);
     }
 
+    // More than 4 paths: the judge never picks which 4, so a best-effort call drops them all and asks as text.
+    [Fact]
+    public async Task Best_effort_with_more_than_four_paths_drops_all_and_asks_as_text()
+    {
+        var (paths, files) = Case("more-than-four");
+        var run = new QuestionRun { ImageReader = new FakeImageReader(files) };
+        var jev = Jev().Decides("continue", 0.9);
+
+        var outcome = await run.Ask(AskCheckQuestion.Definition, Input(paths, bestEffort: true), jev);
+
+        Assert.Equal(("continue", ProviderName.Jev), (Assert.IsType<DecidedOutcome>(outcome).Decision, ProviderName.Jev));
+        Assert.Empty(Assert.Single(jev.Calls).Question.Images);
+        Assert.Equal(["judge: images has 5 paths; at most 4 are allowed; asked as text"], outcome.StderrLines);
+        var dropped = Assert.IsType<JsonArray>(Stored(run)["imagesDropped"]);
+        Assert.Equal("images has 5 paths; at most 4 are allowed; asked as text", Assert.Single(dropped)!.GetValue<string>());
+        Assert.Null(Stored(run)["images"]);
+    }
+
     // A strict caller (Sindri's step, a person at the CLI) gets no partial answer: nothing is asked, the reason is one code, the cause is on stderr
     // and the row keeps the paths as given.
     [Theory]

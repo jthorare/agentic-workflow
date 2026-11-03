@@ -10,6 +10,8 @@ namespace Aw.Judge.Core.Evaluation;
 /// <summary>The input's own 'images' and 'imagesBestEffort' (any question): read once, checked, and written to the row in their read form.</summary>
 public sealed partial class QuestionEvaluator
 {
+    private const string AskedAsText = "; asked as text";
+
     // Reads the input's images once. A strict call (the default) with one bad image is refused whole ('invalid-images', one stderr line naming the
     // cause, no provider runs, the row keeps the paths as given); a best-effort call drops each bad image with a trace and a stderr line and goes on,
     // as text when none are left. A context with no reader or workspaces ignores the field, as a judge without this feature does.
@@ -91,7 +93,7 @@ public sealed partial class QuestionEvaluator
             : (image, cause);
     }
 
-    // More than 4 paths refuse a strict call; a best-effort one keeps the first 4 and records the rest as dropped.
+    // More than 4 paths refuse a strict call; a best-effort one drops them all and asks as text: the judge never picks which 4, the caller does.
     private static (IReadOnlyList<string> Paths, string? Refusal) Capped(EvaluationRun run, GenericImages spec)
     {
         if (spec.Paths.Count <= GenericImages.MaxImages)
@@ -105,8 +107,8 @@ public sealed partial class QuestionEvaluator
             return (spec.Paths, cause);
         }
 
-        run.DropCauses.Add(cause);
-        return ([.. spec.Paths.Take(GenericImages.MaxImages)], null);
+        run.DropCauses.Add(cause + AskedAsText);
+        return ([], null);
     }
 
     private async ValueTask<EvaluationOutcome> Refuse<TInput>(
@@ -160,7 +162,7 @@ public sealed partial class QuestionEvaluator
         }
 
         var asked = string.Equals(provider, EvaluationReasons.NoProvider, StringComparison.Ordinal) ? "" : $"; asked {provider} {(run.GenericRead.Count == 0 ? "as text" : "without it")}";
-        List<string> dropped = [.. run.DropCauses.Select(cause => cause + asked), .. run.ProviderDrops];
+        List<string> dropped = [.. run.DropCauses.Select(cause => cause.EndsWith(AskedAsText, StringComparison.Ordinal) ? cause : cause + asked), .. run.ProviderDrops];
         if (dropped.Count > 0)
         {
             copy["imagesDropped"] = new JsonArray([.. dropped.Select(line => (JsonNode?)JsonValue.Create(line))]);
