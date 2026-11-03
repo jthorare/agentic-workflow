@@ -1,42 +1,51 @@
 # Probe template
 
-A Playwright script that proves each option works on the seeded local stack. Copy it to `$AW_DIR/prototypes/<slug>/probe.mjs`, edit the `CONFIG` block and each option's `steps`, and run it with `node` from the prototype worktree (so it resolves the project's own `playwright` package).
+A Playwright script that proves each option works on the seeded local stack. Copy it to `$AW_DIR/prototypes/<slug>/probe.ts`, edit the `CONFIG` block and each option's `steps`, and run it from the prototype worktree with a TypeScript runner the project already has (`bun`, `tsx`, or `node --experimental-strip-types`) so it resolves the project's own `playwright` package.
 
 It uses the project's existing Playwright. If the project has none, **Ask the user** before installing anything. It signs in through the real login form (no cookie shortcuts).
 
-```js
+```ts
 import { mkdirSync, writeFileSync } from "node:fs";
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 
-const OUT = process.env.OUT; // $AW_DIR/prototypes/<slug>, set by you when running the probe
+const OUT = process.env.OUT ?? ""; // $AW_DIR/prototypes/<slug>, set by you when running the probe
+if (OUT === "") throw new Error("set OUT to the prototype output dir");
 
 // ---- CONFIG ---------------------------------------------------------------
 const CONFIG = {
   baseUrl: "http://localhost:<port>", // from the brief's Stack section
   route: "<full URL of the screen>", // the seeded route; re-read it after every re-seed
+  storageKey: "prototype-option:<slug>", // STORAGE_KEY in PrototypeOptions.tsx
   login: {
     // The real sign-in form. Replace the selectors and read credentials from the
     // project's seed output or env; never hardcode a real password here.
-    email: process.env.PROTO_EMAIL,
-    password: process.env.PROTO_PASSWORD,
-    steps: async (page) => {
+    email: process.env.PROTO_EMAIL ?? "",
+    password: process.env.PROTO_PASSWORD ?? "",
+    steps: async (page: Page) => {
       await page.goto(`${CONFIG.baseUrl}/login`);
       await page.getByLabel("Email").fill(CONFIG.login.email);
       await page.getByLabel("Password").fill(CONFIG.login.password);
       await page.getByRole("button", { name: /sign in/i }).click();
     },
   },
-  flags: [], // client-side flags as "storage-key=value"
-  // The element that proves the REAL screen has rendered with data.
-  ready: (page) => page.getByTestId("<real-screen-testid>"),
+  flags: [] as string[], // client-side flags as "storage-key=value"
+  // The element that proves the REAL screen has rendered with data. It must not be
+  // inside anything an option replaces, or the wait hangs for that option.
+  ready: (page: Page) => page.getByTestId("<real-screen-testid>"),
   viewport: { width: 1600, height: 1000 },
   settleMs: 1500,
 };
 
+type Option = {
+  id: string; // matches OPTIONS[].id in PrototypeOptions.tsx
+  // Click through the one interaction from the brief. Assert the NEW thing is visible.
+  steps: (page: Page) => Promise<void>;
+};
+
 // One entry per option from the brief. The first is always `current`.
-const OPTIONS = [
+const OPTIONS: Option[] = [
   {
-    id: "current", // matches OPTIONS[].id in PrototypeOptions.tsx
+    id: "current",
     steps: async (page) => {
       await CONFIG.ready(page).waitFor();
     },
@@ -49,51 +58,81 @@ const OPTIONS = [
 // ---------------------------------------------------------------------------
 
 mkdirSync(`${OUT}/shots`, { recursive: true });
-const errors = [];
-const results = [];
+const errors: string[] = [];
+const results: { option: string; shot: string }[] = [];
 
 const browser = await chromium.launch();
 // Many apps gate the headless build's user agent ("HeadlessChrome") with an
 // "Unsupported browser" page. Present as plain Chrome of the same version.
 const userAgent = `Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version()} Safari/537.36`;
 const context = await browser.newContext({ viewport: CONFIG.viewport, userAgent });
-const page = await context.newPage();
-page.setDefaultTimeout(60_000);
-page.on("pageerror", (e) => errors.push(String(e)));
+
+const watch = (page: Page) => {
+  page.setDefaultTimeout(60_000);
+  page.on("pageerror", (e: Error) => errors.push(String(e)));
+};
 
 try {
-  await context.addInitScript((flags) => {
+  await context.addInitScript((flags: string[]) => {
     for (const flag of flags) {
       const [key, value] = flag.split("=");
       try {
         localStorage.setItem(key, value ?? "true");
-      } catch {}
+      } catch (error) {
+        console.warn(`flag ${key} not set: storage blocked`, error);
+      }
     }
   }, CONFIG.flags);
-  await CONFIG.login.steps(page);
+
+  const login = await context.newPage();
+  watch(login);
+  await CONFIG.login.steps(login);
+  await CONFIG.ready(login).waitFor(); // sign-in worked only if the app shows the real screen
+  await login.close();
 
   for (const option of OPTIONS) {
-    // Select through the switcher the user will use, then reload the route so the
-    // choice is read back from localStorage (proves persistence too).
+    // A fresh tab per option. Its init script clears the stored choice once, before the
+    // first load, so the screen starts on `current` and never on the previous option.
+    // The sessionStorage mark stops the later reload from clearing the choice again.
+    const page = await context.newPage();
+    watch(page);
+    await page.addInitScript((key: string) => {
+      try {
+        if (!sessionStorage.getItem("probe-cleared")) {
+          localStorage.removeItem(key);
+          sessionStorage.setItem("probe-cleared", "1");
+        }
+      } catch (error) {
+        console.warn("stored option not cleared: storage blocked", error);
+      }
+    }, CONFIG.storageKey);
+
     await page.goto(CONFIG.route);
     await CONFIG.ready(page).waitFor();
     const pill = page.getByTestId(`prototype-option-${option.id}`);
     await pill.click();
+    // The reload proves persistence: the choice must be read back from localStorage.
+    await page.reload();
+    await CONFIG.ready(page).waitFor();
     if ((await pill.getAttribute("aria-pressed")) !== "true")
-      throw new Error(`switcher did not select ${option.id}`);
+      throw new Error(`${option.id} was not restored from localStorage after reload`);
     await page.evaluate(() => document.fonts.ready);
     await option.steps(page);
     await page.mouse.move(5, 5); // keep the pointer off the subject
     // Let transitions, animations and late rows finish. A shot taken right after the
-    // click can show the previous option's highlight while the DOM is already right.
+    // switch can show the previous option's highlight while the DOM is already right.
     await page.waitForTimeout(CONFIG.settleMs);
     const shot = `${OUT}/shots/${option.id}.png`;
     await page.screenshot({ path: shot });
     results.push({ option: option.id, shot });
     console.log(`ok - ${option.id} -> ${shot}`);
+    await page.close();
   }
 } catch (error) {
-  await page.screenshot({ path: `${OUT}/shots/failure.png` }).catch(() => {});
+  const open = context.pages();
+  await open[open.length - 1]
+    ?.screenshot({ path: `${OUT}/shots/failure.png` })
+    .catch((shotError: unknown) => console.error("no failure screenshot:", shotError));
   console.error("FAILED:", error);
   errors.push(`probe: ${String(error)}`);
 } finally {
