@@ -60,7 +60,8 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
         var frames = new[] { Frame(Path.Combine(checkout, "shot.png")), Frame(Path.Combine(state, "ui-evidence", "runs", "r1", "home.png")) };
         using var jev = RecordingJev.Start();
         Arrange(jev, checkout, state);
-        await using var sindri = _harness.Sindri(_harness.Replacing, name => name == "AW_STATE_DIR" ? state : null);
+        // The composition reads only the variables this lambda gives it: without AW_SINDRI_JUDGE the Step would run whatever `judge` is on the PATH.
+        await using var sindri = _harness.Sindri(_harness.Replacing, name => name switch { "AW_STATE_DIR" => state, "AW_SINDRI_JUDGE" => program, _ => null });
         await WorkflowsHarness.HoldLease(sindri, ct);
         using var worker = new TemporalWorker(server.Environment.Client, sindri.GetRequiredService<TemporalWorkerOptions>());
         await worker.ExecuteAsync(async () =>
