@@ -49,7 +49,8 @@
 # Case files: <eval dir>/<skill>/{routing,behaviour}/<case>/{prompt.md|case.yaml, graders/*.md}. Conventions the script
 # reads on top of the tool's format: a routing case's `skill-fired` grader (tool_used Skill) passing means the skill fired; a
 # near-miss case uses `skill-not-fired` instead (passing means it did NOT fire). Cases named *-natural-N and *-near-miss feed
-# the routing gate (spec §6.1). --selftest reads graders/_selftest/<grader>.pass.<ext> and .fail.<ext>, where <ext> is
+# the routing gate (spec §6.1). --selftest reads graders/_selftest/<grader>.pass.<ext> and .fail.<ext> (plus any extra <grader>.pass.<N>.<ext> and
+# .fail.<N>.<ext>, each graded on its own), where <ext> is
 # txt (the reply, or a file's contents), files (newline-separated created paths; file_exists and regex target files) or
 # tools (one "ToolName<TAB>input" per call; tool_used), or trace (the eval tool's trace text: run.trace.map(JSON.stringify).join("\n"): one compact JSON message per line, a Skill call being an assistant
 # message with a tool_use block {"name":"Skill","input":{"skill":"<name>"}} (the exact envelope is checked on the first real family run); regex with target: trace, as the
@@ -312,10 +313,11 @@ regex_verdict() { # match count -> 0 when the grader passes
     *) return 2 ;;
   esac
 }
-# grader_passes GRADER_MD WHICH(pass|fail) -> 0 the grader passes the reply, 1 fails it, 3 no reply file, 2 cannot evaluate
+# grader_passes GRADER_MD WHICH(pass|fail) [N] -> 0 the grader passes the reply, 1 fails it, 3 no reply file, 2 cannot evaluate.
+# N picks an extra reply <grader>.<which>.<N>.<ext>; without it, the main reply <grader>.<which>.<ext>.
 grader_passes() {
   local g="$1" which="$2" type name dir base pat flags match target tool im min max n f
-  type="$(fm_get "$g" type)"; name="$(basename "$g" .md)"; dir="$(dirname "$g")/_selftest"; base="$dir/$name.$which"
+  type="$(fm_get "$g" type)"; name="$(basename "$g" .md)"; dir="$(dirname "$g")/_selftest"; base="$dir/$name.$which${3:+.$3}"
   case "$type" in
     regex)
       pat="$(grader_pattern "$g")"
@@ -380,7 +382,20 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
           *) echo "SELFTEST-GRADER: $rel/graders/$name.md: does not pass its pass reply"; bad=1 ;; esac
         grader_passes "$g" fail; case $? in
           1) ;; 3) echo "SELFTEST-GRADER: $rel/graders/$name.md: no graders/_selftest/$name.fail.* reply"; bad=1 ;;
-          *) echo "SELFTEST-GRADER: $rel/graders/$name.md: does not fail its fail reply (a grader that cannot fail)"; bad=1 ;; esac ;;
+          *) echo "SELFTEST-GRADER: $rel/graders/$name.md: does not fail its fail reply (a grader that cannot fail)"; bad=1 ;; esac
+        # extra replies <grader>.pass.<N>.<ext> / .fail.<N>.<ext>, each graded on its own: one wording that passes
+        # never hides another that fails, as it would inside one reply file
+        for x in "$(dirname "$g")/_selftest/$name".pass.[0-9]*.* "$(dirname "$g")/_selftest/$name".fail.[0-9]*.*; do
+          [ -f "$x" ] || continue
+          xw="${x##*/}"; xw="${xw#"$name".}"; xn="${xw#*.}"; xn="${xn%%.*}"; xw="${xw%%.*}"
+          grader_passes "$g" "$xw" "$xn"; xrc=$?
+          case "$xw:$xrc" in
+            pass:0|fail:1) ;;
+            *:3) echo "SELFTEST-GRADER: $rel/graders/$name.md: ${x##*/} is not a reply this grader reads"; bad=1 ;;
+            pass:*) echo "SELFTEST-GRADER: $rel/graders/$name.md: does not pass its pass reply ${x##*/}"; bad=1 ;;
+            fail:*) echo "SELFTEST-GRADER: $rel/graders/$name.md: does not fail its fail reply ${x##*/}"; bad=1 ;;
+          esac
+        done ;;
       llm)
         [ -n "$(fm_body "$g" | tr -d '[:space:]')" ] || { echo "SELFTEST-GRADER: $rel/graders/$name.md: llm grader without a rubric"; bad=1; } ;;
     esac
