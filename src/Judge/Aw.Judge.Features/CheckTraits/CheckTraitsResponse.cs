@@ -18,5 +18,8 @@ public sealed record CheckTraitsResponse(IReadOnlyList<TraitFinding> Findings, b
     /// Edited image files that were not judged, by repo-relative path, with <see cref="ImageNotSent"/>: left out of the 4 files and 4 MiB, unreadable, or dropped by Jev.
     /// A file that is skipped is never judged on its name alone. The command prints no field for it; the trait-check log has a line.
     /// </summary>
-    public IReadOnlyDictionary<string, string> Skipped { get; init; } = new Dictionary<string, string>(StringComparer.Ordinal);
+    public IReadOnlyDictionary<string, string> Skipped { get; init; } = NoSkips;
+
+    // One shared instance, so two responses that skipped nothing are equal (record equality compares the dictionaries by reference).
+    internal static IReadOnlyDictionary<string, string> NoSkips { get; } = new Dictionary<string, string>(StringComparer.Ordinal);
 }

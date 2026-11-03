@@ -39,8 +39,8 @@ internal sealed class TraitVerdicts(ITraitCheckLog log)
         }
 
         return failures.Count > 0 && failures.Count == answers.Count - left
-            ? new CheckTraitsResponse([], JevUnavailable: true, Reason: failures[0], Requests: answers.Count) { Skipped = skipped }
-            : new CheckTraitsResponse([.. findings.OrderByDescending(finding => finding.Probability)], Requests: answers.Count) { Skipped = skipped };
+            ? new CheckTraitsResponse([], JevUnavailable: true, Reason: failures[0], Requests: answers.Count) { Skipped = skipped.Count == 0 ? CheckTraitsResponse.NoSkips : skipped }
+            : new CheckTraitsResponse([.. findings.OrderByDescending(finding => finding.Probability)], Requests: answers.Count) { Skipped = skipped.Count == 0 ? CheckTraitsResponse.NoSkips : skipped };
     }
 
     private IEnumerable<TraitFinding> Assess(TraitCheckMode mode, double minimum, TraitTask task, BatchDecided decided, string root)
