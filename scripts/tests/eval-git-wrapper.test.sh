@@ -80,6 +80,15 @@ expect_refused "branch --unset-upstream" "branch" -C "$REPO" branch --unset-upst
 expect_refused "branch --edit-description" "branch" -C "$REPO" branch --edit-description
 out="$(AW_GIT_MODE=readonly wrapped -C "$REPO" branch -vv 2>&1)"; rc=$?
 [ "$rc" = 0 ] && ok "git branch -vv is allowed in readonly" || bad "git branch -vv rc=$rc: $out"
+# git takes unambiguous prefixes (--u, --e) and bundled short flags (-vu<x>, -a -u<x>).
+expect_refused "branch --u <x>" "branch" -C "$REPO" branch --u origin/x
+expect_refused "branch --e" "branch" -C "$REPO" branch --e
+expect_refused "branch -vu<x>" "branch" -C "$REPO" branch -vuorigin/x
+expect_refused "branch -a -u<x>" "branch" -C "$REPO" branch -a -uother
+for f in '--format=%(upstream)' '--sort=-committerdate'; do
+  out="$(AW_GIT_MODE=readonly wrapped -C "$REPO" branch "$f" 2>&1)"; rc=$?
+  [ "$rc" = 0 ] && ok "git branch $f is allowed in readonly" || bad "git branch $f rc=$rc: $out"
+done
 expect_refused "commit after -c option" "commit" -c core.editor=true -C "$REPO" commit -m x
 
 [ "$("$REAL_GIT" -C "$REPO" rev-list --count HEAD)" = 1 ] && ok "no commit was made by the refused forms" || bad "a refused commit landed"
