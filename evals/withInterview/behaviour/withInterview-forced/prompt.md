@@ -1,7 +1,7 @@
 ---
 max_turns: 12
 timeout_seconds: 420
-allowed_tools: [Read, Write, Glob, Grep, Skill, AskUserQuestion]
+allowed_tools: [Read, Write, Glob, Grep, Skill, Bash, AskUserQuestion]
 tags: [withInterview, behaviour, forced]
 ---
 
