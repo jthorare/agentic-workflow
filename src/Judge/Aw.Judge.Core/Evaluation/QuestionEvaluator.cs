@@ -102,8 +102,9 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
         // The question's images are read once, before any provider runs; the scope hands the agent CLIs a directory of those bytes
         // and is disposed after the last provider.
         var (images, root, problem) = await ReadImages(question, input, context, cancellationToken).ConfigureAwait(false);
-        if (problem)
+        if (problem is not null)
         {
+            run.Note = problem;
             return await Escalate(question, run, EvaluationReasons.InvalidInput, DecisionOutcome.Escalated, cancellationToken).ConfigureAwait(false);
         }
 
@@ -114,19 +115,19 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
     }
 
     // A question that names images with no reader or workspaces in the context is a wiring bug (it throws); a file that can't be read escalates the call.
-    private static async ValueTask<(IReadOnlyList<ImageAttachment> Images, string? Root, bool Problem)> ReadImages<TInput>(
+    private static async ValueTask<(IReadOnlyList<ImageAttachment> Images, string? Root, string? Problem)> ReadImages<TInput>(
         QuestionDefinition<TInput> question, TInput input, EvaluationContext context, CancellationToken cancellationToken)
         where TInput : class
     {
         if (question.Images?.Invoke(input) is not { } request)
         {
-            return ([], null, false);
+            return ([], null, null);
         }
 
         var reader = context.ImageReader ?? throw new InvalidOperationException($"question '{question.Name}' names images but the context has no image reader");
         _ = context.ImageWorkspaces ?? throw new InvalidOperationException($"question '{question.Name}' names images but the context has no image workspaces");
         var read = await reader.Read(request.Paths, request.Root, cancellationToken).ConfigureAwait(false);
-        return read.Problem is null ? (read.Images, request.Root, false) : ([], null, true);
+        return read.Problem is null ? (read.Images, request.Root, null) : ([], null, read.Problem);
     }
 
     // What escalation rows digest and store: the parsed JSON, or the text itself as a JSON string when it isn't JSON

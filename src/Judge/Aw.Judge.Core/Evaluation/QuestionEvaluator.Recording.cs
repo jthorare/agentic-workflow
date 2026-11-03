@@ -18,6 +18,7 @@ public sealed partial class QuestionEvaluator
             ReasonCode = reasonCode,
             ChainPosition = run.Skipped.Count,
             Probabilities = run.UndecidedProbabilities,
+            Reasons = run.Note is null ? null : new JsonArray(run.Note),
         };
         // Once the input validated, the row holds the record (its declared fields), as a decided row does; before that
         // (disabled, invalid) it holds what the caller sent.

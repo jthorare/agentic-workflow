@@ -67,7 +67,7 @@ internal sealed class ImageWorkspace : IImageWorkspace
     {
         if (relativeTo is not null)
         {
-            var relative = System.IO.Path.GetRelativePath(relativeTo, image.Path).Replace('\\', '/');
+            var relative = ToSlashes(System.IO.Path.GetRelativePath(relativeTo, image.Path));
             if (relative != ".." && !relative.StartsWith("../", StringComparison.Ordinal) && !System.IO.Path.IsPathRooted(relative))
             {
                 return relative;
@@ -76,6 +76,9 @@ internal sealed class ImageWorkspace : IImageWorkspace
 
         return "image-" + (index + 1).ToString(CultureInfo.InvariantCulture) + (image.Format == ImageFormat.Png ? ".png" : ".jpg");
     }
+
+    // Windows separates with a backslash; anywhere else a backslash is part of the file's name.
+    private static string ToSlashes(string relative) => OperatingSystem.IsWindows() ? relative.Replace('\\', '/') : relative;
 
     // Best effort: a directory that can't be removed (not ours: its 0700 mode keeps others out) stays.
     private static void Sweep(TimeSpan age)
