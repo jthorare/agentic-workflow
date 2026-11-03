@@ -38,6 +38,17 @@ public interface IProviderCatalog
     public Result<IModelProvider> Provider(ProviderName name, IReadOnlyCollection<ProviderName>? allowed, ProvidersConfig? config) => Provider(name, allowed);
 
     /// <summary>
+    /// <see cref="Provider(ProviderName, IReadOnlyCollection{ProviderName}, ProvidersConfig)"/> with images going to Jev whatever
+    /// providers.jevImages and AW_JUDGE_JEV_IMAGES say, for this one call ('judge check images' runs with images on to see whether
+    /// they should be). A catalog that has no switch keeps this default.
+    /// </summary>
+    /// <param name="name">The provider.</param>
+    /// <param name="allowed">The allowlist, or null for every provider.</param>
+    /// <param name="config">The providers block, or null.</param>
+    /// <returns>As the overload without the switch.</returns>
+    public Result<IModelProvider> ProviderWithImagesOn(ProviderName name, IReadOnlyCollection<ProviderName>? allowed, ProvidersConfig? config) => Provider(name, allowed, config);
+
+    /// <summary>
     /// The stronger model 'judge adjudicate' asks: the claude CLI on opus at high effort, in a locked-down child (no tools,
     /// settings or hooks; a scratch directory; a minimal environment). Same refusals as <see cref="Provider(ProviderName, IReadOnlyCollection{ProviderName})"/> for claude-cli.
     /// </summary>

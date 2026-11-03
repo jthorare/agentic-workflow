@@ -11,27 +11,23 @@ public sealed class ChainSpecTests
     private static readonly ProviderName[] _textDefault = [ProviderName.Jev, ProviderName.ClaudeCli, ProviderName.Rules];
 
     [Fact]
-    public void The_default_chain_is_jev_claude_rules_on_text_and_claude_rules_on_image()
+    public void The_default_chain_is_jev_claude_rules_on_every_class_image_included()
     {
-        foreach (var cls in ContentClasses.Text)
+        foreach (var cls in ContentClasses.All)
         {
             Assert.Equal(_textDefault, ChainSpec.Default.For(cls));
         }
-
-        Assert.Equal([ProviderName.ClaudeCli, ProviderName.Rules], ChainSpec.Default.For(ContentClass.Image));
     }
 
     [Fact]
-    public void Build_puts_jev_first_then_the_agent_clis_in_order_then_rules_and_image_skips_jev()
+    public void Build_puts_jev_first_then_the_agent_clis_in_order_then_rules_on_image_too()
     {
         var chain = ChainSpec.Build([AgentCliName.CodexCli, AgentCliName.ClaudeCli, AgentCliName.CursorCli], jev: true);
 
-        foreach (var cls in ContentClasses.Text)
+        foreach (var cls in ContentClasses.All)
         {
             Assert.Equal([ProviderName.Jev, ProviderName.CodexCli, ProviderName.ClaudeCli, ProviderName.CursorCli, ProviderName.Rules], chain.For(cls));
         }
-
-        Assert.Equal([ProviderName.CodexCli, ProviderName.ClaudeCli, ProviderName.CursorCli, ProviderName.Rules], chain.For(ContentClass.Image));
     }
 
     [Fact]
@@ -51,7 +47,7 @@ public sealed class ChainSpecTests
 
         var restricted = chain.Restrict([ProviderName.Jev, ProviderName.ClaudeCli]);
         Assert.Equal(_textDefault, restricted.For(ContentClass.Code));
-        Assert.Equal([ProviderName.ClaudeCli, ProviderName.Rules], restricted.For(ContentClass.Image));
+        Assert.Equal(_textDefault, restricted.For(ContentClass.Image));
 
         Assert.Equal([ProviderName.Rules], chain.Restrict([]).For(ContentClass.Code));
     }

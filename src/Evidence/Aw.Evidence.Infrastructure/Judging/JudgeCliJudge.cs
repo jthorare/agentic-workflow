@@ -17,11 +17,12 @@ internal sealed class JudgeCliJudge(ICliRunner runner, IExecutableLocator locato
 {
     private const string BinVariable = "AW_JUDGE_BIN";
     private const string DefaultBinary = "judge";
+    private const string JevImagesVariable = "AW_JUDGE_JEV_IMAGES";
 
     // The judge's state and provider selection, and the credentials its agent CLIs read; nothing else leaks into the call.
     private static readonly string[] _passedOn =
     [
-        "AW_STATE_DIR", "AW_JUDGE_STATE_DIR", "AW_JUDGE_SESSIONS_DIR", "AW_JUDGE_PROVIDERS", "AW_LOG_LEVEL",
+        "AW_STATE_DIR", "AW_JUDGE_STATE_DIR", "AW_JUDGE_SESSIONS_DIR", "AW_JUDGE_PROVIDERS", JevImagesVariable, "AW_LOG_LEVEL",
         "ANTHROPIC_API_KEY", "OPENAI_API_KEY", "CODEX_HOME", "CLAUDE_CONFIG_DIR", "DOTNET_ROOT",
     ];
 
@@ -29,6 +30,43 @@ internal sealed class JudgeCliJudge(ICliRunner runner, IExecutableLocator locato
 
     /// <inheritdoc/>
     public bool IsAvailable => FindJudge() is not null;
+
+    /// <inheritdoc/>
+    // The judge's own rule (JevImagesSetting): AW_JUDGE_JEV_IMAGES=0|1 wins, else config.json's providers.jevImages, else off.
+    // 'judge config get' prints only the file, so the variable is applied here; anything unreadable is off.
+    public async ValueTask<bool> JevImagesOnAsync(CancellationToken cancellationToken)
+    {
+        var variable = _environment(JevImagesVariable);
+        if (string.Equals(variable, "1", StringComparison.Ordinal) || string.Equals(variable, "0", StringComparison.Ordinal))
+        {
+            return string.Equals(variable, "1", StringComparison.Ordinal);
+        }
+
+        if (FindJudge() is not { } judge)
+        {
+            return false;
+        }
+
+        var outcome = await runner.RunAsync(new CliInvocation(judge, ["config", "get"], Stdin: null, PassedOnEnvironment()), cancellationToken).ConfigureAwait(false);
+        if (outcome.IsError || outcome.Value.ExitCode != 0)
+        {
+            return false;
+        }
+
+        try
+        {
+            using var config = JsonDocument.Parse(outcome.Value.Stdout);
+            return config.RootElement.ValueKind == JsonValueKind.Object
+                && config.RootElement.TryGetProperty("providers", out var providers)
+                && providers.ValueKind == JsonValueKind.Object
+                && providers.TryGetProperty("jevImages", out var on)
+                && on.ValueKind == JsonValueKind.True;
+        }
+        catch (JsonException)
+        {
+            return false;
+        }
+    }
 
     /// <inheritdoc/>
     public async ValueTask<SelectorRepair?> RepairSelectorAsync(SelectorRepairRequest request, CancellationToken cancellationToken)

@@ -1,0 +1,6 @@
+POST https://api.typesafe.ai/v1/systemone
+Authorization: Bearer jev-test-key
+Content-Type: application/json
+TypeSafe-Danger-Zone-Images: (not sent)
+
+{"state":{"text":"hello","senderKind":"human"},"model":"jev-1.13.0","questions":{"decision":{"type":"choice","instructions":"Classify the message.","criteria":{"send":"worth waking for","batch":"batch","drop":"drop"}}}}
