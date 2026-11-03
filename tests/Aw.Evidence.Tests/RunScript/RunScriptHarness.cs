@@ -54,7 +54,7 @@ internal sealed class RunScriptHarness
     {
         var json = TestJson.Options;
         var run = new ScriptRun(Browser, new StepRunner(Judge, Clock), Files, Settings, new FakeSecrets(SecretValues));
-        var verdict = new RunVerdict(new VisualGate(Files, Codec, Judge, Clock, json), Cache, Settings, json);
+        var verdict = new RunVerdict(new VisualGate(Files, Codec, Judge, Clock, json), Judge, Cache, Settings, json);
         var service = new ValidatingService<RunScriptRequest, RunScriptResponse>(
             new RunScriptService(new ScriptFiles(Files, json), Locks, run, verdict, Clock, Ids, Settings), new RunScriptValidator());
         return service.Handle(request, interrupt);

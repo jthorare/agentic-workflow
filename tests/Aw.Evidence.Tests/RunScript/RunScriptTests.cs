@@ -144,6 +144,24 @@ public sealed class RunScriptTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task RunScript_never_reuses_a_verdict_formed_before_jev_images_were_turned_off()
+    {
+        var harness = WithMenu();
+        harness.Judge = new FakeJudge { JevImages = true }.Critiques(
+            new VisualVerdict(VisualDecision.LooksRight, [], Usage: null), new VisualVerdict(VisualDecision.LooksOff, ["text only"], Usage: null));
+        _ = harness.WithScript(OpenMenu());
+        var request = A.RunScriptRequest().WithAppBuild("abc123").WithCache("/cache/verdicts.json");
+
+        _ = await harness.Run(request.Build());
+        harness.Judge.JevImages = false;   // judge config set providers jev-images false
+        var after = (await harness.Run(request.In("/runs/run-2").Build())).Value.Summary;
+
+        Assert.Equal(Verdict.LooksOff, after.Visual.Verdict);
+        Assert.Equal(2, harness.Judge.CritiqueRequests.Count);
+        Assert.False(after.Invocations.Single().CacheHit);
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task RunScript_never_reuses_an_earlier_runs_verdict_without_an_app_build_even_in_the_same_directory()
     {
         var harness = WithMenu();

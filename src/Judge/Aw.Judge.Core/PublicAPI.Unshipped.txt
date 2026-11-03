@@ -2106,3 +2106,38 @@ Aw.Judge.Core.Evaluation.EvaluationContext.ImageWorkspaces.get -> Aw.Judge.Core.
 Aw.Judge.Core.Evaluation.EvaluationContext.ImageWorkspaces.init -> void
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Images.get -> System.Func<TInput!, Aw.Judge.Core.Images.ImageRequest?>?
 Aw.Judge.Core.Questions.QuestionDefinition<TInput>.Images.init -> void
+Aw.Judge.Core.Decisions.SkippedProvider.Code.get -> string?
+Aw.Judge.Core.Decisions.SkippedProvider.Code.init -> void
+Aw.Judge.Core.Providers.QuestionRef.JevMaySettle.get -> bool
+Aw.Judge.Core.Providers.QuestionRef.JevMaySettle.init -> void
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.JevMaySettle.get -> bool
+Aw.Judge.Core.Questions.QuestionDefinition<TInput>.JevMaySettle.init -> void
+Aw.Judge.Core.Config.ProvidersConfig.JevImages.get -> bool?
+Aw.Judge.Core.Config.ProvidersConfig.JevImages.init -> void
+Aw.Judge.Core.Images.ImageCase
+Aw.Judge.Core.Images.ImageCase.<Clone>$() -> Aw.Judge.Core.Images.ImageCase!
+Aw.Judge.Core.Images.ImageCase.ImageCase() -> void
+Aw.Judge.Core.Images.ImageCase.Equals(Aw.Judge.Core.Images.ImageCase? other) -> bool
+Aw.Judge.Core.Images.ImageCase.Bytes.get -> System.ReadOnlyMemory<byte>
+Aw.Judge.Core.Images.ImageCase.Bytes.init -> void
+Aw.Judge.Core.Images.ImageCase.Expected.get -> string!
+Aw.Judge.Core.Images.ImageCase.Expected.init -> void
+Aw.Judge.Core.Images.ImageCase.Name.get -> string!
+Aw.Judge.Core.Images.ImageCase.Name.init -> void
+override Aw.Judge.Core.Images.ImageCase.Equals(object? obj) -> bool
+override Aw.Judge.Core.Images.ImageCase.GetHashCode() -> int
+override Aw.Judge.Core.Images.ImageCase.ToString() -> string!
+static Aw.Judge.Core.Images.ImageCase.operator !=(Aw.Judge.Core.Images.ImageCase? left, Aw.Judge.Core.Images.ImageCase? right) -> bool
+static Aw.Judge.Core.Images.ImageCase.operator ==(Aw.Judge.Core.Images.ImageCase? left, Aw.Judge.Core.Images.ImageCase? right) -> bool
+Aw.Judge.Core.Ports.IImageCaseSet
+Aw.Judge.Core.Ports.IImageCaseSet.Cases.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageCase!>!
+const Aw.Judge.Core.Providers.ProviderUnavailable.ImagesOff = "images-off" -> string!
+const Aw.Judge.Core.Providers.ProviderUnavailable.ImageOutOfLimits = "image-out-of-limits" -> string!
+const Aw.Judge.Core.Providers.ProviderUnavailable.ImageTooLarge = "image-too-large" -> string!
+Aw.Judge.Core.Config.JudgeConfig.SetJevImages(bool on) -> Aw.Judge.Core.Config.JudgeConfig!
+Aw.Judge.Core.Config.JevImagesSetting
+const Aw.Judge.Core.Config.JevImagesSetting.Variable = "AW_JUDGE_JEV_IMAGES" -> string!
+static Aw.Judge.Core.Config.JevImagesSetting.IsOn(Aw.Judge.Core.Config.ProvidersConfig? config, string? environment) -> bool
+Aw.Judge.Core.Ports.IProviderCatalog.ProviderWithImagesOn(Aw.Judge.Core.Providers.ProviderName name, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, Aw.Judge.Core.Config.ProvidersConfig? config) -> Aw.Kernel.Result<Aw.Judge.Core.Ports.IModelProvider!>!
+Aw.Judge.Core.Decisions.JevSkipNotes
+static Aw.Judge.Core.Decisions.JevSkipNotes.For(Aw.Judge.Core.Decisions.DecisionRecord! decision) -> System.Collections.Generic.IReadOnlyList<string!>!

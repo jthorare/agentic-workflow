@@ -23,6 +23,8 @@
   <ItemGroup>
     <!-- The schema migrations, loaded by Aw.Kernel.Data's EmbeddedMigrations under JudgeDatabase.ResourcePrefix. -->
     <EmbeddedResource Include="Sqlite/Migrations/*.sql" LogicalName="Aw.Judge.Infrastructure.Sqlite.Migrations.%(Filename)%(Extension)" />
+    <!-- The labeled screenshots of 'judge check images' (tests/fixtures/judge/images, <name>.<label>.png). -->
+    <EmbeddedResource Include="../../../tests/fixtures/judge/images/*.png" LogicalName="judge-images/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

@@ -229,49 +229,24 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
     {
         var result = at.Result;
         var verdict = Judged(question, run, result);
-        switch (verdict)
+        if (await Passed(question, run, at, verdict, cancellationToken).ConfigureAwait(false))
         {
-            case StepVerdict.Unavailable:
-                run.Skip(at.Name, SkipReason.Unavailable);
-                return null;
-            case StepVerdict.TimedOut:
-                await Fail(question.Name, at.Name, ProviderUnavailable.Timeout, cancellationToken).ConfigureAwait(false);
-                run.Skip(at.Name, SkipReason.Timeout);
-                return null;
-            case StepVerdict.Errored:
-            case StepVerdict.OutOfEnum:
-            case StepVerdict.NoReasons:
-                await Fail(question.Name, at.Name, FailureCode(verdict, result), cancellationToken).ConfigureAwait(false);
-                run.Skip(at.Name, SkipReason.Failed);
-                return null;
-            case StepVerdict.BelowThreshold:
-                run.Undecided(at.Name, (ProviderDecided)result);
-                return await Fallback(question, input, cancellationToken).ConfigureAwait(false) is { } fallback
-                    ? Rule(fallback, EvaluationReasons.FallbackAfterUndecided, at.LatencyMs, at.Position) with
-                    {
-                        Probabilities = run.UndecidedProbabilities,
-                        Agreement = Agreement.Undecided,
-                    }
-                    : null;
-            case StepVerdict.Decided:
-            default:
-                return Decided(run, at, (ProviderDecided)result, await Fallback(question, input, cancellationToken).ConfigureAwait(false));
-        }
-    }
-
-    private static StepVerdict Judged<TInput>(QuestionDefinition<TInput> question, EvaluationRun run, ProviderResult result)
-        where TInput : class =>
-        StepVerdicts.Of(result, question.Outputs, run.Threshold, lacksReasons: result is ProviderDecided decided && question.LacksReasons(decided));
-
-    // The failure row's reason: the provider's own, or the engine's when the provider answered but the answer can't be used.
-    private static string FailureCode(StepVerdict verdict, ProviderResult result)
-    {
-        if (verdict == StepVerdict.NoReasons)
-        {
-            return EvaluationReasons.NoReasons;
+            return null;
         }
 
-        return result is ProviderDecided ? EvaluationReasons.OutOfEnum : result.ReasonCode;
+        if (verdict != StepVerdict.BelowThreshold)
+        {
+            return Decided(run, at, (ProviderDecided)result, await Fallback(question, input, cancellationToken).ConfigureAwait(false));
+        }
+
+        run.Undecided(at.Name, (ProviderDecided)result);
+        return await Fallback(question, input, cancellationToken).ConfigureAwait(false) is { } fallback
+            ? Rule(fallback, EvaluationReasons.FallbackAfterUndecided, at.LatencyMs, at.Position) with
+            {
+                Probabilities = run.UndecidedProbabilities,
+                Agreement = Agreement.Undecided,
+            }
+            : null;
     }
 
     // opinion: what the fallback rules would have said; telemetry only, never a change to the model's decision.

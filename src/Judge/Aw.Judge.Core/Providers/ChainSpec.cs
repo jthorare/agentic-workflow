@@ -5,12 +5,11 @@ namespace Aw.Judge.Core.Providers;
 public sealed record ChainSpec(IReadOnlyDictionary<ContentClass, IReadOnlyList<ProviderName>> Classes)
 {
     /// <summary>
-    /// The default chain: jev, then claude-cli, then rules on every text class; image goes to claude-cli then rules (jev is
-    /// text-only). Every class ends with rules, so a rule fallback can always decide.
+    /// The default chain: jev, then claude-cli, then rules on every class, image included (Jev takes images). Every class ends with rules, so a rule fallback can always decide.
     /// </summary>
     public static ChainSpec Default { get; } = Build([AgentCliName.ClaudeCli], jev: true);
 
-    /// <summary>The runtime chain: text classes get jev (unless disabled), the agent CLIs in order, then rules; image the agent CLIs then rules.</summary>
+    /// <summary>The runtime chain: every class gets jev (unless disabled), the agent CLIs in order, then rules.</summary>
     /// <param name="agentClis">The installed agent CLIs, in priority order.</param>
     /// <param name="jev">Whether jev is on.</param>
     /// <returns>The chain.</returns>
@@ -20,7 +19,7 @@ public sealed record ChainSpec(IReadOnlyDictionary<ContentClass, IReadOnlyList<P
         var clis = agentClis.Select(AgentCliNames.Provider).ToList();
         List<ProviderName> text = [.. jev ? [ProviderName.Jev] : Array.Empty<ProviderName>(), .. clis, ProviderName.Rules];
         var classes = ContentClasses.Text.ToDictionary(cls => cls, IReadOnlyList<ProviderName> (_) => text);
-        classes[ContentClass.Image] = [.. clis, ProviderName.Rules];
+        classes[ContentClass.Image] = text;
         return new ChainSpec(classes);
     }
 
