@@ -1,6 +1,6 @@
 ---
 name: withInterview
-description: "Interview the user to clarify requirements before executing a prompt. Use when the user wants to refine a task through guided questions before implementation."
+description: "Use when the user asks to be interviewed, quizzed or asked questions in rounds before any work starts, so a vague or big task gets pinned down first, then handed to another skill. Not for turning an idea into a spec (officeHours) or for rewriting a prompt from project docs (enhancePrompt)."
 argument-hint: "<skill-name> [prompt]"
 disable-model-invocation: true
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
@@ -127,7 +127,7 @@ If the target was "none — execute directly", begin the work yourself using the
 
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/withInterview-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
-Keys: `skill` (`withInterview`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
-plus `confirmed` (true when the user confirmed the plan).
+Keys: `skill` (`withInterview`), `artifacts` (absolute paths: `$PLAN_DIR/interview.md` and `$PLAN_DIR/plan.md`, `[]` when the user never confirmed), `summary` (one line),
+plus `confirmed` (true when the user confirmed the plan); `plan_dir` (absolute path of the `$PLAN_DIR` directory holding `interview.md` and `plan.md`); `target_skill` (the skill handed off to, or `none`); `rounds` (number of interview rounds held).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
