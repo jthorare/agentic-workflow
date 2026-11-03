@@ -212,6 +212,19 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
     }
 
     [Fact, Trait("Lane", "integration")]
+    public async Task An_in_use_losing_candidate_is_kept()
+    {
+        var (loser, loserCommit, winner, winnerCommit) = await Box();
+        await LostToC2(loser, loserCommit, winner, winnerCommit);
+        _lab.StartSleeper(loser);
+
+        var sweep = await Sweep("--path", loser, "--discarded");
+
+        Assert.True(Directory.Exists(loser), sweep.Out);
+        Assert.Contains("in use by pid", sweep.Out, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
     public async Task Discarded_without_path_is_a_usage_error()
     {
         await _lab.Init();
