@@ -96,7 +96,7 @@ Design skills add a second reference to `skills/_design-preamble.md` (`<!-- desi
 
 The preamble points the agent at `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/capabilities.md` for the capability → tool map, then verifies:
 1. `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}` exists and the provider registry `$HOME/.agentic-workflow/providers` is non-empty
-2. All 55 native skills are present in every registered provider's skills dir (plus 14 skills from the 3 fetched external packs)
+2. All 56 native skills are present in every registered provider's skills dir (plus 14 skills from the 3 fetched external packs)
 3. Domain rules exist: `AGENTS.md` + `.agents/rules/` (or legacy `.claude/rules/`)
 4. The repo-slug output directory `$AW_DIR/` (set and created by `skills/_shared/repo-slug.sh`) is created
 
@@ -130,6 +130,7 @@ Result: `org-repo` (e.g., `myorg-myrepo`). All output paths use `$AW_DIR/<domain
 | Planning | `/officeHours`, `/productReview`, `/archReview`, `/planDesignReview`, `/planDevexReview`, `/autoplan` | `plans/` (`officeHours` and `autoplan` write to `plans/<feature>/`) |
 | System design | `/system-design` | `system-design/<slug>/` (status.md, pages/, diagrams/, mockups/, shots/) |
 | Design | `/design-mockup`, `/design-verify`, `/design-shotgun` | `design/` (`design-shotgun` writes to `design/shotgun/`) |
+| Prototypes | `/clickable-prototype` | `prototypes/<slug>/` (brief.md, probe.mjs, shots/) |
 | Verification | `/verify-app` | `verification/` |
 | Security | `/cso` | `security/` |
 | Videos | `/system-design-video` | `videos/<design>/<persona>/` |
