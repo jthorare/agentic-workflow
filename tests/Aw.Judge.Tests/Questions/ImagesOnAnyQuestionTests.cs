@@ -239,18 +239,20 @@ public sealed class ImagesOnAnyQuestionTests
     }
 
     // Jev dropped the images (413, then a text retry) and answered, but under the threshold: the chain goes on, and the next provider is asked as text too (spec 2).
+    // Not ask-check: it has fallback rules that settle every below-threshold answer, so its CLI is never asked after Jev.
     [Fact]
     public async Task Best_effort_drop_then_a_jev_answer_below_threshold_asks_the_next_provider_as_text()
     {
-        var handler = new TooLargeWithImagesHandler("0.1");
+        var handler = new TooLargeWithImagesHandler("0.1", "progressing");
         using var jev = JevImages.Jev(handler);
-        var cli = Cli(ContentClass.Transcript, ContentClass.Image).Decides("continue", 0.9);
+        var cli = Cli(ContentClass.Diff).Decides("progressing", 0.9);
         var run = new QuestionRun { ImageReader = Reader(("/shots/home.png", ImageBytes.Png(1512, 982, "home"))) };
+        var input = new JsonObject { ["problem"] = "the page is blank", ["turnDiff"] = "+ render()", ["images"] = new JsonArray("/shots/home.png"), ["imagesBestEffort"] = true };
 
-        var outcome = await run.Ask(AskCheckQuestion.Definition, Input(["/shots/home.png"], bestEffort: true), jev, cli);
+        var outcome = await run.Ask(TurnProgressQuestion.Definition, input.ToJsonString(), jev, cli);
 
         var decided = Assert.IsType<DecidedOutcome>(outcome);
-        Assert.Equal(("continue", ProviderName.ClaudeCli), (decided.Decision, decided.Model));
+        Assert.Equal(("progressing", ProviderName.ClaudeCli), (decided.Decision, decided.Model));
         Assert.Equal(2, handler.Requests.Count);
         Assert.Empty(Assert.Single(cli.Calls).Question.Images);
     }
@@ -317,7 +319,7 @@ public sealed class ImagesOnAnyQuestionTests
     }
 
     // Jev as a call with images finds it: a 413 for any request that holds images, an answer for one that does not.
-    private sealed class TooLargeWithImagesHandler(string confidence = "0.9") : HttpMessageHandler
+    private sealed class TooLargeWithImagesHandler(string confidence = "0.9", string choice = "continue") : HttpMessageHandler
     {
         public List<RecordedJevRequest> Requests { get; } = [];
 
@@ -326,7 +328,7 @@ public sealed class ImagesOnAnyQuestionTests
             var recorded = await RecordedJevRequest.Capture(request, cancellationToken);
             Requests.Add(recorded);
             return recorded.ImagesHeader is null
-                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JevImages.Choice("continue", confidence), Encoding.UTF8, "application/json") }
+                ? new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(JevImages.Choice(choice, confidence), Encoding.UTF8, "application/json") }
                 : new HttpResponseMessage(HttpStatusCode.RequestEntityTooLarge) { Content = new StringContent("{}", Encoding.UTF8, "application/json") };
         }
     }
