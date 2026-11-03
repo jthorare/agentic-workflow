@@ -1,9 +1,10 @@
 # The judge sends images to Jev: visual-critique first, then any question, Sindri's choose Steps and the hooks
 
-Status: draft for the owner's read (not marked ready). Issue: #1961. Owner answers (2026-11-02, through meta): 1 - build on Jev's
+Status: approved by the owner (2026-11-02, through meta), with q170: downscale big images (9). Issue: #1961. Owner answers (2026-11-02, through meta): 1 - build on Jev's
 experimental image API (`TypeSafe-Danger-Zone-Images: true`, `assets` + `state`); 2 - an image question goes to Jev first, with the
 agent CLIs as the fallback; 3 - there are no model options: one Jev model, so no model list, no model config and no per-model
-thresholds; 4 - every hook decision may attach images, as an optional input, and an old caller's call stays byte-identical.
+thresholds; 4 - every hook decision may attach images, as an optional input, and an old caller's call stays byte-identical;
+q170 - the judge downscales an image too big for Jev (SkiaSharp, ~8 MB per platform accepted).
 Written against main `414f647bf`; the goldens in 6 are captured on each PR's own base, in its red commit.
 
 Related: `docs/csharp/judge.md` (providers, chain, decision rows), `docs/superpowers/specs/2026-10-29-context-model-routing-design.md`
@@ -34,8 +35,8 @@ Jev has taken images since 1.13 (our pin is `jev-1.13.0`, `src/Judge/Aw.Judge.Co
 
 ### Non-goals
 
-- Downscaling, cropping or rotating images. Jev rejects images outside its limits instead of resizing them; an image Jev can't take
-  goes to the CLIs (3.3).
+- Cropping, rotating or upscaling images. The judge downscales an image that's too big for Jev (3.3a, owner answer q170); one that's
+  too small, or that can't fit both of Jev's limits at its aspect ratio, still goes to the CLIs (3.3).
 - Jev's Box questions (bounding boxes). Nothing asks for a location yet.
 - Images in Sindri's batched Jev picks (`JevChoicePort`'s label and surface picks). They have no image to send. The two hook
   callers of the batch classifier, `prompt-sort` and `trait-check`, do get images (3.6).
@@ -74,13 +75,14 @@ Every question's input JSON may hold one more top-level field:
   but it and prompt-sort are batch calls, which record a drop on their own row and never on stderr, 3.6), and the call
   goes on with the rest (as text when none are left). Without it (Sindri's Step, a person at the CLI) a bad image escalates
   `invalid-images` as above.
-- **Best effort covers Jev's limits too.** For a hook call, an image Jev can't take (3.3: outside 280-1568 px, over the pixel
-  count or 16 MiB, `jevImages` off) is dropped before the call, never a reason to leave Jev: the call goes to Jev with the images
+- **Best effort covers Jev's limits too.** For a hook call, an image Jev still can't take after downscaling (3.3: under 280 px,
+  an aspect ratio no downscale can fit, a file that fails to decode, `jevImages` off) is dropped before the call, never a reason to leave Jev: the call goes to Jev with the images
   that fit, or as text when none do, which is today's call. If Jev answers `413`, or `400` on an image call, the judge retries
   Jev once without the images when at least half the hook's budget is left; else Jev counts as errored, as on a Jev timeout today.
   Once a hook call has dropped its images for Jev, the rest of its chain runs as text too, so a hook never pays for a CLI call it
-  doesn't pay for today. Example: on a Mac the agent Reads a retina screenshot (3024x1964) inside the checkout and stops; done-gate's
-  `ask-check` drops it (over 1568 px) and Jev answers as text in about a second, as today, not `claude-cli` on a 10 s budget. Each
+  doesn't pay for today. A retina screenshot is no longer one of these: it's downscaled and sent (3.3a). Example: the agent Reads a
+  200x120 icon PNG inside the checkout and stops; done-gate's `ask-check` drops it (under 280 px) and Jev answers as text in about a
+  second, as today, not `claude-cli` on a 10 s budget. Each
   drop is a trace line and a `jev images dropped:` line in `judge why` (4).
 - **An older judge ignores the field.** Question inputs drop unknown fields (`QuestionDefinition` docs), so a box that installs the
   new hooks before the new judge sends `images` to a judge that reads past it: today's call, no error. No hook gets a new argument
@@ -171,7 +173,8 @@ Checked before anything is sent, from the header read in 2:
 
 | Case | Result | Next |
 |---|---|---|
-| Width or height outside 280-1568 px, pixels outside 78,400-2,458,624, file over 16 MiB | `ProviderUnavailable("image-out-of-limits")` | the CLIs |
+| Too big (over 1568 px either side, over 2,458,624 pixels, or over 16 MiB) | downscaled (3.3a), then sent | Jev |
+| Width or height under 280 px, pixels under 78,400, or an aspect ratio where fitting the long side drops the short one under 280 px (e.g. 4000x500), or the scaler can't decode it | `ProviderUnavailable("image-out-of-limits")` | the CLIs |
 | `providers.jevImages: false` in config.json | `ProviderUnavailable("images-off")` | the CLIs |
 | Jev answers `413` | `ProviderUnavailable("image-too-large")` | the CLIs |
 | Jev answers `400` on an image call | `ProviderErrored("http-400")` as today | the CLIs |
@@ -179,9 +182,34 @@ Checked before anything is sent, from the header read in 2:
 That table is for strict callers (Sindri's Step, a person, ui-evidence). A hook call (`imagesBestEffort`) never moves on for these:
 it drops the image and stays on Jev (2).
 
-The common case this hits: ui-evidence's default viewport is 1512x982 (`src/Evidence/Aw.Evidence.Core/Design/DesignManifest.cs:10`),
-which fits; the same page at device pixel ratio 2 is 3024x1964, which doesn't, and goes to the CLIs as it does today. Downscaling
-those is the owner question in 9.
+The common case: ui-evidence's default viewport is 1512x982 (`src/Evidence/Aw.Evidence.Core/Design/DesignManifest.cs:10`), which
+fits as is; the same page at device pixel ratio 2 is 3024x1964, which is downscaled to 1568x1018 and sent to Jev.
+
+### 3.3a Downscaling (owner answer q170)
+
+The judge shrinks an image that's too big for Jev, so retina frames stay on the fast path.
+
+- **When.** Only for Jev, only when the image is over a limit: over 1568 px on either side, over 2,458,624 pixels, or over 16 MiB.
+  An image that fits is sent byte for byte as read. The CLIs always get the original: they take big images today.
+- **How much.** One scale factor, `min(1568 / width, 1568 / height, sqrt(2,458,624 / (width x height)), 1)`, both sides rounded
+  down, aspect ratio kept. If the short side lands under 280 px it isn't sent (the table above). Example: 3024x1964 -> factor
+  0.5185 -> 1568x1018, 1.6 M pixels, under both limits.
+- **With what.** SkiaSharp (MIT), at the version the box already ships: `sindri-ui` resolves `SkiaSharp` 3.119.4 through
+  `Avalonia.Skia` (`src/Sindri/Aw.Sindri.Ui.Desktop/packages.lock.json`), and `sindri-ui` is already NativeAOT, so the AOT path is
+  proven on this box. The judge pins the same version in `Directory.Packages.props`, never a second one. Mitchell cubic resampling
+  (`SKCubicResampler.Mitchell`), PNG in -> PNG out, JPEG in -> JPEG out at quality 90.
+- **Where.** A Core port, `IImageScaler.Fit(ImageAttachment, JevLimits) -> ImageAttachment?` (null: can't fit), implemented in
+  Infrastructure as `SkiaImageScaler`; Core stays I/O- and library-free. `JevProvider` and `JevProvider.Batch` (3.6) call it once
+  per image per call, so the evaluator and the batch path send the same scaled bytes. Everything else (the decision row's sha256, the
+  CLIs, ui-evidence's `VerdictCacheKey`) keeps the original.
+- **Same input, same bytes.** Scaling is deterministic at a pinned SkiaSharp version: a golden test pins the sha256 of a fixture's
+  scaled output, so a SkiaSharp bump that changes the picture fails a test instead of silently changing what Jev sees.
+- **Binary size.** The native `libSkiaSharp` ships beside the NativeAOT `judge` the way `libe_sqlite3` does (`scripts/install-cs.sh:27`),
+  about 8 MB per platform (owner accepted). The PR that adds it states the measured before / after size of the published judge
+  directory in its body; much over 10 MB more is a finding. It uses `SkiaSharp.NativeAssets.Linux.NoDependencies` on Linux, so the
+  judge doesn't start needing fontconfig on a box that never installed a desktop.
+- **Seen in `judge why`**: an image line gains `-> sent to jev as 1568x1018` (4).
+
 
 ### 3.4 Images leave the machine
 
@@ -270,15 +298,16 @@ adds one line per image and, when Jev was skipped for its images, one line sayin
 ```
 images: 2
   1. /home/u/r/ui-evidence/home.png  1512x982  403 KB  sha256 3fa9c1d2e8b0
-  2. /home/u/r/ui-evidence/home@2x.png  3024x1964  1.2 MB  sha256 77c01e9a4b12
-jev skipped: image 2 is 3024x1964, over Jev's 1568 px limit; asked claude-cli
+  2. /home/u/r/ui-evidence/home@2x.png  3024x1964  1.2 MB  sha256 77c01e9a4b12  -> sent to jev as 1568x1018
+  3. /home/u/r/ui-evidence/icon.png  200x120  9 KB  sha256 0b1e44a7c3d9
+jev skipped: image 3 is 200x120, under Jev's 280 px minimum; asked claude-cli
 ```
 
 This is the one list of `jev skipped:` lines (each ends `; asked <next provider>`):
 
 | When | Line |
 |---|---|
-| An image outside Jev's limits | `image N is WxH, over Jev's 1568 px limit` / `under Jev's 280 px minimum` / `image N is WxH, over Jev's 2,458,624-pixel limit` / `over Jev's 16 MiB limit` |
+| An image Jev can't take even downscaled | `image N is WxH, under Jev's 280 px minimum` / `image N is WxH; fitting it under 1568 px leaves it under 280 px` / `image N couldn't be decoded to downscale it` |
 | Images off | `image sending to Jev is off (judge config set providers jev-images true)` |
 | No key | `no Jev key (TYPESAFE_API_KEY or the keychain)` |
 | Jev answered a problem | `jev said looks-off with no reasons` (or `sloppy`) |
@@ -287,7 +316,7 @@ This is the one list of `jev skipped:` lines (each ends `; asked <next provider>
 | `400` | `Jev refused the request (400); AW_LOG_LEVEL=debug shows its body` |
 
 A hook call that dropped an image for Jev (2) prints a `jev images dropped:` line instead, since Jev still answered:
-`jev images dropped: image 1 is 3024x1964, over Jev's 1568 px limit; asked jev as text` (or `...; asked jev with images 2, 3`).
+`jev images dropped: image 1 is 200x120, under Jev's 280 px minimum; asked jev as text` (or `...; asked jev with images 2, 3`).
 After a `413` / `400` retry it reads `jev images dropped: Jev said the images were too large (413); asked jev again as text`.
 
 A call without images prints exactly today's `why`. ui-evidence caches visual-critique verdicts by image hashes, prompt version and model (`VerdictCacheKey`); it can't know the
@@ -299,11 +328,11 @@ case `skipped: image-changed`, not a failure.
 ## 4a. Health
 
 `judge health` gets one line once any call had images, counting every `jev skipped:` reason from 4:
-`images: 14 calls, jev 9, clis 5 (looks-off 2, out-of-limits 1, too-large 1, http-400 1), dropped for jev 3` (the last count is hook
-calls that went to Jev with fewer images, 2); with sending off it reads
+`images: 14 calls, jev 9, clis 5 (looks-off 2, out-of-limits 1, too-large 1, http-400 1), downscaled 6, dropped for jev 3` (downscaled
+counts calls that sent at least one shrunk image, 3.3a; dropped counts hook calls that went to Jev with fewer images, 2); with sending off it reads
 `images: 14 calls, jev 0, clis 14 (images-off 14)`. A sudden run of `http-400` is how a change on Jev's experimental API shows. Nothing
-when there were none, so its output on a box that never sends images is today's. That's the number that answers whether retina
-frames make the Jev path rare (9).
+when there were none, so its output on a box that never sends images is today's. A high `too-large` count says the downscale
+targets need lowering (a 413 on a scaled image).
 
 ## 5. Callers
 
@@ -362,15 +391,17 @@ Red first in each; ideas reviews each; "Part of #1961" except the last, which sa
 | PR | What | Red test (fails before, names the behavior) | Gate |
 |---|---|---|---|
 | 1a | The plumbing, no behavior change: `ImageAttachment` + `IImageReader` + limits, `QuestionRef.Images`, `hasImages` routing, the CLIs building evidence from attachments, visual-critique's `afterScreenshot`/`baselineScreenshot` read into attachments, `ImageWorkspace` (generic `images` waits for PR 2; visual-critique still on the CLIs) | `VisualCritique_cli_sees_the_same_screenshots_in_the_same_order`; `ImageReader_reads_png_and_jpeg_sizes_from_headers` | Judge unit + integration, Arch, PublicAPI |
-| 1b | Jev takes images: `JevProvider` multipart + header + references, `JevMaySettle` (set by visual-critique only; `Refused` unchanged otherwise), visual-critique's `ReasonedOutputs`, the `SkippedProvider` reason code, `Classes = All`, image chain `jev, CLIs, rules`, `providers.jevImages` + `AW_JUDGE_JEV_IMAGES`, the 20 labeled cases (embedded), `judge check images` | `VisualCritique_looks_right_is_settled_by_jev_from_multipart_screenshots`; `CheckImages_prints_both_scores_and_the_flip_command_when_the_bar_holds`; `VisualCritique_looks_off_from_jev_goes_to_the_cli_for_reasons`; `ResolutionCheck_still_refuses_jev`; `Image_over_1568px_skips_jev_for_the_clis`; the no-image Jev wire golden | Judge unit + integration, `judge-cs-hook-surface`, judge aot-smoke, Arch (new type in Core), PublicAPI |
-| 2 | Any question takes `images` (and `imagesBestEffort`, both stripped before the question's record): the evaluator reads and strips it, routes on the image class, CLIs get the per-call directory, the decision row's image lines, `judge why`, eval's `image-changed` | `AskCheck_with_an_image_routes_to_jev_and_stores_its_hash_not_its_bytes`; `Input_without_images_stores_todays_row`; `Best_effort_drops_a_bad_image_and_answers_as_text`; `Strict_bad_image_escalates_invalid_images`; `Best_effort_image_over_jev_limits_is_dropped_and_jev_answers_as_text`; `Best_effort_413_retries_jev_once_as_text` | Judge unit + integration, hook surface, aot-smoke |
+| 1b | Jev takes images: `JevProvider` multipart + header + references, `JevMaySettle` (set by visual-critique only; `Refused` unchanged otherwise), visual-critique's `ReasonedOutputs`, the `SkippedProvider` reason code, `Classes = All`, image chain `jev, CLIs, rules`, `providers.jevImages` + `AW_JUDGE_JEV_IMAGES`, the 20 labeled cases (embedded), `judge check images` | `VisualCritique_looks_right_is_settled_by_jev_from_multipart_screenshots`; `CheckImages_prints_both_scores_and_the_flip_command_when_the_bar_holds`; `VisualCritique_looks_off_from_jev_goes_to_the_cli_for_reasons`; `ResolutionCheck_still_refuses_jev`; `Image_under_280px_skips_jev_for_the_clis`; the no-image Jev wire golden | Judge unit + integration, `judge-cs-hook-surface`, judge aot-smoke, Arch (new type in Core), PublicAPI |
+| 1c | Downscaling (3.3a): `IImageScaler` in Core, `SkiaImageScaler` in Infrastructure, SkiaSharp pinned at the UI's 3.119.4 (+ `NativeAssets.Linux.NoDependencies`), `JevProvider` and `JevProvider.Batch` fit before sending, `libSkiaSharp` shipped beside the judge by `install-cs.sh`, the `why` and health lines | `Retina_frame_is_sent_to_jev_as_1568x1018`; `Scaled_bytes_match_the_pinned_sha256`; `Image_that_cant_fit_both_limits_skips_jev`; `Fitting_image_is_sent_byte_for_byte` | Judge unit + integration, judge aot-smoke (the published binary loads `libSkiaSharp` and scales the fixture), `install-cs.test.sh` (the native library is linked beside `judge`), `scripts/dotnet-verify-packages.sh` (locks), `node scripts/check-deps.mjs`, the before / after size in the body |
+| 2 | Any question takes `images` (and `imagesBestEffort`, both stripped before the question's record): the evaluator reads and strips it, routes on the image class, CLIs get the per-call directory, the decision row's image lines, `judge why`, eval's `image-changed` | `AskCheck_with_an_image_routes_to_jev_and_stores_its_hash_not_its_bytes`; `Input_without_images_stores_todays_row`; `Best_effort_drops_a_bad_image_and_answers_as_text`; `Strict_bad_image_escalates_invalid_images`; `Best_effort_image_under_jev_minimum_is_dropped_and_jev_answers_as_text`; `Best_effort_413_retries_jev_once_as_text` | Judge unit + integration, hook surface, aot-smoke |
 | 3 | Sindri: `ChooseRequest.Images`, `step.judge.choose` `images:`, `RCP-CHOICE-007`, `imageCount` in `fact:decision`, the Jobs view line | `JudgeChoose_passes_the_named_fact_as_images`; `JudgeCliChoice_without_images_sends_todays_input`; `Jobs_view_says_decided_with_2_images` | Sindri unit + integration (ApiGoldens for the fact), Ui unit + integration, recipe eval, Arch |
-| 4 | Batch images (`BatchRequest.Images`, `JevProvider.Batch` multipart, drop-and-trace) and the hooks: all five sources (done-gate, scope-gate, send-gate, prompt-sort, and trait-check reading an edited PNG `--file` as an image), `config/lib/image-paths.sh`, docs (`docs/csharp/judge.md`, `config/hooks` README) | `done-gate` bash case: a turn that read a PNG sends `images`; `done-gate` bash case: a turn that read a 3024x1964 PNG gets its answer from `jev` with a dropped-image note; `TraitCheck_edited_png_file_is_sent_as_an_image`; trait-check.sh's argv for an edited PNG is byte-identical to today's | every hook bash test, hook surface, sync-rules |
+| 4 | Batch images (`BatchRequest.Images`, `JevProvider.Batch` multipart, drop-and-trace) and the hooks: all five sources (done-gate, scope-gate, send-gate, prompt-sort, and trait-check reading an edited PNG `--file` as an image), `config/lib/image-paths.sh`, docs (`docs/csharp/judge.md`, `config/hooks` README) | `done-gate` bash case: a turn that read a PNG sends `images`; `done-gate` bash case: a turn that read a 3024x1964 PNG gets its answer from `jev` with the image (downscaled); `done-gate` bash case: a turn that read a 200x120 PNG gets its answer from `jev` with a dropped-image note; `TraitCheck_edited_png_file_is_sent_as_an_image`; trait-check.sh's argv for an edited PNG is byte-identical to today's | every hook bash test, hook surface, sync-rules |
 
 Each PR updates `docs/csharp/judge.md` (and `docs/csharp/sindri-workflow.md` for PR 3) for what it ships, so no PR lands an
 undocumented field.
 
-PR 1 is split in two so the plumbing (1a) can land and be rolled back apart from the behavior change (1b). Every PR that changes usage text (`config set providers jev-images` and `check images` in 1b) runs the whole Judge unit lane and judge aot-smoke, and updates its `expected.txt`.
+PR 1 is split in three so the plumbing (1a) can land and be rolled back apart from the behavior change (1b), and the native
+dependency (1c) lands on its own, with its own AOT smoke and size number. Every PR that changes usage text (`config set providers jev-images` and `check images` in 1b) runs the whole Judge unit lane and judge aot-smoke, and updates its `expected.txt`.
 
 PR 1b's gate adds `scripts/check-env-example.sh` (`AW_JUDGE_JEV_IMAGES`). The evaluator strips `imagesBestEffort` with `images`
 (PR 2). PR 4's red tests include a `.png` that isn't a PNG from a hook: dropped, the call answers as text. PR 4 also runs one hook
@@ -379,14 +410,18 @@ input with `images` against the judge from PR 2's base (the pre-change build) to
 PR 4's red tests include the helper's refusals: a path outside the checkout, a symlink that escapes it, five images (keeps 4),
 and 6 MiB of images (keeps what fits 4 MiB), each counted on the `probe-log` line.
 
-**Parallel plan.** PR 1a, then 1b (everything rides on the provider and chain). Then PR 2. Then PR 3 and PR 4 at once: PR 3 is
+**Parallel plan.** PR 1a, then 1b (everything rides on the provider and chain). Then PR 1c and PR 2 at once: 1c touches only
+`JevProvider`'s send path, a new Infrastructure type and the package files; 2 touches the evaluator. Then PR 3 and PR 4 at once
+(PR 4's retina case needs 1c): PR 3 is
 Sindri-only; PR 4 is the batch classifier (Judge Infrastructure, which PR 3 doesn't touch) plus the hooks. Builders: one per PR (Sonnet), the lane lead runs every gate.
 
 ## 8. Proof
 
 - **Jev against the CLI on the same screenshots (PR 1b).** Today Jev never judges a picture, so moving visual-critique to Jev
   first needs evidence. PR 1b adds 20 labeled visual-critique cases under `tests/fixtures/judge/images/` (10 that look right,
-  10 with a visible break: overlap, clipped text, missing element, wrong color, cut-off content). The error that costs is Jev saying
+  10 with a visible break: overlap, clipped text, missing element, wrong color, cut-off content). 4 of them (2 right, 2 broken) are
+rendered at device pixel ratio 2 (3024x1964), so after PR 1c the bar also covers what Jev sees of a downscaled frame; until 1c
+lands, those 4 skip Jev and `judge check images` says so. The error that costs is Jev saying
   `looks-right` on a broken page, because nothing after it looks again; a wrong `looks-off` only costs a CLI call. So the bar is:
   **zero `looks-right` on the 10 broken cases**, plus seconds per call for both providers.
   - Order: the lead runs `judge check images` (below) before ready when this box has the Jev key (`judge health` shows
@@ -433,8 +468,8 @@ Sindri-only; PR 4 is the batch classifier (Judge Infrastructure, which PR 3 does
   `step.finished` carries `provider: jev`. Jev itself reading pictures is what `judge check images` already proved; PR 3 only
   carries them there.
 
-## 9. Owner question
+## 9. Owner answers
 
-1. **Big screenshots.** A retina screenshot (3024x1964) is over Jev's 1568 px limit, and Jev won't resize. My pick: send it to the
-   CLIs, as happens today (3.3); no new dependency. The other way: the judge downscales to fit, which adds SkiaSharp (MIT) to the
-   NativeAOT judge (~8 MB of native library per platform) and changes the picture Jev judges. Go with sending it to the CLIs?
+1. **Big screenshots (q170): downscale.** A retina screenshot (3024x1964) is over Jev's 1568 px limit and Jev won't resize, so the
+   judge shrinks it to fit before sending (3.3a, PR 1c), with SkiaSharp at the version `sindri-ui` already ships. The ~8 MB native
+   library per platform in the NativeAOT judge is accepted. Hooks drop only what still can't fit (2).
