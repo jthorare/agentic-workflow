@@ -17,6 +17,7 @@ Skim before Phase 4; search when something looks wrong.
 - **Some pages lock a headless browser.** If a page freezes Playwright, prototype another screen, or describe the limit in the hand-back and give the user the URL to click themselves. Do not claim it was probed.
 - **Text-absent checks pass vacuously right after `goto`.** `expect(text).toHaveCount(0)` is true before the page has rendered. Wait for something that proves the screen loaded (`CONFIG.ready`) and that the new thing is visible first.
 - **Waiting on the wrong thing.** `waitUntil: "networkidle"` never settles when the app holds a realtime socket. Wait for a specific testid.
+- **A shot can show the previous option.** The probe opens a fresh tab per option and clears the stored choice in an init script before the first load; do not reuse one tab across options.
 - **Screenshot too early.** Right after switching, a shot can show the previous option's highlight while the DOM is already right. Wait (`settleMs`) before the screenshot.
 - **Client flags only.** Flags set through `localStorage` before the app boots work; a flag the server evaluates cannot be set this way.
 - **Screenshots lie too.** A shot of the wrong option or a loading skeleton can pass the probe. Open each one and compare it with the brief.
