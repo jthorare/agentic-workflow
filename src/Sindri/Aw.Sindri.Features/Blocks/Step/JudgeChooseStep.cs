@@ -17,7 +17,7 @@ namespace Aw.Sindri.Features.Blocks.Step;
 /// <param name="judge">The judge's choose question.</param>
 /// <param name="scrubber">Redacts the facts' text before it leaves for the judge.</param>
 /// <param name="roots">The places an image may come from (the checkout and the ui-evidence output).</param>
-internal sealed class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber, IStepImageRoots? roots = null) : IBlockStep, IBlockStepId
+internal sealed partial class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber, IStepImageRoots? roots = null) : IBlockStep, IBlockStepId
 {
     /// <summary>Where an image may come from; null (a caller that gives none) checks no place.</summary>
     internal IStepImageRoots? Roots { get; } = roots;
@@ -37,7 +37,7 @@ internal sealed class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber
     {
         ArgumentNullException.ThrowIfNull(context);
         cancellationToken.ThrowIfCancellationRequested();
-        var (request, failure) = Request(context);
+        var (request, failure, dropped) = await Request(context, cancellationToken).ConfigureAwait(false);
         if (failure is not null || request is null)
         {
             return BlockStepResult.Failed(failure ?? $"{Name} has no request");
@@ -46,20 +46,20 @@ internal sealed class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber
         var answer = await judge.Choose(request, cancellationToken).ConfigureAwait(false);
         return answer.Status switch
         {
-            ChooseStatus.Decided when answer.Choice is { } choice && request.Choices.Any(c => string.Equals(c.Name, choice, StringComparison.Ordinal)) => Decision(choice, answer),
+            ChooseStatus.Decided when answer.Choice is { } choice && request.Choices.Any(c => string.Equals(c.Name, choice, StringComparison.Ordinal)) => Decision(choice, answer, request.Images.Count, dropped),
             ChooseStatus.Decided => BlockStepResult.Failed($"{Name}: the judge chose '{answer.Choice}', which is not one of the choices"),
-            ChooseStatus.Escalated => Decision(Uncertain, answer),
+            ChooseStatus.Escalated => Decision(Uncertain, answer, request.Images.Count, dropped),
             ChooseStatus.Failed => BlockStepResult.Failed($"{Name}: {answer.Reason}"),
             _ => BlockStepResult.Failed($"{Name}: {answer.Reason}"),
         };
     }
 
-    private static BlockStepResult Decision(string outcome, ChooseAnswer answer)
+    private static BlockStepResult Decision(string outcome, ChooseAnswer answer, int images, int dropped)
     {
         var probabilities = answer.Probabilities is { Count: > 0 } map
             ? new JsonObject(map.Select(static p => KeyValuePair.Create(p.Key, (JsonNode?)JsonValue.Create(p.Value))))
             : null;
-        return StepFacts.Done(outcome, ("fact:decision", new JsonObject
+        var decision = new JsonObject
         {
             ["choice"] = outcome,
             ["reason"] = answer.Reason,
@@ -68,37 +68,54 @@ internal sealed class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber
             ["probabilities"] = probabilities,
             ["provider"] = answer.Provider,
             ["decisionId"] = answer.DecisionRef,
-        }));
+        };
+        if (images > 0)
+        {
+            decision["imageCount"] = images;   // only for a call with images, so today's facts don't change
+        }
+
+        if (dropped > 0)
+        {
+            decision["imagesDropped"] = dropped;
+        }
+
+        return StepFacts.Done(outcome, ("fact:decision", decision));
     }
 
-    private (ChooseRequest? Request, string? Failure) Request(StepContext context)
+    private async ValueTask<(ChooseRequest? Request, string? Failure, int Dropped)> Request(StepContext context, CancellationToken cancellationToken)
     {
         if (Text(context, "prompt") is not { Length: > 0 } prompt)
         {
-            return (null, $"{Name} needs a 'prompt'");
+            return (null, $"{Name} needs a 'prompt'", 0);
         }
 
         var keys = Strings(context, "facts");
         if (keys.Count == 0)
         {
-            return (null, $"{Name} needs 'facts' to read");
+            return (null, $"{Name} needs 'facts' to read", 0);
         }
 
         if (StepFacts.Missing(context, [.. keys]) is { Count: > 0 } missing)
         {
-            return (null, $"{Name} needs {string.Join(", ", missing)}, which the instance does not hold");
+            return (null, $"{Name} needs {string.Join(", ", missing)}, which the instance does not hold", 0);
         }
 
         var (choices, choicesFailure) = Choices(Strings(context, "choices"));
         var (threshold, thresholdFailure) = Threshold(context);
         if ((choicesFailure ?? thresholdFailure) is { } failure)
         {
-            return (null, failure);
+            return (null, failure, 0);
+        }
+
+        var (images, dropped, imagesFailure) = await Images(context, cancellationToken).ConfigureAwait(false);
+        if (imagesFailure is not null)
+        {
+            return (null, imagesFailure, 0);
         }
 
         var providers = context.Arguments.ContainsKey("providers") ? Strings(context, "providers") : JudgeProviders.Default;
         var facts = keys.ToDictionary(static k => k, k => Cap(scrubber.Scrub(FactText(StepFacts.Read(context, k)))), StringComparer.Ordinal);
-        return (new ChooseRequest(prompt, choices, facts, threshold, providers), null);
+        return (new ChooseRequest(prompt, choices, facts, threshold, providers) { Images = images }, null, dropped);
     }
 
     // A choice is '<outcome>: <criterion>' (RCP-CHOICE-*): the validator holds the recipe to it, so this is the run-time guard for a hand-edited one.

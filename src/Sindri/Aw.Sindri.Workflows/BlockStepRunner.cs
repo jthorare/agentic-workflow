@@ -233,7 +233,7 @@ internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog c
             stored[key] = put.Value;
         }
 
-        return new BlockStepOutcome(done.Outcome, stored, DecisionOf(done.Outputs), Failure: null);
+        return new BlockStepOutcome(done.Outcome, stored, DecisionOf(done.Outputs), Failure: null) { ImageCount = DecisionCount(done.Outputs, "imageCount"), ImagesDropped = DecisionCount(done.Outputs, "imagesDropped") };
     }
 
     // An Unavailable error (a fact or the profile can't be read) is infrastructure: the engine retries the Step, then parks it as unavailable.
@@ -243,9 +243,22 @@ internal sealed class BlockStepRunner(BlockStepRuntimes runtimes, BlockCatalog c
 
     // The fact keys the Step's list parameter (InputsFrom, 'facts') names; the facts its descriptor reads (Inputs) come with them.
     private static IEnumerable<FactKey> FactsNamed(BlockDescriptor? descriptor, Dictionary<string, JsonElement> arguments) =>
-        descriptor?.InputsFrom is { } list && arguments.TryGetValue(list, out var names) && names.ValueKind == JsonValueKind.Array
+        (descriptor?.InputsFrom is { } list && arguments.TryGetValue(list, out var names) && names.ValueKind == JsonValueKind.Array
             ? names.EnumerateArray().Where(static n => n.ValueKind == JsonValueKind.String).Select(static n => FactKey.From(n.GetString() ?? string.Empty))
+            : [])
+        .Concat(ImagesFact(descriptor, arguments));
+
+    // A choice Step's optional 'images: <fact key>' (images spec 5.1): the fact comes with the Step's facts, though its text is never sent.
+    private static IEnumerable<FactKey> ImagesFact(BlockDescriptor? descriptor, Dictionary<string, JsonElement> arguments) =>
+        descriptor is not null && descriptor.Parameters.Any(static p => string.Equals(p.Name, "images", StringComparison.Ordinal))
+            && arguments.TryGetValue("images", out var named) && named.ValueKind == JsonValueKind.String && FactKey.TryFrom(named.GetString(), out var key)
+            ? [key]
             : [];
+
+    // A count 'fact:decision' carries (a judge choice's 'imageCount' and 'imagesDropped'), for the event.
+    private static int? DecisionCount(IReadOnlyDictionary<FactKey, JsonElement> outputs, string name) =>
+        outputs.TryGetValue(FactKey.From("fact:decision"), out var decision) && decision.ValueKind == JsonValueKind.Object
+            && decision.TryGetProperty(name, out var count) && count.ValueKind == JsonValueKind.Number && count.TryGetInt32(out var value) ? value : null;
 
     // The Judge's decision id when 'fact:decision' carries one: the event's 'via block · decision <id>'.
     private static string? DecisionOf(IReadOnlyDictionary<FactKey, JsonElement> outputs) =>

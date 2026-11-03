@@ -17,6 +17,14 @@ public sealed record TriggerRecord(string Kind, TriggerKey Key, string Actor, Ou
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Tokens { get; init; }
 
+    /// <summary>How many images a judge choice looked at (images spec 5.1); null for any other trigger. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ImageCount { get; init; }
+
+    /// <summary>How many images a judge choice left out; null when none. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ImagesDropped { get; init; }
+
     /// <summary>The launcher agent an agent report ran on (#1269); null for any other trigger. Not written when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Agent { get; init; }

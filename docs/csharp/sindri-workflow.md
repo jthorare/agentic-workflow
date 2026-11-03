@@ -446,6 +446,7 @@ and a test that pins its exact line (the P2 rows have none yet). All are errors 
 | `RCP-CHOICE-004` | `facts` is a literal list of at least one fact key; a hyphenated key gets the camelCase fix | List the facts the question reads |
 | `RCP-CHOICE-005` | A route state that routes `uncertain` to a desk twin sends it to a `step.desk.choose` state whose `from` names it, and has a `step.failed` transition to that twin; a twin's `from` is a literal naming a route state (not `{ fact }` or `{ profile }`) | Route to the desk twin; set `from:` to the route state |
 | `RCP-CHOICE-006` | A route state's `uncertain` and `step.failed` transitions come after its branch transitions (the app takes the first transition as the main path) | List the branches first |
+| `RCP-CHOICE-007` | A route state's optional `images:` names a fact the state can't read (the facts recorded on every path into it, as for `facts`) | Produce the fact on every path into the state, or add it to the recipe's inputs |
 | `RCP-CHILD-001` | A child recipe resolves (registered, or next to the recipe) and gets its inputs | Register it, or put `<id>.yaml` beside the recipe; pass the inputs it declares |
 | `RCP-CHILD-002` | Child recipes form no cycle | Remove a child wait |
 | `RCP-CHILD-003` | Children nest at most 10 deep | Flatten the chain |

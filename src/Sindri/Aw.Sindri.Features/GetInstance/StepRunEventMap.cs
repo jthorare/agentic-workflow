@@ -17,6 +17,10 @@ internal static class StepRunEventMap
         ArgumentNullException.ThrowIfNull(payload);
         var frame = payload.Detail?.Delta.Frame;
         return new RecordedWorkflowEvent(type, at, actor, payload.Trigger, payload.Outcome, payload.Run, payload.Tokens ?? payload.Detail?.Tokens, payload.Detail?.TriggerActor,
-            frame is null ? null : new RecordedFrame(frame.State, frame.Run, frame.Runtime));
+            frame is null ? null : new RecordedFrame(frame.State, frame.Run, frame.Runtime))
+        {
+            ImageCount = payload.Detail?.ImageCount,
+            ImagesDropped = payload.Detail?.ImagesDropped,
+        };
     }
 }

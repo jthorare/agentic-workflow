@@ -140,7 +140,7 @@ internal sealed partial class RecipeWorkflow
         {
             var outcome = await running.ConfigureAwait(true);
             return outcome is { Outcome: { } name, Outputs: { } outputs, Failure: null }
-                ? BlockStepTriggers.Completed(instance, context.Recipe, context.Decisions, new BlockCompletion(step.Use, open.Token, name, outputs, outcome.Decision))
+                ? BlockStepTriggers.Completed(instance, context.Recipe, context.Decisions, new BlockCompletion(step.Use, open.Token, name, outputs, outcome.Decision, outcome.ImageCount, outcome.ImagesDropped))
                 : BlockStepTriggers.Failed(step.Use, open.Token, outcome.Failure ?? "the Step returned nothing") with { Dependency = outcome.Dependency, Code = outcome.Code };
         }
         catch (ActivityFailureException failed)

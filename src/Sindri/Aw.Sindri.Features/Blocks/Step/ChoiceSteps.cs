@@ -25,6 +25,7 @@ internal static class ChoiceSteps
             new ParameterSpec("prompt", ParameterType.Text, Required: true, IsCapabilityField: false),
             new ParameterSpec("choices", ParameterType.List, Required: true, IsCapabilityField: false),
             new ParameterSpec("facts", ParameterType.List, Required: true, IsCapabilityField: false),
+            new ParameterSpec("images", ParameterType.Text, Required: false, IsCapabilityField: false),
             new ParameterSpec("threshold", ParameterType.Number, Required: false, IsCapabilityField: true),
             new ParameterSpec("providers", ParameterType.List, Required: false, IsCapabilityField: true),
         ],
