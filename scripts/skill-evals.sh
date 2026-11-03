@@ -347,7 +347,7 @@ grader_passes() {
 }
 
 lint_case() { # case dir -> prints problems, returns the count via the exit status (0 = clean)
-  local c="$1" rel g type name seen="" bad=0 free=0 gcount=0 tools to nf rerr
+  local c="$1" rel g type name seen="" bad=0 free=0 gcount=0 tools to nf rerr x xw xn xrc
   rel="${c#"$ROOT"/}"
   if [ ! -f "$c/prompt.md" ] && ! grep -Eq '^[[:space:]]*prompt:' "$c/case.yaml" 2>/dev/null; then
     echo "SELFTEST-CASE: $rel: no prompt.md and no execution.prompt"; bad=1
@@ -398,6 +398,15 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
         done ;;
       llm)
         [ -n "$(fm_body "$g" | tr -d '[:space:]')" ] || { echo "SELFTEST-GRADER: $rel/graders/$name.md: llm grader without a rubric"; bad=1; } ;;
+    esac
+    # selftest grades no tool_order or llm reply, so an extra next to one would sit there unchecked: say so
+    case "$type" in
+      regex|file_exists|tool_used) ;;
+      *)
+        for x in "$(dirname "$g")/_selftest/$name".pass.[0-9]*.* "$(dirname "$g")/_selftest/$name".fail.[0-9]*.*; do
+          [ -f "$x" ] || continue
+          echo "SELFTEST-GRADER: $rel/graders/$name.md: ${x##*/} is never graded (selftest grades only regex, file_exists and tool_used replies)"; bad=1
+        done ;;
     esac
   done
   [ "$gcount" -gt 0 ] || { echo "SELFTEST-CASE: $rel: no graders/*.md"; bad=1; }
