@@ -74,6 +74,22 @@ public sealed class JudgeChooseKnownPlacesTests : IDisposable
     }
 
     [Fact]
+    public async Task JudgeChoose_fails_the_step_when_the_facts_own_dotdot_climbs_out_of_a_linked_directory()
+    {
+        _ = File(Path.Combine(Elsewhere, "a"), "x.png");
+        _ = Directory.CreateDirectory(Path.Combine(Elsewhere, "a", "b"));
+        _ = Directory.CreateDirectory(Checkout);
+        _ = Directory.CreateSymbolicLink(Path.Combine(Checkout, "shots"), Path.Combine(Elsewhere, "a", "b"));
+        var path = Path.Combine(Checkout, "shots", "..", "x.png");   // the OS opens elsewhere/a/x.png; read as text it would be checkout/x.png
+        var judge = Decided();
+
+        var result = await Run(judge, path);
+
+        Assert.Empty(judge.Requests);
+        Assert.Equal($"step.judge.choose: images: {path} (from fact:frames) is outside the checkout and the ui-evidence output", result.Failure);
+    }
+
+    [Fact]
     public async Task JudgeChoose_fails_the_step_when_a_relative_file_link_inside_a_linked_directory_climbs_out()
     {
         // checkout/indir -> elsewhere/out/inner, and inner/x.png -> ../secret.png: read as text that is checkout/secret.png, but the real file is elsewhere/out/secret.png.
