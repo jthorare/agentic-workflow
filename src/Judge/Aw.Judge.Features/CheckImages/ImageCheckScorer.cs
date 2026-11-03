@@ -25,6 +25,12 @@ internal sealed class ImageCheckScorer(IImageWorkspaces workspaces, TimeProvider
             var input = new JsonObject { ["afterScreenshot"] = visual.AfterScreenshot, ["evidenceDir"] = ImageCheckCases.Root };
             var start = clock.GetTimestamp();
             var answer = await provider.Decide(question, input, VisualCritiqueQuestion.Definition.TimeBudget, cancellationToken).ConfigureAwait(false);
+            if (answer is ProviderUnavailable skipped && string.Equals(skipped.ReasonCode, ProviderUnavailable.ImageOutOfLimits, StringComparison.Ordinal))
+            {
+                tally.SkipTooBig();   // a retina case until downscaling lands: not a wrong answer, and not timed
+                continue;
+            }
+
             var judgedRight = answer is ProviderDecided decided && string.Equals(decided.Decision, LooksRight, StringComparison.Ordinal);
             tally.Add(string.Equals(item.Expected, LooksRight, StringComparison.Ordinal), judgedRight, clock.GetElapsedTime(start));
         }

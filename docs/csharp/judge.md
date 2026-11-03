@@ -564,7 +564,7 @@ images to Jev: off
 to turn it on: judge config set providers jev-images true
 ```
 
-Missed: `bar (0 broken judged looks-right): missed (2/10)`, exit 1, and with sending on the last line is `to turn it off: judge config set providers jev-images false`. It writes nothing to config.json.
+A case over Jev's size limits (the four retina cases, until downscaling lands) is in neither of Jev's counts; its line ends in `· 4 over its size limits, skipped` before the time. Missed: `bar (0 broken judged looks-right): missed (2/10)`, exit 1, and with sending on the last line is `to turn it off: judge config set providers jev-images false`. It writes nothing to config.json.
 
 TypeSafe data terms (checked 2026-11-03): the [privacy policy](https://typesafe.ai/privacy) (last updated 2025-11-19) says TypeSafe will not train or fine-tune any model on prompts or other Input, where Input covers prompts, data, instructions and other input, so a screenshot sent to Jev is not trained on. It names no fixed retention period, only "as long as reasonably necessary". The [site terms](https://typesafe.ai/terms) (2026-09-19) defer to separate agreements, and the images page of TypeSafe's API docs says nothing on retention.
 

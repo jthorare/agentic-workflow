@@ -15,6 +15,11 @@ internal sealed class ImageCheckTally
 
     public int RightJudgedRight { get; private set; }
 
+    /// <summary>Cases the provider passed over because the image is outside its size limits; in neither count.</summary>
+    public int TooBig { get; private set; }
+
+    public void SkipTooBig() => TooBig++;
+
     public void Add(bool pageIsRight, bool judgedRight, TimeSpan elapsed)
     {
         _elapsed += elapsed;
@@ -35,6 +40,9 @@ internal sealed class ImageCheckTally
         var seconds = (_elapsed / Math.Max(1, Broken + Right)).TotalSeconds.ToString("F1", CultureInfo.InvariantCulture);
         return string.Create(
             CultureInfo.InvariantCulture,
-            $"{label,-12}broken judged looks-right {BrokenJudgedRight}/{Broken} · right pages judged looks-right {RightJudgedRight}/{Right} · {seconds} s per call");
+            $"{label,-12}broken judged looks-right {BrokenJudgedRight}/{Broken} · right pages judged looks-right {RightJudgedRight}/{Right}{Skipped()} · {seconds} s per call");
     }
+
+    private string Skipped() =>
+        TooBig == 0 ? "" : string.Create(CultureInfo.InvariantCulture, $" · {TooBig} over its size limits, skipped");
 }

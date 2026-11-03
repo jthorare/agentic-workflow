@@ -59,6 +59,30 @@ public sealed class CheckImagesTests : IDisposable
     }
 
     [Fact]
+    public async Task CheckImages_counts_a_case_over_jevs_size_limit_as_skipped_not_wrong()
+    {
+        var handler = new RecordingJevHandler(request => JevImages.Choice(
+            request.Parts.Any(p => p.Name != "request" && Encoding.ASCII.GetString(p.Bytes).Contains("broken", StringComparison.Ordinal)) ? "looks-off" : "looks-right"));
+        using var jev = JevImages.Jev(handler);
+        var retina = new ImageCase { Name = "retina-right", Expected = "looks-right", Bytes = ImageBytes.Png(3024, 1964, "retina-right") };
+        var cases = new[] { Case("right-1", "looks-right"), Case("right-2", "looks-right"), Case("broken-1", "looks-off"), Case("broken-2", "looks-off"), retina };
+        var cli = new JudgeCli(_state)
+        {
+            Environment = new Dictionary<string, string>(StringComparer.Ordinal) { ["TYPESAFE_API_KEY"] = JevImages.Key },
+            Providers = [jev, new StubCli()],
+            Overrides = services => services.AddSingleton<IImageCaseSet>(new CaseSet(cases)),
+        };
+
+        var run = await cli.Run("check", "images");
+
+        Assert.Equal((0, ""), (run.ExitCode, run.Stderr));
+        var lines = run.Stdout.Split('\n');
+        Assert.Matches(@"^jev:        broken judged looks-right 0/2 · right pages judged looks-right 2/2 · 1 over its size limits, skipped · \d+(\.\d+)? s per call$", lines[1]);
+        Assert.Matches(@"^claude-cli: broken judged looks-right 0/2 · right pages judged looks-right 3/3 · \d+(\.\d+)? s per call$", lines[2]);
+        Assert.Equal(5, handler.Requests.Count);   // the live call and the four that fit: the retina case never reaches Jev
+    }
+
+    [Fact]
     public async Task CheckImages_stops_without_a_jev_key()
     {
         var cli = new JudgeCli(_state) { Overrides = services => services.AddSingleton<IImageCaseSet>(new CaseSet([Case("right-1", "looks-right")])) };
