@@ -78,5 +78,6 @@ internal sealed class FileBugfixRecords(string directory) : IBugfixRecords
     private static bool Flag(JsonElement element, string name) =>
         element.TryGetProperty(name, out var value) && value.ValueKind == JsonValueKind.True;
 
+    // GetFullPath and the Core normalizer only differ on odd paths, and a miss there ends in kept, never removed.
     private static string Normalize(string path) => path.Length > 1 && Path.IsPathRooted(path) ? Path.GetFullPath(path).TrimEnd('/') : path.Trim();
 }

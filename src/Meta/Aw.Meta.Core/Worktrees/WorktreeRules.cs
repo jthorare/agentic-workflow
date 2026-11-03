@@ -96,10 +96,10 @@ internal static class WorktreeRules
             }
 
             // Rule 7 needs a recorded sweep; without one a live tree on a fresh branch would look unchanged.
-            if (facts.NoPreviousSweep)
+            if (facts.NoPreviousSweep && facts.Discarded is null)
             {
                 reasons.Add("no previous sweep to compare with");
-                if (!facts.HeadMerged && facts.Discarded is null)
+                if (!facts.HeadMerged)
                 {
                     reasons.Add("not merged into origin/main (no pull request)");
                 }
@@ -172,7 +172,7 @@ internal static class WorktreeRules
     // Rules 2 and 4 and the change trigger: nothing uncommitted or untracked beyond build output, no process in it, and (for a worktree that is not a gate tree) nothing changed since the last sweep started.
     private static void Untouched(WorktreeFacts facts, List<string> reasons)
     {
-        if (facts.ChangedSinceSweep && facts.GatePr is null)
+        if (facts.ChangedSinceSweep && facts.GatePr is null && facts.Discarded is null)
         {
             reasons.Add("changed since the last sweep");
         }

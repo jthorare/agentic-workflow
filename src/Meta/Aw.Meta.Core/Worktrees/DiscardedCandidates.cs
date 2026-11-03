@@ -27,10 +27,16 @@ internal static class DiscardedCandidates
             return "no bugfix run names this worktree";
         }
 
-        var here = named.Where(r => r.Branch == entry.Branch && r.Commit == entry.Head).ToList();
-        if (here.Count == 0)
+        var sameCommit = named.Where(r => r.Commit == entry.Head).ToList();
+        if (sameCommit.Count == 0)
         {
             return "HEAD moved past the evaluated commit";
+        }
+
+        var here = sameCommit.Where(r => r.Branch == entry.Branch).ToList();
+        if (here.Count == 0)
+        {
+            return $"the tree is on {entry.Branch}, the candidate was on {sameCommit[0].Branch}";
         }
 
         if (here.Find(static r => r.Resolves) is { } winner)

@@ -51,10 +51,9 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         await File.WriteAllTextAsync(path, JsonSerializer.Serialize(state), TestContext.Current.CancellationToken);
     }
 
-    private async Task<CliResult> SweepTwice(params string[] args)
+    private async Task<CliResult> Sweep(params string[] args)
     {
         _lab.Cli.Clock.SetUtcNow(RealTime.NowOffset.AddHours(1));   // the recorded start must be later than the trees' files
-        _ = await _lab.Cli.Run(["worktree-sweep", .. args]);   // no previous sweep: kept, and it records its start
         return await _lab.Cli.Run(["worktree-sweep", .. args]);
     }
 
@@ -67,7 +66,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         var (loser, loserCommit, winner, winnerCommit) = await Box();
         await LostToC2(loser, loserCommit, winner, winnerCommit);
 
-        var sweep = await SweepTwice("--path", loser, "--discarded");
+        var sweep = await Sweep("--path", loser, "--discarded");
 
         Assert.Equal(0, sweep.Exit);
         Assert.False(Directory.Exists(loser), sweep.Out);
@@ -80,7 +79,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         var (loser, loserCommit, winner, winnerCommit) = await Box();
         await LostToC2(loser, loserCommit, winner, winnerCommit);
 
-        var sweep = await SweepTwice("--path", loser, "--discarded");
+        var sweep = await Sweep("--path", loser, "--discarded");
 
         Assert.True(Directory.Exists(winner), sweep.Out);
         Assert.DoesNotContain(winner, sweep.Out, StringComparison.Ordinal);
@@ -92,7 +91,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         var (loser, loserCommit, winner, winnerCommit) = await Box();
         await LostToC2(loser, loserCommit, winner, winnerCommit);
 
-        var sweep = await SweepTwice("--path", loser);
+        var sweep = await Sweep("--path", loser);
 
         Assert.True(Directory.Exists(loser), sweep.Out);
         Assert.Contains("work not finished", sweep.Out, StringComparison.Ordinal);
@@ -104,7 +103,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         var (loser, loserCommit, winner, winnerCommit) = await Box();
         await LostToC2(loser, loserCommit, winner, winnerCommit);
 
-        var sweep = await SweepTwice("--path", winner, "--discarded");
+        var sweep = await Sweep("--path", winner, "--discarded");
 
         Assert.True(Directory.Exists(winner), sweep.Out);
         Assert.Contains("--discarded: candidate c2 resolved the bug", sweep.Out, StringComparison.Ordinal);
@@ -117,7 +116,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         await LostToC2(loser, loserCommit, winner, winnerCommit);
         await WorktreeLab.CommitLocally(loser, "more.txt");
 
-        var sweep = await SweepTwice("--path", loser, "--discarded");
+        var sweep = await Sweep("--path", loser, "--discarded");
 
         Assert.True(Directory.Exists(loser), sweep.Out);
         Assert.Contains("--discarded: HEAD moved past the evaluated commit", sweep.Out, StringComparison.Ordinal);
@@ -129,7 +128,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         var (loser, loserCommit, winner, winnerCommit) = await Box();
         await State(finished: false, resolvedBy: null, new Candidate("c1", loser, "bugfix/gh-9-a1", loserCommit, Evaluated: true, Resolves: false), new Candidate("c2", winner, "bugfix/gh-9-a2", winnerCommit, Evaluated: false, Resolves: false));
 
-        var sweep = await SweepTwice("--path", loser, "--discarded");
+        var sweep = await Sweep("--path", loser, "--discarded");
 
         Assert.True(Directory.Exists(loser), sweep.Out);
         Assert.Contains("--discarded: the bugfix run is not over", sweep.Out, StringComparison.Ordinal);
@@ -141,7 +140,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         var (loser, loserCommit, winner, winnerCommit) = await Box();
         await State(finished: false, resolvedBy: "c2", new Candidate("c1", loser, "bugfix/gh-9-a1", loserCommit, Evaluated: true, Resolves: false), new Candidate("c2", winner, "bugfix/gh-9-a2", winnerCommit, Evaluated: true, Resolves: true));
 
-        var sweep = await SweepTwice("--path", loser, "--discarded");
+        var sweep = await Sweep("--path", loser, "--discarded");
 
         Assert.False(Directory.Exists(loser), sweep.Out);
     }
@@ -152,7 +151,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         var (loser, loserCommit, winner, winnerCommit) = await Box();
         await State(finished: true, resolvedBy: "c2", new Candidate("c1", loser, "bugfix/gh-9-a1", loserCommit, Evaluated: false, Resolves: false), new Candidate("c2", winner, "bugfix/gh-9-a2", winnerCommit, Evaluated: true, Resolves: true));
 
-        var sweep = await SweepTwice("--path", loser, "--discarded");
+        var sweep = await Sweep("--path", loser, "--discarded");
 
         Assert.True(Directory.Exists(loser), sweep.Out);
         Assert.Contains("--discarded: candidate c1 was never evaluated", sweep.Out, StringComparison.Ordinal);
@@ -163,7 +162,7 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
     {
         var (loser, _, _, _) = await Box();
 
-        var sweep = await SweepTwice("--path", loser, "--discarded");
+        var sweep = await Sweep("--path", loser, "--discarded");
 
         Assert.True(Directory.Exists(loser), sweep.Out);
         Assert.Contains("--discarded: no bugfix run names this worktree", sweep.Out, StringComparison.Ordinal);
@@ -176,10 +175,40 @@ public sealed class WorktreeDiscardedCandidateTests : IDisposable
         await LostToC2(loser, loserCommit, winner, winnerCommit);
         await File.WriteAllTextAsync(Path.Combine(loser, "NOTES.md"), "notes", TestContext.Current.CancellationToken);
 
-        var sweep = await SweepTwice("--path", loser, "--discarded");
+        var sweep = await Sweep("--path", loser, "--discarded");
 
         Assert.True(Directory.Exists(loser), sweep.Out);
         Assert.Contains("NOTES.md", sweep.Out, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_candidate_recorded_on_another_branch_is_kept_with_that_reason()
+    {
+        var (loser, loserCommit, winner, winnerCommit) = await Box();
+        await State(finished: true, resolvedBy: "c2", new Candidate("c1", loser, "bugfix/gh-9-other", loserCommit, Evaluated: true, Resolves: false), new Candidate("c2", winner, "bugfix/gh-9-a2", winnerCommit, Evaluated: true, Resolves: true));
+
+        var sweep = await Sweep("--path", loser, "--discarded");
+
+        Assert.True(Directory.Exists(loser), sweep.Out);
+        Assert.Contains("the tree is on bugfix/gh-9-a1, the candidate was on bugfix/gh-9-other", sweep.Out, StringComparison.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "integration")]
+    public async Task A_path_sweep_does_not_shorten_rule_7_for_other_trees()
+    {
+        var (loser, loserCommit, winner, winnerCommit) = await Box();
+        await LostToC2(loser, loserCommit, winner, winnerCommit);
+        _lab.Cli.Clock.SetUtcNow(RealTime.NowOffset.AddHours(-1));
+        _ = await _lab.Cli.Run("worktree-sweep");   // records its start an hour ago
+        var fresh = Path.Combine(_lab.Root, "ideas-scoping");   // cut from origin/main after that sweep started
+        WorktreeLab.Git(_lab.Repo, "worktree", "add", "--quiet", "-b", "docs/scoping-station", fresh, "origin/main");
+
+        var path = await Sweep("--path", loser, "--discarded");
+        var full = await _lab.Cli.Run("worktree-sweep", "--include-no-pr");
+
+        Assert.False(Directory.Exists(loser), path.Out);
+        Assert.True(Directory.Exists(fresh), full.Out);
+        Assert.Contains("changed since the last sweep", full.Out, StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "integration")]

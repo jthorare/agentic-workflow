@@ -38,14 +38,16 @@ public sealed class DiscardedCandidateRulesTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void A_discarded_candidate_is_still_kept_when_dirty_or_changed_since_the_last_sweep()
+    public void A_discarded_candidate_is_kept_when_dirty_but_not_for_the_sweep_window()
     {
         var dirty = WorktreeRules.Judge(Loser() with { Discarded = "c1", DirtyEntries = ["notes.txt"] });
         var changed = WorktreeRules.Judge(Loser() with { Discarded = "c1", ChangedSinceSweep = true });
+        var first = WorktreeRules.Judge(Loser() with { Discarded = "c1", NoPreviousSweep = true });
 
         Assert.Equal(WorktreeDecision.Kept, dirty.Decision);
-        Assert.Equal(WorktreeDecision.Kept, changed.Decision);
         Assert.DoesNotContain(dirty.Reasons, reason => reason.Contains("work not finished", StringComparison.Ordinal));
+        Assert.Equal(WorktreeDecision.Removable, changed.Decision);
+        Assert.Equal(WorktreeDecision.Removable, first.Decision);
     }
 
     [Fact, Trait("Lane", "unit")]
