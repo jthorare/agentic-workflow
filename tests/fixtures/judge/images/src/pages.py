@@ -20,7 +20,7 @@ p.lead { color: #5a6680; margin: 0 0 32px; }
 .card h2 { font-size: 18px; margin: 0 0 8px; }
 .card .num { font-size: 36px; font-weight: 700; }
 .btn { display: inline-block; padding: 12px 24px; border-radius: 8px; background: #2f6fed; color: #fff;
-       font-weight: 600; border: 0; }
+       font: inherit; font-weight: 600; border: 0; }
 .row { display: flex; gap: 16px; align-items: center; margin-top: 32px; }
 table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #dde1e8; }
 td, th { text-align: left; padding: 12px 16px; border-bottom: 1px solid #eef0f4; }
@@ -51,6 +51,14 @@ TABLE = ("<table><tr><th>Customer</th><th>Amount</th><th>Due</th></tr>"
 FORM = ('<form><label>Company name</label><input value="Northwind Traders"><label>Billing email</label>'
         '<input value="billing@northwind.example"><div class="row"><button class="btn">Save changes</button></div></form>')
 
+ARTICLE = ("<p>Send the invoice the day the work ends, while the customer still remembers what they asked for.</p>"
+           "<p>Put the due date and the amount in the first line of the email, so nobody has to open the PDF to find them.</p>"
+           "<p>Offer a card link next to the bank details. Most customers who pay late are not refusing; they are busy.</p>")
+OTHERS = ("<table><tr><th>Customer</th><th>Amount</th><th>Due</th></tr>"
+          + "".join(f"<tr><td>{c}</td><td>{a}</td><td>{d}</td></tr>" for c, a, d in [
+              ("Litware", "$540", "Dec 2"), ("Adatum", "$1,980", "Dec 5"), ("Proseware", "$75", "Dec 9"),
+              ("Woodgrove", "$3,300", "Dec 14")]) + "</table>")
+
 RIGHT = {
     "dashboard": page("Overview", "Everything due this month at a glance.", DASH),
     "invoices": page("Invoices", "Four invoices are waiting on payment.", TABLE),
@@ -58,8 +66,8 @@ RIGHT = {
     "empty": page("Reports", "No reports yet.", '<div class="card"><h2>Nothing here yet</h2><p>Reports show up after your first paid invoice.</p><button class="btn">Create an invoice</button></div>'),
     "pricing": page("Plans", "Pick the plan that fits.", cards(["Starter", "Team", "Business"], ["$0", "$29", "$99"])),
     "profile": page("Profile", "How others see you.", '<div class="card"><h2>Joan Example</h2><p>Finance lead · Northwind</p><button class="btn">Edit profile</button></div>'),
-    "article": page("Getting paid faster", "Three habits that shorten your payment cycle.", "<p>" + "Send invoices the day work ends. " * 12 + "</p>"),
-    "wide-table": page("Customers", "Everyone you've billed.", TABLE + TABLE),
+    "article": page("Getting paid faster", "Three habits that shorten your payment cycle.", ARTICLE),
+    "wide-table": page("Customers", "Everyone you've billed.", TABLE + '<div style="height:24px"></div>' + OTHERS),
     "two-cards": page("Billing", "Your plan and payment method.", cards(["Plan", "Card"], ["Team", "•••• 4242"])),
     "confirm": page("Invoice sent", "Northwind will get it by email.", '<div class="card"><h2>Sent</h2><p>Invoice #1042 for $1,200.</p><button class="btn">Back to invoices</button></div>'),
 }
@@ -75,7 +83,7 @@ BROKEN = {
     "wrong-color-text": page("Plans", "Pick the plan that fits.", cards(["Starter", "Team", "Business"], ["$0", "$29", "$99"]), ".card{color:#fff;}"),
     "wrong-color-button": page("Invoice sent", "Northwind will get it by email.", '<div class="card"><h2>Sent</h2><p>Invoice #1042 for $1,200.</p><button class="btn">Back to invoices</button></div>', ".btn{background:#fff;color:#fff;border:1px solid #fff;}"),
     "cut-off-grid": page("Billing", "Your plan and payment method.", cards(["Plan", "Card", "Next charge"], ["Team", "•••• 4242", "Dec 1"]), ".grid{width:1600px;grid-template-columns:repeat(3,600px);} body{overflow:hidden;}"),
-    "cut-off-article": page("Getting paid faster", "Three habits that shorten your payment cycle.", "<p>" + "Send invoices the day work ends. " * 12 + "</p>", "p:not(.lead){height:24px;overflow:hidden;}"),
+    "cut-off-article": page("Getting paid faster", "Three habits that shorten your payment cycle.", ARTICLE, "main p:not(.lead){height:14px;overflow:hidden;margin:0 0 12px;}"),
 }
 
 # Rendered at device pixel ratio 2 (3024x1964); render.sh reads this list.
