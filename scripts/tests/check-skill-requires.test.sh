@@ -19,7 +19,7 @@ expect_rc() { if [ "$RC" -eq "$2" ]; then ok "$1 (exit $RC)"; else fail "$1: exi
 expect_out() { if printf '%s\n' "$OUT" | has -E -- "$2"; then ok "$1"; else fail "$1: output lacks /$2/"; printf '%s\n' "$OUT" | sed 's/^/      | /'; fi; }
 
 GATE='[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"'
-OPENING='Every run ends with the [Result block](#result-block), whatever the outcome. Run its gate now, before the first step.'
+OPENING='Every run ends with the [Result block](#result-block), whatever the outcome. Run its gate now, before the first step. Under `AW_RESULT=1` your final reply opens with the `aw-result` block.'
 
 # skill DIR NAME REQUIRES_TEXT|- : a skill with a Result block; "-" writes no requires.yaml
 skill() {
@@ -131,6 +131,16 @@ grep -vF -- '(#result-block)' "$T/skills/lateopen/SKILL.md" > "$T/x" && mv "$T/x
 in_block "$T/skills/lateopen/SKILL.md" "$OPENING"
 run "$T"; expect_rc "the gate pointer only after the first heading fails" 1
 expect_out "late opening reason" 'lateopen/SKILL.md: the opening'
+
+T="$(fixture no-order)"; skill "$T" noorder '{}'
+sed -i 's/ Under `AW_RESULT=1` your final reply opens with the `aw-result` block\.//' "$T/skills/noorder/SKILL.md"
+run "$T"; expect_rc "an opening that runs the gate but never says the reply opens with the block fails" 1
+expect_out "no-order reason" 'noorder/SKILL.md: the opening'
+
+T="$(fixture unswept-slash)"; skill "$T" later '{}'
+mkdir -p "$T/scripts"; printf 'skills/later/\n' > "$T/scripts/check-skill-requires.unswept"
+run "$T"; expect_rc "an unswept entry with a trailing slash fails" 1
+expect_out "trailing slash reason" 'scripts/check-skill-requires.unswept: skills/later/ ends in /'
 
 T="$(fixture unswept)"; skill "$T" later '{}'
 grep -vF -- '(#result-block)' "$T/skills/later/SKILL.md" > "$T/x" && mv "$T/x" "$T/skills/later/SKILL.md"

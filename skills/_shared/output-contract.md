@@ -19,12 +19,12 @@ The eval runner cannot pass `AW_*` variables into the agent's environment, so it
 The gate runs at the start of the run, not when the run reaches the Result block. A skill's last section is easy to never reach: a failed step, a FAIL verdict, a busy lock, a refusal or a question back to the person ends the run first, and a gate that never ran writes no file and prints no block (#2002: 7 of 9 misses). So every skill's opening, the text before its first `## ` heading, carries this line, next to its preamble or preflight:
 
 ```
-Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else.
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 ```
 
-A skill may word it its own way (`ui-evidence` and `verify-desktop` point at a Done checklist that ends with the Result block), but the line keeps the `(#result-block)` link and the words "gate now": `scripts/check-skill-requires.sh` looks for both before the first `## ` heading. Skills not swept yet are listed in `scripts/check-skill-requires.unswept`, and the list only shrinks.
+A skill may word it its own way (`ui-evidence` and `verify-desktop` point at a Done checklist that ends with the Result block), but the line keeps the `(#result-block)` link and the words "gate now" and "opens with": `scripts/check-skill-requires.sh` looks for all three before the first `## ` heading. The reply order lives in the opening as well as here because the agent reads the skill, not this contract. Skills not swept yet are listed in `scripts/check-skill-requires.unswept`, and the list only shrinks.
 
-Every exit is a finished run. Under `AW_RESULT=1`, a run that stops, fails or hands a question back still writes the result file and prints the block. Its `summary` says where it stopped and why, its `artifacts` lists what it did write (`[]` when nothing), and a skill key it could not fill gets the skill's own "not reached" value, or `null` when it has none.
+Every exit is a finished run. Under `AW_RESULT=1`, a run that stops, fails or hands a question back still writes the result file and prints the block. Its `summary` says where it stopped and why, its `artifacts` lists what it did write (`[]` when nothing), and a skill key it could not fill gets the skill's own "not reached" value, or `null` when it has none. `skill`, `artifacts` and `summary` are never `null`.
 
 ## The result file
 
@@ -62,6 +62,6 @@ Under `AW_RESULT=1`, the reply carries the same JSON as one fenced block tagged 
 ```
 ````
 
-- A skill that already prints a JSON tail in every reply (today `rootCause`) keeps printing it always, as an `aw-result` block with `skill`, `artifacts` and `summary` added to its existing keys.
+- A skill that already prints its JSON in every reply (today `rootCause`) keeps printing it always, as an `aw-result` block with `skill`, `artifacts` and `summary` added to its existing keys. It moves to the top of the final reply like every other block; callers pick it by `skill`, never by position (`bugFixOrchestrator` reads `handoff_path` from it).
 - Every other skill prints the block only when the gate printed `AW_RESULT=1`.
 - Order: write the result file, and every other file the run writes, first. The final reply, the message after the last tool call, **opens** with the `aw-result` block, then the prose, then `## Next steps`. The block comes first because it was just written: the agent that saves the file and then writes the prose reply tends to report the file ("I also saved the result file at ...") and leave the block out (#2002). The result file never stands in for the block, and a reply that names the file without the block is unfinished. Callers and graders read only that final reply, so a block printed before a later tool call (a Write, a chained skill) is lost. A skill that chains another (canary to syncDocs, shipRelease to landAndDeploy) opens that reply with two or more blocks: the chained skill's first, the calling skill's last. A caller picks the block whose `skill` is the skill it ran, never by position. A lens's `verdict:` stays the last line of its report file.

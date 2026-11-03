@@ -10,8 +10,9 @@
 #   - every bins name is on PATH or in evals/stubs/bin/ (--skip-bins skips this one: a box without ffmpeg or bun)
 #   - the SKILL.md has exactly one `## Result block` section, holding the exact gate line from skills/_shared/output-contract.md
 #   - a Result block line that puts the `aw-result` block before `## Next steps` also says "final reply" (the block goes in the reply after the last tool call; #1941)
-#   - the opening (everything before the first `## ` heading) has a line that links `(#result-block)` and says "gate now": the gate
-#     runs before the first step, so a run that stops early still ends with the Result block (#2002). Skills listed in
+#   - the opening (everything before the first `## ` heading) has a line that links `(#result-block)` and says "gate now" and
+#     "opens with": the gate runs before the first step, so a run that stops early still ends with the Result block, and the final
+#     reply opens with the aw-result block, so the result file never stands in for it (#2002). Skills listed in
 #     scripts/check-skill-requires.unswept (one skill directory per line, `#` comments) are skipped until they are swept; a listed
 #     skill that already has the opening, or that does not exist, is a finding, so the list only shrinks
 # A skills/ directory without a SKILL.md (_shared, the preamble files) is not a skill.
@@ -62,9 +63,9 @@ requires_lines() {
   ' "$1"
 }
 
-# has_opening FILE: exit 0 when a line before the first `## ` heading links the Result block and says "gate now".
+# has_opening FILE: exit 0 when a line before the first `## ` heading links the Result block and says "gate now" and "opens with".
 has_opening() {
-  awk '/^## / { exit } index($0, "(#result-block)") && index($0, "gate now") { found = 1; exit } END { exit !found }' "$1"
+  awk '/^## / { exit } index($0, "(#result-block)") && index($0, "gate now") && index($0, "opens with") { found = 1; exit } END { exit !found }' "$1"
 }
 
 UNSWEPT=" "
@@ -72,6 +73,9 @@ if [ -f "$UNSWEPT_FILE" ]; then
   while IFS= read -r entry; do
     entry="${entry%%#*}"; entry="${entry%"${entry##*[![:space:]]}"}"; entry="${entry#"${entry%%[![:space:]]*}"}"
     [ -n "$entry" ] || continue
+    case "$entry" in
+      */) finding "$UNSWEPT_FILE" "$entry ends in / (write the skill directory without it)"; continue ;;
+    esac
     if [ ! -f "$entry/SKILL.md" ]; then
       finding "$UNSWEPT_FILE" "$entry has no SKILL.md (drop it from the list)"
     elif has_opening "$entry/SKILL.md"; then
