@@ -33,4 +33,11 @@ test_opt_out_env_skips_the_hook() {
 
 test_installs_a_timed_user_prompt_submit_hook_idempotently_and_keeps_foreign_hooks
 test_opt_out_env_skips_the_hook
+test_installs_image_paths_next_to_the_hook() {
+  local d; d="$(fresh)"
+  install "$d"
+  [ -f "$d/hooks/lib/image-paths.sh" ] || { echo "FAIL: prompt-sort attaches images through lib/image-paths.sh, which must sit next to it"; exit 1; }
+  echo "PASS: test_installs_image_paths_next_to_the_hook"
+}
+test_installs_image_paths_next_to_the_hook
 echo "All install-prompt-sort tests passed."

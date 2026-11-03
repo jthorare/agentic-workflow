@@ -18,4 +18,14 @@ public interface ITraitJudge
     /// <param name="cancellationToken">Cancels the call.</param>
     /// <returns>The answers, or why there are none.</returns>
     public ValueTask<ProviderResult> Ask(JsonNode? state, IReadOnlyList<BatchQuestion> questions, TimeSpan budget, IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Asks one batch that may carry images (an edited PNG or JPEG), best effort: one Jev can't take is dropped, and the result's ImageNotes
+    /// says so, so the caller never judges the file on its name alone. The request's state is redacted before it leaves the machine.
+    /// </summary>
+    /// <param name="request">The state, questions, budget and images.</param>
+    /// <param name="allowed">The --providers / AW_JUDGE_PROVIDERS allowlist, or null for every provider.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The answers, or why there are none.</returns>
+    public ValueTask<ProviderResult> Ask(BatchRequest request, IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken);
 }

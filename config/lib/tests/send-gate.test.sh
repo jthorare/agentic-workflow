@@ -198,4 +198,43 @@ test_aw_judge_child_guard
 test_control_messages_bypass_the_classifier_entirely_f6
 test_an_old_queued_item_is_never_expired
 test_a_lane_message_to_meta_or_the_lead_skips_wake_gating
+# A throwaway git checkout with a screenshot in it (the hooks only attach images under the checkout they run in).
+make_checkout_with_png() {
+  local d; d="$(mktemp -d)"; git -C "$d" init -q; printf '\211PNG\r\n\032\n' > "$d/shot.png"; echo "$d"
+}
+
+# --- judge images (spec 5.2): an existing screenshot named in the message goes to wake-gate as `images` ---
+setup_recording_wake_judge() {
+  local bin_dir; bin_dir="$(mktemp -d)"
+  cat > "$bin_dir/judge" <<EOF
+#!/usr/bin/env bash
+cat > "$bin_dir/wake-input.json"
+echo '{"decision":"send","confidence":0.9,"model":"claude-cli","reason_code":"model","id":"fixed-id"}'
+EOF
+  chmod +x "$bin_dir/judge"
+  echo "$bin_dir"
+}
+
+test_a_screenshot_named_in_the_message_is_sent_to_wake_gate_as_an_image() {
+  local bin_dir repo outbox input
+  bin_dir="$(setup_recording_wake_judge)"; repo="$(make_checkout_with_png)"; outbox="$(mktemp -d)"
+  input="$(jq -nc --arg m "see $repo/shot.png" '{session_id:"s1",agent_type:"builder-a",tool_input:{to:"main",message:$m}}')"
+  ( cd "$repo" && PATH="$bin_dir:$PATH" AW_OUTBOX_DIR="$outbox" bash "$HOOK" <<< "$input" > /dev/null )
+  jq -e --arg p "$repo/shot.png" '.images == [$p] and .imagesBestEffort == true' "$bin_dir/wake-input.json" > /dev/null \
+    || { echo "FAIL: expected wake-gate to be sent images [$repo/shot.png] with imagesBestEffort, got $(cat "$bin_dir/wake-input.json")"; exit 1; }
+  echo "PASS: test_a_screenshot_named_in_the_message_is_sent_to_wake_gate_as_an_image"
+}
+
+# Green today and must stay so: a message that names no image is today's input, byte for byte.
+test_a_message_naming_no_image_keeps_the_wake_gate_input_byte_identical() {
+  local bin_dir outbox
+  bin_dir="$(setup_recording_wake_judge)"; outbox="$(mktemp -d)"
+  PATH="$bin_dir:$PATH" AW_OUTBOX_DIR="$outbox" bash "$HOOK" <<< '{"session_id":"s1","agent_type":"builder-a","tool_input":{"to":"main","message":"done: PR #100 merged"}}' > /dev/null
+  [ "$(cat "$bin_dir/wake-input.json")" = '{"text":"done: PR #100 merged","senderKind":"subagent"}' ] \
+    || { echo "FAIL: a call without images must be today's input, got $(cat "$bin_dir/wake-input.json")"; exit 1; }
+  echo "PASS: test_a_message_naming_no_image_keeps_the_wake_gate_input_byte_identical"
+}
+
+test_a_message_naming_no_image_keeps_the_wake_gate_input_byte_identical
+test_a_screenshot_named_in_the_message_is_sent_to_wake_gate_as_an_image
 echo "All send-gate tests passed."
