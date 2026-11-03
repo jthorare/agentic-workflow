@@ -153,7 +153,7 @@ node scripts/check-rules.mjs [--json]   # Every §4b rule has a record; every ac
 scripts/check-env-example.sh            # Every env var the code reads is in .env.example (ENV-EXAMPLE-001..004); exit 1 on drift
 scripts/check-skills-toolkit.sh           # skills/, bootstrap/ and config/voice/ name the toolkit as ${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit} and the per-repo output dir as $AW_DIR (SKILLS-TOOLKIT-001, -002); exit 1 on drift, file:line per hit
 scripts/check-skills-git-mode.sh        # every skill that makes a worktree, branch, commit, PR or PR comment reads AW_GIT_MODE and refuses the write under `readonly` (skill-revamp spec §2.3); exit 1 on drift, file:line per hit
-scripts/check-skill-requires.sh [--skip-bins]   # every skill has a requires.yaml sidecar (bins, agents, mcp, skills; {} for none) naming things that exist, and exactly one Result block, holding the AW_RESULT gate line (output contract: skills/_shared/output-contract.md); exit 1 with file: reason per finding, 2 usage; --skip-bins on a box without every binary
+scripts/check-skill-requires.sh [--skip-bins]   # every skill has a requires.yaml sidecar (bins, agents, mcp, skills; {} for none) naming things that exist, and exactly one Result block, holding the AW_RESULT gate line, and an opening that runs that gate before the first step (skills in scripts/check-skill-requires.unswept are skipped until swept; output contract: skills/_shared/output-contract.md); exit 1 with file: reason per finding, 2 usage; --skip-bins on a box without every binary
 scripts/skills-toolkit-rewrite.sh [--dry-run]   # The scripted fix for that drift; idempotent, so a skill PR in flight rebases by re-running it
 # .devcontainer/ is for humans only, never the agent sandbox (no Docker-in-Docker); see docs/devcontainer.md
 # Label scheme: .github/labels.yml (type:, area:, size:, ring:). Applying it to the repo is an owner settings change; until then
@@ -177,7 +177,7 @@ bash scripts/tests/check-profile-doc.test.sh # docs/csharp/sindri-profile.md nam
 bash scripts/tests/scaffold.test.sh
 bash scripts/tests/check-env-example.test.sh
 bash scripts/tests/check-skills-toolkit.test.sh   # scripts/check-skills-toolkit.sh and scripts/skills-toolkit-rewrite.sh on fixture trees: a bare toolkit path or a hand-spelled per-repo path fails with file:line, the rewrite is idempotent
-bash scripts/tests/check-skill-requires.test.sh   # scripts/check-skill-requires.sh on fixture skills: good, missing sidecar, empty file, unknown key, unknown agent, unknown mcp, unknown bin (and a stub), missing or misplaced gate line, two Result blocks, usage errors, then the real tree
+bash scripts/tests/check-skill-requires.test.sh   # scripts/check-skill-requires.sh on fixture skills: good, missing sidecar, empty file, unknown key, unknown agent, unknown mcp, unknown bin (and a stub), missing or misplaced gate line, two Result blocks, an opening that never runs the gate or runs it after the first heading, the unswept list (skipped, stale and unknown entries), usage errors, then the real tree
 bash scripts/tests/binaries-lock.test.sh
 bash scripts/tests/images-lock.test.sh
 bash scripts/tests/code-index-lock.test.sh
@@ -191,6 +191,7 @@ bash scripts/tests/probe-linear-projects.test.sh   # scripts/probe-linear-projec
 bash scripts/tests/run-test-guard.test.sh   # scripts/run-test-guard.sh (the check wrapper for the TS bugfix-state, #1130): exit code passes through, a timeout exits 124 and the EXIT trap runs, a daemonized child is gone after a normal exit and after a timeout, usage errors exit 2 (Linux only)
 bash scripts/tests/skill-lock.test.sh   # skills/_shared/skill-lock.sh called the way the skills document it (`LOCK_NAME=browser source skill-lock.sh; acquire_lock`, then release_lock): exit 0, the lock named, the file gone after release, and the default name
 bash scripts/tests/skill-lock-recovery.test.sh   # skill-lock.sh after a failed or abandoned call (#1989): an abandoned lock is taken over, a failed acquire leaves the holder's pid and none of its own, the next acquire gets the lock
+bash scripts/tests/skill-lock-sessions.test.sh   # skill-lock.sh called the way skills call it (#1991): acquire and release in separate Bash calls of one session, another session's acquire waits while the lock is held, a session that ends while holding it is taken over
 bash scripts/tests/find-duplicate-skills.test.sh
 bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh: every skill with a git/gh write command has a "## Git mode" section with ${AW_GIT_MODE:-full}; a planted skill without it fails naming file:line
 bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, merge, rebase, cherry-pick, revert, am, tag <name>, branch <name>, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line
