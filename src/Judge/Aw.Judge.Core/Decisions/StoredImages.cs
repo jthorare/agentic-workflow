@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using Aw.Judge.Core.Evaluation;
 
 namespace Aw.Judge.Core.Decisions;
 
@@ -36,8 +35,23 @@ internal static class StoredImages
             ? [.. list.Select(item => item is JsonValue value && value.TryGetValue<string>(out var text) ? text : null).OfType<string>()]
             : [];
 
-    private static JsonObject? Parse(DecisionRecord decision) =>
-        decision.Details is { } details && InputJson.TryParse(details.InputJson, out var node) ? node as JsonObject : null;
+    // Not Evaluation's InputJson: Decisions sits below Evaluation, and a stored input was written as valid JSON (or capped to a valid stub).
+    private static JsonObject? Parse(DecisionRecord decision)
+    {
+        if (decision.Details is not { } details)
+        {
+            return null;
+        }
+
+        try
+        {
+            return JsonNode.Parse(details.InputJson) as JsonObject;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
 
     private static Image? Read(JsonObject node) =>
         Text(node, "path") is { } path && Text(node, "sha256") is { } sha && Number<long>(node, "bytes") is { } size && Number<int>(node, "width") is { } w && Number<int>(node, "height") is { } h
