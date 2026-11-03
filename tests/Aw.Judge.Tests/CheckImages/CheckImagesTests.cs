@@ -58,6 +58,32 @@ public sealed class CheckImagesTests : IDisposable
         Assert.All(handler.Requests, request => Assert.Equal("true", request.ImagesHeader));
     }
 
+    [Fact]
+    public async Task CheckImages_stops_without_a_jev_key()
+    {
+        var cli = new JudgeCli(_state) { Overrides = services => services.AddSingleton<IImageCaseSet>(new CaseSet([Case("right-1", "looks-right")])) };
+
+        var run = await cli.Run("check", "images");
+
+        Assert.Equal((1, "no Jev key: judge check images needs one\n", ""), (run.ExitCode, run.Stdout, run.Stderr));
+    }
+
+    [Fact]
+    public async Task CheckImages_stops_when_no_case_is_embedded()
+    {
+        using var jev = JevImages.Jev(new RecordingJevHandler(_ => JevImages.Choice("looks-right")));
+        var cli = new JudgeCli(_state)
+        {
+            Environment = new Dictionary<string, string>(StringComparer.Ordinal) { ["TYPESAFE_API_KEY"] = JevImages.Key },
+            Providers = [jev, new StubCli()],
+            Overrides = services => services.AddSingleton<IImageCaseSet>(new CaseSet([])),
+        };
+
+        var run = await cli.Run("check", "images");
+
+        Assert.Equal((1, "no image cases embedded\n", ""), (run.ExitCode, run.Stdout, run.Stderr));
+    }
+
     private static ImageCase Case(string name, string expected) => new() { Name = name, Expected = expected, Bytes = ImageBytes.Png(400, 300, name) };
 
     private sealed class CaseSet(IReadOnlyList<ImageCase> cases) : IImageCaseSet

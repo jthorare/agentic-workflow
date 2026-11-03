@@ -1,12 +1,14 @@
-# Image cases for `judge check images`
+# Visual-critique cases for `judge check images`
 
-The labeled screenshots `judge check images` scores Jev and the agent CLIs on. Every `*.png` here is embedded in the `judge` binary
-(`src/Judge/Aw.Judge.Infrastructure/Aw.Judge.Infrastructure.csproj`), so the installed judge does not need a checkout.
+Twenty synthetic screenshots, embedded in the judge binary (`Aw.Judge.Infrastructure.csproj`, `judge-images/*.png`). A file named
+`<name>.<label>.png` is the case `name` that visual-critique should call `<label>`:
 
-Layout: one file per case, `<name>.<label>.png`, where `<label>` is what `visual-critique` should answer:
+- `looks-right`: 10 pages that render as designed.
+- `looks-off`: 10 pages with one visible break each (clipped, cut off, overlapping, missing or wrong-colored).
 
-- `home-plain.looks-right.png`: a page that looks right.
-- `home-overlap.looks-off.png`: a page with a visible break (overlap, clipped text, missing element, wrong color, cut-off content).
+`dashboard`, `invoices`, `overlap-cards` and `wrong-color-button` are rendered at device pixel ratio 2 (3024x1964). The rest are
+rendered at 1512x982, ui-evidence's default viewport.
 
-The cases are rendered from small synthetic HTML pages, never captures of a real app. With no `.png` here the command prints
-`no image cases embedded` and exits 1. Each case is 280 to 1568 px a side: until downscaling lands, Jev does not take a bigger one.
+To render them again, run `bash src/render.sh <out-dir>`. `src/pages.py` writes the HTML and headless Chrome screenshots it
+(`CHROME` overrides the browser). A new case is a new page in `pages.py`. Keep the 10 / 10 split, since the bar in
+`docs/csharp/judge.md` counts broken pages judged `looks-right`.
