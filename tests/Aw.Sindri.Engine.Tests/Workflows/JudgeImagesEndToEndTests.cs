@@ -27,7 +27,9 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
 {
     private const string RecipeId = "workflow.t-judge-images";
     private const string Repo = "app";
-    private static readonly string[] _variables = ["AW_STATE_DIR", "AW_JUDGE_JEV_URL", "AW_JUDGE_JEV_IMAGES", "TYPESAFE_API_KEY", "AW_JUDGE_PROVIDERS"];
+    private static readonly string[] _variables = ["AW_STATE_DIR", "AW_JUDGE_JEV_URL", "AW_JUDGE_JEV_IMAGES", "TYPESAFE_API_KEY", "AW_JUDGE_PROVIDERS", "PATH"];
+
+    private static readonly string[] _agentClis = ["claude", "codex", "cursor-agent"];
 
     private readonly WorkflowsHarness _harness = new();
     private readonly Dictionary<string, string?> _saved = _variables.ToDictionary(static v => v, static v => Environment.GetEnvironmentVariable(v), StringComparer.Ordinal);
@@ -95,7 +97,9 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
         Environment.SetEnvironmentVariable("AW_JUDGE_JEV_URL", jev.Url);
         Environment.SetEnvironmentVariable("AW_JUDGE_JEV_IMAGES", "1");
         Environment.SetEnvironmentVariable("TYPESAFE_API_KEY", "jev-stub-key");
-        Environment.SetEnvironmentVariable("AW_JUDGE_PROVIDERS", value: null);   // the Step names its own list
+        Environment.SetEnvironmentVariable("AW_JUDGE_PROVIDERS", value: null);   // the Step names its own list: the default one, Jev first
+        Environment.SetEnvironmentVariable("PATH", "/usr/bin:/bin");   // a Jev miss must never reach a real model: no agent CLI is on this path
+        AssertNoAgentCli();
         _harness.Replacing = services => services.Replace(ServiceDescriptor.Singleton<IRepoCheckouts>(new InMemoryRepoCheckouts().With(Repo, checkout)));
         _harness.Recipe(RecipeId, Recipe(), _harness.Replacing);
     }
@@ -137,6 +141,19 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
         var error = await process.StandardError.ReadToEndAsync(limit.Token);
         await process.WaitForExitAsync(limit.Token);
         return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"exit {process.ExitCode}: {output} {error}").ReplaceLineEndings(" ");
+    }
+
+    // Fail fast: none of the agent CLIs the default list falls back to is reachable from the PATH the judge child inherits.
+    private static void AssertNoAgentCli()
+    {
+        var path = Environment.GetEnvironmentVariable("PATH") ?? "";
+        var found = path.Split(':', StringSplitOptions.RemoveEmptyEntries)
+            .SelectMany(static dir => _agentClis.Select(name => Path.Combine(dir, name)))
+            .FirstOrDefault(static file => File.Exists(file));
+        if (found is not null)
+        {
+            Assert.Fail($"an agent CLI is on the test's PATH: {found} (PATH={path})");
+        }
     }
 
     // The decision the Step wrote ('fact:decision' is stored in the home's fact store): the provider that answered.
@@ -195,7 +212,6 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
             "        prompt: \"Which evidence proves this change works?\"",
             "        facts: [fact:change]",
             "        images: \"fact:frames\"",
-            "        providers: [jev]",   // only the recording Jev: the default list is the agent CLIs, which a test must never reach
             "        choices:",
             "          - \"ui: what a user sees changed\"",
             "          - \"api: a contract changed\"",
