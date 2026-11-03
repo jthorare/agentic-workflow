@@ -4,7 +4,7 @@
 
 Agentic Workflow (repo: `agentic-workflow`) is a portable, provider-agnostic workflow toolkit for AI coding agents. It supports **Claude Code**, **Codex**, and **Cursor** as equal hosts. The canonical core has these parts:
 
-- 55 native skills spanning the full development lifecycle (planning, design, review, debugging, QA, shipping, retrospectives)
+- 56 native skills spanning the full development lifecycle (planning, design, review, debugging, QA, shipping, retrospectives)
 - a documentation bootstrapper skill
 - canonical safety hooks
 - the C# binaries: `judge` and the other tool ports, and Sindri (control plane, workflow engine, context engine), published by `scripts/install-cs.sh`
@@ -177,6 +177,7 @@ agentic-workflow/
 │   ├── design-mockup/                   # /design-mockup — platform dispatcher (routes to -web or -ios)
 │   ├── design-mockup-web/               # /design-mockup web — generate HTML mockup using design language
 │   ├── design-mockup-ios/               # /design-mockup ios — generate SwiftUI mockup using design language
+│   ├── clickable-prototype/             # /clickable-prototype — 2-3 live, clickable design options inside the real running app (local only, never pushed)
 │   ├── design-implement/                # /design-implement — platform dispatcher (routes to -web or -ios)
 │   ├── design-implement-web/            # /design-implement web — generate React/Next.js production code from mockup
 │   ├── design-implement-ios/            # /design-implement ios — generate SwiftUI production code from mockup
