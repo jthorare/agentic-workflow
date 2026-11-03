@@ -88,7 +88,7 @@ public sealed partial class QuestionEvaluator
                 RulesOpinion = settlement.RulesOpinion,
                 Agreement = settlement.Agreement,
                 SessionId = run.SessionId,
-                Images = run.ReadImages.Count == 0 ? null : new DecisionImages(run.ReadImages, settlement.SentImages ?? []),
+                SentImages = ScaledOnly(run.ReadImages, settlement.SentImages),
             },
         };
         var written = await log.Record(decision, cancellationToken).ConfigureAwait(false);
@@ -96,6 +96,18 @@ public sealed partial class QuestionEvaluator
         {
             await Fail(question.Name, settlement.ProviderColumn, EvaluationReasons.DecisionWriteFailed, cancellationToken).ConfigureAwait(false);
         }
+    }
+
+    // What was sent for each image that went smaller than it was read; null when nothing was (or no provider sent images).
+    private static List<Images.ImageSize?>? ScaledOnly(IReadOnlyList<Images.ImageSize> read, IReadOnlyList<Images.ImageSize>? sent)
+    {
+        if (sent is null || sent.Count != read.Count)
+        {
+            return null;
+        }
+
+        var scaled = read.Select((size, i) => sent[i] == size ? null : sent[i]).ToList();
+        return scaled.Exists(static size => size is not null) ? scaled : null;
     }
 
     // The model's reasons, redacted then capped like the input; null when the answer carried none.

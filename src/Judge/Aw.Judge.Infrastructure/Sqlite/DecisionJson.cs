@@ -1,6 +1,7 @@
 using System.Text;
 using System.Text.Json;
 using Aw.Judge.Core.Decisions;
+using Aw.Judge.Core.Images;
 using Aw.Kernel.Json;
 
 namespace Aw.Judge.Infrastructure.Sqlite;
@@ -26,9 +27,9 @@ internal sealed class DecisionJson(JsonSerializerOptions json)
 
     internal IReadOnlyList<string>? Reasons(string? text) => text is null ? null : Read<IReadOnlyList<string>>(text, "reasons");
 
-    internal string? Images(DecisionImages? images) => images is null ? null : Write(images);
+    internal string? SentImages(IReadOnlyList<ImageSize?>? sent) => sent is null ? null : Write(sent);
 
-    internal DecisionImages? Images(string? text) => text is null ? null : Read<DecisionImages>(text, "images");
+    internal IReadOnlyList<ImageSize?>? SentImages(string? text) => text is null ? null : Read<IReadOnlyList<ImageSize?>>(text, "sent_images");
 
     private string Write<T>(T value) => Encoding.UTF8.GetString(AwJson.Serialize(value, json));
 

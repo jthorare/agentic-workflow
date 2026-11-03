@@ -18,21 +18,19 @@ public static class JevSkipNotes
             .Select(skip => $"jev skipped: {Words(skip.Code)}{next}")];
     }
 
-    // Jev was sent an image smaller than the one read: 'image 1 3024x1964 -> sent to jev as 1568x1018'.
+    // Jev was sent an image smaller than the one read: 'image 1 -> sent to jev as 1568x1018'.
     private static IEnumerable<string> Scaled(DecisionRecord decision)
     {
-        if (decision.Details?.Images is not { } images || !string.Equals(decision.Provider, ProviderNames.Name(ProviderName.Jev), StringComparison.Ordinal))
+        if (decision.Details?.SentImages is not { } sent || !string.Equals(decision.Provider, ProviderNames.Name(ProviderName.Jev), StringComparison.Ordinal))
         {
             yield break;
         }
 
-        for (var i = 0; i < images.Sent.Count && i < images.Read.Count; i++)
+        for (var i = 0; i < sent.Count; i++)
         {
-            if (images.Sent[i] != images.Read[i])
+            if (sent[i] is { } size)
             {
-                yield return string.Create(
-                    System.Globalization.CultureInfo.InvariantCulture,
-                    $"image {i + 1} {images.Read[i].Width}x{images.Read[i].Height} -> sent to jev as {images.Sent[i].Width}x{images.Sent[i].Height}");
+                yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"image {i + 1} -> sent to jev as {size.Width}x{size.Height}");
             }
         }
     }

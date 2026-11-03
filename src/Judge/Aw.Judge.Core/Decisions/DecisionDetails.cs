@@ -23,8 +23,11 @@ public sealed record DecisionDetails
     /// <summary>How the rules' opinion compared with the decision.</summary>
     public Agreement? Agreement { get; init; }
 
-    /// <summary>The call's image sizes as read and as sent, when the call had images; null otherwise.</summary>
-    public DecisionImages? Images { get; init; }
+    /// <summary>
+    /// The size Jev was sent for each image of the call, null for an image sent as read; null when the call had no images or nothing was
+    /// scaled. The images' own sizes are in the stored input, not here.
+    /// </summary>
+    public IReadOnlyList<Aw.Judge.Core.Images.ImageSize?>? SentImages { get; init; }
 
     /// <summary>The session the question came from, when known.</summary>
     public SessionId? SessionId { get; init; }
