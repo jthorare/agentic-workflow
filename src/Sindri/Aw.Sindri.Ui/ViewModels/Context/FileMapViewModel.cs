@@ -14,6 +14,7 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
     private string _current = string.Empty;
     private int _generation;
     private int _filterVersion;
+    private int _filterRuns;
     private LazyFileRows _all = new(entries: [], symbols: null);
     private FileMapEntry[] _entries = [];
     private List<FileSymbolsEntry> _symbolFiles = [];
@@ -35,7 +36,7 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
     internal int Loaded => _entries.Length;
 
     /// <summary>How many filter runs have finished and show their rows (a burst of keystrokes runs it once).</summary>
-    internal int FilterRuns { get; private set; }
+    internal int FilterRuns => Volatile.Read(ref _filterRuns);
 
     /// <summary>What the stage reads through.</summary>
     internal ContextPorts Ports { get; } = ports;

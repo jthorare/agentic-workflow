@@ -119,8 +119,9 @@ internal sealed partial class FileMapViewModel
         if (version == _filterVersion && ReferenceEquals(all, _all))
         {
             // Count the run only once its rows show: a reader that sees FilterRuns go up must never read the old list (#2008).
+            // The increment is a full fence, so on arm64 too the Rows store is visible before the new count.
             Rows = narrowed;
-            FilterRuns++;
+            _ = Interlocked.Increment(ref _filterRuns);
         }
     }
 }
