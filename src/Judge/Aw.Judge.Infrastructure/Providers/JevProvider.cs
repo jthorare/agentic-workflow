@@ -26,7 +26,8 @@ namespace Aw.Judge.Infrastructure.Providers;
 /// <param name="http">Sends the request (owned: disposed with the provider).</param>
 /// <param name="secrets">Reads the API key.</param>
 /// <param name="redactor">Strips secrets from the input before it leaves the machine.</param>
-internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor) : IModelProvider, IDisposable
+/// <param name="scaler">Shrinks an image too big for Jev before it is sent; null sends images as they are.</param>
+internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor, IImageScaler? scaler = null) : IModelProvider, IDisposable
 {
     /// <summary>The model.</summary>
     public const string Model = Core.Batching.JevModel.Id;
@@ -47,6 +48,9 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
 
     private static readonly Uri _endpoint = new("https://api.typesafe.ai/v1/systemone");
 
+    /// <summary>Shrinks an image too big for Jev before it is sent; null sends images as they are.</summary>
+    internal IImageScaler? Scaler { get; } = scaler;
+
     /// <inheritdoc />
     public ProviderName Name => ProviderName.Jev;
 
@@ -63,6 +67,14 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
             return refused;
         }
 
+        // An image too big for Jev is shrunk first (once per image per call); one that still can't be sent is the CLIs' to read.
+        if (Fitted(question.Images) is not { } sent)
+        {
+            return new ProviderUnavailable(ProviderUnavailable.ImageOutOfLimits);
+        }
+
+        question = question with { Images = sent };
+
         // The key read is inside the budget: with no key in the environment it asks the keychain, which can sit on its
         // unlock prompt, and that wait must end at the budget like the call itself.
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -77,13 +89,7 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
             var cap = question.InputCapChars ?? ProvidersConfig.DefaultInputCapChars;
             using var request = Request(question, input, cap, key);
             using var response = await http.SendAsync(request, deadline.Token).ConfigureAwait(false);
-            if (!response.IsSuccessStatusCode)
-            {
-                return Rejected(question, response.StatusCode);
-            }
-
-            var body = await response.Content.ReadAsByteArrayAsync(deadline.Token).ConfigureAwait(false);
-            return Read(body, question);
+            return await Answer(response, question, sent, deadline.Token).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (deadline.IsCancellationRequested && !cancellationToken.IsCancellationRequested)
         {
@@ -96,12 +102,43 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
     }
 
     // What Jev can't take, decided before anything is read or sent: too many options, a question that needs reasons (Jev only
-    // classifies) unless the question lets Jev settle it anyway (visual-critique: a page that looks right needs none), or an image outside its limits.
+    // classifies) unless the question lets Jev settle it anyway (visual-critique: a page that looks right needs none).
     private static ProviderResult? Refused(QuestionRef question) =>
         question.Outputs.Count > MaxOptions ? new ProviderErrored(ProviderReasons.TooManyOptions)
         : !question.JevMaySettle && question.ExtraProperties?.ContainsKey(ResolutionCheckQuestion.Reasons) == true ? new ProviderUnavailable(ProviderReasons.CannotExplain)
-        : question.Images.Any(image => !JevImageLimits.Fits(image)) ? new ProviderUnavailable(ProviderUnavailable.ImageOutOfLimits)
         : null;
+
+    // The answer, with the sizes of the images that were sent when the call had any.
+    private static async ValueTask<ProviderResult> Answer(HttpResponseMessage response, QuestionRef question, List<ImageAttachment> sent, CancellationToken cancellationToken)
+    {
+        if (!response.IsSuccessStatusCode)
+        {
+            return Rejected(question, response.StatusCode);
+        }
+
+        var answer = Read(await response.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false), question);
+        return answer is ProviderDecided decided && sent.Count > 0
+            ? decided with { SentImages = [.. sent.Select(static image => new ImageSize(image.Width, image.Height))] }
+            : answer;
+    }
+
+    // The images as they will be sent: fitted by the scaler, or as read when there is none and they fit. Null when one can't be sent.
+    private List<ImageAttachment>? Fitted(IReadOnlyList<ImageAttachment> images)
+    {
+        List<ImageAttachment> fitted = [];
+        foreach (var image in images)
+        {
+            var sendable = Scaler is { } scale ? scale.Fit(image, JevLimits.Default) : JevImageLimits.Fits(image) ? image : null;
+            if (sendable is null)
+            {
+                return null;
+            }
+
+            fitted.Add(sendable);
+        }
+
+        return fitted;
+    }
 
     // A non-success status is errored ('http-NNN'); a 413 on a call with images says the images were too large, for the CLIs to take.
     private static ProviderResult Rejected(QuestionRef question, HttpStatusCode status) =>
