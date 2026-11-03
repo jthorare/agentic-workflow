@@ -22,6 +22,8 @@ Every step below is an `aw-meta` call. Don't improvise a step the CLI has a comm
 Needs Claude Code: lanes talk to you through **Message a running agent** across sessions, and the hooks that keep you honest are
 Claude Code hooks.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## The rule that runs everything: obligations
 
 Every message a lane sends you is recorded (the Stop hook reads it from your transcript) and opens an **obligation**:

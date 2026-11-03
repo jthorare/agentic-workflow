@@ -22,6 +22,8 @@ Detects whether this is a web or iOS project and delegates to the appropriate de
 > - Web: `/design-evolve-web <url>`
 > - iOS: `/design-evolve-ios <path/to/Theme.swift>`
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Argument-Shape Routing
 
 The argument shape usually decides the platform — validate it before any project detection:

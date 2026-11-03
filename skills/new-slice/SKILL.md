@@ -15,6 +15,8 @@ specifies (that file is the contract; this skill drives its generator, `scripts/
 it encodes: **test (with compiling stubs) → service → endpoint or CLI command → registration.** It leaves exactly one
 new red test; everything else stays green.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## 1. Collect the inputs
 
 Take what the arguments give, then **Ask the user** for every input still missing.
