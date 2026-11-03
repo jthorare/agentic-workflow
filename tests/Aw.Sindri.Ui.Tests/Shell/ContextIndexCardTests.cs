@@ -109,6 +109,58 @@ public sealed class ContextIndexCardTests
         _ = Assert.Single(card.Lines);
     }
 
+    [Fact]
+    public async Task A_store_warning_shows_its_detail_and_fix_and_needs_a_look()
+    {
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
+            $$$"""{"sources":[{{{Source("github", "running", 200)}}}],"store":{"state":"warn","detail":"context.db's log is 13.2 GB, 5.5x the 2.4 GB database: a long-running reader keeps it from resetting","fix":"restart Sindri (sindri stop, then sindri) to drop old readers; the log resets at the next checkpoint"}}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal(
+            [
+                "Store: context.db's log is 13.2 GB, 5.5x the 2.4 GB database: a long-running reader keeps it from resetting",
+                "Fix: restart Sindri (sindri stop, then sindri) to drop old readers; the log resets at the next checkpoint",
+            ],
+            card.Lines.TakeLast(2).Select(l => l.Text),
+            StringComparer.Ordinal);
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
+    }
+
+    [Fact]
+    public async Task A_store_that_cannot_be_read_shows_its_code_and_fix_and_needs_a_look()
+    {
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
+            $$$"""{"sources":[{{{Source("github", "running", 200)}}}],"store":{"state":"fail","detail":"SND-CONTEXT-004: context.db can't be read","fix":"check $AW_SINDRI_HOME/context permissions"}}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal(
+            [
+                "Store: SND-CONTEXT-004: context.db can't be read",
+                "Fix: check $AW_SINDRI_HOME/context permissions",
+            ],
+            card.Lines.TakeLast(2).Select(l => l.Text),
+            StringComparer.Ordinal);
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
+    }
+
+    [Fact]
+    public async Task A_fine_store_is_one_quiet_line_and_stays_ok()
+    {
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
+            $$$"""{"sources":[{{{Source("github", "running", 200)}}}],"store":{"state":"ok","detail":"context.db 2.4 GB, its log 12.0 MB","fix":null}}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal("Store: context.db 2.4 GB, its log 12.0 MB", card.Lines[^1].Text);
+        Assert.DoesNotContain(card.Lines, l => l.Text.StartsWith("Fix:", StringComparison.Ordinal));
+        Assert.Equal(Labels.CodeIndexOk, card.Word);
+    }
+
     private async Task<ContextIndexCardViewModel> ReadWithConcepts(string concepts, params string[] sources)
     {
         _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK, $$"""{"sources":[{{string.Join(',', sources)}}],"concepts":{{concepts}}}""");
