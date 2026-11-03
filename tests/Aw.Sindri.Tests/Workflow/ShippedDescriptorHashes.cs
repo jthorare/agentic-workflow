@@ -60,7 +60,7 @@ internal static class ShippedDescriptorHashes
         ["step.interview.apply"] = "sha256:6b0c46e0dc8b016d3413f24b8fef52ab8a67173c5e9f6d7cb3e801d7a099ed9d",
         ["step.interview.questions"] = "sha256:7f66c41ee6dd95b683d37f9de7d64a089e6a316ee4028636c1dfc1d0a780ad08",
         ["step.interview.record"] = "sha256:fd0e7dfb21b08317f8b98dd809927da7b37fd9029588e5cf3780dcb773ec7e6e",
-        ["step.judge.choose"] = "sha256:7e172d1a423e48ffc9c053c3a5d4ff4edfa5753518e339170a73c685f726b2a6",
+        ["step.judge.choose"] = "sha256:762759ee47f6ab3f4fd9deccaab7e2b1050780070b74861262a57a8cff8589eb",
         ["step.lens.log"] = "sha256:2dfc381ac91d3ab17be3a72d355ac5b303882ea9058e3b3d847efbfb2b37ec6f",
         ["step.lens.round"] = "sha256:8e31f7aaa9519e250a145cb37f10aa61bc45746e857e1a7ad7bd0c6358ba8f3b",
         ["step.lens.run"] = "sha256:6e230ca3cacbeb875be8c69b76173dd33308c581c2e98d87818a9ae5f3121855",

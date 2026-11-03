@@ -33,4 +33,13 @@ public sealed record StepRun(
     long? DurationMs,
     string? Outcome,
     int? Tokens,
-    string? Actor);
+    string? Actor)
+{
+    /// <summary>How many images a judge choice looked at (images spec 5.1); null for a run that had none. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ImageCount { get; init; }
+
+    /// <summary>How many images a judge choice left out; null when none were. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ImagesDropped { get; init; }
+}
