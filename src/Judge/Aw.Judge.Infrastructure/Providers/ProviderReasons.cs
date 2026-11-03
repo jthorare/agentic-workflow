@@ -26,6 +26,9 @@ internal static class ProviderReasons
     /// <summary>Unavailable: Jev couldn't be reached (offline, DNS, refused).</summary>
     public const string NetworkError = "network-error";
 
+    /// <summary>Errored: the directory the CLI reads the question's images from couldn't be written.</summary>
+    public const string ImageWorkspace = "image-workspace";
+
     /// <summary>Errored: the CLI's stdout isn't its output envelope.</summary>
     public const string UnparseableOutput = "unparseable-output";
 

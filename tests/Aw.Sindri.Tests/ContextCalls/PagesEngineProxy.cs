@@ -52,12 +52,19 @@ public class PagesEngineProxy : DispatchProxy
                 return new ValueTask<Result<MapHealth>>(new MapHealth("context:pages", MapHealthState.Ok, "no pages named", string.Empty));
             case nameof(IContextEngine.CheckMap):
                 return new ValueTask<Result<MapHealth>>(new MapHealth("context:map", MapHealthState.Ok, "ok", string.Empty));
-            case nameof(IContextEngine.CheckRetention):
-                return new ValueTask<Result<MapHealth>>(new MapHealth("context:retention", MapHealthState.Ok, "ok", string.Empty));
             case nameof(IContextEngine.MapStatus):
                 return new ValueTask<Result<MapStatusView>>(Context.Core.ContextErrors.NoMap.With("no map yet"));
             default:
-                throw new NotSupportedException(targetMethod?.Name);
+                return StoreCall(targetMethod?.Name);
         }
     }
+
+    /// <summary>The store's own calls (doctor rows and upkeep): all quiet.</summary>
+    private static object StoreCall(string? name) => name switch
+    {
+        nameof(IContextEngine.CheckRetention) => new ValueTask<Result<MapHealth>>(new MapHealth("context:retention", MapHealthState.Ok, "ok", string.Empty)),
+        nameof(IContextEngine.CheckStore) => new ValueTask<Result<MapHealth>>(new MapHealth("context:store", MapHealthState.Ok, "ok", string.Empty)),
+        nameof(IContextEngine.Upkeep) => new ValueTask<Result<StoreUpkeep?>>(Results.Success<StoreUpkeep?>(value: null)),
+        _ => throw new NotSupportedException(name),
+    };
 }

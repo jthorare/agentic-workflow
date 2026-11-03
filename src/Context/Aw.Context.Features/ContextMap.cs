@@ -33,6 +33,10 @@ internal sealed class ContextMap(MapAdmin admin, MapReview review, MapProposals 
 
     public ValueTask<Result<MapHealth>> CheckRetention(CancellationToken cancellationToken) => admin.CheckRetention(cancellationToken);
 
+    public ValueTask<Result<MapHealth>> CheckStore(CancellationToken cancellationToken) => admin.CheckStore(cancellationToken);
+
+    public ValueTask<Result<StoreUpkeep?>> Upkeep(CancellationToken cancellationToken) => admin.Upkeep(cancellationToken);
+
     public ValueTask<Result<PurgeReport>> PurgeExpired(CancellationToken cancellationToken) => admin.PurgeExpired(cancellationToken);
 
     public ValueTask<Result<MapBuildReport>> BuildMap(IProgress<string>? progress, ContextScope scope, CancellationToken cancellationToken) =>

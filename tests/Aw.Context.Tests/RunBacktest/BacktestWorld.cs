@@ -67,7 +67,7 @@ internal sealed class BacktestWorld : IAsyncDisposable
             .AddSingleton<TimeProvider>(Clock)
             .AddSingleton<IGraphStore>(Store)
             .AddSingleton<IProposalRuns>(Store)
-            .AddSingleton<IExportStore>(new FakeExportStore(Clock))
+            .AddSingleton<IExportStore>(new FakeExportStore(Clock)).AddSingleton<IStoreFiles>(new FakeStoreFiles()).AddSingleton<IStoreUpkeep>(new FakeStoreUpkeep())
             .AddSingleton<IMapFileReader>(Reader)
             .AddSingleton<IScrubberFactory>(new RedactionScrubberFactory(Clock))
             .AddSingleton<ISourceCatalog>(catalog)

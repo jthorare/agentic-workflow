@@ -1,4 +1,5 @@
 using Aw.Judge.Core.Ids;
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
 
@@ -21,4 +22,10 @@ public sealed record EvaluationContext
 
     /// <summary>The calling session, stored with the decision's details.</summary>
     public SessionId? SessionId { get; init; }
+
+    /// <summary>Reads the images a question sends; null when the process has none to read (a question that names images then throws: it is a wiring bug).</summary>
+    public IImageReader? ImageReader { get; init; }
+
+    /// <summary>Makes the directories the agent CLIs read a question's images from; null when the process has none.</summary>
+    public IImageWorkspaces? ImageWorkspaces { get; init; }
 }

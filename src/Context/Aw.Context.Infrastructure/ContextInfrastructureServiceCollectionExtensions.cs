@@ -79,6 +79,7 @@ public static class ContextInfrastructureServiceCollectionExtensions
             .AddSingleton<IMapFileReader, MapFileReader>()
             .AddSingleton<IMapSearchIndexFactory, SqliteMapSearchIndexFactory>()
             .AddSingleton<IExportStore, FileExportStore>()
+            .AddSingleton<IStoreFiles, FileStoreFiles>().AddSingleton<IStoreUpkeep, SqliteStoreUpkeep>()
             .AddSingleton<IReviewFileStore, FileReviewFileStore>()
             .AddSingleton<ICurrentUser, OsCurrentUser>()
             .AddSingleton<IRepoReader, GitRepoReader>()

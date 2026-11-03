@@ -45,10 +45,13 @@ public sealed class FakeContextEngine : IContextEngine
 
     private readonly Func<EmbedRecordsRequest, Result<EmbedRecordsReport>>? _embed;
 
-    private FakeContextEngine(ProbeSet? probes, Func<EmbedRecordsRequest, Result<EmbedRecordsReport>>? embed = null)
+    private readonly Func<Result<StoreUpkeep?>>? _upkeep;
+
+    private FakeContextEngine(ProbeSet? probes, Func<EmbedRecordsRequest, Result<EmbedRecordsReport>>? embed = null, Func<Result<StoreUpkeep?>>? upkeep = null)
     {
         _probes = probes;
         _embed = embed;
+        _upkeep = upkeep;
     }
 
     /// <summary>The one instance, with no probe file.</summary>
@@ -63,6 +66,11 @@ public sealed class FakeContextEngine : IContextEngine
     /// <param name="embed">Answers one embed request.</param>
     /// <returns>The engine.</returns>
     public static FakeContextEngine WithEmbed(Func<EmbedRecordsRequest, Result<EmbedRecordsReport>> embed) => new(probes: null, embed);
+
+    /// <summary>An engine like <see cref="Instance"/> whose upkeep pass answers with <paramref name="upkeep"/> (what it did, or an error).</summary>
+    /// <param name="upkeep">Answers one pass.</param>
+    /// <returns>The engine.</returns>
+    public static FakeContextEngine WithUpkeep(Func<Result<StoreUpkeep?>> upkeep) => new(probes: null, embed: null, upkeep);
 
     /// <inheritdoc />
     public Result<ContextSettings> CheckSettings(JsonElement? section, IReadOnlyList<ProfileRepoEntry> repos) =>
@@ -287,6 +295,14 @@ public sealed class FakeContextEngine : IContextEngine
     /// <inheritdoc/>
     public ValueTask<Result<MapHealth>> CheckRetention(CancellationToken cancellationToken) =>
         ValueTask.FromResult(Results.Success(new MapHealth("context:retention", MapHealthState.Ok, "nothing to purge", Fix: null)));
+
+    /// <inheritdoc/>
+    public ValueTask<Result<MapHealth>> CheckStore(CancellationToken cancellationToken) =>
+        ValueTask.FromResult(Results.Success(new MapHealth("context:store", MapHealthState.Ok, "no store yet", Fix: null)));
+
+    /// <inheritdoc/>
+    public ValueTask<Result<StoreUpkeep?>> Upkeep(CancellationToken cancellationToken) =>
+        ValueTask.FromResult(_upkeep is null ? Results.Success<StoreUpkeep?>(value: null) : _upkeep());
 
     /// <inheritdoc/>
     public ValueTask<Result<PurgeReport>> PurgeExpired(CancellationToken cancellationToken) =>
