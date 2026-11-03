@@ -12,6 +12,8 @@ namespace Aw.Judge.Core.Evaluation;
 /// <param name="Problem">Why the field can't be read as a list of paths, or null.</param>
 internal sealed record GenericImages(IReadOnlyList<string> Paths, bool BestEffort, string? Problem)
 {
+    private const string MalformedCause = "images must be a list of absolute file paths";
+
     /// <summary>The most images a call takes.</summary>
     public const int MaxImages = 4;
 
@@ -28,9 +30,11 @@ internal sealed record GenericImages(IReadOnlyList<string> Paths, bool BestEffor
             return null;
         }
 
+        // Read first: a best-effort call with an unreadable field still drops it and asks as text (spec 2).
+        var bestEffort = input["imagesBestEffort"] is JsonValue flag && flag.GetValueKind() == JsonValueKind.True;
         if (field is not JsonArray list)
         {
-            return new GenericImages([], BestEffort: false, "images must be a list of absolute file paths");
+            return new GenericImages([], bestEffort, MalformedCause);
         }
 
         if (list.Count == 0)
@@ -43,13 +47,12 @@ internal sealed record GenericImages(IReadOnlyList<string> Paths, bool BestEffor
         {
             if (item is not JsonValue value || value.GetValueKind() != JsonValueKind.String)
             {
-                return new GenericImages([], BestEffort: false, "images must be a list of absolute file paths");
+                return new GenericImages([], bestEffort, MalformedCause);
             }
 
             paths.Add(value.GetValue<string>());
         }
 
-        var bestEffort = input["imagesBestEffort"] is JsonValue flag && flag.GetValueKind() == JsonValueKind.True;
         return new GenericImages(paths, bestEffort, Problem: null);
     }
 }

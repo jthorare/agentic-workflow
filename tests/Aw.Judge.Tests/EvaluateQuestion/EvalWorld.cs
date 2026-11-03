@@ -17,10 +17,12 @@ internal sealed class EvalWorld
 
     private static readonly JsonSerializerOptions _json = AwJson.CreateOptions(JudgeJsonContext.Default);
 
-    internal EvalWorld(IInputRedactor? redactor = null)
+    internal EvalWorld(IInputRedactor? redactor = null, IImageReader? reader = null)
     {
-        Service = new EvaluateQuestionService(Store, new InMemoryJudgeConfigStore(), new FakeProviderCatalog(Jev), Files, new EvalRedaction(redactor ?? new FakeInputRedactor(), _json), Clock, new FakeImageReader());
+        Service = new EvaluateQuestionService(Store, new InMemoryJudgeConfigStore(), new FakeProviderCatalog(Jev), Files, new EvalRedaction(redactor ?? new FakeInputRedactor(), _json), Clock, new EvalImageSource(reader ?? new FakeImageReader(), Workspaces));
     }
+
+    internal FakeImageWorkspaces Workspaces { get; } = new();
 
     internal FakeEvalStore Store { get; } = new();
 
