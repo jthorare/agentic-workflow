@@ -14,6 +14,9 @@ internal static class RecordMappers
     /// <summary>How a due day is stored: the date alone, no time zone.</summary>
     internal const string DueFormat = "yyyy-MM-dd";
 
+    /// <summary>The version a row waiting for its re-read (stored '' by migrations 0023 and 0029) reads as; no source sends it, so it never matches a fetched version.</summary>
+    internal static SourceVersion Reread { get; } = SourceVersion.From("reread-pending");
+
     internal static IRowMapper<StoredRecord> Record { get; } = new Mapper<StoredRecord>(r => new StoredRecord(
         RecordKey.From(r.GetString(0)),
         SourceId.From(r.GetString(1)),
@@ -28,7 +31,7 @@ internal static class RecordMappers
         At(r, 10),
         At(r, 11),
         At(r, 12),
-        SourceVersion.From(r.GetString(13)),
+        SourceVersion.TryFrom(r.GetString(13), out var version) ? version : Reread,
         r.GetString(14),
         r.GetString(15),
         r.GetInt64(16) == 1,
