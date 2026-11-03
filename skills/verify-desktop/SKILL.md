@@ -1,6 +1,6 @@
 ---
 name: verify-desktop
-description: "Use when a desktop app's views, styles or resources changed and you need a verdict on whether the real screens still match their design mockups before shipping. Runs the app on seeded data, pixel-compares each affected screen, and writes a PASS, WARN or FAIL evidence pack. Not for web or iOS apps (verify-app routes those) or for fix suggestions while designing (design-verify)."
+description: "Use when a desktop app's views, styles or resources changed and you need a verdict on whether the real screens still match their design mockups before shipping. Runs the app on seeded data, pixel-compares each affected screen, and writes a PASS, WARN or FAIL evidence pack. Not for web or iOS apps (verify-app routes those) or for mismatches with fixes mid-design (design-verify-desktop)."
 argument-hint: "[--journey <plan.md>] [--lenses <csv>] [--visual] [--baseline] [--yes] [--screens <csv>] [criteria or 'auto']"
 allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(cat *), Bash(cp *), Bash(ui-evidence *), Bash(command *), Read, Write, Glob, Grep, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
