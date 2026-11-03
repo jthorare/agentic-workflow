@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Aw.Judge.Core.Decisions;
 using Aw.Judge.Core.Ids;
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Core.Questions;
@@ -98,8 +99,34 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
             return await Settle(question, run, settlement, extra: null, cancellationToken).ConfigureAwait(false);
         }
 
-        var candidates = ChainRouting.Candidates(context.Chain, question.ContentClass, context.Providers, context.Override?.Providers);
-        return await Walk(question, input, candidates, run, cancellationToken).ConfigureAwait(false);
+        // The question's images are read once, before any provider runs; the scope hands the agent CLIs a directory of those bytes
+        // and is disposed after the last provider.
+        var (images, root, problem) = await ReadImages(question, input, context, cancellationToken).ConfigureAwait(false);
+        if (problem)
+        {
+            return await Escalate(question, run, EvaluationReasons.InvalidInput, DecisionOutcome.Escalated, cancellationToken).ConfigureAwait(false);
+        }
+
+        // why: ReadImages threw unless the context has image workspaces, and images are only non-empty after it read some.
+        using var scope = images.Count > 0 ? new ImageScope(context.ImageWorkspaces!, images, root) : null;
+        var candidates = ChainRouting.Candidates(context.Chain, question.ContentClass, context.Providers, context.Override?.Providers, hasImages: images.Count > 0);
+        return await Walk(question, input, new Lineup(candidates, new CallImages(images, scope)), run, cancellationToken).ConfigureAwait(false);
+    }
+
+    // A question that names images with no reader or workspaces in the context is a wiring bug (it throws); a file that can't be read escalates the call.
+    private static async ValueTask<(IReadOnlyList<ImageAttachment> Images, string? Root, bool Problem)> ReadImages<TInput>(
+        QuestionDefinition<TInput> question, TInput input, EvaluationContext context, CancellationToken cancellationToken)
+        where TInput : class
+    {
+        if (question.Images?.Invoke(input) is not { } request)
+        {
+            return ([], null, false);
+        }
+
+        var reader = context.ImageReader ?? throw new InvalidOperationException($"question '{question.Name}' names images but the context has no image reader");
+        _ = context.ImageWorkspaces ?? throw new InvalidOperationException($"question '{question.Name}' names images but the context has no image workspaces");
+        var read = await reader.Read(request.Paths, request.Root, cancellationToken).ConfigureAwait(false);
+        return read.Problem is null ? (read.Images, request.Root, false) : ([], null, true);
     }
 
     // What escalation rows digest and store: the parsed JSON, or the text itself as a JSON string when it isn't JSON
@@ -162,8 +189,7 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
     }
 
     private async ValueTask<EvaluationOutcome> Walk<TInput>(
-        QuestionDefinition<TInput> question, TInput input, IReadOnlyList<IModelProvider> candidates, EvaluationRun run,
-        CancellationToken cancellationToken)
+        QuestionDefinition<TInput> question, TInput input, Lineup lineup, EvaluationRun run, CancellationToken cancellationToken)
         where TInput : class
     {
         if (TimedOut(() => question.ToRef(input), out var reference))
@@ -171,6 +197,12 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
             return await RuleTimedOut(question, run, cancellationToken).ConfigureAwait(false);
         }
 
+        if (lineup.Images.Images.Count > 0)
+        {
+            reference = reference with { Images = lineup.Images.Images, ImageScope = lineup.Images.Scope };
+        }
+
+        var candidates = lineup.Candidates;
         for (var i = 0; i < candidates.Count; i++)
         {
             var provider = candidates[i];

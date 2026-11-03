@@ -4,7 +4,9 @@ using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Core.Questions;
 using Aw.Judge.Host;
+using Aw.Judge.Infrastructure.Images;
 using Aw.Judge.Testing;
+using Aw.Judge.Tests.Images;
 using Aw.Kernel.Json;
 using Aw.Kernel.Testing;
 using Microsoft.Extensions.Time.Testing;
@@ -18,6 +20,13 @@ internal sealed class QuestionRun
 
     public InMemoryDecisionLog Log { get; } = new();
 
+    /// <summary>Reads the images a question names; by default an empty in-memory one (the integration tests use the real reader).</summary>
+    public IImageReader ImageReader { get; init; } = new FakeImageReader();
+
+    /// <summary>An in-memory reader that has these files (tiny PNGs) under the directory.</summary>
+    public static FakeImageReader ReaderWith(string directory, params string[] names) =>
+        new(names.ToDictionary(name => directory + "/" + name, _ => ImageBytes.Png(1, 1), StringComparer.Ordinal));
+
     public static ScriptedProvider Cli(params ContentClass[] classes) => new(ProviderName.ClaudeCli, classes);
 
     public static ScriptedProvider Rules(params ContentClass[] classes) => new(ProviderName.Rules, classes);
@@ -26,7 +35,7 @@ internal sealed class QuestionRun
         where TInput : class
     {
         var evaluator = new QuestionEvaluator(Log, new FakeInputRedactor(), new SequentialIdGenerator(), new FakeTimeProvider(KnownInstants.Epoch), Json);
-        return evaluator.Evaluate(question, input, new EvaluationContext { Providers = providers }, CancellationToken.None);
+        return evaluator.Evaluate(question, input, new EvaluationContext { Providers = providers, ImageReader = ImageReader, ImageWorkspaces = new ImageWorkspaces() }, CancellationToken.None);
     }
 
     /// <summary>Asks a question by its catalog name (the path the CLI takes), so a per-call question builds its definition from the input.</summary>
@@ -44,7 +53,7 @@ internal sealed class QuestionRun
     private ValueTask<EvaluationOutcome> AskByName(string name, string input, ChainSpec chain, QuestionOverride? entry, IModelProvider[] providers)
     {
         var evaluator = new QuestionEvaluator(Log, new FakeInputRedactor(), new SequentialIdGenerator(), new FakeTimeProvider(KnownInstants.Epoch), Json);
-        return evaluator.Ask(name, input, new EvaluationContext { Providers = providers, Chain = chain, Override = entry }, CancellationToken.None);
+        return evaluator.Ask(name, input, new EvaluationContext { Providers = providers, Chain = chain, Override = entry, ImageReader = ImageReader, ImageWorkspaces = new ImageWorkspaces() }, CancellationToken.None);
     }
 
     /// <summary>The outcome is a pre-rule's: the decision, by rules, confidence 1.</summary>
