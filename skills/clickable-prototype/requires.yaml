@@ -1,2 +1,2 @@
-bins: [git, node]
+bins: [git, bun]
 mcp: [prism-mcp]

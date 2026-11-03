@@ -2,7 +2,7 @@
 name: clickable-prototype
 description: "Use when a designer or PM wants to click through 2-3 options of a screen inside the real running app, built from its real components and seeded data, switchable from a small dev-only pill. Local only: the prototype branch is never pushed. Not for HTML drafts outside the app (design-mockup-web), proof that a real change works (verify-web, ui-evidence), or code that will merge."
 argument-hint: "<feature-slug> [--route <path>]"
-allowed-tools: Bash(git *), Bash(bash */prototypes/*), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Bash(source *), Bash(node *), Bash(bun *), Bash(tsx *), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
+allowed-tools: Bash(git *), Bash(bash /*/prototypes/*/preflight.sh), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Bash(source *), Bash(bun /*/prototypes/*/probe.ts *), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
 <!-- preamble -->
@@ -72,9 +72,9 @@ Record what you found in `brief.md` under **Stack**: start command, seed command
 
 **Reuse the project's stack and demo scripts as they are.** Do not edit or copy them for the prototype. If they do something a user should know about, say so in the hand-back and in `brief.md`: listening on all interfaces (reachable from the local network), public seed logins, or dropping and reseeding a shared database. If the stack would touch a database other people use, stop (hard rule 6).
 
-**Preflight first.** Copy `references/preflight-template.sh` to `$AW_DIR/prototypes/<slug>/preflight.sh` and fill in only what this stack needs, from the run skill or docs: container runtime, package manager, secrets or login, free ports, free disk. Do not hardcode tools the project does not use. Run it (`bash <absolute path>/preflight.sh`); it prints one plain-language fix per miss and exits 1 on any miss. Stop and relay the fixes until it passes.
+**Preflight first.** Copy `references/preflight-template.sh` to `$AW_DIR/prototypes/<slug>/preflight.sh` and fill in only what this stack needs, from the run skill or docs: container runtime, package manager, secrets or login, free ports, free disk. Do not hardcode tools the project does not use. Run it as its own Bash call with the literal absolute path (`bash /abs/.../prototypes/<slug>/preflight.sh`, so the allowlist matches); it prints one plain-language fix per miss and exits 1 on any miss. Stop and relay the fixes until it passes.
 
-Create the worktree and keep it from being pushed (see Git mode). Never edit repo-wide hooks or the main checkout's remote. The guard makes exactly two writes outside the worktree's own files, both in the shared `.git/config`: `extensions.worktreeConfig=true` (inert for other worktrees; it only makes git read a per-worktree `config.worktree` file) and `branch.local-prototype/<slug>.pushRemote`. The invalid `pushurl` goes in this worktree's `config.worktree`, so the main checkout still pushes normally. Teardown deletes the branch section; it leaves `extensions.worktreeConfig` set. Note both writes in `brief.md`. Each Bash call is a fresh shell, so the block resolves `$AW_DIR` itself:
+Create the worktree and keep it from being pushed (see Git mode). Never edit repo-wide hooks or the main checkout's remote. The guard writes to the shared `.git/config` and `.git/`, not just the worktree: `extensions.worktreeConfig=true` (stays after teardown; inert for other worktrees, it only makes git read a per-worktree `config.worktree` file); a `branch.local-prototype/<slug>` section holding `pushRemote` plus the `remote` and `merge` upstream keys git adds itself when `worktree add -b` starts from `origin/main`; the remote-tracking refs `git fetch origin` updates; and the worktree's metadata under `.git/worktrees/`. The invalid `pushurl` goes in this worktree's `config.worktree`, so the main checkout still pushes normally. Teardown removes the worktree and the whole branch section, and leaves `extensions.worktreeConfig` and the fetched refs. Note these writes in `brief.md`. Each Bash call is a fresh shell, so the block resolves `$AW_DIR` itself:
 
 ```bash
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
@@ -83,7 +83,6 @@ MAIN=$(git rev-parse --show-toplevel)           # the checkout you were started 
 SLUG=<slug>
 WT="$(dirname "$MAIN")/$(basename "$MAIN")-proto-$SLUG"
 BASE=$(git -C "$MAIN" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/main)
-bash "$AW_DIR/prototypes/$SLUG/preflight.sh" || exit 1
 git -C "$MAIN" fetch origin
 git -C "$MAIN" worktree add -b local-prototype/$SLUG "$WT" "$BASE"
 git -C "$MAIN" config extensions.worktreeConfig true                          # shared config, inert elsewhere; needed before --worktree works
@@ -117,7 +116,7 @@ Rules for this phase:
 
 ## Phase 4: Prove
 
-Use `references/probe-template.md`. Copy it to `$AW_DIR/prototypes/<slug>/probe.ts`, set the route, login, ready selector, options and each option's click-through, and run it as `bun <absolute path>/probe.ts --out <absolute path to the prototype dir>` (no env prefix). The stack's own start, seed and stop commands are not pre-allowed: expect a permission prompt for each and let the user approve them.
+Use `references/probe-template.md`. Copy it to `$AW_DIR/prototypes/<slug>/probe.ts`, set the route, login, ready selector, options and each option's click-through, and run it as `bun /abs/.../prototypes/<slug>/probe.ts --out <absolute path to the prototype dir>` (literal absolute path, no env prefix). Only `git`, the preflight and the probe are pre-allowed; the agent asks permission for anything else, including the stack's start, seed and stop commands, installs and any other runtime: expect a permission prompt for each and let the user approve them.
 
 The probe, per option: select it through the switcher, run its click-through, assert the new thing is visible, wait for animations, screenshot, and record page errors. It screenshots `current` first as the baseline.
 

@@ -14,13 +14,23 @@ main=$2
 wt=$3
 root=$4
 
+branch="local-prototype/$slug"
+
+# Refuse before stopping or removing anything unless the worktree is this slug's prototype worktree.
+if [ -d "$wt" ]; then
+  wt_branch=$(git -C "$wt" symbolic-ref --short HEAD 2>/dev/null || true)
+  if [ "$wt_branch" != "$branch" ]; then
+    echo "REFUSED: $wt is on branch '${wt_branch:-detached HEAD}', not $branch; this is not the prototype worktree for '$slug'. Nothing was stopped or removed." >&2
+    exit 1
+  fi
+fi
+
 STOP_CMD="" # the project's stop command from Phase 2, run from $wt, e.g. "make down"; empty = nothing to stop
 if [ -n "$STOP_CMD" ]; then
   (cd "$wt" && bash -c "$STOP_CMD") || exit 1
 fi
 
 fail=0
-branch="local-prototype/$slug"
 
 if [ -d "$wt" ]; then
   wt_real=$(cd "$wt" && pwd -P) || wt_real=$wt

@@ -1,6 +1,6 @@
 # Probe template
 
-A Playwright script that proves each option works on the seeded local stack. Copy it to `$AW_DIR/prototypes/<slug>/probe.ts`, edit the `CONFIG` block and each option's `steps`, and run it from the prototype worktree with `bun` or `tsx` (both handle TypeScript and top-level await), as `bun probe.ts --out <dir>`. Plain `node --experimental-strip-types` works only if the file is named `probe.mts` (or the nearest package.json has `"type": "module"`), because the script uses top-level await. It resolves the project's own `playwright` package.
+A Playwright script that proves each option works on the seeded local stack. Copy it to `$AW_DIR/prototypes/<slug>/probe.ts`, edit the `CONFIG` block and each option's `steps`, and run it from the prototype worktree with `bun` (it handles TypeScript and top-level await), as `bun /abs/path/probe.ts --out <dir>`. It resolves the project's own `playwright` package.
 
 It uses the project's existing Playwright. If the project has none, **Ask the user** before installing anything. It signs in through the real login form (no cookie shortcuts).
 
