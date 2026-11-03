@@ -13,7 +13,11 @@ internal sealed class ImageCheckScorer(IImageWorkspaces workspaces, TimeProvider
 {
     private const string LooksRight = "looks-right";
 
-    public async ValueTask<ImageCheckTally> Score(IModelProvider provider, IReadOnlyList<ImageCase> set, CancellationToken cancellationToken)
+    /// <summary>
+    /// Asks <paramref name="provider"/> every case in <paramref name="set"/>. A looks-right under <paramref name="threshold"/> (visual-critique's)
+    /// would not settle the chain, so it does not count as one.
+    /// </summary>
+    public async ValueTask<ImageCheckTally> Score(IModelProvider provider, IReadOnlyList<ImageCase> set, double threshold, CancellationToken cancellationToken)
     {
         var tally = new ImageCheckTally();
         foreach (var item in set)
@@ -31,7 +35,7 @@ internal sealed class ImageCheckScorer(IImageWorkspaces workspaces, TimeProvider
                 continue;
             }
 
-            var judgedRight = answer is ProviderDecided decided && string.Equals(decided.Decision, LooksRight, StringComparison.Ordinal);
+            var judgedRight = answer is ProviderDecided decided && decided.Confidence >= threshold && string.Equals(decided.Decision, LooksRight, StringComparison.Ordinal);
             tally.Add(string.Equals(item.Expected, LooksRight, StringComparison.Ordinal), judgedRight, clock.GetElapsedTime(start));
         }
 

@@ -83,6 +83,28 @@ public sealed class CheckImagesTests : IDisposable
     }
 
     [Fact]
+    public async Task CheckImages_counts_a_looks_right_under_the_threshold_as_not_settled_like_the_chain_does()
+    {
+        // Jev says looks-right on every page, sure only of the right ones: the chain would pass the broken ones on to the CLI.
+        var handler = new RecordingJevHandler(request => JevImages.Choice(
+            "looks-right",
+            request.Parts.Any(p => p.Name != "request" && Encoding.ASCII.GetString(p.Bytes).Contains("broken", StringComparison.Ordinal)) ? "0.3" : "0.9"));
+        using var jev = JevImages.Jev(handler);
+        var cases = new[] { Case("right-1", "looks-right"), Case("right-2", "looks-right"), Case("broken-1", "looks-off"), Case("broken-2", "looks-off") };
+        var cli = new JudgeCli(_state)
+        {
+            Environment = new Dictionary<string, string>(StringComparer.Ordinal) { ["TYPESAFE_API_KEY"] = JevImages.Key },
+            Providers = [jev, new StubCli()],
+            Overrides = services => services.AddSingleton<IImageCaseSet>(new CaseSet(cases)),
+        };
+
+        var run = await cli.Run("check", "images");
+
+        Assert.Equal((0, ""), (run.ExitCode, run.Stderr));
+        Assert.Matches("^jev:        " + Scores, run.Stdout.Split('\n')[1]);
+    }
+
+    [Fact]
     public async Task CheckImages_stops_without_a_jev_key()
     {
         var cli = new JudgeCli(_state) { Overrides = services => services.AddSingleton<IImageCaseSet>(new CaseSet([Case("right-1", "looks-right")])) };

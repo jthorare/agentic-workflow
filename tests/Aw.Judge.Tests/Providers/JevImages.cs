@@ -17,8 +17,11 @@ internal static class JevImages
         new(new HttpClient(handler), new FakeSecretSource(new Dictionary<SecretName, string> { [SecretName.TypeSafeApiKey] = Key }), new FakeInputRedactor());
 
     /// <summary>Jev's answer to the 'decision' choice question: <paramref name="choice"/> at confidence 0.9.</summary>
-    public static string Choice(string choice) =>
-        $$$"""{"answers":{"decision":{"type":"choice","choice":"{{{choice}}}","confidence":0.9}},"usage":{"input_tokens":12,"output_tokens":1}}""";
+    public static string Choice(string choice) => Choice(choice, "0.9");
+
+    /// <summary>Jev's answer to the 'decision' choice question: <paramref name="choice"/> at <paramref name="confidence"/> (as JSON).</summary>
+    public static string Choice(string choice, string confidence) =>
+        $$$"""{"answers":{"decision":{"type":"choice","choice":"{{{choice}}}","confidence":{{{confidence}}}}},"usage":{"input_tokens":12,"output_tokens":1}}""";
 
     /// <summary>A PNG attachment of the given size, as the image reader would have made it.</summary>
     public static ImageAttachment Attachment(string path, int width, int height, string tag = "") => Attachment(path, ImageBytes.Png(width, height, tag), width, height);

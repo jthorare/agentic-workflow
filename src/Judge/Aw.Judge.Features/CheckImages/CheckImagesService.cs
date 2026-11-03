@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Judge.Core.Config;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
+using Aw.Judge.Core.Questions;
 using Aw.Judge.Core.Secrets;
 using Aw.Kernel;
 using Aw.Kernel.Services;
@@ -33,6 +34,8 @@ internal sealed class CheckImagesService(
 
         var reading = ConfigReading.From(await configs.Load(cancellationToken).ConfigureAwait(false));
         var providers = reading.IsSuccess ? reading.Value.Config.Providers : null;
+        var question = VisualCritiqueQuestion.Definition;
+        var threshold = (reading.IsSuccess && reading.Value.Config.Questions.TryGetValue(question.Name, out var settings) ? settings.Threshold : null) ?? question.Threshold;
         var jev = catalog.ProviderWithImagesOn(ProviderName.Jev, request.Providers, providers);
         if (jev.IsError)
         {
@@ -40,10 +43,10 @@ internal sealed class CheckImagesService(
         }
 
         List<string> lines = [.. await live.Run(set, request.Providers, providers, jev.Value, cancellationToken).ConfigureAwait(false)];
-        var jevScore = await scorer.Score(jev.Value, set, cancellationToken).ConfigureAwait(false);
+        var jevScore = await scorer.Score(jev.Value, set, threshold, cancellationToken).ConfigureAwait(false);
         lines.Add(jevScore.Line("jev:"));
         var cli = catalog.Provider(ProviderName.ClaudeCli, request.Providers, providers);
-        lines.Add(cli.IsError ? $"{"claude-cli:",-12}not available ({cli.Error.Message})" : (await scorer.Score(cli.Value, set, cancellationToken).ConfigureAwait(false)).Line("claude-cli:"));
+        lines.Add(cli.IsError ? $"{"claude-cli:",-12}not available ({cli.Error.Message})" : (await scorer.Score(cli.Value, set, threshold, cancellationToken).ConfigureAwait(false)).Line("claude-cli:"));
         lines.AddRange(Verdict(jevScore, JevImagesSetting.IsOn(providers, request.JevImagesEnvironment)));
         return new CheckImagesResponse(lines, jevScore.BrokenJudgedRight == 0);
     }
