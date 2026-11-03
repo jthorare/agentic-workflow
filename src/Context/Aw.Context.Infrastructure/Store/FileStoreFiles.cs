@@ -1,3 +1,4 @@
+using Aw.Context.Core;
 using Aw.Context.Core.Map;
 using Aw.Kernel;
 
@@ -8,7 +9,20 @@ internal sealed class FileStoreFiles(ContextStoreSettings settings) : IStoreFile
 {
     public Result<StoreFileSizes?> Sizes()
     {
-        _ = settings;
-        throw new NotSupportedException();
+        try
+        {
+            var database = new FileInfo(settings.DatabasePath);
+            if (!database.Exists)
+            {
+                return Results.Success<StoreFileSizes?>(value: null);
+            }
+
+            var wal = new FileInfo(settings.DatabasePath + "-wal");
+            return Results.Success<StoreFileSizes?>(new StoreFileSizes(database.Length, WalBytes: wal.Exists ? wal.Length : 0));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            return ContextErrors.StoreUnavailable.With(e.Message);
+        }
     }
 }
