@@ -10,6 +10,8 @@ allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash(git *), Bash(ls *)
 
 # enhancePrompt
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Overview
 
 Dynamically discovers project documentation, reads what's relevant to the user's prompt, and rewrites the request with full context — constraints, conventions, domain rules, and known patterns — before any work begins.

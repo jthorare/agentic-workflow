@@ -16,6 +16,8 @@ allowed-tools: Read, Write, Edit, Skill, Glob, Grep, Bash(git *), Bash(ls *), Ba
 
 Pre-loads the design language context, then runs a **bounded** refinement sequence: impeccable audit → map findings to packs → dispatch at most 3 refinements → impeccable verify pass → design-verify diff. If no refinement intent is given, analyzes the implementation and suggests intents.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Pack Selection
 
 `design-refine` orchestrates three external skill packs (all fetched at setup time). Only these registered skill names may be dispatched — there are no per-dimension skills like "colorize" or "typeset"; those are **intents phrased in the args of an `/impeccable` dispatch**.

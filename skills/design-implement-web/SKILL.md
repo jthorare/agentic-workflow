@@ -17,6 +17,8 @@ allowed-tools: Read, Write, Edit, Glob, Grep, Bash(git *), Bash(ls *), Bash(SHAR
 
 Generate production-ready code from an approved mockup, generating token files directly from `design-tokens.json`, then proving the result against the mockup baseline before claiming completion.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Select Mockup
 
 Locate mockup sources in priority order — HTML source files are far more useful for code generation than PNG screenshots.

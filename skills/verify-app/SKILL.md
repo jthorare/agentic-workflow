@@ -17,6 +17,8 @@ Detects whether this is a web, iOS or desktop project and delegates to the appro
 
 > **Tip:** If you already know the platform, invoke directly: `/verify-web`, `/verify-ios` or `/verify-desktop`
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Platform Detection & Dispatch
 
 Follow `_shared/platform-detection.md` — canonical detection globs (with vendored-path excludes), the resolution table, and the dispatch contract. Resolve it from the stable toolkit path:

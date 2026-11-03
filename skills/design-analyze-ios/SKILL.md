@@ -19,6 +19,8 @@ allowed-tools: Bash(SHARED_DIR=*), Read, Write, Glob, AskUserQuestion, mcp__pris
 
 Scans the Xcode project for color, typography, and spacing definitions and writes `design-tokens.json` in W3C DTCG format.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Locate Source Files
 
 ### With explicit path argument:

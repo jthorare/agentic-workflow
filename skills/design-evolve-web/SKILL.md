@@ -17,6 +17,8 @@ allowed-tools: Bash(npx dembrandt *), Bash(git *), Bash(SHARED_DIR=*), Bash(mkdi
 
 Analyze a new reference site mid-project and selectively merge its design elements into the existing design language. Shows a diff of what would change, lets the user choose what to adopt.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Validate Prerequisites
 
 Both `.impeccable.md` and `design-tokens.json` must exist. If either is missing:
