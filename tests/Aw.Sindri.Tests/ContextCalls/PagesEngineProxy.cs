@@ -54,6 +54,8 @@ public class PagesEngineProxy : DispatchProxy
                 return new ValueTask<Result<MapHealth>>(new MapHealth("context:map", MapHealthState.Ok, "ok", string.Empty));
             case nameof(IContextEngine.CheckRetention):
                 return new ValueTask<Result<MapHealth>>(new MapHealth("context:retention", MapHealthState.Ok, "ok", string.Empty));
+            case nameof(IContextEngine.CheckStore):
+                return new ValueTask<Result<MapHealth>>(new MapHealth("context:store", MapHealthState.Ok, "ok", string.Empty));
             case nameof(IContextEngine.MapStatus):
                 return new ValueTask<Result<MapStatusView>>(Context.Core.ContextErrors.NoMap.With("no map yet"));
             default:

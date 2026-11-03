@@ -10,7 +10,7 @@ namespace Aw.Sindri.Features.RunDoctor;
 
 /// <summary>
 /// The context engine's doctor rows, after Sindri's own lease, ledger, profile, api and temporal: 'context:map', 'context:pages' and
-/// 'context:retention' (S-3a), 'context:publish' (F1P-c: is the map held for the code index, overdue, or answering from another commit than the index), and 'context:linear' (S-6, <see cref="LinearDoctor"/>).
+/// 'context:retention' (S-3a), 'context:store' (#1953: context.db's write-ahead log against the database), 'context:publish' (F1P-c: is the map held for the code index, overdue, or answering from another commit than the index), and 'context:linear' (S-6, <see cref="LinearDoctor"/>).
 /// </summary>
 /// <param name="context">The context engine.</param>
 /// <param name="publish">The map's publish row.</param>
@@ -31,6 +31,7 @@ internal sealed class ContextEngineChecks(IContextEngine context, IMapPublishChe
             Line("context:pages", await context.CheckPages(scope, cancellationToken).ConfigureAwait(false)),
             await Roles(scope, cancellationToken).ConfigureAwait(false),
             Line("context:retention", await context.CheckRetention(cancellationToken).ConfigureAwait(false)),
+            Line("context:store", await context.CheckStore(cancellationToken).ConfigureAwait(false)),
             await publish.Check(approved, cancellationToken).ConfigureAwait(false),
             await linear.Check(approved, cancellationToken).ConfigureAwait(false),
             .. await codeIndex.Check(approved, cancellationToken).ConfigureAwait(false),
