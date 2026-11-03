@@ -1,6 +1,6 @@
 ---
 name: canary
-description: "Post-deploy monitoring. Watches error rate, latency, logs, and custom probes for a configurable window. Verdict: HEALTHY (chain syncDocs), DEGRADED (warn), UNHEALTHY (alert + rootCause)."
+description: "Use when a deploy just went out and someone wants to know whether prod is okay: error rate climbing, latency creeping up, odd log lines, or a smoke probe failing after release. Watches those for a window against the pre-deploy numbers and returns HEALTHY, DEGRADED or UNHEALTHY. Not for shipping or deploying itself (shipRelease, landAndDeploy)."
 argument-hint: "[release-id] [--duration <sec>] [--setup]"
 allowed-tools: Bash, Read, Write, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -88,7 +88,7 @@ Write `.agentic-workflow/canary.json`. Exit without monitoring.
 5. Determine duration (`--duration` arg > config `duration` > default 900).
 
 6. Resolve baseline values (**pre-deploy first**):
-   - Read `releases/<release-id>/baseline.json` (persisted by `/landAndDeploy` **before** it deployed) → `baseline.errorRate`, `baseline.p95`, `baseline.logAnomalyCount`.
+   - Read `releases/<release-id>/baseline.json` (persisted by `/landAndDeploy` **before** it deployed) → `baseline.error_rate`, `baseline.p95`, `baseline.log_anomaly_count`.
    - **Fallback:** if the file is missing (standalone deploy, older landAndDeploy), use the first probe minute's values and print a warning: "no pre-deploy baseline found — using post-deploy first-minute values; a regression introduced by this deploy may be masked."
 
 7. Probe loop — every 60 s for `ceil(duration / 60)` iterations (so the final tail is probed even when duration isn't a multiple of 60):
@@ -101,11 +101,11 @@ Write `.agentic-workflow/canary.json`. Exit without monitoring.
 8. Compute verdict after the loop:
    - **UNHEALTHY** if ANY of:
      - A `critical:true` custom probe failed at any point
-     - Error rate exceeded `baseline.errorRate * errorRateUnhealthyMultiplier` for ≥2 consecutive minutes
-     - Log anomalies exceeded the **rate threshold**: pattern matches in ≥2 distinct minutes, or ≥3 matches within a single minute, above `baseline.logAnomalyCount` (a single isolated match is NOT UNHEALTHY — noisy prod logs must not flip the verdict on one line)
+     - Error rate exceeded `baseline.error_rate * errorRateUnhealthyMultiplier` for ≥2 consecutive minutes
+     - Log anomalies exceeded the **rate threshold**: pattern matches in ≥2 distinct minutes, or ≥3 matches within a single minute, above `baseline.log_anomaly_count` (a single isolated match is NOT UNHEALTHY — noisy prod logs must not flip the verdict on one line)
    - **DEGRADED** if ANY of (and not UNHEALTHY):
      - A non-critical custom probe failed
-     - Error rate exceeded `baseline.errorRate * errorRateDegradedMultiplier`
+     - Error rate exceeded `baseline.error_rate * errorRateDegradedMultiplier`
      - p95 latency exceeded `baseline.p95 * latencyDegradedMultiplier`
      - Exactly one isolated log anomaly match occurred
    - **HEALTHY** otherwise.

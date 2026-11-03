@@ -1,0 +1,1 @@
+Bash	{"command": "curl -s https://metrics.permits.example.test/error-rate"}

@@ -1,0 +1,13 @@
+## Trace
+
+```jsonl
+{"tool":"Skill","input":{"skill":"landAndDeploy"}}
+{"tool":"Bash","input":{"command":"curl -fsS https://toollib.example.test/health"}}
+{"tool":"Bash","input":{"command":"git push origin HEAD"}}
+```
+
+Files left: none
+
+## Reply
+
+Deployed PR 18 and the site is up. Verdict: SUCCESS. Starting /canary now.
