@@ -54,6 +54,12 @@ internal sealed record WorktreeFacts
     /// <summary>That pull request's state.</summary>
     public PrState? PrState { get; init; }
 
+    /// <summary>Set by a `--discarded` sweep when a finished bugfix run names this tree as a losing candidate at its HEAD: says which (e.g. "bugfix gh-9 candidate c1, resolved by c2"). Its unpushed commits and "no pull request" don't keep it.</summary>
+    public string? Discarded { get; init; }
+
+    /// <summary>Set by a `--discarded` sweep when the tree is not a discarded candidate: why not (no run names it, HEAD moved, it won, the run isn't over).</summary>
+    public string? NotDiscarded { get; init; }
+
     /// <summary>Whether a branch with no pull request is kept whatever else holds (a sweep without --include-no-pr).</summary>
     public bool KeepNoPr { get; init; }
 

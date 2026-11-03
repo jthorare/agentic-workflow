@@ -63,7 +63,8 @@ public sealed class WorktreeSweeper(WorktreeInspector inspector, RepoCommands re
         }
 
         var outcome = await Apply(team, scope, mode, inspected.Value, cancellationToken).ConfigureAwait(false);
-        if (mode == SweepMode.Remove)
+        // A --path run never moves the marker: it would make rule 7's window seconds wide for every other tree.
+        if (mode == SweepMode.Remove && scope.Path is null)
         {
             // The marker moves only after the removals, which judged again against the previous one; the next sweep keeps whatever changed after this one began.
             _ = await values.Set(KvKeys.WorktreesSweepStart, started.ToString("O", CultureInfo.InvariantCulture), cancellationToken).ConfigureAwait(false);
