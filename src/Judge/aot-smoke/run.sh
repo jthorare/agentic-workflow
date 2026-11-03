@@ -25,7 +25,7 @@ tree="$out/tree"
 [ ! -d "$tree" ] || find "$tree" -delete
 mkdir -p "$tree"
 git -C "$root" ls-files -z --cached --others --exclude-standard -- global.json nuget.config .editorconfig 'Directory.*' 'BannedSymbols*.txt' CodeMetricsConfig.txt \
-  src/Aw.Kernel src/Aw.Kernel.Data src/Aw.Kernel.Telemetry src/Redaction src/Aw.Analyzers src/Judge | (cd "$root" && tar --null -T - -cf -) | tar -xf - -C "$tree"
+  src/Aw.Kernel src/Aw.Kernel.Data src/Aw.Kernel.Telemetry src/Redaction src/Aw.Analyzers src/Judge tests/fixtures/judge/images | (cd "$root" && tar --null -T - -cf -) | tar -xf - -C "$tree"
 rid="$(dotnet --info | awk '/^ *RID:/ {print $2; exit}')"
 dotnet publish "$tree/src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj" -c Release -r "$rid" -p:RestoreLockedMode=false \
   -o "$out/bin" </dev/null >"$out/publish.log" 2>&1 || { tail -20 "$out/publish.log" >&2; exit 1; }
@@ -82,6 +82,8 @@ brief='{"toolUseId":"toolu_1","sessionId":"s1","promptId":"p1","dispatchName":"b
   judge label status || echo "exit $?"
   echo "## not yet built (cutover spec 5.2: the prompt-sort subcommands of unit 6.4)"
   judge prompt-sort why abc || echo "exit $?"
+  echo "## check images (offline: a dummy key, jev not allowed; 'no image cases embedded' means the publish lost tests/fixtures/judge/images)"
+  env -i HOME="$work" PATH=/usr/bin:/bin AW_STATE_DIR="$state" AW_JUDGE_PROVIDERS=rules AW_SESSION_ID=smoke TYPESAFE_API_KEY=smoke-dummy "$bin" check images || echo "exit $?"
   echo "## state files"
   (cd "$state" && find . -type f ! -name '*-wal' ! -name '*-shm' | sort)
 } >"$out/raw.txt" 2>&1
