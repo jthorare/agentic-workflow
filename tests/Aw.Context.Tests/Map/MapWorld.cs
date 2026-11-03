@@ -100,7 +100,7 @@ internal sealed class MapWorld : IDisposable
             .AddSingleton(codeSearch ?? new FakeCodeSearch(Repos[0], Head, BuildFiles))
             .AddSingleton(symbols ?? new NoCodeSymbolSource())
             .AddSingleton<IIntentStore>(Intents).AddRecordFakes().AddSingleton(records ?? Records).AddSingleton(lexical ?? new FakeLexicalLeg())
-            .AddSingleton<ISourceIdentityStore>(Identities).AddSingleton<ISourceViewers>(Viewers)
+            .AddSingleton<ISourceIdentityStore>(Identities).AddSingleton<ISourceViewers>(Viewers).AddSingleton<IStoreFiles>(StoreFiles)
             .AddSingleton(history ?? new FakeFileHistory(Repos[0], new HistoryWorld(Head, [])))
             .AddSingleton<IModelPort>(Model)
             .AddSingleton<IClusterSource>(Clusters)
@@ -167,6 +167,9 @@ internal sealed class MapWorld : IDisposable
     public FakeModelPort Model { get; } = new();
 
     public FakeExportStore Exports { get; }
+
+    /// <summary>The store files the 'context:store' check reads.</summary>
+    public FakeStoreFiles StoreFiles { get; } = new();
 
     public FakeClusterSource Clusters { get; } = new();
 
