@@ -29,6 +29,9 @@ other_call() { bash -c 'bash -c "LOCK_NAME=browser source \"\$1\"; $2" _ "$1" "$
 # --- acquire in one call; the lock still holds in the next ---
 call acquire_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
 check "acquire in one call exits 0" "$rc" "0"
+call acquire_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
+check "the same session's acquire in a later call returns at once" "$rc" "0"
+check "it says the lock is already held" "$(grep -c 'already held' <<<"$out")" "1"
 other_call acquire_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
 check "another session's acquire waits and times out while the lock is held" "$rc" "1"
 check "it names the timeout" "$(grep -c 'TIMEOUT' <<<"$out")" "1"

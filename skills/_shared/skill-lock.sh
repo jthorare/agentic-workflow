@@ -28,6 +28,10 @@ set -euo pipefail
 # session, excludes other sessions, and is released by a later call of the same session.
 # A script that sources this file directly from a long-lived shell should set
 # SKILL_LOCK_OWNER_PID=$$.
+# Limits: a lead and its subagents run in one agent process, so they are one session
+# here and are not kept apart. $PPID is the agent only when the agent starts each Bash
+# call's shell itself; a per-call wrapper that forks in between (a sandbox helper) makes
+# the wrapper the owner again, so such a host must set SKILL_LOCK_OWNER_PID.
 
 LOCK_NAME="${LOCK_NAME:-skill}"
 
