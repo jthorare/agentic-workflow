@@ -118,8 +118,10 @@ internal sealed partial class FileMapViewModel
         var narrowed = await Task.Run(() => text.Length == 0 ? all.Narrow(text, total, Touched) : all.Narrow(text), CancellationToken.None).ConfigureAwait(true);
         if (version == _filterVersion && ReferenceEquals(all, _all))
         {
-            FilterRuns++;
+            // Count the run only once its rows show: a reader that sees FilterRuns go up must never read the old list (#2008).
+            // The increment is a full fence, so on arm64 too the Rows store is visible before the new count.
             Rows = narrowed;
+            _ = Interlocked.Increment(ref _filterRuns);
         }
     }
 }
