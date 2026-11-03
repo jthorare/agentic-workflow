@@ -58,5 +58,8 @@ check "symlink in the checkout to a file outside: dropped" "$(paths "$REPO/link-
 check "symlinked directory in the checkout that points out: dropped" "$(paths "$REPO/outdir/elsewhere.png")" ""
 check "symlink that stays inside the checkout: kept" "$(paths "$REPO/link-in.png")" "link-in.png"
 check "relative symlink that stays inside: kept" "$(paths "$REPO/sub/rel-in.png")" "sub/rel-in.png"
+# A relative ".." link inside a symlinked directory is resolved against the real directory, not the path text.
+mkdir "$OUTSIDE/inner"; png "$OUTSIDE/secret.png"; ln -s ../secret.png "$OUTSIDE/inner/x.png"; ln -s "$OUTSIDE/inner" "$REPO/indir"
+check "relative .. link inside a symlinked directory that points out: dropped" "$(paths "$REPO/indir/x.png")" ""
 
 exit $fail
