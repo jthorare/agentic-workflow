@@ -298,7 +298,7 @@ frames make the Jev path rare (9).
   (`RCP-CHOICE-007`, "`images` names fact `<key>`, which this state can't read"). The Step resolves the list, keeps the first 4,
   and fails the Step with `step_failed` when a path is missing, before any judge call, with the reason
   `images: /…/home.png (from fact frames) does not exist`. When it dropped some, `fact:decision` gets `imagesDropped: <n>`.
-- No shipped recipe uses it in this work. The proof is an eval case on a fixture recipe plus the e2e in 8.
+- No shipped recipe uses it in this work. The proof is an eval case on a fixture recipe plus the integration test in 8.
 - The Step's `fact:decision` gets `imageCount: <n>` (only when n > 0, so today's facts don't change). The app's Jobs view shows it on
   the Step's decision line: "decided with 1 image" / "decided with 2 images", nothing at 0, and "decided with 4 images
   (2 left out)" when `imagesDropped` is set. A batch's dropped images are on its own row only; batches have no `judge why`. That's in PR 3, with its UI goldens.
@@ -343,7 +343,7 @@ Red first in each; ideas reviews each; "Part of #1961" except the last, which sa
 | PR | What | Red test (fails before, names the behavior) | Gate |
 |---|---|---|---|
 | 1a | The plumbing, no behavior change: `ImageAttachment` + `IImageReader` + limits, `QuestionRef.Images`, `hasImages` routing, the CLIs building evidence from attachments, visual-critique's `afterScreenshot`/`baselineScreenshot` read into attachments, `ImageWorkspace` (generic `images` waits for PR 2; visual-critique still on the CLIs) | `VisualCritique_cli_sees_the_same_screenshots_in_the_same_order`; `ImageReader_reads_png_and_jpeg_sizes_from_headers` | Judge unit + integration, Arch, PublicAPI |
-| 1b | Jev takes images: `JevProvider` multipart + header + references, `JevMaySettle` (set by visual-critique only; `Refused` unchanged otherwise), visual-critique's `ReasonedOutputs`, the `SkippedProvider` reason code, `Classes = All`, image chain `jev, CLIs, rules`, `providers.jevImages` + `AW_JUDGE_JEV_IMAGES`, the 20 labeled cases | `VisualCritique_looks_right_is_settled_by_jev_from_multipart_screenshots`; `VisualCritique_looks_off_from_jev_goes_to_the_cli_for_reasons`; `ResolutionCheck_still_refuses_jev`; `Image_over_1568px_skips_jev_for_the_clis`; the no-image Jev wire golden | Judge unit + integration, `judge-cs-hook-surface`, judge aot-smoke, Arch (new type in Core), PublicAPI |
+| 1b | Jev takes images: `JevProvider` multipart + header + references, `JevMaySettle` (set by visual-critique only; `Refused` unchanged otherwise), visual-critique's `ReasonedOutputs`, the `SkippedProvider` reason code, `Classes = All`, image chain `jev, CLIs, rules`, `providers.jevImages` + `AW_JUDGE_JEV_IMAGES`, the 20 labeled cases (embedded), `judge check images` | `VisualCritique_looks_right_is_settled_by_jev_from_multipart_screenshots`; `CheckImages_prints_both_scores_and_the_flip_command_when_the_bar_holds`; `VisualCritique_looks_off_from_jev_goes_to_the_cli_for_reasons`; `ResolutionCheck_still_refuses_jev`; `Image_over_1568px_skips_jev_for_the_clis`; the no-image Jev wire golden | Judge unit + integration, `judge-cs-hook-surface`, judge aot-smoke, Arch (new type in Core), PublicAPI |
 | 2 | Any question takes `images` (and `imagesBestEffort`, both stripped before the question's record): the evaluator reads and strips it, routes on the image class, CLIs get the per-call directory, the decision row's image lines, `judge why`, eval's `image-changed` | `AskCheck_with_an_image_routes_to_jev_and_stores_its_hash_not_its_bytes`; `Input_without_images_stores_todays_row`; `Best_effort_drops_a_bad_image_and_answers_as_text`; `Strict_bad_image_escalates_invalid_images` | Judge unit + integration, hook surface, aot-smoke |
 | 3 | Sindri: `ChooseRequest.Images`, `step.judge.choose` `images:`, `RCP-CHOICE-007`, `imageCount` in `fact:decision`, the Jobs view line | `JudgeChoose_passes_the_named_fact_as_images`; `JudgeCliChoice_without_images_sends_todays_input`; `Jobs_view_says_decided_with_2_images` | Sindri unit + integration (ApiGoldens for the fact), Ui unit + integration, recipe eval, Arch |
 | 4 | Batch images (`BatchRequest.Images`, `JevProvider.Batch` multipart, drop-and-trace) and the hooks: all five sources (done-gate, scope-gate, send-gate, prompt-sort, trait-check `--image`), `config/lib/image-paths.sh`, docs (`docs/csharp/judge.md`, `config/hooks` README) | `done-gate` bash case: a turn that read a PNG sends `images` | every hook bash test, hook surface, sync-rules |
@@ -351,7 +351,7 @@ Red first in each; ideas reviews each; "Part of #1961" except the last, which sa
 Each PR updates `docs/csharp/judge.md` (and `docs/csharp/sindri-workflow.md` for PR 3) for what it ships, so no PR lands an
 undocumented field.
 
-PR 1 is split in two so the plumbing (1a) can land and be rolled back apart from the behavior change (1b). Every PR that changes usage text (`config set providers jev-images` in 1b,
+PR 1 is split in two so the plumbing (1a) can land and be rolled back apart from the behavior change (1b). Every PR that changes usage text (`config set providers jev-images` and `check images` in 1b,
 `trait-check --image` in 4) runs the whole Judge unit lane and judge aot-smoke, and updates its `expected.txt`.
 
 PR 1b's gate adds `scripts/check-env-example.sh` (`AW_JUDGE_JEV_IMAGES`). The evaluator strips `imagesBestEffort` with `images`
@@ -371,22 +371,47 @@ Sindri-only; PR 4 is the batch classifier (Judge Infrastructure, which PR 3 does
   10 with a visible break: overlap, clipped text, missing element, wrong color, cut-off content). The error that costs is Jev saying
   `looks-right` on a broken page, because nothing after it looks again; a wrong `looks-off` only costs a CLI call. So the bar is:
   **zero `looks-right` on the 10 broken cases**, plus seconds per call for both providers.
-  - Order: the lead runs both evals before ready when this box has the Jev key (`judge health` shows `jev: available`), and the
-    scores go in the PR body. If the bar holds, `jevImages` ships `true`; if not, `false`, and the numbers go to the owner.
-  - No key on the box: PR 1b ships `jevImages` default `false`, and the owner step below runs the evals; flipping it on is then one
-    pasted command (`judge config set providers jev-images true`), and a one-line PR moves the default.
+  - Order: the lead runs `judge check images` (below) before ready when this box has the Jev key (`judge health` shows
+    `jev: available`), and its output goes in the PR body. If the bar holds, `jevImages` ships `true`; if not, `false`, and the
+    numbers go to the owner.
+  - No key on the box: PR 1b ships `jevImages` default `false`, and the owner runs the same one command; a one-line PR then moves
+    the default if the bar held.
 
-- In tests: the goldens in 6 and the red tests in 7, on a recording handler (no network in CI).
-- On the owner's box, once, after PR 1 (one item on the owner checklist, needs the Jev key):
-  `jq --arg d "$PWD/tests/fixtures/judge/images" '.evidenceDir = $d' tests/fixtures/judge/images/visual-critique.json | judge visual-critique`
-  from the repo root (a page that looks right; the fixture's `evidenceDir` must be absolute, so `jq` fills it in) → you should see
-  `"decision": "looks-right"` and, in `judge why <id>`, `provider: jev`. If you see `provider: claude-cli` instead, the `jev skipped:`
-  line says why (4). If PR 1 shipped with images off (Jev scored lower), you'll see `image sending to Jev is off`: that's expected.
-  Then two pasted commands, `AW_JUDGE_JEV_IMAGES=1 judge eval visual-critique --providers jev` (the `=1` makes Jev take the images
-  even while the default is off) and `judge eval visual-critique --providers claude-cli`,
-  each print a score and seconds per call.
-- After PR 3: a fixture recipe whose `step.judge.choose` names two frames, run through `sindri workflow start` on a scratch home;
-  the Jobs view shows "decided with 2 images" and the ledger's `step.finished` carries `provider: jev`.
+- **`judge check images` (PR 1b): the whole check in one command.** It runs from any directory, writes nothing to config.json, and
+  does, in order:
+  1. Reads the Jev key the way a live call does. None: prints `no Jev key: judge check images needs one` and exits 1.
+  2. Unpacks the 20 cases, which are embedded in the binary (so the installed `judge` doesn't need a checkout), into a temp
+     directory and fills each case's `evidenceDir` with it (the field must be absolute).
+  3. Runs one live `visual-critique` on a looks-right case with images forced on for this run only (as `AW_JUDGE_JEV_IMAGES=1`
+     does), and prints its decision, provider and decision id; a provider other than `jev` prints the `jev skipped:` reason from 4.
+  4. Runs `judge eval visual-critique` on the 20 cases twice, `--provider jev` (images forced on) and `--provider claude-cli`, one
+     line per case as it goes.
+  5. Prints the result and removes the temp directory.
+
+  What the owner sees, with the bar held and sending off (exit 0):
+
+  ```
+  live call:  looks-right  provider jev  (judge why dec_8f2c…)
+  jev:        broken judged looks-right 0/10 · right pages judged looks-right 9/10 · 1.8 s per call
+  claude-cli: broken judged looks-right 0/10 · right pages judged looks-right 10/10 · 21.4 s per call
+  bar (0 broken judged looks-right): held
+  images to Jev: off
+  to turn it on: judge config set providers jev-images true
+  ```
+
+  Bar missed: `bar ...: missed (2/10)`, exit 1, and with sending on the last line is the `false` command instead. Bar held with
+  sending already on: no command line. Exit 0 bar held, 1 bar missed or no Jev key, 64 usage. It spends 41 model calls (one live,
+  20 per eval); the CLI eval runs on the owner's own `claude` login, so it takes minutes, not seconds.
+
+- In tests: the goldens in 6 and the red tests in 7, on a recording handler (no network in CI). `judge check images` gets its own
+  red test on a recording Jev and a stub CLI, `CheckImages_prints_both_scores_and_the_flip_command_when_the_bar_holds`, and its
+  usage line goes in judge aot-smoke's `expected.txt`.
+- On the owner's box, once, after PR 1b (one item on the owner checklist, needs the Jev key): `judge check images` → you should see
+  `bar (0 broken judged looks-right): held` and, if sending is off, the exact command to turn it on.
+- PR 3 adds no owner step. Its proof is an integration test that runs a fixture recipe whose `step.judge.choose` names two frames
+  through a real control plane on a temp home with a recording Jev: the Jobs view shows "decided with 2 images" and the ledger's
+  `step.finished` carries `provider: jev`. Jev itself reading pictures is what `judge check images` already proved; PR 3 only
+  carries them there.
 
 ## 9. Owner question
 
