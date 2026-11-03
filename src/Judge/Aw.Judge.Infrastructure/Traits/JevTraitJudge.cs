@@ -13,10 +13,15 @@ namespace Aw.Judge.Infrastructure.Traits;
 internal sealed class JevTraitJudge(IBatchClassifier classifier, IInputRedactor redactor, IJudgeConfigStore config) : ITraitJudge
 {
     /// <inheritdoc />
-    public async ValueTask<ProviderResult> Ask(JsonNode? state, IReadOnlyList<BatchQuestion> questions, TimeSpan budget, IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken)
+    public ValueTask<ProviderResult> Ask(JsonNode? state, IReadOnlyList<BatchQuestion> questions, TimeSpan budget, IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken) =>
+        Ask(new BatchRequest(state, questions, budget), allowed, cancellationToken);
+
+    /// <inheritdoc />
+    public async ValueTask<ProviderResult> Ask(BatchRequest request, IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var reading = ConfigReading.From(await config.Load(cancellationToken).ConfigureAwait(false));
         var providers = reading.IsSuccess ? reading.Value.Config.Providers : null;
-        return await classifier.Classify(new BatchRequest(redactor.Redact(state), questions, budget), providers, allowed, cancellationToken).ConfigureAwait(false);
+        return await classifier.Classify(request with { State = redactor.Redact(request.State) }, providers, allowed, cancellationToken).ConfigureAwait(false);
     }
 }

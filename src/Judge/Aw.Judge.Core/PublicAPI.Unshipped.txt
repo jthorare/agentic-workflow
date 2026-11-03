@@ -1049,6 +1049,10 @@ Aw.Judge.Core.Batching.BatchRequest.Questions.get -> System.Collections.Generic.
 Aw.Judge.Core.Batching.BatchRequest.Questions.init -> void
 Aw.Judge.Core.Batching.BatchRequest.State.get -> System.Text.Json.Nodes.JsonNode?
 Aw.Judge.Core.Batching.BatchRequest.State.init -> void
+Aw.Judge.Core.Batching.BatchRequest.Images.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageAttachment!>!
+Aw.Judge.Core.Batching.BatchRequest.Images.init -> void
+Aw.Judge.Core.Batching.BatchRequest.ImagesBestEffort.get -> bool
+Aw.Judge.Core.Batching.BatchRequest.ImagesBestEffort.init -> void
 Aw.Judge.Core.Batching.BatchUsage
 Aw.Judge.Core.Batching.BatchUsage.<Clone>$() -> Aw.Judge.Core.Batching.BatchUsage!
 Aw.Judge.Core.Batching.BatchUsage.BatchUsage(long InputTokens, long OutputTokens) -> void
@@ -1279,6 +1283,8 @@ virtual Aw.Judge.Core.Batching.BatchQuestion.PrintMembers(System.Text.StringBuil
 Aw.Judge.Core.Ports.ITraitCheckLog
 Aw.Judge.Core.Ports.ITraitCheckLog.Append(System.Text.Json.Nodes.JsonObject! entry) -> void
 Aw.Judge.Core.Ports.ITraitFiles
+Aw.Judge.Core.Ports.ITraitFiles.FileSize(string! path) -> long?
+Aw.Judge.Core.Ports.ITraitFiles.ReadImage(string! path, string! root, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Images.ImageRead!>
 Aw.Judge.Core.Ports.ITraitFiles.ReadText(string! path) -> string?
 Aw.Judge.Core.Ports.ITraitFiles.WorkingDirectory.get -> string!
 Aw.Judge.Core.Ports.ITraitStore
@@ -1406,6 +1412,7 @@ static Aw.Judge.Core.Traits.TraitQuestions.For(Aw.Judge.Core.Traits.Trait! trait
 static Aw.Judge.Core.Traits.TraitSet.operator !=(Aw.Judge.Core.Traits.TraitSet? left, Aw.Judge.Core.Traits.TraitSet? right) -> bool
 static Aw.Judge.Core.Traits.TraitSet.operator ==(Aw.Judge.Core.Traits.TraitSet? left, Aw.Judge.Core.Traits.TraitSet? right) -> bool
 Aw.Judge.Core.Ports.ITraitJudge
+Aw.Judge.Core.Ports.ITraitJudge.Ask(Aw.Judge.Core.Batching.BatchRequest! request, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Providers.ProviderResult!>
 Aw.Judge.Core.Ports.ITraitJudge.Ask(System.Text.Json.Nodes.JsonNode? state, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Batching.BatchQuestion!>! questions, System.TimeSpan budget, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Providers.ProviderResult!>
 Aw.Judge.Core.Config.JudgeConfig.SetPromptSortEnabled(bool enabled) -> Aw.Judge.Core.Config.JudgeConfig!
 Aw.Judge.Core.Config.JudgeConfig.SetScaffold(string! scaffold, bool on) -> Aw.Kernel.Result<Aw.Judge.Core.Config.JudgeConfig!>!

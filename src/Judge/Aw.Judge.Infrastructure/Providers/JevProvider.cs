@@ -27,7 +27,8 @@ namespace Aw.Judge.Infrastructure.Providers;
 /// <param name="secrets">Reads the API key.</param>
 /// <param name="redactor">Strips secrets from the input before it leaves the machine.</param>
 /// <param name="scaler">Shrinks an image too big for Jev before it is sent; null sends images as they are.</param>
-internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor, IImageScaler? scaler = null) : IModelProvider, IDisposable
+/// <param name="endpoint">Where requests go (JevEndpoint reads AW_JUDGE_JEV_URL); null is the real Jev.</param>
+internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor, IImageScaler? scaler = null, Uri? endpoint = null) : IModelProvider, IDisposable
 {
     /// <summary>The model.</summary>
     public const string Model = Core.Batching.JevModel.Id;
@@ -47,6 +48,8 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
     private const string ImageSentence = "\n\nThe images are in `images`, in the order the input lists them.";
 
     private static readonly Uri _endpoint = new("https://api.typesafe.ai/v1/systemone");
+
+    private readonly Uri _target = endpoint ?? _endpoint;
 
     /// <summary>Shrinks an image too big for Jev before it is sent; null sends images as they are.</summary>
     internal IImageScaler? Scaler { get; } = scaler;
@@ -167,7 +170,7 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
         return Request(question, CappedState(input, stateCap), instructions, key);
     }
 
-    private static HttpRequestMessage Request(QuestionRef question, JsonNode? input, string instructions, string key)
+    private HttpRequestMessage Request(QuestionRef question, JsonNode? input, string instructions, string key)
     {
         var images = question.Images;
         var references = images.Select((image, i) => Reference(i + 1, image)).ToList();
@@ -189,7 +192,7 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
             Assets = images.Count == 0 ? null : references.ToDictionary(reference => reference, reference => new JevAsset("image", reference), StringComparer.Ordinal),
         };
         var json = AwJson.Serialize(body, WireJson.Options);
-        var request = new HttpRequestMessage(HttpMethod.Post, _endpoint) { Content = images.Count == 0 ? JevMultipart.Json(json) : JevMultipart.Build(json, images, references) };
+        var request = new HttpRequestMessage(HttpMethod.Post, _target) { Content = images.Count == 0 ? JevMultipart.Json(json) : JevMultipart.Build(json, images, references) };
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
         if (images.Count > 0)
         {
