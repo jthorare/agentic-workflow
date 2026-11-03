@@ -1,6 +1,6 @@
 namespace Aw.Sindri.Features.Blocks.Step;
 
-/// <summary>Whether an image's real path sits under one of the real directories a 'step.judge.choose' image may come from (the file system is the <see cref="Aw.Sindri.Core.Judge.IStepImageFiles"/> port's).</summary>
+/// <summary>Whether an image's real path sits under one of the real directories a 'step.judge.choose' image may come from (the file system is the <see cref="Core.Judge.IStepImageFiles"/> port's).</summary>
 internal static class StepImagePlaces
 {
     /// <summary>Whether <paramref name="real"/> is inside one of <paramref name="roots"/>.</summary>
