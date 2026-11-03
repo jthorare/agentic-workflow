@@ -54,6 +54,13 @@ internal sealed partial class JudgeChooseStep
             return null;
         }
 
+        // A '..' in the fact's own path is refused, as the hooks do: .NET folds it as text before opening, the OS follows it after a linked directory,
+        // so which file it names depends on who reads it.
+        if (allowed is not null && path.Split(['/', '\\']).Contains("..", StringComparer.Ordinal))
+        {
+            return "is outside the checkout and the ui-evidence output";
+        }
+
         return files.RealPath(path) is not { } real ? "does not exist"
             : allowed is not null && !StepImagePlaces.Inside(real, allowed) ? "is outside the checkout and the ui-evidence output"
             : null;
