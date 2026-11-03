@@ -1,4 +1,5 @@
 using Aw.Judge.Core;
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Features;
@@ -40,6 +41,8 @@ internal sealed class AskQuestionHarness
             .AddSingleton<IIdGenerator>(new SequentialIdGenerator())
             .AddSingleton<IProviderCatalog>(new FakeProviderCatalog(providers))
             .AddSingleton<IEvalFiles>(new InMemoryEvalFiles())
+            .AddSingleton<IImageReader>(new FakeImageReader())
+            .AddSingleton<IImageWorkspaces>(new FakeImageWorkspaces())
             .AddTraitCheckFakes()
             .AddJudgeCore()
             .AddJudgeFeatures();

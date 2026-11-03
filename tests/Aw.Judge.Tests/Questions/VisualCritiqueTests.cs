@@ -16,7 +16,7 @@ public sealed class VisualCritiqueTests
         var extra = new System.Text.Json.Nodes.JsonObject { ["reasons"] = new System.Text.Json.Nodes.JsonArray("button misaligned") };
         var cli = Cli(ContentClass.Image).Returns(new ProviderDecided("looks-off", 0.6, "model") { Extra = extra });
 
-        var outcome = await new QuestionRun().Ask(
+        var outcome = await new QuestionRun { ImageReader = ReaderWith("/tmp/ev", "after.png", "before.png") }.Ask(
             VisualCritiqueQuestion.Definition, """{"afterScreenshot":"after.png","baselineScreenshot":"before.png","evidenceDir":"/tmp/ev"}""", cli);
 
         Assert.Equal("""{"reasons":["button misaligned"]}""", AssertModel("looks-off", outcome).Extra?.ToJsonString());
@@ -55,7 +55,7 @@ public sealed class VisualCritiqueTests
         var cli = Cli(ContentClass.Image).Decides("looks-right", 1);
         var input = new System.Text.Json.Nodes.JsonObject { ["afterScreenshot"] = new string('a', 50_000) + ".png", ["evidenceDir"] = "/tmp/ev" };
 
-        _ = await new QuestionRun().Ask(VisualCritiqueQuestion.Definition, input.ToJsonString(), cli);
+        _ = await new QuestionRun { ImageReader = ReaderWith("/tmp/ev", input["afterScreenshot"]!.GetValue<string>()) }.Ask(VisualCritiqueQuestion.Definition, input.ToJsonString(), cli);
 
         var prompt = Assert.Single(cli.Calls).Question.Prompt;
         Assert.Contains("[truncated", prompt, StringComparison.Ordinal);
@@ -67,7 +67,7 @@ public sealed class VisualCritiqueTests
     {
         var cli = Cli(ContentClass.Image).Decides("looks-right", 1);
 
-        var outcome = await new QuestionRun().Ask(VisualCritiqueQuestion.Definition, """{"afterScreenshot":"shots/after.png","evidenceDir":"/tmp/ev"}""", cli);
+        var outcome = await new QuestionRun { ImageReader = ReaderWith("/tmp/ev", "shots/after.png") }.Ask(VisualCritiqueQuestion.Definition, """{"afterScreenshot":"shots/after.png","evidenceDir":"/tmp/ev"}""", cli);
 
         _ = AssertModel("looks-right", outcome);
     }
@@ -78,7 +78,7 @@ public sealed class VisualCritiqueTests
         var text = new ScriptedProvider(ProviderName.Jev, ContentClass.Brief).Decides("looks-right", 1);
         var cli = Cli(ContentClass.Image).Decides("looks-right", 0.4);
 
-        var outcome = await new QuestionRun().Ask(VisualCritiqueQuestion.Definition, """{"afterScreenshot":"after.png","evidenceDir":"/tmp/ev"}""", text, cli);
+        var outcome = await new QuestionRun { ImageReader = ReaderWith("/tmp/ev", "after.png") }.Ask(VisualCritiqueQuestion.Definition, """{"afterScreenshot":"after.png","evidenceDir":"/tmp/ev"}""", text, cli);
 
         Assert.Equal(new EscalatedOutcome("below-threshold"), outcome);
         Assert.Empty(text.Calls);
