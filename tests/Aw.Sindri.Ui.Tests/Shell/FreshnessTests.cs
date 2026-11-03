@@ -164,9 +164,19 @@ public sealed partial class FreshnessTests : IDisposable
     // is followed by exactly one ViewReads++ (ControlPlaneFollower.Refresh), so the two counts are equal when none is mid-flight.
     private async Task RefreshHandled(int services) => await Until(() => _server.ServicesCalls == services && _vm.ViewReads == services);
 
-    // The throttle window ends: the pending re-read comes. The clock moves one window per poll until it does, so a move
-    // that lands before the timer exists is made up by the next one.
-    private async Task ReReadAfterWindow(int services) => await Until(() => _server.ServicesCalls == services, _clock);
+    // The throttle window ends: the pending re-read comes within two windows. The clock moves one window, then (if the
+    // re-read has not come in 1 s) exactly one more, which covers the gap between ViewReads++ and the app creating its
+    // timer; a re-read that comes later than that fails the test.
+    private async Task ReReadAfterWindow(int services)
+    {
+        _clock.Advance(HealthViewModel.RefreshEvery);
+        await Poll(() => _server.ServicesCalls == services, timeoutMs: 1000);
+        if (_server.ServicesCalls != services)
+        {
+            _clock.Advance(HealthViewModel.RefreshEvery);
+            await Until(() => _server.ServicesCalls == services);
+        }
+    }
 
     // §9.2: a burst re-reads each view at most once per 250 ms. The first event re-reads at once; the events in the next
     // 250 ms collapse into one more re-read when the window ends.
@@ -358,10 +368,10 @@ public sealed partial class FreshnessTests : IDisposable
     }
 
     // Polls with yields, not sleeps, so the wait ends the moment the condition holds; the 1 ms pause every 64th turn lets threadpool
-    // work run when the box is busy. A hang still fails: it gives up after 5 s.
-    private static async Task Poll(Func<bool> condition, Action? step = null)
+    // work run when the box is busy. A hang still fails: it gives up after 5 s (or timeoutMs).
+    private static async Task Poll(Func<bool> condition, Action? step = null, int timeoutMs = 5000)
     {
-        var deadline = Environment.TickCount64 + 5000;
+        var deadline = Environment.TickCount64 + timeoutMs;
         for (var i = 1; !condition() && Environment.TickCount64 < deadline; i++)
         {
             step?.Invoke();
