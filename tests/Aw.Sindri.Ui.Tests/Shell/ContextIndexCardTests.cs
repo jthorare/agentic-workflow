@@ -129,6 +129,25 @@ public sealed class ContextIndexCardTests
     }
 
     [Fact]
+    public async Task A_store_that_cannot_be_read_shows_its_code_and_fix_and_needs_a_look()
+    {
+        _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
+            $$$"""{"sources":[{{{Source("github", "running", 200)}}}],"store":{"state":"fail","detail":"SND-CONTEXT-004: context.db can't be read","fix":"check $AW_SINDRI_HOME/context permissions"}}""");
+        var card = new ContextIndexCardViewModel(_server, _clock);
+
+        await card.Refresh(_api, Token);
+
+        Assert.Equal(
+            [
+                "Store: SND-CONTEXT-004: context.db can't be read",
+                "Fix: check $AW_SINDRI_HOME/context permissions",
+            ],
+            card.Lines.TakeLast(2).Select(l => l.Text),
+            StringComparer.Ordinal);
+        Assert.Equal(Labels.CodeIndexNeedsLook, card.Word);
+    }
+
+    [Fact]
     public async Task A_fine_store_is_one_quiet_line_and_stays_ok()
     {
         _server.IndexStatusAnswer = new RouteAnswer(HttpStatusCode.OK,
