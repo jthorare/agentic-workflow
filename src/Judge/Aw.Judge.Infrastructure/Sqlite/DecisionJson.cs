@@ -26,6 +26,10 @@ internal sealed class DecisionJson(JsonSerializerOptions json)
 
     internal IReadOnlyList<string>? Reasons(string? text) => text is null ? null : Read<IReadOnlyList<string>>(text, "reasons");
 
+    internal string? Images(DecisionImages? images) => images is null ? null : Write(images);
+
+    internal DecisionImages? Images(string? text) => text is null ? null : Read<DecisionImages>(text, "images");
+
     private string Write<T>(T value) => Encoding.UTF8.GetString(AwJson.Serialize(value, json));
 
     // The judge wrote every stored value itself: one it can't read back is a corrupt database, not an expected error.

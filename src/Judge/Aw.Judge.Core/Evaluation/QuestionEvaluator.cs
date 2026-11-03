@@ -201,6 +201,7 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
         if (lineup.Images.Images.Count > 0)
         {
             reference = reference with { Images = lineup.Images.Images, ImageScope = lineup.Images.Scope };
+            run.ReadImages = [.. lineup.Images.Images.Select(static i => new Images.ImageSize(i.Width, i.Height))];
         }
 
         var candidates = lineup.Candidates;
@@ -267,6 +268,7 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
             DecidingProbabilities = answer.Probabilities,
             RulesOpinion = opinion,
             Agreement = agreement,
+            SentImages = answer.SentImages,
         };
     }
 }

@@ -2178,5 +2178,20 @@ Aw.Judge.Core.Ports.IImageScaler
 Aw.Judge.Core.Ports.IImageScaler.Fit(Aw.Judge.Core.Images.ImageAttachment! image, Aw.Judge.Core.Images.JevLimits! limits) -> Aw.Judge.Core.Images.ImageAttachment?
 Aw.Judge.Core.Providers.ProviderDecided.SentImages.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>?
 Aw.Judge.Core.Providers.ProviderDecided.SentImages.init -> void
-Aw.Judge.Core.Decisions.DecisionDetails.SentImages.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>?
-Aw.Judge.Core.Decisions.DecisionDetails.SentImages.init -> void
+Aw.Judge.Core.Decisions.DecisionDetails.Images.get -> Aw.Judge.Core.Decisions.DecisionImages?
+Aw.Judge.Core.Decisions.DecisionDetails.Images.init -> void
+Aw.Judge.Core.Images.JevLimits.Fits(Aw.Judge.Core.Images.ImageAttachment! image) -> bool
+Aw.Judge.Core.Decisions.DecisionImages
+Aw.Judge.Core.Decisions.DecisionImages.<Clone>$() -> Aw.Judge.Core.Decisions.DecisionImages!
+Aw.Judge.Core.Decisions.DecisionImages.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>! Read, out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>! Sent) -> void
+Aw.Judge.Core.Decisions.DecisionImages.DecisionImages(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>! Read, System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>! Sent) -> void
+Aw.Judge.Core.Decisions.DecisionImages.Equals(Aw.Judge.Core.Decisions.DecisionImages? other) -> bool
+Aw.Judge.Core.Decisions.DecisionImages.Read.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>!
+Aw.Judge.Core.Decisions.DecisionImages.Read.init -> void
+Aw.Judge.Core.Decisions.DecisionImages.Sent.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>!
+Aw.Judge.Core.Decisions.DecisionImages.Sent.init -> void
+override Aw.Judge.Core.Decisions.DecisionImages.Equals(object? obj) -> bool
+override Aw.Judge.Core.Decisions.DecisionImages.GetHashCode() -> int
+override Aw.Judge.Core.Decisions.DecisionImages.ToString() -> string!
+static Aw.Judge.Core.Decisions.DecisionImages.operator !=(Aw.Judge.Core.Decisions.DecisionImages? left, Aw.Judge.Core.Decisions.DecisionImages? right) -> bool
+static Aw.Judge.Core.Decisions.DecisionImages.operator ==(Aw.Judge.Core.Decisions.DecisionImages? left, Aw.Judge.Core.Decisions.DecisionImages? right) -> bool

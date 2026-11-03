@@ -88,6 +88,7 @@ public sealed partial class QuestionEvaluator
                 RulesOpinion = settlement.RulesOpinion,
                 Agreement = settlement.Agreement,
                 SessionId = run.SessionId,
+                Images = run.ReadImages.Count == 0 ? null : new DecisionImages(run.ReadImages, settlement.SentImages ?? []),
             },
         };
         var written = await log.Record(decision, cancellationToken).ConfigureAwait(false);

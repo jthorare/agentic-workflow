@@ -23,8 +23,8 @@ public sealed record DecisionDetails
     /// <summary>How the rules' opinion compared with the decision.</summary>
     public Agreement? Agreement { get; init; }
 
-    /// <summary>The sizes of the images the deciding provider sent, in order, when it sent any; null otherwise.</summary>
-    public IReadOnlyList<Aw.Judge.Core.Images.ImageSize>? SentImages { get; init; }
+    /// <summary>The call's image sizes as read and as sent, when the call had images; null otherwise.</summary>
+    public DecisionImages? Images { get; init; }
 
     /// <summary>The session the question came from, when known.</summary>
     public SessionId? SessionId { get; init; }
