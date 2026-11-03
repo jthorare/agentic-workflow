@@ -58,6 +58,55 @@ public sealed class JudgeChooseKnownPlacesTests : IDisposable
         Assert.Equal([inCheckout, inEvidence], Assert.Single(judge.Requests).Images, StringComparer.Ordinal);
     }
 
+    [Fact]
+    public async Task JudgeChoose_fails_the_step_when_a_directory_symlink_in_the_checkout_points_out()
+    {
+        _ = File(Path.Combine(Elsewhere, "downloads"), "x.png");
+        _ = Directory.CreateDirectory(Checkout);
+        _ = Directory.CreateSymbolicLink(Path.Combine(Checkout, "shots"), Path.Combine(Elsewhere, "downloads"));
+        var path = Path.Combine(Checkout, "shots", "x.png");
+        var judge = Decided();
+
+        var result = await Run(judge, path);
+
+        Assert.Empty(judge.Requests);
+        Assert.Equal($"step.judge.choose: images: {path} (from fact:frames) is outside the checkout and the ui-evidence output", result.Failure);
+    }
+
+    [Fact]
+    public async Task JudgeChoose_fails_the_step_when_a_relative_file_link_inside_a_linked_directory_climbs_out()
+    {
+        // checkout/indir -> elsewhere/out/inner, and inner/x.png -> ../secret.png: read as text that is checkout/secret.png, but the real file is elsewhere/out/secret.png.
+        _ = File(Path.Combine(Elsewhere, "out"), "secret.png");
+        _ = Directory.CreateDirectory(Path.Combine(Elsewhere, "out", "inner"));
+        _ = System.IO.File.CreateSymbolicLink(Path.Combine(Elsewhere, "out", "inner", "x.png"), Path.Combine("..", "secret.png"));
+        _ = Directory.CreateDirectory(Checkout);
+        _ = Directory.CreateSymbolicLink(Path.Combine(Checkout, "indir"), Path.Combine(Elsewhere, "out", "inner"));
+        var path = Path.Combine(Checkout, "indir", "x.png");
+        var judge = Decided();
+
+        var result = await Run(judge, path);
+
+        Assert.Empty(judge.Requests);
+        Assert.Equal($"step.judge.choose: images: {path} (from fact:frames) is outside the checkout and the ui-evidence output", result.Failure);
+    }
+
+    [Fact]
+    public async Task JudgeChoose_takes_an_image_under_a_directory_symlink_that_stays_inside_the_checkout()
+    {
+        _ = File(Path.Combine(Checkout, "real"), "home.png");
+        _ = Directory.CreateSymbolicLink(Path.Combine(Checkout, "alias"), Path.Combine(Checkout, "real"));
+        var path = Path.Combine(Checkout, "alias", "home.png");
+        var judge = Decided();
+
+        var result = await Run(judge, path);
+
+        Assert.Null(result.Failure);
+        Assert.Equal([path], Assert.Single(judge.Requests).Images, StringComparer.Ordinal);
+    }
+
+    private static FakeJudgeChoice Decided() => new FakeJudgeChoice().Answers(new ChooseAnswer(ChooseStatus.Decided, "api", "model", 0.9, "jev", "d-1"));
+
     private static string File(string directory, string name)
     {
         _ = Directory.CreateDirectory(directory);
