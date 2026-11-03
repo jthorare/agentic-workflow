@@ -2,8 +2,8 @@ using System.Text.Json.Nodes;
 using Aw.Judge.Core.Evaluation;
 using Aw.Judge.Core.Providers;
 using Aw.Judge.Core.Questions;
-using Aw.Kernel.Testing;
 using Aw.Judge.Testing;
+using Aw.Kernel.Testing;
 
 namespace Aw.Judge.Tests.Questions;
 

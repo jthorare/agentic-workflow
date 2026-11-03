@@ -238,19 +238,20 @@ public sealed class ImagesOnAnyQuestionTests
             JevSkipNotes.For(Assert.Single(run.Log.Decisions)));
     }
 
-    // Jev dropped an image and answered, but under the threshold: the chain goes on, and the next provider is asked as text too (spec 2).
+    // Jev dropped the images (413, then a text retry) and answered, but under the threshold: the chain goes on, and the next provider is asked as text too (spec 2).
     [Fact]
     public async Task Best_effort_drop_then_a_jev_answer_below_threshold_asks_the_next_provider_as_text()
     {
-        var handler = new RecordingJevHandler(_ => JevImages.Choice("continue", "0.1"));
+        var handler = new TooLargeWithImagesHandler("0.1");
         using var jev = JevImages.Jev(handler);
         var cli = Cli(ContentClass.Transcript, ContentClass.Image).Decides("continue", 0.9);
-        var run = new QuestionRun { ImageReader = Reader(("/shots/icon.png", ImageBytes.Png(200, 120, "icon"))) };
+        var run = new QuestionRun { ImageReader = Reader(("/shots/home.png", ImageBytes.Png(1512, 982, "home"))) };
 
-        var outcome = await run.Ask(AskCheckQuestion.Definition, Input(["/shots/icon.png"], bestEffort: true), jev, cli);
+        var outcome = await run.Ask(AskCheckQuestion.Definition, Input(["/shots/home.png"], bestEffort: true), jev, cli);
 
-        Assert.Equal(("continue", ProviderName.ClaudeCli), (Assert.IsType<DecidedOutcome>(outcome).Decision, ProviderName.ClaudeCli));
-        _ = Assert.Single(handler.Requests);
+        var decided = Assert.IsType<DecidedOutcome>(outcome);
+        Assert.Equal(("continue", ProviderName.ClaudeCli), (decided.Decision, decided.Model));
+        Assert.Equal(2, handler.Requests.Count);
         Assert.Empty(Assert.Single(cli.Calls).Question.Images);
     }
 
@@ -316,7 +317,7 @@ public sealed class ImagesOnAnyQuestionTests
     }
 
     // Jev as a call with images finds it: a 413 for any request that holds images, an answer for one that does not.
-    private sealed class TooLargeWithImagesHandler : HttpMessageHandler
+    private sealed class TooLargeWithImagesHandler(string confidence = "0.9") : HttpMessageHandler
     {
         public List<RecordedJevRequest> Requests { get; } = [];
 
