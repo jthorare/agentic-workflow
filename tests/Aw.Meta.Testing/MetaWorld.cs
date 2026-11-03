@@ -84,6 +84,9 @@ public sealed class MetaWorld
     /// <summary>When worktree directories last changed.</summary>
     public InMemoryWorktreeFiles WorktreeFiles { get; } = new();
 
+    /// <summary>What the bugfix runs recorded.</summary>
+    public InMemoryBugfixRecords BugfixRecords { get; } = new();
+
     /// <summary>The delay between polls; waiting moves <see cref="Clock"/>.</summary>
     public InMemoryDelay Delay { get; }
 
@@ -91,7 +94,7 @@ public sealed class MetaWorld
     public MetaPaths Paths { get; } = new("/state/meta", "/state/meta/gates", "/bin/heavy", "gh");
 
     /// <summary>The worktree inspector over <see cref="Runner"/> and <see cref="Locations"/>.</summary>
-    public WorktreeInspector Inspector => new(Repo, Locations, Paths, Values, WorktreeFiles);
+    public WorktreeInspector Inspector => new(Repo, Locations, Paths, Values, WorktreeFiles, BugfixRecords);
 
     /// <summary>The worktree sweeper over the fakes.</summary>
     public WorktreeSweeper Sweeper => new(Inspector, Repo, Log, Values, Clock);
