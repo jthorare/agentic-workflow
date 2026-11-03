@@ -1,0 +1,3 @@
+## Enhanced Prompt
+
+**Original:** Add rate limiting to the recipe-scaling API, per API key, 60 requests a minute, answering 429.

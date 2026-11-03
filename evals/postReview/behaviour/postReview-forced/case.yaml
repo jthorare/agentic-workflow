@@ -1,0 +1,23 @@
+schema_version: '1.1'
+name: postReview-forced
+tags:
+- review
+- behaviour
+execution:
+  max_turns: 20
+  timeout_seconds: 400
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - Bash
+  - Write
+  - TodoWrite
+  - AskUserQuestion
+context:
+  scaffold_script: fixture.sh
+# AW_GIT_MODE=readonly, stub `gh` first on PATH (answers in .aw-eval/gh.json, written by fixture.sh).
+# Planted: the saved review for PR 23 has 2 reviewers (security-sentinel: inline at src/permits/lookup.py position 31
+# and src/api/renew.py position 18; performance-oracle: 1 inline + 1 top-level). A good run prints one batched
+# `gh api .../pulls/23/reviews` per reviewer under `Would run:` and posts nothing.
