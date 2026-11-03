@@ -11,6 +11,9 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
     <!-- The trait files (cutover unit 6.2). Only the parser and representation model are used: reflection-free, NativeAOT-clean. -->
     <PackageReference Include="YamlDotNet" />
+    <!-- The image scaler (images spec 3.3a); the native library ships beside the binary. -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
   </ItemGroup>
 
   <ItemGroup>

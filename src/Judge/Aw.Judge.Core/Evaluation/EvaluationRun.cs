@@ -34,6 +34,9 @@ internal sealed class EvaluationRun(DecisionId id, DateTimeOffset ts, JsonNode? 
     /// <summary>Why an escalation happened, when it is more than its reason code (an image that couldn't be read); stored as the row's reason.</summary>
     public string? Note { get; set; }
 
+    /// <summary>The sizes of the call's images as read; empty for a call without images.</summary>
+    public IReadOnlyList<Images.ImageSize> ReadImages { get; set; } = [];
+
     /// <summary>The effective threshold.</summary>
     public double Threshold { get; set; }
 
