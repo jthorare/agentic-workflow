@@ -14,14 +14,17 @@ allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash
 
 Launches Playwright against a running web app and executes **journeys** through **verification lenses**. Every run writes an evidence pack (`pack.json` + `report.md`) per `_shared/evidence-pack.md`.
 
+Every run ends with the [Done checklist](#done-checklist), whatever the verdict: PASS, WARN, FAIL or a stop (a busy browser lock included). A failed run is a finished run, not a reason to skip the result file or the `aw-result` block. Run the [Result block](#result-block)'s gate now, in the same Bash call as the shared references and ahead of their `ls`, so you know `AW_RESULT` even when that `ls` fails. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 Shared references resolve from the stable toolkit path (never through a provider's skills dir):
 
 ```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/verification-lenses.md" "$SHARED_DIR/evidence-pack.md"
 ```
 
-If resolution or `ls` fails, stop and report — do not improvise the journey/lens rules. Read both files before planning.
+If resolution or `ls` fails, stop and report through the [Done checklist](#done-checklist) (verdict FAIL) — do not improvise the journey/lens rules. Read both files before planning.
 
 ## Step 1: Parse Arguments
 
@@ -103,7 +106,7 @@ Execute each selected lens with fully-qualified tools:
 
 ### `functional`
 
-Execute journeys step by step: `mcp: playwright/browser_click`, `mcp: playwright/browser_fill_form`, `mcp: playwright/browser_press_key`, `mcp: playwright/browser_select_option` (navigation steps via `mcp: playwright/browser_navigate`; async UI via `mcp: playwright/browser_wait_for`). Assert after each step with `mcp: playwright/browser_snapshot`. Then check `mcp: playwright/browser_console_messages` (no uncaught errors) and `mcp: playwright/browser_network_requests` (no failed calls).
+Execute journeys step by step: `mcp: playwright/browser_click`, `mcp: playwright/browser_fill_form`, `mcp: playwright/browser_press_key`, `mcp: playwright/browser_select_option` (navigation steps via `mcp: playwright/browser_navigate`; async UI via `mcp: playwright/browser_wait_for`). Assert after each step with `mcp: playwright/browser_snapshot`. Run every step the criteria name, in order, as its own tool call: "open X" or "save" is a `browser_click` on that control, even when the snapshot already shows what it would reveal; never fold a click into a fill or an Enter key. Only after the journey's interactive steps, check `mcp: playwright/browser_console_messages` (no uncaught errors) and `mcp: playwright/browser_network_requests` (no failed calls).
 
 ### `visual`
 
@@ -111,7 +114,7 @@ Execute journeys step by step: `mcp: playwright/browser_click`, `mcp: playwright
 
 ### `accessibility`
 
-`mcp: playwright/browser_snapshot` tree: labels, roles, heading order, keyboard reachability of interactive elements.
+`mcp: playwright/browser_snapshot` tree: labels, roles, heading order, keyboard reachability of interactive elements. Walk every interactive node: a `button`, `link` or `textbox` line with no quoted name (e.g. `- link [ref=e31]`) has no accessible name, and is an accessibility FAIL naming that ref and role.
 
 ### `error-state`
 
@@ -145,7 +148,7 @@ LOCK_NAME=browser source "$SHARED_DIR/skill-lock.sh"; release_lock
 
 ## Verdict & Gate
 
-**A FAIL verdict forbids downstream PR-open / mark-ready** (gate rule in `_shared/evidence-pack.md`). Consumers (verify-app, specToProvenPR, shipRelease, review) read the pack — do not soften the verdict in prose. End the report with exactly:
+**A FAIL verdict forbids downstream PR-open / mark-ready** (gate rule in `_shared/evidence-pack.md`). Consumers (verify-app, specToProvenPR, shipRelease, review) read the pack — do not soften the verdict in prose. Your final reply (not only `report.md`) names every issue found, one line each with its evidence: the console error's message and source file, the element ref and role of an accessibility gap, the failed request. End both `report.md` and the final reply with exactly these two lines:
 
 ```
 verdict: <PASS|WARN|FAIL>
@@ -164,6 +167,17 @@ evidence_path: <absolute path to verification/<run-id>/>
 
 - `/design-verify-web` — if visual gaps surfaced, run web design verification
 - `/bugReport` — if functional gaps surfaced, capture them as a bug report
+
+## Done checklist
+
+Do every item before you send the reply; a run that skips one is not finished, even when the verdict is FAIL or the run stopped early:
+
+1. The pack exists: `pack.json` and `report.md` under `$AW_DIR/verification/<run-id>/` (Write tool). A run that stopped before the journey still writes a FAIL pack that says where it stopped and why.
+2. The browser lock is released (Step 7).
+3. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/verify-web-<timestamp>.json` (Result block, Write tool), with the pack's verdict.
+4. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), opens with the `aw-result` block, before the prose and `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply.
+
+If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
 
 ## Result block
 

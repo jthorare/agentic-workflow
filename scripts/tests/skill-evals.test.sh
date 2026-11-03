@@ -230,6 +230,11 @@ rm "$F/has-done.fail.3.txt"; printf 'x\n' >"$F/has-done.pass.3.tools"
 run --skills alpha --selftest
 expect "an extra reply of the wrong kind is caught" 1 'has-done.pass.3.tools is not a reply this grader reads'
 rm -f "$F"/has-done.*.[0-9]*.*
+printf -- '---\ntype: llm\n---\nThe reply says it is done.\n' >"$REPO/evals/alpha/behaviour/alpha-forced/graders/judged.md"
+printf 'done\n' >"$F/judged.pass.2.txt"
+run --skills alpha --selftest
+expect "an extra reply next to an llm grader is reported, not skipped" 1 'judged.pass.2.txt is never graded'
+rm -f "$REPO/evals/alpha/behaviour/alpha-forced/graders/judged.md" "$F/judged.pass.2.txt"
 printf -- '---\ntype: regex\n---\n.*\n' >"$REPO/evals/alpha/behaviour/alpha-forced/graders/has-done.md"
 run --skills alpha --selftest
 expect "a grader that cannot fail is caught" 1 'cannot fail'

@@ -1,7 +1,7 @@
 ---
 type: tool_order
 before:
-  tool: mcp__plugin_playwright_playwright__browser_click
+  tool: mcp__plugin_aw-evals_playwright__browser_click
 after:
-  tool: mcp__plugin_playwright_playwright__browser_console_messages
+  tool: mcp__plugin_aw-evals_playwright__browser_console_messages
 ---
