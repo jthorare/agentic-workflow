@@ -3,6 +3,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Aw.Kernel.Testing;
+using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Scoping;
 using Aw.Sindri.Core.Workflow.Engine.Runtime;
 using Aw.Sindri.Core.Workflow.Ids;
@@ -74,7 +75,7 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
             var handle = await WorkflowsHarness.Start(server.Environment.Client, start);
             var view = await WorkflowsHarness.Until(handle, static v => v.State is not ("route" or "starting"));
 
-            Assert.Equal("prove", view.State);
+            Assert.True(string.Equals(view.State, "prove", StringComparison.Ordinal), await Explain(sindri, jev, view.State, ct));
             var asked = Assert.Single(jev.Requests);
             Assert.Equal(("multipart/form-data", 2), (asked.ContentType, asked.ImageParts));
 
@@ -97,6 +98,19 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
         Environment.SetEnvironmentVariable("AW_JUDGE_PROVIDERS", value: null);   // the Step names its own list
         _harness.Replacing = services => services.Replace(ServiceDescriptor.Singleton<IRepoCheckouts>(new InMemoryRepoCheckouts().With(Repo, checkout)));
         _harness.Recipe(RecipeId, Recipe(), _harness.Replacing);
+    }
+
+    // Why the instance is not in 'prove': what Jev was asked, why the Step failed (the ledger's step.failed reason), and every decision fact stored.
+    private async Task<string> Explain(IServiceProvider sindri, RecordingJev jev, string state, CancellationToken ct)
+    {
+        var rows = (await sindri.GetRequiredService<ILedgerStore>().ReadAfter(0, 500, ct)).Value;
+        var failures = rows.Select(static e => TryParse(e.Envelope.Payload))
+            .OfType<JsonElement>()
+            .Where(static p => p.TryGetProperty("trigger", out var t) && string.Equals(t.GetString(), "step.failed", StringComparison.Ordinal))
+            .Select(static p => p.GetProperty("detail").GetProperty("reason").GetString())
+            .ToList();
+        var decisions = Directory.EnumerateFiles(Path.Combine(_harness.Home, "workflow", "facts")).Select(static f => File.ReadAllText(f)).Where(static t => t.Contains("\"choice\"", StringComparison.Ordinal));
+        return $"the instance is in '{state}', not 'prove'. Jev was asked {jev.Requests.Count} time(s): {string.Join("; ", jev.Requests)}. step.failed reasons: [{string.Join(" | ", failures)}]. decision facts: [{string.Join(" | ", decisions)}]";
     }
 
     // The decision the Step wrote ('fact:decision' is stored in the home's fact store): the provider that answered.
