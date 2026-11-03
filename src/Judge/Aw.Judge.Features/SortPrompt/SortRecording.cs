@@ -13,7 +13,7 @@ namespace Aw.Judge.Features.SortPrompt;
 /// <param name="Latency">How long the sort took.</param>
 internal sealed record SortRecording(string Prompt, string Sent, SessionId? Session, SortOutcome Outcome, ScaffoldPlan Plan, TimeSpan Latency)
 {
-    /// <summary>The images that were sent with the prompt, in the read form the row keeps.</summary>
+    /// <summary>The images read for the prompt, in the read form the row keeps; <c>imagesDropped</c> says whether they went to Jev.</summary>
     public IReadOnlyList<ImageAttachment> Images { get; init; } = [];
 
     /// <summary>What was dropped on the way, one line each; kept on the row as 'imagesDropped'.</summary>

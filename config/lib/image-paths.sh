@@ -23,7 +23,8 @@ _aw_image_candidates() {
   printf '%s\n' "$1" | grep -oiE '/[^[:space:]"`<>()|,;]+\.(png|jpe?g)' 2> /dev/null || true
 }
 
-# The real path of a file: every symlink on the way resolved (no readlink -f or realpath: macOS lacks them). Fails for a loop or a missing directory.
+# The real path of a file: every symlink on the way resolved (no readlink -f or realpath: macOS lacks them). `cd -P` resolves a "..", which
+# a relative link can leave after a symlinked directory, against the real directory, not the path text. Fails for a loop or a missing directory.
 _aw_realpath() {
   local p="$1" link dir n=0
   while [ -L "$p" ]; do
@@ -31,13 +32,13 @@ _aw_realpath() {
     link="$(readlink "$p")" || return 1
     case "$link" in /*) p="$link" ;; *) p="$(dirname "$p")/$link" ;; esac
   done
-  dir="$(cd "$(dirname "$p")" 2> /dev/null && pwd -P)" || return 1
+  dir="$(cd -P "$(dirname "$p")" 2> /dev/null && pwd -P)" || return 1
   printf '%s/%s\n' "$dir" "$(basename "$p")"
 }
 
 aw_image_files() {
   local hook="${1:-hook}" root="${2:-}" p real size total=0 sent=0 left=0 seen=$'\n'
-  if [ -n "$root" ]; then root="$(cd "$root" 2> /dev/null && pwd -P)" || root="/nonexistent"; fi
+  if [ -n "$root" ]; then root="$(cd -P "$root" 2> /dev/null && pwd -P)" || root="/nonexistent"; fi
   while IFS= read -r p; do
     [ -n "$p" ] || continue
     case "$seen" in *$'\n'"$p"$'\n'*) continue ;; esac
