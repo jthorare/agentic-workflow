@@ -74,7 +74,7 @@ public sealed class SandboxDoctorChecksTests
         var row = Assert.Single(rows, IsProbeRow);
         Assert.Equal(CheckState.Ok, row.State);
         Assert.Null(row.Fix);
-        Assert.Equal("Steps can't run by themselves on macOS yet.", row.Detail);
+        Assert.Equal("Steps can't run by themselves on this operating system: Sindri has a sandbox for Linux and macOS only.", row.Detail);
     }
 
     [Fact]
