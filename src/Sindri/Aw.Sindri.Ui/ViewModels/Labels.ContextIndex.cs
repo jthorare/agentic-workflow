@@ -90,6 +90,16 @@ internal static partial class Labels
         _ => string.Create(CultureInfo.InvariantCulture, $"{(int)age.TotalDays} d ago"),
     };
 
+    /// <summary>The store line (#1963): what the context.db check found.</summary>
+    /// <param name="detail">The server's detail text.</param>
+    /// <returns>"Store: context.db's log is 13.2 GB, ...".</returns>
+    internal static string StoreLine(string detail) => "Store: " + detail;
+
+    /// <summary>The line under a store warning: what to do about it.</summary>
+    /// <param name="fix">The server's fix text.</param>
+    /// <returns>"Fix: restart Sindri ...".</returns>
+    internal static string StoreFix(string fix) => "Fix: " + fix;
+
     /// <summary>The concepts line when concept synthesis or labeling is off.</summary>
     internal const string ConceptsOff = "Concepts: labeling is off";
 
