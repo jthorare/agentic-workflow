@@ -20,13 +20,14 @@ export AW_STATE_DIR="$WORK/state"
 export SKILL_LOCK_TIMEOUT=1
 LF="$AW_STATE_DIR/.browser.lock"
 
-# --- a call that takes the lock and exits without releasing: the next documented acquire takes it over ---
-bash -c 'LOCK_NAME=browser source "$1"; acquire_lock >/dev/null' _ "$LOCK"
+# --- a session that takes the lock and ends without releasing: the next session's acquire takes it over ---
+# The lock's owner is the calling shell's parent (#1991), so the abandoning session is a shell of its own that exits.
+bash -c 'bash -c "LOCK_NAME=browser source \"\$1\"; acquire_lock >/dev/null" _ "$1"; exit $?' _ "$LOCK"
 dead="$(cat "$LF")"
-out="$(bash -c 'LOCK_NAME=browser source "$1"; acquire_lock; echo "me=$$"' _ "$LOCK" 2>&1)" && rc=0 || rc=$?
+bash -c 'LOCK_NAME=browser source "$1"; acquire_lock' _ "$LOCK" >"$WORK/out" 2>&1 && rc=0 || rc=$?
 check "a second acquire after an abandoned one exits 0" "$rc" "0"
-check "the second acquire now holds the lock" "$(cat "$LF")" "$(sed -n 's/^me=//p' <<<"$out")"
-check "the abandoned pid is gone from the lock" "$([ "$(cat "$LF")" = "$dead" ] && echo kept || echo replaced)" "replaced"
+check "the second acquire now holds the lock (this script is its session)" "$(cat "$LF")" "$$"
+check "the abandoned owner is gone from the lock" "$([ "$(cat "$LF")" = "$dead" ] && echo kept || echo replaced)" "replaced"
 rm -f "$LF"
 
 # --- an acquire that fails (the lock is held by a live process) leaves the holder's lock, not one of its own ---
