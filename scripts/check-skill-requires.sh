@@ -10,6 +10,10 @@
 #   - every bins name is on PATH or in evals/stubs/bin/ (--skip-bins skips this one: a box without ffmpeg or bun)
 #   - the SKILL.md has exactly one `## Result block` section, holding the exact gate line from skills/_shared/output-contract.md
 #   - a Result block line that puts the `aw-result` block before `## Next steps` also says "final reply" (the block goes in the reply after the last tool call; #1941)
+#   - the opening (everything before the first `## ` heading) has a line that links `(#result-block)` and says "gate now": the gate
+#     runs before the first step, so a run that stops early still ends with the Result block (#2002). Skills listed in
+#     scripts/check-skill-requires.unswept (one skill directory per line, `#` comments) are skipped until they are swept; a listed
+#     skill that already has the opening, or that does not exist, is a finding, so the list only shrinks
 # A skills/ directory without a SKILL.md (_shared, the preamble files) is not a skill.
 # Usage: scripts/check-skill-requires.sh [--root DIR] [--skip-bins]
 set -uo pipefail
@@ -27,6 +31,7 @@ cd "$ROOT" || { echo "SKILL-REQUIRES: cannot cd to $ROOT" >&2; exit 2; }
 [ -d skills ] || { echo "SKILL-REQUIRES: no skills/ directory in $ROOT" >&2; exit 2; }
 
 GATE='[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"'
+UNSWEPT_FILE="scripts/check-skill-requires.unswept"
 FINDINGS=0
 finding() { printf '%s: %s\n' "$1" "$2"; FINDINGS=$((FINDINGS + 1)); }
 
@@ -57,6 +62,25 @@ requires_lines() {
   ' "$1"
 }
 
+# has_opening FILE: exit 0 when a line before the first `## ` heading links the Result block and says "gate now".
+has_opening() {
+  awk '/^## / { exit } index($0, "(#result-block)") && index($0, "gate now") { found = 1; exit } END { exit !found }' "$1"
+}
+
+UNSWEPT=" "
+if [ -f "$UNSWEPT_FILE" ]; then
+  while IFS= read -r entry; do
+    entry="${entry%%#*}"; entry="${entry%"${entry##*[![:space:]]}"}"; entry="${entry#"${entry%%[![:space:]]*}"}"
+    [ -n "$entry" ] || continue
+    if [ ! -f "$entry/SKILL.md" ]; then
+      finding "$UNSWEPT_FILE" "$entry has no SKILL.md (drop it from the list)"
+    elif has_opening "$entry/SKILL.md"; then
+      finding "$UNSWEPT_FILE" "$entry already runs the gate in its opening (drop it from the list)"
+    fi
+    UNSWEPT+="$entry "
+  done < "$UNSWEPT_FILE"
+fi
+
 for skill_md in skills/*/SKILL.md bootstrap/SKILL.md; do
   [ -f "$skill_md" ] || continue
   dir="$(dirname "$skill_md")"
@@ -86,6 +110,10 @@ for skill_md in skills/*/SKILL.md bootstrap/SKILL.md; do
   if awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md" | grep -F -- '`aw-result` block' | grep -F -- 'before `## Next steps`' | grep -qvF -- 'final reply'; then
     finding "$skill_md" "the Result block puts the aw-result block before ## Next steps without saying final reply (write every file first, then print it in the final reply, after the last tool call)"
   fi
+  case "$UNSWEPT" in
+    *" $dir "*) ;;
+    *) has_opening "$skill_md" || finding "$skill_md" "the opening (before the first ## heading) does not run the Result block's gate: add the opening line from skills/_shared/output-contract.md" ;;
+  esac
 done
 
 [ "$FINDINGS" -eq 0 ]
