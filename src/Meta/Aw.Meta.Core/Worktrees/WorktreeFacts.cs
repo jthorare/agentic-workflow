@@ -45,6 +45,12 @@ internal sealed record WorktreeFacts
     /// <summary>Whether the directory or one of its files (top two levels, build output left out) changed after the last sweep started.</summary>
     public bool ChangedSinceSweep { get; init; }
 
+    /// <summary>Whether <see cref="ChangedSinceSweep"/> was judged against when the tree's merged or closed pull request ended, rather than against the last sweep's start.</summary>
+    public bool ChangedSinceEnd { get; init; }
+
+    /// <summary>Whether the tree's pull request merged or closed but GitHub gave no time for it, so "changed since" can't be judged (the tree is kept).</summary>
+    public bool EndedAtUnknown { get; init; }
+
     /// <summary>Whether no removing sweep has been recorded yet, so "changed since the last sweep" has nothing to compare with.</summary>
     public bool NoPreviousSweep { get; init; }
 
