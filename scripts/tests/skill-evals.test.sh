@@ -216,6 +216,20 @@ echo "--selftest"
 mkrepo
 run --skills alpha --selftest
 expect "a good case set passes" 0 'selftest: 3 case\(s\), 0 problem'
+F="$REPO/evals/alpha/behaviour/alpha-forced/graders/_selftest"
+printf 'also ALPHA-DONE\n' >"$F/has-done.pass.2.txt"; printf 'still nothing\n' >"$F/has-done.fail.2.txt"
+run --skills alpha --selftest
+expect "extra pass and fail replies that get their verdicts pass" 0 'selftest: 3 case\(s\), 0 problem'
+printf 'no done here\n' >"$F/has-done.pass.3.txt"
+run --skills alpha --selftest
+expect "an extra pass reply is graded on its own (the main one passing does not hide it)" 1 'does not pass its pass reply has-done.pass.3.txt'
+rm "$F/has-done.pass.3.txt"; printf 'ALPHA-DONE\n' >"$F/has-done.fail.3.txt"
+run --skills alpha --selftest
+expect "an extra fail reply the grader passes is caught" 1 'does not fail its fail reply has-done.fail.3.txt'
+rm "$F/has-done.fail.3.txt"; printf 'x\n' >"$F/has-done.pass.3.tools"
+run --skills alpha --selftest
+expect "an extra reply of the wrong kind is caught" 1 'has-done.pass.3.tools is not a reply this grader reads'
+rm -f "$F"/has-done.*.[0-9]*.*
 printf -- '---\ntype: regex\n---\n.*\n' >"$REPO/evals/alpha/behaviour/alpha-forced/graders/has-done.md"
 run --skills alpha --selftest
 expect "a grader that cannot fail is caught" 1 'cannot fail'
