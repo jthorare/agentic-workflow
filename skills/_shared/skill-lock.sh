@@ -30,6 +30,9 @@ if ! [[ "$LOCK_NAME" =~ ^[a-zA-Z0-9_-]+$ ]]; then
   return 1 2>/dev/null || exit 1
 fi
 
+# A `LOCK_NAME=x source` prefix only lasts during the source, so functions read this copy.
+SKILL_LOCK_NAME="$LOCK_NAME"
+
 # sec-1: Require bash >= 4 for atomic noclobber (O_CREAT|O_EXCL semantics).
 # macOS ships bash 3.2 where noclobber uses stat+open, not open(O_CREAT|O_EXCL),
 # making the atomic write claim false on that platform.
@@ -38,7 +41,7 @@ if [ "${BASH_VERSINFO[0]:-0}" -lt 4 ]; then
   return 1 2>/dev/null || exit 1
 fi
 
-LOCK_FILE="${AW_STATE_DIR:-$HOME/.agentic-workflow}/.${LOCK_NAME}.lock"
+LOCK_FILE="${AW_STATE_DIR:-$HOME/.agentic-workflow}/.${SKILL_LOCK_NAME}.lock"
 SKILL_LOCK_TIMEOUT="${SKILL_LOCK_TIMEOUT:-120}"
 
 _lock_is_stale() {
@@ -62,7 +65,7 @@ acquire_lock() {
   # sec-5: Explicitly check that lock directory creation succeeds.
   # When sourced, mkdir failure could be silently ignored without this guard.
   mkdir -p "$(dirname "$LOCK_FILE")" || {
-    echo "skill-lock[$LOCK_NAME]: failed to create lock directory $(dirname "$LOCK_FILE")" >&2
+    echo "skill-lock[$SKILL_LOCK_NAME]: failed to create lock directory $(dirname "$LOCK_FILE")" >&2
     return 1
   }
 
@@ -74,7 +77,7 @@ acquire_lock() {
     # where two processes could both see a stale lock and both write their PID.
     # The subshell ensures noclobber is scoped and does not leak into the caller.
     if ( set -o noclobber; echo "$$" > "$LOCK_FILE" ) 2>/dev/null; then
-      echo "skill-lock[$LOCK_NAME]: acquired (pid $$)"
+      echo "skill-lock[$SKILL_LOCK_NAME]: acquired (pid $$)"
       return 0
     fi
 
@@ -91,7 +94,7 @@ acquire_lock() {
     if [ "$elapsed" -ge "$SKILL_LOCK_TIMEOUT" ]; then
       local holder
       holder=$(cat "$LOCK_FILE" 2>/dev/null || echo "unknown")
-      echo "skill-lock[$LOCK_NAME]: TIMEOUT after ${elapsed}s waiting for pid $holder"
+      echo "skill-lock[$SKILL_LOCK_NAME]: TIMEOUT after ${elapsed}s waiting for pid $holder"
       return 1
     fi
 
@@ -99,7 +102,7 @@ acquire_lock() {
     local actual_sleep=$((backoff < remaining ? backoff : remaining))
     [ "$actual_sleep" -lt 1 ] && actual_sleep=1
 
-    echo "skill-lock[$LOCK_NAME]: waiting (held by pid $(cat "$LOCK_FILE" 2>/dev/null)), retry in ${actual_sleep}s..."
+    echo "skill-lock[$SKILL_LOCK_NAME]: waiting (held by pid $(cat "$LOCK_FILE" 2>/dev/null)), retry in ${actual_sleep}s..."
     sleep "$actual_sleep"
     elapsed=$((elapsed + actual_sleep))
 
@@ -116,10 +119,10 @@ release_lock() {
     holder=$(cat "$tmp" 2>/dev/null || echo "")
     if [ "$holder" = "$$" ]; then
       rm "$tmp"
-      echo "skill-lock[$LOCK_NAME]: released (pid $$)"
+      echo "skill-lock[$SKILL_LOCK_NAME]: released (pid $$)"
     else
       mv "$tmp" "$LOCK_FILE" 2>/dev/null || true
-      echo "skill-lock[$LOCK_NAME]: not releasing — held by pid $holder, we are pid $$" >&2
+      echo "skill-lock[$SKILL_LOCK_NAME]: not releasing — held by pid $holder, we are pid $$" >&2
     fi
   fi
 }
