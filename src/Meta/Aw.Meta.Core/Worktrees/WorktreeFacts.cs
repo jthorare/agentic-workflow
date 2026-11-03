@@ -63,6 +63,6 @@ internal sealed record WorktreeFacts
     /// <summary>Whether a gate tree's HEAD is the merge commit the gate made (committer aw-meta@localhost), whose parents are main and the pull request's head.</summary>
     public bool HeadIsGateMerge { get; init; }
 
-    /// <summary>Whether a gate-run, gate-rerun or merge-run of the gate tree's pull request is running.</summary>
+    /// <summary>Whether an aw-meta process is running gate-run, gate-rerun or merge-run for the gate tree's pull request (a command line that only mentions them doesn't count).</summary>
     public bool GateRunning { get; init; }
 }
