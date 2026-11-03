@@ -71,6 +71,22 @@ public sealed class VisualCritiqueImageTests
     }
 
     [Fact]
+    public async Task VisualCritique_evidence_dir_that_is_a_symlink_loop_escalates_invalid_input()
+    {
+        using var scratch = new ScratchDirectory();
+        var a = Path.Combine(scratch.Path, "a");
+        var b = Path.Combine(scratch.Path, "b");
+        _ = File.CreateSymbolicLink(a, b);
+        _ = File.CreateSymbolicLink(b, a);
+        Install(_ => { });
+
+        var outcome = await Ask(a, "after.png", baseline: null);
+
+        Assert.Equal(new EscalatedOutcome("invalid-input"), outcome);
+        Assert.Empty(_runner.Calls);
+    }
+
+    [Fact]
     public async Task VisualCritique_missing_screenshot_escalates_invalid_input()
     {
         using var evidence = new ScratchDirectory();
