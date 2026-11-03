@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Judge.Core.Questions;
 
 namespace Aw.Judge.Core.Providers;
 
@@ -43,4 +44,7 @@ public sealed record QuestionRef
     /// caller's (GH_TOKEN, AW_FORGE_TOKEN, cloud keys) reaches a model that reads repo-controlled text; false inherits everything.
     /// </summary>
     public bool MinimalEnvironment { get; init; }
+
+    /// <summary>The images the question sends, read once (empty for a text question): every provider that sends images gets these bytes.</summary>
+    public IReadOnlyList<ImageAttachment> Images { get; init; } = [];
 }

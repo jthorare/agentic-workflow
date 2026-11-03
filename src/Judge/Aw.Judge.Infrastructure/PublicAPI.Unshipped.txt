@@ -4,3 +4,12 @@ static Aw.Judge.Infrastructure.JudgeInfrastructureServiceCollectionExtensions.Ad
 
 Aw.Judge.Infrastructure.TraitCheckServiceCollectionExtensions
 static Aw.Judge.Infrastructure.TraitCheckServiceCollectionExtensions.AddTraitCheckInfrastructure(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Func<string!, string?>! environment) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+Aw.Judge.Infrastructure.Images.FileImageReader
+Aw.Judge.Infrastructure.Images.FileImageReader.FileImageReader() -> void
+Aw.Judge.Infrastructure.Images.FileImageReader.Read(System.Collections.Generic.IReadOnlyList<string!>! paths, string? root, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Judge.Core.Questions.ImageRead!>
+Aw.Judge.Infrastructure.Images.ImageWorkspace
+Aw.Judge.Infrastructure.Images.ImageWorkspace.Dispose() -> void
+Aw.Judge.Infrastructure.Images.ImageWorkspace.ImageWorkspace() -> void
+Aw.Judge.Infrastructure.Images.ImageWorkspace.Path.get -> string!
+Aw.Judge.Infrastructure.Images.ImageWorkspace.Path.init -> void
+static Aw.Judge.Infrastructure.Images.ImageWorkspace.Create(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Questions.ImageAttachment!>! images, string? relativeTo) -> Aw.Judge.Infrastructure.Images.ImageWorkspace!

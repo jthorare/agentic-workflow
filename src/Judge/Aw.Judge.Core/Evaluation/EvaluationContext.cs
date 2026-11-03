@@ -21,4 +21,7 @@ public sealed record EvaluationContext
 
     /// <summary>The calling session, stored with the decision's details.</summary>
     public SessionId? SessionId { get; init; }
+
+    /// <summary>Reads the images a question sends; null when the process has none to read (a question with images then escalates).</summary>
+    public IImageReader? ImageReader { get; init; }
 }

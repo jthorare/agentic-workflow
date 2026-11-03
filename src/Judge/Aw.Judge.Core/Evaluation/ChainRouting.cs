@@ -10,11 +10,13 @@ public static class ChainRouting
     /// <param name="chain">The chain.</param>
     /// <param name="contentClass">The class.</param>
     /// <param name="providers">Every available provider.</param>
+    /// <param name="hasImages">Whether the call carries images, which take the chain's image entry whatever the class.</param>
     /// <returns>The candidates.</returns>
-    public static IReadOnlyList<IModelProvider> ProvidersFor(ChainSpec chain, ContentClass contentClass, IReadOnlyList<IModelProvider> providers)
+    public static IReadOnlyList<IModelProvider> ProvidersFor(ChainSpec chain, ContentClass contentClass, IReadOnlyList<IModelProvider> providers, bool hasImages = false)
     {
         ArgumentNullException.ThrowIfNull(chain);
         ArgumentNullException.ThrowIfNull(providers);
+        _ = hasImages; // Red step: the image entry of the chain is the green step's.
         return [.. chain.For(contentClass)
             .Select(name => providers.FirstOrDefault(p => p.Name == name))
             .OfType<IModelProvider>()
@@ -29,11 +31,12 @@ public static class ChainRouting
     /// <param name="contentClass">The question's class.</param>
     /// <param name="providers">Every available provider.</param>
     /// <param name="questionProviders">The question's own list, or null.</param>
+    /// <param name="hasImages">Whether the call carries images, which take the chain's image entry whatever the class.</param>
     /// <returns>The candidates, in the order to try them.</returns>
     public static IReadOnlyList<IModelProvider> Candidates(
-        ChainSpec chain, ContentClass contentClass, IReadOnlyList<IModelProvider> providers, IReadOnlyList<ProviderName>? questionProviders)
+        ChainSpec chain, ContentClass contentClass, IReadOnlyList<IModelProvider> providers, IReadOnlyList<ProviderName>? questionProviders, bool hasImages = false)
     {
-        var candidates = ProvidersFor(chain, contentClass, providers);
+        var candidates = ProvidersFor(chain, contentClass, providers, hasImages);
         return questionProviders is null
             ? candidates
             : [.. questionProviders.SelectMany(name => candidates.Where(p => p.Name == name))];
