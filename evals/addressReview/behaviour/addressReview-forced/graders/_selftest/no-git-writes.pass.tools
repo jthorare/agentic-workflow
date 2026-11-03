@@ -1,0 +1,1 @@
+Bash	{"command": "cat src/*.js; git branch --show-current; git status --short"}
