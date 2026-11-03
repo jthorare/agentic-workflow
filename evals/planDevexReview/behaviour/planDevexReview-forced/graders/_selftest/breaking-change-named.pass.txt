@@ -1,0 +1,1 @@
+HIGH: `--out` is removed with no deprecation window and 40 callers break.

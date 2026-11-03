@@ -1,0 +1,3 @@
+✓ Dashboard reachable
+✓ MCP server connected
+✓ Knowledge base populated

@@ -1,0 +1,1 @@
+Fix: reinstall the judge binary.

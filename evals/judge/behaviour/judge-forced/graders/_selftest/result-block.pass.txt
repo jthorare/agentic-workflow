@@ -1,0 +1,3 @@
+```aw-result
+{"skill": "judge", "artifacts": [], "summary": "judge not installed"}
+```
