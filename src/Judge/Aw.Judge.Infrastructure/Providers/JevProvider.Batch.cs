@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http.Headers;
 using Aw.Judge.Core.Batching;
 using Aw.Judge.Core.Config;
@@ -46,6 +47,24 @@ internal sealed partial class JevProvider
             return new BatchDecided(new Dictionary<string, BatchAnswer>(StringComparer.Ordinal));
         }
 
+        return batch.Images.Count > 0
+            ? await BatchWithImages(batch, inputCapChars, cancellationToken).ConfigureAwait(false)
+            : await BatchOnce(batch, inputCapChars, cancellationToken).ConfigureAwait(false);
+    }
+
+    // One request for the batch as it stands: its images (if any) fitted once, sent as a multipart body.
+    private async ValueTask<ProviderResult> BatchOnce(BatchRequest batch, int inputCapChars, CancellationToken cancellationToken)
+    {
+        if (batch.Images.Count > 0)
+        {
+            if (Fitted(batch.Images) is not { } fitted)
+            {
+                return new ProviderUnavailable(ProviderUnavailable.ImageOutOfLimits);
+            }
+
+            batch = batch with { Images = fitted };
+        }
+
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(batch.Budget);
         try
@@ -59,7 +78,9 @@ internal sealed partial class JevProvider
             using var response = await http.SendAsync(request, deadline.Token).ConfigureAwait(false);
             if (!response.IsSuccessStatusCode)
             {
-                return new ProviderErrored(ProviderReasons.Http((int)response.StatusCode));
+                return batch.Images.Count > 0 && response.StatusCode == HttpStatusCode.RequestEntityTooLarge
+                    ? new ProviderUnavailable(ProviderUnavailable.ImageTooLarge)
+                    : new ProviderErrored(ProviderReasons.Http((int)response.StatusCode));
             }
 
             var body = await response.Content.ReadAsByteArrayAsync(deadline.Token).ConfigureAwait(false);
@@ -90,10 +111,25 @@ internal sealed partial class JevProvider
     private HttpRequestMessage BatchMessage(BatchRequest batch, int cap, string key)
     {
         var questions = batch.Questions.ToDictionary(q => q.Key, q => WireQuestion(q, cap), StringComparer.Ordinal);
-        var body = new JevBatchRequest(CappedState(batch.State, cap), Model, questions);
-        var content = new ByteArrayContent(AwJson.Serialize(body, WireJson.Options));
-        content.Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        var request = new HttpRequestMessage(HttpMethod.Post, _endpoint) { Content = content };
+        var images = batch.Images;
+        var references = images.Select((image, i) => Reference(i + 1, image)).ToList();
+        var state = CappedState(batch.State, cap);
+        if (images.Count > 0)
+        {
+            state = JevImageReferences.Replace(state, images, references);
+        }
+
+        var body = new JevBatchRequest(state, Model, questions)
+        {
+            Assets = images.Count == 0 ? null : references.ToDictionary(reference => reference, reference => new JevAsset("image", reference), StringComparer.Ordinal),
+        };
+        var json = AwJson.Serialize(body, WireJson.Options);
+        var request = new HttpRequestMessage(HttpMethod.Post, _target) { Content = images.Count == 0 ? JevMultipart.Json(json) : JevMultipart.Build(json, images, references) };
+        if (images.Count > 0)
+        {
+            request.Headers.Add(ImagesHeader, "true");
+        }
+
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", key);
         return request;
     }

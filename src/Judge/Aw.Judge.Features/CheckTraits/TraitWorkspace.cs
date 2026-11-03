@@ -1,3 +1,4 @@
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Traits;
 
@@ -14,6 +15,8 @@ namespace Aw.Judge.Features.CheckTraits;
 internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFiles files, ITraitCheckLog log)
 {
     private const int MaxSourceChars = 20_000;
+    private const int MaxImages = 4;
+    private const long MaxImageBytes = 4 * 1024 * 1024;
     private const string DefaultBase = "origin/main";
     private static readonly string[] _diffFlags = ["--no-color", "--no-ext-diff", "-U3", "--src-prefix=a/", "--dst-prefix=b/"];
 
@@ -38,9 +41,68 @@ internal sealed class TraitWorkspace(TraitGit git, ITraitStore traits, ITraitFil
         var diffs = request.Mode == TraitCheckMode.Scan
             ? await Scanned(root, request.Paths ?? [], active, cancellationToken).ConfigureAwait(false)
             : TraitDiff.Parse(await Changed(root, request, edited, cancellationToken).ConfigureAwait(false));
-        var tasks = Tasks(root, diffs, active);
-        return tasks.Count == 0 ? null : new TraitPlan(root, tasks);
+        return await WithImages(root, edited, active, Tasks(root, diffs, active), cancellationToken).ConfigureAwait(false);
     }
+
+    // An edit (the only mode with edited files) also asks about its image files; a plan is null when there is nothing to ask and nothing was skipped.
+    private async ValueTask<TraitPlan?> WithImages(string root, List<string> edited, List<Trait> active, List<TraitTask> tasks, CancellationToken cancellationToken)
+    {
+        var skipped = new Dictionary<string, string>(StringComparer.Ordinal);
+        var images = await ImageTasks(root, edited, active, skipped, cancellationToken).ConfigureAwait(false);
+
+        // A file named .png that isn't an image (a text file) is image-not-sent only; its text is not judged either.
+        _ = tasks.RemoveAll(task => skipped.ContainsKey(task.Source.Path));
+        tasks.AddRange(images);
+
+        return tasks.Count == 0 && skipped.Count == 0 ? null : new TraitPlan(root, tasks) { Skipped = skipped };
+    }
+
+    // An edited PNG or JPEG is read as an image (best effort): inside the checkout, the first 4 files and 4 MiB; the rest are skipped, never judged on their names.
+    private async ValueTask<List<TraitTask>> ImageTasks(string root, List<string> edited, List<Trait> active, Dictionary<string, string> skipped, CancellationToken cancellationToken)
+    {
+        List<TraitTask> tasks = [];
+        long total = 0;
+        var sent = 0;
+        foreach (var file in edited.Where(IsImage).Distinct(StringComparer.Ordinal))
+        {
+            var applicable = active.Where(trait => TraitGlob.InScope(trait.Paths, file)).ToList();
+            if (applicable.Count == 0)
+            {
+                continue;
+            }
+
+            var (image, why) = await Admit(root, file, (sent, total), cancellationToken).ConfigureAwait(false);
+            if (image is null)
+            {
+                skipped[file] = CheckTraitsResponse.ImageNotSent;
+                log.Append(new System.Text.Json.Nodes.JsonObject { ["event"] = "image-not-sent", ["path"] = file, ["reason"] = why });
+                continue;
+            }
+
+            total += image.Bytes.Length;
+            sent++;
+            var source = new DiffSource(file, 1, 1, "(an image file: its picture is attached)");
+            tasks.AddRange(TraitQuestions.Batches(applicable).Select(batch => new TraitTask(source, batch) { Images = [image] }));
+        }
+
+        return tasks;
+    }
+
+    // The size comes from file metadata: a file over what is left of the 4 files and 4 MiB is skipped without being read.
+    private async ValueTask<(ImageAttachment? Image, string Why)> Admit(string root, string file, (int Sent, long Total) so, CancellationToken cancellationToken)
+    {
+        var path = Path.Combine(root, file);
+        if (so.Sent >= MaxImages || files.FileSize(path) is not { } size || so.Total + size > MaxImageBytes)
+        {
+            return (null, "past the 4 files and 4 MiB an edit sends");
+        }
+
+        var read = await files.ReadImage(path, root, cancellationToken).ConfigureAwait(false);
+        return read.Images is [var image] && so.Total + image.Bytes.Length <= MaxImageBytes ? (image, "") : (null, read.Problem ?? "not an image Jev can be sent");
+    }
+
+    private static bool IsImage(string file) =>
+        file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase);
 
     // The traits to check: the repo's, limited to the ones named; a file that isn't a trait is logged.
     private async ValueTask<List<Trait>> Active(CheckTraitsRequest request, string root, CancellationToken cancellationToken)

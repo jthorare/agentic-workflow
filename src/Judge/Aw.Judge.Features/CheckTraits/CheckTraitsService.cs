@@ -54,7 +54,7 @@ internal sealed class CheckTraitsService(IProcessRunner runner, ITraitStore trai
         var remaining = deadline - clock.GetUtcNow();
         var budget = remaining < _minimumCallBudget ? _minimumCallBudget : remaining > _maximumCallBudget ? _maximumCallBudget : remaining;
         List<BatchQuestion> questions = [.. task.Batch.Select(TraitQuestions.For)];
-        return judge.Ask(State(request, task.Source), questions, budget, request.Providers, cancellationToken);
+        return judge.Ask(new BatchRequest(State(request, task.Source), questions, budget) { Images = task.Images, ImagesBestEffort = task.Images.Count > 0 }, request.Providers, cancellationToken);
     }
 
     // What Jev sees: the excerpt. A stop names the ref the branch is compared with.

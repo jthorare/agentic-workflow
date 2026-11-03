@@ -28,7 +28,7 @@ internal static class SortPromptCommand
         var service = services.GetRequiredService<IService<SortPromptRequest, SortPromptResponse>>();
         try
         {
-            var result = await service.Handle(new SortPromptRequest(input.Value.Prompt, session, allowed?.ToArray()), CancellationToken.None).ConfigureAwait(false);
+            var result = await service.Handle(new SortPromptRequest(input.Value.Prompt, session, allowed?.ToArray()) { Images = input.Value.Images ?? [] }, CancellationToken.None).ConfigureAwait(false);
             return result.IsError || result.Value.Context is null
                 ? CommandOutput.Emit(0, "")
                 : CommandOutput.Emit(0, CommandOutput.Json(new SortPromptOutput(result.Value.Context), json));

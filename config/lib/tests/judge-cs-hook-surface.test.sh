@@ -299,5 +299,87 @@ done
 rc=0; judge_on cs "$(fresh cs stub)" prompt-sort bogus > /dev/null 2> "$WORK/stub.err" || rc=$?
 { [ "$rc" = 1 ] && [ "$(cat "$WORK/stub.err")" = "judge: unknown prompt-sort subcommand: bogus" ]; } || fail "prompt-sort bogus: got exit $rc, '$(cat "$WORK/stub.err")'"
 
+# ---- done-gate with images (judge-images spec 5.2, 6): a turn that read a PNG gets its ask-check answer from Jev ----
+# A stub Jev on loopback (python3), reached through AW_JUDGE_JEV_URL: it answers 'continue' and logs one line per
+# request: its content type and the width and height of the first PNG in the body ("-" for a text request).
+# Needs python3 and sqlite3; without them these cases are skipped.
+if command -v python3 > /dev/null 2>&1 && command -v sqlite3 > /dev/null 2>&1; then
+  cat > "$WORK/stub-jev.py" <<'PY'
+import http.server, json, struct, sys
+LOG, PORT_FILE = sys.argv[1], sys.argv[2]
+class H(http.server.BaseHTTPRequestHandler):
+    def do_POST(self):
+        body = self.rfile.read(int(self.headers.get("Content-Length", "0")))
+        i = body.find(b"IHDR")
+        size = "%d %d" % struct.unpack(">II", body[i + 4:i + 12]) if i >= 0 else "-"
+        with open(LOG, "a") as f:
+            f.write("%s %s\n" % (self.headers.get("Content-Type", "").split(";")[0], size))
+        answer = json.dumps({"answers": {"decision": {"type": "choice", "choice": "continue", "confidence": 0.95}}, "usage": {"input_tokens": 9, "output_tokens": 1}}).encode()
+        self.send_response(200); self.send_header("Content-Type", "application/json"); self.send_header("Content-Length", str(len(answer))); self.end_headers(); self.wfile.write(answer)
+    def log_message(self, *a): pass
+s = http.server.HTTPServer(("127.0.0.1", 0), H)
+open(PORT_FILE, "w").write(str(s.server_address[1]))
+s.serve_forever()
+PY
+  python3 -I "$WORK/stub-jev.py" "$WORK/jev.log" "$WORK/jev.port" &
+  JEV_PID=$!
+  for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do [ -s "$WORK/jev.port" ] && break; sleep 0.25; done
+
+  # A real (solid grey) PNG of the given size: the downscaler decodes it, so a header alone won't do.
+  make_png() {
+    python3 -I - "$1" "$2" "$3" <<'PY'
+import struct, sys, zlib
+path, w, h = sys.argv[1], int(sys.argv[2]), int(sys.argv[3])
+def chunk(kind, data):
+    return struct.pack(">I", len(data)) + kind + data + struct.pack(">I", zlib.crc32(kind + data) & 0xFFFFFFFF)
+raw = b"".join(b"\x00" + b"\x80\x80\x80" * w for _ in range(h))
+open(path, "wb").write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 2, 0, 0, 0)) + chunk(b"IDAT", zlib.compress(raw, 9)) + chunk(b"IEND", b""))
+PY
+  }
+  # A transcript of one turn that Read the given PNG, then ends on a next step (not a done claim, so done-gate asks ask-check).
+  png_turn() {
+    jq -nc '{type:"user", message:{role:"user", content:"check the page"}}' > "$1"
+    jq -nc --arg f "$2" '{type:"assistant", message:{content:[{type:"tool_use", id:"tu", name:"Read", input:{file_path:$f}}]}}' >> "$1"
+    jq -nc '{type:"user", message:{role:"user", content:[{type:"tool_result", tool_use_id:"tu", content:"ok"}]}}' >> "$1"
+    jq -nc '{type:"assistant", message:{content:[{type:"text", text:"I will look at the logs next."}]}}' >> "$1"
+  }
+  jev_env() { TYPESAFE_API_KEY=stub-key AW_JUDGE_JEV_IMAGES=1 AW_JUDGE_PROVIDERS=rules,jev AW_JUDGE_JEV_URL="http://127.0.0.1:$(cat "$WORK/jev.port")/v1/systemone" "$@"; }
+
+  # 3024x1964 is over Jev's 1568 px side: it goes downscaled, Jev answers 'continue' (exit 2), the row says jev.
+  # The hook only sends images under the checkout of its cwd, so the PNGs live in a git repo the hooks run in.
+  mkdir -p "$WORK/img-repo"; git -C "$WORK/img-repo" init -q
+  make_png "$WORK/img-repo/big.png" 3024 1964; png_turn "$WORK/t-big.jsonl" "$WORK/img-repo/big.png"
+  s="$(fresh cs done-img-big)"; : > "$WORK/jev.log"
+  (cd "$WORK/img-repo" && jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-big.jsonl")" done-img-big)
+  [ "$(rc_of done-img-big)" = 2 ] || fail "done-img-big: Jev settles ask-check with the downscaled image (exit 2), got $(rc_of done-img-big): $(err_of done-img-big)"
+  [ "$(sqlite3 "$s/judge/decisions.sqlite" "SELECT provider FROM decisions WHERE question = 'ask-check'" 2> /dev/null)" = jev ] || fail "done-img-big: expected the ask-check row to say jev"
+  awk '$1 == "multipart/form-data" && $2 <= 1568 && $3 <= 1568 && $2 >= 280 && $3 >= 280 { ok = 1 } END { exit !ok }' "$WORK/jev.log" || fail "done-img-big: expected one multipart request with the PNG downscaled to within 1568 px, got '$(cat "$WORK/jev.log")'"
+  no_failopen done-img-big
+
+  # 200x120 is under Jev's 280 px minimum: Jev still answers, as text, and `judge why` says what was left out.
+  make_png "$WORK/img-repo/icon.png" 200 120; png_turn "$WORK/t-icon.jsonl" "$WORK/img-repo/icon.png"
+  s="$(fresh cs done-img-small)"; : > "$WORK/jev.log"
+  (cd "$WORK/img-repo" && jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-icon.jsonl")" done-img-small)
+  [ "$(rc_of done-img-small)" = 2 ] || fail "done-img-small: Jev settles ask-check as text (exit 2), got $(rc_of done-img-small): $(err_of done-img-small)"
+  [ "$(cat "$WORK/jev.log")" = "application/json -" ] || fail "done-img-small: expected one text request, got '$(cat "$WORK/jev.log")'"
+  id="$(sqlite3 "$s/judge/decisions.sqlite" "SELECT id FROM decisions WHERE question = 'ask-check'" 2> /dev/null | head -n 1)"
+  judge_on cs "$s" why "$id" 2> /dev/null | has "jev images dropped: image 1 is 200x120, under Jev's 280 px minimum; asked jev as text" || fail "done-img-small: judge why should carry the dropped-image line"
+  [ -z "$(err_of done-img-small)" ] || fail "done-img-small: a dropped image is never on stderr, got '$(err_of done-img-small)'"
+  no_failopen done-img-small
+
+  # A file named .png that isn't a PNG is dropped, and the answer comes as text.
+  printf 'this is not a png' > "$WORK/img-repo/fake.png"; png_turn "$WORK/t-fake.jsonl" "$WORK/img-repo/fake.png"
+  s="$(fresh cs done-img-fake)"; : > "$WORK/jev.log"
+  (cd "$WORK/img-repo" && jev_env hook cs "$s" done-gate.sh "$(stop "$WORK/t-fake.jsonl")" done-img-fake)
+  [ "$(rc_of done-img-fake)" = 2 ] || fail "done-img-fake: Jev settles ask-check as text (exit 2), got $(rc_of done-img-fake): $(err_of done-img-fake)"
+  [ "$(cat "$WORK/jev.log")" = "application/json -" ] || fail "done-img-fake: expected one text request, got '$(cat "$WORK/jev.log")'"
+  [ -z "$(err_of done-img-fake)" ] || fail "done-img-fake: nothing on stderr, got '$(err_of done-img-fake)'"
+  no_failopen done-img-fake
+
+  kill "$JEV_PID" 2> /dev/null || true
+else
+  echo "skip: done-gate image cases need python3 and sqlite3"
+fi
+
 if [ "$FAILS" -gt 0 ]; then echo "judge-cs-hook-surface: $FAILS failure(s)"; exit 1; fi
 echo "All judge-cs-hook-surface tests passed."

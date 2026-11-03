@@ -31,6 +31,7 @@ mkdir -p "$HOME/.codex"
 echo '{"hooks":{"PreToolUse":[{"matcher":"Bash","hooks":[{"type":"command","command":"/usr/local/bin/theirs.sh"}]}]}}' > "$CODEX_FILE"
 q bash "$ROOT/providers/codex/install-hooks.sh"
 check "codex: scripts staged in ~/.agentic-workflow/hooks" "$([ -x "$AWH/block-destructive.sh" ] && [ -x "$AWH/adapters/codex.sh" ] && [ -f "$AWH/lib/locks.sh" ] && [ -f "$AWH/lib/failopen.sh" ] && echo y)" "y"
+check "codex: image-paths.sh staged next to failopen.sh" "$([ -f "$AWH/lib/image-paths.sh" ] && echo y)" "y"
 check "codex: 4 owned PreToolUse commands" "$(jq '[.hooks.PreToolUse[].hooks[].command | select(test("# aw:"))] | length' "$CODEX_FILE")" "4"
 check "codex: commands go through the adapter" \
   "$(jq -r '.hooks.PreToolUse[].hooks[].command | select(endswith("# aw:block-destructive"))' "$CODEX_FILE")" \
@@ -76,6 +77,7 @@ check "claude: SessionStart git-context then prism-context" "$(jq -c '[.hooks.Se
   '["~/.claude/hooks/git-context.sh","~/.claude/hooks/prism-context.sh"]'
 check "claude: scripts copied to CLAUDE_DIR/hooks" "$([ -x "$CD/hooks/done-gate.sh" ] && echo y)" "y"
 check "claude: HOOK-FAILOPEN logger installed next to the hooks" "$([ -f "$CD/hooks/lib/failopen.sh" ] && echo y)" "y"
+check "claude: image-paths.sh installed next to failopen.sh" "$([ -f "$CD/hooks/lib/image-paths.sh" ] && echo y)" "y"
 snap="$(jq -Sc . "$CD/settings.json")"
 q env CLAUDE_DIR="$CD" bash "$ROOT/providers/claude/install-hooks.sh"
 check "claude: reinstall is idempotent" "$(jq -Sc . "$CD/settings.json")" "$snap"

@@ -17,6 +17,11 @@ failopen() {
     done
   ) > /dev/null 2>&1 || true
 }
+# The images a hook sends the judge (config/lib/image-paths.sh, installed beside failopen.sh). Without it the hook sends none, as before.
+for _aw_f in "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/lib/image-paths.sh" "$(cd "$(dirname "${BASH_SOURCE[0]}")" 2> /dev/null && pwd)/../lib/image-paths.sh"; do
+  if [ -f "$_aw_f" ]; then . "$_aw_f" 2> /dev/null && break; fi
+done
+type aw_images_attach > /dev/null 2>&1 || { aw_images_attach() { printf '%s' "$1"; }; aw_image_paths() { :; }; aw_image_files() { cat > /dev/null; }; }
 # No EXIT trap: on bash 3.2 a trap defers SIGTERM until a running $(judge …)
 # returns, so the host's timeout kill would take longer. A crash keeps its exit
 # code and is not counted under Claude Code (see "Fail-open logging" in
@@ -120,6 +125,7 @@ if [ -n "${AW_META_LANE:-}" ] && [ -n "$TO" ]; then
 fi
 
 JUDGE_INPUT="$(jq -nc --arg text "$MESSAGE" --arg sk "$SENDER_KIND" '{text: $text, senderKind: $sk}')"
+JUDGE_INPUT="$(aw_images_attach "$JUDGE_INPUT" "$(aw_image_paths "$MESSAGE" send-gate)")"
 JUDGE_OUT="$(printf '%s' "$JUDGE_INPUT" | AW_SESSION_ID="$SESSION_ID" judge wake-gate 2>/dev/null)" || { failopen "judge-exit-$?"; allow; }
 DECISION="$(printf '%s' "$JUDGE_OUT" | jq -r '.decision // empty' 2>/dev/null)" || { failopen judge-output-unparsable; allow; }
 [ -n "$DECISION" ] || { failopen judge-decision-missing; allow; }
