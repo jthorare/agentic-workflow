@@ -1,6 +1,6 @@
 # Probe template
 
-A Playwright script that proves each option works on the seeded local stack. Copy it to `$AW_DIR/prototypes/<slug>/probe.mjs`, edit the `CONFIG` block and each option's `steps`, and run it with `node` from the prototype worktree (so it resolves the project's own `playwright` package).
+A Playwright script that proves each option works on the seeded local stack. Copy it to `<proto-dir>/probe.mjs` (the absolute `$AW_DIR/prototypes/<slug>` path echoed in Phase 1), edit the `CONFIG` block and each option's `steps`, and run it from the prototype worktree (so it resolves the project's own `playwright` package) as `node <proto-dir>/probe.mjs <proto-dir>`.
 
 It uses the project's existing Playwright. If the project has none, **Ask the user** before installing anything. It signs in through the real login form (no cookie shortcuts).
 
@@ -8,7 +8,11 @@ It uses the project's existing Playwright. If the project has none, **Ask the us
 import { mkdirSync, writeFileSync } from "node:fs";
 import { chromium } from "playwright";
 
-const OUT = process.env.OUT; // $AW_DIR/prototypes/<slug>, set by you when running the probe
+const OUT = process.argv[2]; // the absolute $AW_DIR/prototypes/<slug> path, first CLI argument
+if (!OUT) {
+  console.error("usage: node probe.mjs <output-dir> (the absolute $AW_DIR/prototypes/<slug> path)");
+  process.exit(2);
+}
 
 // ---- CONFIG ---------------------------------------------------------------
 const CONFIG = {
@@ -32,6 +36,13 @@ const CONFIG = {
   viewport: { width: 1600, height: 1000 },
   settleMs: 1500,
 };
+
+// Local stack only (hard rule 6): refuse any non-loopback base URL.
+const host = new URL(CONFIG.baseUrl).hostname;
+if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(host)) {
+  console.error(`refusing to run against non-loopback host: ${host}`);
+  process.exit(2);
+}
 
 // One entry per option from the brief. The first is always `current`.
 const OPTIONS = [

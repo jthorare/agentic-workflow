@@ -1,7 +1,7 @@
 ---
 max_turns: 5
 timeout_seconds: 300
-allowed_tools: [Read, Glob, Grep, Skill, Bash]
+allowed_tools: [Read, Glob, Grep, Skill, Bash, AskUserQuestion]
 tags: [clickable-prototype, routing, heldout]
 ---
 

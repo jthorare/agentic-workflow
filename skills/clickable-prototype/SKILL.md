@@ -2,7 +2,7 @@
 name: clickable-prototype
 description: "Use when a designer or PM wants to click through 2-3 options of a screen inside the real running app, built from its real components and seeded data, switchable from a small dev-only pill. Local only: the prototype branch is never pushed. Not for HTML drafts outside the app (design-mockup-web), proof that a real change works (verify-web, ui-evidence), or code that will merge."
 argument-hint: "<feature-slug> [--route <path>]"
-allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Bash(source *), Bash(node *), Bash(bun *), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
+allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(echo *), Bash(chmod *), Bash(dirname *), Bash(basename *), Bash(SHARED_DIR=*), Bash(source *), Bash(node *), Bash(bun *), Bash(npm *), Bash(npx *), Bash(pnpm *), Bash(yarn *), Bash(make *), Bash(docker compose *), Bash(docker ps *), Bash(curl *), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
 <!-- preamble -->
@@ -22,17 +22,17 @@ Output lives in `$AW_DIR/prototypes/<slug>/` (brief, probe, shots). Templates ar
 
 - `references/switcher-template.md`: the dev-only switcher and the mount pattern (React/TypeScript worked example, notes for other frameworks)
 - `references/probe-template.md`: the Playwright probe that selects each option, screenshots it and counts page errors
-- `references/gotchas.md`: what went wrong on the first real run
+- `references/gotchas.md`: what was found on earlier runs
 
 ## Hard rules
 
-1. **Never push the prototype branch and never open a PR for it.** The branch is `prototype/<slug>`, local only. Phase 2 points its push remote at a name that does not exist, so a plain `git push` fails; that stops accidents, not a deliberate push to a real remote, so the rule is on you.
+1. **Never push the prototype branch and never open a PR for it.** The branch is `prototype/<slug>`, local only. Phase 2 installs a per-worktree `pre-push` hook that always exits 1, so every `git push` from the worktree fails, whatever the remote or refspec. A deliberate bypass (`--no-verify`, another checkout) is still possible, so the rule is on you.
 2. **Gate everything on the dev build.** The switcher, the option bodies and every mount edit must render exactly the real UI when the dev flag is off (`import.meta.env.DEV` in Vite, `process.env.NODE_ENV !== "production"` elsewhere).
 3. **No data-path changes.** No edits to the API, shared packages, queries, schema or migrations, and no flags the server reads. Options are display only. Fake the data an option needs as constants inside the prototype file, never in the database or a request.
 4. **One prototype file per feature plus minimal mount edits.** All option bodies live together in one `<Feature>Prototype` file next to the real screen. Edits to real files are a few lines: an import, a swap, one switcher mount. Every option, including the real screen as `current`, is reachable from the switcher.
 5. **Build from the app's real components and tokens.** Use its component library, icon set and token classes or variables. No hand-picked hex, no new primitives, no look-alike markup.
-6. **Never touch a shared or non-local database or service.** Run only the stack the project documents for local seeded use. If a command points at a shared database, stop.
-7. **Never work in the user's main checkout.** Everything runs from the prototype worktree.
+6. **Never touch a shared or non-local database or service.** Run only the stack the project documents for local seeded use. Before any seed or start command, print the effective database host and API base URL (from the env files and config the command reads) and continue only when each is loopback (`localhost`, `127.0.0.1`, `::1`, a unix socket, or a container name on the local docker network); otherwise stop and **Ask the user**.
+7. **Never edit files or switch branches in the user's main checkout.** All edits and runs happen in the prototype worktree. Git metadata commands against the main checkout (`fetch`, `worktree add` / `remove`, `branch -D`) are fine.
 
 ## Design rules
 
@@ -47,9 +47,18 @@ Output lives in `$AW_DIR/prototypes/<slug>/` (brief, probe, shots). Templates ar
 
 Goal: write down what will be built so the user can correct it cheaply. Ask only for what you cannot read from the repo.
 
+First resolve the output directory (shell state does not persist, so **echo the absolute path and reuse that literal path in every later shell call**; subagents and fresh shells cannot resolve `$AW_DIR`):
+
+```bash
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
+source "$SHARED_DIR/repo-slug.sh"
+mkdir -p "$AW_DIR/prototypes/<slug>/shots"
+echo "proto-dir: $AW_DIR/prototypes/<slug>"
+```
+
 Write `$AW_DIR/prototypes/<slug>/brief.md`:
 
-- **Slug**: kebab-case, e.g. `schedule-header-actions`.
+- **Slug**: kebab-case, e.g. `<feature>-header-actions`.
 - **Screen and route**: the real route or page file and the URL shape (read the router, and the nearest `AGENTS.md` / `CONTEXT.md`). Which view or tab.
 - **Persona and login**: which seeded account the screen needs.
 - **The 2-3 options in words**: for each, what changes on screen, which real component is swapped or wrapped, and the one interaction to click through.
@@ -68,7 +77,7 @@ Find how this project runs locally with seeded data, in this order:
 
 Record what you found in `brief.md` under **Stack**: start command, seed command, URL, login, where credentials live. Never invent a login or a port.
 
-Create the worktree and keep it from being pushed (see Git mode):
+Create the worktree and block pushes from it (see Git mode):
 
 ```bash
 MAIN=$(git rev-parse --show-toplevel)           # the checkout you were started in; never edit it
@@ -76,9 +85,20 @@ SLUG=<slug>
 WT="$(dirname "$MAIN")/$(basename "$MAIN")-proto-$SLUG"
 BASE=$(git -C "$MAIN" symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null || echo origin/main)
 git -C "$MAIN" fetch origin
-git -C "$MAIN" worktree add -b prototype/$SLUG "$WT" "$BASE"
-git -C "$WT" config branch.prototype/$SLUG.pushRemote no-push-prototype   # a push now fails by design
+git -C "$MAIN" worktree add --no-track -b prototype/$SLUG "$WT" "$BASE"
+
+# Block every push from this worktree: a pre-push hook that always fails, kept outside the tree
+HOOKS="<proto-dir>/hooks"                       # the absolute proto-dir echoed in Phase 1
+mkdir -p "$HOOKS"
+printf '#!/bin/sh\necho "prototype branches are never pushed" >&2\nexit 1\n' > "$HOOKS/pre-push"
+chmod +x "$HOOKS/pre-push"
+git -C "$WT" config extensions.worktreeConfig true
+git -C "$WT" config --worktree core.hooksPath "$HOOKS"
 ```
+
+If `refs/remotes/origin/HEAD` is unset and `origin/main` does not exist, **Ask the user** for the base branch.
+
+Before any seed or start command, apply hard rule 6: print the database host and API base URL and continue only on loopback.
 
 Then, from the worktree, install dependencies only if the project needs them (its own install, never another checkout's `node_modules`), start the stack and seed it with the commands you recorded.
 
@@ -106,7 +126,7 @@ Rules for this phase:
 
 ## Phase 4: Prove
 
-Use `references/probe-template.md`. Copy it to `$AW_DIR/prototypes/<slug>/probe.mjs`, set the route, login, ready selector, options and each option's click-through, and run it.
+Use `references/probe-template.md`. Copy it to `<proto-dir>/probe.mjs` (the absolute path echoed in Phase 1), set the route, login, ready selector, options and each option's click-through, and run it from the worktree as `node <proto-dir>/probe.mjs <proto-dir>`. The first argument is the output directory; the probe exits with an error if it is missing.
 
 The probe, per option: select it through the switcher, run its click-through, assert the new thing is visible, wait for animations, screenshot, and record page errors. It screenshots `current` first as the baseline.
 
@@ -129,7 +149,7 @@ Give the user, in this order:
 2. **Login**: the account from Phase 1 and where its credentials are. Say it is a local-only account.
 3. **How to flip**: the switcher pill; name each option and the one thing to click in it. The choice is remembered in browser storage for that browser.
 4. **Screenshots**: paths under `$AW_DIR/prototypes/<slug>/shots/` (a reference, not a deliverable).
-5. **How to stop and discard**: the stack's stop command from Phase 2, then `git -C "$MAIN" worktree remove --force "$WT" && git -C "$MAIN" branch -D prototype/$SLUG`.
+5. **How to stop and discard**: the stack's stop command from Phase 2, then `git -C "$MAIN" worktree remove --force "$WT" && git -C "$MAIN" branch -D prototype/$SLUG`. Discarding throws the prototype away, so **Ask the user** before running it. Default: leave the worktree in place and print the command for them to run later.
 6. State plainly: nothing was pushed, no PR exists, the prototype is local code.
 
 ## Git mode

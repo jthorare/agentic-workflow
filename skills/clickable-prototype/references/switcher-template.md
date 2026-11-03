@@ -101,7 +101,7 @@ At the mount point of the real element, keep the real element as the fallthrough
 import { usePrototypeOption } from "./PrototypeOptions";
 import { ActionsOptionA, ActionsOptionB } from "./ActionsPrototype";
 
-export function ScheduleHeaderActions() {
+export function <Feature>HeaderActions() {
   const option = usePrototypeOption();
   if (option === "a") return <ActionsOptionA />;
   if (option === "b") return <ActionsOptionB />;
