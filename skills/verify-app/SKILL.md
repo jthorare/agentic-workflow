@@ -2,7 +2,7 @@
 name: verify-app
 description: "Use when someone asks to verify, smoke-test or prove a UI change works and has not said whether it is web, iOS or desktop: it inspects the repo and hands off to the matching verify skill, arguments unchanged. Not for when the platform is already named, or for mockup comparison."
 argument-hint: "[--journey <path>] [--lenses <csv>] [--baseline] [--yes] [--base-url <url>] [--screens <csv>] [--visual] [criteria or 'auto']"
-allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), Glob, Read, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
+allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), Bash(source *), Glob, Read, Write, AskUserQuestion, Skill, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 <!-- MEMORY: SKIP -->
 
@@ -17,18 +17,19 @@ Detects whether this is a web, iOS or desktop project and delegates to the appro
 
 > **Tip:** If you already know the platform, invoke directly: `/verify-web`, `/verify-ios` or `/verify-desktop`
 
-Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+Every run ends with the [Done checklist](#done-checklist), whatever the outcome: done, stopped, failed, refused or a question back to the person. A stopped run is a finished run, not a reason to skip the result file or the `aw-result` block. Run the [Result block](#result-block)'s gate now, in the same Bash call as the shared reference and ahead of its `ls`, so you know `AW_RESULT` even when that `ls` fails. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Platform Detection & Dispatch
 
 Follow `_shared/platform-detection.md` — canonical detection globs (with vendored-path excludes), the resolution table, and the dispatch contract. Resolve it from the stable toolkit path:
 
 ```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/platform-detection.md"
 ```
 
-If resolution or `ls` fails, stop and report — do not guess the platform. Otherwise read the file and apply it: iOS → `verify-ios`, web → `verify-web`, desktop → `verify-desktop`, several/none → **Ask the user**. Echo `dispatch: <sub-skill> args=<args>` before dispatching, then dispatch literally: **Invoke skill `<sub-skill>`** with args `"<original args verbatim>"`.
+If resolution or `ls` fails, stop and report through the [Done checklist](#done-checklist) (verdict FAIL, no dispatch) — do not guess the platform. Otherwise read the file and apply it: iOS → `verify-ios`, web → `verify-web`, desktop → `verify-desktop`, several/none → **Ask the user**. Echo `dispatch: <sub-skill> args=<args>` before dispatching, then dispatch literally: **Invoke skill `<sub-skill>`** with args `"<original args verbatim>"`.
 
 ## Argument Spec (pass-through)
 
@@ -45,7 +46,7 @@ All arguments are forwarded to the sub-skill **unchanged** — never drop or rew
 | `--visual` | Include the visual lens |
 | `auto` / criteria | Diff-inference mode / explicit verification criteria |
 
-If `--journey` is given but the path does not exist, **stop** and report — do not dispatch with a blank or dead required arg.
+If `--journey` is given but the path does not exist, **stop** and report through the [Done checklist](#done-checklist) (verdict FAIL) — do not dispatch with a blank or dead required arg.
 
 ## Sub-skill Return Contract
 
@@ -85,6 +86,16 @@ If `screens.json` exists and has `baselines` entries for one or more of the veri
 
 - `/design-verify` — re-run design diffing on demand (auto-chained above when baselines cover verified screens)
 - `/bugReport` — if functional gaps surfaced, capture them as a bug report
+
+## Done checklist
+
+Do every item before you send the reply; a run that skips one is not finished, even when the verdict is FAIL or the run stopped before dispatch:
+
+1. Dispatched runs: the `dispatch: <sub-skill> args=<args>` line was echoed, and the sub-skill's pack was confirmed (or the run is FAIL with the "no evidence pack" line).
+2. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/verify-app-<timestamp>.json` (Result block, Write tool), with the sub-skill's verdict relayed verbatim, or FAIL for a run that stopped before dispatch or got no pack (`dispatched`, `platform`, `pack` and `evidence_path` `""` when there is none).
+3. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), opens with the `aw-result` block, before the prose and `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply. A sub-skill's own `aw-result` block does not stand in for yours.
+
+If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
 
 ## Result block
 

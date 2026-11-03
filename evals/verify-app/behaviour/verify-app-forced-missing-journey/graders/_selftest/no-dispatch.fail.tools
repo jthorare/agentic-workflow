@@ -1,0 +1,2 @@
+Skill	{"skill":"verify-app","args":"--yes --journey plans/add-book.md"}
+Skill	{"skill":"verify-web","args":"--yes --journey plans/add-book.md"}
