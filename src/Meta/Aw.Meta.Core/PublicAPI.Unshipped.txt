@@ -1206,7 +1206,6 @@ Aw.Meta.Core.Worktrees.WorktreeDecision.Kept = 2 -> Aw.Meta.Core.Worktrees.Workt
 Aw.Meta.Core.Worktrees.WorktreeDecision.Removable = 1 -> Aw.Meta.Core.Worktrees.WorktreeDecision
 Aw.Meta.Core.Worktrees.WorktreeInspector
 Aw.Meta.Core.Worktrees.WorktreeInspector.Inspect(Aw.Meta.Core.Config.TeamConfig! team, Aw.Meta.Core.Worktrees.WorktreeScope! scope, bool fetch, string? onlyPath, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Worktrees.WorktreeReport!>!>!>
-Aw.Meta.Core.Worktrees.WorktreeInspector.WorktreeInspector(Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.IProcessLocations! processes, Aw.Meta.Core.MetaPaths! paths, Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Ports.IWorktreeFiles! files) -> void
 Aw.Meta.Core.Worktrees.WorktreeReport
 Aw.Meta.Core.Worktrees.WorktreeReport.<Clone>$() -> Aw.Meta.Core.Worktrees.WorktreeReport!
 Aw.Meta.Core.Worktrees.WorktreeReport.Branch.get -> string?
@@ -2125,3 +2124,37 @@ static Aw.Meta.Core.Usage.UsageReading.operator !=(Aw.Meta.Core.Usage.UsageReadi
 static Aw.Meta.Core.Usage.UsageReading.operator ==(Aw.Meta.Core.Usage.UsageReading? left, Aw.Meta.Core.Usage.UsageReading? right) -> bool
 static Aw.Meta.Core.Usage.UsageStop.operator !=(Aw.Meta.Core.Usage.UsageStop? left, Aw.Meta.Core.Usage.UsageStop? right) -> bool
 static Aw.Meta.Core.Usage.UsageStop.operator ==(Aw.Meta.Core.Usage.UsageStop? left, Aw.Meta.Core.Usage.UsageStop? right) -> bool
+Aw.Meta.Core.Ports.BugfixCandidate
+Aw.Meta.Core.Ports.BugfixCandidate.<Clone>$() -> Aw.Meta.Core.Ports.BugfixCandidate!
+Aw.Meta.Core.Ports.BugfixCandidate.Branch.get -> string!
+Aw.Meta.Core.Ports.BugfixCandidate.Branch.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.BugfixCandidate(string! Run, string! Candidate, string! Worktree, string! Branch, string! Commit, bool Evaluated, bool Resolves, bool Finished, string? ResolvedBy) -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Candidate.get -> string!
+Aw.Meta.Core.Ports.BugfixCandidate.Candidate.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Commit.get -> string!
+Aw.Meta.Core.Ports.BugfixCandidate.Commit.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Deconstruct(out string! Run, out string! Candidate, out string! Worktree, out string! Branch, out string! Commit, out bool Evaluated, out bool Resolves, out bool Finished, out string? ResolvedBy) -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Equals(Aw.Meta.Core.Ports.BugfixCandidate? other) -> bool
+Aw.Meta.Core.Ports.BugfixCandidate.Evaluated.get -> bool
+Aw.Meta.Core.Ports.BugfixCandidate.Evaluated.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Finished.get -> bool
+Aw.Meta.Core.Ports.BugfixCandidate.Finished.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.ResolvedBy.get -> string?
+Aw.Meta.Core.Ports.BugfixCandidate.ResolvedBy.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Resolves.get -> bool
+Aw.Meta.Core.Ports.BugfixCandidate.Resolves.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Run.get -> string!
+Aw.Meta.Core.Ports.BugfixCandidate.Run.init -> void
+Aw.Meta.Core.Ports.BugfixCandidate.Worktree.get -> string!
+Aw.Meta.Core.Ports.BugfixCandidate.Worktree.init -> void
+Aw.Meta.Core.Ports.IBugfixRecords
+Aw.Meta.Core.Ports.IBugfixRecords.Naming(string! worktree, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Meta.Core.Ports.BugfixCandidate!>!>!>
+Aw.Meta.Core.Worktrees.WorktreeInspector.WorktreeInspector(Aw.Meta.Core.Coordination.RepoCommands! repo, Aw.Meta.Core.Ports.IProcessLocations! processes, Aw.Meta.Core.MetaPaths! paths, Aw.Meta.Core.Ports.IKeyValueStore! values, Aw.Meta.Core.Ports.IWorktreeFiles! files, Aw.Meta.Core.Ports.IBugfixRecords! bugfix) -> void
+Aw.Meta.Core.Worktrees.WorktreeScope.Discarded.get -> bool
+Aw.Meta.Core.Worktrees.WorktreeScope.Path.get -> string?
+override Aw.Meta.Core.Ports.BugfixCandidate.Equals(object? obj) -> bool
+override Aw.Meta.Core.Ports.BugfixCandidate.GetHashCode() -> int
+override Aw.Meta.Core.Ports.BugfixCandidate.ToString() -> string!
+static Aw.Meta.Core.Ports.BugfixCandidate.operator !=(Aw.Meta.Core.Ports.BugfixCandidate? left, Aw.Meta.Core.Ports.BugfixCandidate? right) -> bool
+static Aw.Meta.Core.Ports.BugfixCandidate.operator ==(Aw.Meta.Core.Ports.BugfixCandidate? left, Aw.Meta.Core.Ports.BugfixCandidate? right) -> bool
+static Aw.Meta.Core.Worktrees.WorktreeScope.ForPath(string! path, bool discarded) -> Aw.Meta.Core.Worktrees.WorktreeScope!
