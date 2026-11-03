@@ -35,13 +35,19 @@ internal sealed class JudgeCliChoice(IToolRunner runner, Func<string, string?> e
             state[key] = text;
         }
 
-        return new JsonObject
+        var input = new JsonObject
         {
             ["prompt"] = request.Prompt,
             ["state"] = state,
             ["choices"] = new JsonArray([.. request.Choices.Select(static c => (JsonNode)new JsonObject { ["name"] = c.Name, ["criterion"] = c.Criterion })]),
             ["threshold"] = request.Threshold,
-        }.ToJsonString();
+        };
+        if (request.Images.Count > 0)
+        {
+            input["images"] = new JsonArray([.. request.Images.Select(static path => (JsonNode)JsonValue.Create(path))]);   // only with images, so a text question sends the same bytes as ever
+        }
+
+        return input.ToJsonString();
     }
 
     /// <summary>Reads the judge's envelope from a finished run: exit 0 is a decided envelope, exit 2 an escalated one, anything else a failed answer.</summary>

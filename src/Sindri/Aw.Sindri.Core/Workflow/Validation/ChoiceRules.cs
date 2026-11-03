@@ -27,6 +27,7 @@ internal sealed partial class ChoiceRules : IRecipeRules
         var routes = Routes(recipe, context.Catalog).ToList();
         var findings = routes.SelectMany(r => Choices(r, document.Source))
             .Concat(routes.SelectMany(r => Facts(r, document.Source)))
+            .Concat(routes.SelectMany(r => Images(recipe, r, document.Source)))
             .Concat(Twins(recipe, routes, context.Catalog, document.Source))
             .Concat(routes.SelectMany(r => Order(recipe, r, document.Source)));
         return [.. findings.OrderBy(f => f.Line).ThenBy(f => f.Column).ThenBy(f => f.Rule, StringComparer.Ordinal)];
@@ -158,6 +159,23 @@ internal sealed partial class ChoiceRules : IRecipeRules
         foreach (var finding in FactEntries(list, name, route, path, source))
         {
             yield return finding;
+        }
+    }
+
+    // RCP-CHOICE-007: the 'images' fact must be one the state can read, as its 'facts' are (the facts recorded on every path into it).
+    private static IEnumerable<RecipeFinding> Images(Recipe recipe, Route route, RecipeSource source)
+    {
+        if (!route.Step.With.TryGetValue("images", out var value) || value.Literal is not { ValueKind: JsonValueKind.String } named
+            || !FactKey.TryFrom(named.GetString(), out var key))
+        {
+            yield break;
+        }
+
+        if (!FactsReaching.Of(recipe).TryGetValue(route.State, out var readable) || !readable.Contains(key))
+        {
+            yield return source.Finding(
+                "RCP-CHOICE-007", $"states.{route.State}.step.with.images", $"images names fact {key.Value}, which state '{route.State}' can't read",
+                "produce the fact on every path into the state, or add it to the recipe's inputs");
         }
     }
 

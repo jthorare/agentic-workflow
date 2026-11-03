@@ -8,4 +8,6 @@ namespace Aw.Sindri.Core.Workflow.Engine.Rules;
 /// <param name="Outcome">The reported outcome.</param>
 /// <param name="Outputs">The stored outputs.</param>
 /// <param name="Decision">The Judge decision id the Step reported, or null.</param>
-public sealed record BlockCompletion(BlockId Step, RunToken Run, OutcomeName Outcome, IReadOnlyDictionary<FactKey, FactValue> Outputs, string? Decision = null);
+/// <param name="ImageCount">How many images the Step's judge choice looked at, or null.</param>
+/// <param name="ImagesDropped">How many images it left out, or null.</param>
+public sealed record BlockCompletion(BlockId Step, RunToken Run, OutcomeName Outcome, IReadOnlyDictionary<FactKey, FactValue> Outputs, string? Decision = null, int? ImageCount = null, int? ImagesDropped = null);
