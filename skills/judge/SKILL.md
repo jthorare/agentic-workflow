@@ -1,6 +1,6 @@
 ---
 name: judge
-description: Tune, inspect, and undo cheap-agent-harness `judge` decisions in-session — config get/set, why, undo, health.
+description: "Use when a judge notice, status-line warning or decision needs explaining, undoing or tuning: why a call was made, a question escalating too often, a threshold to move, judge health. Not for code review or for choosing between two options yourself."
 ---
 
 # /judge
@@ -107,6 +107,6 @@ confirmations.
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/judge-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`judge`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
-plus `command` (the `judge` subcommand it ran).
+plus `command` (the `judge` subcommand it ran, e.g. `judge health`); `outcome` (`ok | unavailable | error`: `unavailable` when the binary is missing or down).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

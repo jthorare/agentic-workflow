@@ -1,6 +1,6 @@
 ---
 name: prismStatus
-description: "Health check for prism-mcp. Reports dashboard reachability, MCP server connection, knowledge base population, and version."
+description: "Use when prism-mcp, the Mind Palace memory server, seems down, slow or empty and the user wants to know whether it is up: dashboard, MCP connection, stored entries, version. A read-only check; not for saving or loading memory."
 argument-hint: "[--port <port>]"
 allowed-tools: Bash(curl *), Bash(claude mcp *), Bash(codex mcp *), Bash(PORT=*), Bash(SHARED_DIR=*), Bash(source *), Bash(jq *), mcp__prism-mcp__session_health_check, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -81,6 +81,6 @@ stdout only. No file written.
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/prismStatus-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`prismStatus`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
-plus `healthy` (true when dashboard, MCP server and knowledge base all answer).
+plus `healthy` (true when dashboard, MCP server and knowledge base all answer); `dashboard`, `mcp`, `kb` (each `ok` or `fail`, one per check); `version` (the version string, or `unknown`).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

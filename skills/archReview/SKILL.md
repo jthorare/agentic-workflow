@@ -1,6 +1,6 @@
 ---
 name: archReview
-description: Engineering architecture review with mandatory diagrams and edge case analysis. Reviews plans or implementations for technical soundness.
+description: "Use BEFORE building from a plan or design doc, or whenever someone asks if a technical design will hold up: component boundaries, data flow, failure modes, load. Draws mermaid diagrams, fills an edge-case matrix and rates SOUND / NEEDS WORK / REDESIGN. One lens only; not for product scope, threat models or UI critique."
 argument-hint: "[--plan <path> | plan-file-or-directory-to-review] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(date *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

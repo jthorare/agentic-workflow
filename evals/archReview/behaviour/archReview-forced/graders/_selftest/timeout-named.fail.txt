@@ -1,0 +1,1 @@
+The processor client retries three times with backoff, and the single worker processes permits in order.

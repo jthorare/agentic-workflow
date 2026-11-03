@@ -1,6 +1,6 @@
 ---
 name: cso
-description: "OWASP Top 10 + STRIDE threat model. Runs on a plan (pre-impl mode) or a PR diff (post-impl mode). Outputs severity-rated findings with mitigations."
+description: "Use when a plan or pull request needs a security check: auth gaps, exposed data, injection, abuse cases, \"is this safe to ship\". Walks the OWASP Top 10 and STRIDE, then writes rated findings with fixes. Plan mode before building, diff mode on a PR. Not for scaling or component-design questions."
 argument-hint: "[--plan|--diff] [path-or-pr#] [--output <path>] [--slim]"
 allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

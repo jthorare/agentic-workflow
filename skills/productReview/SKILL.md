@@ -1,6 +1,6 @@
 ---
 name: productReview
-description: "Founder/product lens review of plans with 4 scope modes -- mvp, growth, scale, pivot. Challenges assumptions and tightens scope."
+description: "Use when a plan or idea needs a founder's challenge: is it worth building, is the first version too big, who is it for. Applies an mvp, growth, scale or pivot lens, says what to cut and returns SHIP / ITERATE / RETHINK. Not for technical design, security or UI review."
 argument-hint: "[--mode mvp|growth|scale|pivot] [--plan <path> | plan-file-or-description] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(date *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

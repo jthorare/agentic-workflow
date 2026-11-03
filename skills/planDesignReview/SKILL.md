@@ -1,6 +1,6 @@
 ---
 name: planDesignReview
-description: "Design-lens review of a plan document. Rates information architecture, interaction states, user flows, accessibility, and brand/voice consistency on a 1–5 scale with specific gaps."
+description: "Use when a plan or feature spec needs a UX check before any building: screens, flows, loading, empty and error states, accessibility, copy tone. Rates five design dimensions 1-5 and fills a surface-by-state coverage table from the plan text. Not for a running UI, and not for API or developer-experience review."
 argument-hint: "[plan-path] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

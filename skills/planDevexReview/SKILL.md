@@ -1,6 +1,6 @@
 ---
 name: planDevexReview
-description: "Developer-experience review of a plan document. Maps friction in API ergonomics, setup, error messages, observability, docs, migration paths, and ramp-up cost."
+description: "Use when a plan adds or changes an API, CLI, SDK, config or setup flow and you need to know how painful it is for the developers who adopt or join it: install steps, error output, docs, migration path, ramp-up. Rates friction by severity. Not for end-user screens or security review."
 argument-hint: "[plan-path] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---

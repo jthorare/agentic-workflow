@@ -1,0 +1,1 @@
+CRITICAL: the member API token rides in the share URL query string, and the link exposes every member's phone number.
