@@ -14,6 +14,8 @@ allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash
 
 Verifies a desktop UI change by running the real app on seeded data and comparing every affected screen with its mockup. The UI is expected to **match the mockups**: this skill finds out whether it does. Every run writes an evidence pack (`pack.json` + `report.md`) per `_shared/evidence-pack.md`.
 
+Every run ends with the [Done checklist](#done-checklist), whatever the verdict: PASS, WARN, FAIL or a stop. A failed run is a finished run, not a reason to skip the result file or the `aw-result` block. Run the [Result block](#result-block)'s gate now, with the shared references, so you know `AW_RESULT` before the first verb.
+
 Shared references resolve from the stable toolkit path (never through a provider's skills dir):
 
 ```bash
@@ -92,6 +94,16 @@ Artifacts: $AW_DIR/verification/<run-id>/
 - **PASS** — `/shipRelease` — the screens match their mockups, ship the release
 - **WARN** — `/design-verify` — cover the missing screens, then verify again
 - **FAIL** — `/design-refine` or `/design-implement` — fix the mismatches the pack lists, then `/verify-desktop` again; do **not** ship until it passes
+
+## Done checklist
+
+Do every item before you send the reply; a run that skips one is not finished, even when the verdict is FAIL:
+
+1. The pack exists: `pack.json` and `report.md` under `$AW_DIR/verification/<run-id>/` (Write tool).
+2. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/verify-desktop-<timestamp>.json` (Result block, Write tool), with the pack's verdict.
+3. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), contains the `aw-result` block, before `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply.
+
+If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
 
 ## Result block
 
