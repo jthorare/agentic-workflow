@@ -17,6 +17,9 @@ if (!OUT) {
   console.error("usage: node probe.mjs <output-dir> (the absolute $AW_DIR/prototypes/<slug> path)");
   process.exit(2);
 }
+// `--baseline` (Phase 2, before the switcher exists): no pill, just prove the real screen renders.
+const BASELINE = process.argv[3] === "--baseline";
+const STORAGE_KEY = "prototype-option:<slug>"; // the switcher's localStorage key
 
 // ---- CONFIG ---------------------------------------------------------------
 const CONFIG = {
@@ -32,10 +35,13 @@ const CONFIG = {
       await page.getByLabel("Email").fill(CONFIG.login.email);
       await page.getByLabel("Password").fill(CONFIG.login.password);
       await page.getByRole("button", { name: /sign in/i }).click();
+      // Wait for the sign-in to settle before the first goto, or it can abort the login.
+      await page.waitForURL((u) => !/login|sign-?in/i.test(u.pathname));
     },
   },
   flags: [], // client-side flags as "storage-key=value"
-  // The element that proves the REAL screen has rendered with data.
+  // The element that proves the REAL screen has rendered with data. It must sit
+  // OUTSIDE the region the options swap, or an option can hide it.
   ready: (page) => page.getByTestId("<real-screen-testid>"),
   viewport: { width: 1600, height: 1000 },
   settleMs: 1500,
@@ -90,14 +96,32 @@ try {
   await CONFIG.login.steps(page);
 
   for (const option of OPTIONS) {
-    // Select through the switcher the user will use, then reload the route so the
-    // choice is read back from localStorage (proves persistence too).
+    // Clear the previous option's stored choice (we are on the app's origin after
+    // login or the last loop) so it cannot hide `ready` on this load.
+    await page.evaluate((k) => localStorage.removeItem(k), STORAGE_KEY);
     await page.goto(CONFIG.route);
     await CONFIG.ready(page).waitFor();
+    if (BASELINE) {
+      // Baseline: the switcher does not exist yet. Screenshot the real screen only.
+      await page.evaluate(() => document.fonts.ready);
+      await page.mouse.move(5, 5);
+      await page.waitForTimeout(CONFIG.settleMs);
+      const shot = `${OUT}/shots/current-baseline.png`;
+      await page.screenshot({ path: shot });
+      results.push({ option: "current-baseline", shot });
+      console.log(`ok - baseline -> ${shot}`);
+      break;
+    }
+    // Select through the switcher the user will use, then reload so the choice is
+    // read back from localStorage (proves persistence too).
     const pill = page.getByTestId(`prototype-option-${option.id}`);
     await pill.click();
     if ((await pill.getAttribute("aria-pressed")) !== "true")
       throw new Error(`switcher did not select ${option.id}`);
+    await page.reload();
+    await CONFIG.ready(page).waitFor();
+    if ((await pill.getAttribute("aria-pressed")) !== "true")
+      throw new Error(`${option.id} was not remembered after reload`);
     await page.evaluate(() => document.fonts.ready);
     await option.steps(page);
     await page.mouse.move(5, 5); // keep the pointer off the subject
@@ -128,6 +152,6 @@ if (errors.length > 0) {
 ## Reading the result
 
 - Exit code 0 and `page errors: 0` is necessary, not sufficient. **Open every PNG in `shots/` yourself.**
-- `shots/current.png` must look like the real screen. Compare it with a screenshot of the real app without the prototype. `shots/failure.png` appears only when a step failed; read it first.
+- `shots/current-baseline.png` (from `--baseline`) and `shots/current.png` must look like the real screen. Compare it with a screenshot of the real app without the prototype. `shots/failure.png` appears only when a step failed; read it first.
 - Compare each option's shot with its description in the brief and say what you saw.
 - Add per-option assertions that the NEW element is visible (`waitFor`) before any "is gone" assertion.

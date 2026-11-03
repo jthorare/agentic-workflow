@@ -2,7 +2,7 @@
 name: clickable-prototype
 description: "Use when a designer or PM wants to click through 2-3 options of a screen inside the real running app, built from its real components and seeded data, switchable from a small dev-only pill. Local only: the prototype branch is never pushed. Not for HTML drafts outside the app (design-mockup-web), proof that a real change works (verify-web, ui-evidence), or code that will merge."
 argument-hint: "<feature-slug> [--route <path>]"
-allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(echo *), Bash(chmod *), Bash(dirname *), Bash(basename *), Bash(SHARED_DIR=*), Bash(MAIN=*), Bash(SLUG=*), Bash(WT=*), Bash(BASE=*), Bash(HOOKS=*), Bash(printf *), Bash([ *), Bash(source *), Bash(node *), Bash(bun *), Bash(npm *), Bash(npx *), Bash(pnpm *), Bash(yarn *), Bash(make *), Bash(docker compose *), Bash(docker ps *), Bash(curl *), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
+allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(echo *), Bash(chmod *), Bash(dirname *), Bash(basename *), Bash(SHARED_DIR=*), Bash(MAIN=*), Bash(SLUG=*), Bash(WT=*), Bash(BASE=*), Bash(HOOKS=*), Bash(cd *), Bash(PROTO_EMAIL=*), Bash(printf *), Bash([ *), Bash(source *), Bash(node *), Bash(bun *), Bash(npm *), Bash(npx *), Bash(pnpm *), Bash(yarn *), Bash(make *), Bash(docker compose *), Bash(docker ps *), Bash(curl *), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
 <!-- preamble -->
@@ -112,7 +112,7 @@ Rules for this phase:
 - Re-seeding can change every id and URL. Re-run the probe after every seed.
 - After the stack is up and again after the first page load, run `git -C <wt> status --short`. Dev servers sometimes rewrite a tracked generated file; `git checkout -- <file>` it before you diff.
 
-**Gate 2:** open the route in the probe (`current` only) and confirm the real screen renders with data. Show the user the screenshot.
+**Gate 2:** run `node <proto-dir>/probe.mjs <proto-dir> --baseline` (the switcher does not exist yet, so it screenshots the real screen as `current-baseline.png`) and confirm the real screen renders with data. Show the user the screenshot.
 
 ## Phase 3: Build
 
