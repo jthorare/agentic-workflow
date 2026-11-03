@@ -9,6 +9,8 @@ description: "Use when a judge notice, status-line warning or decision needs exp
 `docs/superpowers/specs/2026-09-26-cheap-agent-harness-design.md`. This skill is the in-session
 way to tune it without leaving the conversation.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Commands this skill wraps
 
 - `judge health` — status (`ok`/`degraded`) and failures in the last 24h.

@@ -3,14 +3,11 @@
 
 bootstrap
 skills/addressReview
-skills/archReview
-skills/autoplan
 skills/bugFixOrchestrator
 skills/bugHunt
 skills/bugReport
 skills/canary
 skills/clickable-prototype
-skills/cso
 skills/design-analyze
 skills/design-analyze-ios
 skills/design-analyze-web
@@ -31,17 +28,12 @@ skills/design-verify-desktop
 skills/design-verify-ios
 skills/design-verify-web
 skills/enhancePrompt
-skills/judge
 skills/landAndDeploy
 skills/meta
 skills/new-package
 skills/new-slice
 skills/officeHours
-skills/planDesignReview
-skills/planDevexReview
 skills/postReview
-skills/prismStatus
-skills/productReview
 skills/review
 skills/rootCause
 skills/shipRelease

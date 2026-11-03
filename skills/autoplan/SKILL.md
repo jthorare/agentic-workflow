@@ -12,6 +12,8 @@ Fans out five review lenses in parallel against a plan document, then consolidat
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Overview
 
 Dispatches five subagents in parallel — product, architecture, design, devex, security — each writing its own review file directly into the feature dir. After all return, consolidates: dedupes findings into one normalized severity table, surfaces cross-lens tensions (e.g., "product wants X but security blocks Y"), derives an overall verdict, recommends top 3 next actions. One command for full plan vetting.

@@ -12,6 +12,8 @@ Rates a plan document across five design dimensions with specific gaps and recom
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Overview
 
 Reads a plan directory's design-relevant docs (auto-discovers latest if no arg) along with the design language artifacts (`.impeccable.md`, `design-tokens.json`). Rates each of five dimensions on the anchored 1–5 scale from `_shared/severity.md`, with a mandatory surface×state coverage table. Writes the review to `plans/<feature>/design-review.md` so `/autoplan` can consolidate alongside other lenses.

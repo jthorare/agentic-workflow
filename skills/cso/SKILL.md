@@ -12,6 +12,8 @@ OWASP Top 10 + STRIDE threat model. Pre-impl (plan) or post-impl (diff) mode. Au
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Overview
 
 Runs a two-axis security review (OWASP Top 10 + STRIDE) against either a plan doc or a PR diff. Each finding gets a severity rating and a concrete mitigation. Plan-mode output lands at the canonical `plans/<feature>/security-review.md`; diff mode writes to `security/`. Fits the pipeline at two points: pre-ship gate, or fanned out from `/autoplan` for early plan-stage security check.

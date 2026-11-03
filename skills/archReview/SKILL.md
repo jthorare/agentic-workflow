@@ -12,6 +12,8 @@ Reviews plans or implementations for technical soundness. Produces mandatory mer
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Resolve the Target
 
 **Parse flags first:** `--plan <path>` (equivalent to the positional path), `--output <path>` (explicit output file — `/autoplan` passes `--output <feature-dir>/arch-review.md`), `--slim` (compact output: matrix, scores, and verdict only).

@@ -14,6 +14,8 @@ Quick health check for the prism-mcp Mind Palace.
 
 > **Preamble exemption:** If the preamble's prism-mcp calls failed, continue anyway — diagnosing that failure is this skill's purpose; Session Close ledger/handoff are exempt for this skill.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Overview
 
 Probes the prism-mcp dashboard HTTP endpoint, the MCP server connection, and the per-repo knowledge base. Returns a single status report; writes no file. Useful at session start (matches the `prism-context.sh` SessionStart hook) and on demand.
