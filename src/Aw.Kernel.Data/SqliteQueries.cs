@@ -20,6 +20,7 @@ public static class SqliteQueries
         ArgumentNullException.ThrowIfNull(mapper);
         var command = Prepare(session, statement);
         await using var commandScope = command.ConfigureAwait(false);
+        await using var interrupt = InterruptOnCancel(session, cancellationToken).ConfigureAwait(false);
         try
         {
             var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -27,6 +28,10 @@ public static class SqliteQueries
             return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
                 ? mapper.Map(reader)
                 : DataErrors.NotFound.With($"No row for {statement.Describe()}");
+        }
+        catch (SqliteException exception) when (exception.SqliteErrorCode == SqliteErrors.SqliteInterrupt && cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(exception.Message, exception, cancellationToken);
         }
         catch (SqliteException exception) when (SqliteErrors.TryMap(exception, statement.Describe(), out var error))
         {
@@ -46,6 +51,7 @@ public static class SqliteQueries
         ArgumentNullException.ThrowIfNull(mapper);
         var command = Prepare(session, statement);
         await using var commandScope = command.ConfigureAwait(false);
+        await using var interrupt = InterruptOnCancel(session, cancellationToken).ConfigureAwait(false);
         try
         {
             var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -57,6 +63,10 @@ public static class SqliteQueries
             }
 
             return rows;
+        }
+        catch (SqliteException exception) when (exception.SqliteErrorCode == SqliteErrors.SqliteInterrupt && cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(exception.Message, exception, cancellationToken);
         }
         catch (SqliteException exception) when (SqliteErrors.TryMap(exception, statement.Describe(), out var error))
         {
@@ -73,10 +83,15 @@ public static class SqliteQueries
     {
         var command = Prepare(session, statement);
         await using var commandScope = command.ConfigureAwait(false);
+        await using var interrupt = InterruptOnCancel(session, cancellationToken).ConfigureAwait(false);
         try
         {
             var value = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
             return value is long number && number != 0;
+        }
+        catch (SqliteException exception) when (exception.SqliteErrorCode == SqliteErrors.SqliteInterrupt && cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException(exception.Message, exception, cancellationToken);
         }
         catch (SqliteException exception) when (SqliteErrors.TryMap(exception, statement.Describe(), out var error))
         {
@@ -102,6 +117,12 @@ public static class SqliteQueries
             return error;
         }
     }
+
+    // why: Microsoft.Data.Sqlite checks the token only between steps, and one step of an aggregate is the whole scan, so a
+    // cancelled read would run to its end (#1951: hours); sqlite3_interrupt ends the running statement. Reads only: an
+    // interrupted write inside a transaction rolls the whole transaction back.
+    private static CancellationTokenRegistration InterruptOnCancel(ISqliteSession session, CancellationToken cancellationToken) =>
+        cancellationToken.Register(static connection => SQLitePCL.raw.sqlite3_interrupt(((SqliteConnection)connection!).Handle), session.Connection);
 
     private static SqliteCommand Prepare(ISqliteSession session, SqlStatement statement)
     {
