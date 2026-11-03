@@ -1,0 +1,1 @@
+A01 Broken Access Control: GET /api/permits/{id} has no ownership check and ids are sequential (IDOR).

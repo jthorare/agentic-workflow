@@ -1,6 +1,6 @@
 ---
 name: productReview
-description: "Founder/product lens review of plans with 4 scope modes -- mvp, growth, scale, pivot. Challenges assumptions and tightens scope."
+description: "Use when a plan or idea needs a founder's challenge: is it worth building, is the first version too big, who is it for. Applies an mvp, growth, scale or pivot lens, says what to cut and returns SHIP / ITERATE / RETHINK. Not for technical design, security or UI review."
 argument-hint: "[--mode mvp|growth|scale|pivot] [--plan <path> | plan-file-or-description] [--output <path>] [--slim]"
 allowed-tools: Bash(git *), Bash(ls *), Bash(date *), Bash(mkdir *), Bash(SHARED_DIR=*), Agent, Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -11,6 +11,8 @@ Reviews plans through a product/founder lens with four distinct modes. Challenge
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
+
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Step 1: Parse Arguments and Resolve Plan
 

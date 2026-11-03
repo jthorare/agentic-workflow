@@ -1,0 +1,1 @@
+A failed charge is skipped with no retry and no dead-letter queue, so the permit stays unpaid and nobody is told.

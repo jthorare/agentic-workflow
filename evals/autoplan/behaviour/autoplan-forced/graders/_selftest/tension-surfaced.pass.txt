@@ -1,0 +1,2 @@
+## Cross-lens tensions
+Product wants a no-sign-in link; security blocks it.

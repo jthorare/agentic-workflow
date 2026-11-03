@@ -1,0 +1,1 @@
+The API returns a JSON body with a status field and a request id.
