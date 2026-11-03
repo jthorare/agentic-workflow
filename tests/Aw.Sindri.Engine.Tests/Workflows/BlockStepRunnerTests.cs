@@ -28,7 +28,7 @@ public sealed class BlockStepRunnerTests
     private static readonly FactKey _change = FactKey.From("fact:change");
     private static readonly string[] _choices = ["ui", "api"];
     private static readonly string[] _factNames = ["fact:change"];
-    private static readonly string[] _defaults = ["claude-cli", "codex-cli", "cursor-cli", "rules"];
+    private static readonly string[] _defaults = ["jev", "claude-cli", "codex-cli", "cursor-cli", "rules"];
 
     private readonly InMemoryFactStore _store = new();
     private readonly InMemoryProfiles _profiles = new();
