@@ -21,6 +21,9 @@ internal sealed class EvaluateQuestionService(
     IEvalStore store, IJudgeConfigStore configs, IProviderCatalog catalog, IEvalFiles files, IInputRedactor redactor, TimeProvider clock, JsonSerializerOptions json)
     : IService<EvaluateQuestionRequest, EvaluateQuestionResponse>
 {
+    // red: the constructor already has the most dependencies AW1007 allows, so the reader that re-reads stored images is a seam the green commit folds in
+    internal IImageReader? Images { get; init; }
+
     public async ValueTask<Result<EvaluateQuestionResponse>> Handle(EvaluateQuestionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -126,6 +129,8 @@ internal sealed class EvaluateQuestionService(
         }
 
         var provider = found.Value;
+        // red: the stored images are re-read (a file gone or changed is skipped as 'image-changed') in the green commit
+        _ = Images;
         List<EvalResult> results = [];
         foreach (var labeled in items)
         {

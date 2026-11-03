@@ -2141,3 +2141,5 @@ static Aw.Judge.Core.Config.JevImagesSetting.IsOn(Aw.Judge.Core.Config.Providers
 Aw.Judge.Core.Ports.IProviderCatalog.ProviderWithImagesOn(Aw.Judge.Core.Providers.ProviderName name, System.Collections.Generic.IReadOnlyCollection<Aw.Judge.Core.Providers.ProviderName>? allowed, Aw.Judge.Core.Config.ProvidersConfig? config) -> Aw.Kernel.Result<Aw.Judge.Core.Ports.IModelProvider!>!
 Aw.Judge.Core.Decisions.JevSkipNotes
 static Aw.Judge.Core.Decisions.JevSkipNotes.For(Aw.Judge.Core.Decisions.DecisionRecord! decision) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.Evaluation.EvaluationOutcome.StderrLines.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.Evaluation.EvaluationOutcome.StderrLines.init -> void
