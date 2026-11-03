@@ -21,6 +21,11 @@ internal static class WorktreeRules
         ArgumentNullException.ThrowIfNull(facts);
         List<string> reasons = [];
         Protected(facts, reasons);
+        if (facts.NotDiscarded is { } notDiscarded)
+        {
+            reasons.Add("--discarded: " + notDiscarded);
+        }
+
         if (facts.GatePr is { } gate)
         {
             GateTree(facts, gate, reasons);
@@ -28,7 +33,7 @@ internal static class WorktreeRules
         else
         {
             Merged(facts, reasons);
-            if (facts.UnpushedCommits > 0 && !(facts.PrState is null && facts.HeadMerged))
+            if (facts.Discarded is null && facts.UnpushedCommits > 0 && !(facts.PrState is null && facts.HeadMerged))
             {
                 reasons.Add(string.Create(CultureInfo.InvariantCulture, $"{facts.UnpushedCommits} commit(s) are on no remote branch"));
             }
@@ -80,12 +85,12 @@ internal static class WorktreeRules
         else
         {
             // A fresh branch cut from main looks finished (head in origin/main, nothing inside at this instant); only an explicit --include-no-pr sweep may remove one.
-            if (facts.KeepNoPr)
+            if (facts.KeepNoPr && facts.Discarded is null)
             {
                 reasons.Add("kept: no PR (pass --include-no-pr to remove)");
             }
 
-            if (!facts.HeadMerged && facts.UnpushedCommits > 0)
+            if (facts.Discarded is null && !facts.HeadMerged && facts.UnpushedCommits > 0)
             {
                 reasons.Add("no pull request: work not finished (not all of it is pushed)");
             }
@@ -94,7 +99,7 @@ internal static class WorktreeRules
             if (facts.NoPreviousSweep)
             {
                 reasons.Add("no previous sweep to compare with");
-                if (!facts.HeadMerged)
+                if (!facts.HeadMerged && facts.Discarded is null)
                 {
                     reasons.Add("not merged into origin/main (no pull request)");
                 }
