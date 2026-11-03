@@ -42,7 +42,7 @@ namespace Aw.Judge.Host;
 [JsonSerializable(typeof(DecisionOutput))]
 [JsonSerializable(typeof(JudgeConfig))]
 [JsonSerializable(typeof(IReadOnlyList<SkippedProvider>))]
-[JsonSerializable(typeof(IReadOnlyList<Aw.Judge.Core.Images.ImageSize?>))]
+[JsonSerializable(typeof(IReadOnlyList<Core.Images.ImageSize?>))]
 [JsonSerializable(typeof(IReadOnlyDictionary<string, double>))]
 [JsonSerializable(typeof(IReadOnlyList<string>))]
 [JsonSerializable(typeof(WakeGateInput))]

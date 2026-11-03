@@ -43,7 +43,7 @@ internal sealed record Settlement
     public string? RulesOpinion { get; init; }
 
     /// <summary>The sizes of the images the deciding provider sent, when it sent any.</summary>
-    public IReadOnlyList<Aw.Judge.Core.Images.ImageSize>? SentImages { get; init; }
+    public IReadOnlyList<Images.ImageSize>? SentImages { get; init; }
 
     /// <summary>How that opinion compared.</summary>
     public Agreement? Agreement { get; init; }

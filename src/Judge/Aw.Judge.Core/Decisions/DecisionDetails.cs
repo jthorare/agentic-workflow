@@ -27,7 +27,7 @@ public sealed record DecisionDetails
     /// The size Jev was sent for each image of the call, null for an image sent as read; null when the call had no images or nothing was
     /// scaled. The images' own sizes are in the stored input, not here.
     /// </summary>
-    public IReadOnlyList<Aw.Judge.Core.Images.ImageSize?>? SentImages { get; init; }
+    public IReadOnlyList<Images.ImageSize?>? SentImages { get; init; }
 
     /// <summary>The session the question came from, when known.</summary>
     public SessionId? SessionId { get; init; }
