@@ -49,7 +49,7 @@ public sealed partial class QuestionEvaluator
     {
         if (spec.Problem is not null)
         {
-            return ([], spec.Problem);
+            return Unreadable(run, spec);
         }
 
         var (paths, tooMany) = Capped(run, spec);
@@ -91,6 +91,18 @@ public sealed partial class QuestionEvaluator
         return image is not null && spec.BestEffort && at.Total + image.Bytes.Length > GenericImages.MaxBytes
             ? (null, string.Create(CultureInfo.InvariantCulture, $"images[{at.Index}] {path} would take the images over 24 MiB"))
             : (image, cause);
+    }
+
+    // A field that is not a list of paths refuses a strict call; a best-effort one drops it and asks as text.
+    private static (IReadOnlyList<ImageAttachment> Kept, string? Refusal) Unreadable(EvaluationRun run, GenericImages spec)
+    {
+        if (!spec.BestEffort)
+        {
+            return ([], spec.Problem);
+        }
+
+        run.DropCauses.Add(spec.Problem + AskedAsText);
+        return ([], null);
     }
 
     // More than 4 paths refuse a strict call; a best-effort one drops them all and asks as text: the judge never picks which 4, the caller does.

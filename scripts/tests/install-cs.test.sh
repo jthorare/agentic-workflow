@@ -93,8 +93,19 @@ n=0; [ -z "$recipes" ] || n="$(find "$recipes" -name '*.yaml' | wc -l | tr -d ' 
 printf '#!/usr/bin/env bash\nFAKE_SELF="$0" FAKE_NAME=%s FAKE_REV=%s FAKE_RECIPES=%s FAKE_CALLS="%s" FAKE_BAD_VERSION="%s" exec bash "%s" "$@"\n' "$name" "$rev" "$n" "$FAKE_CALLS" "${FAKE_BAD_VERSION:-}" "$FAKE_BIN" > "$out/$name"
 chmod +x "$out/$name"
 [ "$name" != judge ] || : > "$out/libe_sqlite3.so"
+# The staged libSkiaSharp.so: sindri-ui's build needs fontconfig, judge's NoDependencies build does not (FAKE_NOFONT=1: sindri-ui's lacks it too).
+case "$name" in
+  sindri-ui) if [ -n "${FAKE_NOFONT:-}" ]; then echo "NEEDED libc.so.6" > "$out/libSkiaSharp.so"; else printf 'NEEDED libfontconfig.so.1\nNEEDED libc.so.6\n' > "$out/libSkiaSharp.so"; fi ;;
+  judge) echo "NEEDED libc.so.6" > "$out/libSkiaSharp.so" ;;
+esac
 FD
 chmod +x "$WORK/fakebin/dotnet"
+# A fake readelf: `readelf -d <file>` lists a NEEDED entry for each "NEEDED <lib>" line of the fake .so (no compiler needed for a real ELF).
+cat > "$WORK/fakebin/readelf" <<'FR'
+#!/usr/bin/env bash
+sed -n 's/^NEEDED \(.*\)$/ 0x0000000000000001 (NEEDED)             Shared library: [\1]/p' "${2:?}"
+FR
+chmod +x "$WORK/fakebin/readelf"
 export PATH="$WORK/fakebin:$PATH"
 
 # A miniature checkout: the script, its inputs list, a pinned SDK, some sources and two shipped recipes.
@@ -135,8 +146,9 @@ check "--link without a build writes no wrapper" "$(ls "$CLAUDE_LOCAL_BIN" | wc 
 out="$(bash "$INSTALL" --publish 2>&1)"; rc=$?
 check "--publish exits 0" "$rc" "0"
 S1="$(stamps | tr -d ' ')"
+if [ "$(uname -s)" = Linux ]; then check "the staged libSkiaSharp.so is sindri-ui's, the one that needs fontconfig" "$(readelf -d "$B/$S1/libSkiaSharp.so" | grep -c fontconfig)" "1"; fi
 check "one stamped build" "$(printf '%s' "$S1" | wc -c | tr -d ' ')" "16"
-for f in sindri sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness libe_sqlite3.so build-info; do
+for f in sindri sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness libe_sqlite3.so libSkiaSharp.so build-info; do
   check "build has $f" "$([ -e "$B/$S1/$f" ] && echo yes || echo no)" "yes"
 done
 check "seven publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "7"
@@ -198,6 +210,12 @@ out="$(FAKE_BAD_VERSION=nothing bash "$INSTALL" --publish 2>&1)"; rc=$?
 check "a ui-evidence that does not name the commit fails" "$rc" "1"
 has "install didn't take" "$out" "install didn't take"
 check "still no new build" "$(stamps | tr -d ' ')" "$S1"
+if [ "$(uname -s)" = Linux ]; then
+  out="$(FAKE_NOFONT=1 bash "$INSTALL" --publish 2>&1)"; rc=$?
+  check "a staged libSkiaSharp.so without a libfontconfig NEEDED entry fails the install" "$rc" "1"
+  has "and says why" "$out" "install didn't take: the staged libSkiaSharp.so does not need libfontconfig, so it is not sindri-ui's build"
+  check "and no new build" "$(stamps | tr -d ' ')" "$S1"
+fi
 
 # --- prune: newest two, current, and the build a running serve executes ---
 out="$(bash "$INSTALL" --publish 2>&1)"; check "publish of the changed source" "$?" "0"

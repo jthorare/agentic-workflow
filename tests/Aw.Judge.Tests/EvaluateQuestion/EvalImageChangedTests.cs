@@ -33,7 +33,7 @@ public sealed class EvalImageChangedTests
             ["/shots/same.png"] = kept,
         });
         var service = new EvaluateQuestionService(
-            world.Store, new InMemoryJudgeConfigStore(), new FakeProviderCatalog(world.Jev), world.Files, new EvalRedaction(new FakeInputRedactor(), AwJson.CreateOptions(JudgeJsonContext.Default)), world.Clock, reader);
+            world.Store, new InMemoryJudgeConfigStore(), new FakeProviderCatalog(world.Jev), world.Files, new EvalRedaction(new FakeInputRedactor(), AwJson.CreateOptions(JudgeJsonContext.Default)), world.Clock, new EvalImageSource(reader, world.Workspaces));
         _ = world.Jev.Decides("ask", 0.9);
 
         var result = await service.Handle(A.EvaluateQuestionRequest().Record(RecordPath).Build(), TestContext.Current.CancellationToken);
@@ -49,6 +49,32 @@ public sealed class EvalImageChangedTests
         }
 
         Assert.Equal("decided", lines["same"]["status"]?.GetValue<string>());
+    }
+
+    [Fact]
+    public async Task Eval_replay_skips_a_row_whose_images_are_plain_paths_as_image_changed_without_a_call()
+    {
+        var world = new EvalWorld();
+        _ = world.Store.Label(EvalWorld.Question, "paths", new JsonObject { ["transcriptTail"] = "run the tests", ["images"] = new JsonArray("/shots/a.png") }.ToJsonString(), "ask");
+        _ = world.Jev.Decides("ask", 0.9);
+
+        var result = await world.Service.Handle(A.EvaluateQuestionRequest().Record(RecordPath).Build(), TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsSuccess, result.IsError ? result.Error.Message : "");
+        Assert.Empty(world.Jev.Calls);
+        var line = JsonNode.Parse(world.Files.Text(RecordPath)!.Split('\n', StringSplitOptions.RemoveEmptyEntries)[0])!.AsObject();
+        Assert.Equal(("unavailable", "image-changed"), (line["status"]?.GetValue<string>(), line["reasonCode"]?.GetValue<string>()));
+    }
+
+    [Fact]
+    public async Task Rereading_a_row_that_has_images_with_no_reader_is_image_changed()
+    {
+        var stored = JsonNode.Parse(Stored("/shots/a.png", JevImages.Sha256(ImageBytes.Png(1512, 982, "a")), 1512, 982));
+
+        var (images, changed) = await EvalImages.Reread(stored, reader: null, TestContext.Current.CancellationToken);
+
+        Assert.Empty(images);
+        Assert.True(changed);
     }
 
     // What a decision row stores for an input with one image (spec 4): the read form, never the bytes.

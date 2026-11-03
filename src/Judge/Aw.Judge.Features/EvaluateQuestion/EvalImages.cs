@@ -14,20 +14,26 @@ internal static class EvalImages
     /// <param name="stored">The stored input.</param>
     /// <param name="reader">Reads the files.</param>
     /// <param name="cancellationToken">Cancels the reads.</param>
-    /// <returns>The images as they are now, and whether any is gone or has another sha256; no images for an input without any.</returns>
+    /// <returns>The images as they are now, and whether any is gone, has another sha256 or is not in the stored read form; no images for an input without any.</returns>
     internal static async ValueTask<(IReadOnlyList<ImageAttachment> Images, bool Changed)> Reread(JsonNode? stored, IImageReader? reader, CancellationToken cancellationToken)
     {
-        if (reader is null || stored is not JsonObject input || input["images"] is not JsonArray list)
+        if (stored is not JsonObject input || input["images"] is not JsonArray list || list.Count == 0)
         {
             return ([], false);
         }
 
-        List<ImageAttachment> images = [];
-        foreach (var item in list.OfType<JsonObject>())
+        // A row that names images but cannot be checked against them (no reader, or an entry that is not the read form, such as a bare path) is not replayed as text.
+        if (reader is null)
         {
-            if (Stored(item) is not { } entry)
+            return ([], true);
+        }
+
+        List<ImageAttachment> images = [];
+        foreach (var item in list)
+        {
+            if (item is not JsonObject fields || Stored(fields) is not { } entry)
             {
-                continue;
+                return ([], true);
             }
 
             var read = await reader.Read([entry.Path], root: null, cancellationToken).ConfigureAwait(false);
