@@ -2,7 +2,7 @@
 name: clickable-prototype
 description: "Use when a designer or PM wants to click through 2-3 options of a screen inside the real running app, built from its real components and seeded data, switchable from a small dev-only pill. Local only: the prototype branch is never pushed. Not for HTML drafts outside the app (design-mockup-web), proof that a real change works (verify-web, ui-evidence), or code that will merge."
 argument-hint: "<feature-slug> [--route <path>]"
-allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(echo *), Bash(chmod *), Bash(dirname *), Bash(basename *), Bash(SHARED_DIR=*), Bash(source *), Bash(node *), Bash(bun *), Bash(npm *), Bash(npx *), Bash(pnpm *), Bash(yarn *), Bash(make *), Bash(docker compose *), Bash(docker ps *), Bash(curl *), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
+allowed-tools: Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(echo *), Bash(chmod *), Bash(dirname *), Bash(basename *), Bash(SHARED_DIR=*), Bash(MAIN=*), Bash(SLUG=*), Bash(WT=*), Bash(BASE=*), Bash(HOOKS=*), Bash(printf *), Bash([ *), Bash(source *), Bash(node *), Bash(bun *), Bash(npm *), Bash(npx *), Bash(pnpm *), Bash(yarn *), Bash(make *), Bash(docker compose *), Bash(docker ps *), Bash(curl *), Read, Write, Edit, Glob, Grep, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
 
 <!-- preamble -->
@@ -47,7 +47,7 @@ Output lives in `$AW_DIR/prototypes/<slug>/` (brief, probe, shots). Templates ar
 
 Goal: write down what will be built so the user can correct it cheaply. Ask only for what you cannot read from the repo.
 
-First resolve the output directory (shell state does not persist, so **echo the absolute path and reuse that literal path in every later shell call**; subagents and fresh shells cannot resolve `$AW_DIR`):
+First resolve the output directory (shell state does not persist, so **echo the absolute path and reuse that literal path in every later shell call; the same goes for the main, worktree and slug values echoed in Phase 2**; subagents and fresh shells cannot resolve `$AW_DIR`):
 
 ```bash
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
@@ -94,7 +94,10 @@ printf '#!/bin/sh\necho "prototype branches are never pushed" >&2\nexit 1\n' > "
 chmod +x "$HOOKS/pre-push"
 git -C "$WT" config extensions.worktreeConfig true
 git -C "$WT" config --worktree core.hooksPath "$HOOKS"
+echo "main=$MAIN wt=$WT slug=$SLUG"
 ```
+
+Shell state does not persist: from here on use the literal paths echoed above (`<main>`, `<wt>`, `<slug>`) and `<proto-dir>` from Phase 1 in every shell call, never `$MAIN`, `$WT` or `$SLUG`.
 
 If `refs/remotes/origin/HEAD` is unset and `origin/main` does not exist, **Ask the user** for the base branch.
 
@@ -107,7 +110,7 @@ Rules for this phase:
 - Run installs, the stack and type-checks one at a time. Heavy jobs in parallel crash the machine.
 - If a port is already in use, a stack is already running (maybe another worktree's). Ask before stopping it.
 - Re-seeding can change every id and URL. Re-run the probe after every seed.
-- After the stack is up and again after the first page load, run `git -C "$WT" status --short`. Dev servers sometimes rewrite a tracked generated file; `git checkout -- <file>` it before you diff.
+- After the stack is up and again after the first page load, run `git -C <wt> status --short`. Dev servers sometimes rewrite a tracked generated file; `git checkout -- <file>` it before you diff.
 
 **Gate 2:** open the route in the probe (`current` only) and confirm the real screen renders with data. Show the user the screenshot.
 
@@ -118,7 +121,7 @@ Rules for this phase:
 3. Mount with minimal edits: read the selected option at the mount point; when it is `current` or `null` (not a dev build) return the real element untouched. Mount the switcher once, at the screen root.
 4. Make the options feel alive: the one interaction in the brief must work (open, expand, dismiss, accept), with a short animation where something appears.
 5. Keep dev-only chrome out of the way: a small fixed pill at a corner, not over primary controls.
-6. Check scope: `git -C "$WT" add -N . && git -C "$WT" diff HEAD --stat` lists only the prototype files and the mount edits (`-N` makes new files show up). Anything in the API, shared packages or schema breaks hard rule 3; revert it. Do not commit or push.
+6. Check scope: `git -C <wt> add -N . && git -C <wt> diff HEAD --stat` lists only the prototype files and the mount edits (`-N` makes new files show up). Anything in the API, shared packages or schema breaks hard rule 3; revert it. Do not commit or push.
 7. Lint and format only your changed files with the project's own tools. Do not run the whole-repo type-check: in a fresh worktree it is often unreliable (unbuilt project references) and heavy, and a prototype that is never merged does not need it. The dev server compiling plus the probe's zero page errors is the runtime check.
 8. Check nothing is clipped: look at where your new element lands in the screenshot at the probe's viewport, not just that it exists.
 
@@ -149,7 +152,7 @@ Give the user, in this order:
 2. **Login**: the account from Phase 1 and where its credentials are. Say it is a local-only account.
 3. **How to flip**: the switcher pill; name each option and the one thing to click in it. The choice is remembered in browser storage for that browser.
 4. **Screenshots**: paths under `$AW_DIR/prototypes/<slug>/shots/` (a reference, not a deliverable).
-5. **How to stop and discard**: the stack's stop command from Phase 2, then `git -C "$MAIN" worktree remove --force "$WT" && git -C "$MAIN" branch -D prototype/$SLUG`. Discarding throws the prototype away, so **Ask the user** before running it. Default: leave the worktree in place and print the command for them to run later.
+5. **How to stop and discard**: the stack's stop command from Phase 2, then `git -C <main> worktree remove --force <wt> && git -C <main> branch -D prototype/<slug>`. Discarding throws the prototype away, so **Ask the user** before running it. Default: leave the worktree in place and print the command for them to run later.
 6. State plainly: nothing was pushed, no PR exists, the prototype is local code.
 
 ## Git mode
@@ -157,7 +160,7 @@ Give the user, in this order:
 `AW_GIT_MODE` is `${AW_GIT_MODE:-full}`.
 
 - `full`: do everything this skill describes.
-- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes (in the current checkout, and say so), and print each git or gh command you would have run under a `Would run:` heading.
+- `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes (in the current checkout; this waives hard rule 7, so tell the user you are editing their checkout), and print each git or gh command you would have run under a `Would run:` heading.
 
 ## Related skills
 
