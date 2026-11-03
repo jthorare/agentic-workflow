@@ -20,18 +20,21 @@ trap '[ -z "$other" ] || kill "$other" 2>/dev/null || true; rm -rf "$WORK"' EXIT
 export AW_STATE_DIR="$WORK/state"
 export SKILL_LOCK_TIMEOUT=1
 LF="$AW_STATE_DIR/.browser.lock"
-call() { bash -c "LOCK_NAME=browser source \"\$1\"; $1" _ "$LOCK" 2>&1; }      # one Bash call of this "session"
-other_call() { bash -c 'bash -c "LOCK_NAME=browser source \"\$1\"; $2" _ "$1" "$2"' _ "$LOCK" "$1" 2>&1; } # another session's call
+# A Bash call's parent is the agent process itself, so each call runs straight from this script, never inside $(...) (that
+# would put a throwaway subshell in between). Its output goes to $WORK/out.
+call() { bash -c "LOCK_NAME=browser source \"\$1\"; $1" _ "$LOCK" >"$WORK/out" 2>&1; }
+# Another session: the call runs under a live shell of its own (the trailing exit keeps bash from exec'ing the inner call).
+other_call() { bash -c 'bash -c "LOCK_NAME=browser source \"\$1\"; $2" _ "$1" "$2"; exit $?' _ "$LOCK" "$1" >"$WORK/out" 2>&1; }
 
 # --- acquire in one call; the lock still holds in the next ---
-out="$(call acquire_lock)" && rc=0 || rc=$?
+call acquire_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
 check "acquire in one call exits 0" "$rc" "0"
-out="$(other_call acquire_lock)" && rc=0 || rc=$?
+other_call acquire_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
 check "another session's acquire waits and times out while the lock is held" "$rc" "1"
 check "it names the timeout" "$(grep -c 'TIMEOUT' <<<"$out")" "1"
 
 # --- release in a later call removes the lock ---
-out="$(call release_lock)" && rc=0 || rc=$?
+call release_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
 check "release in a later call exits 0" "$rc" "0"
 check "release in a later call says released" "$(grep -c 'released' <<<"$out")" "1"
 check "release in a later call removes the lock file" "$([ -e "$LF" ] && echo present || echo gone)" "gone"
@@ -39,12 +42,12 @@ check "release in a later call removes the lock file" "$([ -e "$LF" ] && echo pr
 # --- a session that ends while holding the lock: the next acquire takes it over ---
 bash -c 'bash -c "LOCK_NAME=browser source \"\$1\"; acquire_lock >/dev/null" _ "$1"; sleep 30' _ "$LOCK" & other=$!
 for _ in $(seq 50); do [ -s "$LF" ] && break; sleep 0.1; done
-out="$(call acquire_lock)" && rc=0 || rc=$?
+call acquire_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
 check "acquire while another live session holds the lock times out" "$rc" "1"
 kill "$other" 2>/dev/null || true; wait "$other" 2>/dev/null || true; other=""
-out="$(call acquire_lock)" && rc=0 || rc=$?
+call acquire_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
 check "once that session is gone, the next acquire takes the lock" "$rc" "0"
-out="$(call release_lock)" && rc=0 || rc=$?
+call release_lock && rc=0 || rc=$?; out="$(cat "$WORK/out")"
 check "and releases it in a later call" "$([ -e "$LF" ] && echo present || echo gone)" "gone"
 
 exit "$fail"
