@@ -4,7 +4,7 @@ Status: draft for the owner's read (not marked ready). Issue: #1961. Owner answe
 experimental image API (`TypeSafe-Danger-Zone-Images: true`, `assets` + `state`); 2 - an image question goes to Jev first, with the
 agent CLIs as the fallback; 3 - there are no model options: one Jev model, so no model list, no model config and no per-model
 thresholds; 4 - every hook decision may attach images, as an optional input, and an old caller's call stays byte-identical.
-Written against main `414f647bf`.
+Written against main `414f647bf`; the goldens in 6 are captured on each PR's own base, in its red commit.
 
 Related: `docs/csharp/judge.md` (providers, chain, decision rows), `docs/superpowers/specs/2026-10-29-context-model-routing-design.md`
 (the other Jev caller, `JevChoicePort`), Jev's image docs at https://docs.typesafe.ai/images (read 2026-11-02).
@@ -67,6 +67,13 @@ Every question's input JSON may hold one more top-level field:
   input that doesn't validate, and no provider runs. The judge never cuts the list itself: a caller with more than 4 picks which 4
   (the Step and the hooks keep the first 4 and say how many they dropped, 5.1 and 5.2), so one rule holds everywhere. The reason code stays one (`invalid-images`, so the hooks' contract is
   untouched); stderr names the cause in words, e.g. `judge: images[2] /home/u/r/a.webp is not a PNG or JPEG`.
+- **Strict for explicit callers, best effort for hooks.** A hook can't check what the judge checks (magic bytes, size, a file
+  deleted in between), and a bad attachment must never cost a hook the answer it gets today. So a hook's input also sets
+  `"imagesBestEffort": true`: the judge drops each image that fails a check, with a trace line and stderr naming it, and the call
+  goes on with the rest (as text when none are left). Without it (Sindri's Step, a person at the CLI) a bad image escalates
+  `invalid-images` as above.
+- **An older judge ignores the field.** Question inputs drop unknown fields (`QuestionDefinition` docs), so a box that installs the
+  new hooks before the new judge sends `images` to a judge that reads past it: today's call, no error.
 - **Format by magic bytes**, not by extension: PNG (`89 50 4E 47`) or JPEG (`FF D8 FF`). Anything else is `invalid-images`.
 - **Read once.** The evaluator reads each file once, hashes it (sha256) and reads its width and height from the header (PNG `IHDR`,
   JPEG's first `SOFn`; no image library). Every provider gets those bytes, not the path, so a file that changes mid-call can't give
@@ -112,7 +119,14 @@ answers need reasons": `ReasonedOutputs` (resolution-check sets `partial`/`unres
 skipped like a failed one, so the next provider runs (`QuestionDefinition.LacksReasons`). So:
 
 - visual-critique sets `ReasonedOutputs = {looks-off, sloppy}`. `looks-right` needs no reasons (callers act only on the problems).
-- `Refused` refuses only when **every** output needs reasons, instead of whenever `reasons` is asked.
+- `Refused` stays as it is for every other question. visual-critique opts in with a new definition flag, `JevMaySettle` (carried
+  on `QuestionRef`), and `Refused` lets Jev through only when it's set. It has to be opt-in: resolution-check also asks for reasons
+  and its `resolved` needs none, so loosening `Refused` for everyone would move every `/bugFixOrchestrator` resolution check, with
+  no images at all, onto Jev. With the flag, resolution-check's chain is today's (golden in PR 1b).
+- A reasonless `looks-off` from Jev is stored as a skip with the reason `no-reasons`, not as a failure (next point), so `judge health`
+  doesn't count Jev as failing every time it spots a problem.
+- `SkippedProvider` (the trace entry) gains a nullable reason code. Today it holds only an enum, which can't say "images off" or
+  "413"; every `jev skipped:` line in 4 and every count in 4a reads from that code.
 - Net: Jev settles the common case, a page that looks right, in one fast call. A page with problems goes to the CLI, which says what
   the problems are. Jev's skipped answer is in the trace, so `judge why` shows "jev said looks-off (no reasons), asked claude-cli".
 
@@ -160,10 +174,21 @@ Jev is a third party. Text gets redacted before it goes; a screenshot can't be. 
 - **Hook-sourced images stay inside the repo.** A hook attaches a path only when it resolves (symlinks followed) under the checkout
   the session runs in (`git rev-parse --show-toplevel` of the hook's cwd). A screenshot the agent opened from `~/Downloads` or `/tmp`
   is never sent. Hook calls also cap the total at 4 MiB: most hook budgets are 10 s per provider (`AskCheckQuestion.cs:34`,
-`WakeGateQuestion.cs:40`, `BriefScopeQuestion.cs:42`), and 4 MiB is about 2 s up at 20 Mbit/s. PR 4 measures one ask-check with
-4 MiB attached and puts the seconds in its body.
-- **Jev's data terms.** PR 1 records in `docs/csharp/judge.md` what TypeSafe's terms say about keeping or training on request
-  content, with the link, read on the day it merges.
+  `WakeGateQuestion.cs:40`, `BriefScopeQuestion.cs:42`), and 4 MiB is about 2 s up at 20 Mbit/s. PR 4 measures one ask-check with
+  4 MiB attached and puts the seconds in its body. Every path a hook leaves out (outside the repo, over 4, over 4 MiB) is counted
+  on the hook's `probe-log` line, so nothing is filtered silently.
+- **Jev's data terms decide the default.** PR 1b records in `docs/csharp/judge.md` what TypeSafe's terms say about keeping or
+  training on request content, with the link, read on the day it merges. If they allow training on it, or say nothing findable,
+  `jevImages` ships `false` and the owner decides with the terms in front of them.
+- **Off for one repo, or one shell.** `AW_JUDGE_JEV_IMAGES=0` in the environment wins over config.json (hooks and Sindri's judge
+  child inherit it), so a repo whose screenshots show customer data turns it off in its own env (direnv, the lane's launch env)
+  without touching the box's config. Listed in `.env.example`.
+- **Step images stay in known places.** `step.judge.choose` images must resolve (symlinks followed) under the item's checkout or
+  `$AW_STATE_DIR`'s ui-evidence output; anything else fails the Step before the call.
+- **Nothing logs an image.** Debug logs name images by reference (`aw-image-1-…`) and size, never bytes or source paths; the
+  multipart parts' `filename` is the reference.
+- **Fixtures are synthetic**: the 20 labeled screenshots are rendered from small HTML pages in the fixture directory, never captures
+  of a real app.
 - `judge eval` and the label replays send images only when `jevImages` is on, like a live call.
 - Today `judge config set` takes only `<question> enabled|threshold`. PR 1 adds one form, `judge config set providers jev-images
   true|false`, so turning it off is one pasted command, not a hand edit. It prints the saved config like the other forms; a value
@@ -178,10 +203,14 @@ see the same files in the same order as today (golden: the CLI argv for visual-c
 
 They take images today through `ImageEvidence` (`src/Judge/Aw.Judge.Infrastructure/Providers/ImageEvidence.cs`), which needs every
 screenshot inside one `evidenceDir`: Claude's Read tool is scoped to it, Cursor's workspace is it. Generic `images` can be anywhere,
-so for a call with `images` the judge writes the read bytes into a fresh per-call directory (`$TMPDIR/aw-judge-images-<random>/`,
+so for every call with images (visual-critique included) an Infrastructure `ImageWorkspace`, opened by the evaluator once before
+the chain runs and disposed after the last provider, writes the read bytes into a fresh per-call directory (`$TMPDIR/aw-judge-images-<random>/`,
 mode 0700, `image-1.png`, …, removed in a `finally` after the call, and any older than an hour swept at the next call's start, which
 catches a judge killed by a hook's timeout) and hands the CLIs that directory as their `evidenceDir`. Same bytes Jev saw, same scoping.
-visual-critique keeps its own `evidenceDir`, so its CLI calls don't change.
+Because visual-critique's CLI calls now read these copies too, Jev and the CLI always judge the same bytes. Its CLI prompt and
+argv differ from today only in the directory (golden). For a generic call the CLI prompt gets one more line naming the files in
+order ("The images are image-1.png, image-2.png in this directory, in the order the question lists them"), since only
+visual-critique's own prompt names its screenshots.
 
 ### 3.6 The batch classifier (prompt-sort, trait-check)
 
@@ -190,7 +219,12 @@ visual-critique keeps its own `evidenceDir`, so its CLI calls don't change.
 `IImageReader`, and `JevProvider.Batch` sends the same multipart request (one `assets` map for the whole batch, the state's `images`
 holding the references once). A batch has no CLI fallback today, so an image the batch can't send (out of limits, `jevImages` off,
 `413`) is dropped from that batch with a trace line and the batch goes as text: the hook still gets its answer, just without the
-picture. With no images, the batch request is byte-identical (golden).
+picture. A size limit Jev only reports after the upload (`413`, or `400` on an image batch) gets one retry without the images when
+at least half the hook's budget is left, else the batch counts as unanswered and the hook fails open as it does today on a Jev
+timeout. The drop is recorded on the batch's own record (the sort or trait-check row), never on stderr, which the hook contract
+freezes. For `trait-check`, a question that was about an image file (an edited PNG) is not asked as text when its image was dropped:
+that file is reported `skipped: image-not-sent`, never judged on its name alone. `prompt-sort` asks about the prompt, so its answer on
+text alone is still an answer. With no images, the batch request is byte-identical (golden).
 
 ## 4. The decision row
 
@@ -210,14 +244,27 @@ images: 2
 jev skipped: image 2 is 3024x1964, over Jev's 1568 px limit; asked claude-cli
 ```
 
-The skip line's three forms: `image N is WxH, over Jev's 1568 px limit` / `under Jev's 280 px minimum` / `over Jev's 16 MiB limit`,
-`image sending to Jev is off (judge config set providers jev-images true)`, `Jev said the images were too large (413)`. A call
-without images prints exactly today's `why`. `judge eval` and the label replays re-read the paths: a file that is gone or whose sha256 changed makes that
+This is the one list of `jev skipped:` lines (each ends `; asked <next provider>`):
+
+| When | Line |
+|---|---|
+| An image outside Jev's limits | `image N is WxH, over Jev's 1568 px limit` / `under Jev's 280 px minimum` / `over Jev's 16 MiB limit` |
+| Images off | `image sending to Jev is off (judge config set providers jev-images true)` |
+| No key | `no Jev key (TYPESAFE_API_KEY or the keychain)` |
+| Jev answered a problem | `jev said looks-off with no reasons` (or `sloppy`) |
+| Jev below threshold | `jev said looks-right at 0.41, under 0.5` |
+| `413` | `Jev said the images were too large (413)` |
+| `400` | `Jev refused the request (400); AW_LOG_LEVEL=debug shows its body` |
+
+A call without images prints exactly today's `why`. The verdict cache keys an image call by the images' sha256 and the deciding provider, so a Jev verdict is never read back as the
+CLI's. `judge eval` and the label replays read `path` from each stored image object and re-read the file: a file that is gone or whose sha256 changed makes that
 case `skipped: image-changed`, not a failure.
 
 ## 4a. Health
 
-`judge health` gets one line once any call had images: `images: 14 calls, jev 9, clis 5 (out-of-limits 4, too-large 1)`. Nothing
+`judge health` gets one line once any call had images, counting every `jev skipped:` reason from 4:
+`images: 14 calls, jev 9, clis 5 (looks-off 2, out-of-limits 1, too-large 1, http-400 1)`; with sending off it reads
+`images: 14 calls, jev 0, clis 14 (images-off 14)`. A sudden run of `http-400` is how a change on Jev's experimental API shows. Nothing
 when there were none, so its output on a box that never sends images is today's. That's the number that answers whether retina
 frames make the Jev path rare (9).
 
@@ -251,7 +298,9 @@ Every hook question takes `images`. What each hook attaches, at most 4, newest f
 
 So all five hooks that ask the judge can attach images (owner answer 4). The three text sources share one helper,
 `config/lib/image-paths.sh` (`aw_image_paths <text>`: absolute paths ending `.png`/`.jpg`/`.jpeg`, existing files only, deduped,
-first 4), so the rule is written once.
+newest first, keeping paths under the session's checkout only, up to 4 files and 4 MiB, then counting what it left out for
+`probe-log`), so the rule is written once. done-gate's newest is the last `Read` in the turn; for text sources it's the order they
+appear, last first. Every hook input with images also sets `imagesBestEffort: true` (2).
 
 The hook contract stays frozen (AGENTS.md "hook contract"): no new exit codes, stderr prefixes or stdout fields. A hook adds `images`
 to its `jq -nc` input only when it found at least one (more than 4: the newest 4, and a `probe-log` line with the dropped count), so `ASK_INPUT` for a turn with no image reads is exactly today's string.
@@ -274,7 +323,8 @@ Red first in each; ideas reviews each; "Part of #1961" except the last, which sa
 
 | PR | What | Red test (fails before, names the behavior) | Gate |
 |---|---|---|---|
-| 1 | Jev takes images: `ImageAttachment` + `IImageReader` + limits, `QuestionRef.Images`, `JevProvider` multipart + header + references, `Refused` only when every output needs reasons, visual-critique's `ReasonedOutputs`, `Classes = All`, image chain `jev, CLIs, rules` with `hasImages` routing, the CLIs building evidence from attachments, `providers.jevImages`, the 12 labeled cases | `VisualCritique_looks_right_is_settled_by_jev_from_multipart_screenshots`; `VisualCritique_looks_off_from_jev_goes_to_the_cli_for_reasons`; `Image_over_1568px_skips_jev_for_the_clis`; the no-image Jev wire golden; the unchanged visual-critique CLI argv golden | Judge unit + integration, `judge-cs-hook-surface`, judge aot-smoke, Arch (new type in Core), PublicAPI |
+| 1a | The plumbing, no behavior change: `ImageAttachment` + `IImageReader` + limits, `QuestionRef.Images`, `hasImages` routing, the CLIs building evidence from attachments (visual-critique still on the CLIs) | `VisualCritique_cli_sees_the_same_screenshots_in_the_same_order`; `ImageReader_reads_png_and_jpeg_sizes_from_headers` | Judge unit + integration, Arch, PublicAPI |
+| 1b | Jev takes images: `JevProvider` multipart + header + references, `Refused` only when every output needs reasons, visual-critique's `ReasonedOutputs`, `Classes = All`, image chain `jev, CLIs, rules`, `providers.jevImages` + `AW_JUDGE_JEV_IMAGES`, the 20 labeled cases | `VisualCritique_looks_right_is_settled_by_jev_from_multipart_screenshots`; `VisualCritique_looks_off_from_jev_goes_to_the_cli_for_reasons`; `Image_over_1568px_skips_jev_for_the_clis`; the no-image Jev wire golden | Judge unit + integration, `judge-cs-hook-surface`, judge aot-smoke, Arch (new type in Core), PublicAPI |
 | 2 | Any question takes `images`: the evaluator reads and strips it, routes on the image class, CLIs get the per-call directory, the decision row's image lines, `judge why`, eval's `image-changed` | `AskCheck_with_an_image_routes_to_jev_and_stores_its_hash_not_its_bytes`; `Input_without_images_stores_todays_row` | Judge unit + integration, hook surface, aot-smoke |
 | 3 | Sindri: `ChooseRequest.Images`, `step.judge.choose` `images:`, `RCP-CHOICE-007`, `imageCount` in `fact:decision`, the Jobs view line | `JudgeChoose_passes_the_named_fact_as_images`; `JudgeCliChoice_without_images_sends_todays_input`; `Jobs_view_says_decided_with_2_images` | Sindri unit + integration (ApiGoldens for the fact), Ui unit + integration, recipe eval, Arch |
 | 4 | Batch images (`BatchRequest.Images`, `JevProvider.Batch` multipart, drop-and-trace) and the hooks: all five sources (done-gate, scope-gate, send-gate, prompt-sort, trait-check `--image`), `config/lib/image-paths.sh`, docs (`docs/csharp/judge.md`, `config/hooks` README) | `done-gate` bash case: a turn that read a PNG sends `images` | every hook bash test, hook surface, sync-rules |
@@ -282,24 +332,35 @@ Red first in each; ideas reviews each; "Part of #1961" except the last, which sa
 Each PR updates `docs/csharp/judge.md` (and `docs/csharp/sindri-workflow.md` for PR 3) for what it ships, so no PR lands an
 undocumented field.
 
-**Parallel plan.** PR 1 first (everything rides on the provider and chain). Then PR 2. Then PR 3 and PR 4 at once: PR 3 is
+PR 1 is split in two so the plumbing (1a) can land and be rolled back apart from the behavior change (1b). Every PR that changes usage text (`config set providers jev-images` in 1b,
+`trait-check --image` in 4) runs the whole Judge unit lane and judge aot-smoke, and updates its `expected.txt`.
+
+PR 4's red tests include the helper's refusals: a path outside the checkout, a symlink that escapes it, five images (keeps 4),
+and 6 MiB of images (keeps what fits 4 MiB), each counted on the `probe-log` line.
+
+**Parallel plan.** PR 1a, then 1b (everything rides on the provider and chain). Then PR 2. Then PR 3 and PR 4 at once: PR 3 is
 Sindri-only; PR 4 is the batch classifier (Judge Infrastructure, which PR 3 doesn't touch) plus the hooks. Builders: one per PR (Sonnet), the lane lead runs every gate.
 
 ## 8. Proof
 
-- **Jev against the CLI on the same screenshots (PR 1, before it merges).** Today Jev never judges a picture, so moving
-  visual-critique to Jev first needs evidence it decides like the CLI. PR 1 adds 12 labeled visual-critique cases under
-  `tests/fixtures/judge/images/` (6 that should pass, 6 with a visible break: overlap, clipped text, missing element, wrong color),
-  and the owner-box step below runs `judge eval visual-critique --providers jev` and `--providers claude-cli` on them. The PR body
-  gets both scores and the seconds per call. If Jev scores below claude-cli, PR 1 still merges but ships `providers.jevImages`
-  default `false`, and the numbers go to the owner.
+- **Jev against the CLI on the same screenshots (PR 1b).** Today Jev never judges a picture, so moving visual-critique to Jev
+  first needs evidence. PR 1b adds 20 labeled visual-critique cases under `tests/fixtures/judge/images/` (10 that look right,
+  10 with a visible break: overlap, clipped text, missing element, wrong color, cut-off content). The error that costs is Jev saying
+  `looks-right` on a broken page, because nothing after it looks again; a wrong `looks-off` only costs a CLI call. So the bar is:
+  **zero `looks-right` on the 10 broken cases**, plus seconds per call for both providers.
+  - Order: the lead runs both evals before ready when this box has the Jev key (`judge health` shows `jev: available`), and the
+    scores go in the PR body. If the bar holds, `jevImages` ships `true`; if not, `false`, and the numbers go to the owner.
+  - No key on the box: PR 1b ships `jevImages` default `false`, and the owner step below runs the evals; flipping it on is then one
+    pasted command (`judge config set providers jev-images true`), and a one-line PR moves the default.
 
 - In tests: the goldens in 6 and the red tests in 7, on a recording handler (no network in CI).
 - On the owner's box, once, after PR 1 (one item on the owner checklist, needs the Jev key):
-  `judge visual-critique < tests/fixtures/judge/images/visual-critique.json` → you should see `"decision"` and, in
-  `judge why <id>`, `provider: jev`. If you see `provider: claude-cli` instead, `judge why` says why on its `jev skipped:` line
-  (no key prints `jev: no-api-key`). Then the eval line above, one pasted command, prints both scores. If Jev answers `400`, the checklist's second line captures the body
-  (`AW_LOG_LEVEL=debug`), which is the evidence for a wire fix.
+  `jq --arg d "$PWD/tests/fixtures/judge/images" '.evidenceDir = $d' tests/fixtures/judge/images/visual-critique.json | judge visual-critique`
+  from the repo root (a page that looks right; the fixture's `evidenceDir` must be absolute, so `jq` fills it in) → you should see
+  `"decision": "looks-right"` and, in `judge why <id>`, `provider: jev`. If you see `provider: claude-cli` instead, the `jev skipped:`
+  line says why (4). If PR 1 shipped with images off (Jev scored lower), you'll see `image sending to Jev is off`: that's expected.
+  Then two pasted commands, `judge eval visual-critique --providers jev` and `judge eval visual-critique --providers claude-cli`,
+  each print a score and seconds per call.
 - After PR 3: a fixture recipe whose `step.judge.choose` names two frames, run through `sindri workflow start` on a scratch home;
   the Jobs view shows "decided with 2 images" and the ledger's `step.finished` carries `provider: jev`.
 
