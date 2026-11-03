@@ -187,6 +187,33 @@ public sealed class ImagesOnAnyQuestionTests
             JevSkipNotes.For(Assert.Single(run.Log.Decisions)));
     }
 
+    // Spec 4's own example: image 2 is shrunk, image 3 is dropped, in one call. The sizes sent line up with the images read.
+    [Fact]
+    public async Task Best_effort_scaled_and_dropped_images_each_get_their_own_why_line()
+    {
+        var handler = RecordingJevHandler.Choosing("continue");
+        using var jev = JevImages.Jev(handler, new FakeImageScaler());
+        var run = new QuestionRun
+        {
+            ImageReader = Reader(
+                ("/shots/home.png", ImageBytes.Png(1512, 982, "home")),
+                ("/shots/home@2x.png", ImageBytes.Png(3024, 1964, "retina")),
+                ("/shots/icon.png", ImageBytes.Png(200, 120, "icon"))),
+        };
+
+        _ = await run.Ask(AskCheckQuestion.Definition, Input(["/shots/home.png", "/shots/home@2x.png", "/shots/icon.png"], bestEffort: true), jev);
+
+        var row = Assert.Single(run.Log.Decisions);
+        var lines = ImageNotes.For(row);
+        Assert.Equal(4, lines.Count);
+        Assert.DoesNotContain("sent to jev", lines[1], StringComparison.Ordinal);
+        Assert.EndsWith("-> sent to jev as 1568x1018", lines[2], StringComparison.Ordinal);
+        Assert.DoesNotContain("sent to jev", lines[3], StringComparison.Ordinal);
+        Assert.Equal(
+            ["jev images dropped: image 3 is 200x120, under Jev's 280 px minimum; asked jev with images 1, 2"],
+            JevSkipNotes.For(row));
+    }
+
     // Jev reports a size limit only after the upload: a hook call tries Jev once more without the images, and stays on Jev.
     [Fact]
     public async Task Best_effort_413_retries_jev_once_as_text()

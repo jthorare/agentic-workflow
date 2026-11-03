@@ -43,6 +43,7 @@ internal sealed partial class JevProvider
             }
         }
 
+        result = Aligned(result, question.Images, kept);
         return notes.Count == 0 ? result : result with { ImageNotes = notes };
     }
 
@@ -71,6 +72,21 @@ internal sealed partial class JevProvider
         }
 
         return (kept, why.Count == 0 ? null : $"{string.Join("; ", why)}; asked jev {(kept.Count == 0 ? "as text" : "with images " + string.Join(", ", numbers))}");
+    }
+
+    // SentImages names one size per READ image, by index: a dropped image holds its read size (it went nowhere), so only a scaled one differs.
+    private static ProviderResult Aligned(ProviderResult result, IReadOnlyList<ImageAttachment> read, List<ImageAttachment> kept)
+    {
+        if (result is not ProviderDecided { SentImages: { } sent } decided || sent.Count != kept.Count || kept.Count == read.Count)
+        {
+            return result;
+        }
+
+        var next = 0;
+        return decided with
+        {
+            SentImages = [.. read.Select(image => kept.Contains(image) ? sent[next++] : new ImageSize(image.Width, image.Height))],
+        };
     }
 
     // Why Jev refused the images it was sent, in words, or null when the answer isn't about them.
