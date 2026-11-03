@@ -268,8 +268,9 @@ CLI provider that needs it (Jev settles most calls, so most calls never write on
 provider, writes the read bytes into a fresh per-call directory (`$TMPDIR/aw-judge-images-<random>/`,
 mode 0700, visual-critique's files under their own relative names (`home.png`, `base/home.png`, so the prompt's "Look at the screenshot
 home.png" still names a real file), generic images as `image-1.png`, …; a workspace that can't be created errors that CLI provider
-(`image-workspace`) and the chain moves on; removed in a `finally` after the call, and any `aw-judge-images-*` directory older than an hour and
-owned by the current user swept at the next call's start (symlinks not followed), which
+(`image-workspace`) and the chain moves on; removed in a `finally` after the call, and any `aw-judge-images-*` directory older than an hour swept
+at the next call's start (best effort: it removes only what it can, since the sticky /tmp and the 0700 mode keep it off other users'
+directories; symlinks not followed), which
 catches a judge killed by a hook's timeout) and hands the CLIs that directory as their `evidenceDir`. Same bytes Jev saw, same scoping.
 Because visual-critique's CLI calls now read these copies too, Jev and the CLI always judge the same bytes. Its CLI prompt and
 argv differ from today only in the directory (golden). For a generic call the CLI prompt gets one more line naming the files in
