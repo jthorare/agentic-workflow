@@ -12,7 +12,7 @@ This skill runs Sindri's `ui-evidence` binary. It is one tool for the skill, a h
 command -v ui-evidence >/dev/null || { echo "run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri)"; exit 1; }
 ```
 
-Every run ends with the [Done checklist](#done-checklist), whatever the outcome: passed, a failed step, refused or errored. A failed run is a finished run, not a reason to skip the result file or the `aw-result` block. Run the [Result block](#result-block)'s gate now, with the preflight, so you know `AW_RESULT` and `AW_DIR` before the first verb.
+Every run ends with the [Done checklist](#done-checklist), whatever the outcome: passed, a failed step, refused or errored. A failed run is a finished run, not a reason to skip the result file or the `aw-result` block. Run the [Result block](#result-block)'s gate now, with the preflight, so you know `AW_RESULT` and `AW_DIR` before the first verb. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 If `deployment.md` sits next to this file, read it first: it holds this deployment's conventions (preview hosts, roles, login form, where credentials come from). Deployment-specific values are settings, never code ([Configuration](#configuration)).
 
@@ -183,7 +183,7 @@ Do every item before you send the reply; a run that skips one is not finished, e
 
 1. Every failed or broken step is named in the reply by the `name` the summary prints, quoted as written (a reviewer greps for it), with its `detail`. Your own paraphrase can go next to it, never instead of it.
 2. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/ui-evidence-<timestamp>.json` (Result block, Write tool), with the `outcome` the exit code gives.
-3. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), contains the `aw-result` block, before `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply.
+3. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), opens with the `aw-result` block, before the prose and `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply.
 
 If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
 
