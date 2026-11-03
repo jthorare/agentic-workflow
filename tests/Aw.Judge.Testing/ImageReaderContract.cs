@@ -119,7 +119,7 @@ public abstract class ImageReaderContract
     {
         var (reader, directory) = Create(new Dictionary<string, byte[]>(StringComparer.Ordinal) { ["in/a.png"] = Png(7, 8), ["out/b.png"] = Png(1, 1) });
 
-        var inside = await reader.Read(["in/../in/a.png"], directory + "/in", TestContext.Current.CancellationToken);
+        var inside = await reader.Read(["../in/a.png"], directory + "/in", TestContext.Current.CancellationToken);
         var outside = await reader.Read(["../out/b.png"], directory + "/in", TestContext.Current.CancellationToken);
 
         Expect.That(inside.Problem is null && inside.Images.Count == 1 && inside.Images[0].Path == directory + "/in/a.png", "the folded path is the file's");
