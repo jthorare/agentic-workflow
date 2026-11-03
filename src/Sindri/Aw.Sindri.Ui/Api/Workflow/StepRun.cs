@@ -25,4 +25,11 @@ internal sealed record StepRun(
     long? DurationMs,
     string? Outcome,
     int? Tokens,
-    string? Actor);
+    string? Actor)
+{
+    /// <summary>How many images a judge choice looked at; null for a run that had none.</summary>
+    public int? ImageCount { get; init; }
+
+    /// <summary>How many images a judge choice was given beyond the four it takes; null when none were left out.</summary>
+    public int? ImagesDropped { get; init; }
+}
