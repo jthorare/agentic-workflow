@@ -15,18 +15,26 @@ internal sealed class FileImageReader : IImageReader
     public async ValueTask<ImageRead> Read(IReadOnlyList<string> paths, string? root, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(paths);
-        var realRoot = root is null ? null : RealPath(root);
         var images = new List<ImageAttachment>(paths.Count);
-        foreach (var given in paths)
+        try
         {
-            var path = root is null || Path.IsPathRooted(given) ? given : Path.GetFullPath(given, root);
-            var (image, problem) = await ReadOne(path, realRoot, cancellationToken).ConfigureAwait(false);
-            if (image is null)
+            var realRoot = root is null ? null : RealPath(root);
+            foreach (var given in paths)
             {
-                return new ImageRead { Problem = problem };
-            }
+                var path = root is null || Path.IsPathRooted(given) ? given : Path.GetFullPath(given, root);
+                var (image, problem) = await ReadOne(path, realRoot, cancellationToken).ConfigureAwait(false);
+                if (image is null)
+                {
+                    return new ImageRead { Problem = problem };
+                }
 
-            images.Add(image);
+                images.Add(image);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException)
+        {
+            // A root that is a symlink loop or can't be examined: the paths under it can't be vouched for.
+            return new ImageRead { Problem = $"images under {root ?? "(no root)"} can't be read: {ex.Message}" };
         }
 
         return new ImageRead { Images = images };
@@ -55,6 +63,13 @@ internal sealed class FileImageReader : IImageReader
             if (!File.Exists(real))
             {
                 return (null, $"image {path} does not exist");
+            }
+
+            // .NET has no file type for a path, and a FIFO, device or socket (which blocks or never ends when read) reports size 0:
+            // anything with no size is refused, as no PNG or JPEG is empty.
+            if (new FileInfo(real).Length == 0)
+            {
+                return (null, $"image {path} is not a regular file or is empty");
             }
 
             var bytes = await File.ReadAllBytesAsync(real, cancellationToken).ConfigureAwait(false);
