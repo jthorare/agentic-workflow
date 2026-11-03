@@ -259,11 +259,15 @@ publish() {
   local aot=(-r "$platform" -p:RestoreLockedMode=false)
   pub sindri src/Sindri/Aw.Sindri.Host/Aw.Sindri.Host.csproj --no-self-contained -p:AwRecipesDir="$tree/recipes/sindri"
   pub ui-evidence src/Evidence/Aw.Evidence.Host/Aw.Evidence.Host.csproj --no-self-contained
+  # Keep sindri-ui BEFORE judge: pub() keeps the first file of a name, so the staged libSkiaSharp.so is sindri-ui's (SkiaSharp.NativeAssets.Linux,
+  # which links fontconfig, so Avalonia finds system fonts), not judge's NoDependencies build. check_skia_fontconfig fails the install if that flips.
   pub sindri-ui src/Sindri/Aw.Sindri.Ui.Desktop/Aw.Sindri.Ui.Desktop.csproj "${aot[@]}"
   pub judge src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj "${aot[@]}"
   pub aw-packets src/Packets/Aw.Packets.App/Aw.Packets.App.csproj "${aot[@]}"
   pub bugfix-state src/BugFix/Aw.BugFix.Host/Aw.BugFix.Host.csproj "${aot[@]}"
   pub aw-readiness src/Readiness/Aw.Readiness.App/Aw.Readiness.App.csproj "${aot[@]}"
+
+  check_skia_fontconfig "$stage"
 
   # 3. "Install didn't take": each binary answers its state-free call, in a scratch state dir and with no inherited environment.
   verify "$stage" "$revision"
@@ -295,6 +299,19 @@ publish() {
   if [ -n "$digest" ]; then printf '%s\n' "$digest" > "$base/recipes-digest"; fi
   say "built $base/$stamp ($revision)"
   prune
+}
+
+# On Linux the staged libSkiaSharp.so must be the build that needs libfontconfig (sindri-ui's); macOS has one SkiaSharp build for both apps.
+check_skia_fontconfig() { # check_skia_fontconfig <dir>
+  [ "$(uname -s)" = Linux ] || return 0
+  if ! command -v readelf > /dev/null 2>&1; then
+    say "readelf is missing; not checking that libSkiaSharp.so needs libfontconfig"; return 0
+  fi
+  local lib="$1/libSkiaSharp.so" needed
+  [ -e "$lib" ] || die "install didn't take: $lib is missing (sindri-ui stages it)"
+  needed="$(readelf -d "$lib" 2> /dev/null || true)"
+  grep -q 'NEEDED.*libfontconfig' <<< "$needed" \
+    || die "install didn't take: the staged libSkiaSharp.so does not need libfontconfig, so it is not sindri-ui's build (judge's NoDependencies one won the stage: keep sindri-ui before judge in the pub lines)"
 }
 
 verify() { # verify <dir> <revision>
