@@ -1,0 +1,2 @@
+Bash	{"command": "cat src/*.js; git branch --show-current; git status --short"}
+Bash	{"command": "git stash list; git log --oneline -3; git merge-base HEAD origin/main"}

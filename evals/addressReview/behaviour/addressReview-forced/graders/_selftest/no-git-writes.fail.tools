@@ -1,0 +1,6 @@
+Bash	{"command": "git commit -am \"fix\" && git push origin HEAD"}
+Bash	{"command": "git branch fix-77"}
+Bash	{"command": "git switch fix-77"}
+Bash	{"command": "gh pr checkout 77"}
+Bash	{"command": "git -C /w checkout pr-77"}
+Bash	{"command": "git add src/export.js && git stash"}

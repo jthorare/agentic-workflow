@@ -1,0 +1,3 @@
+schema_version: "1.1"
+name: postReview-natural-1
+source: "no issue or PR in jthorare/agentic-workflow asks for postReview in its own words (all 325 issues and the PR list searched); reworded from the skill's own use case, a saved review waiting to be published, written for the eval"
