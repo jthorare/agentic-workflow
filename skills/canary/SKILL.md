@@ -12,6 +12,8 @@ Watches prod error rate, latency, logs, and custom probes for a configurable win
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Overview
 
 Reads `.agentic-workflow/canary.json` for monitoring URLs and probes. Runs minute-by-minute checks for `duration` seconds (default 900 = 15 min). Computes a verdict: HEALTHY, DEGRADED, or UNHEALTHY. Writes a timeline to `releases/<release-id>/canary.md`. On HEALTHY, auto-chains `/syncDocs`. On DEGRADED, warns and stops. On UNHEALTHY, alerts and suggests `/rootCause` — does NOT auto-chain (human decides next step).
