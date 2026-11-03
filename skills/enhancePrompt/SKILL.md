@@ -1,6 +1,6 @@
 ---
 name: enhancePrompt
-description: "Use when the user wants a request rewritten with project context first: what the docs say, constraints, scope and done-criteria, so a fresh session or another agent can run it. It only rewrites; it does not do the task or interview the user (that is withInterview)."
+description: "Use when the user wants a request rewritten, or a standalone prompt written for a fresh session, with project context first: what the docs say, constraints, scope and done-criteria, so another agent can run it. It only writes the prompt; it does not do the task or interview the user (that is withInterview)."
 argument-hint: [prompt-to-enhance]
 allowed-tools: Read, Write, Glob, Grep, AskUserQuestion, Bash(git *), Bash(ls *), Bash(mkdir *), Bash(date *), Bash(SHARED_DIR=*), mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
