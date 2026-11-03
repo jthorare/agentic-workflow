@@ -18,11 +18,21 @@ internal sealed class JevImagesOffProvider(IModelProvider inner) : IModelProvide
     public IReadOnlySet<ContentClass> Classes => inner.Classes;
 
     /// <inheritdoc />
-    public ValueTask<ProviderResult> Decide(QuestionRef question, JsonNode? input, TimeSpan budget, CancellationToken cancellationToken)
+    public async ValueTask<ProviderResult> Decide(QuestionRef question, JsonNode? input, TimeSpan budget, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(question);
-        return question.Images.Count > 0
-            ? ValueTask.FromResult<ProviderResult>(new ProviderUnavailable(ProviderUnavailable.ImagesOff))
-            : inner.Decide(question, input, budget, cancellationToken);
+        if (question.Images.Count == 0)
+        {
+            return await inner.Decide(question, input, budget, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (!question.ImagesBestEffort)
+        {
+            return new ProviderUnavailable(ProviderUnavailable.ImagesOff);
+        }
+
+        // A hook's call drops its images and goes as text: hooks never sent images before, so turning them off gives today's call.
+        var result = await inner.Decide(JevImageDrops.With(question, []), JevImageDrops.With(input, []), budget, cancellationToken).ConfigureAwait(false);
+        return result with { ImageNotes = ["image sending to Jev is off (judge config set providers jev-images true); asked jev as text"] };
     }
 }

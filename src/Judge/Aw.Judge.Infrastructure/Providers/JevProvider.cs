@@ -57,8 +57,8 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
     /// <inheritdoc />
     public IReadOnlySet<ContentClass> Classes { get; } = new HashSet<ContentClass>(ContentClasses.All);
 
-    /// <inheritdoc />
-    public async ValueTask<ProviderResult> Decide(QuestionRef question, JsonNode? input, TimeSpan budget, CancellationToken cancellationToken)
+    // One call to Jev as the question stands (a hook's best-effort call goes through Decide in JevProvider.BestEffort first).
+    private async ValueTask<ProviderResult> DecideOnce(QuestionRef question, JsonNode? input, TimeSpan budget, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(question);
         cancellationToken.ThrowIfCancellationRequested();
