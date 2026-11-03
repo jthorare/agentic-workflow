@@ -12,6 +12,12 @@ namespace Aw.Sindri.Infrastructure.Workflows;
 internal sealed record BlockStepOutcome(OutcomeName? Outcome, IReadOnlyDictionary<FactKey, FactValue>? Outputs, string? Decision, string? Failure)
 {
     /// <summary>The dependency that was down when the Step failed, where the Step named one (<see cref="BlockStepResult.Unavailable"/>); null otherwise.</summary>
+    /// <summary>How many images a judge choice looked at (from 'fact:decision'); null for any other Step.</summary>
+    public int? ImageCount { get; init; }
+
+    /// <summary>How many images it left out; null when none were.</summary>
+    public int? ImagesDropped { get; init; }
+
     public string? Dependency { get; init; }
 
     /// <summary>The dependency's own error code, where it had one.</summary>
