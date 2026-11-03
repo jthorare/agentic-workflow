@@ -32,7 +32,7 @@ Output lives in `$AW_DIR/prototypes/<slug>/` (brief, probe, shots). Templates ar
 4. **One prototype file per feature plus minimal mount edits.** All option bodies live together in one `<Feature>Prototype` file next to the real screen. Edits to real files are a few lines: an import, a swap, one switcher mount. Every option, including the real screen as `current`, is reachable from the switcher.
 5. **Build from the app's real components and tokens.** Use its component library, icon set and token classes or variables. No hand-picked hex, no new primitives, no look-alike markup.
 6. **Never touch a shared or non-local database or service.** Run only the stack the project documents for local seeded use. Before any seed or start command, print the effective database host and API base URL (from the env files and config the command reads) and continue only when each is loopback (`localhost`, `127.0.0.1`, `::1`, a unix socket, or a container name on the local docker network); otherwise stop and **Ask the user**.
-7. **Never edit files or switch branches in the user's main checkout.** All edits and runs happen in the prototype worktree. Git metadata commands against the main checkout (`fetch`, `worktree add` / `remove`, `branch -D`) are fine.
+7. **Never edit files or switch branches in the user's main checkout.** All edits and runs happen in the prototype worktree. Git metadata commands against the main checkout (`fetch`, `worktree add` / `remove`, `branch -D`) are fine. Note that `extensions.worktreeConfig true` is written into the shared `.git/config`, so the main checkout keeps `[extensions] worktreeConfig = true` after a discard; that is harmless on git 2.20 or newer.
 
 ## Design rules
 
@@ -112,6 +112,8 @@ Rules for this phase:
 - Re-seeding can change every id and URL. Re-run the probe after every seed.
 - After the stack is up and again after the first page load, run `git -C <wt> status --short`. Dev servers sometimes rewrite a tracked generated file; `git checkout -- <file>` it before you diff.
 
+Write the probe now, from `references/probe-template.md`: copy it to `<proto-dir>/probe.mjs` (the absolute path echoed in Phase 1) and set `CONFIG` (route, login, ready selector, switcher storage key) with `OPTIONS` holding `current` only. The first CLI argument is the output directory; the probe exits with an error if it is missing.
+
 **Gate 2:** run `node <proto-dir>/probe.mjs <proto-dir> --baseline` (the switcher does not exist yet, so it screenshots the real screen as `current-baseline.png`) and confirm the real screen renders with data. Show the user the screenshot.
 
 ## Phase 3: Build
@@ -129,7 +131,7 @@ Rules for this phase:
 
 ## Phase 4: Prove
 
-Use `references/probe-template.md`. Copy it to `<proto-dir>/probe.mjs` (the absolute path echoed in Phase 1), set the route, login, ready selector, options and each option's click-through, and run it from the worktree as `node <proto-dir>/probe.mjs <proto-dir>`. The first argument is the output directory; the probe exits with an error if it is missing.
+Add each option's entry and click-through `steps` to `<proto-dir>/probe.mjs` (written before Gate 2), and run it from the worktree as `node <proto-dir>/probe.mjs <proto-dir>`.
 
 The probe, per option: select it through the switcher, run its click-through, assert the new thing is visible, wait for animations, screenshot, and record page errors. It screenshots `current` first as the baseline.
 
