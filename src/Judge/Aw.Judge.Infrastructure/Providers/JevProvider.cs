@@ -26,7 +26,8 @@ namespace Aw.Judge.Infrastructure.Providers;
 /// <param name="http">Sends the request (owned: disposed with the provider).</param>
 /// <param name="secrets">Reads the API key.</param>
 /// <param name="redactor">Strips secrets from the input before it leaves the machine.</param>
-internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor) : IModelProvider, IDisposable
+/// <param name="scaler">Shrinks an image too big for Jev before it is sent; null sends images as they are.</param>
+internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets, IInputRedactor redactor, IImageScaler? scaler = null) : IModelProvider, IDisposable
 {
     /// <summary>The model.</summary>
     public const string Model = Core.Batching.JevModel.Id;
@@ -46,6 +47,9 @@ internal sealed partial class JevProvider(HttpClient http, ISecretSource secrets
     private const string ImageSentence = "\n\nThe images are in `images`, in the order the input lists them.";
 
     private static readonly Uri _endpoint = new("https://api.typesafe.ai/v1/systemone");
+
+    /// <summary>Shrinks an image too big for Jev before it is sent; null sends images as they are.</summary>
+    internal IImageScaler? Scaler { get; } = scaler;
 
     /// <inheritdoc />
     public ProviderName Name => ProviderName.Jev;

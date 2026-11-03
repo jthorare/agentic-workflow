@@ -49,6 +49,7 @@ public static class JudgeInfrastructureServiceCollectionExtensions
             .AddSingleton<IImageReader, FileImageReader>()
             .AddSingleton<IImageWorkspaces, ImageWorkspaces>()
             .AddSingleton<IImageCaseSet, EmbeddedImageCaseSet>()
+            .AddSingleton<IImageScaler>(new SkiaImageScaler())
             .AddSingleton<IProcessRunner>(new SystemProcessRunner(environment))
             .AddSingleton<ISecretSource>(sp => new KeychainSecretSource(environment, sp.GetRequiredService<IProcessRunner>()))
             .AddSingleton<IIdGenerator, RandomIdGenerator>()
