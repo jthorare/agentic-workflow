@@ -21,6 +21,7 @@ namespace Aw.Sindri.Tests.Workflows;
 /// then the apphost under artifacts/bin/Aw.Judge.Host); skips without it, like JudgeCliChoiceRealJudgeTests.
 /// </summary>
 [Lane(TestLane.Heavy)]
+[Collection(nameof(WallClockAlone))]   // sets AW_STATE_DIR and the Jev variables for the whole process: no other test runs beside it
 public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : IClassFixture<BlockRuntimeDevServer>, IDisposable
 {
     private const string RecipeId = "workflow.t-judge-images";
