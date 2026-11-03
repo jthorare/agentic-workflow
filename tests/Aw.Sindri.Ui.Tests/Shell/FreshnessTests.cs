@@ -159,15 +159,14 @@ public sealed partial class FreshnessTests : IDisposable
         Assert.True(_vm.Banner.IsStalled);
         Assert.True(_server.StatusCalls > status && _server.ServicesCalls > services);
     }
-    // The refresh that read the services view has been handled.
-    private async Task RefreshHandled(int services) => await Until(() => _server.ServicesCalls == services);
+    // The refresh that made the services read number `services` has ended, not just read the services: its throttle timer
+    // starts only after the followed views (ViewReads++), so a clock move before that is lost (#1972). Every services read
+    // is followed by exactly one ViewReads++ (ControlPlaneFollower.Refresh), so the two counts are equal when none is mid-flight.
+    private async Task RefreshHandled(int services) => await Until(() => _server.ServicesCalls == services && _vm.ViewReads == services);
 
-    // The throttle window ends: the pending re-read comes.
-    private async Task ReReadAfterWindow(int services)
-    {
-        _clock.Advance(HealthViewModel.RefreshEvery);
-        await Until(() => _server.ServicesCalls == services);
-    }
+    // The throttle window ends: the pending re-read comes. The clock moves one window per poll until it does, so a move
+    // that lands before the timer exists is made up by the next one.
+    private async Task ReReadAfterWindow(int services) => await Until(() => _server.ServicesCalls == services, _clock);
 
     // §9.2: a burst re-reads each view at most once per 250 ms. The first event re-reads at once; the events in the next
     // 250 ms collapse into one more re-read when the window ends.
