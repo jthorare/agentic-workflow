@@ -2,9 +2,9 @@
 
 The contract of the Sindri sandbox phase (spec `docs/superpowers/specs/2026-10-18-sindri-sandbox-design.md`, revision 6, "the spec"). This page
 is written in SB-0 and holds what the later phases (SB-1 to SB-11) build against: the types, the codes and their kinds, the owner-voice
-copy, the profile keys, the plan-file schema, the shim table and what works inside a Step. **No sandbox behavior exists yet.** Until SB-5a
-the product Host registers only `UnavailableSandbox`, so every Step launch is refused with `SND-LAUNCH-014`, and a `sindri open` session
-opens unconfined as today until SB-5b (spec §3.9).
+copy, the profile keys, the plan-file schema, the shim table and what works inside a Step. On Linux Steps and `sindri open` sessions run in
+bubblewrap (SB-5a, SB-5b), on macOS in Seatbelt (SB-9). On any other OS the product registers a refusing sandbox step, so every Step launch
+and every `sindri open` is refused with `SND-LAUNCH-014` `unsupported-platform` (#2016).
 
 Every session Sindri launches for a Step run runs confined or does not run (spec SB1). The mechanism is bubblewrap and a systemd cgroup
 scope on Linux (SB-2, SB-3a), Seatbelt on macOS (SB-9). The agent CLI's own policy file is the second layer. The threat model is honest
@@ -161,7 +161,8 @@ banner (`takeover-banner.txt`) and the in-pane refusal (`refusal.txt`) are golde
 
 `Aw.Sindri.Core.Sandbox.Plan` builds the plan with no I/O: `SandboxPlanner.Build(mechanism, SandboxRequest)` returns a `SandboxPlan` or a refusal, and every adapter's
 `ISandbox.Plan` calls it. The host gives it the box's facts (`SandboxHostFacts`: home, state directory, RAM, cores, the environment the allowlist copies from), so Core reads no
-environment. `ISandbox` is `Probe`, `Plan`, `SelfCheck` and `Wrap`, all returning `Result`. The product registers `UnavailableSandbox` (every call is `-014 unsupported-platform`);
+environment. `ISandbox` is `Probe`, `Plan`, `SelfCheck` and `Wrap`, all returning `Result`. Core registers `UnavailableSandbox` (every call is `-014 unsupported-platform`)
+as the default, and Linux and macOS replace it;
 `PassThroughSandbox` and `RecordingSandbox` live in `Aw.Sindri.Testing` and only test hosts register them (`Product_host_registers_only_UnavailableSandbox`).
 
 | Piece | Rule |
