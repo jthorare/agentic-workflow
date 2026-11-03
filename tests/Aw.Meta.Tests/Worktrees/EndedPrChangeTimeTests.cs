@@ -166,4 +166,18 @@ public sealed class EndedPrChangeTimeTests
 
         Assert.Contains("changed since the last sweep", await MergeRun(), StringComparison.Ordinal);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task A_branch_with_several_pull_requests_is_judged_by_the_one_it_picks_not_the_latest_end()
+    {
+        // An old pull request 5 on the same branch closed at minute 110, after the edit; the branch picks 7, the higher number.
+        Script("{\"number\":5,\"state\":\"CLOSED\",\"headRefName\":\"feat\",\"headRefOid\":\"ccccccc\",\"closedAt\":\"" + Stamp(110) + "\"}," + Merged(90));
+        _world.WorktreeFiles.Touch(Lane, A.At(100));
+        await _world.Ready();
+
+        var swept = await _world.Sweeper.Sweep(Team(), WorktreeScope.All, SweepMode.Remove, "sweep", CancellationToken.None);
+
+        var kept = Assert.Single(swept.Value.Kept, r => string.Equals(r.Path, Lane, StringComparison.Ordinal));
+        Assert.Contains(kept.Reasons, r => r.Contains("changed since PR #7 merged", StringComparison.Ordinal));
+    }
 }
