@@ -200,6 +200,7 @@ bash scripts/tests/system-design-video.test.sh   # skills/system-design-video/sc
 bash scripts/tests/dotnet-verify-packages.test.sh
 bash scripts/tests/sindri-prove.test.sh
 bash scripts/tests/evidence-one-path.test.sh   # cutover §3.4: Playwright only in src/Evidence, SKILL.md runs checks only through ui-evidence verbs
+bash scripts/tests/bugfix-worktree-sweep.test.sh   # #1992: skills/bugFixOrchestrator removes worktrees only outside a meta lane; a lane asks meta for aw-meta worktree-sweep
 bash scripts/tests/executable-script.test.sh   # tests that write a shell script and run it go through ExecutableScript.Write (ETXTBSY, #1251): a test .cs file with a `#!` line and a hand-set exec bit fails
 bash scripts/tests/sindri-sandbox-e2e.test.sh   # scripts/sindri-sandbox-e2e.sh: arguments, the --sindri apphost rewrite and the scratch guard (no serve)
 bash scripts/tests/sindri-ui-fixture.test.sh
