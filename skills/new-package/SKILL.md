@@ -18,6 +18,8 @@ named for the first use case, so your first move is the TDD step.
 Run it from the repo root of a checkout of this repo (the C# build lives here). Rules the output satisfies:
 `.agents/rules/csharp.md` and `.agents/rules/csharp-testing.md`.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## 1. Collect the inputs
 
 Take what the arguments give, then **Ask the user** for every input still missing. Never guess a tier or an error
