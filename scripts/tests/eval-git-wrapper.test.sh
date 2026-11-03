@@ -47,6 +47,14 @@ for form in "branch" "branch -a" "branch --list" "tag" "tag -l" "tag --list"; do
   out="$(AW_GIT_MODE=readonly wrapped -C "$REPO" $form 2>&1)"; rc=$?
   [ "$rc" = 0 ] && ok "git $form is allowed in readonly" || bad "git $form rc=$rc: $out"
 done
+# #1995: a listing flag's commit is its value, not a name to create, whether it follows as its own argument or after `=`.
+for form in "branch --contains HEAD" "branch --contains=HEAD" "branch --no-contains HEAD" "branch --merged HEAD" \
+  "branch --no-merged HEAD" "branch --points-at HEAD" "branch -a --contains HEAD" "tag --contains HEAD" \
+  "tag --no-contains HEAD" "tag --merged HEAD" "tag --no-merged HEAD" "tag --points-at HEAD"; do
+  # shellcheck disable=SC2086
+  out="$(AW_GIT_MODE=readonly wrapped -C "$REPO" $form 2>&1)"; rc=$?
+  [ "$rc" = 0 ] && ok "git $form is allowed in readonly" || bad "git $form rc=$rc: $out"
+done
 echo b > "$REPO/b.txt"; "$REAL_GIT" -C "$REPO" add b.txt
 expect_refused "commit" "commit" -C "$REPO" commit -m x
 expect_refused "push" "push" -C "$REPO" push origin main
@@ -61,6 +69,9 @@ expect_refused "am" "am" -C "$REPO" am x.patch
 expect_refused "tag <name>" "tag" -C "$REPO" tag v1
 expect_refused "tag -a <name>" "tag" -C "$REPO" tag -a v1 -m x
 expect_refused "branch <name>" "branch" -C "$REPO" branch newbranch
+expect_refused "branch <name> <start>" "branch" -C "$REPO" branch newbranch HEAD
+expect_refused "branch -f <name>" "branch" -C "$REPO" branch -f newbranch
+expect_refused "tag <name> <commit>" "tag" -C "$REPO" tag v2 HEAD
 expect_refused "commit after -c option" "commit" -c core.editor=true -C "$REPO" commit -m x
 
 [ "$("$REAL_GIT" -C "$REPO" rev-list --count HEAD)" = 1 ] && ok "no commit was made by the refused forms" || bad "a refused commit landed"

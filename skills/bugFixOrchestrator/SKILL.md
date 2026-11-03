@@ -241,8 +241,11 @@ Outcome:
   candidates, pick the smaller diff and say why.
 - `partial` / `unresolved` / a failing run → back to Phase 4 with the failure reasons.
 - Attempt cap reached (the helper refuses a 6th) → Phase 6 as unresolved.
-- Remove every worktree except the winning candidate's once it is evaluated (`git worktree remove`);
-  keep the branches until the ticket closes.
+- Outside a meta lane, remove every worktree except the winning candidate's once it is evaluated
+  (`git worktree remove`). In a meta lane (`AW_META_TEAM` and `AW_META_LANE` both set) only meta removes
+  worktrees: leave them, and once each losing one is evaluated tell the team's meta by path and branch
+  ("evaluated, lost: <path> on bugfix/<ticket-slug>-a<n>, free to remove"); meta picks how to remove it.
+  Keep the branches until the ticket closes either way.
 
 ## Phase 6 — Report
 
@@ -253,9 +256,11 @@ Outcome:
 3. **Ask the user** before posting anything: offer to post `resolution.md` to the Linear issue with
    `mcp: linear/save_comment`. Screenshots and traces follow `ui-evidence`'s publish rules (approved
    uploader and `seeded` DB provenance only; otherwise local paths).
-4. Remove the winning candidate's worktree (`git worktree remove <path>`; the branch and commit
-   stay) — git won't check out a branch that another worktree holds, so `/shipRelease` could not use
-   it. Then `git -C "$REPO" checkout bugfix/<ticket-slug>`.
+4. Outside a meta lane, remove the winning candidate's worktree (`git worktree remove <path>`; the branch
+   and commit stay) — git won't check out a branch that another worktree holds, so `/shipRelease` could
+   not use it. Then `git -C "$REPO" checkout bugfix/<ticket-slug>`. In a meta lane (`AW_META_TEAM` and
+   `AW_META_LANE` set) don't remove it: ship from that worktree, where the branch is checked out; the tree
+   goes away through meta's merge and close triggers or a sweep meta runs.
 5. Do not open a PR. Leave the winning branch ready and suggest `/shipRelease`.
 
 Report to the user:
