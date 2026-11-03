@@ -59,6 +59,14 @@ public sealed record WorkflowEventDetail(
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public int? Tokens { get; init; }
 
+    /// <summary>How many images a judge choice looked at (images spec 5.1); null for any other event. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ImageCount { get; init; }
+
+    /// <summary>How many images a judge choice left out; null when none were. Not written when null.</summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public int? ImagesDropped { get; init; }
+
     /// <summary>The launcher agent an agent run ran on (#1269); null for any other event. Not written when null.</summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public string? Agent { get; init; }
@@ -179,6 +187,7 @@ public sealed record WorkflowEventDetail(
         }.Ran(recorded.Trigger);
     }
 
-    // The agent and model an agent run ran on, from the trigger record (#1269).
-    private WorkflowEventDetail Ran(TriggerRecord trigger) => this with { Agent = trigger.Agent, Model = trigger.Model };
+    // The agent and model an agent run ran on (#1269), and the images a judge choice looked at (images spec 5.1), from the trigger record.
+    private WorkflowEventDetail Ran(TriggerRecord trigger) =>
+        this with { Agent = trigger.Agent, Model = trigger.Model, ImageCount = trigger.ImageCount, ImagesDropped = trigger.ImagesDropped };
 }

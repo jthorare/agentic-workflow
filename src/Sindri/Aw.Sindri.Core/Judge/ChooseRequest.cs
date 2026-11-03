@@ -6,4 +6,8 @@ namespace Aw.Sindri.Core.Judge;
 /// <param name="Facts">The facts the question reads, by fact key, as text.</param>
 /// <param name="Threshold">The confidence an answer needs, above 0 and at most 1.</param>
 /// <param name="Providers">The providers the judge may ask, in order (the effective allowlist, 'rules' last).</param>
-public sealed record ChooseRequest(string Prompt, IReadOnlyList<ChooseOption> Choices, IReadOnlyDictionary<string, string> Facts, double Threshold, IReadOnlyList<string> Providers);
+public sealed record ChooseRequest(string Prompt, IReadOnlyList<ChooseOption> Choices, IReadOnlyDictionary<string, string> Facts, double Threshold, IReadOnlyList<string> Providers)
+{
+    /// <summary>The absolute paths of the images the question looks at (at most four), in order; empty for a text question, which sends exactly what it always did.</summary>
+    public IReadOnlyList<string> Images { get; init; } = [];
+}

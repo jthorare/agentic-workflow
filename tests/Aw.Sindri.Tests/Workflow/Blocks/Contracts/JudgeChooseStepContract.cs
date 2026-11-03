@@ -17,7 +17,7 @@ public sealed class JudgeChooseStepContract : BlockContract
 
     protected override BlockDescriptor Descriptor => ChoiceSteps.JudgeChoose;
 
-    protected override string ExpectedHash => "sha256:7e172d1a423e48ffc9c053c3a5d4ff4edfa5753518e339170a73c685f726b2a6";
+    protected override string ExpectedHash => "sha256:762759ee47f6ab3f4fd9deccaab7e2b1050780070b74861262a57a8cff8589eb";
 
     protected override JsonSerializerOptions Json => ShippedComposition.Json;
 

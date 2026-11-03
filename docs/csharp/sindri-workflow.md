@@ -446,6 +446,7 @@ and a test that pins its exact line (the P2 rows have none yet). All are errors 
 | `RCP-CHOICE-004` | `facts` is a literal list of at least one fact key; a hyphenated key gets the camelCase fix | List the facts the question reads |
 | `RCP-CHOICE-005` | A route state that routes `uncertain` to a desk twin sends it to a `step.desk.choose` state whose `from` names it, and has a `step.failed` transition to that twin; a twin's `from` is a literal naming a route state (not `{ fact }` or `{ profile }`) | Route to the desk twin; set `from:` to the route state |
 | `RCP-CHOICE-006` | A route state's `uncertain` and `step.failed` transitions come after its branch transitions (the app takes the first transition as the main path) | List the branches first |
+| `RCP-CHOICE-007` | A route state's optional `images:` names a fact the state can't read (the facts recorded on every path into it, as for `facts`) | Produce the fact on every path into the state, or add it to the recipe's inputs |
 | `RCP-CHILD-001` | A child recipe resolves (registered, or next to the recipe) and gets its inputs | Register it, or put `<id>.yaml` beside the recipe; pass the inputs it declares |
 | `RCP-CHILD-002` | Child recipes form no cycle | Remove a child wait |
 | `RCP-CHILD-003` | Children nest at most 10 deep | Flatten the chain |
@@ -827,6 +828,7 @@ complete example is `recipes/dev/workflow.dev-evidence-route.yaml`.
 - **The route state** gives `prompt`, `facts` (what the question reads; each must be produced on every path into the
   state) and `choices`, each entry quoted `"<outcome>: <criterion>"` with a camelCase outcome (`notStartable`, `[a-z][A-Za-z0-9]{0,31}`). Its outcomes are the choice names plus `uncertain`.
   The choices are literal, so approving the recipe fixes its branches.
+- **Images (optional):** `images: "fact:frames"` on the route state names a fact whose value is a list of absolute file paths (what `ui-evidence run` reports for its frames); the question looks at them. The fact must be readable in the state (`RCP-CHOICE-007`), it is not part of `facts` and its content is never sent as text. At run time the Step keeps the first 4; a path that isn't absolute, doesn't exist, or doesn't resolve (symlinks followed) under the item's checkout or `$AW_STATE_DIR/ui-evidence` fails the Step (`step_failed`, so the desk twin takes over) before any judge call, with `images: <path> (from fact:frames) does not exist` / `... is outside the checkout and the ui-evidence output`. `fact:decision` then gains `imageCount` (only when there are images) and `imagesDropped` (only when some were left out); the same counts ride the Step's ledger event and the instance's `stepRuns`, and the Runs list says "decided with 2 images" or "decided with 4 images (2 left out)". No shipped recipe uses it.
 - **The desk twin** is `step: { use: step.desk.choose, with: { from: <route state> } }`. Its outcomes are the route's choices.
 - **Transitions:** one per choice, listing both states in `from`, each `produces: [fact:decision]`; then
   `{ from: <route>, to: <twin>, on: step.completed, when: { outcome: uncertain }, produces: [fact:decision] }` and

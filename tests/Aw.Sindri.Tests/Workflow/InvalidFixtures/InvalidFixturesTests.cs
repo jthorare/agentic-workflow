@@ -27,7 +27,7 @@ public sealed class InvalidFixturesTests
     /// <summary>The decision-tree rules (DT spec §3.2, §8.1).</summary>
     private static readonly string[] _decisionTree =
     [
-        "RCP-CHOICE-001", "RCP-CHOICE-002", "RCP-CHOICE-003", "RCP-CHOICE-004", "RCP-CHOICE-005", "RCP-CHOICE-006",
+        "RCP-CHOICE-001", "RCP-CHOICE-002", "RCP-CHOICE-003", "RCP-CHOICE-004", "RCP-CHOICE-005", "RCP-CHOICE-006", "RCP-CHOICE-007",
         "RCP-TIME-003",
     ];
 
