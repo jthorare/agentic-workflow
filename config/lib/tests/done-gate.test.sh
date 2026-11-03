@@ -591,10 +591,10 @@ write_transcript_with_reads() {
 
 test_a_turn_that_read_a_png_sends_images_to_ask_check() {
   local bin_dir transcript dir png
-  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; png="$dir/home.png"
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; git -C "$dir" init -q; png="$dir/home.png"
   printf '\211PNG\r\n\032\n' > "$png"
   write_transcript_with_reads "$transcript" "still working on the next step" "$png"
-  PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" || true
+  ( cd "$dir" && PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" ) || true
   jq -e --arg p "$png" '.images == [$p] and .imagesBestEffort == true and .transcriptTail == "still working on the next step"' "$bin_dir/ask-input.json" > /dev/null \
     || { echo "FAIL: expected ask-check to be sent images [$png] with imagesBestEffort, got $(cat "$bin_dir/ask-input.json")"; exit 1; }
   echo "PASS: test_a_turn_that_read_a_png_sends_images_to_ask_check"
@@ -602,10 +602,10 @@ test_a_turn_that_read_a_png_sends_images_to_ask_check() {
 
 test_only_the_newest_four_images_are_sent_newest_first() {
   local bin_dir transcript dir expected n
-  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; git -C "$dir" init -q
   for n in 1 2 3 4 5; do printf '\211PNG\r\n\032\n' > "$dir/f$n.png"; done
   write_transcript_with_reads "$transcript" "still working on the next step" "$dir/f1.png" "$dir/f2.png" "$dir/f3.png" "$dir/f4.png" "$dir/f5.png"
-  PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" || true
+  ( cd "$dir" && PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" ) || true
   expected="$(jq -nc --arg d "$dir" '[$d+"/f5.png", $d+"/f4.png", $d+"/f3.png", $d+"/f2.png"]')"
   [ "$(jq -c '.images' "$bin_dir/ask-input.json")" = "$expected" ] || { echo "FAIL: expected the newest four first, $expected, got $(cat "$bin_dir/ask-input.json")"; exit 1; }
   echo "PASS: test_only_the_newest_four_images_are_sent_newest_first"
@@ -614,10 +614,10 @@ test_only_the_newest_four_images_are_sent_newest_first() {
 # Green today and must stay so: a call without images is today's input, byte for byte.
 test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical() {
   local bin_dir transcript dir
-  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; git -C "$dir" init -q
   printf 'export const a = 1;\n' > "$dir/a.ts"
   write_transcript_with_reads "$transcript" "still working on the next step" "$dir/a.ts"
-  PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" || true
+  ( cd "$dir" && PATH="$bin_dir:$PATH" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" ) || true
   [ "$(cat "$bin_dir/ask-input.json")" = '{"transcriptTail":"still working on the next step"}' ] \
     || { echo "FAIL: a call without images must be today's input, got $(cat "$bin_dir/ask-input.json")"; exit 1; }
   echo "PASS: test_a_turn_that_read_no_image_keeps_the_ask_check_input_byte_identical"
@@ -630,12 +630,27 @@ test_only_the_newest_four_images_are_sent_newest_first
 # More than 4 images read: the newest 4 go, and one probe-log line says how many were left out.
 test_images_past_four_leave_a_probe_log_line_with_the_dropped_count() {
   local bin_dir transcript dir probe n
-  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; probe="$(mktemp -d)"
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; dir="$(mktemp -d)"; git -C "$dir" init -q; probe="$(mktemp -d)"
   for n in 1 2 3 4 5; do printf '\211PNG\r\n\032\n' > "$dir/f$n.png"; done
   write_transcript_with_reads "$transcript" "still working on the next step" "$dir/f1.png" "$dir/f2.png" "$dir/f3.png" "$dir/f4.png" "$dir/f5.png"
-  PATH="$bin_dir:$PATH" AW_PROBE_DIR="$probe" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" || true
+  ( cd "$dir" && PATH="$bin_dir:$PATH" AW_PROBE_DIR="$probe" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" ) || true
   [ "$(jq -c 'select(.event == "image-paths") | .input' "$probe/image-paths.jsonl" 2> /dev/null)" = '{"hook":"done-gate","sent":4,"dropped":1}' ] \
     || { echo "FAIL: expected one probe line with sent 4 and dropped 1, got $(cat "$probe/image-paths.jsonl" 2> /dev/null)"; exit 1; }
   echo "PASS: test_images_past_four_leave_a_probe_log_line_with_the_dropped_count"
 }
 test_images_past_four_leave_a_probe_log_line_with_the_dropped_count
+
+# The checkout rule: a PNG the turn read outside the checkout of the hook's cwd is never sent (a receipt in ~/Downloads), and is counted on the probe line.
+test_a_png_read_outside_the_checkout_is_not_sent_and_is_counted_dropped() {
+  local bin_dir transcript repo outside probe
+  bin_dir="$(setup_recording_judge)"; transcript="$(mktemp)"; repo="$(mktemp -d)"; outside="$(mktemp -d)"; probe="$(mktemp -d)"
+  git -C "$repo" init -q; printf '\211PNG\r\n\032\n' > "$outside/receipt.png"
+  write_transcript_with_reads "$transcript" "still working on the next step" "$outside/receipt.png"
+  ( cd "$repo" && PATH="$bin_dir:$PATH" AW_PROBE_DIR="$probe" bash "$HOOK" <<< "$(jq -nc --arg t "$transcript" '{transcript_path:$t, session_id:"s1"}')" ) || true
+  [ "$(cat "$bin_dir/ask-input.json")" = '{"transcriptTail":"still working on the next step"}' ] \
+    || { echo "FAIL: a PNG outside the checkout must not be sent, got $(cat "$bin_dir/ask-input.json")"; exit 1; }
+  [ "$(jq -c 'select(.event == "image-paths") | .input' "$probe/image-paths.jsonl" 2> /dev/null)" = '{"hook":"done-gate","sent":0,"dropped":1}' ] \
+    || { echo "FAIL: expected a probe line counting the outside PNG as dropped, got $(cat "$probe/image-paths.jsonl" 2> /dev/null)"; exit 1; }
+  echo "PASS: test_a_png_read_outside_the_checkout_is_not_sent_and_is_counted_dropped"
+}
+test_a_png_read_outside_the_checkout_is_not_sent_and_is_counted_dropped

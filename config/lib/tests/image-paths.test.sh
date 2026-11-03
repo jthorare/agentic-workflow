@@ -49,4 +49,14 @@ check "probe-log: no probe directory, no file" "$([ -e "$PROBE/none" ] && echo m
 check "attach: no paths leaves the input byte for byte" "$(. "$LIB"; aw_images_attach '{"text":"x","senderKind":"main"}' "")" '{"text":"x","senderKind":"main"}'
 check "attach: paths are added after the existing keys" "$(. "$LIB"; aw_images_attach '{"text":"x"}' "$(printf '/a.png\n/b.png')")" '{"text":"x","images":["/a.png","/b.png"],"imagesBestEffort":true}'
 
+# Symlinks are followed before the checkout rule: a link that leaves the checkout is dropped, one that stays is kept.
+ln -s "$OUTSIDE/elsewhere.png" "$REPO/link-out.png"
+ln -s "$OUTSIDE" "$REPO/outdir"
+ln -s "$REPO/a.png" "$REPO/link-in.png"
+mkdir "$REPO/sub"; ln -s ../b.png "$REPO/sub/rel-in.png"
+check "symlink in the checkout to a file outside: dropped" "$(paths "$REPO/link-out.png")" ""
+check "symlinked directory in the checkout that points out: dropped" "$(paths "$REPO/outdir/elsewhere.png")" ""
+check "symlink that stays inside the checkout: kept" "$(paths "$REPO/link-in.png")" "link-in.png"
+check "relative symlink that stays inside: kept" "$(paths "$REPO/sub/rel-in.png")" "sub/rel-in.png"
+
 exit $fail
