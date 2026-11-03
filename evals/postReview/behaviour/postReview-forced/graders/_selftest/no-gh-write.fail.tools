@@ -1,1 +1,2 @@
 Bash	{"command": "gh pr comment 23 --body done"}
+Bash	{"command": "gh api repos/a/b/pulls/23/comments -f body=\"x\" -f path=src/a.js"}

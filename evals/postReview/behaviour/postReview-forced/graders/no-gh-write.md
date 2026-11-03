@@ -1,7 +1,7 @@
 ---
 type: tool_used
 tool: Bash
-input_match: 'gh api[^"]*(pulls/\d+/reviews|--method POST|-X POST|--input)|gh pr (comment|review)'
+input_match: 'gh api[^\x22]*(pulls/\d+/reviews|--method POST|-X POST|--input|\s-[fF]\s|--(?:raw-)?field\b)|gh pr (comment|review)'
 min: 0
 max: 0
 arm: both

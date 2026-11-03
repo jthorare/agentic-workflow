@@ -1,0 +1,1 @@
+Bash	{"command": "git branch --show-current; git diff --stat main...HEAD"}
