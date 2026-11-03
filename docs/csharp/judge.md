@@ -537,6 +537,34 @@ reads a TS-written file.
 | `trait-check/log.jsonl` | One line per trait-check run (redacted) |
 | `config.json` | `JudgeConfig`, written by `config set` (a temporary file in the same directory renamed over it, so a question never reads a half-written file); absent means the defaults |
 
+### `images` on any question
+
+Every question's input may hold two more top-level fields: `images` (absolute paths, at most 4 files and 24 MiB together) and `imagesBestEffort` (a hook sets it). The evaluator reads and
+strips both before the question's own record deserializes, so no question record changes. Absent, `[]`, or `[]` with `imagesBestEffort` is today's call: same chain, same row. A call with images
+takes the chain's image entry whatever the question's class, and the row's stored input holds each image as `{path, sha256, bytes, width, height}` (never the bytes) in place of its path.
+`judge why` lists them (`images: 2`, then one line each) in its `notes`, with the `jev skipped:` / `jev images dropped:` lines.
+
+**Strict (the default).** One bad image refuses the call: outcome escalated with reason `invalid-images`, no provider runs, the row keeps the paths as given, and one stderr line names the cause
+(exit codes and stdout are the escalated envelope's, as for any escalation):
+
+| Cause | Stderr line |
+|---|---|
+| more than 4 paths | `judge: images has 5 paths; at most 4 are allowed` |
+| a relative path | `judge: images[0] shots/a.png is not an absolute path` |
+| a missing file | `judge: images[0] /shots/gone.png does not exist` |
+| a directory | `judge: images[0] /shots/dir is a directory` |
+| not a PNG or JPEG (magic bytes) | `judge: images[2] /shots/a.webp is not a PNG or JPEG` |
+| over 24 MiB together | `judge: images total 26 MiB; at most 24 MiB` |
+
+**Best effort (`imagesBestEffort: true`).** Each bad image is dropped with the same stderr line, and the call goes on (as text when none are left). An image Jev can't take (under 280 px, 78,400 pixels) is dropped
+by `JevProvider` and Jev still answers; `judge why` says `jev images dropped: image 1 is 200x120, under Jev's 280 px minimum; asked jev as text`. A `413` (or a `400` on an image call) is retried once as text when at
+least half the call's budget is left (`jev images dropped: Jev said the images were too large (413); asked jev again as text`), else Jev counts as errored. Once images were dropped for Jev, the rest of the chain runs
+as text. With sending off (`jev-images false`) a best-effort call drops its images and goes as text. The drops are kept in the row's stored input as `imagesDropped`.
+
+The agent CLIs read the images from the per-call directory; a question that is not visual-critique gets one more prompt line naming the files in order.
+
+`judge eval` and the label replays re-read each stored image path: a file that is gone or whose sha256 changed makes that case `unavailable` with reason `image-changed` (skipped, not a failure; the provider is not asked).
+
 ### Jev and images
 
 A call with images (`QuestionRef.Images` non-empty; visual-critique's screenshots today) takes the chain's image entry, `[jev, agent CLIs, rules]`, so Jev goes first and the CLIs are the fallback.

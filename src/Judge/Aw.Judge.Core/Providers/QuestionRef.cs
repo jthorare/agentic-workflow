@@ -54,6 +54,12 @@ public sealed record QuestionRef
     /// <summary>The images the question sends, read once (empty for a text question): every provider that sends images gets these bytes.</summary>
     public IReadOnlyList<ImageAttachment> Images { get; init; } = [];
 
+    /// <summary>
+    /// Whether a bad or unusable image is dropped and the call goes on (a hook's call), instead of the call being refused; Jev then drops what it
+    /// can't take and answers with the rest, as text when none are left.
+    /// </summary>
+    public bool ImagesBestEffort { get; init; }
+
     /// <summary>Where the agent CLIs open <see cref="Images"/> from; null when there are none or the caller has no way to write them.</summary>
     public ImageScope? ImageScope { get; init; }
 }

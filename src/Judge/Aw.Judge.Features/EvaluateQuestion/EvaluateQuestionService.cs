@@ -3,6 +3,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Aw.Judge.Core.Errors;
 using Aw.Judge.Core.Evaluation;
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Labels;
 using Aw.Judge.Core.Ports;
 using Aw.Judge.Core.Providers;
@@ -18,9 +19,11 @@ namespace Aw.Judge.Features.EvaluateQuestion;
 /// writes (the record, the .json and .md reports) is redacted, values and keys, before it is written.
 /// </summary>
 internal sealed class EvaluateQuestionService(
-    IEvalStore store, IJudgeConfigStore configs, IProviderCatalog catalog, IEvalFiles files, IInputRedactor redactor, TimeProvider clock, JsonSerializerOptions json)
+    IEvalStore store, IJudgeConfigStore configs, IProviderCatalog catalog, IEvalFiles files, EvalRedaction redaction, TimeProvider clock, EvalImageSource images)
     : IService<EvaluateQuestionRequest, EvaluateQuestionResponse>
 {
+    private readonly JsonSerializerOptions _json = redaction.Options;
+
     public async ValueTask<Result<EvaluateQuestionResponse>> Handle(EvaluateQuestionRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -129,13 +132,7 @@ internal sealed class EvaluateQuestionService(
         List<EvalResult> results = [];
         foreach (var labeled in items)
         {
-            var input = InputJson.TryParse(labeled.Item.InputJson, out var node) ? variant(node) : null;
-            var asked = question.Ask(input, json);
-            var start = clock.GetTimestamp();
-            var answer = asked is null
-                ? new ProviderErrored("invalid-input")
-                : await provider.Decide(asked, input, question.TimeBudget, cancellationToken).ConfigureAwait(false);
-            var row = new EvalResult(labeled.Item.Id.Value, labeled.Label, answer, (long)clock.GetElapsedTime(start).TotalMilliseconds);
+            var row = await Case(question, variant, provider, labeled, cancellationToken).ConfigureAwait(false);
             results.Add(row);
             if (request.RecordFile is { } recordFile)
             {
@@ -148,6 +145,23 @@ internal sealed class EvaluateQuestionService(
         }
 
         return Results.Success<IReadOnlyList<EvalResult>>(results);
+    }
+
+    private async ValueTask<EvalResult> Case(
+        ScoringQuestion question, Func<JsonNode?, JsonNode?> variant, IModelProvider provider, LabeledItem labeled, CancellationToken cancellationToken)
+    {
+        var input = InputJson.TryParse(labeled.Item.InputJson, out var node) ? variant(node) : null;
+        // The images the item was judged with are read again: one that is gone or changed makes the case skipped, not a failure, and asks nobody.
+        var (current, changed) = await EvalImages.Reread(node, images.Reader, cancellationToken).ConfigureAwait(false);
+        input = EvalImages.ForProvider(input, current);
+        // The agent CLIs open the images from a per-call folder: the scope makes it on first use and removes it after this case.
+        using var scope = current.Count > 0 ? new ImageScope(images.Workspaces, current, relativeTo: null) : null;
+        var asked = question.Ask(input, _json) is { } built ? built with { Images = current, ImageScope = scope } : null;
+        var start = clock.GetTimestamp();
+        var answer = changed ? new ProviderUnavailable(EvalImages.Changed)
+            : asked is null ? new ProviderErrored("invalid-input")
+            : await provider.Decide(asked, input, question.TimeBudget, cancellationToken).ConfigureAwait(false);
+        return new EvalResult(labeled.Item.Id.Value, labeled.Label, answer, (long)clock.GetElapsedTime(start).TotalMilliseconds);
     }
 
     private async ValueTask<Result<EvaluateQuestionResponse>> Report(
@@ -176,7 +190,7 @@ internal sealed class EvaluateQuestionService(
     }
 
     // Values and keys both go through the redactor, before anything is written.
-    private string Redacted(JsonNode node) => InputJson.Write(redactor.Redact(node), json);
+    private string Redacted(JsonNode node) => redaction.Redacted(node);
 
-    private string RedactedText(string text) => redactor.Redact(JsonValue.Create(text)) is JsonValue value && value.TryGetValue<string>(out var redacted) ? redacted : "";
+    private string RedactedText(string text) => redaction.RedactedText(text);
 }
