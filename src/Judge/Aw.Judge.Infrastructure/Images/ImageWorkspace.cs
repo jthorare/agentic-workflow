@@ -1,5 +1,5 @@
-using Aw.Judge.Core.Images;
 using System.Globalization;
+using Aw.Judge.Core.Images;
 
 namespace Aw.Judge.Infrastructure.Images;
 

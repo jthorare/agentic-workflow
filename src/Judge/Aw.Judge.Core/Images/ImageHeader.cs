@@ -20,7 +20,7 @@ public static class ImageHeader
 
     private static (ImageFormat, int, int)? Png(ReadOnlySpan<byte> bytes)
     {
-        if (bytes.Length < PngHeaderLength || !bytes[12..16].SequenceEqual<byte>([(byte)'I', (byte)'H', (byte)'D', (byte)'R']))
+        if (bytes.Length < PngHeaderLength || !bytes[12..16].SequenceEqual([(byte)'I', (byte)'H', (byte)'D', (byte)'R']))
         {
             return null;
         }

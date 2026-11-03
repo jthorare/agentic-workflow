@@ -1,5 +1,5 @@
-using Aw.Judge.Core.Images;
 using System.Security.Cryptography;
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
 
 namespace Aw.Judge.Infrastructure.Images;

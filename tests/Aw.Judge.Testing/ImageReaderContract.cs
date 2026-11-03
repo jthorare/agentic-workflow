@@ -1,6 +1,6 @@
-using Aw.Judge.Core.Images;
 using System.Buffers.Binary;
 using System.Security.Cryptography;
+using Aw.Judge.Core.Images;
 using Aw.Judge.Core.Ports;
 using Xunit;
 

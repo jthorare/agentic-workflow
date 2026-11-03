@@ -103,7 +103,7 @@ public sealed class VisualCritiqueImageTests
     }
 
     // claude answers looks-right; the hook sees the request as the run starts, while the per-call directory still exists.
-    private void Install(Action<Aw.Judge.Core.Processes.ProcessRequest> onRun) =>
+    private void Install(Action<Core.Processes.ProcessRequest> onRun) =>
         _runner.With("claude", request =>
         {
             onRun(request);
