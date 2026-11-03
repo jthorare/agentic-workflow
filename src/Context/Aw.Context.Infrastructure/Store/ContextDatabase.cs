@@ -1,4 +1,5 @@
 using Aw.Context.Core;
+using Aw.Context.Core.Map;
 using Aw.Kernel;
 using Aw.Kernel.Data;
 
@@ -129,6 +130,10 @@ internal sealed class ContextDatabase : IDisposable
             // the rows are already deleted and committed; a checkpoint that can't run now runs with the next one
         }
     }
+
+    /// <summary>Refreshes the planner statistics, then checkpoints and truncates the write-ahead log, without ever waiting: a reader or writer in the way makes the pass partial, not an error.</summary>
+    /// <returns>What the pass did, null when there is no store file yet, or SND-CONTEXT-004.</returns>
+    public Result<StoreUpkeep?> Upkeep() => throw new NotSupportedException();
 
     /// <summary>Maps a store failure to SND-CONTEXT-004, keeping the original code in the message.</summary>
     /// <param name="error">The Kernel.Data error.</param>

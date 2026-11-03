@@ -40,6 +40,7 @@ internal static class ContextSlicesServiceCollectionExtensions
         _ = services.AddScoped<IValidator<PurgeIndexSourceRequest>, AcceptAllValidator<PurgeIndexSourceRequest>>().AddCommand<PurgeIndexSourceRequest, IndexPurgeView, PurgeIndexSourceService>();
         return services
             .AddScoped<IScheduledService, IndexSyncService>()
+            .AddScoped<IScheduledService, ContextUpkeepService>()
             .AddSingleton(IndexSyncService.BuiltIn)
             .AddScoped<IScheduledService, IndexDecisionsService>()
             .AddSingleton(IndexDecisionsService.BuiltIn);
