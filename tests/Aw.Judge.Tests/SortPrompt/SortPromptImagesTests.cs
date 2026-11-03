@@ -24,7 +24,8 @@ public sealed class SortPromptImagesTests
 
         var batch = Assert.Single(harness.Jev.Asked);
         var image = Assert.Single(batch.Images);
-        Assert.Equal(("/ev/shot.png", png), (image.Path, image.Bytes.ToArray()));
+        Assert.Equal("/ev/shot.png", image.Path);
+        Assert.Equal(png, image.Bytes.ToArray());
         Assert.True(batch.ImagesBestEffort);
         var stored = JsonNode.Parse(Assert.Single(harness.Log.Decisions).Details!.InputJson)!;   // why: the row always holds JSON
         Assert.Equal("/ev/shot.png", stored["images"]?[0]?["path"]?.GetValue<string>());
