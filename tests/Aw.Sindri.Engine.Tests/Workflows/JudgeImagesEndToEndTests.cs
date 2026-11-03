@@ -62,7 +62,7 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
         using var worker = new TemporalWorker(server.Environment.Client, sindri.GetRequiredService<TemporalWorkerOptions>());
         await worker.ExecuteAsync(async () =>
         {
-            var start = await WorkflowsHarness.RecipeStart(sindri, RecipeId, "T-e2e-1", ct) with
+            var start = await WorkflowsHarness.RecipeStart(sindri, RecipeId, "T-E2E1", ct) with
             {
                 Inputs = new Dictionary<FactKey, InputFact>
                 {
@@ -155,6 +155,7 @@ public sealed class JudgeImagesEndToEndTests(BlockRuntimeDevServer server) : ICl
             "        prompt: \"Which evidence proves this change works?\"",
             "        facts: [fact:change]",
             "        images: \"fact:frames\"",
+            "        providers: [jev]",   // only the recording Jev: the default list is the agent CLIs, which a test must never reach
             "        choices:",
             "          - \"ui: what a user sees changed\"",
             "          - \"api: a contract changed\"",
