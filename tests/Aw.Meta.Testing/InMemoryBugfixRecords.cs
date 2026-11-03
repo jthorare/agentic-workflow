@@ -1,9 +1,10 @@
 using Aw.Kernel;
+using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Testing;
 
-/// <summary>The in-memory IBugfixRecords: candidates added by hand.</summary>
+/// <summary>The in-memory IBugfixRecords: candidates added by hand, matched on the normalized worktree path.</summary>
 public sealed class InMemoryBugfixRecords : IBugfixRecords
 {
     private readonly List<BugfixCandidate> _rows = [];
@@ -23,5 +24,5 @@ public sealed class InMemoryBugfixRecords : IBugfixRecords
     public ValueTask<Result<IReadOnlyList<BugfixCandidate>>> Naming(string worktree, CancellationToken cancellationToken) =>
         Failure is { } error
             ? Done.Failed<IReadOnlyList<BugfixCandidate>>(error)
-            : Done.Of<IReadOnlyList<BugfixCandidate>>([.. _rows.Where(r => string.Equals(r.Worktree, worktree, StringComparison.Ordinal))]);
+            : Done.Of<IReadOnlyList<BugfixCandidate>>([.. _rows.Where(r => string.Equals(WorktreeConfig.NormalizePath(r.Worktree), WorktreeConfig.NormalizePath(worktree), StringComparison.Ordinal))]);
 }
