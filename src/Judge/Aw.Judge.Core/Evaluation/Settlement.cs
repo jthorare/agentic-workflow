@@ -42,6 +42,9 @@ internal sealed record Settlement
     /// <summary>What the fallback rules would have said.</summary>
     public string? RulesOpinion { get; init; }
 
+    /// <summary>The sizes of the images the deciding provider sent, when it sent any.</summary>
+    public IReadOnlyList<Images.ImageSize>? SentImages { get; init; }
+
     /// <summary>How that opinion compared.</summary>
     public Agreement? Agreement { get; init; }
 }

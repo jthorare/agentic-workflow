@@ -2150,3 +2150,43 @@ Aw.Judge.Core.Providers.QuestionRef.ImagesBestEffort.init -> void
 const Aw.Judge.Core.Evaluation.EvaluationReasons.InvalidImages = "invalid-images" -> string!
 Aw.Judge.Core.Decisions.ImageNotes
 static Aw.Judge.Core.Decisions.ImageNotes.For(Aw.Judge.Core.Decisions.DecisionRecord! decision) -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Core.Images.ImageSize
+Aw.Judge.Core.Images.ImageSize.<Clone>$() -> Aw.Judge.Core.Images.ImageSize!
+Aw.Judge.Core.Images.ImageSize.Deconstruct(out int Width, out int Height) -> void
+Aw.Judge.Core.Images.ImageSize.Equals(Aw.Judge.Core.Images.ImageSize? other) -> bool
+Aw.Judge.Core.Images.ImageSize.Height.get -> int
+Aw.Judge.Core.Images.ImageSize.Height.init -> void
+Aw.Judge.Core.Images.ImageSize.ImageSize(int Width, int Height) -> void
+Aw.Judge.Core.Images.ImageSize.Width.get -> int
+Aw.Judge.Core.Images.ImageSize.Width.init -> void
+override Aw.Judge.Core.Images.ImageSize.Equals(object? obj) -> bool
+override Aw.Judge.Core.Images.ImageSize.GetHashCode() -> int
+override Aw.Judge.Core.Images.ImageSize.ToString() -> string!
+static Aw.Judge.Core.Images.ImageSize.operator !=(Aw.Judge.Core.Images.ImageSize? left, Aw.Judge.Core.Images.ImageSize? right) -> bool
+static Aw.Judge.Core.Images.ImageSize.operator ==(Aw.Judge.Core.Images.ImageSize? left, Aw.Judge.Core.Images.ImageSize? right) -> bool
+Aw.Judge.Core.Images.JevLimits
+Aw.Judge.Core.Images.JevLimits.<Clone>$() -> Aw.Judge.Core.Images.JevLimits!
+Aw.Judge.Core.Images.JevLimits.Deconstruct(out int MinSide, out int MaxSide, out long MinPixels, out long MaxPixels) -> void
+Aw.Judge.Core.Images.JevLimits.Equals(Aw.Judge.Core.Images.JevLimits? other) -> bool
+Aw.Judge.Core.Images.JevLimits.JevLimits(int MinSide, int MaxSide, long MinPixels, long MaxPixels) -> void
+Aw.Judge.Core.Images.JevLimits.MaxPixels.get -> long
+Aw.Judge.Core.Images.JevLimits.MaxPixels.init -> void
+Aw.Judge.Core.Images.JevLimits.MaxSide.get -> int
+Aw.Judge.Core.Images.JevLimits.MaxSide.init -> void
+Aw.Judge.Core.Images.JevLimits.MinPixels.get -> long
+Aw.Judge.Core.Images.JevLimits.MinPixels.init -> void
+Aw.Judge.Core.Images.JevLimits.MinSide.get -> int
+Aw.Judge.Core.Images.JevLimits.MinSide.init -> void
+override Aw.Judge.Core.Images.JevLimits.Equals(object? obj) -> bool
+override Aw.Judge.Core.Images.JevLimits.GetHashCode() -> int
+override Aw.Judge.Core.Images.JevLimits.ToString() -> string!
+static Aw.Judge.Core.Images.JevLimits.Default.get -> Aw.Judge.Core.Images.JevLimits!
+static Aw.Judge.Core.Images.JevLimits.operator !=(Aw.Judge.Core.Images.JevLimits? left, Aw.Judge.Core.Images.JevLimits? right) -> bool
+static Aw.Judge.Core.Images.JevLimits.operator ==(Aw.Judge.Core.Images.JevLimits? left, Aw.Judge.Core.Images.JevLimits? right) -> bool
+Aw.Judge.Core.Ports.IImageScaler
+Aw.Judge.Core.Ports.IImageScaler.Fit(Aw.Judge.Core.Images.ImageAttachment! image, Aw.Judge.Core.Images.JevLimits! limits) -> Aw.Judge.Core.Images.ImageAttachment?
+Aw.Judge.Core.Providers.ProviderDecided.SentImages.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize!>?
+Aw.Judge.Core.Providers.ProviderDecided.SentImages.init -> void
+Aw.Judge.Core.Images.JevLimits.Fits(Aw.Judge.Core.Images.ImageAttachment! image) -> bool
+Aw.Judge.Core.Decisions.DecisionDetails.SentImages.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Images.ImageSize?>?
+Aw.Judge.Core.Decisions.DecisionDetails.SentImages.init -> void

@@ -65,7 +65,7 @@ public sealed class EvalLabelsMigrationTests : IDisposable
         var factory = new SqliteConnectionFactory(JudgeDatabase.OptionsFor(Path.Combine(_state.Path, "judge")));
         var migrations = EmbeddedMigrations.Load(typeof(JudgeDatabase).Assembly, JudgeDatabase.ResourcePrefix);
         Assert.True(migrations.IsSuccess);
-        Assert.Equal([1, 2, 3, 4, 5], [.. migrations.Value.Select(m => m.Version)]);
+        Assert.Equal([1, 2, 3, 4, 5, 6], [.. migrations.Value.Select(m => m.Version)]);
         return (factory, migrations.Value);
     }
 

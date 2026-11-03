@@ -64,6 +64,9 @@ internal sealed class EvaluationRun(DecisionId id, DateTimeOffset ts, JsonNode? 
     /// <summary>The cause the call was refused for, when its images failed a check and the call is strict.</summary>
     public string? Refusal { get; set; }
 
+    /// <summary>The sizes of the call's images as read; empty for a call without images.</summary>
+    public IReadOnlyList<Images.ImageSize> ReadImages { get; set; } = [];
+
     /// <summary>The effective threshold.</summary>
     public double Threshold { get; set; }
 
