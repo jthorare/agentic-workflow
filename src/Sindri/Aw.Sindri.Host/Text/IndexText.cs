@@ -14,7 +14,7 @@ internal static class IndexText
         ArgumentNullException.ThrowIfNull(view);
         if (view.Sources.Count == 0)
         {
-            return "no record source is set up (fix: add one to the profile's context section)\n" + Concepts(view.Concepts);
+            return "no record source is set up (fix: add one to the profile's context section)\n" + Concepts(view.Concepts) + Store(view.Store);
         }
 
         var width = view.Sources.Max(static s => s.Source.Length);
@@ -28,8 +28,12 @@ internal static class IndexText
             _ = text.Append('\n');
         }
 
-        return text.Append(Concepts(view.Concepts)).ToString();
+        return text.Append(Concepts(view.Concepts)).Append(Store(view.Store)).ToString();
     }
+
+    /// <summary>The context.db store line: only when the store needs a look (warn or fail); nothing when ok or from a server that sends none.</summary>
+    private static string Store(IndexStoreView? s) =>
+        s is null || s.State == "ok" ? string.Empty : $"store: {s.Detail}" + (s.Fix is { } fix ? $" (fix: {fix})" : string.Empty) + "\n";
 
     /// <summary>The concepts line (#1597): empty from a server that sends none; a part whose value is unknown is left out.</summary>
     private static string Concepts(IndexConceptsView? c)
