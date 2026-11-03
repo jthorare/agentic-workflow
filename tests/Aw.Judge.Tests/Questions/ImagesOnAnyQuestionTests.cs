@@ -163,6 +163,30 @@ public sealed class ImagesOnAnyQuestionTests
             JevSkipNotes.For(Assert.Single(run.Log.Decisions)));
     }
 
+    // An image no downscale can fit (4000x500) goes alone; the other one stays on Jev with its picture.
+    [Fact]
+    public async Task Best_effort_image_that_cannot_fit_is_dropped_and_the_rest_stay_on_jev()
+    {
+        var handler = RecordingJevHandler.Choosing("continue");
+        using var jev = JevImages.Jev(handler, new FakeImageScaler());
+        var cli = Cli(ContentClass.Transcript, ContentClass.Image).Decides("continue", 0.9);
+        var run = new QuestionRun
+        {
+            ImageReader = Reader(("/shots/wide.png", ImageBytes.Png(4000, 500, "wide")), ("/shots/home.png", ImageBytes.Png(1512, 982, "home"))),
+        };
+
+        var outcome = await run.Ask(AskCheckQuestion.Definition, Input(["/shots/wide.png", "/shots/home.png"], bestEffort: true), jev, cli);
+
+        Assert.Equal(("continue", ProviderName.Jev), (Assert.IsType<DecidedOutcome>(outcome).Decision, ProviderName.Jev));
+        Assert.Empty(cli.Calls);
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal("true", request.ImagesHeader);
+        _ = Assert.Single(request.Parts, part => part.Name != "request");
+        Assert.Equal(
+            ["jev images dropped: image 1 is 4000x500; fitting it under 1568 px leaves it under 280 px; asked jev with images 2"],
+            JevSkipNotes.For(Assert.Single(run.Log.Decisions)));
+    }
+
     // Jev reports a size limit only after the upload: a hook call tries Jev once more without the images, and stays on Jev.
     [Fact]
     public async Task Best_effort_413_retries_jev_once_as_text()

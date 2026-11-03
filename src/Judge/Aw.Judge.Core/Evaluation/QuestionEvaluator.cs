@@ -115,6 +115,7 @@ public sealed partial class QuestionEvaluator(IDecisionLog log, IInputRedactor r
         }
 
         images = [.. images, .. own];
+        run.GenericRead = images;
 
         // why: ReadImages threw unless the context has image workspaces, and images are only non-empty after it read some.
         using var scope = images.Count > 0 ? new ImageScope(context.ImageWorkspaces!, images, root) : null;

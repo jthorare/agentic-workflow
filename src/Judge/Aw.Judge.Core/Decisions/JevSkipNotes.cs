@@ -6,34 +6,17 @@ namespace Aw.Judge.Core.Decisions;
 /// <summary>The 'jev skipped:' and 'jev images dropped:' lines 'judge why' prints: why Jev was passed over for a call with images, or what a best-effort call dropped, in words.</summary>
 public static class JevSkipNotes
 {
-    /// <summary>The lines for a decision: one per image Jev was sent smaller than it was read, then one per Jev skip that stored a code; none for a decision without either.</summary>
+    /// <summary>The lines for a decision: one per Jev skip that stored a code, then one per drop a best-effort call recorded; none for a decision without either.</summary>
     /// <param name="decision">The recorded decision.</param>
     /// <returns>Lines like 'jev skipped: Jev said the images were too large (413); asked claude-cli' or 'jev images dropped: image 1 is 200x120, under Jev's 280 px minimum; asked jev as text'.</returns>
     public static IReadOnlyList<string> For(DecisionRecord decision)
     {
         ArgumentNullException.ThrowIfNull(decision);
         var next = string.Equals(decision.Provider, EvaluationReasons.NoProvider, StringComparison.Ordinal) ? "" : $"; asked {decision.Provider}";
-        return [.. Scaled(decision), .. decision.Skipped
+        return [.. decision.Skipped
             .Where(skip => string.Equals(skip.Provider, ProviderNames.Name(ProviderName.Jev), StringComparison.Ordinal) && Words(skip.Code) is not null)
             .Select(skip => $"jev skipped: {Words(skip.Code)}{next}"),
             .. StoredImages.Dropped(decision).Select(line => $"jev images dropped: {line}")];
-    }
-
-    // Jev was sent an image smaller than the one read: 'image 1 -> sent to jev as 1568x1018'.
-    private static IEnumerable<string> Scaled(DecisionRecord decision)
-    {
-        if (decision.Details?.SentImages is not { } sent || !string.Equals(decision.Provider, ProviderNames.Name(ProviderName.Jev), StringComparison.Ordinal))
-        {
-            yield break;
-        }
-
-        for (var i = 0; i < sent.Count; i++)
-        {
-            if (sent[i] is { } size)
-            {
-                yield return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"image {i + 1} -> sent to jev as {size.Width}x{size.Height}");
-            }
-        }
     }
 
     private static string? Words(string? code) => code switch

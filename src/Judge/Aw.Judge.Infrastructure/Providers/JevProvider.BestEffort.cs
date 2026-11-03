@@ -47,7 +47,7 @@ internal sealed partial class JevProvider
     }
 
     // The images Jev can take, and one line for the rest ('image 1 is 200x120, under Jev's 280 px minimum; asked jev with images 2, 3'), null when none were dropped.
-    private static (List<ImageAttachment> Kept, string? Note) Partition(IReadOnlyList<ImageAttachment> images)
+    private (List<ImageAttachment> Kept, string? Note) Partition(IReadOnlyList<ImageAttachment> images)
     {
         List<ImageAttachment> kept = [];
         List<string> why = [];
@@ -57,6 +57,11 @@ internal sealed partial class JevProvider
             if (TooSmall(images[i]))
             {
                 why.Add(string.Create(CultureInfo.InvariantCulture, $"image {i + 1} is {images[i].Width}x{images[i].Height}, {Minimum}"));
+            }
+            else if (Fitted([images[i]]) is null)
+            {
+                // No downscale makes it fit (4000x500: the short side would land under 280 px): this image goes, the rest stay on Jev.
+                why.Add(string.Create(CultureInfo.InvariantCulture, $"image {i + 1} is {images[i].Width}x{images[i].Height}; fitting it under 1568 px leaves it under 280 px"));
             }
             else
             {

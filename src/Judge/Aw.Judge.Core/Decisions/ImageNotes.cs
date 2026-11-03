@@ -22,9 +22,15 @@ public static class ImageNotes
             string.Create(CultureInfo.InvariantCulture, $"images: {images.Count}"),
             .. images.Select((image, i) => string.Create(
                 CultureInfo.InvariantCulture,
-                $"  {i + 1}. {image.Path}  {image.Width}x{image.Height}  {Size(image.Bytes)}  sha256 {image.Sha256[..Math.Min(12, image.Sha256.Length)]}")),
+                $"  {i + 1}. {image.Path}  {image.Width}x{image.Height}  {Size(image.Bytes)}  sha256 {image.Sha256[..Math.Min(12, image.Sha256.Length)]}{Sent(decision, i)}")),
         ];
     }
+
+    // '  -> sent to jev as 1568x1018' for an image Jev was sent smaller than it was read.
+    private static string Sent(DecisionRecord decision, int index) =>
+        string.Equals(decision.Provider, "jev", StringComparison.Ordinal) && decision.Details?.SentImages is { } sent && index < sent.Count && sent[index] is { } size
+            ? string.Create(CultureInfo.InvariantCulture, $"  -> sent to jev as {size.Width}x{size.Height}")
+            : "";
 
     private static string Size(long bytes) =>
         bytes >= 1024 * 1024 ? string.Create(CultureInfo.InvariantCulture, $"{bytes / 1048576d:0.#} MB") : string.Create(CultureInfo.InvariantCulture, $"{Math.Max(1, bytes / 1024)} KB");
