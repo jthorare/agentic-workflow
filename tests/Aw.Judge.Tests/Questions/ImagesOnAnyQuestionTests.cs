@@ -238,6 +238,22 @@ public sealed class ImagesOnAnyQuestionTests
             JevSkipNotes.For(Assert.Single(run.Log.Decisions)));
     }
 
+    // Jev dropped an image and answered, but under the threshold: the chain goes on, and the next provider is asked as text too (spec 2).
+    [Fact]
+    public async Task Best_effort_drop_then_a_jev_answer_below_threshold_asks_the_next_provider_as_text()
+    {
+        var handler = new RecordingJevHandler(_ => JevImages.Choice("continue", "0.1"));
+        using var jev = JevImages.Jev(handler);
+        var cli = Cli(ContentClass.Transcript, ContentClass.Image).Decides("continue", 0.9);
+        var run = new QuestionRun { ImageReader = Reader(("/shots/icon.png", ImageBytes.Png(200, 120, "icon"))) };
+
+        var outcome = await run.Ask(AskCheckQuestion.Definition, Input(["/shots/icon.png"], bestEffort: true), jev, cli);
+
+        Assert.Equal(("continue", ProviderName.ClaudeCli), (Assert.IsType<DecidedOutcome>(outcome).Decision, ProviderName.ClaudeCli));
+        _ = Assert.Single(handler.Requests);
+        Assert.Empty(Assert.Single(cli.Calls).Question.Images);
+    }
+
     // An ask-check input with the given extra fields; the transcript tail is one the deny list does not settle.
     private static string Input(string[]? images = null, bool bestEffort = false)
     {

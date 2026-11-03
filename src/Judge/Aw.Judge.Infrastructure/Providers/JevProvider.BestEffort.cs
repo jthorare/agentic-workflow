@@ -34,7 +34,7 @@ internal sealed partial class JevProvider
             {
                 // Not enough budget to ask again: Jev errored, as on a timeout, and the rest of the chain runs as text.
                 notes.Add($"{cause}; not enough of the budget was left to ask jev again");
-                result = new ProviderErrored(ProviderReasons.Http(cause.Contains("(413)", StringComparison.Ordinal) ? 413 : 400));
+                result = Exhausted(result);
             }
             else
             {
@@ -88,6 +88,10 @@ internal sealed partial class JevProvider
             SentImages = [.. read.Select(image => kept.Contains(image) ? sent[next++] : new ImageSize(image.Width, image.Height))],
         };
     }
+
+    // The answer that stands when there is no budget to ask again: Jev's own, except that a 413 (told to the CLIs as 'image too large') is an errored 'http-413' for Jev's health.
+    private static ProviderResult Exhausted(ProviderResult result) =>
+        result is ProviderUnavailable unavailable && string.Equals(unavailable.ReasonCode, ProviderUnavailable.ImageTooLarge, StringComparison.Ordinal) ? new ProviderErrored(ProviderReasons.Http(413)) : result;
 
     // Why Jev refused the images it was sent, in words, or null when the answer isn't about them.
     private static string? Retry(ProviderResult result) => result switch
