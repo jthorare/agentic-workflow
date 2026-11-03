@@ -1,1 +1,3 @@
-Nothing has been posted or uploaded to PR 57. I need your go-ahead before I post even the text-only comment.
+The evidence run failed, and I've published nothing to PR 57.
+
+Want me to post a text-only comment once you approve?

@@ -12,6 +12,8 @@ This skill runs Sindri's `ui-evidence` binary. It is one tool for the skill, a h
 command -v ui-evidence >/dev/null || { echo "run ./setup.sh from the agentic-workflow checkout (the evidence tool ships with Sindri)"; exit 1; }
 ```
 
+Every run ends with the [Done checklist](#done-checklist), whatever the outcome: passed, a failed step, refused or errored. A failed run is a finished run, not a reason to skip the result file or the `aw-result` block. Run the [Result block](#result-block)'s gate now, with the preflight, so you know `AW_RESULT` and `AW_DIR` before the first verb.
+
 If `deployment.md` sits next to this file, read it first: it holds this deployment's conventions (preview hosts, roles, login form, where credentials come from). Deployment-specific values are settings, never code ([Configuration](#configuration)).
 
 Every run directory is `$AW_STATE_DIR/ui-evidence/runs/<id>` (pick a fresh `<id>`, for example the PR number and a timestamp). The verbs take the stack lock and the heavy-job lock themselves (`--lock-timeout <seconds>`, default 120), so never wrap one in a lock of your own.
@@ -175,13 +177,26 @@ The files are `NAME=value` lines (`#` comments, optional `export ` and quotes); 
 - `full`: do everything this skill describes.
 - `readonly`: work in the current directory. Make no branch, worktree, commit, push, PR, PR comment or review, and change no remote ref. Do the file edits and local checks the skill describes, and print each git or gh command you would have run under a `Would run:` heading.
 
+## Done checklist
+
+Do every item before you send the reply; a run that skips one is not finished, even when a step failed or the run errored:
+
+1. Every failed or broken step is named in the reply by the `name` the summary prints, quoted as written (a reviewer greps for it), with its `detail`. Your own paraphrase can go next to it, never instead of it.
+2. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/ui-evidence-<timestamp>.json` (Result block, Write tool), with the `outcome` the exit code gives.
+3. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), contains the `aw-result` block, before `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply.
+
+If the Write tool itself refuses a path, say so in the reply and still print the block, with the paths you could not write left as `""`.
+
 ## Result block
 
 ```bash
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
+source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
+echo "AW_DIR=$AW_DIR"
 ```
 
-`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/ui-evidence-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/ui-evidence-<timestamp>.json` with the Write tool, at the absolute path under the `AW_DIR` printed above (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front), first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
 
 Keys: `skill` (`ui-evidence`), `artifacts` (absolute paths: the run's evidence directory (screenshots, `summary.json`) and the PR comment or Linear update when published), `summary` (one line),
 plus `run_dir` (absolute path of the run directory); `outcome` (`passed` | `failed` | `refused` | `errored` | `blocked`, for exit 0, 2, 1, 4, 3); `provenance` (`seeded` | `unknown` | `n/a`, what `ui-evidence provenance` printed); `passed` (true when every check passed); `published` (`true` only if something was actually posted or uploaded after the user approved it, else `false`).
