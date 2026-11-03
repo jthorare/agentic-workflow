@@ -19,6 +19,8 @@ allowed-tools: Bash(npx dembrandt *), Bash(git *), Bash(SHARED_DIR=*), Bash(mkdi
 
 Runs Dembrandt CLI on one or more reference website URLs, extracts design tokens, merges across sites, and writes `design-tokens.json` in W3C DTCG format.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Validate Arguments
 
 The user must provide at least one URL. Parse all URLs from the argument string. A `--dark` flag (anywhere in the arguments) requests an additional dark-mode extraction pass.

@@ -19,6 +19,8 @@ Produces two output files: `design-tokens.json` (W3C DTCG token set) and `.impec
 
 ---
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Phase 1: URL Analysis (skip if no URLs provided)
 
 If no URLs were provided as arguments, skip to Phase 2.

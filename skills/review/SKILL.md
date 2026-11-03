@@ -12,6 +12,8 @@ allowed-tools: Bash(gh *), Bash(git *), Bash(ls *), Bash(mkdir *), Bash(SHARED_D
 
 Runs parallel domain-specific reviewers and saves findings locally. Does **not** post to GitHub — run `/postReview` when ready.
 
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+
 ## Step 1: Resolve the PR
 
 **If an argument was provided**, use it directly:
