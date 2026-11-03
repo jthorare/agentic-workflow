@@ -69,6 +69,33 @@ public sealed class WorktreeInspectorTests
         Assert.Equal(WorktreeDecision.Removable, (await GateTreeReport()).Decision);
     }
 
+    // #1993: a Claude Code Bash call runs as `bash -c '... aw-meta gate-run N ...'`; that shell, or any process forked from it, carries the
+    // verb and the number in its command line without being a gate run. Only aw-meta itself, with the verb and N as its first arguments, counts.
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("/bin/bash -c source /home/u/.claude/shell-snapshots/s.sh 2>/dev/null || true && eval 'cd /work; aw-meta gate-run 7 repo bash-scripts 2>&1 | grep -vE \"^  PASS\"' < /dev/null && pwd -P >| /tmp/c-cwd")]
+    [InlineData("bash -c aw-meta merge-check 7 | tail -1 && aw-meta merge-run 7 | grep -E ^MERGED")]
+    [InlineData("grep -E gate-run 7")]
+    [InlineData("tail -f /state/logs/merge-run 7")]
+    public async Task A_process_that_only_mentions_a_gate_verb_is_not_a_running_gate(string command)
+    {
+        Script();
+        _world.Locations.Add(new ProcessLocation(500, command, ["/elsewhere"]));
+
+        Assert.Equal(WorktreeDecision.Removable, (await GateTreeReport()).Decision);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("aw-meta gate-run 7 repo bash-scripts")]
+    [InlineData("/home/u/.agentic-workflow/bin/aw-meta gate-rerun #7")]
+    [InlineData("/work/src/Meta/Aw.Meta.Host/bin/Debug/net10.0/aw-meta merge-run 7")]
+    public async Task Aw_meta_running_a_gate_verb_for_the_pull_request_keeps_its_gate_tree(string command)
+    {
+        Script();
+        _world.Locations.Add(new ProcessLocation(500, command, ["/elsewhere"]));
+
+        Assert.Equal(WorktreeDecision.Kept, (await GateTreeReport()).Decision);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task A_gate_tree_whose_head_is_the_gates_own_merge_commit_is_removable_once_its_pull_request_closed()
     {
