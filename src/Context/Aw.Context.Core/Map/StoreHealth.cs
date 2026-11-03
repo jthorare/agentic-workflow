@@ -28,7 +28,7 @@ public static class StoreHealth
         // The restart fix works because the store's connections are unpooled: when the last one closes SQLite checkpoints and deletes the -wal file; a PASSIVE autocheckpoint never shrinks it.
         return new MapHealth(Name, MapHealthState.Warn,
             string.Create(CultureInfo.InvariantCulture, $"context.db's log is {Size(sizes.WalBytes)}, {ratio:0.0}x the {Size(sizes.DatabaseBytes)} database: a long-running reader or no quiet moment keeps it from resetting"),
-            "restart Sindri (sindri stop, then sindri) to drop old readers; the log resets at the next checkpoint");
+            "the context-upkeep service retries every 15 minutes and a long-running reader is what blocks it: restart Sindri (sindri stop, then sindri) to drop old readers; the log resets at the next checkpoint");
     }
 
     private static string Size(long bytes)
