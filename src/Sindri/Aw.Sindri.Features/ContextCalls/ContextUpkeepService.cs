@@ -41,7 +41,7 @@ internal sealed class ContextUpkeepService(IContextEngine engine) : IScheduledSe
         }
 
         return new ScheduledResult(Idle: false, upkeep.Truncated
-            ? string.Create(CultureInfo.InvariantCulture, $"ok: log checkpointed ({upkeep.LogPages} pages)")
-            : string.Create(CultureInfo.InvariantCulture, $"partial: a reader or writer held the log ({upkeep.CheckpointedPages} of {upkeep.LogPages} pages checkpointed)"));
+            ? string.Create(CultureInfo.InvariantCulture, $"ok: log file truncated (it held {upkeep.LogPages} pages)")
+            : string.Create(CultureInfo.InvariantCulture, $"partial: a reader or writer held the log ({upkeep.CheckpointedPages} of the log file's {upkeep.LogPages} pages checkpointed)"));
     }
 }

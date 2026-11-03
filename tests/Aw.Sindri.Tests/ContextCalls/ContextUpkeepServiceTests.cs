@@ -49,12 +49,12 @@ public sealed class ContextUpkeepServiceTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task A_truncated_log_says_how_many_pages_were_checkpointed()
+    public async Task A_truncated_log_says_how_many_pages_its_file_held()
     {
         var result = await Run(() => Results.Success<StoreUpkeep?>(new StoreUpkeep(Optimized: true, Truncated: true, LogPages: 3200, CheckpointedPages: 3200)));
 
         Assert.False(result.Value.Idle);
-        Assert.Equal("ok: log checkpointed (3200 pages)", result.Value.Summary);
+        Assert.Equal("ok: log file truncated (it held 3200 pages)", result.Value.Summary);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -64,7 +64,7 @@ public sealed class ContextUpkeepServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.False(result.Value.Idle);
-        Assert.Equal("partial: a reader or writer held the log (1200 of 3200 pages checkpointed)", result.Value.Summary);
+        Assert.Equal("partial: a reader or writer held the log (1200 of the log file's 3200 pages checkpointed)", result.Value.Summary);
     }
 
     [Fact, Trait("Lane", "unit")]
