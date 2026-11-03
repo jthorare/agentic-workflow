@@ -48,15 +48,17 @@ public sealed class JudgeProviderSettingsTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public void Absent_key_leaves_jev_out() =>
-        Assert.Equal(["claude-cli", "codex-cli", "cursor-cli", "rules"], JudgeProviders.Effective(_valid, repo: null, recipeLiteral: null));
+    public void Absent_key_asks_jev_first() =>
+        Assert.Equal(["jev", "claude-cli", "codex-cli", "cursor-cli", "rules"], JudgeProviders.Effective(_valid, repo: null, recipeLiteral: null));
 
     [Fact, Trait("Lane", "unit")]
     public void A_recipe_literal_narrows_but_never_adds_jev()
     {
-        Assert.Equal(["claude-cli", "rules"], JudgeProviders.Effective(_valid, repo: null, recipeLiteral: ["jev", "claude-cli"]));
-        var optIn = _valid with { Workflow = new(Judge: new(Providers: ["jev", "claude-cli"])) };
-        Assert.Equal(["jev", "rules"], JudgeProviders.Effective(optIn, repo: null, recipeLiteral: ["jev", "codex-cli"]));
+        var withoutJev = _valid with { Workflow = new(Judge: new(Providers: ["claude-cli", "codex-cli"])) };
+        Assert.Equal(["claude-cli", "rules"], JudgeProviders.Effective(withoutJev, repo: null, recipeLiteral: ["jev", "claude-cli"]));
+        Assert.Equal(["jev", "claude-cli", "rules"], JudgeProviders.Effective(_valid, repo: null, recipeLiteral: ["jev", "claude-cli"]));
+        var listed = _valid with { Workflow = new(Judge: new(Providers: ["jev", "claude-cli"])) };
+        Assert.Equal(["jev", "rules"], JudgeProviders.Effective(listed, repo: null, recipeLiteral: ["jev", "codex-cli"]));
     }
 
     [Fact, Trait("Lane", "unit")]

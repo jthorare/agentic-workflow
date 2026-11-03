@@ -18,6 +18,7 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
 {
     private const string GateCommitter = "aw-meta@localhost";
     private static readonly string[] _gateCommands = ["gate-run", "gate-rerun", "merge-run"];
+    private const string GateHost = "aw-meta";
 
     /// <summary>Inspects the worktrees in a scope.</summary>
     /// <param name="team">The team config (the repo, the worktree settings).</param>
@@ -224,12 +225,15 @@ public sealed class WorktreeInspector(RepoCommands repo, IProcessLocations proce
 
     private static bool Same(string a, string b) => WorktreeRoots.Normalize(a) == WorktreeRoots.Normalize(b);
 
-    // "aw-meta gate-run 7 ...", "gate-rerun #7": the command word followed by the pull request number.
+    // "aw-meta gate-run 7 ...", ".../net10.0/aw-meta merge-run #7": the process itself is aw-meta (installed, or the dev apphost, which
+    // has the same name) with the verb and the pull request number as its first three words. A shell or grep whose command line only mentions them doesn't count.
     private static bool Runs(string command, int pr)
     {
         var words = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-        var number = pr.ToString(CultureInfo.InvariantCulture);
-        return words.Zip(words.Skip(1)).Any(pair => _gateCommands.Contains(pair.First, StringComparer.Ordinal) && pair.Second.TrimStart('#') == number);
+        return words.Length >= 3
+            && string.Equals(words[0][(words[0].LastIndexOf('/') + 1)..], GateHost, StringComparison.Ordinal)
+            && _gateCommands.Contains(words[1], StringComparer.Ordinal)
+            && words[2].TrimStart('#') == pr.ToString(CultureInfo.InvariantCulture);
     }
 
     // What one inspection shares between its worktrees.
