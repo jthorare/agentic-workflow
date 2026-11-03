@@ -1,4 +1,6 @@
+using System.Globalization;
 using Aw.Context.Core.Facade;
+using Aw.Context.Core.Map;
 using Aw.Kernel;
 using Aw.Sindri.Core.Ids;
 using Aw.Sindri.Core.Profile;
@@ -23,9 +25,23 @@ internal sealed class ContextUpkeepService(IContextEngine engine) : IScheduledSe
 
     public ServiceName Identity() => ServiceId;
 
-    public ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
+    public async ValueTask<Result<ScheduledResult>> Run(ScheduledRun run, CancellationToken cancellationToken)
     {
-        _ = engine;
-        throw new NotSupportedException();
+        ArgumentNullException.ThrowIfNull(run);
+        var upkeep = await engine.Upkeep(cancellationToken).ConfigureAwait(false);
+        return upkeep.IsError ? upkeep.Error : Summarize(upkeep.Value);
+    }
+
+    /// <summary>The run's outcome: quiet with no store or nothing in the log, 'ok:' once the log is truncated, 'partial:' while a reader or writer holds it.</summary>
+    internal static ScheduledResult Summarize(StoreUpkeep? upkeep)
+    {
+        if (upkeep is null || (upkeep.Truncated && upkeep.LogPages == 0))
+        {
+            return ScheduledResult.Quiet;
+        }
+
+        return new ScheduledResult(Idle: false, upkeep.Truncated
+            ? string.Create(CultureInfo.InvariantCulture, $"ok: log checkpointed ({upkeep.LogPages} pages)")
+            : string.Create(CultureInfo.InvariantCulture, $"partial: a reader or writer held the log ({upkeep.CheckpointedPages} of {upkeep.LogPages} pages checkpointed)"));
     }
 }

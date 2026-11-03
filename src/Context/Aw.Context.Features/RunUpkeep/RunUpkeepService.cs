@@ -8,8 +8,5 @@ namespace Aw.Context.Features.RunUpkeep;
 internal sealed class RunUpkeepService(IStoreUpkeep upkeep) : IService<RunUpkeepRequest, StoreUpkeep?>
 {
     public ValueTask<Result<StoreUpkeep?>> Handle(RunUpkeepRequest request, CancellationToken cancellationToken)
-    {
-        _ = upkeep;
-        throw new NotSupportedException();
-    }
+        => ValueTask.FromResult(upkeep.Run());
 }

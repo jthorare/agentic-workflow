@@ -41,6 +41,7 @@ internal static class ContextSlicesServiceCollectionExtensions
         return services
             .AddScoped<IScheduledService, IndexSyncService>()
             .AddScoped<IScheduledService, ContextUpkeepService>()
+            .AddSingleton(ContextUpkeepService.BuiltIn)
             .AddSingleton(IndexSyncService.BuiltIn)
             .AddScoped<IScheduledService, IndexDecisionsService>()
             .AddSingleton(IndexDecisionsService.BuiltIn);
