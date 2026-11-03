@@ -88,6 +88,9 @@ public sealed record QuestionDefinition<TInput>
                 && reasons.Any(static r => r is JsonValue value && value.TryGetValue<string>(out var text) && !string.IsNullOrWhiteSpace(text)));
     }
 
+    /// <summary>Whether Jev may settle this question although it asks for reasons (see <see cref="QuestionRef.JevMaySettle"/>); only visual-critique sets it.</summary>
+    public bool JevMaySettle { get; init; }
+
     /// <summary>
     /// The images the validated input names, read once by the evaluator before any provider runs (visual-critique: its two screenshots);
     /// null for a question that sends none. A file that can't be read escalates the call as 'invalid-input'.
@@ -108,5 +111,6 @@ public sealed record QuestionDefinition<TInput>
         Criteria = Criteria,
         AskConfidence = AskConfidence,
         InputCapChars = InputCapChars,
+        JevMaySettle = JevMaySettle,
     };
 }

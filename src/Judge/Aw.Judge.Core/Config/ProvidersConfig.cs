@@ -12,6 +12,13 @@ public sealed record ProvidersConfig(
     [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] int? InputCapChars = null)
 {
     /// <summary>
+    /// False stops images going to Jev without turning Jev off (it keeps answering text; image calls skip it as 'images-off'); null for the
+    /// default, on. AW_JUDGE_JEV_IMAGES=0|1 wins over this.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public bool? JevImages { get; init; }
+
+    /// <summary>
     /// The cap on what the providers are sent when neither the question nor config.json sets one: Jev's state and instructions, and choose's prompt facts. Jev's window is 64k tokens; JSON and code run at
     /// about 3 characters a token, so 64k tokens is ~196,000 characters, and ~10k tokens (~30,000 characters) are left for
     /// the instructions, the criteria and the answer: 160,000 characters of state.
