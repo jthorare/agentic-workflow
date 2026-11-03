@@ -35,6 +35,21 @@ public abstract class ImageWorkspacesContract
         Expect.That(workspace.Files.SequenceEqual(["image-1.png", "image-2.jpg"], StringComparer.Ordinal), "numbered by position, extension by format");
     }
 
+    /// <summary>Off Windows a backslash is part of a file's name, not a separator.</summary>
+    [Fact]
+    public void A_backslash_in_a_name_is_kept_off_windows()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            return;
+        }
+
+        using var workspace = Create().Create([Image("/ev/a\\b.png", [9])], "/ev");
+
+        Expect.That(workspace.Files.SequenceEqual(["a\\b.png"], StringComparer.Ordinal), "the name keeps its backslash");
+        Expect.That(Read(workspace, "a\\b.png") is [9], "and the bytes are under that name");
+    }
+
     /// <summary>Disposing removes the files.</summary>
     [Fact]
     public void Disposing_removes_the_files()
