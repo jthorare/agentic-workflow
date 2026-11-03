@@ -186,6 +186,7 @@ public sealed class WorktreeUnfinishedWorkTests : IDisposable
         await _lab.Init();
         _ = await _lab.Branch("done", pr: 1);
         _lab.MergeIntoMain("done");
+        _lab.EndedAt = DateTimeOffset.Parse("2000-01-01T00:00:00Z", System.Globalization.CultureInfo.InvariantCulture);   // long before the sweep marker, which then is the cutoff
         await _lab.Gh((1, "MERGED", "done"));
         await _lab.Team();
         _lab.Cli.Clock.SetUtcNow(RealTime.NowOffset.AddHours(-1));

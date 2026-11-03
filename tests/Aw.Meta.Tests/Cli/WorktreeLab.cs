@@ -136,6 +136,12 @@ internal sealed class WorktreeLab : IDisposable
         _sleepers.Clear();
     }
 
+    // When every stub pull request "ended".
+    private string Ended => (EndedAt ?? DateTimeOffset.Parse("2999-01-01T00:00:00Z", CultureInfo.InvariantCulture)).ToString("O", CultureInfo.InvariantCulture);
+
+    /// <summary>When the stub pull requests merged or closed; unset, long after every file in the lab (rule 7 compares a tree with the later of this and the sweep marker, so a test about the marker sets it early).</summary>
+    internal DateTimeOffset? EndedAt { get; set; }
+
     /// <summary>Writes what the stub gh answers: `gh pr list` prints the list, `gh pr view N` the pull request, `gh pr merge N` runs merge-N.sh when it exists.</summary>
     internal async Task Gh(params (int Number, string State, string Branch)[] prs)
     {
@@ -143,7 +149,7 @@ internal sealed class WorktreeLab : IDisposable
         foreach (var (number, state, branch) in prs)
         {
             var head = GitOut(Repo, "rev-parse", "--verify", branch);
-            var row = string.Create(CultureInfo.InvariantCulture, $$"""{"number":{{number}},"state":"{{state}}","isDraft":false,"headRefOid":"{{head}}","headRefName":"{{branch}}","mergeable":"MERGEABLE","title":"t{{number}}"}""");
+            var row = string.Create(CultureInfo.InvariantCulture, $$"""{"number":{{number}},"state":"{{state}}","isDraft":false,"headRefOid":"{{head}}","headRefName":"{{branch}}","mergeable":"MERGEABLE","title":"t{{number}}","mergedAt":"{{Ended}}","closedAt":"{{Ended}}"}""");
             _ = list.Append(list.Length > 1 ? "," : string.Empty).Append(row);
             await File.WriteAllTextAsync(Path.Combine(GhState, string.Create(CultureInfo.InvariantCulture, $"view-{number}.json")), row, TestContext.Current.CancellationToken);
         }
