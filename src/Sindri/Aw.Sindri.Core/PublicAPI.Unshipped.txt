@@ -21884,3 +21884,4 @@ Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Repos.get -> System.Collections.
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.Repos.init -> void
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.get -> int?
 Aw.Sindri.Core.Projects.Facts.LinearProjectFact.PrWindowDays.init -> void
+const Aw.Sindri.Core.Doctor.DoctorRules.ContextFix = "check $AW_SINDRI_HOME/context" -> string!

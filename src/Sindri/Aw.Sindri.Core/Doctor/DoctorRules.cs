@@ -12,6 +12,9 @@ namespace Aw.Sindri.Core.Doctor;
 /// <summary>The doctor's verdicts (design spec §10.3, §11.5), one pure rule per check; the service only gathers the facts.</summary>
 public static class DoctorRules
 {
+    /// <summary>The fix a context row carries when its check could not run; the index status's store row says the same.</summary>
+    public const string ContextFix = "check $AW_SINDRI_HOME/context";
+
     /// <summary>The lease: free, held by a live process, held by a dead one, or held from another machine.</summary>
     /// <param name="row">The stored lease.</param>
     /// <param name="now">The current time.</param>

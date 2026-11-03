@@ -54,4 +54,24 @@ public sealed class IndexTextTests
 
         Assert.Equal("no record source is set up (fix: add one to the profile's context section)\nconcepts: off (context.conceptSynthesis or labeling is off)\n", text);
     }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_warn_store_prints_its_detail_and_fix_after_the_rows()
+    {
+        var view = new IndexStatusView([_linear]) { Store = new IndexStoreView("warn", "context.db 41 GB, its log 3.0 GB", "sindri context checkpoint") };
+
+        Assert.Equal(LinearLine + "store: context.db 41 GB, its log 3.0 GB (fix: sindri context checkpoint)\n", IndexText.Status(view));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void An_ok_store_prints_no_store_line()
+    {
+        var view = new IndexStatusView([_linear]) { Store = new IndexStoreView("ok", "context.db 2.4 GB, its log 12.0 MB", Fix: null) };
+
+        Assert.Equal(LinearLine, IndexText.Status(view));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void A_server_without_a_store_row_prints_no_store_line() =>
+        Assert.Equal(LinearLine, IndexText.Status(new IndexStatusView([_linear]) { Store = null }));
 }
