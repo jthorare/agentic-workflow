@@ -45,6 +45,12 @@ public sealed record QuestionRef
     /// </summary>
     public bool MinimalEnvironment { get; init; }
 
+    /// <summary>
+    /// Whether Jev may settle this question although it asks for reasons Jev cannot give (visual-critique: Jev answers a page that looks right in
+    /// one call and the CLIs say what is wrong); false keeps Jev out of every question that asks for reasons.
+    /// </summary>
+    public bool JevMaySettle { get; init; }
+
     /// <summary>The images the question sends, read once (empty for a text question): every provider that sends images gets these bytes.</summary>
     public IReadOnlyList<ImageAttachment> Images { get; init; } = [];
 

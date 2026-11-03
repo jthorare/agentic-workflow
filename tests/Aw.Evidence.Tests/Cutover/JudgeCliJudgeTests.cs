@@ -161,6 +161,55 @@ public sealed class JudgeCliJudgeTests
         Assert.Empty(runner.Calls);
     }
 
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("""{"providers":{"jevImages":true}}""", null, true)]
+    [InlineData("""{"providers":{"jevImages":false}}""", null, false)]
+    [InlineData("""{"questions":{}}""", null, false)]   // unset: off, the judge's default
+    [InlineData("""{"providers":{"jevImages":false}}""", "1", true)]   // AW_JUDGE_JEV_IMAGES wins over config.json, as in the judge
+    [InlineData("""{"providers":{"jevImages":true}}""", "0", false)]
+    [InlineData("""{"providers":{"jevImages":true}}""", "yes", true)]   // anything but 0 or 1 is ignored, as in the judge
+    public async Task Jev_images_is_what_the_judge_acts_on_its_config_with_the_environment_winning(string config, string? variable, bool expected)
+    {
+        var runner = new FakeCliRunner().Program(Judge, Decided(config));
+        var locator = new FakeExecutableLocator().Executable(Judge);
+        var judge = new JudgeCliJudge(runner, locator, name => name switch
+        {
+            "AW_JUDGE_BIN" => Judge,
+            "AW_JUDGE_JEV_IMAGES" => variable,
+            _ => null,
+        });
+
+        Assert.Equal(expected, await judge.JevImagesOnAsync(CancellationToken.None));
+        Assert.All(runner.Calls, call => Assert.Equal(["config", "get"], call.Args));
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData(1, "")]
+    [InlineData(0, "not json")]
+    public async Task Jev_images_is_off_when_the_judge_config_cannot_be_read(int exit, string stdout)
+    {
+        var runner = new FakeCliRunner().Program(Judge, new CliOutcome(exit, stdout, string.Empty));
+
+        Assert.False(await Create(runner).JevImagesOnAsync(CancellationToken.None));
+        Assert.False(await Create(new FakeCliRunner(), judgeFound: false).JevImagesOnAsync(CancellationToken.None));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task The_critique_call_passes_AW_JUDGE_JEV_IMAGES_on_so_the_judge_acts_on_the_bit_the_cache_key_carries()
+    {
+        var runner = new FakeCliRunner().Program(Judge, Decided("""{"decision":"looks-right","confidence":0.9,"model":"jev","reasonCode":"model","id":"d","reasons":[]}"""));
+        var judge = new JudgeCliJudge(runner, new FakeExecutableLocator().Executable(Judge), name => name switch
+        {
+            "AW_JUDGE_BIN" => Judge,
+            "AW_JUDGE_JEV_IMAGES" => "1",
+            _ => null,
+        });
+
+        _ = await judge.CritiqueAsync(new VisualCritiqueRequest("/runs/r1/after.png", BaselineScreenshot: null, "/runs/r1"), CancellationToken.None);
+
+        Assert.Equal("1", Assert.Single(runner.Calls).Environment["AW_JUDGE_JEV_IMAGES"]);
+    }
+
     [Fact, Trait("Lane", "unit")]
     public void The_judge_is_available_when_the_judge_binary_is_found_and_not_when_it_is_missing()
     {

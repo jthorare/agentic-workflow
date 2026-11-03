@@ -8,7 +8,7 @@ namespace Aw.Evidence.Tests.Visual;
 
 public sealed class VerdictCacheTests
 {
-    private static readonly VerdictCacheContext _context = new("visual-critique/v1", "judge-default", "abc123", "scenario", Fixtures: null, "desktop", "140.0");
+    private static readonly VerdictCacheContext _context = new("visual-critique/v1", "judge-default", "abc123", "scenario", Fixtures: null, "desktop", "140.0", JevImages: false);
     private static readonly RunInstanceId _run1 = RunInstanceId.From("instance-1");
     private static readonly RunInstanceId _run2 = RunInstanceId.From("instance-2");
 
@@ -25,6 +25,14 @@ public sealed class VerdictCacheTests
         Assert.NotEqual(Key(_context), Key(_context with { Model = "other" }), StringComparer.Ordinal);
         Assert.NotEqual(Key(_context), Key(_context with { BrowserVersion = "141.0" }), StringComparer.Ordinal);
         Assert.NotEqual(Key(_context), Key(_context with { AppBuild = null }), StringComparer.Ordinal);
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public void The_key_changes_with_whether_jev_gets_images_and_a_v1_entry_never_matches()
+    {
+        Assert.NotEqual(Key(_context), Key(_context with { JevImages = true }), StringComparer.Ordinal);
+        Assert.Equal("visual-critique/v2", VerdictCacheContext.CurrentPromptVersion);   // v1 verdicts came from the CLIs only
+        Assert.NotEqual(Key(_context), Key(_context with { PromptVersion = VerdictCacheContext.CurrentPromptVersion }), StringComparer.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]

@@ -33,6 +33,9 @@ exit 64
 ## not yet built (cutover spec 5.2: the prompt-sort subcommands of unit 6.4)
 judge: prompt-sort why is not in this build yet
 exit 1
+## check images (offline: a dummy key, jev not allowed; 'no image cases embedded' means the publish lost tests/fixtures/judge/images)
+jev is not available: jev is excluded by the providers allowlist
+exit 1
 ## state files
 ./judge/decisions.sqlite
 ./judge/sessions/s1.sort.json

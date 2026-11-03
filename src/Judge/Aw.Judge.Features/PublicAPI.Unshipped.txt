@@ -892,3 +892,55 @@ override Aw.Judge.Features.PromoteScaffolds.PromoteScaffoldsResponse.ToString() 
 static Aw.Judge.Features.PromoteScaffolds.PromoteScaffoldsResponse.operator !=(Aw.Judge.Features.PromoteScaffolds.PromoteScaffoldsResponse? left, Aw.Judge.Features.PromoteScaffolds.PromoteScaffoldsResponse? right) -> bool
 static Aw.Judge.Features.PromoteScaffolds.PromoteScaffoldsResponse.operator ==(Aw.Judge.Features.PromoteScaffolds.PromoteScaffoldsResponse? left, Aw.Judge.Features.PromoteScaffolds.PromoteScaffoldsResponse? right) -> bool
 Aw.Judge.Features.EvaluateQuestion.EvaluateQuestionResponse.ToJson() -> System.Text.Json.Nodes.JsonObject!
+Aw.Judge.Features.SetJevImages.SetJevImagesRequest
+Aw.Judge.Features.SetJevImages.SetJevImagesRequest.<Clone>$() -> Aw.Judge.Features.SetJevImages.SetJevImagesRequest!
+Aw.Judge.Features.SetJevImages.SetJevImagesRequest.On.get -> bool
+Aw.Judge.Features.SetJevImages.SetJevImagesRequest.On.init -> void
+Aw.Judge.Features.SetJevImages.SetJevImagesRequest.Deconstruct(out bool On) -> void
+Aw.Judge.Features.SetJevImages.SetJevImagesRequest.Equals(Aw.Judge.Features.SetJevImages.SetJevImagesRequest? other) -> bool
+Aw.Judge.Features.SetJevImages.SetJevImagesRequest.SetJevImagesRequest(bool On) -> void
+override Aw.Judge.Features.SetJevImages.SetJevImagesRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetJevImages.SetJevImagesRequest.GetHashCode() -> int
+override Aw.Judge.Features.SetJevImages.SetJevImagesRequest.ToString() -> string!
+static Aw.Judge.Features.SetJevImages.SetJevImagesRequest.operator !=(Aw.Judge.Features.SetJevImages.SetJevImagesRequest? left, Aw.Judge.Features.SetJevImages.SetJevImagesRequest? right) -> bool
+static Aw.Judge.Features.SetJevImages.SetJevImagesRequest.operator ==(Aw.Judge.Features.SetJevImages.SetJevImagesRequest? left, Aw.Judge.Features.SetJevImages.SetJevImagesRequest? right) -> bool
+Aw.Judge.Features.SetJevImages.SetJevImagesResponse
+Aw.Judge.Features.SetJevImages.SetJevImagesResponse.<Clone>$() -> Aw.Judge.Features.SetJevImages.SetJevImagesResponse!
+Aw.Judge.Features.SetJevImages.SetJevImagesResponse.Config.get -> Aw.Judge.Core.Config.JudgeConfig!
+Aw.Judge.Features.SetJevImages.SetJevImagesResponse.Config.init -> void
+Aw.Judge.Features.SetJevImages.SetJevImagesResponse.Deconstruct(out Aw.Judge.Core.Config.JudgeConfig! Config) -> void
+Aw.Judge.Features.SetJevImages.SetJevImagesResponse.Equals(Aw.Judge.Features.SetJevImages.SetJevImagesResponse? other) -> bool
+Aw.Judge.Features.SetJevImages.SetJevImagesResponse.SetJevImagesResponse(Aw.Judge.Core.Config.JudgeConfig! Config) -> void
+override Aw.Judge.Features.SetJevImages.SetJevImagesResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.SetJevImages.SetJevImagesResponse.GetHashCode() -> int
+override Aw.Judge.Features.SetJevImages.SetJevImagesResponse.ToString() -> string!
+static Aw.Judge.Features.SetJevImages.SetJevImagesResponse.operator !=(Aw.Judge.Features.SetJevImages.SetJevImagesResponse? left, Aw.Judge.Features.SetJevImages.SetJevImagesResponse? right) -> bool
+static Aw.Judge.Features.SetJevImages.SetJevImagesResponse.operator ==(Aw.Judge.Features.SetJevImages.SetJevImagesResponse? left, Aw.Judge.Features.SetJevImages.SetJevImagesResponse? right) -> bool
+Aw.Judge.Features.CheckImages.CheckImagesRequest
+Aw.Judge.Features.CheckImages.CheckImagesRequest.<Clone>$() -> Aw.Judge.Features.CheckImages.CheckImagesRequest!
+Aw.Judge.Features.CheckImages.CheckImagesRequest.Providers.get -> System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>?
+Aw.Judge.Features.CheckImages.CheckImagesRequest.Providers.init -> void
+Aw.Judge.Features.CheckImages.CheckImagesRequest.JevImagesEnvironment.get -> string?
+Aw.Judge.Features.CheckImages.CheckImagesRequest.JevImagesEnvironment.init -> void
+Aw.Judge.Features.CheckImages.CheckImagesRequest.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers, out string? JevImagesEnvironment) -> void
+Aw.Judge.Features.CheckImages.CheckImagesRequest.Equals(Aw.Judge.Features.CheckImages.CheckImagesRequest? other) -> bool
+Aw.Judge.Features.CheckImages.CheckImagesRequest.CheckImagesRequest(System.Collections.Generic.IReadOnlyList<Aw.Judge.Core.Providers.ProviderName>? Providers = null, string? JevImagesEnvironment = null) -> void
+override Aw.Judge.Features.CheckImages.CheckImagesRequest.Equals(object? obj) -> bool
+override Aw.Judge.Features.CheckImages.CheckImagesRequest.GetHashCode() -> int
+override Aw.Judge.Features.CheckImages.CheckImagesRequest.ToString() -> string!
+static Aw.Judge.Features.CheckImages.CheckImagesRequest.operator !=(Aw.Judge.Features.CheckImages.CheckImagesRequest? left, Aw.Judge.Features.CheckImages.CheckImagesRequest? right) -> bool
+static Aw.Judge.Features.CheckImages.CheckImagesRequest.operator ==(Aw.Judge.Features.CheckImages.CheckImagesRequest? left, Aw.Judge.Features.CheckImages.CheckImagesRequest? right) -> bool
+Aw.Judge.Features.CheckImages.CheckImagesResponse
+Aw.Judge.Features.CheckImages.CheckImagesResponse.<Clone>$() -> Aw.Judge.Features.CheckImages.CheckImagesResponse!
+Aw.Judge.Features.CheckImages.CheckImagesResponse.Lines.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aw.Judge.Features.CheckImages.CheckImagesResponse.Lines.init -> void
+Aw.Judge.Features.CheckImages.CheckImagesResponse.Held.get -> bool
+Aw.Judge.Features.CheckImages.CheckImagesResponse.Held.init -> void
+Aw.Judge.Features.CheckImages.CheckImagesResponse.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Lines, out bool Held) -> void
+Aw.Judge.Features.CheckImages.CheckImagesResponse.Equals(Aw.Judge.Features.CheckImages.CheckImagesResponse? other) -> bool
+Aw.Judge.Features.CheckImages.CheckImagesResponse.CheckImagesResponse(System.Collections.Generic.IReadOnlyList<string!>! Lines, bool Held) -> void
+override Aw.Judge.Features.CheckImages.CheckImagesResponse.Equals(object? obj) -> bool
+override Aw.Judge.Features.CheckImages.CheckImagesResponse.GetHashCode() -> int
+override Aw.Judge.Features.CheckImages.CheckImagesResponse.ToString() -> string!
+static Aw.Judge.Features.CheckImages.CheckImagesResponse.operator !=(Aw.Judge.Features.CheckImages.CheckImagesResponse? left, Aw.Judge.Features.CheckImages.CheckImagesResponse? right) -> bool
+static Aw.Judge.Features.CheckImages.CheckImagesResponse.operator ==(Aw.Judge.Features.CheckImages.CheckImagesResponse? left, Aw.Judge.Features.CheckImages.CheckImagesResponse? right) -> bool

@@ -38,6 +38,8 @@ public static class VisualCritiqueQuestion
         Threshold = 0.5,
         TimeBudget = TimeSpan.FromSeconds(20),
         ExtraProperties = new Dictionary<string, JsonObject>(StringComparer.Ordinal) { [ResolutionCheckQuestion.Reasons] = ResolutionCheckQuestion.StringList() },
+        ReasonedOutputs = new HashSet<string>(StringComparer.Ordinal) { LooksOff, Sloppy },
+        JevMaySettle = true,
         Prompt = Prompt,
         InputProblem = InputProblem,
         Images = Screenshots,
