@@ -77,6 +77,7 @@ using Aw.Context.Features.ReviewHistory;
 using Aw.Context.Features.ReviewMap;
 using Aw.Context.Features.ReviewQueue;
 using Aw.Context.Features.RunBacktest;
+using Aw.Context.Features.RunUpkeep;
 using Aw.Context.Features.ScanConcepts;
 using Aw.Context.Features.SearchMap;
 using Aw.Context.Features.ShowMapStatus;
@@ -129,6 +130,7 @@ public static class ContextFeaturesServiceCollectionExtensions
     private static IServiceCollection AddMapHealthChecks(this IServiceCollection services) => services
         .AddScoped<IService<CheckRetentionRequest, MapHealth>, CheckRetentionService>()
         .AddScoped<IService<CheckStoreRequest, MapHealth>, CheckStoreService>()
+        .AddScoped<IService<RunUpkeepRequest, StoreUpkeep?>, RunUpkeepService>()
         .AddScoped<MapHealthChecks>();
 
     private static IServiceCollection AddRecordSearch(this IServiceCollection services) => services.AddScoped<RecordSearch>();

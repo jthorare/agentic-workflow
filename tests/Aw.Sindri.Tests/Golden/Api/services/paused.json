@@ -61,6 +61,18 @@
       "description": "Starts a sync for a context source that has never synced."
     },
     {
+      "name": "context-upkeep",
+      "every": "15m",
+      "paused": false,
+      "lastRun": null,
+      "nextSlot": null,
+      "job": null,
+      "actions": [
+        "run"
+      ],
+      "description": "Checkpoints context.db's log and refreshes its query stats."
+    },
+    {
       "name": "heartbeat",
       "every": "5s",
       "paused": true,
