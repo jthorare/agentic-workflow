@@ -547,7 +547,7 @@ A call with images (`QuestionRef.Images` non-empty; visual-critique's screenshot
 without images sends exactly the JSON body it always did (golden: `Providers/Golden/jev-no-image-request.txt`).
 
 What Jev can't take is decided before anything is sent, and the next provider is asked: an image under 280 px on a side, under 78,400 pixels, over 1568 px on a side or over 2,458,624 pixels is `image-out-of-limits` (no downscaling yet); Jev's `413` is `image-too-large`; a `400` stays errored `http-400`.
-Sending images to Jev can be turned off without turning Jev off: `providers.jevImages: false` in config.json (`judge config set providers jev-images false`, the rollback, no deploy) or `AW_JUDGE_JEV_IMAGES=0` in the environment (`=1` forces it on; the variable wins over config.json). Off, an image call skips Jev as `images-off`; text calls are unchanged. Default on.
+Sending images to Jev can be turned off without turning Jev off: `providers.jevImages: false` in config.json (`judge config set providers jev-images false`, the rollback, no deploy) or `AW_JUDGE_JEV_IMAGES=0` in the environment (`=1` forces it on; the variable wins over config.json). Off, an image call skips Jev as `images-off`; text calls are unchanged. Default off: on 2026-11-03 `judge check images` missed the bar (Jev settled 2 of the 8 broken pages that fit as `looks-right`: a header overlapping the title and a grid cut off at the right edge), so screenshots stay with the agent CLIs until a later check holds it. `judge config set providers jev-images true` turns it on.
 
 **`JevMaySettle`.** Jev only classifies, so `Refused` keeps it out of every question that asks for `reasons` (resolution-check's chain is unchanged). visual-critique sets `JevMaySettle`, and its `ReasonedOutputs` are `looks-off` and `sloppy`: Jev settles a page that looks right in one call; a `looks-off` / `sloppy` from Jev has no reasons, so it is stored as a skip with code `no-reasons` (not a failure row, so health doesn't count Jev as failing) and the next provider says what is wrong.
 
@@ -572,7 +572,7 @@ TypeSafe data terms (checked 2026-11-03): the [privacy policy](https://typesafe.
 
 | Variable | Read by | Meaning |
 |---|---|---|
-| `AW_JUDGE_JEV_IMAGES` | `ProviderCatalog`, `judge check images` | `0` keeps images away from Jev (image calls skip it as `images-off`), `1` sends them; wins over config.json's `providers.jevImages` (default on) |
+| `AW_JUDGE_JEV_IMAGES` | `ProviderCatalog`, `judge check images` | `0` keeps images away from Jev (image calls skip it as `images-off`), `1` sends them; wins over config.json's `providers.jevImages` (default off) |
 | `AW_JUDGE_STATE_DIR` | Infrastructure settings | The judge directory itself (`decisions.sqlite`, `config.json`), used as is; read first. For a caller that runs its own judge with its own store (Sindri): it moves nothing but the judge's own files, so `AW_STATE_DIR`'s locks and other tools' state stay put |
 | `AW_STATE_DIR` | Infrastructure settings | The state root; the judge's files are under `<root>/judge/` unless `AW_JUDGE_STATE_DIR` is set. Default `~/.agentic-workflow` |
 | `AW_SESSION_ID` | the question commands (`Composition`, once) | The calling session, stored with the decision's detail row; a value past the session id's cap is ignored |

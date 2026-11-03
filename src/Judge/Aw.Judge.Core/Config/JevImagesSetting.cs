@@ -1,6 +1,6 @@
 namespace Aw.Judge.Core.Config;
 
-/// <summary>Whether images are sent to Jev: AW_JUDGE_JEV_IMAGES=0|1 in the environment wins over config.json's providers.jevImages, which defaults to on.</summary>
+/// <summary>Whether images are sent to Jev: AW_JUDGE_JEV_IMAGES=0|1 in the environment wins over config.json's providers.jevImages, which defaults to off (the 20-case bar in judge check images was missed, PR 1b).</summary>
 public static class JevImagesSetting
 {
     /// <summary>The environment variable.</summary>
@@ -14,6 +14,6 @@ public static class JevImagesSetting
     {
         "1" => true,
         "0" => false,
-        _ => config?.JevImages != false,
+        _ => config?.JevImages == true,
     };
 }

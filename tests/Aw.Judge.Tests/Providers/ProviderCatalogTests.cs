@@ -35,8 +35,9 @@ public sealed class ProviderCatalogTests
     {
         var lineup = Catalog(_all, hostProvider: null).Lineup(config: null, allowed: null, _rules);
 
+        // No config: images to Jev are off by default, so Jev comes wrapped (text still reaches it).
         Assert.Equal(
-            [typeof(JevProvider), typeof(ClaudeCliProvider), typeof(CodexCliProvider), typeof(CursorCliProvider)],
+            [typeof(JevImagesOffProvider), typeof(ClaudeCliProvider), typeof(CodexCliProvider), typeof(CursorCliProvider)],
             lineup.Providers.SkipLast(1).Select(p => Assert.IsType<FailOpenModelProvider>(p).Inner.GetType()));
         Assert.Same(_rules, lineup.Providers[^1]);
     }
