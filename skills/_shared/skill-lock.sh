@@ -20,6 +20,18 @@ set -euo pipefail
 # Environment:
 #   LOCK_NAME             — lock identifier written into the lock file path (default: "skill")
 #   SKILL_LOCK_TIMEOUT    — max seconds to wait (default: 120)
+#   SKILL_LOCK_OWNER_PID  — pid written as the lock owner (default: the caller's parent, $PPID)
+#
+# Owner: agents run every Bash call in a fresh shell that exits when the call ends, so $$
+# is dead by the next call. The owner is the caller's parent process (the agent session,
+# which outlives each call), so a lock taken in one call holds in later calls of that
+# session, excludes other sessions, and is released by a later call of the same session.
+# A script that sources this file directly from a long-lived shell should set
+# SKILL_LOCK_OWNER_PID=$$.
+# Limits: a lead and its subagents run in one agent process, so they are one session
+# here and are not kept apart. $PPID is the agent only when the agent starts each Bash
+# call's shell itself; a per-call wrapper that forks in between (a sandbox helper) makes
+# the wrapper the owner again, so such a host must set SKILL_LOCK_OWNER_PID.
 
 LOCK_NAME="${LOCK_NAME:-skill}"
 
@@ -32,6 +44,12 @@ fi
 
 # A `LOCK_NAME=x source` prefix only lasts during the source, so functions read this copy.
 SKILL_LOCK_NAME="$LOCK_NAME"
+
+SKILL_LOCK_OWNER="${SKILL_LOCK_OWNER_PID:-$PPID}"
+if ! [[ "$SKILL_LOCK_OWNER" =~ ^[0-9]+$ ]]; then
+  echo "skill-lock: invalid SKILL_LOCK_OWNER_PID '$SKILL_LOCK_OWNER' — must be digits" >&2
+  return 1 2>/dev/null || exit 1
+fi
 
 # sec-1: Require bash >= 4 for atomic noclobber (O_CREAT|O_EXCL semantics).
 # macOS ships bash 3.2 where noclobber uses stat+open, not open(O_CREAT|O_EXCL),
@@ -76,8 +94,14 @@ acquire_lock() {
     # sec-1: Attempt atomic O_EXCL write via noclobber — avoids TOCTOU race
     # where two processes could both see a stale lock and both write their PID.
     # The subshell ensures noclobber is scoped and does not leak into the caller.
-    if ( set -o noclobber; echo "$$" > "$LOCK_FILE" ) 2>/dev/null; then
-      echo "skill-lock[$SKILL_LOCK_NAME]: acquired (pid $$)"
+    if ( set -o noclobber; echo "$SKILL_LOCK_OWNER" > "$LOCK_FILE" ) 2>/dev/null; then
+      echo "skill-lock[$SKILL_LOCK_NAME]: acquired (owner pid $SKILL_LOCK_OWNER)"
+      return 0
+    fi
+
+    # Re-acquire by the same session is not a wait.
+    if [ "$(cat "$LOCK_FILE" 2>/dev/null || echo "")" = "$SKILL_LOCK_OWNER" ]; then
+      echo "skill-lock[$SKILL_LOCK_NAME]: already held (owner pid $SKILL_LOCK_OWNER)"
       return 0
     fi
 
@@ -117,12 +141,12 @@ release_lock() {
   if mv "$LOCK_FILE" "$tmp" 2>/dev/null; then
     local holder
     holder=$(cat "$tmp" 2>/dev/null || echo "")
-    if [ "$holder" = "$$" ]; then
+    if [ "$holder" = "$SKILL_LOCK_OWNER" ]; then
       rm "$tmp"
-      echo "skill-lock[$SKILL_LOCK_NAME]: released (pid $$)"
+      echo "skill-lock[$SKILL_LOCK_NAME]: released (owner pid $SKILL_LOCK_OWNER)"
     else
       mv "$tmp" "$LOCK_FILE" 2>/dev/null || true
-      echo "skill-lock[$SKILL_LOCK_NAME]: not releasing — held by pid $holder, we are pid $$" >&2
+      echo "skill-lock[$SKILL_LOCK_NAME]: not releasing — held by pid $holder, we are owner pid $SKILL_LOCK_OWNER" >&2
     fi
   fi
 }
