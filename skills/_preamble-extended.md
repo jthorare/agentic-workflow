@@ -2,7 +2,7 @@
 
 Read after `_preamble.md`, only when `${AW_PREAMBLE:-on}` is not `off`. Run **Session Close** at the end of the skill.
 
-> **Agentic Workflow** — 55 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill family). Works in Claude Code, Codex, and Cursor. Run any as `/<name>` (Claude Code, Cursor) or `$<name>` (Codex).
+> **Agentic Workflow** — 56 native skills + 3 fetched external packs (impeccable, emil-design-eng, taste-skill family). Works in Claude Code, Codex, and Cursor. Run any as `/<name>` (Claude Code, Cursor) or `$<name>` (Codex).
 >
 > | Skill | Purpose |
 > |-------|---------|
@@ -49,6 +49,7 @@ Read after `_preamble.md`, only when `${AW_PREAMBLE:-on}` is not `off`. Run **Se
 > | `/planDevexReview` | DX-lens review of plan docs |
 > | `/cso` | OWASP Top 10 + STRIDE threat model (plan or PR diff) |
 > | `/design-shotgun` | Generate 4–6 mockup variants in parallel |
+> | `/clickable-prototype` | 2-3 live, clickable design options inside the real running app, local only, never pushed |
 > | `/landAndDeploy` | Merge → deploy → smoke → chain canary |
 > | `/canary` | Post-deploy monitoring with custom probes |
 > | `/prismStatus` | Health check for prism-mcp |
