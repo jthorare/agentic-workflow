@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Eval git wrapper (spec 2026-10-25-skill-revamp-evals-design.md §2.4): a pass-through to the real git, found on PATH after this
 # directory. Under AW_GIT_MODE=readonly it refuses commit, push, merge, rebase, cherry-pick, revert, am, tag <name>, branch <name>,
-# worktree add, checkout -b and switch -c (exit 1, one line a grader can match). Put this directory on PATH for the agent's run only; fixture.sh and --selftest use the real git.
+# worktree add, checkout -b and switch -c (exit 1, one line a grader can match). The commit after --contains, --no-contains,
+# --merged, --no-merged or --points-at is that flag's value, not a name, so those listing forms pass. Put this directory on PATH for the agent's run only; fixture.sh and --selftest use the real git.
 set -u
 
 self_dir="$(cd "${BASH_SOURCE[0]%/*}" && pwd)"
@@ -29,9 +30,15 @@ if [ "${AW_GIT_MODE:-full}" = "readonly" ]; then
   case "$sub" in
     commit|push|merge|rebase|cherry-pick|revert|am) refused="$sub" ;;
     tag) # a name makes a tag; no args, -l/--list and other flags only read
-      for a in "${args[@]:$((i + 1))}"; do case "$a" in -l|--list) refused=""; break ;; -*) ;; *) refused="tag" ;; esac; done ;;
+      skip=""; for a in "${args[@]:$((i + 1))}"; do
+        [ -n "$skip" ] && { skip=""; continue; }
+        case "$a" in -l|--list) refused=""; break ;; --contains|--no-contains|--merged|--no-merged|--points-at) skip=1 ;; -*) ;; *) refused="tag" ;; esac
+      done ;;
     branch) # a bare name makes a branch; no args and flags like --show-current, --list, -a, -r, -v only read
-      for a in "${args[@]:$((i + 1))}"; do case "$a" in -l|--list|--show-current) refused=""; break ;; -*) ;; *) refused="branch" ;; esac; done ;;
+      skip=""; for a in "${args[@]:$((i + 1))}"; do
+        [ -n "$skip" ] && { skip=""; continue; }
+        case "$a" in -l|--list|--show-current) refused=""; break ;; --contains|--no-contains|--merged|--no-merged|--points-at) skip=1 ;; -*) ;; *) refused="branch" ;; esac
+      done ;;
     worktree) [ "$next" = "add" ] && refused="worktree add" ;;
     checkout) for a in "${args[@]:$((i + 1))}"; do { [ "$a" = "-b" ] || [ "$a" = "-B" ]; } && refused="checkout -b"; done ;;
     switch) for a in "${args[@]:$((i + 1))}"; do { [ "$a" = "-c" ] || [ "$a" = "-C" ] || [ "$a" = "--create" ]; } && refused="switch -c"; done ;;
