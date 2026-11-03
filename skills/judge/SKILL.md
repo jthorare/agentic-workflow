@@ -1,6 +1,6 @@
 ---
 name: judge
-description: "Use when a judge notice, status-line warning or decision needs explaining, undoing or tuning: why a call was made, a question escalating too often, a threshold to move, judge health. Not for code review or for choosing between two options yourself."
+description: "Use when a judge notice, status-line warning or decision needs explaining, undoing or tuning: why a call was made, a question escalating too often, a cutoff to change, judge health. Not for code review or for choosing between two options yourself."
 ---
 
 # /judge

@@ -1,6 +1,6 @@
 ---
 name: prismStatus
-description: "Use when prism-mcp, the Mind Palace memory server, seems down, slow or empty and the user wants to know whether it is up: dashboard, MCP connection, stored entries, version. A read-only check; not for saving or loading memory."
+description: "Use when prism-mcp, the Mind Palace memory server, seems down, slow or empty and the user wants to know whether it is up: dashboard, MCP connection, what's stored, version. A read-only check; not for saving or loading memory."
 argument-hint: "[--port <port>]"
 allowed-tools: Bash(curl *), Bash(claude mcp *), Bash(codex mcp *), Bash(PORT=*), Bash(SHARED_DIR=*), Bash(source *), Bash(jq *), mcp__prism-mcp__session_health_check, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
