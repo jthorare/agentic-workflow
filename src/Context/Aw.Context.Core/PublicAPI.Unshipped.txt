@@ -11088,3 +11088,4 @@ override Aw.Context.Core.Map.StoreUpkeep.GetHashCode() -> int
 override Aw.Context.Core.Map.StoreUpkeep.ToString() -> string!
 static Aw.Context.Core.Map.StoreUpkeep.operator !=(Aw.Context.Core.Map.StoreUpkeep? left, Aw.Context.Core.Map.StoreUpkeep? right) -> bool
 static Aw.Context.Core.Map.StoreUpkeep.operator ==(Aw.Context.Core.Map.StoreUpkeep? left, Aw.Context.Core.Map.StoreUpkeep? right) -> bool
+const Aw.Context.Core.Map.StoreHealth.Name = "context:store" -> string!
