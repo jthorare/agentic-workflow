@@ -243,8 +243,9 @@ Outcome:
 - Attempt cap reached (the helper refuses a 6th) → Phase 6 as unresolved.
 - Outside a meta lane, remove every worktree except the winning candidate's once it is evaluated
   (`git worktree remove`). In a meta lane (`AW_META_TEAM` and `AW_META_LANE` both set) only meta removes
-  worktrees: leave them and ask the team's meta for `aw-meta worktree-sweep --include-no-pr` once they are
-  evaluated. Keep the branches until the ticket closes either way.
+  worktrees: leave them, and once each losing one is evaluated tell the team's meta by path and branch
+  ("evaluated, lost: <path> on bugfix/<ticket-slug>-a<n>, free to remove"); meta picks how to remove it.
+  Keep the branches until the ticket closes either way.
 
 ## Phase 6 — Report
 
