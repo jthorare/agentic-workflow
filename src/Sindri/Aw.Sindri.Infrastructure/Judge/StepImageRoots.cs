@@ -10,7 +10,8 @@ namespace Aw.Sindri.Infrastructure.Judge;
 /// </summary>
 /// <param name="checkouts">Where a repo is checked out.</param>
 /// <param name="environment">Reads AW_STATE_DIR.</param>
-internal sealed class StepImageRoots(IRepoCheckouts checkouts, Func<string, string?> environment) : IStepImageRoots
+/// <param name="files">Resolves each root to its real path, so an image is compared with symlinks followed on both sides.</param>
+internal sealed class StepImageRoots(IRepoCheckouts checkouts, Func<string, string?> environment, IStepImageFiles files) : IStepImageRoots
 {
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<string>> Of(RepoName? repo, CancellationToken cancellationToken)
@@ -22,6 +23,6 @@ internal sealed class StepImageRoots(IRepoCheckouts checkouts, Func<string, stri
         }
 
         roots.Add(Path.Combine(SettingsFromEnvironment.StateRoot(environment), "ui-evidence"));
-        return roots;
+        return [.. roots.Select(files.RealDirectory)];
     }
 }

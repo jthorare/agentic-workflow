@@ -5,6 +5,7 @@ using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Core.Workflow.Ids;
 using Aw.Sindri.Features.Blocks.Step;
+using Aw.Sindri.Infrastructure.Judge;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Judge;
 
@@ -88,7 +89,7 @@ public sealed class JudgeChooseImagesTests : IDisposable
     {
         var arguments = new Dictionary<string, JsonElement>(StringComparer.Ordinal) { ["images"] = JsonSerializer.SerializeToElement("fact:frames") };
         var context = JudgeChooseStepTests.Context(arguments, ("fact:built", "{\"head\":\"abc\"}"), ("fact:frames", JsonSerializer.Serialize(frames)));
-        return new JudgeChooseStep(judge, new PassThroughScrubber()).Run(context, Token).AsTask();
+        return new JudgeChooseStep(judge, new PassThroughScrubber(), roots: null, files: new StepImageFiles()).Run(context, Token).AsTask();
     }
 
     private static JsonObject Decision(BlockStepResult result) =>

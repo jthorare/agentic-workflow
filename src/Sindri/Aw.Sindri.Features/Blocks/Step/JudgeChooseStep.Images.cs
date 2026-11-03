@@ -1,4 +1,5 @@
 using System.Text.Json.Nodes;
+using Aw.Sindri.Core.Judge;
 using Aw.Sindri.Core.Workflow.Blocks;
 
 namespace Aw.Sindri.Features.Blocks.Step;
@@ -31,7 +32,7 @@ internal sealed partial class JudgeChooseStep
         var allowed = Roots is { } roots ? await roots.Of(context.Repo, cancellationToken).ConfigureAwait(false) : null;
         foreach (var path in kept)
         {
-            if (Problem(path, allowed) is { } problem)
+            if (Problem(path, allowed, Files) is { } problem)
             {
                 return ([], 0, $"{Name}: images: {path} (from {key}) {problem}");
             }
@@ -40,9 +41,21 @@ internal sealed partial class JudgeChooseStep
         return (kept, paths.Count - kept.Count, null);
     }
 
-    private static string? Problem(string path, IReadOnlyList<string>? allowed) =>
-        !Path.IsPathRooted(path) ? "is not an absolute path"
-        : !File.Exists(path) ? "does not exist"
-        : allowed is not null && !StepImagePlaces.Inside(path, allowed) ? "is outside the checkout and the ui-evidence output"
-        : null;
+    // A caller with no file port (a test of something else) checks no file.
+    private static string? Problem(string path, IReadOnlyList<string>? allowed, IStepImageFiles? files)
+    {
+        if (!Path.IsPathRooted(path))
+        {
+            return "is not an absolute path";
+        }
+
+        if (files is null)
+        {
+            return null;
+        }
+
+        return files.RealPath(path) is not { } real ? "does not exist"
+            : allowed is not null && !StepImagePlaces.Inside(real, allowed) ? "is outside the checkout and the ui-evidence output"
+            : null;
+    }
 }

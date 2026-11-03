@@ -16,11 +16,15 @@ namespace Aw.Sindri.Features.Blocks.Step;
 /// </summary>
 /// <param name="judge">The judge's choose question.</param>
 /// <param name="scrubber">Redacts the facts' text before it leaves for the judge.</param>
-/// <param name="roots">The places an image may come from (the checkout and the ui-evidence output).</param>
-internal sealed partial class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber, IStepImageRoots? roots = null) : IBlockStep, IBlockStepId
+/// <param name="roots">The places an image may come from (the checkout and the ui-evidence output), as real paths.</param>
+/// <param name="files">Whether an image is there, and where it really is.</param>
+internal sealed partial class JudgeChooseStep(IJudgeChoice judge, ITextScrubber scrubber, IStepImageRoots? roots = null, IStepImageFiles? files = null) : IBlockStep, IBlockStepId
 {
     /// <summary>Where an image may come from; null (a caller that gives none) checks no place.</summary>
     internal IStepImageRoots? Roots { get; } = roots;
+
+    /// <summary>The file system, for an image's existence and real path; null checks no file.</summary>
+    internal IStepImageFiles? Files { get; } = files;
 
     internal const double DefaultThreshold = 0.6;
 
