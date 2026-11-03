@@ -34,7 +34,7 @@ internal sealed partial class FileMapViewModel(ContextPorts ports) : ObservableO
     /// <summary>How many entries are read so far.</summary>
     internal int Loaded => _entries.Length;
 
-    /// <summary>How many times the filter has run (a burst of keystrokes runs it once).</summary>
+    /// <summary>How many filter runs have finished and show their rows (a burst of keystrokes runs it once).</summary>
     internal int FilterRuns { get; private set; }
 
     /// <summary>What the stage reads through.</summary>
