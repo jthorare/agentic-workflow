@@ -14,16 +14,17 @@ allowed-tools: Bash(git *), Bash(SHARED_DIR=*), Bash(source *), Bash(ls *), Bash
 
 Launches Playwright against a running web app and executes **journeys** through **verification lenses**. Every run writes an evidence pack (`pack.json` + `report.md`) per `_shared/evidence-pack.md`.
 
-Every run ends with the [Done checklist](#done-checklist), whatever the verdict: PASS, WARN, FAIL or a stop (a busy browser lock included). A failed run is a finished run, not a reason to skip the result file or the `aw-result` block. Run the [Result block](#result-block)'s gate now, with the shared references, so you know `AW_RESULT` before the first verb. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
+Every run ends with the [Done checklist](#done-checklist), whatever the verdict: PASS, WARN, FAIL or a stop (a busy browser lock included). A failed run is a finished run, not a reason to skip the result file or the `aw-result` block. Run the [Result block](#result-block)'s gate now, in the same Bash call as the shared references and ahead of their `ls`, so you know `AW_RESULT` even when that `ls` fails. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 Shared references resolve from the stable toolkit path (never through a provider's skills dir):
 
 ```bash
+[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
 SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/verification-lenses.md" "$SHARED_DIR/evidence-pack.md"
 ```
 
-If resolution or `ls` fails, stop and report — do not improvise the journey/lens rules. Read both files before planning.
+If resolution or `ls` fails, stop and report through the [Done checklist](#done-checklist) (verdict FAIL) — do not improvise the journey/lens rules. Read both files before planning.
 
 ## Step 1: Parse Arguments
 
