@@ -1,5 +1,8 @@
 ---
-type: tool_used
-tool: Edit
-input_match: '^(?=[\s\S]*reviews/77\.json)(?=[\s\S]*addressed\W{1,4}true)'
+type: regex
+pattern: '"name":"(?:Edit|MultiEdit|Write|Bash)"(?=[^\n]*?77\.json)(?=[^\n]*?addressed\W{1,6}true)'
+flags: i
+target: trace
 ---
+
+The review state file marks the fixed findings addressed: true, through Edit, Write or a Bash script.

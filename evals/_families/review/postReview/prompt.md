@@ -5,4 +5,4 @@ allowed_tools: [Read, Glob, Grep, Skill]
 tags: [family, review, postReview]
 ---
 
-Post what you found on #41 so the author can see it.
+The review of #41 is written up and saved, still held back. Put it on GitHub now so the author can see it.
