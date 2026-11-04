@@ -1,4 +1,4 @@
 ---
 type: regex
-pattern: 'setup\.sh'
+pattern: '(setup|install-cs)\.sh'
 ---
