@@ -1,6 +1,6 @@
 ---
 name: system-design
-description: "Use when asked to write a system design for a project or ticket: an engineering page (schema, PR order, risks) plus a shareable product and design page, with diagrams, mockups and one running record of the owner's decisions. Writes a packet folder. Not for reviewing an existing design (archReview), one spec doc (officeHours) or a bug (rootCause)."
+description: "Use when asked to write a system design for a project or ticket: an engineering page (schema, PR order, risks), a shareable TDD and eng-review deck, a product and design page, diagrams, mockups and one running record of the owner's decisions. Writes a packet folder. Not for reviewing an existing design (archReview), one spec doc (officeHours) or a bug (rootCause)."
 argument-hint: "[ticket-or-project] [--personas engineering,product-design,...]"
 allowed-tools: Bash(git *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), Bash(python3 *), Bash(node *), Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, Agent
 ---
@@ -13,7 +13,7 @@ allowed-tools: Bash(git *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), B
 
 # System Design
 
-One run turns a project into a status doc (the source of truth), one page per persona, mockups, and diagrams. Pages are plain HTML so they can be shared without a build step.
+One run turns a project into a status doc (the source of truth), one page per persona, a shareable TDD and the deck that presents it, mockups, and diagrams. Pages are plain HTML so they can be shared without a build step.
 
 **Prerequisites (checked in Diagrams and Style and build, not before):** `python3` (stdlib only); Node 20+; the tldraw offline app running (diagrams); Playwright installed in some directory's `node_modules` (page verification, passed as `--playwright-root`). If one is missing, say which step it blocks and **Ask the user**; do not skip the step.
 
@@ -22,7 +22,7 @@ SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 source "$SHARED_DIR/repo-slug.sh"          # sets REPO_SLUG, AW_DIR
 S="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/system-design"
 SD="$AW_DIR/system-design/<slug>"          # one folder per design = the packet (layout below)
-mkdir -p "$SD"/{prs,diagrams,mockups,shots}
+mkdir -p "$SD"/{prs,diagrams,mockups,shots,share}
 ```
 
 If the user names another deliverables folder (a notes vault, a docs dir), use it for `$SD` instead. Never write deliverables into the code repo unless asked.
@@ -44,6 +44,9 @@ Every run ends with the [Result block](#result-block), whatever the outcome: don
 $SD/
   packet.json            manifest: slug, title, personas -> page, diagrams -> mmd/svg, sections in TDD order with anchors, prs
   tdd.html               engineering page; PR cards + deep-dive dialog at its PR-order section
+  share/story.json       the shareable TDD's story: the one source of tdd-share.html and deck.html
+  tdd-share.html         shareable TDD: the pre-read engineers get as a link (build_share.py)
+  deck.html              eng-review deck: the same story as slides, presented live (build_share.py)
   product-design.html    product + design page (or <persona>.html, one per extra persona)
   status.md              the one living doc
   diagrams/<key>.mmd     mermaid source, one per diagram (+ colors.json, optional)
@@ -52,7 +55,7 @@ $SD/
   mockups/ shots/        working files
 ```
 
-`packet.json` is written by `scripts/write_packet.py` from what is on disk (step 11); never hand-edit it.
+`packet.json` is written by `scripts/write_packet.py` from what is on disk (step 12); never hand-edit it.
 
 ## Personas
 
@@ -61,6 +64,7 @@ One page per persona, each answering that persona's question. Default two; add m
 | Persona | Page | Question it answers | Shape |
 |---|---|---|---|
 | Engineering | `tdd.html` | Is this buildable and safe to ship in order? | Open questions; product decisions; design needed; formula or rules; schema with example rows; services (repo / facade, read -> plan -> publish where the project uses that split); architecture; blast radius; PR order; gotchas; scope; failure modes; rollout; risks. One card per PR opens a deep dive (code changes as `path:line`, Sindri graph context, screenshots of the pages it touches). Diagrams as linked figures. |
+| Engineering, shared | `tdd-share.html` + `deck.html` | What is this design, and what do you need from my review? | Built from `share/story.json` (shape: `templates/share-story.md`). A cold reader's story: hero with stats, the problem today, five whys with `path:line` evidence, the fix (thesis, 2-4 pieces, not building / building instead), a step-through walkthrough, a clickable lifecycle, before/after, the data model (new tables beside the ones they join), diagrams, locked decisions, build slices with done-means and open questions, then the asks. Several parts become chapters of one page. **Current answer only**: no addenda, no superseded items, no change notes. The deck is the same story, ending on the asks. Required on every run. |
 | Product + design | `product-design.html` | What are we deciding, and what will it look like? | Designs first (mockups), how the functions work with one numeric example, surfaces-to-design table + gallery of today's screens, product questions with options, decisions list. Self-contained: images inlined. |
 | (add: ops, support, ...) | own page | that persona's question | start from `$S/templates/page-skeleton.html` |
 
@@ -73,13 +77,14 @@ Each step writes to `$SD/status.md`, the one living doc. Sections: surfaces, cou
 3. **Decisions with the owner.** **Ask the user** one decision at a time: background, the gap, a concrete example with real numbers, options in words. Record the answer in their words under the next D-number (re-read the file for the max first; sessions add concurrently). Stop asking if they reject the question.
 4. **Scope.** Acceptance criteria in EARS form. Mark "waiting on approval" until approved.
 5. **TDD.** Engineering page from the approved scope; PR cards last. Write one `prs/pr-NN.md` per PR (summary, `path:line | change` table, Sindri graph context, tests; `templates/pr-cards.md`), put `<!-- PR-CARDS -->` in the PR-order section and run `python3 -I "$S/scripts/build_prs.py" "$SD/tdd.html" "$SD/prs" [--shots shots.json]`. It writes milestone-grouped cards (number, title, one-line change, rollback box, "Open the deep dive") and one shared dialog; click a card in the rendered page to confirm it opens.
-6. **Product + design page.** Mockups first.
-7. **Mockups.** Build only from the project's real components and tokens (**Invoke skill** `design-mockup-web` for the HTML). Render each beside a real screenshot of the same screen and compare before showing anyone. Reuse filters and creation flows that already exist; never re-mock them.
-8. **Diagrams.** Next section.
-9. **Style pass.** **Invoke skill** `design-refine` on each page, then re-apply the style (below).
-10. **Verify.** Every page rendered, 0 broken images, no horizontal scroll at 390px, every screenshot opened and read by you. The script gives metrics; the metrics are not the review.
-11. **Packet.** `python3 -I "$S/scripts/write_packet.py" "$SD" --slug <slug> --title "<title>"` after the last page and diagram change; open `packet.json` and check every path exists.
-12. **Tracker last.** Create issues only after the owner approves scope and pages, in whatever state the project's tracker uses for "not started".
+6. **Shareable TDD and deck.** Once the TDD is approved, write `$SD/share/story.json` from `templates/share-story.md` (example: `templates/share-story.example.json`) and run `python3 -I "$S/scripts/build_share.py" "$SD"`. Distil, don't copy: the reader is an engineer outside the work, reading cold before an eng review. Fold every later round (review fixes, re-scopes, owner feedback) into the current answer; the story never says what changed or when, `status.md` does. A design with several parts is one story with a chapter per part. Put what the review must decide in `asks`, with your recommendation in its `notes`. `--check` validates it now; the pages are built in the style pass, once the diagrams and `doc-style.css` exist. Rebuild after any change to the TDD or the decisions, so the pages never lag the design.
+7. **Product + design page.** Mockups first.
+8. **Mockups.** Build only from the project's real components and tokens (**Invoke skill** `design-mockup-web` for the HTML). Render each beside a real screenshot of the same screen and compare before showing anyone. Reuse filters and creation flows that already exist; never re-mock them.
+9. **Diagrams.** Next section.
+10. **Style pass.** **Invoke skill** `design-refine` on each hand-written page, then re-apply the style and build the shareable TDD and deck (below). Their look lives in `templates/share-base.css` and `deck-base.css`; never hand-edit the generated files, they are rewritten on every build.
+11. **Verify.** Every page rendered (the deck included: `verify_page.mjs` also fails a slide whose content overflows its 16:9 frame; open slides of each kind and read them), 0 broken images, no horizontal scroll at 390px, every screenshot opened and read by you. The script gives metrics; the metrics are not the review.
+12. **Packet.** `python3 -I "$S/scripts/write_packet.py" "$SD" --slug <slug> --title "<title>"` after the last page and diagram change; open `packet.json` and check every path exists.
+13. **Tracker last.** Create issues only after the owner approves scope and pages, in whatever state the project's tracker uses for "not started".
 
 ## Diagrams
 
@@ -102,11 +107,15 @@ It creates your own tldraw doc (`POST /api/docs/create`; never edit another sess
 python3 -I "$S/scripts/tokens_to_css.py" design-tokens.json "$SD/doc-style.css"   # prints tokens it could not map
 python3 -I "$S/scripts/apply_doc_style.py" "$SD/tdd.html" "$SD/doc-style.css"          # rerunnable
 python3 -I "$S/scripts/build_page.py" "$SD/product-design.src.html" "$SD/product-design.html" "$SD/doc-style.css"
+python3 -I "$S/scripts/build_share.py" "$SD"                    # tdd-share.html + deck.html from share/story.json; --check validates only
+node "$S/scripts/verify_page.mjs" "$SD/tdd-share.html" "$SD/shots" --playwright-root <dir whose node_modules has playwright>
+node "$S/scripts/verify_page.mjs" "$SD/deck.html" "$SD/shots" --playwright-root <dir whose node_modules has playwright>
 node "$S/scripts/verify_page.mjs" "$SD/product-design.html" "$SD/shots" --playwright-root <dir whose node_modules has playwright>
 ```
 
 - `tokens_to_css.py` maps `color.*`, `font.*`, `radius.*` tokens onto the semantic variables in `templates/doc-base.css`. For any it lists as unmapped, ask the user for the value or fix `design-tokens.json`; do not invent brand colors.
 - Exit codes: the Python scripts exit 0 on success and 1 with a message on bad arguments, a missing image, a missing style marker or unmatched markers; `draw_diagrams.mjs` exits 0 when every diagram is drawn, 2 on bad arguments, 1 on an API error; `verify_page.mjs` exits 0 clean, 1 on a broken image or horizontal scroll, 2 on bad arguments.
+- `build_share.py` exits 0 when both pages are written and 1 with every problem listed: a missing field, a list or text over its limit, a history marker, a missing image. It layers the project tokens from `$SD/doc-style.css` (or `--style`) on `templates/share-base.css` (+ `deck-base.css` for the deck), so run `tokens_to_css.py` first. The deck: arrow keys or space to move, `N` speaker notes, `P` presenter window (current, next, notes, timer), `F` full screen, `#N` deep-links a slide, print gives one slide per page.
 - `build_page.py` inlines every `<img>` as a data URI and fails on a missing image. `verify_page.mjs` exits 1 on a broken image or horizontal scroll at 1280 or 390px.
 - Start new pages from `templates/page-skeleton.html`. A generic sketch of a full run is in `references/example-run.md`.
 
@@ -117,6 +126,7 @@ node "$S/scripts/verify_page.mjs" "$SD/product-design.html" "$SD/shots" --playwr
 - Schema: foreign-key columns with CHECK constraints over join tables or synced subject keys; show example rows.
 - Reuse existing filters, creation flows and screens; showing a design is not new UI.
 - Deliverables live in `$SD`; one status doc; no `-handoff-N` copies.
+- The shareable TDD and deck carry the current design only. A later round rewrites the story; it never appends an addendum to it.
 - No deadline or estimate questions; size stages by dependency only.
 - Don't design recovery for states the work itself makes impossible.
 
@@ -137,7 +147,7 @@ f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; 
 
 `AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/system-design-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then open your final reply (the message after the last tool call) with the same JSON as a fenced `aw-result` block, before any prose and before `## Next steps`.
 
-Keys: `skill` (`system-design`), `artifacts` (absolute paths: the packet under `$AW_DIR/system-design/<slug>/` (TDD, persona pages, `packet.json`)), `summary` (one line),
+Keys: `skill` (`system-design`), `artifacts` (absolute paths: the packet under `$AW_DIR/system-design/<slug>/` (TDD, `tdd-share.html`, `deck.html`, persona pages, `packet.json`)), `summary` (one line),
 plus `slug` (design slug); `packet_dir` (absolute path of the packet directory).
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
