@@ -964,10 +964,10 @@ EOF
 # list. Record mode (the default) starts no server that has no evals/mocks/<server>/, so each call moves the mock dirs of
 # the servers its case names no tool of to evals/.mocks-off/ (still under evals/, which the agent can't read) and puts them
 # back after the call; cleanup puts them back too, so a killed run leaves a kept stage whole.
-MOCKS_STAGE=
-mocks_off() { # stage, tools (one per line) -> MOCKS_OFF: the servers moved aside for this call
+mocks_stage=
+mocks_off() { # stage, tools (one per line) -> mocks_moved: the servers moved aside for this call
   local m s t named
-  MOCKS_STAGE="$1" MOCKS_OFF=
+  mocks_stage="$1" mocks_moved=
   for m in "$1"/evals/mocks/*/; do
     [ -d "$m" ] || continue
     s="$(basename "$m")" named=0
@@ -978,17 +978,17 @@ $2
 EOF
     [ "$named" = 0 ] || continue
     mkdir -p "$1/evals/.mocks-off" && mv "$1/evals/mocks/$s" "$1/evals/.mocks-off/$s" || die 3 "cannot move the $s mocks aside"
-    MOCKS_OFF="${MOCKS_OFF:+$MOCKS_OFF }$s"
+    mocks_moved="${mocks_moved:+$mocks_moved }$s"
   done
 }
 mocks_on() { # the servers mocks_off moved aside go back to evals/mocks/
   local m
-  [ -n "$MOCKS_STAGE" ] && [ -d "$MOCKS_STAGE/evals/.mocks-off" ] || { MOCKS_STAGE=; return 0; }
-  for m in "$MOCKS_STAGE"/evals/.mocks-off/*/; do
-    [ ! -d "$m" ] || mv "${m%/}" "$MOCKS_STAGE/evals/mocks/$(basename "$m")"
+  [ -n "$mocks_stage" ] && [ -d "$mocks_stage/evals/.mocks-off" ] || { mocks_stage=; return 0; }
+  for m in "$mocks_stage"/evals/.mocks-off/*/; do
+    [ ! -d "$m" ] || mv "${m%/}" "$mocks_stage/evals/mocks/$(basename "$m")"
   done
-  rmdir "$MOCKS_STAGE/evals/.mocks-off" 2>/dev/null
-  MOCKS_STAGE=
+  rmdir "$mocks_stage/evals/.mocks-off" 2>/dev/null
+  mocks_stage=
 }
 
 do_run() {
@@ -1118,7 +1118,7 @@ do_run() {
       [ "${#GRANT_DENY[@]}" = 0 ] || args+=(--disallow-tools "${GRANT_DENY[@]}")
       mocks_off "$STAGE" "$tools"
       if [ "$dry" = 1 ]; then
-        echo "  cd $STAGE && env -i $(shq "${pass_env[@]}") $(shq "$CLAUDE_BIN" "${args[@]}")${MOCKS_OFF:+  # mocks off: $MOCKS_OFF}"
+        echo "  cd $STAGE && env -i $(shq "${pass_env[@]}") $(shq "$CLAUDE_BIN" "${args[@]}")${mocks_moved:+  # mocks off: $mocks_moved}"
         mocks_on
         continue
       fi
