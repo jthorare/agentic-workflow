@@ -1,2 +1,0 @@
-Found an Avalonia project (*.axaml views).
-dispatch: verify-desktop args=--yes
