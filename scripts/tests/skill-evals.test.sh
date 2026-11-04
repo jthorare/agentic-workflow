@@ -82,6 +82,8 @@ for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; [ "$prev" = "--case" ] && 
 [ -z "$name" ] || echo "$name" >>"$d/cases.txt"
 [ -z "$name" ] || ls "$PWD/evals/mocks" 2>/dev/null | grep -v '\.md$' | tr '\n' ' ' >"$d/mocks.$name.txt"
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
+# a refused call (#2044) writes a results file with no cases at all and exits 0
+if [ -f "$d/empty-result" ] && [ -n "$out" ]; then mkdir -p "$(dirname "$out")"; echo '{"cases": [], "costUsd": 0, "partial": false}' >"$out"; exit 0; fi
 # like the real one, --case NAME leaves only that case; a call that matched none spent nothing
 [ -f "$d/no-result" ] || { [ "$(cat "$d/no-result-case" 2>/dev/null)" = "$name" ] && [ -n "$name" ]; } || { [ -z "$out" ] || { mkdir -p "$(dirname "$out")"
   jq --arg n "$name" 'if $n == "" then . else .cases |= map(select(.name == $n)) | if .cases == [] then .costUsd = 0 else . end end' \
@@ -403,6 +405,12 @@ expect "a failed call keeps the earlier case's row and exits 3" 3 '\| alpha-natu
 has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && has -F 'skipped (no result): alpha / alpha-zz-3' <<<"$OUT" && ok "the failed case and the one after it are skipped" || { fail "skipped after failed call"; show; }
 [ "$(wc -l <"$BIN/cases.txt")" = 2 ] && ok "no call after the failed one" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
 
+echo "a refused call writes cases: [] (#2044)"
+mkrepo; mkclaude; mkresult 1 true 1
+touch "$BIN/empty-result"
+run --skills alpha --kind routing
+expect "a call whose results.json has no cases counts as a failed call and the run exits 3" 3 'skipped \(no result\): alpha / alpha-natural-1'
+
 echo "the spend tally"
 mkrepo; mkclaude; mkresult 1 true 1
 run --skills alpha --kind routing --max-cost-usd 70
@@ -659,6 +667,10 @@ printf '{"t":"settle","id":"x","date":"%s","lane":"l","usd":50}\n' "$(date +%F)"
 run --skills alpha --family grp --kind routing --family-max-cost-usd 1
 expect "a smaller family ceiling fits" 0 '### family grp'
 [ "$(grep -c -- '-family' "$STATE/skill-evals/spend.jsonl" || true)" = 2 ] && ok "the family set has its own reserve and settle rows" || { fail "family tally rows"; cat "$STATE/skill-evals/spend.jsonl"; }
+touch "$BIN/no-result"
+run --family grp --family-max-cost-usd 1
+expect "a family call that writes no results.json still exits 3" 3 'left no readable'
+rm -f "$BIN/no-result"
 
 echo "regex graders are JavaScript"
 mkrepo

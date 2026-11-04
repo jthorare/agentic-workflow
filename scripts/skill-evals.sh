@@ -1142,12 +1142,15 @@ do_run() {
     done
     [ "$dry" = 0 ] || continue
     for f in "$out_dir"/cases/*/results.json; do
-      [ ! -s "$f" ] || ! jq -e '.cases' "$f" >/dev/null 2>&1 || files+=("$f")
+      [ ! -s "$f" ] || ! jq -e '.cases | length > 0' "$f" >/dev/null 2>&1 || files+=("$f")
     done
     if [ "${#files[@]}" -gt 0 ]; then
       jq -s --argjson cost "$cost" '{costUsd: $cost, partial: (map(.partial // false) | any), cases: (map(.cases // []) | add)}' \
         "${files[@]}" >"$results" || nores=1
-    else nores=1; fi
+    else
+      jq -n --argjson cost "$cost" '{costUsd: $cost, partial: false, cases: []}' >"$results" || nores=1
+      [ "$isfam" = 1 ] || { note "no plugin eval call ran a case (refused or failed to load)"; envfail=1; }
+    fi
     [ "$ceil" = 0 ] || partial=1
     [ "$callfail" = 0 ] || envfail=1
     if [ "$nores" = 1 ]; then
