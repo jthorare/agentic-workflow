@@ -1,0 +1,1 @@
+Bash	{"command":"PORT=7391; echo \"http://localhost:$PORT/\""}

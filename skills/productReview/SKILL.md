@@ -218,4 +218,10 @@ Suggested next steps:
 Keys: `skill` (`productReview`), `artifacts` (absolute paths: `$AW_DIR/plans/<timestamp>-product-review-<slug>.md`), `summary` (one line),
 plus `mode` (`mvp | growth | scale | pivot`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line); `review_verdict` (`SHIP | ITERATE | RETHINK`, the report's `## Verdict` word).
 
+The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
+
+```aw-result
+{ "skill": "productReview", "artifacts": ["<absolute product review path>"], "summary": "<one line>", "mode": "mvp | growth | scale | pivot", "verdict": "PASS | NEEDS_WORK | BLOCKED", "review_verdict": "SHIP | ITERATE | RETHINK" }
+```
+
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
