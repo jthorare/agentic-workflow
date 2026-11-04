@@ -1,7 +1,7 @@
 ---
 max_turns: 6
 timeout_seconds: 180
-allowed_tools: [Read, Glob, Grep, Skill]
+allowed_tools: [Read, Glob, Grep, Skill, Bash, Write]
 tags: [design-analyze-web, routing, tier-d]
 ---
 

@@ -1,7 +1,7 @@
 ---
 timeout_seconds: 300
 max_turns: 4
-allowed_tools: [Read, Glob, Grep, Skill]
+allowed_tools: [Read, Glob, Grep, Skill, Bash, Write]
 tags: [family, plan-review, productReview]
 ---
 

@@ -1,7 +1,7 @@
 ---
 max_turns: 6
 timeout_seconds: 180
-allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion, "Bash(ls *)", "Bash(git *)", "Bash(source *)", "Bash(SHARED_DIR=*)"]
+allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion, "Bash(ls *)", "Bash(git *)", "Bash(source *)", "Bash(SHARED_DIR=*)", Write]
 tags: [verify-app, behaviour]
 ---
 

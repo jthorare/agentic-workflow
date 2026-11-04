@@ -1,7 +1,7 @@
 ---
 max_turns: 4
 timeout_seconds: 300
-allowed_tools: [Read, Glob, Grep, Skill, Bash, AskUserQuestion]
+allowed_tools: [Read, Glob, Grep, Skill, Bash, AskUserQuestion, Write]
 tags: [design-mockup-ios, routing, near-miss]
 ---
 

@@ -1,7 +1,7 @@
 ---
 max_turns: 30
 timeout_seconds: 480
-allowed_tools: [Read, Glob, Grep, Skill, Agent, TodoWrite, AskUserQuestion, Bash, Write]
+allowed_tools: [Read, Glob, Grep, Skill, Agent, TodoWrite, AskUserQuestion, Bash, Write, Edit]
 tags: [verify-desktop, behaviour, forced]
 ---
 
