@@ -1,0 +1,39 @@
+```aw-result
+{"skill":"autoplan","artifacts":["/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-BGMuKU/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist/consolidated-review.md","/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-BGMuKU/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist/product-review.md","/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-BGMuKU/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist/arch-review.md","/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-BGMuKU/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist/design-review.md","/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-BGMuKU/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist/devex-review.md","/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-BGMuKU/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist/security-review.md"],"summary":"All five lenses BLOCKED: member API token in the share URL and unauthenticated phone-number exposure are CRITICAL.","feature_dir":"/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-BGMuKU/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist","verdict":"BLOCKED","lenses":{"product":"BLOCKED","architecture":"BLOCKED","design":"BLOCKED","devex":"BLOCKED","security":"BLOCKED"}}
+```
+
+**Verdict: BLOCKED.** All five lenses came back BLOCKED. The plan shouldn't be built as written.
+
+## Lens status
+| Lens | File | Status |
+|---|---|---|
+| Product | product-review.md | ✓ (BLOCKED) |
+| Architecture | arch-review.md | ✓ (BLOCKED) |
+| Design | design-review.md | ✓ (BLOCKED) |
+| Devex | devex-review.md | ✓ (BLOCKED) |
+| Security | security-review.md | ✓ (BLOCKED) |
+
+## Overall verdict
+Two CRITICAL findings drive it:
+- **C1:** The share link carries the member's own API token in the query string. It leaks through logs, history and referrers. A leaked link also lets someone act as that member on every API route.
+- **C2:** The link works without signing in and shows other members' names and phone numbers. The listed members haven't consented.
+
+The lenses also raised these HIGH findings:
+- **Admin tab:** It has no loading, empty or error states, no staff-role check and no accessibility spec.
+- **Share route:** There's no error path for an expired or revoked link.
+- **Class IDs:** They're sequential, so classes can be enumerated.
+- **Delivery:** One PR across the API, admin app and SMS config doesn't fit four days.
+- **Docs and logging:** No docs are planned, and the access logs would capture live tokens.
+
+verdict: BLOCKED
+
+## Top 3 next actions
+1. Replace the member API token with a dedicated share token scoped to one class, read-only, expiring and revocable. Remove phone numbers from the view that needs no sign-in. (product, arch, devex, security)
+2. Split the work into two PRs, with the API and share view first and the admin tab second. Write the engineering and task docs, then re-estimate. (product, arch, devex)
+3. Specify the admin tab's states, columns, staff-role check and accessibility, plus the share-link error and revoke flows. (design, arch, security)
+
+You gave me the plan inline, so I wrote it to `plan.md` in a new feature directory. The reviewers saw only that file, with no engineering or design docs. The review files, `consolidated-review.md` and the result file are under `.aw-state/home/` in the working directory.
+
+## Next steps
+- Edit the plan to fix the two CRITICAL findings, then re-run `/autoplan`.
+- Once the plan is no longer BLOCKED, `/specToProvenPR` takes it into staged implementation.

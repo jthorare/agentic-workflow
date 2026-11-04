@@ -1,0 +1,35 @@
+The plan is **BLOCKED**. All five lenses came back BLOCKED, and none of them was missing or empty.
+
+## Lens status
+
+| Lens | File | Status |
+|---|---|---|
+| Product | product-review.md | ✓ BLOCKED |
+| Architecture | arch-review.md | ✓ BLOCKED |
+| Design | design-review.md | ✓ BLOCKED |
+| Devex | devex-review.md | ✓ BLOCKED |
+| Security | security-review.md | ✓ BLOCKED |
+
+## Overall verdict
+
+**BLOCKED.** Two CRITICAL findings drive it:
+- **API token in the URL:** the share link carries a member's own API token. It leaks through logs, history and Referer headers, and anyone with the link can act as that member across the whole API.
+- **Phone numbers with no sign-in:** the unauthenticated page shows the member list and phone numbers. Class ids are sequential, so classes can be enumerated.
+
+## Top 3 next actions
+1. **Replace the API token in the link.** Use a separate share token that is scoped to one class, expires and can be revoked. Product, architecture, devex and security all raised this.
+2. **Take phone numbers and the full member list off the unauthenticated view.** Show counts or first names at most, and put anything personal behind sign-in.
+3. **Cut the PR down to the share link only.** Drop the admin tab and the SMS config until someone names a requirement for them, and re-estimate. The four days leaves out the token redesign.
+
+The other findings (HIGH and below) are in `consolidated-review.md`. The highest ones are the admin tab having no role check, the missing loading, empty and error states, the missing docs, and the unexplained SMS config.
+
+You gave the plan inline, so I wrote it to `plan.md` in a new feature dir. The lenses reviewed only those few lines, because there was no `engineering.md`, `product.md` or `TASKS.md`. The devex agent also couldn't read the toolkit preamble, so it didn't apply it.
+
+Everything is in `/home/thor/.agentic-workflow/skill-evals/tmp/Uzqo/claude-eval-e7dKSo/home/cwd/.aw-state/home/plans/2026-11-03-share-class-waitlist/`. That includes `consolidated-review.md`, which also covers the cross-lens tensions, the per-lens highlights and the full findings table.
+
+```aw-result
+{"skill":"autoplan","verdict":"BLOCKED","lenses":{"product":"BLOCKED","arch":"BLOCKED","design":"BLOCKED","devex":"BLOCKED","security":"BLOCKED"},"summary":"All five lenses BLOCKED: API token in share URL and unauthenticated phone numbers."}
+```
+
+## Next steps
+- Fix the CRITICAL findings in the plan, then re-run `/autoplan`.

@@ -105,4 +105,10 @@ Reads a plan directory's engineering-facing docs (auto-discovers latest if no ar
 Keys: `skill` (`planDevexReview`), `artifacts` (absolute paths: `$AW_DIR/plans/<feature>/devex-review.md`), `summary` (one line),
 plus `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
 
+The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
+
+```aw-result
+{ "skill": "planDevexReview", "artifacts": ["<absolute devex-review.md path>"], "summary": "<one line>", "verdict": "PASS | NEEDS_WORK | BLOCKED" }
+```
+
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
