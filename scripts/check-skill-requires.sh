@@ -111,6 +111,12 @@ for skill_md in skills/*/SKILL.md bootstrap/SKILL.md; do
   if ! awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md" | grep -qxF -- "$GATE"; then
     finding "$skill_md" "no '## Result block' section with the gate line: $GATE"
   fi
+  if ! awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md" | grep -qF -- 'echo "AW_DIR='; then
+    finding "$skill_md" "the Result block's gate does not print AW_DIR (source skills/_shared/repo-slug.sh in it; #2036)"
+  fi
+  if awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md" | grep -qF -- 'in your final reply, after the last tool call, before `## Next steps`'; then
+    finding "$skill_md" "the Result block puts the aw-result block after the reply's prose; say: open your final reply (the message after the last tool call) with it, before any prose (#2034)"
+  fi
   if awk '/^## Result block[[:space:]]*$/ { in_block = 1; next } in_block && /^## / { in_block = 0 } in_block { print }' "$skill_md" | grep -F -- '`aw-result` block' | grep -F -- 'before `## Next steps`' | grep -qvF -- 'final reply'; then
     finding "$skill_md" "the Result block puts the aw-result block before ## Next steps without saying final reply (write every file first, then print it in the final reply, after the last tool call)"
   fi

@@ -643,9 +643,11 @@ All under `$AW_DIR/plans/{timestamp}-{slug}/` (manifest per `_shared/plan-layout
 
 ```bash
 [ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"
+f="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/repo-slug.sh"; [ -f "$f" ] && . "$f" 2>/dev/null; echo "AW_DIR=${AW_DIR:-}"
+[ "${AW_RESULT:-0}" = 1 ] && [ -z "${AW_DIR:-}" ] && echo "AW_DIR is empty: source skills/_shared/repo-slug.sh, then write the result file; never skip it" || true
 ```
 
-`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/officeHours-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then print the same JSON as a fenced `aw-result` block in your final reply, after the last tool call, before `## Next steps`.
+`AW_RESULT=0`: write no result file and print no `aw-result` block. `AW_RESULT=1`: write `$AW_DIR/results/officeHours-<timestamp>.json` with the Write tool (timestamp `date +%Y%m%d-%H%M%S`, no `mkdir` chain in front) first, along with every other file the run writes; then open your final reply (the message after the last tool call) with the same JSON as a fenced `aw-result` block, before any prose and before `## Next steps`.
 
 Keys: `skill` (`officeHours`), `artifacts` (absolute paths: `plan.md` and the domain docs in `$AW_DIR/plans/<timestamp>-<slug>/`), `summary` (one line),
 plus `plan_dir` (absolute path of the plan directory); `ears_types` (the EARS types the session selected, from `ubiquitous`, `event-driven`, `state-driven`, `optional`, `unwanted`); `requirements` (number of `REQ-*` ids in product.md); `tasks` (number of tasks in TASKS.md).
