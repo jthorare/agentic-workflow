@@ -36,7 +36,7 @@ Read `$SHARED_DIR/platform-detection.md` and apply it exactly — the recursive 
 
 ## Dispatch Contract
 
-1. Echo before dispatching: `dispatch: <sub-skill> args=<args>`
+1. Write `dispatch: <sub-skill> args=<args>` as its own line of reply text, in the same message as the Skill call. A Bash `echo` does not count: the person reads your reply, not tool output.
 2. Dispatch literally, passing all user-supplied arguments through unchanged:
    - Web: **Invoke skill `design-analyze-web`** with args `"<original args verbatim>"`
    - iOS: **Invoke skill `design-analyze-ios`** with args `"<original args verbatim>"`
