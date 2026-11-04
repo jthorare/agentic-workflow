@@ -19,13 +19,14 @@ expect_rc() { if [ "$RC" -eq "$2" ]; then ok "$1 (exit $RC)"; else fail "$1: exi
 expect_out() { if printf '%s\n' "$OUT" | has -E -- "$2"; then ok "$1"; else fail "$1: output lacks /$2/"; printf '%s\n' "$OUT" | sed 's/^/      | /'; fi; }
 
 GATE='[ "${AW_RESULT:-0}" = 1 ] && echo "AW_RESULT=1" || echo "AW_RESULT=0"'
+GATE_DIR='echo "AW_DIR=${AW_DIR:-}"'
 OPENING='Every run ends with the [Result block](#result-block), whatever the outcome. Run its gate now, before the first step. Under `AW_RESULT=1` your final reply opens with the `aw-result` block.'
 
 # skill DIR NAME REQUIRES_TEXT|- : a skill with a Result block; "-" writes no requires.yaml
 skill() {
   local d="$1/skills/$2"
   mkdir -p "$d"
-  printf -- '---\nname: %s\n---\n%s\n\nBody.\n\n## Result block\n\n```bash\n%s\n```\n\nKeys: `skill`.\n\n## Next steps\n\n- none\n' "$2" "$OPENING" "$GATE" > "$d/SKILL.md"
+  printf -- '---\nname: %s\n---\n%s\n\nBody.\n\n## Result block\n\n```bash\n%s\n```\n\nKeys: `skill`.\n\n## Next steps\n\n- none\n' "$2" "$OPENING" "$GATE"$'\n'"$GATE_DIR" > "$d/SKILL.md"
   if [ "$3" != "-" ]; then printf '%s\n' "$3" > "$d/requires.yaml"; fi
 }
 
@@ -49,6 +50,10 @@ echo "check-skill-requires.sh"
 T="$(fixture good)"
 run "$T"; expect_rc "compliant tree passes" 0
 if [ -z "$OUT" ]; then ok "compliant tree prints nothing"; else fail "compliant tree printed: $OUT"; fi
+
+T="$(fixture no-aw-dir)"; skill "$T" nodir '{}'; sed -i '/echo "AW_DIR=/d' "$T/skills/nodir/SKILL.md"
+run "$T"; expect_rc "a gate that does not print AW_DIR fails" 1
+expect_out "a gate without AW_DIR is named" "skills/nodir/SKILL.md: the Result block's gate does not print AW_DIR"
 
 T="$(fixture empty-braces)"; skill "$T" none '{}'
 run "$T"; expect_rc "a skill with no dependencies is {}" 0
