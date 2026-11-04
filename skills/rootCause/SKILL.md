@@ -216,7 +216,7 @@ Report: $AW_DIR/investigations/{filename}
 Handoff: $AW_DIR/investigations/{slug}/handoff.md
 ```
 
-**Open your final reply with exactly one fenced `aw-result` block**, before the report text and `## Next steps` (`/review`, `bugFixOrchestrator` and other callers parse it and pick it by `skill`; see the Result block below). A run that stops before Phase 5 (the person says stop, or it refuses before any report) sets `report_path` and `handoff_path` to `null` and lists only what it wrote in `artifacts`; a caller stops there instead of guessing a path. A scope breach is not that stop: it writes both, and the handoff goes on to `bugHunt`:
+**Open your final reply with exactly one fenced `aw-result` block**, before the report text and `## Next steps` (`/review`, `bugFixOrchestrator` and other callers parse it and pick it by `skill`; see the Result block below). A run that stops before Phase 5 (the person says stop, or it refuses before any report) sets `report_path` and `handoff_path` to `null`, reports status `unfixed` and lists only what it wrote in `artifacts`; a caller stops there instead of guessing a path. A scope breach is not that stop: it writes both, and the handoff goes on to `bugHunt`:
 
 ```aw-result
 { "skill": "rootCause", "artifacts": ["<absolute report path>", "<absolute handoff.md path>"], "summary": "<one line>", "status": "fixed | unfixed | scope-breach | diagnosed", "report_path": "<absolute report path>", "handoff_path": "<absolute handoff.md path>", "boundary": "<boundary path>" }
