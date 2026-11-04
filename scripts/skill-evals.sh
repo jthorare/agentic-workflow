@@ -283,20 +283,28 @@ GRADER_TYPES="regex file_exists llm tool_used tool_order baseline"
 
 # The tool's regex graders are JavaScript: new RegExp(pattern, flags).test(text), flags in dgimsuvy, `count:N` counted with g. So the
 # selftest runs node with the pattern and flags exactly as written (a Perl-only construct such as (?i), (?s) or \A is an error).
-# regex_error PATTERN FLAGS -> prints the problem (nothing when the regex is fine)
+# regex_error PATTERN FLAGS -> prints the problem (nothing when the regex is fine; a node failure is a problem too)
+# The -- before the arguments keeps node from reading a pattern that starts with -- as one of its own options.
 regex_error() {
-  node -e '
+  local out rc
+  out="$(node -e '
     const [p, f] = process.argv.slice(1);
     if (!/^[dgimsuvy]*$/.test(f)) { console.log("flags \"" + f + "\" are not JavaScript RegExp flags (dgimsuvy)"); process.exit(0) }
-    try { new RegExp(p, f) } catch (e) { console.log("pattern does not compile in JavaScript: " + e.message) }' "$1" "$2"
+    try { new RegExp(p, f) } catch (e) { console.log("pattern does not compile in JavaScript: " + e.message) }' -- "$1" "$2")" && rc=0 || rc=$?
+  [ -z "$out" ] || printf '%s\n' "$out"
+  [ "$rc" -eq 0 ] || printf 'node failed (exit %s) checking the pattern\n' "$rc"
+  return 0
 }
-# regex_count PATTERN FLAGS < text -> number of matches (with the g flag added); exit 2 when it does not compile
+# regex_count PATTERN FLAGS < text -> number of matches (with the g flag added); exit 2 when it does not compile or node fails
 regex_count() {
-  node -e '
+  local out rc
+  out="$(node -e '
     const [p, f] = process.argv.slice(1);
     const t = require("fs").readFileSync(0, "utf8");
     let re; try { re = new RegExp(p, f.includes("g") ? f : f + "g") } catch (e) { console.log("bad"); process.exit(2) }
-    console.log((t.match(re) || []).length)' "$1" "$2"
+    console.log((t.match(re) || []).length)' -- "$1" "$2")" && rc=0 || rc=$?
+  [ -z "$out" ] || printf '%s\n' "$out"
+  [ "$rc" -eq 0 ] || return 2
 }
 # grader_pattern GRADER_MD: the regex grader's pattern (its pattern: line, else the body without trailing blank lines)
 grader_pattern() {
