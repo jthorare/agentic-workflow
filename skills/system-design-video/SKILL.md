@@ -118,7 +118,7 @@ Do every item before you send the reply; a run that skips one is not finished, e
 2. The deliverables exist at 1920x1080 and 1280x720, h264, BT.709 tags, with the corner pixel check passing, and `playback-check.sh` passed on both files. When it failed, the reply says playback failed and names the reason it printed; never call a file that failed it delivered or ready.
 3. The reply names which frames were read; say "reviewed stills", never "watched", unless the video was played in a real player. It lists the deliverable paths and sizes.
 4. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/system-design-video-<timestamp>.json` (Result block, Write tool), with `playback` and `deliverables` as the Result block defines them.
-5. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), opens with the `aw-result` block, before the prose and `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply.
+5. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), opens with the `aw-result` block, before the prose and `## Next steps`: the result file's JSON copied unchanged, every key and absolute path as written. A block printed before a later tool call does not count: callers read only the final reply.
 
 Posting to chat or a tracker is a separate step: **Ask the user** first, and use the project's own tool for it.
 
