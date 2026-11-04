@@ -1,0 +1,5 @@
+The journey file plans/add-book.md does not exist, so nothing was dispatched.
+
+```aw-result
+{"skill":"verify-app","artifacts":[],"summary":"journey plans/add-book.md not found; not dispatched","evidence_path":"","pack":"","verdict":"FAIL","platform":"","dispatched":""}
+```
