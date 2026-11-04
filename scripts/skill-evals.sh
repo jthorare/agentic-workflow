@@ -288,7 +288,7 @@ regex_error() {
   node -e '
     const [p, f] = process.argv.slice(1);
     if (!/^[dgimsuvy]*$/.test(f)) { console.log("flags \"" + f + "\" are not JavaScript RegExp flags (dgimsuvy)"); process.exit(0) }
-    try { new RegExp(p, f) } catch (e) { console.log("pattern does not compile in JavaScript: " + e.message) }' -- "$1" "$2"
+    try { new RegExp(p, f) } catch (e) { console.log("pattern does not compile in JavaScript: " + e.message) }' "$1" "$2"
 }
 # regex_count PATTERN FLAGS < text -> number of matches (with the g flag added); exit 2 when it does not compile
 regex_count() {
@@ -296,7 +296,7 @@ regex_count() {
     const [p, f] = process.argv.slice(1);
     const t = require("fs").readFileSync(0, "utf8");
     let re; try { re = new RegExp(p, f.includes("g") ? f : f + "g") } catch (e) { console.log("bad"); process.exit(2) }
-    console.log((t.match(re) || []).length)' -- "$1" "$2"
+    console.log((t.match(re) || []).length)' "$1" "$2"
 }
 # grader_pattern GRADER_MD: the regex grader's pattern (its pattern: line, else the body without trailing blank lines)
 grader_pattern() {
