@@ -45,7 +45,7 @@ Follow `$SHARED_DIR/platform-detection.md` exactly (desktop is detected there to
 
 Dispatch contract (from the shared file):
 
-1. Echo `dispatch: <sub-skill> args=<args>`
+1. Write `dispatch: <sub-skill> args=<args>` as its own line of reply text, in the same message as the Skill call. A Bash `echo` does not count: the person reads your reply, not tool output.
 2. Dispatch literally, passing arguments through unchanged (minus a stripped `--no-mockup`):
    - **Invoke skill `design-implement-web`** with args `"<original args verbatim>"`
    - **Invoke skill `design-implement-ios`** with args `"<original args verbatim>"`
