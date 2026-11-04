@@ -1,3 +1,0 @@
-```aw-result
-{"skill": "prismStatus", "artifacts": [], "summary": "judge not installed"}
-```
