@@ -29,7 +29,11 @@ SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 ls "$SHARED_DIR/platform-detection.md"
 ```
 
-If resolution or `ls` fails, stop and report through the [Done checklist](#done-checklist) (verdict FAIL, no dispatch) — do not guess the platform. Otherwise read the file and apply it: iOS → `verify-ios`, web → `verify-web`, desktop → `verify-desktop`, several/none → **Ask the user**, unless the request already names the platform ("the iOS app", "the web app", "the desktop app"): that is the answer to the question, so dispatch the named platform without asking, even when detection finds none. Before the Skill call, write `dispatch: <sub-skill> args=<args>` as its own line in your reply text (a Bash `echo` does not count: the person reads your reply, not tool output), on every dispatch, then dispatch literally: **Invoke skill `<sub-skill>`** with args `"<original args verbatim>"`.
+If resolution or `ls` fails, stop and report through the [Done checklist](#done-checklist) (verdict FAIL, no dispatch) — do not guess the platform. Otherwise read the file and dispatch in three steps:
+
+1. Pick the sub-skill: iOS → `verify-ios`, web → `verify-web`, desktop → `verify-desktop`, several/none → **Ask the user**. When the request already names the platform ("the iOS app", "the web app", "the desktop app"), that is the answer: take it without asking, even when detection finds none.
+2. Write `dispatch: <sub-skill> args=<args>` as its own line of reply text, in the same message as the Skill call. Every dispatch has it. A Bash `echo` does not count: the person reads your reply, not tool output.
+3. Dispatch literally: **Invoke skill `<sub-skill>`** with args `"<original args verbatim>"`.
 
 ## Argument Spec (pass-through)
 
