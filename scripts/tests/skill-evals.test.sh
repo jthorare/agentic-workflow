@@ -77,10 +77,14 @@ env >"$d/env.$$.txt"
 echo "$PWD" >"$d/cwd.$$.txt"
 if [ -n "${TMPDIR:-}" ] && [ -d "$TMPDIR" ] && [ -w "$TMPDIR" ]; then echo writable >"$d/tmpdir-ok.$$.txt"; fi
 if [ -n "${TMPDIR:-}" ] && [ -w "$TMPDIR" ]; then mkdir -p "$TMPDIR/sealed" && echo left >"$TMPDIR/sealed/leftover" && chmod 500 "$TMPDIR/sealed"; fi
-out=""; prev=""
-for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; prev="$a"; done
+out=""; name=""; prev=""
+for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; [ "$prev" = "--case" ] && name="$a"; prev="$a"; done
+[ -z "$name" ] || echo "$name" >>"$d/cases.txt"
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
-[ -f "$d/no-result" ] || { [ -z "$out" ] || { mkdir -p "$(dirname "$out")"; cp "$d/result.json" "$out"; }; }
+# like the real one, --case NAME leaves only that case; a call that matched none spent nothing
+[ -f "$d/no-result" ] || { [ -z "$out" ] || { mkdir -p "$(dirname "$out")"
+  jq --arg n "$name" 'if $n == "" then . else .cases |= map(select(.name == $n)) | if .cases == [] then .costUsd = 0 else . end end' \
+    "$d/result.json" >"$out"; }; }
 exit "$(cat "$d/exit" 2>/dev/null || echo 0)"
 EOF
   chmod +x "$BIN/claude"
@@ -326,10 +330,14 @@ has -E "^TMPDIR=$STATE/skill-evals/tmp/[A-Za-z0-9]{4}\$" "$ENVF" && ok "eval chi
 RUN_TMP="$(sed -n 's/^TMPDIR=//p' "$ENVF")"
 [ -n "$RUN_TMP" ] && [ ! -e "$RUN_TMP" ] && ok "eval child: a normal run removes its TMPDIR, read-only leftovers included" || fail "eval child: TMPDIR '$RUN_TMP' is still there after a normal run"
 [ -n "$(ls "$BIN"/tmpdir-ok.*.txt 2>/dev/null)" ] && ok "eval child: TMPDIR exists and is writable when claude runs" || fail "eval child: TMPDIR exists and is writable when claude runs"
-ARGS="$(cat "$BIN"/args.*.txt | head -1)"
-for f in '--trust-plugin' '--scaffold' '--no-publish' '--ablation none' '--runs 2' '--max-cost-usd 8' '--allow-tools Bash Write Edit'; do
+ARGS="$(grep -h -- '--case alpha-natural-1 ' "$BIN"/args.*.txt | head -1)"
+for f in '--trust-plugin' '--scaffold' '--no-publish' '--ablation none' '--runs 2' '--max-cost-usd 8' \
+         '--disallow-tools Agent Bash Edit Glob Grep NotebookEdit Read TaskStop WebFetch Write'; do
   case "$ARGS" in *"$f"*) ok "claude got $f" ;; *) fail "claude args lack $f: $ARGS" ;; esac
 done
+# alpha-natural-1 allows only Skill: nothing gated to grant, so no --allow-tools at all (#2023)
+case "$ARGS" in *--allow-tools*) fail "a Skill-only case got --allow-tools: $ARGS" ;; *) ok "a Skill-only case gets no --allow-tools" ;; esac
+[ "$(sort "$BIN/cases.txt" | tr '\n' ' ')" = "alpha-natural-1 alpha-near-miss " ] && ok "one claude call per routing case name" || { fail "case calls: $(tr '\n' ' ' <"$BIN/cases.txt")"; }
 case "$(cat "$BIN"/cwd.*.txt | head -1)" in "$STATE"/skill-evals/cache/stage-*) ok "claude runs inside the stage" ;; *) fail "claude cwd" ;; esac
 ROWS="$STATE/skill-evals/spend.jsonl"
 [ "$(jq -s '[.[] | select(.t == "reserve")] | length' "$ROWS")" = 1 ] && [ "$(jq -s '[.[] | select(.t == "settle") | .usd] | add * 1' "$ROWS")" = 1.5 ] && ok "the tally has a reserve row and a settle row with the real cost" || { fail "tally rows"; cat "$ROWS"; }
@@ -706,13 +714,13 @@ mkrepo; mkclaude; mkresult 1 true 1
 mkdir -p "$TMPROOT/tr/1" "$TMPROOT/tr/2" "$TMPROOT/tr/3"   # every run's trace is called trace.jsonl, as in the real tool
 echo '{"type":"system"}' >"$TMPROOT/tr/1/trace.jsonl"; echo '{"type":"assistant"}' >"$TMPROOT/tr/2/trace.jsonl"; echo '{"type":"result"}' >"$TMPROOT/tr/3/trace.jsonl"
 jq --arg a "$TMPROOT/tr/1/trace.jsonl" --arg b "$TMPROOT/tr/2/trace.jsonl" --arg c "$TMPROOT/tr/3/trace.jsonl" '
-  .cases = [.cases[0], (.cases[0] | .name = "alpha-natural-2" | .dir = "evals/alpha/routing/alpha-natural-2")]
+  .cases = [.cases[0], (.cases[0] | .name = "alpha-near-miss" | .dir = "evals/alpha/routing/alpha-near-miss")]
   | .cases[0].arms.with[0].tracePath = $a | .cases[0].arms.with[1].tracePath = $b
   | .cases[1].arms.with[0].tracePath = $c | .cases[1].arms.with[1].tracePath = null' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
 run --skills alpha --kind routing --keep-temp
 TD="$(find "$STATE/skill-evals" -type d -name traces | head -1)"
 [ "$(ls "$TD" 2>/dev/null | wc -l)" = 3 ] && ok "three traced runs of two cases leave three files" || { fail "trace files: $(ls "$TD" 2>/dev/null | tr '\n' ' ')"; show; }
-[ -f "$TD/alpha-natural-1-with-1.jsonl" ] && [ -f "$TD/alpha-natural-1-with-2.jsonl" ] && [ -f "$TD/alpha-natural-2-with-1.jsonl" ] && ok "traces are named <case>-<arm>-<run>.jsonl" || { fail "trace names"; ls "$TD"; }
+[ -f "$TD/alpha-natural-1-with-1.jsonl" ] && [ -f "$TD/alpha-natural-1-with-2.jsonl" ] && [ -f "$TD/alpha-near-miss-with-1.jsonl" ] && ok "traces are named <case>-<arm>-<run>.jsonl" || { fail "trace names"; ls "$TD"; }
 grep -q assistant "$TD/alpha-natural-1-with-2.jsonl" && ok "each file holds its own run's trace" || fail "trace content"
 KEPT_TMP="$(sed -n 's/^TMPDIR=//p' "$BIN"/env.*.txt | head -1)"
 [ -n "$KEPT_TMP" ] && [ -d "$KEPT_TMP" ] && ok "eval child: --keep-temp keeps the run's TMPDIR" || fail "eval child: --keep-temp lost TMPDIR '$KEPT_TMP'"
@@ -737,6 +745,28 @@ expect "a real push is still flagged" 1 'SELFTEST-FIXTURE: .*deletes or writes o
 printf '#!/usr/bin/env bash\necho x > /home/foo\n' >"$REPO/evals/alpha/fixture.sh"
 run --skills alpha --selftest
 expect "a real redirect outside is still flagged" 1 'SELFTEST-FIXTURE'
+
+echo "each case gets its own tools (#2023)"
+mkrepo; mkclaude; mkresult 1 true 1
+run --skills alpha --kind behaviour
+ARGS="$(grep -h -- '--case alpha-forced ' "$BIN"/args.*.txt | head -1)"
+case "$ARGS" in *"--allow-tools Write --disallow-tools Agent Bash Edit Glob Grep NotebookEdit Read TaskStop WebFetch"*) ok "a Skill, Write case is granted Write and denied every other built-in" ;;
+  *) fail "alpha-forced args: $ARGS" ;; esac
+mkrepo; mkclaude; mkresult 1 true 1
+mkdir -p "$REPO/evals/alpha/routing/_heldout" "$REPO/evals/beta/routing/_heldout"
+printf -- '---\nmax_turns: 5\ntimeout_seconds: 60\nallowed_tools: [Skill, Bash]\n---\nThe cart total is off again.\n' >"$REPO/evals/alpha/routing/_heldout/prompt.md"
+printf -- '---\nmax_turns: 5\ntimeout_seconds: 60\nallowed_tools: [Skill, Read, "Bash(git *)"]\n---\nAre the deploy gates green?\n' >"$REPO/evals/beta/routing/_heldout/prompt.md"
+git -C "$REPO" add -A && git -C "$REPO" commit -qm heldout
+run --skills alpha,beta --kind routing
+[ "$(grep -c '^_heldout$' "$BIN/cases.txt")" = 1 ] && ok "every skill's _heldout runs in one call" || fail "_heldout calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
+ARGS="$(grep -h -- '--case _heldout ' "$BIN"/args.*.txt | head -1)"
+case "$ARGS" in *"--allow-tools Bash Bash(git *) --disallow-tools Agent Edit Glob Grep NotebookEdit TaskStop WebFetch Write"*) ok "the _heldout call gets its lists' union (Read and Bash kept, the rest denied)" ;;
+  *) fail "_heldout args: $ARGS" ;; esac
+mkrepo
+sed -i '/^allowed_tools:/d' "$REPO/evals/alpha/routing/alpha-near-miss/prompt.md"
+git -C "$REPO" commit -qam "no list"
+run --skills alpha --selftest
+expect "a case without allowed_tools is a selftest error" 1 'SELFTEST-CASE: .*alpha-near-miss: no allowed_tools'
 
 echo
 echo "skill-evals: $PASS passed, $FAIL failed"
