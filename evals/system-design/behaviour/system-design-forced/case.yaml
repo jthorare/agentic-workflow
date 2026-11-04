@@ -1,0 +1,25 @@
+schema_version: '1.1'
+name: system-design-forced
+tags:
+- tier-b
+- behaviour
+execution:
+  max_turns: 45
+  timeout_seconds: 900
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Write
+  - Edit
+  - Skill
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+context:
+  scaffold_script: fixture.sh
+# AW_GIT_MODE=readonly. No stubs needed: the skill's scripts are python3 stdlib only (build_prs, write_packet, tokens_to_css, apply_doc_style, build_page).
+# tldraw and Playwright are absent on the eval box, so the diagram and verify steps are blocked and must be named, not faked.
+# Planted fact: the prompt's hard 2-second limit for the lookup page must land in the TDD.
+# Eval sandbox: Bash writes nothing a grader sees, so packet.json (write_packet.py) is graded by tool_used only; tdd.html, product-design*.html and status.md are Write'd.

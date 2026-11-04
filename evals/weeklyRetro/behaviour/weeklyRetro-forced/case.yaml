@@ -1,0 +1,19 @@
+schema_version: '1.1'
+name: weeklyRetro-forced
+source: "written for the eval"
+execution:
+  max_turns: 25
+  timeout_seconds: 480
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Write
+  - Skill
+  - Bash
+  - TodoWrite
+context:
+  scaffold_script: fixture.sh
+# Fixture (evals/weeklyRetro/fixture.sh): 10 commits in the last 7 days by two authors, one older commit (20 days ago, outside the window).
+# Planted facts: Ana Ruiz 6 and Ben Okoye 4 commits in the window; recipes/ is the busiest area (6 of 10); Ben's "shopping list export" is reverted.
+# No test runner in the repo (retro reports tests n/a). weeklyRetro makes no gh calls, so .aw-eval/gh.json is empty: any gh call shows as "no canned answer".
