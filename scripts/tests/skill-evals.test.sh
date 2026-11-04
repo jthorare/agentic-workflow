@@ -673,6 +673,22 @@ printf -- "---\ntype: tool_order\nbefore:\n  tool: Skill\n  input_match: 'alpha'
 run --skills alpha --selftest
 lacks "a JavaScript input_match under tool_order is clean" 'SELFTEST-REGEX'
 
+echo "a pattern that starts with -- is compiled too (#2027)"
+mkrepo
+R="$REPO/evals/alpha/routing/alpha-natural-1/graders"
+printf -- "---\ntype: tool_used\ntool: Skill\ninput_match: '--x('\narm: with-only\n---\n" >"$R/skill-fired.md"
+run --skills alpha --selftest
+expect "a -- input_match that does not compile is reported, not read as a node option" 1 'SELFTEST-REGEX: .*skill-fired.md: input_match does not compile in JavaScript'
+printf -- "---\ntype: tool_used\ntool: Skill\ninput_match: '--host\\\\s+x'\narm: with-only\n---\n" >"$R/skill-fired.md"
+run --skills alpha --selftest
+lacks "a valid JavaScript input_match starting with -- is clean" 'SELFTEST-REGEX'
+lacks "a valid -- input_match is not handed to node as an option" 'bad option'
+mkrepo
+G="$REPO/evals/alpha/behaviour/alpha-forced/graders"
+printf -- '---\ntype: regex\n---\n--x(\n' >"$G/has-done.md"
+run --skills alpha --selftest
+expect "a -- regex pattern that does not compile is reported" 1 'SELFTEST-REGEX: .*has-done.md: pattern does not compile in JavaScript'
+
 echo "with-only checks that fail are named, though they are not in the score (#2024)"
 mkrepo; mkclaude; mkresult 1 false 1
 jq '.cases[0].arms.with |= map(.graders += [{"name":"args-passed-through","type":"tool_used","passed":false,"withOnly":true,"scored":false,
