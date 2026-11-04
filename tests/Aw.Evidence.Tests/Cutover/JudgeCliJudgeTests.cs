@@ -164,7 +164,9 @@ public sealed class JudgeCliJudgeTests
     [Theory, Trait("Lane", "unit")]
     [InlineData("""{"providers":{"jevImages":true}}""", null, true)]
     [InlineData("""{"providers":{"jevImages":false}}""", null, false)]
-    [InlineData("""{"questions":{}}""", null, false)]   // unset: off, the judge's default
+    [InlineData("""{"questions":{}}""", null, true)]   // no providers block: on, the judge's default
+    [InlineData("""{"providers":{}}""", null, true)]   // providers block without jevImages: on
+    [InlineData("""{}""", null, true)]
     [InlineData("""{"providers":{"jevImages":false}}""", "1", true)]   // AW_JUDGE_JEV_IMAGES wins over config.json, as in the judge
     [InlineData("""{"providers":{"jevImages":true}}""", "0", false)]
     [InlineData("""{"providers":{"jevImages":true}}""", "yes", true)]   // anything but 0 or 1 is ignored, as in the judge
