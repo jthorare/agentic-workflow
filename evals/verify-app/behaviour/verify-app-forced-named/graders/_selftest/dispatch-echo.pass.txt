@@ -1,2 +1,0 @@
-You named the iOS app, so no detection needed.
-dispatch: verify-ios args=--yes
