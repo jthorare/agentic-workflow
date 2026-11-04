@@ -998,7 +998,7 @@ do_run() {
     [ -z "$JUDGE" ] || args+=(--judge-model "$JUDGE")
     [ -z "$JOBS" ] || args+=(-j "$JOBS")
     [ "$KEEP" = 0 ] || args+=(--keep-temp)
-    args+=(--max-cost-usd "$bl" --allow-tools Bash)
+    args+=(--max-cost-usd "$bl" --allow-tools Bash Write)
     pass_env=(PATH="$STAGE/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
               AW_STATE_DIR=.aw-state AW_PREAMBLE="$PREAMBLE" AW_GIT_MODE=readonly AW_RESULT=1)
     pass_env+=(TMPDIR="$EVAL_TMP")
