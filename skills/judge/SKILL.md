@@ -111,4 +111,10 @@ confirmations.
 Keys: `skill` (`judge`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
 plus `command` (the `judge` subcommand it ran, e.g. `judge health`); `outcome` (`ok | unavailable | error`: `unavailable` when the binary is missing or down).
 
+The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
+
+```aw-result
+{ "skill": "judge", "artifacts": [], "summary": "<one line>", "command": "<the judge subcommand it ran>", "outcome": "ok | unavailable | error" }
+```
+
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

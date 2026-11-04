@@ -1,0 +1,22 @@
+```aw-result
+{"skill":"judge","artifacts":[],"summary":"judge binary has no C# build linked; health and why could not run, so the escalation reason is unknown","command":"judge health; judge why 7c1e9a40-52d3-4b6e-9f10-0a8d3e6b21c4","outcome":"unavailable"}
+```
+
+**What's wrong:** `judge` is down because the CLI has no C# build linked. Both `judge health` and `judge why 7c1e9a40-…` failed with:
+
+```
+judge: no C# build is linked (run scripts/install-cs.sh)
+```
+
+That matches the `judge ✗ down` in your status line. The fix is to run `scripts/install-cs.sh` from the toolkit checkout. I didn't run it, since you asked me to look only.
+
+**Why decision 7c1e9a40 escalated:** I can't tell, because `judge why` can't read the stored decision while the binary is down. From the skill docs, I can say what an escalation of `resolution-check` can mean:
+- **Empty brief:** `resolution-check` escalates when the ticket brief is empty.
+- **Confidence below the 0.8 threshold:** this question has no safe default, so it keeps walking the provider chain and escalates if none is confident enough.
+- **No usable provider:** if the CLI providers (`claude`, `codex` or `cursor-agent`) were unavailable or timed out, the chain would also end in escalation.
+
+These are possibilities, not findings. The stored decision would show which one it was.
+
+**Result file:** I couldn't write the `aw-result` file. The Write tool was denied in don't-ask mode, and `$AW_DIR` is empty here. The block above is the same content.
+
+**Next steps:** After you run `scripts/install-cs.sh`, I can re-run `judge health` and `judge why 7c1e9a40-52d3-4b6e-9f10-0a8d3e6b21c4`. I would only read output, not undo, approve or change config.
