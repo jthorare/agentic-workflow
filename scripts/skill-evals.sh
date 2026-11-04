@@ -373,10 +373,10 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
   elif [ -f "$c/prompt.md" ] && [ -z "$(fm_body "$c/prompt.md" | tr -d '[:space:]')" ]; then
     echo "SELFTEST-CASE: $rel/prompt.md: empty prompt"; bad=1
   fi
-  for to in timeout_seconds allowed_tools; do
-    { [ -f "$c/prompt.md" ] && [ -n "$(fm_get "$c/prompt.md" "$to")" ]; } || grep -Eq "^[[:space:]]+$to:" "$c/case.yaml" 2>/dev/null ||
-      note "warning: $rel has no $to in prompt.md or case.yaml's execution: (set it on every case)"
-  done
+  { [ -f "$c/prompt.md" ] && [ -n "$(fm_get "$c/prompt.md" timeout_seconds)" ]; } || grep -Eq "^[[:space:]]+timeout_seconds:" "$c/case.yaml" 2>/dev/null ||
+    note "warning: $rel has no timeout_seconds in prompt.md or case.yaml's execution: (set it on every case)"
+  # the run grants a case exactly these tools (#2023), so a case without the list would run with almost none
+  [ -n "$(case_tools "$c")" ] || { echo "SELFTEST-CASE: $rel: no allowed_tools in prompt.md or case.yaml's execution: (the run grants a case only these)"; bad=1; }
   if [ -f "$c/case.yaml" ] && [ -n "$(awk '/scaffold_script:/ { sub(/.*scaffold_script:[ \t]*/, ""); print; exit }' "$c/case.yaml")" ]; then
     to="$(awk '/scaffold_script:/ { sub(/.*scaffold_script:[ \t]*/, ""); gsub(/["\047]/, ""); print; exit }' "$c/case.yaml")"
     [ -f "$c/$to" ] || { echo "SELFTEST-CASE: $rel/case.yaml: scaffold_script $to is not in the case directory"; bad=1; }
@@ -922,6 +922,45 @@ gate_lines() { # results.json -> lines "ROUTING GATE MISSED: ..."; nothing when 
 
 shq() { printf '%q ' "$@"; }
 
+# Tool grants (#2023). claude plugin eval gives every case in one call the same tools: its --allow-tools grant plus every
+# built-in, whatever the case's allowed_tools says. So the run calls it once per case name with that case's own grant:
+# --allow-tools the gated tools the list names, --disallow-tools the built-ins it doesn't. NotebookEdit counts only when named
+# (a Write grant unlocks it too); ToolSearch is never kept back, a deferred tool can't load without it.
+EVAL_BUILTINS="Agent Bash Edit Glob Grep NotebookEdit Read Skill TaskStop WebFetch Write"
+stage_case_dirs() { # stage -> its case directories (evals/<skill>/<kind>/<case>, evals/_families/<family>/<case>)
+  find "$1/evals" -mindepth 4 -maxdepth 4 -type f \( -name prompt.md -o -name case.yaml \) \
+    ! -path "$1/evals/_lib/*" ! -path "$1/evals/mocks/*" -exec dirname {} \; | sort -u
+}
+case_tools() { # case dir -> the tools its allowed_tools names (prompt.md front matter and case.yaml), one per line
+  local c="$1"
+  { [ ! -f "$c/prompt.md" ] || fm_get "$c/prompt.md" allowed_tools | tr -d '[]' | tr ',' '\n'
+    [ ! -f "$c/case.yaml" ] || awk '
+      /^[ \t]+allowed_tools:/ { v = $0; sub(/^[^:]*:[ \t]*/, "", v)
+        if (v != "") { gsub(/[][]/, "", v); n = split(v, a, ","); for (i = 1; i <= n; i++) print a[i]; next }
+        on = 1; next }
+      on && /^[ \t]*- / { v = $0; sub(/^[ \t]*- /, "", v); print v; next }
+      { on = 0 }' "$c/case.yaml"
+  } | sed "s/^[ \"']*//; s/[ \"']*\$//" | grep -v '^$' | sort -u
+}
+case_grant() { # tools (one per line) -> GRANT_ALLOW (the gated ones) and GRANT_DENY (the built-ins it doesn't name)
+  local t b named
+  GRANT_ALLOW=() GRANT_DENY=()
+  while IFS= read -r t; do
+    case "$t" in Bash|Bash\(*|Write|Write\(*|Edit|Edit\(*|WebFetch|WebFetch\(*|mcp__*) GRANT_ALLOW+=("$t") ;; esac
+  done <<EOF
+$1
+EOF
+  for b in $EVAL_BUILTINS; do
+    named=0
+    while IFS= read -r t; do
+      case "$t" in "$b"|"$b("*) named=1 ;; Task|Task\(*) [ "$b" != Agent ] || named=1 ;; esac
+    done <<EOF
+$1
+EOF
+    [ "$named" = 1 ] || GRANT_DENY+=("$b")
+  done
+}
+
 do_run() {
   local skills s k c kinds gl branch cases total_cases=0 dry=0 rc_final=0 below=0 partial=0 gate_missed=0 envfail=0
   local out_dir results cmd_rc ab pass_env cost run_cost=0 clog tool rest budget_left skipped
@@ -1024,35 +1063,64 @@ do_run() {
     if is_family_kind "$k"; then isfam=1; ab=none; bl="$fam_left"; fi
     out_dir="$EVAL_HOME/$DAY/$RUN_ID-$k"
     results="$out_dir/results.json"
-    local args
-    args=(plugin eval . --trust-plugin --scaffold --no-publish --ablation "$ab" --output-dir "$out_dir" --json "$results" --report "$out_dir/report.html")
-    [ -z "$RUNS" ] || args+=(--runs "$RUNS")
-    [ -z "$MODEL" ] || args+=(--model "$MODEL")
-    [ -z "$JUDGE" ] || args+=(--judge-model "$JUDGE")
-    [ -z "$JOBS" ] || args+=(-j "$JOBS")
-    [ "$KEEP" = 0 ] || args+=(--keep-temp)
-    args+=(--max-cost-usd "$bl" --allow-tools Bash Write Edit)
+    local base args name co cres crc cbl ccost cost nores dirs tools
+    base=(plugin eval . --trust-plugin --scaffold --no-publish --ablation "$ab")
+    [ -z "$RUNS" ] || base+=(--runs "$RUNS")
+    [ -z "$MODEL" ] || base+=(--model "$MODEL")
+    [ -z "$JUDGE" ] || base+=(--judge-model "$JUDGE")
+    [ -z "$JOBS" ] || base+=(-j "$JOBS")
+    [ "$KEEP" = 0 ] || base+=(--keep-temp)
     pass_env=(PATH="$STAGE/stubs/bin:$PATH" TERM="${TERM:-dumb}" LANG="${LANG:-C.UTF-8}" HOME="$HOME"
               AW_STATE_DIR=.aw-state AW_PREAMBLE="$PREAMBLE" AW_GIT_MODE=readonly AW_RESULT=1)
     pass_env+=(TMPDIR="$EVAL_TMP")
-    if [ "$dry" = 1 ]; then
-      echo "dry run, not calling claude:"
-      echo "  cd $STAGE && env -i $(shq "${pass_env[@]}") $(shq "$CLAUDE_BIN" "${args[@]}")"
-      continue
-    fi
-    mkdir -p "$out_dir"
-    note "running $k cases (ablation $ab, ceiling \$$bl)"
-    (cd "$STAGE" && env -i "${pass_env[@]}" "$CLAUDE_BIN" "${args[@]}") >&2
-    cmd_rc=$?
-    # whatever the tool saved goes through the scrub before anything else reads it
-    scrub_paths "$out_dir"
-    if [ ! -s "$results" ] || ! jq -e '.cases' "$results" >/dev/null 2>&1; then
-      note "claude plugin eval exited $cmd_rc and left no readable $results"
-      if [ "$isfam" = 1 ]; then fam_cost="$(awk -v a="$fam_cost" -v b="$bl" 'BEGIN { printf "%.6f", a + b }')"
-      else run_cost="$(awk -v a="$run_cost" -v b="$bl" 'BEGIN { printf "%.6f", a + b }')"; fi   # unknown spend settles at the reserve
+    if [ "$dry" = 1 ]; then echo "dry run, not calling claude (one call per case, each with its own tools):"
+    else mkdir -p "$out_dir/cases"; note "running $k cases (ablation $ab, ceiling \$$bl)"; fi
+    # one call per case name (every skill's held-out is named _heldout: one call runs them all, with their lists' union)
+    dirs="$(stage_case_dirs "$STAGE")"
+    cmd_rc=0 cost=0 nores=0 cbl="$bl" callfail=0 ceil=0 files=()
+    for name in $(printf '%s\n' "$dirs" | sed 's|.*/||' | sort -u); do
+      tools="$(for c in $dirs; do [ "${c##*/}" != "$name" ] || case_tools "$c"; done | sort -u)"
+      case_grant "$tools"
+      co="$out_dir/cases/$name" cres="$out_dir/cases/$name/results.json"
+      args=("${base[@]}" --case "$name" --output-dir "$co" --json "$cres" --report "$co/report.html" --max-cost-usd "$cbl")
+      [ "${#GRANT_ALLOW[@]}" = 0 ] || args+=(--allow-tools "${GRANT_ALLOW[@]}")
+      [ "${#GRANT_DENY[@]}" = 0 ] || args+=(--disallow-tools "${GRANT_DENY[@]}")
+      if [ "$dry" = 1 ]; then
+        echo "  cd $STAGE && env -i $(shq "${pass_env[@]}") $(shq "$CLAUDE_BIN" "${args[@]}")"
+        continue
+      fi
+      (cd "$STAGE" && env -i "${pass_env[@]}" "$CLAUDE_BIN" "${args[@]}") >&2
+      crc=$?
+      # whatever the tool saved goes through the scrub before anything else reads it
+      scrub_paths "$co"
+      if [ ! -s "$cres" ] || ! jq -e '.cases' "$cres" >/dev/null 2>&1; then
+        note "claude plugin eval exited $crc and left no readable $cres"
+        cost="$(awk -v a="$cost" -v b="$cbl" 'BEGIN { printf "%.6f", a + b }')"   # unknown spend settles at what was left
+        callfail=1; break   # no more calls; the cases that did finish still count
+      fi
+      ccost="$(jq -r '(.costUsd // 0) as $c | if $c > 0 then $c else ([.cases[] | (.arms.with // [])[], (.arms.without // [])[] | (.costUsd // 0) + (.judgeCostUsd // 0)] | add // 0) end' "$cres")"
+      cost="$(awk -v a="$cost" -v b="$ccost" 'BEGIN { printf "%.6f", a + b }')"
+      cbl="$(awk -v m="$bl" -v c="$cost" 'BEGIN { v = m - c; printf "%.2f", (v < 0.01 ? 0.01 : v) }')"
+      case $crc in 0|1) ;; *) case $cmd_rc in 0|1) cmd_rc=$crc ;; esac ;; esac
+      [ "$crc" != 2 ] || break   # the ceiling: the cases after this one stay unrun ("skipped (no result)")
+      # spend reached the kind's ceiling: the next call would start at the $0.01 floor, so stop before launching it
+      if awk -v c="$cost" -v m="$bl" 'BEGIN { exit !(c >= m) }'; then ceil=1; break; fi
+    done
+    [ "$dry" = 0 ] || continue
+    for f in "$out_dir"/cases/*/results.json; do
+      [ ! -s "$f" ] || ! jq -e '.cases' "$f" >/dev/null 2>&1 || files+=("$f")
+    done
+    if [ "${#files[@]}" -gt 0 ]; then
+      jq -s --argjson cost "$cost" '{costUsd: $cost, partial: (map(.partial // false) | any), cases: (map(.cases // []) | add)}' \
+        "${files[@]}" >"$results" || nores=1
+    else nores=1; fi
+    [ "$ceil" = 0 ] || partial=1
+    [ "$callfail" = 0 ] || envfail=1
+    if [ "$nores" = 1 ]; then
+      if [ "$isfam" = 1 ]; then fam_cost="$(awk -v a="$fam_cost" -v b="$cost" 'BEGIN { printf "%.6f", a + b }')"
+      else run_cost="$(awk -v a="$run_cost" -v b="$cost" 'BEGIN { printf "%.6f", a + b }')"; fi
       envfail=1; continue
     fi
-    cost="$(jq -r '(.costUsd // 0) as $c | if $c > 0 then $c else ([.cases[] | (.arms.with // [])[], (.arms.without // [])[] | (.costUsd // 0) + (.judgeCostUsd // 0)] | add // 0) end' "$results")"
     if [ "$isfam" = 1 ]; then
       fam_cost="$(awk -v a="$fam_cost" -v b="$cost" 'BEGIN { printf "%.6f", a + b }')"
       fam_left="$(awk -v m="$fam_left" -v c="$cost" 'BEGIN { v = m - c; printf "%.2f", (v < 0.01 ? 0.01 : v) }')"

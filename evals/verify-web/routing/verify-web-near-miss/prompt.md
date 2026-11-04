@@ -1,7 +1,7 @@
 ---
 max_turns: 4
 timeout_seconds: 120
-allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion]
+allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion, Bash, Write]
 tags: [verify-web, routing]
 ---
 

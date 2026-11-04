@@ -1,7 +1,7 @@
 ---
 timeout_seconds: 300
 max_turns: 8
-allowed_tools: [Read, Glob, Grep, Skill, Agent, TodoWrite, AskUserQuestion]
+allowed_tools: [Read, Glob, Grep, Skill, Agent, TodoWrite, AskUserQuestion, Bash, Write]
 tags: [canary, routing, natural]
 ---
 

@@ -1,7 +1,7 @@
 ---
 max_turns: 8
 timeout_seconds: 300
-allowed_tools: [Read, Glob, Grep, Skill]
+allowed_tools: [Read, Glob, Grep, Skill, Bash, Write]
 tags: [canary, routing, heldout]
 ---
 

@@ -1,7 +1,7 @@
 ---
 max_turns: 2
 timeout_seconds: 90
-allowed_tools: [Skill]
+allowed_tools: [Skill, Bash, Write]
 tags: [family, design-implement, routing]
 ---
 
