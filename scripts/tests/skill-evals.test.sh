@@ -658,6 +658,21 @@ printf -- '---\ntype: regex\nmatch: count:3\n---\nALPHA\n' >"$G/has-done.md"
 run --skills alpha --selftest
 expect "a wrong count:N fails the pass reply" 1 'does not pass its pass reply'
 
+echo "input_match patterns are JavaScript too (#2024)"
+mkrepo
+R="$REPO/evals/alpha/routing/alpha-natural-1/graders"
+printf -- '---\ntype: tool_used\ntool: Skill\ninput_match: (?s)alpha.*\narm: with-only\n---\n' >"$R/skill-fired.md"
+run --skills alpha --selftest
+expect "a Perl-only (?s) in a tool_used input_match is reported" 1 'SELFTEST-REGEX: .*skill-fired.md: input_match does not compile in JavaScript'
+mkrepo
+G="$REPO/evals/alpha/behaviour/alpha-forced/graders"
+printf -- "---\ntype: tool_order\nbefore:\n  tool: Skill\n  input_match: 'alpha'\nafter:\n  tool: Skill\n  input_match: '(?i)beta'\n---\n" >"$G/order.md"
+run --skills alpha --selftest
+expect "a Perl-only (?i) under a tool_order after: is reported" 1 'SELFTEST-REGEX: .*order.md: input_match does not compile in JavaScript'
+printf -- "---\ntype: tool_order\nbefore:\n  tool: Skill\n  input_match: 'alpha'\nafter:\n  tool: Skill\n  input_match: 'beta'\n---\n" >"$G/order.md"
+run --skills alpha --selftest
+lacks "a JavaScript input_match under tool_order is clean" 'SELFTEST-REGEX'
+
 echo "kept traces: one file per run"
 mkrepo; mkclaude; mkresult 1 true 1
 mkdir -p "$TMPROOT/tr/1" "$TMPROOT/tr/2" "$TMPROOT/tr/3"   # every run's trace is called trace.jsonl, as in the real tool
