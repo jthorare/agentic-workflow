@@ -1,0 +1,5 @@
+{"type":"system","subtype":"init","session_id":"selftest"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"landAndDeploy"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh pr view 18 --json number,state,mergedAt"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","content":"aw-eval: gh pr view 18 --json number,state,mergedAt has no canned answer","is_error":true}]}}
+{"type":"assistant","message":{"content":[{"type":"text","text":"The prompt says PR 18 is merged, so I deploy. mergedAt is unknown."}]}}

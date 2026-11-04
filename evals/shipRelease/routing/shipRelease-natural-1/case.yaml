@@ -1,0 +1,3 @@
+schema_version: "1.1"
+name: shipRelease-natural-1
+source: "PR #992 description (its shipRelease call site: tests, UI evidence, then the push and the PR), reworded to a made-up tide-chart project"

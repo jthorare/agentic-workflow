@@ -1,0 +1,24 @@
+schema_version: '1.1'
+name: landAndDeploy-forced
+tags:
+- tier-b
+- behaviour
+execution:
+  max_turns: 30
+  timeout_seconds: 480
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Skill
+  - Agent
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+  - Write
+context:
+  scaffold_script: fixture.sh
+# stubs first on PATH (evals/stubs/bin): gh, curl. fixture.sh writes the canned answers to .aw-eval/gh.json and .aw-eval/curl.json.
+# Run with AW_GIT_MODE=readonly and AW_STATE_DIR=<workspace>/.aw-state.
+# Planted fact: the third smoke test, GET https://toollib.example.test/api/checkout/ping, answers 503 (curl exit 22). Health and the
+# other two smoke tests are fine, so a correct run reports DEGRADED (never SUCCESS), names the checkout ping, and does not chain /canary.
