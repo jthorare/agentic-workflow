@@ -11,7 +11,7 @@ execution:
   - Bash
   - Skill
   - AskUserQuestion
-  - mcp__xcodebuildmcp__*
+  - mcp__plugin_aw-evals_xcodebuildmcp__*
 context:
   scaffold_script: fixture.sh
 # MCP mocks: ../../../mocks/xcodebuildmcp
