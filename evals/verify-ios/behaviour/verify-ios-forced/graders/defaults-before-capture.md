@@ -1,7 +1,7 @@
 ---
 type: tool_order
 before:
-  tool: mcp__xcodebuildmcp__session_show_defaults
+  tool: mcp__plugin_aw-evals_xcodebuildmcp__session_show_defaults
 after:
-  tool: mcp__xcodebuildmcp__snapshot_ui
+  tool: mcp__plugin_aw-evals_xcodebuildmcp__snapshot_ui
 ---
