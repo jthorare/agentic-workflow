@@ -1,7 +1,7 @@
 ---
 max_turns: 40
 timeout_seconds: 600
-allowed_tools: [Read, Write, Glob, Grep, Bash, Skill, AskUserQuestion, "mcp__xcodebuildmcp__*"]
+allowed_tools: [Read, Write, Glob, Grep, Bash, Skill, AskUserQuestion, "mcp__plugin_aw-evals_xcodebuildmcp__*"]
 tags: [verify-ios, behaviour]
 ---
 
