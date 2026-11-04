@@ -193,6 +193,7 @@ bash scripts/tests/skill-lock.test.sh   # skills/_shared/skill-lock.sh called th
 bash scripts/tests/skill-lock-recovery.test.sh   # skill-lock.sh after a failed or abandoned call (#1989): an abandoned lock is taken over, a failed acquire leaves the holder's pid and none of its own, the next acquire gets the lock
 bash scripts/tests/skill-lock-sessions.test.sh   # skill-lock.sh called the way skills call it (#1991): acquire and release in separate Bash calls of one session, another session's acquire waits while the lock is held, a session that ends while holding it is taken over
 bash scripts/tests/find-duplicate-skills.test.sh
+bash scripts/tests/weeklyretro-shortlog.test.sh   # #1898: /weeklyRetro's `git shortlog` names a revision, so it lists authors with no terminal on stdin
 bash scripts/tests/canary-baseline-keys.test.sh   # #1896: every `baseline.<key>` /canary reads is a key /landAndDeploy writes to baseline.json
 bash scripts/tests/check-skills-git-mode.test.sh   # scripts/check-skills-git-mode.sh: every skill with a git/gh write command has a "## Git mode" section with ${AW_GIT_MODE:-full}; a planted skill without it fails naming file:line
 bash scripts/tests/eval-git-wrapper.test.sh     # evals/stubs/bin/git: pass-through; under AW_GIT_MODE=readonly refuses commit, push, merge, rebase, cherry-pick, revert, am, tag <name>, branch <name>, worktree add, checkout -b, switch -c with exit 1 and an `aw-eval: git <sub> refused` line

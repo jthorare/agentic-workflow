@@ -1,0 +1,6 @@
+project_name: recipe-api
+
+language_servers:
+- python
+
+read_only: false

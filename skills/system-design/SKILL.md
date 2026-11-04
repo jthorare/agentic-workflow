@@ -1,6 +1,6 @@
 ---
 name: system-design
-description: "Produce a system design as persona pages (an engineering TDD and a product + design page) backed by one living status doc, owner decisions recorded one at a time, mockups from real components, and tldraw diagrams styled from design tokens. Use for 'write a system design', adding a persona page, or re-styling the diagrams. Not a spec (/officeHours), a bug (/rootCause), or a plan review (/autoplan)."
+description: "Use when asked to write a system design for a project or ticket: an engineering page (schema, PR order, risks) plus a shareable product and design page, with diagrams, mockups and one running record of the owner's decisions. Writes a packet folder. Not for reviewing an existing design (archReview), one spec doc (officeHours) or a bug (rootCause)."
 argument-hint: "[ticket-or-project] [--personas engineering,product-design,...]"
 allowed-tools: Bash(git *), Bash(mkdir *), Bash(SHARED_DIR=*), Bash(source *), Bash(python3 *), Bash(node *), Read, Write, Edit, Glob, Grep, Skill, AskUserQuestion, Agent
 ---
@@ -26,6 +26,8 @@ mkdir -p "$SD"/{prs,diagrams,mockups,shots}
 ```
 
 If the user names another deliverables folder (a notes vault, a docs dir), use it for `$SD` instead. Never write deliverables into the code repo unless asked.
+
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Inputs
 

@@ -1,6 +1,6 @@
 ---
 name: specToProvenPR
-description: Use when turning an approved spec or design doc into PRs proven to work in the running app - staged builds where each stage is planned, built, tested by hand in the app, evidenced, then driven to zero blocking review findings. Triggers include "take this spec to PRs", "ship this design", "prove it works then open the PR". Also when tempted to stop a review loop early or treat green tests as proof.
+description: "Use when an approved spec or design doc has to ship as staged pull requests, one per phase, and each stage must be seen working in the real app before its PR opens, or when you are tempted to stop a review loop early or call green tests proof. Plans, hand-tests, evidences, reviews to zero blocking, stops for human merge. Not for a one-line fix or a single small PR; use a normal commit."
 argument-hint: "[approved-spec-or-design-doc-path] (no argument = resume from stages.md)"
 allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(SHARED_DIR=*), Bash(source *), Bash(mkdir *), Bash(ls *), Bash(cat *), Bash(test *), Bash(date *), Agent, Read, Write, Edit, Glob, Grep, Skill, TodoWrite, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -11,6 +11,8 @@ Take an approved spec to production-ready PRs that are **definitively proven to 
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
+
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Core principle
 
