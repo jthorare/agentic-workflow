@@ -15,7 +15,7 @@ namespace Aw.Judge.Infrastructure.Providers;
 /// <param name="environment">Reads AW_JUDGE_JEV_IMAGES; null reads nothing, so config.json decides.</param>
 internal sealed class JevBatchClassifier(JevProvider jev, Func<string, string?>? environment = null) : IBatchClassifier
 {
-    private const string ImagesOff = "image sending to Jev is off (judge config set providers jev-images true); asked jev as text";
+    private const string ImagesOff = "image sending to Jev is off (providers.jevImages false or AW_JUDGE_JEV_IMAGES=0); asked jev as text";
 
     /// <inheritdoc />
     public async ValueTask<ProviderResult> Classify(BatchRequest request, ProvidersConfig? providers, IReadOnlyCollection<ProviderName>? allowed, CancellationToken cancellationToken)
