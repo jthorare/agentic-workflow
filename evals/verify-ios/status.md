@@ -14,5 +14,5 @@ Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per ca
     Fixed in 4da85f8e8.
   - missing-label-named was widened after that run to take "null label" (one run named waterToggle-2 that way). In the final run
     it is the reason run 1 passes ("null label", "no accessibility label"; the old check took only "accessible"). With the old
-    check the final run is 0.92, not 1.0.
+    check the final run is 0.97 (run 1 at 10 of 11 scored checks), not 1.0.
 - Caveat: 3 runs per arm. One run flips a case by about 0.1-0.3.
