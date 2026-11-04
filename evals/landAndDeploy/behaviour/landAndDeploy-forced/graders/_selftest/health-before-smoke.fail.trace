@@ -1,0 +1,4 @@
+{"type":"system","subtype":"init","session_id":"selftest"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"landAndDeploy"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"for u in api/ping api/catalog; do curl -fsS https://toollib.example.test/$u; done"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"curl -sS https://toollib.example.test/health"}}]}}

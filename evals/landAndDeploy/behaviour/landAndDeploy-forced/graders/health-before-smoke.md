@@ -1,11 +1,7 @@
 ---
-type: tool_order
-before:
-  tool: Bash
-  input_match: 'curl[^"]*toollib\.example\.test/health'
-after:
-  tool: Bash
-  input_match: '(?=[\s\S]*\bcurl\b)(?=[\s\S]*toollib\.example\.test/)(?=[\s\S]*\bapi/)'
+type: regex
+pattern: '"command":"(?:[^"\\]|\\.)*?toollib\.example\.test/health(?:(?:[^"\\]|\\.)*?\bapi/|[\s\S]*?"command":"(?=(?:[^"\\]|\\.)*?\bcurl\b)(?:[^"\\]|\\.)*?\bapi/)'
+target: trace
 ---
 
-Smoke tests run after the health check. The `after` match takes the smoke URL anywhere in the Bash command, so a loop such as `for u in api/ping ...; do curl https://toollib.example.test/$u; done` counts.
+Smoke tests run after the health check: a Bash command hits the health URL and then, in the same command or a later one, a curl hits an `api/` smoke URL. Same-command runs (`curl .../health; for u in api/ping ...; do curl .../$u; done`) and split runs both count; a tool_order check can't see the order inside one command.
