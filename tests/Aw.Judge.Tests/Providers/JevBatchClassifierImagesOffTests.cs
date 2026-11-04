@@ -5,7 +5,7 @@ using Aw.Kernel.Testing;
 
 namespace Aw.Judge.Tests.Providers;
 
-/// <summary>While sending images to Jev is off (the default) a batch goes as text and says so; the images only leave the machine once the setting is on.</summary>
+/// <summary>By default a batch keeps its images; with providers.jevImages false it goes as text and says so.</summary>
 [Lane(TestLane.Unit)]
 public sealed class JevBatchClassifierImagesOffTests
 {
@@ -14,12 +14,25 @@ public sealed class JevBatchClassifierImagesOffTests
     private static readonly NoulBatchQuestion _noul = new("touchesUi", "Does the work change the UI?");
 
     [Fact]
-    public async Task Images_off_by_default_a_batch_goes_as_text_with_the_off_note()
+    public async Task By_default_a_batch_keeps_its_images_with_no_off_note()
     {
         var handler = new RecordingJevHandler(_ => Answer);
         using var jev = JevImages.Jev(handler);
 
         var result = await new JevBatchClassifier(jev, _ => null).Classify(Batch(), providers: null, allowed: null, TestContext.Current.CancellationToken);
+
+        var request = Assert.Single(handler.Requests);
+        Assert.Equal(("true", "multipart/form-data"), (request.ImagesHeader, request.ContentType));
+        Assert.Null(result.ImageNotes);
+    }
+
+    [Fact]
+    public async Task Images_off_in_config_a_batch_goes_as_text_with_the_off_note()
+    {
+        var handler = new RecordingJevHandler(_ => Answer);
+        using var jev = JevImages.Jev(handler);
+
+        var result = await new JevBatchClassifier(jev, _ => null).Classify(Batch(), new ProvidersConfig { JevImages = false }, allowed: null, TestContext.Current.CancellationToken);
 
         _ = Assert.IsType<BatchDecided>(result);
         var request = Assert.Single(handler.Requests);
