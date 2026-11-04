@@ -4,4 +4,4 @@ tool: Bash
 input_match: 'write_packet\.py'
 ---
 
-The packet manifest comes from the skill's script, never hand-written (SKILL.md step 11).
+The packet manifest comes from the skill's script, never hand-written (SKILL.md step 12).

@@ -1,0 +1,1 @@
+Bash	{"command": "python3 -I skills/system-design/scripts/write_packet.py /work/.aw-state/work/system-design/permit-desk --slug permit-desk --title \"Permit desk\""}
