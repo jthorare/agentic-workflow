@@ -666,6 +666,10 @@ printf '{"t":"settle","id":"x","date":"%s","lane":"l","usd":50}\n' "$(date +%F)"
 run --skills alpha --family grp --kind routing --family-max-cost-usd 1
 expect "a smaller family ceiling fits" 0 '### family grp'
 [ "$(grep -c -- '-family' "$STATE/skill-evals/spend.jsonl" || true)" = 2 ] && ok "the family set has its own reserve and settle rows" || { fail "family tally rows"; cat "$STATE/skill-evals/spend.jsonl"; }
+touch "$BIN/no-result"
+run --family grp --family-max-cost-usd 1
+expect "a family call that writes no results.json still exits 3" 3 'left no readable'
+rm -f "$BIN/no-result"
 
 echo "regex graders are JavaScript"
 mkrepo
