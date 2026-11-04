@@ -80,6 +80,7 @@ if [ -n "${TMPDIR:-}" ] && [ -w "$TMPDIR" ]; then mkdir -p "$TMPDIR/sealed" && e
 out=""; name=""; prev=""
 for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; [ "$prev" = "--case" ] && name="$a"; prev="$a"; done
 [ -z "$name" ] || echo "$name" >>"$d/cases.txt"
+[ -z "$name" ] || ls "$PWD/evals/mocks" 2>/dev/null | grep -v '\.md$' | tr '\n' ' ' >"$d/mocks.$name.txt"
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
 # a refused call (#2044) writes a results file with no cases at all and exits 0
 if [ -f "$d/empty-result" ] && [ -n "$out" ]; then mkdir -p "$(dirname "$out")"; echo '{"cases": [], "costUsd": 0, "partial": false}' >"$out"; exit 0; fi
@@ -814,6 +815,28 @@ run --skills alpha,beta --kind routing
 ARGS="$(grep -h -- '--case _heldout ' "$BIN"/args.*.txt | head -1)"
 case "$ARGS" in *"--allow-tools Bash Bash(git *) --disallow-tools Agent Edit Glob Grep NotebookEdit TaskStop WebFetch Write"*) ok "the _heldout call gets its lists' union (Read and Bash kept, the rest denied)" ;;
   *) fail "_heldout args: $ARGS" ;; esac
+mkrepo; mkclaude; mkresult 1 true 1
+printf -- '---\nmax_turns: 5\ntimeout_seconds: 60\nallowed_tools: [Skill, Bash, "mcp__plugin_aw-evals_playwright__*"]\n---\nCheck the checkout page.\n' >"$REPO/evals/alpha/behaviour/alpha-forced/prompt.md"
+git -C "$REPO" add -A && git -C "$REPO" commit -qm mocks
+run --skills alpha --kind routing --keep-temp
+M="$(cat "$BIN/mocks.alpha-near-miss.txt" 2>/dev/null || echo missing)"
+[ "$M" = "" ] && ok "a case naming no mcp__ tool runs with no mock server dirs (#2042)" || fail "alpha-near-miss saw mocks: '$M'"
+run --skills alpha --kind behaviour --keep-temp
+M="$(cat "$BIN/mocks.alpha-forced.txt" 2>/dev/null || echo missing)"
+[ "$M" = "playwright " ] && ok "a case naming playwright tools sees only the playwright mocks" || fail "alpha-forced saw mocks: '$M'"
+S="$(find "$STATE" -maxdepth 4 -type d -name 'stage-*-behaviour' | head -1)"
+if [ -n "$S" ] && [ -d "$S/evals/mocks/playwright" ] && [ -d "$S/evals/mocks/xcodebuildmcp" ] && [ ! -e "$S/evals/.mocks-off" ]; then
+  ok "after the call the kept stage has every mock dir back"
+else fail "kept stage mocks: $(ls -a "$S/evals" "$S/evals/mocks" 2>&1 | tr '\n' ' ')"; fi
+mkrepo; mkclaude; mkresult 1 true 1; echo 30 >"$BIN/sleep"
+(cd "$REPO" && exec env -i PATH="$BIN:$PATH" HOME="$TMPROOT/home" TERM=dumb LANG=C.UTF-8 AW_STATE_DIR="$STATE" bash scripts/skill-evals.sh --skills alpha --kind routing --keep-temp >/dev/null 2>&1) &
+LIVE_PID=$!
+for _ in $(seq 1 100); do [ -s "$BIN/cases.txt" ] && break; sleep 0.1; done
+kill -TERM "$LIVE_PID" 2>/dev/null || true; wait "$LIVE_PID" 2>/dev/null || true; LIVE_PID=""
+S="$(find "$STATE" -maxdepth 4 -type d -name 'stage-*-routing' | head -1)"
+if [ -s "$BIN/cases.txt" ] && [ -n "$S" ] && [ -d "$S/evals/mocks/playwright" ] && [ -d "$S/evals/mocks/xcodebuildmcp" ] && [ ! -e "$S/evals/.mocks-off" ]; then
+  ok "a run killed mid-call puts the mock dirs back (the trap)"
+else fail "killed run's stage: cases=$(cat "$BIN/cases.txt" 2>/dev/null) $(ls -a "$S/evals" "$S/evals/mocks" 2>&1 | tr '\n' ' ')"; fi
 mkrepo
 sed -i '/^allowed_tools:/d' "$REPO/evals/alpha/routing/alpha-near-miss/prompt.md"
 git -C "$REPO" commit -qam "no list"
