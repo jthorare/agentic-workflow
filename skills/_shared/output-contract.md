@@ -34,7 +34,7 @@ Under `AW_RESULT=1`, write one file:
 $AW_DIR/results/<skill>-<timestamp>.json
 ```
 
-- `$AW_DIR` is the per-repo output directory the preamble already resolved (`skills/_shared/repo-slug.sh` sets it; source it again in a new Bash call, shell state does not persist). Print it with `echo "$AW_DIR"` and put the absolute path in the Write call.
+- `$AW_DIR` is the per-repo output directory the preamble already resolved (`skills/_shared/repo-slug.sh` sets it; source it again in a new Bash call, shell state does not persist). Print it with `echo "$AW_DIR"` and put the absolute path in the Write call. The Result block's gate sources `repo-slug.sh` and prints `AW_DIR`; an empty `AW_DIR` under `AW_RESULT=1` means source `repo-slug.sh` again, never skip the file.
 - Under an eval the file must land inside the workspace, the only place the Write tool can write and graders look. The eval runner (`scripts/skill-evals.sh`) does that in its staged copy of the toolkit: it rewrites `repo-slug.sh`'s `${AW_STATE_DIR:-$HOME/.agentic-workflow}` default to the workspace root's `.aw-state` (found by walking up from `$PWD` to the directory holding `.aw-eval/`, not `$PWD` itself, so a skill that `cd`s into a subdirectory writes to the same place), so `$AW_DIR` is `<workspace root>/.aw-state/<slug>`. Skills do nothing for this beyond using `$AW_DIR`, never a hand-built `~/.agentic-workflow/...` path.
 - `<timestamp>` is `date +%Y%m%d-%H%M%S`.
 - **Write it with the Write tool**, not a shell redirect. Under an eval, Bash cannot write anything a grader sees; the Write tool can, and it creates the parent directories itself. Do not put a `mkdir -p ... &&` chain in front of it.
