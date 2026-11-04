@@ -1,0 +1,7 @@
+# Testing
+
+MARKER-KEEP-7f3a: hand-written by the team, do not regenerate.
+
+## Coverage targets
+
+Route handlers 80%, db layer 60%.
