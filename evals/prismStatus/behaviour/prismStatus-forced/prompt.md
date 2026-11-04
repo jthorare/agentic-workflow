@@ -1,7 +1,7 @@
 ---
 max_turns: 15
 timeout_seconds: 420
-allowed_tools: [Read, Glob, Grep, Skill, Bash]
+allowed_tools: [Read, Glob, Grep, Skill, Bash, Write]
 tags: [prismStatus, behaviour, forced]
 ---
 

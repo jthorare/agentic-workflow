@@ -1,7 +1,7 @@
 ---
 max_turns: 30
 timeout_seconds: 420
-allowed_tools: [Read, Glob, Grep, Skill, Agent]
+allowed_tools: [Read, Glob, Grep, Skill, Agent, Bash, Edit]
 tags: [rootCause, routing]
 ---
 

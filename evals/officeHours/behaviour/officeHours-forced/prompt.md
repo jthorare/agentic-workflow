@@ -1,7 +1,7 @@
 ---
 max_turns: 25
 timeout_seconds: 420
-allowed_tools: [Read, Write, Glob, Grep, Skill, Bash]
+allowed_tools: [Read, Write, Glob, Grep, Skill, Bash, Edit]
 tags: [officeHours, behaviour, forced]
 ---
 

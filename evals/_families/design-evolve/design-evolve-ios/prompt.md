@@ -1,7 +1,7 @@
 ---
 max_turns: 4
 timeout_seconds: 150
-allowed_tools: [Read, Glob, Grep, Skill]
+allowed_tools: [Read, Glob, Grep, Skill, Bash, Write]
 tags: [design-evolve, family, routing]
 ---
 

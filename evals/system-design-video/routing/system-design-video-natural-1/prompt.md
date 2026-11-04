@@ -1,7 +1,7 @@
 ---
 max_turns: 6
 timeout_seconds: 300
-allowed_tools: [Read, Glob, Grep, Skill, Agent, TodoWrite, AskUserQuestion]
+allowed_tools: [Read, Glob, Grep, Skill, Agent, TodoWrite, AskUserQuestion, Bash, Write]
 tags: [system-design-video, routing, natural]
 ---
 

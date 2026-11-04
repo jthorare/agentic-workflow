@@ -1,7 +1,7 @@
 ---
 max_turns: 3
 timeout_seconds: 90
-allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion]
+allowed_tools: [Read, Glob, Grep, Skill, AskUserQuestion, Bash, Write]
 tags: [family-verify, routing]
 expected_first_skill: design-verify-web
 ---

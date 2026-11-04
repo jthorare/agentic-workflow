@@ -1,7 +1,7 @@
 ---
 max_turns: 40
 timeout_seconds: 600
-allowed_tools: [Read, Write, Edit, Glob, Grep, Bash, Skill, AskUserQuestion, "mcp__plugin_aw-evals_playwright__*"]
+allowed_tools: [Read, Write, Edit, Glob, Grep, Bash, Skill, AskUserQuestion, "mcp__plugin_aw-evals_playwright__*", TaskStop]
 tags: [verify-web, behaviour]
 ---
 
