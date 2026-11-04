@@ -12,7 +12,7 @@ execution:
   - Bash
   - Skill
   - AskUserQuestion
-  - mcp__plugin_playwright_playwright__*
+  - mcp__plugin_aw-evals_playwright__*
 context:
   scaffold_script: fixture.sh
 # MCP mocks: ../../../mocks/playwright

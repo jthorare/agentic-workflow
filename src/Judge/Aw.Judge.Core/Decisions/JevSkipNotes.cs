@@ -21,7 +21,7 @@ public static class JevSkipNotes
 
     private static string? Words(string? code) => code switch
     {
-        ProviderUnavailable.ImagesOff => "image sending to Jev is off (judge config set providers jev-images true)",
+        ProviderUnavailable.ImagesOff => "image sending to Jev is off (providers.jevImages false or AW_JUDGE_JEV_IMAGES=0)",
         ProviderUnavailable.ImageOutOfLimits => "an image is outside what Jev takes (280 to 1568 px a side, 78,400 to 2,458,624 pixels)",
         ProviderUnavailable.ImageTooLarge => "Jev said the images were too large (413)",
         EvaluationReasons.NoReasons => "jev answered with a problem but no reasons",

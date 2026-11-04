@@ -7,19 +7,21 @@ using Aw.Kernel.Testing;
 namespace Aw.Judge.Tests.Providers;
 
 /// <summary>
-/// Turning image sending to Jev off without turning Jev off: config.json's providers.jevImages, and AW_JUDGE_JEV_IMAGES=0|1 in the environment
-/// that wins over it (a repo whose screenshots show customer data turns it off in its own shell). Read through the provider catalog, the
+/// Image sending to Jev is on unless config.json's providers.jevImages is false; AW_JUDGE_JEV_IMAGES=0|1 in the environment
+/// wins over it (a repo whose screenshots show customer data turns it off in its own shell). Read through the provider catalog, the
 /// one place the config and the environment meet.
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class JevImagesSwitchTests
 {
     [Theory]
+    [InlineData(null, null, true)]
+    [InlineData(true, null, true)]
     [InlineData(false, null, false)]
     [InlineData(null, "0", false)]
     [InlineData(true, "0", false)]
     [InlineData(false, "1", true)]
-    public async Task Images_off_skips_jev_with_images_off(bool? configured, string? environment, bool sendsImages)
+    public async Task Images_go_to_jev_unless_config_or_environment_turns_them_off(bool? configured, string? environment, bool sendsImages)
     {
         var handler = RecordingJevHandler.Choosing("batch");
         using var jev = JevImages.Jev(handler);
