@@ -1,7 +1,7 @@
 fire_rate: 9/9
 delta: 0.77
 last_run: 2026-11-04
-pr: #2018
+pr: #2033
 
 Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per case, preamble on.
 - fire_rate: after the "not for" fix (#1999, 20261103T123421-3980385-routing): verify-desktop-natural-1 and verify-desktop-natural-2
