@@ -1,0 +1,45 @@
+**Overall verdict: BLOCKED.** Two CRITICAL findings drive it: the member's API token sits in the share URL, and phone numbers are visible to anyone with the link.
+
+All five lenses ran and wrote their files.
+
+## Lens status
+
+| Lens | File | Status |
+|---|---|---|
+| Product | product-review.md | ✓ BLOCKED |
+| Architecture | arch-review.md | ✓ BLOCKED |
+| Design | design-review.md | ✓ BLOCKED |
+| Devex | devex-review.md | ✓ NEEDS_WORK |
+| Security | security-review.md | ✓ BLOCKED |
+
+`verdict: BLOCKED`
+
+## Top 3 next actions
+1. **Replace the API token in the URL.** Use a random share token tied to one class, with an expiry and a way to revoke it. All five lenses raised this.
+2. **Take phone numbers off the public page.** Show names or a count only. Product, architecture, design and security raised this.
+3. **Cut the admin tab and SMS config from v1.** Split the PR and re-estimate the four days. Product, architecture and devex raised this.
+
+## Other findings
+- **HIGH:**
+  - The token isn't tied to a class, so changing `812` in the URL could expose other waitlists.
+  - There is no expiry, revocation or consent from the members whose phone numbers are shared.
+  - No loading, empty or error states on either surface.
+  - Accessibility isn't covered.
+  - The sharing flow is undefined.
+  - No docs are planned for a new public endpoint.
+- **Tensions:**
+  - "Works without signing in" conflicts with security's advice to require sign-in. Using a scoped share token with names only resolves it.
+  - Design wants states for the admin tab, while product wants the tab cut. Cutting it settles that.
+
+The plan existed only as the text you gave me, so I wrote it to a `plan.md` first. There was no `engineering.md` or `TASKS.md`, and the lenses reviewed the plan text alone.
+
+The security agent's result file has a placeholder timestamp in its name (`cso-20261104-000000.json`). Other lens result files may too.
+
+Files are in `/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-ia2oCf/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist/`, and the rollup is `consolidated-review.md`.
+
+```aw-result
+{"skill":"autoplan","feature_dir":"/home/thor/.agentic-workflow/skill-evals/tmp/05mX/claude-eval-ia2oCf/home/cwd/.aw-state/home/plans/2026-11-04-share-class-waitlist","artifacts":["consolidated-review.md","product-review.md","arch-review.md","design-review.md","devex-review.md","security-review.md"],"summary":"BLOCKED: member API token in share URL and unauthenticated phone numbers","verdict":"BLOCKED","lenses":{"product":"BLOCKED","arch":"BLOCKED","design":"BLOCKED","devex":"NEEDS_WORK","security":"BLOCKED"}}
+```
+
+## Next steps
+- Edit the plan to fix the CRITICAL findings, then re-run `/autoplan`.
