@@ -38,7 +38,7 @@ Read the echoed `platform-detection.md` and apply its Detection globs (with excl
 Both sub-skills take `<screen-name>` — design-mockup-ios now **requires** it too (baselines are per-screen: `mockup-ios-<screen>.png`). Per the dispatch contract in `platform-detection.md`:
 
 1. If `<screen-name>` is empty, **stop** and ask for it — never dispatch with a blank required argument.
-2. Echo the dispatch line: `dispatch: design-mockup-web args=<args>` (or `design-mockup-ios`).
+2. Write `dispatch: design-mockup-web args=<args>` (or `design-mockup-ios`) as its own line of reply text, in the same message as the Skill call. A Bash `echo` does not count: the person reads your reply, not tool output.
 3. Dispatch literally, passing all user-supplied arguments through unchanged:
    - Web: **Invoke skill `design-mockup-web`** with args `"<original args verbatim>"`
    - iOS: **Invoke skill `design-mockup-ios`** with args `"<original args verbatim>"`
