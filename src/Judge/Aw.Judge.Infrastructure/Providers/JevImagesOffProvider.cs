@@ -33,6 +33,6 @@ internal sealed class JevImagesOffProvider(IModelProvider inner) : IModelProvide
 
         // A hook's call drops its images and goes as text: hooks never sent images before, so turning them off gives today's call.
         var result = await inner.Decide(JevImageDrops.With(question, []), JevImageDrops.With(input, []), budget, cancellationToken).ConfigureAwait(false);
-        return result with { ImageNotes = ["image sending to Jev is off (judge config set providers jev-images true); asked jev as text"] };
+        return result with { ImageNotes = ["image sending to Jev is off (providers.jevImages false or AW_JUDGE_JEV_IMAGES=0); asked jev as text"] };
     }
 }
