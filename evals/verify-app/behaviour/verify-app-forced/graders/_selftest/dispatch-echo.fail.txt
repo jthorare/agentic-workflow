@@ -1,2 +1,0 @@
-Detected a web app (package.json, Playwright config).
-dispatch: verify-web args=

@@ -1,0 +1,4 @@
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"You told me it's the iOS app, so I'm going with iOS."},{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"echo \"dispatch: verify-ios args=--yes\""}}]}}
+{"type":"user","message":{"role":"user","content":[{"tool_use_id":"t1","type":"tool_result","content":"dispatch: verify-ios args=--yes","is_error":false}]},"tool_use_result":{"stdout":"dispatch: verify-ios args=--yes","stderr":""}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Skill","input":{"skill":"aw-evals:verify-ios","args":"--yes"}}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Now running the sub-skill's own steps."}]}}
