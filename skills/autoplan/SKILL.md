@@ -134,4 +134,10 @@ All under `$AW_DIR/plans/<feature>/`: `product-review.md` · `arch-review.md` ·
 Keys: `skill` (`autoplan`), `artifacts` (absolute paths: `consolidated-review.md` and each lens's review file in the feature dir), `summary` (one line),
 plus `feature_dir` (absolute path of `$AW_DIR/plans/<feature>`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line); `lenses` (object: lens name to that lens's verdict, or `MISSING`).
 
+The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
+
+```aw-result
+{ "skill": "autoplan", "artifacts": ["<absolute consolidated-review.md path>", "<absolute path of each lens's review file>"], "summary": "<one line>", "feature_dir": "<absolute $AW_DIR/plans/<feature> path>", "verdict": "PASS | NEEDS_WORK | BLOCKED", "lenses": { "<lens>": "<its verdict, or MISSING>" } }
+```
+
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

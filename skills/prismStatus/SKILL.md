@@ -85,4 +85,10 @@ stdout only. No file written.
 Keys: `skill` (`prismStatus`), `artifacts` (absolute paths: `[]` (this skill only talks)), `summary` (one line),
 plus `healthy` (true when dashboard, MCP server and knowledge base all answer); `dashboard`, `mcp`, `kb` (each `ok` or `fail`, one per check); `version` (the version string, or `unknown`).
 
+The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
+
+```aw-result
+{ "skill": "prismStatus", "artifacts": [], "summary": "<one line>", "healthy": true, "dashboard": "ok | fail", "mcp": "ok | fail", "kb": "ok | fail", "version": "<version, or unknown>" }
+```
+
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

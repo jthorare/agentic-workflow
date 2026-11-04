@@ -118,4 +118,10 @@ Reads a plan directory's design-relevant docs (auto-discovers latest if no arg) 
 Keys: `skill` (`planDesignReview`), `artifacts` (absolute paths: `$AW_DIR/plans/<feature>/design-review.md`), `summary` (one line),
 plus `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
 
+The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
+
+```aw-result
+{ "skill": "planDesignReview", "artifacts": ["<absolute design-review.md path>"], "summary": "<one line>", "verdict": "PASS | NEEDS_WORK | BLOCKED" }
+```
+
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.

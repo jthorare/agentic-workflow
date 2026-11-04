@@ -125,4 +125,10 @@ MEDIUM = hardening gap worth fixing, non-blocking; LOW = defense-in-depth nit.
 Keys: `skill` (`cso`), `artifacts` (absolute paths: the security review (`$AW_DIR/plans/<feature>/security-review.md` or `$AW_DIR/security/<target-slug>-threat-model.md`)), `summary` (one line),
 plus `mode` (`plan | pr`); `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line).
 
+The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
+
+```aw-result
+{ "skill": "cso", "artifacts": ["<absolute security review path>"], "summary": "<one line>", "mode": "plan | pr", "verdict": "PASS | NEEDS_WORK | BLOCKED" }
+```
+
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
