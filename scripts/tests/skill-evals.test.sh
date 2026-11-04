@@ -83,9 +83,12 @@ for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; [ "$prev" = "--case" ] && 
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
 # a refused call (#2044) writes a results file with no cases at all and exits 0
 if [ -f "$d/empty-result" ] && [ -n "$out" ]; then mkdir -p "$(dirname "$out")"; echo '{"cases": [], "costUsd": 0, "partial": false}' >"$out"; exit 0; fi
-# like the real one, --case NAME leaves only that case; a call that matched none spent nothing
+# a call refused with no cases (#2045): the real CLI writes cases: [] and spends nothing
+if [ -n "$name" ] && [ "$(cat "$d/empty-result-case" 2>/dev/null)" = "$name" ] && [ -n "$out" ]; then mkdir -p "$(dirname "$out")"
+  jq '.cases = [] | .costUsd = 0' "$d/result.json" >"$out"; exit 0; fi
+# like the real one, --case NAME leaves only that case; a name the fixture lacks still runs a case of that name (the fixture's first, renamed)
 [ -f "$d/no-result" ] || { [ "$(cat "$d/no-result-case" 2>/dev/null)" = "$name" ] && [ -n "$name" ]; } || { [ -z "$out" ] || { mkdir -p "$(dirname "$out")"
-  jq --arg n "$name" 'if $n == "" then . else .cases |= map(select(.name == $n)) | if .cases == [] then .costUsd = 0 else . end end' \
+  jq --arg n "$name" 'if $n == "" then . else (if any(.cases[]; .name == $n) then . else .cases = [.cases[0] | .name = $n | if (.dir | type) == "string" then .dir |= sub("[^/]*$"; $n) else . end] end) | .cases |= map(select(.name == $n)) end' \
     "$d/result.json" >"$out"; }; }
 exit "$(cat "$d/exit" 2>/dev/null || echo 0)"
 EOF
@@ -342,8 +345,8 @@ case "$ARGS" in *--allow-tools*) fail "a Skill-only case got --allow-tools: $ARG
 [ "$(sort "$BIN/cases.txt" | tr '\n' ' ')" = "alpha-natural-1 alpha-near-miss " ] && ok "one claude call per routing case name" || { fail "case calls: $(tr '\n' ' ' <"$BIN/cases.txt")"; }
 case "$(cat "$BIN"/cwd.*.txt | head -1)" in "$STATE"/skill-evals/cache/stage-*) ok "claude runs inside the stage" ;; *) fail "claude cwd" ;; esac
 ROWS="$STATE/skill-evals/spend.jsonl"
-[ "$(jq -s '[.[] | select(.t == "reserve")] | length' "$ROWS")" = 1 ] && [ "$(jq -s '[.[] | select(.t == "settle") | .usd] | add * 1' "$ROWS")" = 1.5 ] && ok "the tally has a reserve row and a settle row with the real cost" || { fail "tally rows"; cat "$ROWS"; }
-has -E 'spend: this run \$1.50, today \$1.50 of \$60.00' <<<"$OUT" && ok "the spend line is printed" || { fail "spend line"; show; }
+[ "$(jq -s '[.[] | select(.t == "reserve")] | length' "$ROWS")" = 1 ] && [ "$(jq -s '[.[] | select(.t == "settle") | .usd] | add * 1' "$ROWS")" = 3 ] && ok "the tally has a reserve row and a settle row with the real cost" || { fail "tally rows"; cat "$ROWS"; }
+has -E 'spend: this run \$3.00, today \$3.00 of \$60.00' <<<"$OUT" && ok "the spend line is printed" || { fail "spend line"; show; }
 [ -z "$(find "$STATE/skill-evals/cache" -maxdepth 1 -name 'stage-*')" ] && ok "the stage is removed afterwards" || fail "stage left behind"
 SAVED="$(find "$STATE/skill-evals" -name results.json | head -1)"
 [ -s "$SAVED" ] && ok "results.json is saved under EVAL_HOME" || fail "no saved results.json"
@@ -462,6 +465,8 @@ jq '.cases[0].dir = null' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json
 run --skills alpha --kind routing --gate block
 expect "a jq error in the gate is a MISS with a clear line, never a pass" 4 'gate could not be evaluated'
 mkresult 1 true 1
+# the near-miss case the stub invents from the first one fires too; a good result has it not firing
+jq '.cases += [.cases[0] | .name = "alpha-near-miss" | .dir = "evals/alpha/routing/alpha-near-miss" | .arms.with |= map(.graders |= map(.passed = false))]' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
 run --skills alpha --kind routing --gate block
 expect "a result with fired runs still passes the gate" 0
 lacks "no gate line on a good result" 'ROUTING GATE MISSED'
@@ -659,9 +664,10 @@ run --skills alpha --family grp --kind routing --gate block
 expect "a missed gate under block still exits 4 when the family set was refused" 4 'ROUTING GATE MISSED: alpha'
 has -E 'FAMILY SKIPPED' <<<"$OUT" && ok "the refused family set is still reported" || { fail "family skip line lost"; show; }
 mkresult 0.5 true 1
+printf '{"t":"settle","id":"x","date":"%s","lane":"l","usd":50}\n' "$(date +%F)" >"$STATE/skill-evals/spend.jsonl"
 run --skills alpha --family grp --kind routing
 expect "a score below the threshold still exits 1 when the family set was refused" 1 'FAMILY SKIPPED'
-mkresult 1 true 1
+mkresult 1 true 0.4
 printf '{"t":"settle","id":"x","date":"%s","lane":"l","usd":50}\n' "$(date +%F)" >"$STATE/skill-evals/spend.jsonl"
 run --skills alpha --family grp --kind routing --family-max-cost-usd 1
 expect "a smaller family ceiling fits" 0 '### family grp'
@@ -670,6 +676,24 @@ touch "$BIN/no-result"
 run --family grp --family-max-cost-usd 1
 expect "a family call that writes no results.json still exits 3" 3 'left no readable'
 rm -f "$BIN/no-result"
+
+echo "a call that ran no case (#2045)"
+mkrepo; mkclaude; mkresult 1 true 1
+jq '.cases += [(.cases[0] | .name = "alpha-zz-3")]' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+mkdir -p "$REPO/evals/alpha/routing/alpha-zz-3" && cp -a "$REPO/evals/alpha/routing/alpha-natural-1/." "$REPO/evals/alpha/routing/alpha-zz-3/"
+git -C "$REPO" add -A && git -C "$REPO" commit -q -m third
+echo alpha-near-miss >"$BIN/empty-result-case"
+run --skills alpha --kind routing
+expect "a skill call that ran no case fails the run, exit 3" 3 '\| alpha-natural-1 \|'
+has -E '\| alpha-zz-3 \|' <<<"$OUT" && ok "the case after the refused one still prints its row" || { fail "row after refused call"; show; }
+has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && ok "the refused case is listed as skipped" || { fail "refused case not skipped"; show; }
+mkrepo; mkclaude; mkfamily; mkresult 1 true 0.4
+echo beta >"$BIN/empty-result-case"
+run --family grp --family-max-cost-usd 1
+expect "a family call that ran no case fails the run, exit 3" 3
+rm -f "$BIN/empty-result-case"; touch "$BIN/empty-result"
+run --family grp --family-max-cost-usd 1
+expect "a family set where every call ran no case fails the run, exit 3" 3
 
 echo "regex graders are JavaScript"
 mkrepo
