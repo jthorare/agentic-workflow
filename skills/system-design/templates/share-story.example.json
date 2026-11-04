@@ -1,0 +1,141 @@
+{
+  "title": "Dock Rebalancing",
+  "eyebrow": "TDD · Fleet ops · REBAL-12",
+  "headline": "Empty docks fill themselves,",
+  "headline_em": "before riders notice.",
+  "lede": "A planner proposes van moves each morning. Dispatchers accept them one at a time, and riders see a reward for ending a trip at a dock that needs bikes.",
+  "notes": "Two parts: the shared planner, then the two places people act on it. Ask for the three decisions at the end.",
+  "chips": [{ "text": "Lead: Sam Rivera" }, { "text": "Fleet team" }, { "text": "Design file", "href": "https://example.com/design" }],
+  "stats": [
+    { "value": "1,240", "label": "empty-dock minutes a day, city wide" },
+    { "value": "38%", "label": "of van moves go to a dock that empties again within 2 h" },
+    { "value": "<400", "label": "target empty-dock minutes a day", "goal": true }
+  ],
+  "chapters": [
+    {
+      "id": "planner",
+      "title": "The shared planner",
+      "summary": "One plan per morning, built from yesterday's trips and today's forecast.",
+      "sections": [
+        {
+          "type": "problem",
+          "title": "Rebalancing runs on a whiteboard and a radio",
+          "lede": "Dispatchers read dock counts off a map, write moves on a board and radio them to vans.",
+          "pains": [
+            { "title": "Slow", "text": "A move takes 6 minutes to decide and 40 to run, so it lands after the rush." },
+            { "title": "Not auditable", "text": "Nobody can say which moves helped; the board is wiped at noon." }
+          ]
+        },
+        {
+          "type": "whys",
+          "title": "Five whys, from the empty dock to the root",
+          "rows": [
+            { "text": "Docks near stations are empty from 08:10 to 09:30.", "evidence": "Observed · `dock_status` minute counts, last 30 days" },
+            { "text": "Vans arrive after the dock is empty, not before.", "evidence": "`van_move.completed_at` is after `dock_status.empty_since` in 71% of moves" },
+            { "text": "Moves are chosen from the live map, which only shows the present.", "evidence": "`MapView.tsx` reads `dock_status` only" },
+            { "text": "**No part of the system forecasts demand per dock, so no move can be planned ahead.**" }
+          ]
+        },
+        {
+          "type": "fix",
+          "title": "How we solve it",
+          "thesis": "Plan the moves the night before. We only need to ==forecast each dock== and ==let dispatch accept a plan==.",
+          "pieces": [
+            { "label": "1 · Forecast", "title": "Demand per dock per 15 min", "text": "Built nightly from 8 weeks of trips.", "where": "Batch job · `forecast_dock`" },
+            { "label": "2 · Plan", "title": "Van moves that cover the gaps", "text": "A solver picks moves under van capacity and shift length.", "where": "Planner service" },
+            { "label": "3 · Accept", "title": "Dispatch takes one move at a time", "text": "Accepting a move is the dispatch; no second radio call.", "where": "Dispatch console" }
+          ],
+          "not_building": ["A live auto-pilot that moves vans without a person", "A second map just for plans"],
+          "building": ["One plan table and one move table", "A rail on the existing dispatch map"],
+          "building_note": "Every move still goes through a dispatcher."
+        },
+        {
+          "type": "lifecycle",
+          "title": "A move's status is read, never written",
+          "lede": "A move stores who accepted it and when the van checked in. Try it.",
+          "states": [
+            { "name": "Proposed", "desc": "in the plan", "tone": "warn" },
+            { "name": "Accepted", "desc": "a van is on it", "tone": "good" },
+            { "name": "Done", "desc": "van checked in", "tone": "mute" },
+            { "name": "Skipped", "desc": "dispatcher said no", "tone": "bad" }
+          ],
+          "start": "Proposed",
+          "actions": [
+            { "actor": "Dispatcher", "label": "Accept", "from": ["Proposed"], "to": "Accepted" },
+            { "actor": "Dispatcher", "label": "Skip", "from": ["Proposed"], "to": "Skipped" },
+            { "actor": "Van", "label": "Check in", "from": ["Accepted"], "to": "Done" },
+            { "actor": "Van", "label": "Cancel run", "from": ["Accepted"], "to": "Proposed" }
+          ],
+          "rule": "status =\n  skipped_at   ? Skipped\n  checkin_at   ? Done\n  accepted_at  ? Accepted\n  : Proposed"
+        },
+        {
+          "type": "model",
+          "title": "Two new tables, joined to what exists",
+          "tables": [
+            { "name": "rebalance_plan", "status": "new", "cols": [{ "name": "id", "type": "uuid", "key": true }, { "name": "service_day", "type": "date" }, { "name": "built_at", "type": "timestamptz" }] },
+            { "name": "rebalance_move", "status": "new", "cols": [{ "name": "plan_id", "type": "fk", "key": true }, { "name": "from_dock_id · to_dock_id", "type": "fk" }, { "name": "bikes", "type": "int" }, { "name": "accepted_at · skipped_at", "type": "nullable" }] },
+            { "name": "dock", "status": "exists", "cols": [{ "name": "id · capacity · zone", "type": "the dock" }] },
+            { "name": "van_run", "status": "changed", "cols": [{ "name": "move_id", "type": "fk, nullable", "added": true }] }
+          ],
+          "rules": [
+            { "title": "One plan per day", "text": "Unique index on `service_day`." },
+            { "title": "Status is derived", "text": "From the two timestamps and the van check-in." }
+          ]
+        },
+        { "type": "diagram", "title": "How a plan is built", "src": "diagrams/plan.svg", "alt": "Trips feed the forecast, the forecast feeds the solver, the solver writes the plan", "caption": "Nightly, 02:00 local." }
+      ]
+    },
+    {
+      "id": "experiences",
+      "title": "Dispatch and riders",
+      "summary": "Where people act on the plan.",
+      "sections": [
+        {
+          "type": "walkthrough",
+          "title": "One move, start to finish",
+          "steps": [
+            { "who": "Dispatcher", "title": "Open the rail", "note": "The plan shows as a list beside the map.", "html": "<div class=\"panel\"><b>Plan · 14 moves</b><p>Dock 12 → Dock 3 · 6 bikes</p></div>" },
+            { "who": "Dispatcher", "title": "Accept the move", "note": "Accepting assigns the nearest free van.", "html": "<div class=\"panel\"><b>Accepted</b><p>Van 4 · ETA 12 min</p></div>" },
+            { "who": "Rider", "title": "See the reward", "note": "Riders ending at Dock 3 get 10 minutes free.", "html": "<div class=\"panel\"><b>End here, get 10 min free</b></div>" }
+          ]
+        },
+        {
+          "type": "compare",
+          "title": "Which dock does the rider app suggest?",
+          "before_label": "Today",
+          "after_label": "With the plan",
+          "before": [{ "name": "Dock 12", "sub": "closest" }, { "name": "Dock 3", "sub": "2 min further" }],
+          "after": [{ "name": "Dock 3", "sub": "needs 6 bikes · reward", "hi": true }, { "name": "Dock 12", "sub": "closest, full by 08:20" }],
+          "side": [{ "title": "Closest first", "sub": "today's order" }, { "title": "Needed docks first", "sub": "new stage, inside 3 min walk" }]
+        },
+        {
+          "type": "decisions",
+          "title": "What we agreed",
+          "items": [
+            { "q": "Who moves vans", "a": "Always a dispatcher", "text": "The plan proposes; it never dispatches." },
+            { "q": "Plan horizon", "a": "One service day", "text": "Rebuilt nightly at 02:00." },
+            { "q": "Reward", "a": "10 minutes free", "text": "Only at docks the plan marks as needed." }
+          ]
+        },
+        {
+          "type": "slices",
+          "title": "Five slices, each a reviewable PR",
+          "items": [
+            { "title": "Storage", "text": "`rebalance_plan`, `rebalance_move`, `van_run.move_id`.", "tags": ["db"] },
+            { "title": "Forecast job", "text": "Nightly demand per dock per 15 min.", "tags": ["batch"] },
+            { "title": "Planner", "text": "Solver and plan writer behind a flag.", "tags": ["service"] },
+            { "title": "Dispatch rail", "text": "List, accept, skip.", "tags": ["web"] },
+            { "title": "Rider reward", "text": "Suggest needed docks first.", "tags": ["app"] }
+          ],
+          "done": ["A test walks every move status.", "In the running app: accept a move, see the van assigned."],
+          "questions": ["Do weekend plans use their own forecast?"]
+        }
+      ]
+    }
+  ],
+  "asks": [
+    { "q": "Ship the planner before the rider reward?", "options": ["Yes, planner first", "Both together"], "notes": "I'd go planner first: the reward needs a week of plans to tune." },
+    { "q": "Who owns the nightly job's alerts?", "text": "Fleet on-call or the data team." }
+  ],
+  "links": [{ "text": "Working TDD", "href": "https://example.com/tdd" }]
+}

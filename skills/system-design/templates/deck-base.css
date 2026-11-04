@@ -1,0 +1,91 @@
+/* The eng-review deck (deck.html). Loaded after share-base.css and the token block, so slides reuse the shareable
+   TDD's blocks (whys, pieces, tables, decisions, lanes) at presentation size. Each slide is a 1280x720 canvas scaled
+   to the window; print gives one slide per page. */
+html, body.deck { height: 100%; }
+body.deck { padding: 0; overflow: hidden; background: color-mix(in srgb, var(--ink) 88%, var(--bg)); }
+.deck .stagebox { position: fixed; inset: 0; }
+.slide {
+  position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; transform: translate(-50%, -50%) scale(var(--k, 1));
+  background: var(--bg); color: var(--ink); padding: 56px 72px 64px; display: none; flex-direction: column; gap: 22px;
+  overflow: hidden; border-radius: 6px; box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+}
+.slide.on { display: flex; }
+.slide .eyebrow { font-size: 14px; }
+.slide h1 { font-size: 64px; line-height: 1.04; font-weight: 800; max-width: 20ch; }
+.slide h1 em { font-style: normal; color: var(--accent); }
+.slide h2 { font-size: 42px; line-height: 1.12; }
+.slide .lede { font-size: 21px; max-width: 60ch; }
+.slide .body { flex: 1; min-height: 0; display: grid; gap: 18px; align-content: start; }
+.slide .body.center { align-content: center; }
+.slide .foot { position: absolute; left: 72px; right: 72px; bottom: 22px; display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); }
+.slide .notes { display: none; }
+.slide.title-slide { justify-content: center; gap: 28px; }
+.slide.divider { justify-content: center; background: var(--accent-soft); }
+.slide.divider h2 { font-size: 64px; }
+.slide.divider .n { font: 800 18px var(--f-mono); color: var(--accent-ink); }
+.slide .thesis { font-size: 38px; max-width: 34ch; }
+.slide .why { padding: 12px 16px; }
+.slide .why p { font-size: 16px; }
+.slide .pieces, .slide .dgrid { gap: 16px; }
+.slide .piece p, .slide .dec p, .slide .lane p, .slide .pain p { font-size: 15px; }
+.slide .dgrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.slide .dec .a { font-size: 19px; }
+.slide .lane { padding: 12px 16px; }
+.slide .list li { font-size: 17px; }
+.slide .figure { flex: 1; min-height: 0; place-items: center; }
+.slide .figure img { max-height: 470px; max-width: 100%; }
+.slide .walk { grid-template-columns: 300px minmax(0, 1fr); }
+.slide .stage-frame { min-height: 0; height: 430px; }
+.slide .stage-frame img { max-height: 390px; }
+.slide .step-row { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; padding: 8px 10px; border-radius: 10px; color: var(--muted); font-size: 14px; }
+.slide .step-row .d { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 600 12px var(--f-mono); background: var(--surface-2); }
+.slide .step-row.on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow); font-weight: 600; }
+.slide .step-row.on .d { background: var(--accent); color: var(--on-accent); }
+.slide .ask { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--warn); border-radius: var(--radius); padding: 16px 20px; display: grid; gap: 6px; }
+.slide .ask b { font: 700 22px/1.3 var(--f-display); }
+.slide .ask ol { margin: 0; padding-left: 22px; font-size: 16px; color: var(--muted); }
+.slide .agenda { display: grid; gap: 12px; }
+.slide .agenda .part { grid-template-columns: 48px minmax(0, 1fr); align-items: center; padding: 18px 22px; }
+.slide .agenda .part b { font: 700 24px var(--f-display); }
+
+/* A slide is a fixed 1280x720 canvas: undo share-base.css's narrow-window layouts inside it (.slide .x outranks the
+   media queries' .x), so a deck on a phone or a small window scales instead of reflowing and overflowing. */
+.slide .stats { grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); }
+.slide .today, .slide .sim, .slide .versus, .slide .two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.slide .today.solo, .slide .model.solo { grid-template-columns: minmax(0, 1fr); }
+.slide .compare { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); }
+.slide .model { grid-template-columns: minmax(0, 1fr) 60px minmax(0, 1fr); gap: 0; }
+.slide .model .arrow { transform: none; justify-self: auto; }
+.slide .model.solo { gap: 12px; }
+.slide .why { grid-template-columns: 120px minmax(0, 1fr); gap: 18px; margin-left: calc(var(--i, 0) * 3%); }
+.slide .lane { grid-template-columns: 44px minmax(0, 1fr) auto; }
+.slide .lane .tags { grid-column: auto; justify-content: flex-end; }
+
+/* speaker notes overlay (N) and help */
+.notes-pane { position: fixed; left: 0; right: 0; bottom: 0; max-height: 34vh; overflow-y: auto; background: color-mix(in srgb, var(--surface) 96%, transparent); border-top: 1px solid var(--line); padding: 14px 20px; font-size: 16px; line-height: 1.5; display: none; z-index: 3; }
+.deck.show-notes .notes-pane { display: block; }
+.hud { position: fixed; right: 12px; top: 10px; font: 12px var(--f-mono); color: #c9ccd3; opacity: .7; z-index: 2; transition: opacity .6s; }
+.hud.idle { opacity: 0; }
+.deck.show-notes .hud { display: none; }
+
+/* presenter view (P opens it in a second window) */
+.presenter .stagebox, .presenter .hud, .presenter .notes-pane { display: none !important; }
+.pv { display: none; }
+.presenter .pv { display: grid; position: fixed; inset: 0; grid-template-columns: 1.6fr 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 16px; padding: 16px; background: #111418; color: #e9ecf2; font-family: var(--f-body); }
+.pv .bar { grid-column: 1 / -1; display: flex; gap: 24px; align-items: baseline; font: 600 18px var(--f-mono); }
+.pv .bar .t { font-size: 28px; }
+.pv .cur, .pv .nxt { position: relative; overflow: hidden; border-radius: 8px; background: #000; min-height: 0; }
+.pv .cur { grid-row: 2; }
+.pv .side { grid-row: 2; display: grid; grid-template-rows: 38% minmax(0, 1fr); gap: 16px; min-height: 0; }
+.pv .pnotes { overflow-y: auto; font-size: 20px; line-height: 1.5; background: #1b1f26; border-radius: 8px; padding: 16px 18px; white-space: pre-wrap; }
+.pv .slide { display: flex; box-shadow: none; }
+.pv .lbl { position: absolute; left: 8px; top: 6px; z-index: 1; font: 600 12px var(--f-mono); color: #9aa0aa; }
+
+@media print {
+  @page { size: 1280px 720px; margin: 0; }
+  html, body.deck { height: auto; overflow: visible; background: #fff; }
+  .deck .stagebox { position: static; }
+  .slide { display: flex !important; position: relative; left: 0; top: 0; transform: none; border-radius: 0; box-shadow: none; break-after: page; }
+  .hud, .notes-pane, .pv { display: none !important; }
+}
+@media (prefers-reduced-motion: reduce) { .slide { transition: none; } }

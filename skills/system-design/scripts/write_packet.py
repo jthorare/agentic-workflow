@@ -1,6 +1,7 @@
 """Write packet.json, the manifest /system-design-video reads. Re-runnable; reads what is on disk, invents nothing. Exit 0 on success; 1 with a message on bad arguments or a packet without tdd.html.
 Usage: write_packet.py <packet-dir> --slug <slug> --title "<title>"
-Layout (see SKILL.md): tdd.html, product-design.html (or <persona>.html), diagrams/<key>.mmd + <key>.svg, status.md, prs/pr-NN.md.
+Layout (see SKILL.md): tdd.html, product-design.html (or <persona>.html), tdd-share.html + deck.html + share/story.json (build_share.py),
+diagrams/<key>.mmd + <key>.svg, status.md, prs/pr-NN.md.
 Sections come from the TDD's <section id="..."> blocks, in document order, each with its heading and the diagram keys it embeds."""
 import json, os, re, sys
 
@@ -18,9 +19,10 @@ rel = lambda *p: os.path.join(*p)
 exists = lambda p: os.path.exists(os.path.join(root, p))
 
 PERSONA = {"tdd.html": "engineering", "product-design.html": "product-design"}
+SHARE = {"tdd-share.html": "share", "deck.html": "deck"}  # build_share.py output: top-level keys, not personas (no film of a deck)
 personas = {}
 for f in sorted(os.listdir(root)):
-    if f.endswith(".html") and not f.endswith(".src.html"):  # *.src.html is build_page.py input, not a page
+    if f.endswith(".html") and not f.endswith(".src.html") and f not in SHARE:  # *.src.html is build_page.py input, not a page
         personas[PERSONA.get(f, f[:-5])] = {"page": f}
 if "tdd.html" not in {v["page"] for v in personas.values()}:
     sys.exit("packet has no tdd.html")
@@ -46,6 +48,9 @@ manifest = {
     "title": arg("--title", os.path.basename(root)),
     "personas": personas,
     "status": "status.md" if exists("status.md") else None,
+    "share": "tdd-share.html" if exists("tdd-share.html") else None,
+    "deck": "deck.html" if exists("deck.html") else None,
+    "story": rel("share", "story.json") if exists(rel("share", "story.json")) else None,
     "diagrams": diagrams,
     "sections": sections,
     "prs": [rel("prs", f) for f in prs if re.fullmatch(r"pr-\d+\.md", f)],
