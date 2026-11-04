@@ -1,0 +1,3 @@
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"This repo is web."},{"type":"tool_use","id":"t1","name":"Bash","input":{"command":"echo \"dispatch: design-evolve-web args=--detect\""}}]}}
+{"type":"user","message":{"role":"user","content":[{"tool_use_id":"t1","type":"tool_result","content":"dispatch: design-evolve-web args=--detect","is_error":false}]},"tool_use_result":{"stdout":"dispatch: design-evolve-web args=--detect","stderr":""}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"tool_use","id":"t2","name":"Skill","input":{"skill":"design-evolve-web","args":"--detect"}}]}}

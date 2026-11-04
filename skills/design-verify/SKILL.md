@@ -31,7 +31,7 @@ SHARED_DIR="${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared"
 echo "$SHARED_DIR"
 ```
 
-Read `$SHARED_DIR/platform-detection.md` and apply its Detection rules, Platform Resolution table, and Dispatch contract. Dispatch literally, echoing first:
+Read `$SHARED_DIR/platform-detection.md` and apply its Detection rules, Platform Resolution table, and Dispatch contract. Dispatch literally. Write the `dispatch:` line as its own line of reply text, in the same message as the Skill call (a Bash `echo` does not count: the person reads your reply, not tool output):
 
 ```
 dispatch: design-verify-web args=<original args verbatim>
