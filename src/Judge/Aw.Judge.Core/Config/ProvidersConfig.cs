@@ -13,7 +13,7 @@ public sealed record ProvidersConfig(
 {
     /// <summary>
     /// False stops images going to Jev without turning Jev off (it keeps answering text; image calls skip it as 'images-off'); null for the
-    /// default, off. AW_JUDGE_JEV_IMAGES=0|1 wins over this.
+    /// default, on. AW_JUDGE_JEV_IMAGES=0|1 wins over this.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public bool? JevImages { get; init; }

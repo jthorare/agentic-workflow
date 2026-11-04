@@ -74,7 +74,7 @@ internal sealed class ProviderCatalog(Func<string, string?> environment, IExecut
     private static IModelProvider WithConfiguredCap(IModelProvider provider, ProvidersConfig? config) =>
         provider.Name == ProviderName.Jev && config?.InputCapChars is { } cap ? new JevInputCapProvider(provider, cap) : provider;
 
-    // AW_JUDGE_JEV_IMAGES=0|1 wins over config.json's providers.jevImages (default off); off keeps images away from Jev only.
+    // AW_JUDGE_JEV_IMAGES=0|1 wins over config.json's providers.jevImages (default on); off keeps images away from Jev only.
     private IModelProvider WithConfiguredImages(IModelProvider provider, ProvidersConfig? config)
     {
         var on = JevImagesSetting.IsOn(config, environment(JevImagesSetting.Variable));

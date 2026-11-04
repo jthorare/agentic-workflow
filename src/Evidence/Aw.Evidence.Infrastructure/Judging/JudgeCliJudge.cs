@@ -32,8 +32,8 @@ internal sealed class JudgeCliJudge(ICliRunner runner, IExecutableLocator locato
     public bool IsAvailable => FindJudge() is not null;
 
     /// <inheritdoc/>
-    // The judge's own rule (JevImagesSetting): AW_JUDGE_JEV_IMAGES=0|1 wins, else config.json's providers.jevImages, else off.
-    // 'judge config get' prints only the file, so the variable is applied here; anything unreadable is off.
+    // The judge's own rule (JevImagesSetting): AW_JUDGE_JEV_IMAGES=0|1 wins, else config.json's providers.jevImages: false is off, anything else on.
+    // 'judge config get' prints only the file, so the variable is applied here; anything unreadable (no judge, an error, bad JSON) is off.
     public async ValueTask<bool> JevImagesOnAsync(CancellationToken cancellationToken)
     {
         var variable = _environment(JevImagesVariable);
@@ -57,10 +57,10 @@ internal sealed class JudgeCliJudge(ICliRunner runner, IExecutableLocator locato
         {
             using var config = JsonDocument.Parse(outcome.Value.Stdout);
             return config.RootElement.ValueKind == JsonValueKind.Object
-                && config.RootElement.TryGetProperty("providers", out var providers)
-                && providers.ValueKind == JsonValueKind.Object
-                && providers.TryGetProperty("jevImages", out var on)
-                && on.ValueKind == JsonValueKind.True;
+                && !(config.RootElement.TryGetProperty("providers", out var providers)
+                    && providers.ValueKind == JsonValueKind.Object
+                    && providers.TryGetProperty("jevImages", out var on)
+                    && on.ValueKind == JsonValueKind.False);
         }
         catch (JsonException)
         {

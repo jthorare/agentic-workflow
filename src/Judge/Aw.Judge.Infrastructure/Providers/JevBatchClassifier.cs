@@ -8,11 +8,11 @@ namespace Aw.Judge.Infrastructure.Providers;
 /// <summary>
 /// IBatchClassifier over Jev: first the same inclusion test ProviderCatalog.Lineup applies to the chain (the allowlist and
 /// 'providers.jev: false'), so an excluded Jev is unavailable ('excluded') without a key read or a request, then the
-/// batched call. While sending images to Jev is off (config.json's providers.jevImages, or AW_JUDGE_JEV_IMAGES=0, the default) a
+/// batched call. While sending images to Jev is off (config.json's providers.jevImages, or AW_JUDGE_JEV_IMAGES=0) a
 /// batch's images are taken out before anything is sent and the result says so in ImageNotes, as a single question's call does.
 /// </summary>
 /// <param name="jev">The Jev provider (shared with the catalog, which owns it).</param>
-/// <param name="environment">Reads AW_JUDGE_JEV_IMAGES; null reads nothing, so images stay off.</param>
+/// <param name="environment">Reads AW_JUDGE_JEV_IMAGES; null reads nothing, so config.json decides.</param>
 internal sealed class JevBatchClassifier(JevProvider jev, Func<string, string?>? environment = null) : IBatchClassifier
 {
     private const string ImagesOff = "image sending to Jev is off (judge config set providers jev-images true); asked jev as text";
