@@ -1,7 +1,7 @@
 fire_rate: 9/9
 delta: 0.83
 last_run: 2026-11-04
-pr: #TBD
+pr: #2035
 
 Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per case, preamble off (the runner's default).
 - fire_rate: autoplan-natural-1, autoplan-natural-2 and the held-out case fired 3/3 each; autoplan-near-miss fired 0/3, which is
