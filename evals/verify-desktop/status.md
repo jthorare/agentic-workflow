@@ -8,8 +8,11 @@ Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per ca
   fired 3/3 each; verify-desktop-near-miss fired 0/3, which is right; the held-out case fired 0/3. Before the fix it fired 1/3
   (20261103T010649-382012-routing) and 0/3 (20261103T005929-208887-routing); in those kept traces the other held-out runs called
   design-verify-desktop. The held-out prompt asks which screens drifted from their mockups and never asks for a ship verdict, which is
-  design-verify-desktop's job, so the case doesn't separate the two skills. It stays as is and counts as a miss here; a new held-out,
-  written before any run, replaces it (#1986).
+  design-verify-desktop's job, so the case doesn't separate the two skills. It counts as a miss here.
+- Held-out replaced (#2018): the old prompt is retired, not relabeled (its text is in git history before #2018). The new one asks
+  for a go or no-go to paste into a release ticket, on a desktop app against the designer's comps. It was written before any run,
+  shares no 4-word phrase with verify-desktop's, design-verify-desktop's or verify-app's description, any desktop routing prompt or
+  the old held-out, and no description gets tuned after reading it. Its first run: not yet.
 - delta: verify-desktop-forced 1.0 with the skill, 0.23 without (20261103T005525-4015613-behaviour). Every grader passed 3/3 with the
   skill. First run: 0.69 / 0.23 (20261103T005010-3866273-behaviour): two of three runs with the skill skipped the result file and the
   aw-result block (fixed by the Done checklist), and two graders failed runs that did the right thing (pack-says-fail read a glob focus
