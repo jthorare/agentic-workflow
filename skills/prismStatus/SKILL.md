@@ -67,7 +67,7 @@ Assign `PORT` explicitly at the top of **every** bash block (shell state does no
 
 ## Outputs
 
-stdout only. No file written.
+stdout only. No file written (under AW_RESULT=1, the result file).
 
 ## Next steps
 
@@ -88,7 +88,7 @@ plus `healthy` (true when dashboard, MCP server and knowledge base all answer); 
 The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
 
 ```aw-result
-{ "skill": "prismStatus", "artifacts": [], "summary": "<one line>", "healthy": true, "dashboard": "ok | fail", "mcp": "ok | fail", "kb": "ok | fail", "version": "<version, or unknown>" }
+{ "skill": "prismStatus", "artifacts": [], "summary": "<one line>", "healthy": true | false, "dashboard": "ok | fail", "mcp": "ok | fail", "kb": "ok | fail", "version": "<version, or unknown>" }
 ```
 
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
