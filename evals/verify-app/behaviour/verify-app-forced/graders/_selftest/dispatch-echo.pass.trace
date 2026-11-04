@@ -1,0 +1,2 @@
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Web only (the iOS hits are in excluded node_modules/).\n\ndispatch: verify-web args=--yes Check that adding a book to the club's reading list still works."},{"type":"tool_use","id":"t2","name":"Skill","input":{"skill":"aw-evals:verify-web","args":"--yes Check that adding a book to the club's reading list still works."}}]}}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"Now running the sub-skill's own steps."}]}}
