@@ -5,6 +5,5 @@ execution:
   timeout_seconds: 180
   allowed_tools:
   - Read
-  - Write
 context:
   scaffold_script: fixture.sh

@@ -1,7 +1,7 @@
 ---
 max_turns: 6
 timeout_seconds: 180
-allowed_tools: [Read, Write]
+allowed_tools: [Read]
 tags: [probe, allowed-tools]
 ---
 
