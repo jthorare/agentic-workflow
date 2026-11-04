@@ -925,7 +925,8 @@ shq() { printf '%q ' "$@"; }
 # Tool grants (#2023). claude plugin eval gives every case in one call the same tools: its --allow-tools grant plus every
 # built-in, whatever the case's allowed_tools says. So the run calls it once per case name with that case's own grant:
 # --allow-tools the gated tools the list names, --disallow-tools the built-ins it doesn't. NotebookEdit counts only when named
-# (a Write grant unlocks it too); ToolSearch is never kept back, a deferred tool can't load without it.
+# (a Write grant unlocks it too); ToolSearch is never kept back, a deferred tool can't load without it. Each mock MCP server
+# under evals/mocks/ that the list names no tool of is denied whole (#2042), so a case's tool list is exactly its grant.
 EVAL_BUILTINS="Agent Bash Edit Glob Grep NotebookEdit Read Skill TaskStop WebFetch Write"
 stage_case_dirs() { # stage -> its case directories (evals/<skill>/<kind>/<case>, evals/_families/<family>/<case>)
   find "$1/evals" -mindepth 4 -maxdepth 4 -type f \( -name prompt.md -o -name case.yaml \) \
@@ -942,8 +943,8 @@ case_tools() { # case dir -> the tools its allowed_tools names (prompt.md front 
       { on = 0 }' "$c/case.yaml"
   } | sed "s/^[ \"']*//; s/[ \"']*\$//" | grep -v '^$' | sort -u
 }
-case_grant() { # tools (one per line) -> GRANT_ALLOW (the gated ones) and GRANT_DENY (the built-ins it doesn't name)
-  local t b named
+case_grant() { # tools (one per line) -> GRANT_ALLOW (the gated ones) and GRANT_DENY (the built-ins and mock servers it doesn't name)
+  local t b m named
   GRANT_ALLOW=() GRANT_DENY=()
   while IFS= read -r t; do
     case "$t" in Bash|Bash\(*|Write|Write\(*|Edit|Edit\(*|WebFetch|WebFetch\(*|mcp__*) GRANT_ALLOW+=("$t") ;; esac
@@ -958,6 +959,16 @@ EOF
 $1
 EOF
     [ "$named" = 1 ] || GRANT_DENY+=("$b")
+  done
+  for m in "$STAGE"/evals/mocks/*/; do
+    [ -d "$m" ] || continue
+    m="mcp__plugin_aw-evals_$(basename "$m")" named=0
+    while IFS= read -r t; do
+      case "$t" in "$m"|"$m"__*) named=1 ;; esac
+    done <<EOF
+$1
+EOF
+    [ "$named" = 1 ] || GRANT_DENY+=("$m")
   done
 }
 
