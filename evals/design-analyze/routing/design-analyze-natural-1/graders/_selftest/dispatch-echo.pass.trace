@@ -1,2 +1,1 @@
-{"role":"assistant","content":[{"type":"tool_use","name":"Skill","input":{"skill":"design-analyze"}}]}
-{"role":"assistant","content":[{"type":"text","text":"dispatch: design-analyze-web args=--detect"}]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"This repo is web.\n\ndispatch: design-analyze-web args=--detect"},{"type":"tool_use","id":"t2","name":"Skill","input":{"skill":"design-analyze-web","args":"--detect"}}]}}

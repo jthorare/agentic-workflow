@@ -60,7 +60,7 @@ If the app cannot be built or launched, **ask the user** rather than guessing a 
 
 ## Step 2.5: Gesture Capability Probe
 
-Per `_shared/sim-bootstrap.md`: before any tap/swipe/type step, probe whether the UI-automation workflow tools are available. If absent, print exactly:
+Per `_shared/sim-bootstrap.md`: before any tap/swipe/type step, probe whether the UI-automation workflow tools are available. If absent, print exactly, as reply text (not only in `report.md` or `pack.json`), and repeat it in your final reply:
 
 "XcodeBuildMCP UI-automation workflow not enabled — see github.com/getsentry/XcodeBuildMCP/docs/CONFIGURATION.md. Interaction steps will be SKIPPED (verdict capped at WARN)."
 
@@ -138,7 +138,7 @@ LOCK_NAME=ios-sim source "$SHARED_DIR/skill-lock.sh"; release_lock
 
 ## Verdict & Gate
 
-**A FAIL verdict forbids downstream PR-open / mark-ready** (gate rule in `_shared/evidence-pack.md`). Consumers (verify-app, specToProvenPR, shipRelease, review) read the pack — do not soften the verdict in prose. End the report with exactly:
+**A FAIL verdict forbids downstream PR-open / mark-ready** (gate rule in `_shared/evidence-pack.md`). Consumers (verify-app, specToProvenPR, shipRelease, review) read the pack — do not soften the verdict in prose. Your final reply (not only `report.md`) names every issue found, one line each with its evidence (the element id and what is wrong), plus the gesture probe message when the probe failed. End both `report.md` and the final reply with exactly these two lines, after any `aw-result` block (inside the block's JSON does not count):
 
 ```
 verdict: <PASS|WARN|FAIL>

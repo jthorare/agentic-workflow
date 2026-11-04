@@ -1,2 +1,1 @@
-{"role":"assistant","content":[{"type":"tool_use","name":"Skill","input":{"skill":"design-evolve"}}]}
-{"role":"assistant","content":[{"type":"text","text":"dispatch: design-evolve-web args=--detect"}]}
+{"type":"assistant","message":{"role":"assistant","content":[{"type":"text","text":"This repo is web.\n\ndispatch: design-evolve-web args=--detect"},{"type":"tool_use","id":"t2","name":"Skill","input":{"skill":"design-evolve-web","args":"--detect"}}]}}
