@@ -960,6 +960,36 @@ EOF
     [ "$named" = 1 ] || GRANT_DENY+=("$b")
   done
 }
+# Mock servers (#2042). --disallow-tools refuses MCP names, so a case's grant can't keep a mock server's tools out of its
+# list. Record mode (the default) starts no server that has no evals/mocks/<server>/, so each call moves the mock dirs of
+# the servers its case names no tool of to evals/.mocks-off/ (still under evals/, which the agent can't read) and puts them
+# back after the call; cleanup puts them back too, so a killed run leaves a kept stage whole.
+MOCKS_STAGE=
+mocks_off() { # stage, tools (one per line) -> MOCKS_OFF: the servers moved aside for this call
+  local m s t named
+  MOCKS_STAGE="$1" MOCKS_OFF=
+  for m in "$1"/evals/mocks/*/; do
+    [ -d "$m" ] || continue
+    s="$(basename "$m")" named=0
+    while IFS= read -r t; do
+      case "$t" in "mcp__plugin_aw-evals_$s"|"mcp__plugin_aw-evals_$s"__*) named=1 ;; esac
+    done <<EOF
+$2
+EOF
+    [ "$named" = 0 ] || continue
+    mkdir -p "$1/evals/.mocks-off" && mv "$1/evals/mocks/$s" "$1/evals/.mocks-off/$s" || die 3 "cannot move the $s mocks aside"
+    MOCKS_OFF="${MOCKS_OFF:+$MOCKS_OFF }$s"
+  done
+}
+mocks_on() { # the servers mocks_off moved aside go back to evals/mocks/
+  local m
+  [ -n "$MOCKS_STAGE" ] && [ -d "$MOCKS_STAGE/evals/.mocks-off" ] || { MOCKS_STAGE=; return 0; }
+  for m in "$MOCKS_STAGE"/evals/.mocks-off/*/; do
+    [ ! -d "$m" ] || mv "${m%/}" "$MOCKS_STAGE/evals/mocks/$(basename "$m")"
+  done
+  rmdir "$MOCKS_STAGE/evals/.mocks-off" 2>/dev/null
+  MOCKS_STAGE=
+}
 
 do_run() {
   local skills s k c kinds gl branch cases total_cases=0 dry=0 rc_final=0 below=0 partial=0 gate_missed=0 envfail=0
@@ -1018,6 +1048,7 @@ do_run() {
   esac
   cleanup() {
     local kv
+    mocks_on
     [ "$KEEP" = 0 ] || return 0
     for kv in $STAGE_LIST; do case "${kv#*=}" in "$EVAL_HOME"/cache/stage-*) find "${kv#*=}" -delete 2>/dev/null ;; esac; done
     # what the agent's tools left in TMPDIR; claude leaves its sealed dirs read-only, so open them first
@@ -1085,12 +1116,15 @@ do_run() {
       args=("${base[@]}" --case "$name" --output-dir "$co" --json "$cres" --report "$co/report.html" --max-cost-usd "$cbl")
       [ "${#GRANT_ALLOW[@]}" = 0 ] || args+=(--allow-tools "${GRANT_ALLOW[@]}")
       [ "${#GRANT_DENY[@]}" = 0 ] || args+=(--disallow-tools "${GRANT_DENY[@]}")
+      mocks_off "$STAGE" "$tools"
       if [ "$dry" = 1 ]; then
-        echo "  cd $STAGE && env -i $(shq "${pass_env[@]}") $(shq "$CLAUDE_BIN" "${args[@]}")"
+        echo "  cd $STAGE && env -i $(shq "${pass_env[@]}") $(shq "$CLAUDE_BIN" "${args[@]}")${MOCKS_OFF:+  # mocks off: $MOCKS_OFF}"
+        mocks_on
         continue
       fi
       (cd "$STAGE" && env -i "${pass_env[@]}" "$CLAUDE_BIN" "${args[@]}") >&2
       crc=$?
+      mocks_on
       # whatever the tool saved goes through the scrub before anything else reads it
       scrub_paths "$co"
       if [ ! -s "$cres" ] || ! jq -e '.cases' "$cres" >/dev/null 2>&1; then
