@@ -82,7 +82,7 @@ for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; [ "$prev" = "--case" ] && 
 [ -z "$name" ] || echo "$name" >>"$d/cases.txt"
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
 # like the real one, --case NAME leaves only that case; a call that matched none spent nothing
-[ -f "$d/no-result" ] || { [ -z "$out" ] || { mkdir -p "$(dirname "$out")"
+[ -f "$d/no-result" ] || { [ "$(cat "$d/no-result-case" 2>/dev/null)" = "$name" ] && [ -n "$name" ]; } || { [ -z "$out" ] || { mkdir -p "$(dirname "$out")"
   jq --arg n "$name" 'if $n == "" then . else .cases |= map(select(.name == $n)) | if .cases == [] then .costUsd = 0 else . end end' \
     "$d/result.json" >"$out"; }; }
 exit "$(cat "$d/exit" 2>/dev/null || echo 0)"
@@ -385,6 +385,22 @@ git -C "$REPO" checkout -q -- skills
 (cd "$REPO" && set +e; OUT="$(env -i PATH="/usr/bin:/bin" HOME="$TMPROOT/home" AW_STATE_DIR="$STATE" bash scripts/skill-evals.sh --skills alpha --kind routing 2>&1)"; echo "$?" >"$TMPROOT/rc"; echo "$OUT" >"$TMPROOT/out")
 RC="$(cat "$TMPROOT/rc")"; OUT="$(cat "$TMPROOT/out")"
 expect "claude missing exits 3" 3 'claude is not on PATH'
+
+echo "a kind's spend at its ceiling, and one failed call (#2023)"
+mkrepo; mkclaude; mkresult 1 true 9
+run --skills alpha --kind routing
+expect "spend past the kind's ceiling stops the loop and the run is partial" 2 'PARTIAL'
+[ "$(wc -l <"$BIN/cases.txt")" = 1 ] && ok "the next call never starts once the ceiling is reached" || { fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"; }
+has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && ok "the case that never ran is listed as skipped" || { fail "skipped listing"; show; }
+mkrepo; mkclaude; mkresult 1 true 1
+jq '.cases += [(.cases[0] | .name = "alpha-zz-3")]' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+mkdir -p "$REPO/evals/alpha/routing/alpha-zz-3" && cp -a "$REPO/evals/alpha/routing/alpha-natural-1/." "$REPO/evals/alpha/routing/alpha-zz-3/"
+git -C "$REPO" add -A && git -C "$REPO" commit -q -m third
+echo alpha-near-miss >"$BIN/no-result-case"
+run --skills alpha --kind routing
+expect "a failed call keeps the earlier case's row and exits 3" 3 '\| alpha-natural-1 \|'
+has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && has -F 'skipped (no result): alpha / alpha-zz-3' <<<"$OUT" && ok "the failed case and the one after it are skipped" || { fail "skipped after failed call"; show; }
+[ "$(wc -l <"$BIN/cases.txt")" = 2 ] && ok "no call after the failed one" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
 
 echo "the spend tally"
 mkrepo; mkclaude; mkresult 1 true 1

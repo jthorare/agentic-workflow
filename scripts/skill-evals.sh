@@ -1077,7 +1077,7 @@ do_run() {
     else mkdir -p "$out_dir/cases"; note "running $k cases (ablation $ab, ceiling \$$bl)"; fi
     # one call per case name (every skill's held-out is named _heldout: one call runs them all, with their lists' union)
     dirs="$(stage_case_dirs "$STAGE")"
-    cmd_rc=0 cost=0 nores=0 cbl="$bl"
+    cmd_rc=0 cost=0 nores=0 cbl="$bl" callfail=0 ceil=0 files=()
     for name in $(printf '%s\n' "$dirs" | sed 's|.*/||' | sort -u); do
       tools="$(for c in $dirs; do [ "${c##*/}" != "$name" ] || case_tools "$c"; done | sort -u)"
       case_grant "$tools"
@@ -1096,19 +1096,26 @@ do_run() {
       if [ ! -s "$cres" ] || ! jq -e '.cases' "$cres" >/dev/null 2>&1; then
         note "claude plugin eval exited $crc and left no readable $cres"
         cost="$(awk -v a="$cost" -v b="$cbl" 'BEGIN { printf "%.6f", a + b }')"   # unknown spend settles at what was left
-        nores=1; break
+        callfail=1; break   # no more calls; the cases that did finish still count
       fi
       ccost="$(jq -r '(.costUsd // 0) as $c | if $c > 0 then $c else ([.cases[] | (.arms.with // [])[], (.arms.without // [])[] | (.costUsd // 0) + (.judgeCostUsd // 0)] | add // 0) end' "$cres")"
       cost="$(awk -v a="$cost" -v b="$ccost" 'BEGIN { printf "%.6f", a + b }')"
       cbl="$(awk -v m="$bl" -v c="$cost" 'BEGIN { v = m - c; printf "%.2f", (v < 0.01 ? 0.01 : v) }')"
       case $crc in 0|1) ;; *) case $cmd_rc in 0|1) cmd_rc=$crc ;; esac ;; esac
       [ "$crc" != 2 ] || break   # the ceiling: the cases after this one stay unrun ("skipped (no result)")
+      # spend reached the kind's ceiling: the next call would start at the $0.01 floor, so stop before launching it
+      if awk -v c="$cost" -v m="$bl" 'BEGIN { exit !(c >= m) }'; then ceil=1; break; fi
     done
     [ "$dry" = 0 ] || continue
-    if [ "$nores" = 0 ] && ls "$out_dir"/cases/*/results.json >/dev/null 2>&1; then
+    for f in "$out_dir"/cases/*/results.json; do
+      [ ! -s "$f" ] || ! jq -e '.cases' "$f" >/dev/null 2>&1 || files+=("$f")
+    done
+    if [ "${#files[@]}" -gt 0 ]; then
       jq -s --argjson cost "$cost" '{costUsd: $cost, partial: (map(.partial // false) | any), cases: (map(.cases // []) | add)}' \
-        "$out_dir"/cases/*/results.json >"$results" || nores=1
+        "${files[@]}" >"$results" || nores=1
     else nores=1; fi
+    [ "$ceil" = 0 ] || partial=1
+    [ "$callfail" = 0 ] || envfail=1
     if [ "$nores" = 1 ]; then
       if [ "$isfam" = 1 ]; then fam_cost="$(awk -v a="$fam_cost" -v b="$cost" 'BEGIN { printf "%.6f", a + b }')"
       else run_cost="$(awk -v a="$run_cost" -v b="$cost" 'BEGIN { printf "%.6f", a + b }')"; fi
