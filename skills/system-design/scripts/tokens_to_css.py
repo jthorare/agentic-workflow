@@ -48,21 +48,23 @@ WANT = {
     "--warn": ["color.warning", "color.caution", "color.yellow"],
     "--bad": ["color.danger", "color.error", "color.destructive", "color.red"],
     "--f-body": ["font.family-body", "font.family-sans", "font.family", "typography.body"],
+    "--f-heading": ["font.family-display", "font.family-heading", "typography.display", "typography.heading"],
     "--f-mono": ["font.family-mono", "typography.mono"],
     "--radius": ["radius.md", "radius.base", "radius.default"],
 }
+OPTIONAL = {"--f-heading"}  # falls back to --f-body; never worth asking about
 lines, missing = [], []
 for var, names in WANT.items():
     value = next((css_value(flat_tokens[n]) for n in names if n in flat_tokens and css_value(flat_tokens[n]) is not None), None)
     if value is not None:
         lines.append(f"  {var}: {value};")
-    else:
+    elif var not in OPTIONAL:
         missing.append(var)
 # every other color is exposed too, for diagram-adjacent callouts: --color-<name>
 for n, v in flat_tokens.items():
     if n.startswith("color.") and css_value(v) is not None:
         lines.append(f"  --{n.replace('.', '-')}: {css_value(v)};")
 base = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "templates", "doc-base.css"), encoding="utf-8").read()
-# project tokens go last so they win over the neutral fallbacks at the top of doc-base.css
-open(out, "w", encoding="utf-8").write(f"/* generated from {os.path.basename(tokens_path)} by tokens_to_css.py */\n" + base + "\n:root {\n" + "\n".join(lines) + "\n}\n")
+# project tokens go last so they win over the neutral fallbacks at the top of doc-base.css; build_share.py lifts everything after the /* tokens */ marker onto the shareable pages
+open(out, "w", encoding="utf-8").write(f"/* generated from {os.path.basename(tokens_path)} by tokens_to_css.py */\n" + base + "\n/* tokens */\n:root {\n" + "\n".join(lines) + "\n}\n")
 print("wrote", out, "| unmapped (neutral fallback used):", ", ".join(missing) or "none")
