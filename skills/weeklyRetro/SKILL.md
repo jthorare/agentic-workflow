@@ -1,6 +1,6 @@
 ---
 name: weeklyRetro
-description: Weekly retrospective — analyzes git history for per-person breakdowns, shipping streaks, test health trends, and generates actionable insights.
+description: "Use when someone wants to look back on the last week or few weeks of work: who did what, how steady the shipping was, streaks, test health, where the churn and reverts are. Reads git history and writes a retro report with a JSON sibling. Not for refreshing README or CHANGELOG after a ship (syncDocs) or the status of one PR."
 argument-hint: "[--weeks N] [--team user1,user2,...]"
 allowed-tools: Bash(git *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(coverage *), Bash(date *), Bash(WEEKS=*), Bash(ls *), Bash(cat *), Bash(SHARED_DIR=*), Bash(source *), Read, Write, Glob, Grep, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -11,6 +11,8 @@ Analyzes git history to produce per-person breakdowns, shipping streaks, test he
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
+
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Step 1: Parse Arguments
 
@@ -35,7 +37,7 @@ Run the following git commands to collect raw data:
 
 ```bash
 # Commits by author (summary)
-git shortlog -sne --since="$SINCE_DATE" --no-merges
+git shortlog -sne HEAD --since="$SINCE_DATE" --no-merges
 
 # Commit details: hash, author name, author email, subject, ISO date
 git log --since="$SINCE_DATE" --no-merges --format="%H|%an|%ae|%s|%aI"
