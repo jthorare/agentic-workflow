@@ -304,6 +304,15 @@ grader_pattern() {
   pat="$(fm_get "$1" pattern)"; [ -n "$pat" ] || pat="$(fm_body "$1" | sed -e :a -e '/^\n*$/{$d;N;ba' -e '}')"
   printf '%s' "$pat"
 }
+# grader_input_matches GRADER_MD: every input_match value in the frontmatter, top level or nested (tool_order's before:/after:),
+# one per line, quotes stripped. The runner compiles them as JavaScript; the selftest's tool_used check uses perl, which accepts more.
+grader_input_matches() {
+  awk -v q="'" 'NR==1 { if ($0 != "---") exit; next }
+    /^---[ \t]*$/ { exit }
+    /^[ \t]*input_match:/ { v = $0; sub(/^[ \t]*input_match:[ \t]*/, "", v); sub(/[ \t\r]+$/, "", v)
+      if (length(v) > 1 && ((substr(v,1,1) == "\"" && substr(v,length(v),1) == "\"") || (substr(v,1,1) == q && substr(v,length(v),1) == q))) v = substr(v, 2, length(v) - 2)
+      if (v != "") print v }' "$1"
+}
 regex_verdict() { # match count -> 0 when the grader passes
   local match="$1" n="$2"
   case "$match" in
@@ -373,6 +382,13 @@ lint_case() { # case dir -> prints problems, returns the count via the exit stat
     if [ "$type" = regex ]; then
       rerr="$(regex_error "$(grader_pattern "$g")" "$(fm_get "$g" flags)")"
       if [ -n "$rerr" ]; then echo "SELFTEST-REGEX: $rel/graders/$name.md: $rerr"; bad=1; free=1; continue; fi
+    fi
+    if [ "$type" = tool_used ] || [ "$type" = tool_order ]; then
+      rerr=""
+      while IFS= read -r x; do
+        rerr="$(regex_error "$x" "")"; [ -z "$rerr" ] || break
+      done < <(grader_input_matches "$g")
+      if [ -n "$rerr" ]; then echo "SELFTEST-REGEX: $rel/graders/$name.md: input_match ${rerr#pattern }"; bad=1; free=1; continue; fi
     fi
     case "$type" in
       regex|file_exists|tool_used)
