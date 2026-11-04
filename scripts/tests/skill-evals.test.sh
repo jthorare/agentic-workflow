@@ -779,14 +779,13 @@ ARGS="$(grep -h -- '--case _heldout ' "$BIN"/args.*.txt | head -1)"
 case "$ARGS" in *"--allow-tools Bash Bash(git *) --disallow-tools Agent Edit Glob Grep NotebookEdit TaskStop WebFetch Write"*) ok "the _heldout call gets its lists' union (Read and Bash kept, the rest denied)" ;;
   *) fail "_heldout args: $ARGS" ;; esac
 mkrepo; mkclaude; mkresult 1 true 1
-mkdir -p "$REPO/evals/mocks/playwright" "$REPO/evals/mocks/xcodebuildmcp"
-printf 'mock\n' >"$REPO/evals/mocks/playwright/browser_click.md"
-printf 'mock\n' >"$REPO/evals/mocks/xcodebuildmcp/tap.md"
+jq '.mcpServers.figma = {"command": "npx", "args": ["-y", "figma-mcp"]}' "$REPO/evals/plugin/.mcp.json" >"$TMPROOT/mcp.json"
+mv "$TMPROOT/mcp.json" "$REPO/evals/plugin/.mcp.json"
 printf -- '---\nmax_turns: 5\ntimeout_seconds: 60\nallowed_tools: [Skill, Bash, "mcp__plugin_aw-evals_playwright__*"]\n---\nCheck the checkout page.\n' >"$REPO/evals/alpha/behaviour/alpha-forced/prompt.md"
 git -C "$REPO" add -A && git -C "$REPO" commit -qm mocks
 run --skills alpha --kind routing
 ARGS="$(grep -h -- '--case alpha-near-miss ' "$BIN"/args.*.txt | head -1)"
-case "$ARGS" in *"--disallow-tools "*" mcp__plugin_aw-evals_playwright mcp__plugin_aw-evals_xcodebuildmcp"*) ok "a case naming no mcp__ tool is denied every mock server (#2042)" ;;
+case "$ARGS" in *"--disallow-tools "*" mcp__plugin_aw-evals_figma mcp__plugin_aw-evals_playwright mcp__plugin_aw-evals_xcodebuildmcp"*) ok "a case naming no mcp__ tool is denied every .mcp.json server, one without a mocks dir too (#2042)" ;;
   *) fail "alpha-near-miss args: $ARGS" ;; esac
 run --skills alpha --kind behaviour
 ARGS="$(grep -h -- '--case alpha-forced ' "$BIN"/args.*.txt | head -1)"
