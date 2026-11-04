@@ -673,6 +673,18 @@ printf -- "---\ntype: tool_order\nbefore:\n  tool: Skill\n  input_match: 'alpha'
 run --skills alpha --selftest
 lacks "a JavaScript input_match under tool_order is clean" 'SELFTEST-REGEX'
 
+echo "with-only checks that fail are named, though they are not in the score (#2024)"
+mkrepo; mkclaude; mkresult 1 false 1
+jq '.cases[0].arms.with |= map(.graders += [{"name":"args-passed-through","type":"tool_used","passed":false,"withOnly":true,"scored":false,
+      "explanation":"grader threw: Invalid regular expression: unrecognized character after (?"}])' "$BIN/result.json" >"$BIN/r2.json" && mv "$BIN/r2.json" "$BIN/result.json"
+run --skills alpha --kind routing
+has -E 'NOT SCORED alpha-natural-1 / args-passed-through: failed in 2 run\(s\), with the skill only, not in the score: grader threw' <<<"$OUT" &&
+  ok "a with-only check that throws in every run gets a NOT SCORED line" || { fail "no NOT SCORED line"; show; }
+lacks "skill-fired is not repeated as NOT SCORED (the Skill fired column has it)" 'NOT SCORED alpha-natural-1 / skill-fired'
+mkresult 1 true 1
+run --skills alpha --kind routing
+lacks "no NOT SCORED line when every with-only check passes" 'NOT SCORED'
+
 echo "kept traces: one file per run"
 mkrepo; mkclaude; mkresult 1 true 1
 mkdir -p "$TMPROOT/tr/1" "$TMPROOT/tr/2" "$TMPROOT/tr/3"   # every run's trace is called trace.jsonl, as in the real tool

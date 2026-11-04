@@ -306,6 +306,8 @@ grader_pattern() {
 }
 # grader_input_matches GRADER_MD: every input_match value in the frontmatter, top level or nested (tool_order's before:/after:),
 # one per line, quotes stripped. The runner compiles them as JavaScript; the selftest's tool_used check uses perl, which accepts more.
+# Reads plain and single-quoted values exactly (every input_match in evals/ is single-quoted, none with ''); a double-quoted
+# value's escapes are not decoded, and a block scalar (| or >) is not read at all.
 grader_input_matches() {
   awk -v q="'" 'NR==1 { if ($0 != "---") exit; next }
     /^---[ \t]*$/ { exit }
@@ -861,6 +863,13 @@ print_failures() { # results.json threshold
     .cases[] | select((.aggregates.score // 0) < $th) as $c
     | [($c.arms.with // [])[] | .graders[]? | select((.scored // true) and (.passed == false))] | group_by(.name)[]
     | "FAIL \($c.name) / \(.[0].name): failed in \(length) run(s): \((.[0].explanation // .[0].evidence // "") | tostring | .[0:200])"' "$1"
+  # why: a with-only check is never in the score, so the FAIL lines above skip it; a broken one would never show (#2024).
+  # skill-fired and skill-not-fired are left out: the Skill fired column and the routing gate already report them.
+  jq -r '
+    .cases[] as $c
+    | [($c.arms.with // [])[] | .graders[]? | select((.withOnly == true) and (.passed == false) and ((.name | test("^skill-(not-)?fired$")) | not))]
+    | group_by(.name)[]
+    | "NOT SCORED \($c.name) / \(.[0].name): failed in \(length) run(s), with the skill only, not in the score: \((.[0].explanation // .[0].evidence // "") | tostring | .[0:200])"' "$1"
   jq -r '.cases[] | .arms.with[]? | select((.error // "") != "") | "ERROR \(.error | .[0:200])"' "$1" | sort -u
 }
 
