@@ -95,7 +95,7 @@ If `screens.json` exists and has `baselines` entries for one or more of the veri
 
 Do every item before you send the reply; a run that skips one is not finished, even when the verdict is FAIL or the run stopped before dispatch:
 
-1. Dispatched runs: the `dispatch: <sub-skill> args=<args>` line was echoed, and the sub-skill's pack was confirmed (or the run is FAIL with the "no evidence pack" line).
+1. Dispatched runs: the `dispatch: <sub-skill> args=<args>` line was written as reply text in the Skill call's message, and the sub-skill's pack was confirmed (or the run is FAIL with the "no evidence pack" line).
 2. Under `AW_RESULT=1`, the result file exists at `$AW_DIR/results/verify-app-<timestamp>.json` (Result block, Write tool), with the sub-skill's verdict relayed verbatim, or FAIL for a run that stopped before dispatch or got no pack (`dispatched`, `platform`, `pack` and `evidence_path` `""` when there is none).
 3. Under `AW_RESULT=1`, your final reply, sent after the last tool call (every Write done first), opens with the `aw-result` block, before the prose and `## Next steps`. A block printed before a later tool call does not count: callers read only the final reply. A sub-skill's own `aw-result` block does not stand in for yours.
 
