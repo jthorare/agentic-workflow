@@ -26,12 +26,12 @@ A change counts as a **desktop UI change** when its diff touches a detected desk
 | Web only | Invoke the web sub-skill with original arguments |
 | Desktop only | Invoke the desktop sub-skill with original arguments |
 | More than one present | If the diff touches exactly one platform's files, that platform. Otherwise **Ask the user**: "<detected platforms> project files detected. Which platform should I verify? (web / ios / desktop)" → invoke chosen (a change that spans platforms is verified once per platform) |
-| None present | **Ask the user**: "No iOS, web or desktop project files detected. Which platform should I verify? (web / ios / desktop)" → invoke chosen |
+| None present | If the request names the platform, that platform. Otherwise **Ask the user**: "No iOS, web or desktop project files detected. Which platform should I verify? (web / ios / desktop)" → invoke chosen |
 
 All user-supplied arguments are passed through to the sub-skill unchanged.
 
 ## Dispatch contract
 
-1. Echo before dispatching: `dispatch: <sub-skill> args=<args>`
+1. Before dispatching, write `dispatch: <sub-skill> args=<args>` as its own line in the reply text (not a Bash `echo`)
 2. Dispatch literally: **Invoke skill `<sub-skill>`** with args `"<original args verbatim>"`
 3. If a required argument is empty, **stop** and ask — never dispatch with a blank required arg.
