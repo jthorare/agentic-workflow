@@ -1,0 +1,4 @@
+{"type":"system","subtype":"init","session_id":"selftest"}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Skill","input":{"skill":"landAndDeploy"}}]}}
+{"type":"assistant","message":{"content":[{"type":"tool_use","name":"Bash","input":{"command":"gh pr view 18 --json number,state,mergedAt,mergeCommit"}}]}}
+{"type":"user","message":{"content":[{"type":"tool_result","content":"{\"number\":18,\"state\":\"MERGED\",\"mergedAt\":\"2026-11-01T09:12:44Z\",\"mergeCommit\":{\"oid\":\"abc123\"}}"}]}}

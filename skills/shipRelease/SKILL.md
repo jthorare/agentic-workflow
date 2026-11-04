@@ -1,6 +1,6 @@
 ---
 name: shipRelease
-description: "Ship a release — sync branch, run tests, audit coverage, push, open PR, then auto-chain → /landAndDeploy → /canary → /syncDocs (skip the deploy chain with --no-deploy)."
+description: "Use when a branch is finished and the person wants it out the door: sync it with the base branch, run the tests, check coverage, then publish the branch and create the pull request, and hand off to landAndDeploy (skip with --no-deploy). Not for waiting on a merge or deploying a PR that is already open (landAndDeploy), or watching a live release (canary)."
 argument-hint: "[--base main] [--skip-docs] [--no-deploy] [--min-coverage <pct>]"
 allowed-tools: Bash(git *), Bash(gh *), Bash(npm *), Bash(npx *), Bash(pytest *), Bash(cargo *), Bash(go *), Bash(bundle *), Bash(coverage *), Bash(ls *), Bash(cat *), Bash(mkdir *), Bash(test *), Bash(SHARED_DIR=*), Bash(source *), Read, Write, Glob, Grep, Skill, AskUserQuestion, mcp__prism-mcp__session_load_context, mcp__prism-mcp__session_save_ledger, mcp__prism-mcp__session_save_handoff
 ---
@@ -12,6 +12,8 @@ Syncs your branch, runs tests, audits coverage, pushes, opens a PR, and optional
 
 <!-- preamble -->
 **Before anything else:** read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble.md` and follow it (provider capability map, reply voice). Unless `${AW_PREAMBLE:-on}` is `off`, also read `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_preamble-extended.md` (skill index, session context) and run its **Session Close** section when this skill finishes.
+
+Every run ends with the [Result block](#result-block), whatever the outcome: done, stopped, failed, refused or a question back to the person. Run its gate now, before the first step, so you know `AW_RESULT` before anything else. Under `AW_RESULT=1` your final reply opens with the `aw-result` block; the result file never stands in for it.
 
 ## Step 1: Pre-flight Checks
 
