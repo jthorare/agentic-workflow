@@ -1,7 +1,7 @@
 fire_rate: 9/9
 delta: 0.82
 last_run: 2026-11-04
-pr: #TBD
+pr: #2029
 
 Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per case, preamble on.
 - fire_rate: verify-ios-natural-1, verify-ios-natural-2 and the held-out case fired 3/3 each; verify-ios-near-miss fired 0/3, which
