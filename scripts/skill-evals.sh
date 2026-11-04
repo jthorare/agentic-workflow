@@ -1135,6 +1135,8 @@ do_run() {
       ccost="$(jq -r '(.costUsd // 0) as $c | if $c > 0 then $c else ([.cases[] | (.arms.with // [])[], (.arms.without // [])[] | (.costUsd // 0) + (.judgeCostUsd // 0)] | add // 0) end' "$cres")"
       cost="$(awk -v a="$cost" -v b="$ccost" 'BEGIN { printf "%.6f", a + b }')"
       cbl="$(awk -v m="$bl" -v c="$cost" 'BEGIN { v = m - c; printf "%.2f", (v < 0.01 ? 0.01 : v) }')"
+      # a readable file with no case is a failed call (refused or failed to load); later calls still run
+      jq -e '.cases | length > 0' "$cres" >/dev/null 2>&1 || { note "claude plugin eval ran no case for $name (refused or failed to load)"; envfail=1; }
       case $crc in 0|1) ;; *) case $cmd_rc in 0|1) cmd_rc=$crc ;; esac ;; esac
       [ "$crc" != 2 ] || break   # the ceiling: the cases after this one stay unrun ("skipped (no result)")
       # spend reached the kind's ceiling: the next call would start at the $0.01 floor, so stop before launching it
@@ -1149,7 +1151,7 @@ do_run() {
         "${files[@]}" >"$results" || nores=1
     else
       jq -n --argjson cost "$cost" '{costUsd: $cost, partial: false, cases: []}' >"$results" || nores=1
-      [ "$isfam" = 1 ] || { note "no plugin eval call ran a case (refused or failed to load)"; envfail=1; }
+      note "no plugin eval call ran a case (refused or failed to load)"; envfail=1
     fi
     [ "$ceil" = 0 ] || partial=1
     [ "$callfail" = 0 ] || envfail=1
