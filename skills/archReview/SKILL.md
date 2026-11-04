@@ -218,4 +218,10 @@ Suggested next steps:
 Keys: `skill` (`archReview`), `artifacts` (absolute paths: the architecture review file (`$AW_DIR/plans/<timestamp>-arch-review-<slug>.md`, or the `--output` path)), `summary` (one line),
 plus `verdict` (`PASS | NEEDS_WORK | BLOCKED`, copied from the report's last `verdict:` line); `review_verdict` (`SOUND | NEEDS WORK | REDESIGN`, the report's `## Verdict` word).
 
+The block is the result file's JSON copied unchanged, never retyped from memory: the same keys and the same absolute paths (Read the file back if it is no longer in view). Its shape:
+
+```aw-result
+{ "skill": "archReview", "artifacts": ["<absolute arch review path>"], "summary": "<one line>", "verdict": "PASS | NEEDS_WORK | BLOCKED", "review_verdict": "SOUND | NEEDS WORK | REDESIGN" }
+```
+
 Contract: `${AW_TOOLKIT:-$HOME/.agentic-workflow/toolkit}/skills/_shared/output-contract.md`.
