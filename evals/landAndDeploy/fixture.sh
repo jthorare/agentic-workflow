@@ -46,7 +46,7 @@ cat > .agentic-workflow/deploy.json <<'P'
 P
 cat > .aw-eval/gh.json <<P
 [
-  {"match": ["pr", "view"],
+  {"match": ["pr", "view", "18"],
    "stdout": "{\"number\":18,\"state\":\"MERGED\",\"mergedAt\":\"2026-11-01T09:12:44Z\",\"mergeCommit\":{\"oid\":\"$SHA\"},\"headRefName\":\"late-fee-cap\",\"baseRefName\":\"main\",\"url\":\"https://example.test/toollib/pull/18\"}\n",
    "stderr": "", "exit": 0}
 ]
