@@ -81,6 +81,8 @@ out=""; name=""; prev=""
 for a in "$@"; do [ "$prev" = "--json" ] && out="$a"; [ "$prev" = "--case" ] && name="$a"; prev="$a"; done
 [ -z "$name" ] || echo "$name" >>"$d/cases.txt"
 [ ! -f "$d/sleep" ] || sleep "$(cat "$d/sleep")"
+# a refused call (#2044) writes a results file with no cases at all and exits 0
+if [ -f "$d/empty-result" ] && [ -n "$out" ]; then mkdir -p "$(dirname "$out")"; echo '{"cases": [], "costUsd": 0, "partial": false}' >"$out"; exit 0; fi
 # like the real one, --case NAME leaves only that case; a call that matched none spent nothing
 [ -f "$d/no-result" ] || { [ "$(cat "$d/no-result-case" 2>/dev/null)" = "$name" ] && [ -n "$name" ]; } || { [ -z "$out" ] || { mkdir -p "$(dirname "$out")"
   jq --arg n "$name" 'if $n == "" then . else .cases |= map(select(.name == $n)) | if .cases == [] then .costUsd = 0 else . end end' \
@@ -401,6 +403,12 @@ run --skills alpha --kind routing
 expect "a failed call keeps the earlier case's row and exits 3" 3 '\| alpha-natural-1 \|'
 has -F 'skipped (no result): alpha / alpha-near-miss' <<<"$OUT" && has -F 'skipped (no result): alpha / alpha-zz-3' <<<"$OUT" && ok "the failed case and the one after it are skipped" || { fail "skipped after failed call"; show; }
 [ "$(wc -l <"$BIN/cases.txt")" = 2 ] && ok "no call after the failed one" || fail "calls: $(tr '\n' ' ' <"$BIN/cases.txt")"
+
+echo "a refused call writes cases: [] (#2044)"
+mkrepo; mkclaude; mkresult 1 true 1
+touch "$BIN/empty-result"
+run --skills alpha --kind routing
+expect "a call whose results.json has no cases counts as a failed call and the run exits 3" 3 'skipped \(no result\): alpha / alpha-natural-1'
 
 echo "the spend tally"
 mkrepo; mkclaude; mkresult 1 true 1
