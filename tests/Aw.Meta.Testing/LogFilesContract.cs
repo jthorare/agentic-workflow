@@ -47,4 +47,24 @@ public abstract class LogFilesContract
 
         Expect.That(missing.IsError && missing.Error.Code == MetaErrors.LogUnreadable.Code, "AW-META-013");
     }
+
+    /// <summary>The latest run is the highest all-digit directory; other names and a missing directory count as none.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task The_latest_run_is_the_highest_numbered_directory()
+    {
+        var logs = Create();
+        _ = Seed(logs, "gates/1/check.log", "a");
+        _ = Seed(logs, "gates/9/check.log", "b");
+        var path = Seed(logs, "gates/10/check.log", "c");
+        _ = Seed(logs, "gates/tree/x.log", "d");
+        var directory = Path.GetDirectoryName(Path.GetDirectoryName(path))!;
+        var elsewhere = Path.Combine(Path.GetDirectoryName(directory)!, "absent");
+
+        var latest = await logs.LatestRun(directory, _none);
+        var missing = await logs.LatestRun(elsewhere, _none);
+
+        Expect.That(latest.IsSuccess && latest.Value == 10, "10 is above 9 numerically, and tree is ignored");
+        Expect.That(missing.IsSuccess && missing.Value == 0, "a missing directory is run 0");
+    }
 }

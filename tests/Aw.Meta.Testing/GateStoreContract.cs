@@ -55,6 +55,23 @@ public abstract class GateStoreContract
         Expect.That(none.IsSuccess && none.Value is null, "no run is null");
     }
 
+    /// <summary>A gate saved with a planned run number above the stored maximum keeps it; a lower or unset one takes the next number.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_planned_run_above_the_stored_maximum_is_kept()
+    {
+        var store = await Create();
+
+        var planned = await store.Save(Gate(190, "h1") with { Run = 3 }, _none);
+        var next = await store.Save(Gate(190, "h2") with { Run = 1 }, _none);
+        var unset = await store.Save(Gate(190, "h3") with { Run = 0 }, _none);
+        var latest = await store.Latest(190, _none);
+
+        Expect.That(planned.Value.Run == 3, "a planned run above the maximum is stored as planned");
+        Expect.That(next.Value.Run == 4, "a run at or below the maximum takes the next number");
+        Expect.That(unset.Value.Run == 5 && latest.Value!.Run == 5, "an unset run takes the next number");
+    }
+
     /// <summary>A gate's tested tree and its stack read back through Latest and History; a gate without them reads back with a null tree and an empty stack.</summary>
     /// <returns>A task.</returns>
     [Fact]
