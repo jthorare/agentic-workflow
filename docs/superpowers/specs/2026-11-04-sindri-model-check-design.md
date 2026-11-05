@@ -1,6 +1,6 @@
 # Sindri model check: a TLC step for recipes, and TLA+ specs of the engine
 
-Status: draft for the owner's read (owner decision 2026-11-04, routed by meta). Lane: engine. Related: the formal-verify skill (#2052, ideas), the shared TLC runner and CI job (#2057, its `--root` / `--timeout` follow-up #2067, api), the projector and heavy-slot specs (api).
+Status: draft; the owner answered §8 on 2026-11-04 (routed by meta), sign-off on the whole note pending. Lane: engine. Related: the formal-verify skill (#2052, ideas), the shared TLC runner and CI job (#2057, its `--root` / `--timeout` follow-up #2067, api), the projector and heavy-slot specs (api).
 
 ## 1. What this is
 
@@ -275,9 +275,11 @@ So a new trigger fails the build until someone adds it to a spec, or says why it
 
 Parallel: M-1 and M-3 start together, with separate builders and trees. M-1 needs only TLA+ and the runner, M-3 only C#. M-2 follows M-1. M-3u follows M-3's finding shape. M-5t starts when M-3 merges, beside M-4. M-4 follows M-3 and the first go/no-go; M-5 follows both go/no-gos. A recipe edit means the Ui tests run in that PR's gate (team rule).
 
-## 8. Open questions for the owner
+## 8. Owner decisions (2026-11-04)
 
-1. **Build-line check: the step or the profile command?** I recommend the step (§4.1): it checks only specs whose code changed, reports a typed violation, and asks when java is missing. The profile command works today with no code, but runs every spec on every change.
-2. **What happens when a box has no java?** I recommend stopping at the desk with the install line and a Check again button (§4.3), so nothing is ever called checked without TLC running. Setup installs java, so this should be rare. The other option is to skip with a warning on the run, which means a PR can merge with its model unchecked on that box (CI still checks it).
-3. **Scoping: always ask, or only for some sizes?** I recommend asking the one-question classifier on every scoping run. It's one cheap model call, and the model write only runs on yes. The other option is to ask only for items sized M or bigger.
-4. **When the scoping model finds a hole, who decides?** I recommend going back to `draft` with the trace, like any other gap, with two tries before it stops for you (§4.2). The other option is a desk stop where you read the trace first, every time.
+The owner took every recommendation (routed by meta):
+
+1. **Build-line check: the step.** `step.model.check` in `workflow.build` (§4.1), not the profile command. It checks only the specs whose code changed, reports a typed violation, and asks when java is missing.
+2. **No java on the box: stop at the desk.** `model-desk` shows the install line and **Check again** (§4.3), so nothing is called checked without TLC running. No skip-with-a-warning.
+3. **Scoping: always ask.** `model-gate` asks its one question on every scoping run, whatever the item's size. Its yes-rate is in the 30-day review (§1).
+4. **A hole the scoping model finds goes back to `draft`** with the trace, like any other gap, with 2 tries (the `models` loop) before it stops for the owner (§4.2).
