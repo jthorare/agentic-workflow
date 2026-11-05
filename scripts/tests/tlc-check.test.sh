@@ -152,6 +152,12 @@ run "$R/specs/tla/Rx"
 expect "the same paths without --root warn" 0 'warning: models path missing: code\.cs'
 run --root "$R" specs/tla/Rx
 expect "--root: a relative spec-dir is taken from <dir>" 0 '^tlc-check: Rx/Rx\.cfg: PASS'
+mkspec "$R/model" Mx; printf 'models: code.cs:9 %s/code.cs\n' "$R" >"$R/model/Mx/README.md"
+rm -f "$TMPROOT/calls"
+run --root "$R" specs/tla/Rx/ model/Mx/ "$R/model/Mx"
+expect "--root: relative folders outside specs/tla (trailing /) and absolute ones all run" 0 '^tlc-check: Mx/Mx\.cfg: PASS'
+lacks "--root: folder args' models: paths (relative and absolute) resolve" 'warning'
+if [ "$(ncalls)" = 3 ]; then ok "--root: explicit folders run, not the specs/tla default"; else fail "--root explicit: $(ncalls) calls, want 3"; fi
 run --root "$TMPROOT/nope"
 expect "--root missing exits 2" 2 'tlc-check: --root'
 : >"$TMPROOT/afile"; run --root "$TMPROOT/afile"
