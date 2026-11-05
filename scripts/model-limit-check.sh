@@ -235,7 +235,7 @@ wait_job() {
     printf '%s' "$OUT" | jq -e "$test" >/dev/null 2>&1 && return 0
     st="$(printf '%s' "$OUT" | jq -r '"\(.state)\(if .waitingOn then " on " + .waitingOn else "" end)"' 2>/dev/null)"
     case "$st" in succeeded* | failed* | cancelled*) [ "$what" = "it succeeds" ] || broke "the job $(job_id) is $st before $what; run: $(shown) jobs show $(job_id)" ;; esac
-    case "$st" in failed* | cancelled*) broke "the job $(job_id) is $st; run: $(shown) jobs show $(job_id)" ;; esac
+    case "$st" in failed* | cancelled*) broke "the job $(job_id) is $st; run: $(shown) jobs show $(job_id)   (a job left from an earlier run? $self down, then up)" ;; esac
     [ "$waited" -lt "$limit" ] || broke "the job $(job_id) was still $st after ${waited}s, not $what; run: $(shown) jobs show $(job_id)"
     sleep "$poll"; waited=$((waited + poll))
     note "the job is $st (${waited}s)"
