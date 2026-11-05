@@ -9,6 +9,8 @@ namespace Aw.Meta.Infrastructure.Files;
 internal sealed class FileLogFiles : ILogFiles
 {
     private const int BytesPerCharacterBound = 4;
+    private const int MaxClaimAttempts = 1000;
+    private const string ClaimMarker = ".claimed";
 
     public async ValueTask<Result<string>> Tail(string path, int maxCharacters, CancellationToken cancellationToken)
     {
@@ -53,6 +55,41 @@ internal sealed class FileLogFiles : ILogFiles
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             return ValueTask.FromResult<Result<int>>(MetaErrors.LogUnreadable.With(exception.Message));
+        }
+    }
+
+    public async ValueTask<Result<int>> ClaimRun(string gateDirectory, int recorded, CancellationToken cancellationToken)
+    {
+        var latest = await LatestRun(gateDirectory, cancellationToken).ConfigureAwait(false);
+        if (latest.IsError)
+        {
+            return latest;
+        }
+
+        try
+        {
+            for (var run = Math.Max(recorded, latest.Value) + 1; run <= Math.Max(recorded, latest.Value) + MaxClaimAttempts; run++)
+            {
+                var directory = Path.Combine(gateDirectory, run.ToString(CultureInfo.InvariantCulture));
+                _ = Directory.CreateDirectory(directory);
+
+                // CreateDirectory succeeds on an existing directory, so the directory alone is not exclusive: the marker file is.
+                try
+                {
+                    await new FileStream(Path.Combine(directory, ClaimMarker), FileMode.CreateNew, FileAccess.Write, FileShare.None).DisposeAsync().ConfigureAwait(false);
+                    return run;
+                }
+                catch (IOException) when (File.Exists(Path.Combine(directory, ClaimMarker)))
+                {
+                    // Another pass claimed this run first: try the next one.
+                }
+            }
+
+            return MetaErrors.LogUnreadable.With("no free run directory in " + gateDirectory);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return MetaErrors.LogUnreadable.With(exception.Message);
         }
     }
 }
