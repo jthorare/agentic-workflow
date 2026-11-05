@@ -42,3 +42,10 @@ Product change only if the owner wants SND-WF-003 even after close: not possible
 
 ## Run request for the lead (nothing run here)
 After applying the test change: `dotnet test --project tests/Aw.Sindri.Engine.Tests --filter-class "*QueuedUpdateTests"` 20x under hogs; to prove hypothesis 1/4 dump `handle.FetchHistoryEventsAsync()` event types in the failing run's output (add temporarily).
+
+## Update 2026-11-05: late-takeover theory ruled out; diagnosis added instead
+- The only failing run on record (#2074's gate, integration lane): the cancel answered, then the takeover's WaitAsync timed out after the full 20 s (`TimeoutException` at QueuedUpdateTests.cs:62, 25 s total). So the takeover got no answer at all; it did not get a wrong answer.
+- Late takeovers tried on a quiet box with worker 2 running, 3 runs each, every one answered at once: takeover sent after the cancel returned -> `WorkflowUpdateFailedException`; cancel and takeover sent back to back -> same; takeover sent after the run closed -> `RpcException` "update ... not found". So row 4 (the time-skipping server never answers an Update sent to a closed run) is false here, and a takeover sent 3 s late (0081e05, reverted) passed 5/5.
+- 20 runs of the class under CPU hogs (`yes` per core): 20/20 pass. The red has only ever shown in the full parallel integration run.
+- Not ruled out: an Update accepted but never answered when it races the run's close under real contention; worker 2's first task missing the takeover on the `MaxCachedWorkflows = 0` replay path.
+- Next: the test now dumps the run's status and history when an Update wait times out, so the next red names which of these it is.
