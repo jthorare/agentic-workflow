@@ -1,0 +1,25 @@
+schema_version: '1.1'
+name: formal-verify-forced
+tags:
+- tier-b
+- behaviour
+execution:
+  max_turns: 30
+  timeout_seconds: 900
+  allowed_tools:
+  - Read
+  - Glob
+  - Grep
+  - Write
+  - Edit
+  - Skill
+  - TodoWrite
+  - AskUserQuestion
+  - Bash
+context:
+  scaffold_script: fixture.sh
+# AW_GIT_MODE=readonly. Planted: src/jobs/claim.py reads the owner and sets it in two autocommit statements, so two workers
+# can both see owner null and both claim the job; docs/claim.md says that never happens.
+# The eval box may have no tla2tools.jar (and no network to fetch it): then verdict blocked is right, and the model, config
+# and properties must still be written and the race still named. A pass verdict is wrong either way.
+# Eval sandbox: Bash writes nothing a grader sees, so the model files are Write'd and the TLC call is graded by tool_used.

@@ -1,0 +1,2 @@
+Bash	{"command": "bash skills/formal-verify/scripts/tlc.sh doctor"}
+Bash	{"command": "cat skills/formal-verify/scripts/tlc.sh | grep check"}
