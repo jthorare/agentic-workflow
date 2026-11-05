@@ -22,6 +22,9 @@ namespace Aw.Sindri.Tests.Workflows;
 public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassFixture<SindriTimeSkippingServer>, IDisposable
 {
     private const string Launch = "LCH-0123456789abcdef0123456789abcdef";
+    private static readonly string _cancelTakeoverIds = $"cancel={new string('c', 32)}, takeover={new string('d', 32)}";
+    private static readonly string _cancelReportIds = $"cancel={new string('c', 32)}, report={new string('d', 32)}";
+    private static readonly TimeSpan _dumpDeadline = TimeSpan.FromSeconds(10);
     private static readonly TimeSpan _patience = TimeSpan.FromSeconds(20);
     private readonly WorkflowsHarness _harness = new();
 
@@ -60,9 +63,9 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
         using var second = new TemporalWorker(client, options);
         await second.ExecuteAsync(async () =>
         {
-            var cancelled = await Within(cancelling, "the cancel", handle, ct);
-            var refused = await Refused(takingOver, "the takeover", handle, ct);
-            var ended = await Within(handle.GetResultAsync(), "the workflow result", handle, ct);
+            var cancelled = await Within(cancelling, "the cancel", _cancelTakeoverIds, handle, ct);
+            var refused = await Refused(takingOver, "the takeover", _cancelTakeoverIds, handle, ct);
+            var ended = await Within(handle.GetResultAsync(), "the workflow result", _cancelTakeoverIds, handle, ct);
 
             Assert.Equal("cancelled", cancelled.Instance.State);
             Assert.Equal("SND-WF-003", Assert.IsType<ApplicationFailureException>(refused.InnerException).ErrorType);
@@ -71,7 +74,7 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
     }
 
     // why: a timeout here says nothing about the run; the dump says which await hung, what the server holds and which Updates it accepted (#2080)
-    private static async Task<T> Within<T>(Task<T> task, string what, WorkflowHandle<RecipeWorkflow, RecipeResult> handle, CancellationToken ct)
+    private static async Task<T> Within<T>(Task<T> task, string what, string ids, WorkflowHandle<RecipeWorkflow, RecipeResult> handle, CancellationToken ct)
     {
         try
         {
@@ -79,11 +82,11 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
         }
         catch (TimeoutException)
         {
-            throw await TimedOut(what, handle);
+            throw await TimedOut(what, ids, handle, ct);
         }
     }
 
-    private static async Task<WorkflowUpdateFailedException> Refused<T>(Task<T> task, string what, WorkflowHandle<RecipeWorkflow, RecipeResult> handle, CancellationToken ct)
+    private static async Task<WorkflowUpdateFailedException> Refused<T>(Task<T> task, string what, string ids, WorkflowHandle<RecipeWorkflow, RecipeResult> handle, CancellationToken ct)
     {
         try
         {
@@ -95,38 +98,34 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
         }
         catch (TimeoutException)
         {
-            throw await TimedOut(what, handle);
+            throw await TimedOut(what, ids, handle, ct);
         }
 
         throw new XunitException($"{what} was accepted but should have been refused");
     }
 
-    private static async Task<XunitException> TimedOut(string what, WorkflowHandle<RecipeWorkflow, RecipeResult> handle)
+    private static async Task<XunitException> TimedOut(string what, string ids, WorkflowHandle<RecipeWorkflow, RecipeResult> handle, CancellationToken ct)
     {
-        var lines = new List<string> { $"{what} did not answer within " + _patience.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s" };
+        var lines = new List<string>
+        {
+            $"{what} did not answer within " + _patience.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s",
+            "expected update ids: " + ids,
+            UpdateHistoryDump.MissingIdNote,
+        };
+        // why: if the server or the connection is what hung, the dump must not hang with it and lose the line above
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(ct);
+        deadline.CancelAfter(_dumpDeadline);
+        var rpc = new RpcOptions { CancellationToken = deadline.Token };
         try
         {
-            var described = await handle.DescribeAsync();
+            var described = await handle.DescribeAsync(new WorkflowDescribeOptions { Rpc = rpc });
             lines.Add("run status: " + described.Status);
-            var history = await handle.FetchHistoryAsync();
-            foreach (var e in history.Events)
-            {
-                var update = string.Empty;
-                if (e.WorkflowExecutionUpdateAdmittedEventAttributes is { } admitted)
-                {
-                    update = " update " + admitted.Request.Meta.UpdateId + " admitted";
-                }
-                else if (e.WorkflowExecutionUpdateAcceptedEventAttributes is { } accepted)
-                {
-                    update = " update " + accepted.AcceptedRequest.Meta.UpdateId + " accepted";
-                }
-                else if (e.WorkflowExecutionUpdateCompletedEventAttributes is { } completed)
-                {
-                    update = " update " + completed.Meta.UpdateId + (completed.Outcome.Failure is null ? " completed" : " rejected");
-                }
-
-                lines.Add("  #" + e.EventId.ToString(CultureInfo.InvariantCulture) + " " + e.EventType + update);
-            }
+            var history = await handle.FetchHistoryAsync(new WorkflowHistoryEventFetchOptions { Rpc = rpc });
+            lines.AddRange(UpdateHistoryDump.Describe(history.Events));
+        }
+        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
+        {
+            lines.Add("history unavailable: timed out after " + _dumpDeadline.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
@@ -170,9 +169,9 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
         using var second = new TemporalWorker(client, options);
         await second.ExecuteAsync(async () =>
         {
-            var reported = await Within(reporting, "the report", handle, ct);
-            var refused = await Refused(cancelling, "the cancel", handle, ct);
-            var ended = await Within(handle.GetResultAsync(), "the workflow result", handle, ct);
+            var reported = await Within(reporting, "the report", _cancelReportIds, handle, ct);
+            var refused = await Refused(cancelling, "the cancel", _cancelReportIds, handle, ct);
+            var ended = await Within(handle.GetResultAsync(), "the workflow result", _cancelReportIds, handle, ct);
 
             Assert.Equal("-> done", reported.Happened);
             Assert.Equal("SND-WF-003", Assert.IsType<ApplicationFailureException>(refused.InnerException).ErrorType);
