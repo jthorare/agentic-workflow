@@ -14,6 +14,10 @@
 #     temporal, temporal-test-server   scripts/binaries-lock.sh fetch <name> (sha256-verified, idempotent) into
 #                  ${AW_STATE_DIR:-~/.agentic-workflow}/cache/bin/<name>-<pin>/, where sindri serve and the tests look;
 #                  `temporal --version` is run afterwards and a failed fetch or a binary that won't run fails the script
+#     tlc.sh doctor  the model check's tools (skills/formal-verify/scripts/tlc.sh; TLC_SH replaces the path, tests): its `java:` and
+#                  `tla2tools:` lines are read (exit 3 when either is missing). A missing or older-than-11 java installs the `java`
+#                  package (JDK 21, config/lib/sys-pkg.sh; Homebrew's keg-only openjdk@21 is then linked onto PATH); a missing
+#                  jar runs `tlc.sh fetch` (pinned, sha256-verified, into ${AW_STATE_DIR:-~/.agentic-workflow}/cache/bin/)
 #   systemd-run --user --scope is checked (a warning only: the Sindri sandbox's limits need a user manager; AW_DEPS_SYSTEMD_PROBE replaces the command, tests).
 #   bwrap is also probed with a no-op sandbox (`bwrap --ro-bind / / true`); when that fails because AppArmor restricts
 #   user namespaces (Ubuntu 24.04), the /etc/apparmor.d/bwrap profile is written and loaded with sudo, then probed again.
@@ -221,6 +225,37 @@ for _bin in temporal temporal-test-server; do
     echo "  WARN: scripts/binaries-lock.sh fetch $_bin failed"; FAILED=1
   fi
 done
+
+# --- TLA+ tools (the model check, sindri's step.model.check): java 11 or newer, and the pinned tla2tools.jar ---
+TLC_SH="${TLC_SH:-$ROOT/skills/formal-verify/scripts/tlc.sh}"
+tlc_doctor() {   # sets TLC_OUT and TLC_RC from `tlc.sh doctor`, and TLC_JAVA_OK / TLC_JAR_OK from its two lines
+  TLC_RC=0; TLC_OUT="$(bash "$TLC_SH" doctor 2>&1)" || TLC_RC=$?
+  TLC_JAVA_OK=0; TLC_JAR_OK=0
+  printf '%s\n' "$TLC_OUT" | grep '^java: ok' >/dev/null && TLC_JAVA_OK=1
+  printf '%s\n' "$TLC_OUT" | grep '^tla2tools: ok' >/dev/null && TLC_JAR_OK=1
+  return 0
+}
+tlc_doctor
+if [ "$TLC_RC" != "0" ] && [ "$TLC_RC" != "3" ]; then
+  echo "  WARN: tlc.sh doctor failed (exit $TLC_RC): $(printf '%s\n' "$TLC_OUT" | tr '\n' ' ')"; FAILED=1
+elif [ "$TLC_JAVA_OK" = "1" ] && [ "$TLC_JAR_OK" = "1" ]; then
+  echo "  tlc: java and tla2tools.jar found"
+else
+  if [ "$TLC_JAVA_OK" = "1" ]; then echo "  java: found"; else
+    echo "  java: MISSING or older than 11 (model check)"
+    if aw_sys_install java && ! dry; then
+      if [ "$OS" = "Darwin" ] && command -v brew &>/dev/null; then brew link --force openjdk@21 >/dev/null 2>&1 || true; fi
+      tlc_doctor
+      if [ "$TLC_JAVA_OK" = "1" ]; then echo "  java: installed"; else echo "  WARN: java still not usable after the install"; FAILED=1; fi
+    elif ! dry; then FAILED=1; fi
+    if dry && [ "$OS" = "Darwin" ]; then echo "  [dry-run] would run: brew link --force openjdk@21"; fi
+  fi
+  if [ "$TLC_JAR_OK" = "1" ]; then echo "  tla2tools.jar: found"; elif dry; then
+    echo "  [dry-run] would run: skills/formal-verify/scripts/tlc.sh fetch"
+  elif _jar="$(bash "$TLC_SH" fetch 2>&1)"; then echo "  tla2tools.jar: ${_jar##*$'\n'}"; else
+    echo "  WARN: tlc.sh fetch failed: $(printf '%s\n' "$_jar" | tr '\n' ' ')"; FAILED=1
+  fi
+fi
 
 # --- bwrap present but unusable: apply the AppArmor profile (root), probe again ---
 BWRAP_PROFILE='abi <abi/4.0>,
