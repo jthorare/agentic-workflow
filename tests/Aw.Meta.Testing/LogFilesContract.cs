@@ -67,4 +67,38 @@ public abstract class LogFilesContract
         Expect.That(latest.IsSuccess && latest.Value == 10, "10 is above 9 numerically, and tree is ignored");
         Expect.That(missing.IsSuccess && missing.Value == 0, "a missing directory is run 0");
     }
+
+    /// <summary>Claiming twice in one gate directory gives two different runs, and both directories then count as runs.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task Claiming_twice_gives_two_different_runs()
+    {
+        var logs = Create();
+        var directory = GateDirectory(logs);
+
+        var first = await logs.ClaimRun(directory, 0, _none);
+        var second = await logs.ClaimRun(directory, 0, _none);
+        var latest = await logs.LatestRun(directory, _none);
+
+        Expect.That(first.IsSuccess && second.IsSuccess && second.Value > first.Value, "the second claim is above the first");
+        Expect.That(latest.IsSuccess && latest.Value == second.Value, "a claimed run counts for LatestRun before any log is written");
+    }
+
+    /// <summary>A claim starts above the recorded run and above the highest directory on disk.</summary>
+    /// <returns>A task.</returns>
+    [Fact]
+    public async Task A_claim_starts_above_the_recorded_run_and_the_highest_directory()
+    {
+        var logs = Create();
+        var directory = GateDirectory(logs);
+        _ = Seed(logs, "gates/7/check.log", "x");
+
+        var aboveRecorded = await logs.ClaimRun(directory, 12, _none);
+        var aboveDisk = await logs.ClaimRun(directory, 3, _none);
+
+        Expect.That(aboveRecorded.IsSuccess && aboveRecorded.Value == 13, "recorded 12 beats directory 7");
+        Expect.That(aboveDisk.IsSuccess && aboveDisk.Value == 14, "directory 13 (the first claim) beats recorded 3");
+    }
+
+    private string GateDirectory(ILogFiles logs) => Path.GetDirectoryName(Path.GetDirectoryName(Seed(logs, "gates/1/seed.log", "x"))!)!;
 }

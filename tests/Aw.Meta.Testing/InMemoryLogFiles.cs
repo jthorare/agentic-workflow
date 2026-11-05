@@ -29,6 +29,9 @@ public sealed class InMemoryLogFiles : ILogFiles
     }
 
     /// <inheritdoc />
+    public ValueTask<Result<int>> ClaimRun(string gateDirectory, int recorded, CancellationToken cancellationToken) => throw new NotSupportedException();
+
+    /// <inheritdoc />
     public ValueTask<Result<string>> Tail(string path, int maxCharacters, CancellationToken cancellationToken) =>
         _files.TryGetValue(path, out var text)
             ? Done.Of(text.Length <= maxCharacters ? text : text[^maxCharacters..])

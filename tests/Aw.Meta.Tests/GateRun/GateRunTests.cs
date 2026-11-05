@@ -253,6 +253,43 @@ public sealed class GateRunTests
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Two_passes_planned_before_either_records_get_their_own_run_and_directory()
+    {
+        using var disk = new TempDirectory();
+        await SaveParallelGate(parallel: null, new StepConfig("check", ["scripts/check.sh"]));
+        ScriptGit();
+        var firstStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var firstMayWrite = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var calls = 0;
+        _ = _world.Runner.When("scripts/check.sh", async request =>
+        {
+            if (Interlocked.Increment(ref calls) == 1)
+            {
+                // The first pass is planned and its step has started, but nothing is on disk yet: the second pass plans now.
+                firstStarted.SetResult();
+                await firstMayWrite.Task.WaitAsync(TimeSpan.FromSeconds(10), TimeProvider.System, TestContext.Current.CancellationToken);
+            }
+
+            _ = Directory.CreateDirectory(Path.GetDirectoryName(request.LogFile!)!);
+            await File.AppendAllTextAsync(request.LogFile!, "pass\n", TestContext.Current.CancellationToken);
+            _ = firstMayWrite.TrySetResult();
+            return new CommandResult(0, string.Empty, string.Empty, TimedOut: false);
+        });
+        var service = ServiceAt(new MetaPaths("/state/meta", disk.Path, "/bin/heavy", "gh"));
+
+        var first = Task.Run(async () => await service.Handle(new GateRunRequest(190, []), CancellationToken.None), TestContext.Current.CancellationToken);
+        await firstStarted.Task.WaitAsync(TimeSpan.FromSeconds(10), TimeProvider.System, TestContext.Current.CancellationToken);
+        var second = await service.Handle(new GateRunRequest(190, []), CancellationToken.None);
+        var firstResult = await first;
+
+        Assert.True(firstResult.IsSuccess && second.IsSuccess);
+        var passes = new[] { firstResult.Value.Gate, second.Value.Gate };
+        Assert.Equal(2, passes.Select(g => g.Run).Distinct().Count());
+        Assert.All(passes, g => Assert.Equal(Path.Combine(disk.Path, "190", g.Run.ToString(CultureInfo.InvariantCulture), "check.log"), g.Steps[0].Log));
+        Assert.All(passes, g => Assert.Equal("pass\n", File.ReadAllText(g.Steps[0].Log)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Scopes_named_on_the_command_line_replace_the_plan()
     {
         await _world.ReadyWithGate();

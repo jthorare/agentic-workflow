@@ -55,4 +55,6 @@ internal sealed class FileLogFiles : ILogFiles
             return ValueTask.FromResult<Result<int>>(MetaErrors.LogUnreadable.With(exception.Message));
         }
     }
+
+    public ValueTask<Result<int>> ClaimRun(string gateDirectory, int recorded, CancellationToken cancellationToken) => throw new NotSupportedException();
 }
