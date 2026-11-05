@@ -57,7 +57,8 @@ public sealed class InMemoryViewStore(JsonSerializerOptions options) : IViewStor
     }
 
     /// <inheritdoc/>
-    public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at, CancellationToken cancellationToken)
+    public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at, long rebuiltThrough,
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(views);
         lock (_gate)
@@ -67,7 +68,7 @@ public sealed class InMemoryViewStore(JsonSerializerOptions options) : IViewStor
                 _tables[view].Clear();
             }
 
-            _state = new ProjectorState(0, schemaVersion, at, Rebuilding: true, StalledAt: null, StalledType: null, Fresh: false);
+            _state = new ProjectorState(0, schemaVersion, at, Rebuilding: true, StalledAt: null, StalledType: null, Fresh: false, RebuiltThrough: rebuiltThrough);
             return ValueTask.FromResult<Result<ProjectorState>>(_state);
         }
     }

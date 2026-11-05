@@ -90,7 +90,7 @@ public sealed class ViewsFileTests : IDisposable
         Assert.Contains("view_decisions", Tables(path), StringComparer.Ordinal);
         Assert.Contains("view_needs_you", Tables(path), StringComparer.Ordinal);
         Assert.Equal(1, Count(path, "view_items"));   // the migration only adds tables
-        var reset = (await views.Store.Reset(ViewNames.All, ViewSchema.Version, new FakeTimeProvider().GetUtcNow(), Token)).Value;
+        var reset = (await views.Store.Reset(ViewNames.All, ViewSchema.Version, new FakeTimeProvider().GetUtcNow(), 0, Token)).Value;
         Assert.True(reset is { Cursor: 0, Rebuilding: true, SchemaVersion: ViewSchema.Version });
         Assert.Equal(0, Count(path, "view_items"));
     }
@@ -111,7 +111,7 @@ public sealed class ViewsFileTests : IDisposable
         Assert.Equal(3, opened.SchemaVersion);   // the file's own version: the projector sees it differs and resets
         Assert.Contains("view_jobs", Tables(path), StringComparer.Ordinal);
         Assert.Equal(1, Count(path, "view_services"));   // the migration only adds the table
-        var reset = (await views.Store.Reset(ViewNames.All, ViewSchema.Version, new FakeTimeProvider().GetUtcNow(), Token)).Value;
+        var reset = (await views.Store.Reset(ViewNames.All, ViewSchema.Version, new FakeTimeProvider().GetUtcNow(), 0, Token)).Value;
         Assert.True(reset is { Cursor: 0, Rebuilding: true, SchemaVersion: ViewSchema.Version });
         Assert.Equal(0, Count(path, "view_services"));
     }
@@ -139,7 +139,7 @@ public sealed class ViewsFileTests : IDisposable
 
         Assert.Equal(1, opened.SchemaVersion);   // the file's own version: the projector sees it differs and resets
         Assert.Contains("view_items", Tables(path), StringComparer.Ordinal);
-        var reset = (await views.Store.Reset(ViewNames.All, ViewSchema.Version, new FakeTimeProvider().GetUtcNow(), Token)).Value;
+        var reset = (await views.Store.Reset(ViewNames.All, ViewSchema.Version, new FakeTimeProvider().GetUtcNow(), 0, Token)).Value;
         Assert.True(reset is { Cursor: 0, Rebuilding: true, SchemaVersion: ViewSchema.Version });
     }
 

@@ -97,7 +97,7 @@ public sealed class SqliteJobViewsTests : IDisposable
         }
 
         var incremental = Json((await _views.Reader.List<JobRow>(ViewNames.Jobs, Token)).Value);
-        _ = (await _views.Store.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), Token)).Value;
+        _ = (await _views.Store.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), 0, Token)).Value;
         Assert.Null((await _views.Store.Apply(ledger, projections, _h.Clock.GetUtcNow(), Token)).Value.Stall);
         _ = (await _views.Store.FinishRebuild(Token)).Value;
         var rebuilt = Json((await _views.Reader.List<JobRow>(ViewNames.Jobs, Token)).Value);
