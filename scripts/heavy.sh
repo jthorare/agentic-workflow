@@ -123,12 +123,17 @@ reclaim_slot() {
 
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
-  local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" reserve_blocked
+  local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" reserve_blocked usable
   while [ -z "$got" ]; do
     reserve_blocked=0
     # Re-read the cap and the reservation each pass: a drained queue releases waiting lane jobs promptly, and a lowered cap
     # keeps them off the slots above it (nothing running is pre-empted).
-    if [ "$label" = box-wide ]; then slots="$(heavy_cap "$GIVEN_SLOTS")"; RESERVE="$(heavy_reserve "$slots")"; fi
+    if [ "$label" = box-wide ]; then
+      slots="$(heavy_cap "$GIVEN_SLOTS")"; RESERVE="$(heavy_reserve "$slots")"
+      # The reserve also stays below the slots free memory allows this pass, so a lane job keeps one (#2060).
+      usable=1; while [ "$usable" -lt "$slots" ] && mem_ok "$((usable + 1))"; do usable=$((usable + 1)); done
+      [ "$RESERVE" -gt "$((usable - 1))" ] && RESERVE=$((usable - 1))
+    fi
     for k in $(seq 1 "$slots"); do
       if [ "$k" -eq 1 ]; then d="$base"; else d="$base.$k"; fi
       # Box-wide slots above 1 need the memory guard; the per-session pool doesn't.
