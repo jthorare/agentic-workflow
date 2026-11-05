@@ -144,7 +144,7 @@ the other:
 - aw-meta **computes** the reservation from the **merge-queue depth**: the pull requests lanes said are `ready` that are not yet
   merged, ended or dropped (what `status` lists as the merge queue), sized against the team's `heavy.cap` (default 3; keep it equal
   to the wrapper's own cap). The tier with the highest `minDepth` the depth reaches decides; with the defaults a depth of 3 or 4
-  reserves 1 slot, 5 or 6 reserves 2, 7 or more reserves all of them (`"all"` is `heavy.cap`), and 0 to 2 reserves none. It
+  reserves 1 slot, 5 or 6 reserves 2, 7 or more reserves all but one (`"all"` is `heavy.cap`; every tier is held to `heavy.cap` less one so a lane job always keeps a slot), and 0 to 2 reserves none. It
   keeps the result, the depth behind it and the time in `heavy-reserve` in the team's state directory (`meta/teams/<team>/`, or
   `meta/` for a legacy team), and recomputes it wherever the queue changes: before each `gate-run`, after each `merge-run` (even
   when its log line fails), after each `queue-drop`, on every `watch` poll (a ready message, a drop, or a pull request seen
@@ -154,9 +154,9 @@ the other:
 - **Applying it is the meta's step**: `gate-run`, `status` and `health` print `heavy reservation: N of C slots (queue depth D) - set
   it with meta-gate-reserve A`, and the meta runs `meta-gate-reserve A` (the installed bash script, the only writer of the
   wrapper's file) before each gate. `A` is **not the queue depth**: the script has its own fixed tiers (depth 0-2 reserves 0, 3-4
-  reserves 1, 5-6 reserves 2, 7 or more reserves its cap), which differ from a team's custom `heavy.reserve` tiers or `heavy.cap`.
-  aw-meta prints the argument that makes the script keep the slots it computed: 0 slots prints 0, 1 prints 3, 2 prints 5, and all
-  of them (N = C) prints 7. A count between 2 and the cap has no argument; it prints 5 (the script keeps 2, never more than computed).
+  reserves 1, 5-6 reserves 2, 7 or more reserves its cap less one), which differ from a team's custom `heavy.reserve` tiers or `heavy.cap`.
+  aw-meta prints the argument that makes the script keep the slots it computed: 0 slots prints 0, 1 prints 3, 2 prints 5, and the cap less one
+  (from 3) prints 7. A count in between has no argument; it prints 5 (the script keeps 2, never more than computed).
   `gate-run` computes before its steps and prints the line after them, so to apply the reservation before a gate read it from
   `status` (which recomputes it). The wrapper then gives every expensive job *without* the priority only the
   slots above the reservation, and does not count a wait for the reservation toward its timeout. A line ending `[stale: computed
