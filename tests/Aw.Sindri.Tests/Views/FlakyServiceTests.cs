@@ -92,6 +92,7 @@ public sealed class FlakyServiceTests : IDisposable
         var live = (await app.Services.GetRequiredService<IProfileSource>().Load(Token)).Value;
         _ = (await app.Services.GetRequiredService<IApprovals>().Save(live, Token)).Value;
         _ = Pipeline.Configure(app);
+        FirstPass.Publish(app.Services);
         await app.StartAsync(Token);
         return app;
     }

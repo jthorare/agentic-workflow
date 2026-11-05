@@ -18,6 +18,7 @@ using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Server;
+using Aw.Sindri.Tests.Views;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -90,6 +91,7 @@ public sealed class ListedNextSlotTests : IDisposable
         var live = (await app.Services.GetRequiredService<IProfileSource>().Load(Token)).Value;
         _ = (await app.Services.GetRequiredService<IApprovals>().Save(live, Token)).Value;
         _ = Pipeline.Configure(app);
+        FirstPass.Publish(app.Services);
         await app.StartAsync(Token);
         return app;
     }
