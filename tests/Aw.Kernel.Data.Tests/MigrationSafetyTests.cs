@@ -186,6 +186,24 @@ public sealed class MigrationSafetyTests
     }
 
     [Fact]
+    public async Task An_upgrade_backup_is_readable_only_by_its_owner()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes");
+            return;
+        }
+
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+
+        var mode = File.GetUnixFileMode(db.Path + ".bak-v1");
+
+        Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, mode);
+    }
+
+    [Fact]
     public async Task Two_runners_at_once_apply_each_migration_once_and_both_report_the_final_version()
     {
         using var db = new TempDatabase();
