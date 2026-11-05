@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel.Testing;
 using Aw.Sindri.Core.Workflow.Engine;
 using Aw.Sindri.Core.Workflow.Engine.Triggers;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Temporalio.Client;
 using Temporalio.Exceptions;
 using Temporalio.Worker;
+using Xunit.Sdk;
 
 namespace Aw.Sindri.Tests.Workflows;
 
@@ -58,14 +60,80 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
         using var second = new TemporalWorker(client, options);
         await second.ExecuteAsync(async () =>
         {
-            var cancelled = await cancelling.WaitAsync(_patience, ct);
-            var refused = await Assert.ThrowsAsync<WorkflowUpdateFailedException>(() => takingOver.WaitAsync(_patience, ct));
-            var ended = await handle.GetResultAsync().WaitAsync(_patience, ct);
+            var cancelled = await Within(cancelling, "the cancel", handle, ct);
+            var refused = await Refused(takingOver, "the takeover", handle, ct);
+            var ended = await Within(handle.GetResultAsync(), "the workflow result", handle, ct);
 
             Assert.Equal("cancelled", cancelled.Instance.State);
             Assert.Equal("SND-WF-003", Assert.IsType<ApplicationFailureException>(refused.InnerException).ErrorType);
             Assert.Equal("cancelled", ended.State);
         }, ct);
+    }
+
+    // why: a timeout here says nothing about the run; the dump says which await hung, what the server holds and which Updates it accepted (#2080)
+    private static async Task<T> Within<T>(Task<T> task, string what, WorkflowHandle<RecipeWorkflow, RecipeResult> handle, CancellationToken ct)
+    {
+        try
+        {
+            return await task.WaitAsync(_patience, ct);
+        }
+        catch (TimeoutException)
+        {
+            throw await TimedOut(what, handle);
+        }
+    }
+
+    private static async Task<WorkflowUpdateFailedException> Refused<T>(Task<T> task, string what, WorkflowHandle<RecipeWorkflow, RecipeResult> handle, CancellationToken ct)
+    {
+        try
+        {
+            _ = await task.WaitAsync(_patience, ct);
+        }
+        catch (WorkflowUpdateFailedException refused)
+        {
+            return refused;
+        }
+        catch (TimeoutException)
+        {
+            throw await TimedOut(what, handle);
+        }
+
+        throw new XunitException($"{what} was accepted but should have been refused");
+    }
+
+    private static async Task<XunitException> TimedOut(string what, WorkflowHandle<RecipeWorkflow, RecipeResult> handle)
+    {
+        var lines = new List<string> { $"{what} did not answer within " + _patience.TotalSeconds.ToString("0", CultureInfo.InvariantCulture) + " s" };
+        try
+        {
+            var described = await handle.DescribeAsync();
+            lines.Add("run status: " + described.Status);
+            var history = await handle.FetchHistoryAsync();
+            foreach (var e in history.Events)
+            {
+                var update = string.Empty;
+                if (e.WorkflowExecutionUpdateAdmittedEventAttributes is { } admitted)
+                {
+                    update = " update " + admitted.Request.Meta.UpdateId + " admitted";
+                }
+                else if (e.WorkflowExecutionUpdateAcceptedEventAttributes is { } accepted)
+                {
+                    update = " update " + accepted.AcceptedRequest.Meta.UpdateId + " accepted";
+                }
+                else if (e.WorkflowExecutionUpdateCompletedEventAttributes is { } completed)
+                {
+                    update = " update " + completed.Meta.UpdateId + (completed.Outcome.Failure is null ? " completed" : " rejected");
+                }
+
+                lines.Add("  #" + e.EventId.ToString(CultureInfo.InvariantCulture) + " " + e.EventType + update);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            lines.Add($"history unavailable: {ex.GetType().Name}: {ex.Message}");
+        }
+
+        return new XunitException(string.Join(Environment.NewLine, lines));
     }
 
     [Fact]
@@ -102,9 +170,9 @@ public sealed class QueuedUpdateTests(SindriTimeSkippingServer server) : IClassF
         using var second = new TemporalWorker(client, options);
         await second.ExecuteAsync(async () =>
         {
-            var reported = await reporting.WaitAsync(_patience, ct);
-            var refused = await Assert.ThrowsAsync<WorkflowUpdateFailedException>(() => cancelling.WaitAsync(_patience, ct));
-            var ended = await handle.GetResultAsync().WaitAsync(_patience, ct);
+            var reported = await Within(reporting, "the report", handle, ct);
+            var refused = await Refused(cancelling, "the cancel", handle, ct);
+            var ended = await Within(handle.GetResultAsync(), "the workflow result", handle, ct);
 
             Assert.Equal("-> done", reported.Happened);
             Assert.Equal("SND-WF-003", Assert.IsType<ApplicationFailureException>(refused.InnerException).ErrorType);
