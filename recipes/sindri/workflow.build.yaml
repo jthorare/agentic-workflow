@@ -31,7 +31,7 @@ states:
   model:      { displayName: "Check the design model", why: "Runs the design models of the code this change touches through a model checker, so a hole in the design shows before review.", kind: active, step: { use: step.model.check, with: { scope: touched } }, timeout: { after: 20m, then: park },
                 next: "Check the design models {item}'s change touches (up to 10 min)." }
   model-desk: { displayName: "The model check can't run", why: "The model checker isn't available on this machine, so the design model can't be checked.", kind: active, step: step.model.desk, timeout: { after: 14d, then: park },
-                onOutcome: { again: "Check again", stop: "Stop" },
+                onOutcome: { again: "Runs the model check again on the same commit.", stop: "Stops the build here; nothing ships." },
                 next: "The model check can't run for {item} (see the finding): fix the machine and check again, or stop." }
   scope-desk: { displayName: "Allow a file outside the plan?", why: "A change outside the plan needs your OK.", kind: active, step: step.build.scope-desk, timeout: { after: 14d, then: park },
                 next: "{item}'s builder needs a file outside its allowed files: allow it with a reason, have it reverted, or stop." }
