@@ -174,13 +174,14 @@ public sealed class MigrationSafetyTests
     public async Task A_failed_migration_prunes_nothing()
     {
         using var db = new TempDatabase();
-        _ = await Runner(db).Migrate([Schema.Items], Ct);
-        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
-        var failing = new Migration(3, "failing", "INSERT INTO no_such_table VALUES (1);");
+        var extra = new Migration(2, "extra", "CREATE TABLE extra (id INTEGER PRIMARY KEY);");
+        var orphaning = new Migration(3, "orphan", "INSERT INTO child VALUES (1, 999);");
+        _ = await Runner(db).Migrate([Parent], Ct);
+        _ = await Runner(db).Migrate([Parent, extra], Ct);
 
-        var refused = await Runner(db).Migrate([Schema.Items, Schema.Tags, failing], Ct);
+        var refused = await Runner(db).Migrate([Parent, extra, orphaning], Ct);
 
-        Assert.False(refused.IsSuccess);
+        Assert.Equal(DataErrors.Constraint.Code, refused.Error.Code);
         Assert.True(File.Exists(db.Path + ".bak-v1"));
         Assert.True(File.Exists(db.Path + ".bak-v2"));
     }
