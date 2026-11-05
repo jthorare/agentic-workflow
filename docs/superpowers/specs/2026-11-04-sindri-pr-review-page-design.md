@@ -382,7 +382,7 @@ Rows are stored PR records (kind `pr`, open or draft) of the repos in `context.s
 
 | Where | Loading | Empty | Error |
 |---|---|---|---|
-| Reviews list | skeleton rows | "Nothing waiting on you and no open PRs of yours." plus where repos are set (Settings → Context sources), and "Reviews asked of a team don't show here yet." With no `review.login`: the one-field login prompt. Before Ph2b: §5.6's line | "PR list is from <time>: <source> failed: <reason>", above the last rows |
+| Reviews list | skeleton rows | "Nothing waiting on you and no open PRs of yours." plus where repos are set (Settings → Connections), and "Reviews asked of a team don't show here yet." With no `review.login`: the one-field login prompt. Before Ph2b: §5.6's line | "PR list is from <time>: <source> failed: <reason>", above the last rows |
 | Library count and errors sheet | "Library: reading…" | "Library: no design docs yet" and a link to the convention page | "Library: <root> couldn't be read: <reason>" per root |
 | `requiredChecks` | a one-line placeholder in the panel's place, so the column doesn't jump (the same for every panel) | "No required checks for this project" | "Couldn't decide checks: <source> failed: <reason>" |
 | `docMap` | placeholder | "This PR names no design doc", plus the project's docs | "Couldn't read the library: <reason>" |
