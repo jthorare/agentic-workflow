@@ -25,7 +25,7 @@ internal sealed partial class Projector(
     private string? _problem;
     private long _seenHead;
     private bool _healing;
-    private ViewsStatus _last = new(0, 0, ProjectedAt: null, Rebuilding: true, Stalled: false, StalledAt: null, StalledType: null);
+    private ViewsStatus _last = new(0, 0, ProjectedAt: null, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null, Starting: true);
 
     /// <summary>The ledger head the last pass saw; the host waits for an append past it.</summary>
     internal long SeenHead => Volatile.Read(ref _seenHead);
@@ -179,13 +179,13 @@ internal sealed partial class Projector(
     internal void Threw(Exception error)
     {
         ArgumentNullException.ThrowIfNull(error);
-        Publish(_last with { Stalled = true, StalledAt = null, StalledType = $"{error.GetType().Name}: {error.Message}" });
+        Publish(_last with { Starting = false, Stalled = true, StalledAt = null, StalledType = $"{error.GetType().Name}: {error.Message}" });
     }
 
     private ProjectorPass Failed(string code, string detail, long? head)
     {
         // no event is to blame, so StalledAt stays null: the status says the projector can't run, until a pass works
-        Publish(_last with { LedgerHead = head ?? _last.LedgerHead, Stalled = true, StalledAt = null, StalledType = $"{code}: {detail}" });
+        Publish(_last with { LedgerHead = head ?? _last.LedgerHead, Starting = false, Stalled = true, StalledAt = null, StalledType = $"{code}: {detail}" });
         if (!string.Equals(_problem, detail, StringComparison.Ordinal))
         {
             _problem = detail;

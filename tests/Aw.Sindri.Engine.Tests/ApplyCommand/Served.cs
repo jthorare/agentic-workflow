@@ -162,7 +162,7 @@ internal sealed class Served : IAsyncDisposable
     /// <summary>The projector's status with a wait that returns at once: the views are always at the head in these hosts.</summary>
     private sealed class CaughtUpViews(ProjectorProgress inner) : IProjectorStatus
     {
-        public ViewsStatus Current => inner.Current with { Rebuilding = false };   // no pass ever runs here, and a fresh progress reads Rebuilding (#2053)
+        public ViewsStatus Current => inner.Current;
 
         public ValueTask<Result<Unit>> WaitFor(long sequence, TimeSpan limit, CancellationToken cancellationToken) => ValueTask.FromResult<Result<Unit>>(Unit.Value);
     }
