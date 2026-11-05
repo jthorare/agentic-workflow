@@ -576,18 +576,24 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
         var script = Path.Combine(FindRepoRoot(), "config", "lib", "locks.sh");
         var slots = Slots();
         await using var ours = await Taken(slots);
-        var bash = Run($". '{script}'; slot=\"$(acquire_any_lock '{Lock}' 2 0)\" && echo \"$slot\"");
+        // The holder stays alive (exec keeps its pid): a locks.sh pid naming a dead process is reclaimed (#2059).
+        using var bash = Run($". '{script}'; slot=\"$(acquire_any_lock '{Lock}' 2 0)\" && echo \"$slot\" && exec sleep 60 >/dev/null");
+        try
+        {
+            var bashSlot = ((await bash.StandardOutput.ReadLineAsync(ct)) ?? string.Empty).Trim();
+            var busy = (await slots.Take("third", TimeSpan.Zero, waiting: null, ct)).Value;
 
-        var bashSlot = (await bash.StandardOutput.ReadToEndAsync(ct)).Trim();
-        await bash.WaitForExitAsync(ct);
-        var busy = (await slots.Take("third", TimeSpan.Zero, waiting: null, ct)).Value;
-
-        Assert.Equal(Lock + ".2", bashSlot);   // slot 1 was ours, so the shell took slot 2
-        Assert.Null(busy.Lease);
-        await ours.DisposeAsync();
-        var again = await Taken(slots);   // slot 1 is free again, the shell's slot 2 still stands
-        await again.DisposeAsync();
-        Assert.True(Directory.Exists(Lock + ".2"));
+            Assert.Equal(Lock + ".2", bashSlot);   // slot 1 was ours, so the shell took slot 2
+            Assert.Null(busy.Lease);
+            await ours.DisposeAsync();
+            var again = await Taken(slots);   // slot 1 is free again, the shell's slot 2 still stands
+            await again.DisposeAsync();
+            Assert.True(Directory.Exists(Lock + ".2"));
+        }
+        finally
+        {
+            bash.Kill();
+        }
     }
 
     private static Process Run(string script)

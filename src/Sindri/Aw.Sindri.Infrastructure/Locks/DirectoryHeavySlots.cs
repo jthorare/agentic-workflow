@@ -200,7 +200,7 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
     private bool EmptyStill(string directory)
     {
         BeforeTakeover(directory);
-        return TryRemove(directory);
+        return IsEmpty(directory) && Age(directory) > EmptyGrace && TryRemove(directory);   // re-judged: a retaken slot is new and has a record or a fresh mtime
     }
 
     // Takes the judged record out of the way, and only that record: if what we moved isn't the text judged stale, it goes back.
