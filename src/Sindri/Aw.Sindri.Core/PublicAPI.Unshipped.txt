@@ -15665,13 +15665,15 @@ Aw.Sindri.Core.Checks.CheckResult.Run.init -> void
 Aw.Sindri.Core.Checks.CheckResult.Summary.get -> string!
 Aw.Sindri.Core.Checks.CommandSet
 Aw.Sindri.Core.Checks.CommandSet.<Clone>$() -> Aw.Sindri.Core.Checks.CommandSet!
-Aw.Sindri.Core.Checks.CommandSet.CommandSet(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>! Commands, System.TimeSpan Each) -> void
+Aw.Sindri.Core.Checks.CommandSet.CommandSet(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>! Commands, System.TimeSpan Each, int OutputLimit = 4000) -> void
 Aw.Sindri.Core.Checks.CommandSet.Commands.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>!
 Aw.Sindri.Core.Checks.CommandSet.Commands.init -> void
-Aw.Sindri.Core.Checks.CommandSet.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>! Commands, out System.TimeSpan Each) -> void
+Aw.Sindri.Core.Checks.CommandSet.Deconstruct(out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Profile.BuildCommand!>! Commands, out System.TimeSpan Each, out int OutputLimit) -> void
 Aw.Sindri.Core.Checks.CommandSet.Each.get -> System.TimeSpan
 Aw.Sindri.Core.Checks.CommandSet.Each.init -> void
 Aw.Sindri.Core.Checks.CommandSet.Equals(Aw.Sindri.Core.Checks.CommandSet? other) -> bool
+Aw.Sindri.Core.Checks.CommandSet.OutputLimit.get -> int
+Aw.Sindri.Core.Checks.CommandSet.OutputLimit.init -> void
 Aw.Sindri.Core.Checks.IBuildCommandSource
 Aw.Sindri.Core.Checks.IBuildCommandSource.Read(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Checks.CommandSet!>!>
 Aw.Sindri.Core.Checks.ProfileBuildCommands
