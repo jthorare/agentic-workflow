@@ -6,7 +6,7 @@
 #     records both pids under "$work", so cleanup can stop them even after control.json is gone. It APPENDS, never
 #     overwrites: every serve start's pids stay recorded. run.sh calls it after every serve start.
 #   - cleanup() stops the recorded servers FIRST (SIGTERM, a short bounded wait, SIGKILL) and only then may try `sindri
-#     stop`, all within the 10 s a gate cancel (SIGTERM, then SIGKILL) allows, before it deletes the scratch tree. A
+#     stop`, all within a gate cancel's grace (SIGTERM, then SIGKILL after 45 s by default), before it deletes the scratch tree. A
 #     hanging `stop` must not delay it (scenario 7).
 #   - cleanup only signals a recorded pid whose command line (/proc/<pid>/cmdline) still names sindri or temporal, so a
 #     reused pid is left alone (scenario 6).

@@ -48,7 +48,7 @@ work=""
 remember_servers() {
   jq -r '(.pid // empty), (.temporal.pid // empty)' "$AW_SINDRI_HOME/control.json" >>"$work/servers.pids" 2>/dev/null || true
 }
-# On any exit (a gate cancel sends SIGTERM and SIGKILLs ~10 s later, so this must be quick), the servers this run started are
+# On any exit (a gate cancel sends SIGTERM and SIGKILLs what is left after the step's grace, 45 s by default, so this must be quick), the servers this run started are
 # stopped before the scratch tree is deleted: only once this run's home is exported (never the owner's default home). Each
 # recorded pid is signalled (SIGTERM, a shared wait of ~3 s, SIGKILL for survivors) only while its command line still names
 # sindri or temporal, so a reused pid is left alone. serve and temporal lead their own session, so one that leads its own
