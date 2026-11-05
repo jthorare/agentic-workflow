@@ -1002,6 +1002,7 @@ Aw.Meta.Core.Ports.ILaneStore
 Aw.Meta.Core.Ports.ILaneStore.Current(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Meta.Core.Lanes.LaneMapState!>!>
 Aw.Meta.Core.Ports.ILaneStore.Save(Aw.Meta.Core.Lanes.LaneMapState! map, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Meta.Core.Ports.ILogFiles
+Aw.Meta.Core.Ports.ILogFiles.ClaimRun(string! gateDirectory, int recorded, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Meta.Core.Ports.ILogFiles.LatestRun(string! gateDirectory, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<int>!>
 Aw.Meta.Core.Ports.ILogFiles.Tail(string! path, int maxCharacters, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<string!>!>
 Aw.Meta.Core.Ports.IMessageStore

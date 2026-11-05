@@ -15,7 +15,7 @@ internal static class GateSql
         "SELECT pr, sha, at FROM merges ORDER BY at DESC, rowid DESC LIMIT 1", Subject: "latest merge");
 
     internal static SqlStatement NextRun(int pr, int planned) => new(
-        "SELECT MAX(COALESCE(MAX(run), 0) + 1, $planned) FROM gates WHERE pr = $pr", c => c.Bind("$pr", pr).Bind("$planned", planned), "next gate run");
+        "SELECT CASE WHEN $planned > 0 AND NOT EXISTS (SELECT 1 FROM gates WHERE pr = $pr AND run = $planned) THEN $planned ELSE COALESCE((SELECT MAX(run) FROM gates WHERE pr = $pr), 0) + 1 END", c => c.Bind("$pr", pr).Bind("$planned", planned), "next gate run");
 
     internal static IEnumerable<SqlStatement> Insert(GateRecord gate)
     {
