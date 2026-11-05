@@ -144,6 +144,37 @@ public sealed class ModelCheckStepTests
     }
 
     [Fact]
+    public async Task Output_past_the_cap_that_drops_an_early_pass_is_tooBig_naming_it_never_pass()
+    {
+        var h = new Harness().Folder(Folders.Spec("A")).Folder(Folders.Spec("B"));
+        h.PrintsCut(0, "tlc-check: A/A.cfg: PASS distinct=10 depth=3\ntlc-check: B/gaps/PlantedBug.cfg: WITNESS-CAUGHT invariant X\n" + Trace() + "tlc-check: B/B.cfg: PASS distinct=4 depth=2\n");
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("tooBig", result.Result!.Outcome.Value);
+        var findings = StepRig.Out(result, "findings").ToJsonString();
+        Assert.Contains("A/A.cfg never reported", findings, StringComparison.Ordinal);   // the pass that fell out of the cut output is unrun, not passed
+        Assert.Contains("B/gaps/PlantedBug.cfg never reported", findings, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Output_past_the_cap_ending_in_a_violation_is_never_pass()
+    {
+        var h = new Harness().Folder(Folders.Spec("A")).Folder(Folders.Spec("B"));
+        h.PrintsCut(1, "tlc-check: A/A.cfg: PASS distinct=10 depth=3\ntlc-check: B/gaps/PlantedBug.cfg: WITNESS-CAUGHT invariant X\n" + Trace() + "tlc-check: B/B.cfg: VIOLATION invariant Y\n  | State 1: <Initial predicate>\n  | /\\ x = 1\n  | \n");
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("violation", result.Result!.Outcome.Value);
+        var findings = StepRig.Out(result, "findings").AsArray();
+        Assert.Contains(findings, static f => (string?)f!["rule"] == "MDL-VIOLATION-001");
+        Assert.Contains("A/A.cfg never reported", findings.ToJsonString(), StringComparison.Ordinal);   // the early pass is named as unrun beside the violation
+    }
+
+    // More than the step's 256 KiB of TLC output under one check.
+    private static string Trace() => string.Concat(Enumerable.Repeat("  | a line of TLC output that goes on for a while, xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n", 6000));
+
+    [Fact]
     public async Task A_missed_or_wrong_witness_is_vacuous()
     {
         var missed = new Harness().Folder(Folders.Spec("Takeover"));
@@ -378,6 +409,10 @@ public sealed class ModelCheckStepTests
         /// <summary>The runner prints these lines and exits with <paramref name="exit"/>.</summary>
         internal void Prints(int exit, params string[] lines) =>
             Rig.Commands.Answer("model-check", CheckRun.Of(exit, timedOut: false, TimeSpan.FromSeconds(20), string.Join('\n', lines)));
+
+        /// <summary>The runner prints this much and exits with <paramref name="exit"/>; the output is cut to the step's cap the way the real tool run cuts it.</summary>
+        internal void PrintsCut(int exit, string fullOutput) =>
+            Rig.Commands.Answer("model-check", CheckRun.Of(exit, timedOut: false, TimeSpan.FromSeconds(20), fullOutput, ModelCheckStep.OutputLimit));
 
         /// <summary>The runner printed these lines and then ran past the time it was given.</summary>
         internal void RunnerKilled(params string[] lines) =>
