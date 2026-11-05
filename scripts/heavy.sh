@@ -38,7 +38,7 @@ TIMEOUT=5400
 # Meta gate reservation (owner, 2026-10-17): the meta orchestrator writes how many box-wide slots its gates reserve
 # (0..SLOTS) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
 # take any slot; any other expensive job may take only slots above the reservation. Nothing running is pre-empted, and
-# a job shut out by a reservation covering every slot does not count that wait toward TIMEOUT.
+# a job blocked only by the reservation (it skipped a free reserved slot) does not count that wait toward TIMEOUT.
 RESERVE="$(heavy_reserve "$SLOTS")"
 PRIORITY="${AW_HEAVY_PRIORITY:-}"
 
@@ -123,15 +123,16 @@ reclaim_slot() {
 
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
-  local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got=""
+  local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" reserve_blocked
   while [ -z "$got" ]; do
+    reserve_blocked=0
     # Re-read the cap and the reservation each pass: a drained queue releases waiting lane jobs promptly, and a lowered cap
     # keeps them off the slots above it (nothing running is pre-empted).
     if [ "$label" = box-wide ]; then slots="$(heavy_cap "$GIVEN_SLOTS")"; RESERVE="$(heavy_reserve "$slots")"; fi
     for k in $(seq 1 "$slots"); do
       if [ "$k" -eq 1 ]; then d="$base"; else d="$base.$k"; fi
       # Box-wide slots above 1 need the memory guard; the per-session pool doesn't.
-      if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then continue; fi
+      if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then [ -d "$d" ] || reserve_blocked=1; continue; fi
       if [ "$k" -gt 1 ] && [ "$label" = box-wide ] && ! mem_ok "$k"; then continue; fi
       if mkdir "$d" 2>/dev/null; then got="$d"; break; fi
       if reclaim_slot "$d" && mkdir "$d" 2>/dev/null; then got="$d"; break; fi
@@ -139,9 +140,8 @@ acquire() {
     [ -n "$got" ] && break
     [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; }
     [ "$waited" -ge "$TIMEOUT" ] && { echo "heavy: $label lock timeout ($base)" >&2; exit 75; }
-    # Only a reserve covering every slot keeps a lane job's wait off TIMEOUT; one that leaves a slot open counts.
-    sleep 1
-    if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$RESERVE" -ge "$slots" ]; then :; else waited=$((waited + 1)); fi
+    # A pass that skipped a free reserved slot was blocked only by the reservation and doesn't count; any other pass does.
+    sleep 1; [ "$reserve_blocked" = 1 ] || waited=$((waited + 1))
   done
   echo "$$ $(date -u +%FT%TZ) session=$session $*" > "$got/owner" 2>/dev/null || true
   HELD+=("$got")

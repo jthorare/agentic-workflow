@@ -71,21 +71,33 @@ echo 1 > "$T/heavy-slots-cap"
 check "box: wrapper holds slot 1, cap lowered to 1, a locks.sh taker gets no slot 2" "$(lockssh "$BASE" 2 2)" "none"
 wait "$wrap"
 
-# A reserve that leaves a slot open is no reason to stop counting: cap 2, reserve 1, slot 2 busy with a lane job. A
-# non-meta taker's wait counts toward its timeout and it gives up (ideas on #2061: it used to wait forever).
-scratch locks-timeout 2 1; hold "$BASE.2"
+# The timeout counts a pass unless a slot it skipped for the reserve was free (owner 2026-10-17: a lane job blocked only
+# by the reserve doesn't burn its timeout). Cap 2, reserve 1: with slot 1 busy too, nothing free was skipped, so the wait
+# counts and it gives up (ideas on #2061: it used to wait forever); with slot 1 free, the reserve alone blocks it, so it waits.
+scratch locks-timeout 2 1; hold "$BASE"; hold "$BASE.2"
 SECONDS=0; got="$(lockssh "$BASE" 2 2)"; took=$SECONDS
-check "locks.sh: reserve 1, slot 2 busy, timeout 2 gives up inside 6 s" "$got $([ "$took" -lt 6 ] && echo fast || echo "slow ${took}s")" "none fast"
+check "locks.sh: reserve 1, both slots busy, timeout 2 gives up inside 6 s" "$got $([ "$took" -lt 6 ] && echo fast || echo "slow ${took}s")" "none fast"
+
+scratch locks-reserve-free 2 1; hold "$BASE.2"
+rc=0
+timeout 6 env AW_STATE_DIR="$T" AW_HEAVY_JOB_LOCK="$BASE" bash -c '. "$1"; acquire_any_lock "$2" 2 2' _ "$LOCKS" "$BASE" >/dev/null 2>&1 || rc=$?
+check "locks.sh: reserve 1, slot 1 free, slot 2 busy, timeout 2 still waits at 6 s (124)" "$rc" "124"
 
 # The wrapper the same way, on a copy with TIMEOUT=2 (the real one is a constant 5400 s); it finds config/lib beside it.
 mkdir -p "$WORK/w/scripts"; ln -s "$DIR/../../config" "$WORK/w/config"
 TWO="$WORK/w/scripts/heavy-two.sh"; sed 's/^TIMEOUT=5400$/TIMEOUT=2/' "$HEAVY" > "$TWO"
 check "the TIMEOUT=2 copy differs from the wrapper in one line" "$(diff "$HEAVY" "$TWO" | grep -c '^>')" "1"
-scratch wrapper-timeout 2 1; hold "$BASE.2"
+scratch wrapper-timeout 2 1; hold "$BASE"; hold "$BASE.2"
 rc=0; SECONDS=0
 timeout 10 env AW_STATE_DIR="$T" AW_HEAVY_JOB_LOCK="$BASE" AW_HEAVY_SESSION_PID="$live" AW_HEAVY_RUN_MAX=0 AW_HEAVY_MIN_FREE_MB=0 \
   bash "$TWO" --expensive true >/dev/null 2>&1 || rc=$?
-check "wrapper: reserve 1, slot 2 busy, TIMEOUT=2 exits 75 inside 6 s" "$rc $([ "$SECONDS" -lt 6 ] && echo fast || echo "slow ${SECONDS}s")" "75 fast"
+check "wrapper: reserve 1, both slots busy, TIMEOUT=2 exits 75 inside 6 s" "$rc $([ "$SECONDS" -lt 6 ] && echo fast || echo "slow ${SECONDS}s")" "75 fast"
+
+scratch wrapper-reserve-free 2 1; hold "$BASE.2"
+rc=0
+timeout 6 env AW_STATE_DIR="$T" AW_HEAVY_JOB_LOCK="$BASE" AW_HEAVY_SESSION_PID="$live" AW_HEAVY_RUN_MAX=0 AW_HEAVY_MIN_FREE_MB=0 \
+  bash "$TWO" --expensive true >/dev/null 2>&1 || rc=$?
+check "wrapper: reserve 1, slot 1 free, slot 2 busy, TIMEOUT=2 still waits at 6 s (124)" "$rc" "124"
 
 # Taking the cap file away while a job waits goes back to the given count (ideas on #2061: the lowered value stuck).
 scratch locks-uncap 1 ""; hold "$BASE"
