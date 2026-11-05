@@ -23,7 +23,7 @@
 # (SIGKILL, a cleared session) reclaims the lock. The C# ui-evidence holder writes the same
 # <dir>/pid, and an older one only <dir>/owner, whose first word is its pid; both are read.
 # A dir with neither file and no entries at all (a holder killed between its mkdir and its pid
-# write) is freed once over a minute old; younger is a holder mid-write, and rmdir fails if it
+# write) is freed once over two minutes old (GNU find -mmin +1 truncates; Sindri waits one); younger is a holder mid-write, and rmdir fails if it
 # writes meanwhile. A dir holding other files (sindri's TS lock) is never reclaimed.
 
 # _lock_pid_alive <pid>: 0 (alive) unless the pid is a number whose process is gone.

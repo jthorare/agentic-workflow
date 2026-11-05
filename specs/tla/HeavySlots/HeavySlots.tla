@@ -157,9 +157,9 @@ Try(p) ==
           THEN Next1(p) /\ UNCHANGED <<rec, seen, myRes>>                        \* reserved for meta: skip
        ELSE IF ~dir[k]
           THEN Take(p, k) /\ rec' = [rec EXCEPT ![k] = YoungNone] /\ UNCHANGED <<seen, myRes>>
-       ELSE IF rec[k] = NoRec /\ \A q \in Procs : ~(alive[q] /\ holds[q] = k)
+       ELSE IF rec[k] = NoRec
           \* An empty folder over a minute old (not YoungNone): its mkdir-er is dead, or it would have written by
-          \* now. The code is `find -mmin +1` then rmdir (fails if a holder wrote meanwhile); modelled as one
+          \* now (Age's assumption). The code is `find -mmin +0` then rmdir (fails if a holder wrote meanwhile); modelled as one
           \* step, so a folder re-made between the two can't be removed. The code leaves that window open for
           \* a few microseconds.
           THEN /\ dir' = [dir EXCEPT ![k] = FALSE]
@@ -249,10 +249,13 @@ Rel2(p) ==
     /\ UNCHANGED <<rec, at, seen, myRes, capBreak, resBreak>> /\ Same
 
 \* A minute passes on a slot folder with no record.
-\* Assumption: a live process finishes its rmdir within the minute (a process stalled longer is not modelled).
+\* Assumptions (a process stalled longer is not modelled: the code would free its folder under it): a live
+\* reclaimer finishes its rmdir within the minute, and a live holder's folder is empty for under a minute: between
+\* its mkdir and its record write, and between its release's unlink and its rmdir.
 Age(k) ==
     /\ rec[k] = YoungNone
     /\ \A q \in Procs : ~(alive[q] /\ pc[q] = "c_rmdir" /\ at[q] = k)
+    /\ \A q \in Procs : ~(alive[q] /\ pc[q] \in {"write", "rel2"} /\ holds[q] = k)
     /\ rec' = [rec EXCEPT ![k] = NoRec]
     /\ UNCHANGED <<dir, pc, at, seen, myCap, myRes, holds, alive, cap, reserve, deaths, capBreak, resBreak>>
 
