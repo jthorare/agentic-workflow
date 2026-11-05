@@ -106,6 +106,8 @@ contain explicit `Goal:`, `Acceptance criteria:` and `Proof command:` lines.
    once for it (its Phase 3.6); do not go on to Phase 3 without it. This changes nothing about the helper's
    checks: it is your own gate.
 
+**Race or ordering bug.** Concurrency means two or more actors that can interleave: locks, leases, retries with idempotency, queues and workers, multi-step writes across actors, failover or leader election, ordering between processes. If rootCause's handoff came from a `formal-verify` counterexample whose steps reproduce the report, accept that trace as root-cause proof and keep its `report.md` path with the handoff evidence. It adds to Phase 3, never replaces it: the failing check below is still required before any fix, and the before/after run of that check stays the proof of resolution. Put the `report.md` path (and the `--rerun` result after the fix) in `resolution.md`.
+
 ## Phase 3 — Reproduce (the check must FAIL first)
 
 **Preflight:** `git -C "$REPO" status --porcelain` must be empty — every helper step refuses a dirty

@@ -61,6 +61,8 @@ Inject:
 - `{file_list}` — JSON array of changed file paths
 - `{diff}` — full diff output
 
+**Formal check lens.** When the diff touches locks, leases, retries, queues or workers, or a state machine (locks, leases, retries with idempotency, queues and workers, multi-step writes across actors, failover or leader election, ordering between processes), also assign a reviewer with focus "concurrency: **Invoke skill `formal-verify`** on the changed mechanism; report a `violation` as a blocking finding with the trace in real steps and its `report.md` path; list a `pass` with its bounds; name `blocked` as not checked". The bad case: two workers both claim a job because the check and the set are separate statements. Otherwise skip it; no assignment, no line in the state file.
+
 Parse the returned JSON array of reviewer assignments. If the user passed `--lens <persona,...>`, append one assignment per named lens/persona (dedupe by agent name) — these run in addition to triage output.
 
 ## Step 5: Spawn Parallel Reviewers

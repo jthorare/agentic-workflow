@@ -1,2 +1,3 @@
 bins: [git]
 mcp: [prism-mcp]
+skills: [formal-verify]
