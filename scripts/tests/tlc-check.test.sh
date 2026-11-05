@@ -218,6 +218,46 @@ else
   echo "  SKIP killing tlc-check.sh: no setsid on this box"
 fi
 
+# --witnesses: each gaps/*.cfg must fail on the invariant or property its line 1 names.
+mkgap() {   # <name> <cfg> <witness line or empty> [body]: a gap cfg under specs/Alpha/gaps
+  mkdir -p "$S/$1/gaps"
+  { [ -z "$3" ] || printf '%s\n' "$3"; printf '%s\n' "${4:-INVARIANT X}"; } >"$S/$1/gaps/$2"
+}
+reset; mkspec "$S" Alpha; mkgap Alpha G.cfg '\* witness: Inv'
+run "$S/Alpha"
+if [ "$(ncalls)" = 1 ]; then ok "without --witnesses gaps/ is skipped"; else fail "without --witnesses: $(ncalls) calls"; fi
+script Alpha.tla G.cfg 1 "tlc: VIOLATION invariant Inv"
+run --witnesses "$S/Alpha"
+expect "a gap that breaks the named invariant is CAUGHT, exit 0" 0 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-CAUGHT invariant Inv$'
+script Alpha.tla G.cfg 1 "tlc: VIOLATION invariant Other"
+run --witnesses "$S/Alpha"
+expect "a gap that breaks another invariant is WRONG, exit 1" 1 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-WRONG invariant Other \(expected Inv\)$'
+script Alpha.tla G.cfg 0 "tlc: PASS distinct=1 depth=1"
+run --witnesses "$S/Alpha"
+expect "a gap that passes is MISSED, exit 1" 1 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-MISSED Inv$'
+script Alpha.tla G.cfg 1 "tlc: VIOLATION property unnamed (the config checks 2 properties: check them one at a time to find it)"
+run --witnesses "$S/Alpha"
+expect "unnamed property with several properties is WRONG" 1 'WITNESS-WRONG property unnamed \(expected Inv\)'
+mkgap Alpha G.cfg '\* witness: Live' 'PROPERTY Live'
+script Alpha.tla G.cfg 1 "tlc: VIOLATION property unnamed (the config checks 1 properties)"
+run --witnesses "$S/Alpha"
+expect "unnamed property, single PROPERTY equal to the witness (#2063) is CAUGHT" 0 '^tlc-check: Alpha/gaps/G\.cfg: WITNESS-CAUGHT property Live$'
+mkgap Alpha G.cfg '\* witness: Live' 'PROPERTIES
+    Live'
+run --witnesses "$S/Alpha"
+expect "the same with PROPERTIES and the name on the next line" 0 'WITNESS-CAUGHT property Live$'
+mkgap Alpha G.cfg '\* witness: Live' 'PROPERTY Other'
+run --witnesses "$S/Alpha"
+expect "unnamed property, single PROPERTY not the witness is WRONG" 1 'WITNESS-WRONG property unnamed'
+mkgap Alpha G.cfg ''
+script Alpha.tla G.cfg 1 "tlc: VIOLATION invariant Inv"
+run --witnesses "$S/Alpha"
+expect "a gap cfg without a witness line is an ERROR, exit 2" 2 '^tlc-check: Alpha/gaps/G\.cfg: ERROR no witness line$'
+mkgap Alpha G.cfg '\* witness: Inv'
+script Alpha.tla G.cfg 2 "tlc: ERROR parse error"
+run --witnesses "$S/Alpha"
+expect "a gap cfg TLC errors on stays an ERROR, exit 2" 2 'gaps/G\.cfg: ERROR parse error'
+
 # No arguments: every specs/tla/* of the repo, sorted. A copy of the script in a scratch repo root sees only that repo's folders.
 reset
 FAKE="$TMPROOT/fakerepo"

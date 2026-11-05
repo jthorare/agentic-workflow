@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/tlc-check.sh — run TLC on every TLA+ spec in the repo (CI job "TLA+ specs (TLC)").
 #
-# Usage: scripts/tlc-check.sh [--root <dir>] [--timeout <seconds>] [<spec-dir>...]
+# Usage: scripts/tlc-check.sh [--root <dir>] [--timeout <seconds>] [--witnesses] [<spec-dir>...]
 #   A spec is a folder specs/tla/<Name>/ with <Name>.tla, one or more *.cfg, an optional MC<Name>.tla (TLC runs on it
 #   instead of <Name>.tla when present) and a README.md. With no arguments every specs/tla/*/ folder runs, sorted; with
 #   arguments only those folders do (relative ones are taken from the repo root).
@@ -15,6 +15,10 @@
 #   instead of this script's own checkout (a toolkit copy of this script checking another repo). A missing <dir> exits 2.
 #   --timeout <seconds>: a positive integer, per check. A check that runs longer gets its whole process group TERMed, then
 #   KILLed after 5 s (a check can overrun by up to <s>+6 s: the 1 s poll plus the grace), prints 'tlc-check: <Name>/<cfg>: TIMEOUT after <s> s' and counts as exit 2. No flag, no timeout.
+#   --witnesses: after a folder's own cfgs also run every <folder>/gaps/*.cfg, each of which must FAIL. Line 1 of a gap cfg
+#   is '\* witness: <Name>', the invariant or property it is planted to break. Prints 'tlc-check: <Spec>/gaps/<cfg>:
+#   WITNESS-CAUGHT <kind> <Name>' (exit 0), 'WITNESS-WRONG <kind> <actual> (expected <Name>)' or 'WITNESS-MISSED <Name>'
+#   (the cfg passed) (both exit 1), or 'ERROR no witness line' (exit 2). Without the flag gaps/ is not run.
 #   The per-cfg line 'tlc-check: <Name>/<cfg>: <result>' is parsed by a Sindri step: keep its format stable.
 # Env: TLC_SH overrides the path to tlc.sh (the test's stub).
 # Exit: 0 every check passed, 1 a violation, 2 an error (also a folder without <Name>.tla or without a .cfg, a bad
@@ -96,7 +100,21 @@ abort_timed() {
 }
 CHILD_PID=""
 
+# cfg_properties <cfg>: the PROPERTY/PROPERTIES name when the cfg lists exactly one, else nothing. Names follow the keyword on
+# its line or on the lines after it, up to the next cfg keyword. (tlc.sh's own count misses the names on following lines.)
+cfg_properties() {
+  awk '{ sub(/\\\*.*/, "") }
+    NF == 0 { next }
+    $1 ~ /^(INIT|NEXT|SPECIFICATION|INVARIANTS?|PROPERT(Y|IES)|CONSTANTS?|CONSTRAINTS?|ACTION_CONSTRAINTS?|SYMMETRY|VIEW|ALIAS|POSTCONDITION)$/ {
+      inprop = ($1 ~ /^PROPERT/)
+      for (i = 2; i <= NF && inprop; i++) n[++c] = $i
+      next }
+    inprop && NF == 1 { n[++c] = $1 }
+    END { if (c == 1) print n[1] }' "$1"
+}
+
 TIMEOUT=""
+WITNESSES=""
 dirs=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -106,6 +124,7 @@ while [ $# -gt 0 ]; do
     --timeout)
       case "${2:-}" in ''|*[!0-9]*|0*) echo "tlc-check: --timeout needs a positive integer (seconds)" >&2; exit 2 ;; esac
       TIMEOUT="$2"; shift 2 ;;
+    --witnesses) WITNESSES=1; shift ;;
     -*) usage ;;
     *) dirs+=("$1"); shift ;;
   esac
@@ -140,8 +159,22 @@ for dir in "${dirs[@]}"; do
   if [ ${#cfgs[@]} -eq 0 ]; then
     echo "tlc-check: $name: ERROR no .cfg in $dir" >&2; note_rc 2; continue
   fi
+  if [ -n "$WITNESSES" ]; then
+    for c in "$dir"/gaps/*.cfg; do
+      if [ -f "$c" ]; then cfgs+=("$c"); fi
+    done
+  fi
   for cfg in "${cfgs[@]}"; do
-    label="$name/$(basename "$cfg")"
+    gap=""
+    case "$cfg" in "$dir"/gaps/*) gap=1; label="$name/gaps/$(basename "$cfg")" ;; *) label="$name/$(basename "$cfg")" ;; esac
+    if [ -n "$gap" ]; then
+      witness=""
+      IFS= read -r first <"$cfg" || true
+      case "$first" in '\* witness: '*) witness="${first#'\* witness: '}"; witness="${witness%% *}" ;; esac
+      if [ -z "$witness" ]; then
+        echo "tlc-check: $label: ERROR no witness line"; note_rc 2; continue
+      fi
+    fi
     if [ -n "$TIMEOUT" ]; then
       tout="$(mktemp "${TMPDIR:-/tmp}/tlc-check.XXXXXX")"
       run_timed "$TIMEOUT"
@@ -163,6 +196,18 @@ for dir in "${dirs[@]}"; do
     if [ -z "$last" ]; then last="ERROR no result line from tlc.sh (exit $rc)"; fi
     if [ "$rc" -eq 0 ]; then
       case "$last" in PASS*) ;; *) rc=2 ;; esac
+    fi
+    if [ -n "$gap" ]; then
+      case "$last" in
+        PASS*) last="WITNESS-MISSED $witness"; rc=1 ;;
+        "VIOLATION "*)
+          set -- $last
+          kind="${2:-}"; actual="${3:-}"
+          # tlc.sh prints "unnamed" for a temporal property violation (#2063); #2066 fixes it, then this can go.
+          if [ "$kind" = property ] && { [ -z "$actual" ] || [ "$actual" = unnamed ]; } && [ "$(cfg_properties "$cfg")" = "$witness" ]; then actual="$witness"; fi
+          if [ "$actual" = "$witness" ]; then last="WITNESS-CAUGHT $kind $witness"; rc=0
+          else last="WITNESS-WRONG $kind ${actual:-unnamed} (expected $witness)"; rc=1; fi ;;
+      esac
     fi
     echo "tlc-check: $label: $last"
     if [ "$rc" -ne 0 ]; then

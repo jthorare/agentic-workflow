@@ -7,10 +7,10 @@ models: config/lib/locks.sh src/Sindri/Aw.Sindri.Infrastructure/Locks/DirectoryH
   - `DirectoryHeavySlots.cs`: reads the cap once at serve start (the `HeavyLockSettings` singleton) and never reads the reserve. Its record is `<dir>/owner`, and it reclaims by renaming the record aside (`Claim`) and then a non-recursive delete. `HeavySlotLease` leaves alone a slot whose owner names another process.
 
   Each syscall is one step. A process can be SIGKILLed at any step: its folder and record stay, and its pid is never reused. Not modelled: the per-session `heavy-session/<pid>.lock` pool, the memory guard (it only skips slots), timeouts, the 6 h no-record grace and the TS `holder.json`.
-- **Checks:** `OneHolderPerSlot` (no two live processes hold one slot folder), `TakeWithinCap` (nobody takes a slot above the cap file as it reads at that moment), `ReserveHonored` (a non-meta job never takes a slot meta reserved), `SomeoneRuns` (the box never locks up). Also, outside CI: `NoStarvation` (every waiter gets a slot) and `OrphanReclaimed` (a slot whose holder died is freed).
+- **Checks:** `OneHolderPerSlot` (no two live processes hold one slot folder), `TakeWithinCap` (nobody takes a slot above the cap file as it reads at that moment), `ReserveHonored` (a non-meta job never takes a slot meta reserved), `SomeoneRuns` (the box never locks up). Also, checked only as witnesses on the gap cfgs: `NoStarvation` (every waiter gets a slot) and `OrphanReclaimed` (a slot whose holder died is freed).
 - **Bounds:** `HeavySlots.cfg`: one wrapper job, one locks.sh holder, one Sindri job, 2 slots, every cap 2, no reserve, no SIGKILL, weak fairness; about 1k states. `HeavySlotsReclaim.cfg`: two locks.sh holders and one Sindri job on 1 slot, 1 SIGKILL anywhere. Their rename-aside reclaims never let two processes hold one slot (about 1k states).
 
-## Known gaps (`gaps/*.cfg`, outside CI: `tlc-check.sh` only runs the folder's own cfgs)
+## Known gaps (`gaps/*.cfg`, run in CI as witnesses: `tlc-check.sh --witnesses` expects each to fail on the invariant its line 1 `\* witness: <Name>` names)
 
 | Config | Fails | What TLC shows | Issue |
 |---|---|---|---|
@@ -22,6 +22,6 @@ models: config/lib/locks.sh src/Sindri/Aw.Sindri.Infrastructure/Locks/DirectoryH
 | `gaps/StaleCap.cfg` | `TakeWithinCap` | Lowering `heavy-slots-cap` from 2 to 1: a wrapper job already waiting, Sindri and locks.sh all still take slot 2 | #2061 |
 | `gaps/IgnoredReserve.cfg` | `ReserveHonored` | Only the wrapper reads `heavy-meta-reserve`: locks.sh (bugfix-state's `locked`) and Sindri jobs take reserved slots | #2061 |
 
-Run: `scripts/tlc-check.sh specs/tla/HeavySlots`. For one gap, run `bash skills/formal-verify/scripts/tlc.sh check "$PWD/specs/tla/HeavySlots/HeavySlots.tla" --config "$PWD/specs/tla/HeavySlots/gaps/<Name>.cfg"`. Use absolute paths: `tlc.sh` changes into the spec's folder.
+Run: `scripts/tlc-check.sh --witnesses specs/tla/HeavySlots` (the gaps print WITNESS-CAUGHT). For one gap, run `bash skills/formal-verify/scripts/tlc.sh check "$PWD/specs/tla/HeavySlots/HeavySlots.tla" --config "$PWD/specs/tla/HeavySlots/gaps/<Name>.cfg"`. Use absolute paths: `tlc.sh` changes into the spec's folder.
 
 When the wrapper changes, re-read it, update the spec and the sha256 above (`sha256sum ~/.agentic-workflow/bin-r1b/heavy`).
