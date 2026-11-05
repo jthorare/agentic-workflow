@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Tests for scripts/meta-gate-reserve.sh (the meta gate's heavy-slot reserve), pinning what it does today. Everything runs
-# against a temp AW_STATE_DIR (HOME is never changed). Covers: the depth tiers (0-2 -> 0, 3-4 -> 1, 5-6 -> 2, >=7 -> the slot cap);
+# against a temp AW_STATE_DIR (HOME is never changed). Covers: the depth tiers (0-2 -> 0, 3-4 -> 1, 5-6 -> 2, >=7 -> the slot cap),
+# every tier capped at slots-1 so a lane job always keeps one slot (owner 2026-11-05, #2060);
 # the cap file heavy-slots-cap (missing, empty, 0 and non-numeric fall back to 3; a smaller cap clamps every tier); --show with
 # and without a reserve file; --clear; usage (exit 2); the reserve file holds just the number and no .tmp is left behind.
 # Run: bash scripts/tests/meta-gate-reserve.test.sh
@@ -34,25 +35,30 @@ check "depth 3" "$(at - 3)" "depth=3 reserve=1 cap=3"
 check "depth 4" "$(at - 4)" "depth=4 reserve=1 cap=3"
 check "depth 5" "$(at - 5)" "depth=5 reserve=2 cap=3"
 check "depth 6" "$(at - 6)" "depth=6 reserve=2 cap=3"
-check "depth 7" "$(at - 7)" "depth=7 reserve=3 cap=3"
-check "depth 50" "$(at - 50)" "depth=50 reserve=3 cap=3"
+check "depth 7" "$(at - 7)" "depth=7 reserve=2 cap=3"
+check "depth 50" "$(at - 50)" "depth=50 reserve=2 cap=3"
 
 # --- cap file variants ---
-check "an empty cap file means 3" "$(at "" 7)" "depth=7 reserve=3 cap=3"
-check "a cap of 0 means 3" "$(at 0 7)" "depth=7 reserve=3 cap=3"
-check "a cap of abc means 3" "$(at abc 7)" "depth=7 reserve=3 cap=3"
-check "cap 5: depth 7 reserves all 5" "$(at 5 7)" "depth=7 reserve=5 cap=5"
+check "an empty cap file means 3" "$(at "" 7)" "depth=7 reserve=2 cap=3"
+check "a cap of 0 means 3" "$(at 0 7)" "depth=7 reserve=2 cap=3"
+check "a cap of abc means 3" "$(at abc 7)" "depth=7 reserve=2 cap=3"
+check "cap 5: depth 7 reserves 4, one stays free" "$(at 5 7)" "depth=7 reserve=4 cap=5"
 check "cap 5: depth 5 still reserves 2" "$(at 5 5)" "depth=5 reserve=2 cap=5"
-check "cap 2: depth 5 clamps to 2" "$(at 2 5)" "depth=5 reserve=2 cap=2"
-check "cap 2: depth 7 clamps to 2" "$(at 2 7)" "depth=7 reserve=2 cap=2"
+check "cap 3: depth 5 stays 2" "$(at 3 5)" "depth=5 reserve=2 cap=3"
 check "cap 2: depth 3 stays 1" "$(at 2 3)" "depth=3 reserve=1 cap=2"
-check "cap 1: depth 5 clamps to 1" "$(at 1 5)" "depth=5 reserve=1 cap=1"
-check "cap 1: depth 7 clamps to 1" "$(at 1 7)" "depth=7 reserve=1 cap=1"
+check "cap 2: depth 5 clamps to 1" "$(at 2 5)" "depth=5 reserve=1 cap=2"
+check "cap 2: depth 7 clamps to 1" "$(at 2 7)" "depth=7 reserve=1 cap=2"
 check "cap 1: depth 0 stays 0" "$(at 1 0)" "depth=0 reserve=0 cap=1"
+check "cap 1: depth 3 clamps to 0" "$(at 1 3)" "depth=3 reserve=0 cap=1"
+check "cap 1: depth 5 clamps to 0" "$(at 1 5)" "depth=5 reserve=0 cap=1"
+check "cap 1: depth 7 clamps to 0" "$(at 1 7)" "depth=7 reserve=0 cap=1"
 
 # --- the reserve file ---
 reset; run 5 > /dev/null
 check "the file holds just the number" "$(cat "$F")" "2"
+run 9 > /dev/null
+check "a capped tier is written as the capped number" "$(cat "$F")" "2"
+run 5 > /dev/null
 check "the file is one line" "$(wc -l < "$F" | tr -d ' ')" "1"
 check "no .tmp is left behind" "$(ls "$AW_STATE_DIR" | tr '\n' ' ')" "heavy-meta-reserve "
 run 0 > /dev/null
