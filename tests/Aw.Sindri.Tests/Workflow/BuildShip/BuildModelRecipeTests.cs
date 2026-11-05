@@ -19,7 +19,7 @@ public sealed class BuildModelRecipeTests
 
     private static readonly string[] _cases =
     [
-        "model-pass", "model-skipped", "model-violation-fixed", "model-sent-back", "model-cant-run-again-then-stop", "model-violation-cap",
+        "model-pass", "model-skipped", "model-violation-fixed", "model-sent-back", "model-cant-run-again-then-stop", "model-cant-run-cap", "model-cant-run-same-no-progress", "model-violation-cap",
     ];
 
     public static TheoryData<string> Cases => [.. _cases];

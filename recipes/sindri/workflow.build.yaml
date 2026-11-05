@@ -76,6 +76,8 @@ evals:
   - evals/workflow.build/scope-revert.jsonl
   - evals/workflow.build/vacuous-red.jsonl
   - evals/workflow.build/model-cant-run-again-then-stop.jsonl
+  - evals/workflow.build/model-cant-run-cap.jsonl
+  - evals/workflow.build/model-cant-run-same-no-progress.jsonl
   - evals/workflow.build/model-pass.jsonl
   - evals/workflow.build/model-sent-back.jsonl
   - evals/workflow.build/model-skipped.jsonl
