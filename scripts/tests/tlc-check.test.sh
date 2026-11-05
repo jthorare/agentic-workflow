@@ -120,6 +120,28 @@ reset; mkspec "$S" Alpha; mkspec "$S" Beta
 run "$S/Beta"
 if [ "$(ncalls)" = 1 ] && has -E -- 'Beta\.tla' "$TMPROOT/calls"; then ok "explicit dirs run only those"; else fail "explicit dirs ran: $(cat "$TMPROOT/calls")"; fi
 
+# README line 1 "models: <path>[:<line>] ..." warnings: never change the exit code.
+reset; mkspec "$S" Alpha
+run "$S/Alpha"
+expect "a missing README warns" 0 '^tlc-check: Alpha: warning: README line 1 is not models:$'
+
+reset; mkspec "$S" Alpha; printf 'Alpha is a spec\nmodels: x\n' >"$S/Alpha/README.md"
+run "$S/Alpha"
+expect "a line 1 without models: warns" 0 '^tlc-check: Alpha: warning: README line 1 is not models:$'
+
+reset; mkspec "$S" Alpha; : >"$S/real.cs"; mkdir -p "$S/realdir"
+printf 'models: %s/real.cs:12 %s/nope.cs:3 %s/realdir/ %s/nodir/\n' "$S" "$S" "$S" "$S" >"$S/Alpha/README.md"
+run "$S/Alpha"
+expect "a missing path warns, line suffix stripped" 0 "^tlc-check: Alpha: warning: models path missing: $S/nope\\.cs\$"
+expect "a missing folder path warns" 0 "warning: models path missing: $S/nodir/\$"
+lacks "existing paths don't warn" 'missing: .*(real\.cs|realdir)'
+
+reset; mkspec "$S" Alpha; : >"$S/real.cs"
+printf 'models: %s/real.cs:12\n' "$S" >"$S/Alpha/README.md"
+run "$S/Alpha"
+expect "a good models: line passes" 0 '^tlc-check: Alpha/Alpha\.cfg: PASS'
+lacks "a good models: line has no warning" 'warning'
+
 # No arguments: every specs/tla/* of the repo, sorted. A copy of the script in a scratch repo root sees only that repo's folders.
 reset
 FAKE="$TMPROOT/fakerepo"

@@ -8,6 +8,9 @@
 #   For each folder and each *.cfg in it (sorted) this runs 'tlc.sh check <spec>.tla --config <cfg>' from
 #   skills/formal-verify/scripts/tlc.sh (one worker). It prints one line per check,
 #   'tlc-check: <Name>/<cfg>: <tlc.sh's last line without "tlc: ">', and tlc.sh's full output only when a check isn't PASS.
+#   README.md line 1 of a spec folder names the code it models: 'models: <path>[:<line>] ...' (paths from the repo root, a
+#   trailing / is a folder). A line 1 without 'models: ' or a path that doesn't exist prints
+#   'tlc-check: <Name>: warning: ...'. Warnings never change the exit code.
 # Env: TLC_SH overrides the path to tlc.sh (the test's stub).
 # Exit: 0 every check passed, 1 a violation, 2 an error (also a folder without <Name>.tla or without a .cfg, a bad
 #       argument, no spec folders), 3 java or the jar is missing (tlc.sh's fix line is in the output above). The worst
@@ -27,6 +30,22 @@ note_rc() {
   case "$1" in 0) rank_new=0 ;; 1) rank_new=1 ;; 3) rank_new=3 ;; *) rank_new=2 ;; esac
   case "$worst" in 0) rank_old=0 ;; 1) rank_old=1 ;; 3) rank_old=3 ;; *) rank_old=2 ;; esac
   if [ "$rank_new" -gt "$rank_old" ]; then worst="$rank_new"; fi
+  return 0
+}
+
+# check_models <dir> <name>: warns when README.md line 1 isn't 'models: <paths>' or names a path that doesn't exist.
+check_models() {
+  local first="" entry path
+  if [ -f "$1/README.md" ]; then IFS= read -r first <"$1/README.md" || true; fi
+  case "$first" in
+    "models: "*) ;;
+    *) echo "tlc-check: $2: warning: README line 1 is not models:"; return 0 ;;
+  esac
+  for entry in ${first#models: }; do
+    path="${entry%%:[0-9]*}"
+    case "$path" in /*) ;; *) path="$ROOT/$path" ;; esac
+    if [ ! -e "$path" ]; then echo "tlc-check: $2: warning: models path missing: ${entry%%:[0-9]*}"; fi
+  done
   return 0
 }
 
@@ -54,6 +73,7 @@ for dir in "${dirs[@]}"; do
   if [ ! -d "$dir" ]; then
     echo "tlc-check: $name: ERROR no such folder $dir" >&2; note_rc 2; continue
   fi
+  check_models "$dir" "$name"
   if [ -f "$dir/MC$name.tla" ]; then spec="$dir/MC$name.tla"
   elif [ -f "$dir/$name.tla" ]; then spec="$dir/$name.tla"
   else
