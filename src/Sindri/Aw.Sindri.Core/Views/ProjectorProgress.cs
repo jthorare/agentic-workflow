@@ -11,7 +11,8 @@ namespace Aw.Sindri.Core.Views;
 internal sealed class ProjectorProgress(TimeProvider clock) : IProjectorStatus, IProjectorControl, IProjectorFeed
 {
     private readonly Lock _gate = new();
-    private ViewsStatus _current = new(0, 0, ProjectedAt: null, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null);
+    // starting: no pass has published yet, so the status must not read Healthy (#2053)
+    private ViewsStatus _current = new(0, 0, ProjectedAt: null, Rebuilding: false, Stalled: false, StalledAt: null, StalledType: null, Starting: true);
     private TaskCompletionSource _pulse = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private bool _rebuildRequested;
 

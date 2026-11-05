@@ -33,6 +33,7 @@ internal sealed partial class ProjectorHost(Projector projector, ILedgerSignal s
             catch (Exception e)   // boundary: a broken pass must not stop the read side; the next tick tries again
             {
                 LogPassFailed(log, e.GetType().Name, e.Message);
+                projector.Threw(e);
                 await Task.Delay(_tick, clock, stoppingToken).ConfigureAwait(false);
             }
         }
