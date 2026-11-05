@@ -21,7 +21,7 @@ internal static class SpecRules
     internal static IReadOnlyList<RuleFinding> Check(SpecFolder folder)
     {
         ArgumentNullException.ThrowIfNull(folder);
-        var findings = new List<RuleFinding>();
+        var findings = Missing(folder);
         var local = new HashSet<string>(folder.Files.Where(static f => f.Name.EndsWith(".tla", StringComparison.Ordinal) && !f.Name.Contains('/', StringComparison.Ordinal)).Select(static f => f.Name[..^4]), StringComparer.Ordinal);
         foreach (var file in folder.Files)
         {
@@ -39,6 +39,24 @@ internal static class SpecRules
                 findings.AddRange(Modules(StripComments(file.Text)).Where(m => !_standard.Contains(m) && !local.Contains(m))
                     .Select(m => new RuleFinding(Rule, $"{folder.Path}/{file.Name} pulls in the module {m}, which is neither one of TLC's standard modules nor in this folder (fix: remove it; a spec may not load other code)", path)));
             }
+        }
+
+        return findings;
+    }
+
+    // The runner refuses a folder without <Name>.tla or without a .cfg of its own; saying so here keeps that from reading as a TLC result.
+    private static List<RuleFinding> Missing(SpecFolder folder)
+    {
+        var findings = new List<RuleFinding>();
+        var name = folder.Path[(folder.Path.LastIndexOf('/') + 1)..];
+        if (!folder.Files.Any(f => f.Kind == SpecFileKind.Regular && string.Equals(f.Name, name + ".tla", StringComparison.Ordinal)))
+        {
+            findings.Add(new RuleFinding(Rule, $"{folder.Path} has no {name}.tla; a spec folder holds a module named like the folder (fix: rename the module or the folder)", $"{folder.Path}/{name}.tla"));
+        }
+
+        if (!folder.Files.Any(static f => f.Kind == SpecFileKind.Regular && f.Name.EndsWith(".cfg", StringComparison.Ordinal) && !f.Name.Contains('/', StringComparison.Ordinal)))
+        {
+            findings.Add(new RuleFinding(Rule, $"{folder.Path} has no .cfg of its own (gaps/ cfgs don't count); TLC needs one to check the model (fix: add {name}.cfg)", $"{folder.Path}/{name}.cfg"));
         }
 
         return findings;

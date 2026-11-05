@@ -20,7 +20,8 @@ namespace Aw.Sindri.Features.ModelCheck;
 /// <param name="commands">Runs the runner under one heavy slot.</param>
 /// <param name="scrubber">Takes secrets out of a trace.</param>
 /// <param name="setup">The runner's path and the environment it gets.</param>
-internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges changes, RepoCommandRunner commands, ITextScrubber scrubber, ModelCheckSetup setup) : IBlockStep, IBlockStepId
+/// <param name="scratch">Makes the run's own TMPDIR.</param>
+internal sealed partial class ModelCheckStep(ISpecFolders folders, IBranchChanges changes, RepoCommandRunner commands, ITextScrubber scrubber, ModelCheckSetup setup, IScratchDirectories scratch) : IBlockStep, IBlockStepId
 {
     /// <summary>The most characters of the runner's output the step keeps: TLC prints a full trace under every check that is not a PASS.</summary>
     internal const int OutputLimit = 256 * 1024;
@@ -117,12 +118,32 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
 
     private static JsonArray Looked(List<Spec> all) => new([.. all.SelectMany(static s => s.Readme.Models ?? []).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal).Select(static p => (JsonNode?)p)]);
 
+    // One TMPDIR per run under the setup's base: made before the runner starts and removed in a finally, so a timeout or a cancel cleans up too, and two steps at once never share one.
     private async ValueTask<Result<IReadOnlyList<CheckResult>>> RunRunner(string runner, string workspace, List<Spec> runnable, ModelCheckOptions options, CancellationToken cancellationToken)
     {
+        var made = scratch.Make(setup.Tmp);
+        if (made.IsError)
+        {
+            return made.Error;
+        }
+
+        try
+        {
+            return await RunRunnerIn(made.Value, new Invocation(runner, workspace, runnable, options), cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            scratch.Remove(made.Value);
+        }
+    }
+
+    private async ValueTask<Result<IReadOnlyList<CheckResult>>> RunRunnerIn(string tmp, Invocation call, CancellationToken cancellationToken)
+    {
+        var (runner, workspace, runnable, options) = call;
         List<string> argv =
         [
             "env", "-i",
-            $"PATH={setup.Path}", $"HOME={setup.Home}", $"AW_STATE_DIR={setup.StateDir}", $"TLC_SH={setup.TlcSh}", $"TLC_HEAP={setup.TlcHeap}", $"TMPDIR={setup.Tmp}",
+            $"PATH={setup.Path}", $"HOME={setup.Home}", $"AW_STATE_DIR={setup.StateDir}", $"TLC_SH={setup.TlcSh}", $"TLC_HEAP={setup.TlcHeap}", $"TMPDIR={tmp}",
             runner, "--root", workspace, "--timeout", CheckSeconds.ToString(System.Globalization.CultureInfo.InvariantCulture),
         ];
         if (options.Witnesses)
@@ -154,14 +175,22 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
         findings.AddRange(tooBig);
         if (findings.Count == 0)
         {
-            return Pass(judged.Runnable, lines);
+            return run.ExitCode == 0 && !run.TimedOut ? Pass(judged.Runnable, lines) : DidNotFinish(run);
         }
 
-        var outcome = lines.Exists(static l => l.Result == TlcResult.Violation) ? "violation"
-            : lines.Exists(static l => l.Result is TlcResult.WitnessMissed or TlcResult.WitnessWrong) ? "vacuous"
-            : specErrors.Count + judged.Rules.Count > 0 ? "specError"
-            : "tooBig";
-        return Findings(outcome, findings);
+        return Findings(Outcome(lines, specErrors.Count + judged.Rules.Count > 0), findings);
+    }
+
+    private static string Outcome(List<TlcCheckLine> lines, bool specError) => lines.Exists(static l => l.Result == TlcResult.Violation) ? "violation"
+        : lines.Exists(static l => l.Result is TlcResult.WitnessMissed or TlcResult.WitnessWrong) ? "vacuous"
+        : specError ? "specError"
+        : "tooBig";
+
+    // Every printed line was a PASS but the runner did not finish clean (a folder it refused, a signal): no PASS counts.
+    private BlockStepResult DidNotFinish(CheckRun run)
+    {
+        var how = run.TimedOut ? "ran past its time" : $"exited {run.ExitCode.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
+        return Findings("specError", [new RuleFinding(SpecErrorRule, $"The model check didn't finish clean (the runner {how}) so no PASS counts. Sent back to fix it", Detail: run.Tail)]);
     }
 
     private BlockStepResult Findings(string outcome, IEnumerable<RuleFinding> findings) => StepFacts.Done(outcome, ("fact:findings", RuleFinding.ToFact(findings.Select(f => f.Scrubbed(scrubber)))));
@@ -201,83 +230,13 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
         .Select(static m => $"{m.Groups["name"].Value} = {m.Groups["value"].Value}")
         .Distinct(StringComparer.Ordinal)];
 
-    // ---- what the runner said, read as findings
+    // ---- the step's own records
 
     private sealed record Request(string Workspace, ModelCheckOptions Options, List<Spec> All, List<Spec> Chosen);
 
     private sealed record Spec(SpecFolder Folder, ModelReadme Readme);
 
+    private sealed record Invocation(string Runner, string Workspace, List<Spec> Runnable, ModelCheckOptions Options);
+
     private sealed record Judged(List<Spec> Runnable, IReadOnlyList<RuleFinding> Rules, ModelCheckOptions Options);
-
-    private sealed class Found(List<Spec> runnable, List<TlcCheckLine> lines, CheckRun run)
-    {
-        internal IEnumerable<RuleFinding> Violations() => lines.Where(static l => l.Result == TlcResult.Violation).Select(l =>
-        {
-            var spec = SpecOf(l);
-            var space = l.Rest.IndexOf(' ', StringComparison.Ordinal);
-            var property = (space < 0 ? l.Rest : l.Rest[(space + 1)..]).Trim();
-            var words = spec.Readme.Properties.TryGetValue(property, out var plain) ? plain.TrimEnd('.') : "a property of the design broke";
-            return new RuleFinding(ViolationRule, $"The model found a hole: {words} ({property}, {l.Label})", CfgPath(spec, l), Detail: TraceSteps.Detail(l.Detail, spec.Readme.Vars));
-        });
-
-        internal IEnumerable<RuleFinding> Witnesses() => lines.Where(static l => l.Result is TlcResult.WitnessMissed or TlcResult.WitnessWrong).Select(l =>
-        {
-            var wrong = _wrong.Match(l.Rest);
-            var how = l.Result == TlcResult.WitnessMissed
-                ? "it was not caught"
-                : wrong.Success ? $"it tripped {wrong.Groups["actual"].Value} instead of {wrong.Groups["expected"].Value}" : $"it tripped another property ({l.Rest})";
-            return new RuleFinding(WitnessRule, $"The model didn't catch the bug planted to test it, so it proves nothing there: {how} ({l.Label}). Sent back to fix the model", CfgPath(SpecOf(l), l));
-        });
-
-        internal List<RuleFinding> SpecErrors()
-        {
-            var errors = lines.Where(l => l.Result == TlcResult.Error && !IsOutOfMemory(l))
-                .Select(l => new RuleFinding(SpecErrorRule, $"The model doesn't check: {l.Label}: {l.Rest}. Sent back to fix it", CfgPath(SpecOf(l), l), Detail: l.Detail.Count == 0 ? null : string.Join('\n', l.Detail)))
-                .ToList();
-            if (lines.Count == 0 && run.ExitCode != 0 && !run.TimedOut)
-            {
-                errors.Add(new RuleFinding(SpecErrorRule, $"The model check printed no results (the runner exited {run.ExitCode.ToString(System.Globalization.CultureInfo.InvariantCulture)}). Sent back to fix it", Detail: run.Tail));
-            }
-
-            return errors;
-        }
-
-        // One finding per spec: a check that ran past its time or out of memory, and the checks that never reported.
-        internal List<RuleFinding> TooBig(bool witnesses, bool hasOther)
-        {
-            var cut = run.TimedOut || run.Tail.Length >= OutputLimit;
-            var seen = lines.Select(static l => l.Label).ToHashSet(StringComparer.Ordinal);
-            var findings = new List<RuleFinding>();
-            foreach (var spec in runnable)
-            {
-                var name = NameOf(spec.Folder);
-                var why = lines.Where(l => l.Name == name && (l.Result == TlcResult.Timeout || IsOutOfMemory(l)))
-                    .Select(l => l.Result == TlcResult.Timeout ? $"{l.Label} ran past {CheckSeconds} s" : $"{l.Label} ran out of memory").ToList();
-                if (cut || !hasOther)
-                {
-                    why.AddRange(Expected(spec, witnesses).Where(label => !seen.Contains(label)).Select(label => $"{label} never reported"));
-                }
-
-                if (why.Count > 0)
-                {
-                    findings.Add(new RuleFinding(TooBigRule, $"The model is too big to check: {string.Join(", ", why)} (bounds: {spec.Readme.Bounds ?? string.Join("; ", Constants(spec.Folder))}). Sent back to make the bounds smaller", spec.Folder.Path));
-                }
-            }
-
-            return findings;
-        }
-
-        private static IEnumerable<string> Expected(Spec spec, bool witnesses)
-        {
-            var name = NameOf(spec.Folder);
-            return spec.Folder.Files.Where(f => f.Kind == SpecFileKind.Regular && f.Name.EndsWith(".cfg", StringComparison.Ordinal) && (witnesses || !f.Name.StartsWith("gaps/", StringComparison.Ordinal)))
-                .Select(f => $"{name}/{f.Name}");
-        }
-
-        private static bool IsOutOfMemory(TlcCheckLine line) => line.Rest.Contains("OutOfMemoryError", StringComparison.Ordinal) || line.Detail.Any(static d => d.Contains("OutOfMemoryError", StringComparison.Ordinal));
-
-        private Spec SpecOf(TlcCheckLine line) => runnable.FirstOrDefault(s => string.Equals(NameOf(s.Folder), line.Name, StringComparison.Ordinal)) ?? runnable[0];
-
-        private static string CfgPath(Spec spec, TlcCheckLine line) => $"{spec.Folder.Path}/{line.Cfg}.cfg";
-    }
 }

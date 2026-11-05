@@ -29,6 +29,6 @@ public sealed class ModelCheckStepContract : BlockContract
     {
         var rig = new StepRig();
         var setup = new ModelCheckSetup("/runner/tlc-check.sh", "/usr/bin", "/home/u", "/home/u/.state", "/runner/tlc.sh", "2g", "/tmp/m");
-        _ = await new ModelCheckStep(new FakeSpecFolders(), rig.Changes, rig.Runner, new IdentityScrubber(), setup).Run(BuildShipContexts.Of("step.model.check", []), cancellationToken);
+        _ = await new ModelCheckStep(new FakeSpecFolders(), rig.Changes, rig.Runner, new IdentityScrubber(), setup, new Aw.Sindri.Infrastructure.ModelCheck.DiskScratchDirectories()).Run(BuildShipContexts.Of("step.model.check", []), cancellationToken);
     }
 }

@@ -21920,6 +21920,9 @@ Aw.Sindri.Core.Workflow.Views.StepRun.ImagesDropped.init -> void
 Aw.Sindri.Core.Judge.IStepImageFiles
 Aw.Sindri.Core.Judge.IStepImageFiles.RealDirectory(string! directory) -> string!
 Aw.Sindri.Core.Judge.IStepImageFiles.RealPath(string! path) -> string?
+Aw.Sindri.Core.ModelCheck.IScratchDirectories
+Aw.Sindri.Core.ModelCheck.IScratchDirectories.Make(string! parent) -> Aw.Kernel.Result<string!>!
+Aw.Sindri.Core.ModelCheck.IScratchDirectories.Remove(string! directory) -> void
 Aw.Sindri.Core.ModelCheck.ISpecFolders
 Aw.Sindri.Core.ModelCheck.ISpecFolders.List(string! workspace, string! pattern, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFolder!>!>!>
 Aw.Sindri.Core.ModelCheck.SpecFile

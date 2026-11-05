@@ -5,6 +5,7 @@ using Aw.Sindri.Core.ModelCheck;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.ModelCheck;
+using Aw.Sindri.Infrastructure.ModelCheck;
 using Aw.Sindri.Tests.Workflow.BuildShip;
 
 namespace Aw.Sindri.Tests.Workflow.ModelCheck;
@@ -19,7 +20,7 @@ public sealed class ModelCheckStepTests
     private const string Secret = "hunter2-" + "not-a-real-credential";
     private const string RunnerPath = "/home/u/.agentic-workflow/bin/cs/s1/tlc/scripts/tlc-check.sh";
 
-    private static readonly ModelCheckSetup _setup = new(RunnerPath, "/usr/bin:/bin", "/home/u", "/home/u/.agentic-workflow", "/home/u/.agentic-workflow/bin/cs/s1/tlc/skills/formal-verify/scripts/tlc.sh", "2g", "/tmp/aw-model-check-1");
+    private static readonly ModelCheckSetup _setup = new(RunnerPath, "/usr/bin:/bin", "/home/u", "/home/u/.agentic-workflow", "/home/u/.agentic-workflow/bin/cs/s1/tlc/skills/formal-verify/scripts/tlc.sh", "2g", Path.Combine(Path.GetTempPath(), "aw-model-check-tests"));
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -472,9 +473,12 @@ public sealed class ModelCheckStepTests
         var argv = command.Argv.ToList();
         Assert.Equal(("env", "-i"), (argv[0], argv[1]));   // nothing else of the host's environment reaches TLC
         var runnerAt = argv.IndexOf(RunnerPath);
+        var environment = argv[2..runnerAt].Order(StringComparer.Ordinal).ToList();
+        var tmp = environment.Single(static e => e.StartsWith("TMPDIR=", StringComparison.Ordinal));
+        Assert.StartsWith($"TMPDIR={_setup.Tmp}/", tmp, StringComparison.Ordinal);   // a directory of its own under the base
         Assert.Equal(
-            ["AW_STATE_DIR=/home/u/.agentic-workflow", "HOME=/home/u", "PATH=/usr/bin:/bin", "TLC_HEAP=2g", $"TLC_SH={_setup.TlcSh}", "TMPDIR=/tmp/aw-model-check-1"],
-            argv[2..runnerAt].Order(StringComparer.Ordinal),
+            ["AW_STATE_DIR=/home/u/.agentic-workflow", "HOME=/home/u", "PATH=/usr/bin:/bin", "TLC_HEAP=2g", $"TLC_SH={_setup.TlcSh}"],
+            environment.Where(static e => !e.StartsWith("TMPDIR=", StringComparison.Ordinal)),
             StringComparer.Ordinal);
         Assert.Equal(["--root", "/work/p1", "--timeout", "180", "--witnesses", "/work/p1/specs/tla/Retry", "/work/p1/specs/tla/Takeover"], argv[(runnerAt + 1)..]);   // absolute folders, name order
         Assert.DoesNotContain("--jar", argv, StringComparer.Ordinal);
@@ -575,7 +579,7 @@ public sealed class ModelCheckStepTests
         internal void RunnerKilled(params string[] lines) =>
             Rig.Commands.Answer("model-check", CheckRun.Of(143, timedOut: true, TimeSpan.FromMinutes(9), string.Join('\n', lines)));
 
-        internal ModelCheckStep Step() => new(Specs, Rig.Changes, Rig.Runner, new Mask(), setup ?? _setup);
+        internal ModelCheckStep Step() => new(Specs, Rig.Changes, Rig.Runner, new Mask(), setup ?? _setup, new DiskScratchDirectories());
     }
 
     private sealed class Mask : ITextScrubber
