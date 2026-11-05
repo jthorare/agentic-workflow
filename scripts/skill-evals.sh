@@ -59,10 +59,12 @@
 # evals/_lib/description-bytes.baseline (one number) when that file exists.
 #
 # Exit: 0 pass (also "no skills changed"), 1 below threshold (or a failed --selftest/--lint-descriptions), 2 budget refused
-# or the run hit its cost ceiling, 3 environment (claude, jq, perl or rsync missing, not logged in, dirty or detached tree, a
+# or the ceiling left a case (or the CLI left a run) unrun, 3 environment (claude, jq, perl or rsync missing, not logged in, dirty or detached tree, a
 # staged path outside the repo, an unreadable result), 4 routing gate missed (--gate block), 64 usage.
 # When several apply the order is 3, 4, 1, 2, so a missed gate or a low score is never hidden behind a refused family set or
-# a partial run. A --dry-run prints FAMILY SKIPPED when the family would be refused but exits 0.
+# a partial run. A case is never started when the money left is less than the costliest call so far ("stopped before"); one CLI
+# call can still pass its cap, since the CLI checks it only between its runs: that is "over the ceiling by", not PARTIAL, and not exit 2.
+# A --dry-run prints FAMILY SKIPPED when the family would be refused but exits 0.
 # Bash 3.2 compatible.
 set -uo pipefail
 
@@ -993,7 +995,7 @@ mocks_on() { # the servers mocks_off moved aside go back to evals/mocks/
 
 do_run() {
   local skills s k c kinds gl branch cases total_cases=0 dry=0 rc_final=0 below=0 partial=0 gate_missed=0 envfail=0
-  local out_dir results cmd_rc ab pass_env cost run_cost=0 clog tool rest budget_left skipped
+  local kcap kspent left cmax out_dir results cmd_rc ab pass_env cost run_cost=0 clog tool rest budget_left skipped
   local famlines fams f fam_cost=0 fam_left="$FAMILY_MAX" fam_skipped=0 fam_refused=0 isfam bl fid n_fam
   [ "$ACTION" = dry ] && dry=1
   need jq; need perl; need rsync
@@ -1108,8 +1110,15 @@ do_run() {
     else mkdir -p "$out_dir/cases"; note "running $k cases (ablation $ab, ceiling \$$bl)"; fi
     # one call per case name (every skill's held-out is named _heldout: one call runs them all, with their lists' union)
     dirs="$(stage_case_dirs "$STAGE")"
-    cmd_rc=0 cost=0 nores=0 cbl="$bl" callfail=0 ceil=0 files=()
+    cmd_rc=0 cost=0 nores=0 cbl="$bl" callfail=0 ceil=0 cmax=0 files=()
+    if [ "$isfam" = 1 ]; then kcap="$FAMILY_MAX" kspent="$fam_cost"; else kcap="$MAX_COST" kspent="$run_cost"; fi
     for name in $(printf '%s\n' "$dirs" | sed 's|.*/||' | sort -u); do
+      # never start a case the money left can't pay for (the costliest finished call is the estimate)
+      left="$(awk -v m="$kcap" -v s="$kspent" -v c="$cost" 'BEGIN { v = m - s - c; printf "%.2f", (v < 0 ? 0 : v) }')"
+      if [ "$dry" = 0 ] && awk -v l="$left" -v x="$cmax" 'BEGIN { exit !(l <= 0 || l < x) }'; then
+        echo "stopped before $name: \$$left left$(awk -v x="$cmax" 'BEGIN { if (x > 0) printf ", a case cost $%.2f", x }')"
+        ceil=1; break
+      fi
       tools="$(for c in $dirs; do [ "${c##*/}" != "$name" ] || case_tools "$c"; done | sort -u)"
       case_grant "$tools"
       co="$out_dir/cases/$name" cres="$out_dir/cases/$name/results.json"
@@ -1134,13 +1143,12 @@ do_run() {
       fi
       ccost="$(jq -r '(.costUsd // 0) as $c | if $c > 0 then $c else ([.cases[] | (.arms.with // [])[], (.arms.without // [])[] | (.costUsd // 0) + (.judgeCostUsd // 0)] | add // 0) end' "$cres")"
       cost="$(awk -v a="$cost" -v b="$ccost" 'BEGIN { printf "%.6f", a + b }')"
+      cmax="$(awk -v a="$cmax" -v b="$ccost" 'BEGIN { printf "%.6f", (b > a ? b : a) }')"
       cbl="$(awk -v m="$bl" -v c="$cost" 'BEGIN { v = m - c; printf "%.2f", (v < 0.01 ? 0.01 : v) }')"
       # a readable file with no case is a failed call (refused or failed to load); later calls still run
       jq -e '.cases | length > 0' "$cres" >/dev/null 2>&1 || { note "claude plugin eval ran no case for $name (refused or failed to load)"; envfail=1; }
       case $crc in 0|1) ;; *) case $cmd_rc in 0|1) cmd_rc=$crc ;; esac ;; esac
       [ "$crc" != 2 ] || break   # the ceiling: the cases after this one stay unrun ("skipped (no result)")
-      # spend reached the kind's ceiling: the next call would start at the $0.01 floor, so stop before launching it
-      if awk -v c="$cost" -v m="$bl" 'BEGIN { exit !(c >= m) }'; then ceil=1; break; fi
     done
     [ "$dry" = 0 ] || continue
     for f in "$out_dir"/cases/*/results.json; do
@@ -1218,7 +1226,11 @@ do_run() {
     CMD_DESC="skill-evals family $(echo $fams | tr ' ' ',')"
     tally_run settle "$fam_cost" "$fid" || note "could not settle the family spend (the reserve stays until its process is gone)"
   fi
-  [ "$partial" = 0 ] || echo "PARTIAL: the run hit its cost ceiling; the table above is not a full measurement"
+  if [ "$partial" = 0 ]; then
+    awk -v c="$run_cost" -v m="$MAX_COST" 'BEGIN { if (c > m) printf "over the ceiling by $%.2f ($%.2f of $%.2f): every case ran; the CLI checks its own cap only between its runs\n", c - m, c, m }'
+    awk -v c="$fam_cost" -v m="$FAMILY_MAX" 'BEGIN { if (c > m) printf "family over the ceiling by $%.2f ($%.2f of $%.2f): every case ran; the CLI checks its own cap only between its runs\n", c - m, c, m }'
+  else echo "PARTIAL: the cost ceiling left cases or runs unrun; the table above is not a full measurement"
+  fi
   [ "$envfail" = 0 ] || exit 3
   if [ "$gate_missed" = 1 ] && [ "$GATE" = block ]; then exit 4; fi
   [ "$below" = 0 ] || exit 1
