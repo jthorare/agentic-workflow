@@ -7,6 +7,7 @@
 # touches, so each CI job can decide between real work and a no-op success:
 #   bash=true|false      the bash tests need to run
 #   dotnet=true|false    the .NET solution needs to build (spikes/ never counts)
+#   tla=true|false       the TLA+ specs need a TLC run (specs/tla/, scripts/tlc-check.sh, skills/formal-verify/)
 #
 # Anything other than a pull_request into the default branch with a known base
 # runs everything: a filter that can't tell must not skip a check. A stacked PR
@@ -14,13 +15,13 @@
 # GitHub retargets it without a new run, and a narrowed result would carry over.
 
 print_all() {
-  printf 'bash=true\ndotnet=true'
+  printf 'bash=true\ndotnet=true\ntla=true'
 }
 
 # Reads changed paths, NUL-separated (git diff -z), on stdin and prints the outputs.
 # NUL separation means no quoting: a non-ASCII or oddly named path arrives verbatim.
 classify_changes() {
-  local bash=false dotnet=false file
+  local bash=false dotnet=false tla=false file
   while IFS= read -r -d '' file || [ -n "$file" ]; do
     [ -n "$file" ] || continue
     case "$file" in
@@ -42,6 +43,9 @@ classify_changes() {
         bash=true ;;
       src/*|tests/*|schemas/packets/*|*.cs|*.csproj|*.props|*.targets|*.slnx|global.json|nuget.config|.editorconfig|BannedSymbols*.txt|packages.lock.json|.config/dotnet-tools.json)
         dotnet=true ;;
+    esac
+    case "$file" in
+      specs/tla/*|scripts/tlc-check.sh|skills/formal-verify/*) tla=true ;;  # the TLA+ job (scripts/tlc-check.sh); scripts/ and skills/ also run the bash tests below
     esac
     case "$file" in
       # The dotnet job's hook-contract step runs these hooks against the C# judge
@@ -76,7 +80,7 @@ classify_changes() {
       docs/csharp/sindri-sessions.md) bash=true ;;
     esac
   done
-  printf 'bash=%s\ndotnet=%s' "$bash" "$dotnet"
+  printf 'bash=%s\ndotnet=%s\ntla=%s' "$bash" "$dotnet" "$tla"
 }
 
 main() {
