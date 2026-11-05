@@ -71,10 +71,16 @@ Every result is a `step.completed` outcome, so a recipe routes it and the findin
 | `MDL-TOOBIG-001` | finding | timeout, out of memory (`TLC_HEAP` raise it, or shrink the constants) or cfgs unrun |
 | `MDL-TOOL-001` | finding | java or the jar is missing, or the runner copy is |
 | `MDL-SPEC-001` | rule | the folder breaks the folder rules; not run |
-| `MDL-SPEC-002` | warning | README has no `models:` path that exists, no `Bounds:` or a property without its line; shown on the run, not an outcome |
-| `MDL-SPEC-003` | rule | build line: the packet's `model/<Name>/` was not moved to `specs/tla/<Name>/`, or the moved README's `models:` line names no path that exists in the head |
+| `MDL-SPEC-002` | warning | a README `models:` path that doesn't exist in the workspace (one warning per path; not checked under `specs: model/*/`), or no `Bounds:` line; shown in `fact:modelCheck.warnings` on a pass, never an outcome |
+| `MDL-SPEC-003` | rule | build line, checked before any TLC call: the packet in force has `model/<Name>/` and the head has no `specs/tla/<Name>/`, or the moved README's `models:` line names no path that exists in the head; a specError |
 
 A trace is scrubbed with `Aw.Redaction` before it becomes a finding.
+
+## The build line (`workflow.build` v7)
+
+`checks` passing leads to the `model` state, which runs this step with `scope: touched` (state timeout 20 min). `pass` and `skipped` finish the build and the result is `fact:modelCheck`; `violation`, `vacuous`, `specError` and `tooBig` return to `green` inside the `revisions` loop (cap 6), so a fix that keeps breaking the model parks `rounds`; `cantRun` goes to `model-desk` (14 days, then park), whose buttons are **Check again** and **Stop**. The step reads `fact:activePacket` to run MDL-SPEC-003: a scoping model in the packet (`model/<Name>/`, listed by `IPacketDirectory.Read`, which returns files under `model/` with relative keys and no other nested file) must be moved by the build to `specs/tla/<Name>/`, with a README whose `models:` line names a real path. `ISpecFolders.Exists` answers path questions for MDL-SPEC-002 and -003: it refuses `..`, a rooted path, and a link whose target is outside the workspace.
+
+The PR body gets one line from `fact:modelCheck` in `HandoffPack` (a `## Design model` section: "Model checked: Takeover (specs/tla/Takeover/, 1,204 states at up to 2 takeovers and 2 parks)", or "Model check skipped: no modelled code changed"; none when the fact is absent). `fact:modelCheck` reaches `step.ship.pack` only once the phase and ship recipes pass it on; until then the line stays out of the body. `sindri doctor` warns (`model:double-run`) when a profile also lists `scripts/tlc-check.sh` in `workflow.build.commands`, since every spec would run twice.
 
 ## Folder rules
 

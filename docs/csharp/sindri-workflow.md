@@ -741,6 +741,8 @@ Each round queues the lenses whose `when` holds, in pack order, as `fact:lensQue
 | `step.build.checks` | block | `pass`, `failed`, `outOfScope` | `built`, `change` on pass; `findings` otherwise |
 | `step.build.scope-desk` | desk, human-only | `allow`, `revert`, `stop` | `answers` on allow and revert |
 | `step.build.amend` | block | `amended` | `activePacket` |
+| `step.model.check` | block | `pass`, `skipped`, `violation`, `vacuous`, `specError`, `tooBig`, `cantRun` | `modelCheck` on pass and skipped; `findings` otherwise |
+| `step.model.desk` | desk, human-only | `again`, `stop`, `skip` | none |
 | `step.prove.intake` | block | `ready` | the seeds `findings`, `proof`, `holdoutResult`, `beforeAfter` |
 | `step.prove.before-after` | block | `pass`, `fail` | `beforeAfter` |
 | `step.prove.holdout` | agent | `ran` | `holdoutResult` |
@@ -748,6 +750,8 @@ Each round queues the lenses whose `when` holds, in pack order, as `fact:lensQue
 | `step.prove.collect` | block | `collected` | `proof` (the children's hashed files appended as artifacts) |
 | `step.prove.evidence` | block | `complete`, `incomplete` | `proofPack`; `findings` on incomplete |
 | `step.prove.fail-log` | block | `logged` | `findings` |
+
+**`workflow.build` v7 (the model check).** After `checks` passes, the build runs `model` (`step.model.check` with `scope: touched`, state timeout 20 min, then park) on the design models of the code the change touches. `pass` and `skipped` go to `built` and write `fact:modelCheck` (an output of the build); `violation`, `vacuous`, `specError` and `tooBig` go back to `green` with `fact:findings`, inside the `revisions` loop (cap 6); `cantRun` goes to `model-desk` ("The model check can't run", `14d then park`). The desk wires `again` ("Check again", back to `model`) and `stop` ("Stop", to `stopped`); `skip` is scoping's. The step reads `fact:workspace`, `fact:change` and `fact:activePacket`, all of which a build holds after `prepare` and `checks`. The shipped evals `model-*.jsonl` cover pass, skipped, violation then fixed, violation at the revisions cap, the three sent-back outcomes, and cantRun then Check again then Stop; the older build evals go through `model` first. Spec: `docs/csharp/sindri-model-check.md`.
 
 `step.prove.holdout-log` has a block runtime (BS-6b, `Aw.Sindri.Features/Prove/ProveHoldoutLogStep.cs`): it checks the evaluator's `fact:holdoutResult` against the phase's hidden set in the holdout store (a result naming a scenario the set lacks, or whose `observed` line repeats a run of 8 words of the scenario, fails the Step), scans the phase's commits (base to `fact:built.head`) and the facts it reads for the canary phrase (`leaked`, one PRV-HOLD-003 finding), marks failed scenarios spent (`failed`, PRV-HOLD-001 findings by item) and otherwise records `passed` with `canary: clean`. Its descriptor now says block, so its hash moved (`sha256:9511ad11…`); no shipped recipe changed.
 
