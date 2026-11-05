@@ -9,7 +9,7 @@
 #   runtime  aspnet + git, bubblewrap, tini; uid 1000; read-only-root friendly (all state under /data)
 # sindri-ui is not built: the image has no desktop.
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401-noble@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS build
 ARG TARGETARCH
 # Commit and recipes tree hash, for doctor's build row (optional: the image has no git checkout to compare with)
 ARG SOURCE_COMMIT=unknown
@@ -37,7 +37,7 @@ RUN dotnet publish src/Judge/Aw.Judge.Host/Aw.Judge.Host.csproj -c Release -r "$
 RUN /out/sindri/sindri recipe eval --shipped --json > /tmp/evals.json \
  && test "$(jq -r '.recipes | length' /tmp/evals.json)" = "$(find /src/recipes/sindri -maxdepth 1 -name '*.yaml' | wc -l)"
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.401-noble@sha256:e70cdb7f80b0348f5cb85f19a8f670fca061f033d57eed12fa003d58b0e06317 AS tools
+FROM mcr.microsoft.com/dotnet/sdk:10.0.403-noble@sha256:de4fe90a98845d75910b9769662465c84de1a934665c431279d1382b2bddc02b AS tools
 ARG TARGETARCH
 RUN apt-get update \
  && apt-get install -y --no-install-recommends curl ca-certificates \
@@ -59,7 +59,7 @@ RUN set -eu; \
  && uv pip install --quiet --python /opt/sindri/graphify/bin/python --require-hashes -r context/code-index-requirements.txt --exclude-newer "$date" \
  && test "$(/opt/sindri/graphify/bin/graphify --version | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)" = "$ver"
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble@sha256:8af87eba5e7cdafb1514d7388be287365da97c132509e84dfe252ffd552398ca AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble@sha256:de0ee358cdd672f7017a003bed21e9ac9ed48a27c922a59b18175b6e82fa7fee AS runtime
 # git (repos), bubblewrap (the code graph's sandbox), tini (PID 1: it reaps the detached Temporal process), procps (/bin/ps
 # and /bin/kill: the Temporal dev server's lifecycle finds and signals its process through them, DevServerProcesses), curl (the chart's exec probes, spec §A.1). The base
 # image's `ubuntu` user holds uid 1000, so it is removed and `sindri` takes the uid (no Docker in the image).
