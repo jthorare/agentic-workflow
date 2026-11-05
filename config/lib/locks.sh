@@ -42,6 +42,25 @@ _lock_take() {
   return 0
 }
 
+# _lock_reclaim_orphan <dir>: <dir> has no holder file, only <pid|owner>.reclaim.<N>* leftovers of a reclaimer killed
+# between its mv and its rm. Free it when every such N is dead; a live N is mid-step, so the dir is left alone.
+_lock_reclaim_orphan() {
+  local dir="$1" f n m left=()
+  for f in "$dir"/pid.reclaim.* "$dir"/owner.reclaim.*; do
+    [ -e "$f" ] || continue
+    n="${f##*.reclaim.}"; n="${n%%[!0-9]*}"
+    [ -n "$n" ] && ! _lock_pid_alive "$n" || return 1
+    left+=("$f")
+  done
+  [ "${#left[@]}" -gt 0 ] || return 1
+  for f in "${left[@]}"; do
+    m="${f%.reclaim.*}.reclaim.$$"
+    mv "$f" "$m" 2>/dev/null || return 1
+    rm -f "$m"
+  done
+  rmdir "$dir" 2>/dev/null
+}
+
 # _lock_reclaim_dead <dir>: free <dir> when its holder file names a dead process. The holder
 # file is <dir>/pid, else the C# ui-evidence holder's <dir>/owner ('<pid> <utc> ui-evidence'; its
 # first word is the pid). The file is moved aside first (only one waiter's mv wins); if what was
@@ -49,7 +68,7 @@ _lock_take() {
 _lock_reclaim_dead() {
   local dir="$1" file="$1/pid" line pid moved
   [ -f "$file" ] || file="$dir/owner"
-  [ -f "$file" ] || return 1
+  [ -f "$file" ] || { _lock_reclaim_orphan "$dir"; return; }
   line="$(cat "$file" 2>/dev/null)" || return 1
   pid="${line%% *}"
   _lock_pid_alive "$pid" && return 1

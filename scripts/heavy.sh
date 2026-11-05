@@ -85,9 +85,33 @@ job=""; dog=""
 stop_job() { [ -n "$job" ] && kill -TERM -- "-$job" 2>/dev/null; [ -n "$dog" ] && kill "$dog" 2>/dev/null; return 0; }
 trap 'stop_job; release; exit 130' INT TERM
 
+# reclaim_slot <dir>: free a slot whose owner pid is dead. The owner file is moved aside first (only one waiter's mv wins);
+# if what moved is not the dead line read, the slot changed hands and it goes back. With no owner file, leftover
+# <owner|pid>.reclaim.<N>* files (pid: locks.sh's) are freed when every reclaimer pid N is dead (a live N is mid-step).
+reclaim_slot() {
+  local d="$1" line pid f n m="$1/owner.reclaim.$$" left=()
+  if [ -f "$d/owner" ]; then
+    line="$(cat "$d/owner" 2>/dev/null)" || return 1; pid="${line%% *}"
+    case $pid in ""|*[!0-9]*) return 1 ;; esac
+    kill -0 "$pid" 2>/dev/null && return 1
+    mv "$d/owner" "$m" 2>/dev/null || return 1
+    if [ "$(cat "$m" 2>/dev/null)" != "$line" ]; then mv "$m" "$d/owner" 2>/dev/null; return 1; fi
+    rm -f "$m"; rmdir "$d" 2>/dev/null; return 0
+  fi
+  for f in "$d"/owner.reclaim.* "$d"/pid.reclaim.*; do
+    [ -e "$f" ] || continue
+    n="${f##*.reclaim.}"; n="${n%%[!0-9]*}"
+    [ -n "$n" ] && ! kill -0 "$n" 2>/dev/null || return 1
+    left+=("$f")
+  done
+  [ "${#left[@]}" -gt 0 ] || return 1
+  for f in "${left[@]}"; do mv "$f" "$m" 2>/dev/null || return 1; rm -f "$m"; done
+  rmdir "$d" 2>/dev/null; return 0
+}
+
 # acquire <label> <base> <slots>: take one slot of a mkdir-mutex pool; a slot whose owner pid is gone is reclaimed.
 acquire() {
-  local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" owner reserved_skip=0
+  local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" reserved_skip=0
   while [ -z "$got" ]; do
     reserved_skip=0
     # Re-read the reservation each pass so a drained queue releases waiting lane jobs promptly.
@@ -98,11 +122,7 @@ acquire() {
       if [ "$label" = box-wide ] && [ "$PRIORITY" != meta ] && [ "$k" -le "$RESERVE" ]; then reserved_skip=1; continue; fi
       if [ "$k" -gt 1 ] && [ "$label" = box-wide ] && ! mem_ok "$k"; then continue; fi
       if mkdir "$d" 2>/dev/null; then got="$d"; break; fi
-      owner="$(awk '{print $1; exit}' "$d/owner" 2>/dev/null)"
-      if [ -n "$owner" ] && ! kill -0 "$owner" 2>/dev/null; then
-        unlink "$d/owner" 2>/dev/null; rmdir "$d" 2>/dev/null
-        if mkdir "$d" 2>/dev/null; then got="$d"; break; fi
-      fi
+      if reclaim_slot "$d" && mkdir "$d" 2>/dev/null; then got="$d"; break; fi
     done
     [ -n "$got" ] && break
     [ "$printed" -eq 0 ] && { echo "heavy: waiting for the $label lock ($slots slot(s), $base)" >&2; printed=1; }
