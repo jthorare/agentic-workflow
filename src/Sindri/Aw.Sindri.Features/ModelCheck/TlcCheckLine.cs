@@ -7,7 +7,7 @@ namespace Aw.Sindri.Features.ModelCheck;
 /// One 'tlc-check: &lt;Name&gt;/&lt;cfg&gt;: &lt;RESULT&gt; ...' line of the runner (scripts/tlc-check.sh) with the '  | ' lines under it. The result word decides; a word the step doesn't know is <see cref="TlcResult.Error"/>.
 /// </summary>
 /// <param name="Name">The spec folder's name.</param>
-/// <param name="Cfg">The cfg, 'Takeover' or 'gaps/FullTimeout', without '.cfg' (the runner prints it with or without).</param>
+/// <param name="Cfg">The cfg, 'Takeover' or 'gaps/FullTimeout', without '.cfg' (the runner prints it with or without); empty for the runner's 'Name: ERROR ...' line about a whole folder.</param>
 /// <param name="Result">The result.</param>
 /// <param name="Rest">What follows the result word.</param>
 /// <param name="Detail">The indented lines under it (TLC's output), without the '  | ' margin.</param>
@@ -20,7 +20,7 @@ internal sealed record TlcCheckLine(string Name, string Cfg, TlcResult Result, s
     private static readonly Regex _counts = new(@"distinct=(?<distinct>\d+)\s+depth=(?<depth>\d+)", RegexOptions.CultureInvariant | RegexOptions.ExplicitCapture, TimeSpan.FromSeconds(1));
 
     /// <summary>The label as a person names the file: 'Name/cfg.cfg'.</summary>
-    internal string Label => $"{Name}/{Cfg}.cfg";
+    internal string Label => Cfg.Length == 0 ? Name : $"{Name}/{Cfg}.cfg";
 
     /// <summary>The distinct states of a PASS, or 0.</summary>
     internal int Distinct => Count("distinct");
@@ -59,6 +59,11 @@ internal sealed record TlcCheckLine(string Name, string Cfg, TlcResult Result, s
     {
         var colon = text.IndexOf(": ", StringComparison.Ordinal);
         var slash = text.IndexOf('/', StringComparison.Ordinal);
+        if (FolderError(text, colon, slash) is { } folder)
+        {
+            return folder;
+        }
+
         if (colon < 0 || slash < 1 || slash > colon)
         {
             return null;   // a runner warning ('tlc-check: Name: warning: ...') or text that is not a check
@@ -70,6 +75,12 @@ internal sealed record TlcCheckLine(string Name, string Cfg, TlcResult Result, s
         var rest = space < 0 ? string.Empty : after[(space + 1)..].Trim();
         return new TlcCheckLine(text[..slash], WithoutExtension(text[(slash + 1)..colon]), Classify(word), _known.Contains(word) ? rest : $"{word} {rest}".Trim(), []);
     }
+
+    // The runner refusing a whole folder ('tlc-check: Name: ERROR no .cfg in ...'): no cfg to name.
+    private static TlcCheckLine? FolderError(string text, int colon, int slash) =>
+        colon > 0 && (slash < 0 || slash > colon) && text[(colon + 2)..].StartsWith("ERROR", StringComparison.Ordinal)
+            ? new TlcCheckLine(text[..colon], string.Empty, TlcResult.Error, text[(colon + 2 + "ERROR".Length)..].Trim(), [])
+            : null;
 
     private static string WithoutExtension(string cfg) => cfg.EndsWith(".cfg", StringComparison.Ordinal) ? cfg[..^4] : cfg;
 

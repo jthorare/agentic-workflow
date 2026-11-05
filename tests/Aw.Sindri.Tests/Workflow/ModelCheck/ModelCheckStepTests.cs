@@ -5,6 +5,7 @@ using Aw.Sindri.Core.ModelCheck;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Blocks;
 using Aw.Sindri.Features.ModelCheck;
+using Aw.Sindri.Infrastructure.ModelCheck;
 using Aw.Sindri.Testing.Packets;
 using Aw.Sindri.Tests.Workflow.BuildShip;
 
@@ -20,7 +21,7 @@ public sealed class ModelCheckStepTests
     private const string Secret = "hunter2-" + "not-a-real-credential";
     private const string RunnerPath = "/home/u/.agentic-workflow/bin/cs/s1/tlc/scripts/tlc-check.sh";
 
-    private static readonly ModelCheckSetup _setup = new(RunnerPath, "/usr/bin:/bin", "/home/u", "/home/u/.agentic-workflow", "/home/u/.agentic-workflow/bin/cs/s1/tlc/skills/formal-verify/scripts/tlc.sh", "2g", "/tmp/aw-model-check-1");
+    private static readonly ModelCheckSetup _setup = new(RunnerPath, "/usr/bin:/bin", "/home/u", "/home/u/.agentic-workflow", "/home/u/.agentic-workflow/bin/cs/s1/tlc/skills/formal-verify/scripts/tlc.sh", "2g", Path.Combine(Path.GetTempPath(), "aw-model-check-tests"));
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
@@ -286,6 +287,163 @@ public sealed class ModelCheckStepTests
         Assert.Equal("MDL-SPEC-ERROR-001", (string?)StepRig.Out(result, "findings").AsArray().Single()!["rule"]);
     }
 
+    // ---- a PASS never hides a broken folder
+
+    [Fact]
+    public async Task A_folder_the_runner_reports_as_ERROR_without_a_cfg_is_specError_even_beside_a_PASS()
+    {
+        var h = new Harness().Folder(Folders.Spec("Good")).Folder(Folders.Spec("NoCfg"));
+        h.Prints(2, "tlc-check: Good/Good.cfg: PASS distinct=5 depth=3", "tlc-check: Good/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained", "tlc-check: NoCfg: ERROR no .cfg in /work/p1/specs/tla/NoCfg");   // no slash before ': '
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("specError", result.Result!.Outcome.Value);
+        var finding = StepRig.Out(result, "findings").AsArray().Single()!;
+        Assert.Equal("MDL-SPEC-ERROR-001", (string?)finding["rule"]);
+        Assert.Contains("NoCfg", finding.ToJsonString(), StringComparison.Ordinal);
+        Assert.Contains("no .cfg in", finding.ToJsonString(), StringComparison.Ordinal);   // the runner's own message
+    }
+
+    [Fact]
+    public async Task A_folder_whose_tla_has_another_name_is_MDL_SPEC_001_before_any_run_and_not_tooBig()
+    {
+        var bar = new SpecFolder("specs/tla/Bar", [new("Foo.tla", SpecFileKind.Regular, "---- MODULE Foo ----\n====\n"), new("Foo.cfg", SpecFileKind.Regular, "SPECIFICATION Spec\n")]);
+        var h = new Harness().Folder(bar);
+        h.Prints(2, "tlc-check: Bar: ERROR no Bar.tla in /work/p1/specs/tla/Bar");
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("specError", result.Result!.Outcome.Value);
+        var finding = StepRig.Out(result, "findings").AsArray().Single()!;
+        Assert.Equal("MDL-SPEC-001", (string?)finding["rule"]);
+        Assert.Contains("Bar.tla", (string?)finding["message"], StringComparison.Ordinal);
+        Assert.Empty(h.Rig.Commands.Calls);
+    }
+
+    [Fact]
+    public async Task A_folder_with_no_cfg_is_MDL_SPEC_001_before_any_run()
+    {
+        var h = new Harness().Folder(new SpecFolder("specs/tla/Bare", [new("Bare.tla", SpecFileKind.Regular, "---- MODULE Bare ----\n====\n"), new("gaps/Planted.cfg", SpecFileKind.Regular, "\\* witness: X\n")]));
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("specError", result.Result!.Outcome.Value);
+        var finding = StepRig.Out(result, "findings").AsArray().Single()!;
+        Assert.Equal("MDL-SPEC-001", (string?)finding["rule"]);
+        Assert.Contains(".cfg", (string?)finding["message"], StringComparison.Ordinal);   // gaps/ cfgs don't count as the folder's own
+        Assert.Empty(h.Rig.Commands.Calls);
+    }
+
+    [Theory]
+    [InlineData(2)]
+    [InlineData(143)]
+    [InlineData(130)]
+    public async Task A_nonzero_exit_with_only_PASS_lines_is_never_pass(int exit)
+    {
+        var h = new Harness().Folder(Folders.Spec("Takeover"));
+        h.Prints(exit, "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("specError", result.Result!.Outcome.Value);
+        var finding = StepRig.Out(result, "findings").AsArray().Single()!;
+        Assert.Equal("MDL-SPEC-ERROR-001", (string?)finding["rule"]);
+        Assert.Contains(exit.ToString(System.Globalization.CultureInfo.InvariantCulture), finding.ToJsonString(), StringComparison.Ordinal);   // the exit code the owner can look up
+    }
+
+    // ---- TMPDIR: one directory per run, made before it and removed after it
+
+    [Theory]
+    [InlineData("pass")]
+    [InlineData("violation")]
+    [InlineData("timeout")]
+    public async Task The_runner_gets_a_TMPDIR_of_its_own_that_exists_while_it_runs_and_is_gone_after_the_run(string how)
+    {
+        var tmp = Path.Combine(Path.GetTempPath(), "aw-mc-tmp-" + Path.GetRandomFileName());   // a fresh box: not even the parent exists
+        try
+        {
+            var h = new Harness(_setup with { Tmp = tmp }).Folder(Folders.Spec("Takeover"));
+            var seen = new List<(string Dir, bool Existed)>();
+            var run = how switch
+            {
+                "pass" => CheckRun.Of(0, timedOut: false, TimeSpan.FromSeconds(1), "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3\ntlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained"),
+                "violation" => CheckRun.Of(1, timedOut: false, TimeSpan.FromSeconds(1), "tlc-check: Takeover/Takeover.cfg: VIOLATION invariant NoTimeGained"),
+                _ => CheckRun.Of(143, timedOut: true, TimeSpan.FromMinutes(9), "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3"),
+            };
+            _ = h.Rig.Commands.Answer("model-check", _ =>
+            {
+                var dir = TmpOf(h);
+                seen.Add((dir, Directory.Exists(dir)));
+                return run;
+            });
+
+            _ = await h.Step().Run(Harness.Context(), Token);
+
+            var (dir, existed) = Assert.Single(seen);
+            Assert.True(existed);   // tlc.sh's mktemp -d fails when it is missing
+            Assert.Equal(tmp, Path.GetDirectoryName(dir));   // under the step's base, not the base itself
+            Assert.False(Directory.Exists(dir));
+        }
+        finally
+        {
+            if (Directory.Exists(tmp))
+            {
+                Directory.Delete(tmp, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Two_runs_at_once_get_different_TMPDIRs()
+    {
+        var tmp = Path.Combine(Path.GetTempPath(), "aw-mc-tmp-" + Path.GetRandomFileName());
+        try
+        {
+            var a = new Harness(_setup with { Tmp = tmp }).Folder(Folders.Spec("Takeover"));
+            var b = new Harness(_setup with { Tmp = tmp }).Folder(Folders.Spec("Takeover"));
+            var dirs = new List<string>();
+            foreach (var h in new[] { a, b })
+            {
+                var harness = h;
+                _ = harness.Rig.Commands.Answer("model-check", _ =>
+                {
+                    dirs.Add(TmpOf(harness));
+                    return CheckRun.Of(0, timedOut: false, TimeSpan.FromSeconds(1), "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3\ntlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
+                });
+            }
+
+            _ = await Task.WhenAll(a.Step().Run(Harness.Context(), Token).AsTask(), b.Step().Run(Harness.Context(), Token).AsTask());
+
+            Assert.Equal(2, dirs.Distinct(StringComparer.Ordinal).Count());
+        }
+        finally
+        {
+            if (Directory.Exists(tmp))
+            {
+                Directory.Delete(tmp, recursive: true);
+            }
+        }
+    }
+
+    private static string TmpOf(Harness h) => h.Rig.Commands.Calls[^1].Command.Argv.Single(static a => a.StartsWith("TMPDIR=", StringComparison.Ordinal))["TMPDIR=".Length..];
+
+    // ---- a liveness trace
+
+    [Fact]
+    public async Task A_liveness_trace_ends_with_its_loop_back_and_a_stutter_says_nothing_changed()
+    {
+        var h = new Harness().Folder(Folders.Spec("Settle"));
+        h.Prints(1, await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Workflow", "ModelCheck", "Fixtures", "liveness-loop.txt"), Token));
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("violation", result.Result!.Outcome.Value);
+        var steps = ((string?)StepRig.Out(result, "findings").AsArray().Single()!["detail"])!.Split('\n').TakeWhile(static l => l.Length > 0).ToList();
+        Assert.Equal(4, steps.Count);
+        Assert.Equal("3. Stuttering: no change", steps[2]);
+        Assert.Equal("4. Then repeats from step 2 (Bump)", steps[3]);
+    }
+
     // ---- tooBig and cantRun
 
     [Fact]
@@ -377,9 +535,12 @@ public sealed class ModelCheckStepTests
         var argv = command.Argv.ToList();
         Assert.Equal(("env", "-i"), (argv[0], argv[1]));   // nothing else of the host's environment reaches TLC
         var runnerAt = argv.IndexOf(RunnerPath);
+        var environment = argv[2..runnerAt].Order(StringComparer.Ordinal).ToList();
+        var tmp = environment.Single(static e => e.StartsWith("TMPDIR=", StringComparison.Ordinal));
+        Assert.StartsWith($"TMPDIR={_setup.Tmp}/", tmp, StringComparison.Ordinal);   // a directory of its own under the base
         Assert.Equal(
-            ["AW_STATE_DIR=/home/u/.agentic-workflow", "HOME=/home/u", "PATH=/usr/bin:/bin", "TLC_HEAP=2g", $"TLC_SH={_setup.TlcSh}", "TMPDIR=/tmp/aw-model-check-1"],
-            argv[2..runnerAt].Order(StringComparer.Ordinal),
+            ["AW_STATE_DIR=/home/u/.agentic-workflow", "HOME=/home/u", "PATH=/usr/bin:/bin", "TLC_HEAP=2g", $"TLC_SH={_setup.TlcSh}"],
+            environment.Where(static e => !e.StartsWith("TMPDIR=", StringComparison.Ordinal)),
             StringComparer.Ordinal);
         Assert.Equal(["--root", "/work/p1", "--timeout", "180", "--witnesses", "/work/p1/specs/tla/Retry", "/work/p1/specs/tla/Takeover"], argv[(runnerAt + 1)..]);   // absolute folders, name order
         Assert.DoesNotContain("--jar", argv, StringComparer.Ordinal);
@@ -487,7 +648,7 @@ public sealed class ModelCheckStepTests
 
         internal InMemoryPacketDirectory Packets { get; } = new();
 
-        internal ModelCheckStep Step() => new(Specs, Rig.Changes, Rig.Runner, new Mask(), setup ?? _setup, Packets);
+        internal ModelCheckStep Step() => new(Specs, Rig.Changes, Rig.Runner, new Mask(), setup ?? _setup, Packets, new DiskScratchDirectories());
     }
 
     private sealed class Mask : ITextScrubber

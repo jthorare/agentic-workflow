@@ -40,7 +40,7 @@ What it does:
 
 1. Lists the spec folders and checks each against the folder rules below. A folder that breaks them is `MDL-SPEC-001` and is not run.
 2. Under `touched`, drops the folders the change doesn't touch.
-3. Runs `tlc-check.sh --root <workspace> [--witnesses] --timeout 180 <abs folders>` through `RepoCommandRunner`: one heavy slot, `MaxDuration` 15 min (10 min for TLC after `BudgetFor`'s margin), folders in name order. The environment is `PATH`, `HOME`, `AW_STATE_DIR`, `TLC_SH`, `TLC_HEAP` and `TMPDIR` (the step's own temp dir, deleted after the run, timeouts included). No `JAVA_HOME`, and `--jar` is never passed.
+3. Runs `tlc-check.sh --root <workspace> [--witnesses] --timeout 180 <abs folders>` through `RepoCommandRunner`: one heavy slot, `MaxDuration` 15 min (10 min for TLC after `BudgetFor`'s margin), folders in name order. The environment is `PATH`, `HOME`, `AW_STATE_DIR`, `TLC_SH`, `TLC_HEAP` and `TMPDIR` (a new directory per run under `$AW_STATE_DIR/tmp/model-check/`, made by `IScratchDirectories` before the runner starts and removed in a `finally`, so timeouts and cancels clean up too and two steps at once never share one). No `JAVA_HOME`, and `--jar` is never passed.
 4. Reads the `tlc-check:` lines. Their result word decides the outcome, not the exit code (the worst code hides a violation in one spec behind an error in another). A line with no result word it knows counts as `ERROR`. The one exception: exit 3 means only "java or the jar is missing".
 5. Reads each passed cfg's `CONSTANT` lines and the README's `Bounds:` line, so a pass carries its bounds.
 6. When time runs out, the cfgs that never ran are listed by name in `tooBig`; they are never counted as passed.

@@ -6,6 +6,7 @@ using Aw.Sindri.Core.Jobs;
 using Aw.Sindri.Core.Views;
 using Aw.Sindri.Features.Jobs;
 using Aw.Sindri.Testing;
+using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.Jobs;
 
@@ -14,7 +15,7 @@ internal sealed class RecoveryRig
 {
     public RecoveryRig()
     {
-        Progress = new ProjectorProgress(H.Clock);
+        Progress = FirstPass.Progress(H.Clock);
         Registry = new JobRegistry();
         Recovery = new JobRecovery(Views, H.Store, Progress, H.Held, new JobEventWriter(H.Store, H.Held, H.Events, new PassThroughScrubber(), H.Callers), Registry);
     }

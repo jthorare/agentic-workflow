@@ -3,6 +3,9 @@ namespace Aw.Evidence.Tests.Infrastructure;
 /// <summary>The pages the browser tests drive.</summary>
 internal static class FixtureSite
 {
+    /// <summary>The text of the '/controls' button 'long': 250 emoji, each one code point and two UTF-16 units.</summary>
+    internal static readonly string LongLabel = string.Concat(Enumerable.Repeat("\U0001F600", 250));
+
     internal static IReadOnlyDictionary<string, string> Pages(string elsewhere) => new Dictionary<string, string>(StringComparer.Ordinal)
     {
         ["/"] = Home(elsewhere),
@@ -15,6 +18,7 @@ internal static class FixtureSite
             "<input type=\"submit\" data-testid=\"blank-label\" aria-label=\"\" value=\"Delete\">",
             "<input type=\"submit\" data-testid=\"blank-title\" title=\" \" aria-label=\"  \" value=\"Archive\">",
             "<input data-testid=\"typed\" value=\"delete my account\"><input type=\"password\" data-testid=\"secret\" value=\"hunter2\">",
+            $"<button data-testid=\"long\">{LongLabel}</button>",
             "</body></html>"),
         ["/tall"] = Lines(
             "<!doctype html><html><head><title>Tall</title></head><body>",

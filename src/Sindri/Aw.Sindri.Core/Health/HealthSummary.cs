@@ -35,7 +35,7 @@ public static class HealthSummary
 
         problems.AddRange(FailedServices(services, context));
         problems.AddRange(Profile(profile));
-        var word = views.Stalled ? HealthWord.Stalled : views.Rebuilding ? HealthWord.Rebuilding : (problems.Count > 0 ? HealthWord.Degraded : HealthWord.Healthy);
+        var word = views.Stalled ? HealthWord.Stalled : views.Rebuilding || views.Starting ? HealthWord.Rebuilding : (problems.Count > 0 ? HealthWord.Degraded : HealthWord.Healthy);
         return new HealthReport(word, [.. problems], Sentence(word, problems));
     }
 
@@ -153,6 +153,10 @@ public static class HealthSummary
         {
             yield return new("SND-API-010", EmptyText.Rebuilding(views.Cursor, views.LedgerHead),
                 string.Create(CultureInfo.InvariantCulture, $"the views are replaying (cursor {views.Cursor} of {views.LedgerHead})"));
+        }
+        else if (views.Starting)
+        {
+            yield return new("SND-API-010", EmptyText.Starting(), "the views are starting");
         }
     }
 
