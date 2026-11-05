@@ -32,7 +32,7 @@ public static partial class TransitionDecision
         return new TransitionMatch(Transition: null, MatchMiss.NoTransition);
     }
 
-    /// <summary>Why the trigger can't match here: an engine trigger, an ended instance, another run's report, or a trigger the state doesn't take.</summary>
+    /// <summary>Why the trigger can't match here: an engine trigger, an ended instance, another run's report, a suspended instance, or a trigger the state doesn't take.</summary>
     private static MatchMiss Miss(WorkflowInstance instance, Recipe recipe, Trigger trigger)
     {
         if (trigger is not (StepCompleted or StepFailed or WaitSatisfied or CommandFired))
@@ -45,17 +45,28 @@ public static partial class TransitionDecision
             return MatchMiss.NotAllowed;
         }
 
+        if (RunMiss(instance, trigger) is var runMiss and not MatchMiss.None)
+        {
+            return runMiss;
+        }
+
+        if (instance.Suspension is not null)
+        {
+            return MatchMiss.Suspended;
+        }
+
+        return recipe.States.TryGetValue(instance.State, out var state) && Allowed(instance, recipe, state, trigger) ? MatchMiss.None : MatchMiss.NotAllowed;
+    }
+
+    /// <summary>A report for a run that isn't the open one, or a desk or agent report for a run the engine runs itself; none otherwise.</summary>
+    private static MatchMiss RunMiss(WorkflowInstance instance, Trigger trigger)
+    {
         if (Run(trigger) is { } token && instance.Frame.Run?.Token != token)
         {
             return MatchMiss.StaleRun;
         }
 
-        if (trigger is StepCompleted { Via: not StepRuntime.Block } && instance.Frame.Run is { Runtime: StepRuntime.Block })
-        {
-            return MatchMiss.EngineOwnedRun;
-        }
-
-        return recipe.States.TryGetValue(instance.State, out var state) && Allowed(instance, recipe, state, trigger) ? MatchMiss.None : MatchMiss.NotAllowed;
+        return trigger is StepCompleted { Via: not StepRuntime.Block } && instance.Frame.Run is { Runtime: StepRuntime.Block } ? MatchMiss.EngineOwnedRun : MatchMiss.None;
     }
 
     /// <summary>
