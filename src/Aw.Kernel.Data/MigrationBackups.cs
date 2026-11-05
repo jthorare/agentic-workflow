@@ -22,7 +22,9 @@ internal static class MigrationBackups
         }
     }
 
-    // Best effort after a successful upgrade: keeps the newest backup and the one this run wrote or kept.
+    // Best effort after a successful upgrade: keeps the newest backup and the one this run wrote or kept. They differ
+    // only when a higher version's backup is already there (the database was restored below it), and that file is
+    // then the only copy of the later data.
     internal static void Prune(string dataSource, int current)
     {
         var path = Path.GetFullPath(dataSource);

@@ -156,7 +156,7 @@ public sealed class MigrationSafetyTests
         [
             db.Path + ".bak-v1.tmp-1-x",
             db.Path + ".bak-vX",
-            System.IO.Path.Combine(db.Directory, "other.db.bak-v1"),
+            Path.Combine(db.Directory, "other.db.bak-v1"),
         ];
         foreach (var path in bystanders)
         {

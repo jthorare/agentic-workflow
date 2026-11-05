@@ -141,6 +141,7 @@ public sealed class MigrationRunner(ISqliteConnectionFactory connections, TimePr
         var backup = $"{connection.DataSource}.bak-v{from.ToString(CultureInfo.InvariantCulture)}";
         if (File.Exists(backup))
         {
+            MigrationBackups.RestrictToOwner(backup); // why: a backup kept from before #2107 can still be 0644
             return; // the first backup of a version is the one kept
         }
 
@@ -162,6 +163,7 @@ public sealed class MigrationRunner(ISqliteConnectionFactory connections, TimePr
             catch (IOException) when (File.Exists(backup))
             {
                 // another runner's backup of the same version got there first; keep it
+                MigrationBackups.RestrictToOwner(backup);
             }
         }
         finally
