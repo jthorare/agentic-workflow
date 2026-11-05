@@ -19,5 +19,6 @@ Leaves out: Temporal replay, the ledger mirror, desk timeouts, the approved flag
 | Config | Fails | What TLC shows |
 |---|---|---|
 | `gaps/FullTimeoutOnHandback.cfg` | `NoTimeGained` | A handback that arms the full timeout even though the takeover paused a running timer: start, one tick, takeover (2 left), handback (3 left). 4 states. Needs the `Elapse` action: without it the timer is always full when paused and the bug is invisible. |
+| `gaps/PauseKeepsFull.cfg` | `NoTimeGained` | A takeover that keeps the state's full timeout instead of the ticks left (`TimerScopes.Pause`): start, one tick, takeover (keeps 3, had 2), handback (3 left). 4 states. Also needs `Elapse`. |
 
 Run: `scripts/tlc-check.sh --witnesses specs/tla/Takeover`.
