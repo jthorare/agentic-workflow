@@ -14,8 +14,8 @@ internal static class GateSql
     internal static readonly SqlStatement LatestMerge = new(
         "SELECT pr, sha, at FROM merges ORDER BY at DESC, rowid DESC LIMIT 1", Subject: "latest merge");
 
-    internal static SqlStatement NextRun(int pr) => new(
-        "SELECT COALESCE(MAX(run), 0) + 1 FROM gates WHERE pr = $pr", c => c.Bind("$pr", pr), "next gate run");
+    internal static SqlStatement NextRun(int pr, int planned) => new(
+        "SELECT MAX(COALESCE(MAX(run), 0) + 1, $planned) FROM gates WHERE pr = $pr", c => c.Bind("$pr", pr).Bind("$planned", planned), "next gate run");
 
     internal static IEnumerable<SqlStatement> Insert(GateRecord gate)
     {

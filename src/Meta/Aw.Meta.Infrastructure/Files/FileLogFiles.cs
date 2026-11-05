@@ -1,3 +1,4 @@
+using System.Globalization;
 using Aw.Kernel;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Ports;
@@ -27,6 +28,31 @@ internal sealed class FileLogFiles : ILogFiles
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             return MetaErrors.LogUnreadable.With(exception.Message);
+        }
+    }
+
+    public ValueTask<Result<int>> LatestRun(string gateDirectory, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var latest = 0;
+            if (Directory.Exists(gateDirectory))
+            {
+                foreach (var directory in Directory.EnumerateDirectories(gateDirectory))
+                {
+                    var name = Path.GetFileName(directory);
+                    if (name.All(char.IsAsciiDigit) && int.TryParse(name, NumberStyles.None, CultureInfo.InvariantCulture, out var run))
+                    {
+                        latest = Math.Max(latest, run);
+                    }
+                }
+            }
+
+            return ValueTask.FromResult(Results.Success(latest));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            return ValueTask.FromResult<Result<int>>(MetaErrors.LogUnreadable.With(exception.Message));
         }
     }
 }

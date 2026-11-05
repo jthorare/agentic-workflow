@@ -16,6 +16,7 @@ public sealed class FileLogFilesContractTests : LogFilesContract, IDisposable
     protected override string Seed(ILogFiles logs, string name, string text)
     {
         var path = Path.Combine(_dir.Path, name);
+        _ = Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         File.WriteAllText(path, text);
         return path;
     }

@@ -58,7 +58,13 @@ internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace
             return prepared.IsError ? prepared.Error : latest.Error;
         }
 
-        return new GatePlan(request.Pr, (latest.Value?.Run ?? 0) + 1, Scopes(request, team.Gate, prepared.Value.Changed), prepared.Value);
+        var run = await workspace.NextRun(request.Pr, latest.Value?.Run ?? 0, cancellationToken).ConfigureAwait(false);
+        if (run.IsError)
+        {
+            return run.Error;
+        }
+
+        return new GatePlan(request.Pr, run.Value, Scopes(request, team.Gate, prepared.Value.Changed), prepared.Value);
     }
 
     private static IReadOnlyList<string> Scopes(GateRunRequest request, GateConfig gate, IReadOnlyList<string> changed) =>
@@ -83,7 +89,7 @@ internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace
     private async ValueTask<Result<GateRunResponse>> Record(GatePlan plan, IReadOnlyList<GateStep> ran, HeavySlots? heavy, CancellationToken cancellationToken)
     {
         var verdict = !plan.Prepared.Merged ? GateVerdict.Conflict : ran.All(s => s.Verdict == GateVerdict.Pass) ? GateVerdict.Pass : GateVerdict.Fail;
-        var record = new GateRecord(plan.Pr, plan.Prepared.Pr.Head, plan.Prepared.Main, plan.Scopes, ran, verdict, clock.GetUtcNow()) { Tree = plan.Prepared.TreeSha, Stack = [] };
+        var record = new GateRecord(plan.Pr, plan.Prepared.Pr.Head, plan.Prepared.Main, plan.Scopes, ran, verdict, clock.GetUtcNow()) { Run = plan.Run, Tree = plan.Prepared.TreeSha, Stack = [] };
         var saved = await gates.Save(record, cancellationToken).ConfigureAwait(false);
         return saved.IsError ? saved.Error : new GateRunResponse(saved.Value, heavy);
     }
