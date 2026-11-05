@@ -209,6 +209,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddScoped<IDoctorChecks, TokenFileDoctorChecks>()
             .AddScoped<IDoctorChecks, DeployDoctorChecks>()
             .AddScoped<IDoctorChecks>(_ => new UiEvidenceDoctorChecks(environment, Environment.ProcessPath, new ProcessToolRunner()))   // cutover §3.1: `setup:ui-evidence`
+            .AddScoped<IDoctorChecks>(sp => new ModelCheckDoctorChecks(sp.GetRequiredService<ModelCheckSetup>(), new ProcessToolRunner()))   // model-check design §4.3: `model:check`
             .AddScoped<IDoctorChecks>(static _ => new BannerDoctorChecks(OperatingSystem.IsMacOS(), static () => NotifierCommand.OnPath("terminal-notifier")));   // #1111: `setup:banners`
 
     /// <summary>The claude CLI and the providers' MCP config files, with their settings.</summary>
