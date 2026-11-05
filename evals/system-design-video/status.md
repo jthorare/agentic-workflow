@@ -1,7 +1,7 @@
 fire_rate: 9/9
 delta: 0.42
 last_run: 2026-11-05
-pr:
+pr: #2084
 
 Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per case, preamble on.
 - fire_rate: system-design-video-natural-1, system-design-video-natural-2 and the held-out case fired 3/3 each;
