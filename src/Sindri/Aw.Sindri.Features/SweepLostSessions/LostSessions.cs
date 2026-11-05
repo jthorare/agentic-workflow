@@ -60,8 +60,8 @@ internal sealed class LostSessions(LaunchLiveness liveness, LaunchSessionEvents 
 
     public async ValueTask<int?> SweepFiles(TimeSpan olderThan, CancellationToken cancellationToken)
     {
-        var freshness = status.Current.AsOf;
-        if (freshness.Rebuilding || freshness.Stalled || freshness.Cursor < freshness.LedgerHead)
+        var freshness = status.Current;   // the whole status, not its AsOf: Starting (no first pass yet) isn't in AsOf
+        if (freshness.Starting || freshness.Rebuilding || freshness.Stalled || freshness.Cursor < freshness.LedgerHead)
         {
             return null;
         }
