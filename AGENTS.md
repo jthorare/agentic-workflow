@@ -239,6 +239,7 @@ bash scripts/tests/ui-checks-xvfb-lib.test.sh   # tests/ui-checks/xvfb-lib.sh wi
 bash scripts/tests/test-tmux.test.sh
 bash scripts/tests/sindri-smoke-normalize.test.sh
 bash scripts/tests/aot-smoke-helpers.test.sh   # src/Sindri/aot-smoke/helpers.sh with a fake sindri: a session's manual service run gets past a scheduled run's SND-JOB-409 (#1949)
+bash scripts/tests/aot-smoke-cleanup.test.sh   # src/Sindri/aot-smoke/run.sh's cleanup and traps with fake serve and temporal processes: both are gone after a normal exit, a missing control.json, TERM and INT, temporal alone, two starts and a hung stop, and an unrelated pid is left alone (#2109)
 bash scripts/tests/scoping-fixture.test.sh
 bash scripts/tests/line-fixture.test.sh
 bash scripts/tests/skill-evals.test.sh      # scripts/skill-evals.sh with a stub claude: flags, exit codes 0-4, the staged rewrite (source untouched), the env allowlist and token scrub, the flock'd spend tally under two concurrent runs, budget refusal, --changed, bootstrap/ as a skill, family sets (selftest, description-change pull-in, the separate $12 cap), the fixture lint's comment lines, --selftest, --lint-descriptions, --status; the stubs gh and curl

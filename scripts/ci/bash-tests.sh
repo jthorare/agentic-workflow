@@ -105,6 +105,7 @@ SERIAL=(
   "scripts/tests/forge-fixture.test.sh	dotnet-builds src/Forge in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
   "scripts/tests/run-test-guard.test.sh	asserts a 2 s timeout plus 3 s grace returns within 20 s and reaps a daemonized sleep by token; a loaded machine shifts the windows"
   "scripts/tests/cutover-clean-ts.test.sh	dotnet-builds src/BugFix in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
+  "scripts/tests/aot-smoke-cleanup.test.sh	starts fake serve and temporal processes that ignore TERM and polls up to 15 s per scenario for them to be gone; a loaded machine shifts the windows"
   "scripts/tests/heavy-reclaim-race.test.sh	holds wrapper jobs at a step with stub gates that give up after 5 s and bounds an orphaned-slot wait at 20 s; a loaded machine shifts both"
   "scripts/tests/heavy-mixed-reclaim-race.test.sh	holds a wrapper job and a locks.sh holder at a step with stub gates that give up after 5 s; a loaded machine shifts them"
   "scripts/tests/heavy-reclaim-leftovers.test.sh	bounds each take at 6 s and needs the \"kept\" rows to time out; a loaded machine can push a real take past it"
