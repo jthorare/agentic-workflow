@@ -48,12 +48,39 @@ work=""
 remember_servers() {
   jq -r '(.pid // empty), (.temporal.pid // empty)' "$AW_SINDRI_HOME/control.json" >>"$work/servers.pids" 2>/dev/null || true
 }
+# stop_recorded <pids-file> signals every pid listed in the file (SIGTERM, a shared wait of ~3 s, SIGKILL for survivors) only
+# while its command line still names sindri or temporal, so a reused pid is left alone. serve and temporal lead their own
+# session, so one that leads its own process group, not run.sh's, is signalled as a group to take its children too. cleanup
+# and reap_stale share it.
+stop_recorded() {
+  local pid cmd pgid mine targets=() sig live
+  mine="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
+  while read -r pid; do
+    [ -n "$pid" ] || continue
+    if [ -r "/proc/$pid/cmdline" ]; then cmd="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
+    else cmd="$(ps -p "$pid" -o command= 2>/dev/null || true)"; fi
+    case "$cmd" in *sindri*|*temporal*) ;; *) continue ;; esac
+    pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
+    if [ "$pgid" = "$pid" ] && [ "$pgid" != "$mine" ]; then targets+=("-$pid"); else targets+=("$pid"); fi
+  done <"$1"
+  for sig in TERM KILL; do
+    live=0
+    for pid in ${targets[@]+"${targets[@]}"}; do
+      # a group target counts as live while its leader is; a zombie leader awaiting its reaper is not running
+      kill -0 "${pid#-}" 2>/dev/null && live=1 && kill "-$sig" -- "$pid" 2>/dev/null || true
+    done
+    [ "$live" = 1 ] && [ "$sig" = TERM ] || break
+    for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+      live=0
+      for pid in "${targets[@]}"; do kill -0 "${pid#-}" 2>/dev/null && live=1; done
+      [ "$live" = 0 ] && break 2
+      sleep 0.2
+    done
+  done
+}
 # On any exit (a gate cancel sends SIGTERM and SIGKILLs what is left after the step's grace, 45 s by default, so this must be quick), the servers this run started are
-# stopped before the scratch tree is deleted: only once this run's home is exported (never the owner's default home). Each
-# recorded pid is signalled (SIGTERM, a shared wait of ~3 s, SIGKILL for survivors) only while its command line still names
-# sindri or temporal, so a reused pid is left alone. serve and temporal lead their own session, so one that leads its own
-# process group, not run.sh's, is signalled as a group to take its children too. `sindri stop` is not called: signalling
-# the recorded pids covers serve and temporal, and a hung `stop` could eat the cancel's grace.
+# stopped before the scratch tree is deleted: only once this run's home is exported (never the owner's default home).
+# `sindri stop` is not called: signalling the recorded pids covers serve and temporal, and a hung `stop` could eat the cancel's grace.
 cleaned=0
 cleanup() {
   [ -n "$scratch" ] || return 0
@@ -62,32 +89,27 @@ cleanup() {
   if [ "${AW_SINDRI_HOME:-}" = "$work/home" ]; then
     [ ! -f "$AW_SINDRI_HOME/control.json" ] || remember_servers   # a start that was never recorded
     [ -f "$work/servers.pids" ] || { find "$scratch" -delete; return 0; }
-    local pid cmd pgid mine targets=() sig live
-    mine="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
-    while read -r pid; do
-      [ -n "$pid" ] || continue
-      if [ -r "/proc/$pid/cmdline" ]; then cmd="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
-      else cmd="$(ps -p "$pid" -o command= 2>/dev/null || true)"; fi
-      case "$cmd" in *sindri*|*temporal*) ;; *) continue ;; esac
-      pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
-      if [ "$pgid" = "$pid" ] && [ "$pgid" != "$mine" ]; then targets+=("-$pid"); else targets+=("$pid"); fi
-    done <"$work/servers.pids"
-    for sig in TERM KILL; do
-      live=0
-      for pid in ${targets[@]+"${targets[@]}"}; do
-        # a group target counts as live while its leader is; a zombie leader awaiting its reaper is not running
-        kill -0 "${pid#-}" 2>/dev/null && live=1 && kill "-$sig" -- "$pid" 2>/dev/null || true
-      done
-      [ "$live" = 1 ] && [ "$sig" = TERM ] || break
-      for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
-        live=0
-        for pid in "${targets[@]}"; do kill -0 "${pid#-}" 2>/dev/null && live=1; done
-        [ "$live" = 0 ] && break 2
-        sleep 0.2
-      done
-    done
+    stop_recorded "$work/servers.pids"
   fi
   find "$scratch" -delete
+}
+# A SIGKILLed run (a gate's hard kill) runs no trap, and serve and temporal lead their own sessions, outside run.sh's process tree,
+# so the kill never reaches them: they keep running and the scratch dir stays on disk (#2116). The next run reaps them at its start.
+# A scratch dir belongs to a live run while its owner file's pid is alive with the recorded start time (a reused pid has another
+# start time), and such a dir is never touched, so a concurrent gate's run is safe. No owner file, no reap. Nothing here is fatal.
+reap_stale() {
+  local dir pid lstart recorded
+  for dir in "${TMPDIR:-/tmp}"/aot-sindri-smoke.*; do
+    [ -d "$dir" ] || continue
+    [ "$dir" != "$scratch" ] || continue
+    { { read -r pid && read -r lstart; } <"$dir/owner"; } 2>/dev/null || continue
+    [ -n "$pid" ] || continue
+    recorded="$(ps -o lstart= -p "$pid" 2>/dev/null || true)"
+    [ "$recorded" != "$lstart" ] || [ -z "$recorded" ] || continue   # alive with the same start time: a live run's dir
+    [ ! -f "$dir/run/servers.pids" ] || stop_recorded "$dir/run/servers.pids" || true
+    find "$dir" -delete 2>/dev/null || true
+  done
+  return 0
 }
 trap cleanup EXIT
 trap 'cleanup; exit 143' TERM
@@ -98,6 +120,8 @@ trap 'cleanup; exit 129' HUP
 scratch="$(cd "$(mktemp -d "${TMPDIR:-/tmp}/aot-sindri-smoke.XXXXXX")" && pwd -P)"
 tree="$scratch/tree"
 work="$scratch/run"
+printf '%s\n%s\n' "$$" "$(ps -o lstart= -p $$)" >"$scratch/owner"
+reap_stale
 mkdir -p "$tree" "$work"
 # shellcheck source=../../../scripts/lib/sindri-build-inputs.sh
 source "$root/scripts/lib/sindri-build-inputs.sh"
