@@ -41,7 +41,7 @@ public sealed class ShippedBlocksTests
                 "step.evidence.api-run", "step.evidence.combine", "step.evidence.db-plan", "step.evidence.db-run", "step.evidence.desk", "step.evidence.desktop-review", "step.evidence.desktop-run",
                 "step.evidence.none", "step.evidence.ui-plan", "step.evidence.ui-run", "step.handtest.run", "step.implement.fix", "step.intake.ticket",
                 "step.interview.answer", "step.interview.apply", "step.interview.questions", "step.interview.record", "step.judge.choose",
-                "step.lens.ask", "step.lens.log", "step.lens.round", "step.lens.run", "step.line.decide", "step.line.dispatch", "step.line.seed", "step.owner.decide", "step.phase.decide",
+                "step.lens.ask", "step.lens.log", "step.lens.round", "step.lens.run", "step.line.decide", "step.line.dispatch", "step.line.seed", "step.model.check", "step.model.desk", "step.owner.decide", "step.phase.decide",
                 "step.phase.drift", "step.phase.seed", "step.plan.check", "step.plan.evidence", "step.plan.exec-review", "step.plan.freeze",
                 "step.plan.graph", "step.plan.holdout", "step.plan.holdout-store", "step.plan.intake", "step.plan.questions", "step.plan.review", "step.plan.settle",
                 "step.pr.ci-fix", "step.pr.ci-log", "step.pr.docs-decide", "step.pr.docs-merge-decide", "step.pr.fix-comment", "step.pr.held-comment",

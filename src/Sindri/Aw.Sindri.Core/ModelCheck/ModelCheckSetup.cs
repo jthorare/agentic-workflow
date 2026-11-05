@@ -1,4 +1,4 @@
-namespace Aw.Sindri.Features.ModelCheck;
+namespace Aw.Sindri.Core.ModelCheck;
 
 /// <summary>
 /// What the step runs the runner with: the copy of <c language="text">tlc-check.sh</c> installed beside sindri (null when it is missing, or <c language="text">AW_TLC_CHECK</c> names nothing)
@@ -11,4 +11,4 @@ namespace Aw.Sindri.Features.ModelCheck;
 /// <param name="TlcSh">TLC_SH, the installed copy of tlc.sh.</param>
 /// <param name="TlcHeap">TLC_HEAP, the heap cap ('2g').</param>
 /// <param name="Tmp">TMPDIR, the step's own temp dir.</param>
-internal sealed record ModelCheckSetup(string? Runner, string Path, string Home, string StateDir, string TlcSh, string TlcHeap, string Tmp);
+public sealed record ModelCheckSetup(string? Runner, string Path, string Home, string StateDir, string TlcSh, string TlcHeap, string Tmp);

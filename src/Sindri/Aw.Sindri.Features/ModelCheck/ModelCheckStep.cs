@@ -22,9 +22,6 @@ namespace Aw.Sindri.Features.ModelCheck;
 /// <param name="setup">The runner's path and the environment it gets.</param>
 internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges changes, RepoCommandRunner commands, ITextScrubber scrubber, ModelCheckSetup setup) : IBlockStep, IBlockStepId
 {
-    /// <summary>The longest the step may run (design §3, step 4).</summary>
-    internal static readonly TimeSpan MaxDuration = TimeSpan.FromMinutes(15);
-
     /// <summary>The most characters of the runner's output the step keeps: TLC prints a full trace under every check that is not a PASS.</summary>
     internal const int OutputLimit = 256 * 1024;
 
@@ -134,7 +131,7 @@ internal sealed class ModelCheckStep(ISpecFolders folders, IBranchChanges change
         }
 
         argv.AddRange(runnable.Select(s => $"{workspace.TrimEnd('/')}/{s.Folder.Path}"));
-        var budget = RepoCommandRunner.BudgetFor(MaxDuration);
+        var budget = RepoCommandRunner.BudgetFor(CommandStepLimits.ModelCheckMaxDuration);
 
         // The command's own timeout sits just under the budget, so the runner running out of time comes back as a result, not as the budget error.
         var set = new CommandSet([new BuildCommand("model-check", argv)], budget - TimeSpan.FromSeconds(1), OutputLimit);

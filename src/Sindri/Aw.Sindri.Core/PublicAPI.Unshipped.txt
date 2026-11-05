@@ -21956,3 +21956,28 @@ static Aw.Sindri.Core.ModelCheck.SpecFile.operator !=(Aw.Sindri.Core.ModelCheck.
 static Aw.Sindri.Core.ModelCheck.SpecFile.operator ==(Aw.Sindri.Core.ModelCheck.SpecFile? left, Aw.Sindri.Core.ModelCheck.SpecFile? right) -> bool
 static Aw.Sindri.Core.ModelCheck.SpecFolder.operator !=(Aw.Sindri.Core.ModelCheck.SpecFolder? left, Aw.Sindri.Core.ModelCheck.SpecFolder? right) -> bool
 static Aw.Sindri.Core.ModelCheck.SpecFolder.operator ==(Aw.Sindri.Core.ModelCheck.SpecFolder? left, Aw.Sindri.Core.ModelCheck.SpecFolder? right) -> bool
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.<Clone>$() -> Aw.Sindri.Core.ModelCheck.ModelCheckSetup!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Deconstruct(out string? Runner, out string! Path, out string! Home, out string! StateDir, out string! TlcSh, out string! TlcHeap, out string! Tmp) -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Equals(Aw.Sindri.Core.ModelCheck.ModelCheckSetup? other) -> bool
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Home.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Home.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.ModelCheckSetup(string? Runner, string! Path, string! Home, string! StateDir, string! TlcSh, string! TlcHeap, string! Tmp) -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Path.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Path.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Runner.get -> string?
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Runner.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.StateDir.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.StateDir.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.TlcHeap.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.TlcHeap.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.TlcSh.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.TlcSh.init -> void
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Tmp.get -> string!
+Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Tmp.init -> void
+override Aw.Sindri.Core.ModelCheck.ModelCheckSetup.Equals(object? obj) -> bool
+override Aw.Sindri.Core.ModelCheck.ModelCheckSetup.GetHashCode() -> int
+override Aw.Sindri.Core.ModelCheck.ModelCheckSetup.ToString() -> string!
+static Aw.Sindri.Core.ModelCheck.ModelCheckSetup.operator !=(Aw.Sindri.Core.ModelCheck.ModelCheckSetup? left, Aw.Sindri.Core.ModelCheck.ModelCheckSetup? right) -> bool
+static Aw.Sindri.Core.ModelCheck.ModelCheckSetup.operator ==(Aw.Sindri.Core.ModelCheck.ModelCheckSetup? left, Aw.Sindri.Core.ModelCheck.ModelCheckSetup? right) -> bool
+static Aw.Sindri.Core.Checks.CommandStepLimits.ModelCheckMaxDuration.get -> System.TimeSpan
