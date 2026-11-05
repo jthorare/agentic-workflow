@@ -331,7 +331,7 @@ working untouched. `team-migrate` moves it into `teams/<its team name>/` on requ
 | `$AW_STATE_DIR/meta/teams/<team>/meta.db` | `aw-meta` |
 | `$AW_STATE_DIR/meta/teams/<team>/team.json` | `team-init` (then the owner) |
 | `$AW_STATE_DIR/meta/meta.db`, `team.json` | the legacy flat layout of a team set up before named teams (still read when no team is selected; `team-migrate` moves it) |
-| `$AW_STATE_DIR/meta/teams/<team>/gates/<pr>/` | `gate-run`, `gate-rerun`: `tree` (the gate tree, reused per PR), `main-tree` (plain main for reruns), `<run>/<step>.log` |
+| `$AW_STATE_DIR/meta/teams/<team>/gates/<pr>/` | `gate-run`, `gate-rerun`: `tree` (the gate tree, reused per PR), `main-tree` (plain main for reruns), `<run>/<step>.log` (the `<run>` directory is claimed with a `.claimed` marker when the pass is planned, so two passes never share one) |
 | `$AW_STATE_DIR/meta/teams/<team>/lane-sessions/<lane>` | `scripts/meta-lane.sh` (the lane's Claude session id), or `config/hooks/session-id-report.sh` at the SessionStart of a Codex or Cursor lane (its own session id, atomic, 0600) |
 | `$AW_STATE_DIR/meta/teams/<team>/lane-sessions/<lane>.replied`, `.owed` | `config/hooks/meta-lane-gate.sh`: the checksum of the last reply it recorded and of the owed list the last block showed (cleared by a new delivery, a relaunch, a new session) |
 | `$AW_STATE_DIR/meta/teams/<team>/lane-sessions/<lane>.agent` | `scripts/meta-lane.sh` (JSON: `agent`, `processName`, `hooks`, `transcripts`) for a lane whose agent isn't Claude Code; read by the lane commands and the lane source |

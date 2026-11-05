@@ -18,7 +18,7 @@ public sealed class QueueGateTests
 
     private QueueGateService Service() => new(
         new TrainSelection(_world.Config, Worlds.Queue(_world)),
-        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, new FileLogFiles()),
+        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, _world.LogFiles),
         new GateStepRunner(_world.Runner, _world.Paths),
         _world.Gates,
         _world.Values,
