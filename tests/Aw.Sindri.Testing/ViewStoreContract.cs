@@ -100,13 +100,30 @@ public abstract class ViewStoreContract
         _ = await store.Open(ViewSchema.Version, Token);
         _ = await store.Apply([Event(1, Put, "alpha"), Event(2, Fail, "bad")], Projections(), Clock.GetUtcNow(), Token);
 
-        var reset = (await store.Reset(ViewNames.All, ViewSchema.Version + 1, Clock.GetUtcNow(), Token)).Value;
+        var reset = (await store.Reset(ViewNames.All, ViewSchema.Version + 1, Clock.GetUtcNow(), 7, Token)).Value;
 
-        Expect.True(reset is { Cursor: 0, Rebuilding: true, StalledAt: null, StalledType: null, SchemaVersion: ViewSchema.Version + 1 });
+        Expect.True(reset is { Cursor: 0, Rebuilding: true, StalledAt: null, StalledType: null, SchemaVersion: ViewSchema.Version + 1, RebuiltThrough: 7 });
         Expect.Equal(0, (await reader.List<ServiceRow>(ViewNames.Services, Token)).Value.Count);
         Expect.Equal(0, (await reader.List<ServiceRow>(ViewNames.Profile, Token)).Value.Count);
         _ = (await store.FinishRebuild(Token)).Value;
         Expect.True((await reader.State(Token)).Value is { Rebuilding: false, Cursor: 0 });
+    }
+
+    /// <summary>A store with no recorded rebuild adopts the first value it is given and keeps it; a reset overwrites it (#2054).</summary>
+    /// <returns>The test.</returns>
+    [Fact]
+    public async Task AdoptRebuiltThrough_fills_only_an_empty_value_and_a_reset_overwrites_it()
+    {
+        var (store, reader) = Create();
+        var opened = (await store.Open(ViewSchema.Version, Token)).Value;
+        Expect.True(opened.RebuiltThrough is null);
+
+        _ = (await store.AdoptRebuiltThrough(4, Token)).Value;
+        _ = (await store.AdoptRebuiltThrough(9, Token)).Value;
+        Expect.Equal(4L, (await reader.State(Token)).Value?.RebuiltThrough);
+
+        _ = (await store.Reset(ViewNames.All, ViewSchema.Version, Clock.GetUtcNow(), 9, Token)).Value;
+        Expect.Equal(9L, (await reader.State(Token)).Value?.RebuiltThrough);
     }
 
     /// <summary>A row reads back equal to what the projection wrote, nested records, enums and times included.</summary>

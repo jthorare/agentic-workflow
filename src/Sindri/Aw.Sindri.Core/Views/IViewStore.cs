@@ -25,14 +25,21 @@ public interface IViewStore
     public ValueTask<Result<PageApplied>> Apply(IReadOnlyList<LedgerEvent> page, IReadOnlyList<IProjection> projections,
         DateTimeOffset at, CancellationToken cancellationToken);
 
-    /// <summary>Empties <paramref name="views"/>, sets the cursor to 0, clears a stall and marks the store rebuilding.</summary>
+    /// <summary>Empties <paramref name="views"/>, sets the cursor to 0, clears a stall, marks the store rebuilding and records <paramref name="rebuiltThrough"/>, all in one transaction.</summary>
     /// <param name="views">The view tables to empty.</param>
     /// <param name="schemaVersion">The schema version the replay folds with.</param>
     /// <param name="at">When the rebuild started.</param>
+    /// <param name="rebuiltThrough">The newest <c lang="text">views.rebuilt</c> sequence this reset covers (0 when the ledger has none).</param>
     /// <param name="cancellationToken">Cancels the operation.</param>
     /// <returns>The new state.</returns>
-    public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at,
+    public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at, long rebuiltThrough,
         CancellationToken cancellationToken);
+
+    /// <summary>Records <paramref name="rebuiltThrough"/> without rebuilding, only where none is recorded yet (a store from before the column).</summary>
+    /// <param name="rebuiltThrough">The newest <c lang="text">views.rebuilt</c> sequence in the ledger (0 when it has none).</param>
+    /// <param name="cancellationToken">Cancels the operation.</param>
+    /// <returns>Success.</returns>
+    public ValueTask<Result<Unit>> AdoptRebuiltThrough(long rebuiltThrough, CancellationToken cancellationToken);
 
     /// <summary>Clears the rebuilding mark once the replay reached the head.</summary>
     /// <param name="cancellationToken">Cancels the operation.</param>

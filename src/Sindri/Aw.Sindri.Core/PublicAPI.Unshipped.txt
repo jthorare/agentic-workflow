@@ -2191,7 +2191,8 @@ Aw.Sindri.Core.Views.IViewStore
 Aw.Sindri.Core.Views.IViewStore.Apply(System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Ledger.LedgerEvent!>! page, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.Views.IProjection!>! projections, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.PageApplied!>!>
 Aw.Sindri.Core.Views.IViewStore.FinishRebuild(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
 Aw.Sindri.Core.Views.IViewStore.Open(int schemaVersion, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState!>!>
-Aw.Sindri.Core.Views.IViewStore.Reset(System.Collections.Generic.IReadOnlyList<string!>! views, int schemaVersion, System.DateTimeOffset at, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState!>!>
+Aw.Sindri.Core.Views.IViewStore.AdoptRebuiltThrough(long rebuiltThrough, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Kernel.Unit>!>
+Aw.Sindri.Core.Views.IViewStore.Reset(System.Collections.Generic.IReadOnlyList<string!>! views, int schemaVersion, System.DateTimeOffset at, long rebuiltThrough, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Sindri.Core.Views.ProjectorState!>!>
 Aw.Sindri.Core.Views.ItemRow
 Aw.Sindri.Core.Views.ItemRow.<Clone>$() -> Aw.Sindri.Core.Views.ItemRow!
 Aw.Sindri.Core.Views.ItemRow.Alias.get -> Aw.Sindri.Core.Ids.ItemAlias?
@@ -2282,13 +2283,15 @@ Aw.Sindri.Core.Views.ProjectorState
 Aw.Sindri.Core.Views.ProjectorState.<Clone>$() -> Aw.Sindri.Core.Views.ProjectorState!
 Aw.Sindri.Core.Views.ProjectorState.Cursor.get -> long
 Aw.Sindri.Core.Views.ProjectorState.Cursor.init -> void
-Aw.Sindri.Core.Views.ProjectorState.Deconstruct(out long Cursor, out int SchemaVersion, out System.DateTimeOffset? ProjectedAt, out bool Rebuilding, out long? StalledAt, out string? StalledType, out bool Fresh) -> void
+Aw.Sindri.Core.Views.ProjectorState.Deconstruct(out long Cursor, out int SchemaVersion, out System.DateTimeOffset? ProjectedAt, out bool Rebuilding, out long? StalledAt, out string? StalledType, out bool Fresh, out long? RebuiltThrough) -> void
 Aw.Sindri.Core.Views.ProjectorState.Equals(Aw.Sindri.Core.Views.ProjectorState? other) -> bool
 Aw.Sindri.Core.Views.ProjectorState.Fresh.get -> bool
 Aw.Sindri.Core.Views.ProjectorState.Fresh.init -> void
 Aw.Sindri.Core.Views.ProjectorState.ProjectedAt.get -> System.DateTimeOffset?
 Aw.Sindri.Core.Views.ProjectorState.ProjectedAt.init -> void
-Aw.Sindri.Core.Views.ProjectorState.ProjectorState(long Cursor, int SchemaVersion, System.DateTimeOffset? ProjectedAt, bool Rebuilding, long? StalledAt, string? StalledType, bool Fresh) -> void
+Aw.Sindri.Core.Views.ProjectorState.ProjectorState(long Cursor, int SchemaVersion, System.DateTimeOffset? ProjectedAt, bool Rebuilding, long? StalledAt, string? StalledType, bool Fresh, long? RebuiltThrough = null) -> void
+Aw.Sindri.Core.Views.ProjectorState.RebuiltThrough.get -> long?
+Aw.Sindri.Core.Views.ProjectorState.RebuiltThrough.init -> void
 Aw.Sindri.Core.Views.ProjectorState.Rebuilding.get -> bool
 Aw.Sindri.Core.Views.ProjectorState.Rebuilding.init -> void
 Aw.Sindri.Core.Views.ProjectorState.SchemaVersion.get -> int

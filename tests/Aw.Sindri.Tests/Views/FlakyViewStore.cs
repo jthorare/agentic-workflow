@@ -39,8 +39,23 @@ internal sealed class FlakyViewStore(InMemoryViewStore inner) : IViewStore, IVie
         return inner.Apply(page, projections, at, cancellationToken);
     }
 
-    public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at, CancellationToken cancellationToken) =>
-        inner.Reset(views, schemaVersion, at, cancellationToken);
+    /// <summary>The next this many Reset calls fail.</summary>
+    public int FailResets { get; set; }
+
+    public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at, long rebuiltThrough,
+        CancellationToken cancellationToken)
+    {
+        if (FailResets > 0)
+        {
+            FailResets--;
+            return ValueTask.FromResult<Result<ProjectorState>>(SindriErrors.ViewsStalled.With("views.db can't be reset (fixture)"));
+        }
+
+        return inner.Reset(views, schemaVersion, at, rebuiltThrough, cancellationToken);
+    }
+
+    public ValueTask<Result<Unit>> AdoptRebuiltThrough(long rebuiltThrough, CancellationToken cancellationToken) =>
+        inner.AdoptRebuiltThrough(rebuiltThrough, cancellationToken);
 
     public ValueTask<Result<Unit>> FinishRebuild(CancellationToken cancellationToken) => inner.FinishRebuild(cancellationToken);
 

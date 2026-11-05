@@ -175,7 +175,7 @@ public sealed class RecipeStatsRouteTests : IAsyncLifetime
         await ViewScenarios.CatchUp(_host, ct);
         var first = await Body("?window=30d");
 
-        _ = (await _host.App.Services.GetRequiredService<IViewStore>().Reset(ViewNames.All, ViewSchema.Version, Clock.GetUtcNow(), ct)).Value;
+        _ = (await _host.App.Services.GetRequiredService<IViewStore>().Reset(ViewNames.All, ViewSchema.Version, Clock.GetUtcNow(), 0, ct)).Value;
         var emptied = (await Cache().Get(RecipeId.From("workflow.item"), hash: null, StatsWindow.ThirtyDays, Clock.GetUtcNow(), ct)).Value;
         await ViewScenarios.CatchUp(_host, ct);
         var second = await Body("?window=30d");

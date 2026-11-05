@@ -125,7 +125,7 @@ internal sealed class SchedulerRig : IAsyncDisposable
     public async Task BeginRebuild()
     {
         Progress.Publish(Progress.Current with { Rebuilding = true });
-        _ = await _views.Reset([ViewNames.Services], ViewSchema.Version, H.Clock.GetUtcNow(), TestContext.Current.CancellationToken);
+        _ = await _views.Reset([ViewNames.Services], ViewSchema.Version, H.Clock.GetUtcNow(), 0, TestContext.Current.CancellationToken);
         _sequence = 0;
     }
 

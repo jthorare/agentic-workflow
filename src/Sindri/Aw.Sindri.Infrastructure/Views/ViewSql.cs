@@ -11,7 +11,7 @@ internal static class ViewSql
     internal const string StateTable = "projector_state";
 
     internal const string SelectState =
-        "SELECT cursor, schema_version, projected_at, rebuilding, stalled_at, stalled_type FROM projector_state WHERE id = 1";
+        "SELECT cursor, schema_version, projected_at, rebuilding, stalled_at, stalled_type, rebuilt_through FROM projector_state WHERE id = 1";
 
     internal const string InsertState =
         "INSERT INTO projector_state (id, cursor, schema_version, rebuilding) VALUES (1, 0, $schemaVersion, 0) ON CONFLICT (id) DO NOTHING";
@@ -21,7 +21,9 @@ internal static class ViewSql
 
     internal const string ResetState =
         "UPDATE projector_state SET cursor = 0, schema_version = $schemaVersion, projected_at = $at, rebuilding = 1, stalled_at = NULL, " +
-        "stalled_type = NULL WHERE id = 1";
+        "stalled_type = NULL, rebuilt_through = $rebuiltThrough WHERE id = 1";
+
+    internal const string AdoptRebuiltThrough = "UPDATE projector_state SET rebuilt_through = $rebuiltThrough WHERE id = 1 AND rebuilt_through IS NULL";
 
     internal const string FinishRebuild = "UPDATE projector_state SET rebuilding = 0 WHERE id = 1";
 

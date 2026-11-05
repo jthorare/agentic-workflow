@@ -59,7 +59,8 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
             return written.IsError ? written.Error : new PageApplied(state, Stall: null, unreadable.Count);
         }, cancellationToken);
 
-    public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at, CancellationToken cancellationToken) =>
+    public ValueTask<Result<ProjectorState>> Reset(IReadOnlyList<string> views, int schemaVersion, DateTimeOffset at, long rebuiltThrough,
+        CancellationToken cancellationToken) =>
         InSession(async session =>
         {
             foreach (var table in views.Select(ViewSql.Table).OfType<ViewTable>())
@@ -72,8 +73,16 @@ internal sealed class SqliteViewStore(ViewsDatabase database, JsonSerializerOpti
             }
 
             var reset = await SqliteQueries.Execute(session, new SqlStatement(ViewSql.ResetState,
-                c => c.Bind("$schemaVersion", schemaVersion).Bind("$at", at)), cancellationToken).ConfigureAwait(false);
+                c => c.Bind("$schemaVersion", schemaVersion).Bind("$at", at).Bind("$rebuiltThrough", rebuiltThrough)), cancellationToken).ConfigureAwait(false);
             return reset.IsError ? ViewsDatabase.Translate(reset.Error) : await ReadState(session, cancellationToken).ConfigureAwait(false);
+        }, cancellationToken);
+
+    public ValueTask<Result<Unit>> AdoptRebuiltThrough(long rebuiltThrough, CancellationToken cancellationToken) =>
+        InSession(async session =>
+        {
+            var adopted = await SqliteQueries.Execute(session, new SqlStatement(ViewSql.AdoptRebuiltThrough, c => c.Bind("$rebuiltThrough", rebuiltThrough)),
+                cancellationToken).ConfigureAwait(false);
+            return adopted.IsError ? ViewsDatabase.Translate(adopted.Error) : Results.Success(Unit.Value);
         }, cancellationToken);
 
     public ValueTask<Result<Unit>> FinishRebuild(CancellationToken cancellationToken) =>

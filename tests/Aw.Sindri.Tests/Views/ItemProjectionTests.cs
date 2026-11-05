@@ -155,7 +155,7 @@ public sealed class ItemProjectionTests
         var views = await Fold(page);
         var first = await Snapshot(views);
 
-        _ = await views.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), Token);
+        _ = await views.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), 0, Token);
         _ = await views.Apply(page, Projections(_plain), _h.Clock.GetUtcNow(), Token);
 
         Assert.Equal(first, await Snapshot(views));
