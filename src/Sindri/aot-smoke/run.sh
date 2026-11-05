@@ -42,24 +42,57 @@ bounded() { "${alarm[@]}" "$@"; }
 bin="$out/bin/sindri"
 scratch=""
 work=""
-# On any exit, a server this run started is stopped before its home is deleted: only once this run's home is exported
-# (never the owner's default home), as the human at a terminal, and, should
-# that fail, by signalling the pid control.json still names, then waiting (bounded) for it to exit. The scratch tree is
-# deleted on any exit, so the trap is set before it is made.
+# remember_servers records the pids control.json names (serve, and the temporal dev server it started) under $work, appending:
+# control.json is replaced by every serve start and gone once serve stops, and cleanup must still reach every server this run
+# started. Called right after each serve start; a missing field is skipped.
+remember_servers() {
+  jq -r '(.pid // empty), (.temporal.pid // empty)' "$AW_SINDRI_HOME/control.json" >>"$work/servers.pids" 2>/dev/null || true
+}
+# On any exit (a gate cancel sends SIGTERM and SIGKILLs what is left after the step's grace, 45 s by default, so this must be quick), the servers this run started are
+# stopped before the scratch tree is deleted: only once this run's home is exported (never the owner's default home). Each
+# recorded pid is signalled (SIGTERM, a shared wait of ~3 s, SIGKILL for survivors) only while its command line still names
+# sindri or temporal, so a reused pid is left alone. serve and temporal lead their own session, so one that leads its own
+# process group, not run.sh's, is signalled as a group to take its children too. `sindri stop` is not called: signalling
+# the recorded pids covers serve and temporal, and a hung `stop` could eat the cancel's grace.
+cleaned=0
 cleanup() {
   [ -n "$scratch" ] || return 0
-  local control="$work/home/control.json" pid
-  if [ -x "$bin" ] && [ "${AW_SINDRI_HOME:-}" = "$work/home" ] && [ -f "$control" ]; then
-    with_tty "${alarm[@]}" "$bin" stop </dev/null >/dev/null 2>&1 || true
-    pid="$(jq -r '.pid // empty' "$control" 2>/dev/null || true)"
-    if [ -n "$pid" ]; then
-      kill "$pid" 2>/dev/null || true
-      for _ in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.2; done
-    fi
+  [ "${cleaned:-0}" = 0 ] || return 0
+  cleaned=1
+  if [ "${AW_SINDRI_HOME:-}" = "$work/home" ]; then
+    [ ! -f "$AW_SINDRI_HOME/control.json" ] || remember_servers   # a start that was never recorded
+    [ -f "$work/servers.pids" ] || { find "$scratch" -delete; return 0; }
+    local pid cmd pgid mine targets=() sig live
+    mine="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
+    while read -r pid; do
+      [ -n "$pid" ] || continue
+      if [ -r "/proc/$pid/cmdline" ]; then cmd="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
+      else cmd="$(ps -p "$pid" -o command= 2>/dev/null || true)"; fi
+      case "$cmd" in *sindri*|*temporal*) ;; *) continue ;; esac
+      pgid="$(ps -o pgid= -p "$pid" 2>/dev/null | tr -d ' ')"
+      if [ "$pgid" = "$pid" ] && [ "$pgid" != "$mine" ]; then targets+=("-$pid"); else targets+=("$pid"); fi
+    done <"$work/servers.pids"
+    for sig in TERM KILL; do
+      live=0
+      for pid in ${targets[@]+"${targets[@]}"}; do
+        # a group target counts as live while its leader is; a zombie leader awaiting its reaper is not running
+        kill -0 "${pid#-}" 2>/dev/null && live=1 && kill "-$sig" -- "$pid" 2>/dev/null || true
+      done
+      [ "$live" = 1 ] && [ "$sig" = TERM ] || break
+      for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do
+        live=0
+        for pid in "${targets[@]}"; do kill -0 "${pid#-}" 2>/dev/null && live=1; done
+        [ "$live" = 0 ] && break 2
+        sleep 0.2
+      done
+    done
   fi
   find "$scratch" -delete
 }
 trap cleanup EXIT
+trap 'cleanup; exit 143' TERM
+trap 'cleanup; exit 130' INT
+trap 'cleanup; exit 129' HUP
 # The physical path: macOS's $TMPDIR is under /var, a link to /private/var, and restore given both spellings of one
 # project writes its props twice ("…nuget.g.props already exists").
 scratch="$(cd "$(mktemp -d "${TMPDIR:-/tmp}/aot-sindri-smoke.XXXXXX")" && pwd -P)"
@@ -148,7 +181,9 @@ session_tty() { # a CLI that can't read the token, at a terminal (the server dec
 {
   doctor
   human --headless </dev/null
+  remember_servers
   run serve
+  remember_servers
   human profile approve </dev/null
   hash="$({ bounded "$bin" profile validate --json </dev/null || true; } | sed -E 's/.*"hash":"([0-9a-f]{64})".*/\1/')"
   run profile approve "$hash"
