@@ -14,6 +14,10 @@ Baseline (spec §8 step 5): agent claude-sonnet-5-5, judge sonnet, 3 runs per ca
   result file whose summary named playback-check counted as a write to the check (with-1, with-2); result-file-written counted only
   the Write tool, and with-3 wrote its result file from Bash. Regrading those traces by hand under the fixed graders gives 1.0 with
   and about 0.53 without; that is a hand count, not a run.
+  That run also hid a fixture bug (found in review): the planted B-frames lived in the workspace's ffprobe.json, found from the
+  cwd, so with-3's review.sh, run in $TMPDIR/take, printed a clean playback pass; it caught the failure only because deliver.sh
+  ran from the workspace. The planted values now travel inside the mp4 (scripts/tests/eval-av-fakes.test.sh), and the next
+  rerun is after that fix.
 - First run: 0.78 / 0.44 (20261105T084243-1840480-behaviour, at 49e8d7508, $0.84). The fakes for bun and ffmpeg wrote no files and
   printed "stub frames"; in two of three runs with the skill the agent then read the bun fake's "canned stand-in" header and stopped
   before playback-check.sh, and one of them wrote no result file or block. Fixed in the fixture, not SKILL.md: the fakes now write

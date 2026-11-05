@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
-# Behaviour and shapes: evals/stubs/README.md "system-design-video".
-here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cfg="${AW_STUB_FFPROBE_JSON:-}"
-[ -n "$cfg" ] && [ -f "$cfg" ] || { cfg=""; d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/ffprobe.json" ] && { cfg="$d/ffprobe.json"; break; }; d="$(dirname "$d")"; done; }
-[ -n "$cfg" ] && [ -f "$cfg" ] || cfg="$here/../ffprobe.json"
-[ -f "$cfg" ] || { echo "ffprobe: no input" >&2; exit 1; }
-val() { sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^\",}]*\)\"\{0,1\}.*/\1/p" "$cfg" | head -1; }
+# Behaviour and shapes: ../README.md, "system-design-video".
+av_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$av_here/../av-lib.sh"
 args="$*"
 file="${!#}"
 [ -f "$file" ] || { echo "$file: No such file or directory" >&2; exit 1; }
+# answers travel with the file: its stamp, else the answer file found from $PWD
+src="$(av_stamp_of "$file")"; [ -n "$src" ] || src="$(av_json "$(av_answers)")"
+[ -n "$src" ] || { echo "$file: Invalid data found when processing input" >&2; exit 1; }
+val() { av_val "$src" "$1"; }
 w="$(val width)" h="$(val height)"
 case "$(basename "$file")" in *720p*) w=1280 h=720 ;; esac
 case "$args" in

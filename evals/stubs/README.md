@@ -61,9 +61,13 @@ never say they are fakes (in a run that read "stub frames" and a "canned stand-i
 - `ffprobe` fails on a missing file and answers the three call shapes the skill's scripts make from the answer file; a file
   named `*720p*` reports 1280x720.
 
-The answer file is the first found of `$AW_STUB_FFPROBE_JSON`, the nearest `ffprobe.json` upward from `$PWD` (a case's fixture
-plants its failure there) and `evals/stubs/ffprobe.json`. `media/` holds the pet-sitter case's two beats (`model`, `rollout`) as
-960x540 JPEG and PNG on its board color, and a 2x2 contact sheet; an unknown beat gets `model`.
+The planted answers travel with the file. `bun`'s render reads the answer file (the nearest `ffprobe.json` upward from `$PWD`, else
+`evals/stubs/ffprobe.json`) and writes it on one line into a `free` box after `footage.mp4`'s `ftyp` header; `ffmpeg` copies its first
+input's box into every mp4 it writes, and both `ffmpeg` and `ffprobe` read a file's box before they look for an answer file. So a take
+rendered outside the workspace still probes `has_b_frames=2` from its own folder. Shared code: `evals/stubs/av-lib.sh`. There is no
+environment override (an agent could have pointed one at a clean file). `media/` holds the pet-sitter case's two beats (`model`,
+`rollout`) as 960x540 JPEG and PNG on its board color, and a 2x2 contact sheet; an unknown beat gets `model`.
+Tests: `scripts/tests/eval-av-fakes.test.sh`.
 
 ## Files
 

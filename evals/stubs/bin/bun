@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Behaviour and shapes: evals/stubs/README.md "system-design-video".
-media="$(cd "$(dirname "${BASH_SOURCE[0]}")/../media" && pwd)"
+# Behaviour and shapes: ../README.md, "system-design-video".
+av_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; media="$av_here/../media"
+. "$av_here/../av-lib.sh"
 beat_secs=23
 ids_of() { grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$1" | sed 's/.*"\([^"]*\)"$/\1/'; }
 case "${1:-}" in
@@ -48,5 +49,5 @@ if [ -n "$still" ]; then
   echo "stills in $out/stills; total $total.00s"
   exit 0
 fi
-{ printf '\000\000\000\040ftypisom\000\000\002\000isomiso2avc1mp41'; head -c 2400000 /dev/urandom; } > "$out/footage.mp4"
+av_write_mp4 "$out/footage.mp4" 2400000 "$(av_json "$(av_answers)")"
 echo "footage.mp4: $((total * fps)) frames @${fps}fps, $total.00s; beats: $n"

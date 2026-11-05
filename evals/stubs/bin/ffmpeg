@@ -1,11 +1,7 @@
 #!/usr/bin/env bash
-# Behaviour and shapes: evals/stubs/README.md "system-design-video".
-here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-media="$here/../media"
-cfg="${AW_STUB_FFPROBE_JSON:-}"
-[ -n "$cfg" ] && [ -f "$cfg" ] || { cfg=""; d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/ffprobe.json" ] && { cfg="$d/ffprobe.json"; break; }; d="$(dirname "$d")"; done; }
-[ -n "$cfg" ] && [ -f "$cfg" ] || cfg="$here/../ffprobe.json"
-val() { [ -f "$cfg" ] && sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^\",}]*\)\"\{0,1\}.*/\1/p" "$cfg" | head -1; }
+# Behaviour and shapes: ../README.md, "system-design-video".
+av_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; media="$av_here/../media"
+. "$av_here/../av-lib.sh"
 args=("$@"); n=${#args[@]}
 [ "$n" -ge 1 ] || { echo "Hyper fast Audio and Video encoder" >&2; echo "usage: ffmpeg [options] [[infile options] -i infile]... {[outfile options] outfile}..." >&2; exit 1; }
 [ "${args[0]}" = "-version" ] && { echo "ffmpeg version 7.1.1 Copyright (c) 2000-2025 the FFmpeg developers"; exit 0; }
@@ -14,6 +10,9 @@ for ((i = 0; i < n - 1; i++)); do [ "${args[i]}" = "-i" ] && inputs+=("${args[i+
 [ "${#inputs[@]}" -ge 1 ] || { echo "At least one output file must be specified" >&2; exit 1; }
 for f in "${inputs[@]}"; do [ -f "$f" ] || { echo "$f: No such file or directory" >&2; exit 1; }; done
 last="${args[n-1]}"
+# answers travel with the file: the first input's stamp, else the answer file found from $PWD
+src="$(av_stamp_of "${inputs[0]}")"; [ -n "$src" ] || src="$(av_json "$(av_answers)")"
+val() { av_val "$src" "$1"; }
 all="$*"
 if [ "$last" = "-" ]; then
   case "$all" in
@@ -31,8 +30,8 @@ case "$(basename "$last")" in
   sheet-*.jpg) cp "$media/sheet.jpg" "$last" ;;
   [0-9]*-*.jpg)
     id="$(basename "$last" .jpg)"; id="${id#*-}"
-    src="$media/$id.jpg"; [ -f "$src" ] || src="$media/model.jpg"
-    cp "$src" "$last" ;;
+    img="$media/$id.jpg"; [ -f "$img" ] || img="$media/model.jpg"
+    cp "$img" "$last" ;;
   *.jpg|*.png)
     # a frame grab shows the beat on screen at -ss (23 s per beat, ids from the nearest layout.json or storyboard.json)
     ext="${last##*.}" at=0 ids=""
@@ -47,10 +46,10 @@ case "$(basename "$last")" in
     done
     k=$(awk -v t="$at" 'BEGIN { print int(t / 23) + 1 }')
     id="$(printf '%s\n' "$ids" | sed -n "${k}p")"; [ -n "$id" ] || id="$(printf '%s\n' "$ids" | grep . | tail -1)"
-    src="$media/$id.$ext"; [ -f "$src" ] || src="$media/model.$ext"
-    cp "$src" "$last" ;;
+    img="$media/$id.$ext"; [ -f "$img" ] || img="$media/model.$ext"
+    cp "$img" "$last" ;;
   *.mp4)
     size=1600000; case "$all" in *"scale=1280:720"*) size=600000 ;; esac
-    { printf '\000\000\000\040ftypisom\000\000\002\000isomiso2avc1mp41'; head -c "$size" /dev/urandom; } > "$last" ;;
+    av_write_mp4 "$last" "$size" "$src" ;;
   *) echo "Unable to choose an output format for '$last'; use a standard extension for the filename or specify the format manually." >&2; exit 1 ;;
 esac
