@@ -115,6 +115,7 @@ check() {
   [ -f "$spec" ] || { echo "tlc: no spec at $spec" >&2; exit 2; }
   [ -n "$cfg" ] || cfg="${spec%.tla}.cfg"
   [ -f "$cfg" ] || { echo "tlc: no config at $cfg (write one next to the spec, or pass --config)" >&2; exit 2; }
+  cfg="$(cd "$(dirname "$cfg")" && pwd)/$(basename "$cfg")"   # absolute: TLC runs from the spec's directory
   need_tools
   local dir base out rc flags=""
   dir="$(cd "$(dirname "$spec")" && pwd)"; base="$(basename "$spec" .tla)"
@@ -125,7 +126,7 @@ check() {
   set +e
   # shellcheck disable=SC2086
   (cd "$dir" && java -XX:+UseParallelGC -cp "$jar" tlc2.TLC -cleanup -metadir "$meta/states" -workers "$workers" \
-    $flags -config "$(cd "$(dirname "$cfg")" && pwd)/$(basename "$cfg")" "$base") >"$out" 2>&1
+    $flags -config "$cfg" "$base") >"$out" 2>&1
   rc=$?
   set -e
   cat "$out"
@@ -142,8 +143,10 @@ summarize() {
   if grep -q '^Error: Deadlock reached' "$out"; then echo "tlc: VIOLATION deadlock reached"; exit 1; fi
   if grep -q '^Error: Temporal properties were violated' "$out"; then
     # TLC doesn't say which PROPERTY failed; name it when the config checks only one
-    name="$(awk '$1 == "PROPERTY" || $1 == "PROPERTIES" { for (i = 2; i <= NF; i++) n[++c] = $i; next }
-      c && NF == 1 && $1 ~ /^[A-Za-z_][A-Za-z0-9_]*$/ && prev ~ /^PROPERT/ { n[++c] = $1 } { prev = $1 }
+    name="$(awk 'BEGIN { split("SPECIFICATION INIT NEXT CONSTANT CONSTANTS INVARIANT INVARIANTS PROPERTY PROPERTIES SYMMETRY VIEW CONSTRAINT CONSTRAINTS ACTION_CONSTRAINT ACTION_CONSTRAINTS CHECK_DEADLOCK POSTCONDITION ALIAS", k, " "); for (i in k) kw[k[i]] = 1 }
+      { sub(/\\\*.*/, ""); if (NF == 0) next; i = 1
+        if ($1 in kw) { insec = ($1 == "PROPERTY" || $1 == "PROPERTIES"); i = 2 }
+        if (insec) for (; i <= NF; i++) n[++c] = $i }
       END { if (c == 1) print n[1]; else print "unnamed (the config checks " c + 0 " properties: check them one at a time to find it)" }' "$cfg")"
     echo "tlc: VIOLATION property $name"; exit 1
   fi
