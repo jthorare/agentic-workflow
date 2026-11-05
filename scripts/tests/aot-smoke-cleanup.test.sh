@@ -24,6 +24,12 @@
 #     delete the dir.
 #   - run.sh writes "$scratch/owner" right after it creates $scratch, and calls reap_stale after that and before the
 #     publish.
+#   - the start time on line 2 is normalized: run.sh's `started <pid>` is `LC_ALL=C TZ=UTC ps -o lstart= -p <pid>` with blanks
+#     squeezed and trimmed, used for the owner write and for the check, so a TZ or LC_TIME that differs between the two
+#     runs doesn't make a live run look dead (scenario 15).
+#   - reap_stale signals only pids whose command line also names aot-sindri-smoke (the smoke's serve is
+#     <root>/artifacts/aot-sindri-smoke/bin/sindri, its temporal's --db-filename is under the scratch dir), because a pid
+#     recorded days ago may now be the owner's real sindri or temporal (scenario 16). cleanup has no such extra condition.
 #   - scenarios 8-14: 8 a killed run's servers and dir are reaped; 9 a live owner's are kept; 10 no owner file keeps
 #     them; 11 a reused pid (not sindri or temporal) is left alone but the dir goes; 12 $scratch itself is never touched;
 #     13 an owner pid reused by another process (different lstart) counts as dead; 14 the owner write and the reap_stale
@@ -123,11 +129,11 @@ FAKE
 chmod +x "$tmp/fakebin/sindri" "$tmp/fakebin/temporal"
 
 # start_pair DIR: a fake serve and temporal in their own sessions; sets serve child temporal tchild and records them
-start_pair() {
-  local d="$1" i
+start_pair() { # DIR [BINDIR]: the fakes run from BINDIR (default fakebin); the reap rows pass a dir named aot-sindri-smoke.*
+  local d="$1" i fb="${2:-$tmp/fakebin}"
   mkdir -p "$d"
-  FAKE_DIR="$d" setsid bash "$tmp/fakebin/sindri" serve </dev/null >/dev/null 2>&1 &
-  FAKE_DIR="$d" setsid bash "$tmp/fakebin/temporal" server start-dev --db-filename "$d/temporal.db" </dev/null >/dev/null 2>&1 &
+  FAKE_DIR="$d" setsid bash "$fb/sindri" serve </dev/null >/dev/null 2>&1 &
+  FAKE_DIR="$d" setsid bash "$fb/temporal" server start-dev --db-filename "$d/temporal.db" </dev/null >/dev/null 2>&1 &
   for i in $(seq 50); do
     [ -s "$d/serve.pid" ] && [ -s "$d/child.pid" ] && [ -s "$d/temporal.pid" ] && [ -s "$d/tchild.pid" ] && break
     sleep 0.1
@@ -226,8 +232,13 @@ verdicts hung-stop 0 "serve=$serve" "serve's child=$child" "temporal=$temporal" 
 rtmp="$tmp/rtmp"; mkdir -p "$rtmp"
 own="$rtmp/aot-sindri-smoke.own"
 
-reap() { # scratch-dir: reap_stale in the harness with TMPDIR=$rtmp, bounded at 25 s
-  env TMPDIR="$rtmp" H_REAP=1 H_SCRATCH="$1" H_BIN="$tmp/fakebin/sindri" H_SLEEPPID="$tmp/reap.sleep" \
+ustart() { LC_ALL=C TZ=UTC ps -o lstart= -p "$1" 2>/dev/null | tr -s ' ' | sed 's/^ //;s/ $//'; } # the normalized start time run.sh writes
+smoke_fakes() { # name: copies of the fakes under the dir being reaped, so their command lines name aot-sindri-smoke; sets sfb
+  sfb="$rtmp/aot-sindri-smoke.$1/bin"; mkdir -p "$sfb"; cp "$tmp/fakebin/sindri" "$tmp/fakebin/temporal" "$sfb/"
+}
+reap() { # scratch-dir [ENV=value...]: reap_stale in the harness with TMPDIR=$rtmp, bounded at 25 s
+  local rs="$1"; shift
+  env TMPDIR="$rtmp" "$@" H_REAP=1 H_SCRATCH="$rs" H_BIN="$tmp/fakebin/sindri" H_SLEEPPID="$tmp/reap.sleep" \
     perl -e 'alarm 25; exec @ARGV' bash "$tmp/harness.sh" >/dev/null 2>&1
 }
 stale_dir() { # name ownerpid ownerlstart pids...: "$rtmp/aot-sindri-smoke.NAME"; ownerpid "-" writes no owner file
@@ -240,13 +251,13 @@ stale_dir() { # name ownerpid ownerlstart pids...: "$rtmp/aot-sindri-smoke.NAME"
 dead_owner() { # sets opid olstart: a process this suite started and SIGKILLed (reaped, so no zombie)
   sleep 300 </dev/null >/dev/null 2>&1 &
   opid=$!; recorded+=("$opid")
-  olstart="$(ps -o lstart= -p "$opid")"
+  olstart="$(ustart "$opid")"
   kill -KILL "$opid"; wait "$opid" 2>/dev/null
 }
 live_owner() { # sets opid olstart: a live process this suite started
   sleep 300 </dev/null >/dev/null 2>&1 &
   opid=$!; recorded+=("$opid")
-  olstart="$(ps -o lstart= -p "$opid")"
+  olstart="$(ustart "$opid")"
 }
 keep() { # label role=pid...: all alive after the reap
   local label="$1" rp
@@ -263,7 +274,7 @@ reaped() { # label dir-name: serve, its child and temporal gone within 8 s, the 
 }
 
 # 8. killed run: owner dead, serve (with child) and temporal reaped, dir gone
-start_pair "$tmp/fk8"; dead_owner
+smoke_fakes A; start_pair "$tmp/fk8" "$sfb"; dead_owner
 stale_dir A "$opid" "$olstart" "$serve" "$temporal"
 reap "$own"
 reaped killed-run A
@@ -299,11 +310,26 @@ keep own-dir "serve=$serve" "serve's child=$child" "temporal=$temporal"
 [ -f "$own/owner" ] && [ -f "$own/run/servers.pids" ]; check "own-dir: the scratch dir is untouched" $?
 
 # 13. owner pid reused: line 1 is a live pid, line 2 is a different lstart -> dead -> reaped
-start_pair "$tmp/fk13"; live_owner
+smoke_fakes E; start_pair "$tmp/fk13" "$sfb"; live_owner
 stale_dir E "$opid" "Mon Jan  1 00:00:00 1990" "$serve" "$temporal"
 reap "$own"
 reaped owner-reused E
 alive "$opid"; check "owner-reused: the live process that reused the owner pid is left alone" $?
+
+# 15. TZ and locale: the owner file is written under UTC, the reap runs under another TZ and LC_TIME -> still alive, kept
+start_pair "$tmp/fk15"; live_owner
+stale_dir G "$opid" "$olstart" "$serve" "$temporal"
+reap "$own" TZ=America/Los_Angeles LC_TIME=de_DE.UTF-8
+keep tz-differs "serve=$serve" "serve's child=$child" "temporal=$temporal"
+[ -d "$rtmp/aot-sindri-smoke.G" ]; check "tz-differs: dir G is still there" $?
+
+# 16. a dead owner's servers.pids names a live sindri serve and temporal with no aot-sindri-smoke in the command line
+#     (the owner's real ones, by pid reuse): left alone, the dir is deleted
+start_pair "$tmp/fk16"; dead_owner
+stale_dir F "$opid" "$olstart" "$serve" "$temporal"
+reap "$own"
+keep foreign-sindri "serve=$serve" "serve's child=$child" "temporal=$temporal"
+[ ! -e "$rtmp/aot-sindri-smoke.F" ]; check "foreign-sindri: dir F is deleted" $?
 
 # 14. structural: the owner write and the reap_stale call sit between `mktemp -d` and the first `dotnet publish`
 mk="$(grep -n 'mktemp -d' "$RUN" | head -1 | cut -d: -f1)"
