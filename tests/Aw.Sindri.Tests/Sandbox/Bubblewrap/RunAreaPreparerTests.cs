@@ -64,6 +64,21 @@ public sealed class RunAreaPreparerTests
     }
 
     [Fact]
+    public void A_missing_corefx_under_an_existing_dotnet_is_made_private_and_a_host_without_dotnet_gets_nothing()
+    {
+        using var area = new TempRunArea();
+        var home = area.Root + "/home";
+        _ = Directory.CreateDirectory(home + "/.dotnet");
+        PlanMount[] corefx = [new(home + "/.dotnet/corefx", PlanMountKind.Tmpfs, Size: 4096, Reason: "test", Optional: true), new(home + "/.nodotnet/corefx", PlanMountKind.Tmpfs, Size: 4096, Reason: "test", Optional: true)];
+
+        var refusal = RunAreaPreparer.Prepare(area.Plan with { Mounts = [.. area.Plan.Mounts, .. corefx] });
+
+        Assert.Null(refusal);
+        Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute, File.GetUnixFileMode(home + "/.dotnet/corefx"));
+        Assert.False(Directory.Exists(home + "/.nodotnet"));
+    }
+
+    [Fact]
     public async Task The_run_area_gets_a_refusing_pre_push_an_empty_global_config_and_the_plan_file_that_a_second_prepare_rewrites_the_same()
     {
         using var area = new TempRunArea();

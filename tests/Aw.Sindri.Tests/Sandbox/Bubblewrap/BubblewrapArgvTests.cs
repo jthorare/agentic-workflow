@@ -17,7 +17,7 @@ public sealed class BubblewrapArgvTests
 
         public HostPathKind KindOf(string path) => path switch
         {
-            "/srv/aw" => HostPathKind.Directory,
+            "/srv/aw" or "/home/owner/.dotnet/corefx" => HostPathKind.Directory,
             "/var/run/docker.sock" => HostPathKind.File,
             "/etc/ssh" or "/root" => HostPathKind.Directory,
             "/home/owner/.claude/.credentials.json" => HostPathKind.File,

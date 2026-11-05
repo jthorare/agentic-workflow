@@ -1,22 +1,23 @@
 #!/usr/bin/env bash
-# Canned stand-in for ffprobe (system-design-video evals). Answers from a JSON file, first found of:
-# $AW_STUB_FFPROBE_JSON, the nearest ./ffprobe.json upward from the cwd (a case's fixture plants its failure here), evals/stubs/ffprobe.json.
-# Does not check that the file exists: the ffmpeg and bun stubs write no files, so an encode never lands on disk. Exits 1 on a call shape the skill's scripts don't make.
-here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-cfg="${AW_STUB_FFPROBE_JSON:-}"
-[ -n "$cfg" ] && [ -f "$cfg" ] || { cfg=""; d="$PWD"; while [ "$d" != "/" ]; do [ -f "$d/ffprobe.json" ] && { cfg="$d/ffprobe.json"; break; }; d="$(dirname "$d")"; done; }
-[ -n "$cfg" ] && [ -f "$cfg" ] || cfg="$here/../ffprobe.json"
-[ -f "$cfg" ] || { echo "ffprobe stub: no answer file" >&2; exit 1; }
-val() { sed -n "s/.*\"$1\"[[:space:]]*:[[:space:]]*\"\{0,1\}\([^\",}]*\)\"\{0,1\}.*/\1/p" "$cfg" | head -1; }
+# Behaviour and shapes: ../README.md, "system-design-video".
+av_here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+. "$av_here/../av-lib.sh"
 args="$*"
 file="${!#}"
+[ -f "$file" ] || { echo "$file: No such file or directory" >&2; exit 1; }
+# answers travel with the file: its stamp, else the answer file found from $PWD
+src="$(av_stamp_of "$file")"; [ -n "$src" ] || src="$(av_json "$(av_answers)")"
+[ -n "$src" ] || { echo "$file: Invalid data found when processing input" >&2; exit 1; }
+val() { av_val "$src" "$1"; }
+w="$(val width)" h="$(val height)"
+case "$(basename "$file")" in *720p*) w=1280 h=720 ;; esac
 case "$args" in
   *"format=duration"*"csv=p=0"*) val duration ;;
   *"stream=codec_name,width,height"*"compact=p=0"*)
-    echo "stream|codec_name=$(val codec_name)|width=$(val width)|height=$(val height)|r_frame_rate=$(val r_frame_rate)|color_space=$(val color_space)|color_primaries=$(val color_primaries)|color_transfer=$(val color_transfer)|color_range=$(val color_range)"
+    echo "stream|codec_name=$(val codec_name)|width=$w|height=$h|r_frame_rate=$(val r_frame_rate)|color_space=$(val color_space)|color_primaries=$(val color_primaries)|color_transfer=$(val color_transfer)|color_range=$(val color_range)"
     echo "format|duration=$(val duration)" ;;
   *"stream=codec_name,profile,level,has_b_frames,pix_fmt"*)
     printf 'codec_name=%s\nprofile=%s\nlevel=%s\nhas_b_frames=%s\npix_fmt=%s\n' \
       "$(val codec_name)" "$(val profile)" "$(val level)" "$(val has_b_frames)" "$(val pix_fmt)" ;;
-  *) echo "ffprobe stub: unknown call: $args" >&2; exit 1 ;;
+  *) echo "ffprobe: unsupported arguments: $args" >&2; exit 1 ;;
 esac

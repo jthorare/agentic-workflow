@@ -1,4 +1,5 @@
 using Aw.Sindri.Core.Commands;
+using Aw.Sindri.Core.Events;
 using Aw.Sindri.Core.Ledger;
 using Aw.Sindri.Core.Views;
 
@@ -78,23 +79,40 @@ internal sealed partial class Projector(
         }
 
         var state = opened.Value;
-        var reason = requested ? "requested" : _healing ? "unreadable rows" : state.Fresh ? "views.db created" : state.SchemaVersion != ViewSchema.Version ? "schema version changed" : null;
+        var recorded = await ledger.Latest(EventTypes.ViewsRebuilt, ct).ConfigureAwait(false);   // an accepted rebuild is in the ledger even when serve died before its reset (#2054)
+        if (recorded.IsError)
+        {
+            return recorded.Error;
+        }
+
+        var through = recorded.Value?.Sequence ?? 0;
+        var reason = requested ? "requested" : RebuildReason(state, through);
         if (reason is null)
         {
             return state;
         }
 
+        var reset = await Rebuild(state, reason, through, head, ct).ConfigureAwait(false);
+        if (requested && reset.IsSuccess)
+        {
+            _ = feed.TakeRebuildRequest();   // taken only once the reset worked: a failed attempt keeps the request
+        }
+
+        return reset;
+    }
+
+    private string? RebuildReason(ProjectorState state, long through) =>
+        state.RebuiltThrough is { } done && through > done ? "recorded rebuild" : _healing ? "unreadable rows" : state.Fresh ? "views.db created" : state.SchemaVersion != ViewSchema.Version ? "schema version changed" : state.RebuiltThrough is null ? "no rebuild record" : null;
+
+    private async ValueTask<Kernel.Result<ProjectorState>> Rebuild(ProjectorState state, string reason, long through, long head, CancellationToken ct)
+    {
         LogRebuilding(log, reason, state.SchemaVersion, ViewSchema.Version, head);
         IReadOnlyList<string> views = [.. ViewNames.All.Concat(_projections.SelectMany(p => p.Views)).Distinct(StringComparer.Ordinal)];
-        var reset = await store.Reset(views, ViewSchema.Version, clock.GetUtcNow(), ct).ConfigureAwait(false);
+        var reset = await store.Reset(views, ViewSchema.Version, clock.GetUtcNow(), through, ct).ConfigureAwait(false);
         if (reset.IsSuccess)
         {
             _stalledSince = null;
             _healing = false;
-            if (requested)
-            {
-                _ = feed.TakeRebuildRequest();
-            }
         }
 
         return reset;

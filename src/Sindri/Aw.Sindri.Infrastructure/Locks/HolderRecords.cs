@@ -44,7 +44,7 @@ internal static class HolderRecords
 
     private static string ShortHost(string host) => host.Split('.', 2)[0];
 
-    private static bool StartedAfter(int pid, DateTimeOffset? recorded)
+    internal static bool StartedAfter(int pid, DateTimeOffset? recorded)
     {
         if (recorded is null)
         {

@@ -83,7 +83,7 @@ public sealed class EngineRebuildTests : IDisposable
         }
 
         var incremental = await Snapshot(views, ct);
-        _ = (await views.Store.Reset(ViewNames.All, ViewSchema.Version, _slice.Clock.GetUtcNow(), ct)).Value;
+        _ = (await views.Store.Reset(ViewNames.All, ViewSchema.Version, _slice.Clock.GetUtcNow(), 0, ct)).Value;
         Assert.Null((await views.Store.Apply(ledger, projections, _slice.Clock.GetUtcNow(), ct)).Value.Stall);
         _ = (await views.Store.FinishRebuild(ct)).Value;
         var rebuilt = await Snapshot(views, ct);

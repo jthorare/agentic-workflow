@@ -259,7 +259,7 @@ public sealed class LaunchesProjectionTests
         _ = (await _v.Views.Apply(events, projections, _v.Slice.Clock.GetUtcNow(), ct)).Value;
         var incremental = await Row();
 
-        _ = (await _v.Views.Reset([ViewNames.Items, ViewNames.Launches], ViewSchema.Version, _v.Slice.Clock.GetUtcNow(), ct)).Value;
+        _ = (await _v.Views.Reset([ViewNames.Items, ViewNames.Launches], ViewSchema.Version, _v.Slice.Clock.GetUtcNow(), 0, ct)).Value;
         _ = (await _v.Views.Apply(events, projections, _v.Slice.Clock.GetUtcNow(), ct)).Value;
         var rebuilt = await Row();
 
