@@ -158,8 +158,8 @@ Try(p) ==
        ELSE IF ~dir[k]
           THEN Take(p, k) /\ rec' = [rec EXCEPT ![k] = YoungNone] /\ UNCHANGED <<seen, myRes>>
        ELSE IF rec[k] = NoRec
-          \* An empty folder over a minute old (not YoungNone): its mkdir-er is dead, or it would have written by
-          \* now (Age's assumption). The code is `find -mmin +0` then rmdir (fails if a holder wrote meanwhile); modelled as one
+          \* An empty folder over two minutes old (not YoungNone): its mkdir-er is dead, or it would have written by
+          \* now (Age's assumption). The code is `find -mmin +1` then rmdir (fails if a holder wrote meanwhile); modelled as one
           \* step, so a folder re-made between the two can't be removed. The code leaves that window open for
           \* a few microseconds.
           THEN /\ dir' = [dir EXCEPT ![k] = FALSE]
