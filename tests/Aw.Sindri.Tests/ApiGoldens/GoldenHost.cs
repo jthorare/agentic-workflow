@@ -14,6 +14,7 @@ using Aw.Sindri.Testing;
 using Aw.Sindri.Testing.Workflow;
 using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Server;
+using Aw.Sindri.Tests.Views;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -168,6 +169,7 @@ public sealed class GoldenHost : IAsyncDisposable
         }
 
         app.Services.GetRequiredService<HeldHumanToken>().Hold(Token);
+        FirstPass.Publish(app.Services);   // no projector pass runs in a golden host: it starts from a finished first one
         await app.StartAsync(ct);
         Http = new HttpClient { BaseAddress = new Uri(app.Urls.First()), Timeout = TimeSpan.FromSeconds(10) };
     }
