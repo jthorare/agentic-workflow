@@ -212,6 +212,7 @@ if command -v setsid >/dev/null 2>&1; then
   set +e; wait "$cp"; RC=$?; set -e
   p1=""; p2=""; read -r p1 p2 <"$TMPROOT/pids" || true
   if [ "$RC" -eq 143 ]; then ok "killed tlc-check.sh exits 143"; else fail "killed tlc-check.sh exit $RC, want 143"; fi
+  for _ in $(seq 1 50); do { ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; } && break; sleep 0.1; done   # init reaps the orphans
   if [ -n "$p1" ] && ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; then ok "killed tlc-check.sh: the check and its child are gone"; else fail "killed tlc-check.sh: pids $p1 $p2 survive"; fi
   if [ -z "$(ls "$TT" 2>/dev/null)" ]; then ok "killed tlc-check.sh leaves no temp file"; else fail "temp files left: $(ls "$TT")"; fi
 else
