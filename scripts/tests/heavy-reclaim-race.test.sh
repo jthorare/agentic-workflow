@@ -4,6 +4,8 @@
 # specs/tla/HeavySlots, replayed on the real wrapper with PATH stubs (AW_HEAVY_TEST_PATH) that hold a job at a step.
 set -uo pipefail
 unset TMUX
+for v in $(compgen -e | grep -E '^AW_(HEAVY|SESSION_HEAVY)'); do unset "$v"; done   # this suite may itself run under a heavy job
+unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HEAVY="$DIR/../heavy.sh"
 fail=0

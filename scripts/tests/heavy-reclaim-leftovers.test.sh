@@ -5,6 +5,8 @@
 # folder is over 6 h old, and leave a young one with a live N alone. Scratch lock dirs only, never the box's live ones.
 set -uo pipefail
 unset TMUX
+for v in $(compgen -e | grep -E '^AW_(HEAVY|SESSION_HEAVY)'); do unset "$v"; done   # this suite may itself run under a heavy job
+unset DOTNET_PROCESSOR_COUNT MSBUILDDISABLENODEREUSE
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HEAVY="$DIR/../heavy.sh"
 LOCKS="$DIR/../../config/lib/locks.sh"
