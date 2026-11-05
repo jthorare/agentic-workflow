@@ -40,7 +40,7 @@ public sealed class HeavyReservationTests
     [InlineData(2, 0)]
     [InlineData(3, 1)]
     [InlineData(5, 2)]
-    [InlineData(7, 3)]
+    [InlineData(7, 2)]
     public async Task The_reservation_follows_the_merge_queue_depth(int depth, int reserved)
     {
         await Ready(depth);
@@ -53,14 +53,14 @@ public sealed class HeavyReservationTests
     }
 
     [Fact, Trait("Lane", "unit")]
-    public async Task All_means_the_teams_heavy_cap()
+    public async Task All_means_the_teams_heavy_cap_less_the_slot_kept_for_lanes()
     {
         await Ready(7);
         await Configure(team => team with { Heavy = team.Heavy with { Cap = 5 } });
 
         var applied = await Apply();
 
-        Assert.Equal(5, _world.Heavy.Reserve);
+        Assert.Equal(4, _world.Heavy.Reserve);
         Assert.Equal(5, applied.Value!.Cap);
     }
 
@@ -127,7 +127,7 @@ public sealed class HeavyReservationTests
 
         _ = await Apply();
 
-        Assert.Equal(3, _world.Heavy.Reserve);
+        Assert.Equal(2, _world.Heavy.Reserve);
     }
 
     [Theory, Trait("Lane", "unit")]
@@ -154,8 +154,8 @@ public sealed class HeavyReservationTests
 
         var applied = await Apply();
 
-        Assert.Equal("heavy reservation: 3 of 3 slots (queue depth 2) - set it with meta-gate-reserve 7", applied.Value!.Line());
-        Assert.Contains("set it with meta-gate-reserve 7", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
+        Assert.Equal("heavy reservation: 2 of 3 slots (queue depth 2) - set it with meta-gate-reserve 5", applied.Value!.Line());
+        Assert.Contains("set it with meta-gate-reserve 5", Assert.Single(_world.Log.Lines), StringComparison.Ordinal);
     }
 
     [Fact, Trait("Lane", "unit")]
@@ -163,7 +163,7 @@ public sealed class HeavyReservationTests
     {
         await Ready(7);
         _ = await Apply();
-        Assert.Equal(3, _world.Heavy.Reserve);
+        Assert.Equal(2, _world.Heavy.Reserve);
         var drop = new QueueDropService(_world.Messages, _world.Gates, _world.Values, _world.Log, Worlds.Reservation(_world), _world.Clock);
 
         foreach (var pr in new[] { 190, 191, 192, 193, 194 })
