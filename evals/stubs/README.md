@@ -56,7 +56,8 @@ never say they are fakes (in a run that read "stub frames" and a "canned stand-i
   `NN id seconds` line per beat of `./layout.json`. `bun --version` answers; anything else exits 1.
 - `ffmpeg` fails on a missing `-i` input. To `-` it answers `-f null` (clean unless the answer file sets `decode_error`) and
   `-f rawvideo` (the answer file's `corner_hex`). To a file it copies `media/`: `NN-<beat>.jpg` gets `<beat>.jpg`, `sheet-N.jpg`
-  gets `sheet.jpg`, an `.mp4` gets a header and random bytes (600 kB when scaled to 720p, else 1.6 MB).
+  gets `sheet.jpg`, any other `.jpg` or `.png` gets the beat on screen at `-ss` (ids from the nearest `layout.json` or
+  `storyboard.json` above the input or `$PWD`), an `.mp4` gets a header and random bytes (600 kB when scaled to 720p, else 1.6 MB).
 - `ffprobe` fails on a missing file and answers the three call shapes the skill's scripts make from the answer file; a file
   named `*720p*` reports 1280x720.
 

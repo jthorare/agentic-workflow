@@ -33,8 +33,22 @@ case "$(basename "$last")" in
     id="$(basename "$last" .jpg)"; id="${id#*-}"
     src="$media/$id.jpg"; [ -f "$src" ] || src="$media/model.jpg"
     cp "$src" "$last" ;;
-  *.jpg) cp "$media/model.jpg" "$last" ;;
-  *.png) cp "$media/model.png" "$last" ;;
+  *.jpg|*.png)
+    # a frame grab shows the beat on screen at -ss (23 s per beat, ids from the nearest layout.json or storyboard.json)
+    ext="${last##*.}" at=0 ids=""
+    for ((i = 0; i < n - 1; i++)); do [ "${args[i]}" = "-ss" ] && at="${args[i+1]}"; done
+    for d in "$(cd "$(dirname "${inputs[0]}")" && pwd)" "$PWD"; do
+      while [ -n "$d" ] && [ "$d" != "/" ]; do
+        for f in "$d/layout.json" "$d/storyboard.json"; do
+          [ -z "$ids" ] && [ -f "$f" ] && ids="$(grep -o '"id"[[:space:]]*:[[:space:]]*"[^"]*"' "$f" | sed 's/.*"\([^"]*\)"$/\1/')"
+        done
+        d="$(dirname "$d")"
+      done
+    done
+    k=$(awk -v t="$at" 'BEGIN { print int(t / 23) + 1 }')
+    id="$(printf '%s\n' "$ids" | sed -n "${k}p")"; [ -n "$id" ] || id="$(printf '%s\n' "$ids" | grep . | tail -1)"
+    src="$media/$id.$ext"; [ -f "$src" ] || src="$media/model.$ext"
+    cp "$src" "$last" ;;
   *.mp4)
     size=1600000; case "$all" in *"scale=1280:720"*) size=600000 ;; esac
     { printf '\000\000\000\040ftypisom\000\000\002\000isomiso2avc1mp41'; head -c "$size" /dev/urandom; } > "$last" ;;
