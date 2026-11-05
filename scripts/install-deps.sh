@@ -237,7 +237,7 @@ tlc_doctor() {   # sets TLC_OUT and TLC_RC from `tlc.sh doctor`, and TLC_JAVA_OK
 }
 tlc_doctor
 if [ "$TLC_RC" != "0" ] && [ "$TLC_RC" != "3" ]; then
-  echo "  WARN: tlc.sh doctor failed (exit $TLC_RC): $(printf '%s\n' "$TLC_OUT" | head -3 | tr '\n' ' ')"; FAILED=1
+  echo "  WARN: tlc.sh doctor failed (exit $TLC_RC): $(printf '%s\n' "$TLC_OUT" | tr '\n' ' ')"; FAILED=1
 elif [ "$TLC_JAVA_OK" = "1" ] && [ "$TLC_JAR_OK" = "1" ]; then
   echo "  tlc: java and tla2tools.jar found"
 else
@@ -252,8 +252,8 @@ else
   fi
   if [ "$TLC_JAR_OK" = "1" ]; then echo "  tla2tools.jar: found"; elif dry; then
     echo "  [dry-run] would run: skills/formal-verify/scripts/tlc.sh fetch"
-  elif _jar="$(bash "$TLC_SH" fetch 2>&1)"; then echo "  tla2tools.jar: $(printf '%s\n' "$_jar" | tail -1)"; else
-    echo "  WARN: tlc.sh fetch failed: $(printf '%s\n' "$_jar" | tail -2 | tr '\n' ' ')"; FAILED=1
+  elif _jar="$(bash "$TLC_SH" fetch 2>&1)"; then echo "  tla2tools.jar: ${_jar##*$'\n'}"; else
+    echo "  WARN: tlc.sh fetch failed: $(printf '%s\n' "$_jar" | tr '\n' ' ')"; FAILED=1
   fi
 fi
 

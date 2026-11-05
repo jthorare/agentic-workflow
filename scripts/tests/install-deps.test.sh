@@ -319,9 +319,14 @@ expect "a lock that fails its check skips the code index pins and fails" 1 "WARN
 printf '%s\n' "$OUT" | has "code-index graphify" && fail "went on to install with a bad lock" || ok "nothing is installed from a bad lock"
 
 # 10. The model check's tools (tlc.sh doctor). Everything else present, so only these decide the output.
-: >"$TMPROOT/zlib.h"; for t in bwrap socat secret-tool clang lsof tmux curl git systemd-run uv; do fake "$t"; done
-fake graphify "echo graphify $PIN"; fake ollama 'exit 0'
+: >"$TMPROOT/zlib.h"; for t in bwrap socat secret-tool clang lsof tmux curl git systemd-run; do fake "$t"; done
+fake graphify "echo graphify $PIN"
+# the code index passes, as in 9d, so a non-dry run's exit code is decided by the java and jar steps alone
+uv_fake ok; ollama_fake "$CI_ID" "$CI_ID" 0
 S="$TMPROOT/tlc-state"; fresh_state "$S"
+only_tlc() {   # <label>: the output has no graphify, ollama or temporal WARN
+  printf '%s\n' "$OUT" | has -E "WARN: .*(graphify|ollama|temporal|Ollama)" && { fail "$1: an unrelated WARN"; printf '%s\n' "$OUT" | sed 's/^/      | /'; } || ok "$1: no graphify/ollama WARN"
+}
 run AW_DEPS_OS=Linux AW_STATE_DIR="$S" AW_DRY_RUN=1
 expect "java and the jar present: doctor's lines are accepted, nothing planned" 0 "tlc: java and tla2tools.jar found"
 run AW_DEPS_OS=Linux AW_STATE_DIR="$S" AW_DRY_RUN=1 TLC_STUB_JAVA=none TLC_STUB_JAR=none
@@ -333,15 +338,19 @@ run AW_DEPS_OS=Linux AW_STATE_DIR="$S" TLC_STUB_JAVA=none TLC_STUB_JAR=none AW_F
 grep -q "^apt-get install -y openjdk-21-jre-headless$" "$LOG" && ok "a missing java installs the JDK package" || fail "java not installed: $(cat "$LOG")"
 grep -q "^tlc fetch" "$TMPROOT/tlc.log" && ok "a missing jar runs tlc.sh fetch" || fail "no fetch: $(cat "$TMPROOT/tlc.log")"
 expect "java installed and jar fetched: exit 0" 0 "java: installed" "tla2tools.jar: /cache/tla2tools.jar"
+only_tlc "java installed and jar fetched"
 find "$BIN" -name java -delete
 run AW_DEPS_OS=Linux AW_STATE_DIR="$S" TLC_STUB_JAVA=none
-expect "java still missing after the install fails the run" 1 "java still not usable"
+expect "java still missing after the install fails the run" 1 "WARN: java still not usable"
+only_tlc "java still missing"
 rm -f "$TMPROOT/jar"
 run AW_DEPS_OS=Linux AW_STATE_DIR="$S" TLC_STUB_JAR=none TLC_STUB_FETCH_FAIL=1
 expect "a failed fetch warns and fails the run" 1 "WARN: tlc.sh fetch failed"
+only_tlc "failed fetch"
 : >"$LOG"
 run AW_DEPS_OS=Linux AW_STATE_DIR="$S" TLC_STUB_JAVA=none AW_NO_SYSTEM_INSTALL=1
 expect "AW_NO_SYSTEM_INSTALL=1 prints the java command and fails" 1 "nothing is installed" "sudo apt-get install -y openjdk-21-jre-headless"
+only_tlc "AW_NO_SYSTEM_INSTALL=1"
 grep -q "openjdk" "$LOG" && fail "AW_NO_SYSTEM_INSTALL=1 still installed java" || ok "AW_NO_SYSTEM_INSTALL=1 installs nothing"
 : >"$TMPROOT/tlc.log"
 run AW_DEPS_OS=Linux AW_STATE_DIR="$S" AW_DRY_RUN=1 TLC_STUB_JAR=none
