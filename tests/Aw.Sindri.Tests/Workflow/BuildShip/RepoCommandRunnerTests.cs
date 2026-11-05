@@ -39,6 +39,18 @@ public sealed class RepoCommandRunnerTests
     }
 
     [Fact]
+    public async Task A_set_that_asks_for_more_output_hands_its_limit_to_every_command_and_the_default_is_the_tail_limit()
+    {
+        var rig = new StepRig();
+        _ = rig.Commands.Answer("a", StepRig.Pass());
+
+        _ = await rig.Runner.Run("h", StubCommandSource.Set(TimeSpan.FromHours(2), "a"), StepRig.Tree, TimeSpan.FromHours(4), Token);
+        _ = await rig.Runner.Run("h", StubCommandSource.Set(TimeSpan.FromHours(2), "a") with { OutputLimit = 256 * 1024 }, StepRig.Tree, TimeSpan.FromHours(4), Token);
+
+        Assert.Equal([CheckRun.TailLimit, 256 * 1024], rig.Commands.Calls.Select(static c => c.Command.OutputLimit));
+    }
+
+    [Fact]
     public async Task The_slot_is_released_when_a_command_throws()
     {
         var rig = new StepRig();

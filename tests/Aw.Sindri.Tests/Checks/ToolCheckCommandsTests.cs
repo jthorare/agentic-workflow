@@ -43,6 +43,21 @@ public sealed class ToolCheckCommandsTests
     }
 
     [Fact]
+    public async Task A_limit_above_the_default_keeps_the_head_lines_and_the_default_still_cuts_at_4000()
+    {
+        var output = "first line\n" + new string('x', CheckRun.TailLimit * 2) + "\nlast line";
+        var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 0, output));
+        var commands = new ToolCheckCommands(runner, new Mask("x-not-present"), new FakeTimeProvider());
+
+        var cut = await commands.Run(new CheckInvocation("unit", ["t"], TimeSpan.FromMinutes(1)), "/w", Token);
+        var kept = await commands.Run(new CheckInvocation("unit", ["t"], TimeSpan.FromMinutes(1), OutputLimit: 256 * 1024), "/w", Token);
+
+        Assert.Equal(CheckRun.TailLimit, cut.Value.Tail.Length);
+        Assert.DoesNotContain("first line", cut.Value.Tail, StringComparison.Ordinal);
+        Assert.Equal(output, kept.Value.Tail);
+    }
+
+    [Fact]
     public async Task Standard_error_follows_standard_output_in_the_tail()
     {
         var runner = new FakeToolRunner(new ToolRun(ToolOutcome.Exited, 2, "out\n", "err\n"));

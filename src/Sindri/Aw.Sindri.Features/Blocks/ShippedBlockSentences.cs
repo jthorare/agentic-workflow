@@ -92,6 +92,8 @@ internal sealed class ShippedBlockSentences : IBlockSentences
         ["step.lens.log"] = "Adds a review result to the review passes",
         ["step.lens.round"] = "Lines up the reviews for one review pass",
         ["step.lens.run"] = "Starts an AI agent session that reviews from one angle",
+        ["step.model.check"] = "Checks the design model of the change with a model checker, and reports what it found",
+        ["step.model.desk"] = "Asks you what to do when the model check cannot run",
         ["step.owner.decide"] = "Asks you whether to retry or stop",
         ["step.line.decide"] = "Asks you whether to retry a failed phase, skip it and what depends on it, or stop the line",
         ["step.line.dispatch"] = "Picks the next phases of the line that are ready to start, within the limits you set",

@@ -25,6 +25,8 @@
 (deny file-read* file-write* (subpath "/Users/owner"))
 ; the .NET SDK
 (allow file-read* (subpath "/Users/owner/.dotnet"))
+; the .NET runtime's lock files; private to the run
+(allow file-read* file-write* (subpath "/Users/owner/.dotnet/corefx"))
 ; Rust tools
 (allow file-read* (subpath "/Users/owner/.cargo"))
 ; Rust toolchains
