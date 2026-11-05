@@ -11,7 +11,7 @@ namespace Aw.Sindri.Tests.Workflow.ModelCheck;
 
 /// <summary>
 /// 'step.model.check' (model-check design §3): one outcome per row of the outcomes table, over a fake runner that prints canned 'tlc-check:' lines and exits with a code. The result word of each
-/// line decides, never the exit code. Line labels are '&lt;Name&gt;/&lt;cfg&gt;', and '&lt;Name&gt;/gaps/&lt;cfg&gt;' for a witness.
+/// line decides, never the exit code. Line labels are the runner's: '&lt;Name&gt;/&lt;cfg file&gt;', and '&lt;Name&gt;/gaps/&lt;cfg file&gt;' for a witness.
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class ModelCheckStepTests
@@ -29,7 +29,7 @@ public sealed class ModelCheckStepTests
     public async Task Every_cfg_passing_and_every_witness_caught_is_pass_with_bounds()
     {
         var h = new Harness().Folder(Folders.Spec("Takeover")).Folder(Folders.Spec("Retry"));
-        h.Prints(0, "tlc-check: Retry/Retry: PASS distinct=88 depth=9", "tlc-check: Retry/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained", "tlc-check: Takeover/Takeover: PASS distinct=1204 depth=14", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");
+        h.Prints(0, "tlc-check: Retry/Retry.cfg: PASS distinct=88 depth=9", "tlc-check: Retry/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained", "tlc-check: Takeover/Takeover.cfg: PASS distinct=1204 depth=14", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
 
         var result = await h.Step().Run(Harness.Context(), Token);
 
@@ -42,6 +42,17 @@ public sealed class ModelCheckStepTests
         Assert.Contains("MaxTakeovers = 2", takeover["constants"]!.ToJsonString(), StringComparison.Ordinal);   // the cfg's CONSTANT lines
         Assert.Equal(["Retry", "Takeover"], fact["specs"]!.AsArray().Select(static s => (string?)s!["name"]), StringComparer.Ordinal);
         Assert.Equal((1, 1), (h.Rig.Slots.Taken, h.Rig.Slots.Released));
+    }
+
+    [Fact]
+    public async Task A_label_without_the_cfg_extension_still_parses()
+    {
+        var h = new Harness().Folder(Folders.Spec("Takeover"));
+        h.Prints(0, "tlc-check: Takeover/Takeover: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");   // tolerance only: the runner prints the file name, with .cfg
+
+        var result = await h.Step().Run(Harness.Context(), Token);
+
+        Assert.Equal("pass", result.Result!.Outcome.Value);
     }
 
     [Fact]
@@ -66,7 +77,7 @@ public sealed class ModelCheckStepTests
     public async Task Touched_scope_matches_the_path_only_a_dir_prefix_and_the_specs_own_files(string changed)
     {
         var h = new Harness().Folder(Folders.Spec("Takeover")).Changed(changed);
-        h.Prints(0, "tlc-check: Takeover/Takeover: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");
+        h.Prints(0, "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
 
         var result = await h.Step().Run(Harness.Context(scope: "touched"), Token);
 
@@ -78,7 +89,7 @@ public sealed class ModelCheckStepTests
     public async Task A_folder_with_no_models_line_is_always_checked_under_touched()
     {
         var h = new Harness().Folder(Folders.Spec("Takeover", readme: "# Takeover\nBounds: small.\n")).Changed("docs/x.md");
-        h.Prints(0, "tlc-check: Takeover/Takeover: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");
+        h.Prints(0, "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
 
         var result = await h.Step().Run(Harness.Context(scope: "touched"), Token);
 
@@ -91,7 +102,7 @@ public sealed class ModelCheckStepTests
     public async Task A_violation_wins_over_an_error_in_another_spec()
     {
         var h = new Harness().Folder(Folders.Spec("Alpha")).Folder(Folders.Spec("Beta"));
-        h.Prints(2, "tlc-check: Alpha/Alpha: VIOLATION invariant NoTimeGained", "  | Error: Invariant NoTimeGained is violated.", $"  | State 2: remaining = 3 note={Secret}", "tlc-check: Beta/Beta: ERROR parse error at line 4");
+        h.Prints(2, "tlc-check: Alpha/Alpha.cfg: VIOLATION invariant NoTimeGained", "  | Error: Invariant NoTimeGained is violated.", $"  | State 2: remaining = 3 note={Secret}", "tlc-check: Beta/Beta.cfg: ERROR parse error at line 4");
 
         var result = await h.Step().Run(Harness.Context(), Token);   // exit 2 is the worst code: the result word decides
 
@@ -136,9 +147,9 @@ public sealed class ModelCheckStepTests
     public async Task A_missed_or_wrong_witness_is_vacuous()
     {
         var missed = new Harness().Folder(Folders.Spec("Takeover"));
-        missed.Prints(1, "tlc-check: Takeover/Takeover: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-MISSED");
+        missed.Prints(1, "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-MISSED");
         var wrong = new Harness().Folder(Folders.Spec("Takeover"));
-        wrong.Prints(1, "tlc-check: Takeover/Takeover: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-WRONG invariant TimerStoppedWhileTakenOver (expected NoTimeGained)");
+        wrong.Prints(1, "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-WRONG invariant TimerStoppedWhileTakenOver (expected NoTimeGained)");
 
         var a = await missed.Step().Run(Harness.Context(), Token);
         var b = await wrong.Step().Run(Harness.Context(), Token);
@@ -156,9 +167,9 @@ public sealed class ModelCheckStepTests
     public async Task An_unparseable_spec_or_a_gaps_cfg_without_a_witness_line_is_specError()
     {
         var parse = new Harness().Folder(Folders.Spec("Takeover"));
-        parse.Prints(2, "tlc-check: Takeover/Takeover: ERROR parse error at line 4", "  | Encountered \"Beginning of definition\" at line 4, column 1");
+        parse.Prints(2, "tlc-check: Takeover/Takeover.cfg: ERROR parse error at line 4", "  | Encountered \"Beginning of definition\" at line 4, column 1");
         var noWitness = new Harness().Folder(Folders.Spec("Takeover"));
-        noWitness.Prints(2, "tlc-check: Takeover/Takeover: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug: ERROR gaps cfg has no '\\* witness:' line");
+        noWitness.Prints(2, "tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3", "tlc-check: Takeover/gaps/PlantedBug.cfg: ERROR gaps cfg has no '\\* witness:' line");
 
         var a = await parse.Step().Run(Harness.Context(), Token);
         var b = await noWitness.Step().Run(Harness.Context(), Token);
@@ -174,7 +185,7 @@ public sealed class ModelCheckStepTests
     public async Task An_unknown_result_line_counts_as_error()
     {
         var h = new Harness().Folder(Folders.Spec("Takeover"));
-        h.Prints(0, "tlc-check: Takeover/Takeover: SHRUG whatever", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");   // exit 0 does not make it a pass
+        h.Prints(0, "tlc-check: Takeover/Takeover.cfg: SHRUG whatever", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");   // exit 0 does not make it a pass
 
         var result = await h.Step().Run(Harness.Context(), Token);
 
@@ -188,11 +199,11 @@ public sealed class ModelCheckStepTests
     public async Task A_timeout_or_out_of_memory_or_unrun_cfgs_is_tooBig_naming_them()
     {
         var timeout = new Harness().Folder(Folders.Spec("Takeover"));
-        timeout.Prints(0, "tlc-check: Takeover/Takeover: TIMEOUT after 180 s", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");
+        timeout.Prints(0, "tlc-check: Takeover/Takeover.cfg: TIMEOUT after 180 s", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
         var memory = new Harness().Folder(Folders.Spec("Takeover"));
-        memory.Prints(2, "tlc-check: Takeover/Takeover: ERROR tlc: java.lang.OutOfMemoryError: Java heap space", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");
+        memory.Prints(2, "tlc-check: Takeover/Takeover.cfg: ERROR tlc: java.lang.OutOfMemoryError: Java heap space", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
         var cutOff = new Harness().Folder(Folders.Spec("Takeover"));
-        cutOff.RunnerKilled("tlc-check: Takeover/Takeover: PASS distinct=5 depth=3");   // the step's time ran out: gaps/PlantedBug never ran
+        cutOff.RunnerKilled("tlc-check: Takeover/Takeover.cfg: PASS distinct=5 depth=3");   // the step's time ran out: gaps/PlantedBug never ran
 
         var a = await timeout.Step().Run(Harness.Context(), Token);
         var b = await memory.Step().Run(Harness.Context(), Token);
@@ -204,7 +215,7 @@ public sealed class ModelCheckStepTests
         Assert.Contains("Takeover", (string?)first["message"], StringComparison.Ordinal);
         Assert.Contains("make the bounds smaller", (string?)first["message"], StringComparison.Ordinal);
         Assert.Equal("MDL-TOOBIG-001", (string?)StepRig.Out(b, "findings").AsArray().Single()!["rule"]);
-        Assert.Contains("Takeover/gaps/PlantedBug", StepRig.Out(c, "findings").ToJsonString(), StringComparison.Ordinal);   // an unrun cfg is named, never counted as passed
+        Assert.Contains("Takeover/gaps/PlantedBug.cfg", StepRig.Out(c, "findings").ToJsonString(), StringComparison.Ordinal);   // an unrun cfg is named, never counted as passed
     }
 
     [Fact]
@@ -240,7 +251,7 @@ public sealed class ModelCheckStepTests
             .Folder(Folders.Spec("Instanced", tla: "---- MODULE Instanced ----\nEXTENDS Naturals\nM == INSTANCE Elsewhere\n====\n"))
             .Folder(Folders.Spec("Odd", extra: new SpecFile("Weird.class", SpecFileKind.Other, string.Empty)))
             .Folder(Folders.Spec("Fine", tla: "---- MODULE Fine ----\n\\* EXTENDS IOUtils (a comment)\n(* INSTANCE IOUtils *)\nEXTENDS Naturals, Sequences, Helpers\n====\n", extra: new SpecFile("Helpers.tla", SpecFileKind.Regular, "---- MODULE Helpers ----\n====\n")));
-        h.Prints(0, "tlc-check: Fine/Fine: PASS distinct=2 depth=2", "tlc-check: Fine/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");
+        h.Prints(0, "tlc-check: Fine/Fine.cfg: PASS distinct=2 depth=2", "tlc-check: Fine/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
 
         var result = await h.Step().Run(Harness.Context(), Token);
 
@@ -265,7 +276,7 @@ public sealed class ModelCheckStepTests
     public async Task The_runner_gets_only_the_allowed_environment_and_never_jar()
     {
         var h = new Harness().Folder(Folders.Spec("Takeover")).Folder(Folders.Spec("Retry"));
-        h.Prints(0, "tlc-check: Retry/Retry: PASS distinct=1 depth=1", "tlc-check: Retry/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained", "tlc-check: Takeover/Takeover: PASS distinct=1 depth=1", "tlc-check: Takeover/gaps/PlantedBug: WITNESS-CAUGHT NoTimeGained");
+        h.Prints(0, "tlc-check: Retry/Retry.cfg: PASS distinct=1 depth=1", "tlc-check: Retry/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained", "tlc-check: Takeover/Takeover.cfg: PASS distinct=1 depth=1", "tlc-check: Takeover/gaps/PlantedBug.cfg: WITNESS-CAUGHT NoTimeGained");
 
         _ = await h.Step().Run(Harness.Context(), Token);
 
@@ -286,7 +297,7 @@ public sealed class ModelCheckStepTests
     public async Task Witnesses_false_drops_the_flag_and_specs_defaults_to_specs_tla()
     {
         var h = new Harness().Folder(Folders.Spec("Takeover"));
-        h.Prints(0, "tlc-check: Takeover/Takeover: PASS distinct=1 depth=1");
+        h.Prints(0, "tlc-check: Takeover/Takeover.cfg: PASS distinct=1 depth=1");
 
         var result = await h.Step().Run(Harness.Context(witnesses: false), Token);
 
