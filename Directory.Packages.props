@@ -11,7 +11,7 @@
 
   <!-- Analyzers in every project. Severities and the one owner per overlapping rule: .editorconfig. -->
   <ItemGroup Label="Analyzers">
-    <GlobalPackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="[10.0.401]" />
+    <GlobalPackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" Version="[10.0.403]" />
     <GlobalPackageReference Include="Meziantou.Analyzer" Version="[3.0.299]" />
     <GlobalPackageReference Include="Roslynator.Analyzers" Version="[5.0.1]" />
     <GlobalPackageReference Include="Microsoft.CodeAnalysis.BannedApiAnalyzers" Version="[5.6.0]" />
