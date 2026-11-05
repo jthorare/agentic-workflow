@@ -135,7 +135,9 @@ internal static class HandoffPack
 
         if (check["skipped"] is JsonValue flag && flag.TryGetValue<bool>(out var wasSkipped) && wasSkipped)
         {
-            return "Model check skipped: no modelled code changed";
+            return check["specFolders"] is JsonValue count && count.TryGetValue<int>(out var folders) && folders == 0
+                ? "Model check skipped: this repo has no TLA+ specs (specs/tla/)"
+                : "Model check skipped: no modelled code changed";
         }
 
         var specs = (check["specs"] as JsonArray ?? []).OfType<JsonObject>().Select(Spec).ToList();
