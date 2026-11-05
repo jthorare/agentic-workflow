@@ -38,6 +38,7 @@ Dispatches five subagents in parallel — product, architecture, design, devex, 
 
    - **`productReview` agent** → "Invoke the `productReview` skill with `--plan <plan-path> --output <feature-dir>/product-review.md`" — append `--mode <mode>` when `--mode` was given.
    - **`archReview` agent** → "Invoke the `archReview` skill with `--plan <plan-path> --output <feature-dir>/arch-review.md`."
+     (When the plan has a state machine, protocol or concurrency, the archReview agent runs the formal check itself; autoplan has no formal-verify step and does not run it again.)
    - **`planDesignReview` agent** → "Invoke the `planDesignReview` skill with `--plan <plan-path> --output <feature-dir>/design-review.md`."
    - **`planDevexReview` agent** → "Invoke the `planDevexReview` skill with `--plan <plan-path> --output <feature-dir>/devex-review.md`."
    - **`cso --plan` agent** → "Invoke the `cso` skill with `--plan <plan-path> --output <feature-dir>/security-review.md`."
