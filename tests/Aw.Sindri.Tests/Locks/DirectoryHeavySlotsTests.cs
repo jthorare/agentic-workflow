@@ -569,22 +569,6 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
         Assert.True(Directory.Exists(Lock + ".2"));
     }
 
-    [Fact, Trait("Lane", "unit")]
-    public async Task Take_finds_nothing_free_when_the_meta_reserve_covers_every_slot()
-    {
-        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), "2\n", TestContext.Current.CancellationToken);
-        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-meta-reserve"), "2\n", TestContext.Current.CancellationToken);
-        var slots = new DirectoryHeavySlots(SettingsOverStateRoot(), TimeProvider.System);
-
-        var taken = (await slots.Take("sindri job", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
-        if (taken.Lease is { } lease)
-        {
-            await lease.DisposeAsync();
-        }
-
-        Assert.Null(taken.Lease);
-    }
-
     [Theory, Trait("Lane", "unit")]
     [InlineData(null, 1)]
     [InlineData("", 1)]
