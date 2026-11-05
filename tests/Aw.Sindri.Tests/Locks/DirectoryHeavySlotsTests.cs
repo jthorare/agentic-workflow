@@ -570,6 +570,24 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
     }
 
     [Theory, Trait("Lane", "unit")]
+    [InlineData("2", "2", ".2")]
+    [InlineData("2", "9", ".2")]
+    [InlineData("1", "1", "")]
+    [InlineData("3", "3", ".3")]
+    public async Task Take_always_finds_a_slot_because_the_reserve_is_capped_at_the_slot_count_minus_one(string cap, string reserve, string slot)
+    {
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-slots-cap"), cap + "\n", TestContext.Current.CancellationToken);
+        await File.WriteAllTextAsync(Path.Combine(_root, "heavy-meta-reserve"), reserve + "\n", TestContext.Current.CancellationToken);
+        var slots = new DirectoryHeavySlots(SettingsOverStateRoot(), TimeProvider.System);
+
+        var taken = (await slots.Take("sindri job", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+        await using var lease = taken.Lease;
+
+        Assert.True(lease is not null, $"cap {cap}, reserve {reserve}: a Sindri job found no slot (busy: {taken.Busy})");
+        Assert.True(Directory.Exists(Lock + slot), $"cap {cap}, reserve {reserve}: the slot above the capped reserve is taken");
+    }
+
+    [Theory, Trait("Lane", "unit")]
     [InlineData(null, 1)]
     [InlineData("", 1)]
     [InlineData("2", 2)]
