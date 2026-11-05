@@ -9,7 +9,7 @@ repos: [jthorare/agentic-workflow]
 
 # Sindri's PR review page, configured per project, mapped against the design docs
 
-**Status:** draft for the owner, revision 4 (after /autoplan rounds 1 to 3, two rounds of context and ideas section reviews, and the owner's answers of 2026-11-04) · **Date:** 2026-11-04 · **Lane:** ui (this spec), with context (§5, the library's store) and ideas (§4, the convention and the skills) · **Builds on:** the Projects page spec `2026-10-29-sindri-projects-page-design.md`, the owned index spec `2026-10-27-sindri-owned-index-design.md`, the PR babysitter spec `2026-10-15-sindri-pr-babysitter-docs-sync-design.md` with `docs/csharp/sindri-pr.md` and `docs/csharp/forge.md`, the pages and actions spec `2026-10-29-sindri-pages-actions-design.md` (profile entries saved with one-click approval), `docs/csharp/sindri-profile.md` · **Next:** meta's UX check, the owner's read; then /specToProvenPR takes §12's phases.
+**Status:** draft for the owner, revision 5 (after /autoplan rounds 1 to 3, two rounds of context and ideas section reviews, meta's UX check, and the owner's answers of 2026-11-04 and 2026-11-05) · **Date:** 2026-11-04 · **Lane:** ui (this spec), with context (§5, the library's store) and ideas (§4, the convention and the skills) · **Builds on:** the Projects page spec `2026-10-29-sindri-projects-page-design.md`, the owned index spec `2026-10-27-sindri-owned-index-design.md`, the PR babysitter spec `2026-10-15-sindri-pr-babysitter-docs-sync-design.md` with `docs/csharp/sindri-pr.md` and `docs/csharp/forge.md`, the pages and actions spec `2026-10-29-sindri-pages-actions-design.md` (profile entries saved with one-click approval), `docs/csharp/sindri-profile.md` · **Next:** the owner's read of the whole spec; then /specToProvenPR takes §12's phases.
 
 Every file path below is one the author or a reviewing lane opened on main (94ff1714e, rechecked at 89a4d4b). Every command, route, event, key and type is marked **existing** or **new**. This file is written in the convention §4 defines, so the first index run has a real document to itemize.
 
@@ -81,6 +81,10 @@ What exists today (checked on main 94ff1714e):
 | D15 | **A fix task goes to the lane that owns the PR, never through `/meta`** (§8.2) | Owner, 2026-11-04 (§14 Q2) |
 | D16 | **Fixtures are made up** ("Harbor ferry booking"). No work-app names, paths or text | Owner rule |
 | D17 | **Owner-only is its own audience key, `owner:library`.** The human's scope always holds it; no session scope ever does, and the record-link rule never lets an `owner:` record through | A null audience is visible to no one, the owner included (context and arch round 2) |
+| D18 | **Posting uses the owner's own GitHub token** (`review.credential`), never the agent App token (§8.3) | Owner, 2026-11-05 (§14 Q7) |
+| D19 | **Release 1 is read-only; posting comes in release 2** (D10) | Owner, 2026-11-05 (§14 Q8) |
+| D20 | **Lanes hear about fix tasks through the per-prompt `sindri-tasks.sh` hook** (§8.2) | Owner, 2026-11-05 (§14 Q9) |
+| D21 | **A PR the owner reviewed comes back to "Waiting on you" when new commits land** (§5.6, §6.1) | Owner, 2026-11-05 (§14 Q10) |
 
 ## 2. Goals and non-goals
 
@@ -330,7 +334,7 @@ Doc text in results is fenced as untrusted.
 
 The Reviews list needs, per open PR, its author login and requested reviewer logins (§6.1). The author is already on the record (`StoredRecord.Author`, from `ConnectorFeed.cs:75`). Ph2b adds `RequestedReviewers` to `GitHubPullDetail` (`Aw.Connectors.Core/GitHub/GitHubPullDetail.cs`), read by `GitHubWire.ReadPull`, the single-PR read that already gives `Merged`, `Draft`, `MergedAt` and `Paths`, and stores it on the PR record (the context lane picks the column, in migration 0030 or its own).
 - **Team requests** land in GitHub's `requested_teams`, not `requested_reviewers`, so a review asked of a team the owner is on isn't "Waiting on you" in v1. The list's empty state says so.
-- **A PR the owner already reviewed** drops out of `requested_reviewers`, so new commits after the owner's review don't bring it back unless someone re-requests. Whether to add "reviewed by you, with commits since" is §14 open Q4; until it ships, the waiting count undercounts, and the list's header says so.
+- **A PR the owner already reviewed** drops out of `requested_reviewers` (D21, owner 2026-11-05). Ph2b also reads `GET /repos/{owner}/{repo}/pulls/{n}/reviews` for an open PR the owner didn't author, only when its `updated_at` or head sha changed since the last read, and stores the `commit_id` of `review.login`'s latest review. When that differs from the head, it reads `GET .../compare/{commit_id}...{head}` once and stores `ahead_by` as the new-commit count. A force-push that dropped the reviewed commit (compare answers 404) stores the count as unknown. Until Ph2b's review read lands, the waiting count undercounts, and the list's header says so.
 - Until Ph2b lands, the list shows only the PRs the owner authored, with the line "Review requests show here once Sindri reads requested reviewers." in its header.
 
 ## 6. The review page
@@ -339,7 +343,7 @@ The Reviews list needs, per open PR, its author login and requested reviewer log
 
 Rows are stored PR records (kind `pr`, open or draft) of the repos in `context.sources.github.repos`.
 - **Which PRs**: the author is `review.login`, or `review.login` is among the requested reviewers (owner, 2026-11-04, §14 Q3).
-- **Order**: two groups, **Waiting on you** (review requested) first, then **Yours**. Inside each, rows are grouped by the project whose `review.projects[]` names the repo, else by the repo's name, newest activity first.
+- **Order**: two groups, **Waiting on you** first, then **Yours**. A PR waits on the owner when `review.login` is a requested reviewer, or when the owner's latest review is on an older commit than the head (§5.6); that row reads "reviewed, N new commits" ("reviewed, new commits" when the count is unknown). Inside each, rows are grouped by the project whose `review.projects[]` names the repo, else by the repo's name, newest activity first.
 - **A row** shows the title, number, author, age, CI state, open required checks, and whether the PR claims a doc.
 - **The header** shows the library's state, e.g. "Library: 41 docs, 3 with errors"; the count opens a sheet listing the broken docs and their errors, and the near misses (§4.1).
 - **The waiting count** ("N PRs waiting on you") is the "Waiting on you" group's size, read from the same stored records. It shows on Home and as the Reviews tab's badge, with the badge's accessible name "Reviews, N waiting on you".
@@ -638,9 +642,9 @@ Registered in `docs/csharp/sindri.md`'s error table; `SND-LIB-01x` are also list
 | **Ph0** | — | ideas | The convention page (with a copy-paste first doc) and `schemas/library/design-doc.schema.json`. Made-up fixtures in `tests/fixtures/library/`: a TDD; an officeHours plan in its real shape, with REQ refs in its engineering and tasks docs, a Traceability table repeating each REQ, ACs in their own section, and TASKS.md's `- reqs:` / `- depends:` lines; near misses (`aw-doc: "1"`, `1.0`, a blank first line); a stage map whose `parent` is a repo spec's full ref; a stage map and verification plan; a doc with a fenced example; `Ph01` vs `Ph1`; a rerun pair; two repo-slugs sharing an id; one broken doc per `SND-LIB-01x`; a vault with `.obsidian/`, a private folder, a symlink and a note without front matter. Also the baseline count of this repo's last 20 merged PRs, both ways, and the go/no-go (§2) | — | a schema test over the fixtures: the good ones pass, and each broken one fails with its rule |
 | **Ph1** | 1 | context | `DesignDocParser`; itemizing in `RecordBatches.From` (doc records of `repo-docs` and `library` only); migration 0030 and the `IRecordStore.Commit` rows, deleted with the record's `removed_at`; claims from PR records, resolved on read; the parser version in the cursor fingerprint and the re-read check; the `owner:` audience key and its rules (§5.4); `IContextLibrary` with the caller's scope; the ERD | Ph0's draft schema | unit: the parser over every fixture; the three audience tests (§5.4). integration: **an existing `aw-doc` repo spec (this file) itemizes on the first tick after upgrade with no new commit**; a PR body's claims land, and one written before its doc resolves once the doc lands; a removed doc's rows go and its id passes to the next doc |
 | **Ph2** | 1 | context | The `library` feed (front-matter files only, near misses counted); `context.sources.library` keys and rules; the zero-repo catalog change; the doctor row; `library sync`; the decision-pass and reranker skips (D13) | Ph1 | unit: keys, `~/` expanded before the check, refused roots, built-in deny, symlinks, caps, skipping a file without front matter, near misses. integration: a tick over the fixture vault, a removed file, an unreadable root that removes nothing; no model call for the `library` source with `models: false`. aot-smoke `expected.txt` |
-| **Ph2b** | 1 | context | PR records gain requested reviewers (§5.6; the author is already stored). If the owner says yes to §14 open Q4: also "reviewed by you, with commits since" | — | unit: the mapping. integration: a GitHub fake PR with two reviewers |
+| **Ph2b** | 1 | context | PR records gain requested reviewers (§5.6; the author is already stored), and the owner's latest reviewed commit with the new-commit count (D21) | — | unit: the mapping; the reviews read skipped when `updated_at` and head are unchanged; a 404 compare stores the count as unknown. integration: a GitHub fake PR with two reviewers; a PR reviewed by the owner then pushed to shows as "reviewed, 2 new commits" |
 | **Ph3** | 1 | api | `Files`, `Checks.Runs` (every page; conclusion and app) and `SubmitReview` (GitHub, file, fake; release 1 uses only verdict `comment`); `seed files` and `seed checks --runs`; the `IPullRequests` members | — | contract tests over the fake and file adapters; stubbed-HTTP unit tests, including a 422 line and a second page of check runs |
-| **Ph4a** | 1 | ideas | officeHours (front matter, TASKS.md list-item keys, reruns), system-design (`doc.md`), specToProvenPR and `pr-body.md` write the convention and `Covers:`; the one-line skip when `sindri library` is missing; dark-factory's TASKS.md wording | Ph0 | the system-design suites; fixtures from real runs pass the schema; each plan-reading skill still names a fixture plan's sections with front matter on it |
+| **Ph4a** | before 1 | ideas | officeHours (front matter, TASKS.md list-item keys, reruns), system-design (`doc.md`), specToProvenPR and `pr-body.md` write the convention and `Covers:`; the one-line skip when `sindri library` is missing; dark-factory's TASKS.md wording | Ph0's draft schema (the same draft Ph1 starts from) | the system-design suites; fixtures from real runs pass the schema; each plan-reading skill still names a fixture plan's sections with front matter on it |
 | **Ph4b** | after 1 | api, then ideas | The `type: command` grader in `scripts/skill-evals.sh` (api), with selftest rows. Then one eval case per skill (ideas), officeHours with pre-filled answers. Runs go through the spend line | Ph4a, Ph5's `library validate` | the selftest; the three cases pass |
 | **Ph5** | 1 | api (the `PrCommentQueue` change with the lane that owns the babysitter) | `sindri library list|show|validate|sync`, `GET /library` and `GET /library/{doc}`. The `review` block and its rules; `review.credential` in `LaunchEnvironment.Credentials`. `GET /reviews` and `GET /reviews/{pr}`: the page model, one-head reads, the cache, check evaluation, `Covers:` from the PR's own files, the evidence lookup measured and wired, audience-scoped reads for sessions. Fix tasks: item, thread (owner's and agent PRs only), the repo-and-branch session match, the per-head task files; `PrCommentQueue` takes `sindri.fix:` threads and closes the item on `fixed`. `sindri review list|show|fix|tasks|settings|stats` and `sindri_review`; the `review.opened` event; the `sindri-tasks.sh` hook and its installer rows; catalog rows | Ph1, Ph2b, Ph3 | unit per check kind (`skipped` doesn't pass), mapping rule and fix-task branch (half-done, no session, contributor's PR, a fork's `main` matching nothing); the scrub test for the review token; API goldens; `SND-AUTH-002` for a session's fix; the hook test in `config/hooks/tests/` (silent, once per task per session, ids only, silent under `AW_SINDRI_CHILD`, exit 0, under 500 ms with no `sindri` on PATH) |
 | **Ph6** | — | ui | Mockups: the Reviews list, the review page (every §6.3 state, both widths), the confirm sheet, Settings → Library. Then the owner's pick | — | the pick, recorded here |
@@ -650,12 +654,12 @@ Registered in `docs/csharp/sindri.md`'s error table; `SND-LIB-01x` are also list
 | **Ph10** | — | — | The owner proof (§13) and the two-week measure | each release | §13 |
 
 **Parallel plan.**
-- **Day one**: ideas on Ph0, then Ph4a; context on Ph1 (from Ph0's draft schema) and Ph2b; api on Ph3; ui on Ph6's mockups.
+- **Day one**: ideas on Ph0's draft schema, then Ph4a at once, with Ph0's fixtures and baseline count after it (meta's UX check: the doc map is mostly empty until the skills write the convention, so Ph4a goes first); context on Ph1 (from Ph0's draft schema) and Ph2b; api on Ph3; ui on Ph6's mockups.
 - **Then**:
   - context: Ph1 → Ph2;
   - api: Ph3 → Ph5 (once Ph1's read path and Ph2b land) → Ph4b's grader → Ph8;
   - ui: Ph6 → Ph7 on Ph5's hand-written goldens → Ph9 and Ph8's sheet.
-- **Release 1 ships** when Ph1, Ph2, Ph2b, Ph3, Ph5 and Ph7 are in. Ph4a ships beside it (before Ph7 if Ph0's go/no-go says so); Ph4b follows.
+- **Release 1 ships** when Ph1, Ph2, Ph2b, Ph3, Ph5 and Ph7 are in. Ph4a merges as soon as it's ready, ahead of release 1, so PRs written while release 1 is built already carry `Covers:`; Ph4b follows.
 - **The spend line** is the team's rule for paid eval runs: the lane sends its cost estimate to meta and starts only after meta's OK.
 
 **Gates per phase.**
@@ -696,11 +700,13 @@ Decided (owner, 2026-11-04):
 5. **Vault pickup within 5 minutes**: fine (§5.2).
 6. **How Sindri reaches the vault**: Sindri runs on the work laptop, so the vault is a local path in the profile (D12, §5.1). No sync.
 
-Open (raised by the reviews):
-1. **Posting as you.** Release 2 posts with your own GitHub token (`review.credential`), not the agent App token, so the review is yours. That needs a personal token with pull-request write on these repos, stored as a pointer (env, keychain or 1Password). I'd go with that. The other way is to post as the App with "on behalf of" text, but an App can't approve PRs it opened. Your own token?
-2. **Release 1 without posting.** Release 1 shows everything and sends fix tasks, but its review buttons open GitHub, and posting from Sindri comes in release 2. I'd ship in that order, because release 1 carries what GitHub can't do. OK?
-3. **The fix-task hook.** A lane hears about a fix task through a new per-prompt hook: one line, once per task, only when the lane's branch has an open task. It reads one small file, starts no Sindri process, and stays under 500 ms. It's one more hook every session runs; the other way is the SessionStart hook only, which a long-running lane wouldn't see until it restarts. The new hook?
-4. **PRs you already reviewed.** GitHub drops you from a PR's requested reviewers once you review it, so when the author pushes new commits, the PR leaves "Waiting on you" unless someone re-requests you. I'd add those PRs to "Waiting on you" as "reviewed, N new commits". Cost: Sindri reads each open PR's reviews from GitHub (one extra call per open PR), but only when the PR's update time or head changed since the last read, so in practice a few calls per tick. The context lane builds it next to requested reviewers (Ph2b). Add it?
+Decided (owner, 2026-11-05; raised by the reviews):
+7. **Posting as you**: release 2 posts with your own GitHub token (`review.credential`, a pointer, never a value), not the agent App token (D18, §8.3).
+8. **Release 1 without posting**: release 1 is read-only and its review buttons open GitHub; posting from Sindri comes in release 2 (D10, D19).
+9. **The fix-task hook**: the new per-prompt hook, `sindri-tasks.sh` (D20, §8.2).
+10. **PRs you already reviewed**: back in "Waiting on you" as "reviewed, N new commits" when new commits land (D21, §5.6, §6.1, Ph2b).
+
+Open: none.
 
 ## 15. Left for the phases (autoplan round 3)
 
