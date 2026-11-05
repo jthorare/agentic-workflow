@@ -205,6 +205,26 @@ public sealed class MigrationSafetyTests
     }
 
     [Fact]
+    public async Task An_existing_group_readable_backup_is_made_owner_only_on_the_next_upgrade()
+    {
+        if (OperatingSystem.IsWindows())
+        {
+            Assert.Skip("Unix file modes");
+            return;
+        }
+
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        var old = db.Path + ".bak-v1";
+        await File.WriteAllTextAsync(old, "written before backups were owner-only", Ct);
+        File.SetUnixFileMode(old, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.GroupRead | UnixFileMode.OtherRead);
+
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+
+        Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(old));
+    }
+
+    [Fact]
     public async Task Two_runners_at_once_apply_each_migration_once_and_both_report_the_final_version()
     {
         using var db = new TempDatabase();
