@@ -43,6 +43,10 @@
 # `sindri` wrapper also exports AW_SINDRI_JUDGE, AW_PACKETS_BIN and AW_UI_EVIDENCE_BIN (unless the caller set them), so bare
 # `sindri` finds sindri-ui next to it. A wrapper never publishes.
 #
+# The heavy-job wrapper: $AW_STATE_DIR/bin-r1b/heavy is a symlink to this tree's scripts/heavy.sh (both modes, before anything runs
+# under it). A real file already there is moved to heavy.pre-repo (never deleted; a later one gets a timestamp suffix). A linked worktree is
+# not linked (it can be swept away).
+#
 # Environment: AW_STATE_DIR (default ~/.agentic-workflow), CLAUDE_LOCAL_BIN (default ~/.local/bin), DOTNET_ROOT,
 #   AW_SINDRI_HOME (control.json for the running-serve guard; default $AW_STATE_DIR/sindri-app),
 #   AW_CS_SKIP_DOWNLOADS=1 skip the network steps (SDK install, temporal fetch, Chromium); the test's seam.
@@ -417,6 +421,23 @@ link() {
   fi
 }
 
+link_heavy() {
+  local want="$root/scripts/heavy.sh"
+  [ -f "$want" ] || { warn "no $want; leaving $heavy as it is"; return 0; }
+  # a linked worktree (.git is a file) can be swept away, which would leave the box's heavy dangling
+  [ -d "$root/.git" ] || { warn "$root is not a main checkout; leaving $heavy as it is"; return 0; }
+  if [ -L "$heavy" ] && [ "$(readlink "$heavy")" = "$want" ]; then return 0; fi
+  if [ "$dry" = 1 ]; then say "[dry-run] would link $heavy -> $want"; return 0; fi
+  mkdir -p "$(dirname "$heavy")"
+  if [ -e "$heavy" ] && [ ! -L "$heavy" ]; then
+    if [ -e "$heavy.pre-repo" ]; then mv "$heavy" "$heavy.pre-repo.$(date +%s)"; else mv "$heavy" "$heavy.pre-repo"; fi
+  fi
+  ln -s "$want" "$heavy.$$"
+  rename_over "$heavy.$$" "$heavy"
+  say "heavy -> $want"
+}
+
+link_heavy
 if [ "$do_publish" = 1 ]; then publish; fi
 if [ "$do_link" = 1 ]; then link; fi
 exit 0

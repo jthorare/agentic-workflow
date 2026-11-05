@@ -113,6 +113,7 @@ REPO="$WORK/repo"
 mkdir -p "$REPO/scripts/lib" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge" "$REPO/recipes/sindri"
 cp "$DIR/install-cs.sh" "$REPO/scripts/"
 cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$REPO/scripts/lib/"
+printf '#!/usr/bin/env bash\n[ "${1:-}" = --expensive ] && shift\nexec "$@"\n' > "$REPO/scripts/heavy.sh"; chmod +x "$REPO/scripts/heavy.sh"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
 echo "name: one" > "$REPO/recipes/sindri/one.yaml"; echo "name: two" > "$REPO/recipes/sindri/two.yaml"
@@ -135,6 +136,18 @@ check "dry run exits 0" "$rc" "0"
 has "dry run says what it would do" "$out" "install-cs: [dry-run] would"
 check "dry run writes no state" "$([ -e "$AW_STATE_DIR" ] && echo yes || echo no)" "no"
 check "dry run publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
+has "dry run says it would link heavy" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/heavy -> $REPO/scripts/heavy.sh"
+
+# --- heavy: bin-r1b/heavy is a symlink to the checkout's scripts/heavy.sh ---
+HV="$AW_STATE_DIR/bin-r1b/heavy"
+mkdir -p "$AW_STATE_DIR/bin-r1b"; printf '#!/bin/sh\necho old-heavy\n' > "$HV"; chmod +x "$HV"
+bash "$INSTALL" --link > /dev/null 2>&1   # fails (no build yet) but links heavy first
+check "heavy is now a symlink to the repo script" "$(readlink "$HV")" "$REPO/scripts/heavy.sh"
+check "the old real file moved to heavy.pre-repo" "$(sh "$HV.pre-repo")" "old-heavy"
+bash "$INSTALL" --link > /dev/null 2>&1
+check "a second run keeps the link" "$(readlink "$HV")" "$REPO/scripts/heavy.sh"
+check "a second run adds no other file" "$(ls "$AW_STATE_DIR/bin-r1b" | tr '\n' ' ')" "heavy heavy.pre-repo "
+check "the linked heavy runs its command" "$("$HV" --expensive echo ran)" "ran"
 
 # --- link before any build ---
 out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
