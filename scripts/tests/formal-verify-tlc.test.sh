@@ -2,7 +2,7 @@
 # Tests for skills/formal-verify/scripts/tlc.sh: usage, fetch against a file:// lock (install, cache hit, sha256 refusal, bad
 # lock), doctor and check refusing without java or the jar, then the real thing: fetch the pinned jar from the repo's
 # tla2tools.lock into a temp dir and run TLC on small models (a check-then-set mutex TLC must break, its fix, a starving
-# liveness property, a deadlock, a parse error, a PlusCal lost update). The real part needs java 11+ and the network; without
+# liveness property named in several cfg layouts, relative paths, a deadlock, a parse error, a PlusCal lost update). The real part needs java 11+ and the network; without
 # either it prints SKIP and passes.
 set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/../../scripts/lib/test-grep.sh"
@@ -134,6 +134,29 @@ EOF
     printf 'CONSTANT Procs = {p1, p2}\nSPECIFICATION Spec\nPROPERTY EveryoneRuns\n' >"$W/Starve.cfg"
     run check "$W/Starve.tla" --jar "$JAR"
     expect "a liveness property without fairness fails, named from the config" 1 '^tlc: VIOLATION property EveryoneRuns$'
+
+    printf 'CONSTANT Procs = {p1, p2}\nSPECIFICATION Spec\nPROPERTIES\n    EveryoneRuns\n' >"$W/Starve.cfg"
+    run check "$W/Starve.tla" --jar "$JAR"
+    expect "a property name on the line after PROPERTIES is still named" 1 '^tlc: VIOLATION property EveryoneRuns$'
+    printf 'CONSTANT Procs = {p1, p2}\nSPECIFICATION Spec\nPROPERTIES\n    \\* a comment\n    EveryoneRuns\nINVARIANT MutualExclusion\n' >"$W/Starve.cfg"
+    run check "$W/Starve.tla" --jar "$JAR"
+    expect "a comment line and a following INVARIANT section do not change the named property" 1 '^tlc: VIOLATION property EveryoneRuns$'
+    { sed '/^====/d' "$W/Starve.tla" | sed 's/MODULE Starve/MODULE Starve2/'
+      printf 'AlsoRuns == \\A p \\in Procs : pc[p] = "set" ~> pc[p] = "cs"\n====\n'; } >"$W/Starve2.tla"
+    printf 'CONSTANT Procs = {p1, p2}\nSPECIFICATION Spec\nPROPERTIES\n    EveryoneRuns\n    AlsoRuns\n' >"$W/Starve2.cfg"
+    run check "$W/Starve2.tla" --jar "$JAR"
+    expect "two properties on separate lines are both counted" 1 'the config checks 2 properties'
+
+    mkdir -p "$TMPROOT/other"
+    cp "$W/Locked.witness.cfg" "$TMPROOT/other/w.cfg"
+    pushd "$TMPROOT" >/dev/null
+    run check models/Locked.tla --jar "$JAR"
+    expect "a relative spec path finds its default config" 0 '^tlc: PASS'
+    run check models/Locked.tla --config models/Locked.witness.cfg --jar "$JAR"
+    expect "a relative --config resolves from the caller's directory" 1 'VIOLATION invariant NobodyInCS'
+    run check models/Locked.tla --config other/w.cfg --jar "$JAR"
+    expect "a relative --config in another folder than the spec resolves from the caller" 1 'VIOLATION invariant NobodyInCS'
+    popd >/dev/null
 
     printf -- '---- MODULE Stop ----\nEXTENDS Naturals\nVARIABLE x\nInit == x = 0\nNext == x < 2 /\\ x'"'"' = x + 1\nSpec == Init /\\ [][Next]_x\n====\n' >"$W/Stop.tla"
     printf 'SPECIFICATION Spec\n' >"$W/Stop.cfg"
