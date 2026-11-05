@@ -14,12 +14,13 @@
 #   --root <dir>: take the spec folders (specs/tla/*/), relative <spec-dir> arguments and README 'models:' paths from <dir>
 #   instead of this script's own checkout (a toolkit copy of this script checking another repo). A missing <dir> exits 2.
 #   --timeout <seconds>: a positive integer, per check. A check that runs longer gets its whole process group TERMed, then
-#   KILLed after 5 s, prints 'tlc-check: <Name>/<cfg>: TIMEOUT after <s> s' and counts as exit 2. No flag, no timeout.
+#   KILLed after 5 s (a check can overrun by up to <s>+6 s: the 1 s poll plus the grace), prints 'tlc-check: <Name>/<cfg>: TIMEOUT after <s> s' and counts as exit 2. No flag, no timeout.
 #   The per-cfg line 'tlc-check: <Name>/<cfg>: <result>' is parsed by a Sindri step: keep its format stable.
 # Env: TLC_SH overrides the path to tlc.sh (the test's stub).
 # Exit: 0 every check passed, 1 a violation, 2 an error (also a folder without <Name>.tla or without a .cfg, a bad
 #       argument, no spec folders), 3 java or the jar is missing (tlc.sh's fix line is in the output above). The worst
-#       code wins, ordered 3 > 2 > 1 > 0.
+#       code wins, ordered 3 > 2 > 1 > 0. With --timeout, a TERM, INT or HUP to this script stops the running check's
+#       group first, then exits 143, 130 or 129 (128 + the signal).
 # Bash 3.2 compatible (macOS /bin/bash).
 set -euo pipefail
 
@@ -62,6 +63,11 @@ run_timed() {
   bash "$TLC_SH" check "$spec" --config "$cfg" >"$tout" 2>&1 &
   pid=$!
   set +m
+  # The check's group is not ours, so a signal that kills us would leave TLC running: stop its group first.
+  CHILD_PID="$pid"
+  trap 'abort_timed 143' TERM
+  trap 'abort_timed 130' INT
+  trap 'abort_timed 129' HUP
   while kill -0 "$pid" 2>/dev/null && [ "$waited" -lt "$limit" ]; do sleep 1; waited=$((waited + 1)); done
   if kill -0 "$pid" 2>/dev/null; then
     kill -TERM -- "-$pid" 2>/dev/null || true
@@ -72,7 +78,23 @@ run_timed() {
   else
     set +e; { wait "$pid"; } 2>/dev/null; rc=$?; set -e
   fi
+  trap - TERM INT HUP
+  CHILD_PID=""
 }
+
+# abort_timed <exit code>: TERM, 5 s grace, KILL for the running check's group, drop its temp file, exit 128+signal.
+abort_timed() {
+  local grace=0
+  trap - TERM INT HUP
+  if [ -n "$CHILD_PID" ]; then
+    kill -TERM -- "-$CHILD_PID" 2>/dev/null || true
+    while kill -0 "$CHILD_PID" 2>/dev/null && [ "$grace" -lt 5 ]; do sleep 1; grace=$((grace + 1)); done
+    kill -KILL -- "-$CHILD_PID" 2>/dev/null || true
+  fi
+  rm -f "$tout"
+  exit "$1"
+}
+CHILD_PID=""
 
 TIMEOUT=""
 dirs=()

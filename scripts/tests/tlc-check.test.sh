@@ -200,6 +200,24 @@ if [ "$took" -lt 10 ]; then ok "--timeout: finished in ${took}s"; else fail "--t
 p1=""; p2=""; read -r p1 p2 <"$TMPROOT/pids" || true
 if [ -n "$p1" ] && ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; then ok "--timeout: stub and its child are gone"; else fail "--timeout: pids $p1 $p2 survive"; fi
 
+# Killing tlc-check.sh itself (a caller's timeout, Ctrl-C) must also stop the TLC it started, which sits in its own group.
+if command -v setsid >/dev/null 2>&1; then
+  reset; mkspec "$S" Alpha; rm -f "$TMPROOT/pids" "$TMPROOT/cpid"
+  TT="$TMPROOT/tt"; mkdir -p "$TT"
+  TLC_SH="$HANG" TMPDIR="$TT" setsid bash -c 'echo $$ >"$TMPROOT/cpid"; exec bash "$0" --timeout 30 "$1"' "$SCRIPT" "$S/Alpha" >/dev/null 2>&1 &
+  cp=$!
+  for _ in $(seq 1 50); do [ -s "$TMPROOT/pids" ] && break; sleep 0.1; done
+  gid=""; read -r gid <"$TMPROOT/cpid" || gid="$cp"
+  kill -TERM -- "-$gid" 2>/dev/null || true
+  set +e; wait "$cp"; RC=$?; set -e
+  p1=""; p2=""; read -r p1 p2 <"$TMPROOT/pids" || true
+  if [ "$RC" -eq 143 ]; then ok "killed tlc-check.sh exits 143"; else fail "killed tlc-check.sh exit $RC, want 143"; fi
+  if [ -n "$p1" ] && ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; then ok "killed tlc-check.sh: the check and its child are gone"; else fail "killed tlc-check.sh: pids $p1 $p2 survive"; fi
+  if [ -z "$(ls "$TT" 2>/dev/null)" ]; then ok "killed tlc-check.sh leaves no temp file"; else fail "temp files left: $(ls "$TT")"; fi
+else
+  echo "  SKIP killing tlc-check.sh: no setsid on this box"
+fi
+
 # No arguments: every specs/tla/* of the repo, sorted. A copy of the script in a scratch repo root sees only that repo's folders.
 reset
 FAKE="$TMPROOT/fakerepo"
