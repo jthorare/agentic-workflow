@@ -18,6 +18,7 @@ using Aw.Sindri.Core.LensPacks;
 using Aw.Sindri.Core.Line;
 using Aw.Sindri.Core.Locks;
 using Aw.Sindri.Core.Mcp;
+using Aw.Sindri.Core.ModelCheck;
 using Aw.Sindri.Core.ModelHistory;
 using Aw.Sindri.Core.Packets;
 using Aw.Sindri.Core.Profile;
@@ -55,6 +56,7 @@ using Aw.Sindri.Infrastructure.LensPacks;
 using Aw.Sindri.Infrastructure.Line;
 using Aw.Sindri.Infrastructure.Locks;
 using Aw.Sindri.Infrastructure.Mcp;
+using Aw.Sindri.Infrastructure.ModelCheck;
 using Aw.Sindri.Infrastructure.Notifications;
 using Aw.Sindri.Infrastructure.Packets;
 using Aw.Sindri.Infrastructure.Processes;
@@ -136,7 +138,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
     private static IServiceCollection AddScopingInfrastructure(this IServiceCollection services, Func<string, string?> environment) =>
         services.AddSingleton<IPackets>(_ => new AwPacketsTool(new ProcessToolRunner(), environment))
             .AddSingleton<IForgeRepos>(sp => new GitForgeRepos(new ProcessToolRunner(), sp.GetRequiredService<IApprovedProfile>()))
-            .AddSingleton<IScopePacketStore>(sp => new ScopePacketStore(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<IPackets>())).AddSingleton<IBriefFiles, BriefFiles>().AddSingleton<IRunArea, DiskRunArea>().AddSingleton<IPacketFiles, DiskPacketFiles>().AddSingleton<IHoldoutStore, DiskHoldoutStore>().AddSingleton<ICommitText, GitCommitText>().AddSingleton<IArtifactFiles, DiskArtifactFiles>().AddSingleton<IPacketDirectory, DiskPacketDirectory>()
+            .AddSingleton<IScopePacketStore>(sp => new ScopePacketStore(sp.GetRequiredService<SindriSettings>(), sp.GetRequiredService<IPackets>())).AddSingleton<IBriefFiles, BriefFiles>().AddSingleton<IRunArea, DiskRunArea>().AddSingleton<IPacketFiles, DiskPacketFiles>().AddSingleton<IHoldoutStore, DiskHoldoutStore>().AddSingleton<ICommitText, GitCommitText>().AddSingleton<IArtifactFiles, DiskArtifactFiles>().AddSingleton<IPacketDirectory, DiskPacketDirectory>().AddSingleton<ISpecFolders, DiskSpecFolders>().AddSingleton<IScratchDirectories, DiskScratchDirectories>().AddSingleton(_ => ModelCheckSetups.Read(environment))
             .AddSingleton<IOwnerDecisions, PendingOwnerDecisions>()
             .AddSingleton<IFrozenPackets>(sp => new FrozenPacketRecords(Path.Combine(sp.GetRequiredService<SindriSettings>().StateDirectory, "packets")))
             .AddSingleton<ITrackerSource>(_ => new FileTrackerSource(environment("AW_SINDRI_TRACKER_DIR"))).AddSingleton<IChangeSource, GitChangeSource>();
@@ -207,6 +209,7 @@ public static class SindriInfrastructureServiceCollectionExtensions
             .AddScoped<IDoctorChecks, TokenFileDoctorChecks>()
             .AddScoped<IDoctorChecks, DeployDoctorChecks>()
             .AddScoped<IDoctorChecks>(_ => new UiEvidenceDoctorChecks(environment, Environment.ProcessPath, new ProcessToolRunner()))   // cutover §3.1: `setup:ui-evidence`
+            .AddScoped<IDoctorChecks>(sp => new ModelCheckDoctorChecks(sp.GetRequiredService<ModelCheckSetup>(), new ProcessToolRunner()))   // model-check design §4.3: `model:check`
             .AddScoped<IDoctorChecks>(static _ => new BannerDoctorChecks(OperatingSystem.IsMacOS(), static () => NotifierCommand.OnPath("terminal-notifier")));   // #1111: `setup:banners`
 
     /// <summary>The claude CLI and the providers' MCP config files, with their settings.</summary>

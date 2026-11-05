@@ -40,7 +40,12 @@ fake apt-get
 run Linux secret-tool zlib-dev build-tools pip docker
 expect "apt-get: Debian names through sudo" 0 "would run: sudo apt-get install -y libsecret-tools zlib1g-dev build-essential python3-pip docker.io$"
 
+run Linux java
+expect "apt-get: java is the JDK 21 headless JRE" 0 "would run: sudo apt-get install -y openjdk-21-jre-headless$"
+
 unfake apt-get; fake dnf
+run Linux java
+expect "dnf: java is java-21-openjdk-headless" 0 "would run: sudo dnf install -y java-21-openjdk-headless$"
 run Linux secret-tool zlib-dev build-tools
 expect "dnf: Fedora names" 0 "would run: sudo dnf install -y libsecret zlib-devel gcc-c\\+\\+ make$"
 
@@ -48,7 +53,12 @@ unfake dnf; fake pacman
 run Linux zlib-dev build-tools python3 pip
 expect "pacman: Arch names, --needed --noconfirm" 0 "would run: sudo pacman -S --needed --noconfirm zlib base-devel python python-pip$"
 
+run Linux java
+expect "pacman: java is jre21-openjdk-headless" 0 "would run: sudo pacman -S --needed --noconfirm jre21-openjdk-headless$"
+
 unfake pacman; fake zypper
+run Linux java
+expect "zypper: java is java-21-openjdk-headless" 0 "would run: sudo zypper --non-interactive install java-21-openjdk-headless$"
 run Linux tmux
 expect "zypper: non-interactive" 0 "would run: sudo zypper --non-interactive install tmux$"
 
@@ -63,6 +73,9 @@ expect "not root and no sudo fails clearly" 1 "needs root, and sudo is not insta
 fake brew
 run Darwin tmux bubblewrap build-tools python3 docker
 expect "brew: no sudo, Linux-only names skipped, docker is a cask" 0 "would run: brew install tmux python@3.13 && brew install --cask docker-desktop$"
+
+run Darwin java
+expect "brew: java is openjdk@21" 0 "would run: brew install openjdk@21$"
 
 run Darwin bubblewrap clang
 expect "nothing to install on macOS is a no-op" 0 "^$"
