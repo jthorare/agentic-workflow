@@ -10157,6 +10157,9 @@ Aw.Context.Core.Extract.MapBuildGate.Dispose() -> void
 Aw.Context.Core.Extract.MapBuildGate.Enter(string? job, System.IProgress<string!>? progress, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<Aw.Context.Core.Extract.MapBuildTurn!>!>
 Aw.Context.Core.Extract.MapBuildGate.MapBuildGate(System.TimeProvider! clock) -> void
 static Aw.Context.Core.Extract.MapBuildGate.WaitLimit.get -> System.TimeSpan
+Aw.Context.Core.Extract.StepHeartbeat
+static Aw.Context.Core.Extract.StepHeartbeat.Every.get -> System.TimeSpan
+static Aw.Context.Core.Extract.StepHeartbeat.Run<T>(string! step, System.IProgress<string!>? progress, System.TimeProvider! clock, System.Func<System.Threading.Tasks.ValueTask<T>>! work, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<T>
 Aw.Context.Core.Extract.MapBuildTurn
 Aw.Context.Core.Extract.MapBuildTurn.Dispose() -> void
 Aw.Context.Core.Extract.MapBuildTurn.Progress.get -> System.IProgress<string!>!
