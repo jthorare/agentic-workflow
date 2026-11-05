@@ -318,6 +318,99 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
         Assert.DoesNotContain("long job", await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken), StringComparison.Ordinal);
     }
 
+    private async Task LeaveOnly(string name)
+    {
+        Directory.CreateDirectory(Lock);
+        await File.WriteAllTextAsync(Path.Combine(Lock, name), "2147483646 2026-10-01T00:00:00Z dead job\n", TestContext.Current.CancellationToken);
+    }
+
+    [Theory, Trait("Lane", "unit")]
+    [InlineData("owner.reclaim.2147483646")]
+    [InlineData("pid.reclaim.2147483646")]
+    [InlineData("owner.reclaim.2147483646.abcdefgh.xyz")]
+    public async Task Take_frees_a_slot_left_holding_a_dead_reclaimers_record(string leftover)
+    {
+        await LeaveOnly(leftover);
+        await using var lease = await Taken(OneSlot());
+
+        Assert.Empty(Directory.GetFiles(Lock, "*.reclaim.*"));
+        Assert.True(File.Exists(Path.Combine(Lock, "owner")));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_keeps_a_slot_whose_reclaimer_is_alive()
+    {
+        await LeaveOnly("owner.reclaim." + Pid);
+
+        var taken = (await OneSlot().Take("x", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(taken.Lease);
+        Assert.True(File.Exists(Path.Combine(Lock, "owner.reclaim." + Pid)));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_frees_an_aged_slot_whose_leftover_names_a_live_pid()
+    {
+        await LeaveOnly("owner.reclaim." + Pid + ".abcdefgh.xyz");
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddHours(-7));
+
+        await using var lease = await Taken(OneSlot());
+
+        Assert.Empty(Directory.GetFiles(Lock, "*.reclaim.*"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_frees_a_slot_whose_leftover_pid_was_reused()
+    {
+        await LeaveOnly("owner.reclaim." + Pid);
+        using var self = Process.GetCurrentProcess();
+        Directory.SetLastWriteTimeUtc(Lock, self.StartTime.ToUniversalTime().AddHours(-1));   // the leftover is older than this process
+
+        await using var lease = await Taken(OneSlot());
+
+        Assert.Empty(Directory.GetFiles(Lock, "*.reclaim.*"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_puts_the_record_back_when_reading_the_claimed_record_fails()
+    {
+        Directory.CreateDirectory(Lock);
+        var text = "2147483646 2026-10-01T00:00:00Z dead job\n";
+        await File.WriteAllTextAsync(Path.Combine(Lock, "owner"), text, TestContext.Current.CancellationToken);
+        var slots = new DirectoryHeavySlots(new HeavyLockSettings(Lock, 1, Held: false), TimeProvider.System)
+        {
+            ReadFile = static path => path.Contains(".reclaim.", StringComparison.Ordinal) ? throw new IOException("disk gone") : File.ReadAllText(path),
+        };
+
+        var taken = (await slots.Take("x", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(taken.Lease);
+        Assert.Equal(text, await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken));
+        Assert.Empty(Directory.GetFiles(Lock, "*.reclaim.*"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_keeps_a_young_slot_holding_an_old_random_reclaim_name()
+    {
+        await LeaveOnly("owner.reclaim.abcdefgh.xyz");
+
+        var taken = (await OneSlot().Take("x", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(taken.Lease);
+        Assert.True(File.Exists(Path.Combine(Lock, "owner.reclaim.abcdefgh.xyz")));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_frees_an_aged_slot_holding_an_old_random_reclaim_name()
+    {
+        await LeaveOnly("owner.reclaim.abcdefgh.xyz");
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddHours(-7));
+
+        await using var lease = await Taken(OneSlot());
+
+        Assert.Empty(Directory.GetFiles(Lock, "*.reclaim.*"));
+    }
+
     [Fact, Trait("Lane", "unit")]
     public async Task Two_waiters_that_both_judged_a_record_less_old_slot_stale_leave_the_slot_to_the_one_that_retook_it()
     {
