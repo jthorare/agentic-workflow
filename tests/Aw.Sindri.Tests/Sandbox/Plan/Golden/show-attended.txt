@@ -1,4 +1,4 @@
-Sandbox b7e11841b781 (pass-through) for a session you opened
+Sandbox 0d6f8edf25a4 (pass-through) for a session you opened
 Launch: LCH-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 Files, bottom to top (a later line wins):
@@ -9,6 +9,7 @@ Files, bottom to top (a later line wins):
   writable  /tmp  (private scratch, removed with the run)
   empty     /home/owner  (an empty home: only the entries below exist)
   read-only /home/owner/.dotnet  (the .NET SDK)
+  empty     /home/owner/.dotnet/corefx  (the .NET runtime's lock files; private to the run)
   read-only /home/owner/.cargo  (Rust tools)
   read-only /home/owner/.rustup  (Rust toolchains)
   read-only /home/owner/.local/bin  (tools, and the sindri and judge wrappers)

@@ -86,7 +86,11 @@ internal static class SeatbeltPlan
                 return;
             }
 
-            if (m.Kind is PlanMountKind.Tmpfs or PlanMountKind.Deny)
+            if (m.Kind == PlanMountKind.Tmpfs && m.Optional)
+            {
+                _out.Add(m with { Kind = PlanMountKind.ReadWrite });   // why: Seatbelt has no tmpfs; the only optional one is the .NET runtime's lock directory, which gets a write allowance on its real path
+            }
+            else if (m.Kind is PlanMountKind.Tmpfs or PlanMountKind.Deny)
             {
                 AddDeny(m);
             }

@@ -8,7 +8,7 @@ Docker-in-Docker, no host Docker socket and no privileged mode, because Docker-i
 
 | Tool | Version | Pinned by |
 |---|---|---|
-| .NET SDK | 10.0.401 (the `global.json` pin, `rollForward: disable`) | the base image `mcr.microsoft.com/dotnet/sdk:10.0.401-noble`, by digest |
+| .NET SDK | 10.0.403 (the `global.json` pin, `rollForward: disable`) | the base image `mcr.microsoft.com/dotnet/sdk:10.0.403-noble`, by digest |
 | Node | 22.23.3 (`.nvmrc` says 22) | version and the release's SHA-256, per architecture |
 | uv | 0.12.17 | the `ghcr.io/astral-sh/uv` image, by digest |
 | git, jq, sqlite3, shellcheck, shfmt, ruby, python3, build tools | Ubuntu 24.04 packages | the base image's apt sources |

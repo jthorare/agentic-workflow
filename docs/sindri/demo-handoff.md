@@ -30,7 +30,7 @@ You can run these (no human needed): `sindri profile validate`, `sindri --headle
 2. At the **08:00 PT merge freeze**, run `git pull` once. Do not pull after that. Record the commit with `git rev-parse --short HEAD`.
 3. `scripts/install-deps.sh` (installs uv, graphify at Sindri's pin, the Temporal binaries and missing system packages). `AW_DRY_RUN=1` prints only. `AW_NO_SYSTEM_INSTALL=1` prints the commands and exits 1 instead of installing; with that set, hand the printed commands to the owner.
 4. `scripts/binaries-lock.sh fetch temporal` (pinned `temporal` CLI; verifies its sha256).
-5. .NET: the SDK `global.json` pins (`10.0.401` at the time of writing; read the file). `scripts/install-cs.sh` installs it into `$DOTNET_ROOT` (default `~/.dotnet`) if it is missing.
+5. .NET: the SDK `global.json` pins (`10.0.403` at the time of writing; read the file). `scripts/install-cs.sh` installs it into `$DOTNET_ROOT` (default `~/.dotnet`) if it is missing.
 6. `./setup.sh` (or `scripts/install-cs.sh`) publishes `sindri` (framework-dependent) and `sindri-ui` (NativeAOT) for this platform under `$AW_STATE_DIR/bin/cs/<stamp>/` when the source changed; then bare `sindri` starts the control plane and opens the app. The first publish takes a few minutes (about 3 minutes on an idle box; the heavy-job slot can queue it). It links `sindri` into `~/.local/bin`. Any other arguments go to `sindri`, so `sindri status` is `sindri status`.
 7. Needs on PATH: `git`, and your agent CLI (`claude`, `codex` or `cursor`). `sindri` is the command to use below.
 

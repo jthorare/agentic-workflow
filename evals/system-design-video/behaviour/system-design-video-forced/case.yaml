@@ -1,4 +1,4 @@
-# Graded on behaviour only: Bash writes are sandboxed away (#1892), so deliver.sh / review.sh output is never checked with file_exists.
+# Graded on behaviour only: deliver.sh / review.sh output is never checked with file_exists.
 schema_version: '1.1'
 name: system-design-video-forced
 tags:
@@ -19,5 +19,5 @@ execution:
 context:
   scaffold_script: fixture.sh
 # planted: ffprobe reports has_b_frames=2, so playback-check.sh (run by review.sh and deliver.sh) exits 1
-# stubs on PATH (repo evals/stubs/bin, staged to <stage>/stubs/bin for the run): ffmpeg, ffprobe, bun
+# fakes on PATH (repo evals/stubs/bin, staged to <stage>/stubs/bin for the run): ffmpeg, ffprobe, bun; they write their outputs (evals/stubs/README.md)
 # Planted failure: fixture.sh writes ffprobe.json with has_b_frames=2 (level 41, h264: only the B-frames are wrong).
