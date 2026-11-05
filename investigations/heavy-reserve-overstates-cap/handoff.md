@@ -13,8 +13,8 @@ repro: cap 3, merge-queue depth 8: `aw-meta status` prints "heavy reservation: 3
 | # | Hypothesis | Cause-site files | Likelihood | Result |
 |---|-----------|------------------|------------|--------|
 | 1 | Resolve/For clamp to cap, not cap-1; default All tier = cap | `src/Meta/Aw.Meta.Core/Config/ReserveSlots.cs`, `src/Meta/Aw.Meta.Core/Config/ReserveSetting.cs` | High | confirmed |
-| 2 | ScriptDepth maps Reserve >= Cap to 7, docs describe old tiers | `src/Meta/Aw.Meta.Core/Health/HeavySlots.cs`, `docs/csharp/meta.md:146-158` | High | confirmed (follows from 1) |
-| 3 | A custom ReserveSlots(9) is clamped elsewhere | `src/Meta/Aw.Meta.Core/Coordination/HeavyReservation.cs` | Medium | ruled out |
+| 2 | ScriptDepth maps Reserve >= Cap to 7, docs describe old tiers | `src/Meta/Aw.Meta.Core/Health/HeavySlots.cs`, `docs/csharp/meta.md:146-158` | High | confirmed |
+| 3 | A custom ReserveSlots(9) is clamped elsewhere | `src/Meta/Aw.Meta.Core/Coordination/HeavyReservation.cs` | Medium | ruled-out |
 
 ## Ruled Out
 - Custom tier above cap-1 clamped elsewhere — the only clamp is ReserveSlots.Resolve (0..cap); HeavyReservation.cs:73 uses For's result as-is and no other caller of For/Resolve exists in src/Meta.
