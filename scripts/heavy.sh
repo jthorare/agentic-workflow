@@ -36,7 +36,7 @@ case $STEP_MB in ""|*[!0-9]*) STEP_MB=4096 ;; esac
 mem_ok() { local kb need; need=$((MIN_FREE_MB + (${1:-2} - 2) * STEP_MB)); kb="$(awk '/^MemAvailable:/ {print $2; exit}' /proc/meminfo 2>/dev/null)"; [ -n "$kb" ] && [ "$((kb / 1024))" -ge "$need" ]; }
 TIMEOUT=5400
 # Meta gate reservation (owner, 2026-10-17): the meta orchestrator writes how many box-wide slots its gates reserve
-# (0..SLOTS) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
+# (0..SLOTS; every reader caps it at SLOTS-1, so a lane job always has a slot, #2060) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
 # take any slot; any other expensive job may take only slots above the reservation. Nothing running is pre-empted, and
 # a job blocked only by the reservation (it skipped a free reserved slot) does not count that wait toward TIMEOUT.
 RESERVE="$(heavy_reserve "$SLOTS")"
