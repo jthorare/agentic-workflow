@@ -135,6 +135,57 @@ public sealed class MigrationSafetyTests
     }
 
     [Fact]
+    public async Task A_successful_upgrade_keeps_only_the_newest_backup()
+    {
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags, Schema.Notes], Ct);
+
+        Assert.True(File.Exists(db.Path + ".bak-v2"));
+        Assert.False(File.Exists(db.Path + ".bak-v1"));
+    }
+
+    [Fact]
+    public async Task Pruning_leaves_temp_files_and_other_names_alone()
+    {
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+        string[] bystanders =
+        [
+            db.Path + ".bak-v1.tmp-1-x",
+            db.Path + ".bak-vX",
+            System.IO.Path.Combine(db.Directory, "other.db.bak-v1"),
+        ];
+        foreach (var path in bystanders)
+        {
+            await File.WriteAllTextAsync(path, "keep", Ct);
+        }
+
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags, Schema.Notes], Ct);
+
+        Assert.False(File.Exists(db.Path + ".bak-v1"));
+        Assert.True(File.Exists(db.Path + ".bak-v2"));
+        Assert.All(bystanders, path => Assert.True(File.Exists(path), path));
+    }
+
+    [Fact]
+    public async Task A_failed_migration_prunes_nothing()
+    {
+        using var db = new TempDatabase();
+        _ = await Runner(db).Migrate([Schema.Items], Ct);
+        _ = await Runner(db).Migrate([Schema.Items, Schema.Tags], Ct);
+        var failing = new Migration(3, "failing", "INSERT INTO no_such_table VALUES (1);");
+
+        var refused = await Runner(db).Migrate([Schema.Items, Schema.Tags, failing], Ct);
+
+        Assert.False(refused.IsSuccess);
+        Assert.True(File.Exists(db.Path + ".bak-v1"));
+        Assert.True(File.Exists(db.Path + ".bak-v2"));
+    }
+
+    [Fact]
     public async Task Two_runners_at_once_apply_each_migration_once_and_both_report_the_final_version()
     {
         using var db = new TempDatabase();
