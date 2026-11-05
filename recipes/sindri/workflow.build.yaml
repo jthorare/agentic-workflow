@@ -1,6 +1,6 @@
 schema: 1
 id: workflow.build
-version: 6
+version: 7
 description: "Block recipe: one TDD builder for one phase in its own worktree: a failing test per acceptance item, then code in atomic commits inside the phase's allowed files."
 displayName: "Build one phase, tests first"
 inputs:
@@ -11,6 +11,7 @@ inputs:
 outputs:
   - { key: fact:built,        label: "Built head",  type: payload, from: checks }
   - { key: fact:change,       label: "Change under review", type: payload, from: checks }
+  - { key: fact:modelCheck,   label: "Design model check result", type: payload, from: model }
   - { key: fact:redTests,     label: "Red tests",   type: payload, from: red }
   - { key: fact:activePacket, label: "Phase packet in force", type: packet, from: amend }
 initial: prepare
@@ -27,6 +28,11 @@ states:
                 next: "Implement {item} in atomic commits inside its allowed files (round {loop.revisions}/{loop.revisions.cap})." }
   checks:     { kind: active, step: step.build.checks, timeout: { after: 1d, then: park },
                 next: "Run {item}'s scope gate, build rules and the repo's commands." }
+  model:      { displayName: "Check the design model", why: "Runs the design models of the code this change touches through a model checker, so a hole in the design shows before review.", kind: active, step: { use: step.model.check, with: { scope: touched } }, timeout: { after: 20m, then: park },
+                next: "Check the design models {item}'s change touches (up to 10 min)." }
+  model-desk: { displayName: "The model check can't run", why: "The model checker isn't available on this machine, so the design model can't be checked.", kind: active, step: step.model.desk, timeout: { after: 14d, then: park },
+                onOutcome: { again: "Check again", stop: "Stop" },
+                next: "The model check can't run for {item} (see the finding): fix the machine and check again, or stop." }
   scope-desk: { displayName: "Allow a file outside the plan?", why: "A change outside the plan needs your OK.", kind: active, step: step.build.scope-desk, timeout: { after: 14d, then: park },
                 next: "{item}'s builder needs a file outside its allowed files: allow it with a reason, have it reverted, or stop." }
   amend:      { kind: active, step: step.build.amend, loop: grants, timeout: { after: 1d, then: park },
@@ -42,7 +48,16 @@ transitions:
   - { label: "a test passed too early: write it again", from: red-check, to: red,       on: step.completed, when: { outcome: vacuous }, produces: [fact:findings] }
   - { from: green, to: checks,     on: step.completed, when: { outcome: built },   produces: [fact:built] }
   - { from: green, to: scope-desk, on: step.completed, when: { outcome: blocked }, produces: [fact:findings] }
-  - { from: checks, to: built,      on: step.completed, when: { outcome: pass },       produces: [fact:built, fact:change] }
+  - { from: checks, to: model,      on: step.completed, when: { outcome: pass },       produces: [fact:built, fact:change] }
+  - { from: model, to: built, on: step.completed, when: { outcome: pass },    produces: [fact:modelCheck] }
+  - { from: model, to: built, on: step.completed, when: { outcome: skipped }, produces: [fact:modelCheck] }
+  - { label: "the model found a hole: fix the code", from: model, to: green, on: step.completed, when: { outcome: violation }, produces: [fact:findings] }
+  - { label: "the model checks nothing: fix the model", from: model, to: green, on: step.completed, when: { outcome: vacuous }, produces: [fact:findings] }
+  - { label: "the model doesn't check: fix the model", from: model, to: green, on: step.completed, when: { outcome: specError }, produces: [fact:findings] }
+  - { label: "the model is too big: make its bounds smaller", from: model, to: green, on: step.completed, when: { outcome: tooBig }, produces: [fact:findings] }
+  - { label: "the model check can't run: you decide", from: model, to: model-desk, on: step.completed, when: { outcome: cantRun }, produces: [fact:findings] }
+  - { label: "you fixed the machine: check again", from: model-desk, to: model, on: step.completed, when: { outcome: again } }
+  - { from: model-desk, to: stopped, on: step.completed, when: { outcome: stop } }
   - { label: "checks failed: fix the code", from: checks, to: green,      on: step.completed, when: { outcome: failed },     produces: [fact:findings] }
   - { label: "file outside the plan: you decide", from: checks, to: scope-desk, on: step.completed, when: { outcome: outOfScope }, produces: [fact:findings] }
   - { label: "you allowed it", from: scope-desk, to: amend,   on: step.completed, when: { outcome: allow },  produces: [fact:answers] }
@@ -60,3 +75,9 @@ evals:
   - evals/workflow.build/revisions-cap.jsonl
   - evals/workflow.build/scope-revert.jsonl
   - evals/workflow.build/vacuous-red.jsonl
+  - evals/workflow.build/model-cant-run-again-then-stop.jsonl
+  - evals/workflow.build/model-pass.jsonl
+  - evals/workflow.build/model-sent-back.jsonl
+  - evals/workflow.build/model-skipped.jsonl
+  - evals/workflow.build/model-violation-cap.jsonl
+  - evals/workflow.build/model-violation-fixed.jsonl

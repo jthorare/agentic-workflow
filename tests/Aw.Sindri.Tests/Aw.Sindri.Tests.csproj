@@ -98,7 +98,6 @@
   <ItemGroup>
     <None Include="Sandbox/Denials/Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Workflow/ModelCheck/Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
-    <None Include="Workflow/BuildShip/Fixtures/**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

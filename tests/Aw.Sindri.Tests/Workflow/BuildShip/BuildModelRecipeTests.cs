@@ -9,7 +9,7 @@ namespace Aw.Sindri.Tests.Workflow.BuildShip;
 /// <summary>
 /// 'workflow.build' v7 (model-check design §4.1): after 'checks' passes the build runs 'step.model.check' on what the change touches, and routes each result: pass or skipped finish the build, a violation, a
 /// vacuous model, a spec error or a model too big go back to 'green' inside the revisions loop (cap 6), and a model check that can't run goes to 'model-desk', whose answers are Check again and Stop.
-/// The new eval cases are test fixtures until the recipe is edited (a yaml edit moves the recipe's pinned hash); the green commit moves them next to the others and lists them in the recipe.
+/// The eval cases are the recipe's own (recipes/sindri/evals/workflow.build/model-*.jsonl).
 /// </summary>
 [Lane(TestLane.Unit)]
 public sealed class BuildModelRecipeTests
@@ -79,10 +79,6 @@ public sealed class BuildModelRecipeTests
         {
             _ = files.With(path, ShippedRecipes.Read(path));
         }
-
-        var fixture = await File.ReadAllTextAsync(Path.Combine(AppContext.BaseDirectory, "Workflow", "BuildShip", "Fixtures", "model-evals", name + ".jsonl"), TestContext.Current.CancellationToken);
-        _ = files.With("sindri/evals/workflow.build/" + name + ".jsonl", fixture);
-        _ = files.With(Build, ShippedRecipes.Read(Build).TrimEnd() + $"\n  - evals/workflow.build/{name}.jsonl\n");
 
         var response = (await EvalComposition.Service(files).Handle(new Aw.Sindri.Features.EvalRecipe.EvalRecipeRequest(Build, Aw.Sindri.Features.EvalRecipe.EvalMode.Run), TestContext.Current.CancellationToken)).Value;
 
