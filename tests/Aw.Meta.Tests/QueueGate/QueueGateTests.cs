@@ -207,14 +207,14 @@ public sealed class QueueGateTests
         _ = Directory.CreateDirectory(cancelled);
         await File.WriteAllTextAsync(Path.Combine(cancelled, "check.log"), "cancelled pass\n", TestContext.Current.CancellationToken);
         await SaveGate(parallel: null, new StepConfig("check", ["scripts/check.sh"]));
-        ScriptPr(11);
-        ScriptGit();
         _ = _world.Runner.When("scripts/check.sh", request =>
         {
             _ = Directory.CreateDirectory(Path.GetDirectoryName(request.LogFile!)!);
             File.AppendAllText(request.LogFile!, "new pass\n");
             return Exit(0);
         });
+        ScriptPr(11);
+        ScriptGit();
         var paths = new MetaPaths("/state/meta", disk.Path, "/bin/heavy", "gh");
         var service = new QueueGateService(
             new TrainSelection(_world.Config, Worlds.Queue(_world)),
