@@ -12,6 +12,8 @@
 #   binary, or opens a browser (Playwright, ui-evidence, Aw.Evidence); `heavy --expensive <cmd>` forces it,
 #   `heavy --light <cmd>` forces the per-session slot only.
 set -u
+# The cap and reserve readers live next to locks.sh; this script may run through a link (~/.agentic-workflow/bin-r1b/heavy).
+. "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/../config/lib/heavy-config.sh"
 export DOTNET_ROOT="$HOME/.dotnet" PATH="${AW_HEAVY_TEST_PATH:+$AW_HEAVY_TEST_PATH:}$HOME/.dotnet:$PATH" DOTNET_CLI_TELEMETRY_OPTOUT=1 DOTNET_NOLOGO=1
 LOCKS="${AW_STATE_DIR:-$HOME/.agentic-workflow}/locks"
 LOCK="${AW_HEAVY_JOB_LOCK:-$LOCKS/heavy-job.lock}"
@@ -22,8 +24,7 @@ case $SLOTS in ""|*[!0-9]*|0) SLOTS=1 ;; esac
 case $SESSION_SLOTS in ""|*[!0-9]*|0) SESSION_SLOTS=1 ;; esac
 # Owner cap (2026-10-14; 2026-10-15: the cap file is the box-wide slot count): ~/.agentic-workflow/heavy-slots-cap sets
 # the box-wide slots, whatever a session's inherited AW_HEAVY_SLOTS says (sessions were launched with AW_HEAVY_SLOTS=1).
-CAP="$(cat "${AW_STATE_DIR:-$HOME/.agentic-workflow}/heavy-slots-cap" 2>/dev/null)"
-case $CAP in ""|*[!0-9]*|0) ;; *) SLOTS="$CAP" ;; esac
+SLOTS="$(heavy_cap "$SLOTS")"
 # Memory guard (owner, 2026-10-15): a box-wide slot above 1 is only taken while MemAvailable is at least
 # AW_HEAVY_MIN_FREE_MB (default 10240); below that, jobs queue for slot 1 as before.
 MIN_FREE_MB="${AW_HEAVY_MIN_FREE_MB:-10240}"
@@ -37,9 +38,7 @@ TIMEOUT=5400
 # (0..SLOTS) to <state>/heavy-meta-reserve, scaled to its merge-queue depth. A job run with AW_HEAVY_PRIORITY=meta may
 # take any slot; any other expensive job may take only slots above the reservation. Nothing running is pre-empted, and
 # a job blocked only by the reservation does not count that wait toward TIMEOUT.
-RESERVE="$(cat "${AW_STATE_DIR:-$HOME/.agentic-workflow}/heavy-meta-reserve" 2>/dev/null)"
-case $RESERVE in ""|*[!0-9]*) RESERVE=0 ;; esac
-[ "$RESERVE" -gt "$SLOTS" ] && RESERVE="$SLOTS"
+RESERVE="$(heavy_reserve "$SLOTS")"
 PRIORITY="${AW_HEAVY_PRIORITY:-}"
 
 mode=auto
@@ -126,8 +125,9 @@ acquire() {
   local label="$1" base="$2" slots="$3" waited=0 printed=0 k d got="" reserved_skip=0
   while [ -z "$got" ]; do
     reserved_skip=0
-    # Re-read the reservation each pass so a drained queue releases waiting lane jobs promptly.
-    if [ "$label" = box-wide ]; then RESERVE="$(cat "${AW_STATE_DIR:-$HOME/.agentic-workflow}/heavy-meta-reserve" 2>/dev/null)"; case $RESERVE in ""|*[!0-9]*) RESERVE=0 ;; esac; [ "$RESERVE" -gt "$slots" ] && RESERVE="$slots"; fi
+    # Re-read the cap and the reservation each pass: a drained queue releases waiting lane jobs promptly, and a lowered cap
+    # keeps them off the slots above it (nothing running is pre-empted).
+    if [ "$label" = box-wide ]; then slots="$(heavy_cap "$slots")"; RESERVE="$(heavy_reserve "$slots")"; fi
     for k in $(seq 1 "$slots"); do
       if [ "$k" -eq 1 ]; then d="$base"; else d="$base.$k"; fi
       # Box-wide slots above 1 need the memory guard; the per-session pool doesn't.
