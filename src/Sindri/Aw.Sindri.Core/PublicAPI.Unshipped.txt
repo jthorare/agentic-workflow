@@ -18784,7 +18784,7 @@ Aw.Sindri.Core.Sandbox.Plan.PlanLimits.WallGrace.get -> System.TimeSpan
 Aw.Sindri.Core.Sandbox.Plan.PlanLimits.WallGrace.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.<Clone>$() -> Aw.Sindri.Core.Sandbox.Plan.PlanMount!
-Aw.Sindri.Core.Sandbox.Plan.PlanMount.Deconstruct(out string! Path, out Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, out string? Source, out long? Size, out string! Reason, out bool Optional) -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.Deconstruct(out string! Path, out Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, out string? Source, out long? Size, out string! Reason, out bool Optional, out bool PrivateScratch) -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Equals(Aw.Sindri.Core.Sandbox.Plan.PlanMount? other) -> bool
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Kind.get -> Aw.Sindri.Core.Sandbox.Plan.PlanMountKind
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Kind.init -> void
@@ -18792,7 +18792,9 @@ Aw.Sindri.Core.Sandbox.Plan.PlanMount.Optional.get -> bool
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Optional.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Path.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Path.init -> void
-Aw.Sindri.Core.Sandbox.Plan.PlanMount.PlanMount(string! Path, Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, string? Source = null, long? Size = null, string! Reason = "", bool Optional = false) -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.PlanMount(string! Path, Aw.Sindri.Core.Sandbox.Plan.PlanMountKind Kind, string? Source = null, long? Size = null, string! Reason = "", bool Optional = false, bool PrivateScratch = false) -> void
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.PrivateScratch.get -> bool
+Aw.Sindri.Core.Sandbox.Plan.PlanMount.PrivateScratch.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Reason.get -> string!
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Reason.init -> void
 Aw.Sindri.Core.Sandbox.Plan.PlanMount.Size.get -> long?
