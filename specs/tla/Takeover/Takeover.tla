@@ -9,7 +9,8 @@ CONSTANTS
     MaxTime,           \* the full timeout of state 1, in ticks
     MaxTakeovers,      \* takeovers per run (a start taken over counts)
     MaxParks,          \* parks the engine raises per run (a timeout park does not count)
-    GapFullTimeout     \* TRUE plants the bug: a handback arms the full timeout even when a running timer was paused
+    GapFullTimeout,    \* TRUE plants the bug: a handback arms the full timeout even when a running timer was paused
+    GapPauseFull       \* TRUE plants the bug: a takeover keeps the full timeout instead of the ticks left (TimerScopes.Pause)
 
 NoTimer == -1   \* "no timer": an integer, because TLC refuses to compare a number with a string
 
@@ -63,7 +64,7 @@ Takeover ==
     /\ tmr' = NoTimer
     /\ resumed' = FALSE
     /\ IF susp = "none"
-          THEN /\ kept' = tmr
+          THEN /\ kept' = IF GapPauseFull THEN Full(st) ELSE tmr
                /\ ceiling' = tmr
                /\ pend' = pend
           ELSE /\ kept' = NoTimer            \* a park runs no timer: nothing to pause
@@ -85,7 +86,7 @@ Handback ==
                           /\ ceiling' = ceiling /\ resumed' = TRUE
                      ELSE /\ tmr' = Full(st)              \* nothing was kept (or the planted bug): the full timeout
                           /\ ceiling' = IF Ticks(kept) THEN ceiling ELSE NoTimer
-                          /\ resumed' = Ticks(Full(st)) /\ Ticks(kept)
+                          /\ resumed' = Ticks(Full(st))   \* HandedBack turns this arm into a resume
     /\ UNCHANGED <<st, retried, ended, nTake, nPark, held>>
 
 \* A park arrives (a child, a gate, a drift ...): the current one when nothing is suspended, else it queues.
