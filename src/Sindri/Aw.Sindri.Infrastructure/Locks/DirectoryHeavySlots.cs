@@ -33,6 +33,9 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
     /// <summary>Writes the owner file (tests use it to fail a write after the file was created, as a full disk does).</summary>
     internal Action<string, string> WriteFile { get; init; } = static (path, text) => File.WriteAllText(path, text);
 
+    /// <summary>Reads the claimed record back (tests use it to fail the read after the record was moved aside).</summary>
+    internal Func<string, string> ReadFile { get; init; } = File.ReadAllText;
+
     public async ValueTask<Result<HeavySlotTaken>> Take(string holder, TimeSpan timeout, IProgress<string>? waiting, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(holder);
@@ -140,7 +143,8 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
     /// judged stale, else puts it back. The heavy wrapper renames the record aside the same way, but the two sides share no mutex, so its reclaim can
     /// still land between our last delete and the folder's removal; the folder is never removed while anything is in it. A reclaimer killed between its
     /// rename and its delete leaves a slot holding only 'owner.reclaim.N' or 'pid.reclaim.N' files: when every such N (the reclaimer's pid, in our names
-    /// too) is gone on this host the slot is freed, a live N is a reclaimer mid-step, and a name with no pid waits for the age grace. False when the
+    /// too) is gone on this host, or a reused pid, the slot is freed; a live N is a reclaimer mid-step, and a name with no pid waits for the age grace, which also
+    /// beats a live N. A claim that fails after its rename puts the record back. False when the
     /// slot is held, was taken meanwhile, or can't be removed.
     /// </summary>
     private bool Reclaim(string directory)
@@ -179,18 +183,25 @@ internal sealed class DirectoryHeavySlots(HeavyLockSettings settings, TimeProvid
     private bool Aged(string directory) => clock.GetUtcNow() - new DateTimeOffset(Directory.GetLastWriteTimeUtc(directory), TimeSpan.Zero) > NoRecordGrace;
 
     // Takes the judged record out of the way, and only that record: if what we moved isn't the text judged stale, it goes back.
-    private static bool Claim(HolderRecord record)
+    private bool Claim(HolderRecord record)
     {
         var claimed = ReclaimLeftovers.NameFor(record.Path);
         File.Move(record.Path, claimed);   // atomic: of two reclaimers of one record, the second finds nothing to move
-        if (!string.Equals(File.ReadAllText(claimed), record.Text, StringComparison.Ordinal))
+        try
         {
-            File.Move(claimed, record.Path);
-            return false;
+            if (string.Equals(ReadFile(claimed), record.Text, StringComparison.Ordinal))
+            {
+                File.Delete(claimed);
+                return true;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // fall through: never leave a name of ours behind
         }
 
-        File.Delete(claimed);
-        return true;
+        ReclaimLeftovers.PutBack(claimed, record.Path);
+        return false;
     }
 
     private static bool TryRemove(string directory)

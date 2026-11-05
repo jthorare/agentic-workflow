@@ -87,9 +87,10 @@ trap 'stop_job; release; exit 130' INT TERM
 
 # reclaim_slot <dir>: free a slot whose owner pid is dead. The owner file is moved aside first (only one waiter's mv wins);
 # if what moved is not the dead line read, the slot changed hands and it goes back. With no owner file, leftover
-# <owner|pid>.reclaim.<N>* files (pid: locks.sh's) are freed when every reclaimer pid N is dead (a live N is mid-step).
+# <owner|pid>.reclaim.<N>* files (pid: locks.sh's) are freed when every reclaimer pid N is dead (a live N is mid-step),
+# or whoever N is once the folder is over 6 h old (a reused pid, or a reclaimer that failed without dying).
 reclaim_slot() {
-  local d="$1" line pid f n m="$1/owner.reclaim.$$" left=()
+  local d="$1" line pid f n m="$1/owner.reclaim.$$" left=() aged=""
   if [ -f "$d/owner" ]; then
     line="$(cat "$d/owner" 2>/dev/null)" || return 1; pid="${line%% *}"
     case $pid in ""|*[!0-9]*) return 1 ;; esac
@@ -98,10 +99,11 @@ reclaim_slot() {
     if [ "$(cat "$m" 2>/dev/null)" != "$line" ]; then mv "$m" "$d/owner" 2>/dev/null; return 1; fi
     rm -f "$m"; rmdir "$d" 2>/dev/null; return 0
   fi
+  [ -n "$(find "$d" -maxdepth 0 -mmin +360 2>/dev/null)" ] && aged=1
   for f in "$d"/owner.reclaim.* "$d"/pid.reclaim.*; do
     [ -e "$f" ] || continue
     n="${f##*.reclaim.}"; n="${n%%[!0-9]*}"
-    [ -n "$n" ] && ! kill -0 "$n" 2>/dev/null || return 1
+    [ -n "$aged" ] || { [ -n "$n" ] && ! kill -0 "$n" 2>/dev/null; } || return 1
     left+=("$f")
   done
   [ "${#left[@]}" -gt 0 ] || return 1

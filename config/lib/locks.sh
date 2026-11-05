@@ -43,13 +43,15 @@ _lock_take() {
 }
 
 # _lock_reclaim_orphan <dir>: <dir> has no holder file, only <pid|owner>.reclaim.<N>* leftovers of a reclaimer killed
-# between its mv and its rm. Free it when every such N is dead; a live N is mid-step, so the dir is left alone.
+# between its mv and its rm. Free it when every such N is dead; a live N is mid-step, so the dir is left alone, until
+# the dir is over 6 h old (a reused pid, or a reclaimer that failed without dying): then it is freed whoever N is.
 _lock_reclaim_orphan() {
-  local dir="$1" f n m left=()
+  local dir="$1" f n m left=() aged=""
+  [ -n "$(find "$dir" -maxdepth 0 -mmin +360 2>/dev/null)" ] && aged=1
   for f in "$dir"/pid.reclaim.* "$dir"/owner.reclaim.*; do
     [ -e "$f" ] || continue
     n="${f##*.reclaim.}"; n="${n%%[!0-9]*}"
-    [ -n "$n" ] && ! _lock_pid_alive "$n" || return 1
+    [ -n "$aged" ] || { [ -n "$n" ] && ! _lock_pid_alive "$n"; } || return 1
     left+=("$f")
   done
   [ "${#left[@]}" -gt 0 ] || return 1

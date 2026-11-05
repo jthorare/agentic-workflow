@@ -107,6 +107,7 @@ SERIAL=(
   "scripts/tests/cutover-clean-ts.test.sh	dotnet-builds src/BugFix in the shared checkout (obj dirs), which races any other dotnet build there; builds once, then runs git and jq only"
   "scripts/tests/heavy-reclaim-race.test.sh	holds wrapper jobs at a step with stub gates that give up after 5 s and bounds an orphaned-slot wait at 20 s; a loaded machine shifts both"
   "scripts/tests/heavy-mixed-reclaim-race.test.sh	holds a wrapper job and a locks.sh holder at a step with stub gates that give up after 5 s; a loaded machine shifts them"
+  "scripts/tests/heavy-reclaim-leftovers.test.sh	bounds each take at 6 s and needs the \"kept\" rows to time out; a loaded machine can push a real take past it"
   "scripts/tests/readiness-baseline.test.sh	asserts a 200 ms gh timeout (READINESS_GH_TIMEOUT_MS) fires against a 3 s stub and is reported as the timeout, not a parse error"
 )
 

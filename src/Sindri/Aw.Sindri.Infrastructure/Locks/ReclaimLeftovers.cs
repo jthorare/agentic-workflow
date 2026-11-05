@@ -11,13 +11,26 @@ internal static class ReclaimLeftovers
     internal static string NameFor(string path) =>
         path + Marker + Environment.ProcessId.ToString(CultureInfo.InvariantCulture) + "." + Path.GetRandomFileName();
 
-    /// <summary>True when the folder holds nothing but leftovers and every one names a reclaimer pid that is gone on this host.</summary>
+    /// <summary>True when the folder holds nothing but leftovers and every one names a reclaimer pid that is gone on this host (a pid that started after the folder's last write is a reused one, so gone too).</summary>
     internal static bool AllDead(string directory) =>
-        Find(directory) is { Length: > 0 } left && left.All(l => l.Pid is { } pid && !HolderRecords.Alive(pid));
+        Find(directory) is { Length: > 0 } left && left.All(l => l.Pid is { } pid && Gone(pid, directory));
+
+    /// <summary>Moves <paramref name="from"/> back to <paramref name="to"/> as well as it can: a failed move is swallowed, the caller is already reporting failure.</summary>
+    internal static void PutBack(string from, string to)
+    {
+        try
+        {
+            File.Move(from, to);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            // best effort
+        }
+    }
 
     /// <summary>
-    /// Moves each leftover to a name of ours (one winner per file) and deletes it. False when a reclaimer is alive or a pid-less name isn't aged yet; a
-    /// failed move throws, which the caller reads as another reclaimer winning. True without touching anything when the folder holds anything else.
+    /// Moves each leftover to a name of ours (one winner per file) and deletes it. An aged slot is cleared whoever the leftovers name; a young one is kept
+    /// when a pid-less name is there or a reclaimer is alive and not a reused pid. A failed move throws, which the caller reads as another reclaimer winning. True without touching anything when the folder holds anything else.
     /// </summary>
     internal static bool Clear(string directory, bool aged)
     {
@@ -26,7 +39,7 @@ internal static class ReclaimLeftovers
             return true;
         }
 
-        if (left.Any(l => l.Pid is { } pid ? HolderRecords.Alive(pid) : !aged))
+        if (!aged && left.Any(l => l.Pid is not { } pid || !Gone(pid, directory)))
         {
             return false;
         }
@@ -40,6 +53,10 @@ internal static class ReclaimLeftovers
 
         return true;
     }
+
+    // The reclaimer is gone: no such process, or one that started after the folder was last written (a rename into it updates its time), so a reused pid.
+    private static bool Gone(int pid, string directory) =>
+        !HolderRecords.Alive(pid) || HolderRecords.StartedAfter(pid, new DateTimeOffset(Directory.GetLastWriteTimeUtc(directory), TimeSpan.Zero));
 
     // Null when something else is in the folder: not ours to clear.
     private static (string Path, int? Pid)[]? Find(string directory)

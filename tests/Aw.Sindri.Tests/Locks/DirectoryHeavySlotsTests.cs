@@ -349,6 +349,47 @@ public sealed class DirectoryHeavySlotsTests : IDisposable
     }
 
     [Fact, Trait("Lane", "unit")]
+    public async Task Take_frees_an_aged_slot_whose_leftover_names_a_live_pid()
+    {
+        await LeaveOnly("owner.reclaim." + Pid + ".abcdefgh.xyz");
+        Directory.SetLastWriteTimeUtc(Lock, RealTime.NowDateTime.AddHours(-7));
+
+        await using var lease = await Taken(OneSlot());
+
+        Assert.Empty(Directory.GetFiles(Lock, "*.reclaim.*"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_frees_a_slot_whose_leftover_pid_was_reused()
+    {
+        await LeaveOnly("owner.reclaim." + Pid);
+        using var self = Process.GetCurrentProcess();
+        Directory.SetLastWriteTimeUtc(Lock, self.StartTime.ToUniversalTime().AddHours(-1));   // the leftover is older than this process
+
+        await using var lease = await Taken(OneSlot());
+
+        Assert.Empty(Directory.GetFiles(Lock, "*.reclaim.*"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
+    public async Task Take_puts_the_record_back_when_reading_the_claimed_record_fails()
+    {
+        Directory.CreateDirectory(Lock);
+        var text = "2147483646 2026-10-01T00:00:00Z dead job\n";
+        await File.WriteAllTextAsync(Path.Combine(Lock, "owner"), text, TestContext.Current.CancellationToken);
+        var slots = new DirectoryHeavySlots(new HeavyLockSettings(Lock, 1, Held: false), TimeProvider.System)
+        {
+            ReadFile = static path => path.Contains(".reclaim.", StringComparison.Ordinal) ? throw new IOException("disk gone") : File.ReadAllText(path),
+        };
+
+        var taken = (await slots.Take("x", TimeSpan.Zero, waiting: null, TestContext.Current.CancellationToken)).Value;
+
+        Assert.Null(taken.Lease);
+        Assert.Equal(text, await File.ReadAllTextAsync(Path.Combine(Lock, "owner"), TestContext.Current.CancellationToken));
+        Assert.Empty(Directory.GetFiles(Lock, "*.reclaim.*"));
+    }
+
+    [Fact, Trait("Lane", "unit")]
     public async Task Take_keeps_a_young_slot_holding_an_old_random_reclaim_name()
     {
         await LeaveOnly("owner.reclaim.abcdefgh.xyz");
