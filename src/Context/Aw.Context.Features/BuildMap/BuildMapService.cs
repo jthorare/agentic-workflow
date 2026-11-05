@@ -162,7 +162,7 @@ internal sealed partial class BuildMapService(
         var (commit, files, paths) = read.Value;
         var (extracted, timedOut) = MapExtractor.Extract(repo.Name, files, recognizers, settings.SchemaGlobs);
         var home = HomeFeatures.Assign(repo, paths, extracted, pins);
-        var clusters = await Clusters(repo, commit, settings.Graphify, cancellationToken).ConfigureAwait(false);
+        var clusters = await Clusters(progress, repo, commit, settings.Graphify, cancellationToken).ConfigureAwait(false);
         var labels = await Labels(progress, settings, home.LabelRequests, cancellationToken).ConfigureAwait(false);
         if (labels.IsError && labels.Error.Code == ContextErrors.LabelingUnavailable.Code)
         {
@@ -228,21 +228,6 @@ internal sealed partial class BuildMapService(
 
         Tell(progress, files.Count, wanted.Count);
         return (head.Value, files, listed.Value);
-    }
-
-    // A cluster source that fails reads like one that is absent; a denied path never reaches the labeler or the graph.
-    private async ValueTask<ClusterSet> Clusters(ContextRepo repo, string commit, ClusterLimits limits, CancellationToken cancellationToken)
-    {
-        var set = await clusterSource.Clusters(repo, commit, limits, cancellationToken).ConfigureAwait(false);
-        if (set.IsError || !set.Value.Available)
-        {
-            return new ClusterSet([], Available: false, set.IsError ? null : set.Value.Reason);
-        }
-
-        return new ClusterSet(
-            [.. set.Value.Clusters.Select(c => c with { Files = [.. c.Files.Where(f => !repo.Denies(f))] }).Where(c => c.Files.Count > 0)],
-            Available: true,
-            set.Value.Reason);
     }
 
     private async ValueTask<Result<LabelPass>> Labels(IProgress<string>? progress, ContextSettings settings, IReadOnlyList<FileCluster> requests, CancellationToken cancellationToken)
