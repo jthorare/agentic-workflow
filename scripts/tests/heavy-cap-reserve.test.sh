@@ -62,4 +62,13 @@ timeout 5 env AW_STATE_DIR="$T" AW_HEAVY_JOB_LOCK="$BASE" AW_HEAVY_SESSION_PID="
 wait "$freer"
 check "wrapper: a cap lowered to 1 while waiting keeps a job off slot 2 (exit 124 = still waiting)" "$rc" "124"
 
+# Box case: a real wrapper job holds slot 1 (cap 2); the cap is then lowered to 1; a locks.sh taker must not get slot 2.
+scratch box 2 ""
+timeout 12 env AW_STATE_DIR="$T" AW_HEAVY_JOB_LOCK="$BASE" AW_HEAVY_SESSION_PID="$live" AW_HEAVY_RUN_MAX=0 AW_HEAVY_MIN_FREE_MB=0 \
+  bash "$HEAVY" --expensive sleep 5 >/dev/null 2>&1 & wrap=$!
+for _ in $(seq 1 40); do [ -f "$BASE/owner" ] && break; sleep 0.1; done
+echo 1 > "$T/heavy-slots-cap"
+check "box: wrapper holds slot 1, cap lowered to 1, a locks.sh taker gets no slot 2" "$(lockssh "$BASE" 2 2)" "none"
+wait "$wrap"
+
 exit "$fail"
