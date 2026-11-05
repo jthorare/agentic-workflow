@@ -107,6 +107,11 @@ internal static class HandoffPack
             _ = body.Append("\n## Local checks\n\nPassed on the head: ").AppendJoin(", ", sources.Inputs.Commands.Select(static c => $"`{c}`")).Append(".\n");
         }
 
+        if (ModelLine(sources.Inputs.ModelCheck) is { } model)
+        {
+            _ = body.Append("\n## Design model\n\n").Append(model).Append('\n');
+        }
+
         if (sources.Inputs.Stack is { } stack)
         {
             _ = body.Append("\n## Stack\n\nStacked on `").Append(stack).Append("`; it merges after that pull request.\n");
@@ -119,6 +124,33 @@ internal static class HandoffPack
 
         return body.Append("\n---\n").Append(Footer(sources)).Append('\n').ToString();
     }
+
+    // "Model checked: Takeover (specs/tla/Takeover/, 1,204 states at up to 2 takeovers and 2 parks)", one entry per spec; or the skip; null when the build left no model-check fact.
+    private static string? ModelLine(JsonNode? check)
+    {
+        if (check is not JsonObject)
+        {
+            return null;
+        }
+
+        if (check["skipped"] is JsonValue flag && flag.TryGetValue<bool>(out var wasSkipped) && wasSkipped)
+        {
+            return "Model check skipped: no modelled code changed";
+        }
+
+        var specs = (check["specs"] as JsonArray ?? []).OfType<JsonObject>().Select(Spec).ToList();
+        return specs.Count == 0 ? null : "Model checked: " + string.Join("; ", specs);
+    }
+
+    private static string Spec(JsonObject spec)
+    {
+        var states = (spec["cfgs"] as JsonArray ?? []).OfType<JsonObject>().Sum(static cfg => Int(cfg["distinct"]) ?? 0);
+        var name = StepFacts.Field(spec, "name") ?? "model";
+        var bounds = (StepFacts.Field(spec, "bounds") ?? "its bounds").TrimEnd('.');
+        return $"{name} (specs/tla/{name}/, {states.ToString("N0", CultureInfo.InvariantCulture)} states at {bounds})";
+    }
+
+    private static int? Int(JsonNode? node) => node is JsonValue value && value.TryGetValue<int>(out var number) ? number : null;
 
     private static string Footer(HandoffSources sources)
     {

@@ -1,0 +1,17 @@
+{"start":{"inputs":{"fact:phasePacket":{"hash":"sha256:aa","dir":"packets/p1"},"fact:workspace":"/work/p1","fact:buildNotes":{},"fact:lineContext":{}}}}
+{"trigger":{"kind":"step.completed","outcome":"ready","outputs":{"fact:activePacket":{"hash":"sha256:aa"},"fact:redTests":{},"fact:built":{},"fact:change":{},"fact:findings":[],"fact:answers":{}}},"expect":{"state":"slot"}}
+{"trigger":{"kind":"wait.satisfied"},"expect":{"state":"red"}}
+{"trigger":{"kind":"step.completed","outcome":"written","outputs":{"fact:redTests":{"i1":["T1"]}}},"expect":{"state":"red-check"}}
+{"trigger":{"kind":"step.completed","outcome":"red"},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h1"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h1"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h1"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"vacuous","outputs":{"fact:findings":[{"rule":"MDL-WITNESS-001","message":"planted bug not caught"}]}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h2"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h2"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h2"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"specError","outputs":{"fact:findings":[{"rule":"MDL-SPEC-ERROR-001","message":"parse error"}]}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h3"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h3"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h3"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"tooBig","outputs":{"fact:findings":[{"rule":"MDL-TOOBIG-001","message":"too big"}]}},"expect":{"state":"green"}}
+{"trigger":{"kind":"step.completed","outcome":"built","outputs":{"fact:built":{"head":"h4"}}},"expect":{"state":"checks"}}
+{"trigger":{"kind":"step.completed","outcome":"pass","outputs":{"fact:built":{"head":"h4"},"fact:change":{"repo":"r","branch":"b","base":"m","head":"h4"}}},"expect":{"state":"model"}}
+{"trigger":{"kind":"step.completed","outcome":"skipped","outputs":{"fact:modelCheck":{"skipped":true,"looked":["src/a.cs"],"specs":[]}}},"expect":{"state":"built","outcome":"resolved"}}

@@ -42,7 +42,7 @@ public sealed class ReviewLoopV2Tests
 
         var inputs = phase.States["review"].WaitFor!.Child!.Inputs;   // why: 'review' is the phase's child wait
 
-        Assert.Equal(5, phase.Version);   // 5: the park timeouts are a day or more (owner q93); 4: the owner's stop reports the phase failed to its line (LN-WF1); 3: passes the phase worktree (LN-WF2); 2: passes the empty round log (LN-PK lite)
+        Assert.Equal(6, phase.Version);   // 6: the ship pack reads the build's model check result (model-check design §4.1); 5: the park timeouts are a day or more (owner q93); 4: the owner's stop reports the phase failed to its line (LN-WF1); 3: passes the phase worktree (LN-WF2); 2: passes the empty round log (LN-PK lite)
         var log = inputs[FactKey.From("fact:lensRounds")];
         Assert.Equal("[]", log.Literal!.Value.GetRawText());
         Assert.Null(log.Fact);

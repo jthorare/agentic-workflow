@@ -21988,6 +21988,7 @@ override Aw.Sindri.Core.ModelCheck.ModelCheckSetup.ToString() -> string!
 static Aw.Sindri.Core.ModelCheck.ModelCheckSetup.operator !=(Aw.Sindri.Core.ModelCheck.ModelCheckSetup? left, Aw.Sindri.Core.ModelCheck.ModelCheckSetup? right) -> bool
 static Aw.Sindri.Core.ModelCheck.ModelCheckSetup.operator ==(Aw.Sindri.Core.ModelCheck.ModelCheckSetup? left, Aw.Sindri.Core.ModelCheck.ModelCheckSetup? right) -> bool
 static Aw.Sindri.Core.Checks.CommandStepLimits.ModelCheckMaxDuration.get -> System.TimeSpan
+Aw.Sindri.Core.ModelCheck.ISpecFolders.Exists(string! workspace, string! path, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<bool>
 Aw.Sindri.Core.Views.ViewsStatus.Starting.get -> bool
 Aw.Sindri.Core.Views.ViewsStatus.Starting.init -> void
 static Aw.Sindri.Core.Views.EmptyText.Starting() -> string!

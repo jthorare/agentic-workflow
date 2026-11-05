@@ -15,6 +15,6 @@ public sealed class FakeSpecFoldersContractTests : SpecFoldersContract
             _ = fake.Add(folder);
         }
 
-        return (fake, "/work/ws");
+        return (fake.Strict(), "/work/ws");
     }
 }
