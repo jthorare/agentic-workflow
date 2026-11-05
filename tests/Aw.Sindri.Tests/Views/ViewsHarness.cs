@@ -22,7 +22,7 @@ internal sealed class ViewsHarness
 
     public ViewsHarness(params BuiltInService[] builtIns)
     {
-        Progress = new ProjectorProgress(Slice.Clock);
+        Progress = FirstPass.Progress(Slice.Clock);
         _projections =
         [
             new ServicesProjection(Slice.Events),

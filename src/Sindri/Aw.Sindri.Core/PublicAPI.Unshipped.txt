@@ -2386,7 +2386,7 @@ Aw.Sindri.Core.Views.ViewsStatus.<Clone>$() -> Aw.Sindri.Core.Views.ViewsStatus!
 Aw.Sindri.Core.Views.ViewsStatus.AsOf.get -> Aw.Sindri.Core.Views.AsOf!
 Aw.Sindri.Core.Views.ViewsStatus.Cursor.get -> long
 Aw.Sindri.Core.Views.ViewsStatus.Cursor.init -> void
-Aw.Sindri.Core.Views.ViewsStatus.Deconstruct(out long Cursor, out long LedgerHead, out System.DateTimeOffset? ProjectedAt, out bool Rebuilding, out bool Stalled, out long? StalledAt, out string? StalledType) -> void
+Aw.Sindri.Core.Views.ViewsStatus.Deconstruct(out long Cursor, out long LedgerHead, out System.DateTimeOffset? ProjectedAt, out bool Rebuilding, out bool Stalled, out long? StalledAt, out string? StalledType, out bool Starting) -> void
 Aw.Sindri.Core.Views.ViewsStatus.Equals(Aw.Sindri.Core.Views.ViewsStatus? other) -> bool
 Aw.Sindri.Core.Views.ViewsStatus.LedgerHead.get -> long
 Aw.Sindri.Core.Views.ViewsStatus.LedgerHead.init -> void
@@ -2403,7 +2403,7 @@ Aw.Sindri.Core.Views.ViewsStatus.StalledPhrase() -> string!
 Aw.Sindri.Core.Views.ViewsStatus.StalledType.get -> string?
 Aw.Sindri.Core.Views.ViewsStatus.StalledType.init -> void
 Aw.Sindri.Core.Views.ViewsStatus.Text.get -> string?
-Aw.Sindri.Core.Views.ViewsStatus.ViewsStatus(long Cursor, long LedgerHead, System.DateTimeOffset? ProjectedAt, bool Rebuilding, bool Stalled, long? StalledAt, string? StalledType) -> void
+Aw.Sindri.Core.Views.ViewsStatus.ViewsStatus(long Cursor, long LedgerHead, System.DateTimeOffset? ProjectedAt, bool Rebuilding, bool Stalled, long? StalledAt, string? StalledType, bool Starting = false) -> void
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.Blocks.get -> System.Collections.Generic.IReadOnlyCollection<Aw.Sindri.Core.Workflow.Blocks.BlockDescriptor!>!
 Aw.Sindri.Core.Workflow.Blocks.BlockCatalog.Events.get -> System.Collections.Generic.IReadOnlyCollection<Aw.Sindri.Core.Workflow.Blocks.EventDescriptor!>!
@@ -21916,3 +21916,6 @@ Aw.Sindri.Core.Workflow.Views.StepRun.ImagesDropped.init -> void
 Aw.Sindri.Core.Judge.IStepImageFiles
 Aw.Sindri.Core.Judge.IStepImageFiles.RealDirectory(string! directory) -> string!
 Aw.Sindri.Core.Judge.IStepImageFiles.RealPath(string! path) -> string?
+Aw.Sindri.Core.Views.ViewsStatus.Starting.get -> bool
+Aw.Sindri.Core.Views.ViewsStatus.Starting.init -> void
+static Aw.Sindri.Core.Views.EmptyText.Starting() -> string!
