@@ -113,6 +113,7 @@ REPO="$WORK/repo"
 mkdir -p "$REPO/scripts/lib" "$REPO/src/Sindri/Aw.Sindri.Host" "$REPO/src/Judge" "$REPO/recipes/sindri"
 cp "$DIR/install-cs.sh" "$REPO/scripts/"
 cp "$DIR/lib/sindri-build-inputs.sh" "$DIR/lib/sindri-open-runs.sh" "$REPO/scripts/lib/"
+printf '#!/usr/bin/env bash\n[ "${1:-}" = --expensive ] && shift\nexec "$@"\n' > "$REPO/scripts/heavy.sh"; chmod +x "$REPO/scripts/heavy.sh"
 printf '{"sdk":{"version":"%s"}}\n' "$FAKE_SDK" > "$REPO/global.json"
 echo a > "$REPO/src/Sindri/Aw.Sindri.Host/a.cs"; echo b > "$REPO/src/Judge/b.cs"
 echo "name: one" > "$REPO/recipes/sindri/one.yaml"; echo "name: two" > "$REPO/recipes/sindri/two.yaml"
@@ -135,6 +136,7 @@ check "dry run exits 0" "$rc" "0"
 has "dry run says what it would do" "$out" "install-cs: [dry-run] would"
 check "dry run writes no state" "$([ -e "$AW_STATE_DIR" ] && echo yes || echo no)" "no"
 check "dry run publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')" "0"
+has "dry run says it would link heavy through current" "$out" "[dry-run] would link $AW_STATE_DIR/bin-r1b/heavy -> $AW_STATE_DIR/bin/cs/current/heavy"
 
 # --- link before any build ---
 out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
@@ -152,6 +154,9 @@ for f in sindri sindri-ui judge aw-packets bugfix-state ui-evidence aw-readiness
   check "build has $f" "$([ -e "$B/$S1/$f" ] && echo yes || echo no)" "yes"
 done
 check "seven publishes, each stamped with the commit" "$(grep -c "rev=$(g rev-parse HEAD)$" "$FAKE_LOG")" "7"
+check "the build carries heavy, executable" "$([ -x "$B/$S1/heavy" ] && echo yes || echo no)" "yes"
+check "the build's heavy is scripts/heavy.sh" "$(cmp -s "$B/$S1/heavy" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
+check "--publish leaves the heavy link alone" "$([ -e "$AW_STATE_DIR/bin-r1b/heavy" ] || [ -L "$AW_STATE_DIR/bin-r1b/heavy" ] && echo yes || echo no)" "no"
 check "--publish leaves current alone" "$([ -e "$B/current" ] && echo yes || echo no)" "no"
 check "--publish writes no wrapper" "$(ls "$CLAUDE_LOCAL_BIN" | wc -l | tr -d ' ')" "0"
 has "the recipe evals ran" "$(cat "$FAKE_CALLS")" "sindri state="
@@ -167,8 +172,29 @@ check "a second --publish publishes nothing" "$(wc -l < "$FAKE_LOG" | tr -d ' ')
 
 # --- link ---
 printf '#!/bin/sh\necho ts-wrapper\n' > "$CLAUDE_LOCAL_BIN/judge"; chmod +x "$CLAUDE_LOCAL_BIN/judge"
+HV="$AW_STATE_DIR/bin-r1b/heavy"
+mkdir -p "$AW_STATE_DIR/bin-r1b"; printf '#!/bin/sh\necho old-heavy\n' > "$HV"; chmod +x "$HV"
 out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
 check "--link exits 0" "$rc" "0"
+check "heavy links through current" "$(readlink "$HV")" "$B/current/heavy"
+check "heavy resolves into the build dir" "$(readlink -f "$HV")" "$(cd "$B/$S1" && pwd -P)/heavy"
+case "$(readlink -f "$HV")" in "$REPO"/*) r=repo ;; *) r=outside ;; esac
+check "heavy never resolves into the repo" "$r" "outside"
+git_top="$(cd "$(dirname "$(readlink -f "$HV")")" && git rev-parse --show-toplevel 2> /dev/null || true)"
+check "heavy never resolves into any git tree" "$git_top" ""
+check "the resolved heavy is scripts/heavy.sh" "$(cmp -s "$HV" "$REPO/scripts/heavy.sh" && echo same || echo differs)" "same"
+check "the old real file moved to heavy.pre-repo" "$(sh "$HV.pre-repo")" "old-heavy"
+bash "$INSTALL" --link > /dev/null 2>&1
+check "a second --link keeps the link" "$(readlink "$HV")" "$B/current/heavy"
+check "a second --link adds no other file" "$(ls "$AW_STATE_DIR/bin-r1b" | tr '\n' ' ')" "heavy heavy.pre-repo "
+check "the linked heavy runs its command" "$("$HV" --expensive echo ran)" "ran"
+mv "$B/$S1/heavy" "$B/$S1/heavy.away"
+out="$(bash "$INSTALL" --link 2>&1)"; rc=$?
+check "--link of a build without heavy fails" "$rc" "1"
+has "...and names the fix" "$out" "has no heavy; run scripts/install-cs.sh --publish --rebuild"
+check "...current unchanged" "$(readlink "$B/current")" "$S1"
+check "...heavy link unchanged" "$(readlink "$HV")" "$B/current/heavy"
+mv "$B/$S1/heavy.away" "$B/$S1/heavy"
 check "current is a symlink to the stamp" "$(readlink "$B/current")" "$S1"
 check "the six wrappers, not sindri-ui" "$(ls "$CLAUDE_LOCAL_BIN" | tr '\n' ' ')" "aw-packets aw-readiness bugfix-state judge sindri ui-evidence "
 check "the TS judge wrapper was replaced" "$(grep -c ts-wrapper "$CLAUDE_LOCAL_BIN/judge")" "0"
