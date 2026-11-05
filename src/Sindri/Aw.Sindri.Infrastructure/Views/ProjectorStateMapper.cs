@@ -16,5 +16,6 @@ internal sealed class ProjectorStateMapper : IRowMapper<ProjectorState>
         reader.GetInt64(3) == 1,
         reader.IsDBNull(4) ? null : reader.GetInt64(4),
         reader.IsDBNull(5) ? null : reader.GetString(5),
-        Fresh: false);
+        Fresh: false,
+        RebuiltThrough: reader.IsDBNull(6) ? null : reader.GetInt64(6));
 }

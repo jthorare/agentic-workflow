@@ -116,7 +116,7 @@ public sealed class RecipeStatsCacheTests : IDisposable
         _ = (await _views.Store.Open(ViewSchema.Version, Token)).Value;
         _ = (await _cache.Put(Stats(), head: 0, _h.Clock.GetUtcNow(), Token)).Value;
 
-        _ = (await _views.Store.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), Token)).Value;
+        _ = (await _views.Store.Reset(ViewNames.All, ViewSchema.Version, _h.Clock.GetUtcNow(), 0, Token)).Value;
 
         Assert.Null(await Get());
     }

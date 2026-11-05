@@ -100,9 +100,9 @@ public abstract class ViewStoreContract
         _ = await store.Open(ViewSchema.Version, Token);
         _ = await store.Apply([Event(1, Put, "alpha"), Event(2, Fail, "bad")], Projections(), Clock.GetUtcNow(), Token);
 
-        var reset = (await store.Reset(ViewNames.All, ViewSchema.Version + 1, Clock.GetUtcNow(), Token)).Value;
+        var reset = (await store.Reset(ViewNames.All, ViewSchema.Version + 1, Clock.GetUtcNow(), 7, Token)).Value;
 
-        Expect.True(reset is { Cursor: 0, Rebuilding: true, StalledAt: null, StalledType: null, SchemaVersion: ViewSchema.Version + 1 });
+        Expect.True(reset is { Cursor: 0, Rebuilding: true, StalledAt: null, StalledType: null, SchemaVersion: ViewSchema.Version + 1, RebuiltThrough: 7 });
         Expect.Equal(0, (await reader.List<ServiceRow>(ViewNames.Services, Token)).Value.Count);
         Expect.Equal(0, (await reader.List<ServiceRow>(ViewNames.Profile, Token)).Value.Count);
         _ = (await store.FinishRebuild(Token)).Value;
