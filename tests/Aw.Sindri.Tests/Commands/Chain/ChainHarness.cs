@@ -19,9 +19,9 @@ using Aw.Sindri.Features.StopProcess;
 using Aw.Sindri.Host.Catalog;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Server;
+using Aw.Sindri.Tests.Views;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.Commands.Chain;
 

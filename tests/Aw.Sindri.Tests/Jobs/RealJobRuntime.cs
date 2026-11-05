@@ -23,8 +23,8 @@ using Aw.Sindri.Testing.Jobs;
 using Aw.Sindri.Tests.Commands.Authorization;
 using Aw.Sindri.Tests.Commands.Chain;
 using Aw.Sindri.Tests.Server;
-using Microsoft.Extensions.DependencyInjection;
 using Aw.Sindri.Tests.Views;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Aw.Sindri.Tests.Jobs;
 

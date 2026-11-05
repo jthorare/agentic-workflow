@@ -18,11 +18,11 @@ using Aw.Sindri.Infrastructure.Workflows;
 using Aw.Sindri.Testing;
 using Aw.Sindri.Tests.Ledger;
 using Aw.Sindri.Tests.Server;
+using Aw.Sindri.Tests.Views;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Time.Testing;
-using Aw.Sindri.Tests.Views;
 
 namespace Aw.Sindri.Tests.Scheduling;
 
