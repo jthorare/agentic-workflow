@@ -13,9 +13,9 @@ The PARTIAL line is a bookkeeping bug in scripts/skill-evals.sh. After each case
 | # | Hypothesis | Cause-site files | Likelihood | Result |
 |---|-----------|------------------|------------|--------|
 | 1 | PARTIAL is set on spend >= ceiling, not on a case actually skipped | `scripts/skill-evals.sh:1143`, `:1160`, `:1221` | High | confirmed |
-| 2 | No pre-launch check that what is left can pay for one more case; the loop only breaks after a case pushed spend past the ceiling | `scripts/skill-evals.sh:1137`, `:1143` | Medium | confirmed as a real gap, but not what produced this report (only one case existed, nothing was left to launch) |
-| 3 | The CLI overshoots its own `--max-cost-usd` inside one call (checks between runs; 6 runs, last ones landed after the cap) | external `claude plugin eval` | Medium | consistent with the run's numbers: cap 2, settled 2.166, CLI itself says partial:false; cannot be fixed in the script, only bounded |
-| 4 | Cost double-counted | `scripts/skill-evals.sh:1133-1135` | Low | ruled out: script total equals the CLI's costUsd 2.165891 and the per-run sum 2.166 |
+| 2 | No pre-launch check that what is left can pay for one more case; the loop only breaks after a case pushed spend past the ceiling | `scripts/skill-evals.sh:1137`, `:1143` | Medium | confirmed |
+| 3 | The CLI overshoots its own `--max-cost-usd` inside one call (checks between runs; 6 runs, last ones landed after the cap) | external `claude plugin eval` | Medium | confirmed |
+| 4 | Cost double-counted | `scripts/skill-evals.sh:1133-1135` | Low | ruled-out |
 
 ## Ruled Out
 - Double counting (4): settled spend = CLI costUsd = sum of the six runs.
@@ -27,3 +27,5 @@ Within scripts/skill-evals.sh only:
 2. When spend ends above the ceiling with every case run, print "over the ceiling by $X" (cost - bl) instead of PARTIAL, and decide the exit code deliberately (likely 0/unchanged, not 2).
 3. Optional: pre-launch affordability check per case (skip when remaining < the $0.01 floor, or a per-case estimate) so later cases never start; for the in-call overshoot, document it as a CLI limit (cap is checked between runs), do not try to fix it here.
 4. Tests: bash suite for skill-evals (stub claude printing a results.json whose costUsd > cap on the last/only case): expect no PARTIAL line, an "over the ceiling by" note; a two-case stub where case 1 exhausts the cap: expect PARTIAL and exit 2.
+
+Row notes: 2 is a real gap but did not produce this report (one case, nothing left to launch). 3 matches the run's numbers (cap 2, settled 2.166, the CLI says partial:false); it is external and can only be bounded. 4: the script's total equals the CLI's costUsd 2.165891 and the per-run sum 2.166.
