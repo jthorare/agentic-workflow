@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using Aw.Kernel;
 using Aw.Sindri.Core.Checks;
+using Aw.Sindri.Core.ModelCheck;
 using Aw.Sindri.Core.Profile;
 using Aw.Sindri.Core.Text;
 using Aw.Sindri.Core.Workflow.Blocks;

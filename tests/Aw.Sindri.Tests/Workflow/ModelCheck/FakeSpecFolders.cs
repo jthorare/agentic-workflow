@@ -1,5 +1,5 @@
 using Aw.Kernel;
-using Aw.Sindri.Features.ModelCheck;
+using Aw.Sindri.Core.ModelCheck;
 
 namespace Aw.Sindri.Tests.Workflow.ModelCheck;
 

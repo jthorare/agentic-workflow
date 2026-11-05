@@ -1,7 +1,7 @@
-namespace Aw.Sindri.Features.ModelCheck;
+namespace Aw.Sindri.Core.ModelCheck;
 
 /// <summary>What a spec folder entry is on disk: only regular files may sit in a spec folder (MDL-SPEC-001).</summary>
-internal enum SpecFileKind
+public enum SpecFileKind
 {
     /// <summary>A regular file.</summary>
     Regular,

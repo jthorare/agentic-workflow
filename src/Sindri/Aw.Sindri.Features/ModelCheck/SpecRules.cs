@@ -1,5 +1,6 @@
 using System.Text;
 using Aw.Sindri.Core.Checks;
+using Aw.Sindri.Core.ModelCheck;
 
 namespace Aw.Sindri.Features.ModelCheck;
 

@@ -21920,3 +21920,39 @@ Aw.Sindri.Core.Workflow.Views.StepRun.ImagesDropped.init -> void
 Aw.Sindri.Core.Judge.IStepImageFiles
 Aw.Sindri.Core.Judge.IStepImageFiles.RealDirectory(string! directory) -> string!
 Aw.Sindri.Core.Judge.IStepImageFiles.RealPath(string! path) -> string?
+Aw.Sindri.Core.ModelCheck.ISpecFolders
+Aw.Sindri.Core.ModelCheck.ISpecFolders.List(string! workspace, string! pattern, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<Aw.Kernel.Result<System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFolder!>!>!>
+Aw.Sindri.Core.ModelCheck.SpecFile
+Aw.Sindri.Core.ModelCheck.SpecFile.<Clone>$() -> Aw.Sindri.Core.ModelCheck.SpecFile!
+Aw.Sindri.Core.ModelCheck.SpecFile.Deconstruct(out string! Name, out Aw.Sindri.Core.ModelCheck.SpecFileKind Kind, out string! Text) -> void
+Aw.Sindri.Core.ModelCheck.SpecFile.Equals(Aw.Sindri.Core.ModelCheck.SpecFile? other) -> bool
+Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFile.Kind.get -> Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFile.Kind.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFileKind.Other = 2 -> Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFileKind.Regular = 0 -> Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFileKind.Symlink = 1 -> Aw.Sindri.Core.ModelCheck.SpecFileKind
+Aw.Sindri.Core.ModelCheck.SpecFile.Name.get -> string!
+Aw.Sindri.Core.ModelCheck.SpecFile.Name.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFile.SpecFile(string! Name, Aw.Sindri.Core.ModelCheck.SpecFileKind Kind, string! Text) -> void
+Aw.Sindri.Core.ModelCheck.SpecFile.Text.get -> string!
+Aw.Sindri.Core.ModelCheck.SpecFile.Text.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFolder
+Aw.Sindri.Core.ModelCheck.SpecFolder.<Clone>$() -> Aw.Sindri.Core.ModelCheck.SpecFolder!
+Aw.Sindri.Core.ModelCheck.SpecFolder.Deconstruct(out string! Path, out System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFile!>! Files) -> void
+Aw.Sindri.Core.ModelCheck.SpecFolder.Equals(Aw.Sindri.Core.ModelCheck.SpecFolder? other) -> bool
+Aw.Sindri.Core.ModelCheck.SpecFolder.Files.get -> System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFile!>!
+Aw.Sindri.Core.ModelCheck.SpecFolder.Files.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFolder.Path.get -> string!
+Aw.Sindri.Core.ModelCheck.SpecFolder.Path.init -> void
+Aw.Sindri.Core.ModelCheck.SpecFolder.SpecFolder(string! Path, System.Collections.Generic.IReadOnlyList<Aw.Sindri.Core.ModelCheck.SpecFile!>! Files) -> void
+override Aw.Sindri.Core.ModelCheck.SpecFile.Equals(object? obj) -> bool
+override Aw.Sindri.Core.ModelCheck.SpecFile.GetHashCode() -> int
+override Aw.Sindri.Core.ModelCheck.SpecFile.ToString() -> string!
+override Aw.Sindri.Core.ModelCheck.SpecFolder.Equals(object? obj) -> bool
+override Aw.Sindri.Core.ModelCheck.SpecFolder.GetHashCode() -> int
+override Aw.Sindri.Core.ModelCheck.SpecFolder.ToString() -> string!
+static Aw.Sindri.Core.ModelCheck.SpecFile.operator !=(Aw.Sindri.Core.ModelCheck.SpecFile? left, Aw.Sindri.Core.ModelCheck.SpecFile? right) -> bool
+static Aw.Sindri.Core.ModelCheck.SpecFile.operator ==(Aw.Sindri.Core.ModelCheck.SpecFile? left, Aw.Sindri.Core.ModelCheck.SpecFile? right) -> bool
+static Aw.Sindri.Core.ModelCheck.SpecFolder.operator !=(Aw.Sindri.Core.ModelCheck.SpecFolder? left, Aw.Sindri.Core.ModelCheck.SpecFolder? right) -> bool
+static Aw.Sindri.Core.ModelCheck.SpecFolder.operator ==(Aw.Sindri.Core.ModelCheck.SpecFolder? left, Aw.Sindri.Core.ModelCheck.SpecFolder? right) -> bool

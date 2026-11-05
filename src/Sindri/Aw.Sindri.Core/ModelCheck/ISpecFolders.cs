@@ -1,9 +1,9 @@
 using Aw.Kernel;
 
-namespace Aw.Sindri.Features.ModelCheck;
+namespace Aw.Sindri.Core.ModelCheck;
 
 /// <summary>Lists the spec folders of a workspace and reads their entries, without following links.</summary>
-internal interface ISpecFolders
+public interface ISpecFolders
 {
     /// <summary>The folders matching <paramref name="pattern"/>, in name order.</summary>
     /// <param name="workspace">The directory the pattern is relative to.</param>

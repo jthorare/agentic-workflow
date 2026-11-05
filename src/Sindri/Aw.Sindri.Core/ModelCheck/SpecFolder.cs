@@ -1,6 +1,6 @@
-namespace Aw.Sindri.Features.ModelCheck;
+namespace Aw.Sindri.Core.ModelCheck;
 
 /// <summary>A spec folder of the workspace (model-check design §3): <c language="text">specs/tla/&lt;Name&gt;/</c>.</summary>
 /// <param name="Path">The folder, relative to the workspace, without a trailing slash.</param>
 /// <param name="Files">Every entry in it, 'gaps/' included.</param>
-internal sealed record SpecFolder(string Path, IReadOnlyList<SpecFile> Files);
+public sealed record SpecFolder(string Path, IReadOnlyList<SpecFile> Files);
