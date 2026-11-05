@@ -2,6 +2,7 @@ using System.Globalization;
 using Aw.Kernel;
 using Aw.Meta.Core.Config;
 using Aw.Meta.Core.Gate;
+using Aw.Meta.Core.Ports;
 
 namespace Aw.Meta.Core.Coordination;
 
@@ -9,9 +10,24 @@ namespace Aw.Meta.Core.Coordination;
 /// <param name="repo">The git and gh calls.</param>
 /// <param name="trees">The worktree handling.</param>
 /// <param name="paths">Where the trees live.</param>
-public sealed class GateWorkspace(RepoCommands repo, GateTree trees, MetaPaths paths)
+/// <param name="logs">Lists the run directories already on disk.</param>
+public sealed class GateWorkspace(RepoCommands repo, GateTree trees, MetaPaths paths, ILogFiles logs)
 {
     private const string Fields = "headRefOid,headRefName,isDraft,title";
+
+    /// <summary>
+    /// The run number of a pull request's next gate pass: one above the highest of the latest recorded run and the highest
+    /// gates/&lt;pr&gt;/&lt;run&gt;/ directory on disk, so a pass that was cancelled before it was recorded keeps its directory to itself.
+    /// </summary>
+    /// <param name="pr">The pull request number.</param>
+    /// <param name="recorded">The latest recorded run, 0 when none.</param>
+    /// <param name="cancellationToken">Cancels the call.</param>
+    /// <returns>The run number, or the error from reading the gate directory.</returns>
+    public async ValueTask<Result<int>> NextRun(int pr, int recorded, CancellationToken cancellationToken)
+    {
+        var onDisk = await logs.LatestRun(paths.GateDirectory(pr), cancellationToken).ConfigureAwait(false);
+        return onDisk.IsError ? onDisk.Error : Results.Success(Math.Max(recorded, onDisk.Value) + 1);
+    }
 
     /// <summary>The gate tree of a pull request.</summary>
     /// <param name="pr">The pull request number.</param>
@@ -53,7 +69,7 @@ public sealed class GateWorkspace(RepoCommands repo, GateTree trees, MetaPaths p
     /// <returns>The prepared tree, or an error from git or gh.</returns>
     public ValueTask<Result<PreparedGate>> Prepare(TeamConfig config, int pr, bool listChanged, GateBase? onto = null, CancellationToken cancellationToken = default) =>
         cancellationToken.CanBeCanceled
-            ? new GateWorkspace(repo.Cancelling(cancellationToken), trees.Cancelling(cancellationToken), paths).Prepared(config, pr, listChanged, onto)
+            ? new GateWorkspace(repo.Cancelling(cancellationToken), trees.Cancelling(cancellationToken), paths, logs).Prepared(config, pr, listChanged, onto)
             : Prepared(config, pr, listChanged, onto);
 
     private async ValueTask<Result<PreparedGate>> Prepared(TeamConfig config, int pr, bool listChanged, GateBase? onto)

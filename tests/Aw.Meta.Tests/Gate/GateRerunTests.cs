@@ -1,3 +1,4 @@
+using Aw.Meta.Infrastructure.Files;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
 using Aw.Meta.Core.Config;
@@ -18,7 +19,7 @@ public sealed class GateRerunTests
     private GateRerunService Service() => new(
         _world.Config,
         _world.Gates,
-        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths),
+        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, new FileLogFiles()),
         new RerunExecutor(_world.Runner, _world.Paths),
         _world.LogFiles);
 

@@ -58,7 +58,13 @@ internal sealed class GateRunService(IMetaConfig config, GateWorkspace workspace
             return prepared.IsError ? prepared.Error : latest.Error;
         }
 
-        return new GatePlan(request.Pr, (latest.Value?.Run ?? 0) + 1, Scopes(request, team.Gate, prepared.Value.Changed), prepared.Value);
+        var run = await workspace.NextRun(request.Pr, latest.Value?.Run ?? 0, cancellationToken).ConfigureAwait(false);
+        if (run.IsError)
+        {
+            return run.Error;
+        }
+
+        return new GatePlan(request.Pr, run.Value, Scopes(request, team.Gate, prepared.Value.Changed), prepared.Value);
     }
 
     private static IReadOnlyList<string> Scopes(GateRunRequest request, GateConfig gate, IReadOnlyList<string> changed) =>

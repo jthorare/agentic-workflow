@@ -1,3 +1,4 @@
+using Aw.Meta.Infrastructure.Files;
 using System.Globalization;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
@@ -18,7 +19,7 @@ public sealed class GateRunTests
 
     private GateRunService Service() => new(
         _world.Config,
-        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths),
+        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, new FileLogFiles()),
         new GateStepRunner(_world.Runner, _world.Paths),
         _world.Gates,
         Worlds.Reservation(_world),
@@ -192,7 +193,7 @@ public sealed class GateRunTests
 
     private GateRunService ServiceAt(MetaPaths paths) => new(
         _world.Config,
-        new GateWorkspace(_world.Repo, _world.Trees, paths),
+        new GateWorkspace(_world.Repo, _world.Trees, paths, new FileLogFiles()),
         new GateStepRunner(_world.Runner, paths),
         _world.Gates,
         Worlds.Reservation(_world),

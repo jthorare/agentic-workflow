@@ -1,3 +1,4 @@
+using Aw.Meta.Infrastructure.Files;
 using System.Globalization;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Config;
@@ -316,7 +317,7 @@ public sealed class HeavyReservationTests
     }
 
     private GateRunService GateRun() =>
-        new(_world.Config, new GateWorkspace(_world.Repo, _world.Trees, _world.Paths), new GateStepRunner(_world.Runner, _world.Paths), _world.Gates, Worlds.Reservation(_world), _world.Clock);
+        new(_world.Config, new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, new FileLogFiles()), new GateStepRunner(_world.Runner, _world.Paths), _world.Gates, Worlds.Reservation(_world), _world.Clock);
 
     private MergeRunService MergeRun() =>
         new(new MergeReadiness(_world.Config, _world.Gates, _world.Repo, _world.LogFiles), _world.Repo, _world.Gates, _world.Log, Worlds.Reservation(_world), _world.Clock);

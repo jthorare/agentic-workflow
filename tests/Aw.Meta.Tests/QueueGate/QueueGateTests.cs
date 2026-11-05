@@ -1,3 +1,4 @@
+using Aw.Meta.Infrastructure.Files;
 using System.Globalization;
 using Aw.Meta.Core;
 using Aw.Meta.Core.Commands;
@@ -17,7 +18,7 @@ public sealed class QueueGateTests
 
     private QueueGateService Service() => new(
         new TrainSelection(_world.Config, Worlds.Queue(_world)),
-        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths),
+        new GateWorkspace(_world.Repo, _world.Trees, _world.Paths, new FileLogFiles()),
         new GateStepRunner(_world.Runner, _world.Paths),
         _world.Gates,
         _world.Values,
@@ -217,7 +218,7 @@ public sealed class QueueGateTests
         var paths = new MetaPaths("/state/meta", disk.Path, "/bin/heavy", "gh");
         var service = new QueueGateService(
             new TrainSelection(_world.Config, Worlds.Queue(_world)),
-            new GateWorkspace(_world.Repo, _world.Trees, paths),
+            new GateWorkspace(_world.Repo, _world.Trees, paths, new FileLogFiles()),
             new GateStepRunner(_world.Runner, paths),
             _world.Gates,
             _world.Values,
