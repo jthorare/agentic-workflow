@@ -284,11 +284,14 @@ Every row names the run (`idea-to-pr › ...`), so two runs on one repo never sh
 
 ## 6. The canvas (ui; D9, release 2: F-5)
 
-Release 2. The canvas edits one flow's server-side draft (§7, F-5 routes) and draws the flow file (§4.1) as cards and wires. It holds no rules of its own: wire legality comes from the candidates call, findings from the server, and the file stays the source of truth. A promoted draft is a normal flow version, approved and run like a hand-written one.
+**A release-2 sketch.** Release 1 ships none of this. It fixes enough for F-5's goldens to start against (§6.7) and freezes only §6.9's asks of engine's sections. Everything else is re-read against what release 1 actually shipped before F-5 starts. It is drawn against release 1's blocks: ports of type `text` and `path` only (§3.1; `pr`, `issue` and `packet` wait for C6), and the five shipped skills' six blocks.
+
+The canvas edits one flow's server-side draft (§6.4, §7's F-5 routes) and draws the flow file (§4.1) as cards and wires. It holds no rules of its own: wire legality comes from the candidates call, findings from the server, and the file stays the source of truth. A promoted draft is a normal flow version, approved and run like a hand-written one.
 
 ### 6.1 Where it sits
 
 - **Top bar:** a **Flows** page beside Workflows and Recipes, chord `G F` (free today; `ShellViewModel.Chords.cs` `SecondKey`). The Flows page lists flows (`GET /sindri/flows`, §7), each with **Run**, plus **New flow**.
+- **Flows, Workflows and Recipes:** Flows is what the owner writes (flow files and their drafts). Recipes is what they compile to and what gets approved (every recipe, flow-made or hand-written). Workflows is what's running (instances of any recipe). A flow's page links to its compiled recipe on Recipes, and a run of a flow is an ordinary row on Workflows.
 - **A flow's page** has three tabs: **Canvas** (this section), **Runs** (its runs, each opening the run page of §5.2), and **File** (the flow YAML of the open draft, read-only, with each finding's line marked). The File tab is how the owner checks that the canvas wrote what they meant.
 - **Opening a flow with an open draft** asks once: "You have a draft from 14:02 (12 edits). Resume or discard?" Discard asks again before it deletes. With no draft, the canvas shows the current version read-only with an **Edit** button. The first edit creates the draft (`POST .../draft`).
 
@@ -296,17 +299,18 @@ Release 2. The canvas edits one flow's server-side draft (§7, F-5 routes) and d
 ┌ Flows › Idea to proven PR ─────── Canvas | Runs | File ──────────────────────────────┐
 │ Palette        │                    stage (ZoomBorder, 22 px dotted grid)        │ Inspector     │
 │ ─────────────  │   ┌ Inputs ┐                                                    │ critique      │
-│ ⌕ filter       │   │ idea ●─┼──┐   ┌ 1 shape ─────────┐                          │ autoplan      │
-│ officeHours    │   └────────┘  └──▶● idea  featureDir ●─┐                        │ Reviews a pl… │
-│ autoplan       │                   │ done ◆            │ │                        │ ─ Inputs ──── │
-│ specToProven…  │                   └───────┬──────────┘ │                        │ plan ← shape… │
-│ bugFixOrch…    │                           ┆ next       │                        │ mode  [mvp ▾] │
-│ review         │   ┌ 2 critique ─────────┐ ▼            │                        │ ─ Outcomes ── │
-│ system-design  │   │ plan ●◀──────────────┼────────────┘                        │ needsWork →   │
-│                │   │        report ●     │                                     │  revise (≤2)  │
-│ (only skills   │   │ pass ◆ needsWork ◆ blocked ◆ │                              │ blocked → stop│
-│  with a        │   └──┬───────┬───────────┬───┘                                 │ pass → build  │
-│  block.yaml)   │      ┆next   │ rework ≤2 └──▶ ■ stop                            │ [Test block]  │
+│ ⌕ filter       │   │ idea T─┼──┐   ┌ 1 shape ─────────┐                          │ autoplan      │
+│ office-hours   │   └────────┘  └──▶T idea  featureDir P─┐                        │ Reviews a pl… │
+│ office-hours-  │                   │ done ◆            │ │                        │ ─ Inputs ──── │
+│   revise       │                   └───────┬──────────┘ │                        │ plan ← shape… │
+│ autoplan       │                           ┆ next       │                        │ mode  [mvp ▾] │
+│ spec-to-prov…  │   ┌ 2 critique ─────────┐ ▼            │                        │ ─ Outcomes ── │
+│ bug-fix-orch…  │   │ plan P◀──────────────┼────────────┘                        │ pass → build  │
+│ review         │   │        report P     │                                     │ needsWork →   │
+│                │   │ pass ◆ needsWork ◆ blocked ◆ │                              │  revise,      │
+│ (only skills   │   └──┬───────┬───────────┬───┘                                 │  loop rework 2│
+│  with a        │      │next   │rework ≤2  └──▶ ■ stop                            │ blocked → stop│
+│  block.yaml)   │      ▼       ▼ 3 revise ──┐  (return wire to critique, no pill) │ [Test block]  │
 ├────────────────┴──────────────────────────────────────────────────────────────┴───────────────┤
 │ Draft rev 14 · saved · 0 findings                    Undo  Redo   [Discard]  [Save as v3]        │
 └──────────────────────────────────────────────────────────────────────────────────────────────────┘
@@ -316,74 +320,118 @@ Release 2. The canvas edits one flow's server-side draft (§7, F-5 routes) and d
 
 | In the file (§4.1) | On the canvas |
 |---|---|
-| A block (`blocks.<id>`) | A card (the run canvas's card shape, `RunCardView`): header = file-order number, block id and skill name; input ports on the left, one per declared input, in `block.yaml` order; output ports on the right; outcome ports along the bottom, one per outcome (`done` for a skill with no `outcomes`) |
-| `inputs` of the flow | One **Inputs** card, fixed at the top left: an output port per flow input. Add, rename and type an input in the inspector |
+| A block (`blocks.<id>`) | A card: header = file-order number, block id and the block it uses; input ports on the left, one per declared input, in `block.yaml` order; output ports on the right; outcome ports along the bottom, one per outcome (`done` for a block with no `outcomes`) |
+| `inputs` of the flow | One **Inputs** card, fixed at the top left: an output port per flow input. Add, rename and type (`text` or `path`) an input in the inspector |
 | `with: { x: { ref: a.out } }` | A **data wire**, output port to input port: solid, Wire colour (`GraphEdgesControl`'s default) |
-| `on: { o: { to: b } }` / `on: { o: stop }` | An **outcome wire** from the outcome port to the target card's header, or to the **Stop** terminal: solid, in the outcome's tone |
-| `loop: { name, cap }` on a back-edge | The outcome wire plus a pill on it: "rework ≤ 2". A wire into an earlier card is a back-edge and can't exist without its loop (§6.3) |
-| `next:` (the success outcome's target, §4.1) | A **next wire** from the success outcome port. When `next:` is left out (the next block in file order), it's dashed and dimmed, labelled "next"; wiring it somewhere writes `next:` and makes it solid, and deleting that wire brings the dashed default back. Every other outcome has no wire until it's wired: an unwired non-success outcome is a finding on its port (§4.1) |
+| `with: { x: { value: v } }` | No wire: the input port shows a filled glyph and the inspector shows the value in its field |
+| `on: { o: <block> }` / `on: { o: stop }` | An **outcome wire** from the outcome port to the target card's header, or to the **Stop** terminal: solid, in the outcome's tone |
+| `on: { o: { to, loop: { name, cap } } }` | The outcome wire plus a pill on **that** wire: "rework ≤ 2". The pill always sits on the edge that carries `loop:` in the file, which is the edge entering the loop (`critique.needsWork → revise`) |
+| The edge that closes a cycle (`revise.next: critique`) | A **return wire**: routed round the left of the cards it skips, no pill, labelled with its outcome. It needs no `loop:` of its own when an edge on the same cycle carries one (§6.3) |
+| `next:` (the success outcome's target, §4.1) | A **next wire** from the success outcome port. When `next:` is left out (the next block in file order), it's dashed, drawn at the dimmed tone, labelled "next"; wiring it somewhere writes `next:` and makes it solid, and deleting that wire brings the dashed default back. Every other outcome has no wire until it's wired: an unwired non-success outcome is a finding on its port (§4.1) |
 | File order | The number in the card header. Moving a card on the canvas never changes the order. **Move up / Move down** in the inspector, or Alt+Shift+↑/↓, does |
-| `<name>.layout.json` | Card positions. Missing positions (a flow written by hand, a new card from the assistant) get the run canvas's deterministic layout (`RunCanvasLayout`: main path down the centre in file order, loop targets beside their source) and are saved on the next edit |
+| `<name>.layout.json` | Card positions. Missing positions (a flow written by hand, a new card from the assistant) get `RunCanvasLayout`'s deterministic layout (main path down the centre in file order, loop targets beside their source) and are saved on the next edit |
 
-Port glyphs carry the type (`text`, `path`, `pr`, `issue`, `packet`) as a letter plus the shape. Colour is never the only signal, and every port has an automation name ("plan, path input, wired from shape.featureDir").
+**Ports** carry their type as a letter plus a shape (`T` round for `text`, `P` square for `path`), so colour is never the only signal. Every port has an automation name ("plan, path input, wired from shape.featureDir").
+
+**Card sizes.** `RunCardView` is fixed height (`RunCardSizes`: one header and a step strip), and a flow card has one to three port rows plus an outcome row. Reused: the card's chrome, header, focus and selection drawing, and `RunCanvasLayout.Of(graph, sizes)`, which already takes a size per node. New: `FlowCardSizes`, the height from the card's port and outcome rows, passed to that same layout call.
+
+**Contrast.** Wires, port outlines and the dashed next wire meet 3:1 non-text contrast against the stage and its grid, in both themes. "Dimmed" (ports that aren't candidates, the default next wire) lowers emphasis but never below 3:1. The F-5 rendering test checks each tone against the grid.
 
 ### 6.3 Wiring
 
-**Mouse.** Press on an output port, which calls `GET .../draft/candidates?rev=&port=` once. While the wire follows the pointer, the legal input ports are lit and every other port is dimmed. Hovering a dimmed port shows the server's reason ("needs a path; report is text"). Dropping on a lit port sends the edit. Dropping anywhere else, or Esc, cancels without a request. Dragging from an **outcome** port works the same way, with cards and the Stop terminal as targets. A target earlier in file order is a back-edge, so the drop opens an inline form on the wire (loop name, prefilled from the outcome; cap, default 2, 1 to 9). Esc there cancels the wire. A back-edge is never sent without its loop.
+**Loops and cycles.** A **back-edge** is the edge that closes a cycle, wherever it sits in file order. Every cycle needs one edge on it that carries `loop: { name, cap }`, and that edge is the one entering the loop (what the validator checks, §4.1). In `idea-to-pr`, `critique.needsWork → revise` carries `loop: rework, cap 2`, and `revise.next: critique` closes the cycle with no loop of its own. The canvas never decides this. The candidates call (§6.9.5) marks each target that would close a cycle, with the edge the loop belongs on and whether that edge has one already:
+- The cycle already has its loop (wiring `revise → critique` after `needsWork → revise` has one): the drop just sends the edit.
+- It doesn't: the drop opens the loop form on the edge the server named (loop name, prefilled from the outcome; cap, default 2, 1 to 9), and that edge is outlined. The form is a small dialog-like region: focus moves into it, Tab stays inside it, Esc cancels the wire and returns focus to the port it started from, Enter sends both edits as one PATCH. A cycle is never sent without its loop.
 
-**Keyboard** (a must, not a nice-to-have). The stage is one tab stop. Inside it:
-- Tab / Shift+Tab move between cards in file order. Arrow keys move to the nearest card in that direction.
-- **W** on a card lists its unwired output and outcome ports. Pick one with ↑/↓ and Enter, and the second list is the candidates, with each disallowed row disabled and its reason read out. Enter wires it. A back-edge opens the same loop form.
-- **Enter** puts focus in the inspector. **Delete** removes the selected card or wire. Removing a card that has wires asks first and names them.
+**Mouse.** Press on an output port, which calls `GET .../draft/candidates?rev=&port=` once. While the call is in flight (usually under 300 ms), the wire follows the pointer and no port is dimmed. After 300 ms the status bar says "Checking where this can go…". When it answers, the legal input ports are lit and every other port is dimmed. Hovering a dimmed port shows the server's reason ("needs a path; report is text"). Dropping on a lit port sends the edit. Dropping anywhere else, or Esc, cancels without a request. If the call fails, the wire is cancelled at once, no port stays dimmed, and the status bar says "Couldn't check where this wire can go: <reason>. Try again." Dragging from an **outcome** port works the same way, with cards and the Stop terminal as targets.
+
+**Keyboard** (a must, not a nice-to-have). The stage is one tab stop: **Tab** and **Shift+Tab** always leave it (to the inspector, then the status bar, and back to the palette), so it never traps focus. Inside the stage:
+- **Arrow keys** move between cards: ←/→ and ↑/↓ to the nearest card in that direction, **Home** and **End** to the first and last card in file order. Focus comes back into the stage on the card that had it last.
+- **W** on a card lists its unwired output and outcome ports. Pick one with ↑/↓ and Enter, and the second list is the candidates, with each disallowed row disabled and its reason read out. Enter wires it. A cycle without its loop opens the same loop form. Esc backs out one list at a time and then returns focus to the card.
+- **Enter** moves focus to the selected card's first inspector field. **Esc** in the inspector (from any field that isn't a dropdown left open) returns focus to that card on the stage, and Shift+Tab from the inspector's first field does the same.
+- **Delete** removes the selected card or wire. Removing a card that has wires asks first and names them.
 - **Alt+arrows** move a card one grid step (22 px), and the position is sent on key release. Alt+Shift+↑/↓ changes file order.
 - Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z are undo and redo. `+`, `-` and `0` zoom (ZoomBorder's keys today), and **F** fits the flow.
+- **Single-key commands** (W, F, Delete, `+`, `-`, `0`) fire only while the stage has focus. In a text field (the inspector, the palette filter, the loop form) they type text. Undo and redo in a text field undo the field's text, not the draft.
 
-**Screen readers.** Wires aren't focusable, so the inspector's lists are the readable view of them. A card's automation name reads like the file: "Block 2, critique, autoplan. plan from shape.featureDir. needsWork goes to revise, loop rework, cap 2. blocked stops. pass goes to the next block, build." Every list in §6.3's keyboard path is a real list control with names, so the same steps work with a screen reader.
+**Screen readers.** Wires aren't focusable, so the inspector's lists are the readable view of them. A card's automation name reads like the file: "Block 2, critique, autoplan. plan from shape.featureDir. pass goes to build. needsWork goes to revise, loop rework, cap 2. blocked stops." The status bar is a polite live region that is always in the tree. It announces each message once and keeps the last one on screen until the next replaces it, so a refused edit's reason can be read after it's spoken. Every list in the keyboard path is a real list control with names, so the same steps work with a screen reader.
 
-**Palette.** It lists `GET /sindri/skills`: only skills with a `block.yaml` (§3.1), filterable by name and sentence, with a skill that failed to load shown greyed with its doctor reason. Drag one onto the stage, or Enter on it to place it under the selected card, and it becomes a new block with an id made from the skill name (`autoplan`, then `autoplan2`). Rename it in the inspector, and refs to it follow because the rename is one op the server applies to the whole draft.
+**Palette.** It lists `GET /sindri/skills` by block (the six release-1 blocks, so officeHours shows as `office-hours` and `office-hours-revise`), filterable by id and sentence. A skill that failed to load is shown greyed with its doctor reason. Drag one onto the stage, or Enter on it to place it under the selected card, and it becomes a new block with an id made from the block id (`autoplan`, then `autoplan2`). Rename it in the inspector, and refs to it follow because the rename is one op the server applies to the whole draft.
 
-**Inspector.** It shows the selected card's sentence and inputs. Each input shows its wire ("← shape.featureDir") or a literal field, picked by type: a text box for `text`, a folder picker for `path`, a PR box for `pr`, and a dropdown when `block.yaml` has `values`. Below that are its outcome wires and **Test block** (§6.5).
+**Inspector.** It shows the selected card's sentence and inputs. Each input shows its wire ("← shape.featureDir") or a literal field, picked by type: a text box for `text`, a folder picker for `path`, and a dropdown when `block.yaml` has `values`. Below that are its outcome wires (with the loop, if one is on that edge) and **Test block** (§6.5).
 
-### 6.4 Drafts in the app (the client half of D9)
+### 6.4 Drafts (the client half of D9, and where they live)
 
+- **Where a draft lives.** One draft per flow, server side, in `$AW_SINDRI_HOME/drafts.db` (owner-only, beside `views.db` but not rebuilt from the ledger, so `views rebuild` never drops a draft). Draft edits are not ledger events; only promote is (`flow.saved`). Drafts are never deleted by age: Health lists drafts idle for more than 14 days with **Open** and **Discard**.
+- **Base.** A draft records the flow file and the hash of that file it started from. The **File** tab shows "Based on flows/idea-to-pr.yaml v2".
 - **Every edit is an op.** The edit shows at once, then `PATCH .../draft {rev, ops[]}` goes out. Ops are small and named: `addBlock`, `removeBlock`, `renameBlock`, `setRef`, `clearRef`, `setLiteral`, `setOutcome`, `clearOutcome`, `setLoop`, `move` (position), `reorder`, `setInput`. Card drags send one `move` when you let go, never during the drag.
-- **Refused or 409.** A refused op rolls back that one edit, and the reason shows on the card or wire for 6 s and in the status bar. A 409 (someone else's rev landed first) re-pulls the draft, re-applies the ops not yet sent on top, and only then sends them.
+- **Refused or 409.** A refused op rolls back that one edit, and its reason shows on the card or wire and in the status bar. A 409 (someone else's rev landed first) re-pulls the draft, re-applies the ops not yet sent on top, and only then sends them.
+- **Can't reach Sindri** is not a refusal. A PATCH that gets no answer (serve down, connection refused, timeout) rolls nothing back. The edits stay on the canvas, queue in order with the rev they were made on, and the status bar says "Can't reach Sindri: 3 edits waiting". When the stream reconnects, the canvas re-pulls the draft and sends the queue (a 409 replays as above). Leaving the page with edits waiting asks "3 edits haven't reached Sindri. Leave and lose them?". Save as is disabled while edits wait.
 - **Undo** sends the inverse ops as a new edit (removing a wire you added re-adds it, `move` restores the old position). The stack holds ops, never revisions, so an assistant edit between yours survives your undo. The stack lives with the page: leaving the flow clears it, but the draft stays.
-- **`draft.changed`** from someone else (the assistant, another window) applies the new revision live. What changed is outlined for 2 s, and the status bar says "Assistant added review after critique" (from the event's op list). An edit you're making (a wire in the air, the loop form open) is kept and re-checked against the new revision when you finish it.
-- **Findings** come back on every PATCH response for the new revision. That's one request instead of PATCH-then-validate, and the §7 PATCH route returns them. Each finding attaches to its card, port or wire and is listed in the status bar. **Save as vN** (`POST .../draft/promote`) is enabled at 0 findings and says what blocks it otherwise ("2 findings: build.spec is not wired").
-- **Status bar:** "Draft rev 14 · saving… / saved · N findings", then Undo, Redo, Discard and Save as vN.
+- **`draft.changed`** from someone else (the assistant, another window) applies the new revision live. What changed is outlined for 2 s, and the status bar says "Assistant added review after critique" (from the event's op list). An edit you're making (a wire in the air, the loop form open) is kept and re-checked against the new revision when you finish it. `draft.changed` rides the event stream as a frame **with no id** (`SseWriter.Event` with a null id): it isn't a ledger event, so a reconnect never replays it, and the canvas re-pulls the draft on every reconnect instead.
+- **Findings** come back on every PATCH response for the new revision, and the §7 PATCH route returns them. Each finding attaches to its card, port or wire and is listed in the status bar.
+- **Save as vN** (`POST .../draft/promote`) is enabled at 0 findings and says what blocks it otherwise ("2 findings: build.spec is not wired"). Promote writes the flow file and bumps its `version` itself (RCP-VERSION-001: a content change is a new version). An owner's flow is written in place at `<repo>/.agentic-workflow/flows/<name>.yaml`. A shipped flow (`flows/` in the toolkit) is never written: Save forks it under a new id into the repo's `.agentic-workflow/flows/`, and the button says so ("Save as my-idea-to-pr v1"). Then the compiled recipe goes to approval like any other.
+- **The file changed under the draft** (a hand edit, a pull, another promote). When the file's hash no longer matches the draft's base, the canvas shows a banner before any more edits: "flows/idea-to-pr.yaml changed since this draft started (v2 → v3)." It offers **Re-base** (the server re-applies the draft's ops on the new file; ops that no longer apply are listed and dropped, and the owner sees the list before it's applied) and **Discard draft**. Promote is refused until one is picked.
 
 ### 6.5 Test this block
 
 **Test block** in the inspector calls `POST .../draft/test` for the selected block at the current rev.
+- **The owner's only.** An agent session calling the route gets `SND-AUTH-002` (§7), so the assistant can edit a draft but never start a test.
+- **It's a real session, without the push grant.** A test always runs scrubbed (no push token, even for a block with `pushes: true`), counts against the session cap like any launch, and runs in a fresh scratch worktree of the flow's repo at its current main, made for the test and removed when it ends (what `sindri skill run` uses, §7). The button says "Runs autoplan as a real agent session in a scratch copy of the repo (up to 3h, no pushes)", using the `maxDuration` from `block.yaml`. While it runs, the card shows running, **Take over** (§5.3), the "waiting on you" state with the skill's question, and the result: the outcome chip, the outputs as clickable paths, and the cost when the session reports one.
 - **Inputs:** a wired input uses the upstream block's last test output in this draft when it's not stale, else it asks for a value in the same field the literal would use. Nothing runs until every required input has one.
-- **It's a real session:** the button says "Runs autoplan as a real agent session (up to 3h)", using the `maxDuration` from `block.yaml`. While it runs the card shows running, **Take over** (§5.3), the "waiting on you" state with the skill's question, and the result: the outcome chip, the outputs as clickable paths, and the cost when the session reports one.
 - **Stale:** a result is keyed to (draft, rev). Any later edit to that block, or to anything wired into it, marks the result **stale** on the card, and a stale result is never fed into another block's test.
 
-### 6.6 What's reused and what's new
+### 6.6 What the owner sees (canvas states)
+
+Shaped like §5.4. Every surface also uses the app's vocabulary: skeleton rows on first load only, the stale pill after 30 s, the Not running card when serve is down.
+
+| Surface | State | Text | Buttons | What clears it |
+|---|---|---|---|---|
+| Flows page | Loading | skeleton rows | - | The list |
+| Flows page | Empty | "No flows yet. A flow chains skill blocks; start from a blank one or from idea-to-pr." | New flow, Copy idea-to-pr | A flow |
+| Flows page | Request failed | "Couldn't load flows: <reason>" above the last list | Try again | A good read |
+| Flows page | Serve down | the Not running card | Start Sindri | Serve up |
+| Canvas | Loading | the stage with skeleton cards | - | The draft or version |
+| Canvas | Empty (new flow) | the Inputs card and "Drag a block from the palette, or press Enter on one" | - | The first block |
+| Canvas | Request failed (the draft won't load) | "Couldn't load this flow's draft: <reason>" | Try again, Open read-only | A good read |
+| Canvas | Can't reach Sindri mid-edit | "Can't reach Sindri: N edits waiting" (§6.4) | - | Reconnect and send |
+| Canvas | File changed under the draft | §6.4's banner | Re-base, Discard draft | A pick |
+| Palette | Loading | skeleton rows | - | The list |
+| Palette | Empty | "No skill blocks loaded. `sindri doctor` says why." | Open Health | A block |
+| Palette | A block failed to load | the row greyed with its doctor reason | - | A fixed `block.yaml` |
+| File tab | Loading | "Rendering the draft…" | - | The YAML |
+| File tab | Request failed | "Couldn't render the draft: <reason>" | Try again | A good read |
+| Candidates | In flight > 300 ms | "Checking where this can go…" | - | The answer |
+| Candidates | Failed | "Couldn't check where this wire can go: <reason>. Try again." | - | The next drag |
+| Test block | Running, waiting, done, failed | §5.4's rows for a skill state, on the card | §5.4's | §5.4's |
+
+### 6.7 What's reused and what's new
 
 | Reused (`src/Sindri/Aw.Sindri.Ui/Views`) | For |
 |---|---|
 | `Controls/ZoomBorder.cs` | The stage: pan, zoom at the cursor, pinch, dotted grid, reduced motion |
-| `Controls/GraphEdgesControl.cs` | Every wire in one render pass, the dashed next wires, the hit stroke, dimming, highlight around the selected card. Bezier routes are a new `Route` shape |
+| `Controls/GraphEdgesControl.cs` | Every wire in one render pass, the dashed next wires, the hit stroke, dimming, highlight around the selected card. Bezier routes and the left-side return route are a new `Route` shape |
 | `Controls/MiniMapControl.cs` | The overview, bottom right |
-| `Run/RunCardView.cs`, `ViewModels/Run/RunCanvasLayout.cs` | The card shape and its automation, and the layout for cards with no position |
+| `Run/RunCardView.cs`, `ViewModels/Run/RunCanvasLayout.cs` | The card chrome, header and automation, and the layout for cards with no position (with `FlowCardSizes`, §6.2) |
 
-New: the port controls and the in-air wire, the palette, the inspector, the draft client (op queue, rollback, replay, undo stack), the candidates overlay, the loop form and the File tab. No new package. Everything stays in compiled bindings and passes `src/Sindri/Aw.Sindri.Ui.AotSmoke/run.sh` with zero IL2xxx/IL3xxx warnings.
+New: `FlowCardSizes`, the port controls and the in-air wire, the palette, the inspector, the draft client (op queue, offline queue, rollback, replay, undo stack), the candidates overlay, the loop form, the re-base banner and the File tab. No new package. Everything stays in compiled bindings and passes `src/Sindri/Aw.Sindri.Ui.AotSmoke/run.sh` with zero IL2xxx/IL3xxx warnings.
 
-### 6.7 Proof and tests
+### 6.8 Proof and tests
 
-- **Unit (Ui.Tests, headless):** the op inverse table (every op's undo, round-tripped), 409 replay order, rollback of one refused op among three in flight, the next-wire rule, the unwired-non-success-outcome finding, the back-edge-needs-a-loop rule, stale marking, and the automation names against goldens.
+- **Unit (Ui.Tests, headless):** the op inverse table (every op's undo, round-tripped), 409 replay order, rollback of one refused op among three in flight, the offline queue (no rollback, sent in order on reconnect, leave-page prompt), the next-wire rule, the unwired-non-success-outcome finding, the loop form opening only for a cycle without its loop (and not for `revise → critique` in `idea-to-pr`), Tab leaving the stage from every card and Esc returning from the inspector, single-key commands not firing in a text field, the candidates failure cancelling the wire, the re-base banner, stale marking, each row of §6.6, and the automation names against goldens.
+- **Rendering (Ui.Rendering.Tests):** each wire and port tone at 3:1 against the grid, in both themes.
 - **API goldens first:** the draft, candidates and PATCH-with-findings responses as fake-route goldens, so the canvas is built and tested before F-5's server half lands. ui starts on them as soon as engine writes them at F-4's start (§8.2), the way F-3 starts on F-1's and F-2's goldens.
-- **Proof in the running app (F-5's row in §8.1):** build `idea-to-pr` from an empty flow **by keyboard only**, driven through `aw-ui-driver`: inputs, four blocks, data wires, the rework loop, then Save as v1. Then one more step with the mouse. Then an assistant edit arrives mid-session and shows live. Then undo steps over the owner's edit and leaves the assistant's. Each step gets a screenshot and its automation tree.
+- **Proof in the running app (F-5's row in §8.1):** build `idea-to-pr` from an empty flow **by keyboard only**, driven through `aw-ui-driver`: inputs, four blocks, data wires, the rework loop, then Save as v1. Then one more step with the mouse. Then an assistant edit arrives mid-session and shows live. Then undo steps over the owner's edit and leaves the assistant's. Then stop serve, make two edits, start it, and see them land. Each step gets a screenshot and its automation tree.
 
-### 6.8 Asks of engine's sections (ui's picks; all four accepted by engine, folded into §4.1 and §7)
+### 6.9 Asks of engine's sections (ui's picks)
+
+Asks 1 to 4 are accepted by engine and folded into §4.1 and §7. Ask 5 is new in round 2.
 
 1. **PATCH returns the findings** for the new rev (§6.4), so the canvas doesn't send a validate after every edit. `POST /sindri/flows/validate` stays for files.
-2. **Literal values in `with:`** (`mode: { value: mvp }`). §4.1 shows refs only, but `autoplan`'s `mode` and a fixed `idea` in a test both need one. If literals stay out of release 1, the inspector shows unwired optional inputs as "not set", and an unwired required input is a finding.
+2. **Literal values in `with:`** (`mode: { value: mvp }`), now in §4.1.
 3. **`draft.changed` carries the op list** (or a one-line summary per op), so the status bar can say what the assistant did without diffing two revisions in the app.
 4. **`renameBlock` is one server op** that rewrites every ref to the block, so a rename never leaves dangling refs, even for a moment.
-
+5. **The candidates response marks cycles.** For each target that would close a cycle: `closesCycle: true`, the edge the loop belongs on, and whether it already carries one. The canvas opens the loop form from that, never from its own graph walk (§6.3). Also: `draft/test` is owner-only and scrubbed (§6.5), the draft records its base file hash and promote bumps the version and forks shipped flows (§6.4), and `draft.changed` is an id-less stream frame (§6.4).
 
 ## 7. API and CLI
 
