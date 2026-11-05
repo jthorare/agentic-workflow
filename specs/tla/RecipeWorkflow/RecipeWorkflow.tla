@@ -16,7 +16,8 @@ CONSTANTS
     MaxRewinds,        \* rewinds per run
     MaxTakeovers,      \* takeovers per run (coarse: the timer detail is in Takeover/)
     GapLoopOffByOne,   \* TRUE plants the bug: the loop runs one round past its cap
-    GapGateFallsThrough \* TRUE plants the bug: a refused gate takes the transition anyway
+    GapGateFallsThrough, \* TRUE plants the bug: a refused gate takes the transition anyway
+    GapStaleTimer      \* TRUE plants the bug: Expired skips its Entry check (TransitionDecision.Timers.cs:26), so a stale timer parks `timeout`
 
 VARIABLES
     st,        \* the recipe state
@@ -177,8 +178,11 @@ FireCurrent ==
 
 FireStale ==
     /\ ~ended /\ staleT
-    /\ staleT' \in BOOLEAN
-    /\ UNCHANGED <<st, susp, why, underS, underW, round, retries, curT, visited, nRewind, nTake, ended, via>>
+    /\ IF GapStaleTimer /\ susp = "none"
+          THEN /\ ParkOn("timeout")
+               /\ UNCHANGED <<st, underS, underW, round, retries, visited, nRewind, nTake, ended, via>>
+          ELSE /\ staleT' \in BOOLEAN
+               /\ UNCHANGED <<st, susp, why, underS, underW, round, retries, curT, visited, nRewind, nTake, ended, via>>
 
 Done == ended /\ UNCHANGED vars
 
@@ -214,6 +218,6 @@ UnmatchedCompletedNeverMoves ==
     [][(\E o \in {"ok", "pass", "fail", "other"} : Report(o) /\ ~(st = "produce" /\ o = "ok") /\ ~(st = "checks" /\ o \in {"pass", "fail"}))
         => UNCHANGED vars]_vars
 
-\* With fair steps, every instance ends or waits on a person (a park or a takeover).
-EventuallySettles == <>(ended \/ susp # "none")
+\* With fair steps, every instance ends or waits on a person (a park or a takeover), again after every answer.
+EventuallySettles == []<>(ended \/ susp # "none")
 =============================================================================
