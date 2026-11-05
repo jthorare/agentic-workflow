@@ -52,7 +52,7 @@ classify_changes() {
     case "$file" in
       # The dotnet job's hook-contract step runs these hooks against the C# judge
       # (config/lib/tests/judge-cs-hook-surface.test.sh|config/lib/tests/sindri-cs-hook-surface.test.sh); bash-tests.sh leaves that test to it.
-      config/hooks/*|config/statusline.sh|config/lib/failopen.sh|config/lib/locks.sh|config/lib/tests/judge-cs-hook-surface.test.sh)
+      config/hooks/*|config/statusline.sh|config/lib/failopen.sh|config/lib/locks.sh|config/lib/heavy-config.sh|config/lib/tests/judge-cs-hook-surface.test.sh)
         dotnet=true ;;
     esac
     case "$file" in
@@ -62,7 +62,7 @@ classify_changes() {
       scripts/deps/*) dotnet=true ;;
       schemas/packets/*) ;;  # the packet schemas belong to Aw.Packets (its golden test, the dotnet area above)
       # Aw.Evidence's lock interop tests source it: the C# lock adapter and the shell tools share one lock format
-      config/lib/locks.sh) dotnet=true ;;
+      config/lib/locks.sh|config/lib/heavy-config.sh) dotnet=true ;;
       # recipes/ is embedded in the Sindri tests (ShippedRecipes) and read by the schema check (check-scoping-schemas.mjs)
       recipes/*) dotnet=true; bash=true ;;
       schemas/*|rules/*) bash=true ;;  # check-deps and check-rules (and their suites) read these
