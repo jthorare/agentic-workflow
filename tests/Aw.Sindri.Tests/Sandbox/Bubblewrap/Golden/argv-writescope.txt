@@ -26,6 +26,12 @@
 --ro-bind-try
 /home/owner/.dotnet
 /home/owner/.dotnet
+--perms
+0700
+--size
+4194304
+--tmpfs
+/home/owner/.dotnet/corefx
 --ro-bind-try
 /home/owner/.cargo
 /home/owner/.cargo
