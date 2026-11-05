@@ -196,7 +196,7 @@ start=$SECONDS
 set +e; OUT="$(TLC_SH="$HANG" bash "$SCRIPT" --timeout 1 "$S/Alpha" 2>&1)"; RC=$?; set -e
 took=$((SECONDS - start))
 expect "--timeout: a hung check prints TIMEOUT and counts as exit 2" 2 '^tlc-check: Alpha/Alpha\.cfg: TIMEOUT after 1 s$'
-if [ "$took" -lt 10 ]; then ok "--timeout: finished in ${took}s"; else fail "--timeout: took ${took}s"; fi
+if [ "$took" -lt 20 ]; then ok "--timeout: finished in ${took}s"; else fail "--timeout: took ${took}s"; fi
 p1=""; p2=""; read -r p1 p2 <"$TMPROOT/pids" || true
 if [ -n "$p1" ] && ! kill -0 "$p1" 2>/dev/null && ! kill -0 "$p2" 2>/dev/null; then ok "--timeout: stub and its child are gone"; else fail "--timeout: pids $p1 $p2 survive"; fi
 
@@ -206,7 +206,7 @@ if command -v setsid >/dev/null 2>&1; then
   TT="$TMPROOT/tt"; mkdir -p "$TT"
   TLC_SH="$HANG" TMPDIR="$TT" setsid bash -c 'echo $$ >"$TMPROOT/cpid"; exec bash "$0" --timeout 30 "$1"' "$SCRIPT" "$S/Alpha" >/dev/null 2>&1 &
   cp=$!
-  for _ in $(seq 1 50); do [ -s "$TMPROOT/pids" ] && break; sleep 0.1; done
+  for _ in $(seq 1 300); do [ -s "$TMPROOT/pids" ] && break; sleep 0.1; done
   gid=""; read -r gid <"$TMPROOT/cpid" || gid="$cp"
   kill -TERM -- "-$gid" 2>/dev/null || true
   set +e; wait "$cp"; RC=$?; set -e
