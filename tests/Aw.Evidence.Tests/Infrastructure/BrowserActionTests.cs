@@ -114,6 +114,19 @@ public sealed class BrowserActionTests(BrowserFixture fixture)
     }
 
     [Fact]
+    public async Task A_candidates_name_and_text_are_capped_at_200_code_points_so_a_page_wide_container_fits_the_judge()
+    {
+        await using var session = await fixture.OpenAsync();
+        _ = await session.GotoAsync("/controls", _wait, Token);
+
+        var candidates = (await session.VisibleCandidatesAsync(Token)).Value;
+
+        var capped = string.Concat(Enumerable.Repeat("\U0001F600", 200)) + "\u2026";
+        var button = Assert.Single(candidates, c => c.TestId?.Value == "long");
+        Assert.Equal((capped, capped), (button.AccessibleName, button.Text));
+    }
+
+    [Fact]
     public async Task Navigation_off_the_host_is_aborted()
     {
         await using var session = await fixture.OpenAsync();
