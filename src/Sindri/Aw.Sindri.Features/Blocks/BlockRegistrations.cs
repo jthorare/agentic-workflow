@@ -144,6 +144,8 @@ internal static class BlockRegistrations
         .AddBlockDescriptor(BuildSteps.Checks)
         .AddBlockDescriptor(BuildSteps.ScopeDesk)
         .AddBlockDescriptor(BuildSteps.Amend)
+        .AddBlockDescriptor(ModelCheckSteps.Check)
+        .AddBlockDescriptor(ModelCheckSteps.Desk)
         .AddBlockDescriptor(ProveSteps.Intake)
         .AddBlockDescriptor(ProveSteps.BeforeAfter)
         .AddBlockDescriptor(ProveSteps.Holdout)

@@ -23,8 +23,28 @@ done
 fake() { printf '#!/bin/sh\n%s\n' "${2:-exit 0}" >"$BIN/$1"; chmod +x "$BIN/$1"; }
 
 HOME_DIR="$TMPROOT/home"; mkdir -p "$HOME_DIR"
+# A stub tlc.sh (the script reads it through TLC_SH, so the real java and jar never matter). Its doctor prints the real one's two
+# lines: java is ok unless TLC_STUB_JAVA=none and no `java` is on PATH; the jar is ok unless TLC_STUB_JAR=none and $TMPROOT/jar
+# does not exist yet. `fetch` logs, creates that file and prints its path (TLC_STUB_FETCH_FAIL=1: fails with exit 2); doctor
+# exits 3 when either is missing, as the real one does.
+cat >"$TMPROOT/tlc-stub.sh" <<STUB
+#!/bin/sh
+echo "tlc \$*" >>"$TMPROOT/tlc.log"
+case "\$1" in
+  doctor)
+    rc=0
+    if [ "\${TLC_STUB_JAVA:-ok}" = none ] && ! command -v java >/dev/null 2>&1; then echo "java: missing"; rc=3; else echo "java: ok (21)"; fi
+    if [ "\${TLC_STUB_JAR:-ok}" = none ] && [ ! -f "$TMPROOT/jar" ]; then echo "tla2tools: missing (/cache/tla2tools.jar)"; rc=3; else echo "tla2tools: ok (/cache/tla2tools.jar)"; fi
+    exit \$rc ;;
+  fetch)
+    [ "\${TLC_STUB_FETCH_FAIL:-0}" = 1 ] && { echo "tlc: download failed" >&2; exit 2; }
+    : >"$TMPROOT/jar"; echo "/cache/tla2tools.jar" ;;
+  *) exit 2 ;;
+esac
+STUB
+chmod +x "$TMPROOT/tlc-stub.sh"
 run() {   # <env assignments...> -- runs the script on the sandboxed PATH
-  set +e; OUT="$(env -i PATH="$BIN" HOME="$HOME_DIR" AW_DEPS_ZLIB_H="$TMPROOT/zlib.h" "$@" bash "$SCRIPT" 2>&1)"; RC=$?; set -e
+  set +e; OUT="$(env -i PATH="$BIN" HOME="$HOME_DIR" AW_DEPS_ZLIB_H="$TMPROOT/zlib.h" TLC_SH="$TMPROOT/tlc-stub.sh" "$@" bash "$SCRIPT" 2>&1)"; RC=$?; set -e
 }
 expect() {   # <label> <rc> [<regex>]...
   local label="$1" rc="$2"; shift 2
@@ -294,9 +314,47 @@ COPY="$TMPROOT/tree"; mkdir -p "$COPY/context" "$COPY/config"
 cp -R "$REPO/scripts" "$COPY/scripts"; cp -R "$REPO/config/lib" "$COPY/config/lib"; cp "$REPO/binaries.lock" "$COPY/";
 cp "$REPO"/context/code-index* "$REPO/context/graphify.pin" "$COPY/context/"; sed 's/^need disk-bytes.*/need disk-bytes 0/' "$REPO/context/code-index.lock" >"$COPY/context/code-index.lock"
 S="$TMPROOT/ci-fresh5"; fresh_state "$S"; fake uv 'exit 0'; ollama_fake "$CI_ID" "$CI_ID" 0
-set +e; OUT="$(env -i PATH="$BIN" HOME="$HOME_DIR" AW_DEPS_ZLIB_H="$TMPROOT/zlib.h" AW_DEPS_OS=Linux AW_STATE_DIR="$S" bash "$COPY/scripts/install-deps.sh" 2>&1)"; RC=$?; set -e
+set +e; OUT="$(env -i PATH="$BIN" HOME="$HOME_DIR" AW_DEPS_ZLIB_H="$TMPROOT/zlib.h" TLC_SH="$TMPROOT/tlc-stub.sh" AW_DEPS_OS=Linux AW_STATE_DIR="$S" bash "$COPY/scripts/install-deps.sh" 2>&1)"; RC=$?; set -e
 expect "a lock that fails its check skips the code index pins and fails" 1 "WARN: context/code-index.lock fails scripts/code-index-lock.sh check"
 printf '%s\n' "$OUT" | has "code-index graphify" && fail "went on to install with a bad lock" || ok "nothing is installed from a bad lock"
+
+# 10. The model check's tools (tlc.sh doctor). Everything else present, so only these decide the output.
+: >"$TMPROOT/zlib.h"; for t in bwrap socat secret-tool clang lsof tmux curl git systemd-run; do fake "$t"; done
+fake graphify "echo graphify $PIN"
+# the code index passes, as in 9d, so a non-dry run's exit code is decided by the java and jar steps alone
+uv_fake ok; ollama_fake "$CI_ID" "$CI_ID" 0
+S="$TMPROOT/tlc-state"; fresh_state "$S"
+only_tlc() {   # <label>: the output has no graphify, ollama or temporal WARN
+  printf '%s\n' "$OUT" | has -E "WARN: .*(graphify|ollama|temporal|Ollama)" && { fail "$1: an unrelated WARN"; printf '%s\n' "$OUT" | sed 's/^/      | /'; } || ok "$1: no graphify/ollama WARN"
+}
+run AW_DEPS_OS=Linux AW_STATE_DIR="$S" AW_DRY_RUN=1
+expect "java and the jar present: doctor's lines are accepted, nothing planned" 0 "tlc: java and tla2tools.jar found"
+run AW_DEPS_OS=Linux AW_STATE_DIR="$S" AW_DRY_RUN=1 TLC_STUB_JAVA=none TLC_STUB_JAR=none
+expect "dry run: a missing java and jar print their commands" 0 "java: MISSING" "would run: sudo apt-get install -y openjdk-21-jre-headless\$" "would run: skills/formal-verify/scripts/tlc.sh fetch"
+run AW_DEPS_OS=Darwin AW_STATE_DIR="$S" AW_DRY_RUN=1 TLC_STUB_JAVA=none
+expect "dry run on macOS: openjdk@21 through brew, then linked" 0 "would run: brew install openjdk@21\$" "would run: brew link --force openjdk@21"
+rm -f "$TMPROOT/jar"; : >"$LOG"; : >"$TMPROOT/tlc.log"
+run AW_DEPS_OS=Linux AW_STATE_DIR="$S" TLC_STUB_JAVA=none TLC_STUB_JAR=none AW_FAKE_PROVIDES=java
+grep -q "^apt-get install -y openjdk-21-jre-headless$" "$LOG" && ok "a missing java installs the JDK package" || fail "java not installed: $(cat "$LOG")"
+grep -q "^tlc fetch" "$TMPROOT/tlc.log" && ok "a missing jar runs tlc.sh fetch" || fail "no fetch: $(cat "$TMPROOT/tlc.log")"
+expect "java installed and jar fetched: exit 0" 0 "java: installed" "tla2tools.jar: /cache/tla2tools.jar"
+only_tlc "java installed and jar fetched"
+find "$BIN" -name java -delete
+run AW_DEPS_OS=Linux AW_STATE_DIR="$S" TLC_STUB_JAVA=none
+expect "java still missing after the install fails the run" 1 "WARN: java still not usable"
+only_tlc "java still missing"
+rm -f "$TMPROOT/jar"
+run AW_DEPS_OS=Linux AW_STATE_DIR="$S" TLC_STUB_JAR=none TLC_STUB_FETCH_FAIL=1
+expect "a failed fetch warns and fails the run" 1 "WARN: tlc.sh fetch failed"
+only_tlc "failed fetch"
+: >"$LOG"
+run AW_DEPS_OS=Linux AW_STATE_DIR="$S" TLC_STUB_JAVA=none AW_NO_SYSTEM_INSTALL=1
+expect "AW_NO_SYSTEM_INSTALL=1 prints the java command and fails" 1 "nothing is installed" "sudo apt-get install -y openjdk-21-jre-headless"
+only_tlc "AW_NO_SYSTEM_INSTALL=1"
+grep -q "openjdk" "$LOG" && fail "AW_NO_SYSTEM_INSTALL=1 still installed java" || ok "AW_NO_SYSTEM_INSTALL=1 installs nothing"
+: >"$TMPROOT/tlc.log"
+run AW_DEPS_OS=Linux AW_STATE_DIR="$S" AW_DRY_RUN=1 TLC_STUB_JAR=none
+grep -q "^tlc fetch" "$TMPROOT/tlc.log" && fail "dry run fetched the jar" || ok "dry run never fetches"
 
 echo ""
 echo "$PASS passed, $FAIL failed"

@@ -28,7 +28,7 @@ public sealed class LongBlockStepsTests
     public static TheoryData<string> Ids => ["step.build.red-check", "step.build.checks", "step.ship.green"];
 
     // before-after runs the recorded scripts (20 minutes each, at the base and at the head) rather than the repo's commands, so it has no command budget and its own limit
-    public static TheoryData<string> AllLongIds => ["step.build.red-check", "step.build.checks", "step.ship.green", "step.prove.before-after"];
+    public static TheoryData<string> AllLongIds => ["step.build.red-check", "step.build.checks", "step.ship.green", "step.prove.before-after", "step.model.check"];
 
     [Theory]
     [MemberData(nameof(AllLongIds))]
