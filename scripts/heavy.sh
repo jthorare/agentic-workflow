@@ -85,19 +85,29 @@ job=""; dog=""
 stop_job() { [ -n "$job" ] && kill -TERM -- "-$job" 2>/dev/null; [ -n "$dog" ] && kill "$dog" 2>/dev/null; return 0; }
 trap 'stop_job; release; exit 130' INT TERM
 
-# reclaim_slot <dir>: free a slot whose owner pid is dead. The owner file is moved aside first (only one waiter's mv wins);
-# if what moved is not the dead line read, the slot changed hands and it goes back. With no owner file, leftover
-# <owner|pid>.reclaim.<N>* files (pid: locks.sh's) are freed when every reclaimer pid N is dead (a live N is mid-step),
-# or whoever N is once the folder is over 6 h old (a reused pid, or a reclaimer that failed without dying).
+# reclaim_slot <dir>: free a slot whose holder pid is dead. The holder file is <dir>/owner (this wrapper, ui-evidence), else
+# <dir>/pid (config/lib/locks.sh); the first word of the line is the pid in both. The file is moved aside first (only one
+# waiter's mv wins); if what moved is not the dead line read, the slot changed hands and it goes back. With neither file, leftover
+# <owner|pid>.reclaim.<N>* files are freed when every reclaimer pid N is dead (a live N is mid-step), or whoever N is once the
+# folder is over 6 h old (a reused pid, or a reclaimer that failed without dying). A folder with no entries at all (a holder killed
+# between its mkdir and its record write) is freed once over two minutes old (GNU find -mmin +1 truncates; Sindri waits one); younger is a holder mid-write, and rmdir fails if one
+# writes meanwhile.
 reclaim_slot() {
-  local d="$1" line pid f n m="$1/owner.reclaim.$$" left=() aged=""
-  if [ -f "$d/owner" ]; then
-    line="$(cat "$d/owner" 2>/dev/null)" || return 1; pid="${line%% *}"
+  local d="$1" line pid f n hf m left=() aged=""
+  hf="$d/owner"; [ -f "$hf" ] || hf="$d/pid"
+  if [ -f "$hf" ]; then
+    m="$hf.reclaim.$$"
+    line="$(cat "$hf" 2>/dev/null)" || return 1; pid="${line%% *}"
     case $pid in ""|*[!0-9]*) return 1 ;; esac
     kill -0 "$pid" 2>/dev/null && return 1
-    mv "$d/owner" "$m" 2>/dev/null || return 1
-    if [ "$(cat "$m" 2>/dev/null)" != "$line" ]; then mv "$m" "$d/owner" 2>/dev/null; return 1; fi
+    mv "$hf" "$m" 2>/dev/null || return 1
+    if [ "$(cat "$m" 2>/dev/null)" != "$line" ]; then mv "$m" "$hf" 2>/dev/null; return 1; fi
     rm -f "$m"; rmdir "$d" 2>/dev/null; return 0
+  fi
+  m="$d/owner.reclaim.$$"
+  if [ -z "$(ls -A "$d" 2>/dev/null)" ]; then
+    [ -n "$(find "$d" -maxdepth 0 -mmin +1 2>/dev/null)" ] && rmdir "$d" 2>/dev/null
+    return
   fi
   [ -n "$(find "$d" -maxdepth 0 -mmin +360 2>/dev/null)" ] && aged=1
   for f in "$d"/owner.reclaim.* "$d"/pid.reclaim.*; do
