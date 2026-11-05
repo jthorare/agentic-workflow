@@ -43,9 +43,11 @@
 # `sindri` wrapper also exports AW_SINDRI_JUDGE, AW_PACKETS_BIN and AW_UI_EVIDENCE_BIN (unless the caller set them), so bare
 # `sindri` finds sindri-ui next to it. A wrapper never publishes.
 #
-# The heavy-job wrapper: $AW_STATE_DIR/bin-r1b/heavy is a symlink to this tree's scripts/heavy.sh (both modes, before anything runs
-# under it). A real file already there is moved to heavy.pre-repo (never deleted; a later one gets a timestamp suffix). A linked worktree is
-# not linked (it can be swept away).
+# The heavy-job wrapper: scripts/heavy.sh is copied into each build as <build>/heavy (mode 755; part of the stamp, checked by verify), and
+# --link points $AW_STATE_DIR/bin-r1b/heavy at bin/cs/current/heavy, so the link never resolves into a git working tree (a checkout of an
+# older commit or a swept worktree cannot take it away) and changes only on an install. --link refuses a build without a heavy. A real
+# file already at bin-r1b/heavy is moved to heavy.pre-repo (never deleted; a later one gets a timestamp suffix). --publish alone does
+# not touch the link.
 #
 # Environment: AW_STATE_DIR (default ~/.agentic-workflow), CLAUDE_LOCAL_BIN (default ~/.local/bin), DOTNET_ROOT,
 #   AW_SINDRI_HOME (control.json for the running-serve guard; default $AW_STATE_DIR/sindri-app),
@@ -95,7 +97,7 @@ commit="$(git -C "$root" rev-parse --verify -q HEAD 2> /dev/null || true)"
 recipes_tree="$(git -C "$root" rev-parse --verify -q HEAD:recipes/sindri 2> /dev/null || true)"
 # shellcheck source=lib/sindri-build-inputs.sh
 source "$here/lib/sindri-build-inputs.sh"
-PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness)
+PATHSPECS=("${SINDRI_BUILD_PATHSPECS[@]}" src/Evidence src/BugFix src/Readiness scripts/heavy.sh)
 sha256() { shasum -a 256 2> /dev/null || sha256sum; }
 inputs="$(mktemp "${TMPDIR:-/tmp}/install-cs-inputs.XXXXXX")"
 # a tracked file deleted in the working tree is left out: it isn't part of the build, and tar would fail on it
@@ -273,8 +275,11 @@ publish() {
 
   check_skia_fontconfig "$stage"
 
+  # The heavy-job wrapper rides in the build, so bin-r1b/heavy can point at bin/cs/current/heavy and never into a git tree.
+  install -m 755 "$tree/scripts/heavy.sh" "$stage/heavy" || die "staging scripts/heavy.sh failed"
+
   # 3. "Install didn't take": each binary answers its state-free call, in a scratch state dir and with no inherited environment.
-  verify "$stage" "$revision"
+  verify "$stage" "$revision" "$tree/scripts/heavy.sh"
 
   # 4. The recipe evals, with the published binary over the staged set, before the build becomes a candidate.
   local digest="" manifest evals staged_count embedded_count
@@ -318,14 +323,15 @@ check_skia_fontconfig() { # check_skia_fontconfig <dir>
     || die "install didn't take: the staged libSkiaSharp.so does not need libfontconfig, so it is not sindri-ui's build (judge's NoDependencies one won the stage: keep sindri-ui before judge in the pub lines)"
 }
 
-verify() { # verify <dir> <revision>
-  local d="$1" rev="$2" scratch b out rc
+verify() { # verify <dir> <revision> <heavy source>
+  local d="$1" rev="$2" src="$3" scratch b out rc
   scratch="$(mktemp -d "$cache/verify.XXXXXX")"
   for b in "${BINARIES[@]}" sindri-ui; do
     [ -x "$d/$b" ] || { rm -rf "$scratch"; die "install didn't take: $d/$b is missing or not executable"; }
   done
   run() { env -i HOME="$scratch" PATH="/usr/bin:/bin" DOTNET_ROOT="$DOTNET_ROOT" AW_STATE_DIR="$scratch/state" AW_JUDGE_PROVIDERS=rules \
       AW_SESSION_ID=install-cs "$@" < /dev/null 2>&1; }
+  { [ -x "$d/heavy" ] && cmp -s "$d/heavy" "$src"; } || { rm -rf "$scratch"; die "install didn't take: $d/heavy is missing, not executable or not scripts/heavy.sh"; }
   mkdir -p "$scratch/state"
   rc=0; out="$(run "$d/sindri" help)" || rc=$?
   [ "$rc" = 0 ] || { rm -rf "$scratch"; die "install didn't take: sindri help exited $rc"; }
@@ -392,10 +398,12 @@ profile_hint() {
 link() {
   local b sdk_dir
   if [ "$dry" = 1 ]; then
+    say "[dry-run] would link $heavy -> $base/current/heavy"
     say "[dry-run] would point $base/current at $stamp, write wrappers for ${BINARIES[*]} into $link_dir, and run ui-evidence install-browser"
     return 0
   fi
   built "$stamp" || die "no build for this source (stamp $stamp); run scripts/install-cs.sh --publish first"
+  [ -x "$base/$stamp/heavy" ] || die "build $stamp has no heavy; run scripts/install-cs.sh --publish --rebuild"
   if [ -z "${DOTNET_ROOT:-}" ]; then   # where the pinned SDK is found (the parent of its sdk dir), else ~/.dotnet
     sdk_dir="$(dotnet --list-sdks 2> /dev/null | grep "^$sdk " | head -1 | sed 's/^[^[]*\[\(.*\)\]$/\1/' || true)"
     DOTNET_ROOT="${sdk_dir:+$(dirname "$sdk_dir")}"
@@ -405,6 +413,7 @@ link() {
   ln -s "$stamp" "$base/.current.$$"
   rename_over "$base/.current.$$" "$base/current"
   say "current -> $stamp"
+  link_heavy
   for b in "${BINARIES[@]}"; do write_wrapper "$b"; done
   say "wrappers in $link_dir: ${BINARIES[*]}"
   case ":$PATH:" in *":$link_dir:"*) ;; *) warn "$link_dir is not on your PATH" ;; esac
@@ -421,13 +430,9 @@ link() {
   fi
 }
 
-link_heavy() {
-  local want="$root/scripts/heavy.sh"
-  [ -f "$want" ] || { warn "no $want; leaving $heavy as it is"; return 0; }
-  # a linked worktree (.git is a file) can be swept away, which would leave the box's heavy dangling
-  [ -d "$root/.git" ] || { warn "$root is not a main checkout; leaving $heavy as it is"; return 0; }
+link_heavy() { # through current, so it changes only on an install
+  local want="$base/current/heavy"
   if [ -L "$heavy" ] && [ "$(readlink "$heavy")" = "$want" ]; then return 0; fi
-  if [ "$dry" = 1 ]; then say "[dry-run] would link $heavy -> $want"; return 0; fi
   mkdir -p "$(dirname "$heavy")"
   if [ -e "$heavy" ] && [ ! -L "$heavy" ]; then
     if [ -e "$heavy.pre-repo" ]; then mv "$heavy" "$heavy.pre-repo.$(date +%s)"; else mv "$heavy" "$heavy.pre-repo"; fi
@@ -437,7 +442,6 @@ link_heavy() {
   say "heavy -> $want"
 }
 
-link_heavy
 if [ "$do_publish" = 1 ]; then publish; fi
 if [ "$do_link" = 1 ]; then link; fi
 exit 0
