@@ -1,0 +1,1 @@
+Both workers read owner null before either update lands, so both claim job 7 and run it.
