@@ -30,9 +30,9 @@ states:
                 next: "Run {item}'s scope gate, build rules and the repo's commands." }
   model:      { displayName: "Check the design model", why: "Runs the design models of the code this change touches through a model checker, so a hole in the design shows before review.", kind: active, step: { use: step.model.check, with: { scope: touched } }, timeout: { after: 20m, then: park },
                 next: "Check the design models {item}'s change touches (up to 10 min)." }
-  model-desk: { displayName: "The model check can't run", why: "The model checker isn't available on this machine, so the design model can't be checked.", kind: active, step: step.model.desk, timeout: { after: 14d, then: park },
+  model-desk: { displayName: "The model check can't run", why: "The model checker isn't available on this machine, so the design model can't be checked.", kind: active, step: step.model.desk, loop: model-retries, timeout: { after: 14d, then: park },
                 onOutcome: { again: "Runs the model check again on the same commit.", stop: "Stops the build here; nothing ships." },
-                next: "The model check can't run for {item} (see the finding): fix the machine and check again, or stop." }
+                next: "The model check can't run for {item} (see the finding): fix the machine and check again (try {loop.model-retries}/{loop.model-retries.cap}), or stop." }
   scope-desk: { displayName: "Allow a file outside the plan?", why: "A change outside the plan needs your OK.", kind: active, step: step.build.scope-desk, timeout: { after: 14d, then: park },
                 next: "{item}'s builder needs a file outside its allowed files: allow it with a reason, have it reverted, or stop." }
   amend:      { kind: active, step: step.build.amend, loop: grants, timeout: { after: 1d, then: park },
@@ -64,7 +64,7 @@ transitions:
   - { label: "you said to revert it", from: scope-desk, to: green,   on: step.completed, when: { outcome: revert }, produces: [fact:answers] }
   - { from: scope-desk, to: stopped, on: step.completed, when: { outcome: stop } }
   - { from: amend, to: checks, on: step.completed, when: { outcome: amended }, produces: [fact:activePacket] }
-loops: { tests: { cap: 5 }, revisions: { cap: 6 }, grants: { cap: 3 } }
+loops: { tests: { cap: 5 }, revisions: { cap: 6 }, grants: { cap: 3 }, model-retries: { cap: 3 } }
 evals:
   - evals/workflow.build/blocked-stop.jsonl
   - evals/workflow.build/happy.jsonl
